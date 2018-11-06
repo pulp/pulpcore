@@ -1,0 +1,10 @@
+---
+images:
+  - pulp-api
+  - pulp-content
+  - pulp-worker
+  - pulp-resource-manager
+registry: quay.io
+project: pulp
+tag: latest
+plugins: []

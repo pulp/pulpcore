@@ -31,7 +31,9 @@ addons:
 before_install: .travis/before_install.sh
 install: .travis/install.sh
 before_script: .travis/before_script.sh
-script: .travis/script.sh
+script:
+  - .travis/script.sh
+  - .travis/test-container-images.sh
 jobs:
   include:
     - stage: deploy

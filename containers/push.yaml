@@ -1,0 +1,23 @@
+---
+- hosts: localhost
+  vars:
+    container_cli: 'docker'
+  vars_files:
+    - vars/defaults.yaml
+  tasks:
+    - name: 'Check for podman'
+      command: 'which podman'
+      register: podman_exists
+      ignore_errors: true
+
+    - set_fact:
+        container_cli: 'podman'
+      when: podman_exists | success
+
+    - name: 'Tag images'
+      command: "{{ container_cli }} tag {{ item }}:{{ tag }} {{ registry }}/{{ project }}/{{ item }}:{{ tag }}"
+      with_items: "{{ images }}"
+
+    - name: 'Push images'
+      command: "{{ container_cli }} push {{ registry }}/{{ project }}/{{ item }}:{{ tag }}"
+      with_items: "{{ images }}"
