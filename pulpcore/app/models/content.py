@@ -60,8 +60,6 @@ class QueryMixin:
         """
         Returns a Q object that represents the model
         """
-        if self.pk:
-            return models.Q(pk=self.pk)
         try:
             kwargs = self.natural_key_dict()
         except AttributeError:
