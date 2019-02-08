@@ -288,6 +288,22 @@ class NamedModelViewSet(viewsets.GenericViewSet):
         return self.get_parent_field_and_object()[1]
 
 
+class AsyncCreateMixin:
+    """
+    Provides a create method that dispatches a task with reservation for the instance
+    """
+
+    @swagger_auto_schema(operation_description="Trigger an asynchronous create task",
+                         responses={202: AsyncOperationResponseSerializer})
+    def create(self, request, **kwargs):
+        app_label = instance._meta.app_label
+        async_result = enqueue_with_reservation(
+            tasks.base.general_create, [instance],
+            args=(app_label, serializer.__class__.__name__)
+        )
+        return OperationPostponedResponse(async_result, request)
+
+
 class AsyncUpdateMixin:
     """
     Provides an update method that dispatches a task with reservation for the instance

@@ -70,11 +70,11 @@ class DistributionFilter(BaseFilterSet):
 
 
 class DistributionViewSet(NamedModelViewSet,
-                          mixins.CreateModelMixin,
-                          mixins.UpdateModelMixin,
+                          mixins.AsyncCreateMixin,
+                          mixins.AsyncUpdateMixin,
                           mixins.RetrieveModelMixin,
                           mixins.ListModelMixin,
-                          mixins.DestroyModelMixin):
+                          mixins.AsyncDeleteMixin):
     endpoint_name = 'distributions'
     queryset = Distribution.objects.all()
     serializer_class = DistributionSerializer
