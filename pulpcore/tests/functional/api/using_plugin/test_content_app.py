@@ -77,7 +77,10 @@ class ContentAppTestCase(unittest.TestCase):
         body['repository'] = repo['_href']
         body['publisher'] = publisher['_href']
 
-        distribution = self.client.post(DISTRIBUTION_PATH, body)
+        response_dict = self.client.post(DISTRIBUTION_PATH, body)
+        dist_task = self.client.get(response_dict['task'])
+        distribution_href = dist_task['created_resources'][0]
+        distribution = self.client.get(distribution_href)
         self.addCleanup(self.client.delete, distribution['_href'])
 
         last_version_href = get_versions(repo)[-1]['_href']
