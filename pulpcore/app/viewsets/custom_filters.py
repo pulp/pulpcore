@@ -3,11 +3,13 @@ This module contains custom filters that might be used by more than one ViewSet.
 """
 from gettext import gettext as _
 from urllib.parse import urlparse
+
 from django.urls import resolve, Resolver404
 from django_filters import Filter, DateTimeFilter
 from django_filters.fields import IsoDateTimeField
 
 from rest_framework import serializers
+from uuid import UUID
 
 from pulpcore.app.models import RepositoryVersion
 from pulpcore.app.viewsets import NamedModelViewSet
@@ -45,6 +47,10 @@ class HyperlinkRelatedFilter(Filter):
             raise serializers.ValidationError(detail=_('URI not valid: {u}').format(u=value))
 
         pk = match.kwargs['pk']
+        try:
+            UUID(pk, version=4)
+        except ValueError:
+            raise serializers.ValidationError(detail=_('UUID invalid: {u}').format(u=pk))
 
         key = "{}__pk".format(self.field_name)
         return qs.filter(**{key: pk})
