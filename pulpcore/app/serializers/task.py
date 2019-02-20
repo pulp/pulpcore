@@ -101,7 +101,7 @@ class MinimalTaskSerializer(TaskSerializer):
 
     class Meta:
         model = models.Task
-        fields = ModelSerializer.Meta.fields + ('state', 'started_at', 'finished_at',
+        fields = ModelSerializer.Meta.fields + ('name', 'state', 'started_at', 'finished_at',
                                                 'worker', 'parent')
 
 
