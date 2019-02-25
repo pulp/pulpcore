@@ -2,7 +2,7 @@ from django.db import models, transaction
 
 from . import storage
 from .base import MasterModel, Model
-from .repository import Publisher, Repository
+from .repository import Publisher, Remote, Repository
 from .task import CreatedResource
 
 
@@ -248,7 +248,9 @@ class BaseDistribution(Model):
         publication (models.ForeignKey): The current publication associated with
             the distribution.  This is the publication being served by Pulp through
             this relative URL path and settings.
-        content_guard ((models.ForeignKey): An optional content-guard.
+        content_guard (models.ForeignKey): An optional content-guard.
+        remote (models.ForeignKey): A remote that the content app can use to find content not
+            yet stored in Pulp.
     """
 
     name = models.CharField(max_length=255, db_index=True, unique=True)
@@ -258,6 +260,7 @@ class BaseDistribution(Model):
     publisher = models.ForeignKey(Publisher, null=True, on_delete=models.SET_NULL)
     repository = models.ForeignKey(Repository, null=True, on_delete=models.SET_NULL)
     content_guard = models.ForeignKey(ContentGuard, null=True, on_delete=models.SET_NULL)
+    remote = models.ForeignKey(Remote, null=True, on_delete=models.SET_NULL)
 
     class Meta:
         abstract = True
