@@ -14,7 +14,7 @@ from aiohttp.web_exceptions import HTTPForbidden, HTTPFound, HTTPNotFound
 from django.conf import settings
 from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 from django.db import IntegrityError, transaction
-from pulpcore.app.models import Artifact, ContentArtifact, Distribution, Remote
+from pulpcore.app.models import Artifact, ContentArtifact, Distribution, Remote, RemoteArtifact
 
 
 log = logging.getLogger(__name__)
@@ -163,47 +163,18 @@ class Handler:
         distribution = Handler._match_distribution(path)
         self._permit(request, distribution)
         publication = distribution.publication
-        if not publication:
+        remote = distribution.remote
+        if not publication and not remote:
             raise PathNotResolved(path)
         rel_path = path.lstrip('/')
         rel_path = rel_path[len(distribution.base_path):]
         rel_path = rel_path.lstrip('/')
 
-        # published artifact
-        try:
-            pa = publication.published_artifact.get(relative_path=rel_path)
-            ca = pa.content_artifact
-        except ObjectDoesNotExist:
-            pass
-        else:
-            if ca.artifact:
-                return self._handle_file_response(ca.artifact.file)
-            else:
-                return await self._stream_content_artifact(request, StreamResponse(), ca)
-
-        # published metadata
-        try:
-            pm = publication.published_metadata.get(relative_path=rel_path)
-        except ObjectDoesNotExist:
-            pass
-        else:
-            return self._handle_file_response(pm.file)
-
-        # pass-through
-        if publication.pass_through:
+        if publication:
+            # published artifact
             try:
-                ca = ContentArtifact.objects.get(
-                    content__in=publication.repository_version.content,
-                    relative_path=rel_path)
-            except MultipleObjectsReturned:
-                log.error(
-                    _('Multiple (pass-through) matches for {b}/{p}'),
-                    {
-                        'b': distribution.base_path,
-                        'p': rel_path,
-                    }
-                )
-                raise
+                pa = publication.published_artifact.get(relative_path=rel_path)
+                ca = pa.content_artifact
             except ObjectDoesNotExist:
                 pass
             else:
@@ -211,6 +182,52 @@ class Handler:
                     return self._handle_file_response(ca.artifact.file)
                 else:
                     return await self._stream_content_artifact(request, StreamResponse(), ca)
+
+            # published metadata
+            try:
+                pm = publication.published_metadata.get(relative_path=rel_path)
+            except ObjectDoesNotExist:
+                pass
+            else:
+                return self._handle_file_response(pm.file)
+
+            # pass-through
+            if publication.pass_through:
+                try:
+                    ca = ContentArtifact.objects.get(
+                        content__in=publication.repository_version.content,
+                        relative_path=rel_path)
+                except MultipleObjectsReturned:
+                    log.error(
+                        _('Multiple (pass-through) matches for {b}/{p}'),
+                        {
+                            'b': distribution.base_path,
+                            'p': rel_path,
+                        }
+                    )
+                    raise
+                except ObjectDoesNotExist:
+                    pass
+                else:
+                    if ca.artifact:
+                        return self._handle_file_response(ca.artifact.file)
+                    else:
+                        return await self._stream_content_artifact(request, StreamResponse(), ca)
+        if remote:
+            remote = remote.cast()
+            try:
+                url = remote.get_remote_artifact_url(rel_path)
+                ra = RemoteArtifact.objects.get(remote=remote, url=url)
+                ca = ra.content_artifact
+                if ca.artifact:
+                    return self._handle_file_response(ca.artifact.file)
+                else:
+                    return await self._stream_content_artifact(request, StreamResponse(), ca)
+            except ObjectDoesNotExist:
+                ca = ContentArtifact(relative_path=rel_path)
+                ra = RemoteArtifact(remote=remote, url=url, content_artifact=ca)
+                return await self._stream_remote_artifact(request, StreamResponse(), ra)
+
         raise PathNotResolved(path)
 
     async def _stream_content_artifact(self, request, response, content_artifact):
@@ -236,47 +253,22 @@ class Handler:
                 the client.
         """
         for remote_artifact in content_artifact.remoteartifact_set.all():
-            remote = remote_artifact.remote.cast()
-
-            async def handle_headers(headers):
-                for name, value in headers.items():
-                    if name.lower() in HOP_BY_HOP_HEADERS:
-                        continue
-                    response.headers[name] = value
-                await response.prepare(request)
-
-            async def handle_data(data):
-                await response.write(data)
-                if remote.policy != Remote.STREAMED:
-                    await original_handle_data(data)
-
-            async def finalize():
-                if remote.policy != Remote.STREAMED:
-                    await original_finalize()
-
-            downloader = remote.get_downloader(remote_artifact=remote_artifact,
-                                               headers_ready_callback=handle_headers)
-            original_handle_data = downloader.handle_data
-            downloader.handle_data = handle_data
-            original_finalize = downloader.finalize
-            downloader.finalize = finalize
             try:
-                download_result = await downloader.run()
+                response = await self._stream_remote_artifact(request, response, remote_artifact)
+
             except ClientResponseError:
                 continue
-            if remote.policy != Remote.STREAMED:
-                self._save_content_artifact(download_result, content_artifact)
-            await response.write_eof()
-            return response
+
         raise HTTPNotFound()
 
-    def _save_content_artifact(self, download_result, content_artifact):
+    def _save_artifact(self, download_result, remote_artifact):
         """
-        Create/Get an Artifact and associate it to a ContentArtifact.
+        Create/Get an Artifact and associate it to a RemoteArtifact and/or ContentArtifact.
 
         Create (or get if already existing) an :class:`~pulpcore.plugin.models.Artifact`
-        based on the `download_result` and associate it to the given `content_artifact`. Both
-        the created artifact and the updated content_artifact are saved to the DB.
+        based on the `download_result` and associate it to the `content_artifact` of the given
+        `remote_artifact`. Both the created artifact and the updated content_artifact are saved to
+        the DB.  The `remote_artifact` is also saved for the pull-through caching use case.
 
         Plugin-writers may overide this method if their content module requires
         additional/different steps for saving.
@@ -285,12 +277,14 @@ class Handler:
             download_result (:class:`~pulpcore.plugin.download.DownloadResult`: The
                 DownloadResult for the downloaded artifact.
 
-            content_artifact (:class:`~pulpcore.plugin.models.ContentArtifact`): The
-                ContentArtifact to associate the Artifact with.
+            remote_artifact (:class:`~pulpcore.plugin.models.RemoteArtifact`): The
+                RemoteArtifact to associate the Artifact with.
 
         Returns:
             The associated :class:`~pulpcore.plugin.models.Artifact`.
         """
+        content_artifact = remote_artifact.content_artifact
+        remote = remote_artifact.remote
         artifact = Artifact(
             **download_result.artifact_attributes,
             file=download_result.path
@@ -301,8 +295,37 @@ class Handler:
                     artifact.save()
             except IntegrityError:
                 artifact = Artifact.objects.get(artifact.q())
-            content_artifact.artifact = artifact
-            content_artifact.save()
+            update_content_artifact = True
+            if not content_artifact.pk:
+                # This is the first time pull-through content was requested.
+                rel_path = content_artifact.relative_path
+                c_type = remote.get_remote_artifact_content_type(rel_path)
+                content = c_type.init_from_artifact_and_relative_path(artifact, rel_path)
+                try:
+                    with transaction.atomic():
+                        content.save()
+                        content_artifact.content = content
+                        content_artifact.save()
+                except IntegrityError:
+                    # There is already content for this Artifact
+                    content = c_type.objects.get(content.q())
+                    artifacts = content._artifacts
+                    if artifact.sha256 != artifacts[0].sha256:
+                        raise RuntimeError("The Artifact downloaded during pull-through does not "
+                                           "match the Artifact already stored for the same "
+                                           "content.")
+                    content_artifact = ContentArtifact.objects.get(content=content)
+                    update_content_artifact = False
+                try:
+                    with transaction.atomic():
+                        remote_artifact.content_artifact = content_artifact
+                        remote_artifact.save()
+                except IntegrityError:
+                    # Remote artifact must have already gotten saved during a parallel request
+                    log.info("RemoteArtifact already exists.")
+            if update_content_artifact:
+                content_artifact.artifact = artifact
+                content_artifact.save()
         return artifact
 
     def _handle_file_response(self, file):
@@ -328,3 +351,50 @@ class Handler:
             raise HTTPFound(file.url)
         else:
             raise NotImplementedError()
+
+    async def _stream_remote_artifact(self, request, response, remote_artifact):
+        """
+        Stream and save a RemoteArtifact.
+
+        Args:
+            request(:class:`~aiohttp.web.Request`): The request to prepare a response for.
+            response (:class:`~aiohttp.web.StreamResponse`): The response to stream data to.
+            content_artifact (:class:`~pulpcore.plugin.models.ContentArtifact`): The ContentArtifact
+                to fetch and then stream back to the client
+
+        Raises:
+            :class:`~aiohttp.web.HTTPNotFound` when no
+                :class:`~pulpcore.plugin.models.RemoteArtifact` objects associated with the
+                :class:`~pulpcore.plugin.models.ContentArtifact` returned the binary data needed for
+                the client.
+
+        """
+        remote = remote_artifact.remote.cast()
+
+        async def handle_headers(headers):
+            for name, value in headers.items():
+                if name.lower() in HOP_BY_HOP_HEADERS:
+                    continue
+                response.headers[name] = value
+            await response.prepare(request)
+
+        async def handle_data(data):
+            await response.write(data)
+            if remote.policy != Remote.STREAMED:
+                await original_handle_data(data)
+
+        async def finalize():
+            if remote.policy != Remote.STREAMED:
+                await original_finalize()
+        downloader = remote.get_downloader(remote_artifact=remote_artifact,
+                                           headers_ready_callback=handle_headers)
+        original_handle_data = downloader.handle_data
+        downloader.handle_data = handle_data
+        original_finalize = downloader.finalize
+        downloader.finalize = finalize
+        download_result = await downloader.run()
+
+        if remote.policy != Remote.STREAMED:
+            self._save_artifact(download_result, remote_artifact)
+        await response.write_eof()
+        return response
