@@ -18,6 +18,7 @@ from .repository import (  # noqa
     Repository,
     RepositoryContent,
     RepositoryVersion,
+    RepositoryVersionContentDetails,
 )
 
 from .task import CreatedResource, ReservedResource, Task, TaskReservedResource, Worker  # noqa

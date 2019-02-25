@@ -25,7 +25,7 @@ else
   git fetch origin +refs/pull/$PULP_PLUGIN_PR_NUMBER/merge
   git checkout FETCH_HEAD
   pip install -e .
-  cd ../pulp
+  cd ../pulpcore
 fi
 
 if [ -z "$PULP_FILE_PR_NUMBER" ]; then
@@ -37,7 +37,7 @@ else
   git fetch origin +refs/pull/$PULP_FILE_PR_NUMBER/merge
   git checkout FETCH_HEAD
   pip install -e .
-  cd ../pulp
+  cd ../pulpcore
 fi
 
 if [ ! -z "$PULP_SMASH_PR_NUMBER" ]; then
@@ -48,5 +48,5 @@ if [ ! -z "$PULP_SMASH_PR_NUMBER" ]; then
   git fetch origin +refs/pull/$PULP_SMASH_PR_NUMBER/merge
   git checkout FETCH_HEAD
   pip install -e .
-  cd ../pulp
+  cd ../pulpcore
 fi
