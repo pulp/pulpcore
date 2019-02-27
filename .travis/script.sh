@@ -47,23 +47,24 @@ show_logs_and_return_non_zero() {
     return "${rc}"
 }
 
+# TODO coverage
 # Start services
-rq worker -n 'resource-manager@%h' -w 'pulpcore.tasking.worker.PulpWorker' -c 'pulpcore.rqconfig' >> ~/resource_manager.log 2>&1 &
-rq worker -n 'reserved-resource-worker-1@%h' -w 'pulpcore.tasking.worker.PulpWorker' -c 'pulpcore.rqconfig' >> ~/reserved_worker-1.log 2>&1 &
-gunicorn pulpcore.tests.functional.content_with_coverage:server --bind 'localhost:8080' --worker-class 'aiohttp.GunicornWebWorker' -w 2 >> ~/content_app.log 2>&1 &
-coverage run $(which pulp-manager) runserver --noreload >> ~/django_runserver.log 2>&1 &
-wait_for_pulp 20
+# rq worker -n 'resource-manager@%h' -w 'pulpcore.tasking.worker.PulpWorker' -c 'pulpcore.rqconfig' >> ~/resource_manager.log 2>&1 &
+# rq worker -n 'reserved-resource-worker-1@%h' -w 'pulpcore.tasking.worker.PulpWorker' -c 'pulpcore.rqconfig' >> ~/reserved_worker-1.log 2>&1 &
+# gunicorn pulpcore.tests.functional.content_with_coverage:server --bind 'localhost:8080' --worker-class 'aiohttp.GunicornWebWorker' -w 2 >> ~/content_app.log 2>&1 &
+# coverage run $(which pulp-manager) runserver --noreload >> ~/django_runserver.log 2>&1 &
+# wait_for_pulp 20
 
 # Run functional tests
 pytest -v -r sx --color=yes --pyargs pulpcore.tests.functional || show_logs_and_return_non_zero
 pytest -v -r sx --color=yes --pyargs pulp_file.tests.functional || show_logs_and_return_non_zero
 
 # Stop services to write coverage
-kill -SIGINT %?runserver
-kill -SIGINT %?content_with_coverage
-kill -SIGINT %?reserved-resource-worker
-kill -SIGINT %?resource-manager
-wait || true
-
-coverage combine
-codecov
+# kill -SIGINT %?runserver
+# kill -SIGINT %?content_with_coverage
+# kill -SIGINT %?reserved-resource-worker
+# kill -SIGINT %?resource-manager
+# wait || true
+#
+# coverage combine
+# codecov

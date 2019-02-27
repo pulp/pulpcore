@@ -15,20 +15,11 @@ matrix:
     - python: '3.6'
       env: TEST=docs
   fast_finish: true
-addons:
-  apt:
-    packages:
-      - httpie
-      - jq
-  # postgres versions provided by el7 RHSCL (lowest supportable version)
-  postgresql: '9.6'
-  mariadb: '10.3'
 services:
   - postgresql
-  - redis-server
-  - mariadb
-install: source .travis/install.sh
-before_script: source .travis/before_script.sh
+before_install: .travis/before_install.sh
+install: .travis/install.sh
+before_script: .travis/before_script.sh
 script: .travis/script.sh
 jobs:
   include:
