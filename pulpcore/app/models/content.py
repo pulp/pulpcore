@@ -290,7 +290,7 @@ class ContentArtifact(Model, QueryMixin):
     """
     artifact = models.ForeignKey(Artifact, on_delete=models.PROTECT, null=True)
     content = models.ForeignKey(Content, on_delete=models.CASCADE)
-    relative_path = models.CharField(max_length=256)
+    relative_path = models.CharField(max_length=255)
 
     objects = BulkCreateManager()
 
