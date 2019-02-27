@@ -47,7 +47,12 @@ show_logs_and_return_non_zero() {
     return "${rc}"
 }
 
-# Start services
+# Stop services started by ansible roles
+sudo systemctl stop pulp-worker* pulp-resource-manager pulp-content-app pulp-wsgi
+
+# Start services with logs and coverage
+export DJANGO_SETTINGS_MODULE=pulpcore.app.settings
+export PULP_CONTENT_HOST=localhost:8080
 rq worker -n 'resource-manager@%h' -w 'pulpcore.tasking.worker.PulpWorker' -c 'pulpcore.rqconfig' >> ~/resource_manager.log 2>&1 &
 rq worker -n 'reserved-resource-worker-1@%h' -w 'pulpcore.tasking.worker.PulpWorker' -c 'pulpcore.rqconfig' >> ~/reserved_worker-1.log 2>&1 &
 gunicorn pulpcore.tests.functional.content_with_coverage:server --bind 'localhost:8080' --worker-class 'aiohttp.GunicornWebWorker' -w 2 >> ~/content_app.log 2>&1 &

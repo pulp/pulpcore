@@ -1,0 +1,29 @@
+---
+- hosts: all
+  pre_tasks:
+    - name: Load DB variables
+      include_vars: '{{ pulp_db_type }}.yml'
+  vars:
+    pulp_default_admin_password: admin
+    pulp_secret_key: secret
+    pulp_source_dir: '/home/travis/build/pulp/pulpcore/'
+    pulp_plugin_source_dir: "/home/travis/build/pulp/pulpcore-plugin"
+    pulp_install_plugins:
+      pulp-file:
+        app_label: "file"
+        source_dir: "/home/travis/build/pulp/pulp_file"
+    ansible_python_interpreter: '/opt/pyenv/shims/python3'
+    pulp_user: 'travis'
+    developer_user: 'travis'
+    pulp_install_db: false
+    pulp_db_user: 'travis'
+    pulp_db_password: ''
+    pulp_preq_packages: []
+  environment:
+    DJANGO_SETTINGS_MODULE: pulpcore.app.settings
+  roles:
+    - pulp3-database
+    - pulp3-workers
+    - pulp3-resource-manager
+    - pulp3-webserver
+    - pulp3-content
