@@ -104,7 +104,7 @@ class PulpOpenAPISchemaGenerator(OpenAPISchemaGenerator):
         """
         resource_path = '%s}/' % path.rsplit(sep='}', maxsplit=1)[0]
         if resource_path.endswith('_pk}/'):
-            resource_path = '%s{id}/' % resource_path.rsplit(sep='{', maxsplit=1)[0]
+            resource_path = '%s{_id}/' % resource_path.rsplit(sep='{', maxsplit=1)[0]
         return resource_path
 
     @staticmethod
