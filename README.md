@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/pulp/pulpcore.svg)](https://travis-ci.org/pulp/pulpcore)
+[![Build Status](https://travis-ci.com/pulp/pulpcore.svg)](https://travis-ci.com/pulp/pulpcore)
 [![PyPI](https://img.shields.io/pypi/pyversions/pulpcore.svg)](https://pypi.python.org/pypi/pulpcore)
 [![codecov](https://codecov.io/gh/pulp/pulpcore/branch/master/graph/badge.svg)](https://codecov.io/gh/pulp/pulpcore/branch/master)
 [![Code Quality: Python](https://img.shields.io/lgtm/grade/python/g/pulp/pulpcore.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/pulp/pulpcore/context:python)
