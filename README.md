@@ -1,8 +1,8 @@
-[![Build Status](https://travis-ci.org/pulp/pulp.svg)](https://travis-ci.org/pulp/pulp)
+[![Build Status](https://travis-ci.org/pulp/pulpcore.svg)](https://travis-ci.org/pulp/pulpcore)
 [![PyPI](https://img.shields.io/pypi/pyversions/pulpcore.svg)](https://pypi.python.org/pypi/pulpcore)
-[![codecov](https://codecov.io/gh/pulp/pulp/branch/master/graph/badge.svg)](https://codecov.io/gh/pulp/pulp/branch/master)
-[![Code Quality: Python](https://img.shields.io/lgtm/grade/python/g/pulp/pulp.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/pulp/pulp/context:python)
-[![Total Alerts](https://img.shields.io/lgtm/alerts/g/pulp/pulp.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/pulp/pulp/alerts)
+[![codecov](https://codecov.io/gh/pulp/pulpcore/branch/master/graph/badge.svg)](https://codecov.io/gh/pulp/pulpcore/branch/master)
+[![Code Quality: Python](https://img.shields.io/lgtm/grade/python/g/pulp/pulpcore.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/pulp/pulpcore/context:python)
+[![Total Alerts](https://img.shields.io/lgtm/alerts/g/pulp/pulpcore.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/pulp/pulpcore/alerts)
 
 **Acquire, Organize, and Distribute Software**
 
@@ -18,7 +18,7 @@ Using Pulp you can:
 Pulp is completely free and open-source!
 - License: GNUv2
 - Documentation: http://docs.pulpproject.org/en/3.0/nightly/
-- Source: https://github.com/pulp/pulp/
+- Source: https://github.com/pulp/pulpcore/
 - Bugs: https://pulp.plan.io/projects/pulp
 
 For more information, check out the project website: http://www.pulpproject.org

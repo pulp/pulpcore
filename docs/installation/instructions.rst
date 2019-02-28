@@ -52,8 +52,8 @@ a dependency)::
 
    To install from source, clone git repositories and do a local, editable pip installation::
 
-   $ git clone https://github.com/pulp/pulp.git
-   $ pip install -e ./pulp
+   $ git clone https://github.com/pulp/pulpcore.git
+   $ pip install -e ./pulpcore
    $ git clone https://github.com/pulp/pulpcore-plugin.git
    $ pip install -e ./pulpcore-plugin
 

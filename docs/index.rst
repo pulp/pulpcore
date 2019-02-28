@@ -39,7 +39,7 @@ make Pulp better, please reach out!
 
 * Source code
 
-  * `pulpcore <https://github.com/pulp/pulp/>`_
+  * `pulpcore <https://github.com/pulp/pulpcore/>`_
   * `pulp-smash (test suite) <https://github.com/PulpQE/pulp-smash>`_
   * `plugin table <https://pulpproject.org/pulp-3-plugins/>`_
 

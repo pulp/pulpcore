@@ -4,18 +4,18 @@ Pulp 3.0 Release Notes
 3.0.0b21
 ========
 
-`Comprehensive list of changes and bugfixes for beta 21 <https://github.com/pulp/pulp/compare/3.0.0b20...3.0.0b21>`_.
+`Comprehensive list of changes and bugfixes for beta 21 <https://github.com/pulp/pulpcore/compare/3.0.0b20...3.0.0b21>`_.
 
 
 3.0.0b20
 ========
 
-`Comprehensive list of changes and bugfixes for beta 20 <https://github.com/pulp/pulp/compare/3.0.0b19...3.0.0b20>`_.
+`Comprehensive list of changes and bugfixes for beta 20 <https://github.com/pulp/pulpcore/compare/3.0.0b19...3.0.0b20>`_.
 
 3.0.0b19
 ========
 
-`Comprehensive list of changes and bugfixes for beta 19 <https://github.com/pulp/pulp/compare/3.0.0b18...3.0.0b19>`_.
+`Comprehensive list of changes and bugfixes for beta 19 <https://github.com/pulp/pulpcore/compare/3.0.0b18...3.0.0b19>`_.
 
 Breaking Changes
 ----------------
@@ -26,7 +26,7 @@ Breaking Changes
 3.0.0b18
 ========
 
-`Comprehensive list of changes and bugfixes for beta 18 <https://github.com/pulp/pulp/compare/3.0.0b17...3.0.0b18>`_.
+`Comprehensive list of changes and bugfixes for beta 18 <https://github.com/pulp/pulpcore/compare/3.0.0b17...3.0.0b18>`_.
 
 Breaking Changes
 ----------------
@@ -39,7 +39,7 @@ Breaking Changes
 3.0.0b17
 ========
 
-`Comprehensive list of changes and bugfixes for beta 17 <https://github.com/pulp/pulp/compare/pulpcore-3.0.0b16...3.0.0b17>`_.
+`Comprehensive list of changes and bugfixes for beta 17 <https://github.com/pulp/pulpcore/compare/3.0.0b16...3.0.0b17>`_.
 
 Breaking Changes
 ----------------
@@ -53,43 +53,43 @@ Breaking Changes
 3.0.0b16
 ========
 
-`Comprehensive list of changes and bugfixes for beta 16 <https://github.com/pulp/pulp/compare/pulpcore-3.0.0b15...pulpcore-3.0.0b16>`_.
+`Comprehensive list of changes and bugfixes for beta 16 <https://github.com/pulp/pulpcore/compare/3.0.0b15...3.0.0b16>`_.
 
 3.0.0b15
 ========
 
-`Comprehensive list of changes and bugfixes for beta 15 <https://github.com/pulp/pulp/compare/pulpcore-3.0.0b14...pulpcore-3.0.0b15>`_.
+`Comprehensive list of changes and bugfixes for beta 15 <https://github.com/pulp/pulpcore/compare/3.0.0b14...3.0.0b15>`_.
 
 3.0.0b14
 ========
 
-`Comprehensive list of changes and bugfixes for beta 14 <https://github.com/pulp/pulp/compare/pulpcore-3.0.0b13...pulpcore-3.0.0b14>`_.
+`Comprehensive list of changes and bugfixes for beta 14 <https://github.com/pulp/pulpcore/compare/3.0.0b13...3.0.0b14>`_.
 
 
 3.0.0b13
 ========
 
-`Comprehensive list of changes and bugfixes for beta 13 <https://github.com/pulp/pulp/compare/pulpcore-3.0.0b12...pulpcore-3.0.0b13>`_.
+`Comprehensive list of changes and bugfixes for beta 13 <https://github.com/pulp/pulpcore/compare/3.0.0b12...3.0.0b13>`_.
 
 3.0.0b12
 ========
 
-`Comprehensive list of changes and bugfixes for beta 12 <https://github.com/pulp/pulp/compare/pulpcore-3.0.0b11...pulpcore-3.0.0b12>`_.
+`Comprehensive list of changes and bugfixes for beta 12 <https://github.com/pulp/pulpcore/compare/3.0.0b11...3.0.0b12>`_.
 
 3.0.0b11
 ========
 
-`Comprehensive list of changes and bugfixes for beta 11 <https://github.com/pulp/pulp/compare/pulpcore-3.0.0b10...pulpcore-3.0.0b11>`_.
+`Comprehensive list of changes and bugfixes for beta 11 <https://github.com/pulp/pulpcore/compare/3.0.0b10...3.0.0b11>`_.
 
 3.0.0b10
 ========
 
-`Comprehensive list of changes and bugfixes for beta 10 <https://github.com/pulp/pulp/compare/pulpcore-3.0.0b9...pulpcore-3.0.0b10>`_.
+`Comprehensive list of changes and bugfixes for beta 10 <https://github.com/pulp/pulpcore/compare/3.0.0b9...3.0.0b10>`_.
 
 3.0.0b9
 =======
 
-`Comprehensive list of changes and bugfixes for beta 9 <https://github.com/pulp/pulp/compare/pulpcore-3.0.0b8...pulpcore-3.0.0b9>`_.
+`Comprehensive list of changes and bugfixes for beta 9 <https://github.com/pulp/pulpcore/compare/3.0.0b8...3.0.0b9>`_.
 
 Breaking Changes
 ----------------
@@ -101,7 +101,7 @@ Breaking Changes
 3.0.0b8
 =======
 
-* `Comprehensive list of changes and bugfixes for beta 8 <https://github.com/pulp/pulp/compare/pulpcore-3.0.0b7...pulpcore-3.0.0b8>`_.
+* `Comprehensive list of changes and bugfixes for beta 8 <https://github.com/pulp/pulpcore/compare/3.0.0b7...3.0.0b8>`_.
 
 Breaking Changes
 ----------------
@@ -112,12 +112,12 @@ Breaking Changes
 3.0.0b7
 =======
 
-* `Comprehensive list of changes and bugfixes for beta 7 <https://github.com/pulp/pulp/compare/pulpcore-3.0.0b6...pulpcore-3.0.0b7>`_.
+* `Comprehensive list of changes and bugfixes for beta 7 <https://github.com/pulp/pulpcore/compare/3.0.0b6...3.0.0b7>`_.
 
 3.0.0b6
 =======
 
-* `Comprehensive list of changes and bugfixes for beta 6 <https://github.com/pulp/pulp/compare/pulpcore-3.0.0b5...pulpcore-3.0.0b6>`_.
+* `Comprehensive list of changes and bugfixes for beta 6 <https://github.com/pulp/pulpcore/compare/3.0.0b5...3.0.0b6>`_.
 
 Breaking Changes
 ----------------
@@ -128,12 +128,12 @@ Breaking Changes
 3.0.0b5
 =======
 
-* `Comprehensive list of changes and bugfixes for beta 5 <https://github.com/pulp/pulp/compare/pulpcore-3.0.0b4...pulpcore-3.0.0b5>`_.
+* `Comprehensive list of changes and bugfixes for beta 5 <https://github.com/pulp/pulpcore/compare/3.0.0b4...3.0.0b5>`_.
 
 3.0.0b4
 =======
 
-* `Comprehensive list of changes and bugfixes for beta 4 <https://github.com/pulp/pulp/compare/pulpcore-3.0.0b3...pulpcore-3.0.0b4>`_.
+* `Comprehensive list of changes and bugfixes for beta 4 <https://github.com/pulp/pulpcore/compare/3.0.0b3...3.0.0b4>`_.
 
 3.0.0b3
 =======

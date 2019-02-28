@@ -14,10 +14,10 @@ units (function, method or class instance) are working correctly.
 A Pull Request that has failing unit tests cannot be merged.
 
 The unit tests for `pulpcore` are in `pulpcore/tests
-<https://github.com/pulp/pulp/tree/master/pulpcore/tests/unit>`_.
+<https://github.com/pulp/pulpcore/tree/master/pulpcore/tests/unit>`_.
 
 The unit tests for `pulpcore-plugin` are in `pulpcore-plugins/tests
-<https://github.com/pulp/pulp/tree/master/plugin/tests/unit/>`_.
+<https://github.com/pulp/pulpcore/tree/master/plugin/tests/unit/>`_.
 
 Functional Tests
 ----------------
@@ -30,7 +30,7 @@ toolkit written to ease the testing of Pulp.
 
 It is highly encouraged to accompany new features with functional
 tests in `pulpcore/functional
-<https://github.com/pulp/pulp/tree/master/pulpcore/tests/functional>`_.
+<https://github.com/pulp/pulpcore/tree/master/pulpcore/tests/functional>`_.
 
 Only the tests for features related to `pulpcore` should live in this repository.
 
