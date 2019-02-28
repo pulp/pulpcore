@@ -509,6 +509,9 @@ class RepositoryVersion(Model):
             self.save()
             self.compute_counts()
 
+    def __str__(self):
+        return "<Repository: {}; Version: {}>".format(self.repository.name, self.number)
+
 
 class RepositoryVersionContentDetails(models.Model):
     ADDED = 'A'
