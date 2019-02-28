@@ -3,7 +3,7 @@ Pull Request Walkthrough
 
 Changes to pulpcore are submitted via `GitHub Pull Requests (PR)
 <https://help.github.com/articles/about-pull-requests/>`_ to the `pulp git repository
-<https://github.com/pulp/pulp>`_ . Plugin git repositories are listed in the `plugin table
+<https://github.com/pulp/pulpcore>`_ . Plugin git repositories are listed in the `plugin table
 <https://pulpproject.org/pulp-3-plugins/>`_.
 
 Boilerplate
@@ -12,8 +12,8 @@ Boilerplate
 If you would like to submit a patch, especially if you have a major change, it is recommended that
 you :ref:`chat with us<community>` before you get started.
 
-#. `Fork <https://help.github.com/articles/fork-a-repo/>`_ `pulp <https://github.com/pulp/pulp>`_ in
-   your GitHub account.
+#. `Fork <https://help.github.com/articles/fork-a-repo/>`_
+   `pulpcore <https://github.com/pulp/pulpcore>`_ in your GitHub account.
 #. :doc:`Install Pulp from source.<dev-setup/index>`
 #. Create a new branch from the :ref:`appropriate base branch<git-branch>`
 #. Review the :doc:`style-guide`.
