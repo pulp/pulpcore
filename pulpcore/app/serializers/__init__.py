@@ -28,6 +28,7 @@ from .content import (  # noqa
 )
 from .progress import ProgressReportSerializer  # noqa
 from .publication import (  # noqa
+    BaseDistributionSerializer,
     ContentGuardSerializer,
     DistributionSerializer,
     PublicationSerializer,
