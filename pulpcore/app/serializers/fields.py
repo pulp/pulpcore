@@ -200,8 +200,12 @@ class BaseURLField(serializers.CharField):
     """
 
     def to_representation(self, value):
-        if settings.CONTENT_HOST:
-            host = settings.CONTENT_HOST
-        else:
-            host = self.context['request'].get_host()
-        return ''.join([host, settings.CONTENT_PATH_PREFIX, value])
+        base_path = value
+        host = settings.CONTENT_HOST or ''
+        prefix = settings.CONTENT_PATH_PREFIX or ''
+        return '/'.join(
+            (
+                host.strip('/'),
+                prefix.strip('/'),
+                base_path.lstrip('/')
+            ))
