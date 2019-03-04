@@ -25,6 +25,7 @@ from .content import (  # noqa
     NoArtifactContentSerializer,
     SingleArtifactContentSerializer,
     MultipleArtifactContentSerializer,
+    UploadSerializer,
 )
 from .progress import ProgressReportSerializer  # noqa
 from .publication import (  # noqa

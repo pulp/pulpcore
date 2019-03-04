@@ -1,4 +1,5 @@
 import hashlib
+import os
 from django.core.files.uploadhandler import TemporaryFileUploadHandler
 from django.core.files.uploadedfile import TemporaryUploadedFile
 
@@ -13,6 +14,25 @@ class PulpTemporaryUploadedFile(TemporaryUploadedFile):
         for hasher in hashlib.algorithms_guaranteed:
             self.hashers[hasher] = getattr(hashlib, hasher)()
         super().__init__(name, content_type, size, charset, content_type_extra)
+
+    @classmethod
+    def from_file(cls, file):
+        """
+        Create a PulpTemporaryUploadedFile from a file system file
+
+        Args:
+            file (File): a filesystem file
+
+        Returns:
+            PulpTemporaryUploadedFile: instantiated instance from file
+        """
+        name = os.path.basename(file.name)
+        instance = cls(name, '', file.size, '', '')
+        instance.file = file
+        data = file.read()
+        for hasher in hashlib.algorithms_guaranteed:
+            instance.hashers[hasher].update(data)
+        return instance
 
 
 class HashingFileUploadHandler(TemporaryFileUploadHandler):
