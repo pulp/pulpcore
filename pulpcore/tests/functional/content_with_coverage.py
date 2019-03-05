@@ -14,4 +14,4 @@ def finalize_coverage():
 
 atexit.register(finalize_coverage)
 
-from pulpcore.content import server  # noqa
+from ...content import server  # noqa
