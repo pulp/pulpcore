@@ -8,7 +8,7 @@ from rest_framework_nested import routers
 
 from pulpcore.app.apps import pulp_plugin_configs
 from pulpcore.app.openapigenerator import PulpOpenAPISchemaGenerator
-from pulpcore.app.views import OrphansView, StatusView
+from pulpcore.app.views import OrphansView, StatusView, UploadView
 from pulpcore.constants import API_ROOT
 
 import logging
@@ -142,6 +142,16 @@ urlpatterns.append(url(
     r'^{api_root}docs/'.format(api_root=API_ROOT),
     docs_schema_view.with_ui('redoc', cache_timeout=None),
     name='schema-redoc')
+)
+
+urlpatterns.append(url(
+    r'^{api_root}uploads/(?P<pk>.*)/$'.format(api_root=API_ROOT),
+    UploadView.as_view(),
+    name='upload-detail')
+)
+urlpatterns.append(url(
+    r'^{api_root}uploads/$'.format(api_root=API_ROOT),
+    UploadView.as_view())
 )
 
 schema_view = get_schema_view(

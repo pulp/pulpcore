@@ -2,7 +2,7 @@ from gettext import gettext as _
 
 from django.db import models
 from rest_framework import status, mixins
-from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
 from rest_framework.response import Response
 
 from pulpcore.app.models import Artifact, Content
@@ -39,7 +39,7 @@ class ArtifactViewSet(NamedModelViewSet,
     queryset = Artifact.objects.all()
     serializer_class = ArtifactSerializer
     filterset_class = ArtifactFilter
-    parser_classes = (MultiPartParser, FormParser)
+    parser_classes = (MultiPartParser, FormParser, JSONParser)
 
     def destroy(self, request, pk):
         """
