@@ -3,6 +3,7 @@ import unittest
 from django.http import Http404, QueryDict
 from django.test import TestCase
 from rest_framework.serializers import ValidationError as DRFValidationError
+from uuid import uuid4
 
 from pulpcore.app import models, viewsets, serializers
 from pulpcore.constants import API_ROOT
@@ -85,7 +86,7 @@ class TestGetResource(TestCase):
         Tests that get_resource() raises a ValidationError if you use a URI for a resource that
         does not exist.
         """
-        pk = 500
+        pk = uuid4()
         viewset = viewsets.RepositoryViewSet()
 
         with self.assertRaises(DRFValidationError):

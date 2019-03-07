@@ -1,6 +1,8 @@
 from django.db import models
 from django.db.models import options
 
+import uuid
+
 
 class Model(models.Model):
     """Base model class for all Pulp models.
@@ -14,7 +16,7 @@ class Model(models.Model):
         * https://docs.djangoproject.com/en/1.8/topics/db/models/#automatic-primary-key-fields
 
     """
-    _id = models.AutoField(primary_key=True)
+    _id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     _created = models.DateTimeField(auto_now_add=True)
     _last_updated = models.DateTimeField(auto_now=True, null=True)
 
