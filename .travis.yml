@@ -7,9 +7,13 @@ python:
   - '3.7'
 env:
   matrix:
-    - DJANGO_MAX=2.2.100 DB=postgres TEST=pulp
-    - DJANGO_MAX=2.2.100 TEST=docs
+    - DB=postgres TEST=pulp
+    - DB=mariadb TEST=pulp
+    - TEST=docs
 matrix:
+  exclude:
+    - python: '3.6'
+      env: TEST=docs
   fast_finish: true
 addons:
   apt:
@@ -18,9 +22,11 @@ addons:
       - jq
   # postgres versions provided by el7 RHSCL (lowest supportable version)
   postgresql: '9.6'
+  mariadb: '10.3'
 services:
   - postgresql
   - redis-server
+  - mariadb
 install: source .travis/install.sh
 before_script: source .travis/before_script.sh
 script: .travis/script.sh
@@ -40,14 +46,12 @@ jobs:
     - stage: publish-beta-docs
       script: bash .travis/publish_docs.sh beta
       env:
-        - DJANGO_MAX=2.2.100
         - DB=postgres
         - TEST=docs
       if: tag IS present
     - stage: publish-nightly-docs
       script: bash .travis/publish_docs.sh nightly
       env:
-        - DJANGO_MAX=2.2.100
         - DB=postgres
         - TEST=docs
       if: type != pull_request

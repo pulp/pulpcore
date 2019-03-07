@@ -12,7 +12,6 @@ requirements = [
     'drf-nested-routers',
     'drf-yasg',
     'gunicorn',
-    'psycopg2-binary',
     'PyYAML',
     'rq>=0.12.0',
     'redis<3.2.0',
@@ -35,6 +34,10 @@ setup(
     url='http://www.pulpproject.org',
     python_requires='>=3.6',
     install_requires=requirements,
+    extras_require={
+        'postgres': ['psycopg2-binary'],
+        'mysql': ['mysqlclient']
+    },
     include_package_data=True,
     classifiers=(
         'License :: OSI Approved :: GNU General Public License v2 or later (GPLv2+)',

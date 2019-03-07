@@ -34,7 +34,7 @@ class ReservedResource(Model):
         task (models.ForeignKey): The task associated with this reservation
         worker (models.ForeignKey): The worker associated with this reservation
     """
-    resource = models.TextField(unique=True)
+    resource = models.CharField(max_length=255, unique=True)
 
     tasks = models.ManyToManyField("Task", related_name="reserved_resources",
                                    through='TaskReservedResource')

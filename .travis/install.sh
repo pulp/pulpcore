@@ -2,9 +2,13 @@
 set -v
 
 # dev_requirements should not be needed for testing; don't install them to make sure
-pip install "Django<=$DJANGO_MAX"
 pip install -r test_requirements.txt
-pip install -e .
+
+if [ "$DB" = 'mariadb' ]; then
+  pip install -e .[mysql]
+else
+  pip install -e .[postgres]
+fi
 
 if [ "$TEST" = 'docs' ]; then
   pip3 install -r doc_requirements.txt

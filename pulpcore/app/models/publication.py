@@ -224,7 +224,7 @@ class ContentGuard(MasterModel):
         description (models.TextField): An optional description.
 
     """
-    name = models.CharField(max_length=256, db_index=True, unique=True)
+    name = models.CharField(max_length=255, db_index=True, unique=True)
     description = models.TextField(null=True)
 
 
