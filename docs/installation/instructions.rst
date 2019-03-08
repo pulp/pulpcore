@@ -43,17 +43,18 @@ PyPI Installation
 
    $ sudo apt-get install python3-venv
 
-3. Install Pulp (install ``pulpcore-plugin``, and ``pulpcore`` itself will be installed as
-a dependency)::
+3. Install Pulp with the set of packages for the relational database you prefer to use. Right now we
+   have extra sets for postgresql or MySQL/mariadb::
 
-   $ pip install pulpcore-plugin
+   $ pip install pulpcore-plugin pulpcore[postgres]
+   $ pip install pulpcore-plugin pulpcore[mysql]
 
 .. note::
 
    To install from source, clone git repositories and do a local, editable pip installation::
 
    $ git clone https://github.com/pulp/pulpcore.git
-   $ pip install -e ./pulpcore
+   $ pip install -e ./pulpcore[postgres]
    $ git clone https://github.com/pulp/pulpcore-plugin.git
    $ pip install -e ./pulpcore-plugin
 
