@@ -1,5 +1,5 @@
 import sys
-from django.conf import settings
+from pulpcore.app.settings import settings
 
 
 settings.configure()

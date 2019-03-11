@@ -2,9 +2,6 @@ from gettext import gettext as _
 import logging
 import os
 
-# https://github.com/rochacbruno/dynaconf/issues/89
-from dynaconf.contrib import django_dynaconf  # noqa
-
 import django  # noqa otherwise E402: module level not at top of file
 django.setup()  # noqa otherwise E402: module level not at top of file
 
