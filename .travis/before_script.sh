@@ -36,11 +36,11 @@ echo "SECRET_KEY: \"$(cat /dev/urandom | tr -dc 'a-z0-9!@#$%^&*(\-_=+)' | head -
 # Run migrations.
 export DJANGO_SETTINGS_MODULE=pulpcore.app.settings
 export PULP_CONTENT_HOST=localhost:8080
-pulp-manager migrate --noinput
+django-admin migrate --noinput
 
 if [ "$TEST" != 'docs' ]; then
-  pulp-manager makemigrations file --noinput
-  pulp-manager migrate --noinput
+  django-admin makemigrations file --noinput
+  django-admin migrate --noinput
 fi
 
-pulp-manager reset-admin-password --password admin
+django-admin reset-admin-password --password admin

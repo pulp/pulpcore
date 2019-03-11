@@ -74,16 +74,16 @@ PyPI Installation
 
 8. Run Django Migrations::
 
-   $ pulp-manager migrate --noinput
-   $ pulp-manager reset-admin-password --password admin
+   $ django-admin migrate --noinput
+   $ django-admin reset-admin-password --password admin
 
 9. Collect Static Media for live docs and browsable API::
 
-   $ pulp-manager collectstatic --noinput
+   $ django-admin collectstatic --noinput
 
 10. Run Pulp::
 
-    $ pulp-manager runserver
+    $ django-admin runserver
 
 .. _database-install:
 
