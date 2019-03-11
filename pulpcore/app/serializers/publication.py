@@ -122,6 +122,12 @@ class BaseDistributionSerializer(ModelSerializer):
         view_name='repositories-detail',
         allow_null=True
     )
+    remote = DetailRelatedField(
+        required=False,
+        help_text=_('Remote that can be used to fetch content when using pull-through caching.'),
+        queryset=models.Remote.objects.all(),
+        allow_null=True
+    )
 
     class Meta:
         fields = ModelSerializer.Meta.fields + (
@@ -130,6 +136,7 @@ class BaseDistributionSerializer(ModelSerializer):
             'publication',
             'repository',
             'content_guard',
+            'remote',
         )
 
     def validate(self, data):
