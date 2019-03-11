@@ -6,9 +6,6 @@ import sys
 import threading
 import time
 
-# https://github.com/rochacbruno/dynaconf/issues/89
-from dynaconf.contrib import django_dynaconf  # noqa
-
 from rq import Queue
 from rq.worker import Worker
 
