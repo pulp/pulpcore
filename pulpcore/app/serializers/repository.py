@@ -267,7 +267,7 @@ class RepositoryVersionSerializer(ModelSerializer, NestedHyperlinkedModelSeriali
         The summary of contained content.
 
         Returns:
-            dict: of {'added': {<_type>: {'count': <count>, 'href': <href>},
+            dict:    {'added': {<_type>: {'count': <count>, 'href': <href>},
                       'removed': {<_type>: {'count': <count>, 'href': <href>},
                       'present': {<_type>: {'count': <count>, 'href': <href>},
                      }
