@@ -50,7 +50,7 @@ DEFAULT_FILE_STORAGE
 
    This can be configured though to alternatively use `Amazon S3 <https://aws.amazon.com/s3/>`_. To
    use S3, set ``DEFAULT_FILE_STORAGE`` to ``storages.backends.s3boto3.S3Boto3Storage``. For more
-   information about different Pulp storage options, see the `storage documentation <storage>`_.
+   information about different Pulp storage options, see the :ref:`storage documentation <storage>`.
 
 MEDIA_ROOT
 ^^^^^^^^^^
@@ -58,7 +58,7 @@ MEDIA_ROOT
    The location where Pulp will store files. By default this is `/var/lib/pulp/`.
 
    If you're using S3, point this to the path in your bucket you want to save files. See the
-   `storage documentation <storage>`_ for more info.
+   :ref:`storage documentation <storage>` for more info.
 
 LOGGING
 ^^^^^^^
