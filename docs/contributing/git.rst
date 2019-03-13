@@ -1,8 +1,7 @@
 Git
 ===
 
-Pulp source code lives on `GitHub <https://github.com/pulp>`_. The "pulp" repository is for
-pulpcore.  This document is definitive for :term:`pulpcore` only, but some plugins may choose to
+Pulp source code lives on `GitHub <https://github.com/pulp>`_. This document is definitive for :term:`pulpcore` only, but some plugins may choose to
 follow the same strategies.
 
 .. _git-branch:
