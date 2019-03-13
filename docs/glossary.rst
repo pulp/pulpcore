@@ -9,9 +9,9 @@ Glossary
     :class:`~pulpcore.app.models.Content`
     content unit
         Content are the smallest units of data that can be added and removed from
-        :term:`repositories<repository>`. When singular, "content unit" should be used. Content
-        units can have multiple :term:`artifacts<artifact>`. Each content unit has a :term:`type`
-        (like .rpm or .deb) which that is defined by a :term:`plugin`.
+        :term:`repositories<repository>`. When singular, "content unit" should be used. Each
+        content unit can have multiple :term:`artifacts<artifact>`. Each content unit has a
+        :term:`type` (like .rpm or .deb) which that is defined by a :term:`plugin`.
 
     content app
         A `Django <https://docs.djangoproject.com>`_ app provided by :term:`pulpcore` that serves
