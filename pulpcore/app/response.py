@@ -1,8 +1,6 @@
 from rest_framework.response import Response
 from rest_framework.reverse import reverse
 
-from .models import Task
-
 
 class OperationPostponedResponse(Response):
     """
@@ -21,10 +19,8 @@ class OperationPostponedResponse(Response):
     def __init__(self, result, request):
         """
         Args:
-            task_result (pulpcore.app.models.Task): A :class:`rq.job.Job` object used to generate
-                the response.
+            result (rq.job.Job): A :class:`rq.job.Job` object used to generate the response.
             request (rest_framework.request.Request): Request used to generate the _href urls
         """
-        task = Task.objects.get(job_id=result.id)
-        resp = {"task": reverse('tasks-detail', args=[task.pk], request=None)}
+        resp = {"task": reverse('tasks-detail', args=[result.id], request=None)}
         super().__init__(data=resp, status=202)

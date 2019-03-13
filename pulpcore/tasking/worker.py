@@ -84,7 +84,7 @@ class PulpWorker(Worker):
             queue (rq.queue.Queue): The Queue associated with the job
         """
         try:
-            task = Task.objects.get(job_id=job.get_id())
+            task = Task.objects.get(pk=job.get_id())
         except Task.DoesNotExist:
             pass
         else:
@@ -113,7 +113,7 @@ class PulpWorker(Worker):
             kwargs (dict): Unused parameters
         """
         try:
-            task = Task.objects.get(job_id=job.get_id())
+            task = Task.objects.get(pk=job.get_id())
         except Task.DoesNotExist:
             pass
         else:
@@ -134,7 +134,7 @@ class PulpWorker(Worker):
             started_job_registry (rq.registry.StartedJobRegistry): The RQ registry of started jobs
         """
         try:
-            task = Task.objects.get(job_id=job.get_id())
+            task = Task.objects.get(pk=job.get_id())
         except Task.DoesNotExist:
             pass
         else:

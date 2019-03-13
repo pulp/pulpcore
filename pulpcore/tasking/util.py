@@ -41,7 +41,7 @@ def cancel(task_id):
         return
 
     redis_conn = connection.get_redis_connection()
-    job = Job(id=str(task_status.job_id), connection=redis_conn)
+    job = Job(id=str(task_status.pk), connection=redis_conn)
 
     if job.is_started:
         redis_conn.sadd(TASKING_CONSTANTS.KILL_KEY, job.get_id())
