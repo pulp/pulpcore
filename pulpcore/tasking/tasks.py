@@ -49,7 +49,7 @@ def _acquire_worker(resources):
     return Worker.objects.get_unreserved_worker()
 
 
-def _queue_reserved_task(func, inner_job_id, resources, inner_args, inner_kwargs, options):
+def _queue_reserved_task(func, inner_task_id, resources, inner_args, inner_kwargs, options):
     """
     A task that encapsulates another task to be dispatched later.
 
@@ -64,7 +64,7 @@ def _queue_reserved_task(func, inner_job_id, resources, inner_args, inner_kwargs
 
     Args:
         func (basestring): The function to be called
-        inner_job_id (basestring): The job_id to be set on the task being called. By providing
+        inner_task_id (basestring): The task_id to be set on the task being called. By providing
             the UUID, the caller can have an asynchronous reference to the inner task
             that will be dispatched.
         resources (basestring): The urls of the resource you wish to reserve for your task.
@@ -75,7 +75,7 @@ def _queue_reserved_task(func, inner_job_id, resources, inner_args, inner_kwargs
         options (dict): For all options accepted by enqueue see the RQ docs
     """
     redis_conn = connection.get_redis_connection()
-    task_status = Task.objects.get(job_id=inner_job_id)
+    task_status = Task.objects.get(pk=inner_task_id)
     task_name = func.__module__ + '.' + func.__name__
     while True:
         if task_name == "pulpcore.app.tasks.orphan.orphan_cleanup":
@@ -87,7 +87,7 @@ def _queue_reserved_task(func, inner_job_id, resources, inner_args, inner_kwargs
                 task_status.state = TASK_STATES.RUNNING
                 task_status.save()
                 q = Queue('resource-manager', connection=redis_conn, is_async=False)
-                q.enqueue(func, args=inner_args, kwargs=inner_kwargs, job_id=inner_job_id,
+                q.enqueue(func, args=inner_args, kwargs=inner_kwargs, job_id=inner_task_id,
                           timeout=TASK_TIMEOUT, **options)
                 task_status.state = TASK_STATES.COMPLETED
                 task_status.save()
@@ -114,13 +114,13 @@ def _queue_reserved_task(func, inner_job_id, resources, inner_args, inner_kwargs
 
     try:
         q = Queue(worker.name, connection=redis_conn)
-        q.enqueue(func, args=inner_args, kwargs=inner_kwargs, job_id=inner_job_id,
+        q.enqueue(func, args=inner_args, kwargs=inner_kwargs, job_id=inner_task_id,
                   timeout=TASK_TIMEOUT, **options)
     finally:
-        q.enqueue(_release_resources, args=(inner_job_id, ))
+        q.enqueue(_release_resources, args=(inner_task_id, ))
 
 
-def _release_resources(job_id):
+def _release_resources(task_id):
     """
     Do not queue this task yourself. It will be used automatically when your task is dispatched by
     the _queue_reserved_task task.
@@ -128,11 +128,11 @@ def _release_resources(job_id):
     When a resource-reserving task is complete, this method releases the task's resource(s)
 
     Args:
-        job_id (basestring): The job_id of the task that requested the reservation
+        task_id (basestring): The id of the task that requested the reservation
 
     """
     try:
-        task = Task.objects.get(job_id=job_id, state=TASK_STATES.RUNNING)
+        task = Task.objects.get(pk=task_id, state=TASK_STATES.RUNNING)
     except Task.DoesNotExist:
         pass
     else:
@@ -142,7 +142,7 @@ def _release_resources(job_id):
         exc = RuntimeError(msg.format(task_id=task.pk))
         task.set_failed(exc, None)
 
-    Task.objects.get(job_id=job_id).release_resources()
+    Task.objects.get(pk=task_id).release_resources()
 
 
 def enqueue_with_reservation(func, resources, args=None, kwargs=None, options=None):
@@ -190,16 +190,16 @@ def enqueue_with_reservation(func, resources, args=None, kwargs=None, options=No
         raise ValueError(_('Must be (str|Model)'))
 
     resources = {as_url(r) for r in resources}
-    inner_job_id = str(uuid.uuid4())
+    inner_task_id = str(uuid.uuid4())
     redis_conn = connection.get_redis_connection()
     current_job = get_current_job(connection=redis_conn)
     parent_kwarg = {}
     if current_job:
-        current_task = Task.objects.get(job_id=current_job.id)
+        current_task = Task.objects.get(pk=current_job.id)
         parent_kwarg['parent'] = current_task
-    Task.objects.create(job_id=inner_job_id, state=TASK_STATES.WAITING,
+    Task.objects.create(pk=inner_task_id, state=TASK_STATES.WAITING,
                         name=f'{func.__module__}.{func.__name__}', **parent_kwarg)
     q = Queue('resource-manager', connection=redis_conn)
-    task_args = (func, inner_job_id, list(resources), args, kwargs, options)
+    task_args = (func, inner_task_id, list(resources), args, kwargs, options)
     q.enqueue(_queue_reserved_task, args=task_args, timeout=TASK_TIMEOUT)
-    return Job(id=inner_job_id, connection=redis_conn)
+    return Job(id=inner_task_id, connection=redis_conn)

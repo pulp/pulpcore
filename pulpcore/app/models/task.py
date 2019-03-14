@@ -5,7 +5,6 @@ from datetime import timedelta
 from gettext import gettext as _
 import logging
 import traceback
-import uuid
 
 from django.db import models, transaction
 from django.utils import timezone
@@ -267,7 +266,6 @@ class Task(Model):
         parent (models.ForeignKey): Task that spawned this task (if any)
         worker (models.ForeignKey): The worker that this task is in
     """
-    job_id = models.UUIDField(unique=True, default=uuid.uuid4, editable=False)
     state = models.TextField(choices=TASK_CHOICES)
     name = models.CharField(max_length=255)
 
@@ -289,11 +287,11 @@ class Task(Model):
             pulpcore.app.models.Task: The current task.
         """
         try:
-            job_id = get_current_job().id
+            task_id = get_current_job().id
         except AttributeError:
             task = None
         else:
-            task = Task.objects.get(job_id=job_id)
+            task = Task.objects.get(pk=task_id)
         return task
 
     def set_running(self):
