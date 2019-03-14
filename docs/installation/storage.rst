@@ -24,7 +24,7 @@ Setting up S3
 Configuring Pulp
 ----------------
 
-  To have Pulp use S3, you'll need to install the optional django-stroages Python package::
+  To have Pulp use S3, you'll need to install the optional django-storages Python package::
 
       pip install django-storages
 

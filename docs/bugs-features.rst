@@ -147,7 +147,7 @@ Redmine Fields
 +-------------+-----------------------------------------------------------------------------------+
 | Triaged     | Indicates whether an issue has gone through :ref:`bug triage<triage>`             |
 +-------------+-----------------------------------------------------------------------------------+
-| Groomed     | Core developers mark issues groomed when they inludes all necessary information.  |
+| Groomed     | Core developers mark issues groomed when they include all necessary information.  |
 +-------------+-----------------------------------------------------------------------------------+
 | Sprint      | If set, indicates that the issue is accepted and is ready to be worked on.        |
 +-------------+-----------------------------------------------------------------------------------+
