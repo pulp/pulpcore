@@ -82,7 +82,7 @@ class PublicationsTestCase(unittest.TestCase):
 
         Permutate field list to ensure different combinations on result.
         """
-        fields = ('_href', '_created', 'distributions', 'publisher')
+        fields = ('_href', '_created', '_distributions', 'publisher')
         for field_pair in permutations(fields, 2):
             # ex: field_pair = ('_href', '_created)
             with self.subTest(field_pair=field_pair):
@@ -98,9 +98,9 @@ class PublicationsTestCase(unittest.TestCase):
     def test_02_read_publication_without_specific_fields(self):
         """Read a publication by its href excluding specific fields."""
         # requests doesn't allow the use of != in parameters.
-        url = '{}?fields!=distributions'.format(self.publication['_href'])
+        url = '{}?fields!=_distributions'.format(self.publication['_href'])
         publication = self.client.get(url)
-        self.assertNotIn('distributions', publication.keys())
+        self.assertNotIn('_distributions', publication.keys())
 
     @skip_if(bool, 'publication', False)
     def test_02_read_publications(self):

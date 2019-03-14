@@ -285,4 +285,4 @@ class Distribution(BaseDistribution):
             this relative URL path and settings.
     """
     class Meta:
-        default_related_name = 'distributions'
+        default_related_name = '_distributions'

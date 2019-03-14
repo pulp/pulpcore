@@ -154,7 +154,7 @@ class PublisherSerializer(MasterModelSerializer):
         help_text=_('Timestamp of the most recent update of the publisher configuration.'),
         read_only=True
     )
-    distributions = serializers.HyperlinkedRelatedField(
+    _distributions = serializers.HyperlinkedRelatedField(
         many=True,
         read_only=True,
         view_name='distributions-detail',
@@ -164,7 +164,7 @@ class PublisherSerializer(MasterModelSerializer):
         abstract = True
         model = models.Publisher
         fields = MasterModelSerializer.Meta.fields + (
-            'name', '_last_updated', 'distributions',
+            'name', '_last_updated', '_distributions',
         )
 
 

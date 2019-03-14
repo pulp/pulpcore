@@ -27,7 +27,7 @@ class PublicationSerializer(ModelSerializer):
         help_text=_('The publisher that created this publication.'),
         queryset=models.Publisher.objects.all()
     )
-    distributions = serializers.HyperlinkedRelatedField(
+    _distributions = serializers.HyperlinkedRelatedField(
         help_text=_('This publication is currently being served as'
                     'defined by these distributions.'),
         many=True,
@@ -45,7 +45,7 @@ class PublicationSerializer(ModelSerializer):
         model = models.Publication
         fields = ModelSerializer.Meta.fields + (
             'publisher',
-            'distributions',
+            '_distributions',
             'repository_version',
         )
 
