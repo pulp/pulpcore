@@ -1,11 +1,25 @@
 Pulp 3.0 Release Notes
 ======================
 
+3.0.0b22
+========
+
+`Comprehensive list of changes and bugfixes for beta 22 <https://github.com/pulp/pulpcore/compare/3.0.0b21...3.0.0b22>`_.
+
+Breaking Changes
+----------------
+
+* `Rename pulp_app label to core _ <https://github.com/pulp/pulpcore/pull/12>`_
+* `Use UUID primary keys <https://github.com/pulp/pulpcore/pull/22>`_
+* `Adding support for mariadb/mysql <https://github.com/pulp/pulpcore/pull/21>`_
+* `Problem: pulp-manager is not needed <https://github.com/pulp/pulpcore/pull/27>`_
+* `Removing the job_id field from tasks <https://github.com/pulp/pulpcore/pull/30>`_
+* `Problem: 'distributions' related name overlaps with a plugin field <https://github.com/pulp/pulpcore/pull/33>`_
+
 3.0.0b21
 ========
 
 `Comprehensive list of changes and bugfixes for beta 21 <https://github.com/pulp/pulpcore/compare/3.0.0b20...3.0.0b21>`_.
-
 
 3.0.0b20
 ========
