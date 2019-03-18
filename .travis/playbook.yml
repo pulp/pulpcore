@@ -3,20 +3,21 @@
   vars:
     pulp_default_admin_password: admin
     pulp_secret_key: secret
-    pulp_source_dir: '/home/travis/build/pulp/pulpcore/'
-    pulp_plugin_source_dir: "/home/travis/build/pulp/pulpcore-plugin"
+    pulp_source_dir: '/home/travis/build/asmacdo/pulpcore/'
+    pulp_plugin_source_dir: "/home/travis/build/asmacdo/pulpcore-plugin"
     pulp_install_plugins:
       pulp-file:
         app_label: "file"
-        source_dir: "/home/travis/build/pulp/pulp_file"
+        source_dir: "/home/travis/build/asmacdo/pulp_file"
     ansible_python_interpreter: '/opt/pyenv/shims/python3'
     pulp_user: 'travis'
     developer_user: 'travis'
-    pulp_install_postgresql: false
-    pulp_postgresql_user: 'travis'
+    pulp_db_install: false
+    pulp_db_type: 'travis'
+    pulp_db_user: 'travis'
     pulp_preq_packages: []
   roles:
-    - pulp3-postgresql
+    - pulp3-database
     - pulp3-workers
     - pulp3-resource-manager
     - pulp3-webserver
