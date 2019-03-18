@@ -49,10 +49,5 @@ setup(
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
     ),
-    entry_points={
-        'console_scripts': [
-            'pulp-manager=pulpcore.app.entry_points:pulp_manager_entry_point'
-        ]
-    },
     scripts=['bin/pulp-content'],
 )

@@ -23,7 +23,7 @@ things:
    A simple, but limited way to run the REST API as a standalone service using the built-in Django
    runserver.::
 
-      $ python pulp-manager runserver
+      $ python django-admin runserver
 
 
 The REST API can be deployed with any any WSGI webserver like a normal Django application. See the
@@ -93,4 +93,4 @@ For production environments, configure static content as follows:
 Collect all of the static content into place using the ``collectstatic`` command
 as follows::
 
-    $ pulp-manager collectstatic
+    $ django-admin collectstatic

@@ -6,11 +6,11 @@ All calls to REST API endpoints must be authenticated as a particular User.
 .. tip::
   The password for the "admin" user can be set using two methods.
 
-      ``pulp-manager reset-admin-password``
+      ``django-admin reset-admin-password``
 
   The above command prompts the user to enter a new password for "admin" user.
 
-      ``pulp-manager reset-admin-password --random``
+      ``django-admin reset-admin-password --random``
 
   The above command generates a random password for "admin" user and prints it to the screen.
 
