@@ -343,7 +343,7 @@ class Handler:
             The :class:`aiohttp.web.FileResponse` for the file.
         """
         if settings.DEFAULT_FILE_STORAGE == 'pulpcore.app.models.storage.FileSystem':
-            return FileResponse(file.name)
+            return FileResponse(os.path.join(settings.MEDIA_ROOT, file.name))
         elif settings.DEFAULT_FILE_STORAGE == 'storages.backends.s3boto3.S3Boto3Storage':
             raise HTTPFound(file.url)
         else:

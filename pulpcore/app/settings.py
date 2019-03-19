@@ -27,7 +27,6 @@ SETTINGS_MODULE_FOR_DYNACONF = settings.get('SETTINGS_MODULE_FOR_DYNACONF',
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = settings.get('BASE_DIR', os.path.dirname(os.path.abspath(__file__)))
-STATIC_ROOT = settings.get('STATIC_ROOT', '/var/lib/pulp/static/')
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.11/howto/deployment/checklist/
@@ -38,10 +37,14 @@ DEBUG = settings.get('DEBUG', False, '@bool')
 ALLOWED_HOSTS = settings.get('ALLOWED_HOSTS', ['*'])
 
 MEDIA_ROOT = settings.get('MEDIA_ROOT', '/var/lib/pulp/')
+STATIC_ROOT = settings.get('STATIC_ROOT', os.path.join(MEDIA_ROOT, 'static/'))
+
 DEFAULT_FILE_STORAGE = settings.get('DEFAULT_FILE_STORAGE',
                                     'pulpcore.app.models.storage.FileSystem')
 
-FILE_UPLOAD_TEMP_DIR = settings.get('FILE_UPLOAD_TEMP_DIR', '/var/lib/pulp/tmp/')
+FILE_UPLOAD_TEMP_DIR = settings.get('FILE_UPLOAD_TEMP_DIR', os.path.join(MEDIA_ROOT, 'tmp/'))
+WORKING_DIRECTORY = settings.get('WORKING_DIRECTORY', os.path.join(MEDIA_ROOT, 'tmp/'))
+
 # List of upload handler classes to be applied in order.
 FILE_UPLOAD_HANDLERS = settings.get('FILE_UPLOAD_HANDLERS',
                                     ('pulpcore.app.files.HashingFileUploadHandler',)
@@ -208,8 +211,6 @@ LOGGING = settings.get('LOGGING', {
         },
     }
 })
-
-WORKING_DIRECTORY = settings.get('WORKING_DIRECTORY', '/var/lib/pulp/tmp')
 
 CONTENT_HOST = settings.get('CONTENT_HOST', None)
 CONTENT_PATH_PREFIX = settings.get('CONTENT_PATH_PREFIX', '/pulp/content/')

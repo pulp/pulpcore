@@ -2,13 +2,14 @@
 """Tests that perform actions over artifacts."""
 import hashlib
 import itertools
+import os
 import unittest
 
 from requests.exceptions import HTTPError
 
 from pulp_smash import api, cli, config, utils
 from pulp_smash.exceptions import CalledProcessError
-from pulp_smash.pulp3.constants import ARTIFACTS_PATH
+from pulp_smash.pulp3.constants import ARTIFACTS_PATH, MEDIA_PATH
 from pulp_smash.pulp3.utils import delete_orphans
 
 # This import is an exception, we use a file url but we are not actually using
@@ -136,7 +137,7 @@ class ArtifactsDeleteFileSystemTestCase(unittest.TestCase):
         files = {'file': utils.http_get(FILE_URL)}
         artifact = api_client.post(ARTIFACTS_PATH, files=files)
         self.addCleanup(api_client.delete, artifact['_href'])
-        cmd = ('ls', artifact['file'])
+        cmd = ('ls', os.path.join(MEDIA_PATH, artifact['file']))
         cli_client.run(cmd, sudo=True)
 
         # delete

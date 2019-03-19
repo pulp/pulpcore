@@ -125,7 +125,7 @@ def get_artifact_path(sha256digest):
         A string representing the absolute path where a file backing the Artifact should be
         stored
     """
-    return os.path.join(settings.MEDIA_ROOT, 'artifact', sha256digest[0:2], sha256digest[2:])
+    return os.path.join('artifact', sha256digest[0:2], sha256digest[2:])
 
 
 def published_metadata_path(model, name):
