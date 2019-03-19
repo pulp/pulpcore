@@ -1,0 +1,2 @@
+---
+pulp_db_backend: django.db.backends.postgresql_psycopg2
