@@ -1,11 +1,12 @@
 # coding=utf-8:
 """Tests that perform actions over orphan files."""
+import os
 import unittest
 from random import choice
 
 from pulp_smash import api, cli, config, utils
 from pulp_smash.exceptions import CalledProcessError
-from pulp_smash.pulp3.constants import ARTIFACTS_PATH, REPO_PATH
+from pulp_smash.pulp3.constants import ARTIFACTS_PATH, MEDIA_PATH, REPO_PATH
 from pulp_smash.pulp3.utils import (
     delete_orphans,
     delete_version,
@@ -79,7 +80,7 @@ class DeleteOrphansTestCase(unittest.TestCase):
         )
 
         # Verify that the artifact is present on disk.
-        artifact_path = self.api_client.get(content['_artifact'])['file']
+        artifact_path = os.path.join(MEDIA_PATH, self.api_client.get(content['_artifact'])['file'])
         cmd = ('ls', artifact_path)
         self.cli_client.run(cmd, sudo=True)
 
@@ -104,7 +105,7 @@ class DeleteOrphansTestCase(unittest.TestCase):
 
         files = {'file': utils.http_get(FILE2_URL)}
         artifact = self.api_client.post(ARTIFACTS_PATH, files=files)
-        cmd = ('ls', artifact['file'])
+        cmd = ('ls', os.path.join(MEDIA_PATH, artifact['file']))
         self.cli_client.run(cmd, sudo=True)
 
         delete_orphans()
