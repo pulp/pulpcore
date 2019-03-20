@@ -13,6 +13,7 @@ from pulpcore.app.models import (
     Publication,
 )
 from pulpcore.app.serializers import (
+    AsyncOperationResponseSerializer,
     ContentGuardSerializer,
     DistributionSerializer,
     PublicationSerializer,
@@ -90,7 +91,7 @@ class DistributionViewSet(NamedModelViewSet,
     filterset_class = DistributionFilter
 
     @swagger_auto_schema(operation_description="Trigger an asynchronous create task",
-                         responses={202: DistributionSerializer})
+                         responses={202: AsyncOperationResponseSerializer})
     def create(self, request, *args, **kwargs):
         """
         Dispatches a task with reservation for creating a distribution.
@@ -105,7 +106,7 @@ class DistributionViewSet(NamedModelViewSet,
         return OperationPostponedResponse(async_result, request)
 
     @swagger_auto_schema(operation_description="Trigger an asynchronous update task",
-                         responses={202: DistributionSerializer})
+                         responses={202: AsyncOperationResponseSerializer})
     def update(self, request, pk, *args, **kwargs):
         """
         Dispatches a task with reservation for updating a distribution.
@@ -123,7 +124,7 @@ class DistributionViewSet(NamedModelViewSet,
         return OperationPostponedResponse(async_result, request)
 
     @swagger_auto_schema(operation_description="Trigger an asynchronous partial update task",
-                         responses={202: DistributionSerializer})
+                         responses={202: AsyncOperationResponseSerializer})
     def partial_update(self, request, *args, **kwargs):
         """
         Dispatches a task with reservation for partially updating a distribution.
@@ -132,7 +133,7 @@ class DistributionViewSet(NamedModelViewSet,
         return self.update(request, *args, **kwargs)
 
     @swagger_auto_schema(operation_description="Trigger an asynchronous delete task",
-                         responses={202: DistributionSerializer})
+                         responses={202: AsyncOperationResponseSerializer})
     def delete(self, request, pk, *args, **kwargs):
         """
         Dispatches a task with reservation for deleting a distribution.
