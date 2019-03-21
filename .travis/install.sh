@@ -9,7 +9,7 @@ if [ "$TEST" = 'docs' ]; then
 fi
 
 # Run Ansible playbook
-cd ../ansible-pulp3
+cd ../ansible-pulp
 ansible-galaxy install -r requirements.yml
 
 ansible-playbook --connection=local --inventory 127.0.0.1, playbook.yml --extra-vars \

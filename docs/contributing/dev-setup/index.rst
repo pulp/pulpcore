@@ -13,11 +13,11 @@ repos into the same directory so that they are peers.
 
 Navigate into the pulplift directory. Follow the installation instructions in the
 `README.md <https://github.com/pulp/pulplift#setup>`_ which will clone the required forklift and
-`'ansible-pulp3' <https://github.com/pulp/ansible-pulp3>`_ repos.
+`'ansible-pulp' <https://github.com/pulp/ansible-pulp>`_ repos.
 
 The parent directory of 'pulplift' is going to be mounted into the vagrant box at
 /home/vagrant/devel. Any plugins that need to be installed should be added to the
-pulplift/ansible-pulp3/source-install.yml playbook. The paths to the source of the plugins should
+pulplift/ansible-pulp/source-install.yml playbook. The paths to the source of the plugins should
 start with /home/vagrant/devel/. For example::
 
     pulp_install_plugins:

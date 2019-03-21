@@ -6,12 +6,12 @@ export COMMIT_MSG
 export PULP_FILE_PR_NUMBER=$(echo $COMMIT_MSG | grep -oP 'Required\ PR:\ https\:\/\/github\.com\/pulp\/pulp_file\/pull\/(\d+)' | awk -F'/' '{print $7}')
 export PULP_SMASH_PR_NUMBER=$(echo $COMMIT_MSG | grep -oP 'Required\ PR:\ https\:\/\/github\.com\/PulpQE\/pulp-smash\/pull\/(\d+)' | awk -F'/' '{print $7}')
 export PULP_PLUGIN_PR_NUMBER=$(echo $COMMIT_MSG | grep -oP 'Required\ PR:\ https\:\/\/github\.com\/pulp\/pulpcore-plugin\/pull\/(\d+)' | awk -F'/' '{print $7}')
-export PULP_ROLES_PR_NUMBER=$(echo $COMMIT_MSG | grep -oP 'Required\ PR:\ https\:\/\/github\.com\/pulp\/ansible-pulp3\/pull\/(\d+)' | awk -F'/' '{print $7}')
+export PULP_ROLES_PR_NUMBER=$(echo $COMMIT_MSG | grep -oP 'Required\ PR:\ https\:\/\/github\.com\/pulp\/ansible-pulp\/pull\/(\d+)' | awk -F'/' '{print $7}')
 
 cd ..
-git clone https://github.com/pulp/ansible-pulp3.git
+git clone https://github.com/pulp/ansible-pulp.git
 if [ -n "$PULP_ROLES_PR_NUMBER" ]; then
-  cd ansible-pulp3
+  cd ansible-pulp
   git fetch origin +refs/pull/$PULP_ROLES_PR_NUMBER/merge
   git checkout FETCH_HEAD
   cd ..
@@ -51,8 +51,8 @@ else
 fi
 
 pip install ansible
-cp pulpcore/.travis/playbook.yml ansible-pulp3/playbook.yml
-cp pulpcore/.travis/postgres.yml ansible-pulp3/postgres.yml
-cp pulpcore/.travis/mariadb.yml ansible-pulp3/mariadb.yml
+cp pulpcore/.travis/playbook.yml ansible-pulp/playbook.yml
+cp pulpcore/.travis/postgres.yml ansible-pulp/postgres.yml
+cp pulpcore/.travis/mariadb.yml ansible-pulp/mariadb.yml
 
 cd pulpcore
