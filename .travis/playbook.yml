@@ -22,8 +22,8 @@
   environment:
     DJANGO_SETTINGS_MODULE: pulpcore.app.settings
   roles:
-    - pulp3-database
-    - pulp3-workers
-    - pulp3-resource-manager
-    - pulp3-webserver
-    - pulp3-content
+    - pulp-database
+    - pulp-workers
+    - pulp-resource-manager
+    - pulp-webserver
+    - pulp-content
