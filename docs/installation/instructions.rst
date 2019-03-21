@@ -24,7 +24,7 @@ Ansible Installation
 --------------------
 
 To use ansible roles to install Pulp 3 instead of manual setup refer to
-`Pulp 3 Ansible installer <https://github.com/pulp/ansible-pulp3/>`_.
+`Pulp 3 Ansible installer <https://github.com/pulp/ansible-pulp/>`_.
 
 PyPI Installation
 -----------------
