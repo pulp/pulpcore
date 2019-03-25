@@ -13,7 +13,7 @@ requirements = [
     'drf-yasg',
     'gunicorn',
     'PyYAML',
-    'rq>=0.12.0',
+    'rq>=0.12,<1.0',
     'redis<3.2.0',
     'setuptools',
     'dynaconf>=1.0.4',
