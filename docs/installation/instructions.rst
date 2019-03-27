@@ -20,8 +20,8 @@ Fedora, CentOS, and Mac OSX.
     `Enabling SELinux in pulplift <https://pulp.plan.io/issues/97>`_.
 
 
-Ansible Installation
---------------------
+Ansible Installation (Recommended)
+----------------------------------
 
 To use ansible roles to install Pulp 3 instead of manual setup refer to
 `Pulp 3 Ansible installer <https://github.com/pulp/ansible-pulp/>`_.
