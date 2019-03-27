@@ -14,7 +14,7 @@ you :ref:`chat with us<community>` before you get started.
 
 #. `Fork <https://help.github.com/articles/fork-a-repo/>`_
    `pulpcore <https://github.com/pulp/pulpcore>`_ in your GitHub account.
-#. :doc:`Install Pulp from source.<dev-setup/index>`
+#. :doc:`Install Pulp from source.<dev-setup>`
 #. Create a new branch from the :ref:`appropriate base branch<git-branch>`
 #. Review the :doc:`style-guide`.
 

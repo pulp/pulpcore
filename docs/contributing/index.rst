@@ -11,7 +11,8 @@ Fundamentals
 .. toctree::
    :maxdepth: 1
 
-   dev-setup/index
+   dev-setup
+   runtests
    style-guide
    pull-request-walkthrough
 
