@@ -1,6 +1,11 @@
 Pulp 3.0 Release Notes
 ======================
 
+3.0.0rc1
+========
+
+`Comprehensive list of changes and bugfixes for beta 23 <https://github.com/pulp/pulpcore/compare/3.0.0b23...3.0.0rc1>`_.
+
 3.0.0b23
 ========
 
