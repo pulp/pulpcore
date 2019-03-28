@@ -44,7 +44,7 @@ make Pulp better, please reach out!
   * `plugin table <https://pulpproject.org/pulp-3-plugins/>`_
 
     * Ansible #pulp-ansible channel on Freenode
-    * Docker #pulp-dockerchannel on Freenode
+    * Docker #pulp-containers channel on Freenode
     * Python #pulp-python channel on Freenode
     * RPM #pulp-rpm channel on Freenode
 
