@@ -33,6 +33,14 @@ if [ -n "$PULP_FILE_PR_NUMBER" ]; then
   cd ..
 fi
 
+git clone https://github.com/pulp/pulp-certguard.git
+if [ -n "$PULP_CERTGUARD_PR_NUMBER" ]; then
+  cd pulp_file
+  git fetch origin +refs/pull/$PULP_CERTGUARD_PR_NUMBER/merge
+  git checkout FETCH_HEAD
+  cd ..
+fi
+
 if [ -n "$PULP_SMASH_PR_NUMBER" ]; then
   pip uninstall -y pulp-smash
   git clone https://github.com/PulpQE/pulp-smash.git

@@ -62,6 +62,7 @@ wait_for_pulp 20
 # Run functional tests
 pytest -v -r sx --color=yes --pyargs pulpcore.tests.functional || show_logs_and_return_non_zero
 pytest -v -r sx --color=yes --pyargs pulp_file.tests.functional || show_logs_and_return_non_zero
+pytest -v -r sx --color=yes --pyargs pulp_certguard.tests.functional || show_logs_and_return_non_zero
 
 # Stop services to write coverage
 kill -SIGINT %?runserver

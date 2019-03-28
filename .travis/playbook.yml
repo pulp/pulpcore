@@ -12,6 +12,9 @@
       pulp-file:
         app_label: "file"
         source_dir: "/home/travis/build/pulp/pulp_file"
+      pulp-certguard:
+        app_label: "certguard"
+        source_dir: "/home/travis/build/pulp/pulp-certguard"
     ansible_python_interpreter: '/opt/pyenv/shims/python3'
     pulp_user: 'travis'
     developer_user: 'travis'
