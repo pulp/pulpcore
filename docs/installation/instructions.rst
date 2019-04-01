@@ -138,9 +138,9 @@ After installing and configuring Redis, you should configure it to start at boot
 Systemd
 -------
 
-To run the Pulp services, three systemd files needs to be created in /etc/systemd/system/. Make
-sure to substitute ``Environment=PULP_SETTINGS=/path/to/pulp/server.yaml`` with the real location
-of :ref:`configuration file <configuration>`.
+To run the Pulp services, three systemd files needs to be created in /etc/systemd/system/. You can
+apply custom configuration here using the ``Environment`` option using settings from the
+:ref:`Pulp settings documentation <configuration>`.
 
 ``pulp-resource-manager.service``::
 
@@ -150,8 +150,6 @@ of :ref:`configuration file <configuration>`.
     Wants=network-online.target
 
     [Service]
-    # Set Environment if server.yaml is not in the default /etc/pulp/ directory
-    Environment=PULP_SETTINGS=/path/to/pulp/server.yaml
     Environment="DJANGO_SETTINGS_MODULE=pulpcore.app.settings"
     User=pulp
     WorkingDirectory=/var/run/pulp-resource-manager/
@@ -173,8 +171,6 @@ of :ref:`configuration file <configuration>`.
     Wants=network-online.target
 
     [Service]
-    # Set Environment if server.yaml is not in the default /etc/pulp/ directory
-    Environment=PULP_SETTINGS=/path/to/pulp/server.yaml
     Environment="DJANGO_SETTINGS_MODULE=pulpcore.app.settings"
     User=pulp
     WorkingDirectory=/var/run/pulp-worker-%i/
