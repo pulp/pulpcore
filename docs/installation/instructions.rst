@@ -138,9 +138,14 @@ After installing and configuring Redis, you should configure it to start at boot
 Systemd
 -------
 
-To run the Pulp services, three systemd files needs to be created in /etc/systemd/system/. You can
-apply custom configuration here using the ``Environment`` option using settings from the
+To run the Pulp services, two systemd files needs to be created in /usr/lib/systemd/system/. You
+can apply custom configuration here using the ``Environment`` option using settings from the
 :ref:`Pulp settings documentation <configuration>`.
+
+.. note::
+
+    These examples may need their ``User`` updated and the path to the rq binary in ``ExecStart``.
+
 
 ``pulp-resource-manager.service``::
 
@@ -154,7 +159,7 @@ apply custom configuration here using the ``Environment`` option using settings 
     User=pulp
     WorkingDirectory=/var/run/pulp-resource-manager/
     RuntimeDirectory=pulp-resource-manager
-    ExecStart=/path/to/python/bin/rq worker -n resource-manager@%%h\
+    ExecStart=/usr/local/lib/pulp/bin/rq worker -n resource-manager@%%h\
               -w 'pulpcore.tasking.worker.PulpWorker'\
               -c 'pulpcore.rqconfig'\
               --pid=/var/run/pulp-resource-manager/resource-manager.pid
@@ -175,7 +180,7 @@ apply custom configuration here using the ``Environment`` option using settings 
     User=pulp
     WorkingDirectory=/var/run/pulp-worker-%i/
     RuntimeDirectory=pulp-worker-%i
-    ExecStart=/path/to/python/bin/rq worker -w 'pulpcore.tasking.worker.PulpWorker'\
+    ExecStart=/usr/local/lib/pulp/bin/rq worker -w 'pulpcore.tasking.worker.PulpWorker'\
               -n reserved-resource-worker-%i@%%h\
               -c 'pulpcore.rqconfig'\
               --pid=/var/run/pulp-worker-%i/reserved-resource-worker-%i.pid
