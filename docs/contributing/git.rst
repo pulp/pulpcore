@@ -1,28 +1,16 @@
 Git
 ===
 
-Pulp source code lives on `GitHub <https://github.com/pulp>`_. This document is definitive for :term:`pulpcore` only, but some plugins may choose to
-follow the same strategies.
+Pulp source code lives on `GitHub <https://github.com/pulp/pulpcore>`_. This document is definitive
+for :term:`pulpcore` only, but some plugins may choose to follow the same strategies.
 
 .. _git-branch:
 
 Versions and Branches
 ---------------------
 
-Pulp uses a version scheme ``x.y.z``, which is based on `Semantic Versioning
-<http://semver.org/>`_. Briefly, ``x.y.z`` releases may only contain bugfixes (no features),
-``x.y`` releases may only contain backwards compatible changes (new features, bugfixes), and ``x``
-releases may break backwards compatibility.
-
-Most changes should be merged into the ``master`` branch only. When necessary, fixes can be
-cherry-picked into ``x.y`` stream.
-
-.. note::
-
-   For additional information on Pulp's branching strategy decision, please
-   refer to PUP-0003_
-
-.. _PUP-0003: https://github.com/pulp/pups/blob/master/pup-0003.md
+Code is submitted by a Pull Request on Github to merge the changes to ``master`` which represents
+the next ``pulpcore`` release. See :ref:`versioning` for more details.
 
 
 Commits
