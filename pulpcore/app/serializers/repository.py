@@ -267,10 +267,14 @@ class RepositoryVersionSerializer(ModelSerializer, NestedHyperlinkedModelSeriali
         The summary of contained content.
 
         Returns:
-            dict:    {'added': {<_type>: {'count': <count>, 'href': <href>},
-                      'removed': {<_type>: {'count': <count>, 'href': <href>},
-                      'present': {<_type>: {'count': <count>, 'href': <href>},
-                     }
+            dict: The dictionary has the following format.::
+
+                {
+                    'added': {<_type>: {'count': <count>, 'href': <href>},
+                    'removed': {<_type>: {'count': <count>, 'href': <href>},
+                    'present': {<_type>: {'count': <count>, 'href': <href>},
+                }
+
         """
         to_return = {'added': {}, 'removed': {}, 'present': {}}
         for count_detail in obj.counts.all():

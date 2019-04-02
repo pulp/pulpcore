@@ -1,22 +1,47 @@
+.. _configuration:
+
 Configuration
 =============
 
-.. _configuration:
+Pulp uses `dynaconf <https://dynaconf.readthedocs.io/en/latest/>`_ for its settings which allows you
+to configure Pulp in a few ways:
 
------------
 
-Pulp uses `dynaconf <https://dynaconf.readthedocs.io/en/latest/>`_ for its settings. dynaconf
-allows storing `settings in multiple file formats <https://dynaconf.readthedocs
-.io/en/latest/guides/examples.html>`_. By default Pulp looks for settings in ``/etc/pulp/settings
-.py``. An alternate location for the settings file is specified by setting the ``PULP_SETTINGS``
-environment variable. Each of the settings can also be set by prepending ``PULP_`` to the name
-and setting it as an environment variable. The comprehensive list of settings can be found in
-`Django docs <https://docs.djangoproject.com/en/2.1/ref/settings/>`_. `Environment variables
-<https://dynaconf.readthedocs.io/en/latest/guides/environment_variables
-.html#environment-variables>`_ take precedence over all other configuration sources. `TOML inline
-table notation <https://github.com/toml-lang/toml#inline-table>`_ should be used to express any
-nested environment variables such as ``PULP_LOGGING`` or ``PULP_DATABASES``. Python is the
-recommended language for expressing configuration in a settings file.
+By Configuration File
+---------------------
+
+Non-default settings can be specified in the ``/etc/pulp/settings.py``. The presence of this file is
+optional. The expected location and format can be changed by specifying the ``PULP_SETTINGS``
+environment variable. Dynaconf supports `settings in multiple file formats <https://dynaconf.
+readthedocs.io/en/latest/guides/examples.html>`_
+
+
+By Environment Variables
+------------------------
+
+Each of the settings can also be configured using Dynaconf by prepending ``PULP_`` to the name of
+the setting and specifying that as an environment variable. For example the ``SECRET_KEY`` can be
+specified by exporting the ``PULP_SECRET_KEY`` variable.
+
+
+Settings
+--------
+
+Pulp uses three types of settings:
+
+* `Django settings <django-settings>`_ Pulp is configuring
+* `Pulp defined settings <pulp-settings>`_
+* `RQ settings <rq-settings>`_ Pulp is using
+
+
+.. _django-settings:
+
+Django Settings
+---------------
+
+Pulp is a Django project, so any Django `Django setting
+<https://docs.djangoproject.com/en/2.1/ref/settings/>`_ can also be set to configure your Pulp
+deployment.
 
 SECRET_KEY
 ^^^^^^^^^^
@@ -67,12 +92,25 @@ LOGGING
    refer to `Django documenation on logging <https://docs.djangoproject.com/en/2
    .1/topics/logging/#configuring-logging>`_.
 
-WORKING_DIRECTORY
-^^^^^^^^^^^^^^^^^
 
-   The directory used by workers to store files temporarily. This defaults to
-   ``/var/lib/pulp/tmp/``.
+.. _rq-settings:
 
+RQ Settings
+-----------
+
+The following RQ settings can be set in your Pulp config:
+
+  * REDIS_URL
+  * REDIS_HOST
+  * REDIS_PORT
+  * REDIS_DB
+  * REDIS_PASSWORD
+  * SENTINEL
+
+These will be used by any worker loaded with the ``-c 'pulpcore.rqconfig'`` option.
+
+Below are some common settings used for RQ configuration. See the `RQ settings documentation
+<http://python-rq.org/docs/workers/#using-a-config-file>`_ for information on these settings.
 
 REDIS_HOST
 ^^^^^^^^^^
@@ -90,6 +128,20 @@ REDIS_PASSWORD
 ^^^^^^^^^^^^^^
 
    The password for Redis.
+
+
+.. _pulp-settings:
+
+Pulp Settings
+-------------
+
+Pulp defines the following settings itself:
+
+WORKING_DIRECTORY
+^^^^^^^^^^^^^^^^^
+
+   The directory used by workers to store files temporarily. This defaults to
+   ``/var/lib/pulp/tmp/``.
 
 
 CONTENT_HOST
