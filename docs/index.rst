@@ -8,6 +8,7 @@ content type is provided by the corresponding plugin, which can be found in our
 Developers interested in writing plugins should reference the `Pulp Plugin API
 <../../pulpcore-plugin/nightly/>`_ documentation.
 
+
 Self-Guided Tour for New Users
 ------------------------------
 
@@ -17,6 +18,7 @@ pulp<installation/index>`, the simplest way to get concrete experience is to ins
 `plugins <https://pulpproject.org/pulp-3-plugins/>`_ and use its quickstart guide. Next it is
 recommended that users read through our :doc:`workflows/index` to find best practices for common
 use cases.
+
 
 .. _community:
 
@@ -44,9 +46,20 @@ make Pulp better, please reach out!
   * `plugin table <https://pulpproject.org/pulp-3-plugins/>`_
 
     * Ansible #pulp-ansible channel on Freenode
-    * Docker #pulp-dockerchannel on Freenode
+    * Docker #pulp-docker channel on Freenode
     * Python #pulp-python channel on Freenode
     * RPM #pulp-rpm channel on Freenode
+
+
+.. _versioning:
+
+Versioning
+----------
+
+Pulp uses a version scheme ``x.y.z``, which is based on `Semantic Versioning
+<http://semver.org/>`_. Briefly, ``x.y.z`` releases may only contain bugfixes (no features),
+``x.y`` releases may only contain backwards compatible changes (new features, bugfixes), and ``x``
+releases may break backwards compatibility.
 
 
 Table of Contents
