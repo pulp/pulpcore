@@ -74,10 +74,10 @@ class ContentPromotionTestCase(unittest.TestCase):
         for _ in range(2):
             body = gen_distribution()
             body['publication'] = publication['_href']
-            response_dict = client.post(DISTRIBUTION_PATH, body)
-            dist_task = client.get(response_dict['task'])
-            distribution_href = dist_task['created_resources'][0]
-            distribution = client.get(distribution_href)
+            distribution = client.using_handler(api.task_handler).post(
+                DISTRIBUTION_PATH,
+                body
+            )
             distributions.append(distribution)
             self.addCleanup(client.delete, distribution['_href'])
 
