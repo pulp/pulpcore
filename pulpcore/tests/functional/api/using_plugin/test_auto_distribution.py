@@ -93,11 +93,10 @@ class AutoDistributionTestCase(unittest.TestCase):
         body = gen_distribution()
         body['repository'] = repo['_href']
         body['publisher'] = publisher['_href']
-
-        response_dict = self.client.post(DISTRIBUTION_PATH, body)
-        dist_task = self.client.get(response_dict['task'])
-        distribution_href = dist_task['created_resources'][0]
-        distribution = self.client.get(distribution_href)
+        distribution = self.client.using_handler(api.task_handler).post(
+            DISTRIBUTION_PATH,
+            body
+        )
         self.addCleanup(self.client.delete, distribution['_href'])
 
         last_version_href = get_versions(repo)[-1]['_href']
@@ -175,10 +174,10 @@ class SetupAutoDistributionTestCase(unittest.TestCase):
         body = gen_distribution()
         body['publisher'] = publisher['_href']
         body['repository'] = repo['_href']
-        response_dict = self.client.post(DISTRIBUTION_PATH, body)
-        dist_task = self.client.get(response_dict['task'])
-        distribution_href = dist_task['created_resources'][0]
-        distribution = self.client.get(distribution_href)
+        distribution = self.client.using_handler(api.task_handler).post(
+            DISTRIBUTION_PATH,
+            body
+        )
         self.addCleanup(self.client.delete, distribution['_href'])
 
         # Update the distribution.

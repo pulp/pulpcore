@@ -140,10 +140,10 @@ class PublicationsTestCase(unittest.TestCase):
         """Read a publication by its distribution."""
         body = gen_distribution()
         body['publication'] = self.publication['_href']
-        response_dict = self.client.post(DISTRIBUTION_PATH, body)
-        dist_task = self.client.get(response_dict['task'])
-        distribution_href = dist_task['created_resources'][0]
-        distribution = self.client.get(distribution_href)
+        distribution = self.client.using_handler(api.task_handler).post(
+            DISTRIBUTION_PATH,
+            body
+        )
         self.addCleanup(self.client.delete, distribution['_href'])
 
         self.publication.update(self.client.get(self.publication['_href']))
