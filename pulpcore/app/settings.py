@@ -216,3 +216,9 @@ CONTENT_HOST = settings.get('CONTENT_HOST', None)
 CONTENT_PATH_PREFIX = settings.get('CONTENT_PATH_PREFIX', '/pulp/content/')
 
 PROFILE_STAGES_API = settings.get('PROFILE_STAGES_API', False)
+
+SWAGGER_SETTINGS = {
+    'DEFAULT_GENERATOR_CLASS': 'pulpcore.app.openapigenerator.PulpOpenAPISchemaGenerator',
+    'DEFAULT_AUTO_SCHEMA_CLASS': 'pulpcore.app.openapigenerator.PulpAutoSchema',
+    'DEFAULT_INFO': 'pulpcore.app.urls.api_info',
+}
