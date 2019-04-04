@@ -138,59 +138,35 @@ After installing and configuring Redis, you should configure it to start at boot
 Systemd
 -------
 
-To run the Pulp services, two systemd files needs to be created in /usr/lib/systemd/system/. You
-can apply custom configuration here using the ``Environment`` option using settings from the
-:ref:`Pulp settings documentation <configuration>`.
-
-.. note::
-
-    These examples may need their ``User`` updated and the path to the rq binary in ``ExecStart``.
+To run the Pulp services, three systemd files needs to be created in /usr/lib/systemd/system/. The
+`Pulp 3 Ansible Installer <https://github.com/pulp/ansible-pulp/>`_ makes these for you, but you
+can also configure them by hand from the templates below. Custom configuration can be applied using
+the ``Environment`` option with various :ref:`Pulp settings <configuration>`.
 
 
-``pulp-resource-manager.service``::
+1. Make a ``pulp-content-app.service`` file for the pulp-content-app service which serves Pulp
+   content to clients. We recommend starting with the `pulp-content-app template <https://github.com
+   /pulp/ansible-pulp/blob/master/roles/pulp-content/templates/pulp-content-app.service.j2>`_ and
+   setting the variables according to the `pulp-content-app config variables documentation <https://
+   github.com/pulp/ ansible-pulp/tree/master/roles/pulp-content#variables>`_
 
-    [Unit]
-    Description=Pulp Resource Manager
-    After=network-online.target
-    Wants=network-online.target
+2. Make a ``pulp-worker@.service`` file for the pulp-worker processes which allows you to manage one
+   or more workers. We recommend starting with the `pulp-worker template <https://github.com/pulp/
+   ansible-pulp/blob/master/roles/pulp-workers/templates/pulp-worker%40.service.j2>`_ and setting
+   the variables according to the `pulp-worker config variables documentation <https://github.com/
+   pulp/ansible-pulp/tree/master/roles/pulp-workers#configurable-variables>`_
 
-    [Service]
-    Environment="DJANGO_SETTINGS_MODULE=pulpcore.app.settings"
-    User=pulp
-    WorkingDirectory=/var/run/pulp-resource-manager/
-    RuntimeDirectory=pulp-resource-manager
-    ExecStart=/usr/local/lib/pulp/bin/rq worker -n resource-manager@%%h\
-              -w 'pulpcore.tasking.worker.PulpWorker'\
-              -c 'pulpcore.rqconfig'\
-              --pid=/var/run/pulp-resource-manager/resource-manager.pid
-
-    [Install]
-    WantedBy=multi-user.target
-
-
-``pulp-worker@.service``::
-
-    [Unit]
-    Description=Pulp Worker
-    After=network-online.target
-    Wants=network-online.target
-
-    [Service]
-    Environment="DJANGO_SETTINGS_MODULE=pulpcore.app.settings"
-    User=pulp
-    WorkingDirectory=/var/run/pulp-worker-%i/
-    RuntimeDirectory=pulp-worker-%i
-    ExecStart=/usr/local/lib/pulp/bin/rq worker -w 'pulpcore.tasking.worker.PulpWorker'\
-              -n reserved-resource-worker-%i@%%h\
-              -c 'pulpcore.rqconfig'\
-              --pid=/var/run/pulp-worker-%i/reserved-resource-worker-%i.pid
-
-    [Install]
-    WantedBy=multi-user.target
+3. Make a ``pulp-resource-manager.service`` file which can manage one pulp-resource-manager process.
+   We recommend starting with the `pulp-resource-manager template <https://github.com/pulp/
+   ansible-pulp/blob/master/roles/pulp-resource-manager/templates/pulp-resource-manager.service.
+   j2>`_ and setting the variables according to the `pulp-resource-manager config variables
+   documentation <https://github.com/pulp/ansible-pulp/tree/master/roles/pulp-resource-manager#
+   configurable-variables>`_
 
 These services can then be started by running::
 
     sudo systemctl start pulp-resource-manager
+    sudo systemctl start pulp-content-app
     sudo systemctl start pulp-worker@1
     sudo systemctl start pulp-worker@2
 
