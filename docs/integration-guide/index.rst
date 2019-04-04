@@ -1,7 +1,4 @@
 REST API Integration
 ====================
 
-.. toctree::
-   :maxdepth: 2
-
-   rest-api/index
+The REST API for pulpcore can be `found here <../restapi.html>`_.

@@ -41,7 +41,7 @@ Glossary
 
     pulpcore
         A generalized backend with a Plugin API and a :doc:`REST
-        API<integration-guide/rest-api/index>`. It uses :term:`plugins<plugin>` to manage
+        API<integration-guide/index>`. It uses :term:`plugins<plugin>` to manage
         :term:`content`.
 
     PUP

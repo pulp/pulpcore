@@ -50,7 +50,8 @@ diagrams:
 	mv diagrams_src/*.png $(DIAGRAM_BUILD_DIR)/
 
 html:
-	curl -o api.yaml "http://localhost:8000/pulp/api/v3/docs/api.yaml"
+	mkdir -p $(BUILDDIR)/html
+	curl -o _build/html/api.json "http://localhost:8000/pulp/api/v3/docs/?format=openapi"
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
 	@echo
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/html."
