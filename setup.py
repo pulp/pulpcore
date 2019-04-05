@@ -16,7 +16,7 @@ requirements = [
     'rq>=0.12,<1.0',
     'redis<3.2.0',
     'setuptools',
-    'dynaconf>=1.0.4',
+    'dynaconf>=2.0.0',
     'whitenoise',
     'drf-chunked-upload'
 ]
