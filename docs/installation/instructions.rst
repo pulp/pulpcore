@@ -173,6 +173,7 @@ These services can then be started by running::
 
     sudo systemctl start pulp-resource-manager
     sudo systemctl start pulp-content-app
+    sudo systemctl start pulp-api
     sudo systemctl start pulp-worker@1
     sudo systemctl start pulp-worker@2
 
