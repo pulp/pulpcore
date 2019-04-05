@@ -138,7 +138,7 @@ After installing and configuring Redis, you should configure it to start at boot
 Systemd
 -------
 
-To run the Pulp services, three systemd files needs to be created in /usr/lib/systemd/system/. The
+To run the four Pulp services, systemd files needs to be created in /usr/lib/systemd/system/. The
 `Pulp 3 Ansible Installer <https://github.com/pulp/ansible-pulp/>`_ makes these for you, but you
 can also configure them by hand from the templates below. Custom configuration can be applied using
 the ``Environment`` option with various :ref:`Pulp settings <configuration>`.
@@ -150,13 +150,19 @@ the ``Environment`` option with various :ref:`Pulp settings <configuration>`.
    setting the variables according to the `pulp-content-app config variables documentation <https://
    github.com/pulp/ ansible-pulp/tree/master/roles/pulp-content#variables>`_
 
-2. Make a ``pulp-worker@.service`` file for the pulp-worker processes which allows you to manage one
+2. Make a ``pulp-api.service`` file for the pulp-api service which serves the Pulp REST API. We
+   recommend starting with the `pulp-api template <https://github.com/pulp/ansible-pulp/blob/master/
+   roles/pulp/templates/pulp-api.service.j2>`_ and setting the variables according to the `pulp-api
+   config variables documentation <https://github.com/pulp/ ansible-pulp/tree/master/roles/
+   pulp-content#variables>`_
+
+3. Make a ``pulp-worker@.service`` file for the pulp-worker processes which allows you to manage one
    or more workers. We recommend starting with the `pulp-worker template <https://github.com/pulp/
    ansible-pulp/blob/master/roles/pulp-workers/templates/pulp-worker%40.service.j2>`_ and setting
    the variables according to the `pulp-worker config variables documentation <https://github.com/
    pulp/ansible-pulp/tree/master/roles/pulp-workers#configurable-variables>`_
 
-3. Make a ``pulp-resource-manager.service`` file which can manage one pulp-resource-manager process.
+4. Make a ``pulp-resource-manager.service`` file which can manage one pulp-resource-manager process.
    We recommend starting with the `pulp-resource-manager template <https://github.com/pulp/
    ansible-pulp/blob/master/roles/pulp-resource-manager/templates/pulp-resource-manager.service.
    j2>`_ and setting the variables according to the `pulp-resource-manager config variables
