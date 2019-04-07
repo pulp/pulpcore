@@ -1,4 +1,5 @@
 from gettext import gettext as _
+from drf_yasg.utils import swagger_auto_schema
 from pkg_resources import get_distribution
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -22,6 +23,7 @@ class StatusView(APIView):
     authentication_classes = []
     permission_classes = []
 
+    @swagger_auto_schema(operation_summary="Inspect status of Pulp")
     def get(self, request, format=None):
         """
         Returns app information including the version of pulpcore and loaded pulp plugins,
