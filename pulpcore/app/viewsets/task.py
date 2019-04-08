@@ -1,4 +1,5 @@
 from django_filters.rest_framework import filters, DjangoFilterBackend
+from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status, mixins
 from rest_framework.decorators import detail_route
 from rest_framework.filters import OrderingFilter
@@ -46,6 +47,8 @@ class TaskViewSet(NamedModelViewSet,
     filter_backends = (OrderingFilter, DjangoFilterBackend)
     ordering = ('-_created')
 
+    @swagger_auto_schema(operation_description="This operation cancels a task.",
+                         operation_summary="Cancel a task")
     @detail_route(methods=('post',))
     def cancel(self, request, pk=None):
         task = self.get_object()

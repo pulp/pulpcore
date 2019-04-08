@@ -256,7 +256,8 @@ class PulpAutoSchema(SwaggerAutoSchema):
         tags = self.get_tags(operation_keys)
 
         responses = self.get_responses()
-        summary = self.get_summary(operation_keys)
+        if 'operation_summary' not in self.overrides:
+            summary = self.get_summary(operation_keys)
         return openapi.Operation(
             operation_id=operation_id,
             description=force_real_str(description),
