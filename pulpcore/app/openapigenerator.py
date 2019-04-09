@@ -58,6 +58,9 @@ class PulpOpenAPISchemaGenerator(OpenAPISchemaGenerator):
         if not endpoints:
             return openapi.Paths(paths={}), ''
 
+        plugin_filter = None
+        if 'plugin' in request.GET:
+            plugin_filter = request.GET['plugin']
         prefix = ''
         resources = {}
         resource_example = {}
@@ -65,6 +68,9 @@ class PulpOpenAPISchemaGenerator(OpenAPISchemaGenerator):
         for path, (view_cls, methods) in sorted(endpoints.items()):
             operations = {}
             for method, view in methods:
+                if plugin_filter:
+                    if view.__module__.split('.')[0] != plugin_filter:
+                        continue
                 if not public and not self._gen.has_view_permissions(path, method, view):
                     continue
 
@@ -278,7 +284,7 @@ class PulpAutoSchema(SwaggerAutoSchema):
         This is the value that is displayed in the ReDoc document as the short name for the API
         operation.
         """
-        if not hasattr(self.view, 'queryset'):
+        if not hasattr(self.view, 'queryset') or self.view.queryset is None:
             return self.get_summary_and_description()[0]
         model = self.view.queryset.model
         operation = operation_keys[-1]
