@@ -8,8 +8,8 @@
         {
             "hostname": "localhost",
             "roles": {
-                "api": {"port": 8000, "scheme": "http", "service": "nginx"},
-                "content": {"port": 8080, "scheme": "http", "service": "pulp_content_app"},
+                "api": {"port": 24817, "scheme": "http", "service": "nginx"},
+                "content": {"port": 24816, "scheme": "http", "service": "pulp_content_app"},
                 "pulp resource manager": {},
                 "pulp workers": {},
                 "redis": {},
