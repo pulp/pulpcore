@@ -302,7 +302,7 @@ To use this request:
 
 .. code-block:: bash
 
-    http 'http://192.168.121.134:8000/pulp/api/v3/repositories/?name=singing-gerbil'
+    http 'http://192.168.121.134:24817/pulp/api/v3/repositories/?name=singing-gerbil'
 
 This is what the ViewSet should look like:
 
@@ -322,7 +322,7 @@ that allows the same request:
 
 .. code-block:: bash
 
-    http 'http://192.168.121.134:8000/pulp/api/v3/repositories/?name=singing-gerbil'
+    http 'http://192.168.121.134:24817/pulp/api/v3/repositories/?name=singing-gerbil'
 
 
 .. code:: python
@@ -350,7 +350,7 @@ https://django-filter.readthedocs.io/en/latest/ref/filters.html#filters
 
 Simply define any filters in the `FilterSet` and then include them in `fields` in the Filter's Meta class.
 
-`http 'http://192.168.121.134:8000/pulp/api/v3/repositories/?name_contains=singing'`
+`http 'http://192.168.121.134:24817/pulp/api/v3/repositories/?name_contains=singing'`
 
 .. code-block:: python
 
@@ -373,7 +373,7 @@ custom filter based on the `BaseInFilter`.
 
 .. code-block:: bash
 
-    http 'http://192.168.121.134:8000/pulp/api/v3/repositories/?name_in_list=singing-gerbil,versatile-pudu'
+    http 'http://192.168.121.134:24817/pulp/api/v3/repositories/?name_in_list=singing-gerbil,versatile-pudu'
 
 
 .. code-block:: python

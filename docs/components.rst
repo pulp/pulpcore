@@ -23,7 +23,7 @@ things:
    A simple, but limited way to run the REST API as a standalone service using the built-in Django
    runserver.::
 
-      $ python django-admin runserver
+      $ python django-admin runserver 24817
 
 
 The REST API can be deployed with any any WSGI webserver like a normal Django application. See the

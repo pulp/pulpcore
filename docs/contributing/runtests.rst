@@ -14,7 +14,7 @@ Prerequisites
 If you want to run the functional tests, you need a running pulp instance that is allowed to be
 mixed up by the tests.
 For example, using the development vm (see :ref:`DevSetup`),
-this can be accomplished by `workon pulp; django-admin runserver`.
+this can be accomplished by `workon pulp; django-admin runserver 24817`.
 Also, you need a valid *pulp-smash*
 `config <https://pulp-smash.readthedocs.io/en/latest/configuration.html>`_ file.
 This can be created with `pulp-smash settings create`.
