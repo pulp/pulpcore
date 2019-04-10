@@ -3,6 +3,11 @@
 
 set -mveuo pipefail
 
+# Needed for both starting the service and building the docs.
+# Gets set in .travis/settings.yml, but doesn't seem to inherited by
+# this script.
+export DJANGO_SETTINGS_MODULE=pulpcore.app.settings
+
 wait_for_pulp() {
   TIMEOUT=${1:-5}
   while [ "$TIMEOUT" -gt 0 ]
@@ -51,7 +56,6 @@ show_logs_and_return_non_zero() {
 sudo systemctl stop pulp-worker* pulp-resource-manager pulp-content-app pulp-api
 
 # Start services with logs and coverage
-export DJANGO_SETTINGS_MODULE=pulpcore.app.settings
 export PULP_CONTENT_HOST=localhost:8080
 rq worker -n 'resource-manager@%h' -w 'pulpcore.tasking.worker.PulpWorker' -c 'pulpcore.rqconfig' >> ~/resource_manager.log 2>&1 &
 rq worker -n 'reserved-resource-worker-1@%h' -w 'pulpcore.tasking.worker.PulpWorker' -c 'pulpcore.rqconfig' >> ~/reserved_worker-1.log 2>&1 &
