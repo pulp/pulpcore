@@ -94,8 +94,7 @@ class AutoDistributionTestCase(unittest.TestCase):
         body['repository'] = repo['_href']
         body['publisher'] = publisher['_href']
         distribution = self.client.using_handler(api.task_handler).post(
-            DISTRIBUTION_PATH,
-            body
+            DISTRIBUTION_PATH, body
         )
         self.addCleanup(self.client.delete, distribution['_href'])
 
@@ -175,8 +174,7 @@ class SetupAutoDistributionTestCase(unittest.TestCase):
         body['publisher'] = publisher['_href']
         body['repository'] = repo['_href']
         distribution = self.client.using_handler(api.task_handler).post(
-            DISTRIBUTION_PATH,
-            body
+            DISTRIBUTION_PATH, body
         )
         self.addCleanup(self.client.delete, distribution['_href'])
 

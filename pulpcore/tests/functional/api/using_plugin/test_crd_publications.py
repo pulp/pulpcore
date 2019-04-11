@@ -141,8 +141,7 @@ class PublicationsTestCase(unittest.TestCase):
         body = gen_distribution()
         body['publication'] = self.publication['_href']
         distribution = self.client.using_handler(api.task_handler).post(
-            DISTRIBUTION_PATH,
-            body
+            DISTRIBUTION_PATH, body
         )
         self.addCleanup(self.client.delete, distribution['_href'])
 
