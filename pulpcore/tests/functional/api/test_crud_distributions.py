@@ -26,12 +26,10 @@ class CRUDDistributionsTestCase(unittest.TestCase):
     def test_01_create_distribution(self):
         """Create a distribution."""
         body = gen_distribution()
-        response_dict = self.client.post(
+        distribution = self.client.using_handler(api.task_handler).post(
             DISTRIBUTION_PATH, body
         )
-        dist_task = self.client.get(response_dict['task'])
-        distribution_href = dist_task['created_resources'][0]
-        type(self).distribution = self.client.get(distribution_href)
+        type(self).distribution = self.client.get(distribution['_href'])
         for key, val in body.items():
             with self.subTest(key=key):
                 self.assertEqual(self.distribution[key], val)
@@ -161,10 +159,10 @@ class DistributionBasePathTestCase(unittest.TestCase):
         cls.client = api.Client(cls.cfg, api.json_handler)
         body = gen_distribution()
         body['base_path'] = body['base_path'].replace('-', '/')
-        response_dict = cls.client.post(DISTRIBUTION_PATH, body)
-        dist_task = cls.client.get(response_dict['task'])
-        distribution_href = dist_task['created_resources'][0]
-        cls.distribution = cls.client.get(distribution_href)
+        distribution = api.Client(cls.cfg, api.task_handler).post(
+            DISTRIBUTION_PATH, body
+        )
+        cls.distribution = cls.client.get(distribution['_href'])
 
     @classmethod
     def tearDownClass(cls):
