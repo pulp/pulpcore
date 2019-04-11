@@ -66,7 +66,6 @@ FILE_URL = urljoin(FILE_FIXTURE_URL, '1.iso')
 FILE2_URL = urljoin(FILE2_FIXTURE_URL, '1.iso')
 """The URL to an ISO file at :data:`FILE2_FIXTURE_URL`."""
 
-
 RPM_PACKAGE_CONTENT_NAME = 'rpm.package'
 
 RPM_UPDATE_CONTENT_NAME = 'rpm.update'
