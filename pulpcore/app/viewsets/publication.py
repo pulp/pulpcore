@@ -134,7 +134,7 @@ class DistributionViewSet(NamedModelViewSet,
 
     @swagger_auto_schema(operation_description="Trigger an asynchronous delete task",
                          responses={202: AsyncOperationResponseSerializer})
-    def delete(self, request, pk, *args, **kwargs):
+    def destroy(self, request, pk, *args, **kwargs):
         """
         Dispatches a task with reservation for deleting a distribution.
         """
