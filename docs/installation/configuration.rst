@@ -147,7 +147,7 @@ WORKING_DIRECTORY
 
     It is recommended that ``WORKING_DIRECTORY`` and ``MEDIA_ROOT`` exist on the same storage
     volume for performance reasons. Files are commonly staged in the ``WORKING_DIRECTORY`` and
-    validated before being moved to its permanent home in ``MEDIA_ROOT``.
+    validated before being moved to their permanent home in ``MEDIA_ROOT``.
 
 
 CONTENT_HOST
