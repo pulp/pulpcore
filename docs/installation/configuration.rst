@@ -140,8 +140,14 @@ Pulp defines the following settings itself:
 WORKING_DIRECTORY
 ^^^^^^^^^^^^^^^^^
 
-   The directory used by workers to store files temporarily. This defaults to
+   The directory used by workers to stage files temporarily. This defaults to
    ``/var/lib/pulp/tmp/``.
+
+.. note::
+
+    It is recommended that ``WORKING_DIRECTORY`` and ``MEDIA_ROOT`` exist on the same storage
+    volume for performance reasons. Files are commonly staged in the ``WORKING_DIRECTORY`` and
+    validated before being moved to its permanent home in ``MEDIA_ROOT``.
 
 
 CONTENT_HOST
