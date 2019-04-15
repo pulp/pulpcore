@@ -10,12 +10,15 @@ env:
     - DB=postgres TEST=pulp
     - DB=mariadb TEST=pulp
     - DB=postgres TEST=docs
+    - DB=postgres TEST=bindings
 matrix:
   exclude:
     - python: '3.6'
       env: DB=postgres TEST=docs
     - python: '3.6'
       env: DB=mariadb TEST=pulp
+    - python: '3.7'
+      env: DB=postgres TEST=bindings
   fast_finish: true
 services:
   - postgresql

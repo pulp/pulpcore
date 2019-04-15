@@ -33,6 +33,18 @@ if [ "$TEST" = 'docs' ]; then
   exit
 fi
 
+if [ "$TEST" = 'bindings' ]; then
+  cd ..
+  git clone https://github.com/pulp/pulp-swagger-codegen.git
+  cd pulp-swagger-codegen
+  sudo ./generate.sh pulpcore python
+  sudo ./generate.sh pulp_file python
+  pip install ./pulpcore-client
+  pip install ./pulp_file-client
+  python test_bindings.py
+  exit
+fi
+
 # check the commit message
 ./.travis/check_commit.sh
 
