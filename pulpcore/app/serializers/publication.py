@@ -187,7 +187,7 @@ class DistributionSerializer(BaseDistributionSerializer):
         model = models.Distribution
         fields = BaseDistributionSerializer.Meta.fields + ('base_path', 'base_url')
 
-    def _validate_path_overlap(self, path):
+    def _validate_path_overlap(self, path, param_name):
         # look for any base paths nested in path
         search = path.split("/")[0]
         q = Q(base_path=search)
@@ -204,11 +204,11 @@ class DistributionSerializer(BaseDistributionSerializer):
 
         match = qs.first()
         if match:
-            raise serializers.ValidationError(detail=_("Overlaps with existing distribution '"
-                                                       "{}'").format(match.name))
+            raise serializers.ValidationError({param_name: _("Overlaps with existing distribution'"
+                                                             " {}'").format(match.name)})
 
         return path
 
     def validate_base_path(self, path):
-        self._validate_relative_path(path)
-        return self._validate_path_overlap(path)
+        self._validate_relative_path(path, 'base_path')
+        return self._validate_path_overlap(path, 'base_path')

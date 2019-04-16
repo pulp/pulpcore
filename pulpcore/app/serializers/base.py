@@ -40,13 +40,14 @@ class ModelSerializer(QueryFieldsMixin, serializers.HyperlinkedModelSerializer):
         read_only=True
     )
 
-    def _validate_relative_path(self, path):
+    def _validate_relative_path(self, path, param_name):
         """
         Validate a relative path (eg from a url) to ensure it forms a valid url and does not begin
         or end with slashes nor contain spaces
 
         Args:
             path (str): A relative path to validate
+            param_name (str): Name of parameter being validated
 
         Returns:
             str: the validated path
@@ -59,14 +60,15 @@ class ModelSerializer(QueryFieldsMixin, serializers.HyperlinkedModelSerializer):
         base = "http://localhost"  # use a scheme/hostname we know are valid
 
         if ' ' in path:
-            raise serializers.ValidationError(detail=_("Relative path cannot contain spaces."))
+            raise serializers.ValidationError({param_name: _("Relative path cannot contain "
+                                                             "spaces.")})
 
         validate = URLValidator()
         validate(urljoin(base, path))
 
         if path != path.strip("/"):
-            raise serializers.ValidationError(detail=_("Relative path cannot begin or end with "
-                                                       "slashes."))
+            raise serializers.ValidationError({param_name: _("Relative path cannot begin or end "
+                                                             "with slashes.")})
 
         return path
 
