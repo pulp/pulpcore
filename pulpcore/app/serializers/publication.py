@@ -114,7 +114,7 @@ class BaseDistributionSerializer(ModelSerializer):
         view_name='publications-detail',
         allow_null=True
     )
-    repository = serializers.HyperlinkedRelatedField(
+    repository = RelatedField(
         required=False,
         help_text=_('Publications created by this repository and publisher are automatically'
                     'served as defined by this distribution'),
