@@ -88,7 +88,7 @@ def _queue_reserved_task(func, inner_task_id, resources, inner_args, inner_kwarg
                 task_status.save()
                 q = Queue('resource-manager', connection=redis_conn, is_async=False)
                 q.enqueue(func, args=inner_args, kwargs=inner_kwargs, job_id=inner_task_id,
-                          timeout=TASK_TIMEOUT, **options)
+                          job_timeout=TASK_TIMEOUT, **options)
                 task_status.state = TASK_STATES.COMPLETED
                 task_status.save()
                 return
@@ -115,7 +115,7 @@ def _queue_reserved_task(func, inner_task_id, resources, inner_args, inner_kwarg
     try:
         q = Queue(worker.name, connection=redis_conn)
         q.enqueue(func, args=inner_args, kwargs=inner_kwargs, job_id=inner_task_id,
-                  timeout=TASK_TIMEOUT, **options)
+                  job_timeout=TASK_TIMEOUT, **options)
     finally:
         q.enqueue(_release_resources, args=(inner_task_id, ))
 
@@ -201,5 +201,5 @@ def enqueue_with_reservation(func, resources, args=None, kwargs=None, options=No
                         name=f'{func.__module__}.{func.__name__}', **parent_kwarg)
     q = Queue('resource-manager', connection=redis_conn)
     task_args = (func, inner_task_id, list(resources), args, kwargs, options)
-    q.enqueue(_queue_reserved_task, args=task_args, timeout=TASK_TIMEOUT)
+    q.enqueue(_queue_reserved_task, args=task_args, job_timeout=TASK_TIMEOUT)
     return Job(id=inner_task_id, connection=redis_conn)
