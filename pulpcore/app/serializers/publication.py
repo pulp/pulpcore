@@ -83,17 +83,6 @@ class BaseDistributionSerializer(ModelSerializer):
             )),
             UniqueValidator(queryset=models.Distribution.objects.all())]
     )
-    base_path = serializers.CharField(
-        help_text=_('The base (relative) path component of the published url. Avoid paths that \
-                    overlap with other distribution base paths (e.g. "foo" and "foo/bar")'),
-        validators=[validators.MaxLengthValidator(
-            models.Distribution._meta.get_field('base_path').max_length,
-            message=_('Distribution base_path length must be less than {} characters').format(
-                models.Distribution._meta.get_field('base_path').max_length
-            )),
-            UniqueValidator(queryset=models.Distribution.objects.all()),
-        ]
-    )
     publisher = DetailRelatedField(
         required=False,
         help_text=_('Publications created by this publisher and repository are automatically'
@@ -139,32 +128,6 @@ class BaseDistributionSerializer(ModelSerializer):
             'remote',
         )
 
-    def validate(self, data):
-        super().validate(data)
-
-        if 'publisher' in data:
-            publisher = data['publisher']
-        elif self.instance:
-            publisher = self.instance.publisher
-        else:
-            publisher = None
-
-        if 'repository' in data:
-            repository = data['repository']
-        elif self.instance:
-            repository = self.instance.repository
-        else:
-            repository = None
-
-        if publisher and not repository:
-            raise serializers.ValidationError({'repository': _("Repository must be set if "
-                                                               "publisher is set.")})
-        if repository and not publisher:
-            raise serializers.ValidationError({'publisher': _("Publisher must be set if "
-                                                              "repository is set.")})
-
-        return data
-
 
 class DistributionSerializer(BaseDistributionSerializer):
     base_path = serializers.CharField(
@@ -208,6 +171,32 @@ class DistributionSerializer(BaseDistributionSerializer):
                                                        "{}'").format(match.name))
 
         return path
+
+    def validate(self, data):
+        super().validate(data)
+
+        if 'publisher' in data:
+            publisher = data['publisher']
+        elif self.instance:
+            publisher = self.instance.publisher
+        else:
+            publisher = None
+
+        if 'repository' in data:
+            repository = data['repository']
+        elif self.instance:
+            repository = self.instance.repository
+        else:
+            repository = None
+
+        if publisher and not repository:
+            raise serializers.ValidationError({'repository': _("Repository must be set if "
+                                                               "publisher is set.")})
+        if repository and not publisher:
+            raise serializers.ValidationError({'publisher': _("Publisher must be set if "
+                                                              "repository is set.")})
+
+        return data
 
     def validate_base_path(self, path):
         self._validate_relative_path(path)
