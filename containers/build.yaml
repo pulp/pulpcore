@@ -1,0 +1,26 @@
+---
+- hosts: localhost
+  gather_facts: no
+  vars:
+    container_cli: 'docker'
+  vars_files:
+    - vars/defaults.yaml
+  tasks:
+    - name: 'Check for podman'
+      command: 'which podman'
+      register: podman_exists
+      ignore_errors: true
+
+    - set_fact:
+        container_cli: 'podman'
+      when: podman_exists | success
+
+    - name: 'Build images'
+      command: "{{ container_cli }} build --network host --no-cache --build-arg VERSION={{ tag }} --build-arg PLUGINS=\"{{ plugins | join(' ') }}\" -t {{ item }}:{{ tag }} ."
+      args:
+        chdir: "images/{{ item }}"
+      with_items: "{{ images }}"
+
+    - name: 'Tag images'
+      command: "{{ container_cli }} tag {{ item }}:{{ tag }} {{ registry }}/{{ project }}/{{ item }}:{{ tag }}"
+      with_items: "{{ images }}"
