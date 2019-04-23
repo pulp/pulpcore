@@ -1,24 +1,50 @@
 Pulp Documentation
 ==================
 
-The documentation presented here is generalized to all content types. Information for managing each
-content type is provided by the corresponding plugin, which can be found in our
-`list of plugins <https://pulpproject.org/pulp-3-plugins/>`_.
+This documentation is for `pulpcore`, which is used with plugins to fetch, upload, and organize
+arbitrary content types.
 
-Developers interested in writing plugins should reference the `Pulp Plugin API
+Anyone interested in writing a plugin should reference the `Pulp Plugin API
 <../../pulpcore-plugin/nightly/>`_ documentation.
 
 
-Self-Guided Tour for New Users
-------------------------------
+How to Navigate the pulpcore and plugin docs
+--------------------------------------------
 
-A good place for new users to start is the :doc:`concepts`, which gives a high level
-introduction to Pulp concepts, terminology, and components. After :doc:`installing
-pulp<installation/index>`, the simplest way to get concrete experience is to install one of the
-`plugins <https://pulpproject.org/pulp-3-plugins/>`_ and use its quickstart guide. Next it is
-recommended that users read through our :doc:`workflows/index` to find best practices for common
-use cases.
+Plugin Documentation
+^^^^^^^^^^^^^^^^^^^^
 
+If you are a new user who is evaluating Pulp it is recommended that you skim the documentation for
+the plugins that add the content types you are interested in. Links to these docs can be found in
+our `list of plugins <https://pulpproject.org/pulp-3-plugins/>`_
+
+Because the ecosystems of various content types (ie, rpm, docker) can be so diverse, `pulpcore`
+stays out of the way for plugins that need to do something differently.
+
+Each plugin can have different features, but as much as possible they follow common patterns to stay
+consistent. The potential difference in workflows means that **each plugin is responsible for
+documenting all workflows**. Some common plugin workflows the are:
+
+* synchronize from an external repository
+* add/remove content manually
+* publish and host a repository version, enabling a client to download content
+* deferred download (aka, lazy sync)
+* lifecycle management
+
+Pulpcore Documentation
+^^^^^^^^^^^^^^^^^^^^^^
+
+`pulpcore` handles some parts of common content management workflows, including high performance
+downloading, task queuing with scalable workers, and management of content within versioned
+repositories. Information about :ref:`installation`, :ref:`deployment`, and :doc:`general concepts
+and terminology<concepts>` are all covered by the ``pulpcore`` documentation.
+
+ .. note::
+
+    Some parts of the plugin workflows, like manual add/remove and lifecycle management are also
+    documented in the pulpcore docs. These cover the common case, but not every plugin will use
+    them.  This is why the plugin docs are the single source of truth for the workflows of each
+    content type, and pulpcore docs are supplemental.
 
 .. _community:
 
