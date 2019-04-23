@@ -1,5 +1,8 @@
 .. _rq: http://python-rq.org
 
+
+.. _deployment:
+
 Architecture and Deploying
 ==========================
 
