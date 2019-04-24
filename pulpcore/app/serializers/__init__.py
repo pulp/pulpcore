@@ -17,6 +17,7 @@ from .fields import (  # noqa
     BaseURLField,
     ContentRelatedField,
     LatestVersionField,
+    SecretCharField,
     SingleContentArtifactField,
     relative_path_validator,
 )
