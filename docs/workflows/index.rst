@@ -12,6 +12,5 @@ assumes that the reader is familiar with the fundamentals discussed in the :doc:
 
    upload-publish
    lazy-downloading
-   mirroring
    promotion
    scheduling-tasks
