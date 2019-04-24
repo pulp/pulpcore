@@ -68,9 +68,9 @@ PyPI Installation
     In place of using the systemd unit files provided in the `systemd-setup` section, you can run
     the commands yourself inside of a shell. This is fine for development but not recommended in production::
 
-    $ /path/to/python/bin/rq worker -n 'resource-manager@%h' -w 'pulpcore.tasking.worker.PulpWorker'
-    $ /path/to/python/bin/rq worker -n 'reserved-resource-worker-1@%h' -w 'pulpcore.tasking.worker.PulpWorker'
-    $ /path/to/python/bin/rq worker -n 'reserved-resource-worker-2@%h' -w 'pulpcore.tasking.worker.PulpWorker'
+    $ /path/to/python/bin/rq worker -n 'resource-manager@%h' -w 'pulpcore.tasking.worker.PulpWorker' -c 'pulpcore.rqconfig'
+    $ /path/to/python/bin/rq worker -n 'reserved-resource-worker-1@%h' -w 'pulpcore.tasking.worker.PulpWorker' -c 'pulpcore.rqconfig'
+    $ /path/to/python/bin/rq worker -n 'reserved-resource-worker-2@%h' -w 'pulpcore.tasking.worker.PulpWorker' -c 'pulpcore.rqconfig'
 
 8. Run Django Migrations::
 
@@ -83,7 +83,8 @@ PyPI Installation
 
 10. Run Pulp::
 
-    $ django-admin runserver 24817
+    $ pulp-content  # The Pulp Content service (listening on port 24816)
+    $ django-admin runserver 24817  # The Pulp API service
 
 .. _database-install:
 
