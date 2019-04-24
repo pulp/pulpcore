@@ -53,7 +53,11 @@ fi
 
 
 if [ "$DB" = 'mariadb' ]; then
-  mysql -e 'CREATE DATABASE pulp;'
+  # working around https://travis-ci.community/t/mariadb-build-error-with-xenial/3160
+  mysql -u root -e "DROP USER IF EXISTS 'travis'@'%';"
+  mysql -u root -e "CREATE USER 'travis'@'%';"
+  mysql -u root -e "CREATE DATABASE pulp;"
+  mysql -u root -e "GRANT ALL PRIVILEGES ON *.* TO 'travis'@'%';";
 else
   psql -c 'CREATE DATABASE pulp OWNER travis;'
 fi
