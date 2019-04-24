@@ -136,7 +136,8 @@ class RepositorySyncURLSerializer(serializers.Serializer):
     mirror = fields.BooleanField(
         required=False,
         default=False,
-        help_text=_('The synchronization mode, True for "mirror" and False for "additive" mode.')
+        help_text=_('If ``True``, synchronization will remove all content that is not present in '
+                    'the external repository. If ``False``, sync will be additive only.')
     )
 
 
