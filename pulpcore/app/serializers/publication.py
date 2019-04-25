@@ -38,6 +38,12 @@ class PublicationSerializer(MasterModelSerializer):
         parent_lookup_kwargs={'repository_pk': 'repository__pk'},
         read_only=True,
     )
+    repository = RelatedField(
+        required=False,
+        queryset=models.Repository.objects.all(),
+        view_name='repositories-detail',
+        allow_null=True
+    )
 
     class Meta:
         abstract = True
@@ -46,6 +52,7 @@ class PublicationSerializer(MasterModelSerializer):
             'publisher',
             '_distributions',
             'repository_version',
+            'repository',
         )
 
 
