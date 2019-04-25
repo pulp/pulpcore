@@ -19,10 +19,8 @@ from pulpcore.app.serializers import (
 )
 
 
-class PublicationSerializer(ModelSerializer):
-    _href = IdentityField(
-        view_name='publications-detail'
-    )
+class PublicationSerializer(MasterModelSerializer):
+    _href = DetailIdentityField()
     publisher = DetailRelatedField(
         help_text=_('The publisher that created this publication.'),
         queryset=models.Publisher.objects.all()
@@ -42,8 +40,9 @@ class PublicationSerializer(ModelSerializer):
     )
 
     class Meta:
+        abstract = True
         model = models.Publication
-        fields = ModelSerializer.Meta.fields + (
+        fields = MasterModelSerializer.Meta.fields + (
             'publisher',
             '_distributions',
             'repository_version',
@@ -96,11 +95,10 @@ class BaseDistributionSerializer(ModelSerializer):
         queryset=models.ContentGuard.objects.all(),
         allow_null=True
     )
-    publication = RelatedField(
+    publication = DetailRelatedField(
         required=False,
         help_text=_('The publication being served as defined by this distribution'),
         queryset=models.Publication.objects.exclude(complete=False),
-        view_name='publications-detail',
         allow_null=True
     )
     repository = RelatedField(

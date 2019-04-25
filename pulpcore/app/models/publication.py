@@ -6,7 +6,7 @@ from .repository import Publisher, Remote, Repository
 from .task import CreatedResource
 
 
-class Publication(Model):
+class Publication(MasterModel):
     """
     A publication contains metadata and artifacts associated with content
     contained within a RepositoryVersion.
@@ -40,6 +40,7 @@ class Publication(Model):
         >>>             ...
         >>>
     """
+    TYPE = 'publication'
 
     complete = models.BooleanField(db_index=True, default=False)
     pass_through = models.BooleanField(default=False)

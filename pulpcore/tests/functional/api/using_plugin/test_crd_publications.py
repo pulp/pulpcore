@@ -8,7 +8,6 @@ from requests.exceptions import HTTPError
 from pulp_smash import api, config
 from pulp_smash.pulp3.constants import (
     DISTRIBUTION_PATH,
-    PUBLICATIONS_PATH,
     REPO_PATH
 )
 from pulp_smash.pulp3.utils import (
@@ -21,6 +20,7 @@ from pulp_smash.pulp3.utils import (
 
 from pulpcore.tests.functional.api.utils import parse_date_from_string
 from pulpcore.tests.functional.api.using_plugin.constants import (
+    FILE_PUBLICATION_PATH,
     FILE_PUBLISHER_PATH,
     FILE_REMOTE_PATH
 )
@@ -105,7 +105,7 @@ class PublicationsTestCase(unittest.TestCase):
     @skip_if(bool, 'publication', False)
     def test_02_read_publications(self):
         """Read a publication by its repository version."""
-        publications = self.client.get(PUBLICATIONS_PATH, params={
+        publications = self.client.get(FILE_PUBLICATION_PATH, params={
             'repository_version': self.repo['_href']
         })
         self.assertEqual(len(publications), 1, publications)
@@ -116,7 +116,7 @@ class PublicationsTestCase(unittest.TestCase):
     @skip_if(bool, 'publication', False)
     def test_03_read_publications(self):
         """Read a publication by its publisher."""
-        publications = self.client.get(PUBLICATIONS_PATH, params={
+        publications = self.client.get(FILE_PUBLICATION_PATH, params={
             'publisher': self.publisher['_href']
         })
         self.assertEqual(len(publications), 1, publications)
@@ -127,7 +127,7 @@ class PublicationsTestCase(unittest.TestCase):
     @skip_if(bool, 'publication', False)
     def test_04_read_publications(self):
         """Read a publication by its created time."""
-        publications = self.client.get(PUBLICATIONS_PATH, params={
+        publications = self.client.get(FILE_PUBLICATION_PATH, params={
             '_created': self.publication['_created']
         })
         self.assertEqual(len(publications), 1, publications)
@@ -146,7 +146,7 @@ class PublicationsTestCase(unittest.TestCase):
         self.addCleanup(self.client.delete, distribution['_href'])
 
         self.publication.update(self.client.get(self.publication['_href']))
-        publications = self.client.get(PUBLICATIONS_PATH, params={
+        publications = self.client.get(FILE_PUBLICATION_PATH, params={
             'distributions': distribution['_href']
         })
         self.assertEqual(len(publications), 1, publications)
@@ -169,7 +169,7 @@ class PublicationsTestCase(unittest.TestCase):
 
         # Read publications
         publications = self.client.get(
-            PUBLICATIONS_PATH,
+            FILE_PUBLICATION_PATH,
             params={'publisher': self.publisher['_href']}
         )
         self.assertEqual(len(publications), 3)
