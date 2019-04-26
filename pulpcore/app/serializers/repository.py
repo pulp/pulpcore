@@ -13,6 +13,7 @@ from pulpcore.app.serializers import (
     LatestVersionField,
     MasterModelSerializer,
     ModelSerializer,
+    SecretCharField,
 )
 from pulpcore.app.serializers import validate_unknown_fields
 
@@ -59,21 +60,25 @@ class RemoteSerializer(MasterModelSerializer):
         help_text='If True, the plugin will validate imported artifacts.',
         required=False,
     )
-    ssl_ca_certificate = serializers.FileField(
+    ssl_ca_certificate = SecretCharField(
         help_text='A PEM encoded CA certificate used to validate the server '
-                  'certificate presented by the remote server.',
-        write_only=True,
+                  'certificate presented by the remote server. Returns SHA256 sum on GET.',
+        write_only=False,
         required=False,
+        allow_blank=True,
     )
-    ssl_client_certificate = serializers.FileField(
-        help_text='A PEM encoded client certificate used for authentication.',
-        write_only=True,
+    ssl_client_certificate = SecretCharField(
+        help_text='A PEM encoded client certificate used for authentication. Returns SHA256 sum '
+                  'on GET.',
+        write_only=False,
         required=False,
+        allow_blank=True,
     )
-    ssl_client_key = serializers.FileField(
-        help_text='A PEM encoded private key used for authentication.',
-        write_only=True,
+    ssl_client_key = SecretCharField(
+        help_text='A PEM encoded private key used for authentication. Returns SHA256 sum on GET.',
+        write_only=False,
         required=False,
+        allow_blank=True,
     )
     ssl_validation = serializers.BooleanField(
         help_text='If True, SSL peer validation must be performed.',

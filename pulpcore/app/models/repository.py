@@ -12,7 +12,6 @@ from .base import Model, MasterModel
 from .content import Content
 from .task import CreatedResource
 
-from pulpcore.app.models.storage import get_tls_path
 from pulpcore.app.util import get_view_name_for_model
 from pulpcore.exceptions import ResourceImmutableError
 
@@ -96,24 +95,14 @@ class Remote(MasterModel):
                    'future requests for that same content to have to be downloaded again.')
     )
 
-    def tls_storage_path(self, name):
-        """
-        Returns storage path for TLS file
-
-        Args:
-            name (str): Original name of the uploaded file.
-        """
-        return get_tls_path(self, name)
-
     name = models.CharField(db_index=True, unique=True, max_length=255)
 
     url = models.TextField()
     validate = models.BooleanField(default=True)
 
-    ssl_ca_certificate = models.FileField(upload_to=tls_storage_path, max_length=255)
-    ssl_client_certificate = models.FileField(upload_to=tls_storage_path,
-                                              max_length=255)
-    ssl_client_key = models.FileField(upload_to=tls_storage_path, max_length=255)
+    ssl_ca_certificate = models.TextField(null=True)
+    ssl_client_certificate = models.TextField(null=True)
+    ssl_client_key = models.TextField(null=True)
     ssl_validation = models.BooleanField(default=True)
 
     proxy_url = models.TextField()

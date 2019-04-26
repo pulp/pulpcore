@@ -1,5 +1,6 @@
 from gettext import gettext as _
 import os
+import hashlib
 
 from django.conf import settings
 from rest_framework import serializers
@@ -209,3 +210,14 @@ class BaseURLField(serializers.CharField):
                 prefix.strip('/'),
                 base_path.lstrip('/')
             ))
+
+
+class SecretCharField(serializers.CharField):
+    """
+    Serializer field for secrets.
+
+    This field accepts text as input and it returns a sha256 digest of the text stored.
+    """
+
+    def to_representation(self, value):
+        return hashlib.sha256(bytes(value, 'utf-8')).hexdigest()
