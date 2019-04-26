@@ -34,9 +34,18 @@ if [ "$TEST" = 'docs' ]; then
 fi
 
 if [ "$TEST" = 'bindings' ]; then
+  COMMIT_MSG=$(git show HEAD^2 -s)
+  export PULP_BINDINGS_PR_NUMBER=$(echo $COMMIT_MSG | grep -oP 'Required\ PR:\ https\:\/\/github\.com\/pulp\/pulp-swagger-codegen\/pull\/(\d+)' | awk -F'/' '{print $7}')
+
   cd ..
   git clone https://github.com/pulp/pulp-swagger-codegen.git
   cd pulp-swagger-codegen
+
+  if [ -n "$PULP_BINDINGS_PR_NUMBER" ]; then
+    git fetch origin +refs/pull/$PULP_BINDINGS_PR_NUMBER/merge
+    git checkout FETCH_HEAD
+  fi
+
   sudo ./generate.sh pulpcore python
   sudo ./generate.sh pulp_file python
   pip install ./pulpcore-client
