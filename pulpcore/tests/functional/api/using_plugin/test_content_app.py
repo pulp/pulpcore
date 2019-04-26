@@ -13,14 +13,13 @@ from pulp_smash.pulp3.utils import (
     gen_publisher,
     gen_repo,
     get_versions,
-    publish,
 )
 
 from pulpcore.tests.functional.api.using_plugin.constants import (
     FILE_CONTENT_PATH,
     FILE_PUBLISHER_PATH,
 )
-from pulpcore.tests.functional.api.using_plugin.utils import populate_pulp
+from pulpcore.tests.functional.api.using_plugin.utils import populate_pulp, create_file_publication
 from pulpcore.tests.functional.api.using_plugin.utils import (  # noqa:F401
     set_up_module as setUpModule,
 )
@@ -82,7 +81,7 @@ class ContentAppTestCase(unittest.TestCase):
         self.addCleanup(self.client.delete, distribution['_href'])
 
         last_version_href = get_versions(repo)[-1]['_href']
-        publication = publish(self.cfg, publisher, repo, last_version_href)
+        publication = create_file_publication(self.cfg, repo, last_version_href, publisher)
 
         self.addCleanup(self.client.delete, publication['_href'])
         distribution = self.client.get(distribution['_href'])

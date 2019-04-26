@@ -4,18 +4,18 @@ from unittest import TestCase
 from pulpcore.app.models import Distribution
 from pulpcore.app.serializers import (
     DistributionSerializer,
-    RepositoryPublishURLSerializer,
+    PublicationSerializer,
 )
 from rest_framework import serializers
 
 
-class TestRepositoryPublishURLSerializer(TestCase):
+class TestPublicationSerializer(TestCase):
 
     @mock.patch('pulpcore.app.serializers.repository.models.RepositoryVersion')
     def test_validate_repository_only(self, mock_version):
         mock_repo = mock.MagicMock()
         data = {'repository': mock_repo}
-        serializer = RepositoryPublishURLSerializer()
+        serializer = PublicationSerializer()
         new_data = serializer.validate(data)
         self.assertEqual(new_data, {'repository_version': mock_version.latest.return_value})
         mock_version.latest.assert_called_once_with(mock_repo)
@@ -23,7 +23,7 @@ class TestRepositoryPublishURLSerializer(TestCase):
     def test_validate_repository_version_only(self):
         mock_version = mock.MagicMock()
         data = {'repository_version': mock_version}
-        serializer = RepositoryPublishURLSerializer()
+        serializer = PublicationSerializer()
         new_data = serializer.validate(data)
         self.assertEqual(new_data, {'repository_version': mock_version})
 
@@ -31,12 +31,12 @@ class TestRepositoryPublishURLSerializer(TestCase):
         mock_version = mock.MagicMock()
         mock_repository = mock.MagicMock()
         data = {'repository_version': mock_version, 'repository': mock_repository}
-        serializer = RepositoryPublishURLSerializer()
+        serializer = PublicationSerializer()
         with self.assertRaises(serializers.ValidationError):
             serializer.validate(data)
 
     def test_validate_no_repository_no_version(self):
-        serializer = RepositoryPublishURLSerializer()
+        serializer = PublicationSerializer()
         with self.assertRaises(serializers.ValidationError):
             serializer.validate({})
 
@@ -44,14 +44,14 @@ class TestRepositoryPublishURLSerializer(TestCase):
     def test_validate_repository_only_unknown_field(self, mock_version):
         mock_repo = mock.MagicMock()
         data = {'repository': mock_repo, 'unknown_field': 'unknown'}
-        serializer = RepositoryPublishURLSerializer(data=data)
+        serializer = PublicationSerializer(data=data)
         with self.assertRaises(serializers.ValidationError):
             serializer.validate(data)
 
     def test_validate_repository_version_only_unknown_field(self):
         mock_version = mock.MagicMock()
         data = {'repository_version': mock_version, 'unknown_field': 'unknown'}
-        serializer = RepositoryPublishURLSerializer(data=data)
+        serializer = PublicationSerializer(data=data)
         with self.assertRaises(serializers.ValidationError):
             serializer.validate(data)
 

@@ -14,7 +14,6 @@ from pulp_smash.pulp3.utils import (
     gen_distribution,
     gen_publisher,
     gen_repo,
-    publish,
     sync
 )
 
@@ -26,6 +25,7 @@ from pulpcore.tests.functional.api.using_plugin.constants import (
 )
 from pulpcore.tests.functional.api.using_plugin.utils import (
     gen_file_remote,
+    create_file_publication,
     skip_if
 )
 from pulpcore.tests.functional.api.using_plugin.utils import set_up_module as setUpModule  # noqa
@@ -62,10 +62,10 @@ class PublicationsTestCase(unittest.TestCase):
             if resource:
                 cls.client.delete(resource['_href'])
 
-    def test_01_create_publication(self):
+    def test_01_create_file_publication(self):
         """Create a publication."""
         self.publication.update(
-            publish(self.cfg, self.publisher, self.repo)
+            create_file_publication(self.cfg, self.repo, publisher=self.publisher)
         )
 
     @skip_if(bool, 'publication', False)
@@ -165,7 +165,7 @@ class PublicationsTestCase(unittest.TestCase):
         """
         # Create more 2 publications for the same repo
         for _ in range(2):
-            publish(self.cfg, self.publisher, self.repo)
+            create_file_publication(self.cfg, self.repo, publisher=self.publisher)
 
         # Read publications
         publications = self.client.get(
