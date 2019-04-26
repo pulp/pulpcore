@@ -1,6 +1,7 @@
 from gettext import gettext as _
 import logging
 import os
+from urllib.parse import unquote
 
 import django  # noqa otherwise E402: module level not at top of file
 django.setup()  # noqa otherwise E402: module level not at top of file
@@ -93,7 +94,7 @@ class Handler:
             :class:`aiohttp.web.StreamResponse` or :class:`aiohttp.web.FileResponse`: The response
                 back to the client.
         """
-        path = request.match_info['path']
+        path = unquote(request.path)  # Workaround https://github.com/aio-libs/aiohttp/issues/3713
         return await self._match_and_stream(path, request)
 
     @staticmethod
