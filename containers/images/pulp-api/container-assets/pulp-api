@@ -2,6 +2,17 @@
 
 /usr/bin/wait_on_postgres.py
 
-scl enable rh-python36 'django-admin migrate --noinput'
+# Generating /var/lib/pulp/static at runtime rather than at container build time
+# facilitates all of /var/lib/pulp being a separate volume.
+scl enable rh-python36 "django-admin collectstatic --noinput"
 
-exec scl enable rh-python36 "gunicorn -b 0.0.0.0:8000 pulpcore.app.wsgi:application"
+#TODO: Determine list of installed plugins by inspecting image contents
+scl enable rh-python36 "django-admin makemigrations file ansible cookbook docker maven python"
+scl enable rh-python36 "django-admin migrate --noinput"
+scl enable rh-python36 "django-admin migrate auth --noinput"
+
+if [ -n "${PULP_ADMIN_PASSWORD}" ]; then
+    scl enable rh-python36 "django-admin reset-admin-password --password '${PULP_ADMIN_PASSWORD}'"
+fi
+
+exec scl enable rh-python36 "gunicorn -b 0.0.0.0:24817 pulpcore.app.wsgi:application"

@@ -3,4 +3,4 @@
 /usr/bin/wait_on_postgres.py
 /usr/bin/wait_on_database_migrations.sh
 
-exec scl enable rh-python36 "rq worker --url 'redis://$REDIS_SERVICE_HOST:$REDIS_SERVICE_PORT' -n resource_manager@%h -w 'pulpcore.tasking.worker.PulpWorker'"
+exec scl enable rh-python36 "rq worker --url 'redis://$REDIS_SERVICE_HOST:$REDIS_SERVICE_PORT' -n resource-manager@%h -w 'pulpcore.tasking.worker.PulpWorker' -c 'pulpcore.rqconfig'"

@@ -3,4 +3,6 @@
 /usr/bin/wait_on_postgres.py
 /usr/bin/wait_on_database_migrations.sh
 
-exec scl enable rh-python36 "rq worker --url 'redis://${REDIS_SERVICE_HOST}:${REDIS_SERVICE_PORT}' -n reserved_resource_worker_${PULP_WORKER_NUMBER}@${HOSTNAME} -w 'pulpcore.tasking.worker.PulpWorker'"
+# TODO: Set ${PULP_WORKER_NUMBER} to the Pod Number
+# In the meantime, the hostname provides uniqueness.
+exec scl enable rh-python36 "rq worker --url 'redis://${REDIS_SERVICE_HOST}:${REDIS_SERVICE_PORT}' -n reserved-resource-worker-${PULP_WORKER_NUMBER}@${HOSTNAME} -w 'pulpcore.tasking.worker.PulpWorker' -c 'pulpcore.rqconfig'"

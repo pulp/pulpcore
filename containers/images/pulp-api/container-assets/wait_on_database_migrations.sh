@@ -4,7 +4,7 @@ database_migrated=false
 
 echo "Checking for database migrations"
 while [ $database_migrated = false ]; do
-  scl enable rh-python36 "pulp-manager showmigrations | grep '\[ \]'"
+  scl enable rh-python36 "django-admin showmigrations | grep '\[ \]'"
   if [ $? -gt 0 ]; then
     echo "Database migrated!"
     database_migrated=true
