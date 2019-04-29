@@ -16,15 +16,12 @@ from pulpcore.app.serializers import (
     RelatedField,
     MasterModelSerializer,
     ModelSerializer,
+    validate_unknown_fields,
 )
 
 
 class PublicationSerializer(MasterModelSerializer):
     _href = DetailIdentityField()
-    publisher = DetailRelatedField(
-        help_text=_('The publisher that created this publication.'),
-        queryset=models.Publisher.objects.all()
-    )
     _distributions = serializers.HyperlinkedRelatedField(
         help_text=_('This publication is currently being served as'
                     'defined by these distributions.'),
@@ -36,8 +33,41 @@ class PublicationSerializer(MasterModelSerializer):
         view_name='versions-detail',
         lookup_field='number',
         parent_lookup_kwargs={'repository_pk': 'repository__pk'},
-        read_only=True,
+        queryset=models.RepositoryVersion.objects.all(),
+        required=False,
     )
+    repository = serializers.HyperlinkedRelatedField(
+        help_text=_('A URI of the repository to be published.'),
+        required=False,
+        label=_('Repository'),
+        queryset=models.Repository.objects.all(),
+        view_name='repositories-detail',
+    )
+
+    def validate(self, data):
+        if hasattr(self, 'initial_data'):
+            validate_unknown_fields(self.initial_data, self.fields)
+
+        repository = data.pop('repository', None)  # not an actual field on publication
+        repository_version = data.get('repository_version')
+        if not repository and not repository_version:
+            raise serializers.ValidationError(
+                _("Either the 'repository' or 'repository_version' need to be specified"))
+        elif not repository and repository_version:
+            return data
+        elif repository and not repository_version:
+            version = models.RepositoryVersion.latest(repository)
+            if version:
+                new_data = {'repository_version': version}
+                new_data.update(data)
+                return new_data
+            else:
+                raise serializers.ValidationError(
+                    detail=_('Repository has no version available to create Publication from'))
+        raise serializers.ValidationError(
+            _("Either the 'repository' or 'repository_version' need to be specified "
+              "but not both.")
+        )
 
     class Meta:
         abstract = True
@@ -46,6 +76,7 @@ class PublicationSerializer(MasterModelSerializer):
             'publisher',
             '_distributions',
             'repository_version',
+            'repository'
         )
 
 

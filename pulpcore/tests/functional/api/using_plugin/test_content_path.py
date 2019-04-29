@@ -9,7 +9,6 @@ from pulp_smash.pulp3.utils import (
     gen_publisher,
     gen_remote,
     gen_repo,
-    publish,
     sync,
 )
 
@@ -19,6 +18,7 @@ from pulpcore.tests.functional.api.using_plugin.constants import (
     FILE_REMOTE_PATH,
 )
 from pulpcore.tests.functional.api.using_plugin.utils import (  # noqa:F401
+    create_file_publication,
     set_up_module as setUpModule
 )
 
@@ -70,4 +70,4 @@ class SyncPublishContentPathTestCase(unittest.TestCase):
         for _ in range(2):
             sync(cfg, remote, repo)
             repo = client.get(repo['_href'])
-            publish(cfg, publisher, repo)
+            create_file_publication(cfg, repo, publisher=publisher)

@@ -9,7 +9,6 @@ from pulp_smash.pulp3.utils import (
     gen_publisher,
     gen_repo,
     get_content,
-    publish,
     sync,
 )
 
@@ -18,7 +17,10 @@ from pulpcore.tests.functional.api.using_plugin.constants import (
     FILE_REMOTE_PATH,
     FILE_PUBLISHER_PATH
 )
-from pulpcore.tests.functional.api.using_plugin.utils import gen_file_remote
+from pulpcore.tests.functional.api.using_plugin.utils import (
+    create_file_publication,
+    gen_file_remote
+)
 from pulpcore.tests.functional.api.using_plugin.utils import set_up_module as setUpModule  # noqa
 
 
@@ -76,7 +78,7 @@ class RemotesPublishersTestCase(unittest.TestCase):
         # Publish repositories.
         publications = []
         for repo in repos:
-            publications.append(publish(cfg, publisher, repo))
+            publications.append(create_file_publication(cfg, repo, publisher=publisher))
         self.assertEqual(
             publications[0]['publisher'],
             publications[1]['publisher']

@@ -12,7 +12,6 @@ from pulp_smash.pulp3.utils import (
     gen_remote,
     gen_repo,
     get_added_content,
-    publish,
     sync,
 )
 
@@ -23,6 +22,7 @@ from pulpcore.tests.functional.api.using_plugin.constants import (
     FILE_REMOTE_PATH
 )
 from pulpcore.tests.functional.api.using_plugin.utils import (  # noqa:F401
+    create_file_publication,
     set_up_module as setUpModule
 )
 
@@ -67,7 +67,7 @@ class ContentPromotionTestCase(unittest.TestCase):
         publisher = client.post(FILE_PUBLISHER_PATH, gen_publisher())
         self.addCleanup(client.delete, publisher['_href'])
 
-        publication = publish(cfg, publisher, repo)
+        publication = create_file_publication(cfg, repo, publisher=publisher)
         self.addCleanup(client.delete, publication['_href'])
 
         distributions = []

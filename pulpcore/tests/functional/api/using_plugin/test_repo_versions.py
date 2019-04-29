@@ -22,7 +22,6 @@ from pulp_smash.pulp3.utils import (
     get_removed_content,
     get_removed_content_summary,
     get_versions,
-    publish,
     sync,
 )
 
@@ -39,6 +38,7 @@ from pulpcore.tests.functional.api.using_plugin.constants import (
 from pulpcore.tests.functional.api.using_plugin.utils import (
     gen_file_remote,
     populate_pulp,
+    create_file_publication,
     skip_if,
 )
 from pulpcore.tests.functional.api.using_plugin.utils import set_up_module as setUpModule  # noqa
@@ -370,7 +370,7 @@ class AddRemoveRepoVersionTestCase(unittest.TestCase):
         publisher = self.client.post(FILE_PUBLISHER_PATH, gen_publisher())
         self.addCleanup(self.client.delete, publisher['_href'])
 
-        publication = publish(self.cfg, publisher, self.repo)
+        publication = create_file_publication(self.cfg, self.repo, publisher=publisher)
         delete_version(self.repo)
 
         with self.assertRaises(HTTPError):

@@ -20,7 +20,6 @@ from pulp_smash.pulp3.utils import (
     gen_publisher,
     gen_repo,
     get_content,
-    publish,
     sync,
 )
 
@@ -32,6 +31,7 @@ from pulpcore.tests.functional.api.using_plugin.constants import (
 )
 from pulpcore.tests.functional.api.using_plugin.utils import (
     gen_file_remote,
+    create_file_publication
 )
 from pulpcore.tests.functional.api.using_plugin.utils import (  # noqa:F401
     set_up_module as setUpModule
@@ -75,7 +75,7 @@ class ContentDeliveryTestCase(unittest.TestCase):
         publisher = client.post(FILE_PUBLISHER_PATH, gen_publisher())
         self.addCleanup(client.delete, publisher['_href'])
 
-        publication = publish(cfg, publisher, repo)
+        publication = create_file_publication(cfg, repo, publisher=publisher)
         self.addCleanup(client.delete, publication['_href'])
 
         # Delete the remote.
