@@ -67,4 +67,4 @@ jobs:
       env:
         - DB=postgres
         - TEST=bindings
-      if: type != pull_request
+      if: type = cron
