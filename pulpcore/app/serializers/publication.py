@@ -22,7 +22,7 @@ from pulpcore.app.serializers import (
 
 class PublicationSerializer(MasterModelSerializer):
     _href = DetailIdentityField()
-    _distributions = serializers.HyperlinkedRelatedField(
+    _distributions = RelatedField(
         help_text=_('This publication is currently being served as'
                     'defined by these distributions.'),
         many=True,
