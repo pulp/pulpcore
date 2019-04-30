@@ -1,5 +1,5 @@
 # coding=utf-8
-"""Tests related to pagination."""
+"""Tests related to file plugin pagination."""
 import unittest
 from random import sample
 
@@ -17,7 +17,7 @@ from pulpcore.tests.functional.api.using_plugin.utils import set_up_module as se
 
 
 class PaginationTestCase(unittest.TestCase):
-    """Test pagination.
+    """Test file plugin pagination.
 
     This test case assumes that Pulp returns 100 elements in each page of
     results. This is configurable, but the current default set by all known
@@ -30,24 +30,7 @@ class PaginationTestCase(unittest.TestCase):
         cls.cfg = config.get_config()
         cls.client = api.Client(cls.cfg, api.page_handler)
 
-    def test_repos(self):
-        """Test pagination for repositories."""
-        # Perform a sanity check.
-        repos = self.client.get(REPO_PATH)
-        self.assertEqual(len(repos), 0, repos)
-
-        number_to_create = 21
-
-        # Create repos
-        for _ in range(number_to_create):
-            repo = self.client.post(REPO_PATH, gen_repo())
-            self.addCleanup(self.client.delete, repo['_href'])
-
-        # assert results
-        repos = self.client.get(REPO_PATH, params={'page_size': 10})
-        self.assertEqual(len(repos), number_to_create, repos)
-
-    def test_content(self):
+    def test_file_content(self):
         """Test pagination for repository versions."""
         # Add content to Pulp, create a repo, and add content to repo. We
         # sample 21 contents, because with page_size set to 10, this produces 3
