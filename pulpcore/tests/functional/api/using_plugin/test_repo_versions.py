@@ -799,3 +799,55 @@ class CreateRepoBaseVersionTestCase(unittest.TestCase):
     def remove_created_key(dic):
         """Given a dict remove the key `created`."""
         return {k: v for k, v in dic.items() if k != 'created'}
+
+
+class UpdateRepoVersionTestCase(unittest.TestCase):
+    """Repository version can not be updated using PATCH or PUT.
+
+    Assert that an HTTP exception is raised.
+
+    This test targets the following issue:
+
+    * `Pulp #4667 <https://pulp.plan.io/issues/4667>`_
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        """Create class-wide variables."""
+        cls.cfg = config.get_config()
+        cls.client = api.Client(cls.cfg)
+
+    def test_http_error(self):
+        """Test partial update repository version."""
+        remote = self.client.post(FILE_REMOTE_PATH, gen_file_remote())
+        self.addCleanup(self.client.delete, remote['_href'])
+
+        repo = self.client.post(REPO_PATH, gen_repo())
+        self.addCleanup(self.client.delete, repo['_href'])
+
+        # create repo version
+        sync(self.cfg, remote, repo)
+        repo = self.client.get(repo['_href'])
+
+        self.assert_patch(repo)
+        self.assert_put(repo)
+
+    def assert_patch(self, repo):
+        """Assert PATCH method raises an HTTP exception."""
+        previous_repo_name = repo['name']
+        with self.assertRaises(HTTPError):
+            self.client.patch(
+                repo['_latest_version_href'],
+                {'name': utils.uuid4()}
+            )
+        repo = self.client.get(repo['_href'])
+        self.assertEqual(previous_repo_name, repo['name'], repo)
+
+    def assert_put(self, repo):
+        """Assert PUT method raises an HTTP exception."""
+        previous_repo_name = repo['name']
+        with self.assertRaises(HTTPError):
+            repo['name'] = utils.uuid4()
+            self.client.put(repo['_latest_version_href'], repo)
+        repo = self.client.get(repo['_href'])
+        self.assertEqual(previous_repo_name, repo['name'], repo)
