@@ -68,3 +68,10 @@ jobs:
         - DB=postgres
         - TEST=bindings
       if: type = cron
+    - stage: publish-pulpcore-client-pypi
+      script: bash .travis/publish_pulpcore_client_pypi.sh
+      env:
+        - DB=postgres
+        - TEST=bindings
+        - secure: "pc6ocmc/MAAlgHOmECCzoOFpCDYy7IrPXoX+f6MuiHrxdb45y/ynJshPug17JW/cLJYDG6EDj6KImIMmkU90Aq1ylTBtcwWFHfdprMzHFg52/vGFIP7QKasTontfBj+ESTD4q4Yqwzdk5aju9J2vHlJXBQQwEJkd6M40jxT6ABpJFqAbfeZvSGRZ2NTXTXpAKJRWujm5lKopYvk26r4KxtRvD/kvsKz4aqYktCTMt/E9nON3NLJALpFFvX012n5L3GEPqFL3CThgo2s6pQcC4ec+7Nnx1+j8akc+0iRW9/wmDJg48nQEWskteDKWad2uFsVi4hRMmE9FqXWX9AdoJP4Y7iaSeszpf56KEuv2m5dKhGghGtiPidUsFAvP4oY4X5y/3RNE1p44kXxfaG0/OSE7O7JaV2Hfha4GD0C0hLD7iY8yMRCdOgdSApsWZDdQ17SORrrdI/XNGH1ZzmK5xCQb7abVUa2pKSvwIC2BPf8tl98WnJ0HepgNBc9ingfWgaOCHpuzp2ROjm8YwfdAx89Bud74Ka/XCaRg1AJ02pFTMo3T+9wRogw6rXy0dy6iO0HdTmsUddTM3/dDOs79lCBNlRWH8OW3x9ar0wHxlHYXyWBWEgZp/ppuxHy+Dc50tJdvwkqgxSHJXT2ertGTfbvq0U/wnFjOKGh+PgoE+ck="
+      if: type != pull_request
