@@ -111,6 +111,33 @@ class TasksTestCase(unittest.TestCase):
         self.assertGreaterEqual(len(page['results']), 1, page['results'])
 
     @skip_if(bool, 'task', False)
+    def test_02_search_task_by_name(self):
+        """Search Task by its name.
+
+        This test targets the following issue:
+
+        * `Pulp #4230 <https://pulp.plan.io/issues/4230>`_
+
+        Do the following:
+
+        1. Assert that task has a field name, and that this field is not empty.
+        2. Filter the tasks by name.
+        3. Assert the created task is included on the search results.
+        """
+        # step 1
+        self.assertIsNotNone(self.task.get('name'))
+        # step 2
+        search_results = self.filter_tasks({'name': self.task['name']})
+        # step 3
+        self.assertIn(self.task, search_results['results'])
+
+    def test_02_search_by_invalid_name(self):
+        """Search passing invalid name and assert nothing is returned."""
+        search_results = self.filter_tasks({'name': 'this-is-not-a-task-name'})
+        self.assertEqual(search_results['count'], 0)
+        self.assertEqual(len(search_results['results']), 0)
+
+    @skip_if(bool, 'task', False)
     def test_03_delete_tasks(self):
         """Delete a task."""
         # If this assertion fails, then either Pulp's tasking system or Pulp
