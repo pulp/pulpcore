@@ -186,7 +186,6 @@ class RepositoryVersionFilter(BaseFilterSet):
 
 class RepositoryVersionViewSet(NamedModelViewSet,
                                mixins.CreateModelMixin,
-                               mixins.UpdateModelMixin,
                                mixins.RetrieveModelMixin,
                                mixins.ListModelMixin,
                                mixins.DestroyModelMixin):
