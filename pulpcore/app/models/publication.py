@@ -229,7 +229,7 @@ class ContentGuard(MasterModel):
     description = models.TextField(null=True)
 
 
-class BaseDistribution(Model):
+class BaseDistribution(MasterModel):
     """
     A distribution defines how a publication is distributed by Pulp's webserver.
 
@@ -242,13 +242,6 @@ class BaseDistribution(Model):
         base_path (models.CharField): The base (relative) path component of the published url.
 
     Relations:
-        publisher (models.ForeignKey): The associated publisher.
-            All publications of the repository that are created by the publisher will be
-            automatically associated.
-        repository (models.ForeignKey): The associated repository.
-        publication (models.ForeignKey): The current publication associated with
-            the distribution.  This is the publication being served by Pulp through
-            this relative URL path and settings.
         content_guard (models.ForeignKey): An optional content-guard.
         remote (models.ForeignKey): A remote that the content app can use to find content not
             yet stored in Pulp.
@@ -257,24 +250,13 @@ class BaseDistribution(Model):
     name = models.CharField(max_length=255, db_index=True, unique=True)
     base_path = models.CharField(max_length=255, unique=True)
 
-    publication = models.ForeignKey(Publication, null=True, on_delete=models.SET_NULL)
-    publisher = models.ForeignKey(Publisher, null=True, on_delete=models.SET_NULL)
-    repository = models.ForeignKey(Repository, null=True, on_delete=models.SET_NULL)
     content_guard = models.ForeignKey(ContentGuard, null=True, on_delete=models.SET_NULL)
     remote = models.ForeignKey(Remote, null=True, on_delete=models.SET_NULL)
-
-    class Meta:
-        abstract = True
 
 
 class Distribution(BaseDistribution):
     """
     A distribution defines how a publication is distributed by Pulp's webserver.
-
-    Fields:
-        name (models.CharField): The name of the distribution.
-            Examples: "rawhide" and "stable".
-        base_path (models.CharField): The base (relative) path component of the published url.
 
     Relations:
         publisher (models.ForeignKey): The associated publisher.
@@ -285,5 +267,10 @@ class Distribution(BaseDistribution):
             the distribution.  This is the publication being served by Pulp through
             this relative URL path and settings.
     """
+
+    publication = models.ForeignKey(Publication, null=True, on_delete=models.SET_NULL)
+    publisher = models.ForeignKey(Publisher, null=True, on_delete=models.SET_NULL)
+    repository = models.ForeignKey(Repository, null=True, on_delete=models.SET_NULL)
+
     class Meta:
         default_related_name = '_distributions'

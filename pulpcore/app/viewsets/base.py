@@ -288,9 +288,69 @@ class NamedModelViewSet(viewsets.GenericViewSet):
         return self.get_parent_field_and_object()[1]
 
 
-class AsyncUpdateMixin:
+class AsyncReservedObjectMixin:
     """
-    Provides an update method that dispatches a task with reservation for the instance
+    Mixin class providing the default method to compute the resources to reserve in the task.
+
+    By default, lock the object instance we are working on.
+    """
+
+    def async_reserved_resources(self, instance):
+        """
+        Return the resources to reserve for the task created by the Async...Mixins.
+
+        This default implementation locks the instance being worked on.
+
+        .. note::
+
+          This does not work for :class:`~pulpcore.app.viewsets.AsyncCreateMixin`
+          (as there is no instance). Classes using :class:`~pulpcore.app.viewsets.AsyncCreateMixin`
+          must override this method.
+
+        Args:
+            instance (django.models.Model): The instance that will be worked
+                on by the task.
+
+        Returns:
+            list/str: The resources to put in the task's reservation
+
+        Raises:
+            AssertionError if instance is None (which happens for creation)
+
+        """
+        assert instance is not None, (_(
+            "'{}' must not use the default `async_reserved_resources` method "
+            "when using create.".format(self.__class__.__name__)
+        ))
+        return [instance]
+
+
+class AsyncCreateMixin:
+    """
+    Provides a create method that dispatches a task with reservation.
+    """
+
+    @swagger_auto_schema(operation_description="Trigger an asynchronous create task",
+                         responses={202: AsyncOperationResponseSerializer})
+    def create(self, request, *args, **kwargs):
+        """
+        Dispatches a task with reservation for creating an instance.
+        """
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        app_label = self.queryset.model._meta.app_label
+        async_result = enqueue_with_reservation(
+            tasks.base.general_create,
+            self.async_reserved_resources(None),
+            args=(app_label, serializer.__class__.__name__),
+            kwargs={'data': request.data}
+        )
+        return OperationPostponedResponse(async_result, request)
+
+
+class AsyncUpdateMixin(AsyncReservedObjectMixin):
+    """
+    Provides an update method that dispatches a task with reservation
     """
 
     @swagger_auto_schema(operation_description="Trigger an asynchronous update task",
@@ -302,7 +362,7 @@ class AsyncUpdateMixin:
         serializer.is_valid(raise_exception=True)
         app_label = instance._meta.app_label
         async_result = enqueue_with_reservation(
-            tasks.base.general_update, [instance],
+            tasks.base.general_update, self.async_reserved_resources(instance),
             args=(pk, app_label, serializer.__class__.__name__),
             kwargs={'data': request.data, 'partial': partial}
         )
@@ -315,9 +375,9 @@ class AsyncUpdateMixin:
         return self.update(request, *args, **kwargs)
 
 
-class AsyncRemoveMixin:
+class AsyncRemoveMixin(AsyncReservedObjectMixin):
     """
-    Provides a delete method that dispatches a task with reservation for the instance
+    Provides a delete method that dispatches a task with reservation
     """
 
     @swagger_auto_schema(operation_description="Trigger an asynchronous delete task",
@@ -330,7 +390,7 @@ class AsyncRemoveMixin:
         serializer = self.get_serializer(instance)
         app_label = instance._meta.app_label
         async_result = enqueue_with_reservation(
-            tasks.base.general_delete, [instance],
+            tasks.base.general_delete, self.async_reserved_resources(instance),
             args=(pk, app_label, serializer.__class__.__name__)
         )
         return OperationPostponedResponse(async_result, request)

@@ -7,6 +7,7 @@ from rest_framework_nested.serializers import NestedHyperlinkedModelSerializer
 from pulpcore.app import models
 from pulpcore.app.serializers import (
     DetailIdentityField,
+    DetailRelatedField,
     IdentityField,
     NestedIdentityField,
     NestedRelatedField,
@@ -159,10 +160,9 @@ class PublisherSerializer(MasterModelSerializer):
         help_text=_('Timestamp of the most recent update of the publisher configuration.'),
         read_only=True
     )
-    _distributions = serializers.HyperlinkedRelatedField(
+    _distributions = DetailRelatedField(
         many=True,
         read_only=True,
-        view_name='distributions-detail',
     )
 
     class Meta:

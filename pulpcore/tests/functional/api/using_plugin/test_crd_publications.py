@@ -6,10 +6,7 @@ from itertools import permutations
 from requests.exceptions import HTTPError
 
 from pulp_smash import api, config
-from pulp_smash.pulp3.constants import (
-    DISTRIBUTION_PATH,
-    REPO_PATH
-)
+from pulp_smash.pulp3.constants import REPO_PATH
 from pulp_smash.pulp3.utils import (
     gen_distribution,
     gen_publisher,
@@ -19,6 +16,7 @@ from pulp_smash.pulp3.utils import (
 
 from pulpcore.tests.functional.api.utils import parse_date_from_string
 from pulpcore.tests.functional.api.using_plugin.constants import (
+    FILE_DISTRIBUTION_PATH,
     FILE_PUBLICATION_PATH,
     FILE_PUBLISHER_PATH,
     FILE_REMOTE_PATH
@@ -141,7 +139,7 @@ class PublicationsTestCase(unittest.TestCase):
         body = gen_distribution()
         body['publication'] = self.publication['_href']
         distribution = self.client.using_handler(api.task_handler).post(
-            DISTRIBUTION_PATH, body
+            FILE_DISTRIBUTION_PATH, body
         )
         self.addCleanup(self.client.delete, distribution['_href'])
 
