@@ -100,6 +100,12 @@ class ContentGuardSerializer(MasterModelSerializer):
 
 class BaseDistributionSerializer(MasterModelSerializer):
     _href = DetailIdentityField()
+    content_guard = DetailRelatedField(
+        required=False,
+        help_text=_('An optional content-guard.'),
+        queryset=models.ContentGuard.objects.all(),
+        allow_null=True
+    )
     name = serializers.CharField(
         help_text=_('A unique distribution name. Ex, `rawhide` and `stable`.'),
         validators=[validators.MaxLengthValidator(
@@ -108,12 +114,6 @@ class BaseDistributionSerializer(MasterModelSerializer):
                 models.Distribution._meta.get_field('name').max_length
             )),
             UniqueValidator(queryset=models.Distribution.objects.all())]
-    )
-    content_guard = DetailRelatedField(
-        required=False,
-        help_text=_('An optional content-guard.'),
-        queryset=models.ContentGuard.objects.all(),
-        allow_null=True
     )
     remote = DetailRelatedField(
         required=False,
@@ -124,8 +124,8 @@ class BaseDistributionSerializer(MasterModelSerializer):
 
     class Meta:
         fields = ModelSerializer.Meta.fields + (
-            'name',
             'content_guard',
+            'name',
             'remote',
         )
 
@@ -146,26 +146,27 @@ class DistributionSerializer(BaseDistributionSerializer):
         source='base_path', read_only=True,
         help_text=_('The URL for accessing the publication as defined by this distribution.')
     )
-    publisher = DetailRelatedField(
-        required=False,
-        help_text=_('Publications created by this publisher and repository are automatically'
-                    'served as defined by this distribution'),
-        queryset=models.Publisher.objects.all(),
-        allow_null=True
-    )
     publication = DetailRelatedField(
         required=False,
-        help_text=_('The publication being served as defined by this distribution'),
+        help_text=_('Publication to be served'),
         queryset=models.Publication.objects.exclude(complete=False),
         allow_null=True
     )
     repository = RelatedField(
         required=False,
-        help_text=_('Publications created by this repository and publisher are automatically'
-                    'served as defined by this distribution'),
+        help_text=_('The latest RepositoryVersion for this Repository will be served.'),
         queryset=models.Repository.objects.all(),
         view_name='repositories-detail',
         allow_null=True
+    )
+    repository_version = NestedRelatedField(
+        required=False,
+        help_text=_('RepositoryVersion to be served'),
+        queryset=models.RepositoryVersion.objects.exclude(complete=False),
+        view_name='versions-detail',
+        allow_null=True,
+        lookup_field='number',
+        parent_lookup_kwargs={'repository_pk': 'repository__pk'},
     )
 
     class Meta:
@@ -173,9 +174,9 @@ class DistributionSerializer(BaseDistributionSerializer):
         fields = BaseDistributionSerializer.Meta.fields + (
             'base_path',
             'base_url',
-            'publisher',
             'publication',
             'repository',
+            'repository_version',
         )
 
     def _validate_path_overlap(self, path):
@@ -200,32 +201,21 @@ class DistributionSerializer(BaseDistributionSerializer):
 
         return path
 
-    def validate(self, data):
-        super().validate(data)
-
-        if 'publisher' in data:
-            publisher = data['publisher']
-        elif self.instance:
-            publisher = self.instance.publisher
-        else:
-            publisher = None
-
-        if 'repository' in data:
-            repository = data['repository']
-        elif self.instance:
-            repository = self.instance.repository
-        else:
-            repository = None
-
-        if publisher and not repository:
-            raise serializers.ValidationError({'repository': _("Repository must be set if "
-                                                               "publisher is set.")})
-        if repository and not publisher:
-            raise serializers.ValidationError({'publisher': _("Publisher must be set if "
-                                                              "repository is set.")})
-
-        return data
-
     def validate_base_path(self, path):
         self._validate_relative_path(path)
         return self._validate_path_overlap(path)
+
+    def validate(self, data):
+        super().validate(data)
+
+        mutex_keys = ['publication', 'repository', 'repository_version']
+        in_use_keys = []
+        for mkey in mutex_keys:
+            if mkey in data:
+                in_use_keys.append(mkey)
+
+        if len(in_use_keys) > 1:
+            msg = _("The attributes {keys} must be used exclusively.".format(keys=in_use_keys))
+            raise serializers.ValidationError(msg)
+
+        return data

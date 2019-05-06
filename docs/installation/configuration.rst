@@ -160,6 +160,8 @@ CONTENT_HOST
    This defaults to ``None`` which returns relative urls.
 
 
+.. _content-path-prefix:
+
 CONTENT_PATH_PREFIX
 ^^^^^^^^^^^^^^^^^^^
 

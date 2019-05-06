@@ -157,20 +157,21 @@ class Handler:
             :class:`aiohttp.web.StreamResponse` or :class:`aiohttp.web.FileResponse`: The response
                 streamed back to the client.
         """
-        distribution = Handler._match_distribution(path)
-        self._permit(request, distribution)
-        publication = distribution.publication
-        remote = distribution.remote
-        if not publication and not remote:
+        distro = Handler._match_distribution(path)
+        self._permit(request, distro)
+
+        if not distro.publication and not distro.repository \
+                and not distro.repository_version and not distro.remote:
             raise PathNotResolved(path)
+
         rel_path = path.lstrip('/')
-        rel_path = rel_path[len(distribution.base_path):]
+        rel_path = rel_path[len(distro.base_path):]
         rel_path = rel_path.lstrip('/')
 
-        if publication:
+        if distro.publication:
             # published artifact
             try:
-                pa = publication.published_artifact.get(relative_path=rel_path)
+                pa = distro.publication.published_artifact.get(relative_path=rel_path)
                 ca = pa.content_artifact
             except ObjectDoesNotExist:
                 pass
@@ -182,23 +183,23 @@ class Handler:
 
             # published metadata
             try:
-                pm = publication.published_metadata.get(relative_path=rel_path)
+                pm = distro.publication.published_metadata.get(relative_path=rel_path)
             except ObjectDoesNotExist:
                 pass
             else:
                 return self._handle_file_response(pm.file)
 
             # pass-through
-            if publication.pass_through:
+            if distro.publication.pass_through:
                 try:
                     ca = ContentArtifact.objects.get(
-                        content__in=publication.repository_version.content,
+                        content__in=distro.publication.repository_version.content,
                         relative_path=rel_path)
                 except MultipleObjectsReturned:
                     log.error(
                         _('Multiple (pass-through) matches for {b}/{p}'),
                         {
-                            'b': distribution.base_path,
+                            'b': distro.base_path,
                             'p': rel_path,
                         }
                     )
@@ -210,8 +211,32 @@ class Handler:
                         return self._handle_file_response(ca.artifact.file)
                     else:
                         return await self._stream_content_artifact(request, StreamResponse(), ca)
-        if remote:
-            remote = remote.cast()
+        elif distro.repository or distro.repository_version:
+            if distro.repository:
+                repo_version = distro.repository.versions.get(number=distro.repository.last_version)
+            else:
+                repo_version = distro.repository_version
+
+            try:
+                ca = ContentArtifact.objects.get(
+                    content__in=repo_version.content,
+                    relative_path=rel_path)
+            except MultipleObjectsReturned:
+                log.error(
+                    _('Multiple (pass-through) matches for {b}/{p}'),
+                    {
+                        'b': distro.base_path,
+                        'p': rel_path,
+                    }
+                )
+                raise
+            except ObjectDoesNotExist:
+                pass
+            else:
+                return self._handle_file_response(ca.artifact.file)
+
+        if distro.remote:
+            remote = distro.remote.cast()
             try:
                 url = remote.get_remote_artifact_url(rel_path)
                 ra = RemoteArtifact.objects.get(remote=remote, url=url)

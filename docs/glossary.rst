@@ -14,12 +14,13 @@ Glossary
         :term:`type` (like .rpm or .deb) which that is defined by a :term:`plugin`.
 
     content app
-        A `Django <https://docs.djangoproject.com>`_ app provided by :term:`pulpcore` that serves
-        :term:`content`.
+        An `aiohttp.server <https://aiohttp.readthedocs.io/en/stable/web.html>`_ app provided by
+        :term:`pulpcore` that serves :term:`content` through :term:`Distributions <distribution>`.
 
     :class:`~pulpcore.plugin.models.Distribution`
-        User facing settings that specify how and where associated
-        :term:`publications<publication>` are served.
+        User facing object that configures the :term:`content app` to serve either a
+        :term:`Repository Version <RepositoryVersion>`, a :term:`Repository`, or a
+        :term:`publications<publication>`.
 
     lazy content
         A :term:`content unit<content>` that was synchronized into Pulp but is missing one or more
