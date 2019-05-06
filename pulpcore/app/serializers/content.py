@@ -99,6 +99,7 @@ class ArtifactSerializer(base.ModelSerializer):
 
     file = serializers.FileField(
         help_text=_("The stored file."),
+        allow_empty_file=True,
         required=False
     )
 
