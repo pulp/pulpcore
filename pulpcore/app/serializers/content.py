@@ -2,7 +2,6 @@ from gettext import gettext as _
 import hashlib
 
 from django.db import transaction
-from drf_chunked_upload.serializers import ChunkedUploadSerializer
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 
@@ -103,6 +102,7 @@ class ArtifactSerializer(base.ModelSerializer):
     )
 
     upload = serializers.HyperlinkedRelatedField(
+        help_text=_("An href for an Upload."),
         view_name="upload-detail",
         write_only=True,
         required=False,
@@ -218,16 +218,49 @@ class ArtifactSerializer(base.ModelSerializer):
 
 class UploadSerializer(base.ModelSerializer):
     """Serializer for chunked uploads."""
-    viewname = 'uploads:upload-detail'
-
     _href = base.IdentityField(
         view_name='upload-detail',
     )
-
     file = serializers.FileField(
+        help_text=_("Uploaded file."),
         write_only=True,
     )
 
-    class Meta(ChunkedUploadSerializer.Meta):
+    class Meta:
         model = models.Upload
-        fields = ('_href', 'file', 'offset', 'expires_at')
+        fields = ('_href', 'offset', 'expires_at', 'file', 'md5')
+
+
+class UploadPUTSerializer(serializers.Serializer):
+    """Serializer for starting chunked uploads."""
+    file = serializers.FileField(
+        help_text=_("A chunk of a file to upload."),
+        write_only=True,
+        required=True
+    )
+
+
+class UploadPOSTSerializer(base.ModelSerializer):
+    """Serializer for creating chunked uploads from entire file."""
+    file = serializers.FileField(
+        help_text=_("The full file to upload."),
+        required=True
+    )
+    md5 = serializers.CharField(
+        help_text=_("The expected MD5 checksum of the file."),
+        required=True,
+        allow_blank=False
+    )
+
+    class Meta:
+        model = models.Upload
+        fields = ['file', 'md5']
+
+
+class UploadFinishSerializer(serializers.Serializer):
+    """Serializer for POST to complete Upload and validate Upload's md5 checksum"""
+    md5 = serializers.CharField(
+        help_text=_("The expected MD5 checksum of the file."),
+        required=True,
+        allow_blank=False
+    )

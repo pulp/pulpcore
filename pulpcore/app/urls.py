@@ -3,15 +3,65 @@ from django.conf.urls import url, include
 from drf_yasg.views import get_schema_view as yasg_get_schema_view
 from drf_yasg import openapi
 from rest_framework import permissions
+from rest_framework.routers import Route
 from rest_framework.schemas import get_schema_view
 from rest_framework_nested import routers
 
 from pulpcore.app.apps import pulp_plugin_configs
-from pulpcore.app.views import OrphansView, StatusView, UploadView
+from pulpcore.app.views import OrphansView, StatusView
+from pulpcore.app.viewsets import UploadViewSet
 from pulpcore.constants import API_ROOT
 
 import logging
 log = logging.getLogger(__name__)
+
+
+class UploadsRouter(routers.SimpleRouter):
+    """
+    A router for the chunked uploads ViewSet
+
+    This router dispatches requests in the following way:
+
+    GET  /pulp/api/v3/uploads/ --> UploadViewSet.list()
+    POST /pulp/api/v3/uploads/ --> UploadViewSet.post_create()
+    PUT /pulp/api/v3/uploads/ --> UploadViewSet.put_create()
+
+    GET /pulp/api/v3/uploads/<uuid>/ --> UploadViewSet.retrieve()
+    PUT /pulp/api/v3/uploads/<uuid>/ --> UploadViewSet.put_update()
+    POST /pulp/api/v3/uploads/<uuid>/ --> UploadViewSet.post()
+    DELETE /pulp/api/v3/uploads/<uuid>/ --> UploadViewSet.destroy()
+
+    The serializers associated with each of those methods are used to validate the requests. The
+    OpenAPI schema is generated using the same set of serializers.
+
+    """
+    routes = [
+        # List route.
+        Route(
+            url=r'^{prefix}{trailing_slash}$',
+            mapping={
+                'get': 'list',
+                'put': 'put_create',
+                'post': 'post_create'
+            },
+            name='{basename}-list',
+            detail=False,
+            initkwargs={'suffix': 'List'}
+        ),
+        # Detail route.
+        Route(
+            url=r'^{prefix}/{lookup}{trailing_slash}$',
+            mapping={
+                'get': 'retrieve',
+                'put': 'put_update',
+                'post': 'post',
+                'delete': 'destroy'
+            },
+            name='{basename}-detail',
+            detail=True,
+            initkwargs={'suffix': 'Instance'}
+        ),
+    ]
 
 
 class ViewSetNode:
@@ -116,6 +166,9 @@ for viewset in sorted_by_depth:
 #: The Pulp Platform v3 API router, which can be used to manually register ViewSets with the API.
 root_router = routers.DefaultRouter()
 
+uploads_router = UploadsRouter()
+uploads_router.register(r'uploads', UploadViewSet)
+
 urlpatterns = [
     url(r'^{api_root}status/'.format(api_root=API_ROOT), StatusView.as_view()),
     url(r'^{api_root}orphans/'.format(api_root=API_ROOT), OrphansView.as_view()),
@@ -143,16 +196,6 @@ urlpatterns.append(url(
     name='schema-redoc')
 )
 
-urlpatterns.append(url(
-    r'^{api_root}uploads/(?P<pk>.*)/$'.format(api_root=API_ROOT),
-    UploadView.as_view(),
-    name='upload-detail')
-)
-urlpatterns.append(url(
-    r'^{api_root}uploads/$'.format(api_root=API_ROOT),
-    UploadView.as_view())
-)
-
 schema_view = get_schema_view(
     title='Pulp API',
     permission_classes=[permissions.AllowAny],
@@ -160,7 +203,7 @@ schema_view = get_schema_view(
 
 urlpatterns.append(url(r'^{api_root}$'.format(api_root=API_ROOT), schema_view))
 
-all_routers = [root_router] + vs_tree.register_with(root_router)
+all_routers = [root_router, uploads_router] + vs_tree.register_with(root_router)
 for router in all_routers:
     urlpatterns.append(url(r'^{api_root}'.format(api_root=API_ROOT), include(router.urls)))
 

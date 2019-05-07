@@ -24,3 +24,4 @@ from .repository import (  # noqa
     RepositoryVersionViewSet
 )
 from .task import TaskViewSet, WorkerViewSet  # noqa
+from .upload import UploadViewSet  # noqa
