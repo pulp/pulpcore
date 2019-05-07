@@ -47,7 +47,9 @@ clean:
 diagrams:
 	mkdir -p $(DIAGRAM_BUILD_DIR)
 	python3 -m plantuml diagrams_src/*.dot
-	mv diagrams_src/*.png $(DIAGRAM_BUILD_DIR)/
+	# cp + rm = mv  workaround https://pulp.plan.io/issues/4791#note-3
+	cp diagrams_src/*.png $(DIAGRAM_BUILD_DIR)/
+	rm diagrams_src/*.png
 
 html:
 	mkdir -p $(BUILDDIR)/html
