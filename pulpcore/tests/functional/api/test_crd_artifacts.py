@@ -54,11 +54,31 @@ class ArtifactTestCase(unittest.TestCase):
             for keys in itertools.combinations(file_attrs, i):
                 data = {key: file_attrs[key] for key in keys}
                 with self.subTest(data=data):
-                    self._do_upload_valid_attrs(data)
+                    self._do_upload_valid_attrs(data, self.file)
 
-    def _do_upload_valid_attrs(self, data):
+    def test_upload_empty_file(self):
+        """Upload an empty file.
+
+        For each possible combination of ``sha256`` and ``size`` (including
+        neither), do the following:
+
+        1. Upload a file with the chosen combination of attributes.
+        2. Verify that an artifact has been created, and that it has valid
+           attributes.
+        3. Delete the artifact, and verify that its attributes are
+           inaccessible.
+        """
+        empty_file = b''
+        file_attrs = {'sha256': hashlib.sha256(empty_file).hexdigest(), 'size': 0}
+        for i in range(len(file_attrs) + 1):
+            for keys in itertools.combinations(file_attrs, i):
+                data = {key: file_attrs[key] for key in keys}
+                with self.subTest(data=data):
+                    self._do_upload_valid_attrs(data, files={'file': empty_file})
+
+    def _do_upload_valid_attrs(self, data, files):
         """Upload a file with the given attributes."""
-        artifact = self.client.post(ARTIFACTS_PATH, data=data, files=self.file)
+        artifact = self.client.post(ARTIFACTS_PATH, data=data, files=files)
         self.addCleanup(self.client.delete, artifact['_href'])
         read_artifact = self.client.get(artifact['_href'])
         for key, val in artifact.items():
