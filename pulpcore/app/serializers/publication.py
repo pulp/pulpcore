@@ -11,7 +11,6 @@ from pulpcore.app.serializers import (
     BaseURLField,
     DetailIdentityField,
     DetailRelatedField,
-    IdentityField,
     NestedRelatedField,
     RelatedField,
     MasterModelSerializer,
@@ -22,12 +21,11 @@ from pulpcore.app.serializers import (
 
 class PublicationSerializer(MasterModelSerializer):
     _href = DetailIdentityField()
-    _distributions = RelatedField(
-        help_text=_('This publication is currently being served as'
-                    'defined by these distributions.'),
-        many=True,
-        read_only=True,
-        view_name='distributions-detail',
+    _distributions = DetailRelatedField(
+       help_text=_('This publication is currently being served as'
+                   'defined by these distributions.'),
+       many=True,
+       read_only=True,
     )
     repository_version = NestedRelatedField(
         view_name='versions-detail',
@@ -100,10 +98,8 @@ class ContentGuardSerializer(MasterModelSerializer):
         )
 
 
-class BaseDistributionSerializer(ModelSerializer):
-    _href = IdentityField(
-        view_name='distributions-detail'
-    )
+class BaseDistributionSerializer(MasterModelSerializer):
+    _href = DetailIdentityField()
     name = serializers.CharField(
         help_text=_('A unique distribution name. Ex, `rawhide` and `stable`.'),
         validators=[validators.MaxLengthValidator(
@@ -113,31 +109,10 @@ class BaseDistributionSerializer(ModelSerializer):
             )),
             UniqueValidator(queryset=models.Distribution.objects.all())]
     )
-    publisher = DetailRelatedField(
-        required=False,
-        help_text=_('Publications created by this publisher and repository are automatically'
-                    'served as defined by this distribution'),
-        queryset=models.Publisher.objects.all(),
-        allow_null=True
-    )
     content_guard = DetailRelatedField(
         required=False,
         help_text=_('An optional content-guard.'),
         queryset=models.ContentGuard.objects.all(),
-        allow_null=True
-    )
-    publication = DetailRelatedField(
-        required=False,
-        help_text=_('The publication being served as defined by this distribution'),
-        queryset=models.Publication.objects.exclude(complete=False),
-        allow_null=True
-    )
-    repository = RelatedField(
-        required=False,
-        help_text=_('Publications created by this repository and publisher are automatically'
-                    'served as defined by this distribution'),
-        queryset=models.Repository.objects.all(),
-        view_name='repositories-detail',
         allow_null=True
     )
     remote = DetailRelatedField(
@@ -150,9 +125,6 @@ class BaseDistributionSerializer(ModelSerializer):
     class Meta:
         fields = ModelSerializer.Meta.fields + (
             'name',
-            'publisher',
-            'publication',
-            'repository',
             'content_guard',
             'remote',
         )
@@ -174,10 +146,37 @@ class DistributionSerializer(BaseDistributionSerializer):
         source='base_path', read_only=True,
         help_text=_('The URL for accessing the publication as defined by this distribution.')
     )
+    publisher = DetailRelatedField(
+        required=False,
+        help_text=_('Publications created by this publisher and repository are automatically'
+                    'served as defined by this distribution'),
+        queryset=models.Publisher.objects.all(),
+        allow_null=True
+    )
+    publication = DetailRelatedField(
+        required=False,
+        help_text=_('The publication being served as defined by this distribution'),
+        queryset=models.Publication.objects.exclude(complete=False),
+        allow_null=True
+    )
+    repository = RelatedField(
+        required=False,
+        help_text=_('Publications created by this repository and publisher are automatically'
+                    'served as defined by this distribution'),
+        queryset=models.Repository.objects.all(),
+        view_name='repositories-detail',
+        allow_null=True
+    )
 
     class Meta:
         model = models.Distribution
-        fields = BaseDistributionSerializer.Meta.fields + ('base_path', 'base_url')
+        fields = BaseDistributionSerializer.Meta.fields + (
+            'base_path',
+            'base_url',
+            'publisher',
+            'publication',
+            'repository',
+        )
 
     def _validate_path_overlap(self, path):
         # look for any base paths nested in path

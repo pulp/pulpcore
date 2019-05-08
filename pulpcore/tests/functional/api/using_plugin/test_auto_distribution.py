@@ -7,7 +7,7 @@ from urllib.parse import urljoin
 from requests import HTTPError
 
 from pulp_smash import api, config, utils
-from pulp_smash.pulp3.constants import DISTRIBUTION_PATH, REPO_PATH
+from pulp_smash.pulp3.constants import REPO_PATH
 from pulp_smash.pulp3.utils import (
     delete_orphans,
     gen_distribution,
@@ -22,6 +22,7 @@ from pulp_smash.pulp3.utils import (
 from pulpcore.tests.functional.api.using_plugin.constants import (
     FILE_CONTENT_NAME,
     FILE_CONTENT_PATH,
+    FILE_DISTRIBUTION_PATH,
     FILE_FIXTURE_MANIFEST_URL,
     FILE_PUBLISHER_PATH,
     FILE_REMOTE_PATH,
@@ -93,7 +94,7 @@ class AutoDistributionTestCase(unittest.TestCase):
         body['repository'] = repo['_href']
         body['publisher'] = publisher['_href']
         distribution = self.client.using_handler(api.task_handler).post(
-            DISTRIBUTION_PATH, body
+            FILE_DISTRIBUTION_PATH, body
         )
         self.addCleanup(self.client.delete, distribution['_href'])
 
@@ -173,7 +174,7 @@ class SetupAutoDistributionTestCase(unittest.TestCase):
         body['publisher'] = publisher['_href']
         body['repository'] = repo['_href']
         distribution = self.client.using_handler(api.task_handler).post(
-            DISTRIBUTION_PATH, body
+            FILE_DISTRIBUTION_PATH, body
         )
         self.addCleanup(self.client.delete, distribution['_href'])
 
@@ -212,7 +213,7 @@ class SetupAutoDistributionTestCase(unittest.TestCase):
         body = gen_distribution()
         body.update(kwargs)
         with self.assertRaises(HTTPError):
-            self.client.post(DISTRIBUTION_PATH, body)
+            self.client.post(FILE_DISTRIBUTION_PATH, body)
 
     def try_update_distribution(self, distribution, **kwargs):
         """Unsuccessfully update a distribution with HTTP PATCH.

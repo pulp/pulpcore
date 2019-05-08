@@ -5,7 +5,7 @@ import unittest
 from urllib.parse import urljoin
 
 from pulp_smash import api, config
-from pulp_smash.pulp3.constants import DISTRIBUTION_PATH, REPO_PATH
+from pulp_smash.pulp3.constants import REPO_PATH
 from pulp_smash.pulp3.utils import (
     gen_distribution,
     gen_publisher,
@@ -17,6 +17,7 @@ from pulp_smash.pulp3.utils import (
 
 from pulpcore.tests.functional.api.using_plugin.constants import (
     FILE_CONTENT_NAME,
+    FILE_DISTRIBUTION_PATH,
     FILE_FIXTURE_MANIFEST_URL,
     FILE_PUBLISHER_PATH,
     FILE_REMOTE_PATH
@@ -75,7 +76,7 @@ class ContentPromotionTestCase(unittest.TestCase):
             body = gen_distribution()
             body['publication'] = publication['_href']
             distribution = client.using_handler(api.task_handler).post(
-                DISTRIBUTION_PATH, body
+                FILE_DISTRIBUTION_PATH, body
             )
             distributions.append(distribution)
             self.addCleanup(client.delete, distribution['_href'])

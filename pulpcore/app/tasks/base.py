@@ -1,4 +1,22 @@
 from pulpcore.app.apps import get_plugin_config
+from pulpcore.app.models import CreatedResource
+
+
+def general_create(app_label, serializer_name, *args, **kwargs):
+    """
+    Create a model instance.
+
+    Raises:
+        ValidationError: If the serializer is not valid
+
+    """
+    data = kwargs.pop('data', None)
+    serializer_class = get_plugin_config(app_label).named_serializers[serializer_name]
+    serializer = serializer_class(data=data)
+    serializer.is_valid(raise_exception=True)
+    serializer.save()
+    resource = CreatedResource(content_object=serializer.instance)
+    resource.save()
 
 
 def general_update(instance_id, app_label, serializer_name, *args, **kwargs):

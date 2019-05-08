@@ -6,7 +6,7 @@ from urllib.parse import urljoin
 from requests import HTTPError
 
 from pulp_smash import api, config
-from pulp_smash.pulp3.constants import DISTRIBUTION_PATH, REPO_PATH
+from pulp_smash.pulp3.constants import REPO_PATH
 from pulp_smash.pulp3.utils import (
     delete_orphans,
     gen_distribution,
@@ -17,6 +17,7 @@ from pulp_smash.pulp3.utils import (
 
 from pulpcore.tests.functional.api.using_plugin.constants import (
     FILE_CONTENT_PATH,
+    FILE_DISTRIBUTION_PATH,
     FILE_PUBLISHER_PATH,
 )
 from pulpcore.tests.functional.api.using_plugin.utils import populate_pulp, create_file_publication
@@ -76,7 +77,7 @@ class ContentAppTestCase(unittest.TestCase):
         body['repository'] = repo['_href']
         body['publisher'] = publisher['_href']
         distribution = self.client.using_handler(api.task_handler).post(
-            DISTRIBUTION_PATH, body
+            FILE_DISTRIBUTION_PATH, body
         )
         self.addCleanup(self.client.delete, distribution['_href'])
 
