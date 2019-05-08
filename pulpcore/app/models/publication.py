@@ -2,7 +2,7 @@ from django.db import models, transaction
 
 from . import storage
 from .base import MasterModel, Model
-from .repository import Publisher, Remote, Repository
+from .repository import Remote, Repository, RepositoryVersion
 from .task import CreatedResource
 
 
@@ -107,28 +107,6 @@ class Publication(MasterModel):
             CreatedResource.objects.filter(object_id=self.pk).delete()
             super().delete(**kwargs)
 
-    def update_distributions(self, model=None):
-        """
-        Update distributions with this publication.
-
-        This supports the auto-distribution feature by updating the publication on
-        distributions with matching repository and publisher. By doing this, this
-        publication will be distributed.  This method may only be called after
-        setting complete=True and saved.
-
-        Args:
-            model (pulpcore.app.models.BaseDistribution): A distribution model used.
-                The Distribution model is used when not specified.
-
-        """
-        model = model or Distribution
-        distributions = model.objects.filter(
-            publisher=self.publisher,
-            repository=self.repository)
-        for distribution in distributions:
-            distribution.publication = self
-            distribution.save()
-
     def __enter__(self):
         """
         Enter context.
@@ -140,10 +118,7 @@ class Publication(MasterModel):
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         """
-        Exit the context.
-
-        Set the complete=True, create the publication, and update distributions
-        configured for auto-distribution (as needed).
+        Set the complete=True, create the publication.
 
         Args:
             exc_type (Type): (optional) Type of exception raised.
@@ -152,9 +127,7 @@ class Publication(MasterModel):
         """
         if not exc_val:
             self.complete = True
-            with transaction.atomic():
-                self.save()
-                self.update_distributions()
+            self.save()
         else:
             self.delete()
 
@@ -231,14 +204,19 @@ class ContentGuard(MasterModel):
 
 class BaseDistribution(MasterModel):
     """
-    A distribution defines how a publication is distributed by Pulp's webserver.
+    A distribution defines how a publication is distributed by the Content App.
 
     This abstract model can be used by plugin writers to create concrete distributions that are
     stored in separate tables from the Distributions provided by pulpcore.
 
+    The `name` must be unique.
+
+    The ``base_path`` must have no overlapping components. So if a :term:`Distribution` with
+    ``base_path`` of ``a/path/foo`` existed, you could not make a second :term:`Distribution` with a
+    ``base_path`` of ``a/path`` or ``a`` because both are subpaths of ``a/path/foo``.
+
     Fields:
-        name (models.CharField): The name of the distribution.
-            Examples: "rawhide" and "stable".
+        name (models.CharField): The name of the distribution. Examples: "rawhide" and "stable".
         base_path (models.CharField): The base (relative) path component of the published url.
 
     Relations:
@@ -256,21 +234,21 @@ class BaseDistribution(MasterModel):
 
 class Distribution(BaseDistribution):
     """
-    A distribution defines how a publication is distributed by Pulp's webserver.
+    A distribution defines how a publication is distributed by Pulp's content app.
+
+    The use of repository, repository_version, or publication are mutually exclusive, and this
+    model's serializer will raise a ValidationError if they are used together.
 
     Relations:
-        publisher (models.ForeignKey): The associated publisher.
-            All publications of the repository that are created by the publisher will be
-            automatically associated.
-        repository (models.ForeignKey): The associated repository.
-        publication (models.ForeignKey): The current publication associated with
-            the distribution.  This is the publication being served by Pulp through
-            this relative URL path and settings.
+        publication (models.ForeignKey): Publication to be served.
+        repository (models.ForeignKey): The latest RepositoryVersion for this Repository will be
+            served.
+        repository_version (models.ForeignKey): RepositoryVersion to be served.
     """
 
     publication = models.ForeignKey(Publication, null=True, on_delete=models.SET_NULL)
-    publisher = models.ForeignKey(Publisher, null=True, on_delete=models.SET_NULL)
     repository = models.ForeignKey(Repository, null=True, on_delete=models.SET_NULL)
+    repository_version = models.ForeignKey(RepositoryVersion, null=True, on_delete=models.SET_NULL)
 
     class Meta:
         default_related_name = '_distributions'
