@@ -18,8 +18,8 @@ then
 fi
 
 cd
-git clone https://github.com/pulp/pulp-swagger-codegen.git
-cd pulp-swagger-codegen
+git clone https://github.com/pulp/pulp-openapi-generator.git
+cd pulp-openapi-generator
 
 sudo ./generate.sh pulpcore python $VERSION
 sudo chown -R travis:travis pulpcore-client

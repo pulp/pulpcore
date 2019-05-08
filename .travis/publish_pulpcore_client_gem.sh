@@ -19,8 +19,8 @@ then
 fi
 
 cd
-git clone https://github.com/pulp/pulp-swagger-codegen.git
-cd pulp-swagger-codegen
+git clone https://github.com/pulp/pulp-openapi-generator.git
+cd pulp-openapi-generator
 
 sudo ./generate.sh pulpcore ruby $VERSION
 sudo chown travis:travis pulpcore-client
