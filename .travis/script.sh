@@ -34,7 +34,7 @@ if [ "$TEST" = 'docs' ]; then
 fi
 
 if [ "$TEST" = 'bindings' ]; then
-  cd ../pulp-swagger-codegen
+  cd ../pulp-openapi-generator
   sudo ./generate.sh pulpcore python
   sudo ./generate.sh pulp_file python
   pip install ./pulpcore-client

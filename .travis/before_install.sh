@@ -8,7 +8,7 @@ export PULP_SMASH_PR_NUMBER=$(echo $COMMIT_MSG | grep -oP 'Required\ PR:\ https\
 export PULP_PLUGIN_PR_NUMBER=$(echo $COMMIT_MSG | grep -oP 'Required\ PR:\ https\:\/\/github\.com\/pulp\/pulpcore-plugin\/pull\/(\d+)' | awk -F'/' '{print $7}')
 export PULP_ROLES_PR_NUMBER=$(echo $COMMIT_MSG | grep -oP 'Required\ PR:\ https\:\/\/github\.com\/pulp\/ansible-pulp\/pull\/(\d+)' | awk -F'/' '{print $7}')
 export PULP_CERTGUARD_PR_NUMBER=$(echo $COMMIT_MSG | grep -oP 'Required\ PR:\ https\:\/\/github\.com\/pulp\/pulp-certguard\/pull\/(\d+)' | awk -F'/' '{print $7}')
-export PULP_BINDINGS_PR_NUMBER=$(echo $COMMIT_MSG | grep -oP 'Required\ PR:\ https\:\/\/github\.com\/pulp\/pulp-swagger-codegen\/pull\/(\d+)' | awk -F'/' '{print $7}')
+export PULP_BINDINGS_PR_NUMBER=$(echo $COMMIT_MSG | grep -oP 'Required\ PR:\ https\:\/\/github\.com\/pulp\/pulp-openapi-generator\/pull\/(\d+)' | awk -F'/' '{print $7}')
 
 cd ..
 git clone https://github.com/pulp/ansible-pulp.git
@@ -54,8 +54,8 @@ if [ -n "$PULP_SMASH_PR_NUMBER" ]; then
 fi
 
 if [ "$TEST" = 'bindings' ]; then
-  git clone https://github.com/pulp/pulp-swagger-codegen.git
-  cd pulp-swagger-codegen
+  git clone https://github.com/pulp/pulp-openapi-generator.git
+  cd pulp-openapi-generator
 
   if [ -n "$PULP_BINDINGS_PR_NUMBER" ]; then
     git fetch origin +refs/pull/$PULP_BINDINGS_PR_NUMBER/merge
