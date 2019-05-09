@@ -11,7 +11,9 @@ Breaking Changes
 
 Default port changes happened in the `Ansible Installer for Pulp <https://github.com/pulp/
 ansible-pulp>`_ and pulpcore was updated to match with `this PR <https://github.com/pulp/pulpcore/
-pull/75>`_
+pull/75>`_. Existing installs are unaffected. This was done to avoid conflicts that would prevent
+Pulp from starting by default in many environments; the previous ports (8000 & 8080) are commonly
+used by management webGUIs, development webservers, etc.
 
 Publications are now Master/Detail which causes any Publication URL endpoint to change. To give an
 example from `pulp_file <https://github.com/pulp/pulp_file>`_ see the URL changes made
