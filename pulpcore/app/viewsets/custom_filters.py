@@ -11,7 +11,7 @@ from django_filters.fields import IsoDateTimeField
 from rest_framework import serializers
 from uuid import UUID
 
-from pulpcore.app.models import RepositoryVersion
+from pulpcore.app.models import ContentArtifact, RepositoryVersion
 from pulpcore.app.viewsets import NamedModelViewSet
 
 
@@ -101,6 +101,30 @@ class RepoVersionHrefFilter(Filter):
             value (string): The RepositoryVersion href to filter by
         """
         raise NotImplementedError()
+
+
+class ArtifactRepositoryVersionFilter(RepoVersionHrefFilter):
+    """
+    Filter used to get the artifacts in a repository version.
+    """
+
+    def filter(self, qs, value):
+        """
+        Args:
+            qs (django.db.models.query.QuerySet): The Artifact Queryset
+            value (string): The RepositoryVersion href to filter by
+
+        Returns:
+            Queryset of the artifacts contained within the specified repository version
+        """
+        if value is None:
+            # user didn't supply a value
+            return qs
+
+        repo_version = self.get_repository_version(value)
+        content = repo_version.content
+        artifact_pks = ContentArtifact.objects.filter(content__in=content).values('artifact__pk')
+        return qs.filter(pk__in=artifact_pks)
 
 
 class ContentRepositoryVersionFilter(RepoVersionHrefFilter):
