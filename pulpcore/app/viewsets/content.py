@@ -10,6 +10,7 @@ from pulpcore.app.serializers import ArtifactSerializer, MultipleArtifactContent
 from pulpcore.app.viewsets.base import BaseFilterSet, NamedModelViewSet
 
 from .custom_filters import (
+    ArtifactRepositoryVersionFilter,
     ContentRepositoryVersionFilter,
     ContentAddedRepositoryVersionFilter,
     ContentRemovedRepositoryVersionFilter,
@@ -25,9 +26,19 @@ class ArtifactFilter(BaseFilterSet):
        - specify plugin content model
        - extend `fields` with plugin-specific ones
     """
+    repository_version = ArtifactRepositoryVersionFilter()
+
     class Meta:
         model = Artifact
-        fields = ['md5', 'sha1', 'sha224', 'sha256', 'sha384', 'sha512']
+        fields = {
+            'repository_version': ['exact'],
+            'md5': ['exact'],
+            'sha1': ['exact'],
+            'sha224': ['exact'],
+            'sha256': ['exact'],
+            'sha384': ['exact'],
+            'sha512': ['exact']
+        }
 
 
 class ArtifactViewSet(NamedModelViewSet,
