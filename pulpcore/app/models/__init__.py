@@ -6,10 +6,11 @@ from .generic import GenericRelationModel  # noqa
 from .publication import (  # noqa
     ContentGuard,
     BaseDistribution,
-    Distribution,
     Publication,
+    PublicationDistribution,
     PublishedArtifact,
-    PublishedMetadata
+    PublishedMetadata,
+    RepositoryVersionDistribution,
 )
 from .repository import (  # noqa
     Exporter,

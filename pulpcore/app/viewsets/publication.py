@@ -3,13 +3,13 @@ from rest_framework import mixins
 from rest_framework.filters import OrderingFilter
 
 from pulpcore.app.models import (
+    BaseDistribution,
     ContentGuard,
-    Distribution,
     Publication,
 )
 from pulpcore.app.serializers import (
+    BaseDistributionSerializer,
     ContentGuardSerializer,
-    DistributionSerializer,
     PublicationSerializer,
 )
 from pulpcore.app.viewsets import (
@@ -65,42 +65,29 @@ class DistributionFilter(BaseFilterSet):
     base_path = filters.CharFilter()
 
     class Meta:
-        model = Distribution
+        model = BaseDistribution
         fields = {
             'name': NAME_FILTER_OPTIONS,
             'base_path': ['exact', 'contains', 'icontains', 'in']
         }
 
 
-class DistributionViewSet(NamedModelViewSet,
-                          mixins.RetrieveModelMixin,
-                          mixins.ListModelMixin,
-                          AsyncCreateMixin,
-                          AsyncRemoveMixin,
-                          AsyncUpdateMixin):
+class BaseDistributionViewSet(NamedModelViewSet,
+                              mixins.RetrieveModelMixin,
+                              mixins.ListModelMixin,
+                              AsyncCreateMixin,
+                              AsyncRemoveMixin,
+                              AsyncUpdateMixin):
     """
     Provides read and list methods and also provides asynchronous CUD methods to dispatch tasks
     with reservation that lock all Distributions preventing race conditions during base_path
     checking.
     """
     endpoint_name = 'distributions'
-    queryset = Distribution.objects.all()
-    serializer_class = DistributionSerializer
+    queryset = BaseDistribution.objects.all()
+    serializer_class = BaseDistributionSerializer
     filterset_class = DistributionFilter
 
     def async_reserved_resources(self, instance):
         """Return resource that locks all Distributions."""
         return "/api/v3/distributions/"
-
-    @classmethod
-    def is_master_viewset(cls):
-        """
-        Declare DistributionViewSet to be a master ViewSet.
-
-        This Viewset is a master ViewSet despite that its associated Model isn't
-        a master model. This prevents registering the ViewSet with a router.
-        """
-        if cls is DistributionViewSet:
-            return True
-        else:
-            return super().is_master_viewset()

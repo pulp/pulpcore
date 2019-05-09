@@ -11,7 +11,7 @@ from aiohttp.web_exceptions import HTTPForbidden, HTTPFound, HTTPNotFound
 from django.conf import settings
 from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 from django.db import IntegrityError, transaction
-from pulpcore.app.models import Artifact, ContentArtifact, Distribution, Remote, RemoteArtifact
+from pulpcore.app.models import Artifact, ContentArtifact, BaseDistribution, Remote, RemoteArtifact
 
 
 log = logging.getLogger(__name__)
@@ -94,16 +94,16 @@ class Handler:
             path (str): The path component of the URL.
 
         Returns:
-            Distribution: The matched distribution.
+            BaseDistribution: The matched distribution.
 
         Raises:
             PathNotResolved: when not matched.
         """
         base_paths = Handler._base_paths(path)
         try:
-            return Distribution.objects.get(base_path__in=base_paths)
+            return BaseDistribution.objects.get(base_path__in=base_paths)
         except ObjectDoesNotExist:
-            log.debug(_('Distribution not matched for {path} using: {base_paths}').format(
+            log.debug(_('BaseDistribution not matched for {path} using: {base_paths}').format(
                 path=path, base_paths=base_paths
             ))
             raise PathNotResolved(path)
@@ -117,7 +117,8 @@ class Handler:
 
         Args:
             request (:class:`aiohttp.web.Request`): A request for a published file.
-            distribution (:class:`pulpcore.plugin.models.Distribution`): The matched distribution.
+            distribution (:class:`pulpcore.plugin.models.BaseDistribution`): The matched
+                distribution.
 
         Raises:
             :class:`aiohttp.web_exceptions.HTTPForbidden`: When not permitted.
@@ -157,21 +158,19 @@ class Handler:
             :class:`aiohttp.web.StreamResponse` or :class:`aiohttp.web.FileResponse`: The response
                 streamed back to the client.
         """
-        distro = Handler._match_distribution(path)
+        distro = Handler._match_distribution(path).cast()
         self._permit(request, distro)
-
-        if not distro.publication and not distro.repository \
-                and not distro.repository_version and not distro.remote:
-            raise PathNotResolved(path)
 
         rel_path = path.lstrip('/')
         rel_path = rel_path[len(distro.base_path):]
         rel_path = rel_path.lstrip('/')
 
-        if distro.publication:
+        publication = getattr(distro, 'publication', None)
+
+        if publication:
             # published artifact
             try:
-                pa = distro.publication.published_artifact.get(relative_path=rel_path)
+                pa = publication.published_artifact.get(relative_path=rel_path)
                 ca = pa.content_artifact
             except ObjectDoesNotExist:
                 pass
@@ -183,17 +182,17 @@ class Handler:
 
             # published metadata
             try:
-                pm = distro.publication.published_metadata.get(relative_path=rel_path)
+                pm = publication.published_metadata.get(relative_path=rel_path)
             except ObjectDoesNotExist:
                 pass
             else:
                 return self._handle_file_response(pm.file)
 
             # pass-through
-            if distro.publication.pass_through:
+            if publication.pass_through:
                 try:
                     ca = ContentArtifact.objects.get(
-                        content__in=distro.publication.repository_version.content,
+                        content__in=publication.repository_version.content,
                         relative_path=rel_path)
                 except MultipleObjectsReturned:
                     log.error(
@@ -211,11 +210,13 @@ class Handler:
                         return self._handle_file_response(ca.artifact.file)
                     else:
                         return await self._stream_content_artifact(request, StreamResponse(), ca)
-        elif distro.repository or distro.repository_version:
-            if distro.repository:
+
+        repo_version = getattr(distro, 'repository_version', None)
+        repository = getattr(distro, 'repository', None)
+
+        if repository or repo_version:
+            if repository:
                 repo_version = distro.repository.versions.get(number=distro.repository.last_version)
-            else:
-                repo_version = distro.repository_version
 
             try:
                 ca = ContentArtifact.objects.get(

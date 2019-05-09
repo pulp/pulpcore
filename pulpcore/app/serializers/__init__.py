@@ -35,8 +35,9 @@ from .progress import ProgressReportSerializer  # noqa
 from .publication import (  # noqa
     BaseDistributionSerializer,
     ContentGuardSerializer,
-    DistributionSerializer,
+    PublicationDistributionSerializer,
     PublicationSerializer,
+    RepositoryVersionDistributionSerializer,
 )
 from .repository import (  # noqa
     ExporterSerializer,
