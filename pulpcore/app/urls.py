@@ -178,6 +178,7 @@ urlpatterns = [
 api_info = openapi.Info(
     title="Pulp 3 API",
     default_version='v3',
+    logo={"url": "https://pulp.plan.io/attachments/download/517478/pulp_logo_word_rectangle.svg"}
 )
 
 docs_schema_view = yasg_get_schema_view(
