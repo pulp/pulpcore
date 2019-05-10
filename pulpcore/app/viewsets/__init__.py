@@ -16,9 +16,9 @@ from .custom_filters import (  # noqa
     RepoVersionHrefFilter
 )
 from .publication import (  # noqa
+    BaseDistributionViewSet,
     ContentGuardFilter,
     ContentGuardViewSet,
-    DistributionViewSet,
     PublicationViewSet,
 )
 from .repository import (  # noqa

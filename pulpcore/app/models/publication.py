@@ -211,9 +211,9 @@ class BaseDistribution(MasterModel):
 
     The `name` must be unique.
 
-    The ``base_path`` must have no overlapping components. So if a :term:`Distribution` with
-    ``base_path`` of ``a/path/foo`` existed, you could not make a second :term:`Distribution` with a
-    ``base_path`` of ``a/path`` or ``a`` because both are subpaths of ``a/path/foo``.
+    The ``base_path`` must have no overlapping components. So if a Distribution with ``base_path``
+    of ``a/path/foo`` existed, you could not make a second Distribution with a ``base_path`` of
+    ``a/path`` or ``a`` because both are subpaths of ``a/path/foo``.
 
     Fields:
         name (models.CharField): The name of the distribution. Examples: "rawhide" and "stable".
@@ -232,23 +232,34 @@ class BaseDistribution(MasterModel):
     remote = models.ForeignKey(Remote, null=True, on_delete=models.SET_NULL)
 
 
-class Distribution(BaseDistribution):
+class PublicationDistribution(BaseDistribution):
     """
-    A distribution defines how a publication is distributed by Pulp's content app.
-
-    The use of repository, repository_version, or publication are mutually exclusive, and this
-    model's serializer will raise a ValidationError if they are used together.
+    Define how Pulp's content app will serve a Publication.
 
     Relations:
         publication (models.ForeignKey): Publication to be served.
+    """
+
+    publication = models.ForeignKey(Publication, null=True, on_delete=models.SET_NULL)
+
+    class Meta:
+        abstract = True
+
+
+class RepositoryVersionDistribution(BaseDistribution):
+    """
+    Define how Pulp's content app will serve a RepositoryVersion or Repository.
+
+    The ``repository`` and ``repository_version`` fields cannot be used together.
+
+    Relations:
         repository (models.ForeignKey): The latest RepositoryVersion for this Repository will be
             served.
         repository_version (models.ForeignKey): RepositoryVersion to be served.
     """
 
-    publication = models.ForeignKey(Publication, null=True, on_delete=models.SET_NULL)
     repository = models.ForeignKey(Repository, null=True, on_delete=models.SET_NULL)
     repository_version = models.ForeignKey(RepositoryVersion, null=True, on_delete=models.SET_NULL)
 
     class Meta:
-        default_related_name = '_distributions'
+        abstract = True

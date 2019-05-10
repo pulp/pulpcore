@@ -21,12 +21,6 @@ from pulpcore.app.serializers import (
 
 class PublicationSerializer(MasterModelSerializer):
     _href = DetailIdentityField()
-    _distributions = DetailRelatedField(
-       help_text=_('This publication is currently being served as'
-                   'defined by these distributions.'),
-       many=True,
-       read_only=True,
-    )
     repository_version = NestedRelatedField(
         view_name='versions-detail',
         lookup_field='number',
@@ -72,7 +66,6 @@ class PublicationSerializer(MasterModelSerializer):
         model = models.Publication
         fields = MasterModelSerializer.Meta.fields + (
             'publisher',
-            '_distributions',
             'repository_version',
             'repository'
         )
@@ -100,6 +93,21 @@ class ContentGuardSerializer(MasterModelSerializer):
 
 class BaseDistributionSerializer(MasterModelSerializer):
     _href = DetailIdentityField()
+    base_path = serializers.CharField(
+        help_text=_('The base (relative) path component of the published url. Avoid paths that \
+                    overlap with other distribution base paths (e.g. "foo" and "foo/bar")'),
+        validators=[validators.MaxLengthValidator(
+            models.BaseDistribution._meta.get_field('base_path').max_length,
+            message=_('`base_path` length must be less than {} characters').format(
+                models.BaseDistribution._meta.get_field('base_path').max_length
+            )),
+            UniqueValidator(queryset=models.BaseDistribution.objects.all()),
+        ]
+    )
+    base_url = BaseURLField(
+        source='base_path', read_only=True,
+        help_text=_('The URL for accessing the publication as defined by this distribution.')
+    )
     content_guard = DetailRelatedField(
         required=False,
         help_text=_('An optional content-guard.'),
@@ -107,13 +115,13 @@ class BaseDistributionSerializer(MasterModelSerializer):
         allow_null=True
     )
     name = serializers.CharField(
-        help_text=_('A unique distribution name. Ex, `rawhide` and `stable`.'),
+        help_text=_('A unique name. Ex, `rawhide` and `stable`.'),
         validators=[validators.MaxLengthValidator(
-            models.Distribution._meta.get_field('name').max_length,
-            message=_('Distribution name length must be less than {} characters').format(
-                models.Distribution._meta.get_field('name').max_length
+            models.BaseDistribution._meta.get_field('name').max_length,
+            message=_('`name` length must be less than {} characters').format(
+                models.BaseDistribution._meta.get_field('name').max_length
             )),
-            UniqueValidator(queryset=models.Distribution.objects.all())]
+            UniqueValidator(queryset=models.BaseDistribution.objects.all())]
     )
     remote = DetailRelatedField(
         required=False,
@@ -123,35 +131,59 @@ class BaseDistributionSerializer(MasterModelSerializer):
     )
 
     class Meta:
+        abstract = True
+        model = models.BaseDistribution
         fields = ModelSerializer.Meta.fields + (
+            'base_path',
+            'base_url',
             'content_guard',
             'name',
             'remote',
         )
 
+    def _validate_path_overlap(self, path):
+        # look for any base paths nested in path
+        search = path.split("/")[0]
+        q = Q(base_path=search)
+        for subdir in path.split("/")[1:]:
+            search = "/".join((search, subdir))
+            q |= Q(base_path=search)
 
-class DistributionSerializer(BaseDistributionSerializer):
-    base_path = serializers.CharField(
-        help_text=_('The base (relative) path component of the published url. Avoid paths that \
-                    overlap with other distribution base paths (e.g. "foo" and "foo/bar")'),
-        validators=[validators.MaxLengthValidator(
-            models.Distribution._meta.get_field('base_path').max_length,
-            message=_('Distribution base_path length must be less than {} characters').format(
-                models.Distribution._meta.get_field('base_path').max_length
-            )),
-            UniqueValidator(queryset=models.Distribution.objects.all()),
-        ]
-    )
-    base_url = BaseURLField(
-        source='base_path', read_only=True,
-        help_text=_('The URL for accessing the publication as defined by this distribution.')
-    )
+        # look for any base paths that nest path
+        q |= Q(base_path__startswith='{}/'.format(path))
+        qs = models.BaseDistribution.objects.filter(q)
+
+        if self.instance is not None:
+            qs = qs.exclude(pk=self.instance.pk)
+
+        match = qs.first()
+        if match:
+            raise serializers.ValidationError(detail=_("Overlaps with existing distribution '"
+                                                       "{}'").format(match.name))
+
+        return path
+
+    def validate_base_path(self, path):
+        self._validate_relative_path(path)
+        return self._validate_path_overlap(path)
+
+
+class PublicationDistributionSerializer(BaseDistributionSerializer):
     publication = DetailRelatedField(
         required=False,
         help_text=_('Publication to be served'),
         queryset=models.Publication.objects.exclude(complete=False),
         allow_null=True
     )
+
+    class Meta:
+        abstract = True
+        fields = BaseDistributionSerializer.Meta.fields + (
+            'publication',
+        )
+
+
+class RepositoryVersionDistributionSerializer(BaseDistributionSerializer):
     repository = RelatedField(
         required=False,
         help_text=_('The latest RepositoryVersion for this Repository will be served.'),
@@ -170,52 +202,18 @@ class DistributionSerializer(BaseDistributionSerializer):
     )
 
     class Meta:
-        model = models.Distribution
+        abstract = True
         fields = BaseDistributionSerializer.Meta.fields + (
-            'base_path',
-            'base_url',
-            'publication',
             'repository',
             'repository_version',
         )
 
-    def _validate_path_overlap(self, path):
-        # look for any base paths nested in path
-        search = path.split("/")[0]
-        q = Q(base_path=search)
-        for subdir in path.split("/")[1:]:
-            search = "/".join((search, subdir))
-            q |= Q(base_path=search)
-
-        # look for any base paths that nest path
-        q |= Q(base_path__startswith='{}/'.format(path))
-        qs = models.Distribution.objects.filter(q)
-
-        if self.instance is not None:
-            qs = qs.exclude(pk=self.instance.pk)
-
-        match = qs.first()
-        if match:
-            raise serializers.ValidationError(detail=_("Overlaps with existing distribution '"
-                                                       "{}'").format(match.name))
-
-        return path
-
-    def validate_base_path(self, path):
-        self._validate_relative_path(path)
-        return self._validate_path_overlap(path)
-
     def validate(self, data):
         super().validate(data)
 
-        mutex_keys = ['publication', 'repository', 'repository_version']
-        in_use_keys = []
-        for mkey in mutex_keys:
-            if mkey in data:
-                in_use_keys.append(mkey)
-
-        if len(in_use_keys) > 1:
-            msg = _("The attributes {keys} must be used exclusively.".format(keys=in_use_keys))
+        if 'repository' in data and 'repository_version' in data:
+            msg = _("The attributes 'repository' and 'repository_version' must be used"
+                    "exclusively.")
             raise serializers.ValidationError(msg)
 
         return data
