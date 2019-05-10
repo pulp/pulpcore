@@ -8,7 +8,7 @@ from urllib.parse import urlsplit
 from requests.exceptions import HTTPError
 
 from pulp_smash import api, config, utils
-from pulp_smash.pulp3.constants import REPO_PATH
+from pulp_smash.pulp3.constants import ARTIFACTS_PATH, REPO_PATH
 from pulp_smash.pulp3.utils import (
     delete_orphans,
     delete_version,
@@ -25,6 +25,7 @@ from pulp_smash.pulp3.utils import (
 )
 
 from pulpcore.tests.functional.api.using_plugin.constants import (
+    FILE2_FIXTURE_MANIFEST_URL,
     FILE_CONTENT_NAME,
     FILE_CONTENT_PATH,
     FILE_FIXTURE_COUNT,
@@ -32,6 +33,7 @@ from pulpcore.tests.functional.api.using_plugin.constants import (
     FILE_FIXTURE_SUMMARY,
     FILE_LARGE_FIXTURE_MANIFEST_URL,
     FILE_REMOTE_PATH,
+    FILE_MANY_FIXTURE_MANIFEST_URL,
 )
 from pulpcore.tests.functional.api.using_plugin.utils import (
     gen_file_remote,
@@ -846,3 +848,78 @@ class UpdateRepoVersionTestCase(unittest.TestCase):
             self.client.put(repo['_latest_version_href'], repo)
         repo = self.client.get(repo['_href'])
         self.assertEqual(previous_repo_name, repo['name'], repo)
+
+
+class FilterArtifactsTestCase(unittest.TestCase):
+    """Filter artifacts by repository version.
+
+    This test targets the following issue:
+
+    * `Pulp #4811 <https://pulp.plan.io/issues/4811>`_
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        """Create class-wide variables.
+
+        Populate Pulp with artifacts to show how the filter is related to
+        repository version.
+        """
+        cls.cfg = config.get_config()
+        populate_pulp(cls.cfg, url=FILE_MANY_FIXTURE_MANIFEST_URL)
+        cls.client = api.Client(cls.cfg)
+
+    def test_filter_last_repository_version(self):
+        """Filter by last repository version.
+
+        For a repository with more than one version.
+        """
+        repo = self.client.post(REPO_PATH, gen_repo())
+        self.addCleanup(self.client.delete, repo['_href'])
+
+        for url in [FILE2_FIXTURE_MANIFEST_URL, FILE_FIXTURE_MANIFEST_URL]:
+            remote = self.client.post(
+                FILE_REMOTE_PATH,
+                gen_file_remote(url=url)
+            )
+            self.addCleanup(self.client.delete, remote['_href'])
+            sync(self.cfg, remote, repo)
+            repo = self.client.get(repo['_href'])
+
+        artifacts = self.client.get(
+            ARTIFACTS_PATH,
+            params={'repository_version': repo['_latest_version_href']}
+        )
+        # Every sync add 3 content units to the repository. Last repository
+        # version has 6 content units.
+        self.assertEqual(len(artifacts), FILE_FIXTURE_COUNT*2, artifacts)
+
+    def test_filter_invalid_repo_version(self):
+        """Filter by invalid repository version."""
+        repo = self.client.post(REPO_PATH, gen_repo())
+        self.addCleanup(self.client.delete, repo['_href'])
+        with self.assertRaises(HTTPError) as ctx:
+            self.client.using_handler(api.json_handler).get(
+                ARTIFACTS_PATH,
+                params={'repository_version': repo['_href']}
+            )
+        for key in ('uri', 'repositoryversion', 'not', 'found'):
+            self.assertIn(
+                key,
+                ctx.exception.response.json()[0].lower(),
+                ctx.exception.response
+            )
+
+    def test_filter_valid_repo_version(self):
+        """Filter by valid repository version."""
+        remote = self.client.post(FILE_REMOTE_PATH, gen_file_remote())
+        self.addCleanup(self.client.delete, remote['_href'])
+        repo = self.client.post(REPO_PATH, gen_repo())
+        self.addCleanup(self.client.delete, repo['_href'])
+        sync(self.cfg, remote, repo)
+        repo = self.client.get(repo['_href'])
+        artifacts = self.client.get(
+            ARTIFACTS_PATH,
+            params={'repository_version': repo['_latest_version_href']}
+        )
+        self.assertEqual(len(artifacts), FILE_FIXTURE_COUNT, artifacts)
