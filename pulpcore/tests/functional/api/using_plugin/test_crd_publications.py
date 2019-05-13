@@ -9,7 +9,6 @@ from pulp_smash import api, config
 from pulp_smash.pulp3.constants import REPO_PATH
 from pulp_smash.pulp3.utils import (
     gen_distribution,
-    gen_publisher,
     gen_repo,
     sync
 )
@@ -18,7 +17,6 @@ from pulpcore.tests.functional.api.utils import parse_date_from_string
 from pulpcore.tests.functional.api.using_plugin.constants import (
     FILE_DISTRIBUTION_PATH,
     FILE_PUBLICATION_PATH,
-    FILE_PUBLISHER_PATH,
     FILE_REMOTE_PATH
 )
 from pulpcore.tests.functional.api.using_plugin.utils import (
@@ -39,15 +37,11 @@ class PublicationsTestCase(unittest.TestCase):
         cls.client = api.Client(cls.cfg, api.page_handler)
         cls.remote = {}
         cls.publication = {}
-        cls.publisher = {}
         cls.repo = {}
         try:
             cls.repo.update(cls.client.post(REPO_PATH, gen_repo()))
             body = gen_file_remote()
             cls.remote.update(cls.client.post(FILE_REMOTE_PATH, body))
-            cls.publisher.update(
-                cls.client.post(FILE_PUBLISHER_PATH, gen_publisher())
-            )
             sync(cls.cfg, cls.remote, cls.repo)
         except Exception:
             cls.tearDownClass()
@@ -56,14 +50,14 @@ class PublicationsTestCase(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         """Clean class-wide variables."""
-        for resource in (cls.remote, cls.publisher, cls.repo):
+        for resource in (cls.remote, cls.repo):
             if resource:
                 cls.client.delete(resource['_href'])
 
     def test_01_create_file_publication(self):
         """Create a publication."""
         self.publication.update(
-            create_file_publication(self.cfg, self.repo, publisher=self.publisher)
+            create_file_publication(self.cfg, self.repo)
         )
 
     @skip_if(bool, 'publication', False)
@@ -80,7 +74,7 @@ class PublicationsTestCase(unittest.TestCase):
 
         Permutate field list to ensure different combinations on result.
         """
-        fields = ('_href', '_created', 'distributions', 'publisher')
+        fields = ('_href', '_created', 'distributions')
         for field_pair in permutations(fields, 2):
             # ex: field_pair = ('_href', '_created)
             with self.subTest(field_pair=field_pair):
@@ -105,17 +99,6 @@ class PublicationsTestCase(unittest.TestCase):
         """Read a publication by its repository version."""
         publications = self.client.get(FILE_PUBLICATION_PATH, params={
             'repository_version': self.repo['_href']
-        })
-        self.assertEqual(len(publications), 1, publications)
-        for key, val in self.publication.items():
-            with self.subTest(key=key):
-                self.assertEqual(publications[0][key], val)
-
-    @skip_if(bool, 'publication', False)
-    def test_03_read_publications(self):
-        """Read a publication by its publisher."""
-        publications = self.client.get(FILE_PUBLICATION_PATH, params={
-            'publisher': self.publisher['_href']
         })
         self.assertEqual(len(publications), 1, publications)
         for key, val in self.publication.items():
@@ -163,12 +146,11 @@ class PublicationsTestCase(unittest.TestCase):
         """
         # Create more 2 publications for the same repo
         for _ in range(2):
-            create_file_publication(self.cfg, self.repo, publisher=self.publisher)
+            create_file_publication(self.cfg, self.repo)
 
         # Read publications
         publications = self.client.get(
-            FILE_PUBLICATION_PATH,
-            params={'publisher': self.publisher['_href']}
+            FILE_PUBLICATION_PATH
         )
         self.assertEqual(len(publications), 3)
 
@@ -193,17 +175,6 @@ class PublicationsTestCase(unittest.TestCase):
         """
         response = api.Client(self.cfg, api.echo_handler).post(
             FILE_REMOTE_PATH, gen_file_remote(foo='bar')
-        )
-        assert response.status_code == 400
-        assert response.json()['foo'] == ['Unexpected field']
-
-    def test_negative_create_file_publisher_with_invalid_parameter(self):
-        """Attempt to create file publisher passing invalid parameter.
-
-        Assert response returns an error 400 including ["Unexpected field"].
-        """
-        response = api.Client(self.cfg, api.echo_handler).post(
-            FILE_PUBLISHER_PATH, gen_publisher(foo='bar')
         )
         assert response.status_code == 400
         assert response.json()['foo'] == ['Unexpected field']

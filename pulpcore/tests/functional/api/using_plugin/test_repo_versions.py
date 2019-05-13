@@ -12,7 +12,6 @@ from pulp_smash.pulp3.constants import REPO_PATH
 from pulp_smash.pulp3.utils import (
     delete_orphans,
     delete_version,
-    gen_publisher,
     gen_repo,
     get_added_content,
     get_added_content_summary,
@@ -32,7 +31,6 @@ from pulpcore.tests.functional.api.using_plugin.constants import (
     FILE_FIXTURE_MANIFEST_URL,
     FILE_FIXTURE_SUMMARY,
     FILE_LARGE_FIXTURE_MANIFEST_URL,
-    FILE_PUBLISHER_PATH,
     FILE_REMOTE_PATH,
 )
 from pulpcore.tests.functional.api.using_plugin.utils import (
@@ -367,11 +365,7 @@ class AddRemoveRepoVersionTestCase(unittest.TestCase):
         Delete a repository version, and verify the associated publication is
         also deleted.
         """
-        publisher = self.client.post(FILE_PUBLISHER_PATH, gen_publisher())
-        self.addCleanup(self.client.delete, publisher['_href'])
-
-        publication = create_file_publication(
-            self.cfg, self.repo, publisher=publisher)
+        publication = create_file_publication(self.cfg, self.repo)
         delete_version(self.repo)
 
         with self.assertRaises(HTTPError):
