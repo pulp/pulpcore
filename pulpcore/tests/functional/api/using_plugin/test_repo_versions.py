@@ -370,7 +370,8 @@ class AddRemoveRepoVersionTestCase(unittest.TestCase):
         publisher = self.client.post(FILE_PUBLISHER_PATH, gen_publisher())
         self.addCleanup(self.client.delete, publisher['_href'])
 
-        publication = create_file_publication(self.cfg, self.repo, publisher=publisher)
+        publication = create_file_publication(
+            self.cfg, self.repo, publisher=publisher)
         delete_version(self.repo)
 
         with self.assertRaises(HTTPError):
@@ -463,7 +464,8 @@ class FilterRepoVersionTestCase(unittest.TestCase):
         for repo_version in repo_versions:
             self.assertIn(
                 self.client.get(content['_href']),
-                get_content(self.repo, repo_version['_href'])[FILE_CONTENT_NAME]
+                get_content(self.repo, repo_version['_href'])[
+                    FILE_CONTENT_NAME]
             )
 
     def test_filter_invalid_date(self):
@@ -572,12 +574,11 @@ class CreatedResourcesTaskTestCase(unittest.TestCase):
         self.addCleanup(client.delete, remote['_href'])
 
         call_report = sync(cfg, remote, repo)
-        last_task = next(api.poll_spawned_tasks(cfg, call_report))
         for key in ('repositories', 'versions'):
             self.assertIn(
                 key,
-                last_task['created_resources'][0],
-                last_task['created_resources']
+                call_report['_href'],
+                call_report
             )
 
 
