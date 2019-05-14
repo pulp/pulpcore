@@ -6,7 +6,6 @@ from pulp_smash.constants import PULP_FIXTURES_BASE_URL
 from pulp_smash.pulp3.constants import (
     BASE_DISTRIBUTION_PATH,
     BASE_PUBLICATION_PATH,
-    BASE_PUBLISHER_PATH,
     BASE_REMOTE_PATH,
     CONTENT_PATH
 )
@@ -21,8 +20,6 @@ FILE_REMOTE_PATH = urljoin(BASE_REMOTE_PATH, 'file/file/')
 FILE_DISTRIBUTION_PATH = urljoin(BASE_DISTRIBUTION_PATH, 'file/file/')
 
 FILE_PUBLICATION_PATH = urljoin(BASE_PUBLICATION_PATH, 'file/file/')
-
-FILE_PUBLISHER_PATH = urljoin(BASE_PUBLISHER_PATH, 'file/file/')
 
 FILE_FIXTURE_URL = urljoin(PULP_FIXTURES_BASE_URL, 'file/')
 """The URL to a file repository."""

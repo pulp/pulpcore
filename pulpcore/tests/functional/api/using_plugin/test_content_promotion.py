@@ -8,7 +8,6 @@ from pulp_smash import api, config
 from pulp_smash.pulp3.constants import REPO_PATH
 from pulp_smash.pulp3.utils import (
     gen_distribution,
-    gen_publisher,
     gen_remote,
     gen_repo,
     get_added_content,
@@ -19,7 +18,6 @@ from pulpcore.tests.functional.api.using_plugin.constants import (
     FILE_CONTENT_NAME,
     FILE_DISTRIBUTION_PATH,
     FILE_FIXTURE_MANIFEST_URL,
-    FILE_PUBLISHER_PATH,
     FILE_REMOTE_PATH
 )
 from pulpcore.tests.functional.api.using_plugin.utils import (  # noqa:F401
@@ -41,7 +39,7 @@ class ContentPromotionTestCase(unittest.TestCase):
         Do the following:
 
         1. Create a repository that has at least one repository version.
-        2. Create a publisher, and publication.
+        2. Create a publication.
         3. Create 2 distributions - using the same publication. Those
            distributions will have different ``base_path``.
         4. Assert that distributions have the same publication.
@@ -65,10 +63,7 @@ class ContentPromotionTestCase(unittest.TestCase):
         sync(cfg, remote, repo)
         repo = client.get(repo['_href'])
 
-        publisher = client.post(FILE_PUBLISHER_PATH, gen_publisher())
-        self.addCleanup(client.delete, publisher['_href'])
-
-        publication = create_file_publication(cfg, repo, publisher=publisher)
+        publication = create_file_publication(cfg, repo)
         self.addCleanup(client.delete, publication['_href'])
 
         distributions = []

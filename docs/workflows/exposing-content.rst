@@ -124,13 +124,9 @@ content in it::
     http POST ':24817'$REMOTE_HREF'sync/' repository=$REPO_HREF
     sleep 3  # wait for the sync to happen
 
-    # Create a FilePublisher
-    http POST :24817/pulp/api/v3/publishers/file/file/ name=bar
-    export PUBLISHER_HREF=$(http :24817/pulp/api/v3/publishers/file/file/ | jq -r '.results[] | select(.name == "bar") | ._href')
-
     # Create a Publication
-    http POST :24817/pulp/api/v3/publications/file/file/ repository=$REPO_HREF publisher=$PUBLISHER_HREF
-    export PUBLICATION_HREF=$(http :24817/pulp/api/v3/publications/file/file/ | jq -r --arg PUBLISHER_HREF "$PUBLISHER_HREF" '.results[] | select(.publisher==$PUBLISHER_HREF) | ._href')
+    http POST :24817/pulp/api/v3/publications/file/file/ repository=$REPO_HREF
+    export PUBLICATION_HREF=$(http :24817/pulp/api/v3/publications/file/file/ | jq -r '.results[0] | ._href')
 
 Now with your :term:`Publication` saved as ``PUBLICATION_HREF`` you can have the
 :term:`Distribution` serve it at base_path ``bar``::
