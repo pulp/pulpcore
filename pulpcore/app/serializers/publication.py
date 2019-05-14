@@ -92,6 +92,22 @@ class ContentGuardSerializer(MasterModelSerializer):
 
 
 class BaseDistributionSerializer(MasterModelSerializer):
+    """
+    The Serializer for the BaseDistribution model.
+
+    The serializer deliberately omits the "remote" field, which is used for
+    pull-through caching only. Plugins implementing pull-through caching will
+    have to add the field in their derived serializer class like this::
+
+      remote = DetailRelatedField(
+          required=False,
+          help_text=_('Remote that can be used to fetch content when using pull-through caching.'),
+          queryset=models.Remote.objects.all(),
+          allow_null=True
+      )
+
+    """
+
     _href = DetailIdentityField()
     base_path = serializers.CharField(
         help_text=_('The base (relative) path component of the published url. Avoid paths that \
@@ -123,12 +139,6 @@ class BaseDistributionSerializer(MasterModelSerializer):
             )),
             UniqueValidator(queryset=models.BaseDistribution.objects.all())]
     )
-    remote = DetailRelatedField(
-        required=False,
-        help_text=_('Remote that can be used to fetch content when using pull-through caching.'),
-        queryset=models.Remote.objects.all(),
-        allow_null=True
-    )
 
     class Meta:
         abstract = True
@@ -138,7 +148,6 @@ class BaseDistributionSerializer(MasterModelSerializer):
             'base_url',
             'content_guard',
             'name',
-            'remote',
         )
 
     def _validate_path_overlap(self, path):
