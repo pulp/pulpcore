@@ -38,17 +38,42 @@ class ArtifactNotFound(Exception):
     pass
 
 
-HOP_BY_HOP_HEADERS = [
-    'connection',
-    'keep-alive',
-    'public',
-    'proxy-authenticate',
-    'transfer-encoding',
-    'upgrade',
-]
-
-
 class Handler:
+    """
+    A default Handler for the Content App that also can be subclassed to create custom handlers.
+
+    This Handler will perform the following:
+
+    1. Match the request against a Distribution
+
+    2. Call the certguard check if a certguard exists for the matched Distribution.
+
+    3. If the Distribution has a `publication` serve that Publication's `PublishedArtifacts`,
+       `PublishedMetadata` by the remaining `relative path`. If still unserved and if `pass_through`
+        is set, the associated `repository_version` will have its `ContentArtifacts` served by
+        `relative_path` also. This will serve the associated `Artifact`.
+
+    4. If still unmatched, and the Distribution has a `repository` attribute set, find it's latest
+       `repository_version`. If the Distribution has a `repository_version` attribute set, use that.
+       For this `repository_version`, find matching `ContentArtifact` objects by `relative_path` and
+       serve them. If there is an associated `Artifact` return it.
+
+    5. If the Distribution has a `remote`, find an associated `RemoteArtifact` that matches by
+       `relative_path`. Fetch and stream the corresponding `RemoteArtifact` to the client,
+       optionally saving the `Artifact` depending on the `policy` attribute.
+
+    """
+
+    hop_by_hop_headers = [
+        'connection',
+        'keep-alive',
+        'public',
+        'proxy-authenticate',
+        'transfer-encoding',
+        'upgrade',
+    ]
+
+    distribution_model = None
 
     async def stream_content(self, request):
         """
@@ -85,26 +110,31 @@ class Handler:
             path = base
         return tree
 
-    @staticmethod
-    def _match_distribution(path):
+    @classmethod
+    def _match_distribution(cls, path):
         """
-        Match a distribution using a list of base paths.
+        Match a distribution using a list of base paths and return its detail object.
 
         Args:
             path (str): The path component of the URL.
 
         Returns:
-            BaseDistribution: The matched distribution.
+            detail of BaseDistribution: The matched distribution.
 
         Raises:
             PathNotResolved: when not matched.
         """
-        base_paths = Handler._base_paths(path)
+        base_paths = cls._base_paths(path)
         try:
-            return BaseDistribution.objects.get(base_path__in=base_paths)
+            if cls.distribution_model is None:
+                model_class = BaseDistribution
+                return BaseDistribution.objects.get(base_path__in=base_paths).cast()
+            else:
+                model_class = cls.distribution_model
+                return cls.distribution_model.objects.get(base_path__in=base_paths)
         except ObjectDoesNotExist:
-            log.debug(_('BaseDistribution not matched for {path} using: {base_paths}').format(
-                path=path, base_paths=base_paths
+            log.debug(_('{model_name} not matched for {path} using: {base_paths}').format(
+                model_name=model_class.__name__, path=path, base_paths=base_paths
             ))
             raise PathNotResolved(path)
 
@@ -117,7 +147,7 @@ class Handler:
 
         Args:
             request (:class:`aiohttp.web.Request`): A request for a published file.
-            distribution (:class:`pulpcore.plugin.models.BaseDistribution`): The matched
+            distribution (detail of :class:`pulpcore.plugin.models.BaseDistribution`): The matched
                 distribution.
 
         Raises:
@@ -137,10 +167,6 @@ class Handler:
                     'r': str(pe)
                 })
             raise HTTPForbidden(reason=str(pe))
-        except Exception:
-            reason = _('Guard "{g}" failed:').format(g=guard.name)
-            log.debug(reason, exc_info=True)
-            raise HTTPForbidden(reason=reason)
 
     async def _match_and_stream(self, path, request):
         """
@@ -158,7 +184,7 @@ class Handler:
             :class:`aiohttp.web.StreamResponse` or :class:`aiohttp.web.FileResponse`: The response
                 streamed back to the client.
         """
-        distro = Handler._match_distribution(path).cast()
+        distro = self._match_distribution(path)
         self._permit(request, distro)
 
         rel_path = path.lstrip('/')
@@ -396,7 +422,7 @@ class Handler:
 
         async def handle_headers(headers):
             for name, value in headers.items():
-                if name.lower() in HOP_BY_HOP_HEADERS:
+                if name.lower() in self.hop_by_hop_headers:
                     continue
                 response.headers[name] = value
             await response.prepare(request)
