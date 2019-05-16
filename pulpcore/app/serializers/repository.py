@@ -33,7 +33,7 @@ class RepositorySerializer(ModelSerializer):
     description = serializers.CharField(
         help_text=_('An optional description.'),
         required=False,
-        allow_blank=True
+        allow_null=True
     )
 
     class Meta:
@@ -64,20 +64,20 @@ class RemoteSerializer(MasterModelSerializer):
                   'certificate presented by the remote server. Returns SHA256 sum on GET.',
         write_only=False,
         required=False,
-        allow_blank=True,
+        allow_null=True,
     )
     ssl_client_certificate = SecretCharField(
         help_text='A PEM encoded client certificate used for authentication. Returns SHA256 sum '
                   'on GET.',
         write_only=False,
         required=False,
-        allow_blank=True,
+        allow_null=True,
     )
     ssl_client_key = SecretCharField(
         help_text='A PEM encoded private key used for authentication. Returns SHA256 sum on GET.',
         write_only=False,
         required=False,
-        allow_blank=True,
+        allow_null=True,
     )
     ssl_validation = serializers.BooleanField(
         help_text='If True, SSL peer validation must be performed.',
@@ -86,19 +86,19 @@ class RemoteSerializer(MasterModelSerializer):
     proxy_url = serializers.CharField(
         help_text='The proxy URL. Format: scheme://user:password@host:port',
         required=False,
-        allow_blank=True,
+        allow_null=True,
     )
     username = serializers.CharField(
         help_text='The username to be used for authentication when syncing.',
         write_only=True,
         required=False,
-        allow_blank=True,
+        allow_null=True,
     )
     password = serializers.CharField(
         help_text='The password to be used for authentication when syncing.',
         write_only=True,
         required=False,
-        allow_blank=True,
+        allow_null=True,
     )
     _last_updated = serializers.DateTimeField(
         help_text='Timestamp of the most recent update of the remote.',
