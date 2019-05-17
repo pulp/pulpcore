@@ -11,7 +11,14 @@ from aiohttp.web_exceptions import HTTPForbidden, HTTPFound, HTTPNotFound
 from django.conf import settings
 from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 from django.db import IntegrityError, transaction
-from pulpcore.app.models import Artifact, ContentArtifact, BaseDistribution, Remote, RemoteArtifact
+from pulpcore.app.models import (
+    Artifact,
+    BaseDistribution,
+    ContentArtifact,
+    Remote,
+    RemoteArtifact,
+    RepositoryVersion,
+)
 
 
 log = logging.getLogger(__name__)
@@ -242,7 +249,7 @@ class Handler:
 
         if repository or repo_version:
             if repository:
-                repo_version = distro.repository.versions.get(number=distro.repository.last_version)
+                repo_version = RepositoryVersion.latest(distro.repository)
 
             try:
                 ca = ContentArtifact.objects.get(
