@@ -93,7 +93,14 @@ class PulpOpenAPISchemaGenerator(OpenAPISchemaGenerator):
                     resource_path = '%s}/' % path.rsplit(sep='}', maxsplit=1)[0]
                     resource_other_path = self.get_resource_from_path(path)
                     if resource_other_path in endpoints:
-                        resource_model = endpoints[resource_other_path][0].queryset.model
+                        view = endpoints[resource_other_path][0]
+                        if not hasattr(view, 'queryset') or view.queryset is None:
+                            if hasattr(view, 'model'):
+                                resource_model = view.model
+                            else:
+                                continue
+                        else:
+                            resource_model = view.queryset.model
                         resource_name = self.get_parameter_name(resource_model)
                         param_name = self.get_parameter_slug_from_model(resource_model)
                         if resource_path in resources:
