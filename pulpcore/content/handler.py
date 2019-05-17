@@ -50,8 +50,8 @@ class Handler:
 
     3. If the Distribution has a `publication` serve that Publication's `PublishedArtifacts`,
        `PublishedMetadata` by the remaining `relative path`. If still unserved and if `pass_through`
-        is set, the associated `repository_version` will have its `ContentArtifacts` served by
-        `relative_path` also. This will serve the associated `Artifact`.
+       is set, the associated `repository_version` will have its `ContentArtifacts` served by
+       `relative_path` also. This will serve the associated `Artifact`.
 
     4. If still unmatched, and the Distribution has a `repository` attribute set, find it's latest
        `repository_version`. If the Distribution has a `repository_version` attribute set, use that.
