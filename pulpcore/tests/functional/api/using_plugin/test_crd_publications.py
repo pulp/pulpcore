@@ -178,3 +178,45 @@ class PublicationsTestCase(unittest.TestCase):
         )
         assert response.status_code == 400
         assert response.json()['foo'] == ['Unexpected field']
+
+
+class PublicationRepositoryParametersTestCase(unittest.TestCase):
+    """Create a publication using repository and repository version.
+
+    Assert that an HTTP exception is raised.
+
+    This test targets the following issue:
+
+    * ` Pulp #4854 <https://pulp.plan.io/issues/4854>`_
+    """
+
+    def test_parameters(self):
+        """Create a publication using repository and repository version."""
+        cfg = config.get_config()
+        client = api.Client(cfg)
+
+        repo = client.post(REPO_PATH, gen_repo())
+        self.addCleanup(client.delete, repo['_href'])
+
+        remote = client.post(FILE_REMOTE_PATH, gen_file_remote())
+        self.addCleanup(client.delete, remote['_href'])
+
+        sync(cfg, remote, repo)
+        repo = client.get(repo['_href'])
+        version_href = client.get(repo['_versions_href'])[0]['_href']
+
+        with self.assertRaises(HTTPError) as ctx:
+            client.using_handler(api.json_handler).post(
+                FILE_PUBLICATION_PATH,
+                {
+                    'repository_version': version_href,
+                    'repository': repo['_href']
+                }
+            )
+
+        for key in ('repository', 'repository_version', 'not', 'both'):
+            self.assertIn(
+                key,
+                ctx.exception.response.json()['non_field_errors'][0].lower(),
+                ctx.exception.response
+            )
