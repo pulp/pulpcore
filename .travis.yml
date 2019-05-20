@@ -51,7 +51,7 @@ jobs:
           tags: true
       if: tag IS present
     - stage: publish-beta-docs
-      script: bash .travis/publish_docs.sh beta
+      script: bash .travis/publish_docs.sh rc
       env:
         - DB=postgres
         - TEST=docs

@@ -83,8 +83,8 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--build-type", required=True, help="Build type: nightly or beta.")
     opts = parser.parse_args()
-    if opts.build_type not in ['nightly', 'beta']:
-        raise RuntimeError("Build type must be either 'nightly' or 'beta'.")
+    if opts.build_type not in ['nightly', 'beta', 'rc']:
+        raise RuntimeError("Build type must be either 'nightly' or 'beta' or 'rc'.")
 
     build_type = opts.build_type
 
