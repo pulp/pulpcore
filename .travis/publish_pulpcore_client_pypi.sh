@@ -7,8 +7,13 @@ sleep 5
 
 cd /home/travis/build/pulp/pulpcore/
 export REPORTED_VERSION=$(http :24817/pulp/api/v3/status/ | jq --arg plugin pulpcore -r '.versions[] | select(.component == $plugin) | .version')
-export EPOCH="$(date +%s)"
-export VERSION=${REPORTED_VERSION}.dev.${EPOCH}
+export DESCRIPTION="$(git describe --all --exact-match `git rev-parse HEAD`)"
+if [[ $DESCRIPTION == 'tags/'$REPORTED_VERSION ]]; then
+  export VERSION=${REPORTED_VERSION}
+else
+  export EPOCH="$(date +%s)"
+  export VERSION=${REPORTED_VERSION}.dev.${EPOCH}
+fi
 
 export response=$(curl --write-out %{http_code} --silent --output /dev/null https://pypi.org/project/pulpcore-client/$VERSION/)
 
