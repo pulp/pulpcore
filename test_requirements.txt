@@ -3,6 +3,7 @@ asynctest
 codecov
 coverage
 flake8
+flake8-docstrings
 mock
 pytest
 git+https://github.com/PulpQE/pulp-smash.git#egg=pulp-smash
