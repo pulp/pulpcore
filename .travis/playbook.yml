@@ -22,6 +22,7 @@
     pulp_db_user: 'travis'
     pulp_db_password: ''
     pulp_preq_packages: []
+    pulp_pip_editable: no
   environment:
     DJANGO_SETTINGS_MODULE: pulpcore.app.settings
   roles:
