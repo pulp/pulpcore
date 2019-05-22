@@ -48,7 +48,7 @@ First lets make a Repository named ``foo`` and save its URL as ``REPO_HREF``::
 
 Then lets make a :term:`Distribution` that will distribute ``foo`` at base_url ``mypath``::
 
-    http POST :24817/pulp/api/v3/distributions/ name='baz' base_path='mypath' repository=$REPO_HREF``
+    http POST :24817/pulp/api/v3/distributions/file/file/ name='baz' base_path='mypath' repository=$REPO_HREF``
 
 As soon as this is created, any :term:`RepositoryVersion` created will be immediately available at
 base_path ``mypath``. With the default :ref:`CONTENT_PATH_PREFIX <content-path-prefix>` that would
@@ -88,7 +88,7 @@ pulp_ansible>`_ content in it::
 Now with your :term:`RepositoryVersion` saved as ``REPO_VERSION_HREF`` you can have the
 :term:`Distribution` serve it at base_path ``dev``::
 
-    http POST :24817/pulp/api/v3/distributions/ name='baz' base_path='dev' repository_version=REPO_VERSION_HREF
+    http POST :24817/pulp/api/v3/distributions/file/file/ name='baz' base_path='dev' repository_version=REPO_VERSION_HREF
 
 As soon as this is created, the :term:`RepositoryVersion` will be immediately available at base_path
 ``dev``. With the default :ref:`CONTENT_PATH_PREFIX <content-path-prefix>` that would be
@@ -131,7 +131,7 @@ content in it::
 Now with your :term:`Publication` saved as ``PUBLICATION_HREF`` you can have the
 :term:`Distribution` serve it at base_path ``bar``::
 
-    http POST :24817/pulp/api/v3/distributions/ name='baz' base_path='bar' publication=$PUBLICATION_HREF
+    http POST :24817/pulp/api/v3/distributions/file/file/ name='baz' base_path='bar' publication=$PUBLICATION_HREF
 
 As soon as this is created, the :term:`Publication` will be immediately available at base_path
 ``bar``. With the default :ref:`CONTENT_PATH_PREFIX <content-path-prefix>` that would be
