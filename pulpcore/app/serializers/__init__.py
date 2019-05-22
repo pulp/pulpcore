@@ -23,6 +23,7 @@ from .fields import (  # noqa
 )
 from .content import (  # noqa
     ArtifactSerializer,
+    ContentChecksumSerializer,
     NoArtifactContentSerializer,
     SingleArtifactContentSerializer,
     MultipleArtifactContentSerializer,

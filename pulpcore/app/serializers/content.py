@@ -91,6 +91,51 @@ class MultipleArtifactContentSerializer(BaseContentSerializer):
         fields = BaseContentSerializer.Meta.fields + ('_artifacts',)
 
 
+class ContentChecksumSerializer(serializers.Serializer):
+    """
+    Provide a serializer with artifact checksum fields for single artifact content.
+
+    If you use this serializer, it's recommended that you prefetch artifacts:
+
+        Content.objects.prefetch_related("_artifacts").all()
+    """
+
+    md5 = fields.ContentArtifactChecksumField(
+        help_text=_("The MD5 checksum if available."),
+        checksum='md5',
+    )
+
+    sha1 = fields.ContentArtifactChecksumField(
+        help_text=_("The SHA-1 checksum if available."),
+        checksum='sha1',
+    )
+
+    sha224 = fields.ContentArtifactChecksumField(
+        help_text=_("The SHA-224 checksum if available."),
+        checksum='sha224',
+    )
+
+    sha256 = fields.ContentArtifactChecksumField(
+        help_text=_("The SHA-256 checksum if available."),
+        checksum='sha256',
+    )
+
+    sha384 = fields.ContentArtifactChecksumField(
+        help_text=_("The SHA-384 checksum if available."),
+        checksum='sha384',
+    )
+
+    sha512 = fields.ContentArtifactChecksumField(
+        help_text=_("The SHA-512 checksum if available."),
+        checksum='sha512',
+    )
+
+    class Meta:
+        model = models.Artifact
+        fields = base.ModelSerializer.Meta.fields + ('md5', 'sha1', 'sha224', 'sha256', 'sha384',
+                                                     'sha512')
+
+
 class ArtifactSerializer(base.ModelSerializer):
     _href = base.IdentityField(
         view_name='artifacts-detail',
