@@ -33,7 +33,7 @@ class Repository(Model):
         content (models.ManyToManyField): Associated content.
     """
     name = models.CharField(db_index=True, unique=True, max_length=255)
-    description = models.TextField()
+    description = models.TextField(null=True)
     last_version = models.PositiveIntegerField(default=0)
     content = models.ManyToManyField('Content', through='RepositoryContent',
                                      related_name='repositories')
@@ -105,9 +105,9 @@ class Remote(MasterModel):
     ssl_client_key = models.TextField(null=True)
     ssl_validation = models.BooleanField(default=True)
 
-    proxy_url = models.TextField()
-    username = models.TextField()
-    password = models.TextField()
+    proxy_url = models.TextField(null=True)
+    username = models.TextField(null=True)
+    password = models.TextField(null=True)
     download_concurrency = models.PositiveIntegerField(default=20)
     policy = models.TextField(choices=POLICY_CHOICES, default=IMMEDIATE)
 

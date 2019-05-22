@@ -118,37 +118,37 @@ class ArtifactSerializer(base.ModelSerializer):
     md5 = serializers.CharField(
         help_text=_("The MD5 checksum of the file if available."),
         required=False,
-        allow_blank=True
+        allow_null=True,
     )
 
     sha1 = serializers.CharField(
         help_text=_("The SHA-1 checksum of the file if available."),
         required=False,
-        allow_blank=True
+        allow_null=True,
     )
 
     sha224 = serializers.CharField(
         help_text=_("The SHA-224 checksum of the file if available."),
         required=False,
-        allow_blank=True
+        allow_null=True,
     )
 
     sha256 = serializers.CharField(
         help_text=_("The SHA-256 checksum of the file if available."),
         required=False,
-        allow_blank=True
+        allow_null=True,
     )
 
     sha384 = serializers.CharField(
         help_text=_("The SHA-384 checksum of the file if available."),
         required=False,
-        allow_blank=True
+        allow_null=True,
     )
 
     sha512 = serializers.CharField(
         help_text=_("The SHA-512 checksum of the file if available."),
         required=False,
-        allow_blank=True
+        allow_null=True,
     )
 
     def validate(self, data):

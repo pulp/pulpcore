@@ -79,7 +79,7 @@ class ContentGuardSerializer(MasterModelSerializer):
     )
     description = serializers.CharField(
         help_text=_('An optional description.'),
-        allow_blank=True,
+        allow_null=True,
         required=False
     )
 

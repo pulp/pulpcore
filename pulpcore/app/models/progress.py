@@ -55,7 +55,7 @@ class ProgressReport(Model):
         on_delete=models.CASCADE
     )
 
-    suffix = models.TextField(default='')
+    suffix = models.TextField(null=True)
 
     _using_context_manager = False
     _last_save_time = None

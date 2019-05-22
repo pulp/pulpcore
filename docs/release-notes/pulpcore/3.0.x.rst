@@ -1,6 +1,18 @@
 Pulp 3.0 Release Notes
 ======================
 
+3.0.0rc3
+========
+
+`Comprehensive list of changes and bugfixes for rc 3 <https://github.com/pulp/pulpcore/compare/3.0.0rc2...3.0.0rc3>`_.
+
+Breaking Changes
+----------------
+
+All the string fields in the REST API no longer accept an empty string as a value. These fields
+now accept null instead.
+
+
 3.0.0rc2
 ========
 
