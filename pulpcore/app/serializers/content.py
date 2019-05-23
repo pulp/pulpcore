@@ -131,7 +131,7 @@ class ContentChecksumSerializer(serializers.Serializer):
     )
 
     class Meta:
-        model = models.Artifact
+        model = models.Content
         fields = base.ModelSerializer.Meta.fields + ('md5', 'sha1', 'sha224', 'sha256', 'sha384',
                                                      'sha512')
 
