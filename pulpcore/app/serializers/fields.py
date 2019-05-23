@@ -49,12 +49,51 @@ class SingleContentArtifactField(RelatedField):
         Returns:
             A single Artifact model related to the instance of Content.
         """
-        try:
-            return instance._artifacts.get()
-        except models.Artifact.DoesNotExist:
+        # using get() and first() will query the db. count() and all() will use cached artifacts if
+        # they are prefetched.
+        if instance._artifacts.count() == 0:
             return None
-        except models.Artifact.MultipleObjectsReturned:
+        if instance._artifacts.count() == 1:
+            return instance._artifacts.all()[0]
+        if instance._artifacts.count() > 1:
             raise ValueError(_("SingleContentArtifactField should not be used in a context where "
+                               "multiple artifacts for one content is possible."))
+
+
+class ContentArtifactChecksumField(serializers.CharField):
+    """
+    A serializer field for the artifact checksum Content model (single-artifact).
+    """
+
+    def __init__(self, *args, **kwargs):
+        kwargs['read_only'] = True
+        self.checksum = kwargs.pop('checksum', 'md5')
+        super().__init__(*args, **kwargs)
+
+    def get_attribute(self, instance):
+        """
+        Returns the field from the instance that should be serialized using this serializer field.
+
+        This serializer looks up the checksum for single artifact content
+
+        Args:
+            instance (:class:`pulpcore.app.models.Content`): An instance of Content being
+                serialized.
+
+        Returns:
+            A string of the checksum or None.
+
+        Raises:
+            :class:`rest_framework.exceptions.ValidationError`: When more than one Artifacts exist.
+        """
+        # using get() and first() will query the db. count() and all() will use cached artifacts if
+        # they are prefetched.
+        if instance._artifacts.count() == 0:
+            return None
+        if instance._artifacts.count() == 1:
+            return getattr(instance._artifacts.all()[0], self.checksum)
+        if instance._artifacts.count() > 1:
+            raise ValueError(_("ContentArtifactChecksumField should not be used in a context where "
                                "multiple artifacts for one content is possible."))
 
 
