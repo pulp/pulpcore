@@ -170,32 +170,40 @@ class PublicationsTestCase(unittest.TestCase):
 
 
 class PublicationRepositoryParametersTestCase(unittest.TestCase):
-    """Create a publication using repository and repository version.
-
-    Assert that an HTTP exception is raised.
+    """Explore publication creation using repository and repository version.
 
     This test targets the following issue:
 
-    * ` Pulp #4854 <https://pulp.plan.io/issues/4854>`_
+    * `Pulp #4854 <https://pulp.plan.io/issues/4854>`_
+    * `Pulp #4874 <https://pulp.plan.io/issues/4874>`_
     """
 
-    def test_parameters(self):
+    @classmethod
+    def setUpClass(cls):
+        """Create class-wide variables."""
+        cls.cfg = config.get_config()
+        cls.client = api.Client(cls.cfg)
+
+    def test_create_only_using_repoversion(self):
+        """Create a publication only using repository version."""
+        repo = self.create_sync_repo(3)
+        version_href = self.client.get(repo['_versions_href'])[1]['_href']
+        publication = create_file_publication(self.cfg, repo, version_href)
+        self.addCleanup(self.client.delete, publication['_href'])
+
+        self.assertEqual(
+            publication['repository_version'],
+            version_href,
+            publication
+        )
+
+    def test_create_repo_repoversion(self):
         """Create a publication using repository and repository version."""
-        cfg = config.get_config()
-        client = api.Client(cfg)
-
-        repo = client.post(REPO_PATH, gen_repo())
-        self.addCleanup(client.delete, repo['_href'])
-
-        remote = client.post(FILE_REMOTE_PATH, gen_file_remote())
-        self.addCleanup(client.delete, remote['_href'])
-
-        sync(cfg, remote, repo)
-        repo = client.get(repo['_href'])
-        version_href = client.get(repo['_versions_href'])[0]['_href']
+        repo = self.create_sync_repo()
+        version_href = self.client.get(repo['_versions_href'])[0]['_href']
 
         with self.assertRaises(HTTPError) as ctx:
-            client.using_handler(api.json_handler).post(
+            self.client.using_handler(api.json_handler).post(
                 FILE_PUBLICATION_PATH,
                 {
                     'repository_version': version_href,
@@ -209,3 +217,18 @@ class PublicationRepositoryParametersTestCase(unittest.TestCase):
                 ctx.exception.response.json()['non_field_errors'][0].lower(),
                 ctx.exception.response
             )
+
+    def create_sync_repo(self, number_syncs=1):
+        """Create and sync a repository.
+
+        Given the number of times to be synced.
+        """
+        repo = self.client.post(REPO_PATH, gen_repo())
+        self.addCleanup(self.client.delete, repo['_href'])
+
+        remote = self.client.post(FILE_REMOTE_PATH, gen_file_remote())
+        self.addCleanup(self.client.delete, remote['_href'])
+
+        for _ in range(number_syncs):
+            sync(self.cfg, remote, repo)
+        return self.client.get(repo['_href'])
