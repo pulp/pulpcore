@@ -73,7 +73,7 @@ def gen_file_remote(url=None, **kwargs):
 
 
 def create_file_publication(cfg, repo, version_href=None):
-    """Create a file publication
+    """Create a file publication.
 
     :param pulp_smash.config.PulpSmashConfig cfg: Information about the Pulp
         host.
@@ -83,11 +83,7 @@ def create_file_publication(cfg, repo, version_href=None):
         publication.
     """
     if version_href:
-        body = {"repository_version": version_href}
+        body = {'repository_version': version_href}
     else:
-        body = {"repository": repo["_href"]}
-
-    client = api.Client(cfg, api.json_handler)
-    call_report = client.post(FILE_PUBLICATION_PATH, body)
-    tasks = tuple(api.poll_spawned_tasks(cfg, call_report))
-    return client.get(tasks[-1]["created_resources"][0])
+        body = {'repository': repo['_href']}
+    return api.Client(cfg).post(FILE_PUBLICATION_PATH, body)
