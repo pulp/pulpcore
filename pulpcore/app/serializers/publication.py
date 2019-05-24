@@ -28,12 +28,13 @@ class PublicationSerializer(MasterModelSerializer):
         queryset=models.RepositoryVersion.objects.all(),
         required=False,
     )
-    repository = serializers.HyperlinkedRelatedField(
+    repository = RelatedField(
         help_text=_('A URI of the repository to be published.'),
         required=False,
         label=_('Repository'),
         queryset=models.Repository.objects.all(),
         view_name='repositories-detail',
+        write_only=True
     )
 
     def validate(self, data):
