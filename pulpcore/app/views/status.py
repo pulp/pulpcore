@@ -23,7 +23,7 @@ class StatusView(APIView):
     authentication_classes = []
     permission_classes = []
 
-    @swagger_auto_schema(operation_summary="Inspect status of Pulp")
+    @swagger_auto_schema(operation_summary="Inspect status of Pulp", responses={200: StatusSerializer})
     def get(self, request, format=None):
         """
         Returns app information including the version of pulpcore and loaded pulp plugins,
