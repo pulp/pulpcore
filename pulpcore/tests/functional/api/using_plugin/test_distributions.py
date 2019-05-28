@@ -168,3 +168,92 @@ class CRUDPublicationDistributionTestCase(unittest.TestCase):
         # Verify the update
         distribution = self.client.get(self.distribution['_href'])
         self.assertEqual(string, distribution[attr], self.distribution)
+
+
+class DistributionBasePathTestCase(unittest.TestCase):
+    """Test possible values for ``base_path`` on a distribution.
+
+    This test targets the following issues:
+
+    * `Pulp #2987 <https://pulp.plan.io/issues/2987>`_
+    * `Pulp #3412 <https://pulp.plan.io/issues/3412>`_
+    * `Pulp #4882 <https://pulp.plan.io/issues/4882>`_
+    * `Pulp Smash #906 <https://github.com/PulpQE/pulp-smash/issues/906>`_
+    * `Pulp Smash #956 <https://github.com/PulpQE/pulp-smash/issues/956>`_
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        """Create class-wide variables."""
+        cls.cfg = config.get_config()
+        cls.client = api.Client(cls.cfg)
+        body = gen_distribution()
+        body['base_path'] = body['base_path'].replace('-', '/')
+        distribution = cls.client.post(FILE_DISTRIBUTION_PATH, body)
+        cls.distribution = cls.client.get(distribution['_href'])
+
+    @classmethod
+    def tearDownClass(cls):
+        """Clean up resources."""
+        cls.client.delete(cls.distribution['_href'])
+
+    def test_negative_create_using_spaces(self):
+        """Test that spaces can not be part of ``base_path``."""
+        self.try_create_distribution(base_path=utils.uuid4().replace('-', ' '))
+        self.try_update_distribution(base_path=utils.uuid4().replace('-', ' '))
+
+    def test_negative_create_using_begin_slash(self):
+        """Test that slash cannot be in the begin of ``base_path``."""
+        self.try_create_distribution(base_path='/' + utils.uuid4())
+        self.try_update_distribution(base_path='/' + utils.uuid4())
+
+    def test_negative_create_using_end_slash(self):
+        """Test that slash cannot be in the end of ``base_path``."""
+        self.try_create_distribution(base_path=utils.uuid4() + '/')
+        self.try_update_distribution(base_path=utils.uuid4() + '/')
+
+    def test_negative_create_using_non_unique_base_path(self):
+        """Test that ``base_path`` can not be duplicated."""
+        self.try_create_distribution(base_path=self.distribution['base_path'])
+
+    def test_negative_create_using_overlapping_base_path(self):
+        """Test that distributions can't have overlapping ``base_path``.
+
+        See: `Pulp #2987`_.
+        """
+        base_path = self.distribution['base_path'].rsplit('/', 1)[0]
+        self.try_create_distribution(base_path=base_path)
+
+        base_path = '/'.join((
+            self.distribution['base_path'],
+            utils.uuid4().replace('-', '/'),
+        ))
+        self.try_create_distribution(base_path=base_path)
+
+    def try_create_distribution(self, **kwargs):
+        """Unsuccessfully create a distribution.
+
+        Merge the given kwargs into the body of the request.
+        """
+        body = gen_distribution()
+        body.update(kwargs)
+        with self.assertRaises(HTTPError) as ctx:
+            self.client.post(FILE_DISTRIBUTION_PATH, body)
+
+        self.assertIsNotNone(
+            ctx.exception.response.json()['base_path'],
+            ctx.exception.response.json()
+        )
+
+    def try_update_distribution(self, **kwargs):
+        """Unsuccessfully update a distribution with HTTP PATCH.
+
+        Use the given kwargs as the body of the request.
+        """
+        with self.assertRaises(HTTPError) as ctx:
+            self.client.patch(self.distribution['_href'], kwargs)
+
+        self.assertIsNotNone(
+            ctx.exception.response.json()['base_path'],
+            ctx.exception.response.json()
+        )
