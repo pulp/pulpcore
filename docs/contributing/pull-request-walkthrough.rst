@@ -25,7 +25,7 @@ Checklist
 #. Update relevent :doc:`documentation`. Please build the docs to test!
 #. If your change would benefit from integration testing, write a `pulp smash issue
    <https://github.com/PulpQE/pulp-smash/issues/new>`_.
-#. If you are adding a new feature, add a release note.
+#. Add a :ref:`changelog update <changelog-update>`.
 #. :ref:`Rebase and squash<rebase>` to a single commit, if appropriate.
 #. Write an excellent :ref:`commit-message`. Make sure you reference and link to the issue.
 #. Push your branch to your fork and open a `Pull request across forks

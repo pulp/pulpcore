@@ -5,6 +5,17 @@ Contribution documentation generally assumes that the reader is familiar with
 :doc:`Pulp basics</concepts>`. If you have problems, you can :ref:`contact us<community>`
 or :doc:`file an issue</bugs-features>`.
 
+Workflow
+--------
+
+1. Clone the GitHub repo
+2. Make a change
+3. Make sure all tests passed
+4. Add a file into CHANGES folder (Changelog update).
+5. Commit changes to own aiohttp clone
+6. Make pull request from github page for your clone against master branch
+
+
 Fundamentals
 ------------
 

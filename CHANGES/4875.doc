@@ -1,0 +1,1 @@
+Switch to using `towncrier <https://github.com/hawkowl/towncrier>`_ for better release notes.
