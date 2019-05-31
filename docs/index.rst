@@ -100,7 +100,6 @@ Table of Contents
    installation/index
    plugins/index
    workflows/index
-   release-notes/index
    integration-guide/index
    contributing/index
    troubleshooting

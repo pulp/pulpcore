@@ -12,7 +12,7 @@ Workflow
 2. Make a change
 3. Make sure all tests passed
 4. Add a file into CHANGES folder (Changelog update).
-5. Commit changes to own aiohttp clone
+5. Commit changes to own ``pulpcore`` clone
 6. Make pull request from github page for your clone against master branch
 
 

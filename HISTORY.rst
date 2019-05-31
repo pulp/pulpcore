@@ -1,0 +1,218 @@
+3.0.0rc2
+========
+
+`Comprehensive list of changes and bugfixes for rc 2 <https://github.com/pulp/pulpcore/compare/3.0.0rc1...3.0.0rc2>`_.
+
+Breaking Changes
+----------------
+
+Default port changes happened in the `Ansible Installer for Pulp <https://github.com/pulp/
+ansible-pulp>`_ and pulpcore was updated to match with `this PR <https://github.com/pulp/pulpcore/
+pull/75>`_. Existing installs are unaffected. This was done to avoid conflicts that would prevent
+Pulp from starting by default in many environments; the previous ports (8000 & 8080) are commonly
+used by management webGUIs, development webservers, etc.
+
+Publications are now Master/Detail which causes any Publication URL endpoint to change. To give an
+example from `pulp_file <https://github.com/pulp/pulp_file>`_ see the URL changes made
+`here <https://github.com/pulp/pulp_file/pull/205/files#diff-88b99bb28683bd5b7e3a204826ead112R200>`_
+as an example. See plugin docs compatible with 3.0.0rc2 for more details.
+
+Distributions are now Master/Detail which causes the Distribution URL endpoint to change. To give an
+example from `pulp_file <https://github.com/pulp/pulp_file>`_ see the URL changes made
+`in this PR <https://github.com/pulp/pulp_file/pull/219/files>`_ as an example. See plugin docs
+compatible with 3.0.0rc2 for more details.
+
+The semantics of :term:`Remote` attributes ``ssl_ca_certificate``, ``ssl_client_certificate``, and
+``ssl_client_key`` changed even though the field names didn't. Now these assets are saved directly
+in the database instead of on the filesystem, and they are prevented from being read back out to
+users after being set for security reasons. This was done with `these changes <https://github.com/
+pulp/pulpcore/pull/99/>`_.
+
+3.0.0rc1
+========
+
+`Comprehensive list of changes and bugfixes for rc 1 <https://github.com/pulp/pulpcore/compare/3.0.0b23...3.0.0rc1>`_.
+
+3.0.0b23
+========
+
+`Comprehensive list of changes and bugfixes for beta 23 <https://github.com/pulp/pulpcore/compare/3.0.0b22...3.0.0b23>`_.
+
+3.0.0b22
+========
+
+`Comprehensive list of changes and bugfixes for beta 22 <https://github.com/pulp/pulpcore/compare/3.0.0b21...3.0.0b22>`_.
+
+Breaking Changes
+----------------
+
+* `Rename pulp_app label to core _ <https://github.com/pulp/pulpcore/pull/12>`_
+* `Use UUID primary keys <https://github.com/pulp/pulpcore/pull/22>`_
+* `Adding support for mariadb/mysql <https://github.com/pulp/pulpcore/pull/21>`_
+* `Problem: pulp-manager is not needed <https://github.com/pulp/pulpcore/pull/27>`_
+* `Removing the job_id field from tasks <https://github.com/pulp/pulpcore/pull/30>`_
+* `Problem: 'distributions' related name overlaps with a plugin field <https://github.com/pulp/pulpcore/pull/33>`_
+
+3.0.0b21
+========
+
+`Comprehensive list of changes and bugfixes for beta 21 <https://github.com/pulp/pulpcore/compare/3.0.0b20...3.0.0b21>`_.
+
+3.0.0b20
+========
+
+`Comprehensive list of changes and bugfixes for beta 20 <https://github.com/pulp/pulpcore/compare/3.0.0b19...3.0.0b20>`_.
+
+3.0.0b19
+========
+
+`Comprehensive list of changes and bugfixes for beta 19 <https://github.com/pulp/pulpcore/compare/3.0.0b18...3.0.0b19>`_.
+
+Breaking Changes
+----------------
+
+* `MySQL doesn't support text fields as indexes <https://github.com/pulp/pulp/pull/3817>`_
+
+
+3.0.0b18
+========
+
+`Comprehensive list of changes and bugfixes for beta 18 <https://github.com/pulp/pulpcore/compare/3.0.0b17...3.0.0b18>`_.
+
+Breaking Changes
+----------------
+
+* `Prepend pulpcore Content model fields with _ <https://github.com/pulp/pulp/pull/3798>`_
+* `Rename connection_limit to download_concurrency <https://github.com/pulp/pulp/pull/3808>`_
+* `Prepend type for master/detail models with a plugin app label <https://github.com/pulp/pulp/pull/3801>`_
+* `Checking in migrations <https://github.com/pulp/pulp/pull/3810>`_
+
+3.0.0b17
+========
+
+`Comprehensive list of changes and bugfixes for beta 17 <https://github.com/pulp/pulpcore/compare/3.0.0b16...3.0.0b17>`_.
+
+Breaking Changes
+----------------
+
+* `Remove 'notes' from Pulp <https://github.com/pulp/pulp/pull/3783>`_
+* `Adds the content app to pulpcore.content <https://github.com/pulp/pulp/pull/3779>`_
+* `Adds 'policy' to Remote <https://github.com/pulp/pulp/pull/3738>`_
+* `Create a new Task field job_id to store rq job ids <https://github.com/pulp/pulp/pull/3800>`_
+* `API Changes <https://github.com/pulp/pulp/pull/3774>`_
+
+3.0.0b16
+========
+
+`Comprehensive list of changes and bugfixes for beta 16 <https://github.com/pulp/pulpcore/compare/3.0.0b15...3.0.0b16>`_.
+
+3.0.0b15
+========
+
+`Comprehensive list of changes and bugfixes for beta 15 <https://github.com/pulp/pulpcore/compare/3.0.0b14...3.0.0b15>`_.
+
+3.0.0b14
+========
+
+`Comprehensive list of changes and bugfixes for beta 14 <https://github.com/pulp/pulpcore/compare/3.0.0b13...3.0.0b14>`_.
+
+
+3.0.0b13
+========
+
+`Comprehensive list of changes and bugfixes for beta 13 <https://github.com/pulp/pulpcore/compare/3.0.0b12...3.0.0b13>`_.
+
+3.0.0b12
+========
+
+`Comprehensive list of changes and bugfixes for beta 12 <https://github.com/pulp/pulpcore/compare/3.0.0b11...3.0.0b12>`_.
+
+3.0.0b11
+========
+
+`Comprehensive list of changes and bugfixes for beta 11 <https://github.com/pulp/pulpcore/compare/3.0.0b10...3.0.0b11>`_.
+
+3.0.0b10
+========
+
+`Comprehensive list of changes and bugfixes for beta 10 <https://github.com/pulp/pulpcore/compare/3.0.0b9...3.0.0b10>`_.
+
+3.0.0b9
+=======
+
+`Comprehensive list of changes and bugfixes for beta 9 <https://github.com/pulp/pulpcore/compare/3.0.0b8...3.0.0b9>`_.
+
+Breaking Changes
+----------------
+
+* `Problem: Pulp can't be configured using environment variables <https://github.com/pulp/pulp/pull/3663>`_
+* `Problem: pulpcore-common is not used outside of pulpcore <https://github.com/pulp/pulp/pull/3662>`_
+* `Reduction of information in response to operation postponed <https://github.com/pulp/pulp/pull/3631>`_
+
+3.0.0b8
+=======
+
+* `Comprehensive list of changes and bugfixes for beta 8 <https://github.com/pulp/pulpcore/compare/3.0.0b7...3.0.0b8>`_.
+
+Breaking Changes
+----------------
+
+* `Dropped support for Python 3.5 <https://github.com/pulp/pulp/pull/3637>`_
+* `Id field no longer returned by REST API <https://github.com/pulp/pulp/pull/3630>`_
+
+3.0.0b7
+=======
+
+* `Comprehensive list of changes and bugfixes for beta 7 <https://github.com/pulp/pulpcore/compare/3.0.0b6...3.0.0b7>`_.
+
+3.0.0b6
+=======
+
+* `Comprehensive list of changes and bugfixes for beta 6 <https://github.com/pulp/pulpcore/compare/3.0.0b5...3.0.0b6>`_.
+
+Breaking Changes
+----------------
+
+* `Use querysets for add/remove_content methods <https://github.com/pulp/pulp/pull/3548>`_
+* `Switch to using integer IDs instead of UUIDs <https://github.com/pulp/pulp/pull/3549>`_
+
+3.0.0b5
+=======
+
+* `Comprehensive list of changes and bugfixes for beta 5 <https://github.com/pulp/pulpcore/compare/3.0.0b4...3.0.0b5>`_.
+
+3.0.0b4
+=======
+
+* `Comprehensive list of changes and bugfixes for beta 4 <https://github.com/pulp/pulpcore/compare/3.0.0b3...3.0.0b4>`_.
+
+3.0.0b3
+=======
+
+* `Comprehensive list of changes and bugfixes for beta 3 <https://github.com/pulp/pulp/pulls?utf8=%E2%9C%93&q=label%3A3.0+is%3Aclosed+merged%3A2018-05-02T17%3A23%3A00-06%3A00..2018-05-16T17%3A30%3A00-06%3A00+>`_.
+
+Breaking Changes
+----------------
+
+* Tasking system switching from Celery+RabbitMQ to RQ+Redis. This breaking change impacts both
+  plugin writers and users. See
+  `the blog post about this change and how to update <https://pulpproject.org/2018/05/08/pulp3-moving-to-rq/>`_.
+
+3.0.0b2
+=======
+
+* `Comprehensive list of changes and bugfixes for beta 2 <https://github.com/pulp/pulp/pulls?utf8=%E2%9C%93&q=label%3A3.0+is%3Aclosed+merged%3A2018-04-25T12%3A30%3A00-06%3A00..2018-05-02T17%3A23%3A00-06%3A00+>`_
+
+
+Breaking Changes
+----------------
+
+* Default database changed from sqlite to postgres. See
+  `why <https://www.redhat.com/archives/pulp-dev/2018-April/msg00204.html>`_
+
+
+3.0.0b1
+=======
+
+* Pulp3 beta1 is released!
+* See `blog post <https://pulpproject.org/2018/04/25/beta-release/>`_ for details
