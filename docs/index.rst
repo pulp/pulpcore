@@ -106,3 +106,4 @@ Table of Contents
    troubleshooting
    bugs-features
    glossary
+   changes

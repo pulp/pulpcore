@@ -8,3 +8,4 @@ pyyaml
 sphinx<1.8.0
 sphinx-rtd-theme
 sphinxcontrib-openapi
+towncrier
