@@ -1,6 +1,4 @@
-import pkg_resources
-
-__version__ = pkg_resources.get_distribution("pulpcore").version
+__version__ = '3.0.0rc2'
 
 
 from pkgutil import extend_path
