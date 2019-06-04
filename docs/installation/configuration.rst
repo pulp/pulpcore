@@ -15,6 +15,19 @@ optional. The expected location and format can be changed by specifying the ``PU
 environment variable. Dynaconf supports `settings in multiple file formats <https://dynaconf.
 readthedocs.io/en/latest/guides/examples.html>`_
 
+This file should have permissions of:
+
+* mode: 640
+* owner: root
+* group: pulp
+* SELinux context: system_u:object_r:etc_t:s0
+
+If it is in its own directory like ``/etc/pulp``, the directory should have permissions of:
+
+* mode: 750
+* owner: root
+* group: pulp
+* SELinux context: unconfined_u:object_r:etc_t:s0
 
 By Environment Variables
 ------------------------
@@ -85,6 +98,13 @@ MEDIA_ROOT
    If you're using S3, point this to the path in your bucket you want to save files. See the
    :ref:`storage documentation <storage>` for more info.
 
+   It should have permissions of:
+
+   * mode: 750
+   * owner: pulp
+   * group: pulp
+   * SELinux context: system_u:object_r:var_lib_t:s0
+
 LOGGING
 ^^^^^^^
 
@@ -142,6 +162,13 @@ WORKING_DIRECTORY
 
    The directory used by workers to stage files temporarily. This defaults to
    ``/var/lib/pulp/tmp/``.
+
+   It should have permissions of:
+
+   * mode: 755
+   * owner: pulp
+   * group: pulp
+   * SELinux context: unconfined_u:object_r:var_lib_t:s0
 
 .. note::
 
