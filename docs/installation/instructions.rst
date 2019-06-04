@@ -69,7 +69,10 @@ PyPI Installation
 
 5. Follow the :ref:`configuration instructions <configuration>` to set the ``SECRET_KEY``.
 
-6. Go through the :ref:`database-install`, :ref:`redis-install`, and :ref:`systemd-setup` sections
+6. Create the ``MEDIA_ROOT`` & ``WORKING_DIRECTORY`` with the prescribed permissions from the
+   :ref:`configuration instructions. <configuration>`
+
+7. Go through the :ref:`database-install`, :ref:`redis-install`, and :ref:`systemd-setup` sections
 
 .. note::
 
@@ -80,16 +83,16 @@ PyPI Installation
     $ /path/to/python/bin/rq worker -n 'reserved-resource-worker-1@%h' -w 'pulpcore.tasking.worker.PulpWorker' -c 'pulpcore.rqconfig'
     $ /path/to/python/bin/rq worker -n 'reserved-resource-worker-2@%h' -w 'pulpcore.tasking.worker.PulpWorker' -c 'pulpcore.rqconfig'
 
-7. Run Django Migrations::
+8. Run Django Migrations::
 
    $ django-admin migrate --noinput
    $ django-admin reset-admin-password --password admin
 
-8. Collect Static Media for live docs and browsable API::
+9. Collect Static Media for live docs and browsable API::
 
    $ django-admin collectstatic --noinput
 
-9. Run Pulp::
+10. Run Pulp::
 
     $ pulp-content  # The Pulp Content service (listening on port 24816)
     $ django-admin runserver 24817  # The Pulp API service
