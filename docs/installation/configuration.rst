@@ -19,14 +19,14 @@ This file should have permissions of:
 
 * mode: 640
 * owner: root
-* group: pulp
+* group: pulp (the group of the account that pulp runs under)
 * SELinux context: system_u:object_r:etc_t:s0
 
 If it is in its own directory like ``/etc/pulp``, the directory should have permissions of:
 
 * mode: 750
 * owner: root
-* group: pulp
+* group: pulp (the group of the account that pulp runs under)
 * SELinux context: unconfined_u:object_r:etc_t:s0
 
 By Environment Variables
@@ -101,8 +101,8 @@ MEDIA_ROOT
    It should have permissions of:
 
    * mode: 750
-   * owner: pulp
-   * group: pulp
+   * owner: pulp (the account that pulp runs under)
+   * group: pulp (the group of the account that pulp runs under)
    * SELinux context: system_u:object_r:var_lib_t:s0
 
 LOGGING
@@ -177,8 +177,8 @@ WORKING_DIRECTORY
    It should have permissions of:
 
    * mode: 755
-   * owner: pulp
-   * group: pulp
+   * owner: pulp (the account that pulp runs under)
+   * group: pulp (the group of the account that pulp runs under)
    * SELinux context: unconfined_u:object_r:var_lib_t:s0
 
 .. note::

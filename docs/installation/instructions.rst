@@ -29,9 +29,17 @@ To use ansible roles to install Pulp 3 instead of manual setup refer to
 PyPI Installation
 -----------------
 
-1. Install python3.6(+) and pip.
+1. (Optional) Create a user account & group for Pulp 3 to run under, rather than using root. The following values are recommended:
 
-2. Create a pulp venv::
+   * name: pulp
+   * shell: The path to the `nologin` executable
+   * home: ``MEDIA_ROOT``
+   * system account: yes
+   * create corresponding private group: yes
+
+2. Install python3.6(+) and pip.
+
+3. Create a pulp venv::
 
    $ python3 -m venv pulpvenv
    $ source pulpvenv/bin/activate
@@ -43,7 +51,7 @@ PyPI Installation
 
    $ sudo apt-get install python3-venv
 
-3. Install Pulp with the set of packages for the relational database you prefer to use. Right now we
+4. Install Pulp with the set of packages for the relational database you prefer to use. Right now we
    have extra sets for postgresql or MySQL/mariadb::
 
    $ pip install pulpcore-plugin pulpcore[postgres]
@@ -59,9 +67,9 @@ PyPI Installation
    $ pip install -e ./pulpcore-plugin
 
 
-4. Follow the :ref:`configuration instructions <configuration>` to set the ``SECRET_KEY``.
+5. Follow the :ref:`configuration instructions <configuration>` to set the ``SECRET_KEY``.
 
-5. Go through the :ref:`database-install`, :ref:`redis-install`, and :ref:`systemd-setup` sections
+6. Go through the :ref:`database-install`, :ref:`redis-install`, and :ref:`systemd-setup` sections
 
 .. note::
 
@@ -72,16 +80,16 @@ PyPI Installation
     $ /path/to/python/bin/rq worker -n 'reserved-resource-worker-1@%h' -w 'pulpcore.tasking.worker.PulpWorker' -c 'pulpcore.rqconfig'
     $ /path/to/python/bin/rq worker -n 'reserved-resource-worker-2@%h' -w 'pulpcore.tasking.worker.PulpWorker' -c 'pulpcore.rqconfig'
 
-8. Run Django Migrations::
+7. Run Django Migrations::
 
    $ django-admin migrate --noinput
    $ django-admin reset-admin-password --password admin
 
-9. Collect Static Media for live docs and browsable API::
+8. Collect Static Media for live docs and browsable API::
 
    $ django-admin collectstatic --noinput
 
-10. Run Pulp::
+9. Run Pulp::
 
     $ pulp-content  # The Pulp Content service (listening on port 24816)
     $ django-admin runserver 24817  # The Pulp API service
