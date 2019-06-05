@@ -56,6 +56,7 @@ def cancel(task_id):
         _delete_incomplete_resources(task_status)
 
     _logger.info(_('Task canceled: {id}.').format(id=task_id))
+    return task_status
 
 
 def _delete_incomplete_resources(task):

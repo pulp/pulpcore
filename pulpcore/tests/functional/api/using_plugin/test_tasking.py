@@ -86,8 +86,7 @@ class CancelTaskTestCase(unittest.TestCase):
     def test_cancel_running_task(self):
         """Cancel a running task."""
         task = self.create_long_task()
-        self.cancel_task(task)
-        response = self.client.get(task['task'])
+        response = self.cancel_task(task)
         self.assertIsNone(response['finished_at'], response)
         self.assertEqual(response['state'], 'canceled', response)
 
@@ -95,7 +94,7 @@ class CancelTaskTestCase(unittest.TestCase):
         """Cancel a nonexistent task."""
         task_href = urljoin(TASKS_PATH, utils.uuid4() + '/')
         with self.assertRaises(HTTPError) as ctx:
-            self.client.post(urljoin(task_href, 'cancel/'))
+            self.client.patch(task_href, json={'state': 'canceled'})
         for key in ('not', 'found'):
             self.assertIn(
                 key,
@@ -128,4 +127,4 @@ class CancelTaskTestCase(unittest.TestCase):
 
     def cancel_task(self, task):
         """Cancel a task."""
-        return self.client.post(urljoin(task['task'], 'cancel/'))
+        return self.client.patch(task['task'], json={'state': 'canceled'})
