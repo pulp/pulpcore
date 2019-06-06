@@ -101,6 +101,16 @@ class MinimalTaskSerializer(TaskSerializer):
                                                 'worker', 'parent')
 
 
+class TaskCancelSerializer(ModelSerializer):
+    state = serializers.CharField(
+        help_text=_("The desired state of the task. Only 'canceled' is accepted."),
+    )
+
+    class Meta:
+        model = models.Task
+        fields = ('state',)
+
+
 class WorkerSerializer(ModelSerializer):
     _href = IdentityField(view_name='workers-detail')
 

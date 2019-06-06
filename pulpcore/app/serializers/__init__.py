@@ -49,4 +49,4 @@ from .repository import (  # noqa
     RepositoryVersionSerializer,
     RepositoryVersionCreateSerializer
 )
-from .task import MinimalTaskSerializer, TaskSerializer, WorkerSerializer  # noqa
+from .task import MinimalTaskSerializer, TaskSerializer, TaskCancelSerializer, WorkerSerializer  # noqa

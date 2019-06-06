@@ -1,14 +1,16 @@
+from gettext import gettext as _
 from django_filters.rest_framework import filters, DjangoFilterBackend
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status, mixins
-from rest_framework.decorators import detail_route
 from rest_framework.filters import OrderingFilter
 from rest_framework.response import Response
+from rest_framework.serializers import ValidationError
 
 from pulpcore.constants import TASK_INCOMPLETE_STATES
 
 from pulpcore.app.models import Task, Worker
-from pulpcore.app.serializers import MinimalTaskSerializer, TaskSerializer, WorkerSerializer
+from pulpcore.app.serializers import MinimalTaskSerializer, TaskSerializer, TaskCancelSerializer,\
+    WorkerSerializer
 from pulpcore.app.viewsets import BaseFilterSet, NamedModelViewSet
 from pulpcore.app.viewsets.base import NAME_FILTER_OPTIONS, DATETIME_FILTER_OPTIONS
 from pulpcore.app.viewsets.custom_filters import HyperlinkRelatedFilter, IsoDateTimeFilter
@@ -48,18 +50,28 @@ class TaskViewSet(NamedModelViewSet,
     ordering = ('-_created')
 
     @swagger_auto_schema(operation_description="This operation cancels a task.",
-                         operation_summary="Cancel a task")
-    @detail_route(methods=('post',))
-    def cancel(self, request, pk=None):
+                         operation_summary="Cancel a task", operation_id='tasks_cancel',
+                         responses={200: TaskSerializer})
+    def partial_update(self, request, pk=None, partial=True):
         task = self.get_object()
-        cancel_task(task.pk)
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        if 'state' not in request.data:
+            raise ValidationError(_("'state' must be provided with the request."))
+        if request.data['state'] != 'canceled':
+            raise ValidationError(_("The only acceptable value for 'state' is 'canceled'."))
+        task = cancel_task(task.pk)
+        serializer = self.serializer_class(task, context={'request': request})
+        return Response(serializer.data)
 
     def destroy(self, request, pk=None):
         task = self.get_object()
         if task.state in TASK_INCOMPLETE_STATES:
             return Response(status=status.HTTP_409_CONFLICT)
         return super().destroy(request, pk)
+
+    def get_serializer_class(self):
+        if self.action == 'partial_update':
+            return TaskCancelSerializer
+        return super().get_serializer_class()
 
 
 class WorkerFilter(BaseFilterSet):
