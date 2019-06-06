@@ -1,21 +1,29 @@
 # coding=utf-8
 """Tests that perform actions over distributions."""
+import csv
+import hashlib
 import unittest
+from functools import reduce
+from urllib.parse import urljoin
+
+from requests.exceptions import HTTPError
 
 from pulp_smash import api, config, utils
 from pulp_smash.pulp3.constants import REPO_PATH
 from pulp_smash.pulp3.utils import (
     gen_distribution,
     gen_repo,
+    get_added_content,
     get_versions,
     sync,
 )
 
-from requests.exceptions import HTTPError
-
 from pulpcore.tests.functional.api.using_plugin.constants import (
+    FILE_CONTENT_NAME,
     FILE_DISTRIBUTION_PATH,
+    FILE_FIXTURE_COUNT,
     FILE_REMOTE_PATH,
+    FILE_URL,
 )
 from pulpcore.tests.functional.api.using_plugin.utils import (
     create_file_publication,
@@ -257,3 +265,82 @@ class DistributionBasePathTestCase(unittest.TestCase):
             ctx.exception.response.json()['base_path'],
             ctx.exception.response.json()
         )
+
+
+class ContentServePublicationDistributionTestCase(unittest.TestCase):
+    """Verify that content is served from a publication distribution.
+
+    Assert that published metadata and content is served from a publication
+    distribution.
+
+    This test targets the following issue:
+
+    `Pulp #4847 <https://pulp.plan.io/issues/4847>`_
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        """Create class-wide variables."""
+        cls.cfg = config.get_config()
+        cls.client = api.Client(cls.cfg)
+
+    def test_content_served(self):
+        """Verify that content is served over publication distribution."""
+        repo = self.client.post(REPO_PATH, gen_repo())
+        self.addCleanup(self.client.delete, repo['_href'])
+
+        remote = self.client.post(FILE_REMOTE_PATH, gen_file_remote())
+        self.addCleanup(self.client.delete, remote['_href'])
+
+        sync(self.cfg, remote, repo)
+        repo = self.client.get(repo['_href'])
+
+        publication = create_file_publication(self.cfg, repo)
+        self.addCleanup(self.client.delete, publication['_href'])
+
+        distribution = self.client.post(
+            FILE_DISTRIBUTION_PATH,
+            gen_distribution(publication=publication['_href'])
+        )
+        self.addCleanup(self.client.delete, distribution['_href'])
+
+        pulp_manifest = parse_pulp_manifest(
+            self.download_pulp_manifest(distribution)
+        )
+
+        self.assertEqual(len(pulp_manifest), FILE_FIXTURE_COUNT, pulp_manifest)
+
+        added_content = get_added_content(repo)
+        unit_path = added_content[FILE_CONTENT_NAME][0]['relative_path']
+        unit_url = self.cfg.get_hosts('api')[0].roles['api']['scheme']
+        unit_url += '://' + distribution['base_url'] + '/'
+        unit_url = urljoin(unit_url, unit_path)
+
+        pulp_hash = hashlib.sha256(
+            self.client.using_handler(api.safe_handler).get(unit_url).content
+        ).hexdigest()
+        fixtures_hash = hashlib.sha256(
+            utils.http_get(urljoin(FILE_URL, unit_path))
+        ).hexdigest()
+
+        self.assertEqual(fixtures_hash, pulp_hash)
+
+    def download_pulp_manifest(self, distribution):
+        """Download pulp manifest."""
+        unit_url = reduce(
+            urljoin,
+            (
+                self.cfg.get_content_host_base_url(),
+                '//' + distribution['base_url'] + '/',
+                'PULP_MANIFEST'
+            ),
+        )
+        return self.client.using_handler(api.safe_handler).get(unit_url)
+
+
+def parse_pulp_manifest(pulp_manifest):
+    """Parse pulp manifest."""
+    return list(csv.DictReader(
+        pulp_manifest.text.splitlines(),
+        ('name', 'checksum', 'size'),
+    ))
