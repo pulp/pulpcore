@@ -206,6 +206,9 @@ SWAGGER_SETTINGS = {
     'DEFAULT_INFO': 'pulpcore.app.urls.api_info',
 }
 
+# Checksum type used to validate chunked uploads. Only md5 and sha256 are supported currently.
+DRF_CHUNKED_UPLOAD_CHECKSUM = 'sha256'
+
 # HERE STARTS DYNACONF EXTENSION LOAD (Keep at the very bottom of settings.py)
 # Read more at https://dynaconf.readthedocs.io/en/latest/guides/django.html
 import dynaconf  # noqa

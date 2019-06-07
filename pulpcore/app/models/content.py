@@ -344,4 +344,7 @@ class RemoteArtifact(Model, QueryMixin):
 
 
 class Upload(ChunkedUpload):
-    pass
+
+    @property
+    def sha256(self):
+        self.checksum

@@ -1,6 +1,7 @@
 from gettext import gettext as _
 import hashlib
 
+from django.conf import settings
 from django.db import transaction
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
@@ -274,7 +275,7 @@ class UploadSerializer(base.ModelSerializer):
 
     class Meta:
         model = models.Upload
-        fields = ('_href', 'offset', 'expires_at', 'file', 'md5')
+        fields = ('_href', 'offset', 'expires_at', 'file')
 
 
 class UploadPUTSerializer(serializers.Serializer):
@@ -286,27 +287,33 @@ class UploadPUTSerializer(serializers.Serializer):
     )
 
 
-class UploadPOSTSerializer(base.ModelSerializer):
+class UploadFinishSerializer(serializers.Serializer):
+    """Serializer for POST to complete Upload and validate Upload's sha256 checksum"""
+    if settings.DRF_CHUNKED_UPLOAD_CHECKSUM == 'md5':
+        md5 = serializers.CharField(
+            help_text=_("The expected md5 hex digest of the file."),
+            required=True,
+            allow_blank=False,
+            write_only=True,
+        )
+    elif settings.DRF_CHUNKED_UPLOAD_CHECKSUM == 'sha256':
+        sha256 = serializers.CharField(
+            help_text=_("The expected sha256 hex digest of the file."),
+            required=True,
+            allow_blank=False,
+            write_only=True,
+        )
+
+
+class UploadPOSTSerializer(base.ModelSerializer, UploadFinishSerializer):
     """Serializer for creating chunked uploads from entire file."""
     file = serializers.FileField(
         help_text=_("The full file to upload."),
         required=True
     )
-    md5 = serializers.CharField(
-        help_text=_("The expected MD5 checksum of the file."),
-        required=True,
-        allow_blank=False
-    )
 
     class Meta:
         model = models.Upload
-        fields = ['file', 'md5']
+        fields = ['file', settings.DRF_CHUNKED_UPLOAD_CHECKSUM]
 
 
-class UploadFinishSerializer(serializers.Serializer):
-    """Serializer for POST to complete Upload and validate Upload's md5 checksum"""
-    md5 = serializers.CharField(
-        help_text=_("The expected MD5 checksum of the file."),
-        required=True,
-        allow_blank=False
-    )

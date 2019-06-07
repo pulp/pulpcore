@@ -15,10 +15,10 @@ be used for subsequent chunks::
 
     http --form PUT :24817/pulp/api/v3/uploads/a8b5a7f7-2f22-460d-ab20-d5616cb71cdd/ file@./chunkbb 'Content-Range:bytes 6291456-10485759/32095676'
 
-Once all chunks have been uploaded, a final POST request with the file md5 can be sent to complete the
+Once all chunks have been uploaded, a final POST request with the file sha256 can be sent to complete the
 upload::
 
-    http --form POST :24817/pulp/api/v3/uploads/a8b5a7f7-2f22-460d-ab20-d5616cb71cdd/ md5=037a47d93670e64f2b1038e6f90e4cfd
+    http --form POST :24817/pulp/api/v3/uploads/a8b5a7f7-2f22-460d-ab20-d5616cb71cdd/ sha256=d7c0953bd2a0c44b75844677ea839b2f3d40b5d3689c3b3756f3c2bc784eef3d
 
 Then the artifact may be created with the upload href::
 
@@ -32,5 +32,5 @@ Putting this altogether, here is an example that uploads a 1.iso file in two chu
    split --bytes=6M 1.iso chunk
    export UPLOAD=$(http --form PUT :24817/pulp/api/v3/uploads/ file@./chunkaa 'Content-Range:bytes 0-6291455/32095676'  | jq -r '._href')
    http --form PUT :24817$UPLOAD file@./chunkab 'Content-Range:bytes 6291456-10485759/32095676'
-   http POST :24817$UPLOAD md5=037a47d93670e64f2b1038e6f90e4cfd
-   http --form POST :24817/pulp/api/v3/artifacts/ upload=$UPLOAD
+   http --form POST :24817$UPLOAD sha256=d7c0953bd2a0c44b75844677ea839b2f3d40b5d3689c3b3756f3c2bc784eef3d
+   http POST :24817/pulp/api/v3/artifacts/ upload=$UPLOAD

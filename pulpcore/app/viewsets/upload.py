@@ -44,7 +44,7 @@ class UploadViewSet(GenericViewSet, ChunkedUploadView, CreateModelMixin, Destroy
         """
         Mark the Upload as "complete".
 
-        The md5 checksum is used to validate the integrity of the upload.
+        The checksum is used to validate the integrity of the upload.
         """
         return super().post(*args, **kwargs)
 
