@@ -7,6 +7,7 @@ from rest_framework.viewsets import GenericViewSet
 from rest_framework.parsers import FormParser, MultiPartParser
 
 from drf_yasg.utils import swagger_auto_schema
+from drf_yasg.openapi import Parameter
 
 
 class UploadViewSet(GenericViewSet, ChunkedUploadView, CreateModelMixin, DestroyModelMixin):
@@ -16,9 +17,16 @@ class UploadViewSet(GenericViewSet, ChunkedUploadView, CreateModelMixin, Destroy
     queryset = Upload.objects.all()
     parser_classes = (MultiPartParser, FormParser)
 
+    content_range_parameter = \
+        Parameter(name='Content-Range', in_='header', required=True, type='string',
+                  pattern=r"^bytes (?P<start>\d+)-(?P<end>\d+)/(?P<total>\d+)$",
+                  description='The Content-Range header specifies the location of the file chunk '
+                              'within the file.')
+
     @swagger_auto_schema(operation_summary="Start Upload",
                          operation_id="uploads_create",
                          request_body=UploadPUTSerializer,
+                         manual_parameters=[content_range_parameter],
                          responses={200: UploadSerializer})
     def put_create(self, *args, **kwargs):
         """
@@ -29,6 +37,7 @@ class UploadViewSet(GenericViewSet, ChunkedUploadView, CreateModelMixin, Destroy
     @swagger_auto_schema(operation_summary="Continue an Upload",
                          operation_id="uploads_update",
                          request_body=UploadPUTSerializer,
+                         manual_parameters=[content_range_parameter],
                          responses={200: UploadSerializer})
     def put_update(self, *args, **kwargs):
         """
