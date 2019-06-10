@@ -11,6 +11,7 @@ class JSONField(models.TextField):
     A custom Django field to serialize data into a text field and vice versa
 
     """
+
     def from_db_value(self, value, *args, **kwargs):
         """
         Converts a value as returned by the database to a Python object

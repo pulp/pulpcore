@@ -9,7 +9,7 @@ from pulpcore.app.fields import JSONField
 class TestJSONField(TestCase):
     def setUp(self):
         self.json_field = JSONField()
-        self.obj = {'test': 12}
+        self.obj = {"test": 12}
         self.obj_json = json.dumps(self.obj)
 
     def test_to_python(self):
@@ -29,6 +29,6 @@ class TestJSONField(TestCase):
 
     def test_value_to_string(self):
         """Assert the value returned by value_to_string matches a json-serialized version of obj"""
-        with patch('pulpcore.app.fields.JSONField.value_from_object', return_value=self.obj):
+        with patch("pulpcore.app.fields.JSONField.value_from_object", return_value=self.obj):
             new_obj = self.json_field.value_to_string(object())
             self.assertEquals(self.obj_json, new_obj)

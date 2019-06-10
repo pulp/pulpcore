@@ -2,35 +2,31 @@ import mock
 from unittest import TestCase
 
 from pulpcore.app.models import BaseDistribution
-from pulpcore.app.serializers import (
-    BaseDistributionSerializer,
-    PublicationSerializer,
-)
+from pulpcore.app.serializers import BaseDistributionSerializer, PublicationSerializer
 from rest_framework import serializers
 
 
 class TestPublicationSerializer(TestCase):
-
-    @mock.patch('pulpcore.app.serializers.repository.models.RepositoryVersion')
+    @mock.patch("pulpcore.app.serializers.repository.models.RepositoryVersion")
     def test_validate_repository_only(self, mock_version):
         mock_repo = mock.MagicMock()
-        data = {'repository': mock_repo}
+        data = {"repository": mock_repo}
         serializer = PublicationSerializer()
         new_data = serializer.validate(data)
-        self.assertEqual(new_data, {'repository_version': mock_version.latest.return_value})
+        self.assertEqual(new_data, {"repository_version": mock_version.latest.return_value})
         mock_version.latest.assert_called_once_with(mock_repo)
 
     def test_validate_repository_version_only(self):
         mock_version = mock.MagicMock()
-        data = {'repository_version': mock_version}
+        data = {"repository_version": mock_version}
         serializer = PublicationSerializer()
         new_data = serializer.validate(data)
-        self.assertEqual(new_data, {'repository_version': mock_version})
+        self.assertEqual(new_data, {"repository_version": mock_version})
 
     def test_validate_repository_and_repository_version(self):
         mock_version = mock.MagicMock()
         mock_repository = mock.MagicMock()
-        data = {'repository_version': mock_version, 'repository': mock_repository}
+        data = {"repository_version": mock_version, "repository": mock_repository}
         serializer = PublicationSerializer()
         with self.assertRaises(serializers.ValidationError):
             serializer.validate(data)
@@ -40,17 +36,17 @@ class TestPublicationSerializer(TestCase):
         with self.assertRaises(serializers.ValidationError):
             serializer.validate({})
 
-    @mock.patch('pulpcore.app.serializers.repository.models.RepositoryVersion')
+    @mock.patch("pulpcore.app.serializers.repository.models.RepositoryVersion")
     def test_validate_repository_only_unknown_field(self, mock_version):
         mock_repo = mock.MagicMock()
-        data = {'repository': mock_repo, 'unknown_field': 'unknown'}
+        data = {"repository": mock_repo, "unknown_field": "unknown"}
         serializer = PublicationSerializer(data=data)
         with self.assertRaises(serializers.ValidationError):
             serializer.validate(data)
 
     def test_validate_repository_version_only_unknown_field(self):
         mock_version = mock.MagicMock()
-        data = {'repository_version': mock_version, 'unknown_field': 'unknown'}
+        data = {"repository_version": mock_version, "unknown_field": "unknown"}
         serializer = PublicationSerializer(data=data)
         with self.assertRaises(serializers.ValidationError):
             serializer.validate(data)
@@ -59,7 +55,7 @@ class TestPublicationSerializer(TestCase):
 class TestDistributionPath(TestCase):
     def test_overlap(self):
         BaseDistribution.objects.create(base_path="foo/bar", name="foobar")
-        overlap_errors = {'base_path': ["Overlaps with existing distribution 'foobar'"]}
+        overlap_errors = {"base_path": ["Overlaps with existing distribution 'foobar'"]}
 
         # test that the new distribution cannot be nested in an existing path
         data = {"name": "foobarbaz", "base_path": "foo/bar/baz"}
@@ -89,7 +85,7 @@ class TestDistributionPath(TestCase):
         self.assertDictEqual({}, serializer.errors)
 
     def test_slashes(self):
-        overlap_errors = {'base_path': ["Relative path cannot begin or end with slashes."]}
+        overlap_errors = {"base_path": ["Relative path cannot begin or end with slashes."]}
 
         data = {"name": "fefe", "base_path": "fefe/"}
         serializer = BaseDistributionSerializer(data=data)
@@ -104,7 +100,7 @@ class TestDistributionPath(TestCase):
     def test_uniqueness(self):
         BaseDistribution.objects.create(base_path="fizz/buzz", name="fizzbuzz")
         data = {"name": "feefee", "base_path": "fizz/buzz"}
-        overlap_errors = {'base_path': ["This field must be unique."]}
+        overlap_errors = {"base_path": ["This field must be unique."]}
 
         serializer = BaseDistributionSerializer(data=data)
         self.assertFalse(serializer.is_valid())

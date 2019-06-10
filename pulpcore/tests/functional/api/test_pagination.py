@@ -40,9 +40,7 @@ class PaginationTestCase(unittest.TestCase):
             # Create repos
             for _ in range(cls.number_to_create):
                 repo = cls.client.post(REPO_PATH, gen_repo())
-                cls.teardown_cleanups.append(
-                    (cls.client.delete, repo['_href'])
-                )
+                cls.teardown_cleanups.append((cls.client.delete, repo["_href"]))
 
     @classmethod
     def tearDownClass(cls):
@@ -66,46 +64,36 @@ class PaginationTestCase(unittest.TestCase):
         """
 
         per_page = 7  # will result in 3 pages
-        resp = self.client.get(REPO_PATH, params={'page_size': per_page})
-        collected_results = resp['results']
+        resp = self.client.get(REPO_PATH, params={"page_size": per_page})
+        collected_results = resp["results"]
         # First call returns 7 results
         self.assertEqual(len(collected_results), per_page, collected_results)
         # no previous but there is a next
-        self.assertIsNone(resp['previous'], resp['previous'])
-        self.assertIsNotNone(resp['next'], resp['next'])
+        self.assertIsNone(resp["previous"], resp["previous"])
+        self.assertIsNotNone(resp["next"], resp["next"])
 
         # paginate pages 2 and 3
         for page in range(int(self.number_to_create / per_page)):  # [0, 1, 2]
             if page == 1:
                 # there is a previous and a next
-                self.assertIsNotNone(resp['previous'], resp['previous'])
-                self.assertIsNotNone(resp['next'], resp['next'])
+                self.assertIsNotNone(resp["previous"], resp["previous"])
+                self.assertIsNotNone(resp["next"], resp["next"])
                 # must have twice the size
-                self.assertEqual(
-                    len(collected_results),
-                    per_page * 2,
-                    collected_results
-                )
+                self.assertEqual(len(collected_results), per_page * 2, collected_results)
             if page == 2:
                 # last page there is no next but there is a previous
-                self.assertIsNone(resp['next'], resp['next'])
-                self.assertIsNotNone(resp['previous'], resp['previous'])
+                self.assertIsNone(resp["next"], resp["next"])
+                self.assertIsNotNone(resp["previous"], resp["previous"])
                 # must have 3 x the size
-                self.assertEqual(
-                    len(collected_results),
-                    per_page * 3,
-                    collected_results
-                )
+                self.assertEqual(len(collected_results), per_page * 3, collected_results)
                 break  # last page reached
-            resp = self.client.get(resp['next'])
-            page_results = resp['results']
+            resp = self.client.get(resp["next"])
+            page_results = resp["results"]
             self.assertEqual(len(page_results), per_page, page_results)
             collected_results.extend(page_results)
 
         # Assert the final count
-        self.assertEqual(
-            len(collected_results), self.number_to_create, collected_results
-        )
+        self.assertEqual(len(collected_results), self.number_to_create, collected_results)
 
     def test_skip_pages(self):
         """Test jump from page 1 to page 3 (skipping page 2).
@@ -121,23 +109,17 @@ class PaginationTestCase(unittest.TestCase):
         all_repos = self.client.using_handler(api.page_handler).get(REPO_PATH)
         self.assertEqual(len(all_repos), self.number_to_create, all_repos)
 
-        first_page = self.client.get(
-            REPO_PATH, params={'page_size': per_page, 'page': 1}
-        )
-        last_page = self.client.get(
-            REPO_PATH, params={'page_size': per_page, 'page': 3}
-        )
+        first_page = self.client.get(REPO_PATH, params={"page_size": per_page, "page": 1})
+        last_page = self.client.get(REPO_PATH, params={"page_size": per_page, "page": 3})
 
         for index in range(0, 7):
             # Assert page 1 contains the first 7 items from _all
-            self.assertEqual(first_page['results'][index], all_repos[index])
+            self.assertEqual(first_page["results"][index], all_repos[index])
 
             # skip page 2
 
             # Assert page 3 contains the last 7 items from _all
-            self.assertEqual(
-                last_page['results'][index], all_repos[index + per_page * 2]
-            )
+            self.assertEqual(last_page["results"][index], all_repos[index + per_page * 2])
 
     def test_page_handler_pagination(self):
         """Assert page handler returns all items independent of page_size.
@@ -148,6 +130,6 @@ class PaginationTestCase(unittest.TestCase):
         """
         # assert results
         repos = self.client.using_handler(api.page_handler).get(
-            REPO_PATH, params={'page_size': randint(2, 11)}
+            REPO_PATH, params={"page_size": randint(2, 11)}
         )
         self.assertEqual(len(repos), self.number_to_create, repos)

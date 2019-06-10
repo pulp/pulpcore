@@ -14,14 +14,16 @@ from pulpcore.app.serializers import DetailRelatedField, RelatedField
 
 def relative_path_validator(relative_path):
     if os.path.isabs(relative_path):
-        raise serializers.ValidationError(_("Relative path can't start with '/'. "
-                                            "{0}").format(relative_path))
+        raise serializers.ValidationError(
+            _("Relative path can't start with '/'. " "{0}").format(relative_path)
+        )
 
 
 class ContentRelatedField(DetailRelatedField):
     """
     Serializer Field for use when relating to Content Detail Models
     """
+
     queryset = models.Content.objects.all()
 
 
@@ -29,8 +31,9 @@ class SingleContentArtifactField(RelatedField):
     """
     A serializer field for the '_artifacts' ManyToManyField on the Content model (single-artifact).
     """
-    lookup_field = 'pk'
-    view_name = 'artifacts-detail'
+
+    lookup_field = "pk"
+    view_name = "artifacts-detail"
     queryset = models.Artifact.objects.all()
     allow_null = True
 
@@ -56,8 +59,12 @@ class SingleContentArtifactField(RelatedField):
         if instance._artifacts.count() == 1:
             return instance._artifacts.all()[0]
         if instance._artifacts.count() > 1:
-            raise ValueError(_("SingleContentArtifactField should not be used in a context where "
-                               "multiple artifacts for one content is possible."))
+            raise ValueError(
+                _(
+                    "SingleContentArtifactField should not be used in a context where "
+                    "multiple artifacts for one content is possible."
+                )
+            )
 
 
 class ContentArtifactChecksumField(serializers.CharField):
@@ -66,8 +73,8 @@ class ContentArtifactChecksumField(serializers.CharField):
     """
 
     def __init__(self, *args, **kwargs):
-        kwargs['read_only'] = True
-        self.checksum = kwargs.pop('checksum', 'md5')
+        kwargs["read_only"] = True
+        self.checksum = kwargs.pop("checksum", "md5")
         super().__init__(*args, **kwargs)
 
     def get_attribute(self, instance):
@@ -93,8 +100,12 @@ class ContentArtifactChecksumField(serializers.CharField):
         if instance._artifacts.count() == 1:
             return getattr(instance._artifacts.all()[0], self.checksum)
         if instance._artifacts.count() > 1:
-            raise ValueError(_("ContentArtifactChecksumField should not be used in a context where "
-                               "multiple artifacts for one content is possible."))
+            raise ValueError(
+                _(
+                    "ContentArtifactChecksumField should not be used in a context where "
+                    "multiple artifacts for one content is possible."
+                )
+            )
 
 
 class ContentArtifactsField(serializers.DictField):
@@ -123,12 +134,15 @@ class ContentArtifactsField(serializers.DictField):
         """
         ret = {}
         if data is empty:
-            raise serializers.ValidationError(_('_artifacts field must be specified.'))
+            raise serializers.ValidationError(_("_artifacts field must be specified."))
         for relative_path, url in data.items():
             relative_path_validator(relative_path)
-            artifactfield = RelatedField(view_name='artifacts-detail',
-                                         queryset=models.Artifact.objects.all(),
-                                         source='*', initial=url)
+            artifactfield = RelatedField(
+                view_name="artifacts-detail",
+                queryset=models.Artifact.objects.all(),
+                source="*",
+                initial=url,
+            )
             try:
                 artifact = artifactfield.run_validation(data=url)
                 ret[relative_path] = artifact
@@ -173,8 +187,9 @@ class ContentArtifactsField(serializers.DictField):
         ret = {}
         for content_artifact in value:
             if content_artifact.artifact_id:
-                url = reverse('artifacts-detail', kwargs={'pk': content_artifact.artifact_id},
-                              request=None)
+                url = reverse(
+                    "artifacts-detail", kwargs={"pk": content_artifact.artifact_id}, request=None
+                )
             else:
                 url = None
             ret[content_artifact.relative_path] = url
@@ -182,16 +197,16 @@ class ContentArtifactsField(serializers.DictField):
 
 
 class LatestVersionField(NestedHyperlinkedRelatedField):
-    parent_lookup_kwargs = {'repository_pk': 'repository__pk'}
-    lookup_field = 'number'
-    view_name = 'versions-detail'
+    parent_lookup_kwargs = {"repository_pk": "repository__pk"}
+    lookup_field = "number"
+    view_name = "versions-detail"
 
     def __init__(self, *args, **kwargs):
         """
         Unfortunately you can't just set read_only=True on the class. It has
         to be done explicitly in the kwargs to __init__, or else DRF complains.
         """
-        kwargs['read_only'] = True
+        kwargs["read_only"] = True
         super().__init__(*args, **kwargs)
 
     def get_url(self, obj, view_name, request, format):
@@ -215,10 +230,7 @@ class LatestVersionField(NestedHyperlinkedRelatedField):
         except obj.model.DoesNotExist:
             return None
 
-        kwargs = {
-            'repository_pk': version.repository.pk,
-            'number': version.number,
-        }
+        kwargs = {"repository_pk": version.repository.pk, "number": version.number}
         return self.reverse(view_name, kwargs=kwargs, request=None, format=format)
 
     def get_attribute(self, instance):
@@ -243,12 +255,7 @@ class BaseURLField(serializers.CharField):
         base_path = value
         host = settings.CONTENT_HOST
         prefix = settings.CONTENT_PATH_PREFIX
-        return '/'.join(
-            (
-                host.strip('/'),
-                prefix.strip('/'),
-                base_path.lstrip('/')
-            ))
+        return "/".join((host.strip("/"), prefix.strip("/"), base_path.lstrip("/")))
 
 
 class SecretCharField(serializers.CharField):
@@ -259,4 +266,4 @@ class SecretCharField(serializers.CharField):
     """
 
     def to_representation(self, value):
-        return hashlib.sha256(bytes(value, 'utf-8')).hexdigest()
+        return hashlib.sha256(bytes(value, "utf-8")).hexdigest()

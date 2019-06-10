@@ -58,11 +58,13 @@ def delete_version(pk):
         try:
             version = models.RepositoryVersion.objects.get(pk=pk)
         except models.RepositoryVersion.DoesNotExist:
-            log.info(_('The repository version was not found. Nothing to do.'))
+            log.info(_("The repository version was not found. Nothing to do."))
             return
 
-        log.info(_('Deleting and squashing version %(v)d of repository %(r)s'),
-                 {'v': version.number, 'r': version.repository.name})
+        log.info(
+            _("Deleting and squashing version %(v)d of repository %(r)s"),
+            {"v": version.number, "r": version.repository.name},
+        )
 
         version.delete()
 

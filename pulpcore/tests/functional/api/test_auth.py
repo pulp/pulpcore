@@ -30,8 +30,7 @@ class AuthTestCase(unittest.TestCase):
         Assertion is made by the response_handler.
         """
         api.Client(self.cfg, api.json_handler).get(
-            ARTIFACTS_PATH,
-            auth=HTTPBasicAuth(*self.cfg.pulp_auth),
+            ARTIFACTS_PATH, auth=HTTPBasicAuth(*self.cfg.pulp_auth)
         )
 
     def test_base_auth_failure(self):
@@ -41,14 +40,9 @@ class AuthTestCase(unittest.TestCase):
         """
         self.cfg.pulp_auth[1] = utils.uuid4()  # randomize password
         response = api.Client(self.cfg, api.echo_handler).get(
-            ARTIFACTS_PATH,
-            auth=HTTPBasicAuth(*self.cfg.pulp_auth),
+            ARTIFACTS_PATH, auth=HTTPBasicAuth(*self.cfg.pulp_auth)
         )
         with self.assertRaises(HTTPError):
             response.raise_for_status()
-        for key in ('invalid', 'username', 'password'):
-            self.assertIn(
-                key,
-                response.json()['detail'].lower(),
-                response.json()
-            )
+        for key in ("invalid", "username", "password"):
+            self.assertIn(key, response.json()["detail"].lower(), response.json())

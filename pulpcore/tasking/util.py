@@ -36,7 +36,7 @@ def cancel(task_id):
 
     if task_status.state in TASK_FINAL_STATES:
         # If the task is already done, just stop
-        msg = _('Task [{task_id}] already in a completed state: {state}')
+        msg = _("Task [{task_id}] already in a completed state: {state}")
         _logger.info(msg.format(task_id=task_id, state=task_status.state))
         return
 
@@ -55,7 +55,7 @@ def cancel(task_id):
         task_status.save()
         _delete_incomplete_resources(task_status)
 
-    _logger.info(_('Task canceled: {id}.').format(id=task_id))
+    _logger.info(_("Task canceled: {id}.").format(id=task_id))
     return task_status
 
 
@@ -67,7 +67,7 @@ def _delete_incomplete_resources(task):
         task (Task): A task.
     """
     if not task.state == TASK_STATES.CANCELED:
-        raise RuntimeError(_('Task must be canceled.'))
+        raise RuntimeError(_("Task must be canceled."))
     for model in (r.content_object for r in task.created_resources.all()):
         try:
             if model.complete:
@@ -78,7 +78,7 @@ def _delete_incomplete_resources(task):
             with transaction.atomic():
                 model.delete()
         except Exception as error:
-            _logger.error(_('Delete created resource, failed: {}').format(str(error)))
+            _logger.error(_("Delete created resource, failed: {}").format(str(error)))
 
 
 def get_url(model):
@@ -92,4 +92,4 @@ def get_url(model):
     Returns:
         str: The path component of the resource url
     """
-    return reverse(get_view_name_for_model(model, 'detail'), args=[model.pk])
+    return reverse(get_view_name_for_model(model, "detail"), args=[model.pk])

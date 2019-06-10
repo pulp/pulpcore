@@ -11,7 +11,7 @@ from .base import (  # noqa
     NestedRelatedField,
     RelatedField,
     validate_unknown_fields,
-    AsyncOperationResponseSerializer
+    AsyncOperationResponseSerializer,
 )
 from .fields import (  # noqa
     BaseURLField,
@@ -30,7 +30,7 @@ from .content import (  # noqa
     UploadSerializer,
     UploadFinishSerializer,
     UploadPOSTSerializer,
-    UploadPUTSerializer
+    UploadPUTSerializer,
 )
 from .progress import ProgressReportSerializer  # noqa
 from .publication import (  # noqa
@@ -47,6 +47,11 @@ from .repository import (  # noqa
     RepositorySerializer,
     RepositorySyncURLSerializer,
     RepositoryVersionSerializer,
-    RepositoryVersionCreateSerializer
+    RepositoryVersionCreateSerializer,
 )
-from .task import MinimalTaskSerializer, TaskSerializer, TaskCancelSerializer, WorkerSerializer  # noqa
+from .task import (
+    MinimalTaskSerializer,
+    TaskSerializer,
+    TaskCancelSerializer,
+    WorkerSerializer,
+)  # noqa

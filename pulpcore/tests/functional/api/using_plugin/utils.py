@@ -5,19 +5,13 @@ from unittest import SkipTest
 
 from pulp_smash import api, selectors
 from pulp_smash.pulp3.constants import REPO_PATH
-from pulp_smash.pulp3.utils import (
-    gen_repo,
-    gen_remote,
-    require_pulp_3,
-    require_pulp_plugins,
-    sync
-)
+from pulp_smash.pulp3.utils import gen_repo, gen_remote, require_pulp_3, require_pulp_plugins, sync
 
 from pulpcore.tests.functional.api.using_plugin.constants import (
     FILE_FIXTURE_MANIFEST_URL,
     FILE_CONTENT_PATH,
     FILE_PUBLICATION_PATH,
-    FILE_REMOTE_PATH
+    FILE_REMOTE_PATH,
 )
 
 skip_if = partial(selectors.skip_if, exc=SkipTest)
@@ -30,7 +24,7 @@ def set_up_module():
     aren't installed.
     """
     require_pulp_3(SkipTest)
-    require_pulp_plugins({'pulpcore', 'pulp_file'}, SkipTest)
+    require_pulp_plugins({"pulpcore", "pulp_file"}, SkipTest)
 
 
 def populate_pulp(cfg, url=None):
@@ -55,9 +49,9 @@ def populate_pulp(cfg, url=None):
         sync(cfg, remote, repo)
     finally:
         if remote:
-            client.delete(remote['_href'])
+            client.delete(remote["_href"])
         if repo:
-            client.delete(repo['_href'])
+            client.delete(repo["_href"])
     return client.get(FILE_CONTENT_PATH)
 
 
@@ -83,7 +77,7 @@ def create_file_publication(cfg, repo, version_href=None):
         publication.
     """
     if version_href:
-        body = {'repository_version': version_href}
+        body = {"repository_version": version_href}
     else:
-        body = {'repository': repo['_href']}
+        body = {"repository": repo["_href"]}
     return api.Client(cfg).post(FILE_PUBLICATION_PATH, body)

@@ -11,6 +11,7 @@ from rq.worker import Worker
 
 
 import django  # noqa otherwise E402: module level not at top of file
+
 django.setup()  # noqa otherwise E402: module level not at top of file
 
 
@@ -21,7 +22,7 @@ from pulpcore.tasking.services.storage import WorkerDirectory
 from pulpcore.tasking.services.worker_watcher import (
     check_worker_processes,
     handle_worker_heartbeat,
-    mark_worker_offline
+    mark_worker_offline,
 )
 
 
@@ -49,15 +50,15 @@ class PulpWorker(Worker):
 
     def __init__(self, queues, **kwargs):
 
-        kwargs['name'] = kwargs['name'].replace('%h', socket.getfqdn())
+        kwargs["name"] = kwargs["name"].replace("%h", socket.getfqdn())
 
-        if kwargs['name'].startswith(TASKING_CONSTANTS.WORKER_PREFIX):
-            queues = [Queue(kwargs['name'], connection=kwargs['connection'])]
-        if kwargs['name'].startswith(TASKING_CONSTANTS.RESOURCE_MANAGER_WORKER_NAME):
-            queues = [Queue('resource-manager', connection=kwargs['connection'])]
+        if kwargs["name"].startswith(TASKING_CONSTANTS.WORKER_PREFIX):
+            queues = [Queue(kwargs["name"], connection=kwargs["connection"])]
+        if kwargs["name"].startswith(TASKING_CONSTANTS.RESOURCE_MANAGER_WORKER_NAME):
+            queues = [Queue("resource-manager", connection=kwargs["connection"])]
 
-        kwargs['default_worker_ttl'] = TASKING_CONSTANTS.WORKER_TTL
-        kwargs['job_monitoring_interval'] = TASKING_CONSTANTS.JOB_MONITORING_INTERVAL
+        kwargs["default_worker_ttl"] = TASKING_CONSTANTS.WORKER_TTL
+        kwargs["job_monitoring_interval"] = TASKING_CONSTANTS.JOB_MONITORING_INTERVAL
 
         return super().__init__(queues, **kwargs)
 

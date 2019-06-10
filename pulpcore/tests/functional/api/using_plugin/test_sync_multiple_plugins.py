@@ -23,7 +23,7 @@ from pulpcore.tests.functional.api.using_plugin.constants import (
     RPM_REMOTE_PATH,
     RPM_UNSIGNED_FIXTURE_URL,
 )
-from pulpcore.tests.functional.api.using_plugin.utils import set_up_module # noqa
+from pulpcore.tests.functional.api.using_plugin.utils import set_up_module  # noqa
 
 
 def setUpModule():
@@ -35,7 +35,7 @@ def setUpModule():
     refer :meth:`pulpcore.tests.functional.api.using_plugin.utils.set_up_module`
     """
     set_up_module()
-    require_pulp_plugins({'pulp_rpm'}, SkipTest)
+    require_pulp_plugins({"pulp_rpm"}, SkipTest)
 
 
 class SyncMultiplePlugins(unittest.TestCase):
@@ -67,45 +67,27 @@ class SyncMultiplePlugins(unittest.TestCase):
         """
         # Step 1
         repo = self.client.post(REPO_PATH, gen_repo())
-        self.addCleanup(self.client.delete, repo['_href'])
+        self.addCleanup(self.client.delete, repo["_href"])
 
         # Step 2
-        rpm_remote = self.client.post(
-            RPM_REMOTE_PATH,
-            gen_remote(url=RPM_UNSIGNED_FIXTURE_URL)
-        )
-        self.addCleanup(self.client.delete, rpm_remote['_href'])
+        rpm_remote = self.client.post(RPM_REMOTE_PATH, gen_remote(url=RPM_UNSIGNED_FIXTURE_URL))
+        self.addCleanup(self.client.delete, rpm_remote["_href"])
 
-        file_remote = self.client.post(
-            FILE_REMOTE_PATH,
-            gen_remote(url=FILE_FIXTURE_MANIFEST_URL)
-        )
-        self.addCleanup(self.client.delete, file_remote['_href'])
+        file_remote = self.client.post(FILE_REMOTE_PATH, gen_remote(url=FILE_FIXTURE_MANIFEST_URL))
+        self.addCleanup(self.client.delete, file_remote["_href"])
 
         # Step 3
         sync(self.cfg, rpm_remote, repo)
-        repo = self.client.get(repo['_href'])
-        self.assertIsNotNone(repo['_latest_version_href'])
-        self.assertDictEqual(
-            get_added_content_summary(repo),
-            RPM_FIXTURE_SUMMARY
-        )
+        repo = self.client.get(repo["_href"])
+        self.assertIsNotNone(repo["_latest_version_href"])
+        self.assertDictEqual(get_added_content_summary(repo), RPM_FIXTURE_SUMMARY)
 
         # Step 4
         sync(self.cfg, file_remote, repo, mirror=True)
-        repo = self.client.get(repo['_href'])
-        self.assertIsNotNone(repo['_latest_version_href'])
-        self.assertDictEqual(
-            get_added_content_summary(repo),
-            FILE_FIXTURE_SUMMARY
-        )
+        repo = self.client.get(repo["_href"])
+        self.assertIsNotNone(repo["_latest_version_href"])
+        self.assertDictEqual(get_added_content_summary(repo), FILE_FIXTURE_SUMMARY)
 
         # Step 5
-        self.assertDictEqual(
-            get_content_summary(repo),
-            FILE_FIXTURE_SUMMARY
-        )
-        self.assertDictEqual(
-            get_removed_content_summary(repo),
-            RPM_FIXTURE_SUMMARY
-        )
+        self.assertDictEqual(get_content_summary(repo), FILE_FIXTURE_SUMMARY)
+        self.assertDictEqual(get_removed_content_summary(repo), RPM_FIXTURE_SUMMARY)

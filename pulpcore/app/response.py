@@ -22,5 +22,5 @@ class OperationPostponedResponse(Response):
             result (rq.job.Job): A :class:`rq.job.Job` object used to generate the response.
             request (rest_framework.request.Request): Request used to generate the _href urls
         """
-        resp = {"task": reverse('tasks-detail', args=[result.id], request=None)}
+        resp = {"task": reverse("tasks-detail", args=[result.id], request=None)}
         super().__init__(data=resp, status=202)

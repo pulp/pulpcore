@@ -16,13 +16,13 @@ class TestGetQuerySet(TestCase):
         Tests to make sure the correct lookup is being added to the queryset based on its
         'parent_lookup_kwargs' value.
         """
-        repo = models.Repository.objects.create(name='foo')
-        repo2 = models.Repository.objects.create(name='foo2')
+        repo = models.Repository.objects.create(name="foo")
+        repo2 = models.Repository.objects.create(name="foo2")
         # no concurrency so this is fine
         models.RepositoryVersion.objects.create(repository=repo, number=1)
         models.RepositoryVersion.objects.create(repository=repo2, number=1)
         viewset = viewsets.RepositoryVersionViewSet()
-        viewset.kwargs = {'repository_pk': repo.pk}
+        viewset.kwargs = {"repository_pk": repo.pk}
         queryset = viewset.get_queryset()
         expected = models.RepositoryVersion.objects.filter(repository__pk=repo.pk)
 
@@ -35,9 +35,9 @@ class TestGetQuerySet(TestCase):
         Tests to make sure no filters are applied, based on its empty 'parent_lookup_kwargs'
         value.
         """
-        models.Repository.objects.create(name='foo')
+        models.Repository.objects.create(name="foo")
         viewset = viewsets.RepositoryViewSet()
-        viewset.kwargs = {'name': 'foo'}
+        viewset.kwargs = {"name": "foo"}
         queryset = viewset.get_queryset()
         expected = models.Repository.objects.all()
 
@@ -51,11 +51,10 @@ class TestGetResource(TestCase):
         """
         Tests that get_resource() properly resolves a valid URI and returns the correct resource.
         """
-        repo = models.Repository.objects.create(name='foo')
+        repo = models.Repository.objects.create(name="foo")
         viewset = viewsets.RepositoryViewSet()
         resource = viewset.get_resource(
-            "/{api_root}repositories/{pk}/".format(api_root=API_ROOT, pk=repo.pk),
-            models.Repository
+            "/{api_root}repositories/{pk}/".format(api_root=API_ROOT, pk=repo.pk), models.Repository
         )
         self.assertEquals(repo, resource)
 
@@ -63,14 +62,15 @@ class TestGetResource(TestCase):
         """
         Tests that get_resource() raises a ValidationError if you attempt to use a list endpoint.
         """
-        models.Repository.objects.create(name='foo')
-        models.Repository.objects.create(name='foo2')
+        models.Repository.objects.create(name="foo")
+        models.Repository.objects.create(name="foo2")
         viewset = viewsets.RepositoryViewSet()
 
         with self.assertRaises(DRFValidationError):
             # matches all repositories
-            viewset.get_resource("/{api_root}repositories/".format(api_root=API_ROOT),
-                                 models.Repository)
+            viewset.get_resource(
+                "/{api_root}repositories/".format(api_root=API_ROOT), models.Repository
+            )
 
     def test_invalid_uri(self):
         """
@@ -91,8 +91,7 @@ class TestGetResource(TestCase):
 
         with self.assertRaises(DRFValidationError):
             viewset.get_resource(
-                "/{api_root}repositories/{pk}/".format(api_root=API_ROOT, pk=pk),
-                models.Repository
+                "/{api_root}repositories/{pk}/".format(api_root=API_ROOT, pk=pk), models.Repository
             )
 
     def test_resource_with_field_error(self):
@@ -100,24 +99,24 @@ class TestGetResource(TestCase):
         Tests that get_resource() raises a ValidationError if you use a URI that is not a valid
         model.
         """
-        repo = models.Repository.objects.create(name='foo')
+        repo = models.Repository.objects.create(name="foo")
         viewset = viewsets.RepositoryViewSet()
 
         with self.assertRaises(DRFValidationError):
             # has no repo versions yet
             viewset.get_resource(
                 "/{api_root}repositories/{pk}/versions/1/".format(api_root=API_ROOT, pk=repo.pk),
-                models.Repository
+                models.Repository,
             )
 
 
 class TestGetSerializerClass(TestCase):
-
     def test_must_define_serializer_class(self):
         """
         Test that get_serializer_class() raises an AssertionError if you don't define the
         serializer_class attribute.
         """
+
         class TestTaskViewSet(viewsets.NamedModelViewSet):
             minimal_serializer_class = serializers.MinimalTaskSerializer
 
@@ -129,6 +128,7 @@ class TestGetSerializerClass(TestCase):
         Tests that get_serializer_class() returns the serializer_class attribute if it exists,
         and that it doesn't error if no minimal serializer is defined, but minimal=True.
         """
+
         class TestTaskViewSet(viewsets.NamedModelViewSet):
             serializer_class = serializers.TaskSerializer
 
@@ -136,7 +136,7 @@ class TestGetSerializerClass(TestCase):
         self.assertEquals(viewset.get_serializer_class(), serializers.TaskSerializer)
 
         request = unittest.mock.MagicMock()
-        request.query_params = QueryDict('minimal=True')
+        request.query_params = QueryDict("minimal=True")
         viewset.request = request
 
         self.assertEquals(viewset.get_serializer_class(), serializers.TaskSerializer)
@@ -145,6 +145,7 @@ class TestGetSerializerClass(TestCase):
         """
         Tests that get_serializer_class() returns the correct serializer in the correct situations.
         """
+
         class TestTaskViewSet(viewsets.NamedModelViewSet):
             serializer_class = serializers.TaskSerializer
             minimal_serializer_class = serializers.MinimalTaskSerializer
@@ -157,11 +158,11 @@ class TestGetSerializerClass(TestCase):
         viewset.request = request
         self.assertEquals(viewset.get_serializer_class(), serializers.TaskSerializer)
         # Test that it uses the full serializer with minimal=False
-        request.query_params = QueryDict('minimal=False')
+        request.query_params = QueryDict("minimal=False")
         viewset.request = request
         self.assertEquals(viewset.get_serializer_class(), serializers.TaskSerializer)
         # Test that it uses the minimal serializer with minimal=True
-        request.query_params = QueryDict('minimal=True')
+        request.query_params = QueryDict("minimal=True")
         viewset.request = request
         self.assertEquals(viewset.get_serializer_class(), serializers.MinimalTaskSerializer)
 
@@ -173,7 +174,7 @@ class TestGetParentFieldAndObject(TestCase):
         does not exist on a nested viewset.
         """
         viewset = viewsets.RepositoryVersionViewSet()
-        viewset.kwargs = {'repository_pk': 500}
+        viewset.kwargs = {"repository_pk": 500}
 
         with self.assertRaises(Http404):
             viewset.get_parent_field_and_object()
@@ -183,19 +184,19 @@ class TestGetParentFieldAndObject(TestCase):
         Tests that get_parent_field_and_object() returns the correct parent field and parent
         object.
         """
-        repo = models.Repository.objects.create(name='foo')
+        repo = models.Repository.objects.create(name="foo")
         viewset = viewsets.RepositoryVersionViewSet()
-        viewset.kwargs = {'repository_pk': repo.pk}
+        viewset.kwargs = {"repository_pk": repo.pk}
 
-        self.assertEquals(('repository', repo), viewset.get_parent_field_and_object())
+        self.assertEquals(("repository", repo), viewset.get_parent_field_and_object())
 
     def test_get_parent_object(self):
         """
         Tests that get_parent_object() returns the correct parent object.
         """
-        repo = models.Repository.objects.create(name='foo')
+        repo = models.Repository.objects.create(name="foo")
         viewset = viewsets.RepositoryVersionViewSet()
-        viewset.kwargs = {'repository_pk': repo.pk}
+        viewset.kwargs = {"repository_pk": repo.pk}
 
         self.assertEquals(repo, viewset.get_parent_object())
 

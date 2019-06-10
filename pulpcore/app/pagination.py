@@ -12,8 +12,9 @@ class IDPagination(pagination.PageNumberPagination):
     base Model class.
 
     """
-    ordering = 'id'
-    page_size_query_param = 'page_size'
+
+    ordering = "id"
+    page_size_query_param = "page_size"
     max_page_size = 5000
 
 
@@ -25,6 +26,7 @@ class NamePagination(pagination.PageNumberPagination):
     allowing for a more obvious and user-friendly pagination than the default by-id pagination.
 
     """
-    ordering = 'name'
-    page_size_query_param = 'page_size'
+
+    ordering = "name"
+    page_size_query_param = "page_size"
     max_page_size = 5000

@@ -12,6 +12,6 @@ import os
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "pulpcore.app.settings")
 
-from django.core.wsgi import get_wsgi_application # noqa
+from django.core.wsgi import get_wsgi_application  # noqa
 
 application = get_wsgi_application()

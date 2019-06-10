@@ -76,7 +76,7 @@ def _queue_reserved_task(func, inner_task_id, resources, inner_args, inner_kwarg
     """
     redis_conn = connection.get_redis_connection()
     task_status = Task.objects.get(pk=inner_task_id)
-    task_name = func.__module__ + '.' + func.__name__
+    task_name = func.__module__ + "." + func.__name__
     while True:
         if task_name == "pulpcore.app.tasks.orphan.orphan_cleanup":
             if ReservedResource.objects.exists():
@@ -86,9 +86,15 @@ def _queue_reserved_task(func, inner_task_id, resources, inner_args, inner_kwarg
             else:
                 task_status.state = TASK_STATES.RUNNING
                 task_status.save()
-                q = Queue('resource-manager', connection=redis_conn, is_async=False)
-                q.enqueue(func, args=inner_args, kwargs=inner_kwargs, job_id=inner_task_id,
-                          job_timeout=TASK_TIMEOUT, **options)
+                q = Queue("resource-manager", connection=redis_conn, is_async=False)
+                q.enqueue(
+                    func,
+                    args=inner_args,
+                    kwargs=inner_kwargs,
+                    job_id=inner_task_id,
+                    job_timeout=TASK_TIMEOUT,
+                    **options,
+                )
                 task_status.state = TASK_STATES.COMPLETED
                 task_status.save()
                 return
@@ -114,10 +120,16 @@ def _queue_reserved_task(func, inner_task_id, resources, inner_args, inner_kwarg
 
     try:
         q = Queue(worker.name, connection=redis_conn)
-        q.enqueue(func, args=inner_args, kwargs=inner_kwargs, job_id=inner_task_id,
-                  job_timeout=TASK_TIMEOUT, **options)
+        q.enqueue(
+            func,
+            args=inner_args,
+            kwargs=inner_kwargs,
+            job_id=inner_task_id,
+            job_timeout=TASK_TIMEOUT,
+            **options,
+        )
     finally:
-        q.enqueue(_release_resources, args=(inner_task_id, ))
+        q.enqueue(_release_resources, args=(inner_task_id,))
 
 
 def _release_resources(task_id):
@@ -136,8 +148,10 @@ def _release_resources(task_id):
     except Task.DoesNotExist:
         pass
     else:
-        msg = _('The task {task_id} exited immediately for some reason. Marking as '
-                'failed. Check the logs for more details')
+        msg = _(
+            "The task {task_id} exited immediately for some reason. Marking as "
+            "failed. Check the logs for more details"
+        )
         _logger.error(msg.format(task_id=task.pk))
         exc = RuntimeError(msg.format(task_id=task.pk))
         task.set_failed(exc, None)
@@ -187,7 +201,7 @@ def enqueue_with_reservation(func, resources, args=None, kwargs=None, options=No
             return r
         if isinstance(r, Model):
             return util.get_url(r)
-        raise ValueError(_('Must be (str|Model)'))
+        raise ValueError(_("Must be (str|Model)"))
 
     resources = {as_url(r) for r in resources}
     inner_task_id = str(uuid.uuid4())
@@ -196,10 +210,14 @@ def enqueue_with_reservation(func, resources, args=None, kwargs=None, options=No
     parent_kwarg = {}
     if current_job:
         current_task = Task.objects.get(pk=current_job.id)
-        parent_kwarg['parent'] = current_task
-    Task.objects.create(pk=inner_task_id, state=TASK_STATES.WAITING,
-                        name=f'{func.__module__}.{func.__name__}', **parent_kwarg)
-    q = Queue('resource-manager', connection=redis_conn)
+        parent_kwarg["parent"] = current_task
+    Task.objects.create(
+        pk=inner_task_id,
+        state=TASK_STATES.WAITING,
+        name=f"{func.__module__}.{func.__name__}",
+        **parent_kwarg,
+    )
+    q = Queue("resource-manager", connection=redis_conn)
     task_args = (func, inner_task_id, list(resources), args, kwargs, options)
     q.enqueue(_queue_reserved_task, args=task_args, job_timeout=TASK_TIMEOUT)
     return Job(id=inner_task_id, connection=redis_conn)

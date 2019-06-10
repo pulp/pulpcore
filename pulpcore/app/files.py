@@ -27,7 +27,7 @@ class PulpTemporaryUploadedFile(TemporaryUploadedFile):
             PulpTemporaryUploadedFile: instantiated instance from file
         """
         name = os.path.basename(file.name)
-        instance = cls(name, '', file.size, '', '')
+        instance = cls(name, "", file.size, "", "")
         instance.file = file
         data = file.read()
         for hasher in hashlib.algorithms_guaranteed:
@@ -40,8 +40,15 @@ class HashingFileUploadHandler(TemporaryFileUploadHandler):
     Upload handler that streams data into a temporary file.
     """
 
-    def new_file(self, field_name, file_name, content_type, content_length, charset=None,
-                 content_type_extra=None):
+    def new_file(
+        self,
+        field_name,
+        file_name,
+        content_type,
+        content_length,
+        charset=None,
+        content_type_extra=None,
+    ):
         """
         Signal that a new file has been started.
 
@@ -56,8 +63,9 @@ class HashingFileUploadHandler(TemporaryFileUploadHandler):
         """
         self.field_name = field_name
         self.content_length = content_length
-        self.file = PulpTemporaryUploadedFile(file_name, content_type, 0, charset,
-                                              content_type_extra)
+        self.file = PulpTemporaryUploadedFile(
+            file_name, content_type, 0, charset, content_type_extra
+        )
 
     def receive_data_chunk(self, raw_data, start):
         self.file.write(raw_data)
@@ -87,5 +95,5 @@ class TemporaryDownloadedFile(TemporaryUploadedFile):
         """
         self.file = file
         if name is None:
-            name = getattr(file, 'name', None)
+            name = getattr(file, "name", None)
         self.name = name

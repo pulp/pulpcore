@@ -41,17 +41,22 @@ class ArtifactFileField(FileField):
 
         """
         file = model_instance.file
-        artifact_storage_path = self.upload_to(model_instance, '')
+        artifact_storage_path = self.upload_to(model_instance, "")
 
         if file.name != artifact_storage_path and file.name.startswith(
-                os.path.join(settings.MEDIA_ROOT, 'artifact')):
-            raise ValueError(_('The file referenced by the Artifact is already present in '
-                               'Artifact storage. Files must be stored outside this location '
-                               'prior to Artifact creation.'))
+            os.path.join(settings.MEDIA_ROOT, "artifact")
+        ):
+            raise ValueError(
+                _(
+                    "The file referenced by the Artifact is already present in "
+                    "Artifact storage. Files must be stored outside this location "
+                    "prior to Artifact creation."
+                )
+            )
 
-        move = (file._committed and file.name != artifact_storage_path)
+        move = file._committed and file.name != artifact_storage_path
         if move:
-            file._file = TemporaryDownloadedFile(open(file.name, 'rb'))
+            file._file = TemporaryDownloadedFile(open(file.name, "rb"))
             file._committed = False
 
         return super().pre_save(model_instance, add)

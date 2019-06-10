@@ -5,16 +5,8 @@ from .base import (  # noqa
     BaseFilterSet,
     NamedModelViewSet,
 )
-from .content import (  # noqa
-    ArtifactFilter,
-    ArtifactViewSet,
-    ContentFilter,
-    ContentViewSet,
-)
-from .custom_filters import (  # noqa
-    IsoDateTimeFilter,
-    RepoVersionHrefFilter
-)
+from .content import ArtifactFilter, ArtifactViewSet, ContentFilter, ContentViewSet  # noqa
+from .custom_filters import IsoDateTimeFilter, RepoVersionHrefFilter  # noqa
 from .publication import (  # noqa
     BaseDistributionViewSet,
     ContentGuardFilter,
@@ -27,7 +19,7 @@ from .repository import (  # noqa
     RemoteViewSet,
     PublisherViewSet,
     RepositoryViewSet,
-    RepositoryVersionViewSet
+    RepositoryVersionViewSet,
 )
 from .task import TaskViewSet, WorkerViewSet  # noqa
 from .upload import UploadViewSet  # noqa

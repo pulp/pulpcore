@@ -5,9 +5,9 @@ from django.utils.module_loading import module_has_submodule
 
 from pulpcore.exceptions.plugin import MissingPlugin
 
-VIEWSETS_MODULE_NAME = 'viewsets'
-SERIALIZERS_MODULE_NAME = 'serializers'
-URLS_MODULE_NAME = 'urls'
+VIEWSETS_MODULE_NAME = "viewsets"
+SERIALIZERS_MODULE_NAME = "serializers"
+URLS_MODULE_NAME = "urls"
 
 
 def pulp_plugin_configs():
@@ -82,8 +82,9 @@ class PulpPluginAppConfig(apps.AppConfig):
         self.named_serializers = {}
         if module_has_submodule(self.module, SERIALIZERS_MODULE_NAME):
             # import the serializers module and track any discovered serializers
-            serializers_module_name = '{name}.{module}'.format(
-                name=self.name, module=SERIALIZERS_MODULE_NAME)
+            serializers_module_name = "{name}.{module}".format(
+                name=self.name, module=SERIALIZERS_MODULE_NAME
+            )
             self.serializers_module = import_module(serializers_module_name)
             for objname in dir(self.serializers_module):
                 obj = getattr(self.serializers_module, objname)
@@ -99,18 +100,20 @@ class PulpPluginAppConfig(apps.AppConfig):
     def import_viewsets(self):
         # circular import avoidance
         from pulpcore.app.viewsets import NamedModelViewSet
+
         self.named_viewsets = {}
         if module_has_submodule(self.module, VIEWSETS_MODULE_NAME):
             # import the viewsets module and track any interesting viewsets
-            viewsets_module_name = '{name}.{module}'.format(
-                name=self.name, module=VIEWSETS_MODULE_NAME)
+            viewsets_module_name = "{name}.{module}".format(
+                name=self.name, module=VIEWSETS_MODULE_NAME
+            )
             self.viewsets_module = import_module(viewsets_module_name)
             for objname in dir(self.viewsets_module):
                 obj = getattr(self.viewsets_module, objname)
                 try:
                     # Any subclass of NamedModelViewSet that isn't itself NamedModelViewSet
                     # gets registered in the named_viewsets registry.
-                    if (obj is not NamedModelViewSet and issubclass(obj, NamedModelViewSet)):
+                    if obj is not NamedModelViewSet and issubclass(obj, NamedModelViewSet):
                         model = obj.queryset.model
                         self.named_viewsets[model] = obj
                 except TypeError:
@@ -122,8 +125,7 @@ class PulpPluginAppConfig(apps.AppConfig):
         If a plugin defines a urls.py, include it.
         """
         if module_has_submodule(self.module, URLS_MODULE_NAME) and self.name != "pulpcore.app":
-            urls_module_name = '{name}.{module}'.format(
-                name=self.name, module=URLS_MODULE_NAME)
+            urls_module_name = "{name}.{module}".format(name=self.name, module=URLS_MODULE_NAME)
             self.urls_module = import_module(urls_module_name)
 
 
@@ -132,9 +134,9 @@ class PulpAppConfig(PulpPluginAppConfig):
     # the component discovery mechanisms provided by that superclass.
 
     # The app's importable name
-    name = 'pulpcore.app'
+    name = "pulpcore.app"
 
     # The app label to be used when creating tables, registering models, referencing this app
     # with manage.py, etc. This cannot contain a dot and must not conflict with the name of a
     # package containing a Django app.
-    label = 'core'
+    label = "core"

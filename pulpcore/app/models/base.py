@@ -16,6 +16,7 @@ class Model(models.Model):
         * https://docs.djangoproject.com/en/1.8/topics/db/models/#automatic-primary-key-fields
 
     """
+
     _id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     _created = models.DateTimeField(auto_now_add=True)
     _last_updated = models.DateTimeField(auto_now=True, null=True)
@@ -26,10 +27,10 @@ class Model(models.Model):
     def __str__(self):
         try:
             # if we have a name, use it
-            return '<{}: {}>'.format(self._meta.object_name, self.name)
+            return "<{}: {}>".format(self._meta.object_name, self.name)
         except AttributeError:
             # if we don't, use the pk
-            return '<{}: pk={}>'.format(self._meta.object_name, self.pk)
+            return "<{}: pk={}>".format(self._meta.object_name, self.pk)
 
     def __repr__(self):
         return str(self)
@@ -84,8 +85,7 @@ class MasterModel(Model):
         # Prepend the TYPE defined on a detail model with a django app label.
         # If a plugin sets the type field themselves, it's used as-is.
         if not self._type:
-            self._type = '{app_label}.{type}'.format(app_label=self._meta.app_label,
-                                                     type=self.TYPE)
+            self._type = "{app_label}.{type}".format(app_label=self._meta.app_label, type=self.TYPE)
         return super().save(*args, **kwargs)
 
     def cast(self):
@@ -128,9 +128,9 @@ class MasterModel(Model):
             return super().__str__()
 
         try:
-            return '<{} (_type={}): {}>'.format(self._meta.object_name, cast.TYPE, cast.name)
+            return "<{} (_type={}): {}>".format(self._meta.object_name, cast.TYPE, cast.name)
         except AttributeError:
-            return '<{} (_type={}): pk={}>'.format(self._meta.object_name, cast.TYPE, cast.pk)
+            return "<{} (_type={}): pk={}>".format(self._meta.object_name, cast.TYPE, cast.pk)
 
 
 # Add properties to model _meta info to support master/detail models

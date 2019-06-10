@@ -63,35 +63,32 @@ class DeleteOrphansTestCase(unittest.TestCase):
            is not present on disk.
         """
         repo = self.api_client.post(REPO_PATH, gen_repo())
-        self.addCleanup(self.api_client.delete, repo['_href'])
+        self.addCleanup(self.api_client.delete, repo["_href"])
 
         body = gen_file_remote()
         remote = self.api_client.post(FILE_REMOTE_PATH, body)
-        self.addCleanup(self.api_client.delete, remote['_href'])
+        self.addCleanup(self.api_client.delete, remote["_href"])
 
         sync(self.cfg, remote, repo)
-        repo = self.api_client.get(repo['_href'])
+        repo = self.api_client.get(repo["_href"])
         content = choice(get_content(repo)[FILE_CONTENT_NAME])
 
         # Create an orphan content unit.
-        self.api_client.post(
-            repo['_versions_href'],
-            {'remove_content_units': [content['_href']]}
-        )
+        self.api_client.post(repo["_versions_href"], {"remove_content_units": [content["_href"]]})
 
         # Verify that the artifact is present on disk.
-        artifact_path = os.path.join(MEDIA_PATH, self.api_client.get(content['_artifact'])['file'])
-        cmd = ('ls', artifact_path)
+        artifact_path = os.path.join(MEDIA_PATH, self.api_client.get(content["_artifact"])["file"])
+        cmd = ("ls", artifact_path)
         self.cli_client.run(cmd, sudo=True)
 
         # Delete first repo version. The previous removed content unit will be
         # an orphan.
-        delete_version(repo, get_versions(repo)[0]['_href'])
-        content_units = self.api_client.get(FILE_CONTENT_PATH)['results']
+        delete_version(repo, get_versions(repo)[0]["_href"])
+        content_units = self.api_client.get(FILE_CONTENT_PATH)["results"]
         self.assertIn(content, content_units)
 
         delete_orphans()
-        content_units = self.api_client.get(FILE_CONTENT_PATH)['results']
+        content_units = self.api_client.get(FILE_CONTENT_PATH)["results"]
         self.assertNotIn(content, content_units)
 
         # Verify that the artifact was removed from disk.
@@ -101,11 +98,11 @@ class DeleteOrphansTestCase(unittest.TestCase):
     def test_clean_orphan_artifact(self):
         """Test whether orphan artifacts units can be clean up."""
         repo = self.api_client.post(REPO_PATH, gen_repo())
-        self.addCleanup(self.api_client.delete, repo['_href'])
+        self.addCleanup(self.api_client.delete, repo["_href"])
 
-        files = {'file': utils.http_get(FILE2_URL)}
+        files = {"file": utils.http_get(FILE2_URL)}
         artifact = self.api_client.post(ARTIFACTS_PATH, files=files)
-        cmd = ('ls', os.path.join(MEDIA_PATH, artifact['file']))
+        cmd = ("ls", os.path.join(MEDIA_PATH, artifact["file"]))
         self.cli_client.run(cmd, sudo=True)
 
         delete_orphans()

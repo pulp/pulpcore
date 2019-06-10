@@ -8,10 +8,7 @@ from urllib.parse import urljoin
 from requests import HTTPError
 
 from pulp_smash import api, config, utils
-from pulp_smash.pulp3.constants import (
-    LAZY_DOWNLOAD_POLICIES,
-    REPO_PATH,
-)
+from pulp_smash.pulp3.constants import LAZY_DOWNLOAD_POLICIES, REPO_PATH
 from pulp_smash.pulp3.utils import (
     delete_orphans,
     download_content_unit,
@@ -29,7 +26,7 @@ from pulpcore.tests.functional.api.using_plugin.constants import (
 )
 from pulpcore.tests.functional.api.using_plugin.utils import (
     gen_file_remote,
-    create_file_publication
+    create_file_publication,
 )
 from pulpcore.tests.functional.api.using_plugin.utils import (  # noqa:F401
     set_up_module as setUpModule
@@ -61,48 +58,45 @@ class ContentDeliveryTestCase(unittest.TestCase):
         client = api.Client(cfg, api.page_handler)
 
         repo = client.post(REPO_PATH, gen_repo())
-        self.addCleanup(client.delete, repo['_href'])
+        self.addCleanup(client.delete, repo["_href"])
 
         body = gen_file_remote(policy=choice(LAZY_DOWNLOAD_POLICIES))
         remote = client.post(FILE_REMOTE_PATH, body)
 
         # Sync the repository using a lazy download policy.
         sync(cfg, remote, repo)
-        repo = client.get(repo['_href'])
+        repo = client.get(repo["_href"])
 
         publication = create_file_publication(cfg, repo)
-        self.addCleanup(client.delete, publication['_href'])
+        self.addCleanup(client.delete, publication["_href"])
 
         # Delete the remote.
-        client.delete(remote['_href'])
+        client.delete(remote["_href"])
 
         body = gen_distribution()
-        body['publication'] = publication['_href']
-        distribution = client.using_handler(api.task_handler).post(
-            FILE_DISTRIBUTION_PATH, body
-        )
-        self.addCleanup(client.delete, distribution['_href'])
+        body["publication"] = publication["_href"]
+        distribution = client.using_handler(api.task_handler).post(FILE_DISTRIBUTION_PATH, body)
+        self.addCleanup(client.delete, distribution["_href"])
 
-        unit_path = choice([
-            content_unit['relative_path']
-            for content_unit in get_content(repo)[FILE_CONTENT_NAME]
-        ])
+        unit_path = choice(
+            [content_unit["relative_path"] for content_unit in get_content(repo)[FILE_CONTENT_NAME]]
+        )
 
         # Assert that an HTTP error is raised when one to fetch content from
         # the distribution once the remote was removed.
         with self.assertRaises(HTTPError) as ctx:
             download_content_unit(cfg, distribution, unit_path)
-        for key in ('not', 'found'):
+        for key in ("not", "found"):
             self.assertIn(key, ctx.exception.response.reason.lower())
 
         # Recreating a remote and re-triggering a sync will cause these broken
         # units to recover again.
         body = gen_file_remote(policy=choice(LAZY_DOWNLOAD_POLICIES))
         remote = client.post(FILE_REMOTE_PATH, body)
-        self.addCleanup(client.delete, remote['_href'])
+        self.addCleanup(client.delete, remote["_href"])
 
         sync(cfg, remote, repo)
-        repo = client.get(repo['_href'])
+        repo = client.get(repo["_href"])
 
         content = download_content_unit(cfg, distribution, unit_path)
         pulp_hash = hashlib.sha256(content).hexdigest()

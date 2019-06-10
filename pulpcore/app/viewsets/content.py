@@ -26,27 +26,30 @@ class ArtifactFilter(BaseFilterSet):
        - specify plugin content model
        - extend `fields` with plugin-specific ones
     """
+
     repository_version = ArtifactRepositoryVersionFilter()
 
     class Meta:
         model = Artifact
         fields = {
-            'repository_version': ['exact'],
-            'md5': ['exact'],
-            'sha1': ['exact'],
-            'sha224': ['exact'],
-            'sha256': ['exact'],
-            'sha384': ['exact'],
-            'sha512': ['exact']
+            "repository_version": ["exact"],
+            "md5": ["exact"],
+            "sha1": ["exact"],
+            "sha224": ["exact"],
+            "sha256": ["exact"],
+            "sha384": ["exact"],
+            "sha512": ["exact"],
         }
 
 
-class ArtifactViewSet(NamedModelViewSet,
-                      mixins.CreateModelMixin,
-                      mixins.RetrieveModelMixin,
-                      mixins.ListModelMixin,
-                      mixins.DestroyModelMixin):
-    endpoint_name = 'artifacts'
+class ArtifactViewSet(
+    NamedModelViewSet,
+    mixins.CreateModelMixin,
+    mixins.RetrieveModelMixin,
+    mixins.ListModelMixin,
+    mixins.DestroyModelMixin,
+):
+    endpoint_name = "artifacts"
     queryset = Artifact.objects.all()
     serializer_class = ArtifactSerializer
     filterset_class = ArtifactFilter
@@ -59,8 +62,8 @@ class ArtifactViewSet(NamedModelViewSet,
         try:
             return super().destroy(request, pk)
         except models.ProtectedError:
-            msg = _('The Artifact cannot be deleted because it is associated with Content.')
-            data = {'detail': msg}
+            msg = _("The Artifact cannot be deleted because it is associated with Content.")
+            data = {"detail": msg}
             return Response(data, status=status.HTTP_409_CONFLICT)
 
 
@@ -84,6 +87,7 @@ class ContentFilter(BaseFilterSet):
         repository_version_removed:
             Return Content which was removed from this repository version.
     """
+
     repository_version = ContentRepositoryVersionFilter()
     repository_version_added = ContentAddedRepositoryVersionFilter()
     repository_version_removed = ContentRemovedRepositoryVersionFilter()
@@ -91,17 +95,16 @@ class ContentFilter(BaseFilterSet):
     class Meta:
         model = Content
         fields = {
-            'repository_version': ['exact'],
-            'repository_version_added': ['exact'],
-            'repository_version_removed': ['exact'],
+            "repository_version": ["exact"],
+            "repository_version_added": ["exact"],
+            "repository_version_removed": ["exact"],
         }
 
 
-class ContentViewSet(NamedModelViewSet,
-                     mixins.CreateModelMixin,
-                     mixins.RetrieveModelMixin,
-                     mixins.ListModelMixin):
-    endpoint_name = 'content'
+class ContentViewSet(
+    NamedModelViewSet, mixins.CreateModelMixin, mixins.RetrieveModelMixin, mixins.ListModelMixin
+):
+    endpoint_name = "content"
     filterset_class = ContentFilter
     # These are just placeholders, the plugin writer would replace them with the actual
     queryset = Content.objects.all()

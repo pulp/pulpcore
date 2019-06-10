@@ -6,13 +6,7 @@ from urllib.parse import urljoin
 from requests.exceptions import HTTPError
 from pulp_smash import api, config, utils
 from pulp_smash.pulp3.constants import REPO_PATH, TASKS_PATH
-from pulp_smash.pulp3.utils import (
-    delete_orphans,
-    gen_remote,
-    gen_repo,
-    get_content_summary,
-    sync,
-)
+from pulp_smash.pulp3.utils import delete_orphans, gen_remote, gen_repo, get_content_summary, sync
 
 from pulpcore.tests.functional.api.using_plugin.constants import (
     FILE_FIXTURE_SUMMARY,
@@ -50,20 +44,20 @@ class MultiResourceLockingTestCase(unittest.TestCase):
         client = api.Client(cfg, api.json_handler)
 
         repo = client.post(REPO_PATH, gen_repo())
-        self.addCleanup(client.delete, repo['_href'])
+        self.addCleanup(client.delete, repo["_href"])
 
         body = gen_file_remote(url=FILE_LARGE_FIXTURE_MANIFEST_URL)
         remote = client.post(FILE_REMOTE_PATH, body)
-        self.addCleanup(client.delete, remote['_href'])
+        self.addCleanup(client.delete, remote["_href"])
 
-        url = {'url': FILE_FIXTURE_MANIFEST_URL}
-        client.patch(remote['_href'], url)
+        url = {"url": FILE_FIXTURE_MANIFEST_URL}
+        client.patch(remote["_href"], url)
 
         sync(cfg, remote, repo)
 
-        repo = client.get(repo['_href'])
-        remote = client.get(remote['_href'])
-        self.assertEqual(remote['url'], url['url'])
+        repo = client.get(repo["_href"])
+        remote = client.get(remote["_href"])
+        self.assertEqual(remote["url"], url["url"])
         self.assertDictEqual(get_content_summary(repo), FILE_FIXTURE_SUMMARY)
 
 
@@ -87,26 +81,24 @@ class CancelTaskTestCase(unittest.TestCase):
         """Cancel a running task."""
         task = self.create_long_task()
         response = self.cancel_task(task)
-        self.assertIsNone(response['finished_at'], response)
-        self.assertEqual(response['state'], 'canceled', response)
+        self.assertIsNone(response["finished_at"], response)
+        self.assertEqual(response["state"], "canceled", response)
 
     def test_cancel_nonexistent_task(self):
         """Cancel a nonexistent task."""
-        task_href = urljoin(TASKS_PATH, utils.uuid4() + '/')
+        task_href = urljoin(TASKS_PATH, utils.uuid4() + "/")
         with self.assertRaises(HTTPError) as ctx:
-            self.client.patch(task_href, json={'state': 'canceled'})
-        for key in ('not', 'found'):
+            self.client.patch(task_href, json={"state": "canceled"})
+        for key in ("not", "found"):
             self.assertIn(
-                key,
-                ctx.exception.response.json()['detail'].lower(),
-                ctx.exception.response
+                key, ctx.exception.response.json()["detail"].lower(), ctx.exception.response
             )
 
     def test_delete_running_task(self):
         """Delete a running task."""
         task = self.create_long_task()
         with self.assertRaises(HTTPError):
-            self.client.delete(task['task'])
+            self.client.delete(task["task"])
 
     def create_long_task(self):
         """Create a long task. Sync a repository with large files."""
@@ -114,17 +106,19 @@ class CancelTaskTestCase(unittest.TestCase):
         delete_orphans(self.cfg)
 
         repo = self.client.post(REPO_PATH, gen_repo())
-        self.addCleanup(self.client.delete, repo['_href'])
+        self.addCleanup(self.client.delete, repo["_href"])
 
         body = gen_remote(url=FILE_LARGE_FIXTURE_MANIFEST_URL)
         remote = self.client.post(FILE_REMOTE_PATH, body)
-        self.addCleanup(self.client.delete, remote['_href'])
+        self.addCleanup(self.client.delete, remote["_href"])
 
         # use code_handler to avoid wait to the task to be completed.
-        return self.client.using_handler(api.code_handler).post(
-            urljoin(remote['_href'], 'sync/'), {'repository': repo['_href']}
-        ).json()
+        return (
+            self.client.using_handler(api.code_handler)
+            .post(urljoin(remote["_href"], "sync/"), {"repository": repo["_href"]})
+            .json()
+        )
 
     def cancel_task(self, task):
         """Cancel a task."""
-        return self.client.patch(task['task'], json={'state': 'canceled'})
+        return self.client.patch(task["task"], json={"state": "canceled"})

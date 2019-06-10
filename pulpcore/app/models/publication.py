@@ -40,13 +40,14 @@ class Publication(MasterModel):
         >>>             ...
         >>>
     """
-    TYPE = 'publication'
+
+    TYPE = "publication"
 
     complete = models.BooleanField(db_index=True, default=False)
     pass_through = models.BooleanField(default=False)
 
-    publisher = models.ForeignKey('Publisher', on_delete=models.CASCADE, null=True)
-    repository_version = models.ForeignKey('RepositoryVersion', on_delete=models.CASCADE)
+    publisher = models.ForeignKey("Publisher", on_delete=models.CASCADE, null=True)
+    repository_version = models.ForeignKey("RepositoryVersion", on_delete=models.CASCADE)
 
     @classmethod
     def create(cls, repository_version, publisher=None, pass_through=False):
@@ -73,9 +74,7 @@ class Publication(MasterModel):
             Adds a Task.created_resource for the publication.
         """
         with transaction.atomic():
-            publication = cls(
-                pass_through=pass_through,
-                repository_version=repository_version)
+            publication = cls(pass_through=pass_through, repository_version=repository_version)
             if publisher:
                 publication.publisher = publisher
             publication.save()
@@ -143,6 +142,7 @@ class PublishedFile(Model):
         publication (models.ForeignKey): The publication in which the artifact is included.
 
     """
+
     relative_path = models.CharField(max_length=255)
 
     publication = models.ForeignKey(Publication, on_delete=models.CASCADE)
@@ -158,14 +158,12 @@ class PublishedArtifact(PublishedFile):
     Relations:
         content_artifact (models.ForeignKey): The referenced content artifact.
     """
-    content_artifact = models.ForeignKey('ContentArtifact', on_delete=models.CASCADE)
+
+    content_artifact = models.ForeignKey("ContentArtifact", on_delete=models.CASCADE)
 
     class Meta:
-        default_related_name = 'published_artifact'
-        unique_together = (
-            ('publication', 'content_artifact'),
-            ('publication', 'relative_path')
-        )
+        default_related_name = "published_artifact"
+        unique_together = (("publication", "content_artifact"), ("publication", "relative_path"))
 
 
 class PublishedMetadata(PublishedFile):
@@ -182,11 +180,8 @@ class PublishedMetadata(PublishedFile):
     file = models.FileField(upload_to=_storage_path, max_length=255)
 
     class Meta:
-        default_related_name = 'published_metadata'
-        unique_together = (
-            ('publication', 'file'),
-            ('publication', 'relative_path')
-        )
+        default_related_name = "published_metadata"
+        unique_together = (("publication", "file"), ("publication", "relative_path"))
 
 
 class ContentGuard(MasterModel):
@@ -198,6 +193,7 @@ class ContentGuard(MasterModel):
         description (models.TextField): An optional description.
 
     """
+
     name = models.CharField(max_length=255, db_index=True, unique=True)
     description = models.TextField(null=True)
 

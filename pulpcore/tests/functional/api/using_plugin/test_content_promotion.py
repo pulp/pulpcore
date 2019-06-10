@@ -6,23 +6,17 @@ from urllib.parse import urljoin
 
 from pulp_smash import api, config
 from pulp_smash.pulp3.constants import REPO_PATH
-from pulp_smash.pulp3.utils import (
-    gen_distribution,
-    gen_remote,
-    gen_repo,
-    get_added_content,
-    sync,
-)
+from pulp_smash.pulp3.utils import gen_distribution, gen_remote, gen_repo, get_added_content, sync
 
 from pulpcore.tests.functional.api.using_plugin.constants import (
     FILE_CONTENT_NAME,
     FILE_DISTRIBUTION_PATH,
     FILE_FIXTURE_MANIFEST_URL,
-    FILE_REMOTE_PATH
+    FILE_REMOTE_PATH,
 )
 from pulpcore.tests.functional.api.using_plugin.utils import (  # noqa:F401
     create_file_publication,
-    set_up_module as setUpModule
+    set_up_module as setUpModule,
 )
 
 
@@ -52,41 +46,34 @@ class ContentPromotionTestCase(unittest.TestCase):
         client = api.Client(cfg, api.json_handler)
 
         repo = client.post(REPO_PATH, gen_repo())
-        self.addCleanup(client.delete, repo['_href'])
+        self.addCleanup(client.delete, repo["_href"])
 
-        remote = client.post(
-            FILE_REMOTE_PATH,
-            gen_remote(FILE_FIXTURE_MANIFEST_URL)
-        )
-        self.addCleanup(client.delete, remote['_href'])
+        remote = client.post(FILE_REMOTE_PATH, gen_remote(FILE_FIXTURE_MANIFEST_URL))
+        self.addCleanup(client.delete, remote["_href"])
 
         sync(cfg, remote, repo)
-        repo = client.get(repo['_href'])
+        repo = client.get(repo["_href"])
 
         publication = create_file_publication(cfg, repo)
-        self.addCleanup(client.delete, publication['_href'])
+        self.addCleanup(client.delete, publication["_href"])
 
         distributions = []
         for _ in range(2):
             body = gen_distribution()
-            body['publication'] = publication['_href']
-            distribution = client.using_handler(api.task_handler).post(
-                FILE_DISTRIBUTION_PATH, body
-            )
+            body["publication"] = publication["_href"]
+            distribution = client.using_handler(api.task_handler).post(FILE_DISTRIBUTION_PATH, body)
             distributions.append(distribution)
-            self.addCleanup(client.delete, distribution['_href'])
+            self.addCleanup(client.delete, distribution["_href"])
 
         self.assertEqual(
-            distributions[0]['publication'],
-            distributions[1]['publication'],
-            distributions
+            distributions[0]["publication"], distributions[1]["publication"], distributions
         )
 
         unit_urls = []
-        unit_path = get_added_content(repo)[FILE_CONTENT_NAME][0]['relative_path']
+        unit_path = get_added_content(repo)[FILE_CONTENT_NAME][0]["relative_path"]
         for distribution in distributions:
-            unit_url = cfg.get_hosts('api')[0].roles['api']['scheme']
-            unit_url += '://' + distribution['base_url'] + '/'
+            unit_url = cfg.get_hosts("api")[0].roles["api"]["scheme"]
+            unit_url += "://" + distribution["base_url"] + "/"
             unit_urls.append(urljoin(unit_url, unit_path))
 
         client.response_handler = api.safe_handler

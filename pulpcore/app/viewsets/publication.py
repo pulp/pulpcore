@@ -2,11 +2,7 @@ from django_filters.rest_framework import filters, DjangoFilterBackend
 from rest_framework import mixins
 from rest_framework.filters import OrderingFilter
 
-from pulpcore.app.models import (
-    BaseDistribution,
-    ContentGuard,
-    Publication,
-)
+from pulpcore.app.models import BaseDistribution, ContentGuard, Publication
 from pulpcore.app.serializers import (
     BaseDistributionSerializer,
     ContentGuardSerializer,
@@ -22,15 +18,14 @@ from pulpcore.app.viewsets import (
 from pulpcore.app.viewsets.base import NAME_FILTER_OPTIONS
 
 
-class PublicationViewSet(NamedModelViewSet,
-                         mixins.RetrieveModelMixin,
-                         mixins.ListModelMixin,
-                         mixins.DestroyModelMixin):
-    endpoint_name = 'publications'
+class PublicationViewSet(
+    NamedModelViewSet, mixins.RetrieveModelMixin, mixins.ListModelMixin, mixins.DestroyModelMixin
+):
+    endpoint_name = "publications"
     queryset = Publication.objects.exclude(complete=False)
     serializer_class = PublicationSerializer
     filter_backends = (OrderingFilter, DjangoFilterBackend)
-    ordering = ('-_created',)
+    ordering = ("-_created",)
 
 
 class ContentGuardFilter(BaseFilterSet):
@@ -38,18 +33,18 @@ class ContentGuardFilter(BaseFilterSet):
 
     class Meta:
         model = ContentGuard
-        fields = {
-            'name': NAME_FILTER_OPTIONS,
-        }
+        fields = {"name": NAME_FILTER_OPTIONS}
 
 
-class ContentGuardViewSet(NamedModelViewSet,
-                          mixins.CreateModelMixin,
-                          mixins.UpdateModelMixin,
-                          mixins.DestroyModelMixin,
-                          mixins.RetrieveModelMixin,
-                          mixins.ListModelMixin):
-    endpoint_name = 'contentguards'
+class ContentGuardViewSet(
+    NamedModelViewSet,
+    mixins.CreateModelMixin,
+    mixins.UpdateModelMixin,
+    mixins.DestroyModelMixin,
+    mixins.RetrieveModelMixin,
+    mixins.ListModelMixin,
+):
+    endpoint_name = "contentguards"
     serializer_class = ContentGuardSerializer
     queryset = ContentGuard.objects.all()
     filterset_class = ContentGuardFilter
@@ -67,23 +62,26 @@ class DistributionFilter(BaseFilterSet):
     class Meta:
         model = BaseDistribution
         fields = {
-            'name': NAME_FILTER_OPTIONS,
-            'base_path': ['exact', 'contains', 'icontains', 'in']
+            "name": NAME_FILTER_OPTIONS,
+            "base_path": ["exact", "contains", "icontains", "in"],
         }
 
 
-class BaseDistributionViewSet(NamedModelViewSet,
-                              mixins.RetrieveModelMixin,
-                              mixins.ListModelMixin,
-                              AsyncCreateMixin,
-                              AsyncRemoveMixin,
-                              AsyncUpdateMixin):
+class BaseDistributionViewSet(
+    NamedModelViewSet,
+    mixins.RetrieveModelMixin,
+    mixins.ListModelMixin,
+    AsyncCreateMixin,
+    AsyncRemoveMixin,
+    AsyncUpdateMixin,
+):
     """
     Provides read and list methods and also provides asynchronous CUD methods to dispatch tasks
     with reservation that lock all Distributions preventing race conditions during base_path
     checking.
     """
-    endpoint_name = 'distributions'
+
+    endpoint_name = "distributions"
     queryset = BaseDistribution.objects.all()
     serializer_class = BaseDistributionSerializer
     filterset_class = DistributionFilter

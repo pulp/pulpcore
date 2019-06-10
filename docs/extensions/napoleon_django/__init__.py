@@ -41,12 +41,13 @@ def setup(app):
 
     """
     from sphinx.application import Sphinx
+
     if not isinstance(app, Sphinx):
         return  # probably called by tests
 
-    app.connect('autodoc-process-docstring', _process_docstring)
+    app.connect("autodoc-process-docstring", _process_docstring)
 
-    return {'version': sphinx.__display_version__, 'parallel_read_safe': True}
+    return {"version": sphinx.__display_version__, "parallel_read_safe": True}
 
 
 def _process_docstring(app, what, name, obj, options, lines):

@@ -116,14 +116,7 @@ class Artifact(Model):
     objects = BulkCreateManager()
 
     # All digest fields ordered by algorithm strength.
-    DIGEST_FIELDS = (
-        'sha512',
-        'sha384',
-        'sha256',
-        'sha224',
-        'sha1',
-        'md5',
-    )
+    DIGEST_FIELDS = ("sha512", "sha384", "sha256", "sha224", "sha1", "md5")
 
     # Reliable digest fields ordered by algorithm strength.
     RELIABLE_DIGEST_FIELDS = DIGEST_FIELDS[:-3]
@@ -207,7 +200,7 @@ class Artifact(Model):
             An in-memory, unsaved :class:`~pulpcore.plugin.models.Artifact`
         """
         if isinstance(file, str):
-            with open(file, 'rb') as f:
+            with open(file, "rb") as f:
                 hashers = {n: hashlib.new(n) for n in Artifact.DIGEST_FIELDS}
                 size = 0
                 while True:
@@ -230,7 +223,7 @@ class Artifact(Model):
                 if expected_digest != hashers[algorithm].hexdigest():
                     raise DigestValidationError()
 
-        attributes = {'size': size, 'file': file}
+        attributes = {"size": size, "file": file}
         for algorithm in Artifact.DIGEST_FIELDS:
             attributes[algorithm] = hashers[algorithm].hexdigest()
 
@@ -245,14 +238,15 @@ class Content(MasterModel, QueryMixin):
 
         _artifacts (models.ManyToManyField): Artifacts related to Content through ContentArtifact
     """
-    TYPE = 'content'
 
-    _artifacts = models.ManyToManyField(Artifact, through='ContentArtifact')
+    TYPE = "content"
+
+    _artifacts = models.ManyToManyField(Artifact, through="ContentArtifact")
 
     objects = BulkCreateManager()
 
     class Meta:
-        verbose_name_plural = 'content'
+        verbose_name_plural = "content"
         unique_together = ()
 
     @classmethod
@@ -288,6 +282,7 @@ class ContentArtifact(Model, QueryMixin):
     Serves as a through model for the '_artifacts' ManyToManyField in Content.
     Artifact is protected from deletion if it's present in a ContentArtifact relationship.
     """
+
     artifact = models.ForeignKey(Artifact, on_delete=models.PROTECT, null=True)
     content = models.ForeignKey(Content, on_delete=models.CASCADE)
     relative_path = models.CharField(max_length=255)
@@ -295,7 +290,7 @@ class ContentArtifact(Model, QueryMixin):
     objects = BulkCreateManager()
 
     class Meta:
-        unique_together = ('content', 'relative_path')
+        unique_together = ("content", "relative_path")
 
 
 class RemoteArtifact(Model, QueryMixin):
@@ -325,6 +320,7 @@ class RemoteArtifact(Model, QueryMixin):
         remote (:class:`django.db.models.ForeignKey`): Remote that created the
             RemoteArtifact.
     """
+
     url = models.TextField(validators=[validators.URLValidator])
     size = models.IntegerField(null=True)
     md5 = models.CharField(max_length=32, null=True)
@@ -335,12 +331,12 @@ class RemoteArtifact(Model, QueryMixin):
     sha512 = models.CharField(max_length=128, null=True)
 
     content_artifact = models.ForeignKey(ContentArtifact, on_delete=models.CASCADE)
-    remote = models.ForeignKey('Remote', on_delete=models.CASCADE)
+    remote = models.ForeignKey("Remote", on_delete=models.CASCADE)
 
     objects = BulkCreateManager()
 
     class Meta:
-        unique_together = ('content_artifact', 'remote')
+        unique_together = ("content_artifact", "remote")
 
 
 class Upload(ChunkedUpload):

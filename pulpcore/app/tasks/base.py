@@ -10,7 +10,7 @@ def general_create(app_label, serializer_name, *args, **kwargs):
         ValidationError: If the serializer is not valid
 
     """
-    data = kwargs.pop('data', None)
+    data = kwargs.pop("data", None)
     serializer_class = get_plugin_config(app_label).named_serializers[serializer_name]
     serializer = serializer_class(data=data)
     serializer.is_valid(raise_exception=True)
@@ -41,8 +41,8 @@ def general_update(instance_id, app_label, serializer_name, *args, **kwargs):
             due to validation error. This theoretically should never occur since validation is
             performed before the task is dispatched.
     """
-    data = kwargs.pop('data', None)
-    partial = kwargs.pop('partial', False)
+    data = kwargs.pop("data", None)
+    partial = kwargs.pop("partial", False)
     serializer_class = get_plugin_config(app_label).named_serializers[serializer_name]
     instance = serializer_class.Meta.model.objects.get(pk=instance_id).cast()
     serializer = serializer_class(instance, data=data, partial=partial)

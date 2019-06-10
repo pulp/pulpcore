@@ -32,14 +32,16 @@ class Repository(Model):
 
         content (models.ManyToManyField): Associated content.
     """
+
     name = models.CharField(db_index=True, unique=True, max_length=255)
     description = models.TextField(null=True)
     last_version = models.PositiveIntegerField(default=0)
-    content = models.ManyToManyField('Content', through='RepositoryContent',
-                                     related_name='repositories')
+    content = models.ManyToManyField(
+        "Content", through="RepositoryContent", related_name="repositories"
+    )
 
     class Meta:
-        verbose_name_plural = 'repositories'
+        verbose_name_plural = "repositories"
 
     def natural_key(self):
         """
@@ -78,21 +80,28 @@ class Remote(MasterModel):
 
         repository (models.ForeignKey): The repository that owns this Remote
     """
-    TYPE = 'remote'
+
+    TYPE = "remote"
 
     # Constants for the ChoiceField 'policy'
-    IMMEDIATE = 'immediate'
-    ON_DEMAND = 'on_demand'
-    STREAMED = 'streamed'
+    IMMEDIATE = "immediate"
+    ON_DEMAND = "on_demand"
+    STREAMED = "streamed"
 
     POLICY_CHOICES = (
-        (IMMEDIATE, 'When syncing, download all metadata and content now.'),
-        (ON_DEMAND, 'When syncing, download metadata, but do not download content now. Instead, '
-                    'download content as clients request it, and save it in Pulp to be served for '
-                    'future client requests.'),
-        (STREAMED, 'When syncing, download metadata, but do not download content now. Instead,'
-                   'download content as clients request it, but never save it in Pulp. This causes '
-                   'future requests for that same content to have to be downloaded again.')
+        (IMMEDIATE, "When syncing, download all metadata and content now."),
+        (
+            ON_DEMAND,
+            "When syncing, download metadata, but do not download content now. Instead, "
+            "download content as clients request it, and save it in Pulp to be served for "
+            "future client requests.",
+        ),
+        (
+            STREAMED,
+            "When syncing, download metadata, but do not download content now. Instead,"
+            "download content as clients request it, but never save it in Pulp. This causes "
+            "future requests for that same content to have to be downloaded again.",
+        ),
     )
 
     name = models.CharField(db_index=True, unique=True, max_length=255)
@@ -112,7 +121,7 @@ class Remote(MasterModel):
     policy = models.TextField(choices=POLICY_CHOICES, default=IMMEDIATE)
 
     class Meta:
-        default_related_name = 'remotes'
+        default_related_name = "remotes"
 
 
 class Publisher(MasterModel):
@@ -126,12 +135,13 @@ class Publisher(MasterModel):
     Relations:
 
     """
-    TYPE = 'publisher'
+
+    TYPE = "publisher"
 
     name = models.CharField(db_index=True, unique=True, max_length=255)
 
     class Meta:
-        default_related_name = 'publishers'
+        default_related_name = "publishers"
 
 
 class Exporter(MasterModel):
@@ -146,13 +156,14 @@ class Exporter(MasterModel):
     Relations:
 
     """
-    TYPE = 'exporter'
+
+    TYPE = "exporter"
 
     name = models.CharField(db_index=True, unique=True, max_length=255)
     last_export = models.DateTimeField(null=True)
 
     class Meta:
-        default_related_name = 'exporters'
+        default_related_name = "exporters"
 
 
 class RepositoryContent(Model):
@@ -172,18 +183,23 @@ class RepositoryContent(Model):
         version_removed (models.ForeignKey): The RepositoryVersion which removed the referenced
             Content.
     """
-    content = models.ForeignKey('Content', on_delete=models.CASCADE,
-                                related_name='version_memberships')
+
+    content = models.ForeignKey(
+        "Content", on_delete=models.CASCADE, related_name="version_memberships"
+    )
     repository = models.ForeignKey(Repository, on_delete=models.CASCADE)
-    version_added = models.ForeignKey('RepositoryVersion', related_name='added_memberships',
-                                      on_delete=models.CASCADE)
-    version_removed = models.ForeignKey('RepositoryVersion', null=True,
-                                        related_name='removed_memberships',
-                                        on_delete=models.CASCADE)
+    version_added = models.ForeignKey(
+        "RepositoryVersion", related_name="added_memberships", on_delete=models.CASCADE
+    )
+    version_removed = models.ForeignKey(
+        "RepositoryVersion", null=True, related_name="removed_memberships", on_delete=models.CASCADE
+    )
 
     class Meta:
-        unique_together = (('repository', 'content', 'version_added'),
-                           ('repository', 'content', 'version_removed'))
+        unique_together = (
+            ("repository", "content", "version_added"),
+            ("repository", "content", "version_removed"),
+        )
 
 
 class RepositoryVersion(Model):
@@ -213,17 +229,17 @@ class RepositoryVersion(Model):
 
         repository (models.ForeignKey): The associated repository.
     """
+
     repository = models.ForeignKey(Repository, on_delete=models.CASCADE)
     number = models.PositiveIntegerField(db_index=True)
     complete = models.BooleanField(db_index=True, default=False)
-    base_version = models.ForeignKey('RepositoryVersion', null=True,
-                                     on_delete=models.SET_NULL)
+    base_version = models.ForeignKey("RepositoryVersion", null=True, on_delete=models.SET_NULL)
 
     class Meta:
-        default_related_name = 'versions'
-        unique_together = ('repository', 'number')
-        get_latest_by = 'number'
-        ordering = ('number',)
+        default_related_name = "versions"
+        unique_together = ("repository", "number")
+        get_latest_by = "number"
+        ordering = ("number",)
 
     @property
     def content(self):
@@ -246,9 +262,7 @@ class RepositoryVersion(Model):
         """
         relationships = RepositoryContent.objects.filter(
             repository=self.repository, version_added__number__lte=self.number
-        ).exclude(
-            version_removed__number__lte=self.number
-        )
+        ).exclude(version_removed__number__lte=self.number)
         return Content.objects.filter(version_memberships__in=relationships)
 
     def added(self):
@@ -293,7 +307,8 @@ class RepositoryVersion(Model):
             version = cls(
                 repository=repository,
                 number=int(repository.last_version) + 1,
-                base_version=base_version)
+                base_version=base_version,
+            )
             repository.last_version = version.number
             repository.save()
             version.save()
@@ -335,8 +350,11 @@ class RepositoryVersion(Model):
                 repository and with a higher "number".
         """
         try:
-            return self.repository.versions.exclude(complete=False).filter(
-                number__gt=self.number).order_by('number')[0]
+            return (
+                self.repository.versions.exclude(complete=False)
+                .filter(number__gt=self.number)
+                .order_by("number")[0]
+            )
         except IndexError:
             raise self.DoesNotExist
 
@@ -355,12 +373,10 @@ class RepositoryVersion(Model):
             raise ResourceImmutableError(self)
 
         repo_content = []
-        for content_pk in content.exclude(pk__in=self.content).values_list('pk', flat=True):
+        for content_pk in content.exclude(pk__in=self.content).values_list("pk", flat=True):
             repo_content.append(
                 RepositoryContent(
-                    repository=self.repository,
-                    content_id=content_pk,
-                    version_added=self
+                    repository=self.repository, content_id=content_pk, version_added=self
                 )
             )
 
@@ -382,9 +398,8 @@ class RepositoryVersion(Model):
             raise ResourceImmutableError(self)
 
         q_set = RepositoryContent.objects.filter(
-            repository=self.repository,
-            content_id__in=content,
-            version_removed=None)
+            repository=self.repository, content_id__in=content, version_removed=None
+        )
         q_set.update(version_removed=self)
 
     def _squash(self, repo_relations, next_version):
@@ -397,20 +412,23 @@ class RepositoryVersion(Model):
         # If the same content is deleted in version, but added back in next_version
         # set version_removed field in relation to None, and remove relation adding the content
         # in next_version
-        content_added = repo_relations.filter(version_added=next_version).values_list('content_id')
+        content_added = repo_relations.filter(version_added=next_version).values_list("content_id")
 
         # use list() to force the evaluation of the queryset, otherwise queryset is affected
         # by the update() operation before delete() is ran
-        content_removed_and_readded = list(repo_relations.filter(version_removed=self,
-                                                                 content_id__in=content_added)
-                                           .values_list('content_id'))
+        content_removed_and_readded = list(
+            repo_relations.filter(version_removed=self, content_id__in=content_added).values_list(
+                "content_id"
+            )
+        )
 
-        repo_relations.filter(version_removed=self,
-                              content_id__in=content_removed_and_readded)\
-            .update(version_removed=None)
+        repo_relations.filter(
+            version_removed=self, content_id__in=content_removed_and_readded
+        ).update(version_removed=None)
 
-        repo_relations.filter(version_added=next_version,
-                              content_id__in=content_removed_and_readded).delete()
+        repo_relations.filter(
+            version_added=next_version, content_id__in=content_removed_and_readded
+        ).delete()
 
         # "squash" by moving other additions and removals forward to the next version
         repo_relations.filter(version_added=self).update(version_added=next_version)
@@ -442,8 +460,7 @@ class RepositoryVersion(Model):
         else:
             with transaction.atomic():
                 RepositoryContent.objects.filter(version_added=self).delete()
-                RepositoryContent.objects.filter(version_removed=self) \
-                    .update(version_removed=None)
+                RepositoryContent.objects.filter(version_removed=self).update(version_removed=None)
                 CreatedResource.objects.filter(object_id=self.pk).delete()
                 self.repository.last_version = self.number - 1
                 self.repository.save()
@@ -467,12 +484,12 @@ class RepositoryVersion(Model):
                     qs = self.content
                 elif value == RepositoryVersionContentDetails.REMOVED:
                     qs = self.removed()
-                annotated = qs.values('_type').annotate(count=models.Count('_type'))
+                annotated = qs.values("_type").annotate(count=models.Count("_type"))
                 for item in annotated:
                     count_obj = RepositoryVersionContentDetails(
-                        content_type=item['_type'],
+                        content_type=item["_type"],
                         repository_version=self,
-                        count=item['count'],
+                        count=item["count"],
                         count_type=value,
                     )
                     counts_list.append(count_obj)
@@ -503,22 +520,16 @@ class RepositoryVersion(Model):
 
 
 class RepositoryVersionContentDetails(models.Model):
-    ADDED = 'A'
-    PRESENT = 'P'
-    REMOVED = 'R'
-    COUNT_TYPE_CHOICES = (
-        (ADDED, 'added'),
-        (PRESENT, 'present'),
-        (REMOVED, 'removed'),
-    )
+    ADDED = "A"
+    PRESENT = "P"
+    REMOVED = "R"
+    COUNT_TYPE_CHOICES = ((ADDED, "added"), (PRESENT, "present"), (REMOVED, "removed"))
 
-    count_type = models.CharField(
-        max_length=1,
-        choices=COUNT_TYPE_CHOICES,
-    )
+    count_type = models.CharField(max_length=1, choices=COUNT_TYPE_CHOICES)
     content_type = models.TextField()
-    repository_version = models.ForeignKey('RepositoryVersion', related_name='counts',
-                                           on_delete=models.CASCADE)
+    repository_version = models.ForeignKey(
+        "RepositoryVersion", related_name="counts", on_delete=models.CASCADE
+    )
     count = models.IntegerField()
 
     @property
@@ -536,7 +547,7 @@ class RepositoryVersionContentDetails(models.Model):
             dict: {<_type>: <url>}
         """
         ctype_model = Content.objects.filter(_type=self.content_type).first().cast().__class__
-        ctype_view = get_view_name_for_model(ctype_model, 'list')
+        ctype_view = get_view_name_for_model(ctype_model, "list")
         try:
             ctype_url = reverse(ctype_view)
         except django.urls.exceptions.NoReverseMatch:
@@ -544,13 +555,13 @@ class RepositoryVersionContentDetails(models.Model):
             # There's nothing we can do here, except to skip it.
             return
         rv_href = "/pulp/api/v3/repositories/{repo}/versions/{version}/".format(
-            repo=self.repository_version.repository.pk, version=self.repository_version.number)
+            repo=self.repository_version.repository.pk, version=self.repository_version.number
+        )
         if self.count_type == self.ADDED:
             partial_url_str = "{base}?repository_version_added={rv_href}"
         elif self.count_type == self.PRESENT:
             partial_url_str = "{base}?repository_version={rv_href}"
         elif self.count_type == self.REMOVED:
             partial_url_str = "{base}?repository_version_removed={rv_href}"
-        full_url = partial_url_str.format(
-            base=ctype_url, rv_href=rv_href)
+        full_url = partial_url_str.format(base=ctype_url, rv_href=rv_href)
         return full_url

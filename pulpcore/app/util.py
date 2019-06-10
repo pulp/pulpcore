@@ -30,8 +30,7 @@ def get_viewset_for_model(model_obj):
             break
 
     if model_viewset is None:
-        raise LookupError('Could not determine ViewSet base name for model {}'.format(
-            model_class))
+        raise LookupError("Could not determine ViewSet base name for model {}".format(model_class))
 
     return viewset
 
@@ -62,5 +61,5 @@ def get_view_name_for_model(model_obj, view_action):
     for router in all_routers:
         for pattern, registered_viewset, base_name in router.registry:
             if registered_viewset is viewset:
-                return '-'.join((base_name, view_action))
-    raise LookupError('view not found')
+                return "-".join((base_name, view_action))
+    raise LookupError("view not found")

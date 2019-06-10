@@ -13,6 +13,7 @@ from pulpcore.app.viewsets import UploadViewSet
 from pulpcore.constants import API_ROOT
 
 import logging
+
 log = logging.getLogger(__name__)
 
 
@@ -35,31 +36,23 @@ class UploadsRouter(routers.SimpleRouter):
     OpenAPI schema is generated using the same set of serializers.
 
     """
+
     routes = [
         # List route.
         Route(
-            url=r'^{prefix}{trailing_slash}$',
-            mapping={
-                'get': 'list',
-                'put': 'put_create',
-                'post': 'post_create'
-            },
-            name='{basename}-list',
+            url=r"^{prefix}{trailing_slash}$",
+            mapping={"get": "list", "put": "put_create", "post": "post_create"},
+            name="{basename}-list",
             detail=False,
-            initkwargs={'suffix': 'List'}
+            initkwargs={"suffix": "List"},
         ),
         # Detail route.
         Route(
-            url=r'^{prefix}/{lookup}{trailing_slash}$',
-            mapping={
-                'get': 'retrieve',
-                'put': 'put_update',
-                'post': 'post',
-                'delete': 'destroy'
-            },
-            name='{basename}-detail',
+            url=r"^{prefix}/{lookup}{trailing_slash}$",
+            mapping={"get": "retrieve", "put": "put_update", "post": "post", "delete": "destroy"},
+            name="{basename}-detail",
             detail=True,
-            initkwargs={'suffix': 'Instance'}
+            initkwargs={"suffix": "Instance"},
         ),
     ]
 
@@ -134,8 +127,9 @@ class ViewSetNode:
         if self.viewset:
             router.register(self.viewset.urlpattern(), self.viewset, self.viewset.view_name())
             if self.children:
-                router = routers.NestedDefaultRouter(router, self.viewset.urlpattern(),
-                                                     lookup=self.viewset.router_lookup)
+                router = routers.NestedDefaultRouter(
+                    router, self.viewset.urlpattern(), lookup=self.viewset.router_lookup
+                )
                 created_routers.append(router)
         # If we created a new router for the parent, recursively register the children with it
         for child in self.children:
@@ -167,47 +161,45 @@ for viewset in sorted_by_depth:
 root_router = routers.DefaultRouter()
 
 uploads_router = UploadsRouter()
-uploads_router.register(r'uploads', UploadViewSet)
+uploads_router.register(r"uploads", UploadViewSet)
 
 urlpatterns = [
-    url(r'^{api_root}status/'.format(api_root=API_ROOT), StatusView.as_view()),
-    url(r'^{api_root}orphans/'.format(api_root=API_ROOT), OrphansView.as_view()),
-    url(r'^auth/', include('rest_framework.urls')),
+    url(r"^{api_root}status/".format(api_root=API_ROOT), StatusView.as_view()),
+    url(r"^{api_root}orphans/".format(api_root=API_ROOT), OrphansView.as_view()),
+    url(r"^auth/", include("rest_framework.urls")),
 ]
 
 api_info = openapi.Info(
     title="Pulp 3 API",
-    default_version='v3',
-    logo={"url": "https://pulp.plan.io/attachments/download/517478/pulp_logo_word_rectangle.svg"}
+    default_version="v3",
+    logo={"url": "https://pulp.plan.io/attachments/download/517478/pulp_logo_word_rectangle.svg"},
 )
 
-docs_schema_view = yasg_get_schema_view(
-    public=True,
-    permission_classes=(permissions.AllowAny,),
-)
-urlpatterns.append(url(
-    r'^{api_root}docs/api(?P<format>\.json|\.yaml)'.format(api_root=API_ROOT),
-    docs_schema_view.without_ui(cache_timeout=None),
-    name='schema-json')
-)
-
-urlpatterns.append(url(
-    r'^{api_root}docs/'.format(api_root=API_ROOT),
-    docs_schema_view.with_ui('redoc', cache_timeout=None),
-    name='schema-redoc')
+docs_schema_view = yasg_get_schema_view(public=True, permission_classes=(permissions.AllowAny,))
+urlpatterns.append(
+    url(
+        r"^{api_root}docs/api(?P<format>\.json|\.yaml)".format(api_root=API_ROOT),
+        docs_schema_view.without_ui(cache_timeout=None),
+        name="schema-json",
+    )
 )
 
-schema_view = get_schema_view(
-    title='Pulp API',
-    permission_classes=[permissions.AllowAny],
+urlpatterns.append(
+    url(
+        r"^{api_root}docs/".format(api_root=API_ROOT),
+        docs_schema_view.with_ui("redoc", cache_timeout=None),
+        name="schema-redoc",
+    )
 )
 
-urlpatterns.append(url(r'^{api_root}$'.format(api_root=API_ROOT), schema_view))
+schema_view = get_schema_view(title="Pulp API", permission_classes=[permissions.AllowAny])
+
+urlpatterns.append(url(r"^{api_root}$".format(api_root=API_ROOT), schema_view))
 
 all_routers = [root_router, uploads_router] + vs_tree.register_with(root_router)
 for router in all_routers:
-    urlpatterns.append(url(r'^{api_root}'.format(api_root=API_ROOT), include(router.urls)))
+    urlpatterns.append(url(r"^{api_root}".format(api_root=API_ROOT), include(router.urls)))
 
 # If plugins define a urls.py, include them into the root namespace.
 for plugin_pattern in plugin_patterns:
-    urlpatterns.append(url(r'', include(plugin_pattern)))
+    urlpatterns.append(url(r"", include(plugin_pattern)))

@@ -23,21 +23,23 @@ class StatusView(APIView):
     authentication_classes = []
     permission_classes = []
 
-    @swagger_auto_schema(operation_summary="Inspect status of Pulp",
-                         operation_id="status_read",
-                         responses={200: StatusSerializer})
+    @swagger_auto_schema(
+        operation_summary="Inspect status of Pulp",
+        operation_id="status_read",
+        responses={200: StatusSerializer},
+    )
     def get(self, request, format=None):
         """
         Returns app information including the version of pulpcore and loaded pulp plugins,
         known workers, database connection status, and messaging connection status
         """
-        components = ['pulpcore', 'pulpcore-plugin'] + INSTALLED_PULP_PLUGINS
-        versions = [{
-            'component': component,
-            'version': get_distribution(component).version
-        } for component in components]
-        redis_status = {'connected': self._get_redis_conn_status()}
-        db_status = {'connected': self._get_db_conn_status()}
+        components = ["pulpcore", "pulpcore-plugin"] + INSTALLED_PULP_PLUGINS
+        versions = [
+            {"component": component, "version": get_distribution(component).version}
+            for component in components
+        ]
+        redis_status = {"connected": self._get_redis_conn_status()}
+        db_status = {"connected": self._get_db_conn_status()}
 
         try:
             online_workers = Worker.objects.online_workers()
@@ -50,14 +52,14 @@ class StatusView(APIView):
             missing_workers = None
 
         data = {
-            'versions': versions,
-            'online_workers': online_workers,
-            'missing_workers': missing_workers,
-            'database_connection': db_status,
-            'redis_connection': redis_status
+            "versions": versions,
+            "online_workers": online_workers,
+            "missing_workers": missing_workers,
+            "database_connection": db_status,
+            "redis_connection": redis_status,
         }
 
-        context = {'request': request}
+        context = {"request": request}
         serializer = StatusSerializer(data, context=context)
         return Response(serializer.data)
 
@@ -72,7 +74,7 @@ class StatusView(APIView):
         try:
             Worker.objects.count()
         except Exception:
-            _logger.exception(_('Cannot connect to database during status check.'))
+            _logger.exception(_("Cannot connect to database during status check."))
             return False
         else:
             return True
@@ -89,7 +91,7 @@ class StatusView(APIView):
         try:
             conn.ping()
         except Exception:
-            _logger.error(_('Connection to Redis failed during status check!'))
+            _logger.error(_("Connection to Redis failed during status check!"))
             return False
         else:
             return True

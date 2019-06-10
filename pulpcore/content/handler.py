@@ -3,6 +3,7 @@ import logging
 import os
 
 import django  # noqa otherwise E402: module level not at top of file
+
 django.setup()  # noqa otherwise E402: module level not at top of file
 
 from aiohttp.client_exceptions import ClientResponseError
@@ -42,6 +43,7 @@ class ArtifactNotFound(Exception):
     """
     The artifact associated with a published-artifact does not exist.
     """
+
     pass
 
 
@@ -72,12 +74,12 @@ class Handler:
     """
 
     hop_by_hop_headers = [
-        'connection',
-        'keep-alive',
-        'public',
-        'proxy-authenticate',
-        'transfer-encoding',
-        'upgrade',
+        "connection",
+        "keep-alive",
+        "public",
+        "proxy-authenticate",
+        "transfer-encoding",
+        "upgrade",
     ]
 
     distribution_model = None
@@ -93,7 +95,7 @@ class Handler:
             :class:`aiohttp.web.StreamResponse` or :class:`aiohttp.web.FileResponse`: The response
                 back to the client.
         """
-        path = request.match_info['path']
+        path = request.match_info["path"]
         return await self._match_and_stream(path, request)
 
     @staticmethod
@@ -110,7 +112,7 @@ class Handler:
         """
         tree = []
         while True:
-            base = os.path.split(path.strip('/'))[0]
+            base = os.path.split(path.strip("/"))[0]
             if not base:
                 break
             tree.append(base)
@@ -140,9 +142,11 @@ class Handler:
                 model_class = cls.distribution_model
                 return cls.distribution_model.objects.get(base_path__in=base_paths)
         except ObjectDoesNotExist:
-            log.debug(_('{model_name} not matched for {path} using: {base_paths}').format(
-                model_name=model_class.__name__, path=path, base_paths=base_paths
-            ))
+            log.debug(
+                _("{model_name} not matched for {path} using: {base_paths}").format(
+                    model_name=model_class.__name__, path=path, base_paths=base_paths
+                )
+            )
             raise PathNotResolved(path)
 
     @staticmethod
@@ -168,11 +172,8 @@ class Handler:
         except PermissionError as pe:
             log.debug(
                 _('Path: %(p)s not permitted by guard: "%(g)s" reason: %(r)s'),
-                {
-                    'p': request.path,
-                    'g': guard.name,
-                    'r': str(pe)
-                })
+                {"p": request.path, "g": guard.name, "r": str(pe)},
+            )
             raise HTTPForbidden(reason=str(pe))
 
     async def _match_and_stream(self, path, request):
@@ -194,11 +195,11 @@ class Handler:
         distro = self._match_distribution(path)
         self._permit(request, distro)
 
-        rel_path = path.lstrip('/')
-        rel_path = rel_path[len(distro.base_path):]
-        rel_path = rel_path.lstrip('/')
+        rel_path = path.lstrip("/")
+        rel_path = rel_path[len(distro.base_path) :]
+        rel_path = rel_path.lstrip("/")
 
-        publication = getattr(distro, 'publication', None)
+        publication = getattr(distro, "publication", None)
 
         if publication:
             # published artifact
@@ -225,15 +226,12 @@ class Handler:
             if publication.pass_through:
                 try:
                     ca = ContentArtifact.objects.get(
-                        content__in=publication.repository_version.content,
-                        relative_path=rel_path)
+                        content__in=publication.repository_version.content, relative_path=rel_path
+                    )
                 except MultipleObjectsReturned:
                     log.error(
-                        _('Multiple (pass-through) matches for {b}/{p}'),
-                        {
-                            'b': distro.base_path,
-                            'p': rel_path,
-                        }
+                        _("Multiple (pass-through) matches for {b}/{p}"),
+                        {"b": distro.base_path, "p": rel_path},
                     )
                     raise
                 except ObjectDoesNotExist:
@@ -244,8 +242,8 @@ class Handler:
                     else:
                         return await self._stream_content_artifact(request, StreamResponse(), ca)
 
-        repo_version = getattr(distro, 'repository_version', None)
-        repository = getattr(distro, 'repository', None)
+        repo_version = getattr(distro, "repository_version", None)
+        repository = getattr(distro, "repository", None)
 
         if repository or repo_version:
             if repository:
@@ -253,15 +251,12 @@ class Handler:
 
             try:
                 ca = ContentArtifact.objects.get(
-                    content__in=repo_version.content,
-                    relative_path=rel_path)
+                    content__in=repo_version.content, relative_path=rel_path
+                )
             except MultipleObjectsReturned:
                 log.error(
-                    _('Multiple (pass-through) matches for {b}/{p}'),
-                    {
-                        'b': distro.base_path,
-                        'p': rel_path,
-                    }
+                    _("Multiple (pass-through) matches for {b}/{p}"),
+                    {"b": distro.base_path, "p": rel_path},
                 )
                 raise
             except ObjectDoesNotExist:
@@ -341,10 +336,7 @@ class Handler:
         """
         content_artifact = remote_artifact.content_artifact
         remote = remote_artifact.remote
-        artifact = Artifact(
-            **download_result.artifact_attributes,
-            file=download_result.path
-        )
+        artifact = Artifact(**download_result.artifact_attributes, file=download_result.path)
         with transaction.atomic():
             try:
                 with transaction.atomic():
@@ -367,9 +359,11 @@ class Handler:
                     content = c_type.objects.get(content.q())
                     artifacts = content._artifacts
                     if artifact.sha256 != artifacts[0].sha256:
-                        raise RuntimeError("The Artifact downloaded during pull-through does not "
-                                           "match the Artifact already stored for the same "
-                                           "content.")
+                        raise RuntimeError(
+                            "The Artifact downloaded during pull-through does not "
+                            "match the Artifact already stored for the same "
+                            "content."
+                        )
                     content_artifact = ContentArtifact.objects.get(content=content)
                     update_content_artifact = False
                 try:
@@ -401,9 +395,9 @@ class Handler:
         Returns:
             The :class:`aiohttp.web.FileResponse` for the file.
         """
-        if settings.DEFAULT_FILE_STORAGE == 'pulpcore.app.models.storage.FileSystem':
+        if settings.DEFAULT_FILE_STORAGE == "pulpcore.app.models.storage.FileSystem":
             return FileResponse(os.path.join(settings.MEDIA_ROOT, file.name))
-        elif settings.DEFAULT_FILE_STORAGE == 'storages.backends.s3boto3.S3Boto3Storage':
+        elif settings.DEFAULT_FILE_STORAGE == "storages.backends.s3boto3.S3Boto3Storage":
             raise HTTPFound(file.url)
         else:
             raise NotImplementedError()
@@ -442,8 +436,10 @@ class Handler:
         async def finalize():
             if remote.policy != Remote.STREAMED:
                 await original_finalize()
-        downloader = remote.get_downloader(remote_artifact=remote_artifact,
-                                           headers_ready_callback=handle_headers)
+
+        downloader = remote.get_downloader(
+            remote_artifact=remote_artifact, headers_ready_callback=handle_headers
+        )
         original_handle_data = downloader.handle_data
         downloader.handle_data = handle_data
         original_finalize = downloader.finalize

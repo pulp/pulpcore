@@ -21,11 +21,11 @@ from rest_framework.schemas import AutoSchema
 from rest_framework.serializers import ValidationError as DRFValidationError
 
 # These should be used to prevent duplication and keep things consistent
-NAME_FILTER_OPTIONS = ['exact', 'in']
+NAME_FILTER_OPTIONS = ["exact", "in"]
 # e.g.
 # /?name=foo
 # /?name__in=foo,bar
-DATETIME_FILTER_OPTIONS = ['lt', 'lte', 'gt', 'gte', 'range']
+DATETIME_FILTER_OPTIONS = ["lt", "lte", "gt", "gte", "range"]
 # e.g.
 # /?_created__gte=2018-04-12T19:45:52
 # /?_created__range=2018-04-12T19:45:52,2018-04-13T19:45:52
@@ -49,10 +49,10 @@ class DefaultSchema(AutoSchema):
         Returns:
             bool: True if filter fields should be included into the schema, False otherwise.
         """
-        if getattr(self.view, 'filter_backends', None) is None:
+        if getattr(self.view, "filter_backends", None) is None:
             return False
 
-        if hasattr(self.view, 'action'):
+        if hasattr(self.view, "action"):
             return self.view.action in ["list"]
 
         return method.lower() in ["get"]
@@ -79,6 +79,7 @@ class NamedModelViewSet(viewsets.GenericViewSet):
             identity.
         schema (DefaultSchema): The schema class to use by default in a viewset.
     """
+
     endpoint_name = None
     nest_prefix = None
     parent_viewset = None
@@ -96,18 +97,18 @@ class NamedModelViewSet(viewsets.GenericViewSet):
         The intention is that ViewSets can define a second, more minimal serializer with only
         the most important fields.
         """
-        assert self.serializer_class is not None, (_(
+        assert self.serializer_class is not None, _(
             "'{}' should either include a `serializer_class` attribute, or override the "
             "`get_serializer_class()` method.".format(self.__class__.__name__)
-        ))
-        minimal_serializer_class = getattr(self, 'minimal_serializer_class', None)
+        )
+        minimal_serializer_class = getattr(self, "minimal_serializer_class", None)
 
         if minimal_serializer_class:
-            if hasattr(self, 'request'):
-                if 'minimal' in self.request.query_params:
+            if hasattr(self, "request"):
+                if "minimal" in self.request.query_params:
                     # the query param is a string, and non-empty strings evaluate True,
                     # so we need to do an actual string comparison to 'true'
-                    if self.request.query_params['minimal'].lower() == 'true':
+                    if self.request.query_params["minimal"].lower() == "true":
                         return minimal_serializer_class
 
         return self.serializer_class
@@ -133,51 +134,58 @@ class NamedModelViewSet(viewsets.GenericViewSet):
         try:
             match = resolve(urlparse(uri).path)
         except Resolver404:
-            raise DRFValidationError(detail=_('URI not valid: {u}').format(u=uri))
-        if 'pk' in match.kwargs:
-            kwargs = {'pk': match.kwargs['pk']}
+            raise DRFValidationError(detail=_("URI not valid: {u}").format(u=uri))
+        if "pk" in match.kwargs:
+            kwargs = {"pk": match.kwargs["pk"]}
         else:
             kwargs = {}
             for key, value in match.kwargs.items():
-                if key.endswith('_pk'):
+                if key.endswith("_pk"):
                     kwargs["{}__pk".format(key[:-3])] = value
                 else:
                     kwargs[key] = value
         try:
             return model.objects.get(**kwargs)
         except model.MultipleObjectsReturned:
-            raise DRFValidationError(detail=_('URI {u} matches more than one {m}.').format(
-                u=uri, m=model._meta.model_name))
+            raise DRFValidationError(
+                detail=_("URI {u} matches more than one {m}.").format(
+                    u=uri, m=model._meta.model_name
+                )
+            )
         except model.DoesNotExist:
-            raise DRFValidationError(detail=_('URI {u} not found for {m}.').format(
-                u=uri, m=model._meta.model_name))
+            raise DRFValidationError(
+                detail=_("URI {u} not found for {m}.").format(u=uri, m=model._meta.model_name)
+            )
         except ValidationError:
-            raise DRFValidationError(detail=_('ID invalid: {u}').format(u=kwargs['pk']))
+            raise DRFValidationError(detail=_("ID invalid: {u}").format(u=kwargs["pk"]))
         except FieldError:
-            raise DRFValidationError(detail=_('URI {u} is not a valid {m}.').format(
-                u=uri, m=model._meta.model_name))
+            raise DRFValidationError(
+                detail=_("URI {u} is not a valid {m}.").format(u=uri, m=model._meta.model_name)
+            )
 
     @classmethod
     def is_master_viewset(cls):
         # ViewSet isn't related to a model, so it can't represent a master model
-        if getattr(cls, 'queryset', None) is None:
+        if getattr(cls, "queryset", None) is None:
             return False
 
         # ViewSet is related to a MasterModel subclass that doesn't have its own related
         # master model, which makes this viewset a master viewset.
-        if issubclass(cls.queryset.model, MasterModel) and \
-                cls.queryset.model._meta.master_model is None:
+        if (
+            issubclass(cls.queryset.model, MasterModel)
+            and cls.queryset.model._meta.master_model is None
+        ):
             return True
 
         return False
 
     @classmethod
     def view_name(cls):
-        return '-'.join(cls.endpoint_pieces())
+        return "-".join(cls.endpoint_pieces())
 
     @classmethod
     def urlpattern(cls):
-        return '/'.join(cls.endpoint_pieces())
+        return "/".join(cls.endpoint_pieces())
 
     @classmethod
     def endpoint_pieces(cls):
@@ -201,19 +209,21 @@ class NamedModelViewSet(viewsets.GenericViewSet):
 
             # prepend endpoint of a plugin model with its Django app label
             app_label = cls.queryset.model._meta.app_label
-            detail_endpoint_name = '{app_label}/{plugin_endpoint_name}'.format(
-                app_label=app_label,
-                plugin_endpoint_name=cls.endpoint_name)
+            detail_endpoint_name = "{app_label}/{plugin_endpoint_name}".format(
+                app_label=app_label, plugin_endpoint_name=cls.endpoint_name
+            )
 
             pieces = [master_endpoint_name, detail_endpoint_name]
 
             # ensure that neither piece is None/empty and that they are not equal.
             if not all(pieces) or pieces[0] == pieces[1]:
                 # unable to register; warn and return
-                msg = ('Unable to determine viewset inheritance path for master/detail '
-                       'relationship represented by viewset {}. Does the Detail ViewSet '
-                       'correctly subclass the Master ViewSet, and do both have endpoint_name '
-                       'set to different values?').format(cls.__name__)
+                msg = (
+                    "Unable to determine viewset inheritance path for master/detail "
+                    "relationship represented by viewset {}. Does the Detail ViewSet "
+                    "correctly subclass the Master ViewSet, and do both have endpoint_name "
+                    "set to different values?"
+                ).format(cls.__name__)
                 warnings.warn(msg, RuntimeWarning)
                 return []
             return pieces
@@ -271,7 +281,7 @@ class NamedModelViewSet(viewsets.GenericViewSet):
         if self.parent_lookup_kwargs:
             # Use the parent_lookup_kwargs and the url kwargs (self.kwargs) to retrieve the object
             for key, lookup in self.parent_lookup_kwargs.items():
-                parent_field, _, parent_lookup = lookup.partition('__')
+                parent_field, _, parent_lookup = lookup.partition("__")
                 filters[parent_lookup] = self.kwargs[key]
             return parent_field, get_object_or_404(self.parent_viewset.queryset, **filters)
 
@@ -318,10 +328,10 @@ class AsyncReservedObjectMixin:
             AssertionError if instance is None (which happens for creation)
 
         """
-        assert instance is not None, (_(
+        assert instance is not None, _(
             "'{}' must not use the default `async_reserved_resources` method "
             "when using create.".format(self.__class__.__name__)
-        ))
+        )
         return [instance]
 
 
@@ -330,8 +340,10 @@ class AsyncCreateMixin:
     Provides a create method that dispatches a task with reservation.
     """
 
-    @swagger_auto_schema(operation_description="Trigger an asynchronous create task",
-                         responses={202: AsyncOperationResponseSerializer})
+    @swagger_auto_schema(
+        operation_description="Trigger an asynchronous create task",
+        responses={202: AsyncOperationResponseSerializer},
+    )
     def create(self, request, *args, **kwargs):
         """
         Dispatches a task with reservation for creating an instance.
@@ -343,7 +355,7 @@ class AsyncCreateMixin:
             tasks.base.general_create,
             self.async_reserved_resources(None),
             args=(app_label, serializer.__class__.__name__),
-            kwargs={'data': request.data}
+            kwargs={"data": request.data},
         )
         return OperationPostponedResponse(async_result, request)
 
@@ -353,25 +365,30 @@ class AsyncUpdateMixin(AsyncReservedObjectMixin):
     Provides an update method that dispatches a task with reservation
     """
 
-    @swagger_auto_schema(operation_description="Trigger an asynchronous update task",
-                         responses={202: AsyncOperationResponseSerializer})
+    @swagger_auto_schema(
+        operation_description="Trigger an asynchronous update task",
+        responses={202: AsyncOperationResponseSerializer},
+    )
     def update(self, request, pk, **kwargs):
-        partial = kwargs.pop('partial', False)
+        partial = kwargs.pop("partial", False)
         instance = self.get_object()
         serializer = self.get_serializer(instance, data=request.data, partial=partial)
         serializer.is_valid(raise_exception=True)
         app_label = instance._meta.app_label
         async_result = enqueue_with_reservation(
-            tasks.base.general_update, self.async_reserved_resources(instance),
+            tasks.base.general_update,
+            self.async_reserved_resources(instance),
             args=(pk, app_label, serializer.__class__.__name__),
-            kwargs={'data': request.data, 'partial': partial}
+            kwargs={"data": request.data, "partial": partial},
         )
         return OperationPostponedResponse(async_result, request)
 
-    @swagger_auto_schema(operation_description="Trigger an asynchronous partial update task",
-                         responses={202: AsyncOperationResponseSerializer})
+    @swagger_auto_schema(
+        operation_description="Trigger an asynchronous partial update task",
+        responses={202: AsyncOperationResponseSerializer},
+    )
     def partial_update(self, request, *args, **kwargs):
-        kwargs['partial'] = True
+        kwargs["partial"] = True
         return self.update(request, *args, **kwargs)
 
 
@@ -380,8 +397,10 @@ class AsyncRemoveMixin(AsyncReservedObjectMixin):
     Provides a delete method that dispatches a task with reservation
     """
 
-    @swagger_auto_schema(operation_description="Trigger an asynchronous delete task",
-                         responses={202: AsyncOperationResponseSerializer})
+    @swagger_auto_schema(
+        operation_description="Trigger an asynchronous delete task",
+        responses={202: AsyncOperationResponseSerializer},
+    )
     def destroy(self, request, pk, **kwargs):
         """
         Delete a model instance
@@ -390,8 +409,9 @@ class AsyncRemoveMixin(AsyncReservedObjectMixin):
         serializer = self.get_serializer(instance)
         app_label = instance._meta.app_label
         async_result = enqueue_with_reservation(
-            tasks.base.general_delete, self.async_reserved_resources(instance),
-            args=(pk, app_label, serializer.__class__.__name__)
+            tasks.base.general_delete,
+            self.async_reserved_resources(instance),
+            args=(pk, app_label, serializer.__class__.__name__),
         )
         return OperationPostponedResponse(async_result, request)
 
@@ -407,28 +427,29 @@ class BaseFilterSet(filterset.FilterSet):
         help_text = {'name__in': 'Lorem ipsum dolor', '_last_updated__lt': 'blah blah'}
 
     """
+
     help_text = {}
 
     # copied and modified from django_filter.conf
     LOOKUP_EXPR_TEXT = {
-        'exact': _('matches'),
-        'iexact': _('matches'),
-        'contains': _('contains'),
-        'icontains': _('contains'),
-        'in': _('is in a comma-separated list of'),
-        'gt': _('is greater than'),
-        'gte': _('is greater than or equal to'),
-        'lt': _('is less than'),
-        'lte': _('is less than or equal to'),
-        'startswith': _('starts with'),
-        'istartswith': _('starts with'),
-        'endswith': _('ends with'),
-        'iendswith': _('ends with'),
-        'range': _('is between two comma separated'),
-        'isnull': _('has a null'),
-        'regex': _('matches regex'),
-        'iregex': _('matches regex'),
-        'search': _('matches'),
+        "exact": _("matches"),
+        "iexact": _("matches"),
+        "contains": _("contains"),
+        "icontains": _("contains"),
+        "in": _("is in a comma-separated list of"),
+        "gt": _("is greater than"),
+        "gte": _("is greater than or equal to"),
+        "lt": _("is less than"),
+        "lte": _("is less than or equal to"),
+        "startswith": _("starts with"),
+        "istartswith": _("starts with"),
+        "endswith": _("ends with"),
+        "iendswith": _("ends with"),
+        "range": _("is between two comma separated"),
+        "isnull": _("has a null"),
+        "regex": _("matches regex"),
+        "iregex": _("matches regex"),
+        "search": _("matches"),
     }
 
     @classmethod
@@ -446,14 +467,15 @@ class BaseFilterSet(filterset.FilterSet):
         f = super().filter_for_field(field, name, lookup_expr)
 
         if cls.get_filter_name(name, lookup_expr) in cls.help_text:
-            f.extra['help_text'] = cls.help_text[cls.get_filter_name(name, lookup_expr)]
+            f.extra["help_text"] = cls.help_text[cls.get_filter_name(name, lookup_expr)]
         else:
-            if lookup_expr in {'range', 'in'}:
-                val_word = _('values')
+            if lookup_expr in {"range", "in"}:
+                val_word = _("values")
             else:
-                val_word = _('value')
+                val_word = _("value")
 
-            f.extra['help_text'] = _("Filter results where {field} {expr} {value}").format(
-                field=name, expr=cls.LOOKUP_EXPR_TEXT[lookup_expr], value=val_word)
+            f.extra["help_text"] = _("Filter results where {field} {expr} {value}").format(
+                field=name, expr=cls.LOOKUP_EXPR_TEXT[lookup_expr], value=val_word
+            )
 
         return f
