@@ -19,7 +19,7 @@ class UploadViewSet(GenericViewSet, ChunkedUploadView, CreateModelMixin, Destroy
 
     content_range_parameter = \
         Parameter(name='Content-Range', in_='header', required=True, type='string',
-                  pattern=r'^bytes (\d+)-(\d+)\/(\d+)$',
+                  pattern=r'^bytes (\d+)-(\d+)/(\d+)$',
                   description='The Content-Range header specifies the location of the file chunk '
                               'within the file.')
 
