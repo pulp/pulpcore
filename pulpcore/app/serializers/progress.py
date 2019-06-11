@@ -3,7 +3,7 @@ from gettext import gettext as _
 from rest_framework import serializers
 
 from pulpcore.app import models
-from pulpcore.app.serializers import ModelSerializer, RelatedField
+from pulpcore.app.serializers import ModelSerializer
 
 
 class ProgressReportSerializer(ModelSerializer):
@@ -31,15 +31,10 @@ class ProgressReportSerializer(ModelSerializer):
         read_only=True,
         allow_null=True
     )
-    task = RelatedField(
-        help_text=_("The task associated with this progress report."),
-        read_only=True,
-        view_name='tasks-detail'
-    )
 
     class Meta:
         model = models.ProgressReport
         # this serializer is meant to be nested inside Task serializer,
         # so it will not have its own endpoint, that's why
         # we need to explicitly define fields to exclude '_href' field.
-        fields = ('message', 'state', 'total', 'done', 'suffix', 'task')
+        fields = ('message', 'state', 'total', 'done', 'suffix')
