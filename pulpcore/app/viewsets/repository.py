@@ -225,6 +225,8 @@ class RepositoryVersionViewSet(NamedModelViewSet,
         add_content_units = []
         remove_content_units = []
         repository = self.get_parent_object()
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
 
         if 'base_version' in request.data:
             base_version_pk = self.get_resource(request.data['base_version'], RepositoryVersion).pk
@@ -238,8 +240,11 @@ class RepositoryVersionViewSet(NamedModelViewSet,
 
         if 'remove_content_units' in request.data:
             for url in request.data['remove_content_units']:
-                content = self.get_resource(url, Content)
-                remove_content_units.append(content.pk)
+                if url == '*':
+                    remove_content_units.append(url)
+                else:
+                    content = self.get_resource(url, Content)
+                    remove_content_units.append(content.pk)
 
         result = enqueue_with_reservation(
             tasks.repository.add_and_remove, [repository],
