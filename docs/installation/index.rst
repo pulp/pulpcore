@@ -9,6 +9,7 @@ Installation
    instructions
    configuration
    storage
+   authentication
    distributed-installation
    migration
 
