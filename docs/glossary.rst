@@ -6,6 +6,11 @@ Glossary
     :class:`~pulpcore.app.models.Artifact`
         A file that belongs to a :term:`content unit<content>`.
 
+    :class:`~pulpcore.plugin.models.ContentGuard`
+        A pluggable content protection mechanism that can be added to a :term:`Distribution`, and
+        is used exclusively by the :term:`content app` to only had out binary data to trusted
+        clients. "Trusted users" are defined by the type of ContentGuard used.
+
     :class:`~pulpcore.app.models.Content`
     content unit
         Content are the smallest units of data that can be added and removed from

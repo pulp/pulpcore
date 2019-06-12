@@ -84,8 +84,14 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'pulpcore.app.middleware.PulpRemoteUserMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+]
+
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+    'django.contrib.auth.backends.RemoteUserBackend',
 ]
 
 ROOT_URLCONF = 'pulpcore.app.urls'
@@ -116,6 +122,7 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': ('rest_framework.permissions.IsAuthenticated',),
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework.authentication.SessionAuthentication',
+        'rest_framework.authentication.RemoteUserAuthentication',
         'rest_framework.authentication.BasicAuthentication',
     ),
     'UPLOADED_FILES_USE_URL': False,
@@ -197,6 +204,8 @@ LOGGING = {
 
 CONTENT_HOST = None
 CONTENT_PATH_PREFIX = '/pulp/content/'
+
+REMOTE_USER_ENVIRON_NAME = "REMOTE_USER"
 
 PROFILE_STAGES_API = False
 

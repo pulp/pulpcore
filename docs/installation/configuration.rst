@@ -92,6 +92,17 @@ LOGGING
    refer to `Django documenation on logging <https://docs.djangoproject.com/en/2
    .1/topics/logging/#configuring-logging>`_.
 
+AUTHENTICATION_BACKENDS
+^^^^^^^^^^^^^^^^^^^^^^^
+
+   By default, Pulp has two types of authentication enabled, and they fall back for each other:
+
+   1. Basic Auth which is checked against an internal users database
+   2. Webserver authentication that relies on the webserver to perform the authentication.
+
+   To change the authentication types Pulp will use, modify the ``AUTHENTICATION_BACKENDS``
+   settings. See the `Django authentication documentation <https://docs.djangoproject.com/en/2.2/
+   topics/auth/customizing/#authentication-backends>`_ for more information.
 
 .. _rq-settings:
 
@@ -170,6 +181,23 @@ CONTENT_PATH_PREFIX
    to match incoming URLs.
 
    Defaults to ``'/pulp/content/'``.
+
+
+.. _remote-user-environ-name:
+
+REMOTE_USER_ENVIRON_NAME
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+   The name of the WSGI environment variable to read for :ref:`webserver authentication
+   <webserver-auth>`.
+
+   .. warning::
+
+      Configuring this has serious security implications. See the `Django warning at the end of this
+      section in their docs <https://docs.djangoproject.com/en/2.2/howto/auth-remote-user/
+      #configuration>`_ for more details.
+
+   Defaults to ``'REMOTE_USER'``.
 
 
 PROFILE_STAGES_API

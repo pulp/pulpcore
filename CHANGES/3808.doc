@@ -1,0 +1,3 @@
+Adds an `authentication section <https://docs.pulpproject.org/en/3.0/nightly/installation/
+authentication.html>`_ to the installation guide. Also add two documented settings:
+``AUTHENTICATION_BACKENDS`` and ``REMOTE_USER_ENVIRON_NAME``.
