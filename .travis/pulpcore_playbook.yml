@@ -9,9 +9,12 @@
     pulp_source_dir: '/home/travis/build/pulp/pulpcore/'
     pulp_plugin_source_dir: "/home/travis/build/pulp/pulpcore-plugin"
     pulp_install_plugins:
-      pulpcore:
-        app_label: "pulpcore"
-        source_dir: "$TRAVIS_BUILD_DIR"
+      pulp-file:
+        app_label: "file"
+        source_dir: "/home/travis/build/pulp/pulp_file"
+      pulp-certguard:
+        app_label: "certguard"
+        source_dir: "/home/travis/build/pulp/pulp-certguard"
     ansible_python_interpreter: '/opt/pyenv/shims/python3'
     pulp_user: 'travis'
     developer_user: 'travis'

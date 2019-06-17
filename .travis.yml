@@ -3,26 +3,29 @@ sudo: required
 dist: xenial
 language: python
 python:
-  - '3.6'
-  - '3.7'
+    # python versions used in el7 SCL & supported fedora
+    - "3.6"
+    - "3.7"
 env:
   matrix:
     - DB=postgres TEST=pulp
-    - DB=mariadb TEST=pulp
     - DB=postgres TEST=docs
+    - DB=mariadb TEST=pulp
     - DB=postgres TEST=bindings
+
 matrix:
   exclude:
-    - python: '3.6'
-      env: DB=postgres TEST=docs
     - python: '3.6'
       env: DB=mariadb TEST=pulp
     - python: '3.7'
       env: DB=postgres TEST=bindings
+    - python: '3.6'
+      env: DB=postgres TEST=docs
   fast_finish: true
 services:
-  - postgresql
-  - mariadb
+    - postgresql
+    - redis-server
+    - mariadb
 addons:
   apt:
     packages:
@@ -34,57 +37,50 @@ addons:
 before_install: .travis/before_install.sh
 install: .travis/install.sh
 before_script: .travis/before_script.sh
-script:
-  - .travis/script.sh
-  - .travis/test-container-images.sh
+script: .travis/script.sh
+after_failure:
+  - sh -c "cat ~/django_runserver.log"
+  - sh -c "cat ~/resource_manager.log"
+  - sh -c "cat ~/reserved_workers-1.log"
 jobs:
   include:
-    - stage: deploy
-      script: skip
-      deploy:
-        provider: pypi
-        distributions: sdist bdist_wheel
-        user: pulp
-        password:
-          secure: "nbn1RGf6CEObxurenvbBrS/NzeVqsD2kcYxqLazfqYcp4rBbAL3y8LZDalrNmKr4ge0Byj7tiRD84vvhNf2rcHLW2g7zJ/Av3DuIdZAYtsbr2OO2IiaNzj3RphFHs3GNF0W/C5WjlS8GO+0LKQcgWVKka2oyftiOWNJd3Zh37FPxea9kcoTWBw6lJA8PdQgMBm7qY3IsDI6kYQex8sXbY8kQuhNDx/va4BoYs0sRSsq6cWmKfia3zFO0Mi2Z3Aprj2C8TcogWL0gk2rT49TNt+jA9WkIRBFGn5EF3LGlACOTC2EEhGayt4KiCO9lCPMHMVuvwYxHASR8CFP6Db7hAzAy1t6A84JE3TEsoP5jkt/W1/taqwr+TxlCiCNp21C9+68clthQ+CFUmvAvOywI/3DHWsIE2BS1Zzr57qvQdCz2polwY/c3su/k7LJxuCf1RjLACpDV4dk8/swUhduptmL5Bz6lMEP/u1ZkfUW7GwCNfD12UrFD2wYkyyKy54UDNR/4AjE/zXTkcJuCEFyN1uTIiRmQwgII09QpuV08hDedrRMg38iF17AZ1ZuNEcxYf6XtYjUtkTcHNe7zm5453YZ/YrHtZRnMjtQX2+dv0N2xLBRsbHw4cfp5aYhnc9QvJDoFgHFP6NL6RCtps01Tl7gmcYL99Rju9yFHRICxlI4="
-        on:
-          tags: true
-      if: tag IS present
-    - stage: publish-beta-docs
-      script: bash .travis/publish_docs.sh rc
-      env:
-        - DB=postgres
-        - TEST=docs
-      if: tag IS present
-    - stage: publish-nightly-docs
-      script: bash .travis/publish_docs.sh nightly
-      env:
-        - DB=postgres
-        - TEST=docs
-      if: type != pull_request
-    - stage: publish-daily-pulpcore-client-gem
-      script: bash .travis/publish_pulpcore_client_gem.sh
-      env:
-        - DB=postgres
-        - TEST=bindings
-      if: type = cron
-    - stage: publish-daily-pulpcore-client-pypi
-      script: bash .travis/publish_pulpcore_client_pypi.sh
-      env:
-        - DB=postgres
-        - TEST=bindings
-        - secure: "pc6ocmc/MAAlgHOmECCzoOFpCDYy7IrPXoX+f6MuiHrxdb45y/ynJshPug17JW/cLJYDG6EDj6KImIMmkU90Aq1ylTBtcwWFHfdprMzHFg52/vGFIP7QKasTontfBj+ESTD4q4Yqwzdk5aju9J2vHlJXBQQwEJkd6M40jxT6ABpJFqAbfeZvSGRZ2NTXTXpAKJRWujm5lKopYvk26r4KxtRvD/kvsKz4aqYktCTMt/E9nON3NLJALpFFvX012n5L3GEPqFL3CThgo2s6pQcC4ec+7Nnx1+j8akc+0iRW9/wmDJg48nQEWskteDKWad2uFsVi4hRMmE9FqXWX9AdoJP4Y7iaSeszpf56KEuv2m5dKhGghGtiPidUsFAvP4oY4X5y/3RNE1p44kXxfaG0/OSE7O7JaV2Hfha4GD0C0hLD7iY8yMRCdOgdSApsWZDdQ17SORrrdI/XNGH1ZzmK5xCQb7abVUa2pKSvwIC2BPf8tl98WnJ0HepgNBc9ingfWgaOCHpuzp2ROjm8YwfdAx89Bud74Ka/XCaRg1AJ02pFTMo3T+9wRogw6rXy0dy6iO0HdTmsUddTM3/dDOs79lCBNlRWH8OW3x9ar0wHxlHYXyWBWEgZp/ppuxHy+Dc50tJdvwkqgxSHJXT2ertGTfbvq0U/wnFjOKGh+PgoE+ck="
-      if: type = cron
-    - stage: publish-pulpcore-client-gem
-      script: bash .travis/publish_pulpcore_client_gem.sh
-      env:
-        - DB=postgres
-        - TEST=bindings
-      if: tag IS present
-    - stage: publish-pulpcore-client-pypi
-      script: bash .travis/publish_pulpcore_client_pypi.sh
-      env:
-        - DB=postgres
-        - TEST=bindings
-        - secure: "pc6ocmc/MAAlgHOmECCzoOFpCDYy7IrPXoX+f6MuiHrxdb45y/ynJshPug17JW/cLJYDG6EDj6KImIMmkU90Aq1ylTBtcwWFHfdprMzHFg52/vGFIP7QKasTontfBj+ESTD4q4Yqwzdk5aju9J2vHlJXBQQwEJkd6M40jxT6ABpJFqAbfeZvSGRZ2NTXTXpAKJRWujm5lKopYvk26r4KxtRvD/kvsKz4aqYktCTMt/E9nON3NLJALpFFvX012n5L3GEPqFL3CThgo2s6pQcC4ec+7Nnx1+j8akc+0iRW9/wmDJg48nQEWskteDKWad2uFsVi4hRMmE9FqXWX9AdoJP4Y7iaSeszpf56KEuv2m5dKhGghGtiPidUsFAvP4oY4X5y/3RNE1p44kXxfaG0/OSE7O7JaV2Hfha4GD0C0hLD7iY8yMRCdOgdSApsWZDdQ17SORrrdI/XNGH1ZzmK5xCQb7abVUa2pKSvwIC2BPf8tl98WnJ0HepgNBc9ingfWgaOCHpuzp2ROjm8YwfdAx89Bud74Ka/XCaRg1AJ02pFTMo3T+9wRogw6rXy0dy6iO0HdTmsUddTM3/dDOs79lCBNlRWH8OW3x9ar0wHxlHYXyWBWEgZp/ppuxHy+Dc50tJdvwkqgxSHJXT2ertGTfbvq0U/wnFjOKGh+PgoE+ck="
-      if: tag IS present
+  - stage: deploy-plugin-to-pypi
+    script:  bash .travis/publish_plugin_pypi.sh
+    if: tag IS present
+  - stage: publish-beta-docs
+    script: bash .travis/publish_docs.sh rc
+    env:
+      - DB=postgres
+      - TEST=docs
+    if: tag IS present
+  - stage: publish-continuous-docs
+    script: bash .travis/publish_docs.sh nightly
+    env:
+      - DB=postgres
+      - TEST=docs
+    if: type != pull_request
+
+  - stage: publish-daily-client-gem
+    script: bash .travis/publish_client_gem.sh
+    env:
+      - DB=postgres
+      - TEST=bindings
+    if: type = cron
+  - stage: publish-daily-client-pypi
+    script: bash .travis/publish_client_pypi.sh
+    env:
+      - DB=postgres
+      - TEST=bindings
+    if: type = cron
+  - stage: publish-client-gem
+    script: bash .travis/publish_client_gem.sh
+    env:
+      - DB=postgres
+      - TEST=bindings
+    if: tag IS present
+  - stage: publish-client-pypi
+    script: bash .travis/publish_client_pypi.sh
+    env:
+      - DB=postgres
+      - TEST=bindings
+    if: tag IS present
