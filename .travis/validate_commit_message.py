@@ -11,7 +11,7 @@ sha = sys.argv[1]
 message = subprocess.check_output(['git', 'log', '--format=%B', '-n 1', sha]).decode('utf-8')
 
 
-def check_status(issue):
+def __check_status(issue):
     response = requests.get('https://pulp.plan.io/issues/{}.json'.format(issue))
     response.raise_for_status()
     bug_json = response.json()
@@ -34,7 +34,7 @@ else:
 
     if issues:
         for issue in pattern.findall(message):
-            check_status(issue)
+            __check_status(issue)
     else:
         sys.exit("Error: no attached issues found for {sha}. If this was intentional, add "
                  " '{tag}' to the commit message.".format(sha=sha[0:7], tag=NO_ISSUE))
