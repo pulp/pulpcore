@@ -1,10 +1,9 @@
 import re
 
 from django import template
-from django.utils.safestring import SafeData, mark_safe
 from django.utils.encoding import force_text
 from django.utils.html import escape, smart_urlquote
-
+from django.utils.safestring import SafeData, mark_safe
 
 register = template.Library()
 

@@ -1,4 +1,5 @@
 from gettext import gettext as _
+
 from rest_framework import serializers
 
 from pulpcore.app.serializers.task import WorkerSerializer

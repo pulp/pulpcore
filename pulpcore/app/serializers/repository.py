@@ -1,6 +1,6 @@
 from gettext import gettext as _
 
-from rest_framework import serializers, fields
+from rest_framework import fields, serializers
 from rest_framework.validators import UniqueValidator
 from rest_framework_nested.serializers import NestedHyperlinkedModelSerializer
 
@@ -8,11 +8,11 @@ from pulpcore.app import models
 from pulpcore.app.serializers import (
     DetailIdentityField,
     IdentityField,
-    NestedIdentityField,
-    NestedRelatedField,
     LatestVersionField,
     MasterModelSerializer,
     ModelSerializer,
+    NestedIdentityField,
+    NestedRelatedField,
     SecretCharField,
 )
 

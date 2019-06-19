@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 
-import sys
-import socket
-import time
 import os
+import socket
+import sys
+import time
 
 if __name__ == '__main__':
 

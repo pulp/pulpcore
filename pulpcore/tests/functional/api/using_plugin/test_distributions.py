@@ -6,17 +6,10 @@ import unittest
 from functools import reduce
 from urllib.parse import urljoin
 
-from requests.exceptions import HTTPError
-
 from pulp_smash import api, config, utils
 from pulp_smash.pulp3.constants import REPO_PATH
-from pulp_smash.pulp3.utils import (
-    gen_distribution,
-    gen_repo,
-    get_added_content,
-    get_versions,
-    sync,
-)
+from pulp_smash.pulp3.utils import gen_distribution, gen_repo, get_added_content, get_versions, sync
+from requests.exceptions import HTTPError
 
 from pulpcore.tests.functional.api.using_plugin.constants import (
     FILE_CONTENT_NAME,
@@ -28,9 +21,9 @@ from pulpcore.tests.functional.api.using_plugin.constants import (
 from pulpcore.tests.functional.api.using_plugin.utils import (
     create_file_publication,
     gen_file_remote,
-    skip_if,
 )
 from pulpcore.tests.functional.api.using_plugin.utils import set_up_module as setUpModule  # noqa
+from pulpcore.tests.functional.api.using_plugin.utils import skip_if
 
 
 class CRUDPublicationDistributionTestCase(unittest.TestCase):

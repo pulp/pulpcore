@@ -1,12 +1,10 @@
-import mock
 from unittest import TestCase
 
-from pulpcore.app.models import BaseDistribution
-from pulpcore.app.serializers import (
-    BaseDistributionSerializer,
-    PublicationSerializer,
-)
+import mock
 from rest_framework import serializers
+
+from pulpcore.app.models import BaseDistribution
+from pulpcore.app.serializers import BaseDistributionSerializer, PublicationSerializer
 
 
 class TestPublicationSerializer(TestCase):

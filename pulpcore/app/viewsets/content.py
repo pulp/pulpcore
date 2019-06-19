@@ -1,7 +1,7 @@
 from gettext import gettext as _
 
 from django.db import models
-from rest_framework import status, mixins
+from rest_framework import mixins, status
 from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.response import Response
 
@@ -11,9 +11,9 @@ from pulpcore.app.viewsets.base import BaseFilterSet, NamedModelViewSet
 
 from .custom_filters import (
     ArtifactRepositoryVersionFilter,
-    ContentRepositoryVersionFilter,
     ContentAddedRepositoryVersionFilter,
     ContentRemovedRepositoryVersionFilter,
+    ContentRepositoryVersionFilter,
 )
 
 

@@ -1,6 +1,6 @@
-from gettext import gettext as _
 import logging
 import os
+from gettext import gettext as _
 
 import django  # noqa otherwise E402: module level not at top of file
 django.setup()  # noqa otherwise E402: module level not at top of file

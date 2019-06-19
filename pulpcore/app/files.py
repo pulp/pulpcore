@@ -1,7 +1,8 @@
 import hashlib
 import os
-from django.core.files.uploadhandler import TemporaryFileUploadHandler
+
 from django.core.files.uploadedfile import TemporaryUploadedFile
+from django.core.files.uploadhandler import TemporaryFileUploadHandler
 
 
 class PulpTemporaryUploadedFile(TemporaryUploadedFile):

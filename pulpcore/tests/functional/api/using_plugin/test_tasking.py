@@ -3,20 +3,14 @@
 import unittest
 from urllib.parse import urljoin
 
-from requests.exceptions import HTTPError
 from pulp_smash import api, config, utils
 from pulp_smash.pulp3.constants import REPO_PATH, TASKS_PATH
-from pulp_smash.pulp3.utils import (
-    delete_orphans,
-    gen_remote,
-    gen_repo,
-    get_content_summary,
-    sync,
-)
+from pulp_smash.pulp3.utils import delete_orphans, gen_remote, gen_repo, get_content_summary, sync
+from requests.exceptions import HTTPError
 
 from pulpcore.tests.functional.api.using_plugin.constants import (
-    FILE_FIXTURE_SUMMARY,
     FILE_FIXTURE_MANIFEST_URL,
+    FILE_FIXTURE_SUMMARY,
     FILE_LARGE_FIXTURE_MANIFEST_URL,
     FILE_REMOTE_PATH,
 )

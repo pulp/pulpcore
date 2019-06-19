@@ -1,13 +1,17 @@
 from drf_chunked_upload.views import ChunkedUploadView
-from pulpcore.app.models import Upload
-from pulpcore.app.serializers import UploadSerializer, UploadFinishSerializer,\
-    UploadPOSTSerializer, UploadPUTSerializer
-from rest_framework.mixins import CreateModelMixin, DestroyModelMixin
-from rest_framework.viewsets import GenericViewSet
-from rest_framework.parsers import FormParser, MultiPartParser
-
-from drf_yasg.utils import swagger_auto_schema
 from drf_yasg.openapi import Parameter
+from drf_yasg.utils import swagger_auto_schema
+from rest_framework.mixins import CreateModelMixin, DestroyModelMixin
+from rest_framework.parsers import FormParser, MultiPartParser
+from rest_framework.viewsets import GenericViewSet
+
+from pulpcore.app.models import Upload
+from pulpcore.app.serializers import (
+    UploadFinishSerializer,
+    UploadPOSTSerializer,
+    UploadPUTSerializer,
+    UploadSerializer,
+)
 
 
 class UploadViewSet(GenericViewSet, ChunkedUploadView, CreateModelMixin, DestroyModelMixin):

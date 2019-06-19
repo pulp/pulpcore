@@ -1,15 +1,15 @@
+import logging
 from gettext import gettext as _
+
 from drf_yasg.utils import swagger_auto_schema
 from pkg_resources import get_distribution
 from rest_framework.response import Response
 from rest_framework.views import APIView
-import logging
 
 from pulpcore.app.models.task import Worker
 from pulpcore.app.serializers.status import StatusSerializer
 from pulpcore.app.settings import INSTALLED_PULP_PLUGINS
 from pulpcore.tasking.connection import get_redis_connection
-
 
 _logger = logging.getLogger(__name__)
 

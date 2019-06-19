@@ -1,12 +1,8 @@
-from django_filters.rest_framework import filters, DjangoFilterBackend
+from django_filters.rest_framework import DjangoFilterBackend, filters
 from rest_framework import mixins
 from rest_framework.filters import OrderingFilter
 
-from pulpcore.app.models import (
-    BaseDistribution,
-    ContentGuard,
-    Publication,
-)
+from pulpcore.app.models import BaseDistribution, ContentGuard, Publication
 from pulpcore.app.serializers import (
     BaseDistributionSerializer,
     ContentGuardSerializer,

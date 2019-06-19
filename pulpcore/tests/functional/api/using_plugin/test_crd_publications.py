@@ -1,30 +1,25 @@
 # coding=utf-8
 """Tests that perform actions over publications."""
 import unittest
-
 from itertools import permutations
-from requests.exceptions import HTTPError
 
 from pulp_smash import api, config
 from pulp_smash.pulp3.constants import REPO_PATH
-from pulp_smash.pulp3.utils import (
-    gen_distribution,
-    gen_repo,
-    sync
-)
+from pulp_smash.pulp3.utils import gen_distribution, gen_repo, sync
+from requests.exceptions import HTTPError
 
-from pulpcore.tests.functional.api.utils import parse_date_from_string
 from pulpcore.tests.functional.api.using_plugin.constants import (
     FILE_DISTRIBUTION_PATH,
     FILE_PUBLICATION_PATH,
-    FILE_REMOTE_PATH
+    FILE_REMOTE_PATH,
 )
 from pulpcore.tests.functional.api.using_plugin.utils import (
-    gen_file_remote,
     create_file_publication,
-    skip_if
+    gen_file_remote,
 )
 from pulpcore.tests.functional.api.using_plugin.utils import set_up_module as setUpModule  # noqa
+from pulpcore.tests.functional.api.using_plugin.utils import skip_if
+from pulpcore.tests.functional.api.utils import parse_date_from_string
 
 
 class PublicationsTestCase(unittest.TestCase):

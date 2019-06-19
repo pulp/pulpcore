@@ -1,11 +1,11 @@
 import unittest
+from uuid import uuid4
 
 from django.http import Http404, QueryDict
 from django.test import TestCase
 from rest_framework.serializers import ValidationError as DRFValidationError
-from uuid import uuid4
 
-from pulpcore.app import models, viewsets, serializers
+from pulpcore.app import models, serializers, viewsets
 from pulpcore.constants import API_ROOT
 
 

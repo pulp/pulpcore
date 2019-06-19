@@ -1,7 +1,6 @@
 # coding=utf-8
 """Tests related to core pagination."""
 import unittest
-
 from random import randint
 
 from pulp_smash import api, config

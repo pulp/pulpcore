@@ -3,8 +3,7 @@ from logging import getLogger
 
 from django.db import transaction
 
-from pulpcore.app import models
-from pulpcore.app import serializers
+from pulpcore.app import models, serializers
 
 log = getLogger(__name__)
 
