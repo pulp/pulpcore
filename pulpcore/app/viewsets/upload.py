@@ -24,7 +24,7 @@ class UploadViewSet(GenericViewSet, ChunkedUploadView, CreateModelMixin, Destroy
                               'within the file.')
 
     @swagger_auto_schema(operation_summary="Start an Upload",
-                         operation_id="uploads_create",
+                         operation_id="start_upload",
                          request_body=UploadPUTSerializer,
                          manual_parameters=[content_range_parameter],
                          responses={200: UploadSerializer})
@@ -35,7 +35,7 @@ class UploadViewSet(GenericViewSet, ChunkedUploadView, CreateModelMixin, Destroy
         return super().put(*args, **kwargs)
 
     @swagger_auto_schema(operation_summary="Continue an Upload",
-                         operation_id="uploads_update",
+                         operation_id="continue_upload",
                          request_body=UploadPUTSerializer,
                          manual_parameters=[content_range_parameter],
                          responses={200: UploadSerializer})
@@ -46,7 +46,7 @@ class UploadViewSet(GenericViewSet, ChunkedUploadView, CreateModelMixin, Destroy
         return super().put(*args, **kwargs)
 
     @swagger_auto_schema(operation_summary="Finish an Upload",
-                         operation_id="uploads_finish",
+                         operation_id="finish_upload",
                          request_body=UploadFinishSerializer,
                          responses={200: UploadSerializer})
     def post(self, *args, **kwargs):
@@ -58,7 +58,7 @@ class UploadViewSet(GenericViewSet, ChunkedUploadView, CreateModelMixin, Destroy
         return super().post(*args, **kwargs)
 
     @swagger_auto_schema(operation_summary="Create an Upload",
-                         operation_id="uploads_create_and_check",
+                         operation_id="create_and_check_upload",
                          request_body=UploadPOSTSerializer,
                          responses={200: UploadSerializer})
     def post_create(self, *args, **kwargs):

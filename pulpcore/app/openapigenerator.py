@@ -259,8 +259,12 @@ class PulpAutoSchema(SwaggerAutoSchema):
         parameters = body + query
         parameters = filter_none(parameters)
         parameters = self.add_manual_parameters(parameters)
-
-        operation_id = self.get_operation_id(operation_keys)
+        if 'bindings' in self.request.query_params:
+            operation_id = self.overrides.get('operation_id', '')
+            if not operation_id:
+                operation_id = operation_keys[-1]
+        else:
+            operation_id = self.get_operation_id(operation_keys)
         summary, description = self.get_summary_and_description()
         security = self.get_security()
         assert security is None or isinstance(security, list), "security must be a list of " \
@@ -312,3 +316,28 @@ class PulpAutoSchema(SwaggerAutoSchema):
             return f'Delete {article} {resource}'
         elif operation == 'partial_update':
             return f'Partially update {article} {resource}'
+
+    def get_tags(self, operation_keys):
+        """Get a list of tags for this operation.
+
+        Tags determine how operations relate with each other, and in the UI each tag will show as
+        a group containing the operations that use it. If not provided in overrides, a list of one
+        tag will be returned. The single tag is built from operation keys.
+
+        Args:
+            operation_keys (tuple[str]): an array of keys derived from the pathdescribing the
+            hierarchical layout of this view in the API; e.g. ``('snippets', 'list')``,
+            ``('snippets', 'retrieve')``, etc.
+
+        Returns:
+            list[str] of tags
+        """
+        tags = self.overrides.get('tags')
+        if not tags:
+            if len(operation_keys) > 2:
+                if len(operation_keys) > 3:
+                    del operation_keys[-3]
+                operation_keys[0] = "{key}:".format(key=operation_keys[0])
+            tags = [' '.join(operation_keys[:-1])]
+
+        return tags
