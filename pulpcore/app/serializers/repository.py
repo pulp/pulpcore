@@ -247,12 +247,17 @@ class RepositoryVersionSerializer(ModelSerializer, NestedHyperlinkedModelSeriali
 
 class RepositoryVersionCreateSerializer(ModelSerializer, NestedHyperlinkedModelSerializer):
     add_content_units = serializers.ListField(
-        help_text=_('A list of content units to add to a new repository version'),
-        write_only=True
+        help_text=_('A list of content units to add to a new repository version. This content is '
+                    'added after remove_content_units are removed.'),
+        write_only=True,
+        required=False
     )
     remove_content_units = serializers.ListField(
-        help_text=_('A list of content units to remove from the latest repository version'),
-        write_only=True
+        help_text=_("A list of content units to remove from the latest repository version. "
+                    "You may also specify '*' as an entry to remove all content. This content is "
+                    "removed before add_content_units are added."),
+        write_only=True,
+        required=False
     )
     base_version = NestedRelatedField(
         required=False,
@@ -263,6 +268,11 @@ class RepositoryVersionCreateSerializer(ModelSerializer, NestedHyperlinkedModelS
         lookup_field='number',
         parent_lookup_kwargs={'repository_pk': 'repository__pk'},
     )
+
+    def validate_remove_content_units(self, value):
+        if len(value) > 1 and '*' in value:
+            raise serializers.ValidationError("Cannot supply content units and '*'.")
+        return value
 
     class Meta:
         model = models.RepositoryVersion
