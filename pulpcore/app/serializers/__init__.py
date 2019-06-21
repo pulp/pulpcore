@@ -19,10 +19,6 @@ from .content import (  # noqa
     MultipleArtifactContentSerializer,
     NoArtifactContentSerializer,
     SingleArtifactContentSerializer,
-    UploadFinishSerializer,
-    UploadPOSTSerializer,
-    UploadPUTSerializer,
-    UploadSerializer,
 )
 from .fields import (  # noqa
     BaseURLField,
@@ -55,3 +51,4 @@ from .task import (  # noqa
     TaskSerializer,
     WorkerSerializer,
 )
+from .upload import UploadChunkSerializer, UploadCommitSerializer, UploadSerializer  # noqa

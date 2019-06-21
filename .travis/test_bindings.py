@@ -1,6 +1,6 @@
 from pulpcore.client.pulpcore import (ApiClient as CoreApiClient, ArtifactsApi, Configuration,
                                       Repository, RepositoriesApi, RepositoriesVersionsApi,
-                                      TasksApi, UploadsApi)
+                                      TasksApi, Upload, UploadCommit, UploadsApi)
 from pulpcore.client.pulp_file import (ApiClient as FileApiClient, ContentFilesApi,
                                        FileContent, DistributionsFileApi,
                                        FileDistribution, PublicationsFileApi,
@@ -51,11 +51,14 @@ def upload_file_in_chunks(file_path):
     Returns:
         upload object
     """
+    size = os.stat(file_path).st_size
+    chunk_size = 200000
+    offset = 0
+    sha256hasher = hashlib.new('sha256')
+
+    upload = uploads.create_upload(Upload(size=size))
+
     with open(file_path, 'rb') as full_file:
-        size = os.stat(file_path).st_size
-        chunk_size = 200000
-        offset = 0
-        md5hasher = hashlib.new('md5')
         while True:
             chunk = full_file.read(chunk_size)
             if not chunk:
@@ -66,15 +69,12 @@ def upload_file_in_chunks(file_path):
                                                                 size=size)
             with NamedTemporaryFile() as file_chunk:
                 file_chunk.write(chunk)
-                if not offset:
-                    upload = uploads.start_upload(file=file_chunk.name, content_range=content_range)
-                else:
-                    upload = uploads.continue_upload(upload_href=upload.href,
-                                                     file=file_chunk.name,
-                                                     content_range=content_range)
+                upload = uploads.update_upload(upload_href=upload.href,
+                                               file=file_chunk.name,
+                                               content_range=content_range)
             offset += chunk_size
-            md5hasher.update(chunk)
-        uploads.finish_upload(upload_href=upload.href, md5=md5hasher.hexdigest())
+            sha256hasher.update(chunk)
+        uploads.commit_upload(upload.href, UploadCommit(sha256=sha256hasher.hexdigest()))
     return upload
 
 

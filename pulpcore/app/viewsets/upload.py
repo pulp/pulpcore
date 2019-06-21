@@ -1,88 +1,101 @@
-from drf_chunked_upload.views import ChunkedUploadView
-from drf_yasg.openapi import Parameter
+import re
+from datetime import datetime
+
+from gettext import gettext as _
+from django.utils.decorators import method_decorator
 from drf_yasg.utils import swagger_auto_schema
-from rest_framework.mixins import CreateModelMixin, DestroyModelMixin
-from rest_framework.parsers import FormParser, MultiPartParser
-from rest_framework.viewsets import GenericViewSet
+from drf_yasg.openapi import Parameter
+from rest_framework import mixins, serializers
+from rest_framework.decorators import detail_route
+from rest_framework.response import Response
 
 from pulpcore.app.models import Upload
-from pulpcore.app.serializers import (
-    UploadFinishSerializer,
-    UploadPOSTSerializer,
-    UploadPUTSerializer,
-    UploadSerializer,
-)
+from pulpcore.app.serializers import UploadChunkSerializer, UploadCommitSerializer, UploadSerializer
+from pulpcore.app.viewsets.base import NamedModelViewSet
 
 
-class UploadViewSet(GenericViewSet, ChunkedUploadView, CreateModelMixin, DestroyModelMixin):
+@method_decorator(name='create', decorator=swagger_auto_schema(
+    operation_id="create_upload"
+))
+class UploadViewSet(NamedModelViewSet,
+                    mixins.CreateModelMixin,
+                    mixins.RetrieveModelMixin,
+                    mixins.UpdateModelMixin,
+                    mixins.ListModelMixin):
     """View for chunked uploads."""
-    model = Upload
-    serializer_class = UploadSerializer
+    endpoint_name = 'uploads'
     queryset = Upload.objects.all()
-    parser_classes = (MultiPartParser, FormParser)
+    serializer_class = UploadSerializer
+    http_method_names = ['get', 'post', 'head', 'put']
 
+    content_range_pattern = r'^bytes (\d+)-(\d+)/(\d+|[*])$'
     content_range_parameter = \
         Parameter(name='Content-Range', in_='header', required=True, type='string',
-                  pattern=r'^bytes (\d+)-(\d+)/(\d+)$',
+                  pattern=content_range_pattern,
                   description='The Content-Range header specifies the location of the file chunk '
                               'within the file.')
 
-    @swagger_auto_schema(operation_summary="Start an Upload",
-                         operation_id="start_upload",
-                         request_body=UploadPUTSerializer,
+    @swagger_auto_schema(operation_summary="Upload a file chunk",
+                         operation_id="update_upload",
+                         request_body=UploadChunkSerializer,
                          manual_parameters=[content_range_parameter],
                          responses={200: UploadSerializer})
-    def put_create(self, *args, **kwargs):
+    def update(self, request, pk=None):
         """
-        Start a chunked upload by uploading the first chunk.
+        Upload a chunk for an upload.
         """
-        return super().put(*args, **kwargs)
+        upload = self.get_object()
 
-    @swagger_auto_schema(operation_summary="Continue an Upload",
-                         operation_id="continue_upload",
-                         request_body=UploadPUTSerializer,
-                         manual_parameters=[content_range_parameter],
-                         responses={200: UploadSerializer})
-    def put_update(self, *args, **kwargs):
-        """
-        Continue the upload by uploading the next file chunk.
-        """
-        return super().put(*args, **kwargs)
+        if upload.completed is not None:
+            raise serializers.ValidationError(_("Cannot upload chunk for a completed upload."))
+
+        try:
+            chunk = request.data['file']
+        except KeyError:
+            raise serializers.ValidationError(_("Missing 'file' parameter."))
+
+        content_range = request.META.get('HTTP_CONTENT_RANGE', '')
+        match = re.compile(self.content_range_pattern).match(content_range)
+        if not match:
+            raise serializers.ValidationError(_("Invalid or missing content range header."))
+        start = int(match[1])
+        end = int(match[2])
+
+        if (end - start + 1) != len(chunk):
+            raise serializers.ValidationError(_("Chunk size does not match content range."))
+
+        if end > upload.size - 1:
+            raise serializers.ValidationError(_("End byte is greater than upload size."))
+
+        upload.append(chunk, start)
+
+        serializer = UploadSerializer(upload, context={'request': request})
+        return Response(serializer.data)
 
     @swagger_auto_schema(operation_summary="Finish an Upload",
-                         operation_id="finish_upload",
-                         request_body=UploadFinishSerializer,
+                         operation_id="commit_upload",
+                         request_body=UploadCommitSerializer,
                          responses={200: UploadSerializer})
-    def post(self, *args, **kwargs):
+    @detail_route(methods=('put',))
+    def commit(self, request, pk):
         """
-        Mark the Upload as "complete".
+        Commit the upload and mark it as completed.
+        """
+        upload = self.get_object()
 
-        The md5 checksum is used to validate the integrity of the upload.
-        """
-        return super().post(*args, **kwargs)
+        try:
+            sha256 = request.data['sha256']
+        except KeyError:
+            raise serializers.ValidationError(_("Checksum not supplied."))
 
-    @swagger_auto_schema(operation_summary="Create an Upload",
-                         operation_id="create_and_check_upload",
-                         request_body=UploadPOSTSerializer,
-                         responses={200: UploadSerializer})
-    def post_create(self, *args, **kwargs):
-        """
-        Create an upload from a entire file as one chunk.
-        """
-        return super().post(*args, **kwargs)
+        if sha256 != upload.sha256:
+            raise serializers.ValidationError(_("Checksum does not match upload."))
 
-    def list(self, *args, **kwargs):
-        """
-        List all the uploads.
-        """
-        return super().list(*args, **kwargs)
+        if upload.completed is not None:
+            raise serializers.ValidationError(_("Upload is already complete."))
 
-    def get_serializer_class(self):
-        """
-        Returns the serializer needed for performing the requested action.
-        """
-        if self.action == 'post_create':
-            return UploadPOSTSerializer
-        if self.action == 'put_create':
-            return UploadPUTSerializer
-        return UploadSerializer
+        upload.completed = datetime.now()
+        upload.save()
+
+        serializer = UploadSerializer(upload, context={'request': request})
+        return Response(serializer.data)

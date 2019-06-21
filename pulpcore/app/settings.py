@@ -51,7 +51,6 @@ INSTALLED_APPS = [
     'django_filters',
     'drf_yasg',
     'rest_framework',
-    'drf_chunked_upload',
     # pulp core app
     'pulpcore.app',
 ]
