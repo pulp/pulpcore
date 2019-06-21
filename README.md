@@ -4,6 +4,7 @@
 [![Code Quality: Python](https://img.shields.io/lgtm/grade/python/g/pulp/pulpcore.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/pulp/pulpcore/context:python)
 [![Total Alerts](https://img.shields.io/lgtm/alerts/g/pulp/pulpcore.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/pulp/pulpcore/alerts)
 
+
 **Acquire, Organize, and Distribute Software**
 
 Pulp is a platform for managing repositories of content, such as software
