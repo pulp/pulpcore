@@ -210,6 +210,16 @@ CONTENT_PATH_PREFIX
    Defaults to ``'/pulp/content/'``.
 
 
+.. _content-app-ttl:
+
+CONTENT_APP_TTL
+^^^^^^^^^^^^^^^
+
+   The number of seconds before a content app should be considered lost.
+
+   Defaults to ``30`` seconds.
+
+
 .. _remote-user-environ-name:
 
 REMOTE_USER_ENVIRON_NAME

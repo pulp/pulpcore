@@ -115,6 +115,21 @@ class TaskCancelSerializer(ModelSerializer):
         fields = ('state',)
 
 
+class ContentAppStatusSerializer(ModelSerializer):
+    name = serializers.CharField(
+        help_text=_('The name of the worker.'),
+        read_only=True
+    )
+    last_heartbeat = serializers.DateTimeField(
+        help_text=_('Timestamp of the last time the worker talked to the service.'),
+        read_only=True
+    )
+
+    class Meta:
+        model = models.ContentAppStatus
+        fields = ('name', 'last_heartbeat')
+
+
 class WorkerSerializer(ModelSerializer):
     _href = IdentityField(view_name='workers-detail')
 
