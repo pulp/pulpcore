@@ -6,6 +6,7 @@ from pkg_resources import get_distribution
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from pulpcore.app.models.status import ContentAppStatus
 from pulpcore.app.models.task import Worker
 from pulpcore.app.serializers.status import StatusSerializer
 from pulpcore.app.settings import INSTALLED_PULP_PLUGINS
@@ -49,10 +50,16 @@ class StatusView(APIView):
         except Exception:
             missing_workers = None
 
+        try:
+            online_content_apps = ContentAppStatus.objects.online()
+        except Exception:
+            online_content_apps = None
+
         data = {
             'versions': versions,
             'online_workers': online_workers,
             'missing_workers': missing_workers,
+            'online_content_apps': online_content_apps,
             'database_connection': db_status,
             'redis_connection': redis_status
         }

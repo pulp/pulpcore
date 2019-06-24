@@ -2,7 +2,7 @@ from gettext import gettext as _
 
 from rest_framework import serializers
 
-from pulpcore.app.serializers.task import WorkerSerializer
+from pulpcore.app.serializers.task import ContentAppStatusSerializer, WorkerSerializer
 
 
 class VersionSerializer(serializers.Serializer):
@@ -59,6 +59,12 @@ class StatusSerializer(serializers.Serializer):
         help_text=_("List of missing workers known to the application. A missing worker is a "
                     "worker that was online, but has now stopped heartbeating and has potentially "
                     "died"),
+        many=True
+    )
+
+    online_content_apps = ContentAppStatusSerializer(
+        help_text=_("List of online content apps known to the application. An online worker is "
+                    "actively heartbeating"),
         many=True
     )
 

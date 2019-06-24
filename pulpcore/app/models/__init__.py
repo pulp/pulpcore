@@ -21,6 +21,9 @@ from .repository import (  # noqa
     RepositoryVersion,
     RepositoryVersionContentDetails,
 )
+
+from .status import ContentAppStatus  # noqa
+
 from .task import CreatedResource, ReservedResource, Task, TaskReservedResource, Worker  # noqa
 
 # Moved here to avoid a circular import with Task
