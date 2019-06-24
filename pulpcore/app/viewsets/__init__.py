@@ -23,9 +23,9 @@ from .publication import (  # noqa
 )
 from .repository import (  # noqa
     ExporterViewSet,
+    PublisherViewSet,
     RemoteFilter,
     RemoteViewSet,
-    PublisherViewSet,
     RepositoryViewSet,
     RepositoryVersionViewSet
 )

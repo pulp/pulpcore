@@ -5,8 +5,6 @@ from random import choice, randint, sample
 from time import sleep
 from urllib.parse import urlsplit
 
-from requests.exceptions import HTTPError
-
 from pulp_smash import api, config, utils
 from pulp_smash.pulp3.constants import ARTIFACTS_PATH, REPO_PATH
 from pulp_smash.pulp3.utils import (
@@ -23,6 +21,7 @@ from pulp_smash.pulp3.utils import (
     get_versions,
     sync,
 )
+from requests.exceptions import HTTPError
 
 from pulpcore.tests.functional.api.using_plugin.constants import (
     FILE2_FIXTURE_MANIFEST_URL,
@@ -32,16 +31,16 @@ from pulpcore.tests.functional.api.using_plugin.constants import (
     FILE_FIXTURE_MANIFEST_URL,
     FILE_FIXTURE_SUMMARY,
     FILE_LARGE_FIXTURE_MANIFEST_URL,
-    FILE_REMOTE_PATH,
     FILE_MANY_FIXTURE_MANIFEST_URL,
+    FILE_REMOTE_PATH,
 )
 from pulpcore.tests.functional.api.using_plugin.utils import (
+    create_file_publication,
     gen_file_remote,
     populate_pulp,
-    create_file_publication,
-    skip_if,
 )
 from pulpcore.tests.functional.api.using_plugin.utils import set_up_module as setUpModule  # noqa
+from pulpcore.tests.functional.api.using_plugin.utils import skip_if
 
 
 class AddRemoveContentTestCase(unittest.TestCase):

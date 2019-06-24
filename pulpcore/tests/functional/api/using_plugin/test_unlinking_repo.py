@@ -5,16 +5,9 @@ import unittest
 
 from pulp_smash import api, config
 from pulp_smash.pulp3.constants import REPO_PATH
-from pulp_smash.pulp3.utils import (
-    gen_repo,
-    get_content,
-    sync,
-)
+from pulp_smash.pulp3.utils import gen_repo, get_content, sync
 
-from pulpcore.tests.functional.api.using_plugin.constants import (
-    FILE_CONTENT_NAME,
-    FILE_REMOTE_PATH,
-)
+from pulpcore.tests.functional.api.using_plugin.constants import FILE_CONTENT_NAME, FILE_REMOTE_PATH
 from pulpcore.tests.functional.api.using_plugin.utils import gen_file_remote
 from pulpcore.tests.functional.api.using_plugin.utils import set_up_module as setUpModule  # noqa
 

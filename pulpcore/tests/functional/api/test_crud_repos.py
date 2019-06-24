@@ -1,13 +1,12 @@
 # coding=utf-8
 """Tests that CRUD repositories."""
 import unittest
-
 from itertools import permutations
-from requests.exceptions import HTTPError
 
 from pulp_smash import api, config, utils
 from pulp_smash.pulp3.constants import REPO_PATH
 from pulp_smash.pulp3.utils import gen_repo
+from requests.exceptions import HTTPError
 
 from pulpcore.tests.functional.utils import set_up_module as setUpModule  # noqa:F401
 from pulpcore.tests.functional.utils import skip_if

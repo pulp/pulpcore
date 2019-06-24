@@ -2,7 +2,6 @@ from gettext import gettext as _
 
 from django.core import validators
 from django.db.models import Q
-
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 
@@ -11,10 +10,10 @@ from pulpcore.app.serializers import (
     BaseURLField,
     DetailIdentityField,
     DetailRelatedField,
-    NestedRelatedField,
-    RelatedField,
     MasterModelSerializer,
     ModelSerializer,
+    NestedRelatedField,
+    RelatedField,
     validate_unknown_fields,
 )
 

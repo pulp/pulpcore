@@ -1,17 +1,16 @@
 """
 Django models related to progress reporting
 """
-from gettext import gettext as _
-
-from asyncio import CancelledError
-import logging
 import datetime
+import logging
+from asyncio import CancelledError
+from gettext import gettext as _
 
 from django.db import models
 from django.utils import timezone
 
 from pulpcore.app.models import Model, Task
-from pulpcore.constants import TASK_STATES, TASK_CHOICES
+from pulpcore.constants import TASK_CHOICES, TASK_STATES
 
 _logger = logging.getLogger(__name__)
 

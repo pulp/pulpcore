@@ -1,6 +1,5 @@
 import os
 import shutil
-
 from gettext import gettext as _
 
 from django.conf import settings

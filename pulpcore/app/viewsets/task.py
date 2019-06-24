@@ -1,19 +1,23 @@
 from gettext import gettext as _
-from django_filters.rest_framework import filters, DjangoFilterBackend
+
+from django_filters.rest_framework import DjangoFilterBackend, filters
 from drf_yasg.utils import swagger_auto_schema
-from rest_framework import status, mixins
+from rest_framework import mixins, status
 from rest_framework.filters import OrderingFilter
 from rest_framework.response import Response
 from rest_framework.serializers import ValidationError
 
-from pulpcore.constants import TASK_INCOMPLETE_STATES
-
 from pulpcore.app.models import Task, Worker
-from pulpcore.app.serializers import MinimalTaskSerializer, TaskSerializer, TaskCancelSerializer,\
-    WorkerSerializer
+from pulpcore.app.serializers import (
+    MinimalTaskSerializer,
+    TaskCancelSerializer,
+    TaskSerializer,
+    WorkerSerializer,
+)
 from pulpcore.app.viewsets import BaseFilterSet, NamedModelViewSet
-from pulpcore.app.viewsets.base import NAME_FILTER_OPTIONS, DATETIME_FILTER_OPTIONS
+from pulpcore.app.viewsets.base import DATETIME_FILTER_OPTIONS, NAME_FILTER_OPTIONS
 from pulpcore.app.viewsets.custom_filters import HyperlinkRelatedFilter, IsoDateTimeFilter
+from pulpcore.constants import TASK_INCOMPLETE_STATES
 from pulpcore.tasking.util import cancel as cancel_task
 
 

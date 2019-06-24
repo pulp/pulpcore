@@ -5,10 +5,9 @@ import unittest
 from datetime import datetime, timedelta
 from random import choice
 
-from requests.exceptions import HTTPError
-
 from pulp_smash import api, cli, config
 from pulp_smash.pulp3.constants import STATUS_PATH, WORKER_PATH
+from requests.exceptions import HTTPError
 
 from pulpcore.tests.functional.utils import set_up_module as setUpModule  # noqa:F401
 from pulpcore.tests.functional.utils import skip_if

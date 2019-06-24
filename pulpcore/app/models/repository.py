@@ -1,19 +1,18 @@
 """
 Repository related Django models.
 """
-import django
-
 from contextlib import suppress
-from django.db import models
-from django.db import transaction
-from django.urls import reverse
 
-from .base import Model, MasterModel
-from .content import Content
-from .task import CreatedResource
+import django
+from django.db import models, transaction
+from django.urls import reverse
 
 from pulpcore.app.util import get_view_name_for_model
 from pulpcore.exceptions import ResourceImmutableError
+
+from .base import MasterModel, Model
+from .content import Content
+from .task import CreatedResource
 
 
 class Repository(Model):

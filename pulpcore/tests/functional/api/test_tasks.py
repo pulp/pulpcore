@@ -2,15 +2,10 @@
 """Test that operations can be performed over tasks."""
 import unittest
 
-from requests import HTTPError
-
 from pulp_smash import api, config, utils
-from pulp_smash.pulp3.constants import (
-    P3_TASK_END_STATES,
-    REPO_PATH,
-    TASKS_PATH,
-)
+from pulp_smash.pulp3.constants import P3_TASK_END_STATES, REPO_PATH, TASKS_PATH
 from pulp_smash.pulp3.utils import gen_repo
+from requests import HTTPError
 
 from pulpcore.tests.functional.utils import set_up_module as setUpModule  # noqa:F401
 from pulpcore.tests.functional.utils import skip_if

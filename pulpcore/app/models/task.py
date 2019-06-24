@@ -1,21 +1,20 @@
 """
 Django models related to the Tasking system
 """
-from datetime import timedelta
-from gettext import gettext as _
 import logging
 import traceback
+from datetime import timedelta
+from gettext import gettext as _
 
 from django.db import models, transaction
 from django.utils import timezone
 from rq.job import get_current_job
 
-from pulpcore.app.models import Model, GenericRelationModel
 from pulpcore.app.fields import JSONField
-from pulpcore.constants import TASK_FINAL_STATES, TASK_CHOICES, TASK_STATES
+from pulpcore.app.models import GenericRelationModel, Model
+from pulpcore.constants import TASK_CHOICES, TASK_FINAL_STATES, TASK_STATES
 from pulpcore.exceptions import exception_to_dict
 from pulpcore.tasking.constants import TASKING_CONSTANTS
-
 
 _logger = logging.getLogger(__name__)
 

@@ -1,6 +1,6 @@
-from gettext import gettext as _
 import logging
 import time
+from gettext import gettext as _
 
 from django.db import transaction
 from django.urls import reverse
@@ -12,7 +12,6 @@ from pulpcore.constants import TASK_FINAL_STATES, TASK_STATES
 from pulpcore.exceptions import MissingResource
 from pulpcore.tasking import connection
 from pulpcore.tasking.constants import TASKING_CONSTANTS
-
 
 _logger = logging.getLogger(__name__)
 

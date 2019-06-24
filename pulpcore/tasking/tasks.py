@@ -6,12 +6,11 @@ from gettext import gettext as _
 from django.db import IntegrityError
 from django.db.models import Model
 from rq import Queue
-from rq.job import get_current_job, Job
+from rq.job import Job, get_current_job
 
-from pulpcore.app.models import Task, ReservedResource, Worker
+from pulpcore.app.models import ReservedResource, Task, Worker
 from pulpcore.constants import TASK_STATES
 from pulpcore.tasking import connection, util
-
 
 _logger = logging.getLogger(__name__)
 

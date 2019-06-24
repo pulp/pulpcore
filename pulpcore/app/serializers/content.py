@@ -1,13 +1,12 @@
-from gettext import gettext as _
 import hashlib
+from gettext import gettext as _
 
 from django.db import transaction
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 
-from pulpcore.app import models, files
+from pulpcore.app import files, models
 from pulpcore.app.serializers import base, fields
-
 
 UNIQUE_ALGORITHMS = ['sha256', 'sha384', 'sha512']
 

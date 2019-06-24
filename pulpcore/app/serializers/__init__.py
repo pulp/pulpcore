@@ -2,16 +2,27 @@
 # - fields can import directly from base if needed
 # - all can import directly from base and fields if needed
 from .base import (  # noqa
-    DetailRelatedField,
-    ModelSerializer,
-    MasterModelSerializer,
+    AsyncOperationResponseSerializer,
     DetailIdentityField,
+    DetailRelatedField,
     IdentityField,
+    MasterModelSerializer,
+    ModelSerializer,
     NestedIdentityField,
     NestedRelatedField,
     RelatedField,
     validate_unknown_fields,
-    AsyncOperationResponseSerializer
+)
+from .content import (  # noqa
+    ArtifactSerializer,
+    ContentChecksumSerializer,
+    MultipleArtifactContentSerializer,
+    NoArtifactContentSerializer,
+    SingleArtifactContentSerializer,
+    UploadFinishSerializer,
+    UploadPOSTSerializer,
+    UploadPUTSerializer,
+    UploadSerializer,
 )
 from .fields import (  # noqa
     BaseURLField,
@@ -20,17 +31,6 @@ from .fields import (  # noqa
     SecretCharField,
     SingleContentArtifactField,
     relative_path_validator,
-)
-from .content import (  # noqa
-    ArtifactSerializer,
-    ContentChecksumSerializer,
-    NoArtifactContentSerializer,
-    SingleArtifactContentSerializer,
-    MultipleArtifactContentSerializer,
-    UploadSerializer,
-    UploadFinishSerializer,
-    UploadPOSTSerializer,
-    UploadPUTSerializer
 )
 from .progress import ProgressReportSerializer  # noqa
 from .publication import (  # noqa
@@ -42,11 +42,16 @@ from .publication import (  # noqa
 )
 from .repository import (  # noqa
     ExporterSerializer,
-    RemoteSerializer,
     PublisherSerializer,
+    RemoteSerializer,
     RepositorySerializer,
     RepositorySyncURLSerializer,
+    RepositoryVersionCreateSerializer,
     RepositoryVersionSerializer,
-    RepositoryVersionCreateSerializer
 )
-from .task import MinimalTaskSerializer, TaskSerializer, TaskCancelSerializer, WorkerSerializer  # noqa
+from .task import (  # noqa
+    MinimalTaskSerializer,
+    TaskCancelSerializer,
+    TaskSerializer,
+    WorkerSerializer,
+)

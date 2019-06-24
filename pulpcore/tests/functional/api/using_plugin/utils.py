@@ -5,19 +5,13 @@ from unittest import SkipTest
 
 from pulp_smash import api, selectors
 from pulp_smash.pulp3.constants import REPO_PATH
-from pulp_smash.pulp3.utils import (
-    gen_repo,
-    gen_remote,
-    require_pulp_3,
-    require_pulp_plugins,
-    sync
-)
+from pulp_smash.pulp3.utils import gen_remote, gen_repo, require_pulp_3, require_pulp_plugins, sync
 
 from pulpcore.tests.functional.api.using_plugin.constants import (
-    FILE_FIXTURE_MANIFEST_URL,
     FILE_CONTENT_PATH,
+    FILE_FIXTURE_MANIFEST_URL,
     FILE_PUBLICATION_PATH,
-    FILE_REMOTE_PATH
+    FILE_REMOTE_PATH,
 )
 
 skip_if = partial(selectors.skip_if, exc=SkipTest)

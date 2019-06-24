@@ -5,13 +5,8 @@ import unittest
 from random import choice
 from urllib.parse import urljoin
 
-from requests import HTTPError
-
 from pulp_smash import api, config, utils
-from pulp_smash.pulp3.constants import (
-    LAZY_DOWNLOAD_POLICIES,
-    REPO_PATH,
-)
+from pulp_smash.pulp3.constants import LAZY_DOWNLOAD_POLICIES, REPO_PATH
 from pulp_smash.pulp3.utils import (
     delete_orphans,
     download_content_unit,
@@ -20,6 +15,7 @@ from pulp_smash.pulp3.utils import (
     get_content,
     sync,
 )
+from requests import HTTPError
 
 from pulpcore.tests.functional.api.using_plugin.constants import (
     FILE_CONTENT_NAME,
@@ -28,8 +24,8 @@ from pulpcore.tests.functional.api.using_plugin.constants import (
     FILE_REMOTE_PATH,
 )
 from pulpcore.tests.functional.api.using_plugin.utils import (
+    create_file_publication,
     gen_file_remote,
-    create_file_publication
 )
 from pulpcore.tests.functional.api.using_plugin.utils import (  # noqa:F401
     set_up_module as setUpModule

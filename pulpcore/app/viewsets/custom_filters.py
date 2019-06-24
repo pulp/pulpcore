@@ -3,13 +3,12 @@ This module contains custom filters that might be used by more than one ViewSet.
 """
 from gettext import gettext as _
 from urllib.parse import urlparse
-
-from django.urls import resolve, Resolver404
-from django_filters import Filter, DateTimeFilter
-from django_filters.fields import IsoDateTimeField
-
-from rest_framework import serializers
 from uuid import UUID
+
+from django.urls import Resolver404, resolve
+from django_filters import DateTimeFilter, Filter
+from django_filters.fields import IsoDateTimeField
+from rest_framework import serializers
 
 from pulpcore.app.models import ContentArtifact, RepositoryVersion
 from pulpcore.app.viewsets import NamedModelViewSet

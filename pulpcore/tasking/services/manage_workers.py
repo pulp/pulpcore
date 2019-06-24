@@ -2,12 +2,11 @@
 This module manages creation, deletion, starting, and stopping of the systemd unit files for Pulp's
 RQ workers. It accepts one parameter, which must be start or stop.
 """
-from glob import glob
 import multiprocessing
 import os
 import subprocess
 import sys
-
+from glob import glob
 
 _ENVIRONMENT_FILE = os.path.join('/', 'etc', 'default', 'pulp-workers')
 _SYSTEMD_UNIT_PATH = os.path.join('/', 'run', 'systemd', 'system')

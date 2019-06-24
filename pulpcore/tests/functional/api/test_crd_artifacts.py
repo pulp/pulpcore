@@ -5,12 +5,11 @@ import itertools
 import os
 import unittest
 
-from requests.exceptions import HTTPError
-
 from pulp_smash import api, cli, config, utils
 from pulp_smash.exceptions import CalledProcessError
 from pulp_smash.pulp3.constants import ARTIFACTS_PATH, MEDIA_PATH
 from pulp_smash.pulp3.utils import delete_orphans
+from requests.exceptions import HTTPError
 
 # This import is an exception, we use a file url but we are not actually using
 # any plugin

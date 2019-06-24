@@ -1,6 +1,6 @@
-from gettext import gettext as _
-import os
 import hashlib
+import os
+from gettext import gettext as _
 
 from django.conf import settings
 from rest_framework import serializers

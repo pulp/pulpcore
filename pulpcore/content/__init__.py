@@ -3,10 +3,10 @@ from importlib import import_module
 
 from aiohttp import web
 from django.conf import settings
+
 from pulpcore.app.apps import pulp_plugin_configs
 
 from .handler import Handler
-
 
 app = web.Application()
 

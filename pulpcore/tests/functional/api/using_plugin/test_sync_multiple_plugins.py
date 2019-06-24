@@ -23,7 +23,7 @@ from pulpcore.tests.functional.api.using_plugin.constants import (
     RPM_REMOTE_PATH,
     RPM_UNSIGNED_FIXTURE_URL,
 )
-from pulpcore.tests.functional.api.using_plugin.utils import set_up_module # noqa
+from pulpcore.tests.functional.api.using_plugin.utils import set_up_module  # noqa
 
 
 def setUpModule():

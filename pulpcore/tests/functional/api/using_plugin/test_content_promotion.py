@@ -6,22 +6,16 @@ from urllib.parse import urljoin
 
 from pulp_smash import api, config
 from pulp_smash.pulp3.constants import REPO_PATH
-from pulp_smash.pulp3.utils import (
-    gen_distribution,
-    gen_remote,
-    gen_repo,
-    get_added_content,
-    sync,
-)
+from pulp_smash.pulp3.utils import gen_distribution, gen_remote, gen_repo, get_added_content, sync
 
 from pulpcore.tests.functional.api.using_plugin.constants import (
     FILE_CONTENT_NAME,
     FILE_DISTRIBUTION_PATH,
     FILE_FIXTURE_MANIFEST_URL,
-    FILE_REMOTE_PATH
+    FILE_REMOTE_PATH,
 )
+from pulpcore.tests.functional.api.using_plugin.utils import create_file_publication
 from pulpcore.tests.functional.api.using_plugin.utils import (  # noqa:F401
-    create_file_publication,
     set_up_module as setUpModule
 )
 

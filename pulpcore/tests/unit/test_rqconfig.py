@@ -1,8 +1,9 @@
 import importlib
 import os
 from unittest import TestCase
-from pulpcore.app import settings
+
 from pulpcore import rqconfig
+from pulpcore.app import settings
 
 
 class TestRQConfig(TestCase):

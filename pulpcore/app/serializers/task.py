@@ -3,8 +3,12 @@ from gettext import gettext as _
 from rest_framework import serializers
 
 from pulpcore.app import models
-from pulpcore.app.serializers import IdentityField, RelatedField, ModelSerializer, \
-    ProgressReportSerializer
+from pulpcore.app.serializers import (
+    IdentityField,
+    ModelSerializer,
+    ProgressReportSerializer,
+    RelatedField,
+)
 from pulpcore.app.util import get_viewset_for_model
 
 

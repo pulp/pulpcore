@@ -1,11 +1,11 @@
-from collections import OrderedDict
 import re
+from collections import OrderedDict
 
+import uritemplate
+from drf_yasg import openapi
 from drf_yasg.generators import OpenAPISchemaGenerator
 from drf_yasg.inspectors import SwaggerAutoSchema
-from drf_yasg import openapi
 from drf_yasg.utils import filter_none, force_real_str
-import uritemplate
 
 
 class Paths(openapi.SwaggerDict):

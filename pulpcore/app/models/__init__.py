@@ -1,11 +1,11 @@
 # https://docs.djangoproject.com/en/dev/topics/db/models/#organizing-models-in-a-package
 
-from .base import Model, MasterModel  # noqa
+from .base import MasterModel, Model  # noqa
 from .content import Artifact, Content, ContentArtifact, RemoteArtifact, Upload  # noqa
 from .generic import GenericRelationModel  # noqa
 from .publication import (  # noqa
-    ContentGuard,
     BaseDistribution,
+    ContentGuard,
     Publication,
     PublicationDistribution,
     PublishedArtifact,
@@ -14,14 +14,13 @@ from .publication import (  # noqa
 )
 from .repository import (  # noqa
     Exporter,
-    Remote,
     Publisher,
+    Remote,
     Repository,
     RepositoryContent,
     RepositoryVersion,
     RepositoryVersionContentDetails,
 )
-
 from .task import CreatedResource, ReservedResource, Task, TaskReservedResource, Worker  # noqa
 
 # Moved here to avoid a circular import with Task

@@ -1,7 +1,9 @@
 """pulp URL Configuration"""
-from django.conf.urls import url, include
-from drf_yasg.views import get_schema_view as yasg_get_schema_view
+import logging
+
+from django.conf.urls import include, url
 from drf_yasg import openapi
+from drf_yasg.views import get_schema_view as yasg_get_schema_view
 from rest_framework import permissions
 from rest_framework.routers import Route
 from rest_framework.schemas import get_schema_view
@@ -12,7 +14,6 @@ from pulpcore.app.views import OrphansView, StatusView
 from pulpcore.app.viewsets import UploadViewSet
 from pulpcore.constants import API_ROOT
 
-import logging
 log = logging.getLogger(__name__)
 
 

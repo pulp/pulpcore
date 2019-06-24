@@ -3,13 +3,12 @@ from urllib.parse import urljoin
 
 from django.core.validators import URLValidator
 from drf_queryfields.mixins import QueryFieldsMixin
-
 from rest_framework import serializers
-
 from rest_framework_nested.relations import (
     NestedHyperlinkedIdentityField,
-    NestedHyperlinkedRelatedField
+    NestedHyperlinkedRelatedField,
 )
+
 from pulpcore.app.models import Task
 from pulpcore.app.util import get_view_name_for_model
 

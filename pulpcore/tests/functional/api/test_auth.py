@@ -6,11 +6,10 @@ For more information, see the documentation on `Authentication
 """
 import unittest
 
-from requests.auth import HTTPBasicAuth
-from requests.exceptions import HTTPError
-
 from pulp_smash import api, config, utils
 from pulp_smash.pulp3.constants import ARTIFACTS_PATH
+from requests.auth import HTTPBasicAuth
+from requests.exceptions import HTTPError
 
 from pulpcore.tests.functional.utils import set_up_module as setUpModule  # noqa:F401
 

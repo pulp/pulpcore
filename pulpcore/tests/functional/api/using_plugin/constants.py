@@ -7,7 +7,7 @@ from pulp_smash.pulp3.constants import (
     BASE_DISTRIBUTION_PATH,
     BASE_PUBLICATION_PATH,
     BASE_REMOTE_PATH,
-    CONTENT_PATH
+    CONTENT_PATH,
 )
 
 FILE_CONTENT_NAME = 'file.file'

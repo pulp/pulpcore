@@ -1,9 +1,8 @@
-from gettext import gettext as _
 from getpass import getpass
+from gettext import gettext as _
 
 from django.contrib.auth import get_user_model
 from django.core.management import BaseCommand, CommandError
-
 
 User = get_user_model()
 
