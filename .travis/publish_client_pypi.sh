@@ -12,7 +12,7 @@ if [[ $DESCRIPTION == 'tags/'$REPORTED_VERSION ]]; then
   export VERSION=${REPORTED_VERSION}
 else
   export EPOCH="$(date +%s)"
-  export VERSION=${REPORTED_VERSION}.${EPOCH}
+  export VERSION=${REPORTED_VERSION}${EPOCH}
 fi
 
 export response=$(curl --write-out %{http_code} --silent --output /dev/null https://pypi.org/project/pulp-file-client/$VERSION/)
