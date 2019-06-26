@@ -18,7 +18,6 @@ requirements = [
     'setuptools',
     'dynaconf~=2.0',
     'whitenoise',
-    'drf-chunked-upload'
 ]
 
 setup(

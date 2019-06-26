@@ -5,20 +5,21 @@ Chunked Uploads
 ---------------
 
 For large file uploads, Pulp provides an `Uploads API <../../restapi.html#tag/uploads>`_. To begin
-uploading a file in chunks, an initial PUT request must be sent to the ``/pulp/api/v3/uploads``
-endpoint::
+uploading a file in chunks, an initial POST request must be sent to the ``/pulp/api/v3/uploads``
+endpoint with the total size of the file::
 
-    http --form PUT :24817/pulp/api/v3/uploads/ file@./chunkaa 'Content-Range:bytes 0-6291455/32095676'
+    http POST :24817/pulp/api/v3/uploads/ size=10485760
 
 This returns an upload href (e.g. ``/pulp/api/v3/uploads/a8b5a7f7-2f22-460d-ab20-d5616cb71cdd/``) that can
-be used for subsequent chunks::
+be used for chunks. Chunks can be uploaded in any order or in parallel::
 
-    http --form PUT :24817/pulp/api/v3/uploads/a8b5a7f7-2f22-460d-ab20-d5616cb71cdd/ file@./chunkbb 'Content-Range:bytes 6291456-10485759/32095676'
+    http --form PUT :24817/pulp/api/v3/uploads/a8b5a7f7-2f22-460d-ab20-d5616cb71cdd/ file@./chunk2 'Content-Range:bytes 6291456-10485759/*'
+    http --form PUT :24817/pulp/api/v3/uploads/a8b5a7f7-2f22-460d-ab20-d5616cb71cdd/ file@./chunk1 'Content-Range:bytes 0-6291455'
 
 Once all chunks have been uploaded, a final POST request with the file md5 can be sent to complete the
 upload::
 
-    http --form POST :24817/pulp/api/v3/uploads/a8b5a7f7-2f22-460d-ab20-d5616cb71cdd/ md5=037a47d93670e64f2b1038e6f90e4cfd
+    http PUT :24817/pulp/api/v3/uploads/a8b5a7f7-2f22-460d-ab20-d5616cb71cdd/commit sha256=abc123...
 
 Then the artifact may be created with the upload href::
 
@@ -30,7 +31,8 @@ Putting this altogether, here is an example that uploads a 1.iso file in two chu
 
    curl -O https://repos.fedorapeople.org/repos/pulp/pulp/fixtures/file-large/1.iso
    split --bytes=6M 1.iso chunk
-   export UPLOAD=$(http --form PUT :24817/pulp/api/v3/uploads/ file@./chunkaa 'Content-Range:bytes 0-6291455/32095676'  | jq -r '._href')
-   http --form PUT :24817$UPLOAD file@./chunkab 'Content-Range:bytes 6291456-10485759/32095676'
-   http POST :24817$UPLOAD md5=037a47d93670e64f2b1038e6f90e4cfd
+   export UPLOAD=$(http POST :24817/pulp/api/v3/uploads/ size=`ls -l 1.iso | cut -d ' ' -f5` | jq -r '._href')
+   http --form PUT :24817$UPLOAD file@./chunkab 'Content-Range:bytes 6291456-10485759/*'
+   http --form PUT :24817$UPLOAD file@./chunkaa 'Content-Range:bytes 0-6291455/*'
+   http PUT :24817${UPLOAD}commit/ sha256=`sha256sum 1.iso | cut -d ' ' -f1`
    http --form POST :24817/pulp/api/v3/artifacts/ upload=$UPLOAD

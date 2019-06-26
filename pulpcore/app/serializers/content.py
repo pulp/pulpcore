@@ -148,10 +148,10 @@ class ArtifactSerializer(base.ModelSerializer):
 
     upload = serializers.HyperlinkedRelatedField(
         help_text=_("An href for an Upload."),
-        view_name="upload-detail",
+        view_name="uploads-detail",
         write_only=True,
         required=False,
-        queryset=models.Upload.objects.filter(status=models.Upload.COMPLETE)
+        queryset=models.Upload.objects.exclude(completed__isnull=True)
     )
 
     size = serializers.IntegerField(
@@ -259,53 +259,3 @@ class ArtifactSerializer(base.ModelSerializer):
         model = models.Artifact
         fields = base.ModelSerializer.Meta.fields + ('file', 'size', 'md5', 'sha1', 'sha224',
                                                      'sha256', 'sha384', 'sha512', 'upload')
-
-
-class UploadSerializer(base.ModelSerializer):
-    """Serializer for chunked uploads."""
-    _href = base.IdentityField(
-        view_name='upload-detail',
-    )
-    file = serializers.FileField(
-        help_text=_("Uploaded file."),
-        write_only=True,
-    )
-
-    class Meta:
-        model = models.Upload
-        fields = ('_href', 'offset', 'expires_at', 'file', 'md5')
-
-
-class UploadPUTSerializer(serializers.Serializer):
-    """Serializer for starting chunked uploads."""
-    file = serializers.FileField(
-        help_text=_("A chunk of a file to upload."),
-        write_only=True,
-        required=True
-    )
-
-
-class UploadPOSTSerializer(base.ModelSerializer):
-    """Serializer for creating chunked uploads from entire file."""
-    file = serializers.FileField(
-        help_text=_("The full file to upload."),
-        required=True
-    )
-    md5 = serializers.CharField(
-        help_text=_("The expected MD5 checksum of the file."),
-        required=True,
-        allow_blank=False
-    )
-
-    class Meta:
-        model = models.Upload
-        fields = ['file', 'md5']
-
-
-class UploadFinishSerializer(serializers.Serializer):
-    """Serializer for POST to complete Upload and validate Upload's md5 checksum"""
-    md5 = serializers.CharField(
-        help_text=_("The expected MD5 checksum of the file."),
-        required=True,
-        allow_blank=False
-    )

@@ -7,7 +7,6 @@ from itertools import chain
 from django.core import validators
 from django.db import IntegrityError, models, transaction
 from django.forms.models import model_to_dict
-from drf_chunked_upload.models import ChunkedUpload
 
 from pulpcore.app.models import MasterModel, Model, fields, storage
 from pulpcore.exceptions import DigestValidationError, SizeValidationError
@@ -340,7 +339,3 @@ class RemoteArtifact(Model, QueryMixin):
 
     class Meta:
         unique_together = ('content_artifact', 'remote')
-
-
-class Upload(ChunkedUpload):
-    pass
