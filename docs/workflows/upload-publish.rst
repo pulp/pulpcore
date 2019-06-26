@@ -23,7 +23,7 @@ upload::
 
 Then the artifact may be created with the upload href::
 
-    http --form POST :24817/pulp/api/v3/artifacts/ upload=/pulp/api/v3/uploads/a8b5a7f7-2f22-460d-ab20-d5616cb71cdd/
+    http POST :24817/pulp/api/v3/artifacts/ upload=/pulp/api/v3/uploads/a8b5a7f7-2f22-460d-ab20-d5616cb71cdd/
 
 Note that after creating an artifact from an upload, the upload gets deleted and cannot be re-used.
 
@@ -35,4 +35,4 @@ Putting this altogether, here is an example that uploads a 1.iso file in two chu
    http --form PUT :24817$UPLOAD file@./chunkab 'Content-Range:bytes 6291456-10485759/*'
    http --form PUT :24817$UPLOAD file@./chunkaa 'Content-Range:bytes 0-6291455/*'
    http PUT :24817${UPLOAD}commit/ sha256=`sha256sum 1.iso | cut -d ' ' -f1`
-   http --form POST :24817/pulp/api/v3/artifacts/ upload=$UPLOAD
+   http POST :24817/pulp/api/v3/artifacts/ upload=$UPLOAD
