@@ -10,19 +10,33 @@ from rest_framework.response import Response
 
 from pulpcore.app.models import Upload
 from pulpcore.app.serializers import UploadChunkSerializer, UploadCommitSerializer, UploadSerializer
-from pulpcore.app.viewsets.base import NamedModelViewSet
+from pulpcore.app.viewsets import BaseFilterSet
+from pulpcore.app.viewsets.base import DATETIME_FILTER_OPTIONS, NamedModelViewSet
+from pulpcore.app.viewsets.custom_filters import IsoDateTimeFilter
+
+
+class UploadFilter(BaseFilterSet):
+    completed = IsoDateTimeFilter(field_name='completed')
+
+    class Meta:
+        model = Upload
+        fields = {
+            'completed': DATETIME_FILTER_OPTIONS + ['isnull']
+        }
 
 
 class UploadViewSet(NamedModelViewSet,
                     mixins.CreateModelMixin,
                     mixins.RetrieveModelMixin,
                     mixins.UpdateModelMixin,
+                    mixins.DestroyModelMixin,
                     mixins.ListModelMixin):
     """View for chunked uploads."""
     endpoint_name = 'uploads'
     queryset = Upload.objects.all()
     serializer_class = UploadSerializer
-    http_method_names = ['get', 'post', 'head', 'put']
+    filterset_class = UploadFilter
+    http_method_names = ['get', 'post', 'head', 'put', 'delete']  # remove PATCH
 
     content_range_pattern = r'^bytes (\d+)-(\d+)/(\d+|[*])$'
     content_range_parameter = \
