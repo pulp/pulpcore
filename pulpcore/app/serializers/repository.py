@@ -55,10 +55,6 @@ class RemoteSerializer(MasterModelSerializer):
     url = serializers.CharField(
         help_text='The URL of an external content source.',
     )
-    validate = serializers.BooleanField(
-        help_text='If True, the plugin will validate imported artifacts.',
-        required=False,
-    )
     ssl_ca_certificate = SecretCharField(
         help_text='A string containing the PEM encoded CA certificate used to validate the server '
                   'certificate presented by the remote server. All new line characters must be '
@@ -121,9 +117,10 @@ class RemoteSerializer(MasterModelSerializer):
         abstract = True
         model = models.Remote
         fields = MasterModelSerializer.Meta.fields + (
-            'name', 'url', 'validate', 'ssl_ca_certificate', 'ssl_client_certificate',
-            'ssl_client_key', 'ssl_validation', 'proxy_url', 'username', 'password',
-            '_last_updated', 'download_concurrency', 'policy')
+            'name', 'url', 'ssl_ca_certificate', 'ssl_client_certificate', 'ssl_client_key',
+            'ssl_validation', 'proxy_url', 'username', 'password', '_last_updated',
+            'download_concurrency', 'policy'
+        )
 
 
 class RepositorySyncURLSerializer(serializers.Serializer):
