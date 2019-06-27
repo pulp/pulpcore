@@ -56,7 +56,7 @@ def upload_file_in_chunks(file_path):
     offset = 0
     sha256hasher = hashlib.new('sha256')
 
-    upload = uploads.create_upload(Upload(size=size))
+    upload = uploads.create(Upload(size=size))
 
     with open(file_path, 'rb') as full_file:
         while True:
@@ -69,12 +69,12 @@ def upload_file_in_chunks(file_path):
                                                                 size=size)
             with NamedTemporaryFile() as file_chunk:
                 file_chunk.write(chunk)
-                upload = uploads.update_upload(upload_href=upload.href,
-                                               file=file_chunk.name,
-                                               content_range=content_range)
+                upload = uploads.update(upload_href=upload.href,
+                                        file=file_chunk.name,
+                                        content_range=content_range)
             offset += chunk_size
             sha256hasher.update(chunk)
-        uploads.commit_upload(upload.href, UploadCommit(sha256=sha256hasher.hexdigest()))
+        uploads.commit(upload.href, UploadCommit(sha256=sha256hasher.hexdigest()))
     return upload
 
 
