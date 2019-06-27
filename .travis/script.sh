@@ -41,7 +41,7 @@ if [ "$TEST" = 'docs' ]; then
 fi
 
 if [ "$TEST" = 'bindings' ]; then
-  COMMIT_MSG=$(git show HEAD^2 -s)
+  COMMIT_MSG=$(git log --format=%B --no-merges -1)
   export PULP_BINDINGS_PR_NUMBER=$(echo $COMMIT_MSG | grep -oP 'Required\ PR:\ https\:\/\/github\.com\/pulp\/pulp-openapi-generator\/pull\/(\d+)' | awk -F'/' '{print $7}')
 
   cd ..
