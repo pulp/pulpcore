@@ -2,7 +2,6 @@ import re
 from datetime import datetime
 
 from gettext import gettext as _
-from django.utils.decorators import method_decorator
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg.openapi import Parameter
 from rest_framework import mixins, serializers
@@ -14,9 +13,6 @@ from pulpcore.app.serializers import UploadChunkSerializer, UploadCommitSerializ
 from pulpcore.app.viewsets.base import NamedModelViewSet
 
 
-@method_decorator(name='create', decorator=swagger_auto_schema(
-    operation_id="create_upload"
-))
 class UploadViewSet(NamedModelViewSet,
                     mixins.CreateModelMixin,
                     mixins.RetrieveModelMixin,
@@ -36,7 +32,6 @@ class UploadViewSet(NamedModelViewSet,
                               'within the file.')
 
     @swagger_auto_schema(operation_summary="Upload a file chunk",
-                         operation_id="update_upload",
                          request_body=UploadChunkSerializer,
                          manual_parameters=[content_range_parameter],
                          responses={200: UploadSerializer})
@@ -73,7 +68,6 @@ class UploadViewSet(NamedModelViewSet,
         return Response(serializer.data)
 
     @swagger_auto_schema(operation_summary="Finish an Upload",
-                         operation_id="commit_upload",
                          request_body=UploadCommitSerializer,
                          responses={200: UploadSerializer})
     @detail_route(methods=('put',))
