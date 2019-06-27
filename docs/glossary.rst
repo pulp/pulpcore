@@ -27,10 +27,10 @@ Glossary
         :term:`Repository Version <RepositoryVersion>`, a :term:`Repository`, or a
         :term:`publications<publication>`.
 
-    lazy content
+    on-demand content
         A :term:`content unit<content>` that was synchronized into Pulp but is missing one or more
-        :term:`Artifacts<artifact>`. Lazy content is associated with a :term:`Remote` that knows how
-        to download those :term:`Artifacts<artifact>`.
+        :term:`Artifacts<artifact>`. On-demand content is associated with a :term:`Remote` that
+        knows how to download those :term:`Artifacts<artifact>`.
 
     plugin
         A `Django <https://docs.djangoproject.com>`_ app that exends :term:`pulpcore` to manage one

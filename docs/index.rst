@@ -28,7 +28,7 @@ documenting all workflows**. Some common plugin workflows the are:
 * synchronize from an external repository
 * add/remove content manually
 * publish and host a repository version, enabling a client to download content
-* deferred download (aka, lazy sync)
+* deferred download (aka, on-demand sync)
 * lifecycle management
 
 Pulpcore Documentation

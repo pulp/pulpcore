@@ -1,0 +1,1 @@
+Core's serializer should only validate when policy='immediate' (the default).
