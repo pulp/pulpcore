@@ -1,5 +1,5 @@
-Lazy Downloading
-================
+On-Demand Downloading
+=====================
 
 Overview
 --------
@@ -24,7 +24,7 @@ on_demand
 
   This mode is ideal for saving disk space because Pulp never downloads and stores
   :term:`Artifacts<artifact>` that clients don't need. Units created from this mode are
-  :term:`lazy content units<lazy content>`.
+  :term:`on-demand content units<on-demand content>`.
 
 streamed
   When performing the sync, do not download any :term:`Artifacts<artifact>` now. Download all
@@ -35,21 +35,26 @@ streamed
 
   This mode is ideal for content that you especially don't want Pulp to store over time. For
   instance, syncing from a nightly repo would cause Pulp to store every nightly ever produced which
-  is likely not valuable. Units created from this mode are :term:`lazy content units<lazy content>`.
+  is likely not valuable. Units created from this mode are
+  :term:`on-demand content units<on-demand content>`.
 
 
-Does Plugin X Support Lazy?
----------------------------
+Does Plugin X Support 'on_demand' or 'streamed'?
+------------------------------------------------
 
-Plugins do have to enable support for these modes, so check that plugin's documentation to be sure.
-See the `Pulp Plugin API <../../pulpcore-plugin/nightly/>`_ documentation for more details on how to
-add lazy support to a plugin.
+Unless a plugin has enabled either the 'on_demand' or 'streamed' values for the `policy` attribute
+you will receive an error. Check that plugin's documentation also.
+
+.. note::
+
+   Want to add on-demand support to your plugin? See the `Pulp Plugin API <../../pulpcore-plugin/
+   nightly/>`_ documentation for more details on how to add on-demand support to a plugin.
 
 
-Associating Lazy Content with Additional Repository Versions
-------------------------------------------------------------
+Associating On-Demand Content with Additional Repository Versions
+-----------------------------------------------------------------
 
-A :term:`lazy content unit<lazy content>` can be associated and unassociated from a
+An :term:`on-demand content unit<on-demand content>` can be associated and unassociated from a
 :term:`repository version<RepositoryVersion>` just like a normal unit. Note that the original
 :term:`Remote` will be used to download content should a client request it, even as that content is
 made available in multiple places.

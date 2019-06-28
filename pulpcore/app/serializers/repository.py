@@ -111,9 +111,10 @@ class RemoteSerializer(MasterModelSerializer):
         min_value=1
     )
     policy = serializers.ChoiceField(
-        help_text="The policy to use when downloading content. The possible values include: "
-                  "'immediate', 'on_demand', and 'cache_only'. 'immediate' is the default.",
-        choices=models.Remote.POLICY_CHOICES,
+        help_text="The policy to use when downloading content.",
+        choices=(
+            (models.Remote.IMMEDIATE, 'When syncing, download all metadata and content now.')
+        ),
         default=models.Remote.IMMEDIATE
     )
 
