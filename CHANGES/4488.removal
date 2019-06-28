@@ -1,2 +1,0 @@
-The migrations are squashed, requiring users of RC3 to deploy onto a fresh database so migrations
-can be applied again. This was due to alterations made to migration 0001 during the upload work.

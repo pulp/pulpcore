@@ -1,2 +1,0 @@
-All the string fields in the REST API no longer accept an empty string as a value. These fields now
-accept null instead.
