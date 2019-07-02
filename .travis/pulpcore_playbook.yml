@@ -5,7 +5,6 @@
       include_vars: '{{ pulp_db_type }}.yml'
   vars:
     pulp_default_admin_password: admin
-    pulp_secret_key: secret
     pulp_source_dir: '/home/travis/build/pulp/pulpcore/'
     pulp_plugin_source_dir: "/home/travis/build/pulp/pulpcore-plugin"
     pulp_install_plugins:
@@ -19,10 +18,16 @@
     pulp_user: 'travis'
     developer_user: 'travis'
     pulp_install_db: false
-    pulp_db_user: 'travis'
-    pulp_db_password: ''
     pulp_preq_packages: []
-    pulp_content_host: 'localhost:24816'
+    pulp_settings:
+      secret_key: secret
+      content_host: 'localhost:24816'
+      databases:
+        default:
+          PASSWORD: ''
+          USER: 'travis'
+          ENGINE: "{{ pulp_db_backend }}"
+
   environment:
     DJANGO_SETTINGS_MODULE: pulpcore.app.settings
   roles:
