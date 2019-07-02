@@ -1,6 +1,6 @@
 ---
 - hosts: localhost
-  gather_facts: no
+  gather_facts: false
   vars:
     container_cli: 'docker'
   vars_files:
@@ -16,11 +16,11 @@
       when: podman_exists | success
 
     - name: 'Build images'
-      command: "{{ container_cli }} build --network host --no-cache --build-arg VERSION={{ tag }} --build-arg PLUGINS=\"{{ plugins | join(' ') }}\" -t {{ item }}:{{ tag }} ."
+      command: "{{ container_cli }} build --network host --no-cache --build-arg VERSION={{ tag }} --build-arg PLUGINS=\"{{ item.value.plugins | join(' ') }}\" -t {{ item.key }}:{{ tag }} ."
       args:
-        chdir: "images/{{ item }}"
-      with_items: "{{ images }}"
+        chdir: images/pulp
+      with_dict: "{{ images }}"
 
     - name: 'Tag images'
-      command: "{{ container_cli }} tag {{ item }}:{{ tag }} {{ registry }}/{{ project }}/{{ item }}:{{ tag }}"
-      with_items: "{{ images }}"
+      command: "{{ container_cli }} tag {{ item.key }}:{{ tag }} {{ registry }}/{{ project }}/{{ item.key }}:{{ tag }}"
+      with_dict: "{{ images }}"

@@ -15,9 +15,9 @@
       when: podman_exists | success
 
     - name: 'Tag images'
-      command: "{{ container_cli }} tag {{ item }}:{{ tag }} {{ registry }}/{{ project }}/{{ item }}:{{ tag }}"
-      with_items: "{{ images }}"
+      command: "{{ container_cli }} tag {{ item.key }}:{{ tag }} {{ registry }}/{{ project }}/{{ item.key }}:{{ tag }}"
+      with_dict: "{{ images }}"
 
     - name: 'Push images'
-      command: "{{ container_cli }} push {{ registry }}/{{ project }}/{{ item }}:{{ tag }}"
-      with_items: "{{ images }}"
+      command: "{{ container_cli }} push {{ registry }}/{{ project }}/{{ item.key }}:{{ tag }}"
+      with_dict: "{{ images }}"
