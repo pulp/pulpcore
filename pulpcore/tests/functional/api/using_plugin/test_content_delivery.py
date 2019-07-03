@@ -6,7 +6,7 @@ from random import choice
 from urllib.parse import urljoin
 
 from pulp_smash import api, config, utils
-from pulp_smash.pulp3.constants import LAZY_DOWNLOAD_POLICIES, REPO_PATH
+from pulp_smash.pulp3.constants import ON_DEMAND_DOWNLOAD_POLICIES, REPO_PATH
 from pulp_smash.pulp3.utils import (
     delete_orphans,
     download_content_unit,
@@ -59,7 +59,7 @@ class ContentDeliveryTestCase(unittest.TestCase):
         repo = client.post(REPO_PATH, gen_repo())
         self.addCleanup(client.delete, repo['_href'])
 
-        body = gen_file_remote(policy=choice(LAZY_DOWNLOAD_POLICIES))
+        body = gen_file_remote(policy=choice(ON_DEMAND_DOWNLOAD_POLICIES))
         remote = client.post(FILE_REMOTE_PATH, body)
 
         # Sync the repository using a lazy download policy.
@@ -93,7 +93,7 @@ class ContentDeliveryTestCase(unittest.TestCase):
 
         # Recreating a remote and re-triggering a sync will cause these broken
         # units to recover again.
-        body = gen_file_remote(policy=choice(LAZY_DOWNLOAD_POLICIES))
+        body = gen_file_remote(policy=choice(ON_DEMAND_DOWNLOAD_POLICIES))
         remote = client.post(FILE_REMOTE_PATH, body)
         self.addCleanup(client.delete, remote['_href'])
 
