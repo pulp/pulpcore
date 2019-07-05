@@ -103,7 +103,7 @@ class Artifact(Model):
         return storage.get_artifact_path(self.sha256)
 
     file = fields.ArtifactFileField(null=False, upload_to=storage_path, max_length=255)
-    size = models.IntegerField(null=False)
+    size = models.BigIntegerField(null=False)
     md5 = models.CharField(max_length=32, null=False, unique=False, db_index=True)
     sha1 = models.CharField(max_length=40, null=False, unique=False, db_index=True)
     sha224 = models.CharField(max_length=56, null=False, unique=False, db_index=True)
