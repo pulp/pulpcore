@@ -135,7 +135,8 @@ repository_version_1 = repoversions.read(created_resources[0])
 pprint(repository_version_1)
 
 # Create an artifact from a local file
-artifact = artifacts.create(file='test_bindings.py')
+file_path = os.path.join(os.environ['TRAVIS_BUILD_DIR'], '.travis/test_bindings.py')
+artifact = artifacts.create(file=file_path)
 pprint(artifact)
 
 # Create a FileContent from the artifact
