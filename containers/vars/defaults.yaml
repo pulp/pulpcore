@@ -1,10 +1,16 @@
 ---
 images:
-  - pulp-api
-  - pulp-content
-  - pulp-worker
-  - pulp-resource-manager
+  - pulpcore:
+      plugins:
+        - pulpcore-plugin
+  - pulp:
+      plugins:
+        - pulp-file
+        - pulp-ansible
+        - pulp-cookbook
+        - pulp-docker
+        - pulp-maven
+        - pulp-python
 registry: quay.io
 project: pulp
 tag: latest
-plugins: []
