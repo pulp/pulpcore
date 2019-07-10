@@ -83,13 +83,14 @@ def _queue_reserved_task(func, inner_task_id, resources, inner_args, inner_kwarg
                 time.sleep(0.25)
                 continue
             else:
-                task_status.state = TASK_STATES.RUNNING
-                task_status.save()
+                rq_worker = util.get_current_worker()
+                worker = Worker.objects.get(name=rq_worker.name)
+                task_status.worker = worker
+                task_status.set_running()
                 q = Queue('resource-manager', connection=redis_conn, is_async=False)
                 q.enqueue(func, args=inner_args, kwargs=inner_kwargs, job_id=inner_task_id,
                           job_timeout=TASK_TIMEOUT, **options)
-                task_status.state = TASK_STATES.COMPLETED
-                task_status.save()
+                task_status.set_completed()
                 return
 
         try:
