@@ -143,7 +143,9 @@ class WorkerManager(models.Manager):
 
     def with_reservations(self, resources):
         """
-        Returns a worker with ANY of the reservations for resources specified by resource urls. This
+        Returns a worker with the resources reserved.
+
+        This worker may have ANY of the reservations for resources specified by resource urls. This
         is useful when looking for a worker to queue work against as we don't care if it doesn't
         have all the reservations as we can still try creating reservations for the additional
         resources we need.
@@ -159,6 +161,18 @@ class WorkerManager(models.Manager):
             Worker.MultipleObjectsReturned: More than one worker holds reservations
         """
         return self.filter(reservations__resource__in=resources).distinct().get()
+
+    def resource_managers(self):
+        """
+        Returns a queryset of resource managers.
+
+        Resource managers are identified by their name. Note that some of these may be offline.
+
+        Returns:
+            :class:`django.db.models.query.QuerySet`:  A query set of the Worker objects which
+                which match the resource manager name.
+        """
+        return self.filter(name__startswith=TASKING_CONSTANTS.RESOURCE_MANAGER_WORKER_NAME)
 
 
 class Worker(Model):

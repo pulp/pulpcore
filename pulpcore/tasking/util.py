@@ -4,7 +4,8 @@ from gettext import gettext as _
 
 from django.db import transaction
 from django.urls import reverse
-from rq.job import Job
+from rq.job import Job, get_current_job
+from rq.worker import Worker
 
 from pulpcore.app.models import Task
 from pulpcore.app.util import get_view_name_for_model
@@ -92,3 +93,17 @@ def get_url(model):
         str: The path component of the resource url
     """
     return reverse(get_view_name_for_model(model, 'detail'), args=[model.pk])
+
+
+def get_current_worker():
+    """
+    Get the rq worker assigned to the current job
+
+    Returns:
+       class:`rq.worker.Worker`: The worker assigned to the current job
+    """
+    for worker in Worker.all():
+        if worker.get_current_job() == get_current_job():
+            return worker
+
+    return None
