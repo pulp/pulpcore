@@ -1,0 +1,2 @@
+GET of a ``Distribution`` without configuring the ``CONTENT_HOST`` setting no longer causes a 500
+error.
