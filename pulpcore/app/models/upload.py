@@ -49,6 +49,17 @@ class Upload(Model):
             self._sha256 = sha256.hexdigest()
         return self._sha256
 
+    def delete(self, *args, **kwargs):
+        """
+        Deletes Upload model and the file associated with the model
+
+        Args:
+            args (list): list of positional arguments for Model.delete()
+            kwargs (dict): dictionary of keyword arguments to pass to Model.delete()
+        """
+        super().delete(*args, **kwargs)
+        self.file.delete(save=False)
+
 
 class UploadChunk(Model):
     """
