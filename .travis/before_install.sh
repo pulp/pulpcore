@@ -1,4 +1,4 @@
-#!/usr/bin/env sh
+#!/usr/bin/env bash
 
 # WARNING: DO NOT EDIT!
 #
@@ -7,7 +7,7 @@
 #
 # For more info visit https://github.com/pulp/plugin_template
 
-set -v
+set -mveuo pipefail
 
 export PRE_BEFORE_INSTALL=$TRAVIS_BUILD_DIR/.travis/pre_before_install.sh
 export POST_BEFORE_INSTALL=$TRAVIS_BUILD_DIR/.travis/post_before_install.sh
@@ -31,53 +31,45 @@ pip install -r test_requirements.txt
 # check the commit message
 ./.travis/check_commit.sh
 
+
+
 # Lint code.
-flake8 --config flake8.cfg || exit 1
+flake8 --config flake8.cfg
 
 cd ..
-git clone https://github.com/pulp/ansible-pulp.git
+git clone --depth=1 https://github.com/pulp/ansible-pulp.git
 if [ -n "$PULP_ROLES_PR_NUMBER" ]; then
-  pushd ansible-pulp
-  git fetch origin +refs/pull/$PULP_ROLES_PR_NUMBER/merge
+  cd ansible-pulp
+  git fetch --depth=1 origin +refs/pull/$PULP_ROLES_PR_NUMBER/merge
   git checkout FETCH_HEAD
-  popd
+  cd ..
 fi
 
 
 
-git clone https://github.com/pulp/pulpcore-plugin.git
+git clone --depth=1 https://github.com/pulp/pulpcore-plugin.git
 
 if [ -n "$PULP_PLUGIN_PR_NUMBER" ]; then
-  pushd pulpcore-plugin
-  git fetch origin +refs/pull/$PULP_PLUGIN_PR_NUMBER/merge
+  cd pulpcore-plugin
+  git fetch --depth=1 origin +refs/pull/$PULP_PLUGIN_PR_NUMBER/merge
   git checkout FETCH_HEAD
-  popd
+  cd ..
 fi
 
 
 if [ -n "$PULP_SMASH_PR_NUMBER" ]; then
-  git clone https://github.com/PulpQE/pulp-smash.git
-  pushd pulp-smash
-  git fetch origin +refs/pull/$PULP_SMASH_PR_NUMBER/merge
+  git clone --depth=1 https://github.com/PulpQE/pulp-smash.git
+  cd pulp-smash
+  git fetch --depth=1 origin +refs/pull/$PULP_SMASH_PR_NUMBER/merge
   git checkout FETCH_HEAD
-  popd
+  cd ..
 fi
 
-if [ "$DB" = 'mariadb' ]; then
-  # working around https://travis-ci.community/t/mariadb-build-error-with-xenial/3160
-  mysql -u root -e "DROP USER IF EXISTS 'travis'@'%';"
-  mysql -u root -e "CREATE USER 'travis'@'%';"
-  mysql -u root -e "CREATE DATABASE pulp;"
-  mysql -u root -e "ALTER DATABASE pulp CHARACTER SET utf8;"
-  mysql -u root -e "GRANT ALL PRIVILEGES ON *.* TO 'travis'@'%';";
-else
-  psql -c 'CREATE DATABASE pulp OWNER travis;'
-fi
+psql -c 'CREATE DATABASE pulp OWNER travis;'
 
 pip install ansible
 cp pulpcore/.travis/playbook.yml ansible-pulp/playbook.yml
 cp pulpcore/.travis/postgres.yml ansible-pulp/postgres.yml
-cp pulpcore/.travis/mariadb.yml ansible-pulp/mariadb.yml
 
 cd pulpcore
 

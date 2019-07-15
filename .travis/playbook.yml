@@ -12,8 +12,8 @@
       include_vars: '{{ pulp_db_type }}.yml'
   vars:
     pulp_default_admin_password: admin
-    pulp_source_dir: '/home/travis/build/pulp/pulpcore/'
-    pulp_plugin_source_dir: "/home/travis/build/pulp/pulpcore-plugin"
+    pulp_source_dir: '{{ ansible_env.TRAVIS_BUILD_DIR | dirname }}/pulpcore/'
+    pulp_plugin_source_dir: "{{ ansible_env.TRAVIS_BUILD_DIR | dirname }}/pulpcore-plugin"
     pulp_install_plugins:
       pulpcore:
         app_label: "pulpcore"
