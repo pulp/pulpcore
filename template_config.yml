@@ -1,0 +1,26 @@
+# This config represents the latest values used when running the plugin-template. Any settings that
+# were not present before running plugin-template have been added with their default values.
+
+plugin_name: pulpcore
+plugin_app_label: pulpcore
+plugin_snake: pulpcore
+plugin_caps: PULPCORE
+plugin_caps_short: PULPCORE
+plugin_camel: Pulpcore
+plugin_camel_short: Pulpcore
+plugin_dash: pulpcore
+plugin_dash_short: pulpcore
+black: False
+check_commit_message: True
+coverage: True
+deploy_client_to_pypi: True
+deploy_client_to_rubygems: True
+deploy_daily_client_to_pypi: True
+deploy_daily_client_to_rubygems: True
+deploy_to_pypi: True
+docs_test: True
+pydocstyle: True
+test_bindings: True
+pypi_username: pulp
+
+
