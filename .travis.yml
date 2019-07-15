@@ -86,3 +86,14 @@ jobs:
       - DB=postgres
       - TEST=bindings
     if: tag IS present
+notifications:
+  irc:
+    channels:
+      - "chat.freenode.net#pulp-build"
+    template:
+      - "%{repository_slug}#%{build_number} (%{branch} - %{commit} : %{author} : %{commit_subject})"
+      - "Change view : %{compare_url}"
+      - "Build details : %{build_url}"
+      - "%{message}"
+  on_success: change
+  on_failure: always
