@@ -1,13 +1,15 @@
 # coding=utf-8
 """Tests related to content upload."""
+import os
 import hashlib
 import unittest
 from random import shuffle
 from urllib.parse import urljoin
 
-from pulp_smash import api, config
+from pulp_smash import api, cli, config
 from pulp_smash.utils import http_get
-from pulp_smash.pulp3.constants import ARTIFACTS_PATH, UPLOAD_PATH
+from pulp_smash.exceptions import CalledProcessError
+from pulp_smash.pulp3.constants import ARTIFACTS_PATH, UPLOAD_PATH, MEDIA_PATH
 
 from pulpcore.tests.functional.api.using_plugin.constants import (
     FILE_CHUNKED_PART_1_URL,
@@ -22,22 +24,56 @@ from pulpcore.tests.functional.api.using_plugin.utils import (  # noqa:F401
 class ChunkedUploadTestCase(unittest.TestCase):
     """Test upload of files in chunks.
 
-    This test targets the following issue:
+    This test targets the following issues:
 
     * `Pulp #4197 <https://pulp.plan.io/issues/4197>`_
+    * `Pulp #5092 <https://pulp.plan.io/issues/5092>`_
     """
 
     @classmethod
     def setUpClass(cls):
         """Create class-wide variables."""
+
         cls.cfg = config.get_config()
+        cls.cli_client = cli.Client(cls.cfg)
         cls.client = api.Client(cls.cfg)
+
         cls.file = http_get(FILE_TO_BE_CHUNKED_URL)
         cls.file_sha256 = hashlib.sha256(cls.file).hexdigest()
         cls.size_file = len(cls.file)
 
     def test_create_artifact(self):
         """Test creation of artifact using upload of files in chunks."""
+
+        upload_request = self.upload_chunks()
+
+        response = self.client.post(
+            ARTIFACTS_PATH, {'upload': upload_request['_href']}
+        )
+
+        artifact = self.client.get(response['_href'])
+        self.addCleanup(self.client.delete, artifact['_href'])
+
+        self.assertEqual(artifact['sha256'], self.file_sha256, artifact)
+
+    def test_delete_upload(self):
+        """Test a deletion of an upload using upload of files in chunks."""
+
+        upload_request = self.upload_chunks()
+
+        # fetch a name of the upload from the corresponding _href
+        upload_name = upload_request['_href'].replace('/pulp/api/v3/uploads/', '')[:-1]
+
+        self.addCleanup(self.client.delete, upload_request['_href'])
+        cmd = ('ls', os.path.join(MEDIA_PATH, 'upload', upload_name))
+        self.cli_client.run(cmd, sudo=True)
+
+        # delete
+        self.doCleanups()
+        with self.assertRaises(CalledProcessError):
+            self.cli_client.run(cmd, sudo=True)
+
+    def upload_chunks(self):
         first_chunk = http_get(FILE_CHUNKED_PART_1_URL)
         header_first_chunk = {
             'Content-Range': 'bytes 0-{}/{}'.format(
@@ -74,11 +110,4 @@ class ChunkedUploadTestCase(unittest.TestCase):
             data={'sha256': self.file_sha256},
         )
 
-        response = self.client.post(
-            ARTIFACTS_PATH, {'upload': upload_request['_href']}
-        )
-
-        artifact = self.client.get(response['_href'])
-        self.addCleanup(self.client.delete, artifact['_href'])
-
-        self.assertEqual(artifact['sha256'], self.file_sha256, artifact)
+        return upload_request
