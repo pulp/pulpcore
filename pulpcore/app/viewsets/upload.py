@@ -4,7 +4,7 @@ from gettext import gettext as _
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg.openapi import Parameter
 from rest_framework import mixins, serializers
-from rest_framework.decorators import detail_route
+from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from pulpcore.app import tasks
@@ -94,7 +94,7 @@ class UploadViewSet(NamedModelViewSet,
     @swagger_auto_schema(operation_summary="Finish an Upload",
                          request_body=UploadCommitSerializer,
                          responses={202: AsyncOperationResponseSerializer})
-    @detail_route(methods=('post',))
+    @action(detail=True, methods=['post'])
     def commit(self, request, pk):
         """
         Generates a Task to commit the upload and create an artifact
