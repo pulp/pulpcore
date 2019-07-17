@@ -10,7 +10,7 @@ requirements = [
     'djangorestframework<3.10',
     'djangorestframework-queryfields',
     'drf-nested-routers',
-    'drf-yasg',
+    'drf-yasg<1.16.1',
     'gunicorn',
     'PyYAML',
     'rq~=1.0',
