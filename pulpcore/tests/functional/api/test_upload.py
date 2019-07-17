@@ -28,6 +28,7 @@ class ChunkedUploadTestCase(unittest.TestCase):
 
     * `Pulp #4197 <https://pulp.plan.io/issues/4197>`_
     * `Pulp #5092 <https://pulp.plan.io/issues/5092>`_
+    * `Pulp #4982 <https://pulp.plan.io/issues/4982>`_
     """
 
     @classmethod
@@ -42,10 +43,27 @@ class ChunkedUploadTestCase(unittest.TestCase):
         cls.file_sha256 = hashlib.sha256(cls.file).hexdigest()
         cls.size_file = len(cls.file)
 
-        cls.first_chunk = http_get(FILE_CHUNKED_PART_1_URL)
-        cls.second_chunk = http_get(FILE_CHUNKED_PART_2_URL)
+        first_chunk = http_get(FILE_CHUNKED_PART_1_URL)
+        header_first_chunk = {
+            'Content-Range': 'bytes 0-{}/{}'.format(
+                len(first_chunk) - 1, cls.size_file
+            )
+        }
 
-    def test_create_artifact(self):
+        second_chunk = http_get(FILE_CHUNKED_PART_2_URL)
+        header_second_chunk = {
+            'Content-Range': 'bytes {}-{}/{}'.format(
+                len(first_chunk), cls.size_file - 1, cls.size_file
+            )
+        }
+
+        cls.chunked_data = [
+            [first_chunk, header_first_chunk],
+            [second_chunk, header_second_chunk],
+        ]
+        shuffle(cls.chunked_data)
+
+    def test_create_artifact_without_checksum(self):
         """Test creation of artifact using upload of files in chunks."""
 
         upload_request = self.upload_chunks()
@@ -58,6 +76,52 @@ class ChunkedUploadTestCase(unittest.TestCase):
         self.addCleanup(self.client.delete, artifact['_href'])
 
         self.assertEqual(artifact['sha256'], self.file_sha256, artifact)
+
+    def test_create_artifact_passing_checksum(self):
+        """Test creation of artifact using upload of files in chunks passing checksum."""
+        upload_request = self.client.post(
+            UPLOAD_PATH, {'size': self.size_file}
+        )
+
+        for data in self.chunked_data:
+            self.client.put(
+                upload_request['_href'],
+                data={'sha256': hashlib.sha256(data[0]).hexdigest()},
+                files={'file': data[0]},
+                headers=data[1],
+            )
+
+        self.client.put(
+            urljoin(upload_request['_href'], 'commit/'),
+            data={'sha256': self.file_sha256},
+        )
+
+        response = self.client.post(
+            ARTIFACTS_PATH, {'upload': upload_request['_href']}
+        )
+
+        artifact = self.client.get(response['_href'])
+        self.addCleanup(self.client.delete, artifact['_href'])
+
+        self.assertEqual(artifact['sha256'], self.file_sha256, artifact)
+
+    def test_upload_chunk_wrong_checksum(self):
+        """Test creation of artifact using upload of files in chunks passing wrong checksum."""
+        self.client.response_handler = api.echo_handler
+
+        upload_request = self.client.post(
+            UPLOAD_PATH, {'size': self.size_file}
+        )
+
+        for data in self.chunked_data:
+            response = self.client.put(
+                upload_request.json()['_href'],
+                data={'sha256': "WRONG CHECKSUM"},
+                files={'file': data[0]},
+                headers=data[1],
+            )
+
+            assert response.status_code == 400
 
     def test_delete_upload(self):
         """Test a deletion of an upload using upload of files in chunks."""
@@ -77,29 +141,11 @@ class ChunkedUploadTestCase(unittest.TestCase):
             self.cli_client.run(cmd, sudo=True)
 
     def upload_chunks(self):
-        header_first_chunk = {
-            'Content-Range': 'bytes 0-{}/{}'.format(
-                len(self.first_chunk) - 1, self.size_file
-            )
-        }
-
-        header_second_chunk = {
-            'Content-Range': 'bytes {}-{}/{}'.format(
-                len(self.first_chunk), self.size_file - 1, self.size_file
-            )
-        }
-
-        chunked_data = [
-            [self.first_chunk, header_first_chunk],
-            [self.second_chunk, header_second_chunk],
-        ]
-        shuffle(chunked_data)
-
         upload_request = self.client.post(
             UPLOAD_PATH, {'size': self.size_file}
         )
 
-        for data in chunked_data:
+        for data in self.chunked_data:
             self.client.put(
                 upload_request['_href'],
                 files={'file': data[0]},

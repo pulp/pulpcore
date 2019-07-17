@@ -30,6 +30,12 @@ class UploadChunkSerializer(serializers.Serializer):
         help_text=_("A chunk of the uploaded file."),
     )
 
+    sha256 = serializers.CharField(
+        help_text=_("The SHA-256 checksum of the chunk if available."),
+        required=False,
+        allow_null=True,
+    )
+
 
 class UploadCommitSerializer(serializers.Serializer):
     sha256 = serializers.CharField(

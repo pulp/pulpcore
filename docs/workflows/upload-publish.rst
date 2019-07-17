@@ -16,6 +16,10 @@ be used for chunks. Chunks can be uploaded in any order or in parallel::
     http --form PUT :24817/pulp/api/v3/uploads/a8b5a7f7-2f22-460d-ab20-d5616cb71cdd/ file@./chunk2 'Content-Range:bytes 6291456-10485759/*'
     http --form PUT :24817/pulp/api/v3/uploads/a8b5a7f7-2f22-460d-ab20-d5616cb71cdd/ file@./chunk1 'Content-Range:bytes 0-6291455'
 
+Note: You can send an optional sha256 argument::
+
+    http --form PUT :24817/pulp/api/v3/uploads/a8b5a7f7-2f22-460d-ab20-d5616cb71cdd/ file@./chunk1 'Content-Range:bytes 0-6291455' sha256=7ffc86295de63e96006ce5ab379050628aa5d51f816267946c71906594e13870
+
 Once all chunks have been uploaded, a final POST request with the file md5 can be sent to complete the
 upload::
 
