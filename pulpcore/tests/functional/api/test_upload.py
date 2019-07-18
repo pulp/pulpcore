@@ -42,6 +42,9 @@ class ChunkedUploadTestCase(unittest.TestCase):
         cls.file_sha256 = hashlib.sha256(cls.file).hexdigest()
         cls.size_file = len(cls.file)
 
+        cls.first_chunk = http_get(FILE_CHUNKED_PART_1_URL)
+        cls.second_chunk = http_get(FILE_CHUNKED_PART_2_URL)
+
     def test_create_artifact(self):
         """Test creation of artifact using upload of files in chunks."""
 
@@ -74,23 +77,21 @@ class ChunkedUploadTestCase(unittest.TestCase):
             self.cli_client.run(cmd, sudo=True)
 
     def upload_chunks(self):
-        first_chunk = http_get(FILE_CHUNKED_PART_1_URL)
         header_first_chunk = {
             'Content-Range': 'bytes 0-{}/{}'.format(
-                len(first_chunk) - 1, self.size_file
+                len(self.first_chunk) - 1, self.size_file
             )
         }
 
-        second_chunk = http_get(FILE_CHUNKED_PART_2_URL)
         header_second_chunk = {
             'Content-Range': 'bytes {}-{}/{}'.format(
-                len(first_chunk), self.size_file - 1, self.size_file
+                len(self.first_chunk), self.size_file - 1, self.size_file
             )
         }
 
         chunked_data = [
-            [first_chunk, header_first_chunk],
-            [second_chunk, header_second_chunk],
+            [self.first_chunk, header_first_chunk],
+            [self.second_chunk, header_second_chunk],
         ]
         shuffle(chunked_data)
 
