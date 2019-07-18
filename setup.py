@@ -12,6 +12,7 @@ requirements = [
     'drf-nested-routers',
     'drf-yasg',
     'gunicorn',
+    'packaging',  # until drf-yasg 1.16.2 is out https://github.com/axnsan12/drf-yasg/issues/412
     'PyYAML',
     'rq~=1.0',
     'redis<3.2.0',
