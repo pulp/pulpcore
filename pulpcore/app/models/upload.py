@@ -3,6 +3,7 @@ import os
 
 from django.core.files.base import ContentFile
 from django.db import models
+from rest_framework import serializers
 
 from pulpcore.app.models import Model
 
@@ -22,7 +23,7 @@ class Upload(Model):
     size = models.BigIntegerField()
     completed = models.DateTimeField(null=True)
 
-    def append(self, chunk, offset):
+    def append(self, chunk, offset, sha256=None):
         """
         Append a chunk to an upload.
 
@@ -33,9 +34,14 @@ class Upload(Model):
         if not self.file:
             self.file.save(os.path.join('upload', str(self.pk)), ContentFile(''))
 
+        chunk_read = chunk.read()
+        current_sha256 = hashlib.sha256(chunk_read).hexdigest()
+        if sha256 and sha256 != current_sha256:
+            raise serializers.ValidationError("Checksum does not match chunk upload.")
+
         with self.file.open(mode='r+b') as file:
             file.seek(offset)
-            file.write(chunk.read())
+            file.write(chunk_read)
 
         self.chunks.create(offset=offset, size=len(chunk))
 

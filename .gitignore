@@ -30,6 +30,9 @@ tags
 # Sublime
 .codeintel
 
+#VScode
+.vscode/
+
 # Rope
 .ropeproject
 

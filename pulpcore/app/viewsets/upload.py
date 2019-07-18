@@ -76,7 +76,8 @@ class UploadViewSet(NamedModelViewSet,
         if end > upload.size - 1:
             raise serializers.ValidationError(_("End byte is greater than upload size."))
 
-        upload.append(chunk, start)
+        sha256 = request.data.get('sha256')
+        upload.append(chunk, start, sha256)
 
         serializer = UploadSerializer(upload, context={'request': request})
         return Response(serializer.data)
