@@ -12,6 +12,7 @@ set -mveuo pipefail
 
 export POST_SCRIPT=$TRAVIS_BUILD_DIR/.travis/post_script.sh
 export POST_DOCS_TEST=$TRAVIS_BUILD_DIR/.travis/post_docs_test.sh
+export FUNC_TEST_SCRIPT=$TRAVIS_BUILD_DIR/.travis/func_test_script.sh
 
 # Needed for both starting the service and building the docs.
 # Gets set in .travis/settings.yml, but doesn't seem to inherited by
@@ -80,6 +81,7 @@ show_logs_and_return_non_zero() {
     cat ~/reserved_worker-1.log
     return "${rc}"
 }
+export -f show_logs_and_return_non_zero
 
 # Stop services started by ansible roles
 sudo systemctl stop pulp-worker* pulp-resource-manager pulp-content-app pulp-api
@@ -93,10 +95,11 @@ coverage run $(which django-admin) runserver 24817 --noreload >> ~/django_runser
 wait_for_pulp 20
 
 # Run functional tests
-pytest -v -r sx --color=yes --pyargs pulpcore.tests.functional || show_logs_and_return_non_zero
-pytest -v -r sx --color=yes --pyargs pulp_file.tests.functional || show_logs_and_return_non_zero
-pytest -v -r sx --color=yes --pyargs pulp_certguard.tests.functional || show_logs_and_return_non_zero
-
+if [ -x $FUNC_TEST_SCRIPT ]; then
+    $FUNC_TEST_SCRIPT
+else
+    pytest -v -r sx --color=yes --pyargs pulpcore.tests.functional || show_logs_and_return_non_zero
+fi
 
 # Stop services to write coverage
 kill -SIGINT %?runserver
