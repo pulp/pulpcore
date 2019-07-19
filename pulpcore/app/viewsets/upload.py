@@ -9,7 +9,12 @@ from rest_framework.decorators import detail_route
 from rest_framework.response import Response
 
 from pulpcore.app.models import Upload
-from pulpcore.app.serializers import UploadChunkSerializer, UploadCommitSerializer, UploadSerializer
+from pulpcore.app.serializers import (
+    UploadChunkSerializer,
+    UploadCommitSerializer,
+    UploadSerializer,
+    UploadDetailSerializer
+)
 from pulpcore.app.viewsets import BaseFilterSet
 from pulpcore.app.viewsets.base import DATETIME_FILTER_OPTIONS, NamedModelViewSet
 from pulpcore.app.viewsets.custom_filters import IsoDateTimeFilter
@@ -34,7 +39,6 @@ class UploadViewSet(NamedModelViewSet,
     """View for chunked uploads."""
     endpoint_name = 'uploads'
     queryset = Upload.objects.all()
-    serializer_class = UploadSerializer
     filterset_class = UploadFilter
     http_method_names = ['get', 'post', 'head', 'put', 'delete']  # remove PATCH
 
@@ -44,6 +48,11 @@ class UploadViewSet(NamedModelViewSet,
                   pattern=content_range_pattern,
                   description='The Content-Range header specifies the location of the file chunk '
                               'within the file.')
+
+    def get_serializer_class(self):
+        if self.action == 'retrieve':
+            return UploadDetailSerializer
+        return UploadSerializer
 
     @swagger_auto_schema(operation_summary="Upload a file chunk",
                          request_body=UploadChunkSerializer,
