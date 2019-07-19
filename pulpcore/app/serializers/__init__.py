@@ -51,4 +51,9 @@ from .task import (  # noqa
     TaskSerializer,
     WorkerSerializer,
 )
-from .upload import UploadChunkSerializer, UploadCommitSerializer, UploadSerializer  # noqa
+from .upload import (  # noqa
+    UploadChunkSerializer,
+    UploadCommitSerializer,
+    UploadSerializer,
+    UploadDetailSerializer
+)

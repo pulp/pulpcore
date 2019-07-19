@@ -5,6 +5,24 @@ from pulpcore.app import models
 from pulpcore.app.serializers import base
 
 
+class UploadChunkSerializer(serializers.Serializer):
+    file = serializers.FileField(
+        help_text=_("A chunk of the uploaded file."),
+    )
+
+    sha256 = serializers.CharField(
+        help_text=_("The SHA-256 checksum of the chunk if available."),
+        required=False,
+        allow_null=True,
+    )
+
+
+class UploadChunkDetailSerializer(base.ModelSerializer):
+    class Meta:
+        model = models.UploadChunk
+        fields = ('offset', 'size')
+
+
 class UploadSerializer(base.ModelSerializer):
     """Serializer for chunked uploads."""
     _href = base.IdentityField(
@@ -25,16 +43,15 @@ class UploadSerializer(base.ModelSerializer):
         fields = base.ModelSerializer.Meta.fields + ('size', 'completed')
 
 
-class UploadChunkSerializer(serializers.Serializer):
-    file = serializers.FileField(
-        help_text=_("A chunk of the uploaded file."),
+class UploadDetailSerializer(UploadSerializer):
+    chunks = UploadChunkDetailSerializer(
+        many=True,
+        read_only=True,
     )
 
-    sha256 = serializers.CharField(
-        help_text=_("The SHA-256 checksum of the chunk if available."),
-        required=False,
-        allow_null=True,
-    )
+    class Meta:
+        model = models.Upload
+        fields = base.ModelSerializer.Meta.fields + ('size', 'completed', 'chunks')
 
 
 class UploadCommitSerializer(serializers.Serializer):
