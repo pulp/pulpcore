@@ -27,14 +27,13 @@ class ChunkedUploadTestCase(unittest.TestCase):
     This test targets the following issues:
 
     * `Pulp #4197 <https://pulp.plan.io/issues/4197>`_
-    * `Pulp #5092 <https://pulp.plan.io/issues/5092>`_
     * `Pulp #4982 <https://pulp.plan.io/issues/4982>`_
+    * `Pulp #5092 <https://pulp.plan.io/issues/5092>`_
     """
 
     @classmethod
     def setUpClass(cls):
         """Create class-wide variables."""
-
         cls.cfg = config.get_config()
         cls.cli_client = cli.Client(cls.cfg)
         cls.client = api.Client(cls.cfg)
@@ -65,7 +64,6 @@ class ChunkedUploadTestCase(unittest.TestCase):
 
     def test_create_artifact_without_checksum(self):
         """Test creation of artifact using upload of files in chunks."""
-
         upload_request = self.upload_chunks()
 
         response = self.client.post(
@@ -82,6 +80,7 @@ class ChunkedUploadTestCase(unittest.TestCase):
         upload_request = self.client.post(
             UPLOAD_PATH, {'size': self.size_file}
         )
+        self.addCleanup(self.client.delete, upload_request['_href'])
 
         for data in self.chunked_data:
             self.client.put(
@@ -107,31 +106,30 @@ class ChunkedUploadTestCase(unittest.TestCase):
 
     def test_upload_chunk_wrong_checksum(self):
         """Test creation of artifact using upload of files in chunks passing wrong checksum."""
-        self.client.response_handler = api.echo_handler
-
         upload_request = self.client.post(
             UPLOAD_PATH, {'size': self.size_file}
         )
 
         for data in self.chunked_data:
-            response = self.client.put(
+            response = self.client.using_handler(api.echo_handler).put(
                 upload_request.json()['_href'],
                 data={'sha256': "WRONG CHECKSUM"},
                 files={'file': data[0]},
                 headers=data[1],
             )
 
-            assert response.status_code == 400
+        self.assertEqual(response.status_code, 400, response)
 
     def test_delete_upload(self):
         """Test a deletion of an upload using upload of files in chunks."""
-
         upload_request = self.upload_chunks()
+        self.addCleanup(self.client.delete, upload_request['_href'])
 
         # fetch a name of the upload from the corresponding _href
-        upload_name = upload_request['_href'].replace('/pulp/api/v3/uploads/', '')[:-1]
+        upload_name = upload_request['_href'].replace(
+            '/pulp/api/v3/uploads/', ''
+        )[:-1]
 
-        self.addCleanup(self.client.delete, upload_request['_href'])
         cmd = ('ls', os.path.join(MEDIA_PATH, 'upload', upload_name))
         self.cli_client.run(cmd, sudo=True)
 
@@ -141,6 +139,7 @@ class ChunkedUploadTestCase(unittest.TestCase):
             self.cli_client.run(cmd, sudo=True)
 
     def upload_chunks(self):
+        """Upload file in chunks."""
         upload_request = self.client.post(
             UPLOAD_PATH, {'size': self.size_file}
         )
@@ -156,5 +155,4 @@ class ChunkedUploadTestCase(unittest.TestCase):
             urljoin(upload_request['_href'], 'commit/'),
             data={'sha256': self.file_sha256},
         )
-
         return upload_request
