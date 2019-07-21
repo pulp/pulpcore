@@ -42,9 +42,9 @@ Settings
 
 Pulp uses three types of settings:
 
-* `Django settings <django-settings>`_ Pulp is configuring
-* `Pulp defined settings <pulp-settings>`_
-* `RQ settings <rq-settings>`_ Pulp is using
+* :ref:`Django settings <django-settings>` Pulp is configuring
+* :ref:`Pulp defined settings <pulp-settings>`
+* :ref:`RQ settings <rq-settings>` Pulp is using
 
 
 .. _django-settings:
