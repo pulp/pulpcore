@@ -92,7 +92,7 @@ class ChunkedUploadTestCase(unittest.TestCase):
                 headers=data[1],
             )
 
-        self.client.put(
+        self.client.post(
             urljoin(upload_request['_href'], 'commit/'),
             data={'sha256': self.file_sha256},
         )
@@ -188,7 +188,7 @@ class ChunkedUploadTestCase(unittest.TestCase):
                 headers=data[1],
             )
 
-        self.client.put(
+        self.client.post(
             urljoin(upload_request['_href'], 'commit/'),
             data={'sha256': self.file_sha256},
         )

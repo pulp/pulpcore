@@ -94,7 +94,7 @@ class UploadViewSet(NamedModelViewSet,
     @swagger_auto_schema(operation_summary="Finish an Upload",
                          request_body=UploadCommitSerializer,
                          responses={200: UploadSerializer})
-    @detail_route(methods=('put',))
+    @detail_route(methods=('post',))
     def commit(self, request, pk):
         """
         Commit the upload and mark it as completed.
