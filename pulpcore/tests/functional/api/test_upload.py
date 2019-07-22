@@ -108,15 +108,13 @@ class ChunkedUploadTestCase(unittest.TestCase):
 
     def test_upload_chunk_wrong_checksum(self):
         """Test creation of artifact using upload of files in chunks passing wrong checksum."""
-        self.client.response_handler = api.echo_handler
-
         upload_request = self.client.post(
             UPLOAD_PATH, {'size': self.size_file}
         )
 
         for data in self.chunked_data:
-            response = self.client.put(
-                upload_request.json()['_href'],
+            response = self.client.using_handler(api.echo_handler).put(
+                upload_request['_href'],
                 data={'sha256': "WRONG CHECKSUM"},
                 files={'file': data[0]},
                 headers=data[1],
@@ -126,38 +124,52 @@ class ChunkedUploadTestCase(unittest.TestCase):
 
     def test_upload_response(self):
         """Test upload responses when creating an upload and uploading chunks."""
-        self.client.response_handler = api.echo_handler
-
         upload_request = self.client.post(
             UPLOAD_PATH, {'size': self.size_file}
         )
 
         expected_keys = ['_href', '_created', 'size', 'completed']
 
-        self.assertEquals([*upload_request.json()], expected_keys)
+        self.assertEqual(
+            [*upload_request],
+            expected_keys,
+            'Response keys are different than Expected keys'
+        )
 
         for data in self.chunked_data:
             response = self.client.put(
-                upload_request.json()['_href'],
+                upload_request['_href'],
                 files={'file': data[0]},
                 headers=data[1],
             )
 
-            self.assertEquals([*response.json()], expected_keys)
+            self.assertEqual(
+                [*response],
+                expected_keys,
+                'Response keys are different than Expected keys'
+            )
 
-        response = self.client.get(upload_request.json()['_href'])
+        response = self.client.get(upload_request['_href'])
 
         expected_keys = ['_href', '_created', 'size', 'completed', 'chunks']
 
-        self.assertEquals([*response.json()], expected_keys)
+        self.assertEqual(
+            [*response],
+            expected_keys,
+            'Response keys are different than Expected keys'
+        )
 
         expected_chunks = [
             {'offset': 0, 'size': 6291456},
             {'offset': 6291456, 'size': 4194304}
         ]
 
-        sorted_chunks_response = sorted(response.json()['chunks'], key=lambda i: i['offset'])
-        self.assertEquals(sorted_chunks_response, expected_chunks)
+        sorted_chunks_response = sorted(response['chunks'], key=lambda i: i['offset'])
+        self.assertEqual(
+            sorted_chunks_response,
+            expected_chunks,
+            'Response chunks are different than Expected chunks'
+        )
 
     def test_delete_upload(self):
         """Test a deletion of an upload using upload of files in chunks."""
