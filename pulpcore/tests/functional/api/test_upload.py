@@ -9,7 +9,6 @@ from urllib.parse import urljoin
 from pulp_smash import api, cli, config
 from pulp_smash.exceptions import CalledProcessError
 from pulp_smash.pulp3.constants import (
-    ARTIFACTS_PATH,
     MEDIA_PATH,
     UPLOAD_PATH,
 )
@@ -69,11 +68,9 @@ class ChunkedUploadTestCase(unittest.TestCase):
 
     def test_create_artifact_without_checksum(self):
         """Test creation of artifact using upload of files in chunks."""
-        upload_request = self.upload_chunks()
 
-        artifact = self.client.post(
-            ARTIFACTS_PATH, {'upload': upload_request['_href']}
-        )
+        artifact = self.upload_chunks()
+
         self.addCleanup(self.client.delete, artifact['_href'])
 
         self.assertEqual(artifact['sha256'], self.file_sha256, artifact)
@@ -92,18 +89,14 @@ class ChunkedUploadTestCase(unittest.TestCase):
                 headers=data[1],
             )
 
-        self.client.post(
+        artifact_request = self.client.post(
             urljoin(upload_request['_href'], 'commit/'),
             data={'sha256': self.file_sha256},
         )
 
-        artifact = self.client.post(
-            ARTIFACTS_PATH, {'upload': upload_request['_href']}
-        )
+        self.addCleanup(self.client.delete, artifact_request['_href'])
 
-        self.addCleanup(self.client.delete, artifact['_href'])
-
-        self.assertEqual(artifact['sha256'], self.file_sha256, artifact)
+        self.assertEqual(artifact_request['sha256'], self.file_sha256, artifact_request)
 
     def test_upload_chunk_wrong_checksum(self):
         """Test creation of artifact using upload of files in chunks passing wrong checksum."""
@@ -120,6 +113,8 @@ class ChunkedUploadTestCase(unittest.TestCase):
             )
             with self.subTest(response=response):
                 self.assertEqual(response.status_code, 400, response)
+
+        self.addCleanup(self.client.delete, upload_request['_href'])
 
     def test_upload_response(self):
         """Test upload responses when creating an upload and uploading chunks."""
@@ -156,10 +151,20 @@ class ChunkedUploadTestCase(unittest.TestCase):
             response['chunks'], key=lambda i: i['offset']
         )
         self.assertEqual(sorted_chunks_response, expected_chunks, response)
+        self.addCleanup(self.client.delete, response['_href'])
 
     def test_delete_upload(self):
         """Test a deletion of an upload using upload of files in chunks."""
-        upload_request = self.upload_chunks()
+        upload_request = self.client.post(
+            UPLOAD_PATH, {'size': self.size_file}
+        )
+
+        for data in self.chunked_data:
+            self.client.put(
+                upload_request['_href'],
+                files={'file': data[0]},
+                headers=data[1],
+            )
 
         # fetch a name of the upload from the corresponding _href
         upload_name = upload_request['_href'].replace(
@@ -188,8 +193,8 @@ class ChunkedUploadTestCase(unittest.TestCase):
                 headers=data[1],
             )
 
-        self.client.post(
+        artifact_request = self.client.post(
             urljoin(upload_request['_href'], 'commit/'),
             data={'sha256': self.file_sha256},
         )
-        return upload_request
+        return artifact_request
