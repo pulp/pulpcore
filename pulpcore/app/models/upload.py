@@ -45,16 +45,6 @@ class Upload(Model):
 
         self.chunks.create(offset=offset, size=len(chunk))
 
-    @property
-    def sha256(self, rehash=False):
-        if getattr(self, '_sha256', None) is None or rehash is True:
-            sha256 = hashlib.sha256()
-            with self.file.open(mode='rb') as file:
-                for chunk in file.chunks():
-                    sha256.update(chunk)
-            self._sha256 = sha256.hexdigest()
-        return self._sha256
-
     def delete(self, *args, **kwargs):
         """
         Deletes Upload model and the file associated with the model

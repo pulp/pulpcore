@@ -15,6 +15,7 @@ from .base import (  # noqa
 )
 from .content import (  # noqa
     ArtifactSerializer,
+    ArtifactUploadSerializer,
     ContentChecksumSerializer,
     MultipleArtifactContentSerializer,
     NoArtifactContentSerializer,

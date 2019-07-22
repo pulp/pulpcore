@@ -49,7 +49,7 @@ def upload_file_in_chunks(file_path):
         file_path (str): path to the file being uploaded to Pulp
 
     Returns:
-        upload object
+        artifact object
     """
     size = os.stat(file_path).st_size
     chunk_size = 200000
@@ -74,8 +74,12 @@ def upload_file_in_chunks(file_path):
                                         content_range=content_range)
             offset += chunk_size
             sha256hasher.update(chunk)
-        uploads.commit(upload.href, UploadCommit(sha256=sha256hasher.hexdigest()))
-    return upload
+
+        commit_response = uploads.commit(upload.href, UploadCommit(sha256=sha256hasher.hexdigest()))
+        created_resources = monitor_task(commit_response.task)
+        artifact = artifacts.read(created_resources[0])
+
+    return artifact
 
 
 # Configure HTTP basic authorization: basic
@@ -106,9 +110,7 @@ with NamedTemporaryFile() as downloaded_file:
         'pulp-large_1mb_test-packageA-0.1.1-1.fc14.noarch.rpm')
     response.raise_for_status()
     downloaded_file.write(response.content)
-    upload = upload_file_in_chunks(downloaded_file.name)
-    pprint(upload)
-    artifact = artifacts.create(upload=upload.href)
+    artifact = upload_file_in_chunks(downloaded_file.name)
     pprint(artifact)
 
 # Create a File Remote

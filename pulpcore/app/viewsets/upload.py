@@ -1,5 +1,4 @@
 import re
-from datetime import datetime
 
 from gettext import gettext as _
 from drf_yasg.utils import swagger_auto_schema
@@ -8,8 +7,11 @@ from rest_framework import mixins, serializers
 from rest_framework.decorators import detail_route
 from rest_framework.response import Response
 
+from pulpcore.app import tasks
 from pulpcore.app.models import Upload
+from pulpcore.app.response import OperationPostponedResponse
 from pulpcore.app.serializers import (
+    AsyncOperationResponseSerializer,
     UploadChunkSerializer,
     UploadCommitSerializer,
     UploadSerializer,
@@ -18,6 +20,7 @@ from pulpcore.app.serializers import (
 from pulpcore.app.viewsets import BaseFilterSet
 from pulpcore.app.viewsets.base import DATETIME_FILTER_OPTIONS, NamedModelViewSet
 from pulpcore.app.viewsets.custom_filters import IsoDateTimeFilter
+from pulpcore.tasking.tasks import enqueue_with_reservation
 
 
 class UploadFilter(BaseFilterSet):
@@ -93,27 +96,20 @@ class UploadViewSet(NamedModelViewSet,
 
     @swagger_auto_schema(operation_summary="Finish an Upload",
                          request_body=UploadCommitSerializer,
-                         responses={200: UploadSerializer})
+                         responses={202: AsyncOperationResponseSerializer})
     @detail_route(methods=('post',))
     def commit(self, request, pk):
         """
-        Commit the upload and mark it as completed.
+        Generates a Task to commit the upload and mark it as completed.
         """
-        upload = self.get_object()
-
         try:
             sha256 = request.data['sha256']
         except KeyError:
             raise serializers.ValidationError(_("Checksum not supplied."))
 
-        if sha256 != upload.sha256:
-            raise serializers.ValidationError(_("Checksum does not match upload."))
-
-        if upload.completed is not None:
-            raise serializers.ValidationError(_("Upload is already complete."))
-
-        upload.completed = datetime.now()
-        upload.save()
-
-        serializer = UploadSerializer(upload, context={'request': request})
-        return Response(serializer.data)
+        upload = self.get_object()
+        async_result = enqueue_with_reservation(
+            tasks.upload.commit, [upload],
+            args=(upload.pk, sha256),
+        )
+        return OperationPostponedResponse(async_result, request)

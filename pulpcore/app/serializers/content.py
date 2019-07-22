@@ -146,14 +146,6 @@ class ArtifactSerializer(base.ModelSerializer):
         required=False
     )
 
-    upload = serializers.HyperlinkedRelatedField(
-        help_text=_("An href for an Upload."),
-        view_name="uploads-detail",
-        write_only=True,
-        required=False,
-        queryset=models.Upload.objects.exclude(completed__isnull=True)
-    )
-
     size = serializers.IntegerField(
         help_text=_("The size of the file in bytes."),
         required=False
@@ -254,6 +246,21 @@ class ArtifactSerializer(base.ModelSerializer):
             # creating an artifact will move the upload file so we need to delete the db record
             self.upload.delete()
         return artifact
+
+    class Meta:
+        model = models.Artifact
+        fields = base.ModelSerializer.Meta.fields + ('file', 'size', 'md5', 'sha1', 'sha224',
+                                                     'sha256', 'sha384', 'sha512')
+
+
+class ArtifactUploadSerializer(ArtifactSerializer):
+    upload = serializers.HyperlinkedRelatedField(
+        help_text=_("An href for an Upload."),
+        view_name="uploads-detail",
+        write_only=True,
+        required=False,
+        queryset=models.Upload.objects.exclude(completed__isnull=True)
+    )
 
     class Meta:
         model = models.Artifact
