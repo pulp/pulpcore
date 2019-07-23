@@ -11,6 +11,7 @@ images:
         - pulp-docker
         - pulp-maven
         - pulp-python
+        - pulp-rpm
 registry: quay.io
 project: pulp
 tag: latest

@@ -7,7 +7,7 @@
 django-admin collectstatic --noinput
 
 #TODO: Determine list of installed plugins by inspecting image contents
-django-admin makemigrations file ansible cookbook docker maven python
+django-admin makemigrations file ansible cookbook docker maven python rpm
 django-admin migrate --noinput
 django-admin migrate auth --noinput
 

@@ -20,7 +20,7 @@ ARG PLUGINS=""
 # seems to need.
 #
 # The development packages are needed for installing nightly versions with pip.
-# The development packages group is the equivalent of EL7's "development" group.
+# @c-development is the closest equivalent of EL7's "@development" group.
 #
 # Also installing the long list of pulp-rpm deps from
 # https://github.com/pulp/pulp-rpm-prerequisites/blob/master/vars/Fedora.yml
@@ -29,6 +29,7 @@ RUN		dnf -y update && \
 		dnf -y install wget git && \
 		dnf -y install libxcrypt-compat && \
 		dnf -y install @c-development mariadb-devel python3-devel && \
+		dnf -y install gcc make cmake bzip2-devel expat-devel file-devel glib2-devel libcurl-devel libmodulemd-devel libxml2-devel python3-devel python3-libmodulemd rpm-devel openssl-devel sqlite-devel xz-devel zchunk-devel zlib-devel && \
 		dnf clean all
 
 # Docs suggest RHEL8 uses the alternatives system for /usr/bin/python ,
@@ -53,14 +54,14 @@ RUN pip install git+https://github.com/pulp/pulpcore.git#egg=pulpcore[postgres]
 RUN pip install git+https://github.com/pulp/pulpcore.git#egg=pulpcore[mysql]
 RUN pip install $PLUGINS
 
-RUN mkdir -p /usr/lib/python3.7/site-packages/pulpcore/app/migrations
-RUN mkdir -p /usr/lib/python3.7/site-packages/pulpcore/app/migrations
-RUN mkdir -p /usr/lib/python3.7/site-packages/pulp_file/app/migrations
-RUN mkdir -p /usr/lib/python3.7/site-packages/pulp_ansible/app/migrations
-RUN mkdir -p /usr/lib/python3.7/site-packages/pulp_cookbook/app/migrations
-RUN mkdir -p /usr/lib/python3.7/site-packages/pulp_docker/app/migrations
-RUN mkdir -p /usr/lib/python3.7/site-packages/pulp_maven/app/migrations
-RUN mkdir -p /usr/lib/python3.7/site-packages/pulp_python/app/migrations
+RUN mkdir -p /usr/local/lib/python3.7/site-packages/pulpcore/app/migrations
+RUN mkdir -p /usr/local/lib/python3.7/site-packages/pulp_file/app/migrations
+RUN mkdir -p /usr/local/lib/python3.7/site-packages/pulp_ansible/app/migrations
+RUN mkdir -p /usr/local/lib/python3.7/site-packages/pulp_cookbook/app/migrations
+RUN mkdir -p /usr/local/lib/python3.7/site-packages/pulp_docker/app/migrations
+RUN mkdir -p /usr/local/lib/python3.7/site-packages/pulp_maven/app/migrations
+RUN mkdir -p /usr/local/lib/python3.7/site-packages/pulp_python/app/migrations
+RUN mkdir -p /usr/local/lib/python3.7/site-packages/pulp_rpm/app/migrations
 
 COPY container-assets/wait_on_postgres.py /usr/bin/wait_on_postgres.py
 COPY container-assets/wait_on_database_migrations.sh /usr/bin/wait_on_database_migrations.sh
