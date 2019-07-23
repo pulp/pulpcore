@@ -23,9 +23,11 @@ class CreatedResourceSerializer(RelatedField):
                 return None
         except AttributeError:
             pass
-        request = self.context['request']
         viewset = get_viewset_for_model(data.content_object)
-        serializer = viewset.serializer_class(data.content_object, context={'request': request})
+
+        # serializer contains all serialized fields because we are passing
+        # 'None' to the request's context
+        serializer = viewset.serializer_class(data.content_object, context={'request': None})
         return serializer.data.get('_href')
 
     class Meta:
