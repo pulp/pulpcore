@@ -148,7 +148,7 @@ class TasksTestCase(unittest.TestCase):
 
 
 class FilterTaskCreatedResourcesTestCase(unittest.TestCase):
-    """Perform filtering over task resources.
+    """Perform filtering over the task's field created_resources.
 
     This test targets the following issue:
 
@@ -217,6 +217,47 @@ class FilterTaskReservedResourcesTestCase(unittest.TestCase):
         """Filter all tasks by a non-existing reserved resource."""
         filter_params = {
             'reserved_resources_record': 'a_resource_should_be_never_named_like_this'
+        }
+        with self.assertRaises(HTTPError):
+            self.client.get(TASKS_PATH, params=filter_params)
+
+
+class FilterTaskCreatedResourcesContentTestCase(unittest.TestCase):
+    """Perform filtering for contents of created resources.
+
+    This test targets the following issue:
+
+    * `Pulp #4931 <https://pulp.plan.io/issues/4931>`_
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        """Create class-wide variables."""
+        cls.client = api.Client(config.get_config(), api.page_handler)
+
+        cls.repository = cls.client.post(REPO_PATH, gen_repo())
+        response = cls.client.post(cls.repository['_versions_href'])
+        cls.task = cls.client.get(response['task'])
+
+    @classmethod
+    def tearDownClass(cls):
+        """Clean created resources."""
+        cls.client.delete(cls.repository['_href'])
+        cls.client.delete(cls.task['_href'])
+
+    def test_01_filter_tasks_by_created_resources(self):
+        """Filter all tasks by a particular created resource."""
+        filter_params = {
+            'created_resources': self.task['created_resources'][0]
+        }
+        results = self.client.get(TASKS_PATH, params=filter_params)
+        self.assertEqual(len(results), 1, results)
+        self.assertEqual(self.task, results[0], results)
+
+    def test_02_filter_tasks_by_non_existing_resources(self):
+        """Filter all tasks by a non-existing reserved resource."""
+        filter_params = {
+            'created_resources': 'a_resource_should_be_never_named_like_this'
         }
         with self.assertRaises(HTTPError):
             self.client.get(TASKS_PATH, params=filter_params)

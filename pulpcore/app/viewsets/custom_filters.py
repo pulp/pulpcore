@@ -41,6 +41,33 @@ class ReservedResourcesFilter(Filter):
         return qs.filter(reserved_resources_record__resource=value)
 
 
+class CreatedResourcesFilter(Filter):
+    """
+    Filter used to get tasks by created resources.
+
+    Created resources contain a reference to newly created repository
+    versions, distributions, etc.
+    """
+
+    def filter(self, qs, value):
+        """
+        Args:
+            qs (django.db.models.query.QuerySet): The QuerySet to filter
+            value (string): The content href to filter by
+
+        Returns:
+            Queryset of the content contained within the specified created resource
+        """
+
+        if value is None:
+            return qs
+
+        match = resolve(value)
+        resource = NamedModelViewSet.get_resource(value, match.func.cls.queryset.model)
+
+        return qs.filter(created_resources__object_id=resource.pk)
+
+
 class HyperlinkRelatedFilter(Filter):
     """
     Enables a user to filter by a foreign key using that FK's href
