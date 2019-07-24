@@ -5,7 +5,7 @@ from django.db import transaction
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 
-from pulpcore.app import files, models
+from pulpcore.app import models
 from pulpcore.app.serializers import base, fields
 
 UNIQUE_ALGORITHMS = ['sha256', 'sha384', 'sha512']
@@ -201,15 +201,6 @@ class ArtifactSerializer(base.ModelSerializer):
         """
         super().validate(data)
 
-        if ('file' not in data and 'upload' not in data) or \
-                ('file' in data and 'upload' in data):
-            raise serializers.ValidationError(_("Either 'file' or 'upload' parameter must be "
-                                                "supplied but not both."))
-
-        if 'upload' in data:
-            self.upload = data.pop('upload')
-            data['file'] = files.PulpTemporaryUploadedFile.from_file(self.upload.file.file)
-
         if 'size' in data:
             if data['file'].size != int(data['size']):
                 raise serializers.ValidationError(_("The size did not match actual size of file."))
@@ -234,35 +225,7 @@ class ArtifactSerializer(base.ModelSerializer):
                     validator(digest)
         return data
 
-    def create(self, validated_data):
-        """
-        Create the artifact and delete its associated upload (if there is one)
-
-        Args:
-            validated_data (dict): Data to save to the database
-        """
-        artifact = super().create(validated_data)
-        if hasattr(self, 'upload'):
-            # creating an artifact will move the upload file so we need to delete the db record
-            self.upload.delete()
-        return artifact
-
     class Meta:
         model = models.Artifact
         fields = base.ModelSerializer.Meta.fields + ('file', 'size', 'md5', 'sha1', 'sha224',
                                                      'sha256', 'sha384', 'sha512')
-
-
-class ArtifactUploadSerializer(ArtifactSerializer):
-    upload = serializers.HyperlinkedRelatedField(
-        help_text=_("An href for an Upload."),
-        view_name="uploads-detail",
-        write_only=True,
-        required=False,
-        queryset=models.Upload.objects.exclude(completed__isnull=True)
-    )
-
-    class Meta:
-        model = models.Artifact
-        fields = base.ModelSerializer.Meta.fields + ('file', 'size', 'md5', 'sha1', 'sha224',
-                                                     'sha256', 'sha384', 'sha512', 'upload')

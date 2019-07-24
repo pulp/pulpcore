@@ -16,12 +16,10 @@ class Upload(Model):
 
         file (models.FileField): The stored file.
         size (models.BigIntegerField): The size of the file in bytes.
-        completed (models.DateTimeField): Time when the upload is committed
     """
 
     file = models.FileField(null=False, max_length=255)
     size = models.BigIntegerField()
-    completed = models.DateTimeField(null=True)
 
     def append(self, chunk, offset, sha256=None):
         """
