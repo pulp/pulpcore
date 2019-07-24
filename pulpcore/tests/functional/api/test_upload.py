@@ -122,7 +122,7 @@ class ChunkedUploadTestCase(unittest.TestCase):
             UPLOAD_PATH, {'size': self.size_file}
         )
 
-        expected_keys = ['_href', '_created', 'size', 'completed']
+        expected_keys = ['_href', '_created', 'size']
 
         self.assertEqual([*upload_request], expected_keys, upload_request)
 

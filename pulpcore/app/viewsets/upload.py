@@ -67,9 +67,6 @@ class UploadViewSet(NamedModelViewSet,
         """
         upload = self.get_object()
 
-        if upload.completed is not None:
-            raise serializers.ValidationError(_("Cannot upload chunk for a completed upload."))
-
         try:
             chunk = request.data['file']
         except KeyError:
@@ -100,7 +97,7 @@ class UploadViewSet(NamedModelViewSet,
     @detail_route(methods=('post',))
     def commit(self, request, pk):
         """
-        Generates a Task to commit the upload and mark it as completed.
+        Generates a Task to commit the upload and create an artifact
         """
         try:
             sha256 = request.data['sha256']
