@@ -6,8 +6,10 @@
 # facilitates all of /var/lib/pulp being a separate volume.
 django-admin collectstatic --noinput
 
-#TODO: Determine list of installed plugins by inspecting image contents
-django-admin makemigrations file ansible cookbook docker maven python rpm
+# Get list of installed plugins via pip
+# Assumes they are all named like "pulp-file" -> "file", with no 2nd dash.
+PLUGINS=$(pip list | awk -F '[[:space:]]+|[-]' '/pulp-/{printf $2 " " }')
+django-admin makemigrations $PLUGINS
 django-admin migrate --noinput
 django-admin migrate auth --noinput
 
