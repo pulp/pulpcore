@@ -2,6 +2,17 @@ FROM fedora:30
 
 ARG PLUGINS=""
 
+# https://superuser.com/questions/959380/how-do-i-install-generate-all-locales-on-fedora
+# This may not be necessary anymore because Fedora 30, unlike CentOS 7, has
+# glibc subpackages like glibc-langpack-en.
+RUN rm /etc/rpm/macros.image-language-conf
+RUN echo 'LANG="en_US.UTF-8"' > /etc/locale.conf
+ENV LANG=en_US.UTF-8
+ENV LANGUAGE=en_US.UTF-8
+ENV LC_ALL=en_US.UTF-8
+ENV PYTHONUNBUFFERED=0
+ENV DJANGO_SETTINGS_MODULE=pulpcore.app.settings
+
 # mariadb_devel needed to avoid error installing pulpcore[mysql] (post-rc1)
 # otherwise, `mysql_config` is not found
 # It also needs gcc at least, so we install the dev tools package group.
@@ -13,8 +24,6 @@ ARG PLUGINS=""
 # wget & git are presumably needed for purposes like pip installs from git
 #
 # libxcrypt-compat is needed by psycopg2-binary from PyPI
-#
-# python3-psycopg2 is installed by ansible-pulp
 #
 # glibc-langpack-en is needed to provide the en_US.UTF-8 locale, which Pulp
 # seems to need.
@@ -28,6 +37,7 @@ ARG PLUGINS=""
 RUN		dnf -y update && \
 		dnf -y install wget git && \
 		dnf -y install libxcrypt-compat && \
+		dnf -y install glibc-langpack-en && \
 		dnf -y install @c-development mariadb-devel python3-devel && \
 		dnf -y install gcc make cmake bzip2-devel expat-devel file-devel glib2-devel libcurl-devel libmodulemd-devel libxml2-devel python3-devel python3-libmodulemd rpm-devel openssl-devel sqlite-devel xz-devel zchunk-devel zlib-devel && \
 		dnf clean all
@@ -38,12 +48,6 @@ RUN ln -s /usr/bin/python3 /usr/bin/python
 # If pip2 is installed, it will replace /usr/bin/pip .
 # /usr/local/bin will be before it in the PATH .
 RUN ln -s /usr/bin/pip3 /usr/local/bin/pip
-
-ENV LANG=en_US.UTF-8
-ENV LANGUAGE=en_US.UTF-8
-ENV LC_ALL=en_US.UTF-8
-ENV PYTHONUNBUFFERED=0
-ENV DJANGO_SETTINGS_MODULE=pulpcore.app.settings
 
 RUN mkdir -p /etc/pulp
 
