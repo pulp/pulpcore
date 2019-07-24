@@ -46,7 +46,12 @@ def monitor_task(task_href)
       sleep(2)
       task = @tasks_api.read(task_href)
     end
-    task.created_resources
+    if task.state == 'completed'
+      task.created_resources
+    else
+      print("Task failed. Exiting.\n")
+      exit(2)
+    end
 end
 
 def content_range(start, finish, total)
@@ -88,14 +93,14 @@ def upload_file_in_chunks(file_path)
           filechunk.unlink
         end
       end
-      response = @uploads_api.commit(upload_href, {sha256: sha256.hexdigest})
+      upload_commit_response = @uploads_api.commit(upload_href, {sha256: sha256.hexdigest})
+      created_resources = monitor_task(upload_commit_response.task)
+      @artifacts_api.read(created_resources[0])
     end
-    response
 end
 
 
-upload = upload_file_in_chunks(File.join(ENV['TRAVIS_BUILD_DIR'], '.travis.yml'))
-artifact = @artifacts_api.create({upload: upload._href})
+artifact = upload_file_in_chunks(File.join(ENV['TRAVIS_BUILD_DIR'], '.travis.yml'))
 
 # Create a File Remote
 remote_url = 'https://repos.fedorapeople.org/pulp/pulp/demo_repos/test_file_repo/PULP_MANIFEST'
