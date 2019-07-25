@@ -65,6 +65,29 @@ if [ "$TEST" = 'bindings' ]; then
   ./generate.sh pulp_file python
   pip install ./pulp_file-client
   python $TRAVIS_BUILD_DIR/.travis/test_bindings.py
+
+  if [ ! -f $TRAVIS_BUILD_DIR/.travis/test_bindings.rb ]
+  then
+    exit
+  fi
+
+  rm -rf ./pulpcore-client
+
+  ./generate.sh pulpcore ruby
+  cd pulpcore-client
+  gem build pulpcore_client
+  gem install --both ./pulpcore_client-0.gem
+  cd ..
+
+  rm -rf ./pulp_file-client
+
+  ./generate.sh pulp_file ruby
+  cd pulp_file-client
+  gem build pulp_file_client
+  gem install --both ./pulp_file_client-0.gem
+  cd ..
+
+  ruby $TRAVIS_BUILD_DIR/.travis/test_bindings.rb
   exit
 fi
 
