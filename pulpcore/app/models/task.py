@@ -58,6 +58,47 @@ class TaskReservedResource(Model):
     task = models.ForeignKey('Task', on_delete=models.PROTECT)
 
 
+class ReservedResourceRecord(Model):
+    """
+    Resources that have been reserved.
+
+    This model is a duplicate of ReservedResource. A worker is not included in
+    the model because it will prevent the tasking system to release duplicated
+    reserved resources automatically.
+
+    Fields:
+
+        resource (models.TextField): The url of the resource reserved for the task.
+
+    Relations:
+
+        task (models.ForeignKey): The task associated with this reservation
+    """
+
+    resource = models.CharField(max_length=255, unique=True)
+    tasks = models.ManyToManyField("Task", related_name="reserved_resources_record",
+                                   through='TaskReservedResourceRecord')
+
+
+class TaskReservedResourceRecord(Model):
+    """
+    Association between a Task and its ReservedResourcesRecord.
+
+    Prevents the task from being deleted if it has any ReservedResource(s).
+    This model is a duplicate of TaskReservedResource. When the task is being
+    deleted from a database, the associated TaskReservedResourceRecord will
+    be deleted as well.
+
+    Relations:
+
+        task (models.ForeignKey): The associated task.
+        resource (models.ForeignKey): The associated resource.
+    """
+
+    resource = models.ForeignKey('ReservedResourceRecord', on_delete=models.CASCADE)
+    task = models.ForeignKey('Task', on_delete=models.CASCADE)
+
+
 class WorkerManager(models.Manager):
 
     def get_unreserved_worker(self):
@@ -258,6 +299,10 @@ class Worker(Model):
                 else:
                     reservation = ReservedResource.objects.create(worker=self, resource=resource)
                 TaskReservedResource.objects.create(resource=reservation, task=task)
+
+                reservation_record = ReservedResourceRecord.objects \
+                    .get_or_create(resource=resource)[0]
+                TaskReservedResourceRecord.objects.create(resource=reservation_record, task=task)
 
 
 class Task(Model):

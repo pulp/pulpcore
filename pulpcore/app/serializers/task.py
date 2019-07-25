@@ -35,6 +35,16 @@ class CreatedResourceSerializer(RelatedField):
         fields = []
 
 
+class ReservedResourcesSerializer(ModelSerializer):
+
+    def to_representation(self, instance):
+        return instance.resource
+
+    class Meta:
+        model = models.ReservedResourceRecord
+        fields = []
+
+
 class TaskSerializer(ModelSerializer):
     _href = IdentityField(view_name='tasks-detail')
     state = serializers.CharField(
@@ -90,13 +100,18 @@ class TaskSerializer(ModelSerializer):
         read_only=True,
         view_name='None'  # This is a polymorphic field. The serializer does not need a view name.
     )
+    reserved_resources_record = ReservedResourcesSerializer(
+        many=True,
+        read_only=True,
+    )
 
     class Meta:
         model = models.Task
         fields = ModelSerializer.Meta.fields + ('state', 'name', 'started_at',
                                                 'finished_at', 'non_fatal_errors', 'error',
                                                 'worker', 'parent', 'spawned_tasks',
-                                                'progress_reports', 'created_resources')
+                                                'progress_reports', 'created_resources',
+                                                'reserved_resources_record')
 
 
 class MinimalTaskSerializer(TaskSerializer):

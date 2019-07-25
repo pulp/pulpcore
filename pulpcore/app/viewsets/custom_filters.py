@@ -14,6 +14,33 @@ from pulpcore.app.models import ContentArtifact, RepositoryVersion
 from pulpcore.app.viewsets import NamedModelViewSet
 
 
+class ReservedResourcesFilter(Filter):
+    """
+    Enables a user to filter tasks by a reserved resource href
+    """
+
+    def filter(self, qs, value):
+        """
+        Args:
+            qs (django.db.models.query.QuerySet): The Queryset to filter
+            value (string): href containing a reference to a reserved resource
+
+        Returns:
+            django.db.models.query.QuerySet: Queryset filtered by the reserved resource
+        """
+
+        if value is None:
+            # a value was not supplied by a user
+            return qs
+
+        try:
+            resolve(urlparse(value).path)
+        except Resolver404:
+            raise serializers.ValidationError(detail=_('URI not valid: {u}').format(u=value))
+
+        return qs.filter(reserved_resources_record__resource=value)
+
+
 class HyperlinkRelatedFilter(Filter):
     """
     Enables a user to filter by a foreign key using that FK's href

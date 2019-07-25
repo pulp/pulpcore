@@ -196,3 +196,44 @@ class FilterTaskCreatedResourcesTestCase(unittest.TestCase):
             task['created_resources'],
             task
         )
+
+
+class FilterTaskReservedResourcesTestCase(unittest.TestCase):
+    """Perform filtering over reserved resources.
+
+    This test targets the following issue:
+    * `Pulp #5120 <https://pulp.plan.io/issues/5120>`_
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        """Create class-wide variables."""
+        cls.client = api.Client(config.get_config(), api.page_handler)
+
+        cls.repository = cls.client.post(REPO_PATH, gen_repo())
+        attrs = {'description': utils.uuid4()}
+        response = cls.client.patch(cls.repository['_href'], attrs)
+        cls.task = cls.client.get(response['task'])
+
+    @classmethod
+    def tearDownClass(cls):
+        """Clean created resources."""
+        cls.client.delete(cls.repository['_href'])
+        cls.client.delete(cls.task['_href'])
+
+    def test_01_filter_tasks_by_reserved_resources(self):
+        """Filter all tasks by a particular reserved resource."""
+        filter_params = {
+            'reserved_resources_record': self.task['reserved_resources_record'][0]
+        }
+        results = self.client.get(TASKS_PATH, params=filter_params)
+        self.assertEqual(len(results), 1, results)
+        self.assertEqual(self.task, results[0], results)
+
+    def test_02_filter_tasks_by_non_existing_resources(self):
+        """Filter all tasks by a non-existing reserved resource."""
+        filter_params = {
+            'reserved_resources_record': 'a_resource_should_be_never_named_like_this'
+        }
+        with self.assertRaises(HTTPError):
+            self.client.get(TASKS_PATH, params=filter_params)
