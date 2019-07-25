@@ -1,1 +1,0 @@
-Switched the default of the ``CONTENT_HOST`` setting from ``None`` to ``''``.
