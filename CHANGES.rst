@@ -13,6 +13,57 @@ Changelog
 
 .. towncrier release notes start
 
+3.0.0rc4 (2019-07-25)
+=====================
+
+Features
+--------
+
+- Allow users to pass sha256 with each chunk to have Pulp verify the chunk.
+  `#4982 <https://pulp.plan.io/issues/4982>`_
+- Users can view chunks info for chunked uploads in the API
+  `#5150 <https://pulp.plan.io/issues/5150>`_
+
+
+Bugfixes
+--------
+
+- Setting missing fields on orphan cleanup tasks.
+  `#4662 <https://pulp.plan.io/issues/4662>`_
+- Allow user to filter created resources without providing _href in a query
+  `#4722 <https://pulp.plan.io/issues/4722>`_
+- GET of a ``Distribution`` without configuring the ``CONTENT_HOST`` setting no longer causes a 500
+  error.
+  `#4945 <https://pulp.plan.io/issues/4945>`_
+- Increased artifact size field to prevent 500 errors for artifacts > 2GB in size.
+  `#4998 <https://pulp.plan.io/issues/4998>`_
+- Allow artifacts to be created using json
+  `#5016 <https://pulp.plan.io/issues/5016>`_
+- Have the commit endpoint dispatch a task to create artifacts from chunked uploads
+  `#5087 <https://pulp.plan.io/issues/5087>`_
+- Allow user to delete uploaded content from a local file system when the artifact creation fails
+  `#5092 <https://pulp.plan.io/issues/5092>`_
+
+
+Improved Documentation
+----------------------
+
+- Fix broken urls in the ``/installation/configuration.html#settings`` area.
+  `#5160 <https://pulp.plan.io/issues/5160>`_
+
+
+Deprecations and Removals
+-------------------------
+
+- Switched the default of the ``CONTENT_HOST`` setting from ``None`` to ``''``.
+  `#4945 <https://pulp.plan.io/issues/4945>`_
+- Removed upload parameter from artifact create endpoint and converted upload commit to return 202.
+  `#5087 <https://pulp.plan.io/issues/5087>`_
+
+
+----
+
+
 3.0.0rc3 (2019-06-28)
 =====================
 
