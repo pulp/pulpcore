@@ -1,7 +1,5 @@
 #!/bin/bash
 
-export DJANGO_SETTINGS_MODULE=pulpcore.app.settings
-
 # Prevent pip-installed /usr/local/bin/pulp-content from getting run instead of
 # our /usr/bin/pulp script.
 #
