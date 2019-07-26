@@ -220,9 +220,23 @@ class RepositoryVersionDistributionSerializer(BaseDistributionSerializer):
     def validate(self, data):
         super().validate(data)
 
-        if 'repository' in data and 'repository_version' in data:
+        repository_in_data = 'repository' in data
+        repository_version_in_data = 'repository_version' in data
+        repository_in_instance = self.instance.repository if self.instance else None
+        repository_version_in_instance = self.instance.repository_version if self.instance else None
+
+        if repository_in_data and repository_version_in_data:
+            error = True
+        elif repository_in_data and repository_version_in_instance:
+            error = True
+        elif repository_in_instance and repository_version_in_data:
+            error = True
+        else:
+            error = False
+
+        if error:
             msg = _("The attributes 'repository' and 'repository_version' must be used"
-                    "exclusively.")
+                    " exclusively.")
             raise serializers.ValidationError(msg)
 
         return data
