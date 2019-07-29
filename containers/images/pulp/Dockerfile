@@ -25,6 +25,8 @@ ENV DJANGO_SETTINGS_MODULE=pulpcore.app.settings
 #
 # libxcrypt-compat is needed by psycopg2-binary from PyPI
 #
+# python3-psycopg2 is installed by ansible-pulp
+#
 # glibc-langpack-en is needed to provide the en_US.UTF-8 locale, which Pulp
 # seems to need.
 #
@@ -37,6 +39,7 @@ ENV DJANGO_SETTINGS_MODULE=pulpcore.app.settings
 RUN		dnf -y update && \
 		dnf -y install wget git && \
 		dnf -y install libxcrypt-compat && \
+		dnf -y install python3-psycopg2 && \
 		dnf -y install glibc-langpack-en && \
 		dnf -y install @c-development mariadb-devel python3-devel && \
 		dnf -y install gcc make cmake bzip2-devel expat-devel file-devel glib2-devel libcurl-devel libmodulemd-devel libxml2-devel python3-devel python3-libmodulemd rpm-devel openssl-devel sqlite-devel xz-devel zchunk-devel zlib-devel && \
