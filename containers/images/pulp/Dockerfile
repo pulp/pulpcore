@@ -13,11 +13,6 @@ ENV LC_ALL=en_US.UTF-8
 ENV PYTHONUNBUFFERED=0
 ENV DJANGO_SETTINGS_MODULE=pulpcore.app.settings
 
-# mariadb_devel needed to avoid error installing pulpcore[mysql] (post-rc1)
-# otherwise, `mysql_config` is not found
-# It also needs gcc at least, so we install the dev tools package group.
-# And it needs Python.h
-#
 # The Fedora 30 image already has tsflags=nodocs set in dnf.conf
 # It already has pip
 #
@@ -41,7 +36,7 @@ RUN		dnf -y update && \
 		dnf -y install libxcrypt-compat && \
 		dnf -y install python3-psycopg2 && \
 		dnf -y install glibc-langpack-en && \
-		dnf -y install @c-development mariadb-devel python3-devel && \
+		dnf -y install @c-development python3-devel && \
 		dnf -y install gcc make cmake bzip2-devel expat-devel file-devel glib2-devel libcurl-devel libmodulemd-devel libxml2-devel python3-devel python3-libmodulemd rpm-devel openssl-devel sqlite-devel xz-devel zchunk-devel zlib-devel && \
 		dnf clean all
 
@@ -58,7 +53,6 @@ RUN pip install gunicorn
 RUN pip install git+https://github.com/pulp/pulpcore.git
 RUN pip install git+https://github.com/pulp/pulpcore-plugin.git
 RUN pip install git+https://github.com/pulp/pulpcore.git#egg=pulpcore[postgres]
-RUN pip install git+https://github.com/pulp/pulpcore.git#egg=pulpcore[mysql]
 RUN pip install $PLUGINS
 
 RUN mkdir -p /usr/local/lib/python3.7/site-packages/pulpcore/app/migrations
