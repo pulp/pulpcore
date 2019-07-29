@@ -105,3 +105,17 @@ standard repositories, i.e. :data:`RPM_SIGNED_FIXTURE_URL` and
 :data:`RPM_UNSIGNED_FIXTURE_URL`.  This matches the format output by the
 "content_summary" field on "../repositories/../versions/../".
 """
+
+ANSIBLE_GALAXY_URL = "https://galaxy.ansible.com/api/v1/roles/"
+
+NAMESPACE_ANSIBLE = "?namespace__name=ansible"
+
+ANSIBLE_FIXTURE_URL = urljoin(ANSIBLE_GALAXY_URL, NAMESPACE_ANSIBLE)
+
+ANSIBLE_GALAXY_COLLECTION_URL = "https://galaxy-dev.ansible.com"
+
+ANSIBLE_COLLECTION_REMOTE_PATH = urljoin(BASE_REMOTE_PATH, "ansible/collection/")
+
+COLLECTION_WHITELIST = "testing.ansible_testing_content"
+
+ANSIBLE_COLLECTION_FIXTURE_SUMMARY = {'ansible.collection_version': 1}

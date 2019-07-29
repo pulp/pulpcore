@@ -22,7 +22,12 @@ from pulpcore.tests.functional.api.using_plugin.constants import (
     RPM_FIXTURE_SUMMARY,
     RPM_REMOTE_PATH,
     RPM_UNSIGNED_FIXTURE_URL,
+    ANSIBLE_COLLECTION_FIXTURE_SUMMARY,
+    ANSIBLE_COLLECTION_REMOTE_PATH,
+    ANSIBLE_GALAXY_COLLECTION_URL,
+    COLLECTION_WHITELIST,
 )
+from pulpcore.tests.functional.api.using_plugin.utils import gen_ansible_remote
 from pulpcore.tests.functional.api.using_plugin.utils import set_up_module  # noqa
 
 
@@ -35,7 +40,7 @@ def setUpModule():
     refer :meth:`pulpcore.tests.functional.api.using_plugin.utils.set_up_module`
     """
     set_up_module()
-    require_pulp_plugins({'pulp_rpm'}, SkipTest)
+    require_pulp_plugins({'pulp_rpm', 'pulp_ansible'}, SkipTest)
 
 
 class SyncMultiplePlugins(unittest.TestCase):
@@ -108,4 +113,67 @@ class SyncMultiplePlugins(unittest.TestCase):
         self.assertDictEqual(
             get_removed_content_summary(repo),
             RPM_FIXTURE_SUMMARY
+        )
+
+    def test_ansible_mirror_sync(self):
+        """Sync multiple plugin into the same repo with mirror as `True`.
+
+        This test targets the following issue: 5167
+
+        * `<https://pulp.plan.io/issues/5167>`_
+
+        This test does the following:
+
+        1. Create a repo.
+        2. Create two remotes
+            a. File remote
+            b. Ansible Collection remote
+        3. Sync the repo with File remote.
+        4. Sync the repo with Ansible Collection remote with ``Mirror=True``.
+        5. Verify whether the content in the latest version of the repo
+           has only Ansible Collection content and File content is deleted.
+        """
+        # Step 1
+        repo = self.client.post(REPO_PATH, gen_repo())
+        self.addCleanup(self.client.delete, repo['_href'])
+
+        # Step 2
+        file_remote = self.client.post(
+            FILE_REMOTE_PATH,
+            gen_remote(url=FILE_FIXTURE_MANIFEST_URL)
+        )
+        self.addCleanup(self.client.delete, file_remote['_href'])
+
+        ansible_collection_remote = self.client.post(
+            ANSIBLE_COLLECTION_REMOTE_PATH,
+            gen_ansible_remote(url=ANSIBLE_GALAXY_COLLECTION_URL, whitelist=COLLECTION_WHITELIST)
+        )
+        self.addCleanup(self.client.delete, ansible_collection_remote['_href'])
+
+        # Step 3
+        sync(self.cfg, file_remote, repo)
+        repo = self.client.get(repo['_href'])
+        self.assertIsNotNone(repo['_latest_version_href'])
+        self.assertDictEqual(
+            get_added_content_summary(repo),
+            FILE_FIXTURE_SUMMARY
+        )
+
+        # Step 4
+        sync(self.cfg, ansible_collection_remote, repo, mirror=True)
+        repo = self.client.get(repo['_href'])
+        self.assertIsNotNone(repo['_latest_version_href'])
+        self.assertDictEqual(
+            get_added_content_summary(repo),
+            ANSIBLE_COLLECTION_FIXTURE_SUMMARY
+        )
+
+        # Step 5
+        self.assertDictEqual(
+            get_content_summary(repo),
+            ANSIBLE_COLLECTION_FIXTURE_SUMMARY
+        )
+        self.assertDictEqual(
+            get_removed_content_summary(repo),
+            FILE_FIXTURE_SUMMARY
         )

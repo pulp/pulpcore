@@ -12,6 +12,7 @@ from pulpcore.tests.functional.api.using_plugin.constants import (
     FILE_FIXTURE_MANIFEST_URL,
     FILE_PUBLICATION_PATH,
     FILE_REMOTE_PATH,
+    ANSIBLE_FIXTURE_URL
 )
 
 skip_if = partial(selectors.skip_if, exc=SkipTest)
@@ -63,6 +64,14 @@ def gen_file_remote(url=None, **kwargs):
     if url is None:
         url = FILE_FIXTURE_MANIFEST_URL
 
+    return gen_remote(url, **kwargs)
+
+
+def gen_ansible_remote(url=ANSIBLE_FIXTURE_URL, **kwargs):
+    """Return a semi-random dict for use in creating a ansible Remote.
+
+    :param url: The URL of an external content source.
+    """
     return gen_remote(url, **kwargs)
 
 
