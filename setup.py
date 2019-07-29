@@ -7,7 +7,7 @@ requirements = [
     'coreapi',
     'Django~=2.2',  # LTS version, switch only if we have a compelling reason to
     'django-filter',
-    'djangorestframework<3.10',
+    'djangorestframework',
     'djangorestframework-queryfields',
     'drf-nested-routers',
     'drf-yasg',

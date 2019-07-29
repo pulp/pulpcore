@@ -255,10 +255,11 @@ class PulpAutoSchema(SwaggerAutoSchema):
         produces = self.get_produces()
 
         multipart = ['multipart/form-data', 'application/x-www-form-urlencoded']
-        if 'file' in [param['type'] for param in self.get_request_body_parameters(multipart)]:
-            # automatically set the media type to form data if there's a file
-            # needed due to https://github.com/axnsan12/drf-yasg/issues/386
-            consumes = multipart
+        if self.method != 'GET':
+            if 'file' in [param['type'] for param in self.get_request_body_parameters(multipart)]:
+                # automatically set the media type to form data if there's a file
+                # needed due to https://github.com/axnsan12/drf-yasg/issues/386
+                consumes = multipart
 
         body = self.get_request_body_parameters(consumes)
         query = self.get_query_parameters()
