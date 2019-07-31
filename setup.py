@@ -4,21 +4,21 @@ with open('README.md') as f:
     long_description = f.read()
 
 requirements = [
-    'coreapi',
-    'Django~=2.2',  # LTS version, switch only if we have a compelling reason to
-    'django-filter',
-    'djangorestframework',
-    'djangorestframework-queryfields',
-    'drf-nested-routers',
-    'drf-yasg',
-    'gunicorn',
+    'coreapi~=2.3.3',
+    'Django~=2.2.3',  # LTS version, switch only if we have a compelling reason to
+    'django-filter~=2.2.0',
+    'djangorestframework~=3.10.2',
+    'djangorestframework-queryfields~=1.0.0',
+    'drf-nested-routers~=0.91.0',
+    'drf-yasg~=1.16.1',
+    'gunicorn~=19.9.0',
     'packaging',  # until drf-yasg 1.16.2 is out https://github.com/axnsan12/drf-yasg/issues/412
-    'PyYAML',
-    'rq~=1.0',
-    'redis<3.2.0',
-    'setuptools',
-    'dynaconf~=2.0',
-    'whitenoise',
+    'PyYAML~=5.1.1',
+    'rq~=1.1.0',
+    'redis~=3.1.0',
+    'setuptools~=41.0.1',
+    'dynaconf~=2.0.3',
+    'whitenoise~=4.1.3',
 ]
 
 setup(
