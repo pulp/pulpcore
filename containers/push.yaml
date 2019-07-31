@@ -5,19 +5,12 @@
   vars_files:
     - vars/defaults.yaml
   tasks:
-    - name: 'Check for podman'
-      command: 'which podman'
-      register: podman_exists
-      ignore_errors: true
-
-    - set_fact:
-        container_cli: 'podman'
-      when: podman_exists | success
+    - import_tasks: common_tasks.yaml
 
     - name: 'Tag images'
-      command: "{{ container_cli }} tag {{ item.key }}:{{ tag }} {{ registry }}/{{ project }}/{{ item.key }}:{{ tag }}"
+      command: "{{ container_cli }} tag {{ item.value.image_name }}:{{ item.value.tag }} {{ registry }}/{{ project }}/{{ item.value.image_name }}:{{ item.value.tag }}"
       with_dict: "{{ images }}"
 
     - name: 'Push images'
-      command: "{{ container_cli }} push {{ registry }}/{{ project }}/{{ item.key }}:{{ tag }}"
+      command: "{{ container_cli }} push {{ registry }}/{{ project }}/{{ item.value.image_name }}:{{ item.value.tag }}"
       with_dict: "{{ images }}"

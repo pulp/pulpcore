@@ -1,0 +1,19 @@
+---
+- name: 'Check for podman'
+  command: 'which podman'
+  register: podman_exists
+  ignore_errors: true
+
+- set_fact:
+    container_cli: 'podman'
+  when: podman_exists | success
+
+- name: Check if vars.yaml was created by the user
+  stat:
+    path: vars/vars.yaml
+  register: varsyaml
+
+- name: include vars.yaml
+  include_vars:
+    vars.yaml
+  when: varsyaml.stat.exists
