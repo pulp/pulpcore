@@ -5,7 +5,7 @@ django-filter
 drf-nested-routers
 plantuml
 pyyaml
-sphinx<1.8.0
+sphinx
 sphinx-rtd-theme
 sphinxcontrib-openapi
 towncrier
