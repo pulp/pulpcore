@@ -19,11 +19,11 @@ The variable "images" can be overriden. It includes specifying the plugins per i
 
 The default value (yaml converted to json):
 
-    ansible-playbook build.yaml -e '{"images":[{"pulpcore":{"plugins":["pulpcore-plugin"]}},{"pulp":{"plugins":["pulp-file","pulp-ansible","pulp-cookbook","pulp-docker","pulp-maven","pulp-python"]}}]}'
+    ansible-playbook build.yaml -e '{"images":[{"pulpcore":{"plugins":["pulpcore-plugin"]}},{"pulp":{"plugins":["pulp-file","pulp-ansible","pulp-cookbook","pulp-docker","pulp-maven","pulp-python","pulp-rpm"]}}]}'
 
 The default value, but with nightly versions of plugins instead:
 
-    ansible-playbook build.yaml -e '{"images":[{"pulpcore":{"plugins":["git+https://github.com/pulp/pulpcore-plugin.git"]}},{"pulp":{"plugins":["git+https://github.com/pulp/pulp_file.git","git+https://github.com/pulp/pulp_ansible.git","git+https://github.com/gmbnomis/pulp_cookbook.git","git+https://github.com/pulp/pulp_docker.git","git+https://github.com/pulp/pulp_maven.git","git+https://github.com/pulp/pulp_python.git"]}}]}'
+    ansible-playbook build.yaml -e '{"images":[{"pulpcore":{"plugins":["git+https://github.com/pulp/pulpcore-plugin.git"]}},{"pulp":{"plugins":["git+https://github.com/pulp/pulp_file.git","git+https://github.com/pulp/pulp_ansible.git","git+https://github.com/gmbnomis/pulp_cookbook.git","git+https://github.com/pulp/pulp_docker.git","git+https://github.com/pulp/pulp_maven.git","git+https://github.com/pulp/pulp_python.git","git+https://github.com/pulp/pulp_rpm.git"]}}]}'
 
 ## Push Image to Registry
 

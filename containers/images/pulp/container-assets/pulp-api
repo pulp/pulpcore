@@ -1,18 +1,20 @@
-#!/bin/bash
+#!/bin/bash -x
 
 /usr/bin/wait_on_postgres.py
 
 # Generating /var/lib/pulp/static at runtime rather than at container build time
 # facilitates all of /var/lib/pulp being a separate volume.
-scl enable rh-python36 "django-admin collectstatic --noinput"
+django-admin collectstatic --noinput
 
-#TODO: Determine list of installed plugins by inspecting image contents
-scl enable rh-python36 "django-admin makemigrations file ansible cookbook docker maven python"
-scl enable rh-python36 "django-admin migrate --noinput"
-scl enable rh-python36 "django-admin migrate auth --noinput"
+# Get list of installed plugins via pip
+# Assumes they are all named like "pulp-file" -> "file", with no 2nd dash.
+PLUGINS=$(pip list | awk -F '[[:space:]]+|[-]' '/pulp-/{printf $2 " " }')
+django-admin makemigrations $PLUGINS
+django-admin migrate --noinput
+django-admin migrate auth --noinput
 
 if [ -n "${PULP_ADMIN_PASSWORD}" ]; then
-    scl enable rh-python36 "django-admin reset-admin-password --password '${PULP_ADMIN_PASSWORD}'"
+    django-admin reset-admin-password --password "${PULP_ADMIN_PASSWORD}"
 fi
 
-exec scl enable rh-python36 "gunicorn -b 0.0.0.0:24817 pulpcore.app.wsgi:application"
+exec gunicorn -b 0.0.0.0:24817 pulpcore.app.wsgi:application

@@ -3,8 +3,8 @@
 /usr/bin/wait_on_postgres.py
 /usr/bin/wait_on_database_migrations.sh
 
-exec scl enable rh-python36 "gunicorn pulpcore.content:server \
+exec gunicorn pulpcore.content:server \
 --bind 0.0.0.0:24816 \
 --worker-class 'aiohttp.GunicornWebWorker' \
 -w 2 \
---access-logfile -"
+--access-logfile -
