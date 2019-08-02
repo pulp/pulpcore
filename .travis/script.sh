@@ -106,6 +106,9 @@ show_logs_and_return_non_zero() {
 }
 export -f show_logs_and_return_non_zero
 
+# Create the fixtures for the tests
+$TRAVIS_BUILD_DIR/.travis/create_fixtures.sh
+
 # Stop services started by ansible roles
 sudo systemctl stop pulp-worker* pulp-resource-manager pulp-content-app pulp-api
 
