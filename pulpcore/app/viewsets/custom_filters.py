@@ -6,7 +6,7 @@ from urllib.parse import urlparse
 from uuid import UUID
 
 from django.urls import Resolver404, resolve
-from django_filters import DateTimeFilter, Filter
+from django_filters import BaseInFilter, CharFilter, DateTimeFilter, Filter
 from django_filters.fields import IsoDateTimeField
 from rest_framework import serializers
 
@@ -190,3 +190,7 @@ class ContentRemovedRepositoryVersionFilter(RepoVersionHrefFilter):
 
         repo_version = self.get_repository_version(value)
         return qs.filter(pk__in=repo_version.removed())
+
+
+class CharInFilter(BaseInFilter, CharFilter):
+    pass
