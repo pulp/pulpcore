@@ -1,6 +1,7 @@
 # coding=utf-8
 """Utilities for pulpcore API tests that require the use of a plugin."""
 from functools import partial
+from time import sleep
 from unittest import SkipTest
 
 from pulp_smash import api, selectors
@@ -46,6 +47,7 @@ def populate_pulp(cfg, url=None):
     try:
         remote.update(client.post(FILE_REMOTE_PATH, gen_remote(url)))
         repo.update(client.post(REPO_PATH, gen_repo()))
+        sleep(1)  # hack to throttle requests to fedorapeople.org. remove me ASAP.
         sync(cfg, remote, repo)
     finally:
         if remote:

@@ -915,6 +915,7 @@ class FilterArtifactsTestCase(unittest.TestCase):
         self.addCleanup(self.client.delete, remote['_href'])
         repo = self.client.post(REPO_PATH, gen_repo())
         self.addCleanup(self.client.delete, repo['_href'])
+        sleep(1)  # hack to throttle requests to fedorapeople.org. remove me ASAP.
         sync(self.cfg, remote, repo)
         repo = self.client.get(repo['_href'])
         artifacts = self.client.get(
