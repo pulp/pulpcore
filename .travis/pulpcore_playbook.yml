@@ -16,6 +16,7 @@
         source_dir: "/home/travis/build/pulp/pulp-certguard"
     ansible_python_interpreter: '/opt/pyenv/shims/python3'
     pulp_user: 'travis'
+    pulp_group: 'travis'
     developer_user: 'travis'
     pulp_install_db: false
     pulp_preq_packages: []
