@@ -3,8 +3,13 @@
 import unittest
 
 from pulp_smash import api, config, utils
-from pulp_smash.pulp3.constants import P3_TASK_END_STATES, REPO_PATH, TASKS_PATH
-from pulp_smash.pulp3.utils import gen_repo
+from pulp_smash.pulp3.constants import (
+    BASE_DISTRIBUTION_PATH,
+    P3_TASK_END_STATES,
+    REPO_PATH,
+    TASKS_PATH
+)
+from pulp_smash.pulp3.utils import gen_repo, gen_distribution
 from requests import HTTPError
 
 from pulpcore.tests.functional.utils import set_up_module as setUpModule  # noqa:F401
@@ -145,3 +150,49 @@ class TasksTestCase(unittest.TestCase):
     def filter_tasks(self, criteria):
         """Filter tasks based on the provided criteria."""
         return self.client.get(TASKS_PATH, params=criteria)
+
+
+class FilterTaskCreatedResourcesTestCase(unittest.TestCase):
+    """Perform filtering over task resources.
+
+    This test targets the following issue:
+
+    * `Pulp #5180 <https://pulp.plan.io/issues/5180>`_
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        """Create class-wide variables."""
+        cls.client = api.Client(config.get_config(), api.json_handler)
+        cls.task = {}
+
+    @classmethod
+    def tearDownClass(cls):
+        """Delete the created task and related resources."""
+        cls.client.delete(cls.task['_href'])
+
+        created_distribution = cls.task['created_resources'][0]
+        response = cls.client.delete(created_distribution)
+
+        cls.client.delete(response['task'])
+
+    def test_01_create_task_with_reserved_resources(self):
+        """Create a task that will create a new distribution."""
+        distribution_path = '{}file/file/'.format(BASE_DISTRIBUTION_PATH)
+        response = self.client.post(distribution_path, gen_distribution())
+
+        task = self.client.get(response['task'])
+        self.task.update(task)
+
+    @skip_if(bool, 'task', False)
+    def test_02_read_fields_created_resources_only(self):
+        """Read created resources from the requested fields."""
+        task = self.client.get(
+            self.task['_href'],
+            params={'fields': 'created_resources'}
+        )
+        self.assertEqual(
+            self.task['created_resources'],
+            task['created_resources'],
+            task
+        )
