@@ -63,6 +63,8 @@ def gen_file_remote(url=None, **kwargs):
     if url is None:
         url = FILE_FIXTURE_MANIFEST_URL
 
+    kwargs['download_concurrency'] = 2
+
     return gen_remote(url, **kwargs)
 
 
