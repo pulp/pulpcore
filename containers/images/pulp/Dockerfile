@@ -1,6 +1,8 @@
 FROM fedora:30
 
-ARG PLUGINS=""
+ARG PULPCORE
+ARG PULPCORE_PLUGIN
+ARG PLUGINS
 
 # https://superuser.com/questions/959380/how-do-i-install-generate-all-locales-on-fedora
 # This may not be necessary anymore because Fedora 30, unlike CentOS 7, has
@@ -50,10 +52,10 @@ RUN ln -s /usr/bin/pip3 /usr/local/bin/pip
 RUN mkdir -p /etc/pulp
 
 RUN pip install gunicorn
-RUN pip install git+https://github.com/pulp/pulpcore.git
-RUN pip install git+https://github.com/pulp/pulpcore-plugin.git
-RUN pip install git+https://github.com/pulp/pulpcore.git#egg=pulpcore[postgres]
-RUN pip install $PLUGINS
+RUN pip install $PULPCORE
+RUN pip install $PULPCORE_PLUGIN
+RUN pip install ${PULPCORE}[postgres]
+RUN test -z "$PLUGINS" || pip install $PLUGINS
 
 RUN mkdir -p /usr/local/lib/python3.7/site-packages/pulpcore/app/migrations
 RUN mkdir -p /usr/local/lib/python3.7/site-packages/pulp_file/app/migrations

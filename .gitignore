@@ -44,3 +44,6 @@ Vagrantfile
 docs/_build
 docs/_diagrams
 docs/api.yaml
+
+# Overriden variables
+containers/vars/vars.yaml
