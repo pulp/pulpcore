@@ -7,6 +7,8 @@
 #
 # For more info visit https://github.com/pulp/plugin_template
 
+set -euv
+
 pip install twine
 
 django-admin runserver 24817 >> ~/django_runserver.log 2>&1 &

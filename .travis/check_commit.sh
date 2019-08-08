@@ -7,6 +7,8 @@
 #
 # For more info visit https://github.com/pulp/plugin_template
 
+set -euv
+
 # skip this check for everything but PRs
 if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then
   exit 0
@@ -18,7 +20,7 @@ elif [ "$TRAVIS_COMMIT" != "" ]; then
   RANGE=$TRAVIS_COMMIT
 fi
 
-# Travis sends the ranges with 3 dots. Git only wants one.
+# Travis sends the ranges with 3 dots. Git only wants two.
 if [[ "$RANGE" == *...* ]]; then
   RANGE=`echo $TRAVIS_COMMIT_RANGE | sed 's/\.\.\./../'`
 else

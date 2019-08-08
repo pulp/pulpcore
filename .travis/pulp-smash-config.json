@@ -1,6 +1,6 @@
 {
     "pulp": {
-        "auth": ["admin", "admin"],
+        "auth": ["admin", "password"],
         "selinux enabled": false,
         "version": "3"
     },
@@ -13,7 +13,7 @@
                 "pulp resource manager": {},
                 "pulp workers": {},
                 "redis": {},
-                "shell": {"transport": "local"}
+                "shell": {"transport": "kubectl"}
             }
         }
     ]

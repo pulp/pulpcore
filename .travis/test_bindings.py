@@ -85,7 +85,7 @@ def upload_file_in_chunks(file_path):
 # Configure HTTP basic authorization: basic
 configuration = Configuration()
 configuration.username = 'admin'
-configuration.password = 'admin'
+configuration.password = 'password'
 configuration.safe_chars_for_path_param = '/'
 
 core_client = CoreApiClient(configuration)
