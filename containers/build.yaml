@@ -8,10 +8,17 @@
   tasks:
     - import_tasks: common_tasks.yaml
 
+    - name: Generate per-image Dockerfiles from the Dockerfile template
+      template:
+        src: images/pulp/Dockerfile.j2
+        dest: "images/pulp/Dockerfile.{{ item.key }}"
+      with_dict: "{{ images }}"
+
     - name: 'Build images'
-      command: "{{ container_cli }} build --network host --no-cache --build-arg VERSION={{ item.value.tag }} --build-arg PULPCORE={{ item.value.pulpcore | default('pulpcore') }} --build-arg PULPCORE_PLUGIN={{ item.value.pulpcore_plugin | default('pulpcore-plugin') }} --build-arg PLUGINS=\"{{ item.value.plugins | default([]) | join(' ') }}\" -t {{ item.value.image_name }}:{{ item.value.tag }} ."
-      args:
-        chdir: images/pulp
+      # We build from the ../.. (parent dir of pulpcore git repo) Docker build
+      # "context" so that repos like pulpcore-plugin are accessible to Docker
+      # build. So that PR branches can be used via relative paths.
+      command: "{{ container_cli }} build --network host --no-cache -t {{ item.value.image_name }}:{{ item.value.tag }} -f images/pulp/Dockerfile.{{ item.key }} ../.."
       with_dict: "{{ images }}"
 
     - name: 'Tag images'
