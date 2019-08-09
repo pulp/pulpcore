@@ -88,6 +88,7 @@ RUN pip install {{ plugin }}
 {% endif %}
 
 RUN mkdir -p /usr/local/lib/python3.7/site-packages/pulpcore/app/migrations
+RUN mkdir -p /usr/local/lib/python3.7/site-packages/pulp_certguard/app/migrations
 RUN mkdir -p /usr/local/lib/python3.7/site-packages/pulp_file/app/migrations
 RUN mkdir -p /usr/local/lib/python3.7/site-packages/pulp_ansible/app/migrations
 RUN mkdir -p /usr/local/lib/python3.7/site-packages/pulp_cookbook/app/migrations
