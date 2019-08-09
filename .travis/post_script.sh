@@ -1,33 +1,40 @@
 #!/bin/bash
 
+# Travis doesn't always name it "pulpcore"
+PULPCORE_PATH=./$(basename $PWD)
+
 cd containers
 
-# FIXME: This won't work  because not only is it outside the Docker build env,
-# it's outside of the build context (the pwd from which `docker build` is run.)
-# We need to find/develop a Dockerfile COPY solution for this.
-: '
+# If we are on a PR
+if [ -n "$TRAVIS_PULL_REQUEST_BRANCH" ]; then
+  TAG=$TRAVIS_PULL_REQUEST_BRANCH
+# For push builds, tag builds, and hopefully cron builds
+elif [ -n "$TRAVIS_BRANCH" ]; then
+  TAG=$TRAVIS_BRANCH
+  if [[ "$IMAGE_KEY" = "master" ]]; then
+    TAG=latest
+  fi
+else
+  # Fallback
+  TAG=$(git rev-parse --abbrev-ref HEAD)
+fi
+# Ansible var names/keys cannot have dashes
+TAG=$(echo $TAG | tr '-' '_')
+
 if [ -n "$PULP_PLUGIN_PR_NUMBER" ]; then
-  PULPCORE_PLUGIN_PATH=../../pulpcore-plugin
+  PULPCORE_PLUGIN_PATH=./pulpcore-plugin
 else
   PULPCORE_PLUGIN_PATH=git+https://github.com/pulp/pulpcore-plugin.git
 fi
-cat > vars/vars.yaml << VARSYAML
----
-images:
-  - pulpcore_$(git rev-parse --abbrev-ref HEAD | tr '-' '_'):
-      image_name: pulpcore
-      tag: $(git rev-parse --abbrev-ref HEAD)
-      pulpcore: ..
-      pulpcore_plugin: $PULPCORE_PLUGIN_PATH
-VARSYAML
-'
 
 cat > vars/vars.yaml << VARSYAML
 ---
 images:
-  - pulpcore_$(git rev-parse --abbrev-ref HEAD | tr '-' '_'):
+  - pulpcore_$TAG:
       image_name: pulpcore
-      tag: $(git rev-parse --abbrev-ref HEAD)
+      tag: $TAG
+      pulpcore: $PULPCORE_PATH
+      pulpcore_plugin: $PULPCORE_PLUGIN_PATH
 VARSYAML
 
 ansible-playbook build.yaml

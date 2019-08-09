@@ -18,12 +18,20 @@
 #           appended to the end, so for git URLs, keep #egg=pulpcore on the end.
 #           Defaults to "pulpcore" (latest stable from PyPi) via playbook logic.
 #           To keep the default, leave undefined, do not let it be a null value.
+#           For paths on disk, specify paths relative to the parent dir of
+#           "pulpcore", beginning with "./", such as "./pulpcore".
 # pulpcore-plugin: The pip install string for pulpcore-plugin.
 #                  Defaults to "pulpcore-plugin" (latest stable from PyPi) via
 #                  playbook logic. To keep the default, leave undefined, do not
 #                  let it be a null value.
+#                  For paths on disk, specify paths relative to the parent dir
+#                  of "pulpcore", beginning with "./", such as
+#                  "./pulpcore-plugin".
 # plugins: List of pip install strings for plugins.
 #          To specify no plugins, leave undefined, do not let it be a null value.
+#          For paths on disk, specify paths relative to the parent dir
+#          of "pulpcore", beginning with "./", such as
+#          "./pulp_rpm".
 #
 # registry: The image registry to push to, and to tag for.
 # project: The project (username/organization) on the registry to push to,

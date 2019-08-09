@@ -47,3 +47,6 @@ docs/api.yaml
 
 # Overriden variables
 containers/vars/vars.yaml
+
+# Generated Dockerfiles
+containers/images/pulp/Dockerfile.*
