@@ -1,7 +1,9 @@
+from gettext import gettext as _
 import uuid
 
 from django.db import models
 from django.db.models import options
+from django.db.models.base import ModelBase
 
 
 class Model(models.Model):
@@ -35,7 +37,24 @@ class Model(models.Model):
         return str(self)
 
 
-class MasterModel(Model):
+class MasterModelMeta(ModelBase):
+    def __new__(cls, name, bases, attrs, **kwargs):
+        """Override __new__ to set the default_related_name."""
+        if Model not in bases and MasterModel not in bases:  # Only affects "Detail" models.
+            meta = attrs.get("Meta")
+            default_related_name = getattr(
+                meta, "default_related_name", None)
+            abstract = getattr(meta, "abstract", None)
+
+            if not default_related_name and not abstract:
+                raise Exception(_("The 'default_related_name' option has not been set for "
+                                  "{class_name}").format(class_name=name))
+
+        new_class = super().__new__(cls, name, bases, attrs, **kwargs)
+        return new_class
+
+
+class MasterModel(Model, metaclass=MasterModelMeta):
     """Base model for the "Master" model in a "Master-Detail" relationship.
 
     Provides methods for casting down to detail types, back up to the master type,
