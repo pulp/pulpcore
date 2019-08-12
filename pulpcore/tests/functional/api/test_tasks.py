@@ -7,7 +7,7 @@ from pulp_smash.pulp3.constants import (
     BASE_DISTRIBUTION_PATH,
     P3_TASK_END_STATES,
     REPO_PATH,
-    TASKS_PATH
+    TASKS_PATH,
 )
 from pulp_smash.pulp3.utils import gen_repo, gen_distribution
 from requests import HTTPError
@@ -58,8 +58,7 @@ class TasksTestCase(unittest.TestCase):
         """Read a task by its _href providing specific fields."""
         fields = ('_href', 'state', 'worker')
         task = self.client.get(
-            self.task['_href'],
-            params={'fields': ','.join(fields)}
+            self.task['_href'], params={'fields': ','.join(fields)}
         )
         self.assertEqual(sorted(fields), sorted(task.keys()))
 
@@ -74,10 +73,7 @@ class TasksTestCase(unittest.TestCase):
     @skip_if(bool, 'task', False)
     def test_02_read_task_with_minimal_fields(self):
         """Read a task by its href filtering minimal fields."""
-        task = self.client.get(
-            self.task['_href'],
-            params={'minimal': True}
-        )
+        task = self.client.get(self.task['_href'], params={'minimal': True})
         response_fields = task.keys()
         self.assertNotIn('progress_reports', response_fields)
         self.assertNotIn('spawned_tasks', response_fields)
@@ -99,10 +95,9 @@ class TasksTestCase(unittest.TestCase):
     def test_02_read_invalid_date(self):
         """Read a task by an invalid date."""
         with self.assertRaises(HTTPError):
-            self.filter_tasks({
-                'finished_at': utils.uuid4(),
-                'started_at': utils.uuid4()
-            })
+            self.filter_tasks(
+                {'finished_at': utils.uuid4(), 'started_at': utils.uuid4()}
+            )
 
     @skip_if(bool, 'task', False)
     def test_02_read_valid_date(self):
@@ -160,39 +155,27 @@ class FilterTaskCreatedResourcesTestCase(unittest.TestCase):
     * `Pulp #5180 <https://pulp.plan.io/issues/5180>`_
     """
 
-    @classmethod
-    def setUpClass(cls):
-        """Create class-wide variables."""
-        cls.client = api.Client(config.get_config(), api.json_handler)
-        cls.task = {}
-
-    @classmethod
-    def tearDownClass(cls):
-        """Delete the created task and related resources."""
-        cls.client.delete(cls.task['_href'])
-
-        created_distribution = cls.task['created_resources'][0]
-        response = cls.client.delete(created_distribution)
-
-        cls.client.delete(response['task'])
-
-    def test_01_create_task_with_reserved_resources(self):
-        """Create a task that will create a new distribution."""
-        distribution_path = '{}file/file/'.format(BASE_DISTRIBUTION_PATH)
-        response = self.client.post(distribution_path, gen_distribution())
-
-        task = self.client.get(response['task'])
-        self.task.update(task)
-
-    @skip_if(bool, 'task', False)
-    def test_02_read_fields_created_resources_only(self):
+    def test_read_fields_created_resources_only(self):
         """Read created resources from the requested fields."""
-        task = self.client.get(
-            self.task['_href'],
-            params={'fields': 'created_resources'}
+        client = api.Client(config.get_config(), api.page_handler)
+        distribution_path = '{}file/file/'.format(BASE_DISTRIBUTION_PATH)
+        response = client.post(distribution_path, gen_distribution())
+
+        task = client.get(response['task'])
+        self.addCleanup(client.delete, task['created_resources'][0])
+
+        filtered_task = client.get(
+            task['_href'], params={'fields': 'created_resources'}
         )
+
         self.assertEqual(
-            self.task['created_resources'],
+            len(filtered_task),
+            1,
+            filtered_task
+        )
+
+        self.assertEqual(
             task['created_resources'],
-            task
+            filtered_task['created_resources'],
+            filtered_task,
         )
