@@ -192,30 +192,11 @@ class ExporterSerializer(MasterModelSerializer):
         )
 
 
-class RepositoryVersionSerializer(ModelSerializer, NestedHyperlinkedModelSerializer):
-    _href = NestedIdentityField(
-        view_name='versions-detail',
-        lookup_field='number', parent_lookup_kwargs={'repository_pk': 'repository__pk'},
-    )
-    number = serializers.IntegerField(
-        read_only=True
-    )
-    base_version = NestedRelatedField(
-        required=False,
-        help_text=_('A repository version whose content was used as the initial set of content '
-                    'for this repository version'),
-        queryset=models.RepositoryVersion.objects.all(),
-        view_name='versions-detail',
-        lookup_field='number',
-        parent_lookup_kwargs={'repository_pk': 'repository__pk'},
-    )
-    content_summary = serializers.SerializerMethodField(
-        help_text=_('Various count summaries of the content in the version and the HREF to view '
-                    'them.'),
-        read_only=True,
-    )
-
-    def get_content_summary(self, obj):
+class ContentSummarySerializer(serializers.Serializer):
+    """
+    Serializer for the RepositoryVersion content summary
+    """
+    def to_representation(self, obj):
         """
         The summary of contained content.
 
@@ -234,7 +215,49 @@ class RepositoryVersionSerializer(ModelSerializer, NestedHyperlinkedModelSeriali
             count_type = count_detail.get_count_type_display()
             item_dict = {'count': count_detail.count, 'href': count_detail.content_href}
             to_return[count_type][count_detail.content_type] = item_dict
+
         return to_return
+
+    def to_internal_value(self, data):
+        """
+        Setting the internal value.
+        """
+        return {
+          self.added: data['added'],
+          self.removed: data['removed'],
+          self.present: data['present']
+        }
+
+    added = serializers.DictField(child=serializers.DictField())
+
+    removed = serializers.DictField(child=serializers.DictField())
+
+    present = serializers.DictField(child=serializers.DictField())
+
+
+class RepositoryVersionSerializer(ModelSerializer, NestedHyperlinkedModelSerializer):
+    _href = NestedIdentityField(
+        view_name='versions-detail',
+        lookup_field='number', parent_lookup_kwargs={'repository_pk': 'repository__pk'},
+    )
+    number = serializers.IntegerField(
+        read_only=True
+    )
+    base_version = NestedRelatedField(
+        required=False,
+        help_text=_('A repository version whose content was used as the initial set of content '
+                    'for this repository version'),
+        queryset=models.RepositoryVersion.objects.all(),
+        view_name='versions-detail',
+        lookup_field='number',
+        parent_lookup_kwargs={'repository_pk': 'repository__pk'},
+    )
+    content_summary = ContentSummarySerializer(
+        help_text=_('Various count summaries of the content in the version and the HREF to view '
+                    'them.'),
+        source="*",
+        read_only=True,
+    )
 
     class Meta:
         model = models.RepositoryVersion
