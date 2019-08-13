@@ -37,4 +37,4 @@ images:
       pulpcore_plugin: $PULPCORE_PLUGIN_PATH
 VARSYAML
 
-ansible-playbook build.yaml
+# ansible-playbook build.yaml
