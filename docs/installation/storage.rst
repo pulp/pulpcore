@@ -53,6 +53,6 @@ Configuring Pulp
 
   If you the system that hosts Pulp is running in AWS and has been configured with an
   `instance profile <https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_switch-role-ec2_instance-profiles.html>`
-  that provides access to the S3 bucketyou can omit the ``AWS_ACCESS_KEY_ID`` and
+  that provides access to the S3 bucket you can omit the ``AWS_ACCESS_KEY_ID`` and
   ``AWS_SECRET_ACCESS_KEY`` parameters as the underlying ``boto3`` library will pick them up
   automatically.
