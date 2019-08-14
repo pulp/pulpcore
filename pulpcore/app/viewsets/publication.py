@@ -86,4 +86,4 @@ class BaseDistributionViewSet(NamedModelViewSet,
 
     def async_reserved_resources(self, instance):
         """Return resource that locks all Distributions."""
-        return "/api/v3/distributions/"
+        return ["/api/v3/distributions/"]
