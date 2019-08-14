@@ -58,7 +58,8 @@ class TaskSerializer(ModelSerializer):
                     "task."),
         read_only=True
     )
-    error = serializers.JSONField(
+    error = serializers.DictField(
+        child=serializers.JSONField(),
         help_text=_("A JSON Object of a fatal error encountered during the execution of this "
                     "task."),
         read_only=True
