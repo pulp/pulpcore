@@ -16,7 +16,11 @@ from pulpcore.app.serializers import (
 )
 from pulpcore.app.viewsets import BaseFilterSet, NamedModelViewSet
 from pulpcore.app.viewsets.base import DATETIME_FILTER_OPTIONS, NAME_FILTER_OPTIONS
-from pulpcore.app.viewsets.custom_filters import HyperlinkRelatedFilter, IsoDateTimeFilter
+from pulpcore.app.viewsets.custom_filters import (
+    HyperlinkRelatedFilter,
+    IsoDateTimeFilter,
+    ReservedResourcesFilter,
+)
 from pulpcore.constants import TASK_INCOMPLETE_STATES
 from pulpcore.tasking.util import cancel as cancel_task
 
@@ -28,6 +32,7 @@ class TaskFilter(BaseFilterSet):
     started_at = IsoDateTimeFilter(field_name='started_at')
     finished_at = IsoDateTimeFilter(field_name='finished_at')
     parent = HyperlinkRelatedFilter()
+    reserved_resources_record = ReservedResourcesFilter()
 
     class Meta:
         model = Task
@@ -37,7 +42,8 @@ class TaskFilter(BaseFilterSet):
             'name': ['contains'],
             'started_at': DATETIME_FILTER_OPTIONS,
             'finished_at': DATETIME_FILTER_OPTIONS,
-            'parent': ['exact']
+            'parent': ['exact'],
+            'reserved_resources_record': ['exact']
         }
 
 

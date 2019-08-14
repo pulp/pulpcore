@@ -24,7 +24,14 @@ from .repository import (  # noqa
 
 from .status import ContentAppStatus  # noqa
 
-from .task import CreatedResource, ReservedResource, Task, TaskReservedResource, Worker  # noqa
+from .task import (  # noqa
+    CreatedResource,
+    ReservedResource,
+    ReservedResourceRecord,
+    Task,
+    TaskReservedResource,
+    Worker,
+)
 from .upload import (  # noqa
     Upload,
     UploadChunk,
