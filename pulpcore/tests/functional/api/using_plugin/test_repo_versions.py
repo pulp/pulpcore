@@ -11,6 +11,7 @@ from pulp_smash.pulp3.utils import (
     delete_orphans,
     delete_version,
     gen_repo,
+    gen_distribution,
     get_added_content,
     get_added_content_summary,
     get_artifact_paths,
@@ -27,6 +28,7 @@ from pulpcore.tests.functional.api.using_plugin.constants import (
     FILE2_FIXTURE_MANIFEST_URL,
     FILE_CONTENT_NAME,
     FILE_CONTENT_PATH,
+    FILE_DISTRIBUTION_PATH,
     FILE_FIXTURE_COUNT,
     FILE_FIXTURE_MANIFEST_URL,
     FILE_FIXTURE_SUMMARY,
@@ -922,3 +924,72 @@ class FilterArtifactsTestCase(unittest.TestCase):
             params={'repository_version': repo['_latest_version_href']}
         )
         self.assertEqual(len(artifacts), FILE_FIXTURE_COUNT, artifacts)
+
+
+class DeleteRepoVersionResourcesTestCase(unittest.TestCase):
+    """Test whether removing a repository version affects related resources.
+
+    Test whether removing a repository version will remove a related Publication.
+    Test whether removing a repository version a Distribution will not be removed.
+
+    This test targets the following issue:
+
+    `Pulp #5303 <https://pulp.plan.io/issues/5303>`_
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        """Create class-wide variables."""
+        cls.cfg = config.get_config()
+        cls.client = api.Client(cls.cfg)
+
+    def test_delete_publication(self):
+        """Publication is removed once the repository version is removed."""
+        repo = self.create_sync_repo(2)
+        version_href = choice(self.client.get(repo['_versions_href']))['_href']
+        publication = create_file_publication(self.cfg, repo, version_href)
+
+        # delete repo version used to create publication
+        self.client.delete(version_href)
+
+        with self.assertRaises(HTTPError) as ctx:
+            self.client.get(publication['_href'])
+
+        for key in ('not', 'found'):
+            self.assertIn(
+                key,
+                ctx.exception.response.json()['detail'].lower(),
+                ctx.exception.response,
+            )
+
+    def test_delete_distribution(self):
+        """Distribution is not removed once repository version is removed."""
+        repo = self.create_sync_repo(2)
+        version_href = choice(self.client.get(repo['_versions_href']))['_href']
+        publication = create_file_publication(self.cfg, repo, version_href)
+
+        distribution = self.client.post(
+            FILE_DISTRIBUTION_PATH, gen_distribution(publication=publication['_href'])
+        )
+        self.addCleanup(self.client.delete, distribution['_href'])
+
+        # delete repo version used to create publication
+        self.client.delete(version_href)
+
+        updated_distribution = self.client.get(distribution['_href'])
+        self.assertIsNone(updated_distribution['publication'], updated_distribution)
+
+    def create_sync_repo(self, number_syncs=1):
+        """Create and sync a repository.
+
+        Given the number of times to be synced.
+        """
+        repo = self.client.post(REPO_PATH, gen_repo())
+        self.addCleanup(self.client.delete, repo['_href'])
+
+        remote = self.client.post(FILE_REMOTE_PATH, gen_file_remote())
+        self.addCleanup(self.client.delete, remote['_href'])
+
+        for _ in range(number_syncs):
+            sync(self.cfg, remote, repo)
+        return self.client.get(repo['_href'])
