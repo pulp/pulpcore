@@ -35,8 +35,14 @@ RUN		dnf -y update && \
 		dnf -y install python3-psycopg2 && \
 		dnf -y install glibc-langpack-en && \
 		dnf -y install @c-development python3-devel && \
-		dnf -y install gcc make cmake bzip2-devel expat-devel file-devel glib2-devel libcurl-devel libmodulemd-devel libxml2-devel python3-devel python3-libmodulemd rpm-devel openssl-devel sqlite-devel xz-devel zchunk-devel zlib-devel && \
+		dnf -y install gcc make cmake bzip2-devel expat-devel file-devel glib2-devel libcurl-devel libmodulemd-devel libxml2-devel python3-devel python3-createrepo_c rpm-devel openssl-devel sqlite-devel xz-devel zchunk-devel zlib-devel && \
 		dnf clean all
+
+# These 2 lines are a workaround until F30 createrepo_c is updated past 0.14.2
+# 0.14.3/0.14.4 & 0.15 are already released upstream.
+# The 2nd line should be harmless once they are released; it can exist here in the meantime.
+RUN curl -o /tmp/setup_for_python_metadata.py https://raw.githubusercontent.com/kontura/createrepo_c/9d1c3ffd166d40b25ca6c8209759d1ecdf6d6090/utils/setup_for_python_metadata.py
+RUN test -e /usr/lib64/python3.7/createrepo_c*.egg-info || python3 /tmp/setup_for_python_metadata.py install_egg_info --install-dir /usr/lib64/python3.7/ $(rpm -q python3-createrepo_c --queryformat %{VERSION})
 
 # Docs suggest RHEL8 uses the alternatives system for /usr/bin/python ,
 # but Fedora does not.
