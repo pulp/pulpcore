@@ -45,6 +45,11 @@ from pulpcore.tests.functional.api.using_plugin.utils import set_up_module as se
 from pulpcore.tests.functional.api.using_plugin.utils import skip_if
 
 
+def remove_created_key(dic):
+    """Given a dict remove the key `created`."""
+    return {k: v for k, v in dic.items() if k != 'created'}
+
+
 class AddRemoveContentTestCase(unittest.TestCase):
     """Add and remove content to a repository. Verify side-effects.
 
@@ -616,7 +621,7 @@ class CreateRepoBaseVersionTestCase(unittest.TestCase):
         version_content.append(
             sorted(
                 [
-                    self.remove_created_key(item)
+                    remove_created_key(item)
                     for item in get_content(repo)[FILE_CONTENT_NAME]
                 ],
                 key=lambda item: item['_href'],
@@ -648,7 +653,7 @@ class CreateRepoBaseVersionTestCase(unittest.TestCase):
         version_content.append(
             sorted(
                 [
-                    self.remove_created_key(item)
+                    remove_created_key(item)
                     for item in get_content(repo)[FILE_CONTENT_NAME]
                 ],
                 key=lambda item: item['_href'],
@@ -677,7 +682,7 @@ class CreateRepoBaseVersionTestCase(unittest.TestCase):
         version_content.append(
             sorted(
                 [
-                    self.remove_created_key(item)
+                    remove_created_key(item)
                     for item in get_content(repo)[FILE_CONTENT_NAME]
                 ],
                 key=lambda item: item['_href'],
@@ -707,7 +712,7 @@ class CreateRepoBaseVersionTestCase(unittest.TestCase):
         version_content.append(
             sorted(
                 [
-                    self.remove_created_key(item)
+                    remove_created_key(item)
                     for item in get_content(repo)[FILE_CONTENT_NAME]
                 ],
                 key=lambda item: item['_href'],
@@ -728,14 +733,14 @@ class CreateRepoBaseVersionTestCase(unittest.TestCase):
         # create repo version 1
         repo = self.create_sync_repo()
         version_1_content = [
-            self.remove_created_key(item)
+            remove_created_key(item)
             for item in get_content(repo)[FILE_CONTENT_NAME]
         ]
         self.assertIsNone(get_versions(repo)[0]['base_version'])
 
         # create repo version 2 from version 1
         base_version = get_versions(repo)[0]['_href']
-        added_content = self.remove_created_key(self.content.pop())
+        added_content = remove_created_key(self.content.pop())
         removed_content = choice(version_1_content)
         self.client.post(
             repo['_versions_href'],
@@ -747,7 +752,7 @@ class CreateRepoBaseVersionTestCase(unittest.TestCase):
         )
         repo = self.client.get(repo['_href'])
         version_2_content = [
-            self.remove_created_key(item)
+            remove_created_key(item)
             for item in get_content(repo)[FILE_CONTENT_NAME]
         ]
 
@@ -792,11 +797,6 @@ class CreateRepoBaseVersionTestCase(unittest.TestCase):
 
         sync(self.cfg, remote, repo)
         return self.client.get(repo['_href'])
-
-    @staticmethod
-    def remove_created_key(dic):
-        """Given a dict remove the key `created`."""
-        return {k: v for k, v in dic.items() if k != 'created'}
 
 
 class UpdateRepoVersionTestCase(unittest.TestCase):
@@ -993,3 +993,93 @@ class DeleteRepoVersionResourcesTestCase(unittest.TestCase):
         for _ in range(number_syncs):
             sync(self.cfg, remote, repo)
         return self.client.get(repo['_href'])
+
+
+class ClearAllUnitstRepoVersionTestCase(unittest.TestCase):
+    """Test clear of all units of a given repository version.
+
+    This test targets the following issue:
+
+    `Pulp #4956 <https://pulp.plan.io/issues/4956>`_
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        """Add content to Pulp."""
+        cls.cfg = config.get_config()
+        cls.client = api.Client(cls.cfg)
+        # Populate Pulp to create content units.
+        populate_pulp(cls.cfg, url=FILE_LARGE_FIXTURE_MANIFEST_URL)
+        cls.content = sample(cls.client.get(FILE_CONTENT_PATH), 10)
+
+    def setUp(self):
+        """Create and sync a repository."""
+        self.repo = self.client.post(REPO_PATH, gen_repo())
+        self.addCleanup(self.client.delete, self.repo['_href'])
+        remote = self.client.post(FILE_REMOTE_PATH, gen_file_remote())
+        self.addCleanup(self.client.delete, remote['_href'])
+        sync(self.cfg, remote, self.repo)
+        self.repo = self.client.get(self.repo['_href'])
+
+    def test_add_and_clear_all_units(self):
+        """Test addition and removal of all units for a given repository version."""
+        content = choice(self.content)
+        self.client.post(
+            self.repo['_versions_href'],
+            {'add_content_units': [content['_href']], 'remove_content_units': ['*']},
+        )
+        self.repo = self.client.get(self.repo['_href'])
+        added_content = get_content(self.repo)[FILE_CONTENT_NAME]
+        self.assertEqual(len(added_content), 1, added_content)
+
+        self.assertEqual(
+            remove_created_key(content), remove_created_key(added_content[0])
+        )
+
+    def test_clear_all_units_using_base_version(self):
+        """Test clear all units using base version."""
+        for content in self.content:
+            self.client.post(
+                self.repo['_versions_href'], {'add_content_units': [content['_href']]}
+            )
+        self.repo = self.client.get(self.repo['_href'])
+        base_version = get_versions(self.repo)[0]['_href']
+        self.client.post(
+            self.repo['_versions_href'],
+            {'base_version': base_version, 'remove_content_units': ['*']},
+        )
+        self.repo = self.client.get(self.repo['_href'])
+        content_last_version = get_content(self.repo)[FILE_CONTENT_NAME]
+        self.assertEqual(len(content_last_version), 0, content_last_version)
+
+    def test_clear_all_units(self):
+        """Test clear all units of a given repository version."""
+        added_content = sorted(
+            [content['_href'] for content in get_content(self.repo)[FILE_CONTENT_NAME]]
+        )
+        self.client.post(self.repo['_versions_href'], {'remove_content_units': ['*']})
+        self.repo = self.client.get(self.repo['_href'])
+        removed_content = sorted(
+            [
+                content['_href']
+                for content in get_removed_content(self.repo)[FILE_CONTENT_NAME]
+            ]
+        )
+        self.assertEqual(added_content, removed_content)
+        content = get_content(self.repo)[FILE_CONTENT_NAME]
+        self.assertEqual(len(content), 0, content)
+
+    def test_http_error(self):
+        """Test http error is raised."""
+        added_content = choice(get_added_content(self.repo)[FILE_CONTENT_NAME])
+        with self.assertRaises(HTTPError) as ctx:
+            self.client.post(
+                self.repo['_versions_href'],
+                {'remove_content_units': ['*', added_content['_href']]},
+            )
+        for key in ('content', 'units', '*'):
+            self.assertIn(
+                key,
+                ctx.exception.response.json()['remove_content_units'][0].lower(),
+                ctx.exception.response,
+            )
