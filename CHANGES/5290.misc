@@ -1,0 +1,1 @@
+Add support for loading default settings from plugins using dynaconf.
