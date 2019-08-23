@@ -20,9 +20,9 @@ DOCKER_UPSTREAM_NAME = 'hello-world'
 
 DOCKER_CONTENT_MANIFEST_NAME = 'docker.manifest'
 
-DOCKER_CONTENT_BLOB_NAME = 'docker.manifest-blob'
+DOCKER_CONTENT_BLOB_NAME = 'docker.blob'
 
-DOCKER_CONTENT_TAG_NAME = 'docker.manifest-tag'
+DOCKER_CONTENT_TAG_NAME = 'docker.tag'
 
 DOCKER_REMOTE_PATH = urljoin(BASE_REMOTE_PATH, 'docker/docker/')
 
