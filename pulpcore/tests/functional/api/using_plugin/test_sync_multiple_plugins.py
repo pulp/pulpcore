@@ -181,4 +181,4 @@ class SyncMultiplePlugins(unittest.TestCase):
         # Assert that sync the content was synced properly.
         for value in content.values():
             with self.subTest(value=value):
-                self.assertGreaterEqual(value, 0, content)
+                self.assertGreater(value, 0, content)
