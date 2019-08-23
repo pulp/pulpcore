@@ -1,0 +1,1 @@
+Switch default DRF pagination to use LimitOffset style instead of Page ID.
