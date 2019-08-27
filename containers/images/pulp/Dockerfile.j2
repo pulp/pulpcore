@@ -11,6 +11,12 @@ ENV LC_ALL=en_US.UTF-8
 ENV PYTHONUNBUFFERED=0
 ENV DJANGO_SETTINGS_MODULE=pulpcore.app.settings
 
+# We need this workaround / to avoid random build failures until the F30 image
+# is updated (last updated: 2019-08-01)
+# https://bodhi.fedoraproject.org/updates/FEDORA-2019-13479b151a
+# Allow to try baseurl multiple times (RhBug:1678588)
+# So that it will try different mirrors if one is in a bad (rsync) state
+RUN rpm -q librepo --queryformat=%{VERSION} | grep -v 1.10.2 || dnf -y update || dnf -y update || dnf -y update || dnf -y update || dnf -y update && dnf clean all
 # The Fedora 30 image already has tsflags=nodocs set in dnf.conf
 # It already has pip
 #
