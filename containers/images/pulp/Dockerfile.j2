@@ -29,19 +29,13 @@ RUN rpm -q librepo --queryformat=%{VERSION} | grep -v 1.10.2 || dnf -y update ||
 # glibc-langpack-en is needed to provide the en_US.UTF-8 locale, which Pulp
 # seems to need.
 #
-# The development packages are needed for installing nightly versions with pip.
-# @c-development is the closest equivalent of EL7's "@development" group.
-#
-# Also installing the long list of pulp-rpm deps from
-# https://github.com/pulp/pulp-rpm-prerequisites/blob/master/vars/Fedora.yml
-# (Including it literally, dups @c-development won't slow down dnf much)
+# python3-createrepo_c is needed for pulp_rpm
 RUN		dnf -y update && \
 		dnf -y install wget git && \
 		dnf -y install libxcrypt-compat && \
 		dnf -y install python3-psycopg2 && \
 		dnf -y install glibc-langpack-en && \
-		dnf -y install @c-development python3-devel && \
-		dnf -y install gcc make cmake bzip2-devel expat-devel file-devel glib2-devel libcurl-devel libmodulemd-devel libxml2-devel python3-devel python3-createrepo_c rpm-devel openssl-devel sqlite-devel xz-devel zchunk-devel zlib-devel && \
+		dnf -y install python3-createrepo_c && \
 		dnf clean all
 
 # These 2 lines are a workaround until F30 createrepo_c is updated past 0.14.2
