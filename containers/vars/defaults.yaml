@@ -51,6 +51,7 @@ images:
       image_name: pulp
       tag: stable
       plugins:
+        - pulp-certguard
         - pulp-file
         - pulp-ansible
         - pulp-cookbook
@@ -64,6 +65,7 @@ images:
       pulpcore: git+https://github.com/pulp/pulpcore.git#egg=pulpcore
       pulpcore_plugin: git+https://github.com/pulp/pulpcore-plugin.git
       plugins:
+        - "git+https://github.com/pulp/pulp-certguard.git"
         - "git+https://github.com/pulp/pulp_file.git"
         - "git+https://github.com/pulp/pulp_ansible.git"
         - "git+https://github.com/gmbnomis/pulp_cookbook.git"
