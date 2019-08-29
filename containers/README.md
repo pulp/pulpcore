@@ -21,6 +21,8 @@ The images can be built with the help of an Ansible playbook. To build the image
 
 See `vars/defaults.yaml` for how to customize the "images" variable (data structure.)
 
+You can add `-e cache=false` to that command to prevent outdated image layers from being used.
+
 WARNING: Due to a limitation of Docker (but not Podman), Docker will copy the entire parent directory of "pulpcore" during build (the "build context.") This could slow your system down, exhaust disk space, or copy sensitive data you do not want copied. If using Docker, you probably want to clone pulpcore into a new parent directory, or one with the other pulp repos under it.
 
 ## Push Image to Registry
