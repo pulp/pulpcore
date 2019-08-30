@@ -11,6 +11,12 @@ ENV LC_ALL=en_US.UTF-8
 ENV PYTHONUNBUFFERED=0
 ENV DJANGO_SETTINGS_MODULE=pulpcore.app.settings
 
+# We need this workaround to avoid random build failures until the Errata is
+# released and the F30 image is updated (last updated: 2019-08-25)
+# https://bodhi.fedoraproject.org/updates/FEDORA-2019-ae52a20ff6
+# avoid reporting spurious error in the HTTP2 framing layer (RHBZ#1690971)
+RUN rpm -q curl --queryformat=%{VERSION}-%{RELEASE} | grep -v 7.65.3-2 || dnf -y update curl --enablerepo=updates-testing || dnf -y update curl --enablerepo=updates-testing || dnf -y update curl --enablerepo=updates-testing || dnf -y update curl --enablerepo=updates-testing || dnf -y update curl --enablerepo=updates-testing && dnf clean all
+
 # The Fedora 30 image already has tsflags=nodocs set in dnf.conf
 # It already has pip
 #
