@@ -7,6 +7,8 @@
 #
 # For more info visit https://github.com/pulp/plugin_template
 
+set -euv
+
 echo "---
 :rubygems_api_key: $RUBYGEMS_API_KEY" > ~/.gem/credentials
 sudo chmod 600 ~/.gem/credentials

@@ -7,14 +7,14 @@ require 'digest'
 PulpcoreClient.configure do |config|
   config.host= "http://localhost:24817"
   config.username= 'admin'
-  config.password= 'admin'
+  config.password= 'password'
   config.debugging=true
 end
 
 PulpFileClient.configure do |config|
   config.host= "http://localhost:24817"
   config.username= 'admin'
-  config.password= 'admin'
+  config.password= 'password'
   config.debugging=true
 end
 

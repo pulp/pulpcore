@@ -7,7 +7,7 @@
 #
 # For more info visit https://github.com/pulp/plugin_template
 
-set -v
+set -euv
 
 export PRE_BEFORE_SCRIPT=$TRAVIS_BUILD_DIR/.travis/pre_before_script.sh
 export POST_BEFORE_SCRIPT=$TRAVIS_BUILD_DIR/.travis/post_before_script.sh
@@ -18,7 +18,12 @@ fi
 
 
 mkdir -p ~/.config/pulp_smash
-cp ../pulpcore/.travis/pulp-smash-config.json ~/.config/pulp_smash/settings.json
+
+if [ -f .travis/pulp-smash-config.json ]; then
+    sed "s/localhost/$(hostname)/g" .travis/pulp-smash-config.json > ~/.config/pulp_smash/settings.json
+else
+    sed "s/localhost/$(hostname)/g" ../pulpcore/.travis/pulp-smash-config.json > ~/.config/pulp_smash/settings.json
+fi
 
 
 if [ -f $POST_BEFORE_SCRIPT ]; then

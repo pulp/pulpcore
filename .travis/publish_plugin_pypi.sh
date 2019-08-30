@@ -7,6 +7,8 @@
 #
 # For more info visit https://github.com/pulp/plugin_template
 
+set -euv
+
 pip install twine
 
 python setup.py sdist bdist_wheel --python-tag py3
