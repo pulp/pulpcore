@@ -223,7 +223,10 @@ settings = dynaconf.DjangoDynaconf(
     GLOBAL_ENV_FOR_DYNACONF='PULP',
     ENV_SWITCHER_FOR_DYNACONF='PULP_ENV',
     SETTINGS_MODULE_FOR_DYNACONF='/etc/pulp/settings.py',
-    INCLUDES_FOR_DYNACONF=['/etc/pulp/plugins/*'],
+    INCLUDES_FOR_DYNACONF=[
+        '{}.app.settings'.format(plugin_name)
+        for plugin_name in INSTALLED_PULP_PLUGINS
+    ],
     ENVVAR_FOR_DYNACONF='PULP_SETTINGS',
 )
 # HERE ENDS DYNACONF EXTENSION LOAD (No more code below this line)
