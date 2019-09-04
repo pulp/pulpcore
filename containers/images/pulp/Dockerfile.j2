@@ -87,16 +87,6 @@ RUN pip install {{ plugin }}
 {% endfor %}
 {% endif %}
 
-RUN mkdir -p /usr/local/lib/python3.7/site-packages/pulpcore/app/migrations
-RUN mkdir -p /usr/local/lib/python3.7/site-packages/pulp_certguard/app/migrations
-RUN mkdir -p /usr/local/lib/python3.7/site-packages/pulp_file/app/migrations
-RUN mkdir -p /usr/local/lib/python3.7/site-packages/pulp_ansible/app/migrations
-RUN mkdir -p /usr/local/lib/python3.7/site-packages/pulp_cookbook/app/migrations
-RUN mkdir -p /usr/local/lib/python3.7/site-packages/pulp_docker/app/migrations
-RUN mkdir -p /usr/local/lib/python3.7/site-packages/pulp_maven/app/migrations
-RUN mkdir -p /usr/local/lib/python3.7/site-packages/pulp_python/app/migrations
-RUN mkdir -p /usr/local/lib/python3.7/site-packages/pulp_rpm/app/migrations
-
 COPY pulpcore/containers/images/pulp/container-assets/wait_on_postgres.py /usr/bin/wait_on_postgres.py
 COPY pulpcore/containers/images/pulp/container-assets/wait_on_database_migrations.sh /usr/bin/wait_on_database_migrations.sh
 COPY pulpcore/containers/images/pulp/container-assets/pulp-common-entrypoint.sh /pulp-common-entrypoint.sh
@@ -104,6 +94,5 @@ COPY pulpcore/containers/images/pulp/container-assets/pulp-api /usr/bin/pulp-api
 COPY pulpcore/containers/images/pulp/container-assets/pulp-content /usr/bin/pulp-content
 COPY pulpcore/containers/images/pulp/container-assets/pulp-resource-manager /usr/bin/pulp-resource-manager
 COPY pulpcore/containers/images/pulp/container-assets/pulp-worker /usr/bin/pulp-worker
-
 
 ENTRYPOINT ["/pulp-common-entrypoint.sh"]
