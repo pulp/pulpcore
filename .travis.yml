@@ -47,7 +47,7 @@ after_failure:
   - sudo docker images
   - sudo kubectl logs -l name=pulp-operator -c ansible --tail=10000
   - sudo kubectl logs -l name=pulp-operator -c operator --tail=10000
-  - sudo kubectl logs -l app=pulp-api --tail=10000
+  - sudo kubectl logs -l app=pulp-api --tail=50000
   - sudo kubectl logs -l app=pulp-content --tail=10000
   - sudo kubectl logs -l app=pulp-resource-manager --tail=10000
   - sudo kubectl logs -l app=pulp-worker --tail=10000
