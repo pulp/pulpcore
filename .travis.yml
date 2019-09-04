@@ -4,22 +4,21 @@
 # bootstrap.py to update this file.
 #
 # For more info visit https://github.com/pulp/plugin_template
-
+---
 sudo: required
 # https://docs.travis-ci.com/user/trusty-ci-environment/
 dist: xenial
 language: python
 python:
-    # Fedora has 3.6 available (python36.x86_64), but pulp container images
-    # with it are not being built or published yet.
-    # - "3.6"
-    - "3.7"
+  # Fedora has 3.6 available (python36.x86_64), but pulp container images
+  # with it are not being built or published yet.
+  # - "3.6"
+  - "3.7"
 env:
   matrix:
     - DB=postgres TEST=pulp
     - DB=postgres TEST=docs
     - DB=postgres TEST=bindings
-
 matrix:
   exclude:
     - python: '3.6'
@@ -28,9 +27,9 @@ matrix:
       env: DB=postgres TEST=docs
   fast_finish: true
 services:
-    - postgresql
-    - redis-server
-    - docker
+  - postgresql
+  - redis-server
+  - docker
 addons:
   apt:
     packages:
@@ -47,53 +46,51 @@ after_failure:
   - sudo docker images
   - sudo kubectl logs -l name=pulp-operator -c ansible --tail=10000
   - sudo kubectl logs -l name=pulp-operator -c operator --tail=10000
-  - sudo kubectl logs -l app=pulp-api --tail=10000
+  - sudo kubectl logs -l app=pulp-api --tail=50000
   - sudo kubectl logs -l app=pulp-content --tail=10000
   - sudo kubectl logs -l app=pulp-resource-manager --tail=10000
   - sudo kubectl logs -l app=pulp-worker --tail=10000
 jobs:
   include:
-  - stage: deploy-plugin-to-pypi
-    script:  bash .travis/publish_plugin_pypi.sh
-    if: tag IS present
-  - stage: publish-beta-docs
-    script: bash .travis/publish_docs.sh rc
-    env:
-      - DB=postgres
-      - TEST=docs
-    if: tag IS present
-  - stage: publish-continuous-docs
-    script: bash .travis/publish_docs.sh nightly
-    env:
-      - DB=postgres
-      - TEST=docs
-    if: type != pull_request
-
-  - stage: publish-daily-client-gem
-    script: bash .travis/publish_client_gem.sh
-    env:
-      - DB=postgres
-      - TEST=bindings
-    if: type = cron
-  - stage: publish-daily-client-pypi
-    script: bash .travis/publish_client_pypi.sh
-    env:
-      - DB=postgres
-      - TEST=bindings
-    if: type = cron
-  - stage: publish-client-gem
-    script: bash .travis/publish_client_gem.sh
-    env:
-      - DB=postgres
-      - TEST=bindings
-    if: tag IS present
-  - stage: publish-client-pypi
-    script: bash .travis/publish_client_pypi.sh
-    env:
-      - DB=postgres
-      - TEST=bindings
-    if: tag IS present
-
+    - stage: deploy-plugin-to-pypi
+      script: bash .travis/publish_plugin_pypi.sh
+      if: tag IS present
+    - stage: publish-beta-docs
+      script: bash .travis/publish_docs.sh rc
+      env:
+        - DB=postgres
+        - TEST=docs
+      if: tag IS present
+    - stage: publish-continuous-docs
+      script: bash .travis/publish_docs.sh nightly
+      env:
+        - DB=postgres
+        - TEST=docs
+      if: type != pull_request
+    - stage: publish-daily-client-gem
+      script: bash .travis/publish_client_gem.sh
+      env:
+        - DB=postgres
+        - TEST=bindings
+      if: type = cron
+    - stage: publish-daily-client-pypi
+      script: bash .travis/publish_client_pypi.sh
+      env:
+        - DB=postgres
+        - TEST=bindings
+      if: type = cron
+    - stage: publish-client-gem
+      script: bash .travis/publish_client_gem.sh
+      env:
+        - DB=postgres
+        - TEST=bindings
+      if: tag IS present
+    - stage: publish-client-pypi
+      script: bash .travis/publish_client_pypi.sh
+      env:
+        - DB=postgres
+        - TEST=bindings
+      if: tag IS present
 notifications:
   irc:
     channels:
@@ -105,5 +102,4 @@ notifications:
     - 'Change view : %{compare_url}'
     - 'Build details : %{build_url}'
     - '%{message}'
-
-
+...
