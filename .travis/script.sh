@@ -19,29 +19,6 @@ export FUNC_TEST_SCRIPT=$TRAVIS_BUILD_DIR/.travis/func_test_script.sh
 # this script.
 export DJANGO_SETTINGS_MODULE=pulpcore.app.settings
 
-wait_for_pulp() {
-  TIMEOUT=${1:-5}
-  while [ "$TIMEOUT" -gt 0 ]
-  do
-    echo -n .
-    sleep 1
-    TIMEOUT=$(($TIMEOUT - 1))
-    STATUS=$(http :24817/pulp/api/v3/status/ 2>/dev/null)
-    if [ "$(echo $STATUS | jq '.database_connection.connected and .redis_connection.connected')" = "true"\
-      -a "$(echo $STATUS | jq '.online_content_apps[0]')" != "null" ]
-    then
-      echo
-      return
-    fi
-  done
-  echo
-  return 1
-}
-
-# Containers may take a long time to download & start.
-# See pulp-operator/.travis/pulp-operator-check-and-wait.sh
-wait_for_pulp 600
-
 if [ "$TEST" = 'docs' ]; then
   cd docs
   make html
@@ -103,7 +80,6 @@ export CMD_PREFIX="sudo kubectl exec $PULP_API_POD --"
 # Many tests require pytest/mock, but users do not need them at runtime
 # (or to add plugins on top of pulpcore or pulp container images.)
 # So install it here, rather than in the image Dockerfile.
-# This has to be done after wait_for_pulp (although not at the very end of it.)
 $CMD_PREFIX pip3 install pytest mock
 # Many functional tests require these
 $CMD_PREFIX dnf install -yq lsof which dnf-plugins-core
