@@ -18,4 +18,9 @@ if [ -n "${PULP_ADMIN_PASSWORD}" ]; then
     django-admin reset-admin-password --password "${PULP_ADMIN_PASSWORD}"
 fi
 
-exec gunicorn -b 0.0.0.0:24817 pulpcore.app.wsgi:application
+# NOTE: Due to the Linux dual-stack functionality, this will listen on both IPv4
+# IPv6, even though netstat may seem to indicate it is IPv6 only.
+# Due to containers using network namespaces, even if the host has this disabled
+# with /proc/sys/net/ipv6/bindv6only=1, the container will still have
+# it enabled with /proc/sys/net/ipv6/bindv6only=0 .
+exec gunicorn --bind '[::]:24817' pulpcore.app.wsgi:application
