@@ -28,6 +28,7 @@ class ProgressReport(Model):
 
         message (models.TextField): short message for the progress update, typically
             shown to the user. (required)
+        code (models.CharField): identifies the type of progress report
         state (models.TextField): The state of the progress update. Defaults to `WAITING`. This
             field uses a limited set of choices of field states. See `STATES` for possible states.
         total: (models.IntegerField) The total count of items to be handled by the ProgressBar
@@ -42,6 +43,7 @@ class ProgressReport(Model):
             it will be set to the current task_id.
     """
     message = models.TextField()
+    code = models.CharField(max_length=36)
     state = models.TextField(choices=TASK_CHOICES, default=TASK_STATES.WAITING)
 
     total = models.IntegerField(null=True)
@@ -164,14 +166,22 @@ class ProgressBar(ProgressReport):
     Plugin writers should create these objects to show progress reporting of a single step or
     aspect of work which has a name and state along with total and done counts. For example:
 
-        >>> ProgressBar(message='Publishing files', total=23)  # default: state='waiting' and done=0
+        >>> ProgressBar(
+        >>>     message='Publishing files', code='publish', total=23
+        >>> )  # default: state='waiting' and done=0
 
-        >>> ProgressBar(message='Publishing files', total=23, state='running')  # specify the state
-        >>> ProgressBar(message='Publishing files', total=23, done=16)  # already completed 16
+        >>> ProgressBar(
+        >>>     message='Publishing files', code='publish', total=23, state='running'
+        >>> )  # specify the state
+        >>> ProgressBar(
+        >>>     message='Publishing files', code='publish', total=23, done=16
+        >>> )  # already completed 16
 
     Update the state to COMPLETED and save it:
 
-        >>> progress_bar = ProgressBar(message='Publishing files', total=23, state='running')
+        >>> progress_bar = ProgressBar(
+        >>>     message='Publishing files', code='publish', total=23, state='running'
+        >>> )
         >>> progress_bar.state = 'completed'
         >>> progress_bar.save()
 
@@ -181,7 +191,9 @@ class ProgressBar(ProgressReport):
     is rate limited to every 500 milliseconds.
     Use it as follows:
 
-        >>> progress_bar = ProgressBar(message='Publishing files', total=len(files_iterator))
+        >>> progress_bar = ProgressBar(
+        >>>     message='Publishing files', code='publish', total=len(files_iterator)
+        >>> )
         >>> progress_bar.save()
         >>> with progress_bar:
         >>>     # progress_bar saved as 'running'
@@ -192,7 +204,9 @@ class ProgressBar(ProgressReport):
 
     A convenience method called iter() allows you to avoid calling increment() directly:
 
-        >>> progress_bar = ProgressBar(message='Publishing files', total=len(files_iterator))
+        >>> progress_bar = ProgressBar(
+        >>>     message='Publishing files', code='publish', total=len(files_iterator)
+        >>> )
         >>> progress_bar.save()
         >>> with progress_bar:
         >>>     for file in progress_bar.iter(files_iterator):
@@ -200,7 +214,8 @@ class ProgressBar(ProgressReport):
 
     You can also use this short form which handles all necessary save() calls:
 
-        >>> with ProgressBar(message='Publishing files', total=len(files_iterator)) as pb:
+        >>> data = dict(message='Publishing files', code='publish', total=len(files_iterator))
+        >>> with ProgressBar(**data) as pb:
         >>>     for file in pb.iter(files_iterator):
         >>>         handle(file)
 
@@ -233,7 +248,7 @@ class ProgressBar(ProgressReport):
         """
         Iterate and automatically call increment().
 
-            >>> progress_bar = ProgressBar(message='Publishing files', total=23)
+            >>> progress_bar = ProgressBar(message='Publishing files', code='publish', total=23)
             >>> progress_bar.save()
             >>> for file in progress_bar.iter(files_iterator):
             >>>     handle(file)
