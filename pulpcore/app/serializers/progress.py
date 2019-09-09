@@ -12,6 +12,10 @@ class ProgressReportSerializer(ModelSerializer):
         help_text=_("The message shown to the user for the progress report."),
         read_only=True
     )
+    code = serializers.CharField(
+        help_text=_("Identifies the type of progress report'."),
+        read_only=True
+    )
     state = serializers.CharField(
         help_text=_("The current state of the progress report. The possible values are:"
                     " 'waiting', 'skipped', 'running', 'completed', 'failed' and 'canceled'."
@@ -37,4 +41,4 @@ class ProgressReportSerializer(ModelSerializer):
         # this serializer is meant to be nested inside Task serializer,
         # so it will not have its own endpoint, that's why
         # we need to explicitly define fields to exclude '_href' field.
-        fields = ('message', 'state', 'total', 'done', 'suffix')
+        fields = ('message', 'code', 'state', 'total', 'done', 'suffix')
