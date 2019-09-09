@@ -40,10 +40,7 @@ def exception_to_dict(exc, traceback=None):
     :return: dictionary representing the Exception
     :rtype: dict
     """
-    result = {'code': None, 'description': str(exc), 'traceback': traceback}
-    if isinstance(exc, PulpException):
-        result['code'] = exc.error_code
-    return result
+    return {'description': str(exc), 'traceback': traceback}
 
 
 class ResourceImmutableError(PulpException):
