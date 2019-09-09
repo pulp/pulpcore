@@ -9,6 +9,7 @@
 build
 dist
 *.egg-info
+pip-wheel-metadata/
 .settings
 *.wpr
 *.wpu
