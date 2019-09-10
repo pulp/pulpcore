@@ -13,6 +13,61 @@ Changelog
 
 .. towncrier release notes start
 
+3.0.0rc5 (2019-09-10)
+=====================
+
+Features
+--------
+
+- Allow users to filter tasks by created resources
+  `#4931 <https://pulp.plan.io/issues/4931>`_
+- Enable users to filter tasks by reserved resources
+  `#5120 <https://pulp.plan.io/issues/5120>`_
+- Add CharInFilter that allows filtering CharField by mutiple values
+  `#5182 <https://pulp.plan.io/issues/5182>`_
+- Pinning pulpcore dependencies to y releases
+  `#5196 <https://pulp.plan.io/issues/5196>`_
+
+
+Bugfixes
+--------
+
+- Adding fields parameter to OpenAPI schema.
+  `#4992 <https://pulp.plan.io/issues/4992>`_
+- Improved the OpenAPI schema for RepositoryVersion.content_summary.
+  `#5210 <https://pulp.plan.io/issues/5210>`_
+- Switch default DRF pagination to use LimitOffset style instead of Page ID.
+  `#5324 <https://pulp.plan.io/issues/5324>`_
+
+
+Improved Documentation
+----------------------
+
+- Update REST API docs for `uploads_commit`.
+  `#5190 <https://pulp.plan.io/issues/5190>`_
+- Removed beta changelog entries to shorten the changelog.
+  `#5208 <https://pulp.plan.io/issues/5208>`_
+
+
+Deprecations and Removals
+-------------------------
+
+- Removing code from task errors.
+  `#5282 <https://pulp.plan.io/issues/5282>`_
+- All previous bindings expect a different pagination style and are not compatible with the pagination
+  changes made. Newer bindings are available and should be used.
+  `#5324 <https://pulp.plan.io/issues/5324>`_
+
+
+Misc
+----
+
+- `#4681 <https://pulp.plan.io/issues/4681>`_, `#5210 <https://pulp.plan.io/issues/5210>`_, `#5290 <https://pulp.plan.io/issues/5290>`_
+
+
+----
+
+
 3.0.0rc4 (2019-07-25)
 =====================
 
