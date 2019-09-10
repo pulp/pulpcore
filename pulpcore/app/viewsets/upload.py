@@ -97,7 +97,7 @@ class UploadViewSet(NamedModelViewSet,
     @action(detail=True, methods=['post'])
     def commit(self, request, pk):
         """
-        Generates a Task to commit the upload and create an artifact
+        Queues a Task that creates an Artifact, and the Upload gets deleted and cannot be re-used.
         """
         try:
             sha256 = request.data['sha256']
