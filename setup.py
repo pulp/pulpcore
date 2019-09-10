@@ -17,7 +17,7 @@ requirements = [
     'rq~=1.1.0',
     'redis~=3.1.0',
     'setuptools>=41.0.1,<41.3.0',
-    'dynaconf>=2.0.3,<2.2.0',
+    'dynaconf~=2.1.0',
     'whitenoise~=4.1.3',
 ]
 
