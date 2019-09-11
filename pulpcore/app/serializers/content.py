@@ -27,15 +27,26 @@ class NoArtifactContentSerializer(BaseContentSerializer):
 
 
 class SingleArtifactContentSerializer(BaseContentSerializer):
-    _artifact = fields.SingleContentArtifactField(
+    artifact = fields.SingleContentArtifactField(
         help_text=_("Artifact file representing the physical content"),
     )
 
-    _relative_path = serializers.CharField(
+    relative_path = serializers.CharField(
         help_text=_("Path where the artifact is located relative to distributions base_path"),
         validators=[fields.relative_path_validator],
         write_only=True,
     )
+
+    def __init__(self, *args, **kwargs):
+        """
+        Initializer for SingleArtifactContentSerializer
+        """
+        super().__init__(*args, **kwargs)
+
+        # If the content model has its own database field 'relative_path',
+        # we should not mark the field write_only
+        if hasattr(self.Meta.model, 'relative_path'):
+            self.fields["relative_path"].write_only = False
 
     @transaction.atomic
     def create(self, validated_data):
@@ -45,8 +56,11 @@ class SingleArtifactContentSerializer(BaseContentSerializer):
         Args:
             validated_data (dict): Data to save to the database
         """
-        artifact = validated_data.pop('_artifact')
-        relative_path = validated_data.pop('_relative_path')
+        artifact = validated_data.pop('artifact')
+        if self.fields["relative_path"].write_only:
+            relative_path = validated_data.pop('relative_path')
+        else:
+            relative_path = validated_data.get('relative_path')
         content = self.Meta.model.objects.create(**validated_data)
         models.ContentArtifact.objects.create(
             artifact=artifact,
@@ -57,11 +71,11 @@ class SingleArtifactContentSerializer(BaseContentSerializer):
 
     class Meta:
         model = models.Content
-        fields = BaseContentSerializer.Meta.fields + ('_artifact', '_relative_path')
+        fields = BaseContentSerializer.Meta.fields + ('artifact', 'relative_path')
 
 
 class MultipleArtifactContentSerializer(BaseContentSerializer):
-    _artifacts = fields.ContentArtifactsField(
+    artifacts = fields.ContentArtifactsField(
         help_text=_("A dict mapping relative paths inside the Content to the corresponding"
                     "Artifact URLs. E.g.: {'relative/path': "
                     "'/artifacts/1/'"),
@@ -75,9 +89,9 @@ class MultipleArtifactContentSerializer(BaseContentSerializer):
         Args:
             validated_data (dict): Data to save to the database
         """
-        _artifacts = validated_data.pop('_artifacts')
+        artifacts = validated_data.pop('artifacts')
         content = self.Meta.model.objects.create(**validated_data)
-        for relative_path, artifact in _artifacts.items():
+        for relative_path, artifact in artifacts.items():
             models.ContentArtifact.objects.create(
                 artifact=artifact,
                 content=content,
@@ -87,7 +101,7 @@ class MultipleArtifactContentSerializer(BaseContentSerializer):
 
     class Meta:
         model = models.Content
-        fields = BaseContentSerializer.Meta.fields + ('_artifacts',)
+        fields = BaseContentSerializer.Meta.fields + ('artifacts',)
 
 
 class ContentChecksumSerializer(serializers.Serializer):
