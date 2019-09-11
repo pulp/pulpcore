@@ -330,7 +330,7 @@ class AddRemoveRepoVersionTestCase(unittest.TestCase):
             get_content(self.repo, self.repo_version_hrefs[0])
         for repo_version_href in self.repo_version_hrefs[1:]:
             artifact_paths = get_artifact_paths(self.repo, repo_version_href)
-            self.assertIn(self.content[0]['_artifact'], artifact_paths)
+            self.assertIn(self.content[0]['artifact'], artifact_paths)
 
     def test_delete_last_version(self):
         """Delete the last repository version.
@@ -352,8 +352,8 @@ class AddRemoveRepoVersionTestCase(unittest.TestCase):
         self.repo = self.client.get(self.repo['_href'])
         artifact_paths = get_artifact_paths(self.repo)
 
-        self.assertNotIn(self.content[-2]['_artifact'], artifact_paths)
-        self.assertIn(self.content[-1]['_artifact'], artifact_paths)
+        self.assertNotIn(self.content[-2]['artifact'], artifact_paths)
+        self.assertIn(self.content[-1]['artifact'], artifact_paths)
 
     def test_delete_middle_version(self):
         """Delete a middle version."""
@@ -365,7 +365,7 @@ class AddRemoveRepoVersionTestCase(unittest.TestCase):
 
         for repo_version_href in self.repo_version_hrefs[index + 1:]:
             artifact_paths = get_artifact_paths(self.repo, repo_version_href)
-            self.assertIn(self.content[index]['_artifact'], artifact_paths)
+            self.assertIn(self.content[index]['artifact'], artifact_paths)
 
     def test_delete_publication(self):
         """Delete a publication.

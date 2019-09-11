@@ -123,7 +123,7 @@ class ContentArtifactsField(serializers.DictField):
         """
         ret = {}
         if data is empty:
-            raise serializers.ValidationError(_('_artifacts field must be specified.'))
+            raise serializers.ValidationError(_('artifacts field must be specified.'))
         for relative_path, url in data.items():
             relative_path_validator(relative_path)
             artifactfield = RelatedField(view_name='artifacts-detail',
