@@ -1,9 +1,6 @@
-import re
-
-from gettext import gettext as _
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg.openapi import Parameter
-from rest_framework import mixins, serializers
+from rest_framework import mixins
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
@@ -17,6 +14,7 @@ from pulpcore.app.serializers import (
     UploadSerializer,
     UploadDetailSerializer
 )
+from pulpcore.app.serializers.upload import CONTENT_RANGE_PATTERN
 from pulpcore.app.viewsets import BaseFilterSet
 from pulpcore.app.viewsets.base import DATETIME_FILTER_OPTIONS, NamedModelViewSet
 from pulpcore.app.viewsets.custom_filters import IsoDateTimeFilter
@@ -45,17 +43,26 @@ class UploadViewSet(NamedModelViewSet,
     filterset_class = UploadFilter
     http_method_names = ['get', 'post', 'head', 'put', 'delete']  # remove PATCH
 
-    content_range_pattern = r'^bytes (\d+)-(\d+)/(\d+|[*])$'
     content_range_parameter = \
         Parameter(name='Content-Range', in_='header', required=True, type='string',
-                  pattern=content_range_pattern,
+                  pattern=CONTENT_RANGE_PATTERN,
                   description='The Content-Range header specifies the location of the file chunk '
                               'within the file.')
 
     def get_serializer_class(self):
         if self.action == 'retrieve':
             return UploadDetailSerializer
+        if self.action == 'update':
+            return UploadChunkSerializer
+        if self.action == 'commit':
+            return UploadCommitSerializer
         return UploadSerializer
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        if self.action == 'update':
+            context["upload"] = self.get_object()
+        return context
 
     @swagger_auto_schema(operation_summary="Upload a file chunk",
                          request_body=UploadChunkSerializer,
@@ -65,27 +72,14 @@ class UploadViewSet(NamedModelViewSet,
         """
         Upload a chunk for an upload.
         """
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        chunk = serializer.validated_data["file"]
+        start = serializer.validated_data["start"]
+        sha256 = serializer.validated_data.get("sha256")
+
         upload = self.get_object()
-
-        try:
-            chunk = request.data['file']
-        except KeyError:
-            raise serializers.ValidationError(_("Missing 'file' parameter."))
-
-        content_range = request.META.get('HTTP_CONTENT_RANGE', '')
-        match = re.compile(self.content_range_pattern).match(content_range)
-        if not match:
-            raise serializers.ValidationError(_("Invalid or missing content range header."))
-        start = int(match[1])
-        end = int(match[2])
-
-        if (end - start + 1) != len(chunk):
-            raise serializers.ValidationError(_("Chunk size does not match content range."))
-
-        if end > upload.size - 1:
-            raise serializers.ValidationError(_("End byte is greater than upload size."))
-
-        sha256 = request.data.get('sha256')
         upload.append(chunk, start, sha256)
 
         serializer = UploadSerializer(upload, context={'request': request})
@@ -99,10 +93,10 @@ class UploadViewSet(NamedModelViewSet,
         """
         Queues a Task that creates an Artifact, and the Upload gets deleted and cannot be re-used.
         """
-        try:
-            sha256 = request.data['sha256']
-        except KeyError:
-            raise serializers.ValidationError(_("Checksum not supplied."))
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        sha256 = serializer.validated_data['sha256']
 
         upload = self.get_object()
         async_result = enqueue_with_reservation(
