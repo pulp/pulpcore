@@ -1,0 +1,1 @@
+Fixing error where relative_path was defined on model but not serializer

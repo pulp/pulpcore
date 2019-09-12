@@ -45,7 +45,7 @@ class SingleArtifactContentSerializer(BaseContentSerializer):
 
         # If the content model has its own database field 'relative_path',
         # we should not mark the field write_only
-        if hasattr(self.Meta.model, 'relative_path'):
+        if hasattr(self.Meta.model, 'relative_path') and "relative_path" in self.fields:
             self.fields["relative_path"].write_only = False
 
     @transaction.atomic
@@ -57,7 +57,7 @@ class SingleArtifactContentSerializer(BaseContentSerializer):
             validated_data (dict): Data to save to the database
         """
         artifact = validated_data.pop('artifact')
-        if self.fields["relative_path"].write_only:
+        if "relative_path" in self.fields and self.fields["relative_path"].write_only:
             relative_path = validated_data.pop('relative_path')
         else:
             relative_path = validated_data.get('relative_path')
