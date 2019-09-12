@@ -36,6 +36,10 @@ RUN		dnf -y update && \
 		dnf -y install python3-psycopg2 && \
 		dnf -y install glibc-langpack-en && \
 		dnf -y install python3-createrepo_c && \
+		dnf -y install libmodulemd-devel && \
+		dnf -y install python3-libmodulemd && \
+		dnf -y install libcomps-devel && \
+		dnf -y install python3-libcomps && \
 		dnf clean all
 
 # These 2 lines are a workaround until F30 createrepo_c is updated past 0.14.2
