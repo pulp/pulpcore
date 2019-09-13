@@ -57,7 +57,7 @@ class SingleArtifactContentSerializer(BaseContentSerializer):
             validated_data (dict): Data to save to the database
         """
         artifact = validated_data.pop('artifact')
-        if "relative_path" in self.fields and self.fields["relative_path"].write_only:
+        if "relative_path" not in self.fields or self.fields["relative_path"].write_only:
             relative_path = validated_data.pop('relative_path')
         else:
             relative_path = validated_data.get('relative_path')
