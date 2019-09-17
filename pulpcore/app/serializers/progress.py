@@ -23,7 +23,7 @@ class ProgressReportSerializer(ModelSerializer):
         read_only=True
     )
     total = serializers.IntegerField(
-        help_text=_("The total count of items to be handled by the ProgressBar."),
+        help_text=_("The total count of items."),
         read_only=True
     )
     done = serializers.IntegerField(

@@ -1,4 +1,6 @@
-from pulpcore.app.models import Artifact, Content, ContentArtifact, ProgressBar, RepositoryContent
+from pulpcore.app.models import (
+    Artifact, Content, ContentArtifact, ProgressReport, RepositoryContent
+)
 
 
 def orphan_cleanup():
@@ -9,8 +11,8 @@ def orphan_cleanup():
     # Content cleanup
     content = Content.objects.exclude(pk__in=RepositoryContent.objects.values_list('content_id',
                                                                                    flat=True))
-    progress_bar = ProgressBar(message='Clean up orphan Content', total=content.count(),
-                               code='clean-up.content', done=0, state='running')
+    progress_bar = ProgressReport(message='Clean up orphan Content', total=content.count(),
+                                  code='clean-up.content', done=0, state='running')
     progress_bar.save()
     content.delete()
     progress_bar.done = progress_bar.total
@@ -20,8 +22,8 @@ def orphan_cleanup():
     # Artifact cleanup
     artifacts = Artifact.objects.exclude(pk__in=ContentArtifact.objects.values_list('artifact_id',
                                                                                     flat=True))
-    progress_bar = ProgressBar(message='Clean up orphan Artifacts', total=artifacts.count(),
-                               code='clean-up.content', done=0, state='running')
+    progress_bar = ProgressReport(message='Clean up orphan Artifacts', total=artifacts.count(),
+                                  code='clean-up.content', done=0, state='running')
     progress_bar.save()
     for artifact in artifacts:
         # we need to manually call delete() because it cleans up the file on the filesystem

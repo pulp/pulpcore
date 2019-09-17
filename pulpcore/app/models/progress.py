@@ -20,9 +20,73 @@ BATCH_INTERVAL = 500
 
 class ProgressReport(Model):
     """
-    A base model for all progress reporting.
+    A model for all progress reporting.
 
     All progress reports have a message, state, and are related to a Task.
+
+    Plugin writers should create these objects to show progress reporting of a single step or
+    aspect of work which has a name and state. For example:
+
+        >>> ProgressReport(
+        >>>     message='Publishing files', code='publish', total=23
+        >>> )  # default: state='waiting' and done=0
+
+        >>> ProgressReport(
+        >>>     message='Publishing files', code='publish', total=23, state='running'
+        >>> )  # specify the state
+        >>> ProgressReport(
+        >>>     message='Publishing files', code='publish', total=23, done=16
+        >>> )  # already completed 16
+
+    Update the state to COMPLETED and save it:
+
+        >>> progress_bar = ProgressReport(
+        >>>     message='Publishing files', code='publish', total=23, state='running'
+        >>> )
+        >>> progress_bar.state = 'completed'
+        >>> progress_bar.save()
+
+    The ProgressReport() is a context manager that provides automatic state transitions and saving
+    for the RUNNING CANCELED COMPLETED and FAILED states. The increment() method can be called in
+    the loop as work is completed. When ProgressReport() is used as a context manager progress
+    reporting is rate limited to every 500 milliseconds.
+    Use it as follows:
+
+        >>> progress_bar = ProgressReport(
+        >>>     message='Publishing files', code='publish', total=len(files_iterator)
+        >>> )
+        >>> progress_bar.save()
+        >>> with progress_bar:
+        >>>     # progress_bar saved as 'running'
+        >>>     for file in files_iterator:
+        >>>         handle(file)
+        >>>         progress_bar.increment()  # increments and saves
+        >>> # progress_bar is saved as 'completed' if no exception or 'failed' otherwise
+
+    A convenience method called iter() allows you to avoid calling increment() directly:
+
+        >>> progress_bar = ProgressReport(
+        >>>     message='Publishing files', code='publish', total=len(files_iterator)
+        >>> )
+        >>> progress_bar.save()
+        >>> with progress_bar:
+        >>>     for file in progress_bar.iter(files_iterator):
+        >>>         handle(file)
+
+    You can also use this short form which handles all necessary save() calls:
+
+        >>> data = dict(message='Publishing files', code='publish', total=len(files_iterator))
+        >>> with ProgressReport(**data) as pb:
+        >>>     for file in pb.iter(files_iterator):
+        >>>         handle(file)
+
+    ProgressReport objects are associated with a Task and auto-discover and populate the task id
+    when saved.
+
+    When using threads to update a ProgressReport in parallel, it is recommended that all threads
+    share the same in-memory instance. Django does not synchronize in-memory model instances, so
+    multiple instances of a specific ProgressReport will diverge as they are written to from
+    separate threads.
 
     Fields:
 
@@ -31,8 +95,7 @@ class ProgressReport(Model):
         code (models.CharField): identifies the type of progress report
         state (models.TextField): The state of the progress update. Defaults to `WAITING`. This
             field uses a limited set of choices of field states. See `STATES` for possible states.
-        total: (models.IntegerField) The total count of items to be handled by the ProgressBar
-            (required)
+        total: (models.IntegerField) The total count of items to be handled
         done (models.IntegerField): The count of items already processed. Defaults to 0.
         suffix (models.TextField): Customizable suffix rendered with the progress report
             See `the docs <https://github.com/verigak/progress>`_. for more info.
@@ -106,8 +169,6 @@ class ProgressReport(Model):
         See the context manager documentation for more info on __exit__ parameters
         """
         self._using_context_manager = False
-        if self.total is None and self.done != 0:
-            self.total = self.done
         if type is None:
             self.state = TASK_STATES.COMPLETED
         elif type is CancelledError:
@@ -116,124 +177,9 @@ class ProgressReport(Model):
             self.state = TASK_STATES.FAILED
         self.save()
 
-
-class ProgressSpinner(ProgressReport):
-    """
-    Shows progress reporting when the count of items is not known.
-
-    Plugin writers should create these objects to show progress reporting of a single step or
-    aspect of work which has a name and a state. For example:
-
-        >>> ProgressSpinner(message='Publishing Metadata')  # default state is 'waiting'
-
-        >>> ProgressSpinner(message='Publishing Metadata', state='running')  # specify 'running'
-
-    Update the state to COMPLETED and save it:
-
-        >>> metadata_progress = ProgressSpinner(message='Publishing Metadata', state='running')
-        >>> metadata_progress.state = 'completed'
-        >>> metadata_progress.save()
-
-    The ProgressSpinner() is a context manager that provides automatic state transitions and saving
-    for the RUNNING CANCELED COMPLETED and FAILED states. When ProgressSpinner() is used as a
-    context manager progress reporting is rate limited to every 500 milliseconds.
-    Use it as follows:
-
-        >>> spinner = ProgressSpinner(message='Publishing Metadata')
-        >>> spinner.save() # spinner is saved as 'waiting'
-        >>> with spinner:
-        >>>     # spinner is saved as 'running'
-        >>>     publish_metadata()
-        >>> # spinner is saved as 'completed' if no exception is raised or 'failed' otherwise
-
-    You can also use this short form which handles all necessary save() calls:
-
-        >>> with ProgressSpinner(message='Publishing Metadata'):
-        >>>     publish_metadata()
-
-    ProgressSpinner objects are associated with a Task and auto-discover and populate the task id
-    when saved.
-    """
-
-    class Meta:
-        proxy = True
-
-
-class ProgressBar(ProgressReport):
-    """
-    Shows progress reporting when the count of items is known.
-
-    Plugin writers should create these objects to show progress reporting of a single step or
-    aspect of work which has a name and state along with total and done counts. For example:
-
-        >>> ProgressBar(
-        >>>     message='Publishing files', code='publish', total=23
-        >>> )  # default: state='waiting' and done=0
-
-        >>> ProgressBar(
-        >>>     message='Publishing files', code='publish', total=23, state='running'
-        >>> )  # specify the state
-        >>> ProgressBar(
-        >>>     message='Publishing files', code='publish', total=23, done=16
-        >>> )  # already completed 16
-
-    Update the state to COMPLETED and save it:
-
-        >>> progress_bar = ProgressBar(
-        >>>     message='Publishing files', code='publish', total=23, state='running'
-        >>> )
-        >>> progress_bar.state = 'completed'
-        >>> progress_bar.save()
-
-    The ProgressBar() is a context manager that provides automatic state transitions and saving for
-    the RUNNING CANCELED COMPLETED and FAILED states. The increment() method can be called in the
-    loop as work is completed. When ProgressBar() is used as a context manager progress reporting
-    is rate limited to every 500 milliseconds.
-    Use it as follows:
-
-        >>> progress_bar = ProgressBar(
-        >>>     message='Publishing files', code='publish', total=len(files_iterator)
-        >>> )
-        >>> progress_bar.save()
-        >>> with progress_bar:
-        >>>     # progress_bar saved as 'running'
-        >>>     for file in files_iterator:
-        >>>         handle(file)
-        >>>         progress_bar.increment()  # increments and saves
-        >>> # progress_bar is saved as 'completed' if no exception or 'failed' otherwise
-
-    A convenience method called iter() allows you to avoid calling increment() directly:
-
-        >>> progress_bar = ProgressBar(
-        >>>     message='Publishing files', code='publish', total=len(files_iterator)
-        >>> )
-        >>> progress_bar.save()
-        >>> with progress_bar:
-        >>>     for file in progress_bar.iter(files_iterator):
-        >>>         handle(file)
-
-    You can also use this short form which handles all necessary save() calls:
-
-        >>> data = dict(message='Publishing files', code='publish', total=len(files_iterator))
-        >>> with ProgressBar(**data) as pb:
-        >>>     for file in pb.iter(files_iterator):
-        >>>         handle(file)
-
-    ProgressBar objects are associated with a Task and auto-discover and populate the task id when
-    saved.
-
-    When using threads to update a ProgressBar in parallel, it is recommended that all threads
-    share the same in-memory instance. Django does not synchronize in-memory model instances, so
-    multiple instances of a specific ProgressBar will diverge as they are written to from separate
-    threads.
-    """
-
-    class Meta:
-        proxy = True
-
     def increment(self):
         """
-        Increment done count and save the progress bar.
+        Increment done count and save the progress report.
 
         This will increment and save the self.done attribute which is useful to put into a loop
         processing items.
@@ -241,14 +187,14 @@ class ProgressBar(ProgressReport):
         self.done += 1
         if self.total:
             if self.done > self.total:
-                _logger.warning(_('Too many items processed for ProgressBar %s') % self.message)
+                _logger.warning(_('Too many items processed for ProgressReport %s') % self.message)
         self.save()
 
     def iter(self, iter):
         """
         Iterate and automatically call increment().
 
-            >>> progress_bar = ProgressBar(message='Publishing files', code='publish', total=23)
+            >>> progress_bar = ProgressReport(message='Publishing files', code='publish', total=23)
             >>> progress_bar.save()
             >>> for file in progress_bar.iter(files_iterator):
             >>>     handle(file)
