@@ -3,7 +3,6 @@
 import django.core.validators
 from django.db import migrations, models
 import django.db.models.deletion
-import pulpcore.app.fields
 import pulpcore.app.models.content
 import pulpcore.app.models.fields
 import pulpcore.app.models.publication
@@ -198,8 +197,8 @@ class Migration(migrations.Migration):
                 ('name', models.CharField(max_length=255)),
                 ('started_at', models.DateTimeField(null=True)),
                 ('finished_at', models.DateTimeField(null=True)),
-                ('non_fatal_errors', pulpcore.app.fields.JSONField(default=list)),
-                ('error', pulpcore.app.fields.JSONField(null=True)),
+                ('non_fatal_errors', django.contrib.postgres.fields.JSONField(default=list)),
+                ('error', django.contrib.postgres.fields.JSONField(null=True)),
                 ('parent', models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='spawned_tasks', to='core.Task')),
             ],
             options={

@@ -6,11 +6,11 @@ import traceback
 from datetime import timedelta
 from gettext import gettext as _
 
+from django.contrib.postgres.fields import JSONField
 from django.db import models, transaction
 from django.utils import timezone
 from rq.job import get_current_job
 
-from pulpcore.app.fields import JSONField
 from pulpcore.app.models import GenericRelationModel, Model
 from pulpcore.constants import TASK_CHOICES, TASK_FINAL_STATES, TASK_STATES
 from pulpcore.exceptions import exception_to_dict
