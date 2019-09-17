@@ -1,0 +1,1 @@
+Filter plugin managed repositories.
