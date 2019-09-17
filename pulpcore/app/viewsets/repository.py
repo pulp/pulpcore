@@ -41,10 +41,20 @@ from pulpcore.tasking.tasks import enqueue_with_reservation
 
 class RepositoryFilter(BaseFilterSet):
     name = filters.CharFilter()
+    plugin_managed = filters.BooleanFilter(method='filter_plugin_managed')
+
+    def filter_plugin_managed(self, queryset, name, value):
+        if value:
+            return Repository.objects.filter(**self.data.dict())
+
+        return queryset
 
     class Meta:
         model = Repository
-        fields = {'name': NAME_FILTER_OPTIONS}
+        fields = {
+            'name': NAME_FILTER_OPTIONS,
+            'plugin_managed': ['exact'],
+        }
 
 
 class RepositoryViewSet(NamedModelViewSet,
@@ -53,7 +63,7 @@ class RepositoryViewSet(NamedModelViewSet,
                         mixins.RetrieveModelMixin,
                         mixins.ListModelMixin,
                         mixins.DestroyModelMixin):
-    queryset = Repository.objects.all()
+    queryset = Repository.objects.exclude(plugin_managed=True)
     serializer_class = RepositorySerializer
     endpoint_name = 'repositories'
     router_lookup = 'repository'
