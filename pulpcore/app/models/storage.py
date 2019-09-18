@@ -127,25 +127,6 @@ def get_artifact_path(sha256digest):
     return os.path.join('artifact', sha256digest[0:2], sha256digest[2:])
 
 
-def published_metadata_path(model, name):
-    """
-    Get the storage path for published metadata.
-
-    Args:
-        model (pulpcore.app.models.PublishedMetadata): A model instance.
-        name (str): The file name.
-
-    Returns:
-        str: The absolute storage path.
-    """
-    return os.path.join(
-        settings.MEDIA_ROOT,
-        'published',
-        'metadata',
-        str(uuid4()),
-        name)
-
-
 def get_tls_path(model, name):
     """
     Determine storage location as: MEDIA_ROOT/tls/<model>/<id>/<name>.

@@ -1,9 +1,10 @@
-from django.db import models, transaction
+from django.db import IntegrityError, models, transaction
 
-from . import storage
 from .base import MasterModel, Model
+from .content import Artifact, Content, ContentArtifact
 from .repository import Remote, Repository, RepositoryVersion
 from .task import CreatedResource
+from pulpcore.app.files import PulpTemporaryUploadedFile
 
 
 class Publication(MasterModel):
@@ -35,8 +36,7 @@ class Publication(MasterModel):
         >>>         for content_artifact in content.contentartifact_set.all():
         >>>             artifact = PublishedArtifact(...)
         >>>             artifact.save()
-        >>>             metadata = PublishedMetadata(...)
-        >>>             metadata.save()
+        >>>             metadata = PublishedMetadata.create_from_file(...)
         >>>             ...
         >>>
     """
@@ -132,33 +132,21 @@ class Publication(MasterModel):
             self.delete()
 
 
-class PublishedFile(Model):
+class PublishedArtifact(Model):
     """
-    A file included in Publication.
+    An artifact that is part of a publication.
 
     Fields:
         relative_path (models.CharField): The (relative) path component of the published url.
 
     Relations:
+        content_artifact (models.ForeignKey): The referenced content artifact.
         publication (models.ForeignKey): The publication in which the artifact is included.
-
     """
     relative_path = models.CharField(max_length=255)
 
-    publication = models.ForeignKey(Publication, on_delete=models.CASCADE)
-
-    class Meta:
-        abstract = True
-
-
-class PublishedArtifact(PublishedFile):
-    """
-    An artifact that is part of a publication.
-
-    Relations:
-        content_artifact (models.ForeignKey): The referenced content artifact.
-    """
     content_artifact = models.ForeignKey('ContentArtifact', on_delete=models.CASCADE)
+    publication = models.ForeignKey(Publication, on_delete=models.CASCADE)
 
     class Meta:
         default_related_name = 'published_artifact'
@@ -168,23 +156,60 @@ class PublishedArtifact(PublishedFile):
         )
 
 
-class PublishedMetadata(PublishedFile):
+class PublishedMetadata(Content):
     """
     Metadata file that is part of a publication.
 
     Fields:
-        file (models.FileField): The stored file.
+        relative_path (models.CharField): The (relative) path component of the published url.
+
+    Relations:
+        publication (models.ForeignKey): The publication in which the artifact is included.
     """
 
-    def _storage_path(self, name):
-        return storage.published_metadata_path(self, name)
+    TYPE = 'publishedmetadata'
 
-    file = models.FileField(upload_to=_storage_path, max_length=255)
+    relative_path = models.CharField(max_length=255)
+
+    publication = models.ForeignKey(Publication, on_delete=models.CASCADE)
+
+    @classmethod
+    def create_from_file(cls, file, publication, relative_path=None):
+        """
+        Creates PublishedMetadata along with Artifact, ContentArtifact, and PublishedArtifact.
+
+        Args:
+            file (django.core.files.File): an open File that contains metadata
+            publication (Publication): The publication in which the PublishedMetadata is included.
+            relative_path (str): relative path at which the Metadata is published at. If None, the
+                name of the 'file' is used.
+
+        Returns:
+            PublishedMetadata: a saved instance of PublishedMetadata
+        """
+
+        with transaction.atomic():
+            artifact = Artifact.init_and_validate(file=PulpTemporaryUploadedFile.from_file(file))
+            try:
+                with transaction.atomic():
+                    artifact.save()
+            except IntegrityError:
+                artifact = Artifact.objects.get(sha256=artifact.sha256)
+            if not relative_path:
+                relative_path = file.name
+            content = cls(relative_path=relative_path, publication=publication)
+            content.save()
+            ca = ContentArtifact(relative_path=relative_path, content=content, artifact=artifact)
+            ca.save()
+            pa = PublishedArtifact(relative_path=relative_path,
+                                   content_artifact=ca,
+                                   publication=publication)
+            pa.save()
+        return content
 
     class Meta:
         default_related_name = 'published_metadata'
         unique_together = (
-            ('publication', 'file'),
             ('publication', 'relative_path')
         )
 

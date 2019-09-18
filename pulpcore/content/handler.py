@@ -213,14 +213,6 @@ class Handler:
                 else:
                     return await self._stream_content_artifact(request, StreamResponse(), ca)
 
-            # published metadata
-            try:
-                pm = publication.published_metadata.get(relative_path=rel_path)
-            except ObjectDoesNotExist:
-                pass
-            else:
-                return self._handle_file_response(pm.file)
-
             # pass-through
             if publication.pass_through:
                 try:
