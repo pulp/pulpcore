@@ -2,6 +2,7 @@ import re
 from collections import OrderedDict
 
 import uritemplate
+from django.utils.html import strip_tags
 from drf_yasg import openapi
 from drf_yasg.generators import OpenAPISchemaGenerator
 from drf_yasg.inspectors import SwaggerAutoSchema
@@ -283,6 +284,10 @@ class PulpAutoSchema(SwaggerAutoSchema):
         else:
             operation_id = self.get_operation_id(operation_keys)
         summary, description = self.get_summary_and_description()
+
+        if "include_html" not in self.request.query_params:
+            description = strip_tags(description)
+
         security = self.get_security()
         assert security is None or isinstance(security, list), "security must be a list of " \
                                                                "security requirement objects"
