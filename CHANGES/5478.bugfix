@@ -1,0 +1,1 @@
+Fixed issue where removing all units on a repo with no version threw an error.
