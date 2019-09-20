@@ -51,11 +51,9 @@ PyPI Installation
 
    $ sudo apt-get install python3-venv
 
-4. Install Pulp with the set of packages for the relational database you prefer to use. Right now we
-   have extra sets for postgresql or MySQL/mariadb::
+4. Install Pulp using pip::
 
-   $ pip install pulpcore-plugin pulpcore[postgres]
-   $ pip install pulpcore-plugin pulpcore[mysql]
+   $ pip install pulpcore-plugin pulpcore
 
 .. note::
 
@@ -102,8 +100,8 @@ PyPI Installation
 Database Setup
 --------------
 
-You must provide a compatible SQL database for Pulp to use. At this time Pulp 3.0 is only known to work
-properly with PostgreSQL. It may work with other databases that Django supports, but no guarantees.
+You must provide a PostgreSQL database for Pulp to use. At this time, Pulp 3.0 will only work with
+PostgreSQL.
 
 PostgreSQL
 ^^^^^^^^^^
