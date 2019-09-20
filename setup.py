@@ -13,6 +13,7 @@ requirements = [
     'drf-yasg~=1.16.1',
     'gunicorn~=19.9.0',
     'packaging',  # until drf-yasg 1.16.2 is out https://github.com/axnsan12/drf-yasg/issues/412
+    'psycopg2-binary',
     'PyYAML~=5.1.1',
     'rq~=1.1.0',
     'redis~=3.1.0',
@@ -34,10 +35,6 @@ setup(
     url='http://www.pulpproject.org',
     python_requires='>=3.6',
     install_requires=requirements,
-    extras_require={
-        'postgres': ['psycopg2-binary'],
-        'mysql': ['mysqlclient']
-    },
     include_package_data=True,
     classifiers=(
         'License :: OSI Approved :: GNU General Public License v2 or later (GPLv2+)',

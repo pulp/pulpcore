@@ -1,0 +1,1 @@
+Remove support for mysql/mariadb making postgresql the only supported database.
