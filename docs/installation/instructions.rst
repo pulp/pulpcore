@@ -156,36 +156,36 @@ can also configure them by hand from the templates below. Custom configuration c
 the ``Environment`` option with various :ref:`Pulp settings <configuration>`.
 
 
-1. Make a ``pulp-content-app.service`` file for the pulp-content-app service which serves Pulp
-   content to clients. We recommend starting with the `pulp-content-app template <https://github.com
-   /pulp/ansible-pulp/blob/master/roles/pulp-content/templates/pulp-content-app.service.j2>`_ and
-   setting the variables according to the `pulp-content-app config variables documentation <https://
+1. Make a ``pulpcore-content-app.service`` file for the pulpcore-content-app service which serves Pulp
+   content to clients. We recommend starting with the `pulpcore-content-app template <https://github.com
+   /pulp/ansible-pulp/blob/master/roles/pulp-content/templates/pulpcore-content-app.service.j2>`_ and
+   setting the variables according to the `pulpcore-content-app config variables documentation <https://
    github.com/pulp/ ansible-pulp/tree/master/roles/pulp-content#variables>`_
 
-2. Make a ``pulp-api.service`` file for the pulp-api service which serves the Pulp REST API. We
-   recommend starting with the `pulp-api template <https://github.com/pulp/ansible-pulp/blob/master/
-   roles/pulp/templates/pulp-api.service.j2>`_ and setting the variables according to the `pulp-api
+2. Make a ``pulpcore-api.service`` file for the pulpcore-api service which serves the Pulp REST API. We
+   recommend starting with the `pulpcore-api template <https://github.com/pulp/ansible-pulp/blob/master/
+   roles/pulp/templates/pulpcore-api.service.j2>`_ and setting the variables according to the `pulpcore-api
    config variables documentation <https://github.com/pulp/ ansible-pulp/tree/master/roles/
    pulp-content#variables>`_
 
-3. Make a ``pulp-worker@.service`` file for the pulp-worker processes which allows you to manage one
-   or more workers. We recommend starting with the `pulp-worker template <https://github.com/pulp/
-   ansible-pulp/blob/master/roles/pulp-workers/templates/pulp-worker%40.service.j2>`_ and setting
+3. Make a ``pulpcore-worker@.service`` file for the pulpcore-worker processes which allows you to manage
+   one or more workers. We recommend starting with the `pulpcore-worker template <https://github.com/pulp/
+   ansible-pulp/blob/master/roles/pulp-workers/templates/pulpcore-worker%40.service.j2>`_ and setting
    the variables according to the `pulp-worker config variables documentation <https://github.com/
    pulp/ansible-pulp/tree/master/roles/pulp-workers#configurable-variables>`_
 
-4. Make a ``pulp-resource-manager.service`` file which can manage one pulp-resource-manager process.
-   We recommend starting with the `pulp-resource-manager template <https://github.com/pulp/
-   ansible-pulp/blob/master/roles/pulp-resource-manager/templates/pulp-resource-manager.service.
-   j2>`_ and setting the variables according to the `pulp-resource-manager config variables
+4. Make a ``pulpcore-resource-manager.service`` file which can manage one pulpcore-resource-manager
+   process. We recommend starting with the `pulpcore-resource-manager template <https://github.com/pulp/
+   ansible-pulp/blob/master/roles/pulp-resource-manager/templates/pulpcore-resource-manager.service.
+   j2>`_ and setting the variables according to the `pulpcore-resource-manager config variables
    documentation <https://github.com/pulp/ansible-pulp/tree/master/roles/pulp-resource-manager#
    configurable-variables>`_
 
 These services can then be started by running::
 
-    sudo systemctl start pulp-resource-manager
-    sudo systemctl start pulp-content-app
-    sudo systemctl start pulp-api
-    sudo systemctl start pulp-worker@1
-    sudo systemctl start pulp-worker@2
+    sudo systemctl start pulpcore-resource-manager
+    sudo systemctl start pulpcore-content-app
+    sudo systemctl start pulpcore-api
+    sudo systemctl start pulpcore-worker@1
+    sudo systemctl start pulpcore-worker@2
 

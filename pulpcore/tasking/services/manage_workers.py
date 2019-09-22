@@ -10,7 +10,7 @@ from glob import glob
 
 _ENVIRONMENT_FILE = os.path.join('/', 'etc', 'default', 'pulp-workers')
 _SYSTEMD_UNIT_PATH = os.path.join('/', 'run', 'systemd', 'system')
-_UNIT_FILENAME_TEMPLATE = 'pulp-worker-%s.service'
+_UNIT_FILENAME_TEMPLATE = 'pulpcore-worker-%s.service'
 _WORKER_TEMPLATE = """[Unit]
 Description=Pulp Worker #%(num)s
 After=network.target
