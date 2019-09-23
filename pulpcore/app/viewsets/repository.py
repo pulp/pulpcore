@@ -17,7 +17,6 @@ from pulpcore.app.models import (
     RepositoryContent,
     RepositoryVersion,
 )
-from pulpcore.app.pagination import NamePagination
 from pulpcore.app.response import OperationPostponedResponse
 from pulpcore.app.serializers import (
     AsyncOperationResponseSerializer,
@@ -63,11 +62,10 @@ class RepositoryViewSet(NamedModelViewSet,
                         mixins.RetrieveModelMixin,
                         mixins.ListModelMixin,
                         mixins.DestroyModelMixin):
-    queryset = Repository.objects.exclude(plugin_managed=True)
+    queryset = Repository.objects.exclude(plugin_managed=True).order_by("name")
     serializer_class = RepositorySerializer
     endpoint_name = 'repositories'
     router_lookup = 'repository'
-    pagination_class = NamePagination
     filterset_class = RepositoryFilter
 
     @swagger_auto_schema(operation_description="Trigger an asynchronous task to update"

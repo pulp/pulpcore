@@ -8,7 +8,6 @@ pulp.app
     fields
     models
     response
-    pagination
     serializers
     settings
     urls
