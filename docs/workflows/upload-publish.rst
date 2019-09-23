@@ -1,6 +1,26 @@
 Upload and Publish
 ==================
 
+Uploading Content
+-----------------
+
+Content can be uploaded by POSTing the the file to ``/pulp/api/v3/<plugin_name>/<content_type>``.
+Some plugins can create the content unit completely from that file, but others require some
+additional attributes to be specified with the upload. See your plugin documentation for more info
+on upload features of your plugin.
+
+File data can be uploaded in parallel, and then the call to
+``/pulp/api/v3/<plugin_name>/<content_type>`` can reference the already existing Artifact to create
+the content from.
+
+
+Associating with a Repository on Upload
+---------------------------------------
+
+You can automatically associate newly uploaded content with a Repository when using the
+``/pulp/api/v3/<plugin_name>/<content_type>`` API by passing the ``repository reference``.
+
+
 Chunked Uploads
 ---------------
 
