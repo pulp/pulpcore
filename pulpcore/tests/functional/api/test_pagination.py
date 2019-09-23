@@ -65,7 +65,7 @@ class PaginationTestCase(unittest.TestCase):
         """
 
         per_page = 7  # will result in 3 pages
-        resp = self.client.get(REPO_PATH, params={'page_size': per_page})
+        resp = self.client.get(REPO_PATH, params={'limit': per_page})
         collected_results = resp['results']
         # First call returns 7 results
         self.assertEqual(len(collected_results), per_page, collected_results)
@@ -121,10 +121,10 @@ class PaginationTestCase(unittest.TestCase):
         self.assertEqual(len(all_repos), self.number_to_create, all_repos)
 
         first_page = self.client.get(
-            REPO_PATH, params={'page_size': per_page, 'page': 1}
+            REPO_PATH, params={'limit': per_page}
         )
         last_page = self.client.get(
-            REPO_PATH, params={'page_size': per_page, 'page': 3}
+            REPO_PATH, params={'limit': per_page, 'offset': 2 * per_page}
         )
 
         for index in range(0, 7):

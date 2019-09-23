@@ -148,13 +148,6 @@ pulpcore.app.urls
 This module contains the API :data:`~pulpcore.app.urls.root_router`, and is where all non-API
 views (should we ever write any) are mapped to URLs.
 
-pulpcore.app.pagination
-^^^^^^^^^^^^^^^^^^^^^^^
-
-API-related pagination classes are defined here. The number of paginators defined in this file
-should be kept as small as possible to ensure consistent pagination across all API views.
-
-
 pulpcore.app.models
 ^^^^^^^^^^^^^^^^^^^
 
