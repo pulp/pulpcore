@@ -425,7 +425,7 @@ class Migration(migrations.Migration):
                 ('_created', models.DateTimeField(auto_now_add=True)),
                 ('_last_updated', models.DateTimeField(auto_now=True, null=True)),
                 ('relative_path', models.CharField(max_length=255)),
-                ('file', models.FileField(max_length=255, upload_to=pulpcore.app.models.publication.PublishedMetadata._storage_path)),
+                ('file', models.FileField(max_length=255, upload_to='')),
                 ('publication', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='published_metadata', to='core.Publication')),
             ],
             options={
