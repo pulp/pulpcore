@@ -1,4 +1,5 @@
 import logging
+import mimetypes
 import os
 from gettext import gettext as _
 
@@ -209,7 +210,7 @@ class Handler:
                 pass
             else:
                 if ca.artifact:
-                    return self._handle_file_response(ca.artifact.file)
+                    return self._handle_file_response(ca)
                 else:
                     return await self._stream_content_artifact(request, StreamResponse(), ca)
 
@@ -232,7 +233,7 @@ class Handler:
                     pass
                 else:
                     if ca.artifact:
-                        return self._handle_file_response(ca.artifact.file)
+                        return self._handle_file_response(ca)
                     else:
                         return await self._stream_content_artifact(request, StreamResponse(), ca)
 
@@ -259,7 +260,7 @@ class Handler:
             except ObjectDoesNotExist:
                 pass
             else:
-                return self._handle_file_response(ca.artifact.file)
+                return self._handle_file_response(ca)
 
         if distro.remote:
             remote = distro.remote.cast()
@@ -268,7 +269,7 @@ class Handler:
                 ra = RemoteArtifact.objects.get(remote=remote, url=url)
                 ca = ra.content_artifact
                 if ca.artifact:
-                    return self._handle_file_response(ca.artifact.file)
+                    return self._handle_file_response(ca)
                 else:
                     return await self._stream_content_artifact(request, StreamResponse(), ca)
             except ObjectDoesNotExist:
@@ -376,7 +377,7 @@ class Handler:
                 content_artifact.save()
         return artifact
 
-    def _handle_file_response(self, file):
+    def _handle_file_response(self, content_artifact):
         """
         Handle response for file.
 
@@ -384,7 +385,8 @@ class Handler:
         the file (filesystem) or a redirect (S3).
 
         Args:
-            file (:class:`django.db.models.fields.files.FieldFile`): File to respond with
+            content_artifact (:class:`~pulpcore.plugin.models.ContentArtifact`): The
+                ContentArtifact that references the file that should be served
 
         Raises:
             :class:`aiohttp.web_exceptions.HTTPFound`: When we need to redirect to the file
@@ -393,10 +395,17 @@ class Handler:
         Returns:
             The :class:`aiohttp.web.FileResponse` for the file.
         """
+        file = content_artifact.artifact.file
+        content_type, encoding = mimetypes.guess_type(content_artifact.relative_path)
+        headers = {}
+        if content_type:
+            headers['Content-Type'] = content_type
+        if encoding:
+            headers['Content-Encoding'] = encoding
         if settings.DEFAULT_FILE_STORAGE == 'pulpcore.app.models.storage.FileSystem':
-            return FileResponse(os.path.join(settings.MEDIA_ROOT, file.name))
+            return FileResponse(os.path.join(settings.MEDIA_ROOT, file.name), headers=headers)
         elif settings.DEFAULT_FILE_STORAGE == 'storages.backends.s3boto3.S3Boto3Storage':
-            raise HTTPFound(file.url)
+            raise HTTPFound(file.url, headers=headers)
         else:
             raise NotImplementedError()
 
