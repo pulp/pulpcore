@@ -1,4 +1,5 @@
 import logging
+import mimetypes
 import os
 from gettext import gettext as _
 
@@ -175,6 +176,25 @@ class Handler:
                 })
             raise HTTPForbidden(reason=str(pe))
 
+    @staticmethod
+    def response_headers(path):
+        """
+        Get the Content-Type and Encoding-Type headers for the requested `path`.
+
+        Args:
+            path (str): The relative path that was requested.
+
+        Returns:
+            headers (dict): A dictionary of response headers.
+        """
+        content_type, encoding = mimetypes.guess_type(path)
+        headers = {}
+        if content_type:
+            headers['Content-Type'] = content_type
+        if encoding:
+            headers['Content-Encoding'] = encoding
+        return headers
+
     async def _match_and_stream(self, path, request):
         """
         Match the path and stream results either from the filesystem or by downloading new data.
@@ -198,6 +218,8 @@ class Handler:
         rel_path = rel_path[len(distro.base_path):]
         rel_path = rel_path.lstrip('/')
 
+        headers = self.response_headers(rel_path)
+
         publication = getattr(distro, 'publication', None)
 
         if publication:
@@ -209,9 +231,10 @@ class Handler:
                 pass
             else:
                 if ca.artifact:
-                    return self._handle_file_response(ca.artifact.file)
+                    return self._handle_file_response(ca.artifact.file, headers)
                 else:
-                    return await self._stream_content_artifact(request, StreamResponse(), ca)
+                    return await self._stream_content_artifact(request,
+                                                               StreamResponse(headers=headers), ca)
 
             # pass-through
             if publication.pass_through:
@@ -232,9 +255,11 @@ class Handler:
                     pass
                 else:
                     if ca.artifact:
-                        return self._handle_file_response(ca.artifact.file)
+                        return self._handle_file_response(ca.artifact.file, headers)
                     else:
-                        return await self._stream_content_artifact(request, StreamResponse(), ca)
+                        return await self._stream_content_artifact(request,
+                                                                   StreamResponse(headers=headers),
+                                                                   ca)
 
         repo_version = getattr(distro, 'repository_version', None)
         repository = getattr(distro, 'repository', None)
@@ -259,7 +284,7 @@ class Handler:
             except ObjectDoesNotExist:
                 pass
             else:
-                return self._handle_file_response(ca.artifact.file)
+                return self._handle_file_response(ca.artifact.file, headers)
 
         if distro.remote:
             remote = distro.remote.cast()
@@ -268,13 +293,17 @@ class Handler:
                 ra = RemoteArtifact.objects.get(remote=remote, url=url)
                 ca = ra.content_artifact
                 if ca.artifact:
-                    return self._handle_file_response(ca.artifact.file)
+                    return self._handle_file_response(ca.artifact.file, headers)
                 else:
-                    return await self._stream_content_artifact(request, StreamResponse(), ca)
+                    return await self._stream_content_artifact(request,
+                                                               StreamResponse(headers=headers),
+                                                               ca)
             except ObjectDoesNotExist:
                 ca = ContentArtifact(relative_path=rel_path)
                 ra = RemoteArtifact(remote=remote, url=url, content_artifact=ca)
-                return await self._stream_remote_artifact(request, StreamResponse(), ra)
+                return await self._stream_remote_artifact(request,
+                                                          StreamResponse(headers=headers),
+                                                          ra)
 
         raise PathNotResolved(path)
 
@@ -376,7 +405,7 @@ class Handler:
                 content_artifact.save()
         return artifact
 
-    def _handle_file_response(self, file):
+    def _handle_file_response(self, file, headers):
         """
         Handle response for file.
 
@@ -385,6 +414,7 @@ class Handler:
 
         Args:
             file (:class:`django.db.models.fields.files.FieldFile`): File to respond with
+            headers (dict): A dictionary of response headers.
 
         Raises:
             :class:`aiohttp.web_exceptions.HTTPFound`: When we need to redirect to the file
@@ -394,9 +424,9 @@ class Handler:
             The :class:`aiohttp.web.FileResponse` for the file.
         """
         if settings.DEFAULT_FILE_STORAGE == 'pulpcore.app.models.storage.FileSystem':
-            return FileResponse(os.path.join(settings.MEDIA_ROOT, file.name))
+            return FileResponse(os.path.join(settings.MEDIA_ROOT, file.name), headers=headers)
         elif settings.DEFAULT_FILE_STORAGE == 'storages.backends.s3boto3.S3Boto3Storage':
-            raise HTTPFound(file.url)
+            raise HTTPFound(file.url, headers=headers)
         else:
             raise NotImplementedError()
 
