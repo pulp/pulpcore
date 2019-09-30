@@ -1,0 +1,1 @@
+Alias for `_type` to avoid raise an error on bindings import.

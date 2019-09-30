@@ -140,6 +140,15 @@ class MasterModel(Model, metaclass=MasterModelMeta):
         else:
             return self
 
+    @property
+    def resource_type(self):
+        """
+        Returns _type.
+
+        Due to OpenAPI issue: https://github.com/OpenAPITools/openapi-generator/issues/3168
+        """
+        return self._type
+
     def __str__(self):
         # similar to Model's __str__, but type-aware
         cast = self.cast()

@@ -101,10 +101,10 @@ class MasterModelSerializer(ModelSerializer):
     as-needed.
 
     """
-    _type = serializers.CharField(read_only=True)
+    resource_type = serializers.CharField(read_only=True)
 
     class Meta:
-        fields = ModelSerializer.Meta.fields + ('_type',)
+        fields = ModelSerializer.Meta.fields + ('resource_type',)
 
 
 class MatchingNullViewName(object):
