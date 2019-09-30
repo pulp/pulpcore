@@ -2,10 +2,9 @@ from pulpcore.client.pulpcore import (ApiClient as CoreApiClient, ArtifactsApi, 
                                       Repository, RepositoriesApi, RepositoriesVersionsApi,
                                       TasksApi, Upload, UploadCommit, UploadsApi)
 from pulpcore.client.pulp_file import (ApiClient as FileApiClient, ContentFilesApi,
-                                       FileContent, DistributionsFileApi,
-                                       FileDistribution, PublicationsFileApi,
-                                       RemotesFileApi, FileRemote, RepositorySyncURL,
-                                       FilePublication)
+                                       DistributionsFileApi, FileDistribution,
+                                       PublicationsFileApi, RemotesFileApi, FileRemote,
+                                       RepositorySyncURL, FilePublication)
 from pprint import pprint
 from time import sleep
 import hashlib
@@ -142,12 +141,11 @@ artifact = artifacts.create(file=file_path)
 pprint(artifact)
 
 # Create a FileContent from the artifact
-file_data = FileContent(relative_path='foo.tar.gz', artifact=artifact.href)
-filecontent = filecontent.create(file_data)
-pprint(filecontent)
+filecontent_response = filecontent.create(relative_path='foo.tar.gz', artifact=artifact.href)
+created_resources = monitor_task(filecontent_response.task)
 
 # Add the new FileContent to a repository version
-repo_version_data = {'add_content_units': [filecontent.href]}
+repo_version_data = {'add_content_units': [created_resources[0]]}
 repo_version_response = repoversions.create(repository.href, repo_version_data)
 
 # Monitor the repo version creation task

@@ -125,11 +125,12 @@ file_path = File.join(ENV['TRAVIS_BUILD_DIR'], '.travis/test_bindings.rb')
 artifact = @artifacts_api.create({file: File.new(file_path)})
 
 # Create a FileContent from the artifact
-file_data = PulpFileClient::FileContent.new({relative_path: 'foo.tar.gz', artifact: artifact._href})
-filecontent = @filecontent_api.create(file_data)
+filecontent_response = @filecontent_api.create('foo.tar.gz', {artifact: artifact._href})
+
+created_resources = monitor_task(filecontent_response.task)
 
 # Add the new FileContent to a repository version
-repo_version_data = {add_content_units: [filecontent._href]}
+repo_version_data = {add_content_units: [created_resources[0]]}
 repo_version_response = @repoversions_api.create(repository._href, repo_version_data)
 
 # Monitor the repo version creation task
