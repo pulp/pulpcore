@@ -13,6 +13,64 @@ Changelog
 
 .. towncrier release notes start
 
+3.0.0rc6 (2019-10-01)
+=====================
+
+Features
+--------
+
+- Setting `code` on `ProgressReport` for identifying the type of progress report.
+  `#5184 <https://pulp.plan.io/issues/5184>`_
+- Add the possibility to pass context to the general_create task.
+  `#5403 <https://pulp.plan.io/issues/5403>`_
+- Filter plugin managed repositories.
+  `#5421 <https://pulp.plan.io/issues/5421>`_
+- Using `ProgressReport` for known and unknown items count.
+  `#5444 <https://pulp.plan.io/issues/5444>`_
+
+
+Bugfixes
+--------
+
+- PublishedMetadata files are now stored in artifact storage.
+  `#5304 <https://pulp.plan.io/issues/5304>`_
+- Fixing error where relative_path was defined on model but not serializer
+  `#5445 <https://pulp.plan.io/issues/5445>`_
+- Fixed issue where removing all units on a repo with no version threw an error.
+  `#5478 <https://pulp.plan.io/issues/5478>`_
+- content-app sets Content-Type and Content-Encoding headers for all responses.
+  `#5507 <https://pulp.plan.io/issues/5507>`_
+
+
+Improved Documentation
+----------------------
+
+- Update installation docs since mariadb/mysql is no longer supported.
+  `#5129 <https://pulp.plan.io/issues/5129>`_
+
+
+Deprecations and Removals
+-------------------------
+
+- By default, html in field descriptions filtered out in REST API docs unless 'include_html' is set.
+  `#5009 <https://pulp.plan.io/issues/5009>`_
+- Remove support for mysql/mariadb making postgresql the only supported database.
+  `#5129 <https://pulp.plan.io/issues/5129>`_
+- Creating a progress report now requires setting code field.
+  `#5184 <https://pulp.plan.io/issues/5184>`_
+- Rename the fields on the ContentSerializers to not start with underscore.
+  `#5428 <https://pulp.plan.io/issues/5428>`_
+- Removing `ProgressSpinner` and `ProgressBar` models.
+  `#5444 <https://pulp.plan.io/issues/5444>`_
+- Remove custom JSONField implementation from public API
+  `#5465 <https://pulp.plan.io/issues/5465>`_
+- Delete NamePagination class and use sorting on the queryset instead.
+  `#5489 <https://pulp.plan.io/issues/5489>`_
+
+
+----
+
+
 3.0.0rc5 (2019-09-10)
 =====================
 
