@@ -76,7 +76,7 @@ class CRUDRepoTestCase(unittest.TestCase):
     def test_02_read_repo_without_specific_fields(self):
         """Read a repo by its href excluding specific fields."""
         # requests doesn't allow the use of != in parameters.
-        url = '{}?fields!=created,name'.format(self.repo['_href'])
+        url = '{}?exclude_fields=created,name'.format(self.repo['_href'])
         repo = self.client.get(url)
         response_fields = repo.keys()
         self.assertNotIn('created', response_fields)

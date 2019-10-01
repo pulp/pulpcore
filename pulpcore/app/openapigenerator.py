@@ -274,6 +274,14 @@ class PulpAutoSchema(SwaggerAutoSchema):
                 type="string",
             )
             query.append(fields_paramenter)
+            not_fields_paramenter = Parameter(
+                name="exclude_fields",
+                in_="query",
+                description="A list of fields to exclude from the response.",
+                required=False,
+                type="string",
+            )
+            query.append(not_fields_paramenter)
         parameters = body + query
         parameters = filter_none(parameters)
         parameters = self.add_manual_parameters(parameters)

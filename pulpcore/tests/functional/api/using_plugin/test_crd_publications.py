@@ -85,7 +85,7 @@ class PublicationsTestCase(unittest.TestCase):
     def test_02_read_publication_without_specific_fields(self):
         """Read a publication by its href excluding specific fields."""
         # requests doesn't allow the use of != in parameters.
-        url = '{}?fields!=distributions'.format(self.publication['_href'])
+        url = '{}?exclude_fields=distributions'.format(self.publication['_href'])
         publication = self.client.get(url)
         self.assertNotIn('distributions', publication.keys())
 
