@@ -51,7 +51,7 @@ class CRUDPublicationDistributionTestCase(unittest.TestCase):
         """Clean class-wide variables."""
         for resource in (cls.publication, cls.remote, cls.repo):
             if resource:
-                cls.client.delete(resource['_href'])
+                cls.client.delete(resource['pulp_href'])
 
     def test_01_create(self):
         """Create a publication distribution.
@@ -77,24 +77,24 @@ class CRUDPublicationDistributionTestCase(unittest.TestCase):
         # create 3 repository versions
         for _ in range(3):
             sync(self.cfg, self.remote, self.repo)
-        self.repo = self.client.get(self.repo['_href'])
+        self.repo = self.client.get(self.repo['pulp_href'])
 
         versions = get_versions(self.repo)
 
         self.publication.update(create_file_publication(
             self.cfg,
             self.repo,
-            versions[1]['_href']
+            versions[1]['pulp_href']
         ))
 
         self.distribution.update(
             self.client.post(
                 FILE_DISTRIBUTION_PATH,
-                gen_distribution(publication=self.publication['_href'])
+                gen_distribution(publication=self.publication['pulp_href'])
             )
         )
 
-        self.publication = self.client.get(self.publication['_href'])
+        self.publication = self.client.get(self.publication['pulp_href'])
 
         # content_guard is the only parameter unset.
         for key, val in self.distribution.items():
@@ -105,20 +105,20 @@ class CRUDPublicationDistributionTestCase(unittest.TestCase):
 
         self.assertEqual(
             self.distribution['publication'],
-            self.publication['_href'],
+            self.publication['pulp_href'],
             self.distribution
         )
 
         self.assertEqual(
             self.publication['distributions'][0],
-            self.distribution['_href'],
+            self.distribution['pulp_href'],
             self.publication
         )
 
     @skip_if(bool, 'distribution', False)
     def test_02_read(self):
         """Read distribution by its href."""
-        distribution = self.client.get(self.distribution['_href'])
+        distribution = self.client.get(self.distribution['pulp_href'])
         for key, val in self.distribution.items():
             with self.subTest(key=key):
                 self.assertEqual(distribution[key], val)
@@ -140,22 +140,22 @@ class CRUDPublicationDistributionTestCase(unittest.TestCase):
     @skip_if(bool, 'distribution', False)
     def test_04_delete_distribution(self):
         """Delete a distribution."""
-        self.client.delete(self.distribution['_href'])
+        self.client.delete(self.distribution['pulp_href'])
         with self.assertRaises(HTTPError):
-            self.client.get(self.distribution['_href'])
+            self.client.get(self.distribution['pulp_href'])
 
     def do_fully_update_attr(self, attr):
         """Update a distribution attribute using HTTP PUT.
 
         :param attr: The name of the attribute to update.
         """
-        distribution = self.client.get(self.distribution['_href'])
+        distribution = self.client.get(self.distribution['pulp_href'])
         string = utils.uuid4()
         distribution[attr] = string
-        self.client.put(distribution['_href'], distribution)
+        self.client.put(distribution['pulp_href'], distribution)
 
         # verify the update
-        distribution = self.client.get(distribution['_href'])
+        distribution = self.client.get(distribution['pulp_href'])
         self.assertEqual(string, distribution[attr], distribution)
 
     def do_partially_update_attr(self, attr):
@@ -164,10 +164,10 @@ class CRUDPublicationDistributionTestCase(unittest.TestCase):
         :param attr: The name of the attribute to update.
         """
         string = utils.uuid4()
-        self.client.patch(self.distribution['_href'], {attr: string})
+        self.client.patch(self.distribution['pulp_href'], {attr: string})
 
         # Verify the update
-        distribution = self.client.get(self.distribution['_href'])
+        distribution = self.client.get(self.distribution['pulp_href'])
         self.assertEqual(string, distribution[attr], self.distribution)
 
 
@@ -191,12 +191,12 @@ class DistributionBasePathTestCase(unittest.TestCase):
         body = gen_distribution()
         body['base_path'] = body['base_path'].replace('-', '/')
         distribution = cls.client.post(FILE_DISTRIBUTION_PATH, body)
-        cls.distribution = cls.client.get(distribution['_href'])
+        cls.distribution = cls.client.get(distribution['pulp_href'])
 
     @classmethod
     def tearDownClass(cls):
         """Clean up resources."""
-        cls.client.delete(cls.distribution['_href'])
+        cls.client.delete(cls.distribution['pulp_href'])
 
     def test_negative_create_using_spaces(self):
         """Test that spaces can not be part of ``base_path``."""
@@ -252,7 +252,7 @@ class DistributionBasePathTestCase(unittest.TestCase):
         Use the given kwargs as the body of the request.
         """
         with self.assertRaises(HTTPError) as ctx:
-            self.client.patch(self.distribution['_href'], kwargs)
+            self.client.patch(self.distribution['pulp_href'], kwargs)
 
         self.assertIsNotNone(
             ctx.exception.response.json()['base_path'],
@@ -280,22 +280,22 @@ class ContentServePublicationDistributionTestCase(unittest.TestCase):
     def test_content_served(self):
         """Verify that content is served over publication distribution."""
         repo = self.client.post(REPO_PATH, gen_repo())
-        self.addCleanup(self.client.delete, repo['_href'])
+        self.addCleanup(self.client.delete, repo['pulp_href'])
 
         remote = self.client.post(FILE_REMOTE_PATH, gen_file_remote())
-        self.addCleanup(self.client.delete, remote['_href'])
+        self.addCleanup(self.client.delete, remote['pulp_href'])
 
         sync(self.cfg, remote, repo)
-        repo = self.client.get(repo['_href'])
+        repo = self.client.get(repo['pulp_href'])
 
         publication = create_file_publication(self.cfg, repo)
-        self.addCleanup(self.client.delete, publication['_href'])
+        self.addCleanup(self.client.delete, publication['pulp_href'])
 
         distribution = self.client.post(
             FILE_DISTRIBUTION_PATH,
-            gen_distribution(publication=publication['_href'])
+            gen_distribution(publication=publication['pulp_href'])
         )
-        self.addCleanup(self.client.delete, distribution['_href'])
+        self.addCleanup(self.client.delete, distribution['pulp_href'])
 
         pulp_manifest = parse_pulp_manifest(
             self.download_pulp_manifest(distribution)

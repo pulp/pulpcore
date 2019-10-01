@@ -146,19 +146,19 @@ class PulpOpenAPISchemaGenerator(OpenAPISchemaGenerator):
         """
         resource_path = '%s}/' % path.rsplit(sep='}', maxsplit=1)[0]
         if resource_path.endswith('_pk}/'):
-            resource_path = '%s{_id}/' % resource_path.rsplit(sep='{', maxsplit=1)[0]
+            resource_path = '%s{pulp_id}/' % resource_path.rsplit(sep='{', maxsplit=1)[0]
         return resource_path
 
     @staticmethod
     def get_resource_description(name, example_uri):
-        """Returns a description of an *_href path parameter
+        """Returns a description of an *pulp_href path parameter
 
         Args:
-            name (str): Name of the resource referenced by the *_href path parameter
+            name (str): Name of the resource referenced by the *pulp_href path parameter
             example_uri (str): An example of the URI that is a reference for a specific resource
 
         Returns:
-            str: Description of an *_href path parameter
+            str: Description of an *pulp_href path parameter
         """
         return "URI of %s. e.g.: %s" % (name, example_uri)
 
@@ -186,7 +186,7 @@ class PulpOpenAPISchemaGenerator(OpenAPISchemaGenerator):
             model (django.db.models.Model): The model for which a path parameter name is needed
 
         Returns:
-            str: *_href where * is the model name in all lower case letters
+            str: *pulp_href where * is the model name in all lower case letters
         """
         return '%s_href' % '_'.join([part.lower() for part in re.findall('[A-Z][^A-Z]*',
                                                                          model.__name__)])

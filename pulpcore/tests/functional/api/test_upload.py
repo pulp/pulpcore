@@ -71,7 +71,7 @@ class ChunkedUploadTestCase(unittest.TestCase):
 
         artifact = self.upload_chunks()
 
-        self.addCleanup(self.client.delete, artifact['_href'])
+        self.addCleanup(self.client.delete, artifact['pulp_href'])
 
         self.assertEqual(artifact['sha256'], self.file_sha256, artifact)
 
@@ -83,18 +83,18 @@ class ChunkedUploadTestCase(unittest.TestCase):
 
         for data in self.chunked_data:
             self.client.put(
-                upload_request['_href'],
+                upload_request['pulp_href'],
                 data={'sha256': hashlib.sha256(data[0]).hexdigest()},
                 files={'file': data[0]},
                 headers=data[1],
             )
 
         artifact_request = self.client.post(
-            urljoin(upload_request['_href'], 'commit/'),
+            urljoin(upload_request['pulp_href'], 'commit/'),
             data={'sha256': self.file_sha256},
         )
 
-        self.addCleanup(self.client.delete, artifact_request['_href'])
+        self.addCleanup(self.client.delete, artifact_request['pulp_href'])
 
         self.assertEqual(artifact_request['sha256'], self.file_sha256, artifact_request)
 
@@ -106,7 +106,7 @@ class ChunkedUploadTestCase(unittest.TestCase):
 
         for data in self.chunked_data:
             response = self.client.using_handler(api.echo_handler).put(
-                upload_request['_href'],
+                upload_request['pulp_href'],
                 data={'sha256': "WRONG CHECKSUM"},
                 files={'file': data[0]},
                 headers=data[1],
@@ -114,7 +114,7 @@ class ChunkedUploadTestCase(unittest.TestCase):
             with self.subTest(response=response):
                 self.assertEqual(response.status_code, 400, response)
 
-        self.addCleanup(self.client.delete, upload_request['_href'])
+        self.addCleanup(self.client.delete, upload_request['pulp_href'])
 
     def test_upload_response(self):
         """Test upload responses when creating an upload and uploading chunks."""
@@ -122,13 +122,13 @@ class ChunkedUploadTestCase(unittest.TestCase):
             UPLOAD_PATH, {'size': self.size_file}
         )
 
-        expected_keys = ['_href', '_created', 'size']
+        expected_keys = ['pulp_href', 'pulp_created', 'size']
 
         self.assertEqual([*upload_request], expected_keys, upload_request)
 
         for data in self.chunked_data:
             response = self.client.put(
-                upload_request['_href'],
+                upload_request['pulp_href'],
                 files={'file': data[0]},
                 headers=data[1],
             )
@@ -136,7 +136,7 @@ class ChunkedUploadTestCase(unittest.TestCase):
             with self.subTest(response=response):
                 self.assertEqual([*response], expected_keys, response)
 
-        response = self.client.get(upload_request['_href'])
+        response = self.client.get(upload_request['pulp_href'])
 
         expected_keys.append('chunks')
 
@@ -151,7 +151,7 @@ class ChunkedUploadTestCase(unittest.TestCase):
             response['chunks'], key=lambda i: i['offset']
         )
         self.assertEqual(sorted_chunks_response, expected_chunks, response)
-        self.addCleanup(self.client.delete, response['_href'])
+        self.addCleanup(self.client.delete, response['pulp_href'])
 
     def test_delete_upload(self):
         """Test a deletion of an upload using upload of files in chunks."""
@@ -161,17 +161,17 @@ class ChunkedUploadTestCase(unittest.TestCase):
 
         for data in self.chunked_data:
             self.client.put(
-                upload_request['_href'],
+                upload_request['pulp_href'],
                 files={'file': data[0]},
                 headers=data[1],
             )
 
-        # fetch a name of the upload from the corresponding _href
-        upload_name = upload_request['_href'].replace(
+        # fetch a name of the upload from the corresponding pulp_href
+        upload_name = upload_request['pulp_href'].replace(
             '/pulp/api/v3/uploads/', ''
         )[:-1]
 
-        self.addCleanup(self.client.delete, upload_request['_href'])
+        self.addCleanup(self.client.delete, upload_request['pulp_href'])
         cmd = ('ls', os.path.join(MEDIA_PATH, 'upload', upload_name))
         self.cli_client.run(cmd, sudo=True)
 
@@ -188,13 +188,13 @@ class ChunkedUploadTestCase(unittest.TestCase):
 
         for data in self.chunked_data:
             self.client.put(
-                upload_request['_href'],
+                upload_request['pulp_href'],
                 files={'file': data[0]},
                 headers=data[1],
             )
 
         artifact_request = self.client.post(
-            urljoin(upload_request['_href'], 'commit/'),
+            urljoin(upload_request['pulp_href'], 'commit/'),
             data={'sha256': self.file_sha256},
         )
         return artifact_request

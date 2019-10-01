@@ -48,7 +48,7 @@ class CRUDRepoTestCase(unittest.TestCase):
     @skip_if(bool, 'repo', False)
     def test_02_read_repo(self):
         """Read a repository by its href."""
-        repo = self.client.get(self.repo['_href'])
+        repo = self.client.get(self.repo['pulp_href'])
         for key, val in self.repo.items():
             with self.subTest(key=key):
                 self.assertEqual(repo[key], val)
@@ -60,14 +60,14 @@ class CRUDRepoTestCase(unittest.TestCase):
         Permutate field list to ensure different combinations on result.
         """
         fields = (
-            '_href', '_created', '_versions_href', '_latest_version_href',
+            'pulp_href', 'pulp_created', '_versions_href', '_latest_version_href',
             'name', 'description'
         )
         for field_pair in permutations(fields, 2):
-            # ex: field_pair = ('_href', 'created')
+            # ex: field_pair = ('pulp_href', 'created')
             with self.subTest(field_pair=field_pair):
                 repo = self.client.get(
-                    self.repo['_href'],
+                    self.repo['pulp_href'],
                     params={'fields': ','.join(field_pair)}
                 )
                 self.assertEqual(sorted(field_pair), sorted(repo.keys()))
@@ -76,7 +76,7 @@ class CRUDRepoTestCase(unittest.TestCase):
     def test_02_read_repo_without_specific_fields(self):
         """Read a repo by its href excluding specific fields."""
         # requests doesn't allow the use of != in parameters.
-        url = '{}?exclude_fields=created,name'.format(self.repo['_href'])
+        url = '{}?exclude_fields=created,name'.format(self.repo['pulp_href'])
         repo = self.client.get(url)
         response_fields = repo.keys()
         self.assertNotIn('created', response_fields)
@@ -121,13 +121,13 @@ class CRUDRepoTestCase(unittest.TestCase):
         :param attr: The name of the attribute to update. For example,
             "description." The attribute to update must be a string.
         """
-        repo = self.client.get(self.repo['_href'])
+        repo = self.client.get(self.repo['pulp_href'])
         string = utils.uuid4()
         repo[attr] = string
-        self.client.put(repo['_href'], repo)
+        self.client.put(repo['pulp_href'], repo)
 
         # verify the update
-        repo = self.client.get(repo['_href'])
+        repo = self.client.get(repo['pulp_href'])
         self.assertEqual(string, repo[attr])
 
     @skip_if(bool, 'repo', False)
@@ -150,20 +150,20 @@ class CRUDRepoTestCase(unittest.TestCase):
             "description." The attribute to update must be a string.
         """
         string = utils.uuid4()
-        self.client.patch(self.repo['_href'], {attr: string})
+        self.client.patch(self.repo['pulp_href'], {attr: string})
 
         # verify the update
-        repo = self.client.get(self.repo['_href'])
+        repo = self.client.get(self.repo['pulp_href'])
         self.assertEqual(repo[attr], string)
 
     @skip_if(bool, 'repo', False)
     def test_04_delete_repo(self):
         """Delete a repository."""
-        self.client.delete(self.repo['_href'])
+        self.client.delete(self.repo['pulp_href'])
 
         # verify the delete
         with self.assertRaises(HTTPError):
-            self.client.get(self.repo['_href'])
+            self.client.get(self.repo['pulp_href'])
 
     def test_negative_create_repo_with_invalid_parameter(self):
         """Attempt to create repository passing extraneous invalid parameter.

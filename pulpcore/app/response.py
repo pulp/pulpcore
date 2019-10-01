@@ -11,7 +11,7 @@ class OperationPostponedResponse(Response):
     like the following::
 
         {
-            "_href": "https://example.com/pulp/api/v3/tasks/adlfk-bala-23k5l7-lslser",
+            "pulp_href": "https://example.com/pulp/api/v3/tasks/adlfk-bala-23k5l7-lslser",
             "task_id": "adlfk-bala-23k5l7-lslser"
         }
     """
@@ -20,7 +20,7 @@ class OperationPostponedResponse(Response):
         """
         Args:
             result (rq.job.Job): A :class:`rq.job.Job` object used to generate the response.
-            request (rest_framework.request.Request): Request used to generate the _href urls
+            request (rest_framework.request.Request): Request used to generate the pulp_href urls
         """
         resp = {"task": reverse('tasks-detail', args=[result.id], request=None)}
         super().__init__(data=resp, status=202)

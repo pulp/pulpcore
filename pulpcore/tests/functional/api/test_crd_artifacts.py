@@ -78,14 +78,14 @@ class ArtifactTestCase(unittest.TestCase):
     def _do_upload_valid_attrs(self, data, files):
         """Upload a file with the given attributes."""
         artifact = self.client.post(ARTIFACTS_PATH, data=data, files=files)
-        self.addCleanup(self.client.delete, artifact['_href'])
-        read_artifact = self.client.get(artifact['_href'])
+        self.addCleanup(self.client.delete, artifact['pulp_href'])
+        read_artifact = self.client.get(artifact['pulp_href'])
         for key, val in artifact.items():
             with self.subTest(key=key):
                 self.assertEqual(read_artifact[key], val)
         self.doCleanups()
         with self.assertRaises(HTTPError):
-            self.client.get(artifact['_href'])
+            self.client.get(artifact['pulp_href'])
 
     def test_upload_invalid_attrs(self):
         """Upload a file, and provide invalid attributes.
@@ -155,7 +155,7 @@ class ArtifactsDeleteFileSystemTestCase(unittest.TestCase):
         # create
         files = {'file': utils.http_get(FILE_URL)}
         artifact = api_client.post(ARTIFACTS_PATH, files=files)
-        self.addCleanup(api_client.delete, artifact['_href'])
+        self.addCleanup(api_client.delete, artifact['pulp_href'])
         cmd = ('ls', os.path.join(MEDIA_PATH, artifact['file']))
         cli_client.run(cmd, sudo=True)
 

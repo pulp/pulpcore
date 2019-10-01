@@ -28,7 +28,7 @@ class CreatedResourceSerializer(RelatedField):
         # serializer contains all serialized fields because we are passing
         # 'None' to the request's context
         serializer = viewset.serializer_class(data.content_object, context={'request': None})
-        return serializer.data.get('_href')
+        return serializer.data.get('pulp_href')
 
     class Meta:
         model = models.CreatedResource
@@ -46,7 +46,7 @@ class ReservedResourcesSerializer(ModelSerializer):
 
 
 class TaskSerializer(ModelSerializer):
-    _href = IdentityField(view_name='tasks-detail')
+    pulp_href = IdentityField(view_name='tasks-detail')
     state = serializers.CharField(
         help_text=_("The current state of the task. The possible values include:"
                     " 'waiting', 'skipped', 'running', 'completed', 'failed' and 'canceled'."),
@@ -144,7 +144,7 @@ class ContentAppStatusSerializer(ModelSerializer):
 
 
 class WorkerSerializer(ModelSerializer):
-    _href = IdentityField(view_name='workers-detail')
+    pulp_href = IdentityField(view_name='workers-detail')
 
     name = serializers.CharField(
         help_text=_('The name of the worker.'),

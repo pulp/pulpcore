@@ -40,5 +40,5 @@ class ProgressReportSerializer(ModelSerializer):
         model = models.ProgressReport
         # this serializer is meant to be nested inside Task serializer,
         # so it will not have its own endpoint, that's why
-        # we need to explicitly define fields to exclude '_href' field.
+        # we need to explicitly define fields to exclude 'pulp_href' field.
         fields = ('message', 'code', 'state', 'total', 'done', 'suffix')

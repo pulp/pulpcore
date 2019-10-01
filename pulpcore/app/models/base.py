@@ -10,17 +10,17 @@ class Model(models.Model):
     """Base model class for all Pulp models.
 
     Fields:
-        _created (models.DateTimeField): Created timestamp UTC.
-        _last_updated (models.DateTimeField): Last updated timestamp UTC.
+        pulp_created (models.DateTimeField): Created timestamp UTC.
+        pulp_last_updated (models.DateTimeField): Last updated timestamp UTC.
 
     References:
 
         * https://docs.djangoproject.com/en/1.8/topics/db/models/#automatic-primary-key-fields
 
     """
-    _id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    _created = models.DateTimeField(auto_now_add=True)
-    _last_updated = models.DateTimeField(auto_now=True, null=True)
+    pulp_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    pulp_created = models.DateTimeField(auto_now_add=True)
+    pulp_last_updated = models.DateTimeField(auto_now=True, null=True)
 
     class Meta:
         abstract = True
@@ -104,7 +104,7 @@ class MasterModel(Model, metaclass=MasterModelMeta):
         # If a plugin sets the type field themselves, it's used as-is.
         if not self._type:
             self._type = '{app_label}.{type}'.format(app_label=self._meta.app_label,
-                                                     type=self.TYPE)
+                                                         type=self.TYPE)
         return super().save(*args, **kwargs)
 
     def cast(self):

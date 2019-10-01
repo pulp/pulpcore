@@ -28,16 +28,16 @@ def validate_unknown_fields(initial_data, defined_fields):
 class ModelSerializer(QueryFieldsMixin, serializers.HyperlinkedModelSerializer):
     """Base serializer for use with :class:`pulpcore.app.models.Model`
 
-    This ensures that all Serializers provide values for the '_href` field.
+    This ensures that all Serializers provide values for the 'pulp_href` field.
     """
 
     # default is 'fields!' which doesn't work in the bindings for some langs
     exclude_arg_name = "exclude_fields"
 
     class Meta:
-        fields = ('_href', '_created')
+        fields = ('pulp_href', 'pulp_created')
 
-    _created = serializers.DateTimeField(
+    pulp_created = serializers.DateTimeField(
         help_text=_('Timestamp of creation.'),
         read_only=True
     )
@@ -160,7 +160,7 @@ class _DetailFieldMixin:
 
 
 class IdentityField(serializers.HyperlinkedIdentityField):
-    """IdentityField for use in the _href field of non-Master/Detail Serializers.
+    """IdentityField for use in the pulp_href field of non-Master/Detail Serializers.
 
     The get_url method is overriden so relative URLs are returned.
     """
@@ -184,7 +184,7 @@ class RelatedField(serializers.HyperlinkedRelatedField):
 
 
 class DetailIdentityField(_DetailFieldMixin, serializers.HyperlinkedIdentityField):
-    """IdentityField for use in the _href field of Master/Detail Serializers
+    """IdentityField for use in the pulp_href field of Master/Detail Serializers
 
     When using this field on a Serializer, it will automatically cast objects to their Detail type
     base on the Serializer's Model before generating URLs for them.

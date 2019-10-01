@@ -38,15 +38,15 @@ class TasksTestCase(unittest.TestCase):
     def test_01_create_task(self):
         """Create a task."""
         repo = self.client.post(REPO_PATH, gen_repo())
-        self.addCleanup(self.client.delete, repo['_href'])
+        self.addCleanup(self.client.delete, repo['pulp_href'])
         attrs = {'description': utils.uuid4()}
-        response = self.client.patch(repo['_href'], attrs)
+        response = self.client.patch(repo['pulp_href'], attrs)
         self.task.update(self.client.get(response['task']))
 
     @skip_if(bool, 'task', False)
     def test_02_read_href(self):
-        """Read a task by its _href."""
-        task = self.client.get(self.task['_href'])
+        """Read a task by its pulp_href."""
+        task = self.client.get(self.task['pulp_href'])
         for key, val in self.task.items():
             if key in _DYNAMIC_TASKS_ATTRS:
                 continue
@@ -55,10 +55,10 @@ class TasksTestCase(unittest.TestCase):
 
     @skip_if(bool, 'task', False)
     def test_02_read_href_with_specific_fields(self):
-        """Read a task by its _href providing specific fields."""
-        fields = ('_href', 'state', 'worker')
+        """Read a task by its pulp_hrefproviding specific fields."""
+        fields = ('pulp_href', 'state', 'worker')
         task = self.client.get(
-            self.task['_href'], params={'fields': ','.join(fields)}
+            self.task['pulp_href'], params={'fields': ','.join(fields)}
         )
         self.assertEqual(sorted(fields), sorted(task.keys()))
 
@@ -66,14 +66,14 @@ class TasksTestCase(unittest.TestCase):
     def test_02_read_task_without_specific_fields(self):
         """Read a task by its href excluding specific fields."""
         # requests doesn't allow the use of != in parameters.
-        url = '{}?exclude_fields=state'.format(self.task['_href'])
+        url = '{}?exclude_fields=state'.format(self.task['pulp_href'])
         task = self.client.get(url)
         self.assertNotIn('state', task.keys())
 
     @skip_if(bool, 'task', False)
     def test_02_read_task_with_minimal_fields(self):
         """Read a task by its href filtering minimal fields."""
-        task = self.client.get(self.task['_href'], params={'minimal': True})
+        task = self.client.get(self.task['pulp_href'], params={'minimal': True})
         response_fields = task.keys()
         self.assertNotIn('progress_reports', response_fields)
         self.assertNotIn('spawned_tasks', response_fields)
@@ -137,9 +137,9 @@ class TasksTestCase(unittest.TestCase):
         # If this assertion fails, then either Pulp's tasking system or Pulp
         # Smash's code for interacting with the tasking system has a bug.
         self.assertIn(self.task['state'], P3_TASK_END_STATES)
-        self.client.delete(self.task['_href'])
+        self.client.delete(self.task['pulp_href'])
         with self.assertRaises(HTTPError):
-            self.client.get(self.task['_href'])
+            self.client.get(self.task['pulp_href'])
 
     def filter_tasks(self, criteria):
         """Filter tasks based on the provided criteria."""
@@ -164,7 +164,7 @@ class FilterTaskCreatedResourcesTestCase(unittest.TestCase):
         self.addCleanup(client.delete, task['created_resources'][0])
 
         filtered_task = client.get(
-            task['_href'], params={'fields': 'created_resources'}
+            task['pulp_href'], params={'fields': 'created_resources'}
         )
 
         self.assertEqual(
@@ -194,14 +194,14 @@ class FilterTaskReservedResourcesTestCase(unittest.TestCase):
 
         cls.repository = cls.client.post(REPO_PATH, gen_repo())
         attrs = {'description': utils.uuid4()}
-        response = cls.client.patch(cls.repository['_href'], attrs)
+        response = cls.client.patch(cls.repository['pulp_href'], attrs)
         cls.task = cls.client.get(response['task'])
 
     @classmethod
     def tearDownClass(cls):
         """Clean created resources."""
-        cls.client.delete(cls.repository['_href'])
-        cls.client.delete(cls.task['_href'])
+        cls.client.delete(cls.repository['pulp_href'])
+        cls.client.delete(cls.task['pulp_href'])
 
     def test_01_filter_tasks_by_reserved_resources(self):
         """Filter all tasks by a particular reserved resource."""
@@ -241,8 +241,8 @@ class FilterTaskCreatedResourcesContentTestCase(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         """Clean created resources."""
-        cls.client.delete(cls.repository['_href'])
-        cls.client.delete(cls.task['_href'])
+        cls.client.delete(cls.repository['pulp_href'])
+        cls.client.delete(cls.task['pulp_href'])
 
     def test_01_filter_tasks_by_created_resources(self):
         """Filter all tasks by a particular created resource."""

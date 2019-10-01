@@ -52,12 +52,12 @@ class SyncPublishContentPathTestCase(unittest.TestCase):
             FILE_REMOTE_PATH,
             gen_remote(FILE_FIXTURE_MANIFEST_URL)
         )
-        self.addCleanup(client.delete, remote['_href'])
+        self.addCleanup(client.delete, remote['pulp_href'])
 
         repo = client.post(REPO_PATH, gen_repo())
-        self.addCleanup(client.delete, repo['_href'])
+        self.addCleanup(client.delete, repo['pulp_href'])
 
         for _ in range(2):
             sync(cfg, remote, repo)
-            repo = client.get(repo['_href'])
+            repo = client.get(repo['pulp_href'])
             create_file_publication(cfg, repo)
