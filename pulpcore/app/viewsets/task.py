@@ -60,7 +60,7 @@ class TaskViewSet(NamedModelViewSet,
     serializer_class = TaskSerializer
     minimal_serializer_class = MinimalTaskSerializer
     filter_backends = (OrderingFilter, DjangoFilterBackend)
-    ordering = ('-_created')
+    ordering = ('-pulp_created')
 
     @swagger_auto_schema(operation_description="This operation cancels a task.",
                          operation_summary="Cancel a task", operation_id='tasks_cancel',

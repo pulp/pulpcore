@@ -77,24 +77,24 @@ class SyncMultiplePlugins(unittest.TestCase):
         """
         # Step 1
         repo = self.client.post(REPO_PATH, gen_repo())
-        self.addCleanup(self.client.delete, repo['_href'])
+        self.addCleanup(self.client.delete, repo['pulp_href'])
 
         # Step 2
         rpm_remote = self.client.post(
             RPM_REMOTE_PATH,
             gen_remote(url=RPM_UNSIGNED_FIXTURE_URL)
         )
-        self.addCleanup(self.client.delete, rpm_remote['_href'])
+        self.addCleanup(self.client.delete, rpm_remote['pulp_href'])
 
         file_remote = self.client.post(
             FILE_REMOTE_PATH,
             gen_remote(url=FILE_FIXTURE_MANIFEST_URL)
         )
-        self.addCleanup(self.client.delete, file_remote['_href'])
+        self.addCleanup(self.client.delete, file_remote['pulp_href'])
 
         # Step 3
         sync(self.cfg, rpm_remote, repo)
-        repo = self.client.get(repo['_href'])
+        repo = self.client.get(repo['pulp_href'])
         self.assertIsNotNone(repo['_latest_version_href'])
         self.assertDictEqual(
             get_added_content_summary(repo),
@@ -103,7 +103,7 @@ class SyncMultiplePlugins(unittest.TestCase):
 
         # Step 4
         sync(self.cfg, file_remote, repo, mirror=True)
-        repo = self.client.get(repo['_href'])
+        repo = self.client.get(repo['pulp_href'])
         self.assertIsNotNone(repo['_latest_version_href'])
         self.assertDictEqual(
             get_added_content_summary(repo),
@@ -128,19 +128,19 @@ class SyncMultiplePlugins(unittest.TestCase):
         `Pulp #4274 <https://pulp.plan.io/issues/4274>`_
         """
         repo = self.client.post(REPO_PATH, gen_repo())
-        self.addCleanup(self.client.delete, repo['_href'])
+        self.addCleanup(self.client.delete, repo['pulp_href'])
 
         rpm_remote = self.client.post(
             RPM_REMOTE_PATH,
             gen_remote(url=RPM_UNSIGNED_FIXTURE_URL)
         )
-        self.addCleanup(self.client.delete, rpm_remote['_href'])
+        self.addCleanup(self.client.delete, rpm_remote['pulp_href'])
 
         file_remote = self.client.post(
             FILE_REMOTE_PATH,
             gen_remote(url=FILE_FIXTURE_MANIFEST_URL)
         )
-        self.addCleanup(self.client.delete, file_remote['_href'])
+        self.addCleanup(self.client.delete, file_remote['pulp_href'])
 
         docker_remote = self.client.post(
             DOCKER_REMOTE_PATH,
@@ -149,14 +149,14 @@ class SyncMultiplePlugins(unittest.TestCase):
                 upstream_name=DOCKER_UPSTREAM_NAME
             )
         )
-        self.addCleanup(self.client.delete, docker_remote['_href'])
+        self.addCleanup(self.client.delete, docker_remote['pulp_href'])
 
         remotes = [file_remote, docker_remote, rpm_remote]
         shuffle(remotes)
         for remote in remotes:
             sync(self.cfg, remote, repo)
 
-        repo = self.client.get(repo['_href'])
+        repo = self.client.get(repo['pulp_href'])
 
         content_keys = sorted([
             DOCKER_CONTENT_BLOB_NAME,

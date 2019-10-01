@@ -26,7 +26,7 @@ class PublicationViewSet(NamedModelViewSet,
     queryset = Publication.objects.exclude(complete=False)
     serializer_class = PublicationSerializer
     filter_backends = (OrderingFilter, DjangoFilterBackend)
-    ordering = ('-_created',)
+    ordering = ('-pulp_created',)
 
 
 class ContentGuardFilter(BaseFilterSet):

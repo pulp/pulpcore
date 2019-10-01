@@ -56,7 +56,7 @@ class UploadChunkSerializer(serializers.Serializer):
 
 class UploadSerializer(base.ModelSerializer):
     """Serializer for chunked uploads."""
-    _href = base.IdentityField(
+    pulp_href = base.IdentityField(
         view_name='uploads-detail',
     )
 

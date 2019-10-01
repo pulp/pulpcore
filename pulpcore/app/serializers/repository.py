@@ -18,7 +18,7 @@ from pulpcore.app.serializers import (
 
 
 class RepositorySerializer(ModelSerializer):
-    _href = IdentityField(
+    pulp_href = IdentityField(
         view_name='repositories-detail'
     )
     _versions_href = IdentityField(
@@ -53,7 +53,7 @@ class RemoteSerializer(MasterModelSerializer):
     Every remote defined by a plugin should have a Remote serializer that inherits from this
     class. Please import from `pulpcore.plugin.serializers` rather than from this module directly.
     """
-    _href = DetailIdentityField()
+    pulp_href = DetailIdentityField()
     name = serializers.CharField(
         help_text=_('A unique name for this remote.'),
         validators=[UniqueValidator(queryset=models.Remote.objects.all())],
@@ -103,7 +103,7 @@ class RemoteSerializer(MasterModelSerializer):
         required=False,
         allow_null=True,
     )
-    _last_updated = serializers.DateTimeField(
+    pulp_last_updated = serializers.DateTimeField(
         help_text='Timestamp of the most recent update of the remote.',
         read_only=True
     )
@@ -125,7 +125,7 @@ class RemoteSerializer(MasterModelSerializer):
         model = models.Remote
         fields = MasterModelSerializer.Meta.fields + (
             'name', 'url', 'ssl_ca_certificate', 'ssl_client_certificate', 'ssl_client_key',
-            'ssl_validation', 'proxy_url', 'username', 'password', '_last_updated',
+            'ssl_validation', 'proxy_url', 'username', 'password', 'pulp_last_updated',
             'download_concurrency', 'policy'
         )
 
@@ -155,12 +155,12 @@ class PublisherSerializer(MasterModelSerializer):
     Every publisher defined by a plugin should have an Publisher serializer that inherits from this
     class. Please import from `pulpcore.plugin.serializers` rather than from this module directly.
     """
-    _href = DetailIdentityField()
+    pulp_href = DetailIdentityField()
     name = serializers.CharField(
         help_text=_('A unique name for this publisher.'),
         validators=[UniqueValidator(queryset=models.Publisher.objects.all())]
     )
-    _last_updated = serializers.DateTimeField(
+    pulp_last_updated = serializers.DateTimeField(
         help_text=_('Timestamp of the most recent update of the publisher configuration.'),
         read_only=True
     )
@@ -169,17 +169,17 @@ class PublisherSerializer(MasterModelSerializer):
         abstract = True
         model = models.Publisher
         fields = MasterModelSerializer.Meta.fields + (
-            'name', '_last_updated',
+            'name', 'pulp_last_updated',
         )
 
 
 class ExporterSerializer(MasterModelSerializer):
-    _href = DetailIdentityField()
+    pulp_href = DetailIdentityField()
     name = serializers.CharField(
         help_text=_('The exporter unique name.'),
         validators=[UniqueValidator(queryset=models.Exporter.objects.all())]
     )
-    _last_updated = serializers.DateTimeField(
+    pulp_last_updated = serializers.DateTimeField(
         help_text=_('Timestamp of the last update.'),
         read_only=True
     )
@@ -193,7 +193,7 @@ class ExporterSerializer(MasterModelSerializer):
         model = models.Exporter
         fields = MasterModelSerializer.Meta.fields + (
             'name',
-            '_last_updated',
+            'pulp_last_updated',
             'last_export',
         )
 
@@ -242,7 +242,7 @@ class ContentSummarySerializer(serializers.Serializer):
 
 
 class RepositoryVersionSerializer(ModelSerializer, NestedHyperlinkedModelSerializer):
-    _href = NestedIdentityField(
+    pulp_href = NestedIdentityField(
         view_name='versions-detail',
         lookup_field='number', parent_lookup_kwargs={'repository_pk': 'repository__pk'},
     )
@@ -268,7 +268,7 @@ class RepositoryVersionSerializer(ModelSerializer, NestedHyperlinkedModelSeriali
     class Meta:
         model = models.RepositoryVersion
         fields = ModelSerializer.Meta.fields + (
-            '_href', 'number', 'base_version', 'content_summary',
+            'pulp_href', 'number', 'base_version', 'content_summary',
         )
 
 

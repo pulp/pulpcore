@@ -19,7 +19,7 @@ from pulpcore.app.serializers import (
 
 
 class PublicationSerializer(MasterModelSerializer):
-    _href = DetailIdentityField()
+    pulp_href = DetailIdentityField()
     repository_version = NestedRelatedField(
         view_name='versions-detail',
         lookup_field='number',
@@ -72,7 +72,7 @@ class PublicationSerializer(MasterModelSerializer):
 
 
 class ContentGuardSerializer(MasterModelSerializer):
-    _href = DetailIdentityField()
+    pulp_href = DetailIdentityField()
 
     name = serializers.CharField(
         help_text=_('The unique name.')
@@ -108,7 +108,7 @@ class BaseDistributionSerializer(MasterModelSerializer):
 
     """
 
-    _href = DetailIdentityField()
+    pulp_href = DetailIdentityField()
     base_path = serializers.CharField(
         help_text=_('The base (relative) path component of the published url. Avoid paths that \
                     overlap with other distribution base paths (e.g. "foo" and "foo/bar")'),

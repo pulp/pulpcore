@@ -74,7 +74,7 @@ def upload_file_in_chunks(file_path)
       total_size = File.size(file)
       upload_data = PulpcoreClient::Upload.new({size: total_size})
       response = @uploads_api.create(upload_data)
-      upload_href = response._href
+      upload_href = response.pulp_href
       chunksize = 200000
       offset = 0
       sha256 = Digest::SHA256.new
@@ -112,8 +112,8 @@ repository_data = PulpcoreClient::Repository.new({name: 'foo38'})
 repository = @repositories_api.create(repository_data)
 
 # Sync a Repository
-repository_sync_data = PulpFileClient::RepositorySyncURL.new({repository: repository._href})
-sync_response = @fileremotes_api.sync(file_remote._href, repository_sync_data)
+repository_sync_data = PulpFileClient::RepositorySyncURL.new({repository: repository.pulp_href})
+sync_response = @fileremotes_api.sync(file_remote.pulp_href, repository_sync_data)
 
 # Monitor the sync task
 created_resources = monitor_task(sync_response.task)
@@ -125,13 +125,13 @@ file_path = File.join(ENV['TRAVIS_BUILD_DIR'], '.travis/test_bindings.rb')
 artifact = @artifacts_api.create({file: File.new(file_path)})
 
 # Create a FileContent from the artifact
-filecontent_response = @filecontent_api.create('foo.tar.gz', {artifact: artifact._href})
+filecontent_response = @filecontent_api.create('foo.tar.gz', {artifact: artifact.pulp_href})
 
 created_resources = monitor_task(filecontent_response.task)
 
 # Add the new FileContent to a repository version
 repo_version_data = {add_content_units: [created_resources[0]]}
-repo_version_response = @repoversions_api.create(repository._href, repo_version_data)
+repo_version_response = @repoversions_api.create(repository.pulp_href, repo_version_data)
 
 # Monitor the repo version creation task
 created_resources = monitor_task(repo_version_response.task)
@@ -139,7 +139,7 @@ created_resources = monitor_task(repo_version_response.task)
 repository_version_2 = @repoversions_api.read(created_resources[0])
 
 # Create a publication from the latest version of the repository
-publish_data = PulpFileClient::FilePublication.new({repository: repository._href})
+publish_data = PulpFileClient::FilePublication.new({repository: repository.pulp_href})
 publish_response = @filepublications_api.create(publish_data)
 
 # Monitor the publish task

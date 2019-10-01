@@ -57,27 +57,27 @@ class ContentDeliveryTestCase(unittest.TestCase):
         client = api.Client(cfg, api.page_handler)
 
         repo = client.post(REPO_PATH, gen_repo())
-        self.addCleanup(client.delete, repo['_href'])
+        self.addCleanup(client.delete, repo['pulp_href'])
 
         body = gen_file_remote(policy=choice(ON_DEMAND_DOWNLOAD_POLICIES))
         remote = client.post(FILE_REMOTE_PATH, body)
 
         # Sync the repository using a lazy download policy.
         sync(cfg, remote, repo)
-        repo = client.get(repo['_href'])
+        repo = client.get(repo['pulp_href'])
 
         publication = create_file_publication(cfg, repo)
-        self.addCleanup(client.delete, publication['_href'])
+        self.addCleanup(client.delete, publication['pulp_href'])
 
         # Delete the remote.
-        client.delete(remote['_href'])
+        client.delete(remote['pulp_href'])
 
         body = gen_distribution()
-        body['publication'] = publication['_href']
+        body['publication'] = publication['pulp_href']
         distribution = client.using_handler(api.task_handler).post(
             FILE_DISTRIBUTION_PATH, body
         )
-        self.addCleanup(client.delete, distribution['_href'])
+        self.addCleanup(client.delete, distribution['pulp_href'])
 
         unit_path = choice([
             content_unit['relative_path']
@@ -95,10 +95,10 @@ class ContentDeliveryTestCase(unittest.TestCase):
         # units to recover again.
         body = gen_file_remote(policy=choice(ON_DEMAND_DOWNLOAD_POLICIES))
         remote = client.post(FILE_REMOTE_PATH, body)
-        self.addCleanup(client.delete, remote['_href'])
+        self.addCleanup(client.delete, remote['pulp_href'])
 
         sync(cfg, remote, repo)
-        repo = client.get(repo['_href'])
+        repo = client.get(repo['pulp_href'])
 
         content = download_content_unit(cfg, distribution, unit_path)
         pulp_hash = hashlib.sha256(content).hexdigest()

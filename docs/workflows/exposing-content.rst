@@ -44,7 +44,7 @@ will serve the latest RepositoryVersion associated with that Repository.
 First lets make a Repository named ``foo`` and save its URL as ``REPO_HREF``::
 
     http POST http://localhost:24817/pulp/api/v3/repositories/ name=foo
-    export REPO_HREF=$(http :24817/pulp/api/v3/repositories/ | jq -r '.results[] | select(.name == "foo") | ._href')
+    export REPO_HREF=$(http :24817/pulp/api/v3/repositories/ | jq -r '.results[] | select(.name == "foo") | .pulp_href')
 
 Then lets make a :term:`Distribution` that will distribute ``foo`` at base_url ``mypath``::
 
@@ -74,16 +74,16 @@ pulp_ansible>`_ content in it::
 
     # Create a Repository
     http POST :24817/pulp/api/v3/repositories/ name=foo
-    export REPO_HREF=$(http :24817/pulp/api/v3/repositories/ | jq -r '.results[] | select(.name == "foo") | ._href')
+    export REPO_HREF=$(http :24817/pulp/api/v3/repositories/ | jq -r '.results[] | select(.name == "foo") | .pulp_href')
 
     # Create an AnsibleRemote to sync roles from galaxy.ansible.com
     http POST :24817/pulp/api/v3/remotes/ansible/ansible/ name=bar url='https://galaxy.ansible.com/api/v1/roles/?namespace__name=elastic'
-    export REMOTE_HREF=$(http :24817/pulp/api/v3/remotes/ansible/ansible/ | jq -r '.results[] | select(.name == "bar") | ._href')
+    export REMOTE_HREF=$(http :24817/pulp/api/v3/remotes/ansible/ansible/ | jq -r '.results[] | select(.name == "bar") | .pulp_href')
 
     # Sync the repo with the remote
     http POST ':24817'$REMOTE_HREF'sync/' repository=$REPO_HREF
     sleep 3  # wait for the sync to happen
-    export REPO_VERSION_HREF=$(http GET ':24817'$REPO_HREF'versions/1/' | jq -r '._href')
+    export REPO_VERSION_HREF=$(http GET ':24817'$REPO_HREF'versions/1/' | jq -r '.pulp_href')
 
 Now with your :term:`RepositoryVersion` saved as ``REPO_VERSION_HREF`` you can have the
 :term:`Distribution` serve it at base_path ``dev``::
@@ -114,11 +114,11 @@ content in it::
 
     # Create a Repository
     http POST :24817/pulp/api/v3/repositories/ name=foo
-    export REPO_HREF=$(http :24817/pulp/api/v3/repositories/ | jq -r '.results[] | select(.name == "foo") | ._href')
+    export REPO_HREF=$(http :24817/pulp/api/v3/repositories/ | jq -r '.results[] | select(.name == "foo") | .pulp_href')
 
     # Create an FileRemote to sync roles from fedorapeople
     http POST :24817/pulp/api/v3/remotes/file/file/ name='bar' url='https://repos.fedorapeople.org/pulp/pulp/demo_repos/test_file_repo/PULP_MANIFEST'
-    export REMOTE_HREF=$(http :24817/pulp/api/v3/remotes/file/file/ | jq -r '.results[] | select(.name == "bar") | ._href')
+    export REMOTE_HREF=$(http :24817/pulp/api/v3/remotes/file/file/ | jq -r '.results[] | select(.name == "bar") | .pulp_href')
 
     # Sync the repo with the remote
     http POST ':24817'$REMOTE_HREF'sync/' repository=$REPO_HREF
@@ -126,7 +126,7 @@ content in it::
 
     # Create a Publication
     http POST :24817/pulp/api/v3/publications/file/file/ repository=$REPO_HREF
-    export PUBLICATION_HREF=$(http :24817/pulp/api/v3/publications/file/file/ | jq -r '.results[0] | ._href')
+    export PUBLICATION_HREF=$(http :24817/pulp/api/v3/publications/file/file/ | jq -r '.results[0] | .pulp_href')
 
 Now with your :term:`Publication` saved as ``PUBLICATION_HREF`` you can have the
 :term:`Distribution` serve it at base_path ``bar``::

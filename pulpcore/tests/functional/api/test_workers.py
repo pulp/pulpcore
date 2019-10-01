@@ -46,8 +46,8 @@ class WorkersTestCase(unittest.TestCase):
 
     @skip_if(bool, 'worker', False)
     def test_02_read_worker(self):
-        """Read a worker by its _href."""
-        worker = self.client.get(self.worker['_href'])
+        """Read a worker by its pulp_href."""
+        worker = self.client.get(self.worker['pulp_href'])
         for key, val in self.worker.items():
             if key in _DYNAMIC_WORKER_ATTRS:
                 continue
@@ -104,7 +104,7 @@ class WorkersTestCase(unittest.TestCase):
         Assert an error is raised.
         """
         with self.assertRaises(HTTPError):
-            self.client.delete(self.worker['_href'])
+            self.client.delete(self.worker['pulp_href'])
 
 
 class OfflineWorkerTestCase(unittest.TestCase):
@@ -147,7 +147,7 @@ class OfflineWorkerTestCase(unittest.TestCase):
         """Stop the worker and assert it is offline."""
         self.svc_mgr.stop(['pulpcore-worker@99'])
         time.sleep(2)
-        worker = self.client.get(self.worker['_href'])
+        worker = self.client.get(self.worker['pulp_href'])
         self.assertEqual(worker['online'], False)
 
     @skip_if(bool, 'worker', False)
@@ -155,8 +155,8 @@ class OfflineWorkerTestCase(unittest.TestCase):
         """Status API doesn't show offline workers."""
         online_workers = self.client.get(STATUS_PATH)['online_workers']
         self.assertNotIn(
-            self.worker['_href'],
-            [worker['_href'] for worker in online_workers]
+            self.worker['pulp_href'],
+            [worker['pulp_href'] for worker in online_workers]
         )
 
     @skip_if(bool, 'worker', False)
@@ -164,8 +164,8 @@ class OfflineWorkerTestCase(unittest.TestCase):
         """Worker API shows all workers including offline."""
         workers = self.client.get(WORKER_PATH)['results']
         self.assertIn(
-            self.worker['_href'],
-            [worker['_href'] for worker in workers]
+            self.worker['pulp_href'],
+            [worker['pulp_href'] for worker in workers]
         )
 
     @skip_if(bool, 'worker', False)
@@ -175,6 +175,6 @@ class OfflineWorkerTestCase(unittest.TestCase):
             WORKER_PATH, params={'online': False}
         )['results']
         self.assertIn(
-            self.worker['_href'],
-            [worker['_href'] for worker in workers]
+            self.worker['pulp_href'],
+            [worker['pulp_href'] for worker in workers]
         )

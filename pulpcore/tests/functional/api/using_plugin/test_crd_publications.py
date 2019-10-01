@@ -47,7 +47,7 @@ class PublicationsTestCase(unittest.TestCase):
         """Clean class-wide variables."""
         for resource in (cls.remote, cls.repo):
             if resource:
-                cls.client.delete(resource['_href'])
+                cls.client.delete(resource['pulp_href'])
 
     def test_01_create_file_publication(self):
         """Create a publication."""
@@ -58,7 +58,7 @@ class PublicationsTestCase(unittest.TestCase):
     @skip_if(bool, 'publication', False)
     def test_02_read_publication(self):
         """Read a publication by its href."""
-        publication = self.client.get(self.publication['_href'])
+        publication = self.client.get(self.publication['pulp_href'])
         for key, val in self.publication.items():
             with self.subTest(key=key):
                 self.assertEqual(publication[key], val)
@@ -69,12 +69,12 @@ class PublicationsTestCase(unittest.TestCase):
 
         Permutate field list to ensure different combinations on result.
         """
-        fields = ('_href', '_created', 'distributions')
+        fields = ('pulp_href', 'pulp_created', 'distributions')
         for field_pair in permutations(fields, 2):
-            # ex: field_pair = ('_href', '_created)
+            # ex: field_pair = ('pulp_href', 'pulp_created)
             with self.subTest(field_pair=field_pair):
                 publication = self.client.get(
-                    self.publication['_href'],
+                    self.publication['pulp_href'],
                     params={'fields': ','.join(field_pair)}
                 )
                 self.assertEqual(
@@ -85,7 +85,7 @@ class PublicationsTestCase(unittest.TestCase):
     def test_02_read_publication_without_specific_fields(self):
         """Read a publication by its href excluding specific fields."""
         # requests doesn't allow the use of != in parameters.
-        url = '{}?exclude_fields=distributions'.format(self.publication['_href'])
+        url = '{}?exclude_fields=distributions'.format(self.publication['pulp_href'])
         publication = self.client.get(url)
         self.assertNotIn('distributions', publication.keys())
 
@@ -93,7 +93,7 @@ class PublicationsTestCase(unittest.TestCase):
     def test_02_read_publications(self):
         """Read a publication by its repository version."""
         publications = self.client.get(FILE_PUBLICATION_PATH, params={
-            'repository_version': self.repo['_href']
+            'repository_version': self.repo['pulp_href']
         })
         self.assertEqual(len(publications), 1, publications)
         for key, val in self.publication.items():
@@ -104,7 +104,7 @@ class PublicationsTestCase(unittest.TestCase):
     def test_04_read_publications(self):
         """Read a publication by its created time."""
         publications = self.client.get(FILE_PUBLICATION_PATH, params={
-            '_created': self.publication['_created']
+            'pulp_created': self.publication['pulp_created']
         })
         self.assertEqual(len(publications), 1, publications)
         for key, val in self.publication.items():
@@ -115,15 +115,15 @@ class PublicationsTestCase(unittest.TestCase):
     def test_05_read_publications(self):
         """Read a publication by its distribution."""
         body = gen_distribution()
-        body['publication'] = self.publication['_href']
+        body['publication'] = self.publication['pulp_href']
         distribution = self.client.using_handler(api.task_handler).post(
             FILE_DISTRIBUTION_PATH, body
         )
-        self.addCleanup(self.client.delete, distribution['_href'])
+        self.addCleanup(self.client.delete, distribution['pulp_href'])
 
-        self.publication.update(self.client.get(self.publication['_href']))
+        self.publication.update(self.client.get(self.publication['pulp_href']))
         publications = self.client.get(FILE_PUBLICATION_PATH, params={
-            'distributions': distribution['_href']
+            'distributions': distribution['pulp_href']
         })
         self.assertEqual(len(publications), 1, publications)
         for key, val in self.publication.items():
@@ -149,19 +149,19 @@ class PublicationsTestCase(unittest.TestCase):
         )
         self.assertEqual(len(publications), 3)
 
-        # Assert publications are ordered by _created field in descending order
+        # Assert publications are ordered by pulp_created field in descending order
         for i, publication in enumerate(publications[:-1]):
             self.assertGreater(
-                parse_date_from_string(publication['_created']),  # Current
-                parse_date_from_string(publications[i + 1]['_created'])  # Prev
+                parse_date_from_string(publication['pulp_created']),  # Current
+                parse_date_from_string(publications[i + 1]['pulp_created'])  # Prev
             )
 
     @skip_if(bool, 'publication', False)
     def test_07_delete(self):
         """Delete a publication."""
-        self.client.delete(self.publication['_href'])
+        self.client.delete(self.publication['pulp_href'])
         with self.assertRaises(HTTPError):
-            self.client.get(self.publication['_href'])
+            self.client.get(self.publication['pulp_href'])
 
 
 class PublicationRepositoryParametersTestCase(unittest.TestCase):
@@ -182,9 +182,9 @@ class PublicationRepositoryParametersTestCase(unittest.TestCase):
     def test_create_only_using_repoversion(self):
         """Create a publication only using repository version."""
         repo = self.create_sync_repo(3)
-        version_href = self.client.get(repo['_versions_href'])[1]['_href']
+        version_href = self.client.get(repo['_versions_href'])[1]['pulp_href']
         publication = create_file_publication(self.cfg, repo, version_href)
-        self.addCleanup(self.client.delete, publication['_href'])
+        self.addCleanup(self.client.delete, publication['pulp_href'])
 
         self.assertEqual(
             publication['repository_version'],
@@ -195,14 +195,14 @@ class PublicationRepositoryParametersTestCase(unittest.TestCase):
     def test_create_repo_repoversion(self):
         """Create a publication using repository and repository version."""
         repo = self.create_sync_repo()
-        version_href = self.client.get(repo['_versions_href'])[0]['_href']
+        version_href = self.client.get(repo['_versions_href'])[0]['pulp_href']
 
         with self.assertRaises(HTTPError) as ctx:
             self.client.using_handler(api.json_handler).post(
                 FILE_PUBLICATION_PATH,
                 {
                     'repository_version': version_href,
-                    'repository': repo['_href']
+                    'repository': repo['pulp_href']
                 }
             )
 
@@ -219,11 +219,11 @@ class PublicationRepositoryParametersTestCase(unittest.TestCase):
         Given the number of times to be synced.
         """
         repo = self.client.post(REPO_PATH, gen_repo())
-        self.addCleanup(self.client.delete, repo['_href'])
+        self.addCleanup(self.client.delete, repo['pulp_href'])
 
         remote = self.client.post(FILE_REMOTE_PATH, gen_file_remote())
-        self.addCleanup(self.client.delete, remote['_href'])
+        self.addCleanup(self.client.delete, remote['pulp_href'])
 
         for _ in range(number_syncs):
             sync(self.cfg, remote, repo)
-        return self.client.get(repo['_href'])
+        return self.client.get(repo['pulp_href'])

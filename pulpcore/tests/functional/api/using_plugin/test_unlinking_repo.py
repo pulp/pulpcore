@@ -38,21 +38,21 @@ class RemotesTestCase(unittest.TestCase):
         client = api.Client(cfg, api.json_handler)
         body = gen_file_remote()
         remote = client.post(FILE_REMOTE_PATH, body)
-        self.addCleanup(client.delete, remote['_href'])
+        self.addCleanup(client.delete, remote['pulp_href'])
 
         # Create and sync repos.
         repos = []
         for _ in range(2):
             repo = client.post(REPO_PATH, gen_repo())
-            self.addCleanup(client.delete, repo['_href'])
+            self.addCleanup(client.delete, repo['pulp_href'])
             sync(cfg, remote, repo)
-            repos.append(client.get(repo['_href']))
+            repos.append(client.get(repo['pulp_href']))
 
         # Compare contents of repositories.
         contents = []
         for repo in repos:
             contents.append(get_content(repo)[FILE_CONTENT_NAME])
         self.assertEqual(
-            {content['_href'] for content in contents[0]},
-            {content['_href'] for content in contents[1]},
+            {content['pulp_href'] for content in contents[0]},
+            {content['pulp_href'] for content in contents[1]},
         )

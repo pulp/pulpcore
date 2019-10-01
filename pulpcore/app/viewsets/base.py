@@ -24,8 +24,8 @@ NAME_FILTER_OPTIONS = ['exact', 'in']
 # /?name__in=foo,bar
 DATETIME_FILTER_OPTIONS = ['lt', 'lte', 'gt', 'gte', 'range']
 # e.g.
-# /?_created__gte=2018-04-12T19:45:52
-# /?_created__range=2018-04-12T19:45:52,2018-04-13T19:45:52
+# /?pulp_created__gte=2018-04-12T19:45:52
+# /?pulp_created__range=2018-04-12T19:45:52,2018-04-13T19:45:52
 
 
 class DefaultSchema(AutoSchema):
@@ -405,7 +405,7 @@ class BaseFilterSet(filterset.FilterSet):
     filter. However, this can be overriden by setting a help_text dict with the the field name
     mapped to some help text:
 
-        help_text = {'name__in': 'Lorem ipsum dolor', '_last_updated__lt': 'blah blah'}
+        help_text = {'name__in': 'Lorem ipsum dolor', 'pulp_last_updated__lt': 'blah blah'}
 
     """
     help_text = {}

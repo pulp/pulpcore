@@ -49,9 +49,9 @@ def populate_pulp(cfg, url=None):
         sync(cfg, remote, repo)
     finally:
         if remote:
-            client.delete(remote['_href'])
+            client.delete(remote['pulp_href'])
         if repo:
-            client.delete(repo['_href'])
+            client.delete(repo['pulp_href'])
     return client.get(FILE_CONTENT_PATH)
 
 
@@ -79,5 +79,5 @@ def create_file_publication(cfg, repo, version_href=None):
     if version_href:
         body = {'repository_version': version_href}
     else:
-        body = {'repository': repo['_href']}
+        body = {'repository': repo['pulp_href']}
     return api.Client(cfg).post(FILE_PUBLICATION_PATH, body)

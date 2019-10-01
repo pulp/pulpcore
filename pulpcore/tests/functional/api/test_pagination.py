@@ -40,7 +40,7 @@ class PaginationTestCase(unittest.TestCase):
             for _ in range(cls.number_to_create):
                 repo = cls.client.post(REPO_PATH, gen_repo())
                 cls.teardown_cleanups.append(
-                    (cls.client.delete, repo['_href'])
+                    (cls.client.delete, repo['pulp_href'])
                 )
 
     @classmethod
