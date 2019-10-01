@@ -31,6 +31,9 @@ class ModelSerializer(QueryFieldsMixin, serializers.HyperlinkedModelSerializer):
     This ensures that all Serializers provide values for the '_href` field.
     """
 
+    # default is 'fields!' which doesn't work in the bindings for some langs
+    exclude_arg_name = "exclude_fields"
+
     class Meta:
         fields = ('_href', '_created')
 

@@ -66,7 +66,7 @@ class TasksTestCase(unittest.TestCase):
     def test_02_read_task_without_specific_fields(self):
         """Read a task by its href excluding specific fields."""
         # requests doesn't allow the use of != in parameters.
-        url = '{}?fields!=state'.format(self.task['_href'])
+        url = '{}?exclude_fields=state'.format(self.task['_href'])
         task = self.client.get(url)
         self.assertNotIn('state', task.keys())
 
