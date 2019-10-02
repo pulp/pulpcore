@@ -189,12 +189,16 @@ class NamedModelViewSet(viewsets.GenericViewSet):
             # so start finding parents at the second item, index 1.
             for eldest in reversed(cls.mro()):
                 try:
-                    if eldest.endpoint_name is not None:
+                    if eldest is not cls and eldest.endpoint_name is not None:
                         master_endpoint_name = eldest.endpoint_name
                         break
                 except AttributeError:
                     # no endpoint_name defined, need to get more specific in the MRO
                     continue
+
+            # if there is no master viewset or master endpoint name, just use endpoint_name
+            if master_endpoint_name is None:
+                return [cls.endpoint_name]
 
             # prepend endpoint of a plugin model with its Django app label
             app_label = cls.queryset.model._meta.app_label
