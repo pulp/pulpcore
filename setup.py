@@ -10,9 +10,8 @@ requirements = [
     'djangorestframework~=3.10.2',
     'djangorestframework-queryfields~=1.0.0',
     'drf-nested-routers~=0.91.0',
-    'drf-yasg~=1.16.1',
+    'drf-yasg~=1.17.0',
     'gunicorn~=19.9.0',
-    'packaging',  # until drf-yasg 1.16.2 is out https://github.com/axnsan12/drf-yasg/issues/412
     'psycopg2-binary',
     'PyYAML~=5.1.1',
     'rq~=1.1.0',
