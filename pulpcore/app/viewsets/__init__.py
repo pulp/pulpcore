@@ -10,6 +10,7 @@ from .content import (  # noqa
     ArtifactViewSet,
     ContentFilter,
     ContentViewSet,
+    ReadOnlyContentViewSet,
 )
 from .custom_filters import (  # noqa
     IsoDateTimeFilter,

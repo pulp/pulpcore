@@ -95,12 +95,31 @@ class ContentFilter(BaseFilterSet):
         }
 
 
-class ContentViewSet(NamedModelViewSet,
-                     mixins.CreateModelMixin,
-                     mixins.RetrieveModelMixin,
-                     mixins.ListModelMixin):
+class BaseContentViewSet(NamedModelViewSet):
+    """
+    A base class for any content viewset.
+
+    It ensures that 'content/' is a part of endpoint. It also sets a default filter class.
+    """
     endpoint_name = 'content'
     filterset_class = ContentFilter
     # These are just placeholders, the plugin writer would replace them with the actual
     queryset = Content.objects.all()
     serializer_class = MultipleArtifactContentSerializer
+
+
+class ContentViewSet(BaseContentViewSet,
+                     mixins.CreateModelMixin,
+                     mixins.RetrieveModelMixin,
+                     mixins.ListModelMixin):
+    """
+    Content viewset that supports POST and GET by default.
+    """
+
+
+class ReadOnlyContentViewSet(BaseContentViewSet,
+                             mixins.RetrieveModelMixin,
+                             mixins.ListModelMixin):
+    """
+    Content viewset that supports only GET by default.
+    """
