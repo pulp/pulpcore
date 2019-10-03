@@ -156,10 +156,10 @@ can also configure them by hand from the templates below. Custom configuration c
 the ``Environment`` option with various :ref:`Pulp settings <configuration>`.
 
 
-1. Make a ``pulpcore-content-app.service`` file for the pulpcore-content-app service which serves Pulp
-   content to clients. We recommend starting with the `pulpcore-content-app template <https://github.com
-   /pulp/ansible-pulp/blob/master/roles/pulp-content/templates/pulpcore-content-app.service.j2>`_ and
-   setting the variables according to the `pulpcore-content-app config variables documentation <https://
+1. Make a ``pulpcore-content.service`` file for the pulpcore-content service which serves Pulp
+   content to clients. We recommend starting with the `pulpcore-content template <https://github.com
+   /pulp/ansible-pulp/blob/master/roles/pulp-content/templates/pulpcore-content.service.j2>`_ and
+   setting the variables according to the `pulpcore-content config variables documentation <https://
    github.com/pulp/ ansible-pulp/tree/master/roles/pulp-content#variables>`_
 
 2. Make a ``pulpcore-api.service`` file for the pulpcore-api service which serves the Pulp REST API. We
@@ -184,7 +184,7 @@ the ``Environment`` option with various :ref:`Pulp settings <configuration>`.
 These services can then be started by running::
 
     sudo systemctl start pulpcore-resource-manager
-    sudo systemctl start pulpcore-content-app
+    sudo systemctl start pulpcore-content
     sudo systemctl start pulpcore-api
     sudo systemctl start pulpcore-worker@1
     sudo systemctl start pulpcore-worker@2
