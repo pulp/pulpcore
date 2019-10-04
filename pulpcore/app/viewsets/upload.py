@@ -60,7 +60,7 @@ class UploadViewSet(NamedModelViewSet,
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
-        if self.action == 'update':
+        if self.action == 'update' and self.kwargs.get("pk"):
             context["upload"] = self.get_object()
         return context
 

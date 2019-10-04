@@ -8,7 +8,7 @@ from django_filters.rest_framework import filterset
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import viewsets
 from rest_framework.generics import get_object_or_404
-from rest_framework.schemas import AutoSchema
+from rest_framework.schemas.openapi import AutoSchema
 from rest_framework.serializers import ValidationError as DRFValidationError
 
 from pulpcore.app import tasks
