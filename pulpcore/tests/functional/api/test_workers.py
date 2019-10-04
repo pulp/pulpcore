@@ -123,14 +123,14 @@ class OfflineWorkerTestCase(unittest.TestCase):
         cls.client = api.Client(cls.cfg, api.json_handler)
         cls.svc_mgr = cli.ServiceManager(cls.cfg, cls.cfg.get_hosts('api')[0])
         cls.worker = {}
-        if not cls.svc_mgr.is_active(['pulp-worker@*']):
+        if not cls.svc_mgr.is_active(['pulpcore-worker@*']):
             raise unittest.SkipTest(
                 'These tests require pulp workers running on systemd'
             )
 
     def test_01_start_new_worker(self):
         """Start a new worker to be used in next assertions."""
-        self.svc_mgr.start(['pulp-worker@99'])
+        self.svc_mgr.start(['pulpcore-worker@99'])
         time.sleep(2)
         workers = self.client.get(
             WORKER_PATH, params={'online': True}
@@ -145,7 +145,7 @@ class OfflineWorkerTestCase(unittest.TestCase):
     @skip_if(bool, 'worker', False)
     def test_02_stop_worker(self):
         """Stop the worker and assert it is offline."""
-        self.svc_mgr.stop(['pulp-worker@99'])
+        self.svc_mgr.stop(['pulpcore-worker@99'])
         time.sleep(2)
         worker = self.client.get(self.worker['_href'])
         self.assertEqual(worker['online'], False)
