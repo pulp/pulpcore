@@ -6,7 +6,7 @@
 
 - set_fact:
     container_cli: 'podman'
-  when: podman_exists | success
+  when: podman_exists is success
 
 - name: Check if vars.yaml was created by the user
   stat:
