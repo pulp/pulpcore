@@ -44,7 +44,7 @@ class PaginationTestCase(unittest.TestCase):
 
         for content in contents:
             self.client.post(
-                repo['_versions_href'],
+                repo['versions_href'],
                 {'add_content_units': [content['pulp_href']]}
             )
 

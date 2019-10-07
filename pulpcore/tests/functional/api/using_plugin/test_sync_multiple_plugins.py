@@ -95,7 +95,7 @@ class SyncMultiplePlugins(unittest.TestCase):
         # Step 3
         sync(self.cfg, rpm_remote, repo)
         repo = self.client.get(repo['pulp_href'])
-        self.assertIsNotNone(repo['_latest_version_href'])
+        self.assertIsNotNone(repo['latest_version_href'])
         self.assertDictEqual(
             get_added_content_summary(repo),
             RPM_FIXTURE_SUMMARY
@@ -104,7 +104,7 @@ class SyncMultiplePlugins(unittest.TestCase):
         # Step 4
         sync(self.cfg, file_remote, repo, mirror=True)
         repo = self.client.get(repo['pulp_href'])
-        self.assertIsNotNone(repo['_latest_version_href'])
+        self.assertIsNotNone(repo['latest_version_href'])
         self.assertDictEqual(
             get_added_content_summary(repo),
             FILE_FIXTURE_SUMMARY

@@ -20,11 +20,11 @@ class RepositorySerializer(ModelSerializer):
     pulp_href = IdentityField(
         view_name='repositories-detail'
     )
-    _versions_href = IdentityField(
+    versions_href = IdentityField(
         view_name='versions-list',
         lookup_url_kwarg='repository_pk',
     )
-    _latest_version_href = LatestVersionField()
+    latest_version_href = LatestVersionField()
     name = serializers.CharField(
         help_text=_('A unique name for this repository.'),
         validators=[UniqueValidator(queryset=models.Repository.objects.all())]
@@ -43,8 +43,8 @@ class RepositorySerializer(ModelSerializer):
 
     class Meta:
         model = models.Repository
-        fields = ModelSerializer.Meta.fields + ('_versions_href', '_latest_version_href', 'name',
-                                                'plugin_managed', 'description')
+        fields = ModelSerializer.Meta.fields + ('versions_href', 'latest_version_href',
+                                                'name', 'plugin_managed', 'description')
 
 
 class RemoteSerializer(ModelSerializer):
