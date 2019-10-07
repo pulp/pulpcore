@@ -78,7 +78,6 @@ class TasksTestCase(unittest.TestCase):
         self.assertNotIn('progress_reports', response_fields)
         self.assertNotIn('spawned_tasks', response_fields)
         self.assertNotIn('error', response_fields)
-        self.assertNotIn('non_fatal_errors', response_fields)
 
     @skip_if(bool, 'task', False)
     def test_02_read_invalid_worker(self):
