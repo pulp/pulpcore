@@ -235,7 +235,7 @@ class FilterTaskCreatedResourcesContentTestCase(unittest.TestCase):
         cls.client = api.Client(config.get_config(), api.page_handler)
 
         cls.repository = cls.client.post(REPO_PATH, gen_repo())
-        response = cls.client.post(cls.repository['_versions_href'])
+        response = cls.client.post(cls.repository['versions_href'])
         cls.task = cls.client.get(response['task'])
 
     @classmethod

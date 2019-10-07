@@ -182,7 +182,7 @@ class PublicationRepositoryParametersTestCase(unittest.TestCase):
     def test_create_only_using_repoversion(self):
         """Create a publication only using repository version."""
         repo = self.create_sync_repo(3)
-        version_href = self.client.get(repo['_versions_href'])[1]['pulp_href']
+        version_href = self.client.get(repo['versions_href'])[1]['pulp_href']
         publication = create_file_publication(self.cfg, repo, version_href)
         self.addCleanup(self.client.delete, publication['pulp_href'])
 
@@ -195,7 +195,7 @@ class PublicationRepositoryParametersTestCase(unittest.TestCase):
     def test_create_repo_repoversion(self):
         """Create a publication using repository and repository version."""
         repo = self.create_sync_repo()
-        version_href = self.client.get(repo['_versions_href'])[0]['pulp_href']
+        version_href = self.client.get(repo['versions_href'])[0]['pulp_href']
 
         with self.assertRaises(HTTPError) as ctx:
             self.client.using_handler(api.json_handler).post(

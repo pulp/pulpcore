@@ -75,7 +75,7 @@ class DeleteOrphansTestCase(unittest.TestCase):
 
         # Create an orphan content unit.
         self.api_client.post(
-            repo['_versions_href'],
+            repo['versions_href'],
             {'remove_content_units': [content['pulp_href']]}
         )
 
