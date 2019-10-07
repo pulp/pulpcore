@@ -244,6 +244,7 @@ class Content(MasterModel, QueryMixin):
         _artifacts (models.ManyToManyField): Artifacts related to Content through ContentArtifact
     """
     TYPE = 'content'
+    repo_key = ()
 
     _artifacts = models.ManyToManyField(Artifact, through='ContentArtifact')
 
