@@ -11,7 +11,7 @@ def orphan_cleanup():
     # Content cleanup
     content = Content.objects.exclude(pk__in=RepositoryContent.objects.values_list('content_id',
                                                                                    flat=True))
-    content = content.exclude(_type='core.{}'.format(PublishedMetadata.TYPE))
+    content = content.exclude(pulp_type='core.{}'.format(PublishedMetadata.TYPE))
     progress_bar = ProgressReport(message='Clean up orphan Content', total=content.count(),
                                   code='clean-up.content', done=0, state='running')
     progress_bar.save()

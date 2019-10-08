@@ -210,9 +210,9 @@ class ContentSummarySerializer(serializers.Serializer):
             dict: The dictionary has the following format.::
 
                 {
-                    'added': {<_type>: {'count': <count>, 'href': <href>},
-                    'removed': {<_type>: {'count': <count>, 'href': <href>},
-                    'present': {<_type>: {'count': <count>, 'href': <href>},
+                    'added': {<pulp_type>: {'count': <count>, 'href': <href>},
+                    'removed': {<pulp_type>: {'count': <count>, 'href': <href>},
+                    'present': {<pulp_type>: {'count': <count>, 'href': <href>},
                 }
 
         """

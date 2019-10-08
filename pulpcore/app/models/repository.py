@@ -495,10 +495,10 @@ class RepositoryVersion(Model):
                     qs = self.content
                 elif value == RepositoryVersionContentDetails.REMOVED:
                     qs = self.removed()
-                annotated = qs.values('_type').annotate(count=models.Count('_type'))
+                annotated = qs.values('pulp_type').annotate(count=models.Count('pulp_type'))
                 for item in annotated:
                     count_obj = RepositoryVersionContentDetails(
-                        content_type=item['_type'],
+                        content_type=item['pulp_type'],
                         repository_version=self,
                         count=item['count'],
                         count_type=value,
@@ -561,9 +561,9 @@ class RepositoryVersionContentDetails(models.Model):
         Args:
             obj (pulpcore.app.models.RepositoryVersion): The RepositoryVersion being serialized.
         Returns:
-            dict: {<_type>: <url>}
+            dict: {<pulp_type>: <url>}
         """
-        ctype_model = Content.objects.filter(_type=self.content_type).first().cast().__class__
+        ctype_model = Content.objects.filter(pulp_type=self.content_type).first().cast().__class__
         ctype_view = get_view_name_for_model(ctype_model, 'list')
         try:
             ctype_url = reverse(ctype_view)
