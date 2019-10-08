@@ -311,8 +311,9 @@ class RepositoryVersion(Model):
                 # now add any content that's in the base_version but not in version
                 version.add_content(base_version.content.exclude(pk__in=version.content))
 
-            resource = CreatedResource(content_object=version)
-            resource.save()
+            if not repository.plugin_managed:
+                resource = CreatedResource(content_object=version)
+                resource.save()
             return version
 
     @staticmethod
