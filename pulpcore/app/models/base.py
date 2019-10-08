@@ -62,12 +62,12 @@ class MasterModel(Model, metaclass=MasterModelMeta):
 
     Attributes:
 
-        TYPE (str): Default constant value saved into the ``_type``
+        TYPE (str): Default constant value saved into the ``pulp_type``
             field of Model instances
 
     Fields:
 
-        _type: The user-facing string identifying the detail type of this model
+        pulp_type: The user-facing string identifying the detail type of this model
 
     Warning:
         Subclasses of this class rely on there being no other parent/child Model
@@ -83,14 +83,14 @@ class MasterModel(Model, metaclass=MasterModelMeta):
     # It can also be used for filtering across a relation where a model is related to a Master
     # model. Set this to something reasonable in Master and Detail model classes, e.g. when
     # create a master model, like "Remote", its TYPE value could be "remote". Then, when
-    # creating a Remote Detail class like PackageRemote, its _type value could be "package",
+    # creating a Remote Detail class like PackageRemote, its pulp_type value could be "package",
     # not "package_remote", since "package_remote" would be redundant in the context of
     # a remote Master model.
     TYPE = None
 
     # This field must have a value when models are saved, and defaults to the value of
     # the TYPE attribute on the Model being saved (seen above).
-    _type = models.TextField(null=False, default=None)
+    pulp_type = models.TextField(null=False, default=None)
 
     class Meta:
         abstract = True
@@ -98,12 +98,12 @@ class MasterModel(Model, metaclass=MasterModelMeta):
     def save(self, *args, **kwargs):
         # instances of "detail" models that subclass MasterModel are exposed
         # on instances of MasterModel by the string stored in that model's TYPE attr.
-        # Storing this _type in a column on the MasterModel next to makes it trivial
+        # Storing this pulp_type in a column on the MasterModel next to makes it trivial
         # to filter for specific detail model types across master's relations.
         # Prepend the TYPE defined on a detail model with a django app label.
         # If a plugin sets the type field themselves, it's used as-is.
-        if not self._type:
-            self._type = '{app_label}.{type}'.format(app_label=self._meta.app_label,
+        if not self.pulp_type:
+            self.pulp_type = '{app_label}.{type}'.format(app_label=self._meta.app_label,
                                                          type=self.TYPE)
         return super().save(*args, **kwargs)
 
@@ -147,9 +147,9 @@ class MasterModel(Model, metaclass=MasterModelMeta):
             return super().__str__()
 
         try:
-            return '<{} (_type={}): {}>'.format(self._meta.object_name, cast.TYPE, cast.name)
+            return '<{} (pulp_type={}): {}>'.format(self._meta.object_name, cast.TYPE, cast.name)
         except AttributeError:
-            return '<{} (_type={}): pk={}>'.format(self._meta.object_name, cast.TYPE, cast.pk)
+            return '<{} (pulp_type={}): pk={}>'.format(self._meta.object_name, cast.TYPE, cast.pk)
 
 
 # Add properties to model _meta info to support master/detail models

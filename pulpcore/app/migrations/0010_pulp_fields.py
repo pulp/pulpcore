@@ -8,7 +8,7 @@ import pulpcore.app.models.task
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('core', '0008_published_metadata_as_content'),
+        ('core', '0009_remove_task_non_fatal_errors'),
     ]
 
     operations = [
@@ -43,6 +43,11 @@ class Migration(migrations.Migration):
             new_name='pulp_last_updated',
         ),
         migrations.RenameField(
+            model_name='basedistribution',
+            old_name='_type',
+            new_name='pulp_type',
+        ),
+        migrations.RenameField(
             model_name='content',
             old_name='_created',
             new_name='pulp_created',
@@ -56,6 +61,11 @@ class Migration(migrations.Migration):
             model_name='content',
             old_name='_last_updated',
             new_name='pulp_last_updated',
+        ),
+        migrations.RenameField(
+            model_name='content',
+            old_name='_type',
+            new_name='pulp_type',
         ),
         migrations.RenameField(
             model_name='contentappstatus',
@@ -103,6 +113,11 @@ class Migration(migrations.Migration):
             new_name='pulp_last_updated',
         ),
         migrations.RenameField(
+            model_name='contentguard',
+            old_name='_type',
+            new_name='pulp_type',
+        ),
+        migrations.RenameField(
             model_name='createdresource',
             old_name='_created',
             new_name='pulp_created',
@@ -131,6 +146,11 @@ class Migration(migrations.Migration):
             model_name='exporter',
             old_name='_last_updated',
             new_name='pulp_last_updated',
+        ),
+        migrations.RenameField(
+            model_name='exporter',
+            old_name='_type',
+            new_name='pulp_type',
         ),
         migrations.RenameField(
             model_name='progressreport',
@@ -163,6 +183,11 @@ class Migration(migrations.Migration):
             new_name='pulp_last_updated',
         ),
         migrations.RenameField(
+            model_name='publication',
+            old_name='_type',
+            new_name='pulp_type',
+        ),
+        migrations.RenameField(
             model_name='publishedartifact',
             old_name='_created',
             new_name='pulp_created',
@@ -193,6 +218,11 @@ class Migration(migrations.Migration):
             new_name='pulp_last_updated',
         ),
         migrations.RenameField(
+            model_name='publisher',
+            old_name='_type',
+            new_name='pulp_type',
+        ),
+        migrations.RenameField(
             model_name='remote',
             old_name='_created',
             new_name='pulp_created',
@@ -206,6 +236,11 @@ class Migration(migrations.Migration):
             model_name='remote',
             old_name='_last_updated',
             new_name='pulp_last_updated',
+        ),
+        migrations.RenameField(
+            model_name='remote',
+            old_name='_type',
+            new_name='pulp_type',
         ),
         migrations.RenameField(
             model_name='remoteartifact',
