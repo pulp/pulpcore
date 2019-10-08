@@ -1,35 +1,40 @@
 # This config represents the latest values used when running the plugin-template. Any settings that
 # were not present before running plugin-template have been added with their default values.
 
-plugin_name: pulpcore
+additional_plugins: ['pulp-certguard']
+black: false
+check_commit_message: true
+coverage: true
+deploy_client_to_pypi: true
+deploy_client_to_rubygems: true
+deploy_daily_client_to_pypi: true
+deploy_daily_client_to_rubygems: true
+deploy_to_pypi: true
+docs_test: true
 plugin_app_label: pulpcore
-plugin_snake: pulpcore
-plugin_caps: PULPCORE
-plugin_caps_short: PULPCORE
 plugin_camel: Pulpcore
 plugin_camel_short: Pulpcore
+plugin_caps: PULPCORE
+plugin_caps_short: PULPCORE
 plugin_dash: pulpcore
 plugin_dash_short: pulpcore
-black: False
-check_commit_message: True
-coverage: True
-deploy_client_to_pypi: True
-deploy_client_to_rubygems: True
-deploy_daily_client_to_pypi: True
-deploy_daily_client_to_rubygems: True
-deploy_to_pypi: True
-docs_test: True
-pydocstyle: True
-test_bindings: True
+plugin_name: pulpcore
+plugin_snake: pulpcore
+pulp_settings:
+  content_host: $(hostname):24816
+pydocstyle: true
 pypi_username: pulp
+test_bindings: true
+test_performance: false
 travis_notifications:
   irc:
     channels:
-      - "chat.freenode.net#pulp-build"
-    template:
-      - "%{repository_slug}#%{build_number} (%{branch} - %{commit} : %{author} : %{commit_subject})"
-      - "Change view : %{compare_url}"
-      - "Build details : %{build_url}"
-      - "%{message}"
-    on_success: change
+    - chat.freenode.net#pulp-build
     on_failure: always
+    on_success: change
+    template:
+    - '%{repository_slug}#%{build_number} (%{branch} - %{commit} : %{author} : %{commit_subject})'
+    - 'Change view : %{compare_url}'
+    - 'Build details : %{build_url}'
+    - '%{message}'
+
