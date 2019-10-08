@@ -78,38 +78,6 @@ class ModelSerializer(QueryFieldsMixin, serializers.HyperlinkedModelSerializer):
         return data
 
 
-class MasterModelSerializer(ModelSerializer):
-    """
-    Base serializer for all Master/Detail Models.
-
-    When subclassing this, all subclasses should explicitly inherit the fields of their parent
-    in their Meta options class. For example:
-
-        class MasterSerializer(MasterModelSerializer):
-            foo = SerializerField()
-
-            class Meta:
-                fields = MasterModelSerializer.Meta.fields + ('foo',)
-
-        class DetailSerializer(MasterSerializer):
-            bar = SerializerField()
-
-            class Meta:
-                fields = MasterSerializer.Meta.fields + ('bar',)
-
-    This ensures that fields are represented consistently throughout the API, and Detail Model
-    types are cast down before representation.
-
-    Other Meta attributes, such as `filterset_fields`, should also be inherited in this way
-    as-needed.
-
-    """
-    _type = serializers.CharField(read_only=True)
-
-    class Meta:
-        fields = ModelSerializer.Meta.fields + ('_type',)
-
-
 class MatchingNullViewName(object):
     """Object that can be used as the default view name for detail fields
 

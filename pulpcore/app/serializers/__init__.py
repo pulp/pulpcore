@@ -6,7 +6,6 @@ from .base import (  # noqa
     DetailIdentityField,
     DetailRelatedField,
     IdentityField,
-    MasterModelSerializer,
     ModelSerializer,
     NestedIdentityField,
     NestedRelatedField,

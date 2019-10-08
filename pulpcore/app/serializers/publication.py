@@ -10,7 +10,6 @@ from pulpcore.app.serializers import (
     BaseURLField,
     DetailIdentityField,
     DetailRelatedField,
-    MasterModelSerializer,
     ModelSerializer,
     NestedRelatedField,
     RelatedField,
@@ -18,7 +17,7 @@ from pulpcore.app.serializers import (
 )
 
 
-class PublicationSerializer(MasterModelSerializer):
+class PublicationSerializer(ModelSerializer):
     pulp_href = DetailIdentityField()
     repository_version = NestedRelatedField(
         view_name='versions-detail',
@@ -64,14 +63,14 @@ class PublicationSerializer(MasterModelSerializer):
     class Meta:
         abstract = True
         model = models.Publication
-        fields = MasterModelSerializer.Meta.fields + (
+        fields = ModelSerializer.Meta.fields + (
             'publisher',
             'repository_version',
             'repository'
         )
 
 
-class ContentGuardSerializer(MasterModelSerializer):
+class ContentGuardSerializer(ModelSerializer):
     pulp_href = DetailIdentityField()
 
     name = serializers.CharField(
@@ -85,13 +84,13 @@ class ContentGuardSerializer(MasterModelSerializer):
 
     class Meta:
         model = models.ContentGuard
-        fields = MasterModelSerializer.Meta.fields + (
+        fields = ModelSerializer.Meta.fields + (
             'name',
             'description'
         )
 
 
-class BaseDistributionSerializer(MasterModelSerializer):
+class BaseDistributionSerializer(ModelSerializer):
     """
     The Serializer for the BaseDistribution model.
 

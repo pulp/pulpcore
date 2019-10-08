@@ -228,7 +228,7 @@ representing the Master Model in a Master/Detail relationship, and every Seriali
 Detail Models must subclass their respective Master Serializer.
 
 Furthermore, every Serializer representing a Master Model should subclass a special Serializer
-created for Master/Detail models, :class:`pulpcore.app.serializers.base.MasterModelSerializer`. This
+created for Master/Detail models, :class:`pulpcore.app.serializers.base.ModelSerializer`. This
 Serializer includes a definition for the `type` field present on all models inheriting from
 :class:`pulpcore.app.models.MasterModel`, and also identifies the `type` field as filterable,
 centralizing common behavior that we're likely to want in all Serializers representing Models
