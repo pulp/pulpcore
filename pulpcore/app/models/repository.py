@@ -1,10 +1,14 @@
 """
 Repository related Django models.
 """
+from collections import defaultdict
 from contextlib import suppress
+from gettext import gettext as _
+import logging
 
 import django
 from django.db import models, transaction
+from django.db.models import Q
 from django.urls import reverse
 
 from pulpcore.app.util import get_view_name_for_model
@@ -13,6 +17,9 @@ from pulpcore.exceptions import ResourceImmutableError
 from .base import MasterModel, Model
 from .content import Content
 from .task import CreatedResource
+
+
+_logger = logging.getLogger(__name__)
 
 
 class Repository(Model):
@@ -342,7 +349,12 @@ class RepositoryVersion(Model):
 
     def add_content(self, content):
         """
-        Add a content unit to this version.
+        Add a content unit to this version, and possibly remove duplcates in some situations.
+
+        In some situations plugin writers have configured new content to automatically remove other
+        content in the repository. For example, `pulp_file` content would conflict with a
+        `relative_path`. That is resolved by having the newer associated unit automatically remove
+        the other `pulp_file` content with the same `relative_path`.
 
         Args:
            content (django.db.models.QuerySet): Set of Content to add
@@ -351,8 +363,23 @@ class RepositoryVersion(Model):
             pulpcore.exception.ResourceImmutableError: if add_content is called on a
                 complete RepositoryVersion
         """
+
         if self.complete:
             raise ResourceImmutableError(self)
+
+        query_for_repo_duplicates_by_type = defaultdict(lambda: Q())
+        for item in content.all():
+            if item.repo_key == ():
+                continue
+            unit_q_dict = {
+                field: getattr(item, field) for field in item.repo_key
+            }
+            query_for_repo_duplicates_by_type[item._meta.model] |= Q(**unit_q_dict)
+
+        for model in query_for_repo_duplicates_by_type:
+            _logger.debug(_("Removing duplicates for type: {}".format(model)))
+            qs = model.objects.filter(query_for_repo_duplicates_by_type[model])
+            self.remove_content(qs)
 
         repo_content = []
         for content_pk in content.exclude(pk__in=self.content).values_list('pk', flat=True):
