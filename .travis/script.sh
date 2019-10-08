@@ -74,21 +74,17 @@ if [ "$TEST" = 'bindings' ]; then
   exit
 fi
 
-
-PULP_API_POD=$(sudo kubectl get pods | grep -E -o "pulp-api-(\w+)-(\w+)")
+# Aliases for running commands in the pulp-api container.
+export PULP_API_POD=$(sudo kubectl get pods | grep -E -o "pulp-api-(\w+)-(\w+)")
+# Run a command
 export CMD_PREFIX="sudo kubectl exec $PULP_API_POD --"
-# Many tests require pytest/mock, but users do not need them at runtime
-# (or to add plugins on top of pulpcore or pulp container images.)
-# So install it here, rather than in the image Dockerfile.
-$CMD_PREFIX pip3 install pytest mock
-# Many functional tests require these
-$CMD_PREFIX dnf install -yq lsof which dnf-plugins-core
+# Run a command, and pass STDIN
+export CMD_STDIN_PREFIX="sudo kubectl exec -i $PULP_API_POD --"
 # The alias does not seem to work in Travis / the scripting framework
 #alias pytest="$CMD_PREFIX pytest"
 
 # Run unit tests.
-$CMD_PREFIX bash -c "sed \"s/'USER': 'pulp'/'USER': 'postgres'/g\" /etc/pulp/settings.py > unit-test.py"
-$CMD_PREFIX bash -c "PULP_SETTINGS=/unit-test.py django-admin test  --noinput /usr/local/lib/python${TRAVIS_PYTHON_VERSION}/site-packages/pulpcore/tests/unit/"
+$CMD_PREFIX bash -c "PULP_DATABASES__default__USER=postgres django-admin test  --noinput /usr/local/lib/python${TRAVIS_PYTHON_VERSION}/site-packages/pulpcore/tests/unit/"
 
 # Note: This function is in the process of being merged into after_failure
 show_logs_and_return_non_zero() {
@@ -103,6 +99,13 @@ set +u
 export PYTHONPATH=$TRAVIS_BUILD_DIR:${PYTHONPATH}
 
 set -u
+
+if [[ "$TEST" == "performance" ]]; then
+  echo "--- Performance Tests ---"
+  pytest -vv -r sx --color=yes --pyargs --durations=0 pulpcore.tests.performance || show_logs_and_return_non_zero
+  exit
+fi
+
 if [ -f $FUNC_TEST_SCRIPT ]; then
     $FUNC_TEST_SCRIPT
 else
