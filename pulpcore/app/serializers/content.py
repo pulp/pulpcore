@@ -11,12 +11,12 @@ from pulpcore.app.serializers import base, fields
 UNIQUE_ALGORITHMS = ['sha256', 'sha384', 'sha512']
 
 
-class BaseContentSerializer(base.MasterModelSerializer):
+class BaseContentSerializer(base.ModelSerializer):
     pulp_href = base.DetailIdentityField()
 
     class Meta:
         model = models.Content
-        fields = base.MasterModelSerializer.Meta.fields
+        fields = base.ModelSerializer.Meta.fields
 
 
 class NoArtifactContentSerializer(BaseContentSerializer):

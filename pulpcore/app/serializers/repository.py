@@ -9,7 +9,6 @@ from pulpcore.app.serializers import (
     DetailIdentityField,
     IdentityField,
     LatestVersionField,
-    MasterModelSerializer,
     ModelSerializer,
     NestedIdentityField,
     NestedRelatedField,
@@ -48,7 +47,7 @@ class RepositorySerializer(ModelSerializer):
                                                 'plugin_managed', 'description')
 
 
-class RemoteSerializer(MasterModelSerializer):
+class RemoteSerializer(ModelSerializer):
     """
     Every remote defined by a plugin should have a Remote serializer that inherits from this
     class. Please import from `pulpcore.plugin.serializers` rather than from this module directly.
@@ -123,7 +122,7 @@ class RemoteSerializer(MasterModelSerializer):
     class Meta:
         abstract = True
         model = models.Remote
-        fields = MasterModelSerializer.Meta.fields + (
+        fields = ModelSerializer.Meta.fields + (
             'name', 'url', 'ssl_ca_certificate', 'ssl_client_certificate', 'ssl_client_key',
             'ssl_validation', 'proxy_url', 'username', 'password', 'pulp_last_updated',
             'download_concurrency', 'policy'
@@ -150,7 +149,7 @@ class RepositorySyncURLSerializer(serializers.Serializer):
     )
 
 
-class PublisherSerializer(MasterModelSerializer):
+class PublisherSerializer(ModelSerializer):
     """
     Every publisher defined by a plugin should have an Publisher serializer that inherits from this
     class. Please import from `pulpcore.plugin.serializers` rather than from this module directly.
@@ -168,12 +167,12 @@ class PublisherSerializer(MasterModelSerializer):
     class Meta:
         abstract = True
         model = models.Publisher
-        fields = MasterModelSerializer.Meta.fields + (
+        fields = ModelSerializer.Meta.fields + (
             'name', 'pulp_last_updated',
         )
 
 
-class ExporterSerializer(MasterModelSerializer):
+class ExporterSerializer(ModelSerializer):
     pulp_href = DetailIdentityField()
     name = serializers.CharField(
         help_text=_('The exporter unique name.'),
@@ -191,7 +190,7 @@ class ExporterSerializer(MasterModelSerializer):
     class Meta:
         abstract = True
         model = models.Exporter
-        fields = MasterModelSerializer.Meta.fields + (
+        fields = ModelSerializer.Meta.fields + (
             'name',
             'pulp_last_updated',
             'last_export',
