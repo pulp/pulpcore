@@ -143,7 +143,7 @@ class PublishedArtifact(Model):
         content_artifact (models.ForeignKey): The referenced content artifact.
         publication (models.ForeignKey): The publication in which the artifact is included.
     """
-    relative_path = models.CharField(max_length=255)
+    relative_path = models.TextField()
 
     content_artifact = models.ForeignKey('ContentArtifact', on_delete=models.CASCADE)
     publication = models.ForeignKey(Publication, on_delete=models.CASCADE)
@@ -169,7 +169,7 @@ class PublishedMetadata(Content):
 
     TYPE = 'publishedmetadata'
 
-    relative_path = models.CharField(max_length=255)
+    relative_path = models.TextField()
 
     publication = models.ForeignKey(Publication, on_delete=models.CASCADE)
 
