@@ -4,6 +4,9 @@ with open('README.md') as f:
     long_description = f.read()
 
 requirements = [
+    'aiohttp',
+    'aiofiles',
+    'backoff',
     'coreapi~=2.3.3',
     'Django~=2.2.3',  # LTS version, switch only if we have a compelling reason to
     'django-filter~=2.2.0',
