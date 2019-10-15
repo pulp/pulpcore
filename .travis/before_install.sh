@@ -64,9 +64,6 @@ fi
 
 
 
-# When building a (release) tag, we don't need the development modules for the
-# build (they will be installed as dependencies of the plugin).
-if [ -z "$TRAVIS_TAG" ]; then
 
   git clone --depth=1 https://github.com/pulp/pulpcore-plugin.git
 
@@ -89,7 +86,7 @@ if [ -z "$TRAVIS_TAG" ]; then
 
   # pulp-smash already got installed via test_requirements.txt
   pip install --upgrade --force-reinstall ./pulp-smash
-fi
+
 
 pip install ansible
 
