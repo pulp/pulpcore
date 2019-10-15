@@ -53,7 +53,9 @@ after_failure:
 jobs:
   include:
     - stage: deploy-plugin-to-pypi
+      before_install: skip
       install: skip
+      before_script: skip
       script: bash .travis/publish_plugin_pypi.sh
       if: tag IS present
     - stage: publish-beta-docs
