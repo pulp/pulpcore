@@ -13,6 +13,94 @@ Changelog
 
 .. towncrier release notes start
 
+3.0.0rc7 (2019-10-15)
+=====================
+
+Features
+--------
+
+- Setting `code` on `ProgressReport` for identifying the type of progress report.
+  `#5184 <https://pulp.plan.io/issues/5184>`_
+- Add the possibility to pass context to the general_create task.
+  `#5403 <https://pulp.plan.io/issues/5403>`_
+- Filter plugin managed repositories.
+  `#5421 <https://pulp.plan.io/issues/5421>`_
+- Using `ProgressReport` for known and unknown items count.
+  `#5444 <https://pulp.plan.io/issues/5444>`_
+- Expose `exclude_fields` the api schema and bindings to allow users to filter out fields.
+  `#5519 <https://pulp.plan.io/issues/5519>`_
+
+
+Bugfixes
+--------
+
+- PublishedMetadata files are now stored in artifact storage.
+  `#5304 <https://pulp.plan.io/issues/5304>`_
+- Fix 500 on Schemas.
+  `#5311 <https://pulp.plan.io/issues/5311>`_
+- /etc/pulp/settings.py override default settings provided by plugins.
+  `#5425 <https://pulp.plan.io/issues/5425>`_
+- Fixing error where relative_path was defined on model but not serializer
+  `#5445 <https://pulp.plan.io/issues/5445>`_
+- Fixed issue where removing all units on a repo with no version threw an error.
+  `#5478 <https://pulp.plan.io/issues/5478>`_
+- content-app sets Content-Type and Content-Encoding headers for all responses.
+  `#5507 <https://pulp.plan.io/issues/5507>`_
+- Fix erroneous namespacing for Detail viewsets that don't inherit from Master viewsets.
+  `#5533 <https://pulp.plan.io/issues/5533>`_
+
+
+Improved Documentation
+----------------------
+
+- Update installation docs since mariadb/mysql is no longer supported.
+  `#5129 <https://pulp.plan.io/issues/5129>`_
+
+
+Deprecations and Removals
+-------------------------
+
+- By default, html in field descriptions filtered out in REST API docs unless 'include_html' is set.
+  `#5009 <https://pulp.plan.io/issues/5009>`_
+- Remove support for mysql/mariadb making postgresql the only supported database.
+  `#5129 <https://pulp.plan.io/issues/5129>`_
+- Creating a progress report now requires setting code field.
+  `#5184 <https://pulp.plan.io/issues/5184>`_
+- Rename the fields on the ContentSerializers to not start with underscore.
+  `#5428 <https://pulp.plan.io/issues/5428>`_
+- Removing `ProgressSpinner` and `ProgressBar` models.
+  `#5444 <https://pulp.plan.io/issues/5444>`_
+- Change `_type` to `pulp_type`
+  `#5454 <https://pulp.plan.io/issues/5454>`_
+- Change `_id`, `_created`, `_last_updated`, `_href` to `pulp_id`, `pulp_created`, `pulp_last_updated`, `pulp_href`
+  `#5457 <https://pulp.plan.io/issues/5457>`_
+- Remove custom JSONField implementation from public API
+  `#5465 <https://pulp.plan.io/issues/5465>`_
+- Delete NamePagination class and use sorting on the queryset instead.
+  `#5489 <https://pulp.plan.io/issues/5489>`_
+- Removing filter for `plugin_managed` repositories.
+  `#5516 <https://pulp.plan.io/issues/5516>`_
+- Renamed `fields!` to `exclude_fields` since exclamation mark is a special char in many languages.
+  `#5519 <https://pulp.plan.io/issues/5519>`_
+- Removed the logic that automatically defines the namespace for Detail model viewsets when there is no Master viewset.
+  `#5533 <https://pulp.plan.io/issues/5533>`_
+- Removing `non_fatal_errors` from `Task`.
+  `#5537 <https://pulp.plan.io/issues/5537>`_
+- Remove "_" from `_versions_href`, `_latest_version_href`
+  `#5548 <https://pulp.plan.io/issues/5548>`_
+- Removing base serializer field: `_type` .
+  `#5550 <https://pulp.plan.io/issues/5550>`_
+
+
+Misc
+----
+
+- `#4554 <https://pulp.plan.io/issues/4554>`_, `#5008 <https://pulp.plan.io/issues/5008>`_, `#5535 <https://pulp.plan.io/issues/5535>`_, `#5565 <https://pulp.plan.io/issues/5565>`_
+
+
+----
+
+
 3.0.0rc6 (2019-10-01)
 =====================
 

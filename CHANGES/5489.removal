@@ -1,1 +1,0 @@
-Delete NamePagination class and use sorting on the queryset instead.

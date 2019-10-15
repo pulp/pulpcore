@@ -1,1 +1,0 @@
-Fix erroneous namespacing for Detail viewsets that don't inherit from Master viewsets.
