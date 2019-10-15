@@ -59,21 +59,6 @@ else
   PULP_CERTGUARD=git+https://github.com/pulp/pulp-certguard.git
 fi
 
-
-if [ -n "$TRAVIS_TAG" ]; then
-  # Install the plugin only and use published PyPI packages for the rest
-  cat > vars/vars.yaml << VARSYAML
----
-images:
-  - ${PLUGIN}-${TAG}:
-      image_name: $PLUGIN
-      tag: $TAG
-      plugins:
-        - ./$PLUGIN
-        - pulp-certguard
-        
-VARSYAML
-else
   cat > vars/vars.yaml << VARSYAML
 ---
 images:
@@ -85,10 +70,7 @@ images:
       plugins:
         - ./$PLUGIN
         - $PULP_CERTGUARD
-        
 VARSYAML
-fi
-
 ansible-playbook build.yaml
 
 cd $TRAVIS_BUILD_DIR/../pulp-operator
