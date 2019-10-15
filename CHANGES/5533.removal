@@ -1,1 +1,0 @@
-Removed the logic that automatically defines the namespace for Detail model viewsets when there is no Master viewset.
