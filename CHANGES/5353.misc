@@ -1,0 +1,1 @@
+Moving all the methods for `Content`, `ContentGuard`, `Remote` and `Publisher` from pulpcore-plugin to pulpcore.
