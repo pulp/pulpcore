@@ -3,6 +3,7 @@ from gettext import gettext as _
 from urllib.parse import urlparse
 
 from django.core.exceptions import FieldError, ValidationError
+from django.forms.utils import ErrorList
 from django.urls import Resolver404, resolve
 from django_filters.rest_framework import filterset
 from drf_yasg.utils import swagger_auto_schema
@@ -458,3 +459,20 @@ class BaseFilterSet(filterset.FilterSet):
                 field=name, expr=cls.LOOKUP_EXPR_TEXT[lookup_expr], value=val_word)
 
         return f
+
+    def is_valid(self, *args, **kwargs):
+        is_valid = super().is_valid(*args, **kwargs)
+        DEFAULT_FILTERS = [
+            "exclude_fields", "fields", "limit", "minimal", "offset", "page_size"
+        ]
+        for field in self.data.keys():
+            if field in DEFAULT_FILTERS:
+                continue
+
+            if field not in self.filters:
+                errors = self.form._errors.get("errors", ErrorList())
+                errors.extend(["Invalid Filter: '{field}'".format(field=field)])
+                self.form._errors["errors"] = errors
+                is_valid = False
+
+        return is_valid
