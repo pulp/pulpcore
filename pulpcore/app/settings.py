@@ -230,8 +230,6 @@ settings = dynaconf.DjangoDynaconf(
     INCLUDES_FOR_DYNACONF=[
         '{}.app.settings'.format(plugin_name)
         for plugin_name in INSTALLED_PULP_PLUGINS
-    ] + [
-        "/etc/pulp/settings.py"
     ],
     ENVVAR_FOR_DYNACONF='PULP_SETTINGS',
 )
