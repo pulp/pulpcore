@@ -10,10 +10,20 @@ to configure Pulp in a few ways:
 By Configuration File
 ---------------------
 
-Non-default settings can be specified in the ``/etc/pulp/settings.py``. The presence of this file is
-optional. The expected location and format can be changed by specifying the ``PULP_SETTINGS``
-environment variable. Dynaconf supports `settings in multiple file formats <https://dynaconf.
-readthedocs.io/en/latest/guides/examples.html>`_
+To configure Pulp by settings file, you must set the format and location of the config file by
+specifying the ``PULP_SETTINGS`` environment variable. For example, if you wanted to use Python to
+specify your configuration, and provide it at ``/etc/pulp/settings.py`` you could::
+
+    export PULP_SETTINGS=/etc/pulp/settings.py
+
+
+Or in a systemd file you could::
+
+    Environment="PULP_SETTINGS=/etc/pulp/settings.py" as the Ansible Installer does.
+
+
+Dynaconf supports `settings in multiple file formats <https://dynaconf.readthedocs.io/en/latest/
+guides/examples.html>`_
 
 This file should have permissions of:
 
@@ -32,9 +42,10 @@ If it is in its own directory like ``/etc/pulp``, the directory should have perm
 By Environment Variables
 ------------------------
 
-Each of the settings can also be configured using Dynaconf by prepending ``PULP_`` to the name of
-the setting and specifying that as an environment variable. For example the ``SECRET_KEY`` can be
-specified by exporting the ``PULP_SECRET_KEY`` variable.
+Many users specify their Pulp settings entirely by Environment Variables. Each of the settings can
+be configured using Dynaconf by prepending ``PULP_`` to the name of the setting and specifying that
+as an Environment Variable. For example the ``SECRET_KEY`` can be specified by exporting the
+``PULP_SECRET_KEY`` variable.
 
 
 Settings
