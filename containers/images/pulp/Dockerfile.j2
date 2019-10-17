@@ -10,6 +10,7 @@ ENV LANGUAGE=en_US.UTF-8
 ENV LC_ALL=en_US.UTF-8
 ENV PYTHONUNBUFFERED=0
 ENV DJANGO_SETTINGS_MODULE=pulpcore.app.settings
+ENV PULP_SETTINGS=/etc/pulp/settings.py
 
 # We need this workaround to avoid random build failures until the Errata is
 # released and the F30 image is updated (last updated: 2019-08-25)
