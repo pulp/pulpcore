@@ -18,7 +18,7 @@ from pulpcore.exceptions import ResourceImmutableError
 
 from .base import MasterModel, Model
 from .content import Artifact, Content
-from .task import CreatedResource
+from .task import CreatedResource, Task
 
 
 _logger = logging.getLogger(__name__)
@@ -431,7 +431,7 @@ class RepositoryVersion(Model):
                 # now add any content that's in the base_version but not in version
                 version.add_content(base_version.content.exclude(pk__in=version.content))
 
-            if not repository.plugin_managed:
+            if Task.current and not repository.plugin_managed:
                 resource = CreatedResource(content_object=version)
                 resource.save()
             return version
