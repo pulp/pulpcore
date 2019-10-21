@@ -2,9 +2,9 @@ from pulpcore.client.pulpcore import (ApiClient as CoreApiClient, ArtifactsApi, 
                                       Repository, RepositoriesApi, RepositoriesVersionsApi,
                                       TasksApi, Upload, UploadCommit, UploadsApi)
 from pulpcore.client.pulp_file import (ApiClient as FileApiClient, ContentFilesApi,
-                                       DistributionsFileApi, FileDistribution,
-                                       PublicationsFileApi, RemotesFileApi, FileRemote,
-                                       RepositorySyncURL, FilePublication)
+                                       DistributionsFileApi, FileFileDistribution,
+                                       PublicationsFileApi, RemotesFileApi, FileFileRemote,
+                                       RepositorySyncURL, FileFilePublication)
 from pprint import pprint
 from time import sleep
 import hashlib
@@ -116,7 +116,7 @@ with NamedTemporaryFile() as downloaded_file:
 
 # Create a File Remote
 remote_url = 'https://repos.fedorapeople.org/pulp/pulp/demo_repos/test_file_repo/PULP_MANIFEST'
-remote_data = FileRemote(name='bar25', url=remote_url)
+remote_data = FileFileRemote(name='bar25', url=remote_url)
 file_remote = fileremotes.create(remote_data)
 pprint(file_remote)
 
@@ -157,13 +157,15 @@ repository_version_2 = repoversions.read(created_resources[0])
 pprint(repository_version_2)
 
 # Create a publication from the latest version of the repository
-publish_data = FilePublication(repository=repository.pulp_href)
+publish_data = FileFilePublication(repository=repository.pulp_href)
 publish_response = filepublications.create(publish_data)
 
 # Monitor the publish task
 created_resources = monitor_task(publish_response.task)
 publication_href = created_resources[0]
 
-distribution_data = FileDistribution(name='baz25', base_path='foo25', publication=publication_href)
+distribution_data = FileFileDistribution(
+    name='baz25', base_path='foo25', publication=publication_href
+)
 distribution = filedistributions.create(distribution_data)
 pprint(distribution)

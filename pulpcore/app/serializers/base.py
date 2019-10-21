@@ -29,6 +29,11 @@ class ModelSerializer(QueryFieldsMixin, serializers.HyperlinkedModelSerializer):
     """Base serializer for use with :class:`pulpcore.app.models.Model`
 
     This ensures that all Serializers provide values for the 'pulp_href` field.
+
+    The class provides a default for the ``ref_name`` attribute in the
+    ModelSerializers's ``Meta`` class. This ensures that the OpenAPI definitions
+    of plugins are namespaced properly.
+
     """
 
     # default is 'fields!' which doesn't work in the bindings for some langs
@@ -76,6 +81,34 @@ class ModelSerializer(QueryFieldsMixin, serializers.HyperlinkedModelSerializer):
         if hasattr(self, 'initial_data'):
             validate_unknown_fields(self.initial_data, self.fields)
         return data
+
+    def __init_subclass__(cls, **kwargs):
+        """Set default attributes in subclasses.
+
+        Sets the default for the ``ref_name`` attribute for a ModelSerializers's
+        ``Meta`` class.
+
+        If the ``Meta.ref_name`` attribute is not yet defined, set it according
+        to the best practice established within Pulp: ``<app label>.<model class
+        name>``. ``app_label`` is used to create a per plugin namespace.
+
+        Serializers in pulpcore (``app_label`` is 'core') will not be
+        namespaced, i.e. ref_name is not set in this case.
+
+        The ``ref_name`` default value is computed using ``Meta.model``. If that
+        is not defined (because the class must be subclassed to be useful),
+        `ref_name` is not set.
+
+        """
+        super().__init_subclass__(**kwargs)
+        meta = cls.Meta
+        try:
+            if not hasattr(meta, "ref_name"):
+                plugin_namespace = meta.model._meta.app_label
+                if plugin_namespace != "core":
+                    meta.ref_name = f"{plugin_namespace}.{meta.model.__name__}"
+        except AttributeError:
+            pass
 
 
 class MatchingNullViewName(object):
