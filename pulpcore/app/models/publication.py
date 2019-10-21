@@ -137,7 +137,7 @@ class PublishedArtifact(Model):
     An artifact that is part of a publication.
 
     Fields:
-        relative_path (models.CharField): The (relative) path component of the published url.
+        relative_path (models.TextField): The (relative) path component of the published url.
 
     Relations:
         content_artifact (models.ForeignKey): The referenced content artifact.
@@ -161,7 +161,7 @@ class PublishedMetadata(Content):
     Metadata file that is part of a publication.
 
     Fields:
-        relative_path (models.CharField): The (relative) path component of the published url.
+        relative_path (models.TextField): The (relative) path component of the published url.
 
     Relations:
         publication (models.ForeignKey): The publication in which the artifact is included.
@@ -230,11 +230,11 @@ class ContentGuard(MasterModel):
     We defer to the Django docs on extending this model definition with additional fields.
 
     Fields:
-        name (models.CharField): Unique guard name.
+        name (models.TextField): Unique guard name.
         description (models.TextField): An optional description.
 
     """
-    name = models.CharField(max_length=255, db_index=True, unique=True)
+    name = models.TextField(db_index=True, unique=True)
     description = models.TextField(null=True)
 
     def permit(self, request):
@@ -264,8 +264,8 @@ class BaseDistribution(MasterModel):
     ``a/path`` or ``a`` because both are subpaths of ``a/path/foo``.
 
     Fields:
-        name (models.CharField): The name of the distribution. Examples: "rawhide" and "stable".
-        base_path (models.CharField): The base (relative) path component of the published url.
+        name (models.TextField): The name of the distribution. Examples: "rawhide" and "stable".
+        base_path (models.TextField): The base (relative) path component of the published url.
 
     Relations:
         content_guard (models.ForeignKey): An optional content-guard.
@@ -273,8 +273,8 @@ class BaseDistribution(MasterModel):
             yet stored in Pulp.
     """
 
-    name = models.CharField(max_length=255, db_index=True, unique=True)
-    base_path = models.CharField(max_length=255, unique=True)
+    name = models.TextField(db_index=True, unique=True)
+    base_path = models.TextField(unique=True)
 
     content_guard = models.ForeignKey(ContentGuard, null=True, on_delete=models.SET_NULL)
     remote = models.ForeignKey(Remote, null=True, on_delete=models.SET_NULL)
