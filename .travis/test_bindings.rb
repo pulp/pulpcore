@@ -104,7 +104,7 @@ artifact = upload_file_in_chunks(File.join(ENV['TRAVIS_BUILD_DIR'], '.travis.yml
 
 # Create a File Remote
 remote_url = 'https://repos.fedorapeople.org/pulp/pulp/demo_repos/test_file_repo/PULP_MANIFEST'
-remote_data = PulpFileClient::FileRemote.new({name: 'bar38', url: remote_url})
+remote_data = PulpFileClient::FileFileRemote.new({name: 'bar38', url: remote_url})
 file_remote = @fileremotes_api.create(remote_data)
 
 # Create a Repository
@@ -139,12 +139,12 @@ created_resources = monitor_task(repo_version_response.task)
 repository_version_2 = @repoversions_api.read(created_resources[0])
 
 # Create a publication from the latest version of the repository
-publish_data = PulpFileClient::FilePublication.new({repository: repository.pulp_href})
+publish_data = PulpFileClient::FileFilePublication.new({repository: repository.pulp_href})
 publish_response = @filepublications_api.create(publish_data)
 
 # Monitor the publish task
 created_resources = monitor_task(publish_response.task)
 publication_href = created_resources[0]
 
-distribution_data = PulpFileClient::FileDistribution.new({name: 'baz38', base_path: 'foo38', publication: publication_href})
+distribution_data = PulpFileClient::FileFileDistribution.new({name: 'baz38', base_path: 'foo38', publication: publication_href})
 distribution = @filedistributions_api.create(distribution_data)
