@@ -16,7 +16,7 @@
 
     - name: 'Build images'
       # We build from the ../.. (parent dir of pulpcore git repo) Docker build
-      # "context" so that repos like pulpcore-plugin are accessible to Docker
+      # "context" so that repos like pulp-smash are accessible to Docker
       # build. So that PR branches can be used via relative paths.
       #
       # We default to using the docker build / podman buildah cache, for

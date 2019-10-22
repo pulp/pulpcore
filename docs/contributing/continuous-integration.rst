@@ -16,9 +16,6 @@ A Pull Request that has failing unit tests cannot be merged.
 The unit tests for `pulpcore` are in `pulpcore/tests
 <https://github.com/pulp/pulpcore/tree/master/pulpcore/tests/unit>`_.
 
-The unit tests for `pulpcore-plugin` are in `pulpcore-plugins/tests
-<https://github.com/pulp/pulpcore/tree/master/plugin/tests/unit/>`_.
-
 Functional Tests
 ----------------
 

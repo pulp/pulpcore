@@ -32,7 +32,7 @@ class StatusView(APIView):
         Returns app information including the version of pulpcore and loaded pulp plugins,
         known workers, database connection status, and messaging connection status
         """
-        components = ['pulpcore', 'pulpcore-plugin'] + INSTALLED_PULP_PLUGINS
+        components = ['pulpcore'] + INSTALLED_PULP_PLUGINS
         versions = [{
             'component': component,
             'version': get_distribution(component).version

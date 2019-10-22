@@ -16,12 +16,11 @@ Get the Source
 It is assumed that any Pulp project repositories are cloned into one directory. As long as Ansible
 has read and write permissions, it doesn't matter where your **development directory** is.
 
-You will need ``pulp/pulpcore-plugin`` and ``pulp/pulpcore`` at a minimum::
+You will need ``pulp/pulpcore`` at a minimum::
 
-    $ git clone https://github.com/pulp/pulpcore-plugin.git
     $ git clone https://github.com/pulp/pulpcore.git
 
-Both of these repositories are for Pulp 3 only, development is done agains the master branch of
+This repository is for Pulp 3 only, development is done agains the master branch of
 each.
 
 Additionally, you will need at least one plugin.::
