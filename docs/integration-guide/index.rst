@@ -32,18 +32,18 @@ A client can be generated using Pulp's OpenAPI schema and any of the available `
 
 Generating a client is a two step process:
 
-**1) Download the OpenAPI schema for pulpcore and all installed plugins:**
+**1) Download the OpenAPI schema for pulpcore:**
 
 .. code-block:: bash
 
-    curl -o api.json http://<pulp-hostname>:24817/pulp/api/v3/docs/api.json
+    curl -o api.json http://<pulp-hostname>:24817/pulp/api/v3/docs/api.json?bindings&plugin=pulpcore
 
 The OpenAPI schema for a specific plugin can be downloaded by specifying the plugin's module name
 as a GET parameter. For example for pulp_rpm only endpoints use a query like this:
 
 .. code-block:: bash
 
-    curl -o api.json http://<pulp-hostname>:24817/pulp/api/v3/docs/api.json?plugin=pulp_rpm
+    curl -o api.json http://<pulp-hostname>:24817/pulp/api/v3/docs/api.json?bindings&plugin=pulp_rpm
 
 **2) Generate a client using openapi-generator.**
 
