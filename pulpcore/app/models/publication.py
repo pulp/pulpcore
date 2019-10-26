@@ -180,12 +180,14 @@ class PublishedMetadata(Content):
 
         Args:
             file (django.core.files.File): an open File that contains metadata
-            publication (Publication): The publication in which the PublishedMetadata is included.
+            publication (pulpcore.app.models.Publication): The publication in which the
+                PublishedMetadata is included.
             relative_path (str): relative path at which the Metadata is published at. If None, the
                 name of the 'file' is used.
 
         Returns:
-            PublishedMetadata: a saved instance of PublishedMetadata
+            PublishedMetadata (pulpcore.app.models.PublishedMetadata):
+                A saved instance of PublishedMetadata.
         """
 
         with transaction.atomic():

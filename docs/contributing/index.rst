@@ -32,7 +32,7 @@ Plugin Development
 ------------------
 
 Developers interested in writing plugins should reference the `Pulp Plugin API
-<../../../pulpcore-plugin/nightly/>`_ documentation.
+<../plugins/nightly/>`_ documentation.
 
 
 Reference
