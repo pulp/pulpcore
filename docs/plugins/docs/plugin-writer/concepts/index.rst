@@ -27,7 +27,7 @@ Subclassing
 Pulp Core and each plugin utilize `Django <https://docs.djangoproject.com/>`_ and the `Django Rest
 Framework <https://www.django-rest-framework.org/>`_. Each plugin provides
 :ref:`subclassing-models`, :ref:`subclassing-serializers`, and :ref:`subclassing-viewsets`. For
-each object that a plugin writer needs to make, the ``pulpcore-plugin`` API provides base classes.
+each object that a plugin writer needs to make, the ``pulpcore.plugin`` API provides base classes.
 These base classes handle most of the boilerplate code, resulting in CRUD for each object out of
 the box.
 
