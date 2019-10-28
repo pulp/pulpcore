@@ -77,17 +77,17 @@ fi
 
 
 
-git clone --depth=1 https://github.com/PulpQE/pulp-smash.git
+  git clone --depth=1 https://github.com/PulpQE/pulp-smash.git
 
-if [ -n "$PULP_SMASH_PR_NUMBER" ]; then
-  cd pulp-smash
-  git fetch --depth=1 origin +refs/pull/$PULP_SMASH_PR_NUMBER/merge
-  git checkout FETCH_HEAD
-  cd ..
-fi
+  if [ -n "$PULP_SMASH_PR_NUMBER" ]; then
+    cd pulp-smash
+    git fetch --depth=1 origin +refs/pull/$PULP_SMASH_PR_NUMBER/merge
+    git checkout FETCH_HEAD
+    cd ..
+  fi
 
-# pulp-smash already got installed via test_requirements.txt
-pip install --upgrade --force-reinstall ./pulp-smash
+  # pulp-smash already got installed via test_requirements.txt
+  pip install --upgrade --force-reinstall ./pulp-smash
 
 
 pip install ansible

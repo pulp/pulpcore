@@ -22,6 +22,8 @@ export DESCRIPTION="$(git describe --all --exact-match `git rev-parse HEAD`)"
 if [[ $DESCRIPTION == 'tags/'$REPORTED_VERSION ]]; then
   export VERSION=${REPORTED_VERSION}
 else
+  # Daily publishing of development version (ends in ".dev" reported as ".dev0")
+  [ "${REPORTED_VERSION%.dev*}" != "${REPORTED_VERSION}" ] || exit 1
   export EPOCH="$(date +%s)"
   export VERSION=${REPORTED_VERSION}${EPOCH}
 fi
@@ -30,7 +32,7 @@ export response=$(curl --write-out %{http_code} --silent --output /dev/null http
 
 if [ "$response" == "200" ];
 then
-    exit
+  exit
 fi
 
 cd

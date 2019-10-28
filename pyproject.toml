@@ -5,3 +5,11 @@ directory = "CHANGES/"
 title_format = "{version} ({project_date})"
 template = "CHANGES/.TEMPLATE.rst"
 issue_format = "`#{issue} <https://pulp.plan.io/issues/{issue}>`_"
+
+    [[tool.towncrier.section]]
+        path = ""
+        name = "REST API"
+
+    [[tool.towncrier.section]]
+        path = "plugin_api"
+        name = "Plugin API"
