@@ -43,6 +43,14 @@ STATUS = {
                 }
             },
         },
+        'storage': {
+            'type': 'object',
+            'properties': {
+                'total': {'type': 'integer'},
+                'used': {'type': 'integer'},
+                'free': {'type': 'integer'},
+            },
+        },
     }
 }
 
@@ -96,3 +104,4 @@ class StatusTestCase(unittest.TestCase):
         self.assertEqual(status['missing_workers'], [])
         self.assertNotEqual(status['online_workers'], [])
         self.assertNotEqual(status['versions'], [])
+        self.assertIsNotNone(status['storage'])

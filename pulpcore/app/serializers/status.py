@@ -39,6 +39,27 @@ class RedisConnectionSerializer(serializers.Serializer):
     )
 
 
+class StorageSerializer(serializers.Serializer):
+    """
+    Serializer for information about the storage system
+    """
+
+    total = serializers.IntegerField(
+        min_value=0,
+        help_text=_('Total number of bytes')
+    )
+
+    used = serializers.IntegerField(
+        min_value=0,
+        help_text=_('Number of bytes in use')
+    )
+
+    free = serializers.IntegerField(
+        min_value=0,
+        help_text=_('Number of free bytes')
+    )
+
+
 class StatusSerializer(serializers.Serializer):
     """
     Serializer for the status information of the app
@@ -74,4 +95,9 @@ class StatusSerializer(serializers.Serializer):
 
     redis_connection = RedisConnectionSerializer(
         help_text=_("Redis connection information")
+    )
+
+    storage = StorageSerializer(
+        required=False,
+        help_text=_("Storage information")
     )
