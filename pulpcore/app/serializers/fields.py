@@ -241,7 +241,7 @@ class BaseURLField(serializers.CharField):
 
     def to_representation(self, value):
         base_path = value
-        host = settings.CONTENT_HOST
+        host = settings.CONTENT_ORIGIN
         prefix = settings.CONTENT_PATH_PREFIX
         return '/'.join(
             (

@@ -201,7 +201,7 @@ LOGGING = {
     }
 }
 
-CONTENT_HOST = ''
+CONTENT_ORIGIN = ''
 CONTENT_PATH_PREFIX = '/pulp/content/'
 CONTENT_APP_TTL = 30
 
