@@ -5,7 +5,6 @@ import unittest
 from urllib.parse import urljoin
 
 from pulp_smash import api, config
-from pulp_smash.pulp3.constants import REPO_PATH
 from pulp_smash.pulp3.utils import gen_distribution, gen_remote, gen_repo, get_added_content, sync
 
 from pulpcore.tests.functional.api.using_plugin.constants import (
@@ -13,6 +12,7 @@ from pulpcore.tests.functional.api.using_plugin.constants import (
     FILE_DISTRIBUTION_PATH,
     FILE_FIXTURE_MANIFEST_URL,
     FILE_REMOTE_PATH,
+    FILE_REPO_PATH,
 )
 from pulpcore.tests.functional.api.using_plugin.utils import create_file_publication
 from pulpcore.tests.functional.api.using_plugin.utils import (  # noqa:F401
@@ -45,7 +45,7 @@ class ContentPromotionTestCase(unittest.TestCase):
         cfg = config.get_config()
         client = api.Client(cfg, api.json_handler)
 
-        repo = client.post(REPO_PATH, gen_repo())
+        repo = client.post(FILE_REPO_PATH, gen_repo())
         self.addCleanup(client.delete, repo['pulp_href'])
 
         remote = client.post(

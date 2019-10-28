@@ -4,10 +4,10 @@ import unittest
 from itertools import permutations
 
 from pulp_smash import api, config, utils
-from pulp_smash.pulp3.constants import REPO_PATH
 from pulp_smash.pulp3.utils import gen_repo
 from requests.exceptions import HTTPError
 
+from pulpcore.tests.functional.api.using_plugin.constants import FILE_REPO_PATH
 from pulpcore.tests.functional.utils import set_up_module as setUpModule  # noqa:F401
 from pulpcore.tests.functional.utils import skip_if
 
@@ -27,7 +27,7 @@ class CRUDRepoTestCase(unittest.TestCase):
 
     def test_01_create_repo(self):
         """Create repository."""
-        type(self).repo = self.client.post(REPO_PATH, gen_repo())
+        type(self).repo = self.client.post(FILE_REPO_PATH, gen_repo())
 
     @skip_if(bool, 'repo', False)
     def test_02_create_same_name(self):
@@ -39,7 +39,7 @@ class CRUDRepoTestCase(unittest.TestCase):
         """
         self.client.response_handler = api.echo_handler
         response = self.client.post(
-            REPO_PATH,
+            FILE_REPO_PATH,
             gen_repo(name=self.repo['name'])
         )
         self.assertIn('unique', response.json()['name'][0])
@@ -85,7 +85,7 @@ class CRUDRepoTestCase(unittest.TestCase):
     @skip_if(bool, 'repo', False)
     def test_02_read_repos(self):
         """Read the repository by its name."""
-        page = self.client.get(REPO_PATH, params={
+        page = self.client.get(FILE_REPO_PATH, params={
             'name': self.repo['name']
         })
         self.assertEqual(len(page['results']), 1)
@@ -99,7 +99,7 @@ class CRUDRepoTestCase(unittest.TestCase):
 
         See Pulp #2824 <https://pulp.plan.io/issues/2824>`_
         """
-        for repo in self.client.get(REPO_PATH)['results']:
+        for repo in self.client.get(FILE_REPO_PATH)['results']:
             self.assertIsNotNone(repo['name'])
 
     @skip_if(bool, 'repo', False)
@@ -171,7 +171,7 @@ class CRUDRepoTestCase(unittest.TestCase):
         Assert response returns an error 400 including ["Unexpected field"].
         """
         response = api.Client(self.cfg, api.echo_handler).post(
-            REPO_PATH, gen_repo(foo='bar')
+            FILE_REPO_PATH, gen_repo(foo='bar')
         )
         assert response.status_code == 400
         assert response.json()['foo'] == ['Unexpected field']

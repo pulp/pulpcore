@@ -4,10 +4,13 @@
 import unittest
 
 from pulp_smash import api, config
-from pulp_smash.pulp3.constants import REPO_PATH
 from pulp_smash.pulp3.utils import gen_repo, get_content, sync
 
-from pulpcore.tests.functional.api.using_plugin.constants import FILE_CONTENT_NAME, FILE_REMOTE_PATH
+from pulpcore.tests.functional.api.using_plugin.constants import (
+    FILE_CONTENT_NAME,
+    FILE_REMOTE_PATH,
+    FILE_REPO_PATH
+)
 from pulpcore.tests.functional.api.using_plugin.utils import gen_file_remote
 from pulpcore.tests.functional.api.using_plugin.utils import set_up_module as setUpModule  # noqa
 
@@ -43,7 +46,7 @@ class RemotesTestCase(unittest.TestCase):
         # Create and sync repos.
         repos = []
         for _ in range(2):
-            repo = client.post(REPO_PATH, gen_repo())
+            repo = client.post(FILE_REPO_PATH, gen_repo())
             self.addCleanup(client.delete, repo['pulp_href'])
             sync(cfg, remote, repo)
             repos.append(client.get(repo['pulp_href']))

@@ -19,7 +19,6 @@ from pulpcore.app.models import (
     ContentArtifact,
     Remote,
     RemoteArtifact,
-    RepositoryVersion,
 )
 
 from jinja2 import Template
@@ -370,7 +369,7 @@ class Handler:
 
         if repository or repo_version:
             if repository:
-                repo_version = RepositoryVersion.latest(distro.repository)
+                repo_version = distro.repository.latest_version()
 
             if rel_path == '' or rel_path[-1] == '/':
                 try:

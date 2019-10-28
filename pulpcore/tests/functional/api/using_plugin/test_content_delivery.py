@@ -6,7 +6,7 @@ from random import choice
 from urllib.parse import urljoin
 
 from pulp_smash import api, config, utils
-from pulp_smash.pulp3.constants import ON_DEMAND_DOWNLOAD_POLICIES, REPO_PATH
+from pulp_smash.pulp3.constants import ON_DEMAND_DOWNLOAD_POLICIES
 from pulp_smash.pulp3.utils import (
     delete_orphans,
     download_content_unit,
@@ -22,6 +22,7 @@ from pulpcore.tests.functional.api.using_plugin.constants import (
     FILE_DISTRIBUTION_PATH,
     FILE_FIXTURE_URL,
     FILE_REMOTE_PATH,
+    FILE_REPO_PATH,
 )
 from pulpcore.tests.functional.api.using_plugin.utils import (
     create_file_publication,
@@ -56,7 +57,7 @@ class ContentDeliveryTestCase(unittest.TestCase):
         delete_orphans(cfg)
         client = api.Client(cfg, api.page_handler)
 
-        repo = client.post(REPO_PATH, gen_repo())
+        repo = client.post(FILE_REPO_PATH, gen_repo())
         self.addCleanup(client.delete, repo['pulp_href'])
 
         body = gen_file_remote(policy=choice(ON_DEMAND_DOWNLOAD_POLICIES))

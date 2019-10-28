@@ -26,12 +26,11 @@ class PublicationSerializer(ModelSerializer):
         queryset=models.RepositoryVersion.objects.all(),
         required=False,
     )
-    repository = RelatedField(
+    repository = DetailRelatedField(
         help_text=_('A URI of the repository to be published.'),
         required=False,
         label=_('Repository'),
         queryset=models.Repository.objects.all(),
-        view_name='repositories-detail',
     )
 
     def validate(self, data):
@@ -46,7 +45,7 @@ class PublicationSerializer(ModelSerializer):
         elif not repository and repository_version:
             return data
         elif repository and not repository_version:
-            version = models.RepositoryVersion.latest(repository)
+            version = repository.latest_version()
             if version:
                 new_data = {'repository_version': version}
                 new_data.update(data)

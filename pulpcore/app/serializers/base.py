@@ -222,7 +222,7 @@ class DetailRelatedField(_DetailFieldMixin, serializers.HyperlinkedRelatedField)
 class NestedIdentityField(NestedHyperlinkedIdentityField):
     """NestedIdentityField for use with nested resources.
 
-    When using this field in a serializer, it serializes the  as a relative URL.
+    When using this field in a serializer, it serializes the resource as a relative URL.
     """
 
     def get_url(self, obj, view_name, request, *args, **kwargs):

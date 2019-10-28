@@ -1,10 +1,15 @@
-from pulpcore.client.pulpcore import (ApiClient as CoreApiClient, ArtifactsApi, Configuration,
-                                      Repository, RepositoriesApi, RepositoriesVersionsApi,
-                                      TasksApi, Upload, UploadCommit, UploadsApi)
-from pulpcore.client.pulp_file import (ApiClient as FileApiClient, ContentFilesApi,
-                                       DistributionsFileApi, FileFileDistribution,
-                                       PublicationsFileApi, RemotesFileApi, FileFileRemote,
-                                       RepositorySyncURL, FileFilePublication)
+from pulpcore.client.pulpcore import (
+    ApiClient as CoreApiClient, ArtifactsApi, Configuration,
+    TasksApi, Upload, UploadCommit, UploadsApi
+)
+from pulpcore.client.pulp_file import (
+    ApiClient as FileApiClient, ContentFilesApi,
+    DistributionsFileApi, FileFileDistribution,
+    PublicationsFileApi, RemotesFileApi, FileFileRemote,
+    RepositorySyncURL, FileFilePublication,
+    FileFileRepository, RepositoriesFileApi,
+    RepositoriesVersionsApi,
+)
 from pprint import pprint
 from time import sleep
 import hashlib
@@ -32,7 +37,7 @@ def monitor_task(task_href):
         task = tasks.read(task_href)
     pprint(task)
     if task.state == 'completed':
-        print("The task was successfful.")
+        print("The task was successful.")
         return task.created_resources
     else:
         print("The task did not finish successfully.")
@@ -94,12 +99,12 @@ file_client = FileApiClient(configuration)
 
 # Create api clients for all resource types
 artifacts = ArtifactsApi(core_client)
-repositories = RepositoriesApi(core_client)
 repoversions = RepositoriesVersionsApi(core_client)
 filecontent = ContentFilesApi(file_client)
 filedistributions = DistributionsFileApi(core_client)
 filepublications = PublicationsFileApi(file_client)
 fileremotes = RemotesFileApi(file_client)
+filerepositories = RepositoriesFileApi(file_client)
 tasks = TasksApi(core_client)
 uploads = UploadsApi(core_client)
 
@@ -121,13 +126,13 @@ file_remote = fileremotes.create(remote_data)
 pprint(file_remote)
 
 # Create a Repository
-repository_data = Repository(name='foo25')
-repository = repositories.create(repository_data)
+repository_data = FileFileRepository(name='foo25')
+repository = filerepositories.create(repository_data)
 pprint(repository)
 
 # Sync a Repository
-repository_sync_data = RepositorySyncURL(repository=repository.pulp_href)
-sync_response = fileremotes.sync(file_remote.pulp_href, repository_sync_data)
+repository_sync_data = RepositorySyncURL(remote=file_remote.pulp_href)
+sync_response = filerepositories.sync(repository.pulp_href, repository_sync_data)
 
 pprint(sync_response)
 

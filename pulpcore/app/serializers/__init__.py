@@ -22,7 +22,6 @@ from .content import (  # noqa
 from .exporter import FileSystemExporterSerializer, PublicationExportSerializer  # noqa
 from .fields import (  # noqa
     BaseURLField,
-    ContentRelatedField,
     LatestVersionField,
     SecretCharField,
     SingleContentArtifactField,
@@ -41,7 +40,8 @@ from .repository import (  # noqa
     RemoteSerializer,
     RepositorySerializer,
     RepositorySyncURLSerializer,
-    RepositoryVersionCreateSerializer,
+    RepositorySerializer,
+    RepositoryAddRemoveContentSerializer,
     RepositoryVersionSerializer,
 )
 from .task import (  # noqa
