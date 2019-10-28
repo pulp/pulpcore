@@ -1,6 +1,9 @@
 import logging
+import shutil
 from gettext import gettext as _
 
+from django.conf import settings
+from django.core.files.storage import default_storage
 from drf_yasg.utils import swagger_auto_schema
 from pkg_resources import get_distribution
 from rest_framework.response import Response
@@ -13,6 +16,16 @@ from pulpcore.app.settings import INSTALLED_PULP_PLUGINS
 from pulpcore.tasking.connection import get_redis_connection
 
 _logger = logging.getLogger(__name__)
+
+
+def _disk_usage():
+    if settings.DEFAULT_FILE_STORAGE == 'pulpcore.app.models.storage.FileSystem':
+        try:
+            return shutil.disk_usage(default_storage.location)
+        except Exception:
+            _logger.exception(_('Failed to determine disk usage'))
+
+    return None
 
 
 class StatusView(APIView):
@@ -61,7 +74,8 @@ class StatusView(APIView):
             'missing_workers': missing_workers,
             'online_content_apps': online_content_apps,
             'database_connection': db_status,
-            'redis_connection': redis_status
+            'redis_connection': redis_status,
+            'storage': _disk_usage(),
         }
 
         context = {'request': request}
