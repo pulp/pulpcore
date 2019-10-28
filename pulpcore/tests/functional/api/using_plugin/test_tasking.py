@@ -4,7 +4,7 @@ import unittest
 from urllib.parse import urljoin
 
 from pulp_smash import api, config, utils
-from pulp_smash.pulp3.constants import REPO_PATH, TASKS_PATH
+from pulp_smash.pulp3.constants import TASKS_PATH
 from pulp_smash.pulp3.utils import delete_orphans, gen_remote, gen_repo, get_content_summary, sync
 from requests.exceptions import HTTPError
 
@@ -13,6 +13,7 @@ from pulpcore.tests.functional.api.using_plugin.constants import (
     FILE_FIXTURE_SUMMARY,
     FILE_LARGE_FIXTURE_MANIFEST_URL,
     FILE_REMOTE_PATH,
+    FILE_REPO_PATH,
 )
 from pulpcore.tests.functional.api.using_plugin.utils import gen_file_remote
 from pulpcore.tests.functional.api.using_plugin.utils import set_up_module as setUpModule  # noqa
@@ -43,7 +44,7 @@ class MultiResourceLockingTestCase(unittest.TestCase):
         cfg = config.get_config()
         client = api.Client(cfg, api.json_handler)
 
-        repo = client.post(REPO_PATH, gen_repo())
+        repo = client.post(FILE_REPO_PATH, gen_repo())
         self.addCleanup(client.delete, repo['pulp_href'])
 
         body = gen_file_remote(url=FILE_LARGE_FIXTURE_MANIFEST_URL)
@@ -107,7 +108,7 @@ class CancelTaskTestCase(unittest.TestCase):
         # to force the download of files.
         delete_orphans(self.cfg)
 
-        repo = self.client.post(REPO_PATH, gen_repo())
+        repo = self.client.post(FILE_REPO_PATH, gen_repo())
         self.addCleanup(self.client.delete, repo['pulp_href'])
 
         body = gen_remote(url=FILE_LARGE_FIXTURE_MANIFEST_URL)
@@ -116,7 +117,7 @@ class CancelTaskTestCase(unittest.TestCase):
 
         # use code_handler to avoid wait to the task to be completed.
         return self.client.using_handler(api.code_handler).post(
-            urljoin(remote['pulp_href'], 'sync/'), {'repository': repo['pulp_href']}
+            urljoin(repo['pulp_href'], 'sync/'), {'remote': remote['pulp_href']}
         ).json()
 
     def cancel_task(self, task):

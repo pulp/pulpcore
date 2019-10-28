@@ -16,6 +16,7 @@ from pulpcore.app.viewsets import (  # noqa
     ReadOnlyContentViewSet,
     RemoteFilter,
     RemoteViewSet,
+    RepositoryViewSet,
 )
 
 # Import custom filters that are potentially useful to plugin writers

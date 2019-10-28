@@ -4,7 +4,6 @@ import unittest
 from itertools import permutations
 
 from pulp_smash import api, config
-from pulp_smash.pulp3.constants import REPO_PATH
 from pulp_smash.pulp3.utils import gen_distribution, gen_repo, sync
 from requests.exceptions import HTTPError
 
@@ -12,6 +11,7 @@ from pulpcore.tests.functional.api.using_plugin.constants import (
     FILE_DISTRIBUTION_PATH,
     FILE_PUBLICATION_PATH,
     FILE_REMOTE_PATH,
+    FILE_REPO_PATH,
 )
 from pulpcore.tests.functional.api.using_plugin.utils import (
     create_file_publication,
@@ -34,7 +34,7 @@ class PublicationsTestCase(unittest.TestCase):
         cls.publication = {}
         cls.repo = {}
         try:
-            cls.repo.update(cls.client.post(REPO_PATH, gen_repo()))
+            cls.repo.update(cls.client.post(FILE_REPO_PATH, gen_repo()))
             body = gen_file_remote()
             cls.remote.update(cls.client.post(FILE_REMOTE_PATH, body))
             sync(cls.cfg, cls.remote, cls.repo)
@@ -218,7 +218,7 @@ class PublicationRepositoryParametersTestCase(unittest.TestCase):
 
         Given the number of times to be synced.
         """
-        repo = self.client.post(REPO_PATH, gen_repo())
+        repo = self.client.post(FILE_REPO_PATH, gen_repo())
         self.addCleanup(self.client.delete, repo['pulp_href'])
 
         remote = self.client.post(FILE_REMOTE_PATH, gen_file_remote())

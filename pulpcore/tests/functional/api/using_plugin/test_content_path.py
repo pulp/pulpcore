@@ -3,12 +3,12 @@
 import unittest
 
 from pulp_smash import api, config
-from pulp_smash.pulp3.constants import REPO_PATH
 from pulp_smash.pulp3.utils import delete_orphans, gen_remote, gen_repo, sync
 
 from pulpcore.tests.functional.api.using_plugin.constants import (
     FILE_FIXTURE_MANIFEST_URL,
     FILE_REMOTE_PATH,
+    FILE_REPO_PATH,
 )
 from pulpcore.tests.functional.api.using_plugin.utils import create_file_publication
 from pulpcore.tests.functional.api.using_plugin.utils import (  # noqa:F401
@@ -54,7 +54,7 @@ class SyncPublishContentPathTestCase(unittest.TestCase):
         )
         self.addCleanup(client.delete, remote['pulp_href'])
 
-        repo = client.post(REPO_PATH, gen_repo())
+        repo = client.post(FILE_REPO_PATH, gen_repo())
         self.addCleanup(client.delete, repo['pulp_href'])
 
         for _ in range(2):

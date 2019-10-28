@@ -6,12 +6,12 @@ from pulp_smash import api, config, utils
 from pulp_smash.pulp3.constants import (
     BASE_DISTRIBUTION_PATH,
     P3_TASK_END_STATES,
-    REPO_PATH,
     TASKS_PATH,
 )
 from pulp_smash.pulp3.utils import gen_repo, gen_distribution
 from requests import HTTPError
 
+from pulpcore.tests.functional.api.using_plugin.constants import FILE_REPO_PATH
 from pulpcore.tests.functional.utils import set_up_module as setUpModule  # noqa:F401
 from pulpcore.tests.functional.utils import skip_if
 
@@ -37,7 +37,7 @@ class TasksTestCase(unittest.TestCase):
 
     def test_01_create_task(self):
         """Create a task."""
-        repo = self.client.post(REPO_PATH, gen_repo())
+        repo = self.client.post(FILE_REPO_PATH, gen_repo())
         self.addCleanup(self.client.delete, repo['pulp_href'])
         attrs = {'description': utils.uuid4()}
         response = self.client.patch(repo['pulp_href'], attrs)
@@ -192,7 +192,7 @@ class FilterTaskReservedResourcesTestCase(unittest.TestCase):
         """Create class-wide variables."""
         cls.client = api.Client(config.get_config(), api.page_handler)
 
-        cls.repository = cls.client.post(REPO_PATH, gen_repo())
+        cls.repository = cls.client.post(FILE_REPO_PATH, gen_repo())
         attrs = {'description': utils.uuid4()}
         response = cls.client.patch(cls.repository['pulp_href'], attrs)
         cls.task = cls.client.get(response['task'])
@@ -232,10 +232,11 @@ class FilterTaskCreatedResourcesContentTestCase(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         """Create class-wide variables."""
+        cls.cfg = config.get_config()
         cls.client = api.Client(config.get_config(), api.page_handler)
 
-        cls.repository = cls.client.post(REPO_PATH, gen_repo())
-        response = cls.client.post(cls.repository['versions_href'])
+        cls.repository = cls.client.post(FILE_REPO_PATH, gen_repo())
+        response = cls.client.post(cls.repository['pulp_href'] + "modify/")
         cls.task = cls.client.get(response['task'])
 
     @classmethod
