@@ -5,7 +5,7 @@ This documentation is for `pulpcore`, which is used with plugins to fetch, uploa
 arbitrary content types.
 
 Anyone interested in writing a plugin should reference the `Pulp Plugin API
-<../../pulpcore-plugin/nightly/>`_ documentation.
+<plugins/nightly/>`_ documentation.
 
 
 How to Navigate the pulpcore and plugin docs

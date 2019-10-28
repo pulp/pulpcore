@@ -83,6 +83,9 @@ export CMD_STDIN_PREFIX="sudo kubectl exec -i $PULP_API_POD --"
 # The alias does not seem to work in Travis / the scripting framework
 #alias pytest="$CMD_PREFIX pytest"
 
+cat test_requirements.txt | $CMD_STDIN_PREFIX bash -c "cat > /tmp/test_requirements.txt"
+$CMD_PREFIX pip3 install -r /tmp/test_requirements.txt
+
 # Run unit tests.
 $CMD_PREFIX bash -c "PULP_DATABASES__default__USER=postgres django-admin test --noinput /usr/local/lib/python${TRAVIS_PYTHON_VERSION}/site-packages/pulpcore/tests/unit/"
 
@@ -102,7 +105,7 @@ set -u
 
 if [[ "$TEST" == "performance" ]]; then
   echo "--- Performance Tests ---"
-  pytest -vv -r sx --color=yes --pyargs --durations=0 pulpcore.tests.performance || show_logs_and_return_non_zero
+  pytest -vv -r sx --color=yes --pyargs --capture=no --durations=0 pulpcore.tests.performance || show_logs_and_return_non_zero
   exit
 fi
 

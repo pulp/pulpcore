@@ -47,7 +47,7 @@ you will receive an error. Check that plugin's documentation also.
 
 .. note::
 
-   Want to add on-demand support to your plugin? See the `Pulp Plugin API <../../pulpcore-plugin/
+   Want to add on-demand support to your plugin? See the `Pulp Plugin API <../plugins/
    nightly/>`_ documentation for more details on how to add on-demand support to a plugin.
 
 

@@ -20,13 +20,6 @@
 #           To keep the default, leave undefined, do not let it be a null value.
 #           For paths on disk, specify paths relative to the parent dir of
 #           "pulpcore", beginning with "./", such as "./pulpcore".
-# pulpcore-plugin: The pip install string for pulpcore-plugin.
-#                  Defaults to "pulpcore-plugin" (latest stable from PyPi) via
-#                  playbook logic. To keep the default, leave undefined, do not
-#                  let it be a null value.
-#                  For paths on disk, specify paths relative to the parent dir
-#                  of "pulpcore", beginning with "./", such as
-#                  "./pulpcore-plugin".
 # plugins: List of pip install strings for plugins.
 #          To specify no plugins, leave undefined, do not let it be a null value.
 #          For paths on disk, specify paths relative to the parent dir
@@ -46,7 +39,6 @@ images:
       # Must specify egg name here so that the Dockerfile can specify the
       # setuptools extra of postgres
       pulpcore: git+https://github.com/pulp/pulpcore.git#egg=pulpcore
-      pulpcore_plugin: git+https://github.com/pulp/pulpcore-plugin.git
   - pulp_stable_plugins_stable:
       image_name: pulp
       tag: stable
@@ -63,7 +55,6 @@ images:
       image_name: pulp
       tag: latest
       pulpcore: git+https://github.com/pulp/pulpcore.git#egg=pulpcore
-      pulpcore_plugin: git+https://github.com/pulp/pulpcore-plugin.git
       plugins:
         - "git+https://github.com/pulp/pulp-certguard.git"
         - "git+https://github.com/pulp/pulp_file.git"

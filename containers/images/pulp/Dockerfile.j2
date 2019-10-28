@@ -64,20 +64,9 @@ RUN pip install gunicorn
         item.value.pulpcore.startswith('./') ) %}
 COPY {{ item.value.pulpcore }} /tmp/{{ item.value.pulpcore | basename }}
 RUN pip install /tmp/{{ item.value.pulpcore | basename }}
-RUN pip install /tmp/{{ item.value.pulpcore | basename }}[postgres]
 RUN rm -rf /tmp/{{ item.value.pulpcore | basename }}
 {% else %}
 RUN pip install {{ item.value.pulpcore | default('pulpcore') }}
-RUN pip install {{ item.value.pulpcore | default('pulpcore') }}[postgres]
-{% endif %}
-
-{% if ( ( item.value.pulpcore_plugin is defined ) and
-        ( item.value.pulpcore_plugin.startswith('./') ) ) %}
-COPY {{ item.value.pulpcore_plugin }} /tmp/{{ item.value.pulpcore_plugin | basename }}
-RUN pip install /tmp/{{ item.value.pulpcore_plugin | basename }}
-RUN rm -rf /tmp/{{ item.value.pulpcore_plugin | basename }}
-{% else %}
-RUN pip install {{ item.value.pulpcore_plugin | default('pulpcore-plugin') }}
 {% endif %}
 
 {% if item.value.plugins is defined %}

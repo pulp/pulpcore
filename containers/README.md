@@ -2,7 +2,7 @@
 
 This directory contains assets and tooling for building Pulp 3 container images.
 
-The image names differ based on the set of plugins installed, including none (pulpcore-plugin only). The image tags differ based on the versions of pulpcore & the plugins.
+The image names differ based on the set of plugins installed, including none. The image tags differ based on the versions of pulpcore & the plugins.
 
 Each image is an all-in-one image that gets called with different commands to assume each of the roles. The roles must be specified as the container's "command", without the full filepath:
 

@@ -315,3 +315,31 @@ napoleon_use_ivar = True
 
 # set primary domain to python so we don't have to include :py: in xref links
 default_domain = 'py'
+
+from sphinx.domains.python import PythonDomain
+
+# Adapted from:
+# https://github.com/sphinx-doc/sphinx/issues/3866#issuecomment-366014346
+# Required because pulpcore.app and pulpcore.plugin have the same class names
+# and Sphinx can't figure out which it should be using. This code defaults to
+# pulpcore.app
+class MyPythonDomain(PythonDomain):
+    def find_obj(self, env, modname, classname, name, type, searchmode=0):
+        """Ensures an object always resolves to the desired module if defined there."""
+        orig_matches = PythonDomain.find_obj(self, env, modname, classname, name, type, searchmode)
+        matches = []
+        for match in orig_matches:
+            match_name = match[0]
+            desired_name = "pulpcore.app.models." + name.strip('.')
+            if match_name == desired_name:
+                matches.append(match)
+                break
+        if matches:
+            return matches
+        else:
+            return orig_matches
+
+
+def setup(sphinx):
+    """Use MyPythonDomain in place of PythonDomain"""
+    sphinx.add_domain(MyPythonDomain, override=True)

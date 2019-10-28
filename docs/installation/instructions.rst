@@ -53,7 +53,7 @@ PyPI Installation
 
 4. Install Pulp using pip::
 
-   $ pip install pulpcore-plugin pulpcore
+   $ pip install pulpcore
 
 .. note::
 
@@ -61,8 +61,6 @@ PyPI Installation
 
    $ git clone https://github.com/pulp/pulpcore.git
    $ pip install -e ./pulpcore[postgres]
-   $ git clone https://github.com/pulp/pulpcore-plugin.git
-   $ pip install -e ./pulpcore-plugin
 
 
 5. Follow the :ref:`configuration instructions <configuration>` to set the ``SECRET_KEY``.

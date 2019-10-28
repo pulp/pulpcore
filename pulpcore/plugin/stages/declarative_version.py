@@ -1,0 +1,169 @@
+import asyncio
+
+from pulpcore.plugin.models import RepositoryVersion
+from pulpcore.plugin.tasking import WorkingDirectory
+
+from .api import create_pipeline, EndStage
+from .artifact_stages import (
+    ArtifactDownloader,
+    ArtifactSaver,
+    QueryExistingArtifacts,
+    RemoteArtifactSaver,
+)
+from .association_stages import ContentAssociation, ContentUnassociation, RemoveDuplicates
+from .content_stages import ContentSaver, QueryExistingContents, ResolveContentFutures
+
+
+class DeclarativeVersion:
+
+    def __init__(self, first_stage, repository, mirror=False, remove_duplicates=None):
+        """
+        A pipeline that creates a new :class:`~pulpcore.plugin.models.RepositoryVersion` from a
+        stream of :class:`~pulpcore.plugin.stages.DeclarativeContent` objects.
+
+        The plugin writer needs to specify a first_stage that will create a
+        :class:`~pulpcore.plugin.stages.DeclarativeContent` object for each Content unit that should
+        exist in the new :class:`~pulpcore.plugin.models.RepositoryVersion`.
+
+        The pipeline stages perform the following steps by default:
+
+        1. Create the new :class:`~pulpcore.plugin.models.RepositoryVersion`
+        2. Use the provided `first_stage` to construct
+           :class:`~pulpcore.plugin.stages.DeclarativeContent`
+        3. Query existing artifacts to determine which are already local to Pulp with
+           :class:`~pulpcore.plugin.stages.QueryExistingArtifacts`
+        4. Download any undownloaded :class:`~pulpcore.plugin.models.Artifact` objects with
+           :class:`~pulpcore.plugin.stages.ArtifactDownloader`
+        5. Save the newly downloaded :class:`~pulpcore.plugin.models.Artifact` objects with
+           :class:`~pulpcore.plugin.stages.ArtifactSaver`
+        6. Query for Content units already present in Pulp with
+           :class:`~pulpcore.plugin.stages.QueryExistingContents`
+        7. Save new Content units not yet present in Pulp with
+           :class:`~pulpcore.plugin.stages.ContentSaver`
+        8. Attach :class:`~pulpcore.plugin.models.RemoteArtifact` to the
+           :class:`~pulpcore.plugin.models.Content` via
+           :class:`~pulpcore.plugin.stages.RemoteArtifactSaver`
+        9. Resolve the attached :class:`~asyncio.Future` of
+           :class:`~pulpcore.plugin.stages.DeclarativeContent` with
+           :class:`~pulpcore.plugin.stages.ResolveContentFutures`
+        10. Remove duplicate content in the repository version if `remove_duplicates` is given by
+            :class:`~pulpcore.plugin.stages.RemoveDuplicates`
+        11. Associate all content units with the new
+            :class:`~pulpcore.plugin.models.RepositoryVersion` with
+            :class:`~pulpcore.plugin.stages.ContentAssociation`
+        12. Unassociate any content units not declared in the stream (only when mirror=True)
+            with :class:`~pulpcore.plugin.stages.ContentUnassociation`
+
+        To do this, the plugin writer should subclass the
+        :class:`~pulpcore.plugin.stages.Stage` class and define its
+        :meth:`run()` interface which returns a coroutine. This coroutine should
+        download metadata, create the corresponding
+        :class:`~pulpcore.plugin.stages.DeclarativeContent` objects, and put them into the
+        :class:`asyncio.Queue` via :meth:`put()` to send them down the pipeline. For example:
+
+        >>> class MyFirstStage(Stage):
+        >>>
+        >>>     def __init__(remote):
+        >>>         self.remote = remote
+        >>>
+        >>>     async def run(self):
+        >>>         downloader = remote.get_downloader(url=remote.url)
+        >>>         result = await downloader.run()
+        >>>         for entry in read_my_metadata_file_somehow(result.path)
+        >>>             unit = MyContent(entry)  # make the content unit in memory-only
+        >>>             artifact = Artifact(entry)  # make Artifact in memory-only
+        >>>             da = DeclarativeArtifact(artifact, url, entry.relative_path, self.remote)
+        >>>             dc = DeclarativeContent(content=unit, d_artifacts=[da])
+        >>>             await self.put(dc)
+
+        To use your first stage with the pipeline you have to instantiate the subclass and pass it
+        to :class:`~pulpcore.plugin.stages.DeclarativeVersion`.
+
+        1. Create the instance of the subclassed :class:`~pulpcore.plugin.stages.Stage` object.
+        2. Create the :class:`~pulpcore.plugin.stages.DeclarativeVersion` instance, passing the
+           :class:`~pulpcore.plugin.stages.Stage` subclass instance to it
+        3. Call the :meth:`~pulpcore.plugin.stages.DeclarativeVersion.create` method on your
+           :class:`~pulpcore.plugin.stages.DeclarativeVersion` instance
+
+        Here is an example:
+
+        >>> first_stage = MyFirstStage(remote)
+        >>> DeclarativeVersion(first_stage, repository).create()
+
+        Example using remove_duplicates:
+
+        # This will enforce that within a repository version, `FileContent.relative_path` is
+        # unique.
+        >>> remove_dupes = [{'model': FileContent, 'field_names': ['relative_path']}]
+        >>> DeclarativeVersion(first_stage, repository, remove_duplicates=remove_dupes).create()
+
+        Args:
+            first_stage (:class:`~pulpcore.plugin.stages.Stage`): The first stage to receive
+                :class:`~pulpcore.plugin.stages.DeclarativeContent` from.
+            repository (:class:`~pulpcore.plugin.models.Repository`): The repository receiving the
+                new version.
+            mirror (bool): 'True' removes content units from the
+                :class:`~pulpcore.plugin.models.RepositoryVersion` that are not
+                requested in the :class:`~pulpcore.plugin.stages.DeclarativeVersion` stream.
+                'False' (additive) only adds content units observed in the
+                :class:`~pulpcore.plugin.stages.DeclarativeVersion stream`, and does not remove any
+                pre-existing units in the :class:`~pulpcore.plugin.models.RepositoryVersion`.
+                'False' is the default.
+            remove_duplicates (list): A list of dictionaries that indicate objects which are
+                considered duplicates within a single repository version. These objects will be
+                removed from the new version, making room for the new objects passing through the
+                pipeline. Each dict should have 2 keys, `model`, which is a subclass of
+                :class:`pulpcore.plugin.models.Content` and `field_names` which is a list of
+                strings corresponding to fields on the provided model.
+
+        """
+        self.first_stage = first_stage
+        self.repository = repository
+        self.mirror = mirror
+        self.remove_duplicates = remove_duplicates or []
+
+    def pipeline_stages(self, new_version):
+        """
+        Build the list of pipeline stages feeding into the ContentAssociation stage.
+
+        Plugin-writers may override this method to build a custom pipeline. This
+        can be achieved by returning a list with different stages or by extending
+        the list returned by this method.
+
+        Args:
+            new_version (:class:`~pulpcore.plugin.models.RepositoryVersion`): The
+                new repository version that is going to be built.
+
+        Returns:
+            list: List of :class:`~pulpcore.plugin.stages.Stage` instances
+
+        """
+        pipeline = [
+            self.first_stage,
+            QueryExistingArtifacts(),
+            ArtifactDownloader(),
+            ArtifactSaver(),
+            QueryExistingContents(),
+            ContentSaver(),
+            RemoteArtifactSaver(),
+            ResolveContentFutures(),
+        ]
+        for dupe_query_dict in self.remove_duplicates:
+            pipeline.extend([RemoveDuplicates(new_version, **dupe_query_dict)])
+
+        return pipeline
+
+    def create(self):
+        """
+        Perform the work. This is the long-blocking call where all syncing occurs.
+        """
+        with WorkingDirectory():
+            with RepositoryVersion.create(self.repository) as new_version:
+                loop = asyncio.get_event_loop()
+                stages = self.pipeline_stages(new_version)
+                stages.append(ContentAssociation(new_version))
+                if self.mirror:
+                    stages.append(ContentUnassociation(new_version))
+                stages.append(EndStage())
+                pipeline = create_pipeline(stages)
+                loop.run_until_complete(pipeline)
