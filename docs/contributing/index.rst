@@ -11,7 +11,8 @@ Workflow
 1. Clone the GitHub repo
 2. Make a change
 3. Make sure all tests passed
-4. Add a file into CHANGES folder (Changelog update).
+4. Add a file into CHANGES folder for user facing changes and CHANGES/plugin_api for plugin API
+   changes.
 5. Commit changes to own ``pulpcore`` clone
 6. Make pull request from github page for your clone against master branch
 
