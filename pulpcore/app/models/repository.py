@@ -24,7 +24,7 @@ from .task import CreatedResource, Task
 _logger = logging.getLogger(__name__)
 
 
-class Repository(Model):
+class Repository(MasterModel):
     """
     Collection of content.
 
@@ -42,6 +42,8 @@ class Repository(Model):
 
         content (models.ManyToManyField): Associated content.
     """
+    TYPE = 'repository'
+
     name = models.CharField(db_index=True, unique=True, max_length=255)
     description = models.TextField(null=True)
     last_version = models.PositiveIntegerField(default=0)
@@ -51,6 +53,55 @@ class Repository(Model):
 
     class Meta:
         verbose_name_plural = 'repositories'
+
+    def new_version(self, base_version=None):
+        """
+        Create a new RepositoryVersion for this Repository
+
+        Creation of a RepositoryVersion should be done in a RQ Job.
+
+        Args:
+            repository (pulpcore.app.models.Repository): to create a new version of
+            base_version (pulpcore.app.models.RepositoryVersion): an optional repository version
+                whose content will be used as the set of content for the new version
+
+        Returns:
+            pulpcore.app.models.RepositoryVersion: The Created RepositoryVersion
+        """
+        with transaction.atomic():
+            version = RepositoryVersion(
+                repository=self,
+                number=int(self.last_version) + 1,
+                base_version=base_version)
+            self.last_version = version.number
+            self.save()
+            version.save()
+
+            if base_version:
+                # first remove the content that isn't in the base version
+                version.remove_content(version.content.exclude(pk__in=base_version.content))
+                # now add any content that's in the base_version but not in version
+                version.add_content(base_version.content.exclude(pk__in=version.content))
+
+            if Task.current and not self.plugin_managed:
+                resource = CreatedResource(content_object=version)
+                resource.save()
+            return version
+
+    def latest_version(self):
+        """
+        Get the latest RepositoryVersion on a repository
+
+        Args:
+            repository (pulpcore.app.models.Repository): to get the latest version of
+
+        Returns:
+            pulpcore.app.models.RepositoryVersion: The latest RepositoryVersion
+
+        """
+        with suppress(RepositoryVersion.DoesNotExist):
+            model = self.versions.get(number=self.last_version)
+            return model
 
     def natural_key(self):
         """
@@ -125,9 +176,10 @@ class Remote(MasterModel):
     ssl_client_key = models.TextField(null=True)
     ssl_validation = models.BooleanField(default=True)
 
-    proxy_url = models.TextField(null=True)
     username = models.TextField(null=True)
     password = models.TextField(null=True)
+
+    proxy_url = models.TextField(null=True)
     download_concurrency = models.PositiveIntegerField(default=20)
     policy = models.TextField(choices=POLICY_CHOICES, default=IMMEDIATE)
 
@@ -301,7 +353,7 @@ class RepositoryVersion(Model):
 
     Examples:
         >>>
-        >>> with RepositoryVersion.create(repository) as new_version:
+        >>> with repository.new_version(repository) as new_version:
         >>>     new_version.add_content(content_q)
         >>>     new_version.remove_content(content_q)
         >>>
@@ -390,73 +442,6 @@ class RepositoryVersion(Model):
         """
         return self.content.filter(pk=content.pk).exists()
 
-    @classmethod
-    def create(cls, repository, base_version=None):
-        """
-        Create a new RepositoryVersion
-
-        Creation of a RepositoryVersion should be done in a RQ Job.
-
-        Args:
-            repository (pulpcore.app.models.Repository): to create a new version of
-            base_version (pulpcore.app.models.RepositoryVersion): an optional repository version
-                whose content will be used as the set of content for the new version
-
-        Returns:
-            pulpcore.app.models.RepositoryVersion: The Created RepositoryVersion
-        """
-        with transaction.atomic():
-            version = cls(
-                repository=repository,
-                number=int(repository.last_version) + 1,
-                base_version=base_version)
-            repository.last_version = version.number
-            repository.save()
-            version.save()
-
-            if base_version:
-                # first remove the content that isn't in the base version
-                version.remove_content(version.content.exclude(pk__in=base_version.content))
-                # now add any content that's in the base_version but not in version
-                version.add_content(base_version.content.exclude(pk__in=version.content))
-
-            if Task.current and not repository.plugin_managed:
-                resource = CreatedResource(content_object=version)
-                resource.save()
-            return version
-
-    @staticmethod
-    def latest(repository):
-        """
-        Get the latest RepositoryVersion on a repository
-
-        Args:
-            repository (pulpcore.app.models.Repository): to get the latest version of
-
-        Returns:
-            pulpcore.app.models.RepositoryVersion: The latest RepositoryVersion
-
-        """
-        with suppress(RepositoryVersion.DoesNotExist):
-            model = repository.versions.exclude(complete=False).latest()
-            return model
-
-    def next(self):
-        """
-        Returns:
-            pulpcore.app.models.RepositoryVersion: The next RepositoryVersion with the same
-                repository.
-
-        Raises:
-            RepositoryVersion.DoesNotExist: if there is not a RepositoryVersion for the same
-                repository and with a higher "number".
-        """
-        try:
-            return self.repository.versions.exclude(complete=False).filter(
-                number__gt=self.number).order_by('number')[0]
-        except IndexError:
-            raise self.DoesNotExist
-
     def add_content(self, content):
         """
         Add a content unit to this version, and possibly remove duplcates in some situations.
@@ -524,6 +509,21 @@ class RepositoryVersion(Model):
             version_removed=None)
         q_set.update(version_removed=self)
 
+    def next(self):
+        """
+        Returns:
+            pulpcore.app.models.RepositoryVersion: The next RepositoryVersion with the same
+                repository.
+        Raises:
+            RepositoryVersion.DoesNotExist: if there is not a RepositoryVersion for the same
+                repository and with a higher "number".
+        """
+        try:
+            return self.repository.versions.exclude(complete=False).filter(
+                number__gt=self.number).order_by('number')[0]
+        except IndexError:
+            raise self.DoesNotExist
+
     def _squash(self, repo_relations, next_version):
         """
         Squash a complete repo version into the next version
@@ -586,7 +586,7 @@ class RepositoryVersion(Model):
                 self.repository.save()
                 super().delete(**kwargs)
 
-    def compute_counts(self):
+    def _compute_counts(self):
         """
         Compute and save content unit counts by type.
 
@@ -633,7 +633,7 @@ class RepositoryVersion(Model):
         else:
             self.complete = True
             self.save()
-            self.compute_counts()
+            self._compute_counts()
 
     def __str__(self):
         return "<Repository: {}; Version: {}>".format(self.repository.name, self.number)
@@ -680,8 +680,12 @@ class RepositoryVersionContentDetails(models.Model):
             # We've hit a content type for which there is no viewset.
             # There's nothing we can do here, except to skip it.
             return
-        rv_href = "/pulp/api/v3/repositories/{repo}/versions/{version}/".format(
-            repo=self.repository_version.repository.pk, version=self.repository_version.number)
+        repository = self.repository_version.repository.cast()
+        repository_view = get_view_name_for_model(repository.__class__, 'list')
+
+        repository_url = reverse(repository_view)
+        rv_href = repository_url + str(repository.pk) + "/versions/{version}/".format(
+            version=self.repository_version.number)
         if self.count_type == self.ADDED:
             partial_url_str = "{base}?repository_version_added={rv_href}"
         elif self.count_type == self.PRESENT:

@@ -7,7 +7,6 @@ from functools import reduce
 from urllib.parse import urljoin
 
 from pulp_smash import api, config, utils
-from pulp_smash.pulp3.constants import REPO_PATH
 from pulp_smash.pulp3.utils import gen_distribution, gen_repo, get_added_content, get_versions, sync
 from requests.exceptions import HTTPError
 
@@ -17,6 +16,7 @@ from pulpcore.tests.functional.api.using_plugin.constants import (
     FILE_FIXTURE_COUNT,
     FILE_REMOTE_PATH,
     FILE_URL,
+    FILE_REPO_PATH,
 )
 from pulpcore.tests.functional.api.using_plugin.utils import (
     create_file_publication,
@@ -70,7 +70,7 @@ class CRUDPublicationDistributionTestCase(unittest.TestCase):
            distribution (it's backref).
 
         """
-        self.repo.update(self.client.post(REPO_PATH, gen_repo()))
+        self.repo.update(self.client.post(FILE_REPO_PATH, gen_repo()))
         self.remote.update(
             self.client.post(FILE_REMOTE_PATH, gen_file_remote())
         )
@@ -279,7 +279,7 @@ class ContentServePublicationDistributionTestCase(unittest.TestCase):
 
     def test_content_served(self):
         """Verify that content is served over publication distribution."""
-        repo = self.client.post(REPO_PATH, gen_repo())
+        repo = self.client.post(FILE_REPO_PATH, gen_repo())
         self.addCleanup(self.client.delete, repo['pulp_href'])
 
         remote = self.client.post(FILE_REMOTE_PATH, gen_file_remote())

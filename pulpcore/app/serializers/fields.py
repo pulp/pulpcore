@@ -9,20 +9,13 @@ from rest_framework.reverse import reverse
 from rest_framework_nested.relations import NestedHyperlinkedRelatedField
 
 from pulpcore.app import models
-from pulpcore.app.serializers import DetailRelatedField, RelatedField
+from pulpcore.app.serializers import RelatedField
 
 
 def relative_path_validator(relative_path):
     if os.path.isabs(relative_path):
         raise serializers.ValidationError(_("Relative path can't start with '/'. "
                                             "{0}").format(relative_path))
-
-
-class ContentRelatedField(DetailRelatedField):
-    """
-    Serializer Field for use when relating to Content Detail Models
-    """
-    queryset = models.Content.objects.all()
 
 
 class SingleContentArtifactField(RelatedField):

@@ -16,7 +16,8 @@ def general_create(app_label, serializer_name, *args, **kwargs):
     serializer = serializer_class(data=data, context=context)
     serializer.is_valid(raise_exception=True)
     serializer.save()
-    resource = CreatedResource(content_object=serializer.instance)
+    instance = serializer_class.Meta.model.objects.get(pk=serializer.instance.pk).cast()
+    resource = CreatedResource(content_object=instance)
     resource.save()
 
 

@@ -9,14 +9,13 @@ from pulpcore.app.serializers import BaseDistributionSerializer, PublicationSeri
 
 class TestPublicationSerializer(TestCase):
 
-    @mock.patch('pulpcore.app.serializers.repository.models.RepositoryVersion')
-    def test_validate_repository_only(self, mock_version):
-        mock_repo = mock.MagicMock()
+    @mock.patch('pulpcore.app.serializers.repository.models.Repository')
+    def test_validate_repository_only(self, mock_repo):
         data = {'repository': mock_repo}
         serializer = PublicationSerializer()
         new_data = serializer.validate(data)
-        self.assertEqual(new_data, {'repository_version': mock_version.latest.return_value})
-        mock_version.latest.assert_called_once_with(mock_repo)
+        self.assertEqual(new_data, {'repository_version': mock_repo.latest_version.return_value})
+        mock_repo.latest_version.assert_called_once_with()
 
     def test_validate_repository_version_only(self):
         mock_version = mock.MagicMock()
