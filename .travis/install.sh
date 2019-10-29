@@ -16,7 +16,7 @@ if [ "$TEST" = 'docs' ]; then
   pip install -r doc_requirements.txt
 fi
 
-pip install -r test_requirements.txt
+pip install -r functest_requirements.txt
 
 cd $TRAVIS_BUILD_DIR/../pulpcore/containers/
 
@@ -91,7 +91,8 @@ spec:
     username: pulp
     password: pulp
     admin_password: pulp
-  content_host: $(hostname):24816
+  pulp_settings:
+     content_host: $(hostname):24816
 CRYAML
 
 # Install k3s, lightweight Kubernetes
