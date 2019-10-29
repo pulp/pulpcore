@@ -463,7 +463,7 @@ class BaseFilterSet(filterset.FilterSet):
     def is_valid(self, *args, **kwargs):
         is_valid = super().is_valid(*args, **kwargs)
         DEFAULT_FILTERS = [
-            "exclude_fields", "fields", "limit", "minimal", "offset", "page_size"
+            "exclude_fields", "fields", "limit", "minimal", "offset", "page_size", "ordering"
         ]
         for field in self.data.keys():
             if field in DEFAULT_FILTERS:
