@@ -305,12 +305,11 @@ class ContentServePublicationDistributionTestCase(unittest.TestCase):
 
         added_content = get_added_content(repo)
         unit_path = added_content[FILE_CONTENT_NAME][0]['relative_path']
-        unit_url = self.cfg.get_hosts('api')[0].roles['api']['scheme']
-        unit_url += '://' + distribution['base_url'] + '/'
+        unit_url = distribution['base_url'] + '/'
         unit_url = urljoin(unit_url, unit_path)
 
         pulp_hash = hashlib.sha256(
-            self.client.using_handler(api.safe_handler).get(unit_url).content
+            self.client.get(unit_url).content
         ).hexdigest()
         fixtures_hash = hashlib.sha256(
             utils.http_get(urljoin(FILE_URL, unit_path))
@@ -323,12 +322,10 @@ class ContentServePublicationDistributionTestCase(unittest.TestCase):
         unit_url = reduce(
             urljoin,
             (
-                self.cfg.get_content_host_base_url(),
-                '//' + distribution['base_url'] + '/',
-                'PULP_MANIFEST'
+                distribution['base_url'] + '/', 'PULP_MANIFEST'
             ),
         )
-        return self.client.using_handler(api.safe_handler).get(unit_url)
+        return self.client.get(unit_url)
 
 
 def parse_pulp_manifest(pulp_manifest):

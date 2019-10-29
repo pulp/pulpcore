@@ -209,6 +209,15 @@ CONTENT_HOST
    This defaults to ``None`` which returns relative urls.
 
 
+CONTENT_ORIGIN
+^^^^^^^^^^^^^^
+
+   A required string containing the protocol, fqdn, and port where the content app is reachable by
+   users. This is used by ``pulpcore`` and various plugins when referring users to the content app.
+   For example if the API should refer users to content at using http to pulp.example.com on port
+   24816, (the content default port), you would set: ``https://pulp.example.com:24816``.
+
+
 .. _content-path-prefix:
 
 CONTENT_PATH_PREFIX
