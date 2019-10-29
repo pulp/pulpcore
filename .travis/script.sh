@@ -20,6 +20,10 @@ export FUNC_TEST_SCRIPT=$TRAVIS_BUILD_DIR/.travis/func_test_script.sh
 export DJANGO_SETTINGS_MODULE=pulpcore.app.settings
 
 if [ "$TEST" = 'docs' ]; then
+  
+    export PULP_CONTENT_ORIGIN=http://$(hostname):24816
+  
+
   cd docs
   make html
   cd ..

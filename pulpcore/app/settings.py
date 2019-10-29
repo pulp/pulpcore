@@ -10,8 +10,12 @@ https://docs.djangoproject.com/en/1.11/ref/settings/
 
 import os
 from contextlib import suppress
+from gettext import gettext as _
 from importlib import import_module
 from pkg_resources import iter_entry_points
+
+from django.core.exceptions import ImproperlyConfigured
+
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -234,3 +238,9 @@ settings = dynaconf.DjangoDynaconf(
     ENVVAR_FOR_DYNACONF='PULP_SETTINGS',
 )
 # HERE ENDS DYNACONF EXTENSION LOAD (No more code below this line)
+
+
+try:
+    CONTENT_ORIGIN
+except NameError:
+    raise ImproperlyConfigured(_('You must specify the CONTENT_ORIGIN setting.'))
