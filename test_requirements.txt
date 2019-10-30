@@ -1,8 +1,3 @@
-# Test requirements
-asynctest
-codecov
-coverage
-flake8
-mock
-pytest
-git+https://github.com/PulpQE/pulp-smash.git#egg=pulp-smash
+# All test requirements
+-r unittest_requirements.txt
+-r functest_requirements.txt

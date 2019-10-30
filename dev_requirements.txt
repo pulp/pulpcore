@@ -2,3 +2,6 @@
 django-crispy-forms
 django-extensions
 ipython
+codecov
+coverage
+flake8
