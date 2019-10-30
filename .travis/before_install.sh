@@ -39,9 +39,9 @@ else
   export PULP_OPERATOR_PR_NUMBER=
 fi
 
-# test_requirements contains tools needed for flake8, etc.
+# dev_requirements contains tools needed for flake8, etc.
 # So install them here rather than in install.sh
-pip install -r test_requirements.txt
+pip install -r dev_requirements.txt
 
 # check the commit message
 ./.travis/check_commit.sh
