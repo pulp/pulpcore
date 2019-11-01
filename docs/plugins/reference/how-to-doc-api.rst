@@ -29,11 +29,27 @@ Response status codes can be generated through the `Meta` class on the serialize
 
 
 .. note::
-    ref_name - a string that is used as the model definition name for this serializer class.
-    If this option is not specified, all serializers have an implicit name derived from their
-    class name. In order to avoid possible collisions, it is better to explicitly define ref_name
-    on the Meta class.
-    Suggested format: ref_name = f'{model._meta.app_label}_{model._meta.model_name}'
+    ``Meta.ref_name`` is a string that is used as the model definition name for
+    the serializer class. If this attribute is not specified, all serializers
+    have an implicit name derived from their class name. In order to avoid
+    possible name collisions between plugins, plugins must define ``ref_name``
+    on the Meta class using ``<app_label>.`` as a prefix.
+
+    For the model based serializers offered by pulpcore (i.e.
+    :class:`~pulpcore.plugin.serializers.ModelSerializer` and derived
+    serializers), ``Meta.ref_name`` will be set correctly automatically. There is no
+    need to set ``Meta.ref_name`` in this case.
+
+    If a serializer has no associated model, you need to set ``Meta.ref_name``
+    explicitly. For example, if the ``SnippetSerializerV1`` from above is for
+    the plugin providing the ``snippets`` app, ``ref_name`` could be set like
+    this::
+
+        class SnippetSerializerV1(serializers.Serializer):
+            title = serializers.CharField(required=False, allow_blank=True, max_length=100)
+
+            class Meta:
+                ref_name = "snippets.Snippet"
 
 .. note::
 
