@@ -122,7 +122,7 @@ repository_version_1 = @repoversions_api.read(created_resources[0])
 
 # Create an artifact from a local file
 file_path = File.join(ENV['TRAVIS_BUILD_DIR'], '.travis/test_bindings.rb')
-artifact = @artifacts_api.create({file: File.new(file_path)})
+artifact = @artifacts_api.create(File.new(file_path))
 
 # Create a FileContent from the artifact
 filecontent_response = @filecontent_api.create('foo.tar.gz', {artifact: artifact.pulp_href})
