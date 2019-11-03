@@ -157,12 +157,11 @@ class ArtifactSerializer(base.ModelSerializer):
     file = serializers.FileField(
         help_text=_("The stored file."),
         allow_empty_file=True,
-        required=False
     )
 
     size = serializers.IntegerField(
         help_text=_("The size of the file in bytes."),
-        required=False
+        required=False,
     )
 
     md5 = serializers.CharField(
