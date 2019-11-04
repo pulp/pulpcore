@@ -373,3 +373,19 @@ class PulpAutoSchema(SwaggerAutoSchema):
             tags = [' '.join(operation_keys[:-1])]
 
         return tags
+
+    def serializer_to_schema(self, serializer):
+        """
+        Convert a serializer to an OpenAPI Schema.
+        Patch: https://github.com/axnsan12/drf-yasg/issues/70#issuecomment-485050813
+        """
+
+        if self.method.lower() == "get":
+            new_fields = OrderedDict()
+            for field_name, field in serializer.fields.items():
+                if not field.write_only:  # Removing write_only fields
+                    new_fields[field_name] = field
+
+            serializer.fields = new_fields
+
+        return super().serializer_to_schema(serializer)
