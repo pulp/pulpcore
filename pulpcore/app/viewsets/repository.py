@@ -10,7 +10,6 @@ from rest_framework.filters import OrderingFilter
 from pulpcore.app import tasks
 from pulpcore.app.models import (
     Content,
-    Exporter,
     Publisher,
     Remote,
     Repository,
@@ -20,7 +19,6 @@ from pulpcore.app.models import (
 from pulpcore.app.response import OperationPostponedResponse
 from pulpcore.app.serializers import (
     AsyncOperationResponseSerializer,
-    ExporterSerializer,
     PublisherSerializer,
     RemoteSerializer,
     RepositorySerializer,
@@ -322,35 +320,3 @@ class PublisherViewSet(NamedModelViewSet,
     serializer_class = PublisherSerializer
     queryset = Publisher.objects.all()
     filterset_class = PublisherFilter
-
-
-class ExporterFilter(BaseFilterSet):
-    """
-    Plugin exporter filter should:
-     - inherit from this class
-     - add any specific filters if needed
-     - define a `Meta` class which should:
-       - specify a plugin exporter model for which filter is defined
-       - extend `fields` with specific ones
-    """
-    name = filters.CharFilter()
-    last_export = IsoDateTimeFilter()
-
-    class Meta:
-        model = Exporter
-        fields = {
-            'name': NAME_FILTER_OPTIONS,
-            'last_export': DATETIME_FILTER_OPTIONS
-        }
-
-
-class ExporterViewSet(NamedModelViewSet,
-                      mixins.CreateModelMixin,
-                      mixins.RetrieveModelMixin,
-                      mixins.ListModelMixin,
-                      AsyncUpdateMixin,
-                      AsyncRemoveMixin):
-    endpoint_name = 'exporters'
-    serializer_class = ExporterSerializer
-    queryset = Exporter.objects.all()
-    filterset_class = ExporterFilter

@@ -261,27 +261,6 @@ class Publisher(MasterModel):
         default_related_name = 'publishers'
 
 
-class Exporter(MasterModel):
-    """
-    A publication exporter.
-
-    Fields:
-
-        name (models.CharField): The exporter unique name.
-        last_export (models.DatetimeField): When the last successful export occurred.
-
-    Relations:
-
-    """
-    TYPE = 'exporter'
-
-    name = models.CharField(db_index=True, unique=True, max_length=255)
-    last_export = models.DateTimeField(null=True)
-
-    class Meta:
-        default_related_name = 'exporters'
-
-
 class RepositoryContent(Model):
     """
     Association between a repository and its contained content.
@@ -377,6 +356,16 @@ class RepositoryVersion(Model):
             version_removed__number__lte=self.number
         )
         return Content.objects.filter(version_memberships__in=relationships)
+
+    @property
+    def arifacts(self):
+        """
+        Returns a set of artifacts for a repository version.
+
+        Returns:
+            django.db.models.QuerySet: The artifacts that are contained within this version.
+        """
+        Artifact.objects.filter(content__pk__in=self.content())
 
     def added(self):
         """

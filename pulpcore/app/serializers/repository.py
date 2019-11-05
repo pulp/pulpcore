@@ -172,31 +172,6 @@ class PublisherSerializer(ModelSerializer):
         )
 
 
-class ExporterSerializer(ModelSerializer):
-    pulp_href = DetailIdentityField()
-    name = serializers.CharField(
-        help_text=_('The exporter unique name.'),
-        validators=[UniqueValidator(queryset=models.Exporter.objects.all())]
-    )
-    pulp_last_updated = serializers.DateTimeField(
-        help_text=_('Timestamp of the last update.'),
-        read_only=True
-    )
-    last_export = serializers.DateTimeField(
-        help_text=_('Timestamp of the last export.'),
-        read_only=True
-    )
-
-    class Meta:
-        abstract = True
-        model = models.Exporter
-        fields = ModelSerializer.Meta.fields + (
-            'name',
-            'pulp_last_updated',
-            'last_export',
-        )
-
-
 class ContentSummarySerializer(serializers.Serializer):
     """
     Serializer for the RepositoryVersion content summary

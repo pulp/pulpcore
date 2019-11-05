@@ -3,6 +3,11 @@
 from .base import MasterModel, Model  # noqa
 from .content import Artifact, Content, ContentArtifact, RemoteArtifact  # noqa
 from .generic import GenericRelationModel  # noqa
+from .exporter import (  # noqa
+    FileSystemExporter,
+    FileSystemPublicationExporter,
+    FileSystemRepositoryVersionExporter,
+)
 from .publication import (  # noqa
     BaseDistribution,
     ContentGuard,
@@ -13,7 +18,6 @@ from .publication import (  # noqa
     RepositoryVersionDistribution,
 )
 from .repository import (  # noqa
-    Exporter,
     Publisher,
     Remote,
     Repository,
