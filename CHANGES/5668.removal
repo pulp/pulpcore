@@ -1,0 +1,2 @@
+Allow awaiting for resolution on DeclarativeContent.
+Remove get_or_create_future and does_batch from DeclarativeContent.

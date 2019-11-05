@@ -160,15 +160,20 @@ class ResolveContentFutures(Stage):
     different content type `Bar`. Consider this code in FirstStage::
 
         # Create d_content and d_artifact for a `foo_a`
-        foo_a = DeclarativeContent(..., does_batch=False)
-        foo_a_future = foo_a.get_or_create_future()  # This is awaitable
+        foo_a = DeclarativeContent(...)
+        # Send it in the pipeline
+        await self.put(foo_a)
 
         ...
 
-        foo_a_content = await foo_a_future  # awaits until the foo_a reaches this stage
+        foo_a_content = await foo_a.resolution()  # awaits until the foo_a reaches this stage
 
     This creates a "looping" pattern, of sorts, where downloaded content at the end of the pipeline
     can introduce new additional to-be-downloaded content at the beginning of the pipeline.
+    On the other hand, it can impose a substantial performance decrement of batching content in the
+    earlier stages.
+    As a rule of thumb, sending more items into the pipeline first and awaiting their resolution
+    later is better.
     """
 
     async def run(self):
@@ -179,6 +184,5 @@ class ResolveContentFutures(Stage):
             The coroutine for this stage.
         """
         async for d_content in self.items():
-            if d_content.future is not None:
-                d_content.future.set_result(d_content.content)
+            d_content.resolve()
             await self.put(d_content)

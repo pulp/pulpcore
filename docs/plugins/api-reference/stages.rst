@@ -24,7 +24,7 @@ DeclarativeVersion
 
 .. autoclass:: pulpcore.plugin.stages.DeclarativeContent
    :no-members:
-   :members: get_or_create_future
+   :members: resolution
 
 
 .. _stages-api:

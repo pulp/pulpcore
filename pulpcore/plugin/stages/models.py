@@ -102,43 +102,58 @@ class DeclarativeContent:
         d_artifacts (list): A list of zero or more
             :class:`~pulpcore.plugin.stages.DeclarativeArtifact` objects associated with `content`.
         extra_data (dict): A dictionary available for additional data to be stored in.
-        does_batch (bool): If `False`, prevent batching mechanism to block this item.
-            Defaults to `True`.
-        future (:class:`~asyncio.Future`): A future that gets resolved to the
-            :class:`~pulpcore.plugin.models.Content` in the
-            :class:`~pulpcore.plugin.stages.ResolveContentFutures` stage. See the
-            :class:`~pulpcore.plugin.stages.ResolveContentFutures` stage for example usage.
 
     Raises:
         ValueError: If `content` is not specified.
     """
 
-    __slots__ = ('content', 'd_artifacts', 'extra_data', 'does_batch', 'future')
+    __slots__ = (
+        'content',
+        'd_artifacts',
+        'extra_data',
+        '_future',
+        '_thaw_queue_event',
+        '_resolved',
+    )
 
-    def __init__(self, content=None, d_artifacts=None, extra_data=None, does_batch=True):
+    def __init__(self, content=None, d_artifacts=None, extra_data=None):
         if not content:
             raise ValueError(_("DeclarativeContent must have a 'content'"))
         self.content = content
         self.d_artifacts = d_artifacts or []
         self.extra_data = extra_data or {}
-        self.does_batch = does_batch
-        self.future = None
+        self._future = None
+        self._thaw_queue_event = None
+        self._resolved = False
 
-    def get_or_create_future(self):
+    @property
+    def does_batch(self):
+        """Whether this content is being awaited on and must therefore not wait forever in batches.
+        When overwritten in subclasses, a `True` value must never be turned into `False`.
         """
-        Return the existing or a new future.
+        return not self._resolved and self._future is None
 
-        If you rely on this future in a the course of the pipeline, consider clearing the
-        `does_batch` attribute to prevent deadlocks.
-        See the :class:`~pulpcore.plugin.stages.ResolveContentFutures` stage for example usage.
+    async def resolution(self):
+        """Coroutine that waits for the content to be saved to database.
+        Returns the content unit."""
+        if self._resolved:
+            # Already resolved ~> shortcut
+            return self.content
+        if self._future is None:
+            # We do not yet have a future
+            self._future = asyncio.get_event_loop().create_future()
+            if self._thaw_queue_event:
+                # We have a future now but are still stuck in a queue
+                self._thaw_queue_event.set()
+        # Now we wait
+        return await self._future
 
-        Returns:
-            An existing :class:`asyncio.Future` or a newly created one.
-        """
-        if self.future is None:
-            # If on 3.7, we could preferrably use get_running_loop()
-            self.future = asyncio.get_event_loop().create_future()
-        return self.future
+    def resolve(self):
+        """Resolve this content unit and notify any waiting tasks."""
+        self._resolved = True
+        if self._future:
+            self._future.set_result(self.content)
+            self._future = None
 
     def __str__(self):
         return str(self.content.__class__.__name__)

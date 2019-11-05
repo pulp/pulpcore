@@ -109,22 +109,36 @@ class Stage:
         batch = []
         shutdown = False
         no_block = False
+        thaw_queue_event = asyncio.Event()
 
         def add_to_batch(content):
             nonlocal batch
             nonlocal shutdown
             nonlocal no_block
+            nonlocal thaw_queue_event
+
             if content is None:
                 shutdown = True
                 log.debug(_('%(name)s - shutdown.'), {'name': self})
             else:
                 if not content.does_batch:
                     no_block = True
+                content._thaw_queue_event = thaw_queue_event
                 batch.append(content)
 
+        get_listener = asyncio.ensure_future(self._in_q.get())
+        thaw_event_listener = asyncio.ensure_future(thaw_queue_event.wait())
         while not shutdown:
-            content = await self._in_q.get()
-            add_to_batch(content)
+            done, pending = await asyncio.wait(
+                [thaw_event_listener, get_listener], return_when=asyncio.FIRST_COMPLETED
+            )
+            if thaw_event_listener in done:
+                thaw_event_listener = asyncio.ensure_future(thaw_queue_event.wait())
+                no_block = True
+            if get_listener in done:
+                content = await get_listener
+                add_to_batch(content)
+                get_listener = asyncio.ensure_future(self._in_q.get())
             while not shutdown:
                 try:
                     content = self._in_q.get_nowait()
@@ -140,9 +154,14 @@ class Stage:
                         'name': self,
                         'length': len(batch),
                     })
+                for content in batch:
+                    content._thaw_queue_event = None
+                thaw_queue_event.clear()
                 yield batch
                 batch = []
                 no_block = False
+        thaw_event_listener.cancel()
+        get_listener.cancel()
 
     async def put(self, item):
         """
