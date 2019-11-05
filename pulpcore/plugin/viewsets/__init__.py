@@ -9,6 +9,7 @@ from pulpcore.app.viewsets import (  # noqa
     ContentGuardFilter,
     ContentGuardViewSet,
     ContentViewSet,
+    FileSystemExporterViewSet,
     NamedModelViewSet,
     PublicationViewSet,
     PublisherViewSet,

@@ -8,6 +8,8 @@ from pulpcore.app.models import (  # noqa
     ContentArtifact,
     ContentGuard,
     CreatedResource,
+    FileSystemPublicationExporter,
+    FileSystemRepositoryVersionExporter,
     MasterModel,
     Model,
     ProgressReport,
