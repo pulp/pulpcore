@@ -47,5 +47,6 @@ async def server(*args, **kwargs):
                                                            module=CONTENT_MODULE_NAME)
             with suppress(ModuleNotFoundError):
                 import_module(content_module_name)
+    app.add_routes([web.get(settings.CONTENT_PATH_PREFIX, Handler().list_distributions)])
     app.add_routes([web.get(settings.CONTENT_PATH_PREFIX + '{path:.+}', Handler().stream_content)])
     return app

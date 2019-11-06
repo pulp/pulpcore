@@ -85,6 +85,23 @@ class Handler:
 
     distribution_model = None
 
+    async def list_distributions(self, request):
+        """
+        The handler for an HTML listing all distributions
+
+        Args:
+            request (:class:`aiohttp.web.request`): The request from the client.
+
+        Returns:
+            :class:`aiohttp.web.HTTPOk`: The response back to the client.
+        """
+        if self.distribution_model is None:
+            distributions = BaseDistribution.objects.only("base_path").all()
+        else:
+            distributions = self.distribution_model.objects.only("base_path").all()
+        directory_list = ['{}/'.format(d.base_path) for d in distributions]
+        return HTTPOk(headers={"Content-Type": "text/html"}, body=self.render_html(directory_list))
+
     async def stream_content(self, request):
         """
         The request handler for the Content app.
@@ -197,6 +214,31 @@ class Handler:
             headers['Content-Encoding'] = encoding
         return headers
 
+    @staticmethod
+    def render_html(directory_list):
+        """
+        Render a list of strings as an HTML list of links.
+
+        Args:
+            directory_list (iterable): an iterable of strings representing file and directory names
+
+        Returns:
+            String representing HTML of the directory listing.
+        """
+        template = Template("""
+        <!DOCTYPE html>
+        <html>
+            <body>
+                <ul>
+                {% for name in dir_list %}
+                    <li><a href="{{ name|e }}">{{ name|e }}</a></li>
+                {% endfor %}
+                </ul>
+            </body>
+        </html>
+        """)
+        return template.render(dir_list=sorted(directory_list))
+
     async def list_directory(self, repo_version, publication, path):
         """
         Generate HTML with directory listing of the path.
@@ -217,18 +259,6 @@ class Handler:
             raise Exception("Either a repo_version or publication is required.")
         if publication and repo_version:
             raise Exception("Either a repo_version or publication can be specified.")
-
-        template = Template("""
-        <html>
-            <body>
-                <ul>
-                {% for name in dir_list %}
-                    <li><a href="{{ name }}">{{ name }}</a></li>
-                {% endfor %}
-                </ul>
-            </body>
-        </html>
-        """)
 
         def file_or_directory_name(directory_path, relative_path):
             result = re.match(r'({})([^\/]*)(\/*)'.format(directory_path), relative_path)
@@ -256,7 +286,7 @@ class Handler:
                 directory_list.add(file_or_directory_name(path, ca.relative_path))
 
         if directory_list:
-            return template.render(dir_list=sorted(directory_list))
+            return self.render_html(directory_list)
         else:
             raise PathNotResolved(path)
 
