@@ -1,13 +1,14 @@
 import logging
 import mimetypes
 import os
+import re
 from gettext import gettext as _
 
 import django  # noqa otherwise E402: module level not at top of file
 django.setup()  # noqa otherwise E402: module level not at top of file
 
 from aiohttp.client_exceptions import ClientResponseError
-from aiohttp.web import FileResponse, StreamResponse
+from aiohttp.web import FileResponse, StreamResponse, HTTPOk
 from aiohttp.web_exceptions import HTTPForbidden, HTTPFound, HTTPNotFound
 from django.conf import settings
 from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
@@ -21,6 +22,7 @@ from pulpcore.app.models import (
     RepositoryVersion,
 )
 
+from jinja2 import Template
 
 log = logging.getLogger(__name__)
 
@@ -111,7 +113,7 @@ class Handler:
         """
         tree = []
         while True:
-            base = os.path.split(path.strip('/'))[0]
+            base = os.path.split(path)[0]
             if not base:
                 break
             tree.append(base)
@@ -195,6 +197,69 @@ class Handler:
             headers['Content-Encoding'] = encoding
         return headers
 
+    async def list_directory(self, repo_version, publication, path):
+        """
+        Generate HTML with directory listing of the path.
+
+        This method expects either a repo_version or a publication in addition to a path. This
+        method generates HTML directory list of a path inside the repository version or
+        publication.
+
+        Args:
+            repo_version (:class:`~pulpcore.app.models.RepositoryVersion`): The repository version
+            publication (:class:`~pulpcore.app.models.Publication`): Publication
+            path (str): relative path inside the repo version of publication.
+
+        Returns:
+            String representing HTML of the directory listing.
+        """
+        if not publication and not repo_version:
+            raise Exception("Either a repo_version or publication is required.")
+        if publication and repo_version:
+            raise Exception("Either a repo_version or publication can be specified.")
+
+        template = Template("""
+        <html>
+            <body>
+                <ul>
+                {% for name in dir_list %}
+                    <li><a href="{{ name }}">{{ name }}</a></li>
+                {% endfor %}
+                </ul>
+            </body>
+        </html>
+        """)
+
+        def file_or_directory_name(directory_path, relative_path):
+            result = re.match(r'({})([^\/]*)(\/*)'.format(directory_path), relative_path)
+            return '{}{}'.format(result.groups()[1], result.groups()[2])
+
+        directory_list = set()
+
+        if publication:
+            pas = publication.published_artifact.filter(relative_path__startswith=path)
+            for pa in pas:
+                directory_list.add(file_or_directory_name(path, pa.relative_path))
+
+            if publication.pass_through:
+                cas = ContentArtifact.objects.filter(
+                        content__in=publication.repository_version.content,
+                        relative_path__startswith=path)
+                for ca in cas:
+                    directory_list.add(file_or_directory_name(path, ca.relative_path))
+
+        if repo_version:
+            cas = ContentArtifact.objects.filter(
+                content__in=repo_version.content,
+                relative_path__startswith=path)
+            for ca in cas:
+                directory_list.add(file_or_directory_name(path, ca.relative_path))
+
+        if directory_list:
+            return template.render(dir_list=sorted(directory_list))
+        else:
+            raise PathNotResolved(path)
+
     async def _match_and_stream(self, path, request):
         """
         Match the path and stream results either from the filesystem or by downloading new data.
@@ -223,6 +288,15 @@ class Handler:
         publication = getattr(distro, 'publication', None)
 
         if publication:
+            if rel_path == '' or rel_path[-1] == '/':
+                try:
+                    index_path = '{}index.html'.format(rel_path)
+                    publication.published_artifact.get(relative_path=index_path)
+                    rel_path = index_path
+                except ObjectDoesNotExist:
+                    dir_list = await self.list_directory(None, publication, rel_path)
+                    return HTTPOk(headers={"Content-Type": "text/html"}, body=dir_list)
+
             # published artifact
             try:
                 pa = publication.published_artifact.get(relative_path=rel_path)
@@ -267,6 +341,17 @@ class Handler:
         if repository or repo_version:
             if repository:
                 repo_version = RepositoryVersion.latest(distro.repository)
+
+            if rel_path == '' or rel_path[-1] == '/':
+                try:
+                    index_path = '{}index.html'.format(rel_path)
+                    ContentArtifact.objects.get(
+                        content__in=repo_version.content,
+                        relative_path=index_path)
+                    rel_path = index_path
+                except ObjectDoesNotExist:
+                    dir_list = await self.list_directory(repo_version, None, rel_path)
+                    return HTTPOk(headers={"Content-Type": "text/html"}, body=dir_list)
 
             try:
                 ca = ContentArtifact.objects.get(
