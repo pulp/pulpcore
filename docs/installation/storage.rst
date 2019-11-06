@@ -44,8 +44,9 @@ Configuring Pulp
         AWS_ACCESS_KEY_ID = 'AKIAIT2Z5TDYPX3ARJBA'
         AWS_SECRET_ACCESS_KEY = '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'
         AWS_STORAGE_BUCKET_NAME = 'pulp3'
+        AWS_DEFAULT_ACL: None
         S3_USE_SIGV4 = True
-        AWS_S3_SIGNATURE_VERSION = "s3v4" 
+        AWS_S3_SIGNATURE_VERSION = "s3v4"
         AWS_S3_ADDRESSING_STYLE = "path"
         AWS_S3_REGION_NAME = "eu-central-1"
         DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
@@ -56,3 +57,9 @@ Configuring Pulp
   that provides access to the S3 bucket you can omit the ``AWS_ACCESS_KEY_ID`` and
   ``AWS_SECRET_ACCESS_KEY`` parameters as the underlying ``boto3`` library will pick them up
   automatically.
+
+  It is only necessary to set ``AWS_DEFAULT_ACL`` to ``None`` if you have set the
+  ``BlockPublicAcls`` option in the Block Public Access settings of your bucket
+  or of your AWS account. The default setting in the latest version of django-storages
+  is `public-read`, which will get blocked. This is set to change in a
+  `future release <https://django-storages.readthedocs.io/en/1.7.2/backends/amazon-S3.html>`.
