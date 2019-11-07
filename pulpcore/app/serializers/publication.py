@@ -11,19 +11,15 @@ from pulpcore.app.serializers import (
     DetailIdentityField,
     DetailRelatedField,
     ModelSerializer,
-    NestedRelatedField,
+    RepositoryVersionRelatedField,
     validate_unknown_fields,
 )
 
 
 class PublicationSerializer(ModelSerializer):
     pulp_href = DetailIdentityField()
-    repository_version = NestedRelatedField(
-        view_name='versions-detail',
-        lookup_field='number',
-        parent_lookup_kwargs={'repository_pk': 'repository__pk'},
-        queryset=models.RepositoryVersion.objects.all(),
-        required=False,
+    repository_version = RepositoryVersionRelatedField(
+        required=False
     )
     repository = DetailRelatedField(
         help_text=_('A URI of the repository to be published.'),
@@ -195,14 +191,10 @@ class RepositoryVersionDistributionSerializer(BaseDistributionSerializer):
         queryset=models.Repository.objects.all(),
         allow_null=True
     )
-    repository_version = NestedRelatedField(
+    repository_version = RepositoryVersionRelatedField(
         required=False,
         help_text=_('RepositoryVersion to be served'),
-        queryset=models.RepositoryVersion.objects.exclude(complete=False),
-        view_name='versions-detail',
         allow_null=True,
-        lookup_field='number',
-        parent_lookup_kwargs={'repository_pk': 'repository__pk'},
     )
 
     class Meta:

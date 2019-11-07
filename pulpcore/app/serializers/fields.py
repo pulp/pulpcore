@@ -6,10 +6,9 @@ from django.conf import settings
 from rest_framework import serializers
 from rest_framework.fields import empty
 from rest_framework.reverse import reverse
-from rest_framework_nested.relations import NestedHyperlinkedRelatedField
 
 from pulpcore.app import models
-from pulpcore.app.serializers import RelatedField
+from pulpcore.app.serializers import DetailIdentityField, IdentityField, RelatedField
 
 
 def relative_path_validator(relative_path):
@@ -174,10 +173,50 @@ class ContentArtifactsField(serializers.DictField):
         return ret
 
 
-class LatestVersionField(NestedHyperlinkedRelatedField):
-    parent_lookup_kwargs = {'repository_pk': 'repository__pk'}
-    lookup_field = 'number'
+class RepositoryVersionsIdentityFromRepositoryField(DetailIdentityField):
+    view_name = 'repositories-detail'
+
+    def __init__(self, view_name=None, **kwargs):
+        assert view_name is None, 'The `view_name` must not be set.'
+        super().__init__(view_name=self.view_name, **kwargs)
+
+    def get_url(self, obj, view_name, request, *args, **kwargs):
+        return super().get_url(obj, self.view_name, request, *args, **kwargs) + "versions/"
+
+
+class RepositoryVersionFieldGetURLMixin:
     view_name = 'versions-detail'
+
+    def __init__(self, view_name=None, **kwargs):
+        assert view_name is None, 'The `view_name` must not be set.'
+        super().__init__(view_name=self.view_name, **kwargs)
+
+    def get_url(self, obj, view_name, request, *args, **kwargs):
+        rvr_field = RepositoryVersionsIdentityFromRepositoryField()
+        repo_url = rvr_field.get_url(obj.repository, None, request, *args, **kwargs)
+        return f"{repo_url}{obj.number}/"
+
+    def use_pk_only_optimization(self):
+        return False
+
+
+class RepositoryVersionIdentityField(RepositoryVersionFieldGetURLMixin, IdentityField):
+    pass
+
+
+class RepositoryVersionRelatedField(RepositoryVersionFieldGetURLMixin, RelatedField):
+    queryset = models.RepositoryVersion.objects.all()
+
+    def get_object(self, view_name, view_args, view_kwargs):
+        lookup_kwargs = {
+           'repository__pk': view_kwargs['repository_pk'],
+           'number': view_kwargs['number']
+        }
+        return self.get_queryset().get(**lookup_kwargs)
+
+
+class LatestVersionField(RepositoryVersionRelatedField):
+    queryset = None  # read-only relational fields should not provide a `queryset` argument
 
     def __init__(self, *args, **kwargs):
         """
@@ -207,12 +246,7 @@ class LatestVersionField(NestedHyperlinkedRelatedField):
             version = obj.exclude(complete=False).latest()
         except obj.model.DoesNotExist:
             return None
-
-        kwargs = {
-            'repository_pk': version.repository.pk,
-            'number': version.number,
-        }
-        return self.reverse(view_name, kwargs=kwargs, request=None, format=format)
+        return super().get_url(version, view_name, request, format)
 
     def get_attribute(self, instance):
         """
