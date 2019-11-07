@@ -32,7 +32,6 @@ class PublicationSerializer(ModelSerializer):
         label=_('Repository'),
         queryset=models.Repository.objects.all(),
         view_name='repositories-detail',
-        write_only=True
     )
 
     def validate(self, data):
