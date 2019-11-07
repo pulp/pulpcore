@@ -629,9 +629,13 @@ class RepositoryVersion(Model):
             self.delete()
         else:
             self.repository.finalize_new_version(self)
-            self.complete = True
-            self.save()
-            self._compute_counts()
+            no_change = not self.added() and not self.removed()
+            if no_change:
+                self.delete()
+            else:
+                self.complete = True
+                self.save()
+                self._compute_counts()
 
     def __str__(self):
         return "<Repository: {}; Version: {}>".format(self.repository.name, self.number)
