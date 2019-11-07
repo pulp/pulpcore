@@ -1,7 +1,6 @@
 """
 Repository related Django models.
 """
-from collections import defaultdict
 from contextlib import suppress
 from gettext import gettext as _
 from os import path
@@ -9,7 +8,6 @@ import logging
 
 import django
 from django.db import models, transaction
-from django.db.models import Q
 from django.urls import reverse
 
 from pulpcore.app.util import get_view_name_for_model
@@ -84,6 +82,27 @@ class Repository(MasterModel):
                 resource = CreatedResource(content_object=version)
                 resource.save()
             return version
+
+    def finalize_new_version(self, new_version):
+        """
+        Finalize the incomplete RepositoryVersion with plugin-provided code.
+
+        This method should be overridden by plugin writers for an opportunity for plugin input. This
+        method is intended to be called with the incomplete
+        :class:`pulpcore.app.models.RepositoryVersion` to validate or modify the content.
+
+        This method does not adjust the value of complete, or save the `RepositoryVersion` itself.
+        Its intent is to allow the plugin writer an opportunity for plugin input before pulpcore
+        marks the `RepositoryVersion` as complete.
+
+        Args:
+            new_version (pulpcore.app.models.RepositoryVersion): The incomplete RepositoryVersion to
+                finalize.
+
+        Returns:
+
+        """
+        pass
 
     def latest_version(self):
         """
@@ -346,14 +365,14 @@ class RepositoryVersion(Model):
     A version of a repository's content set.
 
     Plugin Writers are strongly encouraged to use RepositoryVersion as a context manager to provide
-    transactional safety, working directory set up, and cleaning up the database on failures.
+    transactional safety, working directory set up, plugin finalization, and cleaning up the
+    database on failures.
 
-    Examples:
-        >>>
-        >>> with repository.new_version(repository) as new_version:
-        >>>     new_version.add_content(content_q)
-        >>>     new_version.remove_content(content_q)
-        >>>
+    Examples::
+
+        with repository.new_version(repository) as new_version:
+            new_version.add_content(content_q)
+            new_version.remove_content(content_q)
 
     Fields:
 
@@ -441,12 +460,7 @@ class RepositoryVersion(Model):
 
     def add_content(self, content):
         """
-        Add a content unit to this version, and possibly remove duplcates in some situations.
-
-        In some situations plugin writers have configured new content to automatically remove other
-        content in the repository. For example, `pulp_file` content would conflict with a
-        `relative_path`. That is resolved by having the newer associated unit automatically remove
-        the other `pulp_file` content with the same `relative_path`.
+        Add a content unit to this version.
 
         Args:
            content (django.db.models.QuerySet): Set of Content to add
@@ -458,20 +472,6 @@ class RepositoryVersion(Model):
 
         if self.complete:
             raise ResourceImmutableError(self)
-
-        query_for_repo_duplicates_by_type = defaultdict(lambda: Q())
-        for item in content.all():
-            if item.repo_key == ():
-                continue
-            unit_q_dict = {
-                field: getattr(item, field) for field in item.repo_key
-            }
-            query_for_repo_duplicates_by_type[item._meta.model] |= Q(**unit_q_dict)
-
-        for model in query_for_repo_duplicates_by_type:
-            _logger.debug(_("Removing duplicates for type: {}".format(model)))
-            qs = model.objects.filter(query_for_repo_duplicates_by_type[model])
-            self.remove_content(qs)
 
         repo_content = []
         for content_pk in content.exclude(pk__in=self.content).values_list('pk', flat=True):
@@ -623,11 +623,12 @@ class RepositoryVersion(Model):
 
     def __exit__(self, exc_type, exc_value, traceback):
         """
-        Save the RepositoryVersion if no errors are raised, delete it if not
+        Finalize and save the RepositoryVersion if no errors are raised, delete it if not
         """
         if exc_value:
             self.delete()
         else:
+            self.repository.finalize_new_version(self)
             self.complete = True
             self.save()
             self._compute_counts()

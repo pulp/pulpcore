@@ -8,7 +8,6 @@ from .artifact_stages import (  # noqa
 from .association_stages import (  # noqa
     ContentAssociation,
     ContentUnassociation,
-    RemoveDuplicates
 )
 from .content_stages import ContentSaver, QueryExistingContents, ResolveContentFutures  # noqa
 from .declarative_version import DeclarativeVersion  # noqa

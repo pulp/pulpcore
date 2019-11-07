@@ -244,7 +244,7 @@ class Content(MasterModel, QueryMixin):
         _artifacts (models.ManyToManyField): Artifacts related to Content through ContentArtifact
     """
     TYPE = 'content'
-    repo_key = ()
+    repo_key_fields = ()  # Used by pulpcore.plugin.repo_version_utils.remove_duplicates
 
     _artifacts = models.ManyToManyField(Artifact, through='ContentArtifact')
 
@@ -287,10 +287,11 @@ class Content(MasterModel, QueryMixin):
         Plugin writers are expected to override this method with an implementation for a specific
         content type.
 
-        For example:
-            >>> if path.isabs(relative_path):
-            >>>     raise ValueError(_("Relative path can't start with '/'."))
-            >>> return FileContent(relative_path=relative_path, digest=artifact.sha256)
+        For example::
+
+            if path.isabs(relative_path):
+                raise ValueError(_("Relative path can't start with '/'."))
+            return FileContent(relative_path=relative_path, digest=artifact.sha256)
 
         Args:
             artifact (:class:`~pulpcore.plugin.models.Artifact`): An instance of an Artifact

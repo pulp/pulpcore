@@ -871,9 +871,10 @@ class FilterArtifactsTestCase(unittest.TestCase):
             ARTIFACTS_PATH,
             params={'repository_version': repo['latest_version_href']}
         )
-        # Every sync add 3 content units to the repository. Last repository
-        # version has 6 content units.
-        self.assertEqual(len(artifacts), FILE_FIXTURE_COUNT*2, artifacts)
+        # Even though every sync adds 3 content units to the repository the fixture data contains
+        # the same relative urls so the second sync replaces the first 3, leaving a total of 3 each
+        # time
+        self.assertEqual(len(artifacts), FILE_FIXTURE_COUNT, artifacts)
 
     def test_filter_invalid_repo_version(self):
         """Filter by invalid repository version."""

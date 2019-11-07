@@ -170,12 +170,12 @@ async def create_pipeline(stages, maxsize=100):
     Each stage is an instance of a class derived from :class:`pulpcore.plugin.stages.Stage` that
     implements the :meth:`run` coroutine. This coroutine reads asyncromously either from the
     `items()` iterator or the `batches()` iterator and outputs the items with `put()`. Here is an
-    example of the simplest stage that only passes data.
+    example of the simplest stage that only passes data::
 
-    >>> class MyStage(Stage):
-    >>>     async def run(self):
-    >>>         async for d_content in self.items():  # Fetch items from the previous stage
-    >>>             await self.put(d_content)  # Hand them over to the next stage
+        class MyStage(Stage):
+            async def run(self):
+                async for d_content in self.items():  # Fetch items from the previous stage
+                    await self.put(d_content)  # Hand them over to the next stage
 
     Args:
         stages (list of coroutines): A list of Stages API compatible coroutines.

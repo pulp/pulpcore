@@ -73,8 +73,6 @@ Content Related Stages
 Content Association and Unassociation Stages
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: pulpcore.plugin.stages.RemoveDuplicates
-
 .. autoclass:: pulpcore.plugin.stages.ContentAssociation
 
 .. autoclass:: pulpcore.plugin.stages.ContentUnassociation
