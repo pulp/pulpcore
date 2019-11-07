@@ -53,7 +53,7 @@ Configuring Pulp
         MEDIA_ROOT = ''
 
   If the system that hosts Pulp is running in AWS and has been configured with an
-  `instance profile <https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_switch-role-ec2_instance-profiles.html>`
+  `instance profile <https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_switch-role-ec2_instance-profiles.html>`_
   that provides access to the S3 bucket you can omit the ``AWS_ACCESS_KEY_ID`` and
   ``AWS_SECRET_ACCESS_KEY`` parameters as the underlying ``boto3`` library will pick them up
   automatically.
@@ -62,4 +62,4 @@ Configuring Pulp
   ``BlockPublicAcls`` option in the Block Public Access settings of your bucket
   or of your AWS account. The default setting in the latest version of django-storages
   is `public-read`, which will get blocked. This is set to change in a
-  `future release <https://django-storages.readthedocs.io/en/1.7.2/backends/amazon-S3.html>`.
+  `future release <https://django-storages.readthedocs.io/en/1.7.2/backends/amazon-S3.html>`_.
