@@ -199,16 +199,6 @@ WORKING_DIRECTORY
     validated before being moved to their permanent home in ``MEDIA_ROOT``.
 
 
-CONTENT_HOST
-^^^^^^^^^^^^
-
-   A string containing the protocol, fqdn, and port where the content app is deployed. This is used
-   when Pulp needs to refer the client to the content serving app from within the REST API, such as
-   the ``base_path`` attribute for a :term:`distribution`.
-
-   This defaults to ``None`` which returns relative urls.
-
-
 CONTENT_ORIGIN
 ^^^^^^^^^^^^^^
 

@@ -1,0 +1,1 @@
+Removed CONTENT_HOST variable and replace its functionality with CONTENT_ORIGIN.
