@@ -9,6 +9,8 @@ from drf_yasg.inspectors import SwaggerAutoSchema
 from drf_yasg.openapi import Parameter
 from drf_yasg.utils import filter_none, force_real_str
 
+from pulpcore.app.viewsets import RepositoryVersionViewSet
+
 
 class Paths(openapi.SwaggerDict):
     def __init__(self, paths, **extra):
@@ -75,7 +77,6 @@ class PulpOpenAPISchemaGenerator(OpenAPISchemaGenerator):
                         continue
                 if not public and not self._gen.has_view_permissions(path, method, view):
                     continue
-
                 operation = self.get_operation(view, path, prefix, method, components, request)
                 if operation is not None:
                     operations[method.lower()] = operation
@@ -104,7 +105,10 @@ class PulpOpenAPISchemaGenerator(OpenAPISchemaGenerator):
                         else:
                             resource_model = view.queryset.model
                         resource_name = self.get_parameter_name(resource_model)
-                        param_name = self.get_parameter_slug_from_model(resource_model)
+                        prefix_ = None
+                        if issubclass(view_cls, RepositoryVersionViewSet):
+                            prefix_ = view_cls.parent_viewset.endpoint_name
+                        param_name = self.get_parameter_slug_from_model(resource_model, prefix_)
                         if resource_path in resources:
                             path = path.replace(resource_path, '{%s}' % resources[resource_path])
                         elif resource_other_path in resources:
@@ -179,17 +183,22 @@ class PulpOpenAPISchemaGenerator(OpenAPISchemaGenerator):
         return uritemplate.expand(path, **params)
 
     @staticmethod
-    def get_parameter_slug_from_model(model):
+    def get_parameter_slug_from_model(model, prefix):
         """Returns a path parameter name for the resource associated with the model.
 
         Args:
             model (django.db.models.Model): The model for which a path parameter name is needed
+            prefix (str): Optional prefix to add to the slug
 
         Returns:
             str: *pulp_href where * is the model name in all lower case letters
         """
-        return '%s_href' % '_'.join([part.lower() for part in re.findall('[A-Z][^A-Z]*',
+        slug = '%s_href' % '_'.join([part.lower() for part in re.findall('[A-Z][^A-Z]*',
                                                                          model.__name__)])
+        if prefix:
+            return '{}_{}'.format(prefix, slug)
+        else:
+            return slug
 
     @staticmethod
     def get_parameter_name(model):
