@@ -26,9 +26,9 @@ class ViewSetNode:
         RootNode
         ├─ RepositoryViewSet
         │  ├─ PluginPublisherViewSet (non-nested)
-        │  │  └─ DistributionViewSet
+        │  │  └─ PluginPublisherVDistributionViewSet
         │  ├─ AnotherPluginPublisherViewSet
-        │  │  └─ DistributionViewSet (This node is attached to all Publisher Detail parents)
+        │  │  └─ AnotherPluginDistributionViewSet
         │  └─ FileRemoteViewSet
         └─ some-non-nested viewset
     """
@@ -48,11 +48,6 @@ class ViewSetNode:
         """
         Add a VSNode to the tree. If node is not a direct child, attempt to add the to each child.
 
-        Some nodes must be added more than once if they have a Master/Detail parent. Using
-        Distributions as an example, DistributionViewset.parent_viewset is PublisherViewSet, which
-        is a MasterViewset. Each of the publisher detail viewsets like FilePublisherViewSEt will
-        have its own router, and the DistributionViewSet must be registered with each.
-
         Args:
             node (ViewSetNode): A node that represents a viewset and its decendents.
         """
@@ -62,9 +57,8 @@ class ViewSetNode:
         # Non-nested viewsets are attached to the root node
         if not node.viewset.parent_viewset:
             self.children.append(node)
-        # The node is a direct child if the child.parent_viewset == self.viewset and also
-        # if child.viewset is a master viewset and self.viewset is one of its detail viewsets.
-        elif self.viewset and issubclass(self.viewset, node.viewset.parent_viewset):
+        # The node is a direct child if the child.parent_viewset is self.viewset.
+        elif self.viewset and self.viewset is node.viewset.parent_viewset:
             self.children.append(node)
         else:
             for child in self.children:
@@ -104,8 +98,8 @@ all_viewsets = []
 plugin_patterns = []
 # Iterate over each app, including pulpcore and the plugins.
 for app_config in pulp_plugin_configs():
-    for viewset in app_config.named_viewsets.values():
-        all_viewsets.append(viewset)
+    for viewsets in app_config.named_viewsets.values():
+        all_viewsets.extend(viewsets)
     if app_config.urls_module:
         plugin_patterns.append(app_config.urls_module)
 
