@@ -20,8 +20,6 @@ plugin_dash: pulpcore
 plugin_dash_short: pulpcore
 plugin_name: pulpcore
 plugin_snake: pulpcore
-pulp_settings:
-  content_origin: http://$(hostname):24816
 pydocstyle: true
 pypi_username: pulp
 test_bindings: true
