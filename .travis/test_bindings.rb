@@ -20,8 +20,8 @@ end
 
 
 @artifacts_api = PulpcoreClient::ArtifactsApi.new
-@repositories_api = PulpcoreClient::RepositoriesApi.new
-@repoversions_api = PulpcoreClient::RepositoriesVersionsApi.new
+@filerepositories_api = PulpFileClient::RepositoriesFileApi.new
+@repoversions_api = PulpFileClient::RepositoriesFileVersionsApi.new
 @filecontent_api = PulpFileClient::ContentFilesApi.new
 @filedistributions_api = PulpFileClient::DistributionsFileApi.new
 @filepublications_api = PulpFileClient::PublicationsFileApi.new
@@ -108,12 +108,12 @@ remote_data = PulpFileClient::FileFileRemote.new({name: 'bar38', url: remote_url
 file_remote = @fileremotes_api.create(remote_data)
 
 # Create a Repository
-repository_data = PulpcoreClient::Repository.new({name: 'foo38'})
-repository = @repositories_api.create(repository_data)
+repository_data = PulpFileClient::FileFileRepository.new({name: 'foo38'})
+file_repository = @filerepositories_api.create(repository_data)
 
 # Sync a Repository
-repository_sync_data = PulpFileClient::RepositorySyncURL.new({repository: repository.pulp_href})
-sync_response = @fileremotes_api.sync(file_remote.pulp_href, repository_sync_data)
+repository_sync_data = PulpFileClient::RepositorySyncURL.new({remote: file_remote.pulp_href})
+sync_response = @filerepositories_api.sync(file_repository.pulp_href, repository_sync_data)
 
 # Monitor the sync task
 created_resources = monitor_task(sync_response.task)
@@ -131,7 +131,7 @@ created_resources = monitor_task(filecontent_response.task)
 
 # Add the new FileContent to a repository version
 repo_version_data = {add_content_units: [created_resources[0]]}
-repo_version_response = @repoversions_api.create(repository.pulp_href, repo_version_data)
+repo_version_response = @filerepositories_api.modify(file_repository.pulp_href, repo_version_data)
 
 # Monitor the repo version creation task
 created_resources = monitor_task(repo_version_response.task)
@@ -139,7 +139,7 @@ created_resources = monitor_task(repo_version_response.task)
 repository_version_2 = @repoversions_api.read(created_resources[0])
 
 # Create a publication from the latest version of the repository
-publish_data = PulpFileClient::FileFilePublication.new({repository: repository.pulp_href})
+publish_data = PulpFileClient::FileFilePublication.new({repository: file_repository.pulp_href})
 publish_response = @filepublications_api.create(publish_data)
 
 # Monitor the publish task

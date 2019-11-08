@@ -8,7 +8,7 @@ from pulpcore.client.pulp_file import (
     PublicationsFileApi, RemotesFileApi, FileFileRemote,
     RepositorySyncURL, FileFilePublication,
     FileFileRepository, RepositoriesFileApi,
-    RepositoriesVersionsApi,
+    RepositoriesFileVersionsApi,
 )
 from pprint import pprint
 from time import sleep
@@ -99,9 +99,9 @@ file_client = FileApiClient(configuration)
 
 # Create api clients for all resource types
 artifacts = ArtifactsApi(core_client)
-repoversions = RepositoriesVersionsApi(core_client)
+filerepoversions = RepositoriesFileVersionsApi(file_client)
 filecontent = ContentFilesApi(file_client)
-filedistributions = DistributionsFileApi(core_client)
+filedistributions = DistributionsFileApi(file_client)
 filepublications = PublicationsFileApi(file_client)
 fileremotes = RemotesFileApi(file_client)
 filerepositories = RepositoriesFileApi(file_client)
@@ -139,7 +139,7 @@ pprint(sync_response)
 # Monitor the sync task
 created_resources = monitor_task(sync_response.task)
 
-repository_version_1 = repoversions.read(created_resources[0])
+repository_version_1 = filerepoversions.read(created_resources[0])
 pprint(repository_version_1)
 
 # Create an artifact from a local file
@@ -153,12 +153,12 @@ created_resources = monitor_task(filecontent_response.task)
 
 # Add the new FileContent to a repository version
 repo_version_data = {'add_content_units': [created_resources[0]]}
-repo_version_response = repoversions.create(repository.pulp_href, repo_version_data)
+repo_version_response = filerepositories.modify(repository.pulp_href, repo_version_data)
 
 # Monitor the repo version creation task
 created_resources = monitor_task(repo_version_response.task)
 
-repository_version_2 = repoversions.read(created_resources[0])
+repository_version_2 = filerepoversions.read(created_resources[0])
 pprint(repository_version_2)
 
 # Create a publication from the latest version of the repository
