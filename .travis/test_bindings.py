@@ -99,9 +99,9 @@ file_client = FileApiClient(configuration)
 
 # Create api clients for all resource types
 artifacts = ArtifactsApi(core_client)
-filerepoversions = RepositoriesFileVersionsApi(core_client)
+filerepoversions = RepositoriesFileVersionsApi(file_client)
 filecontent = ContentFilesApi(file_client)
-filedistributions = DistributionsFileApi(core_client)
+filedistributions = DistributionsFileApi(file_client)
 filepublications = PublicationsFileApi(file_client)
 fileremotes = RemotesFileApi(file_client)
 filerepositories = RepositoriesFileApi(file_client)
