@@ -1,5 +1,6 @@
 #!/bin/bash
 
+export PULP_CONTENT_ORIGIN=http://$(hostname):24816
 django-admin runserver 24817 >> ~/django_runserver.log 2>&1 &
 sleep 5
 
