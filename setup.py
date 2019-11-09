@@ -14,7 +14,7 @@ requirements = [
     'djangorestframework-queryfields~=1.0.0',
     'drf-nested-routers~=0.91.0',
     'drf-yasg~=1.17.0',
-    'gunicorn~=19.9.0',
+    'gunicorn>=19.9,<20.1',
     'psycopg2-binary',
     'PyYAML~=5.1.1',
     'rq~=1.1.0',
