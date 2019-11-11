@@ -7,23 +7,19 @@ from rest_framework_nested.serializers import NestedHyperlinkedModelSerializer
 from pulpcore.app import models
 from pulpcore.app.serializers import (
     DetailIdentityField,
-    IdentityField,
+    DetailRelatedField,
     LatestVersionField,
     ModelSerializer,
-    NestedIdentityField,
-    NestedRelatedField,
     SecretCharField,
+    RepositoryVersionIdentityField,
+    RepositoryVersionRelatedField,
+    RepositoryVersionsIdentityFromRepositoryField
 )
 
 
 class RepositorySerializer(ModelSerializer):
-    pulp_href = IdentityField(
-        view_name='repositories-detail'
-    )
-    versions_href = IdentityField(
-        view_name='versions-list',
-        lookup_url_kwarg='repository_pk',
-    )
+    pulp_href = DetailIdentityField()
+    versions_href = RepositoryVersionsIdentityFromRepositoryField()
     latest_version_href = LatestVersionField()
     name = serializers.CharField(
         help_text=_('A unique name for this repository.'),
@@ -130,22 +126,21 @@ class RemoteSerializer(ModelSerializer):
 
 
 class RepositorySyncURLSerializer(serializers.Serializer):
-    repository = serializers.HyperlinkedRelatedField(
+    remote = DetailRelatedField(
         required=True,
+        queryset=models.Remote.objects.all(),
         help_text=_('A URI of the repository to be synchronized.'),
-        queryset=models.Repository.objects.all(),
-        view_name='repositories-detail',
-        label=_('Repository'),
+        label=_('Remote'),
         error_messages={
-            'required': _('The repository URI must be specified.')
-        }
+            'required': _('The remote URI must be specified.')
+        },
     )
 
     mirror = fields.BooleanField(
         required=False,
         default=False,
         help_text=_('If ``True``, synchronization will remove all content that is not present in '
-                    'the remote repository. If ``False``, sync will be additive only.')
+                    'the remote repository. If ``False``, sync will be additive only.'),
     )
 
 
@@ -176,6 +171,7 @@ class ContentSummarySerializer(serializers.Serializer):
     """
     Serializer for the RepositoryVersion content summary
     """
+
     def to_representation(self, obj):
         """
         The summary of contained content.
@@ -216,21 +212,14 @@ class ContentSummarySerializer(serializers.Serializer):
 
 
 class RepositoryVersionSerializer(ModelSerializer, NestedHyperlinkedModelSerializer):
-    pulp_href = NestedIdentityField(
-        view_name='versions-detail',
-        lookup_field='number', parent_lookup_kwargs={'repository_pk': 'repository__pk'},
-    )
+    pulp_href = RepositoryVersionIdentityField()
     number = serializers.IntegerField(
         read_only=True
     )
-    base_version = NestedRelatedField(
+    base_version = RepositoryVersionRelatedField(
         required=False,
         help_text=_('A repository version whose content was used as the initial set of content '
                     'for this repository version'),
-        queryset=models.RepositoryVersion.objects.all(),
-        view_name='versions-detail',
-        lookup_field='number',
-        parent_lookup_kwargs={'repository_pk': 'repository__pk'},
     )
     content_summary = ContentSummarySerializer(
         help_text=_('Various count summaries of the content in the version and the HREF to view '
@@ -246,7 +235,7 @@ class RepositoryVersionSerializer(ModelSerializer, NestedHyperlinkedModelSeriali
         )
 
 
-class RepositoryVersionCreateSerializer(ModelSerializer, NestedHyperlinkedModelSerializer):
+class RepositoryAddRemoveContentSerializer(ModelSerializer, NestedHyperlinkedModelSerializer):
     add_content_units = serializers.ListField(
         help_text=_('A list of content units to add to a new repository version. This content is '
                     'added after remove_content_units are removed.'),
@@ -260,14 +249,10 @@ class RepositoryVersionCreateSerializer(ModelSerializer, NestedHyperlinkedModelS
         write_only=True,
         required=False
     )
-    base_version = NestedRelatedField(
+    base_version = RepositoryVersionRelatedField(
         required=False,
         help_text=_('A repository version whose content will be used as the initial set of content '
                     'for the new repository version'),
-        queryset=models.RepositoryVersion.objects.all(),
-        view_name='versions-detail',
-        lookup_field='number',
-        parent_lookup_kwargs={'repository_pk': 'repository__pk'},
     )
 
     def validate_remove_content_units(self, value):

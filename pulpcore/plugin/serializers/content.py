@@ -5,10 +5,9 @@ from logging import getLogger
 from rest_framework.serializers import (
     FileField,
     ValidationError,
-    HyperlinkedRelatedField,
 )
-from pulpcore.plugin.models import Artifact, Repository, RepositoryVersion
-from pulpcore.plugin.serializers import SingleArtifactContentSerializer
+from pulpcore.plugin.models import Artifact, Repository
+from pulpcore.plugin.serializers import DetailRelatedField, SingleArtifactContentSerializer
 
 
 log = getLogger(__name__)
@@ -32,14 +31,13 @@ class SingleArtifactContentUploadSerializer(SingleArtifactContentSerializer):
         required=False,
         write_only=True,
     )
-    repository = HyperlinkedRelatedField(
+    repository = DetailRelatedField(
         help_text=_(
             "A URI of a repository the new content unit should be associated with."
         ),
         required=False,
         write_only=True,
         queryset=Repository.objects.all(),
-        view_name="repositories-detail",
     )
 
     def __init__(self, *args, **kwargs):
@@ -86,10 +84,11 @@ class SingleArtifactContentUploadSerializer(SingleArtifactContentSerializer):
         content = super().create(validated_data)
 
         if repository:
+            repository.cast()
             content_to_add = self.Meta.model.objects.filter(pk=content.pk)
 
             # create new repo version with uploaded package
-            with RepositoryVersion.create(repository) as new_version:
+            with repository.new_version() as new_version:
                 new_version.add_content(content_to_add)
         return content
 

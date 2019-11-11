@@ -38,7 +38,7 @@ class PublisherCRUDTestCase(TestCase):
     @patch('pulpcore.app.models.task.get_current_job')
     def test_create_repository_version(self, mock_task):
         mock_task.return_value.id = self.task.pk
-        with RepositoryVersion.create(self.repository) as new_version:
+        with self.repository.new_version() as new_version:
             new_version.add_content(Content.objects.filter(pk=self.content.pk))
         self.assertTrue(RepositoryVersion.objects.filter().exists())
 

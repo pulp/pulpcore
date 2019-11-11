@@ -6,13 +6,14 @@ from random import choice
 
 from pulp_smash import api, cli, config, utils
 from pulp_smash.exceptions import CalledProcessError
-from pulp_smash.pulp3.constants import ARTIFACTS_PATH, MEDIA_PATH, REPO_PATH
+from pulp_smash.pulp3.constants import ARTIFACTS_PATH, MEDIA_PATH
 from pulp_smash.pulp3.utils import (
     delete_orphans,
     delete_version,
     gen_repo,
     get_content,
     get_versions,
+    modify_repo,
     sync,
 )
 
@@ -21,6 +22,7 @@ from pulpcore.tests.functional.api.using_plugin.constants import (
     FILE_CONTENT_NAME,
     FILE_CONTENT_PATH,
     FILE_REMOTE_PATH,
+    FILE_REPO_PATH,
 )
 from pulpcore.tests.functional.api.using_plugin.utils import gen_file_remote
 from pulpcore.tests.functional.api.using_plugin.utils import (  # noqa:F401
@@ -62,7 +64,7 @@ class DeleteOrphansTestCase(unittest.TestCase):
         5. Assert that the orphan content unit was cleaned up, and its artifact
            is not present on disk.
         """
-        repo = self.api_client.post(REPO_PATH, gen_repo())
+        repo = self.api_client.post(FILE_REPO_PATH, gen_repo())
         self.addCleanup(self.api_client.delete, repo['pulp_href'])
 
         body = gen_file_remote()
@@ -74,10 +76,7 @@ class DeleteOrphansTestCase(unittest.TestCase):
         content = choice(get_content(repo)[FILE_CONTENT_NAME])
 
         # Create an orphan content unit.
-        self.api_client.post(
-            repo['versions_href'],
-            {'remove_content_units': [content['pulp_href']]}
-        )
+        modify_repo(self.cfg, repo, remove_units=[content])
 
         # Verify that the artifact is present on disk.
         artifact_path = os.path.join(MEDIA_PATH, self.api_client.get(content['artifact'])['file'])
@@ -100,7 +99,7 @@ class DeleteOrphansTestCase(unittest.TestCase):
 
     def test_clean_orphan_artifact(self):
         """Test whether orphan artifacts units can be clean up."""
-        repo = self.api_client.post(REPO_PATH, gen_repo())
+        repo = self.api_client.post(FILE_REPO_PATH, gen_repo())
         self.addCleanup(self.api_client.delete, repo['pulp_href'])
 
         files = {'file': utils.http_get(FILE2_URL)}

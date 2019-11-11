@@ -8,8 +8,8 @@ class TestViewNameForModel(TestCase):
         """
         Use Repository as an example that should work.
         """
-        ret = util.get_view_name_for_model(models.Repository(), 'foo')
-        self.assertEqual(ret, 'repositories-foo')
+        ret = util.get_view_name_for_model(models.Artifact(), 'foo')
+        self.assertEqual(ret, 'artifacts-foo')
 
     @mock.patch.object(util, 'get_viewset_for_model')
     def test_not_found(self, mock_viewset_for_model):

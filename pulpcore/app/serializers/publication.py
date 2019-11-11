@@ -11,27 +11,21 @@ from pulpcore.app.serializers import (
     DetailIdentityField,
     DetailRelatedField,
     ModelSerializer,
-    NestedRelatedField,
-    RelatedField,
+    RepositoryVersionRelatedField,
     validate_unknown_fields,
 )
 
 
 class PublicationSerializer(ModelSerializer):
     pulp_href = DetailIdentityField()
-    repository_version = NestedRelatedField(
-        view_name='versions-detail',
-        lookup_field='number',
-        parent_lookup_kwargs={'repository_pk': 'repository__pk'},
-        queryset=models.RepositoryVersion.objects.all(),
-        required=False,
+    repository_version = RepositoryVersionRelatedField(
+        required=False
     )
-    repository = RelatedField(
+    repository = DetailRelatedField(
         help_text=_('A URI of the repository to be published.'),
         required=False,
         label=_('Repository'),
         queryset=models.Repository.objects.all(),
-        view_name='repositories-detail',
     )
 
     def validate(self, data):
@@ -46,7 +40,7 @@ class PublicationSerializer(ModelSerializer):
         elif not repository and repository_version:
             return data
         elif repository and not repository_version:
-            version = models.RepositoryVersion.latest(repository)
+            version = repository.latest_version()
             if version:
                 new_data = {'repository_version': version}
                 new_data.update(data)
@@ -191,21 +185,16 @@ class PublicationDistributionSerializer(BaseDistributionSerializer):
 
 
 class RepositoryVersionDistributionSerializer(BaseDistributionSerializer):
-    repository = RelatedField(
+    repository = DetailRelatedField(
         required=False,
         help_text=_('The latest RepositoryVersion for this Repository will be served.'),
         queryset=models.Repository.objects.all(),
-        view_name='repositories-detail',
         allow_null=True
     )
-    repository_version = NestedRelatedField(
+    repository_version = RepositoryVersionRelatedField(
         required=False,
         help_text=_('RepositoryVersion to be served'),
-        queryset=models.RepositoryVersion.objects.exclude(complete=False),
-        view_name='versions-detail',
         allow_null=True,
-        lookup_field='number',
-        parent_lookup_kwargs={'repository_pk': 'repository__pk'},
     )
 
     class Meta:

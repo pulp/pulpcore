@@ -1,4 +1,5 @@
 from pulpcore.app.apps import pulp_plugin_configs
+from pulpcore.app import models
 
 # a little cache so viewset_for_model doesn't have iterate over every app every time
 _model_viewset_cache = {}
@@ -21,11 +22,15 @@ def get_viewset_for_model(model_obj):
     model_viewset = None
     # go through the viewset registry to find the viewset for the passed-in model
     for app in pulp_plugin_configs():
-        for model, viewset in app.named_viewsets.items():
-            _model_viewset_cache.setdefault(model, viewset)
-            if model is model_class:
-                model_viewset = viewset
-                break
+        for model, viewsets in app.named_viewsets.items():
+            # There may be multiple viewsets for a model. In this
+            # case, we can't reverse the mapping.
+            if len(viewsets) == 1:
+                viewset = viewsets[0]
+                _model_viewset_cache.setdefault(model, viewset)
+                if model is model_class:
+                    model_viewset = viewset
+                    break
         if model_viewset is not None:
             break
 
@@ -55,6 +60,8 @@ def get_view_name_for_model(model_obj, view_action):
     # Import this here to prevent out-of-order plugin discovery
     from pulpcore.app.urls import all_routers
 
+    if isinstance(model_obj, models.MasterModel):
+        model_obj = model_obj.cast()
     viewset = get_viewset_for_model(model_obj)
 
     # return the complete view name, joining the registered viewset base name with

@@ -88,12 +88,12 @@ def add_and_remove(repository_pk, add_content_units, remove_content_units, base_
         base_version = None
 
     if '*' in remove_content_units:
-        latest = models.RepositoryVersion.latest(repository)
+        latest = repository.latest_version()
         if latest:
             remove_content_units = latest.content.values_list('pk', flat=True)
         else:
             remove_content_units = []
 
-    with models.RepositoryVersion.create(repository, base_version=base_version) as new_version:
+    with repository.new_version(base_version=base_version) as new_version:
         new_version.remove_content(models.Content.objects.filter(pk__in=remove_content_units))
         new_version.add_content(models.Content.objects.filter(pk__in=add_content_units))

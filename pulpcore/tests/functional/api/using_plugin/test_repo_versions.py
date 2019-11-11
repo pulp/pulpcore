@@ -6,7 +6,7 @@ from time import sleep
 from urllib.parse import urlsplit
 
 from pulp_smash import api, config, utils
-from pulp_smash.pulp3.constants import ARTIFACTS_PATH, REPO_PATH
+from pulp_smash.pulp3.constants import ARTIFACTS_PATH
 from pulp_smash.pulp3.utils import (
     delete_orphans,
     delete_version,
@@ -20,6 +20,7 @@ from pulp_smash.pulp3.utils import (
     get_removed_content,
     get_removed_content_summary,
     get_versions,
+    modify_repo,
     sync,
 )
 from requests.exceptions import HTTPError
@@ -35,6 +36,7 @@ from pulpcore.tests.functional.api.using_plugin.constants import (
     FILE_LARGE_FIXTURE_MANIFEST_URL,
     FILE_MANY_FIXTURE_MANIFEST_URL,
     FILE_REMOTE_PATH,
+    FILE_REPO_PATH,
 )
 from pulpcore.tests.functional.api.using_plugin.utils import (
     create_file_publication,
@@ -91,7 +93,7 @@ class AddRemoveContentTestCase(unittest.TestCase):
         * The ``versions_href`` API call is correct.
         * The ``latest_version_href`` API call is correct.
         """
-        self.repo.update(self.client.post(REPO_PATH, gen_repo()))
+        self.repo.update(self.client.post(FILE_REPO_PATH, gen_repo()))
 
         repo_versions = get_versions(self.repo)
         self.assertEqual(len(repo_versions), 0, repo_versions)
@@ -154,10 +156,8 @@ class AddRemoveContentTestCase(unittest.TestCase):
         """
         repo = self.client.get(self.repo['pulp_href'])
         self.content.update(choice(get_content(repo)[FILE_CONTENT_NAME]))
-        self.client.post(
-            repo['versions_href'],
-            {'remove_content_units': [self.content['pulp_href']]}
-        )
+
+        modify_repo(self.cfg, self.repo, remove_units=[self.content])
         repo = self.client.get(self.repo['pulp_href'])
 
         repo_versions = get_versions(repo)
@@ -197,10 +197,7 @@ class AddRemoveContentTestCase(unittest.TestCase):
         Make roughly the same assertions as :meth:`test_02_sync_content`.
         """
         repo = self.client.get(self.repo['pulp_href'])
-        self.client.post(
-            repo['versions_href'],
-            {'add_content_units': [self.content['pulp_href']]}
-        )
+        modify_repo(self.cfg, self.repo, add_units=[self.content])
         repo = self.client.get(self.repo['pulp_href'])
 
         repo_versions = get_versions(repo)
@@ -266,7 +263,7 @@ class SyncChangeRepoVersionTestCase(unittest.TestCase):
         cfg = config.get_config()
         client = api.Client(cfg, api.json_handler)
 
-        repo = client.post(REPO_PATH, gen_repo())
+        repo = client.post(FILE_REPO_PATH, gen_repo())
         self.addCleanup(client.delete, repo['pulp_href'])
 
         body = gen_file_remote()
@@ -308,14 +305,14 @@ class AddRemoveRepoVersionTestCase(unittest.TestCase):
 
     def setUp(self):
         """Create a repository and give it nine new versions."""
-        self.repo = self.client.post(REPO_PATH, gen_repo())
+        self.repo = self.client.post(FILE_REPO_PATH, gen_repo())
         self.addCleanup(self.client.delete, self.repo['pulp_href'])
 
         # Don't upload the last content unit. The test case might upload it to
         # create a new repo version within the test.
         for content in self.content[:-1]:
             self.client.post(
-                self.repo['versions_href'],
+                self.repo['pulp_href'] + "modify/",
                 {'add_content_units': [content['pulp_href']]}
             )
         self.repo = self.client.get(self.repo['pulp_href'])
@@ -346,7 +343,7 @@ class AddRemoveRepoVersionTestCase(unittest.TestCase):
 
         # Make new repo version from new last repo version.
         self.client.post(
-            self.repo['versions_href'],
+            self.repo['pulp_href'] + "modify/",
             {'add_content_units': [self.content[-1]['pulp_href']]}
         )
         self.repo = self.client.get(self.repo['pulp_href'])
@@ -401,7 +398,7 @@ class ContentImmutableRepoVersionTestCase(unittest.TestCase):
         cfg = config.get_config()
         client = api.Client(cfg, api.json_handler)
 
-        repo = client.post(REPO_PATH, gen_repo())
+        repo = client.post(FILE_REPO_PATH, gen_repo())
         self.addCleanup(client.delete, repo['pulp_href'])
 
         body = gen_file_remote()
@@ -443,14 +440,11 @@ class FilterRepoVersionTestCase(unittest.TestCase):
 
     def setUp(self):
         """Create a repository and give it new versions."""
-        self.repo = self.client.post(REPO_PATH, gen_repo())
+        self.repo = self.client.post(FILE_REPO_PATH, gen_repo())
         self.addCleanup(self.client.delete, self.repo['pulp_href'])
 
         for content in self.contents[:10]:  # slice is arbitrary upper bound
-            self.client.post(
-                self.repo['versions_href'],
-                {'add_content_units': [content['pulp_href']]}
-            )
+            modify_repo(self.cfg, self.repo, add_units=[content])
             sleep(1)
         self.repo = self.client.get(self.repo['pulp_href'])
 
@@ -568,7 +562,7 @@ class CreatedResourcesTaskTestCase(unittest.TestCase):
         cfg = config.get_config()
         client = api.Client(cfg, api.json_handler)
 
-        repo = client.post(REPO_PATH, gen_repo())
+        repo = client.post(FILE_REPO_PATH, gen_repo())
         self.addCleanup(client.delete, repo['pulp_href'])
 
         body = gen_file_remote()
@@ -632,18 +626,12 @@ class CreateRepoBaseVersionTestCase(unittest.TestCase):
         content = self.content.pop()
 
         # create repo version 2
-        self.client.post(
-            repo['versions_href'],
-            {'add_content_units': [content['pulp_href']]}
-        )
+        modify_repo(self.cfg, repo, add_units=[content])
         repo = self.client.get(repo['pulp_href'])
 
         # create repo version 3 from version 1
         base_version = get_versions(repo)[0]['pulp_href']
-        self.client.post(
-            repo['versions_href'],
-            {'base_version': base_version}
-        )
+        modify_repo(self.cfg, repo, base_version=base_version)
         repo = self.client.get(repo['pulp_href'])
 
         # assert that base_version of the version 3 points to version 1
@@ -694,14 +682,11 @@ class CreateRepoBaseVersionTestCase(unittest.TestCase):
         base_version = get_versions(repo)[0]['pulp_href']
 
         # create repo B
-        repo = self.client.post(REPO_PATH, gen_repo())
+        repo = self.client.post(FILE_REPO_PATH, gen_repo())
         self.addCleanup(self.client.delete, repo['pulp_href'])
 
         # create a version for repo B using repo A version 1 as base_version
-        self.client.post(
-            repo['versions_href'],
-            {'base_version': base_version}
-        )
+        modify_repo(self.cfg, repo, base_version=base_version)
         repo = self.client.get(repo['pulp_href'])
 
         # assert that base_version of repo B points to version 1 of repo A
@@ -742,13 +727,11 @@ class CreateRepoBaseVersionTestCase(unittest.TestCase):
         base_version = get_versions(repo)[0]['pulp_href']
         added_content = remove_created_key(self.content.pop())
         removed_content = choice(version_1_content)
-        self.client.post(
-            repo['versions_href'],
-            {
-                'base_version': base_version,
-                'add_content_units': [added_content['pulp_href']],
-                'remove_content_units': [removed_content['pulp_href']]
-            }
+        modify_repo(
+            self.cfg, repo,
+            base_version=base_version,
+            add_units=[added_content],
+            remove_units=[removed_content]
         )
         repo = self.client.get(repo['pulp_href'])
         version_2_content = [
@@ -777,18 +760,15 @@ class CreateRepoBaseVersionTestCase(unittest.TestCase):
            ``base_version``.
         3. Assert that an HTTP exception is raised.
         """
-        repo = self.client.post(REPO_PATH, gen_repo())
+        repo = self.client.post(FILE_REPO_PATH, gen_repo())
         self.addCleanup(self.client.delete, repo['pulp_href'])
 
         with self.assertRaises(HTTPError):
-            self.client.post(
-                repo['versions_href'],
-                {'base_version': utils.uuid4()}
-            )
+            modify_repo(self.cfg, repo, base_version=utils.uuid4())
 
     def create_sync_repo(self):
         """Create, and sync a repo."""
-        repo = self.client.post(REPO_PATH, gen_repo())
+        repo = self.client.post(FILE_REPO_PATH, gen_repo())
         self.addCleanup(self.client.delete, repo['pulp_href'])
 
         body = gen_file_remote(url=FILE_FIXTURE_MANIFEST_URL)
@@ -820,7 +800,7 @@ class UpdateRepoVersionTestCase(unittest.TestCase):
         remote = self.client.post(FILE_REMOTE_PATH, gen_file_remote())
         self.addCleanup(self.client.delete, remote['pulp_href'])
 
-        repo = self.client.post(REPO_PATH, gen_repo())
+        repo = self.client.post(FILE_REPO_PATH, gen_repo())
         self.addCleanup(self.client.delete, repo['pulp_href'])
 
         # create repo version
@@ -875,7 +855,7 @@ class FilterArtifactsTestCase(unittest.TestCase):
 
         For a repository with more than one version.
         """
-        repo = self.client.post(REPO_PATH, gen_repo())
+        repo = self.client.post(FILE_REPO_PATH, gen_repo())
         self.addCleanup(self.client.delete, repo['pulp_href'])
 
         for url in [FILE2_FIXTURE_MANIFEST_URL, FILE_FIXTURE_MANIFEST_URL]:
@@ -897,7 +877,7 @@ class FilterArtifactsTestCase(unittest.TestCase):
 
     def test_filter_invalid_repo_version(self):
         """Filter by invalid repository version."""
-        repo = self.client.post(REPO_PATH, gen_repo())
+        repo = self.client.post(FILE_REPO_PATH, gen_repo())
         self.addCleanup(self.client.delete, repo['pulp_href'])
         with self.assertRaises(HTTPError) as ctx:
             self.client.using_handler(api.json_handler).get(
@@ -915,7 +895,7 @@ class FilterArtifactsTestCase(unittest.TestCase):
         """Filter by valid repository version."""
         remote = self.client.post(FILE_REMOTE_PATH, gen_file_remote())
         self.addCleanup(self.client.delete, remote['pulp_href'])
-        repo = self.client.post(REPO_PATH, gen_repo())
+        repo = self.client.post(FILE_REPO_PATH, gen_repo())
         self.addCleanup(self.client.delete, repo['pulp_href'])
         sync(self.cfg, remote, repo)
         repo = self.client.get(repo['pulp_href'])
@@ -984,7 +964,7 @@ class DeleteRepoVersionResourcesTestCase(unittest.TestCase):
 
         Given the number of times to be synced.
         """
-        repo = self.client.post(REPO_PATH, gen_repo())
+        repo = self.client.post(FILE_REPO_PATH, gen_repo())
         self.addCleanup(self.client.delete, repo['pulp_href'])
 
         remote = self.client.post(FILE_REMOTE_PATH, gen_file_remote())
@@ -995,7 +975,7 @@ class DeleteRepoVersionResourcesTestCase(unittest.TestCase):
         return self.client.get(repo['pulp_href'])
 
 
-class ClearAllUnitstRepoVersionTestCase(unittest.TestCase):
+class ClearAllUnitsRepoVersionTestCase(unittest.TestCase):
     """Test clear of all units of a given repository version.
 
     This test targets the following issue:
@@ -1014,7 +994,7 @@ class ClearAllUnitstRepoVersionTestCase(unittest.TestCase):
 
     def setUp(self):
         """Create and sync a repository."""
-        self.repo = self.client.post(REPO_PATH, gen_repo())
+        self.repo = self.client.post(FILE_REPO_PATH, gen_repo())
         self.addCleanup(self.client.delete, self.repo['pulp_href'])
         remote = self.client.post(FILE_REMOTE_PATH, gen_file_remote())
         self.addCleanup(self.client.delete, remote['pulp_href'])
@@ -1024,11 +1004,13 @@ class ClearAllUnitstRepoVersionTestCase(unittest.TestCase):
     def test_add_and_clear_all_units(self):
         """Test addition and removal of all units for a given repository version."""
         content = choice(self.content)
-        self.client.post(
-            self.repo['versions_href'],
-            {'add_content_units': [content['pulp_href']], 'remove_content_units': ['*']},
+        modify_repo(
+            self.cfg, self.repo,
+            add_units=[content],
+            remove_units=['*']
         )
         self.repo = self.client.get(self.repo['pulp_href'])
+
         added_content = get_content(self.repo)[FILE_CONTENT_NAME]
         self.assertEqual(len(added_content), 1, added_content)
 
@@ -1039,16 +1021,17 @@ class ClearAllUnitstRepoVersionTestCase(unittest.TestCase):
     def test_clear_all_units_using_base_version(self):
         """Test clear all units using base version."""
         for content in self.content:
-            self.client.post(
-                self.repo['versions_href'], {'add_content_units': [content['pulp_href']]}
-            )
+            modify_repo(self.cfg, self.repo, add_units=[content])
+
         self.repo = self.client.get(self.repo['pulp_href'])
         base_version = get_versions(self.repo)[0]['pulp_href']
-        self.client.post(
-            self.repo['versions_href'],
-            {'base_version': base_version, 'remove_content_units': ['*']},
+
+        modify_repo(
+            self.cfg, self.repo,
+            base_version=base_version, remove_units=['*']
         )
         self.repo = self.client.get(self.repo['pulp_href'])
+
         content_last_version = get_content(self.repo)[FILE_CONTENT_NAME]
         self.assertEqual(len(content_last_version), 0, content_last_version)
 
@@ -1057,7 +1040,8 @@ class ClearAllUnitstRepoVersionTestCase(unittest.TestCase):
         added_content = sorted(
             [content['pulp_href'] for content in get_content(self.repo)[FILE_CONTENT_NAME]]
         )
-        self.client.post(self.repo['versions_href'], {'remove_content_units': ['*']})
+
+        modify_repo(self.cfg, self.repo, remove_units=['*'])
         self.repo = self.client.get(self.repo['pulp_href'])
         removed_content = sorted(
             [
@@ -1074,7 +1058,7 @@ class ClearAllUnitstRepoVersionTestCase(unittest.TestCase):
         added_content = choice(get_added_content(self.repo)[FILE_CONTENT_NAME])
         with self.assertRaises(HTTPError) as ctx:
             self.client.post(
-                self.repo['versions_href'],
+                self.repo['pulp_href'] + "modify/",
                 {'remove_content_units': ['*', added_content['pulp_href']]},
             )
         for key in ('content', 'units', '*'):

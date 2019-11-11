@@ -1,3 +1,4 @@
+from collections import defaultdict
 from importlib import import_module
 
 from django import apps
@@ -65,7 +66,7 @@ class PulpPluginAppConfig(apps.AppConfig):
         # Module containing urlpatterns
         self.urls_module = None
 
-        # Mapping of model names to viewsets (viewsets unrelated to models are excluded)
+        # Mapping of model names to viewset lists (viewsets unrelated to models are excluded)
         self.named_viewsets = None
         # Mapping of serializer names to serializers
         self.named_serializers = None
@@ -99,7 +100,7 @@ class PulpPluginAppConfig(apps.AppConfig):
     def import_viewsets(self):
         # circular import avoidance
         from pulpcore.app.viewsets import NamedModelViewSet
-        self.named_viewsets = {}
+        self.named_viewsets = defaultdict(list)
         if module_has_submodule(self.module, VIEWSETS_MODULE_NAME):
             # import the viewsets module and track any interesting viewsets
             viewsets_module_name = '{name}.{module}'.format(
@@ -112,7 +113,7 @@ class PulpPluginAppConfig(apps.AppConfig):
                     # gets registered in the named_viewsets registry.
                     if (obj is not NamedModelViewSet and issubclass(obj, NamedModelViewSet)):
                         model = obj.queryset.model
-                        self.named_viewsets[model] = obj
+                        self.named_viewsets[model].append(obj)
                 except TypeError:
                     # obj isn't a class, issubclass exploded but obj can be safely filtered out
                     continue

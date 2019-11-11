@@ -18,7 +18,7 @@ working directory setup, and database cleanup after encountering failures.
 
 .. code-block:: python
 
-     with RepositoryVersion.create(repository) as new_version:
+     with repository.new_version() as new_version:
 
         # add content manually
         new_version.add_content(content)
