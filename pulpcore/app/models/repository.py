@@ -32,8 +32,6 @@ class Repository(MasterModel):
 
         name (models.CharField): The repository name.
         description (models.TextField): An optional description.
-        plugin_managed (models.BooleanField): True if the plugin manages this repository and users
-            typically do not interact with it.
         last_version (models.PositiveIntegerField): A record of the last created version number.
             Used when a repository version is deleted so as not to create a new vesrion with the
             same version number.
@@ -47,7 +45,6 @@ class Repository(MasterModel):
     name = models.CharField(db_index=True, unique=True, max_length=255)
     description = models.TextField(null=True)
     last_version = models.PositiveIntegerField(default=0)
-    plugin_managed = models.BooleanField(default=False)
     content = models.ManyToManyField('Content', through='RepositoryContent',
                                      related_name='repositories')
 
@@ -83,7 +80,7 @@ class Repository(MasterModel):
                 # now add any content that's in the base_version but not in version
                 version.add_content(base_version.content.exclude(pk__in=version.content))
 
-            if Task.current and not self.plugin_managed:
+            if Task.current:
                 resource = CreatedResource(content_object=version)
                 resource.save()
             return version

@@ -51,7 +51,7 @@ class RepositoryViewSet(NamedModelViewSet,
                         mixins.RetrieveModelMixin,
                         mixins.ListModelMixin,
                         mixins.DestroyModelMixin):
-    queryset = Repository.objects.exclude(plugin_managed=True).order_by("name")
+    queryset = Repository.objects.all().order_by("name")
     serializer_class = RepositorySerializer
     endpoint_name = 'repositories'
     router_lookup = 'repository'
