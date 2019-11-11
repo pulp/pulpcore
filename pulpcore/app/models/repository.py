@@ -410,14 +410,14 @@ class RepositoryVersion(Model):
         return Content.objects.filter(version_memberships__in=relationships)
 
     @property
-    def arifacts(self):
+    def artifacts(self):
         """
         Returns a set of artifacts for a repository version.
 
         Returns:
             django.db.models.QuerySet: The artifacts that are contained within this version.
         """
-        Artifact.objects.filter(content__pk__in=self.content())
+        Artifact.objects.filter(content__pk__in=self.content)
 
     def added(self):
         """
