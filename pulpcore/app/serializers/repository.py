@@ -25,12 +25,6 @@ class RepositorySerializer(ModelSerializer):
         help_text=_('A unique name for this repository.'),
         validators=[UniqueValidator(queryset=models.Repository.objects.all())]
     )
-    plugin_managed = serializers.BooleanField(
-        help_text=_(
-            'True if the plugin manages this repository, users typically do not interact with it.'
-        ),
-        read_only=True,
-    )
     description = serializers.CharField(
         help_text=_('An optional description.'),
         required=False,
@@ -40,7 +34,7 @@ class RepositorySerializer(ModelSerializer):
     class Meta:
         model = models.Repository
         fields = ModelSerializer.Meta.fields + ('versions_href', 'latest_version_href',
-                                                'name', 'plugin_managed', 'description')
+                                                'name', 'description')
 
 
 class RemoteSerializer(ModelSerializer):
