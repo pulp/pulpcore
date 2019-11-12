@@ -1,6 +1,5 @@
 from gettext import gettext as _
 
-from django.core import validators
 from django.db.models import Q
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
@@ -104,13 +103,7 @@ class BaseDistributionSerializer(ModelSerializer):
     base_path = serializers.CharField(
         help_text=_('The base (relative) path component of the published url. Avoid paths that \
                     overlap with other distribution base paths (e.g. "foo" and "foo/bar")'),
-        validators=[validators.MaxLengthValidator(
-            models.BaseDistribution._meta.get_field('base_path').max_length,
-            message=_('`base_path` length must be less than {} characters').format(
-                models.BaseDistribution._meta.get_field('base_path').max_length
-            )),
-            UniqueValidator(queryset=models.BaseDistribution.objects.all()),
-        ]
+        validators=[UniqueValidator(queryset=models.BaseDistribution.objects.all())]
     )
     base_url = BaseURLField(
         source='base_path', read_only=True,
@@ -124,12 +117,7 @@ class BaseDistributionSerializer(ModelSerializer):
     )
     name = serializers.CharField(
         help_text=_('A unique name. Ex, `rawhide` and `stable`.'),
-        validators=[validators.MaxLengthValidator(
-            models.BaseDistribution._meta.get_field('name').max_length,
-            message=_('`name` length must be less than {} characters').format(
-                models.BaseDistribution._meta.get_field('name').max_length
-            )),
-            UniqueValidator(queryset=models.BaseDistribution.objects.all())]
+        validators=[UniqueValidator(queryset=models.BaseDistribution.objects.all())]
     )
 
     class Meta:

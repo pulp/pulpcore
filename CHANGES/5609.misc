@@ -1,0 +1,1 @@
+Database column types using CharField were converted to TextField. This was a restriction leftover from MySQL support which is no longer relevant.

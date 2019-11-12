@@ -30,7 +30,7 @@ class Repository(MasterModel):
 
     Fields:
 
-        name (models.CharField): The repository name.
+        name (models.TextField): The repository name.
         description (models.TextField): An optional description.
         last_version (models.PositiveIntegerField): A record of the last created version number.
             Used when a repository version is deleted so as not to create a new vesrion with the
@@ -42,7 +42,7 @@ class Repository(MasterModel):
     """
     TYPE = 'repository'
 
-    name = models.CharField(db_index=True, unique=True, max_length=255)
+    name = models.TextField(db_index=True, unique=True)
     description = models.TextField(null=True)
     last_version = models.PositiveIntegerField(default=0)
     content = models.ManyToManyField('Content', through='RepositoryContent',
@@ -127,7 +127,7 @@ class Remote(MasterModel):
 
     Fields:
 
-        name (models.CharField): The remote name.
+        name (models.TextField): The remote name.
         url (models.TextField): The URL of an external content source.
         ca_cert (models.FileField): A PEM encoded CA certificate used to validate the
             server certificate presented by the external source.
@@ -164,7 +164,7 @@ class Remote(MasterModel):
                    'future requests for that same content to have to be downloaded again.')
     )
 
-    name = models.CharField(db_index=True, unique=True, max_length=255)
+    name = models.TextField(db_index=True, unique=True)
 
     url = models.TextField()
 

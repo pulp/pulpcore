@@ -92,7 +92,7 @@ class ProgressReport(Model):
 
         message (models.TextField): short message for the progress update, typically
             shown to the user. (required)
-        code (models.CharField): identifies the type of progress report
+        code (models.TextField): identifies the type of progress report
         state (models.TextField): The state of the progress update. Defaults to `WAITING`. This
             field uses a limited set of choices of field states. See `STATES` for possible states.
         total: (models.IntegerField) The total count of items to be handled

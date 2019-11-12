@@ -14,11 +14,11 @@ class FileSystemExporter(MasterModel):
 
     Fields:
 
-        name (models.CharField): The exporter unique name.
+        name (models.TextField): The exporter unique name.
         path (models.TextField): a full path where the export will go.
     """
 
-    name = models.CharField(db_index=True, unique=True, max_length=255)
+    name = models.TextField(db_index=True, unique=True)
     path = models.TextField()
 
     def _export_to_file_system(self, content_artifacts):

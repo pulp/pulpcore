@@ -35,12 +35,12 @@ class ContentAppStatus(Model):
 
     Fields:
 
-        name (models.CharField): The name of the content app
+        name (models.TextField): The name of the content app
         last_heartbeat (models.DateTimeField): A timestamp of this worker's last heartbeat
     """
     objects = ContentAppStatusManager()
 
-    name = models.CharField(db_index=True, unique=True, max_length=255)
+    name = models.TextField(db_index=True, unique=True)
     last_heartbeat = models.DateTimeField(auto_now=True)
 
     @property
