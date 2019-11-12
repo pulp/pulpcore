@@ -129,12 +129,12 @@ class Remote(MasterModel):
 
         name (models.CharField): The remote name.
         url (models.TextField): The URL of an external content source.
-        ssl_ca_certificate (models.FileField): A PEM encoded CA certificate used to validate the
+        ca_cert (models.FileField): A PEM encoded CA certificate used to validate the
             server certificate presented by the external source.
-        ssl_client_certificate (models.FileField): A PEM encoded client certificate used
+        client_cert (models.FileField): A PEM encoded client certificate used
             for authentication.
-        ssl_client_key (models.FileField): A PEM encoded private key used for authentication.
-        ssl_validation (models.BooleanField): If True, SSL peer validation must be performed.
+        client_key (models.FileField): A PEM encoded private key used for authentication.
+        tls_validation (models.BooleanField): If True, TLS peer validation must be performed.
         proxy_url (models.TextField): The optional proxy URL.
             Format: scheme://user:password@host:port
         username (models.TextField): The username to be used for authentication when syncing.
@@ -168,10 +168,10 @@ class Remote(MasterModel):
 
     url = models.TextField()
 
-    ssl_ca_certificate = models.TextField(null=True)
-    ssl_client_certificate = models.TextField(null=True)
-    ssl_client_key = models.TextField(null=True)
-    ssl_validation = models.BooleanField(default=True)
+    ca_cert = models.TextField(null=True)
+    client_cert = models.TextField(null=True)
+    client_key = models.TextField(null=True)
+    tls_validation = models.BooleanField(default=True)
 
     username = models.TextField(null=True)
     password = models.TextField(null=True)
