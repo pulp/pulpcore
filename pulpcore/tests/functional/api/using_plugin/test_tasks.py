@@ -8,12 +8,17 @@ from pulp_smash.pulp3.constants import (
     P3_TASK_END_STATES,
     TASKS_PATH,
 )
-from pulp_smash.pulp3.utils import gen_repo, gen_distribution
+from pulp_smash.pulp3.utils import gen_repo, gen_distribution, get_content, modify_repo, sync
 from requests import HTTPError
 
-from pulpcore.tests.functional.api.using_plugin.constants import FILE_REPO_PATH
+from pulpcore.tests.functional.api.using_plugin.constants import (
+    FILE_CONTENT_NAME,
+    FILE_REMOTE_PATH,
+    FILE_REPO_PATH
+)
 from pulpcore.tests.functional.utils import set_up_module as setUpModule  # noqa:F401
 from pulpcore.tests.functional.utils import skip_if
+from pulpcore.tests.functional.api.using_plugin.utils import gen_file_remote
 
 _DYNAMIC_TASKS_ATTRS = ('finished_at',)
 """Task attributes that are dynamically set by Pulp, not set by a user."""
@@ -180,37 +185,49 @@ class FilterTaskCreatedResourcesTestCase(unittest.TestCase):
         )
 
 
-class FilterTaskReservedResourcesTestCase(unittest.TestCase):
+class FilterTaskResourcesTestCase(unittest.TestCase):
     """Perform filtering over reserved resources.
 
     This test targets the following issue:
     * `Pulp #5120 <https://pulp.plan.io/issues/5120>`_
+
+    Perform filtering for contents of created resources.
+
+    This test targets the following issue:
+    * `Pulp #4931 <https://pulp.plan.io/issues/4931>`_
     """
 
     @classmethod
     def setUpClass(cls):
         """Create class-wide variables."""
-        cls.client = api.Client(config.get_config(), api.page_handler)
-
+        cls.cfg = config.get_config()
+        cls.client = api.Client(cls.cfg, api.page_handler)
+        cls.remote = cls.client.post(FILE_REMOTE_PATH, gen_file_remote())
         cls.repository = cls.client.post(FILE_REPO_PATH, gen_repo())
+        response = sync(cls.cfg, cls.remote, cls.repository)
+        cls.created_repo_version = response['pulp_href']
+        cls.repository = cls.client.get(cls.repository['pulp_href'])
+        for file_content in get_content(cls.repository)[FILE_CONTENT_NAME]:
+            modify_repo(cls.cfg, cls.repository, remove_units=[file_content])
         attrs = {'description': utils.uuid4()}
         response = cls.client.patch(cls.repository['pulp_href'], attrs)
-        cls.task = cls.client.get(response['task'])
+        cls.repo_update_task = cls.client.get(response['task'])
 
     @classmethod
     def tearDownClass(cls):
         """Clean created resources."""
         cls.client.delete(cls.repository['pulp_href'])
-        cls.client.delete(cls.task['pulp_href'])
+        cls.client.delete(cls.remote['pulp_href'])
+        cls.client.delete(cls.repo_update_task['pulp_href'])
 
     def test_01_filter_tasks_by_reserved_resources(self):
         """Filter all tasks by a particular reserved resource."""
         filter_params = {
-            'reserved_resources_record': self.task['reserved_resources_record'][0]
+            'reserved_resources_record': self.repo_update_task['reserved_resources_record'][0]
         }
         results = self.client.get(TASKS_PATH, params=filter_params)
-        self.assertEqual(len(results), 1, results)
-        self.assertEqual(self.task, results[0], results)
+        self.assertEqual(len(results), 5, results)
+        self.assertEqual(self.repo_update_task, results[0], results)
 
     def test_02_filter_tasks_by_non_existing_resources(self):
         """Filter all tasks by a non-existing reserved resource."""
@@ -220,41 +237,16 @@ class FilterTaskReservedResourcesTestCase(unittest.TestCase):
         with self.assertRaises(HTTPError):
             self.client.get(TASKS_PATH, params=filter_params)
 
-
-class FilterTaskCreatedResourcesContentTestCase(unittest.TestCase):
-    """Perform filtering for contents of created resources.
-
-    This test targets the following issue:
-
-    * `Pulp #4931 <https://pulp.plan.io/issues/4931>`_
-    """
-
-    @classmethod
-    def setUpClass(cls):
-        """Create class-wide variables."""
-        cls.cfg = config.get_config()
-        cls.client = api.Client(config.get_config(), api.page_handler)
-
-        cls.repository = cls.client.post(FILE_REPO_PATH, gen_repo())
-        response = cls.client.post(cls.repository['pulp_href'] + "modify/")
-        cls.task = cls.client.get(response['task'])
-
-    @classmethod
-    def tearDownClass(cls):
-        """Clean created resources."""
-        cls.client.delete(cls.repository['pulp_href'])
-        cls.client.delete(cls.task['pulp_href'])
-
-    def test_01_filter_tasks_by_created_resources(self):
+    def test_03_filter_tasks_by_created_resources(self):
         """Filter all tasks by a particular created resource."""
         filter_params = {
-            'created_resources': self.task['created_resources'][0]
+            'created_resources': self.created_repo_version
         }
         results = self.client.get(TASKS_PATH, params=filter_params)
         self.assertEqual(len(results), 1, results)
-        self.assertEqual(self.task, results[0], results)
+        self.assertEqual([self.created_repo_version], results[0]['created_resources'], results)
 
-    def test_02_filter_tasks_by_non_existing_resources(self):
+    def test_04_filter_tasks_by_non_existing_resources(self):
         """Filter all tasks by a non-existing reserved resource."""
         filter_params = {
             'created_resources': 'a_resource_should_be_never_named_like_this'

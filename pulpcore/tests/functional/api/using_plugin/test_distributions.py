@@ -7,7 +7,15 @@ from functools import reduce
 from urllib.parse import urljoin
 
 from pulp_smash import api, config, utils
-from pulp_smash.pulp3.utils import gen_distribution, gen_repo, get_added_content, get_versions, sync
+from pulp_smash.pulp3.utils import (
+    gen_distribution,
+    gen_repo,
+    get_added_content,
+    get_content,
+    get_versions,
+    modify_repo,
+    sync
+)
 from requests.exceptions import HTTPError
 
 from pulpcore.tests.functional.api.using_plugin.constants import (
@@ -75,8 +83,11 @@ class CRUDPublicationDistributionTestCase(unittest.TestCase):
             self.client.post(FILE_REMOTE_PATH, gen_file_remote())
         )
         # create 3 repository versions
-        for _ in range(3):
-            sync(self.cfg, self.remote, self.repo)
+        sync(self.cfg, self.remote, self.repo)
+        self.repo = self.client.get(self.repo['pulp_href'])
+        for file_content in get_content(self.repo)[FILE_CONTENT_NAME]:
+            modify_repo(self.cfg, self.repo, remove_units=[file_content])
+
         self.repo = self.client.get(self.repo['pulp_href'])
 
         versions = get_versions(self.repo)

@@ -256,9 +256,9 @@ class SyncChangeRepoVersionTestCase(unittest.TestCase):
         Do the following:
 
         1. Create a repository, and a remote.
-        2. Sync the repository an arbitrary number of times.
-        3. Verify that the repository version is equal to the previous number
-           of syncs.
+        2. Sync the repository.
+        3. Remove all content - one by one.
+        3. Verify that the repository version is equal to the number of operations.
         """
         cfg = config.get_config()
         client = api.Client(cfg, api.json_handler)
@@ -270,14 +270,14 @@ class SyncChangeRepoVersionTestCase(unittest.TestCase):
         remote = client.post(FILE_REMOTE_PATH, body)
         self.addCleanup(client.delete, remote['pulp_href'])
 
-        number_of_syncs = randint(1, 10)
-        for _ in range(number_of_syncs):
-            sync(cfg, remote, repo)
-
+        sync(cfg, remote, repo)
+        repo = client.get(repo['pulp_href'])
+        for file_content in get_content(repo)[FILE_CONTENT_NAME]:
+            modify_repo(cfg, repo, remove_units=[file_content])
         repo = client.get(repo['pulp_href'])
         path = urlsplit(repo['latest_version_href']).path
         latest_repo_version = int(path.split('/')[-2])
-        self.assertEqual(latest_repo_version, number_of_syncs)
+        self.assertEqual(latest_repo_version, 4)
 
 
 class AddRemoveRepoVersionTestCase(unittest.TestCase):

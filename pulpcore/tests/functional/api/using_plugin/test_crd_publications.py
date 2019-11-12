@@ -4,10 +4,11 @@ import unittest
 from itertools import permutations
 
 from pulp_smash import api, config
-from pulp_smash.pulp3.utils import gen_distribution, gen_repo, sync
+from pulp_smash.pulp3.utils import gen_distribution, gen_repo, get_content, modify_repo, sync
 from requests.exceptions import HTTPError
 
 from pulpcore.tests.functional.api.using_plugin.constants import (
+    FILE_CONTENT_NAME,
     FILE_DISTRIBUTION_PATH,
     FILE_PUBLICATION_PATH,
     FILE_REMOTE_PATH,
@@ -181,7 +182,9 @@ class PublicationRepositoryParametersTestCase(unittest.TestCase):
 
     def test_create_only_using_repoversion(self):
         """Create a publication only using repository version."""
-        repo = self.create_sync_repo(3)
+        repo = self.create_sync_repo()
+        for file_content in get_content(repo)[FILE_CONTENT_NAME]:
+            modify_repo(self.cfg, repo, remove_units=[file_content])
         version_href = self.client.get(repo['versions_href'])[1]['pulp_href']
         publication = create_file_publication(self.cfg, repo, version_href)
         self.addCleanup(self.client.delete, publication['pulp_href'])
@@ -213,7 +216,7 @@ class PublicationRepositoryParametersTestCase(unittest.TestCase):
                 ctx.exception.response
             )
 
-    def create_sync_repo(self, number_syncs=1):
+    def create_sync_repo(self):
         """Create and sync a repository.
 
         Given the number of times to be synced.
@@ -224,6 +227,5 @@ class PublicationRepositoryParametersTestCase(unittest.TestCase):
         remote = self.client.post(FILE_REMOTE_PATH, gen_file_remote())
         self.addCleanup(self.client.delete, remote['pulp_href'])
 
-        for _ in range(number_syncs):
-            sync(self.cfg, remote, repo)
+        sync(self.cfg, remote, repo)
         return self.client.get(repo['pulp_href'])
