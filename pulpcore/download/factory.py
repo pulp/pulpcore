@@ -80,9 +80,9 @@ class DownloaderFactory:
         tcp_conn_opts = {'force_close': True}
 
         sslcontext = None
-        if self._remote.ssl_ca_certificate:
-            sslcontext = ssl.create_default_context(cadata=self._remote.ssl_ca_certificate)
-        if self._remote.ssl_client_key and self._remote.ssl_client_certificate:
+        if self._remote.ca_cert:
+            sslcontext = ssl.create_default_context(cadata=self._remote.ca_cert)
+        if self._remote.client_key and self._remote.client_cert:
             if not sslcontext:
                 sslcontext = ssl.create_default_context()
             with NamedTemporaryFile() as key_file:
@@ -95,7 +95,7 @@ class DownloaderFactory:
                         cert_file.name,
                         key_file.name
                     )
-        if not self._remote.ssl_validation:
+        if not self._remote.tls_validation:
             if not sslcontext:
                 sslcontext = ssl.create_default_context()
             sslcontext.check_hostname = False

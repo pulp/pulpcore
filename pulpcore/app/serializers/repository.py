@@ -50,7 +50,7 @@ class RemoteSerializer(ModelSerializer):
     url = serializers.CharField(
         help_text='The URL of an external content source.',
     )
-    ssl_ca_certificate = SecretCharField(
+    ca_cert = SecretCharField(
         help_text='A string containing the PEM encoded CA certificate used to validate the server '
                   'certificate presented by the remote server. All new line characters must be '
                   'escaped. Returns SHA256 sum on GET.',
@@ -58,21 +58,21 @@ class RemoteSerializer(ModelSerializer):
         required=False,
         allow_null=True,
     )
-    ssl_client_certificate = SecretCharField(
+    client_cert = SecretCharField(
         help_text='A string containing the PEM encoded client certificate used for authentication. '
                   'All new line characters must be escaped. Returns SHA256 sum on GET.',
         write_only=False,
         required=False,
         allow_null=True,
     )
-    ssl_client_key = SecretCharField(
+    client_key = SecretCharField(
         help_text='A PEM encoded private key used for authentication. Returns SHA256 sum on GET.',
         write_only=False,
         required=False,
         allow_null=True,
     )
-    ssl_validation = serializers.BooleanField(
-        help_text='If True, SSL peer validation must be performed.',
+    tls_validation = serializers.BooleanField(
+        help_text='If True, TLS peer validation must be performed.',
         required=False,
     )
     proxy_url = serializers.CharField(
@@ -113,8 +113,8 @@ class RemoteSerializer(ModelSerializer):
         abstract = True
         model = models.Remote
         fields = ModelSerializer.Meta.fields + (
-            'name', 'url', 'ssl_ca_certificate', 'ssl_client_certificate', 'ssl_client_key',
-            'ssl_validation', 'proxy_url', 'username', 'password', 'pulp_last_updated',
+            'name', 'url', 'ca_cert', 'client_cert', 'client_key',
+            'tls_validation', 'proxy_url', 'username', 'password', 'pulp_last_updated',
             'download_concurrency', 'policy'
         )
 
