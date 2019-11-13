@@ -147,6 +147,7 @@ class PaginationTestCase(unittest.TestCase):
             len(collected_results), self.number_to_create, collected_results
         )
 
+    @unittest.SkipTest
     def test_skip_pages(self):
         """Test jump from page 1 to page 3 (skipping page 2).
 

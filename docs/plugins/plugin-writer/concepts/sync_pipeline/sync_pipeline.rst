@@ -36,8 +36,12 @@ following order:
    3. :class:`pulpcore.plugin.stages.ArtifactDownloader`
    4. :class:`pulpcore.plugin.stages.ArtifactSaver`
    5. :class:`pulpcore.plugin.stages.ContentSaver`
-   6. :class:`pulpcore.plugin.stages.RemoveDuplicates`
+   6. :class:`pulpcore.plugin.stages.RemoteArtifactSaver`
    7. :class:`pulpcore.plugin.stages.ResolveContentFutures`
+   8. :class:`pulpcore.plugin.stages.ContentAssociation`
+
+If the `mirror=True` optional parameter is passed to `DeclarativeVersion` the pipeline also runs
+:class:`pulpcore.plugin.stages.ContentUnassociation` at the end.
 
 On-demand synchronizing
 -----------------------

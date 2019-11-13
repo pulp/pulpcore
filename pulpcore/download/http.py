@@ -71,24 +71,26 @@ class HttpDownloader(BaseDownloader):
     For more information on `aiohttp.BasicAuth` objects, see their docs:
     http://aiohttp.readthedocs.io/en/stable/client_reference.html#aiohttp.BasicAuth
 
-    Synchronous Download:
-       >>> downloader = HttpDownloader('http://example.com/')
-       >>> result = downloader.fetch()
+    Synchronous Download::
 
-    Parallel Download:
-        >>> download_coroutines = [
-        >>>     HttpDownloader('http://example.com/').run(),
-        >>>     HttpDownloader('http://pulpproject.org/').run(),
-        >>> ]
-        >>>
-        >>> loop = asyncio.get_event_loop()
-        >>> done, not_done = loop.run_until_complete(asyncio.wait(download_coroutines))
-        >>>
-        >>> for task in done:
-        >>>     try:
-        >>>         task.result()  # This is a DownloadResult
-        >>>     except Exception as error:
-        >>>         pass  # fatal exceptions are raised by result()
+        downloader = HttpDownloader('http://example.com/')
+        result = downloader.fetch()
+
+    Parallel Download::
+
+        download_coroutines = [
+            HttpDownloader('http://example.com/').run(),
+            HttpDownloader('http://pulpproject.org/').run(),
+        ]
+
+        loop = asyncio.get_event_loop()
+        done, not_done = loop.run_until_complete(asyncio.wait(download_coroutines))
+
+        for task in done:
+            try:
+                task.result()  # This is a DownloadResult
+            except Exception as error:
+                pass  # fatal exceptions are raised by result()
 
     The HTTPDownloaders contain automatic retry logic if the server responds with HTTP 429 response.
     The coroutine will automatically retry 10 times with exponential backoff before allowing a

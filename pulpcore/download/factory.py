@@ -31,10 +31,11 @@ class DownloaderFactory:
     any given protocol. This allows the user to specify custom, subclassed downloaders to be built
     by the factory.
 
-    Usage:
-        >>> the_factory = DownloaderFactory(remote)
-        >>> downloader = the_factory.build(url_a)
-        >>> result = downloader.fetch()  # 'result' is a DownloadResult
+    Usage::
+
+        the_factory = DownloaderFactory(remote)
+        downloader = the_factory.build(url_a)
+        result = downloader.fetch()  # 'result' is a DownloadResult
 
     For http and https urls, in addition to the remote settings, non-default timing values are used.
     Specifically, the "total" timeout is set to None and the "sock_connect" and "sock_read" are both

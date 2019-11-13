@@ -1,5 +1,3 @@
-from django.db.models import Q
-
 from pulpcore.plugin.models import Content, ProgressReport
 
 from .api import Stage
@@ -85,51 +83,3 @@ class ContentUnassociation(Stage):
                 pb.save()
 
                 await self.put(queryset_to_unassociate)
-
-
-class RemoveDuplicates(Stage):
-    """
-    Stage allows plugins to remove content that would break repository uniqueness constraints.
-
-    This stage is expected to be added by the
-    :class:`~pulpcore.plugin.stages.DeclarativeVersion`. See that class for example usage.
-    """
-
-    def __init__(self, new_version, model, field_names):
-        """
-        Args:
-            new_version (:class:`~pulpcore.plugin.models.RepositoryVersion`): The repo version this
-                stage unassociates content from.
-            model (:class:`pulpcore.plugin.models.Content`): Subclass of a Content model to
-                indicate which content type to operate on.
-            field_names (list): List of field names to ensure uniqueness within a repository
-                version.
-        """
-        self.new_version = new_version
-        self.model = model
-        self.field_names = field_names
-
-    async def run(self):
-        """
-        The coroutine for this stage.
-
-        Returns:
-            The coroutine for this stage.
-        """
-        async for batch in self.batches():
-            rm_q = Q()
-            for d_content in batch:
-                if isinstance(d_content.content, self.model):
-                    unit_q_dict = {
-                        field: getattr(d_content.content, field) for field in self.field_names
-                    }
-                    # Don't remove *this* object if it is already in the repository version.
-                    not_this = ~Q(pk=d_content.content.pk)
-                    dupe = Q(**unit_q_dict)
-                    rm_q |= Q(dupe & not_this)
-            if rm_q:
-                queryset_to_unassociate = self.model.objects.filter(rm_q)
-                self.new_version.remove_content(queryset_to_unassociate)
-
-            for d_content in batch:
-                await self.put(d_content)
