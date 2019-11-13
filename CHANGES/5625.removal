@@ -1,3 +1,0 @@
-The /pulp/api/v3/repositories/ endpoint has been removed and Repositories have made a "typed" object. They now live at /pulp/api/v3/repositories/<plugin>/<type>, e.g. /repositories/file/file/.
-
-The convention for sync is that it will now be performed by POSTing to {repo_href}/sync/ remote={remote_href} instead of by POSTING to {remote_href}/sync/ repository={repo_href}. The latter convention will break due to the aforementioned change.
