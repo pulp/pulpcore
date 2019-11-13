@@ -1,4 +1,4 @@
-Renamed the Content.repo_key to be Content.repo_unit_key. Also the calling of `RemoveDuplicates`
+Renamed the Content.repo_key to be Content.repo_key_fields. Also the calling of `remove_duplicates`
 no longer happens in `RepositoryVersion.add_content` and instead is intended for plugins to call
 from `Repository.finalize_new_version(new_version)`. Also the `pulpcore.plugin.RemoveDuplicates`
 Stage was removed.

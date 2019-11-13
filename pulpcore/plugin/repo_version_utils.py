@@ -22,10 +22,6 @@ def remove_duplicates(repository_version):
     a `repo_key_fields` attribute with the field names to be compared. If all `repo_key_fields`
     contain the same value for two content units, they are considered "repository duplicates".
 
-    After instantiating `RemoveDuplicates` call it with the `run()` method and pass in the
-    :class:`~pulpcore.plugin.models.RepositoryVersion` to be checked and possibly modified as a
-    parameter to `run()`.
-
     Args:
         repository_version: The :class:`~pulpcore.plugin.models.RepositoryVersion` to be checked
             and possibly modified.
