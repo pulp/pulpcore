@@ -1,0 +1,1 @@
+Delete the repository version if an exception is raised during finalize_new_version().
