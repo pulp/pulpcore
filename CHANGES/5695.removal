@@ -1,2 +1,0 @@
-Renamed ssl_ca_certificate to ca_cert, ssl_client_certificate to client_cert, ssl_client_key to
-client_key, and ssl_validation to tls_validation.

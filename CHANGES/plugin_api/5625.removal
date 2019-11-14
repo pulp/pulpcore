@@ -1,5 +1,0 @@
-models.RepositoryVersion.create() is no longer available, it has been replaced by {repository instance}.new_version().
-
-The convention for sync is that it will now be performed by POSTing to {repo_href}/sync/ remote={remote_href} instead of by POSTING to {remote_href}/sync/ repository={repo_href}. The latter will break due to becoming a typed resource, so plugins will need to adjust their code for the former convention.
-
-Make repositories "typed". Plugin writers need to subclass the Repository model, viewset, and serializer, as well as the RepositoryVersion viewset (just the viewset). They should also remove the /sync/ endpoint from their remote viewset and place it on the repository viewset.
