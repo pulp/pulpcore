@@ -80,7 +80,7 @@ def add_and_remove(repository_pk, add_content_units, remove_content_units, base_
         base_version_pk (int): the primary key for a RepositoryVersion whose content will be used
             as the initial set of content for our new RepositoryVersion
     """
-    repository = models.Repository.objects.get(pk=repository_pk)
+    repository = models.Repository.objects.get(pk=repository_pk).cast()
 
     if base_version_pk:
         base_version = models.RepositoryVersion.objects.get(pk=base_version_pk)
