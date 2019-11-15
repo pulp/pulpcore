@@ -147,9 +147,13 @@ class MasterModel(Model, metaclass=MasterModelMeta):
             return super().__str__()
 
         try:
-            return '<{} (pulp_type={}): {}>'.format(self._meta.object_name, cast.TYPE, cast.name)
+            return '<{} (pulp_type={}): {}>'.format(self._meta.object_name,
+                                                    cast.pulp_type,
+                                                    cast.name)
         except AttributeError:
-            return '<{} (pulp_type={}): pk={}>'.format(self._meta.object_name, cast.TYPE, cast.pk)
+            return '<{} (pulp_type={}): pk={}>'.format(self._meta.object_name,
+                                                       cast.pulp_type,
+                                                       cast.pk)
 
 
 # Add properties to model _meta info to support master/detail models
