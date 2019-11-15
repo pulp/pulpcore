@@ -1,0 +1,1 @@
+Fix the pulp_type field output in __str__ for MasterModels.
