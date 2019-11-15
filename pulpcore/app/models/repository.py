@@ -509,7 +509,7 @@ class RepositoryVersion(Model):
     def next(self):
         """
         Returns:
-            pulpcore.app.models.RepositoryVersion: The next RepositoryVersion with the same
+            pulpcore.app.models.RepositoryVersion: The next complete RepositoryVersion for the same
                 repository.
         Raises:
             RepositoryVersion.DoesNotExist: if there is not a RepositoryVersion for the same
@@ -518,6 +518,22 @@ class RepositoryVersion(Model):
         try:
             return self.repository.versions.exclude(complete=False).filter(
                 number__gt=self.number).order_by('number')[0]
+        except IndexError:
+            raise self.DoesNotExist
+
+    def previous(self):
+        """
+        Returns:
+            pulpcore.app.models.RepositoryVersion: The previous complete RepositoryVersion for the
+                same repository.
+
+        Raises:
+            RepositoryVersion.DoesNotExist: if there is not a RepositoryVersion for the same
+                repository and with a lower "number".
+        """
+        try:
+            return self.repository.versions.exclude(complete=False).filter(
+                number__lt=self.number).order_by('-number')[0]
         except IndexError:
             raise self.DoesNotExist
 
