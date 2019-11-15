@@ -629,6 +629,12 @@ class RepositoryVersion(Model):
             self.delete()
         else:
             self.repository.finalize_new_version(self)
+            # remove any records which sync added and finalize removed
+            RepositoryContent.objects.filter(
+                repository=self.repository,
+                version_added=self.version,
+                version_removed=self.version
+            ).delete()
             no_change = not self.added() and not self.removed()
             if no_change:
                 self.delete()
