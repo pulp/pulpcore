@@ -475,13 +475,14 @@ class RepositoryVersion(Model):
 
         repo_content = []
         for content_pk in content.exclude(pk__in=self.content).values_list('pk', flat=True):
-            repo_content.append(
-                RepositoryContent(
-                    repository=self.repository,
-                    content_id=content_pk,
-                    version_added=self
+            if content_pk:
+                repo_content.append(
+                    RepositoryContent(
+                        repository=self.repository,
+                        content_id=content_pk,
+                        version_added=self
+                    )
                 )
-            )
 
         RepositoryContent.objects.bulk_create(repo_content)
 
