@@ -138,6 +138,9 @@ created_resources = monitor_task(repo_version_response.task)
 
 repository_version_2 = @repoversions_api.read(created_resources[0])
 
+# List all the repository versions
+@repoversions_api.list(file_repository.pulp_href)
+
 # Create a publication from the latest version of the repository
 publish_data = PulpFileClient::FileFilePublication.new({repository: file_repository.pulp_href})
 publish_response = @filepublications_api.create(publish_data)

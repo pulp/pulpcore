@@ -161,6 +161,9 @@ created_resources = monitor_task(repo_version_response.task)
 repository_version_2 = filerepoversions.read(created_resources[0])
 pprint(repository_version_2)
 
+# List all the repository versions
+filerepoversions.list(repository.pulp_href)
+
 # Create a publication from the latest version of the repository
 publish_data = FileFilePublication(repository=repository.pulp_href)
 publish_response = filepublications.create(publish_data)
