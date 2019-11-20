@@ -9,7 +9,7 @@ from drf_yasg.inspectors import SwaggerAutoSchema
 from drf_yasg.openapi import Parameter
 from drf_yasg.utils import filter_none, force_real_str
 
-from pulpcore.app.viewsets import RepositoryVersionViewSet
+from pulpcore.app.models import RepositoryVersion
 
 
 class Paths(openapi.SwaggerDict):
@@ -106,7 +106,7 @@ class PulpOpenAPISchemaGenerator(OpenAPISchemaGenerator):
                             resource_model = view.queryset.model
                         resource_name = self.get_parameter_name(resource_model)
                         prefix_ = None
-                        if issubclass(view_cls, RepositoryVersionViewSet):
+                        if issubclass(resource_model, RepositoryVersion):
                             prefix_ = view_cls.parent_viewset.endpoint_name
                         param_name = self.get_parameter_slug_from_model(resource_model, prefix_)
                         if resource_path in resources:
