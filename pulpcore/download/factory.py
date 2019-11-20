@@ -87,10 +87,10 @@ class DownloaderFactory:
             if not sslcontext:
                 sslcontext = ssl.create_default_context()
             with NamedTemporaryFile() as key_file:
-                key_file.write(bytes(self._remote.ssl_client_key, 'utf-8'))
+                key_file.write(bytes(self._remote.client_key, 'utf-8'))
                 key_file.flush()
                 with NamedTemporaryFile() as cert_file:
-                    cert_file.write(bytes(self._remote.ssl_client_certificate, 'utf-8'))
+                    cert_file.write(bytes(self._remote.client_cert, 'utf-8'))
                     cert_file.flush()
                     sslcontext.load_cert_chain(
                         cert_file.name,
