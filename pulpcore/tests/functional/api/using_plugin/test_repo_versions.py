@@ -96,9 +96,9 @@ class AddRemoveContentTestCase(unittest.TestCase):
         self.repo.update(self.client.post(FILE_REPO_PATH, gen_repo()))
 
         repo_versions = get_versions(self.repo)
-        self.assertEqual(len(repo_versions), 0, repo_versions)
+        self.assertEqual(len(repo_versions), 1, repo_versions)
 
-        self.assertIsNone(self.repo['latest_version_href'])
+        self.assertEqual(self.repo['latest_version_href'], f"{self.repo['pulp_href']}versions/0/")
 
     @skip_if(bool, 'repo', False)
     def test_02_sync_content(self):
@@ -121,7 +121,7 @@ class AddRemoveContentTestCase(unittest.TestCase):
         repo = self.client.get(self.repo['pulp_href'])
 
         repo_versions = get_versions(repo)
-        self.assertEqual(len(repo_versions), 1, repo_versions)
+        self.assertEqual(len(repo_versions), 2, repo_versions)
 
         self.assertIsNotNone(repo['latest_version_href'])
 
@@ -161,7 +161,7 @@ class AddRemoveContentTestCase(unittest.TestCase):
         repo = self.client.get(self.repo['pulp_href'])
 
         repo_versions = get_versions(repo)
-        self.assertEqual(len(repo_versions), 2, repo_versions)
+        self.assertEqual(len(repo_versions), 3, repo_versions)
 
         self.assertIsNotNone(repo['latest_version_href'])
 
@@ -201,7 +201,7 @@ class AddRemoveContentTestCase(unittest.TestCase):
         repo = self.client.get(self.repo['pulp_href'])
 
         repo_versions = get_versions(repo)
-        self.assertEqual(len(repo_versions), 3, repo_versions)
+        self.assertEqual(len(repo_versions), 4, repo_versions)
 
         self.assertIsNotNone(repo['latest_version_href'])
 
@@ -621,7 +621,7 @@ class CreateRepoBaseVersionTestCase(unittest.TestCase):
                 key=lambda item: item['pulp_href'],
             )
         )
-        self.assertIsNone(get_versions(repo)[0]['base_version'])
+        self.assertIsNone(get_versions(repo)[1]['base_version'])
 
         content = self.content.pop()
 
@@ -630,12 +630,12 @@ class CreateRepoBaseVersionTestCase(unittest.TestCase):
         repo = self.client.get(repo['pulp_href'])
 
         # create repo version 3 from version 1
-        base_version = get_versions(repo)[0]['pulp_href']
+        base_version = get_versions(repo)[1]['pulp_href']
         modify_repo(self.cfg, repo, base_version=base_version)
         repo = self.client.get(repo['pulp_href'])
 
         # assert that base_version of the version 3 points to version 1
-        self.assertEqual(get_versions(repo)[2]['base_version'], base_version)
+        self.assertEqual(get_versions(repo)[3]['base_version'], base_version)
 
         # assert that content on version 1 is equal to content on version 3
         version_content.append(
@@ -676,10 +676,10 @@ class CreateRepoBaseVersionTestCase(unittest.TestCase):
                 key=lambda item: item['pulp_href'],
             )
         )
-        self.assertIsNone(get_versions(repo)[0]['base_version'])
+        self.assertIsNone(get_versions(repo)[1]['base_version'])
 
         # get repo A version 1 to be used as base_version
-        base_version = get_versions(repo)[0]['pulp_href']
+        base_version = get_versions(repo)[1]['pulp_href']
 
         # create repo B
         repo = self.client.post(FILE_REPO_PATH, gen_repo())
@@ -690,7 +690,7 @@ class CreateRepoBaseVersionTestCase(unittest.TestCase):
         repo = self.client.get(repo['pulp_href'])
 
         # assert that base_version of repo B points to version 1 of repo A
-        self.assertEqual(get_versions(repo)[0]['base_version'], base_version)
+        self.assertEqual(get_versions(repo)[1]['base_version'], base_version)
 
         # assert that content on version 1 of repo A is equal to content on
         # version 1 repo B
@@ -721,10 +721,10 @@ class CreateRepoBaseVersionTestCase(unittest.TestCase):
             remove_created_key(item)
             for item in get_content(repo)[FILE_CONTENT_NAME]
         ]
-        self.assertIsNone(get_versions(repo)[0]['base_version'])
+        self.assertIsNone(get_versions(repo)[1]['base_version'])
 
         # create repo version 2 from version 1
-        base_version = get_versions(repo)[0]['pulp_href']
+        base_version = get_versions(repo)[1]['pulp_href']
         added_content = remove_created_key(self.content.pop())
         removed_content = choice(version_1_content)
         modify_repo(
@@ -740,7 +740,7 @@ class CreateRepoBaseVersionTestCase(unittest.TestCase):
         ]
 
         # assert that base_version of the version 2 points to version 1
-        self.assertEqual(get_versions(repo)[1]['base_version'], base_version)
+        self.assertEqual(get_versions(repo)[2]['base_version'], base_version)
 
         # assert that the removed content is not present on repo version 2
         self.assertNotIn(removed_content, version_2_content)
