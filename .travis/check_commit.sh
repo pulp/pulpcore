@@ -29,6 +29,7 @@ fi
 
 for sha in `git log --format=oneline --no-merges "$RANGE" | cut '-d ' -f1`
 do
+  pip install requests
   python .travis/validate_commit_message.py $sha
   VALUE=$?
 

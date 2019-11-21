@@ -67,7 +67,7 @@ jobs:
       script: bash .travis/publish_docs.sh nightly
       env:
         - TEST=docs
-      if: type != pull_request
+      if: type != pull_request AND branch = master
     - stage: publish-daily-client-gem
       script: bash .travis/publish_client_gem.sh
       env:
