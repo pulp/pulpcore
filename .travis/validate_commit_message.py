@@ -13,7 +13,7 @@ import sys
 
 KEYWORDS = ["fixes", "closes", "re", "ref"]
 NO_ISSUE = "[noissue]"
-STATUSES = ["NEW", "ASSIGNED", "POST"]
+STATUSES = ["NEW", "ASSIGNED", "POST", "MODIFIED"]
 
 sha = sys.argv[1]
 message = subprocess.check_output(["git", "log", "--format=%B", "-n 1", sha]).decode("utf-8")
