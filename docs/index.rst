@@ -102,7 +102,6 @@ Table of Contents
    workflows/index
    integration-guide/index
    contributing/index
-   troubleshooting
    bugs-features
    glossary
    changes
