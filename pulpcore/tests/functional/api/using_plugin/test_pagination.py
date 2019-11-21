@@ -49,7 +49,7 @@ class RepoVersionPaginationTestCase(unittest.TestCase):
         # Verify pagination works for getting repo versions.
         repo = self.client.get(repo['pulp_href'])
         repo_versions = get_versions(repo, {'page_size': 10})
-        self.assertEqual(len(repo_versions), sample_size, repo_versions)
+        self.assertEqual(len(repo_versions), sample_size + 1, repo_versions)
 
 
 class PaginationTestCase(unittest.TestCase):

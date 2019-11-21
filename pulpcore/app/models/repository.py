@@ -49,6 +49,32 @@ class Repository(MasterModel):
     class Meta:
         verbose_name_plural = 'repositories'
 
+    def save(self, *args, **kwargs):
+        """
+        Saves Repository model and creates an initial repository version.
+
+        Args:
+            args (list): list of positional arguments for Model.save()
+            kwargs (dict): dictionary of keyword arguments to pass to Model.save()
+        """
+        with transaction.atomic():
+            adding = self._state.adding
+            super().save(*args, **kwargs)
+            if adding:
+                self.create_initial_version()
+
+    def create_initial_version(self):
+        """
+        Create an initial repository version (version 0).
+
+        This method can be overriden by plugins if they require custom logic.
+        """
+        version = RepositoryVersion(
+            repository=self,
+            number=self.last_version,
+            complete=True)
+        version.save()
+
     def new_version(self, base_version=None):
         """
         Create a new RepositoryVersion for this Repository
