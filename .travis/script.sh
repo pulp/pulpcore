@@ -20,9 +20,9 @@ export FUNC_TEST_SCRIPT=$TRAVIS_BUILD_DIR/.travis/func_test_script.sh
 export DJANGO_SETTINGS_MODULE=pulpcore.app.settings
 
 if [ "$TEST" = 'docs' ]; then
-
-  export PULP_CONTENT_ORIGIN=http://$(hostname):24816
-
+  
+    export PULP_CONTENT_ORIGIN=http://$(hostname):24816
+  
 
   cd docs
   make html
@@ -109,7 +109,11 @@ set -u
 
 if [[ "$TEST" == "performance" ]]; then
   echo "--- Performance Tests ---"
-  pytest -vv -r sx --color=yes --pyargs --capture=no --durations=0 pulpcore.tests.performance || show_logs_and_return_non_zero
+  if [[ -z "$PERFORMANCE_TEST" ]]; then
+    pytest -vv -r sx --color=yes --pyargs --capture=no --durations=0 pulpcore.tests.performance || show_logs_and_return_non_zero
+  else
+    pytest -vv -r sx --color=yes --pyargs --capture=no --durations=0 pulpcore.tests.performance.test_$PERFORMANCE_TEST || show_logs_and_return_non_zero
+  fi
   exit
 fi
 
