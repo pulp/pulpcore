@@ -10,7 +10,6 @@ Installation
    configuration
    storage
    authentication
-   migration
 
 Other links
    :ref:`DevSetup`
