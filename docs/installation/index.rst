@@ -10,7 +10,6 @@ Installation
    configuration
    storage
    authentication
-   distributed-installation
    migration
 
 Other links
