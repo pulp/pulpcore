@@ -85,7 +85,7 @@ class DeleteOrphansTestCase(unittest.TestCase):
 
         # Delete first repo version. The previous removed content unit will be
         # an orphan.
-        delete_version(repo, get_versions(repo)[0]['pulp_href'])
+        delete_version(repo, get_versions(repo)[1]['pulp_href'])
         content_units = self.api_client.get(FILE_CONTENT_PATH)['results']
         self.assertIn(content, content_units)
 
