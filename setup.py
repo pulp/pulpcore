@@ -34,7 +34,7 @@ setup(
     packages=find_packages(exclude=['test']),
     author='Pulp Team',
     author_email='pulp-list@redhat.com',
-    url='http://www.pulpproject.org',
+    url='https://pulpproject.org',
     python_requires='>=3.6',
     install_requires=requirements,
     include_package_data=True,
