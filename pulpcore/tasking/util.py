@@ -54,6 +54,7 @@ def cancel(task_id):
         task_status.state = TASK_STATES.CANCELED
         task_status.save()
         _delete_incomplete_resources(task_status)
+        task_status.release_resources()
 
     _logger.info(_('Task canceled: {id}.').format(id=task_id))
     return task_status
