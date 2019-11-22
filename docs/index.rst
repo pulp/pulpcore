@@ -98,8 +98,9 @@ Table of Contents
    from-pulp-2
    components
    installation/index
-   plugins/index
    workflows/index
+   plugins/index
+   rest_api
    integration-guide/index
    contributing/index
    bugs-features
