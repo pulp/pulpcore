@@ -4,8 +4,7 @@ Pulp Documentation
 This documentation is for `pulpcore`, which is used with plugins to fetch, upload, and organize
 arbitrary content types.
 
-Anyone interested in writing a plugin should reference the `Pulp Plugin API
-<plugins/nightly/>`_ documentation.
+Anyone interested in writing a plugin should reference the :ref:`Plugin API`.
 
 
 How to Navigate the pulpcore and plugin docs

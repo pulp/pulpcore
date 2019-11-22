@@ -12,6 +12,9 @@ Let us know when the plugin is ready and we will be happy to add it to the list 
 .. note::
    Are we missing a plugin? Let us know via the pulp-dev@redhat.com mailing list.
 
+
+.. _Plugin API:
+
 Plugin API
 ==========
 
