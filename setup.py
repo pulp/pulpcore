@@ -19,7 +19,7 @@ requirements = [
     'PyYAML~=5.1.1',
     'rq~=1.1.0',
     'redis~=3.1.0',
-    'setuptools>=39.2.0,<41.7.0',
+    'setuptools>=39.2.0,<42.1.0',
     'dynaconf>=2.2,<2.3',
     'whitenoise~=4.1.3',
 ]
