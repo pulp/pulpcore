@@ -46,9 +46,8 @@ Glossary
         :term:`type` of :term:`content unit<content>`.
 
     pulpcore
-        A generalized backend with a Plugin API and a :doc:`REST
-        API<integration-guide/index>`. It uses :term:`plugins<plugin>` to manage
-        :term:`content`.
+        A python package offering users a :doc:`rest_api` and plugin writers a
+        :ref:`Plugin API`. It is :term:`plugin` based and manages :term:`content`.
 
     PUP
         Stands for "Pulp Update Proposal", and are the documents that specify process changes for
