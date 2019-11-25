@@ -100,7 +100,7 @@ Table of Contents
    workflows/index
    plugins/index
    rest_api
-   integration-guide/index
+   client_bindings
    contributing/index
    bugs-features
    glossary

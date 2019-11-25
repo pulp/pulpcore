@@ -1,21 +1,26 @@
+Client Bindings
+===============
+
 Python Client for pulpcore's REST API
-=====================================
+-------------------------------------
 
 The ``pulpcore-client`` Python package is available on `PyPI
 <https://pypi.org/project/pulpcore-client/>`_. It is currently published daily and with every RC.
 Each plugin is responsible for publishing it's own client to PyPI. The client libraries for plugins
 should follow the``pulp_<slug>-client`` naming scheme.
 
+
 Ruby Client for pulpcore's REST API
-===================================
+-----------------------------------
 
 ``pulpcore_client`` Ruby Gem is available on
 `rubygems.org <https://rubygems.org/gems/pulpcore_client>`_. It is currently published daily and
 with every RC. Each plugin is responsible for publishing it's own client to Rubygems.org. The
 client libraries for plugins should follow the``pulp_<slug>_client`` naming scheme.
 
-Client in a language of your choice
-===================================
+
+Other Languages
+---------------
 
 A client can be generated using Pulp's OpenAPI schema and any of the available `generators
 <https://openapi-generator.tech/docs/generators.html>`_.
