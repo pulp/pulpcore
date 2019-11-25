@@ -76,16 +76,9 @@ class StatusSerializer(serializers.Serializer):
         many=True
     )
 
-    missing_workers = WorkerSerializer(
-        help_text=_("List of missing workers known to the application. A missing worker is a "
-                    "worker that was online, but has now stopped heartbeating and has potentially "
-                    "died"),
-        many=True
-    )
-
     online_content_apps = ContentAppStatusSerializer(
-        help_text=_("List of online content apps known to the application. An online worker is "
-                    "actively heartbeating"),
+        help_text=_("List of online content apps known to the application. An online content app "
+                    "is actively heartbeating and can serve data to clients"),
         many=True
     )
 

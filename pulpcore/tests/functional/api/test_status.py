@@ -101,7 +101,6 @@ class StatusTestCase(unittest.TestCase):
         validate(status, STATUS)
         self.assertTrue(status['database_connection']['connected'])
         self.assertTrue(status['redis_connection']['connected'])
-        self.assertEqual(status['missing_workers'], [])
         self.assertNotEqual(status['online_workers'], [])
         self.assertNotEqual(status['versions'], [])
         self.assertIsNotNone(status['storage'])
