@@ -44,7 +44,6 @@ class TaskFilter(BaseFilterSet):
             'name': ['contains'],
             'started_at': DATETIME_FILTER_OPTIONS,
             'finished_at': DATETIME_FILTER_OPTIONS,
-            'parent': ['exact'],
             'reserved_resources_record': ['exact'],
             'created_resources': ['exact']
         }
