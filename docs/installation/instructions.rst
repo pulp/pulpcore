@@ -63,7 +63,8 @@ PyPI Installation
    $ pip install -e ./pulpcore[postgres]
 
 
-5. Follow the :ref:`configuration instructions <configuration>` to set the ``SECRET_KEY``.
+5. Follow the :ref:`configuration instructions <configuration>` to set ``SECRET_KEY`` and
+   ``CONTENT_ORIGIN``.
 
 6. Create the ``MEDIA_ROOT`` & ``WORKING_DIRECTORY`` with the prescribed permissions from the
    :ref:`configuration instructions. <configuration>`
@@ -76,8 +77,8 @@ PyPI Installation
     the commands yourself inside of a shell. This is fine for development but not recommended in production::
 
     $ /path/to/python/bin/rq worker -n 'resource-manager@%h' -w 'pulpcore.tasking.worker.PulpWorker' -c 'pulpcore.rqconfig'
-    $ /path/to/python/bin/rq worker -n 'reserved-resource-worker-1@%h' -w 'pulpcore.tasking.worker.PulpWorker' -c 'pulpcore.rqconfig'
-    $ /path/to/python/bin/rq worker -n 'reserved-resource-worker-2@%h' -w 'pulpcore.tasking.worker.PulpWorker' -c 'pulpcore.rqconfig'
+    $ /path/to/python/bin/rq worker -w 'pulpcore.tasking.worker.PulpWorker' -c 'pulpcore.rqconfig'
+    $ /path/to/python/bin/rq worker -w 'pulpcore.tasking.worker.PulpWorker' -c 'pulpcore.rqconfig'
 
 8. Run Django Migrations::
 

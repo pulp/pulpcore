@@ -63,11 +63,13 @@ Pulp's tasking system has two components: a resource manager and workers, all of
 Worker
   Pulp workers perform most tasks "run" by the tasking system including long-running tasks like
   synchronize and short-running tasks like a Distribution update. Each worker handles one task at a
-  time, and additional workers provide more concurrency.
+  time, and additional workers provide more concurrency. Workers auto-name and are auto-discovered,
+  so they can be started and stopped without notifying Pulp.
 
 Resource Manager
   A different type of Pulp worker that plays a coordinating role for the tasking system. You must
-  run exactly one of these for Pulp to operate correctly.
+  run exactly one of these for Pulp to operate correctly. The ``resource-manager`` is identified by
+  configuring its name with the ``-n 'resource_manager'``.
 
 .. note::
 
