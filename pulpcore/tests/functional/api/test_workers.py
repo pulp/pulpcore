@@ -1,11 +1,10 @@
 # coding=utf-8
 """Tests related to the workers."""
-import time
 import unittest
 from datetime import datetime, timedelta
 from random import choice
 
-from pulp_smash import api, cli, config
+from pulp_smash import api, config
 from pulp_smash.pulp3.constants import WORKER_PATH
 from requests.exceptions import HTTPError
 
@@ -101,48 +100,3 @@ class WorkersTestCase(unittest.TestCase):
         """
         with self.assertRaises(HTTPError):
             self.client.delete(self.worker['pulp_href'])
-
-
-class OfflineWorkerTestCase(unittest.TestCase):
-    """Test actions over offline workers.
-
-    This test targets the following issues:
-
-    * `Pulp #2659 <https://pulp.plan.io/issues/2659>`_
-    * `Pulp Smash #877 <https://github.com/PulpQE/pulp-smash/issues/877>`_
-    """
-
-    @classmethod
-    def setUpClass(cls):
-        """Create an API Client and a ServiceManager."""
-        cls.cfg = config.get_config()
-        cls.client = api.Client(cls.cfg, api.json_handler)
-        cls.svc_mgr = cli.ServiceManager(cls.cfg, cls.cfg.get_hosts('api')[0])
-        cls.worker = {}
-        if not cls.svc_mgr.is_active(['pulpcore-worker@*']):
-            raise unittest.SkipTest(
-                'These tests require pulp workers running on systemd'
-            )
-
-    def test_01_start_new_worker(self):
-        """Start a new worker to be used in next assertions."""
-        self.svc_mgr.start(['pulpcore-worker@99'])
-        time.sleep(2)
-        workers = self.client.get(
-            WORKER_PATH, params={'online': True}
-        )['results']
-        for worker in workers:
-            if 'worker-99' in worker['name']:
-                self.worker.update(worker)
-                break
-        self.assertNotEqual({}, self.worker)
-        self.assertIn('resource-worker-99', self.worker['name'])
-
-    @skip_if(bool, 'worker', False)
-    def test_02_read_all_workers(self):
-        """Worker API shows all workers including offline."""
-        workers = self.client.get(WORKER_PATH)['results']
-        self.assertIn(
-            self.worker['pulp_href'],
-            [worker['pulp_href'] for worker in workers]
-        )
