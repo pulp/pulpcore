@@ -154,18 +154,10 @@ class WorkerSerializer(ModelSerializer):
         help_text=_('Timestamp of the last time the worker talked to the service.'),
         read_only=True
     )
-    online = serializers.BooleanField(
-        help_text=_('True if the worker is considered online, otherwise False'),
-        read_only=True
-    )
-    missing = serializers.BooleanField(
-        help_text=_('True if the worker is considerd missing, otherwise False'),
-        read_only=True
-    )
     # disable "created" because we don't care about it
     created = None
 
     class Meta:
         model = models.Worker
         _base_fields = tuple(set(ModelSerializer.Meta.fields) - set(['created']))
-        fields = _base_fields + ('name', 'last_heartbeat', 'online', 'missing')
+        fields = _base_fields + ('name', 'last_heartbeat')
