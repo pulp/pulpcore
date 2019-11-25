@@ -59,11 +59,6 @@ class StatusView(APIView):
             online_workers = None
 
         try:
-            missing_workers = Worker.objects.missing_workers()
-        except Exception:
-            missing_workers = None
-
-        try:
             online_content_apps = ContentAppStatus.objects.online()
         except Exception:
             online_content_apps = None
@@ -71,7 +66,6 @@ class StatusView(APIView):
         data = {
             'versions': versions,
             'online_workers': online_workers,
-            'missing_workers': missing_workers,
             'online_content_apps': online_content_apps,
             'database_connection': db_status,
             'redis_connection': redis_status,
