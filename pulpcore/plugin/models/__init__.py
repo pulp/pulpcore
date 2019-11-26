@@ -4,6 +4,7 @@
 from pulpcore.app.models import (  # noqa
     Artifact,
     BaseDistribution,
+    BaseModel,
     Content,
     ContentArtifact,
     ContentGuard,
@@ -11,7 +12,6 @@ from pulpcore.app.models import (  # noqa
     FileSystemPublicationExporter,
     FileSystemRepositoryVersionExporter,
     MasterModel,
-    Model,
     ProgressReport,
     Publication,
     PublicationDistribution,

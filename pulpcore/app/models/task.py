@@ -11,7 +11,7 @@ from django.db import models, transaction
 from django.utils import timezone
 from rq.job import get_current_job
 
-from pulpcore.app.models import GenericRelationModel, Model
+from pulpcore.app.models import GenericRelationModel, BaseModel
 from pulpcore.constants import TASK_CHOICES, TASK_FINAL_STATES, TASK_STATES
 from pulpcore.exceptions import exception_to_dict
 from pulpcore.tasking.constants import TASKING_CONSTANTS
@@ -19,7 +19,7 @@ from pulpcore.tasking.constants import TASKING_CONSTANTS
 _logger = logging.getLogger(__name__)
 
 
-class ReservedResource(Model):
+class ReservedResource(BaseModel):
     """
     Resources that have been reserved
 
@@ -39,7 +39,7 @@ class ReservedResource(Model):
     worker = models.ForeignKey("Worker", related_name="reservations", on_delete=models.CASCADE)
 
 
-class TaskReservedResource(Model):
+class TaskReservedResource(BaseModel):
     """
     Association between a Task and its ReservedResources.
 
@@ -58,7 +58,7 @@ class TaskReservedResource(Model):
     task = models.ForeignKey('Task', on_delete=models.PROTECT)
 
 
-class ReservedResourceRecord(Model):
+class ReservedResourceRecord(BaseModel):
     """
     Resources that have been reserved.
 
@@ -80,7 +80,7 @@ class ReservedResourceRecord(Model):
                                    through='TaskReservedResourceRecord')
 
 
-class TaskReservedResourceRecord(Model):
+class TaskReservedResourceRecord(BaseModel):
     """
     Association between a Task and its ReservedResourcesRecord.
 
@@ -218,7 +218,7 @@ class WorkerManager(models.Manager):
         return self.filter(name=TASKING_CONSTANTS.RESOURCE_MANAGER_WORKER_NAME)
 
 
-class Worker(Model):
+class Worker(BaseModel):
     """
     Represents a worker
 
@@ -307,7 +307,7 @@ class Worker(Model):
                 TaskReservedResourceRecord.objects.create(resource=reservation_record, task=task)
 
 
-class Task(Model):
+class Task(BaseModel):
     """
     Represents a task
 

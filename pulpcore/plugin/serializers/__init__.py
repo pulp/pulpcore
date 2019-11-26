@@ -12,7 +12,6 @@ from pulpcore.app.serializers import (  # noqa
     DetailRelatedField,
     IdentityField,
     ModelSerializer,
-    NestedIdentityField,
     NestedRelatedField,
     PublicationDistributionSerializer,
     PublicationExportSerializer,
@@ -22,8 +21,6 @@ from pulpcore.app.serializers import (  # noqa
     RepositorySerializer,
     RepositorySyncURLSerializer,
     RepositoryVersionDistributionSerializer,
-    SingleContentArtifactField,
-    relative_path_validator,
     validate_unknown_fields,
 )
 

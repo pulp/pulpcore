@@ -9,10 +9,10 @@ from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
 
-from pulpcore.app.models.base import Model
+from pulpcore.app.models.base import BaseModel
 
 
-class GenericRelationModel(Model):
+class GenericRelationModel(BaseModel):
     """Base model class for implementing Generic Relations.
 
     This class provides the required fields to implement generic relations. Instances of

@@ -11,6 +11,9 @@ from pulpcore.app.serializers import (
 from pulpcore.tasking.tasks import enqueue_with_reservation
 
 
+__all__ = ["ModifyRepositoryActionMixin"]
+
+
 class ModifyRepositoryActionMixin:
 
     @swagger_auto_schema(
