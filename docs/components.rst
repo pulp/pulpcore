@@ -75,26 +75,24 @@ Resource Manager
    the same repo should not run in parallel. Generally tasks are serialized at the "repo" level, so
    if you have N workers you can process N repo sync's concurrently.
 
-.. _static-content:
 
 Static Content
-==============
+--------------
 
 When browsing the REST API or the browsable documentation with a web browser, for a good experience,
 you'll need static content to be served.
 
 In Development
---------------
+^^^^^^^^^^^^^^
 
 If using the built-in Django webserver and your settings.yaml has ``DEBUG: True`` then static
 content is automatically served for you.
 
 In Production
--------------
-
-For production environments, configure static content as follows:
+^^^^^^^^^^^^^
 
 Collect all of the static content into place using the ``collectstatic`` command
 as follows::
 
     $ django-admin collectstatic
+
