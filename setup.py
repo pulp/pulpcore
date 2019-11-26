@@ -22,6 +22,7 @@ requirements = [
     'setuptools>=39.2.0,<42.1.0',
     'dynaconf>=2.2,<2.3',
     'whitenoise~=4.1.3',
+    'pygtrie~=2.3.2',
 ]
 
 setup(
