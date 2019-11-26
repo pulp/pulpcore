@@ -10,9 +10,7 @@
 set -euv
 
 if [ "$TEST" = 'docs' ]; then
-
   pip install psycopg2-binary
-
   pip install -r doc_requirements.txt
 fi
 
@@ -48,10 +46,11 @@ else
 fi
 
 
-PLUGIN=pulp_file
-
-
-# For pulpcore, and any other repo that might check out some plugin PR
+if [ -e $TRAVIS_BUILD_DIR/../pulp_file ]; then
+  PULP_FILE=./pulp_file
+else
+  PULP_FILE=git+https://github.com/pulp/pulp_file.git@0.1
+fi
 
 if [ -e $TRAVIS_BUILD_DIR/../pulp-certguard ]; then
   PULP_CERTGUARD=./pulp-certguard
@@ -59,15 +58,15 @@ else
   PULP_CERTGUARD=git+https://github.com/pulp/pulp-certguard.git@master
 fi
 
-  cat > vars/vars.yaml << VARSYAML
+cat > vars/vars.yaml << VARSYAML
 ---
 images:
-  - ${PLUGIN}-${TAG}:
-      image_name: $PLUGIN
+  - pulp_file-${TAG}:
+      image_name: pulp_file
       tag: $TAG
       pulpcore: ./pulpcore
       plugins:
-        - ./$PLUGIN
+        - $PULP_FILE
         - $PULP_CERTGUARD
 VARSYAML
 ansible-playbook -v build.yaml
@@ -85,7 +84,7 @@ spec:
     access_mode: "ReadWriteOnce"
     # We have a little over 40GB free on Travis VMs/instances
     size: "40Gi"
-  image: $PLUGIN
+  image: pulp_file
   tag: $TAG
   database_connection:
     username: pulp
