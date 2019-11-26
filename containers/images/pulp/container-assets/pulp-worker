@@ -5,4 +5,4 @@
 
 # TODO: Set ${PULP_WORKER_NUMBER} to the Pod Number
 # In the meantime, the hostname provides uniqueness.
-exec rq worker --url "redis://${REDIS_SERVICE_HOST}:${REDIS_SERVICE_PORT}" -n "reserved-resource-worker-${PULP_WORKER_NUMBER}@${HOSTNAME}" -w "pulpcore.tasking.worker.PulpWorker" -c "pulpcore.rqconfig"
+exec rq worker --url "redis://${REDIS_SERVICE_HOST}:${REDIS_SERVICE_PORT}" -w "pulpcore.tasking.worker.PulpWorker" -c "pulpcore.rqconfig"
