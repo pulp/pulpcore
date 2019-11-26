@@ -5,7 +5,7 @@ export PULP_FILE_PR_NUMBER=$(echo $COMMIT_MSG | grep -oP 'Required\ PR:\ https\:
 export PULP_CERTGUARD_PR_NUMBER=$(echo $COMMIT_MSG | grep -oP 'Required\ PR:\ https\:\/\/github\.com\/pulp\/pulp-certguard\/pull\/(\d+)' | awk -F'/' '{print $7}')
 
 pip install yq
-PULP_FILE_BRANCH=$(yq -r .pulpcore_branch ./template_config.yml)
+PULP_FILE_BRANCH=$(yq -r ".additional_plugins | .[] | select(.name == \"pulp_file\") | .branch" template_config.yml)
 echo PULP_FILE_BRANCH="$PULP_FILE_BRANCH"
 
 cd ..
