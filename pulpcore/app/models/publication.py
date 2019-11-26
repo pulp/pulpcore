@@ -1,6 +1,6 @@
 from django.db import IntegrityError, models, transaction
 
-from .base import MasterModel, Model
+from .base import MasterModel, BaseModel
 from .content import Artifact, Content, ContentArtifact
 from .repository import Remote, Repository, RepositoryVersion
 from .task import CreatedResource
@@ -125,7 +125,7 @@ class Publication(MasterModel):
             self.delete()
 
 
-class PublishedArtifact(Model):
+class PublishedArtifact(BaseModel):
     """
     An artifact that is part of a publication.
 

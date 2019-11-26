@@ -6,7 +6,7 @@ from django.db.models import options
 from django.db.models.base import ModelBase
 
 
-class Model(models.Model):
+class BaseModel(models.Model):
     """Base model class for all Pulp models.
 
     Fields:
@@ -40,7 +40,7 @@ class Model(models.Model):
 class MasterModelMeta(ModelBase):
     def __new__(cls, name, bases, attrs, **kwargs):
         """Override __new__ to set the default_related_name."""
-        if Model not in bases and MasterModel not in bases:  # Only affects "Detail" models.
+        if BaseModel not in bases and MasterModel not in bases:  # Only affects "Detail" models.
             meta = attrs.get("Meta")
             default_related_name = getattr(
                 meta, "default_related_name", None)
@@ -54,7 +54,7 @@ class MasterModelMeta(ModelBase):
         return new_class
 
 
-class MasterModel(Model, metaclass=MasterModelMeta):
+class MasterModel(BaseModel, metaclass=MasterModelMeta):
     """Base model for the "Master" model in a "Master-Detail" relationship.
 
     Provides methods for casting down to detail types, back up to the master type,

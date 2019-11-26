@@ -14,7 +14,7 @@ from pulpcore.app.util import get_view_name_for_model
 from pulpcore.download.factory import DownloaderFactory
 from pulpcore.exceptions import ResourceImmutableError
 
-from .base import MasterModel, Model
+from .base import MasterModel, BaseModel
 from .content import Artifact, Content
 from .task import CreatedResource, Task
 
@@ -325,7 +325,7 @@ class Remote(MasterModel):
         default_related_name = 'remotes'
 
 
-class RepositoryContent(Model):
+class RepositoryContent(BaseModel):
     """
     Association between a repository and its contained content.
 
@@ -356,7 +356,7 @@ class RepositoryContent(Model):
                            ('repository', 'content', 'version_removed'))
 
 
-class RepositoryVersion(Model):
+class RepositoryVersion(BaseModel):
     """
     A version of a repository's content set.
 

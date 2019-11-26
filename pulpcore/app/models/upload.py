@@ -5,10 +5,10 @@ from django.core.files.base import ContentFile
 from django.db import models
 from rest_framework import serializers
 
-from pulpcore.app.models import Model
+from pulpcore.app.models import BaseModel
 
 
-class Upload(Model):
+class Upload(BaseModel):
     """
     A chunked upload. Stores chunks until used to create an artifact, etc.
 
@@ -55,7 +55,7 @@ class Upload(Model):
         self.file.delete(save=False)
 
 
-class UploadChunk(Model):
+class UploadChunk(BaseModel):
     """
     A chunk for an uploaded file.
 

@@ -7,7 +7,7 @@ from django.conf import settings
 from django.db import models
 from django.utils import timezone
 
-from pulpcore.app.models import Model
+from pulpcore.app.models import BaseModel
 
 
 class ContentAppStatusManager(models.Manager):
@@ -29,7 +29,7 @@ class ContentAppStatusManager(models.Manager):
         return self.filter(last_heartbeat__gte=age_threshold)
 
 
-class ContentAppStatus(Model):
+class ContentAppStatus(BaseModel):
     """
     Represents a Content App Status
 
