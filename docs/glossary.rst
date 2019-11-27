@@ -27,6 +27,10 @@ Glossary
         :term:`Repository Version <RepositoryVersion>`, a :term:`Repository`, or a
         :term:`publications<publication>`.
 
+    Exporter
+        Push a :term:`Repository Version <RepositoryVersion>`, a :term:`Repository`, or a
+        :term:`publications<publication>` content to a remote location.
+
     on-demand content
         A :term:`content unit<content>` that was synchronized into Pulp but is missing one or more
         :term:`Artifacts<artifact>`. On-demand content is associated with a :term:`Remote` that
