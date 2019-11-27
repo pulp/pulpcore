@@ -23,15 +23,13 @@ class Publication(MasterModel):
             a PublishedArtifact for all of the content (artifacts) in the repository.
 
     Relations:
-        publisher (models.ForeignKey): The publisher that created the publication.
         repository_version (models.ForeignKey): The RepositoryVersion used to
             create this Publication.
 
     Examples:
-        >>> publisher = ...
         >>> repository_version = ...
         >>>
-        >>> with Publication.create(repository_version, publisher) as publication:
+        >>> with Publication.create(repository_version) as publication:
         >>>     for content in repository_version.content():
         >>>         for content_artifact in content.contentartifact_set.all():
         >>>             artifact = PublishedArtifact(...)
@@ -45,11 +43,10 @@ class Publication(MasterModel):
     complete = models.BooleanField(db_index=True, default=False)
     pass_through = models.BooleanField(default=False)
 
-    publisher = models.ForeignKey('Publisher', on_delete=models.CASCADE, null=True)
     repository_version = models.ForeignKey('RepositoryVersion', on_delete=models.CASCADE)
 
     @classmethod
-    def create(cls, repository_version, publisher=None, pass_through=False):
+    def create(cls, repository_version, pass_through=False):
         """
         Create a publication.
 
@@ -59,8 +56,6 @@ class Publication(MasterModel):
         Args:
             repository_version (pulpcore.app.models.RepositoryVersion): The repository
                 version to be published.
-            publisher (pulpcore.app.models.Publisher): The publisher used
-                to create the publication.
             pass_through (bool): Indicates that the publication is a pass-through
                 to the repository version. Enabling pass-through has the same effect
                 as creating a PublishedArtifact for all of the content (artifacts)
@@ -76,8 +71,6 @@ class Publication(MasterModel):
             publication = cls(
                 pass_through=pass_through,
                 repository_version=repository_version)
-            if publisher:
-                publication.publisher = publisher
             publication.save()
             resource = CreatedResource(content_object=publication)
             resource.save()

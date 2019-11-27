@@ -45,10 +45,6 @@ Glossary
         :term:`repository version<RepositoryVersion>`. Publications are served by the
         :term:`content app` when they are assigned to a :term:`distribution`.
 
-    :class:`~pulpcore.app.models.Publisher`
-        A :term:`plugin` defined object that contains settings required to publish a specific
-        :term:`type` of :term:`content unit<content>`.
-
     pulpcore
         A python package offering users a :doc:`rest_api` and plugin writers a
         :ref:`Plugin API`. It is :term:`plugin` based and manages :term:`content`.

@@ -18,7 +18,6 @@ from .publication import (  # noqa
     RepositoryVersionDistribution,
 )
 from .repository import (  # noqa
-    Publisher,
     Remote,
     Repository,
     RepositoryContent,

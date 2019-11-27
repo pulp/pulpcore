@@ -17,7 +17,6 @@ from pulpcore.app.models import (  # noqa
     PublicationDistribution,
     PublishedArtifact,
     PublishedMetadata,
-    Publisher,
     Repository,
     Remote,
     RemoteArtifact,

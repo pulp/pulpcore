@@ -17,7 +17,6 @@ from pulpcore.app.serializers import (  # noqa
     PublicationDistributionSerializer,
     PublicationExportSerializer,
     PublicationSerializer,
-    PublisherSerializer,
     RelatedField,
     RemoteSerializer,
     RepositorySerializer,

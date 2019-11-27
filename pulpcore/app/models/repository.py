@@ -325,36 +325,6 @@ class Remote(MasterModel):
         default_related_name = 'remotes'
 
 
-class Publisher(MasterModel):
-    """
-    A content publisher.
-
-    This is meant to be subclassed by plugin authors as an opportunity to provide plugin-specific
-    persistant data attributes and additional validation for those attributes.
-
-    This object is a Django model that inherits from :class: `pulpcore.app.models.Publisher`
-    which provides the platform persistent attributes for a publisher object. Plugin authors can
-    add additional persistent publisher data by subclassing this object and adding Django
-    fields. We defer to the Django docs on extending this model definition with additional fields.
-
-    Validation of the publisher is done at the API level by a plugin defined subclass of
-    :class: `pulpcore.plugin.serializers.repository.PublisherSerializer`.
-
-    Fields:
-
-        name (models.CharField): The publisher unique name.
-
-    Relations:
-
-    """
-    TYPE = 'publisher'
-
-    name = models.CharField(db_index=True, unique=True, max_length=255)
-
-    class Meta:
-        default_related_name = 'publishers'
-
-
 class RepositoryContent(Model):
     """
     Association between a repository and its contained content.
