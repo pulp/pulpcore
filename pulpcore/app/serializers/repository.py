@@ -138,29 +138,6 @@ class RepositorySyncURLSerializer(serializers.Serializer):
     )
 
 
-class PublisherSerializer(ModelSerializer):
-    """
-    Every publisher defined by a plugin should have an Publisher serializer that inherits from this
-    class. Please import from `pulpcore.plugin.serializers` rather than from this module directly.
-    """
-    pulp_href = DetailIdentityField()
-    name = serializers.CharField(
-        help_text=_('A unique name for this publisher.'),
-        validators=[UniqueValidator(queryset=models.Publisher.objects.all())]
-    )
-    pulp_last_updated = serializers.DateTimeField(
-        help_text=_('Timestamp of the most recent update of the publisher configuration.'),
-        read_only=True
-    )
-
-    class Meta:
-        abstract = True
-        model = models.Publisher
-        fields = ModelSerializer.Meta.fields + (
-            'name', 'pulp_last_updated',
-        )
-
-
 class ContentSummarySerializer(serializers.Serializer):
     """
     Serializer for the RepositoryVersion content summary

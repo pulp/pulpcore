@@ -10,7 +10,6 @@ from rest_framework.filters import OrderingFilter
 from pulpcore.app import tasks
 from pulpcore.app.models import (
     Content,
-    Publisher,
     Remote,
     Repository,
     RepositoryContent,
@@ -19,7 +18,6 @@ from pulpcore.app.models import (
 from pulpcore.app.response import OperationPostponedResponse
 from pulpcore.app.serializers import (
     AsyncOperationResponseSerializer,
-    PublisherSerializer,
     RemoteSerializer,
     RepositorySerializer,
     RepositoryVersionSerializer,
@@ -243,35 +241,3 @@ class RemoteViewSet(NamedModelViewSet,
     serializer_class = RemoteSerializer
     queryset = Remote.objects.all()
     filterset_class = RemoteFilter
-
-
-class PublisherFilter(BaseFilterSet):
-    """
-    Plugin publisher filter should:
-     - inherit from this class
-     - add any specific filters if needed
-     - define a `Meta` class which should:
-       - specify a plugin publisher model for which filter is defined
-       - extend `fields` with specific ones
-    """
-    name = filters.CharFilter()
-    pulp_last_updated = IsoDateTimeFilter()
-
-    class Meta:
-        model = Publisher
-        fields = {
-            'name': NAME_FILTER_OPTIONS,
-            'pulp_last_updated': DATETIME_FILTER_OPTIONS
-        }
-
-
-class PublisherViewSet(NamedModelViewSet,
-                       mixins.CreateModelMixin,
-                       mixins.RetrieveModelMixin,
-                       mixins.ListModelMixin,
-                       AsyncUpdateMixin,
-                       AsyncRemoveMixin):
-    endpoint_name = 'publishers'
-    serializer_class = PublisherSerializer
-    queryset = Publisher.objects.all()
-    filterset_class = PublisherFilter

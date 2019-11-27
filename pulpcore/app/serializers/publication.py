@@ -56,7 +56,6 @@ class PublicationSerializer(ModelSerializer):
         abstract = True
         model = models.Publication
         fields = ModelSerializer.Meta.fields + (
-            'publisher',
             'repository_version',
             'repository'
         )

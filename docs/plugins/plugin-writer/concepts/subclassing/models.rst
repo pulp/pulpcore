@@ -13,7 +13,6 @@ For the most part, models provided by plugin writers are just regular `Django Mo
 Most plugins will implement:
  * model(s) for the specific content type(s) used in the plugin, should be subclassed from Content model
  * model(s) for the plugin specific remote(s), should be subclassed from Remote model
- * model(s) for the plugin specific publisher(s), should be subclassed from Publisher model
 
 
 Adding Model Fields

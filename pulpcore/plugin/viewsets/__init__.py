@@ -12,7 +12,6 @@ from pulpcore.app.viewsets import (  # noqa
     FileSystemExporterViewSet,
     NamedModelViewSet,
     PublicationViewSet,
-    PublisherViewSet,
     ReadOnlyContentViewSet,
     RemoteFilter,
     RemoteViewSet,

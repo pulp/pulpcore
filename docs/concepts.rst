@@ -37,7 +37,6 @@ Plugins can define actions to interact with those sources. For example, most or 
     :align: center
 
 All content that is managed by Pulp can be hosted by the :term:`content app`. Users create
-type-specific :term:`publishers<publisher>` that provide the settings necessary to generate
 a :term:`publication` for a content set in a repository version. A publication consists of the
 metadata of the content set and the artifacts of each content unit in the content set. To host a
 publication, it must be assigned to a :term:`distribution`, which determines how and where a
