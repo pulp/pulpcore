@@ -6,3 +6,4 @@ Architecture
 
    app-layout
    rest-api
+   error-handling
