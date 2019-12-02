@@ -121,7 +121,7 @@ class WorkerManager(models.Manager):
             Worker.DoesNotExist: If all Workers have at least one ReservedResource entry.
         """
         workers_qs = self.online_workers().exclude(
-            name__startswith=TASKING_CONSTANTS.RESOURCE_MANAGER_WORKER_NAME
+            name=TASKING_CONSTANTS.RESOURCE_MANAGER_WORKER_NAME
         )
         workers_qs_with_counts = workers_qs.annotate(models.Count('reservations'))
         try:
@@ -215,7 +215,7 @@ class WorkerManager(models.Manager):
             :class:`django.db.models.query.QuerySet`:  A query set of the Worker objects which
                 which match the resource manager name.
         """
-        return self.filter(name__startswith=TASKING_CONSTANTS.RESOURCE_MANAGER_WORKER_NAME)
+        return self.filter(name=TASKING_CONSTANTS.RESOURCE_MANAGER_WORKER_NAME)
 
 
 class Worker(Model):

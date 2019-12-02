@@ -54,7 +54,7 @@ class PulpWorker(Worker):
         else:
             kwargs['name'] = "{pid}@{hostname}".format(pid=os.getpid(), hostname=socket.getfqdn())
 
-        if kwargs['name'].startswith(TASKING_CONSTANTS.RESOURCE_MANAGER_WORKER_NAME):
+        if kwargs['name'] == TASKING_CONSTANTS.RESOURCE_MANAGER_WORKER_NAME:
             queues = [Queue('resource-manager', connection=kwargs['connection'])]
         else:
             queues = [Queue(kwargs['name'], connection=kwargs['connection'])]
