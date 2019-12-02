@@ -16,7 +16,7 @@ Using Pulp you can:
 - Promote content through different repos in an organized way
 
 Pulp is completely free and open-source!
-- License: GNUv2
+- License: GNUv2+
 - Documentation: http://docs.pulpproject.org/en/3.0/nightly/
 - Source: https://github.com/pulp/pulpcore/
 - Bugs: https://pulp.plan.io/projects/pulp
