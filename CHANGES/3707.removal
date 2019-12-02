@@ -1,0 +1,3 @@
+Resource managers must now have the name ``resource-manager``. For example::
+
+     /path/to/python/bin/rq worker -n 'resource-manager' -w 'pulpcore.tasking.worker.PulpWorker' -c 'pulpcore.rqconfig'
