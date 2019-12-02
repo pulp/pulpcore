@@ -75,10 +75,10 @@ def check_worker_processes():
         mark_worker_offline(worker.name)
 
     worker_count = Worker.objects.online_workers().exclude(
-        name__startswith=TASKING_CONSTANTS.RESOURCE_MANAGER_WORKER_NAME).count()
+        name=TASKING_CONSTANTS.RESOURCE_MANAGER_WORKER_NAME).count()
 
     resource_manager_count = Worker.objects.online_workers().filter(
-        name__startswith=TASKING_CONSTANTS.RESOURCE_MANAGER_WORKER_NAME).count()
+        name=TASKING_CONSTANTS.RESOURCE_MANAGER_WORKER_NAME).count()
 
     if resource_manager_count == 0:
         msg = _("There are 0 pulpcore-resource-manager processes running. Pulp will not operate "
