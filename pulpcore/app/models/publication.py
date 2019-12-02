@@ -107,6 +107,19 @@ class Publication(MasterModel):
             CreatedResource.objects.filter(object_id=self.pk).delete()
             super().delete(**kwargs)
 
+    def finalize_new_publication(self):
+        """
+        Finalize the incomplete Publication with plugin-provided code.
+
+        This method should be overridden by plugin writers for an opportunity for plugin input. This
+        method is intended to be used to validate or modify the content.
+
+        This method does not adjust the value of complete, or save the `Publication` itself.
+        Its intent is to allow the plugin writer an opportunity for plugin input before pulpcore
+        marks the `Publication` as complete.
+        """
+        pass
+
     def __enter__(self):
         """
         Enter context.
@@ -125,11 +138,16 @@ class Publication(MasterModel):
             exc_val (Exception): (optional) Instance of exception raised.
             exc_tb (types.TracebackType): (optional) stack trace.
         """
-        if not exc_val:
-            self.complete = True
-            self.save()
-        else:
+        if exc_val:
             self.delete()
+        else:
+            try:
+                self.finalize_new_publication()
+                self.complete = True
+                self.save()
+            except Exception:
+                self.delete()
+                raise
 
 
 class PublishedArtifact(Model):
