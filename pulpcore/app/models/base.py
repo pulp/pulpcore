@@ -36,6 +36,10 @@ class Model(models.Model):
     def __repr__(self):
         return str(self)
 
+    def save(self, *args, **kwargs):
+        self.full_clean()  # always call full_clean() to validate data
+        return super().save(*args, **kwargs)
+
 
 class MasterModelMeta(ModelBase):
     def __new__(cls, name, bases, attrs, **kwargs):
