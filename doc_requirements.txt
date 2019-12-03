@@ -11,6 +11,7 @@ drf-yasg
 dynaconf
 plantuml
 pyyaml
+pygtrie
 rq
 sphinx
 sphinx-rtd-theme

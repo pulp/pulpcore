@@ -4,6 +4,9 @@ import logging
 
 from django.db.models import Q
 
+from pulpcore.app.models import ContentArtifact
+from pulpcore.app.files import validate_file_paths
+
 
 _logger = logging.getLogger(__name__)
 
@@ -43,3 +46,20 @@ def remove_duplicates(repository_version):
         _logger.debug(_("Removing duplicates for type: {}".format(model)))
         qs = model.objects.filter(query_for_repo_duplicates_by_type[model])
         repository_version.remove_content(qs)
+
+
+def validate_version_paths(version):
+    """
+    Validate artifact relative paths for dupes or overlap (e.g. a/b and a/b/c).
+
+    Raises:
+        ValueError: If two artifact relative paths overlap
+    """
+    paths = ContentArtifact.objects. \
+        filter(content__pk__in=version.content). \
+        values_list("relative_path", flat=True)
+
+    try:
+        validate_file_paths(paths)
+    except ValueError as e:
+        raise ValueError(_("Cannot create repository version. {err}.").format(err=e))
