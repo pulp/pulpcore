@@ -1,2 +1,0 @@
-Adds entries to all intended plugin API endpoints to import through ``pulpcore.plugin``. This allows
-all plugins to safely use the plugin API as long as they import from ``pulpcore.plugin``.

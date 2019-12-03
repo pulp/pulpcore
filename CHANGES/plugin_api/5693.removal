@@ -1,7 +1,0 @@
-The ``pulpcore.plugin.models.Model`` is renamed to ``pulpcore.plugin.models.BaseModel``. Also the
-following objects have been removed from the plugin API:
-
-* ``pulpcore.plugin.serializers.NestedIdentityField``
-* ``pulpcore.plugin.serializers.SingleContentArtifactField``
-* ``pulpcore.plugin.serializers.relative_path_validator``
-* ``pulpcore.plugin.viewsets.RemoteFilter``
