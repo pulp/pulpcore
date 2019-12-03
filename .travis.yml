@@ -59,7 +59,7 @@ jobs:
       script: bash .travis/publish_plugin_pypi.sh
       if: tag IS present
     - stage: publish-beta-docs
-      script: bash .travis/publish_docs.sh rc
+      script: bash .travis/publish_docs.sh tag
       env:
         - TEST=docs
       if: tag IS present
@@ -67,7 +67,7 @@ jobs:
       script: bash .travis/publish_docs.sh nightly
       env:
         - TEST=docs
-      if: type != pull_request AND branch = master
+      if: type != pull_request AND repo = pulp/pulpcore
     - stage: publish-daily-client-gem
       script: bash .travis/publish_client_gem.sh
       env:
