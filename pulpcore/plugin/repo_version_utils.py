@@ -7,6 +7,8 @@ from django.db.models import Q
 
 _logger = logging.getLogger(__name__)
 
+__all__ = ["remove_duplicates"]
+
 
 def remove_duplicates(repository_version):
     """

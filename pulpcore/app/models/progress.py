@@ -9,7 +9,7 @@ from gettext import gettext as _
 from django.db import models
 from django.utils import timezone
 
-from pulpcore.app.models import Model, Task
+from pulpcore.app.models import BaseModel, Task
 from pulpcore.constants import TASK_CHOICES, TASK_STATES
 
 _logger = logging.getLogger(__name__)
@@ -18,7 +18,7 @@ _logger = logging.getLogger(__name__)
 BATCH_INTERVAL = 500
 
 
-class ProgressReport(Model):
+class ProgressReport(BaseModel):
     """
     A model for all progress reporting.
 
