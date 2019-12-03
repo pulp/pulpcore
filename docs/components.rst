@@ -63,38 +63,42 @@ Pulp's tasking system has two components: a resource manager and workers, all of
 Worker
   Pulp workers perform most tasks "run" by the tasking system including long-running tasks like
   synchronize and short-running tasks like a Distribution update. Each worker handles one task at a
-  time, and additional workers provide more concurrency.
+  time, and additional workers provide more concurrency. Workers auto-name and are auto-discovered,
+  so they can be started and stopped without notifying Pulp.
 
 Resource Manager
   A different type of Pulp worker that plays a coordinating role for the tasking system. You must
-  run exactly one of these for Pulp to operate correctly.
+  run exactly one of these for Pulp to operate correctly. The ``resource-manager`` is identified by
+  configuring using exactly the name ``resource-manager`` with the ``-n 'resource_manager'`` option.
+
+  *N* ``resource-manager`` rq processes can be started with 1 being active and *N-1* being passive.
+  The *N-1* will exit and should be configured to auto-relaunch with either systemd, supervisord, or
+  k8s.
 
 .. note::
 
    Pulp serializes tasks that are unsafe to run in parallel, e.g. a sync and publish operation on
    the same repo should not run in parallel. Generally tasks are serialized at the "repo" level, so
-   if you have N workers you can process N repo sync's concurrently.
+   if you start *N* workers you can process *N* repo sync/modify/publish operations concurrently.
 
-.. _static-content:
 
 Static Content
-==============
+--------------
 
 When browsing the REST API or the browsable documentation with a web browser, for a good experience,
 you'll need static content to be served.
 
 In Development
---------------
+^^^^^^^^^^^^^^
 
 If using the built-in Django webserver and your settings.yaml has ``DEBUG: True`` then static
 content is automatically served for you.
 
 In Production
--------------
-
-For production environments, configure static content as follows:
+^^^^^^^^^^^^^
 
 Collect all of the static content into place using the ``collectstatic`` command
 as follows::
 
     $ django-admin collectstatic
+

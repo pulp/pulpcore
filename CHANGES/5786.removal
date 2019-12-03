@@ -1,0 +1,2 @@
+The ``/pulp/api/v3/status/`` had the ``missing_workers`` section removed. Also the
+``online_workers`` key had the ``online`` and ``missing`` keys removed.

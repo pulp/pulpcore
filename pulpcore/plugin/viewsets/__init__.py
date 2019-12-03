@@ -12,15 +12,12 @@ from pulpcore.app.viewsets import (  # noqa
     FileSystemExporterViewSet,
     NamedModelViewSet,
     PublicationViewSet,
-    PublisherViewSet,
     ReadOnlyContentViewSet,
-    RemoteFilter,
     RemoteViewSet,
     RepositoryViewSet,
     RepositoryVersionViewSet,
 )
 
-# Import custom filters that are potentially useful to plugin writers
 from pulpcore.app.viewsets.custom_filters import CharInFilter, HyperlinkRelatedFilter  # noqa
 
 from .content import SingleArtifactContentUploadViewSet  # noqa

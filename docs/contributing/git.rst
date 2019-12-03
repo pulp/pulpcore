@@ -81,13 +81,37 @@ Putting this all together, the following is an example of a good commit message:
     closes #1392
     https://pulp.plan.io/issues/1392
 
-You can also reference additional Pull Requests that should be used by Travis
-when testing your Pull Request. See :ref:`continuous-integration` for details.
-
 .. hint::
 
    A good candidate for a ``noissue`` tag is a one line fix or a typo, otherwise we encourage
    you to open an issue.
+
+
+.. _requiring-other-pull-requests
+
+Requiring other Pull Requests
+*****************************
+
+Sometimes a new feature may require changes to both `pulpcore` and one or many other plugins,
+simultaneously. In order to keep the CI happy in these circumstances (as tests may fail otherwise),
+we provide a mechanism to force the CI service to fetch the version of a component in a linked
+Pull Request, rather than master branch.
+
+To do so, add a tag in the following format to the last commit in your series.
+
+This will allow the PR against pulp to run against the Pull Requests for pulp-smash and pulp_file::
+
+    Required PR: https://github.com/PulpQE/pulp-smash/pull/1234
+    Required PR: https://github.com/pulp/pulp_file/pull/2345
+
+This will allow the PR against a plugin to run against the Pull Request for pulpcore::
+
+    Required PR: https://github.com/pulp/pulpcore/pull/3456
+
+Attention and care must be given to merging PRs that require other Pull Requests. Before merging,
+all required PRs should be ready to merge--meaning that all tests/checks should be passing, the code
+review requirements should be met, etc. When merging, the PR along with its required PRs should all
+be merged at the same time. This is necessary to ensure that test breakages don't block other PRs.
 
 
 .. _changelog-update:

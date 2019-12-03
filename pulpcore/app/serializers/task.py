@@ -75,17 +75,6 @@ class TaskSerializer(ModelSerializer):
         read_only=True,
         view_name='workers-detail'
     )
-    parent = RelatedField(
-        help_text=_("The parent task that spawned this task."),
-        read_only=True,
-        view_name='tasks-detail'
-    )
-    spawned_tasks = RelatedField(
-        help_text=_("Any tasks spawned by this task."),
-        many=True,
-        read_only=True,
-        view_name='tasks-detail'
-    )
     progress_reports = ProgressReportSerializer(
         many=True,
         read_only=True
@@ -104,8 +93,7 @@ class TaskSerializer(ModelSerializer):
     class Meta:
         model = models.Task
         fields = ModelSerializer.Meta.fields + ('state', 'name', 'started_at',
-                                                'finished_at', 'error',
-                                                'worker', 'parent', 'spawned_tasks',
+                                                'finished_at', 'error', 'worker',
                                                 'progress_reports', 'created_resources',
                                                 'reserved_resources_record')
 
@@ -115,7 +103,7 @@ class MinimalTaskSerializer(TaskSerializer):
     class Meta:
         model = models.Task
         fields = ModelSerializer.Meta.fields + ('name', 'state', 'started_at', 'finished_at',
-                                                'worker', 'parent')
+                                                'worker')
 
 
 class TaskCancelSerializer(ModelSerializer):
@@ -154,18 +142,10 @@ class WorkerSerializer(ModelSerializer):
         help_text=_('Timestamp of the last time the worker talked to the service.'),
         read_only=True
     )
-    online = serializers.BooleanField(
-        help_text=_('True if the worker is considered online, otherwise False'),
-        read_only=True
-    )
-    missing = serializers.BooleanField(
-        help_text=_('True if the worker is considerd missing, otherwise False'),
-        read_only=True
-    )
     # disable "created" because we don't care about it
     created = None
 
     class Meta:
         model = models.Worker
         _base_fields = tuple(set(ModelSerializer.Meta.fields) - set(['created']))
-        fields = _base_fields + ('name', 'last_heartbeat', 'online', 'missing')
+        fields = _base_fields + ('name', 'last_heartbeat')

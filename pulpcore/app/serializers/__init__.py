@@ -39,7 +39,6 @@ from .publication import (  # noqa
     RepositoryVersionDistributionSerializer,
 )
 from .repository import (  # noqa
-    PublisherSerializer,
     RemoteSerializer,
     RepositorySerializer,
     RepositorySyncURLSerializer,

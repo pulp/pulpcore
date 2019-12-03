@@ -1,0 +1,2 @@
+Only online workers are shown in the ``/pulp/api/v3/status/`` causing environments where worker
+names change to not accumulate workers endlessly.

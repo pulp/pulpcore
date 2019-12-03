@@ -1,8 +1,10 @@
 import hashlib
 import os
+from gettext import gettext as _
 
 from django.core.files.uploadedfile import TemporaryUploadedFile
 from django.core.files.uploadhandler import TemporaryFileUploadHandler
+from pygtrie import StringTrie
 
 
 class PulpTemporaryUploadedFile(TemporaryUploadedFile):
@@ -90,3 +92,41 @@ class TemporaryDownloadedFile(TemporaryUploadedFile):
         if name is None:
             name = getattr(file, 'name', None)
         self.name = name
+
+
+def validate_file_paths(paths):
+    """
+    Check for valid POSIX paths (ie ones that aren't duplicated and don't overlap).
+
+    Overlapping paths are where one path terminates inside another (e.g. a/b and a/b/c).
+
+    This function will raise an exception at the first dupe or overlap it detects. We use a trie (or
+    prefix tree) to keep track of which paths we've already seen.
+
+    Args:
+        paths (iterable of str): An iterable of strings each representing a relative path
+
+    Raises:
+        ValueError: If any path overlaps another
+    """
+    overlap_error = _("The path for file '{path}' overlaps: {conflicts}")
+
+    path_trie = StringTrie(separator="/")
+    for path in paths:
+        if path in path_trie:
+            # path duplicates a path already in the trie
+            raise ValueError(_("Path is duplicated: {path}").format(path=path))
+
+        if path_trie.has_subtrie(path):
+            # overlap where path is 'a/b' and trie has 'a/b/c'
+            conflicts = [item[0] for item in path_trie.items(prefix=path)]
+            raise ValueError(overlap_error.format(path=path, conflicts=(", ").join(conflicts)))
+
+        prefixes = list(path_trie.prefixes(path))
+        if prefixes:
+            # overlap where path is 'a/b/c' and trie has 'a/b'
+            conflicts = [prefix.key for prefix in prefixes]
+            raise ValueError(overlap_error.format(path=path, conflicts=(", ").join(conflicts)))
+
+        # if there are no overlaps, add it to our trie and continue
+        path_trie[path] = True

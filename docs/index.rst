@@ -97,10 +97,11 @@ Table of Contents
    from-pulp-2
    components
    installation/index
+   settings
    workflows/index
    plugins/index
    rest_api
-   integration-guide/index
+   client_bindings
    contributing/index
    bugs-features
    glossary

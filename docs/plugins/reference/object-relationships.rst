@@ -30,13 +30,10 @@ Here is a gist of how models are related to each other and what each model is re
   :class:`~pulpcore.app.models.Publication`.
 * :class:`~pulpcore.plugin.models.PublishedMetadata` is a file generated while publishing and
   belongs to a certain :class:`~pulpcore.app.models.Publication`.
-* :class:`~pulpcore.plugin.models.Publisher` knows specifics of the plugin
-  :class:`~pulpcore.plugin.models.Content` to make it available outside of Pulp.
-  :class:`~pulpcore.plugin.models.Publisher` defines how to publish content available in Pulp.
 * :class:`~pulpcore.app.models.Publication` is a result of publish operation of a specific
-  :class:`~pulpcore.plugin.models.Publisher`.
+  :class:`~pulpcore.plugin.models.RepositoryVersion`.
 * :class:`~pulpcore.app.models.Distribution` defines how a publication is distributed for a specific
-  :class:`~pulpcore.plugin.models.Publisher`.
+  :class:`~pulpcore.plugin.models.Publication`.
 * :class:`~pulpcore.plugin.models.ProgressReport` is used to report progress of the task.
 
 

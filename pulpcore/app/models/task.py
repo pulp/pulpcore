@@ -11,7 +11,7 @@ from django.db import models, transaction
 from django.utils import timezone
 from rq.job import get_current_job
 
-from pulpcore.app.models import GenericRelationModel, Model
+from pulpcore.app.models import GenericRelationModel, BaseModel
 from pulpcore.constants import TASK_CHOICES, TASK_FINAL_STATES, TASK_STATES
 from pulpcore.exceptions import exception_to_dict
 from pulpcore.tasking.constants import TASKING_CONSTANTS
@@ -19,7 +19,7 @@ from pulpcore.tasking.constants import TASKING_CONSTANTS
 _logger = logging.getLogger(__name__)
 
 
-class ReservedResource(Model):
+class ReservedResource(BaseModel):
     """
     Resources that have been reserved
 
@@ -39,7 +39,7 @@ class ReservedResource(Model):
     worker = models.ForeignKey("Worker", related_name="reservations", on_delete=models.CASCADE)
 
 
-class TaskReservedResource(Model):
+class TaskReservedResource(BaseModel):
     """
     Association between a Task and its ReservedResources.
 
@@ -58,7 +58,7 @@ class TaskReservedResource(Model):
     task = models.ForeignKey('Task', on_delete=models.PROTECT)
 
 
-class ReservedResourceRecord(Model):
+class ReservedResourceRecord(BaseModel):
     """
     Resources that have been reserved.
 
@@ -80,7 +80,7 @@ class ReservedResourceRecord(Model):
                                    through='TaskReservedResourceRecord')
 
 
-class TaskReservedResourceRecord(Model):
+class TaskReservedResourceRecord(BaseModel):
     """
     Association between a Task and its ReservedResourcesRecord.
 
@@ -120,7 +120,9 @@ class WorkerManager(models.Manager):
         Raises:
             Worker.DoesNotExist: If all Workers have at least one ReservedResource entry.
         """
-        workers_qs = self.online_workers().filter(name__startswith=TASKING_CONSTANTS.WORKER_PREFIX)
+        workers_qs = self.online_workers().exclude(
+            name=TASKING_CONSTANTS.RESOURCE_MANAGER_WORKER_NAME
+        )
         workers_qs_with_counts = workers_qs.annotate(models.Count('reservations'))
         try:
             return workers_qs_with_counts.filter(reservations__count=0).order_by('?')[0]
@@ -213,10 +215,10 @@ class WorkerManager(models.Manager):
             :class:`django.db.models.query.QuerySet`:  A query set of the Worker objects which
                 which match the resource manager name.
         """
-        return self.filter(name__startswith=TASKING_CONSTANTS.RESOURCE_MANAGER_WORKER_NAME)
+        return self.filter(name=TASKING_CONSTANTS.RESOURCE_MANAGER_WORKER_NAME)
 
 
-class Worker(Model):
+class Worker(BaseModel):
     """
     Represents a worker
 
@@ -305,7 +307,7 @@ class Worker(Model):
                 TaskReservedResourceRecord.objects.create(resource=reservation_record, task=task)
 
 
-class Task(Model):
+class Task(BaseModel):
     """
     Represents a task
 
@@ -329,9 +331,6 @@ class Task(Model):
     finished_at = models.DateTimeField(null=True)
 
     error = JSONField(null=True)
-
-    parent = models.ForeignKey("Task", null=True, related_name="spawned_tasks",
-                               on_delete=models.SET_NULL)
     worker = models.ForeignKey("Worker", null=True, related_name="tasks",
                                on_delete=models.SET_NULL)
 

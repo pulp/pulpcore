@@ -24,8 +24,10 @@ Fundamentals
    :maxdepth: 1
 
    dev-setup
-   runtests
+   tests
    style-guide
+   documentation
+   git
    pull-request-walkthrough
 
 
@@ -33,7 +35,7 @@ Plugin Development
 ------------------
 
 Developers interested in writing plugins should reference the `Pulp Plugin API
-<../plugins/nightly/>`_ documentation.
+<../plugins/index.html>`_ documentation.
 
 
 Reference
@@ -43,10 +45,17 @@ Reference
    :maxdepth: 1
 
    architecture/index
-   error-handling
    platform-api/index
-   git
-   continuous-integration
-   documentation
-   pups
-   build-guide
+
+
+Suggesting Changes to the Pulp Development Process
+--------------------------------------------------
+
+Pulp is a community project, and major changes to the way Pulp is developed, such as the release
+cycle, and style guide, can be suggested by submitting a :term:`PUP`, or, "Pulp Update Proposal".
+All approved PUPs live in the `PUP repository <https://github.com/pulp/pups/>`_.
+
+`PUP-1 <https://github.com/pulp/pups/blob/master/pup-0001.md>`_ defines the PUP process itself.
+
+All approved, rejected, and abandoned PUPs are tracked in the `PUP index
+<https://github.com/pulp/pups/blob/master/README.md>`_

@@ -21,7 +21,7 @@ you :ref:`chat with us<community>` before you get started.
 Checklist
 ---------
 
-#. Add :ref:`unit tests<continuous-integration>` where appropriate.
+#. Add :ref:`unit tests<tests>` where appropriate.
 #. Update relevent :doc:`documentation`. Please build the docs to test!
 #. If your change would benefit from integration testing, write a `pulp smash issue
    <https://github.com/PulpQE/pulp-smash/issues/new>`_.
@@ -33,11 +33,12 @@ Checklist
 #. Add GitHub labels as appropriate.
 #. Change the status of the redmine issue to "POST".
 #. Add a link to the pull request in a comment on the issue.
+#. Make sure the tests are passing.
 
 Review
 ------
 
-Before a pull request can be merged, the :ref:`tests<continuous-integration>` must pass and it must
+Before a pull request can be merged, the :ref:`tests<tests>` must pass and it must
 be reviewed by one of the committers. We encourage you to :ref:`reach out to the
 developers<community>` to get speedy review.
 

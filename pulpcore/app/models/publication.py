@@ -1,6 +1,6 @@
 from django.db import IntegrityError, models, transaction
 
-from .base import MasterModel, Model
+from .base import MasterModel, BaseModel
 from .content import Artifact, Content, ContentArtifact
 from .repository import Remote, Repository, RepositoryVersion
 from .task import CreatedResource
@@ -23,15 +23,13 @@ class Publication(MasterModel):
             a PublishedArtifact for all of the content (artifacts) in the repository.
 
     Relations:
-        publisher (models.ForeignKey): The publisher that created the publication.
         repository_version (models.ForeignKey): The RepositoryVersion used to
             create this Publication.
 
     Examples:
-        >>> publisher = ...
         >>> repository_version = ...
         >>>
-        >>> with Publication.create(repository_version, publisher) as publication:
+        >>> with Publication.create(repository_version) as publication:
         >>>     for content in repository_version.content():
         >>>         for content_artifact in content.contentartifact_set.all():
         >>>             artifact = PublishedArtifact(...)
@@ -45,11 +43,10 @@ class Publication(MasterModel):
     complete = models.BooleanField(db_index=True, default=False)
     pass_through = models.BooleanField(default=False)
 
-    publisher = models.ForeignKey('Publisher', on_delete=models.CASCADE, null=True)
     repository_version = models.ForeignKey('RepositoryVersion', on_delete=models.CASCADE)
 
     @classmethod
-    def create(cls, repository_version, publisher=None, pass_through=False):
+    def create(cls, repository_version, pass_through=False):
         """
         Create a publication.
 
@@ -59,8 +56,6 @@ class Publication(MasterModel):
         Args:
             repository_version (pulpcore.app.models.RepositoryVersion): The repository
                 version to be published.
-            publisher (pulpcore.app.models.Publisher): The publisher used
-                to create the publication.
             pass_through (bool): Indicates that the publication is a pass-through
                 to the repository version. Enabling pass-through has the same effect
                 as creating a PublishedArtifact for all of the content (artifacts)
@@ -76,8 +71,6 @@ class Publication(MasterModel):
             publication = cls(
                 pass_through=pass_through,
                 repository_version=repository_version)
-            if publisher:
-                publication.publisher = publisher
             publication.save()
             resource = CreatedResource(content_object=publication)
             resource.save()
@@ -107,6 +100,19 @@ class Publication(MasterModel):
             CreatedResource.objects.filter(object_id=self.pk).delete()
             super().delete(**kwargs)
 
+    def finalize_new_publication(self):
+        """
+        Finalize the incomplete Publication with plugin-provided code.
+
+        This method should be overridden by plugin writers for an opportunity for plugin input. This
+        method is intended to be used to validate or modify the content.
+
+        This method does not adjust the value of complete, or save the `Publication` itself.
+        Its intent is to allow the plugin writer an opportunity for plugin input before pulpcore
+        marks the `Publication` as complete.
+        """
+        pass
+
     def __enter__(self):
         """
         Enter context.
@@ -125,14 +131,19 @@ class Publication(MasterModel):
             exc_val (Exception): (optional) Instance of exception raised.
             exc_tb (types.TracebackType): (optional) stack trace.
         """
-        if not exc_val:
-            self.complete = True
-            self.save()
-        else:
+        if exc_val:
             self.delete()
+        else:
+            try:
+                self.finalize_new_publication()
+                self.complete = True
+                self.save()
+            except Exception:
+                self.delete()
+                raise
 
 
-class PublishedArtifact(Model):
+class PublishedArtifact(BaseModel):
     """
     An artifact that is part of a publication.
 

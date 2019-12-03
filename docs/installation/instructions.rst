@@ -62,33 +62,33 @@ PyPI Installation
    $ git clone https://github.com/pulp/pulpcore.git
    $ pip install -e ./pulpcore[postgres]
 
+5. Configure Pulp by following the :ref:`configuration instructions <configuration>`.
 
-5. Follow the :ref:`configuration instructions <configuration>` to set the ``SECRET_KEY``.
+6. Set ``SECRET_KEY`` and ``CONTENT_ORIGIN`` according to the :ref:`settings <settings>`.
 
-6. Create the ``MEDIA_ROOT`` & ``WORKING_DIRECTORY`` with the prescribed permissions from the
-   :ref:`configuration instructions. <configuration>`
+7. Create ``MEDIA_ROOT`` and ``WORKING_DIRECTORY`` with the prescribed permissions proposed in
+   the :ref:`settings <settings>`.
 
-7. Go through the :ref:`database-install`, :ref:`redis-install`, and :ref:`systemd-setup` sections
+8. Go through the :ref:`database-install`, :ref:`redis-install`, and :ref:`systemd-setup` sections.
 
 .. note::
 
     In place of using the systemd unit files provided in the `systemd-setup` section, you can run
     the commands yourself inside of a shell. This is fine for development but not recommended in production::
 
-    $ /path/to/python/bin/rq worker -n 'resource-manager@%h' -w 'pulpcore.tasking.worker.PulpWorker' -c 'pulpcore.rqconfig'
-    $ /path/to/python/bin/rq worker -n 'reserved-resource-worker-1@%h' -w 'pulpcore.tasking.worker.PulpWorker' -c 'pulpcore.rqconfig'
-    $ /path/to/python/bin/rq worker -n 'reserved-resource-worker-2@%h' -w 'pulpcore.tasking.worker.PulpWorker' -c 'pulpcore.rqconfig'
+    $ /path/to/python/bin/rq worker -n 'resource-manager' -w 'pulpcore.tasking.worker.PulpWorker' -c 'pulpcore.rqconfig'
+    $ /path/to/python/bin/rq worker -w 'pulpcore.tasking.worker.PulpWorker' -c 'pulpcore.rqconfig'
 
-8. Run Django Migrations::
+9. Run Django Migrations::
 
    $ django-admin migrate --noinput
    $ django-admin reset-admin-password --password admin
 
-9. Collect Static Media for live docs and browsable API::
+10. Collect Static Media for live docs and browsable API::
 
-   $ django-admin collectstatic --noinput
+    $ django-admin collectstatic --noinput
 
-10. Run Pulp::
+11. Run Pulp::
 
     $ pulp-content  # The Pulp Content service (listening on port 24816)
     $ django-admin runserver 24817  # The Pulp API service
@@ -149,7 +149,7 @@ Systemd
 To run the four Pulp services, systemd files needs to be created in /usr/lib/systemd/system/. The
 `Pulp 3 Ansible Installer <https://github.com/pulp/ansible-pulp/>`_ makes these for you, but you
 can also configure them by hand from the templates below. Custom configuration can be applied using
-the ``Environment`` option with various :ref:`Pulp settings <configuration>`.
+the ``Environment`` option with various :ref:`Pulp settings <settings>`.
 
 
 1. Make a ``pulpcore-content.service`` file for the pulpcore-content service which serves Pulp

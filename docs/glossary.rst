@@ -27,6 +27,10 @@ Glossary
         :term:`Repository Version <RepositoryVersion>`, a :term:`Repository`, or a
         :term:`publications<publication>`.
 
+    Exporter
+        Push a :term:`Repository Version <RepositoryVersion>`, a :term:`Repository`, or a
+        :term:`publications<publication>` content to a remote location.
+
     on-demand content
         A :term:`content unit<content>` that was synchronized into Pulp but is missing one or more
         :term:`Artifacts<artifact>`. On-demand content is associated with a :term:`Remote` that
@@ -41,14 +45,9 @@ Glossary
         :term:`repository version<RepositoryVersion>`. Publications are served by the
         :term:`content app` when they are assigned to a :term:`distribution`.
 
-    :class:`~pulpcore.app.models.Publisher`
-        A :term:`plugin` defined object that contains settings required to publish a specific
-        :term:`type` of :term:`content unit<content>`.
-
     pulpcore
-        A generalized backend with a Plugin API and a :doc:`REST
-        API<integration-guide/index>`. It uses :term:`plugins<plugin>` to manage
-        :term:`content`.
+        A python package offering users a :doc:`rest_api` and plugin writers a
+        :ref:`Plugin API`. It is :term:`plugin` based and manages :term:`content`.
 
     PUP
         Stands for "Pulp Update Proposal", and are the documents that specify process changes for

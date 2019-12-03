@@ -16,12 +16,13 @@ requirements = [
     'drf-yasg~=1.17.0',
     'gunicorn>=19.9,<20.1',
     'psycopg2>=2.7,<2.9',
-    'PyYAML~=5.1.1',
+    'PyYAML>=5.1.1,<5.3.0',
     'rq~=1.1.0',
     'redis~=3.1.0',
-    'setuptools>=39.2.0,<41.7.0',
+    'setuptools>=39.2.0,<42.1.0',
     'dynaconf>=2.2,<2.3',
     'whitenoise~=4.1.3',
+    'pygtrie~=2.3.2',
 ]
 
 setup(

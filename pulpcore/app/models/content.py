@@ -8,7 +8,7 @@ from django.core import validators
 from django.db import IntegrityError, models, transaction
 from django.forms.models import model_to_dict
 
-from pulpcore.app.models import MasterModel, Model, fields, storage
+from pulpcore.app.models import MasterModel, BaseModel, fields, storage
 from pulpcore.exceptions import DigestValidationError, SizeValidationError
 
 
@@ -69,7 +69,7 @@ class QueryMixin:
         return models.Q(**kwargs)
 
 
-class Artifact(Model):
+class Artifact(BaseModel):
     """
     A file associated with a piece of content.
 
@@ -306,7 +306,7 @@ class Content(MasterModel, QueryMixin):
         raise NotImplementedError()
 
 
-class ContentArtifact(Model, QueryMixin):
+class ContentArtifact(BaseModel, QueryMixin):
     """
     A relationship between a Content and an Artifact.
 
@@ -323,7 +323,7 @@ class ContentArtifact(Model, QueryMixin):
         unique_together = ('content', 'relative_path')
 
 
-class RemoteArtifact(Model, QueryMixin):
+class RemoteArtifact(BaseModel, QueryMixin):
     """
     Represents a content artifact that is provided by a remote (external) repository.
 

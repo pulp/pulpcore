@@ -1,6 +1,5 @@
 @startuml
-(Repository Version) -right-> (Publisher)
-(Publisher) --> (Publication) : Publisher adds required metada\n due to content type
+(Repository Version) -right-> (Publication)
 (Publication) --> (Distribution)
 
 note left of Distribution
