@@ -135,9 +135,11 @@ class ProgressReport(BaseModel):
         kwargs (dict): keyword arguments to be passed on to the real save
         """
         now = timezone.now()
+        batch_interval = kwargs.pop("batch_interval", BATCH_INTERVAL)
+        saving_periodically = (batch_interval != BATCH_INTERVAL) or self._using_context_manager
 
-        if self._using_context_manager and self._last_save_time:
-            if now - self._last_save_time >= datetime.timedelta(milliseconds=BATCH_INTERVAL):
+        if saving_periodically and self._last_save_time:
+            if now - self._last_save_time >= datetime.timedelta(milliseconds=batch_interval):
                 super().save(*args, **kwargs)
                 self._last_save_time = now
         else:
@@ -177,7 +179,7 @@ class ProgressReport(BaseModel):
             self.state = TASK_STATES.FAILED
         self.save()
 
-    def increment(self):
+    def increment(self, *args, **kwargs):
         """
         Increment done count and save the progress report.
 
@@ -188,7 +190,7 @@ class ProgressReport(BaseModel):
         if self.total:
             if self.done > self.total:
                 _logger.warning(_('Too many items processed for ProgressReport %s') % self.message)
-        self.save()
+        self.save(*args, **kwargs)
 
     def iter(self, iter):
         """

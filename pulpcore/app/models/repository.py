@@ -10,7 +10,7 @@ import django
 from django.db import models, transaction
 from django.urls import reverse
 
-from pulpcore.app.util import get_view_name_for_model
+from pulpcore.app.util import batch_qs, get_view_name_for_model
 from pulpcore.download.factory import DownloaderFactory
 from pulpcore.exceptions import ResourceImmutableError
 
@@ -470,7 +470,11 @@ class RepositoryVersion(BaseModel):
             raise ResourceImmutableError(self)
 
         repo_content = []
-        for content_pk in content.exclude(pk__in=self.content).values_list('pk', flat=True):
+        to_add = set(content.values_list('pk', flat=True))
+        for added in batch_qs(content.values_list('pk', flat=True)):
+            to_add = to_add - set(added.all())
+
+        for content_pk in to_add:
             repo_content.append(
                 RepositoryContent(
                     repository=self.repository,
@@ -495,6 +499,9 @@ class RepositoryVersion(BaseModel):
 
         if self.complete:
             raise ResourceImmutableError(self)
+
+        if not content or not content.count():
+            return
 
         q_set = RepositoryContent.objects.filter(
             repository=self.repository,

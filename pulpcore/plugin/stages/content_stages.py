@@ -36,16 +36,46 @@ class QueryExistingContents(Stage):
         Returns:
             The coroutine for this stage.
         """
+        def update_kwargs(obj, all_kwargs):
+            from django.forms.models import model_to_dict
+            if not obj._state.adding:
+                all_kwargs["pk"].append(self.pk)
+            try:
+                kwargs = obj.natural_key_dict()
+            except AttributeError:
+                _kwargs = model_to_dict(obj)
+                kwargs = {k: v for k, v in _kwargs.items() if v}
+
+            for k, v in kwargs.items():
+                all_kwargs[k].append(v)
+
         async for batch in self.batches():
             content_q_by_type = defaultdict(lambda: Q(pulp_created=None))
+            all_kwargs = defaultdict(list)
+
             for d_content in batch:
                 if d_content.content._state.adding:
                     model_type = type(d_content.content)
-                    unit_q = d_content.content.q()
-                    content_q_by_type[model_type] = content_q_by_type[model_type] | unit_q
+                    d_content.content.pulp_type = d_content.content.TYPE
+                    kwargs = all_kwargs.get(model_type)
+                    if not kwargs:
+                        kwargs = defaultdict(list)
+                    all_kwargs[model_type] = kwargs
+                    update_kwargs(d_content.content, all_kwargs[model_type])
+
+            for k, v in all_kwargs.items():
+                for key, value in v.items():
+                    _key = key
+                    _value = value[0]
+
+                    if len(value) > 1:
+                        _key = f"{key}__in"
+                        _value = value
+
+                    content_q_by_type[k] |= Q(**{_key: _value})
 
             for model_type in content_q_by_type.keys():
-                for result in model_type.objects.filter(content_q_by_type[model_type]):
+                for result in model_type.objects.filter(content_q_by_type[model_type]).iterator():
                     for d_content in batch:
                         if type(d_content.content) is not model_type:
                             continue

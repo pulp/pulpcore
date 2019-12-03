@@ -81,7 +81,7 @@ class Stage:
             log.debug(_('%(name)s - next: %(content)s.'), {'name': self, 'content': content})
             yield content
 
-    async def batches(self, minsize=50):
+    async def batches(self, minsize=500):
         """
         Asynchronous iterator yielding batches of :class:`DeclarativeContent` from `self._in_q`.
 
@@ -163,7 +163,7 @@ class Stage:
         return '[{id}] {name}'.format(id=id(self), name=self.__class__.__name__)
 
 
-async def create_pipeline(stages, maxsize=100):
+async def create_pipeline(stages, maxsize=1000):
     """
     A coroutine that builds a Stages API linear pipeline from the list `stages` and runs it.
 

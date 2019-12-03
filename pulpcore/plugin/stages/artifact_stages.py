@@ -1,4 +1,5 @@
 import asyncio
+from collections import defaultdict
 from gettext import gettext as _
 import logging
 
@@ -41,15 +42,33 @@ class QueryExistingArtifacts(Stage):
         Returns:
             The coroutine for this stage.
         """
+        def update_kwargs(obj, all_kwargs):
+            if not obj._state.adding:
+                all_kwargs["pk"].append(self.pk)
+            for digest_name in obj.DIGEST_FIELDS:
+                digest_value = getattr(obj, digest_name)
+                if digest_value:
+                    all_kwargs[digest_name].append(digest_value)
+
         async for batch in self.batches():
             all_artifacts_q = Q(pulp_created=None)
+            all_kwargs = defaultdict(list)
+
             for d_content in batch:
                 for d_artifact in d_content.d_artifacts:
-                    one_artifact_q = d_artifact.artifact.q()
-                    if one_artifact_q:
-                        all_artifacts_q |= one_artifact_q
+                    update_kwargs(d_artifact.artifact, all_kwargs)
 
-            for artifact in Artifact.objects.filter(all_artifacts_q):
+            for k, v in all_kwargs.items():
+                key = k
+                value = v[0]
+
+                if len(v) > 1:
+                    key = f"{k}__in"
+                    value = v
+
+                all_artifacts_q |= Q(**{key: value})
+
+            for artifact in Artifact.objects.filter(all_artifacts_q).iterator():
                 for d_content in batch:
                     for d_artifact in d_content.d_artifacts:
                         for digest_name in artifact.DIGEST_FIELDS:
@@ -115,7 +134,6 @@ class ArtifactDownloader(Stage):
         #: (:class:`asyncio.Task`): The task that gets new content from `self._in_q`.
         #    Set to None if stage is shutdown.
         content_get_task = _add_to_pending(content_iterator.__anext__())
-
         with ProgressReport(message='Downloading Artifacts', code='downloading.artifacts') as pb:
             try:
                 while pending:
@@ -130,7 +148,7 @@ class ArtifactDownloader(Stage):
                                 content_get_task = None
                         else:
                             pb.done += task.result()  # download_count
-                            pb.save()
+                            pb.save(batch_interval=2000)
 
                     if content_get_task and content_get_task not in pending:  # not yet shutdown
                         if len(pending) < self.max_concurrent_content:

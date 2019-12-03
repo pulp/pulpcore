@@ -1,10 +1,10 @@
-from collections import defaultdict
 from gettext import gettext as _
 import logging
 
 from django.db.models import Q
 
-from pulpcore.app.models import ContentArtifact
+from pulpcore.app.models import Content, ContentArtifact
+from pulpcore.app.util import batch_qs
 from pulpcore.app.files import validate_file_paths
 
 
@@ -31,21 +31,44 @@ def remove_duplicates(repository_version):
         repository_version: The :class:`~pulpcore.plugin.models.RepositoryVersion` to be checked
             and possibly modified.
     """
-    query_for_repo_duplicates_by_type = defaultdict(lambda: Q())
-    for item in repository_version.added():
-        detail_item = item.cast()
-        if detail_item.repo_key_fields == ():
-            continue
-        unit_q_dict = {
-            field: getattr(detail_item, field) for field in detail_item.repo_key_fields
-        }
-        item_query = Q(**unit_q_dict) & ~Q(pk=detail_item.pk)
-        query_for_repo_duplicates_by_type[detail_item._meta.model] |= item_query
+    repository_type = repository_version.repository.pulp_type.split(".")[-1]
+    CONTENT_TYPES = [
+        f.name for f in Content._meta.get_fields() if f.name.startswith(repository_type)
+    ]
 
-    for model in query_for_repo_duplicates_by_type:
+    for content_type in CONTENT_TYPES:
+        first_content = getattr(Content, content_type, None).get_queryset().first()
+        if not first_content:
+            continue
+
+        repo_key_fields = first_content.repo_key_fields
+        if repo_key_fields == ():
+            continue
+
+        model = first_content._meta.model
+        if "pk" not in repo_key_fields:
+            repo_key_fields = repo_key_fields + ("pk",)
+
+        added_batch = batch_qs(model.objects.filter(
+            version_memberships__version_added=repository_version
+        ).values(*repo_key_fields))
+
+        queryset = None
+        for added in added_batch:
+            query_for_repo_duplicates_by_type = Q()
+            for item in added:
+                pk = str(item.pop("pk"))
+                item_query = Q(**item) & ~Q(pk=pk)
+                query_for_repo_duplicates_by_type |= item_query
+
+            qs = model.objects.filter(query_for_repo_duplicates_by_type)
+            if not queryset:
+                queryset = qs
+            else:
+                queryset = queryset | qs
+
         _logger.debug(_("Removing duplicates for type: {}".format(model)))
-        qs = model.objects.filter(query_for_repo_duplicates_by_type[model])
-        repository_version.remove_content(qs)
+        repository_version.remove_content(queryset)
 
 
 def validate_version_paths(version):
