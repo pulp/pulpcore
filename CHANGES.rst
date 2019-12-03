@@ -13,6 +13,138 @@ Changelog
 
 .. towncrier release notes start
 
+3.0.0rc9 (2019-12-03)
+=====================
+REST API
+--------
+
+Features
+~~~~~~~~
+
+- Multiple resource-managers can be started and only one will be active.
+  `#3707 <https://pulp.plan.io/issues/3707>`_
+- Create an initial repo version when repos get created.
+  `#5757 <https://pulp.plan.io/issues/5757>`_
+- Workers no longer require names, and auto-name as {pid}@{fqdn}. This allows easy finding of
+  processes from the Status API. Custom names still work by specifying the ``-n`` option when starting
+  a worker. Any worker name starting with ``resource-manager`` is a resource-manager, otherwise it's
+  assumed to be a task worker.
+  `#5787 <https://pulp.plan.io/issues/5787>`_
+
+
+Bugfixes
+~~~~~~~~
+
+- Release reservations for tasks when cleaned up by another worker.
+  `#5673 <https://pulp.plan.io/issues/5673>`_
+- Delete the repository version if an exception is raised during finalize_new_version().
+  `#5712 <https://pulp.plan.io/issues/5712>`_
+- Fix uncast Repository bug when modifying repository content.
+  `#5728 <https://pulp.plan.io/issues/5728>`_
+- Fix the pulp_type field output in __str__ for MasterModels.
+  `#5733 <https://pulp.plan.io/issues/5733>`_
+- Fix path parameter in OpenAPI schema for Repoistory Version endpoints.
+  `#5760 <https://pulp.plan.io/issues/5760>`_
+- Fix old references to ssl_ca_certificate and ssl_client_key.
+  `#5770 <https://pulp.plan.io/issues/5770>`_
+- Only online workers are shown in the ``/pulp/api/v3/status/`` causing environments where worker
+  names change to not accumulate workers endlessly.
+  `#5786 <https://pulp.plan.io/issues/5786>`_
+
+
+Improved Documentation
+~~~~~~~~~~~~~~~~~~~~~~
+
+- Added info about ``resource-manager`` High Availability to the docs.
+  `#3707 <https://pulp.plan.io/issues/3707>`_
+- Fixing a broken link to the Plugin API docs on the homepage.
+  `#5660 <https://pulp.plan.io/issues/5660>`_
+- Added content to the pulp2-to-3 documentation page.
+  `#5715 <https://pulp.plan.io/issues/5715>`_
+- Move the section "Static Content" to "Architecture and Deploying"
+  `#5716 <https://pulp.plan.io/issues/5716>`_
+- Remove the empty Migration page under installation. The migration tool will add this content back as
+  it becomes available.
+  `#5717 <https://pulp.plan.io/issues/5717>`_
+- Removes the empty Distributed Installation page.
+  `#5718 <https://pulp.plan.io/issues/5718>`_
+- Extract the section "Settings" from the section "Configuration"
+  `#5719 <https://pulp.plan.io/issues/5719>`_
+- Adding dedicated `Rest API` left-navigation section.
+  `#5722 <https://pulp.plan.io/issues/5722>`_
+- Move `Client Bindings` to their own page and fix links.
+  `#5723 <https://pulp.plan.io/issues/5723>`_
+- Rearranged contributing documentation.
+  `#5724 <https://pulp.plan.io/issues/5724>`_
+- Removes the empty Troubleshooting page.
+  `#5725 <https://pulp.plan.io/issues/5725>`_
+
+
+Deprecations and Removals
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+- Resource managers must now have the name ``resource-manager``. For example::
+
+       /path/to/python/bin/rq worker -n 'resource-manager' -w 'pulpcore.tasking.worker.PulpWorker' -c 'pulpcore.rqconfig'
+  `#3707 <https://pulp.plan.io/issues/3707>`_
+- Remove "spawned_tasks" and "parent" field from tasks.
+  `#5710 <https://pulp.plan.io/issues/5710>`_
+- The ``/pulp/api/v3/status/`` had the ``missing_workers`` section removed. Also the
+  ``online_workers`` key had the ``online`` and ``missing`` keys removed.
+  `#5786 <https://pulp.plan.io/issues/5786>`_
+- Remove Publishers from pulpcore
+
+  Now that all plugins use Publications instead of Publishers,
+  remove Publisher model from pulpcore.
+  `#5814 <https://pulp.plan.io/issues/5814>`_
+
+
+Misc
+~~~~
+
+- `#5777 <https://pulp.plan.io/issues/5777>`_
+
+
+Plugin API
+----------
+
+Features
+~~~~~~~~
+
+- Added artifact path overlap checks for repo versions and publications. Plugin writers should call
+  ``validate_version_paths()`` or ``validate_publication_paths()`` during the finalize step when
+  creating RepositoryVersions or Publications (respectively).
+  `#5559 <https://pulp.plan.io/issues/5559>`_
+- Add a new ``finalize_new_publication()`` hook for plugin writers to call before a Publication is finalized.
+  `#5827 <https://pulp.plan.io/issues/5827>`_
+
+
+Bugfixes
+~~~~~~~~
+
+- Adds entries to all intended plugin API endpoints to import through ``pulpcore.plugin``. This allows
+  all plugins to safely use the plugin API as long as they import from ``pulpcore.plugin``.
+  `#5693 <https://pulp.plan.io/issues/5693>`_
+- Fix the pulp_type field output in __str__ for MasterModels.
+  `#5733 <https://pulp.plan.io/issues/5733>`_
+
+
+Deprecations and Removals
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+- The ``pulpcore.plugin.models.Model`` is renamed to ``pulpcore.plugin.models.BaseModel``. Also the
+  following objects have been removed from the plugin API:
+
+  * ``pulpcore.plugin.serializers.NestedIdentityField``
+  * ``pulpcore.plugin.serializers.SingleContentArtifactField``
+  * ``pulpcore.plugin.serializers.relative_path_validator``
+  * ``pulpcore.plugin.viewsets.RemoteFilter``
+  `#5693 <https://pulp.plan.io/issues/5693>`_
+
+
+----
+
+
 3.0.0rc8 (2019-11-13)
 =====================
 REST API

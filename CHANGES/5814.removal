@@ -1,4 +1,0 @@
-Remove Publishers from pulpcore
-
-Now that all plugins use Publications instead of Publishers,
-remove Publisher model from pulpcore.
