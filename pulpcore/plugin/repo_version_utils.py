@@ -1,11 +1,11 @@
-from collections import defaultdict
 from gettext import gettext as _
 import logging
 
 from django.db.models import Q
 
-from pulpcore.app.models import ContentArtifact
 from pulpcore.app.files import validate_file_paths
+from pulpcore.app.models import ContentArtifact
+from pulpcore.app.util import batch_qs
 
 
 _logger = logging.getLogger(__name__)
@@ -31,21 +31,34 @@ def remove_duplicates(repository_version):
         repository_version: The :class:`~pulpcore.plugin.models.RepositoryVersion` to be checked
             and possibly modified.
     """
-    query_for_repo_duplicates_by_type = defaultdict(lambda: Q())
-    for item in repository_version.added():
-        detail_item = item.cast()
-        if detail_item.repo_key_fields == ():
-            continue
-        unit_q_dict = {
-            field: getattr(detail_item, field) for field in detail_item.repo_key_fields
-        }
-        item_query = Q(**unit_q_dict) & ~Q(pk=detail_item.pk)
-        query_for_repo_duplicates_by_type[detail_item._meta.model] |= item_query
+    added_content = repository_version.added()
+    existing_content = repository_version._content_old()
+    repository = repository_version.repository.cast()
+    content_types = {type_obj.get_pulp_type(): type_obj for type_obj in repository.CONTENT_TYPES}
 
-    for model in query_for_repo_duplicates_by_type:
-        _logger.debug(_("Removing duplicates for type: {}".format(model)))
-        qs = model.objects.filter(query_for_repo_duplicates_by_type[model])
-        repository_version.remove_content(qs)
+    for pulp_type, type_obj in content_types.items():
+        repo_key_fields = type_obj.repo_key_fields
+        new_content_qs = type_obj.objects.filter(
+            pk__in=added_content.filter(pulp_type=pulp_type)
+        ).values(*repo_key_fields)
+
+        if type_obj.repo_key_fields == ():
+            continue
+
+        if new_content_qs.count() and existing_content.count():
+            _logger.debug(_("Removing duplicates for type: {}".format(type_obj.get_pulp_type())))
+
+            for batch in batch_qs(new_content_qs):
+                find_dup_qs = Q()
+
+                for content_dict in batch:
+                    item_query = Q(**content_dict)
+                    find_dup_qs |= item_query
+
+                duplicates_qs = type_obj.objects.filter(pk__in=existing_content)\
+                                                .filter(find_dup_qs)\
+                                                .only('pk')
+                repository_version.remove_content(duplicates_qs)
 
 
 def validate_version_paths(version):
