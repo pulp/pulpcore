@@ -648,11 +648,25 @@ class RepositoryVersion(BaseModel):
             self.delete()
         else:
             try:
-                self.repository.finalize_new_version(self)
+                repository = self.repository.cast()
+                repository.finalize_new_version(self)
                 no_change = not self.added() and not self.removed()
                 if no_change:
                     self.delete()
                 else:
+                    content_types_seen = set(
+                        self.content.values_list('pulp_type', flat=True).distinct()
+                    )
+                    content_types_supported = set(
+                        ctype.get_pulp_type() for ctype in repository.CONTENT_TYPES
+                    )
+
+                    unsupported_types = content_types_seen - content_types_supported
+                    if unsupported_types:
+                        raise ValueError(
+                            "Saw unsupported content types {}".format(unsupported_types)
+                        )
+
                     self.complete = True
                     self.save()
                     self._compute_counts()
