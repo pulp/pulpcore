@@ -39,6 +39,7 @@ class Repository(MasterModel):
         content (models.ManyToManyField): Associated content.
     """
     TYPE = 'repository'
+    CONTENT_TYPES = []
 
     name = models.TextField(db_index=True, unique=True)
     description = models.TextField(null=True)
@@ -416,6 +417,23 @@ class RepositoryVersion(BaseModel):
         """
         relationships = RepositoryContent.objects.filter(
             repository=self.repository, version_added__number__lte=self.number
+        ).exclude(
+            version_removed__number__lte=self.number
+        )
+        return Content.objects.filter(version_memberships__in=relationships)
+
+    def _content_old(self):
+        """
+        Returns the set of content in the repo version that was not added
+
+        Identical to .content except for "version_added__number__lt"
+
+        Returns:
+            django.db.models.QuerySet: The content that is contained within this version
+                that was not added.
+        """
+        relationships = RepositoryContent.objects.filter(
+            repository=self.repository, version_added__number__lt=self.number
         ).exclude(
             version_removed__number__lte=self.number
         )
