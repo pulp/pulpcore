@@ -15,7 +15,7 @@ from pulpcore.constants import TASK_CHOICES, TASK_STATES
 _logger = logging.getLogger(__name__)
 
 # number of ms between save() calls when _using_context_manager is set
-BATCH_INTERVAL = 500
+BATCH_INTERVAL = 2000
 
 
 class ProgressReport(BaseModel):

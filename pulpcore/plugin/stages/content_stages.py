@@ -45,7 +45,7 @@ class QueryExistingContents(Stage):
                     content_q_by_type[model_type] = content_q_by_type[model_type] | unit_q
 
             for model_type in content_q_by_type.keys():
-                for result in model_type.objects.filter(content_q_by_type[model_type]):
+                for result in model_type.objects.filter(content_q_by_type[model_type]).iterator():
                     for d_content in batch:
                         if type(d_content.content) is not model_type:
                             continue
