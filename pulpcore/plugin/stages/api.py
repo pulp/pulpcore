@@ -157,7 +157,7 @@ class Stage:
         if item is None:
             raise ValueError(_('(None) not permitted.'))
         await self._out_q.put(item)
-        log.debug(_('%(name)s - put: %(content)s'), {'name': self, 'content': item})
+        log.debug('{name} - put: {content}'.format(name=self, content=item))
 
     def __str__(self):
         return '[{id}] {name}'.format(id=id(self), name=self.__class__.__name__)
