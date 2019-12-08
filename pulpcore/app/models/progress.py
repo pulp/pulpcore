@@ -184,7 +184,16 @@ class ProgressReport(BaseModel):
         This will increment and save the self.done attribute which is useful to put into a loop
         processing items.
         """
-        self.done += 1
+        self.increase_by(1)
+
+    def increase_by(self, count):
+        """
+        Increase the done count and save the progress report.
+
+        This will increment and save the self.done attribute which is useful to put into a loop
+        processing items.
+        """
+        self.done += count
         if self.total:
             if self.done > self.total:
                 _logger.warning(_('Too many items processed for ProgressReport %s') % self.message)
