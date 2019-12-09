@@ -39,6 +39,7 @@ class Repository(MasterModel):
         content (models.ManyToManyField): Associated content.
     """
     TYPE = 'repository'
+    CONTENT_TYPES = []
 
     name = models.TextField(db_index=True, unique=True)
     description = models.TextField(null=True)
@@ -421,6 +422,23 @@ class RepositoryVersion(BaseModel):
         )
         return Content.objects.filter(version_memberships__in=relationships)
 
+    def _content_old(self):
+        """
+        Returns the set of content in the repo version that was not added
+
+        Identical to .content except for "version_added__number__lt"
+
+        Returns:
+            django.db.models.QuerySet: The content that is contained within this version
+                that was not added.
+        """
+        relationships = RepositoryContent.objects.filter(
+            repository=self.repository, version_added__number__lt=self.number
+        ).exclude(
+            version_removed__number__lte=self.number
+        )
+        return Content.objects.filter(version_memberships__in=relationships)
+
     @property
     def artifacts(self):
         """
@@ -648,11 +666,25 @@ class RepositoryVersion(BaseModel):
             self.delete()
         else:
             try:
-                self.repository.finalize_new_version(self)
+                repository = self.repository.cast()
+                repository.finalize_new_version(self)
                 no_change = not self.added() and not self.removed()
                 if no_change:
                     self.delete()
                 else:
+                    content_types_seen = set(
+                        self.content.values_list('pulp_type', flat=True).distinct()
+                    )
+                    content_types_supported = set(
+                        ctype.get_pulp_type() for ctype in repository.CONTENT_TYPES
+                    )
+
+                    unsupported_types = content_types_seen - content_types_supported
+                    if unsupported_types:
+                        raise ValueError(
+                            "Saw unsupported content types {}".format(unsupported_types)
+                        )
+
                     self.complete = True
                     self.save()
                     self._compute_counts()
