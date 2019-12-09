@@ -4,11 +4,12 @@ Glossary
 .. glossary::
 
     :class:`~pulpcore.app.models.Artifact`
-        A file that belongs to a :term:`content unit<content>`.
+        A file. They usually belong to a :term:`content unit<content>` but may be used elsewhere
+        (e.g. for PublishedArtifacts).
 
     :class:`~pulpcore.plugin.models.ContentGuard`
         A pluggable content protection mechanism that can be added to a :term:`Distribution`, and
-        is used exclusively by the :term:`content app` to only had out binary data to trusted
+        is used exclusively by the :term:`content app` to only hand out binary data to trusted
         clients. "Trusted users" are defined by the type of ContentGuard used.
 
     :class:`~pulpcore.app.models.Content`
@@ -25,20 +26,23 @@ Glossary
     :class:`~pulpcore.plugin.models.Distribution`
         User facing object that configures the :term:`content app` to serve either a
         :term:`Repository Version <RepositoryVersion>`, a :term:`Repository`, or a
-        :term:`publications<publication>`.
+        :term:`Publication<publication>`.
 
     Exporter
-        Push a :term:`Repository Version <RepositoryVersion>`, a :term:`Repository`, or a
-        :term:`publications<publication>` content to a remote location.
+        Exporters can push a :term:`Repository Version <RepositoryVersion>`, a :term:`Repository`,
+        or a :term:`Publication<publication>` content to a location outside of Pulp. Some example
+        locations include a remote server or a file system location.
 
     on-demand content
-        A :term:`content unit<content>` that was synchronized into Pulp but is missing one or more
-        :term:`Artifacts<artifact>`. On-demand content is associated with a :term:`Remote` that
-        knows how to download those :term:`Artifacts<artifact>`.
+        :term:`Content<content>` that was synchronized into Pulp but not yet saved to the
+        filesystem. The Content's :term:`Artifacts<artifact>` are fetched at the time they are
+        requested.  On-demand content is associated with a :term:`Remote` that knows how to download
+        those :term:`Artifacts<artifact>`.
 
     plugin
-        A `Django <https://docs.djangoproject.com>`_ app that exends :term:`pulpcore` to manage one
-        or more :term:`types<type>` of :term:`content`.
+        A `Django <https://docs.djangoproject.com>`_ app that exends :term:`pulpcore` to add more
+        features to Pulp. Plugins are most commonly used to add support for one or more
+        :term:`types<type>` of :term:`content`.
 
     :class:`~pulpcore.app.models.Publication`
         The metadata and :term:`artifacts<Artifact>` of the :term:`content units<content>` in a
@@ -47,7 +51,7 @@ Glossary
 
     pulpcore
         A python package offering users a :doc:`rest_api` and plugin writers a
-        :ref:`Plugin API`. It is :term:`plugin` based and manages :term:`content`.
+        :ref:`Plugin API`. It is :term:`plugin`-based and manages :term:`content`.
 
     PUP
         Stands for "Pulp Update Proposal", and are the documents that specify process changes for
@@ -70,5 +74,5 @@ Glossary
         :term:`repository`, creating a new :term:`repository version<RepositoryVersion>`.
 
     type
-        Each :term:`content unit<content>` has a type (ex. rpm or docker) which is defined by a
-        :term:`Plugin<plugin>`.
+        Each :term:`content unit<content>` has a type (ex. rpm package or container tag) which is
+        defined by a :term:`Plugin<plugin>`.
