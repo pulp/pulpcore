@@ -50,4 +50,7 @@ setup(
         'Programming Language :: Python :: 3.7',
     ),
     scripts=['bin/pulp-content'],
+    entry_points={'console_scripts': [
+        'pulpcore-admin = pulpcore.app.manage:manage',
+    ]}
 )
