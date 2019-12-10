@@ -7,7 +7,8 @@ class Command(BaseCommand):
     """
     Django management command for printing a summary report of a Stages API pipeline run.
     """
-    help = _('Print a summary of a Stages API pipeline run')
+    help = _('Print a summary of a Stages API pipeline run. This command is provided as a tech '
+             'preview and may not work properly or change in the future.')
 
     def add_arguments(self, parser):
         parser.add_argument('file_path',

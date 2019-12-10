@@ -204,3 +204,8 @@ PROFILE_STAGES_API
 
    A debugging feature that collects profile data about the Stages API as it runs. See
    staging api profiling docs for more information.
+
+   .. warning::
+
+      Profiling stages is provided as a tech preview in Pulp 3.0. Functionality may not fully work
+      and backwards compatibility when upgrading to future Pulp releases is not guaranteed.
