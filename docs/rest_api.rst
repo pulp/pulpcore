@@ -3,7 +3,7 @@ REST API
 
 .. note::
 
-    The REST API documentation is `here <../restapi.html>`_.
+    The REST API documentation is `here <restapi.html>`_.
 
 
 The documentation is auto generated based on the OpenAPI schema for the REST API. The hosted
