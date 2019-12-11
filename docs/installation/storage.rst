@@ -13,6 +13,10 @@ Storage
 Amazon S3
 ^^^^^^^^^
 
+.. warning::
+    Support for Amazon S3 is provided as a tech preview in Pulp 3.0. Functionality may not work or
+    may be incomplete. Also, backwards compatibility when upgrading is not guaranteed.
+
 Setting up S3
 -------------
 
