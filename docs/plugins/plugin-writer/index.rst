@@ -6,7 +6,7 @@ Plugin Writer's Guide
    `our contributor docs <https://docs.pulpproject.org/en/3.0/nightly/contributing/index.html#contributing>`_.
 
 Pulp Core does not manage content by itself, but instead relies on plugins to add support for one
-content type or another. Examples of content types include RPM packages, Ansible roles, and Docker
+content type or another. Examples of content types include RPM packages, Ansible roles, and Container
 images.
 
 This documentation outlines how to create a Pulp plugin that provides features like:

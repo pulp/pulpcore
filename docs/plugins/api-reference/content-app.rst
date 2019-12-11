@@ -4,7 +4,7 @@ pulpcore.plugin.content
 =======================
 
 The Content app provides built-in functionality to handle user requests for content, but in some
-cases the default behavior may not work for some content types. For example, Docker content requires
+cases the default behavior may not work for some content types. For example, Container content requires
 specific response headers to be present. In these cases the plugin write should provide a custom
 Handler to the Content App by subclassing `pulpcore.plugin.content.Handler`.
 
@@ -29,8 +29,8 @@ provided by overriding the various methods of `Handler`, but here is the simples
 
         pass
 
-Here is an example of the `Docker custom Handler <https://github.com/pulp/pulp_docker/blob/master/
-pulp_docker/app/registry.py>`_.
+Here is an example of the `Container custom Handler <https://github.com/pulp/pulp_container/blob/master/
+pulp_container/app/registry.py>`_.
 
 
 Registering your Handler
@@ -46,8 +46,8 @@ adding a custom route to it. Here's an example:
     app.add_routes([web.get(r'/my/custom/{somevar:.+}', MyHandler().stream_content)])
 
 
-Here is an example of `Docker registering some custom routes <https://github.com/pulp/pulp_docker/
-blob/master/pulp_docker/app/content.py>`_.
+Here is an example of `Container registering some custom routes <https://github.com/pulp/pulp_container/
+blob/master/pulp_container/app/content.py>`_.
 
 
 Restricting which detail Distributions Match

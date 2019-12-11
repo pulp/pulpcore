@@ -82,8 +82,8 @@ Content Protection
 ------------------
 
 Users can configure a ``ContentGuard`` to protect a ``Distribution`` on their own, but some plugins
-want to offer built-in content protection features. For example pulp_docker may only want a user to
-download docker images they have rights to based on some permissions system pulp_docker could
+want to offer built-in content protection features. For example pulp_container may only want a user
+to download container images they have rights to based on some permissions system pulp_container could
 provide.
 
 For more information see the :ref:`ContentGuard Usage by Plugin Writers
