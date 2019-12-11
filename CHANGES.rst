@@ -13,6 +13,64 @@ Changelog
 
 .. towncrier release notes start
 
+3.0.0 (2019-12-11)
+==================
+
+.. note::
+
+    Task names, e.g. ``pulpcore.app.tasks.orphan.orphan_cleanup``, are subject to change in future
+    releases 3.y releases. These are represented in the Task API as the "name" attribute. Please
+    check future release notes to see when these names will be considered stable. Otherwise, the
+    REST API pulpcore provides is considered semantically versioned.
+
+
+REST API
+--------
+
+Features
+~~~~~~~~
+
+- Pulp will do validation that a new repository version contains only content which is supported by
+  the Repository type. Using the same a-priori knowledge of content types, increase performance of
+  duplicate removal.
+  `#5701 <https://pulp.plan.io/issues/5701>`_
+
+
+Bugfixes
+~~~~~~~~
+
+- Improve speed and memory performance.
+  `#5688 <https://pulp.plan.io/issues/5688>`_
+
+
+Improved Documentation
+~~~~~~~~~~~~~~~~~~~~~~
+
+- Fix an incorrect license claim in the docs. Pulp is GPLv2+.
+  `#4592 <https://pulp.plan.io/issues/4592>`_
+- Labeling 3.0 features as tech preview.
+  `#5563 <https://pulp.plan.io/issues/5563>`_
+- Simplified docs index page.
+  `#5714 <https://pulp.plan.io/issues/5714>`_
+- Add text to Promotion page.
+  `#5721 <https://pulp.plan.io/issues/5721>`_
+- Fixes and updates to the glossry page.
+  `#5726 <https://pulp.plan.io/issues/5726>`_
+
+
+Plugin API
+----------
+
+Features
+~~~~~~~~
+
+- Added a new required field called CONTENT_TYPES to the Repository model.
+  `#5701 <https://pulp.plan.io/issues/5701>`_
+
+
+----
+
+
 3.0.0rc9 (2019-12-03)
 =====================
 REST API
