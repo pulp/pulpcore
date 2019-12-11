@@ -15,7 +15,7 @@ from pulpcore.constants import TASK_CHOICES, TASK_STATES
 _logger = logging.getLogger(__name__)
 
 # number of ms between save() calls when _using_context_manager is set
-BATCH_INTERVAL = 500
+BATCH_INTERVAL = 2000
 
 
 class ProgressReport(BaseModel):
@@ -184,7 +184,16 @@ class ProgressReport(BaseModel):
         This will increment and save the self.done attribute which is useful to put into a loop
         processing items.
         """
-        self.done += 1
+        self.increase_by(1)
+
+    def increase_by(self, count):
+        """
+        Increase the done count and save the progress report.
+
+        This will increment and save the self.done attribute which is useful to put into a loop
+        processing items.
+        """
+        self.done += count
         if self.total:
             if self.done > self.total:
                 _logger.warning(_('Too many items processed for ProgressReport %s') % self.message)

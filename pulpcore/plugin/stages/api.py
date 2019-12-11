@@ -81,7 +81,7 @@ class Stage:
             log.debug(_('%(name)s - next: %(content)s.'), {'name': self, 'content': content})
             yield content
 
-    async def batches(self, minsize=50):
+    async def batches(self, minsize=500):
         """
         Asynchronous iterator yielding batches of :class:`DeclarativeContent` from `self._in_q`.
 
@@ -157,13 +157,13 @@ class Stage:
         if item is None:
             raise ValueError(_('(None) not permitted.'))
         await self._out_q.put(item)
-        log.debug(_('%(name)s - put: %(content)s'), {'name': self, 'content': item})
+        log.debug('{name} - put: {content}'.format(name=self, content=item))
 
     def __str__(self):
         return '[{id}] {name}'.format(id=id(self), name=self.__class__.__name__)
 
 
-async def create_pipeline(stages, maxsize=100):
+async def create_pipeline(stages, maxsize=1000):
     """
     A coroutine that builds a Stages API linear pipeline from the list `stages` and runs it.
 

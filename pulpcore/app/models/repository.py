@@ -10,7 +10,7 @@ import django
 from django.db import models, transaction
 from django.urls import reverse
 
-from pulpcore.app.util import get_view_name_for_model
+from pulpcore.app.util import batch_qs, get_view_name_for_model
 from pulpcore.download.factory import DownloaderFactory
 from pulpcore.exceptions import ResourceImmutableError
 
@@ -39,6 +39,7 @@ class Repository(MasterModel):
         content (models.ManyToManyField): Associated content.
     """
     TYPE = 'repository'
+    CONTENT_TYPES = []
 
     name = models.TextField(db_index=True, unique=True)
     description = models.TextField(null=True)
@@ -421,6 +422,23 @@ class RepositoryVersion(BaseModel):
         )
         return Content.objects.filter(version_memberships__in=relationships)
 
+    def _content_old(self):
+        """
+        Returns the set of content in the repo version that was not added
+
+        Identical to .content except for "version_added__number__lt"
+
+        Returns:
+            django.db.models.QuerySet: The content that is contained within this version
+                that was not added.
+        """
+        relationships = RepositoryContent.objects.filter(
+            repository=self.repository, version_added__number__lt=self.number
+        ).exclude(
+            version_removed__number__lte=self.number
+        )
+        return Content.objects.filter(version_memberships__in=relationships)
+
     @property
     def artifacts(self):
         """
@@ -470,7 +488,11 @@ class RepositoryVersion(BaseModel):
             raise ResourceImmutableError(self)
 
         repo_content = []
-        for content_pk in content.exclude(pk__in=self.content).values_list('pk', flat=True):
+        to_add = set(content.values_list('pk', flat=True))
+        for added in batch_qs(self.content.values_list('pk', flat=True)):
+            to_add = to_add - set(added.all())
+
+        for content_pk in to_add:
             repo_content.append(
                 RepositoryContent(
                     repository=self.repository,
@@ -495,6 +517,9 @@ class RepositoryVersion(BaseModel):
 
         if self.complete:
             raise ResourceImmutableError(self)
+
+        if not content or not content.count():
+            return
 
         q_set = RepositoryContent.objects.filter(
             repository=self.repository,
@@ -625,11 +650,25 @@ class RepositoryVersion(BaseModel):
             self.delete()
         else:
             try:
-                self.repository.finalize_new_version(self)
+                repository = self.repository.cast()
+                repository.finalize_new_version(self)
                 no_change = not self.added() and not self.removed()
                 if no_change:
                     self.delete()
                 else:
+                    content_types_seen = set(
+                        self.content.values_list('pulp_type', flat=True).distinct()
+                    )
+                    content_types_supported = set(
+                        ctype.get_pulp_type() for ctype in repository.CONTENT_TYPES
+                    )
+
+                    unsupported_types = content_types_seen - content_types_supported
+                    if unsupported_types:
+                        raise ValueError(
+                            "Saw unsupported content types {}".format(unsupported_types)
+                        )
+
                     self.complete = True
                     self.save()
                     self._compute_counts()

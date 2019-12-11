@@ -49,7 +49,7 @@ class QueryExistingArtifacts(Stage):
                     if one_artifact_q:
                         all_artifacts_q |= one_artifact_q
 
-            for artifact in Artifact.objects.filter(all_artifacts_q):
+            for artifact in Artifact.objects.filter(all_artifacts_q).iterator():
                 for d_content in batch:
                     for d_artifact in d_content.d_artifacts:
                         for digest_name in artifact.DIGEST_FIELDS:

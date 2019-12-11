@@ -11,6 +11,9 @@ class TestValidateFilePaths(TestCase):
         paths = ['a/b', 'a/c/b', 'PULP_MANIFEST', 'b']
         validate_file_paths(paths)
 
+        paths = ['a/b/c', 'a/b/d']
+        validate_file_paths(paths)
+
     def test_dupes(self):
         """
         Test for two duplicate paths.
@@ -32,5 +35,13 @@ class TestValidateFilePaths(TestCase):
             validate_file_paths(paths)
 
         paths = ['b/c', 'a/b', 'b']
+        with self.assertRaises(ValueError):
+            validate_file_paths(paths)
+
+        paths = ['a/b/c/d', 'a/b']
+        with self.assertRaises(ValueError):
+            validate_file_paths(paths)
+
+        paths = ['a/b', 'a/b/c/d']
         with self.assertRaises(ValueError):
             validate_file_paths(paths)

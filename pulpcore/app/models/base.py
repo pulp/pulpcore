@@ -103,9 +103,17 @@ class MasterModel(BaseModel, metaclass=MasterModelMeta):
         # Prepend the TYPE defined on a detail model with a django app label.
         # If a plugin sets the type field themselves, it's used as-is.
         if not self.pulp_type:
-            self.pulp_type = '{app_label}.{type}'.format(app_label=self._meta.app_label,
-                                                         type=self.TYPE)
+            self.pulp_type = self.get_pulp_type()
         return super().save(*args, **kwargs)
+
+    @classmethod
+    def get_pulp_type(cls):
+        """ Get the "pulp_type" string associated with this MasterModel type.
+        """
+        return '{app_label}.{type}'.format(
+            app_label=cls._meta.app_label,
+            type=cls.TYPE
+        )
 
     def cast(self):
         """Return a "Detail" model instance of this master-detail pair.

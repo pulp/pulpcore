@@ -44,8 +44,7 @@ class ContentAssociation(Stage):
 
                 if to_add:
                     self.new_version.add_content(Content.objects.filter(pk__in=to_add))
-                    pb.done = pb.done + len(to_add)
-                    pb.save()
+                    pb.increase_by(len(to_add))
 
             if to_delete:
                 await self.put(Content.objects.filter(pk__in=to_delete))
@@ -79,7 +78,6 @@ class ContentUnassociation(Stage):
         with ProgressReport(message='Un-Associating Content', code='unassociating.content') as pb:
             async for queryset_to_unassociate in self.items():
                 self.new_version.remove_content(queryset_to_unassociate)
-                pb.done = pb.done + queryset_to_unassociate.count()
-                pb.save()
+                pb.increase_by(queryset_to_unassociate.count())
 
                 await self.put(queryset_to_unassociate)
