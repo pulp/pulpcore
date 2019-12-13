@@ -3,7 +3,7 @@ import asyncio
 import asynctest
 import mock
 
-from pulpcore.plugin.stages import Stage, EndStage
+from pulpcore.plugin.stages import Stage, EndStage, DeclarativeContent
 
 
 class TestStage(asynctest.TestCase):
@@ -20,8 +20,8 @@ class TestStage(asynctest.TestCase):
             await batch_it.__anext__()
 
     async def test_single_batch_and_none(self):
-        c1 = mock.Mock(does_batch=True)
-        c2 = mock.Mock(does_batch=True)
+        c1 = mock.Mock()
+        c2 = mock.Mock()
         self.in_q.put_nowait(c1)
         self.in_q.put_nowait(c2)
         self.in_q.put_nowait(None)
@@ -31,8 +31,8 @@ class TestStage(asynctest.TestCase):
             await batch_it.__anext__()
 
     async def test_batch_and_single_none(self):
-        c1 = mock.Mock(does_batch=True)
-        c2 = mock.Mock(does_batch=True)
+        c1 = mock.Mock()
+        c2 = mock.Mock()
         self.in_q.put_nowait(c1)
         self.in_q.put_nowait(c2)
         batch_it = self.stage.batches(minsize=1)
@@ -42,10 +42,10 @@ class TestStage(asynctest.TestCase):
             await batch_it.__anext__()
 
     async def test_two_batches(self):
-        c1 = mock.Mock(does_batch=True)
-        c2 = mock.Mock(does_batch=True)
-        c3 = mock.Mock(does_batch=True)
-        c4 = mock.Mock(does_batch=True)
+        c1 = mock.Mock()
+        c2 = mock.Mock()
+        c3 = mock.Mock()
+        c4 = mock.Mock()
         self.in_q.put_nowait(c1)
         self.in_q.put_nowait(c2)
         batch_it = self.stage.batches(minsize=1)
@@ -54,6 +54,28 @@ class TestStage(asynctest.TestCase):
         self.in_q.put_nowait(c4)
         self.in_q.put_nowait(None)
         self.assertEqual([c3, c4], await batch_it.__anext__())
+        with self.assertRaises(StopAsyncIteration):
+            await batch_it.__anext__()
+
+    async def test_thaw_queue(self):
+        # Test that awaiting `resolved` on DeclarativeContent does not dead lock
+        c1 = DeclarativeContent(mock.Mock())
+        c2 = DeclarativeContent(mock.Mock())
+        c3 = DeclarativeContent(mock.Mock())
+        c4 = DeclarativeContent(mock.Mock())
+        batch_it = self.stage.batches(minsize=4)
+        fetch_task = asyncio.ensure_future(batch_it.__anext__())
+        fetch_task.add_done_callback(lambda _: c2.resolve())
+        self.in_q.put_nowait(c1)
+        self.in_q.put_nowait(c2)
+        self.in_q.put_nowait(c3)
+        wait_task = asyncio.ensure_future(c2.resolution())
+        wait_task.add_done_callback(lambda _: self.in_q.put_nowait(c4))
+        batch, c2_res = await asyncio.gather(fetch_task, wait_task)
+        self.assertEqual([c1, c2, c3], batch)
+        self.assertEqual(c2.content, c2_res)
+        self.in_q.put_nowait(None)
+        self.assertEqual([c4], await batch_it.__anext__())
         with self.assertRaises(StopAsyncIteration):
             await batch_it.__anext__()
 
@@ -70,7 +92,7 @@ class TestMultipleStages(asynctest.TestCase):
         async def run(self):
             for i in range(self.num):
                 await asyncio.sleep(0)  # Force reschedule
-                await self.put(mock.Mock(does_batch=True))
+                await self.put(mock.Mock())
 
     class MiddleStage(Stage):
         def __init__(self, num, minsize, test_case, *args, **kwargs):
