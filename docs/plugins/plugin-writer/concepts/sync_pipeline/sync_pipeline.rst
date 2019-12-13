@@ -53,7 +53,7 @@ See :ref:`on-demand-support`.
 Multiple level discovery
 ------------------------
 
-Plugins like `pulp_deb` and `pulp_docker` use content artifacts to enumerate more content.
+Plugins like `pulp_deb` and `pulp_container` use content artifacts to enumerate more content.
 To support this pattern, the declarative content allows to be associated with a
 :class:`asyncio.Future`, that is resolved when the content reaches the
 :class:`pulpcore.plugin.stages.ResolveContentFutures` stage.

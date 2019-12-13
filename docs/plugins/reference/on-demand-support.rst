@@ -70,7 +70,7 @@ this one inspired by `pulp-rpm`::
 What if the Custom Pipeline Needs Artifact Downloading?
 =======================================================
 
-For example, `pulp-docker` uses a custom Stages API Pipeline, and relies on Artifact downloading to
+For example, `pulp-container` uses a custom Stages API Pipeline, and relies on Artifact downloading to
 download metadata that is saved and stored as a Content unit. This metadata defines more Content
 units to be created without downloading their corresponding Artifacts. The on-demand support for
 this type needs to download Artifacts for those content types, but not others.
