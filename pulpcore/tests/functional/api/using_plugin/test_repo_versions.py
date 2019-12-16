@@ -65,7 +65,7 @@ class AddRemoveContentTestCase(unittest.TestCase):
 
     * `Pulp #3059 <https://pulp.plan.io/issues/3059>`_
     * `Pulp #3234 <https://pulp.plan.io/issues/3234>`_
-    * `Pulp Smash #878 <https://github.com/PulpQE/pulp-smash/issues/878>`_
+    * `Pulp Smash #878 <https://github.com/pulp/pulp-smash/issues/878>`_
     """
 
     @classmethod
@@ -286,7 +286,7 @@ class AddRemoveRepoVersionTestCase(unittest.TestCase):
     This test targets the following issues:
 
     * `Pulp #3219 <https://pulp.plan.io/issues/3219>`_
-    * `Pulp Smash #871 <https://github.com/PulpQE/pulp-smash/issues/871>`_
+    * `Pulp Smash #871 <https://github.com/pulp/pulp-smash/issues/871>`_
     """
 
     # `cls.content[i]` is a dict.
@@ -382,7 +382,7 @@ class ContentImmutableRepoVersionTestCase(unittest.TestCase):
 
     This test targets the following issue:
 
-    * `Pulp Smash #953 <https://github.com/PulpQE/pulp-smash/issues/953>`_
+    * `Pulp Smash #953 <https://github.com/pulp/pulp-smash/issues/953>`_
     """
 
     def test_all(self):
@@ -423,7 +423,7 @@ class FilterRepoVersionTestCase(unittest.TestCase):
     * `Pulp #3536 <https://pulp.plan.io/issues/3536>`_
     * `Pulp #3557 <https://pulp.plan.io/issues/3557>`_
     * `Pulp #3558 <https://pulp.plan.io/issues/3558>`_
-    * `Pulp Smash #880 <https://github.com/PulpQE/pulp-smash/issues/880>`_
+    * `Pulp Smash #880 <https://github.com/pulp/pulp-smash/issues/880>`_
     """
 
     @classmethod
@@ -554,7 +554,7 @@ class CreatedResourcesTaskTestCase(unittest.TestCase):
 
     This test targets the following issue:
 
-    `Pulp Smash #876 <https://github.com/PulpQE/pulp-smash/issues/876>`_.
+    `Pulp Smash #876 <https://github.com/pulp/pulp-smash/issues/876>`_.
     """
 
     def test_all(self):

@@ -23,7 +23,7 @@ class ArtifactTestCase(unittest.TestCase):
     This test targets the following issues:
 
     * `Pulp #2843 <https://pulp.plan.io/issues/2843>`_
-    * `Pulp Smash #726 <https://github.com/PulpQE/pulp-smash/issues/726>`_
+    * `Pulp Smash #726 <https://github.com/pulp/pulp-smash/issues/726>`_
     """
 
     @classmethod
@@ -137,7 +137,7 @@ class ArtifactsDeleteFileSystemTestCase(unittest.TestCase):
     This test targets the following issues:
 
     * `Pulp #3508 <https://pulp.plan.io/issues/3508>`_
-    * `Pulp Smash #908 <https://github.com/PulpQE/pulp-smash/issues/908>`_
+    * `Pulp Smash #908 <https://github.com/pulp/pulp-smash/issues/908>`_
     """
 
     def test_all(self):

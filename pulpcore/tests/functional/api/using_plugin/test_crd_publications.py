@@ -137,7 +137,7 @@ class PublicationsTestCase(unittest.TestCase):
 
         This test targets the following issues:
 
-        * `Pulp Smash #954 <https://github.com/PulpQE/pulp-smash/issues/954>`_
+        * `Pulp Smash #954 <https://github.com/pulp/pulp-smash/issues/954>`_
         * `Pulp #3576 <https://pulp.plan.io/issues/3576>`_
         """
         # Create more 2 publications for the same repo

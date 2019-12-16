@@ -1,2 +1,2 @@
 # Functional test requirements
-git+https://github.com/PulpQE/pulp-smash.git#egg=pulp-smash
+git+https://github.com/pulp/pulp-smash.git#egg=pulp-smash
