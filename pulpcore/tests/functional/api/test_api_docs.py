@@ -14,7 +14,7 @@ class ApiDocsTestCase(unittest.TestCase):
 
     This test targets the following issue:
 
-    * `Pulp Smash #893 <https://github.com/PulpQE/pulp-smash/issues/893>`_
+    * `Pulp Smash #893 <https://github.com/pulp/pulp-smash/issues/893>`_
     """
 
     def setUp(self):
