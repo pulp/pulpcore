@@ -21,7 +21,7 @@ class WorkersTestCase(unittest.TestCase):
     This test targets the following issues:
 
     * `Pulp #3143 <https://pulp.plan.io/issues/3143>`_
-    * `Pulp Smash #945 <https://github.com/PulpQE/pulp-smash/issues/945>`_
+    * `Pulp Smash #945 <https://github.com/pulp/pulp-smash/issues/945>`_
     """
 
     @classmethod

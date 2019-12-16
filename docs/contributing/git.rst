@@ -101,7 +101,7 @@ To do so, add a tag in the following format to the last commit in your series.
 
 This will allow the PR against pulp to run against the Pull Requests for pulp-smash and pulp_file::
 
-    Required PR: https://github.com/PulpQE/pulp-smash/pull/1234
+    Required PR: https://github.com/pulp/pulp-smash/pull/1234
     Required PR: https://github.com/pulp/pulp_file/pull/2345
 
 This will allow the PR against a plugin to run against the Pull Request for pulpcore::
