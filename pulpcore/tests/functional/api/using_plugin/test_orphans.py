@@ -40,7 +40,7 @@ class DeleteOrphansTestCase(unittest.TestCase):
     This test targets the following issues:
 
     * `Pulp #3442 <https://pulp.plan.io/issues/3442>`_
-    * `Pulp Smash #914 <https://github.com/PulpQE/pulp-smash/issues/914>`_
+    * `Pulp Smash #914 <https://github.com/pulp/pulp-smash/issues/914>`_
     """
 
     @classmethod

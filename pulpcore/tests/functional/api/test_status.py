@@ -63,7 +63,7 @@ class StatusTestCase(unittest.TestCase):
     * `Pulp #2804 <https://pulp.plan.io/issues/2804>`_
     * `Pulp #2867 <https://pulp.plan.io/issues/2867>`_
     * `Pulp #3544 <https://pulp.plan.io/issues/3544>`_
-    * `Pulp Smash #755 <https://github.com/PulpQE/pulp-smash/issues/755>`_
+    * `Pulp Smash #755 <https://github.com/pulp/pulp-smash/issues/755>`_
     """
 
     def setUp(self):

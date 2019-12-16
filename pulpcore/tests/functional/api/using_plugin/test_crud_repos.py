@@ -33,9 +33,9 @@ class CRUDRepoTestCase(unittest.TestCase):
     def test_02_create_same_name(self):
         """Try to create a second repository with an identical name.
 
-        * `Pulp Smash #882 <https://github.com/PulpQE/pulp-smash/issues/882>`_.
+        * `Pulp Smash #882 <https://github.com/pulp/pulp-smash/issues/882>`_.
         * `Pulp Smash #1055
-        <https://github.com/PulpQE/pulp-smash/issues/1055>`_.
+        <https://github.com/pulp/pulp-smash/issues/1055>`_.
         """
         self.client.response_handler = api.echo_handler
         response = self.client.post(
