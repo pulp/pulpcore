@@ -11,6 +11,7 @@ additional_plugins:
 - { name: pulp-certguard, branch: master }
 black: false
 check_commit_message: true
+cherry_pick_automation: true
 coverage: true
 deploy_client_to_pypi: true
 deploy_client_to_rubygems: true
@@ -31,6 +32,7 @@ pulp_settings: null
 pulpcore_branch: null
 pydocstyle: true
 pypi_username: pulp
+stable_branch: "3.0"
 test_bindings: true
 test_performance: false
 travis_notifications:

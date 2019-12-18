@@ -88,6 +88,12 @@ jobs:
       env:
         - TEST=bindings
       if: tag IS present
+    - stage: cherry-pick
+      if: type = cron
+      before_install: skip
+      install: skip
+      before_script: skip
+      script: bash .travis/cherrypick.sh
 notifications:
   irc:
     channels:
