@@ -2,7 +2,7 @@
 """Constants for pulpcore API tests that require the use of a plugin."""
 from urllib.parse import urljoin
 
-from pulp_smash.constants import PULP_FIXTURES_BASE_URL
+from pulp_smash import config
 from pulp_smash.pulp3.constants import (
     BASE_DISTRIBUTION_PATH,
     BASE_PUBLICATION_PATH,
@@ -10,6 +10,8 @@ from pulp_smash.pulp3.constants import (
     BASE_REPO_PATH,
     BASE_CONTENT_PATH,
 )
+
+PULP_FIXTURES_BASE_URL = config.get_config().get_fixtures_url()
 
 FILE_CONTENT_NAME = 'file.file'
 
@@ -81,30 +83,3 @@ FILE_URL = urljoin(FILE_FIXTURE_URL, '1.iso')
 
 FILE2_URL = urljoin(FILE2_FIXTURE_URL, '1.iso')
 """The URL to an ISO file at :data:`FILE2_FIXTURE_URL`."""
-
-RPM_PACKAGE_CONTENT_NAME = 'rpm.package'
-
-RPM_ADVISORY_CONTENT_NAME = 'rpm.advisory'
-
-RPM_REMOTE_PATH = urljoin(BASE_REMOTE_PATH, 'rpm/rpm/')
-
-RPM_UNSIGNED_FIXTURE_URL = urljoin(PULP_FIXTURES_BASE_URL, 'rpm-unsigned/')
-"""The URL to a repository with unsigned RPM packages."""
-
-RPM_PACKAGE_COUNT = 35
-"""The number of packages available at
-:data:`RPM_SIGNED_FIXTURE_URL` and :data:`RPM_UNSIGNED_FIXTURE_URL`
-"""
-
-RPM_ADVISORY_COUNT = 4
-"""The number of updated record units."""
-
-RPM_FIXTURE_SUMMARY = {
-    RPM_PACKAGE_CONTENT_NAME: RPM_PACKAGE_COUNT,
-    RPM_ADVISORY_CONTENT_NAME: RPM_ADVISORY_COUNT,
-}
-"""The breakdown of how many of each type of content unit are present in the
-standard repositories, i.e. :data:`RPM_SIGNED_FIXTURE_URL` and
-:data:`RPM_UNSIGNED_FIXTURE_URL`.  This matches the format output by the
-"content_summary" field on "../repositories/../versions/../".
-"""
