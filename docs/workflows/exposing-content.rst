@@ -4,7 +4,7 @@ Exposing Content
 Overview
 --------
 
-Content, e.g. rpms or docker containers, loaded into Pulp is only served by Pulp if made available
+Content, e.g. rpms or docker/oci containers, loaded into Pulp is only served by Pulp if made available
 through a :term:`Distribution`. There are three options available to plugin writers.
 
 * Auto-distribution of a Repository

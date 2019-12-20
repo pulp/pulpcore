@@ -33,9 +33,9 @@ Understanding the structure and content of a content type's metadata is crucial 
 function of a plugin.
 
 **Example:**
-When the Docker plugin was in the planning phase, engineers got familiar with the `manifest spec
+When the Container plugin was in the planning phase, engineers got familiar with the `manifest spec
 files <https://docs.docker.com/registry/spec/manifest-v2-2/>`_ to understand how to properly design
-the workflow of Docker content management within the plugin.
+the workflow of Container content management within the plugin.
 
 
 Which data should be modeled as Content Units?

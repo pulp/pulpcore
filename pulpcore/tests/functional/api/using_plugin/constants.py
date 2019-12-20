@@ -11,22 +11,6 @@ from pulp_smash.pulp3.constants import (
     BASE_CONTENT_PATH,
 )
 
-
-DOCKER_V2_FEED_URL = 'https://registry-1.docker.io'
-"""The URL to a V2 Docker registry."""
-
-# hello-world is the smallest docker image available on docker hub 1.84kB
-DOCKER_UPSTREAM_NAME = 'hello-world'
-"""The name of a Docker repository"""
-
-DOCKER_CONTENT_MANIFEST_NAME = 'docker.manifest'
-
-DOCKER_CONTENT_BLOB_NAME = 'docker.blob'
-
-DOCKER_CONTENT_TAG_NAME = 'docker.tag'
-
-DOCKER_REMOTE_PATH = urljoin(BASE_REMOTE_PATH, 'docker/docker/')
-
 FILE_CONTENT_NAME = 'file.file'
 
 FILE_CONTENT_PATH = urljoin(BASE_CONTENT_PATH, 'file/files/')
