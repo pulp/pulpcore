@@ -25,7 +25,7 @@ class MultiResourceLockingTestCase(unittest.TestCase):
     This test targets the following issues:
 
     * `Pulp #3186 <https://pulp.plan.io/issues/3186>`_
-    * `Pulp Smash #879 <https://github.com/PulpQE/pulp-smash/issues/879>`_
+    * `Pulp Smash #879 <https://github.com/pulp/pulp-smash/issues/879>`_
     """
 
     def test_all(self):
@@ -69,7 +69,7 @@ class CancelTaskTestCase(unittest.TestCase):
 
     * `Pulp #3527 <https://pulp.plan.io/issues/3527>`_
     * `Pulp #3634 <https://pulp.plan.io/issues/3634>`_
-    * `Pulp Smash #976 <https://github.com/PulpQE/pulp-smash/issues/976>`_
+    * `Pulp Smash #976 <https://github.com/pulp/pulp-smash/issues/976>`_
     """
 
     @classmethod

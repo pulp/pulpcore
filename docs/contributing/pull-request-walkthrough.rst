@@ -24,7 +24,7 @@ Checklist
 #. Add :ref:`unit tests<tests>` where appropriate.
 #. Update relevent :doc:`documentation`. Please build the docs to test!
 #. If your change would benefit from integration testing, write a `pulp smash issue
-   <https://github.com/PulpQE/pulp-smash/issues/new>`_.
+   <https://github.com/pulp/pulp-smash/issues/new>`_.
 #. Add a :ref:`changelog update <changelog-update>`.
 #. :ref:`Rebase and squash<rebase>` to a single commit, if appropriate.
 #. Write an excellent :ref:`commit-message`. Make sure you reference and link to the issue.

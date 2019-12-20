@@ -190,8 +190,8 @@ class DistributionBasePathTestCase(unittest.TestCase):
     * `Pulp #2987 <https://pulp.plan.io/issues/2987>`_
     * `Pulp #3412 <https://pulp.plan.io/issues/3412>`_
     * `Pulp #4882 <https://pulp.plan.io/issues/4882>`_
-    * `Pulp Smash #906 <https://github.com/PulpQE/pulp-smash/issues/906>`_
-    * `Pulp Smash #956 <https://github.com/PulpQE/pulp-smash/issues/956>`_
+    * `Pulp Smash #906 <https://github.com/pulp/pulp-smash/issues/906>`_
+    * `Pulp Smash #956 <https://github.com/pulp/pulp-smash/issues/956>`_
     """
 
     @classmethod

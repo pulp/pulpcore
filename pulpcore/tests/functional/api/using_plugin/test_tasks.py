@@ -31,7 +31,7 @@ class TasksTestCase(unittest.TestCase):
 
     * `Pulp #3144 <https://pulp.plan.io/issues/3144>`_
     * `Pulp #3527 <https://pulp.plan.io/issues/3527>`_
-    * `Pulp Smash #754 <https://github.com/PulpQE/pulp-smash/issues/754>`_
+    * `Pulp Smash #754 <https://github.com/pulp/pulp-smash/issues/754>`_
     """
 
     @classmethod

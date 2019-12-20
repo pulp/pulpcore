@@ -1,5 +1,5 @@
 .. _istqb: https://www.istqb.org/downloads/syllabi/foundation-level-syllabus.html
-.. _Pulp Smash: https://github.com/PulpQE/pulp-smash/
+.. _Pulp Smash: https://github.com/pulp/pulp-smash/
 
 .. _tests:
 
