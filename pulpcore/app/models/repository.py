@@ -105,7 +105,7 @@ class Repository(MasterModel):
                 # now add any content that's in the base_version but not in version
                 version.add_content(base_version.content.exclude(pk__in=version.content))
 
-            if Task.current:
+            if Task.current():
                 resource = CreatedResource(content_object=version)
                 resource.save()
             return version
@@ -396,6 +396,17 @@ class RepositoryVersion(BaseModel):
         get_latest_by = 'number'
         ordering = ('number',)
 
+    def _relationships(self):
+        """
+        Returns a set of repository_content for a repository version
+
+        Returns:
+            django.db.models.QuerySet: The repository_content that is contained within this version.
+        """
+        return RepositoryContent.objects.filter(
+            repository=self.repository, version_added__number__lte=self.number
+        ).exclude(version_removed__number__lte=self.number)
+
     @property
     def content(self):
         """
@@ -415,12 +426,7 @@ class RepositoryVersion(BaseModel):
             >>>     ...
             >>>
         """
-        relationships = RepositoryContent.objects.filter(
-            repository=self.repository, version_added__number__lte=self.number
-        ).exclude(
-            version_removed__number__lte=self.number
-        )
-        return Content.objects.filter(version_memberships__in=relationships)
+        return Content.objects.filter(version_memberships__in=self._relationships())
 
     def _content_old(self):
         """
@@ -449,19 +455,39 @@ class RepositoryVersion(BaseModel):
         """
         Artifact.objects.filter(content__pk__in=self.content)
 
-    def added(self):
+    def added(self, base_version=None):
         """
+        Args:
+            base_version (pulpcore.app.models.RepositoryVersion): an optional repository version
+
         Returns:
             QuerySet: The Content objects that were added by this version.
         """
-        return Content.objects.filter(version_memberships__version_added=self)
+        if not base_version:
+            return Content.objects.filter(version_memberships__version_added=self)
 
-    def removed(self):
+        return Content.objects.filter(
+            version_memberships__in=self._relationships()
+        ).exclude(
+            version_memberships__in=base_version._relationships()
+        )
+
+    def removed(self, base_version=None):
         """
+        Args:
+            base_version (pulpcore.app.models.RepositoryVersion): an optional repository version
+
         Returns:
             QuerySet: The Content objects that were removed by this version.
         """
-        return Content.objects.filter(version_memberships__version_removed=self)
+        if not base_version:
+            return Content.objects.filter(version_memberships__version_removed=self)
+
+        return Content.objects.filter(
+            version_memberships__in=base_version._relationships()
+        ).exclude(
+            version_memberships__in=self._relationships()
+        )
 
     def contains(self, content):
         """
