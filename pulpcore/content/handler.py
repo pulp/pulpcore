@@ -195,7 +195,7 @@ class Handler:
             raise HTTPForbidden(reason=str(pe))
 
     @staticmethod
-    def response_headers(path):
+    def response_headers(path, guess_encoding):
         """
         Get the Content-Type and Encoding-Type headers for the requested `path`.
 
@@ -209,7 +209,7 @@ class Handler:
         headers = {}
         if content_type:
             headers['Content-Type'] = content_type
-        if encoding:
+        if encoding and guess_encoding:
             headers['Content-Encoding'] = encoding
         return headers
 
@@ -312,9 +312,9 @@ class Handler:
         rel_path = rel_path[len(distro.base_path):]
         rel_path = rel_path.lstrip('/')
 
-        headers = self.response_headers(rel_path)
-
         publication = getattr(distro, 'publication', None)
+
+        headers = self.response_headers(rel_path, publication.settings["guess_encoding"])
 
         if publication:
             if rel_path == '' or rel_path[-1] == '/':

@@ -1,3 +1,4 @@
+from django.contrib.postgres.fields import JSONField
 from django.db import IntegrityError, models, transaction
 
 from .base import MasterModel, BaseModel
@@ -21,6 +22,7 @@ class Publication(MasterModel):
         pass_through (models.BooleanField): Indicates that the publication is a pass-through
             to the repository version. Enabling pass-through has the same effect as creating
             a PublishedArtifact for all of the content (artifacts) in the repository.
+        settings (JSONField): Optional publication settings.
 
     Relations:
         repository_version (models.ForeignKey): The RepositoryVersion used to
@@ -42,6 +44,7 @@ class Publication(MasterModel):
 
     complete = models.BooleanField(db_index=True, default=False)
     pass_through = models.BooleanField(default=False)
+    settings = JSONField(default=dict)
 
     repository_version = models.ForeignKey('RepositoryVersion', on_delete=models.CASCADE)
 
@@ -70,6 +73,7 @@ class Publication(MasterModel):
         with transaction.atomic():
             publication = cls(
                 pass_through=pass_through,
+                settings={"guess_encoding": True},
                 repository_version=repository_version)
             publication.save()
             resource = CreatedResource(content_object=publication)
