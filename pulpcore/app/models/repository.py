@@ -7,7 +7,7 @@ from os import path
 import logging
 
 import django
-from django.db import models, transaction
+from django.db import IntegrityError, models, transaction
 from django.urls import reverse
 
 from pulpcore.app.util import batch_qs, get_view_name_for_model
@@ -464,7 +464,23 @@ class RepositoryVersion(BaseModel):
             QuerySet: The Content objects that were added by this version.
         """
         if not base_version:
-            return Content.objects.filter(version_memberships__version_added=self)
+            raw_added = RepositoryContent.objects.filter(
+                repository=self.repository, version_added=self
+            )
+            # We must exclude two non normalized cases:
+            # 1. Content was added then removed in this version (same
+            #    RepositoryContent)
+            # 2. Content was removed then added in this version (two
+            #    RepositoryContent records pointing to the same content)
+            #
+            # For both cases, it is sufficient to find a RepositoryContent
+            # that has version_removed == self
+            raw_removed = RepositoryContent.objects.filter(
+                repository=self.repository, version_removed=self
+            )
+            return Content.objects.filter(
+                version_memberships__in=raw_added
+            ).exclude(version_memberships__in=raw_removed)
 
         return Content.objects.filter(
             version_memberships__in=self._content_relationships()
@@ -481,7 +497,23 @@ class RepositoryVersion(BaseModel):
             QuerySet: The Content objects that were removed by this version.
         """
         if not base_version:
-            return Content.objects.filter(version_memberships__version_removed=self)
+            raw_removed = RepositoryContent.objects.filter(
+                repository=self.repository, version_removed=self
+            )
+            # We must exclude two non normalized cases:
+            # 1. Content was added then removed in this version (same
+            #    RepositoryContent)
+            # 2. Content was removed then added in this version (two
+            #    RepositoryContent records pointing to the same content)
+            #
+            # For both cases, it is sufficient to find a RepositoryContent
+            # that has version_added == self
+            raw_added = RepositoryContent.objects.filter(
+                repository=self.repository, version_added=self
+            )
+            return Content.objects.filter(
+                version_memberships__in=raw_removed
+            ).exclude(version_memberships__in=raw_added)
 
         return Content.objects.filter(
             version_memberships__in=base_version._content_relationships()
@@ -515,7 +547,7 @@ class RepositoryVersion(BaseModel):
 
         repo_content = []
         to_add = set(content.values_list('pk', flat=True))
-        for added in batch_qs(self.content.values_list('pk', flat=True)):
+        for added in batch_qs(self.content.order_by('pk').values_list('pk', flat=True)):
             to_add = to_add - set(added.all())
 
         for content_pk in to_add:
@@ -527,7 +559,11 @@ class RepositoryVersion(BaseModel):
                 )
             )
 
-        RepositoryContent.objects.bulk_create(repo_content)
+        try:
+            RepositoryContent.objects.bulk_create(repo_content)
+        except IntegrityError:
+            self._normalize_repository_content()
+            RepositoryContent.objects.bulk_create(repo_content)
 
     def remove_content(self, content):
         """
@@ -551,7 +587,11 @@ class RepositoryVersion(BaseModel):
             repository=self.repository,
             content_id__in=content,
             version_removed=None)
-        q_set.update(version_removed=self)
+        try:
+            q_set.update(version_removed=self)
+        except IntegrityError:
+            self._normalize_repository_content()
+            q_set.update(version_removed=self)
 
     def next(self):
         """
@@ -675,6 +715,53 @@ class RepositoryVersion(BaseModel):
                     counts_list.append(count_obj)
             RepositoryVersionContentDetails.objects.bulk_create(counts_list)
 
+    def _normalize_repository_content(self, batch_size=2000):
+        """
+        Normalize RepositoryContent records.
+
+        When a content unit is added and deleted (or deleted and re-added) in
+        the same repository version, superfluous RepositoryContent records will
+        be created that may violate the integrity constraints of
+        RepositoryContent. This method normalizes the RepositoryContent to avoid
+        these errors and remove the superfluous records.
+        """
+        # Remove any records which were added and then removed in this version
+        RepositoryContent.objects.filter(
+            repository=self.repository,
+            version_added=self,
+            version_removed=self
+        ).delete()
+        # Normalize any records that were removed and then re-added in this version
+        while True:
+            raw_removed = RepositoryContent.objects.filter(
+                repository=self.repository, version_removed=self
+            )
+            raw_added = RepositoryContent.objects.filter(
+                repository=self.repository, version_added=self
+            )
+            readded_content = list(  # force evaluation of the QS, we need a stable list of pks
+                Content.objects.filter(
+                    version_memberships__in=raw_removed
+                ).filter(
+                    version_memberships__in=raw_added
+                ).values_list('pk', flat=True)[:batch_size]
+            )
+            if readded_content:
+                with transaction.atomic():
+                    RepositoryContent.objects.filter(
+                        content__in=readded_content,
+                        repository=self.repository,
+                        version_added=self,
+                        version_removed=None
+                    ).delete()
+                    RepositoryContent.objects.filter(
+                        content__in=readded_content,
+                        repository=self.repository,
+                        version_removed=self
+                    ).update(version_removed=None)
+            if len(readded_content) < batch_size:
+                break
+
     def __enter__(self):
         """
         Create the repository version
@@ -698,6 +785,7 @@ class RepositoryVersion(BaseModel):
                 if no_change:
                     self.delete()
                 else:
+                    self._normalize_repository_content()
                     content_types_seen = set(
                         self.content.values_list('pulp_type', flat=True).distinct()
                     )
