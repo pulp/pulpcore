@@ -515,8 +515,20 @@ class RepositoryVersion(BaseModel):
 
         repo_content = []
         to_add = set(content.values_list('pk', flat=True))
-        for added in batch_qs(self.content.values_list('pk', flat=True)):
-            to_add = to_add - set(added.all())
+        for existing in batch_qs(self.content.order_by('pk').values_list('pk', flat=True)):
+            to_add = to_add - set(existing.all())
+
+        # Normalize representation if content has already been removed in this version and
+        # is re-added: Undo removal by setting version_removed to None.
+        for removed in batch_qs(self.removed().order_by('pk').values_list('pk', flat=True)):
+            to_readd = to_add.intersection(set(removed))
+            if to_readd:
+                RepositoryContent.objects.filter(
+                    content__in=to_readd,
+                    repository=self.repository,
+                    version_removed=self
+                ).update(version_removed=None)
+                to_add = to_add - to_readd
 
         for content_pk in to_add:
             repo_content.append(
@@ -546,6 +558,15 @@ class RepositoryVersion(BaseModel):
 
         if not content or not content.count():
             return
+
+        # Normalize representation if content has already been added in this version.
+        # Undo addition by deleting the RepositoryContent.
+        RepositoryContent.objects.filter(
+            repository=self.repository,
+            content_id__in=content,
+            version_added=self,
+            version_removed=None
+        ).delete()
 
         q_set = RepositoryContent.objects.filter(
             repository=self.repository,
