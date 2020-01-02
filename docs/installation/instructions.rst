@@ -81,8 +81,18 @@ PyPI Installation
 
 9. Run Django Migrations::
 
-   $ django-admin migrate --noinput
-   $ django-admin reset-admin-password --password admin
+    $ django-admin migrate --noinput
+    $ django-admin reset-admin-password --password admin
+
+.. note::
+
+    ``django-admin`` is provided by Django and is available wherever Django is installed. For
+    virtualenv based installs, that is from the activated virtualenv. For system-wide Django
+    installations, ``django-admin`` should be on your system path.
+
+    Katello users use an alternate binary, ``python3-django-admin`` which is available on the system
+    path. In Katello environments, the ``django-admin`` command is for the Django environment of
+    Pulp 2.
 
 10. Collect Static Media for live docs and browsable API::
 
