@@ -1,0 +1,1 @@
+Fix bug where calling Repository new_version() outside of task raises exception.
