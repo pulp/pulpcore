@@ -539,8 +539,8 @@ class Handler:
         """
         if settings.DEFAULT_FILE_STORAGE == 'pulpcore.app.models.storage.FileSystem':
             return FileResponse(os.path.join(settings.MEDIA_ROOT, file.name), headers=headers)
-        elif settings.DEFAULT_FILE_STORAGE == 'storages.backends.s3boto3.S3Boto3Storage' or \
-            settings.DEFAULT_FILE_STORAGE == 'storages.backends.azure_storage.AzureStorage':
+        elif (settings.DEFAULT_FILE_STORAGE == 'storages.backends.s3boto3.S3Boto3Storage' or
+              settings.DEFAULT_FILE_STORAGE == 'storages.backends.azure_storage.AzureStorage'):
             raise HTTPFound(file.url, headers=headers)
         else:
             raise NotImplementedError()
