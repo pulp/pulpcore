@@ -396,7 +396,7 @@ class RepositoryVersion(BaseModel):
         get_latest_by = 'number'
         ordering = ('number',)
 
-    def _relationships(self):
+    def _content_relationships(self):
         """
         Returns a set of repository_content for a repository version
 
@@ -426,7 +426,7 @@ class RepositoryVersion(BaseModel):
             >>>     ...
             >>>
         """
-        return Content.objects.filter(version_memberships__in=self._relationships())
+        return Content.objects.filter(version_memberships__in=self._content_relationships())
 
     def _content_old(self):
         """
@@ -467,9 +467,9 @@ class RepositoryVersion(BaseModel):
             return Content.objects.filter(version_memberships__version_added=self)
 
         return Content.objects.filter(
-            version_memberships__in=self._relationships()
+            version_memberships__in=self._content_relationships()
         ).exclude(
-            version_memberships__in=base_version._relationships()
+            version_memberships__in=base_version._content_relationships()
         )
 
     def removed(self, base_version=None):
@@ -484,9 +484,9 @@ class RepositoryVersion(BaseModel):
             return Content.objects.filter(version_memberships__version_removed=self)
 
         return Content.objects.filter(
-            version_memberships__in=base_version._relationships()
+            version_memberships__in=base_version._content_relationships()
         ).exclude(
-            version_memberships__in=self._relationships()
+            version_memberships__in=self._content_relationships()
         )
 
     def contains(self, content):
