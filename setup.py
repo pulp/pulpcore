@@ -14,15 +14,14 @@ requirements = [
     'djangorestframework-queryfields~=1.0.0',
     'drf-nested-routers~=0.91.0',
     'drf-yasg~=1.17.0',
+    'dynaconf>=2.2,<2.3',
     'gunicorn>=19.9,<20.1',
+    'pygtrie~=2.3.2',
     'psycopg2>=2.7,<2.9',
     'PyYAML>=5.1.1,<5.4.0',
     'rq>=1.1,<1.3',
-    'redis~=3.1.0',
-    'setuptools>=39.2.0,<44.1.0',
-    'dynaconf>=2.2,<2.3',
+    'setuptools>=39.2.0',
     'whitenoise>=4.1.3,<5.1.0',
-    'pygtrie~=2.3.2',
 ]
 
 setup(
