@@ -1,0 +1,1 @@
+The fix in the FileSystem._save() also fixes 5870 too.

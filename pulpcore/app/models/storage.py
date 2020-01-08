@@ -1,74 +1,26 @@
-import errno
 import os
 from uuid import uuid4
 
 from django.conf import settings
-from django.core.files import File
+from django.core.files import locks
+from django.core.files.move import file_move_safe
 from django.core.files.storage import FileSystemStorage
 
 
 class FileSystem(FileSystemStorage):
     """
-    Django's FileSystemStorage with modified save() behavior
+    Django's FileSystemStorage with modified _save() and get_available_name behaviors
 
-    The FileSystemStorage backend provided by Django is designed to work with File,
-    TemporaryUploadedFile, and InMemoryUploadedFile objects. The latter two inherit from the first.
-    The type of File determines how the storage backend places it in its final destination. The
-    Artifact upload API always uses a TemporaryUploadedFile, which writes the file to a temporary
-    location on disk during the upload. Here is how FileSystemStorage saves a file to its
-    destination for the two File types we are interested in:
-
-    TemporaryUploadedFile
-    ------------------------------
-    1) is name available?
-         2a) yes, os.rename()
-                 3a) no exception, you are done
-                 3b) exception, copy from source to destination using python and delete the original
-         2b) no, append random characters to to the name and go back to 1
-
-    File
-    -----
-    1) is name available?
-         2a) yes, copy from source to destination using python
-         2b) no, append random characters to to the name and go back to 1
-
-    The behavior from 2b can result in duplicate files being created, but not associated with any
-    Artifact. There is a race condition if the same file is being uploaded in two parallel
-    requests. One of the requests will create the Artifact in /var/lib/pulp/artifact and then
-    save it to the database. The second request will also create a file in
-    /var/lib/pulp/artifacts, but it will have a random name. The database insert will fail due to
-    uniqueness constraint and the user will receive a 400 error. No cleanup happens when this
-    occurs.
-
-    Here is how FileSystem saves a file to its destination for the two File types we are
-    interested in:
-
-    TemporaryUploadedFile
-    ------------------------------
-    1) is name available?
-         2a) yes, os.rename()
-                 3a) no exception, you are done
-                 3b) exception, copy from source to destination using python and delete the original
-         2b) no, the file already exists. keep the existing file in place.
-
-    File
-    -----
-    1) is name available?
-         2a) yes, copy from source to destination using python
-         2b) no, the file already exists. keep the existing file in place.
-
-    The difference between the two save() methods is in the behavior at 2b.
-
-    The non-atomic nature of 3b makes it possible for corrupted Artifacts to be saved if
-    /var/lib/pulp/tmp and /var/lib/pulp/artifact are on separate filesystems. An interrupted save()
-    operation will result in a partial file being placed into /var/lib/pulp/artifact. In such
-    situations, Pulp will not be able to replace the file with the correct version in the
-    future and the user will have to manually remove the partial file.
+    The _save() will check if the file is saved in MEDIA_ROOT first. If it is, a move is used. This
+    will move all files created by the Downloaders and uploaded files from the user. If it is saved
+    in-memory or outside of MEDIA_ROOT, the data is written in chunks to the new location.
     """
 
     def get_available_name(self, name, max_length=None):
         """
-        Returns a filename if a file by that name does not exist
+        Returns a filename for the file even if it already exists.
+
+        Content adressable storage must be saved with the expected filename.
 
         Args:
             name (string): Requested file name
@@ -76,18 +28,12 @@ class FileSystem(FileSystemStorage):
 
         Returns:
             Name of the file.
-
-        Raises:
-            OSError if a file with requested name already exists.
         """
-        if self.exists(name):
-            raise OSError(errno.EEXIST, "File Exists")
-        else:
-            return name
+        return name
 
-    def save(self, name, content, max_length=None):
+    def _save(self, name, content, max_length=None):
         """
-        Saves the file if it doesn't already exist
+        Create dirs to the destination, move the file if already in MEDIA_ROOT, or copy otherwise.
 
         Args:
             name (str): Target path to which the file is copied.
@@ -97,20 +43,56 @@ class FileSystem(FileSystemStorage):
         Returns:
             str: Final storage path.
         """
-        if name is None:
-            name = content.name
+        full_path = self.path(name)
 
-        if not hasattr(content, 'chunks'):
-            content = File(content, name)
+        # Create any intermediate directories that do not exist.
+        directory = os.path.dirname(full_path)
+        try:
+            if self.directory_permissions_mode is not None:
+                # os.makedirs applies the global umask, so we reset it,
+                # for consistency with file_permissions_mode behavior.
+                old_umask = os.umask(0)
+                try:
+                    os.makedirs(directory, self.directory_permissions_mode, exist_ok=True)
+                finally:
+                    os.umask(old_umask)
+            else:
+                os.makedirs(directory, exist_ok=True)
+        except FileExistsError:
+            raise FileExistsError('%s exists and is not a directory.' % directory)
 
         try:
-            name = self.get_available_name(name, max_length=max_length)
-            return self._save(name, content)
-        except OSError as e:
-            if e.errno == errno.EEXIST:
-                return name
+            if hasattr(content, 'temporary_file_path') and \
+                    content.temporary_file_path().startswith(settings.MEDIA_ROOT):
+                file_move_safe(content.temporary_file_path(), full_path)
             else:
-                raise
+                # This is a normal uploaded file that we can stream.
+
+                # The current umask value is masked out by os.open!
+                fd = os.open(full_path, self.OS_OPEN_FLAGS, 0o666)
+                _file = None
+                try:
+                    locks.lock(fd, locks.LOCK_EX)
+                    for chunk in content.chunks():
+                        if _file is None:
+                            mode = 'wb' if isinstance(chunk, bytes) else 'wt'
+                            _file = os.fdopen(fd, mode)
+                        _file.write(chunk)
+                finally:
+                    locks.unlock(fd)
+                    if _file is not None:
+                        _file.close()
+                    else:
+                        os.close(fd)
+        except FileExistsError:
+            # It's a content addressable store so if the file is already in place we can do nothing
+            pass
+
+        if self.file_permissions_mode is not None:
+            os.chmod(full_path, self.file_permissions_mode)
+
+        # Store filenames with forward slashes, even on Windows.
+        return str(name).replace('\\', '/')
 
 
 def get_artifact_path(sha256digest):
