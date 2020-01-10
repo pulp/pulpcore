@@ -7,7 +7,7 @@
 ---
 sudo: required
 # https://docs.travis-ci.com/user/trusty-ci-environment/
-dist: xenial
+dist: bionic
 language: python
 python:
   # Fedora has 3.6 available (python36.x86_64), but pulp container images
