@@ -67,3 +67,38 @@ Configuring Pulp
   or of your AWS account. The default setting in the latest version of django-storages
   is `public-read`, which will get blocked. This is set to change in a
   `future release <https://django-storages.readthedocs.io/en/1.7.2/backends/amazon-S3.html>`_.
+
+Azure Blob storage
+^^^^^^^^^^^^^^^^^^
+
+.. warning::
+    Support for Azure Blob storage is provided as a tech preview in Pulp 3.0. Functionality may not
+    work or may be incomplete. Also, backwards compatibility when upgrading is not guaranteed.
+
+Setting up Azure Blob storage
+-----------------------------
+
+  In order to use Azure Blob Storage, you'll need to set up an Azure account. Then create a storage
+  account, and in that storage account, create a container under Blob service. The access credentials
+  can be found at the storage account level, at Access keys (these are automatically generated).
+
+Configuring Pulp
+----------------
+
+  To have Pulp use Azure Blob storage, you'll need to install the optional django-storages[azure]
+  package in the pulp virtual environment::
+
+      pip install django-storages[azure]
+
+  Next you'll need to set the ``DEFAULT_FILE_STORAGE`` to
+  ``storages.backends.azure_storage.AzureStorage`` in your pulp settings, and configure following
+  parameters in your pulp settings file (for a comprehensive overview of all possible options for
+  the Azure Blob storage backend see the `django-storages[azure] documents
+  <https://django-storages.readthedocs.io/en/latest/backends/azure.html>_`)::
+
+      AZURE_ACCOUNT_NAME = 'Storage account name'
+      AZURE_CONTAINER = 'Container name (as created within the blob service of your storage account)'
+      AZURE_ACCOUNT_KEY = 'Key1 or Key2 from the access keys of your storage account'
+      AZURE_URL_EXPIRATION_SECS = 60
+      AZURE_OVERWRITE_FILES = 'True'
+      AZURE_LOCATION = 'the folder within the container where your pulp objects will be stored'
