@@ -1,0 +1,3 @@
+Saving an Artifact from a source that is outside of settings.MEDIA_ROOT will copy the file instead
+of moving the file as it did in previous versions. This causes data imported from file:/// sources
+to be left in tact.
