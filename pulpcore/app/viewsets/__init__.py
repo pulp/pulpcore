@@ -14,7 +14,8 @@ from .content import (  # noqa
 )
 from .custom_filters import (  # noqa
     IsoDateTimeFilter,
-    RepoVersionHrefFilter
+    RepoVersionHrefFilter,
+    RepositoryVersionFilter,
 )
 from .exporter import (  # noqa
     FileSystemExporterViewSet
@@ -23,6 +24,7 @@ from .publication import (  # noqa
     BaseDistributionViewSet,
     ContentGuardFilter,
     ContentGuardViewSet,
+    PublicationFilter,
     PublicationViewSet,
 )
 from .repository import (  # noqa

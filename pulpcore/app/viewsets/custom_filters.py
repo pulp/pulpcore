@@ -156,6 +156,29 @@ class RepoVersionHrefFilter(Filter):
         raise NotImplementedError()
 
 
+class RepositoryVersionFilter(RepoVersionHrefFilter):
+    """
+    Filter by RepositoryVersion href.
+    """
+
+    def filter(self, qs, value):
+        """
+        Args:
+            qs (django.db.models.query.QuerySet): The Queryset to filter
+            value (string): The RepositoryVersion href to filter by
+
+        Returns:
+            Queryset filtered by given repository version on field_name
+        """
+        if value is None:
+            # user didn't supply a value
+            return qs
+
+        repo_version = self.get_repository_version(value)
+        key = f"{self.field_name}__pk"
+        return qs.filter(**{key: repo_version.pk})
+
+
 class ArtifactRepositoryVersionFilter(RepoVersionHrefFilter):
     """
     Filter used to get the artifacts in a repository version.

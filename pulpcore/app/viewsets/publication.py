@@ -15,7 +15,20 @@ from pulpcore.app.viewsets import (
     BaseFilterSet,
     NamedModelViewSet,
 )
-from pulpcore.app.viewsets.base import NAME_FILTER_OPTIONS
+from pulpcore.app.viewsets.base import NAME_FILTER_OPTIONS, DATETIME_FILTER_OPTIONS
+from pulpcore.app.viewsets.custom_filters import IsoDateTimeFilter, RepositoryVersionFilter
+
+
+class PublicationFilter(BaseFilterSet):
+    repository_version = RepositoryVersionFilter()
+    pulp_created = IsoDateTimeFilter()
+
+    class Meta:
+        model = Publication
+        fields = {
+            'repository_version': ['exact'],
+            'pulp_created': DATETIME_FILTER_OPTIONS,
+        }
 
 
 class PublicationViewSet(NamedModelViewSet,
@@ -26,6 +39,7 @@ class PublicationViewSet(NamedModelViewSet,
     queryset = Publication.objects.exclude(complete=False)
     serializer_class = PublicationSerializer
     filter_backends = (OrderingFilter, DjangoFilterBackend)
+    filterset_class = PublicationFilter
     ordering = ('-pulp_created',)
 
 
