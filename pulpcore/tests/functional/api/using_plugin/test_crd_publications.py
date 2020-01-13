@@ -31,14 +31,18 @@ class PublicationsTestCase(unittest.TestCase):
         """Create class-wide variables."""
         cls.cfg = config.get_config()
         cls.client = api.Client(cls.cfg, api.page_handler)
+        cls.client_echo = api.Client(cls.cfg, api.echo_handler)
         cls.remote = {}
         cls.publication = {}
         cls.repo = {}
         try:
             cls.repo.update(cls.client.post(FILE_REPO_PATH, gen_repo()))
+            cls.repo_initial_version = cls.repo['latest_version_href']
             body = gen_file_remote()
             cls.remote.update(cls.client.post(FILE_REMOTE_PATH, body))
             sync(cls.cfg, cls.remote, cls.repo)
+            # update to get latest_version_href
+            cls.repo.update(cls.client.get(cls.repo['pulp_href']))
         except Exception:
             cls.tearDownClass()
             raise
@@ -91,10 +95,10 @@ class PublicationsTestCase(unittest.TestCase):
         self.assertNotIn('distributions', publication.keys())
 
     @skip_if(bool, 'publication', False)
-    def test_02_read_publications(self):
+    def test_02_read_publications_filter_repo_version(self):
         """Read a publication by its repository version."""
         publications = self.client.get(FILE_PUBLICATION_PATH, params={
-            'repository_version': self.repo['pulp_href']
+            'repository_version': self.repo['latest_version_href']
         })
         self.assertEqual(len(publications), 1, publications)
         for key, val in self.publication.items():
@@ -102,7 +106,25 @@ class PublicationsTestCase(unittest.TestCase):
                 self.assertEqual(publications[0][key], val)
 
     @skip_if(bool, 'publication', False)
-    def test_04_read_publications(self):
+    def test_02_read_publications_filter_repo_version_no_match(self):
+        """Filter by repo version for which no publication exists."""
+        publications = self.client.get(FILE_PUBLICATION_PATH, params={
+            'repository_version': self.repo_initial_version
+        })
+        self.assertFalse(publications)
+
+    @skip_if(bool, 'publication', False)
+    def test_02_read_publications_filter_repo_version_invalid(self):
+        """Filter by a repo version that does not exist."""
+        invalid_repo_version = self.repo['versions_href']+'123456789/'
+        response = self.client_echo.get(FILE_PUBLICATION_PATH, params={
+            'repository_version': invalid_repo_version
+        })
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('not found for repositoryversion', response.text)
+
+    @skip_if(bool, 'publication', False)
+    def test_02_read_publications_filter_created_time(self):
         """Read a publication by its created time."""
         publications = self.client.get(FILE_PUBLICATION_PATH, params={
             'pulp_created': self.publication['pulp_created']
@@ -113,7 +135,16 @@ class PublicationsTestCase(unittest.TestCase):
                 self.assertEqual(publications[0][key], val)
 
     @skip_if(bool, 'publication', False)
-    def test_05_read_publications(self):
+    def test_02_read_publications_filter_created_time_no_match(self):
+        """Filter for created time for which no publication exists."""
+        publications = self.client.get(FILE_PUBLICATION_PATH, params={
+            'pulp_created': self.repo['pulp_created']
+        })
+        self.assertFalse(publications)
+
+    @skip_if(bool, 'publication', False)
+    @unittest.skip("distribution filter not implemented")
+    def test_02_read_publications_filter_distribution(self):
         """Read a publication by its distribution."""
         body = gen_distribution()
         body['publication'] = self.publication['pulp_href']
