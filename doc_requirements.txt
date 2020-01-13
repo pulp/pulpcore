@@ -5,7 +5,7 @@ coreapi
 django
 djangorestframework
 djangorestframework-queryfields
-django-filter
+djangorestframework-filters==1.0.0.dev0
 drf-nested-routers
 drf-yasg
 dynaconf

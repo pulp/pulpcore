@@ -100,3 +100,13 @@ class WorkersTestCase(unittest.TestCase):
         """
         with self.assertRaises(HTTPError):
             self.client.delete(self.worker['pulp_href'])
+
+    @skip_if(bool, 'worker', False)
+    def test_06_test_not_filter(self):
+        """Test the name! filter which should exclude by name."""
+        workers = self.client.get(WORKER_PATH)['results']
+        worker = choice(workers)
+        page = self.client.get(WORKER_PATH, params={
+            'name!': worker['name'],
+        })
+        self.assertEqual(len(workers) - 1, len(page['results']))

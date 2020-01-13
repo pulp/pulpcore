@@ -5,7 +5,7 @@ from urllib.parse import urlparse
 from django.core.exceptions import FieldError, ValidationError
 from django.forms.utils import ErrorList
 from django.urls import Resolver404, resolve
-from django_filters.rest_framework import filterset
+import rest_framework_filters as filters
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import viewsets
 from rest_framework.generics import get_object_or_404
@@ -398,7 +398,7 @@ class AsyncRemoveMixin(AsyncReservedObjectMixin):
         return OperationPostponedResponse(async_result, request)
 
 
-class BaseFilterSet(filterset.FilterSet):
+class BaseFilterSet(filters.FilterSet):
     """
     Class to override django_filter's FilterSet and provide a way to set help text
 
