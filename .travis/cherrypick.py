@@ -13,7 +13,7 @@ GITHUB_TOKEN = os.environ["GITHUB_TOKEN"]
 
 
 def blobs_match(commit1, commit2):
-    """Compare the file blobs of two commits"""
+    """Compare the file blobs of two commits."""
     if len(commit1.files) != len(commit2.files):
         return False
 
