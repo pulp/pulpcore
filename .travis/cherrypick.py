@@ -52,7 +52,7 @@ def get_merged_commits(pr):
         return commits
     else:
         # we have a squashed commit. we can just use the merge commit
-        return merge_commit
+        return [merge_commit]
 
 
 print(f"Processing cherry picks for {REPOSITORY}.")
