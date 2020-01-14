@@ -28,10 +28,10 @@ Setting up S3
 Configuring Pulp
 ----------------
 
-  To have Pulp use S3, you'll need to install the optional django-storages Python package in the pulp
+  To have Pulp use S3, you'll need to install the optional django-storages and boto3 Python packages in the pulp
   virtual environment::
 
-      pip install django-storages
+      pip install django-storages[boto3]
 
   Next you'll need to set ``DEFAULT_FILE_STORAGE`` to ``storages.backends.s3boto3.S3Boto3Storage``
   in your Pulp settings. At a minimum, you'll also need to set ``AWS_ACCESS_KEY_ID``,
@@ -48,7 +48,7 @@ Configuring Pulp
         AWS_ACCESS_KEY_ID = 'AKIAIT2Z5TDYPX3ARJBA'
         AWS_SECRET_ACCESS_KEY = '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'
         AWS_STORAGE_BUCKET_NAME = 'pulp3'
-        AWS_DEFAULT_ACL: None
+        AWS_DEFAULT_ACL = None
         S3_USE_SIGV4 = True
         AWS_S3_SIGNATURE_VERSION = "s3v4"
         AWS_S3_ADDRESSING_STYLE = "path"
