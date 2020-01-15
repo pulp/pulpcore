@@ -13,6 +13,64 @@ Changelog
 
 .. towncrier release notes start
 
+3.0.1 (2020-01-15)
+==================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fix bug where content shows as being added and removed in the same version.
+  `#5707 <https://pulp.plan.io/issues/5707>`_
+- Fix bug where calling Repository new_version() outside of task raises exception.
+  `#5894 <https://pulp.plan.io/issues/5894>`_
+- Adjusts setup.py classifier to show 3.0 as Production/Stable.
+  `#5896 <https://pulp.plan.io/issues/5896>`_
+- Importing from file:/// paths no longer destroys the source repository.
+  `#5941 <https://pulp.plan.io/issues/5941>`_
+- Webserver auth no longer prompts for csrf incorrectly.
+  `#5955 <https://pulp.plan.io/issues/5955>`_
+
+
+Deprecations and Removals
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+- Removed ``pulpcore.app.middleware.PulpRemoteUserMiddleware`` from the default middleware section.
+  Also replaced ``rest_framework.authentication.RemoteUserAuthentication`` with
+  ``pulpcore.app.authentication.PulpRemoteUserAuthentication`` in the Django Rest Framework portion
+  of the config.
+  `#5955 <https://pulp.plan.io/issues/5955>`_
+
+
+Misc
+~~~~
+
+- `#5833 <https://pulp.plan.io/issues/5833>`_, `#5867 <https://pulp.plan.io/issues/5867>`_, `#5870 <https://pulp.plan.io/issues/5870>`_, `#5873 <https://pulp.plan.io/issues/5873>`_
+
+
+Plugin API
+----------
+
+Features
+~~~~~~~~
+
+- Added an optional parameter base_version to RepositoryVersion add() and removed() methods.
+  `#5706 <https://pulp.plan.io/issues/5706>`_
+
+
+Deprecations and Removals
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+- Saving an Artifact from a source that is outside of settings.MEDIA_ROOT will copy the file instead
+  of moving the file as it did in previous versions. This causes data imported from file:/// sources
+  to be left in tact.
+  `#5941 <https://pulp.plan.io/issues/5941>`_
+
+
+----
+
+
 3.0.0 (2019-12-11)
 ==================
 

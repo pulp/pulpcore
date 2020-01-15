@@ -1,4 +1,0 @@
-Removed ``pulpcore.app.middleware.PulpRemoteUserMiddleware`` from the default middleware section.
-Also replaced ``rest_framework.authentication.RemoteUserAuthentication`` with
-``pulpcore.app.authentication.PulpRemoteUserAuthentication`` in the Django Rest Framework portion
-of the config.
