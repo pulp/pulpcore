@@ -55,8 +55,8 @@ cd ..
 git clone --depth=1 https://github.com/pulp/ansible-pulp.git
 if [ -n "$PULP_ROLES_PR_NUMBER" ]; then
   cd ansible-pulp
-  git fetch --depth=1 origin +refs/pull/$PULP_ROLES_PR_NUMBER/merge
-  git checkout FETCH_HEAD
+  git fetch --depth=1 origin pull/$PULP_ROLES_PR_NUMBER/head:$PULP_ROLES_PR_NUMBER
+  git checkout $PULP_ROLES_PR_NUMBER
   cd ..
 fi
 
@@ -64,8 +64,8 @@ fi
 git clone --depth=1 https://github.com/pulp/pulp-operator.git
 if [ -n "$PULP_OPERATOR_PR_NUMBER" ]; then
   cd pulp-operator
-  git fetch --depth=1 origin +refs/pull/$PULP_OPERATOR_PR_NUMBER/merge
-  git checkout FETCH_HEAD
+  git fetch --depth=1 origin pull/$PULP_OPERATOR_PR_NUMBER/head:$PULP_OPERATOR_PR_NUMBER
+  git checkout $PULP_OPERATOR_PR_NUMBER
   RELEASE_VERSION=v0.9.0
   curl -LO https://github.com/operator-framework/operator-sdk/releases/download/${RELEASE_VERSION}/operator-sdk-${RELEASE_VERSION}-x86_64-linux-gnu
   chmod +x operator-sdk-${RELEASE_VERSION}-x86_64-linux-gnu && sudo mkdir -p /usr/local/bin/ && sudo cp operator-sdk-${RELEASE_VERSION}-x86_64-linux-gnu /usr/local/bin/operator-sdk && rm operator-sdk-${RELEASE_VERSION}-x86_64-linux-gnu
@@ -76,8 +76,8 @@ fi
 git clone https://github.com/pulp/pulp-openapi-generator.git
 if [ -n "$PULP_BINDINGS_PR_NUMBER" ]; then
   cd pulp-openapi-generator
-  git fetch origin +refs/pull/$PULP_BINDINGS_PR_NUMBER/merge
-  git checkout FETCH_HEAD
+  git fetch origin pull/$PULP_BINDINGS_PR_NUMBER/head:$PULP_BINDINGS_PR_NUMBER
+  git checkout $PULP_BINDINGS_PR_NUMBER
   cd ..
 fi
 
@@ -89,8 +89,8 @@ fi
 
   if [ -n "$PULP_SMASH_PR_NUMBER" ]; then
     cd pulp-smash
-    git fetch --depth=1 origin +refs/pull/$PULP_SMASH_PR_NUMBER/merge
-    git checkout FETCH_HEAD
+    git fetch --depth=1 origin pull/$PULP_SMASH_PR_NUMBER/head:$PULP_SMASH_PR_NUMBER
+    git checkout $PULP_SMASH_PR_NUMBER
     cd ..
   fi
 
