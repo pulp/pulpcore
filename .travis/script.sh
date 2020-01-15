@@ -40,8 +40,8 @@ if [ "$TEST" = 'bindings' ]; then
   export PULP_BINDINGS_PR_NUMBER=$(echo $COMMIT_MSG | grep -oP 'Required\ PR:\ https\:\/\/github\.com\/pulp\/pulp-openapi-generator\/pull\/(\d+)' | awk -F'/' '{print $7}')
 
   if [ -n "$PULP_BINDINGS_PR_NUMBER" ]; then
-    git fetch origin +refs/pull/$PULP_BINDINGS_PR_NUMBER/merge
-    git checkout FETCH_HEAD
+    git fetch origin pull/$PULP_BINDINGS_PR_NUMBER/head:$PULP_BINDINGS_PR_NUMBER
+    git checkout $PULP_BINDINGS_PR_NUMBER
   fi
 
   ./generate.sh pulpcore python
