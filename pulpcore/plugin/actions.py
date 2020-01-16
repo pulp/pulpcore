@@ -18,6 +18,7 @@ class ModifyRepositoryActionMixin:
 
     @swagger_auto_schema(
         operation_description="Trigger an asynchronous task to create a new repository version.",
+        operation_summary="Modify Repository Content",
         responses={202: AsyncOperationResponseSerializer}
     )
     @action(detail=True, methods=["post"], serializer_class=RepositoryAddRemoveContentSerializer)
