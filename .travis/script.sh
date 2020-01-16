@@ -19,10 +19,18 @@ export FUNC_TEST_SCRIPT=$TRAVIS_BUILD_DIR/.travis/func_test_script.sh
 # this script.
 export DJANGO_SETTINGS_MODULE=pulpcore.app.settings
 
+if [ -r /usr/lib/libeatmydata/libeatmydata.so ]; then
+  # much faster package installation
+  export LD_PRELOAD='/usr/lib/libeatmydata/libeatmydata.so'
+elif [ -r /usr/lib/*/libeatmydata.so ]; then
+  # much faster package installation
+  export LD_PRELOAD='/usr/$LIB/libeatmydata.so'
+fi
+
 if [ "$TEST" = 'docs' ]; then
-  
+
     export PULP_CONTENT_ORIGIN=http://$(hostname):24816
-  
+
 
   cd docs
   make html
