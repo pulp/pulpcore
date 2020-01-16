@@ -31,6 +31,16 @@ else
     sed "s/localhost/$(hostname)/g" ../pulpcore/.travis/pulp-smash-config.json > ~/.config/pulp_smash/settings.json
 fi
 
+
+# set up pulp-fixtures docker container
+if [[ "$TEST" == 'pulp' ]]; then
+  docker run -d -p 0.0.0.0:8000:80 quay.io/pulp/pulp-fixtures:latest
+fi
+cat ~/.config/pulp_smash/settings.json | \
+    jq "setpath([\"custom\",\"fixtures_origin\"]; \"http://$(hostname):8000/fixtures/\")" > temp.json
+cat temp.json > ~/.config/pulp_smash/settings.json
+
+
 if [[ "$TEST" == 'pulp' || "$TEST" == 'performance' ]]; then
     # Many tests require pytest/mock, but users do not need them at runtime
     # (or to add plugins on top of pulpcore or pulp container images.)
