@@ -18,6 +18,7 @@ from .content import (  # noqa
     MultipleArtifactContentSerializer,
     NoArtifactContentSerializer,
     SingleArtifactContentSerializer,
+    SigningServiceSerializer,
 )
 from .exporter import FileSystemExporterSerializer, PublicationExportSerializer  # noqa
 from .fields import (  # noqa

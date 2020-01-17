@@ -4,8 +4,12 @@ from django.db import models
 from rest_framework import mixins, status
 from rest_framework.response import Response
 
-from pulpcore.app.models import Artifact, Content
-from pulpcore.app.serializers import ArtifactSerializer, MultipleArtifactContentSerializer
+from pulpcore.app.models import Artifact, Content, SigningService
+from pulpcore.app.serializers import (
+    ArtifactSerializer,
+    MultipleArtifactContentSerializer,
+    SigningServiceSerializer,
+)
 from pulpcore.app.viewsets.base import BaseFilterSet, NamedModelViewSet
 
 from .custom_filters import (
@@ -123,3 +127,14 @@ class ReadOnlyContentViewSet(BaseContentViewSet,
     """
     Content viewset that supports only GET by default.
     """
+
+
+class SigningServiceViewSet(NamedModelViewSet,
+                            mixins.RetrieveModelMixin,
+                            mixins.ListModelMixin):
+    """
+    A ViewSet that supports browsing of existing signing services.
+    """
+    endpoint_name = 'signing-services'
+    queryset = SigningService.objects.all()
+    serializer_class = SigningServiceSerializer

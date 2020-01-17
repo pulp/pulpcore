@@ -11,6 +11,7 @@ from .content import (  # noqa
     ContentFilter,
     ContentViewSet,
     ReadOnlyContentViewSet,
+    SigningServiceViewSet
 )
 from .custom_filters import (  # noqa
     IsoDateTimeFilter,
