@@ -21,7 +21,7 @@ class RepositoryVersionTestCase(TestCase):
     def test_add_and_remove_content(self):
         contents = Content.objects.filter(pk__in=self.pks[:4])
         with self.repository.new_version() as version1:
-            version1.add_content(contents)  # v1 == four content units 0-4
+            version1.add_content(contents)  # v1 == four content units 0-3
 
         to_remove = contents[0:2]
         with self.repository.new_version() as version2:
@@ -207,3 +207,50 @@ class RepositoryVersionTestCase(TestCase):
             added=[0, 1, 0, 1, 0],
             removed=[0, 0, 1, 0, 1]
         )
+
+    @staticmethod
+    def pks_of_next_qs(qs_generator):
+        """Iterate qs_generator one step and return the list of pks in the qs."""
+        return list(next(qs_generator).values_list("pk", flat=True))
+
+    def test_content_batch_qs(self):
+        """Verify content iteration using content_batch_qs()."""
+        sorted_pks = sorted(self.pks[:4])
+        contents = Content.objects.filter(pk__in=self.pks[:4])
+        with self.repository.new_version() as version1:
+            version1.add_content(contents)  # v1 == four content units 0-3
+
+            # Verify content_batch_qs on incomplete version
+            qs_generator = version1.content_batch_qs(batch_size=2)
+            self.assertListEqual(self.pks_of_next_qs(qs_generator), sorted_pks[:2])
+            self.assertListEqual(self.pks_of_next_qs(qs_generator), sorted_pks[2:])
+            with self.assertRaises(StopIteration):
+                self.pks_of_next_qs(qs_generator)
+
+        # Verify on complete version
+        # The last batch has only a single element (Depending on how a qs is
+        # written, Django ORM sometimes returns the actual object instead of a
+        # qs. This must not happen for the generator).
+        reverse_pks = sorted(self.pks[:4], reverse=True)
+        qs_generator = version1.content_batch_qs(order_by_params=("-pk",), batch_size=3)
+        self.assertListEqual(self.pks_of_next_qs(qs_generator), reverse_pks[:3])
+        self.assertListEqual(self.pks_of_next_qs(qs_generator), reverse_pks[3:])
+        with self.assertRaises(StopIteration):
+            self.pks_of_next_qs(qs_generator)
+
+    def test_content_batch_qs_using_filter(self):
+        """Verify that a plugin can define a filtering query set for content_batch_qs()."""
+        contents = Content.objects.filter(pk__in=self.pks[:4])
+        with self.repository.new_version() as version1:
+            version1.add_content(contents)  # v1 == four content units 0-3
+
+        # Filter for pks 0-2 and 4 (4 is not part of the repo version, i.e.
+        # must not be part of the content iterated over).
+        pre_filter_qs = Content.objects.filter(pk__in=self.pks[:3] + [self.pks[4]])
+
+        sorted_pks = sorted(self.pks[:3])
+        qs_generator = version1.content_batch_qs(content_qs=pre_filter_qs, batch_size=2)
+        self.assertListEqual(self.pks_of_next_qs(qs_generator), sorted_pks[:2])
+        self.assertListEqual(self.pks_of_next_qs(qs_generator), sorted_pks[2:])
+        with self.assertRaises(StopIteration):
+            self.pks_of_next_qs(qs_generator)
