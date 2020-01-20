@@ -242,3 +242,22 @@ class ArtifactSerializer(base.ModelSerializer):
         model = models.Artifact
         fields = base.ModelSerializer.Meta.fields + ('file', 'size', 'md5', 'sha1', 'sha224',
                                                      'sha256', 'sha384', 'sha512')
+
+
+class SigningServiceSerializer(base.ModelSerializer):
+    """
+    A serializer for the model declaring a signing service.
+    """
+    pulp_href = base.IdentityField(
+        view_name='signing-services-detail',
+    )
+    name = serializers.CharField(
+        help_text=_("A unique name used to recognize a script.")
+    )
+    script = serializers.CharField(
+        help_text=_("An absolute path to a script which is going to be used for the signing.")
+    )
+
+    class Meta:
+        model = models.SigningService
+        fields = BaseContentSerializer.Meta.fields + ('name', 'script')

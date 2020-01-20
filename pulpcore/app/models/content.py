@@ -366,3 +366,16 @@ class RemoteArtifact(BaseModel, QueryMixin):
 
     class Meta:
         unique_together = ('content_artifact', 'remote')
+
+
+class SigningService(BaseModel):
+    """
+    A model used for producing signed Artifacts.
+
+    Fields:
+        name (models.TextField): A unique name describing a script used for the signing.
+        script (models.TextField): An absolute path to the script.
+
+    """
+    name = models.TextField(db_index=True, unique=True)
+    script = models.TextField()
