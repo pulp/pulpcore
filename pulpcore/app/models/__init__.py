@@ -1,7 +1,14 @@
 # https://docs.djangoproject.com/en/dev/topics/db/models/#organizing-models-in-a-package
 
 from .base import MasterModel, BaseModel  # noqa
-from .content import Artifact, Content, ContentArtifact, RemoteArtifact, SigningService  # noqa
+from .content import (  # noqa
+    Artifact,
+    AsciiArmoredDetachedSigningService,
+    Content,
+    ContentArtifact,
+    RemoteArtifact,
+    SigningService,
+)
 from .generic import GenericRelationModel  # noqa
 from .exporter import (  # noqa
     FileSystemExporter,

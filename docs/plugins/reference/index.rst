@@ -14,3 +14,4 @@ This section includes in-depth material that is topic specific.
    on-demand-support
    releasing
    content-protection
+   metadata-signing
