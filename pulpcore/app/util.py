@@ -1,3 +1,5 @@
+from django.core.paginator import Paginator
+
 from pulpcore.app.apps import pulp_plugin_configs
 from pulpcore.app import models
 
@@ -84,7 +86,6 @@ def batch_qs(qs, batch_size=1000):
             for article in qs:
                 print article.body
     """
-    total = qs.count()
-    for start in range(0, total, batch_size):
-        end = min(start + batch_size, total)
-        yield qs[start:end]
+    paginator = Paginator(qs, batch_size)
+    for page_idx in range(1, paginator.num_pages):
+        yield paginator.page(page_idx).object_list
