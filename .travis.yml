@@ -35,7 +35,6 @@ addons:
     packages:
       - httpie
       - jq
-      - nginx
   # postgres versions provided by el7 RHSCL (lowest supportable version)
   postgresql: '9.6'
 before_install: .travis/before_install.sh
