@@ -428,6 +428,64 @@ class RepositoryVersion(BaseModel):
         """
         return Content.objects.filter(version_memberships__in=self._content_relationships())
 
+    def content_batch_qs(self, content_qs=None, order_by_params=("pk",), batch_size=1000):
+        """
+        Generate content batches to efficiently iterate over all content.
+
+        Generates query sets that span the `content_qs` content of the repository
+        version. Each yielded query set evaluates to at most `batch_size` content records.
+        This is useful to limit the memory footprint when iterating over all content of
+        a repository version.
+
+        .. note::
+
+            * This generator is not safe against changes (i.e. add/remove content) during
+              the iteration!
+
+            * As the method uses slices internally, the queryset must be ordered to yield
+              stable results. By default, it is ordered by primary key.
+
+        Args:
+            content_qs (:class:`django.db.models.QuerySet`): The queryset for Content that will be
+                restricted further to the content present in this repository version. If not given,
+                ``Content.objects.all()`` is used (to iterate over all content present in the
+                repository version). A plugin may want to use a specific subclass of
+                :class:`~pulpcore.plugin.models.Content` or use e.g. ``filter()`` to select
+                a subset of the repository version's content.
+            order_by_params (tuple of str): The parameters for the ``order_by`` clause
+                for the content. The Default is ``("pk",)``. This needs to
+                specify a stable order. For example, if you want to iterate by
+                decreasing creation time stamps use ``("-pulp_created", "pk")`` to
+                ensure that content records are still sorted by primary key even
+                if their creation timestamp happens to be equal.
+            batch_size (int): The maximum batch size.
+
+        Yields:
+            :class:`django.db.models.QuerySet`: A QuerySet representing a slice of the content.
+
+        Example:
+            The following code could be used to loop over all ``FileContent`` in
+            ``repository_version``. It prefetches the related
+            :class:`~pulpcore.plugin.models.ContentArtifact` instances for every batch::
+
+                repository_version = ...
+
+                batch_generator = repository_version.content_batch_qs(
+                    content_class=FileContent.objects.all()
+                )
+                for content_batch_qs in batch_generator:
+                    content_batch_qs.prefetch_related("contentartifact_set")
+                    for content in content_batch_qs:
+                        ...
+
+        """
+        if content_qs is None:
+            content_qs = Content.objects
+        version_content_qs = content_qs.filter(
+            version_memberships__in=self._content_relationships()
+        ).order_by(*order_by_params)
+        yield from batch_qs(version_content_qs, batch_size=batch_size)
+
     def _content_old(self):
         """
         Returns the set of content in the repo version that was not added
