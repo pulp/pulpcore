@@ -162,7 +162,6 @@ class PublishedArtifact(BaseModel):
     class Meta:
         default_related_name = 'published_artifact'
         unique_together = (
-            ('publication', 'content_artifact'),
             ('publication', 'relative_path')
         )
 
