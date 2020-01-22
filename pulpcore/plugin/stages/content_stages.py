@@ -1,11 +1,52 @@
 from collections import defaultdict
+from itertools import chain
 
+from django.apps import apps
 from django.db import IntegrityError, transaction
 from django.db.models import Q
 
 from pulpcore.plugin.models import ContentArtifact
+from pulpcore.plugin.serializers import SingleArtifactContentSerializer
+from pulpcore.app import files
 
 from .api import Stage
+
+
+def validate_content(content):
+    """Validate Content."""
+    data = {}
+    opts = content._meta
+    fields = chain(
+        opts.concrete_fields, opts.private_fields, opts.many_to_many, opts.related_objects
+    )
+    label = content._meta.app_label
+    model = content._meta.model
+    serializer = apps.get_app_config(label).model_serializers[model]
+    serializer_fields = serializer.Meta.fields
+
+    for f in fields:
+        if f.name not in serializer_fields:
+            continue
+        if f in opts.many_to_many + opts.related_objects:
+            if content.pk is None:
+                data[f.name] = []
+            else:
+                data[f.name] = list(f.value_from_object(content).values_list('pk', flat=True))
+        else:
+            data[f.name] = f.value_from_object(content)
+
+    if issubclass(serializer, SingleArtifactContentSerializer):
+        data["relative_path"] = data.get("relative_path", ".")
+        data["file"] = data.get("file", files.PulpTemporaryUploadedFile("name", "", 3, ""))
+
+    # avoiding deferred_validate on SingleArtifactContentUploadSerializer
+    serializer = serializer(data=data, context={"request": {}})
+    is_valid = serializer.is_valid()
+    if not is_valid:
+        total_errors = len(serializer.errors)
+        uniqueness_error = "must make a unique set" in str(serializer.errors)
+        if total_errors > 1 or not uniqueness_error:
+            serializer.is_valid(raise_exception=True)
 
 
 class QueryExistingContents(Stage):
@@ -96,6 +137,7 @@ class ContentSaver(Stage):
                     # Are we saving to the database for the first time?
                     content_already_saved = not d_content.content._state.adding
                     if not content_already_saved:
+                        validate_content(d_content.content)
                         try:
                             with transaction.atomic():
                                 d_content.content.save()
