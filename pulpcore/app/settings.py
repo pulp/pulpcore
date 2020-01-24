@@ -74,6 +74,7 @@ for entry_point in iter_entry_points("pulpcore.plugin"):
     INSTALLED_PULP_PLUGINS.append(entry_point.module_name)
     INSTALLED_APPS.append(plugin_app_config)
 
+
 # Optional apps that help with development, or augment Pulp in some non-critical way
 OPTIONAL_APPS = [
     "crispy_forms",
@@ -97,6 +98,14 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
+
+# Prepend and append optional middleware like django_prometheus
+with suppress(ImportError):
+    import_module('django_prometheus')
+    INSTALLED_APPS.append('django_prometheus')
+    MIDDLEWARE.insert(0, 'django_prometheus.middleware.PrometheusBeforeMiddleware')
+    MIDDLEWARE.append('django_prometheus.middleware.PrometheusAfterMiddleware')
+
 
 AUTHENTICATION_BACKENDS = [
     "django.contrib.auth.backends.ModelBackend",

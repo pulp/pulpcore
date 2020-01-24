@@ -1,4 +1,5 @@
 """pulp URL Configuration"""
+from contextlib import suppress
 import logging
 
 from django.conf.urls import include, url
@@ -117,6 +118,9 @@ urlpatterns = [
     url(r"^{api_root}orphans/".format(api_root=API_ROOT), OrphansView.as_view()),
     url(r"^auth/", include("rest_framework.urls")),
 ]
+
+with suppress(ImportError):
+    urlpatterns.append(url('', include('django_prometheus.urls')))
 
 api_info = openapi.Info(
     title="Pulp 3 API",
