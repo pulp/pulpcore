@@ -93,7 +93,6 @@ MIDDLEWARE = [
 
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
-    'django.contrib.auth.backends.RemoteUserBackend',
 ]
 
 ROOT_URLCONF = 'pulpcore.app.urls'
@@ -124,7 +123,6 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': ('rest_framework.permissions.IsAuthenticated',),
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework.authentication.SessionAuthentication',
-        'pulpcore.app.authentication.PulpRemoteUserAuthentication',
         'rest_framework.authentication.BasicAuthentication',
     ),
     'UPLOADED_FILES_USE_URL': False,
