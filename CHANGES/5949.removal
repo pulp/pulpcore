@@ -1,0 +1,4 @@
+Removed the ``django.contrib.auth.backends.RemoteUserBackend`` as a default configured backend in
+``settings.AUTHENTICATION_BACKENDS``. Also removed
+``pulpcore.app.authentication.PulpRemoteUserAuthentication`` from the DRF configuration of
+``DEFAULT_AUTHENTICATION_CLASSES``.
