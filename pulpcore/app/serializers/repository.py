@@ -1,10 +1,11 @@
 from gettext import gettext as _
+import os
 
 from rest_framework import fields, serializers
 from rest_framework.validators import UniqueValidator
 from rest_framework_nested.serializers import NestedHyperlinkedModelSerializer
 
-from pulpcore.app import models
+from pulpcore.app import models, settings
 from pulpcore.app.serializers import (
     DetailIdentityField,
     DetailRelatedField,
@@ -108,6 +109,33 @@ class RemoteSerializer(ModelSerializer):
         ),
         default=models.Remote.IMMEDIATE
     )
+
+    def validate_url(self, value):
+        """
+        Check if the 'url' is a ``file://`` path, and if so, ensure it's an ALLOWED_IMPORT_PATH.
+
+        The ALLOWED_IMPORT_PATH is specified as a Pulp setting.
+
+        Args:
+            value: The user-provided value for 'url' to be validated.
+
+        Raises:
+            ValidationError: When the url starts with `file://`, but is not a subfolder of a path in
+                the ALLOWED_IMPORT_PATH setting.
+
+        Returns:
+            The validated value.
+        """
+        if not value.lower().startswith('file://'):
+            return value
+
+        user_path = value[7:]
+
+        for allowed_path in settings.ALLOWED_IMPORT_PATHS:
+            user_provided_realpath = os.path.realpath(user_path)
+            if user_provided_realpath.startswith(allowed_path):
+                return value
+        raise serializers.ValidationError(_("url '{}' is not an allowed import path").format(value))
 
     class Meta:
         abstract = True

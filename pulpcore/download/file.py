@@ -27,7 +27,13 @@ class FileDownloader(BaseDownloader):
             url (str): The url to the file. This is expected to begin with `file://`
             kwargs (dict): This accepts the parameters of
                 :class:`~pulpcore.plugin.download.BaseDownloader`.
+
+        Raises:
+            ValidationError: When the url starts with `file://`, but is not a subfolder of a path in
+                the ALLOWED_IMPORT_PATH setting.
         """
+        from pulpcore.app.serializers import RemoteSerializer
+        RemoteSerializer().validate_url(url)
         p = urlparse(url)
         self._path = os.path.abspath(os.path.join(p.netloc, p.path))
         super().__init__(url, **kwargs)
