@@ -17,11 +17,11 @@ Using Pulp you can:
 
 Pulp is completely free and open-source!
 - License: GPLv2+
-- Documentation: http://docs.pulpproject.org/en/3.0/nightly/
+- Documentation: https://docs.pulpproject.org/
 - Source: https://github.com/pulp/pulpcore/
 - Bugs: https://pulp.plan.io/projects/pulp
 
-For more information, check out the project website: http://www.pulpproject.org
+For more information, check out the project website: https://pulpproject.org
 
 Get Help
 --------

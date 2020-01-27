@@ -2,7 +2,7 @@ Plugin Walkthrough
 ==================
 
 This guide assumes that you are familiar with `general pulp concepts
-<https://docs.pulpproject.org/en/3.0/nightly/concepts.html>`_ as well as the :ref:`planning-guide`.
+<https://docs.pulpproject.org/plugins/plugin-writer/concepts/>`_ as well as the :ref:`planning-guide`.
 It will be helpful to skim the :ref:`plugin-concepts` pages, and refer back to them as you go
 through the process.
 

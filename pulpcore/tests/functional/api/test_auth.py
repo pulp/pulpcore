@@ -2,7 +2,7 @@
 """Tests for Pulp 3's authentication API.
 
 For more information, see the documentation on `Authentication
-<http://docs.pulpproject.org/en/3.0/nightly/integration_guide/rest_api/authentication.html>`_.
+<https://docs.pulpproject.org/restapi.html#section/Authentication>`_.
 """
 import unittest
 

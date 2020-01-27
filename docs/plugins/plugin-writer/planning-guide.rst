@@ -4,7 +4,7 @@ Plugin Planning Guide
 =====================
 
 This guide assumes that you are familiar with `general pulp concepts
-<https://docs.pulpproject.org/en/3.0/nightly/concepts.html>`_.  Usually, the most difficult part
+<https://docs.pulpproject.org/plugins/plugin-writer/concepts/>`_.  Usually, the most difficult part
 of writing a new plugin is understanding the ecosystem surrounding the content type(s) that you
 want to support.
 

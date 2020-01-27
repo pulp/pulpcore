@@ -2,7 +2,7 @@
 
 We have provided detailed documentation for ways in which you can
 contribute to Pulp here:
-https://docs.pulpproject.org/en/3.0/nightly/contributing/index.html
+https://docs.pulpproject.org/contributing/
 
 This documentation includes:
 
