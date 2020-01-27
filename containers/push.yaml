@@ -1,7 +1,7 @@
 ---
 - hosts: localhost
   vars:
-    container_cli: 'docker'
+    container_cli: 'podman'
   vars_files:
     - vars/defaults.yaml
   tasks:

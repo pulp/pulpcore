@@ -34,7 +34,7 @@ fi
 
 # set up pulp-fixtures docker container
 if [[ "$TEST" == 'pulp' ]]; then
-  docker run -d -p 0.0.0.0:8000:80 quay.io/pulp/pulp-fixtures:latest
+  podman run -d -p 0.0.0.0:8000:80 quay.io/pulp/pulp-fixtures:latest
 fi
 cat ~/.config/pulp_smash/settings.json | \
     jq "setpath([\"custom\",\"fixtures_origin\"]; \"http://$(hostname):8000/fixtures/\")" > temp.json
