@@ -1,0 +1,18 @@
+name: Pulp CI Lints
+
+on: [push, pull_request]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python 3.x
+        uses: actions/setup-python@v1
+        with:
+          python-version: '3.x' # Latest .x version available
+      - name: Lint with flake8
+        run: |
+          pip install flake8
+          # stop the build if there are Python syntax errors or undefined names
+          flake8 . --config=flake8.cfg --count --show-source --statistics
