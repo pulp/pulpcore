@@ -7,7 +7,7 @@ Changelog
     file is managed by towncrier. You *may* edit previous change logs to
     fix problems like typo corrections or such.
     To add a new change log entry, please see
-    https://docs.pulpproject.org/en/3.0/nightly/contributing/git.html#changelog-update
+    https://docs.pulpproject.org/contributing/git.html#changelog-update
 
     WARNING: Don't drop the next directive!
 
@@ -665,7 +665,7 @@ Bugfixes
 Improved Documentation
 ----------------------
 
-- Adds an `authentication section <https://docs.pulpproject.org/en/3.0/nightly/installation/
+- Adds an `authentication section <https://docs.pulpproject.org/installation/
   authentication.html>`_ to the installation guide. Also add two documented settings:
   ``AUTHENTICATION_BACKENDS`` and ``REMOTE_USER_ENVIRON_NAME``.
   `#3808 <https://pulp.plan.io/issues/3808>`_

@@ -76,7 +76,7 @@ Users create an instance of a ``SecretStringContentGuard`` and give it a secret 
 
 
 Then the user can protect one or more Distributions by specifying ``content_guard``. See the
-`ContentGuard creation API <https://docs.pulpproject.org/en/3.0/nightly/restapi.html#operation/
+`ContentGuard creation API <https://docs.pulpproject.org/restapi.html#operation/
 distributions_file_file_create>`_ for more information.
 
 
