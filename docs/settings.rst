@@ -199,6 +199,19 @@ REMOTE_USER_ENVIRON_NAME
    Defaults to ``'REMOTE_USER'``.
 
 
+.. _allowed-import-paths:
+
+ALLOWED_IMPORT_PATHS
+^^^^^^^^^^^^^^^^^^^^
+
+   One or more real filesystem paths that Remotes with filesystem paths can import from. For example
+   to allow a remote url of ``file:///mnt/foo/bar/another/folder/`` you could specify::
+
+       ALLOWED_IMPORT_PATHS = ['/mnt/foo/bar']  # only a subpath is needed
+
+   Defaults to ``[]``, meaning ``file:///`` urls are not allowed in any Remote.
+
+
 PROFILE_STAGES_API
 ^^^^^^^^^^^^^^^^^^
 
