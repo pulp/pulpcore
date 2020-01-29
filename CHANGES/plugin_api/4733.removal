@@ -1,0 +1,5 @@
+The ```Handler._handle_file_response` has been removed. It was renamed to
+``_serve_content_artifact`` and has the following signature::
+
+    def _serve_content_artifact(self, content_artifact, headers):
+

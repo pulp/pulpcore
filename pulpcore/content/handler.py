@@ -334,7 +334,7 @@ class Handler:
                 pass
             else:
                 if ca.artifact:
-                    return self._handle_file_response(ca.artifact.file, headers)
+                    return self._serve_content_artifact(ca, headers)
                 else:
                     return await self._stream_content_artifact(request,
                                                                StreamResponse(headers=headers), ca)
@@ -358,7 +358,7 @@ class Handler:
                     pass
                 else:
                     if ca.artifact:
-                        return self._handle_file_response(ca.artifact.file, headers)
+                        return self._serve_content_artifact(ca, headers)
                     else:
                         return await self._stream_content_artifact(request,
                                                                    StreamResponse(headers=headers),
@@ -398,7 +398,7 @@ class Handler:
             except ObjectDoesNotExist:
                 pass
             else:
-                return self._handle_file_response(ca.artifact.file, headers)
+                return self._serve_content_artifact(ca, headers)
 
         if distro.remote:
             remote = distro.remote.cast()
@@ -407,7 +407,7 @@ class Handler:
                 ra = RemoteArtifact.objects.get(remote=remote, url=url)
                 ca = ra.content_artifact
                 if ca.artifact:
-                    return self._handle_file_response(ca.artifact.file, headers)
+                    return self._serve_content_artifact(ca, headers)
                 else:
                     return await self._stream_content_artifact(request,
                                                                StreamResponse(headers=headers),
@@ -519,15 +519,16 @@ class Handler:
                 content_artifact.save()
         return artifact
 
-    def _handle_file_response(self, file, headers):
+    def _serve_content_artifact(self, content_artifact, headers):
         """
-        Handle response for file.
+        Handle response for a Content Artifact with the file present.
 
         Depending on where the file storage (e.g. filesystem, S3, etc) this could be responding with
         the file (filesystem) or a redirect (S3).
 
         Args:
-            file (:class:`django.db.models.fields.files.FieldFile`): File to respond with
+            content_artifact (:class:`pulpcore.app.models.ContentArtifact`): The Content Artifact to
+                respond with.
             headers (dict): A dictionary of response headers.
 
         Raises:
@@ -538,10 +539,15 @@ class Handler:
             The :class:`aiohttp.web.FileResponse` for the file.
         """
         if settings.DEFAULT_FILE_STORAGE == 'pulpcore.app.models.storage.FileSystem':
-            return FileResponse(os.path.join(settings.MEDIA_ROOT, file.name), headers=headers)
+            filename = content_artifact.artifact.file.name
+            return FileResponse(os.path.join(settings.MEDIA_ROOT, filename), headers=headers)
         elif (settings.DEFAULT_FILE_STORAGE == 'storages.backends.s3boto3.S3Boto3Storage' or
               settings.DEFAULT_FILE_STORAGE == 'storages.backends.azure_storage.AzureStorage'):
-            raise HTTPFound(file.url, headers=headers)
+            filename_portion = '?response-content-disposition=attachment; filename={}'.format(
+                content_artifact.relative_path
+            )
+            url = content_artifact.artifact.file.url + filename_portion
+            raise HTTPFound(url, headers=headers)
         else:
             raise NotImplementedError()
 
