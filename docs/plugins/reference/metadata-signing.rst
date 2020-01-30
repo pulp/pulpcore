@@ -3,6 +3,11 @@
 Metadata Signing
 ================
 
+.. note::
+
+    Content Signing is in tech-preview and may change in backwards incompatible ways in future
+    releases.
+
 Plugin writers wishing to enable users to sign metadata need to add a new field ``metadata_signing_service``
 to their implementation of a repository. This field should be exposed to users who consume content
 via REST API. The users may afterwards specify which kind of a signing service will be used to sign the
@@ -11,8 +16,7 @@ metadata when creating a publication.
 In order to sign metadata, plugin writers are required to call the method ``sign()`` of the subclasses
 inheriting from the model ``SigningService``. This method invokes a signing script which is provided by
 an administrator and creates a detached ascii-armored signature if called via the class
-``AsciiArmoredDetachedSigningService``. Learn more about the creation of the signing script in the section
-:ref:`administration`.
+``AsciiArmoredDetachedSigningService``.
 
 The following procedure may be taken into account for the plugin writers:
 
