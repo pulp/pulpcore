@@ -15,4 +15,4 @@ assumes that the reader is familiar with the fundamentals discussed in the :doc:
    promotion
    scheduling-tasks
    exposing-content
-   administration
+   signed-metadata
