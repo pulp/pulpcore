@@ -1,2 +1,0 @@
-Remove get_or_create_future and does_batch from DeclarativeContent. Replaced by awaiting for
-resolution on the DeclarativeContent itself.

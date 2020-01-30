@@ -1,2 +1,0 @@
-Importing from file:/// now requires the configuration of the ``ALLOWED_IMPORT_PATHS`` setting.
-Without this configuration, Pulp will not import content from ``file:///`` locations correctly.
