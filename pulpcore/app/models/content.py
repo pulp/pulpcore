@@ -1,7 +1,13 @@
 """
 Content related Django models.
 """
+import json
 import hashlib
+import tempfile
+import subprocess
+
+import gnupg
+
 from itertools import chain
 
 from django.core import validators
@@ -370,12 +376,92 @@ class RemoteArtifact(BaseModel, QueryMixin):
 
 class SigningService(BaseModel):
     """
-    A model used for producing signed Artifacts.
+    A model used for producing signatures.
 
     Fields:
-        name (models.TextField): A unique name describing a script used for the signing.
+        name (models.TextField): A unique name describing a script used for signing.
         script (models.TextField): An absolute path to the script.
 
     """
     name = models.TextField(db_index=True, unique=True)
     script = models.TextField()
+
+    def sign(self, filename):
+        """
+        Sign a passed file.
+
+        Subclasses are required to implement this method. The method shall invoke an external
+        signing script that creates a signature for the passed filename.
+
+        Args:
+            filename (str): A relative path to a file which is intended to be signed.
+
+        """
+        raise NotImplementedError('Subclasses must implement their own method for signing.')
+
+
+class AsciiArmoredDetachedSigningService(SigningService):
+    """
+    A model used for creating detached ascii armored signatures.
+    """
+
+    def save(self, *args, **kwargs):
+        """
+        Validate and save a signing service for an ASCII armored signature.
+
+        Before saving the signing service to the database, it is required to check if the service's
+        output corresponds to a proposed output format and creates valid signatures.
+
+        In this case, Pulp creates a file with random content, signs the file, and checks if the
+        signature can be verified by a provided public key. If the signature was verified without
+        errors, the signing service object is saved to the database.
+        """
+        gpg = gnupg.GPG()
+        with tempfile.TemporaryDirectory() as temp_directory_name:
+            with tempfile.NamedTemporaryFile(dir=temp_directory_name) as temp_file:
+                temp_file.write(b"random-data")
+                try:
+                    data = self.sign(temp_file.name)
+                except RuntimeError:
+                    raise
+
+                with open(data["signature"], "rb") as fp:
+                    with open(data["key"], "rb") as key:
+                        import_result = gpg.import_keys(key.read())
+                        verified = gpg.verify_file(fp, temp_file.name)
+                        if verified.trust_level is None \
+                                and verified.trust_level < verified.TRUST_FULLY:
+                            raise RuntimeError(
+                                "A signature could not be verified or a trust level is too low. "
+                                "The signing script may generate invalid signatures."
+                            )
+                        elif verified.pubkey_fingerprint != import_result.fingerprints[0]:
+                            raise RuntimeError(
+                                "Fingerprints of a provided public key and a verified public key "
+                                "are not equal. The signing script is probably not valid.")
+                        else:
+                            super().save(*args, **kwargs)
+
+    def sign(self, filename):
+        """
+        Create an ASCII armored signature for the passed filename.
+
+        Args:
+            filename (str): A relative path to a file which is intended to be signed.
+
+        Raises:
+            RuntimeError: If a return code of the script is not equal to 0, indicating a failure.
+
+        Returns:
+            A dictionary in the following format::
+
+                {"file": "signed_file.xml", "signature": "signed_file.asc", "key": "public.key"}
+
+        """
+        completed_process = subprocess.run(
+            [self.script, filename], stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        )
+        if completed_process.returncode != 0:
+            raise RuntimeError(str(completed_process.stderr))
+
+        return json.loads(completed_process.stdout)

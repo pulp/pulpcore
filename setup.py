@@ -19,6 +19,7 @@ requirements = [
     'pygtrie~=2.3.2',
     'psycopg2>=2.7,<2.9',
     'PyYAML>=5.1.1,<5.4.0',
+    'python-gnupg~=0.4.0',
     'redis~=3.1.0',  # pinned due to https://github.com/andymccurdy/redis-py/issues/1138
     'rq>=1.1,<1.3',
     'setuptools>=39.2.0',

@@ -1,10 +1,12 @@
+.. _administration:
+
 Administration
 ==============
 
 Administrators are responsible for deploying and configuring Pulp.
 
-Content Signing
----------------
+Metadata Signing
+----------------
 
 Administrators can add signing services to Pulp using the command line tools. Users
 may then associate the signing services with repositories that support content signing.
@@ -17,7 +19,8 @@ The example below demonstrates how a signing service can be created using ``gpg`
 
        {"file": "filename", "signature": "filename.asc", "key": "public.key"}
 
-   This is an example of a signing script:
+   The filename must remain the same for the detached signature, as shown. Below is an
+   example of a signing script:
 
    .. code-block:: bash
 
@@ -25,9 +28,10 @@ The example below demonstrates how a signing service can be created using ``gpg`
 
        FILE_PATH=$1
        SIGNATURE_PATH="$1.asc"
-       PUBLIC_KEY_PATH="public.key"
 
-       ADMIN_ID="27B3E8915B0C58FB"
+       PUBLIC_KEY_PATH="$(cd "$(dirname $1)" && pwd)/public.key"
+
+       ADMIN_ID="658285BA1A648083"
        PASSWORD="password"
 
        # Export a public key
@@ -35,17 +39,22 @@ The example below demonstrates how a signing service can be created using ``gpg`
 
        # Create a detached signature
        gpg --quiet --batch --pinentry-mode loopback --yes --passphrase \
-           $PASSWORD --homedir ~/.gnupg/ --detach-sign --default-key $ADMIN_ID \
-           --armor --output $SIGNATURE_PATH $FILE_PATH
+          $PASSWORD --homedir ~/.gnupg/ --detach-sign --default-key $ADMIN_ID \
+          --armor --output $SIGNATURE_PATH $FILE_PATH
 
        # Check the exit status
        STATUS=$?
        if [ $STATUS -eq 0 ]; then
-           echo {\"file\": \"$FILE_PATH\", \"signature\": \"$SIGNATURE_PATH\", \
-               \"key\": \"$PUBLIC_KEY_PATH\"}
+          echo {\"file\": \"$FILE_PATH\", \"signature\": \"$SIGNATURE_PATH\", \
+              \"key\": \"$PUBLIC_KEY_PATH\"}
        else
-           exit $STATUS
+          exit $STATUS
        fi
+
+   .. note::
+
+       Make sure the script contains a proper shebang and Pulp has got valid permissions
+       to execute it.
 
 2. Create a signing service consisting of an absolute path to the script and a meaningful
    name describing the script's purpose. It is possible to insert the signing service in
@@ -55,10 +64,16 @@ The example below demonstrates how a signing service can be created using ``gpg`
 
        from pulpcore.app.models.content import SigningService
 
-       SigningService.objects.create(
+       AsciiArmoredDetachedSigningService.objects.create(
            name="sign-metadata",
            script="/var/lib/pulp/scripts/sign-metadata.sh"
        )
+
+   .. note::
+
+       While creating a signing service, the model ``AsciiArmoredDetachedSigningService``
+       runs additional checks in order to prevent saving invalid scripts to the database.
+       This feature enables administrators to validate their signing scripts in advance.
 
 3. Retrieve and check the saved signing service via REST API::
 
@@ -77,3 +92,6 @@ The example below demonstrates how a signing service can be created using ``gpg`
                }
            ]
        }
+
+Plugin writers are then able to sign selected content by the provided script. To learn more
+about the signing from a plugin's perspective, see the section :ref:`metadata-signing`.

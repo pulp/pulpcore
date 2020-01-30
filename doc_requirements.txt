@@ -12,6 +12,7 @@ dynaconf
 plantuml
 pyyaml
 pygtrie
+python-gnupg
 rq
 sphinx
 sphinx-rtd-theme
