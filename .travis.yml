@@ -19,13 +19,6 @@ env:
     - TEST=pulp
     - TEST=docs
     - TEST=bindings
-matrix:
-  exclude:
-    - python: '3.6'
-      env: TEST=bindings
-    - python: '3.6'
-      env: TEST=docs
-  fast_finish: true
 services:
   - postgresql
   - redis-server
