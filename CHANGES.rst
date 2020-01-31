@@ -13,6 +13,100 @@ Changelog
 
 .. towncrier release notes start
 
+3.1.0 (2020-01-30)
+==================
+REST API
+--------
+
+Features
+~~~~~~~~
+
+- Allow administrators to add a signing service
+  `#5943 <https://pulp.plan.io/issues/5943>`_
+- Adds ``pulpcore.app.authentication.PulpDoNotCreateUsersRemoteUserBackend`` which can be used to
+  verify authentication in the webserver, but will not automatically create users like
+  ``django.contrib.auth.backends.RemoteUserBackend`` does.
+  `#5949 <https://pulp.plan.io/issues/5949>`_
+- Allow Azure blob storage to be used as DEFAULT_FILE_STORAGE for Pulp
+  `#5954 <https://pulp.plan.io/issues/5954>`_
+- Allow to filter publications by ``repository_version`` and ``pulp_created``
+  `#5968 <https://pulp.plan.io/issues/5968>`_
+- Adds the ``ALLOWED_IMPORT_PATHS`` setting which can specify the file path prefix that ``file:///``
+  remote paths can import from.
+  `#5974 <https://pulp.plan.io/issues/5974>`_
+- Allow the same artifact to be published at multiple relative paths in the same publication.
+  `#6037 <https://pulp.plan.io/issues/6037>`_
+
+
+Bugfixes
+~~~~~~~~
+
+- Files stored on S3 and Azure now download with the correct filename.
+  `#4733 <https://pulp.plan.io/issues/4733>`_
+- Adds operation_summary to the OpenAPI schema definition of repository modify operation
+  `#6002 <https://pulp.plan.io/issues/6002>`_
+- Temporarily pinned redis-py version to avoid a task locking issue.
+  `#6038 <https://pulp.plan.io/issues/6038>`_
+
+
+Improved Documentation
+~~~~~~~~~~~~~~~~~~~~~~
+
+- Rewrote the Authentication page for more clarity on how to configure Pulp's authentication.
+  `#5949 <https://pulp.plan.io/issues/5949>`_
+
+
+Deprecations and Removals
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+- Removed the ``django.contrib.auth.backends.RemoteUserBackend`` as a default configured backend in
+  ``settings.AUTHENTICATION_BACKENDS``. Also removed
+  ``pulpcore.app.authentication.PulpRemoteUserAuthentication`` from the DRF configuration of
+  ``DEFAULT_AUTHENTICATION_CLASSES``.
+  `#5949 <https://pulp.plan.io/issues/5949>`_
+- Importing from file:/// now requires the configuration of the ``ALLOWED_IMPORT_PATHS`` setting.
+  Without this configuration, Pulp will not import content from ``file:///`` locations correctly.
+  `#5974 <https://pulp.plan.io/issues/5974>`_
+
+
+Misc
+~~~~
+
+- `#5795 <https://pulp.plan.io/issues/5795>`_
+
+
+Plugin API
+----------
+
+Features
+~~~~~~~~
+
+- Allow awaiting for resolution on DeclarativeContent.
+  `#5668 <https://pulp.plan.io/issues/5668>`_
+- Add a previous() method to RepositoryVersion.
+  `#5734 <https://pulp.plan.io/issues/5734>`_
+- Enable plugin writers to sign selected content with signing scripts provided by administrators
+  `#5946 <https://pulp.plan.io/issues/5946>`_
+- Add a batching content iterator ``content_batch_qs()`` to ``RepositoryVersion``.
+  `#6024 <https://pulp.plan.io/issues/6024>`_
+
+
+Deprecations and Removals
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+- The ```Handler._handle_file_response` has been removed. It was renamed to
+  ``_serve_content_artifact`` and has the following signature::
+
+      def _serve_content_artifact(self, content_artifact, headers):
+  `#4733 <https://pulp.plan.io/issues/4733>`_
+- Remove get_or_create_future and does_batch from DeclarativeContent. Replaced by awaiting for
+  resolution on the DeclarativeContent itself.
+  `#5668 <https://pulp.plan.io/issues/5668>`_
+
+
+----
+
+
 3.0.1 (2020-01-15)
 ==================
 REST API

@@ -1,1 +1,0 @@
-Temporarily pinned redis-py version to avoid a task locking issue.
