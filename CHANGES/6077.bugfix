@@ -1,0 +1,1 @@
+Fix a bug that could cause an inability to detect an invalid signing script during the validation

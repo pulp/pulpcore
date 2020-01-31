@@ -430,7 +430,7 @@ class AsciiArmoredDetachedSigningService(SigningService):
                         import_result = gpg.import_keys(key.read())
                         verified = gpg.verify_file(fp, temp_file.name)
                         if verified.trust_level is None \
-                                and verified.trust_level < verified.TRUST_FULLY:
+                                or verified.trust_level < verified.TRUST_FULLY:
                             raise RuntimeError(
                                 "A signature could not be verified or a trust level is too low. "
                                 "The signing script may generate invalid signatures."
