@@ -431,6 +431,7 @@ class BaseFilterSet(filterset.FilterSet):
         'regex': _('matches regex'),
         'iregex': _('matches regex'),
         'search': _('matches'),
+        'ne': _('not equal to'),
     }
 
     @classmethod
