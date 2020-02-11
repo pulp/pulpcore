@@ -12,7 +12,7 @@ from aiohttp.web import FileResponse, StreamResponse, HTTPOk
 from aiohttp.web_exceptions import HTTPForbidden, HTTPFound, HTTPNotFound
 from django.conf import settings
 from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
-from django.db import IntegrityError, transaction
+from django.db import connection, IntegrityError, transaction
 from pulpcore.app.models import (
     Artifact,
     BaseDistribution,
@@ -84,6 +84,13 @@ class Handler:
 
     distribution_model = None
 
+    @staticmethod
+    def _reset_db_connection():
+        """
+        Reset database connection if it's unusable or obselete to avoid "connection already closed".
+        """
+        connection.close_if_unusable_or_obsolete()
+
     async def list_distributions(self, request):
         """
         The handler for an HTML listing all distributions
@@ -94,6 +101,8 @@ class Handler:
         Returns:
             :class:`aiohttp.web.HTTPOk`: The response back to the client.
         """
+        self._reset_db_connection()
+
         if self.distribution_model is None:
             distributions = BaseDistribution.objects.only("base_path").all()
         else:
@@ -112,6 +121,8 @@ class Handler:
             :class:`aiohttp.web.StreamResponse` or :class:`aiohttp.web.FileResponse`: The response
                 back to the client.
         """
+        self._reset_db_connection()
+
         path = request.match_info['path']
         return await self._match_and_stream(path, request)
 
