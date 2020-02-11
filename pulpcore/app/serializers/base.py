@@ -4,6 +4,7 @@ from urllib.parse import urljoin
 from django.core.validators import URLValidator
 from drf_queryfields.mixins import QueryFieldsMixin
 from rest_framework import serializers
+from rest_framework.fields import get_attribute
 from rest_framework_nested.relations import (
     NestedHyperlinkedIdentityField,
     NestedHyperlinkedRelatedField,
@@ -156,8 +157,22 @@ class _DetailFieldMixin:
     def get_url(self, obj, view_name, request, *args, **kwargs):
         # ignore the passed in view name and return the url to the cast unit, not the generic unit
         request = None
+        if isinstance(obj, str):
+            return obj
         view_name = self._view_name(obj)
         return super().get_url(obj, view_name, request, *args, **kwargs)
+
+    def get_attribute(self, instance):
+        # Return empty string instead of None
+        try:
+            attr = get_attribute(instance, self.source_attrs)
+        except Exception:
+            super().get_attribute(instance)
+
+        if not attr:
+            return ""
+
+        return attr
 
 
 class IdentityField(serializers.HyperlinkedIdentityField):
