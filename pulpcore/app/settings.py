@@ -29,7 +29,7 @@ DEBUG = False
 ALLOWED_HOSTS = ['*']
 
 MEDIA_ROOT = '/var/lib/pulp/'
-STATIC_ROOT = os.path.join(MEDIA_ROOT, 'static/')
+STATIC_ROOT = os.path.join(MEDIA_ROOT, 'assets/')
 
 DEFAULT_FILE_STORAGE = 'pulpcore.app.models.storage.FileSystem'
 
