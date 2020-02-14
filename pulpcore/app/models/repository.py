@@ -571,6 +571,33 @@ class RepositoryVersion(BaseModel):
         if self.complete:
             raise ResourceImmutableError(self)
 
+        error_messages = []
+        for type_obj in self.repository.CONTENT_TYPES:
+            if type_obj.repo_key_fields == ():
+                continue
+
+            pulp_type = type_obj.get_pulp_type()
+            repo_key_fields = type_obj.repo_key_fields
+            new_content_total = type_obj.objects.filter(
+                pk__in=content.filter(pulp_type=pulp_type)
+            ).count()
+            unique_new_content_total = type_obj.objects.filter(
+                pk__in=content.filter(pulp_type=pulp_type)
+            ).distinct(*repo_key_fields).count()
+
+            if unique_new_content_total < new_content_total:
+                error_messages.append(_(
+                    "More than one {pulp_type} content with the duplicate values for {fields}."
+                    ).format(
+                        pulp_type=pulp_type,
+                        fields=", ".join(repo_key_fields),
+                    )
+                )
+        if error_messages:
+            raise ValueError(
+                _("Cannot create repository version. {msg}").format(msg=", ".join(error_messages))
+            )
+
         repo_content = []
         to_add = set(content.values_list('pk', flat=True))
         for existing in batch_qs(self.content.order_by('pk').values_list('pk', flat=True)):
