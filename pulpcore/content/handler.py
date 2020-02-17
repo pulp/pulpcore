@@ -12,7 +12,7 @@ from aiohttp.web import FileResponse, StreamResponse, HTTPOk
 from aiohttp.web_exceptions import HTTPForbidden, HTTPFound, HTTPNotFound
 from django.conf import settings
 from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
-from django.db import IntegrityError, transaction
+from django.db import connection, IntegrityError, transaction
 from pulpcore.app.models import (
     Artifact,
     BaseDistribution,
@@ -84,6 +84,13 @@ class Handler:
 
     distribution_model = None
 
+    @staticmethod
+    def _reset_db_connection():
+        """
+        Reset database connection if it's unusable or obselete to avoid "connection already closed".
+        """
+        connection.close_if_unusable_or_obsolete()
+
     async def list_distributions(self, request):
         """
         The handler for an HTML listing all distributions
@@ -94,6 +101,8 @@ class Handler:
         Returns:
             :class:`aiohttp.web.HTTPOk`: The response back to the client.
         """
+        self._reset_db_connection()
+
         if self.distribution_model is None:
             distributions = BaseDistribution.objects.only("base_path").all()
         else:
@@ -112,6 +121,8 @@ class Handler:
             :class:`aiohttp.web.StreamResponse` or :class:`aiohttp.web.FileResponse`: The response
                 back to the client.
         """
+        self._reset_db_connection()
+
         path = request.match_info['path']
         return await self._match_and_stream(path, request)
 
@@ -543,11 +554,11 @@ class Handler:
             return FileResponse(os.path.join(settings.MEDIA_ROOT, filename), headers=headers)
         elif (settings.DEFAULT_FILE_STORAGE == 'storages.backends.s3boto3.S3Boto3Storage' or
               settings.DEFAULT_FILE_STORAGE == 'storages.backends.azure_storage.AzureStorage'):
-            filename_portion = '?response-content-disposition=attachment; filename={}'.format(
-                content_artifact.relative_path
-            )
-            url = content_artifact.artifact.file.url + filename_portion
-            raise HTTPFound(url, headers=headers)
+            artifact_file = content_artifact.artifact.file
+            content_disposition = f'attachment;filename={content_artifact.relative_path}'
+            parameters = {"ResponseContentDisposition": content_disposition}
+            url = artifact_file.storage.url(artifact_file.name, parameters=parameters)
+            raise HTTPFound(url)
         else:
             raise NotImplementedError()
 
