@@ -23,7 +23,10 @@ if [[ $DESCRIPTION == 'tags/'$REPORTED_VERSION ]]; then
   export VERSION=${REPORTED_VERSION}
 else
   # Daily publishing of development version (ends in ".dev" reported as ".dev0")
-  [ "${REPORTED_VERSION%.dev*}" != "${REPORTED_VERSION}" ] || exit 1
+  if [ "${REPORTED_VERSION%.dev*}" == "${REPORTED_VERSION}" ]; then
+    echo "Refusing to publish bindings. $REPORTED_VERSION does not contain 'dev'."
+    exit 1
+  fi
   export EPOCH="$(date +%s)"
   export VERSION=${REPORTED_VERSION}${EPOCH}
 fi
