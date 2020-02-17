@@ -33,11 +33,8 @@ RUN		dnf -y update && \
 		dnf -y install python3-createrepo_c && \
 		dnf -y install python3-libmodulemd && \
 		dnf -y install python3-libcomps && \
+		dnf -y install python3-solv && \
 		dnf clean all
-
-# Until the update is re-submitted & released
-# https://bodhi.fedoraproject.org/updates/FEDORA-2019-0d122cc67a
-RUN rpm -q python3-libcomps --queryformat=%{VERSION}-%{RELEASE} | grep -v 0.1.11-1 || dnf upgrade -y --enablerepo=updates-testing python3-libcomps
 
 # Docs suggest RHEL8 uses the alternatives system for /usr/bin/python ,
 # but Fedora does not.
