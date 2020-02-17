@@ -13,6 +13,40 @@ Changelog
 
 .. towncrier release notes start
 
+3.1.1 (2020-02-17)
+==================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Content with duplicate repo_key_fields raises an error
+  `#5567 <https://pulp.plan.io/issues/5567>`_
+- Resolve content app errors ``django.db.utils.InterfaceError: connection already closed``.
+  `#6045 <https://pulp.plan.io/issues/6045>`_
+- Fix a bug that could cause an inability to detect an invalid signing script during the validation
+  `#6077 <https://pulp.plan.io/issues/6077>`_
+- Fixing broken S3 redirect
+  `#6154 <https://pulp.plan.io/issues/6154>`_
+- Pin `idna==2.8`` to avoid a version conflict caused by the idna 2.9 release.
+  `#6169 <https://pulp.plan.io/issues/6169>`_
+
+
+Plugin API
+----------
+
+Features
+~~~~~~~~
+
+- A new method ``_reset_db_connection`` has been added to ``content.Handler``. It can be called before
+  accessing the db to ensure that the db connection is alive.
+  `#6045 <https://pulp.plan.io/issues/6045>`_
+
+
+----
+
+
 3.1.0 (2020-01-30)
 ==================
 REST API

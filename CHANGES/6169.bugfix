@@ -1,1 +1,0 @@
-Pin `idna==2.8`` to avoid a version conflict caused by the idna 2.9 release.
