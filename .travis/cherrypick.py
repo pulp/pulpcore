@@ -67,7 +67,7 @@ repo.git.checkout(STABLE_BRANCH)
 g = Github(GITHUB_TOKEN)
 grepo = g.get_repo(REPOSITORY)
 (label,) = (l for l in grepo.get_labels() if l.name == PR_LABEL)
-issues = grepo.get_issues(labels=[label], state="all")
+issues = grepo.get_issues(labels=[label], state="all", sort="updated", direction="asc")
 
 cherrypicks = []
 
