@@ -16,7 +16,6 @@ requirements = [
     'drf-yasg~=1.17.0',
     'dynaconf>=2.2,<2.3',
     'gunicorn>=19.9,<20.1',
-    'idna==2.8',  # temporary pin until https://pulp.plan.io/issues/6169#note-2 is resolved
     'pygtrie~=2.3.2',
     'psycopg2>=2.7,<2.9',
     'PyYAML>=5.1.1,<5.4.0',
