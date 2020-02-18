@@ -1,1 +1,0 @@
-Resolve content app errors ``django.db.utils.InterfaceError: connection already closed``.
