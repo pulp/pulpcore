@@ -5,6 +5,7 @@ with open('README.md') as f:
 
 requirements = [
     'aiohttp',
+    'aiodns',
     'aiofiles',
     'backoff',
     'coreapi~=2.3.3',
