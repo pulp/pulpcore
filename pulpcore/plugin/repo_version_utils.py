@@ -31,8 +31,8 @@ def remove_duplicates(repository_version):
         repository_version: The :class:`~pulpcore.plugin.models.RepositoryVersion` to be checked
             and possibly modified.
     """
-    added_content = repository_version.added()
-    existing_content = repository_version._content_old()
+    added_content = repository_version.added(base_version=repository_version.base_version)
+    existing_content = repository_version.previous().content
     repository = repository_version.repository.cast()
     content_types = {type_obj.get_pulp_type(): type_obj for type_obj in repository.CONTENT_TYPES}
 

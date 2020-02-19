@@ -486,23 +486,6 @@ class RepositoryVersion(BaseModel):
         ).order_by(*order_by_params)
         yield from batch_qs(version_content_qs, batch_size=batch_size)
 
-    def _content_old(self):
-        """
-        Returns the set of content in the repo version that was not added
-
-        Identical to .content except for "version_added__number__lt"
-
-        Returns:
-            django.db.models.QuerySet: The content that is contained within this version
-                that was not added.
-        """
-        relationships = RepositoryContent.objects.filter(
-            repository=self.repository, version_added__number__lt=self.number
-        ).exclude(
-            version_removed__number__lte=self.number
-        )
-        return Content.objects.filter(version_memberships__in=relationships)
-
     @property
     def artifacts(self):
         """
@@ -684,6 +667,8 @@ class RepositoryVersion(BaseModel):
             RepositoryVersion.DoesNotExist: if there is not a RepositoryVersion for the same
                 repository and with a lower "number".
         """
+        if self.base_version:
+            return self.base_version
         try:
             return self.repository.versions.exclude(complete=False).filter(
                 number__lt=self.number).order_by('-number')[0]
