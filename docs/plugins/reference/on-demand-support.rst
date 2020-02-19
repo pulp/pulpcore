@@ -75,9 +75,12 @@ download metadata that is saved and stored as a Content unit. This metadata defi
 units to be created without downloading their corresponding Artifacts. The on-demand support for
 this type needs to download Artifacts for those content types, but not others.
 
-.. warning::
-   TODO:  https://pulp.plan.io/issues/4209
+By specifying `deferred_download=False` in the `DeclarativeArtifact` regardless of the overall sync
+policy, lazy downloading for that specific artifact can be prohibited.
 
+.. hint::
+
+   See also :ref:`on-demand-support-with-da`
 
 How Does This Work at the Model Layer?
 ======================================
