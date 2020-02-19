@@ -30,9 +30,8 @@ class Repository(MasterModel):
 
         name (models.TextField): The repository name.
         description (models.TextField): An optional description.
-        last_version (models.PositiveIntegerField): A record of the last created version number.
-            Used when a repository version is deleted so as not to create a new vesrion with the
-            same version number.
+        next_version (models.PositiveIntegerField): A record of the next version number to be
+            created.
 
     Relations:
 
@@ -43,7 +42,7 @@ class Repository(MasterModel):
 
     name = models.TextField(db_index=True, unique=True)
     description = models.TextField(null=True)
-    last_version = models.PositiveIntegerField(default=0)
+    next_version = models.PositiveIntegerField(default=0)
     content = models.ManyToManyField('Content', through='RepositoryContent',
                                      related_name='repositories')
 
@@ -72,8 +71,10 @@ class Repository(MasterModel):
         """
         version = RepositoryVersion(
             repository=self,
-            number=self.last_version,
+            number=self.next_version,
             complete=True)
+        self.next_version += 1
+        self.save()
         version.save()
 
     def new_version(self, base_version=None):
@@ -93,10 +94,8 @@ class Repository(MasterModel):
         with transaction.atomic():
             version = RepositoryVersion(
                 repository=self,
-                number=int(self.last_version) + 1,
+                number=int(self.next_version),
                 base_version=base_version)
-            self.last_version = version.number
-            self.save()
             version.save()
 
             if base_version:
@@ -143,7 +142,7 @@ class Repository(MasterModel):
 
         """
         with suppress(RepositoryVersion.DoesNotExist):
-            model = self.versions.get(number=self.last_version)
+            model = self.versions.exclude(complete=False).latest()
             return model
 
     def natural_key(self):
@@ -733,8 +732,6 @@ class RepositoryVersion(BaseModel):
                 RepositoryContent.objects.filter(version_removed=self) \
                     .update(version_removed=None)
                 CreatedResource.objects.filter(object_id=self.pk).delete()
-                self.repository.last_version = self.number - 1
-                self.repository.save()
                 super().delete(**kwargs)
 
     def _compute_counts(self):
@@ -803,6 +800,8 @@ class RepositoryVersion(BaseModel):
                         )
 
                     self.complete = True
+                    self.repository.next_version = self.number + 1
+                    self.repository.save()
                     self.save()
                     self._compute_counts()
             except Exception:

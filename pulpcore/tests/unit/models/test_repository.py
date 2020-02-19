@@ -254,3 +254,64 @@ class RepositoryVersionTestCase(TestCase):
         self.assertListEqual(self.pks_of_next_qs(qs_generator), sorted_pks[2:])
         with self.assertRaises(StopIteration):
             self.pks_of_next_qs(qs_generator)
+
+
+class RepositoryTestCase(TestCase):
+
+    def setUp(self):
+        self.repository = Repository.objects.create()
+        self.repository.CONTENT_TYPES = [Content]
+        self.repository.save()
+
+    def test_next_version_with_one_version(self):
+        self.assertEqual(self.repository.next_version, 1, self.repository.next_version)
+        self.assertEqual(
+            self.repository.latest_version().number, 0, self.repository.latest_version().number
+        )
+        content = Content(pulp_type="core.content")
+        content.save()
+
+        with self.repository.new_version() as version:
+            version.add_content(Content.objects.filter(pk=content.pk))
+
+        self.assertEqual(self.repository.next_version, 2, self.repository.next_version)
+        self.assertEqual(
+            self.repository.latest_version().number, 1, self.repository.latest_version().number
+        )
+
+        version.delete()
+
+        self.assertEqual(self.repository.next_version, 2, self.repository.next_version)
+        self.assertEqual(
+            self.repository.latest_version().number, 0, self.repository.latest_version().number
+        )
+
+    def test_next_version_with_multiple_versions(self):
+        self.assertEqual(self.repository.next_version, 1, self.repository.next_version)
+        self.assertEqual(
+            self.repository.latest_version().number, 0, self.repository.latest_version().number
+        )
+        contents = []
+        for _ in range(0, 3):
+            contents.append(Content(pulp_type="core.content"))
+
+        Content.objects.bulk_create(contents)
+
+        versions = [self.repository.latest_version()]
+        for content in contents:
+            with self.repository.new_version() as version:
+                version.add_content(Content.objects.filter(pk=content.pk))
+                versions.append(version)
+
+        self.assertEqual(self.repository.next_version, 4, self.repository.next_version)
+        self.assertEqual(
+            self.repository.latest_version().number, 3, self.repository.latest_version().number
+        )
+
+        versions[2].delete()
+        versions[3].delete()
+
+        self.assertEqual(self.repository.next_version, 4, self.repository.next_version)
+        self.assertEqual(
+            self.repository.latest_version().number, 1, self.repository.latest_version().number
+        )

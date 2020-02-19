@@ -147,7 +147,7 @@ class RepositoryVersionContentFilter(Filter):
         # repository version +1 (the +1 is to the current version gets included when we
         # calculate range)
         version_tuples = itertools.zip_longest(version_added, version_removed,
-                                               fillvalue=repository.last_version + 1)
+                                               fillvalue=repository.next_version)
 
         # Get the ranges between paired version_added and version_removed to get all
         # the versions the content is present in.
