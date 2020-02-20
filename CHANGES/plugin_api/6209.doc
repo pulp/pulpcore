@@ -1,0 +1,2 @@
+Adds plugin writer docs on adding custom url routes and having the installer configure the reverse
+proxy to route them.
