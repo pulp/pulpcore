@@ -54,20 +54,22 @@ class RemoteSerializer(ModelSerializer):
     ca_cert = SecretCharField(
         help_text='A string containing the PEM encoded CA certificate used to validate the server '
                   'certificate presented by the remote server. All new line characters must be '
-                  'escaped. Returns SHA256 sum on GET.',
+                  'escaped. Returns SHA256 checksum of the certificate file on GET.',
         write_only=False,
         required=False,
         allow_null=True,
     )
     client_cert = SecretCharField(
         help_text='A string containing the PEM encoded client certificate used for authentication. '
-                  'All new line characters must be escaped. Returns SHA256 sum on GET.',
+                  'All new line characters must be escaped. Returns SHA256 checksum of the '
+                  'certificate file on GET.',
         write_only=False,
         required=False,
         allow_null=True,
     )
     client_key = SecretCharField(
-        help_text='A PEM encoded private key used for authentication. Returns SHA256 sum on GET.',
+        help_text='A PEM encoded private key used for authentication. Returns SHA256 checksum of '
+                  'the certificate file on GET.',
         write_only=False,
         required=False,
         allow_null=True,

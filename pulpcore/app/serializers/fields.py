@@ -284,6 +284,12 @@ class SecretCharField(serializers.CharField):
 
     This field accepts text as input and it returns a sha256 digest of the text stored.
     """
+    def __init__(self, **kwargs):
+        """
+        Initialize a class and do not trim leading and trailing whitespace characters by default.
+        """
+        kwargs['trim_whitespace'] = False
+        super().__init__(**kwargs)
 
     def to_representation(self, value):
         return hashlib.sha256(bytes(value, 'utf-8')).hexdigest()

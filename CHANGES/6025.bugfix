@@ -1,0 +1,2 @@
+Disabled the trimming of leading and trailing whitespace characters which led to a situation where
+a hash of a certificate computed in Pulp was not equal to a hash generated locally
