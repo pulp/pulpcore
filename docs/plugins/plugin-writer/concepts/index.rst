@@ -15,8 +15,7 @@ the ``pulpcore`` Django app. Additional information is given as inline comments 
 Plugin API Usage
 ----------------
 Plugin Applications interact with pulpcore with two high level interfaces, **subclassing** and
-adding **tasks**. Additionally, plugins that need to implement dynamic web APIs can
-optionally provide their own Django views. See our :ref:`live-apis` page for more information.
+adding **tasks**.
 
 
 .. _subclassing-general:
@@ -113,3 +112,109 @@ settings. You don't want to fully overwrite it, but instead add or overwrite onl
 usage.html#merging-existing-values>`_ which is for merging settings instead of overwriting them. For
 example, pulp_ansible makes use of this `here <https://github.com/pulp/pulp_ansible/blob/
 31dd6b77f0e2748644a4b76607be4a6cd2b6ce89/pulp_ansible/app/settings.py>`_.
+
+
+.. _custom-url-routes:
+
+Custom API URL Routes
+---------------------
+
+The `typical plugin viewsets <subclassing-viewsets>`_ are all suburls under ``/pulp/api/v3/``, but
+some content types require additional urls outside of this area. For example pulp_ansible provides
+the Galaxy API at ``/pulp_ansible/galaxy/``.
+
+Place a urls.py that defines a ``urlpatterns`` at the root of your Python package, and the pulpcore
+plugin loading code will append those urls to the url root. This allows your urls.py to be a typical
+Django file. For example pulp_ansible uses a `urls.py defined here <https://github.com/pulp/
+pulp_ansible/blob/master/pulp_ansible/app/urls.py>`_
+
+
+.. _custom-content-app-routes:
+
+Custom Content App Routes
+-------------------------
+
+The Content App may also require custom routes, for example `pulp_container <https://github.com/
+pulp/pulp_container/blob/master/pulp_container/app/content.py>`_ defines some. Read more about how
+to `customize the content app with custom routes <content-app-docs>`_.
+
+
+.. _configuring-reverse-proxy-custom-urls:
+
+Configuring Reverse Proxy with Custom URLs
+------------------------------------------
+
+When a plugin requires either Pulp API or Pulp Content App custom urls, the reverse proxy, i.e.
+either Nginx or Apache, need to receive extra configuration snippets to know which service to route
+the custom URLs to.
+
+A best practice is to document clearly the custom URL requirements your plugin needs. Although the
+installer can automatically install plugin snippets, other environments, e.g. k8s or docker or
+docker containers may still need to configure them manually. Having clear docs is a minimum.
+
+You can ship snippets of configuration and have the installer install them as follows. You'll need
+to create a python package named ``webserver_snippets`` directory inside your app, e.g.
+``pulp_ansible.app.webserver_snippets``. Like all Python packages it will have an ``__init__.py``.
+You'll also create an ``apache.conf`` and an ``nginx.conf``, and the installer will symlink to the
+correct one depending on which reverse proxy is installed.
+
+Create the Nginx and Apache snippets as follow::
+
+    $ tree webserver_snippets/
+    webserver_snippets/
+    ├── __init__.py
+    ├── apache.conf
+    └── nginx.conf
+
+    0 directories, 3 files
+
+The Nginx config provides definitions for the location of the Pulp Content App and the Pulp API as
+pulp-api and pulp-content respectively. To route the url ``/pulp_ansible/galaxy/`` to the Pulp API
+you could use this definition in a snippet like::
+
+    location /pulp_ansible/galaxy/ {
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header Host $http_host;
+        # we don't want nginx trying to do something clever with
+        # redirects, we set the Host: header above already.
+        proxy_redirect off;
+        proxy_pass http://pulp-api;
+    }
+
+The Apache config provides variables containing the location of the Pulp Content App and the Pulp
+API as pulp-api and pulp-content respectively. Below is an equivalent snippet to the one above, only
+for Apache::
+
+    ProxyPass /pulp_ansible/galaxy http://${pulp-api}/pulp_ansible/galaxy
+    ProxyPassReverse /pulp_ansible/galaxy http://${pulp-api}/pulp_ansible/galaxy
+
+
+.. _plugin_installation:
+
+Installation
+------------
+
+It's recommended to use the `Pulp 3 Ansible Installer <https://github.com/pulp/ansible-pulp
+#pulp-3-ansible-installer>`_ to install your plugin. Generally you can do this by configuring
+``pulp_install_plugins`` variable with your Python package's name. For example for ``pulp-file``::
+
+    pulp_install_plugins:
+      pulp-file: {}
+
+
+.. _custom-installation-tasks:
+
+Custom Installation Tasks
+-------------------------
+
+If your plugin requires any custom installation steps, we recommend using an
+Ansible Role prior to Pulp installation.
+
+The easiest way to add custom installation tasks is to follow the
+`Ansible Galaxy guide <https://galaxy.ansible.com/docs/contributing/creating_role.html>`_
+to create a new role with tasks that needs to be done and publish it on Ansible Galaxy.
+
+Documentation will need to be added to the plugin installation instructions. See the
+`RPM Plugin Documentation <https://pulp-rpm.readthedocs.io/en/latest/installation.html#
+install-with-ansible-pulp>`_ as an example.
