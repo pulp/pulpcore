@@ -24,5 +24,6 @@ from pulpcore.app.models import (  # noqa
     RepositoryContent,
     RepositoryVersion,
     RepositoryVersionDistribution,
+    SigningService,
     Task,
 )
