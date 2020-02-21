@@ -32,7 +32,10 @@ def remove_duplicates(repository_version):
             and possibly modified.
     """
     added_content = repository_version.added(base_version=repository_version.base_version)
-    existing_content = repository_version.previous().content
+    if repository_version.base_version:
+        existing_content = repository_version.base_version.content
+    else:
+        existing_content = repository_version.previous().content
     repository = repository_version.repository.cast()
     content_types = {type_obj.get_pulp_type(): type_obj for type_obj in repository.CONTENT_TYPES}
 

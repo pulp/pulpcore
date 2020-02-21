@@ -667,8 +667,6 @@ class RepositoryVersion(BaseModel):
             RepositoryVersion.DoesNotExist: if there is not a RepositoryVersion for the same
                 repository and with a lower "number".
         """
-        if self.base_version:
-            return self.base_version
         try:
             return self.repository.versions.exclude(complete=False).filter(
                 number__lt=self.number).order_by('-number')[0]
