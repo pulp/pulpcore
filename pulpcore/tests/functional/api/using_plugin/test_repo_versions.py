@@ -37,6 +37,8 @@ from pulpcore.tests.functional.api.using_plugin.constants import (
     FILE_MANY_FIXTURE_MANIFEST_URL,
     FILE_REMOTE_PATH,
     FILE_REPO_PATH,
+    FILE_URL,
+    FILE2_URL,
 )
 from pulpcore.tests.functional.api.using_plugin.utils import (
     create_file_publication,
@@ -1068,3 +1070,68 @@ class ClearAllUnitsRepoVersionTestCase(unittest.TestCase):
                 ctx.exception.response.json()['remove_content_units'][0].lower(),
                 ctx.exception.response,
             )
+
+
+class BaseVersionTestCase(unittest.TestCase):
+    """Associate different Content units with the same ``relative_path`` in one RepositoryVersion.
+
+    This test targets the following issues:
+
+    *  `Pulp #4028 <https://pulp.plan.io/issue/4028>`_
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        """Create class-wide variables."""
+        cls.cfg = config.get_config()
+        cls.client = api.Client(cls.cfg, api.json_handler)
+
+    @classmethod
+    def tearDownClass(cls):
+        """Clean created resources."""
+        delete_orphans(cls.cfg)
+
+    def test_add_content_with_base_version(self):
+        """Test modify repository with base_version
+        """
+        delete_orphans(self.cfg)
+
+        repo = self.client.post(FILE_REPO_PATH, gen_repo())
+        self.addCleanup(self.client.delete, repo["pulp_href"])
+
+        files = {"file": utils.http_get(FILE_URL)}
+        artifact = self.client.post(ARTIFACTS_PATH, files=files)
+
+        # create first content unit.
+        content_attrs = {"artifact": artifact["pulp_href"], "relative_path": utils.uuid4()}
+        content = self.client.using_handler(api.task_handler).post(FILE_CONTENT_PATH, content_attrs)
+        repo_version = modify_repo(self.cfg, repo, add_units=[content])
+        repo = self.client.get(repo['pulp_href'])
+
+        self.assertEqual(get_content(repo)[FILE_CONTENT_NAME][0], content)
+
+        files = {"file": utils.http_get(FILE2_URL)}
+        artifact = self.client.post(ARTIFACTS_PATH, files=files)
+
+        # create second content unit.
+        second_content_attrs = {
+            "artifact": artifact["pulp_href"],
+            "relative_path": content_attrs["relative_path"]
+        }
+        content2 = self.client.using_handler(api.task_handler).post(
+            FILE_CONTENT_PATH, second_content_attrs
+        )
+        modify_repo(self.cfg, repo, add_units=[content2])
+        repo = self.client.get(repo['pulp_href'])
+
+        self.assertEqual(get_content(repo)[FILE_CONTENT_NAME][0], content2)
+
+        modify_repo(
+            self.cfg,
+            repo,
+            base_version=repo_version["pulp_href"],
+            add_units=[content2]
+        )
+        repo = self.client.get(repo['pulp_href'])
+
+        self.assertEqual(get_content(repo)[FILE_CONTENT_NAME][0], content2)
