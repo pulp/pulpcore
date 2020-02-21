@@ -81,6 +81,7 @@ class PulpPluginAppConfig(apps.AppConfig):
         from pulpcore.app.serializers import ModelSerializer
 
         self.named_serializers = {}
+        self.model_serializers = {}
         if module_has_submodule(self.module, SERIALIZERS_MODULE_NAME):
             # import the serializers module and track any discovered serializers
             serializers_module_name = '{name}.{module}'.format(
@@ -93,6 +94,9 @@ class PulpPluginAppConfig(apps.AppConfig):
                     # gets registered in the named_serializers registry.
                     if obj is not ModelSerializer and issubclass(obj, ModelSerializer):
                         self.named_serializers[objname] = obj
+                        model = getattr(obj.Meta, "model", None)
+                        if model:
+                            self.model_serializers[obj.Meta.model] = obj
                 except TypeError:
                     # obj isn't a class, issubclass exploded but obj can be safely filtered out
                     continue

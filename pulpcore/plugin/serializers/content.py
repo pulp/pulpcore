@@ -50,6 +50,10 @@ class SingleArtifactContentUploadSerializer(SingleArtifactContentSerializer):
         """Validate that we have an Artifact or can create one."""
 
         data = super().validate(data)
+        validation = self.context.get("pulp_validation")
+
+        if validation == "StagesAPI":
+            return data
 
         if "file" in data:
             if "artifact" in data:

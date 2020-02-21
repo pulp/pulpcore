@@ -1,11 +1,65 @@
 from collections import defaultdict
+from itertools import chain
 
+from django.apps import apps
 from django.db import IntegrityError, transaction
 from django.db.models import Q
+from django.urls import reverse
 
+from pulpcore.app.util import get_view_name_for_model
 from pulpcore.plugin.models import ContentArtifact
 
 from .api import Stage
+
+
+def validate_content(d_content):
+    """Validate Content."""
+    data = {}
+    content = d_content.content
+    opts = content._meta
+    fields = chain(
+        opts.concrete_fields, opts.private_fields, opts.many_to_many, opts.related_objects
+    )
+    label = content._meta.app_label
+    model = content._meta.model
+    serializer = getattr(d_content.content, "serializer", None)
+    if not serializer:
+        serializer = apps.get_app_config(label).model_serializers[model]
+    serializer_fields = serializer.Meta.fields
+
+    for f in fields:
+        if f.name not in serializer_fields:
+            continue
+        if f in opts.many_to_many + opts.related_objects:
+            if content.pk is None:
+                data[f.name] = []
+            else:
+                data[f.name] = list(f.value_from_object(content).values_list('pk', flat=True))
+        else:
+            data[f.name] = f.value_from_object(content)
+
+    context = {"pulp_validation": "StagesAPI"}
+    if len(d_content.d_artifacts) == 1:
+        d_artifact = d_content.d_artifacts[0]
+        if not d_artifact.deferred_download:
+            if "artifact" in serializer_fields:
+                artifact = d_artifact.artifact
+                artifact_url = reverse(
+                    get_view_name_for_model(artifact, "detail"), args=[artifact.pk]
+                )
+                data["artifact"] = artifact_url
+
+            if "relative_path" in serializer_fields:
+                data["relative_path"] = d_artifact.relative_path
+            context = {}
+
+    serializer = serializer(data=data, context=context)
+    is_valid = serializer.is_valid()
+    if not is_valid:
+        total_errors = len(serializer.errors)
+        uniqueness_error = "must make a unique set" in str(serializer.errors)
+        if total_errors > 1 or not uniqueness_error:
+            serializer.is_valid(raise_exception=True)
 
 
 class QueryExistingContents(Stage):
@@ -96,6 +150,7 @@ class ContentSaver(Stage):
                     # Are we saving to the database for the first time?
                     content_already_saved = not d_content.content._state.adding
                     if not content_already_saved:
+                        validate_content(d_content)
                         try:
                             with transaction.atomic():
                                 d_content.content.save()

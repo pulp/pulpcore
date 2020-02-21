@@ -48,6 +48,11 @@ class SingleArtifactContentSerializer(BaseContentSerializer):
         if hasattr(self.Meta.model, 'relative_path') and "relative_path" in self.fields:
             self.fields["relative_path"].write_only = False
 
+        validation = self.context.get("pulp_validation")
+        if validation == "StagesAPI" and "relative_path" in self.fields:
+            self.fields["relative_path"].required = False
+            self.fields["artifact"].required = False
+
     @transaction.atomic
     def create(self, validated_data):
         """
