@@ -106,15 +106,8 @@ class DownloaderFactory:
 
         conn = aiohttp.TCPConnector(**tcp_conn_opts)
 
-        auth_options = {}
-        if self._remote.username and self._remote.password:
-            auth_options['auth'] = aiohttp.BasicAuth(
-                login=self._remote.username,
-                password=self._remote.password
-            )
-
         timeout = aiohttp.ClientTimeout(total=None, sock_connect=600, sock_read=600)
-        return aiohttp.ClientSession(connector=conn, timeout=timeout, **auth_options)
+        return aiohttp.ClientSession(connector=conn, timeout=timeout)
 
     def build(self, url, **kwargs):
         """
@@ -159,6 +152,12 @@ class DownloaderFactory:
         options = {'session': self._session}
         if self._remote.proxy_url:
             options['proxy'] = self._remote.proxy_url
+
+        if self._remote.username and self._remote.password:
+            options['auth'] = aiohttp.BasicAuth(
+                login=self._remote.username,
+                password=self._remote.password
+            )
 
         return download_class(url, **options, **kwargs)
 
