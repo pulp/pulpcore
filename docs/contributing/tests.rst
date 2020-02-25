@@ -52,7 +52,9 @@ Prerequisites for running tests
 If you want to run the functional tests, you need a running Pulp instance that is allowed to be
 mixed up by the tests (in other words, running the tests on a production instance is not
 recommended). For example, using the development vm (see :ref:`DevSetup`),
-this can be accomplished by `workon pulp; django-admin runserver 24817`.
+this can be accomplished by `workon pulp; pulpcore-manager runserver 24817`. The
+``pulpcore-manager`` command is ``manage.py`` configured with the
+``DJANGO_SETTINGS_MODULE="pulpcore.app.settings"``.
 
 Functional tests require a valid *pulp-smash*
 `config <https://pulp-smash.readthedocs.io/en/latest/configuration.html>`_ file.
@@ -63,12 +65,12 @@ Running tests
 
 In case pulp is installed in a virtual environment, activate it first (`workon pulp`).
 
-All tests of a plugin (or pulpcore itself) are run with `django-admin test <plugin_name>`.
+All tests of a plugin (or pulpcore itself) are run with `pulpcore-manager test <plugin_name>`.
 This involves setting up (and tearing down) the test database, however the functional tests are
 still performed against the configured pulp instance with its *production* database.
 
 To only perform the unittests, you can skip the prerequisites and call
-`django-admin test <plugin_name>.tests.unit`.
+`pulpcore-manager test <plugin_name>.tests.unit`.
 
 If you are only interested in functional tests, you can skip the creation of the test database by
 using `pytest <path_to_plugin>/<plugin_name>/tests/functional`.
@@ -81,7 +83,7 @@ using `pytest <path_to_plugin>/<plugin_name>/tests/functional`.
 .. note::
 
     You can be more specific on which tests to run by calling something like
-    `django-admin test pulp_file.tests.unit.test_models` or
+    `pulpcore-manager test pulp_file.tests.unit.test_models` or
     `py.test <path_to_plugin>/<plugin_name>/tests/functional/api/test_sync.py`.
 
 

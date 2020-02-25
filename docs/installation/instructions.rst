@@ -81,17 +81,24 @@ PyPI Installation
 
 9. Run Django Migrations::
 
-   $ django-admin migrate --noinput
-   $ django-admin reset-admin-password --password admin
+   $ pulpcore-manager migrate --noinput
+   $ pulpcore-manager reset-admin-password --password admin
+
+
+.. note::
+
+    The ``pulpcore-manager`` command is ``manage.py`` configured with the
+    ``DJANGO_SETTINGS_MODULE="pulpcore.app.settings"``. You can use it anywhere you would normally
+    use ``manage.py``.
 
 10. Collect Static Media for live docs and browsable API::
 
-    $ django-admin collectstatic --noinput
+    $ pulpcore-manager collectstatic --noinput
 
 11. Run Pulp::
 
     $ pulp-content  # The Pulp Content service (listening on port 24816)
-    $ django-admin runserver 24817  # The Pulp API service
+    $ pulpcore-manager runserver 24817  # The Pulp API service
 
 .. _database-install:
 
