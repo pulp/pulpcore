@@ -581,9 +581,7 @@ class RepositoryVersion(BaseModel):
             )
 
         repo_content = []
-        to_add = set(content.values_list('pk', flat=True))
-        for existing in batch_qs(self.content.order_by('pk').values_list('pk', flat=True)):
-            to_add = to_add - set(existing.all())
+        to_add = set(content.exclude(pk__in=self.content).values_list('pk', flat=True))
 
         # Normalize representation if content has already been removed in this version and
         # is re-added: Undo removal by setting version_removed to None.
