@@ -24,9 +24,10 @@ things:
 .. note::
 
    A simple, but limited way to run the REST API as a standalone service using the built-in Django
-   runserver.::
+   runserver. The ``pulpcore-manager`` command is ``manage.py`` configured with the
+   ``DJANGO_SETTINGS_MODULE="pulpcore.app.settings"``. Run the simple webserver with::
 
-      $ python django-admin runserver 24817
+      $ pulpcore-manager runserver 24817
 
 
 The REST API can be deployed with any any WSGI webserver like a normal Django application. See the
@@ -97,8 +98,9 @@ content is automatically served for you.
 In Production
 ^^^^^^^^^^^^^
 
-Collect all of the static content into place using the ``collectstatic`` command
-as follows::
+Collect all of the static content into place using the ``collectstatic`` command. The
+``pulpcore-manager`` command is ``manage.py`` configured with the
+``DJANGO_SETTINGS_MODULE="pulpcore.app.settings"``. Run ``collectstatic`` as follows::
 
-    $ django-admin collectstatic
+    $ pulpcore-manager collectstatic
 

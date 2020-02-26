@@ -55,11 +55,12 @@ can make and run database migrations with:
 
 .. code-block:: bash
 
-      django-admin makemigrations <plugin_app_label>
-      django-admin migrate
+      pulpcore-manager makemigrations <plugin_app_label>
+      pulpcore-manager migrate
 
-If you recognize this syntax, it is because django-admin is used with the same interace as ``django
-admin``, but has additional commands.
+If you recognize this syntax, it is because pulpcore-manager is ``manage.py`` configured with
+`` DJANGO_SETTINGS_MODULE="pulpcore.app.settings"``. You can use it anywhere you normally would use
+``manage.py`` or ``django-admin``.
 
 
 Uniqueness

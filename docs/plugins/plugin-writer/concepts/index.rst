@@ -4,8 +4,8 @@ Plugin Concepts
 ===============
 
 Like the Pulp Core itself, all Pulp Plugins are Django Applications, and could be created like any
-other Django app with ``django-admin startapp <your_plugin>``. However, instead of writing all of
-the boilerplate yourself, it is recommmended that you start your plugin by utilizing the `Plugin
+other Django app with ``pulpcore-manager startapp <your_plugin>``. However, instead of writing all
+of the boilerplate yourself, it is recommmended that you start your plugin by utilizing the `Plugin
 Template <https://github.com/pulp/plugin_template>`_.  This guide will assume that you have used
 the plugin_template, but if you are interested in the details of what it provides you, please see
 :ref:`plugin-django-application` for more information for how plugins are "discovered" and connected to

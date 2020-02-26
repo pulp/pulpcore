@@ -58,7 +58,8 @@ The example below demonstrates how a signing service can be created using ``gpg`
 
 2. Create a signing service consisting of an absolute path to the script and a meaningful
    name describing the script's purpose. It is possible to insert the signing service in
-   to a database by leveraging the utility ``django-admin shell_plus``:
+   to a database by using the ``pulpcore-manager shell_plus`` interactive Python shell. Here is an
+   example showing how to create one instance pointing to a script:
 
    .. code-block:: python
 

@@ -7,7 +7,7 @@ Plugin Django Application
 -------------------------
 
 Like the Pulp Core itself, all Pulp Plugins begin as Django Applications, started like any other
-with `django-admin startapp <your_plugin>`. However, instead of subclassing Django's
+with `pulpcore-manager startapp <your_plugin>`. However, instead of subclassing Django's
 `django.apps.AppConfig` as seen `in the Django documentation
 <https://docs.djangoproject.com/en/1.8/ref/applications/#for-application-authors>`_, Pulp Plugins
 identify themselves as plugins to the Pulp Core by subclassing
