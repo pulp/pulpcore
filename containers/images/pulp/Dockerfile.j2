@@ -32,8 +32,6 @@ RUN		dnf -y update && \
 		dnf -y install glibc-langpack-en && \
 		dnf -y install python3-createrepo_c && \
 		dnf -y install python3-libmodulemd && \
-		dnf -y install python3-libcomps && \
-		dnf -y install python3-solv && \
 		dnf clean all
 
 # Docs suggest RHEL8 uses the alternatives system for /usr/bin/python ,
@@ -42,6 +40,10 @@ RUN ln -s /usr/bin/python3 /usr/bin/python
 # If pip2 is installed, it will replace /usr/bin/pip .
 # /usr/local/bin will be before it in the PATH .
 RUN ln -s /usr/bin/pip3 /usr/local/bin/pip
+
+# Need to update pip inside of the container so that manylinux2014
+# packages are supported. This can be dropped with Fedora 32.
+RUN pip install --upgrade pip
 
 RUN mkdir -p /etc/pulp
 
