@@ -181,7 +181,7 @@ class HttpDownloader(BaseDownloader):
         Args:
             extra_data (dict): Extra data passed by the downloader.
         """
-        async with self.session.get(self.url, proxy=self.proxy) as response:
+        async with self.session.get(self.url, proxy=self.proxy, auth=self.auth) as response:
             response.raise_for_status()
             to_return = await self._handle_response(response)
             await response.release()

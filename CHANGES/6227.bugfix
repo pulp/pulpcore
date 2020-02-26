@@ -1,0 +1,1 @@
+Stopped HttpDownloader sending basic auth credentials to redirect location if domains don't match.
