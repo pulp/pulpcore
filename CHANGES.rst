@@ -13,6 +13,79 @@ Changelog
 
 .. towncrier release notes start
 
+3.2.0 (2020-02-26)
+==================
+REST API
+--------
+
+Features
+~~~~~~~~
+
+- Added a ``pulpcore-manager`` script that is ``django-admin`` only configured with
+  ``DJANGO_SETTINGS_MODULE="pulpcore.app.settings"``. This can be used for things like applying
+  database migrations or collecting static media.
+  `#5859 <https://pulp.plan.io/issues/5859>`_
+- Resolve DNS faster with aiodns
+  `#6190 <https://pulp.plan.io/issues/6190>`_
+
+
+Bugfixes
+~~~~~~~~
+
+- Considering base version when removing duplicates
+  `#5964 <https://pulp.plan.io/issues/5964>`_
+- Renames /var/lib/pulp/static/ to /var/lib/pulp/assets/.
+  `#5995 <https://pulp.plan.io/issues/5995>`_
+- Disabled the trimming of leading and trailing whitespace characters which led to a situation where
+  a hash of a certificate computed in Pulp was not equal to a hash generated locally
+  `#6025 <https://pulp.plan.io/issues/6025>`_
+- Repository.latest_version() considering deleted versions
+  `#6147 <https://pulp.plan.io/issues/6147>`_
+- Stopped HttpDownloader sending basic auth credentials to redirect location if domains don't match.
+  `#6227 <https://pulp.plan.io/issues/6227>`_
+
+
+Improved Documentation
+~~~~~~~~~~~~~~~~~~~~~~
+
+- Updated docs to suggest to use ``pulpcore-manager`` command instead of ``django-admin`` directly.
+  `#5859 <https://pulp.plan.io/issues/5859>`_
+
+
+Deprecations and Removals
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+- Renaming Repository.last_version to Repository.next_version
+  `#6147 <https://pulp.plan.io/issues/6147>`_
+
+
+Misc
+~~~~
+
+- `#6038 <https://pulp.plan.io/issues/6038>`_, `#6202 <https://pulp.plan.io/issues/6202>`_
+
+
+Plugin API
+----------
+
+Features
+~~~~~~~~
+
+- Adding not equal lookup to model field filters.
+  `#5868 <https://pulp.plan.io/issues/5868>`_
+
+
+Improved Documentation
+~~~~~~~~~~~~~~~~~~~~~~
+
+- Adds plugin writer docs on adding custom url routes and having the installer configure the reverse
+  proxy to route them.
+  `#6209 <https://pulp.plan.io/issues/6209>`_
+
+
+----
+
+
 3.1.1 (2020-02-17)
 ==================
 REST API

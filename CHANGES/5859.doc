@@ -1,1 +1,0 @@
-Updated docs to suggest to use ``pulpcore-manager`` command instead of ``django-admin`` directly.

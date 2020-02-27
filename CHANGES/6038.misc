@@ -1,1 +1,0 @@
-Require redis-py version >= 3.4.0 to avoid a task locking issue.
