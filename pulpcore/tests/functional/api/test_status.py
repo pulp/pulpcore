@@ -2,6 +2,7 @@
 """Test the status page."""
 import unittest
 
+from django.conf import settings
 from jsonschema import validate
 from pulp_smash import api, config
 from pulp_smash.pulp3.constants import STATUS_PATH
@@ -69,6 +70,9 @@ class StatusTestCase(unittest.TestCase):
     def setUp(self):
         """Make an API client."""
         self.client = api.Client(config.get_config(), api.json_handler)
+        self.status_response = STATUS
+        if settings.DEFAULT_FILE_STORAGE != "django.core.files.storage.FileSystemStorage":
+            self.status_response["properties"].pop("storage", None)
 
     def test_get_authenticated(self):
         """GET the status path with valid credentials.
@@ -98,9 +102,10 @@ class StatusTestCase(unittest.TestCase):
 
         Verify that several attributes and have the correct type or value.
         """
-        validate(status, STATUS)
+        validate(status, self.status_response)
         self.assertTrue(status['database_connection']['connected'])
         self.assertTrue(status['redis_connection']['connected'])
         self.assertNotEqual(status['online_workers'], [])
         self.assertNotEqual(status['versions'], [])
-        self.assertIsNotNone(status['storage'])
+        if settings.DEFAULT_FILE_STORAGE == "django.core.files.storage.FileSystemStorage":
+            self.assertIsNotNone(status['storage'])
