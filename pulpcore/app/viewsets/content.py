@@ -138,3 +138,4 @@ class SigningServiceViewSet(NamedModelViewSet,
     endpoint_name = 'signing-services'
     queryset = SigningService.objects.all()
     serializer_class = SigningServiceSerializer
+    filterset_fields = ['name']
