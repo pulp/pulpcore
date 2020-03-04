@@ -9,7 +9,7 @@ requirements = [
     'aiofiles',
     'backoff',
     'coreapi~=2.3.3',
-    'Django~=2.2.3',  # LTS version, switch only if we have a compelling reason to
+    'Django>=2.2.3,<3.1.0',  # LTS version, switch only if we have a compelling reason to
     'django-filter~=2.2.0',
     'djangorestframework~=3.10.2',
     'djangorestframework-queryfields~=1.0.0',
