@@ -1,6 +1,7 @@
 import os
 import tempfile
 
+from django.core.files.storage import default_storage as storage
 from django.test import TestCase
 from pulpcore.plugin.models import Artifact, Content, ContentArtifact
 
@@ -23,10 +24,11 @@ class ContentCRUDTestCase(TestCase):
     def test_create_and_read_content(self):
         content = Content.objects.create()
         content.save()
+        artifact_file = storage.open(self.artifact01.file.name)
         content_artifact = ContentArtifact.objects.create(
             artifact=self.artifact01,
             content=content,
-            relative_path=self.artifact01.file.path)
+            relative_path=artifact_file.name)
         content_artifact.save()
         self.assertTrue(
             Content.objects.filter(pk=content.pk).exists()

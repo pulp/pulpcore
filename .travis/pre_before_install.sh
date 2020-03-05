@@ -26,3 +26,12 @@ if [ -n "$PULP_CERTGUARD_PR_NUMBER" ]; then
 fi
 
 cd pulpcore
+
+if [[ "$TEST" == 's3' ]]; then
+  export MINIO_ACCESS_KEY=AKIAIT2Z5TDYPX3ARJBA
+  export MINIO_SECRET_KEY=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
+  docker run -d -p 0.0.0.0:9000:9000 -e MINIO_ACCESS_KEY=$MINIO_ACCESS_KEY -e MINIO_SECRET_KEY=$MINIO_SECRET_KEY minio/minio server /data
+  wget https://dl.min.io/client/mc/release/linux-amd64/mc
+  chmod +x mc
+  sudo mv mc /usr/local/bin
+fi

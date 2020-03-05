@@ -31,23 +31,21 @@ else
     sed "s/localhost/$(hostname)/g" ../pulpcore/.travis/pulp-smash-config.json > ~/.config/pulp_smash/settings.json
 fi
 
-
-# set up pulp-fixtures docker container
-if [[ "$TEST" == 'pulp' ]]; then
-  docker run -d -p 0.0.0.0:8000:80 quay.io/pulp/pulp-fixtures:latest
-fi
-cat ~/.config/pulp_smash/settings.json | \
-    jq "setpath([\"custom\",\"fixtures_origin\"]; \"http://$(hostname):8000/fixtures/\")" > temp.json
-cat temp.json > ~/.config/pulp_smash/settings.json
-
-
-if [[ "$TEST" == 'pulp' || "$TEST" == 'performance' ]]; then
+if [[ "$TEST" == 'pulp' || "$TEST" == 'performance' || "$TEST" == 's3' ]]; then
     # Many tests require pytest/mock, but users do not need them at runtime
     # (or to add plugins on top of pulpcore or pulp container images.)
     # So install it here, rather than in the image Dockerfile.
     $CMD_PREFIX pip3 install pytest mock
     # Many functional tests require these
     $CMD_PREFIX dnf install -yq lsof which dnf-plugins-core
+    
+    # set up pulp-fixtures docker container
+    docker run -d -p 0.0.0.0:8000:80 quay.io/pulp/pulp-fixtures:latest
+
+    cat ~/.config/pulp_smash/settings.json | \
+        jq "setpath([\"custom\",\"fixtures_origin\"]; \"http://$(hostname):8000/fixtures/\")" > temp.json
+    cat temp.json > ~/.config/pulp_smash/settings.json
+    
 fi
 
 if [[ -f $POST_BEFORE_SCRIPT ]]; then
