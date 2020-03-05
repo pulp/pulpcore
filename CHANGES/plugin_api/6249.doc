@@ -1,0 +1,2 @@
+Add plugin writer docs on adding MANIFEST.in entry to include ``webserver_snippets`` in the Python
+package.

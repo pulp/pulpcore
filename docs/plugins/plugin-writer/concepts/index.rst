@@ -136,7 +136,7 @@ Custom Content App Routes
 
 The Content App may also require custom routes, for example `pulp_container <https://github.com/
 pulp/pulp_container/blob/master/pulp_container/app/content.py>`_ defines some. Read more about how
-to `customize the content app with custom routes <content-app-docs>`_.
+to :ref:`customize the content app with custom routes <content-app-docs>`.
 
 
 .. _configuring-reverse-proxy-custom-urls:
@@ -152,25 +152,24 @@ A best practice is to document clearly the custom URL requirements your plugin n
 installer can automatically install plugin snippets, other environments, e.g. k8s or docker or
 docker containers may still need to configure them manually. Having clear docs is a minimum.
 
-You can ship snippets of configuration and have the installer install them as follows. You'll need
-to create a python package named ``webserver_snippets`` directory inside your app, e.g.
+You can ship webserver snippets as part of your Python package with three steps:
+
+1. Create a python package named ``webserver_snippets`` directory inside your app, e.g.
 ``pulp_ansible.app.webserver_snippets``. Like all Python packages it will have an ``__init__.py``.
-You'll also create an ``apache.conf`` and an ``nginx.conf``, and the installer will symlink to the
-correct one depending on which reverse proxy is installed.
 
-Create the Nginx and Apache snippets as follow::
+2. Create an ``nginx.conf`` and an ``apache.conf``, and the installer will symlink to the correct
+one depending on which reverse proxy is installed. Please create both as the installer supports
+both.
 
-    $ tree webserver_snippets/
-    webserver_snippets/
-    ├── __init__.py
-    ├── apache.conf
-    └── nginx.conf
+3. Create an entry in MANIFEST.in to have the packaged plugin include the ``apache.conf`` and
+``nginx.conf`` files.
 
-    0 directories, 3 files
+Here is an example in `pulp_ansible's webserver configs <https://github.com/pulp/pulp_ansible/tree/
+master/pulp_ansible/app/webserver_snippets>`_.
 
-The Nginx config provides definitions for the location of the Pulp Content App and the Pulp API as
-pulp-api and pulp-content respectively. To route the url ``/pulp_ansible/galaxy/`` to the Pulp API
-you could use this definition in a snippet like::
+For the ``nginx.conf`` you can use variables with the names ``pulp-api`` and ``pulp-content`` as the
+location for the backend services. For example, to route the url ``/pulp_ansible/galaxy/`` to the
+Pulp API you could have your ``nginx.conf`` contain::
 
     location /pulp_ansible/galaxy/ {
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -183,11 +182,17 @@ you could use this definition in a snippet like::
     }
 
 The Apache config provides variables containing the location of the Pulp Content App and the Pulp
-API as pulp-api and pulp-content respectively. Below is an equivalent snippet to the one above, only
-for Apache::
+API as ``pulp-api`` and ``pulp-content`` respectively. Below is an equivalent snippet to the one
+above, only for Apache::
 
     ProxyPass /pulp_ansible/galaxy http://${pulp-api}/pulp_ansible/galaxy
     ProxyPassReverse /pulp_ansible/galaxy http://${pulp-api}/pulp_ansible/galaxy
+
+
+For the MANIFEST.in entry, you'll likely want one like the example below which was taken from
+`pulp_ansible's MANIFEST.in <https://github.com/pulp/pulp_ansible/blob/master/MANIFEST.in>`_::
+
+   include pulp_ansible/app/webserver_snippets/*
 
 
 .. _plugin_installation:
