@@ -63,7 +63,7 @@ The example below demonstrates how a signing service can be created using ``gpg`
 
    .. code-block:: python
 
-       from pulpcore.app.models.content import SigningService
+       from pulpcore.app.models.content import AsciiArmoredDetachedSigningService
 
        AsciiArmoredDetachedSigningService.objects.create(
            name="sign-metadata",
