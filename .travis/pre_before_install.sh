@@ -12,16 +12,16 @@ cd ..
 git clone https://github.com/pulp/pulp_file.git --branch "$PULP_FILE_BRANCH"
 if [ -n "$PULP_FILE_PR_NUMBER" ]; then
   cd pulp_file
-  git fetch origin +refs/pull/$PULP_FILE_PR_NUMBER/merge
-  git checkout FETCH_HEAD
+  git fetch --depth=1 origin pull/$PULP_FILE_PR_NUMBER/head:$PULP_FILE_PR_NUMBER
+  git checkout $PULP_FILE_PR_NUMBER
   cd ..
 fi
 
-git clone https://github.com/pulp/pulp-certguard.git
+git clone --depth=1 https://github.com/pulp/pulp-certguard.git
 if [ -n "$PULP_CERTGUARD_PR_NUMBER" ]; then
   cd pulp-certguard
-  git fetch origin +refs/pull/$PULP_CERTGUARD_PR_NUMBER/merge
-  git checkout FETCH_HEAD
+  git fetch --depth=1 origin pull/$PULP_CERTGUARD_PR_NUMBER/head:$PULP_CERTGUARD_PR_NUMBER
+  git checkout $PULP_CERTGUARD_PR_NUMBER
   cd ..
 fi
 
