@@ -19,6 +19,7 @@ env:
     - TEST=pulp
     - TEST=docs
     - TEST=bindings
+    - TEST=s3
 services:
   - postgresql
   - redis-server

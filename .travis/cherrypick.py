@@ -91,9 +91,9 @@ for issue in issues:
         if ret.returncode != 0:
             print(f"Failed to cherry-pick commit {commit.sha}: {ret.stderr.decode('ascii')}")
             exit(1)
-        else:
-            cherrypicks.append(issue)
-            print(f"Cherry-picked commit {commit.sha}.")
+
+    cherrypicks.append(issue)
+    print(f"Cherry-picked commit {commit.sha}.")
 
 # check if we cherry picked anything
 if len(cherrypicks) == 0:

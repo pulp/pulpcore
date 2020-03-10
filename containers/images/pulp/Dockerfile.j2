@@ -47,7 +47,11 @@ RUN pip install --upgrade pip
 
 RUN mkdir -p /etc/pulp
 
-RUN pip install gunicorn
+RUN pip install gunicorn django-storages[boto3]
+{% if s3_test is defined %}
+# Hacking botocore (https://github.com/boto/botocore/pull/1990):
+RUN sed -i "s/hasattr(body, 'read')/getattr(body, '_size', None)/g" $(pip show botocore | grep -i location | awk '{ print $2 }')/botocore/handlers.py
+{% endif %}
 
 {% if ( item.value.pulpcore is defined and
         item.value.pulpcore.startswith('./') ) %}

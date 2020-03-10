@@ -1,14 +1,11 @@
 # This config represents the latest values used when running the plugin-template. Any settings that
 # were not present before running plugin-template have been added with their default values.
 
-# pulp_file is hardcoded in plugin_template when generating for pulpcore in some
-# places. In other places, plugin_template uses generic logic for it, so we
-# specify it here.
-# Also, .travis/pre_before_install.sh reads the pulp_file branch. At runtime,
-# not template generation time.
 additional_plugins:
-- { name: pulp_file, branch: master }
-- { name: pulp-certguard, branch: master }
+- branch: master
+  name: pulp_file
+- branch: master
+  name: pulp-certguard
 black: false
 check_commit_message: true
 cherry_pick_automation: true
@@ -31,11 +28,14 @@ plugin_name: pulpcore
 plugin_snake: pulpcore
 pulp_settings: null
 pulpcore_branch: null
+pulpcore_pip_version_specifier: null
 pydocstyle: true
 pypi_username: pulp
-stable_branch: "3.2"
+stable_branch: '3.2'
 test_bindings: true
 test_performance: false
+test_s3: true
+travis_addtl_services: []
 travis_notifications:
   irc:
     channels:
