@@ -379,8 +379,10 @@ class SigningService(BaseModel):
     A model used for producing signatures.
 
     Fields:
-        name (models.TextField): A unique name describing a script used for signing.
-        script (models.TextField): An absolute path to the script.
+        name (models.TextField):
+            A unique name describing the script (or executable) used for signing.
+        script (models.TextField):
+            An absolute path to the external signing script (or executable).
 
     """
     name = models.TextField(db_index=True, unique=True)
@@ -388,45 +390,88 @@ class SigningService(BaseModel):
 
     def sign(self, filename):
         """
-        Sign a passed file.
+        Signs the file provided via 'filename' by invoking an external script (or executable).
 
-        Subclasses are required to implement this method. The method shall invoke an external
-        signing script that creates a signature for the passed filename.
+        The external script is run as a subprocess. This is done in the expectation that the script
+        has been validated as an external siging service by the validate() method. This validation
+        is currently only done when creating the signing service object, but not at the time of use.
 
         Args:
             filename (str): A relative path to a file which is intended to be signed.
 
+        Raises:
+            RuntimeError: If the return code of the script is not equal to 0.
+
+        Returns:
+            A dictionary as validated by the validate() method.
         """
-        raise NotImplementedError('Subclasses must implement their own method for signing.')
+        completed_process = subprocess.run(
+            [self.script, filename],
+            env={},
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+
+        if completed_process.returncode != 0:
+            raise RuntimeError(str(completed_process.stderr))
+
+        try:
+            return_value = json.loads(completed_process.stdout)
+        except json.JSONDecodeError:
+            raise RuntimeError("The signing service script did not return valid JSON!")
+
+        return return_value
+
+    def validate(self):
+        """
+        Ensure that the external signing script produces the desired beahviour.
+
+        With desired behaviour we mean the behaviour as validated by this method. Subclasses are
+        required to implement this method. Works by calling the sign() method on some test data, and
+        verifying that any desired signatures/signature files are returned and are valid. Must also
+        enforce the desired return value format of the sign() method.
+
+        Raises:
+            RuntimeError: If the script failed to produce the desired outcome for the test data.
+        """
+        raise NotImplementedError('Subclasses must implement a validate() method.')
+
+    def save(self, *args, **kwargs):
+        """
+        Save a signing service to the database (unless it fails to validate).
+        """
+        self.validate()
+        super().save(*args, **kwargs)
 
 
 class AsciiArmoredDetachedSigningService(SigningService):
     """
-    A model used for creating detached ascii armored signatures.
+    A model used for creating detached ASCII armored signatures.
     """
 
-    def save(self, *args, **kwargs):
+    def validate(self):
         """
-        Validate and save a signing service for an ASCII armored signature.
+        Validate a signing service for a detached ASCII armored signature.
 
-        Before saving the signing service to the database, it is required to check if the service's
-        output corresponds to a proposed output format and creates valid signatures.
+        The validation seeks to ensure that the sign() method returns a dict as follows:
 
-        In this case, Pulp creates a file with random content, signs the file, and checks if the
-        signature can be verified by a provided public key. If the signature was verified without
-        errors, the signing service object is saved to the database.
+        {"file": "signed_file.xml", "signature": "signed_file.asc", "key": "public.key"}
+
+        Will create a file with some content, sign the file, and checks if the
+        signature can be verified by the public key provided.
+
+        Raises:
+            RuntimeError: If the validation has failed.
         """
         gpg = gnupg.GPG()
         with tempfile.TemporaryDirectory() as temp_directory_name:
             with tempfile.NamedTemporaryFile(dir=temp_directory_name) as temp_file:
-                temp_file.write(b"random-data")
-                try:
-                    data = self.sign(temp_file.name)
-                except RuntimeError:
-                    raise
+                temp_file.write(b"arbitrary data")
+                temp_file.flush()
+                signed = self.sign(temp_file.name)
 
-                with open(data["signature"], "rb") as fp:
-                    with open(data["key"], "rb") as key:
+                with open(signed["signature"], "rb") as fp:
+                    with open(signed["key"], "rb") as key:
                         import_result = gpg.import_keys(key.read())
                         verified = gpg.verify_file(fp, temp_file.name)
                         if verified.trust_level is None \
@@ -439,32 +484,3 @@ class AsciiArmoredDetachedSigningService(SigningService):
                             raise RuntimeError(
                                 "Fingerprints of a provided public key and a verified public key "
                                 "are not equal. The signing script is probably not valid.")
-                        else:
-                            super().save(*args, **kwargs)
-
-    def sign(self, filename):
-        """
-        Create an ASCII armored signature for the passed filename.
-
-        Args:
-            filename (str): A relative path to a file which is intended to be signed.
-
-        Raises:
-            RuntimeError: If a return code of the script is not equal to 0, indicating a failure.
-
-        Returns:
-            A dictionary in the following format::
-
-                {"file": "signed_file.xml", "signature": "signed_file.asc", "key": "public.key"}
-
-        """
-        completed_process = subprocess.run(
-            [self.script, filename],
-            env={},
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-        )
-        if completed_process.returncode != 0:
-            raise RuntimeError(str(completed_process.stderr))
-
-        return json.loads(completed_process.stdout)
