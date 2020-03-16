@@ -19,7 +19,9 @@ from .custom_filters import (  # noqa
     RepositoryVersionFilter,
 )
 from .exporter import (  # noqa
-    FileSystemExporterViewSet
+    ExportViewSet,
+    ExporterViewSet,
+    PulpExporterViewSet,
 )
 from .publication import (  # noqa
     BaseDistributionViewSet,

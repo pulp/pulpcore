@@ -20,9 +20,11 @@ from .content import (  # noqa
     SingleArtifactContentSerializer,
     SigningServiceSerializer,
 )
-from .exporter import FileSystemExporterSerializer, PublicationExportSerializer  # noqa
 from .fields import (  # noqa
     BaseURLField,
+    ExportsIdentityFromExporterField,
+    ExportRelatedField,
+    ExportIdentityField,
     LatestVersionField,
     SecretCharField,
     SingleContentArtifactField,
@@ -30,6 +32,13 @@ from .fields import (  # noqa
     RepositoryVersionRelatedField,
     RepositoryVersionIdentityField,
     relative_path_validator,
+)
+from .exporter import (  # noqa
+    ExportSerializer,
+    ExporterSerializer,
+    FileSystemExporterSerializer,
+    PublicationExportSerializer,
+    PulpExporterSerializer,
 )
 from .progress import ProgressReportSerializer  # noqa
 from .publication import (  # noqa

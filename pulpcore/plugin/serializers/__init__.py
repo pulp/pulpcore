@@ -5,6 +5,7 @@ from pulpcore.app.serializers import (  # noqa
     BaseDistributionSerializer,
     ContentChecksumSerializer,
     ContentGuardSerializer,
+    ExporterSerializer,
     FileSystemExporterSerializer,
     NoArtifactContentSerializer,
     SingleArtifactContentSerializer,

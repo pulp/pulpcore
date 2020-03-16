@@ -278,6 +278,48 @@ class BaseURLField(serializers.CharField):
             ))
 
 
+class ExportsIdentityFromExporterField(DetailIdentityField):
+    view_name = 'exporters-detail'
+
+    def __init__(self, view_name=None, **kwargs):
+        assert view_name is None, 'The `view_name` must not be set.'
+        super().__init__(view_name=self.view_name, **kwargs)
+
+    def get_url(self, obj, view_name, request, *args, **kwargs):
+        return super().get_url(obj, self.view_name, request, *args, **kwargs) + "exports/"
+
+
+class ExportFieldGetURLMixin:
+    view_name = 'exports-detail'
+
+    def __init__(self, view_name=None, **kwargs):
+        assert view_name is None, 'The `view_name` must not be set.'
+        super().__init__(view_name=self.view_name, **kwargs)
+
+    def get_url(self, obj, view_name, request, *args, **kwargs):
+        exports_field = ExportsIdentityFromExporterField()
+        exporter_url = exports_field.get_url(obj.exporter, None, request, *args, **kwargs)
+        return f"{exporter_url}{obj.pk}/"
+
+    def use_pk_only_optimization(self):
+        return False
+
+
+class ExportIdentityField(ExportFieldGetURLMixin, IdentityField):
+    pass
+
+
+class ExportRelatedField(ExportFieldGetURLMixin, RelatedField):
+    queryset = models.Export.objects.all()
+
+    def get_object(self, view_name, view_args, view_kwargs):
+        lookup_kwargs = {
+           'exporter__pk': view_kwargs['exporter_pk'],
+           'pk': view_kwargs['pk']
+        }
+        return self.get_queryset().get(**lookup_kwargs)
+
+
 class SecretCharField(serializers.CharField):
     """
     Serializer field for secrets.
