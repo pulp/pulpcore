@@ -115,7 +115,7 @@ print(f"Created pull request {pr.html_url}.")
 for cp in cherrypicks:
     labels = cp.labels
     labels.remove(label)
-    cp.edit(labels=[str(l) for l in labels])
+    cp.edit(labels=[l.name for l in labels])
     print(f"Removed label '{PR_LABEL}' from PR #{cp.number}.")
 
 print("Cherry picking complete.")
