@@ -323,13 +323,9 @@ class AddRemoveRepoVersionTestCase(unittest.TestCase):
         )
 
     def test_delete_first_version(self):
-        """Delete the first repository version."""
-        delete_version(self.repo, self.repo_version_hrefs[0])
+        """Attempt to delete the first repository version."""
         with self.assertRaises(HTTPError):
-            get_content(self.repo, self.repo_version_hrefs[0])
-        for repo_version_href in self.repo_version_hrefs[1:]:
-            artifact_paths = get_artifact_paths(self.repo, repo_version_href)
-            self.assertIn(self.content[0]['artifact'], artifact_paths)
+            delete_version(self.repo, self.repo_version_hrefs[0])
 
     def test_delete_last_version(self):
         """Delete the last repository version.
@@ -929,7 +925,7 @@ class DeleteRepoVersionResourcesTestCase(unittest.TestCase):
     def test_delete_publication(self):
         """Publication is removed once the repository version is removed."""
         repo = self.create_sync_repo(2)
-        version_href = choice(self.client.get(repo['versions_href']))['pulp_href']
+        version_href = self.client.get(repo['versions_href'])[0]['pulp_href']
         publication = create_file_publication(self.cfg, repo, version_href)
 
         # delete repo version used to create publication
@@ -948,7 +944,7 @@ class DeleteRepoVersionResourcesTestCase(unittest.TestCase):
     def test_delete_distribution(self):
         """Distribution is not removed once repository version is removed."""
         repo = self.create_sync_repo(2)
-        version_href = choice(self.client.get(repo['versions_href']))['pulp_href']
+        version_href = self.client.get(repo['versions_href'])[0]['pulp_href']
         publication = create_file_publication(self.cfg, repo, version_href)
 
         distribution = self.client.post(
