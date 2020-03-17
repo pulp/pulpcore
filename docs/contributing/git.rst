@@ -140,3 +140,10 @@ of them with the exact same contents and Towncrier will deduplicate them.
 The contents of this file are reStructuredText formatted text that will be used as the content of
 the news file entry. You do not need to reference the issue or PR numbers here as towncrier will
 automatically add a reference to all of the affected issues when rendering the news file.
+
+The changelog message should use past simple tense. When possible, the message should describe the
+change being made as opposed to the problem or user story. Here are some examples:
+
+- Added API that allows users to export a repository version to disk.
+- Fixed bug where whitespace was being trimmed from uploaded files.
+- Added documentation for new pulpcore-manager command.
