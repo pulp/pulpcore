@@ -20,9 +20,9 @@ export FUNC_TEST_SCRIPT=$TRAVIS_BUILD_DIR/.travis/func_test_script.sh
 export DJANGO_SETTINGS_MODULE=pulpcore.app.settings
 
 if [ "$TEST" = 'docs' ]; then
-  
+
     export PULP_CONTENT_ORIGIN=http://$(hostname):24816
-  
+
 
   cd docs
   make html
@@ -59,7 +59,7 @@ if [ "$TEST" = 'bindings' ]; then
 
   rm -rf ./pulpcore-client
 
-  ./generate.sh pulpcore ruby
+  ./generate.sh pulpcore ruby 0
   cd pulpcore-client
   gem build pulpcore_client
   gem install --both ./pulpcore_client-0.gem
@@ -67,7 +67,7 @@ if [ "$TEST" = 'bindings' ]; then
 
   rm -rf ./pulp_file-client
 
-  ./generate.sh pulp_file ruby
+  ./generate.sh pulp_file ruby 0
   cd pulp_file-client
   gem build pulp_file_client
   gem install --both ./pulp_file_client-0.gem
