@@ -51,3 +51,12 @@ developers<community>` to get speedy review.
    contribution with respect and professionalism. In return, we hope you will accept our review
    process as an opportunity for everyone to learn something, and to make Pulp the best project it
    can be. If you are uncertain about comments or instructions, please let us know!
+
+
+Reviewing a Pull Request
+------------------------
+
+When reviewing a PR, it is important to consider where the change ought to land. If you are
+reviewing a bug fix that might be released as part of a z-stream release, you should add the "Needs
+Cherry Pick" label to the PR. Otherwise the label should be removeed. PR authors can also add or
+remove this label if they have write access.
