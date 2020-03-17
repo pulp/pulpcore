@@ -2,7 +2,7 @@ from drf_yasg.utils import swagger_auto_schema
 from rest_framework.decorators import action
 
 from pulpcore.app import tasks
-from pulpcore.app.models import Content, Repository, RepositoryVersion
+from pulpcore.app.models import Content, RepositoryVersion
 from pulpcore.app.response import OperationPostponedResponse
 from pulpcore.app.serializers import (
     AsyncOperationResponseSerializer,
@@ -28,7 +28,7 @@ class ModifyRepositoryActionMixin:
         """
         add_content_units = []
         remove_content_units = []
-        repository = Repository.objects.get(pk=pk)
+        repository = self.get_object()
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
