@@ -45,12 +45,13 @@ class QueryExistingContents(Stage):
                     content_q_by_type[model_type] = content_q_by_type[model_type] | unit_q
 
             for model_type in content_q_by_type.keys():
+                type_natural_key_fields = model_type.natural_key_fields()
                 for result in model_type.objects.filter(content_q_by_type[model_type]).iterator():
                     for d_content in batch:
                         if type(d_content.content) is not model_type:
                             continue
                         not_same_unit = False
-                        for field in result.natural_key_fields():
+                        for field in type_natural_key_fields:
                             in_memory_digest_value = getattr(d_content.content, field)
                             if in_memory_digest_value != getattr(result, field):
                                 not_same_unit = True
