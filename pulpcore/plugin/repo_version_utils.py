@@ -4,7 +4,7 @@ import logging
 from django.db.models import Q
 
 from pulpcore.app.files import validate_file_paths
-from pulpcore.app.models import ContentArtifact
+from pulpcore.app.models import Content, ContentArtifact
 from pulpcore.app.util import batch_qs
 
 
@@ -35,7 +35,10 @@ def remove_duplicates(repository_version):
     if repository_version.base_version:
         existing_content = repository_version.base_version.content
     else:
-        existing_content = repository_version.previous().content
+        try:
+            existing_content = repository_version.previous().content
+        except repository_version.DoesNotExist:
+            existing_content = Content.objects.none()
     repository = repository_version.repository.cast()
     content_types = {type_obj.get_pulp_type(): type_obj for type_obj in repository.CONTENT_TYPES}
 
