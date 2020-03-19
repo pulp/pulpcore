@@ -204,6 +204,10 @@ class RepositoryVersionViewSet(NamedModelViewSet,
         Queues a task to handle deletion of a RepositoryVersion
         """
         version = self.get_object()
+
+        if version.number == 0:
+            raise serializers.ValidationError(detail=_('Cannot delete repository version 0.'))
+
         async_result = enqueue_with_reservation(
             tasks.repository.delete_version,
             [version.repository], kwargs={'pk': version.pk}

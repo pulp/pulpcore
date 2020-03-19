@@ -1,0 +1,2 @@
+Fixed bug where user could delete repository version 0 but not recreate it by preventing users from
+deleting repo version 0.
