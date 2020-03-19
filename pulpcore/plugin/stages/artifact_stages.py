@@ -42,7 +42,7 @@ class QueryExistingArtifacts(Stage):
             The coroutine for this stage.
         """
         async for batch in self.batches():
-            all_artifacts_q = Q(pulp_created=None)
+            all_artifacts_q = Q(pk__in=[])
             for d_content in batch:
                 for d_artifact in d_content.d_artifacts:
                     one_artifact_q = d_artifact.artifact.q()

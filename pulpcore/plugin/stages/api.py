@@ -78,7 +78,7 @@ class Stage:
             content = await self._in_q.get()
             if content is None:
                 break
-            log.debug(_('%(name)s - next: %(content)s.'), {'name': self, 'content': content})
+            log.debug('%(name)s - next: %(content)s.', {'name': self, 'content': content})
             yield content
 
     async def batches(self, minsize=500):

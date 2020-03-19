@@ -37,7 +37,7 @@ class QueryExistingContents(Stage):
             The coroutine for this stage.
         """
         async for batch in self.batches():
-            content_q_by_type = defaultdict(lambda: Q(pulp_created=None))
+            content_q_by_type = defaultdict(lambda: Q(pk__in=[]))
             for d_content in batch:
                 if d_content.content._state.adding:
                     model_type = type(d_content.content)
