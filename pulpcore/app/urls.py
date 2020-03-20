@@ -142,7 +142,9 @@ urlpatterns.append(
     )
 )
 
-schema_view = get_schema_view(title="Pulp API", permission_classes=[permissions.AllowAny],)
+schema_view = get_schema_view(
+    title="Pulp API", version="v3", permission_classes=[permissions.AllowAny],
+)
 
 urlpatterns.append(url(r"^{api_root}$".format(api_root=API_ROOT), schema_view))
 

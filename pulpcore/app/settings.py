@@ -134,6 +134,7 @@ REST_FRAMEWORK = {
     ),
     "UPLOADED_FILES_USE_URL": False,
     "DEFAULT_VERSIONING_CLASS": "rest_framework.versioning.URLPathVersioning",
+    "DEFAULT_SCHEMA_CLASS": "pulpcore.app.viewsets.base.DefaultSchema",
 }
 
 # Password validation
