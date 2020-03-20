@@ -7,7 +7,7 @@ from drf_yasg import openapi
 from drf_yasg.generators import OpenAPISchemaGenerator
 from drf_yasg.inspectors import SwaggerAutoSchema
 from drf_yasg.openapi import Parameter
-from drf_yasg.utils import filter_none, force_real_str
+from drf_yasg.utils import filter_none, force_real_str, no_body
 
 from pulpcore.app.models import RepositoryVersion
 
@@ -436,13 +436,28 @@ class PulpAutoSchema(SwaggerAutoSchema):
 
         return tags
 
-    def serializer_to_schema(self, serializer):
+    def get_default_response_serializer(self):
         """
-        Convert a serializer to an OpenAPI Schema.
-        Patch: https://github.com/axnsan12/drf-yasg/issues/70#issuecomment-485050813
+        Return the default response serializer for this endpoint.
+
+        Reference: https://github.com/axnsan12/drf-yasg/issues/70#issuecomment-485050813
+        """
+        body_override = self._get_request_body_override()
+        if body_override and body_override is not no_body:
+            return body_override
+
+        return super().get_view_serializer()
+
+    def get_view_serializer(self):
+        """
+        Return the appropriate serializer.
+
+        Reference: https://github.com/axnsan12/drf-yasg/issues/70#issuecomment-485050813
         """
 
-        if self.method.lower() == "get":
+        serializer = super().get_view_serializer()
+
+        if serializer and self.method.lower() == "get":
             new_fields = OrderedDict()
             for field_name, field in serializer.fields.items():
                 if not field.write_only:  # Removing write_only fields
@@ -450,4 +465,4 @@ class PulpAutoSchema(SwaggerAutoSchema):
 
             serializer.fields = new_fields
 
-        return super().serializer_to_schema(serializer)
+        return serializer
