@@ -7,7 +7,7 @@ from drf_yasg import openapi
 from drf_yasg.generators import OpenAPISchemaGenerator
 from drf_yasg.inspectors import SwaggerAutoSchema
 from drf_yasg.openapi import Parameter
-from drf_yasg.utils import filter_none, force_real_str
+from drf_yasg.utils import filter_none, force_real_str, get_serializer_ref_name, no_body
 
 from pulpcore.app.models import RepositoryVersion
 
@@ -439,18 +439,96 @@ class PulpAutoSchema(SwaggerAutoSchema):
 
         return tags
 
-    def serializer_to_schema(self, serializer):
+    def get_default_response_serializer(self):
         """
-        Convert a serializer to an OpenAPI Schema.
-        Patch: https://github.com/axnsan12/drf-yasg/issues/70#issuecomment-485050813
+        Return the default response serializer for this endpoint.
+
+        Reference: https://github.com/axnsan12/drf-yasg/issues/70#issuecomment-485050813
+        """
+        body_override = self._get_request_body_override()
+        if body_override and body_override is not no_body:
+            return body_override
+
+        serializer = super().get_view_serializer()
+
+        if not serializer:
+            return
+
+        read_fields = OrderedDict()
+        for field_name, field in serializer.fields.items():
+            if not field.write_only:  # Removing write_only fields
+                read_fields[field_name] = field
+
+        serializer.fields = read_fields
+        return serializer
+
+    def get_view_serializer(self):
+        """
+        Return the appropriate serializer.
+
+        Reference: https://github.com/axnsan12/drf-yasg/issues/70#issuecomment-485050813
         """
 
-        if self.method.lower() == "get":
-            new_fields = OrderedDict()
-            for field_name, field in serializer.fields.items():
-                if not field.write_only:  # Removing write_only fields
-                    new_fields[field_name] = field
+        serializer = super().get_view_serializer()
 
-            serializer.fields = new_fields
+        if not serializer:
+            return
 
-        return super().serializer_to_schema(serializer)
+        read_fields = OrderedDict()
+        write_fields = OrderedDict()
+        for field_name, field in serializer.fields.items():
+            if not field.write_only:  # Removing write_only fields
+                read_fields[field_name] = field
+            if not field.read_only:  # Removing read_only fields
+                write_fields[field_name] = field
+
+        if len(read_fields) == len(write_fields):
+            return serializer
+
+        contain_write_fields = len(serializer.fields) > len(read_fields)
+        if self.method.lower() == "get" or not contain_write_fields:
+            serializer.fields = read_fields
+            return serializer
+
+        return self._convert_serializer(serializer, WriteOnly)
+
+    def _convert_serializer(self, serializer, new_class):
+        """
+        Convert a serializer into Read/Write only serializer.
+
+        Reference: https://github.com/axnsan12/drf-yasg/issues/70#issuecomment-485050813
+        """
+        serializer_meta = getattr(serializer, "Meta", BlankMeta)
+        name = f"Pulp{get_serializer_ref_name(serializer)}"
+
+        class CustomSerializer(new_class, serializer.__class__):
+            class Meta(serializer_meta):
+                ref_name = name
+
+        new_serializer = CustomSerializer(data=serializer.data)
+        return new_serializer
+
+
+class WriteOnly:
+    """
+    Mixin for removing read_only fields from serializers.
+
+    Reference: https://github.com/axnsan12/drf-yasg/issues/70#issuecomment-485050813
+    """
+
+    def get_fields(self):
+        new_fields = OrderedDict()
+        for file_name, field in super().get_fields().items():
+            if not field.read_only:
+                new_fields[file_name] = field
+        return new_fields
+
+
+class BlankMeta:
+    """
+    Creates a blank Meta for serializers
+
+    Reference: https://github.com/axnsan12/drf-yasg/issues/70#issuecomment-485050813
+    """
+
+    pass
