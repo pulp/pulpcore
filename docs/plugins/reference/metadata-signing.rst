@@ -9,14 +9,43 @@ Metadata Signing
     releases.
 
 Plugin writers wishing to enable users to sign metadata need to add a new field ``metadata_signing_service``
-to their implementation of a repository. This field should be exposed to users who consume content
-via REST API. The users may afterwards specify which kind of a signing service will be used to sign the
+to their implementation of a repository and/or publication. This field should be exposed to users who consume
+content via REST API. The users may afterwards specify which signing service will be used to sign the
 metadata when creating a publication.
 
-In order to sign metadata, plugin writers are required to call the method ``sign()`` of the subclasses
-inheriting from the model ``SigningService``. This method invokes a signing script which is provided by
-an administrator and creates a detached ascii-armored signature if called via the class
-``AsciiArmoredDetachedSigningService``.
+Every signing service will always be an instance of a subclass of the ``SigningService`` model. Plugin
+writers may either use the existing ``AsciiArmoredDetachedSigningService``, or use that as a reference for
+writing their own signing service model.
+
+The ``SigningService`` base class already provides the fully implemented ``sign()`` method, the signature of
+the ``validate()`` method (which must be implemented by each subclass), and the ``save()`` method (which
+calls the ``validate()`` method, but is otherwise fully implemented).
+
+In order to sign metadata, plugin writers are required to call the ``sign()`` method of the signing service
+being used. This method invokes the signing script (or other executable) which is provided by the
+administrator who instantiates a concrete signing service. Instantiating/creating a concrete signing service
+will ultimately call the ``save()`` method, which will in turn call ``validate()``. As a result, it is up to
+the ``validate()`` method to ensure the signing service script provided by the administrator actually provides
+any signatures, signature files, and return values, as required by the individual ``SigningService`` subclass.
+
+This is why implementing a signing service model other than ``AsciiArmoredDetachedSigningService`` simply
+requires inheriting from ``SiginingService`` and then implementing ``validate()``.
+
+.. note::
+    The existing ``AsciiArmoredDetachedSigningService`` requires a signing script that creates a detached
+    ascii-armored signature file, and prints valid JSON in the following format to stdout:
+
+        {"file": "filename", "signature": "filename.asc", "key": "public.key"}
+
+    Here "filename" is a path to the original file that was signed (passed to the signing script by the
+    ``sign()`` method), "filename.asc" is a path to the signature file created by the script, and "public.key"
+    is a path to the signature file containing the public key used by the script.
+
+    This json is converted to a python dict and returned by the ``sign()`` method. If an error occurs, a
+    runtime error is raised instead. All of this is enforced by the ``validate()`` method at the time of
+    instantiation.
+
+    For more information see the corresponding :ref:`workflow documentation <configuring-signing>`.
 
 The following procedure may be taken into account for the plugin writers:
 
@@ -76,13 +105,3 @@ The following procedure may be taken into account for the plugin writers:
                except RuntimeError:
                    raise
                add_to_repository(metadata, signature)
-
-.. note::
-
-    Plugin authors should be aware of the output format returned by a signing service and consider
-    further actions according to that. Currently, only one output format is supported::
-
-        {"file": "filename", "signature": "filename.asc", "key": "public.key"}
-
-    The method ``sign()`` of the model ``AsciiArmoredDetachedSigningService`` returns a dictionary object
-    in this format when no errors occur during the signing. Otherwise, a runtime error is raised.
