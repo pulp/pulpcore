@@ -15,6 +15,15 @@ Most plugins will implement:
  * serializer(s) for plugin specific remote(s), should be subclassed from RemoteSerializer
  * serializer(s) for plugin specific publisher(s), should be subclassed from PublisherSerializer
 
+Secret Fields
+-------------
+If you have fields that are unsafe to be re-shown to the user. Please refer to SecretCharField:
+
+pulp.app.serializers.fields.SecretCharField
+---------------------------
+
+.. autoclass:: pulpcore.app.serializers.fields.SecretCharField
+
 Adding Fields
 -------------
 
