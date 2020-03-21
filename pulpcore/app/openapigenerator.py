@@ -45,6 +45,49 @@ class PulpOpenAPISchemaGenerator(OpenAPISchemaGenerator):
         self.tags = []
         super().__init__(info, version=version, url=url, patterns=patterns, urlconf=urlconf)
 
+    def convert_endpoint_path_params(self, endpoints):
+        """Replaces all 'pulp_id' path parameters with a specific name for the primary key.
+
+        This method is used to ensure that the primary key name is consistent between nested
+        endpoints. get_endpoints() returns paths that use 'pulp_id' for the top level path and a
+        specific name for the nested paths. e.g.: repository_pk.
+
+        This ensures that when the endpoints are sorted, the parent endpoint appears before the
+        endpoints nested under it.
+
+        Args:
+            endpoints (dict): endpoints as returned by get_endpoints
+
+        Returns:
+            dict: The enpoints dictionary with modified primary key path parameter names.
+        """
+        modified_endpoints = {}
+        for path, (view_cls, methods) in sorted(endpoints.items()):
+            if '}' in path:
+                param_name = None
+                for method, view in methods:
+                    if not hasattr(view, 'queryset') or view.queryset is None:
+                        if hasattr(view, 'model'):
+                            resource_model = view.model
+                        else:
+                            continue
+                    else:
+                        resource_model = view.queryset.model
+                    if resource_model:
+                        repository_type = None
+                        if issubclass(resource_model, RepositoryVersion):
+                            repository_type = view_cls.parent_viewset.endpoint_name
+                        param_name = self.get_pk_path_param_name_from_model(resource_model)
+                        break
+                if param_name:
+                    if repository_type:
+                        path = path.replace('repository_pk',
+                                            '{}_repository_pk'.format(repository_type))
+                    else:
+                        path = path.replace('pulp_id', param_name)
+            modified_endpoints[path] = (view_cls, methods)
+        return modified_endpoints
+
     def get_paths(self, endpoints, components, request, public):
         """Generate the Swagger Paths for the API from the given endpoints.
 
@@ -61,6 +104,7 @@ class PulpOpenAPISchemaGenerator(OpenAPISchemaGenerator):
         """
         if not endpoints:
             return openapi.Paths(paths={}), ''
+        endpoints = self.convert_endpoint_path_params(endpoints)
 
         plugin_filter = None
         if 'plugin' in request.GET:
@@ -94,9 +138,8 @@ class PulpOpenAPISchemaGenerator(OpenAPISchemaGenerator):
 
                 if '}' in path:
                     resource_path = '%s}/' % path.rsplit(sep='}', maxsplit=1)[0]
-                    resource_other_path = self.get_resource_from_path(path)
-                    if resource_other_path in endpoints:
-                        view = endpoints[resource_other_path][0]
+                    if resource_path in endpoints:
+                        view = endpoints[resource_path][0]
                         if not hasattr(view, 'queryset') or view.queryset is None:
                             if hasattr(view, 'model'):
                                 resource_model = view.model
@@ -111,14 +154,11 @@ class PulpOpenAPISchemaGenerator(OpenAPISchemaGenerator):
                         param_name = self.get_parameter_slug_from_model(resource_model, prefix_)
                         if resource_path in resources:
                             path = path.replace(resource_path, '{%s}' % resources[resource_path])
-                        elif resource_other_path in resources:
-                            path = path.replace(resource_path, '{%s}' % resources[
-                                resource_other_path])
                         else:
                             resources[resource_path] = param_name
                             resource_example[resource_path] = self.get_example_uri(path)
                             path = path.replace(resource_path, '{%s}' % resources[resource_path])
-                        example = resource_example[resource_other_path]
+                        example = resource_example[resource_path]
                         resource_description = self.get_resource_description(resource_name, example)
                         path_param = openapi.Parameter(
                             name=param_name,
@@ -199,6 +239,19 @@ class PulpOpenAPISchemaGenerator(OpenAPISchemaGenerator):
             return '{}_{}'.format(prefix, slug)
         else:
             return slug
+
+    @staticmethod
+    def get_pk_path_param_name_from_model(model):
+        """Returns a specific name for the primary key of a model.
+
+        Args:
+            model (django.db.models.Model): The model for which a path parameter name is needed
+
+        Returns:
+            str: *_pk where * is the model name in all lower case letters
+        """
+        return '%s_pk' % '_'.join([part.lower() for part in re.findall('[A-Z][^A-Z]*',
+                                                                       model.__name__)])
 
     @staticmethod
     def get_parameter_name(model):
