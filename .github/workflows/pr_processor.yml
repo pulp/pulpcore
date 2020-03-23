@@ -1,0 +1,28 @@
+name: PR Processor
+on:
+  pull_request:
+    types: [opened]
+jobs:
+  process:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v1
+        with:
+          python-version: '3.7'
+      - name: Run pr processor
+        shell: bash
+        env:
+          REDMINE_API_KEY: ${{ secrets.REDMINE_API_KEY }}
+          GITHUB_API_TOKEN: ${{ secrets.GITHUB_API_TOKEN }}
+          REPOSITORY: ${{ github.event.repository.full_name }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          echo ::group::dependencies
+          pip install python-redmine PyGithub
+          echo ::endgroup::
+          python .github/pr_processor.py
+          VALUE=$?
+          if [ "$VALUE" -gt 0 ]; then
+            exit $VALUE
+          fi
