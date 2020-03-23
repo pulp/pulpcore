@@ -29,7 +29,12 @@ DEBUG = False
 ALLOWED_HOSTS = ['*']
 
 MEDIA_ROOT = '/var/lib/pulp/'
-STATIC_ROOT = os.path.join(MEDIA_ROOT, 'assets/')
+
+# Static files (CSS, JavaScript, Images)
+# https://docs.djangoproject.com/en/1.11/howto/static-files/
+
+STATIC_URL = '/assets/'
+STATIC_ROOT = os.path.join(MEDIA_ROOT, STATIC_URL.lstrip("/"))
 
 DEFAULT_FILE_STORAGE = 'pulpcore.app.models.storage.FileSystem'
 
@@ -161,11 +166,6 @@ USE_L10N = True
 
 USE_TZ = True
 
-
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/1.11/howto/static-files/
-
-STATIC_URL = '/static/'
 
 # A set of default settings to use if the configuration file in
 # /etc/pulp/ is missing or if it does not have values for every setting
