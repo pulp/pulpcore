@@ -122,7 +122,7 @@ The default PostgreSQL user and database name in the provided server.yaml file i
 customize the configuration of your Pulp installation, you will need to create this user with the proper permissions
 and also create the ``pulp`` database owned by the ``pulp`` user. If you do choose to customize your installation,
 the database options can be configured in the `DATABASES` section of your server.yaml settings file.
-See the `Django database settings documentation <https://docs.djangoproject.com/en/1.11/ref/settings/#databases>`_
+See the `Django database settings documentation <https://docs.djangoproject.com/en/2.2/ref/settings/#databases>`_
 for more information on setting the `DATABASES` values in server.yaml.
 
 After installing and configuring PostgreSQL, you should configure it to start at boot, and then start it::
