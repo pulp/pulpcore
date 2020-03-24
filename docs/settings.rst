@@ -16,14 +16,14 @@ Django Settings
 ---------------
 
 Pulp is a Django project, so any Django `Django setting
-<https://docs.djangoproject.com/en/2.1/ref/settings/>`_ can also be set to configure your Pulp
+<https://docs.djangoproject.com/en/2.2/ref/settings/>`_ can also be set to configure your Pulp
 deployment.
 
 SECRET_KEY
 ^^^^^^^^^^
 
     In order to get a pulp server up and running a `Django SECRET_KEY
-    <https://docs.djangoproject.com/en/2.1/ref/settings/#secret-key>`_ *must* be
+    <https://docs.djangoproject.com/en/2.2/ref/settings/#secret-key>`_ *must* be
     provided.
 
     The following code snippet can be used to generate a random SECRET_KEY.
@@ -39,9 +39,8 @@ SECRET_KEY
 DATABASES
 ^^^^^^^^^
 
-   By default Pulp uses PostgreSQL on localhost. For all possible configurations please refer to
-   `Django documentation on databases <https://docs.djangoproject.com/en/2
-   .1/ref/settings/#databases>`_
+   By default Pulp uses PostgreSQL on localhost. PostgreSQL is the only supported database. For
+   instructions on how to configure the database, refer to :ref:`database installation <database-install>`.
 
 DEFAULT_FILE_STORAGE
 ^^^^^^^^^^^^^^^^^^^^
@@ -73,7 +72,7 @@ LOGGING
 
    By default Pulp logs at an INFO level to syslog. For all possible configurations please
    refer to `Django documenation on logging <https://docs.djangoproject.com/en/2
-   .1/topics/logging/#configuring-logging>`_.
+   .2/topics/logging/#configuring-logging>`_.
 
 AUTHENTICATION_BACKENDS
 ^^^^^^^^^^^^^^^^^^^^^^^
