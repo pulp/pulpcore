@@ -212,6 +212,17 @@ ALLOWED_IMPORT_PATHS
    Defaults to ``[]``, meaning ``file:///`` urls are not allowed in any Remote.
 
 
+ALLOWED_EXPORT_PATHS
+^^^^^^^^^^^^^^^^^^^^
+
+   One or more real filesystem paths that Exporters can export to. For example to allow a path of
+   ``/mnt/foo/bar/another/folder/`` you could specify::
+
+       ALLOWED_EXPORT_PATHS = ['/mnt/foo/bar']  # only a subpath is needed
+
+   Defaults to ``[]`` which means no path is allowed.
+
+
 PROFILE_STAGES_API
 ^^^^^^^^^^^^^^^^^^
 

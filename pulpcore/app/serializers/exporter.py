@@ -1,9 +1,10 @@
+import os
 from gettext import gettext as _
 
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 
-from pulpcore.app import models
+from pulpcore.app import models, settings
 from pulpcore.app.serializers import (
     DetailIdentityField,
     DetailRelatedField,
@@ -23,6 +24,26 @@ class ExporterSerializer(ModelSerializer):
         help_text=_("Unique name of the file system exporter."),
         validators=[UniqueValidator(queryset=models.BaseDistribution.objects.all())]
     )
+
+    def validate_path(self, value):
+        """
+        Check if path is in ALLOWED_EXPORT_PATHS.
+
+        Args:
+            value: The user-provided value path to be validated.
+
+        Raises:
+            ValidationError: When path is not in the ALLOWED_EXPORT_PATHS setting.
+
+        Returns:
+            The validated value.
+        """
+        for allowed_path in settings.ALLOWED_EXPORT_PATHS:
+            user_provided_realpath = os.path.realpath(value)
+            if user_provided_realpath.startswith(allowed_path):
+                return value
+        raise serializers.ValidationError(_("Path '{}' is not an allowed export "
+                                            "path").format(value))
 
     class Meta:
         model = models.Exporter

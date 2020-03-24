@@ -1,0 +1,2 @@
+Exporting now requires the configuration of the ``ALLOWED_EXPORT_PATHS`` setting.  Without this
+configuration, Pulp will not export content to the filesystem.
