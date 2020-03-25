@@ -1,8 +1,24 @@
 #!/usr/bin/env python
 
+import asyncio
+
 import aiohttp
+
+import django  # noqa otherwise E402: module level not at top of file
+django.setup()  # noqa otherwise E402: module level not at top of file
+
+from django.conf import settings
 
 from pulpcore.content import server
 
 
-aiohttp.web.run_app(server(), port=24816)
+async def work():
+    pulp_content_app = await server()
+    runner = aiohttp.web.AppRunner(pulp_content_app, max_line_size=16380, max_field_size=16380)
+    await runner.setup()
+    site = aiohttp.web.TCPSite(runner, 'localhost', 24816)
+    await site.start()
+
+loop = asyncio.get_event_loop()
+asyncio.ensure_future(work())
+loop.run_forever()
