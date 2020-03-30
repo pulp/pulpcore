@@ -75,6 +75,17 @@ class TaskSerializer(ModelSerializer):
         read_only=True,
         view_name='workers-detail'
     )
+    parent_task = RelatedField(
+        help_text=_("The parent task that spawned this task."),
+        read_only=True,
+        view_name='tasks-detail'
+    )
+    child_tasks = RelatedField(
+        help_text=_("Any tasks spawned by this task."),
+        many=True,
+        read_only=True,
+        view_name='tasks-detail'
+    )
     progress_reports = ProgressReportSerializer(
         many=True,
         read_only=True
@@ -92,8 +103,8 @@ class TaskSerializer(ModelSerializer):
 
     class Meta:
         model = models.Task
-        fields = ModelSerializer.Meta.fields + ('state', 'name', 'started_at',
-                                                'finished_at', 'error', 'worker',
+        fields = ModelSerializer.Meta.fields + ('state', 'name', 'started_at', 'finished_at',
+                                                'error', 'worker', 'parent_task', 'child_tasks',
                                                 'progress_reports', 'created_resources',
                                                 'reserved_resources_record')
 

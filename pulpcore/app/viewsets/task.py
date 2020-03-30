@@ -32,18 +32,21 @@ class TaskFilter(BaseFilterSet):
     name = filters.CharFilter()
     started_at = IsoDateTimeFilter(field_name='started_at')
     finished_at = IsoDateTimeFilter(field_name='finished_at')
-    parent = HyperlinkRelatedFilter()
+    parent_task = HyperlinkRelatedFilter()
+    child_tasks = HyperlinkRelatedFilter()
     reserved_resources_record = ReservedResourcesFilter()
     created_resources = CreatedResourcesFilter()
 
     class Meta:
         model = Task
         fields = {
+            'name': ['contains'],
             'state': ['exact', 'in'],
             'worker': ['exact', 'in'],
-            'name': ['contains'],
             'started_at': DATETIME_FILTER_OPTIONS,
             'finished_at': DATETIME_FILTER_OPTIONS,
+            'parent_task': ['exact'],
+            'child_tasks': ['exact'],
             'reserved_resources_record': ['exact'],
             'created_resources': ['exact']
         }

@@ -81,6 +81,7 @@ class TasksTestCase(unittest.TestCase):
         task = self.client.get(self.task['pulp_href'], params={'minimal': True})
         response_fields = task.keys()
         self.assertNotIn('progress_reports', response_fields)
+        self.assertNotIn('parent_task', response_fields)
         self.assertNotIn('error', response_fields)
 
     @skip_if(bool, 'task', False)
