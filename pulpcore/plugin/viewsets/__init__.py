@@ -11,6 +11,8 @@ from pulpcore.app.viewsets import (  # noqa
     ContentViewSet,
     ExportViewSet,
     ExporterViewSet,
+    ImportViewSet,
+    ImporterViewSet,
     NamedModelViewSet,
     PublicationFilter,
     PublicationViewSet,
