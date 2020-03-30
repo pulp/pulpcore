@@ -334,6 +334,9 @@ class Task(BaseModel):
     worker = models.ForeignKey("Worker", null=True, related_name="tasks",
                                on_delete=models.SET_NULL)
 
+    parent_task = models.ForeignKey("Task", null=True, related_name="child_tasks",
+                                    on_delete=models.SET_NULL)
+
     @staticmethod
     def current():
         """
