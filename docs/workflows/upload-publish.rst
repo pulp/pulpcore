@@ -55,3 +55,9 @@ Putting this altogether, here is an example that uploads a 1.iso file in two chu
    http --form PUT :24817$UPLOAD file@./chunkab 'Content-Range:bytes 6291456-10485759/*'
    http --form PUT :24817$UPLOAD file@./chunkaa 'Content-Range:bytes 0-6291455/*'
    http POST :24817${UPLOAD}commit/ sha256=`sha256sum 1.iso | cut -d ' ' -f1`
+
+.. note::
+
+    Uploaded chunks are stored in a local file system. When the upload is committed, it is
+    automatically removed and a new artifact is created in a default file storage. The directory
+    which is used for temporary uploads is configurable via the setting ``CHUNKED_UPLOAD_DIR``.

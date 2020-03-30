@@ -41,7 +41,7 @@ class UploadViewSet(NamedModelViewSet,
     endpoint_name = 'uploads'
     queryset = Upload.objects.all()
     filterset_class = UploadFilter
-    http_method_names = ['get', 'post', 'head', 'put', 'delete']  # remove PATCH
+    http_method_names = ['get', 'post', 'head', 'put', 'delete']
 
     content_range_parameter = \
         Parameter(name='Content-Range', in_='header', required=True, type='string',

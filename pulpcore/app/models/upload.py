@@ -1,7 +1,8 @@
 import hashlib
-import os
 
+from django.conf import settings
 from django.core.files.base import ContentFile
+from django.core.files.storage import FileSystemStorage
 from django.db import models
 from rest_framework import serializers
 
@@ -14,11 +15,12 @@ class Upload(BaseModel):
 
     Fields:
 
-        file (models.FileField): The stored file.
+        file (models.FileField): The uploaded file that is stored in a local file system.
         size (models.BigIntegerField): The size of the file in bytes.
     """
 
-    file = models.FileField(null=False, max_length=255)
+    file = models.FileField(null=False, max_length=255,
+                            storage=FileSystemStorage(location=settings.CHUNKED_UPLOAD_DIR))
     size = models.BigIntegerField()
 
     def append(self, chunk, offset, sha256=None):
@@ -30,7 +32,7 @@ class Upload(BaseModel):
             offset (int): First byte position to write chunk to.
         """
         if not self.file:
-            self.file.save(os.path.join('upload', str(self.pk)), ContentFile(''))
+            self.file.save(str(self.pk), ContentFile(''))
 
         chunk_read = chunk.read()
         current_sha256 = hashlib.sha256(chunk_read).hexdigest()

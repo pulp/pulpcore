@@ -40,6 +40,7 @@ DEFAULT_FILE_STORAGE = 'pulpcore.app.models.storage.FileSystem'
 
 FILE_UPLOAD_TEMP_DIR = os.path.join(MEDIA_ROOT, 'tmp/')
 WORKING_DIRECTORY = os.path.join(MEDIA_ROOT, 'tmp/')
+CHUNKED_UPLOAD_DIR = os.path.join(MEDIA_ROOT, 'upload/')
 
 # List of upload handler classes to be applied in order.
 FILE_UPLOAD_HANDLERS = ('pulpcore.app.files.HashingFileUploadHandler',)
