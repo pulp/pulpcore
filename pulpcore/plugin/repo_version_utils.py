@@ -15,7 +15,11 @@ __all__ = ["remove_duplicates"]
 
 def remove_duplicates(repository_version):
     """
-    Inspect content additions in the `RepositoryVersion` and replace repository duplicates.
+    Inspect content additions in the `RepositoryVersion` and remove existing repository duplicates.
+
+    This function will inspect the content being added to a repo version and remove any existing
+    content which would collide with the content being added to the repository version. It does not
+    inspect the content being added for duplicates.
 
     Some content can have two instances A and B which are unique, but cannot both exist together in
     one repository. For example, pulp_file's content has `relative_path` for that file within the
@@ -67,6 +71,44 @@ def remove_duplicates(repository_version):
                 repository_version.remove_content(duplicates_qs)
 
 
+def validate_duplicate_content(version):
+    """
+    Validate that a repository version doesn't contain duplicate content.
+
+    Uses repo_key_fields to determine if content is duplicated.
+
+    Raises:
+        ValueError: If repo version has duplicate content.
+    """
+    error_messages = []
+
+    for type_obj in version.repository.CONTENT_TYPES:
+        if type_obj.repo_key_fields == ():
+            continue
+
+        pulp_type = type_obj.get_pulp_type()
+        repo_key_fields = type_obj.repo_key_fields
+        new_content_total = type_obj.objects.filter(
+            pk__in=version.content.filter(pulp_type=pulp_type)
+        ).count()
+        unique_new_content_total = type_obj.objects.filter(
+            pk__in=version.content.filter(pulp_type=pulp_type)
+        ).distinct(*repo_key_fields).count()
+
+        if unique_new_content_total < new_content_total:
+            error_messages.append(_(
+                "More than one {pulp_type} content with the duplicate values for {fields}."
+                ).format(
+                    pulp_type=pulp_type,
+                    fields=", ".join(repo_key_fields),
+                )
+            )
+    if error_messages:
+        raise ValueError(
+            _("Cannot create repository version. {msg}").format(msg=", ".join(error_messages))
+        )
+
+
 def validate_version_paths(version):
     """
     Validate artifact relative paths for dupes or overlap (e.g. a/b and a/b/c).
@@ -82,3 +124,16 @@ def validate_version_paths(version):
         validate_file_paths(paths)
     except ValueError as e:
         raise ValueError(_("Cannot create repository version. {err}.").format(err=e))
+
+
+def validate_repo_version(version):
+    """
+    Validate a repo version.
+
+    Checks for duplicate content, duplicate relative paths, etc.
+
+    Raises:
+        ValueError: If repo version is not valid.
+    """
+    validate_duplicate_content(version)
+    validate_version_paths(version)
