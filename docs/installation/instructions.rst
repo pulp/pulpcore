@@ -97,7 +97,7 @@ PyPI Installation
 
 11. Run Pulp::
 
-    $ pulp-content  # The Pulp Content service (listening on port 24816)
+    $ pulpcore-content  # The Pulp Content service (listening on port 24816)
     $ pulpcore-manager runserver 24817  # The Pulp API service
 
 .. _database-install:

@@ -48,7 +48,7 @@ component as well.
    Pulp installs a script that lets you run the content serving app as a standalone service as
    follows:::
 
-      $ pulp-content
+      $ pulpcore-content
 
 The content serving application can be deployed like any aiohttp.server application. See the
 `aiohttp Deployment docs <https://aiohttp.readthedocs.io/en/stable/deployment.html>`_ for more

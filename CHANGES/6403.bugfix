@@ -1,0 +1,2 @@
+The standalone script ``pulp-content`` was renamed to ``pulpcore-content`` to align with the systemd
+name used by the installer.
