@@ -79,6 +79,8 @@ ansible-playbook -v build.yaml
 cd $TRAVIS_BUILD_DIR/../pulp-operator
 # Tell pulp-perator to deploy our image
 # NOTE: With k3s 1.17, ${TAG} must be quoted. So that 3.0 does not become 3.
+# NOTE: We use 1 pulp-content replica because some plugins need to pass
+# commands to it to modify it, similar to the pulp-api container.
 cat > deploy/crds/pulpproject_v1alpha1_pulp_cr.yaml << CRYAML
 apiVersion: pulpproject.org/v1alpha1
 kind: Pulp
@@ -96,6 +98,8 @@ spec:
     username: pulp
     password: pulp
     admin_password: pulp
+  pulp_content:
+    replicas: 1
 CRYAML
 
 if [ "$TEST" = 's3' ]; then
@@ -116,6 +120,8 @@ if [ "$TEST" = 's3' ]; then
       username: pulp
       password: pulp
       admin_password: pulp
+    pulp_content:
+      replicas: 1
     pulp_settings:
       aws_access_key_id: "AKIAIT2Z5TDYPX3ARJBA"
       aws_secret_access_key: "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"
