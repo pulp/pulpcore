@@ -326,6 +326,7 @@ class SecretCharField(serializers.CharField):
 
     This field accepts text as input and it returns a sha256 digest of the text stored.
     """
+
     def __init__(self, **kwargs):
         """
         Initialize a class and do not trim leading and trailing whitespace characters by default.
@@ -345,3 +346,15 @@ class SecretCharField(serializers.CharField):
                 self.context['request'].data.pop(self.field_name, None)
                 return
         return super(SecretCharField, self).to_internal_value(data)
+
+
+class TaskGroupStatusCountField(serializers.IntegerField, serializers.ReadOnlyField):
+    """ Serializer field for counting the tasks on a task group in a given state.
+    """
+
+    def __init__(self, state, *args, **kwargs):
+        self.state = state
+        super().__init__(*args, **kwargs)
+
+    def get_attribute(self, instance):
+        return instance.tasks.filter(state=self.state).count()

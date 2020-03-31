@@ -8,7 +8,9 @@ from pulpcore.app.serializers import (
     ModelSerializer,
     ProgressReportSerializer,
     RelatedField,
+    TaskGroupStatusCountField,
 )
+from pulpcore.constants import TASK_STATES
 from pulpcore.app.util import get_viewset_for_model
 
 
@@ -86,6 +88,11 @@ class TaskSerializer(ModelSerializer):
         read_only=True,
         view_name='tasks-detail'
     )
+    task_group = RelatedField(
+        help_text=_("The task group that this task is a member of."),
+        read_only=True,
+        view_name='task-groups-detail'
+    )
     progress_reports = ProgressReportSerializer(
         many=True,
         read_only=True
@@ -105,8 +112,8 @@ class TaskSerializer(ModelSerializer):
         model = models.Task
         fields = ModelSerializer.Meta.fields + ('state', 'name', 'started_at', 'finished_at',
                                                 'error', 'worker', 'parent_task', 'child_tasks',
-                                                'progress_reports', 'created_resources',
-                                                'reserved_resources_record')
+                                                'task_group', 'progress_reports',
+                                                'created_resources', 'reserved_resources_record')
 
 
 class MinimalTaskSerializer(TaskSerializer):
@@ -115,6 +122,45 @@ class MinimalTaskSerializer(TaskSerializer):
         model = models.Task
         fields = ModelSerializer.Meta.fields + ('name', 'state', 'started_at', 'finished_at',
                                                 'worker')
+
+
+class TaskGroupSerializer(ModelSerializer):
+    description = serializers.CharField(
+        help_text=_("A description of the task group.")
+    )
+
+    waiting = TaskGroupStatusCountField(
+        state=TASK_STATES.WAITING,
+        help_text=_("Number of tasks in the 'waiting' state")
+    )
+    skipped = TaskGroupStatusCountField(
+        state=TASK_STATES.SKIPPED,
+        help_text=_("Number of tasks in the 'skipped' state")
+    )
+    running = TaskGroupStatusCountField(
+        state=TASK_STATES.RUNNING,
+        help_text=_("Number of tasks in the 'running' state")
+    )
+    completed = TaskGroupStatusCountField(
+        state=TASK_STATES.COMPLETED,
+        help_text=_("Number of tasks in the 'completed' state")
+    )
+    canceled = TaskGroupStatusCountField(
+        state=TASK_STATES.CANCELED,
+        help_text=_("Number of tasks in the 'canceled' state")
+    )
+    failed = TaskGroupStatusCountField(
+        state=TASK_STATES.FAILED,
+        help_text=_("Number of tasks in the 'failed' state")
+    )
+
+    class Meta:
+        model = models.TaskGroup
+        fields = (
+            'description',
+            'waiting', 'skipped', 'running',
+            'completed', 'canceled', 'failed'
+        )
 
 
 class TaskCancelSerializer(ModelSerializer):

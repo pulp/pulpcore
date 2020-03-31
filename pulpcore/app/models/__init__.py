@@ -41,6 +41,7 @@ from .task import (  # noqa
     ReservedResource,
     ReservedResourceRecord,
     Task,
+    TaskGroup,
     TaskReservedResource,
     Worker,
 )

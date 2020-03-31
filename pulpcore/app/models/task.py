@@ -336,6 +336,8 @@ class Task(BaseModel):
 
     parent_task = models.ForeignKey("Task", null=True, related_name="child_tasks",
                                     on_delete=models.SET_NULL)
+    task_group = models.ForeignKey("TaskGroup", null=True, related_name="tasks",
+                                   on_delete=models.SET_NULL)
 
     @staticmethod
     def current():
@@ -408,6 +410,10 @@ class Task(BaseModel):
             TaskReservedResource.objects.filter(task=self.pk).delete()
             if not reservation.tasks.exists():
                 reservation.delete()
+
+
+class TaskGroup(BaseModel):
+    description = models.TextField()
 
 
 class CreatedResource(GenericRelationModel):
