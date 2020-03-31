@@ -25,6 +25,8 @@ ENV PULP_SETTINGS=/etc/pulp/settings.py
 # seems to need.
 #
 # python3-createrepo_c is needed for pulp_rpm
+#
+# openssl-devel, python3-devel, and gcc are for testing pulp-certguard
 RUN		dnf -y update && \
 		dnf -y install wget git && \
 		dnf -y install libxcrypt-compat && \
@@ -32,6 +34,9 @@ RUN		dnf -y update && \
 		dnf -y install glibc-langpack-en && \
 		dnf -y install python3-createrepo_c && \
 		dnf -y install python3-libmodulemd && \
+		dnf -y install openssl-devel && \
+		dnf -y install python3-devel && \
+		dnf -y install gcc && \
 		dnf clean all
 
 # Docs suggest RHEL8 uses the alternatives system for /usr/bin/python ,
@@ -44,6 +49,9 @@ RUN ln -s /usr/bin/pip3 /usr/local/bin/pip
 # Need to update pip inside of the container so that manylinux2014
 # packages are supported. This can be dropped with Fedora 32.
 RUN pip install --upgrade pip
+
+# Need to install optional dep, rhsm, for pulp-certguard
+RUN pip install rhsm
 
 RUN mkdir -p /etc/pulp
 
