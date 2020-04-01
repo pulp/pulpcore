@@ -8,12 +8,18 @@ from django.db import models
 
 from pulpcore.app.models import (
     BaseModel,
-    ContentArtifact,
     GenericRelationModel,
     MasterModel,
 )
-from .repository import Repository
+
 from .task import CreatedResource, Task
+
+from pulpcore.app.models.content import (
+    ContentArtifact,
+)
+from pulpcore.app.models.repository import (
+    Repository,
+)
 
 
 class Export(BaseModel):
@@ -175,14 +181,6 @@ class PulpExport(Export):
             with open(dest, "wb") as f:
                 f.write(artifact.file.read())
 
-    def _export_content(self, repository_version):
-        dest = os.path.join(self.destination_dir, 'repository-{}'.format(str(repository_version.pulp_id)))
-        try:
-            os.makedirs(dest)
-        except FileExistsError:
-            pass
-        pass
-
     def export_repository_version(self, repository_version):
         """
         Export a repository version to the file system
@@ -191,7 +189,8 @@ class PulpExport(Export):
             repository_version (pulpcore.app.models.RepositoryVersion): a repo version to export
         """
         self._export_artifacts(repository_version)
-        self._export_content(repository_version)
+        from pulpcore.app.importexport import export_content
+        export_content(self, repository_version)
 
 
 class PulpExporter(Exporter):

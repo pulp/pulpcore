@@ -56,6 +56,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'import_export',
     # third-party
     'django_filters',
     'drf_yasg',
@@ -209,7 +210,7 @@ REMOTE_USER_ENVIRON_NAME = "REMOTE_USER"
 
 ALLOWED_IMPORT_PATHS = []
 
-ALLOWED_EXPORT_PATHS = []
+ALLOWED_EXPORT_PATHS = ['/tmp/']
 
 PROFILE_STAGES_API = False
 

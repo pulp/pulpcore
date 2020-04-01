@@ -2,7 +2,7 @@ import logging
 
 from gettext import gettext as _
 
-from pulpcore.app.models import Export, ExportedResource, Exporter, Publication, RepositoryVersion, Task
+from pulpcore.app.models import Exporter, Publication, RepositoryVersion, Task
 
 log = logging.getLogger(__name__)
 
@@ -43,6 +43,3 @@ def fs_repo_version_export(exporter_pk, repo_version_pk):
         ).format(exporter=exporter.name, repo_version=repo_version.pk, path=exporter.path)
     )
     exporter.export_repository_version(repo_version)
-
-
-
