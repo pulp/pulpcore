@@ -45,27 +45,36 @@ def export_content(export, repository_version):
             pass
 
         resource = ArtifactResource()
-        dataset = resource.export()
+        queryset = repository_version.artifacts
+        dataset = resource.export(queryset)
         file = os.path.join(dest, 'artifactresource.json')
         with open(file, "w") as f:
             f.write(dataset.json)
+
         resource = ContentResource()
-        dataset = resource.export()
+        queryset = repository_version.content
+        dataset = resource.export(queryset)
         file = os.path.join(dest, 'contentresource.json')
         with open(file, "w") as f:
             f.write(dataset.json)
+
         resource = ContentArtifactResource()
-        dataset = resource.export()
+        queryset = ContentArtifact.objects.filter(content__in=repository_version.content)
+        dataset = resource.export(queryset)
         file = os.path.join(dest, 'contentartifactresource.json')
         with open(file, "w") as f:
             f.write(dataset.json)
+
         resource = RepositoryResource()
-        dataset = resource.export()
+        queryset = Repository.objects.filter(pulp_id=repository_version.repository.pulp_id)
+        dataset = resource.export(queryset)
         file = os.path.join(dest, 'repositoryresource.json')
         with open(file, "w") as f:
             f.write(dataset.json)
+
         resource = RepositoryVersionResource()
-        dataset = resource.export()
+        queryset = RepositoryVersion.objects.filter(pulp_id=repository_version.pulp_id)
+        dataset = resource.export(queryset)
         file = os.path.join(dest, 'repositoryversionresource.json')
         with open(file, "w") as f:
             f.write(dataset.json)

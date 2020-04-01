@@ -164,7 +164,7 @@ class PulpExport(Export):
             ValidationError: When path is not in the ALLOWED_EXPORT_PATHS setting
         """
         import pydevd_pycharm
-        pydevd_pycharm.settrace('192.168.1.109', port=3014, stdoutToServer=True, stderrToServer=True)
+        #pydevd_pycharm.settrace('192.168.1.109', port=3014, stdoutToServer=True, stderrToServer=True)
         content_artifacts = ContentArtifact.objects.filter(content__in=repository_version.content)
         if content_artifacts.filter(artifact=None).exists():
             RuntimeError(_("Remote artifacts cannot be exported."))
@@ -218,7 +218,7 @@ class PulpExporter(Exporter):
 
     def pulp_export(self):
         import pydevd_pycharm
-        pydevd_pycharm.settrace('192.168.1.109', port=3014, stdoutToServer=True, stderrToServer=True)
+        #pydevd_pycharm.settrace('192.168.1.109', port=3014, stdoutToServer=True, stderrToServer=True)
 
         repositories = self.repositories.all()
         export = PulpExport.objects.create(exporter=self, task=Task.current(), params=None)
