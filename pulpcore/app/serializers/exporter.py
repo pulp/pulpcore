@@ -12,6 +12,7 @@ from pulpcore.app.serializers import (
     ModelSerializer,
     RelatedField,
 )
+
 from pulpcore.app.util import get_viewset_for_model
 
 
@@ -64,7 +65,7 @@ class ExportedResourcesSerializer(ModelSerializer):
 
 class ExportSerializer(ModelSerializer):
     """
-    Base serializer for Exporters.
+    Base serializer for Exports.
     """
     pulp_href = ExportIdentityField()
 
@@ -90,15 +91,17 @@ class ExportSerializer(ModelSerializer):
 
 class PulpExporterSerializer(ExporterSerializer):
     """
-    Serializer for pulp exports.
+    Serializer for pulp exporters.
     """
     path = serializers.CharField(
         help_text=_("File system location for the pulp export.")
     )
 
+    repositories = serializers.PrimaryKeyRelatedField(queryset=models.Repository.objects.all(), many=True)
+
     class Meta:
         model = models.PulpExporter
-        fields = ExporterSerializer.Meta.fields + ('path',)
+        fields = ExporterSerializer.Meta.fields + ('path', 'repositories', )
 
 
 class FileSystemExporterSerializer(ExporterSerializer):
@@ -123,3 +126,29 @@ class PublicationExportSerializer(serializers.Serializer):
         help_text=_('A URI of the publication to be exported.'),
         queryset=models.Publication.objects.all(),
     )
+
+
+class PulpExportSerializer(ModelSerializer):
+    """
+    Serializer for PulpExports.
+    """
+    pulp_href = ExportIdentityField()
+
+    task = RelatedField(
+        help_text=_('A URI of the task that ran the Export.'),
+        queryset=models.Task.objects.all(),
+        view_name='tasks-detail',
+    )
+
+    exported_resources = ExportedResourcesSerializer(
+        help_text=_('Resources that were exported.'),
+        many=True,
+    )
+
+    params = serializers.JSONField(
+        help_text=_('Any additional parameters that were used to create the export.'),
+    )
+
+    class Meta:
+        model = models.PulpExporter
+        fields = ModelSerializer.Meta.fields + ('task', 'exported_resources', 'params')

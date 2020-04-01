@@ -52,7 +52,6 @@ from .repository import (  # noqa
     RemoteSerializer,
     RepositorySerializer,
     RepositorySyncURLSerializer,
-    RepositorySerializer,
     RepositoryAddRemoveContentSerializer,
     RepositoryVersionSerializer,
 )

@@ -22,6 +22,7 @@ from .exporter import (  # noqa
     ExportViewSet,
     ExporterViewSet,
     PulpExporterViewSet,
+    PulpExportViewSet,
 )
 from .publication import (  # noqa
     BaseDistributionViewSet,

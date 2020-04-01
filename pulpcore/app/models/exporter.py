@@ -1,4 +1,5 @@
 import os
+from datetime import datetime
 from gettext import gettext as _
 
 from django.conf import settings
@@ -59,29 +60,6 @@ class Exporter(MasterModel):
         name (models.TextField): The exporter unique name.
     """
     name = models.TextField(db_index=True, unique=True)
-
-
-class PulpExporter(Exporter):
-    """
-    A class that provides exports that can be imported into other Pulp instances.
-
-    Fields:
-
-        path (models.TextField): a full path where the export will go.
-
-    Relations:
-
-        repositories (models.ManyToManyField): Repos to be exported.
-        last_export (models.ForeignKey): The last Export from the Exporter.
-    """
-    TYPE = 'pulp'
-
-    path = models.TextField()
-    repositories = models.ManyToManyField(Repository)
-    last_export = models.ForeignKey(Export, on_delete=models.PROTECT, null=True)
-
-    class Meta:
-        default_related_name = '%(app_label)s_pulp_exporter'
 
 
 class FileSystemExporter(Exporter):
@@ -164,3 +142,98 @@ class FileSystemExporter(Exporter):
 
     class Meta:
         abstract = True
+
+
+class PulpExport(Export):
+    destination_dir = None
+
+    def _export_artifacts(self, repository_version):
+        """
+        Export a set of Artifacts to the filesystem.
+
+        Args:
+            repository_version (django.db.models.RepositoryVersion): repo-version whose artifacts are to be exported
+
+        Raises:
+            ValidationError: When path is not in the ALLOWED_EXPORT_PATHS setting
+        """
+        import pydevd_pycharm
+        pydevd_pycharm.settrace('192.168.1.109', port=3014, stdoutToServer=True, stderrToServer=True)
+        content_artifacts = ContentArtifact.objects.filter(content__in=repository_version.content)
+        if content_artifacts.filter(artifact=None).exists():
+            RuntimeError(_("Remote artifacts cannot be exported."))
+
+        for ca in content_artifacts:
+            artifact = ca.artifact
+            dest = os.path.join(self.destination_dir, artifact.file.name)
+
+            try:
+                os.makedirs(os.path.split(dest)[0])
+            except FileExistsError:
+                pass
+
+            with open(dest, "wb") as f:
+                f.write(artifact.file.read())
+
+    def _export_content(self, repository_version):
+        dest = os.path.join(self.destination_dir, 'repository-{}'.format(str(repository_version.pulp_id)))
+        try:
+            os.makedirs(dest)
+        except FileExistsError:
+            pass
+        pass
+
+    def export_repository_version(self, repository_version):
+        """
+        Export a repository version to the file system
+
+        Args:
+            repository_version (pulpcore.app.models.RepositoryVersion): a repo version to export
+        """
+        self._export_artifacts(repository_version)
+        self._export_content(repository_version)
+
+
+class PulpExporter(Exporter):
+    """
+    A class that provides exports that can be imported into other Pulp instances.
+
+    Fields:
+
+        path (models.TextField): a full path where the export will go.
+
+    Relations:
+
+        repositories (models.ManyToManyField): Repos to be exported.
+        last_export (models.ForeignKey): The last Export from the Exporter.
+    """
+    TYPE = 'pulp'
+    path = models.TextField()
+    repositories = models.ManyToManyField(Repository)
+    last_export = models.ForeignKey(PulpExport, on_delete=models.PROTECT, null=True)
+
+    @staticmethod
+    def _export_dir(export):
+        # export-EXPORTID-YYYYMMDD_HHMM/
+        return "export-{}-{}".format(str(export.pulp_id), datetime.utcnow().strftime("%Y%m%d_%H%M"))
+
+    def pulp_export(self):
+        import pydevd_pycharm
+        pydevd_pycharm.settrace('192.168.1.109', port=3014, stdoutToServer=True, stderrToServer=True)
+
+        repositories = self.repositories.all()
+        export = PulpExport.objects.create(exporter=self, task=Task.current(), params=None)
+        # TODO: 'soon' path will be a tarfile and we will be streaming directly into the tarfile
+        export.destination_dir = os.path.join(self.path, self._export_dir(export))
+        CreatedResource.objects.create(content_object=export)
+
+        for repo in repositories:
+            version = repo.latest_version()
+            export.export_repository_version(version)
+            ExportedResource.objects.create(export=export, content_object=version)
+
+        self.last_export = export
+        self.save()
+
+    class Meta:
+        default_related_name = '%(app_label)s_pulp_exporter'
