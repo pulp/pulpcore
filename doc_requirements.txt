@@ -6,6 +6,7 @@ django
 djangorestframework
 djangorestframework-queryfields
 django-filter
+django-import-export
 drf-nested-routers
 drf-yasg
 dynaconf

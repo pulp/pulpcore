@@ -11,6 +11,7 @@ requirements = [
     'coreapi~=2.3.3',
     'Django~=2.2.3',  # LTS version, switch only if we have a compelling reason to
     'django-filter~=2.2.0',
+    'django-import-export~=2.0.2',
     'djangorestframework~=3.10.2',
     'djangorestframework-queryfields~=1.0.0',
     'drf-nested-routers~=0.91.0',

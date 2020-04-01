@@ -15,6 +15,7 @@ from .exporter import (  # noqa
     ExportedResource,
     Exporter,
     FileSystemExporter,
+    PulpExport,
     PulpExporter,
 )
 from .publication import (  # noqa

@@ -40,6 +40,7 @@ from .exporter import (  # noqa
     FileSystemExporterSerializer,
     PublicationExportSerializer,
     PulpExporterSerializer,
+    PulpExportSerializer,
 )
 from .progress import ProgressReportSerializer  # noqa
 from .publication import (  # noqa
@@ -53,7 +54,6 @@ from .repository import (  # noqa
     RemoteSerializer,
     RepositorySerializer,
     RepositorySyncURLSerializer,
-    RepositorySerializer,
     RepositoryAddRemoveContentSerializer,
     RepositoryVersionSerializer,
 )
