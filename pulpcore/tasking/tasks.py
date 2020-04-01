@@ -145,7 +145,8 @@ def _release_resources(task_id):
     Task.objects.get(pk=task_id).release_resources()
 
 
-def enqueue_with_reservation(func, resources, args=None, kwargs=None, options=None):
+def enqueue_with_reservation(func, resources,
+                             args=None, kwargs=None, options=None, task_group=None):
     """
     Enqueue a message to Pulp workers with a reservation.
 
@@ -169,6 +170,7 @@ def enqueue_with_reservation(func, resources, args=None, kwargs=None, options=No
         args (tuple): The positional arguments to pass on to the task.
         kwargs (dict): The keyword arguments to pass on to the task.
         options (dict): The options to be passed on to the task.
+        task_group (models.TaskGroup): A TaskGroup to add the created Task to.
 
     Returns (rq.job.job): An RQ Job instance as returned by RQ's enqueue function
 
@@ -197,7 +199,7 @@ def enqueue_with_reservation(func, resources, args=None, kwargs=None, options=No
     if current_job:
         current_task = Task.objects.get(pk=current_job.id)
         parent_kwarg['parent_task'] = current_task
-    Task.objects.create(pk=inner_task_id, state=TASK_STATES.WAITING,
+    Task.objects.create(pk=inner_task_id, state=TASK_STATES.WAITING, task_group=task_group,
                         name=f'{func.__module__}.{func.__name__}', **parent_kwarg)
     q = Queue('resource-manager', connection=redis_conn)
     task_args = (func, inner_task_id, list(resources), args, kwargs, options)

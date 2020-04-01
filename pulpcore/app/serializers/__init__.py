@@ -32,6 +32,7 @@ from .fields import (  # noqa
     RepositoryVersionRelatedField,
     RepositoryVersionIdentityField,
     relative_path_validator,
+    TaskGroupStatusCountField,
 )
 from .exporter import (  # noqa
     ExportSerializer,
@@ -60,6 +61,7 @@ from .task import (  # noqa
     MinimalTaskSerializer,
     TaskCancelSerializer,
     TaskSerializer,
+    TaskGroupSerializer,
     WorkerSerializer,
 )
 from .upload import (  # noqa

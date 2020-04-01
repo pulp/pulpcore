@@ -7,12 +7,13 @@ from rest_framework.filters import OrderingFilter
 from rest_framework.response import Response
 from rest_framework.serializers import ValidationError
 
-from pulpcore.app.models import Task, Worker
+from pulpcore.app.models import Task, TaskGroup, Worker
 from pulpcore.app.serializers import (
     MinimalTaskSerializer,
     TaskCancelSerializer,
     TaskSerializer,
     WorkerSerializer,
+    TaskGroupSerializer,
 )
 from pulpcore.app.viewsets import BaseFilterSet, NamedModelViewSet
 from pulpcore.app.viewsets.base import DATETIME_FILTER_OPTIONS, NAME_FILTER_OPTIONS
@@ -34,6 +35,7 @@ class TaskFilter(BaseFilterSet):
     finished_at = IsoDateTimeFilter(field_name='finished_at')
     parent_task = HyperlinkRelatedFilter()
     child_tasks = HyperlinkRelatedFilter()
+    task_group = HyperlinkRelatedFilter()
     reserved_resources_record = ReservedResourcesFilter()
     created_resources = CreatedResourcesFilter()
 
@@ -47,6 +49,7 @@ class TaskFilter(BaseFilterSet):
             'finished_at': DATETIME_FILTER_OPTIONS,
             'parent_task': ['exact'],
             'child_tasks': ['exact'],
+            'task_group': ['exact'],
             'reserved_resources_record': ['exact'],
             'created_resources': ['exact']
         }
@@ -87,6 +90,23 @@ class TaskViewSet(NamedModelViewSet,
         if self.action == 'partial_update':
             return TaskCancelSerializer
         return super().get_serializer_class()
+
+
+class TaskGroupFilter(BaseFilterSet):
+    class Meta:
+        model = TaskGroup
+        fields = ()
+
+
+class TaskGroupViewSet(NamedModelViewSet,
+                       mixins.RetrieveModelMixin,
+                       mixins.ListModelMixin):
+    queryset = TaskGroup.objects.all()
+    endpoint_name = 'task-groups'
+    filterset_class = TaskGroupFilter
+    serializer_class = TaskGroupSerializer
+    filter_backends = (OrderingFilter, DjangoFilterBackend)
+    ordering = ('-pulp_created')
 
 
 class WorkerFilter(BaseFilterSet):
