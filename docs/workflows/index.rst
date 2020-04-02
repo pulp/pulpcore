@@ -16,3 +16,4 @@ assumes that the reader is familiar with the fundamentals discussed in the :doc:
    scheduling-tasks
    exposing-content
    signed-metadata
+   repairing-repository-versions

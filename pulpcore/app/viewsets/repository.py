@@ -5,6 +5,7 @@ from django_filters import Filter
 from django_filters.rest_framework import DjangoFilterBackend, filters
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import mixins, serializers
+from rest_framework.decorators import action
 from rest_framework.filters import OrderingFilter
 
 from pulpcore.app import tasks
@@ -211,6 +212,25 @@ class RepositoryVersionViewSet(NamedModelViewSet,
         async_result = enqueue_with_reservation(
             tasks.repository.delete_version,
             [version.repository], kwargs={'pk': version.pk}
+        )
+        return OperationPostponedResponse(async_result, request)
+
+    @swagger_auto_schema(
+        operation_description="Trigger an asynchronous task to repair "
+                              "a repositroy version.",
+        responses={202: AsyncOperationResponseSerializer}
+    )
+    @action(detail=True, methods=['post'])
+    def repair(self, request, repository_pk, number):
+        """
+        Queues a task to repair currupted artifacts corresponding to a RepositoryVersion
+        """
+        version = self.get_object()
+
+        async_result = enqueue_with_reservation(
+            tasks.repository.repair_version,
+            [version.repository],
+            kwargs={'repository_version_pk': version.pk},
         )
         return OperationPostponedResponse(async_result, request)
 
