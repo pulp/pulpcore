@@ -493,7 +493,7 @@ class RepositoryVersion(BaseModel):
         Returns:
             django.db.models.QuerySet: The artifacts that are contained within this version.
         """
-        Artifact.objects.filter(content__pk__in=self.content)
+        return Artifact.objects.filter(content__pk__in=self.content)
 
     def added(self, base_version=None):
         """
