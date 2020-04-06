@@ -23,6 +23,10 @@ if [[ -f $PRE_BEFORE_SCRIPT ]]; then
     $PRE_BEFORE_SCRIPT
 fi
 
+# Developers often want to know the final pulp config
+echo "PULP CONFIG:"
+$CMD_PREFIX bash -c "cat /etc/pulp/settings.*"
+
 mkdir -p ~/.config/pulp_smash
 
 if [[ -f .travis/pulp-smash-config.json ]]; then
