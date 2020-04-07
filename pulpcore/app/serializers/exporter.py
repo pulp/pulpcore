@@ -9,9 +9,11 @@ from pulpcore.app.serializers import (
     DetailIdentityField,
     DetailRelatedField,
     ExportIdentityField,
+    ExportRelatedField,
     ModelSerializer,
     RelatedField,
 )
+
 from pulpcore.app.util import get_viewset_for_model
 
 
@@ -25,7 +27,8 @@ class ExporterSerializer(ModelSerializer):
         validators=[UniqueValidator(queryset=models.BaseDistribution.objects.all())]
     )
 
-    def validate_path(self, value):
+    @staticmethod
+    def validate_path(value, check_is_dir=False):
         """
         Check if path is in ALLOWED_EXPORT_PATHS.
 
@@ -41,6 +44,11 @@ class ExporterSerializer(ModelSerializer):
         for allowed_path in settings.ALLOWED_EXPORT_PATHS:
             user_provided_realpath = os.path.realpath(value)
             if user_provided_realpath.startswith(allowed_path):
+                if check_is_dir:  # fail if exists and not-directory
+                    if os.path.exists(user_provided_realpath) \
+                            and not os.path.isdir(user_provided_realpath):
+                        raise serializers.ValidationError(_("Path '{}' must be a directory "
+                                                            "path").format(value))
                 return value
         raise serializers.ValidationError(_("Path '{}' is not an allowed export "
                                             "path").format(value))
@@ -64,7 +72,7 @@ class ExportedResourcesSerializer(ModelSerializer):
 
 class ExportSerializer(ModelSerializer):
     """
-    Base serializer for Exporters.
+    Base serializer for Exports.
     """
     pulp_href = ExportIdentityField()
 
@@ -76,6 +84,7 @@ class ExportSerializer(ModelSerializer):
 
     exported_resources = ExportedResourcesSerializer(
         help_text=_('Resources that were exported.'),
+        read_only=True,
         many=True,
     )
 
@@ -84,21 +93,51 @@ class ExportSerializer(ModelSerializer):
     )
 
     class Meta:
-        model = models.Exporter
+        model = models.Export
         fields = ModelSerializer.Meta.fields + ('task', 'exported_resources', 'params')
+
+
+class PulpExportSerializer(ExportSerializer):
+    """
+    Serializer for PulpExports.
+    """
+    sha256 = serializers.CharField(
+        help_text=_("The SHA-256 checksum of the exported .tar.gz."),
+        required=False,
+        allow_null=True,
+    )
+
+    filename = serializers.CharField(
+        help_text=_("The full-path filename of the exported .tar.gz."),
+        required=False,
+        allow_null=True,
+    )
+
+    class Meta:
+        model = models.PulpExport
+        fields = ExportSerializer.Meta.fields + ('sha256', 'filename', )
 
 
 class PulpExporterSerializer(ExporterSerializer):
     """
-    Serializer for pulp exports.
+    Serializer for pulp exporters.
     """
     path = serializers.CharField(
-        help_text=_("File system location for the pulp export.")
+        help_text=_("File system directory to store exported tar.gzs.")
+    )
+
+    repositories = serializers.PrimaryKeyRelatedField(queryset=models.Repository.objects.all(),
+                                                      many=True)
+    last_export = ExportRelatedField(
+        help_text=_("Last attempted export for this PulpExporter"),
+        queryset=models.PulpExport.objects.all(),
+        many=False,
+        required=False,
     )
 
     class Meta:
         model = models.PulpExporter
-        fields = ExporterSerializer.Meta.fields + ('path',)
+        fields = ExporterSerializer.Meta.fields + ('path', 'repositories', 'last_export')
 
 
 class FileSystemExporterSerializer(ExporterSerializer):

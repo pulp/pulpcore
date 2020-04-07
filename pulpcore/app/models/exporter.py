@@ -1,4 +1,5 @@
 import os
+from datetime import datetime
 from gettext import gettext as _
 
 from django.conf import settings
@@ -7,17 +8,23 @@ from django.db import models
 
 from pulpcore.app.models import (
     BaseModel,
-    ContentArtifact,
     GenericRelationModel,
     MasterModel,
 )
-from .repository import Repository
+
 from .task import CreatedResource, Task
+
+from pulpcore.app.models.content import (
+    ContentArtifact,
+)
+from pulpcore.app.models.repository import (
+    Repository,
+)
 
 
 class Export(BaseModel):
     """
-    A class that represents an Export.
+    A model that represents an Export.
 
     Fields:
 
@@ -35,7 +42,7 @@ class Export(BaseModel):
 
 class ExportedResource(GenericRelationModel):
     """
-    A class to represent anything that was exported in an Export.
+    A model to represent anything that was exported in an Export.
 
     Resource can be a repo version, publication, etc.
 
@@ -52,7 +59,7 @@ class ExportedResource(GenericRelationModel):
 
 class Exporter(MasterModel):
     """
-    A base class that provides logic to export a set of content and keep track of Exports.
+    A base model that provides logic to export a set of content and keep track of Exports.
 
     Fields:
 
@@ -61,32 +68,9 @@ class Exporter(MasterModel):
     name = models.TextField(db_index=True, unique=True)
 
 
-class PulpExporter(Exporter):
-    """
-    A class that provides exports that can be imported into other Pulp instances.
-
-    Fields:
-
-        path (models.TextField): a full path where the export will go.
-
-    Relations:
-
-        repositories (models.ManyToManyField): Repos to be exported.
-        last_export (models.ForeignKey): The last Export from the Exporter.
-    """
-    TYPE = 'pulp'
-
-    path = models.TextField()
-    repositories = models.ManyToManyField(Repository)
-    last_export = models.ForeignKey(Export, on_delete=models.PROTECT, null=True)
-
-    class Meta:
-        default_related_name = '%(app_label)s_pulp_exporter'
-
-
 class FileSystemExporter(Exporter):
     """
-    A base class that provides logic to export a set of content to the filesystem.
+    A base model that provides logic to export a set of content to the filesystem.
 
     Fields:
 
@@ -105,7 +89,7 @@ class FileSystemExporter(Exporter):
             ValidationError: When path is not in the ALLOWED_EXPORT_PATHS setting
         """
         from pulpcore.app.serializers import ExportSerializer
-        ExportSerializer().validate_path(self.path)
+        ExportSerializer.validate_path(self.path)
 
         if content_artifacts.filter(artifact=None).exists():
             RuntimeError(_("Remote artifacts cannot be exported."))
@@ -164,3 +148,54 @@ class FileSystemExporter(Exporter):
 
     class Meta:
         abstract = True
+
+
+class PulpExport(Export):
+    """
+    A model that provides export-files that can be imported into other Pulp instances.
+
+    Fields:
+
+        tarfile (tarfile.Tarfile): a tarfile for this export to write into
+        sha256 (models.CharField): The SHA-256 checksum of the tarfile after export completes
+        filename (models.CharField): The full-path filename of the generated tarfile
+    """
+    tarfile = None
+    sha256 = models.CharField(max_length=64, null=True)
+    filename = models.CharField(max_length=4096, null=True)
+
+    def export_tarfile_path(self):
+        """
+        Return the full tarfile name where the specified PulpExport should store its export
+        """
+        # EXPORTER-PATH/export-EXPORTID-YYYYMMDD_HHMM.tar.gz
+        return "{}/export-{}-{}.tar.gz".format(self.exporter.path,
+                                               str(self.pulp_id),
+                                               datetime.utcnow().strftime("%Y%m%d_%H%M"))
+
+    class Meta:
+        default_related_name = '%(app_label)s_pulp_export'
+
+
+class PulpExporter(Exporter):
+    """
+    A model that controls creating exports that can be imported into other Pulp instances.
+
+    Fields:
+
+        path (models.TextField): a full path where the export will go.
+
+    Relations:
+
+        repositories (models.ManyToManyField): Repos to be exported.
+        last_export (models.ForeignKey): The last Export from the Exporter.
+    """
+    TYPE = 'pulp'
+    path = models.TextField()
+    repositories = models.ManyToManyField(Repository)
+    last_export = models.ForeignKey("PulpExport",
+                                    related_name='last_export',
+                                    on_delete=models.PROTECT, null=True)
+
+    class Meta:
+        default_related_name = '%(app_label)s_pulp_exporter'

@@ -1,3 +1,4 @@
+import inspect
 from collections import defaultdict
 from importlib import import_module
 
@@ -9,6 +10,7 @@ from pulpcore.exceptions.plugin import MissingPlugin
 VIEWSETS_MODULE_NAME = 'viewsets'
 SERIALIZERS_MODULE_NAME = 'serializers'
 URLS_MODULE_NAME = 'urls'
+MODELRESOURCE_MODULE_NAME = 'modelresource'
 
 
 def pulp_plugin_configs():
@@ -66,6 +68,11 @@ class PulpPluginAppConfig(apps.AppConfig):
         # Module containing urlpatterns
         self.urls_module = None
 
+        # Module containing django-import-export ModelResources for a plugin's Models
+        self.modelresource_module = None
+        # List of classes from self.modelresource_module that can be exported
+        self.exportable_classes = None
+
         # Mapping of model names to viewset lists (viewsets unrelated to models are excluded)
         self.named_viewsets = None
         # Mapping of serializer names to serializers
@@ -75,6 +82,7 @@ class PulpPluginAppConfig(apps.AppConfig):
         self.import_viewsets()
         self.import_serializers()
         self.import_urls()
+        self.import_modelresources()
 
     def import_serializers(self):
         # circular import avoidance
@@ -126,6 +134,22 @@ class PulpPluginAppConfig(apps.AppConfig):
             urls_module_name = '{name}.{module}'.format(
                 name=self.name, module=URLS_MODULE_NAME)
             self.urls_module = import_module(urls_module_name)
+
+    def import_modelresources(self):
+        """
+        If a plugin has a modelresource.py, import it
+
+        (This exists when a plugin knows how to import-export itself)
+        """
+        if module_has_submodule(self.module, MODELRESOURCE_MODULE_NAME) and \
+                self.name != "pulpcore.app":
+            modelrsrc_module_name = '{name}.{module}'.format(
+                name=self.name, module=MODELRESOURCE_MODULE_NAME)
+            self.modelresource_module = import_module(modelrsrc_module_name)
+            self.exportable_classes = []
+            for (classname, cls) in inspect.getmembers(self.modelresource_module, inspect.isclass):
+                if cls.__module__ == self.modelresource_module.__name__:
+                    self.exportable_classes.append(cls)
 
 
 class PulpAppConfig(PulpPluginAppConfig):
