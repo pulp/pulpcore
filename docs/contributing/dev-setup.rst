@@ -42,5 +42,5 @@ We recommened using ``pulplift`` for developer installations. Follow the instruc
 `README.md <https://github.com/pulp/pulplift/#pulplift>`_.
 
 It is also possible to use the `Ansible roles
-<https://github.com/pulp/ansible-pulp#pulp-3-ansible-installer>`_ directly, if you prefer not to
+<https://github.com/pulp/pulp_installer#pulp-3-ansible-installer>`_ directly, if you prefer not to
 use Vagrant.
