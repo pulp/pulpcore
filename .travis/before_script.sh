@@ -25,7 +25,10 @@ fi
 
 # Developers often want to know the final pulp config
 echo "PULP CONFIG:"
-$CMD_PREFIX bash -c "cat /etc/pulp/settings.*"
+$CMD_PREFIX bash -c "tail -v -n +1 /etc/pulp/settings.*"
+
+# Copy pulp config in a place accessible to the test code
+$CMD_PREFIX bash -c "cat /etc/pulp/settings.py" > $TRAVIS_BUILD_DIR/settings.py
 
 mkdir -p ~/.config/pulp_smash
 
@@ -42,14 +45,12 @@ if [[ "$TEST" == 'pulp' || "$TEST" == 'performance' || "$TEST" == 's3' ]]; then
     $CMD_PREFIX pip3 install pytest mock
     # Many functional tests require these
     $CMD_PREFIX dnf install -yq lsof which dnf-plugins-core
-    
     # set up pulp-fixtures docker container
     docker run -d -p 0.0.0.0:8000:80 quay.io/pulp/pulp-fixtures:latest
 
     cat ~/.config/pulp_smash/settings.json | \
         jq "setpath([\"custom\",\"fixtures_origin\"]; \"http://$(hostname):8000/fixtures/\")" > temp.json
     cat temp.json > ~/.config/pulp_smash/settings.json
-    
 fi
 
 if [[ -f $POST_BEFORE_SCRIPT ]]; then

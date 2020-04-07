@@ -28,7 +28,7 @@ if [ "$TRAVIS_PULL_REQUEST" != "false" ] || [ -z "$TRAVIS_TAG" -a "$TRAVIS_BRANC
 then
   export PULP_PR_NUMBER=$(echo $COMMIT_MSG | grep -oP 'Required\ PR:\ https\:\/\/github\.com\/pulp\/pulpcore\/pull\/(\d+)' | awk -F'/' '{print $7}')
   export PULP_SMASH_PR_NUMBER=$(echo $COMMIT_MSG | grep -oP 'Required\ PR:\ https\:\/\/github\.com\/pulp\/pulp-smash\/pull\/(\d+)' | awk -F'/' '{print $7}')
-  export PULP_ROLES_PR_NUMBER=$(echo $COMMIT_MSG | grep -oP 'Required\ PR:\ https\:\/\/github\.com\/pulp\/ansible-pulp\/pull\/(\d+)' | awk -F'/' '{print $7}')
+  export PULP_ROLES_PR_NUMBER=$(echo $COMMIT_MSG | grep -oP 'Required\ PR:\ https\:\/\/github\.com\/pulp\/pulp_installer\/pull\/(\d+)' | awk -F'/' '{print $7}')
   export PULP_BINDINGS_PR_NUMBER=$(echo $COMMIT_MSG | grep -oP 'Required\ PR:\ https\:\/\/github\.com\/pulp\/pulp-openapi-generator\/pull\/(\d+)' | awk -F'/' '{print $7}')
   export PULP_OPERATOR_PR_NUMBER=$(echo $COMMIT_MSG | grep -oP 'Required\ PR:\ https\:\/\/github\.com\/pulp\/pulp-operator\/pull\/(\d+)' | awk -F'/' '{print $7}')
 else
@@ -52,9 +52,9 @@ pip install -r dev_requirements.txt
 flake8 --config flake8.cfg
 
 cd ..
-git clone --depth=1 https://github.com/pulp/ansible-pulp.git
+git clone --depth=1 https://github.com/pulp/pulp_installer.git
 if [ -n "$PULP_ROLES_PR_NUMBER" ]; then
-  cd ansible-pulp
+  cd pulp_installer
   git fetch --depth=1 origin pull/$PULP_ROLES_PR_NUMBER/head:$PULP_ROLES_PR_NUMBER
   git checkout $PULP_ROLES_PR_NUMBER
   cd ..
