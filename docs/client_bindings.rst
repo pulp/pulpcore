@@ -50,9 +50,9 @@ started with openapi-generator-cli is available on
 Generating a client for a dev environment
 -----------------------------------------
 
-The pulp dev environment provided by `ansible-pulp <https://github.com/pulp/ansible-pulp>`_
+The pulp dev environment provided by `pulp_installer <https://github.com/pulp/pulp_installer>`_
 introduces a set of useful
-`aliases <https://github.com/pulp/ansible-pulp/tree/master/roles/pulp-devel#aliases>`_,
+`aliases <https://github.com/pulp/pulp_installer/tree/master/roles/pulp-devel#aliases>`_,
 such as `pbindings`.
 
 Examples:

@@ -200,7 +200,7 @@ For the MANIFEST.in entry, you'll likely want one like the example below which w
 Installation
 ------------
 
-It's recommended to use the `Pulp 3 Ansible Installer <https://github.com/pulp/ansible-pulp
+It's recommended to use the `Pulp 3 Ansible Installer <https://github.com/pulp/pulp_installer
 #pulp-3-ansible-installer>`_ to install your plugin. Generally you can do this by configuring
 ``pulp_install_plugins`` variable with your Python package's name. For example for ``pulp-file``::
 
@@ -222,4 +222,4 @@ to create a new role with tasks that needs to be done and publish it on Ansible 
 
 Documentation will need to be added to the plugin installation instructions. See the
 `RPM Plugin Documentation <https://pulp-rpm.readthedocs.io/en/latest/installation.html#
-install-with-ansible-pulp>`_ as an example.
+install-with-pulp-installer-recommended>`_ as an example.
