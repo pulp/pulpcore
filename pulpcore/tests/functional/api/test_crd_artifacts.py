@@ -149,7 +149,7 @@ class ArtifactsDeleteFileSystemTestCase(unittest.TestCase):
         1. Create an artifact, and verify it is present on the filesystem.
         2. Delete the artifact, and verify it is absent on the filesystem.
         """
-        if settings.DEFAULT_FILE_STORAGE != "django.core.files.storage.FileSystemStorage":
+        if settings.DEFAULT_FILE_STORAGE != "pulpcore.app.models.storage.FileSystem":
             # this test only works for filesystem storage
             return
 
