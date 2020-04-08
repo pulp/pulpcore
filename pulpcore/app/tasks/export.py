@@ -77,7 +77,6 @@ def pulp_export(pulp_exporter):
 
     from pulpcore.app.serializers.exporter import ExporterSerializer
     ExporterSerializer.validate_path(pulp_exporter.path, check_is_dir=True)
-
     repositories = pulp_exporter.repositories.all()
     export = PulpExport.objects.create(exporter=pulp_exporter, task=Task.current(), params=None)
     tarfile_fp = export.export_tarfile_path()
@@ -91,7 +90,7 @@ def pulp_export(pulp_exporter):
         repo_versions = []
         # Gather up the versions and artifacts
         for repo in repositories:
-            version = repo.latest_version()
+            version = repo.cast().latest_version()
             # Check version-content to make sure we're not being asked to export an on_demand repo
             content_artifacts = ContentArtifact.objects.filter(content__in=version.content)
             if content_artifacts.filter(artifact=None).exists():

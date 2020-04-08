@@ -1,0 +1,1 @@
+Taught pulp_export() to cast() repositories so plugins start with the right Detail type
