@@ -13,10 +13,6 @@ Storage
 Amazon S3
 ^^^^^^^^^
 
-.. warning::
-    Support for Amazon S3 is provided as a tech preview in Pulp 3.0. Functionality may not work or
-    may be incomplete. Also, backwards compatibility when upgrading is not guaranteed.
-
 Setting up S3
 -------------
 
@@ -70,10 +66,6 @@ Configuring Pulp
 
 Azure Blob storage
 ^^^^^^^^^^^^^^^^^^
-
-.. warning::
-    Support for Azure Blob storage is provided as a tech preview in Pulp 3.0. Functionality may not
-    work or may be incomplete. Also, backwards compatibility when upgrading is not guaranteed.
 
 Setting up Azure Blob storage
 -----------------------------
