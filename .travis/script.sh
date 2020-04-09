@@ -18,11 +18,10 @@ export FUNC_TEST_SCRIPT=$TRAVIS_BUILD_DIR/.travis/func_test_script.sh
 # Gets set in .travis/settings.yml, but doesn't seem to inherited by
 # this script.
 export DJANGO_SETTINGS_MODULE=pulpcore.app.settings
+export PULP_SETTINGS=$TRAVIS_BUILD_DIR/settings.py
 
 if [ "$TEST" = 'docs' ]; then
-  
     export PULP_CONTENT_ORIGIN=http://$(hostname):24816
-  
 
   cd docs
   make html
@@ -66,7 +65,6 @@ if [ "$TEST" = 'bindings' ]; then
   gem build pulpcore_client
   gem install --both ./pulpcore_client-0.gem
   cd ..
-
   rm -rf ./pulp_file-client
 
   ./generate.sh pulp_file ruby 0
@@ -74,7 +72,6 @@ if [ "$TEST" = 'bindings' ]; then
   gem build pulp_file_client
   gem install --both ./pulp_file_client-0.gem
   cd ..
-
   ruby $TRAVIS_BUILD_DIR/.travis/test_bindings.rb
   exit
 fi

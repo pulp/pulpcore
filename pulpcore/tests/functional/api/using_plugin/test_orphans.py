@@ -80,7 +80,7 @@ class DeleteOrphansTestCase(unittest.TestCase):
         # Create an orphan content unit.
         modify_repo(self.cfg, repo, remove_units=[content])
 
-        if settings.DEFAULT_FILE_STORAGE == "django.core.files.storage.FileSystemStorage":
+        if settings.DEFAULT_FILE_STORAGE == "pulpcore.app.models.storage.FileSystem":
             # Verify that the artifact is present on disk.
             artifact_path = os.path.join(MEDIA_PATH,
                                          self.api_client.get(content['artifact'])['file'])
@@ -97,7 +97,7 @@ class DeleteOrphansTestCase(unittest.TestCase):
         content_units = self.api_client.get(FILE_CONTENT_PATH)['results']
         self.assertNotIn(content, content_units)
 
-        if settings.DEFAULT_FILE_STORAGE == "django.core.files.storage.FileSystemStorage":
+        if settings.DEFAULT_FILE_STORAGE == "pulpcore.app.models.storage.FileSystem":
             # Verify that the artifact was removed from disk.
             with self.assertRaises(CalledProcessError):
                 self.cli_client.run(cmd)
@@ -110,7 +110,7 @@ class DeleteOrphansTestCase(unittest.TestCase):
         files = {'file': utils.http_get(FILE2_URL)}
         artifact = self.api_client.post(ARTIFACTS_PATH, files=files)
 
-        if settings.DEFAULT_FILE_STORAGE == "django.core.files.storage.FileSystemStorage":
+        if settings.DEFAULT_FILE_STORAGE == "pulpcore.app.models.storage.FileSystem":
             cmd = ('ls', os.path.join(MEDIA_PATH, artifact['file']))
             self.cli_client.run(cmd, sudo=True)
 
@@ -119,6 +119,6 @@ class DeleteOrphansTestCase(unittest.TestCase):
         with self.assertRaises(HTTPError):
             self.api_client.get(artifact["pulp_href"])
 
-        if settings.DEFAULT_FILE_STORAGE == "django.core.files.storage.FileSystemStorage":
+        if settings.DEFAULT_FILE_STORAGE == "pulpcore.app.models.storage.FileSystem":
             with self.assertRaises(CalledProcessError):
                 self.cli_client.run(cmd)

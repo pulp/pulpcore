@@ -71,7 +71,7 @@ class StatusTestCase(unittest.TestCase):
         """Make an API client."""
         self.client = api.Client(config.get_config(), api.json_handler)
         self.status_response = STATUS
-        if settings.DEFAULT_FILE_STORAGE != "django.core.files.storage.FileSystemStorage":
+        if settings.DEFAULT_FILE_STORAGE != "pulpcore.app.models.storage.FileSystem":
             self.status_response["properties"].pop("storage", None)
 
     def test_get_authenticated(self):
@@ -107,5 +107,7 @@ class StatusTestCase(unittest.TestCase):
         self.assertTrue(status['redis_connection']['connected'])
         self.assertNotEqual(status['online_workers'], [])
         self.assertNotEqual(status['versions'], [])
-        if settings.DEFAULT_FILE_STORAGE == "django.core.files.storage.FileSystemStorage":
+        if settings.DEFAULT_FILE_STORAGE == "pulpcore.app.models.storage.FileSystem":
             self.assertIsNotNone(status['storage'])
+        else:
+            self.assertIsNone(status['storage'])

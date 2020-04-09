@@ -6,7 +6,7 @@ from django.conf import settings
 from random import sample
 
 from pulp_smash import api, cli, config
-from pulp_smash.pulp3.constants import MEDIA_PATH, STATUS_PATH
+from pulp_smash.pulp3.constants import MEDIA_PATH
 from pulp_smash.pulp3.utils import (
     delete_orphans,
     gen_repo,
@@ -59,12 +59,6 @@ class RepairRepositoryVersionTestCase(unittest.TestCase):
             self.skipTest("Cannot simulate bit-rot on this storage platform ({}).".format(
                 settings.DEFAULT_FILE_STORAGE),
             )
-
-        # Remove this workaround, once https://pulp.plan.io/issues/6451 once is fixed.
-        status = self.api_client.get(STATUS_PATH)
-        if status['storage'] is None:
-            self.skipTest("Cannot simulate bit-rot on this storage platform.")
-        # ----8<--------8<--------8<--------8<--------8<----
 
         # STEP 1
         delete_orphans()
