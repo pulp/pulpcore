@@ -90,7 +90,7 @@ class MasterModel(BaseModel, metaclass=MasterModelMeta):
 
     # This field must have a value when models are saved, and defaults to the value of
     # the TYPE attribute on the Model being saved (seen above).
-    pulp_type = models.TextField(null=False, default=None)
+    pulp_type = models.TextField(null=False, default=None, db_index=True)
 
     class Meta:
         abstract = True
