@@ -97,9 +97,8 @@ def _verify_ca(content_artifact):
 
 
 async def _repair_repository_version(version):
-    loop = asyncio.get_running_loop()
+    loop = asyncio.get_event_loop()
     pending = set()
-    done = set()
     with models.ProgressReport(
             message="Identify corrupted units", code='repair.corrupted') as corrupted:
         with models.ProgressReport(
@@ -116,7 +115,7 @@ async def _repair_repository_version(version):
                         done, pending = await asyncio.wait(
                             pending, return_when=asyncio.FIRST_COMPLETED)
                         await asyncio.gather(*done)  # Clean up tasks
-                    pending.add(asyncio.create_task(_repair_ca(content_artifact, repaired)))
+                    pending.add(asyncio.ensure_future(_repair_ca(content_artifact, repaired)))
             await asyncio.gather(*pending)
 
 
