@@ -17,3 +17,4 @@ assumes that the reader is familiar with the fundamentals discussed in the :doc:
    exposing-content
    signed-metadata
    repairing-repository-versions
+   import-export
