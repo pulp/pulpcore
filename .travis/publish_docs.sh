@@ -1,9 +1,5 @@
 #!/bin/bash
 
-export PULP_CONTENT_ORIGIN=http://$(hostname):24816
-django-admin runserver 24817 >> ~/django_runserver.log 2>&1 &
-sleep 5
-
 openssl aes-256-cbc -K $encrypted_d1a778bda808_key -iv $encrypted_d1a778bda808_iv -in .travis/pulp-infra.enc -out ~/.ssh/pulp-infra -d
 sudo chmod 600 ~/.ssh/pulp-infra
 

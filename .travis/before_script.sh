@@ -9,50 +9,24 @@
 
 set -euv
 
+source .travis/utils.sh
+
 export PRE_BEFORE_SCRIPT=$TRAVIS_BUILD_DIR/.travis/pre_before_script.sh
 export POST_BEFORE_SCRIPT=$TRAVIS_BUILD_DIR/.travis/post_before_script.sh
 
-# Aliases for running commands in the pulp-api container.
-export PULP_API_POD=$(sudo kubectl get pods | grep -E -o "pulp-api-(\w+)-(\w+)")
-# Run a command
-export CMD_PREFIX="sudo kubectl exec $PULP_API_POD --"
-# Run a command, and pass STDIN
-export CMD_STDIN_PREFIX="sudo kubectl exec -i $PULP_API_POD --"
-
 if [[ -f $PRE_BEFORE_SCRIPT ]]; then
-    $PRE_BEFORE_SCRIPT
+  source $PRE_BEFORE_SCRIPT
 fi
 
 # Developers often want to know the final pulp config
 echo "PULP CONFIG:"
-$CMD_PREFIX bash -c "tail -v -n +1 /etc/pulp/settings.*"
-
-# Copy pulp config in a place accessible to the test code
-$CMD_PREFIX bash -c "cat /etc/pulp/settings.py" > $TRAVIS_BUILD_DIR/settings.py
-
-mkdir -p ~/.config/pulp_smash
-
-if [[ -f .travis/pulp-smash-config.json ]]; then
-    sed "s/localhost/$(hostname)/g" .travis/pulp-smash-config.json > ~/.config/pulp_smash/settings.json
-else
-    sed "s/localhost/$(hostname)/g" ../pulpcore/.travis/pulp-smash-config.json > ~/.config/pulp_smash/settings.json
-fi
+tail -v -n +1 .travis/settings/settings.* ~/.config/pulp_smash/settings.json
 
 if [[ "$TEST" == 'pulp' || "$TEST" == 'performance' || "$TEST" == 's3' ]]; then
-    # Many tests require pytest/mock, but users do not need them at runtime
-    # (or to add plugins on top of pulpcore or pulp container images.)
-    # So install it here, rather than in the image Dockerfile.
-    $CMD_PREFIX pip3 install pytest mock
-    # Many functional tests require these
-    $CMD_PREFIX dnf install -yq lsof which dnf-plugins-core
-    # set up pulp-fixtures docker container
-    docker run -d -p 0.0.0.0:8000:80 quay.io/pulp/pulp-fixtures:latest
-
-    cat ~/.config/pulp_smash/settings.json | \
-        jq "setpath([\"custom\",\"fixtures_origin\"]; \"http://$(hostname):8000/fixtures/\")" > temp.json
-    cat temp.json > ~/.config/pulp_smash/settings.json
+  # Many functional tests require these
+  cmd_prefix dnf install -yq lsof which dnf-plugins-core
 fi
 
 if [[ -f $POST_BEFORE_SCRIPT ]]; then
-    $POST_BEFORE_SCRIPT
+  source $POST_BEFORE_SCRIPT
 fi

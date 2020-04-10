@@ -1,0 +1,23 @@
+CONTENT_ORIGIN = "http://pulp:80"
+ANSIBLE_API_HOSTNAME = "http://pulp:80"
+ANSIBLE_CONTENT_HOSTNAME = "http://pulp:80/pulp/content"
+TOKEN_AUTH_DISABLED = True
+
+{% if pulp_settings %}
+{% for key, value in pulp_settings.items() %}
+{{ key | upper }} = {{ value | repr }}
+{% endfor %}
+{% endif %}
+
+{% if s3_test | default(false) %}
+AWS_ACCESS_KEY_ID = "{{ minio_access_key }}"
+AWS_SECRET_ACCESS_KEY = "{{ minio_secret_key }}"
+AWS_S3_REGION_NAME = "eu-central-1"
+AWS_S3_ADDRESSING_STYLE = "path"
+S3_USE_SIGV4 = True
+AWS_S3_SIGNATURE_VERSION = "s3v4"
+AWS_STORAGE_BUCKET_NAME = "pulp3"
+AWS_S3_ENDPOINT_URL = "http://minio:9000"
+DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
+AWS_DEFAULT_ACL = "@none None"
+{% endif %}

@@ -1,0 +1,22 @@
+FROM pulp_ci_base:{{ image.tag }}
+
+{% if s3_test | default(false) %}
+# Hacking botocore (https://github.com/boto/botocore/pull/1990)
+RUN pip3 install django-storages[boto3]
+RUN pip3 install git+https://github.com/fabricio-aguiar/botocore.git@fix-100-continue
+{% endif %}
+
+{% for item in plugins %}
+
+# Install {{ item.name }} from {{ item.source }}
+{% if item.name == "pulp-certguard" %}
+RUN pip3 install python-dateutil rhsm
+{% endif %}
+{% if item.source.startswith("./") %}
+ADD {{ item.source }} {{ item.source }}
+{% endif %}
+RUN pip3 install {{ item.source }}
+RUN ln /usr/local/lib/python3.7/site-packages/{{ item.name }}/app/webserver_snippets/nginx.conf /etc/nginx/conf.d/{{ item.name }} || true
+{% endfor %}
+
+ENTRYPOINT ["/init"]
