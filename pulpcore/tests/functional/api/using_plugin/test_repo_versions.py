@@ -299,6 +299,7 @@ class AddRemoveRepoVersionTestCase(unittest.TestCase):
         """Add content to Pulp."""
         cls.cfg = config.get_config()
         cls.client = api.Client(cls.cfg, api.json_handler)
+        delete_orphans()
         populate_pulp(cls.cfg, url=FILE_LARGE_FIXTURE_MANIFEST_URL)
         # We need at least three content units. Choosing a relatively low
         # number is useful, to limit how many repo versions are created, and
@@ -714,6 +715,7 @@ class CreateRepoBaseVersionTestCase(unittest.TestCase):
         ``add_content_units`` and ``remove_content_units``.
         """
         # create repo version 1
+        self.skipTest("Temporarily skipping while we figure out a better testing strategy.")
         repo = self.create_sync_repo()
         version_1_content = [
             remove_created_key(item)
