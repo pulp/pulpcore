@@ -2,12 +2,13 @@ import warnings
 from gettext import gettext as _
 from urllib.parse import urlparse
 
-from django.core.exceptions import FieldError, ValidationError
+from django.core.exceptions import FieldDoesNotExist, FieldError, ValidationError
 from django.forms.utils import ErrorList
 from django.urls import Resolver404, resolve
-from django_filters.rest_framework import filterset
+from django_filters.rest_framework import DjangoFilterBackend, filterset
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import viewsets
+from rest_framework.filters import OrderingFilter
 from rest_framework.generics import get_object_or_404
 from rest_framework.schemas.openapi import AutoSchema
 from rest_framework.serializers import ValidationError as DRFValidationError
@@ -56,6 +57,32 @@ class DefaultSchema(AutoSchema):
         return method.lower() in ["get"]
 
 
+class StableOrderingFilter(OrderingFilter):
+    """
+    Ordering filter backend.
+
+    Reference: https://github.com/encode/django-rest-framework/issues/6886#issuecomment-547120480
+    """
+
+    def get_ordering(self, request, queryset, view):
+        """
+        Ordering is set by a comma delimited ?ordering=... query parameter.
+
+        The `ordering` query parameter can be overridden by setting the `ordering_param` value on
+        the OrderingFilter or by specifying an `ORDERING_PARAM` value in the API settings.
+        """
+        ordering = super(StableOrderingFilter, self).get_ordering(request, queryset, view)
+        try:
+            field = queryset.model._meta.get_field("pulp_created")
+        except FieldDoesNotExist:
+            field = queryset.model._meta.pk
+
+        if ordering is None:
+            return ["-" + field.name]
+
+        return list(ordering) + ["-" + field.name]
+
+
 class NamedModelViewSet(viewsets.GenericViewSet):
     """
     A customized named ModelViewSet that knows how to register itself with the Pulp API router.
@@ -82,6 +109,7 @@ class NamedModelViewSet(viewsets.GenericViewSet):
     parent_viewset = None
     parent_lookup_kwargs = {}
     schema = DefaultSchema()
+    filter_backends = (StableOrderingFilter, DjangoFilterBackend)
 
     def get_serializer_class(self):
         """
