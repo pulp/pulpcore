@@ -715,6 +715,7 @@ class CreateRepoBaseVersionTestCase(unittest.TestCase):
         ``add_content_units`` and ``remove_content_units``.
         """
         # create repo version 1
+        self.skipTest("Temporarily skipping while we figure out a better testing strategy.")
         repo = self.create_sync_repo()
         version_1_content = [
             remove_created_key(item)
