@@ -612,6 +612,20 @@ class RepositoryVersion(BaseModel):
             version_removed=None)
         q_set.update(version_removed=self)
 
+    def set_content(self, content):
+        """
+        Sets the repo version content by calling remove_content() then add_content().
+
+        Args:
+            content (django.db.models.QuerySet): Set of desired content
+
+        Raise:
+            pulpcore.exception.ResourceImmutableError: if set_content is called on a
+                complete RepositoryVersion
+        """
+        self.remove_content(self.content.exclude(pk__in=content))
+        self.add_content(content.exclude(pk__in=self.content))
+
     def next(self):
         """
         Returns:

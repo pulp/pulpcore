@@ -26,9 +26,16 @@ class QueryModelResource(resources.ModelResource):
         queryset (django.db.models.query.QuerySet): filtering queryset for this resource
             (driven by repo_version)
     """
+    def set_up_queryset(self):
+        return None
+
     def __init__(self, repo_version=None):
         self.repo_version = repo_version
-        self.queryset = None
+        if repo_version:
+            self.queryset = self.set_up_queryset()
+
+    class Meta:
+        import_id_fields = ('pulp_id',)
 
 
 #
@@ -52,18 +59,17 @@ class RepositoryResource(QueryModelResource):
 # follow the same pattern as a plugin writer would follow
 #
 class ContentResource(QueryModelResource):
-    def __init__(self, repo_version):
-        QueryModelResource.__init__(repo_version)
-        self.queryset = repo_version.content
+    def set_up_queryset(self):
+        return self.repo_version.content
 
     class Meta:
         model = Content
+        fields = ('pulp_id', 'pulp_type')
 
 
 class ContentArtifactResource(QueryModelResource):
-    def __init__(self, repo_version):
-        QueryModelResource.__init__(repo_version)
-        self.queryset = ContentArtifact.objects.filter(content__in=repo_version.content)
+    def set_up_queryset(self):
+        return ContentArtifact.objects.filter(content__in=self.repo_version.content)
 
     class Meta:
         model = ContentArtifact

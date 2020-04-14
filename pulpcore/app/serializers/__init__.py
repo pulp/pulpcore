@@ -25,6 +25,9 @@ from .fields import (  # noqa
     ExportsIdentityFromExporterField,
     ExportRelatedField,
     ExportIdentityField,
+    ImportsIdentityFromImporterField,
+    ImportRelatedField,
+    ImportIdentityField,
     LatestVersionField,
     SecretCharField,
     SingleContentArtifactField,
@@ -41,6 +44,12 @@ from .exporter import (  # noqa
     PublicationExportSerializer,
     PulpExporterSerializer,
     PulpExportSerializer,
+)
+from .importer import (  # noqa
+    ImportSerializer,
+    ImporterSerializer,
+    PulpImporterSerializer,
+    PulpImportSerializer,
 )
 from .progress import ProgressReportSerializer  # noqa
 from .publication import (  # noqa

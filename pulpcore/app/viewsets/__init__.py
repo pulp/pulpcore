@@ -24,6 +24,12 @@ from .exporter import (  # noqa
     PulpExporterViewSet,
     PulpExportViewSet,
 )
+from .importer import (  # noqa
+    ImportViewSet,
+    ImporterViewSet,
+    PulpImportViewSet,
+    PulpImporterViewSet,
+)
 from .publication import (  # noqa
     BaseDistributionViewSet,
     ContentGuardFilter,

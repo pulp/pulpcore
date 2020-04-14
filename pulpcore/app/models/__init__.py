@@ -18,6 +18,12 @@ from .exporter import (  # noqa
     PulpExport,
     PulpExporter,
 )
+from .importer import (  # noqa
+    Import,
+    Importer,
+    PulpImport,
+    PulpImporter,
+)
 from .publication import (  # noqa
     BaseDistribution,
     ContentGuard,

@@ -1,4 +1,3 @@
-import inspect
 from collections import defaultdict
 from importlib import import_module
 
@@ -146,10 +145,7 @@ class PulpPluginAppConfig(apps.AppConfig):
             modelrsrc_module_name = '{name}.{module}'.format(
                 name=self.name, module=MODELRESOURCE_MODULE_NAME)
             self.modelresource_module = import_module(modelrsrc_module_name)
-            self.exportable_classes = []
-            for (classname, cls) in inspect.getmembers(self.modelresource_module, inspect.isclass):
-                if cls.__module__ == self.modelresource_module.__name__:
-                    self.exportable_classes.append(cls)
+            self.exportable_classes = self.modelresource_module.IMPORT_ORDER
 
 
 class PulpAppConfig(PulpPluginAppConfig):

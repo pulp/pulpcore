@@ -24,7 +24,7 @@ class ExporterSerializer(ModelSerializer):
     pulp_href = DetailIdentityField()
     name = serializers.CharField(
         help_text=_("Unique name of the file system exporter."),
-        validators=[UniqueValidator(queryset=models.BaseDistribution.objects.all())]
+        validators=[UniqueValidator(queryset=models.Exporter.objects.all())]
     )
 
     @staticmethod
