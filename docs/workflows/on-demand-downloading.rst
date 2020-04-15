@@ -10,27 +10,27 @@ of the :term:`Remote` performing the sync. Policy is an optional parameter and d
 `immediate`.
 
 immediate
-  When performing the sync, download all :term:`Artifacts<artifact>` now. Also download all metadata
+  When performing the sync, download all :term:`Artifacts<Artifact>` now. Also download all metadata
   now to create the content units in Pulp, associated with the
   :term:`repository version<RepositoryVersion>` created by the sync. `immediate` is the default, and
   any plugin providing a sync is expected to implement the `immediate` mode.
 
 on_demand
-  When performing the sync, do not download any :term:`Artifacts<artifact>` now. Download all
+  When performing the sync, do not download any :term:`Artifacts<Artifact>` now. Download all
   metadata now to create the content units in Pulp, associated with the
   :term:`repository version<RepositoryVersion>` created by the sync. Clients requesting content
-  trigger the downloading of :term:`Artifacts<artifact>`, which are saved into Pulp to be served to
+  trigger the downloading of :term:`Artifacts<Artifact>`, which are saved into Pulp to be served to
   future clients.
 
   This mode is ideal for saving disk space because Pulp never downloads and stores
-  :term:`Artifacts<artifact>` that clients don't need. Units created from this mode are
+  :term:`Artifacts<Artifact>` that clients don't need. Units created from this mode are
   :term:`on-demand content units<on-demand content>`.
 
 streamed
-  When performing the sync, do not download any :term:`Artifacts<artifact>` now. Download all
+  When performing the sync, do not download any :term:`Artifacts<Artifact>` now. Download all
   metadata now to create the content units in Pulp, associated with the
   :term:`repository version<RepositoryVersion>` created by the sync. Clients requesting content
-  trigger the downloading of :term:`Artifacts<artifact>`, which are *not* saved into Pulp. This
+  trigger the downloading of :term:`Artifacts<Artifact>`, which are *not* saved into Pulp. This
   content will be re-downloaded with each client request.
 
   This mode is ideal for content that you especially don't want Pulp to store over time. For

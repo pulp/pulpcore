@@ -28,4 +28,7 @@ from pulpcore.app.serializers import (  # noqa
     validate_unknown_fields,
 )
 
-from .content import SingleArtifactContentUploadSerializer  # noqa
+from .content import (  # noqa
+    NoArtifactContentUploadSerializer,
+    SingleArtifactContentUploadSerializer,
+)

@@ -1,5 +1,28 @@
 from pulpcore.app.apps import get_plugin_config
-from pulpcore.app.models import CreatedResource
+from pulpcore.app.models import Artifact, CreatedResource
+from pulpcore.app.files import PulpTemporaryUploadedFile
+
+
+def general_create_from_temp_file(app_label, serializer_name, *args, **kwargs):
+    """
+    Create a model instance from contents stored in a temporary Artifact.
+
+    A caller should always pass the dictionary "data", as a keyword argument, containing the
+    href to the temporary Artifact. Otherwise, the function does nothing.
+
+    This function calls the function general_create() to create a model instance.
+    Data passed to that function already contains a serialized artifact converted
+    to PulpTemporaryUploadFile that will be deleted afterwards.
+    """
+    data = kwargs.pop("data", None)
+    if data and "artifact" in data:
+        named_model_view_set = get_plugin_config(app_label).viewsets_module.NamedModelViewSet
+        artifact = named_model_view_set.get_resource(data.pop("artifact"), Artifact)
+
+        data["file"] = PulpTemporaryUploadedFile.from_file(artifact.file)
+
+        general_create(app_label, serializer_name, data=data, *args, **kwargs)
+        artifact.delete()
 
 
 def general_create(app_label, serializer_name, *args, **kwargs):
