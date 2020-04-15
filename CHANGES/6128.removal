@@ -1,1 +1,0 @@
-Changing STATIC_URL from `/static/` to `/assets/` for avoiding conflicts

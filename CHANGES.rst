@@ -13,6 +13,167 @@ Changelog
 
 .. towncrier release notes start
 
+3.3.0 (2020-04-15)
+==================
+REST API
+--------
+
+Features
+~~~~~~~~
+
+- Added support for repairing a RepositoryVersion by redownloading corrupted artifact files.
+  Sending a POST request to
+  ``/pulp/api/v3/repositories/<plugin>/<type>/<repository-uuid>/versions/<version-number>/repair/``
+  will trigger a task that scans all associated artfacts and attempts to fetch missing or corrupted ones again.
+  `#5613 <https://pulp.plan.io/issues/5613>`_
+- Added support for exporting pulp-repo-versions. POSTing to an exporter using the
+  ``/pulp/api/v3/exporters/core/pulp/<exporter-uuid>/exports/`` API will instantiate a
+  PulpExport entity, which will generate an export-tar.gz file at
+  ``<exporter.path>/export-<export-uuid>-YYYYMMDD_hhMM.tar.gz``
+  `#6135 <https://pulp.plan.io/issues/6135>`_
+- Added API for importing Pulp Exports at ``POST /importers/core/pulp/<uuid>/imports/``.
+  `#6137 <https://pulp.plan.io/issues/6137>`_
+- Added the new setting CHUNKED_UPLOAD_DIR for configuring a default directory used for uploads
+  `#6253 <https://pulp.plan.io/issues/6253>`_
+- Exported SigningService in plugin api
+  `#6256 <https://pulp.plan.io/issues/6256>`_
+- Added name filter for SigningService
+  `#6257 <https://pulp.plan.io/issues/6257>`_
+- Relationships between tasks that spawn other tasks will be shown in the Task API.
+  `#6282 <https://pulp.plan.io/issues/6282>`_
+- Added a new APIs for PulpExporters and Exports at ``/exporters/core/pulp/`` and
+  ``/exporters/core/pulp/<uuid>/exports/``.
+  `#6328 <https://pulp.plan.io/issues/6328>`_
+- Added PulpImporter API at ``/pulp/api/v3/importers/core/pulp/``. PulpImporters are used for
+  importing exports from Pulp.
+  `#6329 <https://pulp.plan.io/issues/6329>`_
+- Added an ``ALLOWED_EXPORT_PATHS`` setting with list of filesystem locations that exporters can export to.
+  `#6335 <https://pulp.plan.io/issues/6335>`_
+- Indroduced `ordering` keyword, which orders the results by specified field.
+  Pulp objects will by default be ordered by pulp_created if that field exists.
+  `#6347 <https://pulp.plan.io/issues/6347>`_
+- Task Groups added -- Plugin writers can spawn tasks as part of a "task group",
+  which facilitates easier monitoring of related tasks.
+  `#6414 <https://pulp.plan.io/issues/6414>`_
+
+
+Bugfixes
+~~~~~~~~
+
+- Improved the overall performance while syncing very large repositories
+  `#6121 <https://pulp.plan.io/issues/6121>`_
+- Made chunked uploads to be stored in a local file system instead of a default file storage
+  `#6253 <https://pulp.plan.io/issues/6253>`_
+- Fixed 500 error when calling modify on nonexistent repo.
+  `#6284 <https://pulp.plan.io/issues/6284>`_
+- Fixed bug where user could delete repository version 0 but not recreate it by preventing users from
+  deleting repo version 0.
+  `#6308 <https://pulp.plan.io/issues/6308>`_
+- Fixed non unique content units on content list
+  `#6347 <https://pulp.plan.io/issues/6347>`_
+- Properly sort endpoints during generation of the OpenAPI schema.
+  `#6372 <https://pulp.plan.io/issues/6372>`_
+- Improved resync performance by up to 2x with a change to the content stages.
+  `#6373 <https://pulp.plan.io/issues/6373>`_
+- Fixed bug where 'secret' fields would be set to the sha256 checksum of the original value.
+  `#6402 <https://pulp.plan.io/issues/6402>`_
+- Fixed pulp containers not allowing commands to be run via absolute path.
+  `#6420 <https://pulp.plan.io/issues/6420>`_
+
+
+Improved Documentation
+~~~~~~~~~~~~~~~~~~~~~~
+
+- Documented bindings installation for a dev environment
+  `#6221 <https://pulp.plan.io/issues/6221>`_
+- Added documentation for how to write changelog messages.
+  `#6336 <https://pulp.plan.io/issues/6336>`_
+- Cleared up a line in the database settings documentation that was ambiguous.
+  `#6384 <https://pulp.plan.io/issues/6384>`_
+- Updated docs to reflect that S3/Azure are supported and no longer tech preview.
+  `#6443 <https://pulp.plan.io/issues/6443>`_
+- Added tech preview note to docs for importers/exporters.
+  `#6454 <https://pulp.plan.io/issues/6454>`_
+- Renamed ansible-pulp to pulp_installer (to avoid confusion with pulp-ansible)
+  `#6461 <https://pulp.plan.io/issues/6461>`_
+
+
+Deprecations and Removals
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+- Changing STATIC_URL from `/static/` to `/assets/` for avoiding conflicts
+  `#6128 <https://pulp.plan.io/issues/6128>`_
+- Exporting now requires the configuration of the ``ALLOWED_EXPORT_PATHS`` setting.  Without this
+  configuration, Pulp will not export content to the filesystem.
+  `#6335 <https://pulp.plan.io/issues/6335>`_
+
+
+Misc
+~~~~
+
+- `#5826 <https://pulp.plan.io/issues/5826>`_, `#6155 <https://pulp.plan.io/issues/6155>`_, `#6357 <https://pulp.plan.io/issues/6357>`_, `#6450 <https://pulp.plan.io/issues/6450>`_, `#6451 <https://pulp.plan.io/issues/6451>`_, `#6481 <https://pulp.plan.io/issues/6481>`_, `#6482 <https://pulp.plan.io/issues/6482>`_
+
+
+Plugin API
+----------
+
+Features
+~~~~~~~~
+
+- Tasks can now be spawned from inside other tasks, and these relationships can be explored
+  via the "parent_task" field and "child_tasks" related name on the Task model.
+  `#6282 <https://pulp.plan.io/issues/6282>`_
+- Added a new Export model, serializer, and viewset.
+  `#6328 <https://pulp.plan.io/issues/6328>`_
+- Added models Import and Importer (as well as serializers and viewsets) that can be used for
+  importing data into Pulp.
+  `#6329 <https://pulp.plan.io/issues/6329>`_
+- `NamedModelViewSet` uses a default ordering of `-pulp_created` using the `StableOrderingFilter`.
+  Users using the `ordering` keyword will be the primary ordering used when specified.
+  `#6347 <https://pulp.plan.io/issues/6347>`_
+- Added two new repo validation methods (validate_repo_version and validate_duplicate_content).
+  `#6362 <https://pulp.plan.io/issues/6362>`_
+- enqueue_with_reservation() provides a new optional argument for "task_group".
+  `#6414 <https://pulp.plan.io/issues/6414>`_
+
+
+Bugfixes
+~~~~~~~~
+
+- Fixed bug where RepositoryVersion.artifacts returns None.
+  `#6439 <https://pulp.plan.io/issues/6439>`_
+
+
+Improved Documentation
+~~~~~~~~~~~~~~~~~~~~~~
+
+- Add plugin writer docs on adding MANIFEST.in entry to include ``webserver_snippets`` in the Python
+  package.
+  `#6249 <https://pulp.plan.io/issues/6249>`_
+- Updated the metadata signing plugin writers documentation.
+  `#6342 <https://pulp.plan.io/issues/6342>`_
+
+
+Deprecations and Removals
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+- Changed master model from FileSystemExporter to Exporter. Plugins will still need to extend
+  FileSystemExporter but the master table is now core_exporter. This will require that plugins drop
+  and recreate their filesystem exporter tables.
+  `#6328 <https://pulp.plan.io/issues/6328>`_
+- RepositoryVersion add_content no longer checks for duplicate content.
+  `#6362 <https://pulp.plan.io/issues/6362>`_
+
+
+Misc
+~~~~
+
+- `#6342 <https://pulp.plan.io/issues/6342>`_
+
+
+----
+
+
 3.2.1 (2020-03-17)
 ==================
 REST API
