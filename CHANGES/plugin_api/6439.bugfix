@@ -1,1 +1,0 @@
-Fixed bug where RepositoryVersion.artifacts returns None.

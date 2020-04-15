@@ -1,3 +1,0 @@
-Changed master model from FileSystemExporter to Exporter. Plugins will still need to extend
-FileSystemExporter but the master table is now core_exporter. This will require that plugins drop
-and recreate their filesystem exporter tables.

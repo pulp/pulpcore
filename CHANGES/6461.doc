@@ -1,1 +1,0 @@
-Renamed ansible-pulp to pulp_installer (to avoid confusion with pulp-ansible)

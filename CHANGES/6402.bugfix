@@ -1,1 +1,0 @@
-Fixed bug where 'secret' fields would be set to the sha256 checksum of the original value.

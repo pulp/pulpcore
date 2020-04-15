@@ -30,7 +30,7 @@ requirements = [
 
 setup(
     name='pulpcore',
-    version='3.3.0.dev',
+    version='3.4.0.dev',
     description='Pulp Django Application and Related Modules',
     long_description=long_description,
     long_description_content_type="text/markdown",
