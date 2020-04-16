@@ -36,6 +36,7 @@ the box.
    subclassing/models
    subclassing/serializers
    subclassing/viewsets
+   subclassing/import-export
 
 
 .. _writing-tasks:
