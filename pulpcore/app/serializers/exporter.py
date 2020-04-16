@@ -126,8 +126,8 @@ class PulpExporterSerializer(ExporterSerializer):
         help_text=_("File system directory to store exported tar.gzs.")
     )
 
-    repositories = serializers.PrimaryKeyRelatedField(queryset=models.Repository.objects.all(),
-                                                      many=True)
+    repositories = DetailRelatedField(queryset=models.Repository.objects.all(),
+                                      many=True)
     last_export = ExportRelatedField(
         help_text=_("Last attempted export for this PulpExporter"),
         queryset=models.PulpExport.objects.all(),

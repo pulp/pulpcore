@@ -1,0 +1,1 @@
+Changed repositories field on ``/pulp/api/v3/exporters/core/pulp/`` from UUIDs to hrefs.
