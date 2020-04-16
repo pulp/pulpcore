@@ -71,7 +71,7 @@ INSTALLED_PULP_PLUGINS = []
 
 for entry_point in iter_entry_points('pulpcore.plugin'):
     plugin_app_config = entry_point.load()
-    INSTALLED_PULP_PLUGINS.append(entry_point.module_name)
+    INSTALLED_PULP_PLUGINS.append(entry_point.name)
     INSTALLED_APPS.append(plugin_app_config)
 
 # Optional apps that help with development, or augment Pulp in some non-critical way
@@ -234,8 +234,8 @@ settings = dynaconf.DjangoDynaconf(
     GLOBAL_ENV_FOR_DYNACONF='PULP',
     ENV_SWITCHER_FOR_DYNACONF='PULP_ENV',
     PRELOAD_FOR_DYNACONF=[
-        '{}.app.settings'.format(plugin_name)
-        for plugin_name in INSTALLED_PULP_PLUGINS
+        '{}.app.settings'.format(entry_point.module_name)
+        for entry_point in iter_entry_points('pulpcore.plugin')
     ],
     ENVVAR_FOR_DYNACONF='PULP_SETTINGS',
 )
