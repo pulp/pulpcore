@@ -1,21 +1,20 @@
 import os
 import io
 import tarfile
+import tempfile
+
+from django.conf import settings
 
 from pulpcore.app.apps import get_plugin_config
-
 from pulpcore.app.models.repository import (
     Repository,
 )
-
 from pulpcore.app.modelresource import (
     ArtifactResource,
     ContentResource,
     ContentArtifactResource,
     RepositoryResource,
 )
-
-from pulpcore.app.settings import MEDIA_ROOT
 
 
 def _write_export(the_tarfile, resource, dest_dir=None):
@@ -59,8 +58,16 @@ def export_artifacts(export, artifacts, last_export=None):
     """
     for artifact in artifacts:
         dest = artifact.file.name
-        src = os.path.join(MEDIA_ROOT, artifact.file.name)
-        export.tarfile.add(src, dest)
+
+        if settings.DEFAULT_FILE_STORAGE != "pulpcore.app.models.storage.FileSystem":
+            with tempfile.TemporaryDirectory() as temp_dir:
+                with tempfile.NamedTemporaryFile(dir=temp_dir) as temp_file:
+                    temp_file.write(artifact.file.read())
+                    temp_file.flush()
+                    export.tarfile.add(temp_file.name, dest)
+        else:
+            export.tarfile.add(artifact.file.path, dest)
+
     resource = ArtifactResource()
     resource.queryset = artifacts
     _write_export(export.tarfile, resource)
