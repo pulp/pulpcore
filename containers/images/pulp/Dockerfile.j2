@@ -1,4 +1,4 @@
-FROM fedora:30
+FROM fedora:32
 
 # https://superuser.com/questions/959380/how-do-i-install-generate-all-locales-on-fedora
 # This may not be necessary anymore because Fedora 30, unlike CentOS 7, has
@@ -38,17 +38,6 @@ RUN		dnf -y update && \
 		dnf -y install python3-devel && \
 		dnf -y install gcc && \
 		dnf clean all
-
-# Docs suggest RHEL8 uses the alternatives system for /usr/bin/python ,
-# but Fedora does not.
-RUN ln -s /usr/bin/python3 /usr/bin/python
-# If pip2 is installed, it will replace /usr/bin/pip .
-# /usr/local/bin will be before it in the PATH .
-RUN ln -s /usr/bin/pip3 /usr/local/bin/pip
-
-# Need to update pip inside of the container so that manylinux2014
-# packages are supported. This can be dropped with Fedora 32.
-RUN pip install --upgrade pip
 
 # Need to install optional dep, rhsm, for pulp-certguard
 RUN pip install rhsm
