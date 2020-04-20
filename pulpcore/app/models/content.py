@@ -5,6 +5,7 @@ import json
 import hashlib
 import tempfile
 import subprocess
+import logging
 
 import gnupg
 
@@ -16,6 +17,8 @@ from django.forms.models import model_to_dict
 
 from pulpcore.app.models import MasterModel, BaseModel, fields, storage
 from pulpcore.exceptions import DigestValidationError, SizeValidationError
+
+_logger = logging.getLogger(__name__)
 
 
 class BulkCreateManager(models.Manager):
@@ -387,6 +390,7 @@ class SigningService(BaseModel):
     """
     name = models.TextField(db_index=True, unique=True)
     script = models.TextField()
+    sha256 = models.CharField(max_length=64, null=True)
 
     def sign(self, filename):
         """
@@ -412,6 +416,9 @@ class SigningService(BaseModel):
             stderr=subprocess.PIPE,
         )
 
+        if self.sha256 != self.hash_value(self.script):
+            _logger.warning('Provided signing script does not match original signing script')
+
         if completed_process.returncode != 0:
             raise RuntimeError(str(completed_process.stderr))
 
@@ -424,7 +431,7 @@ class SigningService(BaseModel):
 
     def validate(self):
         """
-        Ensure that the external signing script produces the desired beahviour.
+        Ensure that the external signing script produces the desired behaviour.
 
         With desired behaviour we mean the behaviour as validated by this method. Subclasses are
         required to implement this method. Works by calling the sign() method on some test data, and
@@ -440,8 +447,19 @@ class SigningService(BaseModel):
         """
         Save a signing service to the database (unless it fails to validate).
         """
+        self.sha256 = self.hash_value(self.script)
         self.validate()
         super().save(*args, **kwargs)
+
+    def hash_value(self, filename):
+        """
+        Calculate hash value (sha256) of signing script.
+        """
+        sha256_hash = hashlib.sha256()
+        with open(filename, "rb") as f:
+            for byte_block in iter(lambda: f.read(4096), b""):
+                sha256_hash.update(byte_block)
+            return sha256_hash.hexdigest()
 
 
 class AsciiArmoredDetachedSigningService(SigningService):
