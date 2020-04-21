@@ -1,13 +1,24 @@
 from pulpcore.client.pulpcore import (
-    ApiClient as CoreApiClient, ArtifactsApi, Configuration,
-    TasksApi, Upload, UploadCommit, UploadsApi
+    ApiClient as CoreApiClient,
+    ArtifactsApi,
+    Configuration,
+    TasksApi,
+    Upload,
+    UploadCommit,
+    UploadsApi,
 )
 from pulpcore.client.pulp_file import (
-    ApiClient as FileApiClient, ContentFilesApi,
-    DistributionsFileApi, FileFileDistribution,
-    PublicationsFileApi, RemotesFileApi, FileFileRemote,
-    RepositorySyncURL, FileFilePublication,
-    FileFileRepository, RepositoriesFileApi,
+    ApiClient as FileApiClient,
+    ContentFilesApi,
+    DistributionsFileApi,
+    FileFileDistribution,
+    PublicationsFileApi,
+    RemotesFileApi,
+    FileFileRemote,
+    RepositorySyncURL,
+    FileFilePublication,
+    FileFileRepository,
+    RepositoriesFileApi,
     RepositoriesFileVersionsApi,
 )
 from pprint import pprint
@@ -30,13 +41,13 @@ def monitor_task(task_href):
         list[str]: List of hrefs that identify resource created by the task
 
     """
-    completed = ['completed', 'failed', 'canceled']
+    completed = ["completed", "failed", "canceled"]
     task = tasks.read(task_href)
     while task.state not in completed:
         sleep(2)
         task = tasks.read(task_href)
     pprint(task)
-    if task.state == 'completed':
+    if task.state == "completed":
         print("The task was successful.")
         return task.created_resources
     else:
@@ -58,24 +69,24 @@ def upload_file_in_chunks(file_path):
     size = os.stat(file_path).st_size
     chunk_size = 200000
     offset = 0
-    sha256hasher = hashlib.new('sha256')
+    sha256hasher = hashlib.new("sha256")
 
     upload = uploads.create(Upload(size=size))
 
-    with open(file_path, 'rb') as full_file:
+    with open(file_path, "rb") as full_file:
         while True:
             chunk = full_file.read(chunk_size)
             if not chunk:
                 break
             actual_chunk_size = len(chunk)
-            content_range = 'bytes {start}-{end}/{size}'.format(start=offset,
-                                                                end=offset+actual_chunk_size-1,
-                                                                size=size)
+            content_range = "bytes {start}-{end}/{size}".format(
+                start=offset, end=offset + actual_chunk_size - 1, size=size
+            )
             with NamedTemporaryFile() as file_chunk:
                 file_chunk.write(chunk)
-                upload = uploads.update(upload_href=upload.pulp_href,
-                                        file=file_chunk.name,
-                                        content_range=content_range)
+                upload = uploads.update(
+                    upload_href=upload.pulp_href, file=file_chunk.name, content_range=content_range
+                )
             offset += chunk_size
             sha256hasher.update(chunk)
 
@@ -90,9 +101,9 @@ def upload_file_in_chunks(file_path):
 
 # Configure HTTP basic authorization: basic
 configuration = Configuration()
-configuration.username = 'admin'
-configuration.password = 'password'
-configuration.safe_chars_for_path_param = '/'
+configuration.username = "admin"
+configuration.password = "password"
+configuration.safe_chars_for_path_param = "/"
 
 core_client = CoreApiClient(configuration)
 file_client = FileApiClient(configuration)
@@ -112,21 +123,22 @@ uploads = UploadsApi(core_client)
 # Test creating an Artifact from a 1mb file uploaded in 200kb chunks
 with NamedTemporaryFile() as downloaded_file:
     response = requests.get(
-        'https://repos.fedorapeople.org/repos/pulp/pulp/demo_repos/test_bandwidth_repo/'
-        'pulp-large_1mb_test-packageA-0.1.1-1.fc14.noarch.rpm')
+        "https://repos.fedorapeople.org/repos/pulp/pulp/demo_repos/test_bandwidth_repo/"
+        "pulp-large_1mb_test-packageA-0.1.1-1.fc14.noarch.rpm"
+    )
     response.raise_for_status()
     downloaded_file.write(response.content)
     artifact = upload_file_in_chunks(downloaded_file.name)
     pprint(artifact)
 
 # Create a File Remote
-remote_url = 'https://repos.fedorapeople.org/pulp/pulp/demo_repos/test_file_repo/PULP_MANIFEST'
-remote_data = FileFileRemote(name='bar25', url=remote_url)
+remote_url = "https://repos.fedorapeople.org/pulp/pulp/demo_repos/test_file_repo/PULP_MANIFEST"
+remote_data = FileFileRemote(name="bar25", url=remote_url)
 file_remote = fileremotes.create(remote_data)
 pprint(file_remote)
 
 # Create a Repository
-repository_data = FileFileRepository(name='foo25')
+repository_data = FileFileRepository(name="foo25")
 repository = filerepositories.create(repository_data)
 pprint(repository)
 
@@ -143,16 +155,16 @@ repository_version_1 = filerepoversions.read(created_resources[0])
 pprint(repository_version_1)
 
 # Create an artifact from a local file
-file_path = os.path.join(os.environ['TRAVIS_BUILD_DIR'], '.travis/test_bindings.py')
+file_path = os.path.join(os.environ["TRAVIS_BUILD_DIR"], ".travis/test_bindings.py")
 artifact = artifacts.create(file=file_path)
 pprint(artifact)
 
 # Create a FileContent from the artifact
-filecontent_response = filecontent.create(relative_path='foo.tar.gz', artifact=artifact.pulp_href)
+filecontent_response = filecontent.create(relative_path="foo.tar.gz", artifact=artifact.pulp_href)
 created_resources = monitor_task(filecontent_response.task)
 
 # Add the new FileContent to a repository version
-repo_version_data = {'add_content_units': [created_resources[0]]}
+repo_version_data = {"add_content_units": [created_resources[0]]}
 repo_version_response = filerepositories.modify(repository.pulp_href, repo_version_data)
 
 # Monitor the repo version creation task
@@ -173,7 +185,7 @@ created_resources = monitor_task(publish_response.task)
 publication_href = created_resources[0]
 
 distribution_data = FileFileDistribution(
-    name='baz25', base_path='foo25', publication=publication_href
+    name="baz25", base_path="foo25", publication=publication_href
 )
 distribution = filedistributions.create(distribution_data)
 pprint(distribution)
