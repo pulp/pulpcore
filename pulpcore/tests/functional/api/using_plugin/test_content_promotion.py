@@ -79,7 +79,7 @@ class ContentPromotionTestCase(unittest.TestCase):
         unit_urls = []
         unit_path = get_added_content(repo)[FILE_CONTENT_NAME][0]['relative_path']
         for distribution in distributions:
-            unit_url = distribution['base_url'] + '/'
+            unit_url = distribution['base_url']
             unit_urls.append(urljoin(unit_url, unit_path))
 
         client.response_handler = api.safe_handler
