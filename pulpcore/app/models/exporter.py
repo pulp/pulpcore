@@ -36,7 +36,7 @@ class Export(BaseModel):
         exporter (models.ForeignKey): The Exporter that exported the resource.
     """
     params = JSONField(null=True)
-    task = models.ForeignKey("Task", on_delete=models.PROTECT)
+    task = models.ForeignKey("Task", on_delete=models.CASCADE)
     exporter = models.ForeignKey("Exporter", on_delete=models.CASCADE)
 
 

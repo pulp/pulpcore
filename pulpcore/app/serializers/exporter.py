@@ -90,6 +90,7 @@ class ExportSerializer(ModelSerializer):
 
     params = serializers.JSONField(
         help_text=_('Any additional parameters that were used to create the export.'),
+        required=False,
     )
 
     class Meta:
@@ -133,6 +134,7 @@ class PulpExporterSerializer(ExporterSerializer):
         queryset=models.PulpExport.objects.all(),
         many=False,
         required=False,
+        allow_null=True,
     )
 
     class Meta:
