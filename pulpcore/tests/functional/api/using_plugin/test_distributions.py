@@ -316,7 +316,7 @@ class ContentServePublicationDistributionTestCase(unittest.TestCase):
 
         added_content = get_added_content(repo)
         unit_path = added_content[FILE_CONTENT_NAME][0]['relative_path']
-        unit_url = distribution['base_url'] + '/'
+        unit_url = distribution['base_url']
         unit_url = urljoin(unit_url, unit_path)
 
         pulp_hash = hashlib.sha256(
@@ -330,12 +330,7 @@ class ContentServePublicationDistributionTestCase(unittest.TestCase):
 
     def download_pulp_manifest(self, distribution):
         """Download pulp manifest."""
-        unit_url = reduce(
-            urljoin,
-            (
-                distribution['base_url'] + '/', 'PULP_MANIFEST'
-            ),
-        )
+        unit_url = reduce(urljoin, (distribution['base_url'], 'PULP_MANIFEST'))
         return self.client.get(unit_url)
 
 

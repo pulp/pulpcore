@@ -267,15 +267,11 @@ class BaseURLField(serializers.CharField):
     """
 
     def to_representation(self, value):
-        base_path = value
-        origin = settings.CONTENT_ORIGIN
-        prefix = settings.CONTENT_PATH_PREFIX
-        return '/'.join(
-            (
-                origin.strip('/'),
-                prefix.strip('/'),
-                base_path.lstrip('/')
-            ))
+        origin = settings.CONTENT_ORIGIN.strip('/')
+        prefix = settings.CONTENT_PATH_PREFIX.strip('/')
+        base_path = value.lstrip('/')
+
+        return '/'.join((origin, prefix, base_path)).rstrip('/') + '/'
 
 
 class ExportsIdentityFromExporterField(DetailIdentityField):
