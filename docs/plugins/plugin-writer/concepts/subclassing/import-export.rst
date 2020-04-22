@@ -13,9 +13,10 @@ QueryModelResource
 ~~~~~~~~~~~~~~~~~~
 
 If you don't need to do anything "special" to export your Model you can subclass
-``QueryModelResource``. This only requires you to provide the ``Meta.model`` class for the
-Model being export/imported, and to override the ``set_up_queryset(self)`` method to
-define a limiting filter based on the self.repo_version provided by ``QueryModelResource``.
+``pulpcore.plugin.importexport.QueryModelResource``. This only requires you to provide the
+``Meta.model`` class for the Model being export/imported, and to override the
+``set_up_queryset(self)`` method to define a limiting filter based on the self.repo_version
+provided by ``QueryModelResource``.
 
 An example ``QueryModelResource`` subclasses, for import/exporting the ``Bar`` Model
 from ``pulp_foo``, would look like this::
@@ -40,7 +41,7 @@ modelresource.py
 
 A simple ``modelresource.py`` module might look like this::
 
-    from pulpcore.app.modelresource import QueryModelResource
+    from pulpcore.plugin.importexport import QueryModelResource
     from pulp_file.app.models import FileContent
 
     class FileContentResource(QueryModelResource):
