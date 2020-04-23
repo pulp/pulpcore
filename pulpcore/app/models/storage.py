@@ -59,11 +59,12 @@ class FileSystem(FileSystemStorage):
             else:
                 os.makedirs(directory, exist_ok=True)
         except FileExistsError:
-            raise FileExistsError('%s exists and is not a directory.' % directory)
+            raise FileExistsError("%s exists and is not a directory." % directory)
 
         try:
-            if hasattr(content, 'temporary_file_path') and \
-                    content.temporary_file_path().startswith(settings.MEDIA_ROOT):
+            if hasattr(content, "temporary_file_path") and content.temporary_file_path().startswith(
+                settings.MEDIA_ROOT
+            ):
                 file_move_safe(content.temporary_file_path(), full_path)
             else:
                 # This is a normal uploaded file that we can stream.
@@ -75,7 +76,7 @@ class FileSystem(FileSystemStorage):
                     locks.lock(fd, locks.LOCK_EX)
                     for chunk in content.chunks():
                         if _file is None:
-                            mode = 'wb' if isinstance(chunk, bytes) else 'wt'
+                            mode = "wb" if isinstance(chunk, bytes) else "wt"
                             _file = os.fdopen(fd, mode)
                         _file.write(chunk)
                 finally:
@@ -92,7 +93,7 @@ class FileSystem(FileSystemStorage):
             os.chmod(full_path, self.file_permissions_mode)
 
         # Store filenames with forward slashes, even on Windows.
-        return str(name).replace('\\', '/')
+        return str(name).replace("\\", "/")
 
 
 def get_artifact_path(sha256digest):
@@ -106,7 +107,7 @@ def get_artifact_path(sha256digest):
         A string representing the absolute path where a file backing the Artifact should be
         stored
     """
-    return os.path.join('artifact', sha256digest[0:2], sha256digest[2:])
+    return os.path.join("artifact", sha256digest[0:2], sha256digest[2:])
 
 
 def get_tls_path(model, name):
@@ -120,9 +121,4 @@ def get_tls_path(model, name):
     Returns:
         str: An absolute (base) path
     """
-    return os.path.join(
-        settings.MEDIA_ROOT,
-        'tls',
-        type(model).__name__,
-        str(uuid4()),
-        name)
+    return os.path.join(settings.MEDIA_ROOT, "tls", type(model).__name__, str(uuid4()), name)

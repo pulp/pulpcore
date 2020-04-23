@@ -34,11 +34,17 @@ class DeclarativeArtifact:
         specified and `artifact` doesn't have a file.
     """
 
-    __slots__ = ('artifact', 'url', 'relative_path', 'remote',
-                 'extra_data', 'deferred_download')
+    __slots__ = ("artifact", "url", "relative_path", "remote", "extra_data", "deferred_download")
 
-    def __init__(self, artifact=None, url=None, relative_path=None, remote=None, extra_data=None,
-                 deferred_download=False):
+    def __init__(
+        self,
+        artifact=None,
+        url=None,
+        relative_path=None,
+        remote=None,
+        extra_data=None,
+        deferred_download=False,
+    ):
         if not url:
             raise ValueError(_("DeclarativeArtifact must have a 'url'"))
         if not relative_path:
@@ -46,8 +52,12 @@ class DeclarativeArtifact:
         if not artifact:
             raise ValueError(_("DeclarativeArtifact must have a 'artifact'"))
         if not remote and not artifact.file:
-            raise ValueError(_("DeclarativeArtifact must have a 'remote' if the Artifact doesn't "
-                               "have a file backing it."))
+            raise ValueError(
+                _(
+                    "DeclarativeArtifact must have a 'remote' if the Artifact doesn't "
+                    "have a file backing it."
+                )
+            )
         self.artifact = artifact
         self.url = url
         self.relative_path = relative_path
@@ -69,20 +79,14 @@ class DeclarativeArtifact:
             if digest_value:
                 expected_digests[digest_name] = digest_value
         if expected_digests:
-            validation_kwargs['expected_digests'] = expected_digests
+            validation_kwargs["expected_digests"] = expected_digests
         if self.artifact.size:
             expected_size = self.artifact.size
-            validation_kwargs['expected_size'] = expected_size
-        downloader = self.remote.get_downloader(
-            url=self.url,
-            **validation_kwargs
-        )
+            validation_kwargs["expected_size"] = expected_size
+        downloader = self.remote.get_downloader(url=self.url, **validation_kwargs)
         # Custom downloaders may need extra information to complete the request.
         download_result = await downloader.run(extra_data=self.extra_data)
-        self.artifact = Artifact(
-            **download_result.artifact_attributes,
-            file=download_result.path
-        )
+        self.artifact = Artifact(**download_result.artifact_attributes, file=download_result.path)
         return download_result
 
 
@@ -108,12 +112,12 @@ class DeclarativeContent:
     """
 
     __slots__ = (
-        'content',
-        'd_artifacts',
-        'extra_data',
-        '_future',
-        '_thaw_queue_event',
-        '_resolved',
+        "content",
+        "d_artifacts",
+        "extra_data",
+        "_future",
+        "_thaw_queue_event",
+        "_resolved",
     )
 
     def __init__(self, content=None, d_artifacts=None, extra_data=None):

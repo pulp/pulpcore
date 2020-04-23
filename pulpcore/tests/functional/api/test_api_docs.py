@@ -34,7 +34,7 @@ class ApiDocsTestCase(unittest.TestCase):
 
         Assert the API documentation is returned.
         """
-        del self.client.request_kwargs['auth']
+        del self.client.request_kwargs["auth"]
         self.client.get(API_DOCS_PATH)
 
     def test_http_method(self):

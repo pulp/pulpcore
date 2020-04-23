@@ -11,7 +11,7 @@ from .content import (  # noqa
     ContentFilter,
     ContentViewSet,
     ReadOnlyContentViewSet,
-    SigningServiceViewSet
+    SigningServiceViewSet,
 )
 from .custom_filters import (  # noqa
     IsoDateTimeFilter,
@@ -41,7 +41,7 @@ from .repository import (  # noqa
     RemoteFilter,
     RemoteViewSet,
     RepositoryViewSet,
-    RepositoryVersionViewSet
+    RepositoryVersionViewSet,
 )
 from .task import TaskViewSet, TaskGroupViewSet, WorkerViewSet  # noqa
 from .upload import UploadViewSet  # noqa

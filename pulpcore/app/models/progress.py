@@ -105,6 +105,7 @@ class ProgressReport(BaseModel):
         task: The task associated with this progress report. If left unset when save() is called
             it will be set to the current task_id.
     """
+
     message = models.TextField()
     code = models.CharField(max_length=36)
     state = models.TextField(choices=TASK_CHOICES, default=TASK_STATES.WAITING)
@@ -113,10 +114,7 @@ class ProgressReport(BaseModel):
     done = models.IntegerField(default=0)
 
     task = models.ForeignKey(
-        'Task',
-        related_name='progress_reports',
-        default=Task.current,
-        on_delete=models.CASCADE
+        "Task", related_name="progress_reports", default=Task.current, on_delete=models.CASCADE
     )
 
     suffix = models.TextField(null=True)
@@ -196,7 +194,7 @@ class ProgressReport(BaseModel):
         self.done += count
         if self.total:
             if self.done > self.total:
-                _logger.warning(_('Too many items processed for ProgressReport %s') % self.message)
+                _logger.warning(_("Too many items processed for ProgressReport %s") % self.message)
         self.save()
 
     def iter(self, iter):

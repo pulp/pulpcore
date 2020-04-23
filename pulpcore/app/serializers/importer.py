@@ -15,44 +15,49 @@ from pulpcore.app.serializers import (
 
 class ImporterSerializer(ModelSerializer):
     """Base serializer for Importers."""
+
     pulp_href = DetailIdentityField()
     name = serializers.CharField(
         help_text=_("Unique name of the Importer."),
-        validators=[UniqueValidator(queryset=models.Importer.objects.all())]
+        validators=[UniqueValidator(queryset=models.Importer.objects.all())],
     )
 
     class Meta:
         model = models.Importer
-        fields = ModelSerializer.Meta.fields + ('name',)
+        fields = ModelSerializer.Meta.fields + ("name",)
 
 
 class ImportSerializer(ModelSerializer):
     """Serializer for Imports."""
+
     pulp_href = ImportIdentityField()
 
     task = RelatedField(
-        help_text=_('A URI of the Task that ran the Import.'),
+        help_text=_("A URI of the Task that ran the Import."),
         queryset=models.Task.objects.all(),
-        view_name='tasks-detail',
+        view_name="tasks-detail",
     )
 
     params = serializers.JSONField(
-        help_text=_('Any parameters that were used to create the import.'),
+        help_text=_("Any parameters that were used to create the import."),
     )
 
     class Meta:
         model = models.Importer
-        fields = ModelSerializer.Meta.fields + ('task', 'params')
+        fields = ModelSerializer.Meta.fields + ("task", "params")
 
 
 class PulpImporterSerializer(ImporterSerializer):
     """Serializer for PulpImporters."""
+
     repo_mapping = serializers.DictField(
         child=serializers.CharField(),
-        help_text=_("Mapping of repo names in an export file to the repo names in Pulp. "
-                    "For example, if the export has a repo named 'foo' and the repo to "
-                    "import content into was 'bar', the mapping would be \"{'foo': 'bar'}\"."),
-        required=False
+        help_text=_(
+            "Mapping of repo names in an export file to the repo names in Pulp. "
+            "For example, if the export has a repo named 'foo' and the repo to "
+            "import content into was 'bar', the mapping would be \"{'foo': 'bar'}\"."
+        ),
+        required=False,
     )
 
     def create(self, validated_data):
@@ -80,14 +85,13 @@ class PulpImporterSerializer(ImporterSerializer):
 
     class Meta:
         model = models.PulpImporter
-        fields = ImporterSerializer.Meta.fields + ('repo_mapping',)
+        fields = ImporterSerializer.Meta.fields + ("repo_mapping",)
 
 
 class PulpImportSerializer(ModelSerializer):
     """Serializer for call to import into Pulp."""
-    path = serializers.CharField(
-        help_text=_("Path to export that will be imported.")
-    )
+
+    path = serializers.CharField(help_text=_("Path to export that will be imported."))
 
     def validate_path(self, value):
         """
@@ -106,9 +110,10 @@ class PulpImportSerializer(ModelSerializer):
             user_provided_realpath = os.path.realpath(value)
             if user_provided_realpath.startswith(allowed_path):
                 return value
-        raise serializers.ValidationError(_("Path '{}' is not an allowed import "
-                                            "path").format(value))
+        raise serializers.ValidationError(
+            _("Path '{}' is not an allowed import " "path").format(value)
+        )
 
     class Meta:
         model = models.Import
-        fields = ('path',)
+        fields = ("path",)

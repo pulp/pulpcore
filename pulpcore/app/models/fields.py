@@ -42,22 +42,27 @@ class ArtifactFileField(FileField):
 
         """
         file = model_instance.file
-        artifact_storage_path = self.upload_to(model_instance, '')
+        artifact_storage_path = self.upload_to(model_instance, "")
 
-        already_in_place = (
-            file.name in [artifact_storage_path,
-                          os.path.join(settings.MEDIA_ROOT, artifact_storage_path)])
-        is_in_artifact_storage = file.name.startswith(os.path.join(settings.MEDIA_ROOT, 'artifact'))
+        already_in_place = file.name in [
+            artifact_storage_path,
+            os.path.join(settings.MEDIA_ROOT, artifact_storage_path),
+        ]
+        is_in_artifact_storage = file.name.startswith(os.path.join(settings.MEDIA_ROOT, "artifact"))
 
         if not already_in_place and is_in_artifact_storage:
-            raise ValueError(_('The file referenced by the Artifact is already present in '
-                               'Artifact storage. Files must be stored outside this location '
-                               'prior to Artifact creation.'))
+            raise ValueError(
+                _(
+                    "The file referenced by the Artifact is already present in "
+                    "Artifact storage. Files must be stored outside this location "
+                    "prior to Artifact creation."
+                )
+            )
 
-        move = (file._committed and file.name != artifact_storage_path)
+        move = file._committed and file.name != artifact_storage_path
         if move:
             if not already_in_place:
-                file._file = TemporaryDownloadedFile(open(file.name, 'rb'))
+                file._file = TemporaryDownloadedFile(open(file.name, "rb"))
             file._committed = False
 
         return super().pre_save(model_instance, add)
@@ -66,10 +71,10 @@ class ArtifactFileField(FileField):
 @Field.register_lookup
 class NotEqualLookup(Lookup):
     # this is copied from https://docs.djangoproject.com/en/3.0/howto/custom-lookups/
-    lookup_name = 'ne'
+    lookup_name = "ne"
 
     def as_sql(self, compiler, connection):
         lhs, lhs_params = self.process_lhs(compiler, connection)
         rhs, rhs_params = self.process_rhs(compiler, connection)
         params = lhs_params + rhs_params
-        return '%s <> %s' % (lhs, rhs), params
+        return "%s <> %s" % (lhs, rhs), params

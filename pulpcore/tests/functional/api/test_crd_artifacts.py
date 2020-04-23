@@ -33,9 +33,9 @@ class ArtifactTestCase(unittest.TestCase):
         cfg = config.get_config()
         delete_orphans(cfg)
         cls.client = api.Client(cfg, api.json_handler)
-        cls.file = {'file': utils.http_get(FILE_URL)}
-        cls.file_sha256 = hashlib.sha256(cls.file['file']).hexdigest()
-        cls.file_size = len(cls.file['file'])
+        cls.file = {"file": utils.http_get(FILE_URL)}
+        cls.file_sha256 = hashlib.sha256(cls.file["file"]).hexdigest()
+        cls.file_size = len(cls.file["file"])
 
     def test_upload_valid_attrs(self):
         """Upload a file, and provide valid attributes.
@@ -49,7 +49,7 @@ class ArtifactTestCase(unittest.TestCase):
         3. Delete the artifact, and verify that its attributes are
            inaccessible.
         """
-        file_attrs = {'sha256': self.file_sha256, 'size': self.file_size}
+        file_attrs = {"sha256": self.file_sha256, "size": self.file_size}
         for i in range(len(file_attrs) + 1):
             for keys in itertools.combinations(file_attrs, i):
                 data = {key: file_attrs[key] for key in keys}
@@ -68,25 +68,25 @@ class ArtifactTestCase(unittest.TestCase):
         3. Delete the artifact, and verify that its attributes are
            inaccessible.
         """
-        empty_file = b''
-        file_attrs = {'sha256': hashlib.sha256(empty_file).hexdigest(), 'size': 0}
+        empty_file = b""
+        file_attrs = {"sha256": hashlib.sha256(empty_file).hexdigest(), "size": 0}
         for i in range(len(file_attrs) + 1):
             for keys in itertools.combinations(file_attrs, i):
                 data = {key: file_attrs[key] for key in keys}
                 with self.subTest(data=data):
-                    self._do_upload_valid_attrs(data, files={'file': empty_file})
+                    self._do_upload_valid_attrs(data, files={"file": empty_file})
 
     def _do_upload_valid_attrs(self, data, files):
         """Upload a file with the given attributes."""
         artifact = self.client.post(ARTIFACTS_PATH, data=data, files=files)
-        self.addCleanup(self.client.delete, artifact['pulp_href'])
-        read_artifact = self.client.get(artifact['pulp_href'])
+        self.addCleanup(self.client.delete, artifact["pulp_href"])
+        read_artifact = self.client.get(artifact["pulp_href"])
         for key, val in artifact.items():
             with self.subTest(key=key):
                 self.assertEqual(read_artifact[key], val)
         self.doCleanups()
         with self.assertRaises(HTTPError):
-            self.client.get(artifact['pulp_href'])
+            self.client.get(artifact["pulp_href"])
 
     def test_upload_invalid_attrs(self):
         """Upload a file, and provide invalid attributes.
@@ -99,7 +99,7 @@ class ArtifactTestCase(unittest.TestCase):
         2. Verify that no artifacts exist in Pulp whose attributes match the
            file that was unsuccessfully uploaded.
         """
-        file_attrs = {'sha256': utils.uuid4(), 'size': self.file_size + 1}
+        file_attrs = {"sha256": utils.uuid4(), "size": self.file_size + 1}
         for i in range(1, len(file_attrs) + 1):
             for keys in itertools.combinations(file_attrs, i):
                 data = {key: file_attrs[key] for key in keys}
@@ -110,8 +110,8 @@ class ArtifactTestCase(unittest.TestCase):
         """Upload a file with the given attributes."""
         with self.assertRaises(HTTPError):
             self.client.post(ARTIFACTS_PATH, data=data, files=self.file)
-        for artifact in self.client.get(ARTIFACTS_PATH)['results']:
-            self.assertNotEqual(artifact['sha256'], self.file_sha256)
+        for artifact in self.client.get(ARTIFACTS_PATH)["results"]:
+            self.assertNotEqual(artifact["sha256"], self.file_sha256)
 
     def test_upload_mixed_attrs(self):
         """Upload a file, and provide both valid and invalid attributes.
@@ -124,8 +124,8 @@ class ArtifactTestCase(unittest.TestCase):
            file that was unsuccessfully uploaded.
         """
         invalid_data = (
-            {'sha256': self.file_sha256, 'size': self.file_size + 1},
-            {'sha256': utils.uuid4(), 'size': self.file_size}
+            {"sha256": self.file_sha256, "size": self.file_size + 1},
+            {"sha256": utils.uuid4(), "size": self.file_size},
         )
         for data in invalid_data:
             with self.subTest(data=data):
@@ -158,10 +158,10 @@ class ArtifactsDeleteFileSystemTestCase(unittest.TestCase):
         cli_client = cli.Client(cfg)
 
         # create
-        files = {'file': utils.http_get(FILE_URL)}
+        files = {"file": utils.http_get(FILE_URL)}
         artifact = api_client.post(ARTIFACTS_PATH, files=files)
-        self.addCleanup(api_client.delete, artifact['pulp_href'])
-        cmd = ('ls', os.path.join(MEDIA_PATH, artifact['file']))
+        self.addCleanup(api_client.delete, artifact["pulp_href"])
+        cmd = ("ls", os.path.join(MEDIA_PATH, artifact["file"]))
         cli_client.run(cmd, sudo=True)
 
         # delete

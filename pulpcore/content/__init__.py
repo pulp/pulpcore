@@ -7,6 +7,7 @@ import os
 import socket
 
 import django  # noqa otherwise E402: module level not at top of file
+
 django.setup()  # noqa otherwise E402: module level not at top of file
 
 from aiohttp import web
@@ -22,11 +23,11 @@ log = logging.getLogger(__name__)
 
 app = web.Application()
 
-CONTENT_MODULE_NAME = 'content'
+CONTENT_MODULE_NAME = "content"
 
 
 async def _heartbeat():
-    name = '{pid}@{hostname}'.format(pid=os.getpid(), hostname=socket.gethostname())
+    name = "{pid}@{hostname}".format(pid=os.getpid(), hostname=socket.gethostname())
     heartbeat_interval = settings.CONTENT_APP_TTL // 4
     i8ln_msg = _("Content App '{name}' heartbeat written, sleeping for '{interarrival}' seconds")
     msg = i8ln_msg.format(name=name, interarrival=heartbeat_interval)
@@ -43,10 +44,11 @@ async def server(*args, **kwargs):
     asyncio.ensure_future(_heartbeat())
     for pulp_plugin in pulp_plugin_configs():
         if pulp_plugin.name != "pulpcore.app":
-            content_module_name = '{name}.{module}'.format(name=pulp_plugin.name,
-                                                           module=CONTENT_MODULE_NAME)
+            content_module_name = "{name}.{module}".format(
+                name=pulp_plugin.name, module=CONTENT_MODULE_NAME
+            )
             with suppress(ModuleNotFoundError):
                 import_module(content_module_name)
     app.add_routes([web.get(settings.CONTENT_PATH_PREFIX, Handler().list_distributions)])
-    app.add_routes([web.get(settings.CONTENT_PATH_PREFIX + '{path:.+}', Handler().stream_content)])
+    app.add_routes([web.get(settings.CONTENT_PATH_PREFIX + "{path:.+}", Handler().stream_content)])
     return app

@@ -65,9 +65,9 @@ def remove_duplicates(repository_version):
                     item_query = Q(**content_dict)
                     find_dup_qs |= item_query
 
-                duplicates_qs = type_obj.objects.filter(pk__in=existing_content)\
-                                                .filter(find_dup_qs)\
-                                                .only('pk')
+                duplicates_qs = (
+                    type_obj.objects.filter(pk__in=existing_content).filter(find_dup_qs).only("pk")
+                )
                 repository_version.remove_content(duplicates_qs)
 
 
@@ -91,16 +91,18 @@ def validate_duplicate_content(version):
         new_content_total = type_obj.objects.filter(
             pk__in=version.content.filter(pulp_type=pulp_type)
         ).count()
-        unique_new_content_total = type_obj.objects.filter(
-            pk__in=version.content.filter(pulp_type=pulp_type)
-        ).distinct(*repo_key_fields).count()
+        unique_new_content_total = (
+            type_obj.objects.filter(pk__in=version.content.filter(pulp_type=pulp_type))
+            .distinct(*repo_key_fields)
+            .count()
+        )
 
         if unique_new_content_total < new_content_total:
-            error_messages.append(_(
-                "More than one {pulp_type} content with the duplicate values for {fields}."
+            error_messages.append(
+                _(
+                    "More than one {pulp_type} content with the duplicate values for {fields}."
                 ).format(
-                    pulp_type=pulp_type,
-                    fields=", ".join(repo_key_fields),
+                    pulp_type=pulp_type, fields=", ".join(repo_key_fields),
                 )
             )
     if error_messages:
@@ -116,9 +118,9 @@ def validate_version_paths(version):
     Raises:
         ValueError: If two artifact relative paths overlap
     """
-    paths = ContentArtifact.objects. \
-        filter(content__pk__in=version.content). \
-        values_list("relative_path", flat=True)
+    paths = ContentArtifact.objects.filter(content__pk__in=version.content).values_list(
+        "relative_path", flat=True
+    )
 
     try:
         validate_file_paths(paths)

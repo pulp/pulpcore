@@ -121,12 +121,12 @@ class Artifact(BaseModel):
 
     # All digest fields ordered by algorithm strength.
     DIGEST_FIELDS = (
-        'sha512',
-        'sha384',
-        'sha256',
-        'sha224',
-        'sha1',
-        'md5',
+        "sha512",
+        "sha384",
+        "sha256",
+        "sha224",
+        "sha1",
+        "md5",
     )
 
     # Reliable digest fields ordered by algorithm strength.
@@ -211,7 +211,7 @@ class Artifact(BaseModel):
             An in-memory, unsaved :class:`~pulpcore.plugin.models.Artifact`
         """
         if isinstance(file, str):
-            with open(file, 'rb') as f:
+            with open(file, "rb") as f:
                 hashers = {n: hashlib.new(n) for n in Artifact.DIGEST_FIELDS}
                 size = 0
                 while True:
@@ -234,7 +234,7 @@ class Artifact(BaseModel):
                 if expected_digest != hashers[algorithm].hexdigest():
                     raise DigestValidationError()
 
-        attributes = {'size': size, 'file': file}
+        attributes = {"size": size, "file": file}
         for algorithm in Artifact.DIGEST_FIELDS:
             attributes[algorithm] = hashers[algorithm].hexdigest()
 
@@ -249,15 +249,16 @@ class Content(MasterModel, QueryMixin):
 
         _artifacts (models.ManyToManyField): Artifacts related to Content through ContentArtifact
     """
-    TYPE = 'content'
+
+    TYPE = "content"
     repo_key_fields = ()  # Used by pulpcore.plugin.repo_version_utils.remove_duplicates
 
-    _artifacts = models.ManyToManyField(Artifact, through='ContentArtifact')
+    _artifacts = models.ManyToManyField(Artifact, through="ContentArtifact")
 
     objects = BulkCreateManager()
 
     class Meta:
-        verbose_name_plural = 'content'
+        verbose_name_plural = "content"
         unique_together = ()
 
     @classmethod
@@ -319,6 +320,7 @@ class ContentArtifact(BaseModel, QueryMixin):
     Serves as a through model for the '_artifacts' ManyToManyField in Content.
     Artifact is protected from deletion if it's present in a ContentArtifact relationship.
     """
+
     artifact = models.ForeignKey(Artifact, on_delete=models.PROTECT, null=True)
     content = models.ForeignKey(Content, on_delete=models.CASCADE)
     relative_path = models.TextField()
@@ -326,7 +328,7 @@ class ContentArtifact(BaseModel, QueryMixin):
     objects = BulkCreateManager()
 
     class Meta:
-        unique_together = ('content', 'relative_path')
+        unique_together = ("content", "relative_path")
 
 
 class RemoteArtifact(BaseModel, QueryMixin):
@@ -356,6 +358,7 @@ class RemoteArtifact(BaseModel, QueryMixin):
         remote (:class:`django.db.models.ForeignKey`): Remote that created the
             RemoteArtifact.
     """
+
     url = models.TextField(validators=[validators.URLValidator])
     size = models.IntegerField(null=True)
     md5 = models.CharField(max_length=32, null=True)
@@ -366,12 +369,12 @@ class RemoteArtifact(BaseModel, QueryMixin):
     sha512 = models.CharField(max_length=128, null=True)
 
     content_artifact = models.ForeignKey(ContentArtifact, on_delete=models.CASCADE)
-    remote = models.ForeignKey('Remote', on_delete=models.CASCADE)
+    remote = models.ForeignKey("Remote", on_delete=models.CASCADE)
 
     objects = BulkCreateManager()
 
     class Meta:
-        unique_together = ('content_artifact', 'remote')
+        unique_together = ("content_artifact", "remote")
 
 
 class SigningService(BaseModel):
@@ -385,6 +388,7 @@ class SigningService(BaseModel):
             An absolute path to the external signing script (or executable).
 
     """
+
     name = models.TextField(db_index=True, unique=True)
     script = models.TextField()
 
@@ -406,10 +410,7 @@ class SigningService(BaseModel):
             A dictionary as validated by the validate() method.
         """
         completed_process = subprocess.run(
-            [self.script, filename],
-            env={},
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
+            [self.script, filename], env={}, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
         )
 
         if completed_process.returncode != 0:
@@ -434,7 +435,7 @@ class SigningService(BaseModel):
         Raises:
             RuntimeError: If the script failed to produce the desired outcome for the test data.
         """
-        raise NotImplementedError('Subclasses must implement a validate() method.')
+        raise NotImplementedError("Subclasses must implement a validate() method.")
 
     def save(self, *args, **kwargs):
         """
@@ -474,8 +475,10 @@ class AsciiArmoredDetachedSigningService(SigningService):
                     with open(signed["key"], "rb") as key:
                         import_result = gpg.import_keys(key.read())
                         verified = gpg.verify_file(fp, temp_file.name)
-                        if verified.trust_level is None \
-                                or verified.trust_level < verified.TRUST_FULLY:
+                        if (
+                            verified.trust_level is None
+                            or verified.trust_level < verified.TRUST_FULLY
+                        ):
                             raise RuntimeError(
                                 "A signature could not be verified or a trust level is too low. "
                                 "The signing script may generate invalid signatures."
@@ -483,4 +486,5 @@ class AsciiArmoredDetachedSigningService(SigningService):
                         elif verified.pubkey_fingerprint != import_result.fingerprints[0]:
                             raise RuntimeError(
                                 "Fingerprints of a provided public key and a verified public key "
-                                "are not equal. The signing script is probably not valid.")
+                                "are not equal. The signing script is probably not valid."
+                            )

@@ -7,7 +7,6 @@ from pulpcore.plugin.stages import Stage, EndStage, DeclarativeContent
 
 
 class TestStage(asynctest.TestCase):
-
     def setUp(self):
         self.in_q = asyncio.Queue()
         self.stage = Stage()
@@ -81,7 +80,6 @@ class TestStage(asynctest.TestCase):
 
 
 class TestMultipleStages(asynctest.TestCase):
-
     class FirstStage(Stage):
         def __init__(self, num, minsize, test_case, *args, **kwargs):
             super().__init__(*args, **kwargs)
@@ -139,8 +137,5 @@ class TestMultipleStages(asynctest.TestCase):
                     last_stage._connect(queues[1], queues[2])
                     end_stage._connect(queues[2], None)
                     await asyncio.gather(
-                        last_stage(),
-                        middle_stage(),
-                        first_stage(),
-                        end_stage(),
+                        last_stage(), middle_stage(), first_stage(), end_stage(),
                     )

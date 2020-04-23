@@ -19,11 +19,11 @@ def commit(upload_id, sha256):
     try:
         upload = models.Upload.objects.get(pk=upload_id)
     except models.Upload.DoesNotExist:
-        log.info(_('The upload was not found. Nothing to do.'))
+        log.info(_("The upload was not found. Nothing to do."))
         return
 
     file = files.PulpTemporaryUploadedFile.from_file(upload.file.file)
-    data = {'file': file, 'sha256': sha256}
+    data = {"file": file, "sha256": sha256}
     serializer = ArtifactSerializer(data=data)
     serializer.is_valid(raise_exception=True)
     artifact = serializer.save()

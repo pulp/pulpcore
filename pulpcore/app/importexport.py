@@ -6,9 +6,7 @@ import tempfile
 from django.conf import settings
 
 from pulpcore.app.apps import get_plugin_config
-from pulpcore.app.models.repository import (
-    Repository,
-)
+from pulpcore.app.models.repository import Repository
 from pulpcore.app.modelresource import (
     ArtifactResource,
     ContentResource,
@@ -31,14 +29,14 @@ def _write_export(the_tarfile, resource, dest_dir=None):
         resource (import_export.resources.ModelResource): ModelResource to be exported
         dest_dir str(directory-path): directory 'inside' the tarfile to write to
     """
-    filename = '{}.{}.json'.format(resource.__module__, type(resource).__name__)
+    filename = "{}.{}.json".format(resource.__module__, type(resource).__name__)
     dataset = resource.export(resource.queryset)
     if dest_dir:
         dest_filename = os.path.join(dest_dir, filename)
     else:
         dest_filename = filename
 
-    data = dataset.json.encode('utf8')
+    data = dataset.json.encode("utf8")
     info = tarfile.TarInfo(name=dest_filename)
     info.size = len(data)
     the_tarfile.addfile(info, io.BytesIO(data))
@@ -86,10 +84,11 @@ def export_content(export, repository_version, last_export=None):
         repository_version (django.db.models.RepositoryVersion): RepositoryVersion being exported
         last_export (django.db.models.PulpExport): previous export of the 'owning' Exporter
     """
-    dest_dir = os.path.join('repository-{}_{}'.format(
-                                str(repository_version.repository.pulp_id),
-                                repository_version.number)
-                            )
+    dest_dir = os.path.join(
+        "repository-{}_{}".format(
+            str(repository_version.repository.pulp_id), repository_version.number
+        )
+    )
     # export the resources pulpcore is responsible for
     resource = ContentResource(repository_version)
     _write_export(export.tarfile, resource, dest_dir)
@@ -98,7 +97,7 @@ def export_content(export, repository_version, last_export=None):
     _write_export(export.tarfile, resource, dest_dir)
 
     # find and export any ModelResource found in pulp_<repo-type>.app.modelresource
-    plugin_name = repository_version.repository.pulp_type.split('.')[0]
+    plugin_name = repository_version.repository.pulp_type.split(".")[0]
     cfg = get_plugin_config(plugin_name)
     if cfg.exportable_classes:
         for cls in cfg.exportable_classes:

@@ -100,6 +100,7 @@ class ArtifactDownloader(Stage):
         Returns:
             The coroutine for this stage.
         """
+
         def _add_to_pending(coro):
             nonlocal pending
             task = asyncio.ensure_future(coro)
@@ -116,7 +117,7 @@ class ArtifactDownloader(Stage):
         #    Set to None if stage is shutdown.
         content_get_task = _add_to_pending(content_iterator.__anext__())
 
-        with ProgressReport(message='Downloading Artifacts', code='downloading.artifacts') as pb:
+        with ProgressReport(message="Downloading Artifacts", code="downloading.artifacts") as pb:
             try:
                 while pending:
                     done, pending = await asyncio.wait(pending, return_when=asyncio.FIRST_COMPLETED)
@@ -148,10 +149,11 @@ class ArtifactDownloader(Stage):
             The number of downloads
         """
         downloaders_for_content = [
-            d_artifact.download() for d_artifact in d_content.d_artifacts
-            if d_artifact.artifact._state.adding and
-            not d_artifact.deferred_download and
-            not d_artifact.artifact.file
+            d_artifact.download()
+            for d_artifact in d_content.d_artifacts
+            if d_artifact.artifact._state.adding
+            and not d_artifact.deferred_download
+            and not d_artifact.artifact.file
         ]
         if downloaders_for_content:
             await asyncio.gather(*downloaders_for_content)
@@ -192,8 +194,12 @@ class ArtifactSaver(Stage):
                         da_to_save.append(d_artifact)
 
             if da_to_save:
-                for d_artifact, artifact in zip(da_to_save, Artifact.objects.bulk_get_or_create(
-                        d_artifact.artifact for d_artifact in da_to_save)):
+                for d_artifact, artifact in zip(
+                    da_to_save,
+                    Artifact.objects.bulk_get_or_create(
+                        d_artifact.artifact for d_artifact in da_to_save
+                    ),
+                ):
                     d_artifact.artifact = artifact
 
             for d_content in batch:
@@ -240,15 +246,15 @@ class RemoteArtifactSaver(Stage):
         prefetch_related_objects(
             [d_c.content for d_c in batch],
             Prefetch(
-                'contentartifact_set',
+                "contentartifact_set",
                 queryset=ContentArtifact.objects.prefetch_related(
                     Prefetch(
-                        'remoteartifact_set',
+                        "remoteartifact_set",
                         queryset=RemoteArtifact.objects.filter(remote__in=remotes_present),
-                        to_attr='_remote_artifact_saver_ras',
+                        to_attr="_remote_artifact_saver_ras",
                     )
                 ),
-                to_attr='_remote_artifact_saver_cas',
+                to_attr="_remote_artifact_saver_cas",
             ),
         )
         needed_ras = []
@@ -259,8 +265,9 @@ class RemoteArtifactSaver(Stage):
                         break
                 else:
                     msg = _('No declared artifact with relative path "{rp}" for content "{c}"')
-                    raise ValueError(msg.format(rp=content_artifact.relative_path,
-                                                c=d_content.content))
+                    raise ValueError(
+                        msg.format(rp=content_artifact.relative_path, c=d_content.content)
+                    )
                 for remote_artifact in content_artifact._remote_artifact_saver_ras:
                     if remote_artifact.remote_id == d_artifact.remote.pk:
                         break

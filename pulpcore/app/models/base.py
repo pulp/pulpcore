@@ -18,6 +18,7 @@ class BaseModel(models.Model):
         * https://docs.djangoproject.com/en/1.8/topics/db/models/#automatic-primary-key-fields
 
     """
+
     pulp_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     pulp_created = models.DateTimeField(auto_now_add=True)
     pulp_last_updated = models.DateTimeField(auto_now=True, null=True)
@@ -28,10 +29,10 @@ class BaseModel(models.Model):
     def __str__(self):
         try:
             # if we have a name, use it
-            return '<{}: {}>'.format(self._meta.object_name, self.name)
+            return "<{}: {}>".format(self._meta.object_name, self.name)
         except AttributeError:
             # if we don't, use the pk
-            return '<{}: pk={}>'.format(self._meta.object_name, self.pk)
+            return "<{}: pk={}>".format(self._meta.object_name, self.pk)
 
     def __repr__(self):
         return str(self)
@@ -42,13 +43,15 @@ class MasterModelMeta(ModelBase):
         """Override __new__ to set the default_related_name."""
         if BaseModel not in bases and MasterModel not in bases:  # Only affects "Detail" models.
             meta = attrs.get("Meta")
-            default_related_name = getattr(
-                meta, "default_related_name", None)
+            default_related_name = getattr(meta, "default_related_name", None)
             abstract = getattr(meta, "abstract", None)
 
             if not default_related_name and not abstract:
-                raise Exception(_("The 'default_related_name' option has not been set for "
-                                  "{class_name}").format(class_name=name))
+                raise Exception(
+                    _(
+                        "The 'default_related_name' option has not been set for " "{class_name}"
+                    ).format(class_name=name)
+                )
 
         new_class = super().__new__(cls, name, bases, attrs, **kwargs)
         return new_class
@@ -110,10 +113,7 @@ class MasterModel(BaseModel, metaclass=MasterModelMeta):
     def get_pulp_type(cls):
         """ Get the "pulp_type" string associated with this MasterModel type.
         """
-        return '{app_label}.{type}'.format(
-            app_label=cls._meta.app_label,
-            type=cls.TYPE
-        )
+        return "{app_label}.{type}".format(app_label=cls._meta.app_label, type=cls.TYPE)
 
     def cast(self):
         """Return a "Detail" model instance of this master-detail pair.
@@ -155,13 +155,13 @@ class MasterModel(BaseModel, metaclass=MasterModelMeta):
             return super().__str__()
 
         try:
-            return '<{} (pulp_type={}): {}>'.format(self._meta.object_name,
-                                                    cast.pulp_type,
-                                                    cast.name)
+            return "<{} (pulp_type={}): {}>".format(
+                self._meta.object_name, cast.pulp_type, cast.name
+            )
         except AttributeError:
-            return '<{} (pulp_type={}): pk={}>'.format(self._meta.object_name,
-                                                       cast.pulp_type,
-                                                       cast.pk)
+            return "<{} (pulp_type={}): pk={}>".format(
+                self._meta.object_name, cast.pulp_type, cast.pk
+            )
 
 
 # Add properties to model _meta info to support master/detail models

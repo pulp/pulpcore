@@ -3,9 +3,7 @@ from pulpcore.app.models.content import (
     Content,
     ContentArtifact,
 )
-from pulpcore.app.models.repository import (
-    Repository,
-)
+from pulpcore.app.models.repository import Repository
 from pulpcore.plugin.importexport import QueryModelResource
 
 
@@ -14,13 +12,11 @@ from pulpcore.plugin.importexport import QueryModelResource
 # repo-version-specific.
 #
 class ArtifactResource(QueryModelResource):
-
     class Meta:
         model = Artifact
 
 
 class RepositoryResource(QueryModelResource):
-
     class Meta:
         model = Repository
 
@@ -35,7 +31,7 @@ class ContentResource(QueryModelResource):
 
     class Meta:
         model = Content
-        fields = ('pulp_id', 'pulp_type')
+        fields = ("pulp_id", "pulp_type")
 
 
 class ContentArtifactResource(QueryModelResource):

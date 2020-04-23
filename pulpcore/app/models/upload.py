@@ -19,8 +19,9 @@ class Upload(BaseModel):
         size (models.BigIntegerField): The size of the file in bytes.
     """
 
-    file = models.FileField(null=False, max_length=255,
-                            storage=FileSystemStorage(location=settings.CHUNKED_UPLOAD_DIR))
+    file = models.FileField(
+        null=False, max_length=255, storage=FileSystemStorage(location=settings.CHUNKED_UPLOAD_DIR)
+    )
     size = models.BigIntegerField()
 
     def append(self, chunk, offset, sha256=None):
@@ -32,14 +33,14 @@ class Upload(BaseModel):
             offset (int): First byte position to write chunk to.
         """
         if not self.file:
-            self.file.save(str(self.pk), ContentFile(''))
+            self.file.save(str(self.pk), ContentFile(""))
 
         chunk_read = chunk.read()
         current_sha256 = hashlib.sha256(chunk_read).hexdigest()
         if sha256 and sha256 != current_sha256:
             raise serializers.ValidationError("Checksum does not match chunk upload.")
 
-        with self.file.open(mode='r+b') as file:
+        with self.file.open(mode="r+b") as file:
             file.seek(offset)
             file.write(chunk_read)
 
@@ -68,6 +69,6 @@ class UploadChunk(BaseModel):
         size (models.BigIntegerField): Size of the chunk in bytes.
     """
 
-    upload = models.ForeignKey(Upload, on_delete=models.CASCADE, related_name='chunks')
+    upload = models.ForeignKey(Upload, on_delete=models.CASCADE, related_name="chunks")
     offset = models.BigIntegerField()
     size = models.BigIntegerField()

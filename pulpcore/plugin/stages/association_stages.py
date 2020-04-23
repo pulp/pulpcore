@@ -32,8 +32,8 @@ class ContentAssociation(Stage):
         Returns:
             The coroutine for this stage.
         """
-        with ProgressReport(message='Associating Content', code='associating.content') as pb:
-            to_delete = set(self.new_version.content.values_list('pk', flat=True))
+        with ProgressReport(message="Associating Content", code="associating.content") as pb:
+            to_delete = set(self.new_version.content.values_list("pk", flat=True))
             async for batch in self.batches():
                 to_add = set()
                 for d_content in batch:
@@ -75,7 +75,7 @@ class ContentUnassociation(Stage):
         Returns:
             The coroutine for this stage.
         """
-        with ProgressReport(message='Un-Associating Content', code='unassociating.content') as pb:
+        with ProgressReport(message="Un-Associating Content", code="unassociating.content") as pb:
             async for queryset_to_unassociate in self.items():
                 self.new_version.remove_content(queryset_to_unassociate)
                 pb.increase_by(queryset_to_unassociate.count())

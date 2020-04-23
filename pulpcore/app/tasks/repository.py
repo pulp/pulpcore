@@ -60,11 +60,13 @@ def delete_version(pk):
         try:
             version = models.RepositoryVersion.objects.get(pk=pk)
         except models.RepositoryVersion.DoesNotExist:
-            log.info(_('The repository version was not found. Nothing to do.'))
+            log.info(_("The repository version was not found. Nothing to do."))
             return
 
-        log.info(_('Deleting and squashing version %(v)d of repository %(r)s'),
-                 {'v': version.number, 'r': version.repository.name})
+        log.info(
+            _("Deleting and squashing version %(v)d of repository %(r)s"),
+            {"v": version.number, "r": version.repository.name},
+        )
 
         version.delete()
 
@@ -100,11 +102,14 @@ async def _repair_repository_version(version):
     loop = asyncio.get_event_loop()
     pending = set()
     with models.ProgressReport(
-            message="Identify corrupted units", code='repair.corrupted') as corrupted:
+        message="Identify corrupted units", code="repair.corrupted"
+    ) as corrupted:
         with models.ProgressReport(
-                message="Repair corrupted units", code='repair.repaired') as repaired:
+            message="Repair corrupted units", code="repair.repaired"
+        ) as repaired:
             query_set = models.ContentArtifact.objects.filter(
-                content__in=version.content).prefetch_related("artifact")
+                content__in=version.content
+            ).prefetch_related("artifact")
             for content_artifact in query_set:
                 if not content_artifact.artifact:
                     continue
@@ -113,7 +118,8 @@ async def _repair_repository_version(version):
                     log.warn(_("Digest mismatch for {}").format(content_artifact))
                     if len(pending) >= 5:  # Limit the number of concurrent repair tasks
                         done, pending = await asyncio.wait(
-                            pending, return_when=asyncio.FIRST_COMPLETED)
+                            pending, return_when=asyncio.FIRST_COMPLETED
+                        )
                         await asyncio.gather(*done)  # Clean up tasks
                     pending.add(asyncio.ensure_future(_repair_ca(content_artifact, repaired)))
             await asyncio.gather(*pending)
@@ -132,8 +138,10 @@ def repair_version(repository_version_pk):
 
     version = models.RepositoryVersion.objects.get(pk=repository_version_pk)
 
-    log.info(_('Repairing version %(v)d of repository %(r)s'),
-             {'v': version.number, 'r': version.repository.name})
+    log.info(
+        _("Repairing version %(v)d of repository %(r)s"),
+        {"v": version.number, "r": version.repository.name},
+    )
 
     loop = asyncio.get_event_loop()
     loop.run_until_complete(_repair_repository_version(version))
@@ -160,10 +168,10 @@ def add_and_remove(repository_pk, add_content_units, remove_content_units, base_
     else:
         base_version = None
 
-    if '*' in remove_content_units:
+    if "*" in remove_content_units:
         latest = repository.latest_version()
         if latest:
-            remove_content_units = latest.content.values_list('pk', flat=True)
+            remove_content_units = latest.content.values_list("pk", flat=True)
         else:
             remove_content_units = []
 

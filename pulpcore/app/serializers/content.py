@@ -8,7 +8,7 @@ from rest_framework.validators import UniqueValidator
 from pulpcore.app import models
 from pulpcore.app.serializers import base, fields
 
-UNIQUE_ALGORITHMS = ['sha256', 'sha384', 'sha512']
+UNIQUE_ALGORITHMS = ["sha256", "sha384", "sha512"]
 
 
 class BaseContentSerializer(base.ModelSerializer):
@@ -20,7 +20,6 @@ class BaseContentSerializer(base.ModelSerializer):
 
 
 class NoArtifactContentSerializer(BaseContentSerializer):
-
     class Meta:
         model = models.Content
         fields = BaseContentSerializer.Meta.fields
@@ -45,7 +44,7 @@ class SingleArtifactContentSerializer(BaseContentSerializer):
 
         # If the content model has its own database field 'relative_path',
         # we should not mark the field write_only
-        if hasattr(self.Meta.model, 'relative_path') and "relative_path" in self.fields:
+        if hasattr(self.Meta.model, "relative_path") and "relative_path" in self.fields:
             self.fields["relative_path"].write_only = False
 
     @transaction.atomic
@@ -56,29 +55,29 @@ class SingleArtifactContentSerializer(BaseContentSerializer):
         Args:
             validated_data (dict): Data to save to the database
         """
-        artifact = validated_data.pop('artifact')
+        artifact = validated_data.pop("artifact")
         if "relative_path" not in self.fields or self.fields["relative_path"].write_only:
-            relative_path = validated_data.pop('relative_path')
+            relative_path = validated_data.pop("relative_path")
         else:
-            relative_path = validated_data.get('relative_path')
+            relative_path = validated_data.get("relative_path")
         content = self.Meta.model.objects.create(**validated_data)
         models.ContentArtifact.objects.create(
-            artifact=artifact,
-            content=content,
-            relative_path=relative_path,
+            artifact=artifact, content=content, relative_path=relative_path,
         )
         return content
 
     class Meta:
         model = models.Content
-        fields = BaseContentSerializer.Meta.fields + ('artifact', 'relative_path')
+        fields = BaseContentSerializer.Meta.fields + ("artifact", "relative_path")
 
 
 class MultipleArtifactContentSerializer(BaseContentSerializer):
     artifacts = fields.ContentArtifactsField(
-        help_text=_("A dict mapping relative paths inside the Content to the corresponding"
-                    "Artifact URLs. E.g.: {'relative/path': "
-                    "'/artifacts/1/'"),
+        help_text=_(
+            "A dict mapping relative paths inside the Content to the corresponding"
+            "Artifact URLs. E.g.: {'relative/path': "
+            "'/artifacts/1/'"
+        ),
     )
 
     @transaction.atomic
@@ -89,19 +88,17 @@ class MultipleArtifactContentSerializer(BaseContentSerializer):
         Args:
             validated_data (dict): Data to save to the database
         """
-        artifacts = validated_data.pop('artifacts')
+        artifacts = validated_data.pop("artifacts")
         content = self.Meta.model.objects.create(**validated_data)
         for relative_path, artifact in artifacts.items():
             models.ContentArtifact.objects.create(
-                artifact=artifact,
-                content=content,
-                relative_path=relative_path,
+                artifact=artifact, content=content, relative_path=relative_path,
             )
         return content
 
     class Meta:
         model = models.Content
-        fields = BaseContentSerializer.Meta.fields + ('artifacts',)
+        fields = BaseContentSerializer.Meta.fields + ("artifacts",)
 
 
 class ContentChecksumSerializer(serializers.Serializer):
@@ -114,60 +111,50 @@ class ContentChecksumSerializer(serializers.Serializer):
     """
 
     md5 = fields.ContentArtifactChecksumField(
-        help_text=_("The MD5 checksum if available."),
-        checksum='md5',
+        help_text=_("The MD5 checksum if available."), checksum="md5",
     )
 
     sha1 = fields.ContentArtifactChecksumField(
-        help_text=_("The SHA-1 checksum if available."),
-        checksum='sha1',
+        help_text=_("The SHA-1 checksum if available."), checksum="sha1",
     )
 
     sha224 = fields.ContentArtifactChecksumField(
-        help_text=_("The SHA-224 checksum if available."),
-        checksum='sha224',
+        help_text=_("The SHA-224 checksum if available."), checksum="sha224",
     )
 
     sha256 = fields.ContentArtifactChecksumField(
-        help_text=_("The SHA-256 checksum if available."),
-        checksum='sha256',
+        help_text=_("The SHA-256 checksum if available."), checksum="sha256",
     )
 
     sha384 = fields.ContentArtifactChecksumField(
-        help_text=_("The SHA-384 checksum if available."),
-        checksum='sha384',
+        help_text=_("The SHA-384 checksum if available."), checksum="sha384",
     )
 
     sha512 = fields.ContentArtifactChecksumField(
-        help_text=_("The SHA-512 checksum if available."),
-        checksum='sha512',
+        help_text=_("The SHA-512 checksum if available."), checksum="sha512",
     )
 
     class Meta:
         model = models.Content
-        fields = base.ModelSerializer.Meta.fields + ('md5', 'sha1', 'sha224', 'sha256', 'sha384',
-                                                     'sha512')
+        fields = base.ModelSerializer.Meta.fields + (
+            "md5",
+            "sha1",
+            "sha224",
+            "sha256",
+            "sha384",
+            "sha512",
+        )
 
 
 class ArtifactSerializer(base.ModelSerializer):
-    pulp_href = base.IdentityField(
-        view_name='artifacts-detail',
-    )
+    pulp_href = base.IdentityField(view_name="artifacts-detail",)
 
-    file = serializers.FileField(
-        help_text=_("The stored file."),
-        allow_empty_file=True,
-    )
+    file = serializers.FileField(help_text=_("The stored file."), allow_empty_file=True,)
 
-    size = serializers.IntegerField(
-        help_text=_("The size of the file in bytes."),
-        required=False,
-    )
+    size = serializers.IntegerField(help_text=_("The size of the file in bytes."), required=False,)
 
     md5 = serializers.CharField(
-        help_text=_("The MD5 checksum of the file if available."),
-        required=False,
-        allow_null=True,
+        help_text=_("The MD5 checksum of the file if available."), required=False, allow_null=True,
     )
 
     sha1 = serializers.CharField(
@@ -214,25 +201,27 @@ class ArtifactSerializer(base.ModelSerializer):
         """
         super().validate(data)
 
-        if 'size' in data:
-            if data['file'].size != int(data['size']):
+        if "size" in data:
+            if data["file"].size != int(data["size"]):
                 raise serializers.ValidationError(_("The size did not match actual size of file."))
         else:
-            data['size'] = data['file'].size
+            data["size"] = data["file"].size
 
         for algorithm in hashlib.algorithms_guaranteed:
             if algorithm in models.Artifact.DIGEST_FIELDS:
-                digest = data['file'].hashers[algorithm].hexdigest()
+                digest = data["file"].hashers[algorithm].hexdigest()
 
                 if algorithm in data and digest != data[algorithm]:
-                    raise serializers.ValidationError(_("The %s checksum did not match.")
-                                                      % algorithm)
+                    raise serializers.ValidationError(
+                        _("The %s checksum did not match.") % algorithm
+                    )
                 else:
                     data[algorithm] = digest
                 if algorithm in UNIQUE_ALGORITHMS:
-                    validator = UniqueValidator(models.Artifact.objects.all(),
-                                                message=_("{0} checksum must be "
-                                                          "unique.").format(algorithm))
+                    validator = UniqueValidator(
+                        models.Artifact.objects.all(),
+                        message=_("{0} checksum must be " "unique.").format(algorithm),
+                    )
                     validator.field_name = algorithm
                     validator.instance = None
                     validator(digest)
@@ -240,24 +229,29 @@ class ArtifactSerializer(base.ModelSerializer):
 
     class Meta:
         model = models.Artifact
-        fields = base.ModelSerializer.Meta.fields + ('file', 'size', 'md5', 'sha1', 'sha224',
-                                                     'sha256', 'sha384', 'sha512')
+        fields = base.ModelSerializer.Meta.fields + (
+            "file",
+            "size",
+            "md5",
+            "sha1",
+            "sha224",
+            "sha256",
+            "sha384",
+            "sha512",
+        )
 
 
 class SigningServiceSerializer(base.ModelSerializer):
     """
     A serializer for the model declaring a signing service.
     """
-    pulp_href = base.IdentityField(
-        view_name='signing-services-detail',
-    )
-    name = serializers.CharField(
-        help_text=_("A unique name used to recognize a script.")
-    )
+
+    pulp_href = base.IdentityField(view_name="signing-services-detail",)
+    name = serializers.CharField(help_text=_("A unique name used to recognize a script."))
     script = serializers.CharField(
         help_text=_("An absolute path to a script which is going to be used for the signing.")
     )
 
     class Meta:
         model = models.SigningService
-        fields = BaseContentSerializer.Meta.fields + ('name', 'script')
+        fields = BaseContentSerializer.Meta.fields + ("name", "script")

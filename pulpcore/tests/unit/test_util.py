@@ -8,12 +8,12 @@ class TestViewNameForModel(TestCase):
         """
         Use Repository as an example that should work.
         """
-        ret = util.get_view_name_for_model(models.Artifact(), 'foo')
-        self.assertEqual(ret, 'artifacts-foo')
+        ret = util.get_view_name_for_model(models.Artifact(), "foo")
+        self.assertEqual(ret, "artifacts-foo")
 
-    @mock.patch.object(util, 'get_viewset_for_model')
+    @mock.patch.object(util, "get_viewset_for_model")
     def test_not_found(self, mock_viewset_for_model):
         """
         Given an unknown viewset (in this case a Mock()), this should raise LookupError.
         """
-        self.assertRaises(LookupError, util.get_view_name_for_model, mock.Mock(), 'foo')
+        self.assertRaises(LookupError, util.get_view_name_for_model, mock.Mock(), "foo")

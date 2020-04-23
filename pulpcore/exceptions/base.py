@@ -6,6 +6,7 @@ class PulpException(Exception):
     """
     Base exception class for Pulp.
     """
+
     http_status_code = http.client.INTERNAL_SERVER_ERROR
 
     def __init__(self, error_code):
@@ -25,7 +26,7 @@ class PulpException(Exception):
         expected to implement it's own __str__() method. The return value is used by Pulp when
         recording the exception in the database.
         """
-        raise NotImplementedError('Subclasses of PulpException must implement a __str__() method')
+        raise NotImplementedError("Subclasses of PulpException must implement a __str__() method")
 
 
 def exception_to_dict(exc, traceback=None):
@@ -40,7 +41,7 @@ def exception_to_dict(exc, traceback=None):
     :return: dictionary representing the Exception
     :rtype: dict
     """
-    return {'description': str(exc), 'traceback': traceback}
+    return {"description": str(exc), "traceback": traceback}
 
 
 class ResourceImmutableError(PulpException):
@@ -57,6 +58,7 @@ class ResourceImmutableError(PulpException):
         self.model = model
 
     def __str__(self):
-        msg = _("Cannot update immutable resource {model_pk} of type {model_type}")\
-            .format(resource=str(self.model.pk), type=type(self.model).__name__)
+        msg = _("Cannot update immutable resource {model_pk} of type {model_type}").format(
+            resource=str(self.model.pk), type=type(self.model).__name__
+        )
         return msg

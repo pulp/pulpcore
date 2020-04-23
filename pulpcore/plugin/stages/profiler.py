@@ -47,8 +47,8 @@ class ProfilingQueue(Queue):
         item = super().get_nowait()
         if item:
             now = time.time()
-            item.extra_data['last_waiting_time'] = now - item.extra_data['lastput_time']
-            item.extra_data['last_get_time'] = now
+            item.extra_data["last_waiting_time"] = now - item.extra_data["lastput_time"]
+            item.extra_data["last_get_time"] = now
         return item
 
     def put_nowait(self, item):
@@ -60,32 +60,36 @@ class ProfilingQueue(Queue):
         """
         if item:
             now = time.time()
-            if not hasattr(item, 'extra_data'):
+            if not hasattr(item, "extra_data"):
                 # track stages that use QuerySet items too
                 item.extra_data = {}
             try:
-                last_waiting_time = item.extra_data['last_waiting_time']
+                last_waiting_time = item.extra_data["last_waiting_time"]
             except KeyError:
                 pass
             else:
-                service_time = now - item.extra_data['last_get_time']
-                sql = "INSERT INTO traffic (uuid, waiting_time, service_time) VALUES (" \
-                      "'{uuid}','{waiting_time}','{service_time}')"
+                service_time = now - item.extra_data["last_get_time"]
+                sql = (
+                    "INSERT INTO traffic (uuid, waiting_time, service_time) VALUES ("
+                    "'{uuid}','{waiting_time}','{service_time}')"
+                )
                 formatted_sql = sql.format(
                     uuid=self.stage_uuid, waiting_time=last_waiting_time, service_time=service_time
                 )
                 CONN.cursor().execute(formatted_sql)
 
             interarrival_time = now - self.last_arrival_time
-            sql = "INSERT INTO system (uuid, length, interarrival_time) VALUES (" \
-                  "'{uuid}','{length}','{interarrival}')"
+            sql = (
+                "INSERT INTO system (uuid, length, interarrival_time) VALUES ("
+                "'{uuid}','{length}','{interarrival}')"
+            )
             formatted_sql = sql.format(
                 uuid=self.stage_uuid, length=super().qsize(), interarrival=interarrival_time
             )
             CONN.cursor().execute(formatted_sql)
             CONN.commit()
 
-            item.extra_data['lastput_time'] = now
+            item.extra_data["lastput_time"] = now
             self.last_arrival_time = now
         return super().put_nowait(item)
 
@@ -105,11 +109,9 @@ class ProfilingQueue(Queue):
         if CONN is None:
             create_profile_db_and_connection()
         stage_id = uuid.uuid4()
-        stage_name = '.'.join([stage.__class__.__module__, stage.__class__.__name__])
-        sql = "INSERT INTO stages (uuid, name, num) VALUES (" \
-              "'{uuid}','{stage}','{num}')"
-        formatted_sql = sql.format(
-            uuid=stage_id, stage=stage_name, num=num)
+        stage_name = ".".join([stage.__class__.__module__, stage.__class__.__name__])
+        sql = "INSERT INTO stages (uuid, name, num) VALUES (" "'{uuid}','{stage}','{num}')"
+        formatted_sql = sql.format(uuid=stage_id, stage=stage_name, num=num)
         CONN.cursor().execute(formatted_sql)
         in_q = ProfilingQueue(stage_id, maxsize=maxsize)
         CONN.commit()
@@ -147,20 +149,27 @@ def create_profile_db_and_connection():
         db_path = debug_data_dir + uuid.uuid4()
 
     import sqlite3
+
     global CONN
     CONN = sqlite3.connect(db_path)
     c = CONN.cursor()
 
     # Create table
-    c.execute('''CREATE TABLE stages
-                 (uuid varchar(36), name text, num int)''')
+    c.execute(
+        """CREATE TABLE stages
+                 (uuid varchar(36), name text, num int)"""
+    )
 
     # Create table
-    c.execute('''CREATE TABLE traffic
-                 (uuid varchar(36), waiting_time real, service_time real)''')
+    c.execute(
+        """CREATE TABLE traffic
+                 (uuid varchar(36), waiting_time real, service_time real)"""
+    )
 
     # Create table
-    c.execute('''CREATE TABLE system
-                 (uuid varchar(36), length int, interarrival_time real)''')
+    c.execute(
+        """CREATE TABLE system
+                 (uuid varchar(36), length int, interarrival_time real)"""
+    )
 
     return CONN

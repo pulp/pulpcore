@@ -22,7 +22,7 @@ from pulpcore.tests.functional.api.using_plugin.constants import (
 )
 from pulpcore.tests.functional.api.using_plugin.utils import gen_file_remote
 from pulpcore.tests.functional.api.using_plugin.utils import (  # noqa:F401
-    set_up_module as setUpModule
+    set_up_module as setUpModule,
 )
 
 
@@ -31,6 +31,7 @@ class RepairRepositoryVersionTestCase(unittest.TestCase):
 
     This test targets the repair feature of RepositoryVersions.
     """
+
     SUPPORTED_STORAGE_FRAMEWORKS = [
         "django.core.files.storage.FileSystemStorage",
         "pulpcore.app.models.storage.FileSystem",
@@ -56,57 +57,85 @@ class RepairRepositoryVersionTestCase(unittest.TestCase):
         6. Assert that the repair task reported none corrupted and none repaired unit.
         """
         if settings.DEFAULT_FILE_STORAGE not in self.SUPPORTED_STORAGE_FRAMEWORKS:
-            self.skipTest("Cannot simulate bit-rot on this storage platform ({}).".format(
-                settings.DEFAULT_FILE_STORAGE),
+            self.skipTest(
+                "Cannot simulate bit-rot on this storage platform ({}).".format(
+                    settings.DEFAULT_FILE_STORAGE
+                ),
             )
 
         # STEP 1
         delete_orphans()
         repo = self.api_client.post(FILE_REPO_PATH, gen_repo())
-        self.addCleanup(self.api_client.delete, repo['pulp_href'])
+        self.addCleanup(self.api_client.delete, repo["pulp_href"])
 
         body = gen_file_remote()
         remote = self.api_client.post(FILE_REMOTE_PATH, body)
-        self.addCleanup(self.api_client.delete, remote['pulp_href'])
+        self.addCleanup(self.api_client.delete, remote["pulp_href"])
 
         sync(self.cfg, remote, repo)
-        repo = self.api_client.get(repo['pulp_href'])
+        repo = self.api_client.get(repo["pulp_href"])
 
         # STEP 2
         content1, content2 = sample(get_content(repo)[FILE_CONTENT_NAME], 2)
         if settings.DEFAULT_FILE_STORAGE in self.SUPPORTED_STORAGE_FRAMEWORKS:
             # Muddify one artifact on disk.
-            artifact1_path = os.path.join(MEDIA_PATH,
-                                          self.api_client.get(content1['artifact'])['file'])
-            cmd1 = ('sed', '-i', '-e', r'$a bit rot', artifact1_path)
+            artifact1_path = os.path.join(
+                MEDIA_PATH, self.api_client.get(content1["artifact"])["file"]
+            )
+            cmd1 = ("sed", "-i", "-e", r"$a bit rot", artifact1_path)
             self.cli_client.run(cmd1, sudo=True)
             # Delete another one from disk.
-            artifact2_path = os.path.join(MEDIA_PATH,
-                                          self.api_client.get(content2['artifact'])['file'])
-            cmd2 = ('rm', artifact2_path)
+            artifact2_path = os.path.join(
+                MEDIA_PATH, self.api_client.get(content2["artifact"])["file"]
+            )
+            cmd2 = ("rm", artifact2_path)
             self.cli_client.run(cmd2, sudo=True)
         else:
             self.fail("Corrupting files on this storage platform is not supported.")
 
         # STEP 3
-        latest_version = get_versions(repo)[-1]['pulp_href']
-        result = self.api_client.post(latest_version + 'repair/')
+        latest_version = get_versions(repo)[-1]["pulp_href"]
+        result = self.api_client.post(latest_version + "repair/")
 
         # STEP 4
-        corrupted_units_report = next((report for report in result['progress_reports']
-                                       if report['code'] == 'repair.corrupted'), None)
-        self.assertEqual(corrupted_units_report['done'], 2, corrupted_units_report)
-        repaired_units_report = next((report for report in result['progress_reports']
-                                      if report['code'] == 'repair.repaired'), None)
-        self.assertEqual(repaired_units_report['done'], 2, repaired_units_report)
+        corrupted_units_report = next(
+            (
+                report
+                for report in result["progress_reports"]
+                if report["code"] == "repair.corrupted"
+            ),
+            None,
+        )
+        self.assertEqual(corrupted_units_report["done"], 2, corrupted_units_report)
+        repaired_units_report = next(
+            (
+                report
+                for report in result["progress_reports"]
+                if report["code"] == "repair.repaired"
+            ),
+            None,
+        )
+        self.assertEqual(repaired_units_report["done"], 2, repaired_units_report)
 
         # STEP 5
-        result = self.api_client.post(latest_version + 'repair/')
+        result = self.api_client.post(latest_version + "repair/")
 
         # STEP 6
-        corrupted_units_report = next((report for report in result['progress_reports']
-                                       if report['code'] == 'repair.corrupted'), None)
-        self.assertEqual(corrupted_units_report['done'], 0, corrupted_units_report)
-        repaired_units_report = next((report for report in result['progress_reports']
-                                      if report['code'] == 'repair.repaired'), None)
-        self.assertEqual(repaired_units_report['done'], 0, repaired_units_report)
+        corrupted_units_report = next(
+            (
+                report
+                for report in result["progress_reports"]
+                if report["code"] == "repair.corrupted"
+            ),
+            None,
+        )
+        self.assertEqual(corrupted_units_report["done"], 0, corrupted_units_report)
+        repaired_units_report = next(
+            (
+                report
+                for report in result["progress_reports"]
+                if report["code"] == "repair.repaired"
+            ),
+            None,
+        )
+        self.assertEqual(repaired_units_report["done"], 0, repaired_units_report)

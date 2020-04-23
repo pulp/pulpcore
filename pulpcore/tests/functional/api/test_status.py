@@ -11,48 +11,34 @@ from requests.exceptions import HTTPError
 from pulpcore.tests.functional.utils import set_up_module as setUpModule  # noqa:F401
 
 STATUS = {
-    '$schema': 'http://json-schema.org/schema#',
-    'title': 'Pulp 3 status API schema',
-    'description': (
-        "Derived from Pulp's actual behaviour and various Pulp issues."
-    ),
-    'type': 'object',
-    'properties': {
-        'database_connection': {
-            'type': 'object',
-            'properties': {'connected': {'type': 'boolean'}},
+    "$schema": "http://json-schema.org/schema#",
+    "title": "Pulp 3 status API schema",
+    "description": ("Derived from Pulp's actual behaviour and various Pulp issues."),
+    "type": "object",
+    "properties": {
+        "database_connection": {
+            "type": "object",
+            "properties": {"connected": {"type": "boolean"}},
         },
-        'redis_connection': {
-            'type': 'object',
-            'properties': {'connected': {'type': 'boolean'}},
-        },
-        'missing_workers': {
-            'type': 'array',
-            'items': {'type': 'object'},
-        },
-        'online_workers': {
-            'type': 'array',
-            'items': {'type': 'object'},
-        },
-        'versions': {
-            'type': 'array',
-            'items': {
-                'type': 'object',
-                'properties': {
-                    'component': {'type': 'string'},
-                    'version': {'type': 'string'},
-                }
+        "redis_connection": {"type": "object", "properties": {"connected": {"type": "boolean"}}},
+        "missing_workers": {"type": "array", "items": {"type": "object"}},
+        "online_workers": {"type": "array", "items": {"type": "object"}},
+        "versions": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {"component": {"type": "string"}, "version": {"type": "string"}},
             },
         },
-        'storage': {
-            'type': 'object',
-            'properties': {
-                'total': {'type': 'integer'},
-                'used': {'type': 'integer'},
-                'free': {'type': 'integer'},
+        "storage": {
+            "type": "object",
+            "properties": {
+                "total": {"type": "integer"},
+                "used": {"type": "integer"},
+                "free": {"type": "integer"},
             },
         },
-    }
+    },
 }
 
 
@@ -86,7 +72,7 @@ class StatusTestCase(unittest.TestCase):
 
         Verify the response with :meth:`verify_get_response`.
         """
-        del self.client.request_kwargs['auth']
+        del self.client.request_kwargs["auth"]
         self.verify_get_response(self.client.get(STATUS_PATH))
 
     def test_post_authenticated(self):
@@ -103,11 +89,11 @@ class StatusTestCase(unittest.TestCase):
         Verify that several attributes and have the correct type or value.
         """
         validate(status, self.status_response)
-        self.assertTrue(status['database_connection']['connected'])
-        self.assertTrue(status['redis_connection']['connected'])
-        self.assertNotEqual(status['online_workers'], [])
-        self.assertNotEqual(status['versions'], [])
+        self.assertTrue(status["database_connection"]["connected"])
+        self.assertTrue(status["redis_connection"]["connected"])
+        self.assertNotEqual(status["online_workers"], [])
+        self.assertNotEqual(status["versions"], [])
         if settings.DEFAULT_FILE_STORAGE == "pulpcore.app.models.storage.FileSystem":
-            self.assertIsNotNone(status['storage'])
+            self.assertIsNotNone(status["storage"])
         else:
-            self.assertIsNone(status['storage'])
+            self.assertIsNone(status["storage"])

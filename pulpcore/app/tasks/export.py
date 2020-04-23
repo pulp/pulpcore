@@ -14,9 +14,7 @@ from pulpcore.app.models import (
     RepositoryVersion,
     Task,
 )
-from pulpcore.app.models.content import (
-    ContentArtifact,
-)
+from pulpcore.app.models.content import ContentArtifact
 
 log = logging.getLogger(__name__)
 
@@ -76,6 +74,7 @@ def pulp_export(pulp_exporter):
     """
 
     from pulpcore.app.serializers.exporter import ExporterSerializer
+
     ExporterSerializer.validate_path(pulp_exporter.path, check_is_dir=True)
 
     repositories = pulp_exporter.repositories.all()
@@ -83,7 +82,7 @@ def pulp_export(pulp_exporter):
     tarfile_fp = export.export_tarfile_path()
     os.makedirs(pulp_exporter.path, exist_ok=True)
 
-    with tarfile.open(tarfile_fp, 'w:gz') as tar:
+    with tarfile.open(tarfile_fp, "w:gz") as tar:
         export.tarfile = tar
         CreatedResource.objects.create(content_object=export)
 
@@ -101,6 +100,7 @@ def pulp_export(pulp_exporter):
             artifacts.extend(version.artifacts.all())
 
         from pulpcore.app.importexport import export_artifacts, export_content
+
         # Export the top-level entities (artifacts and repositories)
         export_artifacts(export, artifacts, pulp_exporter.last_export)
         # Export the repository-version data, per-version

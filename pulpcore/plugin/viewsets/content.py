@@ -16,7 +16,7 @@ from pulpcore.plugin.viewsets import (
     OperationPostponedResponse,
 )
 
-ContentUploadData = namedtuple('ContentUploadData', ['shared_resources', 'task_payload'])
+ContentUploadData = namedtuple("ContentUploadData", ["shared_resources", "task_payload"])
 
 
 class ContentUploadViewSet(ContentViewSet):
@@ -38,7 +38,7 @@ class ContentUploadViewSet(ContentViewSet):
 
     @swagger_auto_schema(
         operation_description="Trigger an asynchronous task to create content,"
-                              "optionally create new repository version.",
+        "optionally create new repository version.",
         responses={202: AsyncOperationResponseSerializer},
     )
     def create(self, request):

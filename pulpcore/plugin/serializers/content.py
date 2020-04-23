@@ -22,16 +22,12 @@ class UploadSerializerFieldsMixin(Serializer):
     """A mixin class that contains fields and methods common to content upload serializers."""
 
     file = FileField(
-        help_text=_(
-            "An uploaded file that may be turned into the artifact of the content unit."
-        ),
+        help_text=_("An uploaded file that may be turned into the artifact of the content unit."),
         required=False,
         write_only=True,
     )
     repository = DetailRelatedField(
-        help_text=_(
-            "A URI of a repository the new content unit should be associated with."
-        ),
+        help_text=_("A URI of a repository the new content unit should be associated with."),
         required=False,
         write_only=True,
         queryset=Repository.objects.all(),
@@ -57,7 +53,7 @@ class UploadSerializerFieldsMixin(Serializer):
         return content
 
     class Meta:
-        fields = ('file', 'repository')
+        fields = ("file", "repository")
 
 
 class NoArtifactContentUploadSerializer(UploadSerializerFieldsMixin, NoArtifactContentSerializer):
@@ -69,12 +65,12 @@ class NoArtifactContentUploadSerializer(UploadSerializerFieldsMixin, NoArtifactC
         return super().create(validated_data)
 
     class Meta:
-        fields = NoArtifactContentSerializer.Meta.fields \
-                 + UploadSerializerFieldsMixin.Meta.fields
+        fields = NoArtifactContentSerializer.Meta.fields + UploadSerializerFieldsMixin.Meta.fields
 
 
-class SingleArtifactContentUploadSerializer(UploadSerializerFieldsMixin,
-                                            SingleArtifactContentSerializer):
+class SingleArtifactContentUploadSerializer(
+    UploadSerializerFieldsMixin, SingleArtifactContentSerializer
+):
     """
     A serializer for content_types with a single Artifact.
 
@@ -98,9 +94,7 @@ class SingleArtifactContentUploadSerializer(UploadSerializerFieldsMixin,
 
         if "file" in data:
             if "artifact" in data:
-                raise ValidationError(
-                    _("Only one of 'file' and 'artifact' may be specified.")
-                )
+                raise ValidationError(_("Only one of 'file' and 'artifact' may be specified."))
             data["artifact"] = Artifact.init_and_validate(data.pop("file"))
         elif "artifact" not in data:
             raise ValidationError(_("One of 'file' and 'artifact' must be specified."))
@@ -122,5 +116,6 @@ class SingleArtifactContentUploadSerializer(UploadSerializerFieldsMixin,
         return data
 
     class Meta(SingleArtifactContentSerializer.Meta):
-        fields = SingleArtifactContentSerializer.Meta.fields \
-                 + UploadSerializerFieldsMixin.Meta.fields
+        fields = (
+            SingleArtifactContentSerializer.Meta.fields + UploadSerializerFieldsMixin.Meta.fields
+        )

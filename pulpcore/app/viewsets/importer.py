@@ -28,54 +28,63 @@ from pulpcore.tasking.tasks import enqueue_with_reservation
 
 class ImporterFilter(BaseFilterSet):
     """Filter for Importers."""
+
     name = filters.CharFilter()
 
     class Meta:
         model = Importer
         fields = {
-            'name': NAME_FILTER_OPTIONS,
+            "name": NAME_FILTER_OPTIONS,
         }
 
 
-class ImporterViewSet(NamedModelViewSet,
-                      mixins.CreateModelMixin,
-                      mixins.UpdateModelMixin,
-                      mixins.RetrieveModelMixin,
-                      mixins.ListModelMixin,
-                      mixins.DestroyModelMixin):
+class ImporterViewSet(
+    NamedModelViewSet,
+    mixins.CreateModelMixin,
+    mixins.UpdateModelMixin,
+    mixins.RetrieveModelMixin,
+    mixins.ListModelMixin,
+    mixins.DestroyModelMixin,
+):
     """ViewSet for Importers."""
+
     queryset = Importer.objects.all()
     serializer_class = ImporterSerializer
-    endpoint_name = 'importers'
-    router_lookup = 'importer'
+    endpoint_name = "importers"
+    router_lookup = "importer"
     filterset_class = ImporterFilter
 
 
-class ImportViewSet(NamedModelViewSet,
-                    mixins.CreateModelMixin,
-                    mixins.RetrieveModelMixin,
-                    mixins.ListModelMixin,
-                    mixins.DestroyModelMixin):
+class ImportViewSet(
+    NamedModelViewSet,
+    mixins.CreateModelMixin,
+    mixins.RetrieveModelMixin,
+    mixins.ListModelMixin,
+    mixins.DestroyModelMixin,
+):
     """ViewSet for viewing imports from an Importer."""
-    endpoint_name = 'imports'
-    nest_prefix = 'importers'
-    router_lookup = 'import'
-    lookup_field = 'pk'
+
+    endpoint_name = "imports"
+    nest_prefix = "importers"
+    router_lookup = "import"
+    lookup_field = "pk"
     parent_viewset = ImporterViewSet
-    parent_lookup_kwargs = {'importer_pk': 'importer__pk'}
+    parent_lookup_kwargs = {"importer_pk": "importer__pk"}
     serializer_class = ImportSerializer
     queryset = Import.objects.all()
 
 
 class PulpImporterViewSet(ImporterViewSet):
     """ViewSet for PulpImporters."""
-    endpoint_name = 'pulp'
+
+    endpoint_name = "pulp"
     serializer_class = PulpImporterSerializer
     queryset = PulpImporter.objects.all()
 
 
 class PulpImportViewSet(ImportViewSet):
     """ViewSet for PulpImports."""
+
     parent_viewset = PulpImporterViewSet
     queryset = PulpImport.objects.all()
 
@@ -96,8 +105,6 @@ class PulpImportViewSet(ImportViewSet):
         path = serializer.validated_data.get("path")
         # resources = [pulp_importer] +
         result = enqueue_with_reservation(
-            pulp_import,
-            [importer],
-            kwargs={"importer_pk": importer.pk, "path": path},
+            pulp_import, [importer], kwargs={"importer_pk": importer.pk, "path": path},
         )
         return OperationPostponedResponse(result, request)

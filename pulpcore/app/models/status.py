@@ -11,7 +11,6 @@ from pulpcore.app.models import BaseModel
 
 
 class ContentAppStatusManager(models.Manager):
-
     def online(self):
         """
         Returns a queryset of ``ContentAppStatus`` objects that are online.
@@ -38,6 +37,7 @@ class ContentAppStatus(BaseModel):
         name (models.TextField): The name of the content app
         last_heartbeat (models.DateTimeField): A timestamp of this worker's last heartbeat
     """
+
     objects = ContentAppStatusManager()
 
     name = models.TextField(db_index=True, unique=True)
@@ -82,4 +82,4 @@ class ContentAppStatus(BaseModel):
             ValueError: When the model instance has never been saved before. This method can
                 only update an existing database record.
         """
-        self.save(update_fields=['last_heartbeat'])
+        self.save(update_fields=["last_heartbeat"])

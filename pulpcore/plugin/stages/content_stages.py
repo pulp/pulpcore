@@ -101,9 +101,9 @@ class ContentSaver(Stage):
                             with transaction.atomic():
                                 d_content.content.save()
                         except IntegrityError:
-                            d_content.content = \
-                                d_content.content.__class__.objects.get(
-                                    d_content.content.q())
+                            d_content.content = d_content.content.__class__.objects.get(
+                                d_content.content.q()
+                            )
                             continue
                         for d_artifact in d_content.d_artifacts:
                             if not d_artifact.artifact._state.adding:
@@ -114,7 +114,7 @@ class ContentSaver(Stage):
                             content_artifact = ContentArtifact(
                                 content=d_content.content,
                                 artifact=artifact,
-                                relative_path=d_artifact.relative_path
+                                relative_path=d_artifact.relative_path,
                             )
                             content_artifact_bulk.append(content_artifact)
                 ContentArtifact.objects.bulk_get_or_create(content_artifact_bulk)

@@ -5,6 +5,7 @@ import re
 from gettext import gettext as _
 
 import django  # noqa otherwise E402: module level not at top of file
+
 django.setup()  # noqa otherwise E402: module level not at top of file
 
 from aiohttp.client_exceptions import ClientResponseError
@@ -44,6 +45,7 @@ class ArtifactNotFound(Exception):
     """
     The artifact associated with a published-artifact does not exist.
     """
+
     pass
 
 
@@ -74,12 +76,12 @@ class Handler:
     """
 
     hop_by_hop_headers = [
-        'connection',
-        'keep-alive',
-        'public',
-        'proxy-authenticate',
-        'transfer-encoding',
-        'upgrade',
+        "connection",
+        "keep-alive",
+        "public",
+        "proxy-authenticate",
+        "transfer-encoding",
+        "upgrade",
     ]
 
     distribution_model = None
@@ -107,7 +109,7 @@ class Handler:
             distributions = BaseDistribution.objects.only("base_path").all()
         else:
             distributions = self.distribution_model.objects.only("base_path").all()
-        directory_list = ['{}/'.format(d.base_path) for d in distributions]
+        directory_list = ["{}/".format(d.base_path) for d in distributions]
         return HTTPOk(headers={"Content-Type": "text/html"}, body=self.render_html(directory_list))
 
     async def stream_content(self, request):
@@ -123,7 +125,7 @@ class Handler:
         """
         self._reset_db_connection()
 
-        path = request.match_info['path']
+        path = request.match_info["path"]
         return await self._match_and_stream(path, request)
 
     @staticmethod
@@ -170,9 +172,11 @@ class Handler:
                 model_class = cls.distribution_model
                 return cls.distribution_model.objects.get(base_path__in=base_paths)
         except ObjectDoesNotExist:
-            log.debug(_('{model_name} not matched for {path} using: {base_paths}').format(
-                model_name=model_class.__name__, path=path, base_paths=base_paths
-            ))
+            log.debug(
+                _("{model_name} not matched for {path} using: {base_paths}").format(
+                    model_name=model_class.__name__, path=path, base_paths=base_paths
+                )
+            )
             raise PathNotResolved(path)
 
     @staticmethod
@@ -198,11 +202,8 @@ class Handler:
         except PermissionError as pe:
             log.debug(
                 _('Path: %(p)s not permitted by guard: "%(g)s" reason: %(r)s'),
-                {
-                    'p': request.path,
-                    'g': guard.name,
-                    'r': str(pe)
-                })
+                {"p": request.path, "g": guard.name, "r": str(pe)},
+            )
             raise HTTPForbidden(reason=str(pe))
 
     @staticmethod
@@ -219,9 +220,9 @@ class Handler:
         content_type, encoding = mimetypes.guess_type(path)
         headers = {}
         if content_type:
-            headers['Content-Type'] = content_type
+            headers["Content-Type"] = content_type
         if encoding:
-            headers['Content-Encoding'] = encoding
+            headers["Content-Encoding"] = encoding
         return headers
 
     @staticmethod
@@ -235,7 +236,8 @@ class Handler:
         Returns:
             String representing HTML of the directory listing.
         """
-        template = Template("""
+        template = Template(
+            """
         <!DOCTYPE html>
         <html>
             <body>
@@ -246,7 +248,8 @@ class Handler:
                 </ul>
             </body>
         </html>
-        """)
+        """
+        )
         return template.render(dir_list=sorted(directory_list))
 
     async def list_directory(self, repo_version, publication, path):
@@ -271,8 +274,8 @@ class Handler:
             raise Exception("Either a repo_version or publication can be specified.")
 
         def file_or_directory_name(directory_path, relative_path):
-            result = re.match(r'({})([^\/]*)(\/*)'.format(directory_path), relative_path)
-            return '{}{}'.format(result.groups()[1], result.groups()[2])
+            result = re.match(r"({})([^\/]*)(\/*)".format(directory_path), relative_path)
+            return "{}{}".format(result.groups()[1], result.groups()[2])
 
         directory_list = set()
 
@@ -283,15 +286,16 @@ class Handler:
 
             if publication.pass_through:
                 cas = ContentArtifact.objects.filter(
-                        content__in=publication.repository_version.content,
-                        relative_path__startswith=path)
+                    content__in=publication.repository_version.content,
+                    relative_path__startswith=path,
+                )
                 for ca in cas:
                     directory_list.add(file_or_directory_name(path, ca.relative_path))
 
         if repo_version:
             cas = ContentArtifact.objects.filter(
-                content__in=repo_version.content,
-                relative_path__startswith=path)
+                content__in=repo_version.content, relative_path__startswith=path
+            )
             for ca in cas:
                 directory_list.add(file_or_directory_name(path, ca.relative_path))
 
@@ -319,18 +323,18 @@ class Handler:
         distro = self._match_distribution(path)
         self._permit(request, distro)
 
-        rel_path = path.lstrip('/')
-        rel_path = rel_path[len(distro.base_path):]
-        rel_path = rel_path.lstrip('/')
+        rel_path = path.lstrip("/")
+        rel_path = rel_path[len(distro.base_path) :]
+        rel_path = rel_path.lstrip("/")
 
         headers = self.response_headers(rel_path)
 
-        publication = getattr(distro, 'publication', None)
+        publication = getattr(distro, "publication", None)
 
         if publication:
-            if rel_path == '' or rel_path[-1] == '/':
+            if rel_path == "" or rel_path[-1] == "/":
                 try:
-                    index_path = '{}index.html'.format(rel_path)
+                    index_path = "{}index.html".format(rel_path)
                     publication.published_artifact.get(relative_path=index_path)
                     rel_path = index_path
                 except ObjectDoesNotExist:
@@ -347,22 +351,20 @@ class Handler:
                 if ca.artifact:
                     return self._serve_content_artifact(ca, headers)
                 else:
-                    return await self._stream_content_artifact(request,
-                                                               StreamResponse(headers=headers), ca)
+                    return await self._stream_content_artifact(
+                        request, StreamResponse(headers=headers), ca
+                    )
 
             # pass-through
             if publication.pass_through:
                 try:
                     ca = ContentArtifact.objects.get(
-                        content__in=publication.repository_version.content,
-                        relative_path=rel_path)
+                        content__in=publication.repository_version.content, relative_path=rel_path
+                    )
                 except MultipleObjectsReturned:
                     log.error(
-                        _('Multiple (pass-through) matches for {b}/{p}'),
-                        {
-                            'b': distro.base_path,
-                            'p': rel_path,
-                        }
+                        _("Multiple (pass-through) matches for {b}/{p}"),
+                        {"b": distro.base_path, "p": rel_path},
                     )
                     raise
                 except ObjectDoesNotExist:
@@ -371,23 +373,23 @@ class Handler:
                     if ca.artifact:
                         return self._serve_content_artifact(ca, headers)
                     else:
-                        return await self._stream_content_artifact(request,
-                                                                   StreamResponse(headers=headers),
-                                                                   ca)
+                        return await self._stream_content_artifact(
+                            request, StreamResponse(headers=headers), ca
+                        )
 
-        repo_version = getattr(distro, 'repository_version', None)
-        repository = getattr(distro, 'repository', None)
+        repo_version = getattr(distro, "repository_version", None)
+        repository = getattr(distro, "repository", None)
 
         if repository or repo_version:
             if repository:
                 repo_version = distro.repository.latest_version()
 
-            if rel_path == '' or rel_path[-1] == '/':
+            if rel_path == "" or rel_path[-1] == "/":
                 try:
-                    index_path = '{}index.html'.format(rel_path)
+                    index_path = "{}index.html".format(rel_path)
                     ContentArtifact.objects.get(
-                        content__in=repo_version.content,
-                        relative_path=index_path)
+                        content__in=repo_version.content, relative_path=index_path
+                    )
                     rel_path = index_path
                 except ObjectDoesNotExist:
                     dir_list = await self.list_directory(repo_version, None, rel_path)
@@ -395,15 +397,12 @@ class Handler:
 
             try:
                 ca = ContentArtifact.objects.get(
-                    content__in=repo_version.content,
-                    relative_path=rel_path)
+                    content__in=repo_version.content, relative_path=rel_path
+                )
             except MultipleObjectsReturned:
                 log.error(
-                    _('Multiple (pass-through) matches for {b}/{p}'),
-                    {
-                        'b': distro.base_path,
-                        'p': rel_path,
-                    }
+                    _("Multiple (pass-through) matches for {b}/{p}"),
+                    {"b": distro.base_path, "p": rel_path},
                 )
                 raise
             except ObjectDoesNotExist:
@@ -420,15 +419,15 @@ class Handler:
                 if ca.artifact:
                     return self._serve_content_artifact(ca, headers)
                 else:
-                    return await self._stream_content_artifact(request,
-                                                               StreamResponse(headers=headers),
-                                                               ca)
+                    return await self._stream_content_artifact(
+                        request, StreamResponse(headers=headers), ca
+                    )
             except ObjectDoesNotExist:
                 ca = ContentArtifact(relative_path=rel_path)
                 ra = RemoteArtifact(remote=remote, url=url, content_artifact=ca)
-                return await self._stream_remote_artifact(request,
-                                                          StreamResponse(headers=headers),
-                                                          ra)
+                return await self._stream_remote_artifact(
+                    request, StreamResponse(headers=headers), ra
+                )
 
         raise PathNotResolved(path)
 
@@ -487,10 +486,7 @@ class Handler:
         """
         content_artifact = remote_artifact.content_artifact
         remote = remote_artifact.remote
-        artifact = Artifact(
-            **download_result.artifact_attributes,
-            file=download_result.path
-        )
+        artifact = Artifact(**download_result.artifact_attributes, file=download_result.path)
         with transaction.atomic():
             try:
                 with transaction.atomic():
@@ -513,9 +509,11 @@ class Handler:
                     content = c_type.objects.get(content.q())
                     artifacts = content._artifacts
                     if artifact.sha256 != artifacts[0].sha256:
-                        raise RuntimeError("The Artifact downloaded during pull-through does not "
-                                           "match the Artifact already stored for the same "
-                                           "content.")
+                        raise RuntimeError(
+                            "The Artifact downloaded during pull-through does not "
+                            "match the Artifact already stored for the same "
+                            "content."
+                        )
                     content_artifact = ContentArtifact.objects.get(content=content)
                     update_content_artifact = False
                 try:
@@ -549,13 +547,15 @@ class Handler:
         Returns:
             The :class:`aiohttp.web.FileResponse` for the file.
         """
-        if settings.DEFAULT_FILE_STORAGE == 'pulpcore.app.models.storage.FileSystem':
+        if settings.DEFAULT_FILE_STORAGE == "pulpcore.app.models.storage.FileSystem":
             filename = content_artifact.artifact.file.name
             return FileResponse(os.path.join(settings.MEDIA_ROOT, filename), headers=headers)
-        elif (settings.DEFAULT_FILE_STORAGE == 'storages.backends.s3boto3.S3Boto3Storage' or
-              settings.DEFAULT_FILE_STORAGE == 'storages.backends.azure_storage.AzureStorage'):
+        elif (
+            settings.DEFAULT_FILE_STORAGE == "storages.backends.s3boto3.S3Boto3Storage"
+            or settings.DEFAULT_FILE_STORAGE == "storages.backends.azure_storage.AzureStorage"
+        ):
             artifact_file = content_artifact.artifact.file
-            content_disposition = f'attachment;filename={content_artifact.relative_path}'
+            content_disposition = f"attachment;filename={content_artifact.relative_path}"
             parameters = {"ResponseContentDisposition": content_disposition}
             url = artifact_file.storage.url(artifact_file.name, parameters=parameters)
             raise HTTPFound(url)
@@ -596,8 +596,10 @@ class Handler:
         async def finalize():
             if remote.policy != Remote.STREAMED:
                 await original_finalize()
-        downloader = remote.get_downloader(remote_artifact=remote_artifact,
-                                           headers_ready_callback=handle_headers)
+
+        downloader = remote.get_downloader(
+            remote_artifact=remote_artifact, headers_ready_callback=handle_headers
+        )
         original_handle_data = downloader.handle_data
         downloader.handle_data = handle_data
         original_finalize = downloader.finalize
