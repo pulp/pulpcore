@@ -269,9 +269,9 @@ class BaseURLField(serializers.CharField):
     def to_representation(self, value):
         origin = settings.CONTENT_ORIGIN.strip('/')
         prefix = settings.CONTENT_PATH_PREFIX.strip('/')
-        base_path = value.lstrip('/')
+        base_path = value.strip('/')
 
-        return '/'.join((origin, prefix, base_path)).rstrip('/') + '/'
+        return '/'.join((origin, prefix, base_path)) + '/'
 
 
 class ExportsIdentityFromExporterField(DetailIdentityField):
