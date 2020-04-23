@@ -17,6 +17,7 @@ from pulpcore.app.viewsets import (  # noqa
     PublicationFilter,
     PublicationViewSet,
     ReadOnlyContentViewSet,
+    RemoteFilter,
     RemoteViewSet,
     RepositoryViewSet,
     RepositoryVersionViewSet,
