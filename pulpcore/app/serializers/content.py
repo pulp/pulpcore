@@ -12,7 +12,7 @@ UNIQUE_ALGORITHMS = ["sha256", "sha384", "sha512"]
 
 
 class BaseContentSerializer(base.ModelSerializer):
-    pulp_href = base.DetailIdentityField()
+    pulp_href = base.DetailIdentityField(view_name_pattern=r"contents(-.*/.*)-detail",)
 
     class Meta:
         model = models.Content

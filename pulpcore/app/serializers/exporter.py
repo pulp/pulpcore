@@ -22,7 +22,7 @@ class ExporterSerializer(ModelSerializer):
     Base serializer for Exporters.
     """
 
-    pulp_href = DetailIdentityField()
+    pulp_href = DetailIdentityField(view_name_pattern=r"exporter(-.*/.*)-detail",)
     name = serializers.CharField(
         help_text=_("Unique name of the file system exporter."),
         validators=[UniqueValidator(queryset=models.Exporter.objects.all())],
@@ -129,7 +129,11 @@ class PulpExporterSerializer(ExporterSerializer):
 
     path = serializers.CharField(help_text=_("File system directory to store exported tar.gzs."))
 
-    repositories = DetailRelatedField(queryset=models.Repository.objects.all(), many=True)
+    repositories = DetailRelatedField(
+        view_name_pattern=r"repositories(-.*/.*)-detail",
+        queryset=models.Repository.objects.all(),
+        many=True,
+    )
     last_export = ExportRelatedField(
         help_text=_("Last attempted export for this PulpExporter"),
         queryset=models.PulpExport.objects.all(),
@@ -163,5 +167,6 @@ class PublicationExportSerializer(serializers.Serializer):
     publication = DetailRelatedField(
         required=True,
         help_text=_("A URI of the publication to be exported."),
+        view_name_pattern=r"publications(-.*/.*)-detail",
         queryset=models.Publication.objects.all(),
     )

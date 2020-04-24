@@ -1,0 +1,1 @@
+Fixed a bug where the wrong kind of error was being raised for href parameters of mismatched types.

@@ -16,12 +16,13 @@ from pulpcore.app.serializers import (
 
 
 class PublicationSerializer(ModelSerializer):
-    pulp_href = DetailIdentityField()
+    pulp_href = DetailIdentityField(view_name_pattern=r"publications(-.*/.*)-detail",)
     repository_version = RepositoryVersionRelatedField(required=False)
     repository = DetailRelatedField(
         help_text=_("A URI of the repository to be published."),
         required=False,
         label=_("Repository"),
+        view_name_pattern=r"repositories(-.*/.*)?-detail",
         queryset=models.Repository.objects.all(),
     )
 
@@ -61,7 +62,7 @@ class PublicationSerializer(ModelSerializer):
 
 
 class ContentGuardSerializer(ModelSerializer):
-    pulp_href = DetailIdentityField()
+    pulp_href = DetailIdentityField(view_name_pattern=r"contentguards(-.*/.*)-detail",)
 
     name = serializers.CharField(help_text=_("The unique name."))
     description = serializers.CharField(
@@ -90,7 +91,7 @@ class BaseDistributionSerializer(ModelSerializer):
 
     """
 
-    pulp_href = DetailIdentityField()
+    pulp_href = DetailIdentityField(view_name_pattern=r"distributions(-.*/.*)-detail",)
     base_path = serializers.CharField(
         help_text=_(
             'The base (relative) path component of the published url. Avoid paths that \
@@ -106,6 +107,7 @@ class BaseDistributionSerializer(ModelSerializer):
     content_guard = DetailRelatedField(
         required=False,
         help_text=_("An optional content-guard."),
+        view_name_pattern=r"contentguards(-.*/.*)?-detail",
         queryset=models.ContentGuard.objects.all(),
         allow_null=True,
     )
@@ -151,6 +153,7 @@ class PublicationDistributionSerializer(BaseDistributionSerializer):
     publication = DetailRelatedField(
         required=False,
         help_text=_("Publication to be served"),
+        view_name_pattern=r"publications(-.*/.*)?-detail",
         queryset=models.Publication.objects.exclude(complete=False),
         allow_null=True,
     )
@@ -164,6 +167,7 @@ class RepositoryVersionDistributionSerializer(BaseDistributionSerializer):
     repository = DetailRelatedField(
         required=False,
         help_text=_("The latest RepositoryVersion for this Repository will be served."),
+        view_name_pattern=r"repositories(-.*/.*)?-detail",
         queryset=models.Repository.objects.all(),
         allow_null=True,
     )
