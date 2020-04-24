@@ -39,7 +39,7 @@ from .fields import (  # noqa
 from .exporter import (  # noqa
     ExportSerializer,
     ExporterSerializer,
-    FileSystemExporterSerializer,
+    FilesystemExporterSerializer,
     PublicationExportSerializer,
     PulpExporterSerializer,
     PulpExportSerializer,

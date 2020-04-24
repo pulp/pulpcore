@@ -182,9 +182,7 @@ class PulpExportTestCase(BaseExporterCase):
 
     def _gen_export(self, exporter, body={}):
         """Create and read back an export for the specified PulpExporter."""
-        # TODO: at this point we can't create an export unless we do string-surgery on the
-        #  exporter-href because there's no way to get just-the-id
-        export_response = self.exports_api.create(exporter.pulp_href.split("/")[-2], body)
+        export_response = self.exports_api.create(exporter.pulp_href, body)
         monitor_task(export_response.task)
         task = self.client.get(export_response.task)
         resources = task["created_resources"]
@@ -215,7 +213,7 @@ class PulpExportTestCase(BaseExporterCase):
                 export = self._gen_export(exporter)
             exporter = self.exporter_api.read(exporter.pulp_href)
             self.assertEqual(exporter.last_export, export.pulp_href)
-            exports = self.exports_api.list(exporter.pulp_href.split("/")[-2]).results
+            exports = self.exports_api.list(exporter.pulp_href).results
             self.assertEqual(MAX_EXPORTS, len(exports))
         finally:
             self._delete_exporter(exporter)
@@ -254,7 +252,7 @@ class PulpExportTestCase(BaseExporterCase):
 
             # make sure the exporter knows it's gone
             exporter = self.exporter_api.read(exporter.pulp_href)
-            exports = self.exports_api.list(exporter.pulp_href.split("/")[-2]).results
+            exports = self.exports_api.list(exporter.pulp_href).results
             self.assertEqual(2, len(exports))
 
             # Now try to delete the last_export export and fail

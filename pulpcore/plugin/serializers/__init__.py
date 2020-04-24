@@ -9,7 +9,7 @@ from pulpcore.app.serializers import (  # noqa
     ExporterSerializer,
     ImportSerializer,
     ImporterSerializer,
-    FileSystemExporterSerializer,
+    FilesystemExporterSerializer,
     NoArtifactContentSerializer,
     SingleArtifactContentSerializer,
     MultipleArtifactContentSerializer,

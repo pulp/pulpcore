@@ -63,7 +63,7 @@ class Exporter(MasterModel):
     name = models.TextField(db_index=True, unique=True)
 
 
-class FileSystemExporter(Exporter):
+class FilesystemExporter(Exporter):
     """
     A base model that provides logic to export a set of content to the filesystem.
 

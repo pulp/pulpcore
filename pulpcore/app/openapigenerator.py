@@ -10,7 +10,7 @@ from drf_yasg.openapi import Parameter
 from drf_yasg.utils import filter_none, force_real_str
 from rest_framework import serializers
 
-from pulpcore.app.models import RepositoryVersion
+from pulpcore.app.models import Export, Import, RepositoryVersion
 
 
 class Paths(openapi.SwaggerDict):
@@ -75,8 +75,18 @@ class PulpOpenAPISchemaGenerator(OpenAPISchemaGenerator):
                         resource_model = view.queryset.model
                     if resource_model:
                         repository_type = None
+                        exporter_type = None
+                        importer_type = None
                         if issubclass(resource_model, RepositoryVersion):
                             repository_type = view_cls.parent_viewset.endpoint_name
+                        if issubclass(resource_model, Export):
+                            exporter_type = view_cls.parent_viewset.endpoint_name
+                            if exporter_type == "filesystem":
+                                exporter_type = view_cls.parent_viewset.endpoint_pieces()[
+                                    -1
+                                ].replace("/", "_")
+                        if issubclass(resource_model, Import):
+                            importer_type = view_cls.parent_viewset.endpoint_name
                         param_name = self.get_pk_path_param_name_from_model(resource_model)
                         break
                 if param_name:
@@ -84,8 +94,12 @@ class PulpOpenAPISchemaGenerator(OpenAPISchemaGenerator):
                         path = path.replace(
                             "repository_pk", "{}_repository_pk".format(repository_type)
                         )
-                    else:
-                        path = path.replace("pulp_id", param_name)
+                    elif exporter_type:
+
+                        path = path.replace("exporter_pk", "{}_exporter_pk".format(exporter_type))
+                    elif importer_type:
+                        path = path.replace("importer_pk", "{}_importer_pk".format(importer_type))
+                    path = path.replace("pulp_id", param_name)
             modified_endpoints[path] = (view_cls, methods)
         return modified_endpoints
 
@@ -106,7 +120,6 @@ class PulpOpenAPISchemaGenerator(OpenAPISchemaGenerator):
         if not endpoints:
             return openapi.Paths(paths={}), ""
         endpoints = self.convert_endpoint_path_params(endpoints)
-
         plugin_filter = None
         if "plugin" in request.GET:
             plugin_filter = request.GET["plugin"]
