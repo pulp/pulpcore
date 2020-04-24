@@ -96,6 +96,8 @@ Improved Documentation
   `#6454 <https://pulp.plan.io/issues/6454>`_
 - Renamed ansible-pulp to pulp_installer (to avoid confusion with pulp-ansible)
   `#6461 <https://pulp.plan.io/issues/6461>`_
+- Fixed missing terms in documentation.
+  `#6485 <https://pulp.plan.io/issues/6485>`_
 
 
 Deprecations and Removals
