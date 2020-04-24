@@ -125,6 +125,7 @@ class MinimalTaskSerializer(TaskSerializer):
 
 
 class TaskGroupSerializer(ModelSerializer):
+    pulp_href = IdentityField(view_name='task-groups-detail')
     description = serializers.CharField(
         help_text=_("A description of the task group.")
     )
@@ -157,7 +158,7 @@ class TaskGroupSerializer(ModelSerializer):
     class Meta:
         model = models.TaskGroup
         fields = (
-            'description',
+            'pulp_href', 'description',
             'waiting', 'skipped', 'running',
             'completed', 'canceled', 'failed'
         )
