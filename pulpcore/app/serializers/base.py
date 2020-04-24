@@ -1,4 +1,6 @@
 from gettext import gettext as _
+from logging import getLogger
+import re
 from urllib.parse import urljoin
 
 from django.core.validators import URLValidator
@@ -11,6 +13,9 @@ from rest_framework_nested.relations import (
 
 from pulpcore.app.models import Task
 from pulpcore.app.util import get_view_name_for_model
+
+
+log = getLogger(__name__)
 
 
 def validate_unknown_fields(initial_data, defined_fields):
@@ -109,34 +114,44 @@ class ModelSerializer(QueryFieldsMixin, serializers.HyperlinkedModelSerializer):
             pass
 
 
-class MatchingNullViewName(object):
-    """Object that can be used as the default view name for detail fields
+class _MatchingRegexViewName(object):
+    """This is a helper class to help defining object matching rules for master-detail.
 
-    This is needed to bypass a view name check done in DRF's to_internal_value method
-    that checks that the view name for the incoming data matches the view name it expects
-    for the object being represented. Since we don't know the view name for that object
-    until it's been cast, and it doesn't get cast until get_object is called, and this
-    check happens immediately before get_object is called, this check is probitive to our
-    implementation. Setting the default view_name attr of a Detail related or identity
-    field to an instance of this class should ensure the the view_name attribute of one
-    of these related fields is equal to any view name it's compared to, bypassing DRF's
-    view_name matching check.
+    If you can be specific, please specify the `view_name`, but if you cannot, this allows
+    you to specify a regular expression like .e.g. `r"repositories(-.*/.*)?-detail"` to
+    identify whether the provided resources viewn name belongs to any repository type.
     """
 
+    __slots__ = ("pattern",)
+
+    def __init__(self, pattern):
+        self.pattern = pattern
+
+    def __repr__(self):
+        return f'{self.__class__.__name__}(r"{self.pattern}")'
+
     def __eq__(self, other):
-        return True
+        return re.fullmatch(self.pattern, other) is not None
 
 
 class _DetailFieldMixin:
     """Mixin class containing code common to DetailIdentityField and DetailRelatedField"""
 
-    def __init__(self, view_name=None, **kwargs):
+    def __init__(self, view_name=None, view_name_pattern=None, **kwargs):
         if view_name is None:
             # set view name to prevent a DRF assertion that view_name is not None
             # Anything that accesses self.view_name after __init__
             # needs to have it set before being called. Unfortunately, a model instance
             # is required to derive this value, so we can't make a view_name property.
-            view_name = MatchingNullViewName()
+            if view_name_pattern:
+                view_name = _MatchingRegexViewName(view_name_pattern)
+            else:
+                log.warn(
+                    _("Please provide either 'view_name' or 'view_name_pattern' for {}.").format(
+                        self.__class__.__name__,
+                    ),
+                )
+                view_name = _MatchingRegexViewName(r".*")
         super().__init__(view_name, **kwargs)
 
     def _view_name(self, obj):

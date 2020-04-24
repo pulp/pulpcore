@@ -19,7 +19,7 @@ from pulpcore.app.serializers import (
 
 
 class RepositorySerializer(ModelSerializer):
-    pulp_href = DetailIdentityField()
+    pulp_href = DetailIdentityField(view_name_pattern=r"repositories(-.*/.*)-detail",)
     versions_href = RepositoryVersionsIdentityFromRepositoryField()
     latest_version_href = LatestVersionField()
     name = serializers.CharField(
@@ -46,7 +46,7 @@ class RemoteSerializer(ModelSerializer):
     class. Please import from `pulpcore.plugin.serializers` rather than from this module directly.
     """
 
-    pulp_href = DetailIdentityField()
+    pulp_href = DetailIdentityField(view_name_pattern=r"remotes(-.*/.*)-detail",)
     name = serializers.CharField(
         help_text=_("A unique name for this remote."),
         validators=[UniqueValidator(queryset=models.Remote.objects.all())],
@@ -156,6 +156,7 @@ class RemoteSerializer(ModelSerializer):
 class RepositorySyncURLSerializer(serializers.Serializer):
     remote = DetailRelatedField(
         required=True,
+        view_name_pattern=r"remotes(-.*/.*)-detail",
         queryset=models.Remote.objects.all(),
         help_text=_("A URI of the repository to be synchronized."),
         label=_("Remote"),

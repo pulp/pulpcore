@@ -30,6 +30,7 @@ class UploadSerializerFieldsMixin(Serializer):
         help_text=_("A URI of a repository the new content unit should be associated with."),
         required=False,
         write_only=True,
+        view_name_pattern=r"repositories(-.*/.*)-detail",
         queryset=Repository.objects.all(),
     )
 
