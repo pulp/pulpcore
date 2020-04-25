@@ -272,7 +272,7 @@ class NamedModelViewSet(viewsets.GenericViewSet):
                 those associated with the parent object.
         """
         qs = super().get_queryset()
-        if self.parent_lookup_kwargs:
+        if self.parent_lookup_kwargs and self.kwargs:
             filters = {}
             for key, lookup in self.parent_lookup_kwargs.items():
                 filters[lookup] = self.kwargs[key]
