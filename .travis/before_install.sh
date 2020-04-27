@@ -51,6 +51,8 @@ pip install -r dev_requirements.txt
 # Lint code.
 flake8 --config flake8.cfg
 
+
+
 cd ..
 git clone --depth=1 https://github.com/pulp/pulp_installer.git
 if [ -n "$PULP_ROLES_PR_NUMBER" ]; then
