@@ -286,6 +286,18 @@ class BaseDistribution(MasterModel):
     content_guard = models.ForeignKey(ContentGuard, null=True, on_delete=models.SET_NULL)
     remote = models.ForeignKey(Remote, null=True, on_delete=models.SET_NULL)
 
+    def content_handler(self, path):
+        """
+        Handler to serve extra, non-Artifact content for this Distribution
+
+        Args:
+            path (str): The path being requested
+        Returns:
+            None if there is no content to be served at path. Otherwise a
+            aiohttp.web_response.Response with the content.
+        """
+        return None
+
 
 class PublicationDistribution(BaseDistribution):
     """

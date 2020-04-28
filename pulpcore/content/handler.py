@@ -327,6 +327,10 @@ class Handler:
         rel_path = rel_path[len(distro.base_path) :]
         rel_path = rel_path.lstrip("/")
 
+        content_handler_result = distro.content_handler(rel_path)
+        if content_handler_result is not None:
+            return content_handler_result
+
         headers = self.response_headers(rel_path)
 
         publication = getattr(distro, "publication", None)
