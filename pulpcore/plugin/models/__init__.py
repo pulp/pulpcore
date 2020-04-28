@@ -29,4 +29,5 @@ from pulpcore.app.models import (  # noqa
     RepositoryVersionDistribution,
     SigningService,
     Task,
+    TaskGroup,
 )
