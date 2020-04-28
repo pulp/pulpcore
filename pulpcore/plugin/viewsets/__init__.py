@@ -29,4 +29,7 @@ from pulpcore.app.viewsets.custom_filters import (  # noqa
     RepositoryVersionFilter,
 )
 
-from .content import SingleArtifactContentUploadViewSet  # noqa
+from .content import (  # noqa
+    NoArtifactContentUploadViewSet,
+    SingleArtifactContentUploadViewSet,
+)

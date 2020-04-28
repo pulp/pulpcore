@@ -33,6 +33,12 @@ class PulpTemporaryUploadedFile(TemporaryUploadedFile):
         instance = cls(name, '', file.size, '', '')
         instance.file = file
         data = file.read()
+
+        # calling the method read() moves the file's pointer to the end of the file object,
+        # thus, it is necessary to reset the file's pointer position back to 0 in case of
+        # calling the method read() again from another place
+        file.seek(0)
+
         for hasher in hashlib.algorithms_guaranteed:
             instance.hashers[hasher].update(data)
         return instance

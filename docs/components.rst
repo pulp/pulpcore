@@ -38,7 +38,7 @@ Content Serving Application
 ---------------------------
 
 An aiohttp.server based application that serves content to clients. The content could be
-:term:`Artifacts<artifact>` already downloaded and saved in Pulp, or
+:term:`Artifacts<Artifact>` already downloaded and saved in Pulp, or
 :term:`on-demand content units<on-demand content>`. When serving
 :term:`on-demand content units<on-demand content>` the downloading also happens from within this
 component as well.

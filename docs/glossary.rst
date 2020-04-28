@@ -4,7 +4,6 @@ Glossary
 .. glossary::
 
     :class:`~pulpcore.app.models.Artifact`
-    artifact
         A file. They usually belong to a :term:`content unit<Content>` but may be used
         elsewhere (e.g. for PublishedArtifacts).
 
@@ -17,7 +16,7 @@ Glossary
     content unit
         Content are the smallest units of data that can be added and removed from
         :term:`repositories<Repository>`. When singular, "content unit" should be used. Each
-        content unit can have multiple :term:`artifacts<artifact>`. Each content unit has a
+        content unit can have multiple :term:`artifacts<Artifact>`. Each content unit has a
         :term:`type` (like .rpm or .deb) which that is defined by a :term:`plugin`.
 
     content app
@@ -36,9 +35,9 @@ Glossary
 
     on-demand content
         :term:`Content<Content>` that was synchronized into Pulp but not yet saved to the
-        filesystem. The Content's :term:`Artifacts<artifact>` are fetched at the time they are
+        filesystem. The Content's :term:`Artifacts<Artifact>` are fetched at the time they are
         requested.  On-demand content is associated with a :term:`Remote` that knows how to download
-        those :term:`Artifacts<artifact>`.
+        those :term:`Artifacts<Artifact>`.
 
     plugin
         A `Django <https://docs.djangoproject.com>`_ app that exends :term:`pulpcore` to add more
