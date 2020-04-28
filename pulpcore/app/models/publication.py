@@ -298,6 +298,18 @@ class BaseDistribution(MasterModel):
         """
         return None
 
+    def content_handler_list_directory(self, rel_path):
+        """
+        Generate the directory listing entries for content_handler
+
+        Args:
+            rel_path (str): relative path inside the distribution's base_path. For example,
+            the root of the base_path is '', a subdir within the base_path is 'subdir/'.
+        Returns:
+            Set of strings for the extra entries in rel_path
+        """
+        return set()
+
 
 class PublicationDistribution(BaseDistribution):
     """
