@@ -36,14 +36,10 @@ install: .travis/install.sh
 before_script: .travis/before_script.sh
 script: .travis/script.sh
 after_failure:
-  - http --timeout 30 --check-status --pretty format --print hb http://localhost:24817/pulp/api/v3/status/
-  - sudo docker images
-  - sudo kubectl logs -l name=pulp-operator -c ansible --tail=10000
-  - sudo kubectl logs -l name=pulp-operator -c operator --tail=10000
-  - sudo kubectl logs -l app=pulp-api --tail=50000
-  - sudo kubectl logs -l app=pulp-content --tail=10000
-  - sudo kubectl logs -l app=pulp-resource-manager --tail=10000
-  - sudo kubectl logs -l app=pulp-worker --tail=10000
+  - http --timeout 30 --check-status --pretty format --print hb http://pulp/pulp/api/v3/status/
+  - docker images
+  - docker ps -a
+  - docker logs pulp
 jobs:
   include:
     - stage: deploy

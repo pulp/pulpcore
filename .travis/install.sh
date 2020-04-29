@@ -9,14 +9,14 @@
 
 set -euv
 
-if [ "$TEST" = 'docs' ]; then
+if [ "$TEST" = "docs" ]; then
   pip install psycopg2-binary
   pip install -r doc_requirements.txt
 fi
 
 pip install -r functest_requirements.txt
 
-cd $TRAVIS_BUILD_DIR/../pulpcore/containers/
+cd .travis
 
 # Although the tag name is not used outside of this script, we might use it
 # later. And it is nice to have a friendly identifier for it.
@@ -45,7 +45,6 @@ else
   TAG=$(git rev-parse --abbrev-ref HEAD | tr / _)
 fi
 
-
 if [ -e $TRAVIS_BUILD_DIR/../pulp_file ]; then
   PULP_FILE=./pulp_file
 else
@@ -58,111 +57,50 @@ else
   PULP_CERTGUARD=git+https://github.com/pulp/pulp-certguard.git@master
 fi
 
-cat > vars/vars.yaml << VARSYAML
+mkdir vars
+cat > vars/main.yaml << VARSYAML
 ---
-images:
-  - pulp_file-${TAG}:
-      image_name: pulp_file
-      tag: "${TAG}"
-      pulpcore: ./pulpcore
-      plugins:
-        - $PULP_FILE
-        - $PULP_CERTGUARD
+image:
+  name: pulp
+  tag: "${TAG}"
+plugins:
+  - name: pulpcore
+    source: ./pulpcore
+  - name: pulp_file
+    source: $PULP_FILE
+  - name: pulp-certguard
+    source: $PULP_CERTGUARD
+services:
+  - name: pulp
+    image: "pulp:${TAG}"
+    volumes:
+      - ./settings:/etc/pulp
 VARSYAML
 
-if [ "$TEST" = 's3' ]; then
-  echo "s3_test: true" >> vars/vars.yaml
+cat >> vars/main.yaml << VARSYAML
+pulp_settings: {"allowed_export_paths": ["/tmp"], "allowed_import_paths": ["/tmp"]}
+VARSYAML
+
+if [[ "$TEST" == "pulp" || "$TEST" == "performance" || "$TEST" == "s3" ]]; then
+  sed -i -e '/^services:/a \
+  - name: pulp-fixtures\
+    image: quay.io/pulp/pulp-fixtures:latest' vars/main.yaml
 fi
 
-ansible-playbook -v build.yaml
-
-cd $TRAVIS_BUILD_DIR/../pulp-operator
-# Tell pulp-perator to deploy our image
-# NOTE: With k3s 1.17, ${TAG} must be quoted. So that 3.0 does not become 3.
-# NOTE: We use 1 pulp-content replica because some plugins need to pass
-# commands to it to modify it, similar to the pulp-api container.
-cat > deploy/crds/pulpproject_v1alpha1_pulp_cr.yaml << CRYAML
-apiVersion: pulpproject.org/v1alpha1
-kind: Pulp
-metadata:
-  name: example-pulp
-spec:
-  pulp_file_storage:
-    # k3s local-path requires this
-    access_mode: "ReadWriteOnce"
-    # We have a little over 40GB free on Travis VMs/instances
-    size: "40Gi"
-  image: pulp_file
-  tag: "${TAG}"
-  database_connection:
-    username: pulp
-    password: pulp
-    admin_password: pulp
-  pulp_content:
-    replicas: 1
-  pulp_settings:
-     allowed_export_paths: ['/tmp']
-     allowed_import_paths: ['/tmp']
-    
-CRYAML
-
-if [ "$TEST" = 's3' ]; then
-  cat > deploy/crds/pulpproject_v1alpha1_pulp_cr.yaml << CRYAML
-  apiVersion: pulpproject.org/v1alpha1
-  kind: Pulp
-  metadata:
-    name: example-pulp
-  spec:
-    pulp_file_storage:
-      # k3s local-path requires this
-      access_mode: "ReadWriteOnce"
-      # We have a little over 40GB free on Travis VMs/instances
-      size: "40Gi"
-    image: pulp_file
-    tag: "${TAG}"
-    database_connection:
-      username: pulp
-      password: pulp
-      admin_password: pulp
-    pulp_content:
-      replicas: 1
-    pulp_settings:
-      allowed_export_paths: ['/tmp']
-      allowed_import_paths: ['/tmp']
-      aws_access_key_id: "AKIAIT2Z5TDYPX3ARJBA"
-      aws_secret_access_key: "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"
-      aws_storage_bucket_name: "pulp3"
-      aws_default_acl: "@none None"
-      s3_use_sigv4: true
-      aws_s3_signature_version: "s3v4"
-      aws_s3_addressing_style: "path"
-      aws_s3_region_name: "eu-central-1"
-      default_file_storage: "storages.backends.s3boto3.S3Boto3Storage"
-      media_root: ''
-      aws_s3_endpoint_url: "http://$(hostname):9000"
-
-CRYAML
+if [ "$TEST" = "s3" ]; then
+  export MINIO_ACCESS_KEY=AKIAIT2Z5TDYPX3ARJBA
+  export MINIO_SECRET_KEY=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
+  sed -i -e '/^services:/a \
+  - name: minio\
+    image: minio/minio\
+    env:\
+      MINIO_ACCESS_KEY: "'$MINIO_ACCESS_KEY'"\
+      MINIO_SECRET_KEY: "'$MINIO_SECRET_KEY'"\
+    command: "server /data"' vars/main.yaml
+  sed -i -e '$a s3_test: true\
+minio_access_key: "'$MINIO_ACCESS_KEY'"\
+minio_secret_key: "'$MINIO_SECRET_KEY'"' vars/main.yaml
 fi
 
-# Install k3s, lightweight Kubernetes
-.travis/k3s-install.sh
-# Deploy pulp-operator, with the pulp containers, according to CRYAML
-sudo ./up.sh
-
-# Needed for the script below
-# Since it is being run during install rather than actual tests (unlike in
-# pulp-operator), and therefore does not trigger the equivalent after_failure
-# travis commands.
-show_logs_and_return_non_zero() {
-    readonly local rc="$?"
-
-    for containerlog in "pulp-api" "pulp-content" "pulp-resource-manager" "pulp-worker"
-    do
-      echo -en "travis_fold:start:$containerlog"'\\r'
-      sudo kubectl logs -l app=$containerlog --tail=10000
-      echo -en "travis_fold:end:$containerlog"'\\r'
-    done
-
-    return "${rc}"
-}
-.travis/pulp-operator-check-and-wait.sh || show_logs_and_return_non_zero
+ansible-playbook build_container.yaml
+ansible-playbook start_container.yaml

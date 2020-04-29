@@ -1,0 +1,4 @@
+#!/usr/bin/execlineb -P
+export DJANGO_SETTINGS_MODULE pulpcore.app.settings
+export PULP_SETTINGS /etc/pulp/settings.py
+/usr/local/bin/gunicorn pulpcore.content:server --bind "127.0.0.1:24816" --worker-class "aiohttp.GunicornWebWorker" -w 2 --access-logfile -

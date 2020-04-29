@@ -1,0 +1,48 @@
+# Ansible playbook to create the pulp service containers image
+---
+- hosts: localhost
+  gather_facts: false
+  vars_files:
+    - vars/main.yaml
+  tasks:
+    - name: "Generate Containerfile from template"
+      template:
+        src: Containerfile.j2
+        dest: Containerfile
+
+    - name: "Build ci base image"
+      docker_image:
+        name: "pulp_ci_base"
+        tag: "{{ image.tag }}"
+        build:
+          path: "."
+          dockerfile: Containerfile.ci_base
+          nocache: "{{ not cache | default(true) | bool }}"
+          pull: true
+        state: present
+        source: build
+
+    - name: "Build pulp image"
+      docker_image:
+      # We build from the ../.. (parent dir of pulpcore git repo) Docker build
+      # "context" so that repos like pulp-smash are accessible to Docker
+      # build. So that PR branches can be used via relative paths.
+      #
+      # We default to using the docker build / podman buildah cache, for
+      # 1-off-builds and Travis CI purposes (which has no cache across CI runs.)
+      # Run build.yaml with -e cache=false if your builds are using outdated
+      # layers.
+        name: "{{ image.name }}"
+        tag: "{{ image.tag }}"
+        build:
+          path: "../.."
+          dockerfile: "{{ playbook_dir }}/Containerfile"
+          nocache: "{{ not cache | default(true) | bool }}"
+          pull: false
+        state: present
+        source: build
+
+    - name: "Clean image cache"
+      docker_prune:
+        images : true
+...
