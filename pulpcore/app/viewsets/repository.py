@@ -45,49 +45,16 @@ class RepositoryFilter(BaseFilterSet):
 class RepositoryViewSet(
     NamedModelViewSet,
     mixins.CreateModelMixin,
-    mixins.UpdateModelMixin,
     mixins.RetrieveModelMixin,
     mixins.ListModelMixin,
-    mixins.DestroyModelMixin,
+    AsyncUpdateMixin,
+    AsyncRemoveMixin,
 ):
     queryset = Repository.objects.all().order_by("name")
     serializer_class = RepositorySerializer
     endpoint_name = "repositories"
     router_lookup = "repository"
     filterset_class = RepositoryFilter
-
-    @swagger_auto_schema(
-        operation_description="Trigger an asynchronous task to update a repository.",
-        responses={202: AsyncOperationResponseSerializer},
-    )
-    def update(self, request, pk, partial=False):
-        """
-        Generates a Task to update a Repository
-        """
-        instance = self.get_object()
-        serializer = self.get_serializer(instance, data=request.data, partial=partial)
-        serializer.is_valid(raise_exception=True)
-        async_result = enqueue_with_reservation(
-            tasks.repository.update,
-            [instance],
-            args=(instance.pk,),
-            kwargs={"data": request.data, "partial": partial},
-        )
-        return OperationPostponedResponse(async_result, request)
-
-    @swagger_auto_schema(
-        operation_description="Trigger an asynchronous task to delete a repository.",
-        responses={202: AsyncOperationResponseSerializer},
-    )
-    def destroy(self, request, pk):
-        """
-        Generates a Task to delete a Repository
-        """
-        repo = self.get_object()
-        async_result = enqueue_with_reservation(
-            tasks.repository.delete, [repo], kwargs={"repo_id": repo.pk}
-        )
-        return OperationPostponedResponse(async_result, request)
 
 
 class RepositoryVersionContentFilter(Filter):
