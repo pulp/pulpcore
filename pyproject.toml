@@ -20,3 +20,19 @@ issue_format = "`#{issue} <https://pulp.plan.io/issues/{issue}>`_"
     [[tool.towncrier.section]]
         path = "plugin_api"
         name = "Plugin API"
+
+[tool.black]
+line-length = 100
+target-version = ["py36", "py37"]
+exclude = '''
+/(
+    \.eggs
+  | \.git
+  | \.venv
+  | _build
+  | build
+  | dist
+  | migrations
+  | docs
+)/
+'''

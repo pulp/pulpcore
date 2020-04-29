@@ -26,9 +26,7 @@ from pulpcore.client.pulpcore import (
     ExportersCoreExportsApi,
 )
 
-from pulpcore.client.pulpcore.exceptions import (
-    ApiException,
-)
+from pulpcore.client.pulpcore.exceptions import ApiException
 
 from pulpcore.client.pulp_file import (
     RepositoriesFileApi,
@@ -49,6 +47,7 @@ class BaseExporterCase(unittest.TestCase):
     that to happen once per-class (instead of once-per-test) is the primary purpose of this parent
     class.
     """
+
     @classmethod
     def _setup_repositories(cls):
         """Create and sync a number of repositories to be exported."""
@@ -100,14 +99,12 @@ class BaseExporterCase(unittest.TestCase):
         and all its contents.
         """
         cli_client = cli.Client(self.cfg)
-        cmd = ('rm', '-rf', exporter.path)
+        cmd = ("rm", "-rf", exporter.path)
         cli_client.run(cmd, sudo=True)
 
         # NOTE: you have to manually undo 'last-export' if you really really REALLY want to
         #  delete an Exporter. This is...probably correct?
-        body = {
-            "last_export": None
-        }
+        body = {"last_export": None}
         self.exporter_api.partial_update(exporter.pulp_href, body)
         self.exporter_api.delete(exporter.pulp_href)
 
@@ -116,7 +113,7 @@ class BaseExporterCase(unittest.TestCase):
         body = {
             "name": uuid4(),
             "repositories": [r.pulp_href for r in self.repos],
-            "path": "/tmp/{}".format(uuid4())
+            "path": "/tmp/{}".format(uuid4()),
         }
         exporter = self.exporter_api.create(body)
         if cleanup:
@@ -126,6 +123,7 @@ class BaseExporterCase(unittest.TestCase):
 
 class PulpExporterTestCase(BaseExporterCase):
     """Test PulpExporter CURDL methods."""
+
     def test_create(self):
         """Create a PulpExporter."""
         (exporter, body) = self._create_exporter()
@@ -145,9 +143,7 @@ class PulpExporterTestCase(BaseExporterCase):
     def test_partial_update(self):
         """Update a PulpExporter's path."""
         (exporter_created, body) = self._create_exporter()
-        body = {
-            "path": "/tmp/{}".format(uuid4())
-        }
+        body = {"path": "/tmp/{}".format(uuid4())}
         self.exporter_api.partial_update(exporter_created.pulp_href, body)
         exporter_read = self.exporter_api.read(exporter_created.pulp_href)
         self.assertNotEqual(exporter_created.path, exporter_read.path)

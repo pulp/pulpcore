@@ -31,8 +31,8 @@ class TaskFilter(BaseFilterSet):
     state = filters.CharFilter()
     worker = HyperlinkRelatedFilter()
     name = filters.CharFilter()
-    started_at = IsoDateTimeFilter(field_name='started_at')
-    finished_at = IsoDateTimeFilter(field_name='finished_at')
+    started_at = IsoDateTimeFilter(field_name="started_at")
+    finished_at = IsoDateTimeFilter(field_name="finished_at")
     parent_task = HyperlinkRelatedFilter()
     child_tasks = HyperlinkRelatedFilter()
     task_group = HyperlinkRelatedFilter()
@@ -42,42 +42,44 @@ class TaskFilter(BaseFilterSet):
     class Meta:
         model = Task
         fields = {
-            'name': ['contains'],
-            'state': ['exact', 'in'],
-            'worker': ['exact', 'in'],
-            'started_at': DATETIME_FILTER_OPTIONS,
-            'finished_at': DATETIME_FILTER_OPTIONS,
-            'parent_task': ['exact'],
-            'child_tasks': ['exact'],
-            'task_group': ['exact'],
-            'reserved_resources_record': ['exact'],
-            'created_resources': ['exact']
+            "name": ["contains"],
+            "state": ["exact", "in"],
+            "worker": ["exact", "in"],
+            "started_at": DATETIME_FILTER_OPTIONS,
+            "finished_at": DATETIME_FILTER_OPTIONS,
+            "parent_task": ["exact"],
+            "child_tasks": ["exact"],
+            "task_group": ["exact"],
+            "reserved_resources_record": ["exact"],
+            "created_resources": ["exact"],
         }
 
 
-class TaskViewSet(NamedModelViewSet,
-                  mixins.RetrieveModelMixin,
-                  mixins.ListModelMixin,
-                  mixins.DestroyModelMixin):
+class TaskViewSet(
+    NamedModelViewSet, mixins.RetrieveModelMixin, mixins.ListModelMixin, mixins.DestroyModelMixin
+):
     queryset = Task.objects.all()
-    endpoint_name = 'tasks'
+    endpoint_name = "tasks"
     filterset_class = TaskFilter
     serializer_class = TaskSerializer
     minimal_serializer_class = MinimalTaskSerializer
     filter_backends = (OrderingFilter, DjangoFilterBackend)
-    ordering = ('-pulp_created')
+    ordering = "-pulp_created"
 
-    @swagger_auto_schema(operation_description="This operation cancels a task.",
-                         operation_summary="Cancel a task", operation_id='tasks_cancel',
-                         responses={200: TaskSerializer})
+    @swagger_auto_schema(
+        operation_description="This operation cancels a task.",
+        operation_summary="Cancel a task",
+        operation_id="tasks_cancel",
+        responses={200: TaskSerializer},
+    )
     def partial_update(self, request, pk=None, partial=True):
         task = self.get_object()
-        if 'state' not in request.data:
+        if "state" not in request.data:
             raise ValidationError(_("'state' must be provided with the request."))
-        if request.data['state'] != 'canceled':
+        if request.data["state"] != "canceled":
             raise ValidationError(_("The only acceptable value for 'state' is 'canceled'."))
         task = cancel_task(task.pk)
-        serializer = self.serializer_class(task, context={'request': request})
+        serializer = self.serializer_class(task, context={"request": request})
         return Response(serializer.data)
 
     def destroy(self, request, pk=None):
@@ -87,7 +89,7 @@ class TaskViewSet(NamedModelViewSet,
         return super().destroy(request, pk)
 
     def get_serializer_class(self):
-        if self.action == 'partial_update':
+        if self.action == "partial_update":
             return TaskCancelSerializer
         return super().get_serializer_class()
 
@@ -98,30 +100,28 @@ class TaskGroupFilter(BaseFilterSet):
         fields = ()
 
 
-class TaskGroupViewSet(NamedModelViewSet,
-                       mixins.RetrieveModelMixin,
-                       mixins.ListModelMixin):
+class TaskGroupViewSet(NamedModelViewSet, mixins.RetrieveModelMixin, mixins.ListModelMixin):
     queryset = TaskGroup.objects.all()
-    endpoint_name = 'task-groups'
+    endpoint_name = "task-groups"
     filterset_class = TaskGroupFilter
     serializer_class = TaskGroupSerializer
     filter_backends = (OrderingFilter, DjangoFilterBackend)
-    ordering = ('-pulp_created')
+    ordering = "-pulp_created"
 
 
 class WorkerFilter(BaseFilterSet):
     name = filters.CharFilter()
     last_heartbeat = IsoDateTimeFilter()
-    online = filters.BooleanFilter(method='filter_online')
-    missing = filters.BooleanFilter(method='filter_missing')
+    online = filters.BooleanFilter(method="filter_online")
+    missing = filters.BooleanFilter(method="filter_missing")
 
     class Meta:
         model = Worker
         fields = {
-            'name': NAME_FILTER_OPTIONS,
-            'last_heartbeat': DATETIME_FILTER_OPTIONS,
-            'online': ['exact'],
-            'missing': ['exact']
+            "name": NAME_FILTER_OPTIONS,
+            "last_heartbeat": DATETIME_FILTER_OPTIONS,
+            "online": ["exact"],
+            "missing": ["exact"],
         }
 
     def filter_online(self, queryset, name, value):
@@ -141,12 +141,10 @@ class WorkerFilter(BaseFilterSet):
             return queryset.exclude(pk__in=missing_workers)
 
 
-class WorkerViewSet(NamedModelViewSet,
-                    mixins.RetrieveModelMixin,
-                    mixins.ListModelMixin):
+class WorkerViewSet(NamedModelViewSet, mixins.RetrieveModelMixin, mixins.ListModelMixin):
     queryset = Worker.objects.all()
     serializer_class = WorkerSerializer
-    endpoint_name = 'workers'
-    http_method_names = ['get', 'options']
-    lookup_value_regex = '[^/]+'
+    endpoint_name = "workers"
+    http_method_names = ["get", "options"]
+    lookup_value_regex = "[^/]+"
     filterset_class = WorkerFilter

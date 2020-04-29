@@ -16,6 +16,15 @@ It is recommended that contributors check for compliance by running flake8_. We 
 .. _PEP-8: https://www.python.org/dev/peps/pep-0008
 .. _flake8: http://flake8.pycqa.org/en/latest/
 
+Black
+-----
+All python code (except for the usually generated files in the migration folder) must be formatted according to the ruleset defined by black_.
+As black_ is able to automatically reformat python code, contributors are supposed to run `black .` in the repositories root directory.
+For various IDEs / editors, there is also an integration_ for black_.
+
+.. _black: https://github.com/psf/black
+.. _integration: https://github.com/psf/black#editor-integration
+
 Modifications:
 **************
 line length: We limit to 100 characters, rather than 79.

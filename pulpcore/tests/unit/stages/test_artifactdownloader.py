@@ -12,6 +12,7 @@ class MockException(Exception):
     """
     A tracer exception.
     """
+
     pass
 
 
@@ -24,6 +25,7 @@ class DownloaderMock:
     after 5 seconds. `DownloaderMock` manages _global_ statistics about the
     downloads.
     """
+
     running = 0
     downloads = 0
     canceled = 0
@@ -57,7 +59,6 @@ class DownloaderMock:
 
 
 class TestArtifactDownloader(asynctest.ClockedTestCase):
-
     def setUp(self):
         super().setUp()
         DownloaderMock.reset()
@@ -94,8 +95,11 @@ class TestArtifactDownloader(asynctest.ClockedTestCase):
             artifact.file = artifact_path
             remote = mock.Mock()
             remote.get_downloader = DownloaderMock
-            das.append(DeclarativeArtifact(artifact=artifact, url=str(delay),
-                                           relative_path='path', remote=remote))
+            das.append(
+                DeclarativeArtifact(
+                    artifact=artifact, url=str(delay), relative_path="path", remote=remote
+                )
+            )
         dc = DeclarativeContent(content=mock.Mock(), d_artifacts=das)
         self.in_q.put_nowait(dc)
 
@@ -106,7 +110,7 @@ class TestArtifactDownloader(asynctest.ClockedTestCase):
         Returns:
             The done count of the ProgressReport.
         """
-        with mock.patch('pulpcore.plugin.stages.artifact_stages.ProgressReport') as pb:
+        with mock.patch("pulpcore.plugin.stages.artifact_stages.ProgressReport") as pb:
             pb.return_value.__enter__.return_value.done = 0
             ad = ArtifactDownloader(max_concurrent_content=max_concurrent_content)
             ad._connect(self.in_q, self.out_q)
@@ -347,7 +351,7 @@ class TestArtifactDownloader(asynctest.ClockedTestCase):
         download_task = self.loop.create_task(self.download_task())
 
         # Create 3 downloads with Artifacts that already have a file
-        self.queue_dc(delays=[1, 2, 3], artifact_path='/foo/bar')
+        self.queue_dc(delays=[1, 2, 3], artifact_path="/foo/bar")
         # Create 3 downloads with Artifacts that don't have a file
         self.queue_dc(delays=[1, 2, 3], artifact_path=None)
         self.in_q.put_nowait(None)

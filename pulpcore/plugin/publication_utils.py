@@ -14,9 +14,9 @@ def validate_publication_paths(publication):
     paths = list(publication.published_artifact.values_list("relative_path", flat=True))
 
     if publication.pass_through:
-        paths += ContentArtifact.objects. \
-            filter(content__pk__in=publication.repository_version.content). \
-            values_list("relative_path", flat=True)
+        paths += ContentArtifact.objects.filter(
+            content__pk__in=publication.repository_version.content
+        ).values_list("relative_path", flat=True)
 
     try:
         validate_file_paths(paths)

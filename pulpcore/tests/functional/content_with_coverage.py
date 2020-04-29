@@ -7,7 +7,7 @@ cov.start()
 
 
 def finalize_coverage():
-    print('writing coverage', file=sys.stderr)
+    print("writing coverage", file=sys.stderr)
     cov.stop()
     cov.save()
 

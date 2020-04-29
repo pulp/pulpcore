@@ -13,16 +13,18 @@ from pulpcore.app.serializers import DetailIdentityField, IdentityField, Related
 
 def relative_path_validator(relative_path):
     if os.path.isabs(relative_path):
-        raise serializers.ValidationError(_("Relative path can't start with '/'. "
-                                            "{0}").format(relative_path))
+        raise serializers.ValidationError(
+            _("Relative path can't start with '/'. " "{0}").format(relative_path)
+        )
 
 
 class SingleContentArtifactField(RelatedField):
     """
     A serializer field for the '_artifacts' ManyToManyField on the Content model (single-artifact).
     """
-    lookup_field = 'pk'
-    view_name = 'artifacts-detail'
+
+    lookup_field = "pk"
+    view_name = "artifacts-detail"
     queryset = models.Artifact.objects.all()
     allow_null = True
 
@@ -48,8 +50,12 @@ class SingleContentArtifactField(RelatedField):
         if instance._artifacts.count() == 1:
             return instance._artifacts.all()[0]
         if instance._artifacts.count() > 1:
-            raise ValueError(_("SingleContentArtifactField should not be used in a context where "
-                               "multiple artifacts for one content is possible."))
+            raise ValueError(
+                _(
+                    "SingleContentArtifactField should not be used in a context where "
+                    "multiple artifacts for one content is possible."
+                )
+            )
 
 
 class ContentArtifactChecksumField(serializers.CharField):
@@ -58,8 +64,8 @@ class ContentArtifactChecksumField(serializers.CharField):
     """
 
     def __init__(self, *args, **kwargs):
-        kwargs['read_only'] = True
-        self.checksum = kwargs.pop('checksum', 'md5')
+        kwargs["read_only"] = True
+        self.checksum = kwargs.pop("checksum", "md5")
         super().__init__(*args, **kwargs)
 
     def get_attribute(self, instance):
@@ -85,8 +91,12 @@ class ContentArtifactChecksumField(serializers.CharField):
         if instance._artifacts.count() == 1:
             return getattr(instance._artifacts.all()[0], self.checksum)
         if instance._artifacts.count() > 1:
-            raise ValueError(_("ContentArtifactChecksumField should not be used in a context where "
-                               "multiple artifacts for one content is possible."))
+            raise ValueError(
+                _(
+                    "ContentArtifactChecksumField should not be used in a context where "
+                    "multiple artifacts for one content is possible."
+                )
+            )
 
 
 class ContentArtifactsField(serializers.DictField):
@@ -115,12 +125,15 @@ class ContentArtifactsField(serializers.DictField):
         """
         ret = {}
         if data is empty:
-            raise serializers.ValidationError(_('artifacts field must be specified.'))
+            raise serializers.ValidationError(_("artifacts field must be specified."))
         for relative_path, url in data.items():
             relative_path_validator(relative_path)
-            artifactfield = RelatedField(view_name='artifacts-detail',
-                                         queryset=models.Artifact.objects.all(),
-                                         source='*', initial=url)
+            artifactfield = RelatedField(
+                view_name="artifacts-detail",
+                queryset=models.Artifact.objects.all(),
+                source="*",
+                initial=url,
+            )
             try:
                 artifact = artifactfield.run_validation(data=url)
                 ret[relative_path] = artifact
@@ -165,8 +178,9 @@ class ContentArtifactsField(serializers.DictField):
         ret = {}
         for content_artifact in value:
             if content_artifact.artifact_id:
-                url = reverse('artifacts-detail', kwargs={'pk': content_artifact.artifact_id},
-                              request=None)
+                url = reverse(
+                    "artifacts-detail", kwargs={"pk": content_artifact.artifact_id}, request=None
+                )
             else:
                 url = None
             ret[content_artifact.relative_path] = url
@@ -174,10 +188,10 @@ class ContentArtifactsField(serializers.DictField):
 
 
 class RepositoryVersionsIdentityFromRepositoryField(DetailIdentityField):
-    view_name = 'repositories-detail'
+    view_name = "repositories-detail"
 
     def __init__(self, view_name=None, **kwargs):
-        assert view_name is None, 'The `view_name` must not be set.'
+        assert view_name is None, "The `view_name` must not be set."
         super().__init__(view_name=self.view_name, **kwargs)
 
     def get_url(self, obj, view_name, request, *args, **kwargs):
@@ -185,10 +199,10 @@ class RepositoryVersionsIdentityFromRepositoryField(DetailIdentityField):
 
 
 class RepositoryVersionFieldGetURLMixin:
-    view_name = 'versions-detail'
+    view_name = "versions-detail"
 
     def __init__(self, view_name=None, **kwargs):
-        assert view_name is None, 'The `view_name` must not be set.'
+        assert view_name is None, "The `view_name` must not be set."
         super().__init__(view_name=self.view_name, **kwargs)
 
     def get_url(self, obj, view_name, request, *args, **kwargs):
@@ -209,8 +223,8 @@ class RepositoryVersionRelatedField(RepositoryVersionFieldGetURLMixin, RelatedFi
 
     def get_object(self, view_name, view_args, view_kwargs):
         lookup_kwargs = {
-           'repository__pk': view_kwargs['repository_pk'],
-           'number': view_kwargs['number']
+            "repository__pk": view_kwargs["repository_pk"],
+            "number": view_kwargs["number"],
         }
         return self.get_queryset().get(**lookup_kwargs)
 
@@ -223,7 +237,7 @@ class LatestVersionField(RepositoryVersionRelatedField):
         Unfortunately you can't just set read_only=True on the class. It has
         to be done explicitly in the kwargs to __init__, or else DRF complains.
         """
-        kwargs['read_only'] = True
+        kwargs["read_only"] = True
         super().__init__(*args, **kwargs)
 
     def get_url(self, obj, view_name, request, format):
@@ -267,18 +281,18 @@ class BaseURLField(serializers.CharField):
     """
 
     def to_representation(self, value):
-        origin = settings.CONTENT_ORIGIN.strip('/')
-        prefix = settings.CONTENT_PATH_PREFIX.strip('/')
-        base_path = value.lstrip('/')
+        origin = settings.CONTENT_ORIGIN.strip("/")
+        prefix = settings.CONTENT_PATH_PREFIX.strip("/")
+        base_path = value.strip("/")
 
-        return '/'.join((origin, prefix, base_path)).rstrip('/') + '/'
+        return "/".join((origin, prefix, base_path)) + "/"
 
 
 class ExportsIdentityFromExporterField(DetailIdentityField):
-    view_name = 'exporters-detail'
+    view_name = "exporters-detail"
 
     def __init__(self, view_name=None, **kwargs):
-        assert view_name is None, 'The `view_name` must not be set.'
+        assert view_name is None, "The `view_name` must not be set."
         super().__init__(view_name=self.view_name, **kwargs)
 
     def get_url(self, obj, view_name, request, *args, **kwargs):
@@ -286,10 +300,10 @@ class ExportsIdentityFromExporterField(DetailIdentityField):
 
 
 class ExportFieldGetURLMixin:
-    view_name = 'exports-detail'
+    view_name = "exports-detail"
 
     def __init__(self, view_name=None, **kwargs):
-        assert view_name is None, 'The `view_name` must not be set.'
+        assert view_name is None, "The `view_name` must not be set."
         super().__init__(view_name=self.view_name, **kwargs)
 
     def get_url(self, obj, view_name, request, *args, **kwargs):
@@ -309,18 +323,15 @@ class ExportRelatedField(ExportFieldGetURLMixin, RelatedField):
     queryset = models.Export.objects.all()
 
     def get_object(self, view_name, view_args, view_kwargs):
-        lookup_kwargs = {
-           'exporter__pk': view_kwargs['exporter_pk'],
-           'pk': view_kwargs['pk']
-        }
+        lookup_kwargs = {"exporter__pk": view_kwargs["exporter_pk"], "pk": view_kwargs["pk"]}
         return self.get_queryset().get(**lookup_kwargs)
 
 
 class ImportsIdentityFromImporterField(DetailIdentityField):
-    view_name = 'importers-detail'
+    view_name = "importers-detail"
 
     def __init__(self, view_name=None, **kwargs):
-        assert view_name is None, 'The `view_name` must not be set.'
+        assert view_name is None, "The `view_name` must not be set."
         super().__init__(view_name=self.view_name, **kwargs)
 
     def get_url(self, obj, view_name, request, *args, **kwargs):
@@ -328,10 +339,10 @@ class ImportsIdentityFromImporterField(DetailIdentityField):
 
 
 class ImportFieldGetURLMixin:
-    view_name = 'imports-detail'
+    view_name = "imports-detail"
 
     def __init__(self, view_name=None, **kwargs):
-        assert view_name is None, 'The `view_name` must not be set.'
+        assert view_name is None, "The `view_name` must not be set."
         super().__init__(view_name=self.view_name, **kwargs)
 
     def get_url(self, obj, view_name, request, *args, **kwargs):
@@ -351,10 +362,7 @@ class ImportRelatedField(ImportFieldGetURLMixin, RelatedField):
     queryset = models.Import.objects.all()
 
     def get_object(self, view_name, view_args, view_kwargs):
-        lookup_kwargs = {
-           'importer__pk': view_kwargs['importer_pk'],
-           'pk': view_kwargs['pk']
-        }
+        lookup_kwargs = {"importer__pk": view_kwargs["importer_pk"], "pk": view_kwargs["pk"]}
         return self.get_queryset().get(**lookup_kwargs)
 
 
@@ -369,19 +377,19 @@ class SecretCharField(serializers.CharField):
         """
         Initialize a class and do not trim leading and trailing whitespace characters by default.
         """
-        kwargs['trim_whitespace'] = False
+        kwargs["trim_whitespace"] = False
         super().__init__(**kwargs)
 
     def to_representation(self, value):
-        return hashlib.sha256(bytes(value, 'utf-8')).hexdigest()
+        return hashlib.sha256(bytes(value, "utf-8")).hexdigest()
 
     def to_internal_value(self, data):
         # We only want to perform this check in the View layer
-        if 'view' in self.context and 'update' in self.context['view'].action:
-            current_value = getattr(self.context['view'].get_object(), self.field_name)
+        if "view" in self.context and "update" in self.context["view"].action:
+            current_value = getattr(self.context["view"].get_object(), self.field_name)
             current_hash = self.to_representation(current_value)
             if current_hash == data:
-                self.context['request'].data.pop(self.field_name, None)
+                self.context["request"].data.pop(self.field_name, None)
                 return
         return super(SecretCharField, self).to_internal_value(data)
 

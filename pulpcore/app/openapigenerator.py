@@ -26,8 +26,7 @@ class Paths(openapi.SwaggerDict):
 
 
 class PulpOpenAPISchemaGenerator(OpenAPISchemaGenerator):
-
-    def __init__(self, info, version='', url=None, patterns=None, urlconf=None):
+    def __init__(self, info, version="", url=None, patterns=None, urlconf=None):
         """
         Args:
             info (drf_yasg.openapi.Info): information about the API
@@ -63,11 +62,11 @@ class PulpOpenAPISchemaGenerator(OpenAPISchemaGenerator):
         """
         modified_endpoints = {}
         for path, (view_cls, methods) in sorted(endpoints.items()):
-            if '}' in path:
+            if "}" in path:
                 param_name = None
                 for method, view in methods:
-                    if not hasattr(view, 'queryset') or view.queryset is None:
-                        if hasattr(view, 'model'):
+                    if not hasattr(view, "queryset") or view.queryset is None:
+                        if hasattr(view, "model"):
                             resource_model = view.model
                         else:
                             continue
@@ -81,10 +80,11 @@ class PulpOpenAPISchemaGenerator(OpenAPISchemaGenerator):
                         break
                 if param_name:
                     if repository_type:
-                        path = path.replace('repository_pk',
-                                            '{}_repository_pk'.format(repository_type))
+                        path = path.replace(
+                            "repository_pk", "{}_repository_pk".format(repository_type)
+                        )
                     else:
-                        path = path.replace('pulp_id', param_name)
+                        path = path.replace("pulp_id", param_name)
             modified_endpoints[path] = (view_cls, methods)
         return modified_endpoints
 
@@ -103,13 +103,13 @@ class PulpOpenAPISchemaGenerator(OpenAPISchemaGenerator):
                                       prefix, as a 2-tuple
         """
         if not endpoints:
-            return openapi.Paths(paths={}), ''
+            return openapi.Paths(paths={}), ""
         endpoints = self.convert_endpoint_path_params(endpoints)
 
         plugin_filter = None
-        if 'plugin' in request.GET:
-            plugin_filter = request.GET['plugin']
-        prefix = ''
+        if "plugin" in request.GET:
+            plugin_filter = request.GET["plugin"]
+        prefix = ""
         resources = {}
         resource_example = {}
         paths = OrderedDict()
@@ -117,7 +117,7 @@ class PulpOpenAPISchemaGenerator(OpenAPISchemaGenerator):
             operations = {}
             for method, view in methods:
                 if plugin_filter:
-                    if view.__module__.split('.')[0] != plugin_filter:
+                    if view.__module__.split(".")[0] != plugin_filter:
                         continue
                 if not public and not self._gen.has_view_permissions(path, method, view):
                     continue
@@ -136,12 +136,12 @@ class PulpOpenAPISchemaGenerator(OpenAPISchemaGenerator):
             if operations:
                 path_param = None
 
-                if '}' in path:
-                    resource_path = '%s}/' % path.rsplit(sep='}', maxsplit=1)[0]
+                if "}" in path:
+                    resource_path = "%s}/" % path.rsplit(sep="}", maxsplit=1)[0]
                     if resource_path in endpoints:
                         view = endpoints[resource_path][0]
-                        if not hasattr(view, 'queryset') or view.queryset is None:
-                            if hasattr(view, 'model'):
+                        if not hasattr(view, "queryset") or view.queryset is None:
+                            if hasattr(view, "model"):
                                 resource_model = view.model
                             else:
                                 continue
@@ -153,11 +153,11 @@ class PulpOpenAPISchemaGenerator(OpenAPISchemaGenerator):
                             prefix_ = view_cls.parent_viewset.endpoint_name
                         param_name = self.get_parameter_slug_from_model(resource_model, prefix_)
                         if resource_path in resources:
-                            path = path.replace(resource_path, '{%s}' % resources[resource_path])
+                            path = path.replace(resource_path, "{%s}" % resources[resource_path])
                         else:
                             resources[resource_path] = param_name
                             resource_example[resource_path] = self.get_example_uri(path)
-                            path = path.replace(resource_path, '{%s}' % resources[resource_path])
+                            path = path.replace(resource_path, "{%s}" % resources[resource_path])
                         example = resource_example[resource_path]
                         resource_description = self.get_resource_description(resource_name, example)
                         path_param = openapi.Parameter(
@@ -169,8 +169,8 @@ class PulpOpenAPISchemaGenerator(OpenAPISchemaGenerator):
                         )
                         paths[path] = openapi.PathItem(parameters=[path_param], **operations)
                     else:
-                        if not path.startswith('/'):
-                            path = '/' + path
+                        if not path.startswith("/"):
+                            path = "/" + path
                         paths[path] = self.get_path_item(path, view_cls, operations)
                 else:
                     paths[path] = openapi.PathItem(parameters=[path_param], **operations)
@@ -188,9 +188,9 @@ class PulpOpenAPISchemaGenerator(OpenAPISchemaGenerator):
         Returns:
             str: path of nested resource
         """
-        resource_path = '%s}/' % path.rsplit(sep='}', maxsplit=1)[0]
-        if resource_path.endswith('_pk}/'):
-            resource_path = '%s{pulp_id}/' % resource_path.rsplit(sep='{', maxsplit=1)[0]
+        resource_path = "%s}/" % path.rsplit(sep="}", maxsplit=1)[0]
+        if resource_path.endswith("_pk}/"):
+            resource_path = "%s{pulp_id}/" % resource_path.rsplit(sep="{", maxsplit=1)[0]
         return resource_path
 
     @staticmethod
@@ -219,7 +219,7 @@ class PulpOpenAPISchemaGenerator(OpenAPISchemaGenerator):
         """
         params = {}
         for variable in uritemplate.variables(path):
-            params[variable] = '1'
+            params[variable] = "1"
         return uritemplate.expand(path, **params)
 
     @staticmethod
@@ -233,10 +233,11 @@ class PulpOpenAPISchemaGenerator(OpenAPISchemaGenerator):
         Returns:
             str: *pulp_href where * is the model name in all lower case letters
         """
-        slug = '%s_href' % '_'.join([part.lower() for part in re.findall('[A-Z][^A-Z]*',
-                                                                         model.__name__)])
+        slug = "%s_href" % "_".join(
+            [part.lower() for part in re.findall("[A-Z][^A-Z]*", model.__name__)]
+        )
         if prefix:
-            return '{}_{}'.format(prefix, slug)
+            return "{}_{}".format(prefix, slug)
         else:
             return slug
 
@@ -250,8 +251,9 @@ class PulpOpenAPISchemaGenerator(OpenAPISchemaGenerator):
         Returns:
             str: *_pk where * is the model name in all lower case letters
         """
-        return '%s_pk' % '_'.join([part.lower() for part in re.findall('[A-Z][^A-Z]*',
-                                                                       model.__name__)])
+        return "%s_pk" % "_".join(
+            [part.lower() for part in re.findall("[A-Z][^A-Z]*", model.__name__)]
+        )
 
     @staticmethod
     def get_parameter_name(model):
@@ -263,7 +265,7 @@ class PulpOpenAPISchemaGenerator(OpenAPISchemaGenerator):
         Returns:
             str: name of the resource associated with the model
         """
-        return ' '.join(re.findall('[A-Z][^A-Z]*', model.__name__))
+        return " ".join(re.findall("[A-Z][^A-Z]*", model.__name__))
 
     def get_operation_keys(self, subpath, method, view):
         """Return a list of keys that should be used to group an operation within the specification. ::
@@ -285,7 +287,7 @@ class PulpOpenAPISchemaGenerator(OpenAPISchemaGenerator):
         Returns:
             List of strings
         """
-        subpath = subpath.replace('/pulp/api/v3', '')
+        subpath = subpath.replace("/pulp/api/v3", "")
         return super().get_operation_keys(subpath, method, view)
 
     def get_schema(self, request=None, public=False):
@@ -318,18 +320,18 @@ class PulpAutoSchema(SwaggerAutoSchema):
         consumes = self.get_consumes()
         produces = self.get_produces()
 
-        multipart = ['multipart/form-data', 'application/x-www-form-urlencoded']
-        if self.method != 'GET':
+        multipart = ["multipart/form-data", "application/x-www-form-urlencoded"]
+        if self.method != "GET":
             request_params = self.get_request_body_parameters(multipart)
-            type_list = [param['type'] for param in request_params if param]
-            if 'file' in type_list:
+            type_list = [param["type"] for param in request_params if param]
+            if "file" in type_list:
                 # automatically set the media type to form data if there's a file
                 # needed due to https://github.com/axnsan12/drf-yasg/issues/386
                 consumes = multipart
 
         body = self.get_request_body_parameters(consumes)
         query = self.get_query_parameters()
-        if self.method == 'GET':
+        if self.method == "GET":
             fields_paramenter = Parameter(
                 name="fields",
                 in_="query",
@@ -349,8 +351,8 @@ class PulpAutoSchema(SwaggerAutoSchema):
         parameters = body + query
         parameters = filter_none(parameters)
         parameters = self.add_manual_parameters(parameters)
-        if 'bindings' in self.request.query_params:
-            operation_id = self.overrides.get('operation_id', '')
+        if "bindings" in self.request.query_params:
+            operation_id = self.overrides.get("operation_id", "")
             if not operation_id:
                 operation_id = operation_keys[-1]
         else:
@@ -361,13 +363,14 @@ class PulpAutoSchema(SwaggerAutoSchema):
             description = strip_tags(description)
 
         security = self.get_security()
-        assert security is None or isinstance(security, list), "security must be a list of " \
-                                                               "security requirement objects"
+        assert security is None or isinstance(security, list), (
+            "security must be a list of " "security requirement objects"
+        )
         deprecated = self.is_deprecated()
         tags = self.get_tags(operation_keys)
 
         responses = self.get_responses()
-        if 'operation_summary' not in self.overrides:
+        if "operation_summary" not in self.overrides:
             summary = self.get_summary(operation_keys)
         return openapi.Operation(
             operation_id=operation_id,
@@ -379,7 +382,7 @@ class PulpAutoSchema(SwaggerAutoSchema):
             produces=produces,
             tags=tags,
             security=security,
-            deprecated=deprecated
+            deprecated=deprecated,
         )
 
     def get_summary(self, operation_keys):
@@ -389,27 +392,27 @@ class PulpAutoSchema(SwaggerAutoSchema):
         This is the value that is displayed in the ReDoc document as the short name for the API
         operation.
         """
-        if not hasattr(self.view, 'queryset') or self.view.queryset is None:
+        if not hasattr(self.view, "queryset") or self.view.queryset is None:
             return self.get_summary_and_description()[0]
         model = self.view.queryset.model
         operation = operation_keys[-1]
         resource = model._meta.verbose_name
-        article = 'a'
-        if resource[0].lower() in 'aeiou':
-            article = 'an'
-        if operation == 'read':
-            return f'Inspect {article} {resource}'
-        elif operation == 'list':
+        article = "a"
+        if resource[0].lower() in "aeiou":
+            article = "an"
+        if operation == "read":
+            return f"Inspect {article} {resource}"
+        elif operation == "list":
             resource = model._meta.verbose_name_plural
-            return f'List {resource}'
-        elif operation == 'create':
-            return f'Create {article} {resource}'
-        elif operation == 'update':
-            return f'Update {article} {resource}'
-        elif operation == 'delete':
-            return f'Delete {article} {resource}'
-        elif operation == 'partial_update':
-            return f'Partially update {article} {resource}'
+            return f"List {resource}"
+        elif operation == "create":
+            return f"Create {article} {resource}"
+        elif operation == "update":
+            return f"Update {article} {resource}"
+        elif operation == "delete":
+            return f"Delete {article} {resource}"
+        elif operation == "partial_update":
+            return f"Partially update {article} {resource}"
 
     def get_tags(self, operation_keys):
         """Get a list of tags for this operation.
@@ -426,13 +429,13 @@ class PulpAutoSchema(SwaggerAutoSchema):
         Returns:
             list[str] of tags
         """
-        tags = self.overrides.get('tags')
+        tags = self.overrides.get("tags")
         if not tags:
             if len(operation_keys) > 2:
                 if len(operation_keys) > 3:
                     del operation_keys[-3]
                 operation_keys[0] = "{key}:".format(key=operation_keys[0])
-            tags = [' '.join(operation_keys[:-1])]
+            tags = [" ".join(operation_keys[:-1])]
 
         return tags
 

@@ -12,7 +12,7 @@ from pulpcore.exceptions import DigestValidationError, SizeValidationError
 log = logging.getLogger(__name__)
 
 
-DownloadResult = namedtuple('DownloadResult', ['url', 'artifact_attributes', 'path', 'headers'])
+DownloadResult = namedtuple("DownloadResult", ["url", "artifact_attributes", "path", "headers"])
 """
 Args:
     url (str): The url corresponding with the download.
@@ -63,8 +63,14 @@ class BaseDownloader:
             ``custom_file_object`` option was specified, otherwise None.
     """
 
-    def __init__(self, url, custom_file_object=None, expected_digests=None, expected_size=None,
-                 semaphore=None):
+    def __init__(
+        self,
+        url,
+        custom_file_object=None,
+        expected_digests=None,
+        expected_size=None,
+        semaphore=None,
+    ):
         """
         Create a BaseDownloader object. This is expected to be called by all subclasses.
 
@@ -170,7 +176,7 @@ class BaseDownloader:
         A property that returns a dictionary with size and digest information. The keys of this
         dictionary correspond with :class:`~pulpcore.plugin.models.Artifact` fields.
         """
-        attributes = {'size': self._size}
+        attributes = {"size": self._size}
         for algorithm in Artifact.DIGEST_FIELDS:
             attributes[algorithm] = self._digests[algorithm].hexdigest()
         return attributes
@@ -253,4 +259,4 @@ class BaseDownloader:
             Validation errors could be emitted when subclassed implementations call
             :meth:`~pulpcore.plugin.download.BaseDownloader.finalize`.
         """
-        raise NotImplementedError('Subclasses must define a _run() method that returns a coroutine')
+        raise NotImplementedError("Subclasses must define a _run() method that returns a coroutine")

@@ -12,7 +12,7 @@ from pulpcore.tests.functional.api.using_plugin.constants import (
 )
 from pulpcore.tests.functional.api.using_plugin.utils import create_file_publication
 from pulpcore.tests.functional.api.using_plugin.utils import (  # noqa:F401
-    set_up_module as setUpModule
+    set_up_module as setUpModule,
 )
 
 
@@ -48,16 +48,13 @@ class SyncPublishContentPathTestCase(unittest.TestCase):
         # or database.
         delete_orphans(cfg)
 
-        remote = client.post(
-            FILE_REMOTE_PATH,
-            gen_remote(FILE_FIXTURE_MANIFEST_URL)
-        )
-        self.addCleanup(client.delete, remote['pulp_href'])
+        remote = client.post(FILE_REMOTE_PATH, gen_remote(FILE_FIXTURE_MANIFEST_URL))
+        self.addCleanup(client.delete, remote["pulp_href"])
 
         repo = client.post(FILE_REPO_PATH, gen_repo())
-        self.addCleanup(client.delete, repo['pulp_href'])
+        self.addCleanup(client.delete, repo["pulp_href"])
 
         for _ in range(2):
             sync(cfg, remote, repo)
-            repo = client.get(repo['pulp_href'])
+            repo = client.get(repo["pulp_href"])
             create_file_publication(cfg, repo)

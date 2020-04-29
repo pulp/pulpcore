@@ -11,6 +11,7 @@ class MissingResource(PulpException):
     Exceptions that are raised due to requests for resources that do not exist should inherit
     from this base class.
     """
+
     http_status_code = http.client.NOT_FOUND
 
     def __init__(self, **resources):
@@ -22,6 +23,6 @@ class MissingResource(PulpException):
         self.resources = resources
 
     def __str__(self):
-        resources_str = ', '.join('%s=%s' % (k, v) for k, v in self.resources.items())
+        resources_str = ", ".join("%s=%s" % (k, v) for k, v in self.resources.items())
         msg = _("The following resources are missing: %s") % resources_str
-        return msg.encode('utf-8')
+        return msg.encode("utf-8")

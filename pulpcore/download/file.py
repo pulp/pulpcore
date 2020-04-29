@@ -33,6 +33,7 @@ class FileDownloader(BaseDownloader):
                 the ALLOWED_IMPORT_PATH setting.
         """
         from pulpcore.app.serializers import RemoteSerializer
+
         RemoteSerializer().validate_url(url)
         p = urlparse(url)
         self._path = os.path.abspath(os.path.join(p.netloc, p.path))
@@ -48,12 +49,16 @@ class FileDownloader(BaseDownloader):
         Args:
             extra_data (dict): Extra data passed to the downloader.
         """
-        async with aiofiles.open(self._path, 'rb') as f_handle:
+        async with aiofiles.open(self._path, "rb") as f_handle:
             while True:
                 chunk = await f_handle.read(1048576)  # 1 megabyte
                 if not chunk:
                     await self.finalize()
                     break  # the reading is done
                 await self.handle_data(chunk)
-            return DownloadResult(path=self._path, artifact_attributes=self.artifact_attributes,
-                                  url=self.url, headers=None)
+            return DownloadResult(
+                path=self._path,
+                artifact_attributes=self.artifact_attributes,
+                url=self.url,
+                headers=None,
+            )

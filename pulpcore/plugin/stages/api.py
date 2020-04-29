@@ -39,10 +39,10 @@ class Stage:
 
         It calls :meth:`run` and signals the next stage that its work is finished.
         """
-        log.debug(_('%(name)s - begin.'), {'name': self})
+        log.debug(_("%(name)s - begin."), {"name": self})
         await self.run()
         await self._out_q.put(None)
-        log.debug(_('%(name)s - put end-marker.'), {'name': self})
+        log.debug(_("%(name)s - put end-marker."), {"name": self})
 
     async def run(self):
         """
@@ -52,7 +52,7 @@ class Stage:
             The coroutine that runs this stage.
 
         """
-        raise NotImplementedError(_('A plugin writer must implement this method'))
+        raise NotImplementedError(_("A plugin writer must implement this method"))
 
     async def items(self):
         """
@@ -78,7 +78,7 @@ class Stage:
             content = await self._in_q.get()
             if content is None:
                 break
-            log.debug('%(name)s - next: %(content)s.', {'name': self, 'content': content})
+            log.debug("%(name)s - next: %(content)s.", {"name": self, "content": content})
             yield content
 
     async def batches(self, minsize=500):
@@ -119,7 +119,7 @@ class Stage:
 
             if content is None:
                 shutdown = True
-                log.debug(_('%(name)s - shutdown.'), {'name': self})
+                log.debug(_("%(name)s - shutdown."), {"name": self})
             else:
                 if not content.does_batch:
                     no_block = True
@@ -149,11 +149,8 @@ class Stage:
 
             if batch and (len(batch) >= minsize or shutdown or no_block):
                 log.debug(
-                    _('%(name)s - next batch[%(length)d].'),
-                    {
-                        'name': self,
-                        'length': len(batch),
-                    })
+                    _("%(name)s - next batch[%(length)d]."), {"name": self, "length": len(batch)}
+                )
                 for content in batch:
                     content._thaw_queue_event = None
                 thaw_queue_event.clear()
@@ -174,12 +171,12 @@ class Stage:
             ValueError: When `item` is None.
         """
         if item is None:
-            raise ValueError(_('(None) not permitted.'))
+            raise ValueError(_("(None) not permitted."))
         await self._out_q.put(item)
-        log.debug('{name} - put: {content}'.format(name=self, content=item))
+        log.debug("{name} - put: {content}".format(name=self, content=item))
 
     def __str__(self):
-        return '[{id}] {name}'.format(id=id(self), name=self.__class__.__name__)
+        return "[{id}] {name}".format(id=id(self), name=self.__class__.__name__)
 
 
 async def create_pipeline(stages, maxsize=1000):
@@ -211,7 +208,7 @@ async def create_pipeline(stages, maxsize=1000):
     in_q = None
     for i, stage in enumerate(stages):
         if stage in history:
-            raise ValueError(_('Each stage instance must be unique.'))
+            raise ValueError(_("Each stage instance must be unique."))
         history.add(stage)
         if i < len(stages) - 1:
             if settings.PROFILE_STAGES_API:

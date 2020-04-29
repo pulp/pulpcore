@@ -38,12 +38,13 @@ class Publication(MasterModel):
         >>>             ...
         >>>
     """
-    TYPE = 'publication'
+
+    TYPE = "publication"
 
     complete = models.BooleanField(db_index=True, default=False)
     pass_through = models.BooleanField(default=False)
 
-    repository_version = models.ForeignKey('RepositoryVersion', on_delete=models.CASCADE)
+    repository_version = models.ForeignKey("RepositoryVersion", on_delete=models.CASCADE)
 
     @classmethod
     def create(cls, repository_version, pass_through=False):
@@ -68,9 +69,7 @@ class Publication(MasterModel):
             Adds a Task.created_resource for the publication.
         """
         with transaction.atomic():
-            publication = cls(
-                pass_through=pass_through,
-                repository_version=repository_version)
+            publication = cls(pass_through=pass_through, repository_version=repository_version)
             publication.save()
             resource = CreatedResource(content_object=publication)
             resource.save()
@@ -154,16 +153,15 @@ class PublishedArtifact(BaseModel):
         content_artifact (models.ForeignKey): The referenced content artifact.
         publication (models.ForeignKey): The publication in which the artifact is included.
     """
+
     relative_path = models.TextField()
 
-    content_artifact = models.ForeignKey('ContentArtifact', on_delete=models.CASCADE)
+    content_artifact = models.ForeignKey("ContentArtifact", on_delete=models.CASCADE)
     publication = models.ForeignKey(Publication, on_delete=models.CASCADE)
 
     class Meta:
-        default_related_name = 'published_artifact'
-        unique_together = (
-            ('publication', 'relative_path')
-        )
+        default_related_name = "published_artifact"
+        unique_together = ("publication", "relative_path")
 
 
 class PublishedMetadata(Content):
@@ -177,7 +175,7 @@ class PublishedMetadata(Content):
         publication (models.ForeignKey): The publication in which the artifact is included.
     """
 
-    TYPE = 'publishedmetadata'
+    TYPE = "publishedmetadata"
 
     relative_path = models.TextField()
 
@@ -213,17 +211,15 @@ class PublishedMetadata(Content):
             content.save()
             ca = ContentArtifact(relative_path=relative_path, content=content, artifact=artifact)
             ca.save()
-            pa = PublishedArtifact(relative_path=relative_path,
-                                   content_artifact=ca,
-                                   publication=publication)
+            pa = PublishedArtifact(
+                relative_path=relative_path, content_artifact=ca, publication=publication
+            )
             pa.save()
         return content
 
     class Meta:
-        default_related_name = 'published_metadata'
-        unique_together = (
-            ('publication', 'relative_path')
-        )
+        default_related_name = "published_metadata"
+        unique_together = ("publication", "relative_path")
 
 
 class ContentGuard(MasterModel):
@@ -244,6 +240,7 @@ class ContentGuard(MasterModel):
         description (models.TextField): An optional description.
 
     """
+
     name = models.TextField(db_index=True, unique=True)
     description = models.TextField(null=True)
 

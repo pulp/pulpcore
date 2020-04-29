@@ -8,14 +8,14 @@ from pulpcore.plugin.models import Artifact, Content, ContentArtifact
 
 class ContentCRUDTestCase(TestCase):
 
-    artifact01_path = os.path.join(tempfile.gettempdir(), 'artifact01-tmp')
-    artifact02_path = os.path.join(tempfile.gettempdir(), 'artifact02-tmp')
+    artifact01_path = os.path.join(tempfile.gettempdir(), "artifact01-tmp")
+    artifact02_path = os.path.join(tempfile.gettempdir(), "artifact02-tmp")
 
     def setUp(self):
-        with open(self.artifact01_path, 'w') as f:
-            f.write('Temp Artifact File 01')
-        with open(self.artifact02_path, 'w') as f:
-            f.write('Temp Artifact File 02')
+        with open(self.artifact01_path, "w") as f:
+            f.write("Temp Artifact File 01")
+        with open(self.artifact02_path, "w") as f:
+            f.write("Temp Artifact File 02")
         self.artifact01 = Artifact.init_and_validate(self.artifact01_path)
         self.artifact01.save()
         self.artifact02 = Artifact.init_and_validate(self.artifact02_path)
@@ -26,15 +26,13 @@ class ContentCRUDTestCase(TestCase):
         content.save()
         artifact_file = storage.open(self.artifact01.file.name)
         content_artifact = ContentArtifact.objects.create(
-            artifact=self.artifact01,
-            content=content,
-            relative_path=artifact_file.name)
+            artifact=self.artifact01, content=content, relative_path=artifact_file.name
+        )
         content_artifact.save()
         self.assertTrue(
             Content.objects.filter(pk=content.pk).exists()
-            and ContentArtifact.objects.get(
-                pk=content_artifact.pk
-            ).content.pk == Content.objects.get(pk=content.pk).pk
+            and ContentArtifact.objects.get(pk=content_artifact.pk).content.pk
+            == Content.objects.get(pk=content.pk).pk
         )
 
     def test_remove_content(self):

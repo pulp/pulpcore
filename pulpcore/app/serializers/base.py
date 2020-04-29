@@ -18,10 +18,10 @@ def validate_unknown_fields(initial_data, defined_fields):
     This will raise a `ValidationError` if a serializer is passed fields that are unknown.
     The `csrfmiddlewaretoken` field is silently ignored.
     """
-    ignored_fields = {'csrfmiddlewaretoken'}
+    ignored_fields = {"csrfmiddlewaretoken"}
     unknown_fields = set(initial_data) - set(defined_fields) - ignored_fields
     if unknown_fields:
-        unknown_fields = {field: _('Unexpected field') for field in unknown_fields}
+        unknown_fields = {field: _("Unexpected field") for field in unknown_fields}
         raise serializers.ValidationError(unknown_fields)
 
 
@@ -40,12 +40,9 @@ class ModelSerializer(QueryFieldsMixin, serializers.HyperlinkedModelSerializer):
     exclude_arg_name = "exclude_fields"
 
     class Meta:
-        fields = ('pulp_href', 'pulp_created')
+        fields = ("pulp_href", "pulp_created")
 
-    pulp_created = serializers.DateTimeField(
-        help_text=_('Timestamp of creation.'),
-        read_only=True
-    )
+    pulp_created = serializers.DateTimeField(help_text=_("Timestamp of creation."), read_only=True)
 
     def _validate_relative_path(self, path):
         """
@@ -65,20 +62,21 @@ class ModelSerializer(QueryFieldsMixin, serializers.HyperlinkedModelSerializer):
         # in order to use django's URLValidator we need to construct a full url
         base = "http://localhost"  # use a scheme/hostname we know are valid
 
-        if ' ' in path:
+        if " " in path:
             raise serializers.ValidationError(detail=_("Relative path cannot contain spaces."))
 
         validate = URLValidator()
         validate(urljoin(base, path))
 
         if path != path.strip("/"):
-            raise serializers.ValidationError(detail=_("Relative path cannot begin or end with "
-                                                       "slashes."))
+            raise serializers.ValidationError(
+                detail=_("Relative path cannot begin or end with " "slashes.")
+            )
 
         return path
 
     def validate(self, data):
-        if hasattr(self, 'initial_data'):
+        if hasattr(self, "initial_data"):
             validate_unknown_fields(self.initial_data, self.fields)
         return data
 
@@ -148,10 +146,12 @@ class _DetailFieldMixin:
         except AttributeError:
             # The normal message that comes up here is unhelpful, so do like other DRF
             # fails do and be a little more helpful in the exception message.
-            msg = ('Expected a detail model instance, not {}. Do you need to add "many=True" to '
-                   'this field definition in its serializer?').format(type(obj))
+            msg = (
+                'Expected a detail model instance, not {}. Do you need to add "many=True" to '
+                "this field definition in its serializer?"
+            ).format(type(obj))
             raise ValueError(msg)
-        return get_view_name_for_model(obj, 'detail')
+        return get_view_name_for_model(obj, "detail")
 
     def get_url(self, obj, view_name, request, *args, **kwargs):
         # ignore the passed in view name and return the url to the cast unit, not the generic unit
@@ -247,10 +247,11 @@ class AsyncOperationResponseSerializer(serializers.Serializer):
     """
     Serializer for asynchronous operations.
     """
+
     task = RelatedField(
         required=True,
-        help_text=_('The href of the task.'),
+        help_text=_("The href of the task."),
         queryset=Task.objects,
-        view_name='tasks-detail',
-        allow_null=False
+        view_name="tasks-detail",
+        allow_null=False,
     )

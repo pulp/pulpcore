@@ -9,7 +9,7 @@ from .base import BaseDownloader, DownloadResult
 log = logging.getLogger(__name__)
 
 
-logging.getLogger('backoff').addHandler(logging.StreamHandler())
+logging.getLogger("backoff").addHandler(logging.StreamHandler())
 
 
 def http_giveup(exc):
@@ -111,8 +111,16 @@ class HttpDownloader(BaseDownloader):
     :class:`~pulpcore.plugin.download.BaseDownloader`
     """
 
-    def __init__(self, url, session=None, auth=None, proxy=None, proxy_auth=None,
-                 headers_ready_callback=None, **kwargs):
+    def __init__(
+        self,
+        url,
+        session=None,
+        auth=None,
+        proxy=None,
+        proxy_auth=None,
+        headers_ready_callback=None,
+        **kwargs,
+    ):
         """
         Args:
             url (str): The url to download.
@@ -134,7 +142,7 @@ class HttpDownloader(BaseDownloader):
             self._close_session_on_finalize = False
         else:
             timeout = aiohttp.ClientTimeout(total=None, sock_connect=600, sock_read=600)
-            conn = aiohttp.TCPConnector({'force_close': True})
+            conn = aiohttp.TCPConnector({"force_close": True})
             self.session = aiohttp.ClientSession(connector=conn, timeout=timeout)
             self._close_session_on_finalize = True
         self.auth = auth
@@ -162,11 +170,16 @@ class HttpDownloader(BaseDownloader):
                 await self.finalize()
                 break  # the download is done
             await self.handle_data(chunk)
-        return DownloadResult(path=self.path, artifact_attributes=self.artifact_attributes,
-                              url=self.url, headers=response.headers)
+        return DownloadResult(
+            path=self.path,
+            artifact_attributes=self.artifact_attributes,
+            url=self.url,
+            headers=response.headers,
+        )
 
-    @backoff.on_exception(backoff.expo, aiohttp.ClientResponseError,
-                          max_tries=10, giveup=http_giveup)
+    @backoff.on_exception(
+        backoff.expo, aiohttp.ClientResponseError, max_tries=10, giveup=http_giveup
+    )
     async def _run(self, extra_data=None):
         """
         Download, validate, and compute digests on the `url`. This is a coroutine.

@@ -77,5 +77,5 @@ from .upload import (  # noqa
     UploadChunkSerializer,
     UploadCommitSerializer,
     UploadSerializer,
-    UploadDetailSerializer
+    UploadDetailSerializer,
 )

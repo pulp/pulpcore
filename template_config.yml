@@ -6,7 +6,7 @@ additional_plugins:
   name: pulp_file
 - branch: master
   name: pulp-certguard
-black: false
+black: true
 check_commit_message: true
 cherry_pick_automation: true
 coverage: true

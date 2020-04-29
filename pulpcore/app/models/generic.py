@@ -19,9 +19,10 @@ class GenericRelationModel(BaseModel):
     this class can only be related models with a primary key, such as those subclassing
     Pulp's base Model class.
     """
+
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
     object_id = models.UUIDField()
-    content_object = GenericForeignKey('content_type', 'object_id')
+    content_object = GenericForeignKey("content_type", "object_id")
 
     class Meta:
         abstract = True

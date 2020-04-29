@@ -14,7 +14,6 @@ from .content_stages import ContentSaver, QueryExistingContents, ResolveContentF
 
 
 class DeclarativeVersion:
-
     def __init__(self, first_stage, repository, mirror=False):
         """
         A pipeline that creates a new :class:`~pulpcore.plugin.models.RepositoryVersion` from a

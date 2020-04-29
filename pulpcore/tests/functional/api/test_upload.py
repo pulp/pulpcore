@@ -10,9 +10,7 @@ from urllib.parse import urljoin
 
 from pulp_smash import api, cli, config
 from pulp_smash.exceptions import CalledProcessError
-from pulp_smash.pulp3.constants import (
-    UPLOAD_PATH,
-)
+from pulp_smash.pulp3.constants import UPLOAD_PATH
 from pulp_smash.utils import http_get
 
 from pulpcore.tests.functional.api.using_plugin.constants import (
@@ -49,14 +47,12 @@ class ChunkedUploadTestCase(unittest.TestCase):
 
         first_chunk = http_get(FILE_CHUNKED_PART_1_URL)
         header_first_chunk = {
-            'Content-Range': 'bytes 0-{}/{}'.format(
-                len(first_chunk) - 1, cls.size_file
-            )
+            "Content-Range": "bytes 0-{}/{}".format(len(first_chunk) - 1, cls.size_file)
         }
 
         second_chunk = http_get(FILE_CHUNKED_PART_2_URL)
         header_second_chunk = {
-            'Content-Range': 'bytes {}-{}/{}'.format(
+            "Content-Range": "bytes {}-{}/{}".format(
                 len(first_chunk), cls.size_file - 1, cls.size_file
             )
         }
@@ -72,132 +68,111 @@ class ChunkedUploadTestCase(unittest.TestCase):
 
         artifact = self.upload_chunks()
 
-        self.addCleanup(self.client.delete, artifact['pulp_href'])
+        self.addCleanup(self.client.delete, artifact["pulp_href"])
 
-        self.assertEqual(artifact['sha256'], self.file_sha256, artifact)
+        self.assertEqual(artifact["sha256"], self.file_sha256, artifact)
 
     def test_create_artifact_passing_checksum(self):
         """Test creation of artifact using upload of files in chunks passing checksum."""
-        upload_request = self.client.post(
-            UPLOAD_PATH, {'size': self.size_file}
-        )
+        upload_request = self.client.post(UPLOAD_PATH, {"size": self.size_file})
 
         for data in self.chunked_data:
             self.client.put(
-                upload_request['pulp_href'],
-                data={'sha256': hashlib.sha256(data[0]).hexdigest()},
-                files={'file': data[0]},
+                upload_request["pulp_href"],
+                data={"sha256": hashlib.sha256(data[0]).hexdigest()},
+                files={"file": data[0]},
                 headers=data[1],
             )
 
         artifact_request = self.client.post(
-            urljoin(upload_request['pulp_href'], 'commit/'),
-            data={'sha256': self.file_sha256},
+            urljoin(upload_request["pulp_href"], "commit/"), data={"sha256": self.file_sha256},
         )
 
-        self.addCleanup(self.client.delete, artifact_request['pulp_href'])
+        self.addCleanup(self.client.delete, artifact_request["pulp_href"])
 
-        self.assertEqual(artifact_request['sha256'], self.file_sha256, artifact_request)
+        self.assertEqual(artifact_request["sha256"], self.file_sha256, artifact_request)
 
     def test_upload_chunk_wrong_checksum(self):
         """Test creation of artifact using upload of files in chunks passing wrong checksum."""
-        upload_request = self.client.post(
-            UPLOAD_PATH, {'size': self.size_file}
-        )
+        upload_request = self.client.post(UPLOAD_PATH, {"size": self.size_file})
 
         for data in self.chunked_data:
             response = self.client.using_handler(api.echo_handler).put(
-                upload_request['pulp_href'],
-                data={'sha256': "WRONG CHECKSUM"},
-                files={'file': data[0]},
+                upload_request["pulp_href"],
+                data={"sha256": "WRONG CHECKSUM"},
+                files={"file": data[0]},
                 headers=data[1],
             )
             with self.subTest(response=response):
                 self.assertEqual(response.status_code, 400, response)
 
-        self.addCleanup(self.client.delete, upload_request['pulp_href'])
+        self.addCleanup(self.client.delete, upload_request["pulp_href"])
 
     def test_upload_response(self):
         """Test upload responses when creating an upload and uploading chunks."""
-        upload_request = self.client.post(
-            UPLOAD_PATH, {'size': self.size_file}
-        )
+        upload_request = self.client.post(UPLOAD_PATH, {"size": self.size_file})
 
-        expected_keys = ['pulp_href', 'pulp_created', 'size']
+        expected_keys = ["pulp_href", "pulp_created", "size"]
 
         self.assertEqual([*upload_request], expected_keys, upload_request)
 
         for data in self.chunked_data:
             response = self.client.put(
-                upload_request['pulp_href'],
-                files={'file': data[0]},
-                headers=data[1],
+                upload_request["pulp_href"], files={"file": data[0]}, headers=data[1],
             )
 
             with self.subTest(response=response):
                 self.assertEqual([*response], expected_keys, response)
 
-        response = self.client.get(upload_request['pulp_href'])
+        response = self.client.get(upload_request["pulp_href"])
 
-        expected_keys.append('chunks')
+        expected_keys.append("chunks")
 
         self.assertEqual([*response], expected_keys, response)
 
         expected_chunks = [
-            {'offset': 0, 'size': 6291456},
-            {'offset': 6291456, 'size': 4194304},
+            {"offset": 0, "size": 6291456},
+            {"offset": 6291456, "size": 4194304},
         ]
 
-        sorted_chunks_response = sorted(
-            response['chunks'], key=lambda i: i['offset']
-        )
+        sorted_chunks_response = sorted(response["chunks"], key=lambda i: i["offset"])
         self.assertEqual(sorted_chunks_response, expected_chunks, response)
-        self.addCleanup(self.client.delete, response['pulp_href'])
+        self.addCleanup(self.client.delete, response["pulp_href"])
 
     def test_delete_upload(self):
         """Test a deletion of an upload using upload of files in chunks."""
-        upload_request = self.client.post(
-            UPLOAD_PATH, {'size': self.size_file}
-        )
+        upload_request = self.client.post(UPLOAD_PATH, {"size": self.size_file})
 
         for data in self.chunked_data:
             self.client.put(
-                upload_request['pulp_href'],
-                files={'file': data[0]},
-                headers=data[1],
+                upload_request["pulp_href"], files={"file": data[0]}, headers=data[1],
             )
 
         # fetch a name of the upload from the corresponding pulp_href
-        upload_name = upload_request['pulp_href'].replace('/pulp/api/v3/uploads/', '')[:-1]
+        upload_name = upload_request["pulp_href"].replace("/pulp/api/v3/uploads/", "")[:-1]
 
-        cmd = ('ls', os.path.join(settings.CHUNKED_UPLOAD_DIR, upload_name))
+        cmd = ("ls", os.path.join(settings.CHUNKED_UPLOAD_DIR, upload_name))
         self.cli_client.run(cmd, sudo=True)
 
         # committing the upload should delete the upload
         artifact = self.client.post(
-            urljoin(upload_request['pulp_href'], 'commit/'),
-            data={'sha256': self.file_sha256},
+            urljoin(upload_request["pulp_href"], "commit/"), data={"sha256": self.file_sha256},
         )
         with self.assertRaises(CalledProcessError):
             self.cli_client.run(cmd, sudo=True)
 
-        self.addCleanup(self.client.delete, artifact['pulp_href'])
+        self.addCleanup(self.client.delete, artifact["pulp_href"])
 
     def upload_chunks(self):
         """Upload file in chunks."""
-        upload_request = self.client.post(
-            UPLOAD_PATH, {'size': self.size_file}
-        )
+        upload_request = self.client.post(UPLOAD_PATH, {"size": self.size_file})
 
         for data in self.chunked_data:
             self.client.put(
-                upload_request['pulp_href'],
-                files={'file': data[0]},
-                headers=data[1],
+                upload_request["pulp_href"], files={"file": data[0]}, headers=data[1],
             )
 
         artifact_request = self.client.post(
-            urljoin(upload_request['pulp_href'], 'commit/'),
-            data={'sha256': self.file_sha256},
+            urljoin(upload_request["pulp_href"], "commit/"), data={"sha256": self.file_sha256},
         )
         return artifact_request

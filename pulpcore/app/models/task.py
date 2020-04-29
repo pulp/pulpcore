@@ -32,10 +32,12 @@ class ReservedResource(BaseModel):
         task (models.ForeignKey): The task associated with this reservation
         worker (models.ForeignKey): The worker associated with this reservation
     """
+
     resource = models.TextField(unique=True)
 
-    tasks = models.ManyToManyField("Task", related_name="reserved_resources",
-                                   through='TaskReservedResource')
+    tasks = models.ManyToManyField(
+        "Task", related_name="reserved_resources", through="TaskReservedResource"
+    )
     worker = models.ForeignKey("Worker", related_name="reservations", on_delete=models.CASCADE)
 
 
@@ -54,8 +56,9 @@ class TaskReservedResource(BaseModel):
         task (models.ForeignKey): The associated task.
         resource (models.ForeignKey): The associated resource.
     """
-    resource = models.ForeignKey('ReservedResource', on_delete=models.CASCADE)
-    task = models.ForeignKey('Task', on_delete=models.PROTECT)
+
+    resource = models.ForeignKey("ReservedResource", on_delete=models.CASCADE)
+    task = models.ForeignKey("Task", on_delete=models.PROTECT)
 
 
 class ReservedResourceRecord(BaseModel):
@@ -76,8 +79,9 @@ class ReservedResourceRecord(BaseModel):
     """
 
     resource = models.TextField(unique=True)
-    tasks = models.ManyToManyField("Task", related_name="reserved_resources_record",
-                                   through='TaskReservedResourceRecord')
+    tasks = models.ManyToManyField(
+        "Task", related_name="reserved_resources_record", through="TaskReservedResourceRecord"
+    )
 
 
 class TaskReservedResourceRecord(BaseModel):
@@ -95,12 +99,11 @@ class TaskReservedResourceRecord(BaseModel):
         resource (models.ForeignKey): The associated resource.
     """
 
-    resource = models.ForeignKey('ReservedResourceRecord', on_delete=models.CASCADE)
-    task = models.ForeignKey('Task', on_delete=models.CASCADE)
+    resource = models.ForeignKey("ReservedResourceRecord", on_delete=models.CASCADE)
+    task = models.ForeignKey("Task", on_delete=models.CASCADE)
 
 
 class WorkerManager(models.Manager):
-
     def get_unreserved_worker(self):
         """
         Randomly selects an unreserved :class:`~pulpcore.app.models.Worker`
@@ -123,9 +126,9 @@ class WorkerManager(models.Manager):
         workers_qs = self.online_workers().exclude(
             name=TASKING_CONSTANTS.RESOURCE_MANAGER_WORKER_NAME
         )
-        workers_qs_with_counts = workers_qs.annotate(models.Count('reservations'))
+        workers_qs_with_counts = workers_qs.annotate(models.Count("reservations"))
         try:
-            return workers_qs_with_counts.filter(reservations__count=0).order_by('?')[0]
+            return workers_qs_with_counts.filter(reservations__count=0).order_by("?")[0]
         except IndexError:
             raise self.model.DoesNotExist()
 
@@ -181,8 +184,9 @@ class WorkerManager(models.Manager):
         now = timezone.now()
         age_threshold = now - timedelta(seconds=TASKING_CONSTANTS.WORKER_TTL)
 
-        return self.filter(last_heartbeat__lt=age_threshold,
-                           cleaned_up=False, gracefully_stopped=False)
+        return self.filter(
+            last_heartbeat__lt=age_threshold, cleaned_up=False, gracefully_stopped=False
+        )
 
     def with_reservations(self, resources):
         """
@@ -230,6 +234,7 @@ class Worker(BaseModel):
             is False.
         cleaned_up (models.BooleanField): True if the worker has been cleaned up. Default is False.
     """
+
     objects = WorkerManager()
 
     name = models.TextField(db_index=True, unique=True)
@@ -281,7 +286,7 @@ class Worker(BaseModel):
             ValueError: When the model instance has never been saved before. This method can
                 only update an existing database record.
         """
-        self.save(update_fields=['last_heartbeat'])
+        self.save(update_fields=["last_heartbeat"])
 
     def lock_resources(self, task, resource_urls):
         """
@@ -302,8 +307,9 @@ class Worker(BaseModel):
                     reservation = ReservedResource.objects.create(worker=self, resource=resource)
                 TaskReservedResource.objects.create(resource=reservation, task=task)
 
-                reservation_record = ReservedResourceRecord.objects \
-                    .get_or_create(resource=resource)[0]
+                reservation_record = ReservedResourceRecord.objects.get_or_create(
+                    resource=resource
+                )[0]
                 TaskReservedResourceRecord.objects.create(resource=reservation_record, task=task)
 
 
@@ -324,6 +330,7 @@ class Task(BaseModel):
         parent (models.ForeignKey): Task that spawned this task (if any)
         worker (models.ForeignKey): The worker that this task is in
     """
+
     state = models.TextField(choices=TASK_CHOICES)
     name = models.TextField()
 
@@ -331,13 +338,14 @@ class Task(BaseModel):
     finished_at = models.DateTimeField(null=True)
 
     error = JSONField(null=True)
-    worker = models.ForeignKey("Worker", null=True, related_name="tasks",
-                               on_delete=models.SET_NULL)
+    worker = models.ForeignKey("Worker", null=True, related_name="tasks", on_delete=models.SET_NULL)
 
-    parent_task = models.ForeignKey("Task", null=True, related_name="child_tasks",
-                                    on_delete=models.SET_NULL)
-    task_group = models.ForeignKey("TaskGroup", null=True, related_name="tasks",
-                                   on_delete=models.SET_NULL)
+    parent_task = models.ForeignKey(
+        "Task", null=True, related_name="child_tasks", on_delete=models.SET_NULL
+    )
+    task_group = models.ForeignKey(
+        "TaskGroup", null=True, related_name="tasks", on_delete=models.SET_NULL
+    )
 
     @staticmethod
     def current():
@@ -360,7 +368,7 @@ class Task(BaseModel):
         This updates the :attr:`started_at` and sets the :attr:`state` to :attr:`RUNNING`.
         """
         if self.state != TASK_STATES.WAITING:
-            _logger.warning(_('Task __call__() occurred but Task %s is not at WAITING') % self.pk)
+            _logger.warning(_("Task __call__() occurred but Task %s is not at WAITING") % self.pk)
         self.state = TASK_STATES.RUNNING
         self.started_at = timezone.now()
         self.save()
@@ -379,7 +387,7 @@ class Task(BaseModel):
         if self.state not in TASK_FINAL_STATES:
             self.state = TASK_STATES.COMPLETED
         else:
-            msg = _('Task set_completed() occurred but Task %s is already in final state')
+            msg = _("Task set_completed() occurred but Task %s is already in final state")
             _logger.warning(msg % self.pk)
 
         self.save()
@@ -397,7 +405,7 @@ class Task(BaseModel):
         """
         self.state = TASK_STATES.FAILED
         self.finished_at = timezone.now()
-        tb_str = ''.join(traceback.format_tb(tb))
+        tb_str = "".join(traceback.format_tb(tb))
         self.error = exception_to_dict(exc, tb_str)
         self.save()
 
@@ -423,9 +431,7 @@ class CreatedResource(GenericRelationModel):
     Relations:
         task (models.ForeignKey): The task that created the resource.
     """
+
     task = models.ForeignKey(
-        Task,
-        related_name='created_resources',
-        default=Task.current,
-        on_delete=models.CASCADE
+        Task, related_name="created_resources", default=Task.current, on_delete=models.CASCADE
     )

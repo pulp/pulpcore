@@ -59,8 +59,10 @@ class WorkerDirectory:
 
         The directory is deleted and recreated when already exists.
         """
+
         def create():
             os.makedirs(self.path, mode=self.MODE)
+
         try:
             create()
         except FileExistsError:
@@ -124,7 +126,7 @@ class WorkingDirectory(WorkerDirectory):
         try:
             return get_current_job().origin
         except AttributeError:
-            raise RuntimeError(_('May only be used within a Task.'))
+            raise RuntimeError(_("May only be used within a Task."))
 
     @staticmethod
     def _task_id():
@@ -140,7 +142,7 @@ class WorkingDirectory(WorkerDirectory):
         try:
             return get_current_job().id
         except AttributeError:
-            raise RuntimeError(_('May only be used within a Task.'))
+            raise RuntimeError(_("May only be used within a Task."))
 
     def __init__(self):
         super().__init__(self._hostname())

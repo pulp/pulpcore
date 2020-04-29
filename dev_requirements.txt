@@ -5,3 +5,4 @@ ipython
 codecov
 coverage
 flake8
+flake8-black

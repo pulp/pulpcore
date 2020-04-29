@@ -5,7 +5,7 @@ from pulpcore.app.apps import get_plugin_config
 from pulpcore.app.models.storage import get_tls_path
 
 
-__all__ = ['get_plugin_storage_path', 'get_tls_path']
+__all__ = ["get_plugin_storage_path", "get_tls_path"]
 
 
 def get_plugin_storage_path(plugin_app_label):
@@ -27,4 +27,4 @@ def get_plugin_storage_path(plugin_app_label):
             label is not installed.
     """
     get_plugin_config(plugin_app_label)
-    return os.path.join('/var/lib/pulp/shared', plugin_app_label, '')
+    return os.path.join("/var/lib/pulp/shared", plugin_app_label, "")

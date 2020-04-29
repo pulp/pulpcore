@@ -88,7 +88,7 @@ def import_repository_version(destination_repo_pk, source_repo_pk, tar_path):
         _import_file(ca_path, ContentArtifactResource)
 
         # Content
-        plugin_name = src_repo["pulp_type"].split('.')[0]
+        plugin_name = src_repo["pulp_type"].split(".")[0]
         cfg = get_plugin_config(plugin_name)
         for res_class in cfg.exportable_classes:
             filename = f"{res_class.__module__}.{res_class.__name__}.json"
@@ -118,9 +118,9 @@ def pulp_import(importer_pk, path):
 
     log.info(_("Importing {}.").format(path))
     importer = PulpImporter.objects.get(pk=importer_pk)
-    pulp_import = PulpImport.objects.create(importer=importer,
-                                            task=Task.current(),
-                                            params={"path": path})
+    pulp_import = PulpImport.objects.create(
+        importer=importer, task=Task.current(), params={"path": path}
+    )
     CreatedResource.objects.create(content_object=pulp_import)
 
     task_group = TaskGroup.objects.create(description=f"Import of {path}")
@@ -134,12 +134,12 @@ def pulp_import(importer_pk, path):
         ar_result = _import_file(os.path.join(temp_dir, ARTIFACT_FILE), ArtifactResource)
         for row in ar_result.rows:
             artifact = Artifact.objects.get(pk=row.object_id)
-            base_path = os.path.join('artifact', artifact.sha256[0:2], artifact.sha256[2:])
+            base_path = os.path.join("artifact", artifact.sha256[0:2], artifact.sha256[2:])
             src = os.path.join(temp_dir, base_path)
             dest = os.path.join(settings.MEDIA_ROOT, base_path)
 
             if not default_storage.exists(dest):
-                with open(src, 'rb') as f:
+                with open(src, "rb") as f:
                     default_storage.save(dest, f)
 
         with open(os.path.join(temp_dir, REPO_FILE), "r") as repo_data_file:
@@ -149,13 +149,16 @@ def pulp_import(importer_pk, path):
                 try:
                     dest_repo = destination_repo(src_repo["name"])
                 except Repository.DoesNotExist:
-                    log.warn(_("Could not find destination repo for {}. "
-                               "Skipping.").format(src_repo["name"]))
+                    log.warn(
+                        _("Could not find destination repo for {}. " "Skipping.").format(
+                            src_repo["name"]
+                        )
+                    )
                     continue
 
                 enqueue_with_reservation(
                     import_repository_version,
                     [dest_repo],
-                    args=[dest_repo.pk, src_repo['pulp_id'], path],
+                    args=[dest_repo.pk, src_repo["pulp_id"], path],
                     task_group=task_group,
                 )

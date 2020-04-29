@@ -11,7 +11,7 @@ from pulpcore.tests.functional.api.using_plugin.constants import (
     FILE_FIXTURE_MANIFEST_URL,
     FILE_PUBLICATION_PATH,
     FILE_REMOTE_PATH,
-    FILE_REPO_PATH
+    FILE_REPO_PATH,
 )
 
 skip_if = partial(selectors.skip_if, exc=SkipTest)
@@ -24,7 +24,7 @@ def set_up_module():
     aren't installed.
     """
     require_pulp_3(SkipTest)
-    require_pulp_plugins({'pulpcore', 'pulp_file'}, SkipTest)
+    require_pulp_plugins({"pulpcore", "pulp_file"}, SkipTest)
 
 
 def populate_pulp(cfg, url=None):
@@ -49,9 +49,9 @@ def populate_pulp(cfg, url=None):
         sync(cfg, remote, repo)
     finally:
         if remote:
-            client.delete(remote['pulp_href'])
+            client.delete(remote["pulp_href"])
         if repo:
-            client.delete(repo['pulp_href'])
+            client.delete(repo["pulp_href"])
     return client.get(FILE_CONTENT_PATH)
 
 
@@ -77,7 +77,7 @@ def create_file_publication(cfg, repo, version_href=None):
         publication.
     """
     if version_href:
-        body = {'repository_version': version_href}
+        body = {"repository_version": version_href}
     else:
-        body = {'repository': repo['pulp_href']}
+        body = {"repository": repo["pulp_href"]}
     return api.Client(cfg).post(FILE_PUBLICATION_PATH, body)

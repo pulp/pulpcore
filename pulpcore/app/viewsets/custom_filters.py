@@ -36,7 +36,7 @@ class ReservedResourcesFilter(Filter):
         try:
             resolve(urlparse(value).path)
         except Resolver404:
-            raise serializers.ValidationError(detail=_('URI not valid: {u}').format(u=value))
+            raise serializers.ValidationError(detail=_("URI not valid: {u}").format(u=value))
 
         return qs.filter(reserved_resources_record__resource=value)
 
@@ -74,7 +74,7 @@ class HyperlinkRelatedFilter(Filter):
     """
 
     def __init__(self, *args, **kwargs):
-        kwargs.setdefault('help_text', _('Foreign Key referenced by HREF'))
+        kwargs.setdefault("help_text", _("Foreign Key referenced by HREF"))
         super().__init__(*args, **kwargs)
 
     def filter(self, qs, value):
@@ -93,17 +93,18 @@ class HyperlinkRelatedFilter(Filter):
 
         if not value:
             raise serializers.ValidationError(
-                detail=_('No value supplied for {name} filter.').format(name=self.field_name))
+                detail=_("No value supplied for {name} filter.").format(name=self.field_name)
+            )
         try:
             match = resolve(urlparse(value).path)
         except Resolver404:
-            raise serializers.ValidationError(detail=_('URI not valid: {u}').format(u=value))
+            raise serializers.ValidationError(detail=_("URI not valid: {u}").format(u=value))
 
-        pk = match.kwargs['pk']
+        pk = match.kwargs["pk"]
         try:
             UUID(pk, version=4)
         except ValueError:
-            raise serializers.ValidationError(detail=_('UUID invalid: {u}').format(u=pk))
+            raise serializers.ValidationError(detail=_("UUID invalid: {u}").format(u=pk))
 
         key = "{}__pk".format(self.field_name)
         return qs.filter(**{key: pk})
@@ -117,10 +118,11 @@ class IsoDateTimeFilter(DateTimeFilter):
     * https://github.com/tomchristie/django-rest-framework/issues/1338
     * https://github.com/alex/django-filter/pull/264
     """
+
     field_class = IsoDateTimeField
 
     def __init__(self, *args, **kwargs):
-        kwargs.setdefault('help_text', _('ISO 8601 formatted dates are supported'))
+        kwargs.setdefault("help_text", _("ISO 8601 formatted dates are supported"))
         super().__init__(*args, **kwargs)
 
 
@@ -130,7 +132,7 @@ class RepoVersionHrefFilter(Filter):
     """
 
     def __init__(self, *args, **kwargs):
-        kwargs.setdefault('help_text', _('Repository Version referenced by HREF'))
+        kwargs.setdefault("help_text", _("Repository Version referenced by HREF"))
         super().__init__(*args, **kwargs)
 
     @staticmethod
@@ -143,7 +145,8 @@ class RepoVersionHrefFilter(Filter):
         """
         if not value:
             raise serializers.ValidationError(
-                detail=_('No value supplied for repository version filter'))
+                detail=_("No value supplied for repository version filter")
+            )
 
         return NamedModelViewSet.get_resource(value, RepositoryVersion)
 
@@ -199,7 +202,7 @@ class ArtifactRepositoryVersionFilter(RepoVersionHrefFilter):
 
         repo_version = self.get_repository_version(value)
         content = repo_version.content
-        artifact_pks = ContentArtifact.objects.filter(content__in=content).values('artifact__pk')
+        artifact_pks = ContentArtifact.objects.filter(content__in=content).values("artifact__pk")
         return qs.filter(pk__in=artifact_pks)
 
 

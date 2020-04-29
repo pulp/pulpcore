@@ -12,11 +12,7 @@ from .http import HttpDownloader
 from .file import FileDownloader
 
 
-PROTOCOL_MAP = {
-    'http': HttpDownloader,
-    'https': HttpDownloader,
-    'file': FileDownloader
-}
+PROTOCOL_MAP = {"http": HttpDownloader, "https": HttpDownloader, "file": FileDownloader}
 
 
 class DownloaderFactory:
@@ -63,8 +59,11 @@ class DownloaderFactory:
         if downloader_overrides:
             for protocol, download_class in downloader_overrides.items():  # overlay the overrides
                 self._download_class_map[protocol] = download_class
-        self._handler_map = {'https': self._http_or_https, 'http': self._http_or_https,
-                             'file': self._generic}
+        self._handler_map = {
+            "https": self._http_or_https,
+            "http": self._http_or_https,
+            "file": self._generic,
+        }
         self._session = self._make_aiohttp_session_from_remote()
         self._semaphore = asyncio.Semaphore(value=remote.download_concurrency)
         atexit.register(self._session.close)
@@ -78,7 +77,7 @@ class DownloaderFactory:
         Returns:
             :class:`aiohttp.ClientSession`
         """
-        tcp_conn_opts = {'force_close': True}
+        tcp_conn_opts = {"force_close": True}
 
         sslcontext = None
         if self._remote.ca_cert:
@@ -87,22 +86,19 @@ class DownloaderFactory:
             if not sslcontext:
                 sslcontext = ssl.create_default_context()
             with NamedTemporaryFile() as key_file:
-                key_file.write(bytes(self._remote.client_key, 'utf-8'))
+                key_file.write(bytes(self._remote.client_key, "utf-8"))
                 key_file.flush()
                 with NamedTemporaryFile() as cert_file:
-                    cert_file.write(bytes(self._remote.client_cert, 'utf-8'))
+                    cert_file.write(bytes(self._remote.client_cert, "utf-8"))
                     cert_file.flush()
-                    sslcontext.load_cert_chain(
-                        cert_file.name,
-                        key_file.name
-                    )
+                    sslcontext.load_cert_chain(cert_file.name, key_file.name)
         if not self._remote.tls_validation:
             if not sslcontext:
                 sslcontext = ssl.create_default_context()
             sslcontext.check_hostname = False
             sslcontext.verify_mode = ssl.CERT_NONE
         if sslcontext:
-            tcp_conn_opts['ssl_context'] = sslcontext
+            tcp_conn_opts["ssl_context"] = sslcontext
 
         conn = aiohttp.TCPConnector(**tcp_conn_opts)
 
@@ -124,13 +120,13 @@ class DownloaderFactory:
             subclass of :class:`~pulpcore.plugin.download.BaseDownloader`: A downloader that
             is configured with the remote settings.
         """
-        kwargs['semaphore'] = self._semaphore
+        kwargs["semaphore"] = self._semaphore
         scheme = urlparse(url).scheme.lower()
         try:
             builder = self._handler_map[scheme]
             download_class = self._download_class_map[scheme]
         except KeyError:
-            raise ValueError(_('URL: {u} not supported.'.format(u=url)))
+            raise ValueError(_("URL: {u} not supported.".format(u=url)))
         else:
             return builder(download_class, url, **kwargs)
 
@@ -149,14 +145,13 @@ class DownloaderFactory:
             :class:`~pulpcore.plugin.download.HttpDownloader`: A downloader that
             is configured with the remote settings.
         """
-        options = {'session': self._session}
+        options = {"session": self._session}
         if self._remote.proxy_url:
-            options['proxy'] = self._remote.proxy_url
+            options["proxy"] = self._remote.proxy_url
 
         if self._remote.username and self._remote.password:
-            options['auth'] = aiohttp.BasicAuth(
-                login=self._remote.username,
-                password=self._remote.password
+            options["auth"] = aiohttp.BasicAuth(
+                login=self._remote.username, password=self._remote.password
             )
 
         return download_class(url, **options, **kwargs)

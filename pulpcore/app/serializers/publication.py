@@ -17,68 +17,60 @@ from pulpcore.app.serializers import (
 
 class PublicationSerializer(ModelSerializer):
     pulp_href = DetailIdentityField()
-    repository_version = RepositoryVersionRelatedField(
-        required=False
-    )
+    repository_version = RepositoryVersionRelatedField(required=False)
     repository = DetailRelatedField(
-        help_text=_('A URI of the repository to be published.'),
+        help_text=_("A URI of the repository to be published."),
         required=False,
-        label=_('Repository'),
+        label=_("Repository"),
         queryset=models.Repository.objects.all(),
     )
 
     def validate(self, data):
-        if hasattr(self, 'initial_data'):
+        if hasattr(self, "initial_data"):
             validate_unknown_fields(self.initial_data, self.fields)
 
-        repository = data.pop('repository', None)  # not an actual field on publication
-        repository_version = data.get('repository_version')
+        repository = data.pop("repository", None)  # not an actual field on publication
+        repository_version = data.get("repository_version")
         if not repository and not repository_version:
             raise serializers.ValidationError(
-                _("Either the 'repository' or 'repository_version' need to be specified"))
+                _("Either the 'repository' or 'repository_version' need to be specified")
+            )
         elif not repository and repository_version:
             return data
         elif repository and not repository_version:
             version = repository.latest_version()
             if version:
-                new_data = {'repository_version': version}
+                new_data = {"repository_version": version}
                 new_data.update(data)
                 return new_data
             else:
                 raise serializers.ValidationError(
-                    detail=_('Repository has no version available to create Publication from'))
+                    detail=_("Repository has no version available to create Publication from")
+                )
         raise serializers.ValidationError(
-            _("Either the 'repository' or 'repository_version' need to be specified "
-              "but not both.")
+            _(
+                "Either the 'repository' or 'repository_version' need to be specified "
+                "but not both."
+            )
         )
 
     class Meta:
         abstract = True
         model = models.Publication
-        fields = ModelSerializer.Meta.fields + (
-            'repository_version',
-            'repository'
-        )
+        fields = ModelSerializer.Meta.fields + ("repository_version", "repository")
 
 
 class ContentGuardSerializer(ModelSerializer):
     pulp_href = DetailIdentityField()
 
-    name = serializers.CharField(
-        help_text=_('The unique name.')
-    )
+    name = serializers.CharField(help_text=_("The unique name."))
     description = serializers.CharField(
-        help_text=_('An optional description.'),
-        allow_null=True,
-        required=False
+        help_text=_("An optional description."), allow_null=True, required=False
     )
 
     class Meta:
         model = models.ContentGuard
-        fields = ModelSerializer.Meta.fields + (
-            'name',
-            'description'
-        )
+        fields = ModelSerializer.Meta.fields + ("name", "description")
 
 
 class BaseDistributionSerializer(ModelSerializer):
@@ -100,34 +92,32 @@ class BaseDistributionSerializer(ModelSerializer):
 
     pulp_href = DetailIdentityField()
     base_path = serializers.CharField(
-        help_text=_('The base (relative) path component of the published url. Avoid paths that \
-                    overlap with other distribution base paths (e.g. "foo" and "foo/bar")'),
-        validators=[UniqueValidator(queryset=models.BaseDistribution.objects.all())]
+        help_text=_(
+            'The base (relative) path component of the published url. Avoid paths that \
+                    overlap with other distribution base paths (e.g. "foo" and "foo/bar")'
+        ),
+        validators=[UniqueValidator(queryset=models.BaseDistribution.objects.all())],
     )
     base_url = BaseURLField(
-        source='base_path', read_only=True,
-        help_text=_('The URL for accessing the publication as defined by this distribution.')
+        source="base_path",
+        read_only=True,
+        help_text=_("The URL for accessing the publication as defined by this distribution."),
     )
     content_guard = DetailRelatedField(
         required=False,
-        help_text=_('An optional content-guard.'),
+        help_text=_("An optional content-guard."),
         queryset=models.ContentGuard.objects.all(),
-        allow_null=True
+        allow_null=True,
     )
     name = serializers.CharField(
-        help_text=_('A unique name. Ex, `rawhide` and `stable`.'),
-        validators=[UniqueValidator(queryset=models.BaseDistribution.objects.all())]
+        help_text=_("A unique name. Ex, `rawhide` and `stable`."),
+        validators=[UniqueValidator(queryset=models.BaseDistribution.objects.all())],
     )
 
     class Meta:
         abstract = True
         model = models.BaseDistribution
-        fields = ModelSerializer.Meta.fields + (
-            'base_path',
-            'base_url',
-            'content_guard',
-            'name',
-        )
+        fields = ModelSerializer.Meta.fields + ("base_path", "base_url", "content_guard", "name",)
 
     def _validate_path_overlap(self, path):
         # look for any base paths nested in path
@@ -138,7 +128,7 @@ class BaseDistributionSerializer(ModelSerializer):
             q |= Q(base_path=search)
 
         # look for any base paths that nest path
-        q |= Q(base_path__startswith='{}/'.format(path))
+        q |= Q(base_path__startswith="{}/".format(path))
         qs = models.BaseDistribution.objects.filter(q)
 
         if self.instance is not None:
@@ -146,8 +136,9 @@ class BaseDistributionSerializer(ModelSerializer):
 
         match = qs.first()
         if match:
-            raise serializers.ValidationError(detail=_("Overlaps with existing distribution '"
-                                                       "{}'").format(match.name))
+            raise serializers.ValidationError(
+                detail=_("Overlaps with existing distribution '" "{}'").format(match.name)
+            )
 
         return path
 
@@ -159,43 +150,36 @@ class BaseDistributionSerializer(ModelSerializer):
 class PublicationDistributionSerializer(BaseDistributionSerializer):
     publication = DetailRelatedField(
         required=False,
-        help_text=_('Publication to be served'),
+        help_text=_("Publication to be served"),
         queryset=models.Publication.objects.exclude(complete=False),
-        allow_null=True
-    )
-
-    class Meta:
-        abstract = True
-        fields = BaseDistributionSerializer.Meta.fields + (
-            'publication',
-        )
-
-
-class RepositoryVersionDistributionSerializer(BaseDistributionSerializer):
-    repository = DetailRelatedField(
-        required=False,
-        help_text=_('The latest RepositoryVersion for this Repository will be served.'),
-        queryset=models.Repository.objects.all(),
-        allow_null=True
-    )
-    repository_version = RepositoryVersionRelatedField(
-        required=False,
-        help_text=_('RepositoryVersion to be served'),
         allow_null=True,
     )
 
     class Meta:
         abstract = True
-        fields = BaseDistributionSerializer.Meta.fields + (
-            'repository',
-            'repository_version',
-        )
+        fields = BaseDistributionSerializer.Meta.fields + ("publication",)
+
+
+class RepositoryVersionDistributionSerializer(BaseDistributionSerializer):
+    repository = DetailRelatedField(
+        required=False,
+        help_text=_("The latest RepositoryVersion for this Repository will be served."),
+        queryset=models.Repository.objects.all(),
+        allow_null=True,
+    )
+    repository_version = RepositoryVersionRelatedField(
+        required=False, help_text=_("RepositoryVersion to be served"), allow_null=True,
+    )
+
+    class Meta:
+        abstract = True
+        fields = BaseDistributionSerializer.Meta.fields + ("repository", "repository_version",)
 
     def validate(self, data):
         super().validate(data)
 
-        repository_in_data = 'repository' in data
-        repository_version_in_data = 'repository_version' in data
+        repository_in_data = "repository" in data
+        repository_version_in_data = "repository_version" in data
         repository_in_instance = self.instance.repository if self.instance else None
         repository_version_in_instance = self.instance.repository_version if self.instance else None
 
@@ -209,8 +193,9 @@ class RepositoryVersionDistributionSerializer(BaseDistributionSerializer):
             error = False
 
         if error:
-            msg = _("The attributes 'repository' and 'repository_version' must be used"
-                    " exclusively.")
+            msg = _(
+                "The attributes 'repository' and 'repository_version' must be used" " exclusively."
+            )
             raise serializers.ValidationError(msg)
 
         return data

@@ -18,6 +18,7 @@ class QueryModelResource(resources.ModelResource):
         queryset (django.db.models.query.QuerySet): filtering queryset for this resource
             (driven by repo_version)
     """
+
     def set_up_queryset(self):
         return None
 
@@ -27,4 +28,4 @@ class QueryModelResource(resources.ModelResource):
             self.queryset = self.set_up_queryset()
 
     class Meta:
-        import_id_fields = ('pulp_id',)
+        import_id_fields = ("pulp_id",)

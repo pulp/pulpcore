@@ -37,17 +37,19 @@ class Repository(MasterModel):
 
         content (models.ManyToManyField): Associated content.
     """
-    TYPE = 'repository'
+
+    TYPE = "repository"
     CONTENT_TYPES = []
 
     name = models.TextField(db_index=True, unique=True)
     description = models.TextField(null=True)
     next_version = models.PositiveIntegerField(default=0)
-    content = models.ManyToManyField('Content', through='RepositoryContent',
-                                     related_name='repositories')
+    content = models.ManyToManyField(
+        "Content", through="RepositoryContent", related_name="repositories"
+    )
 
     class Meta:
-        verbose_name_plural = 'repositories'
+        verbose_name_plural = "repositories"
 
     def save(self, *args, **kwargs):
         """
@@ -69,10 +71,7 @@ class Repository(MasterModel):
 
         This method can be overriden by plugins if they require custom logic.
         """
-        version = RepositoryVersion(
-            repository=self,
-            number=self.next_version,
-            complete=True)
+        version = RepositoryVersion(repository=self, number=self.next_version, complete=True)
         self.next_version += 1
         self.save()
         version.save()
@@ -93,9 +92,8 @@ class Repository(MasterModel):
         """
         with transaction.atomic():
             version = RepositoryVersion(
-                repository=self,
-                number=int(self.next_version),
-                base_version=base_version)
+                repository=self, number=int(self.next_version), base_version=base_version
+            )
             version.save()
 
             if base_version:
@@ -192,21 +190,28 @@ class Remote(MasterModel):
 
         repository (models.ForeignKey): The repository that owns this Remote
     """
-    TYPE = 'remote'
+
+    TYPE = "remote"
 
     # Constants for the ChoiceField 'policy'
-    IMMEDIATE = 'immediate'
-    ON_DEMAND = 'on_demand'
-    STREAMED = 'streamed'
+    IMMEDIATE = "immediate"
+    ON_DEMAND = "on_demand"
+    STREAMED = "streamed"
 
     POLICY_CHOICES = (
-        (IMMEDIATE, 'When syncing, download all metadata and content now.'),
-        (ON_DEMAND, 'When syncing, download metadata, but do not download content now. Instead, '
-                    'download content as clients request it, and save it in Pulp to be served for '
-                    'future client requests.'),
-        (STREAMED, 'When syncing, download metadata, but do not download content now. Instead,'
-                   'download content as clients request it, but never save it in Pulp. This causes '
-                   'future requests for that same content to have to be downloaded again.')
+        (IMMEDIATE, "When syncing, download all metadata and content now."),
+        (
+            ON_DEMAND,
+            "When syncing, download metadata, but do not download content now. Instead, "
+            "download content as clients request it, and save it in Pulp to be served for "
+            "future client requests.",
+        ),
+        (
+            STREAMED,
+            "When syncing, download metadata, but do not download content now. Instead,"
+            "download content as clients request it, but never save it in Pulp. This causes "
+            "future requests for that same content to have to be downloaded again.",
+        ),
     )
 
     name = models.TextField(db_index=True, unique=True)
@@ -281,9 +286,9 @@ class Remote(MasterModel):
                 if digest_value:
                     expected_digests[digest_name] = digest_value
             if expected_digests:
-                kwargs['expected_digests'] = expected_digests
+                kwargs["expected_digests"] = expected_digests
             if remote_artifact.size:
-                kwargs['expected_size'] = remote_artifact.size
+                kwargs["expected_size"] = remote_artifact.size
         return self.download_factory.build(url, **kwargs)
 
     def get_remote_artifact_url(self, relative_path=None):
@@ -322,7 +327,7 @@ class Remote(MasterModel):
         raise NotImplementedError()
 
     class Meta:
-        default_related_name = 'remotes'
+        default_related_name = "remotes"
 
 
 class RepositoryContent(BaseModel):
@@ -342,18 +347,23 @@ class RepositoryContent(BaseModel):
         version_removed (models.ForeignKey): The RepositoryVersion which removed the referenced
             Content.
     """
-    content = models.ForeignKey('Content', on_delete=models.CASCADE,
-                                related_name='version_memberships')
+
+    content = models.ForeignKey(
+        "Content", on_delete=models.CASCADE, related_name="version_memberships"
+    )
     repository = models.ForeignKey(Repository, on_delete=models.CASCADE)
-    version_added = models.ForeignKey('RepositoryVersion', related_name='added_memberships',
-                                      on_delete=models.CASCADE)
-    version_removed = models.ForeignKey('RepositoryVersion', null=True,
-                                        related_name='removed_memberships',
-                                        on_delete=models.CASCADE)
+    version_added = models.ForeignKey(
+        "RepositoryVersion", related_name="added_memberships", on_delete=models.CASCADE
+    )
+    version_removed = models.ForeignKey(
+        "RepositoryVersion", null=True, related_name="removed_memberships", on_delete=models.CASCADE
+    )
 
     class Meta:
-        unique_together = (('repository', 'content', 'version_added'),
-                           ('repository', 'content', 'version_removed'))
+        unique_together = (
+            ("repository", "content", "version_added"),
+            ("repository", "content", "version_removed"),
+        )
 
 
 class RepositoryVersion(BaseModel):
@@ -383,17 +393,17 @@ class RepositoryVersion(BaseModel):
 
         repository (models.ForeignKey): The associated repository.
     """
+
     repository = models.ForeignKey(Repository, on_delete=models.CASCADE)
     number = models.PositiveIntegerField(db_index=True)
     complete = models.BooleanField(db_index=True, default=False)
-    base_version = models.ForeignKey('RepositoryVersion', null=True,
-                                     on_delete=models.SET_NULL)
+    base_version = models.ForeignKey("RepositoryVersion", null=True, on_delete=models.SET_NULL)
 
     class Meta:
-        default_related_name = 'versions'
-        unique_together = ('repository', 'number')
-        get_latest_by = 'number'
-        ordering = ('number',)
+        default_related_name = "versions"
+        unique_together = ("repository", "number")
+        get_latest_by = "number"
+        ordering = ("number",)
 
     def _content_relationships(self):
         """
@@ -508,9 +518,7 @@ class RepositoryVersion(BaseModel):
 
         return Content.objects.filter(
             version_memberships__in=self._content_relationships()
-        ).exclude(
-            version_memberships__in=base_version._content_relationships()
-        )
+        ).exclude(version_memberships__in=base_version._content_relationships())
 
     def removed(self, base_version=None):
         """
@@ -525,9 +533,7 @@ class RepositoryVersion(BaseModel):
 
         return Content.objects.filter(
             version_memberships__in=base_version._content_relationships()
-        ).exclude(
-            version_memberships__in=self._content_relationships()
-        )
+        ).exclude(version_memberships__in=self._content_relationships())
 
     def contains(self, content):
         """
@@ -554,26 +560,22 @@ class RepositoryVersion(BaseModel):
             raise ResourceImmutableError(self)
 
         repo_content = []
-        to_add = set(content.exclude(pk__in=self.content).values_list('pk', flat=True))
+        to_add = set(content.exclude(pk__in=self.content).values_list("pk", flat=True))
 
         # Normalize representation if content has already been removed in this version and
         # is re-added: Undo removal by setting version_removed to None.
-        for removed in batch_qs(self.removed().order_by('pk').values_list('pk', flat=True)):
+        for removed in batch_qs(self.removed().order_by("pk").values_list("pk", flat=True)):
             to_readd = to_add.intersection(set(removed))
             if to_readd:
                 RepositoryContent.objects.filter(
-                    content__in=to_readd,
-                    repository=self.repository,
-                    version_removed=self
+                    content__in=to_readd, repository=self.repository, version_removed=self
                 ).update(version_removed=None)
                 to_add = to_add - to_readd
 
         for content_pk in to_add:
             repo_content.append(
                 RepositoryContent(
-                    repository=self.repository,
-                    content_id=content_pk,
-                    version_added=self
+                    repository=self.repository, content_id=content_pk, version_added=self
                 )
             )
 
@@ -603,13 +605,12 @@ class RepositoryVersion(BaseModel):
             repository=self.repository,
             content_id__in=content,
             version_added=self,
-            version_removed=None
+            version_removed=None,
         ).delete()
 
         q_set = RepositoryContent.objects.filter(
-            repository=self.repository,
-            content_id__in=content,
-            version_removed=None)
+            repository=self.repository, content_id__in=content, version_removed=None
+        )
         q_set.update(version_removed=self)
 
     def set_content(self, content):
@@ -636,8 +637,11 @@ class RepositoryVersion(BaseModel):
                 repository and with a higher "number".
         """
         try:
-            return self.repository.versions.exclude(complete=False).filter(
-                number__gt=self.number).order_by('number')[0]
+            return (
+                self.repository.versions.exclude(complete=False)
+                .filter(number__gt=self.number)
+                .order_by("number")[0]
+            )
         except IndexError:
             raise self.DoesNotExist
 
@@ -652,8 +656,11 @@ class RepositoryVersion(BaseModel):
                 repository and with a lower "number".
         """
         try:
-            return self.repository.versions.exclude(complete=False).filter(
-                number__lt=self.number).order_by('-number')[0]
+            return (
+                self.repository.versions.exclude(complete=False)
+                .filter(number__lt=self.number)
+                .order_by("-number")[0]
+            )
         except IndexError:
             raise self.DoesNotExist
 
@@ -667,20 +674,23 @@ class RepositoryVersion(BaseModel):
         # If the same content is deleted in version, but added back in next_version
         # set version_removed field in relation to None, and remove relation adding the content
         # in next_version
-        content_added = repo_relations.filter(version_added=next_version).values_list('content_id')
+        content_added = repo_relations.filter(version_added=next_version).values_list("content_id")
 
         # use list() to force the evaluation of the queryset, otherwise queryset is affected
         # by the update() operation before delete() is ran
-        content_removed_and_readded = list(repo_relations.filter(version_removed=self,
-                                                                 content_id__in=content_added)
-                                           .values_list('content_id'))
+        content_removed_and_readded = list(
+            repo_relations.filter(version_removed=self, content_id__in=content_added).values_list(
+                "content_id"
+            )
+        )
 
-        repo_relations.filter(version_removed=self,
-                              content_id__in=content_removed_and_readded)\
-            .update(version_removed=None)
+        repo_relations.filter(
+            version_removed=self, content_id__in=content_removed_and_readded
+        ).update(version_removed=None)
 
-        repo_relations.filter(version_added=next_version,
-                              content_id__in=content_removed_and_readded).delete()
+        repo_relations.filter(
+            version_added=next_version, content_id__in=content_removed_and_readded
+        ).delete()
 
         # "squash" by moving other additions and removals forward to the next version
         repo_relations.filter(version_added=self).update(version_added=next_version)
@@ -712,8 +722,7 @@ class RepositoryVersion(BaseModel):
         else:
             with transaction.atomic():
                 RepositoryContent.objects.filter(version_added=self).delete()
-                RepositoryContent.objects.filter(version_removed=self) \
-                    .update(version_removed=None)
+                RepositoryContent.objects.filter(version_removed=self).update(version_removed=None)
                 CreatedResource.objects.filter(object_id=self.pk).delete()
                 super().delete(**kwargs)
 
@@ -735,12 +744,12 @@ class RepositoryVersion(BaseModel):
                     qs = self.content
                 elif value == RepositoryVersionContentDetails.REMOVED:
                     qs = self.removed()
-                annotated = qs.values('pulp_type').annotate(count=models.Count('pulp_type'))
+                annotated = qs.values("pulp_type").annotate(count=models.Count("pulp_type"))
                 for item in annotated:
                     count_obj = RepositoryVersionContentDetails(
-                        content_type=item['pulp_type'],
+                        content_type=item["pulp_type"],
                         repository_version=self,
-                        count=item['count'],
+                        count=item["count"],
                         count_type=value,
                     )
                     counts_list.append(count_obj)
@@ -770,7 +779,7 @@ class RepositoryVersion(BaseModel):
                     self.delete()
                 else:
                     content_types_seen = set(
-                        self.content.values_list('pulp_type', flat=True).distinct()
+                        self.content.values_list("pulp_type", flat=True).distinct()
                     )
                     content_types_supported = set(
                         ctype.get_pulp_type() for ctype in repository.CONTENT_TYPES
@@ -796,22 +805,20 @@ class RepositoryVersion(BaseModel):
 
 
 class RepositoryVersionContentDetails(models.Model):
-    ADDED = 'A'
-    PRESENT = 'P'
-    REMOVED = 'R'
+    ADDED = "A"
+    PRESENT = "P"
+    REMOVED = "R"
     COUNT_TYPE_CHOICES = (
-        (ADDED, 'added'),
-        (PRESENT, 'present'),
-        (REMOVED, 'removed'),
+        (ADDED, "added"),
+        (PRESENT, "present"),
+        (REMOVED, "removed"),
     )
 
-    count_type = models.CharField(
-        max_length=1,
-        choices=COUNT_TYPE_CHOICES,
-    )
+    count_type = models.CharField(max_length=1, choices=COUNT_TYPE_CHOICES,)
     content_type = models.TextField()
-    repository_version = models.ForeignKey('RepositoryVersion', related_name='counts',
-                                           on_delete=models.CASCADE)
+    repository_version = models.ForeignKey(
+        "RepositoryVersion", related_name="counts", on_delete=models.CASCADE
+    )
     count = models.IntegerField()
 
     @property
@@ -829,7 +836,7 @@ class RepositoryVersionContentDetails(models.Model):
             dict: {<pulp_type>: <url>}
         """
         ctype_model = Content.objects.filter(pulp_type=self.content_type).first().cast().__class__
-        ctype_view = get_view_name_for_model(ctype_model, 'list')
+        ctype_view = get_view_name_for_model(ctype_model, "list")
         try:
             ctype_url = reverse(ctype_view)
         except django.urls.exceptions.NoReverseMatch:
@@ -837,17 +844,19 @@ class RepositoryVersionContentDetails(models.Model):
             # There's nothing we can do here, except to skip it.
             return
         repository = self.repository_version.repository.cast()
-        repository_view = get_view_name_for_model(repository.__class__, 'list')
+        repository_view = get_view_name_for_model(repository.__class__, "list")
 
         repository_url = reverse(repository_view)
-        rv_href = repository_url + str(repository.pk) + "/versions/{version}/".format(
-            version=self.repository_version.number)
+        rv_href = (
+            repository_url
+            + str(repository.pk)
+            + "/versions/{version}/".format(version=self.repository_version.number)
+        )
         if self.count_type == self.ADDED:
             partial_url_str = "{base}?repository_version_added={rv_href}"
         elif self.count_type == self.PRESENT:
             partial_url_str = "{base}?repository_version={rv_href}"
         elif self.count_type == self.REMOVED:
             partial_url_str = "{base}?repository_version_removed={rv_href}"
-        full_url = partial_url_str.format(
-            base=ctype_url, rv_href=rv_href)
+        full_url = partial_url_str.format(base=ctype_url, rv_href=rv_href)
         return full_url

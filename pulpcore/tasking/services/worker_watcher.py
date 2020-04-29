@@ -44,8 +44,7 @@ def handle_worker_heartbeat(worker_name):
     worker.save_heartbeat()
 
     msg = _("Worker heartbeat from '{name}' at time {timestamp}").format(
-        timestamp=worker.last_heartbeat,
-        name=worker_name
+        timestamp=worker.last_heartbeat, name=worker_name
     )
 
     _logger.debug(msg)
@@ -64,8 +63,13 @@ def check_worker_processes():
     present. If there are zero of either, log at the error level that Pulp will not operate
     correctly.
     """
-    msg = _('Checking if pulpcore-workers or pulpcore-resource-manager processes are '
-            'missing for more than %d seconds') % TASKING_CONSTANTS.WORKER_TTL
+    msg = (
+        _(
+            "Checking if pulpcore-workers or pulpcore-resource-manager processes are "
+            "missing for more than %d seconds"
+        )
+        % TASKING_CONSTANTS.WORKER_TTL
+    )
     _logger.debug(msg)
 
     for worker in Worker.objects.dirty_workers():
@@ -74,25 +78,40 @@ def check_worker_processes():
 
         mark_worker_offline(worker.name)
 
-    worker_count = Worker.objects.online_workers().exclude(
-        name=TASKING_CONSTANTS.RESOURCE_MANAGER_WORKER_NAME).count()
+    worker_count = (
+        Worker.objects.online_workers()
+        .exclude(name=TASKING_CONSTANTS.RESOURCE_MANAGER_WORKER_NAME)
+        .count()
+    )
 
-    resource_manager_count = Worker.objects.online_workers().filter(
-        name=TASKING_CONSTANTS.RESOURCE_MANAGER_WORKER_NAME).count()
+    resource_manager_count = (
+        Worker.objects.online_workers()
+        .filter(name=TASKING_CONSTANTS.RESOURCE_MANAGER_WORKER_NAME)
+        .count()
+    )
 
     if resource_manager_count == 0:
-        msg = _("There are 0 pulpcore-resource-manager processes running. Pulp will not operate "
-                "correctly without at least one pulpcore-resource-mananger process running.")
+        msg = _(
+            "There are 0 pulpcore-resource-manager processes running. Pulp will not operate "
+            "correctly without at least one pulpcore-resource-mananger process running."
+        )
         _logger.error(msg)
 
     if worker_count == 0:
-        msg = _("There are 0 task worker processes running. Pulp will not operate "
-                "correctly without at least one task worker process running.")
+        msg = _(
+            "There are 0 task worker processes running. Pulp will not operate "
+            "correctly without at least one task worker process running."
+        )
         _logger.error(msg)
 
-    output_dict = {'workers': worker_count, 'resource-manager': resource_manager_count}
-    msg = _("%(workers)d pulpcore-worker processes and %(resource-manager)d "
-            "pulpcore-resource-manager processes") % output_dict
+    output_dict = {"workers": worker_count, "resource-manager": resource_manager_count}
+    msg = (
+        _(
+            "%(workers)d pulpcore-worker processes and %(resource-manager)d "
+            "pulpcore-resource-manager processes"
+        )
+        % output_dict
+    )
     _logger.debug(msg)
 
 
@@ -128,8 +147,8 @@ def mark_worker_offline(worker_name, normal_shutdown=False):
                                 False.
     """
     if not normal_shutdown:
-        msg = _('The worker named %(name)s is missing. Canceling the tasks in its queue.')
-        msg = msg % {'name': worker_name}
+        msg = _("The worker named %(name)s is missing. Canceling the tasks in its queue.")
+        msg = msg % {"name": worker_name}
         _logger.error(msg)
     else:
         msg = _("Cleaning up shutdown worker '%s'.") % worker_name

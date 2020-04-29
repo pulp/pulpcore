@@ -9,6 +9,7 @@ class MissingPlugin(PulpException):
 
     Exception that is raised when a requested plugin is not installed.
     """
+
     def __init__(self, plugin_app_label):
         """
         :param resources: keyword arguments of resource_type=resource_id

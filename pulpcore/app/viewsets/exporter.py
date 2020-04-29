@@ -37,28 +37,32 @@ class ExporterFilter(BaseFilterSet):
        - specify a plugin remote model for which filter is defined
        - extend `fields` with specific ones
     """
+
     name = filters.CharFilter()
 
     class Meta:
         model = Exporter
         fields = {
-            'name': NAME_FILTER_OPTIONS,
+            "name": NAME_FILTER_OPTIONS,
         }
 
 
-class ExporterViewSet(NamedModelViewSet,
-                      mixins.CreateModelMixin,
-                      mixins.UpdateModelMixin,
-                      mixins.RetrieveModelMixin,
-                      mixins.ListModelMixin,
-                      mixins.DestroyModelMixin):
+class ExporterViewSet(
+    NamedModelViewSet,
+    mixins.CreateModelMixin,
+    mixins.UpdateModelMixin,
+    mixins.RetrieveModelMixin,
+    mixins.ListModelMixin,
+    mixins.DestroyModelMixin,
+):
     """
     ViewSet for viewing exporters.
     """
+
     queryset = Exporter.objects.all()
     serializer_class = ExporterSerializer
-    endpoint_name = 'exporters'
-    router_lookup = 'exporter'
+    endpoint_name = "exporters"
+    router_lookup = "exporter"
     filterset_class = ExporterFilter
 
 
@@ -66,24 +70,28 @@ class PulpExporterViewSet(ExporterViewSet):
     """
     ViewSet for viewing PulpExporters.
     """
-    endpoint_name = 'pulp'
+
+    endpoint_name = "pulp"
     serializer_class = PulpExporterSerializer
     queryset = PulpExporter.objects.all()
 
 
-class ExportViewSet(NamedModelViewSet,
-                    mixins.CreateModelMixin,
-                    mixins.RetrieveModelMixin,
-                    mixins.ListModelMixin,
-                    mixins.DestroyModelMixin):
+class ExportViewSet(
+    NamedModelViewSet,
+    mixins.CreateModelMixin,
+    mixins.RetrieveModelMixin,
+    mixins.ListModelMixin,
+    mixins.DestroyModelMixin,
+):
     """
     ViewSet for viewing exports from an Exporter.
     """
-    endpoint_name = 'exports'
-    nest_prefix = 'exporters'
-    router_lookup = 'export'
-    lookup_field = 'pk'
-    parent_lookup_kwargs = {'exporter_pk': 'exporter__pk'}
+
+    endpoint_name = "exports"
+    nest_prefix = "exporters"
+    router_lookup = "export"
+    lookup_field = "pk"
+    parent_lookup_kwargs = {"exporter_pk": "exporter__pk"}
     serializer_class = ExportSerializer
     queryset = Export.objects.all()
     parent_viewset = ExporterViewSet
@@ -93,6 +101,7 @@ class PulpExportViewSet(ExportViewSet):
     """
     ViewSet for viewing exports from a PulpExporter.
     """
+
     parent_viewset = PulpExporterViewSet
     serializer_class = PulpExportSerializer
     queryset = PulpExport.objects.all()
@@ -100,7 +109,7 @@ class PulpExportViewSet(ExportViewSet):
     @swagger_auto_schema(
         request_body=PulpExportSerializer,
         operation_description="Trigger an asynchronous task to export a set of repositories",
-        responses={202: AsyncOperationResponseSerializer}
+        responses={202: AsyncOperationResponseSerializer},
     )
     def create(self, request, exporter_pk):
         """
@@ -109,8 +118,6 @@ class PulpExportViewSet(ExportViewSet):
         exporter = PulpExporter.objects.get(pk=exporter_pk).cast()
 
         result = enqueue_with_reservation(
-            pulp_export,
-            [exporter],
-            kwargs={'pulp_exporter': exporter},
+            pulp_export, [exporter], kwargs={"pulp_exporter": exporter},
         )
         return OperationPostponedResponse(result, request)

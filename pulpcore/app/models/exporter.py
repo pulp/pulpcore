@@ -14,12 +14,8 @@ from pulpcore.app.models import (
 
 from .task import CreatedResource, Task
 
-from pulpcore.app.models.content import (
-    ContentArtifact,
-)
-from pulpcore.app.models.repository import (
-    Repository,
-)
+from pulpcore.app.models.content import ContentArtifact
+from pulpcore.app.models.repository import Repository
 
 
 class Export(BaseModel):
@@ -35,6 +31,7 @@ class Export(BaseModel):
         task (models.ForeignKey): The Task that created the export
         exporter (models.ForeignKey): The Exporter that exported the resource.
     """
+
     params = JSONField(null=True)
     task = models.ForeignKey("Task", on_delete=models.CASCADE)
     exporter = models.ForeignKey("Exporter", on_delete=models.CASCADE)
@@ -50,11 +47,8 @@ class ExportedResource(GenericRelationModel):
 
         export (models.ForeignKey): The Export that exported the resource.
     """
-    export = models.ForeignKey(
-        Export,
-        related_name='exported_resources',
-        on_delete=models.CASCADE
-    )
+
+    export = models.ForeignKey(Export, related_name="exported_resources", on_delete=models.CASCADE)
 
 
 class Exporter(MasterModel):
@@ -65,6 +59,7 @@ class Exporter(MasterModel):
 
         name (models.TextField): The exporter unique name.
     """
+
     name = models.TextField(db_index=True, unique=True)
 
 
@@ -76,6 +71,7 @@ class FileSystemExporter(Exporter):
 
         path (models.TextField): a full path where the export will go.
     """
+
     path = models.TextField()
 
     def _export_to_file_system(self, content_artifacts):
@@ -89,6 +85,7 @@ class FileSystemExporter(Exporter):
             ValidationError: When path is not in the ALLOWED_EXPORT_PATHS setting
         """
         from pulpcore.app.serializers import ExportSerializer
+
         ExportSerializer.validate_path(self.path)
 
         if content_artifacts.filter(artifact=None).exists():
@@ -103,7 +100,7 @@ class FileSystemExporter(Exporter):
             except FileExistsError:
                 pass
 
-            if settings.DEFAULT_FILE_STORAGE == 'pulpcore.app.models.storage.FileSystem':
+            if settings.DEFAULT_FILE_STORAGE == "pulpcore.app.models.storage.FileSystem":
                 src = os.path.join(settings.MEDIA_ROOT, artifact.file.name)
                 os.link(src, dest)
             else:
@@ -122,11 +119,13 @@ class FileSystemExporter(Exporter):
         CreatedResource.objects.create(content_object=export)
 
         content_artifacts = ContentArtifact.objects.filter(
-            pk__in=publication.published_artifact.values_list("content_artifact__pk", flat=True))
+            pk__in=publication.published_artifact.values_list("content_artifact__pk", flat=True)
+        )
 
         if publication.pass_through:
             content_artifacts |= ContentArtifact.objects.filter(
-                content__in=publication.repository_version.content)
+                content__in=publication.repository_version.content
+            )
 
         self._export_to_file_system(content_artifacts)
 
@@ -141,8 +140,7 @@ class FileSystemExporter(Exporter):
         ExportedResource.objects.create(export=export, content_object=repository_version)
         CreatedResource.objects.create(content_object=export)
 
-        content_artifacts = ContentArtifact.objects.filter(
-            content__in=repository_version.content)
+        content_artifacts = ContentArtifact.objects.filter(content__in=repository_version.content)
 
         self._export_to_file_system(content_artifacts)
 
@@ -160,6 +158,7 @@ class PulpExport(Export):
         sha256 (models.CharField): The SHA-256 checksum of the tarfile after export completes
         filename (models.CharField): The full-path filename of the generated tarfile
     """
+
     tarfile = None
     sha256 = models.CharField(max_length=64, null=True)
     filename = models.CharField(max_length=4096, null=True)
@@ -169,12 +168,12 @@ class PulpExport(Export):
         Return the full tarfile name where the specified PulpExport should store its export
         """
         # EXPORTER-PATH/export-EXPORTID-YYYYMMDD_HHMM.tar.gz
-        return "{}/export-{}-{}.tar.gz".format(self.exporter.path,
-                                               str(self.pulp_id),
-                                               datetime.utcnow().strftime("%Y%m%d_%H%M"))
+        return "{}/export-{}-{}.tar.gz".format(
+            self.exporter.path, str(self.pulp_id), datetime.utcnow().strftime("%Y%m%d_%H%M")
+        )
 
     class Meta:
-        default_related_name = '%(app_label)s_pulp_export'
+        default_related_name = "%(app_label)s_pulp_export"
 
 
 class PulpExporter(Exporter):
@@ -190,12 +189,13 @@ class PulpExporter(Exporter):
         repositories (models.ManyToManyField): Repos to be exported.
         last_export (models.ForeignKey): The last Export from the Exporter.
     """
-    TYPE = 'pulp'
+
+    TYPE = "pulp"
     path = models.TextField()
     repositories = models.ManyToManyField(Repository)
-    last_export = models.ForeignKey("PulpExport",
-                                    related_name='last_export',
-                                    on_delete=models.PROTECT, null=True)
+    last_export = models.ForeignKey(
+        "PulpExport", related_name="last_export", on_delete=models.PROTECT, null=True
+    )
 
     class Meta:
-        default_related_name = '%(app_label)s_pulp_exporter'
+        default_related_name = "%(app_label)s_pulp_exporter"

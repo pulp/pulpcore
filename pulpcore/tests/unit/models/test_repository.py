@@ -5,7 +5,6 @@ from pulpcore.plugin.models import Content, Repository, RepositoryVersion
 
 
 class RepositoryVersionTestCase(TestCase):
-
     def setUp(self):
         self.repository = Repository.objects.create()
         self.repository.CONTENT_TYPES = [Content]
@@ -46,20 +45,20 @@ class RepositoryVersionTestCase(TestCase):
         self.assertEqual(version3.added(version0).count(), 3)
         self.assertEqual(version3.removed(version0).count(), 0)
 
-        added_pks_0 = version3.added(version0).values_list('pk', flat=True)
-        removed_pks_0 = version3.removed(version0).values_list('pk', flat=True)
+        added_pks_0 = version3.added(version0).values_list("pk", flat=True)
+        removed_pks_0 = version3.removed(version0).values_list("pk", flat=True)
 
         self.assertCountEqual(added_pks_0, compress(self.pks, [1, 0, 1, 1]), added_pks_0)
         self.assertCountEqual(removed_pks_0, compress(self.pks, [0, 0, 0, 0]), removed_pks_0)
 
-        added_pks_1 = version3.added(version1).values_list('pk', flat=True)
-        removed_pks_1 = version3.removed(version1).values_list('pk', flat=True)
+        added_pks_1 = version3.added(version1).values_list("pk", flat=True)
+        removed_pks_1 = version3.removed(version1).values_list("pk", flat=True)
 
         self.assertCountEqual(added_pks_1, compress(self.pks, [0, 0, 0, 0]), added_pks_1)
         self.assertCountEqual(removed_pks_1, compress(self.pks, [0, 1, 0, 0]), removed_pks_1)
 
-        added_pks_2 = version3.added(version2).values_list('pk', flat=True)
-        removed_pks_2 = version3.removed(version2).values_list('pk', flat=True)
+        added_pks_2 = version3.added(version2).values_list("pk", flat=True)
+        removed_pks_2 = version3.removed(version2).values_list("pk", flat=True)
 
         self.assertCountEqual(added_pks_2, compress(self.pks, [1, 0, 0, 0]), added_pks_2)
         self.assertCountEqual(removed_pks_2, compress(self.pks, [0, 0, 0, 0]), removed_pks_2)
@@ -80,9 +79,9 @@ class RepositoryVersionTestCase(TestCase):
             remove (list): "presence list" for removed content
 
         """
-        content_pks = version.content.values_list('pk', flat=True)
-        added_pks = version.added().values_list('pk', flat=True)
-        removed_pks = version.removed().values_list('pk', flat=True)
+        content_pks = version.content.values_list("pk", flat=True)
+        added_pks = version.added().values_list("pk", flat=True)
+        removed_pks = version.removed().values_list("pk", flat=True)
 
         # There must never be content shown as added & removed
         self.assertSetEqual(set(added_pks).intersection(removed_pks), set())
@@ -97,15 +96,13 @@ class RepositoryVersionTestCase(TestCase):
 
         with self.repository.new_version() as version1:
             version1.add_content(self.content_qs(self.pks[:5]))
-            self.verify_content_sets(version1, content=[1]*5, added=[1]*5, removed=[])
+            self.verify_content_sets(version1, content=[1] * 5, added=[1] * 5, removed=[])
 
             version1.remove_content(self.content_qs(self.pks[:5]))
             self.verify_content_sets(version1, content=[], added=[], removed=[])
 
         self.assertEqual(
-            self.repository.latest_version(),
-            latest_version,
-            msg="Empty version1 must not exist."
+            self.repository.latest_version(), latest_version, msg="Empty version1 must not exist."
         )
 
     def test_remove_add(self):
@@ -115,15 +112,13 @@ class RepositoryVersionTestCase(TestCase):
 
         with self.repository.new_version() as version2:
             version2.remove_content(self.content_qs(self.pks[:5]))
-            self.verify_content_sets(version2, content=[], added=[], removed=[1]*5)
+            self.verify_content_sets(version2, content=[], added=[], removed=[1] * 5)
 
             version2.add_content(self.content_qs(self.pks[:5]))
-            self.verify_content_sets(version2, content=[1]*5, added=[], removed=[])
+            self.verify_content_sets(version2, content=[1] * 5, added=[], removed=[])
 
         self.assertEqual(
-            self.repository.latest_version(),
-            version1,
-            msg="Empty version2 must not exist."
+            self.repository.latest_version(), version1, msg="Empty version2 must not exist."
         )
 
     def test_multiple_adds_and_removes(self):
@@ -134,9 +129,7 @@ class RepositoryVersionTestCase(TestCase):
         """
         # v1 == content id 0, 2, and 4
         with self.repository.new_version() as version1:
-            version1.add_content(
-                self.content_qs([self.pks[0], self.pks[2], self.pks[4]])
-            )
+            version1.add_content(self.content_qs([self.pks[0], self.pks[2], self.pks[4]]))
 
         # v2 version is created in multiple steps:
         #
@@ -158,54 +151,36 @@ class RepositoryVersionTestCase(TestCase):
             # step 1
             version2.remove_content(self.content_qs([self.pks[2], self.pks[4]]))
             self.verify_content_sets(
-                version2,
-                content=[1, 0, 0, 0, 0],
-                added=[],
-                removed=[0, 0, 1, 0, 1]
+                version2, content=[1, 0, 0, 0, 0], added=[], removed=[0, 0, 1, 0, 1]
             )
 
             # step 2
             version2.add_content(self.content_qs([self.pks[1], self.pks[3], self.pks[4]]))
 
             self.verify_content_sets(
-                version2,
-                content=[1, 1, 0, 1, 1],
-                added=[0, 1, 0, 1, 0],
-                removed=[0, 0, 1, 0, 0]
+                version2, content=[1, 1, 0, 1, 1], added=[0, 1, 0, 1, 0], removed=[0, 0, 1, 0, 0]
             )
 
             # step 3
             version2.remove_content(self.content_qs([self.pks[3], self.pks[4]]))
 
             self.verify_content_sets(
-                version2,
-                content=[1, 1, 0, 0, 0],
-                added=[0, 1, 0, 0, 0],
-                removed=[0, 0, 1, 0, 1]
+                version2, content=[1, 1, 0, 0, 0], added=[0, 1, 0, 0, 0], removed=[0, 0, 1, 0, 1]
             )
 
             # step 4
             version2.add_content(self.content_qs([self.pks[3]]))
 
             self.verify_content_sets(
-                version2,
-                content=[1, 1, 0, 1, 0],
-                added=[0, 1, 0, 1, 0],
-                removed=[0, 0, 1, 0, 1]
+                version2, content=[1, 1, 0, 1, 0], added=[0, 1, 0, 1, 0], removed=[0, 0, 1, 0, 1]
             )
 
         # Verify content sets after saving
         self.verify_content_sets(
-            version1,
-            content=[1, 0, 1, 0, 1, 0],
-            added=[1, 0, 1, 0, 1, 0],
-            removed=[]
+            version1, content=[1, 0, 1, 0, 1, 0], added=[1, 0, 1, 0, 1, 0], removed=[]
         )
         self.verify_content_sets(
-            version2,
-            content=[1, 1, 0, 1, 0],
-            added=[0, 1, 0, 1, 0],
-            removed=[0, 0, 1, 0, 1]
+            version2, content=[1, 1, 0, 1, 0], added=[0, 1, 0, 1, 0], removed=[0, 0, 1, 0, 1]
         )
 
     @staticmethod
@@ -257,7 +232,6 @@ class RepositoryVersionTestCase(TestCase):
 
 
 class RepositoryTestCase(TestCase):
-
     def setUp(self):
         self.repository = Repository.objects.create()
         self.repository.CONTENT_TYPES = [Content]

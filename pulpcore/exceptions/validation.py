@@ -7,6 +7,7 @@ class ValidationError(PulpException):
     """
     A base class for all Validation Errors.
     """
+
     pass
 
 
