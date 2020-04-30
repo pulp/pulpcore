@@ -387,10 +387,11 @@ class SecretCharField(serializers.CharField):
         # We only want to perform this check in the View layer
         if "view" in self.context and "update" in self.context["view"].action:
             current_value = getattr(self.context["view"].get_object(), self.field_name)
-            current_hash = self.to_representation(current_value)
-            if current_hash == data:
-                self.context["request"].data.pop(self.field_name, None)
-                return
+            if current_value:
+                current_hash = self.to_representation(current_value)
+                if current_hash == data:
+                    self.context["request"].data.pop(self.field_name, None)
+                    return
         return super(SecretCharField, self).to_internal_value(data)
 
 
