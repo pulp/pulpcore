@@ -6,38 +6,9 @@ import hashlib
 
 from django.db import transaction
 
-from pulpcore.app import models, serializers
+from pulpcore.app import models
 
 log = getLogger(__name__)
-
-
-def delete(repo_id):
-    """
-    Delete a :class:`~pulpcore.app.models.Repository`
-
-    Args:
-        repo_id (int): The name of the repository to be deleted
-    """
-
-    models.Repository.objects.filter(pk=repo_id).delete()
-
-
-def update(repo_id, partial=True, data=None):
-    """
-    Updates a :class:`~pulpcore.app.models.Repository`
-
-    Args:
-        repo_id (int): The id of the repository to be updated
-        partial (bool): Boolean to allow partial updates. If set to False, values for all
-                        required fields must be passed or a validation error will be raised.
-                        Defaults to True
-        data (QueryDict): dict of attributes to change and their new values; if None, no attempt to
-                     update the repository object will be made
-    """
-    instance = models.Repository.objects.get(pk=repo_id)
-    serializer = serializers.RepositorySerializer(instance, data=data, partial=partial)
-    serializer.is_valid(raise_exception=True)
-    serializer.save()
 
 
 def delete_version(pk):
