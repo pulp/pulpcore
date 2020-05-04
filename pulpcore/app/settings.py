@@ -101,10 +101,10 @@ MIDDLEWARE = [
 
 # Prepend and append optional middleware like django_prometheus
 with suppress(ImportError):
-    import_module('django_prometheus')
-    INSTALLED_APPS.append('django_prometheus')
-    MIDDLEWARE.insert(0, 'django_prometheus.middleware.PrometheusBeforeMiddleware')
-    MIDDLEWARE.append('django_prometheus.middleware.PrometheusAfterMiddleware')
+    import_module("django_prometheus")
+    INSTALLED_APPS.append("django_prometheus")
+    MIDDLEWARE.insert(0, "django_prometheus.middleware.PrometheusBeforeMiddleware")
+    MIDDLEWARE.append("django_prometheus.middleware.PrometheusAfterMiddleware")
 
 
 AUTHENTICATION_BACKENDS = [

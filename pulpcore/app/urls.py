@@ -120,7 +120,7 @@ urlpatterns = [
 ]
 
 with suppress(ImportError):
-    urlpatterns.append(url('', include('django_prometheus.urls')))
+    urlpatterns.append(url("", include("django_prometheus.urls")))
 
 api_info = openapi.Info(
     title="Pulp 3 API",
