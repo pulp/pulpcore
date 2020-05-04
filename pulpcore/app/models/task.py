@@ -422,6 +422,17 @@ class Task(BaseModel):
 
 class TaskGroup(BaseModel):
     description = models.TextField()
+    all_tasks_dispatched = models.BooleanField(default=False)
+
+    def finish(self):
+        """
+        Finalize the task group.
+
+        Set 'all_tasks_dispatched' to True so that API users can know that there are no
+        tasks in the group yet to be created.
+        """
+        self.all_tasks_dispatched = True
+        self.save()
 
 
 class CreatedResource(GenericRelationModel):

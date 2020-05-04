@@ -162,3 +162,5 @@ def pulp_import(importer_pk, path):
                     args=[dest_repo.pk, src_repo["pulp_id"], path],
                     task_group=task_group,
                 )
+
+    task_group.finish()
