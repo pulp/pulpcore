@@ -23,7 +23,7 @@ from pulpcore.app.viewsets.custom_filters import (
     ReservedResourcesFilter,
     CreatedResourcesFilter,
 )
-from pulpcore.constants import TASK_INCOMPLETE_STATES
+from pulpcore.constants import TASK_INCOMPLETE_STATES, TASK_STATES
 from pulpcore.tasking.util import cancel as cancel_task
 
 
@@ -70,7 +70,7 @@ class TaskViewSet(
         operation_description="This operation cancels a task.",
         operation_summary="Cancel a task",
         operation_id="tasks_cancel",
-        responses={200: TaskSerializer},
+        responses={200: TaskSerializer, 409: TaskSerializer},
     )
     def partial_update(self, request, pk=None, partial=True):
         task = self.get_object()
@@ -79,8 +79,10 @@ class TaskViewSet(
         if request.data["state"] != "canceled":
             raise ValidationError(_("The only acceptable value for 'state' is 'canceled'."))
         task = cancel_task(task.pk)
+        # Check whether task is actually canceled
+        http_status = None if task.state == TASK_STATES.CANCELED else status.HTTP_409_CONFLICT
         serializer = self.serializer_class(task, context={"request": request})
-        return Response(serializer.data)
+        return Response(serializer.data, status=http_status)
 
     def destroy(self, request, pk=None):
         task = self.get_object()

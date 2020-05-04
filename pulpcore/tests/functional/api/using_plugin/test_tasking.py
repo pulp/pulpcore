@@ -95,6 +95,15 @@ class CancelTaskTestCase(unittest.TestCase):
                 key, ctx.exception.response.json()["detail"].lower(), ctx.exception.response
             )
 
+    def test_cancel_finished_task(self):
+        repo = self.client.post(FILE_REPO_PATH, gen_repo())
+        repo["name"] = utils.uuid4()
+        task_href = self.client.patch(repo["pulp_href"], json=repo)
+        with self.assertRaises(HTTPError) as ctx:
+            self.cancel_task(task_href)
+        self.assertEqual(ctx.exception.response.status_code, 409)
+        self.assertEqual(ctx.exception.response.json()["state"], "completed")
+
     def test_delete_running_task(self):
         """Delete a running task."""
         task = self.create_long_task()

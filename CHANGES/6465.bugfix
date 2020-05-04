@@ -1,0 +1,1 @@
+Fixed a bug, where the attempt to cancel a completed task lead to a strange response.
