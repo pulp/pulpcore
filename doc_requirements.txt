@@ -1,7 +1,6 @@
 aiohttp
 aiofiles
 backoff
-coreapi
 django
 djangorestframework
 djangorestframework-queryfields
