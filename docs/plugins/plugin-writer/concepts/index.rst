@@ -69,6 +69,14 @@ Tasks are deployed from Views or Viewsets, please see :ref:`kick-off-tasks`.
    tasks/export
 
 
+**Task Groups**
+
+Sometimes you may want to create many tasks to perform different parts of one larger piece of work,
+but you need a simple means to track the progress of these many tasks. Task Groups serve this purpose
+by providing details on the number of associated tasks in each possible state. For more details,
+please see :ref:`kick-off-tasks`.
+
+
 Sync Pipeline
 -------------
 

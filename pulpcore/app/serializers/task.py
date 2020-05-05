@@ -134,6 +134,9 @@ class MinimalTaskSerializer(TaskSerializer):
 class TaskGroupSerializer(ModelSerializer):
     pulp_href = IdentityField(view_name="task-groups-detail")
     description = serializers.CharField(help_text=_("A description of the task group."))
+    all_tasks_dispatched = serializers.BooleanField(
+        help_text=_("Whether all tasks have been spawned for this task group.")
+    )
 
     waiting = TaskGroupStatusCountField(
         state=TASK_STATES.WAITING, help_text=_("Number of tasks in the 'waiting' state")
@@ -159,6 +162,7 @@ class TaskGroupSerializer(ModelSerializer):
         fields = (
             "pulp_href",
             "description",
+            "all_tasks_dispatched",
             "waiting",
             "skipped",
             "running",

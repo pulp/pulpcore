@@ -62,6 +62,8 @@ Kick off Tasks
 Some endpoints may need to deploy tasks to the tasking system. The following is an example of how
 this is accomplished.
 
+See :class:`~pulpcore.plugin.tasking.enqueue_with_reservation` for more details.
+
 .. code-block:: python
 
         # We recommend using POST for any endpoints that kick off task.
@@ -92,7 +94,12 @@ this is accomplished.
             # Since tasks are asynchronous, we return a 202
             return OperationPostponedResponse(result, request)
 
-See :class:`~pulpcore.plugin.tasking.enqueue_with_reservation` for more details.
+If a "task_group" is provided as an optional keyword argument, then the deployed task will be
+automatically added to the task group. Once done spawning new tasks for a given task group,
+you should call ``.finish()`` on the task group object.
+
+For more details about the reservation system and task groups, see :ref:`writing-tasks`. and
+:class:`~pulpcore.plugin.models.TaskGroup`.
 
 
 Content Upload ViewSet
