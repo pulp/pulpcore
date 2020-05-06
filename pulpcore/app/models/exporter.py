@@ -33,7 +33,7 @@ class Export(BaseModel):
     """
 
     params = JSONField(null=True)
-    task = models.ForeignKey("Task", on_delete=models.CASCADE)
+    task = models.ForeignKey("Task", on_delete=models.PROTECT, null=True)
     exporter = models.ForeignKey("Exporter", on_delete=models.CASCADE)
 
 

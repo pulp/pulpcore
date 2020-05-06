@@ -1,4 +1,5 @@
 from django_filters.rest_framework import filters
+
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import mixins
 
@@ -117,7 +118,10 @@ class PulpExportViewSet(ExportViewSet):
         """
         exporter = PulpExporter.objects.get(pk=exporter_pk).cast()
 
-        result = enqueue_with_reservation(
-            pulp_export, [exporter], kwargs={"pulp_exporter": exporter},
-        )
+        serializer = PulpExportSerializer(data=request.data, context={"exporter": exporter})
+        serializer.is_valid(raise_exception=True)
+
+        export = PulpExport.objects.create(exporter=exporter, params=request.data)
+
+        result = enqueue_with_reservation(pulp_export, [exporter], kwargs={"the_export": export})
         return OperationPostponedResponse(result, request)
