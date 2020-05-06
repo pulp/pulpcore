@@ -108,13 +108,21 @@ class BaseExporterCase(unittest.TestCase):
         self.exporter_api.partial_update(exporter.pulp_href, body)
         self.exporter_api.delete(exporter.pulp_href)
 
-    def _create_exporter(self, cleanup=True):
-        """Utility routine to create an exporter for the available repositories."""
+    def _create_exporter(self, cleanup=True, use_repos=None):
+        """
+        Utility routine to create an exporter for the available repositories.
+
+        If all_repos, export everything in self.repos; otherwise only export first repo
+        """
+
         body = {
             "name": uuid4(),
-            "repositories": [r.pulp_href for r in self.repos],
             "path": "/tmp/{}".format(uuid4()),
+            "repositories": [r.pulp_href for r in self.repos],
         }
+        if use_repos:
+            body["repositories"] = [r.pulp_href for r in use_repos]
+
         exporter = self.exporter_api.create(body)
         if cleanup:
             self.addCleanup(self._delete_exporter, exporter)
@@ -159,7 +167,7 @@ class PulpExporterTestCase(BaseExporterCase):
 
     def test_delete(self):
         """Delete a pulpExporter."""
-        (exporter_created, body) = self._create_exporter(False)
+        (exporter_created, body) = self._create_exporter(cleanup=False)
         self._delete_exporter(exporter_created)
         try:
             self.exporter_api.read(exporter_created.pulp_href)
@@ -172,11 +180,11 @@ class PulpExporterTestCase(BaseExporterCase):
 class PulpExportTestCase(BaseExporterCase):
     """Test PulpExport CRDL methods (Update is not allowed)."""
 
-    def _gen_export(self, exporter):
+    def _gen_export(self, exporter, body={}):
         """Create and read back an export for the specified PulpExporter."""
         # TODO: at this point we can't create an export unless we do string-surgery on the
         #  exporter-href because there's no way to get just-the-id
-        export_response = self.exports_api.create(exporter.pulp_href.split("/")[-2], {})
+        export_response = self.exports_api.create(exporter.pulp_href.split("/")[-2], body)
         monitor_task(export_response.task)
         task = self.client.get(export_response.task)
         resources = task["created_resources"]
@@ -260,3 +268,33 @@ class PulpExportTestCase(BaseExporterCase):
     def test_export_output(self):
         """Create an export and evaluate the resulting export-file."""
         self.fail("test_export_file")
+
+    def test_export_by_version(self):
+        repositories = self.repos
+        latest_versions = [r.latest_version_href for r in repositories]
+
+        # exporter for one repo. specify one version
+        (exporter, body) = self._create_exporter(use_repos=[repositories[0]])
+        body = {"versions": [latest_versions[0]]}
+        self._gen_export(exporter, body)
+
+        # exporter for one repo. specify one *wrong* version
+        with self.assertRaises(ApiException) as ae:
+            (exporter, body) = self._create_exporter(use_repos=[repositories[0]])
+            body = {"versions": [latest_versions[1]]}
+            self._gen_export(exporter, body)
+        self.assertTrue("must belong to" in ae.exception.body)
+
+        # exporter for two repos, specify one version
+        with self.assertRaises(ApiException) as ae:
+            (exporter, body) = self._create_exporter(use_repos=[repositories[0], repositories[1]])
+            body = {"versions": [latest_versions[0]]}
+            self._gen_export(exporter, body)
+        self.assertTrue("does not match the number" in ae.exception.body)
+
+        # exporter for two repos, specify one correct and one *wrong* version
+        with self.assertRaises(ApiException) as ae:
+            (exporter, body) = self._create_exporter(use_repos=[repositories[0], repositories[1]])
+            body = {"versions": [latest_versions[0], latest_versions[2]]}
+            self._gen_export(exporter, body)
+        self.assertTrue("must belong to" in ae.exception.body)

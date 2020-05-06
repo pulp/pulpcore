@@ -11,7 +11,6 @@ from pulpcore.app.models import (
     ExportedResource,
     Exporter,
     Publication,
-    PulpExport,
     RepositoryVersion,
     Task,
 )
@@ -64,7 +63,7 @@ def fs_repo_version_export(exporter_pk, repo_version_pk):
     exporter.export_repository_version(repo_version)
 
 
-def pulp_export(pulp_exporter):
+def pulp_export(the_export):
     """
     Create a PulpExport to export pulp_exporter.repositories
 
@@ -73,7 +72,7 @@ def pulp_export(pulp_exporter):
     3) Compute and store the sha256 and filename of the resulting tar.gz
 
     Args:
-        pulp_exporter (models.PulpExporter): PulpExporter instance
+        the_export (models.PulpExport): PulpExport instance
 
     Raises:
         ValidationError: When path is not in the ALLOWED_EXPORT_PATHS setting,
@@ -82,16 +81,17 @@ def pulp_export(pulp_exporter):
 
     from pulpcore.app.serializers.exporter import ExporterSerializer
 
+    pulp_exporter = the_export.exporter
     ExporterSerializer.validate_path(pulp_exporter.path, check_is_dir=True)
+    the_export.task = Task.current()
 
     repositories = pulp_exporter.repositories.all()
-    export = PulpExport.objects.create(exporter=pulp_exporter, task=Task.current(), params=None)
-    tarfile_fp = export.export_tarfile_path()
+    tarfile_fp = the_export.export_tarfile_path()
     os.makedirs(pulp_exporter.path, exist_ok=True)
 
     with tarfile.open(tarfile_fp, "w:gz") as tar:
-        export.tarfile = tar
-        CreatedResource.objects.create(content_object=export)
+        the_export.tarfile = tar
+        CreatedResource.objects.create(content_object=the_export)
 
         artifacts = []
         repo_versions = []
@@ -111,21 +111,21 @@ def pulp_export(pulp_exporter):
             repo_versions.append(version)
             artifacts.extend(version.artifacts.all())
 
-        export_versions(export, vers_info)
+        export_versions(the_export, vers_info)
         # Export the top-level entities (artifacts and repositories)
-        export_artifacts(export, artifacts, pulp_exporter.last_export)
+        export_artifacts(the_export, artifacts, pulp_exporter.last_export)
         # Export the repository-version data, per-version
         for version in repo_versions:
-            export_content(export, version, pulp_exporter.last_export)
-            ExportedResource.objects.create(export=export, content_object=version)
+            export_content(the_export, version, pulp_exporter.last_export)
+            ExportedResource.objects.create(export=the_export, content_object=version)
 
     sha256_hash = hashlib.sha256()
     with open(tarfile_fp, "rb") as f:
         # Read and update hash string value in blocks of 4K
         for byte_block in iter(lambda: f.read(4096), b""):
             sha256_hash.update(byte_block)
-        export.sha256 = sha256_hash.hexdigest()
-    export.filename = tarfile_fp
-    export.save()
-    pulp_exporter.last_export = export
+        the_export.sha256 = sha256_hash.hexdigest()
+    the_export.filename = tarfile_fp
+    the_export.save()
+    pulp_exporter.last_export = the_export
     pulp_exporter.save()
