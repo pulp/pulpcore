@@ -1,7 +1,13 @@
 """
 Release script
 
-$ python .travis/realease.py plugin_version plugin_dev_version current_pulpcore_version next_pulpcore_version
+$ python .travis/realease.py
+
+Args:
+    new_version - version to be released
+    new_dev_version - dev version to be bumped after release
+    current_pulpcore_version - lower bound of pulpcore requirement
+    next_pulpcore_version - upper bound of pulpcore requirement
 
 Example:
 setup.py on plugin before script:
