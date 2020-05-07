@@ -1,1 +1,0 @@
-Imports now spawn child tasks which can be fetched via the ``child_tasks`` field of the import task.

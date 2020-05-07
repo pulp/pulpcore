@@ -1,1 +1,0 @@
-Fixed KeyError during OpenAPI schema generation.

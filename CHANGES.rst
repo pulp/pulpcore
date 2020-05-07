@@ -13,6 +13,105 @@ Changelog
 
 .. towncrier release notes start
 
+3.3.1 (2020-05-07)
+==================
+REST API
+--------
+
+Features
+~~~~~~~~
+
+- Added support for S3 and other non-filesystem storage options to pulp import/export functionality.
+  `#6456 <https://pulp.plan.io/issues/6456>`_
+- Optimized imports by having repository versions processed using child tasks.
+  `#6484 <https://pulp.plan.io/issues/6484>`_
+- Task groups now have an 'all_tasks_dispatched' field which denotes that no more tasks will spawn
+  as part of this group.
+  `#6591 <https://pulp.plan.io/issues/6591>`_
+
+
+Bugfixes
+~~~~~~~~
+
+- Fixed KeyError during OpenAPI schema generation.
+  `#6468 <https://pulp.plan.io/issues/6468>`_
+- Added a missing trailing slash to distribution's base_url
+  `#6507 <https://pulp.plan.io/issues/6507>`_
+- Fixed a bug where the wrong kind of error was being raised for href parameters of mismatched types.
+  `#6521 <https://pulp.plan.io/issues/6521>`_
+- containers: Fix pulp_rpm 3.3.0 install by replacing the python3-createrepo_c RPM with its build-dependencies, so createrep_c gets installed & built from PyPI
+  `#6523 <https://pulp.plan.io/issues/6523>`_
+- Fixed partial and general update calls for SecretCharField on the Remote.
+  `#6565 <https://pulp.plan.io/issues/6565>`_
+- Changed repository viewset to use the general_update and general_delete tasks.
+  This fixes a bug where updating specialized fields of a repository was impossible due to using the wrong serializer.
+  `#6569 <https://pulp.plan.io/issues/6569>`_
+- Fixed bug where ``TaskGroup`` was showing up as null for ``created_resources`` in tasks.
+  `#6573 <https://pulp.plan.io/issues/6573>`_
+
+
+Improved Documentation
+~~~~~~~~~~~~~~~~~~~~~~
+
+- Adding docs for importing and exporting from Pulp to Pulp.
+  `#6364 <https://pulp.plan.io/issues/6364>`_
+- Add some documentation around TaskGroups.
+  `#6641 <https://pulp.plan.io/issues/6641>`_
+
+
+Deprecations and Removals
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+- Changed repositories field on ``/pulp/api/v3/exporters/core/pulp/`` from UUIDs to hrefs.
+  `#6457 <https://pulp.plan.io/issues/6457>`_
+- Imports now spawn child tasks which can be fetched via the ``child_tasks`` field of the import task.
+  `#6484 <https://pulp.plan.io/issues/6484>`_
+
+
+Misc
+~~~~
+
+- `#5020 <https://pulp.plan.io/issues/5020>`_, `#6477 <https://pulp.plan.io/issues/6477>`_, `#6539 <https://pulp.plan.io/issues/6539>`_, `#6583 <https://pulp.plan.io/issues/6583>`_
+
+
+Plugin API
+----------
+
+Features
+~~~~~~~~
+
+- Added new NoArtifactContentUploadSerializer and NoArtifactContentUploadViewSet to enable plugin
+  writers to upload content without storing an Artifact
+  `#6281 <https://pulp.plan.io/issues/6281>`_
+- Added view_name_pattern to DetailRelatedField and DetailIdentityField to properly identify wrong resource types.
+  `#6521 <https://pulp.plan.io/issues/6521>`_
+- Added constants to the plugin API at ``pulpcore.plugin.constants``.
+  `#6579 <https://pulp.plan.io/issues/6579>`_
+- TaskGroups now have an 'all_tasks_dispatched' field that can be used to notify systems that no
+  further tasks will be dispatched for a TaskGroup. Plugin writers should call ".finish()" on all
+  TaskGroups created once they are done using them to set this field.
+  `#6591 <https://pulp.plan.io/issues/6591>`_
+- Add TaskGroup to the plugin API.
+  `#6603 <https://pulp.plan.io/issues/6603>`_
+
+
+Bugfixes
+~~~~~~~~
+
+- Added ``RemoteFilter`` to the plugin API as it was missing but used by plugin_template.
+  `#6563 <https://pulp.plan.io/issues/6563>`_
+
+
+Deprecations and Removals
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+- Rehomed QueryModelResource to pulpcore.plugin.importexport.
+  `#6514 <https://pulp.plan.io/issues/6514>`_
+
+
+----
+
+
 3.3.0 (2020-04-15)
 ==================
 REST API
