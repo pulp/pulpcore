@@ -1,5 +1,6 @@
 import os
 import io
+import json
 import tarfile
 import tempfile
 
@@ -40,6 +41,25 @@ def _write_export(the_tarfile, resource, dest_dir=None):
     info = tarfile.TarInfo(name=dest_filename)
     info.size = len(data)
     the_tarfile.addfile(info, io.BytesIO(data))
+
+
+def export_versions(export, version_info):
+    """
+    Write a JSON list of plugins and their versions as 'versions.json' to export.tarfile
+
+    Output format is [{"component": "<pluginname>", "version": "<pluginversion>"},...]
+
+    Args:
+        export (django.db.models.PulpExport): export instance that's doing the export
+        version_info (set): set of (distribution-label,version) tuples for repos in this export
+    """
+    # build the version-list from the distributions for each component
+    versions = [{"component": label, "version": version} for (label, version) in version_info]
+
+    version_json = json.dumps(versions).encode("utf8")
+    info = tarfile.TarInfo(name="versions.json")
+    info.size = len(version_json)
+    export.tarfile.addfile(info, io.BytesIO(version_json))
 
 
 def export_artifacts(export, artifacts, last_export=None):

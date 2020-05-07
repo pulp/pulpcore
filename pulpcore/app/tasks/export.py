@@ -4,6 +4,7 @@ import os
 import tarfile
 
 from gettext import gettext as _
+from pkg_resources import get_distribution
 
 from pulpcore.app.models import (
     CreatedResource,
@@ -15,6 +16,12 @@ from pulpcore.app.models import (
     Task,
 )
 from pulpcore.app.models.content import ContentArtifact
+from pulpcore.app.util import get_version_from_model
+from pulpcore.app.importexport import (
+    export_versions,
+    export_artifacts,
+    export_content,
+)
 
 log = logging.getLogger(__name__)
 
@@ -88,9 +95,14 @@ def pulp_export(pulp_exporter):
 
         artifacts = []
         repo_versions = []
+        vers_info = set()
+        vers_info.add(("pulpcore", get_distribution("pulpcore").version))
+
         # Gather up the versions and artifacts
         for repo in repositories:
+            vers_info.add(get_version_from_model(repo.cast()))
             version = repo.latest_version()
+
             # Check version-content to make sure we're not being asked to export an on_demand repo
             content_artifacts = ContentArtifact.objects.filter(content__in=version.content)
             if content_artifacts.filter(artifact=None).exists():
@@ -99,8 +111,7 @@ def pulp_export(pulp_exporter):
             repo_versions.append(version)
             artifacts.extend(version.artifacts.all())
 
-        from pulpcore.app.importexport import export_artifacts, export_content
-
+        export_versions(export, vers_info)
         # Export the top-level entities (artifacts and repositories)
         export_artifacts(export, artifacts, pulp_exporter.last_export)
         # Export the repository-version data, per-version

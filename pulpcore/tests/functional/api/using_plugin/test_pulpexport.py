@@ -151,11 +151,11 @@ class PulpExporterTestCase(BaseExporterCase):
 
     def test_list(self):
         """Show a set of created PulpExporters."""
+        starting_exporters = self.exporter_api.list().results
         for x in range(NUM_EXPORTERS):
             self._create_exporter()
-
-        exporters = self.exporter_api.list().results
-        self.assertEqual(NUM_EXPORTERS, len(exporters))
+        ending_exporters = self.exporter_api.list().results
+        self.assertEqual(NUM_EXPORTERS, len(ending_exporters) - len(starting_exporters))
 
     def test_delete(self):
         """Delete a pulpExporter."""
