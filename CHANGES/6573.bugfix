@@ -1,1 +1,0 @@
-Fixed bug where ``TaskGroup`` was showing up as null for ``created_resources`` in tasks.
