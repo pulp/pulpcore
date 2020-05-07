@@ -13,6 +13,33 @@ Changelog
 
 .. towncrier release notes start
 
+3.3.1 (2020-05-07)
+==================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fixed partial and general update calls for SecretCharField on the Remote.
+  `#6565 <https://pulp.plan.io/issues/6565>`_
+- Fixed bug where ``TaskGroup`` was showing up as null for ``created_resources`` in tasks.
+  `#6573 <https://pulp.plan.io/issues/6573>`_
+
+
+Plugin API
+----------
+
+Features
+~~~~~~~~
+
+- Add TaskGroup to the plugin API.
+  `#6603 <https://pulp.plan.io/issues/6603>`_
+
+
+----
+
+
 3.3.0 (2020-04-15)
 ==================
 REST API
