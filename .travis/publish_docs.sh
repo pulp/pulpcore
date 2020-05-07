@@ -13,6 +13,8 @@ pip3 install -r doc_requirements.txt
 cd .travis
 
 export PYTHONUNBUFFERED=1
+export DJANGO_SETTINGS_MODULE=pulpcore.app.settings
+export PULP_SETTINGS=$TRAVIS_BUILD_DIR/.travis/settings/settings.py
 
 eval "$(ssh-agent -s)" #start the ssh agent
 ssh-add ~/.ssh/pulp-infra
