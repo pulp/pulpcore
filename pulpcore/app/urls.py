@@ -136,6 +136,14 @@ urlpatterns.append(
 
 urlpatterns.append(
     url(
+        r'^{api_root}docs/swagger/'.format(api_root=API_ROOT),
+        docs_schema_view.with_ui('swagger', cache_timeout=None),
+        name='schema-swagger'
+    )
+)
+
+urlpatterns.append(
+    url(
         r"^{api_root}docs/".format(api_root=API_ROOT),
         docs_schema_view.with_ui("redoc", cache_timeout=None),
         name="schema-redoc",
