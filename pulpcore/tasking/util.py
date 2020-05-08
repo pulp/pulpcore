@@ -38,7 +38,7 @@ def cancel(task_id):
         # If the task is already done, just stop
         msg = _("Task [{task_id}] already in a completed state: {state}")
         _logger.info(msg.format(task_id=task_id, state=task_status.state))
-        return
+        return task_status
 
     redis_conn = connection.get_redis_connection()
     job = Job(id=str(task_status.pk), connection=redis_conn)
