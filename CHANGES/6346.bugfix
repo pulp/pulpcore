@@ -1,0 +1,2 @@
+Remote fields `username` and `password` show up in:
+REST docs, API responses, and are available in the bindings.
