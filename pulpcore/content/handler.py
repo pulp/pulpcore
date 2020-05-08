@@ -254,11 +254,11 @@ class Handler:
 
     async def list_directory(self, repo_version, publication, path):
         """
-        Generate HTML with directory listing of the path.
+        Generate a set with directory listing of the path.
 
         This method expects either a repo_version or a publication in addition to a path. This
-        method generates HTML directory list of a path inside the repository version or
-        publication.
+        method generates a set of strings representing the list of a path inside the repository
+        version or publication.
 
         Args:
             repo_version (:class:`~pulpcore.app.models.RepositoryVersion`): The repository version
@@ -266,7 +266,7 @@ class Handler:
             path (str): relative path inside the repo version of publication.
 
         Returns:
-            String representing HTML of the directory listing.
+            Set of strings representing the files and directories in the directory listing.
         """
         if not publication and not repo_version:
             raise Exception("Either a repo_version or publication is required.")
@@ -300,13 +300,30 @@ class Handler:
                 directory_list.add(file_or_directory_name(path, ca.relative_path))
 
         if directory_list:
-            return self.render_html(directory_list)
+            return directory_list
         else:
             raise PathNotResolved(path)
 
     async def _match_and_stream(self, path, request):
         """
         Match the path and stream results either from the filesystem or by downloading new data.
+
+        After deciding the client can access the distribution at ``path``, this function calls
+        :meth:`BaseDistribution.content_handler`. If that function returns a not-None result,
+        it is returned to the client.
+
+        Then the publication linked to the Distribution is used to determine what content should
+        be served. If ``path`` is a directory entry (i.e. not a file), the directory contents
+        are served to the client. This method calls
+        :meth:`BaseDistribution.content_handler_list_directory` to acquire any additional entries
+        the Distribution's content_handler might serve in that directory. If there is an actifact
+        to be served, it is served to the client.
+
+        If there's no publication, the above paragraph is applied to the lastest repository linked
+        to the matched Distribution.
+
+        Finally, when nothing is served to client yet, we check if there is a remote for the
+        Distribution. If so, the artifact is pulled from the remote and streamed to the client.
 
         Args:
             path (str): The path component of the URL.
@@ -327,6 +344,10 @@ class Handler:
         rel_path = rel_path[len(distro.base_path) :]
         rel_path = rel_path.lstrip("/")
 
+        content_handler_result = distro.content_handler(rel_path)
+        if content_handler_result is not None:
+            return content_handler_result
+
         headers = self.response_headers(rel_path)
 
         publication = getattr(distro, "publication", None)
@@ -339,7 +360,10 @@ class Handler:
                     rel_path = index_path
                 except ObjectDoesNotExist:
                     dir_list = await self.list_directory(None, publication, rel_path)
-                    return HTTPOk(headers={"Content-Type": "text/html"}, body=dir_list)
+                    dir_list.update(distro.content_handler_list_directory(rel_path))
+                    return HTTPOk(
+                        headers={"Content-Type": "text/html"}, body=self.render_html(dir_list)
+                    )
 
             # published artifact
             try:
@@ -393,7 +417,10 @@ class Handler:
                     rel_path = index_path
                 except ObjectDoesNotExist:
                     dir_list = await self.list_directory(repo_version, None, rel_path)
-                    return HTTPOk(headers={"Content-Type": "text/html"}, body=dir_list)
+                    dir_list.update(distro.content_handler_list_directory(rel_path))
+                    return HTTPOk(
+                        headers={"Content-Type": "text/html"}, body=self.render_html(dir_list)
+                    )
 
             try:
                 ca = ContentArtifact.objects.get(

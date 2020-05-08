@@ -1,0 +1,1 @@
+The :meth:`pulpcore.content.handler.Handler.list_directory` function now returns a set of strings where it returned a string of HTML before.

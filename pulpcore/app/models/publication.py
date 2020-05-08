@@ -286,6 +286,30 @@ class BaseDistribution(MasterModel):
     content_guard = models.ForeignKey(ContentGuard, null=True, on_delete=models.SET_NULL)
     remote = models.ForeignKey(Remote, null=True, on_delete=models.SET_NULL)
 
+    def content_handler(self, path):
+        """
+        Handler to serve extra, non-Artifact content for this Distribution
+
+        Args:
+            path (str): The path being requested
+        Returns:
+            None if there is no content to be served at path. Otherwise a
+            aiohttp.web_response.Response with the content.
+        """
+        return None
+
+    def content_handler_list_directory(self, rel_path):
+        """
+        Generate the directory listing entries for content_handler
+
+        Args:
+            rel_path (str): relative path inside the distribution's base_path. For example,
+            the root of the base_path is '', a subdir within the base_path is 'subdir/'.
+        Returns:
+            Set of strings for the extra entries in rel_path
+        """
+        return set()
+
 
 class PublicationDistribution(BaseDistribution):
     """
