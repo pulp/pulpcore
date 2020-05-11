@@ -269,7 +269,7 @@ class PulpExportTestCase(BaseExporterCase):
         """Create an export and evaluate the resulting export-file."""
         self.fail("test_export_file")
 
-    def test_export_by_version(self):
+    def test_export_by_version_validation(self):
         repositories = self.repos
         latest_versions = [r.latest_version_href for r in repositories]
 
@@ -298,3 +298,24 @@ class PulpExportTestCase(BaseExporterCase):
             body = {"versions": [latest_versions[0], latest_versions[2]]}
             self._gen_export(exporter, body)
         self.assertTrue("must belong to" in ae.exception.body)
+
+    def test_export_by_version_results(self):
+        repositories = self.repos
+        latest_versions = [r.latest_version_href for r in repositories]
+        zeroth_versions = []
+        for v in latest_versions:
+            v_parts = v.split("/")
+            v_parts[-2] = "0"
+            zeroth_versions.append("/".join(v_parts))
+
+        (exporter, body) = self._create_exporter(use_repos=[repositories[0]], cleanup=False)
+        try:
+            # export no-version, check that /1/ was exported
+            export = self._gen_export(exporter)
+            self.assertTrue(export.exported_resources[0].endswith("/1/"))
+            # exporter-by-version, check that /0/ was exported
+            body = {"versions": [zeroth_versions[0]]}
+            export = self._gen_export(exporter, body)
+            self.assertTrue(export.exported_resources[0].endswith("/0/"))
+        finally:
+            self._delete_exporter(exporter)

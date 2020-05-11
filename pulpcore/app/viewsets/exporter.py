@@ -116,12 +116,18 @@ class PulpExportViewSet(ExportViewSet):
         """
         Generates a Task to export the set of repositories assigned to a specific PulpExporter.
         """
+        # Validate Exporter
         exporter = PulpExporter.objects.get(pk=exporter_pk).cast()
+        ExporterSerializer.validate_path(exporter.path, check_is_dir=True)
 
+        # Validate Export
         serializer = PulpExportSerializer(data=request.data, context={"exporter": exporter})
         serializer.is_valid(raise_exception=True)
 
+        # Invoke the export
         export = PulpExport.objects.create(exporter=exporter, params=request.data)
+        export.validated_versions = serializer.validated_data.get("versions", None)
 
         result = enqueue_with_reservation(pulp_export, [exporter], kwargs={"the_export": export})
+
         return OperationPostponedResponse(result, request)
