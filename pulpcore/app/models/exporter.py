@@ -155,11 +155,14 @@ class PulpExport(Export):
     Fields:
 
         tarfile (tarfile.Tarfile): a tarfile for this export to write into
+        validated_versions ([pulpcore.app.models.RepositoryVersion]): explicitly-specified versions
+                                                                     to be exported (if any)
         sha256 (models.CharField): The SHA-256 checksum of the tarfile after export completes
         filename (models.CharField): The full-path filename of the generated tarfile
     """
 
     tarfile = None
+    validated_versions = None
     sha256 = models.CharField(max_length=64, null=True)
     filename = models.CharField(max_length=4096, null=True)
 

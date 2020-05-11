@@ -185,7 +185,7 @@ def enqueue_with_reservation(
         args (tuple): The positional arguments to pass on to the task.
         kwargs (dict): The keyword arguments to pass on to the task.
         options (dict): The options to be passed on to the task.
-        task_group (models.TaskGroup): A TaskGroup to add the created Task to.
+        task_group (pulpcore.app.models.TaskGroup): A TaskGroup to add the created Task to.
 
     Returns (rq.job.job): An RQ Job instance as returned by RQ's enqueue function
 

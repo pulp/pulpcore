@@ -63,9 +63,44 @@ def fs_repo_version_export(exporter_pk, repo_version_pk):
     exporter.export_repository_version(repo_version)
 
 
+def _get_versions_to_export(the_exporter, the_export):
+    """
+    Return repo-versions to be exported.
+
+    versions is based on exporter-repositories and how the export-cmd was
+    invoked.
+    """
+    repositories = the_exporter.repositories.all()
+    # Figure out which RepositoryVersions we're going to be exporting
+    # Use repo.latest unless versions= was specified
+    if the_export.validated_versions is not None:
+        versions = the_export.validated_versions
+    else:
+        versions = [r.latest_version() for r in repositories]
+    return versions
+
+
+def _get_versions_info(the_exporter):
+    """
+    Return plugin-version-info based on plugins are responsible for exporter-repositories.
+    """
+    repositories = the_exporter.repositories.all()
+
+    # extract plugin-version-info based on the repositories we're exporting from
+    vers_info = set()
+    # We always need to know what version of pulpcore was in place
+    vers_info.add(("pulpcore", get_distribution("pulpcore").version))
+    # for each repository being exported, get the version-info for the plugin that
+    # owns/controls that kind-of repository
+    for r in repositories:
+        vers_info.add(get_version_from_model(r.cast()))
+
+    return vers_info
+
+
 def pulp_export(the_export):
     """
-    Create a PulpExport to export pulp_exporter.repositories
+    Create a PulpExport to export pulp_exporter.repositories.
 
     1) Spit out all Artifacts, ArtifactResource.json, and RepositoryResource.json
     2) Spit out all *resource JSONs in per-repo-version directories
@@ -78,44 +113,33 @@ def pulp_export(the_export):
         ValidationError: When path is not in the ALLOWED_EXPORT_PATHS setting,
             OR path exists and is not a directory
     """
-
-    from pulpcore.app.serializers.exporter import ExporterSerializer
-
     pulp_exporter = the_export.exporter
-    ExporterSerializer.validate_path(pulp_exporter.path, check_is_dir=True)
     the_export.task = Task.current()
 
-    repositories = pulp_exporter.repositories.all()
     tarfile_fp = the_export.export_tarfile_path()
     os.makedirs(pulp_exporter.path, exist_ok=True)
 
     with tarfile.open(tarfile_fp, "w:gz") as tar:
         the_export.tarfile = tar
         CreatedResource.objects.create(content_object=the_export)
+        versions_to_export = _get_versions_to_export(pulp_exporter, the_export)
+        plugin_version_info = _get_versions_info(pulp_exporter)
 
+        # Gather up versions and artifacts
         artifacts = []
-        repo_versions = []
-        vers_info = set()
-        vers_info.add(("pulpcore", get_distribution("pulpcore").version))
-
-        # Gather up the versions and artifacts
-        for repo in repositories:
-            vers_info.add(get_version_from_model(repo.cast()))
-            version = repo.latest_version()
-
+        for version in versions_to_export:
             # Check version-content to make sure we're not being asked to export an on_demand repo
             content_artifacts = ContentArtifact.objects.filter(content__in=version.content)
             if content_artifacts.filter(artifact=None).exists():
                 RuntimeError(_("Remote artifacts cannot be exported."))
-
-            repo_versions.append(version)
             artifacts.extend(version.artifacts.all())
 
-        export_versions(the_export, vers_info)
+        # export plugin-version-info
+        export_versions(the_export, plugin_version_info)
         # Export the top-level entities (artifacts and repositories)
         export_artifacts(the_export, artifacts, pulp_exporter.last_export)
         # Export the repository-version data, per-version
-        for version in repo_versions:
+        for version in versions_to_export:
             export_content(the_export, version, pulp_exporter.last_export)
             ExportedResource.objects.create(export=the_export, content_object=version)
 

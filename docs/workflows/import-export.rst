@@ -157,6 +157,43 @@ Exporter's path, with a name that follows the convention ``export-<export-UUID>-
 
 This export file can now be transferred to a Downstream Pulp instance, and imported.
 
+Exporting Specific Versions
+---------------------------
+
+By default, the latest-versions of the Repositories specified in the Exporter are exported. However, you
+can export specific RepositoryVersions of those Repositories if you wish using the ``versions`` parameter
+on the ``/exports/`` ivovcation.
+
+Following the above example - let's assume we want to export the "zero'th" RepositoryVersion of the
+repositories in our Exporter.::
+
+    http POST http://localhost:24817${EXPORTER_HREF}exports/ versions:=[\"${ISO_HREF}versions/0/\",\"${ZOO_HREF}versions/0/\"]
+
+Note that the "zero'th" RepositoryVersion of a Repository is created when the Repository is created, and is empty. If you unpack the resulting Export ``tar.gz`` you will find, for example, that there is no ``artifacts/`` directory and an empty ``ArtifactResource.json`` file::
+
+    cd /tmp/exports
+    tar xvzf export-930ea60c-97b7-4e00-a737-70f773ebbb14-20200511_2005.tar.gz
+        versions.json
+        pulpcore.app.modelresource.ArtifactResource.json
+        pulpcore.app.modelresource.RepositoryResource.json
+        repository-3c1ec06a-b0d6-4d04-9f99-32bfc0a499a9_0/pulpcore.app.modelresource.ContentResource.json
+        repository-3c1ec06a-b0d6-4d04-9f99-32bfc0a499a9_0/pulpcore.app.modelresource.ContentArtifactResource.json
+        repository-3c1ec06a-b0d6-4d04-9f99-32bfc0a499a9_0/pulp_rpm.app.modelresource.PackageResource.json
+        repository-3c1ec06a-b0d6-4d04-9f99-32bfc0a499a9_0/pulp_rpm.app.modelresource.ModulemdResource.json
+        repository-3c1ec06a-b0d6-4d04-9f99-32bfc0a499a9_0/pulp_rpm.app.modelresource.ModulemdDefaultsResource.json
+        repository-3c1ec06a-b0d6-4d04-9f99-32bfc0a499a9_0/pulp_rpm.app.modelresource.PackageGroupResource.json
+        repository-3c1ec06a-b0d6-4d04-9f99-32bfc0a499a9_0/pulp_rpm.app.modelresource.PackageCategoryResource.json
+        repository-3c1ec06a-b0d6-4d04-9f99-32bfc0a499a9_0/pulp_rpm.app.modelresource.PackageEnvironmentResource.json
+        repository-3c1ec06a-b0d6-4d04-9f99-32bfc0a499a9_0/pulp_rpm.app.modelresource.PackageLangpacksResource.json
+        repository-3c1ec06a-b0d6-4d04-9f99-32bfc0a499a9_0/pulp_rpm.app.modelresource.UpdateRecordResource.json
+        repository-3c1ec06a-b0d6-4d04-9f99-32bfc0a499a9_0/pulp_rpm.app.modelresource.DistributionTreeResource.json
+        repository-3c1ec06a-b0d6-4d04-9f99-32bfc0a499a9_0/pulp_rpm.app.modelresource.RepoMetadataFileResource.json
+        repository-958ae747-c19d-4820-828c-87452f1a5b8d_0/pulpcore.app.modelresource.ContentResource.json
+        repository-958ae747-c19d-4820-828c-87452f1a5b8d_0/pulpcore.app.modelresource.ContentArtifactResource.json
+        repository-958ae747-c19d-4820-828c-87452f1a5b8d_0/pulp_file.app.modelresource.FileContentResource.json
+    python -m json.tool pulpcore.app.modelresource.ArtifactResource.json
+        []
+
 Updating an Exporter
 --------------------
 
