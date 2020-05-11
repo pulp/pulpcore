@@ -23,8 +23,57 @@ Fedora, CentOS, and Mac OSX.
 Ansible Installation (Recommended)
 ----------------------------------
 
-To use ansible roles to install Pulp 3 instead of manual setup refer to
-`Pulp 3 Ansible Installer <https://github.com/pulp/pulp_installer/>`_.
+`Pulp 3 Ansible Installer <https://github.com/pulp/pulp_installer>`__ can be used to
+install plugins. For example if your host is in your Ansible inventory as ``myhost`` you
+can install onto it with:
+
+.. code-block:: bash
+
+    git clone https://github.com/pulp/pulp_installer.git
+
+Create your pulp_install.yml playbook to use with the installer (Uncomment the desired plugins below):
+
+.. code-block:: yaml
+
+   ---
+   - hosts: all
+     vars:
+       pulp_settings:
+         secret_key: secret
+         content_origin: "http://{{ ansible_fqdn }}"
+       pulp_default_admin_password: password
+       pulp_install_plugins:
+         # galaxy-ng: {}
+         # pulp-ansible: {}
+         # pulp-certguard: {}
+         # pulp-container: {}
+         # pulp-cookbook: {}
+         # pulp-deb: {}
+         # pulp-file: {}
+         # pulp-gem: {}
+         # pulp-maven: {}
+         # pulp-npm: {}
+         # pulp-python: {}
+         # pulp-rpm:
+         #   prereq_role: "pulp.pulp_rpm_prerequisites" # RPM plugin needs a prereq_role: https://galaxy.ansible.com/pulp/pulp_rpm_prerequisites
+     roles:
+       - pulp-database
+       - pulp-workers
+       - pulp-resource-manager
+       - pulp-webserver
+       - pulp-content
+     environment:
+       DJANGO_SETTINGS_MODULE: pulpcore.app.settings
+
+Then install it onto ``myhost`` with:
+
+.. code-block:: bash
+
+    ansible-playbook pulp_install.yaml -l myhost
+
+
+For learning more about the ansible roles to install Pulp 3 please refer to
+`Pulp 3 Ansible Installer <https://github.com/pulp/pulp_installer/#pulp-3-ansible-installer>`__.
 
 PyPI Installation
 -----------------
@@ -154,7 +203,7 @@ Systemd
 -------
 
 To run the four Pulp services, systemd files needs to be created in /usr/lib/systemd/system/. The
-`Pulp 3 Ansible Installer <https://github.com/pulp/pulp_installer/>`_ makes these for you, but you
+`Pulp 3 Ansible Installer <https://github.com/pulp/pulp_installer/>`__ makes these for you, but you
 can also configure them by hand from the templates below. Custom configuration can be applied using
 the ``Environment`` option with various :ref:`Pulp settings <settings>`.
 
