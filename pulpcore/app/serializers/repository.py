@@ -85,13 +85,11 @@ class RemoteSerializer(ModelSerializer):
     )
     username = serializers.CharField(
         help_text="The username to be used for authentication when syncing.",
-        write_only=True,
         required=False,
         allow_null=True,
     )
     password = serializers.CharField(
         help_text="The password to be used for authentication when syncing.",
-        write_only=True,
         required=False,
         allow_null=True,
     )

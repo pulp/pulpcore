@@ -1,0 +1,1 @@
+Fields: `username` and `password` will be returned to the rest API user requesting a `Remote`
