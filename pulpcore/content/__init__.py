@@ -6,17 +6,18 @@ import logging
 import os
 import socket
 
-import django  # noqa otherwise E402: module level not at top of file
-
-django.setup()  # noqa otherwise E402: module level not at top of file
-
 from aiohttp import web
-from django.conf import settings
 
-from pulpcore.app.apps import pulp_plugin_configs
-from pulpcore.app.models import ContentAppStatus
+import django
 
-from .handler import Handler
+django.setup()
+
+from django.conf import settings  # noqa: E402: module level not at top of file
+
+from pulpcore.app.apps import pulp_plugin_configs  # noqa: E402: module level not at top of file
+from pulpcore.app.models import ContentAppStatus  # noqa: E402: module level not at top of file
+
+from .handler import Handler  # noqa: E402: module level not at top of file
 
 
 log = logging.getLogger(__name__)
