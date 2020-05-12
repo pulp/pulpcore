@@ -1,0 +1,1 @@
+Content of ssl certificates and keys changed to be return their full value instead of sha256 through REST API.

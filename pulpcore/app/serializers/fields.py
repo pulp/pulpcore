@@ -1,4 +1,3 @@
-import hashlib
 import os
 from gettext import gettext as _
 
@@ -364,35 +363,6 @@ class ImportRelatedField(ImportFieldGetURLMixin, RelatedField):
     def get_object(self, view_name, view_args, view_kwargs):
         lookup_kwargs = {"importer__pk": view_kwargs["importer_pk"], "pk": view_kwargs["pk"]}
         return self.get_queryset().get(**lookup_kwargs)
-
-
-class SecretCharField(serializers.CharField):
-    """
-    Serializer field for secrets.
-
-    This field accepts text as input and it returns a sha256 digest of the text stored.
-    """
-
-    def __init__(self, **kwargs):
-        """
-        Initialize a class and do not trim leading and trailing whitespace characters by default.
-        """
-        kwargs["trim_whitespace"] = False
-        super().__init__(**kwargs)
-
-    def to_representation(self, value):
-        return hashlib.sha256(bytes(value, "utf-8")).hexdigest()
-
-    def to_internal_value(self, data):
-        # We only want to perform this check in the View layer
-        if "view" in self.context and "update" in self.context["view"].action:
-            current_value = getattr(self.context["view"].get_object(), self.field_name)
-            if current_value:
-                current_hash = self.to_representation(current_value)
-                if current_hash == data:
-                    self.context["request"].data.pop(self.field_name, None)
-                    return
-        return super(SecretCharField, self).to_internal_value(data)
 
 
 class TaskGroupStatusCountField(serializers.IntegerField, serializers.ReadOnlyField):
