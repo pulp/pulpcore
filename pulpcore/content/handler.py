@@ -4,17 +4,25 @@ import os
 import re
 from gettext import gettext as _
 
-import django  # noqa otherwise E402: module level not at top of file
-
-django.setup()  # noqa otherwise E402: module level not at top of file
-
 from aiohttp.client_exceptions import ClientResponseError
 from aiohttp.web import FileResponse, StreamResponse, HTTPOk
 from aiohttp.web_exceptions import HTTPForbidden, HTTPFound, HTTPNotFound
-from django.conf import settings
-from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
-from django.db import connection, IntegrityError, transaction
-from pulpcore.app.models import (
+
+import django
+
+django.setup()
+
+from django.conf import settings  # noqa: E402: module level not at top of file
+from django.core.exceptions import (  # noqa: E402: module level not at top of file
+    MultipleObjectsReturned,
+    ObjectDoesNotExist,
+)
+from django.db import (  # noqa: E402: module level not at top of file
+    connection,
+    IntegrityError,
+    transaction,
+)
+from pulpcore.app.models import (  # noqa: E402: module level not at top of file
     Artifact,
     BaseDistribution,
     ContentArtifact,
@@ -22,7 +30,7 @@ from pulpcore.app.models import (
     RemoteArtifact,
 )
 
-from jinja2 import Template
+from jinja2 import Template  # noqa: E402: module level not at top of file
 
 log = logging.getLogger(__name__)
 

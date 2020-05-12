@@ -10,16 +10,20 @@ from rq import Queue
 from rq.worker import Worker
 
 
-import django  # noqa otherwise E402: module level not at top of file
+import django
 
-django.setup()  # noqa otherwise E402: module level not at top of file
+django.setup()
 
 
-from pulpcore.app.models import Task
+from pulpcore.app.models import Task  # noqa: E402: module level not at top of file
 
-from pulpcore.tasking.constants import TASKING_CONSTANTS
-from pulpcore.tasking.services.storage import WorkerDirectory
-from pulpcore.tasking.services.worker_watcher import (
+from pulpcore.tasking.constants import (  # noqa: E402: module level not at top of file
+    TASKING_CONSTANTS,
+)
+from pulpcore.tasking.services.storage import (  # noqa: E402: module level not at top of file
+    WorkerDirectory,
+)
+from pulpcore.tasking.services.worker_watcher import (  # noqa: E402
     check_worker_processes,
     handle_worker_heartbeat,
     mark_worker_offline,

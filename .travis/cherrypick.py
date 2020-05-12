@@ -66,7 +66,7 @@ repo.git.checkout(STABLE_BRANCH)
 
 g = Github(GITHUB_TOKEN)
 grepo = g.get_repo(REPOSITORY)
-(label,) = (l for l in grepo.get_labels() if l.name == PR_LABEL)
+(label,) = (lbl for lbl in grepo.get_labels() if lbl.name == PR_LABEL)
 issues = grepo.get_issues(labels=[label], state="all", sort="updated", direction="asc")
 
 cherrypicks = []
@@ -97,7 +97,7 @@ for issue in issues:
 
 # check if we cherry picked anything
 if len(cherrypicks) == 0:
-    print(f"No cherry picks detected.")
+    print("No cherry picks detected.")
     exit(0)
 
 # push our changes
@@ -115,7 +115,7 @@ print(f"Created pull request {pr.html_url}.")
 for cp in cherrypicks:
     labels = cp.labels
     labels.remove(label)
-    cp.edit(labels=[l.name for l in labels])
+    cp.edit(labels=[lbl.name for lbl in labels])
     print(f"Removed label '{PR_LABEL}' from PR #{cp.number}.")
 
 print("Cherry picking complete.")
