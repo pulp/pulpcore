@@ -1,6 +1,7 @@
 from gettext import gettext as _
 from logging import getLogger
 import re
+import traceback
 from urllib.parse import urljoin
 
 from django.core.validators import URLValidator
@@ -147,9 +148,9 @@ class _DetailFieldMixin:
                 view_name = _MatchingRegexViewName(view_name_pattern)
             else:
                 log.warn(
-                    _("Please provide either 'view_name' or 'view_name_pattern' for {}.").format(
-                        self.__class__.__name__,
-                    ),
+                    _(
+                        "Please provide either 'view_name' or 'view_name_pattern' for {} on {}."
+                    ).format(self.__class__.__name__, traceback.extract_stack()[-4][2],),
                 )
                 view_name = _MatchingRegexViewName(r".*")
         super().__init__(view_name, **kwargs)
