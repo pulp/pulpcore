@@ -6,7 +6,6 @@ NOTE: assumes ALLOWED_EXPORT_PATHS setting contains "/tmp" - all tests will fail
 the case.
 """
 import unittest
-
 from pulp_smash import api, cli, config
 from pulp_smash.utils import uuid4
 from pulp_smash.pulp3.utils import (
@@ -29,7 +28,9 @@ from pulpcore.client.pulpcore import (
 from pulpcore.client.pulpcore.exceptions import ApiException
 
 from pulpcore.client.pulp_file import (
+    ContentFilesApi,
     RepositoriesFileApi,
+    RepositoriesFileVersionsApi,
     RepositorySyncURL,
     RemotesFileApi,
 )
@@ -75,7 +76,9 @@ class BaseExporterCase(unittest.TestCase):
         cls.core_client = CoreApiClient(configuration=cls.cfg.get_bindings_config())
         cls.file_client = gen_file_client()
 
+        cls.content_api = ContentFilesApi(cls.file_client)
         cls.repo_api = RepositoriesFileApi(cls.file_client)
+        cls.versions_api = RepositoriesFileVersionsApi(cls.file_client)
         cls.remote_api = RemotesFileApi(cls.file_client)
         cls.exporter_api = ExportersPulpApi(cls.core_client)
         cls.exports_api = ExportersCoreExportsApi(cls.core_client)
@@ -315,5 +318,36 @@ class PulpExportTestCase(BaseExporterCase):
             body = {"versions": [zeroth_versions[0]]}
             export = self._gen_export(exporter, body)
             self.assertTrue(export.exported_resources[0].endswith("/0/"))
+        finally:
+            self._delete_exporter(exporter)
+
+    def test_incremental(self):
+        # Create a new file-repo, repo-2
+        a_repo = self.repo_api.create(gen_repo())
+        self.addCleanup(self.client.delete, a_repo.pulp_href)
+        # get a list of all the files from one of our existing repos
+        file_list = self.content_api.list()
+        # copy files from repositories[0] into 2, one file at a time
+        results = file_list.results
+        for a_file in results:
+            href = a_file.pulp_href
+            modify_response = self.repo_api.modify(a_repo.pulp_href, {"add_content_units": [href]})
+            monitor_task(modify_response.task)
+        # get all versions of that repo
+        versions = self.versions_api.list(a_repo.pulp_href, ordering="number")
+        self.assertIsNotNone(versions)
+        self.assertEqual(4, versions.count)
+        # create exporter for that repository
+        (exporter, body) = self._create_exporter(use_repos=[a_repo], cleanup=False)
+        try:
+            # export repo-2-version[1]-full versions.results[1]
+            body = {"versions": [versions.results[1].pulp_href]}
+            self._gen_export(exporter, body)
+            # export repo-2-version[2]
+            body = {"versions": [versions.results[2].pulp_href], "full": False}
+            self._gen_export(exporter, body)
+            # export repo-2-latest
+            body = {"full": False}
+            self._gen_export(exporter, body)
         finally:
             self._delete_exporter(exporter)

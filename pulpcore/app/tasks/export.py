@@ -3,6 +3,7 @@ import logging
 import os
 import tarfile
 
+from distutils.util import strtobool
 from gettext import gettext as _
 from pkg_resources import get_distribution
 
@@ -30,7 +31,7 @@ def fs_publication_export(exporter_pk, publication_pk):
     Export a publication to the file system.
 
     Args:
-        exporter_pk (str): FileSystemExporter pk
+        exporter_pk (str): FilesystemExporter pk
         publication_pk (str): Publication pk
     """
     exporter = Exporter.objects.get(pk=exporter_pk).cast()
@@ -49,7 +50,7 @@ def fs_repo_version_export(exporter_pk, repo_version_pk):
     Export a repository version to the file system.
 
     Args:
-        exporter_pk (str): FileSystemExporter pk
+        exporter_pk (str): FilesystemExporter pk
         repo_version_pk (str): RepositoryVersion pk
     """
     exporter = Exporter.objects.get(pk=exporter_pk).cast()
@@ -98,6 +99,33 @@ def _get_versions_info(the_exporter):
     return vers_info
 
 
+def _version_match(curr_versions, prev_versions):
+    """
+    Match list of repo-versions, to a prev-set, based on belonging to the same repository.
+
+    We need this in order to be able to know how to 'diff' versions for incremental exports.
+
+    :param curr_versions ([model.RepositoryVersion]): versions we want to export
+    :param prev_versions ([model.RepositoryVersion]): last set of versions we exported (if any)
+    :return: { <a_curr_version>: <matching-prev-version>, or None if no match or no prev_versions }
+    """
+    curr_to_repo = {v.repository: v for v in curr_versions}
+    if prev_versions is None:
+        return {curr_to_repo[repo]: None for repo in curr_to_repo}
+    else:
+        prev_to_repo = {v.repository: v for v in prev_versions}
+        return {curr_to_repo[repo]: prev_to_repo[repo] for repo in curr_to_repo}
+
+
+def _incremental_requested(the_export):
+    """Figure out that a) an incremental is requested, and b) it's possible."""
+    the_exporter = the_export.exporter
+    params = the_export.params
+    full = bool(strtobool(params["full"])) if "full" in params else True
+    last_exists = the_exporter.last_export
+    return last_exists and not full
+
+
 def pulp_export(the_export):
     """
     Create a PulpExport to export pulp_exporter.repositories.
@@ -125,6 +153,19 @@ def pulp_export(the_export):
         versions_to_export = _get_versions_to_export(pulp_exporter, the_export)
         plugin_version_info = _get_versions_info(pulp_exporter)
 
+        do_incremental = _incremental_requested(the_export)
+
+        # list-of-previous-versions, or None
+        if do_incremental:
+            prev_versions = [
+                er.content_object
+                for er in ExportedResource.objects.filter(export=pulp_exporter.last_export).all()
+            ]
+        else:
+            prev_versions = None
+
+        vers_match = _version_match(versions_to_export, prev_versions)
+
         # Gather up versions and artifacts
         artifacts = []
         for version in versions_to_export:
@@ -132,15 +173,21 @@ def pulp_export(the_export):
             content_artifacts = ContentArtifact.objects.filter(content__in=version.content)
             if content_artifacts.filter(artifact=None).exists():
                 RuntimeError(_("Remote artifacts cannot be exported."))
-            artifacts.extend(version.artifacts.all())
+
+            if do_incremental:
+                vers_artifacts = version.artifacts.difference(vers_match[version].artifacts).all()
+            else:
+                vers_artifacts = version.artifacts.all()
+            artifacts.extend(vers_artifacts)
 
         # export plugin-version-info
         export_versions(the_export, plugin_version_info)
         # Export the top-level entities (artifacts and repositories)
-        export_artifacts(the_export, artifacts, pulp_exporter.last_export)
+        # Note: we've already handled "what about incrementals" when building the 'artifacts' list
+        export_artifacts(the_export, artifacts)
         # Export the repository-version data, per-version
         for version in versions_to_export:
-            export_content(the_export, version, pulp_exporter.last_export)
+            export_content(the_export, version)
             ExportedResource.objects.create(export=the_export, content_object=version)
 
     sha256_hash = hashlib.sha256()

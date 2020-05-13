@@ -62,14 +62,13 @@ def export_versions(export, version_info):
     export.tarfile.addfile(info, io.BytesIO(version_json))
 
 
-def export_artifacts(export, artifacts, last_export=None):
+def export_artifacts(export, artifacts):
     """
     Export a set of Artifacts, ArtifactResources, and RepositoryResources
 
     Args:
         export (django.db.models.PulpExport): export instance that's doing the export
         artifacts (django.db.models.Artifacts): list of artifacts in all repos being exported
-        last_export (django.db.models.PulpExport): previous export of owning Exporter
 
     Raises:
         ValidationError: When path is not in the ALLOWED_EXPORT_PATHS setting
@@ -95,7 +94,7 @@ def export_artifacts(export, artifacts, last_export=None):
     _write_export(export.tarfile, resource)
 
 
-def export_content(export, repository_version, last_export=None):
+def export_content(export, repository_version):
     """
     Export db-content, and the db-content of the owning repositories
 
