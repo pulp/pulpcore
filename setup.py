@@ -22,7 +22,7 @@ requirements = [
     "PyYAML>=5.1.1,<5.4.0",
     "python-gnupg~=0.4.0",
     "redis>=3.4.0",
-    "rq>=1.1,<1.4",
+    "rq>=1.1,<1.5",
     "setuptools>=39.2.0",
     "whitenoise>=4.1.3,<5.2.0",
 ]
