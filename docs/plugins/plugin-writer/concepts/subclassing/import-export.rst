@@ -5,7 +5,7 @@ Pulp Import/Export
 
 The Pulp Import/Export process is based around the `Django Import/Export library <https://django-import-export.readthedocs.io/en/latest/>`_ .
 To be 'exportable/importable', your plugin must define a ``modelresource`` module at
-``<plugin>/app/modelresource.py``. The module must contain a ModelResource subclasses
+``<plugin>/app/modelresource.py``. The module must contain a ModelResource subclass
 for each Model you want to expose, and it must define an ``IMPORT_ORDER`` ordered list
 for all such ModelResources.
 
@@ -15,8 +15,8 @@ QueryModelResource
 If you don't need to do anything "special" to export your Model you can subclass
 ``pulpcore.plugin.importexport.QueryModelResource``. This only requires you to provide the
 ``Meta.model`` class for the Model being export/imported, and to override the
-``set_up_queryset(self)`` method to define a limiting filter based on the self.repo_version
-provided by ``QueryModelResource``.
+``set_up_queryset(self)`` method to define a limiting filter. QueryModelResource is instantiated
+by the export process with the RepositoryVersion being exported (``self.repo_version``).
 
 An example ``QueryModelResource`` subclasses, for import/exporting the ``Bar`` Model
 from ``pulp_foo``, would look like this::
@@ -39,7 +39,8 @@ from ``pulp_foo``, would look like this::
 modelresource.py
 ~~~~~~~~~~~~~~~~
 
-A simple ``modelresource.py`` module might look like this::
+A simple ``modelresource.py`` module is the one for the ``pulp_file`` plugin. It looks like
+this::
 
     from pulpcore.plugin.importexport import QueryModelResource
     from pulp_file.app.models import FileContent

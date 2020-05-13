@@ -135,8 +135,8 @@ Set up 'isofile' repository::
     # sync the repository to give us some content
     http POST http://localhost:24817$ISOFILE_HREF'sync/' remote=$REMOTE_HREF
 
-Now that we have Repositories with content, let's define an Exporter named ``test-exporter``
-that will export these Repositories to the directory ``/tmp/exports/``::
+Now that we have :term:`Repositories<Repository>` with content, let's define an Exporter named ``test-exporter``
+that will export these :term:`Repositories<Repository>` to the directory ``/tmp/exports/``::
 
     export EXPORTER_HREF=$(http POST http://localhost:24817/pulp/api/v3/exporters/core/pulp/ name=test-exporter repositories:=[\"${ISOFILE_HREF}\",\"${ZOO_HREF}\"] path=/tmp/exports/ | jq -r '.pulp_href')
     http GET http://localhost:24817${EXPORTER_HREF}
@@ -160,16 +160,16 @@ This export file can now be transferred to a Downstream Pulp instance, and impor
 Exporting Specific Versions
 ---------------------------
 
-By default, the latest-versions of the Repositories specified in the Exporter are exported. However, you
-can export specific RepositoryVersions of those Repositories if you wish using the ``versions`` parameter
-on the ``/exports/`` ivovcation.
+By default, the latest-versions of the :term:`Repositories<Repository>` specified in the Exporter are exported. However, you
+can export specific ::term::`RepositoryVersions<RepositoryVersion>` of those :term:`Repositories<Repository>`
+if you wish using the ``versions`` parameter on the ``/exports/`` invocation.
 
-Following the above example - let's assume we want to export the "zero'th" RepositoryVersion of the
+Following the above example - let's assume we want to export the "zero'th" ::term:`RepositoryVersion` of the
 repositories in our Exporter.::
 
     http POST http://localhost:24817${EXPORTER_HREF}exports/ versions:=[\"${ISO_HREF}versions/0/\",\"${ZOO_HREF}versions/0/\"]
 
-Note that the "zero'th" RepositoryVersion of a Repository is created when the Repository is created, and is empty. If you unpack the resulting Export ``tar.gz`` you will find, for example, that there is no ``artifacts/`` directory and an empty ``ArtifactResource.json`` file::
+Note that the "zero'th" ::term:`RepositoryVersion` of a ::term:`Repository` is created when the ::term:`Repository` is created, and is empty. If you unpack the resulting Export ``tar.gz`` you will find, for example, that there is no ``artifacts/`` directory and an empty ``ArtifactResource.json`` file::
 
     cd /tmp/exports
     tar xvzf export-930ea60c-97b7-4e00-a737-70f773ebbb14-20200511_2005.tar.gz
@@ -193,6 +193,22 @@ Note that the "zero'th" RepositoryVersion of a Repository is created when the Re
         repository-958ae747-c19d-4820-828c-87452f1a5b8d_0/pulp_file.app.modelresource.FileContentResource.json
     python -m json.tool pulpcore.app.modelresource.ArtifactResource.json
         []
+
+Exporting Incrementally
+-----------------------
+
+By default, PulpExport exports all of the content and artifacts of the
+::term:`RepositoryVersions<RepositoryVersion>` being exported. A common use-case is to do
+regular transfers of content from an Upstream to a Downstream Pulp instance.  While you
+**can** export everything every time, it is an inefficient use of time and disk storage to
+do so; exporting only the "entities that have changed" is a better choice. You can
+accomplish this by setting the ``full`` parameter on the ``/exports/`` invocation to
+``False``::
+
+    http POST http://localhost:24817${EXPORTER_HREF}exports/ full=False
+
+This results in an export of all content-entities, but only ::term::`Artifacts<Artifact>`
+that have been **added** since the `last_export` of the same Exporter.
 
 Updating an Exporter
 --------------------
