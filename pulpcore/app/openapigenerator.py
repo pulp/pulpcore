@@ -8,6 +8,7 @@ from drf_yasg.generators import OpenAPISchemaGenerator
 from drf_yasg.inspectors import SwaggerAutoSchema
 from drf_yasg.openapi import Parameter
 from drf_yasg.utils import filter_none, force_real_str
+from rest_framework import serializers
 
 from pulpcore.app.models import RepositoryVersion
 
@@ -322,9 +323,15 @@ class PulpAutoSchema(SwaggerAutoSchema):
 
         multipart = ["multipart/form-data", "application/x-www-form-urlencoded"]
         if self.method != "GET":
-            request_params = self.get_request_body_parameters(multipart)
-            type_list = [param["type"] for param in request_params if param]
-            if "file" in type_list:
+            contains_file_field = False
+            serializer = self.get_request_serializer()
+
+            for field_name, field in getattr(serializer, "fields", {}).items():
+                if isinstance(field, serializers.FileField):
+                    contains_file_field = True
+                    break
+
+            if contains_file_field:
                 # automatically set the media type to form data if there's a file
                 # needed due to https://github.com/axnsan12/drf-yasg/issues/386
                 consumes = multipart
