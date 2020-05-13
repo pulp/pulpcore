@@ -29,7 +29,6 @@ from .fields import (  # noqa
     ImportRelatedField,
     ImportIdentityField,
     LatestVersionField,
-    SecretCharField,
     SingleContentArtifactField,
     RepositoryVersionsIdentityFromRepositoryField,
     RepositoryVersionRelatedField,

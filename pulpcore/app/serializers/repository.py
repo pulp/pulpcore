@@ -11,7 +11,6 @@ from pulpcore.app.serializers import (
     DetailRelatedField,
     LatestVersionField,
     ModelSerializer,
-    SecretCharField,
     RepositoryVersionIdentityField,
     RepositoryVersionRelatedField,
     RepositoryVersionsIdentityFromRepositoryField,
@@ -52,26 +51,21 @@ class RemoteSerializer(ModelSerializer):
         validators=[UniqueValidator(queryset=models.Remote.objects.all())],
     )
     url = serializers.CharField(help_text="The URL of an external content source.",)
-    ca_cert = SecretCharField(
+    ca_cert = serializers.CharField(
         help_text="A string containing the PEM encoded CA certificate used to validate the server "
         "certificate presented by the remote server. All new line characters must be "
-        "escaped. Returns SHA256 checksum of the certificate file on GET.",
-        write_only=False,
+        "escaped.",
         required=False,
         allow_null=True,
     )
-    client_cert = SecretCharField(
+    client_cert = serializers.CharField(
         help_text="A string containing the PEM encoded client certificate used for authentication. "
-        "All new line characters must be escaped. Returns SHA256 checksum of the "
-        "certificate file on GET.",
-        write_only=False,
+        "All new line characters must be escaped.",
         required=False,
         allow_null=True,
     )
-    client_key = SecretCharField(
-        help_text="A PEM encoded private key used for authentication. Returns SHA256 checksum of "
-        "the certificate file on GET.",
-        write_only=False,
+    client_key = serializers.CharField(
+        help_text="A PEM encoded private key used for authentication.",
         required=False,
         allow_null=True,
     )
