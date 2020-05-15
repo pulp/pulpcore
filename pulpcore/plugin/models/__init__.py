@@ -30,4 +30,5 @@ from pulpcore.app.models import (  # noqa
     SigningService,
     Task,
     TaskGroup,
+    TaskReservedResourceRecord,
 )
