@@ -14,7 +14,7 @@ from .exporter import (  # noqa
     Export,
     ExportedResource,
     Exporter,
-    FileSystemExporter,
+    FilesystemExporter,
     PulpExport,
     PulpExporter,
 )

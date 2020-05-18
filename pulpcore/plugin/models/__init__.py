@@ -14,7 +14,7 @@ from pulpcore.app.models import (  # noqa
     Exporter,
     Import,
     Importer,
-    FileSystemExporter,
+    FilesystemExporter,
     MasterModel,
     ProgressReport,
     Publication,

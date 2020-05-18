@@ -77,9 +77,7 @@ class PulpImportTestCase(unittest.TestCase):
 
     @classmethod
     def _create_export(cls):
-        # TODO: at this point we can't create an export unless we do string-surgery on the
-        #  exporter-href because there's no way to get just-the-id
-        export_response = cls.exports_api.create(cls.exporter.pulp_href.split("/")[-2], {})
+        export_response = cls.exports_api.create(cls.exporter.pulp_href, {})
         monitor_task(export_response.task)
         task = cls.client.get(export_response.task)
         resources = task["created_resources"]
@@ -193,10 +191,8 @@ class PulpImportTestCase(unittest.TestCase):
         importer = self.importer_api.create(body)
         self.addCleanup(self.importer_api.delete, importer.pulp_href)
 
-        # TODO: at this point we can't create an import unless we do string-surgery on the
-        # importer-href because there's no way to get just-the-id
         import_response = self.imports_api.create(
-            importer.pulp_href.split("/")[-2], {"path": self.export.filename}
+            importer.pulp_href, {"path": self.export.filename}
         )
         monitor_task(import_response.task)
         task = self.client.get(import_response.task)

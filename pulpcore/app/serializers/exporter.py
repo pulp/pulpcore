@@ -199,15 +199,15 @@ class PulpExporterSerializer(ExporterSerializer):
         fields = ExporterSerializer.Meta.fields + ("path", "repositories", "last_export")
 
 
-class FileSystemExporterSerializer(ExporterSerializer):
+class FilesystemExporterSerializer(ExporterSerializer):
     """
-    Base serializer for FileSystemExporters.
+    Base serializer for FilesystemExporters.
     """
 
     path = serializers.CharField(help_text=_("File system location to export to."))
 
     class Meta:
-        model = models.FileSystemExporter
+        model = models.FilesystemExporter
         fields = ExporterSerializer.Meta.fields + ("path",)
 
 
