@@ -1,5 +1,0 @@
-#!/usr/bin/execlineb -P
-export DJANGO_SETTINGS_MODULE pulpcore.app.settings
-export PULP_SETTINGS /etc/pulp/settings.py
-export PATH /usr/local/bin:/usr/bin/
-/usr/local/bin/rq worker -w pulpcore.tasking.worker.PulpWorker --pid=/var/run/pulpcore-worker-2/reserved-resource-worker-2.pid -c "pulpcore.rqconfig" --disable-job-desc-logging

@@ -1,4 +1,4 @@
-FROM pulp_ci_base:{{ image.tag }}
+FROM pulp/pulp-ci:latest
 
 {% if s3_test | default(false) %}
 # Hacking botocore (https://github.com/boto/botocore/pull/1990)
@@ -16,7 +16,8 @@ RUN pip3 install python-dateutil rhsm
 ADD {{ item.source }} {{ item.source }}
 {% endif %}
 RUN pip3 install {{ item.source }}
-RUN ln /usr/local/lib/python3.7/site-packages/{{ item.name }}/app/webserver_snippets/nginx.conf /etc/nginx/conf.d/{{ item.name }} || true
+RUN mkdir -p /etc/nginx/pulp/
+RUN ln /usr/local/lib/python3.7/site-packages/{{ item.name }}/app/webserver_snippets/nginx.conf /etc/nginx/pulp/{{ item.name }}.conf || true
 {% endfor %}
 
 ENTRYPOINT ["/init"]

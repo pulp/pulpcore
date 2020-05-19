@@ -24,7 +24,7 @@ export PULP_SETTINGS=$TRAVIS_BUILD_DIR/.travis/settings/settings.py
 
 if [ "$TEST" = "docs" ]; then
   cd docs
-  make html
+  make PULP_URL="http://pulp" html
   cd ..
 
   if [ -f $POST_DOCS_TEST ]; then

@@ -1,4 +1,0 @@
-#!/usr/bin/execlineb -P
-export DJANGO_SETTINGS_MODULE pulpcore.app.settings
-export PULP_SETTINGS /etc/pulp/settings.py
-/usr/local/bin/gunicorn pulpcore.app.wsgi:application --bind "127.0.0.1:24817" --access-logfile -
