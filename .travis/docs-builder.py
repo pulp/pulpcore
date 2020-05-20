@@ -86,7 +86,7 @@ def main():
     print("Building the docs")
     docs_directory = os.sep.join([WORKING_DIR, "docs"])
 
-    make_command = ["make", "diagrams", "html"]
+    make_command = ["make", "PULP_URL=http://pulp", "diagrams", "html"]
     exit_code = subprocess.call(make_command, cwd=docs_directory)
     if exit_code != 0:
         raise RuntimeError("An error occurred while building the docs.")
