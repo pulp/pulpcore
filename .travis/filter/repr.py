@@ -16,10 +16,10 @@ def _repr_filter(value):
 
 # ---- Ansible filters ----
 class FilterModule(object):
-    """repr filter"""
+    """Repr filter."""
 
     def filters(self):
-        """Filter associations"""
+        """Filter associations."""
         return {
             "repr": _repr_filter,
         }
