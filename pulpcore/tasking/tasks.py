@@ -76,6 +76,7 @@ def _queue_reserved_task(func, inner_task_id, resources, inner_args, inner_kwarg
     redis_conn = connection.get_redis_connection()
     task_status = Task.objects.get(pk=inner_task_id)
     task_name = func.__module__ + "." + func.__name__
+
     while True:
         if task_name == "pulpcore.app.tasks.orphan.orphan_cleanup":
             if ReservedResource.objects.exists():
@@ -115,9 +116,6 @@ def _queue_reserved_task(func, inner_task_id, resources, inner_args, inner_kwarg
             # we have a worker with the locks
             break
 
-    task_status.worker = worker
-    task_status.save()
-
     try:
         q = Queue(worker.name, connection=redis_conn)
         q.enqueue(
@@ -130,6 +128,9 @@ def _queue_reserved_task(func, inner_task_id, resources, inner_args, inner_kwarg
         )
     finally:
         q.enqueue(_release_resources, args=(inner_task_id,))
+
+    task_status.worker = worker
+    task_status.save()
 
 
 def _release_resources(task_id):
@@ -214,6 +215,11 @@ def enqueue_with_reservation(
     if current_job:
         current_task = Task.objects.get(pk=current_job.id)
         parent_kwarg["parent_task"] = current_task
+
+    q = Queue("resource-manager", connection=redis_conn)
+    task_args = (func, inner_task_id, list(resources), args, kwargs, options)
+    q.enqueue(_queue_reserved_task, args=task_args, job_timeout=TASK_TIMEOUT)
+
     Task.objects.create(
         pk=inner_task_id,
         state=TASK_STATES.WAITING,
@@ -221,7 +227,4 @@ def enqueue_with_reservation(
         name=f"{func.__module__}.{func.__name__}",
         **parent_kwarg,
     )
-    q = Queue("resource-manager", connection=redis_conn)
-    task_args = (func, inner_task_id, list(resources), args, kwargs, options)
-    q.enqueue(_queue_reserved_task, args=task_args, job_timeout=TASK_TIMEOUT)
     return Job(id=inner_task_id, connection=redis_conn)

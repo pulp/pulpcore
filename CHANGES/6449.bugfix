@@ -1,0 +1,1 @@
+Fix issue where tasks records can be created that remain in the 'waiting' state forever.
