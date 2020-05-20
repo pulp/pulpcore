@@ -24,7 +24,7 @@ requirements = [
     "redis>=3.4.0",
     "rq>=1.1,<1.4",
     "setuptools>=39.2.0",
-    "whitenoise>=4.1.3,<5.1.0",
+    "whitenoise>=4.1.3,<5.2.0",
 ]
 
 setup(
