@@ -366,6 +366,7 @@ class Handler:
                     index_path = "{}index.html".format(rel_path)
                     publication.published_artifact.get(relative_path=index_path)
                     rel_path = index_path
+                    headers = self.response_headers(rel_path)
                 except ObjectDoesNotExist:
                     dir_list = await self.list_directory(None, publication, rel_path)
                     dir_list.update(distro.content_handler_list_directory(rel_path))
