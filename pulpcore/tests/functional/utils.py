@@ -50,8 +50,8 @@ def monitor_task_group(tg_href):
         sleep(2)
         tg = task_groups.read(tg_href)
     if (tg.failed + tg.skipped + tg.canceled) > 0:
-        print("The task gorup failed.")
+        print(f"The task group failed: {tg}")
         exit()
     else:
-        print("The task group was succesful.")
+        print("The task group was successful.")
         return tg
