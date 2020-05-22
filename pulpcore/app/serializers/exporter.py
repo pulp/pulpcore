@@ -1,4 +1,5 @@
 import os
+import re
 from gettext import gettext as _
 
 from rest_framework import serializers
@@ -109,12 +110,9 @@ class PulpExportSerializer(ExportSerializer):
     Serializer for PulpExports.
     """
 
-    sha256 = serializers.CharField(
-        help_text=_("The SHA-256 checksum of the exported .tar.gz."), read_only=True,
-    )
-
-    filename = serializers.CharField(
-        help_text=_("The full-path filename of the exported .tar.gz."), read_only=True,
+    output_file_info = serializers.JSONField(
+        help_text=_("Dictionary of filename: sha256hash entries for export-output-file(s)"),
+        read_only=True,
     )
 
     dry_run = serializers.BooleanField(
@@ -136,6 +134,15 @@ class PulpExportSerializer(ExportSerializer):
         write_only=True,
     )
 
+    chunk_size = serializers.CharField(
+        help_text=_(
+            "Chunk export-tarfile into pieces of chunk_size bytes."
+            + "Recognizes units of B/KB/MB/GB/TB."
+        ),
+        required=False,
+        write_only=True,
+    )
+
     def validate_versions(self, versions):
         """
         If specifying repo-versions explicitly, must provide a version for each exporter-repository
@@ -146,8 +153,8 @@ class PulpExportSerializer(ExportSerializer):
         if num_repos != len(versions):
             raise serializers.ValidationError(
                 _(
-                    "Number of versions does not match the number of Repositories for the owning "
-                    + "Exporter!"
+                    "Number of versions ({}) does not match the number of Repositories ({}) for "
+                    + "the owning  Exporter!"
                 ).format(num_repos, len(versions))
             )
 
@@ -159,18 +166,41 @@ class PulpExportSerializer(ExportSerializer):
                 _(
                     "Requested RepositoryVersions must belong to the Repositories named by the "
                     + "Exporter!"
-                ).format(exporter_repos, version_repos)
+                )
             )
         return versions
+
+    @staticmethod
+    def _parse_size(size):
+        try:
+            # based on https://stackoverflow.com/a/42865957/2002471
+            units = {"B": 1, "KB": 2 ** 10, "MB": 2 ** 20, "GB": 2 ** 30, "TB": 2 ** 40}
+            size = size.upper()
+            if not re.match(r" ", size):
+                size = re.sub(r"([KMGT]?B)", r" \1", size)
+            number, unit = [string.strip() for string in size.split()]
+            return int(float(number) * units[unit])
+        except ValueError:
+            raise serializers.ValidationError(
+                _("chunk_size '{}' is not valid (valid units are B/KB/MB/GB/TB)").format(size)
+            )
+
+    def validate_chunk_size(self, chunk_size):
+        the_size = self._parse_size(chunk_size)
+        if the_size <= 0:
+            raise serializers.ValidationError(
+                _("Chunk size {} is not greater than zero!").format(the_size)
+            )
+        return the_size
 
     class Meta:
         model = models.PulpExport
         fields = ExportSerializer.Meta.fields + (
-            "sha256",
-            "filename",
             "full",
             "dry_run",
             "versions",
+            "chunk_size",
+            "output_file_info",
         )
 
 

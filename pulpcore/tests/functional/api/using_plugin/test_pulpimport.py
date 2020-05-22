@@ -191,9 +191,8 @@ class PulpImportTestCase(unittest.TestCase):
         importer = self.importer_api.create(body)
         self.addCleanup(self.importer_api.delete, importer.pulp_href)
 
-        import_response = self.imports_api.create(
-            importer.pulp_href, {"path": self.export.filename}
-        )
+        filenames = list(self.export.output_file_info.keys())
+        import_response = self.imports_api.create(importer.pulp_href, {"path": filenames[0]})
         monitor_task(import_response.task)
         task = self.client.get(import_response.task)
         resources = task["created_resources"]
