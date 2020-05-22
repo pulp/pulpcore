@@ -8,6 +8,8 @@ from logging import getLogger
 
 from django.conf import settings
 from django.core.files.storage import default_storage
+from pkg_resources import DistributionNotFound, get_distribution
+from rest_framework.serializers import ValidationError
 from tablib import Dataset
 
 from pulpcore.app.apps import get_plugin_config
@@ -34,6 +36,7 @@ ARTIFACT_FILE = "pulpcore.app.modelresource.ArtifactResource.json"
 REPO_FILE = "pulpcore.app.modelresource.RepositoryResource.json"
 CONTENT_FILE = "pulpcore.app.modelresource.ContentResource.json"
 CA_FILE = "pulpcore.app.modelresource.ContentArtifactResource.json"
+VERSIONS_FILE = "versions.json"
 
 
 def _import_file(fpath, resource_class):
@@ -48,6 +51,33 @@ def _repo_version_path(src_repo):
     """Find the repo version path in the export based on src_repo json."""
     src_repo_version = int(src_repo["next_version"]) - 1
     return f"repository-{src_repo['pulp_id']}_{src_repo_version}"
+
+
+def _check_versions(version_json):
+    """Compare the export version_json to the installed components."""
+    error_messages = []
+    for component in version_json:
+        try:
+            version = get_distribution(component["component"]).version
+        except DistributionNotFound:
+            error_messages.append(
+                _("Export uses {} which is not installed.").format(component["component"])
+            )
+        else:
+            if version != component["version"]:
+                error_messages.append(
+                    _(
+                        "Export version {export_ver} of {component} does not match "
+                        "installed version {ver}."
+                    ).format(
+                        export_ver=component["version"],
+                        component=component["component"],
+                        ver=version,
+                    )
+                )
+
+        if error_messages:
+            raise ValidationError((" ".join(error_messages)))
 
 
 def import_repository_version(destination_repo_pk, source_repo_pk, tar_path):
@@ -129,6 +159,11 @@ def pulp_import(importer_pk, path):
     with tempfile.TemporaryDirectory() as temp_dir:
         with tarfile.open(path, "r:gz") as tar:
             tar.extractall(path=temp_dir)
+
+        # Check version info
+        with open(os.path.join(temp_dir, VERSIONS_FILE)) as version_file:
+            version_json = json.load(version_file)
+            _check_versions(version_json)
 
         # Artifacts
         ar_result = _import_file(os.path.join(temp_dir, ARTIFACT_FILE), ArtifactResource)
