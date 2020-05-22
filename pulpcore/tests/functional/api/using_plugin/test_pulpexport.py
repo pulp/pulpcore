@@ -120,7 +120,7 @@ class BaseExporterCase(unittest.TestCase):
 
         body = {
             "name": uuid4(),
-            "path": "/tmp/{}".format(uuid4()),
+            "path": "/tmp/{}/".format(uuid4()),
             "repositories": [r.pulp_href for r in self.repos],
         }
         if use_repos:
@@ -204,6 +204,7 @@ class PulpExportTestCase(BaseExporterCase):
             self.assertEqual(len(exporter.repositories), len(export.exported_resources))
             self.assertIsNotNone(export.filename)
             self.assertIsNotNone(export.sha256)
+            self.assertFalse("//" in export.filename)
         finally:
             self._delete_exporter(exporter)
 
