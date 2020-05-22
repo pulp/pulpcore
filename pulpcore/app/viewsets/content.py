@@ -1,7 +1,9 @@
 from gettext import gettext as _
 
 from django.db import models
+from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import mixins, status
+from rest_framework.filters import OrderingFilter
 from rest_framework.response import Response
 
 from pulpcore.app.models import Artifact, Content, SigningService
@@ -112,6 +114,8 @@ class BaseContentViewSet(NamedModelViewSet):
 
     endpoint_name = "content"
     filterset_class = ContentFilter
+    filter_backends = (OrderingFilter, DjangoFilterBackend)
+    ordering = "-pulp_created"
     # These are just placeholders, the plugin writer would replace them with the actual
     queryset = Content.objects.all()
     serializer_class = MultipleArtifactContentSerializer
