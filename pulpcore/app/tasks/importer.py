@@ -8,10 +8,7 @@ from logging import getLogger
 
 from django.conf import settings
 from django.core.files.storage import default_storage
-from django.db import (
-    connection,
-    transaction,
-)
+
 from pkg_resources import DistributionNotFound, get_distribution
 from rest_framework.serializers import ValidationError
 from tablib import Dataset
@@ -30,7 +27,6 @@ from pulpcore.app.models import (
 from pulpcore.app.modelresource import (
     ArtifactResource,
     ContentArtifactResource,
-    ContentResource,
 )
 from pulpcore.tasking.tasks import enqueue_with_reservation
 
@@ -44,17 +40,22 @@ VERSIONS_FILE = "versions.json"
 
 
 def _import_file(fpath, resource_class):
-    log.info(_("Importing file {}.").format(fpath))
-    with open(fpath, "r") as json_file:
-        data = Dataset().load(json_file.read(), format="json")
-        resource = resource_class()
-        return resource.import_data(data, raise_errors=True)
+    try:
+        log.info(_("Importing file {}.").format(fpath))
+        with open(fpath, "r") as json_file:
+            data = Dataset().load(json_file.read(), format="json")
+            resource = resource_class()
+            log.info(_("...Importing resource {}.").format(resource.__class__.__name__))
+            return resource.import_data(data, raise_errors=True)
+    except AttributeError:
+        log.error(_("FAILURE importing file {}!").format(fpath))
+        raise
 
 
 def _repo_version_path(src_repo):
     """Find the repo version path in the export based on src_repo json."""
     src_repo_version = int(src_repo["next_version"]) - 1
-    return f"repository-{src_repo['pulp_id']}_{src_repo_version}"
+    return f"repository-{src_repo['name']}_{src_repo_version}"
 
 
 def _check_versions(version_json):
@@ -84,13 +85,13 @@ def _check_versions(version_json):
             raise ValidationError((" ".join(error_messages)))
 
 
-def import_repository_version(destination_repo_pk, source_repo_pk, tar_path):
+def import_repository_version(destination_repo_pk, source_repo_name, tar_path):
     """
     Import a repository version from a Pulp export.
 
     Args:
         destination_repo_pk (str): Primary key of Repository to import into.
-        source_repo_pk (str): Primary key of the Repository in the export.
+        source_repo_name (str): Name of the Repository in the export.
         tar_path (str): A path to export tar.
     """
     dest_repo = Repository.objects.get(pk=destination_repo_pk)
@@ -103,7 +104,7 @@ def import_repository_version(destination_repo_pk, source_repo_pk, tar_path):
         with open(os.path.join(temp_dir, REPO_FILE), "r") as repo_data_file:
             data = json.load(repo_data_file)
 
-        src_repo = next(repo for repo in data if repo["pulp_id"] == source_repo_pk)
+        src_repo = next(repo for repo in data if repo["name"] == source_repo_name)
         rv_path = os.path.join(temp_dir, _repo_version_path(src_repo))
 
         if dest_repo.pulp_type != src_repo["pulp_type"]:
@@ -125,26 +126,24 @@ def import_repository_version(destination_repo_pk, source_repo_pk, tar_path):
                 if re.match(fr"^{_repo_version_path(src_repo)}/.+", mem.name):
                     tar.extract(mem, path=temp_dir)
 
-        # Untyped Content
-        content_path = os.path.join(rv_path, CONTENT_FILE)
-        with transaction.atomic():
-            cursor = connection.cursor()
-            cursor.execute("LOCK TABLE %s IN %s MODE" % (Content._meta.db_table, "EXCLUSIVE"))
-            c_result = _import_file(content_path, ContentResource)
-        content = Content.objects.filter(pk__in=[r.object_id for r in c_result.rows])
-
-        # Content Artifacts
-        ca_path = os.path.join(rv_path, CA_FILE)
-        _import_file(ca_path, ContentArtifactResource)
-
         # Content
         plugin_name = src_repo["pulp_type"].split(".")[0]
         cfg = get_plugin_config(plugin_name)
+
+        resulting_content_ids = []
         for res_class in cfg.exportable_classes:
             filename = f"{res_class.__module__}.{res_class.__name__}.json"
-            _import_file(os.path.join(rv_path, filename), res_class)
+            a_result = _import_file(os.path.join(rv_path, filename), res_class)
+            resulting_content_ids.extend(
+                row.object_id for row in a_result.rows if row.import_type in ("new", "update")
+            )
+
+        # Once all content exists, create the ContentArtifact links
+        ca_path = os.path.join(rv_path, CA_FILE)
+        _import_file(ca_path, ContentArtifactResource)
 
         # Create the repo version
+        content = Content.objects.filter(pk__in=resulting_content_ids)
         with dest_repo.new_version() as new_version:
             new_version.set_content(content)
 
@@ -168,10 +167,10 @@ def pulp_import(importer_pk, path):
 
     log.info(_("Importing {}.").format(path))
     importer = PulpImporter.objects.get(pk=importer_pk)
-    pulp_import = PulpImport.objects.create(
+    the_import = PulpImport.objects.create(
         importer=importer, task=Task.current(), params={"path": path}
     )
-    CreatedResource.objects.create(content_object=pulp_import)
+    CreatedResource.objects.create(content_object=the_import)
 
     task_group = TaskGroup.objects.create(description=f"Import of {path}")
     CreatedResource.objects.create(content_object=task_group)
@@ -214,7 +213,7 @@ def pulp_import(importer_pk, path):
                 enqueue_with_reservation(
                     import_repository_version,
                     [dest_repo],
-                    args=[dest_repo.pk, src_repo["pulp_id"], path],
+                    args=[dest_repo.pk, src_repo["name"], path],
                     task_group=task_group,
                 )
 

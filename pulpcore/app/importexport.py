@@ -10,7 +10,6 @@ from pulpcore.app.apps import get_plugin_config
 from pulpcore.app.models.repository import Repository
 from pulpcore.app.modelresource import (
     ArtifactResource,
-    ContentResource,
     ContentArtifactResource,
     RepositoryResource,
 )
@@ -101,17 +100,14 @@ def export_content(export, repository_version):
     Args:
         export (django.db.models.PulpExport): export instance that's doing the export
         repository_version (django.db.models.RepositoryVersion): RepositoryVersion being exported
-        last_export (django.db.models.PulpExport): previous export of the 'owning' Exporter
     """
     dest_dir = os.path.join(
         "repository-{}_{}".format(
-            str(repository_version.repository.pulp_id), repository_version.number
+            str(repository_version.repository.name), repository_version.number
         )
     )
-    # export the resources pulpcore is responsible for
-    resource = ContentResource(repository_version)
-    _write_export(export.tarfile, resource, dest_dir)
 
+    # Export the connection between content and artifacts
     resource = ContentArtifactResource(repository_version)
     _write_export(export.tarfile, resource, dest_dir)
 

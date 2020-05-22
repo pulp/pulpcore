@@ -245,6 +245,9 @@ class Content(MasterModel, QueryMixin):
     """
     A piece of managed content.
 
+    Fields:
+        upstream_id (models.UUIDField) : identifier of content imported from an 'upstream' Pulp
+
     Relations:
 
         _artifacts (models.ManyToManyField): Artifacts related to Content through ContentArtifact
@@ -252,6 +255,7 @@ class Content(MasterModel, QueryMixin):
 
     TYPE = "content"
     repo_key_fields = ()  # Used by pulpcore.plugin.repo_version_utils.remove_duplicates
+    upstream_id = models.UUIDField(null=True)  # Used by PulpImport/Export processing
 
     _artifacts = models.ManyToManyField(Artifact, through="ContentArtifact")
 

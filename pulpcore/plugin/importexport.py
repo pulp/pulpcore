@@ -27,5 +27,25 @@ class QueryModelResource(resources.ModelResource):
         if repo_version:
             self.queryset = self.set_up_queryset()
 
+
+class BaseContentResource(QueryModelResource):
+    """
+    A QueryModelResource that knows how to fill in the 'upstream_id' export-field
+
+    BaseContentResource knows to de/hydrate upstream_id with the content-being-exported's pulp_id.
+
+    All Content-based resources being import/exported should subclass from this class.
+    """
+
     class Meta:
-        import_id_fields = ("pulp_id",)
+        exclude = (
+            "_artifacts",
+            "content",
+            "content_ptr",
+            "pulp_id",
+            "pulp_created",
+            "pulp_last_updated",
+        )
+
+    def dehydrate_upstream_id(self, content):
+        return str(content.pulp_id)
