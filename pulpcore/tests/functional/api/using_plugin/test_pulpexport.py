@@ -202,9 +202,10 @@ class PulpExportTestCase(BaseExporterCase):
             export = self._gen_export(exporter)
             self.assertIsNotNone(export)
             self.assertEqual(len(exporter.repositories), len(export.exported_resources))
-            self.assertIsNotNone(export.filename)
-            self.assertIsNotNone(export.sha256)
-            self.assertFalse("//" in export.filename)
+            self.assertIsNotNone(export.output_file_info)
+            for an_export_filename in export.output_file_info.keys():
+                self.assertFalse("//" in an_export_filename)
+
         finally:
             self._delete_exporter(exporter)
 
@@ -350,5 +351,18 @@ class PulpExportTestCase(BaseExporterCase):
             # export repo-2-latest
             body = {"full": False}
             self._gen_export(exporter, body)
+        finally:
+            self._delete_exporter(exporter)
+
+    def test_chunking(self):
+        a_repo = self.repo_api.create(gen_repo())
+        self.addCleanup(self.client.delete, a_repo.pulp_href)
+        (exporter, body) = self._create_exporter(use_repos=[a_repo], cleanup=False)
+        try:
+            body = {"chunk_size": "250B"}
+            export = self._gen_export(exporter, body)
+            info = export.output_file_info
+            self.assertIsNotNone(info)
+            self.assertTrue(len(info) > 1)
         finally:
             self._delete_exporter(exporter)

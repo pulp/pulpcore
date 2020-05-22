@@ -163,8 +163,8 @@ class PulpExport(Export):
 
     tarfile = None
     validated_versions = None
-    sha256 = models.CharField(max_length=64, null=True)
-    filename = models.CharField(max_length=4096, null=True)
+    validated_chunk_size = None
+    output_file_info = JSONField(null=True)
 
     def export_tarfile_path(self):
         """

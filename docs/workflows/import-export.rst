@@ -210,6 +210,32 @@ accomplish this by setting the ``full`` parameter on the ``/exports/`` invocatio
 This results in an export of all content-entities, but only ::term::`Artifacts<Artifact>`
 that have been **added** since the `last_export` of the same Exporter.
 
+Exporting Chunked Files
+-----------------------
+
+By default, PulpExport streams data into a single ``.tar.gz`` file. Since ::term:`Respoitories<Repository>`
+can contain a lot of artifacts and content, that can result in a file too large to be
+copied to transport media. In this case, you can specify a maximum-file-size, and the
+export process will chunk the tar.gz into a series of files no larger than this.
+
+You accomplish this by setting the ``chunk_size`` parameter to the desired maximum number of bytes. This
+parameter takes an integer, or size-units of KB, MB, or GB. Files appear in the Exporter.path
+directory, with a four-digit sequence number suffix::
+
+    http POST :/pulp/api/v3/exporters/core/pulp/1ddbe6bf-a6c3-4a88-8614-ad9511d21b94/exports/ chunk_size="10KB"
+        {
+            "task": "/pulp/api/v3/tasks/da3350f7-0102-4dd5-81e0-81becf3ffdc7/"
+        }
+    ls -l /tmp/exports/
+        total 76
+        10K export-780822a4-d280-4ed0-a53c-382a887576a6-20200522_2325.tar.gz.0000
+        10K export-780822a4-d280-4ed0-a53c-382a887576a6-20200522_2325.tar.gz.0001
+        10K export-780822a4-d280-4ed0-a53c-382a887576a6-20200522_2325.tar.gz.0002
+        10K export-780822a4-d280-4ed0-a53c-382a887576a6-20200522_2325.tar.gz.0003
+        10K export-780822a4-d280-4ed0-a53c-382a887576a6-20200522_2325.tar.gz.0004
+        10K export-780822a4-d280-4ed0-a53c-382a887576a6-20200522_2325.tar.gz.0005
+        2.3K export-780822a4-d280-4ed0-a53c-382a887576a6-20200522_2325.tar.gz.0006
+
 Updating an Exporter
 --------------------
 
