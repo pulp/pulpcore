@@ -102,6 +102,19 @@ def import_repository_version(destination_repo_pk, source_repo_pk, tar_path):
         src_repo = next(repo for repo in data if repo["pulp_id"] == source_repo_pk)
         rv_path = os.path.join(temp_dir, _repo_version_path(src_repo))
 
+        if dest_repo.pulp_type != src_repo["pulp_type"]:
+            raise ValidationError(
+                _(
+                    "Repository type mismatch: {src_repo} ({src_type}) vs {dest_repo} "
+                    "({dest_type})."
+                ).format(
+                    src_repo=src_repo["name"],
+                    src_type=src_repo["pulp_type"],
+                    dest_repo=dest_repo.name,
+                    dest_type=dest_repo.pulp_type,
+                )
+            )
+
         # Extract the repo version files
         with tarfile.open(tar_path, "r:gz") as tar:
             for mem in tar.getmembers():
