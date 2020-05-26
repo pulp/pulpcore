@@ -243,7 +243,6 @@ class RepositoryAddRemoveContentSerializer(ModelSerializer, NestedHyperlinkedMod
             "A list of content units to add to a new repository version. This content is "
             "added after remove_content_units are removed."
         ),
-        write_only=True,
         required=False,
     )
     remove_content_units = serializers.ListField(
@@ -252,7 +251,6 @@ class RepositoryAddRemoveContentSerializer(ModelSerializer, NestedHyperlinkedMod
             "You may also specify '*' as an entry to remove all content. This content is "
             "removed before add_content_units are added."
         ),
-        write_only=True,
         required=False,
     )
     base_version = RepositoryVersionRelatedField(
