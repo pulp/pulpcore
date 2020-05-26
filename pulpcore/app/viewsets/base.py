@@ -11,7 +11,7 @@ from rest_framework import viewsets
 from rest_framework.filters import OrderingFilter
 from rest_framework.generics import get_object_or_404
 from rest_framework.schemas.openapi import AutoSchema
-from rest_framework.serializers import ValidationError as DRFValidationError
+from rest_framework.serializers import URLField, ValidationError as DRFValidationError
 
 from pulpcore.app import tasks
 from pulpcore.app.models import MasterModel
@@ -55,6 +55,16 @@ class DefaultSchema(AutoSchema):
             return self.view.action in ["list"]
 
         return method.lower() in ["get"]
+
+    def _map_field_validators(self, field, schema):
+        """
+        Map field validators.
+
+        Treating pattern for URLField because it contains "<!" which comments the html.
+        """
+        super()._map_field_validators(field, schema)
+        if isinstance(field, URLField):
+            schema["pattern"] = schema["pattern"].replace("<!", "<|")
 
 
 class StableOrderingFilter(OrderingFilter):
