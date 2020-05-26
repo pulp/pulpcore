@@ -230,4 +230,10 @@ settings = dynaconf.DjangoDynaconf(
 try:
     CONTENT_ORIGIN
 except NameError:
-    raise ImproperlyConfigured(_("You must specify the CONTENT_ORIGIN setting."))
+    raise ImproperlyConfigured(
+        _(
+            "CONTENT_ORIGIN is a required setting but it was not configured. This may be caused "
+            "by invalid read permissions of the settings file. Note that CONTENT_ORIGIN is set by "
+            "the installer automatically."
+        )
+    )
