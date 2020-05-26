@@ -229,8 +229,6 @@ class Handler:
         headers = {}
         if content_type:
             headers["Content-Type"] = content_type
-        if encoding:
-            headers["Content-Encoding"] = encoding
         return headers
 
     @staticmethod
