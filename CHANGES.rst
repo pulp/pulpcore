@@ -9,7 +9,11 @@ Changelog
     To add a new change log entry, please see
     https://docs.pulpproject.org/contributing/git.html#changelog-update
 
-    WARNING: Don't drop the next directive!
+    WARNING: Don't drop the towncrier directive!
+
+.. warning::
+    Until Role-Based Access Control is added to Pulp, REST API is not safe for multi-user use.
+    Sensitive credentials can be read by any user, e.g. ``Remote.password``, ``Remote.client_key``.
 
 .. towncrier release notes start
 
