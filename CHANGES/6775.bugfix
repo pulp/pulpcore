@@ -1,0 +1,1 @@
+Fixed a bug that prevented write_only fields from being present in the API docs and bindings
