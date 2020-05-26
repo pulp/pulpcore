@@ -1,0 +1,1 @@
+Removed unnecessary write_only option from ``RepositoryAddRemoveContentSerializer``.
