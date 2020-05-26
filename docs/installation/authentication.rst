@@ -10,6 +10,9 @@ username and password against the internal users database.
     This authentication is only for the REST API. Client's fetching binary data have their identity
     verified and authorization checked using a :term:`ContentGuard`.
 
+.. warning::
+    Until Role-Based Access Control is added to Pulp, REST API is not safe for multi-user use.
+    Sensitive credentials can be read by any user, e.g. ``Remote.password``, ``Remote.client_key``.
 
 Which URLs Require Authentication?
 ----------------------------------

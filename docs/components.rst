@@ -29,6 +29,9 @@ things:
 
       $ pulpcore-manager runserver 24817
 
+.. warning::
+    Until Role-Based Access Control is added to Pulp, REST API is not safe for multi-user use.
+    Sensitive credentials can be read by any user, e.g. ``Remote.password``, ``Remote.client_key``.
 
 The REST API can be deployed with any any WSGI webserver like a normal Django application. See the
 `Django deployment docs <https://docs.djangoproject.com/en/2.1/howto/deployment/wsgi/>`_ for more

@@ -1,0 +1,1 @@
+Added a warning that the REST API is not safe for multi-user use until RBAC is implemented.
