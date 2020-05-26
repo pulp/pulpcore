@@ -13,6 +13,19 @@ from rest_framework import serializers
 from pulpcore.app.models import Export, Import, RepositoryVersion
 
 
+def get_model_from_view(view):
+    """
+    Get model from view.
+    """
+    if not hasattr(view, "queryset") or view.queryset is None:
+        if hasattr(view, "model"):
+            return view.model
+
+        return
+
+    return view.queryset.model
+
+
 class Paths(openapi.SwaggerDict):
     def __init__(self, paths, **extra):
         """A listing of all the paths in the API.
@@ -152,36 +165,49 @@ class PulpOpenAPISchemaGenerator(OpenAPISchemaGenerator):
 
                 if "}" in path:
                     resource_path = "%s}/" % path.rsplit(sep="}", maxsplit=1)[0]
+                    resource_parameters = uritemplate.variables(path)
+                    original_path = path
+
                     if resource_path in endpoints:
                         view = endpoints[resource_path][0]
-                        if not hasattr(view, "queryset") or view.queryset is None:
-                            if hasattr(view, "model"):
-                                resource_model = view.model
-                            else:
-                                continue
-                        else:
-                            resource_model = view.queryset.model
-                        resource_name = self.get_parameter_name(resource_model)
-                        prefix_ = None
-                        if issubclass(resource_model, RepositoryVersion):
-                            prefix_ = view_cls.parent_viewset.endpoint_name
-                        param_name = self.get_parameter_slug_from_model(resource_model, prefix_)
+                        resource_name = view.__name__.replace("ViewSet", "").replace("View", "")
+                        param_name = path
+                        resource_model = get_model_from_view(view)
+
+                        if resource_model:
+                            resource_name = self.get_parameter_name(resource_model)
+                            prefix_ = None
+                            if resource_model and issubclass(resource_model, RepositoryVersion):
+                                prefix_ = view_cls.parent_viewset.endpoint_name
+                            param_name = self.get_parameter_slug_from_model(resource_model, prefix_)
+                            resource_parameters = [param_name]
+
                         if resource_path in resources:
                             path = path.replace(resource_path, "{%s}" % resources[resource_path])
                         else:
                             resources[resource_path] = param_name
                             resource_example[resource_path] = self.get_example_uri(path)
                             path = path.replace(resource_path, "{%s}" % resources[resource_path])
+
                         example = resource_example[resource_path]
                         resource_description = self.get_resource_description(resource_name, example)
-                        path_param = openapi.Parameter(
-                            name=param_name,
-                            description=resource_description,
-                            required=True,
-                            in_=openapi.IN_PATH,
-                            type=openapi.TYPE_STRING,
-                        )
-                        paths[path] = openapi.PathItem(parameters=[path_param], **operations)
+
+                        path_params = []
+                        for name in resource_parameters:
+                            path_params.append(
+                                openapi.Parameter(
+                                    name=name,
+                                    required=True,
+                                    in_=openapi.IN_PATH,
+                                    type=openapi.TYPE_STRING,
+                                )
+                            )
+
+                        path = path if resource_model else original_path
+                        if resource_model:
+                            path_params[0].description = resource_description
+
+                        paths[path] = openapi.PathItem(parameters=path_params, **operations)
                     else:
                         if not path.startswith("/"):
                             path = "/" + path
