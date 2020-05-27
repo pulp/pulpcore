@@ -17,6 +17,142 @@ Changelog
 
 .. towncrier release notes start
 
+3.4.0 (2020-05-27)
+==================
+REST API
+--------
+
+Features
+~~~~~~~~
+
+- Implemented incremental-exporting for PulpExport.
+  `#6136 <https://pulp.plan.io/issues/6136>`_
+- Added support for S3 and other non-filesystem storage options to pulp import/export functionality.
+  `#6456 <https://pulp.plan.io/issues/6456>`_
+- Optimized imports by having repository versions processed using child tasks.
+  `#6484 <https://pulp.plan.io/issues/6484>`_
+- Added repository type check during Pulp imports.
+  `#6532 <https://pulp.plan.io/issues/6532>`_
+- Added version checking to import process.
+  `#6558 <https://pulp.plan.io/issues/6558>`_
+- Taught PulpExport to export by RepositoryVersions if specified.
+  `#6566 <https://pulp.plan.io/issues/6566>`_
+- Task groups now have an 'all_tasks_dispatched' field which denotes that no more tasks will spawn
+  as part of this group.
+  `#6591 <https://pulp.plan.io/issues/6591>`_
+- Taught export how to split export-file into chunk_size bytes.
+  `#6736 <https://pulp.plan.io/issues/6736>`_
+
+
+Bugfixes
+~~~~~~~~
+
+- Remote fields `username` and `password` show up in:
+  REST docs, API responses, and are available in the bindings.
+  `#6346 <https://pulp.plan.io/issues/6346>`_
+- Fixed a bug, where the attempt to cancel a completed task lead to a strange response.
+  `#6465 <https://pulp.plan.io/issues/6465>`_
+- Fixed KeyError during OpenAPI schema generation.
+  `#6468 <https://pulp.plan.io/issues/6468>`_
+- Added a missing trailing slash to distribution's base_url
+  `#6507 <https://pulp.plan.io/issues/6507>`_
+- Fixed a bug where the wrong kind of error was being raised for href parameters of mismatched types.
+  `#6521 <https://pulp.plan.io/issues/6521>`_
+- containers: Fix pulp_rpm 3.3.0 install by replacing the python3-createrepo_c RPM with its build-dependencies, so createrep_c gets installed & built from PyPI
+  `#6523 <https://pulp.plan.io/issues/6523>`_
+- Fixed OpenAPI schema for importer and export APIs.
+  `#6556 <https://pulp.plan.io/issues/6556>`_
+- Normalized export-file-path for PulpExports.
+  `#6564 <https://pulp.plan.io/issues/6564>`_
+- Changed repository viewset to use the general_update and general_delete tasks.
+  This fixes a bug where updating specialized fields of a repository was impossible due to using the wrong serializer.
+  `#6569 <https://pulp.plan.io/issues/6569>`_
+- Only uses multipart OpenAPI Schema when dealing with `file` fields
+  `#6702 <https://pulp.plan.io/issues/6702>`_
+- Fixed a bug that prevented write_only fields from being present in the API docs and bindings
+  `#6775 <https://pulp.plan.io/issues/6775>`_
+- Added proper headers for index.html pages served by content app.
+  `#6802 <https://pulp.plan.io/issues/6802>`_
+- Removed Content-Encoding header from pulpcore-content responses.
+  `#6831 <https://pulp.plan.io/issues/6831>`_
+
+
+Improved Documentation
+~~~~~~~~~~~~~~~~~~~~~~
+
+- Adding docs for importing and exporting from Pulp to Pulp.
+  `#6364 <https://pulp.plan.io/issues/6364>`_
+- Add some documentation around TaskGroups.
+  `#6641 <https://pulp.plan.io/issues/6641>`_
+- Introduced a brief explanation about `pulp_installer`
+  `#6674 <https://pulp.plan.io/issues/6674>`_
+- Added a warning that the REST API is not safe for multi-user use until RBAC is implemented.
+  `#6692 <https://pulp.plan.io/issues/6692>`_
+- Updated the required roles names
+  `#6758 <https://pulp.plan.io/issues/6758>`_
+
+
+Deprecations and Removals
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+- Changed repositories field on ``/pulp/api/v3/exporters/core/pulp/`` from UUIDs to hrefs.
+  `#6457 <https://pulp.plan.io/issues/6457>`_
+- Imports now spawn child tasks which can be fetched via the ``child_tasks`` field of the import task.
+  `#6484 <https://pulp.plan.io/issues/6484>`_
+- Content of ssl certificates and keys changed to be return their full value instead of sha256 through REST API.
+  `#6691 <https://pulp.plan.io/issues/6691>`_
+- Replaced PulpExport filename/sha256 fields, with output_info_file, a '<filename>': '<hash>' dictionary.
+  `#6736 <https://pulp.plan.io/issues/6736>`_
+
+
+Misc
+~~~~
+
+- `#5020 <https://pulp.plan.io/issues/5020>`_, `#6421 <https://pulp.plan.io/issues/6421>`_, `#6477 <https://pulp.plan.io/issues/6477>`_, `#6539 <https://pulp.plan.io/issues/6539>`_, `#6542 <https://pulp.plan.io/issues/6542>`_, `#6544 <https://pulp.plan.io/issues/6544>`_, `#6572 <https://pulp.plan.io/issues/6572>`_, `#6583 <https://pulp.plan.io/issues/6583>`_, `#6695 <https://pulp.plan.io/issues/6695>`_, `#6803 <https://pulp.plan.io/issues/6803>`_, `#6804 <https://pulp.plan.io/issues/6804>`_
+
+
+Plugin API
+----------
+
+Features
+~~~~~~~~
+
+- Added new NoArtifactContentUploadSerializer and NoArtifactContentUploadViewSet to enable plugin
+  writers to upload content without storing an Artifact
+  `#6281 <https://pulp.plan.io/issues/6281>`_
+- Added view_name_pattern to DetailRelatedField and DetailIdentityField to properly identify wrong resource types.
+  `#6521 <https://pulp.plan.io/issues/6521>`_
+- Added support for Distributions to provide non-Artifact content via a content_handler.
+  `#6570 <https://pulp.plan.io/issues/6570>`_
+- Added constants to the plugin API at ``pulpcore.plugin.constants``.
+  `#6579 <https://pulp.plan.io/issues/6579>`_
+- TaskGroups now have an 'all_tasks_dispatched' field that can be used to notify systems that no
+  further tasks will be dispatched for a TaskGroup. Plugin writers should call ".finish()" on all
+  TaskGroups created once they are done using them to set this field.
+  `#6591 <https://pulp.plan.io/issues/6591>`_
+
+
+Bugfixes
+~~~~~~~~
+
+- Added ``RemoteFilter`` to the plugin API as it was missing but used by plugin_template.
+  `#6563 <https://pulp.plan.io/issues/6563>`_
+
+
+Deprecations and Removals
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+- Fields: `username` and `password` will be returned to the rest API user requesting a `Remote`
+  `#6346 <https://pulp.plan.io/issues/6346>`_
+- Rehomed QueryModelResource to pulpcore.plugin.importexport.
+  `#6514 <https://pulp.plan.io/issues/6514>`_
+- The :meth:`pulpcore.content.handler.Handler.list_directory` function now returns a set of strings where it returned a string of HTML before.
+  `#6570 <https://pulp.plan.io/issues/6570>`_
+
+
+----
+
+
 3.3.1 (2020-05-07)
 ==================
 REST API
