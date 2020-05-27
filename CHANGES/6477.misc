@@ -1,2 +1,0 @@
-Updated travis config.
-This transitions the ci from pulp-operator to using a single pulp server container.

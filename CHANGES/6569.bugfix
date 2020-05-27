@@ -1,2 +1,0 @@
-Changed repository viewset to use the general_update and general_delete tasks.
-This fixes a bug where updating specialized fields of a repository was impossible due to using the wrong serializer.

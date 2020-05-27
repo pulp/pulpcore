@@ -1,1 +1,0 @@
-Added ``RemoteFilter`` to the plugin API as it was missing but used by plugin_template.
