@@ -84,7 +84,7 @@ VARSYAML
 if [[ "$TEST" == "pulp" || "$TEST" == "performance" || "$TEST" == "s3" ]]; then
   sed -i -e '/^services:/a \
   - name: pulp-fixtures\
-    image: quay.io/pulp/pulp-fixtures:latest' vars/main.yaml
+    image: docker.io/pulp/pulp-fixtures:latest' vars/main.yaml
 fi
 
 if [ "$TEST" = "s3" ]; then
