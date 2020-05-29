@@ -135,39 +135,51 @@ class PulpImportTestCase(unittest.TestCase):
         cls._delete_exporter()
         delete_orphans(cls.cfg)
 
-    def test_importer_create(self):
-        """Test creating an importer."""
+    def _create_importer(self, name=None, cleanup=True):
+        """Create an importer."""
         mapping = {}
+        if not name:
+            name = uuid4()
 
         for idx, repo in enumerate(self.export_repos):
             mapping[repo.name] = self.import_repos[idx].name
 
         body = {
-            "name": uuid4(),
+            "name": name,
             "repo_mapping": mapping,
         }
 
         importer = self.importer_api.create(body)
-        self.addCleanup(self.importer_api.delete, importer.pulp_href)
 
-        self.assertEqual(importer.name, body["name"])
+        if cleanup:
+            self.addCleanup(self.importer_api.delete, importer.pulp_href)
+
+        return importer
+
+    def _perform_import(self, importer):
+        """Perform an import with importer."""
+        filenames = list(self.export.output_file_info.keys())
+        import_response = self.imports_api.create(importer.pulp_href, {"path": filenames[0]})
+        monitor_task(import_response.task)
+        task = self.client.get(import_response.task)
+        resources = task["created_resources"]
+        task_group_href = resources[1]
+        task_group = monitor_task_group(task_group_href)
+
+        return task_group
+
+    def test_importer_create(self):
+        """Test creating an importer."""
+        name = uuid4()
+        importer = self._create_importer(name)
+
+        self.assertEqual(importer.name, name)
         importer = self.importer_api.read(importer.pulp_href)
-        self.assertEqual(importer.name, body["name"])
+        self.assertEqual(importer.name, name)
 
     def test_importer_delete(self):
         """Test deleting an importer."""
-        mapping = {}
-
-        for idx, repo in enumerate(self.export_repos):
-            mapping[repo.name] = self.import_repos[idx].name
-
-        body = {
-            "name": uuid4(),
-            "repo_mapping": mapping,
-        }
-
-        importer = self.importer_api.create(body)
-        self.assertEqual(importer.name, body["name"])
+        importer = self._create_importer(cleanup=False)
 
         self.importer_api.delete(importer.pulp_href)
 
@@ -178,28 +190,23 @@ class PulpImportTestCase(unittest.TestCase):
 
     def test_import(self):
         """Test an import."""
-        mapping = {}
-
-        for idx, repo in enumerate(self.export_repos):
-            mapping[repo.name] = self.import_repos[idx].name
-
-        body = {
-            "name": uuid4(),
-            "repo_mapping": mapping,
-        }
-
-        importer = self.importer_api.create(body)
-        self.addCleanup(self.importer_api.delete, importer.pulp_href)
-
-        filenames = list(self.export.output_file_info.keys())
-        import_response = self.imports_api.create(importer.pulp_href, {"path": filenames[0]})
-        monitor_task(import_response.task)
-        task = self.client.get(import_response.task)
-        resources = task["created_resources"]
-        task_group_href = resources[1]
-        task_group = monitor_task_group(task_group_href)
-
+        importer = self._create_importer()
+        task_group = self._perform_import(importer)
         self.assertEqual(len(self.import_repos), task_group.completed)
         for repo in self.import_repos:
             repo = self.repo_api.read(repo.pulp_href)
+            self.assertEqual(f"{repo.pulp_href}versions/1/", repo.latest_version_href)
+
+    def test_double_import(self):
+        """Test two imports of our export."""
+        importer = self._create_importer()
+        self._perform_import(importer)
+        self._perform_import(importer)
+
+        imports = self.imports_api.list(importer.pulp_href).results
+        self.assertEqual(len(imports), 2)
+
+        for repo in self.import_repos:
+            repo = self.repo_api.read(repo.pulp_href)
+            # still only one version as pulp won't create a new version if nothing changed
             self.assertEqual(f"{repo.pulp_href}versions/1/", repo.latest_version_href)
