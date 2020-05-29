@@ -92,7 +92,7 @@ if [ "$TEST" = "s3" ]; then
   export MINIO_SECRET_KEY=fqRvjWaPU5o0fCqQuUWbj9Fainj2pVZtBCiDiieS
   sed -i -e '/^services:/a \
   - name: minio\
-    image: minio/minio\
+    image: minio/minio:RELEASE.2020-05-16T01-33-21Z\
     env:\
       MINIO_ACCESS_KEY: "'$MINIO_ACCESS_KEY'"\
       MINIO_SECRET_KEY: "'$MINIO_SECRET_KEY'"\
