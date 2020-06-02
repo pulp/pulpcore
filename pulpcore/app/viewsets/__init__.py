@@ -5,6 +5,9 @@ from .base import (  # noqa
     BaseFilterSet,
     NamedModelViewSet,
 )
+
+from .access_policy import AccessPolicyViewSet  # noqa
+
 from .content import (  # noqa
     ArtifactFilter,
     ArtifactViewSet,

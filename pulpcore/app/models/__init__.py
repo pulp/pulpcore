@@ -1,6 +1,10 @@
 # https://docs.djangoproject.com/en/dev/topics/db/models/#organizing-models-in-a-package
 
-from .base import MasterModel, BaseModel  # noqa
+# Must be imported first as other models depend on it
+from .base import BaseModel, MasterModel  # noqa
+
+
+from .access_policy import AccessPolicy, AutoAddObjPermsMixin, AutoDeleteObjPermsMixin  # noqa
 from .content import (  # noqa
     Artifact,
     AsciiArmoredDetachedSigningService,

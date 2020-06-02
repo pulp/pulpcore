@@ -1,3 +1,6 @@
+from unittest import mock
+
+from django.contrib.auth.models import User
 from django.db.models import ProtectedError
 from django.test import TestCase
 
@@ -5,11 +8,13 @@ from pulpcore.app.models import ReservedResource, Task, TaskReservedResource, Wo
 
 
 class TaskTestCase(TestCase):
-    def test_delete_with_reserved_resources(self):
+    @mock.patch("pulpcore.app.models.access_policy.get_current_authenticated_user")
+    def test_delete_with_reserved_resources(self, mock_get_current_authenticated_user):
         """
         Tests that attempting to delete a task with reserved resources will raise
         a ProtectedError
         """
+        mock_get_current_authenticated_user.return_value = User.objects.get()
         task = Task.objects.create()
         worker = Worker.objects.create(name="test_worker")
         resource = ReservedResource.objects.create(resource="test", worker=worker)

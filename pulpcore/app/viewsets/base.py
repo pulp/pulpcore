@@ -7,6 +7,7 @@ from django.forms.utils import ErrorList
 from django.urls import Resolver404, resolve
 from django_filters.rest_framework import DjangoFilterBackend, filterset
 from drf_spectacular.utils import extend_schema
+from guardian.shortcuts import get_objects_for_user
 from rest_framework import viewsets
 from rest_framework.filters import OrderingFilter
 from rest_framework.generics import get_object_or_404
@@ -273,10 +274,17 @@ class NamedModelViewSet(viewsets.GenericViewSet):
         For nested ViewSets, this adds parent filters to the result returned by the superclass. For
         non-nested ViewSets, this returns the original QuerySet unchanged.
 
+        Additional permissions-based filtering is provided for ViewSets that declare a
+        ``queryset_filtering_required_permission`` attribute naming the permission users must have
+        to view an object. This includes receiving the permission through either model-level,
+        object-level, and access through either a user or group.
+
         Returns:
             django.db.models.query.QuerySet: The queryset returned by the superclass with additional
                 filters applied that match self.parent_lookup_kwargs, to scope the results to only
-                those associated with the parent object.
+                those associated with the parent object. Additionally the QuerySet is filtered by
+                the permission named if the ViewSet declares a
+                ``queryset_filtering_required_permission`` attribute.
         """
         qs = super().get_queryset()
         if self.parent_lookup_kwargs and self.kwargs:
@@ -284,6 +292,13 @@ class NamedModelViewSet(viewsets.GenericViewSet):
             for key, lookup in self.parent_lookup_kwargs.items():
                 filters[lookup] = self.kwargs[key]
             qs = qs.filter(**filters)
+
+        try:
+            permission_name = self.queryset_filtering_required_permission
+        except AttributeError:
+            pass
+        else:
+            qs = get_objects_for_user(self.request.user, permission_name, klass=qs)
         return qs
 
     @classmethod
