@@ -1,2 +1,3 @@
 graft pulpcore/etc
 include LICENSE
+include requirements.txt
