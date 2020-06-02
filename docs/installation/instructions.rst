@@ -23,13 +23,14 @@ Fedora, CentOS, and Mac OSX.
 Ansible Installation (Recommended)
 ----------------------------------
 
-`Pulp 3 Ansible Installer <https://github.com/pulp/pulp_installer>`__ can be used to
+`Pulp 3 Ansible Installer <https://pulp-installer.readthedocs.io/>`__ can be used to
 install plugins. For example if your host is in your Ansible inventory as ``myhost`` you
 can install onto it with:
 
 .. code-block:: bash
 
-    git clone https://github.com/pulp/pulp_installer.git
+    ansible-galaxy install geerlingguy.postgresql
+    ansible-galaxy collection install pulp.pulp_installer
 
 Create your pulp_install.yml playbook to use with the installer (Uncomment the desired plugins below):
 
@@ -57,11 +58,11 @@ Create your pulp_install.yml playbook to use with the installer (Uncomment the d
          # pulp-rpm:
          #   prereq_role: "pulp.pulp_rpm_prerequisites" # RPM plugin needs a prereq_role: https://galaxy.ansible.com/pulp/pulp_rpm_prerequisites
      roles:
-       - pulp_database
-       - pulp_workers
-       - pulp_resource_manager
-       - pulp_webserver
-       - pulp_content
+       - pulp.pulp_installer.pulp_database
+       - pulp.pulp_installer.pulp_workers
+       - pulp.pulp_installer.pulp_resource_manager
+       - pulp.pulp_installer.pulp_webserver
+       - pulp.pulp_installer.pulp_content
      environment:
        DJANGO_SETTINGS_MODULE: pulpcore.app.settings
 
@@ -73,7 +74,7 @@ Then install it onto ``myhost`` with:
 
 
 For learning more about the ansible roles to install Pulp 3 please refer to
-`Pulp 3 Ansible Installer <https://github.com/pulp/pulp_installer/#pulp-3-ansible-installer>`__.
+`Pulp 3 Ansible Installer <https://pulp-installer.readthedocs.io/>`__.
 
 PyPI Installation
 -----------------
@@ -203,7 +204,7 @@ Systemd
 -------
 
 To run the four Pulp services, systemd files needs to be created in /usr/lib/systemd/system/. The
-`Pulp 3 Ansible Installer <https://github.com/pulp/pulp_installer/>`__ makes these for you, but you
+`Pulp 3 Ansible Installer <https://pulp-installer.readthedocs.io/>`__ makes these for you, but you
 can also configure them by hand from the templates below. Custom configuration can be applied using
 the ``Environment`` option with various :ref:`Pulp settings <settings>`.
 
