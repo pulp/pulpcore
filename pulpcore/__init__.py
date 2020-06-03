@@ -1,4 +1,4 @@
-__version__ = "3.4.1.dev"
+__version__ = "3.4.1"
 
 
 from pkgutil import extend_path
