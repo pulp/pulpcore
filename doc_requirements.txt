@@ -14,7 +14,7 @@ pyyaml
 pygtrie
 python-gnupg
 rq
-sphinx
+sphinx~=3.0.4
 sphinx-rtd-theme
 sphinxcontrib-openapi
 towncrier
