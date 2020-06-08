@@ -1,19 +1,5 @@
-aiohttp
-aiofiles
-backoff
-django
-djangorestframework
-djangorestframework-queryfields
-django-filter
-django-import-export
-drf-nested-routers
-drf-yasg
-dynaconf
+-r requirements.txt
 plantuml
-pyyaml
-pygtrie
-python-gnupg
-rq
 sphinx
 sphinx-rtd-theme
 sphinxcontrib-openapi
