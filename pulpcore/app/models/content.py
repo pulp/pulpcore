@@ -89,7 +89,7 @@ class Artifact(BaseModel):
 
         file (models.FileField): The stored file. This field should be set using an absolute path to
             a temporary file. It also accepts `class:django.core.files.File`.
-        size (models.IntegerField): The size of the file in bytes.
+        size (models.BigIntegerField): The size of the file in bytes.
         md5 (models.CharField): The MD5 checksum of the file.
         sha1 (models.CharField): The SHA-1 checksum of the file.
         sha224 (models.CharField): The SHA-224 checksum of the file.
@@ -343,7 +343,7 @@ class RemoteArtifact(BaseModel, QueryMixin):
     Fields:
 
         url (models.TextField): The URL where the artifact can be retrieved.
-        size (models.IntegerField): The expected size of the file in bytes.
+        size (models.BigIntegerField): The expected size of the file in bytes.
         md5 (models.CharField): The expected MD5 checksum of the file.
         sha1 (models.CharField): The expected SHA-1 checksum of the file.
         sha224 (models.CharField): The expected SHA-224 checksum of the file.
@@ -360,7 +360,7 @@ class RemoteArtifact(BaseModel, QueryMixin):
     """
 
     url = models.TextField(validators=[validators.URLValidator])
-    size = models.IntegerField(null=True)
+    size = models.BigIntegerField(null=True)
     md5 = models.CharField(max_length=32, null=True)
     sha1 = models.CharField(max_length=40, null=True)
     sha224 = models.CharField(max_length=56, null=True)
