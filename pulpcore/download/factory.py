@@ -1,8 +1,12 @@
+from aiohttp import __version__ as aiohttp_version
 import asyncio
 import atexit
 import copy
 from gettext import gettext as _
+import platform
+from pkg_resources import get_distribution
 import ssl
+import sys
 from tempfile import NamedTemporaryFile
 from urllib.parse import urlparse
 
@@ -13,6 +17,17 @@ from .file import FileDownloader
 
 
 PROTOCOL_MAP = {"http": HttpDownloader, "https": HttpDownloader, "file": FileDownloader}
+
+
+def user_agent():
+    """
+    Produce a User-Agent string to identify Pulp and relevant system info.
+    """
+    pulp_version = get_distribution("pulpcore").version
+    python = "{} {}.{}.{}-{}{}".format(sys.implementation.name, *sys.version_info)
+    uname = platform.uname()
+    system = f"{uname.system} {uname.machine}"
+    return f"pulpcore/{pulp_version} ({python}, {system}) (aiohttp {aiohttp_version})"
 
 
 class DownloaderFactory:
@@ -100,10 +115,12 @@ class DownloaderFactory:
         if sslcontext:
             tcp_conn_opts["ssl_context"] = sslcontext
 
+        headers = {"User-Agent": user_agent()}
+
         conn = aiohttp.TCPConnector(**tcp_conn_opts)
 
         timeout = aiohttp.ClientTimeout(total=None, sock_connect=600, sock_read=600)
-        return aiohttp.ClientSession(connector=conn, timeout=timeout)
+        return aiohttp.ClientSession(connector=conn, timeout=timeout, headers=headers)
 
     def build(self, url, **kwargs):
         """
