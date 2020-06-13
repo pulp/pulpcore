@@ -1,7 +1,7 @@
 from collections import defaultdict
+from itertools import chain
 
 from django.db import IntegrityError, transaction
-from django.db.models import Q
 
 from pulpcore.plugin.models import ContentArtifact
 
@@ -37,29 +37,75 @@ class QueryExistingContents(Stage):
             The coroutine for this stage.
         """
         async for batch in self.batches():
-            content_q_by_type = defaultdict(lambda: Q(pk__in=[]))
+            key_attribute_by_type = {}
+            key_attribute_values_by_type = defaultdict(set)
+            unsaved_content = []
+            deduplicated_content = []
+
             for d_content in batch:
                 if d_content.content._state.adding:
+                    # Content that has not yet been saved could potentially a duplicate already in
+                    # the database, build up a query to search for such duplicates.
+                    unsaved_content.append(d_content)
                     model_type = type(d_content.content)
-                    unit_q = d_content.content.q()
-                    content_q_by_type[model_type] = content_q_by_type[model_type] | unit_q
 
-            for model_type in content_q_by_type.keys():
-                type_natural_key_fields = model_type.natural_key_fields()
-                for result in model_type.objects.filter(content_q_by_type[model_type]).iterator():
-                    for d_content in batch:
-                        if type(d_content.content) is not model_type:
-                            continue
-                        not_same_unit = False
-                        for field in type_natural_key_fields:
-                            in_memory_digest_value = getattr(d_content.content, field)
-                            if in_memory_digest_value != getattr(result, field):
-                                not_same_unit = True
-                                break
-                        if not_same_unit:
-                            continue
-                        d_content.content = result
-            for d_content in batch:
+                    # This could produce false positive duplicates because it matches only on a
+                    # single attribute of the content -- but we handle this when processing the
+                    # results of this query.
+                    try:
+                        key_attribute = key_attribute_by_type[model_type]
+                    except KeyError:
+                        key_attribute = model_type.natural_key_fields()[0]
+                        key_attribute_by_type[model_type] = key_attribute
+
+                    key_attribute_values_by_type[model_type].add(
+                        getattr(d_content.content, key_attribute)
+                    )
+
+                else:
+                    # Content that is already saved is already unique / deduplicated, no further
+                    # processing needed.
+                    deduplicated_content.append(d_content)
+
+            for model_type, key_attr_values in key_attribute_values_by_type.items():
+                # Store the declarative content objects in a dictionary using their natural key as
+                # the key. For each existing content found in the database, compute the full
+                # natural key and look up the natural key in the dictionary. If a match is found,
+                # for each declarative content we swap out its content with the already-saved one,
+                # and remove the entry from the dictionary to speed up future lookups.
+                dc_by_natural_key = defaultdict(list)
+
+                for dc in unsaved_content:
+                    if type(dc.content) is model_type:
+                        dc_by_natural_key[dc.content.natural_key()].append(dc)
+
+                attr_param = "{attr}__in".format(attr=key_attribute_by_type[model_type])
+                query_params = {attr_param: key_attr_values}
+
+                for result in (
+                    model_type.objects.filter(**query_params)
+                    .only(*model_type.natural_key_fields())
+                    .iterator()
+                ):
+                    result_key = result.natural_key()
+                    try:
+                        d_content_list = dc_by_natural_key[result_key]
+                        for d_content_item in d_content_list:
+                            d_content_item.content = result
+                            deduplicated_content.append(d_content_item)
+                        del dc_by_natural_key[result_key]
+                    except KeyError:
+                        pass
+
+                deduplicated_content.extend(chain.from_iterable(dc_by_natural_key.values()))
+
+            content_in = len(batch)
+            content_out = len(deduplicated_content)
+            assert (
+                content_in == content_out
+            ), f"content in ({content_in}) != content out ({content_out})"
+
+            for d_content in deduplicated_content:
                 await self.put(d_content)
 
 
