@@ -1,8 +1,9 @@
 import asyncio
+from collections import defaultdict
 from gettext import gettext as _
 import logging
 
-from django.db.models import Q, Prefetch, prefetch_related_objects
+from django.db.models import Prefetch, prefetch_related_objects
 
 from pulpcore.plugin.models import Artifact, ContentArtifact, ProgressReport, RemoteArtifact
 
@@ -42,21 +43,39 @@ class QueryExistingArtifacts(Stage):
             The coroutine for this stage.
         """
         async for batch in self.batches():
-            all_artifacts_q = Q(pk__in=[])
+            artifact_digests_by_type = defaultdict(list)
+
+            # For each unsaved artifact, check its digests in the order of COMMON_DIGEST_FIELDS
+            # and the first digest which is found is added to the list of digests of that type.
+            # We assume that in general only one digest is provided and that it will be
+            # sufficient to identify the Artifact.
             for d_content in batch:
                 for d_artifact in d_content.d_artifacts:
-                    one_artifact_q = d_artifact.artifact.q()
-                    if one_artifact_q:
-                        all_artifacts_q |= one_artifact_q
+                    if d_artifact.artifact._state.adding:
+                        for digest_type in Artifact.COMMON_DIGEST_FIELDS:
+                            digest_value = getattr(d_artifact.artifact, digest_type)
+                            if digest_value:
+                                artifact_digests_by_type[digest_type].append(digest_value)
+                                break
 
-            for artifact in Artifact.objects.filter(all_artifacts_q).iterator():
+            # For each type of digest, fetch all the existing Artifacts where digest "in"
+            # the list we built earlier. Walk over all the artifacts again compare the
+            # digest of the new artifact to those of the existing ones - if one matches,
+            # swap it out with the existing one.
+            for digest_type, digests in artifact_digests_by_type.items():
+                query_params = {"{attr}__in".format(attr=digest_type): digests}
+                existing_artifacts = Artifact.objects.filter(**query_params).only(digest_type)
+
                 for d_content in batch:
                     for d_artifact in d_content.d_artifacts:
-                        for digest_name in artifact.DIGEST_FIELDS:
-                            digest_value = getattr(d_artifact.artifact, digest_name)
-                            if digest_value and digest_value == getattr(artifact, digest_name):
-                                d_artifact.artifact = artifact
-                                break
+                        artifact_digest = getattr(d_artifact.artifact, digest_type)
+                        if artifact_digest:
+                            for result in existing_artifacts:
+                                result_digest = getattr(result, digest_type)
+                                if result_digest == artifact_digest:
+                                    d_artifact.artifact = result
+                                    break
+
             for d_content in batch:
                 await self.put(d_content)
 

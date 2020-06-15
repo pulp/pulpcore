@@ -129,6 +129,17 @@ class Artifact(BaseModel):
         "md5",
     )
 
+    # All digest fields ordered by relative frequency
+    # (Better average-case performance in some algorithms with fallback)
+    COMMON_DIGEST_FIELDS = (
+        "sha256",
+        "sha512",
+        "sha384",
+        "sha224",
+        "sha1",
+        "md5",
+    )
+
     # Reliable digest fields ordered by algorithm strength.
     RELIABLE_DIGEST_FIELDS = DIGEST_FIELDS[:-3]
 
