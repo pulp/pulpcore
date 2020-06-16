@@ -59,10 +59,11 @@ To support this pattern, the declarative content allows to be associated with a
 :class:`pulpcore.plugin.stages.ResolveContentFutures` stage.
 By awaiting this Future, one can implement an informational back loop into earlier stages.
 
-.. warning::
+.. hint::
 
-   In order to prevent deadlocks, be sure that you mark the declarative content with
-   `does_batch=False`, and that you do not drop it without resolving the future.
+   To improve performance when you expect to create a lot of those futures, consider to
+   create a larger batch before starting to await them. This way the batching in the subsequent
+   stages will still be exploited.
 
 .. hint::
 
