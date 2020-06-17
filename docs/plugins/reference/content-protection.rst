@@ -17,9 +17,10 @@ The ``ContentGuard`` is a Master/Detail object provided at
 github.com/pulp/pulpcore/blob/master/pulpcore/app/models/publication.py#L192-L202>`_.
 
 In your plugin code, subclass ``ContentGuard`` and optionally add additional fields as necessary to
-perform the authentication and authorization. As with all Master/Detail objects a ``TYPE`` class
-attribute is needed which is then used in the URL. For ``ContentGuard`` detail objects the URL
-structure is::
+perform the authentication and authorization. Then overwrite the ``permit`` method so that it
+returns ``None`` if access is granted and throws a ``PermissionError`` on denial. As with all
+Master/Detail objects a ``TYPE`` class attribute is needed which is then used in the URL. For
+``ContentGuard`` detail objects the URL structure is::
 
     ``/pulp/api/v3/contentguards/<plugin_name>/<TYPE>/``
 
@@ -50,19 +51,22 @@ secret both authenticates the user and authorizes them for this Content.
        secret_string = models.FileField(max_length=255)
 
        def permit(self, request):
-            """
+           """
 
-            Authorize the specified web request.
+           Authorize the specified web request.
 
-            Args:
-                request (aiohttp.web.Request): A request for a published file.
+           Args:
+               request (aiohttp.web.Request): A request for a published file.
 
-            Raises:
-                PermissionError: When the request cannot be authorized.
-            """
-            ca = self.ca_certificate.read()
-            validator = Validator(ca.decode('utf8'))
-            validator(request)
+           Raises:
+               PermissionError: When the request cannot be authorized.
+           """
+           ca = self.ca_certificate.read()
+           validator = Validator(ca.decode('utf8'))
+           validator(request)
+
+       class Meta:
+           default_related_name = "%(app_label)s_%(model_name)s"
 
 
 End-User use of ContentGuard
