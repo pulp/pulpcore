@@ -323,7 +323,7 @@ class PulpExportTestCase(BaseExporterCase):
         finally:
             self._delete_exporter(exporter)
 
-    def test_incremental(self):
+    def _create_repo_and_versions(self):
         # Create a new file-repo, repo-2
         a_repo = self.repo_api.create(gen_repo())
         self.addCleanup(self.client.delete, a_repo.pulp_href)
@@ -336,12 +336,23 @@ class PulpExportTestCase(BaseExporterCase):
             modify_response = self.repo_api.modify(a_repo.pulp_href, {"add_content_units": [href]})
             monitor_task(modify_response.task)
         # get all versions of that repo
+        # should now be 4, with 0/1/2/3 files as content
         versions = self.versions_api.list(a_repo.pulp_href, ordering="number")
         self.assertIsNotNone(versions)
         self.assertEqual(4, versions.count)
+        return a_repo, versions
+
+    def test_incremental(self):
+        # create a repo with 4 repo-versions
+        a_repo, versions = self._create_repo_and_versions()
         # create exporter for that repository
         (exporter, body) = self._create_exporter(use_repos=[a_repo], cleanup=False)
         try:
+            # negative - ask for an incremental without having a last_export
+            with self.assertRaises(ApiException):
+                body = {"full": False}
+                self._gen_export(exporter, body)
+
             # export repo-2-version[1]-full versions.results[1]
             body = {"versions": [versions.results[1].pulp_href]}
             self._gen_export(exporter, body)
@@ -364,5 +375,40 @@ class PulpExportTestCase(BaseExporterCase):
             info = export.output_file_info
             self.assertIsNotNone(info)
             self.assertTrue(len(info) > 1)
+        finally:
+            self._delete_exporter(exporter)
+
+    def test_start_end_incrementals(self):
+        # create a repo with 4 repo-versions
+        a_repo, versions = self._create_repo_and_versions()
+        (exporter, body) = self._create_exporter(use_repos=[a_repo], cleanup=False)
+        try:
+            # export from version-1 to latest last=v3
+            body = {"start_versions": [versions.results[1].pulp_href], "full": False}
+            self._gen_export(exporter, body)
+
+            # export from version-1 to version-2, last=v2
+            body = {
+                "start_versions": [versions.results[1].pulp_href],
+                "versions": [versions.results[2].pulp_href],
+                "full": False,
+            }
+            self._gen_export(exporter, body)
+
+            # negative attempt, start_versions= is not a version
+            with self.assertRaises(ApiException):
+                body = {"start_versions": [a_repo.pulp_href], "full": False}
+                self._gen_export(exporter, body)
+
+            # negative attempt, start_versions= and Full=True
+            with self.assertRaises(ApiException):
+                body = {"start_versions": [versions.results[2].pulp_href], "full": True}
+                self._gen_export(exporter, body)
+
+            # negative attempt, start_versions= is a version from Some Other Repo
+            with self.assertRaises(ApiException):
+                second_repo, second_versions = self._create_repo_and_versions()
+                body = {"start_versions": [second_versions.results[0].pulp_href], "full": False}
+                self._gen_export(exporter, body)
         finally:
             self._delete_exporter(exporter)

@@ -138,7 +138,10 @@ Set up 'isofile' repository::
 Now that we have :term:`Repositories<Repository>` with content, let's define an Exporter named ``test-exporter``
 that will export these :term:`Repositories<Repository>` to the directory ``/tmp/exports/``::
 
-    export EXPORTER_HREF=$(http POST http://localhost:24817/pulp/api/v3/exporters/core/pulp/ name=test-exporter repositories:=[\"${ISOFILE_HREF}\",\"${ZOO_HREF}\"] path=/tmp/exports/ | jq -r '.pulp_href')
+    export EXPORTER_HREF=$(http POST http://localhost:24817/pulp/api/v3/exporters/core/pulp/ \
+        name=test-exporter \
+        repositories:=[\"${ISOFILE_HREF}\",\"${ZOO_HREF}\"]
+        path=/tmp/exports/ | jq -r '.pulp_href')
     http GET http://localhost:24817${EXPORTER_HREF}
 
 Exporting Content
@@ -161,13 +164,14 @@ Exporting Specific Versions
 ---------------------------
 
 By default, the latest-versions of the :term:`Repositories<Repository>` specified in the Exporter are exported. However, you
-can export specific ::term::`RepositoryVersions<RepositoryVersion>` of those :term:`Repositories<Repository>`
-if you wish using the ``versions`` parameter on the ``/exports/`` invocation.
+can export specific ::term:`RepositoryVersions<RepositoryVersion>` of those :term:`Repositories<Repository>`
+if you wish using the ``versions=`` parameter on the ``/exports/`` invocation.
 
 Following the above example - let's assume we want to export the "zero'th" ::term:`RepositoryVersion` of the
 repositories in our Exporter.::
 
-    http POST http://localhost:24817${EXPORTER_HREF}exports/ versions:=[\"${ISO_HREF}versions/0/\",\"${ZOO_HREF}versions/0/\"]
+    http POST http://localhost:24817${EXPORTER_HREF}exports/ \
+        versions:=[\"${ISO_HREF}versions/0/\",\"${ZOO_HREF}versions/0/\"]
 
 Note that the "zero'th" ::term:`RepositoryVersion` of a ::term:`Repository` is created when the ::term:`Repository` is created, and is empty. If you unpack the resulting Export ``tar.gz`` you will find, for example, that there is no ``artifacts/`` directory and an empty ``ArtifactResource.json`` file::
 
@@ -207,8 +211,32 @@ accomplish this by setting the ``full`` parameter on the ``/exports/`` invocatio
 
     http POST http://localhost:24817${EXPORTER_HREF}exports/ full=False
 
-This results in an export of all content-entities, but only ::term::`Artifacts<Artifact>`
+This results in an export of all content-entities, but only ::term:`Artifacts<Artifact>`
 that have been **added** since the `last_export` of the same Exporter.
+
+You can override the use of `last_export` as the starting point of an incremental export by use of the ``start_versions=``
+parameter. Building on our example Exporter, if we want to do an incremental export of everything that's happened since the
+**second** ::term:`RepositoryVersion` of each ::term:`Repository`, regardless of what happened in our last export,
+we would issue a command such as the following::
+
+    http POST http://localhost:24817${EXPORTER_HREF}exports/ \
+        full=False                                           \
+        start_versions:=[\"${ISO_HREF}versions/1/\",\"${ZOO_HREF}versions/1/\"]
+
+This would produce an incremental export of everything that had been added to our :term:`Repositories<Repository>`
+between ::term:`RepositoryVersion` '1' and the ``current_version`` ::term:`RepositoryVersions<RepositoryVersion>`
+of our ::term:`Repositories<Repository>`.
+
+Finally, if we need complete comtrol over incremental exporting, we can combine the use of ``start_versions=`` and ``versions=``
+to produce an incremental export of everything that happened after ``start_versions=`` up to and including ``versions=``::
+
+    http POST http://localhost:24817${EXPORTER_HREF}exports/                    \
+        full=False                                                              \
+        start_versions:=[\"${ISO_HREF}versions/1/\",\"${ZOO_HREF}versions/1/\"] \
+        versions:=[\"${ISO_HREF}versions/3/\",\"${ZOO_HREF}versions/3/\"]
+
+**Note** that specifying ``start_versions=`` without specifying ``full=False`` (i.e., asking for an incremental export)
+is an error, since it makes no sense to specify a 'starting version' for a full export.
 
 Exporting Chunked Files
 -----------------------
