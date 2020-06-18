@@ -50,7 +50,7 @@ from .importer import (  # noqa
     PulpImporterSerializer,
     PulpImportSerializer,
 )
-from .progress import ProgressReportSerializer  # noqa
+from .progress import GroupProgressReportSerializer, ProgressReportSerializer  # noqa
 from .publication import (  # noqa
     BaseDistributionSerializer,
     ContentGuardSerializer,

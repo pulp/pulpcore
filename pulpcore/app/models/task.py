@@ -424,6 +424,19 @@ class TaskGroup(BaseModel):
     description = models.TextField()
     all_tasks_dispatched = models.BooleanField(default=False)
 
+    @staticmethod
+    def current():
+        """
+        Returns:
+            pulpcore.app.models.TaskGroup: The task group the current task is being executed and
+            belongs to.
+        """
+        try:
+            task_group = Task.current().task_group
+        except AttributeError:
+            task_group = None
+        return task_group
+
     def finish(self):
         """
         Finalize the task group.
