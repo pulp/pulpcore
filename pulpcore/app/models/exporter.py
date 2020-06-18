@@ -163,6 +163,7 @@ class PulpExport(Export):
 
     tarfile = None
     validated_versions = None
+    validated_start_versions = None
     validated_chunk_size = None
     output_file_info = JSONField(null=True)
 

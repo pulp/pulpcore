@@ -84,6 +84,21 @@ def _get_versions_to_export(the_exporter, the_export):
     return versions
 
 
+def _get_starting_versions(do_incremental, the_exporter, the_export):
+    # list-of-previous-versions, or None
+    if do_incremental:
+        if the_export.validated_start_versions:
+            prev_versions = the_export.validated_start_versions
+        else:
+            prev_versions = [
+                er.content_object
+                for er in ExportedResource.objects.filter(export=the_exporter.last_export).all()
+            ]
+    else:
+        prev_versions = None
+    return prev_versions
+
+
 def _get_versions_info(the_exporter):
     """
     Return plugin-version-info based on plugins are responsible for exporter-repositories.
@@ -205,21 +220,14 @@ def _compute_hash(filename):
 def _do_export(pulp_exporter, tar, the_export):
     the_export.tarfile = tar
     CreatedResource.objects.create(content_object=the_export)
-    versions_to_export = _get_versions_to_export(pulp_exporter, the_export)
+    ending_versions = _get_versions_to_export(pulp_exporter, the_export)
     plugin_version_info = _get_versions_info(pulp_exporter)
     do_incremental = _incremental_requested(the_export)
-    # list-of-previous-versions, or None
-    if do_incremental:
-        prev_versions = [
-            er.content_object
-            for er in ExportedResource.objects.filter(export=pulp_exporter.last_export).all()
-        ]
-    else:
-        prev_versions = None
-    vers_match = _version_match(versions_to_export, prev_versions)
+    starting_versions = _get_starting_versions(do_incremental, pulp_exporter, the_export)
+    vers_match = _version_match(ending_versions, starting_versions)
     # Gather up versions and artifacts
     artifacts = []
-    for version in versions_to_export:
+    for version in ending_versions:
         # Check version-content to make sure we're not being asked to export
         # an on_demand repo
         content_artifacts = ContentArtifact.objects.filter(content__in=version.content)
@@ -237,6 +245,6 @@ def _do_export(pulp_exporter, tar, the_export):
     # Note: we've already handled "what about incrementals" when building the 'artifacts' list
     export_artifacts(the_export, artifacts)
     # Export the repository-version data, per-version
-    for version in versions_to_export:
+    for version in ending_versions:
         export_content(the_export, version)
         ExportedResource.objects.create(export=the_export, content_object=version)

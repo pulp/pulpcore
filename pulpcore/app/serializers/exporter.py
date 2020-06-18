@@ -128,7 +128,7 @@ class PulpExportSerializer(ExportSerializer):
         write_only=True,
     )
     versions = RepositoryVersionRelatedField(
-        help_text=_("List of explicit repo-version hrefs to export"),
+        help_text=_("List of explicit repo-version hrefs to export (replaces current_version)."),
         many=True,
         required=False,
         write_only=True,
@@ -143,24 +143,31 @@ class PulpExportSerializer(ExportSerializer):
         write_only=True,
     )
 
-    def validate_versions(self, versions):
+    start_versions = RepositoryVersionRelatedField(
+        help_text=_("List of explicit last-exported-repo-version hrefs (replaces last_export)."),
+        many=True,
+        required=False,
+        write_only=True,
+    )
+
+    def _validate_versions_to_repos(self, the_versions):
         """
         If specifying repo-versions explicitly, must provide a version for each exporter-repository
         """
         # make sure counts match
         the_exporter = self.context.get("exporter", None)
         num_repos = the_exporter.repositories.count()
-        if num_repos != len(versions):
+        if num_repos != len(the_versions):
             raise serializers.ValidationError(
                 _(
                     "Number of versions ({}) does not match the number of Repositories ({}) for "
                     + "the owning  Exporter!"
-                ).format(num_repos, len(versions))
+                ).format(num_repos, len(the_versions))
             )
 
         # make sure the specified versions 'belong to' the exporter.repositories
         exporter_repos = set(the_exporter.repositories.all())
-        version_repos = set([vers.repository for vers in versions])
+        version_repos = set([vers.repository for vers in the_versions])
         if exporter_repos != version_repos:
             raise serializers.ValidationError(
                 _(
@@ -168,7 +175,33 @@ class PulpExportSerializer(ExportSerializer):
                     + "Exporter!"
                 )
             )
-        return versions
+        return the_versions
+
+    def validate_versions(self, versions):
+        return self._validate_versions_to_repos(versions)
+
+    def validate_start_versions(self, start_versions):
+        return self._validate_versions_to_repos(start_versions)
+
+    def validate(self, data):
+        # If we requested start_versions, make sure we did not forget to specify full=False
+        if data.get("start_versions", None) and data.get("full", True):
+            raise serializers.ValidationError(
+                _("start_versions is only valid for incremental exports (full=False)")
+            )
+
+        # If we requested full=False, make sure we either specified start_versions= or
+        # have a previous-export for our Exporter.
+        if not data.get("full", True):
+            the_exporter = self.context.get("exporter", None)
+            if not data.get("start_versions", None) and not the_exporter.last_export:
+                raise serializers.ValidationError(
+                    _(
+                        "Incremental export can only be requested when there is a previous export "
+                        + "or start_versions= has been specified."
+                    )
+                )
+        return super().validate(data)
 
     @staticmethod
     def _parse_size(size):
@@ -201,6 +234,7 @@ class PulpExportSerializer(ExportSerializer):
             "versions",
             "chunk_size",
             "output_file_info",
+            "start_versions",
         )
 
 
