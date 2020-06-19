@@ -55,8 +55,8 @@ You can set this header on an `httpie <https://httpie.org/>`_ command as follows
 
     For the 3.0 release, Pulp expects the user table to have exactly 1 user in it named 'admin',
     which is created automatically when the initial migration is applied. The password for this user
-    can be set with the ``pulpcore-manager reset-admin-password`` command, but defaults to
-    'password'. To articulate what you'd like to see future versions of Pulp file a feature request
+    can be set with the ``pulpcore-manager reset-admin-password`` command.
+    To articulate what you'd like to see future versions of Pulp file a feature request
     `here <https://pulp.plan.io/projects/pulp/issues/new>`_ or reach out via
     `pulp-list@redhat.com <https://www.redhat.com/mailman/listinfo/pulp-list>`_.
 
