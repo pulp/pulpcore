@@ -3,7 +3,7 @@ Bugs and Feature Requests
 
 Bugs and feature requests for :term:`pulpcore` are tracked with `Redmine
 <https://pulp.plan.io/projects/pulp/issues/>`_. Please see the `plugin table
-<https://pulpproject.org/pulp-3-plugins/>`_ for trackers for each plugin.
+<https://pulpproject.org/content-plugins/>`_ for trackers for each plugin.
 
 .. _issue-writing:
 
@@ -153,5 +153,3 @@ Redmine Fields
 +-------------+-----------------------------------------------------------------------------------+
 | Tags        | Used for filtering.                                                               |
 +-------------+-----------------------------------------------------------------------------------+
-
-

@@ -27,7 +27,7 @@ Source code
 
   * `pulp Github organization <https://github.com/pulp/>`_
   * `pulpcore <https://github.com/pulp/pulpcore/>`_
-  * `plugin repositories <https://pulpproject.org/pulp-3-plugins/>`_
+  * `plugin repositories <https://pulpproject.org/content-plugins/>`_
 
 
 How to Navigate the pulpcore and plugin docs
@@ -38,7 +38,7 @@ Plugin Documentation
 
 If you are a new user who is evaluating Pulp it is recommended that you skim the documentation for
 the plugins that add the content types you are interested in. Links to these docs can be found in
-our `list of plugins <https://pulpproject.org/pulp-3-plugins/>`_
+our `list of plugins <https://pulpproject.org/content-plugins/>`_
 
 Pulpcore Documentation
 ^^^^^^^^^^^^^^^^^^^^^^
