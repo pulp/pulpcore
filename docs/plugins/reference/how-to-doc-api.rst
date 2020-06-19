@@ -69,3 +69,18 @@ as a GET parameter. For example for pulp_rpm only endpoints use a query like thi
 .. code-block:: bash
 
     curl -o api.json http://localhost:24817/pulp/api/v3/docs/api.json?plugin=pulp_rpm
+
+OpenAPI Tags
+------------
+
+Tags are used to group operations logically into categories, such as RepositoriesRpm,
+DistributionsRpm, ContentPackages, and so on.
+Pulpcore OpenAPI Tags are generated from URL paths.
+
+Path ``/pulp/api/v3/repositories/rpm/rpm/`` yields the tag ``repositories: rpm`` which is turned into
+``RepositoriesRpmApi`` in the bindings client.
+
+It is possible to customize the tag by setting the ``pulp_tag_name`` attribute at your view.
+
+Setting ``pulp_tag_name = "Pulp: RPM Repo"`` at ``RpmRepositoryViewSet`` yields the tag ``Pulp: RPM Repo``
+which is turned into ``PulpRPMRepoApi`` in the bindings client.

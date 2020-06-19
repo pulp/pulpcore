@@ -449,7 +449,12 @@ class PulpAutoSchema(SwaggerAutoSchema):
         Returns:
             list[str] of tags
         """
+        pulp_tag_name = getattr(self.view, "pulp_tag_name", False)
+        if pulp_tag_name:
+            return [pulp_tag_name]
+
         tags = self.overrides.get("tags")
+
         if not tags:
             if len(operation_keys) > 2:
                 if len(operation_keys) > 3:
