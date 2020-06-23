@@ -55,14 +55,9 @@ Create your pulp_install.yml playbook to use with the installer (Uncomment the d
          # pulp-maven: {}
          # pulp-npm: {}
          # pulp-python: {}
-         # pulp-rpm:
-         #   prereq_role: "pulp.pulp_rpm_prerequisites" # RPM plugin needs a prereq_role: https://galaxy.ansible.com/pulp/pulp_rpm_prerequisites
+         # pulp-rpm: {}
      roles:
-       - pulp.pulp_installer.pulp_database
-       - pulp.pulp_installer.pulp_workers
-       - pulp.pulp_installer.pulp_resource_manager
-       - pulp.pulp_installer.pulp_webserver
-       - pulp.pulp_installer.pulp_content
+       - pulp.pulp_installer.pulp_all_services
      environment:
        DJANGO_SETTINGS_MODULE: pulpcore.app.settings
 
