@@ -155,6 +155,21 @@ class Repository(MasterModel):
         """
         return (self.name,)
 
+    @staticmethod
+    def artifacts_for_version(version):
+        """
+        Return the artifacts for a repository version.
+
+        Provides a method that plugins can override since RepositoryVersions aren't typed.
+
+        Args:
+            version (pulpcore.app.models.RepositoryVersion): to get the artifacts for
+
+        Returns:
+            django.db.models.QuerySet: The artifacts that are contained within this version.
+        """
+        return Artifact.objects.filter(content__pk__in=version.content)
+
 
 class Remote(MasterModel):
     """
@@ -502,7 +517,7 @@ class RepositoryVersion(BaseModel):
         Returns:
             django.db.models.QuerySet: The artifacts that are contained within this version.
         """
-        return Artifact.objects.filter(content__pk__in=self.content)
+        return self.repository.cast().artifacts_for_version(self)
 
     def added(self, base_version=None):
         """
