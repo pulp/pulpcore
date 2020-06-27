@@ -151,7 +151,7 @@ class Handler:
         tree = []
         while True:
             base = os.path.split(path)[0]
-            if not base:
+            if not base.lstrip("/"):
                 break
             tree.append(base)
             path = base
