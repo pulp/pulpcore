@@ -73,8 +73,41 @@ Tasks are deployed from Views or Viewsets, please see :ref:`kick-off-tasks`.
 
 Sometimes you may want to create many tasks to perform different parts of one larger piece of work,
 but you need a simple means to track the progress of these many tasks. Task Groups serve this purpose
-by providing details on the number of associated tasks in each possible state. For more details,
-please see :ref:`kick-off-tasks`.
+by providing details on the number of associated tasks in each possible state.
+For more details, please see :ref:`kick-off-tasks`.
+
+**GroupProgressReports**
+
+GroupProgressReport can track progress of each task in that group. GroupProgressReport needs to be
+created and associated to the TaskGroup. From within a task that belogs to the task group,
+group progress report needs to be updated.
+
+
+.. code-block:: python
+
+        # Once a Task Group is created, plugin writers should create group progress report objects
+        # ahead, so tasks can find them and update the progress.
+        task_group = TaskGroup(description="Migration Sub-tasks")
+        task_group.save()
+        group_pr = GroupProgressReport(
+            message="Repo migration",
+            code="create.repo_version",
+            task_group=task_group).save()
+        # When a taks that will be executing certain work, which is part of a TaskGroup, it will look
+        # for the Task group it belongs to and find appropriate progress report by its code and will
+        # update it accordingly.
+        task_group = TaskGroup.current()
+        progress_repo = task_group.group_progress_reports.filter(code='create.repo_version')
+        progress_repo.update(done=F('done') + 1)
+        # To avoid race conditions/cache invalidation issues, this pattern needs to be used so that
+        # operations are performed directly inside the database:
+
+        # .update(done=F('done') + 1)
+
+        # See: https://docs.djangoproject.com/en/3.0/ref/models/expressions/#f-expressions
+        # Important: F() objects assigned to model fields persist after saving the model instance and
+        # will be applied on each save(). Do not use save() and use update() instead, otherwise
+        # refresh_from_db() should be called after each save()
 
 
 Sync Pipeline

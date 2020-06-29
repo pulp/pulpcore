@@ -215,3 +215,70 @@ class ProgressReport(BaseModel):
         for x in iter:
             yield x
             self.increment()
+
+
+class GroupProgressReport(BaseModel):
+    """
+    A model for all progress reporting in a Task Group.
+
+    All progress reports have a message, code and are related to a Task Group.
+
+    Once a Task Group is created, plugin writers should create these objects ahead.
+    For example:
+
+    task_group = TaskGroup(description="Migration Sub-tasks")
+    task_group.save()
+    group_pr = GroupProgressReport(
+        message="Repo migration",
+        code="create.repo_version",
+        task_group=task_group).save()
+
+    Taks that will be executing certain work, and is part of a TaskGroup, will look for
+    the Task group it belongs to and find appropriate progress report by its code and will
+    update it accordingly.
+
+    For example:
+    task_group = TaskGroup.current()
+    progress_repo = task_group.group_progress_reports.filter(code='create.repo_version')
+    progress_repo.update(done=F('done') + 1)
+
+    To avoid race conditions/cache invalidation issues, this pattern needs to be used so that
+    operations are performed directly inside the database:
+
+    .update(done=F('done') + 1)
+
+    See: https://docs.djangoproject.com/en/3.0/ref/models/expressions/#f-expressions
+    Important: F() objects assigned to model fields persist after saving the model instance and
+    will be applied on each save(). Do not use save() and use update() instead, otherwise
+    refresh_from_db() should be called after each save()
+
+    Fields:
+
+        message (models.TextField): short message for the progress update, typically
+            shown to the user. (required)
+        code (models.TextField): identifies the type of progress report
+        total: (models.IntegerField) The total count of items to be handled
+        done (models.IntegerField): The count of items already processed. Defaults to 0.
+        suffix (models.TextField): Customizable suffix rendered with the progress report
+            See `the docs <https://github.com/verigak/progress>`_. for more info.
+
+    Relations:
+
+        task_group: The task group associated with this group progress report.
+
+    """
+
+    message = models.TextField()
+    code = models.CharField(max_length=36)
+
+    total = models.IntegerField(default=0)
+    done = models.IntegerField(default=0)
+
+    task_group = models.ForeignKey(
+        "TaskGroup", related_name="group_progress_reports", on_delete=models.CASCADE
+    )
+
+    suffix = models.TextField(null=True)
+
+    class Meta:
+        unique_together = ("code", "task_group")

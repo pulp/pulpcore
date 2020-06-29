@@ -12,6 +12,7 @@ from pulpcore.app.models import (  # noqa
     CreatedResource,
     Export,
     Exporter,
+    GroupProgressReport,
     Import,
     Importer,
     FilesystemExporter,

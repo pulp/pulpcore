@@ -58,4 +58,4 @@ from .upload import (  # noqa
 )
 
 # Moved here to avoid a circular import with Task
-from .progress import ProgressReport  # noqa
+from .progress import GroupProgressReport, ProgressReport  # noqa

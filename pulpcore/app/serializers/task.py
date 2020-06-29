@@ -4,6 +4,7 @@ from rest_framework import serializers
 
 from pulpcore.app import models
 from pulpcore.app.serializers import (
+    GroupProgressReportSerializer,
     IdentityField,
     ModelSerializer,
     ProgressReportSerializer,
@@ -156,6 +157,7 @@ class TaskGroupSerializer(ModelSerializer):
     failed = TaskGroupStatusCountField(
         state=TASK_STATES.FAILED, help_text=_("Number of tasks in the 'failed' state")
     )
+    group_progress_reports = GroupProgressReportSerializer(many=True, read_only=True)
 
     class Meta:
         model = models.TaskGroup
@@ -169,6 +171,7 @@ class TaskGroupSerializer(ModelSerializer):
             "completed",
             "canceled",
             "failed",
+            "group_progress_reports",
         )
 
 
