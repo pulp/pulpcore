@@ -127,10 +127,10 @@ into the ``CHANGES/plugin_api/`` folder.
 
 To add an entry to the news file, you first need an issue in pulp.plan.io describing the change you
 want to make. Once you have an issue, take its number and create a file inside of the ``CHANGES/``
-or ``CHANGES/plugin_api/`` directory named after that issue number with an extension of .feature,
-.bugfix, .doc, .removal, or .misc. So if your user-facing issue is 3543 and it fixes a bug, you
-would create the file ``CHANGES/3543.bugfix``. Or if your plugin API change is 5432 and it's a
-breaking change you would create the file ``CHANGES/plugin_api/5432.removal``.
+or ``CHANGES/plugin_api/`` directory named after that issue number with an extension of ``.feature``,
+``.bugfix``, ``.doc``, ``.removal``, or ``.misc``. So if your user-facing issue is 3543 and it fixes
+a bug, you would create the file ``CHANGES/3543.bugfix``. Or if your plugin API change is 5432 and
+it's a breaking change you would create the file ``CHANGES/plugin_api/5432.removal``.
 
 PRs can span multiple categories by creating multiple files (for instance, if you added a feature
 and deprecated an old feature at the same time, you would create CHANGES/NNNN.feature and
