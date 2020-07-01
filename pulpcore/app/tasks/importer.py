@@ -44,7 +44,7 @@ def _import_file(fpath, resource_class):
     with open(fpath, "r") as json_file:
         data = Dataset().load(json_file.read(), format="json")
         resource = resource_class()
-        return resource.import_data(data, raise_errors=True)
+        return resource.import_data(data, raise_errors=True, use_transactions=True)
 
 
 def _repo_version_path(src_repo):
