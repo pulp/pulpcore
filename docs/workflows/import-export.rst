@@ -56,18 +56,19 @@ In order to minimize space utilization, import/export operates on sets of
 Definitions
 ^^^^^^^^^^^
 Upstream
-    Pulp instance whose :term:`RepositoryVersion(s)<RepositoryVersion>` we want to export
+    Pulp instance whose :term:`RepositoryVersions<RepositoryVersion>` we want to export
 Downstream
-    Pulp instance that will be importing those :term:`RepositoryVersion(s)<RepositoryVersion>`
+    Pulp instance that will be importing those :term:`RepositoryVersions<RepositoryVersion>`
 ModelResource
-    entity that understands how to map the metadata for a specific model
-    owned/controlled by a plugin to an exportable file-format (see django-import-export)
+    entity that understands how to map the metadata for a specific Model
+    owned/controlled by a plugin to an exportable file-format
+    (see `django-import-export <https://django-import-export.readthedocs.io/en/latest/api_resources.html#modelresource>`_)
 Exporter
     resource that exports content from Pulp for a variety of different use cases
 PulpExporter
     kind-of Exporter, that is specifically used to export data from an Upstream
     for consumption by a Downstream
-Export
+PulpExport
     specific instantiation/run of a PulpExporter
 Export file
     compressed tarfile containing database content and :term:`Artifacts<Artifact>` for
@@ -75,7 +76,7 @@ Export file
 PulpImporter
     resource that accepts an Upstream PulpExporter export file, and manages
     the process of importing the content and :term:`Artifacts<Artifact>` included
-Import
+PulpImport
     specific instantiation/run of a PulpImporter
 Repository-mapping
     configuration file that provides the ability to map an Upstream :term:`Repository`,
@@ -110,39 +111,39 @@ and save their UUIDs as ``ZOO_UUID`` and ``ISOFILE_UUID``
 Set up 'zoo' repository"::
 
     # Create the repository
-    export ZOO_HREF=$(http POST http://localhost:24817/pulp/api/v3/repositories/rpm/rpm/ name=zoo | jq -r '.pulp_href')
+    export ZOO_HREF=$(http POST :/pulp/api/v3/repositories/rpm/rpm/ name=zoo | jq -r '.pulp_href')
     #
     # add a remote
-    http POST http://localhost:24817/pulp/api/v3/remotes/rpm/rpm/ name=zoo url=https://repos.fedorapeople.org/pulp/pulp/fixtures/rpm/  policy='immediate'
+    http POST :/pulp/api/v3/remotes/rpm/rpm/ name=zoo url=https://repos.fedorapeople.org/pulp/pulp/fixtures/rpm/  policy='immediate'
     #
     # find remote's href
-    export REMOTE_HREF=$(http http://localhost:24817/pulp/api/v3/remotes/rpm/rpm/ | jq -r ".results[] | select(.name == \"zoo\") | .pulp_href")
+    export REMOTE_HREF=$(http :/pulp/api/v3/remotes/rpm/rpm/ | jq -r ".results[] | select(.name == \"zoo\") | .pulp_href")
     #
     # sync the repository to give us some content
-    http POST http://localhost:24817$ZOO_HREF'sync/' remote=$REMOTE_HREF
+    http POST :$ZOO_HREF'sync/' remote=$REMOTE_HREF
 
 Set up 'isofile' repository::
 
     # create the repository
-    ISOFILE_HREF=$(http POST http://localhost:24817/pulp/api/v3/repositories/file/file/ name=isofile | jq -r '.pulp_href')
+    ISOFILE_HREF=$(http POST :/pulp/api/v3/repositories/file/file/ name=isofile | jq -r '.pulp_href')
     #
     # add remote
-    http POST http://localhost:24817/pulp/api/v3/remotes/file/file/ name=isofile url=https://repos.fedorapeople.org/pulp/pulp/fixtures/file/PULP_MANIFEST
+    http POST :/pulp/api/v3/remotes/file/file/ name=isofile url=https://repos.fedorapeople.org/pulp/pulp/fixtures/file/PULP_MANIFEST
     #
     # find remote's href
-    REMOTE_HREF=$(http http://localhost:24817/pulp/api/v3/remotes/file/file/ | jq -r ".results[] | select(.name == \"isofile\") | .pulp_href")
+    REMOTE_HREF=$(http :/pulp/api/v3/remotes/file/file/ | jq -r ".results[] | select(.name == \"isofile\") | .pulp_href")
     #
     # sync the repository to give us some content
-    http POST http://localhost:24817$ISOFILE_HREF'sync/' remote=$REMOTE_HREF
+    http POST :$ISOFILE_HREF'sync/' remote=$REMOTE_HREF
 
 Now that we have :term:`Repositories<Repository>` with content, let's define an Exporter named ``test-exporter``
 that will export these :term:`Repositories<Repository>` to the directory ``/tmp/exports/``::
 
-    export EXPORTER_HREF=$(http POST http://localhost:24817/pulp/api/v3/exporters/core/pulp/ \
-        name=test-exporter \
-        repositories:=[\"${ISOFILE_HREF}\",\"${ZOO_HREF}\"]
+    export EXPORTER_HREF=$(http POST :/pulp/api/v3/exporters/core/pulp/ \
+        name=test-exporter                                              \
+        repositories:=[\"${ISOFILE_HREF}\",\"${ZOO_HREF}\"]             \
         path=/tmp/exports/ | jq -r '.pulp_href')
-    http GET http://localhost:24817${EXPORTER_HREF}
+    http GET :${EXPORTER_HREF}
 
 Exporting Content
 -----------------
@@ -150,7 +151,7 @@ Exporting Content
 Once we have an Exporter defined, we invoke it to generate an export-file in the directory
 specified by that Exporter's ``path`` attribute::
 
-    http POST http://localhost:24817${EXPORTER_HREF}exports/
+    http POST :${EXPORTER_HREF}exports/
 
 The resulting Export writes to a ``.tar.gz`` file, in the directory pointed to by the
 Exporter's path, with a name that follows the convention ``export-<export-UUID>-YYYYmmdd_HHMM.tar.gz``::
@@ -164,16 +165,16 @@ Exporting Specific Versions
 ---------------------------
 
 By default, the latest-versions of the :term:`Repositories<Repository>` specified in the Exporter are exported. However, you
-can export specific ::term:`RepositoryVersions<RepositoryVersion>` of those :term:`Repositories<Repository>`
+can export specific :term:`RepositoryVersions<RepositoryVersion>` of those :term:`Repositories<Repository>`
 if you wish using the ``versions=`` parameter on the ``/exports/`` invocation.
 
-Following the above example - let's assume we want to export the "zero'th" ::term:`RepositoryVersion` of the
+Following the above example - let's assume we want to export the "zero'th" :term:`RepositoryVersion` of the
 repositories in our Exporter.::
 
-    http POST http://localhost:24817${EXPORTER_HREF}exports/ \
+    http POST :${EXPORTER_HREF}exports/ \
         versions:=[\"${ISO_HREF}versions/0/\",\"${ZOO_HREF}versions/0/\"]
 
-Note that the "zero'th" ::term:`RepositoryVersion` of a ::term:`Repository` is created when the ::term:`Repository` is created, and is empty. If you unpack the resulting Export ``tar.gz`` you will find, for example, that there is no ``artifacts/`` directory and an empty ``ArtifactResource.json`` file::
+Note that the "zero'th" :term:`RepositoryVersion` of a :term:`Repository` is created when the :term:`Repository` is created, and is empty. If you unpack the resulting Export ``tar.gz`` you will find, for example, that there is no ``artifacts/`` directory and an empty ``ArtifactResource.json`` file::
 
     cd /tmp/exports
     tar xvzf export-930ea60c-97b7-4e00-a737-70f773ebbb14-20200511_2005.tar.gz
@@ -202,46 +203,48 @@ Exporting Incrementally
 -----------------------
 
 By default, PulpExport exports all of the content and artifacts of the
-::term:`RepositoryVersions<RepositoryVersion>` being exported. A common use-case is to do
+:term:`RepositoryVersions<RepositoryVersion>` being exported. A common use-case is to do
 regular transfers of content from an Upstream to a Downstream Pulp instance.  While you
 **can** export everything every time, it is an inefficient use of time and disk storage to
 do so; exporting only the "entities that have changed" is a better choice. You can
 accomplish this by setting the ``full`` parameter on the ``/exports/`` invocation to
 ``False``::
 
-    http POST http://localhost:24817${EXPORTER_HREF}exports/ full=False
+    http POST :${EXPORTER_HREF}exports/ full=False
 
-This results in an export of all content-entities, but only ::term:`Artifacts<Artifact>`
+This results in an export of all content-entities, but only :term:`Artifacts<Artifact>`
 that have been **added** since the `last_export` of the same Exporter.
 
 You can override the use of `last_export` as the starting point of an incremental export by use of the ``start_versions=``
 parameter. Building on our example Exporter, if we want to do an incremental export of everything that's happened since the
-**second** ::term:`RepositoryVersion` of each ::term:`Repository`, regardless of what happened in our last export,
+**second** :term:`RepositoryVersion` of each :term:`Repository`, regardless of what happened in our last export,
 we would issue a command such as the following::
 
-    http POST http://localhost:24817${EXPORTER_HREF}exports/ \
-        full=False                                           \
+    http POST :${EXPORTER_HREF}exports/ \
+        full=False                      \
         start_versions:=[\"${ISO_HREF}versions/1/\",\"${ZOO_HREF}versions/1/\"]
 
 This would produce an incremental export of everything that had been added to our :term:`Repositories<Repository>`
-between ::term:`RepositoryVersion` '1' and the ``current_version`` ::term:`RepositoryVersions<RepositoryVersion>`
-of our ::term:`Repositories<Repository>`.
+between :term:`RepositoryVersion` '1' and the ``current_version`` :term:`RepositoryVersions<RepositoryVersion>`
+of our :term:`Repositories<Repository>`.
 
 Finally, if we need complete comtrol over incremental exporting, we can combine the use of ``start_versions=`` and ``versions=``
 to produce an incremental export of everything that happened after ``start_versions=`` up to and including ``versions=``::
 
-    http POST http://localhost:24817${EXPORTER_HREF}exports/                    \
+    http POST :${EXPORTER_HREF}exports/                                         \
         full=False                                                              \
         start_versions:=[\"${ISO_HREF}versions/1/\",\"${ZOO_HREF}versions/1/\"] \
         versions:=[\"${ISO_HREF}versions/3/\",\"${ZOO_HREF}versions/3/\"]
 
-**Note** that specifying ``start_versions=`` without specifying ``full=False`` (i.e., asking for an incremental export)
-is an error, since it makes no sense to specify a 'starting version' for a full export.
+.. note::
+
+    **Note** that specifying ``start_versions=`` without specifying ``full=False`` (i.e., asking for an incremental export)
+    is an error, since it makes no sense to specify a 'starting version' for a full export.
 
 Exporting Chunked Files
 -----------------------
 
-By default, PulpExport streams data into a single ``.tar.gz`` file. Since ::term:`Respoitories<Repository>`
+By default, PulpExport streams data into a single ``.tar.gz`` file. Since :term:`Repositories<Repository>`
 can contain a lot of artifacts and content, that can result in a file too large to be
 copied to transport media. In this case, you can specify a maximum-file-size, and the
 export process will chunk the tar.gz into a series of files no larger than this.
@@ -269,7 +272,7 @@ Updating an Exporter
 
 You can update an Exporter to modify a subset of its fields::
 
-    http PATCH http://localhost:24817${EXPORTER_HREF} path=/tmp/newpath
+    http PATCH :${EXPORTER_HREF} path=/tmp/newpath
 
 Importing
 ^^^^^^^^^
