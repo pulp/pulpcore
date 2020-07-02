@@ -8,6 +8,10 @@ from logging import getLogger
 
 from django.conf import settings
 from django.core.files.storage import default_storage
+from django.db import (
+    connection,
+    transaction,
+)
 from pkg_resources import DistributionNotFound, get_distribution
 from rest_framework.serializers import ValidationError
 from tablib import Dataset
@@ -123,7 +127,10 @@ def import_repository_version(destination_repo_pk, source_repo_pk, tar_path):
 
         # Untyped Content
         content_path = os.path.join(rv_path, CONTENT_FILE)
-        c_result = _import_file(content_path, ContentResource)
+        with transaction.atomic():
+            cursor = connection.cursor()
+            cursor.execute("LOCK TABLE %s IN %s MODE" % (Content._meta.db_table, "EXCLUSIVE"))
+            c_result = _import_file(content_path, ContentResource)
         content = Content.objects.filter(pk__in=[r.object_id for r in c_result.rows])
 
         # Content Artifacts
