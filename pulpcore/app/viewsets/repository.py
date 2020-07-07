@@ -144,13 +144,13 @@ class RepositoryVersionFilter(BaseFilterSet):
     number = filters.NumberFilter()
     pulp_created = IsoDateTimeFilter()
     content = RepositoryVersionContentFilter()
+    content__in = RepositoryVersionContentFilter(field_name="content", lookup_expr="in")
 
     class Meta:
         model = RepositoryVersion
         fields = {
             "number": ["exact", "lt", "lte", "gt", "gte", "range"],
             "pulp_created": DATETIME_FILTER_OPTIONS,
-            "content": ["exact", "in"],
         }
 
 

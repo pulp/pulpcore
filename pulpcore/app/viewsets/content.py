@@ -35,13 +35,12 @@ class ArtifactFilter(BaseFilterSet):
     class Meta:
         model = Artifact
         fields = {
-            "repository_version": ["exact"],
-            "md5": ["exact"],
-            "sha1": ["exact"],
-            "sha224": ["exact"],
-            "sha256": ["exact"],
-            "sha384": ["exact"],
-            "sha512": ["exact"],
+            "md5",
+            "sha1",
+            "sha224",
+            "sha256",
+            "sha384",
+            "sha512",
         }
 
 
@@ -93,14 +92,6 @@ class ContentFilter(BaseFilterSet):
     repository_version = ContentRepositoryVersionFilter()
     repository_version_added = ContentAddedRepositoryVersionFilter()
     repository_version_removed = ContentRemovedRepositoryVersionFilter()
-
-    class Meta:
-        model = Content
-        fields = {
-            "repository_version": ["exact"],
-            "repository_version_added": ["exact"],
-            "repository_version_removed": ["exact"],
-        }
 
 
 class BaseContentViewSet(NamedModelViewSet):

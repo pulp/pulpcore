@@ -15,18 +15,8 @@ from pulpcore.app.serializers import (
     UploadDetailSerializer,
 )
 from pulpcore.app.serializers.upload import CONTENT_RANGE_PATTERN
-from pulpcore.app.viewsets import BaseFilterSet
-from pulpcore.app.viewsets.base import DATETIME_FILTER_OPTIONS, NamedModelViewSet
-from pulpcore.app.viewsets.custom_filters import IsoDateTimeFilter
+from pulpcore.app.viewsets.base import NamedModelViewSet
 from pulpcore.tasking.tasks import enqueue_with_reservation
-
-
-class UploadFilter(BaseFilterSet):
-    completed = IsoDateTimeFilter(field_name="completed")
-
-    class Meta:
-        model = Upload
-        fields = {"completed": DATETIME_FILTER_OPTIONS + ["isnull"]}
 
 
 class UploadViewSet(
@@ -41,7 +31,6 @@ class UploadViewSet(
 
     endpoint_name = "uploads"
     queryset = Upload.objects.all()
-    filterset_class = UploadFilter
     http_method_names = ["get", "post", "head", "put", "delete"]
 
     content_range_parameter = Parameter(
