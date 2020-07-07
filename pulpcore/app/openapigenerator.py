@@ -6,7 +6,7 @@ from django.utils.html import strip_tags
 from drf_yasg import openapi
 from drf_yasg.generators import OpenAPISchemaGenerator
 from drf_yasg.inspectors import SwaggerAutoSchema
-from drf_yasg.openapi import Parameter
+from drf_yasg.openapi import Parameter, IN_BODY
 from drf_yasg.utils import filter_none, force_real_str, get_serializer_ref_name, no_body
 from rest_framework import serializers
 
@@ -334,7 +334,9 @@ class PulpAutoSchema(SwaggerAutoSchema):
         consumes = self.get_consumes()
         produces = self.get_produces()
 
+        body = self.get_request_body_parameters(consumes)
         multipart = ["multipart/form-data", "application/x-www-form-urlencoded"]
+
         if self.method != "GET":
             contains_file_field = False
             serializer = self.get_request_serializer()
@@ -347,9 +349,16 @@ class PulpAutoSchema(SwaggerAutoSchema):
             if contains_file_field:
                 # automatically set the media type to form data if there's a file
                 # needed due to https://github.com/axnsan12/drf-yasg/issues/386
-                consumes = multipart
+                body = self.get_request_body_parameters(multipart)
+                # Due multipart, body will only have `formData`
+                schema = self.get_request_body_schema(serializer)
+                if schema:
+                    body_parameter = Parameter(
+                        name="pulp_body", in_=IN_BODY, required=False, schema=schema
+                    )
+                    # Adding `SchemaRef` for enabling drf-yasg to generate a write_only model
+                    body.append(body_parameter)
 
-        body = self.get_request_body_parameters(consumes)
         query = self.get_query_parameters()
         if self.method == "GET":
             fields_paramenter = Parameter(
