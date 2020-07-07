@@ -122,8 +122,6 @@ class WorkerFilter(BaseFilterSet):
         fields = {
             "name": NAME_FILTER_OPTIONS,
             "last_heartbeat": DATETIME_FILTER_OPTIONS,
-            "online": ["exact"],
-            "missing": ["exact"],
         }
 
     def filter_online(self, queryset, name, value):
