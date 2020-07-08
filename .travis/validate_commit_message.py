@@ -5,12 +5,11 @@
 #
 # For more info visit https://github.com/pulp/plugin_template
 
-import glob
-import os
 import re
 import requests
 import subprocess
 import sys
+from pathlib import Path
 
 KEYWORDS = ["fixes", "closes", "re", "ref"]
 NO_ISSUE = "[noissue]"
@@ -42,12 +41,12 @@ def __check_status(issue):
 
 
 def __check_changelog(issue):
-    matches = glob.glob(f"CHANGES/**/{issue}.*", recursive=True)
+    matches = list(Path("CHANGES").rglob(f"{issue}.*"))
 
     if len(matches) < 1:
         sys.exit(f"Could not find changelog entry in CHANGES/ for {issue}.")
     for match in matches:
-        if os.path.splitext(match)[1] not in CHANGELOG_EXTS:
+        if match.suffix not in CHANGELOG_EXTS:
             sys.exit(f"Invalid extension for changelog entry '{match}'.")
 
 

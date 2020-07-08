@@ -9,7 +9,22 @@
 
 set -euv
 
-pip install twine
+export COMMIT_MSG=$(git log --format=%B --no-merges -1)
+export RELEASE=$(echo $COMMIT_MSG | grep 'Releasing' | awk '{print $2}')
+export MILESTONE_URL=$(echo $COMMIT_MSG | grep 'RedmineMilestone:' | awk '{print $2}')
+export REDMINE_QUERY_URL=$(echo $COMMIT_MSG | grep 'RedmineQuery:' | awk '{print $2}')
+
+MILESTONE=$(http $MILESTONE_URL | jq -r .version.name)
+
+echo "Releasing $RELEASE - Milestone: $MILESTONE_URL Query: $REDMINE_QUERY_URL"
+
+if [[ "$MILESTONE" != "$RELEASE" ]]; then
+  echo "Milestone $MILESTONE is not equal to Release $RELEASE"
+  exit 1
+fi
+
+pip install python-redmine twine
+python .travis/redmine.py $REDMINE_QUERY_URL
 
 python setup.py sdist bdist_wheel --python-tag py3
 twine check dist/* || exit 1

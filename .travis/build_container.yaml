@@ -11,7 +11,6 @@
         dest: Containerfile
 
     - name: "Build pulp image"
-      docker_image:
       # We build from the ../.. (parent dir of pulpcore git repo) Docker build
       # "context" so that repos like pulp-smash are accessible to Docker
       # build. So that PR branches can be used via relative paths.
@@ -20,15 +19,7 @@
       # 1-off-builds and Travis CI purposes (which has no cache across CI runs.)
       # Run build.yaml with -e cache=false if your builds are using outdated
       # layers.
-        name: "{{ image.name }}"
-        tag: "{{ image.tag }}"
-        build:
-          path: "../.."
-          dockerfile: "{{ playbook_dir }}/Containerfile"
-          nocache: "{{ not cache | default(true) | bool }}"
-          pull: false
-        state: present
-        source: build
+      command: "docker build --network host --no-cache={{ not cache | default(true) | bool }} -t {{ image.name }}:{{ image.tag }} -f {{ playbook_dir }}/Containerfile ../.."
 
     - name: "Clean image cache"
       docker_prune:

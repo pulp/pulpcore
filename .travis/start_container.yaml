@@ -67,14 +67,19 @@
         state: present
       when: s3_test | default(false)
 
-    - name: "Wait for Pulp"
-      uri:
-        url: "http://pulp/pulp/api/v3/status/"
-        follow_redirects: none
-      register: result
-      until: result.status == 200
-      retries: 6
-      delay: 5
+    - block:
+        - name: "Wait for Pulp"
+          uri:
+            url: "http://pulp/pulp/api/v3/status/"
+            follow_redirects: none
+          register: result
+          until: result.status == 200
+          retries: 6
+          delay: 5
+      rescue:
+        - name: "Output pulp container log"
+          command: "docker logs pulp"
+          failed_when: true
 
 - hosts: pulp
   gather_facts: false
