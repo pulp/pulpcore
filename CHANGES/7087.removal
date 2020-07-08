@@ -1,0 +1,2 @@
+Removes the Write models from the OpenAPI schema.
+Brings back the models that were accidentally removed from the OpenAPI schema in 3.4.0 release.
