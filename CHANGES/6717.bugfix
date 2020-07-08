@@ -1,1 +1,0 @@
-Fixed 'integer out of range' error during sync by changing RemoteArtifact size field to BigIntegerField.

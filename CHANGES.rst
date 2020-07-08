@@ -17,6 +17,81 @@ Changelog
 
 .. towncrier release notes start
 
+3.5.0 (2020-07-08)
+==================
+REST API
+--------
+
+Features
+~~~~~~~~
+
+- Added start_versions= to export to allow for arbitrary incremental exports.
+  `#6763 <https://pulp.plan.io/issues/6763>`_
+- Added GroupProgressReport to track progress in a TaskGroup.
+  `#6858 <https://pulp.plan.io/issues/6858>`_
+- Provide a user agent string with all aiohttp requests by default.
+  `#6954 <https://pulp.plan.io/issues/6954>`_
+
+
+Bugfixes
+~~~~~~~~
+
+- Fixed 'integer out of range' error during sync by changing RemoteArtifact size field to BigIntegerField.
+  `#6717 <https://pulp.plan.io/issues/6717>`_
+- Added a more descriptive error message that is shown when CONTENT_ORIGIN is not properly configured
+  `#6771 <https://pulp.plan.io/issues/6771>`_
+- Including requirements.txt on MANIFEST.in
+  `#6888 <https://pulp.plan.io/issues/6888>`_
+- Corrected a number of filters to be django-filter-2.3.0-compliant.
+  `#6915 <https://pulp.plan.io/issues/6915>`_
+- Locked Content table to prevent import-deadlock.
+  `#7073 <https://pulp.plan.io/issues/7073>`_
+
+
+Improved Documentation
+~~~~~~~~~~~~~~~~~~~~~~
+
+- Updating installation docs
+  `#6836 <https://pulp.plan.io/issues/6836>`_
+- Fixed a number of typos in the import/export workflow docs.
+  `#6919 <https://pulp.plan.io/issues/6919>`_
+- Fixed docs which claim that admin user has a default password.
+  `#6992 <https://pulp.plan.io/issues/6992>`_
+- Fixed broken link to content plugins web page
+  `#7017 <https://pulp.plan.io/issues/7017>`_
+
+
+Deprecations and Removals
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+- Removes the Write models from the OpenAPI schema.
+  Brings back the models that were accidentally removed from the OpenAPI schema in 3.4.0 release.
+  `#7087 <https://pulp.plan.io/issues/7087>`_
+
+
+Misc
+~~~~
+
+- `#6483 <https://pulp.plan.io/issues/6483>`_, `#6925 <https://pulp.plan.io/issues/6925>`_
+
+
+Plugin API
+----------
+
+Features
+~~~~~~~~
+
+- Views can specify the tag name with `pulp_tag_name`
+  `#6832 <https://pulp.plan.io/issues/6832>`_
+- Added GroupProgressReport to track progress in a TaskGroup.
+  `#6858 <https://pulp.plan.io/issues/6858>`_
+- Exported the symbols `serializers.SingleContentArtifactField` and `files.PulpTemporaryUploadedFile`.
+  `#7088 <https://pulp.plan.io/issues/7088>`_
+
+
+----
+
+
 3.4.0 (2020-05-27)
 ==================
 REST API
