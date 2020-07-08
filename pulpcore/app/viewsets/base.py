@@ -130,7 +130,7 @@ class NamedModelViewSet(viewsets.GenericViewSet):
         minimal_serializer_class = getattr(self, "minimal_serializer_class", None)
 
         if minimal_serializer_class:
-            if hasattr(self, "request"):
+            if getattr(self, "request", None):
                 if "minimal" in self.request.query_params:
                     # the query param is a string, and non-empty strings evaluate True,
                     # so we need to do an actual string comparison to 'true'
