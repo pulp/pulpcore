@@ -1,0 +1,1 @@
+WorkerDirectory.delete() no longer recursively trys to delete itself when encountering a permission error
