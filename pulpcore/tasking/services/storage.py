@@ -73,16 +73,23 @@ class WorkerDirectory:
         """
         Delete the directory.
 
-        On permission denied - an attempt is made to recursively fix the
+        On permission denied - an attempt is made to fix the
         permissions on the tree and the delete is retried.
+        """
+        try:
+            self._delete()
+        except PermissionError:
+            self._set_permissions()
+            self._delete()
+
+    def _delete(self):
+        """
+        Helper method for delete
         """
         try:
             shutil.rmtree(self.path)
         except FileNotFoundError:
             pass
-        except PermissionError:
-            self._set_permissions()
-            self.delete()
 
     def _set_permissions(self):
         """
