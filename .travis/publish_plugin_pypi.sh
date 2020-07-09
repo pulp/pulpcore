@@ -10,13 +10,16 @@
 set -euv
 
 export COMMIT_MSG=$(git log --format=%B --no-merges -1)
-export RELEASE=$(echo $COMMIT_MSG | grep 'Releasing' | awk '{print $2}')
-export MILESTONE_URL=$(echo $COMMIT_MSG | grep 'RedmineMilestone:' | awk '{print $2}')
-export REDMINE_QUERY_URL=$(echo $COMMIT_MSG | grep 'RedmineQuery:' | awk '{print $2}')
+export RELEASE=$(echo $COMMIT_MSG | awk '{print $2}')
+export MILESTONE_URL=$(echo $COMMIT_MSG | awk '{print $6}')
+export REDMINE_QUERY_URL=$(echo $COMMIT_MSG | awk '{print $4}')
+
+echo "Releasing $RELEASE"
+echo "Milestone URL: $MILESTONE_URL"
+echo "Query: $REDMINE_QUERY_URL"
 
 MILESTONE=$(http $MILESTONE_URL | jq -r .version.name)
-
-echo "Releasing $RELEASE - Milestone: $MILESTONE_URL Query: $REDMINE_QUERY_URL"
+echo "Milestone: $MILESTONE"
 
 if [[ "$MILESTONE" != "$RELEASE" ]]; then
   echo "Milestone $MILESTONE is not equal to Release $RELEASE"
