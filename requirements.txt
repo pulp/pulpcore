@@ -3,7 +3,7 @@ aiodns
 aiofiles
 backoff
 Django~=2.2.14  # LTS version, switch only if we have a compelling reason to
-django-filter~=2.2.0
+django-filter~=2.3.0
 django-import-export~=2.2.0
 djangorestframework~=3.10.2
 djangorestframework-queryfields~=1.0.0
