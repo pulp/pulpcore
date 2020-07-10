@@ -3,7 +3,8 @@ import logging
 
 from django.conf.urls import include, url
 from drf_yasg import openapi
-from drf_yasg.views import get_schema_view as yasg_get_schema_view
+
+# from drf_yasg.views import get_schema_view as yasg_get_schema_view
 from rest_framework import permissions
 from rest_framework.schemas import get_schema_view
 from rest_framework_nested import routers
@@ -11,6 +12,10 @@ from rest_framework_nested import routers
 from pulpcore.app.apps import pulp_plugin_configs
 from pulpcore.app.views import OrphansView, StatusView
 from pulpcore.constants import API_ROOT
+
+from rest_framework.renderers import JSONOpenAPIRenderer
+from rest_framework.authentication import BasicAuthentication
+from pulpcore.app.viewsets.base import PulpSchemaGenerator
 
 log = logging.getLogger(__name__)
 
@@ -125,26 +130,42 @@ api_info = openapi.Info(
     license=openapi.License(name="GPLv2+"),
 )
 
-docs_schema_view = yasg_get_schema_view(public=True, permission_classes=(permissions.AllowAny,),)
+# docs_schema_view = yasg_get_schema_view(
+#     public=True,
+#     permission_classes=(permissions.AllowAny,),
+# )
+# urlpatterns.append(url(
+#     r'^{api_root}docs/api(?P<format>\.json|\.yaml)'.format(api_root=API_ROOT),
+#     docs_schema_view.without_ui(cache_timeout=None),
+#     name='schema-json')
+# )
+
+# urlpatterns.append(url(
+#     r'^{api_root}docs/'.format(api_root=API_ROOT),
+#     docs_schema_view.with_ui('redoc', cache_timeout=None),
+#     name='schema-redoc')
+# )
+
+schema_view = get_schema_view(title="Pulp API", permission_classes=[permissions.AllowAny],)
+
+schema_view_openapi = get_schema_view(
+    title="Pulp API",
+    public=True,
+    permission_classes=[permissions.AllowAny],
+    authentication_classes=[BasicAuthentication],
+    renderer_classes=[JSONOpenAPIRenderer],
+    generator_class=PulpSchemaGenerator,
+)
+
+urlpatterns.append(url(r"^{api_root}$".format(api_root=API_ROOT), schema_view))
 urlpatterns.append(
     url(
-        r"^{api_root}docs/api(?P<format>\.json|\.yaml)".format(api_root=API_ROOT),
-        docs_schema_view.without_ui(cache_timeout=None),
+        r"^{api_root}docs/api.json".format(api_root=API_ROOT),
+        schema_view_openapi,
         name="schema-json",
     )
 )
 
-urlpatterns.append(
-    url(
-        r"^{api_root}docs/".format(api_root=API_ROOT),
-        docs_schema_view.with_ui("redoc", cache_timeout=None),
-        name="schema-redoc",
-    )
-)
-
-schema_view = get_schema_view(title="Pulp API", permission_classes=[permissions.AllowAny],)
-
-urlpatterns.append(url(r"^{api_root}$".format(api_root=API_ROOT), schema_view))
 
 all_routers = [root_router] + vs_tree.register_with(root_router)
 for router in all_routers:

@@ -1,3 +1,4 @@
+import re
 import warnings
 from gettext import gettext as _
 from urllib.parse import urlparse
@@ -6,11 +7,13 @@ from django.core.exceptions import FieldDoesNotExist, FieldError, ValidationErro
 from django.forms.utils import ErrorList
 from django.urls import Resolver404, resolve
 from django_filters.rest_framework import DjangoFilterBackend, filterset
-from drf_yasg.utils import swagger_auto_schema
+from drf_yasg.utils import swagger_auto_schema, get_serializer_ref_name
 from rest_framework import viewsets
 from rest_framework.filters import OrderingFilter
 from rest_framework.generics import get_object_or_404
-from rest_framework.schemas.openapi import AutoSchema
+from rest_framework.schemas.openapi import AutoSchema, SchemaGenerator
+from rest_framework.schemas.utils import is_list_view
+from rest_framework import serializers
 from rest_framework.serializers import ValidationError as DRFValidationError
 
 from pulpcore.app import tasks
@@ -28,6 +31,145 @@ DATETIME_FILTER_OPTIONS = ["lt", "lte", "gt", "gte", "range"]
 # e.g.
 # /?pulp_created__gte=2018-04-12T19:45:52
 # /?pulp_created__range=2018-04-12T19:45:52,2018-04-13T19:45:52
+
+
+class PulpSchemaGenerator(SchemaGenerator):
+    def get_schema(self, request=None, public=False):
+        """
+        Generate a OpenAPI schema.
+        """
+        self._initialise_endpoints()
+
+        paths, components = self.get_paths(request, public)
+        if not paths:
+            return None
+
+        schema = {
+            "openapi": "3.0.2",
+            "info": self.get_info(),
+            "servers": [{"url": "http://localhost:24817/"}],
+            "security": [{"basicAuth": []}],
+            "components": components,
+            "paths": paths,
+        }
+
+        return schema
+
+    @staticmethod
+    def get_parameter_slug_from_model(model, prefix):
+        """Returns a path parameter name for the resource associated with the model.
+
+        Args:
+            model (django.db.models.Model): The model for which a path parameter name is needed
+            prefix (str): Optional prefix to add to the slug
+
+        Returns:
+            str: *pulp_href where * is the model name in all lower case letters
+        """
+        slug = "%s_href" % "_".join(
+            [part.lower() for part in re.findall("[A-Z][^A-Z]*", model.__name__)]
+        )
+        if prefix:
+            return "{}_{}".format(prefix, slug)
+        else:
+            return slug
+
+    def convert_endpoint_path_params(self, path, view):
+        """Replaces all 'pulp_id' path parameters with a specific name for the primary key.
+
+        This method is used to ensure that the primary key name is consistent between nested
+        endpoints. get_endpoints() returns paths that use 'pulp_id' for the top level path and a
+        specific name for the nested paths. e.g.: repository_pk.
+
+        This ensures that when the endpoints are sorted, the parent endpoint appears before the
+        endpoints nested under it.
+
+        Args:
+            endpoints (dict): endpoints as returned by get_endpoints
+
+        Returns:
+            dict: The enpoints dictionary with modified primary key path parameter names.
+        """
+        from pulpcore.app.models import RepositoryVersion
+
+        if not hasattr(view, "queryset") or view.queryset is None:
+            if hasattr(view, "model"):
+                resource_model = view.model
+            else:
+                return path
+        else:
+            resource_model = view.queryset.model
+        if resource_model:
+            prefix_ = None
+            if issubclass(resource_model, RepositoryVersion):
+                prefix_ = view.parent_viewset.endpoint_name
+            param_name = self.get_parameter_slug_from_model(resource_model, prefix_)
+            resource_path = "%s}/" % path.rsplit(sep="}", maxsplit=1)[0]
+            path = path.replace(resource_path, "{%s}" % param_name)
+        return path
+
+    def get_paths(self, request=None, public=False):
+        from urllib.parse import urljoin
+        import uritemplate
+
+        result = {}
+        components = {
+            "securitySchemes": {"basicAuth": {"type": "http", "scheme": "basic"}},
+            "schemas": {},
+        }
+
+        plugins = None
+        if "bindings" in request.query_params:
+            plugins = [request.query_params["plugin"]]
+
+        paths, view_endpoints = self._get_paths_and_endpoints(None if public else request)
+
+        # Only generate the path prefix for paths that will be included
+        if not paths:
+            return None
+
+        for path, method, view in view_endpoints:
+            plugin = view.__module__.split(".")[0]
+            if plugins and plugin not in plugins:
+                continue
+            if not self.has_view_permissions(path, method, view):
+                continue
+            variables = uritemplate.variables(path)
+            view_name = view.view_name() if "view_name" in dir(view) else path
+            old_path = path
+            if len(variables) == 1:
+                path = self.convert_endpoint_path_params(path, view)
+            subpath = re.findall(r"[a-zA-Z]+", view_name)
+            if len(subpath) == 1 and old_path != path:
+                subpath = old_path.replace("/pulp/api/v3", "").strip("/").split("/")
+
+            title_path = []
+            for string in subpath:
+                if f"{string}s" in subpath:
+                    continue
+                if "{" not in string and string.title() not in title_path:
+                    title_path.append(string.title())
+            operation = view.schema.get_operation(path, method)
+            operation["tags"] = ["".join(title_path)]
+            if "component" in operation["responses"]:
+                for ref_name, response_schema in operation["responses"]["component"].items():
+                    components["schemas"][ref_name] = response_schema
+                del operation["responses"]["component"]
+            if "component" in operation.get("requestBody", {}):
+                for ref_name, content_schema in operation["requestBody"]["component"].items():
+                    components["schemas"][ref_name] = content_schema
+                del operation["requestBody"]["component"]
+
+            # Normalise path for any provided mount url.
+            if path.startswith("/"):
+                path = path[1:]
+            if not path.startswith("{"):
+                path = urljoin(self.url or "/", path)
+
+            result.setdefault(path, {})
+            result[path][method.lower()] = operation
+
+        return result, components
 
 
 class DefaultSchema(AutoSchema):
@@ -55,6 +197,106 @@ class DefaultSchema(AutoSchema):
             return self.view.action in ["list"]
 
         return method.lower() in ["get"]
+
+    def _get_responses(self, path, method):
+        # TODO: Handle multiple codes and pagination classes.
+        if method == "DELETE":
+            return {"204": {"description": ""}}
+
+        item_schema = {}
+        serializer = self._get_serializer(path, method)
+        ref_name = get_serializer_ref_name(serializer)
+        ref_name = "".join(ref_name.split("."))
+
+        # Getting serializer from @swagger_auto_schema
+        action = getattr(self.view, "action", method.lower())
+        action_method = getattr(self.view, action, None)
+        overrides = getattr(action_method, "_swagger_auto_schema", {})
+        responses = overrides.get(method.lower(), overrides).get("responses")
+        if responses:
+            for key, value in responses.items():
+                serializer = value()
+            ref_name = serializer.__class__.__name__.replace("Serializer", "")
+
+        reference = {"$ref": f"#/components/schemas/{ref_name}"}
+
+        if isinstance(serializer, serializers.Serializer):
+            item_schema = self._map_serializer(serializer)
+            # No write_only fields for response.
+            for name, schema in item_schema["properties"].copy().items():
+                if "writeOnly" in schema:
+                    del item_schema["properties"][name]
+                    if "required" in item_schema:
+                        item_schema["required"] = [f for f in item_schema["required"] if f != name]
+
+        if is_list_view(path, method, self.view):
+            response_schema = {
+                "type": "array",
+                "items": reference,
+            }
+            paginator = self._get_pagninator()
+            if paginator:
+                response_schema = paginator.get_paginated_response_schema(response_schema)
+        else:
+            response_schema = reference
+
+        item_schema["type"] = "object"
+
+        return {
+            "component": {ref_name: item_schema},
+            "200": {
+                "content": {ct: {"schema": response_schema} for ct in self.content_types},
+                # description is a mandatory property,
+                # https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.2.md#responseObject
+                # TODO: put something meaningful into it
+                "description": "",
+            },
+        }
+
+    def _get_request_body(self, path, method):
+        if method not in ("PUT", "PATCH", "POST"):
+            return {}
+
+        serializer = self._get_serializer(path, method)
+
+        if not isinstance(serializer, serializers.Serializer):
+            return {}
+
+        ref_name = get_serializer_ref_name(serializer)
+        ref_name = "".join(ref_name.split("."))
+        # ref_name = f"Pulp{ref_name}"
+
+        reference = {"$ref": f"#/components/schemas/{ref_name}"}
+
+        content = self._map_serializer(serializer)
+        # No required fields for PATCH
+        if method == "PATCH":
+            del content["required"]
+        # No read_only fields for request.
+        # for name, schema in content['properties'].copy().items():
+        #     if 'readOnly' in schema:
+        #         del content['properties'][name]
+
+        content["type"] = "object"
+
+        return {
+            "component": {ref_name: content},
+            "required": True,
+            "content": {ct: {"schema": reference} for ct in self.content_types},
+        }
+
+    def _get_operation_id(self, path, method):
+        """
+        Compute an operation ID from the model, serializer or view name.
+        """
+        method_name = getattr(self.view, "action", method.lower())
+        if is_list_view(path, method, self.view):
+            action = "list"
+        elif method_name not in self.method_mapping:
+            action = method_name
+        else:
+            action = self.method_mapping[method.lower()]
+        return action.replace("destroy", "delete").replace("retrieve", "read")
 
 
 class StableOrderingFilter(OrderingFilter):
