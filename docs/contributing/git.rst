@@ -113,6 +113,14 @@ all required PRs should be ready to merge--meaning that all tests/checks should 
 review requirements should be met, etc. When merging, the PR along with its required PRs should all
 be merged at the same time. This is necessary to ensure that test breakages don't block other PRs.
 
+For very similar reasons it can happen that you need changes to the base image used in the CI to
+spin up a new pulp container. In those cases you can build your own modified version of the image
+and push it to a container registry. Now you can specify the image to use in the last commit like::
+
+    CI Base Image: pulp/pulp-ci:special_feature
+
+The same meticulousness as described above is required to merge those Pull Requests.
+
 
 .. _changelog-update:
 
