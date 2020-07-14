@@ -2,12 +2,14 @@
 """Tests that CRUD repositories."""
 import unittest
 from itertools import permutations
+from urllib.parse import urljoin
 
+from pulp_file.tests.functional.utils import gen_file_remote
 from pulp_smash import api, config, utils
 from pulp_smash.pulp3.utils import gen_repo
 from requests.exceptions import HTTPError
 
-from pulpcore.tests.functional.api.using_plugin.constants import FILE_REPO_PATH
+from pulpcore.tests.functional.api.using_plugin.constants import FILE_REMOTE_PATH, FILE_REPO_PATH
 from pulpcore.tests.functional.utils import set_up_module as setUpModule  # noqa:F401
 from pulpcore.tests.functional.utils import skip_if
 
@@ -153,6 +155,25 @@ class CRUDRepoTestCase(unittest.TestCase):
         # verify the update
         repo = self.client.get(self.repo["pulp_href"])
         self.assertEqual(repo[attr], string)
+
+    @skip_if(bool, "repo", False)
+    def test_03_set_remote_on_repository(self):
+        """Test setting remotes on repositories."""
+        body = gen_file_remote()
+        remote = self.client.post(FILE_REMOTE_PATH, body)
+
+        # verify that syncing with no remote raises an error
+        with self.assertRaises(HTTPError):
+            self.client.post(urljoin(self.repo["pulp_href"], "sync/"))
+
+        # test setting the remote on the repo
+        self.client.patch(self.repo["pulp_href"], {"remote": remote["pulp_href"]})
+
+        # test syncing without a remote
+        self.client.post(urljoin(self.repo["pulp_href"], "sync/"))
+
+        repo = self.client.get(self.repo["pulp_href"])
+        self.assertEqual(repo["latest_version_href"], f"{repo['pulp_href']}versions/1/")
 
     @skip_if(bool, "repo", False)
     def test_04_delete_repo(self):

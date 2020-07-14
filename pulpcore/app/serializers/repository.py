@@ -28,6 +28,20 @@ class RepositorySerializer(ModelSerializer):
     description = serializers.CharField(
         help_text=_("An optional description."), required=False, allow_null=True
     )
+    remote = DetailRelatedField(
+        view_name_pattern=r"remotes(-.*/.*)-detail",
+        queryset=models.Remote.objects.all(),
+        required=False,
+        allow_null=True,
+    )
+
+    def validate_remote(self, value):
+        if value and type(value) not in self.Meta.model.REMOTE_TYPES:
+            raise serializers.ValidationError(
+                detail=_("Type for Remote '{}' does not match Repository.").format(value.name)
+            )
+
+        return value
 
     class Meta:
         model = models.Repository
@@ -36,6 +50,7 @@ class RepositorySerializer(ModelSerializer):
             "latest_version_href",
             "name",
             "description",
+            "remote",
         )
 
 
@@ -145,12 +160,10 @@ class RemoteSerializer(ModelSerializer):
 
 class RepositorySyncURLSerializer(serializers.Serializer):
     remote = DetailRelatedField(
-        required=True,
+        required=False,
         view_name_pattern=r"remotes(-.*/.*)-detail",
         queryset=models.Remote.objects.all(),
-        help_text=_("A URI of the repository to be synchronized."),
-        label=_("Remote"),
-        error_messages={"required": _("The remote URI must be specified.")},
+        help_text=_("A remote to sync from. This will override a remote set on repository."),
     )
 
     mirror = fields.BooleanField(
@@ -161,6 +174,19 @@ class RepositorySyncURLSerializer(serializers.Serializer):
             "the remote repository. If ``False``, sync will be additive only."
         ),
     )
+
+    def validate(self, data):
+        try:
+            remote = models.Repository.objects.get(pk=self.context["repository_pk"]).remote
+        except KeyError:
+            remote = None
+
+        if "remote" not in data and not remote:
+            raise serializers.ValidationError(
+                {"remote": _("This field is required since a remote is not set on the repository.")}
+            )
+
+        return data
 
 
 class ContentSummarySerializer(serializers.Serializer):
