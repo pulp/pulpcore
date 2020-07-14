@@ -36,10 +36,12 @@ class Repository(MasterModel):
     Relations:
 
         content (models.ManyToManyField): Associated content.
+        remote (models.ForeignKeyField): Associated remote
     """
 
     TYPE = "repository"
     CONTENT_TYPES = []
+    REMOTE_TYPES = []
 
     name = models.TextField(db_index=True, unique=True)
     description = models.TextField(null=True)
@@ -47,6 +49,7 @@ class Repository(MasterModel):
     content = models.ManyToManyField(
         "Content", through="RepositoryContent", related_name="repositories"
     )
+    remote = models.ForeignKey("Remote", null=True, on_delete=models.SET_NULL)
 
     class Meta:
         verbose_name_plural = "repositories"
@@ -185,10 +188,6 @@ class Remote(MasterModel):
         download_concurrency (models.PositiveIntegerField): Total number of
             simultaneous connections.
         policy (models.TextField): The policy to use when downloading content.
-
-    Relations:
-
-        repository (models.ForeignKey): The repository that owns this Remote
     """
 
     TYPE = "remote"
