@@ -52,15 +52,13 @@ class RemoteSerializer(ModelSerializer):
     )
     url = serializers.CharField(help_text="The URL of an external content source.",)
     ca_cert = serializers.CharField(
-        help_text="A string containing the PEM encoded CA certificate used to validate the server "
-        "certificate presented by the remote server. All new line characters must be "
-        "escaped.",
+        help_text="A PEM encoded CA certificate used to validate the server "
+        "certificate presented by the remote server.",
         required=False,
         allow_null=True,
     )
     client_cert = serializers.CharField(
-        help_text="A string containing the PEM encoded client certificate used for authentication. "
-        "All new line characters must be escaped.",
+        help_text="A PEM encoded client certificate used for authentication.",
         required=False,
         allow_null=True,
     )
