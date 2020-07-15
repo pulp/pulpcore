@@ -200,7 +200,7 @@ class PulpExporter(Exporter):
     path = models.TextField()
     repositories = models.ManyToManyField(Repository)
     last_export = models.ForeignKey(
-        "PulpExport", related_name="last_export", on_delete=models.PROTECT, null=True
+        "PulpExport", related_name="last_export", on_delete=models.SET_NULL, null=True
     )
 
     class Meta:

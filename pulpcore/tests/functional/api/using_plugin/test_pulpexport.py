@@ -98,17 +98,13 @@ class BaseExporterCase(unittest.TestCase):
         """
         Utility routine to delete an exporter.
 
-        Sets last_exporter to null to make it possible. Also removes the export-directory
-        and all its contents.
+        Delete even with existing last_export should now Just Work
+        (as of https://pulp.plan.io/issues/6555)
         """
         cli_client = cli.Client(self.cfg)
         cmd = ("rm", "-rf", exporter.path)
         cli_client.run(cmd, sudo=True)
 
-        # NOTE: you have to manually undo 'last-export' if you really really REALLY want to
-        #  delete an Exporter. This is...probably correct?
-        body = {"last_export": None}
-        self.exporter_api.partial_update(exporter.pulp_href, body)
         self.exporter_api.delete(exporter.pulp_href)
 
     def _create_exporter(self, cleanup=True, use_repos=None):
@@ -260,10 +256,11 @@ class PulpExportTestCase(BaseExporterCase):
             exports = self.exports_api.list(exporter.pulp_href).results
             self.assertEqual(2, len(exports))
 
-            # Now try to delete the last_export export and fail
-            with self.assertRaises(ApiException) as ae:
-                self._delete_export(last_export)
-            self.assertEqual(ae.exception.status, 500)
+            # Now try to delete the last_export export and succeed
+            # as of https://pulp.plan.io/issues/6555
+            self._delete_export(last_export)
+            # Make sure the exporter is still around...
+            exporter = self.exporter_api.read(exporter.pulp_href)
         finally:
             self._delete_exporter(exporter)
 
