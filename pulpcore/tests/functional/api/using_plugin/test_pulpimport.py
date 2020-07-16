@@ -86,6 +86,16 @@ class PulpImportTestCase(unittest.TestCase):
         return export
 
     @classmethod
+    def _create_chunked_export(cls):
+        export_response = cls.exports_api.create(cls.exporter.pulp_href, {"chunk_size": "5KB"})
+        monitor_task(export_response.task)
+        task = cls.client.get(export_response.task)
+        resources = task["created_resources"]
+        export_href = resources[0]
+        export = cls.exports_api.read(export_href)
+        return export
+
+    @classmethod
     def setUpClass(cls):
         """Create class-wide variables."""
         cls.cfg = config.get_config()
@@ -103,23 +113,18 @@ class PulpImportTestCase(unittest.TestCase):
         (cls.import_repos, cls.export_repos, cls.remotes) = cls._setup_repositories()
         cls.exporter = cls._create_exporter()
         cls.export = cls._create_export()
+        cls.chunked_export = cls._create_chunked_export()
 
     @classmethod
     def _delete_exporter(cls):
         """
         Utility routine to delete an exporter.
 
-        Sets last_exporter to null to make it possible. Also removes the export-directory
-        and all its contents.
+        Also removes the export-directory and all its contents.
         """
         cli_client = cli.Client(cls.cfg)
         cmd = ("rm", "-rf", cls.exporter.path)
         cli_client.run(cmd, sudo=True)
-
-        # NOTE: you have to manually undo 'last-export' if you really really REALLY want to
-        #  delete an Exporter. This is...probably correct?
-        body = {"last_export": None}
-        cls.exporter_api.partial_update(cls.exporter.pulp_href, body)
         cls.exporter_api.delete(cls.exporter.pulp_href)
 
     @classmethod
@@ -156,10 +161,18 @@ class PulpImportTestCase(unittest.TestCase):
 
         return importer
 
-    def _perform_import(self, importer):
+    def _perform_import(self, importer, chunked=False):
         """Perform an import with importer."""
-        filenames = list(self.export.output_file_info.keys())
-        import_response = self.imports_api.create(importer.pulp_href, {"path": filenames[0]})
+        if chunked:
+            filenames = [
+                f for f in list(self.chunked_export.output_file_info.keys()) if f.endswith("json")
+            ]
+            import_response = self.imports_api.create(importer.pulp_href, {"toc": filenames[0]})
+        else:
+            filenames = [
+                f for f in list(self.export.output_file_info.keys()) if f.endswith("tar.gz")
+            ]
+            import_response = self.imports_api.create(importer.pulp_href, {"path": filenames[0]})
         monitor_task(import_response.task)
         task = self.client.get(import_response.task)
         resources = task["created_resources"]
@@ -209,4 +222,13 @@ class PulpImportTestCase(unittest.TestCase):
         for repo in self.import_repos:
             repo = self.repo_api.read(repo.pulp_href)
             # still only one version as pulp won't create a new version if nothing changed
+            self.assertEqual(f"{repo.pulp_href}versions/1/", repo.latest_version_href)
+
+    def test_chunked_import(self):
+        """Test an import."""
+        importer = self._create_importer()
+        task_group = self._perform_import(importer, chunked=True)
+        self.assertEqual(len(self.import_repos), task_group.completed)
+        for repo in self.import_repos:
+            repo = self.repo_api.read(repo.pulp_href)
             self.assertEqual(f"{repo.pulp_href}versions/1/", repo.latest_version_href)

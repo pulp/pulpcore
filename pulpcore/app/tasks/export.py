@@ -1,4 +1,5 @@
 import hashlib
+import json
 import logging
 import os
 import subprocess
@@ -165,8 +166,8 @@ def pulp_export(the_export):
 
     tarfile_fp = the_export.export_tarfile_path()
     os.makedirs(pulp_exporter.path, exist_ok=True)
-    rslts = {}
 
+    rslts = {}
     if the_export.validated_chunk_size:
         # write it into chunks
         with subprocess.Popen(
@@ -186,10 +187,13 @@ def pulp_export(the_export):
                 _do_export(pulp_exporter, tar, the_export)
 
         # compute the hashes
-        paths = [str(Path(p)) for p in glob(tarfile_fp + ".*")]
+        global_hash = hashlib.sha256()
+        paths = sorted([str(Path(p)) for p in glob(tarfile_fp + ".*")])
         for a_file in paths:
-            a_hash = _compute_hash(a_file)
+            a_hash = _compute_hash(a_file, global_hash)
             rslts[a_file] = a_hash
+        tarfile_hash = global_hash.hexdigest()
+
     else:
         # write into the file
         with tarfile.open(tarfile_fp, "w:gz") as tar:
@@ -200,6 +204,31 @@ def pulp_export(the_export):
 
     # store the outputfile/hash info
     the_export.output_file_info = rslts
+
+    # write outputfile/hash info to a file 'next to' the output file(s)
+    output_file_info_path = tarfile_fp.replace(".tar.gz", "-toc.json")
+    with open(output_file_info_path, "w") as outfile:
+        if the_export.validated_chunk_size:
+            chunk_size = the_export.validated_chunk_size
+        else:
+            chunk_size = 0
+        chunk_toc = {
+            "meta": {
+                "chunk_size": chunk_size,
+                "file": os.path.basename(tarfile_fp),
+                "global_hash": tarfile_hash,
+            },
+            "files": {},
+        }
+        # Build a toc with just filenames (not the path on the exporter-machine)
+        for a_path in rslts.keys():
+            chunk_toc["files"][os.path.basename(a_path)] = rslts[a_path]
+        json.dump(chunk_toc, outfile)
+
+    # add toc to output_file_info
+    toc_hash = _compute_hash(output_file_info_path)
+    the_export.output_file_info[output_file_info_path] = toc_hash
+
     # save the export
     the_export.save()
     # mark it as 'last'
@@ -208,12 +237,14 @@ def pulp_export(the_export):
     pulp_exporter.save()
 
 
-def _compute_hash(filename):
+def _compute_hash(filename, global_hash=None):
     sha256_hash = hashlib.sha256()
     with open(filename, "rb") as f:
         # Read and update hash string value in blocks of 4K
         for byte_block in iter(lambda: f.read(4096), b""):
             sha256_hash.update(byte_block)
+            if global_hash:
+                global_hash.update(byte_block)
         return sha256_hash.hexdigest()
 
 

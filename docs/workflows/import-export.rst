@@ -154,12 +154,27 @@ specified by that Exporter's ``path`` attribute::
     http POST :${EXPORTER_HREF}exports/
 
 The resulting Export writes to a ``.tar.gz`` file, in the directory pointed to by the
-Exporter's path, with a name that follows the convention ``export-<export-UUID>-YYYYmmdd_HHMM.tar.gz``::
+Exporter's path, with a name that follows the convention ``export-<export-UUID>-YYYYmmdd_HHMM.tar.gz``.
+
+It will also produce a "table of contents" file describing the file (or files, see
+`Exporting Chunked Files`_ below) for later use verifying and importing the results of the export::
 
     ls /tmp/exports
     export-32fd25c7-18b2-42de-b2f8-16f6d90358c3-20200416_2000.tar.gz
+    export-32fd25c7-18b2-42de-b2f8-16f6d90358c3-20200416_2000-toc.json
+    python -m json.tool /tmp/exports/export-32fd25c7-18b2-42de-b2f8-16f6d90358c3-20200416_2000-toc.json
+        {
+        "meta": {
+            "chunk_size": 0, # chunk_size in bytes, or 0 if an export did not use the chunk_size parameter
+            "file": "export-32fd25c7-18b2-42de-b2f8-16f6d90358c3-20200416_2000.tar.gz",
+            "global_hash": "eaef962943915ecf6b5e45877b162364284bd9c4f367d9c96d18c408012ef424"
+        },
+        "files": {
+            "export-32fd25c7-18b2-42de-b2f8-16f6d90358c3-20200416_2000.tar.gz": "eaef962943915ecf6b5e45877b162364284bd9c4f367d9c96d18c408012ef424"
+        }
+    }
 
-This export file can now be transferred to a Downstream Pulp instance, and imported.
+These export files can now be transferred to a Downstream Pulp instance, and imported.
 
 Exporting Specific Versions
 ---------------------------
@@ -258,7 +273,6 @@ directory, with a four-digit sequence number suffix::
             "task": "/pulp/api/v3/tasks/da3350f7-0102-4dd5-81e0-81becf3ffdc7/"
         }
     ls -l /tmp/exports/
-        total 76
         10K export-780822a4-d280-4ed0-a53c-382a887576a6-20200522_2325.tar.gz.0000
         10K export-780822a4-d280-4ed0-a53c-382a887576a6-20200522_2325.tar.gz.0001
         10K export-780822a4-d280-4ed0-a53c-382a887576a6-20200522_2325.tar.gz.0002
@@ -266,6 +280,27 @@ directory, with a four-digit sequence number suffix::
         10K export-780822a4-d280-4ed0-a53c-382a887576a6-20200522_2325.tar.gz.0004
         10K export-780822a4-d280-4ed0-a53c-382a887576a6-20200522_2325.tar.gz.0005
         2.3K export-780822a4-d280-4ed0-a53c-382a887576a6-20200522_2325.tar.gz.0006
+        1168 export-780822a4-d280-4ed0-a53c-382a887576a6-20200522_2325-toc.json
+
+The "table of contents" lists all the resulting files and their checksums::
+
+    python -m json.tool /tmp/exports/export-780822a4-d280-4ed0-a53c-382a887576a6-20200522_2325-toc.json
+    {
+        "meta": {
+            "chunk_size": 10240,
+            "file": "export-8c1891a3-ffb5-41a7-b141-51daa0e38a18-20200717_1947.tar.gz",
+            "global_hash": "eaef962943915ecf6b5e45877b162364284bd9c4f367d9c96d18c408012ef424"
+        },
+        "files": {
+            "export-780822a4-d280-4ed0-a53c-382a887576a6-20200522_2325.tar.gz.0000": "8156874798802f773bcbaf994def6523888922bde7a939bc8ac795a5cbb25b85",
+            "export-780822a4-d280-4ed0-a53c-382a887576a6-20200522_2325.tar.gz.0001": "e52fac34b0b7b1d8602f5c116bf9d3eb5363d2cae82f7cc00cc4bd5653ded852",
+            "export-780822a4-d280-4ed0-a53c-382a887576a6-20200522_2325.tar.gz.0002": "df4a2ea551ff41e9fb046e03aa36459f216d4bcb07c23276b78a96b98ae2b517",
+            "export-780822a4-d280-4ed0-a53c-382a887576a6-20200522_2325.tar.gz.0003": "27a6ecba3cc51965fdda9ec400f5610ff2aa04a6834c01d0c91776ac21a0e9bb",
+            "export-780822a4-d280-4ed0-a53c-382a887576a6-20200522_2325.tar.gz.0004": "f35c5a96fccfe411c074463c0eb0a77b39fa072ba160903d421c08313aba58f8",
+            "export-780822a4-d280-4ed0-a53c-382a887576a6-20200522_2325.tar.gz.0005": "13458b10465b01134bde49319d6b5cba9948016448da9d35cb447265a25e3caa",
+            "export-780822a4-d280-4ed0-a53c-382a887576a6-20200522_2325.tar.gz.0006": "a1986a0590943c9bb573c7d7170c428457ce54efe75f55997259ea032c585a35"
+        }
+    }
 
 Updating an Exporter
 --------------------
@@ -293,13 +328,31 @@ to the names of repos in Pulp. For example, suppose the name of the repo in the 
     http :/pulp/api/v3/importers/core/pulp/ name="test" repo_mapping:="{\"source\": \"dest\"}"
 
 
-After the importer is created, a POST request to create an import will trigger the import process::
+After the importer is created, a POST request to create an import will trigger the import process.
+
+You can import an exported ``.tar.gz`` directly using the ``path`` parameter::
 
     http POST :/pulp/api/v3/importers/core/pulp/f8acba87-0250-4640-b56b-c92597d344b7/imports/ \
       path="/data/export-113c8950-072b-432a-9da6-24da1f4d0a02-20200408_2015.tar.gz"
 
+Or you can point the importer at the "table of contents" file that was produced by an export.
+If the TOC file is in the same directory as the export-files it points to, the import process
+will:
 
-One thing worth noting is that the path must be defined in the ``ALLOWED_IMPORT_PATHS`` setting.
+    * verify the checksum(s) of all export-files,
+    * reassemble a chunked-export into a single ``.tar.gz``
+    * remove chunks as they are used (in order to conserve disk space)
+    * verify the checksum of the resulting reassembled ``.tar.gz``
+
+and then import the result::
+
+    http POST :/pulp/api/v3/importers/core/pulp/f8acba87-0250-4640-b56b-c92597d344b7/imports/ \
+      toc="/data/export-113c8950-072b-432a-9da6-24da1f4d0a02-20200408_2015-toc.json"
+
+.. note::
+
+    The directory containing the file pointed to by ``path`` or ``toc`` must be defined in the
+    ``ALLOWED_IMPORT_PATHS`` setting or the import will fail.
 
 The command to create an import will return a task that can be used to monitor the import. You can
 also see a history of past imports::
