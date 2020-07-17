@@ -490,6 +490,7 @@ class Handler:
         for remote_artifact in content_artifact.remoteartifact_set.all():
             try:
                 response = await self._stream_remote_artifact(request, response, remote_artifact)
+                return response
 
             except ClientResponseError:
                 continue
@@ -643,4 +644,7 @@ class Handler:
         if remote.policy != Remote.STREAMED:
             self._save_artifact(download_result, remote_artifact)
         await response.write_eof()
+
+        if response.status == 404:
+            raise HTTPNotFound()
         return response
