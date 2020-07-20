@@ -42,19 +42,28 @@ class RepositoryFilter(BaseFilterSet):
         fields = {"name": NAME_FILTER_OPTIONS}
 
 
-class RepositoryViewSet(
+class ImmutableRepositoryViewSet(
     NamedModelViewSet,
     mixins.CreateModelMixin,
     mixins.RetrieveModelMixin,
     mixins.ListModelMixin,
-    AsyncUpdateMixin,
     AsyncRemoveMixin,
 ):
+    """
+    An immutable repository ViewSet that does not allow the usage of the methods PATCH and PUT.
+    """
+
     queryset = Repository.objects.all().order_by("name")
     serializer_class = RepositorySerializer
     endpoint_name = "repositories"
     router_lookup = "repository"
     filterset_class = RepositoryFilter
+
+
+class RepositoryViewSet(ImmutableRepositoryViewSet, AsyncUpdateMixin):
+    """
+    A ViewSet for an ordinary repository.
+    """
 
 
 class RepositoryVersionContentFilter(Filter):
