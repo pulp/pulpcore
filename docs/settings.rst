@@ -55,7 +55,7 @@ DEFAULT_FILE_STORAGE
 MEDIA_ROOT
 ^^^^^^^^^^
 
-   The location where Pulp will store files. By default this is `/var/lib/pulp/`.
+   The location where Pulp will store files. By default this is `/var/lib/pulp/media`.
 
    If you're using S3, point this to the path in your bucket you want to save files. See the
    :ref:`storage documentation <storage>` for more info.
@@ -65,7 +65,7 @@ MEDIA_ROOT
    * mode: 750
    * owner: pulp (the account that pulp runs under)
    * group: pulp (the group of the account that pulp runs under)
-   * SELinux context: system_u:object_r:var_lib_t:s0
+   * SELinux context: system_u:object_r:pulpcore_var_lib_t:s0
 
 LOGGING
 ^^^^^^^
@@ -138,10 +138,10 @@ WORKING_DIRECTORY
 
    It should have permissions of:
 
-   * mode: 755
+   * mode: 750
    * owner: pulp (the account that pulp runs under)
    * group: pulp (the group of the account that pulp runs under)
-   * SELinux context: unconfined_u:object_r:var_lib_t:s0
+   * SELinux context: system_u:object_r:pulpcore_var_lib_t:s0
 
 .. note::
 

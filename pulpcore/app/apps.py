@@ -185,6 +185,10 @@ class PulpAppConfig(PulpPluginAppConfig):
     # The version of this app
     version = "3.10.0.dev"
 
+    def ready(self):
+        super().ready()
+        from . import checks  # noqa
+
 
 def _populate_access_policies(sender, **kwargs):
     print(f"Initialize missing access policies for {sender.label}.")

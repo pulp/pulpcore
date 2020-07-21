@@ -67,7 +67,8 @@ class PulpTemporaryFileTestCase(TestCase):
             temp_file.save()
 
         assert temp_file.file.name.startswith("tmp/files/")
-        assert temp_file.file.file.name.startswith("/var/lib/pulp/tmp/files")
+        name = temp_file.file.file.name
+        assert name.startswith("/var/lib/pulp/media/tmp/files"), name
 
     def test_read_temp_file(self):
         with tempfile.NamedTemporaryFile("ab") as tf:
