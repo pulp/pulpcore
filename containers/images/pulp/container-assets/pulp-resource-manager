@@ -1,6 +1,0 @@
-#!/bin/bash -x
-
-/usr/bin/wait_on_postgres.py
-/usr/bin/wait_on_database_migrations.sh
-
-exec rq worker --url "redis://${REDIS_SERVICE_HOST}:${REDIS_SERVICE_PORT}" -n "resource-manager" -w "pulpcore.tasking.worker.PulpWorker" -c "pulpcore.rqconfig"
