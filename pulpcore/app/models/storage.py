@@ -98,7 +98,7 @@ class FileSystem(FileSystemStorage):
 
 def get_artifact_path(sha256digest):
     """
-    Determine the absolute path where a file backing the Artifact should be stored.
+    Determine the relative path where a file backing the Artifact should be stored.
 
     Args:
         sha256digest (str): sha256 digest of the file for the Artifact
@@ -112,14 +112,14 @@ def get_artifact_path(sha256digest):
 
 def get_temp_file_path(pulp_id):
     """
-    Determine the absolute path where a file backing the PulpTemporaryFile should be stored.
+    Determine the relative path where a file backing the PulpTemporaryFile should be stored.
 
     Args:
         pulp_id (uuid): An identifier identifying the file for the PulpTemporaryFile
 
     Returns:
-        A string representing the absolute path where a file backing the PulpTemporaryFile should be
-        stored
+        A string representing the path where a file backing the PulpTemporaryFile should be
+        stored. This path is relative to the storage.
     """
     pulp_id_str = str(pulp_id)
     return os.path.join("tmp/files", pulp_id_str[:2], pulp_id_str[2:])

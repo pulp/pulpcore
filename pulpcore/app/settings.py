@@ -8,12 +8,12 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/1.11/ref/settings/
 """
 
-import os
 import sys
 
 from contextlib import suppress
 from gettext import gettext as _
 from importlib import import_module
+from pathlib import Path
 from pkg_resources import iter_entry_points
 
 from django.core.exceptions import ImproperlyConfigured
@@ -21,8 +21,8 @@ from django.db import connection
 
 from pulpcore import constants
 
-# Build paths inside the project like this: os.path.join(BASE_DIR, ...)
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+# Build paths inside the project like this: BASE_DIR / ...
+BASE_DIR = Path(__file__).absolute().parent
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.11/howto/deployment/checklist/
@@ -32,7 +32,8 @@ DEBUG = False
 
 ALLOWED_HOSTS = ["*"]
 
-MEDIA_ROOT = "/var/lib/pulp/"
+DEPLOY_ROOT = Path("/var/lib/pulp")
+MEDIA_ROOT = str(DEPLOY_ROOT / "media")  # Django 3.1 adds support for pathlib.Path
 
 ADMIN_SITE_URL = "admin/"
 
@@ -40,12 +41,12 @@ ADMIN_SITE_URL = "admin/"
 # https://docs.djangoproject.com/en/1.11/howto/static-files/
 
 STATIC_URL = "/assets/"
-STATIC_ROOT = os.path.join(MEDIA_ROOT, STATIC_URL.lstrip("/"))
+STATIC_ROOT = DEPLOY_ROOT / STATIC_URL.strip("/")
 
 DEFAULT_FILE_STORAGE = "pulpcore.app.models.storage.FileSystem"
 
-FILE_UPLOAD_TEMP_DIR = os.path.join(MEDIA_ROOT, "tmp/")
-WORKING_DIRECTORY = os.path.join(MEDIA_ROOT, "tmp/")
+FILE_UPLOAD_TEMP_DIR = DEPLOY_ROOT / "tmp"
+WORKING_DIRECTORY = FILE_UPLOAD_TEMP_DIR
 CHUNKED_UPLOAD_DIR = "upload"
 
 # List of upload handler classes to be applied in order.
@@ -118,7 +119,7 @@ ROOT_URLCONF = "pulpcore.app.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [os.path.join(BASE_DIR, "templates")],
+        "DIRS": [BASE_DIR / "templates"],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [

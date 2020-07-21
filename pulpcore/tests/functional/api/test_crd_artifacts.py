@@ -6,7 +6,7 @@ import unittest
 
 from pulp_smash import api, cli, config, utils
 from pulp_smash.exceptions import CalledProcessError
-from pulp_smash.pulp3.constants import ARTIFACTS_PATH, MEDIA_PATH
+from pulp_smash.pulp3.constants import ARTIFACTS_PATH
 from pulp_smash.pulp3.utils import delete_orphans
 from requests.exceptions import HTTPError
 
@@ -165,6 +165,7 @@ class ArtifactsDeleteFileSystemTestCase(unittest.TestCase):
         storage = utils.get_pulp_setting(cli_client, "DEFAULT_FILE_STORAGE")
         if storage != "pulpcore.app.models.storage.FileSystem":
             self.skipTest("this test only works for filesystem storage")
+        media_root = utils.get_pulp_setting(cli_client, "MEDIA_ROOT")
 
         api_client = api.Client(cfg, api.json_handler)
 
@@ -172,7 +173,7 @@ class ArtifactsDeleteFileSystemTestCase(unittest.TestCase):
         files = {"file": utils.http_get(FILE_URL)}
         artifact = api_client.post(ARTIFACTS_PATH, files=files)
         self.addCleanup(api_client.delete, artifact["pulp_href"])
-        cmd = ("ls", os.path.join(MEDIA_PATH, artifact["file"]))
+        cmd = ("ls", os.path.join(media_root, artifact["file"]))
         cli_client.run(cmd, sudo=True)
 
         # delete

@@ -6,7 +6,6 @@ from random import choice
 from pulp_smash import cli, config, utils
 from pulp_smash.exceptions import CalledProcessError
 from pulp_smash.pulp3.bindings import monitor_task
-from pulp_smash.pulp3.constants import MEDIA_PATH
 from pulp_smash.pulp3.utils import (
     delete_orphans,
     delete_version,
@@ -52,6 +51,7 @@ class DeleteOrphansTestCase(unittest.TestCase):
         cls.api_client = ApiClient(configuration)
         cls.cli_client = cli.Client(cls.cfg)
         cls.storage = utils.get_pulp_setting(cls.cli_client, "DEFAULT_FILE_STORAGE")
+        cls.media_root = utils.get_pulp_setting(cls.cli_client, "MEDIA_ROOT")
 
     def test_clean_orphan_content_unit(self):
         """Test whether orphan content units can be clean up.
@@ -92,7 +92,8 @@ class DeleteOrphansTestCase(unittest.TestCase):
 
         if self.storage == "pulpcore.app.models.storage.FileSystem":
             # Verify that the artifact is present on disk.
-            artifact_path = os.path.join(MEDIA_PATH, artifacts_api.read(content["artifact"]).file)
+            relative_path = artifacts_api.read(content["artifact"]).file
+            artifact_path = os.path.join(self.media_root, relative_path)
             cmd = ("ls", artifact_path)
             self.cli_client.run(cmd, sudo=True)
 
@@ -124,7 +125,7 @@ class DeleteOrphansTestCase(unittest.TestCase):
         artifact = artifacts_api.create(file=__file__)
 
         if self.storage == "pulpcore.app.models.storage.FileSystem":
-            cmd = ("ls", os.path.join(MEDIA_PATH, artifact.file))
+            cmd = ("ls", os.path.join(self.media_root, artifact.file))
             self.cli_client.run(cmd, sudo=True)
 
         delete_orphans()

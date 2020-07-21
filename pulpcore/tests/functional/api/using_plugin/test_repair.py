@@ -4,7 +4,7 @@ from random import sample
 from urllib.parse import urljoin
 
 from pulp_smash import api, cli, config, utils
-from pulp_smash.pulp3.constants import MEDIA_PATH, BASE_PATH
+from pulp_smash.pulp3.constants import BASE_PATH
 from pulp_smash.pulp3.utils import (
     delete_orphans,
     gen_repo,
@@ -67,13 +67,14 @@ class ArtifactRepairTestCase(unittest.TestCase):
         repo = self.api_client.get(repo["pulp_href"])
 
         # STEP 2
+        media_root = utils.get_pulp_setting(self.cli_client, "MEDIA_ROOT")
         content1, content2 = sample(get_content(repo)[FILE_CONTENT_NAME], 2)
         # Muddify one artifact on disk.
-        artifact1_path = os.path.join(MEDIA_PATH, self.api_client.get(content1["artifact"])["file"])
+        artifact1_path = os.path.join(media_root, self.api_client.get(content1["artifact"])["file"])
         cmd1 = ("sed", "-i", "-e", r"$a bit rot", artifact1_path)
         self.cli_client.run(cmd1, sudo=True)
         # Delete another one from disk.
-        artifact2_path = os.path.join(MEDIA_PATH, self.api_client.get(content2["artifact"])["file"])
+        artifact2_path = os.path.join(media_root, self.api_client.get(content2["artifact"])["file"])
         cmd2 = ("rm", artifact2_path)
         self.cli_client.run(cmd2, sudo=True)
 
