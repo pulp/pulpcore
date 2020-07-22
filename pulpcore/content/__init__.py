@@ -10,6 +10,7 @@ from aiohttp import web
 
 import django
 
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "pulpcore.app.settings")
 django.setup()
 
 from django.conf import settings  # noqa: E402: module level not at top of file
