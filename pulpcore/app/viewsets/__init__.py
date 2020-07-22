@@ -38,6 +38,7 @@ from .publication import (  # noqa
     PublicationViewSet,
 )
 from .repository import (  # noqa
+    ImmutableRepositoryViewSet,
     RemoteFilter,
     RemoteViewSet,
     RepositoryViewSet,
