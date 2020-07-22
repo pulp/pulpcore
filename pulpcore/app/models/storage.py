@@ -110,6 +110,21 @@ def get_artifact_path(sha256digest):
     return os.path.join("artifact", sha256digest[0:2], sha256digest[2:])
 
 
+def get_temp_file_path(pulp_id):
+    """
+    Determine the absolute path where a file backing the PulpTemporaryFile should be stored.
+
+    Args:
+        pulp_id (uuid): pulp_id the file for the PulpTemporaryFile
+
+    Returns:
+        A string representing the absolute path where a file backing the PulpTemporaryFile should be
+        stored
+    """
+    pulp_id_str = str(pulp_id)
+    return os.path.join("tmp/files", pulp_id_str[0:2], pulp_id_str[2:])
+
+
 def get_tls_path(model, name):
     """
     Determine storage location as: MEDIA_ROOT/tls/<model>/<id>/<name>.

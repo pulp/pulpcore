@@ -4,6 +4,7 @@ Content related Django models.
 import json
 import hashlib
 import tempfile
+import shutil
 import subprocess
 
 import gnupg
@@ -11,6 +12,7 @@ import gnupg
 from itertools import chain
 
 from django.core import validators
+from django.core.files.storage import default_storage
 from django.db import IntegrityError, models, transaction
 from django.forms.models import model_to_dict
 
@@ -75,7 +77,37 @@ class QueryMixin:
         return models.Q(**kwargs)
 
 
-class Artifact(BaseModel):
+class HandleTempFilesMixin:
+    """
+    A mixin that provides methods for handling temporary files.
+    """
+
+    def save(self, *args, **kwargs):
+        """
+        Saves Model and closes the file associated with the Model
+
+        Args:
+            args (list): list of positional arguments for Model.save()
+            kwargs (dict): dictionary of keyword arguments to pass to Model.save()
+        """
+        try:
+            super().save(*args, **kwargs)
+        finally:
+            self.file.close()
+
+    def delete(self, *args, **kwargs):
+        """
+        Deletes Model and the file associated with the Model
+
+        Args:
+            args (list): list of positional arguments for Model.delete()
+            kwargs (dict): dictionary of keyword arguments to pass to Model.delete()
+        """
+        super().delete(*args, **kwargs)
+        self.file.delete(save=False)
+
+
+class Artifact(HandleTempFilesMixin, BaseModel):
     """
     A file associated with a piece of content.
 
@@ -159,32 +191,6 @@ class Artifact(BaseModel):
                 return True
         return False
 
-    def save(self, *args, **kwargs):
-        """
-        Saves Artifact model and closes the file associated with the Artifact
-
-        Args:
-            args (list): list of positional arguments for Model.save()
-            kwargs (dict): dictionary of keyword arguments to pass to Model.save()
-        """
-        try:
-            super().save(*args, **kwargs)
-            self.file.close()
-        except Exception:
-            self.file.close()
-            raise
-
-    def delete(self, *args, **kwargs):
-        """
-        Deletes Artifact model and the file associated with the Artifact
-
-        Args:
-            args (list): list of positional arguments for Model.delete()
-            kwargs (dict): dictionary of keyword arguments to pass to Model.delete()
-        """
-        super().delete(*args, **kwargs)
-        self.file.delete(save=False)
-
     @staticmethod
     def init_and_validate(file, expected_digests=None, expected_size=None):
         """
@@ -239,6 +245,102 @@ class Artifact(BaseModel):
             attributes[algorithm] = hashers[algorithm].hexdigest()
 
         return Artifact(**attributes)
+
+    @classmethod
+    def from_pulp_temporary_file(cls, temp_file):
+        """
+        Creates an Artifact from PulpTemporaryFile.
+
+        Returns:
+            An saved :class:`~pulpcore.plugin.models.Artifact`
+        """
+        artifact_file = default_storage.open(temp_file.file.name)
+        with tempfile.NamedTemporaryFile("wb") as new_file:
+            shutil.copyfileobj(artifact_file, new_file)
+            new_file.flush()
+            artifact = cls.init_and_validate(new_file.name)
+            artifact.save()
+        temp_file.delete()
+        return artifact
+
+
+class PulpTemporaryFile(HandleTempFilesMixin, BaseModel):
+    """
+    A temporary file saved to the storage backend.
+
+    Commonly used to pass data to one or more tasks.
+
+    Fields:
+
+        file (models.FileField): The stored file. This field should be set using an absolute path to
+            a temporary file. It also accepts `class:django.core.files.File`.
+    """
+
+    def storage_path(self, name):
+        """
+        Callable used by FileField to determine where the uploaded file should be stored.
+
+        Args:
+            name (str): Original name of uploaded file. It is ignored by this method because the
+                pulp_id is used to determine a file path instead.
+        """
+        return storage.get_temp_file_path(self.pulp_id)
+
+    file = models.FileField(null=False, upload_to=storage_path, max_length=255)
+
+    @staticmethod
+    def init_and_validate(file, expected_digests=None, expected_size=None):
+        """
+        Initialize an in-memory PulpTemporaryFile from a file, and validate digest and size info.
+
+        This accepts both a path to a file on-disk or a
+        :class:`~pulpcore.app.files.PulpTemporaryUploadedFile`.
+
+        Args:
+            file (:class:`~pulpcore.app.files.PulpTemporaryUploadedFile` or str): The
+                PulpTemporaryUploadedFile to create the PulpTemporaryFile from or a string with the
+                full path to the file on disk.
+            expected_digests (dict): Keyed on the algorithm name provided by hashlib and stores the
+                value of the expected digest. e.g. {'md5': '912ec803b2ce49e4a541068d495ab570'}
+            expected_size (int): The number of bytes the download is expected to have.
+
+        Raises:
+            :class:`~pulpcore.exceptions.DigestValidationError`: When any of the ``expected_digest``
+                values don't match the digest of the data
+            :class:`~pulpcore.exceptions.SizeValidationError`: When the ``expected_size`` value
+                doesn't match the size of the data
+
+        Returns:
+            An in-memory, unsaved :class:`~pulpcore.plugin.models.PulpTemporaryFile`
+        """
+        if not expected_digests and not expected_size:
+            return PulpTemporaryFile(file=file)
+
+        if isinstance(file, str):
+            with open(file, "rb") as f:
+                hashers = {n: hashlib.new(n) for n in expected_digests.keys()}
+                size = 0
+                while True:
+                    chunk = f.read(1048576)  # 1 megabyte
+                    if not chunk:
+                        break
+                    for algorithm in hashers.values():
+                        algorithm.update(chunk)
+                    size = size + len(chunk)
+        else:
+            size = file.size
+            hashers = file.hashers
+
+        if expected_size:
+            if size != expected_size:
+                raise SizeValidationError()
+
+        if expected_digests:
+            for algorithm, expected_digest in expected_digests.items():
+                if expected_digest != hashers[algorithm].hexdigest():
+                    raise DigestValidationError()
+
+        return PulpTemporaryFile(file=file)
 
 
 class Content(MasterModel, QueryMixin):

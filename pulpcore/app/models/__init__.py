@@ -6,6 +6,7 @@ from .content import (  # noqa
     AsciiArmoredDetachedSigningService,
     Content,
     ContentArtifact,
+    PulpTemporaryFile,
     RemoteArtifact,
     SigningService,
 )
