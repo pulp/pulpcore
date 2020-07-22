@@ -21,6 +21,8 @@ from pulpcore.app.viewsets import (  # noqa
     RemoteViewSet,
     RepositoryViewSet,
     RepositoryVersionViewSet,
+    TaskViewSet,
+    TaskGroupViewSet,
 )
 
 from pulpcore.app.viewsets.custom_filters import (  # noqa
