@@ -48,6 +48,32 @@ Any action that can run for a long time should be an asynchronous task. Plugin w
 to understand the internals of the pulpcore tasking system, workers automatically execute tasks from
 RQ, including tasks deployed by plugins.
 
+
+**Making Temporary Files Available to Tasks**
+
+Sometimes, files must be brought forward from the viewset to the executing task, that may or may
+not end up being artifacts in the end. On the other hand, different pulp services are not
+guaranteed to share a common filesystem (like /usr/share/pulp).
+``PulpTemporaryFile`` is the alternative for creating  files with the same
+storage technology that the artifacts use.
+
+.. code-block:: python
+
+    # Example 1 - Saving a temporary file:
+    temp_file = PulpTemporaryFile(file=my_file).save()
+
+    # Example 2 - Validating the digest and saving:
+    temp_file = PulpTemporaryFile.init_and_validate(
+        my_file, expected_digests={'md5': '912ec803b2ce49e4a541068d495ab570'}
+    ).save()
+
+    # Example 3 - From PulpTemporaryFile to Artifact:
+    try:
+        artifact = Artifact.from_pulp_temporary_file(temp_file)
+    except Exception:
+        temp_file.delete()
+
+
 **Reservations**
 
 The tasking system adds a concept called **reservations** which ensures that actions that act on the
