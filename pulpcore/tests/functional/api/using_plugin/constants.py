@@ -1,5 +1,6 @@
 # coding=utf-8
 """Constants for pulpcore API tests that require the use of a plugin."""
+import os
 from urllib.parse import urljoin
 
 from pulp_smash import config
@@ -79,3 +80,8 @@ FILE_URL = urljoin(FILE_FIXTURE_URL, "1.iso")
 
 FILE2_URL = urljoin(FILE2_FIXTURE_URL, "1.iso")
 """The URL to an ISO file at :data:`FILE2_FIXTURE_URL`."""
+
+_CURRENT_DIR = os.path.dirname(os.path.realpath(__file__))
+
+X509_CERTS_BASE_PATH = os.path.join(_CURRENT_DIR, "artifacts", "x509", "certificates")
+X509_CA_CERT_FILE_PATH = os.path.join(X509_CERTS_BASE_PATH, "ca.pem")

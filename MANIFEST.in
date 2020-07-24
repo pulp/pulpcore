@@ -7,6 +7,7 @@ include CHANGES.rst
 include COMMITMENT
 include functest_requirements.txt
 include unittest_requirements.txt
+recursive-include pulpcore/tests/functional/api/using_plugin/artifacts *
 include CODE_OF_CONDUCT.md
 include CONTRIBUTING.md
 include COPYRIGHT
