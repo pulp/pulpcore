@@ -43,8 +43,29 @@ class RepositoryFilter(BaseFilterSet):
         fields = {"name": NAME_FILTER_OPTIONS}
 
 
+class BaseRepositoryViewSet(NamedModelViewSet):
+    """
+    A base class for any repository viewset.
+    """
+
+    queryset = Repository.objects.all().order_by("name")
+    serializer_class = RepositorySerializer
+    endpoint_name = "repositories"
+    router_lookup = "repository"
+    filterset_class = RepositoryFilter
+
+
+class ListRepositoryViewSet(BaseRepositoryViewSet, mixins.ListModelMixin):
+    """Endpoint to list all repositories."""
+
+    @classmethod
+    def is_master_viewset(cls):
+        """Do not hide from the routers."""
+        return False
+
+
 class ReadOnlyRepositoryViewSet(
-    NamedModelViewSet,
+    BaseRepositoryViewSet,
     mixins.ListModelMixin,
     mixins.RetrieveModelMixin,
 ):

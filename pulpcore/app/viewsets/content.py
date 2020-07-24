@@ -108,6 +108,15 @@ class BaseContentViewSet(NamedModelViewSet):
     serializer_class = MultipleArtifactContentSerializer
 
 
+class ListContentViewSet(BaseContentViewSet, mixins.ListModelMixin):
+    """Endpoint to list all content."""
+
+    @classmethod
+    def is_master_viewset(cls):
+        """Do not hide from the routers."""
+        return False
+
+
 class ContentViewSet(
     BaseContentViewSet, mixins.CreateModelMixin, mixins.RetrieveModelMixin, mixins.ListModelMixin
 ):

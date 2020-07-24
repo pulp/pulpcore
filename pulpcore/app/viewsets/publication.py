@@ -52,18 +52,36 @@ class ContentGuardFilter(BaseFilterSet):
         }
 
 
+class BaseContentGuardViewSet(NamedModelViewSet):
+    endpoint_name = "content_guards"
+    serializer_class = ContentGuardSerializer
+    queryset = ContentGuard.objects.all()
+    filterset_class = ContentGuardFilter
+
+
+class ListContentGuardViewSet(
+    BaseContentGuardViewSet,
+    mixins.ListModelMixin,
+):
+    """Endpoint to list all content_guards."""
+
+    @classmethod
+    def is_master_viewset(cls):
+        """Do not hide from the routers."""
+        return False
+
+
 class ContentGuardViewSet(
-    NamedModelViewSet,
+    BaseContentGuardViewSet,
     mixins.CreateModelMixin,
     mixins.UpdateModelMixin,
     mixins.DestroyModelMixin,
     mixins.RetrieveModelMixin,
     mixins.ListModelMixin,
 ):
-    endpoint_name = "contentguards"
-    serializer_class = ContentGuardSerializer
-    queryset = ContentGuard.objects.all()
-    filterset_class = ContentGuardFilter
+    """
+    A viewset for content_guards.
+    """
 
 
 class DistributionFilter(BaseFilterSet):
