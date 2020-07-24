@@ -2,7 +2,7 @@
 # were not present before running plugin-template have been added with their default values.
 
 additional_plugins:
-- branch: master
+- branch: 1.1
   name: pulp_file
 - branch: master
   name: pulp-certguard
@@ -36,7 +36,7 @@ pulpcore_pip_version_specifier: null
 pydocstyle: true
 pypi_username: pulp
 redmine_project: pulp
-stable_branch: '3.4'
+stable_branch: '3.5'
 test_bindings: true
 test_performance: false
 test_s3: true
