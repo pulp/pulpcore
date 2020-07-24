@@ -1,4 +1,4 @@
-from drf_yasg.utils import swagger_auto_schema
+from drf_spectacular.utils import extend_schema
 from rest_framework.views import APIView
 
 from pulpcore.app.response import OperationPostponedResponse
@@ -8,10 +8,10 @@ from pulpcore.tasking.tasks import enqueue_with_reservation
 
 
 class OrphansView(APIView):
-    @swagger_auto_schema(
-        operation_description="Trigger an asynchronous task that deletes all"
+    @extend_schema(
+        description="Trigger an asynchronous task that deletes all"
         "orphaned content and artifacts.",
-        operation_summary="Delete orphans",
+        summary="Delete orphans",
         responses={202: AsyncOperationResponseSerializer},
     )
     def delete(self, request, format=None):

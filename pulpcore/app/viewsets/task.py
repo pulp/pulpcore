@@ -1,7 +1,7 @@
 from gettext import gettext as _
 
 from django_filters.rest_framework import DjangoFilterBackend, filters
-from drf_yasg.utils import swagger_auto_schema
+from drf_spectacular.utils import extend_schema
 from rest_framework import mixins, status
 from rest_framework.filters import OrderingFilter
 from rest_framework.response import Response
@@ -66,9 +66,9 @@ class TaskViewSet(
     filter_backends = (OrderingFilter, DjangoFilterBackend)
     ordering = "-pulp_created"
 
-    @swagger_auto_schema(
-        operation_description="This operation cancels a task.",
-        operation_summary="Cancel a task",
+    @extend_schema(
+        description="This operation cancels a task.",
+        summary="Cancel a task",
         operation_id="tasks_cancel",
         responses={200: TaskSerializer, 409: TaskSerializer},
     )

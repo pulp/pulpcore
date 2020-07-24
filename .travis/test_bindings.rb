@@ -86,7 +86,7 @@ def upload_file_in_chunks(file_path)
           filechunk.write(chunk)
           filechunk.flush()
           actual_chunk_size = File.size(filechunk)
-          response = @uploads_api.update(upload_href, content_range(offset, offset + actual_chunk_size -1, total_size), filechunk)
+          response = @uploads_api.update(content_range(offset, offset + actual_chunk_size -1, total_size), upload_href, filechunk)
           offset += actual_chunk_size -1
         ensure
           filechunk.close

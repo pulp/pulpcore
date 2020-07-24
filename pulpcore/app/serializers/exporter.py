@@ -65,15 +65,17 @@ class ExporterSerializer(ModelSerializer):
         fields = ModelSerializer.Meta.fields + ("name",)
 
 
-class ExportedResourcesSerializer(ModelSerializer):
-    def to_representation(self, data):
-        viewset = get_viewset_for_model(data.content_object)
-        serializer = viewset.serializer_class(data.content_object, context={"request": None})
-        return serializer.data.get("pulp_href")
-
-    class Meta:
-        model = models.ExportedResource
-        fields = []
+class ExportedResourcesField(serializers.ListField):
+    def to_representation(self, obj):
+        result = []
+        exported_resources = obj.exported_resources.all()
+        for exported_resource in exported_resources:
+            viewset = get_viewset_for_model(exported_resource.content_object)
+            serializer = viewset.serializer_class(
+                exported_resource.content_object, context={"request": None}
+            )
+            result.append(serializer.data.get("pulp_href"))
+        return result
 
 
 class ExportSerializer(ModelSerializer):
@@ -91,8 +93,8 @@ class ExportSerializer(ModelSerializer):
         allow_null=True,
     )
 
-    exported_resources = ExportedResourcesSerializer(
-        help_text=_("Resources that were exported."), read_only=True, many=True,
+    exported_resources = ExportedResourcesField(
+        help_text=_("Resources that were exported."), source="*", read_only=True,
     )
 
     params = serializers.JSONField(

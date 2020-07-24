@@ -1,6 +1,6 @@
 from collections import namedtuple
 
-from drf_yasg.utils import swagger_auto_schema
+from drf_spectacular.utils import extend_schema
 
 from django.db.utils import IntegrityError
 
@@ -36,8 +36,8 @@ class ContentUploadViewSet(ContentViewSet):
         """
         return {}
 
-    @swagger_auto_schema(
-        operation_description="Trigger an asynchronous task to create content,"
+    @extend_schema(
+        description="Trigger an asynchronous task to create content,"
         "optionally create new repository version.",
         responses={202: AsyncOperationResponseSerializer},
     )

@@ -3,7 +3,7 @@ from gettext import gettext as _
 
 from django_filters import Filter
 from django_filters.rest_framework import DjangoFilterBackend, filters
-from drf_yasg.utils import swagger_auto_schema
+from drf_spectacular.utils import extend_schema
 from rest_framework import mixins, serializers
 from rest_framework.decorators import action
 from rest_framework.filters import OrderingFilter
@@ -178,8 +178,8 @@ class RepositoryVersionViewSet(
     filter_backends = (OrderingFilter, DjangoFilterBackend)
     ordering = ("-number",)
 
-    @swagger_auto_schema(
-        operation_description="Trigger an asynchronous task to delete " "a repositroy version.",
+    @extend_schema(
+        description="Trigger an asynchronous task to delete " "a repositroy version.",
         responses={202: AsyncOperationResponseSerializer},
     )
     def destroy(self, request, repository_pk, number):
@@ -196,8 +196,8 @@ class RepositoryVersionViewSet(
         )
         return OperationPostponedResponse(async_result, request)
 
-    @swagger_auto_schema(
-        operation_description="Trigger an asynchronous task to repair " "a repositroy version.",
+    @extend_schema(
+        description="Trigger an asynchronous task to repair " "a repositroy version.",
         responses={202: AsyncOperationResponseSerializer},
     )
     @action(detail=True, methods=["post"])

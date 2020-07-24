@@ -1,4 +1,4 @@
-from drf_yasg.utils import swagger_auto_schema
+from drf_spectacular.utils import extend_schema
 from rest_framework.decorators import action
 
 from pulpcore.app import tasks
@@ -15,9 +15,9 @@ __all__ = ["ModifyRepositoryActionMixin"]
 
 
 class ModifyRepositoryActionMixin:
-    @swagger_auto_schema(
-        operation_description="Trigger an asynchronous task to create a new repository version.",
-        operation_summary="Modify Repository Content",
+    @extend_schema(
+        description="Trigger an asynchronous task to create a new repository version.",
+        summary="Modify Repository Content",
         responses={202: AsyncOperationResponseSerializer},
     )
     @action(detail=True, methods=["post"], serializer_class=RepositoryAddRemoveContentSerializer)
