@@ -1,6 +1,6 @@
 from django_filters.rest_framework import filters
 
-from drf_yasg.utils import swagger_auto_schema
+from drf_spectacular.utils import extend_schema
 from rest_framework import mixins
 
 from pulpcore.app.models import (
@@ -107,9 +107,9 @@ class PulpExportViewSet(ExportViewSet):
     serializer_class = PulpExportSerializer
     queryset = PulpExport.objects.all()
 
-    @swagger_auto_schema(
-        request_body=PulpExportSerializer,
-        operation_description="Trigger an asynchronous task to export a set of repositories",
+    @extend_schema(
+        request=PulpExportSerializer,
+        description="Trigger an asynchronous task to export a set of repositories",
         responses={202: AsyncOperationResponseSerializer},
     )
     def create(self, request, exporter_pk):

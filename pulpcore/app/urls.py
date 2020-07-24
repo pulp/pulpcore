@@ -2,8 +2,12 @@
 import logging
 
 from django.conf.urls import include, url
-from drf_yasg import openapi
-from drf_yasg.views import get_schema_view as yasg_get_schema_view
+
+from drf_spectacular.views import (
+    SpectacularJSONAPIView,
+    SpectacularYAMLAPIView,
+    SpectacularRedocView,
+)
 from rest_framework import permissions
 from rest_framework.schemas import get_schema_view
 from rest_framework_nested import routers
@@ -11,6 +15,7 @@ from rest_framework_nested import routers
 from pulpcore.app.apps import pulp_plugin_configs
 from pulpcore.app.views import OrphansView, StatusView
 from pulpcore.constants import API_ROOT
+from pulpcore.openapi import PulpSchemaGenerator
 
 log = logging.getLogger(__name__)
 
@@ -118,31 +123,33 @@ urlpatterns = [
     url(r"^auth/", include("rest_framework.urls")),
 ]
 
-api_info = openapi.Info(
-    title="Pulp 3 API",
-    default_version="v3",
-    logo={"url": "https://pulp.plan.io/attachments/download/517478/pulp_logo_word_rectangle.svg"},
-    license=openapi.License(name="GPLv2+"),
-)
-
-docs_schema_view = yasg_get_schema_view(public=True, permission_classes=(permissions.AllowAny,),)
 urlpatterns.append(
     url(
-        r"^{api_root}docs/api(?P<format>\.json|\.yaml)".format(api_root=API_ROOT),
-        docs_schema_view.without_ui(cache_timeout=None),
-        name="schema-json",
+        r"^{api_root}docs/api.json".format(api_root=API_ROOT),
+        SpectacularJSONAPIView.as_view(),
+        name="schema",
+    )
+)
+
+urlpatterns.append(
+    url(
+        r"^{api_root}docs/api.yaml".format(api_root=API_ROOT),
+        SpectacularYAMLAPIView.as_view(),
+        name="schema-yaml",
     )
 )
 
 urlpatterns.append(
     url(
         r"^{api_root}docs/".format(api_root=API_ROOT),
-        docs_schema_view.with_ui("redoc", cache_timeout=None),
+        SpectacularRedocView.as_view(url_name="schema"),
         name="schema-redoc",
     )
 )
 
-schema_view = get_schema_view(title="Pulp API", permission_classes=[permissions.AllowAny],)
+schema_view = get_schema_view(
+    title="Pulp API", permission_classes=[permissions.AllowAny], generator_class=PulpSchemaGenerator
+)
 
 urlpatterns.append(url(r"^{api_root}$".format(api_root=API_ROOT), schema_view))
 

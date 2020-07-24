@@ -1,5 +1,5 @@
-from drf_yasg.utils import swagger_auto_schema
-from drf_yasg.openapi import Parameter
+from drf_spectacular.utils import extend_schema
+from drf_spectacular.utils import OpenApiParameter
 from rest_framework import mixins
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -14,7 +14,6 @@ from pulpcore.app.serializers import (
     UploadSerializer,
     UploadDetailSerializer,
 )
-from pulpcore.app.serializers.upload import CONTENT_RANGE_PATTERN
 from pulpcore.app.viewsets.base import NamedModelViewSet
 from pulpcore.tasking.tasks import enqueue_with_reservation
 
@@ -33,12 +32,11 @@ class UploadViewSet(
     queryset = Upload.objects.all()
     http_method_names = ["get", "post", "head", "put", "delete"]
 
-    content_range_parameter = Parameter(
+    content_range_parameter = OpenApiParameter(
         name="Content-Range",
-        in_="header",
+        location=OpenApiParameter.HEADER,
         required=True,
-        type="string",
-        pattern=CONTENT_RANGE_PATTERN,
+        type=str,
         description="The Content-Range header specifies the location of the file chunk "
         "within the file.",
     )
@@ -58,10 +56,10 @@ class UploadViewSet(
             context["upload"] = self.get_object()
         return context
 
-    @swagger_auto_schema(
-        operation_summary="Upload a file chunk",
-        request_body=UploadChunkSerializer,
-        manual_parameters=[content_range_parameter],
+    @extend_schema(
+        summary="Upload a file chunk",
+        request=UploadChunkSerializer,
+        parameters=[content_range_parameter],
         responses={200: UploadSerializer},
     )
     def update(self, request, pk=None):
@@ -81,9 +79,9 @@ class UploadViewSet(
         serializer = UploadSerializer(upload, context={"request": request})
         return Response(serializer.data)
 
-    @swagger_auto_schema(
-        operation_summary="Finish an Upload",
-        request_body=UploadCommitSerializer,
+    @extend_schema(
+        summary="Finish an Upload",
+        request=UploadCommitSerializer,
         responses={202: AsyncOperationResponseSerializer},
     )
     @action(detail=True, methods=["post"])

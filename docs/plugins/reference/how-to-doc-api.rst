@@ -53,8 +53,8 @@ Response status codes can be generated through the `Meta` class on the serialize
 
 .. note::
 
-    Plugin authors can provide manual overrides using the `@swagger_auto_schema decorator
-    <https://drf-yasg.readthedocs.io/en/stable/drf_yasg.html#drf_yasg.utils.swagger_auto_schema>`_
+    Plugin authors can provide manual overrides using the `@extend_schema decorator
+    <https://drf-spectacular.readthedocs.io/en/stable/drf_spectacular.html#drf_spectacular.utils.extend_schema>`_
 
 The OpenAPI schema for pulpcore and all installed plugins can be downloaded from the ``pulp-api``
 server:

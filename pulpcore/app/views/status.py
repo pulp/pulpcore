@@ -4,7 +4,7 @@ from gettext import gettext as _
 
 from django.conf import settings
 from django.core.files.storage import default_storage
-from drf_yasg.utils import swagger_auto_schema
+from drf_spectacular.utils import extend_schema
 from pkg_resources import get_distribution
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -37,8 +37,8 @@ class StatusView(APIView):
     authentication_classes = []
     permission_classes = []
 
-    @swagger_auto_schema(
-        operation_summary="Inspect status of Pulp",
+    @extend_schema(
+        summary="Inspect status of Pulp",
         operation_id="status_read",
         responses={200: StatusSerializer},
     )

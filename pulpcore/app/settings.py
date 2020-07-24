@@ -60,7 +60,7 @@ INSTALLED_APPS = [
     "import_export",
     # third-party
     "django_filters",
-    "drf_yasg",
+    "drf_spectacular",
     "rest_framework",
     # pulp core app
     "pulpcore.app",
@@ -134,6 +134,7 @@ REST_FRAMEWORK = {
     ),
     "UPLOADED_FILES_USE_URL": False,
     "DEFAULT_VERSIONING_CLASS": "rest_framework.versioning.URLPathVersioning",
+    "DEFAULT_SCHEMA_CLASS": "pulpcore.openapi.PulpAutoSchema",
 }
 
 # Password validation
@@ -200,15 +201,24 @@ ALLOWED_EXPORT_PATHS = []
 
 PROFILE_STAGES_API = False
 
-SWAGGER_SETTINGS = {
-    "DEFAULT_GENERATOR_CLASS": "pulpcore.app.openapigenerator.PulpOpenAPISchemaGenerator",
-    "DEFAULT_AUTO_SCHEMA_CLASS": "pulpcore.app.openapigenerator.PulpAutoSchema",
-    "DEFAULT_INFO": "pulpcore.app.urls.api_info",
-}
-
-# have the docs url show field descriptions with html
-REDOC_SETTINGS = {
-    "SPEC_URL": "/pulp/api/v3/docs/?format=openapi&include_html=1",
+SPECTACULAR_SETTINGS = {
+    "SERVE_URLCONF": ROOT_URLCONF,
+    "DEFAULT_GENERATOR_CLASS": "pulpcore.openapi.PulpSchemaGenerator",
+    "DEFAULT_SCHEMA_CLASS": "pulpcore.openapi.PulpAutoSchema",
+    "COMPONENT_SPLIT_REQUEST": True,
+    "COMPONENT_NO_READ_ONLY_REQUIRED": True,
+    "TITLE": "Pulp 3 API",
+    "DESCRIPTION": "Fetch, Upload, Organize, and Distribute Software Packages",
+    "VERSION": "v3",
+    "CONTACT": {
+        "name": "Pulp Team",
+        "email": "pulp-list@redhat.com",
+        "url": "https://pulpproject.org",
+    },
+    "LICENSE": {
+        "name": "GPLv2+",
+        "url": "https://raw.githubusercontent.com/pulp/pulpcore/master/LICENSE",
+    },
 }
 
 # HERE STARTS DYNACONF EXTENSION LOAD (Keep at the very bottom of settings.py)

@@ -6,11 +6,11 @@ from django.core.exceptions import FieldDoesNotExist, FieldError, ValidationErro
 from django.forms.utils import ErrorList
 from django.urls import Resolver404, resolve
 from django_filters.rest_framework import DjangoFilterBackend, filterset
-from drf_yasg.utils import swagger_auto_schema
+from drf_spectacular.utils import extend_schema
 from rest_framework import viewsets
 from rest_framework.filters import OrderingFilter
 from rest_framework.generics import get_object_or_404
-from rest_framework.schemas.openapi import AutoSchema
+from pulpcore.openapi import PulpAutoSchema
 from rest_framework.serializers import ValidationError as DRFValidationError
 
 from pulpcore.app import tasks
@@ -30,7 +30,7 @@ DATETIME_FILTER_OPTIONS = ["lt", "lte", "gt", "gte", "range"]
 # /?pulp_created__range=2018-04-12T19:45:52,2018-04-13T19:45:52
 
 
-class DefaultSchema(AutoSchema):
+class DefaultSchema(PulpAutoSchema):
     """
     Overrides _allows_filters method to include filter fields only for read actions.
 
@@ -38,13 +38,10 @@ class DefaultSchema(AutoSchema):
     attribute of a view(set) of interest.
     """
 
-    def _allows_filters(self, path, method):
+    def _allows_filters(self):
         """
         Include filter fields only for read actions, or GET requests.
 
-        Args:
-            path: Route path for view from URLConf.
-            method: The HTTP request method.
         Returns:
             bool: True if filter fields should be included into the schema, False otherwise.
         """
@@ -54,7 +51,7 @@ class DefaultSchema(AutoSchema):
         if hasattr(self.view, "action"):
             return self.view.action in ["list"]
 
-        return method.lower() in ["get"]
+        return self.method.lower() in ["get"]
 
 
 class StableOrderingFilter(OrderingFilter):
@@ -370,8 +367,8 @@ class AsyncCreateMixin:
     Provides a create method that dispatches a task with reservation.
     """
 
-    @swagger_auto_schema(
-        operation_description="Trigger an asynchronous create task",
+    @extend_schema(
+        description="Trigger an asynchronous create task",
         responses={202: AsyncOperationResponseSerializer},
     )
     def create(self, request, *args, **kwargs):
@@ -395,8 +392,8 @@ class AsyncUpdateMixin(AsyncReservedObjectMixin):
     Provides an update method that dispatches a task with reservation
     """
 
-    @swagger_auto_schema(
-        operation_description="Trigger an asynchronous update task",
+    @extend_schema(
+        description="Trigger an asynchronous update task",
         responses={202: AsyncOperationResponseSerializer},
     )
     def update(self, request, pk, **kwargs):
@@ -413,8 +410,8 @@ class AsyncUpdateMixin(AsyncReservedObjectMixin):
         )
         return OperationPostponedResponse(async_result, request)
 
-    @swagger_auto_schema(
-        operation_description="Trigger an asynchronous partial update task",
+    @extend_schema(
+        description="Trigger an asynchronous partial update task",
         responses={202: AsyncOperationResponseSerializer},
     )
     def partial_update(self, request, *args, **kwargs):
@@ -427,8 +424,8 @@ class AsyncRemoveMixin(AsyncReservedObjectMixin):
     Provides a delete method that dispatches a task with reservation
     """
 
-    @swagger_auto_schema(
-        operation_description="Trigger an asynchronous delete task",
+    @extend_schema(
+        description="Trigger an asynchronous delete task",
         responses={202: AsyncOperationResponseSerializer},
     )
     def destroy(self, request, pk, **kwargs):
