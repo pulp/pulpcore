@@ -11,8 +11,7 @@ class OperationPostponedResponse(Response):
     like the following::
 
         {
-            "pulp_href": "https://example.com/pulp/api/v3/tasks/adlfk-bala-23k5l7-lslser",
-            "task_id": "adlfk-bala-23k5l7-lslser"
+            "task": "/pulp/api/v3/tasks/735633bc-eb41-4737-b436-c7c6914f34b1/"
         }
     """
 
