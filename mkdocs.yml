@@ -1,0 +1,11 @@
+---
+site_name: Pulpcore Client
+site_description: Pulpcore Client
+site_author: Pulp Team
+site_url: https://pulpcore-client.readthedocs.io/
+repo_name: pulp/pulpcore
+repo_url: https://github.com/pulp/pulpcore
+theme: readthedocs
+docs_dir: docs/pulpcore_client
+markdown_extensions:
+  - pymdownx.superfences
