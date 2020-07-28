@@ -31,20 +31,30 @@ class PulpAutoSchema(AutoSchema):
         "delete": "delete",
     }
 
+    def _tokenize_path(self):
+        """Tokenize path."""
+        tokenized_path = []
+
+        if getattr(self.view, "parent_viewset", None):
+            tokenized_path.extend(self.view.parent_viewset.endpoint_pieces())
+
+        if getattr(self.view, "endpoint_pieces", None):
+            tokenized_path.extend(self.view.endpoint_pieces())
+
+        if not tokenized_path:
+            tokenized_path = super()._tokenize_path()
+            if not tokenized_path and getattr(self.view, "get_view_name", None):
+                tokenized_path.extend(self.view.get_view_name().split())
+
+        return tokenized_path
+
     def get_tags(self):
         """Generate tags."""
-        tokenized_path = []
         pulp_tag_name = getattr(self.view, "pulp_tag_name", False)
         if pulp_tag_name:
             return [pulp_tag_name]
-        if getattr(self.view, "parent_viewset", None):
-            tokenized_path.extend(self.view.parent_viewset.endpoint_pieces())
-        if getattr(self.view, "endpoint_pieces", None):
-            tokenized_path.extend(self.view.endpoint_pieces())
-        if not tokenized_path:
-            tokenized_path = self._tokenize_path()
-            if not tokenized_path and getattr(self.view, "get_view_name", None):
-                tokenized_path.extend(self.view.get_view_name().split())
+
+        tokenized_path = self._tokenize_path()
 
         subpath = "/".join(tokenized_path)
         operation_keys = subpath.replace("pulp/api/v3/", "").split("/")
@@ -57,6 +67,21 @@ class PulpAutoSchema(AutoSchema):
         tags = [" ".join(operation_keys)]
 
         return tags
+
+    def get_operation_id(self):
+        """Get operation id."""
+        tokenized_path = self._tokenize_path()
+        tokenized_path = [t.replace("-", "_").replace("/", "_").lower() for t in tokenized_path]
+
+        action_name = getattr(self.view, "action", self.method.lower())
+        if self.method.lower() == "get" and self._is_list_view():
+            action = "list"
+        elif action_name not in self.method_mapping:
+            action = action_name.replace("destroy", "delete").replace("retrieve", "read")
+        else:
+            action = self.method_mapping[self.method.lower()]
+
+        return "_".join(tokenized_path + [action])
 
     def _get_serializer_name(self, serializer, direction):
         """
