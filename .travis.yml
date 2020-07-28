@@ -83,12 +83,6 @@ jobs:
       env:
         - TEST=docs
       if: type != pull_request AND repo = pulp/pulpcore AND branch = master
-    - stage: cherry-pick
-      if: type = cron
-      before_install: skip
-      install: skip
-      before_script: skip
-      script: bash .travis/cherrypick.sh
 notifications:
   irc:
     channels:

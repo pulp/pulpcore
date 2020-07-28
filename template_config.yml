@@ -8,7 +8,7 @@ additional_plugins:
   name: pulp-certguard
 black: true
 check_commit_message: true
-cherry_pick_automation: true
+cherry_pick_automation: false
 coverage: true
 deploy_client_to_pypi: true
 deploy_client_to_rubygems: true
