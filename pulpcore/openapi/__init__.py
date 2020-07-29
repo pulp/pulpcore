@@ -14,8 +14,6 @@ from rest_framework.schemas.utils import get_pk_description
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiParameter
 from rest_framework import serializers
-from rest_framework.generics import GenericAPIView
-from rest_framework.views import APIView
 
 
 class PulpAutoSchema(AutoSchema):
@@ -281,12 +279,6 @@ class PulpSchemaGenerator(SchemaGenerator):
             if not self.has_view_permissions(path, method, view):
                 continue
 
-            if "docs" in path or "status" in path:
-                continue
-
-            if not self.contains_serializer(view):
-                continue
-
             schema = view.schema
 
             path = self.convert_endpoint_path_params(path, view, schema)
@@ -337,19 +329,6 @@ class PulpSchemaGenerator(SchemaGenerator):
             result[path][method.lower()] = operation
 
         return result
-
-    def contains_serializer(self, view):
-        """Check if view contains serializer."""
-        if isinstance(view, GenericAPIView):
-            return True
-        if isinstance(view, APIView):
-            if callable(getattr(view, "get_serializer", None)):
-                return True
-            if callable(getattr(view, "get_serializer_class", None)):
-                return True
-            if hasattr(view, "serializer_class"):
-                return True
-        return False
 
     def get_schema(self, request=None, public=False):
         """ Generate a OpenAPI schema. """
