@@ -83,6 +83,34 @@ class PulpAutoSchema(AutoSchema):
 
         return "_".join(tokenized_path + [action])
 
+    def get_summary(self):
+        """
+        Returns summary of operation.
+        This is the value that is displayed in the ReDoc document as the short name for the API
+        operation.
+        """
+        if not hasattr(self.view, "queryset") or self.view.queryset is None:
+            return None
+        model = self.view.queryset.model
+        operation = self.get_operation_id().split("_")[-1]
+        resource = model._meta.verbose_name
+        article = "a"
+        if resource[0].lower() in "aeiou":
+            article = "an"
+        if operation == "read":
+            return f"Inspect {article} {resource}"
+        if operation == "list":
+            resource = model._meta.verbose_name_plural
+            return f"List {resource}"
+        if operation == "create":
+            return f"Create {article} {resource}"
+        if operation == "update":
+            return f"Update {article} {resource}"
+        if operation == "delete":
+            return f"Delete {article} {resource}"
+        if operation == "partial_update":
+            return f"Partially update {article} {resource}"
+
     def _get_serializer_name(self, serializer, direction):
         """
         Get serializer name.
