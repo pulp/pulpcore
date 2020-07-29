@@ -1,8 +1,0 @@
-#!/bin/bash -x
-
-/usr/bin/wait_on_postgres.py
-/usr/bin/wait_on_database_migrations.sh
-
-# TODO: Set ${PULP_WORKER_NUMBER} to the Pod Number
-# In the meantime, the hostname provides uniqueness.
-exec rq worker --url "redis://${REDIS_SERVICE_HOST}:${REDIS_SERVICE_PORT}" -w "pulpcore.tasking.worker.PulpWorker" -c "pulpcore.rqconfig"
