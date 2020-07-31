@@ -17,8 +17,6 @@ from rest_framework import serializers
 from rest_framework.generics import GenericAPIView
 from rest_framework.views import APIView
 
-from pulpcore.app.models import RepositoryVersion
-
 
 class PulpAutoSchema(AutoSchema):
     """Pulp Auto Schema."""
@@ -198,13 +196,14 @@ class PulpSchemaGenerator(SchemaGenerator):
         Returns:
             str: *pulp_href where * is the model name in all lower case letters
         """
-        slug = "%s_href" % "_".join(
-            [part.lower() for part in re.findall("[A-Z][^A-Z]*", model.__name__)]
-        )
+        app_label = model._meta.app_label
+        parts = [part.lower() for part in re.findall("[A-Z][^A-Z]*", model.__name__)]
         if prefix:
-            return "{}_{}".format(prefix, slug)
-        else:
-            return slug
+            parts.insert(0, prefix)
+        if app_label != "core":
+            parts.insert(0, app_label)
+        parts.append("href")
+        return "_".join(parts)
 
     @staticmethod
     def get_pk_path_param_name_from_model(model):
@@ -220,7 +219,7 @@ class PulpSchemaGenerator(SchemaGenerator):
             [part.lower() for part in re.findall("[A-Z][^A-Z]*", model.__name__)]
         )
 
-    def convert_endpoint_path_params(self, path, view):
+    def convert_endpoint_path_params(self, path, view, schema):
         """Replaces all 'pulp_id' path parameters with a specific name for the primary key.
         This method is used to ensure that the primary key name is consistent between nested
         endpoints. get_endpoints() returns paths that use 'pulp_id' for the top level path and a
@@ -230,7 +229,9 @@ class PulpSchemaGenerator(SchemaGenerator):
         Returns:
             path(str): The modified path.
         """
-        if not hasattr(view, "queryset") or view.queryset is None:
+        if "{" not in path:
+            return path
+        if getattr(view, "queryset", None) is None:
             if hasattr(view, "model"):
                 resource_model = view.model
             else:
@@ -238,10 +239,24 @@ class PulpSchemaGenerator(SchemaGenerator):
         else:
             resource_model = view.queryset.model
         if resource_model:
-            prefix_ = None
-            if issubclass(resource_model, RepositoryVersion):
-                prefix_ = view.parent_viewset.endpoint_name
-            param_name = self.get_parameter_slug_from_model(resource_model, prefix_)
+            prefix = None
+            parent_viewset = getattr(view, "parent_viewset", None)
+            if parent_viewset:
+                if schema._is_list_view():
+                    resource_model = parent_viewset.queryset.model
+                else:
+                    prefix = (
+                        "_".join(
+                            (
+                                parent_viewset.queryset.model._meta.app_label,
+                                parent_viewset.endpoint_name,
+                            )
+                        )
+                        .replace("-", "_")
+                        .replace("/", "_")
+                        .lower()
+                    )
+            param_name = self.get_parameter_slug_from_model(resource_model, prefix)
             resource_path = "%s}/" % path.rsplit(sep="}", maxsplit=1)[0]
             path = path.replace(resource_path, "{%s}" % param_name)
         return path
@@ -272,10 +287,9 @@ class PulpSchemaGenerator(SchemaGenerator):
             if not self.contains_serializer(view):
                 continue
 
-            # Converting path params
-            path = self.convert_endpoint_path_params(path, view)
-
             schema = view.schema
+
+            path = self.convert_endpoint_path_params(path, view, schema)
 
             # beware that every access to schema yields a fresh object (descriptor pattern)
             operation = schema.get_operation(path, path_regex, method, self.registry)
