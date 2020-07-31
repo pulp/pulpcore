@@ -1,7 +1,7 @@
-Bugs and Feature Requests
-=========================
+Bugs, Feature and Backport Requests
+===================================
 
-Bugs and feature requests for :term:`pulpcore` are tracked with `Redmine
+Bugs, feature and backport requests for :term:`pulpcore` are tracked with `Redmine
 <https://pulp.plan.io/projects/pulp/issues/>`_. Please see the `plugin table
 <https://pulpproject.org/content-plugins/>`_ for trackers for each plugin.
 
@@ -27,7 +27,8 @@ descriptions of all the fields and how they are used.
      - Instructions
 
    * - Tracker
-     - For a bug, select ``Issue``, for a feature-request, choose ``Story``
+     - For a bug, select ``Issue``, for a feature-request, choose ``Story``,
+       for a backport request, choose ``Backport``.
 
    * - Subject
      - Strive to be specific and concise.
@@ -58,7 +59,10 @@ is ok if you aren't able to provide all the information requested here, but clea
 issues are more likely to be fixed quickly. Bonus points if they are `pretty
 <https://www.redmine.org/projects/redmine/wiki/RedmineTextFormattingMarkdown>`_.
 
-For **Issues** (Bugs) please include:
+For **Issues** (Bugs)
+^^^^^^^^^^^^^^^^^^^^^
+
+Please include:
 
 #. Detailed explanation of the problem. For problems involving external content sources, please
    indicate the source (and a link) if you can.
@@ -71,11 +75,29 @@ You can also upload attachments, but please only upload relevant data. For examp
 entire log which contains some errors, please trim it to just the relevant portions and upload
 those.
 
-For **Feature Requests** (Stories), the description will depend on the feature. Please be specific
-when describing the requested behavior and include the motivation for adding it. If you have
-suggestions for how the commands/REST calls would look, please include that as well. Feature
-requests require follow-up from the filer, so please :ref:`reach out<community>` with a link to
-your issue.
+For **Feature Requests** (Stories)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The description will depend on the feature. Please be specific when describing the requested
+behavior and include the motivation for adding it. If you have suggestions for how the
+commands/REST calls would look, please include that as well. Feature requests require follow-up
+from the filer, so please :ref:`reach out<community>` with a link to your issue.
+
+For **Backport Requests**
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Only bug fixes from newer versions can be requested to be backported. No features can be backported
+to older versions due to semantic versioning.
+
+Please include:
+
+#. A redmine issue number or URL for the bug fix to backport. If possible, relate those two
+issues in the tracker using ``Add`` in the ``Related issues`` section after creating a Backport request.
+#. The Y release of the component you need a backport for. E.g. pulpcore 3.4, pulp_file 1.0, etc.
+#. The reasons for the backport request.
+
+If a backport request is not accepted, it is closed as WONTFIX.
+
 
 .. _triage:
 
@@ -116,11 +138,14 @@ Redmine Fields
 |             | - ``Story`` New feature or functionality.                                         |
 |             | - ``Refactor`` Improvement that will not be visible to the user in any way.       |
 |             | - ``Task`` Work that will not be a part of released code.                         |
+|             | - ``Backport`` Requested backport.                                                |
 |             | - ``Test`` Requested functional test.                                             |
 +-------------+-----------------------------------------------------------------------------------+
 | Subject     | - For an ``Issue``, summary of the situation and the unexpected result.           |
 |             | - For a ``Story``, takes the form "As a [user/dev/etc] I can ..."                 |
 |             | - For a ``Task`` or ``Refactor`` describe what should be done. in any way.        |
+|             | - For a ``Backport``, takes the form "<redmine issue number> into
+|             |   <component><Y release>"
 +-------------+-----------------------------------------------------------------------------------+
 | Description | A detailed explanation of the problem please see :ref:`issue-description`         |
 +-------------+-----------------------------------------------------------------------------------+
