@@ -101,6 +101,14 @@ def export_content(export, repository_version):
         export (django.db.models.PulpExport): export instance that's doing the export
         repository_version (django.db.models.RepositoryVersion): RepositoryVersion being exported
     """
+
+    def _combine_content_mappings(map1, map2):
+        """Combine two content mapping dicts into one by combining ids for for each key."""
+        result = {}
+        for key in map1.keys() | map2.keys():
+            result[key] = list(set(map1.get(key, []) + map2.get(key, [])))
+        return result
+
     dest_dir = os.path.join(
         "repository-{}_{}".format(
             str(repository_version.repository.name), repository_version.number
@@ -111,9 +119,25 @@ def export_content(export, repository_version):
     resource = ContentArtifactResource(repository_version)
     _write_export(export.tarfile, resource, dest_dir)
 
+    # content mapping is used by repo versions with subrepos (eg distribution tree repos)
+    content_mapping = {}
+
     # find and export any ModelResource found in pulp_<repo-type>.app.modelresource
     plugin_name = repository_version.repository.pulp_type.split(".")[0]
     cfg = get_plugin_config(plugin_name)
     if cfg.exportable_classes:
         for cls in cfg.exportable_classes:
-            _write_export(export.tarfile, cls(repository_version), dest_dir)
+            resource = cls(repository_version)
+            _write_export(export.tarfile, resource, dest_dir)
+
+            if hasattr(resource, "content_mapping") and resource.content_mapping:
+                content_mapping = _combine_content_mappings(
+                    content_mapping, resource.content_mapping
+                )
+
+    if content_mapping:
+        # write the content mapping to tarfile
+        cm_json = json.dumps(content_mapping).encode("utf8")
+        info = tarfile.TarInfo(name=f"{dest_dir}/content_mapping.json")
+        info.size = len(cm_json)
+        export.tarfile.addfile(info, io.BytesIO(cm_json))

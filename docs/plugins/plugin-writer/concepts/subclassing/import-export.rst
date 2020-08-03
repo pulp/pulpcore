@@ -61,3 +61,46 @@ this::
 
 
     IMPORT_ORDER = [FileContentResource]
+
+
+content_mapping
+~~~~~~~~~~~~~~~
+
+By default, all the Content that gets imported is automatically associated with the Repository it
+is stored with inside the export archive. In some cases, this may not be desirable. One such case is
+when there is Content that is tied to a sub_repo but not directly to the Repository itself. Another
+case is where you may have Content you want imported but not associated with a Repositoy. In such
+cases, you can set a ``content_mapping`` property on the Resource.
+
+The ``content_mapping`` property should be a dictionary that maps repository names to a list of
+content_ids. The importer code in pulp will combine the ``content_mappings`` across Resources and
+export them to a ``content_mapping.json`` file that it will use during import to map Content to
+Repositories.
+
+Here is an example that deals with subrepos::
+
+    class MyContentResource(BaseContentResource):
+        """
+        Resource for import/export of MyContent.
+        """
+
+        def __init__(self, *args, **kwargs):
+            """Override __init__ to set content_mapping to a dict."""
+            self.content_mapping = {}
+            super().__init__(*args, **kwargs)
+
+        def set_up_queryset(self):
+            """Set up the queryset and our content_mapping."""
+            content = MyContent.objects.filter(pk__in=self.repo_version.content)
+            self.content_mapping[self.repository_version.repository.name] = content
+
+            for repo in self.subrepos(self.repo_version):
+                subrepo_content = repo.latest_repository_version.content
+                self.content_mapping[repo.name] = subrepo_content
+                content |= subrepo_content
+
+            return content
+
+        class Meta:
+            model = MyContent
+
