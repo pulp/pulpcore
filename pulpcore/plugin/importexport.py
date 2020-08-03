@@ -40,6 +40,13 @@ class BaseContentResource(QueryModelResource):
     All Content-based resources being import/exported should subclass from this class.
     """
 
+    # An optional mapping that maps Content to Repositories. Useful when Content is sometimes not
+    # tied directly to a Repository but rather to a subrepo. Formatting:
+    #
+    #     {"<repo name>": ["<content upstream_id>", "..."]}
+    #
+    content_mapping = None
+
     class Meta:
         exclude = QueryModelResource.Meta.exclude + ("_artifacts", "content", "content_ptr")
 

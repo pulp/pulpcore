@@ -39,6 +39,16 @@ REPO_FILE = "pulpcore.app.modelresource.RepositoryResource.json"
 CONTENT_FILE = "pulpcore.app.modelresource.ContentResource.json"
 CA_FILE = "pulpcore.app.modelresource.ContentArtifactResource.json"
 VERSIONS_FILE = "versions.json"
+CONTENT_MAPPING_FILE = "content_mapping.json"
+
+
+def _destination_repo(importer, source_repo_name):
+    """Find the destination repository based on source repo's name."""
+    if importer.repo_mapping and importer.repo_mapping.get(source_repo_name):
+        dest_repo_name = importer.repo_mapping[source_repo_name]
+    else:
+        dest_repo_name = source_repo_name
+    return Repository.objects.get(name=dest_repo_name)
 
 
 def _import_file(fpath, resource_class):
@@ -87,16 +97,18 @@ def _check_versions(version_json):
             raise ValidationError((" ".join(error_messages)))
 
 
-def import_repository_version(destination_repo_pk, source_repo_name, tar_path):
+def import_repository_version(importer_pk, destination_repo_pk, source_repo_name, tar_path):
     """
     Import a repository version from a Pulp export.
 
     Args:
+        importer_pk (str): Importer we are working with
         destination_repo_pk (str): Primary key of Repository to import into.
         source_repo_name (str): Name of the Repository in the export.
         tar_path (str): A path to export tar.
     """
     dest_repo = Repository.objects.get(pk=destination_repo_pk)
+    importer = PulpImporter.objects.get(pk=importer_pk)
 
     with tempfile.TemporaryDirectory() as temp_dir:
         # Extract the repo file for the repo info
@@ -144,10 +156,27 @@ def import_repository_version(destination_repo_pk, source_repo_name, tar_path):
         ca_path = os.path.join(rv_path, CA_FILE)
         _import_file(ca_path, ContentArtifactResource)
 
-        # Create the repo version
-        content = Content.objects.filter(pk__in=resulting_content_ids)
-        with dest_repo.new_version() as new_version:
-            new_version.set_content(content)
+        # see if we have a content mapping
+        mapping_path = f"{_repo_version_path(src_repo)}/{CONTENT_MAPPING_FILE}"
+        mapping = {}
+        with tarfile.open(tar_path, "r:gz") as tar:
+            if mapping_path in tar.getnames():
+                tar.extract(mapping_path, path=temp_dir)
+                with open(os.path.join(temp_dir, mapping_path), "r") as mapping_file:
+                    mapping = json.load(mapping_file)
+
+        if mapping:
+            # use the content mapping to map content to repos
+            for repo_name, content_ids in mapping.items():
+                repo = _destination_repo(importer, repo_name)
+                content = Content.objects.filter(upstream_id__in=content_ids)
+                with repo.new_version() as new_version:
+                    new_version.set_content(content)
+        else:
+            # just map all the content to our destination repo
+            content = Content.objects.filter(pk__in=resulting_content_ids)
+            with dest_repo.new_version() as new_version:
+                new_version.set_content(content)
 
 
 def pulp_import(importer_pk, path, toc):
@@ -166,14 +195,6 @@ def pulp_import(importer_pk, path, toc):
             for byte_block in iter(lambda: f.read(4096), b""):
                 sha256_hash.update(byte_block)
             return sha256_hash.hexdigest()
-
-    def destination_repo(source_repo_name):
-        """Find the destination repository based on source repo's name."""
-        if importer.repo_mapping and importer.repo_mapping.get(source_repo_name):
-            dest_repo_name = importer.repo_mapping[source_repo_name]
-        else:
-            dest_repo_name = source_repo_name
-        return Repository.objects.get(name=dest_repo_name)
 
     def validate_toc(toc_filename):
         """
@@ -331,7 +352,7 @@ def pulp_import(importer_pk, path, toc):
 
             for src_repo in data:
                 try:
-                    dest_repo = destination_repo(src_repo["name"])
+                    dest_repo = _destination_repo(importer, src_repo["name"])
                 except Repository.DoesNotExist:
                     log.warning(
                         _("Could not find destination repo for {}. " "Skipping.").format(
@@ -343,7 +364,7 @@ def pulp_import(importer_pk, path, toc):
                 enqueue_with_reservation(
                     import_repository_version,
                     [dest_repo],
-                    args=[dest_repo.pk, src_repo["name"], path],
+                    args=[importer.pk, dest_repo.pk, src_repo["name"], path],
                     task_group=task_group,
                 )
 
