@@ -119,7 +119,6 @@ class HttpDownloader(BaseDownloader):
         proxy=None,
         proxy_auth=None,
         headers_ready_callback=None,
-        silence_errors_for_response_status_codes=set(),
         **kwargs,
     ):
         """
@@ -135,8 +134,6 @@ class HttpDownloader(BaseDownloader):
                 as its argument. The callback will be called when the response headers are
                 available. The dictionary passed has the header names as the keys and header values
                 as its values. e.g. `{'Transfer-Encoding': 'chunked'}`
-            silence_errors_for_response_status_codes (iterable): An iterable of response exception
-                codes to be ignored when raising exception. e.g. `{404}`
             kwargs (dict): This accepts the parameters of
                 :class:`~pulpcore.plugin.download.BaseDownloader`.
         """
@@ -152,7 +149,6 @@ class HttpDownloader(BaseDownloader):
         self.proxy = proxy
         self.proxy_auth = proxy_auth
         self.headers_ready_callback = headers_ready_callback
-        self.silence_errors_for_response_status_codes = silence_errors_for_response_status_codes
         super().__init__(url, **kwargs)
 
     def raise_for_status(self, response):
@@ -165,8 +161,7 @@ class HttpDownloader(BaseDownloader):
         Raises:
                aiohttp.ClientResponseError: When the response status is >= 400.
         """
-        if response.status not in self.silence_errors_for_response_status_codes:
-            response.raise_for_status()
+        response.raise_for_status()
 
     async def _handle_response(self, response):
         """
