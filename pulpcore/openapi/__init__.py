@@ -269,7 +269,7 @@ class PulpSchemaGenerator(SchemaGenerator):
         # Adding plugin filter
         plugins = None
         # /pulp/api/v3/docs/api.json?bindings&plugin=pulp_file
-        if "bindings" in request.query_params:
+        if request and "bindings" in request.query_params:
             plugins = [request.query_params["plugin"]]
 
         is_public = None if public else request
@@ -299,7 +299,7 @@ class PulpSchemaGenerator(SchemaGenerator):
                 continue
 
             # operationId as actions [list, read, sync, modify, create, delete, ...]
-            if "bindings" in request.query_params:
+            if request and "bindings" in request.query_params:
                 action_name = getattr(view, "action", schema.method.lower())
                 if schema.method.lower() == "get" and schema._is_list_view():
                     operation["operationId"] = "list"
@@ -359,5 +359,6 @@ class PulpSchemaGenerator(SchemaGenerator):
             "url": "https://pulp.plan.io/attachments/download/517478/pulp_logo_word_rectangle.svg"
         }
         # Adding current host as server (it will provide a default value for the bindings)
-        result["servers"] = [{"url": request.build_absolute_uri("/")}]
+        server_url = "http://localhost:24817" if not request else request.build_absolute_uri("/")
+        result["servers"] = [{"url": server_url}]
         return result
