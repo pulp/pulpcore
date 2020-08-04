@@ -27,6 +27,9 @@ class QueryModelResource(resources.ModelResource):
         if repo_version:
             self.queryset = self.set_up_queryset()
 
+    class Meta:
+        exclude = ("pulp_id", "pulp_created", "pulp_last_updated")
+
 
 class BaseContentResource(QueryModelResource):
     """
@@ -38,14 +41,7 @@ class BaseContentResource(QueryModelResource):
     """
 
     class Meta:
-        exclude = (
-            "_artifacts",
-            "content",
-            "content_ptr",
-            "pulp_id",
-            "pulp_created",
-            "pulp_last_updated",
-        )
+        exclude = QueryModelResource.Meta.exclude + ("_artifacts", "content", "content_ptr")
 
     def dehydrate_upstream_id(self, content):
         return str(content.pulp_id)
