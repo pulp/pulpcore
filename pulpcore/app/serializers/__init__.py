@@ -80,3 +80,5 @@ from .upload import (  # noqa
     UploadSerializer,
     UploadDetailSerializer,
 )
+
+from .user import UserSerializer  # noqa
