@@ -7,6 +7,7 @@ from drf_spectacular.views import (
     SpectacularJSONAPIView,
     SpectacularYAMLAPIView,
     SpectacularRedocView,
+    SpectacularSwaggerView,
 )
 from rest_framework import permissions
 from rest_framework.schemas import get_schema_view
@@ -138,6 +139,15 @@ urlpatterns.append(
         name="schema-yaml",
     )
 )
+
+urlpatterns.append(
+    url(
+        r"^{api_root}docs/swaggerui/".format(api_root=API_ROOT),
+        SpectacularSwaggerView.as_view(url_name='schema'),
+        name='schema-swaggerui',
+    )
+)
+
 
 urlpatterns.append(
     url(
