@@ -91,8 +91,8 @@ to older versions due to semantic versioning.
 
 Please include:
 
-#. A redmine issue number or URL for the bug fix to backport. If possible, relate those two
-issues in the tracker using ``Add`` in the ``Related issues`` section after creating a Backport request.
+#. A redmine issue number or URL for the bug fix to backport. If possible, relate those two issues
+   in the tracker using ``Add`` in the ``Related issues`` section after creating a Backport request.
 #. The Y release of the component you need a backport for. E.g. pulpcore 3.4, pulp_file 1.0, etc.
 #. The reasons for the backport request.
 
