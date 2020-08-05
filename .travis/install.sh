@@ -56,10 +56,7 @@ if [ -e $TRAVIS_BUILD_DIR/../pulp-certguard ]; then
 else
   PULP_CERTGUARD=git+https://github.com/pulp/pulp-certguard.git@master
 fi
-
-mkdir vars
-cat > vars/main.yaml << VARSYAML
----
+cat >> vars/main.yaml << VARSYAML
 image:
   name: pulp
   tag: "${TAG}"

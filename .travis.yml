@@ -83,6 +83,12 @@ jobs:
       env:
         - TEST=docs
       if: type != pull_request AND repo = pulp/pulpcore AND branch = master
+    - stage: update-redmine
+      before_install: skip
+      install: skip
+      before_script: skip
+      script: bash .travis/update_redmine.sh
+      if: tag IS present
 notifications:
   irc:
     channels:
