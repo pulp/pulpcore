@@ -40,9 +40,9 @@ Create your pulp_install.yml playbook to use with the installer (Uncomment the d
    - hosts: all
      vars:
        pulp_settings:
-         secret_key: secret
+         secret_key: << YOUR SECRET HERE >>
          content_origin: "http://{{ ansible_fqdn }}"
-       pulp_default_admin_password: password
+       pulp_default_admin_password: << YOUR SECRET HERE >>
        pulp_install_plugins:
          # galaxy-ng: {}
          # pulp-ansible: {}
@@ -127,7 +127,7 @@ PyPI Installation
 9. Run Django Migrations::
 
    $ pulpcore-manager migrate --noinput
-   $ pulpcore-manager reset-admin-password --password admin
+   $ pulpcore-manager reset-admin-password --password << YOUR SECRET HERE >>
 
 
 .. note::
@@ -236,4 +236,3 @@ These services can then be started by running::
     sudo systemctl start pulpcore-api
     sudo systemctl start pulpcore-worker@1
     sudo systemctl start pulpcore-worker@2
-
