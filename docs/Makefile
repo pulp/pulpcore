@@ -54,7 +54,7 @@ diagrams:
 
 html:
 	mkdir -p $(BUILDDIR)/html
-	curl -o _build/html/api.json "$(PULP_URL)/pulp/api/v3/docs/?format=openapi"
+	curl -o _build/html/api.json "$(PULP_URL)/pulp/api/v3/docs/api.json"
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
 	@echo
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/html."
