@@ -241,7 +241,7 @@ class Remote(MasterModel):
     password = models.TextField(null=True)
 
     proxy_url = models.TextField(null=True)
-    download_concurrency = models.PositiveIntegerField(default=20)
+    download_concurrency = models.PositiveIntegerField(default=10)
     policy = models.TextField(choices=POLICY_CHOICES, default=IMMEDIATE)
 
     @property
