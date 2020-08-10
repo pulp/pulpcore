@@ -36,16 +36,41 @@ from ``pulp_foo``, would look like this::
             model = Bar
 
 
+BaseContentResource
+~~~~~~~~~~~~~~~~~~~~
+
+The ``BaseContentResource`` class provides a base class for exporting ``Content``.
+``BaseContentResource`` provides extra functionality on top of ``QueryModelResource`` specific to
+handling the exporting and importing of Content such as handling of Content-specific fields like
+``upstream_id``.
+
+An example of subclassing ``BaseContentResource`` looks like::
+
+    class MyContentResource(BaseContentResource):
+        """
+        Resource for import/export of MyContent.
+        """
+
+        def set_up_queryset(self):
+            """
+            :return: MyContent specific to a specified repo-version.
+            """
+            return MyContent.objects.filter(pk__in=self.repo_version.content)
+
+        class Meta:
+            model = MyContent
+
+
 modelresource.py
 ~~~~~~~~~~~~~~~~
 
 A simple ``modelresource.py`` module is the one for the ``pulp_file`` plugin. It looks like
 this::
 
-    from pulpcore.plugin.importexport import QueryModelResource
+    from pulpcore.plugin.importexport import BaseContentResource
     from pulp_file.app.models import FileContent
 
-    class FileContentResource(QueryModelResource):
+    class FileContentResource(BaseContentResource):
         """
         Resource for import/export of file_filecontent entities
         """
