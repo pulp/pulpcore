@@ -1,0 +1,2 @@
+Replaced an Artifact object, which was used for storing temporary data in
+NoArtifactContentUploadViewSet, by a PulpTemporaryFile object.
