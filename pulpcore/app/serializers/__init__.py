@@ -81,4 +81,4 @@ from .upload import (  # noqa
     UploadDetailSerializer,
 )
 
-from .user import UserSerializer  # noqa
+from .user import GroupSerializer, UserSerializer  # noqa
