@@ -1,7 +1,7 @@
 from gettext import gettext as _
 
 from django.contrib.auth import get_user_model
-from django.contrib.auth.models import Group
+from django.contrib.auth.models import Group, Permission
 from rest_framework import serializers
 
 from pulpcore.app.serializers import IdentityField
@@ -101,8 +101,22 @@ class GroupSerializer(serializers.ModelSerializer):
 
     pulp_href = IdentityField(view_name="groups-detail")
     id = serializers.IntegerField(read_only=True)
-    name = serializers.CharField(help_text=_("First name"), max_length=150)
+    name = serializers.CharField(help_text=_("Name"), max_length=150)
 
     class Meta:
         model = Group
         fields = ("name", "pulp_href", "id")
+
+
+class PermissionSerializer(serializers.ModelSerializer):
+    """Serializer for group."""
+
+    pulp_href = IdentityField(view_name="permissions-detail")
+    id = serializers.IntegerField(read_only=True)
+    name = serializers.CharField(help_text=_("Name"), max_length=255)
+    codename = serializers.CharField(help_text=_("Codename"), max_length=100)
+    content_type_id = serializers.IntegerField(help_text=_("Content type id"))
+
+    class Meta:
+        model = Permission
+        fields = ("pulp_href", "id", "name", "codename", "content_type_id")
