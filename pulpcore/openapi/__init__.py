@@ -2,6 +2,7 @@ import re
 from urllib.parse import urljoin
 
 from django.core.exceptions import FieldDoesNotExist
+from django.utils.html import strip_tags
 from drf_spectacular.generators import SchemaGenerator
 from drf_spectacular.openapi import AutoSchema
 from drf_spectacular.plumbing import (
@@ -289,6 +290,9 @@ class PulpSchemaGenerator(SchemaGenerator):
             # operation was manually removed via @extend_schema
             if not operation:
                 continue
+
+            if "include_html" not in request.query_params:
+                operation["description"] = strip_tags(operation["description"])
 
             # operationId as actions [list, read, sync, modify, create, delete, ...]
             if request and "bindings" in request.query_params:

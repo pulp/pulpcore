@@ -144,7 +144,7 @@ urlpatterns.append(
 urlpatterns.append(
     url(
         r"^{api_root}docs/".format(api_root=API_ROOT),
-        SpectacularRedocView.as_view(url_name="schema"),
+        SpectacularRedocView.as_view(url="/pulp/api/v3/docs/api.json?include_html=1"),
         name="schema-redoc",
     )
 )
