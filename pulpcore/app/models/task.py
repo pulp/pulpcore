@@ -11,7 +11,12 @@ from django.db import models, transaction
 from django.utils import timezone
 from rq.job import get_current_job
 
-from pulpcore.app.models import GenericRelationModel, BaseModel
+from pulpcore.app.models import (
+    AutoAddObjPermsMixin,
+    AutoDeleteObjPermsMixin,
+    BaseModel,
+    GenericRelationModel,
+)
 from pulpcore.constants import TASK_CHOICES, TASK_FINAL_STATES, TASK_STATES
 from pulpcore.exceptions import exception_to_dict
 from pulpcore.tasking.constants import TASKING_CONSTANTS
@@ -313,7 +318,7 @@ class Worker(BaseModel):
                 TaskReservedResourceRecord.objects.create(resource=reservation_record, task=task)
 
 
-class Task(BaseModel):
+class Task(BaseModel, AutoDeleteObjPermsMixin, AutoAddObjPermsMixin):
     """
     Represents a task
 
@@ -346,6 +351,8 @@ class Task(BaseModel):
     task_group = models.ForeignKey(
         "TaskGroup", null=True, related_name="tasks", on_delete=models.SET_NULL
     )
+
+    ACCESS_POLICY_VIEWSET_NAME = "TaskViewSet"
 
     @staticmethod
     def current():

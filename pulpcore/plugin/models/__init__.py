@@ -2,6 +2,9 @@
 # Any models defined in the pulpcore.plugin namespace should probably be proxy models.
 
 from pulpcore.app.models import (  # noqa
+    AccessPolicy,
+    AutoAddObjPermsMixin,
+    AutoDeleteObjPermsMixin,
     Artifact,
     AsciiArmoredDetachedSigningService,
     BaseDistribution,

@@ -61,6 +61,7 @@ INSTALLED_APPS = [
     # third-party
     "django_filters",
     "drf_spectacular",
+    "guardian",
     "rest_framework",
     # pulp core app
     "pulpcore.app",
@@ -96,10 +97,12 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "django_currentuser.middleware.ThreadLocalUserMiddleware",
 ]
 
 AUTHENTICATION_BACKENDS = [
     "django.contrib.auth.backends.ModelBackend",
+    "guardian.backends.ObjectPermissionBackend",
 ]
 
 ROOT_URLCONF = "pulpcore.app.urls"
@@ -189,6 +192,8 @@ LOGGING = {
         },
     },
 }
+
+DRF_ACCESS_POLICY = {"reusable_conditions": "pulpcore.app.global_access_conditions"}
 
 CONTENT_PATH_PREFIX = "/pulp/content/"
 CONTENT_APP_TTL = 30

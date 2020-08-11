@@ -14,6 +14,10 @@ import django
 
 django.setup()
 
+from guardian.shortcuts import get_users_with_perms  # noqa: E402: module level not at top of file
+from django_currentuser.middleware import (  # noqa: E402: module level not at top of file
+    _set_current_user,
+)
 
 from pulpcore.app.models import Task  # noqa: E402: module level not at top of file
 
@@ -94,6 +98,8 @@ class PulpWorker(Worker):
             pass
         else:
             task.set_running()
+            user = get_users_with_perms(task).first()
+            _set_current_user(user)
 
         def check_kill(conn, id, interval=1):
             while True:

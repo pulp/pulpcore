@@ -4,10 +4,14 @@ import uuid
 from django.db import models
 from django.db.models import options
 from django.db.models.base import ModelBase
+from django_lifecycle import LifecycleModel
 
 
-class BaseModel(models.Model):
+class BaseModel(LifecycleModel):
     """Base model class for all Pulp models.
+
+    This model inherits from `LifecycleModel` which allows all Pulp models to be used with
+    `django-lifecycle`.
 
     Fields:
         pulp_created (models.DateTimeField): Created timestamp UTC.
@@ -16,6 +20,7 @@ class BaseModel(models.Model):
     References:
 
         * https://docs.djangoproject.com/en/1.8/topics/db/models/#automatic-primary-key-fields
+        * https://rsinger86.github.io/django-lifecycle/
 
     """
 

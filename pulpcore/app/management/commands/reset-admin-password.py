@@ -32,7 +32,7 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
-        user = User.objects.get_or_create(username="admin", is_superuser=True)[0]
+        user = User.objects.get_or_create(username="admin", is_superuser=True, is_staff=True)[0]
         if options["random"]:
             password = User.objects.make_random_password(length=20)
             user.set_password(password)

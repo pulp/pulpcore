@@ -145,13 +145,42 @@ Sync Pipeline
    sync_pipeline/sync_pipeline
 
 
+Role Based Access Control
+-------------------------
+
+Pulp uses a policy-based approach for Role Based Access Control (RBAC).
+
+Plugin writers can:
+
+* Enable authorization for a viewset
+* Ship a default access policy
+* Express what default object-level and model-level permissions created for new objects
+* Check permissions at various points in task code as needed
+
+
+This allows users to then:
+
+* Modify the default access policy on their installation for custom authorization
+* Modify the default object-level and model-level permissions that are created for new objects
+
+.. toctree::
+   :maxdepth: 2
+
+   rbac/overview
+   rbac/permissions
+   rbac/users_groups
+   rbac/access_policy
+   rbac/adding_automatic_permissions
+   rbac/queryset_scoping
+
+
 Content Protection
 ------------------
 
 Users can configure a ``ContentGuard`` to protect a ``Distribution`` on their own, but some plugins
 want to offer built-in content protection features. For example pulp_container may only want a user
-to download container images they have rights to based on some permissions system pulp_container could
-provide.
+to download container images they have rights to based on some permissions system pulp_container
+could provide.
 
 For more information see the :ref:`ContentGuard Usage by Plugin Writers
 <plugin-writers-use-content-protection>` documentation.

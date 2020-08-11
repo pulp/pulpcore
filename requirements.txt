@@ -3,10 +3,14 @@ aiodns
 aiofiles
 backoff
 Django~=2.2.14  # LTS version, switch only if we have a compelling reason to
+django-currentuser~=0.5.0
 django-filter~=2.3.0
+django-guardian~=2.3.0
 django-import-export~=2.3.0
+django-lifecycle~=0.7.7
 djangorestframework~=3.10.2
 djangorestframework-queryfields~=1.0.0
+drf-access-policy~=0.6.2
 drf-nested-routers~=0.91.0
 drf-spectacular>=0.9.12
 dynaconf>=2.2,<4.0
