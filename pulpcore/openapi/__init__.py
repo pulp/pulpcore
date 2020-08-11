@@ -266,8 +266,8 @@ class PulpSchemaGenerator(SchemaGenerator):
 
         # Adding plugin filter
         plugins = None
-        # /pulp/api/v3/docs/api.json?bindings&plugin=pulp_file
-        if request and "bindings" in request.query_params:
+        # /pulp/api/v3/docs/api.json?plugin=pulp_file
+        if request and "plugin" in request.query_params:
             plugins = [request.query_params["plugin"]]
 
         is_public = None if public else request
