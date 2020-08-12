@@ -3,7 +3,7 @@ aiodns
 aiofiles
 backoff
 Django~=2.2.14  # LTS version, switch only if we have a compelling reason to
-django-currentuser~=0.5.0
+django-currentuser~=0.5.1
 django-filter~=2.3.0
 django-guardian~=2.3.0
 django-import-export~=2.3.0
