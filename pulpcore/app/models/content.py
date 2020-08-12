@@ -95,17 +95,6 @@ class HandleTempFilesMixin:
         finally:
             self.file.close()
 
-    def delete(self, *args, **kwargs):
-        """
-        Deletes Model and the file associated with the Model
-
-        Args:
-            args (list): list of positional arguments for Model.delete()
-            kwargs (dict): dictionary of keyword arguments to pass to Model.delete()
-        """
-        super().delete(*args, **kwargs)
-        self.file.delete(save=False)
-
 
 class Artifact(HandleTempFilesMixin, BaseModel):
     """

@@ -65,6 +65,8 @@ INSTALLED_APPS = [
     "rest_framework",
     # pulp core app
     "pulpcore.app",
+    # the cleanup config has to be placed last
+    "django_cleanup.apps.CleanupConfig",
 ]
 
 # Enumerate the installed Pulp plugins during the loading process for use in the status API

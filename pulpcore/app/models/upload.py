@@ -46,17 +46,6 @@ class Upload(BaseModel):
 
         self.chunks.create(offset=offset, size=len(chunk))
 
-    def delete(self, *args, **kwargs):
-        """
-        Deletes Upload model and the file associated with the model
-
-        Args:
-            args (list): list of positional arguments for Model.delete()
-            kwargs (dict): dictionary of keyword arguments to pass to Model.delete()
-        """
-        super().delete(*args, **kwargs)
-        self.file.delete(save=False)
-
 
 class UploadChunk(BaseModel):
     """
