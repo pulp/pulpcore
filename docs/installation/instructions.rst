@@ -236,3 +236,29 @@ These services can then be started by running::
     sudo systemctl start pulpcore-api
     sudo systemctl start pulpcore-worker@1
     sudo systemctl start pulpcore-worker@2
+
+.. _ssl-setup:
+
+SSL
+---
+
+Users should configure HTTPS communication between clients and the reverse proxy that is in front of pulp services
+like pulpcore-api and pulpcore-content. The Pulp Installer provides three different options for configuring SSL
+certificates for nginx and httpd reverse proxies.
+
+1. By default, the installer will generate a new Certificate Authority and use it to sign an SSL certificate. In
+   this case, the Pulp administrator will need to distribute the Certificate Authority certificate or the SSL
+   certificate to all clients that wish to communicate with Pulp. Clients will need to import one of these
+   certificates to their system CA trust store.
+
+   The default location for the CA certificate is ``/etc/pulp/certs/root.crt``. The default location for the SSL
+   certificate is ``/etc/pulp/certs/pulp_webserver.crt``.
+
+2. If you already have an SSL Cerificate that you want to be used by the reverse proxy to encrypt communication
+   with clients, the Pulp Installer supports providing a path for ``pulp_webserver_tls_cert`` and
+   ``pulp_webserver_tls_key``. The administrator is still responsible for making sure that clients trust the
+   Certificate Authority that signed the SSL certificate.
+
+3. The Pulp Installer also supports using services that use the ACME protocol, e.g. https://letsencrypt.org/,  to
+   generate trusted SSL certificates. See the Pulp Installer documentation for `instructions and an example playbook
+   <https://pulp-installer.readthedocs.io/en/latest/letsencrypt/>`_.
