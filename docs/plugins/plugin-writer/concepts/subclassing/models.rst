@@ -59,7 +59,7 @@ can make and run database migrations with:
       pulpcore-manager migrate
 
 If you recognize this syntax, it is because pulpcore-manager is ``manage.py`` configured with
-`` DJANGO_SETTINGS_MODULE="pulpcore.app.settings"``. You can use it anywhere you normally would use
+``DJANGO_SETTINGS_MODULE="pulpcore.app.settings"``. You can use it anywhere you normally would use
 ``manage.py`` or ``django-admin``.
 
 
