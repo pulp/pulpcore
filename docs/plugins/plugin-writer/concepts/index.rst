@@ -39,6 +39,39 @@ the box.
    subclassing/import-export
 
 
+.. _validating-models:
+
+Validating Models
+-----------------
+
+Pulp ensures validity of its database models by carefully crafted serializers.
+So all instances where resources are created or updated, those serializers must be used.
+
+To create a ``MyModel`` from a ``data`` dictionary, the ``MyModelSerializer`` can be used like:
+
+.. code-block:: python
+
+     serializer = MyModelSerializer(data=data)
+     serializer.is_valid(raise_exception=True)
+     instance = serializer.create(serializer.validated_data)
+
+In the stages pipeline, you want to instantiate the content units without saving them to database
+right away. The ``ContentSaver`` stage will then persist the objects in the database. This can be
+established by:
+
+.. code-block:: python
+
+     # In MyPluginFirstStage::run
+     # <...>
+     serializer = MyModelSerializer(data=data)
+     serializer.is_valid(raise_exception=True)
+     d_content = DeclarativeContent(
+         content=MyModel(**serializer.validated_data),
+         d_artifacts=[d_artifact],
+     )
+     await self.put(d_content)
+     # <...>
+
 .. _writing-tasks:
 
 Tasks
