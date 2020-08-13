@@ -12,6 +12,7 @@ class OrphansView(APIView):
         description="Trigger an asynchronous task that deletes all"
         "orphaned content and artifacts.",
         summary="Delete orphans",
+        operation_id="orphans_delete",
         responses={202: AsyncOperationResponseSerializer},
     )
     def delete(self, request, format=None):
