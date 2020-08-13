@@ -54,3 +54,22 @@ Going Live is Atomic
 Content is served by a :term:`Distribution` and goes live from Pulp's :term:`content app` as soon as
 the database is configured to serve it. This guarantees a users view of a repository is consistent
 and as the entire repository is made available atomically.
+
+
+Obsolete Concepts
+-----------------
+
+Consumers
+*********
+
+In Pulp 2, there are consumers, aka managed hosts. It is information about existing installation
+and subscription profiles for hosts which receive updates based on Pulp repositories. This is
+not supported in Pulp 3. The functionality is available as part of `the Katello project <https://theforeman.org/plugins/katello/>`_.
+
+Applicability
+*************
+
+Applicability is a feature that provides a list of updates, content which needs to be installed
+on a specific host to bring it up to date. In Pulp 2, it is possible to calculate applicability
+based on the installation and subscription profile of a host managed by Pulp. This is
+not supported in Pulp 3. The functionality is available as part of `the Katello project <https://theforeman.org/plugins/katello/>`_.
