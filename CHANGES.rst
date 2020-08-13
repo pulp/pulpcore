@@ -17,6 +17,203 @@ Changelog
 
 .. towncrier release notes start
 
+3.6.0 (2020-08-13)
+==================
+REST API
+--------
+
+Features
+~~~~~~~~
+
+- Added table-of-contents to export and gave import a toc= to find/reassemble pieces on import.
+  `#6737 <https://pulp.plan.io/issues/6737>`_
+- Added ability to associate a Remote with a Repository so users no longer have to specify Remote when
+  syncing.
+  `#7015 <https://pulp.plan.io/issues/7015>`_
+- The `/pulp/api/v3/access_policies/` endpoint is available for reading and modifying the AccessPolicy
+  used for Role Based Access Control for all Pulp endpoints. This allows for complete customization
+  of the Authorization policies.
+
+  NOTE: this endpoint is in tech-preview and may change in backwards incompatible ways in the future.
+  `#7160 <https://pulp.plan.io/issues/7160>`_
+- The `/pulp/api/v3/access_policies/` endpoint also includes a `permissions_assignment` section which
+  customizes the permissions assigned to new objects. This allows for complete customization for how
+  new objects work with custom define Authorization policies.
+  `#7210 <https://pulp.plan.io/issues/7210>`_
+- The `/pulp/api/v3/users/` endpoint is available for reading the Users, Group membership, and
+  Permissions.
+
+  NOTE: this endpoint is in tech-preview and may change in backwards incompatible ways in the future.
+  `#7231 <https://pulp.plan.io/issues/7231>`_
+- The `/pulp/api/v3/groups/` endpoint is available for reading the Groups, membership, and
+  Permissions.
+
+  NOTE: this endpoint is in tech-preview and may change in backwards incompatible ways in the future.
+  `#7232 <https://pulp.plan.io/issues/7232>`_
+- The `/pulp/api/v3/tasks/` endpoint now provides a user-isolation behavior for non-admin users. This
+  policy is controllable at the `/pulp/api/v3/access_policies/` endpoint.
+
+  NOTE: The user-isolation behavior is in "tech preview" and production systems are recommended to
+  continue using the build-in ``admin`` user only.
+  `#7301 <https://pulp.plan.io/issues/7301>`_
+- Extended endpoint `/pulp/api/v3/groups/:pk/users` to add and remove users from a group.
+
+  NOTE: this endpoint is in tech-preview and may change in backwards incompatible ways in the future.
+  `#7310 <https://pulp.plan.io/issues/7310>`_
+- Extended endpoints `/pulp/api/v3/groups/:pk/model_permissions` and
+  `/pulp/api/v3/groups/:pk/object_permissions` to add and remove permissions from a group.
+
+  NOTE: this endpoint is in tech-preview and may change in backwards incompatible ways in the future.
+  `#7311 <https://pulp.plan.io/issues/7311>`_
+
+
+Bugfixes
+~~~~~~~~
+
+- WorkerDirectory.delete() no longer recursively trys to delete itself when encountering a permission error
+  `#6504 <https://pulp.plan.io/issues/6504>`_
+- Stopped preventing removal of PulpExport/Exporter when last-export existed.
+  `#6555 <https://pulp.plan.io/issues/6555>`_
+- First time on demand content requests appear in the access log.
+  `#7002 <https://pulp.plan.io/issues/7002>`_
+- Fixed denial of service caused by extra slashes in content urls.
+  `#7066 <https://pulp.plan.io/issues/7066>`_
+- Set a default DJANGO_SETTINGS_MODULE env var in content app
+  `#7179 <https://pulp.plan.io/issues/7179>`_
+- Added plugin namespace to openapi href identifier.
+  `#7209 <https://pulp.plan.io/issues/7209>`_
+- By default, html in field descriptions filtered out in REST API docs unless 'include_html' is set.
+  `#7299 <https://pulp.plan.io/issues/7299>`_
+- Fixed plugin filtering in bindings to work independently from "bindings" parameter.
+  `#7306 <https://pulp.plan.io/issues/7306>`_
+
+
+Improved Documentation
+~~~~~~~~~~~~~~~~~~~~~~
+
+- Made password variable consistent with Ansible installer example playbook
+  `#7065 <https://pulp.plan.io/issues/7065>`_
+- Fixed various docs bugs in the pulpcore docs.
+  `#7090 <https://pulp.plan.io/issues/7090>`_
+- Adds documentation about SSL configuration requirements for reverse proxies.
+  `#7285 <https://pulp.plan.io/issues/7285>`_
+- Fixed REST API docs.
+  `#7292 <https://pulp.plan.io/issues/7292>`_
+
+
+Deprecations and Removals
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+- Removed unnecessary fields from the import/export transfer.
+  `#6515 <https://pulp.plan.io/issues/6515>`_
+- Upgrading the api documentation from OpenAPI v2 to OpenAPI v3.
+  - Methods signatures for bindings may change.
+  `#7108 <https://pulp.plan.io/issues/7108>`_
+- Changed default ``download_concurrency`` on Remotes from 20 to 10 to avoid connection problems. Also
+  updated existing Remotes with ``download_concurrency`` of 20 to 10.
+  `#7212 <https://pulp.plan.io/issues/7212>`_
+
+
+Misc
+~~~~
+
+- `#6807 <https://pulp.plan.io/issues/6807>`_, `#7142 <https://pulp.plan.io/issues/7142>`_, `#7196 <https://pulp.plan.io/issues/7196>`_
+
+
+Plugin API
+----------
+
+Features
+~~~~~~~~
+
+- Adding `PulpTemporaryFile` for handling temporary files between the viewset and triggered tasks
+  `#6749 <https://pulp.plan.io/issues/6749>`_
+- ``RepositorySyncURLSerializer`` will now check remote on the repository before it raises an
+  exception if the remote param is not set.
+  `#7015 <https://pulp.plan.io/issues/7015>`_
+- Added a hook on ``Repository`` called ``artifacts_for_version()`` that plugins can override to
+  modify the logic behind ``RepositoryVersion.artifacts``. For now, this is used when exporting
+  artifacts.
+  `#7021 <https://pulp.plan.io/issues/7021>`_
+- Enabling plugin writers to have more control on `HttpDownloader` response codes 400+
+  by subclassing `HttpDownloader` and overwriting `raise_for_status` method
+  `#7117 <https://pulp.plan.io/issues/7117>`_
+- `BaseModel` now inherits from `LifecycleModel` provided by `django-lifecycle` allowing any subclass
+  to also use it instead of signals.
+  `#7151 <https://pulp.plan.io/issues/7151>`_
+- A new `pulpcore.plugin.models.AutoDeleteObjPermsMixin` object can be added to models to
+  automatically delete all user and group permissions for an object just before the object is deleted.
+  This provides an easy cleanup mechanism and can be added to models as a mixin. Note that your model
+  must support `django-lifecycle` to use this mixin.
+  `#7157 <https://pulp.plan.io/issues/7157>`_
+- A new model `pulpcore.plugin.models.AccessPolicy` is available to store AccessPolicy statements in
+  the database. The model's `statements` field stores the list of policy statements as a JSON field.
+  The `name` field stores the name of the Viewset the `AccessPolicy` is protecting.
+
+  Additionally, the `pulpcore.plugin.access_policy.AccessPolicyFromDB` is a drf-access-policy which
+  viewsets can use to protect their viewsets with. See the :ref:`viewset_enforcement` for more
+  information on this.
+  `#7158 <https://pulp.plan.io/issues/7158>`_
+- Adds the `TaskViewSet` and `TaskGroupViewSet` objects to the plugin api.
+  `#7187 <https://pulp.plan.io/issues/7187>`_
+- Enabled plugin writers to create immutable repository ViewSets
+  `#7191 <https://pulp.plan.io/issues/7191>`_
+- A new `pulpcore.plugin.models.AutoAddObjPermsMixin` object can be added to models to automatically
+  add permissions for an object just after the object is created. This is controlled by data saved in
+  the `permissions_assignment` attribute of the `pulpcore.plugin.models.AccessPolicy` allowing users
+  to control what permissions are created. Note that your model must support `django-lifecycle` to use
+  this mixin.
+  `#7210 <https://pulp.plan.io/issues/7210>`_
+- Added ability for plugin writers to set a ``content_mapping`` property on content resources to
+  provide a custom mapping of content to repositories.
+  `#7252 <https://pulp.plan.io/issues/7252>`_
+- Automatically excluding ``pulp_id``, ``pulp_created``, and ``pulp_last_updated`` for
+  ``QueryModelResources``.
+  `#7277 <https://pulp.plan.io/issues/7277>`_
+- Viewsets that subclass ``pulpcore.plugin.viewsets.NamedModelViewSet` can declare the
+  ``queryset_filtering_required_permission`` class attribute naming the permission required to view
+  an object. See the :ref:`queryset_scoping` documentation for more information.
+  `#7300 <https://pulp.plan.io/issues/7300>`_
+
+
+Bugfixes
+~~~~~~~~
+
+- Making operation_id unique
+  `#7233 <https://pulp.plan.io/issues/7233>`_
+- Making ReDoc OpenAPI summary human readable
+  `#7237 <https://pulp.plan.io/issues/7237>`_
+- OpenAPI schema generation from CLI
+  `#7258 <https://pulp.plan.io/issues/7258>`_
+- Allow `pulpcore.plugin.models.AutoAddObjPermsMixin.add_for_object_creator` to skip assignment of
+  permissions if there is no known user. This allows endpoints that do not use authorization but still
+  create objects in the DB to execute without error.
+  `#7312 <https://pulp.plan.io/issues/7312>`_
+
+
+Improved Documentation
+~~~~~~~~~~~~~~~~~~~~~~
+
+- Omit a view/viewset from the OpenAPI schema
+  `#7133 <https://pulp.plan.io/issues/7133>`_
+- Added plugin writer docs for ``BaseContentResource``.
+  `#7296 <https://pulp.plan.io/issues/7296>`_
+
+
+Deprecations and Removals
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+- Newlines in certificate string (ca_cert, client_cert, client_key) on Remotes are not required to be escaped.
+  `#6735 <https://pulp.plan.io/issues/6735>`_
+- Replaced drf-yasg with drf-spectacular.
+  - This updates the api documentation to openapi v3.
+  - Plugins may require changes.
+  - Methods signatures for bindings may change.
+  `#7108 <https://pulp.plan.io/issues/7108>`_
+- Moving containers from pulpcore to pulp-operator
+  `#7171 <https://pulp.plan.io/issues/7171>`_
+
+
 3.5.0 (2020-07-08)
 ==================
 REST API

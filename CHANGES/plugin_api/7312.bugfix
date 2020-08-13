@@ -1,3 +1,0 @@
-Allow `pulpcore.plugin.models.AutoAddObjPermsMixin.add_for_object_creator` to skip assignment of
-permissions if there is no known user. This allows endpoints that do not use authorization but still
-create objects in the DB to execute without error.
