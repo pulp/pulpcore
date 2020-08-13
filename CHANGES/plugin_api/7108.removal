@@ -1,4 +1,0 @@
-Replaced drf-yasg with drf-spectacular.
-- This updates the api documentation to openapi v3.
-- Plugins may require changes.
-- Methods signatures for bindings may change.

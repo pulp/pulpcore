@@ -1,1 +1,0 @@
-Fixed denial of service caused by extra slashes in content urls.

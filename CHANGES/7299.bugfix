@@ -1,1 +1,0 @@
-By default, html in field descriptions filtered out in REST API docs unless 'include_html' is set.

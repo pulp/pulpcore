@@ -1,1 +1,0 @@
-Newlines in certificate string (ca_cert, client_cert, client_key) on Remotes are not required to be escaped.

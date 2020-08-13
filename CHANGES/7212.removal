@@ -1,2 +1,0 @@
-Changed default ``download_concurrency`` on Remotes from 20 to 10 to avoid connection problems. Also
-updated existing Remotes with ``download_concurrency`` of 20 to 10.
