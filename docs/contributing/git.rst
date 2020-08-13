@@ -87,7 +87,7 @@ Putting this all together, the following is an example of a good commit message:
    you to open an issue.
 
 
-.. _requiring-other-pull-requests
+.. _requiring-other-pull-requests:
 
 Requiring other Pull Requests
 *****************************

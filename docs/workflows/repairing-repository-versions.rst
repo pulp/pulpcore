@@ -22,7 +22,7 @@ got corrupted in some way (i.e. bit rot).
 To start a repair task on a specific repository version, send a POST request to its `repair`
 endpoint:
 
-.. code-block:: bash
+.. code-block::
 
     $ REPAIR_TASK=$(http POST :24817${REPOSITORY_VERSION}repair/ | jq -r '.task')
     $ http --body :24817$REPAIR_TASK

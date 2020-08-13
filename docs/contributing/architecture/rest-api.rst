@@ -94,8 +94,8 @@ Normal
 A "Normal" relationship, for the purposes of this document, is defined as a Model that relates
 to another Model with no specialized models on either side.
 
-"Specialized" models include Generic
-Relations or a relation to the "Detail" side of a Master/Detail Model, and are documented below.
+"Specialized" models include Generic Relations or a relation to the "Detail" side of a Master/Detail
+Model, and are documented below.
 
 When relating a serializer to serializers representing other models (or lists of other models),
 remember to use DRF's HyperlinkedRelatedField, or a subclass of it, to ensure the relationship
@@ -157,15 +157,15 @@ control over what fields are exposed in the REST API, and that those fields are 
 the same way so that we don't break backward compatibility. To convert a ModelSerializer to its
 explicit Serializer class, DRF provides an excellent bit of functionality::
 
-	>>> from serializers import RepositorySerializer
-	>>> RepositorySerializer()
-	RepositorySerializer():
-		pulp_href = HyperlinkedIdentityField(view_name='repositories-detail')
-		name = CharField(style={'base_template': 'textarea.html'}, validators=[<UniqueValidator(queryset=Repository.objects.all())>])
-		description = CharField(allow_blank=True, required=False, style={'base_template': 'textarea.html'})
-		last_content_added = DateTimeField(allow_null=True, required=False)
-		last_content_removed = DateTimeField(allow_null=True, required=False)
-		content = HyperlinkedRelatedField(many=True, read_only=True, view_name='content-detail')
+    >>> from serializers import RepositorySerializer
+    >>> RepositorySerializer()
+    RepositorySerializer():
+        pulp_href = HyperlinkedIdentityField(view_name='repositories-detail')
+        name = CharField(style={'base_template': 'textarea.html'}, validators=[<UniqueValidator(queryset=Repository.objects.all())>])
+        description = CharField(allow_blank=True, required=False, style={'base_template': 'textarea.html'})
+        last_content_added = DateTimeField(allow_null=True, required=False)
+        last_content_removed = DateTimeField(allow_null=True, required=False)
+        content = HyperlinkedRelatedField(many=True, read_only=True, view_name='content-detail')
 
 DRF Serializers fully support __repr__, which means calling repr() on them will return a string
 that can be used to create that serializer. So, to see what fields DRF automatically generated
@@ -383,7 +383,7 @@ custom filter based on the `BaseInFilter`.
             pass
 
         class RepositoryFilter(filters.FilterSet):
-        name_in_list = CharInFilter(name='name', lookup_expr='in')
+            name_in_list = CharInFilter(name='name', lookup_expr='in')
 
             class Meta:
                 model = models.Repository

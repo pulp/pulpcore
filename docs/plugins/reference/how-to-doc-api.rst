@@ -32,8 +32,8 @@ You may disable schema generation for a view by setting ``schema`` to ``None``:
 .. code-block:: python
 
     class CustomView(APIView):
-    ...
-    schema = None  # Will not appear in schema
+        # ...
+        schema = None  # Will not appear in schema
 
 .. note::
     ``Meta.ref_name`` is a string that is used as the model definition name for

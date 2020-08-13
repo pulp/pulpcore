@@ -55,7 +55,7 @@ can make and run database migrations with:
 
 .. code-block:: bash
 
-      pulpcore-manager makemigrations <plugin_app_label>
+      pulpcore-manager makemigrations $PLUGIN_APP_LABEL
       pulpcore-manager migrate
 
 If you recognize this syntax, it is because pulpcore-manager is ``manage.py`` configured with
