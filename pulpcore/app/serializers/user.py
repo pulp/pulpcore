@@ -1,7 +1,9 @@
 from gettext import gettext as _
 
 from django.contrib.auth import get_user_model
-from django.contrib.auth.models import Group
+from django.contrib.auth.models import Group, Permission
+from django.urls import reverse
+from guardian.models.models import GroupObjectPermission
 from rest_framework import serializers
 
 from pulpcore.app.serializers import IdentityField
@@ -27,15 +29,39 @@ class ContentObjectField(serializers.CharField):
             return serializer.data.get("pulp_href")
 
 
-class ObjectPermissionSerializer(serializers.Serializer):
-    """Serializer for user/group object permission."""
+class PermissionSerializer(serializers.Serializer):
+    """Serializer for User/Group object permission."""
 
+    pulp_href = serializers.SerializerMethodField(read_only=True)
+    id = serializers.SerializerMethodField(read_only=True)
     permission = PermissionField(source="*", read_only=True)
     obj = ContentObjectField(help_text=_("Content object."), source="*", read_only=True)
 
+    def get_id(self, obj):
+        """Get model/object permission id."""
+        return obj.id
+
+    def get_pulp_href(self, obj):
+        """Get model/object permission pulp_href."""
+        group_pk = self.context.get("group_pk")
+
+        if group_pk and isinstance(obj, Permission):
+            return reverse("model_permissions-detail", args=[group_pk, obj.pk])
+
+        if group_pk and isinstance(obj, GroupObjectPermission):
+            return reverse("object_permissions-detail", args=[group_pk, obj.pk])
+
+    def to_representation(self, obj):
+        representation = super().to_representation(obj)
+
+        if not self.context.get("group_pk"):
+            representation.pop("pulp_href")
+
+        return representation
+
 
 class UserGroupSerializer(serializers.ModelSerializer):
-    """Serializer for user groups."""
+    """Serializer for Groups that belong to an User."""
 
     name = serializers.CharField(help_text=_("Name."), max_length=150,)
     pulp_href = IdentityField(view_name="groups-detail")
@@ -46,7 +72,7 @@ class UserGroupSerializer(serializers.ModelSerializer):
 
 
 class UserSerializer(serializers.ModelSerializer):
-    """Serializer for user."""
+    """Serializer for User."""
 
     pulp_href = IdentityField(view_name="users-detail")
     id = serializers.IntegerField(read_only=True)
@@ -83,7 +109,7 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class GroupUserSerializer(serializers.ModelSerializer):
-    """Serializer for group users."""
+    """Serializer for Users that belong to a Group."""
 
     username = serializers.CharField(
         help_text=_("Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only."),
@@ -97,11 +123,11 @@ class GroupUserSerializer(serializers.ModelSerializer):
 
 
 class GroupSerializer(serializers.ModelSerializer):
-    """Serializer for group."""
+    """Serializer for Group."""
 
     pulp_href = IdentityField(view_name="groups-detail")
     id = serializers.IntegerField(read_only=True)
-    name = serializers.CharField(help_text=_("First name"), max_length=150)
+    name = serializers.CharField(help_text=_("Name"), max_length=150)
 
     class Meta:
         model = Group

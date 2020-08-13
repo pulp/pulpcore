@@ -49,4 +49,10 @@ from .repository import (  # noqa
 )
 from .task import TaskViewSet, TaskGroupViewSet, WorkerViewSet  # noqa
 from .upload import UploadViewSet  # noqa
-from .user import GroupViewSet, UserViewSet  # noqa
+from .user import (  # noqa
+    GroupViewSet,
+    GroupUserViewSet,
+    GroupModelPermissionViewSet,
+    GroupObjectPermissionViewSet,
+    UserViewSet,
+)
