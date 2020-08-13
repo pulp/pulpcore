@@ -144,8 +144,8 @@ Redmine Fields
 | Subject     | - For an ``Issue``, summary of the situation and the unexpected result.           |
 |             | - For a ``Story``, takes the form "As a [user/dev/etc] I can ..."                 |
 |             | - For a ``Task`` or ``Refactor`` describe what should be done. in any way.        |
-|             | - For a ``Backport``, takes the form "<redmine issue number> into
-|             |   <component><Y release>"
+|             | - For a ``Backport``, takes the form "<redmine issue number> into                 |
+|             |   <component><Y release>"                                                         |
 +-------------+-----------------------------------------------------------------------------------+
 | Description | A detailed explanation of the problem please see :ref:`issue-description`         |
 +-------------+-----------------------------------------------------------------------------------+

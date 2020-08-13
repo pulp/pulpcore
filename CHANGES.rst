@@ -630,6 +630,7 @@ Deprecations and Removals
   ``_serve_content_artifact`` and has the following signature::
 
       def _serve_content_artifact(self, content_artifact, headers):
+
   `#4733 <https://pulp.plan.io/issues/4733>`_
 - Remove get_or_create_future and does_batch from DeclarativeContent. Replaced by awaiting for
   resolution on the DeclarativeContent itself.
@@ -750,6 +751,3 @@ Features
 
 - Added a new required field called CONTENT_TYPES to the Repository model.
   `#5701 <https://pulp.plan.io/issues/5701>`_
-
-
-----
