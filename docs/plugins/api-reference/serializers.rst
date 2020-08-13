@@ -6,3 +6,4 @@ namespace.
 
 .. automodule:: pulpcore.plugin.serializers
     :imported-members:
+    :members:

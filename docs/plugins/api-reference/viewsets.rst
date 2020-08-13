@@ -6,3 +6,4 @@ namespace.
 
 .. automodule:: pulpcore.plugin.viewsets
     :imported-members:
+    :members:

@@ -226,21 +226,22 @@ class GroupProgressReport(BaseModel):
     Once a Task Group is created, plugin writers should create these objects ahead.
     For example:
 
-    task_group = TaskGroup(description="Migration Sub-tasks")
-    task_group.save()
-    group_pr = GroupProgressReport(
-        message="Repo migration",
-        code="create.repo_version",
-        task_group=task_group).save()
+        >>> task_group = TaskGroup(description="Migration Sub-tasks")
+        >>> task_group.save()
+        >>> group_pr = GroupProgressReport(
+        >>>     message="Repo migration",
+        >>>     code="create.repo_version",
+        >>>     task_group=task_group).save()
 
     Taks that will be executing certain work, and is part of a TaskGroup, will look for
     the Task group it belongs to and find appropriate progress report by its code and will
     update it accordingly.
 
     For example:
-    task_group = TaskGroup.current()
-    progress_repo = task_group.group_progress_reports.filter(code='create.repo_version')
-    progress_repo.update(done=F('done') + 1)
+
+        >>> task_group = TaskGroup.current()
+        >>> progress_repo = task_group.group_progress_reports.filter(code='create.repo_version')
+        >>> progress_repo.update(done=F('done') + 1)
 
     To avoid race conditions/cache invalidation issues, this pattern needs to be used so that
     operations are performed directly inside the database:
