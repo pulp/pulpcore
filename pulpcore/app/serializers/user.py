@@ -6,7 +6,7 @@ from django.urls import reverse
 from guardian.models.models import GroupObjectPermission
 from rest_framework import serializers
 
-from pulpcore.app.serializers import IdentityField
+from pulpcore.app.serializers import IdentityField, ValidateFieldsMixin
 from pulpcore.app.util import get_viewset_for_model
 
 
@@ -108,7 +108,7 @@ class UserSerializer(serializers.ModelSerializer):
         )
 
 
-class GroupUserSerializer(serializers.ModelSerializer):
+class GroupUserSerializer(ValidateFieldsMixin, serializers.ModelSerializer):
     """Serializer for Users that belong to a Group."""
 
     username = serializers.CharField(
@@ -122,7 +122,7 @@ class GroupUserSerializer(serializers.ModelSerializer):
         fields = ("username", "pulp_href")
 
 
-class GroupSerializer(serializers.ModelSerializer):
+class GroupSerializer(ValidateFieldsMixin, serializers.ModelSerializer):
     """Serializer for Group."""
 
     pulp_href = IdentityField(view_name="groups-detail")

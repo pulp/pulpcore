@@ -4,13 +4,13 @@ from gettext import gettext as _
 from rest_framework import serializers
 
 from pulpcore.app import models
-from pulpcore.app.serializers import base
+from pulpcore.app.serializers import base, ValidateFieldsMixin
 
 
 CONTENT_RANGE_PATTERN = r"^bytes (\d+)-(\d+)/(\d+|[*])$"
 
 
-class UploadChunkSerializer(serializers.Serializer):
+class UploadChunkSerializer(ValidateFieldsMixin, serializers.Serializer):
     file = serializers.FileField(help_text=_("A chunk of the uploaded file."), write_only=True,)
 
     sha256 = serializers.CharField(
@@ -70,5 +70,5 @@ class UploadDetailSerializer(UploadSerializer):
         fields = UploadSerializer.Meta.fields + ("chunks",)
 
 
-class UploadCommitSerializer(serializers.Serializer):
+class UploadCommitSerializer(ValidateFieldsMixin, serializers.Serializer):
     sha256 = serializers.CharField(help_text=_("The expected sha256 checksum for the file."))
