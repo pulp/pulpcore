@@ -11,6 +11,7 @@ from .base import (  # noqa
     NestedIdentityField,
     NestedRelatedField,
     RelatedField,
+    ValidateFieldsMixin,
     validate_unknown_fields,
 )
 from .fields import (  # noqa

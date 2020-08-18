@@ -31,7 +31,20 @@ def validate_unknown_fields(initial_data, defined_fields):
         raise serializers.ValidationError(unknown_fields)
 
 
-class ModelSerializer(QueryFieldsMixin, serializers.HyperlinkedModelSerializer):
+class ValidateFieldsMixin:
+    """A mixin for validating unknown serializers' fields."""
+
+    def validate(self, data):
+        if hasattr(self, "initial_data"):
+            validate_unknown_fields(self.initial_data, self.fields)
+
+        data = super().validate(data)
+        return data
+
+
+class ModelSerializer(
+    ValidateFieldsMixin, QueryFieldsMixin, serializers.HyperlinkedModelSerializer
+):
     """Base serializer for use with :class:`pulpcore.app.models.Model`
 
     This ensures that all Serializers provide values for the 'pulp_href` field.
@@ -80,11 +93,6 @@ class ModelSerializer(QueryFieldsMixin, serializers.HyperlinkedModelSerializer):
             )
 
         return path
-
-    def validate(self, data):
-        if hasattr(self, "initial_data"):
-            validate_unknown_fields(self.initial_data, self.fields)
-        return data
 
     def __init_subclass__(cls, **kwargs):
         """Set default attributes in subclasses.

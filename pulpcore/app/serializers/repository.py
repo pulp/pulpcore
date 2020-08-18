@@ -14,6 +14,7 @@ from pulpcore.app.serializers import (
     RepositoryVersionIdentityField,
     RepositoryVersionRelatedField,
     RepositoryVersionsIdentityFromRepositoryField,
+    ValidateFieldsMixin,
 )
 
 
@@ -158,7 +159,7 @@ class RemoteSerializer(ModelSerializer):
         )
 
 
-class RepositorySyncURLSerializer(serializers.Serializer):
+class RepositorySyncURLSerializer(ValidateFieldsMixin, serializers.Serializer):
     remote = DetailRelatedField(
         required=False,
         view_name_pattern=r"remotes(-.*/.*)-detail",
@@ -176,6 +177,8 @@ class RepositorySyncURLSerializer(serializers.Serializer):
     )
 
     def validate(self, data):
+        data = super().validate(data)
+
         try:
             remote = models.Repository.objects.get(pk=self.context["repository_pk"]).remote
         except KeyError:
