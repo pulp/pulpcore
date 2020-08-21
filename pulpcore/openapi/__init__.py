@@ -66,20 +66,23 @@ class PulpAutoSchema(AutoSchema):
 
         return tags
 
+    def get_operation_id_action(self):
+        """Get action from operation_id."""
+        action_name = getattr(self.view, "action", self.method.lower())
+        if action_name not in ["retrieve", "list", "destroy", "create"]:
+            return action_name
+
+        if self.method.lower() == "get" and self._is_list_view():
+            return "list"
+
+        return self.method_mapping[self.method.lower()]
+
     def get_operation_id(self):
         """Get operation id."""
         tokenized_path = self._tokenize_path()
         tokenized_path = [t.replace("-", "_").replace("/", "_").lower() for t in tokenized_path]
 
-        action_name = getattr(self.view, "action", self.method.lower())
-        if self.method.lower() == "get" and self._is_list_view():
-            action = "list"
-        elif action_name not in self.method_mapping:
-            action = action_name.replace("destroy", "delete").replace("retrieve", "read")
-        else:
-            action = self.method_mapping[self.method.lower()]
-
-        return "_".join(tokenized_path + [action])
+        return "_".join(tokenized_path + [self.get_operation_id_action()])
 
     def get_summary(self):
         """
@@ -317,14 +320,13 @@ class PulpSchemaGenerator(SchemaGenerator):
 
             # operationId as actions [list, read, sync, modify, create, delete, ...]
             if request and "bindings" in request.query_params:
-                action_name = getattr(view, "action", schema.method.lower())
-                if schema.method.lower() == "get" and schema._is_list_view():
-                    operation["operationId"] = "list"
-                elif action_name not in schema.method_mapping:
-                    action = action_name.replace("destroy", "delete").replace("retrieve", "read")
+                tokenized_path = schema._tokenize_path()
+                tokenized_path = "_".join(
+                    [t.replace("-", "_").replace("/", "_").lower() for t in tokenized_path]
+                )
+                action = schema.get_operation_id_action()
+                if f"{tokenized_path}_{action}" == operation["operationId"]:
                     operation["operationId"] = action
-                else:
-                    operation["operationId"] = schema.method_mapping[schema.method.lower()]
 
             # Adding query parameters
             if "parameters" in operation and schema.method.lower() == "get":
