@@ -6,6 +6,7 @@ from django.utils.html import strip_tags
 from drf_spectacular.generators import SchemaGenerator
 from drf_spectacular.openapi import AutoSchema
 from drf_spectacular.plumbing import (
+    ResolvedComponent,
     build_basic_type,
     build_parameter_type,
     force_instance,
@@ -181,6 +182,26 @@ class PulpAutoSchema(AutoSchema):
         if "additionalProperties" in str(mapped):
             del mapped["additionalProperties"]
         return mapped
+
+    def resolve_serializer(self, serializer, direction):
+        """Serializer to component."""
+        component_schema = self._map_serializer(serializer, direction)
+        if not component_schema.get("properties", {}):
+            component = ResolvedComponent(
+                name=self._get_serializer_name(serializer, direction),
+                type=ResolvedComponent.SCHEMA,
+                object=serializer,
+            )
+            if component in self.registry:
+                return self.registry[component]
+
+            component.schema = component_schema
+            self.registry.register(component)
+
+        else:
+            component = super().resolve_serializer(serializer, direction)
+
+        return component
 
 
 class PulpSchemaGenerator(SchemaGenerator):
