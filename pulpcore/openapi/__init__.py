@@ -29,7 +29,18 @@ class PulpAutoSchema(AutoSchema):
     }
 
     def _tokenize_path(self):
-        """Tokenize path."""
+        """
+        Tokenize path.
+
+        drf_spectacular uses this to tokenize the path:
+            "/my/path/to/{variable}/api" => ["my", "path", "to", "api"]
+
+        But pulp manipulates the path:
+            "/pulp/api/v3/artifacts/{pulp_id}" == "{artifact_href}"
+
+        This method extends _tokenize_path to handle pulp cases.
+
+        """
         tokenized_path = []
 
         if getattr(self.view, "parent_viewset", None):
@@ -46,7 +57,22 @@ class PulpAutoSchema(AutoSchema):
         return tokenized_path
 
     def get_tags(self):
-        """Generate tags."""
+        """
+        Generate tags.
+
+        For bindings, tags are used to group operation ids into same class.
+        Example:
+            "Content: Files" => ContentFilesAPI
+
+        The path is used to generate a tag:
+            "/pulp/api/v3/content/file/files/" => "Content: Files"
+
+        For customize the tag, please set `pulp_tag_name` at your view.
+        Example:
+            class MyViewSet(ViewSet):
+                pulp_tag_name = "Pulp: Customized Tag"
+
+        """
         pulp_tag_name = getattr(self.view, "pulp_tag_name", False)
         if pulp_tag_name:
             return [pulp_tag_name]
@@ -66,7 +92,14 @@ class PulpAutoSchema(AutoSchema):
         return tags
 
     def get_operation_id_action(self):
-        """Get action from operation_id."""
+        """
+        Get action from operation_id.
+
+        - For default actions: maps methods to action
+            "patch" => "partial_update"
+        - For customized actions: return the customized action
+            e.g. "sync"
+        """
         action_name = getattr(self.view, "action", self.method.lower())
         if action_name not in ["retrieve", "list", "destroy", "create"]:
             return action_name
@@ -77,7 +110,17 @@ class PulpAutoSchema(AutoSchema):
         return self.method_mapping[self.method.lower()]
 
     def get_operation_id(self):
-        """Get operation id."""
+        """
+        Get operation id.
+
+        Combines tokenized_path with action.
+        Example:
+            path = "/my/path/to/{variable}/api"
+            method = "patch"
+
+            Return "my_path_to_api_partial_update"
+
+        """
         tokenized_path = self._tokenize_path()
         tokenized_path = [t.replace("-", "_").replace("/", "_").lower() for t in tokenized_path]
 
@@ -125,6 +168,8 @@ class PulpAutoSchema(AutoSchema):
     def map_parsers(self):
         """
         Get request parsers.
+
+        Handling cases with `FileField`.
         """
         parsers = super().map_parsers()
         serializer = force_instance(self.get_request_serializer())
@@ -141,7 +186,11 @@ class PulpAutoSchema(AutoSchema):
         return request_body
 
     def _resolve_path_parameters(self, variables):
-        """Resolve path parameters."""
+        """
+        Resolve path parameters.
+
+        Extended to omit undesired warns.
+        """
         model = getattr(getattr(self.view, "queryset", None), "model", None)
         parameters = []
 
@@ -294,6 +343,7 @@ class PulpSchemaGenerator(SchemaGenerator):
             if not operation:
                 continue
 
+            # Removes html tags from OpenAPI schema
             if "include_html" not in request.query_params:
                 operation["description"] = strip_tags(operation["description"])
 
