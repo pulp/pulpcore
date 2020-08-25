@@ -117,6 +117,11 @@ class PulpExportSerializer(ExportSerializer):
         read_only=True,
     )
 
+    toc_info = serializers.JSONField(
+        help_text=_("Filename and sha256-checksum of table-of-contents for this export"),
+        read_only=True,
+    )
+
     dry_run = serializers.BooleanField(
         help_text=_("Generate report on what would be exported and disk-space required."),
         default=False,
@@ -237,6 +242,7 @@ class PulpExportSerializer(ExportSerializer):
             "chunk_size",
             "output_file_info",
             "start_versions",
+            "toc_info",
         )
 
 
