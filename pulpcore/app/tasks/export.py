@@ -225,9 +225,10 @@ def pulp_export(the_export):
             chunk_toc["files"][os.path.basename(a_path)] = rslts[a_path]
         json.dump(chunk_toc, outfile)
 
-    # add toc to output_file_info
+    # store toc info
     toc_hash = _compute_hash(output_file_info_path)
     the_export.output_file_info[output_file_info_path] = toc_hash
+    the_export.toc_info = {"file": output_file_info_path, "sha256": toc_hash}
 
     # save the export
     the_export.save()

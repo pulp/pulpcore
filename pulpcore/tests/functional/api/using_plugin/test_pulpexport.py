@@ -199,6 +199,7 @@ class PulpExportTestCase(BaseExporterCase):
             self.assertIsNotNone(export)
             self.assertEqual(len(exporter.repositories), len(export.exported_resources))
             self.assertIsNotNone(export.output_file_info)
+            self.assertIsNotNone(export.toc_info)
             for an_export_filename in export.output_file_info.keys():
                 self.assertFalse("//" in an_export_filename)
 
