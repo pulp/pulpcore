@@ -19,7 +19,9 @@ from pulpcore.app.serializers import (
 
 
 class RepositorySerializer(ModelSerializer):
-    pulp_href = DetailIdentityField(view_name_pattern=r"repositories(-.*/.*)-detail",)
+    pulp_href = DetailIdentityField(
+        view_name_pattern=r"repositories(-.*/.*)-detail",
+    )
     versions_href = RepositoryVersionsIdentityFromRepositoryField()
     latest_version_href = LatestVersionField()
     name = serializers.CharField(
@@ -61,12 +63,16 @@ class RemoteSerializer(ModelSerializer):
     class. Please import from `pulpcore.plugin.serializers` rather than from this module directly.
     """
 
-    pulp_href = DetailIdentityField(view_name_pattern=r"remotes(-.*/.*)-detail",)
+    pulp_href = DetailIdentityField(
+        view_name_pattern=r"remotes(-.*/.*)-detail",
+    )
     name = serializers.CharField(
         help_text=_("A unique name for this remote."),
         validators=[UniqueValidator(queryset=models.Remote.objects.all())],
     )
-    url = serializers.CharField(help_text="The URL of an external content source.",)
+    url = serializers.CharField(
+        help_text="The URL of an external content source.",
+    )
     ca_cert = serializers.CharField(
         help_text="A PEM encoded CA certificate used to validate the server "
         "certificate presented by the remote server.",
@@ -84,7 +90,8 @@ class RemoteSerializer(ModelSerializer):
         allow_null=True,
     )
     tls_validation = serializers.BooleanField(
-        help_text="If True, TLS peer validation must be performed.", required=False,
+        help_text="If True, TLS peer validation must be performed.",
+        required=False,
     )
     proxy_url = serializers.CharField(
         help_text="The proxy URL. Format: scheme://user:password@host:port",

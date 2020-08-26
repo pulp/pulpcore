@@ -137,5 +137,8 @@ class TestMultipleStages(asynctest.TestCase):
                     last_stage._connect(queues[1], queues[2])
                     end_stage._connect(queues[2], None)
                     await asyncio.gather(
-                        last_stage(), middle_stage(), first_stage(), end_stage(),
+                        last_stage(),
+                        middle_stage(),
+                        first_stage(),
+                        end_stage(),
                     )

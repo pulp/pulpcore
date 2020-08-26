@@ -885,7 +885,9 @@ class DeleteRepoVersionResourcesTestCase(unittest.TestCase):
 
         for key in ("not", "found"):
             self.assertIn(
-                key, ctx.exception.response.json()["detail"].lower(), ctx.exception.response,
+                key,
+                ctx.exception.response.json()["detail"].lower(),
+                ctx.exception.response,
             )
 
     def test_delete_distribution(self):
@@ -1023,8 +1025,7 @@ class BaseVersionTestCase(unittest.TestCase):
         delete_orphans(cls.cfg)
 
     def test_add_content_with_base_version(self):
-        """Test modify repository with base_version
-        """
+        """Test modify repository with base_version"""
         delete_orphans(self.cfg)
 
         repo = self.client.post(FILE_REPO_PATH, gen_repo())

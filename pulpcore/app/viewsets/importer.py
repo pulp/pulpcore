@@ -105,6 +105,8 @@ class PulpImportViewSet(ImportViewSet):
         path = serializer.validated_data.get("path")
         toc = serializer.validated_data.get("toc")
         result = enqueue_with_reservation(
-            pulp_import, [importer], kwargs={"importer_pk": importer.pk, "path": path, "toc": toc},
+            pulp_import,
+            [importer],
+            kwargs={"importer_pk": importer.pk, "path": path, "toc": toc},
         )
         return OperationPostponedResponse(result, request)

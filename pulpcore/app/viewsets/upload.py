@@ -96,6 +96,8 @@ class UploadViewSet(
 
         upload = self.get_object()
         async_result = enqueue_with_reservation(
-            tasks.upload.commit, [upload], args=(upload.pk, sha256),
+            tasks.upload.commit,
+            [upload],
+            args=(upload.pk, sha256),
         )
         return OperationPostponedResponse(async_result, request)

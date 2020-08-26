@@ -105,15 +105,23 @@ helper = textwrap.dedent(
 parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter, description=helper)
 
 parser.add_argument(
-    "release_type", type=str, help="Whether the release should be major, minor or patch.",
+    "release_type",
+    type=str,
+    help="Whether the release should be major, minor or patch.",
 )
 
 parser.add_argument(
-    "--lower", type=str, required=False, help="Lower bound of pulpcore requirement.",
+    "--lower",
+    type=str,
+    required=False,
+    help="Lower bound of pulpcore requirement.",
 )
 
 parser.add_argument(
-    "--upper", type=str, required=False, help="Upper bound of pulpcore requirement.",
+    "--upper",
+    type=str,
+    required=False,
+    help="Upper bound of pulpcore requirement.",
 )
 
 args = parser.parse_args()

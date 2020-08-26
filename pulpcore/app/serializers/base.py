@@ -158,7 +158,10 @@ class _DetailFieldMixin:
                 log.warn(
                     _(
                         "Please provide either 'view_name' or 'view_name_pattern' for {} on {}."
-                    ).format(self.__class__.__name__, traceback.extract_stack()[-4][2],),
+                    ).format(
+                        self.__class__.__name__,
+                        traceback.extract_stack()[-4][2],
+                    ),
                 )
                 view_name = _MatchingRegexViewName(r".*")
         super().__init__(view_name, **kwargs)

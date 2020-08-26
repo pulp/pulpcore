@@ -12,7 +12,9 @@ UNIQUE_ALGORITHMS = ["sha256", "sha384", "sha512"]
 
 
 class BaseContentSerializer(base.ModelSerializer):
-    pulp_href = base.DetailIdentityField(view_name_pattern=r"contents(-.*/.*)-detail",)
+    pulp_href = base.DetailIdentityField(
+        view_name_pattern=r"contents(-.*/.*)-detail",
+    )
 
     class Meta:
         model = models.Content
@@ -62,7 +64,9 @@ class SingleArtifactContentSerializer(BaseContentSerializer):
             relative_path = validated_data.get("relative_path")
         content = self.Meta.model.objects.create(**validated_data)
         models.ContentArtifact.objects.create(
-            artifact=artifact, content=content, relative_path=relative_path,
+            artifact=artifact,
+            content=content,
+            relative_path=relative_path,
         )
         return content
 
@@ -92,7 +96,9 @@ class MultipleArtifactContentSerializer(BaseContentSerializer):
         content = self.Meta.model.objects.create(**validated_data)
         for relative_path, artifact in artifacts.items():
             models.ContentArtifact.objects.create(
-                artifact=artifact, content=content, relative_path=relative_path,
+                artifact=artifact,
+                content=content,
+                relative_path=relative_path,
             )
         return content
 
@@ -111,27 +117,33 @@ class ContentChecksumSerializer(serializers.Serializer):
     """
 
     md5 = fields.ContentArtifactChecksumField(
-        help_text=_("The MD5 checksum if available."), checksum="md5",
+        help_text=_("The MD5 checksum if available."),
+        checksum="md5",
     )
 
     sha1 = fields.ContentArtifactChecksumField(
-        help_text=_("The SHA-1 checksum if available."), checksum="sha1",
+        help_text=_("The SHA-1 checksum if available."),
+        checksum="sha1",
     )
 
     sha224 = fields.ContentArtifactChecksumField(
-        help_text=_("The SHA-224 checksum if available."), checksum="sha224",
+        help_text=_("The SHA-224 checksum if available."),
+        checksum="sha224",
     )
 
     sha256 = fields.ContentArtifactChecksumField(
-        help_text=_("The SHA-256 checksum if available."), checksum="sha256",
+        help_text=_("The SHA-256 checksum if available."),
+        checksum="sha256",
     )
 
     sha384 = fields.ContentArtifactChecksumField(
-        help_text=_("The SHA-384 checksum if available."), checksum="sha384",
+        help_text=_("The SHA-384 checksum if available."),
+        checksum="sha384",
     )
 
     sha512 = fields.ContentArtifactChecksumField(
-        help_text=_("The SHA-512 checksum if available."), checksum="sha512",
+        help_text=_("The SHA-512 checksum if available."),
+        checksum="sha512",
     )
 
     class Meta:
@@ -147,14 +159,24 @@ class ContentChecksumSerializer(serializers.Serializer):
 
 
 class ArtifactSerializer(base.ModelSerializer):
-    pulp_href = base.IdentityField(view_name="artifacts-detail",)
+    pulp_href = base.IdentityField(
+        view_name="artifacts-detail",
+    )
 
-    file = serializers.FileField(help_text=_("The stored file."), allow_empty_file=True,)
+    file = serializers.FileField(
+        help_text=_("The stored file."),
+        allow_empty_file=True,
+    )
 
-    size = serializers.IntegerField(help_text=_("The size of the file in bytes."), required=False,)
+    size = serializers.IntegerField(
+        help_text=_("The size of the file in bytes."),
+        required=False,
+    )
 
     md5 = serializers.CharField(
-        help_text=_("The MD5 checksum of the file if available."), required=False, allow_null=True,
+        help_text=_("The MD5 checksum of the file if available."),
+        required=False,
+        allow_null=True,
     )
 
     sha1 = serializers.CharField(
@@ -246,7 +268,9 @@ class SigningServiceSerializer(base.ModelSerializer):
     A serializer for the model declaring a signing service.
     """
 
-    pulp_href = base.IdentityField(view_name="signing-services-detail",)
+    pulp_href = base.IdentityField(
+        view_name="signing-services-detail",
+    )
     name = serializers.CharField(help_text=_("A unique name used to recognize a script."))
     script = serializers.CharField(
         help_text=_("An absolute path to a script which is going to be used for the signing.")

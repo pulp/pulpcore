@@ -16,7 +16,9 @@ from pulpcore.app.serializers import (
 class ImporterSerializer(ModelSerializer):
     """Base serializer for Importers."""
 
-    pulp_href = DetailIdentityField(view_name_pattern=r"importer(-.*/.*)-detail",)
+    pulp_href = DetailIdentityField(
+        view_name_pattern=r"importer(-.*/.*)-detail",
+    )
     name = serializers.CharField(
         help_text=_("Unique name of the Importer."),
         validators=[UniqueValidator(queryset=models.Importer.objects.all())],

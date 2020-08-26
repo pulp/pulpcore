@@ -5,7 +5,7 @@ from .base import PulpException
 
 
 class MissingResource(PulpException):
-    """"
+    """ "
     Base class for missing resource exceptions.
 
     Exceptions that are raised due to requests for resources that do not exist should inherit

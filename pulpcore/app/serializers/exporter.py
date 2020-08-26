@@ -24,7 +24,9 @@ class ExporterSerializer(ModelSerializer):
     Base serializer for Exporters.
     """
 
-    pulp_href = DetailIdentityField(view_name_pattern=r"exporter(-.*/.*)-detail",)
+    pulp_href = DetailIdentityField(
+        view_name_pattern=r"exporter(-.*/.*)-detail",
+    )
     name = serializers.CharField(
         help_text=_("Unique name of the file system exporter."),
         validators=[UniqueValidator(queryset=models.Exporter.objects.all())],
@@ -94,7 +96,9 @@ class ExportSerializer(ModelSerializer):
     )
 
     exported_resources = ExportedResourcesField(
-        help_text=_("Resources that were exported."), source="*", read_only=True,
+        help_text=_("Resources that were exported."),
+        source="*",
+        read_only=True,
     )
 
     params = serializers.JSONField(

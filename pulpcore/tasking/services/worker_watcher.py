@@ -10,7 +10,7 @@ _logger = logging.getLogger(__name__)
 
 
 def mark_worker_online(worker_name):
-    """ Sets some bookkeeping values on the worker record for tracking worker state
+    """Sets some bookkeeping values on the worker record for tracking worker state
 
     Args:
         worker_name (str): The hostname of the worker

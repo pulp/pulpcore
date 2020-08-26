@@ -116,8 +116,7 @@ class MasterModel(BaseModel, metaclass=MasterModelMeta):
 
     @classmethod
     def get_pulp_type(cls):
-        """ Get the "pulp_type" string associated with this MasterModel type.
-        """
+        """Get the "pulp_type" string associated with this MasterModel type."""
         return "{app_label}.{type}".format(app_label=cls._meta.app_label, type=cls.TYPE)
 
     def cast(self):

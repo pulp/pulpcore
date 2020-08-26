@@ -11,7 +11,10 @@ CONTENT_RANGE_PATTERN = r"^bytes (\d+)-(\d+)/(\d+|[*])$"
 
 
 class UploadChunkSerializer(ValidateFieldsMixin, serializers.Serializer):
-    file = serializers.FileField(help_text=_("A chunk of the uploaded file."), write_only=True,)
+    file = serializers.FileField(
+        help_text=_("A chunk of the uploaded file."),
+        write_only=True,
+    )
 
     sha256 = serializers.CharField(
         help_text=_("The SHA-256 checksum of the chunk if available."),
@@ -20,9 +23,13 @@ class UploadChunkSerializer(ValidateFieldsMixin, serializers.Serializer):
         write_only=True,
     )
 
-    offset = serializers.IntegerField(read_only=True,)
+    offset = serializers.IntegerField(
+        read_only=True,
+    )
 
-    size = serializers.IntegerField(read_only=True,)
+    size = serializers.IntegerField(
+        read_only=True,
+    )
 
     def validate(self, data):
         data = super().validate(data)
@@ -50,7 +57,9 @@ class UploadChunkSerializer(ValidateFieldsMixin, serializers.Serializer):
 class UploadSerializer(base.ModelSerializer):
     """Serializer for chunked uploads."""
 
-    pulp_href = base.IdentityField(view_name="uploads-detail",)
+    pulp_href = base.IdentityField(
+        view_name="uploads-detail",
+    )
 
     size = serializers.IntegerField(help_text=_("The size of the upload in bytes."))
 
@@ -64,7 +73,10 @@ class UploadSerializer(base.ModelSerializer):
 
 
 class UploadDetailSerializer(UploadSerializer):
-    chunks = UploadChunkSerializer(many=True, read_only=True,)
+    chunks = UploadChunkSerializer(
+        many=True,
+        read_only=True,
+    )
 
     class Meta(UploadSerializer.Meta):
         fields = UploadSerializer.Meta.fields + ("chunks",)

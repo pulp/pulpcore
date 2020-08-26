@@ -10,9 +10,13 @@ class VersionSerializer(serializers.Serializer):
     Serializer for the version information of Pulp components
     """
 
-    component = serializers.CharField(help_text=_("Name of a versioned component of Pulp"),)
+    component = serializers.CharField(
+        help_text=_("Name of a versioned component of Pulp"),
+    )
 
-    version = serializers.CharField(help_text=_("Version of the component (e.g. 3.0.0)"),)
+    version = serializers.CharField(
+        help_text=_("Version of the component (e.g. 3.0.0)"),
+    )
 
 
 class DatabaseConnectionSerializer(serializers.Serializer):

@@ -100,7 +100,10 @@ class TaskSerializer(ModelSerializer):
         read_only=True,
         view_name="None",  # This is a polymorphic field. The serializer does not need a view name.
     )
-    reserved_resources_record = ReservedResourcesSerializer(many=True, read_only=True,)
+    reserved_resources_record = ReservedResourcesSerializer(
+        many=True,
+        read_only=True,
+    )
 
     class Meta:
         model = models.Task
