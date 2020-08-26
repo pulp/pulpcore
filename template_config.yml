@@ -52,4 +52,5 @@ travis_notifications:
     - 'Change view : %{compare_url}'
     - 'Build details : %{build_url}'
     - '%{message}'
+update_redmine: true
 

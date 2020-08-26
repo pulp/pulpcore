@@ -1,7 +1,10 @@
 CONTENT_ORIGIN = "http://pulp:80"
 ANSIBLE_API_HOSTNAME = "http://pulp:80"
 ANSIBLE_CONTENT_HOSTNAME = "http://pulp:80/pulp/content"
-TOKEN_AUTH_DISABLED = True
+PRIVATE_KEY_PATH = "/etc/pulp/certs/token_private_key.pem"
+PUBLIC_KEY_PATH = "/etc/pulp/certs/token_public_key.pem"
+TOKEN_SERVER = "http://pulp:80/token"
+TOKEN_SIGNATURE_ALGORITHM = "ES256"
 
 {% if pulp_settings %}
 {% for key, value in pulp_settings.items() %}
