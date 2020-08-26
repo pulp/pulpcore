@@ -2,6 +2,7 @@
 django-crispy-forms
 django-extensions
 ipython
+black==19.10b0
 codecov
 coverage
 flake8
