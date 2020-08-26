@@ -26,6 +26,7 @@ plugin_dash: pulpcore
 plugin_dash_short: pulpcore
 plugin_name: pulpcore
 plugin_snake: pulpcore
+publish_docs_to_pulpprojectdotorg: true
 pulp_settings:
   allowed_export_paths:
   - /tmp
@@ -33,6 +34,7 @@ pulp_settings:
   - /tmp
 pulpcore_branch: null
 pulpcore_pip_version_specifier: null
+pulpprojectdotorg_key_id: d1a778bda808
 pydocstyle: true
 pypi_username: pulp
 redmine_project: pulp
