@@ -34,6 +34,7 @@ from pulpcore.client.pulp_file import (
     RepositorySyncURL,
     RemotesFileApi,
 )
+from pulpcore.constants import TASK_STATES
 
 NUM_REPOS = 3
 MAX_EXPORTS = 3
@@ -186,6 +187,15 @@ class PulpExportTestCase(BaseExporterCase):
         task = self.client.get(export_response.task)
         resources = task["created_resources"]
         self.assertEqual(1, len(resources))
+        reports = task["progress_reports"]
+        found_artifacts = False
+        found_content = False
+        for r in reports:
+            self.assertEqual(TASK_STATES.COMPLETED, r["state"])
+            found_artifacts |= r["code"] == "export-artifacts"
+            found_content |= r["code"] == "export-repo-version-content"
+        self.assertTrue(found_artifacts, "No artifacts exported!")
+        self.assertTrue(found_content, "No content exported!")
         export_href = resources[0]
         export = self.exports_api.read(export_href)
         self.assertIsNotNone(export)
