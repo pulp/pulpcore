@@ -6,6 +6,9 @@ with open("README.md") as f:
 with open("requirements.txt") as requirements:
     requirements = requirements.readlines()
 
+with open("functest_requirements.txt") as test_requirements:
+    test_requirements = test_requirements.readlines()
+
 setup(
     name="pulpcore",
     version="3.7.0.dev",
@@ -19,6 +22,12 @@ setup(
     url="https://pulpproject.org",
     python_requires=">=3.6",
     install_requires=requirements,
+    extras_require={
+        "s3": ["django-storages[boto3]"],
+        "azure": ["django-storages[azure]"],
+        "prometheus": ["django-prometheus"],
+        "test": test_requirements,
+    },
     include_package_data=True,
     classifiers=(
         "License :: OSI Approved :: GNU General Public License v2 or later (GPLv2+)",
