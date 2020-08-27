@@ -12,10 +12,10 @@ WORKING_DIR = os.environ["TRAVIS_BUILD_DIR"]
 VERSION_REGEX = r"(\s*)(version)(\s*)(=)(\s*)(['\"])(.*)(['\"])(.*)"
 RELEASE_REGEX = r"(\s*)(release)(\s*)(=)(\s*)(['\"])(.*)(['\"])(.*)"
 
-USERNAME = "pulpcore"
+USERNAME = "doc_builder_pulpcore"
 HOSTNAME = "8.43.85.236"
 
-SITE_ROOT = "/var/www/docs.pulpproject.org/pulpcore/"
+SITE_ROOT = "./"
 
 
 def make_directory_with_rsync(remote_paths_list):
