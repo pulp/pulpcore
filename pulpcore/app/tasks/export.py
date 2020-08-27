@@ -139,8 +139,9 @@ def _version_match(curr_versions, prev_versions):
 def _incremental_requested(the_export):
     """Figure out that a) an incremental is requested, and b) it's possible."""
     the_exporter = the_export.exporter
-    params = the_export.params
-    full = bool(strtobool(params["full"])) if "full" in params else True
+    full = the_export.params.get("full", True)
+    if isinstance(full, str):
+        full = bool(strtobool(full))
     last_exists = the_exporter.last_export
     return last_exists and not full
 
@@ -160,7 +161,6 @@ def pulp_export(the_export):
         ValidationError: When path is not in the ALLOWED_EXPORT_PATHS setting,
             OR path exists and is not a directory
     """
-
     pulp_exporter = the_export.exporter
     the_export.task = Task.current()
 
