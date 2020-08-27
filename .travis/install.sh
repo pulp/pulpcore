@@ -56,10 +56,7 @@ if [ -e $TRAVIS_BUILD_DIR/../pulp-certguard ]; then
 else
   PULP_CERTGUARD=git+https://github.com/pulp/pulp-certguard.git@master
 fi
-
-mkdir vars
-cat > vars/main.yaml << VARSYAML
----
+cat >> vars/main.yaml << VARSYAML
 image:
   name: pulp
   tag: "${TAG}"
@@ -84,7 +81,7 @@ VARSYAML
 if [[ "$TEST" == "pulp" || "$TEST" == "performance" || "$TEST" == "s3" ]]; then
   sed -i -e '/^services:/a \
   - name: pulp-fixtures\
-    image: docker.io/pulp/pulp-fixtures:latest
+    image: docker.io/pulp/pulp-fixtures:latest\
     env: {BASE_URL: "http://pulp-fixtures"}' vars/main.yaml
 fi
 
