@@ -7,12 +7,14 @@ import tempfile
 from django.conf import settings
 
 from pulpcore.app.apps import get_plugin_config
+from pulpcore.app.models.progress import ProgressReport
 from pulpcore.app.models.repository import Repository
 from pulpcore.app.modelresource import (
     ArtifactResource,
     ContentArtifactResource,
     RepositoryResource,
 )
+from pulpcore.constants import TASK_STATES
 
 
 def _write_export(the_tarfile, resource, dest_dir=None):
@@ -72,17 +74,18 @@ def export_artifacts(export, artifacts):
     Raises:
         ValidationError: When path is not in the ALLOWED_EXPORT_PATHS setting
     """
-    for artifact in artifacts:
-        dest = artifact.file.name
-
-        if settings.DEFAULT_FILE_STORAGE != "pulpcore.app.models.storage.FileSystem":
-            with tempfile.TemporaryDirectory() as temp_dir:
-                with tempfile.NamedTemporaryFile(dir=temp_dir) as temp_file:
-                    temp_file.write(artifact.file.read())
-                    temp_file.flush()
-                    export.tarfile.add(temp_file.name, dest)
-        else:
-            export.tarfile.add(artifact.file.path, dest)
+    data = dict(message="Exporting Artifacts", code="export-artifacts", total=len(artifacts))
+    with ProgressReport(**data) as pb:
+        for artifact in pb.iter(artifacts):
+            dest = artifact.file.name
+            if settings.DEFAULT_FILE_STORAGE != "pulpcore.app.models.storage.FileSystem":
+                with tempfile.TemporaryDirectory() as temp_dir:
+                    with tempfile.NamedTemporaryFile(dir=temp_dir) as temp_file:
+                        temp_file.write(artifact.file.read())
+                        temp_file.flush()
+                        export.tarfile.add(temp_file.name, dest)
+            else:
+                export.tarfile.add(artifact.file.path, dest)
 
     resource = ArtifactResource()
     resource.queryset = artifacts
@@ -134,6 +137,21 @@ def export_content(export, repository_version):
                 content_mapping = _combine_content_mappings(
                     content_mapping, resource.content_mapping
                 )
+
+    msg = (
+        f"Exporting content for {plugin_name} "
+        f"repository-version {repository_version.repository.name}/{repository_version.number}"
+    )
+    content_count = repository_version.content.count()
+    data = dict(
+        message=msg,
+        code="export-repo-version-content",
+        total=content_count,
+        done=content_count,
+        state=TASK_STATES.COMPLETED,
+    )
+    pb = ProgressReport(**data)
+    pb.save()
 
     if content_mapping:
         # write the content mapping to tarfile
