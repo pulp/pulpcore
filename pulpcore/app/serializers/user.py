@@ -63,7 +63,7 @@ class PermissionSerializer(serializers.Serializer):
 class UserGroupSerializer(serializers.ModelSerializer):
     """Serializer for Groups that belong to an User."""
 
-    name = serializers.CharField(help_text=_("Name."), max_length=150,)
+    name = serializers.CharField(help_text=_("Name."), max_length=150)
     pulp_href = IdentityField(view_name="groups-detail")
 
     class Meta:

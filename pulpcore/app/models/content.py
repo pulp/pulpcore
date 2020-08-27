@@ -516,7 +516,7 @@ class SigningService(BaseModel):
             A dictionary as validated by the validate() method.
         """
         completed_process = subprocess.run(
-            [self.script, filename], env={}, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+            [self.script, filename], env={}, stdout=subprocess.PIPE, stderr=subprocess.PIPE
         )
 
         if completed_process.returncode != 0:

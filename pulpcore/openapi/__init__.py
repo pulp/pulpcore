@@ -200,7 +200,7 @@ class PulpAutoSchema(AutoSchema):
             description = ""
 
             resolved_parameter = resolve_regex_path_parameter(
-                self.path_regex, variable, self.map_renderers("format"),
+                self.path_regex, variable, self.map_renderers("format")
             )
 
             if resolved_parameter:

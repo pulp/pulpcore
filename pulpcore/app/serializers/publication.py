@@ -16,7 +16,7 @@ from pulpcore.app.serializers import (
 
 
 class PublicationSerializer(ModelSerializer):
-    pulp_href = DetailIdentityField(view_name_pattern=r"publications(-.*/.*)-detail",)
+    pulp_href = DetailIdentityField(view_name_pattern=r"publications(-.*/.*)-detail")
     repository_version = RepositoryVersionRelatedField(required=False)
     repository = DetailRelatedField(
         help_text=_("A URI of the repository to be published."),
@@ -62,7 +62,7 @@ class PublicationSerializer(ModelSerializer):
 
 
 class ContentGuardSerializer(ModelSerializer):
-    pulp_href = DetailIdentityField(view_name_pattern=r"contentguards(-.*/.*)-detail",)
+    pulp_href = DetailIdentityField(view_name_pattern=r"contentguards(-.*/.*)-detail")
 
     name = serializers.CharField(help_text=_("The unique name."))
     description = serializers.CharField(
@@ -91,7 +91,7 @@ class BaseDistributionSerializer(ModelSerializer):
 
     """
 
-    pulp_href = DetailIdentityField(view_name_pattern=r"distributions(-.*/.*)-detail",)
+    pulp_href = DetailIdentityField(view_name_pattern=r"distributions(-.*/.*)-detail")
     base_path = serializers.CharField(
         help_text=_(
             'The base (relative) path component of the published url. Avoid paths that \
@@ -119,7 +119,7 @@ class BaseDistributionSerializer(ModelSerializer):
     class Meta:
         abstract = True
         model = models.BaseDistribution
-        fields = ModelSerializer.Meta.fields + ("base_path", "base_url", "content_guard", "name",)
+        fields = ModelSerializer.Meta.fields + ("base_path", "base_url", "content_guard", "name")
 
     def _validate_path_overlap(self, path):
         # look for any base paths nested in path
@@ -172,12 +172,12 @@ class RepositoryVersionDistributionSerializer(BaseDistributionSerializer):
         allow_null=True,
     )
     repository_version = RepositoryVersionRelatedField(
-        required=False, help_text=_("RepositoryVersion to be served"), allow_null=True,
+        required=False, help_text=_("RepositoryVersion to be served"), allow_null=True
     )
 
     class Meta:
         abstract = True
-        fields = BaseDistributionSerializer.Meta.fields + ("repository", "repository_version",)
+        fields = BaseDistributionSerializer.Meta.fields + ("repository", "repository_version")
 
     def validate(self, data):
         super().validate(data)

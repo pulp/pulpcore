@@ -1,8 +1,8 @@
 # python packages handy for developers, but not required by pulp
+black
 django-crispy-forms
 django-extensions
 ipython
-black==19.10b0
 codecov
 coverage
 flake8

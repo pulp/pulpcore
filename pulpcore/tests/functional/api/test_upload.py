@@ -85,7 +85,7 @@ class ChunkedUploadTestCase(unittest.TestCase):
             )
 
         artifact_request = self.client.post(
-            urljoin(upload_request["pulp_href"], "commit/"), data={"sha256": self.file_sha256},
+            urljoin(upload_request["pulp_href"], "commit/"), data={"sha256": self.file_sha256}
         )
 
         self.addCleanup(self.client.delete, artifact_request["pulp_href"])
@@ -118,7 +118,7 @@ class ChunkedUploadTestCase(unittest.TestCase):
 
         for data in self.chunked_data:
             response = self.client.put(
-                upload_request["pulp_href"], files={"file": data[0]}, headers=data[1],
+                upload_request["pulp_href"], files={"file": data[0]}, headers=data[1]
             )
 
             with self.subTest(response=response):
@@ -144,9 +144,7 @@ class ChunkedUploadTestCase(unittest.TestCase):
         upload_request = self.client.post(UPLOAD_PATH, {"size": self.size_file})
 
         for data in self.chunked_data:
-            self.client.put(
-                upload_request["pulp_href"], files={"file": data[0]}, headers=data[1],
-            )
+            self.client.put(upload_request["pulp_href"], files={"file": data[0]}, headers=data[1])
 
         # fetch a name of the upload from the corresponding pulp_href
         upload_name = upload_request["pulp_href"].replace("/pulp/api/v3/uploads/", "")[:-1]
@@ -156,7 +154,7 @@ class ChunkedUploadTestCase(unittest.TestCase):
 
         # committing the upload should delete the upload
         artifact = self.client.post(
-            urljoin(upload_request["pulp_href"], "commit/"), data={"sha256": self.file_sha256},
+            urljoin(upload_request["pulp_href"], "commit/"), data={"sha256": self.file_sha256}
         )
         with self.assertRaises(CalledProcessError):
             self.cli_client.run(cmd, sudo=True)
@@ -168,11 +166,9 @@ class ChunkedUploadTestCase(unittest.TestCase):
         upload_request = self.client.post(UPLOAD_PATH, {"size": self.size_file})
 
         for data in self.chunked_data:
-            self.client.put(
-                upload_request["pulp_href"], files={"file": data[0]}, headers=data[1],
-            )
+            self.client.put(upload_request["pulp_href"], files={"file": data[0]}, headers=data[1])
 
         artifact_request = self.client.post(
-            urljoin(upload_request["pulp_href"], "commit/"), data={"sha256": self.file_sha256},
+            urljoin(upload_request["pulp_href"], "commit/"), data={"sha256": self.file_sha256}
         )
         return artifact_request

@@ -230,7 +230,7 @@ class DistributionBasePathTestCase(unittest.TestCase):
         base_path = self.distribution["base_path"].rsplit("/", 1)[0]
         self.try_create_distribution(base_path=base_path)
 
-        base_path = "/".join((self.distribution["base_path"], utils.uuid4().replace("-", "/"),))
+        base_path = "/".join((self.distribution["base_path"], utils.uuid4().replace("-", "/")))
         self.try_create_distribution(base_path=base_path)
 
     def try_create_distribution(self, **kwargs):
@@ -318,4 +318,4 @@ class ContentServePublicationDistributionTestCase(unittest.TestCase):
 
 def parse_pulp_manifest(pulp_manifest):
     """Parse pulp manifest."""
-    return list(csv.DictReader(pulp_manifest.text.splitlines(), ("name", "checksum", "size"),))
+    return list(csv.DictReader(pulp_manifest.text.splitlines(), ("name", "checksum", "size")))
