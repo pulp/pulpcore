@@ -15,7 +15,7 @@ RELEASE_REGEX = r"(\s*)(release)(\s*)(=)(\s*)(['\"])(.*)(['\"])(.*)"
 USERNAME = "doc_builder_pulpcore"
 HOSTNAME = "8.43.85.236"
 
-SITE_ROOT = "./"
+SITE_ROOT = "/var/www/docs.pulpproject.org/pulpcore/"
 
 
 def make_directory_with_rsync(remote_paths_list):
