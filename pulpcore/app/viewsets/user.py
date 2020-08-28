@@ -1,7 +1,9 @@
 from gettext import gettext as _
+import uuid
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group, Permission
+from django.core.exceptions import FieldError
 from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import extend_schema
 from guardian.models.models import GroupObjectPermission
@@ -18,6 +20,8 @@ from pulpcore.app.serializers.user import (
     UserSerializer,
 )
 
+User = get_user_model()
+
 
 class UserViewSet(
     NamedModelViewSet, mixins.RetrieveModelMixin, mixins.ListModelMixin,
@@ -31,7 +35,7 @@ class UserViewSet(
 
     endpoint_name = "users"
     serializer_class = UserSerializer
-    queryset = get_user_model().objects.all()
+    queryset = User.objects.all()
 
     @extend_schema(description="List user permissions.",)
     @action(detail=True, methods=["get"], serializer_class=PermissionSerializer)
@@ -98,7 +102,12 @@ class GroupModelPermissionViewSet(NamedModelViewSet):
 
             data[key] = value
 
-        return get_object_or_404(Permission, **data)
+        try:
+            permission = Permission.objects.get(**data)
+        except (Permission.MultipleObjectsReturned, Permission.DoesNotExist, FieldError) as exc:
+            raise ValidationError(str(exc))
+
+        return permission
 
     @extend_schema(description="Retrieve a model permission from a group.")
     def retrieve(self, request, group_pk, pk):
@@ -164,10 +173,33 @@ class GroupObjectPermissionViewSet(NamedModelViewSet):
     serializer_class = PermissionSerializer
     queryset = Permission.objects.all()
 
+    def get_object_pk(self, request):
+        """Get object pk."""
+
+        if "obj" not in request.data:
+            raise ValidationError(_("Please provide 'obj' value"))
+        try:
+            obj_pk = request.data["obj"].strip("/").split("/")[-1]
+            uuid.UUID(obj_pk)
+        except (AttributeError, ValueError):
+            raise ValidationError(_("Invalid value for 'obj': {obj}").format(request.data["obj"]))
+
+        return obj_pk
+
     def get_model_permission(self, request):
         """Get model permission"""
+
+        if "permission" not in request.data:
+            raise ValidationError(_("Please provide 'permission' value"))
+
         codename = request.data["permission"].split(".")[-1]
-        return get_object_or_404(Permission, codename=codename)
+
+        try:
+            permission = Permission.objects.get(codename=codename)
+        except (Permission.MultipleObjectsReturned, Permission.DoesNotExist, FieldError) as exc:
+            raise ValidationError(str(exc))
+
+        return permission
 
     @extend_schema(description="Retrieve a model permission from a group.")
     def retrieve(self, request, group_pk, pk):
@@ -202,7 +234,7 @@ class GroupObjectPermissionViewSet(NamedModelViewSet):
         """
         group = Group.objects.get(pk=group_pk)
         permission = self.get_model_permission(request)
-        object_pk = request.data["obj"].strip("/").split("/")[-1]
+        object_pk = self.get_object_pk(request)
         object_permission = GroupObjectPermission(
             group=group,
             permission=permission,
@@ -237,7 +269,7 @@ class GroupUserViewSet(NamedModelViewSet):
     parent_viewset = GroupViewSet
     parent_lookup_kwargs = {"group_pk": "groups__pk"}
     serializer_class = GroupUserSerializer
-    queryset = get_user_model().objects.all()
+    queryset = User.objects.all()
 
     def list(self, request, group_pk):
         """
@@ -263,7 +295,10 @@ class GroupUserViewSet(NamedModelViewSet):
             raise ValidationError(
                 _("Please provide one of the following values for User: 'pk', 'id', 'username'")
             )
-        user = get_object_or_404(get_user_model(), **request.data)
+        try:
+            user = User.objects.get(**request.data)
+        except (User.DoesNotExist, FieldError) as exc:
+            raise ValidationError(str(exc))
         group.user_set.add(user)
         group.save()
         serializer = GroupUserSerializer(user, context={"request": None})
@@ -274,7 +309,7 @@ class GroupUserViewSet(NamedModelViewSet):
         Remove a user from a group.
         """
         group = Group.objects.get(pk=group_pk)
-        user = get_object_or_404(get_user_model(), pk=pk)
+        user = get_object_or_404(User, pk=pk)
         group.user_set.remove(user)
         group.save()
         return Response(status=status.HTTP_204_NO_CONTENT)
