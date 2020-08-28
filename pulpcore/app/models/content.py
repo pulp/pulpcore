@@ -108,8 +108,9 @@ class Artifact(HandleTempFilesMixin, BaseModel):
 
     Fields:
 
-        file (models.FileField): The stored file. This field should be set using an absolute path to
-            a temporary file. It also accepts `class:django.core.files.File`.
+        file (pulpcore.app.models.fields.ArtifactFileField): The stored file. This field should
+            be set using an absolute path to a temporary file.
+            It also accepts `class:django.core.files.File`.
         size (models.BigIntegerField): The size of the file in bytes.
         md5 (models.CharField): The MD5 checksum of the file.
         sha1 (models.CharField): The SHA-1 checksum of the file.
@@ -272,8 +273,9 @@ class PulpTemporaryFile(HandleTempFilesMixin, BaseModel):
 
     Fields:
 
-        file (models.FileField): The stored file. This field should be set using an absolute path to
-            a temporary file. It also accepts `class:django.core.files.File`.
+        file (pulpcore.app.models.fields.ArtifactFileField): The stored file. This field should
+            be set using an absolute path to a temporary file.
+            It also accepts `class:django.core.files.File`.
     """
 
     def storage_path(self, name):
@@ -286,7 +288,7 @@ class PulpTemporaryFile(HandleTempFilesMixin, BaseModel):
         """
         return storage.get_temp_file_path(self.pulp_id)
 
-    file = models.FileField(null=False, upload_to=storage_path, max_length=255)
+    file = fields.ArtifactFileField(null=False, upload_to=storage_path, max_length=255)
 
     @staticmethod
     def init_and_validate(file, expected_digests=None, expected_size=None):
