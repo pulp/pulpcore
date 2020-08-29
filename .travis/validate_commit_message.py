@@ -15,7 +15,7 @@ KEYWORDS = ["fixes", "closes", "re", "ref"]
 NO_ISSUE = "[noissue]"
 STATUSES = ["NEW", "ASSIGNED", "POST", "MODIFIED"]
 REDMINE_URL = "https://pulp.plan.io"
-CHANGELOG_EXTS = [".feature", ".bugfix", ".doc", ".removal", ".misc"]
+CHANGELOG_EXTS = [".feature", ".bugfix", ".doc", ".removal", ".misc", ".deprecation"]
 
 sha = sys.argv[1]
 project = "pulp"
