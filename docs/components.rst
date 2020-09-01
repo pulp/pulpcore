@@ -107,3 +107,82 @@ Collect all of the static content into place using the ``collectstatic`` command
 
     $ pulpcore-manager collectstatic
 
+
+Hardware requirements
+---------------------
+
+.. note::
+
+   This section is updated based on your feedback. Feel free to share what your experience is https://pulpproject.org/help/
+
+.. note::
+
+   These are empirical guidelines to give an idea how to estimate what you need. It hugely
+   depends on the scale of the setup (how much content you need, how many repositories you plan
+   to have), frequency (how often you run various tasks) and the workflows (which tasks you
+   perform, which plugin you use) of each specific user.
+
+
+CPU
+***
+
+CPU count is recommended to be equal to the number of pulp workers. It allows to perform N
+repository operations concurrently. E.g. 2 CPUs, one can sync 2 repositories concurrently.
+
+RAM
+***
+
+Out of all operations the highest memory consumption task is likely synchronization of a remote
+repository. Publication can also be memory consuming, however it depends on the plugin.
+
+For each worker, the suggestion is to plan on 1GB to 3GB. E.g. 4 workers would need 4GB to 12 GB
+For the database, 1GB is likely enough.
+
+The range for the workers is quite wide because it depends on the plugin. E.g. for RPM plugin, a
+setup with 2 workers will require around 8GB to be able to sync large repositories. 4GB is
+likely not enough for some repositories, especially if 2 workers both run sync tasks in parallel.
+
+Disk
+****
+
+For disk size, it depends on how one is using Pulp and which storage is used.
+
+
+Pulp behaviour
+^^^^^^^^^^^^^^
+
+ * Pulp de-duplicates content.
+ * There are different policies for downloading content. It is possible not to store any content
+   at all.
+ * If plugin needs to generate metadata for a repository, it will be in the artifact storage,
+   even if the download policy is configured not to save any content.
+ * Pulp verifies downloaded artifact checksums locally and artifacts are downloaded/verified in
+   parallel, so some local storage is needed, even if the download policy is configured not to save
+   any content and an external storage, like S3, is used.
+
+Empirical estimation
+^^^^^^^^^^^^^^^^^^^^
+
+ * If S3 is used as a backend for artifact storage, it is not required to have a large local
+   storage. 30GB should be enough in the majority of cases.
+
+ * If no content is planned to be stored in the artifact storage, aka only sync from
+   remote source and only with the ``streamed`` policy, some storage needs to be allocated for
+   metadata. It depends on the plugin, the size of a repository and the number of different
+   publications. 5GB should be enough for medium-large installation.
+
+ * If content is downloaded ``on_demand``, aka only packages that clients request from Pulp. A
+   good estimation would be 30% of the whole repository size, including futher updates to the
+   content. That the most common usage pattern. If clients use all the packages from a repository,
+   it would use 100% of the repository size.
+
+ * If all content needs to be downloaded, the size of all repositories together is needed.
+   Since Pulp de-duplicates content, this calculation assumes that all repositories have unique
+   content.
+
+ * Any additional content, one plans to upload to or import into Pulp, needs to be counted as well.
+
+ * DB size needs to be taken into account as well.
+
+E.g. For syncing remote repositories with ``on_demand`` policy and using local storage, one
+would need 50GB + 30% of size of all the repository content + the DB.

@@ -81,6 +81,14 @@
           command: "docker logs pulp"
           failed_when: true
 
+    - name: "Set pulp password in .netrc"
+      copy:
+        dest: "~/.netrc"
+        content: |
+          machine pulp
+          login admin
+          password password
+
 - hosts: pulp
   gather_facts: false
   tasks:

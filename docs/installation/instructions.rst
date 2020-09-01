@@ -116,14 +116,6 @@ PyPI Installation
 
 8. Go through the :ref:`database-install`, :ref:`redis-install`, and :ref:`systemd-setup` sections.
 
-.. note::
-
-    In place of using the systemd unit files provided in the `systemd-setup` section, you can run
-    the commands yourself inside of a shell. This is fine for development but not recommended in production::
-
-    $ /path/to/python/bin/rq worker -n 'resource-manager' -w 'pulpcore.tasking.worker.PulpWorker' -c 'pulpcore.rqconfig'
-    $ /path/to/python/bin/rq worker -w 'pulpcore.tasking.worker.PulpWorker' -c 'pulpcore.rqconfig'
-
 9. Run Django Migrations::
 
    $ pulpcore-manager migrate --noinput
@@ -135,6 +127,14 @@ PyPI Installation
     The ``pulpcore-manager`` command is ``manage.py`` configured with the
     ``DJANGO_SETTINGS_MODULE="pulpcore.app.settings"``. You can use it anywhere you would normally
     use ``manage.py``.
+
+.. note::
+
+    In place of using the systemd unit files provided in the `systemd-setup` section, you can run
+    the commands yourself inside of a shell. This is fine for development but not recommended in production::
+
+    $ /path/to/python/bin/rq worker -n 'resource-manager' -w 'pulpcore.tasking.worker.PulpWorker' -c 'pulpcore.rqconfig'
+    $ /path/to/python/bin/rq worker -w 'pulpcore.tasking.worker.PulpWorker' -c 'pulpcore.rqconfig'
 
 10. Collect Static Media for live docs and browsable API::
 
