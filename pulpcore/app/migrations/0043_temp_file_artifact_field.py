@@ -8,7 +8,7 @@ import pulpcore.app.models.fields
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('core', '0043_toc_attribute'),
+        ('core', '0042_rbac_for_tasks'),
     ]
 
     operations = [

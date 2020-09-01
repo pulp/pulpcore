@@ -7,7 +7,7 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('core', '0042_rbac_for_tasks'),
+        ('core', '0043_temp_file_artifact_field'),
     ]
 
     operations = [
