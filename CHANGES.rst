@@ -17,6 +17,45 @@ Changelog
 
 .. towncrier release notes start
 
+3.6.1 (2020-09-01)
+==================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fixing groups API validation
+  `#7329 <https://pulp.plan.io/issues/7329>`_
+
+
+Improved Documentation
+~~~~~~~~~~~~~~~~~~~~~~
+
+- Updated Pypi installation step.
+  `#6305 <https://pulp.plan.io/issues/6305>`_
+- Added hardware requirements.
+  `#6856 <https://pulp.plan.io/issues/6856>`_
+
+
+Misc
+~~~~
+
+- `#7229 <https://pulp.plan.io/issues/7229>`_
+
+
+Plugin API
+----------
+
+Bugfixes
+~~~~~~~~
+
+- Fix custom operation_id's from OpenAPI
+  `#7341 <https://pulp.plan.io/issues/7341>`_
+- OpenAPI: do not discard components without properties
+  `#7347 <https://pulp.plan.io/issues/7347>`_
+
+
 3.6.0 (2020-08-13)
 ==================
 REST API
