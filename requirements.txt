@@ -2,7 +2,7 @@ aiohttp
 aiodns
 aiofiles
 backoff
-Django~=2.2.14  # LTS version, switch only if we have a compelling reason to
+Django~=2.2.16  # LTS version, switch only if we have a compelling reason to
 django-currentuser~=0.5.1
 django-cleanup~=5.0.0
 django-filter~=2.3.0
