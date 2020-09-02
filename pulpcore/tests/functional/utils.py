@@ -4,19 +4,18 @@ from functools import partial
 from time import sleep
 from unittest import SkipTest
 
-from pulp_smash import selectors
+from pulp_smash import config, selectors
+from pulp_smash.pulp3.bindings import monitor_task
 from pulp_smash.pulp3.utils import require_pulp_3, require_pulp_plugins
 from pulpcore.client.pulpcore import (
     ApiClient,
-    Configuration,
+    OrphansApi,
     TaskGroupsApi,
 )
 
 
-configuration = Configuration()
-configuration.username = "admin"
-configuration.password = "password"
-configuration.safe_chars_for_path_param = "/"
+cfg = config.get_config()
+configuration = cfg.get_bindings_config()
 
 
 def set_up_module():
@@ -55,3 +54,9 @@ def monitor_task_group(tg_href):
     else:
         print("The task group was successful.")
         return tg
+
+
+def delete_orphans():
+    """Delete orphans through bindings."""
+    response = OrphansApi(core_client).delete()
+    monitor_task(response.task)
