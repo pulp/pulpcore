@@ -17,6 +17,24 @@ Changelog
 
 .. towncrier release notes start
 
+3.6.2 (2020-09-02)
+==================
+REST API
+--------
+
+No significant changes.
+
+
+Plugin API
+----------
+
+Bugfixes
+~~~~~~~~
+
+- Remove customized operation_id from OrphansView
+  `#7446 <https://pulp.plan.io/issues/7446>`_
+
+
 3.6.1 (2020-09-01)
 ==================
 REST API
