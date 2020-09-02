@@ -55,6 +55,9 @@ class PulpAutoSchema(AutoSchema):
             if not tokenized_path and getattr(self.view, "get_view_name", None):
                 tokenized_path.extend(self.view.get_view_name().split())
 
+        path = "/".join(tokenized_path).replace("pulp/api/v3/", "")
+        tokenized_path = path.split("/")
+
         return tokenized_path
 
     def get_tags(self):
