@@ -20,14 +20,15 @@ class AccessPolicy(BaseModel):
 
         permissions_assignment (JSONField): A list of dictionaries identifying callables on the
             ``pulpcore.plugin.access_policy.AccessPolicyFromDB`` which add user or group permissions
-            for newly created objects.
+            for newly created objects. This is a nullable field due to not all endpoints creating
+            objects.
         statements (JSONField): A list of ``drf-access-policy`` statements.
         viewset_name (models.CharField): The name of the viewset this instance controls
             authorization for.
 
     """
 
-    permissions_assignment = JSONField()
+    permissions_assignment = JSONField(null=True)
     statements = JSONField()
     viewset_name = models.CharField(max_length=128, unique=True)
 

@@ -7,9 +7,9 @@ When creating new objects in either viewsets or tasks it's important to have the
 It is important that the permissions new objects receive work with the AccessPolicy so that newly
 created objects can be authorized by the AccessPolicy as expected. The AccessPolicy statements are
 user-configurable and so the permissions to be created for new objects are too. Similar to the
-requirements for the AccessPolicy ``statements``, plugin writers are expected to define and ship a
-default behavior for permissions on new objects, and then users can modify them as needed after
-migrations are run.
+requirements for the AccessPolicy ``statements``, plugin writers can define and ship a default
+behavior for permissions on new objects, and then users can modify them as needed after migrations
+are run.
 
 
 .. _defining_new_object_permission_behaviors:
@@ -21,6 +21,10 @@ The ``AccessPolicy.permissions_assignment`` attribute defines a set of callables
 to be run when new objects are created. These do not run automatically; your models should use the
 ``pulpcore.plugin.models.AutoAddObjPermsMixin`` on the model as described in the
 :ref:`enabling_new_object_permission_creation` section.
+
+The ``AccessPolicy.permissions_assignment`` attribute is optional because not all AccessPolicy
+objects create objects. If no objects are created by an endpoint, there does not need to be a
+``permissions_assignment`` attribute.
 
 The most common auto-assignment of permissions is to the creator of an object themselves. Here is an
 example assigning the ``["pulpcore.view_task", "pulpcore.change_task", "pulpcore.delete_task"]``

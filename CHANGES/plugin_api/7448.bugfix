@@ -1,0 +1,2 @@
+The ``AccessPolicy.permissions_assignment`` can now be null, which some viewset endpoints may
+require.
