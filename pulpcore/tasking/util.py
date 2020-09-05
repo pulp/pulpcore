@@ -24,10 +24,11 @@ def cancel(task_id):
     This method cancels only the task with given task_id, not the spawned tasks. This also updates
     task's state to 'canceled'.
 
-    :param task_id: The ID of the task you wish to cancel
-    :type  task_id: basestring
+    Args:
+        task_id (str): The ID of the task you wish to cancel
 
-    :raises MissingResource: if a task with given task_id does not exist
+    Raises:
+        MissingResource: if a task with given task_id does not exist
     """
     try:
         task_status = Task.objects.get(pk=task_id)
@@ -41,10 +42,17 @@ def cancel(task_id):
         return task_status
 
     redis_conn = connection.get_redis_connection()
+
     job = Job(id=str(task_status.pk), connection=redis_conn)
+    resource_job = Job(id=str(task_status._resource_job_id), connection=redis_conn)
 
     if job.is_started:
         redis_conn.sadd(TASKING_CONSTANTS.KILL_KEY, job.get_id())
+
+    if resource_job.is_started:
+        redis_conn.sadd(TASKING_CONSTANTS.KILL_KEY, resource_job.get_id())
+
+    resource_job.delete()
     job.delete()
 
     # A hack to ensure that we aren't deleting resources still being used by the workhorse

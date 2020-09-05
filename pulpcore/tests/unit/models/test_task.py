@@ -1,3 +1,4 @@
+import uuid
 from unittest import mock
 
 from django.contrib.auth.models import User
@@ -15,7 +16,8 @@ class TaskTestCase(TestCase):
         a ProtectedError
         """
         mock_get_current_authenticated_user.return_value = User.objects.get()
-        task = Task.objects.create()
+        # TODO: get rid of this once we can
+        task = Task.objects.create(_resource_job_id=uuid.uuid4())
         worker = Worker.objects.create(name="test_worker")
         resource = ReservedResource.objects.create(resource="test", worker=worker)
         TaskReservedResource.objects.create(task=task, resource=resource)

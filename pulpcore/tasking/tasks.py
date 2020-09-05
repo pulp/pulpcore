@@ -3,7 +3,7 @@ import time
 import uuid
 from gettext import gettext as _
 
-from django.db import IntegrityError
+from django.db import IntegrityError, transaction
 from django.db.models import Model
 from rq import Queue
 from rq.job import Job, get_current_job
@@ -15,9 +15,7 @@ from pulpcore.tasking import connection, util
 _logger = logging.getLogger(__name__)
 
 
-# workaround for long-running tasks https://github.com/rq/rq/issues/872
-# Pulp tasks should never run more than one Julian year
-TASK_TIMEOUT = 31557600
+TASK_TIMEOUT = -1  # -1 for infinite timeout
 
 
 def _acquire_worker(resources):
@@ -76,6 +74,7 @@ def _queue_reserved_task(func, inner_task_id, resources, inner_args, inner_kwarg
     redis_conn = connection.get_redis_connection()
     task_status = Task.objects.get(pk=inner_task_id)
     task_name = func.__module__ + "." + func.__name__
+
     while True:
         if task_name == "pulpcore.app.tasks.orphan.orphan_cleanup":
             if ReservedResource.objects.exists():
@@ -208,20 +207,30 @@ def enqueue_with_reservation(
 
     resources = {as_url(r) for r in resources}
     inner_task_id = str(uuid.uuid4())
+    resource_task_id = str(uuid.uuid4())
     redis_conn = connection.get_redis_connection()
     current_job = get_current_job(connection=redis_conn)
     parent_kwarg = {}
     if current_job:
-        current_task = Task.objects.get(pk=current_job.id)
-        parent_kwarg["parent_task"] = current_task
-    Task.objects.create(
-        pk=inner_task_id,
-        state=TASK_STATES.WAITING,
-        task_group=task_group,
-        name=f"{func.__module__}.{func.__name__}",
-        **parent_kwarg,
-    )
-    q = Queue("resource-manager", connection=redis_conn)
-    task_args = (func, inner_task_id, list(resources), args, kwargs, options)
-    q.enqueue(_queue_reserved_task, args=task_args, job_timeout=TASK_TIMEOUT)
+        # set the parent task of the spawned task to the current task ID (same as rq Job ID)
+        parent_kwarg["parent_task"] = Task.objects.get(pk=current_job.id)
+
+    def callback():
+        task_args = (func, inner_task_id, list(resources), args, kwargs, options)
+        q = Queue("resource-manager", connection=redis_conn)
+        q.enqueue(
+            _queue_reserved_task, job_id=resource_task_id, args=task_args, job_timeout=TASK_TIMEOUT
+        )
+
+    with transaction.atomic():
+        Task.objects.create(
+            pk=inner_task_id,
+            _resource_job_id=resource_task_id,
+            state=TASK_STATES.WAITING,
+            task_group=task_group,
+            name=f"{func.__module__}.{func.__name__}",
+            **parent_kwarg,
+        )
+        transaction.on_commit(callback)
+
     return Job(id=inner_task_id, connection=redis_conn)

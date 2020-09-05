@@ -352,6 +352,11 @@ class Task(BaseModel, AutoDeleteObjPermsMixin, AutoAddObjPermsMixin):
         "TaskGroup", null=True, related_name="tasks", on_delete=models.SET_NULL
     )
 
+    # TODO: find a solution that makes this unnecessary
+    # The purpose of this is to enable cancelling the job scheduled on the resource manager
+    # as it has a separate job ID that is not the task ID.
+    _resource_job_id = models.UUIDField()
+
     ACCESS_POLICY_VIEWSET_NAME = "TaskViewSet"
 
     @staticmethod

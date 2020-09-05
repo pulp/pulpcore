@@ -1,0 +1,1 @@
+Fixed an edge case where canceled tasks might sometimes be processed and marked completed.
