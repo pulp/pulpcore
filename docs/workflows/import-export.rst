@@ -176,6 +176,12 @@ It will also produce a "table of contents" file describing the file (or files, s
 
 These export files can now be transferred to a Downstream Pulp instance, and imported.
 
+.. note::
+
+   In the event of any failure during an export, the process will clean up any partial
+   export-files that may have been generated. Export-files can be very large; this will
+   preserve available space in the export-directory.
+
 Exporting Specific Versions
 ---------------------------
 

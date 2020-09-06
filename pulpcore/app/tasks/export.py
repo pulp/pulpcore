@@ -161,77 +161,94 @@ def pulp_export(the_export):
         ValidationError: When path is not in the ALLOWED_EXPORT_PATHS setting,
             OR path exists and is not a directory
     """
-    pulp_exporter = the_export.exporter
-    the_export.task = Task.current()
+    try:
+        pulp_exporter = the_export.exporter
+        the_export.task = Task.current()
 
-    tarfile_fp = the_export.export_tarfile_path()
-    os.makedirs(pulp_exporter.path, exist_ok=True)
+        tarfile_fp = the_export.export_tarfile_path()
+        os.makedirs(pulp_exporter.path, exist_ok=True)
 
-    rslts = {}
-    if the_export.validated_chunk_size:
-        # write it into chunks
-        with subprocess.Popen(
-            [
-                "split",
-                "-a",
-                "4",
-                "-b",
-                str(the_export.validated_chunk_size),
-                "-d",
-                "-",
-                tarfile_fp + ".",
-            ],
-            stdin=subprocess.PIPE,
-        ) as split_process:
-            with tarfile.open(tarfile_fp, "w|gz", fileobj=split_process.stdin) as tar:
-                _do_export(pulp_exporter, tar, the_export)
-
-        # compute the hashes
-        global_hash = hashlib.sha256()
-        paths = sorted([str(Path(p)) for p in glob(tarfile_fp + ".*")])
-        for a_file in paths:
-            a_hash = _compute_hash(a_file, global_hash)
-            rslts[a_file] = a_hash
-        tarfile_hash = global_hash.hexdigest()
-
-    else:
-        # write into the file
-        with tarfile.open(tarfile_fp, "w:gz") as tar:
-            _do_export(pulp_exporter, tar, the_export)
-        # compute the hash
-        tarfile_hash = _compute_hash(tarfile_fp)
-        rslts[tarfile_fp] = tarfile_hash
-
-    # store the outputfile/hash info
-    the_export.output_file_info = rslts
-
-    # write outputfile/hash info to a file 'next to' the output file(s)
-    output_file_info_path = tarfile_fp.replace(".tar.gz", "-toc.json")
-    with open(output_file_info_path, "w") as outfile:
+        rslts = {}
         if the_export.validated_chunk_size:
-            chunk_size = the_export.validated_chunk_size
+            # write it into chunks
+            with subprocess.Popen(
+                [
+                    "split",
+                    "-a",
+                    "4",
+                    "-b",
+                    str(the_export.validated_chunk_size),
+                    "-d",
+                    "-",
+                    tarfile_fp + ".",
+                ],
+                stdin=subprocess.PIPE,
+            ) as split_process:
+                try:
+                    with tarfile.open(tarfile_fp, "w|gz", fileobj=split_process.stdin) as tar:
+                        _do_export(pulp_exporter, tar, the_export)
+                except Exception:
+                    # no matter what went wrong, we can't trust the files we (may have) created.
+                    # Delete the ones we can find and pass the problem up.
+                    for pathname in glob(tarfile_fp + ".*"):
+                        os.remove(pathname)
+                    raise
+            # compute the hashes
+            global_hash = hashlib.sha256()
+            paths = sorted([str(Path(p)) for p in glob(tarfile_fp + ".*")])
+            for a_file in paths:
+                a_hash = _compute_hash(a_file, global_hash)
+                rslts[a_file] = a_hash
+            tarfile_hash = global_hash.hexdigest()
+
         else:
-            chunk_size = 0
-        chunk_toc = {
-            "meta": {
-                "chunk_size": chunk_size,
-                "file": os.path.basename(tarfile_fp),
-                "global_hash": tarfile_hash,
-            },
-            "files": {},
-        }
-        # Build a toc with just filenames (not the path on the exporter-machine)
-        for a_path in rslts.keys():
-            chunk_toc["files"][os.path.basename(a_path)] = rslts[a_path]
-        json.dump(chunk_toc, outfile)
+            # write into the file
+            try:
+                with tarfile.open(tarfile_fp, "w:gz") as tar:
+                    _do_export(pulp_exporter, tar, the_export)
+            except Exception:
+                # no matter what went wrong, we can't trust the file we created.
+                # Delete it if it exists and pass the problem up.
+                if os.path.exists(tarfile_fp):
+                    os.remove(tarfile_fp)
+                raise
+            # compute the hash
+            tarfile_hash = _compute_hash(tarfile_fp)
+            rslts[tarfile_fp] = tarfile_hash
 
-    # store toc info
-    toc_hash = _compute_hash(output_file_info_path)
-    the_export.output_file_info[output_file_info_path] = toc_hash
-    the_export.toc_info = {"file": output_file_info_path, "sha256": toc_hash}
+        # store the outputfile/hash info
+        the_export.output_file_info = rslts
 
-    # save the export
-    the_export.save()
+        # write outputfile/hash info to a file 'next to' the output file(s)
+        output_file_info_path = tarfile_fp.replace(".tar.gz", "-toc.json")
+        with open(output_file_info_path, "w") as outfile:
+            if the_export.validated_chunk_size:
+                chunk_size = the_export.validated_chunk_size
+            else:
+                chunk_size = 0
+            chunk_toc = {
+                "meta": {
+                    "chunk_size": chunk_size,
+                    "file": os.path.basename(tarfile_fp),
+                    "global_hash": tarfile_hash,
+                },
+                "files": {},
+            }
+            # Build a toc with just filenames (not the path on the exporter-machine)
+            for a_path in rslts.keys():
+                chunk_toc["files"][os.path.basename(a_path)] = rslts[a_path]
+            json.dump(chunk_toc, outfile)
+
+        # store toc info
+        toc_hash = _compute_hash(output_file_info_path)
+        the_export.output_file_info[output_file_info_path] = toc_hash
+        the_export.toc_info = {"file": output_file_info_path, "sha256": toc_hash}
+    finally:
+        # whatever may have happened, make sure we save the export
+        the_export.save()
+
+    # If an exception was thrown, we'll never get here - which is good, because we don't want a
+    # 'failed' export to be the last_export we derive the next incremental from
     # mark it as 'last'
     pulp_exporter.last_export = the_export
     # save the exporter
