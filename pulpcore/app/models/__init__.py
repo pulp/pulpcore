@@ -13,6 +13,7 @@ from .content import (  # noqa
     PulpTemporaryFile,
     RemoteArtifact,
     SigningService,
+    UnsupportedDigestValidationError,
 )
 from .generic import GenericRelationModel  # noqa
 from .exporter import (  # noqa

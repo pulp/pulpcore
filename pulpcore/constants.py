@@ -43,3 +43,9 @@ SYNC_CHOICES = (
 
 
 API_ROOT = "pulp/api/v3/"
+
+# What content-identifying checksums algorithms does pulp _know about_?
+# NOTE that models.Artifact must include a field for each possible checksum; simply
+# adding here won't make a new type-of checksum available. sha256 MUST be here,
+# as Pulp relies on it to identify entities.
+ALL_KNOWN_CONTENT_CHECKSUMS = {"md5", "sha1", "sha224", "sha256", "sha384", "sha512"}

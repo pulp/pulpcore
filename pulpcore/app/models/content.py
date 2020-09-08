@@ -1,6 +1,8 @@
 """
 Content related Django models.
 """
+from gettext import gettext as _
+
 import json
 import hashlib
 import tempfile
@@ -11,13 +13,48 @@ import gnupg
 
 from itertools import chain
 
+from django.conf import settings
 from django.core import validators
 from django.core.files.storage import default_storage
 from django.db import IntegrityError, models, transaction
 from django.forms.models import model_to_dict
 
+from pulpcore.constants import ALL_KNOWN_CONTENT_CHECKSUMS
 from pulpcore.app.models import MasterModel, BaseModel, fields, storage
-from pulpcore.exceptions import DigestValidationError, SizeValidationError
+from pulpcore.exceptions import (
+    DigestValidationError,
+    SizeValidationError,
+)
+
+# All available digest fields ordered by algorithm strength.
+_DIGEST_FIELDS = []
+for alg in ("sha512", "sha384", "sha256", "sha224", "sha1", "md5"):
+    if alg in settings.ALLOWED_CONTENT_CHECKSUMS:
+        _DIGEST_FIELDS.append(alg)
+
+# All available digest fields ordered by relative frequency
+# (Better average-case performance in some algorithms with fallback)
+_COMMON_DIGEST_FIELDS = []
+for alg in ("sha256", "sha512", "sha384", "sha224", "sha1", "md5"):
+    if alg in settings.ALLOWED_CONTENT_CHECKSUMS:
+        _COMMON_DIGEST_FIELDS.append(alg)
+
+# Available, reliable digest fields ordered by algorithm strength.
+_RELIABLE_DIGEST_FIELDS = []
+for alg in ("sha512", "sha384", "sha256"):
+    if alg in settings.ALLOWED_CONTENT_CHECKSUMS:
+        _RELIABLE_DIGEST_FIELDS.append(alg)
+
+# Digest-fields that are NOT ALLOWED
+_FORBIDDEN_DIGESTS = set(ALL_KNOWN_CONTENT_CHECKSUMS).difference(settings.ALLOWED_CONTENT_CHECKSUMS)
+
+
+class UnsupportedDigestValidationError(Exception):
+    """
+    Raised when an attempt is made to use a checksum-type that is not enabled/available.
+    """
+
+    pass
 
 
 class BulkCreateManager(models.Manager):
@@ -105,7 +142,6 @@ class Artifact(HandleTempFilesMixin, BaseModel):
 
     Artifact is compatible with Django's `bulk_create()` method.
 
-
     Fields:
 
         file (pulpcore.app.models.fields.ArtifactFileField): The stored file. This field should
@@ -115,7 +151,7 @@ class Artifact(HandleTempFilesMixin, BaseModel):
         md5 (models.CharField): The MD5 checksum of the file.
         sha1 (models.CharField): The SHA-1 checksum of the file.
         sha224 (models.CharField): The SHA-224 checksum of the file.
-        sha256 (models.CharField): The SHA-256 checksum of the file.
+        sha256 (models.CharField): The SHA-256 checksum of the file (REQUIRED).
         sha384 (models.CharField): The SHA-384 checksum of the file.
         sha512 (models.CharField): The SHA-512 checksum of the file.
     """
@@ -132,38 +168,46 @@ class Artifact(HandleTempFilesMixin, BaseModel):
 
     file = fields.ArtifactFileField(null=False, upload_to=storage_path, max_length=255)
     size = models.BigIntegerField(null=False)
-    md5 = models.CharField(max_length=32, null=False, unique=False, db_index=True)
-    sha1 = models.CharField(max_length=40, null=False, unique=False, db_index=True)
-    sha224 = models.CharField(max_length=56, null=False, unique=False, db_index=True)
+    md5 = models.CharField(max_length=32, null=True, unique=False, db_index=True)
+    sha1 = models.CharField(max_length=40, null=True, unique=False, db_index=True)
+    sha224 = models.CharField(max_length=56, null=True, unique=False, db_index=True)
     sha256 = models.CharField(max_length=64, null=False, unique=True, db_index=True)
-    sha384 = models.CharField(max_length=96, null=False, unique=True, db_index=True)
-    sha512 = models.CharField(max_length=128, null=False, unique=True, db_index=True)
+    sha384 = models.CharField(max_length=96, null=True, unique=True, db_index=True)
+    sha512 = models.CharField(max_length=128, null=True, unique=True, db_index=True)
 
     objects = BulkCreateManager()
 
-    # All digest fields ordered by algorithm strength.
-    DIGEST_FIELDS = (
-        "sha512",
-        "sha384",
-        "sha256",
-        "sha224",
-        "sha1",
-        "md5",
-    )
+    # All available digest fields ordered by algorithm strength.
+    DIGEST_FIELDS = _DIGEST_FIELDS
 
-    # All digest fields ordered by relative frequency
+    # All available digest fields ordered by relative frequency
     # (Better average-case performance in some algorithms with fallback)
-    COMMON_DIGEST_FIELDS = (
-        "sha256",
-        "sha512",
-        "sha384",
-        "sha224",
-        "sha1",
-        "md5",
-    )
+    COMMON_DIGEST_FIELDS = _COMMON_DIGEST_FIELDS
 
-    # Reliable digest fields ordered by algorithm strength.
-    RELIABLE_DIGEST_FIELDS = DIGEST_FIELDS[:-3]
+    # Available, reliable digest fields ordered by algorithm strength.
+    RELIABLE_DIGEST_FIELDS = _RELIABLE_DIGEST_FIELDS
+
+    # Digest-fields that are NOT ALLOWED
+    FORBIDDEN_DIGESTS = _FORBIDDEN_DIGESTS
+
+    def __init__(self, *args, **kwargs):
+        """
+        Initialization override to reject use of disallowed checksum algorithms.
+
+        Args:
+            args: positional arguments
+            kwargs: keyword arguments
+
+        Raises:
+            :class: `~pulpcore.exceptions.UnsupportedDigestValidationError`: When any of the
+                keys in kwargs are found on the FORBIDDEN_DIGESTS list
+        """
+        bad_keys = self.FORBIDDEN_DIGESTS.intersection(kwargs.keys())
+        if bad_keys:
+            raise UnsupportedDigestValidationError(
+                _(f"Checksum algorithms {bad_keys} are forbidden for this Pulp instance.")
+            )
+        super().__init__(*args, **kwargs)
 
     def q(self):
         if not self._state.adding:
@@ -184,7 +228,7 @@ class Artifact(HandleTempFilesMixin, BaseModel):
         Returns:
             bool: True when equal.
         """
-        for field in Artifact.RELIABLE_DIGEST_FIELDS:
+        for field in self.RELIABLE_DIGEST_FIELDS:
             digest = getattr(self, field)
             if not digest:
                 continue
@@ -213,7 +257,8 @@ class Artifact(HandleTempFilesMixin, BaseModel):
                 values don't match the digest of the data
             :class:`~pulpcore.exceptions.SizeValidationError`: When the ``expected_size`` value
                 doesn't match the size of the data
-
+            :class:`~pulpcore.exceptions.UnsupportedDigestValidationError`: When any of the
+                ``expected_digest`` algorithms aren't in the ALLOWED_CONTENT_CHECKSUMS list
         Returns:
             An in-memory, unsaved :class:`~pulpcore.plugin.models.Artifact`
         """
@@ -238,6 +283,10 @@ class Artifact(HandleTempFilesMixin, BaseModel):
 
         if expected_digests:
             for algorithm, expected_digest in expected_digests.items():
+                if algorithm not in hashers:
+                    raise UnsupportedDigestValidationError(
+                        _(f"Checksum algorithm {algorithm} forbidden for this Pulp instance.")
+                    )
                 if expected_digest != hashers[algorithm].hexdigest():
                     raise DigestValidationError()
 
@@ -311,6 +360,8 @@ class PulpTemporaryFile(HandleTempFilesMixin, BaseModel):
                 values don't match the digest of the data
             :class:`~pulpcore.exceptions.SizeValidationError`: When the ``expected_size`` value
                 doesn't match the size of the data
+            :class:`~pulpcore.exceptions.UnsupportedDigestValidationError`: When any of the
+                ``expected_digest`` algorithms aren't in the ALLOWED_CONTENT_CHECKSUMS list
 
         Returns:
             An in-memory, unsaved :class:`~pulpcore.plugin.models.PulpTemporaryFile`
@@ -339,6 +390,10 @@ class PulpTemporaryFile(HandleTempFilesMixin, BaseModel):
 
         if expected_digests:
             for algorithm, expected_digest in expected_digests.items():
+                if algorithm not in hashers:
+                    raise UnsupportedDigestValidationError(
+                        _(f"Checksum algorithm {algorithm} forbidden for this Pulp instance.")
+                    )
                 if expected_digest != hashers[algorithm].hexdigest():
                     raise DigestValidationError()
 

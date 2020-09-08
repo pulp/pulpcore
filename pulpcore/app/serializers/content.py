@@ -8,8 +8,6 @@ from rest_framework.validators import UniqueValidator
 from pulpcore.app import models
 from pulpcore.app.serializers import base, fields
 
-UNIQUE_ALGORITHMS = ["sha256", "sha384", "sha512"]
-
 
 class BaseContentSerializer(base.ModelSerializer):
     pulp_href = base.DetailIdentityField(view_name_pattern=r"contents(-.*/.*)-detail")
@@ -213,6 +211,15 @@ class ArtifactSerializer(base.ModelSerializer):
         else:
             data["size"] = data["file"].size
 
+        bad_algs = []
+        for algorithm in models.Artifact.FORBIDDEN_DIGESTS:
+            if algorithm in data:
+                bad_algs.append(algorithm)
+        if bad_algs:
+            raise serializers.ValidationError(
+                _(f"Checksum algorithms {bad_algs} forbidden for this Pulp instance.")
+            )
+
         for algorithm in hashlib.algorithms_guaranteed:
             if algorithm in models.Artifact.DIGEST_FIELDS:
                 digest = data["file"].hashers[algorithm].hexdigest()
@@ -223,7 +230,7 @@ class ArtifactSerializer(base.ModelSerializer):
                     )
                 else:
                     data[algorithm] = digest
-                if algorithm in UNIQUE_ALGORITHMS:
+                if algorithm in models.Artifact.RELIABLE_DIGEST_FIELDS:
                     validator = UniqueValidator(
                         models.Artifact.objects.all(),
                         message=_("{0} checksum must be " "unique.").format(algorithm),

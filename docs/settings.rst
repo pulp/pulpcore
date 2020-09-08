@@ -210,6 +210,7 @@ ALLOWED_IMPORT_PATHS
 
    Defaults to ``[]``, meaning ``file:///`` urls are not allowed in any Remote.
 
+.. _allowed-export-paths:
 
 ALLOWED_EXPORT_PATHS
 ^^^^^^^^^^^^^^^^^^^^
@@ -232,3 +233,25 @@ PROFILE_STAGES_API
 
       Profiling stages is provided as a tech preview in Pulp 3.0. Functionality may not fully work
       and backwards compatibility when upgrading to future Pulp releases is not guaranteed.
+
+.. _allowed-content-checksums:
+
+ALLOWED_CONTENT_CHECKSUMS
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+    The list of content-checksums this pulp-instance is **allowed to use**. This list is a
+    proper subset of the checksums defined by the Artifact model. You may safely list fewer
+    algorithms than the Artifact model supports (although see the warning below regarding ``sha256``),
+    but adding unknown algorithms will cause unexpected behavior.
+
+    See :ref:`Configuration` for details on how to change configuration-options.
+
+    .. warning::
+      Due to its use as a primary content-identifier, "sha256"" **IS REQUIRED**. Pulp will
+      fail to start if it is not found in this set.
+
+    .. warning::
+      Specifying checksums that are not available to models.Artifact will cause Pulp to fail to start.
+      The complete set of supported checksum algorithms includes the following:
+
+      ``{"md5", "sha1", "sha224", "sha256", "sha384", "sha512"}``

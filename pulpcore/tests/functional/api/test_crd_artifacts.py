@@ -79,8 +79,12 @@ class ArtifactTestCase(unittest.TestCase):
     def _do_upload_valid_attrs(self, data, files):
         """Upload a file with the given attributes."""
         artifact = self.client.post(ARTIFACTS_PATH, data=data, files=files)
+        # assumes ALLOWED_CONTENT_CHECKSUMS does NOT contain "md5"
+        self.assertTrue(artifact["md5"] is None, "MD5 {}".format(artifact["md5"]))
         self.addCleanup(self.client.delete, artifact["pulp_href"])
         read_artifact = self.client.get(artifact["pulp_href"])
+        # assumes ALLOWED_CONTENT_CHECKSUMS does NOT contain "md5"
+        self.assertTrue(read_artifact["md5"] is None)
         for key, val in artifact.items():
             with self.subTest(key=key):
                 self.assertEqual(read_artifact[key], val)
@@ -112,6 +116,15 @@ class ArtifactTestCase(unittest.TestCase):
             self.client.post(ARTIFACTS_PATH, data=data, files=self.file)
         for artifact in self.client.get(ARTIFACTS_PATH)["results"]:
             self.assertNotEqual(artifact["sha256"], self.file_sha256)
+
+    def test_upload_md5(self):
+        """Attempt to upload a file using an MD5 checksum.
+
+        Assumes ALLOWED_CONTENT_CHECKSUMS does NOT contain ``md5``
+        """
+        file_attrs = {"md5": utils.uuid4(), "size": self.file_size}
+        with self.assertRaises(HTTPError):
+            self.client.post(ARTIFACTS_PATH, data=file_attrs, files=self.file)
 
     def test_upload_mixed_attrs(self):
         """Upload a file, and provide both valid and invalid attributes.
