@@ -84,28 +84,31 @@ RQ, including tasks deployed by plugins.
 
 **Making Temporary Files Available to Tasks**
 
-Sometimes, files must be brought forward from the viewset to the executing task, that may or may
-not end up being artifacts in the end. On the other hand, different pulp services are not
-guaranteed to share a common filesystem (like /usr/share/pulp).
-``PulpTemporaryFile`` is the alternative for creating  files with the same
-storage technology that the artifacts use.
+Sometimes, files must be brought forward from a ViewSet to an executing task. The files may or may
+not end up being artifacts in the end. To tackle this, one should use ``PulpTemporaryFile``.
 
 .. code-block:: python
 
     # Example 1 - Saving a temporary file:
-    temp_file = PulpTemporaryFile(file=my_file).save()
+    temp_file = PulpTemporaryFile(file=my_file)
+    temp_file.save()
 
-    # Example 2 - Validating the digest and saving:
+    # Example 2 - Validating the digest and saving a temporary file:
     temp_file = PulpTemporaryFile.init_and_validate(
         my_file, expected_digests={'md5': '912ec803b2ce49e4a541068d495ab570'}
-    ).save()
+    )
+    temp_file.save()
 
-    # Example 3 - From PulpTemporaryFile to Artifact:
+    # Example 3 - Creating an Artifact from the PulpTemporaryFile:
     try:
         artifact = Artifact.from_pulp_temporary_file(temp_file)
     except Exception:
         temp_file.delete()
 
+When dealing with a clustered deployment, different pulp services are not guaranteed to share a
+common filesystem (like /usr/share/pulp). ``PulpTemporaryFile`` is the alternative for creating
+files with the same storage technology that the artifacts use. Therefore, the temporary files
+are accessible by all pulp instances.
 
 **Reservations**
 
