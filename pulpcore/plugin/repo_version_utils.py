@@ -101,9 +101,7 @@ def validate_duplicate_content(version):
             error_messages.append(
                 _(
                     "More than one {pulp_type} content with the duplicate values for {fields}."
-                ).format(
-                    pulp_type=pulp_type, fields=", ".join(repo_key_fields),
-                )
+                ).format(pulp_type=pulp_type, fields=", ".join(repo_key_fields))
             )
     if error_messages:
         raise ValueError(

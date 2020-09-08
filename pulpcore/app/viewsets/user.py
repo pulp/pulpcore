@@ -23,9 +23,7 @@ from pulpcore.app.serializers.user import (
 User = get_user_model()
 
 
-class UserViewSet(
-    NamedModelViewSet, mixins.RetrieveModelMixin, mixins.ListModelMixin,
-):
+class UserViewSet(NamedModelViewSet, mixins.RetrieveModelMixin, mixins.ListModelMixin):
     """
     ViewSet for User.
 
@@ -37,7 +35,7 @@ class UserViewSet(
     serializer_class = UserSerializer
     queryset = User.objects.all()
 
-    @extend_schema(description="List user permissions.",)
+    @extend_schema(description="List user permissions.")
     @action(detail=True, methods=["get"], serializer_class=PermissionSerializer)
     def permissions(self, request, pk):
         """
@@ -132,7 +130,7 @@ class GroupModelPermissionViewSet(NamedModelViewSet):
         return Response(serializer.data)
 
     @extend_schema(
-        description="Add a model permission to a group.", responses={201: PermissionSerializer},
+        description="Add a model permission to a group.", responses={201: PermissionSerializer}
     )
     def create(self, request, group_pk):
         """
@@ -226,7 +224,7 @@ class GroupObjectPermissionViewSet(NamedModelViewSet):
         return Response(serializer.data)
 
     @extend_schema(
-        description="Add an object permission to a group.", responses={201: PermissionSerializer},
+        description="Add an object permission to a group.", responses={201: PermissionSerializer}
     )
     def create(self, request, group_pk):
         """

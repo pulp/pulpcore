@@ -7,7 +7,7 @@ from pulpcore.app.viewsets import NamedModelViewSet
 
 
 class AccessPolicyViewSet(
-    NamedModelViewSet, mixins.UpdateModelMixin, mixins.RetrieveModelMixin, mixins.ListModelMixin,
+    NamedModelViewSet, mixins.UpdateModelMixin, mixins.RetrieveModelMixin, mixins.ListModelMixin
 ):
     """
     ViewSet for AccessPolicy.

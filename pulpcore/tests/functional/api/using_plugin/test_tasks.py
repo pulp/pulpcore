@@ -169,7 +169,7 @@ class FilterTaskCreatedResourcesTestCase(unittest.TestCase):
         self.assertEqual(len(filtered_task), 1, filtered_task)
 
         self.assertEqual(
-            task["created_resources"], filtered_task["created_resources"], filtered_task,
+            task["created_resources"], filtered_task["created_resources"], filtered_task
         )
 
 

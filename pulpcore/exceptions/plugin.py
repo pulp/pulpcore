@@ -4,7 +4,7 @@ from .base import PulpException
 
 
 class MissingPlugin(PulpException):
-    """"
+    """
     Missing plugin exception.
 
     Exception that is raised when a requested plugin is not installed.

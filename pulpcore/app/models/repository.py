@@ -828,7 +828,7 @@ class RepositoryVersionContentDetails(models.Model):
         (REMOVED, "removed"),
     )
 
-    count_type = models.CharField(max_length=1, choices=COUNT_TYPE_CHOICES,)
+    count_type = models.CharField(max_length=1, choices=COUNT_TYPE_CHOICES)
     content_type = models.TextField()
     repository_version = models.ForeignKey(
         "RepositoryVersion", related_name="counts", on_delete=models.CASCADE

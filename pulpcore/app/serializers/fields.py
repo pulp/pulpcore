@@ -366,8 +366,7 @@ class ImportRelatedField(ImportFieldGetURLMixin, RelatedField):
 
 
 class TaskGroupStatusCountField(serializers.IntegerField, serializers.ReadOnlyField):
-    """ Serializer field for counting the tasks on a task group in a given state.
-    """
+    """Serializer field for counting the tasks on a task group in a given state."""
 
     def __init__(self, state, *args, **kwargs):
         self.state = state
