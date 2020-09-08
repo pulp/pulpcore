@@ -5,6 +5,7 @@ from gettext import gettext as _
 from django.core.files.uploadedfile import TemporaryUploadedFile
 from django.core.files.uploadhandler import TemporaryFileUploadHandler
 from pygtrie import StringTrie
+from pulpcore.app import models
 
 
 class PulpTemporaryUploadedFile(TemporaryUploadedFile):
@@ -14,7 +15,7 @@ class PulpTemporaryUploadedFile(TemporaryUploadedFile):
 
     def __init__(self, name, content_type, size, charset, content_type_extra=None):
         self.hashers = {}
-        for hasher in hashlib.algorithms_guaranteed:
+        for hasher in models.Artifact.DIGEST_FIELDS:
             self.hashers[hasher] = getattr(hashlib, hasher)()
         super().__init__(name, content_type, size, charset, content_type_extra)
 
@@ -39,7 +40,7 @@ class PulpTemporaryUploadedFile(TemporaryUploadedFile):
         # calling the method read() again from another place
         file.seek(0)
 
-        for hasher in hashlib.algorithms_guaranteed:
+        for hasher in models.Artifact.DIGEST_FIELDS:
             instance.hashers[hasher].update(data)
         return instance
 
@@ -78,7 +79,7 @@ class HashingFileUploadHandler(TemporaryFileUploadHandler):
 
     def receive_data_chunk(self, raw_data, start):
         self.file.write(raw_data)
-        for hasher in hashlib.algorithms_guaranteed:
+        for hasher in models.Artifact.DIGEST_FIELDS:
             self.file.hashers[hasher].update(raw_data)
 
 

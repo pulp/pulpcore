@@ -16,6 +16,7 @@ from pkg_resources import iter_entry_points
 
 from django.core.exceptions import ImproperlyConfigured
 
+from pulpcore import constants
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -228,6 +229,13 @@ SPECTACULAR_SETTINGS = {
     },
 }
 
+
+# What kinds of checksums is this pulp-instance _allowed to use_ ?
+# NOTE : "sha256"" IS REQUIRED - Pulp will fail to start if it is not found in this set
+# NOTE: specifying checksums that are not listed under ALL_KNOWN_CONTENT_CHECKSUMS will fail
+#       at startup
+ALLOWED_CONTENT_CHECKSUMS = ["md5", "sha1", "sha224", "sha256", "sha384", "sha512"]
+
 # HERE STARTS DYNACONF EXTENSION LOAD (Keep at the very bottom of settings.py)
 # Read more at https://dynaconf.readthedocs.io/en/latest/guides/django.html
 import dynaconf  # noqa
@@ -243,7 +251,6 @@ settings = dynaconf.DjangoDynaconf(
 )
 # HERE ENDS DYNACONF EXTENSION LOAD (No more code below this line)
 
-
 try:
     CONTENT_ORIGIN
 except NameError:
@@ -252,5 +259,25 @@ except NameError:
             "CONTENT_ORIGIN is a required setting but it was not configured. This may be caused "
             "by invalid read permissions of the settings file. Note that CONTENT_ORIGIN is set by "
             "the installer automatically."
+        )
+    )
+
+# Check legality of ALLOWED_CONTENT_CHECKSUMS post-dynaconf-load, in case it has been overridden
+# in a site-specific location (eg, in /etc/pulp/settings.py)
+if "sha256" not in ALLOWED_CONTENT_CHECKSUMS:
+    raise ImproperlyConfigured(
+        _(
+            "ALLOWED_CONTENT_CHECKSUMS MUST contain 'sha256' - Pulp's content-storage-addressing "
+            "relies on sha256 to identify entities."
+        )
+    )
+
+unknown_algs = set(ALLOWED_CONTENT_CHECKSUMS).difference(constants.ALL_KNOWN_CONTENT_CHECKSUMS)
+if unknown_algs:
+    raise ImproperlyConfigured(
+        _(
+            "ALLOWED_CONTENT_CHECKSUMS may only contain algorithms known to pulp - see "
+            "constants.ALL_KNOWN_CONTENT_CHECKSUMS for the allowed list. Unknown algorithms "
+            "provided: {}".format(unknown_algs)
         )
     )

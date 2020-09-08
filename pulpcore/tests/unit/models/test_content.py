@@ -4,7 +4,13 @@ import tempfile
 from django.core.files.storage import default_storage as storage
 from django.conf import settings
 from django.test import TestCase
-from pulpcore.plugin.models import Artifact, Content, ContentArtifact, PulpTemporaryFile
+from pulpcore.plugin.models import (
+    Artifact,
+    Content,
+    ContentArtifact,
+    PulpTemporaryFile,
+    UnsupportedDigestValidationError,
+)
 
 
 class ContentCRUDTestCase(TestCase):
@@ -64,3 +70,13 @@ class PulpTemporaryFileTestCase(TestCase):
             temp_file.save()
 
         assert b"temp file test" in temp_file.file.read()
+
+
+class ArtifactAlgorithmTestCase(TestCase):
+    def test_set_forbidden(self):
+        # This will only fire on a Pulp instance that has forbidden md5 in settings.py
+        if "md5" not in Artifact.DIGEST_FIELDS:
+            with self.assertRaises(UnsupportedDigestValidationError) as udv:  # noqa
+                a = Artifact(md5="asdf")  # noqa
+        else:
+            pass

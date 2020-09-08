@@ -64,7 +64,7 @@ class ContentArtifactChecksumField(serializers.CharField):
 
     def __init__(self, *args, **kwargs):
         kwargs["read_only"] = True
-        self.checksum = kwargs.pop("checksum", "md5")
+        self.checksum = kwargs.pop("checksum", "sha256")
         super().__init__(*args, **kwargs)
 
     def get_attribute(self, instance):
