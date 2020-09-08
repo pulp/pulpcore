@@ -3,8 +3,9 @@ import time
 import uuid
 from gettext import gettext as _
 
-from django.db import IntegrityError, transaction
+from django.db import IntegrityError
 from django.db.models import Model
+from redis.exceptions import ConnectionError as RedisConnectionError
 from rq import Queue
 from rq.job import Job, get_current_job
 
@@ -87,15 +88,19 @@ def _queue_reserved_task(func, inner_task_id, resources, inner_args, inner_kwarg
                 task_status.worker = worker
                 task_status.set_running()
                 q = Queue("resource-manager", connection=redis_conn, is_async=False)
-                q.enqueue(
-                    func,
-                    args=inner_args,
-                    kwargs=inner_kwargs,
-                    job_id=inner_task_id,
-                    job_timeout=TASK_TIMEOUT,
-                    **options,
-                )
-                task_status.set_completed()
+                try:
+                    q.enqueue(
+                        func,
+                        args=inner_args,
+                        kwargs=inner_kwargs,
+                        job_id=inner_task_id,
+                        job_timeout=TASK_TIMEOUT,
+                        **options,
+                    )
+                    task_status.set_completed()
+                except RedisConnectionError as e:
+                    task_status.set_failed(e, None)
+                    raise
                 return
 
         try:
@@ -119,14 +124,18 @@ def _queue_reserved_task(func, inner_task_id, resources, inner_args, inner_kwarg
 
     try:
         q = Queue(worker.name, connection=redis_conn)
-        q.enqueue(
-            func,
-            args=inner_args,
-            kwargs=inner_kwargs,
-            job_id=inner_task_id,
-            job_timeout=TASK_TIMEOUT,
-            **options,
-        )
+        try:
+            q.enqueue(
+                func,
+                args=inner_args,
+                kwargs=inner_kwargs,
+                job_id=inner_task_id,
+                job_timeout=TASK_TIMEOUT,
+                **options,
+            )
+        except RedisConnectionError as e:
+            task_status.set_failed(e, None)
+            raise
     finally:
         q.enqueue(_release_resources, args=(inner_task_id,))
 
@@ -215,22 +224,22 @@ def enqueue_with_reservation(
         # set the parent task of the spawned task to the current task ID (same as rq Job ID)
         parent_kwarg["parent_task"] = Task.objects.get(pk=current_job.id)
 
-    def callback():
-        task_args = (func, inner_task_id, list(resources), args, kwargs, options)
-        q = Queue("resource-manager", connection=redis_conn)
+    task = Task.objects.create(
+        pk=inner_task_id,
+        _resource_job_id=resource_task_id,
+        state=TASK_STATES.WAITING,
+        task_group=task_group,
+        name=f"{func.__module__}.{func.__name__}",
+        **parent_kwarg,
+    )
+    task_args = (func, inner_task_id, list(resources), args, kwargs, options)
+    q = Queue("resource-manager", connection=redis_conn)
+    try:
         q.enqueue(
             _queue_reserved_task, job_id=resource_task_id, args=task_args, job_timeout=TASK_TIMEOUT
         )
-
-    with transaction.atomic():
-        Task.objects.create(
-            pk=inner_task_id,
-            _resource_job_id=resource_task_id,
-            state=TASK_STATES.WAITING,
-            task_group=task_group,
-            name=f"{func.__module__}.{func.__name__}",
-            **parent_kwarg,
-        )
-        transaction.on_commit(callback)
+    except RedisConnectionError as e:
+        task.set_failed(e, None)
+        raise
 
     return Job(id=inner_task_id, connection=redis_conn)
