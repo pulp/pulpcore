@@ -1,0 +1,3 @@
+The local file system directory used for uploaded chunks was changed and moved to the default
+storage instead. Users are encouraged to remove all uncommitted uploaded files before applying
+this change.

@@ -49,7 +49,7 @@ This queues a task that creates an artifact, and the upload gets deleted and can
 
 Putting this altogether, here is an example that uploads a 1.iso file in two chunks::
 
-   curl -O https://repos.fedorapeople.org/repos/pulp/pulp/fixtures/file-large/1.iso
+   curl -O https://fixtures.pulpproject.org/file-large/1.iso
    split --bytes=6M 1.iso chunk
    export UPLOAD=$(http POST :24817/pulp/api/v3/uploads/ size=`ls -l 1.iso | cut -d ' ' -f5` | jq -r '.pulp_href')
    http --form PUT :24817$UPLOAD file@./chunkab 'Content-Range:bytes 6291456-10485759/*'
@@ -58,6 +58,5 @@ Putting this altogether, here is an example that uploads a 1.iso file in two chu
 
 .. note::
 
-    Uploaded chunks are stored in a local file system. When the upload is committed, it is
-    automatically removed and a new artifact is created in a default file storage. The directory
-    which is used for temporary uploads is configurable via the setting ``CHUNKED_UPLOAD_DIR``.
+    Each uploaded chunk is stored as a separate file in the default storage. When an upload is
+    committed, uploaded chunks are removed automatically and a new artifact is created, as usually.
