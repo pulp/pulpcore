@@ -1,0 +1,1 @@
+Taught export to insure export-dir was writeable by group as well as owner.

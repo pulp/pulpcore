@@ -166,7 +166,9 @@ def pulp_export(the_export):
         the_export.task = Task.current()
 
         tarfile_fp = the_export.export_tarfile_path()
+
         os.makedirs(pulp_exporter.path, exist_ok=True)
+        os.chmod(pulp_exporter.path, 0o775)  # let owner and group read and write the directory
 
         rslts = {}
         if the_export.validated_chunk_size:
