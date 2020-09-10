@@ -65,6 +65,7 @@ class BaseExporterCase(unittest.TestCase):
             sync_response = cls.repo_api.sync(a_repo.pulp_href, repository_sync_data)
             monitor_task(sync_response.task)
             # remember it
+            a_repo = cls.repo_api.read(file_file_repository_href=a_repo.pulp_href)
             repos.append(a_repo)
             remotes.append(remote)
         return repos, remotes
@@ -336,7 +337,7 @@ class PulpExportTestCase(BaseExporterCase):
         a_repo = self.repo_api.create(gen_repo())
         self.addCleanup(self.client.delete, a_repo.pulp_href)
         # get a list of all the files from one of our existing repos
-        file_list = self.content_api.list()
+        file_list = self.content_api.list(repository_version=self.repos[0].latest_version_href)
         # copy files from repositories[0] into 2, one file at a time
         results = file_list.results
         for a_file in results:
