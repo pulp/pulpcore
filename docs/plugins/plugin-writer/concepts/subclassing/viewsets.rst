@@ -118,8 +118,8 @@ validation is only called in the task context.
 If the uploaded content does not need to be stored, plugin writers may derive from the class
 ``NoArtifactContentUploadViewSet``. Again, the same analogy applies to this workflow. To use this
 ViewSet, the associated serializer should also subclass ``NoArtifactContentUploadSerializer``. Note
-that by using the aforesaid Serializer and ViewSet, Pulp still loads content of an uploaded file,
-if any, to a temporary Artifact. But the Artifact is going to be removed by the end of a created task.
+that by using the aforesaid Serializer and ViewSet, Pulp still loads content of an uploaded file to
+a temporary file. But the file is going to be removed by the end of a created task.
 
 If any additional context needs to be passed from the ViewSet to the creation task, the
 ``get_deferred_context`` method of the ViewSet might be overwritten. It's return value will then be
