@@ -1,0 +1,3 @@
+The local file system directory used for uploaded chunks is specified by the setting
+CHUNKED_UPLOAD_DIR. Users are encouraged to remove all uncommitted uploaded files before
+applying this change.
