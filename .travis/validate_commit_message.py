@@ -54,7 +54,7 @@ print("Checking commit message for {sha}.".format(sha=sha[0:7]))
 
 # validate the issue attached to the commit
 regex = r"(?:{keywords})[\s:]+#(\d+)".format(keywords=("|").join(KEYWORDS))
-pattern = re.compile(regex)
+pattern = re.compile(regex, re.IGNORECASE)
 
 issues = pattern.findall(message)
 

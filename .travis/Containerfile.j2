@@ -15,7 +15,7 @@ RUN pip3 install python-dateutil rhsm
 {% if item.source.startswith("./") %}
 ADD {{ item.source }} {{ item.source }}
 {% endif %}
-RUN pip3 install {{ item.source }}
+RUN pip3 install "{{ item.source }}"
 RUN mkdir -p /etc/nginx/pulp/
 RUN ln /usr/local/lib/python3.7/site-packages/{{ item.name }}/app/webserver_snippets/nginx.conf /etc/nginx/pulp/{{ item.name }}.conf || true
 {% endfor %}
