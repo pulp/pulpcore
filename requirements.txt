@@ -20,6 +20,7 @@ jinja2
 pygtrie~=2.3.3
 psycopg2>=2.7,<2.9
 PyYAML>=5.1.1,<5.4.0
+python-box # dynaconf dependency - https://github.com/rochacbruno/dynaconf/commit/6eb163b5d7dbbeb54417a6e6615d2c92dc0cb46c
 python-gnupg~=0.4.6
 redis>=3.4.0
 rq>=1.1,<1.6
