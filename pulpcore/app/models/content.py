@@ -429,7 +429,9 @@ class ContentArtifact(BaseModel, QueryMixin):
     Artifact is protected from deletion if it's present in a ContentArtifact relationship.
     """
 
-    artifact = models.ForeignKey(Artifact, on_delete=models.PROTECT, null=True)
+    artifact = models.ForeignKey(
+        Artifact, on_delete=models.PROTECT, null=True, related_name="content_memberships"
+    )
     content = models.ForeignKey(Content, on_delete=models.CASCADE)
     relative_path = models.TextField()
 
