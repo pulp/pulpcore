@@ -9,13 +9,17 @@ from drf_spectacular.plumbing import (
     ResolvedComponent,
     build_basic_type,
     build_parameter_type,
+    build_root_object,
     force_instance,
+    normalize_result_object,
+    reset_generator_stats,
     resolve_regex_path_parameter,
 )
-from rest_framework.schemas.utils import get_pk_description
+from drf_spectacular.settings import spectacular_settings
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiParameter
 from rest_framework import serializers
+from rest_framework.schemas.utils import get_pk_description
 
 
 class PulpAutoSchema(AutoSchema):
@@ -412,7 +416,14 @@ class PulpSchemaGenerator(SchemaGenerator):
 
     def get_schema(self, request=None, public=False):
         """ Generate a OpenAPI schema. """
-        result = super().get_schema(request, public)
+        reset_generator_stats()
+        result = build_root_object(
+            paths=self.parse(request, public),
+            components=self.registry.build(spectacular_settings.APPEND_COMPONENTS),
+        )
+        for hook in spectacular_settings.POSTPROCESSING_HOOKS:
+            result = hook(result=result, generator=self, request=request, public=public)
+
         # Basically I'm doing it to get pulp logo at redoc page
         result["info"]["x-logo"] = {
             "url": "https://pulp.plan.io/attachments/download/517478/pulp_logo_word_rectangle.svg"
@@ -420,4 +431,5 @@ class PulpSchemaGenerator(SchemaGenerator):
         # Adding current host as server (it will provide a default value for the bindings)
         server_url = "http://localhost:24817" if not request else request.build_absolute_uri("/")
         result["servers"] = [{"url": server_url}]
-        return result
+
+        return normalize_result_object(result)
