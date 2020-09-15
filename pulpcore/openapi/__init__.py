@@ -18,7 +18,7 @@ from drf_spectacular.plumbing import (
 from drf_spectacular.settings import spectacular_settings
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiParameter
-from rest_framework import serializers
+from rest_framework import mixins, serializers
 from rest_framework.schemas.utils import get_pk_description
 
 
@@ -261,6 +261,20 @@ class PulpAutoSchema(AutoSchema):
             component = super().resolve_serializer(serializer, direction)
 
         return component
+
+    def _get_response_bodies(self):
+        """
+        Handle response status code.
+        """
+        response = super()._get_response_bodies()
+        if (
+            self.method == "POST"
+            and issubclass(self.view.__class__, mixins.CreateModelMixin)
+            and "200" in response
+        ):
+            response["201"] = response.pop("200")
+
+        return response
 
 
 class PulpSchemaGenerator(SchemaGenerator):
