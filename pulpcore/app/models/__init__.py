@@ -55,6 +55,7 @@ from .task import (  # noqa
     Task,
     TaskGroup,
     TaskReservedResource,
+    TaskReservedResourceRecord,
     Worker,
 )
 from .upload import (  # noqa

@@ -3,13 +3,19 @@ import time
 import uuid
 from gettext import gettext as _
 
-from django.db import IntegrityError
+from django.db import IntegrityError, transaction
 from django.db.models import Model
 from redis.exceptions import ConnectionError as RedisConnectionError
 from rq import Queue
 from rq.job import Job, get_current_job
 
-from pulpcore.app.models import ReservedResource, Task, Worker
+from pulpcore.app.models import (
+    ReservedResource,
+    ReservedResourceRecord,
+    Task,
+    TaskReservedResourceRecord,
+    Worker,
+)
 from pulpcore.constants import TASK_STATES
 from pulpcore.tasking import connection, util
 
@@ -220,14 +226,19 @@ def enqueue_with_reservation(
         # set the parent task of the spawned task to the current task ID (same as rq Job ID)
         parent_kwarg["parent_task"] = Task.objects.get(pk=current_job.id)
 
-    task = Task.objects.create(
-        pk=inner_task_id,
-        _resource_job_id=resource_task_id,
-        state=TASK_STATES.WAITING,
-        task_group=task_group,
-        name=f"{func.__module__}.{func.__name__}",
-        **parent_kwarg,
-    )
+    with transaction.atomic():
+        task = Task.objects.create(
+            pk=inner_task_id,
+            _resource_job_id=resource_task_id,
+            state=TASK_STATES.WAITING,
+            task_group=task_group,
+            name=f"{func.__module__}.{func.__name__}",
+            **parent_kwarg,
+        )
+        for resource in resources:
+            reservation_record = ReservedResourceRecord.objects.get_or_create(resource=resource)[0]
+            TaskReservedResourceRecord.objects.create(resource=reservation_record, task=task)
+
     task_args = (func, inner_task_id, list(resources), args, kwargs, options)
     try:
         q = Queue("resource-manager", connection=redis_conn)
