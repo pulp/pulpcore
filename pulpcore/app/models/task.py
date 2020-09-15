@@ -312,11 +312,6 @@ class Worker(BaseModel):
                     reservation = ReservedResource.objects.create(worker=self, resource=resource)
                 TaskReservedResource.objects.create(resource=reservation, task=task)
 
-                reservation_record = ReservedResourceRecord.objects.get_or_create(
-                    resource=resource
-                )[0]
-                TaskReservedResourceRecord.objects.create(resource=reservation_record, task=task)
-
 
 class Task(BaseModel, AutoDeleteObjPermsMixin, AutoAddObjPermsMixin):
     """
