@@ -204,7 +204,6 @@ class ArtifactSerializer(base.ModelSerializer):
                 of the checksums don't match their actual values.
         """
         super().validate(data)
-
         if "size" in data:
             if data["file"].size != int(data["size"]):
                 raise serializers.ValidationError(_("The size did not match actual size of file."))
@@ -235,9 +234,9 @@ class ArtifactSerializer(base.ModelSerializer):
                         models.Artifact.objects.all(),
                         message=_("{0} checksum must be " "unique.").format(algorithm),
                     )
-                    validator.field_name = algorithm
                     validator.instance = None
-                    validator(digest)
+
+                    validator(digest, self.fields[algorithm])
         return data
 
     class Meta:
