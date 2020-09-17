@@ -1,0 +1,2 @@
+Updated docs recommending plugins to rely on a 1-release deprecation process for backwards
+incompatible changes in the ``pulpcore.plugin``.
