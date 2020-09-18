@@ -328,6 +328,48 @@ For the MANIFEST.in entry, you'll likely want one like the example below which w
    include pulp_ansible/app/webserver_snippets/*
 
 
+.. _overriding-reverse-proxy-route-configuration:
+
+Overriding the Reverse Proxy Route Configuration
+------------------------------------------------
+
+Sometimes a plugin may want to control the reverse proxy behavior of a URL at the webserver. For
+example, perhaps an additional header may want to be set at the reverse proxy when those urls are
+forwarded to the plugin's Django code. To accomplish this, the
+:ref:`custom app route <custom-content-app-routes>` can be used when it specifies a more-specific
+route than the installer's base webserver configuration provides.
+
+For example assume the header `FOO` should be set at the url ``/pulp/api/v3/foo_route``. Below are
+two examples of a snippet that could do this (one for Nginx and another for Apache).
+
+Nginx example::
+
+        location /pulp/api/v3/foo_route {
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+            proxy_set_header Host $http_host;
+
+            proxy_set_header FOO 'asdf';  # This is the custom part
+
+            # we don't want nginx trying to do something clever with
+            # redirects, we set the Host: header above already.
+            proxy_redirect off;
+            proxy_pass http://pulp-api;
+        }
+
+Apache example::
+
+    <Location "/pulp/api/v3/foo_route">
+        ProxyPass /pulp/api http://${pulp-api}/pulp/api
+        ProxyPassReverse /pulp/api http://${pulp-api}/pulp/api
+        RequestHeader set FOO "asdf"
+    </Location>
+
+These snippets work because both Nginx and Apache match on "more-specific" routes first regardless
+of the order in the config file. The installer ships the a default of ``/pulp/api/v3`` so anything
+containing another portion after ``v3`` such as ``/pulp/api/v3/foo_route`` would be more specific.
+
+
 .. _plugin_installation:
 
 Installation
