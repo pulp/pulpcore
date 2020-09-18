@@ -84,10 +84,6 @@ class FilesystemExporter(Exporter):
         Raises:
             ValidationError: When path is not in the ALLOWED_EXPORT_PATHS setting
         """
-        from pulpcore.app.serializers import ExportSerializer
-
-        ExportSerializer.validate_path(self.path)
-
         if content_artifacts.filter(artifact=None).exists():
             RuntimeError(_("Remote artifacts cannot be exported."))
 
