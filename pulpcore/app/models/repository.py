@@ -94,6 +94,10 @@ class Repository(MasterModel):
             pulpcore.app.models.RepositoryVersion: The Created RepositoryVersion
         """
         with transaction.atomic():
+            latest_version = self.versions.latest()
+            if not latest_version.complete:
+                latest_version.delete()
+
             version = RepositoryVersion(
                 repository=self, number=int(self.next_version), base_version=base_version
             )
@@ -108,6 +112,7 @@ class Repository(MasterModel):
             if Task.current():
                 resource = CreatedResource(content_object=version)
                 resource.save()
+
             return version
 
     def finalize_new_version(self, new_version):
