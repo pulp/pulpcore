@@ -333,9 +333,9 @@ For the MANIFEST.in entry, you'll likely want one like the example below which w
 Installation
 ------------
 
-It's recommended to use the `Pulp 3 Ansible Installer <https://github.com/pulp/pulp_installer
-#pulp-3-ansible-installer>`_ to install your plugin. Generally you can do this by configuring
-``pulp_install_plugins`` variable with your Python package's name. For example for ``pulp-file``::
+It's recommended to use the `Pulp 3 Installer <https://pulp-installer.readthedocs.io/>`_ to install
+your plugin. Generally you can do this by configuring ``pulp_install_plugins`` variable with your
+Python package's name. For example for ``pulp-file``::
 
     pulp_install_plugins:
       pulp-file: {}
@@ -346,13 +346,19 @@ It's recommended to use the `Pulp 3 Ansible Installer <https://github.com/pulp/p
 Custom Installation Tasks
 -------------------------
 
-If your plugin requires any custom installation steps, we recommend using an
-Ansible Role prior to Pulp installation.
+Custom installation steps for a plugin can be added to the installer which are run only when your
+plugin is in the ``pulp_install_plugins`` configuration.
 
-The easiest way to add custom installation tasks is to follow the
-`Ansible Galaxy guide <https://galaxy.ansible.com/docs/contributing/creating_role.html>`_
-to create a new role with tasks that needs to be done and publish it on Ansible Galaxy.
+For example, pulp_rpm requires several system-level dependencies that cannot be received from PyPI.
+The installer delivers these dependencies at install time through the `pulp_rpm_prerequisites
+<https://github.com/pulp/pulp_installer/tree/master/roles/pulp_rpm_prerequisites>`_ role. That role
+ships with the installer itself.
 
-Documentation will need to be added to the plugin installation instructions. See the
-`RPM Plugin Documentation <https://pulp-rpm.readthedocs.io/en/latest/installation.html#
-install-with-pulp-installer-recommended>`_ as an example.
+It's also possible to add custom install behaviors for developers too. For exampe, the galaxy_ng
+plugin desires their web UI to be built from source for devel installs. That occurs `in a custom
+galaxy_ui.yml task <https://github.com/pulp/pulp_installer/blob/master/roles/pulp_devel/tasks/
+galaxy_ui.yml>`_ in the installers ``pulp_devel`` role.
+
+For help contributing or changing a plugin-specific installation, please reach out to the installer
+maintainers either through the developer mailing list (``pulp-dev@redhat.com``) or on Freenode in
+the developer channel, ``#pulp-dev``.
