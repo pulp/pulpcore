@@ -1,0 +1,1 @@
+Fix filesystem exports failing due to undefinied ``validate_path`` method.
