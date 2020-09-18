@@ -15,6 +15,7 @@ from importlib import import_module
 from pkg_resources import iter_entry_points
 
 from django.core.exceptions import ImproperlyConfigured
+from django.db import connection
 
 from pulpcore import constants
 
@@ -283,3 +284,24 @@ if unknown_algs:
             "provided: {}".format(unknown_algs)
         )
     )
+try:
+    for checksum in ALLOWED_CONTENT_CHECKSUMS:
+        # can't import Artifact here so use a direct db connection
+        with connection.cursor() as cursor:
+            cursor.execute(f"SELECT count(pulp_id) FROM core_artifact WHERE {checksum} IS NULL")
+            row = cursor.fetchone()
+            if row[0] > 0:
+                raise ImproperlyConfigured(
+                    _(
+                        "ALLOWED_CONTENT_CHECKSUMS cannot contain checksum '{}' since checksums "
+                        "can only be removed and not added to ALLOWED_CONTENT_CHECKSUMS in "
+                        "existing deployments."
+                    ).format(checksum)
+                )
+except ImproperlyConfigured as e:
+    raise e
+except Exception:
+    # our check could fail if the table hasn't been created yet or we can't get a db connection
+    pass
+finally:
+    connection.close()
