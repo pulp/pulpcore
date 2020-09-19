@@ -370,6 +370,44 @@ of the order in the config file. The installer ships the a default of ``/pulp/ap
 containing another portion after ``v3`` such as ``/pulp/api/v3/foo_route`` would be more specific.
 
 
+.. _deprecation_policy:
+
+Plugin API Stability and Deprecation Policy
+-------------------------------------------
+
+The ``pulpcore.plugin`` API can introduce breaking changes, and will be introduced in the following
+way. For this example, assume that pulpcore 3.8 introduces a breaking change by changing the call
+signature of a method named ``def foo(a, b)`` which is importable via the plugin API.
+
+In 3.8 the following changes happen:
+
+1. The new method would be introduced as a new named function ``def the_new_foo(...)`` or some
+   similar name.
+2. The existing method signature ``def foo(a, b)`` is left in-tact.
+3. The ``foo`` method would have the a Python ``DeprecationWarning`` added to it such as::
+
+    warnings.warn("foo() is deprecated and will be removed in pulpcore==3.9; use the_new_foo().", warnings.DeprecationWarning)
+
+4. A ``CHANGES/plugin_api/XXXX.deprecation`` changelog entry is created explaining how to port
+   plugin code onto the new call interface.
+
+Then in 3.9 the following happens:
+
+1. The ``def foo(a, b)`` method is deleted entirely.
+2. A ``CHANGES/plugin_api/XXXX.removal`` changelog entry is created explaining what has been
+   removed.
+
+.. note::
+
+    Python ``DeprecationWarning`` log statements are shown to users of your plugin when using a
+    deprecated call interface. This is by design to raise general awareness that the code in-use
+    will eventually be removed.
+
+This also applies to models importable from ``pulpcore.plugin.models``. For example, an attribute
+that is being renamed or removed would follow a similar deprecation process described above to allow
+plugin code one release cycle to update their code compatibility.
+
+
 .. _plugin_installation:
 
 Installation
