@@ -1,0 +1,1 @@
+Fixed orphan cleanup for subrepositories (e.g. an add-on repository in RPM distribution tree repository).

@@ -32,26 +32,33 @@ def queryset_iterator(qs, batchsize=2000, gc_collect=True):
 def orphan_cleanup():
     """
     Delete all orphan Content and Artifact records.
+    Go through orphan Content multiple times to remove content from subrepos.
     This task removes Artifact files from the filesystem as well.
-    """
-    content = Content.objects.filter(version_memberships__isnull=True).exclude(
-        pulp_type=PublishedMetadata.get_pulp_type()
-    )
 
-    content_count = content.count()
+    """
     progress_bar = ProgressReport(
         message="Clean up orphan Content",
-        total=content_count,
+        total=0,
         code="clean-up.content",
         done=0,
         state="running",
     )
-    progress_bar.save()
 
-    # delete the content
-    for c in queryset_iterator(content):
-        progress_bar.increase_by(c.count())
-        c.delete()
+    while True:
+        content = Content.objects.filter(version_memberships__isnull=True).exclude(
+            pulp_type=PublishedMetadata.get_pulp_type()
+        )
+        content_count = content.count()
+        if not content_count:
+            break
+
+        progress_bar.total += content_count
+        progress_bar.save()
+
+        # delete the content
+        for c in queryset_iterator(content):
+            progress_bar.increase_by(c.count())
+            c.delete()
 
     progress_bar.state = "completed"
     progress_bar.save()
