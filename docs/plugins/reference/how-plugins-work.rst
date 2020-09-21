@@ -72,3 +72,14 @@ components, particularly for both models and viewsets.
 
 Take a look at `the structure <https://github.com/pulp/pulp_file/tree/master/pulp_file/app>`_ of
 the ``pulp_file`` plugin.
+
+
+Serializer and OpenAPI schema
+-----------------------------
+
+Serializers are converted to OpenAPI objects through `drf-spectacular <https://github.com/tfranzel/drf-spectacular>`_.
+It inspects all serializer fields to describe them in the OpenAPI schema.
+Due to the `DRF issue <https://github.com/encode/django-rest-framework/issues/7354>`_
+it is preferable to use ``CharField`` instead of ``URLField``.
+Otherwise The REST API hosted at ``/pulp/api/v3/`` may hide some paths.
+
