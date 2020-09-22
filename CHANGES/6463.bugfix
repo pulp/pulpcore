@@ -1,1 +1,0 @@
-Fixed a bug where creating an incomplete repository version (via canceled or failed task) could cause future operations to fail.

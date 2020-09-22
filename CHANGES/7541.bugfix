@@ -1,1 +1,0 @@
-Fix a bug that prevented users from adding permissions for models have conflicting names across different django apps.
