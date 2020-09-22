@@ -1,1 +1,0 @@
-Fixed pulp-export scenario where specifying full= could fail silently.
