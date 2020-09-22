@@ -5,7 +5,7 @@ Plugin Concepts
 
 Like the Pulp Core itself, all Pulp Plugins are Django Applications, and could be created like any
 other Django app with ``pulpcore-manager startapp <your_plugin>``. However, instead of writing all
-of the boilerplate yourself, it is recommmended that you start your plugin by utilizing the `Plugin
+of the boilerplate yourself, it is recommended that you start your plugin by utilizing the `Plugin
 Template <https://github.com/pulp/plugin_template>`_.  This guide will assume that you have used
 the plugin_template, but if you are interested in the details of what it provides you, please see
 :ref:`plugin-django-application` for more information for how plugins are "discovered" and connected to
@@ -133,7 +133,7 @@ Tasks are deployed from Views or Viewsets, please see :ref:`kick-off-tasks`.
 
 **Task Groups**
 
-Sometimes you may want to create many tasks to perform different parts of one larger piece of work,
+Sometimes, you may want to create many tasks to perform different parts of one larger piece of work,
 but you need a simple means to track the progress of these many tasks. Task Groups serve this purpose
 by providing details on the number of associated tasks in each possible state.
 For more details, please see :ref:`kick-off-tasks`.
@@ -141,13 +141,13 @@ For more details, please see :ref:`kick-off-tasks`.
 **GroupProgressReports**
 
 GroupProgressReport can track progress of each task in that group. GroupProgressReport needs to be
-created and associated to the TaskGroup. From within a task that belogs to the task group,
-group progress report needs to be updated.
+created and associated to the TaskGroup. From within a task that belongs to the TaskGroup, the
+GroupProgressReport needs to be updated.
 
 
 .. code-block:: python
 
-        # Once a Task Group is created, plugin writers should create group progress report objects
+        # Once a TaskGroup is created, plugin writers should create GroupProgressReport objects
         # ahead, so tasks can find them and update the progress.
         task_group = TaskGroup(description="Migration Sub-tasks")
         task_group.save()
@@ -155,8 +155,8 @@ group progress report needs to be updated.
             message="Repo migration",
             code="create.repo_version",
             task_group=task_group).save()
-        # When a taks that will be executing certain work, which is part of a TaskGroup, it will look
-        # for the Task group it belongs to and find appropriate progress report by its code and will
+        # When a task that will be executing certain work, which is part of a TaskGroup, it will look
+        # for the TaskGroup it belongs to and find appropriate progress report by its code and will
         # update it accordingly.
         task_group = TaskGroup.current()
         progress_repo = task_group.group_progress_reports.filter(code='create.repo_version')
@@ -218,7 +218,7 @@ want to offer built-in content protection features. For example pulp_container m
 to download container images they have rights to based on some permissions system pulp_container
 could provide.
 
-For more information see the :ref:`ContentGuard Usage by Plugin Writers
+For more information, see the :ref:`ContentGuard Usage by Plugin Writers
 <plugin-writers-use-content-protection>` documentation.
 
 
@@ -237,7 +237,7 @@ Settings are parsed in the following order with later settings overwriting earli
 2. Settings from ``pulpcore.app.settings`` (the pulpcore provided settings defaults).
 3. Plugin settings from ``<your plugin>.app.settings``.
 
-In some cases a setting should not overwrite an existing setting, but instead add to it. For
+In some cases, a setting should not overwrite an existing setting, but instead add to it. For
 example, consider adding a custom log handler or logger to the `LOGGING <https://github.com/pulp/
 pulpcore/blob/ec336c2b7bc7cefd3a28fc69dcd1c65655332841/pulpcore/app/settings.py#L183-L202>`_
 settings. You don't want to fully overwrite it, but instead add or overwrite only a sub-portion.
