@@ -89,7 +89,10 @@ class GroupModelPermissionViewSet(NamedModelViewSet):
         data = {}
         for key, value in request.data.items():
             if key == "permission":
-                data["codename"] = value.split(".")[-1]
+                if "." in value:
+                    data["content_type__app_label"], data["codename"] = value.split(".", maxsplit=1)
+                else:
+                    data["codename"] = value
                 continue
 
             if key == "pulp_href":
