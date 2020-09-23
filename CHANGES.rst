@@ -17,6 +17,24 @@ Changelog
 
 .. towncrier release notes start
 
+3.6.4 (2020-09-23)
+==================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fixed broken bindings resulting from drf-spectacular 0.9.13 release.
+  `#7510 <https://pulp.plan.io/issues/7510>`_
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.6.3 (2020-09-04)
 ==================
 REST API
