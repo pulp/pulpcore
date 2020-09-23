@@ -18,9 +18,8 @@ Let us know when the plugin is ready and we will be happy to add it to the list 
 Plugin API
 ==========
 
-The Pulp Plugin API is versioned separately from Pulp Core. It is governed by `semantic
-versioning <http://semver.org/>`_. Backwards incompatible changes may be made until the
-Plugin API reaches stability with v1.0.
+The Pulp Plugin API is published and versioned with ``pulpcore``. It is governed by our `deprecation
+policy <_deprecation_policy>`_.
 
 Plugin Writer's Guide
 ---------------------

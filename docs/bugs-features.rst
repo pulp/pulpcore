@@ -87,7 +87,7 @@ For **Backport Requests**
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Only bug fixes from newer versions can be requested to be backported. No features can be backported
-to older versions due to semantic versioning.
+to older versions.
 
 Please include:
 
