@@ -37,14 +37,18 @@ def cancel(task_id):
 
     if task_status.state in TASK_FINAL_STATES:
         # If the task is already done, just stop
-        msg = _("Task [{task_id}] already in a completed state: {state}")
-        _logger.info(msg.format(task_id=task_id, state=task_status.state))
+        msg = _("Task [{task_id}] already in a final state: {state}")
+        _logger.debug(msg.format(task_id=task_id, state=task_status.state))
         return task_status
 
-    redis_conn = connection.get_redis_connection()
+    _logger.info(_("Canceling task: {id}").format(id=task_id))
 
+    redis_conn = connection.get_redis_connection()
     job = Job(id=str(task_status.pk), connection=redis_conn)
     resource_job = Job(id=str(task_status._resource_job_id), connection=redis_conn)
+
+    task_status.state = TASK_STATES.CANCELED
+    task_status.save()
 
     if job.is_started:
         redis_conn.sadd(TASKING_CONSTANTS.KILL_KEY, job.get_id())
@@ -59,16 +63,13 @@ def cancel(task_id):
     time.sleep(1.5)
 
     with transaction.atomic():
-        task_status.state = TASK_STATES.CANCELED
         for report in task_status.progress_reports.all():
             if report.state not in TASK_FINAL_STATES:
                 report.state = TASK_STATES.CANCELED
                 report.save()
-        task_status.save()
         _delete_incomplete_resources(task_status)
         task_status.release_resources()
 
-    _logger.info(_("Task canceled: {id}.").format(id=task_id))
     return task_status
 
 
