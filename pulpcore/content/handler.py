@@ -442,7 +442,12 @@ class Handler:
             except ObjectDoesNotExist:
                 pass
             else:
-                return self._serve_content_artifact(ca, headers)
+                if ca.artifact:
+                    return self._serve_content_artifact(ca, headers)
+                else:
+                    return await self._stream_content_artifact(
+                        request, StreamResponse(headers=headers), ca
+                    )
 
         if distro.remote:
             remote = distro.remote.cast()
