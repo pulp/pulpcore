@@ -60,6 +60,10 @@ def cancel(task_id):
 
     with transaction.atomic():
         task_status.state = TASK_STATES.CANCELED
+        for report in task_status.progress_reports.all():
+            if report.state not in TASK_FINAL_STATES:
+                report.state = TASK_STATES.CANCELED
+                report.save()
         task_status.save()
         _delete_incomplete_resources(task_status)
         task_status.release_resources()
