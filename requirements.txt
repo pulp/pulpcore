@@ -11,7 +11,7 @@ django-import-export~=2.3.0
 django-lifecycle~=0.7.7
 djangorestframework~=3.12.1
 djangorestframework-queryfields~=1.0.0
-drf-access-policy~=0.7.0
+drf-access-policy~=0.8.0
 drf-nested-routers~=0.91.0
 drf-spectacular==0.9.13
 dynaconf>=3.0,<4.0
