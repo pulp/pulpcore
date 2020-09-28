@@ -1,4 +1,5 @@
 graft pulpcore/etc
 include LICENSE
 include requirements.txt
+include functest_requirements.txt
 include pyproject.toml
