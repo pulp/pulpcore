@@ -17,6 +17,24 @@ Changelog
 
 .. towncrier release notes start
 
+3.7.1 (2020-09-29)
+==================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Including functest_requirements.txt on MANIFEST.in
+  `#7610 <https://pulp.plan.io/issues/7610>`_
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.7.0 (2020-09-22)
 ==================
 REST API
