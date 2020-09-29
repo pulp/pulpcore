@@ -1,0 +1,1 @@
+Added a constant holding the pulpcore version which can be imported by plugins - `pulpcore.plugin.pulpcore_version`.
