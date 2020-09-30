@@ -5,6 +5,7 @@ from gettext import gettext as _
 
 from django.db import IntegrityError, transaction
 from django.db.models import Model
+from django_guid.middleware import GuidMiddleware
 from redis.exceptions import ConnectionError as RedisConnectionError
 from rq import Queue
 from rq.job import Job, get_current_job
@@ -80,6 +81,7 @@ def _queue_reserved_task(func, inner_task_id, resources, inner_args, inner_kwarg
     """
     redis_conn = connection.get_redis_connection()
     task_status = Task.objects.get(pk=inner_task_id)
+    GuidMiddleware.set_guid(task_status.logging_cid)
     task_name = func.__module__ + "." + func.__name__
 
     while True:
@@ -231,6 +233,7 @@ def enqueue_with_reservation(
             pk=inner_task_id,
             _resource_job_id=resource_task_id,
             state=TASK_STATES.WAITING,
+            logging_cid=(GuidMiddleware.get_guid() or ""),
             task_group=task_group,
             name=f"{func.__module__}.{func.__name__}",
             **parent_kwarg,

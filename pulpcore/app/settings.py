@@ -64,6 +64,7 @@ INSTALLED_APPS = [
     "import_export",
     # third-party
     "django_filters",
+    "django_guid",
     "drf_spectacular",
     "guardian",
     "rest_framework",
@@ -93,6 +94,7 @@ for app in OPTIONAL_APPS:
         INSTALLED_APPS.append(app)
 
 MIDDLEWARE = [
+    "django_guid.middleware.GuidMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -186,13 +188,23 @@ DATABASES = {
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
-    "formatters": {"simple": {"format": "pulp: %(name)s:%(levelname)s: %(message)s"}},
-    "handlers": {"console": {"class": "logging.StreamHandler", "formatter": "simple"}},
+    "formatters": {
+        "simple": {"format": "pulp [%(correlation_id)s]: %(name)s:%(levelname)s: %(message)s"}
+    },
+    "filters": {"correlation_id": {"()": "django_guid.log_filters.CorrelationId"}},
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "simple",
+            "filters": ["correlation_id"],
+        }
+    },
     "loggers": {
         "": {
             # The root logger
             "handlers": ["console"],
             "level": "INFO",
+            "filters": ["correlation_id"],
         },
     },
 }
