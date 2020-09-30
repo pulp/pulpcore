@@ -67,6 +67,9 @@ class TaskSerializer(ModelSerializer):
         read_only=True,
     )
     name = serializers.CharField(help_text=_("The name of task."))
+    logging_cid = serializers.CharField(
+        help_text=_("The logging correlation id associated with this task")
+    )
     started_at = serializers.DateTimeField(
         help_text=_("Timestamp of the when this task started execution."), read_only=True
     )
@@ -118,6 +121,7 @@ class TaskSerializer(ModelSerializer):
         fields = ModelSerializer.Meta.fields + (
             "state",
             "name",
+            "logging_cid",
             "started_at",
             "finished_at",
             "error",
