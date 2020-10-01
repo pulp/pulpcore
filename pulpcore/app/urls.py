@@ -1,6 +1,7 @@
 """pulp URL Configuration"""
 import logging
 
+from django.conf import settings
 from django.conf.urls import include, url
 from django.contrib import admin
 from django.urls import path
@@ -122,7 +123,7 @@ urlpatterns = [
     url(r"^{api_root}status/".format(api_root=API_ROOT), StatusView.as_view()),
     url(r"^{api_root}orphans/".format(api_root=API_ROOT), OrphansView.as_view()),
     url(r"^auth/", include("rest_framework.urls")),
-    path("admin/", admin.site.urls),
+    path(settings.ADMIN_SITE_URL, admin.site.urls),
 ]
 
 urlpatterns.append(
