@@ -31,6 +31,8 @@ ALLOWED_HOSTS = ["*"]
 
 MEDIA_ROOT = "/var/lib/pulp/"
 
+ADMIN_SITE_URL = "admin/"
+
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.11/howto/static-files/
 

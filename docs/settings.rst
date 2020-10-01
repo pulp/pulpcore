@@ -255,3 +255,8 @@ ALLOWED_CONTENT_CHECKSUMS
       The complete set of supported checksum algorithms includes the following:
 
       ``{"md5", "sha1", "sha224", "sha256", "sha384", "sha512"}``
+
+ADMIN_SITE_URL
+^^^^^^^^^^^^^^
+
+    The Django admin site URL. Defaults to ``admin/``.
