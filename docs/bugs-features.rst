@@ -89,6 +89,9 @@ For **Backport Requests**
 Only bug fixes from newer versions can be requested to be backported. No features can be backported
 to older versions.
 
+Django migrations are order dependent so we cannot backport any change that has database migrations.
+Thus z-stream releases will not add new migrations.
+
 Please include:
 
 #. A redmine issue number or URL for the bug fix to backport. If possible, relate those two issues
