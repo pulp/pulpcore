@@ -1,0 +1,1 @@
+Updated dynaconf requirement to prevent use of older buggy versions.
