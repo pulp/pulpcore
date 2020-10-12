@@ -1,5 +1,6 @@
 # python packages handy for developers, but not required by pulp
 black
+check-manifest
 django-crispy-forms
 django-extensions
 ipython
