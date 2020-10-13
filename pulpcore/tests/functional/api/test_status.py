@@ -2,9 +2,8 @@
 """Test the status page."""
 import unittest
 
-from django.conf import settings
 from jsonschema import validate
-from pulp_smash import api, config
+from pulp_smash import api, cli, config, utils
 from pulp_smash.pulp3.constants import STATUS_PATH
 from requests.exceptions import HTTPError
 
@@ -57,7 +56,10 @@ class StatusTestCase(unittest.TestCase):
         """Make an API client."""
         self.client = api.Client(config.get_config(), api.json_handler)
         self.status_response = STATUS
-        if settings.DEFAULT_FILE_STORAGE != "pulpcore.app.models.storage.FileSystem":
+        cli_client = cli.Client(config.get_config())
+        self.storage = utils.get_pulp_setting(cli_client, "DEFAULT_FILE_STORAGE")
+
+        if self.storage != "pulpcore.app.models.storage.FileSystem":
             self.status_response["properties"].pop("storage", None)
 
     def test_get_authenticated(self):
@@ -93,7 +95,7 @@ class StatusTestCase(unittest.TestCase):
         self.assertTrue(status["redis_connection"]["connected"])
         self.assertNotEqual(status["online_workers"], [])
         self.assertNotEqual(status["versions"], [])
-        if settings.DEFAULT_FILE_STORAGE == "pulpcore.app.models.storage.FileSystem":
+        if self.storage == "pulpcore.app.models.storage.FileSystem":
             self.assertIsNotNone(status["storage"])
         else:
             self.assertIsNone(status["storage"])

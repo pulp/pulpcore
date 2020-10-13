@@ -4,7 +4,6 @@ import hashlib
 import itertools
 import os
 import unittest
-from django.conf import settings
 
 from pulp_smash import api, cli, config, utils
 from pulp_smash.exceptions import CalledProcessError
@@ -162,7 +161,9 @@ class ArtifactsDeleteFileSystemTestCase(unittest.TestCase):
         1. Create an artifact, and verify it is present on the filesystem.
         2. Delete the artifact, and verify it is absent on the filesystem.
         """
-        if settings.DEFAULT_FILE_STORAGE != "pulpcore.app.models.storage.FileSystem":
+        cli_client = cli.Client(config.get_config())
+        storage = utils.get_pulp_setting(cli_client, "DEFAULT_FILE_STORAGE")
+        if storage != "pulpcore.app.models.storage.FileSystem":
             # this test only works for filesystem storage
             return
 
