@@ -380,8 +380,6 @@ class PulpSchemaGenerator(SchemaGenerator):
 
             schema = view.schema
 
-            path = self.convert_endpoint_path_params(path, view, schema)
-
             # beware that every access to schema yields a fresh object (descriptor pattern)
             operation = schema.get_operation(path, path_regex, method, self.registry)
 
