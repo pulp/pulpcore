@@ -49,7 +49,7 @@ This queues a task that creates an artifact, and the upload gets deleted and can
 
 Putting this altogether, here is an example that uploads a 1.iso file in two chunks::
 
-   curl -O https://repos.fedorapeople.org/repos/pulp/pulp/fixtures/file-large/1.iso
+   curl -O https://fixtures.pulpproject.org/file-large/1.iso
    split --bytes=6M 1.iso chunk
    export UPLOAD=$(http POST :24817/pulp/api/v3/uploads/ size=`ls -l 1.iso | cut -d ' ' -f5` | jq -r '.pulp_href')
    http --form PUT :24817$UPLOAD file@./chunkab 'Content-Range:bytes 6291456-10485759/*'
