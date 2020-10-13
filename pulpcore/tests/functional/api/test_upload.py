@@ -4,11 +4,10 @@ import hashlib
 import os
 import unittest
 
-from django.conf import settings
 from random import shuffle
 from urllib.parse import urljoin
 
-from pulp_smash import api, cli, config
+from pulp_smash import api, cli, config, utils
 from pulp_smash.exceptions import CalledProcessError
 from pulp_smash.pulp3.constants import UPLOAD_PATH
 from pulp_smash.utils import http_get
@@ -149,7 +148,8 @@ class ChunkedUploadTestCase(unittest.TestCase):
         # fetch a name of the upload from the corresponding pulp_href
         upload_name = upload_request["pulp_href"].replace("/pulp/api/v3/uploads/", "")[:-1]
 
-        cmd = ("ls", os.path.join(settings.CHUNKED_UPLOAD_DIR, upload_name))
+        upload_dir = utils.get_pulp_setting(self.cli_client, "CHUNKED_UPLOAD_DIR")
+        cmd = ("ls", os.path.join(upload_dir, upload_name))
         self.cli_client.run(cmd, sudo=True)
 
         # committing the upload should delete the upload
