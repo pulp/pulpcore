@@ -114,7 +114,7 @@ Set up 'zoo' repository"::
     export ZOO_HREF=$(http POST :/pulp/api/v3/repositories/rpm/rpm/ name=zoo | jq -r '.pulp_href')
     #
     # add a remote
-    http POST :/pulp/api/v3/remotes/rpm/rpm/ name=zoo url=https://repos.fedorapeople.org/pulp/pulp/fixtures/rpm/  policy='immediate'
+    http POST :/pulp/api/v3/remotes/rpm/rpm/ name=zoo url=https://fixtures.pulpproject.org/rpm-signed/  policy='immediate'
     #
     # find remote's href
     export REMOTE_HREF=$(http :/pulp/api/v3/remotes/rpm/rpm/ | jq -r ".results[] | select(.name == \"zoo\") | .pulp_href")
@@ -128,7 +128,7 @@ Set up 'isofile' repository::
     ISOFILE_HREF=$(http POST :/pulp/api/v3/repositories/file/file/ name=isofile | jq -r '.pulp_href')
     #
     # add remote
-    http POST :/pulp/api/v3/remotes/file/file/ name=isofile url=https://repos.fedorapeople.org/pulp/pulp/fixtures/file/PULP_MANIFEST
+    http POST :/pulp/api/v3/remotes/file/file/ name=isofile url=https://fixtures.pulpproject.org/file/PULP_MANIFEST
     #
     # find remote's href
     REMOTE_HREF=$(http :/pulp/api/v3/remotes/file/file/ | jq -r ".results[] | select(.name == \"isofile\") | .pulp_href")
