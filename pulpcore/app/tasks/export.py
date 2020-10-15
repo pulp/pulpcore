@@ -142,8 +142,9 @@ def _incremental_requested(the_export):
     full = the_export.params.get("full", True)
     if isinstance(full, str):
         full = bool(strtobool(full))
+    starting_versions_provided = len(the_export.params.get("start_versions", [])) > 0
     last_exists = the_exporter.last_export
-    return last_exists and not full
+    return (starting_versions_provided or last_exists) and not full
 
 
 def pulp_export(the_export):
