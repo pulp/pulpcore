@@ -25,12 +25,23 @@ class CreatedResourceSerializer(RelatedField):
                 return None
         except AttributeError:
             pass
-        viewset = get_viewset_for_model(data.content_object)
 
-        # serializer contains all serialized fields because we are passing
-        # 'None' to the request's context
-        serializer = viewset.serializer_class(data.content_object, context={"request": None})
+        # query parameters can be ignored because we are looking just for 'pulp_href'; still,
+        # we need to use the request object due to contextual references required by some
+        # serializers
+        request = self._get_request_without_query_params()
+
+        viewset = get_viewset_for_model(data.content_object)
+        serializer = viewset.serializer_class(data.content_object, context={"request": request})
         return serializer.data.get("pulp_href")
+
+    def _get_request_without_query_params(self):
+        """Remove all query parameters from the request object."""
+        request = self.context["request"]
+        request.query_params._mutable = True
+        request.query_params.clear()
+        request.query_params._mutable = False
+        return request
 
     class Meta:
         model = models.CreatedResource
