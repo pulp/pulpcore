@@ -14,6 +14,7 @@ from rq.worker import Worker
 
 import django
 
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "pulpcore.app.settings")
 django.setup()
 
 from guardian.shortcuts import get_users_with_perms  # noqa: E402: module level not at top of file
