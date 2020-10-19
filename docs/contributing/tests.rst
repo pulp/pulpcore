@@ -60,6 +60,22 @@ Functional tests require a valid *pulp-smash*
 `config <https://pulp-smash.readthedocs.io/en/latest/configuration.html>`_ file.
 This can be created with `pulp-smash settings create`.
 
+Using pulplift
+^^^^^^^^^^^^^^
+
+When running one of the `pulp3-source-*` boxes in `pulplift`, the smash config is already in
+place.  Also, all the services are running.  They should be restarted with `prestart` if any pulp
+code (not test code) has been changed.
+
+When testing S3 support, you can start and configure a local `minio` container with `pminio`.
+
+Pulp functional tests use a set of upstream fixture repositories hosted on
+`fixtures.pulpproject.org <https://fixtures.pulpproject.org/>`_.  In case you want serve those
+locally, you can run `pfixtures` which will execute a `nginx` container with a copy of those
+fixtures and configure `pulp-smash` to use it.
+
+For more info about Pulp development specific helper commands, you can consult `phelp`.
+
 Running tests
 -------------
 
