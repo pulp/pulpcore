@@ -58,5 +58,6 @@ Putting this altogether, here is an example that uploads a 1.iso file in two chu
 
 .. note::
 
-    Each uploaded chunk is stored as a separate file in the default storage. When an upload is
-    committed, uploaded chunks are removed automatically and a new artifact is created, as usually.
+    Uploaded chunks are stored in a local file system. When the upload is committed, it is
+    automatically removed and a new artifact is created in a default file storage. The directory
+    which is used for temporary uploads is configurable via the setting ``CHUNKED_UPLOAD_DIR``.

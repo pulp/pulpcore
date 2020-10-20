@@ -1,11 +1,12 @@
 import hashlib
 
+from django.conf import settings
 from django.core.files.base import ContentFile
+from django.core.files.storage import FileSystemStorage
 from django.db import models
 from rest_framework import serializers
 
-from pulpcore.app.models import BaseModel, fields, storage
-from pulpcore.app.models.content import HandleTempFilesMixin
+from pulpcore.app.models import BaseModel
 
 
 class Upload(BaseModel):
@@ -14,9 +15,13 @@ class Upload(BaseModel):
 
     Fields:
 
+        file (models.FileField): The uploaded file that is stored in a local file system.
         size (models.BigIntegerField): The size of the file in bytes.
     """
 
+    file = models.FileField(
+        null=False, max_length=255, storage=FileSystemStorage(location=settings.CHUNKED_UPLOAD_DIR)
+    )
     size = models.BigIntegerField()
 
     def append(self, chunk, offset, sha256=None):
@@ -27,38 +32,32 @@ class Upload(BaseModel):
             chunk (File): Binary file to append to the upload file.
             offset (int): First byte position to write chunk to.
         """
+        if not self.file:
+            self.file.save(str(self.pk), ContentFile(""))
+
         chunk_read = chunk.read()
         current_sha256 = hashlib.sha256(chunk_read).hexdigest()
         if sha256 and sha256 != current_sha256:
             raise serializers.ValidationError("Checksum does not match chunk upload.")
 
-        upload_chunk = UploadChunk(upload=self, offset=offset, size=len(chunk))
-        upload_chunk.file.save("", ContentFile(chunk_read))
+        with self.file.open(mode="r+b") as file:
+            file.seek(offset)
+            file.write(chunk_read)
+
+        self.chunks.create(offset=offset, size=len(chunk))
 
 
-class UploadChunk(HandleTempFilesMixin, BaseModel):
+class UploadChunk(BaseModel):
     """
     A chunk for an uploaded file.
 
     Fields:
 
-        file (fields.ArtifactFileField): A file where the uploaded chunk is stored.
         upload (models.ForeignKey): Upload this chunk belongs to.
         offset (models.BigIntegerField): Start of the chunk in bytes.
         size (models.BigIntegerField): Size of the chunk in bytes.
     """
 
-    def storage_path(self, name):
-        """
-        Callable used by FileField to determine where the uploaded file should be stored.
-
-        Args:
-            name (str): Original name of uploaded file. It is ignored by this method because the
-                pulp_id is used to determine a file path instead.
-        """
-        return storage.get_upload_chunk_file_path(self.pulp_id)
-
-    file = fields.FileField(null=False, upload_to=storage_path, max_length=255)
     upload = models.ForeignKey(Upload, on_delete=models.CASCADE, related_name="chunks")
     offset = models.BigIntegerField()
     size = models.BigIntegerField()
