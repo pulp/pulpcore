@@ -17,6 +17,66 @@ Changelog
 
 .. towncrier release notes start
 
+3.8.0 (2020-10-20)
+==================
+REST API
+--------
+
+Features
+~~~~~~~~
+
+- Added check to prevent users from adding checksums to ``ALLOWED_CONTENT_CHECKSUMS`` if there are
+  Artifacts without those checksums.
+  `#7487 <https://pulp.plan.io/issues/7487>`_
+- Django admin site URL is configurable via `ADMIN_SITE_URL` settings parameter.
+  `#7637 <https://pulp.plan.io/issues/7637>`_
+- Always set a default for DJANGO_SETTINGS_MODULE. This means the services files don't need to.
+  `#7720 <https://pulp.plan.io/issues/7720>`_
+
+
+Bugfixes
+~~~~~~~~
+
+- Fix a warning inappropriately logged when cancelling a task.
+  `#4559 <https://pulp.plan.io/issues/4559>`_
+- When a task is canceled, we now set the state of all incomplete "progress reports" to canceled as well.
+  `#4921 <https://pulp.plan.io/issues/4921>`_
+- Properly handle duplicate content during synchronization and migration from Pulp 2 to 3.
+  `#7147 <https://pulp.plan.io/issues/7147>`_
+- Enable content streaming for RepositoryVersionDistribution
+  `#7568 <https://pulp.plan.io/issues/7568>`_
+- Change dropped DRF filter to django urlize.
+  `#7634 <https://pulp.plan.io/issues/7634>`_
+- Added some more files to MANIFEST.in.
+  `#7656 <https://pulp.plan.io/issues/7656>`_
+- Updated dynaconf requirement to prevent use of older buggy versions.
+  `#7682 <https://pulp.plan.io/issues/7682>`_
+
+
+Improved Documentation
+~~~~~~~~~~~~~~~~~~~~~~
+
+- Updated examples of auto-distribution.
+  `#5247 <https://pulp.plan.io/issues/5247>`_
+- Improved testing section in Pulp contributor docs.
+  Mentioned `prestart`, `pminio`, `pfixtures` and `phelp`.
+  `#7475 <https://pulp.plan.io/issues/7475>`_
+- Fix an erroneous API endpoint in the "upload and publish" workflow documentation.
+  `#7655 <https://pulp.plan.io/issues/7655>`_
+- Documented that we don't support backporting migrations.
+  `#7657 <https://pulp.plan.io/issues/7657>`_
+
+
+Plugin API
+----------
+
+Improved Documentation
+~~~~~~~~~~~~~~~~~~~~~~
+
+- Removed mentions of semver in the plugin API docs, and replaced them with a link to the deprecation policy where appropriate.
+  `#7555 <https://pulp.plan.io/issues/7555>`_
+
+
 3.7.1 (2020-09-29)
 ==================
 REST API
