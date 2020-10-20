@@ -107,7 +107,7 @@ def get_artifact_path(sha256digest):
         A string representing the absolute path where a file backing the Artifact should be
         stored
     """
-    return os.path.join("artifact", sha256digest[:2], sha256digest[2:])
+    return os.path.join("artifact", sha256digest[0:2], sha256digest[2:])
 
 
 def get_temp_file_path(pulp_id):
@@ -115,27 +115,14 @@ def get_temp_file_path(pulp_id):
     Determine the absolute path where a file backing the PulpTemporaryFile should be stored.
 
     Args:
-        pulp_id (uuid): An identifier identifying the file for the PulpTemporaryFile
+        pulp_id (uuid): pulp_id the file for the PulpTemporaryFile
 
     Returns:
         A string representing the absolute path where a file backing the PulpTemporaryFile should be
         stored
     """
     pulp_id_str = str(pulp_id)
-    return os.path.join("tmp/files", pulp_id_str[:2], pulp_id_str[2:])
-
-
-def get_upload_chunk_file_path(pulp_id):
-    """
-    Determine the absolute path where a file backing an uploaded chunk should be stored.
-
-    Args:
-        pulp_id (uuid): An identifier identifying the file for UploadChunk
-    Returns:
-        A string representing the absolute path where a file backing UploadChunk should be
-        stored
-    """
-    return os.path.join(settings.CHUNKED_UPLOAD_DIR, str(pulp_id))
+    return os.path.join("tmp/files", pulp_id_str[0:2], pulp_id_str[2:])
 
 
 def get_tls_path(model, name):

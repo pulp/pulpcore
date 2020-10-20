@@ -1,8 +1,5 @@
 from gettext import gettext as _
 from logging import getLogger
-from tempfile import NamedTemporaryFile
-
-from django.core.files import File
 
 from pulpcore.app import files, models
 from pulpcore.app.models import CreatedResource
@@ -25,14 +22,7 @@ def commit(upload_id, sha256):
         log.info(_("The upload was not found. Nothing to do."))
         return
 
-    chunks = models.UploadChunk.objects.filter(upload=upload).order_by("offset")
-    with NamedTemporaryFile("ab") as temp_file:
-        for chunk in chunks:
-            temp_file.write(chunk.file.read())
-        temp_file.flush()
-
-        file = files.PulpTemporaryUploadedFile.from_file(File(open(temp_file.name, "rb")))
-
+    file = files.PulpTemporaryUploadedFile.from_file(upload.file.file)
     data = {"file": file, "sha256": sha256}
     serializer = ArtifactSerializer(data=data)
     serializer.is_valid(raise_exception=True)

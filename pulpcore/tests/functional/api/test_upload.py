@@ -1,13 +1,15 @@
 # coding=utf-8
 """Tests related to content upload."""
 import hashlib
+import os
 import unittest
 
+from django.conf import settings
 from random import shuffle
-from requests import HTTPError
 from urllib.parse import urljoin
 
 from pulp_smash import api, cli, config
+from pulp_smash.exceptions import CalledProcessError
 from pulp_smash.pulp3.constants import UPLOAD_PATH
 from pulp_smash.utils import http_get
 
@@ -64,7 +66,7 @@ class ChunkedUploadTestCase(unittest.TestCase):
     def test_create_artifact_without_checksum(self):
         """Test creation of artifact using upload of files in chunks."""
 
-        _, artifact = self.upload_chunks()
+        artifact = self.upload_chunks()
 
         self.addCleanup(self.client.delete, artifact["pulp_href"])
 
@@ -138,11 +140,24 @@ class ChunkedUploadTestCase(unittest.TestCase):
         self.addCleanup(self.client.delete, response["pulp_href"])
 
     def test_delete_upload(self):
-        """Check whether uploads are being correctly deleted after committing."""
-        upload, artifact = self.upload_chunks()
+        """Test a deletion of an upload using upload of files in chunks."""
+        upload_request = self.client.post(UPLOAD_PATH, {"size": self.size_file})
 
-        with self.assertRaises(HTTPError):
-            self.client.get(upload["pulp_href"])
+        for data in self.chunked_data:
+            self.client.put(upload_request["pulp_href"], files={"file": data[0]}, headers=data[1])
+
+        # fetch a name of the upload from the corresponding pulp_href
+        upload_name = upload_request["pulp_href"].replace("/pulp/api/v3/uploads/", "")[:-1]
+
+        cmd = ("ls", os.path.join(settings.CHUNKED_UPLOAD_DIR, upload_name))
+        self.cli_client.run(cmd, sudo=True)
+
+        # committing the upload should delete the upload
+        artifact = self.client.post(
+            urljoin(upload_request["pulp_href"], "commit/"), data={"sha256": self.file_sha256}
+        )
+        with self.assertRaises(CalledProcessError):
+            self.cli_client.run(cmd, sudo=True)
 
         self.addCleanup(self.client.delete, artifact["pulp_href"])
 
@@ -156,4 +171,4 @@ class ChunkedUploadTestCase(unittest.TestCase):
         artifact_request = self.client.post(
             urljoin(upload_request["pulp_href"], "commit/"), data={"sha256": self.file_sha256}
         )
-        return upload_request, artifact_request
+        return artifact_request

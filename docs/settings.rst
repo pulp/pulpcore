@@ -149,12 +149,6 @@ WORKING_DIRECTORY
     volume for performance reasons. Files are commonly staged in the ``WORKING_DIRECTORY`` and
     validated before being moved to their permanent home in ``MEDIA_ROOT``.
 
-CHUNKED_UPLOAD_DIR
-^^^^^^^^^^^^^^^^^^
-
-   A directory used exclusively for uploaded chunks. The uploaded chunks are stored in the default
-   storage specified by ``DEFAULT_FILE_STORAGE``. This option allows users to customize the actual
-   place where chunked uploads should be stored within the declared storage.
 
 CONTENT_ORIGIN
 ^^^^^^^^^^^^^^
