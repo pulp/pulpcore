@@ -8,6 +8,7 @@ additional_plugins:
   name: pulp-certguard
 black: true
 check_commit_message: true
+check_manifest: true
 cherry_pick_automation: false
 coverage: true
 deploy_client_to_pypi: true
@@ -28,16 +29,16 @@ plugin_name: pulpcore
 plugin_snake: pulpcore
 publish_docs_to_pulpprojectdotorg: true
 pulp_settings:
-  allowed_export_paths:
-  - /tmp
-  allowed_import_paths:
-  - /tmp
   allowed_content_checksums:
   - sha1
   - sha224
   - sha256
   - sha384
   - sha512
+  allowed_export_paths:
+  - /tmp
+  allowed_import_paths:
+  - /tmp
 pulpcore_branch: null
 pulpcore_pip_version_specifier: null
 pulpprojectdotorg_key_id: d1a778bda808

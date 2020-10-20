@@ -3,6 +3,7 @@ black
 django-crispy-forms
 django-extensions
 ipython
+check-manifest
 codecov
 coverage
 flake8
