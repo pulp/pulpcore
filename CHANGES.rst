@@ -17,6 +17,26 @@ Changelog
 
 .. towncrier release notes start
 
+3.7.2 (2020-10-21)
+==================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Properly handle duplicate content during synchronization and migration from Pulp 2 to 3.
+  `#7702 <https://pulp.plan.io/issues/7702>`_
+- Fixed incremental export to happen if start_version provided, even if last_export is null.
+  `#7725 <https://pulp.plan.io/issues/7725>`_
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.7.1 (2020-09-29)
 ==================
 REST API
