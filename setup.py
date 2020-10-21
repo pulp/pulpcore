@@ -11,7 +11,7 @@ with open("functest_requirements.txt") as test_requirements:
 
 setup(
     name="pulpcore",
-    version="3.7.2.dev",
+    version="3.7.2",
     description="Pulp Django Application and Related Modules",
     long_description=long_description,
     long_description_content_type="text/markdown",
