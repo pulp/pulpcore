@@ -1,0 +1,1 @@
+Fixed a file descriptor leak during repository version repair operations.
