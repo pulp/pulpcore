@@ -35,8 +35,9 @@ def delete_version(pk):
             return
 
         log.info(
-            _("Deleting and squashing version %(v)d of repository %(r)s"),
-            {"v": version.number, "r": version.repository.name},
+            _("Deleting and squashing version {num} of repository '{repo}'").format(
+                num=version.number, repo=version.repository.name
+            )
         )
 
         version.delete()
@@ -84,8 +85,8 @@ async def _repair_repository_version(version):
         ) as repaired:
             query_set = models.ContentArtifact.objects.filter(
                 content__in=version.content
-            ).prefetch_related("artifact")
-            for content_artifact in query_set:
+            ).select_related("artifact")
+            for content_artifact in query_set.iterator():
                 if not content_artifact.artifact:
                     continue
                 if not await loop.run_in_executor(None, partial(_verify_ca, content_artifact)):
@@ -114,8 +115,9 @@ def repair_version(repository_version_pk):
     version = models.RepositoryVersion.objects.get(pk=repository_version_pk)
 
     log.info(
-        _("Repairing version %(v)d of repository %(r)s"),
-        {"v": version.number, "r": version.repository.name},
+        _("Repairing version {num} of repository '{repo}'").format(
+            num=version.number, repo=version.repository.name
+        ),
     )
 
     loop = asyncio.get_event_loop()
