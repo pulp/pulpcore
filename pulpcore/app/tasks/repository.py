@@ -58,12 +58,16 @@ async def _repair_ca(content_artifact, repaired=None):
     return False
 
 
+CHUNK_SIZE = 1024 * 1024  # 1 Mb
+
+
 def _verify_ca(content_artifact):
     try:
         # verify files digest
         hasher = hashlib.sha256()
-        for chunk in iter(lambda: content_artifact.artifact.file.read(1024 * 1024), b""):
+        for chunk in content_artifact.artifact.file.chunks(CHUNK_SIZE):
             hasher.update(chunk)
+        content_artifact.artifact.file.close()
         return hasher.hexdigest() == content_artifact.artifact.sha256
     except FileNotFoundError:
         return False
