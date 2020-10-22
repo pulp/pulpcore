@@ -18,8 +18,11 @@ from drf_spectacular.plumbing import (
 from drf_spectacular.settings import spectacular_settings
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiParameter
+from pkg_resources import get_distribution
 from rest_framework import mixins, serializers
 from rest_framework.schemas.utils import get_pk_description
+
+from pulpcore.app.settings import INSTALLED_PULP_PLUGINS
 
 
 class PulpAutoSchema(AutoSchema):
@@ -441,6 +444,11 @@ class PulpSchemaGenerator(SchemaGenerator):
         # Basically I'm doing it to get pulp logo at redoc page
         result["info"]["x-logo"] = {
             "url": "https://pulp.plan.io/attachments/download/517478/pulp_logo_word_rectangle.svg"
+        }
+        # Adding plugin version config
+        components = ["pulpcore"] + INSTALLED_PULP_PLUGINS
+        result["info"]["x-pulp-app-versions"] = {
+            component: get_distribution(component).version for component in components
         }
         # Adding current host as server (it will provide a default value for the bindings)
         server_url = "http://localhost:24817" if not request else request.build_absolute_uri("/")
