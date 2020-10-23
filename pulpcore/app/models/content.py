@@ -18,6 +18,7 @@ from django.core import validators
 from django.core.files.storage import default_storage
 from django.db import IntegrityError, models, transaction
 from django.forms.models import model_to_dict
+from django_lifecycle import BEFORE_UPDATE, hook
 
 from pulpcore.constants import ALL_KNOWN_CONTENT_CHECKSUMS
 from pulpcore.app.models import MasterModel, BaseModel, fields, storage
@@ -619,6 +620,15 @@ class SigningService(BaseModel):
         """
         self.validate()
         super().save(*args, **kwargs)
+
+    @hook(BEFORE_UPDATE)
+    def on_update(self):
+        raise RuntimeError(
+            _(
+                "The signing service is immutable. It is advised to create a new signing service "
+                "when a change is required."
+            )
+        )
 
 
 class AsciiArmoredDetachedSigningService(SigningService):
