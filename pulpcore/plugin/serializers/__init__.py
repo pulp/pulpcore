@@ -16,6 +16,7 @@ from pulpcore.app.serializers import (  # noqa
     MultipleArtifactContentSerializer,
     NestedRelatedField,
     NoArtifactContentSerializer,
+    ProgressReportSerializer,
     PublicationDistributionSerializer,
     PublicationExportSerializer,
     PublicationSerializer,
