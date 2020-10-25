@@ -1,7 +1,7 @@
-aiohttp
-aiodns
-aiofiles
-backoff
+aiohttp~=3.7.1
+aiodns~=2.0.0
+aiofiles==0.5.0
+backoff~=1.10.0
 Django~=2.2.16  # LTS version, switch only if we have a compelling reason to
 django-currentuser~=0.5.1
 django-cleanup~=5.1.0
