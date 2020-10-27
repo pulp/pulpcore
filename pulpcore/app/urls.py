@@ -15,7 +15,7 @@ from rest_framework.schemas import get_schema_view
 from rest_framework_nested import routers
 
 from pulpcore.app.apps import pulp_plugin_configs
-from pulpcore.app.views import OrphansView, StatusView
+from pulpcore.app.views import OrphansView, RepairView, StatusView
 from pulpcore.constants import API_ROOT
 from pulpcore.openapi import PulpSchemaGenerator
 
@@ -120,6 +120,7 @@ for viewset in sorted_by_depth:
 root_router = routers.DefaultRouter()
 
 urlpatterns = [
+    url(r"^{api_root}repair/".format(api_root=API_ROOT), RepairView.as_view()),
     url(r"^{api_root}status/".format(api_root=API_ROOT), StatusView.as_view()),
     url(r"^{api_root}orphans/".format(api_root=API_ROOT), OrphansView.as_view()),
     url(r"^auth/", include("rest_framework.urls")),

@@ -68,6 +68,7 @@ from .repository import (  # noqa
     RepositoryAddRemoveContentSerializer,
     RepositoryVersionSerializer,
 )
+from .repair import RepairSerializer  # noqa
 from .task import (  # noqa
     MinimalTaskSerializer,
     TaskCancelSerializer,
