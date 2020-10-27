@@ -64,7 +64,7 @@ be ``/pulp/content/mypath/``
 Manual Distribution of a RepositoryVersion
 ------------------------------------------
 
-In this workflow, you already have a :term:`RepositoryVersion` created. You then want to distribute
+In this workflow, you are first creating a :term:`RepositoryVersion`. You then want to distribute
 its content at the base_path ``mypath`` using a :term:`Distribution`. In this case you manually
 associate the :term:`Distribution` with the :term:`RepositoryVersion` using the
 ``repository_version`` option of the :term:`Distribution`.
@@ -77,7 +77,7 @@ pulp_ansible>`_ content in it::
     export REPO_HREF=$(http :24817/pulp/api/v3/repositories/ansible/ansible/ | jq -r '.results[] | select(.name == "foo") | .pulp_href')
 
     # Create an AnsibleRemote to sync roles from galaxy.ansible.com
-    http POST :24817/pulp/api/v3/remotes/ansible/ansible/ name=bar url='https://galaxy.ansible.com/api/v1/roles/?namespace__name=elastic'
+    http POST :24817/pulp/api/v3/remotes/ansible/collection/ name=bar url='https://galaxy.ansible.com/api/v1/roles/?namespace__name=elastic'
 
     export REMOTE_HREF=$(http :24817/pulp/api/v3/remotes/ansible/ansible/ | jq -r '.results[] | select(.name == "bar") | .pulp_href')
 
@@ -89,7 +89,7 @@ pulp_ansible>`_ content in it::
 Now with your :term:`RepositoryVersion` saved as ``REPO_VERSION_HREF`` you can have the
 :term:`Distribution` serve it at base_path ``dev``::
 
-    http POST :24817/pulp/api/v3/distributions/file/file/ name='baz' base_path='dev' repository_version=REPO_VERSION_HREF
+    http POST :24817/pulp/api/v3/distributions/ansible/collection/ name='baz' base_path='dev' repository_version=$REPO_VERSION_HREF
 
 As soon as this is created, the :term:`RepositoryVersion` will be immediately available at base_path
 ``dev``. With the default :ref:`CONTENT_PATH_PREFIX <content-path-prefix>` that would be
@@ -105,7 +105,7 @@ As soon as this is created, the :term:`RepositoryVersion` will be immediately av
 Manual Distribution of a Publication
 ------------------------------------
 
-In this workflow, you already have a :term:`Publication` created. You then want to distribute its
+In this workflow, you are first creating a :term:`Publication`. You then want to distribute its
 content at the base_path ``mypath`` using a :term:`Distribution`. In this case you manually
 associate the :term:`Distribution` with the :term:`Publication` using the ``publication`` option of
 the :term:`Distribution`.
@@ -114,12 +114,12 @@ First create a :term:`Publication` with some `pulp_file <https://github.com/pulp
 content in it::
 
     # Create a Repository
-    http POST :24817/pulp/api/v3/repositories/file/file/ name=foo
-    export REPO_HREF=$(http :24817/pulp/api/v3/repositories/file/file/ | jq -r '.results[] | select(.name == "foo") | .pulp_href')
+    http POST :24817/pulp/api/v3/repositories/file/file/ name=foo2
+    export REPO_HREF=$(http :24817/pulp/api/v3/repositories/file/file/ | jq -r '.results[] | select(.name == "foo2") | .pulp_href')
 
     # Create an FileRemote to sync roles from fixures
-    http POST :24817/pulp/api/v3/remotes/file/file/ name='bar' url='https://fixtures.pulpproject.org/file/PULP_MANIFEST'
-    export REMOTE_HREF=$(http :24817/pulp/api/v3/remotes/file/file/ | jq -r '.results[] | select(.name == "bar") | .pulp_href')
+    http POST :24817/pulp/api/v3/remotes/file/file/ name='bar2' url='https://fixtures.pulpproject.org/file/PULP_MANIFEST'
+    export REMOTE_HREF=$(http :24817/pulp/api/v3/remotes/file/file/ | jq -r '.results[] | select(.name == "bar2") | .pulp_href')
 
     # Sync the repo with the remote
     http POST ':24817'$REPO_HREF'sync/' remote=$REMOTE_HREF
