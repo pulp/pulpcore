@@ -20,6 +20,7 @@ from pulpcore.app.response import OperationPostponedResponse
 from pulpcore.app.serializers import (
     AsyncOperationResponseSerializer,
     RemoteSerializer,
+    RepairSerializer,
     RepositorySerializer,
     RepositoryVersionSerializer,
 )
@@ -179,7 +180,7 @@ class RepositoryVersionViewSet(
     ordering = ("-number",)
 
     @extend_schema(
-        description="Trigger an asynchronous task to delete " "a repositroy version.",
+        description="Trigger an asynchronous task to delete a repository version.",
         responses={202: AsyncOperationResponseSerializer},
     )
     def destroy(self, request, repository_pk, number):
@@ -197,20 +198,24 @@ class RepositoryVersionViewSet(
         return OperationPostponedResponse(async_result, request)
 
     @extend_schema(
-        description="Trigger an asynchronous task to repair " "a repositroy version.",
+        description="Trigger an asynchronous task to repair a repository version.",
         responses={202: AsyncOperationResponseSerializer},
     )
     @action(detail=True, methods=["post"])
     def repair(self, request, repository_pk, number):
         """
-        Queues a task to repair currupted artifacts corresponding to a RepositoryVersion
+        Queues a task to repair corrupted artifacts corresponding to a RepositoryVersion
         """
         version = self.get_object()
+        serializer = RepairSerializer(data=request.data)
+        serializer.is_valid()
+
+        verify_checksums = serializer.validated_data["verify_checksums"]
 
         async_result = enqueue_with_reservation(
             tasks.repository.repair_version,
             [version.repository],
-            kwargs={"repository_version_pk": version.pk},
+            args=[version.pk, verify_checksums],
         )
         return OperationPostponedResponse(async_result, request)
 
