@@ -1,0 +1,1 @@
+Fixed a serious bug data integrity bug where some Artifact files could be silently deleted from storage in specific circumstances.
