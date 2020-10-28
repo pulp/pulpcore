@@ -273,6 +273,24 @@ Misc
 - `#7270 <https://pulp.plan.io/issues/7270>`_
 
 
+3.6.5 (2020-10-28)
+==================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fixed a bug where creating an incomplete repository version (via canceled or failed task) could cause future operations to fail. (Backported from https://pulp.plan.io/issues/6463)
+  `#7737 <https://pulp.plan.io/issues/7737>`_
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.6.4 (2020-09-23)
 ==================
 REST API
