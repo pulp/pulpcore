@@ -2,12 +2,13 @@
 # were not present before running plugin-template have been added with their default values.
 
 additional_plugins:
-- branch: master
+- branch: 1.3
   name: pulp_file
 - branch: master
   name: pulp-certguard
 black: true
 check_commit_message: true
+check_manifest: false
 cherry_pick_automation: false
 coverage: true
 deploy_client_to_pypi: true
@@ -28,16 +29,16 @@ plugin_name: pulpcore
 plugin_snake: pulpcore
 publish_docs_to_pulpprojectdotorg: true
 pulp_settings:
-  allowed_export_paths:
-  - /tmp
-  allowed_import_paths:
-  - /tmp
   allowed_content_checksums:
   - sha1
   - sha224
   - sha256
   - sha384
   - sha512
+  allowed_export_paths:
+  - /tmp
+  allowed_import_paths:
+  - /tmp
 pulpcore_branch: null
 pulpcore_pip_version_specifier: null
 pulpprojectdotorg_key_id: d1a778bda808

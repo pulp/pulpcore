@@ -14,18 +14,8 @@ if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then
   exit 0
 fi
 
-if [ "$TRAVIS_COMMIT_RANGE" != "" ]; then
-  RANGE=$TRAVIS_COMMIT_RANGE
-elif [ "$TRAVIS_COMMIT" != "" ]; then
-  RANGE=$TRAVIS_COMMIT
-fi
-
-# Travis sends the ranges with 3 dots. Git only wants two.
-if [[ "$RANGE" == *...* ]]; then
-  RANGE=`echo $TRAVIS_COMMIT_RANGE | sed 's/\.\.\./../'`
-else
-  RANGE="$RANGE~..$RANGE"
-fi
+# Switch to using ".." for git log to capture only PR commits
+RANGE=`echo $TRAVIS_COMMIT_RANGE | sed 's/\.\.\./../'`
 
 for sha in `git log --format=oneline --no-merges "$RANGE" | cut '-d ' -f1`
 do
