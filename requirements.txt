@@ -1,4 +1,4 @@
-aiohttp~=3.7.1
+aiohttp~=3.7.2
 aiodns~=2.0.0
 aiofiles==0.5.0
 backoff~=1.10.0
