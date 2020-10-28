@@ -4,8 +4,8 @@ set -euv
 
 export COMMIT_MSG=$(git log --format=%B --no-merges -1)
 export RELEASE=$(echo $COMMIT_MSG | awk '{print $2}')
-export MILESTONE_URL=$(echo $COMMIT_MSG | awk '{print $6}')
-export REDMINE_QUERY_URL=$(echo $COMMIT_MSG | awk '{print $4}')
+export MILESTONE_URL=$(echo $COMMIT_MSG | grep -o "Redmine Milestone: .*" | awk '{print $3}')
+export REDMINE_QUERY_URL=$(echo $COMMIT_MSG | grep -o "Redmine Query: .*" | awk '{print $3}')
 
 echo "Releasing $RELEASE"
 echo "Milestone URL: $MILESTONE_URL"
