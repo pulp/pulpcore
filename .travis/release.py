@@ -27,6 +27,7 @@ def validate_redmine_data(redmine_query_url, redmine_issues):
     project_set = set()
     stats = defaultdict(list)
     milestone_url = "\n[noissue]"
+    milestone_id = None
     for issue in redmine_issues:
         redmine_issue = redmine.issue.get(int(issue))
 
@@ -37,15 +38,16 @@ def validate_redmine_data(redmine_query_url, redmine_issues):
         status = redmine_issue.status.name
         if "CLOSE" not in status and status != "MODIFIED":
             stats["status_not_modified"].append(issue)
-        milestone_id = None
+
         try:
             milestone = redmine_issue.fixed_version.name
             milestone_id = redmine_issue.fixed_version.id
             stats[f"milestone_{milestone}"].append(issue)
         except ResourceAttrError:
             stats["without_milestone"].append(issue)
+
     if milestone_id is not None:
-        milestone_url = f"RedmineMilestone: {REDMINE_URL}/versions/{milestone_id}.json\n[noissue]"
+        milestone_url = f"Redmine Milestone: {REDMINE_URL}/versions/{milestone_id}.json\n[noissue]"
 
     print(f"\n\nRedmine stats: {json.dumps(stats, indent=2)}")
     error_messages = []
@@ -108,15 +110,15 @@ helper = textwrap.dedent(
 parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter, description=helper)
 
 parser.add_argument(
-    "release_type", type=str, help="Whether the release should be major, minor or patch.",
+    "release_type", type=str, help="Whether the release should be major, minor or patch."
 )
 
 parser.add_argument(
-    "--lower", type=str, required=False, help="Lower bound of pulpcore requirement.",
+    "--lower", type=str, required=False, help="Lower bound of pulpcore requirement."
 )
 
 parser.add_argument(
-    "--upper", type=str, required=False, help="Upper bound of pulpcore requirement.",
+    "--upper", type=str, required=False, help="Upper bound of pulpcore requirement."
 )
 
 args = parser.parse_args()
@@ -158,7 +160,7 @@ git.add(f"{plugin_path}/setup.py")
 git.add(f"{plugin_path}/requirements.txt")
 git.add(f"{plugin_path}/.bumpversion.cfg")
 git.commit(
-    "-m", f"Releasing {release_version}\n\nRedmineQuery: {redmine_final_query}\n{milestone_url}"
+    "-m", f"Release {release_version}\n\nRedmine Query: {redmine_final_query}\n{milestone_url}"
 )
 
 sha = repo.head.object.hexsha

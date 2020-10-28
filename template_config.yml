@@ -2,12 +2,13 @@
 # were not present before running plugin-template have been added with their default values.
 
 additional_plugins:
-- branch: master
+- branch: 1.2
   name: pulp_file
 - branch: master
   name: pulp-certguard
 black: true
 check_commit_message: true
+check_manifest: false
 cherry_pick_automation: false
 coverage: true
 deploy_client_to_pypi: true
