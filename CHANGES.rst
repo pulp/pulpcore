@@ -17,6 +17,24 @@ Changelog
 
 .. towncrier release notes start
 
+3.7.3 (2020-10-28)
+==================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fixed a serious bug data integrity bug where some Artifact files could be silently deleted from storage in specific circumstances. (Backported from https://pulp.plan.io/issues/7676)
+  `#7757 <https://pulp.plan.io/issues/7757>`_
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.7.2 (2020-10-21)
 ==================
 REST API
