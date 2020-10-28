@@ -15,7 +15,7 @@ KEYWORDS = ["fixes", "closes", "re", "ref"]
 NO_ISSUE = "[noissue]"
 STATUSES = ["NEW", "ASSIGNED", "POST", "MODIFIED"]
 REDMINE_URL = "https://pulp.plan.io"
-CHANGELOG_EXTS = [".feature", ".bugfix", ".doc", ".removal", ".misc"]
+CHANGELOG_EXTS = [".feature", ".bugfix", ".doc", ".removal", ".misc", ".deprecation"]
 
 sha = sys.argv[1]
 project = "pulp"
@@ -54,7 +54,7 @@ print("Checking commit message for {sha}.".format(sha=sha[0:7]))
 
 # validate the issue attached to the commit
 regex = r"(?:{keywords})[\s:]+#(\d+)".format(keywords=("|").join(KEYWORDS))
-pattern = re.compile(regex)
+pattern = re.compile(regex, re.IGNORECASE)
 
 issues = pattern.findall(message)
 
