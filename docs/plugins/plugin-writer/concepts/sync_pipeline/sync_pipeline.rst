@@ -6,7 +6,7 @@ Synchronizing Repositories with the async-Pipeline
 To accomplish the steps outlined in :ref:`sync-docs` in an efficient way, pulp provides a high
 level api to construct a pipeline of stages. Those stages work in parallel like an assembly line
 using pythons `async` feature in combination with the `asyncio` library. Each stage takes
-designated content units from an incoming queue of type :class:`asyncio.Queue` and performes an
+designated content units from an incoming queue of type :class:`asyncio.Queue` and performs an
 individual task on them before passing them to the outgoing queue that is connected to the next
 stage.
 
