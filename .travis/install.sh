@@ -48,7 +48,7 @@ fi
 if [ -e $TRAVIS_BUILD_DIR/../pulp_file ]; then
   PULP_FILE=./pulp_file
 else
-  PULP_FILE=git+https://github.com/pulp/pulp_file.git@master
+  PULP_FILE=git+https://github.com/pulp/pulp_file.git@1.3
 fi
 
 if [ -e $TRAVIS_BUILD_DIR/../pulp-certguard ]; then
