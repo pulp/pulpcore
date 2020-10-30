@@ -9,8 +9,11 @@
 
 set -mveuo pipefail
 
+COMPONENT_VERSION=$(sed -ne 's/\s*version=\"\(.*\)\"[\s,]*/\1/p' setup.py)
 mkdir .travis/vars || true
 echo "---" > .travis/vars/main.yaml
+echo "component_name: pulpcore" >> .travis/vars/main.yaml
+echo "component_version: '${COMPONENT_VERSION}'" >> .travis/vars/main.yaml
 
 export PRE_BEFORE_INSTALL=$TRAVIS_BUILD_DIR/.travis/pre_before_install.sh
 export POST_BEFORE_INSTALL=$TRAVIS_BUILD_DIR/.travis/post_before_install.sh
