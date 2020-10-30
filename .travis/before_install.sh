@@ -94,7 +94,7 @@ cd ..
   pip install --upgrade --force-reinstall ./pulp-smash
 
 
-git clone --depth=1 https://github.com/pulp/pulp_file.git --branch master
+git clone --depth=1 https://github.com/pulp/pulp_file.git --branch 1.3
 if [ -n "$PULP_FILE_PR_NUMBER" ]; then
   cd pulp_file
   git fetch --depth=1 origin pull/$PULP_FILE_PR_NUMBER/head:$PULP_FILE_PR_NUMBER
