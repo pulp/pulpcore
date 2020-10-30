@@ -51,6 +51,12 @@ The example below demonstrates how a signing service can be created using ``gpg`
           exit $STATUS
        fi
 
+   .. deprecated:: 3.10
+
+        The path to the public key is no longer required to be present in the output of a signing
+        script. Pass the value of the public key during the object creation process instead. The
+        step number 2 below depicts the recommended way of creating a new signing service.
+
    .. note::
 
        Make sure the script contains a proper shebang and Pulp has got valid permissions
@@ -65,10 +71,14 @@ The example below demonstrates how a signing service can be created using ``gpg`
 
        from pulpcore.app.models.content import AsciiArmoredDetachedSigningService
 
-       AsciiArmoredDetachedSigningService.objects.create(
-           name="sign-metadata",
-           script="/var/lib/pulp/scripts/sign-metadata.sh"
-       )
+       # read an already exported public key
+       with open("public.key") as key:
+           AsciiArmoredDetachedSigningService.objects.create(
+               name="sign-metadata",
+               public_key=key.read(),
+               pubkey_fingerprint="19CD52BD1CA9A00DF10A842D74B14E3590C2231F",
+               script="/var/lib/pulp/scripts/sign-metadata.sh",
+           )
 
    .. note::
 
@@ -87,9 +97,11 @@ The example below demonstrates how a signing service can be created using ``gpg`
            "results": [
                {
                    "name": "sign-metadata",
-                   "pulp_created": "2020-01-20T15:20:40.098923Z",
-                   "pulp_href": "/pulp/api/v3/signing-services/601feba7-a5d9-4f0a-919b-77be52fad0f7/",
-                   "script": "/var/lib/pulp/scripts/sign-metadata.sh"
+                   "pubkey_fingerprint": "19CD52BD1CA9A00DF10A842D74B14E3590C2231F",
+                   "public_key": "-----BEGIN PGP PUBLIC KEY BLOCK-----\n\n [...] \n-----END PGP PUBLIC KEY BLOCK-----\n",
+                   "pulp_created": "2020-11-06T15:42:20.645197Z",
+                   "pulp_href": "/pulp/api/v3/signing-services/ffb9e987-952f-47e3-a274-ffe69a80ded7/",
+                   "script": "/var/lib/pulp/sign-metadata.sh"
                }
            ]
        }

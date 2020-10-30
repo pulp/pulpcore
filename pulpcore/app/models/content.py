@@ -5,6 +5,7 @@ from gettext import gettext as _
 
 import json
 import hashlib
+import warnings
 import tempfile
 import shutil
 import subprocess
@@ -558,19 +559,41 @@ class RemoteArtifact(BaseModel, QueryMixin):
         unique_together = ("content_artifact", "remote")
 
 
+class _WarningsDict(dict):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.msg = _(
+            "The public key will no longer be accessible via 'return_value'. This way is "
+            "deprecated as of the next release (3.10). Use 'signing_service.public_key' "
+            "instead."
+        )
+
+    def __getitem__(self, item):
+        if item == "key":
+            # raise the deprecation warning when a plugin writer tries to access the public key
+            warnings.warn(self.msg, DeprecationWarning)
+
+        return super().__getitem__(item)
+
+
 class SigningService(BaseModel):
     """
     A model used for producing signatures.
 
     Fields:
         name (models.TextField):
-            A unique name describing the script (or executable) used for signing.
+            A unique name describing a script (or executable) used for signing.
+        public_key (models.TextField):
+            The value of the public key.
         script (models.TextField):
-            An absolute path to the external signing script (or executable).
+            An absolute path to an external signing script (or executable).
 
     """
 
     name = models.TextField(db_index=True, unique=True)
+    public_key = models.TextField()
+    pubkey_fingerprint = models.TextField()
     script = models.TextField()
 
     def sign(self, filename):
@@ -578,7 +601,7 @@ class SigningService(BaseModel):
         Signs the file provided via 'filename' by invoking an external script (or executable).
 
         The external script is run as a subprocess. This is done in the expectation that the script
-        has been validated as an external siging service by the validate() method. This validation
+        has been validated as an external signing service by the validate() method. This validation
         is currently only done when creating the signing service object, but not at the time of use.
 
         Args:
@@ -598,15 +621,16 @@ class SigningService(BaseModel):
             raise RuntimeError(str(completed_process.stderr))
 
         try:
-            return_value = json.loads(completed_process.stdout)
+            return_value = _WarningsDict(json.loads(completed_process.stdout))
         except json.JSONDecodeError:
             raise RuntimeError("The signing service script did not return valid JSON!")
 
+        return_value["key"] = self.public_key
         return return_value
 
     def validate(self):
         """
-        Ensure that the external signing script produces the desired beahviour.
+        Ensure that the external signing script produces the desired behaviour.
 
         With desired behaviour we mean the behaviour as validated by this method. Subclasses are
         required to implement this method. Works by calling the sign() method on some test data, and
@@ -622,6 +646,15 @@ class SigningService(BaseModel):
         """
         Save a signing service to the database (unless it fails to validate).
         """
+        if not self.public_key:
+            raise RuntimeError(
+                _(
+                    "The public key needs to be specified during the new instance creation. Other "
+                    "ways of providing the public key are considered deprecated as of the release "
+                    "(3.10)."
+                )
+            )
+
         self.validate()
         super().save(*args, **kwargs)
 
@@ -646,10 +679,10 @@ class AsciiArmoredDetachedSigningService(SigningService):
 
         The validation seeks to ensure that the sign() method returns a dict as follows:
 
-        {"file": "signed_file.xml", "signature": "signed_file.asc", "key": "public.key"}
+        {"file": "signed_file.xml", "signature": "signed_file.asc"}
 
-        Will create a file with some content, sign the file, and checks if the
-        signature can be verified by the public key provided.
+        The method creates a file with some content, signs the file, and checks if the
+        signature can be verified by the provided public key.
 
         Raises:
             RuntimeError: If the validation has failed.
@@ -662,19 +695,18 @@ class AsciiArmoredDetachedSigningService(SigningService):
                 signed = self.sign(temp_file.name)
 
                 with open(signed["signature"], "rb") as fp:
-                    with open(signed["key"], "rb") as key:
-                        import_result = gpg.import_keys(key.read())
-                        verified = gpg.verify_file(fp, temp_file.name)
-                        if (
-                            verified.trust_level is None
-                            or verified.trust_level < verified.TRUST_FULLY
-                        ):
-                            raise RuntimeError(
-                                "A signature could not be verified or a trust level is too low. "
-                                "The signing script may generate invalid signatures."
+                    verified = gpg.verify_file(fp, temp_file.name)
+                    if verified.trust_level is None or verified.trust_level < verified.TRUST_FULLY:
+                        raise RuntimeError(
+                            _(
+                                "The signature could not be verified or the trust level is too "
+                                "low. The signing script may generate invalid signatures."
                             )
-                        elif verified.pubkey_fingerprint != import_result.fingerprints[0]:
-                            raise RuntimeError(
-                                "Fingerprints of a provided public key and a verified public key "
-                                "are not equal. The signing script is probably not valid."
+                        )
+                    elif verified.pubkey_fingerprint != self.pubkey_fingerprint:
+                        raise RuntimeError(
+                            _(
+                                "Fingerprints of the provided public key and the verified public "
+                                "key are not equal. The signing script is probably not valid."
                             )
+                        )

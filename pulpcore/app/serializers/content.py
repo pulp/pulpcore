@@ -259,10 +259,19 @@ class SigningServiceSerializer(base.ModelSerializer):
 
     pulp_href = base.IdentityField(view_name="signing-services-detail")
     name = serializers.CharField(help_text=_("A unique name used to recognize a script."))
+    public_key = serializers.CharField(
+        help_text=_("The value of a public key used for the repository verification.")
+    )
+    pubkey_fingerprint = serializers.CharField(help_text=_("The fingerprint of the public key."))
     script = serializers.CharField(
         help_text=_("An absolute path to a script which is going to be used for the signing.")
     )
 
     class Meta:
         model = models.SigningService
-        fields = BaseContentSerializer.Meta.fields + ("name", "script")
+        fields = BaseContentSerializer.Meta.fields + (
+            "name",
+            "public_key",
+            "pubkey_fingerprint",
+            "script",
+        )

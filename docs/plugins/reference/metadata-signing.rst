@@ -47,6 +47,12 @@ requires inheriting from ``SiginingService`` and then implementing ``validate()`
 
     For more information see the corresponding :ref:`workflow documentation <configuring-signing>`.
 
+.. deprecated:: 3.10
+
+    The path to the public key is no longer required to be present in the output of a signing
+    script. It is recommended to pass the value of the public key during the object creation
+    process instead.
+
 The following procedure may be taken into account for the plugin writers:
 
     1. Let us assume that a file repository contains the field ``metadata_signing_service``:
