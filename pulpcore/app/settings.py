@@ -9,6 +9,8 @@ https://docs.djangoproject.com/en/1.11/ref/settings/
 """
 
 import os
+import sys
+
 from contextlib import suppress
 from gettext import gettext as _
 from importlib import import_module
@@ -281,20 +283,41 @@ if unknown_algs:
             "provided: {}".format(unknown_algs)
         )
     )
+
+FORBIDDEN_CHECKSUMS = set(constants.ALL_KNOWN_CONTENT_CHECKSUMS).difference(
+    ALLOWED_CONTENT_CHECKSUMS
+)
 try:
-    for checksum in ALLOWED_CONTENT_CHECKSUMS:
-        # can't import Artifact here so use a direct db connection
-        with connection.cursor() as cursor:
+    with connection.cursor() as cursor:
+        for checksum in ALLOWED_CONTENT_CHECKSUMS:
+            # can't import Artifact here so use a direct db connection
             cursor.execute(f"SELECT count(pulp_id) FROM core_artifact WHERE {checksum} IS NULL")
             row = cursor.fetchone()
             if row[0] > 0:
+                if len(sys.argv) >= 2 and sys.argv[1] == "handle-artifact-checksums":
+                    break
                 raise ImproperlyConfigured(
                     _(
-                        "ALLOWED_CONTENT_CHECKSUMS cannot contain checksum '{}' since checksums "
-                        "can only be removed and not added to ALLOWED_CONTENT_CHECKSUMS in "
-                        "existing deployments."
+                        "There have been identified artifacts missing checksum '{}'. "
+                        "Run 'pulpcore-manager handle-artifact-checksums' first to populate "
+                        "missing artifact checksums."
                     ).format(checksum)
                 )
+        for checksum in FORBIDDEN_CHECKSUMS:
+            # can't import Artifact here so use a direct db connection
+            cursor.execute(f"SELECT count(pulp_id) FROM core_artifact WHERE {checksum} IS NOT NULL")
+            row = cursor.fetchone()
+            if row[0] > 0:
+                if len(sys.argv) >= 2 and sys.argv[1] == "handle-artifact-checksums":
+                    break
+                raise ImproperlyConfigured(
+                    _(
+                        "There have been identified artifacts with forbidden checksum '{}'. "
+                        "Run 'pulpcore-manager handle-artifact-checksums' first to unset "
+                        "forbidden checksums."
+                    ).format(checksum)
+                )
+
 except ImproperlyConfigured as e:
     raise e
 except Exception:
