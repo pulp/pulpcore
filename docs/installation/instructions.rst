@@ -10,14 +10,9 @@ Fedora, CentOS, and Mac OSX.
 
 .. note::
 
-    Pulp 3 currently does not have an SELinux Policy or AppArmor Profile. Until then, any
-    environment you run Pulp3 in needs have have SELinux or AppArmor either permissive or disabled.
+    Pulp 3 currently does not have an AppArmor Profile. Until then, any
+    environment you run Pulp 3 in must have AppArmor either permissive or disabled.
     There are risks associated with this decision. See your distribution's docs for more details
-
-    To help resolve this situation see these tickets to get involved:
-
-    `Run Pulp3 with SELinux Enforcing <https://pulp.plan.io/issues/3809>`_.
-    `Enabling SELinux in pulplift <https://pulp.plan.io/issues/97>`_.
 
 
 Ansible Installation (Recommended)
