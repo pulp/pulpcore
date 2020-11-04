@@ -262,6 +262,11 @@ ALLOWED_CONTENT_CHECKSUMS
 
       ``{"md5", "sha1", "sha224", "sha256", "sha384", "sha512"}``
 
+    .. warning::
+      If Pulp fails to start because forbidden checkums have been identified or required ones are
+      missing, run ``pulpcore-manager handle-artifact-checksums`` command. This command is in
+      tech-preview and may change in backwards incompatible ways in future releases.
+
 ADMIN_SITE_URL
 ^^^^^^^^^^^^^^
 

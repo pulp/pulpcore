@@ -80,7 +80,10 @@ class DownloaderFactory:
         }
         self._session = self._make_aiohttp_session_from_remote()
         self._semaphore = asyncio.Semaphore(value=remote.download_concurrency)
-        atexit.register(self._session.close)
+        atexit.register(self._session_cleanup)
+
+    def _session_cleanup(self):
+        asyncio.get_event_loop().run_until_complete(self._session.close())
 
     def _make_aiohttp_session_from_remote(self):
         """
