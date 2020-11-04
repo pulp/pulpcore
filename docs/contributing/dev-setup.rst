@@ -38,7 +38,7 @@ The current base branch on this repository is the master branch.
 Installation
 ------------
 
-We recommened using ``pulplift`` for developer installations. Follow the instructions in the
+We recommend using ``pulplift`` for developer installations. Follow the instructions in the
 `README.md <https://github.com/pulp/pulplift/#pulplift>`_.
 
 It is also possible to use the `Ansible roles

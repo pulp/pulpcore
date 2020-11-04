@@ -8,13 +8,14 @@ or :doc:`file an issue</bugs-features>`.
 Workflow
 --------
 
-1. Clone the GitHub repo
-2. Make a change
-3. Make sure all tests passed
+1. Clone the GitHub repo.
+2. Make a change.
+3. Make sure all tests pass.
 4. Add a file into CHANGES folder for user facing changes and CHANGES/plugin_api for plugin API
    changes.
-5. Commit changes to own ``pulpcore`` clone
-6. Make pull request from github page for your clone against master branch
+5. Commit changes to own ``pulpcore`` clone.
+6. :doc:`Record a demo <record-a-demo>` (1-3 minutes).
+7. Make pull request from github page for your clone against master branch.
 
 
 Fundamentals
@@ -28,6 +29,7 @@ Fundamentals
    style-guide
    documentation
    git
+   record-a-demo
    pull-request-walkthrough
 
 
