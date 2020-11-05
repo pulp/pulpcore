@@ -1,7 +1,7 @@
+.. _storage:
+
 Storage
 =======
-
-.. _storage:
 
 -----------
 

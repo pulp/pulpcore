@@ -186,3 +186,31 @@ Empirical estimation
 
 E.g. For syncing remote repositories with ``on_demand`` policy and using local storage, one
 would need 50GB + 30% of size of all the repository content + the DB.
+
+.. _filesystem-layout:
+
+Filesystem Layout
+-----------------
+
+..note::
+  Pulp will mostly automatically manage those directories for you.
+  Only if you need to adjust permissions or security contexts and perform a manual installation,
+  you need to prepare them accordingly.
+
+A usual installation of pulp needs the following files and directories:
+
+================================ ==========================================================================================================
+File/Directory                   Usage
+================================ ==========================================================================================================
+`/etc/pulp/settings.py`          Pulp's configuration file; optional; see :ref:`configuration`
+`/var/lib/pulp`                  Home directory of the pulp user
+`/var/lib/pulp/artifact`         Uploaded Artifacts are stored here; they should only be served through the `pulp-content` app
+`/var/lib/pulp/assets`           Statically served assets like stylesheets, javascript and html; needed for the browsable api
+`/var/lib/pulp/pulpcore-selinux` Contains the compiled selinux-policy if `pulpcore-selinux` is installed
+`/var/lib/pulp/pulpcore_static`  Empty directory used as the document root in the reverse proxy; used to prevent accidentally serving files
+`/var/lib/pulp/tmp`              Used for working directories of pulp workers
+`/var/lib/pulp/upload`           Storage for upload chunks and temporary files that need to be shared between processes
+================================ ==========================================================================================================
+
+..note::
+  `/var/lib/pulp/media` will be empty in case a cloud storage is configured :ref:`storage`
