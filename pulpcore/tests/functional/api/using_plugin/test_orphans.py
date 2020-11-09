@@ -2,10 +2,9 @@
 """Tests that perform actions over orphan files."""
 import os
 import unittest
-from django.conf import settings
 from random import choice
 
-from pulp_smash import cli, config
+from pulp_smash import cli, config, utils
 from pulp_smash.exceptions import CalledProcessError
 from pulp_smash.pulp3.bindings import monitor_task
 from pulp_smash.pulp3.constants import MEDIA_PATH
@@ -52,6 +51,7 @@ class DeleteOrphansTestCase(unittest.TestCase):
         cls.cfg = config.get_config()
         cls.api_client = ApiClient(configuration)
         cls.cli_client = cli.Client(cls.cfg)
+        cls.storage = utils.get_pulp_setting(cls.cli_client, "DEFAULT_FILE_STORAGE")
 
     def test_clean_orphan_content_unit(self):
         """Test whether orphan content units can be clean up.
@@ -90,7 +90,7 @@ class DeleteOrphansTestCase(unittest.TestCase):
 
         artifacts_api = ArtifactsApi(core_client)
 
-        if settings.DEFAULT_FILE_STORAGE == "pulpcore.app.models.storage.FileSystem":
+        if self.storage == "pulpcore.app.models.storage.FileSystem":
             # Verify that the artifact is present on disk.
             artifact_path = os.path.join(MEDIA_PATH, artifacts_api.read(content["artifact"]).file)
             cmd = ("ls", artifact_path)
@@ -109,7 +109,7 @@ class DeleteOrphansTestCase(unittest.TestCase):
         content_units_href = [c["pulp_href"] for c in content_units]
         self.assertNotIn(content["pulp_href"], content_units_href)
 
-        if settings.DEFAULT_FILE_STORAGE == "pulpcore.app.models.storage.FileSystem":
+        if self.storage == "pulpcore.app.models.storage.FileSystem":
             # Verify that the artifact was removed from disk.
             with self.assertRaises(CalledProcessError):
                 self.cli_client.run(cmd)
@@ -123,7 +123,7 @@ class DeleteOrphansTestCase(unittest.TestCase):
         artifacts_api = ArtifactsApi(core_client)
         artifact = artifacts_api.create(file=__file__)
 
-        if settings.DEFAULT_FILE_STORAGE == "pulpcore.app.models.storage.FileSystem":
+        if self.storage == "pulpcore.app.models.storage.FileSystem":
             cmd = ("ls", os.path.join(MEDIA_PATH, artifact.file))
             self.cli_client.run(cmd, sudo=True)
 
@@ -132,6 +132,6 @@ class DeleteOrphansTestCase(unittest.TestCase):
         with self.assertRaises(ApiException):
             artifacts_api.read(artifact.pulp_href)
 
-        if settings.DEFAULT_FILE_STORAGE == "pulpcore.app.models.storage.FileSystem":
+        if self.storage == "pulpcore.app.models.storage.FileSystem":
             with self.assertRaises(CalledProcessError):
                 self.cli_client.run(cmd)
