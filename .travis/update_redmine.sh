@@ -14,7 +14,7 @@ echo "Query: $REDMINE_QUERY_URL"
 MILESTONE=$(http $MILESTONE_URL | jq -r .version.name)
 echo "Milestone: $MILESTONE"
 
-if [[ "$MILESTONE" != "$RELEASE" ]]; then
+if [[ "$MILESTONE" != "${RELEASE%.post*}" ]]; then
   echo "Milestone $MILESTONE is not equal to Release $RELEASE"
   exit 1
 fi
