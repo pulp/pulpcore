@@ -1,6 +1,5 @@
 import os
 import unittest
-from django.conf import settings
 from random import sample
 from urllib.parse import urljoin
 
@@ -46,9 +45,7 @@ class ArtifactRepairTestCase(unittest.TestCase):
         storage = utils.get_pulp_setting(cls.cli_client, "DEFAULT_FILE_STORAGE")
         if storage not in SUPPORTED_STORAGE_FRAMEWORKS:
             raise unittest.SkipTest(
-                "Cannot simulate bit-rot on this storage platform ({}).".format(
-                    settings.DEFAULT_FILE_STORAGE
-                ),
+                "Cannot simulate bit-rot on this storage platform ({}).".format(storage),
             )
 
     def setUp(self):
