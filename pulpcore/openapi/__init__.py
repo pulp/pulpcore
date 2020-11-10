@@ -3,6 +3,7 @@ from urllib.parse import urljoin
 
 from django.core.exceptions import FieldDoesNotExist
 from django.utils.html import strip_tags
+from drf_spectacular.drainage import reset_generator_stats
 from drf_spectacular.generators import SchemaGenerator
 from drf_spectacular.openapi import AutoSchema
 from drf_spectacular.plumbing import (
@@ -12,7 +13,6 @@ from drf_spectacular.plumbing import (
     build_root_object,
     force_instance,
     normalize_result_object,
-    reset_generator_stats,
     resolve_regex_path_parameter,
 )
 from drf_spectacular.settings import spectacular_settings
