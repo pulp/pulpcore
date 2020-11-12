@@ -15,7 +15,6 @@ import aiohttp
 from .http import HttpDownloader
 from .file import FileDownloader
 
-
 PROTOCOL_MAP = {"http": HttpDownloader, "https": HttpDownloader, "file": FileDownloader}
 
 
@@ -118,8 +117,14 @@ class DownloaderFactory:
         headers = {"User-Agent": user_agent()}
 
         conn = aiohttp.TCPConnector(**tcp_conn_opts)
+        total = self._remote.total_timeout
+        sock_connect = self._remote.sock_connect_timeout
+        sock_read = self._remote.sock_read_timeout
+        connect = self._remote.connect_timeout
 
-        timeout = aiohttp.ClientTimeout(total=None, sock_connect=600, sock_read=600)
+        timeout = aiohttp.ClientTimeout(
+            total=total, sock_connect=sock_connect, sock_read=sock_read, connect=connect
+        )
         return aiohttp.ClientSession(connector=conn, timeout=timeout, headers=headers)
 
     def build(self, url, **kwargs):

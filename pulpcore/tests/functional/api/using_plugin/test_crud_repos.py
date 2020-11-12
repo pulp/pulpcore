@@ -1,17 +1,30 @@
 # coding=utf-8
 """Tests that CRUD repositories."""
+import time
 import unittest
 from itertools import permutations
 from urllib.parse import urljoin
 
 from pulp_smash import api, config, utils
+from pulp_smash.pulp3.bindings import monitor_task
 from pulp_smash.pulp3.utils import gen_repo
+
 from requests.exceptions import HTTPError
 
-from pulpcore.tests.functional.api.using_plugin.constants import FILE_REMOTE_PATH, FILE_REPO_PATH
 from pulpcore.tests.functional.api.using_plugin.utils import gen_file_remote
+from pulpcore.tests.functional.api.using_plugin.constants import (
+    FILE_FIXTURE_MANIFEST_URL,
+    FILE_REMOTE_PATH,
+    FILE_REPO_PATH,
+)
 from pulpcore.tests.functional.utils import set_up_module as setUpModule  # noqa:F401
 from pulpcore.tests.functional.utils import skip_if
+
+from pulpcore.client.pulp_file.exceptions import ApiException
+from pulpcore.client.pulp_file import (
+    ApiClient as FileApiClient,
+    RemotesFileApi,
+)
 
 
 class CRUDRepoTestCase(unittest.TestCase):
@@ -192,3 +205,98 @@ class CRUDRepoTestCase(unittest.TestCase):
         response = api.Client(self.cfg, api.echo_handler).post(FILE_REPO_PATH, gen_repo(foo="bar"))
         assert response.status_code == 400
         assert response.json()["foo"] == ["Unexpected field"]
+
+
+class CRUDRemoteTestCase(unittest.TestCase):
+    """CRUD remotes."""
+
+    @classmethod
+    def setUpClass(cls):
+        """Create class-wide variables."""
+        cls.cfg = config.get_config()
+
+    def setUp(self):
+        self.client = FileApiClient(self.cfg.get_bindings_config())
+        self.remotes_api = RemotesFileApi(self.client)
+        self.remote_attrs = {
+            "name": utils.uuid4(),
+            "url": FILE_FIXTURE_MANIFEST_URL,
+            "ca_cert": None,
+            "client_cert": None,
+            "client_key": None,
+            "tls_validation": False,
+            "proxy_url": None,
+            "username": "pulp",
+            "password": "pulp",
+            "download_concurrency": 10,
+            "policy": "on_demand",
+            "total_timeout": None,
+            "connect_timeout": None,
+            "sock_connect_timeout": None,
+            "sock_read_timeout": None,
+        }
+        self.remote = self.remotes_api.create(self.remote_attrs)
+
+    def _compare_results(self, data, received):
+        for k in data:
+            self.assertEqual(getattr(received, k), data[k])
+
+    def test_read(self):
+        # Compare initial-attrs vs remote created in setUp
+        self._compare_results(self.remote_attrs, self.remote)
+
+    def test_update(self):
+        data = {"download_concurrency": 66, "policy": "immediate"}
+        self.remotes_api.partial_update(self.remote.pulp_href, data)
+        time.sleep(1)  # without this, the read returns the pre-patch values
+        new_remote = self.remotes_api.read(self.remote.pulp_href)
+        self._compare_results(data, new_remote)
+
+    def test_timeout_attributes(self):
+        # Test valid timeout settings (float >= 0)
+        data = {
+            "total_timeout": 1.0,
+            "connect_timeout": 66.0,
+            "sock_connect_timeout": 0.0,
+            "sock_read_timeout": 3.1415926535,
+        }
+        self.remotes_api.partial_update(self.remote.pulp_href, data)
+        time.sleep(1)
+        new_remote = self.remotes_api.read(self.remote.pulp_href)
+        self._compare_results(data, new_remote)
+
+    def test_timeout_attributes_float_lt_zero(self):
+        # Test invalid float < 0
+        data = {
+            "total_timeout": -1.0,
+        }
+        with self.assertRaises(ApiException):
+            self.remotes_api.partial_update(self.remote.pulp_href, data)
+
+    def test_timeout_attributes_non_float(self):
+        # Test invalid non-float
+        data = {
+            "connect_timeout": "abc",
+        }
+        with self.assertRaises(ApiException):
+            self.remotes_api.partial_update(self.remote.pulp_href, data)
+
+    def test_timeout_attributes_reset_to_empty(self):
+        # Test reset to empty
+        data = {
+            "total_timeout": False,
+            "connect_timeout": None,
+            "sock_connect_timeout": False,
+            "sock_read_timeout": None,
+        }
+        response = self.remotes_api.partial_update(self.remote.pulp_href, data)
+        monitor_task(response.task)
+        new_remote = self.remotes_api.read(self.remote.pulp_href)
+        self._compare_results(data, new_remote)
+
+    def test_delete(self):
+        response = self.remotes_api.delete(self.remote.pulp_href)
+        monitor_task(response.task)
+        # verify the delete
+        with self.assertRaises(ApiException):
+            self.remotes_api.read(self.remote.pulp_href)

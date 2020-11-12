@@ -7,6 +7,7 @@ from os import path
 import logging
 
 import django
+from django.core.validators import MinValueValidator
 from django.db import models, transaction
 from django.urls import reverse
 
@@ -208,6 +209,10 @@ class Remote(MasterModel):
         download_concurrency (models.PositiveIntegerField): Total number of
             simultaneous connections.
         policy (models.TextField): The policy to use when downloading content.
+        total_timeout (models.FloatField): Value for aiohttp.ClientTimeout.total on connections
+        connect_timeout (models.FloatField): Value for aiohttp.ClientTimeout.connect
+        sock_connect_timeout (models.FloatField): Value for aiohttp.ClientTimeout.sock_connect
+        sock_read_timeout (models.FloatField): Value for aiohttp.ClientTimeout.sock_read
     """
 
     TYPE = "remote"
@@ -248,6 +253,19 @@ class Remote(MasterModel):
     proxy_url = models.TextField(null=True)
     download_concurrency = models.PositiveIntegerField(default=10)
     policy = models.TextField(choices=POLICY_CHOICES, default=IMMEDIATE)
+
+    total_timeout = models.FloatField(
+        null=True, validators=[MinValueValidator(0.0, "Timeout must be >= 0")]
+    )
+    connect_timeout = models.FloatField(
+        null=True, validators=[MinValueValidator(0.0, "Timeout must be >= 0")]
+    )
+    sock_connect_timeout = models.FloatField(
+        null=True, validators=[MinValueValidator(0.0, "Timeout must be >= 0")]
+    )
+    sock_read_timeout = models.FloatField(
+        null=True, validators=[MinValueValidator(0.0, "Timeout must be >= 0")]
+    )
 
     @property
     def download_factory(self):
