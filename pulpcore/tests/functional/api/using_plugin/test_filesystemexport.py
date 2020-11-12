@@ -156,8 +156,8 @@ class FilesystemExporterTestCase(BaseExporterCase):
 
     def test_delete(self):
         """Delete a pulpExporter."""
-        exporter = self.exporter_api.create({"name": "test", "path": "/tmp"})
-        self._delete_exporter(exporter)
+        exporter = self.exporter_api.create({"name": "test", "path": "/tmp/abc"})
+        self.exporter_api.delete(exporter.pulp_href)
         with self.assertRaises(ApiException) as ae:
             self.exporter_api.read(exporter.pulp_href)
         self.assertEqual(404, ae.exception.status)
