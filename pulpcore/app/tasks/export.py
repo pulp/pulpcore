@@ -168,8 +168,9 @@ def pulp_export(the_export):
 
         tarfile_fp = the_export.export_tarfile_path()
 
-        os.makedirs(pulp_exporter.path, exist_ok=True)
-        os.chmod(pulp_exporter.path, 0o775)  # let owner and group read and write the directory
+        path = Path(pulp_exporter.path)
+        if not path.is_dir():
+            path.mkdir(mode=0o775, parents=True)
 
         rslts = {}
         if the_export.validated_chunk_size:
