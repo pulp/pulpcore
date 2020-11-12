@@ -113,6 +113,31 @@ class RemoteSerializer(ModelSerializer):
         default=models.Remote.IMMEDIATE,
     )
 
+    total_timeout = serializers.FloatField(
+        allow_null=True,
+        required=False,
+        help_text="aiohttp.ClientTimeout.total (q.v.) for download-connections.",
+        min_value=0.0,
+    )
+    connect_timeout = serializers.FloatField(
+        allow_null=True,
+        required=False,
+        help_text="aiohttp.ClientTimeout.connect (q.v.) for download-connections.",
+        min_value=0.0,
+    )
+    sock_connect_timeout = serializers.FloatField(
+        allow_null=True,
+        required=False,
+        help_text="aiohttp.ClientTimeout.sock_connect (q.v.) for download-connections.",
+        min_value=0.0,
+    )
+    sock_read_timeout = serializers.FloatField(
+        allow_null=True,
+        required=False,
+        help_text="aiohttp.ClientTimeout.sock_read (q.v.) for download-connections.",
+        min_value=0.0,
+    )
+
     def validate_url(self, value):
         """
         Check if the 'url' is a ``file://`` path, and if so, ensure it's an ALLOWED_IMPORT_PATH.
@@ -156,6 +181,10 @@ class RemoteSerializer(ModelSerializer):
             "pulp_last_updated",
             "download_concurrency",
             "policy",
+            "total_timeout",
+            "connect_timeout",
+            "sock_connect_timeout",
+            "sock_read_timeout",
         )
 
 

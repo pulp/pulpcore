@@ -230,7 +230,6 @@ SPECTACULAR_SETTINGS = {
     },
 }
 
-
 # What kinds of checksums is this pulp-instance _allowed to use_ ?
 # NOTE : "sha256"" IS REQUIRED - Pulp will fail to start if it is not found in this set
 # NOTE: specifying checksums that are not listed under ALL_KNOWN_CONTENT_CHECKSUMS will fail
