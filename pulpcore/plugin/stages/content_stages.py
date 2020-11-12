@@ -38,27 +38,19 @@ class QueryExistingContents(Stage):
         """
         async for batch in self.batches():
             content_q_by_type = defaultdict(lambda: Q(pk__in=[]))
+            d_content_by_nat_key = defaultdict(list)
             for d_content in batch:
                 if d_content.content._state.adding:
                     model_type = type(d_content.content)
                     unit_q = d_content.content.q()
                     content_q_by_type[model_type] = content_q_by_type[model_type] | unit_q
+                    d_content_by_nat_key[d_content.content.natural_key()].append(d_content)
 
             for model_type in content_q_by_type.keys():
-                type_natural_key_fields = model_type.natural_key_fields()
                 for result in model_type.objects.filter(content_q_by_type[model_type]).iterator():
-                    for d_content in batch:
-                        if type(d_content.content) is not model_type:
-                            continue
-                        not_same_unit = False
-                        for field in type_natural_key_fields:
-                            in_memory_digest_value = getattr(d_content.content, field)
-                            if in_memory_digest_value != getattr(result, field):
-                                not_same_unit = True
-                                break
-                        if not_same_unit:
-                            continue
+                    for d_content in d_content_by_nat_key[result.natural_key()]:
                         d_content.content = result
+
             for d_content in batch:
                 await self.put(d_content)
 
@@ -93,6 +85,7 @@ class ContentSaver(Stage):
             content_artifact_bulk = []
             with transaction.atomic():
                 await self._pre_save(batch)
+
                 for d_content in batch:
                     # Are we saving to the database for the first time?
                     content_already_saved = not d_content.content._state.adding

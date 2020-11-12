@@ -263,6 +263,7 @@ class RemoteArtifactSaver(Stage):
             # https://code.djangoproject.com/ticket/32089
             if hasattr(d_content.content, "_remote_artifact_saver_cas"):
                 delattr(d_content.content, "_remote_artifact_saver_cas")
+
             for d_artifact in d_content.d_artifacts:
                 if d_artifact.remote:
                     remotes_present.add(d_artifact.remote)
