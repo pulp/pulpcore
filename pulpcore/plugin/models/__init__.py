@@ -36,4 +36,6 @@ from pulpcore.app.models import (  # noqa
     Task,
     TaskGroup,
     UnsupportedDigestValidationError,
+    Upload,
+    UploadChunk,
 )
