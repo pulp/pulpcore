@@ -4,4 +4,5 @@ from .validation import (  # noqa
     DigestValidationError,
     SizeValidationError,
     ValidationError,
+    MissingDigestValidationError,
 )

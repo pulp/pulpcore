@@ -18,13 +18,14 @@ from django.core import validators
 from django.core.files.storage import default_storage
 from django.db import IntegrityError, models, transaction
 from django.forms.models import model_to_dict
-from django_lifecycle import BEFORE_UPDATE, hook
+from django_lifecycle import BEFORE_UPDATE, BEFORE_SAVE, hook
 
 from pulpcore.constants import ALL_KNOWN_CONTENT_CHECKSUMS
 from pulpcore.app.models import MasterModel, BaseModel, fields, storage
 from pulpcore.exceptions import (
     DigestValidationError,
     SizeValidationError,
+    MissingDigestValidationError,
 )
 
 # All available digest fields ordered by algorithm strength.
@@ -202,24 +203,34 @@ class Artifact(HandleTempFilesMixin, BaseModel):
     # Digest-fields that are NOT ALLOWED
     FORBIDDEN_DIGESTS = _FORBIDDEN_DIGESTS
 
-    def __init__(self, *args, **kwargs):
+    @hook(BEFORE_SAVE)
+    def before_save(self):
         """
-        Initialization override to reject use of disallowed checksum algorithms.
+        Pre-save hook that validates checksum rules prior to allowing an Artifact to be saved.
 
-        Args:
-            args: positional arguments
-            kwargs: keyword arguments
+        An Artifact with any checksums from the FORBIDDEN set will fail to save while raising
+        an UnsupportedDigestValidationError exception.
+
+        Similarly, any checksums in DIGEST_FIELDS that is NOT set will raise a
+        MissingDigestValidationError exception.
 
         Raises:
             :class: `~pulpcore.exceptions.UnsupportedDigestValidationError`: When any of the
-                keys in kwargs are found on the FORBIDDEN_DIGESTS list
+                keys on FORBIDDEN_DIGESTS are set for the Artifact
+            :class: `~pulpcore.exceptions.MissingDigestValidationError`: When any of the
+                keys on DIGEST_FIELDS are found to be missing from the Artifact
         """
-        bad_keys = self.FORBIDDEN_DIGESTS.intersection(kwargs.keys())
+        bad_keys = [k for k in self.FORBIDDEN_DIGESTS if getattr(self, k)]
         if bad_keys:
             raise UnsupportedDigestValidationError(
                 _(f"Checksum algorithms {bad_keys} are forbidden for this Pulp instance.")
             )
-        super().__init__(*args, **kwargs)
+
+        missing_keys = [k for k in self.DIGEST_FIELDS if not getattr(self, k)]
+        if missing_keys:
+            raise MissingDigestValidationError(
+                _(f"Missing required checksum algorithms {missing_keys}.")
+            )
 
     def q(self):
         if not self._state.adding:
