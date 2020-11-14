@@ -1,9 +1,13 @@
 import os
 import tempfile
+from unittest import mock
 
 from django.core.files.storage import default_storage as storage
+from django.core.files.uploadedfile import SimpleUploadedFile
+
 from django.conf import settings
-from django.test import TestCase
+from django.test import SimpleTestCase, TestCase
+from pulpcore.plugin.exceptions import MissingDigestValidationError
 from pulpcore.plugin.models import (
     Artifact,
     Content,
@@ -72,11 +76,51 @@ class PulpTemporaryFileTestCase(TestCase):
         assert b"temp file test" in temp_file.file.read()
 
 
-class ArtifactAlgorithmTestCase(TestCase):
-    def test_set_forbidden(self):
-        # This will only fire on a Pulp instance that has forbidden md5 in settings.py
-        if "md5" not in Artifact.DIGEST_FIELDS:
-            with self.assertRaises(UnsupportedDigestValidationError) as udv:  # noqa
-                a = Artifact(md5="asdf")  # noqa
-        else:
-            pass
+class ArtifactAlgorithmTestCase(SimpleTestCase):
+    @mock.patch(
+        "pulpcore.app.models.Artifact.FORBIDDEN_DIGESTS",
+        new_callable=mock.PropertyMock,
+        return_value=set(["md5"]),
+    )
+    @mock.patch(
+        "pulpcore.app.models.Artifact.DIGEST_FIELDS",
+        new_callable=mock.PropertyMock,
+        return_value=set(["sha512", "sha384", "sha224", "sha1", "sha256"]),
+    )
+    def test_direct_set_forbidden(self, mock_FORBIDDEN_DIGESTS, mock_DIGEST_FIELDS):
+        with self.assertRaises(UnsupportedDigestValidationError):
+            a = Artifact(
+                file=SimpleUploadedFile("test_filename", b"test content"),
+                sha512="asdf",
+                sha384="asdf",
+                sha224="asdf",
+                sha1="asdf",
+                sha256="asdf",
+                size=1024,
+            )
+            a.md5 = "asdf"
+            a.save()
+
+    @mock.patch(
+        "pulpcore.app.models.Artifact.FORBIDDEN_DIGESTS",
+        new_callable=mock.PropertyMock,
+        return_value=set(["md5"]),
+    )
+    @mock.patch(
+        "pulpcore.app.models.Artifact.DIGEST_FIELDS",
+        new_callable=mock.PropertyMock,
+        return_value=set(["sha512", "sha384", "sha224", "sha1", "sha256"]),
+    )
+    def test_forgot_something(self, mock_FORBIDDEN_DIGESTS, mock_DIGEST_FIELDS):
+        with self.assertRaises(MissingDigestValidationError):
+            a = Artifact(
+                file=SimpleUploadedFile("test_filename", b"test content"),
+                sha512="asdf",
+                sha384="asdf",
+                sha224="asdf",
+                sha1="asdf",
+                sha256="asdf",
+                size=1024,
+            )
+            a.sha224 = None
+            a.save()

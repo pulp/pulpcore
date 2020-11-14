@@ -33,3 +33,11 @@ class SizeValidationError(ValidationError):
 
     def __str__(self):
         return _("A file failed validation due to size.")
+
+
+class MissingDigestValidationError(Exception):
+    """
+    Raised when attempting to save() an Artifact with an incomplete set of checksums.
+    """
+
+    pass
