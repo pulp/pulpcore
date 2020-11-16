@@ -58,6 +58,10 @@ To support this pattern, the declarative content allows to be associated with a
 :class:`asyncio.Future`, that is resolved when the content reaches the
 :class:`pulpcore.plugin.stages.ResolveContentFutures` stage.
 By awaiting this Future, one can implement an informational back loop into earlier stages.
+If you need to drop :class:`pulpcore.plugin.stages.DeclarativeContent` prematurely from the
+pipeline, you can resolve the content using the function `resolve()` without handing
+the content to the next stage. The function `resolve()` will unblock the coroutines awaiting the
+attached `Future`.
 
 .. hint::
 

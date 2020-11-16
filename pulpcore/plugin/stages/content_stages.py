@@ -166,6 +166,9 @@ class ResolveContentFutures(Stage):
     can introduce new additional to-be-downloaded content at the beginning of the pipeline.
     On the other hand, it can impose a substantial performance decrement of batching content in the
     earlier stages.
+    If you want to drop a declarative content prematurely from the pipeline, use the function
+    `resolve()` to unblock the coroutines awaiting the attached future and do not hand the content
+    to the next stage.
     As a rule of thumb, sending more items into the pipeline first and awaiting their resolution
     later is better.
     """
