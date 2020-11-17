@@ -211,7 +211,9 @@ For example, here is the FileRemoteViewSet which enables authorization enforceme
 
 .. code-block:: python
 
+    from pulpcore.plugin.access_policy import AccessPolicyFromDB
+
     class FileRemoteViewSet(NamedModelViewSet):
         ...
-        permission_classes = (FileRemoteAccessPolicy,)
+        permission_classes = (AccessPolicyFromDB,)
         ...

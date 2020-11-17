@@ -79,6 +79,7 @@ use the ``pulpcore.plugin.models.AutoAddObjPermsMixin``. See the example below a
 
 
     class MyModel(BaseModel, AutoAddObjPermsMixin):
+       ACCESS_POLICY_VIEWSET_NAME = "mymodel"
        ...
 
 See the docstring below for more information on this mixin.
