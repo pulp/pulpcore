@@ -7,7 +7,7 @@ With limited object-level permissions on certain objects, its desirable to restr
 shown to users. This effectively causes a Pulp system with many users to have each user see only
 "their" permissions.
 
-This is feature is generally referred to as Queryset Scoping because it is applied as an additional
+This feature is generally referred to as Queryset Scoping because it is applied as an additional
 filter on the base Queryset of a ViewSet. This causes the permission filtering to work with other
 filterings applied by a user.
 
@@ -23,7 +23,7 @@ to a specific permission either at the model-level or object-level. Enable this 
 inherits from ``pulpcore.plugin.viewsets.NamedModelViewSet`` by setting the
 ``queryset_filtering_required_permission`` class attribute to the value of the permission name.
 
-For example Tasks are restricted only to those users with the "core.task_viewtask" permission like
+For example Tasks are restricted only to those users with the "core.view_task" permission like
 this::
 
     TaskViewSet(NamedModelViewSet):
