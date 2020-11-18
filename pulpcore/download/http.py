@@ -119,6 +119,7 @@ class HttpDownloader(BaseDownloader):
         proxy=None,
         proxy_auth=None,
         headers_ready_callback=None,
+        headers=None,
         **kwargs,
     ):
         """
@@ -134,6 +135,7 @@ class HttpDownloader(BaseDownloader):
                 as its argument. The callback will be called when the response headers are
                 available. The dictionary passed has the header names as the keys and header values
                 as its values. e.g. `{'Transfer-Encoding': 'chunked'}`
+            headers (dict): Headers to be submitted with the request.
             kwargs (dict): This accepts the parameters of
                 :class:`~pulpcore.plugin.download.BaseDownloader`.
         """
@@ -143,7 +145,7 @@ class HttpDownloader(BaseDownloader):
         else:
             timeout = aiohttp.ClientTimeout(total=None, sock_connect=600, sock_read=600)
             conn = aiohttp.TCPConnector({"force_close": True})
-            self.session = aiohttp.ClientSession(connector=conn, timeout=timeout)
+            self.session = aiohttp.ClientSession(connector=conn, timeout=timeout, headers=headers)
             self._close_session_on_finalize = True
         self.auth = auth
         self.proxy = proxy

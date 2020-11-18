@@ -137,6 +137,10 @@ class RemoteSerializer(ModelSerializer):
         help_text="aiohttp.ClientTimeout.sock_read (q.v.) for download-connections.",
         min_value=0.0,
     )
+    headers = serializers.ListField(
+        child=serializers.DictField(),
+        help_text=_("Headers for aiohttp.Clientsession"),
+    )
 
     def validate_url(self, value):
         """

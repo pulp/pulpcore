@@ -19,6 +19,8 @@ from .base import MasterModel, BaseModel
 from .content import Artifact, Content
 from .task import CreatedResource, Task
 
+from django.contrib.postgres.fields import JSONField
+
 
 _logger = logging.getLogger(__name__)
 
@@ -266,6 +268,7 @@ class Remote(MasterModel):
     sock_read_timeout = models.FloatField(
         null=True, validators=[MinValueValidator(0.0, "Timeout must be >= 0")]
     )
+    headers = JSONField(blank=True, null=True)
 
     @property
     def download_factory(self):
