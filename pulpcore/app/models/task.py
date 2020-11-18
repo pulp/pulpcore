@@ -352,7 +352,7 @@ class Task(BaseModel, AutoDeleteObjPermsMixin, AutoAddObjPermsMixin):
     # as it has a separate job ID that is not the task ID.
     _resource_job_id = models.UUIDField()
 
-    ACCESS_POLICY_VIEWSET_NAME = "TaskViewSet"
+    ACCESS_POLICY_VIEWSET_NAME = "tasks"
 
     @staticmethod
     def current():
