@@ -26,7 +26,7 @@ By default, each model receives four permissions:
 * The “view” permission limits the ability to view an object.
 
 The Model-level permissions are created automatically by Django, and receive a name like:
-``<app_name>_<action>_<model_name>``. For example to change file remote the permission is named
+``<app_name>.<action>_<model_name>``. For example to change file remote the permission is named
 ``file.change_fileremote``. You can view the Permissions on a system via the Django ORM with:
 ``Permission.objects.all()``. See the `Django Permissions Docs <https://docs.djangoproject.com/en/
 2.2/topics/auth/default/#permissions-and-authorization>`_ for more information on working with

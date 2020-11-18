@@ -1,3 +1,5 @@
+import warnings
+
 from rest_access_policy import AccessPolicy
 
 from pulpcore.app.models import AccessPolicy as AccessPolicyModel
@@ -29,5 +31,15 @@ class AccessPolicyFromDB(AccessPolicy):
         Returns:
             The access policy statements in drf-access-policy policy structure.
         """
-        access_policy_obj = AccessPolicyModel.objects.get(viewset_name=view.__class__.__name__)
+        try:
+            access_policy_obj = AccessPolicyModel.objects.get(
+                viewset_name=view.__class__.urlpattern()
+            )
+        except AccessPolicyModel.NotFound:
+            access_policy_obj = AccessPolicyModel.objects.get(viewset_name=view.__class__.__name__)
+            warnings.warn(
+                "Addressing AccessPolicy via the viewset's classname is deprecated"
+                "and will be removed in pulpcore==3.10; use the viewset's urlpattern().",
+                warnings.DeprecationWarning,
+            )
         return access_policy_obj.statements

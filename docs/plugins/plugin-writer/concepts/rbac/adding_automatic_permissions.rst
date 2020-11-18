@@ -109,7 +109,7 @@ this:
     ]
 
     AccessPolicy.objects.create(
-        viewset_name="FileRemoteViewSet",
+        viewset_name="remotes/file/file",
         statements=FILE_REMOTE_STATEMENTS,
         permissions_assignment=FILE_REMOTE_PERMISSIONS_ASSIGNMENT
     )

@@ -180,7 +180,7 @@ an example of code to create an instance, which would be contained in a data mig
     ]
 
     AccessPolicy.objects.create(
-        viewset_name="FileRemoteViewSet",
+        viewset_name="remotes/file/file",
         statements=FILE_REMOTE_STATEMENTS,
         permissions_assignment=FILE_REMOTE_PERMISSIONS_ASSIGNMENT
     )
