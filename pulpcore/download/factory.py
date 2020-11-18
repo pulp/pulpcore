@@ -15,7 +15,14 @@ import aiohttp
 from .http import HttpDownloader
 from .file import FileDownloader
 
-PROTOCOL_MAP = {"http": HttpDownloader, "https": HttpDownloader, "file": FileDownloader}
+import json
+
+
+PROTOCOL_MAP = {
+    "http": HttpDownloader,
+    "https": HttpDownloader,
+    "file": FileDownloader,
+}
 
 
 def user_agent():
@@ -118,6 +125,8 @@ class DownloaderFactory:
             tcp_conn_opts["ssl_context"] = sslcontext
 
         headers = {"User-Agent": user_agent()}
+        if self._remote.headers is not None:
+            headers.update(json.loads(self._remote.headers))
 
         conn = aiohttp.TCPConnector(**tcp_conn_opts)
         total = self._remote.total_timeout
