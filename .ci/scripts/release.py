@@ -72,7 +72,7 @@ if ".github" in release_path:
     plugin_path = os.path.dirname(release_path)
 
 version = {}
-plugin_name = "pulp_npm"
+plugin_name = "pulpcore"
 with open(f"{plugin_path}/{plugin_name}/__init__.py") as fp:
     version_line = [line for line in fp.readlines() if "__version__" in line][0]
     exec(version_line, version)

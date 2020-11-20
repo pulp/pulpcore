@@ -8,15 +8,15 @@ the case.
 import unittest
 from pulp_smash import api, cli, config
 from pulp_smash.utils import uuid4
+from pulp_smash.pulp3.bindings import monitor_task
 from pulp_smash.pulp3.utils import (
     delete_orphans,
     gen_repo,
 )
 
-from pulp_file.tests.functional.utils import (
+from pulpcore.tests.functional.api.using_plugin.utils import (
     gen_file_client,
     gen_file_remote,
-    monitor_task,
 )
 
 from pulpcore.client.pulpcore import (
