@@ -154,7 +154,10 @@ GroupProgressReport needs to be updated.
         group_pr = GroupProgressReport(
             message="Repo migration",
             code="create.repo_version",
-            task_group=task_group).save()
+            total=1,
+            done=0,
+            task_group=task_group)
+        group_pr.save()
         # When a task that will be executing certain work, which is part of a TaskGroup, it will look
         # for the TaskGroup it belongs to and find appropriate progress report by its code and will
         # update it accordingly.
