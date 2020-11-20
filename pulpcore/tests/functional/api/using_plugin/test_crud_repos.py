@@ -4,12 +4,12 @@ import unittest
 from itertools import permutations
 from urllib.parse import urljoin
 
-from pulp_file.tests.functional.utils import gen_file_remote
 from pulp_smash import api, config, utils
 from pulp_smash.pulp3.utils import gen_repo
 from requests.exceptions import HTTPError
 
 from pulpcore.tests.functional.api.using_plugin.constants import FILE_REMOTE_PATH, FILE_REPO_PATH
+from pulpcore.tests.functional.api.using_plugin.utils import gen_file_remote
 from pulpcore.tests.functional.utils import set_up_module as setUpModule  # noqa:F401
 from pulpcore.tests.functional.utils import skip_if
 
