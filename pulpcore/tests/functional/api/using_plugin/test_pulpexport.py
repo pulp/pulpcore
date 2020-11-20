@@ -193,8 +193,8 @@ class PulpExportTestCase(BaseExporterCase):
         found_content = False
         for r in reports:
             self.assertEqual(TASK_STATES.COMPLETED, r["state"])
-            found_artifacts |= r["code"] == "export-artifacts"
-            found_content |= r["code"] == "export-repo-version-content"
+            found_artifacts |= r["code"] == "export.artifacts"
+            found_content |= r["code"] == "export.repo.version.content"
         self.assertTrue(found_artifacts, "No artifacts exported!")
         self.assertTrue(found_content, "No content exported!")
         export_href = resources[0]

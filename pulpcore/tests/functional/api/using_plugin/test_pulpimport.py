@@ -205,7 +205,12 @@ class PulpImportTestCase(unittest.TestCase):
         """Test an import."""
         importer = self._create_importer()
         task_group = self._perform_import(importer)
-        self.assertEqual(len(self.import_repos), task_group.completed)
+        self.assertEqual(len(self.import_repos) + 1, task_group.completed)
+
+        for report in task_group.group_progress_reports:
+            if report.code == "import.repo.versions":
+                self.assertEqual(report.done, len(self.import_repos))
+
         for repo in self.import_repos:
             repo = self.repo_api.read(repo.pulp_href)
             self.assertEqual(f"{repo.pulp_href}versions/1/", repo.latest_version_href)
@@ -228,7 +233,7 @@ class PulpImportTestCase(unittest.TestCase):
         """Test an import."""
         importer = self._create_importer()
         task_group = self._perform_import(importer, chunked=True)
-        self.assertEqual(len(self.import_repos), task_group.completed)
+        self.assertEqual(len(self.import_repos) + 1, task_group.completed)
         for repo in self.import_repos:
             repo = self.repo_api.read(repo.pulp_href)
             self.assertEqual(f"{repo.pulp_href}versions/1/", repo.latest_version_href)

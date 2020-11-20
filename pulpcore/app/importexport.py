@@ -74,7 +74,7 @@ def export_artifacts(export, artifacts):
     Raises:
         ValidationError: When path is not in the ALLOWED_EXPORT_PATHS setting
     """
-    data = dict(message="Exporting Artifacts", code="export-artifacts", total=len(artifacts))
+    data = dict(message="Exporting Artifacts", code="export.artifacts", total=len(artifacts))
     with ProgressReport(**data) as pb:
         for artifact in pb.iter(artifacts):
             dest = artifact.file.name
@@ -145,7 +145,7 @@ def export_content(export, repository_version):
     content_count = repository_version.content.count()
     data = dict(
         message=msg,
-        code="export-repo-version-content",
+        code="export.repo.version.content",
         total=content_count,
         done=content_count,
         state=TASK_STATES.COMPLETED,

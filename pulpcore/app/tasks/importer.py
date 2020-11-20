@@ -10,6 +10,7 @@ from logging import getLogger
 
 from django.conf import settings
 from django.core.files.storage import default_storage
+from django.db.models import F
 
 from pkg_resources import DistributionNotFound, get_distribution
 from rest_framework.serializers import ValidationError
@@ -20,6 +21,8 @@ from pulpcore.app.models import (
     Artifact,
     Content,
     CreatedResource,
+    GroupProgressReport,
+    ProgressReport,
     PulpImport,
     PulpImporter,
     Repository,
@@ -30,6 +33,7 @@ from pulpcore.app.modelresource import (
     ArtifactResource,
     ContentArtifactResource,
 )
+from pulpcore.constants import TASK_STATES
 from pulpcore.tasking.tasks import enqueue_with_reservation
 
 log = getLogger(__name__)
@@ -110,6 +114,13 @@ def import_repository_version(importer_pk, destination_repo_pk, source_repo_name
     dest_repo = Repository.objects.get(pk=destination_repo_pk)
     importer = PulpImporter.objects.get(pk=importer_pk)
 
+    pb = ProgressReport(
+        message=f"Importing content for {dest_repo.name}",
+        code="import.repo.version.content",
+        state=TASK_STATES.RUNNING,
+    )
+    pb.save()
+
     with tempfile.TemporaryDirectory() as temp_dir:
         # Extract the repo file for the repo info
         with tarfile.open(tar_path, "r:gz") as tar:
@@ -178,6 +189,15 @@ def import_repository_version(importer_pk, destination_repo_pk, source_repo_name
             with dest_repo.new_version() as new_version:
                 new_version.set_content(content)
 
+        content_count = content.count()
+        pb.total = content_count
+        pb.done = content_count
+        pb.state = TASK_STATES.COMPLETED
+        pb.save()
+
+    gpr = TaskGroup.current().group_progress_reports.filter(code="import.repo.versions")
+    gpr.update(done=F("done") + 1)
+
 
 def pulp_import(importer_pk, path, toc):
     """
@@ -239,13 +259,16 @@ def pulp_import(importer_pk, path, toc):
             errs = []
             # validate the sha256 of the toc-entries
             # gather errors for reporting at the end
-            for chunk in sorted(the_toc["files"].keys()):
-                a_hash = _compute_hash(os.path.join(base_dir, chunk))
-                if not a_hash == the_toc["files"][chunk]:
-                    err_str = "File {} expected checksum : {}, computed checksum : {}".format(
-                        chunk, the_toc["files"][chunk], a_hash
-                    )
-                    errs.append(err_str)
+            chunks = sorted(the_toc["files"].keys())
+            data = dict(message="Validating Chunks", code="validate.chunks", total=len(chunks))
+            with ProgressReport(**data) as pb:
+                for chunk in pb.iter(chunks):
+                    a_hash = _compute_hash(os.path.join(base_dir, chunk))
+                    if not a_hash == the_toc["files"][chunk]:
+                        err_str = "File {} expected checksum : {}, computed checksum : {}".format(
+                            chunk, the_toc["files"][chunk], a_hash
+                        )
+                        errs.append(err_str)
 
             # if there are any errors, report and fail
             if errs:
@@ -275,30 +298,34 @@ def pulp_import(importer_pk, path, toc):
         # and must be reassembled IN ORDER
         the_chunk_files = sorted(the_toc["files"].keys())
 
-        for chunk in the_chunk_files:
-            # For each chunk, add it to the reconstituted tar.gz, picking up where the previous
-            # chunk left off
-            subprocess.run(
-                [
-                    "dd",
-                    "if={}".format(os.path.join(toc_dir, chunk)),
-                    "of={}".format(result_file),
-                    "bs={}".format(str(block_size)),
-                    "seek={}".format(str(offset)),
-                ],
-            )
-            offset += blocks_per_chunk
-            # To keep from taking up All The Disk, we delete each chunk after it has been added
-            # to the recombined file.
-            try:
-                subprocess.run(["rm", "-f", os.path.join(toc_dir, chunk)])
-            except OSError:
-                log.warning(
-                    _("Failed to remove chunk {} after recombining. Continuing.").format(
-                        os.path.join(toc_dir, chunk)
-                    ),
-                    exc_info=True,
+        data = dict(
+            message="Recombining Chunks", code="recombine.chunks", total=len(the_chunk_files)
+        )
+        with ProgressReport(**data) as pb:
+            for chunk in pb.iter(the_chunk_files):
+                # For each chunk, add it to the reconstituted tar.gz, picking up where the previous
+                # chunk left off
+                subprocess.run(
+                    [
+                        "dd",
+                        "if={}".format(os.path.join(toc_dir, chunk)),
+                        "of={}".format(result_file),
+                        "bs={}".format(str(block_size)),
+                        "seek={}".format(str(offset)),
+                    ],
                 )
+                offset += blocks_per_chunk
+                # To keep from taking up All The Disk, we delete each chunk after it has been added
+                # to the recombined file.
+                try:
+                    subprocess.run(["rm", "-f", os.path.join(toc_dir, chunk)])
+                except OSError:
+                    log.warning(
+                        _("Failed to remove chunk {} after recombining. Continuing.").format(
+                            os.path.join(toc_dir, chunk)
+                        ),
+                        exc_info=True,
+                    )
 
         combined_hash = _compute_hash(result_file)
         if combined_hash != the_toc["meta"]["global_hash"]:
@@ -317,13 +344,16 @@ def pulp_import(importer_pk, path, toc):
         path = validate_and_assemble(toc)
 
     log.info(_("Importing {}.").format(path))
+    current_task = Task.current()
     importer = PulpImporter.objects.get(pk=importer_pk)
     the_import = PulpImport.objects.create(
-        importer=importer, task=Task.current(), params={"path": path}
+        importer=importer, task=current_task, params={"path": path}
     )
     CreatedResource.objects.create(content_object=the_import)
 
     task_group = TaskGroup.objects.create(description=f"Import of {path}")
+    current_task.task_group = task_group
+    current_task.save()
     CreatedResource.objects.create(content_object=task_group)
 
     with tempfile.TemporaryDirectory() as temp_dir:
@@ -337,18 +367,30 @@ def pulp_import(importer_pk, path, toc):
 
         # Artifacts
         ar_result = _import_file(os.path.join(temp_dir, ARTIFACT_FILE), ArtifactResource)
-        for row in ar_result.rows:
-            artifact = Artifact.objects.get(pk=row.object_id)
-            base_path = os.path.join("artifact", artifact.sha256[0:2], artifact.sha256[2:])
-            src = os.path.join(temp_dir, base_path)
-            dest = os.path.join(settings.MEDIA_ROOT, base_path)
+        data = dict(
+            message="Importing Artifacts", code="import.artifacts", total=len(ar_result.rows)
+        )
+        with ProgressReport(**data) as pb:
+            for row in pb.iter(ar_result.rows):
+                artifact = Artifact.objects.get(pk=row.object_id)
+                base_path = os.path.join("artifact", artifact.sha256[0:2], artifact.sha256[2:])
+                src = os.path.join(temp_dir, base_path)
+                dest = os.path.join(settings.MEDIA_ROOT, base_path)
 
-            if not default_storage.exists(dest):
-                with open(src, "rb") as f:
-                    default_storage.save(dest, f)
+                if not default_storage.exists(dest):
+                    with open(src, "rb") as f:
+                        default_storage.save(dest, f)
 
         with open(os.path.join(temp_dir, REPO_FILE), "r") as repo_data_file:
             data = json.load(repo_data_file)
+            gpr = GroupProgressReport(
+                message="Importing repository versions",
+                code="import.repo.versions",
+                total=len(data),
+                done=0,
+                task_group=task_group,
+            )
+            gpr.save()
 
             for src_repo in data:
                 try:
