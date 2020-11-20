@@ -3,7 +3,7 @@
 from functools import partial
 from unittest import SkipTest
 
-from pulp_smash import api, selectors
+from pulp_smash import api, config, selectors
 from pulp_smash.pulp3.utils import gen_remote, gen_repo, require_pulp_3, require_pulp_plugins, sync
 
 from pulpcore.tests.functional.api.using_plugin.constants import (
@@ -13,6 +13,8 @@ from pulpcore.tests.functional.api.using_plugin.constants import (
     FILE_REMOTE_PATH,
     FILE_REPO_PATH,
 )
+from pulpcore.client.pulp_file import ApiClient as FileApiClient
+
 
 skip_if = partial(selectors.skip_if, exc=SkipTest)
 
@@ -55,14 +57,17 @@ def populate_pulp(cfg, url=None):
     return client.get(FILE_CONTENT_PATH)
 
 
-def gen_file_remote(url=None, **kwargs):
+def gen_file_client():
+    """Return an OBJECT for file client."""
+    configuration = config.get_config().get_bindings_config()
+    return FileApiClient(configuration)
+
+
+def gen_file_remote(url=FILE_FIXTURE_MANIFEST_URL, **kwargs):
     """Return a semi-random dict for use in creating a file Remote.
 
     :param url: The URL of an external content source.
     """
-    if url is None:
-        url = FILE_FIXTURE_MANIFEST_URL
-
     return gen_remote(url, **kwargs)
 
 
