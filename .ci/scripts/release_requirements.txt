@@ -1,0 +1,4 @@
+bump2version
+gitpython
+python-redmine
+towncrier

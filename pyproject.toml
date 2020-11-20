@@ -84,6 +84,8 @@ ignore = [
     ".coveragerc",
     ".dependabot/config.yml",
     ".pep8speaks.yml",
+    ".ci/**",
+    ".github/**",
 ]
 
 

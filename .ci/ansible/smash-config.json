@@ -1,0 +1,36 @@
+{
+  "pulp": {
+    "auth": [
+      "admin",
+      "password"
+    ],
+    "selinux enabled": false,
+    "version": "3"
+  },
+  "hosts": [
+    {
+      "hostname": "pulp",
+      "roles": {
+        "api": {
+          "port": 80,
+          "scheme": "http",
+          "service": "nginx"
+        },
+        "content": {
+          "port": 80,
+          "scheme": "http",
+          "service": "pulp_content_app"
+        },
+        "pulp resource manager": {},
+        "pulp workers": {},
+        "redis": {},
+        "shell": {
+          "transport": "docker"
+        }
+      }
+    }
+  ],
+  "custom": {
+    "fixtures_origin": "http://pulp-fixtures/"
+  }
+}
