@@ -3,8 +3,9 @@
 Developer Setup
 ===============
 
-To ease developer setup, we have `Pulplift <https://github.com/pulp/pulplift>`_ which is based on
-the `Forklift <https://github.com/theforeman/forklift>`_ project and utilizes
+To ease developer setup, we have `Pulplift
+<https://pulp-installer.readthedocs.io/en/latest/pulplift/>`_ as part of the installer repository,
+which is based on the `Forklift <https://github.com/theforeman/forklift>`_ project and utilizes
 `Ansible <https://docs.ansible.com/ansible/index.html>`_ roles and playbooks to provide supported
 `Vagrant <https://docs.vagrantup.com/>`_ boxes that are more consistent with the user experience.
 
@@ -19,9 +20,6 @@ has read and write permissions, it doesn't matter where your **development direc
 You will need ``pulp/pulpcore`` at a minimum::
 
     $ git clone https://github.com/pulp/pulpcore.git
-
-This repository is for Pulp 3 only, development is done agains the master branch of
-each.
 
 Additionally, you will need at least one plugin.::
 
@@ -39,7 +37,7 @@ Installation
 ------------
 
 We recommend using ``pulplift`` for developer installations. Follow the instructions in the
-`README.md <https://github.com/pulp/pulplift/#pulplift>`_.
+`installer documentation <https://pulp-installer.readthedocs.io/en/latest/pulplift/>`_.
 
 It is also possible to use the `Ansible roles
 <https://github.com/pulp/pulp_installer#pulp-3-ansible-installer>`_ directly, if you prefer not to
