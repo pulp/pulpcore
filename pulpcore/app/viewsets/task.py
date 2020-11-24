@@ -69,6 +69,37 @@ class TaskViewSet(
     permission_classes = (AccessPolicyFromDB,)
     queryset_filtering_required_permission = "core.view_task"
 
+    DEFAULT_ACCESS_POLICY = {
+        "statements": [
+            {"action": ["list"], "principal": "authenticated", "effect": "allow"},
+            {
+                "action": ["retrieve"],
+                "principal": "authenticated",
+                "effect": "allow",
+                "condition": "has_model_or_obj_perms:core.view_task",
+            },
+            {
+                "action": ["destroy"],
+                "principal": "authenticated",
+                "effect": "allow",
+                "condition": "has_model_or_obj_perms:core.delete_task",
+            },
+            {
+                "action": ["update", "partial_update"],
+                "principal": "authenticated",
+                "effect": "allow",
+                "condition": "has_model_or_obj_perms:core.change_task",
+            },
+        ],
+        "permissions_assignment": [
+            {
+                "function": "add_for_object_creator",
+                "parameters": None,
+                "permissions": ["core.view_task", "core.change_task", "core.delete_task"],
+            }
+        ],
+    }
+
     @extend_schema(
         description="This operation cancels a task.",
         summary="Cancel a task",

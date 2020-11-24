@@ -130,63 +130,64 @@ AccessPolicy instance to exist.
 Shipping a Default Access Policy
 --------------------------------
 
-To ship an access policy, write a data migration that creates an ``AccessPolicy`` instance. Here's
-an example of code to create an instance, which would be contained in a data migration.
+To ship a default access policy, define a dictionary named ``DEFAULT_ACCESS_POLICY`` as a class
+attribute on a subclass of ``NamedModelViewSet`` containing both ``statements`` and
+``permissions_assignment``. The ``AccessPolicy`` instance will be then be created in the
+``pulp_migrate`` signal handler.
+
+Here's an example of code to define a default policy:
 
 .. code-block:: python
 
-    from pulpcore.plugin.models import AccessPolicy
+    class FileRemoteViewSet(RemoteViewSet):
 
-    FILE_REMOTE_STATEMENTS = [
-        {
-            "action": ["list"],
-            "principal": "authenticated",
-            "effect": "allow",
-        },
-        {
-            "action": ["create"],
-            "principal": "authenticated",
-            "effect": "allow",
-            "condition": "has_model_perms:file.add_fileremote",
-        },
-        {
-            "action": ["retrieve"],
-            "principal": "authenticated",
-            "effect": "allow",
-            "condition": "has_model_or_obj_perms:file.view_fileremote",
-        },
-        {
-            "action": ["update", "partial_update"],
-            "principal": "authenticated",
-            "effect": "allow",
-            "condition": "has_model_or_obj_perms:file.change_fileremote",
-        },
-        {
-            "action": ["destroy"],
-            "principal": "authenticated",
-            "effect": "allow",
-            "condition": "has_model_or_obj_perms:file.delete_fileremote",
-        },
-    ]
+    <...>
+        DEFAULT_ACCESS_POLICY = {
+            "statements": [
+                {
+                    "action": ["list"],
+                    "principal": "authenticated",
+                    "effect": "allow",
+                },
+                {
+                    "action": ["create"],
+                    "principal": "authenticated",
+                    "effect": "allow",
+                    "condition": "has_model_perms:file.add_fileremote",
+                },
+                {
+                    "action": ["retrieve"],
+                    "principal": "authenticated",
+                    "effect": "allow",
+                    "condition": "has_model_or_obj_perms:file.view_fileremote",
+                },
+                {
+                    "action": ["update", "partial_update"],
+                    "principal": "authenticated",
+                    "effect": "allow",
+                    "condition": "has_model_or_obj_perms:file.change_fileremote",
+                },
+                {
+                    "action": ["destroy"],
+                    "principal": "authenticated",
+                    "effect": "allow",
+                    "condition": "has_model_or_obj_perms:file.delete_fileremote",
+                },
+            ],
 
-    FILE_REMOTE_PERMISSIONS_ASSIGNMENT = [
-        {
-            "function": "add_for_object_creator",
-            "parameters": None,
-            "permissions": [
-                "file.view_fileremote", "file.change_fileremote", "file.delete_fileremote"
-            ]
+            "permissions_assignment": [
+                {
+                    "function": "add_for_object_creator",
+                    "parameters": None,
+                    "permissions": [
+                        "file.view_fileremote", "file.change_fileremote", "file.delete_fileremote"
+                    ]
+                },
+            ],
         }
-    ]
+        <...>
 
-    AccessPolicy.objects.create(
-        viewset_name="remotes/file/file",
-        statements=FILE_REMOTE_STATEMENTS,
-        permissions_assignment=FILE_REMOTE_PERMISSIONS_ASSIGNMENT
-    )
-
-The actual ``AccessPolicy`` statement is created at the end. The other data structures store the
-default policy. For en explanation of the ``permissions_assignment`` see the
+For an explanation of the ``permissions_assignment`` see the
 :ref:`shipping_a_default_new_object_policy` documentation.
 
 

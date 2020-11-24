@@ -2,6 +2,7 @@ from collections import defaultdict
 from importlib import import_module
 
 from django import apps
+from django.db.models.signals import post_migrate
 from django.utils.module_loading import module_has_submodule
 
 from pulpcore.exceptions.plugin import MissingPlugin
@@ -82,6 +83,9 @@ class PulpPluginAppConfig(apps.AppConfig):
         self.import_serializers()
         self.import_urls()
         self.import_modelresources()
+        post_migrate.connect(
+            _populate_access_policies, sender=self, dispatch_uid="my_unique_identifier"
+        )
 
     def import_serializers(self):
         # circular import avoidance
@@ -106,6 +110,7 @@ class PulpPluginAppConfig(apps.AppConfig):
                     continue
 
     def import_viewsets(self):
+        # TODO do not include imported ViewSets
         # circular import avoidance
         from pulpcore.app.viewsets import NamedModelViewSet
 
@@ -164,3 +169,18 @@ class PulpAppConfig(PulpPluginAppConfig):
     # with manage.py, etc. This cannot contain a dot and must not conflict with the name of a
     # package containing a Django app.
     label = "core"
+
+
+def _populate_access_policies(sender, **kwargs):
+    print(f"Initialize missing access policies for {sender.label}.")
+    apps = kwargs.get("apps")
+    if apps is None:
+        from django.apps import apps
+    AccessPolicy = apps.get_model("core", "AccessPolicy")
+    for viewset_batch in sender.named_viewsets.values():
+        for viewset in viewset_batch:
+            access_policy = getattr(viewset, "DEFAULT_ACCESS_POLICY", None)
+            if access_policy is not None:
+                AccessPolicy.objects.get_or_create(
+                    viewset_name=viewset.urlpattern(), defaults=access_policy
+                )
