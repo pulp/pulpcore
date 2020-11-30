@@ -4,6 +4,8 @@ from gettext import gettext as _
 
 from django.db import transaction
 from django.urls import reverse
+from rq.command import send_stop_job_command
+from rq.exceptions import InvalidJobOperation, NoSuchJobError
 from rq.job import Job, get_current_job
 from rq.worker import Worker
 
@@ -12,7 +14,6 @@ from pulpcore.app.util import get_view_name_for_model
 from pulpcore.constants import TASK_FINAL_STATES, TASK_STATES
 from pulpcore.exceptions import MissingResource
 from pulpcore.tasking import connection
-from pulpcore.tasking.constants import TASKING_CONSTANTS
 
 _logger = logging.getLogger(__name__)
 
@@ -50,17 +51,18 @@ def cancel(task_id):
     task_status.state = TASK_STATES.CANCELED
     task_status.save()
 
-    if job.is_started:
-        redis_conn.sadd(TASKING_CONSTANTS.KILL_KEY, job.get_id())
+    try:
+        send_stop_job_command(redis_conn, job.get_id())
+        send_stop_job_command(redis_conn, resource_job.get_id())
+    except (InvalidJobOperation, NoSuchJobError):
+        # We don't care if the job isn't currently running when we try to cancel
+        pass
 
-    if resource_job.is_started:
-        redis_conn.sadd(TASKING_CONSTANTS.KILL_KEY, resource_job.get_id())
+    # A hack to ensure that we aren't deleting resources still being used by the workhorse
+    time.sleep(0.5)
 
     resource_job.delete()
     job.delete()
-
-    # A hack to ensure that we aren't deleting resources still being used by the workhorse
-    time.sleep(1.5)
 
     with transaction.atomic():
         for report in task_status.progress_reports.all():
