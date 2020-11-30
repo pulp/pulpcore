@@ -9,6 +9,7 @@ from pulp_smash.exceptions import CalledProcessError
 from pulp_smash.pulp3.bindings import monitor_task
 from pulp_smash.pulp3.constants import MEDIA_PATH
 from pulp_smash.pulp3.utils import (
+    delete_orphans,
     delete_version,
     gen_repo,
     get_content,
@@ -25,7 +26,7 @@ from pulpcore.client.pulp_file import (
     RepositorySyncURL,
     RemotesFileApi,
 )
-from pulpcore.tests.functional.utils import configuration, core_client, delete_orphans
+from pulpcore.tests.functional.utils import configuration, core_client
 from pulpcore.tests.functional.api.using_plugin.utils import gen_file_remote
 from pulpcore.tests.functional.api.using_plugin.utils import (  # noqa:F401
     set_up_module as setUpModule,
