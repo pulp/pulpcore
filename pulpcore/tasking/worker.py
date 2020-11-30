@@ -1,12 +1,7 @@
 import logging
 import os
-import signal
 import socket
 import sys
-import threading
-import time
-
-from gettext import gettext as _
 
 from rq import Queue
 from rq.worker import Worker
@@ -103,23 +98,6 @@ class PulpWorker(Worker):
             task.set_running()
             user = get_users_with_perms(task).first()
             _set_current_user(user)
-
-        def check_kill(conn, job_id, interval=1):
-            while True:
-                res = conn.srem(TASKING_CONSTANTS.KILL_KEY, job_id)
-                if res > 0:
-                    _logger.info(
-                        _(
-                            "Received notice of task cancellation, killing workhorse."
-                            " (PID {})".format(os.getpid())
-                        )
-                    )
-
-                    os.kill(os.getpid(), signal.SIGKILL)
-                time.sleep(interval)
-
-        t = threading.Thread(target=check_kill, args=(self.connection, job.get_id()))
-        t.start()
 
         return super().perform_job(job, queue)
 
