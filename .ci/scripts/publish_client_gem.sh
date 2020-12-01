@@ -9,11 +9,15 @@
 
 set -euv
 
+# make sure this script runs at the repo root
+cd "$(dirname "$(realpath -e "$0")")"/../..
+
+mkdir ~/.gem || true
+touch ~/.gem/credentials
 echo "---
 :rubygems_api_key: $RUBYGEMS_API_KEY" > ~/.gem/credentials
 sudo chmod 600 ~/.gem/credentials
 
-cd $GITHUB_WORKSPACE
 export REPORTED_VERSION=$(http pulp/pulp/api/v3/status/ | jq --arg plugin pulpcore -r '.versions[] | select(.component == $plugin) | .version')
 export DESCRIPTION="$(git describe --all --exact-match `git rev-parse HEAD`)"
 if [[ $DESCRIPTION == 'tags/'$REPORTED_VERSION ]]; then
@@ -35,7 +39,7 @@ then
   exit
 fi
 
-cd "${GITHUB_WORKSPACE}"/../pulp-openapi-generator
+cd ../pulp-openapi-generator
 
 ./generate.sh pulpcore ruby $VERSION
 cd pulpcore-client

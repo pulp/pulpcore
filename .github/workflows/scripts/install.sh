@@ -7,9 +7,20 @@
 #
 # For more info visit https://github.com/pulp/plugin_template
 
+# make sure this script runs at the repo root
+cd "$(dirname "$(realpath -e "$0")")"/../../..
+REPO_ROOT="$PWD"
+
 set -euv
 
-if [ "$TEST" = "docs" ]; then
+if [ "${GITHUB_REF##refs/tags/}" = "${GITHUB_REF}" ]
+then
+  TAG_BUILD=0
+else
+  TAG_BUILD=1
+fi
+
+if [[ "$TEST" = "docs" || "$TEST" = "publish" ]]; then
   pip install psycopg2-binary
   pip install -r doc_requirements.txt
 fi
@@ -20,13 +31,13 @@ cd .ci/ansible/
 
 TAG=ci_build
 
-if [ -e $GITHUB_WORKSPACE/../pulp_file ]; then
+if [ -e $REPO_ROOT/../pulp_file ]; then
   PULP_FILE=./pulp_file
 else
   PULP_FILE=git+https://github.com/pulp/pulp_file.git@master
 fi
 
-if [ -e $GITHUB_WORKSPACE/../pulp-certguard ]; then
+if [ -e $REPO_ROOT/../pulp-certguard ]; then
   PULP_CERTGUARD=./pulp-certguard
 else
   PULP_CERTGUARD=git+https://github.com/pulp/pulp-certguard.git@master

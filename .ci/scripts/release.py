@@ -67,9 +67,7 @@ def validate_redmine_data(redmine_query_url, redmine_issues):
 
 
 release_path = os.path.dirname(os.path.abspath(__file__))
-plugin_path = release_path
-if ".github" in release_path:
-    plugin_path = os.path.dirname(release_path)
+plugin_path = release_path.split("/.ci")[0]
 
 version = {}
 plugin_name = "pulpcore"
