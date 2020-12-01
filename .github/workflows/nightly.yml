@@ -5,61 +5,17 @@
 #
 # For more info visit https://github.com/pulp/plugin_template
 ---
-name: Pulp CI
+name: Pulp Nightly CI/CD
 on:
-  pull_request:
-    branches:
-      - '*'
-  push:
-    branches:
-      - '*'
+  schedule:
+    # * is a special character in YAML so you have to quote this string
+    # runs at 23:00 daily
+    - cron: '00 23 * * *'
 
 jobs:
-
-  lint:
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v2
-        with:
-          # by default, it uses a depth of 1
-          # this fetches all history so that we can read each commit
-          fetch-depth: 0
-
-      - uses: actions/setup-python@v2
-        with:
-          python-version: "3.7"
-
-        # dev_requirements contains tools needed for flake8, etc.
-      - name: Install requirements
-        run: pip3 install -r dev_requirements.txt
-
-      - name: Check commit message
-        if: github.event_name == 'pull_request'
-        env:
-          GITHUB_CONTEXT: ${{ github.event.pull_request.commits_url }}
-        run: sh .github/workflows/scripts/check_commit.sh
-
-      # run black separately from flake8 to get a diff
-      - name: Run black
-        run: |
-          black --version
-          black --check --diff .
-
-      # Lint code.
-      - name: Run flake8
-        run: flake8 --config flake8.cfg
-
-      # check for any files unintentionally left out of MANIFEST.in
-      - name: Check manifest
-        run: check-manifest
-
-
-
   test:
     runs-on: ubuntu-latest
-    # run only after lint finishes
-    needs: lint
+
     strategy:
       fail-fast: false
       matrix:
@@ -79,10 +35,6 @@ jobs:
       - uses: actions/setup-python@v2
         with:
           python-version: "3.7"
-
-      - uses: actions/setup-ruby@v1
-        with:
-          ruby-version: "2.6"
 
       - name: Install httpie
         run: |
@@ -112,10 +64,83 @@ jobs:
         run: .github/workflows/scripts/script.sh
         shell: bash
 
+  publish:
+    runs-on: ubuntu-latest
+    needs: test
+
+    env:
+      TEST: publish
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          # by default, it uses a depth of 1
+          # this fetches all history so that we can read each commit
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v2
+        with:
+          python-version: "3.7"
+
+      - uses: actions/setup-ruby@v1
+        with:
+          ruby-version: "2.6"
+
+      - name: Install httpie
+        run: |
+          echo ::group::HTTPIE
+          sudo apt-get update -yq
+          sudo -E apt-get -yq --no-install-suggests --no-install-recommends install httpie
+          echo ::endgroup::
+          echo "HTTPIE_CONFIG_DIR=$GITHUB_WORKSPACE/.ci/assets/httpie/" >> $GITHUB_ENV
+
+      - name: Install python dependencies
+        run: |
+          echo ::group::PYDEPS
+          pip install wheel
+          echo ::endgroup::
+
+      - name: Before Install
+        run: .github/workflows/scripts/before_install.sh
+        shell: bash
+
+      - name: Install
+        run: .github/workflows/scripts/install.sh
+        env:
+          PY_COLORS: '1'
+          ANSIBLE_FORCE_COLOR: '1'
+        shell: bash
+
+      - name: Before Script
+        run: .github/workflows/scripts/before_script.sh
+
+
+      - name: Publish nightly client to rubygems
+        run: .ci/scripts/publish_client_gem.sh
+        shell: bash
+        env:
+          RUBYGEMS_API_KEY: ${{ secrets.RUBYGEMS_API_KEY }}
+
+
+
+      - name: Publish nightly client to pypi
+        run: .ci/scripts/publish_client_pypi.sh
+        shell: bash
+        env:
+          PYPI_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+
+
+
+      - name: Publish nightly docs
+        env:
+          BRANCH: ${GITHUB_REF##*/}
+          PULP_DOCS_KEY: ${{ secrets.PULP_DOCS_KEY }}
+        run: .ci/scripts/publish_docs.sh nightly $BRANCH
+
+
       - name: After failure
         if: failure()
         run: |
-          echo "Need to debug? Please check: https://github.com/marketplace/actions/debugging-with-tmate"
           http --timeout 30 --check-status --pretty format --print hb http://pulp/pulp/api/v3/status/ || true
           docker images || true
           docker ps -a || true

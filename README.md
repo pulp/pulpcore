@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.com/pulp/pulpcore.svg)](https://travis-ci.com/pulp/pulpcore)
+![Pulp CI](https://github.com/pulp/pulpcore/workflows/Pulp%20CI/badge.svg)
 [![PyPI](https://img.shields.io/pypi/pyversions/pulpcore.svg)](https://pypi.python.org/pypi/pulpcore)
 
 

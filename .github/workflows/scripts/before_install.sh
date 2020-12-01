@@ -7,7 +7,25 @@
 #
 # For more info visit https://github.com/pulp/plugin_template
 
+# make sure this script runs at the repo root
+cd "$(dirname "$(realpath -e "$0")")"/../../..
+
 set -mveuo pipefail
+
+if [ "${GITHUB_REF##refs/heads/}" = "${GITHUB_REF}" ]
+then
+  BRANCH_BUILD=0
+else
+  BRANCH_BUILD=1
+  BRANCH="${GITHUB_REF##refs/heads/}"
+fi
+if [ "${GITHUB_REF##refs/tags/}" = "${GITHUB_REF}" ]
+then
+  TAG_BUILD=0
+else
+  TAG_BUILD=1
+  BRANCH="${GITHUB_REF##refs/tags/}"
+fi
 
 if [[ "$TEST" == "plugin-from-pypi" ]]; then
   COMPONENT_VERSION=$(http https://pypi.org/pypi/pulpcore/json | jq -r '.info.version')
@@ -19,8 +37,8 @@ echo "---" > .ci/ansible/vars/main.yaml
 echo "component_name: pulpcore" >> .ci/ansible/vars/main.yaml
 echo "component_version: '${COMPONENT_VERSION}'" >> .ci/ansible/vars/main.yaml
 
-export PRE_BEFORE_INSTALL=$GITHUB_WORKSPACE/.github/workflows/scripts/pre_before_install.sh
-export POST_BEFORE_INSTALL=$GITHUB_WORKSPACE/.github/workflows/scripts/post_before_install.sh
+export PRE_BEFORE_INSTALL=$PWD/.github/workflows/scripts/pre_before_install.sh
+export POST_BEFORE_INSTALL=$PWD/.github/workflows/scripts/post_before_install.sh
 
 COMMIT_MSG=$(git log --format=%B --no-merges -1)
 export COMMIT_MSG
@@ -34,7 +52,7 @@ if [[ -n $(echo -e $COMMIT_MSG | grep -P "Required PR:.*" | grep -v "https") ]];
   exit 1
 fi
 
-if [ "$GITHUB_EVENT_NAME" = "pull_request" ] || [ -z "${GITHUB_REF##*/}" -a "${GITHUB_REF##*/}" != "master" ]
+if [ "$GITHUB_EVENT_NAME" = "pull_request" ] || [ "${BRANCH_BUILD}" = "1" -a "${BRANCH}" != "master" ]
 then
   export PULPCORE_PR_NUMBER=$(echo $COMMIT_MSG | grep -oP 'Required\ PR:\ https\:\/\/github\.com\/pulp\/pulpcore\/pull\/(\d+)' | awk -F'/' '{print $7}')
   export PULP_SMASH_PR_NUMBER=$(echo $COMMIT_MSG | grep -oP 'Required\ PR:\ https\:\/\/github\.com\/pulp\/pulp-smash\/pull\/(\d+)' | awk -F'/' '{print $7}')

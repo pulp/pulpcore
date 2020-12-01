@@ -7,12 +7,15 @@
 #
 # For more info visit https://github.com/pulp/plugin_template
 
+# make sure this script runs at the repo root
+cd "$(dirname "$(realpath -e "$0")")"/../../..
+
 set -euv
 
 source .github/workflows/scripts/utils.sh
 
-export PRE_BEFORE_SCRIPT=$GITHUB_WORKSPACE/.github/workflows/scripts/pre_before_script.sh
-export POST_BEFORE_SCRIPT=$GITHUB_WORKSPACE/.github/workflows/scripts/post_before_script.sh
+export PRE_BEFORE_SCRIPT=$PWD/.github/workflows/scripts/pre_before_script.sh
+export POST_BEFORE_SCRIPT=$PWD/.github/workflows/scripts/post_before_script.sh
 
 if [[ -f $PRE_BEFORE_SCRIPT ]]; then
   source $PRE_BEFORE_SCRIPT
