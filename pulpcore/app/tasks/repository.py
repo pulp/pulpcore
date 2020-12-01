@@ -59,7 +59,7 @@ async def _repair_ca(content_artifact, repaired=None):
         return False
 
     for remote_artifact in remote_artifacts:
-        downloader = remote_artifact.remote.get_downloader(remote_artifact)
+        downloader = remote_artifact.remote.cast().get_downloader(remote_artifact)
         dl_result = await downloader.run()
         if dl_result.artifact_attributes["sha256"] == content_artifact.artifact.sha256:
             with open(dl_result.path, "rb") as src:
