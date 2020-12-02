@@ -160,8 +160,12 @@ def mark_worker_offline(worker_name, normal_shutdown=False):
         pass
     else:
         # Cancel all of the tasks that were assigned to this worker's queue
-        for task_status in worker.tasks.filter(state__in=TASK_INCOMPLETE_STATES):
-            cancel(task_status.pk)
+        for task in worker.tasks.filter(state__in=TASK_INCOMPLETE_STATES):
+            cancel(task.pk)
+
+        # Ensure all locks are released for those tasks that are in final states also
+        for task in worker.tasks.exclude(state__in=TASK_INCOMPLETE_STATES):
+            task.release_resources()
 
         if normal_shutdown:
             worker.gracefully_stopped = True
