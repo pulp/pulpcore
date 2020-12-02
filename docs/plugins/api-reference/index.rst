@@ -11,6 +11,7 @@ aforementioned Pulp Plugin API deprecation policy.
 
 .. toctree::
     models
+    exceptions
     serializers
     storage
     viewsets

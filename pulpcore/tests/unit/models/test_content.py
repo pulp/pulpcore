@@ -7,13 +7,16 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 
 from django.conf import settings
 from django.test import SimpleTestCase, TestCase
-from pulpcore.plugin.exceptions import MissingDigestValidationError
+from pulpcore.plugin.exceptions import (
+    UnsupportedDigestValidationError,
+    MissingDigestValidationError,
+)
+
 from pulpcore.plugin.models import (
     Artifact,
     Content,
     ContentArtifact,
     PulpTemporaryFile,
-    UnsupportedDigestValidationError,
 )
 
 

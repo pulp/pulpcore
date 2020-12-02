@@ -5,4 +5,5 @@ from .validation import (  # noqa
     SizeValidationError,
     ValidationError,
     MissingDigestValidationError,
+    UnsupportedDigestValidationError,
 )
