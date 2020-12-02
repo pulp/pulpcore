@@ -26,6 +26,7 @@ from pulpcore.exceptions import (
     DigestValidationError,
     SizeValidationError,
     MissingDigestValidationError,
+    UnsupportedDigestValidationError,
 )
 
 # All available digest fields ordered by algorithm strength.
@@ -49,14 +50,6 @@ for alg in ("sha512", "sha384", "sha256"):
 
 # Digest-fields that are NOT ALLOWED
 _FORBIDDEN_DIGESTS = set(ALL_KNOWN_CONTENT_CHECKSUMS).difference(settings.ALLOWED_CONTENT_CHECKSUMS)
-
-
-class UnsupportedDigestValidationError(Exception):
-    """
-    Raised when an attempt is made to use a checksum-type that is not enabled/available.
-    """
-
-    pass
 
 
 class BulkCreateManager(models.Manager):

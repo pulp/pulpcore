@@ -1,0 +1,5 @@
+The ``pulpcore.plugin.models.UnsupportedDigestValidationError`` is being deprecated and
+will be removed in 3.10.
+
+It can now be found at ``pulpcore.plugin.exceptions.UnsupportedDigestValidationError``
+instead; please change any code that imports it to access it from its new location.

@@ -3,4 +3,5 @@ from pulpcore.exceptions import (  # noqa
     PulpException,
     SizeValidationError,
     MissingDigestValidationError,
+    UnsupportedDigestValidationError,
 )

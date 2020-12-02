@@ -41,3 +41,11 @@ class MissingDigestValidationError(Exception):
     """
 
     pass
+
+
+class UnsupportedDigestValidationError(Exception):
+    """
+    Raised when an attempt is made to use a checksum-type that is not enabled/available.
+    """
+
+    pass
