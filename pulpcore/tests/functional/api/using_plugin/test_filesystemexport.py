@@ -31,7 +31,7 @@ from pulpcore.tests.functional.api.using_plugin.utils import (
     gen_file_remote,
 )
 
-NUM_REPOS = 3
+NUM_REPOS = 1
 NUM_EXPORTERS = 4
 
 
@@ -163,7 +163,6 @@ class FilesystemExporterTestCase(BaseExporterCase):
         self.assertEqual(404, ae.exception.status)
 
 
-@unittest.skip("Temporarily broken due to GHA switch")
 class FilesystemExportTestCase(BaseExporterCase):
     """Test FilesystemExport CRDL methods (Update is not allowed)."""
 
