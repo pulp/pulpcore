@@ -161,14 +161,13 @@ class ArtifactsDeleteFileSystemTestCase(unittest.TestCase):
         1. Create an artifact, and verify it is present on the filesystem.
         2. Delete the artifact, and verify it is absent on the filesystem.
         """
-        cli_client = cli.Client(config.get_config())
+        cfg = config.get_config()
+        cli_client = cli.Client(cfg)
         storage = utils.get_pulp_setting(cli_client, "DEFAULT_FILE_STORAGE")
         if storage != "pulpcore.app.models.storage.FileSystem":
             self.skipTest("this test only works for filesystem storage")
 
-        cfg = config.get_config()
         api_client = api.Client(cfg, api.json_handler)
-        cli_client = cli.Client(cfg)
 
         # create
         files = {"file": utils.http_get(FILE_URL)}
