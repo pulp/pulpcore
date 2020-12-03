@@ -164,8 +164,7 @@ class ArtifactsDeleteFileSystemTestCase(unittest.TestCase):
         cli_client = cli.Client(config.get_config())
         storage = utils.get_pulp_setting(cli_client, "DEFAULT_FILE_STORAGE")
         if storage != "pulpcore.app.models.storage.FileSystem":
-            # this test only works for filesystem storage
-            return
+            self.skipTest("this test only works for filesystem storage")
 
         cfg = config.get_config()
         api_client = api.Client(cfg, api.json_handler)
