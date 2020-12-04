@@ -1,0 +1,3 @@
+Plugins are encouraged to define a ``version`` attribute on their subclass of
+``PulpPluginAppConfig``. If undefined while Pulp loads a warning is now shown to encourage plugin
+writers to implement this attribute, which will be required starting in pulpcore==3.10.

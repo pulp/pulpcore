@@ -1,5 +1,7 @@
 from collections import defaultdict
+from gettext import gettext as _
 from importlib import import_module
+import warnings
 
 from django import apps
 from django.db.models.signals import post_migrate
@@ -58,6 +60,16 @@ class PulpPluginAppConfig(apps.AppConfig):
 
     def __init__(self, app_name, app_module):
         super().__init__(app_name, app_module)
+
+        try:
+            self.version
+        except AttributeError:
+            msg = _(
+                f"The plugin `{self.label}` is missing a version attribute. Starting with "
+                "pulpcore==3.10, plugins are required to define their version on the "
+                "PulpPluginAppConfig subclass."
+            )
+            warnings.warn(msg, FutureWarning)
 
         # Module containing viewsets eg. <module 'pulp_plugin.app.viewsets'
         # from 'pulp_plugin/app/viewsets.py'>. Set by import_viewsets().
@@ -169,6 +181,9 @@ class PulpAppConfig(PulpPluginAppConfig):
     # with manage.py, etc. This cannot contain a dot and must not conflict with the name of a
     # package containing a Django app.
     label = "core"
+
+    # The version of this app
+    version = "3.9.0.dev"
 
 
 def _populate_access_policies(sender, **kwargs):
