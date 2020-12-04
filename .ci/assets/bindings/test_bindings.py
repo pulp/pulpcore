@@ -58,7 +58,7 @@ def monitor_task(task_href):
 def upload_file_in_chunks(file_path):
     """Uploads a file using the Uploads API
 
-    The file located at 'file_path' is uploaded in chunks of 200kb.
+    The file located at 'file_path' is uploaded in chunks of 1mb.
 
     Args:
         file_path (str): path to the file being uploaded to Pulp
@@ -67,7 +67,7 @@ def upload_file_in_chunks(file_path):
         artifact object
     """
     size = os.stat(file_path).st_size
-    chunk_size = 200000
+    chunk_size = 1000000
     offset = 0
     sha256hasher = hashlib.new("sha256")
 
@@ -120,19 +120,16 @@ tasks = TasksApi(core_client)
 uploads = UploadsApi(core_client)
 
 
-# Test creating an Artifact from a 1mb file uploaded in 200kb chunks
+# Test creating an Artifact from a 10mb file uploaded in 1mb chunks
 with NamedTemporaryFile() as downloaded_file:
-    response = requests.get(
-        "https://repos.fedorapeople.org/repos/pulp/pulp/demo_repos/test_bandwidth_repo/"
-        "pulp-large_1mb_test-packageA-0.1.1-1.fc14.noarch.rpm"
-    )
+    response = requests.get("https://fixtures.pulpproject.org/file-large/1.iso")
     response.raise_for_status()
     downloaded_file.write(response.content)
     artifact = upload_file_in_chunks(downloaded_file.name)
     pprint(artifact)
 
 # Create a File Remote
-remote_url = "https://repos.fedorapeople.org/pulp/pulp/demo_repos/test_file_repo/PULP_MANIFEST"
+remote_url = "https://fixtures.pulpproject.org/file/PULP_MANIFEST"
 remote_data = FileFileRemote(name="bar25", url=remote_url)
 file_remote = fileremotes.create(remote_data)
 pprint(file_remote)

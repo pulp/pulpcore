@@ -103,7 +103,7 @@ end
 artifact = upload_file_in_chunks(File.join(ENV['GITHUB_WORKSPACE'], 'template_config.yml'))
 
 # Create a File Remote
-remote_url = 'https://repos.fedorapeople.org/pulp/pulp/demo_repos/test_file_repo/PULP_MANIFEST'
+remote_url = 'https://fixtures.pulpproject.org/file/PULP_MANIFEST'
 remote_data = PulpFileClient::FileFileRemote.new({name: 'bar38', url: remote_url})
 file_remote = @fileremotes_api.create(remote_data)
 
