@@ -8,19 +8,22 @@ Plugin Django Application
 
 Like the Pulp Core itself, all Pulp Plugins begin as Django Applications, started like any other
 with `pulpcore-manager startapp <your_plugin>`. However, instead of subclassing Django's
-`django.apps.AppConfig` as seen `in the Django documentation
-<https://docs.djangoproject.com/en/1.8/ref/applications/#for-application-authors>`_, Pulp Plugins
-identify themselves as plugins to the Pulp Core by subclassing
-:class:`pulpcore.plugin.PulpPluginAppConfig`
+`django.apps.AppConfig` as seen `in the Django documentation <https://docs.djangoproject.com/en/2.2
+/ref/applications/#for-application-authors>`_, Pulp Plugins identify themselves as plugins to
+pulpcore by subclassing :class:`pulpcore.plugin.PulpPluginAppConfig`.
 
 :class:`pulpcore.plugin.PulpPluginAppConfig` also provides the application autoloading behaviors,
 such as automatic registration of viewsets with the API router, which adds plugin endpoints.
 
-The :class:`pulpcore.plugin.PulpPluginAppConfig` subclass for any plugin must set its `name` attribute to the importable
-dotted Python location of the plugin application (the Python namespace that contains at least
-models and viewsets). Additionally, it should also set its `label` attribute to something that
-unambiguously labels which plugin is represented by that subclass. See `how it is done
-<https://github.com/pulp/pulp_file/blob/master/pulp_file/app/__init__.py>`_ in ``pulp_file`` plugin.
+The :class:`pulpcore.plugin.PulpPluginAppConfig` subclass for any plugin must set a few required
+attributes:
+
+* ``name`` attribute defines the importable dotted Python location of the plugin application (the
+  Python namespace that contains at least models and viewsets).
+* ``label`` attribute to something that unambiguously labels the plugin in a clear way for users.
+  See `how it is done <https://github.com/pulp/pulp_file/blob/master/pulp_file/app/__init__.py>`_ in
+  the ``pulp_file`` plugin.
+* ``version`` attribute to the string representing the version.
 
 
 .. _plugin-entry-point:

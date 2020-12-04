@@ -69,12 +69,15 @@ def validate_redmine_data(redmine_query_url, redmine_issues):
 release_path = os.path.dirname(os.path.abspath(__file__))
 plugin_path = release_path.split("/.ci")[0]
 
-version = {}
 plugin_name = "pulpcore"
-with open(f"{plugin_path}/{plugin_name}/__init__.py") as fp:
-    version_line = [line for line in fp.readlines() if "__version__" in line][0]
-    exec(version_line, version)
-release_version = version["__version__"].replace(".dev", "")
+version = None
+with open(f"{plugin_path}/setup.py") as fp:
+    for line in fp.readlines():
+        if "version=" in line:
+            version = line.split('"')[1]
+    if not version:
+        raise RuntimeError("Could not detect existing version ... aborting.")
+release_version = version.replace(".dev", "")
 
 issues_to_close = []
 for filename in Path(f"{plugin_path}/CHANGES").rglob("*"):
@@ -155,7 +158,8 @@ with open(f"{plugin_path}/requirements.txt", "wt") as setup_file:
 
 os.system("bump2version release --allow-dirty")
 
-git.add(f"{plugin_path}/{plugin_name}/__init__.py")
+git.add(f"{plugin_path}/{plugin_name}/*")
+git.add(f"{plugin_path}/docs/conf.py")
 git.add(f"{plugin_path}/setup.py")
 git.add(f"{plugin_path}/requirements.txt")
 git.add(f"{plugin_path}/.bumpversion.cfg")
@@ -177,14 +181,17 @@ with open(f"{plugin_path}/requirements.txt", "wt") as setup_file:
 
 os.system(f"bump2version {release_type} --allow-dirty")
 
-version = {}
-with open(f"{plugin_path}/{plugin_name}/__init__.py") as fp:
-    version_line = [line for line in fp.readlines() if "__version__" in line][0]
-    exec(version_line, version)
-new_dev_version = version["__version__"]
+new_dev_version = None
+with open(f"{plugin_path}/setup.py") as fp:
+    for line in fp.readlines():
+        if "version=" in line:
+            version = line.split('"')[1]
+    if not new_dev_version:
+        raise RuntimeError("Could not detect new dev version ... aborting.")
 
 
-git.add(f"{plugin_path}/{plugin_name}/__init__.py")
+git.add(f"{plugin_path}/{plugin_name}/*")
+git.add(f"{plugin_path}/docs/conf.py")
 git.add(f"{plugin_path}/setup.py")
 git.add(f"{plugin_path}/requirements.txt")
 git.add(f"{plugin_path}/.bumpversion.cfg")
