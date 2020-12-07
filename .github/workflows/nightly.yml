@@ -9,8 +9,8 @@ name: Pulp Nightly CI/CD
 on:
   schedule:
     # * is a special character in YAML so you have to quote this string
-    # runs at 23:00 daily
-    - cron: '00 23 * * *'
+    # runs at 3:00 UTC daily
+    - cron: '00 3 * * *'
 
 jobs:
   test:
