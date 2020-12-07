@@ -1,2 +1,0 @@
-Prevented a Redis failure scenario from causing the tasking system to back up due to "tasking system
-locks" not being released, even on worker restart.
