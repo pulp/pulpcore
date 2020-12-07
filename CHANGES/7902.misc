@@ -1,1 +1,0 @@
-Replaced some custom code for task cancellation with RQ native functionality.

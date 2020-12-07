@@ -1,1 +1,0 @@
-Removed use of pulpcore.app.settings from functional tests.

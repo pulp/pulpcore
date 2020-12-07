@@ -1,2 +1,0 @@
-Fixed bug where exporter directory existed and was writable but not owned by worker process and thus
-not chmod-able.

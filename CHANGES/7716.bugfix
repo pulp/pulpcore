@@ -1,1 +1,0 @@
-Fixed incremental export to happen if start_version provided, even if last_export is null.
