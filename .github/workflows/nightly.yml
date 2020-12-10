@@ -63,6 +63,11 @@ jobs:
         run: |
           .github/workflows/scripts/before_script.sh
 
+      - name: Setting secrets
+        run: python3 .github/workflows/scripts/secrets.py "$SECRETS_CONTEXT"
+        env:
+          SECRETS_CONTEXT: ${{ toJson(secrets) }}
+
       - name: Script
         run: .github/workflows/scripts/script.sh
         shell: bash
@@ -117,26 +122,25 @@ jobs:
       - name: Before Script
         run: .github/workflows/scripts/before_script.sh
 
+      - name: Setting secrets
+        run: python3 .github/workflows/scripts/secrets.py "$SECRETS_CONTEXT"
+        env:
+          SECRETS_CONTEXT: ${{ toJson(secrets) }}
+
       
       - name: Publish nightly client to rubygems
         run: .ci/scripts/publish_client_gem.sh
         shell: bash
-        env:
-          RUBYGEMS_API_KEY: ${{ secrets.RUBYGEMS_API_KEY }}
       
 
       
       - name: Publish nightly client to pypi
         run: .ci/scripts/publish_client_pypi.sh
         shell: bash
-        env:
-          PYPI_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
       
 
       
       - name: Publish nightly docs
-        env:
-          PULP_DOCS_KEY: ${{ secrets.PULP_DOCS_KEY }}
         run: .ci/scripts/publish_docs.sh nightly ${GITHUB_REF##*/}
       
 

@@ -62,6 +62,11 @@ jobs:
         run: |
           .github/workflows/scripts/before_script.sh
 
+      - name: Setting secrets
+        run: python3 .github/workflows/scripts/secrets.py "$SECRETS_CONTEXT"
+        env:
+          SECRETS_CONTEXT: ${{ toJson(secrets) }}
+
       - name: Script
         run: .github/workflows/scripts/script.sh
         shell: bash
@@ -116,27 +121,21 @@ jobs:
       - name: Before Script
         run: |
           .github/workflows/scripts/before_script.sh
-          echo "HTTPIE_CONFIG_DIR=$GITHUB_WORKSPACE/.ci/assets/httpie/" >> $GITHUB_ENV
-      - name: Deploy plugin to pypi
+
+      - name: Setting secrets
+        run: python3 .github/workflows/scripts/secrets.py "$SECRETS_CONTEXT"
         env:
-          PYPI_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+          SECRETS_CONTEXT: ${{ toJson(secrets) }}
+      - name: Deploy plugin to pypi
         run: bash .ci/scripts/publish_plugin_pypi.sh
       - name: Publish client to rubygems
-        env:
-          RUBYGEMS_API_KEY: ${{ secrets.RUBYGEMS_API_KEY }}
         run: bash .ci/scripts/publish_client_gem.sh
       - name: Publish client to pypi
-        env:
-          PYPI_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
         run: bash .ci/scripts/publish_client_pypi.sh
       - name: Publish docs to pulpproject.org
-        env:
-          PULP_DOCS_KEY: ${{ secrets.PULP_DOCS_KEY }}
         run: .ci/scripts/publish_docs.sh tag ${GITHUB_REF##*/}
       - name: Update Redmine
         run: bash .ci/scripts/update_redmine.sh
-        env:
-          REDMINE_API_KEY: ${{ secrets.REDMINE_API_KEY }}
 
       - name: After failure
         if: failure()
