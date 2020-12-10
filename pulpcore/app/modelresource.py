@@ -8,6 +8,7 @@ from pulpcore.app.models.content import (
     ContentArtifact,
 )
 from pulpcore.app.models.repository import Repository
+from pulpcore.constants import ALL_KNOWN_CONTENT_CHECKSUMS
 from pulpcore.plugin.importexport import QueryModelResource
 
 
@@ -19,6 +20,23 @@ log = getLogger(__name__)
 # repo-version-specific.
 #
 class ArtifactResource(QueryModelResource):
+    """Resource for import/export of artifacts."""
+
+    def before_import_row(self, row, **kwargs):
+        """
+        Sets digests to None if they are blank strings.
+
+        Args:
+            row (tablib.Dataset row): incoming import-row representing a single Variant.
+            kwargs: args passed along from the import() call.
+
+        """
+        # the export converts None to blank strings but sha384 and sha512 have unique constraints
+        # that get triggered if they are blank. convert checksums back into None if they are blank.
+        for checksum in ALL_KNOWN_CONTENT_CHECKSUMS:
+            if row[checksum] == "":
+                row[checksum] = None
+
     class Meta:
         model = Artifact
         exclude = (
