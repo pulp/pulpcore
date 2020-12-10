@@ -79,6 +79,7 @@ with open(f"{plugin_path}/setup.py") as fp:
         raise RuntimeError("Could not detect existing version ... aborting.")
 release_version = version.replace(".dev", "")
 
+
 issues_to_close = []
 for filename in Path(f"{plugin_path}/CHANGES").rglob("*"):
     if filename.stem.isdigit():

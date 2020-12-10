@@ -90,8 +90,10 @@ def main():
 
     ga_build = False
 
-    if not re.search("[a-zA-Z]", branch) and len(branch.split(".")) > 2:
+    if (not re.search("[a-zA-Z]", branch) or "post" in branch) and len(branch.split(".")) > 2:
         ga_build = True
+        if "post" in branch:
+            branch = ".".join(branch.split(".")[:-1])
 
     # build the docs via the Pulp project itself
     print("Building the docs")
