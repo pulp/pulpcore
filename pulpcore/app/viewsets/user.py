@@ -5,14 +5,16 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group, Permission
 from django.core.exceptions import FieldError
 from django.shortcuts import get_object_or_404
+from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import extend_schema
 from guardian.models.models import GroupObjectPermission
 from rest_framework import mixins, status
 from rest_framework.decorators import action
+from rest_framework.filters import OrderingFilter
 from rest_framework.response import Response
 from rest_framework.serializers import ValidationError
 
-from pulpcore.app.viewsets.base import NamedModelViewSet
+from pulpcore.app.viewsets import BaseFilterSet, NamedModelViewSet
 from pulpcore.app.serializers.user import (
     GroupSerializer,
     GroupUserSerializer,
@@ -21,6 +23,23 @@ from pulpcore.app.serializers.user import (
 )
 
 User = get_user_model()
+
+
+class UserFilter(BaseFilterSet):
+    """
+    FilterSet for User.
+    """
+
+    class Meta:
+        model = User
+        fields = {
+            "username": ["exact", "iexact", "in", "contains", "icontains"],
+            "first_name": ["exact", "iexact", "in", "contains", "icontains"],
+            "last_name": ["exact", "iexact", "in", "contains", "icontains"],
+            "email": ["exact", "iexact", "in", "contains", "icontains"],
+            "is_active": ["exact"],
+            "is_staff": ["exact"],
+        }
 
 
 class UserViewSet(NamedModelViewSet, mixins.RetrieveModelMixin, mixins.ListModelMixin):
@@ -32,8 +51,11 @@ class UserViewSet(NamedModelViewSet, mixins.RetrieveModelMixin, mixins.ListModel
     """
 
     endpoint_name = "users"
+    filterset_class = UserFilter
+    filter_backends = (OrderingFilter, DjangoFilterBackend)
     serializer_class = UserSerializer
     queryset = User.objects.all()
+    ordering = ("-date_joined",)
 
     @extend_schema(description="List user permissions.")
     @action(detail=True, methods=["get"], serializer_class=PermissionSerializer)
@@ -45,6 +67,19 @@ class UserViewSet(NamedModelViewSet, mixins.RetrieveModelMixin, mixins.ListModel
         object_permission = PermissionSerializer(user.userobjectpermission_set.all(), many=True)
         permissions = PermissionSerializer(user.user_permissions.all(), many=True)
         return Response(object_permission.data + permissions.data)
+
+
+class GroupFilter(BaseFilterSet):
+    """
+    FilterSet for Group.
+    """
+
+    class Meta:
+        model = Group
+        fields = {
+            "id": ["exact", "in"],
+            "name": ["exact", "iexact", "in", "contains", "icontains"],
+        }
 
 
 class GroupViewSet(
@@ -64,8 +99,11 @@ class GroupViewSet(
 
     endpoint_name = "groups"
     router_lookup = "group"
+    filterset_class = GroupFilter
+    filter_backends = (OrderingFilter, DjangoFilterBackend)
     serializer_class = GroupSerializer
     queryset = Group.objects.all()
+    ordering = ("name",)
 
 
 class GroupModelPermissionViewSet(NamedModelViewSet):
