@@ -1,0 +1,1 @@
+Silence unnecessary log messages from django_guid which were spamming up the logs.
