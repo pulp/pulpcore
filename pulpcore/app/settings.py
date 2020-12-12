@@ -208,6 +208,11 @@ LOGGING = {
             "level": "INFO",
             "filters": ["correlation_id"],
         },
+        "django_guid": {
+            "handlers": ["console"],
+            "level": "WARNING",
+            "propagate": False,
+        },
     },
 }
 
