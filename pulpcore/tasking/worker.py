@@ -23,10 +23,10 @@ from pulpcore.app.models import Task  # noqa: E402: module level not at top of f
 from pulpcore.tasking.constants import (  # noqa: E402: module level not at top of file
     TASKING_CONSTANTS,
 )
-from pulpcore.tasking.services.storage import (  # noqa: E402: module level not at top of file
+from pulpcore.tasking.storage import (  # noqa: E402: module level not at top of file
     WorkerDirectory,
 )
-from pulpcore.tasking.services.worker_watcher import (  # noqa: E402
+from pulpcore.tasking.worker_watcher import (  # noqa: E402
     check_worker_processes,
     handle_worker_heartbeat,
     mark_worker_offline,
