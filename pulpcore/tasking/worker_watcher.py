@@ -115,21 +115,6 @@ def check_worker_processes():
     _logger.debug(msg)
 
 
-def handle_worker_offline(worker_name):
-    """
-    This is a generic function for handling workers going offline.
-
-    _delete_worker() task is called to handle any work cleanup associated with a worker going
-    offline. Logging at the info level is also done.
-
-    Args:
-        worker_name (str): The hostname of the worker
-    """
-    msg = _("Worker '%s' shutdown") % worker_name
-    _logger.info(msg)
-    mark_worker_offline(worker_name, normal_shutdown=True)
-
-
 def mark_worker_offline(worker_name, normal_shutdown=False):
     """
     Mark the :class:`~pulpcore.app.models.Worker` as offline and cancel associated tasks.
@@ -148,11 +133,10 @@ def mark_worker_offline(worker_name, normal_shutdown=False):
     """
     if not normal_shutdown:
         msg = _("The worker named %(name)s is missing. Canceling the tasks in its queue.")
-        msg = msg % {"name": worker_name}
-        _logger.error(msg)
+        _logger.error(msg % {"name": worker_name})
     else:
-        msg = _("Cleaning up shutdown worker '%s'.") % worker_name
-        _logger.info(msg)
+        _logger.info(_("Worker '{name}' shutdown".format(name=worker_name)))
+        _logger.info(_("Cleaning up shutdown worker '{name}'.".format(name=worker_name)))
 
     try:
         worker = Worker.objects.get(name=worker_name, gracefully_stopped=False, cleaned_up=False)

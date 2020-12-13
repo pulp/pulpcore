@@ -115,6 +115,7 @@ class PulpWorker(Worker):
         """
         try:
             task = Task.objects.get(pk=job.get_id())
+            task.release_resources()
         except Task.DoesNotExist:
             pass
         else:
@@ -136,6 +137,7 @@ class PulpWorker(Worker):
         """
         try:
             task = Task.objects.get(pk=job.get_id())
+            task.release_resources()
         except Task.DoesNotExist:
             pass
         else:
