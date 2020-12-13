@@ -139,36 +139,8 @@ def _queue_reserved_task(func, inner_task_id, resources, inner_args, inner_kwarg
             job_timeout=TASK_TIMEOUT,
             **options,
         )
-        q.enqueue(_release_resources, args=(inner_task_id,))
     except RedisConnectionError as e:
         task_status.set_failed(e, None)
-
-
-def _release_resources(task_id):
-    """
-    Do not queue this task yourself. It will be used automatically when your task is dispatched by
-    the _queue_reserved_task task.
-
-    When a resource-reserving task is complete, this method releases the task's resource(s)
-
-    Args:
-        task_id (basestring): The id of the task that requested the reservation
-
-    """
-    try:
-        task = Task.objects.get(pk=task_id, state=TASK_STATES.RUNNING)
-    except Task.DoesNotExist:
-        pass
-    else:
-        msg = _(
-            "The task {task_id} exited immediately for some reason. Marking as "
-            "failed. Check the logs for more details"
-        )
-        _logger.error(msg.format(task_id=task.pk))
-        exc = RuntimeError(msg.format(task_id=task.pk))
-        task.set_failed(exc, None)
-
-    Task.objects.get(pk=task_id).release_resources()
 
 
 def enqueue_with_reservation(
