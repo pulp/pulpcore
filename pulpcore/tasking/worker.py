@@ -28,6 +28,7 @@ from pulpcore.tasking.storage import (  # noqa: E402: module level not at top of
 )
 from pulpcore.tasking.worker_watcher import (  # noqa: E402
     check_worker_processes,
+    check_and_cancel_missing_tasks,
     handle_worker_heartbeat,
     mark_worker_offline,
 )
@@ -64,8 +65,10 @@ class PulpWorker(Worker):
 
         if kwargs["name"] == TASKING_CONSTANTS.RESOURCE_MANAGER_WORKER_NAME:
             queues = [Queue("resource-manager", connection=kwargs["connection"])]
+            self.is_resource_manager = True
         else:
             queues = [Queue(kwargs["name"], connection=kwargs["connection"])]
+            self.is_resource_manager = False
 
         kwargs["default_worker_ttl"] = TASKING_CONSTANTS.WORKER_TTL
         kwargs["job_monitoring_interval"] = TASKING_CONSTANTS.JOB_MONITORING_INTERVAL
@@ -174,6 +177,9 @@ class PulpWorker(Worker):
         """
         handle_worker_heartbeat(self.name)
         check_worker_processes()
+        if self.is_resource_manager:
+            check_and_cancel_missing_tasks()
+
         return super().heartbeat(*args, **kwargs)
 
     def handle_warm_shutdown_request(self, *args, **kwargs):

@@ -1,10 +1,15 @@
 import logging
 from gettext import gettext as _
 
-from pulpcore.app.models import Worker
+from pulpcore.app.models import Worker, Task
 from pulpcore.constants import TASK_INCOMPLETE_STATES
+from pulpcore.tasking import connection
 from pulpcore.tasking.constants import TASKING_CONSTANTS
 from pulpcore.tasking.util import cancel
+
+from rq.exceptions import NoSuchJobError
+from rq.job import Job
+
 
 _logger = logging.getLogger(__name__)
 
@@ -113,6 +118,37 @@ def check_worker_processes():
         % output_dict
     )
     _logger.debug(msg)
+
+
+def check_and_cancel_missing_tasks():
+    """Cancel any unexecuted Tasks which are no longer in the RQ registry.
+
+    In some situations such as a restart of Redis, Jobs can be dropped from the Redis
+    queues and "forgotten". Therefore the Task will never be marked completed in Pulp
+    and are never cleaned up. This results in stray resource locks that cause workers
+    to deadlock.
+
+    We go through all of the tasks which are in an incomplete state and check that RQ
+    still has a record of the job. If not, we cancel it.
+    """
+    redis_conn = connection.get_redis_connection()
+
+    assigned_and_unfinished_tasks = Task.objects.filter(
+        state__in=TASK_INCOMPLETE_STATES, worker__in=Worker.objects.online_workers()
+    )
+
+    for task in assigned_and_unfinished_tasks:
+        try:
+            Job.fetch(str(task.pk), connection=redis_conn)
+        except NoSuchJobError:
+            cancel(task.pk)
+
+    # Also go through all of the tasks that were still queued up on the resource manager
+    for task in Task.objects.filter(worker__isnull=True):
+        try:
+            Job.fetch(str(task._resource_job_id), connection=redis_conn)
+        except NoSuchJobError:
+            cancel(task.pk)
 
 
 def mark_worker_offline(worker_name, normal_shutdown=False):
