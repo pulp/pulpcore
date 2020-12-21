@@ -122,13 +122,16 @@ class PulpWorker(Worker):
         try:
             task = Task.objects.get(pk=job.get_id())
             task.release_resources()
-        except Task.DoesNotExist:
-            pass
-        else:
             exc_type, exc, tb = sys.exc_info()
-            task.set_failed(exc, tb)
-
-        return super().handle_job_failure(job, **kwargs)
+            res = super().handle_job_failure(job, **kwargs)
+            # job "is_stopped" state determined during super().handle_job_failure()
+            if not job.is_stopped:
+                # stopped jobs go onto the failed queue in RQ, so we need to ignore those
+                # to avoid overwriting the task status
+                task.set_failed(exc, tb)
+            return res
+        except Task.DoesNotExist:
+            return super().handle_job_failure(job, **kwargs)
 
     def handle_job_success(self, job, queue, started_job_registry):
         """
