@@ -51,6 +51,9 @@ def cancel(task_id):
     task_status.state = TASK_STATES.CANCELED
     task_status.save()
 
+    resource_job.cancel()
+    job.cancel()
+
     try:
         send_stop_job_command(redis_conn, job.get_id())
         send_stop_job_command(redis_conn, resource_job.get_id())
@@ -60,9 +63,6 @@ def cancel(task_id):
 
     # A hack to ensure that we aren't deleting resources still being used by the workhorse
     time.sleep(0.5)
-
-    resource_job.delete()
-    job.delete()
 
     with transaction.atomic():
         for report in task_status.progress_reports.all():
