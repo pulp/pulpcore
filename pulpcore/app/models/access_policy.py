@@ -1,7 +1,8 @@
 from gettext import gettext as _
 
 from django.core.exceptions import ImproperlyConfigured
-from django.contrib.auth.models import Group, User
+from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Group
 from django.contrib.postgres.fields import JSONField
 from django.db import models
 from django_currentuser.middleware import get_current_authenticated_user
@@ -10,6 +11,9 @@ from guardian.models.models import GroupObjectPermission, UserObjectPermission
 from guardian.shortcuts import assign_perm
 
 from pulpcore.app.models import BaseModel
+
+
+User = get_user_model()
 
 
 class AccessPolicy(BaseModel):
