@@ -139,7 +139,7 @@ class BaseDistributionSerializer(ModelSerializer):
         match = qs.first()
         if match:
             raise serializers.ValidationError(
-                detail=_("Overlaps with existing distribution '" "{}'").format(match.name)
+                detail=_("Overlaps with existing distribution '{}'").format(match.name)
             )
 
         return path
@@ -198,7 +198,7 @@ class RepositoryVersionDistributionSerializer(BaseDistributionSerializer):
 
         if error:
             msg = _(
-                "The attributes 'repository' and 'repository_version' must be used" " exclusively."
+                "The attributes 'repository' and 'repository_version' must be used exclusively."
             )
             raise serializers.ValidationError(msg)
 

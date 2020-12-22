@@ -110,7 +110,7 @@ class ProfilingQueue(Queue):
             create_profile_db_and_connection()
         stage_id = uuid.uuid4()
         stage_name = ".".join([stage.__class__.__module__, stage.__class__.__name__])
-        sql = "INSERT INTO stages (uuid, name, num) VALUES (" "'{uuid}','{stage}','{num}')"
+        sql = "INSERT INTO stages (uuid, name, num) VALUES ('{uuid}','{stage}','{num}')"
         formatted_sql = sql.format(uuid=stage_id, stage=stage_name, num=num)
         CONN.cursor().execute(formatted_sql)
         in_q = ProfilingQueue(stage_id, maxsize=maxsize)

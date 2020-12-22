@@ -232,7 +232,7 @@ class ArtifactSerializer(base.ModelSerializer):
                 if algorithm in models.Artifact.RELIABLE_DIGEST_FIELDS:
                     validator = UniqueValidator(
                         models.Artifact.objects.all(),
-                        message=_("{0} checksum must be " "unique.").format(algorithm),
+                        message=_("{0} checksum must be unique.").format(algorithm),
                     )
                     validator.instance = None
 

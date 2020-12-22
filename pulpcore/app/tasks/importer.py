@@ -397,7 +397,7 @@ def pulp_import(importer_pk, path, toc):
                     dest_repo = _destination_repo(importer, src_repo["name"])
                 except Repository.DoesNotExist:
                     log.warning(
-                        _("Could not find destination repo for {}. " "Skipping.").format(
+                        _("Could not find destination repo for {}. Skipping.").format(
                             src_repo["name"]
                         )
                     )

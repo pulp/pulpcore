@@ -277,7 +277,7 @@ class RepositoryVersionSerializer(ModelSerializer, NestedHyperlinkedModelSeriali
     )
     content_summary = ContentSummarySerializer(
         help_text=_(
-            "Various count summaries of the content in the version and the HREF to view " "them."
+            "Various count summaries of the content in the version and the HREF to view them."
         ),
         source="*",
         read_only=True,
