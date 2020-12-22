@@ -1,4 +1,3 @@
-import hashlib
 from gettext import gettext as _
 
 from django.db import transaction
@@ -219,24 +218,24 @@ class ArtifactSerializer(base.ModelSerializer):
                 _(f"Checksum algorithms {bad_algs} forbidden for this Pulp instance.")
             )
 
-        for algorithm in hashlib.algorithms_guaranteed:
-            if algorithm in models.Artifact.DIGEST_FIELDS:
-                digest = data["file"].hashers[algorithm].hexdigest()
+        for algorithm in reversed(models.Artifact.DIGEST_FIELDS):
+            digest = data["file"].hashers[algorithm].hexdigest()
 
-                if algorithm in data and digest != data[algorithm]:
-                    raise serializers.ValidationError(
-                        _("The %s checksum did not match.") % algorithm
-                    )
-                else:
-                    data[algorithm] = digest
-                if algorithm in models.Artifact.RELIABLE_DIGEST_FIELDS:
-                    validator = UniqueValidator(
-                        models.Artifact.objects.all(),
-                        message=_("{0} checksum must be unique.").format(algorithm),
-                    )
-                    validator.instance = None
+            if algorithm in data and digest != data[algorithm]:
+                raise serializers.ValidationError(_("The %s checksum did not match.") % algorithm)
+            else:
+                data[algorithm] = digest
 
-                    validator(digest, self.fields[algorithm])
+            if algorithm in models.Artifact.RELIABLE_DIGEST_FIELDS:
+                validator = UniqueValidator(
+                    models.Artifact.objects.all(),
+                    message=_("Artifact with {0} checksum of '{1}' already exists.").format(
+                        algorithm, digest
+                    ),
+                )
+                validator.instance = None
+                validator(digest, self.fields[algorithm])
+
         return data
 
     class Meta:
