@@ -53,11 +53,11 @@ class ExporterSerializer(ModelSerializer):
                         user_provided_realpath
                     ):
                         raise serializers.ValidationError(
-                            _("Path '{}' must be a directory " "path").format(value)
+                            _("Path '{}' must be a directory path").format(value)
                         )
                 return value
         raise serializers.ValidationError(
-            _("Path '{}' is not an allowed export " "path").format(value)
+            _("Path '{}' is not an allowed export path").format(value)
         )
 
     class Meta:

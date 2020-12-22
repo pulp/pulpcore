@@ -13,7 +13,7 @@ from pulpcore.app.serializers import DetailIdentityField, IdentityField, Related
 def relative_path_validator(relative_path):
     if os.path.isabs(relative_path):
         raise serializers.ValidationError(
-            _("Relative path can't start with '/'. " "{0}").format(relative_path)
+            _("Relative path can't start with '/'. {0}").format(relative_path)
         )
 
 

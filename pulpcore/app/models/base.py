@@ -53,9 +53,9 @@ class MasterModelMeta(ModelBase):
 
             if not default_related_name and not abstract:
                 raise Exception(
-                    _(
-                        "The 'default_related_name' option has not been set for " "{class_name}"
-                    ).format(class_name=name)
+                    _("The 'default_related_name' option has not been set for {class_name}").format(
+                        class_name=name
+                    )
                 )
 
         new_class = super().__new__(cls, name, bases, attrs, **kwargs)

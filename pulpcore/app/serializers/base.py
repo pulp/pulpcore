@@ -89,7 +89,7 @@ class ModelSerializer(
 
         if path != path.strip("/"):
             raise serializers.ValidationError(
-                detail=_("Relative path cannot begin or end with " "slashes.")
+                detail=_("Relative path cannot begin or end with slashes.")
             )
 
         return path
