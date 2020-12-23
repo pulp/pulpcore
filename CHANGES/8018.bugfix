@@ -1,0 +1,1 @@
+Changed the default permission class to ``IsAdminUser`` to protect endpoints not yet guarded by an access policy from users without permission.
