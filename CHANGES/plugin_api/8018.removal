@@ -1,0 +1,2 @@
+Changed the default permission class to from ``IsAuthenticated`` to ``IsAdminUser``.
+Any endpoints that should be accessible by all known to the system users need to specify the permission_classes accordingly.
