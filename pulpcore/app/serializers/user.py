@@ -37,11 +37,11 @@ class PermissionSerializer(serializers.Serializer):
     permission = PermissionField(source="*", read_only=True)
     obj = ContentObjectField(help_text=_("Content object."), source="*", read_only=True)
 
-    def get_id(self, obj):
+    def get_id(self, obj) -> int:
         """Get model/object permission id."""
         return obj.id
 
-    def get_pulp_href(self, obj):
+    def get_pulp_href(self, obj) -> str:
         """Get model/object permission pulp_href."""
         group_pk = self.context.get("group_pk")
 
