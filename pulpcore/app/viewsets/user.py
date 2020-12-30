@@ -121,6 +121,7 @@ class GroupModelPermissionViewSet(NamedModelViewSet):
     parent_lookup_kwargs = {"group_pk": "group__pk"}
     serializer_class = PermissionSerializer
     queryset = Permission.objects.all()
+    pulp_model_alias = "ModelPermission"
 
     def get_model_permission(self, request):
         """Get model permission"""
@@ -211,6 +212,7 @@ class GroupObjectPermissionViewSet(NamedModelViewSet):
     parent_lookup_kwargs = {"group_pk": "group__pk"}
     serializer_class = PermissionSerializer
     queryset = Permission.objects.all()
+    pulp_model_alias = "ObjectPermission"
 
     def get_object_pk(self, request):
         """Get object pk."""

@@ -1,0 +1,1 @@
+Fixed apidoc bug, where model and object permissions on groups overlapped.

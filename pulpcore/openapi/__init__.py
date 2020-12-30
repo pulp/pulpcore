@@ -284,19 +284,21 @@ class PulpSchemaGenerator(SchemaGenerator):
     """Pulp Schema Generator."""
 
     @staticmethod
-    def get_parameter_slug_from_model(model, prefix):
+    def get_parameter_slug_from_model(model, prefix, pulp_model_alias=None):
         """Returns a path parameter name for the resource associated with the model.
         Args:
             model (django.db.models.Model): The model for which a path parameter name is needed
             prefix (str): Optional prefix to add to the slug
+            pulp_model_alias (str): Optional model name to use instead of model.__name__
         Returns:
             str: *pulp_href where * is the model name in all lower case letters
         """
         app_label = model._meta.app_label
-        parts = [part.lower() for part in re.findall("[A-Z][^A-Z]*", model.__name__)]
+        model_name = pulp_model_alias or model.__name__
+        parts = [part.lower() for part in re.findall("[A-Z][^A-Z]*", model_name)]
         if prefix:
             parts.insert(0, prefix)
-        if app_label != "core":
+        elif app_label != "core":
             parts.insert(0, app_label)
         parts.append("href")
         return "_".join(parts)
@@ -336,23 +338,22 @@ class PulpSchemaGenerator(SchemaGenerator):
             resource_model = view.queryset.model
         if resource_model:
             prefix = None
+            pulp_model_alias = getattr(view, "pulp_model_alias", None)
             parent_viewset = getattr(view, "parent_viewset", None)
             if parent_viewset:
-                if schema._is_list_view():
+                if view.action in ["list", "create"]:
                     resource_model = parent_viewset.queryset.model
+                    pulp_model_alias = getattr(parent_viewset, "pulp_model_alias", None)
+
                 else:
-                    prefix = (
-                        "_".join(
-                            (
-                                parent_viewset.queryset.model._meta.app_label,
-                                parent_viewset.endpoint_name,
-                            )
-                        )
-                        .replace("-", "_")
-                        .replace("/", "_")
-                        .lower()
-                    )
-            param_name = self.get_parameter_slug_from_model(resource_model, prefix)
+                    parent_app_label = parent_viewset.queryset.model._meta.app_label
+                    prefix_parts = [parent_viewset.endpoint_name]
+                    if parent_app_label != "core":
+                        prefix_parts.insert(0, parent_app_label)
+                    prefix = "_".join(prefix_parts).replace("-", "_").replace("/", "_").lower()
+            param_name = self.get_parameter_slug_from_model(
+                resource_model, prefix, pulp_model_alias
+            )
             resource_path = "%s}/" % path.rsplit(sep="}", maxsplit=1)[0]
             path = path.replace(resource_path, "{%s}" % param_name)
         return path
