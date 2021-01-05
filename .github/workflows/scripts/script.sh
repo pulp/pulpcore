@@ -31,6 +31,11 @@ if [[ "$TEST" = "docs" || "$TEST" = "publish" ]]; then
   make PULP_URL="http://pulp" html
   cd ..
 
+  echo "Validating OpenAPI schema..."
+  cat $PWD/.ci/scripts/schema.py | cmd_stdin_prefix bash -c "cat > /tmp/schema.py"
+  cmd_prefix bash -c "python /tmp/schema.py"
+  cmd_prefix bash -c "pulpcore-manager spectacular --file pulp_schema.yml --validate"
+
   if [ -f $POST_DOCS_TEST ]; then
     source $POST_DOCS_TEST
   fi
