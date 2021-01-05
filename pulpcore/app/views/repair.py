@@ -8,6 +8,10 @@ from pulpcore.tasking.tasks import enqueue_with_reservation
 
 
 class RepairView(APIView):
+    def get_serializer_class(self):
+        """Get serializer class."""
+        return AsyncOperationResponseSerializer
+
     @extend_schema(
         description=(
             "Trigger an asynchronous task that checks for missing "

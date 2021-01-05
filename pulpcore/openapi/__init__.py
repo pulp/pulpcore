@@ -170,7 +170,13 @@ class PulpAutoSchema(AutoSchema):
         Get serializer name.
         """
         name = super()._get_serializer_name(serializer, direction)
-        if direction == "request":
+        if "RepositoryVersion" in name:
+            prefix = self.view.parent_viewset.queryset.model._meta.app_label
+            name = prefix.title() + name
+        pulp_model_alias = getattr(self.view, "pulp_model_alias", None)
+        if pulp_model_alias:
+            name = pulp_model_alias
+        if direction == "request" and "Request" in name:
             name = name[:-7]
         elif direction == "response" and "Response" not in name:
             name = name + "Response"
@@ -439,8 +445,6 @@ class PulpSchemaGenerator(SchemaGenerator):
             paths=self.parse(request, public),
             components=self.registry.build(spectacular_settings.APPEND_COMPONENTS),
         )
-        for hook in spectacular_settings.POSTPROCESSING_HOOKS:
-            result = hook(result=result, generator=self, request=request, public=public)
 
         # Basically I'm doing it to get pulp logo at redoc page
         result["info"]["x-logo"] = {

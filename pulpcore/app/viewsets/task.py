@@ -100,6 +100,14 @@ class TaskViewSet(
         ],
     }
 
+    def get_queryset(self):
+        """Get queryset."""
+        if self.request is None:
+            # https://github.com/carltongibson/django-filter/issues/966#issuecomment-639739206
+            return Task.objects.none()
+
+        return Task.objects.all()
+
     @extend_schema(
         description="This operation cancels a task.",
         summary="Cancel a task",
