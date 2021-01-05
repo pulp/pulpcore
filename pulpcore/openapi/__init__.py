@@ -389,7 +389,7 @@ class PulpSchemaGenerator(SchemaGenerator):
                 continue
 
             # Removes html tags from OpenAPI schema
-            if "include_html" not in request.query_params:
+            if request is None or "include_html" not in request.query_params:
                 operation["description"] = strip_tags(operation["description"])
 
             # operationId as actions [list, read, sync, modify, create, delete, ...]
