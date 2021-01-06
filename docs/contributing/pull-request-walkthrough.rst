@@ -34,6 +34,8 @@ Checklist
 #. Change the status of the redmine issue to "POST".
 #. Add a link to the pull request in a comment on the issue.
 #. Make sure the tests are passing.
+#. If the change requires a corresponding change in pulp-cli, open a PR against the pulp-cli or
+   :doc:`file an issue</bugs-features>`.
 
 Review
 ------
