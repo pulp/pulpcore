@@ -37,6 +37,7 @@ from .publication import (  # noqa
     BaseDistributionViewSet,
     ContentGuardFilter,
     ContentGuardViewSet,
+    DistributionFilter,
     PublicationFilter,
     PublicationViewSet,
 )
