@@ -1,4 +1,5 @@
 import os
+import re
 from gettext import gettext as _
 
 from django.conf import settings
@@ -374,3 +375,46 @@ class TaskGroupStatusCountField(serializers.IntegerField, serializers.ReadOnlyFi
 
     def get_attribute(self, instance):
         return instance.tasks.filter(state=self.state).count()
+
+
+class LabelsField(serializers.DictField):
+    """Serializer field for pulp_labels."""
+
+    def to_representation(self, labels):
+        """
+        Serializes list of labels to a dict.
+
+        Args:
+            labels (list of :class:`pulpcore.app.models.Label`): A list of labels to serialize
+
+        Returns:
+            A dict that maps label keys to label values
+        """
+        return {label.key: label.value for label in labels.all()}
+
+    def to_internal_value(self, data):
+        """
+        Ensures that data conforms to key/value dict.
+
+        Args:
+            data (dict): A dictionary that maps label key to label value
+
+        Returns:
+            A validated data dict for labels mapping keys to values
+
+        Raises:
+            rest_framework.serializers.ValidationError: if data is invalid (eg not a dict)
+        """
+        if type(data) != dict:
+            raise serializers.ValidationError(_("Data must be supplied as a key/value hash."))
+        for key, value in data.items():
+            if not re.match(r"^[\w ]+$", key):
+                raise serializers.ValidationError(
+                    _("Key '{}' contains non-alphanumerics.").format(key)
+                )
+            if re.search(r"[,()]", value):
+                raise serializers.ValidationError(
+                    _("Key '{}' contains value with comma or parenthesis.").format(key)
+                )
+
+        return data

@@ -1,10 +1,40 @@
 from gettext import gettext as _
 import uuid
 
+from django.contrib.contenttypes.fields import GenericRelation, GenericForeignKey
+from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.db.models import options
 from django.db.models.base import ModelBase
 from django_lifecycle import LifecycleModel
+
+
+class Label(LifecycleModel):
+    """Model for handling resource labels.
+
+    Labels are key/value data that can be associated with any BaseModel.
+
+    Fields:
+        pulp_id (models.UUIDField): Primary key identifier
+        object_id (models.UUIDField): Resource id
+        key (models.CharField): Key of the label
+        value (models.TextField): Value of the label
+
+    Relations:
+        content_object (GenericForeignKey): Associated resource
+        content_type (models.ForeignKey): Content type of the resource
+    """
+
+    pulp_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+    object_id = models.UUIDField()
+    key = models.CharField(max_length=200)
+    value = models.TextField(null=True)
+
+    content_object = GenericForeignKey("content_type", "object_id")
+
+    class Meta:
+        unique_together = [["content_type", "object_id", "key"]]
 
 
 class BaseModel(LifecycleModel):
@@ -17,6 +47,9 @@ class BaseModel(LifecycleModel):
         pulp_created (models.DateTimeField): Created timestamp UTC.
         pulp_last_updated (models.DateTimeField): Last updated timestamp UTC.
 
+    Relations:
+        pulp_labels (GenericRelation): A list of key/value labels.
+
     References:
 
         * https://docs.djangoproject.com/en/1.8/topics/db/models/#automatic-primary-key-fields
@@ -27,6 +60,7 @@ class BaseModel(LifecycleModel):
     pulp_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     pulp_created = models.DateTimeField(auto_now_add=True)
     pulp_last_updated = models.DateTimeField(auto_now=True, null=True)
+    pulp_labels = GenericRelation(Label)
 
     class Meta:
         abstract = True

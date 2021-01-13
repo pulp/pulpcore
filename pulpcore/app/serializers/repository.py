@@ -9,6 +9,7 @@ from pulpcore.app import models, settings
 from pulpcore.app.serializers import (
     DetailIdentityField,
     DetailRelatedField,
+    LabelsField,
     LatestVersionField,
     ModelSerializer,
     RepositoryVersionIdentityField,
@@ -20,6 +21,7 @@ from pulpcore.app.serializers import (
 
 class RepositorySerializer(ModelSerializer):
     pulp_href = DetailIdentityField(view_name_pattern=r"repositories(-.*/.*)-detail")
+    pulp_labels = LabelsField(required=False)
     versions_href = RepositoryVersionsIdentityFromRepositoryField()
     latest_version_href = LatestVersionField()
     name = serializers.CharField(
@@ -48,6 +50,7 @@ class RepositorySerializer(ModelSerializer):
         model = models.Repository
         fields = ModelSerializer.Meta.fields + (
             "versions_href",
+            "pulp_labels",
             "latest_version_href",
             "name",
             "description",
@@ -62,6 +65,7 @@ class RemoteSerializer(ModelSerializer):
     """
 
     pulp_href = DetailIdentityField(view_name_pattern=r"remotes(-.*/.*)-detail")
+    pulp_labels = LabelsField(required=False)
     name = serializers.CharField(
         help_text=_("A unique name for this remote."),
         validators=[UniqueValidator(queryset=models.Remote.objects.all())],
@@ -182,6 +186,7 @@ class RemoteSerializer(ModelSerializer):
             "proxy_url",
             "username",
             "password",
+            "pulp_labels",
             "pulp_last_updated",
             "download_concurrency",
             "policy",

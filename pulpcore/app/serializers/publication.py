@@ -9,6 +9,7 @@ from pulpcore.app.serializers import (
     BaseURLField,
     DetailIdentityField,
     DetailRelatedField,
+    LabelsField,
     ModelSerializer,
     RepositoryVersionRelatedField,
     validate_unknown_fields,
@@ -92,6 +93,7 @@ class BaseDistributionSerializer(ModelSerializer):
     """
 
     pulp_href = DetailIdentityField(view_name_pattern=r"distributions(-.*/.*)-detail")
+    pulp_labels = LabelsField(required=False)
     base_path = serializers.CharField(
         help_text=_(
             'The base (relative) path component of the published url. Avoid paths that \
@@ -119,7 +121,13 @@ class BaseDistributionSerializer(ModelSerializer):
     class Meta:
         abstract = True
         model = models.BaseDistribution
-        fields = ModelSerializer.Meta.fields + ("base_path", "base_url", "content_guard", "name")
+        fields = ModelSerializer.Meta.fields + (
+            "base_path",
+            "base_url",
+            "content_guard",
+            "pulp_labels",
+            "name",
+        )
 
     def _validate_path_overlap(self, path):
         # look for any base paths nested in path
