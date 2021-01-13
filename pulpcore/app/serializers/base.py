@@ -5,6 +5,7 @@ import traceback
 from urllib.parse import urljoin
 
 from django.core.validators import URLValidator
+from django.db import transaction
 from drf_queryfields.mixins import QueryFieldsMixin
 from rest_framework import serializers
 from rest_framework_nested.relations import (
@@ -12,7 +13,7 @@ from rest_framework_nested.relations import (
     NestedHyperlinkedRelatedField,
 )
 
-from pulpcore.app.models import Task
+from pulpcore.app.models import Label, Task
 from pulpcore.app.util import get_view_name_for_model
 
 
@@ -121,6 +122,58 @@ class ModelSerializer(
                     meta.ref_name = f"{plugin_namespace}.{meta.model.__name__}"
         except AttributeError:
             pass
+
+    def _update_labels(self, instance, labels):
+        """
+        Update the labels for a Model instance.
+
+        Args:
+            instance (pulpcore.app.models.BaseModel): instance with labels to update
+            labels (list): labels to set for the instance
+        """
+        instance.pulp_labels.exclude(key__in=labels.keys()).delete()
+
+        for key, value in labels.items():
+            label = instance.pulp_labels.filter(key=key).first()
+            try:
+                label = instance.pulp_labels.get(key=key)
+                if label.value != value:
+                    instance.pulp_labels.filter(key=key).update(value=value)
+            except Label.DoesNotExist:
+                instance.pulp_labels.create(key=key, value=value)
+
+    def create(self, validated_data):
+        """
+        Created the resource from validated_data.
+
+        Args:
+            validated_data (dict): Validated data to create instance
+
+        Returns:
+            instance: The created of resource
+        """
+        labels = validated_data.pop("pulp_labels", {})
+        with transaction.atomic():
+            instance = super().create(validated_data)
+            self._update_labels(instance, labels)
+        return instance
+
+    def update(self, instance, validated_data):
+        """
+        Update the resource from validated_data.
+
+        Args:
+            validated_data (dict): Validated data to update instance
+
+        Returns:
+            instance: The updated instance of resource
+        """
+        labels = validated_data.pop("pulp_labels", None)
+        with transaction.atomic():
+            instance = super().update(instance, validated_data)
+            if labels is not None:
+                self._update_labels(instance, labels)
+        return instance
 
 
 class _MatchingRegexViewName(object):

@@ -1,7 +1,8 @@
 from itertools import compress
+from uuid import uuid4
 
 from django.test import TestCase
-from pulpcore.plugin.models import Content, Repository, RepositoryVersion
+from pulpcore.plugin.models import Content, Label, Repository, RepositoryVersion
 
 
 class RepositoryVersionTestCase(TestCase):
@@ -289,3 +290,14 @@ class RepositoryTestCase(TestCase):
         self.assertEqual(
             self.repository.latest_version().number, 1, self.repository.latest_version().number
         )
+
+    def test_label_cascade(self):
+        """Check that a repo's labels are deleted when it's deleted."""
+        repo = Repository.objects.create(name=uuid4())
+        repo.CONTENT_TYPES = [Content]
+        repo.save()
+
+        label = repo.pulp_labels.create(key="brown", value="radagast")
+        self.assertTrue(Label.objects.filter(pk=label.pk).exists())
+        repo.delete()
+        self.assertFalse(Label.objects.filter(pk=label.pk).exists())

@@ -1,8 +1,11 @@
 # https://docs.djangoproject.com/en/dev/topics/db/models/#organizing-models-in-a-package
 
 # Must be imported first as other models depend on it
-from .base import BaseModel, MasterModel  # noqa
-
+from .base import (  # noqa
+    BaseModel,
+    Label,
+    MasterModel,
+)
 
 from .access_policy import AccessPolicy, AutoAddObjPermsMixin, AutoDeleteObjPermsMixin  # noqa
 from .content import (  # noqa
