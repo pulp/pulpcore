@@ -1,0 +1,1 @@
+X-CSRFToken is not sent through ajax requests (PUT) in api.html. Fixed by setting the right value in the JS code.
