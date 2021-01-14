@@ -21,7 +21,7 @@ from pulpcore.app.serializers import AsyncOperationResponseSerializer
 from pulpcore.tasking.tasks import enqueue_with_reservation
 
 # These should be used to prevent duplication and keep things consistent
-NAME_FILTER_OPTIONS = ["exact", "in"]
+NAME_FILTER_OPTIONS = ["exact", "in", "icontains", "contains", "startswith"]
 # e.g.
 # /?name=foo
 # /?name__in=foo,bar
