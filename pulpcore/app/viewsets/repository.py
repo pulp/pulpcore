@@ -43,15 +43,13 @@ class RepositoryFilter(BaseFilterSet):
         fields = {"name": NAME_FILTER_OPTIONS}
 
 
-class ImmutableRepositoryViewSet(
+class ReadOnlyRepositoryViewSet(
     NamedModelViewSet,
-    mixins.CreateModelMixin,
-    mixins.RetrieveModelMixin,
     mixins.ListModelMixin,
-    AsyncRemoveMixin,
+    mixins.RetrieveModelMixin,
 ):
     """
-    An immutable repository ViewSet that does not allow the usage of the methods PATCH and PUT.
+    A readonly repository which allows only GET method.
     """
 
     queryset = Repository.objects.all().order_by("name")
@@ -59,6 +57,16 @@ class ImmutableRepositoryViewSet(
     endpoint_name = "repositories"
     router_lookup = "repository"
     filterset_class = RepositoryFilter
+
+
+class ImmutableRepositoryViewSet(
+    ReadOnlyRepositoryViewSet,
+    mixins.CreateModelMixin,
+    AsyncRemoveMixin,
+):
+    """
+    An immutable repository ViewSet that does not allow the usage of the methods PATCH and PUT.
+    """
 
 
 class RepositoryViewSet(ImmutableRepositoryViewSet, AsyncUpdateMixin):
