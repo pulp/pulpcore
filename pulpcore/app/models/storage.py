@@ -7,6 +7,9 @@ from django.core.files.move import file_move_safe
 from django.core.files.storage import FileSystemStorage
 
 
+CHUNKED_UPLOAD_STORAGE = FileSystemStorage(location=settings.CHUNKED_UPLOAD_DIR)
+
+
 class FileSystem(FileSystemStorage):
     """
     Django's FileSystemStorage with modified _save() and get_available_name behaviors
@@ -123,19 +126,6 @@ def get_temp_file_path(pulp_id):
     """
     pulp_id_str = str(pulp_id)
     return os.path.join("tmp/files", pulp_id_str[:2], pulp_id_str[2:])
-
-
-def get_upload_chunk_file_path(pulp_id):
-    """
-    Determine the absolute path where a file backing an uploaded chunk should be stored.
-
-    Args:
-        pulp_id (uuid): An identifier identifying the file for UploadChunk
-    Returns:
-        A string representing the absolute path where a file backing UploadChunk should be
-        stored
-    """
-    return os.path.join(settings.CHUNKED_UPLOAD_DIR, str(pulp_id))
 
 
 def get_tls_path(model, name):

@@ -56,9 +56,11 @@ class UploadChunk(HandleTempFilesMixin, BaseModel):
             name (str): Original name of uploaded file. It is ignored by this method because the
                 pulp_id is used to determine a file path instead.
         """
-        return storage.get_upload_chunk_file_path(self.pulp_id)
+        return str(self.pulp_id)
 
-    file = fields.FileField(null=False, upload_to=storage_path, max_length=255)
+    file = fields.FileField(
+        null=False, storage=storage.CHUNKED_UPLOAD_STORAGE, upload_to=storage_path, max_length=255
+    )
     upload = models.ForeignKey(Upload, on_delete=models.CASCADE, related_name="chunks")
     offset = models.BigIntegerField()
     size = models.BigIntegerField()

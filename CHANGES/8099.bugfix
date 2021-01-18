@@ -1,0 +1,12 @@
+Fix a regression where `CHUNKED_UPLOAD_DIR` was not allowed to be outside of `MEDIA_ROOT`.
+
+In Django, any file that's uploaded outside a `FileSystemStorage` (which `MEDIA_ROOT` is)`, is a
+`SuspicuousOperation`. It generally indicates an attempt to write outside of a designated area which
+is a common attack vector.
+
+In the default Pulp deployment, `MEDIA_ROOT` is `/var/lib/pulp` and `CHUNKED_UPLOAD_DIR` is
+`/var/lib/pulp/tmp`.
+
+As part of #4498, uploads are done to an absolute path rather than use a FileSystemStorage for this.
+In deployments where `MEDIA_ROOT` is different (such as `/var/lib/pulp/media`, it suddenly becomes a
+problem.
