@@ -13,9 +13,6 @@ from guardian.shortcuts import assign_perm
 from pulpcore.app.models import BaseModel
 
 
-User = get_user_model()
-
-
 class AccessPolicy(BaseModel):
     """
     A model storing a viewset authorization policy and permission assignment of new objects created.
@@ -101,7 +98,7 @@ class AutoAddObjPermsMixin:
         permissions = self._ensure_iterable(permissions)
         users = self._ensure_iterable(users)
         for username in users:
-            user = User.objects.get(username=username)
+            user = get_user_model().objects.get(username=username)
             for perm in permissions:
                 assign_perm(perm, user, self)
 
