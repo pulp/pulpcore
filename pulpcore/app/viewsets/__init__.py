@@ -4,6 +4,7 @@ from .base import (  # noqa
     AsyncUpdateMixin,
     BaseFilterSet,
     NamedModelViewSet,
+    NAME_FILTER_OPTIONS,
 )
 
 from .access_policy import AccessPolicyViewSet  # noqa
