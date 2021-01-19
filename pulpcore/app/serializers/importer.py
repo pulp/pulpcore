@@ -10,6 +10,7 @@ from pulpcore.app.serializers import (
     ImportIdentityField,
     ModelSerializer,
     RelatedField,
+    ValidateFieldsMixin,
 )
 
 
@@ -131,21 +132,16 @@ class PulpImportSerializer(ModelSerializer):
         """
         Check validity of provided 'toc' parameter.
 
-        'toc' must:
-          * be within ALLOWED_IMPORT_PATHS.
-          * be valid JSON
-          * point to chunked-export-files that exist 'next to' the 'toc' file
+        'toc' must be within ALLOWED_IMPORT_PATHS.
 
-        NOTE: this method does NOT validate checksums of the chunked-export-files. That
+        NOTE: this method does NOT validate existence/sanity of export-files. That
         happens asynchronously, due to time/responsiveness constraints.
 
         Args:
             value (str): The user-provided toc-file-path to be validated.
 
         Raises:
-            ValidationError: When toc is not in the ALLOWED_IMPORT_PATHS setting,
-            toc is not a valid JSON table-of-contents file, or when toc points to
-            chunked-export-files that can't be found in the same directory as the toc-file.
+            ValidationError: When toc is not in the ALLOWED_IMPORT_PATHS setting
 
         Returns:
             The validated value.
@@ -170,3 +166,76 @@ class PulpImportSerializer(ModelSerializer):
             "path",
             "toc",
         )
+
+
+class EvaluationSerializer(serializers.Serializer):
+    """
+    Results from evaluating a proposed parameter to a PulpImport call.
+    """
+
+    context = serializers.CharField(
+        help_text=_("Parameter value being evaluated."),
+    )
+    is_valid = serializers.BooleanField(
+        help_text=_("True if evaluation passed, false otherwise."),
+    )
+    messages = serializers.ListField(
+        child=serializers.CharField(),
+        help_text=_("Messages describing results of all evaluations done. May be an empty list."),
+    )
+
+
+class PulpImportCheckResponseSerializer(serializers.Serializer):
+    """
+    Return the response to a PulpImport import-check call.
+    """
+
+    toc = EvaluationSerializer(
+        help_text=_("Evaluation of proposed 'toc' file for PulpImport"),
+        required=False,
+    )
+    path = EvaluationSerializer(
+        help_text=_("Evaluation of proposed 'path' file for PulpImport"),
+        required=False,
+    )
+    repo_mapping = EvaluationSerializer(
+        help_text=_("Evaluation of proposed 'repo_mapping' file for PulpImport"),
+        required=False,
+    )
+
+
+class PulpImportCheckSerializer(ValidateFieldsMixin, serializers.Serializer):
+    """
+    Check validity of provided import-options.
+
+    Provides the ability to check that an import is 'sane' without having to actually
+    create an importer.
+    """
+
+    path = serializers.CharField(
+        help_text=_("Path to export-tar-gz that will be imported."), required=False
+    )
+    toc = serializers.CharField(
+        help_text=_(
+            "Path to a table-of-contents file describing chunks to be validated, "
+            "reassembled, and imported."
+        ),
+        required=False,
+    )
+    repo_mapping = serializers.CharField(
+        help_text=_(
+            "Mapping of repo names in an export file to the repo names in Pulp. "
+            "For example, if the export has a repo named 'foo' and the repo to "
+            "import content into was 'bar', the mapping would be \"{'foo': 'bar'}\"."
+        ),
+        required=False,
+    )
+
+    def validate(self, data):
+        data = super().validate(data)
+        if "path" not in data and "toc" not in data and "repo_mapping" not in data:
+            raise serializers.ValidationError(
+                _("One of 'path', 'toc', or 'repo_mapping' must be specified.")
+            )
+        else:
+            return data

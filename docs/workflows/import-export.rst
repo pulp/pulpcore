@@ -364,3 +364,30 @@ The command to create an import will return a task that can be used to monitor t
 also see a history of past imports::
 
     http :/pulp/api/v3/importers/core/pulp/f8acba87-0250-4640-b56b-c92597d344b7/imports/
+
+Pre-validating import parameters
+--------------------------------
+
+There are a number of things that can keep an import from being successful, ranging from a specified
+export-file not being available to bad JSON specified for ``repo_mapping``. You can pre-validate your
+proposed import using the ``import-check`` command::
+
+    http POST :/pulp/api/v3/importers/core/pulp/import-check/ \
+      path=/tmp/export-file-path toc=/tmp/export-toc-path repo_mapping:="{\"source\": \"dest\"}"
+
+``import-check`` will validate that:
+
+    * paths are in ``ALLOWED_IMPORT_PATHS``
+    * containing directory exists
+    * containing directory is readable
+    * path/toc file(s) exist and are readable
+    * for TOC, containing directory is writeable
+    * repo_mapping is valid JSON
+
+``import-check`` is a low-overhead synchronous call. It does not attempt to do validations that
+require database access or long-running tasks such as verifying checksums. All parameters are optional. 
+
+.. note::
+
+    For ``path`` and ``toc``, if the ALLOWED_IMPORT_PATHS check fails, no further information will be given.
+

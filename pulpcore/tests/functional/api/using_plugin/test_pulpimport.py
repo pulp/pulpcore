@@ -4,6 +4,7 @@ Tests PulpImporter and PulpImport functionality
 NOTE: assumes ALLOWED_EXPORT_PATHS and ALLOWED_IMPORT_PATHS settings contain "/tmp" - all tests
 will fail if this is not the case.
 """
+import json
 import unittest
 
 from pulp_smash import api, cli, config
@@ -21,10 +22,11 @@ from pulpcore.tests.functional.api.using_plugin.utils import (
 
 from pulpcore.client.pulpcore import (
     ApiClient as CoreApiClient,
-    ExportersPulpApi,
     ExportersCoreExportsApi,
-    ImportersPulpApi,
+    ExportersPulpApi,
+    ImportersCoreImportCheckApi,
     ImportersCoreImportsApi,
+    ImportersPulpApi,
 )
 
 from pulpcore.client.pulpcore.exceptions import ApiException
@@ -95,6 +97,43 @@ class PulpImportTestCase(unittest.TestCase):
         return export
 
     @classmethod
+    def _setup_import_check_directories(cls):
+        """Creates a directory/file structure for testing import-check"""
+        cli_client = cli.Client(cls.cfg)
+        cmd = (
+            "mkdir",
+            "-p",
+            "/tmp/importcheck/noreaddir",
+            "/tmp/importcheck/nowritedir",
+            "/tmp/importcheck/nowritedir/notafile",
+        )
+        cli_client.run(cmd, sudo=False)
+
+        cmd = ("touch", "/tmp/importcheck/noreadfile")
+        cli_client.run(cmd, sudo=False)
+
+        cmd = ("touch", "/tmp/importcheck/noreaddir/goodfile")
+        cli_client.run(cmd, sudo=False)
+
+        cmd = ("touch", "/tmp/importcheck/nowritedir/goodfile")
+        cli_client.run(cmd, sudo=False)
+
+        cmd = ("touch", "/tmp/importcheck/nowritedir/noreadfile")
+        cli_client.run(cmd, sudo=False)
+
+        cmd = ("chmod", "333", "/tmp/importcheck/nowritedir/noreadfile")
+        cli_client.run(cmd, sudo=False)
+
+        cmd = ("chmod", "333", "/tmp/importcheck/noreadfile")
+        cli_client.run(cmd, sudo=False)
+
+        cmd = ("chmod", "333", "/tmp/importcheck/noreaddir")
+        cli_client.run(cmd, sudo=False)
+
+        cmd = ("chmod", "555", "/tmp/importcheck/nowritedir")
+        cli_client.run(cmd, sudo=False)
+
+    @classmethod
     def setUpClass(cls):
         """Create class-wide variables."""
         cls.cfg = config.get_config()
@@ -109,10 +148,13 @@ class PulpImportTestCase(unittest.TestCase):
         cls.importer_api = ImportersPulpApi(cls.core_client)
         cls.imports_api = ImportersCoreImportsApi(cls.core_client)
 
+        cls.import_check_api = ImportersCoreImportCheckApi(cls.core_client)
+
         (cls.import_repos, cls.export_repos, cls.remotes) = cls._setup_repositories()
         cls.exporter = cls._create_exporter()
         cls.export = cls._create_export()
         cls.chunked_export = cls._create_chunked_export()
+        cls._setup_import_check_directories()
 
     @classmethod
     def _delete_exporter(cls):
@@ -127,6 +169,15 @@ class PulpImportTestCase(unittest.TestCase):
         cls.exporter_api.delete(cls.exporter.pulp_href)
 
     @classmethod
+    def _delete_import_check_structures(cls):
+        """Deletes the directory tree used for testing import-check"""
+        cli_client = cli.Client(cls.cfg)
+        cmd = ("chmod", "-R", "+rwx", "/tmp/importcheck/")
+        cli_client.run(cmd, sudo=False)
+        cmd = ("rm", "-rf", "/tmp/importcheck")
+        cli_client.run(cmd, sudo=False)
+
+    @classmethod
     def tearDownClass(cls):
         """Clean up."""
         for remote in cls.remotes:
@@ -137,6 +188,7 @@ class PulpImportTestCase(unittest.TestCase):
             cls.repo_api.delete(repo.pulp_href)
 
         cls._delete_exporter()
+        cls._delete_import_check_structures()
         delete_orphans(cls.cfg)
 
     def _create_importer(self, name=None, cleanup=True):
@@ -159,6 +211,16 @@ class PulpImportTestCase(unittest.TestCase):
             self.addCleanup(self.importer_api.delete, importer.pulp_href)
 
         return importer
+
+    def _find_toc(self):
+        filenames = [
+            f for f in list(self.chunked_export.output_file_info.keys()) if f.endswith("json")
+        ]
+        return filenames[0]
+
+    def _find_path(self):
+        filenames = [f for f in list(self.export.output_file_info.keys()) if f.endswith("tar.gz")]
+        return filenames[0]
 
     def _perform_import(self, importer, chunked=False):
         """Perform an import with importer."""
@@ -236,3 +298,117 @@ class PulpImportTestCase(unittest.TestCase):
         for repo in self.import_repos:
             repo = self.repo_api.read(repo.pulp_href)
             self.assertEqual(f"{repo.pulp_href}versions/1/", repo.latest_version_href)
+
+    def test_import_check_valid_path(self):
+        body = {"path": self._find_path()}
+        result = self.import_check_api.pulp_import_check_post(body)
+        self.assertEqual(result.path.context, self._find_path())
+        self.assertTrue(result.path.is_valid)
+        self.assertEqual(len(result.path.messages), 0)
+        self.assertIsNone(result.toc)
+        self.assertIsNone(result.repo_mapping)
+
+    def test_import_check_valid_toc(self):
+        body = {"toc": self._find_toc()}
+        result = self.import_check_api.pulp_import_check_post(body)
+        self.assertEqual(result.toc.context, self._find_toc())
+        self.assertTrue(result.toc.is_valid)
+        self.assertEqual(len(result.toc.messages), 0)
+        self.assertIsNone(result.path)
+        self.assertIsNone(result.repo_mapping)
+
+    def test_import_check_repo_mapping(self):
+        body = {"repo_mapping": json.dumps({"foo": "bar"})}
+        result = self.import_check_api.pulp_import_check_post(body)
+        self.assertEqual(result.repo_mapping.context, json.dumps({"foo": "bar"}))
+        self.assertTrue(result.repo_mapping.is_valid)
+        self.assertEqual(len(result.repo_mapping.messages), 0)
+        self.assertIsNone(result.path)
+        self.assertIsNone(result.toc)
+
+        body = {"repo_mapping": '{"foo": "bar"'}
+        result = self.import_check_api.pulp_import_check_post(body)
+        self.assertEqual(result.repo_mapping.context, '{"foo": "bar"')
+        self.assertFalse(result.repo_mapping.is_valid)
+        self.assertEqual(result.repo_mapping.messages[0], "invalid JSON")
+
+    def test_import_check_not_allowed(self):
+        body = {"path": "/notinallowedimports"}
+        result = self.import_check_api.pulp_import_check_post(body)
+        self.assertEqual(result.path.context, "/notinallowedimports")
+        self.assertFalse(result.path.is_valid)
+        self.assertEqual(len(result.path.messages), 1, "Only not-allowed should be returned")
+        self.assertEqual(result.path.messages[0], "/ is not an allowed import path")
+
+        body = {"toc": "/notinallowedimports"}
+        result = self.import_check_api.pulp_import_check_post(body)
+        self.assertEqual(result.toc.context, "/notinallowedimports")
+        self.assertFalse(result.toc.is_valid)
+        self.assertEqual(len(result.toc.messages), 1, "Only not-allowed should be returned")
+        self.assertEqual(result.toc.messages[0], "/ is not an allowed import path")
+
+    def test_import_check_no_file(self):
+        body = {"path": "/tmp/idonotexist"}
+        result = self.import_check_api.pulp_import_check_post(body)
+        self.assertEqual(result.path.context, "/tmp/idonotexist")
+        self.assertFalse(result.path.is_valid)
+        self.assertTrue(
+            any("file /tmp/idonotexist does not exist" in s for s in result.path.messages)
+        )
+
+        body = {"toc": "/tmp/idonotexist"}
+        result = self.import_check_api.pulp_import_check_post(body)
+        self.assertEqual(result.toc.context, "/tmp/idonotexist")
+        self.assertFalse(result.toc.is_valid)
+        self.assertTrue(
+            any("file /tmp/idonotexist does not exist" in s for s in result.toc.messages)
+        )
+
+    def test_import_check_all_valid(self):
+        body = {
+            "path": self._find_path(),
+            "toc": self._find_toc(),
+            "repo_mapping": json.dumps({"foo": "bar"}),
+        }
+        result = self.import_check_api.pulp_import_check_post(body)
+        self.assertEqual(result.path.context, self._find_path())
+        self.assertEqual(result.toc.context, self._find_toc())
+        self.assertEqual(result.repo_mapping.context, json.dumps({"foo": "bar"}))
+
+        self.assertTrue(result.path.is_valid)
+        self.assertTrue(result.toc.is_valid)
+        self.assertTrue(result.repo_mapping.is_valid)
+
+        self.assertEqual(len(result.path.messages), 0)
+        self.assertEqual(len(result.toc.messages), 0)
+        self.assertEqual(len(result.repo_mapping.messages), 0)
+
+    def test_import_check_multiple_errors(self):
+        body = {
+            "path": "/notinallowedimports",
+            "toc": "/tmp/importcheck/nowritedir/notafile",
+            "repo_mapping": '{"foo": "bar"',
+        }
+        result = self.import_check_api.pulp_import_check_post(body)
+
+        self.assertFalse(result.path.is_valid)
+        self.assertEqual(len(result.path.messages), 1, "Only not-allowed should be returned")
+        self.assertEqual(result.path.messages[0], "/ is not an allowed import path")
+
+        self.assertFalse(result.toc.is_valid)
+        self.assertTrue(
+            any(
+                "/tmp/importcheck/nowritedir/notafile is not a file" in s
+                for s in result.toc.messages
+            )
+        )
+        # FAILS IN CI, passes locally
+        # self.assertTrue(
+        #     any(
+        #         "directory /tmp/importcheck/nowritedir must allow pulp write-access" in s
+        #         for s in result.toc.messages
+        #     )
+        # )
+
+        self.assertFalse(result.repo_mapping.is_valid)
+        self.assertEqual(result.repo_mapping.messages[0], "invalid JSON")
