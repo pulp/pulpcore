@@ -127,12 +127,12 @@ def get_temp_file_path(pulp_id):
 
 def get_upload_chunk_file_path(pulp_id):
     """
-    Determine the absolute path where a file backing an uploaded chunk should be stored.
+    Determine the relative path where a file backing an uploaded chunk should be stored.
 
     Args:
         pulp_id (uuid): An identifier identifying the file for UploadChunk
     Returns:
-        A string representing the absolute path where a file backing UploadChunk should be
+        A string representing the relative path where a file backing UploadChunk should be
         stored
     """
     return os.path.join(settings.CHUNKED_UPLOAD_DIR, str(pulp_id))

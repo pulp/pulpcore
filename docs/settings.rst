@@ -152,9 +152,11 @@ WORKING_DIRECTORY
 CHUNKED_UPLOAD_DIR
 ^^^^^^^^^^^^^^^^^^
 
-   A directory used exclusively for uploaded chunks. The uploaded chunks are stored in the default
-   storage specified by ``DEFAULT_FILE_STORAGE``. This option allows users to customize the actual
-   place where chunked uploads should be stored within the declared storage.
+   A relative path inside the MEDIA_ROOT directory used exclusively for uploaded chunks. The
+   uploaded chunks are stored in the default storage specified by ``DEFAULT_FILE_STORAGE``. This
+   option allows users to customize the actual place where chunked uploads should be stored within
+   the declared storage. The default, ``upload``, is sufficient for most use cases. A change to
+   this setting only applies to uploads created after the change.
 
 CONTENT_ORIGIN
 ^^^^^^^^^^^^^^
