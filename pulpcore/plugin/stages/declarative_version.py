@@ -134,6 +134,8 @@ class DeclarativeVersion:
     def create(self):
         """
         Perform the work. This is the long-blocking call where all syncing occurs.
+
+        Returns: The created RepositoryVersion or None if it represents no change from the latest.
         """
         with tempfile.TemporaryDirectory(dir="."):
             with self.repository.new_version() as new_version:
@@ -145,3 +147,5 @@ class DeclarativeVersion:
                 stages.append(EndStage())
                 pipeline = create_pipeline(stages)
                 loop.run_until_complete(pipeline)
+
+        return new_version if new_version.complete else None

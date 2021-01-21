@@ -104,7 +104,7 @@ class CRUDPublicationDistributionTestCase(unittest.TestCase):
 
         self.publication = self.client.get(self.publication["pulp_href"])
 
-        # content_guard is the only parameter unset.
+        # content_guard and repository parameters unset.
         for key, val in self.distribution.items():
             if key in ["content_guard", "repository"]:
                 self.assertIsNone(val, self.distribution)

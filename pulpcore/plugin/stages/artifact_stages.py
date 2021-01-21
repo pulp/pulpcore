@@ -156,7 +156,9 @@ class ArtifactDownloader(Stage):
         #    Set to None if stage is shutdown.
         content_get_task = _add_to_pending(content_iterator.__anext__())
 
-        with ProgressReport(message="Downloading Artifacts", code="downloading.artifacts") as pb:
+        with ProgressReport(
+            message="Downloading Artifacts", code="sync.downloading.artifacts"
+        ) as pb:
             try:
                 while pending:
                     done, pending = await asyncio.wait(pending, return_when=asyncio.FIRST_COMPLETED)

@@ -25,7 +25,7 @@ class Migration(migrations.Migration):
                 ('content_guard', models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, to='core.ContentGuard')),
                 ('publication', models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, to='core.Publication')),
                 ('remote', models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, to='core.Remote')),
-                ('repository', models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, to='core.Repository')),
+                ('repository', models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, to='core.Repository', related_name='distributions')),
                 ('repository_version', models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, to='core.RepositoryVersion')),
             ],
             options={

@@ -360,7 +360,9 @@ class Distribution(MasterModel):
     content_guard = models.ForeignKey(ContentGuard, null=True, on_delete=models.SET_NULL)
     publication = models.ForeignKey(Publication, null=True, on_delete=models.SET_NULL)
     remote = models.ForeignKey(Remote, null=True, on_delete=models.SET_NULL)
-    repository = models.ForeignKey(Repository, null=True, on_delete=models.SET_NULL)
+    repository = models.ForeignKey(
+        Repository, null=True, on_delete=models.SET_NULL, related_name="distributions"
+    )
     repository_version = models.ForeignKey(RepositoryVersion, null=True, on_delete=models.SET_NULL)
 
     def content_handler(self, path):
