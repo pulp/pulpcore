@@ -183,7 +183,7 @@ class PulpAppConfig(PulpPluginAppConfig):
     label = "core"
 
     # The version of this app
-    version = "3.9.1.dev"
+    version = "3.9.1"
 
 
 def _populate_access_policies(sender, **kwargs):
