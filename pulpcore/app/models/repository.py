@@ -12,6 +12,8 @@ from django.core.validators import MinValueValidator
 from django.db import models, transaction
 from django.urls import reverse
 
+from django.contrib.postgres.fields import JSONField
+
 from pulpcore.app.util import batch_qs, get_view_name_for_model
 from pulpcore.constants import ALL_KNOWN_CONTENT_CHECKSUMS
 from pulpcore.download.factory import DownloaderFactory
@@ -20,8 +22,6 @@ from pulpcore.exceptions import ResourceImmutableError
 from .base import MasterModel, BaseModel
 from .content import Artifact, Content
 from .task import CreatedResource, Task
-
-from django.contrib.postgres.fields import JSONField
 
 
 _logger = logging.getLogger(__name__)
@@ -58,6 +58,16 @@ class Repository(MasterModel):
 
     class Meta:
         verbose_name_plural = "repositories"
+
+    def on_new_version(self, version):
+        """Called when new repository versions are created.
+
+        Subclasses are expected to override this to do useful things.
+
+        Args:
+            version: The new repository version.
+        """
+        pass
 
     def save(self, *args, **kwargs):
         """
@@ -913,6 +923,7 @@ class RepositoryVersion(BaseModel):
                     self.repository.save()
                     self.save()
                     self._compute_counts()
+                    repository.on_new_version(self)
             except Exception:
                 self.delete()
                 raise
