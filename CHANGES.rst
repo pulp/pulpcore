@@ -17,6 +17,23 @@ Changelog
 
 .. towncrier release notes start
 
+3.9.1 (2021-01-21)
+==================
+REST API
+--------
+
+Removals
+~~~~~~~~
+
+- CHUNKED_UPLOAD_DIR was converted to a relative path inside MEDIA_ROOT.
+  `#8099 <https://pulp.plan.io/issues/8099>`_
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.9.0 (2020-12-07)
 ==================
 REST API
@@ -103,8 +120,7 @@ Removals
 Misc
 ~~~~
 
-- `#7690 <https://pulp.plan.io/issues/7690>`_, `#7753 <https://pulp.plan.io/issues/7753>`_, `#7902 <https://pulp.plan.io/issues/7902>`_
-
+- `#7690 <https://pulp.plan.io/issues/7690>`_, `#7753 <https://pulp.plan.io/issues/7753>`_, `#7902 <https://pulp.plan.io/issues/7902>`_, `#7890 <https://pulp.plan.io/issues/7890>`_
 
 Plugin API
 ----------
