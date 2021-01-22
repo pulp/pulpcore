@@ -13,8 +13,30 @@ from pulpcore.client.pulp_file import (
 from pulpcore.client.pulp_file.exceptions import ApiException
 
 
-class CRUDRepoTestCase(unittest.TestCase):
-    """CRUD repositories."""
+class BaseLabelTestCase(unittest.TestCase):
+    """Base class for label test classes."""
+
+    @classmethod
+    def setUpClass(cls):
+        """Create class-wide variables."""
+        cls.cfg = config.get_config()
+        cls.repo = None
+
+    def setUp(self):
+        """Create an API client."""
+        self.client = FileApiClient(self.cfg.get_bindings_config())
+        self.repo_api = RepositoriesFileApi(self.client)
+
+    def _create_repo(self, labels={}):
+        attrs = {"name": str(uuid4())}
+        if labels:
+            attrs["pulp_labels"] = labels
+        self.repo = self.repo_api.create(attrs)
+        self.addCleanup(self.repo_api.delete, self.repo.pulp_href)
+
+
+class CRUDLabelTestCase(BaseLabelTestCase):
+    """CRUD labels on repositories."""
 
     @classmethod
     def setUpClass(cls):
@@ -116,3 +138,75 @@ class CRUDRepoTestCase(unittest.TestCase):
 
         self.assertEqual(400, ae.exception.status)
         self.assertTrue("pulp_labels" in json.loads(ae.exception.body))
+
+
+class FilterLabelTestCase(BaseLabelTestCase):
+    """CRUD labels on repositories."""
+
+    @classmethod
+    def setUpClass(cls):
+        """Create class-wide variables."""
+        cls.cfg = config.get_config()
+        cls.repo = None
+
+    def setUp(self):
+        """Create an API client."""
+        self.client = FileApiClient(self.cfg.get_bindings_config())
+        self.repo_api = RepositoriesFileApi(self.client)
+
+    def _filter_labels(self, pulp_label_select):
+        resp = self.repo_api.list(pulp_label_select=pulp_label_select)
+        return resp.results
+
+    def test_label_select(self):
+        """Test removing all labels."""
+        labels = {"environment": "production", "certified": "true"}
+        self._create_repo(labels)
+        labels = {"environment": "staging", "certified": "false"}
+        self._create_repo(labels)
+
+        repos = self._filter_labels("environment=production")
+        self.assertEqual(1, len(repos))
+
+        repos = self._filter_labels("environment!=production")
+        self.assertEqual(1, len(repos))
+
+        repos = self._filter_labels("environment")
+        self.assertEqual(2, len(repos))
+
+        repos = self._filter_labels("!environment")
+        self.assertEqual(0, len(repos))
+
+        repos = self._filter_labels("environment~prod")
+        self.assertEqual(1, len(repos))
+
+        repos = self._filter_labels("environment=production,certified=true")
+        self.assertEqual(1, len(repos))
+
+        repos = self._filter_labels("environment=production,certified!=false")
+        self.assertEqual(1, len(repos))
+
+    def test_empty_blank_filter(self):
+        """Test filtering values with a blank string."""
+        labels = {"environment": ""}
+        self._create_repo(labels)
+
+        repos = self._filter_labels("environment=")
+        self.assertEqual(1, len(repos))
+
+        repos = self._filter_labels("environment~")
+        self.assertEqual(1, len(repos))
+
+    def test_invalid_label_select(self):
+        """Test removing all labels."""
+        with self.assertRaises(ApiException) as ae:
+            self._filter_labels("")
+        self.assertEqual(400, ae.exception.status)
+
+        with self.assertRaises(ApiException) as ae:
+            self._filter_labels("!environment=production")
+        self.assertEqual(400, ae.exception.status)
+
+        with self.assertRaises(ApiException) as ae:
+            self._filter_labels("=bad filter")
+        self.assertEqual(400, ae.exception.status)

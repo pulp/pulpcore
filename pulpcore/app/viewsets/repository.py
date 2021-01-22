@@ -31,12 +31,13 @@ from pulpcore.app.viewsets import (
     NamedModelViewSet,
 )
 from pulpcore.app.viewsets.base import DATETIME_FILTER_OPTIONS, NAME_FILTER_OPTIONS
-from pulpcore.app.viewsets.custom_filters import IsoDateTimeFilter
+from pulpcore.app.viewsets.custom_filters import IsoDateTimeFilter, LabelSelectFilter
 from pulpcore.tasking.tasks import enqueue_with_reservation
 
 
 class RepositoryFilter(BaseFilterSet):
     name = filters.CharFilter()
+    pulp_label_select = LabelSelectFilter()
 
     class Meta:
         model = Repository
@@ -260,6 +261,7 @@ class RemoteFilter(BaseFilterSet):
     """
 
     name = filters.CharFilter()
+    pulp_label_select = LabelSelectFilter()
     pulp_last_updated = IsoDateTimeFilter()
 
     class Meta:
