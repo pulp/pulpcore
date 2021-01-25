@@ -1,0 +1,1 @@
+Publication creation will fail when there is content which doesn't contain at least one artifact with allowed checksum.

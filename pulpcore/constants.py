@@ -1,3 +1,4 @@
+from gettext import gettext as _
 from types import SimpleNamespace
 
 #: All valid task states.
@@ -49,3 +50,8 @@ API_ROOT = "pulp/api/v3/"
 # adding here won't make a new type-of checksum available. sha256 MUST be here,
 # as Pulp relies on it to identify entities.
 ALL_KNOWN_CONTENT_CHECKSUMS = {"md5", "sha1", "sha224", "sha256", "sha384", "sha512"}
+
+# Shared part of error message for user which setting to use
+ALLOWED_CHECKSUM_ERROR_MSG = _(
+    "You can add allowed checksums with extending the 'ALLOWED_CONTENT_CHECKSUMS' setting."
+)

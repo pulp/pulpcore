@@ -1,10 +1,14 @@
 from django.db import IntegrityError, models, transaction
 
+from gettext import gettext as _
+
 from .base import MasterModel, BaseModel
 from .content import Artifact, Content, ContentArtifact
 from .repository import Remote, Repository, RepositoryVersion
 from .task import CreatedResource
+from pulpcore.constants import ALLOWED_CHECKSUM_ERROR_MSG
 from pulpcore.app.files import PulpTemporaryUploadedFile
+from pulpcore.plugin.exceptions import UnsupportedDigestValidationError
 
 
 class Publication(MasterModel):
@@ -69,6 +73,25 @@ class Publication(MasterModel):
             Adds a Task.created_resource for the publication.
         """
         with transaction.atomic():
+            # Check if at least some remote artifacts have allowed checksum
+            for ca in ContentArtifact.objects.filter(
+                content__in=repository_version.content, artifact=None
+            ):
+                allowed_checksum_content = False
+                remote_artifacts = ca.remoteartifact_set.all()
+                for checksum in Artifact.DIGEST_FIELDS:
+                    if any([ra for ra in remote_artifacts if getattr(ra, checksum, None)]):
+                        allowed_checksum_content = True
+                        break
+                if not allowed_checksum_content:
+                    raise UnsupportedDigestValidationError(
+                        _(
+                            'Cannot publish repository version "{}" because any remote artifact '
+                            "of {} doesn't contain allowed checksum type. {}".format(
+                                repository_version.pk, ca.content, ALLOWED_CHECKSUM_ERROR_MSG
+                            )
+                        )
+                    )
             publication = cls(pass_through=pass_through, repository_version=repository_version)
             publication.save()
             resource = CreatedResource(content_object=publication)
