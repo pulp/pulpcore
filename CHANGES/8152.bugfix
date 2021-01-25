@@ -1,0 +1,1 @@
+Fixed the viewset_name used by access policy for the cases when parent_viewset is involved.

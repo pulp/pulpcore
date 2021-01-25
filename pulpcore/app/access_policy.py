@@ -3,6 +3,7 @@ import warnings
 from rest_access_policy import AccessPolicy
 
 from pulpcore.app.models import AccessPolicy as AccessPolicyModel
+from pulpcore.app.util import get_view_urlpattern
 
 
 class AccessPolicyFromDB(AccessPolicy):
@@ -33,7 +34,7 @@ class AccessPolicyFromDB(AccessPolicy):
         """
         try:
             access_policy_obj = AccessPolicyModel.objects.get(
-                viewset_name=view.__class__.urlpattern()
+                viewset_name=get_view_urlpattern(view)
             )
         except AccessPolicyModel.NotFound:
             access_policy_obj = AccessPolicyModel.objects.get(viewset_name=view.__class__.__name__)

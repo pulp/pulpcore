@@ -187,6 +187,8 @@ class PulpAppConfig(PulpPluginAppConfig):
 
 
 def _populate_access_policies(sender, **kwargs):
+    from pulpcore.app.util import get_view_urlpattern
+
     print(f"Initialize missing access policies for {sender.label}.")
     apps = kwargs.get("apps")
     if apps is None:
@@ -197,5 +199,5 @@ def _populate_access_policies(sender, **kwargs):
             access_policy = getattr(viewset, "DEFAULT_ACCESS_POLICY", None)
             if access_policy is not None:
                 AccessPolicy.objects.get_or_create(
-                    viewset_name=viewset.urlpattern(), defaults=access_policy
+                    viewset_name=get_view_urlpattern(viewset), defaults=access_policy
                 )

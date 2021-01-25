@@ -1,3 +1,5 @@
+import os
+
 from django.apps import apps
 from django.contrib.contenttypes.models import ContentType
 from pkg_resources import get_distribution
@@ -108,3 +110,20 @@ def get_version_from_model(in_model):
     maybe_the_distribution_name = app_config_module.split(".")[0]
     version = get_distribution(maybe_the_distribution_name).version  # hope for the best!
     return maybe_the_distribution_name, version
+
+
+def get_view_urlpattern(view):
+    """
+    Get a full urlpattern for a view which includes a parent urlpattern if it exists.
+    E.g. for repository versions the urlpattern is just `versions` without its parent_viewset
+    urlpattern.
+
+    Args:
+        view(subclass rest_framework.viewsets.GenericViewSet): The view being requested.
+
+    Returns:
+        str: a full urlpattern for a specified view/viewset
+    """
+    if hasattr(view, "parent_viewset") and view.parent_viewset:
+        return os.path.join(view.parent_viewset.urlpattern(), view.urlpattern())
+    return view.urlpattern()
