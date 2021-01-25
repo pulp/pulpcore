@@ -19,6 +19,7 @@ gunicorn>=19.9,<20.1
 jinja2
 pygtrie~=2.3.3
 psycopg2>=2.7,<2.9
+pyparsing  # https://github.com/rsinger86/drf-access-policy/issues/46
 PyYAML>=5.1.1,<5.4.0
 python-gnupg~=0.4.6
 redis>=3.4.0
