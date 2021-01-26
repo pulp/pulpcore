@@ -188,3 +188,93 @@ def has_remote_param_model_or_obj_perms(request, view, action, permission):
     if has_remote_param_obj_perms(request, view, action, permission):
         return True
     return False
+
+
+# 'Repository' attribute checks
+
+
+def has_repo_attr_obj_perms(request, view, action, permission):
+    """
+    Checks if the current user has object-level permission on a ``repository`` attribute.
+
+    The object in this case is the one specified by the ``repository`` attribute of a resource
+    which is being operated on. For example, when deleting a repository version, a ``repository``
+    is its attribute.
+
+    This is usable as a conditional check in an AccessPolicy. Here is an example checking for the
+    "file.view_filerepository" permissions at the object-level.
+
+    ::
+
+        {
+            ...
+            "condition": "has_repo_attr_obj_perms:file.view_filerepository",
+        }
+
+    Since it is checking a ``repository`` object the permission argument should be one of the
+    following:
+
+    * "file.change_filerepository" - Permission to change the ``FileRepository``.
+    * "file.view_filerepository" - Permission to view the ``FileRepository``.
+    * "file.delete_filerepository" - Permission to delete the ``FileRepository``.
+    * any custom permission a plugin has defined for their repository.
+
+    Args:
+        request (rest_framework.request.Request): The request being made.
+        view (subclass rest_framework.viewsets.GenericViewSet): The view being checked for
+            authorization.
+        action (str): The action being performed, e.g. "destroy".
+        permission (str): The name of the repository Permission to be checked. In the form
+            `app_label.codename`, e.g. "file.delete_filerepository".
+
+    Returns:
+        True if the user has the Permission named by the ``permission`` argument on the
+        ``repository`` attribute at the object-level. False otherwise.
+    """
+    repository = view.get_object().repository
+    return request.user.has_perm(permission, repository)
+
+
+def has_repo_attr_model_or_obj_perms(request, view, action, permission):
+    """
+    Checks if the current user has model-level or object-level permissions on a ``repository``.
+
+    The object in this case is the one specified by the ``repository`` attribute of a resource
+    which is being operated on. For example, when deleting a repository version, a ``repository``
+    is its attribute.
+
+    This is usable as a conditional check in an AccessPolicy. Here is an example checking for the
+    "file.view_filerepository" permissions at the object-level.
+
+    ::
+
+        {
+            ...
+            "condition": "has_repo_attr_model_or_obj_perms:file.view_filerepository",
+        }
+
+    Since it is checking a ``repository`` object the permission argument should be one of the
+    following:
+
+    * "file.change_filerepository" - Permission to change the ``FileRepository``.
+    * "file.view_filerepository" - Permission to view the ``FileRepository``.
+    * "file.delete_filerepository" - Permission to delete the ``FileRepository``.
+    * any custom permission a plugin has defined for their repository.
+
+    Args:
+        request (rest_framework.request.Request): The request being made.
+        view (subclass rest_framework.viewsets.GenericViewSet): The view being checked for
+            authorization.
+        action (str): The action being performed, e.g. "destroy".
+        permission (str): The name of the repository Permission to be checked. In the form
+            `app_label.codename`, e.g. "file.delete_filerepository".
+
+    Returns:
+        True if the user has the Permission on the ``repository`` attribute named by the
+        ``permission`` at the model or object level. False otherwise.
+    """
+    if has_model_perms(request, view, action, permission):
+        return True
+    if has_repo_attr_obj_perms(request, view, action, permission):
+        return True
+    return False
