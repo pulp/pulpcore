@@ -86,11 +86,13 @@ from the filer, so please :ref:`reach out<community>` with a link to your issue.
 For **Backport Requests**
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Only bug fixes from newer versions can be requested to be backported. No features can be backported
-to older versions.
+Only bug fixes from newer released or unreleased versions can be requested to be backported.
+No features can be backported to older versions.
 
 Django migrations are order dependent so we cannot backport any change that has database migrations.
-Thus z-stream releases will not add new migrations.
+Thus Z-stream releases will not add new migrations.
+
+No Z releases are planned by default. Backport requests trigger Z release planning.
 
 Please include:
 
