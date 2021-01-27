@@ -188,6 +188,8 @@ class DownloaderFactory:
                 login=self._remote.username, password=self._remote.password
             )
 
+        kwargs["throttler"] = self._remote.download_throttler if self._remote.rate_limit else None
+
         return download_class(url, **options, **kwargs)
 
     def _generic(self, download_class, url, **kwargs):
