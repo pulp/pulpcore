@@ -145,6 +145,11 @@ class RemoteSerializer(ModelSerializer):
         child=serializers.DictField(),
         help_text=_("Headers for aiohttp.Clientsession"),
     )
+    rate_limit = serializers.IntegerField(
+        help_text=_("Limits total download rate in requests per second"),
+        allow_null=True,
+        required=False,
+    )
 
     def validate_url(self, value):
         """
@@ -194,6 +199,7 @@ class RemoteSerializer(ModelSerializer):
             "connect_timeout",
             "sock_connect_timeout",
             "sock_read_timeout",
+            "rate_limit",
         )
 
 

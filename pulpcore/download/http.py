@@ -120,6 +120,7 @@ class HttpDownloader(BaseDownloader):
         proxy_auth=None,
         headers_ready_callback=None,
         headers=None,
+        throttler=None,
         **kwargs,
     ):
         """
@@ -136,6 +137,7 @@ class HttpDownloader(BaseDownloader):
                 available. The dictionary passed has the header names as the keys and header values
                 as its values. e.g. `{'Transfer-Encoding': 'chunked'}`
             headers (dict): Headers to be submitted with the request.
+            throttler (asyncio_throttle.Throttler): Throttler for asyncio.
             kwargs (dict): This accepts the parameters of
                 :class:`~pulpcore.plugin.download.BaseDownloader`.
         """
@@ -151,6 +153,7 @@ class HttpDownloader(BaseDownloader):
         self.proxy = proxy
         self.proxy_auth = proxy_auth
         self.headers_ready_callback = headers_ready_callback
+        self.download_throttler = throttler
         super().__init__(url, **kwargs)
 
     def raise_for_status(self, response):
@@ -208,6 +211,8 @@ class HttpDownloader(BaseDownloader):
         Args:
             extra_data (dict): Extra data passed by the downloader.
         """
+        if self.download_throttler:
+            await self.download_throttler.acquire()
         async with self.session.get(self.url, proxy=self.proxy, auth=self.auth) as response:
             self.raise_for_status(response)
             to_return = await self._handle_response(response)

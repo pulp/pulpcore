@@ -7,6 +7,7 @@ from os import path
 import logging
 
 import django
+from asyncio_throttle import Throttler
 from django.core.validators import MinValueValidator
 from django.db import models, transaction
 from django.urls import reverse
@@ -215,6 +216,7 @@ class Remote(MasterModel):
         connect_timeout (models.FloatField): Value for aiohttp.ClientTimeout.connect
         sock_connect_timeout (models.FloatField): Value for aiohttp.ClientTimeout.sock_connect
         sock_read_timeout (models.FloatField): Value for aiohttp.ClientTimeout.sock_read
+        rate_limit (models.IntegerField): Limits total download rate in requests per second.
     """
 
     TYPE = "remote"
@@ -269,6 +271,7 @@ class Remote(MasterModel):
         null=True, validators=[MinValueValidator(0.0, "Timeout must be >= 0")]
     )
     headers = JSONField(blank=True, null=True)
+    rate_limit = models.IntegerField(null=True)
 
     @property
     def download_factory(self):
@@ -289,6 +292,26 @@ class Remote(MasterModel):
         except AttributeError:
             self._download_factory = DownloaderFactory(self)
             return self._download_factory
+
+    @property
+    def download_throttler(self):
+        """
+        Return the Throttler which can be used to rate limit downloaders.
+
+        Upon first access, the Throttler is instantiated and saved internally.
+        Plugin writers are expected to override when additional configuration of the
+        DownloaderFactory is needed.
+
+        Returns:
+            Throttler: The instantiated Throttler to be used by get_downloader()
+
+        """
+        try:
+            return self._download_throttler
+        except AttributeError:
+            if self.rate_limit:
+                self._download_throttler = Throttler(rate_limit=self.rate_limit)
+                return self._download_throttler
 
     def get_downloader(self, remote_artifact=None, url=None, **kwargs):
         """
