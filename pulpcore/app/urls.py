@@ -130,7 +130,7 @@ urlpatterns = [
 urlpatterns.append(
     url(
         r"^{api_root}docs/api.json".format(api_root=API_ROOT),
-        SpectacularJSONAPIView.as_view(),
+        SpectacularJSONAPIView.as_view(authentication_classes=[], permission_classes=[]),
         name="schema",
     )
 )
@@ -138,7 +138,7 @@ urlpatterns.append(
 urlpatterns.append(
     url(
         r"^{api_root}docs/api.yaml".format(api_root=API_ROOT),
-        SpectacularYAMLAPIView.as_view(),
+        SpectacularYAMLAPIView.as_view(authentication_classes=[], permission_classes=[]),
         name="schema-yaml",
     )
 )
@@ -146,7 +146,11 @@ urlpatterns.append(
 urlpatterns.append(
     url(
         r"^{api_root}docs/".format(api_root=API_ROOT),
-        SpectacularRedocView.as_view(url="/pulp/api/v3/docs/api.json?include_html=1"),
+        SpectacularRedocView.as_view(
+            authentication_classes=[],
+            permission_classes=[],
+            url="/pulp/api/v3/docs/api.json?include_html=1",
+        ),
         name="schema-redoc",
     )
 )
