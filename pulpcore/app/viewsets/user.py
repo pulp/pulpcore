@@ -359,6 +359,31 @@ class GroupUserViewSet(NamedModelViewSet):
     parent_lookup_kwargs = {"group_pk": "groups__pk"}
     serializer_class = GroupUserSerializer
     queryset = User.objects.all()
+    permission_classes = (AccessPolicyFromDB,)
+
+    DEFAULT_ACCESS_POLICY = {
+        "statements": [
+            {
+                "action": ["list"],
+                "principal": "authenticated",
+                "effect": "allow",
+                "condition": "has_group_model_or_obj_perms:auth.view_group",
+            },
+            {
+                "action": ["create"],
+                "principal": "authenticated",
+                "effect": "allow",
+                "condition": "has_group_model_or_obj_perms:auth.change_group",
+            },
+            {
+                "action": ["destroy"],
+                "principal": "authenticated",
+                "effect": "allow",
+                "condition": "has_group_model_or_obj_perms:auth.change_group",
+            },
+        ],
+        "permissions_assignment": [],
+    }
 
     def list(self, request, group_pk):
         """
