@@ -14,6 +14,7 @@ from rest_framework.filters import OrderingFilter
 from rest_framework.response import Response
 from rest_framework.serializers import ValidationError
 
+from pulpcore.app.access_policy import AccessPolicyFromDB
 from pulpcore.app.viewsets import BaseFilterSet, NamedModelViewSet
 from pulpcore.app.serializers.user import (
     GroupSerializer,
@@ -104,6 +105,53 @@ class GroupViewSet(
     serializer_class = GroupSerializer
     queryset = Group.objects.all()
     ordering = ("name",)
+    permission_classes = (AccessPolicyFromDB,)
+    queryset_filtering_required_permission = "auth.view_group"
+
+    DEFAULT_ACCESS_POLICY = {
+        "statements": [
+            {
+                "action": ["list"],
+                "principal": "authenticated",
+                "effect": "allow",
+            },
+            {
+                "action": ["create"],
+                "principal": "authenticated",
+                "effect": "allow",
+                "condition": "has_model_perms:auth.add_group",
+            },
+            {
+                "action": ["retrieve"],
+                "principal": "authenticated",
+                "effect": "allow",
+                "condition": "has_model_or_obj_perms:auth.view_group",
+            },
+            {
+                "action": ["update", "partial_update"],
+                "principal": "authenticated",
+                "effect": "allow",
+                "condition": "has_model_or_obj_perms:auth.change_group",
+            },
+            {
+                "action": ["destroy"],
+                "principal": "authenticated",
+                "effect": "allow",
+                "condition": "has_model_or_obj_perms:auth.delete_group",
+            },
+        ],
+        "permissions_assignment": [
+            {
+                "function": "add_for_object_creator",
+                "parameters": None,
+                "permissions": [
+                    "auth.view_group",
+                    "auth.change_group",
+                    "auth.delete_group",
+                ],
+            },
+        ],
+    }
 
 
 class GroupModelPermissionViewSet(NamedModelViewSet):
