@@ -1,4 +1,3 @@
-# coding=utf-8
 """Utilities for pulpcore API tests."""
 import string
 from datetime import datetime

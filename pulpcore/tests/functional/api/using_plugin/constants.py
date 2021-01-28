@@ -1,4 +1,3 @@
-# coding=utf-8
 """Constants for pulpcore API tests that require the use of a plugin."""
 import os
 from urllib.parse import urljoin

@@ -1,4 +1,3 @@
-# coding=utf-8
 """Tests that CRUD repositories."""
 import time
 import unittest

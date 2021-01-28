@@ -1,4 +1,3 @@
-# coding=utf-8
 """Utilities for pulpcore API tests that require the use of a plugin."""
 from functools import partial
 from unittest import SkipTest

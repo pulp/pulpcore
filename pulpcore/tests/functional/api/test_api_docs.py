@@ -1,4 +1,3 @@
-# coding=utf-8
 """Test related to the api docs page."""
 import unittest
 

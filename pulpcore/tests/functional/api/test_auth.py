@@ -1,4 +1,3 @@
-# coding=utf-8
 """Tests for Pulp 3's authentication API.
 
 For more information, see the documentation on `Authentication

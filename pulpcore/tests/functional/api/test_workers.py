@@ -1,4 +1,3 @@
-# coding=utf-8
 """Tests related to the workers."""
 import unittest
 from datetime import datetime, timedelta

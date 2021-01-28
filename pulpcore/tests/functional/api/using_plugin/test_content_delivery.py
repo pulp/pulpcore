@@ -1,4 +1,3 @@
-# coding=utf-8
 """Tests related to content delivery."""
 import hashlib
 import unittest
