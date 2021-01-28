@@ -1,4 +1,3 @@
-# coding=utf-8
 """Utilities for Pulpcore tests."""
 from functools import partial
 from unittest import SkipTest

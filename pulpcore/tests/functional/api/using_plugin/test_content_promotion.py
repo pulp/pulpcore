@@ -1,4 +1,3 @@
-# coding=utf-8
 """Tests related to content promotion."""
 import hashlib
 import unittest

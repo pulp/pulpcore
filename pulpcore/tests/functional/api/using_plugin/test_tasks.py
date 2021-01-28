@@ -1,4 +1,3 @@
-# coding=utf-8
 """Test that operations can be performed over tasks."""
 import unittest
 

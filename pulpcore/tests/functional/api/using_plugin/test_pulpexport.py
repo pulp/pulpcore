@@ -1,4 +1,3 @@
-# coding=utf-8
 """
 Tests PulpExporter and PulpExport functionality
 

@@ -1,4 +1,3 @@
-# coding=utf-8
 """Tests related to pagination."""
 import unittest
 from random import randint, sample

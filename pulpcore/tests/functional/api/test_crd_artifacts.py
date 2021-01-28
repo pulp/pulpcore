@@ -1,4 +1,3 @@
-# coding=utf-8
 """Tests that perform actions over artifacts."""
 import hashlib
 import itertools

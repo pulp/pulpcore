@@ -1,4 +1,3 @@
-# coding=utf-8
 """Test the status page."""
 import unittest
 

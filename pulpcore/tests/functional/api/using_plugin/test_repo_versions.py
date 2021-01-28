@@ -1,4 +1,3 @@
-# coding=utf-8
 """Tests related to repository versions."""
 import unittest
 from random import choice, randint, sample
