@@ -1,3 +1,5 @@
+from django.contrib.auth.models import Group
+
 from pulpcore.app.serializers import RepositorySyncURLSerializer
 
 
@@ -278,3 +280,67 @@ def has_repo_attr_model_or_obj_perms(request, view, action, permission):
     if has_repo_attr_obj_perms(request, view, action, permission):
         return True
     return False
+
+
+# `Group` permission checks
+
+
+def has_group_obj_perms(request, view, action, permission):
+    """
+    Checks whether a user has the requested object permission on the Group in the URL.
+
+    This check is meant to be used for relations nested beneath the group endpoint, e.g. the list
+    of users to belong to that group. It will fail for other endpoints.
+
+    ::
+
+        {
+            ...
+            "condition": "has_group_obj_perms:auth.group_delete",
+        },
+
+    Args:
+        request (rest_framework.request.Request): The request being made.
+        view (subclass rest_framework.viewsets.GenericViewSet): The view being checked for
+            authorization.
+        action (str): The action being performed, e.g. "destroy".
+        permission (str): The name of the Group Permission to be checked. In the form
+            `app_label.codename`, e.g. "auth.group_change".
+
+    Returns:
+        True if the user has the Permission on the ``Group`` specified in the URL named by the
+        ``permission`` at object level. False otherwise.
+    """
+    group_pk = request.resolver_match.kwargs["group_pk"]
+    return request.user.has_perm(permission, Group.objects.get(pk=group_pk))
+
+
+def has_group_model_or_obj_perms(request, view, action, permission):
+    """
+    Checks whether a user has the requested object or model permission on the Group in the URL.
+
+    This check is meant to be used for relations nested beneath the group endpoint, e.g. the list
+    of users to belong to that group. It will fail for other endpoints.
+
+    ::
+
+        {
+            ...
+            "condition": "has_group_model_or_obj_perms:auth.group_delete",
+        },
+
+    Args:
+        request (rest_framework.request.Request): The request being made.
+        view (subclass rest_framework.viewsets.GenericViewSet): The view being checked for
+            authorization.
+        action (str): The action being performed, e.g. "destroy".
+        permission (str): The name of the Group Permission to be checked. In the form
+            `app_label.codename`, e.g. "auth.group_change".
+
+    Returns:
+        True if the user has the Permission on the ``Group`` specified in the URL named by the
+        ``permission`` at the model or object level. False otherwise.
+    """
+    return request.user.has_perm(permission) or has_group_obj_perms(
+        request, view, action, permission
+    )
