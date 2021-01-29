@@ -31,6 +31,6 @@
     }
   ],
   "custom": {
-    "fixtures_origin": "http://pulp-fixtures/"
+    "fixtures_origin": "http://pulp-fixtures:8080/"
   }
 }
