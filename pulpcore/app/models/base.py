@@ -28,8 +28,8 @@ class Label(LifecycleModel):
     pulp_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
     object_id = models.UUIDField()
-    key = models.CharField(max_length=200)
-    value = models.TextField(null=True)
+    key = models.CharField(max_length=200, db_index=True)
+    value = models.TextField(null=True, db_index=True)
 
     content_object = GenericForeignKey("content_type", "object_id")
 
