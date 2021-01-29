@@ -27,6 +27,7 @@ class AccessPolicySerializer(ModelSerializer):
     viewset_name = serializers.CharField(
         help_text=_("The name of ViewSet this AccessPolicy authorizes."),
         validators=[UniqueValidator(queryset=models.AccessPolicy.objects.all())],
+        read_only=True,
     )
 
     class Meta:
