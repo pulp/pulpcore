@@ -233,8 +233,8 @@ def has_repo_attr_obj_perms(request, view, action, permission):
         True if the user has the Permission named by the ``permission`` argument on the
         ``repository`` attribute at the object-level. False otherwise.
     """
-    repository = view.get_object().repository
-    return request.user.has_perm(permission, repository)
+    plugin_repository = view.get_object().repository.cast()
+    return request.user.has_perm(permission, plugin_repository)
 
 
 def has_repo_attr_model_or_obj_perms(request, view, action, permission):
