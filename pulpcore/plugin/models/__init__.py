@@ -1,9 +1,6 @@
 # Models are exposed selectively in the versioned plugin API.
 # Any models defined in the pulpcore.plugin namespace should probably be proxy models.
 
-# THIS WILL BE DEPRECATED In 3.10 - LOOK TO .plugins.exceptions INSTEAD
-from pulpcore.exceptions.validation import UnsupportedDigestValidationError  # noqa
-
 from pulpcore.app.models import (  # noqa
     AccessPolicy,
     AutoAddObjPermsMixin,
