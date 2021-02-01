@@ -1,9 +1,9 @@
 from collections import defaultdict
 from gettext import gettext as _
 from importlib import import_module
-import warnings
 
 from django import apps
+from django.core.exceptions import ImproperlyConfigured
 from django.db.models.signals import post_migrate
 from django.utils.module_loading import module_has_submodule
 
@@ -65,11 +65,11 @@ class PulpPluginAppConfig(apps.AppConfig):
             self.version
         except AttributeError:
             msg = _(
-                f"The plugin `{self.label}` is missing a version attribute. Starting with "
+                "The plugin `{}` is missing a version declaration. Starting with "
                 "pulpcore==3.10, plugins are required to define their version on the "
                 "PulpPluginAppConfig subclass."
             )
-            warnings.warn(msg, FutureWarning)
+            raise ImproperlyConfigured(msg.format(self.label))
 
         # Module containing viewsets eg. <module 'pulp_plugin.app.viewsets'
         # from 'pulp_plugin/app/viewsets.py'>. Set by import_viewsets().
