@@ -1,0 +1,3 @@
+The ``component`` field of the ``versions`` section of the status API ```/pulp/api/v3/status/`` now
+lists the Django app name, not the Python package name. Similarly the OpenAPI schema at
+``/pulp/api/v3`` does also.

@@ -5,14 +5,13 @@ from gettext import gettext as _
 from django.conf import settings
 from django.core.files.storage import default_storage
 from drf_spectacular.utils import extend_schema
-from pkg_resources import get_distribution
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from pulpcore.app.apps import pulp_plugin_configs
 from pulpcore.app.models.status import ContentAppStatus
 from pulpcore.app.models.task import Worker
 from pulpcore.app.serializers.status import StatusSerializer
-from pulpcore.app.settings import INSTALLED_PULP_PLUGINS
 from pulpcore.tasking.connection import get_redis_connection
 
 _logger = logging.getLogger(__name__)
@@ -42,16 +41,22 @@ class StatusView(APIView):
         operation_id="status_read",
         responses={200: StatusSerializer},
     )
-    def get(self, request, format=None):
+    def get(self, request):
         """
-        Returns app information including the version of pulpcore and loaded pulp plugins,
-        known workers, database connection status, and messaging connection status
+        Returns status and app information about Pulp.
+
+        Information includes:
+         * version of pulpcore and loaded pulp plugins
+         * known workers
+         * known content apps
+         * database connection status
+         * redis connection status
+         * disk usage information
         """
-        components = ["pulpcore"] + INSTALLED_PULP_PLUGINS
-        versions = [
-            {"component": component, "version": get_distribution(component).version}
-            for component in components
-        ]
+        versions = []
+        for app in pulp_plugin_configs():
+            versions.append({"component": app.label, "version": app.version})
+
         redis_status = {"connected": self._get_redis_conn_status()}
         db_status = {"connected": self._get_db_conn_status()}
 
