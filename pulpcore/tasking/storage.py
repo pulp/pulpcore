@@ -1,4 +1,5 @@
 import os
+import random
 import shutil
 from gettext import gettext as _
 
@@ -6,42 +7,20 @@ from django.conf import settings
 from rq.job import get_current_job
 
 
-class WorkerDirectory:
+class _WorkingDir:
     """
-    The directory associated with a RQ worker.
-
-    Path format: <root>/<worker-hostname>
-
-    Attributes:
-        _path (str): The absolute path.
+    A base class for temporary working directories.
     """
 
     # Directory permissions.
     MODE = 0o700
 
-    @staticmethod
-    def _worker_path(hostname):
-        """
-        Get the root directory path for a worker by hostname.
-
-        Format: <root>/<worker-hostname>
-
-        Args:
-            hostname (str): The worker hostname.
-
-        Returns:
-            str: The absolute path to a worker's root directory.
-        """
-        root = settings.WORKING_DIRECTORY
-        path = os.path.join(root, hostname)
-        return path
-
-    def __init__(self, hostname):
+    def __init__(self, path):
         """
         Args:
-            hostname (str): The worker hostname.
+            path (str): The absolute directory path to use.
         """
-        self._path = self._worker_path(hostname)
+        self._path = path
 
     @property
     def path(self):
@@ -59,15 +38,7 @@ class WorkerDirectory:
 
         The directory is deleted and recreated when already exists.
         """
-
-        def create():
-            os.makedirs(self.path, mode=self.MODE)
-
-        try:
-            create()
-        except FileExistsError:
-            self.delete()
-            create()
+        os.makedirs(self.path, mode=self.MODE)
 
     def delete(self):
         """
@@ -102,11 +73,54 @@ class WorkerDirectory:
         return self.path
 
 
-class WorkingDirectory(WorkerDirectory):
+def get_worker_path(hostname):
+    """
+    Get the root directory path for a worker by hostname.
+
+    Format: <root>/<worker-hostname>
+
+    Args:
+        hostname (str): The worker hostname.
+
+    Returns:
+        str: The absolute path to a worker's root directory.
+    """
+    return os.path.join(settings.WORKING_DIRECTORY, hostname)
+
+
+class WorkerDirectory(_WorkingDir):
+    """
+    The directory associated with a RQ worker.
+
+    Path format: <root>/<worker-hostname>
+    """
+
+    def __init__(self, hostname):
+        """
+        Args:
+            hostname (str): The worker hostname.
+        """
+        self._path = get_worker_path(hostname)
+
+    def create(self):
+        """
+        Create the directory.
+
+        The directory is deleted and recreated when already exists.
+        Only one of these should ever be held at a time for any individual worker.
+        """
+        try:
+            super().create()
+        except FileExistsError:
+            self.delete()
+            super().create()
+
+
+class WorkingDirectory(_WorkingDir):
     """
     RQ Job working directory.
 
-    Path format: <worker-dir>/<task-id>
+    Path format: <worker-dir>/<task-id>/<random>/
 
     Examples:
         >>>
@@ -119,41 +133,38 @@ class WorkingDirectory(WorkerDirectory):
         >>>
     """
 
-    @staticmethod
-    def _hostname():
-        """
-        The worker hostname.
-
-        Returns:
-            str: The worker hostname.
-
-        Raises:
-            RuntimeError: When used outside of an RQ task.
-        """
-        try:
-            return get_current_job().origin
-        except AttributeError:
-            raise RuntimeError(_("May only be used within a Task."))
-
-    @staticmethod
-    def _task_id():
-        """
-        The current task ID.
-
-        Returns:
-            str: The current task ID.
-
-        Raises:
-            RuntimeError: When used outside of an RQ task.
-        """
-        try:
-            return get_current_job().id
-        except AttributeError:
-            raise RuntimeError(_("May only be used within a Task."))
-
     def __init__(self):
-        super().__init__(self._hostname())
-        self._path = os.path.join(self._path, self._task_id())
+        """
+        Create a WorkingDirectory.
+
+        Raises:
+            RuntimeError: When used outside of an RQ task.
+        """
+        try:
+            job = get_current_job()
+            self.hostname = job.origin
+            self.task_id = job.id
+        except AttributeError:
+            raise RuntimeError(_("May only be used within a Task."))
+
+        self.worker_path = os.path.join(get_worker_path(self.hostname), self.task_id)
+
+    def create(self):
+        """
+        Construct a unique working directory nested under the worker's working directory.
+        """
+        rng = random.Random()
+        characters = "abcdefghijklmnopqrstuvwxyz0123456789_"
+        NUM_ATTEMPTS = 10
+
+        for try_num in range(NUM_ATTEMPTS):
+            random_segment = "".join(rng.choices(characters, k=8))
+            self._path = os.path.join(self.worker_path, random_segment)
+            try:
+                super().create()
+                break
+            except FileExistsError:
+                pass
 
     def __enter__(self):
         """
