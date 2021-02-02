@@ -314,8 +314,8 @@ class LabelSelectFilter(Filter):
                 labels = Label.objects.filter(key=key, value=val)
                 qs = qs.filter(pulp_labels__in=labels)
             elif op == "!=":
-                labels = Label.objects.filter(key=key, value=val)
-                qs = qs.exclude(pulp_labels__in=labels)
+                labels = Label.objects.filter(key=key).exclude(value=val)
+                qs = qs.filter(pulp_labels__in=labels)
             elif op == "~":
                 labels = Label.objects.filter(key=key, value__icontains=val)
                 qs = qs.filter(pulp_labels__in=labels)
