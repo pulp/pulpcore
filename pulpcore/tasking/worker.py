@@ -24,6 +24,7 @@ from pulpcore.tasking.constants import (  # noqa: E402: module level not at top 
     TASKING_CONSTANTS,
 )
 from pulpcore.tasking.storage import (  # noqa: E402: module level not at top of file
+    TaskWorkingDirectory,
     WorkerDirectory,
 )
 from pulpcore.tasking.worker_watcher import (  # noqa: E402
@@ -84,11 +85,10 @@ class PulpWorker(Worker):
 
     def perform_job(self, job, queue):
         """
-        Set the :class:`pulpcore.app.models.Task` to running and install a kill monitor Thread
+        Set the :class:`pulpcore.app.models.Task` to running and init logging.
 
         This method is called by the worker's work horse thread (the forked child) just before the
-        task begins executing. It creates a Thread which monitors a special Redis key which if
-        created should kill the task with SIGKILL.
+        task begins executing.
 
         Args:
             job (rq.job.Job): The job to perform
@@ -104,7 +104,8 @@ class PulpWorker(Worker):
             _set_current_user(user)
             GuidMiddleware.set_guid(task.logging_cid)
 
-        return super().perform_job(job, queue)
+        with TaskWorkingDirectory(job):
+            return super().perform_job(job, queue)
 
     def handle_job_failure(self, job, **kwargs):
         """
