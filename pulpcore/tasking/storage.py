@@ -10,6 +10,10 @@ from rq.job import get_current_job
 class _WorkingDir:
     """
     A base class for temporary working directories.
+
+    TODO: This is very similar to functionality already in the stdlib, why keep our own?
+
+    https://docs.python.org/3/library/tempfile.html#tempfile.TemporaryDirectory
     """
 
     # Directory permissions.
@@ -35,8 +39,6 @@ class _WorkingDir:
     def create(self):
         """
         Create the directory.
-
-        The directory is deleted and recreated when already exists.
         """
         os.makedirs(self.path, mode=self.MODE)
 
@@ -71,6 +73,27 @@ class _WorkingDir:
 
     def __str__(self):
         return self.path
+
+    def __enter__(self):
+        """
+        Create the directory and set the CWD to the path.
+
+        Returns: self
+
+        Raises:
+            OSError: On failure.
+        """
+        self.create()
+        self._prev_dir = os.getcwd()
+        os.chdir(self._path)
+        return self
+
+    def __exit__(self, *unused):
+        """
+        Delete the directory (tree) and restore the original CWD.
+        """
+        os.chdir(self._prev_dir)
+        self.delete()
 
 
 def get_worker_path(hostname):
@@ -116,9 +139,32 @@ class WorkerDirectory(_WorkingDir):
             super().create()
 
 
-class WorkingDirectory(_WorkingDir):
+class TaskWorkingDirectory(_WorkingDir):
     """
     RQ Job working directory.
+
+    Path format: <worker-dir>/<task-id>/
+    """
+
+    def __init__(self, job):
+        """
+        Create a WorkingDirectory.
+
+        Args:
+            job (rq.Job): The RQ job to create a working directory for
+
+        Raises:
+            RuntimeError: When used outside of an RQ task.
+        """
+        self.hostname = job.origin
+        self.task_id = job.id
+        self.task_path = os.path.join(get_worker_path(self.hostname), self.task_id)
+        super().__init__(self.task_path)
+
+
+class WorkingDirectory(_WorkingDir):
+    """
+    Provide clean working directory for plugin writers on demand.
 
     Path format: <worker-dir>/<task-id>/<random>/
 
@@ -147,7 +193,8 @@ class WorkingDirectory(_WorkingDir):
         except AttributeError:
             raise RuntimeError(_("May only be used within a Task."))
 
-        self.worker_path = os.path.join(get_worker_path(self.hostname), self.task_id)
+        self.task_path = os.path.join(get_worker_path(self.hostname), self.task_id)
+        super().__init__(self.task_path)
 
     def create(self):
         """
@@ -158,32 +205,10 @@ class WorkingDirectory(_WorkingDir):
         NUM_ATTEMPTS = 10
 
         for try_num in range(NUM_ATTEMPTS):
-            random_segment = "".join(rng.choices(characters, k=8))
-            self._path = os.path.join(self.worker_path, random_segment)
+            random_suffix = "".join(rng.choices(characters, k=8))
+            self._path = os.path.join(self.task_path, "workdir_" + random_suffix)
             try:
                 super().create()
                 break
             except FileExistsError:
                 pass
-
-    def __enter__(self):
-        """
-        Create the directory and set the CWD to the path.
-
-        Returns:
-            pulpcore.tasking.service.WorkingDirectory: self
-
-        Raises:
-            OSError: On failure.
-        """
-        self.create()
-        self._prev_dir = os.getcwd()
-        os.chdir(self._path)
-        return self
-
-    def __exit__(self, *unused):
-        """
-        Delete the directory (tree) and restore the original CWD.
-        """
-        os.chdir(self._prev_dir)
-        self.delete()
