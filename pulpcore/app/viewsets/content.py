@@ -1,7 +1,7 @@
 from gettext import gettext as _
 
 from django.db import models
-from rest_framework import mixins, status
+from rest_framework import mixins, permissions, status
 from rest_framework.response import Response
 
 from pulpcore.app.models import Artifact, Content, SigningService
@@ -55,6 +55,7 @@ class ArtifactViewSet(
     queryset = Artifact.objects.all()
     serializer_class = ArtifactSerializer
     filterset_class = ArtifactFilter
+    permission_classes = (permissions.IsAuthenticated,)
 
     def destroy(self, request, pk):
         """
