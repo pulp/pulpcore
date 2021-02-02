@@ -26,12 +26,15 @@ class AccessPolicy(BaseModel):
         statements (JSONField): A list of ``drf-access-policy`` statements.
         viewset_name (models.CharField): The name of the viewset this instance controls
             authorization for.
+        customized (BooleanField): False if the AccessPolicy has been user-modified. True otherwise.
+            Defaults to False.
 
     """
 
     permissions_assignment = JSONField(null=True)
     statements = JSONField()
     viewset_name = models.CharField(max_length=128, unique=True)
+    customized = models.BooleanField(default=False)
 
 
 class AutoAddObjPermsMixin:

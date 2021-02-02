@@ -1,5 +1,5 @@
+from django_filters.rest_framework import filters
 from rest_framework import mixins
-
 
 from pulpcore.app.models import AccessPolicy
 from pulpcore.app.serializers import AccessPolicySerializer
@@ -12,11 +12,11 @@ class AccessPolicyFilter(BaseFilterSet):
     FilterSet for AccessPolicy.
     """
 
+    customized = filters.BooleanFilter()
+
     class Meta:
         model = AccessPolicy
-        fields = {
-            "viewset_name": NAME_FILTER_OPTIONS,
-        }
+        fields = {"viewset_name": NAME_FILTER_OPTIONS, "customized": ["exact"]}
 
 
 class AccessPolicyViewSet(
