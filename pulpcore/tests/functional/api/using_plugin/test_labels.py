@@ -164,6 +164,8 @@ class FilterLabelTestCase(BaseLabelTestCase):
         self._create_repo(labels)
         labels = {"environment": "staging", "certified": "false"}
         self._create_repo(labels)
+        labels = {}
+        self._create_repo(labels)
 
         repos = self._filter_labels("environment=production")
         self.assertEqual(1, len(repos))
@@ -174,9 +176,6 @@ class FilterLabelTestCase(BaseLabelTestCase):
         repos = self._filter_labels("environment")
         self.assertEqual(2, len(repos))
 
-        repos = self._filter_labels("!environment")
-        self.assertEqual(0, len(repos))
-
         repos = self._filter_labels("environment~prod")
         self.assertEqual(1, len(repos))
 
@@ -185,6 +184,9 @@ class FilterLabelTestCase(BaseLabelTestCase):
 
         repos = self._filter_labels("environment=production,certified!=false")
         self.assertEqual(1, len(repos))
+
+        repos = self._filter_labels("!environment,certified=false")
+        self.assertEqual(0, len(repos))
 
     def test_empty_blank_filter(self):
         """Test filtering values with a blank string."""
