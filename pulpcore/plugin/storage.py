@@ -1,4 +1,5 @@
 import os
+import warnings
 
 from pulpcore.app.apps import get_plugin_config
 
@@ -26,5 +27,9 @@ def get_plugin_storage_path(plugin_app_label):
         :class:`~pulpcore.exceptions.plugin.MissingPlugin`: When plugin with the requested app
             label is not installed.
     """
+    warnings.warn(
+        "get_plugin_storage_path() is deprecated and will be removed in pulpcore==3.11.",
+        warnings.DeprecationWarning,
+    )
     get_plugin_config(plugin_app_label)
     return os.path.join("/var/lib/pulp/shared", plugin_app_label, "")
