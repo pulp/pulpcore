@@ -30,10 +30,27 @@ class AccessPolicySerializer(ModelSerializer):
         read_only=True,
     )
 
+    customized = serializers.BooleanField(
+        help_text=_("True if the AccessPolicy has been user-modified. False otherwise."),
+        read_only=True,
+    )
+
     class Meta:
         model = models.AccessPolicy
         fields = ModelSerializer.Meta.fields + (
             "permissions_assignment",
             "statements",
             "viewset_name",
+            "customized",
         )
+
+    def validate(self, data):
+        """ "
+        Validate the AccessPolicy.
+
+        This ensures that the customized boolean will be set to True anytime the user modifies it.
+        """
+        data = super().validate(data)
+        if data:
+            data["customized"] = True
+        return data
