@@ -2,17 +2,17 @@
 
 from django.db import migrations
 
-from pulpcore.app.models import AccessPolicy
-
 
 def namespace_access_policies_up(apps, schema_editor):
+    AccessPolicy = apps.get_model('core', 'AccessPolicy')
     task_policy = AccessPolicy.objects.get(viewset_name="TaskViewSet")
     task_policy.viewset_name = "tasks"
     task_policy.save()
 
 
 def namespace_access_policies_down(apps, schema_editor):
-    AccessPolicy.objects.get(viewset_name="tasks").delete()
+    AccessPolicy = apps.get_model('core', 'AccessPolicy')
+    task_policy = AccessPolicy.objects.get(viewset_name="tasks").delete()
     task_policy.viewset_name = "TaskViewSet"
     task_policy.save()
 
