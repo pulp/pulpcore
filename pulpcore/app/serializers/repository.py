@@ -86,6 +86,7 @@ class RemoteSerializer(ModelSerializer):
         help_text="A PEM encoded private key used for authentication.",
         required=False,
         allow_null=True,
+        write_only=True,
     )
     tls_validation = serializers.BooleanField(
         help_text="If True, TLS peer validation must be performed.", required=False
@@ -99,11 +100,13 @@ class RemoteSerializer(ModelSerializer):
         help_text="The username to be used for authentication when syncing.",
         required=False,
         allow_null=True,
+        write_only=True,
     )
     password = serializers.CharField(
         help_text="The password to be used for authentication when syncing.",
         required=False,
         allow_null=True,
+        write_only=True,
     )
     pulp_last_updated = serializers.DateTimeField(
         help_text="Timestamp of the most recent update of the remote.", read_only=True
