@@ -1,10 +1,11 @@
 """Tests that CRUD repositories."""
+import re
 import time
 import unittest
 from itertools import permutations
 from urllib.parse import urljoin
 
-from pulp_smash import api, config, utils
+from pulp_smash import api, cli, config, utils
 from pulp_smash.pulp3.bindings import monitor_task
 from pulp_smash.pulp3.utils import gen_repo
 
@@ -22,6 +23,7 @@ from pulpcore.tests.functional.utils import skip_if
 from pulpcore.client.pulp_file.exceptions import ApiException
 from pulpcore.client.pulp_file import (
     ApiClient as FileApiClient,
+    FileFileRemote,
     RemotesFileApi,
 )
 
@@ -237,6 +239,9 @@ class CRUDRemoteTestCase(unittest.TestCase):
         self.remote = self.remotes_api.create(self.remote_attrs)
 
     def _compare_results(self, data, received):
+        self.assertFalse(hasattr(received, "password"))
+        data.pop("password", None)
+
         for k in data:
             self.assertEqual(getattr(received, k), data[k])
 
@@ -250,6 +255,31 @@ class CRUDRemoteTestCase(unittest.TestCase):
         time.sleep(1)  # without this, the read returns the pre-patch values
         new_remote = self.remotes_api.read(self.remote.pulp_href)
         self._compare_results(data, new_remote)
+
+    def test_password_writeable(self):
+        cli_client = cli.Client(self.cfg)
+        remote = self.remotes_api.create({"name": "test_pass", "url": "http://", "password": "new"})
+        href = remote.pulp_href
+        uuid = re.search(r"/pulp/api/v3/remotes/file/file/([\w-]+)/", href).group(1)
+        shell_cmd = (
+            f"import pulpcore; print(pulpcore.app.models.Remote.objects.get(pk='{uuid}').password)"
+        )
+
+        self.addCleanup(self.remotes_api.delete, href)
+
+        # test a PUT request without a password
+        remote_update = FileFileRemote(name="test_pass", url="http://")
+        response = self.remotes_api.update(href, remote_update)
+        monitor_task(response.task)
+        exc = cli_client.run(["pulpcore-manager", "shell", "-c", shell_cmd])
+        self.assertEqual(exc.stdout.rstrip("\n"), "new")
+
+        # test a PUT request with a new password
+        remote_update = FileFileRemote(name="test_pass", url="http://", password="changed")
+        response = self.remotes_api.update(href, remote_update)
+        monitor_task(response.task)
+        exc = cli_client.run(["pulpcore-manager", "shell", "-c", shell_cmd])
+        self.assertEqual(exc.stdout.rstrip("\n"), "changed")
 
     def test_timeout_attributes(self):
         # Test valid timeout settings (float >= 0)

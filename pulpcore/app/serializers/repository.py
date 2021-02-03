@@ -104,6 +104,7 @@ class RemoteSerializer(ModelSerializer):
         help_text="The password to be used for authentication when syncing.",
         required=False,
         allow_null=True,
+        write_only=True,
     )
     pulp_last_updated = serializers.DateTimeField(
         help_text="Timestamp of the most recent update of the remote.", read_only=True
