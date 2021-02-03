@@ -12,7 +12,7 @@ django-import-export~=2.4.0
 django-lifecycle~=0.8.0
 djangorestframework~=3.12.2
 djangorestframework-queryfields~=1.0.0
-drf-access-policy~=0.8.1
+drf-access-policy~=0.8.6
 drf-nested-routers==0.92.1
 drf-spectacular==0.11.0
 dynaconf~=3.1.2
@@ -20,7 +20,6 @@ gunicorn>=19.9,<20.1
 jinja2
 pygtrie~=2.3.3
 psycopg2>=2.7,<2.9
-pyparsing  # https://github.com/rsinger86/drf-access-policy/issues/46
 PyYAML>=5.1.1,<5.4.0
 python-gnupg~=0.4.6
 redis>=3.4.0
