@@ -5,11 +5,29 @@ import logging
 
 from django.db.models import Prefetch, prefetch_related_objects
 
+from pulpcore.plugin.exceptions import UnsupportedDigestValidationError
 from pulpcore.plugin.models import Artifact, ContentArtifact, ProgressReport, RemoteArtifact
 
 from .api import Stage
 
 log = logging.getLogger(__name__)
+
+
+def _check_for_forbidden_checksume_type(artifact):
+    """Check if content doesn't have forbidden checksum type.
+
+    If contains forbidden checksum type it will raise ValueError,
+    otherwise it passes without returning anything.
+    """
+    for digest_type in Artifact.FORBIDDEN_DIGESTS:
+        digest_value = getattr(artifact, digest_type)
+        if digest_value:
+            # To use shared message constant when #7988 is merged
+            raise UnsupportedDigestValidationError(
+                "Artifact contains forbidden checksum type {}. "
+                "You can allow it with 'ALLOWED_CONTENT_CHECKSUMS' "
+                "setting.".format(digest_type)
+            )
 
 
 class QueryExistingArtifacts(Stage):
@@ -52,6 +70,7 @@ class QueryExistingArtifacts(Stage):
             for d_content in batch:
                 for d_artifact in d_content.d_artifacts:
                     if d_artifact.artifact._state.adding:
+                        _check_for_forbidden_checksume_type(d_artifact.artifact)
                         for digest_type in Artifact.COMMON_DIGEST_FIELDS:
                             digest_value = getattr(d_artifact.artifact, digest_type)
                             if digest_value:
@@ -65,7 +84,6 @@ class QueryExistingArtifacts(Stage):
             for digest_type, digests in artifact_digests_by_type.items():
                 query_params = {"{attr}__in".format(attr=digest_type): digests}
                 existing_artifacts = Artifact.objects.filter(**query_params).only(digest_type)
-
                 for d_content in batch:
                     for d_artifact in d_content.d_artifacts:
                         artifact_digest = getattr(d_artifact.artifact, digest_type)
@@ -300,6 +318,8 @@ class RemoteArtifactSaver(Stage):
                     else:
                         remote_artifact = self._create_remote_artifact(d_artifact, content_artifact)
                         needed_ras.append(remote_artifact)
+        for ra in needed_ras:
+            _check_for_forbidden_checksume_type(ra)
         return needed_ras
 
     @staticmethod
