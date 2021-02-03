@@ -2,8 +2,6 @@
 
 from django.db import migrations
 
-from pulpcore.app.models import AccessPolicy
-
 
 TASK_STATEMENTS = [
     {
@@ -39,6 +37,7 @@ TASK_PERMISSIONS_ASSIGNMENT = [
 
 
 def populate_access_policy(apps, schema_editor):
+    AccessPolicy = apps.get_model('core', 'AccessPolicy')
     AccessPolicy.objects.create(
         viewset_name="TaskViewSet",
         statements=TASK_STATEMENTS,

@@ -1,0 +1,1 @@
+Switches migrations to import models using `apps.get_model(...)`.
