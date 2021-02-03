@@ -214,13 +214,16 @@ def enqueue_with_reservation(
             reservation_record = ReservedResourceRecord.objects.get_or_create(resource=resource)[0]
             TaskReservedResourceRecord.objects.create(resource=reservation_record, task=task)
 
-    task_args = (func, inner_task_id, list(resources), args, kwargs, options)
-    try:
-        q = Queue("resource-manager", connection=redis_conn)
-        q.enqueue(
-            _queue_reserved_task, job_id=resource_task_id, args=task_args, job_timeout=TASK_TIMEOUT
-        )
-    except RedisConnectionError as e:
-        task.set_failed(e, None)
+        task_args = (func, inner_task_id, list(resources), args, kwargs, options)
+        try:
+            q = Queue("resource-manager", connection=redis_conn)
+            q.enqueue(
+                _queue_reserved_task,
+                job_id=resource_task_id,
+                args=task_args,
+                job_timeout=TASK_TIMEOUT,
+            )
+        except RedisConnectionError as e:
+            task.set_failed(e, None)
 
     return Job(id=inner_task_id, connection=redis_conn)
