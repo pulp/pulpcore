@@ -7,6 +7,7 @@
 
 import argparse
 import json
+import re
 import os
 import textwrap
 from collections import defaultdict
@@ -74,7 +75,7 @@ version = None
 with open(f"{plugin_path}/setup.py") as fp:
     for line in fp.readlines():
         if "version=" in line:
-            version = line.split('"')[1]
+            version = re.split("\"|'", line)[1]
     if not version:
         raise RuntimeError("Could not detect existing version ... aborting.")
 release_version = version.replace(".dev", "")
@@ -186,7 +187,7 @@ new_dev_version = None
 with open(f"{plugin_path}/setup.py") as fp:
     for line in fp.readlines():
         if "version=" in line:
-            new_dev_version = line.split('"')[1]
+            new_dev_version = re.split("\"|'", line)[1]
     if not new_dev_version:
         raise RuntimeError("Could not detect new dev version ... aborting.")
 
