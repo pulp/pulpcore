@@ -1,1 +1,0 @@
-The ``pulpcore.plugin.storage.get_plugin_storage_path()`` method has been deprecated.

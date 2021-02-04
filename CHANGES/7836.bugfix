@@ -1,1 +1,0 @@
-Fixed Pulp import/export bug that occurs when sha384 or sha512 is not in ``ALLOWED_CONTENT_CHECKSUMS``.

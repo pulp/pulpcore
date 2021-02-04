@@ -1,3 +1,0 @@
-Fixed bug where duplicate artifact error message was nondeterministic in displaying different error
-messages with different checksum types. Also, updated duplicate artifact error message to be more
-descriptive.

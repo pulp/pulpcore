@@ -1,2 +1,0 @@
-Access to the path of the public key of a signing service was deprecated. The value of the public
-key is now expected to be saved in the model instance as ``SigningService.public_key``.
