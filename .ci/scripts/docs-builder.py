@@ -13,6 +13,9 @@ import os
 import re
 from shutil import rmtree
 import tempfile
+import requests
+import json
+from packaging import version
 
 WORKING_DIR = os.environ["WORKSPACE"]
 
@@ -90,8 +93,17 @@ def main():
 
     ga_build = False
 
+    publish_at_root = False
+
     if (not re.search("[a-zA-Z]", branch) or "post" in branch) and len(branch.split(".")) > 2:
         ga_build = True
+        # Only publish docs at the root if this is the latest version
+        r = requests.get("https://pypi.org/pypi/pulpcore/json")
+        latest_version = version.parse(json.loads(r.text)["info"]["version"])
+        docs_version = version.parse(branch)
+        if latest_version == docs_version:
+            publish_at_root = True
+        # Post releases should use the x.y.z part of the version string to form a path
         if "post" in branch:
             branch = ".".join(branch.split(".")[:-1])
 
@@ -122,22 +134,23 @@ def main():
     elif ga_build:
         # This is a GA build.
         # publish to the root of docs.pulpproject.org
-        version_components = branch.split(".")
-        x_y_version = "{}.{}".format(version_components[0], version_components[1])
-        remote_path_arg = "%s@%s:%s" % (USERNAME, HOSTNAME, SITE_ROOT)
-        rsync_command = [
-            "rsync",
-            "-avzh",
-            "--delete",
-            "--exclude",
-            "en",
-            "--omit-dir-times",
-            local_path_arg,
-            remote_path_arg,
-        ]
-        exit_code = subprocess.call(rsync_command, cwd=docs_directory)
-        if exit_code != 0:
-            raise RuntimeError("An error occurred while pushing docs.")
+        if publish_at_root:
+            version_components = branch.split(".")
+            x_y_version = "{}.{}".format(version_components[0], version_components[1])
+            remote_path_arg = "%s@%s:%s" % (USERNAME, HOSTNAME, SITE_ROOT)
+            rsync_command = [
+                "rsync",
+                "-avzh",
+                "--delete",
+                "--exclude",
+                "en",
+                "--omit-dir-times",
+                local_path_arg,
+                remote_path_arg,
+            ]
+            exit_code = subprocess.call(rsync_command, cwd=docs_directory)
+            if exit_code != 0:
+                raise RuntimeError("An error occurred while pushing docs.")
         # publish to docs.pulpproject.org/en/3.y/
         make_directory_with_rsync(["en", x_y_version])
         remote_path_arg = "%s@%s:%sen/%s/" % (
