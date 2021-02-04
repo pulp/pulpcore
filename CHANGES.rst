@@ -17,6 +17,147 @@ Changelog
 
 .. towncrier release notes start
 
+3.10.0 (2021-02-04)
+===================
+REST API
+--------
+
+Features
+~~~~~~~~
+
+- Change the default deployment layout
+
+  This changes the default deployment layout. The main change is that MEDIA_ROOT gets its own
+  directory. This allows limiting the file permissions in a shared Pulp 2 + Pulp 3 deployment and the
+  SELinux file contexts. Another benefit is compatibility with django_extensions' unreferenced_files
+  command which lists all files in MEDIA_ROOT that are not in the database.
+
+  Other paths are kept on the same absolute paths. The documentation is updated to show the latest
+  best practices.
+  `#7178 <https://pulp.plan.io/issues/7178>`_
+- Added general endpoints to list ``Content``, ``ContentGuards``, and ``Repositories``.
+  `#7204 <https://pulp.plan.io/issues/7204>`_
+- Added /importers/core/pulp/import-check/ to validate import-parameters.
+  `#7549 <https://pulp.plan.io/issues/7549>`_
+- Added a new field called public_key to SigningService. This field preserves the value of the public
+  key. In addition to that, the field fingerprint was introduced as well. This field identifies the
+  public key.
+  `#7700 <https://pulp.plan.io/issues/7700>`_
+- Added possibility to filter users and groups by various fields.
+  `#7975 <https://pulp.plan.io/issues/7975>`_
+- Added pulp_labels to allow users to add key/value data to objects.
+  `#8065 <https://pulp.plan.io/issues/8065>`_
+- Added ``pulp_label_select`` filter to allow users to filter by labels.
+  `#8067 <https://pulp.plan.io/issues/8067>`_
+- Added optional headers field to the aiohttp ClientSession.
+  `#8083 <https://pulp.plan.io/issues/8083>`_
+- Allow querying names on the api using name__icontains, name__contains and name__startswith query parameters.
+  `#8094 <https://pulp.plan.io/issues/8094>`_
+- Added RBAC to the endpoint for managing groups.
+  `#8159 <https://pulp.plan.io/issues/8159>`_
+- Added RBAC to the endpoint for managing group users.
+  `#8160 <https://pulp.plan.io/issues/8160>`_
+- Added the ``AccessPolicy.customized`` field which if ``True`` indicates a user has modified the
+  default AccessPolicy.
+  `#8182 <https://pulp.plan.io/issues/8182>`_
+- Added filtering for access policies.
+  `#8189 <https://pulp.plan.io/issues/8189>`_
+- As an authenticated user I can create and view artifacts.
+  `#8193 <https://pulp.plan.io/issues/8193>`_
+
+
+Bugfixes
+~~~~~~~~
+
+- Fixed bug where duplicate artifact error message was nondeterministic in displaying different error
+  messages with different checksum types. Also, updated duplicate artifact error message to be more
+  descriptive.
+  `#3387 <https://pulp.plan.io/issues/3387>`_
+- Fixed Pulp import/export bug that occurs when sha384 or sha512 is not in ``ALLOWED_CONTENT_CHECKSUMS``.
+  `#7836 <https://pulp.plan.io/issues/7836>`_
+- X-CSRFToken is not sent through ajax requests (PUT) in api.html. Fixed by setting the right value in
+  the JS code.
+  `#7888 <https://pulp.plan.io/issues/7888>`_
+- Provide a mechanism to automatically resolve issues and prevent deadlocks when Redis experiences data loss (such as a restart).
+  `#7912 <https://pulp.plan.io/issues/7912>`_
+- Silence unnecessary log messages from django_guid which were spamming up the logs.
+  `#7982 <https://pulp.plan.io/issues/7982>`_
+- Changed the default permission class to ``IsAdminUser`` to protect endpoints not yet guarded by an access policy from users without permission.
+  `#8018 <https://pulp.plan.io/issues/8018>`_
+- Fixed apidoc bug, where model and object permissions on groups overlapped.
+  `#8033 <https://pulp.plan.io/issues/8033>`_
+- Fixed the viewset_name used by access policy for the cases when parent_viewset is involved.
+  `#8152 <https://pulp.plan.io/issues/8152>`_
+- Made the viewset_name property of access policies read only.
+  `#8185 <https://pulp.plan.io/issues/8185>`_
+
+
+Improved Documentation
+~~~~~~~~~~~~~~~~~~~~~~
+
+- Added a description of the common filesystem layout in the deployment section.
+  `#7750 <https://pulp.plan.io/issues/7750>`_
+- Updated the reference to the new location of pulplift at the installer repository in the development section.
+  `#7878 <https://pulp.plan.io/issues/7878>`_
+- Add links to plugin docs into docs.pulpproject.org.
+  `#8131 <https://pulp.plan.io/issues/8131>`_
+- Added documentation for labels.
+  `#8157 <https://pulp.plan.io/issues/8157>`_
+
+
+Misc
+~~~~
+
+- `#8203 <https://pulp.plan.io/issues/8203>`_
+
+
+Plugin API
+----------
+
+Features
+~~~~~~~~
+
+- Add ``rate_limit`` option to ``Remote``
+  `#7965 <https://pulp.plan.io/issues/7965>`_
+- Made DistributionFilter accessible to plugin writers.
+  `#8059 <https://pulp.plan.io/issues/8059>`_
+- Adding ``Label`` and ``LabelSerializer`` to the plugin api.
+  `#8065 <https://pulp.plan.io/issues/8065>`_
+- Added ``LabelSelectFilter`` to filter resources by labels.
+  `#8067 <https://pulp.plan.io/issues/8067>`_
+- Added ReadOnlyRepositoryViewset to the plugin API.
+  `#8103 <https://pulp.plan.io/issues/8103>`_
+- Added NAME_FILTER_OPTIONS to the plugin API to gain more consistency across plugins when filter by name or similar CharFields.
+  `#8117 <https://pulp.plan.io/issues/8117>`_
+- Added `has_repo_attr_obj_perms` and `has_repo_attr_model_or_obj_perms` to the global access checks available to all plugins to use.
+  `#8161 <https://pulp.plan.io/issues/8161>`_
+
+
+Removals
+~~~~~~~~
+
+- Plugins are required to define a ``version`` attribute on their subclass of
+  ``PulpPluginAppConfig``. Starting with pulpcore==3.10, if undefined while Pulp loads, Pulp will
+  refuse to start.
+  `#7930 <https://pulp.plan.io/issues/7930>`_
+- Changed the default permission class to from ``IsAuthenticated`` to ``IsAdminUser``.
+  Any endpoints that should be accessible by all known to the system users need to specify the permission_classes accordingly.
+  `#8018 <https://pulp.plan.io/issues/8018>`_
+- ``pulpcore.plugin.models.UnsupportedDigestValidationError`` has been removed. Plugins should
+  look for this at ``pulpcore.plugin.exceptions.UnsupportedDigestValidationError`` instead.
+  `#8169 <https://pulp.plan.io/issues/8169>`_
+
+
+Deprecations
+~~~~~~~~~~~~
+
+- Access to the path of the public key of a signing service was deprecated. The value of the public
+  key is now expected to be saved in the model instance as ``SigningService.public_key``.
+  `#7700 <https://pulp.plan.io/issues/7700>`_
+- The ``pulpcore.plugin.storage.get_plugin_storage_path()`` method has been deprecated.
+  `#7935 <https://pulp.plan.io/issues/7935>`_
+
+
 3.9.1 (2021-01-21)
 ==================
 REST API

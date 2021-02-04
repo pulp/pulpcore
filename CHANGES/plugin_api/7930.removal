@@ -1,3 +1,0 @@
-Plugins are required to define a ``version`` attribute on their subclass of
-``PulpPluginAppConfig``. Starting with pulpcore==3.10, if undefined while Pulp loads, Pulp will
-refuse to start.

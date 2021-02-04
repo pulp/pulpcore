@@ -1,2 +1,0 @@
-``pulpcore.plugin.models.UnsupportedDigestValidationError`` has been removed. Plugins should
-look for this at ``pulpcore.plugin.exceptions.UnsupportedDigestValidationError`` instead.

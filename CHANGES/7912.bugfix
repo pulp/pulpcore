@@ -1,1 +1,0 @@
-Provide a mechanism to automatically resolve issues and prevent deadlocks when Redis experiences data loss (such as a restart).
