@@ -1,7 +1,9 @@
+import asyncio
 import logging
 import mimetypes
 import os
 import re
+from concurrent.futures import ThreadPoolExecutor
 from gettext import gettext as _
 
 from aiohttp.client_exceptions import ClientResponseError
@@ -36,6 +38,14 @@ from pulpcore.exceptions import UnsupportedDigestValidationError  # noqa: E402
 from jinja2 import Template  # noqa: E402: module level not at top of file
 
 log = logging.getLogger(__name__)
+
+
+loop = asyncio.get_event_loop()
+# Django ORM is blocking, as are most of our file operations. This means that the
+# standard single-threaded async executor cannot help us. We need to create a separate,
+# thread-based executor to pass our heavy blocking IO work to.
+io_pool_exc = ThreadPoolExecutor(max_workers=2)
+loop.set_default_executor(io_pool_exc)
 
 
 class PathNotResolved(HTTPNotFound):
@@ -116,11 +126,17 @@ class Handler:
         """
         self._reset_db_connection()
 
-        if self.distribution_model is None:
-            base_paths = list(Distribution.objects.values_list("base_path", flat=True))
-        else:
-            base_paths = list(self.distribution_model.objects.values_list("base_path", flat=True))
-        directory_list = ["{}/".format(base_path) for base_path in base_paths]
+        def get_base_paths_blocking():
+            if self.distribution_model is None:
+                base_paths = list(Distribution.objects.values_list("base_path", flat=True))
+            else:
+                base_paths = list(
+                    self.distribution_model.objects.values_list("base_path", flat=True)
+                )
+            return base_paths
+
+        base_paths = await loop.run_in_executor(None, get_base_paths_blocking)
+        directory_list = ["{}/".format(path) for path in base_paths]
         return HTTPOk(headers={"Content-Type": "text/html"}, body=self.render_html(directory_list))
 
     async def stream_content(self, request):
@@ -177,7 +193,13 @@ class Handler:
         base_paths = cls._base_paths(path)
         if cls.distribution_model is None:
             try:
-                return Distribution.objects.get(base_path__in=base_paths).cast()
+                return (
+                    Distribution.objects.select_related(
+                        "repository", "repository_version", "publication", "remote"
+                    )
+                    .get(base_path__in=base_paths)
+                    .cast()
+                )
             except ObjectDoesNotExist:
                 log.debug(
                     _("Distribution not matched for {path} using: {base_paths}").format(
@@ -186,7 +208,9 @@ class Handler:
                 )
         else:
             try:
-                return cls.distribution_model.objects.get(base_path__in=base_paths)
+                return cls.distribution_model.objects.select_related(
+                    "repository", "repository_version", "publication", "remote"
+                ).get(base_path__in=base_paths)
             except ObjectDoesNotExist:
                 log.debug(
                     _("Distribution not matched for {path} using: {base_paths}").format(
@@ -282,41 +306,45 @@ class Handler:
         Returns:
             Set of strings representing the files and directories in the directory listing.
         """
-        if not publication and not repo_version:
-            raise Exception("Either a repo_version or publication is required.")
-        if publication and repo_version:
-            raise Exception("Either a repo_version or publication can be specified.")
 
         def file_or_directory_name(directory_path, relative_path):
             result = re.match(r"({})([^\/]*)(\/*)".format(directory_path), relative_path)
             return "{}{}".format(result.groups()[1], result.groups()[2])
 
-        directory_list = set()
+        def list_directory_blocking():
+            if not publication and not repo_version:
+                raise Exception("Either a repo_version or publication is required.")
+            if publication and repo_version:
+                raise Exception("Either a repo_version or publication can be specified.")
 
-        if publication:
-            pas = publication.published_artifact.filter(relative_path__startswith=path)
-            for pa in pas:
-                directory_list.add(file_or_directory_name(path, pa.relative_path))
+            directory_list = set()
 
-            if publication.pass_through:
+            if publication:
+                pas = publication.published_artifact.filter(relative_path__startswith=path)
+                for pa in pas:
+                    directory_list.add(file_or_directory_name(path, pa.relative_path))
+
+                if publication.pass_through:
+                    cas = ContentArtifact.objects.filter(
+                        content__in=publication.repository_version.content,
+                        relative_path__startswith=path,
+                    )
+                    for ca in cas:
+                        directory_list.add(file_or_directory_name(path, ca.relative_path))
+
+            if repo_version:
                 cas = ContentArtifact.objects.filter(
-                    content__in=publication.repository_version.content,
-                    relative_path__startswith=path,
+                    content__in=repo_version.content, relative_path__startswith=path
                 )
                 for ca in cas:
                     directory_list.add(file_or_directory_name(path, ca.relative_path))
 
-        if repo_version:
-            cas = ContentArtifact.objects.filter(
-                content__in=repo_version.content, relative_path__startswith=path
-            )
-            for ca in cas:
-                directory_list.add(file_or_directory_name(path, ca.relative_path))
+            if directory_list:
+                return directory_list
+            else:
+                raise PathNotResolved(path)
 
-        if directory_list:
-            return directory_list
-        else:
-            raise PathNotResolved(path)
+        return await loop.run_in_executor(None, list_directory_blocking)
 
     async def _match_and_stream(self, path, request):
         """
@@ -351,8 +379,16 @@ class Handler:
             :class:`aiohttp.web.StreamResponse` or :class:`aiohttp.web.FileResponse`: The response
                 streamed back to the client.
         """
-        distro = self._match_distribution(path)
-        self._permit(request, distro)
+
+        def match_distribution_blocking():
+            return self._match_distribution(path)
+
+        distro = await loop.run_in_executor(None, match_distribution_blocking)
+
+        def check_permit_blocking():
+            self._permit(request, distro)
+
+        await loop.run_in_executor(None, check_permit_blocking)
 
         rel_path = path.lstrip("/")
         rel_path = rel_path[len(distro.base_path) :]
@@ -364,27 +400,39 @@ class Handler:
 
         headers = self.response_headers(rel_path)
 
-        publication = getattr(distro, "publication", None)
-        repository = getattr(distro, "repository", None)
-        repo_version = getattr(distro, "repository_version", None)
+        repository = distro.repository
+        publication = distro.publication
+        repo_version = distro.repository_version
+
         if repository:
-            repo_version = repository.latest_version()
-            # Search for publication serving the closest latest version
-            if not publication:
-                try:
-                    versions = repository.versions.all()
-                    publications = Publication.objects.filter(
-                        repository_version__in=versions, complete=True
-                    )
-                    publication = publications.latest("repository_version", "-pulp_created")
-                except ObjectDoesNotExist:
-                    pass
+
+            def get_latest_publication_or_version_blocking():
+                nonlocal repo_version
+                nonlocal publication
+                repo_version = repository.latest_version()
+                # Search for publication serving the closest latest version
+                if not publication:
+                    try:
+                        versions = repository.versions.all()
+                        publications = Publication.objects.filter(
+                            repository_version__in=versions, complete=True
+                        )
+                        publication = publications.latest("repository_version", "-pulp_created")
+                    except ObjectDoesNotExist:
+                        pass
+
+            await loop.run_in_executor(None, get_latest_publication_or_version_blocking)
 
         if publication:
             if rel_path == "" or rel_path[-1] == "/":
                 try:
                     index_path = "{}index.html".format(rel_path)
-                    publication.published_artifact.get(relative_path=index_path)
+
+                    def get_published_artifact_blocking():
+                        publication.published_artifact.get(relative_path=index_path)
+
+                    await loop.run_in_executor(None, get_published_artifact_blocking)
+
                     rel_path = index_path
                     headers = self.response_headers(rel_path)
                 except ObjectDoesNotExist:
@@ -396,13 +444,23 @@ class Handler:
 
             # published artifact
             try:
-                pa = publication.published_artifact.get(relative_path=rel_path)
-                ca = pa.content_artifact
+
+                def get_contentartifact_blocking():
+                    return (
+                        publication.published_artifact.select_related(
+                            "content_artifact",
+                            "content_artifact__artifact",
+                        )
+                        .get(relative_path=rel_path)
+                        .content_artifact
+                    )
+
+                ca = await loop.run_in_executor(None, get_contentartifact_blocking)
             except ObjectDoesNotExist:
                 pass
             else:
                 if ca.artifact:
-                    return self._serve_content_artifact(ca, headers)
+                    return await self._serve_content_artifact(ca, headers)
                 else:
                     return await self._stream_content_artifact(
                         request, StreamResponse(headers=headers), ca
@@ -411,9 +469,15 @@ class Handler:
             # pass-through
             if publication.pass_through:
                 try:
-                    ca = ContentArtifact.objects.select_related("artifact").get(
-                        content__in=publication.repository_version.content, relative_path=rel_path
-                    )
+
+                    def get_contentartifact_blocking():
+                        ca = ContentArtifact.objects.select_related("artifact").get(
+                            content__in=publication.repository_version.content,
+                            relative_path=rel_path,
+                        )
+                        return ca
+
+                    ca = await loop.run_in_executor(None, get_contentartifact_blocking)
                 except MultipleObjectsReturned:
                     log.error(
                         _("Multiple (pass-through) matches for {b}/{p}"),
@@ -424,7 +488,7 @@ class Handler:
                     pass
                 else:
                     if ca.artifact:
-                        return self._serve_content_artifact(ca, headers)
+                        return await self._serve_content_artifact(ca, headers)
                     else:
                         return await self._stream_content_artifact(
                             request, StreamResponse(headers=headers), ca
@@ -432,13 +496,19 @@ class Handler:
 
         if repo_version:
             if rel_path == "" or rel_path[-1] == "/":
-                try:
-                    index_path = "{}index.html".format(rel_path)
-                    ContentArtifact.objects.get(
+                index_path = "{}index.html".format(rel_path)
+
+                def contentartifact_exists_blocking():
+                    return ContentArtifact.objects.filter(
                         content__in=repo_version.content, relative_path=index_path
-                    )
+                    ).exists()
+
+                contentartifact_exists = await loop.run_in_executor(
+                    None, contentartifact_exists_blocking
+                )
+                if contentartifact_exists:
                     rel_path = index_path
-                except ObjectDoesNotExist:
+                else:
                     dir_list = await self.list_directory(repo_version, None, rel_path)
                     dir_list.update(distro.content_handler_list_directory(rel_path))
                     return HTTPOk(
@@ -446,9 +516,14 @@ class Handler:
                     )
 
             try:
-                ca = ContentArtifact.objects.select_related("artifact").get(
-                    content__in=repo_version.content, relative_path=rel_path
-                )
+
+                def get_contentartifact_blocking():
+                    ca = ContentArtifact.objects.select_related("artifact").get(
+                        content__in=repo_version.content, relative_path=rel_path
+                    )
+                    return ca
+
+                ca = await loop.run_in_executor(None, get_contentartifact_blocking)
             except MultipleObjectsReturned:
                 log.error(
                     _("Multiple (pass-through) matches for {b}/{p}"),
@@ -459,23 +534,34 @@ class Handler:
                 pass
             else:
                 if ca.artifact:
-                    return self._serve_content_artifact(ca, headers)
+                    return await self._serve_content_artifact(ca, headers)
                 else:
                     return await self._stream_content_artifact(
                         request, StreamResponse(headers=headers), ca
                     )
 
         if distro.remote:
-            remote = distro.remote.cast()
+
+            def cast_remote_blocking():
+                return distro.remote.cast()
+
+            remote = await loop.run_in_executor(None, cast_remote_blocking)
+
             try:
                 url = remote.get_remote_artifact_url(rel_path)
-                ra = RemoteArtifact.objects.select_related(
-                    "content_artifact",
-                    "content_artifact__artifact",
-                ).get(remote=remote, url=url)
+
+                def get_remote_artifact_blocking():
+                    ra = RemoteArtifact.objects.select_related(
+                        "content_artifact",
+                        "content_artifact__artifact",
+                        "remote",
+                    ).get(remote=remote, url=url)
+                    return ra
+
+                ra = await loop.run_in_executor(None, get_remote_artifact_blocking)
                 ca = ra.content_artifact
                 if ca.artifact:
-                    return self._serve_content_artifact(ca, headers)
+                    return await self._serve_content_artifact(ca, headers)
                 else:
                     return await self._stream_content_artifact(
                         request, StreamResponse(headers=headers), ca
@@ -511,7 +597,12 @@ class Handler:
                 :class:`~pulpcore.plugin.models.ContentArtifact` returned the binary data needed for
                 the client.
         """
-        for remote_artifact in content_artifact.remoteartifact_set.all():
+
+        def get_remote_artifacts_blocking():
+            return list(content_artifact.remoteartifact_set.all())
+
+        remote_artifacts = await loop.run_in_executor(None, get_remote_artifacts_blocking)
+        for remote_artifact in remote_artifacts:
             try:
                 response = await self._stream_remote_artifact(request, response, remote_artifact)
                 return response
@@ -592,7 +683,7 @@ class Handler:
                 content_artifact.save()
         return artifact
 
-    def _serve_content_artifact(self, content_artifact, headers):
+    async def _serve_content_artifact(self, content_artifact, headers):
         """
         Handle response for a Content Artifact with the file present.
 
@@ -611,18 +702,18 @@ class Handler:
         Returns:
             The :class:`aiohttp.web.FileResponse` for the file.
         """
+        artifact_file = content_artifact.artifact.file
+        artifact_name = artifact_file.name
+
         if settings.DEFAULT_FILE_STORAGE == "pulpcore.app.models.storage.FileSystem":
-            filename = content_artifact.artifact.file.name
-            return FileResponse(os.path.join(settings.MEDIA_ROOT, filename), headers=headers)
+            return FileResponse(os.path.join(settings.MEDIA_ROOT, artifact_name), headers=headers)
         elif settings.DEFAULT_FILE_STORAGE == "storages.backends.s3boto3.S3Boto3Storage":
-            artifact_file = content_artifact.artifact.file
             content_disposition = f"attachment;filename={content_artifact.relative_path}"
             parameters = {"ResponseContentDisposition": content_disposition}
-            url = artifact_file.storage.url(artifact_file.name, parameters=parameters)
+            url = artifact_file.storage.url(artifact_name, parameters=parameters)
             raise HTTPFound(url)
         elif settings.DEFAULT_FILE_STORAGE == "storages.backends.azure_storage.AzureStorage":
-            artifact_file = content_artifact.artifact.file
-            url = artifact_file.storage.url(artifact_file.name)
+            url = artifact_file.storage.url(artifact_name)
             raise HTTPFound(url)
         else:
             raise NotImplementedError()
@@ -644,7 +735,11 @@ class Handler:
                 the client.
 
         """
-        remote = remote_artifact.remote.cast()
+
+        def cast_remote_blocking():
+            return remote_artifact.remote.cast()
+
+        remote = await loop.run_in_executor(None, cast_remote_blocking)
 
         async def handle_headers(headers):
             for name, value in headers.items():
@@ -672,7 +767,11 @@ class Handler:
         download_result = await downloader.run()
 
         if remote.policy != Remote.STREAMED:
-            self._save_artifact(download_result, remote_artifact)
+
+            def save_artifact_blocking():
+                self._save_artifact(download_result, remote_artifact)
+
+            await loop.run_in_executor(None, save_artifact_blocking)
         await response.write_eof()
 
         if response.status == 404:
