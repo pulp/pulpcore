@@ -16,7 +16,7 @@ Each plugin has its own documentation that contains setup, workflow, and concept
 * `Pulp Maven plugin <https://github.com/pulp/pulp_maven/blob/master/README.rst/>`_.
 * `Ansible GalaxyNG plugin <https://github.com/ansible/galaxy_ng/blob/master/README.md/>`_.
 * `Pulp Certguard plugin <https://pulp-certguard.readthedocs.io/en/latest/>`_.
-* `Pulp 2-to-3 Migration plugin <https://pulp-2to3-migration.readthedocs.io/en/latest/index.html>`_.
+* `Pulp 2-to-3 Migration plugin <https://docs.pulpproject.org/pulp_2to3_migration/>`_.
 
 
 And don't hesitate to :ref:`contact us<community>` with any questions during development.
