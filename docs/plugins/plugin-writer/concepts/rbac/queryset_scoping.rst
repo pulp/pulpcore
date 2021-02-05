@@ -41,7 +41,8 @@ like more control over the QuerySet Scoping feature it can be added manually by 
 ``get_queryset`` method to your ViewSet which returns the filtered QuerySet.
 
 To look up objects by permission easily from an existing QuerySet use the ``klass`` argument to
-the ``get_objects_for_user`` provided by django-guardian. Here's an example:
+the ``get_objects_for_user`` provided by django-guardian. The ``klass`` argument may be a Model,
+Manager or QuerySet object. Here's an example:
 
 .. code-block:: python
 
