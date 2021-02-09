@@ -256,6 +256,18 @@ SPECTACULAR_SETTINGS = {
 #       at startup
 ALLOWED_CONTENT_CHECKSUMS = ["md5", "sha1", "sha224", "sha256", "sha384", "sha512"]
 
+# check for CONTENT_ORIGIN before loading plugins' settings
+try:
+    CONTENT_ORIGIN
+except NameError:
+    raise ImproperlyConfigured(
+        _(
+            "CONTENT_ORIGIN is a required setting but it was not configured. This may be caused "
+            "by invalid read permissions of the settings file. Note that CONTENT_ORIGIN is set by "
+            "the installer automatically."
+        )
+    )
+
 # HERE STARTS DYNACONF EXTENSION LOAD (Keep at the very bottom of settings.py)
 # Read more at https://dynaconf.readthedocs.io/en/latest/guides/django.html
 import dynaconf  # noqa
@@ -270,17 +282,6 @@ settings = dynaconf.DjangoDynaconf(
     ENVVAR_FOR_DYNACONF="PULP_SETTINGS",
 )
 # HERE ENDS DYNACONF EXTENSION LOAD (No more code below this line)
-
-try:
-    CONTENT_ORIGIN
-except NameError:
-    raise ImproperlyConfigured(
-        _(
-            "CONTENT_ORIGIN is a required setting but it was not configured. This may be caused "
-            "by invalid read permissions of the settings file. Note that CONTENT_ORIGIN is set by "
-            "the installer automatically."
-        )
-    )
 
 # Check legality of ALLOWED_CONTENT_CHECKSUMS post-dynaconf-load, in case it has been overridden
 # in a site-specific location (eg, in /etc/pulp/settings.py)
