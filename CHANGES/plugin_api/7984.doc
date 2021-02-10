@@ -1,0 +1,3 @@
+Added docs identifying plugin writers to use the ``pulpcore.app.pulp_hashlib`` module which provides
+the ``new`` function and ensures only allowed hashers can be instantiated. This should be used in
+place of ``hashlib.new``.

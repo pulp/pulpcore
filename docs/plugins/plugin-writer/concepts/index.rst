@@ -445,3 +445,26 @@ galaxy_ui.yml>`_ in the installers ``pulp_devel`` role.
 For help contributing or changing a plugin-specific installation, please reach out to the installer
 maintainers either through the developer mailing list (``pulp-dev@redhat.com``) or on Freenode in
 the developer channel, ``#pulp-dev``.
+
+.. _checksum-use-in-plugins:
+
+Checksum Use In Plugins
+-----------------------
+
+The ``ALLOWED_CONTENT_CHECKSUMS`` setting provides the list of allowed checksums a Pulp installation
+is allowed to handle. This includes two types of "checksum handling":
+
+1. Generating checksums. Only hashers in the ``ALLOWED_CONTENT_CHECKSUMS`` list should be used for
+   checksum generation.
+2. Passing through checksum data to clients. Pulp installations should not deliver checksum data to
+   clients that are not in the ``ALLOWED_CONTENT_CHECKSUMS`` list. For example, the RPM plugin
+   publications contain checksums that Pulp does not generate, and it should restrict the checksum
+   data used in those publications to the set of allowed hashers in ``ALLOWED_CONTENT_CHECKSUMS``.
+
+.. note::
+
+    The plugin API provides the ``pulpcore.plugin.pulp_hashlib`` module which provides the ``new``
+    function. This is a wrapper around ``hashlib.new`` which raises an exception if a hasher is
+    requested that is not listed in the ``ALLOWED_CONTENT_CHECKSUMS`` setting. This is a convenience
+    facility allowing plugin writers to not check the ``ALLOWED_CONTENT_CHECKSUMS`` setting
+    themselves.
