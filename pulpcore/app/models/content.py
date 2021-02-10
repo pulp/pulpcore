@@ -4,7 +4,6 @@ Content related Django models.
 from gettext import gettext as _
 
 import json
-import hashlib
 import warnings
 import tempfile
 import shutil
@@ -22,6 +21,7 @@ from django.forms.models import model_to_dict
 from django_lifecycle import BEFORE_UPDATE, BEFORE_SAVE, hook
 
 from pulpcore.constants import ALL_KNOWN_CONTENT_CHECKSUMS
+from pulpcore.app import pulp_hashlib
 from pulpcore.app.models import MasterModel, BaseModel, fields, storage
 from pulpcore.exceptions import (
     DigestValidationError,
@@ -281,7 +281,7 @@ class Artifact(HandleTempFilesMixin, BaseModel):
         """
         if isinstance(file, str):
             with open(file, "rb") as f:
-                hashers = {n: hashlib.new(n) for n in Artifact.DIGEST_FIELDS}
+                hashers = {n: pulp_hashlib.new(n) for n in Artifact.DIGEST_FIELDS}
                 size = 0
                 while True:
                     chunk = f.read(1048576)  # 1 megabyte
@@ -388,7 +388,7 @@ class PulpTemporaryFile(HandleTempFilesMixin, BaseModel):
 
         if isinstance(file, str):
             with open(file, "rb") as f:
-                hashers = {n: hashlib.new(n) for n in expected_digests.keys()}
+                hashers = {n: pulp_hashlib.new(n) for n in expected_digests.keys()}
                 size = 0
                 while True:
                     chunk = f.read(1048576)  # 1 megabyte

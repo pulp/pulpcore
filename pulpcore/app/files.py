@@ -1,11 +1,12 @@
-import hashlib
 import os
 from gettext import gettext as _
 
 from django.core.files.uploadedfile import TemporaryUploadedFile
 from django.core.files.uploadhandler import TemporaryFileUploadHandler
 from pygtrie import StringTrie
+
 from pulpcore.app import models
+from pulpcore.app import pulp_hashlib
 
 
 class PulpTemporaryUploadedFile(TemporaryUploadedFile):
@@ -16,7 +17,7 @@ class PulpTemporaryUploadedFile(TemporaryUploadedFile):
     def __init__(self, name, content_type, size, charset, content_type_extra=None):
         self.hashers = {}
         for hasher in models.Artifact.DIGEST_FIELDS:
-            self.hashers[hasher] = getattr(hashlib, hasher)()
+            self.hashers[hasher] = pulp_hashlib.new(hasher)
         super().__init__(name, content_type, size, charset, content_type_extra)
 
     @classmethod

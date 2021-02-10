@@ -1,4 +1,3 @@
-import hashlib
 import os
 
 from gettext import gettext as _
@@ -6,6 +5,7 @@ from gettext import gettext as _
 from django.conf import settings
 from django.core.management import BaseCommand, CommandError
 from pulpcore import constants
+from pulpcore.app import pulp_hashlib
 from pulpcore.plugin.models import Artifact
 
 import logging
@@ -52,7 +52,7 @@ class Command(BaseCommand):
             params = {f"{checksum}__isnull": True}
             artifacts_qs = Artifact.objects.filter(**params)
             for a in artifacts_qs:
-                hasher = hashlib.new(checksum)
+                hasher = pulp_hashlib.new(checksum)
                 try:
                     for chunk in a.file.chunks(CHUNK_SIZE):
                         hasher.update(chunk)
