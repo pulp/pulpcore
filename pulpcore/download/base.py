@@ -1,10 +1,10 @@
 import asyncio
 from collections import namedtuple
-import hashlib
 import logging
 import os
 import tempfile
 
+from pulpcore.app import pulp_insecure_md5_hashlib
 from pulpcore.app.models import Artifact
 from pulpcore.exceptions import DigestValidationError, SizeValidationError
 
@@ -94,7 +94,7 @@ class BaseDownloader:
             self.semaphore = semaphore
         else:
             self.semaphore = asyncio.Semaphore()  # This will always be acquired
-        self._digests = {n: hashlib.new(n) for n in Artifact.DIGEST_FIELDS}
+        self._digests = {n: pulp_insecure_md5_hashlib.new(n) for n in Artifact.DIGEST_FIELDS}
         self._size = 0
 
     def _ensure_writer_has_open_file(self):

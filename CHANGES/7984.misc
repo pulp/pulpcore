@@ -1,0 +1,6 @@
+Consolidate all calls to ```hashlib.new` to use the new, somewhat questionable
+``pulpcore.app.pulp_insecure_md5_hashlib``. This adds the ``usedforsecurity=False`` kwarg when
+instantiating the ``md5`` hasher. All other hashers pass through unmodified.
+
+``md5`` is disallowed in Pulp by default, so this allows ``md5`` if a user went out of their way to
+express their intent for ``md5`` to be used, it should work even in a restricted environment.

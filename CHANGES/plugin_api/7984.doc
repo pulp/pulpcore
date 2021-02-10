@@ -1,0 +1,2 @@
+Adds docs identifying plugin writers to use the ````pulpcore.app.pulp_insecure_md5_hashlib.`` module
+which provides the ``new`` function. This should be used in place of ``hashlib.new``.

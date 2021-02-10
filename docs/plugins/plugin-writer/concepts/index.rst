@@ -445,3 +445,13 @@ galaxy_ui.yml>`_ in the installers ``pulp_devel`` role.
 For help contributing or changing a plugin-specific installation, please reach out to the installer
 maintainers either through the developer mailing list (``pulp-dev@redhat.com``) or on Freenode in
 the developer channel, ``#pulp-dev``.
+
+.. _checksum-use-in-plugins:
+
+Checksum Use In Plugins
+-----------------------
+
+The ``ALLOWED_CONTENT_CHECKSUMS`` setting provides the list of allowed checksums for that Pulp
+installation. Plugin writers are expected to restrict their use of checksums to this list. The
+plugin API provides the ``pulpcore.plugin.pulp_insecure_md5_hashlib`` module which provides the
+``new`` function. This is a wrapper around ``hashlib.new`` and should be used instead of it.
