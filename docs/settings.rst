@@ -247,22 +247,18 @@ PROFILE_STAGES_API
 ALLOWED_CONTENT_CHECKSUMS
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-    The list of content-checksums this pulp-instance is **allowed to use**. This list is a
-    proper subset of the checksums defined by the Artifact model. You may safely list fewer
-    algorithms than the Artifact model supports (although see the warning below regarding ``sha256``),
-    but adding unknown algorithms will cause unexpected behavior.
+    The list of content-checksums this pulp-instance is **allowed to use**. By default the following
+    are used::
 
-    See :ref:`Configuration` for details on how to change configuration-options.
+        ALLOWED_CONTENT_CHECKSUMS = ["sha224", "sha256", "sha384", "sha512"]
+
+    The entire set of supported checksums are: ``md5``, ``sha1``, ``sha224``, ``sha256``,
+    ``sha384``, and ``sha512``. After modifying this setting, you likely will need to run
+    ``pulpcore-manager handle-artifact-checksums`` or Pulp will refuse to start.
 
     .. warning::
       Due to its use as a primary content-identifier, "sha256"" **IS REQUIRED**. Pulp will
       fail to start if it is not found in this set.
-
-    .. warning::
-      Specifying checksums that are not available to models.Artifact will cause Pulp to fail to start.
-      The complete set of supported checksum algorithms includes the following:
-
-      ``{"md5", "sha1", "sha224", "sha256", "sha384", "sha512"}``
 
     .. warning::
       If Pulp fails to start because forbidden checkums have been identified or required ones are
