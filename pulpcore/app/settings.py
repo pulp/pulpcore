@@ -8,18 +8,10 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/1.11/ref/settings/
 """
 
-import sys
-
 from contextlib import suppress
-from gettext import gettext as _
 from importlib import import_module
 from pathlib import Path
 from pkg_resources import iter_entry_points
-
-from django.core.exceptions import ImproperlyConfigured
-from django.db import connection
-
-from pulpcore import constants
 
 # Build paths inside the project like this: BASE_DIR / ...
 BASE_DIR = Path(__file__).absolute().parent
@@ -270,76 +262,3 @@ settings = dynaconf.DjangoDynaconf(
     ENVVAR_FOR_DYNACONF="PULP_SETTINGS",
 )
 # HERE ENDS DYNACONF EXTENSION LOAD (No more code below this line)
-
-try:
-    CONTENT_ORIGIN
-except NameError:
-    raise ImproperlyConfigured(
-        _(
-            "CONTENT_ORIGIN is a required setting but it was not configured. This may be caused "
-            "by invalid read permissions of the settings file. Note that CONTENT_ORIGIN is set by "
-            "the installer automatically."
-        )
-    )
-
-# Check legality of ALLOWED_CONTENT_CHECKSUMS post-dynaconf-load, in case it has been overridden
-# in a site-specific location (eg, in /etc/pulp/settings.py)
-if "sha256" not in ALLOWED_CONTENT_CHECKSUMS:
-    raise ImproperlyConfigured(
-        _(
-            "ALLOWED_CONTENT_CHECKSUMS MUST contain 'sha256' - Pulp's content-storage-addressing "
-            "relies on sha256 to identify entities."
-        )
-    )
-
-unknown_algs = set(ALLOWED_CONTENT_CHECKSUMS).difference(constants.ALL_KNOWN_CONTENT_CHECKSUMS)
-if unknown_algs:
-    raise ImproperlyConfigured(
-        _(
-            "ALLOWED_CONTENT_CHECKSUMS may only contain algorithms known to pulp - see "
-            "constants.ALL_KNOWN_CONTENT_CHECKSUMS for the allowed list. Unknown algorithms "
-            "provided: {}".format(unknown_algs)
-        )
-    )
-
-FORBIDDEN_CHECKSUMS = set(constants.ALL_KNOWN_CONTENT_CHECKSUMS).difference(
-    ALLOWED_CONTENT_CHECKSUMS
-)
-try:
-    with connection.cursor() as cursor:
-        for checksum in ALLOWED_CONTENT_CHECKSUMS:
-            # can't import Artifact here so use a direct db connection
-            cursor.execute(f"SELECT count(pulp_id) FROM core_artifact WHERE {checksum} IS NULL")
-            row = cursor.fetchone()
-            if row[0] > 0:
-                if len(sys.argv) >= 2 and sys.argv[1] == "handle-artifact-checksums":
-                    break
-                raise ImproperlyConfigured(
-                    _(
-                        "There have been identified artifacts missing checksum '{}'. "
-                        "Run 'pulpcore-manager handle-artifact-checksums' first to populate "
-                        "missing artifact checksums."
-                    ).format(checksum)
-                )
-        for checksum in FORBIDDEN_CHECKSUMS:
-            # can't import Artifact here so use a direct db connection
-            cursor.execute(f"SELECT count(pulp_id) FROM core_artifact WHERE {checksum} IS NOT NULL")
-            row = cursor.fetchone()
-            if row[0] > 0:
-                if len(sys.argv) >= 2 and sys.argv[1] == "handle-artifact-checksums":
-                    break
-                raise ImproperlyConfigured(
-                    _(
-                        "There have been identified artifacts with forbidden checksum '{}'. "
-                        "Run 'pulpcore-manager handle-artifact-checksums' first to unset "
-                        "forbidden checksums."
-                    ).format(checksum)
-                )
-
-except ImproperlyConfigured as e:
-    raise e
-except Exception:
-    # our check could fail if the table hasn't been created yet or we can't get a db connection
-    pass
-finally:
-    connection.close()
