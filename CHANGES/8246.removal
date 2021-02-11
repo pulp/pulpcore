@@ -1,0 +1,3 @@
+Adjusted the ``ALLOWED_CONTENT_CHECKSUMS`` setting to remove ``md5`` and ``sha1`` since they are
+insecure. Now, by default, the ``ALLOWED_CONTENT_CHECKSUMS`` contain ``sha224``, ``sha256``,
+``sha384``, and ``sha512``.
