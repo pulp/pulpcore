@@ -115,10 +115,10 @@ class Handler:
         self._reset_db_connection()
 
         if self.distribution_model is None:
-            distributions = BaseDistribution.objects.only("base_path").all()
+            base_paths = list(BaseDistribution.objects.values_list("base_path", flat=True))
         else:
-            distributions = self.distribution_model.objects.only("base_path").all()
-        directory_list = ["{}/".format(d.base_path) for d in distributions]
+            base_paths = list(self.distribution_model.objects.values_list("base_path", flat=True))
+        directory_list = ["{}/".format(d.base_path) for d in base_paths]
         return HTTPOk(headers={"Content-Type": "text/html"}, body=self.render_html(directory_list))
 
     async def stream_content(self, request):
@@ -390,7 +390,7 @@ class Handler:
             # pass-through
             if publication.pass_through:
                 try:
-                    ca = ContentArtifact.objects.get(
+                    ca = ContentArtifact.objects.select_related("artifact").get(
                         content__in=publication.repository_version.content, relative_path=rel_path
                     )
                 except MultipleObjectsReturned:
@@ -431,7 +431,7 @@ class Handler:
                     )
 
             try:
-                ca = ContentArtifact.objects.get(
+                ca = ContentArtifact.objects.select_related("artifact").get(
                     content__in=repo_version.content, relative_path=rel_path
                 )
             except MultipleObjectsReturned:
@@ -454,7 +454,10 @@ class Handler:
             remote = distro.remote.cast()
             try:
                 url = remote.get_remote_artifact_url(rel_path)
-                ra = RemoteArtifact.objects.get(remote=remote, url=url)
+                ra = RemoteArtifact.objects.select_related(
+                    "content_artifact",
+                    "content_artifact__artifact",
+                ).get(remote=remote, url=url)
                 ca = ra.content_artifact
                 if ca.artifact:
                     return self._serve_content_artifact(ca, headers)
