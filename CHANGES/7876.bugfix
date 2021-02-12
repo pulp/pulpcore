@@ -1,0 +1,2 @@
+Fixed a bug experienced by the migration plugin where all content objects are assumed to have a
+remote associated with them.
