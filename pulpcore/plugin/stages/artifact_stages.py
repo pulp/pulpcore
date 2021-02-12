@@ -292,11 +292,11 @@ class RemoteArtifactSaver(Stage):
                     raise ValueError(
                         msg.format(rp=content_artifact.relative_path, c=d_content.content)
                     )
-                for remote_artifact in content_artifact._remote_artifact_saver_ras:
-                    if remote_artifact.remote_id == d_artifact.remote.pk:
-                        break
-                else:
-                    if d_artifact.remote:
+                if d_artifact.remote:
+                    for remote_artifact in content_artifact._remote_artifact_saver_ras:
+                        if remote_artifact.remote_id == d_artifact.remote.pk:
+                            break
+                    else:
                         remote_artifact = self._create_remote_artifact(d_artifact, content_artifact)
                         needed_ras.append(remote_artifact)
         return needed_ras
