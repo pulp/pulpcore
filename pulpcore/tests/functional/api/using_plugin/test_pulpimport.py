@@ -8,7 +8,7 @@ import json
 import unittest
 
 from pulp_smash import api, cli, config
-from pulp_smash.utils import uuid4
+from pulp_smash.utils import uuid4, get_pulp_setting
 from pulp_smash.pulp3.bindings import monitor_task, monitor_task_group
 from pulp_smash.pulp3.utils import (
     delete_orphans,
@@ -137,6 +137,15 @@ class PulpImportTestCase(unittest.TestCase):
     def setUpClass(cls):
         """Create class-wide variables."""
         cls.cfg = config.get_config()
+        cls.cli_client = cli.Client(cls.cfg)
+        allowed_imports = get_pulp_setting(cls.cli_client, "ALLOWED_IMPORT_PATHS")
+        if not allowed_imports or "/tmp" not in allowed_imports:
+            raise unittest.SkipTest(
+                "Cannot run import-tests unless /tmp is in ALLOWED_IMPORT_PATHS ({}).".format(
+                    allowed_imports
+                ),
+            )
+
         cls.client = api.Client(cls.cfg, api.json_handler)
         cls.core_client = CoreApiClient(configuration=cls.cfg.get_bindings_config())
         cls.file_client = gen_file_client()
