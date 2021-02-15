@@ -5,7 +5,7 @@ NOTE: assumes ALLOWED_EXPORT_PATHS setting contains "/tmp" - all tests will fail
 the case.
 """
 import unittest
-from pulp_smash import api, cli, config
+from pulp_smash import api, cli, config, utils
 from pulp_smash.utils import uuid4
 from pulp_smash.pulp3.bindings import monitor_task
 from pulp_smash.pulp3.utils import (
@@ -72,7 +72,17 @@ class BaseExporterCase(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         """Create class-wide variables."""
+
         cls.cfg = config.get_config()
+        cls.cli_client = cli.Client(cls.cfg)
+        allowed_exports = utils.get_pulp_setting(cls.cli_client, "ALLOWED_EXPORT_PATHS")
+        if not allowed_exports or "/tmp" not in allowed_exports:
+            raise unittest.SkipTest(
+                "Cannot run export-tests unless /tmp is in ALLOWED_EXPORT_PATHS ({}).".format(
+                    allowed_exports
+                ),
+            )
+
         cls.client = api.Client(cls.cfg, api.json_handler)
         cls.core_client = CoreApiClient(configuration=cls.cfg.get_bindings_config())
         cls.file_client = gen_file_client()
