@@ -110,6 +110,9 @@ if [ -f $FUNC_TEST_SCRIPT ]; then
 else
     pytest -v -r sx --color=yes --pyargs pulpcore.tests.functional
 fi
+pushd ../pulp-cli
+pytest -v -m pulpcore
+popd
 
 if [ -f $POST_SCRIPT ]; then
   source $POST_SCRIPT
