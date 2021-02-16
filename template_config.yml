@@ -42,6 +42,7 @@ pypi_username: pulp
 redmine_project: pulp
 stable_branch: null
 test_bindings: true
+test_cli: true
 test_performance: false
 test_released_plugin_with_next_pulpcore_release: false
 test_s3: true
