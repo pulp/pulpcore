@@ -234,6 +234,7 @@ SPECTACULAR_SETTINGS = {
     "SERVE_URLCONF": ROOT_URLCONF,
     "DEFAULT_GENERATOR_CLASS": "pulpcore.openapi.PulpSchemaGenerator",
     "DEFAULT_SCHEMA_CLASS": "pulpcore.openapi.PulpAutoSchema",
+    "ENABLE_PULP_HREF": True,
     "COMPONENT_SPLIT_REQUEST": True,
     "COMPONENT_NO_READ_ONLY_REQUIRED": True,
     "TITLE": "Pulp 3 API",

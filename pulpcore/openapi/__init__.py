@@ -379,8 +379,8 @@ class PulpSchemaGenerator(SchemaGenerator):
                 continue
 
             schema = view.schema
-
-            path = self.convert_endpoint_path_params(path, view, schema)
+            if spectacular_settings.user_settings.ENABLE_PULP_HREF:
+                path = self.convert_endpoint_path_params(path, view, schema)
 
             # beware that every access to schema yields a fresh object (descriptor pattern)
             operation = schema.get_operation(path, path_regex, method, self.registry)
