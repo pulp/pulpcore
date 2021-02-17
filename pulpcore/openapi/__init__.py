@@ -4,6 +4,7 @@ from urllib.parse import urljoin
 from django.core.exceptions import FieldDoesNotExist
 from django.utils.html import strip_tags
 from drf_spectacular.drainage import reset_generator_stats
+from drf_spectacular.extensions import OpenApiFilterExtension
 from drf_spectacular.generators import SchemaGenerator
 from drf_spectacular.openapi import AutoSchema
 from drf_spectacular.plumbing import (
@@ -278,6 +279,23 @@ class PulpAutoSchema(AutoSchema):
             response["201"] = response.pop("200")
 
         return response
+
+    def _get_filter_parameters(self):
+        """Enable filter for retrieve requests."""
+        if self.method.lower() != "get":
+            return []
+
+        if getattr(self.view, "filter_backends", None) is None:
+            return []
+
+        parameters = []
+        for filter_backend in self.view.filter_backends:
+            filter_extension = OpenApiFilterExtension.get_match(filter_backend())
+            if filter_extension:
+                parameters += filter_extension.get_schema_operation_parameters(self)
+            else:
+                parameters += filter_backend().get_schema_operation_parameters(self.view)
+        return parameters
 
 
 class PulpSchemaGenerator(SchemaGenerator):

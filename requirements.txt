@@ -14,7 +14,7 @@ djangorestframework~=3.12.2
 djangorestframework-queryfields~=1.0.0
 drf-access-policy~=0.8.6
 drf-nested-routers==0.92.1
-drf-spectacular==0.11.0
+drf-spectacular~=0.13
 dynaconf~=3.1.2
 gunicorn>=19.9,<20.1
 jinja2
