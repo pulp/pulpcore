@@ -601,7 +601,7 @@ class Handler:
             artifact_file = content_artifact.artifact.file
             content_disposition = f"attachment;filename={content_artifact.relative_path}"
             parameters = {"ResponseContentDisposition": content_disposition}
-            url = artifact_file.storage.url(artifact_file.name, parameters=parameters)
+            url = artifact_file.storage.url(artifact_file.name)
             raise HTTPFound(url)
         else:
             raise NotImplementedError()
