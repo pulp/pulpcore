@@ -24,12 +24,12 @@ from pulpcore.app.viewsets.custom_filters import (
     ReservedResourcesFilter,
     CreatedResourcesFilter,
 )
-from pulpcore.constants import TASK_INCOMPLETE_STATES, TASK_STATES
+from pulpcore.constants import TASK_INCOMPLETE_STATES, TASK_STATES, TASK_CHOICES
 from pulpcore.tasking.util import cancel as cancel_task
 
 
 class TaskFilter(BaseFilterSet):
-    state = filters.CharFilter()
+    state = filters.ChoiceFilter(choices=TASK_CHOICES)
     worker = HyperlinkRelatedFilter()
     name = filters.CharFilter()
     started_at = IsoDateTimeFilter(field_name="started_at")
