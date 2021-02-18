@@ -594,14 +594,15 @@ class Handler:
         if settings.DEFAULT_FILE_STORAGE == "pulpcore.app.models.storage.FileSystem":
             filename = content_artifact.artifact.file.name
             return FileResponse(os.path.join(settings.MEDIA_ROOT, filename), headers=headers)
-        elif (
-            settings.DEFAULT_FILE_STORAGE == "storages.backends.s3boto3.S3Boto3Storage"
-            or settings.DEFAULT_FILE_STORAGE == "storages.backends.azure_storage.AzureStorage"
-        ):
+        elif settings.DEFAULT_FILE_STORAGE == "storages.backends.s3boto3.S3Boto3Storage":
             artifact_file = content_artifact.artifact.file
             content_disposition = f"attachment;filename={content_artifact.relative_path}"
             parameters = {"ResponseContentDisposition": content_disposition}
             url = artifact_file.storage.url(artifact_file.name, parameters=parameters)
+            raise HTTPFound(url)
+        elif settings.DEFAULT_FILE_STORAGE == "storages.backends.azure_storage.AzureStorage":
+            artifact_file = content_artifact.artifact.file
+            url = artifact_file.storage.url(artifact_file.name)
             raise HTTPFound(url)
         else:
             raise NotImplementedError()
