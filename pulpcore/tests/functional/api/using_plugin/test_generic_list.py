@@ -12,7 +12,7 @@ from pulpcore.tests.functional.utils import set_up_module as setUpModule  # noqa
 from pulpcore.client.pulpcore import (
     ApiClient as CoreApiClient,
     ContentApi,
-    ContentGuardsApi,
+    ContentguardsApi,
     RepositoriesApi,
 )
 from pulpcore.client.pulp_file import (
@@ -23,7 +23,7 @@ from pulpcore.client.pulp_file import (
 
 from pulpcore.client.pulp_certguard import (
     ApiClient as CertGuardApiClient,
-    ContentGuardsX509Api,
+    ContentguardsX509Api,
 )
 
 
@@ -47,7 +47,7 @@ class GenericListTestCase(unittest.TestCase):
                 cls.file_content_api.create(relative_path=utils.uuid4(), file=tmp_file.name).task
             )
 
-        cls.cert_guards_api = ContentGuardsX509Api(
+        cls.cert_guards_api = ContentguardsX509Api(
             CertGuardApiClient(cls.cfg.get_bindings_config())
         )
         with open(X509_CA_CERT_FILE_PATH, "r") as x509_ca_cert_data_file:
@@ -84,7 +84,7 @@ class GenericListTestCase(unittest.TestCase):
 
     def test_read_all_content_guards_generic(self):
         """Ensure name is displayed when listing content guards generic."""
-        content_guards_api = ContentGuardsApi(CoreApiClient(self.cfg.get_bindings_config()))
+        content_guards_api = ContentguardsApi(CoreApiClient(self.cfg.get_bindings_config()))
 
         response = content_guards_api.list()
         self.assertNotEqual(response.count, 0)

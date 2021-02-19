@@ -57,7 +57,7 @@ class ContentGuardFilter(BaseFilterSet):
 
 
 class BaseContentGuardViewSet(NamedModelViewSet):
-    endpoint_name = "content_guards"
+    endpoint_name = "contentguards"
     serializer_class = ContentGuardSerializer
     queryset = ContentGuard.objects.all()
     filterset_class = ContentGuardFilter
@@ -67,7 +67,7 @@ class ListContentGuardViewSet(
     BaseContentGuardViewSet,
     mixins.ListModelMixin,
 ):
-    """Endpoint to list all content_guards."""
+    """Endpoint to list all contentguards."""
 
     @classmethod
     def is_master_viewset(cls):
@@ -84,7 +84,7 @@ class ContentGuardViewSet(
     mixins.ListModelMixin,
 ):
     """
-    A viewset for content_guards.
+    A viewset for contentguards.
     """
 
 
