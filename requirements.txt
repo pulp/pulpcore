@@ -20,7 +20,7 @@ gunicorn>=19.9,<20.1
 jinja2
 pygtrie~=2.4.2
 psycopg2>=2.7,<2.9
-PyYAML>=5.1.1,<5.4.0
+PyYAML>=5.1.1,<5.5.0
 python-gnupg~=0.4.6
 redis>=3.4.0
 rq>=1.7,<1.8
