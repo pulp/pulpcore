@@ -24,9 +24,12 @@ class ContentObjectField(serializers.CharField):
     def to_representation(self, obj):
         content_object = getattr(obj, "content_object", None)
         if content_object:
-            viewset = get_viewset_for_model(obj.content_object)
-            serializer = viewset.serializer_class(obj.content_object, context={"request": None})
-            return serializer.data.get("pulp_href")
+            try:
+                viewset = get_viewset_for_model(obj.content_object)
+                serializer = viewset.serializer_class(obj.content_object, context={"request": None})
+                return serializer.data.get("pulp_href")
+            except LookupError:
+                return "<unaddressable resource>"
 
 
 class PermissionSerializer(serializers.Serializer):

@@ -1,0 +1,1 @@
+Added a fallback text in the permission view for resources that cannot be represented by a pulp uri.
