@@ -223,6 +223,8 @@ DRF_ACCESS_POLICY = {"reusable_conditions": "pulpcore.app.global_access_conditio
 CONTENT_PATH_PREFIX = "/pulp/content/"
 CONTENT_APP_TTL = 30
 
+WORKER_TTL = 30
+
 REMOTE_USER_ENVIRON_NAME = "REMOTE_USER"
 
 ALLOWED_IMPORT_PATHS = []

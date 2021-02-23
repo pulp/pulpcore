@@ -2,6 +2,7 @@ import logging
 from gettext import gettext as _
 
 from pulpcore.app.models import Worker, Task
+from pulpcore.app.settings import WORKER_TTL
 from pulpcore.constants import TASK_INCOMPLETE_STATES
 from pulpcore.tasking import connection
 from pulpcore.tasking.constants import TASKING_CONSTANTS
@@ -73,7 +74,7 @@ def check_worker_processes():
             "Checking if pulpcore-workers or pulpcore-resource-manager processes are "
             "missing for more than %d seconds"
         )
-        % TASKING_CONSTANTS.WORKER_TTL
+        % WORKER_TTL
     )
     _logger.debug(msg)
 

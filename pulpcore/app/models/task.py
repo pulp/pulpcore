@@ -11,6 +11,7 @@ from django.db import models, transaction
 from django.utils import timezone
 from rq.job import get_current_job
 
+from pulpcore.app.settings import WORKER_TTL
 from pulpcore.app.models import (
     AutoAddObjPermsMixin,
     AutoDeleteObjPermsMixin,
@@ -150,7 +151,7 @@ class WorkerManager(models.Manager):
                 are considered by Pulp to be 'online'.
         """
         now = timezone.now()
-        age_threshold = now - timedelta(seconds=TASKING_CONSTANTS.WORKER_TTL)
+        age_threshold = now - timedelta(seconds=WORKER_TTL)
 
         return self.filter(last_heartbeat__gte=age_threshold, gracefully_stopped=False)
 
@@ -167,7 +168,7 @@ class WorkerManager(models.Manager):
                 are considered by Pulp to be 'missing'.
         """
         now = timezone.now()
-        age_threshold = now - timedelta(seconds=TASKING_CONSTANTS.WORKER_TTL)
+        age_threshold = now - timedelta(seconds=WORKER_TTL)
 
         return self.filter(last_heartbeat__lt=age_threshold, gracefully_stopped=False)
 
@@ -187,7 +188,7 @@ class WorkerManager(models.Manager):
                 are considered by Pulp to be 'dirty'.
         """
         now = timezone.now()
-        age_threshold = now - timedelta(seconds=TASKING_CONSTANTS.WORKER_TTL)
+        age_threshold = now - timedelta(seconds=WORKER_TTL)
 
         return self.filter(
             last_heartbeat__lt=age_threshold, cleaned_up=False, gracefully_stopped=False
@@ -260,7 +261,7 @@ class Worker(BaseModel):
             bool: True if the worker is considered online, otherwise False
         """
         now = timezone.now()
-        age_threshold = now - timedelta(seconds=TASKING_CONSTANTS.WORKER_TTL)
+        age_threshold = now - timedelta(seconds=WORKER_TTL)
 
         return not self.gracefully_stopped and self.last_heartbeat >= age_threshold
 
@@ -277,7 +278,7 @@ class Worker(BaseModel):
             bool: True if the worker is considered missing, otherwise False
         """
         now = timezone.now()
-        age_threshold = now - timedelta(seconds=TASKING_CONSTANTS.WORKER_TTL)
+        age_threshold = now - timedelta(seconds=WORKER_TTL)
 
         return not self.gracefully_stopped and self.last_heartbeat < age_threshold
 
