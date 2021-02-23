@@ -189,6 +189,16 @@ CONTENT_APP_TTL
    Defaults to ``30`` seconds.
 
 
+.. _worker-ttl:
+
+WORKER_TTL
+^^^^^^^^^^
+
+   The number of seconds before a worker should be considered lost.
+
+   Defaults to ``30`` seconds.
+
+
 .. _remote-user-environ-name:
 
 REMOTE_USER_ENVIRON_NAME

@@ -18,6 +18,8 @@ from django_currentuser.middleware import (  # noqa: E402: module level not at t
 )
 from django_guid.middleware import GuidMiddleware  # noqa: E402: module level not at top of file
 
+from pulpcore.app.settings import WORKER_TTL  # noqa: E402: module level not at top of file
+
 from pulpcore.app.models import Task  # noqa: E402: module level not at top of file
 
 from pulpcore.tasking.constants import (  # noqa: E402: module level not at top of file
@@ -71,7 +73,7 @@ class PulpWorker(Worker):
             queues = [Queue(kwargs["name"], connection=kwargs["connection"])]
             self.is_resource_manager = False
 
-        kwargs["default_worker_ttl"] = TASKING_CONSTANTS.WORKER_TTL
+        kwargs["default_worker_ttl"] = WORKER_TTL
         kwargs["job_monitoring_interval"] = TASKING_CONSTANTS.JOB_MONITORING_INTERVAL
 
         return super().__init__(queues, **kwargs)
