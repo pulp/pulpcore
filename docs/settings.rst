@@ -272,8 +272,7 @@ ALLOWED_CONTENT_CHECKSUMS
 
     .. warning::
       If Pulp fails to start because forbidden checkums have been identified or required ones are
-      missing, run ``pulpcore-manager handle-artifact-checksums`` command. This command is in
-      tech-preview and may change in backwards incompatible ways in future releases.
+      missing, run ``pulpcore-manager handle-artifact-checksums`` command.
 
 ADMIN_SITE_URL
 ^^^^^^^^^^^^^^
