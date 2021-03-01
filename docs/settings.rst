@@ -280,6 +280,3 @@ DJANGO_GUID
 
     For more information on how to configure the ``DJANGO_GUID`` setting, see the `django-guid
     settings documentation <https://django-guid.readthedocs.io/en/latest/settings.html>`_.
-
-    This feature is provided as a tech preview and backwards incompatible changes may affect it in
-    future releases of Pulp.
