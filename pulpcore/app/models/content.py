@@ -140,7 +140,80 @@ class HandleTempFilesMixin:
         self.file.delete(save=False)
 
 
-class Artifact(HandleTempFilesMixin, BaseModel):
+class DigestModel:
+    """
+    A mixin that provides functionality for working with digests.
+    """
+
+    # All available digest fields ordered by algorithm strength.
+    DIGEST_FIELDS = _DIGEST_FIELDS
+
+    # All available digest fields ordered by relative frequency
+    # (Better average-case performance in some algorithms with fallback)
+    COMMON_DIGEST_FIELDS = _COMMON_DIGEST_FIELDS
+
+    # Available, reliable digest fields ordered by algorithm strength.
+    RELIABLE_DIGEST_FIELDS = _RELIABLE_DIGEST_FIELDS
+
+    # Digest-fields that are NOT ALLOWED
+    FORBIDDEN_DIGESTS = _FORBIDDEN_DIGESTS
+
+    def __setattr__(self, attrname, val):
+        """
+        Override setattr to ensure that forbidden checksums aren't being set.
+
+        Args:
+            attrname (str): A field to set
+            val: The value to set on the attrname field
+
+        Raises:
+            :class: `~pulpcore.exceptions.UnsupportedDigestValidationError`: When any of the
+                checksum types in FORBIDDEN_DIGESTS are set for the model
+        """
+        if attrname in self.FORBIDDEN_DIGESTS and val is not None:
+            raise UnsupportedDigestValidationError(
+                _("Checksum algorithm {} is forbidden for this Pulp instance.").format(attrname)
+            )
+        else:
+            super(DigestModel, self).__setattr__(attrname, val)
+
+    def is_equal(self, other):
+        """
+        Is equal by matching digest.
+
+        Args:
+            other (pulpcore.app.models.DigestModel): A digest model to match.
+
+        Returns:
+            bool: True when equal.
+        """
+        for field in self.RELIABLE_DIGEST_FIELDS:
+            digest = getattr(self, field)
+            if not digest:
+                continue
+            if digest == getattr(other, field):
+                return True
+        return False
+
+    @hook(BEFORE_SAVE)
+    def validate_forbidden_checksums(self):
+        """
+        Raise an exception if the model has forbidden checksums.
+
+        Raises:
+            :class: `~pulpcore.exceptions.UnsupportedDigestValidationError`: When any of the
+                checksum types in FORBIDDEN_DIGESTS are set for the model
+        """
+        bad_digests = [digest for digest in self.FORBIDDEN_DIGESTS if getattr(self, digest)]
+        if bad_digests:
+            raise UnsupportedDigestValidationError(
+                _("Checksum algorithms {} are forbidden for this Pulp instance.").format(
+                    bad_digests
+                )
+            )
+
+
+class Artifact(HandleTempFilesMixin, DigestModel, BaseModel):
     """
     A file associated with a piece of content.
 
@@ -198,28 +271,14 @@ class Artifact(HandleTempFilesMixin, BaseModel):
     FORBIDDEN_DIGESTS = _FORBIDDEN_DIGESTS
 
     @hook(BEFORE_SAVE)
-    def before_save(self):
+    def validate_missing_checksums(self):
         """
-        Pre-save hook that validates checksum rules prior to allowing an Artifact to be saved.
-
-        An Artifact with any checksums from the FORBIDDEN set will fail to save while raising
-        an UnsupportedDigestValidationError exception.
-
-        Similarly, any checksums in DIGEST_FIELDS that is NOT set will raise a
-        MissingDigestValidationError exception.
+        Validate there are no missing checksums.
 
         Raises:
-            :class: `~pulpcore.exceptions.UnsupportedDigestValidationError`: When any of the
-                keys on FORBIDDEN_DIGESTS are set for the Artifact
             :class: `~pulpcore.exceptions.MissingDigestValidationError`: When any of the
                 keys on DIGEST_FIELDS are found to be missing from the Artifact
         """
-        bad_keys = [k for k in self.FORBIDDEN_DIGESTS if getattr(self, k)]
-        if bad_keys:
-            raise UnsupportedDigestValidationError(
-                _(f"Checksum algorithms {bad_keys} are forbidden for this Pulp instance.")
-            )
-
         missing_keys = [k for k in self.DIGEST_FIELDS if not getattr(self, k)]
         if missing_keys:
             raise MissingDigestValidationError(
@@ -234,24 +293,6 @@ class Artifact(HandleTempFilesMixin, BaseModel):
             if digest_value:
                 return models.Q(**{digest_name: digest_value})
         return models.Q()
-
-    def is_equal(self, other):
-        """
-        Is equal by matching digest.
-
-        Args:
-            other (pulpcore.app.models.Artifact): A artifact to match.
-
-        Returns:
-            bool: True when equal.
-        """
-        for field in self.RELIABLE_DIGEST_FIELDS:
-            digest = getattr(self, field)
-            if not digest:
-                continue
-            if digest == getattr(other, field):
-                return True
-        return False
 
     @staticmethod
     def init_and_validate(file, expected_digests=None, expected_size=None):
@@ -513,7 +554,7 @@ class ContentArtifact(BaseModel, QueryMixin):
         unique_together = ("content", "relative_path")
 
 
-class RemoteArtifact(BaseModel, QueryMixin):
+class RemoteArtifact(BaseModel, DigestModel, QueryMixin):
     """
     Represents a content artifact that is provided by a remote (external) repository.
 

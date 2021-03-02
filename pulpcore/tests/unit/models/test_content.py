@@ -17,6 +17,8 @@ from pulpcore.plugin.models import (
     Content,
     ContentArtifact,
     PulpTemporaryFile,
+    Remote,
+    RemoteArtifact,
 )
 
 
@@ -128,3 +130,41 @@ class ArtifactAlgorithmTestCase(SimpleTestCase):
             )
             a.sha224 = None
             a.save()
+
+
+class TestRemoteArtifact(TestCase):
+    def setUp(self):
+        self.content = Content.objects.create(pulp_type="core.content")
+        self.ca = ContentArtifact.objects.create(content=self.content)
+        self.remote = Remote.objects.create(name="pulp", url="www.pulpproject.org")
+
+    @mock.patch(
+        "pulpcore.app.models.content.DigestModel.FORBIDDEN_DIGESTS",
+        new_callable=mock.PropertyMock,
+        return_value=set(["md5", "sha1"]),
+    )
+    def test_allowed_checksums(self, mock_FORBIDDEN_DIGESTS):
+        remote_artifact = RemoteArtifact(
+            content_artifact=self.ca,
+            remote=self.remote,
+            sha256="b94d27b9934d3e08a52e52d7da7dabfac484efe37a5380ee9088f7ace2efcde9",
+        )
+        remote_artifact.save()
+
+    @mock.patch(
+        "pulpcore.app.models.content.DigestModel.FORBIDDEN_DIGESTS",
+        new_callable=mock.PropertyMock,
+        return_value=set(["md5", "sha1"]),
+    )
+    def test_forbidden_checksums(self, mock_FORBIDDEN_DIGESTS):
+        with self.assertRaises(UnsupportedDigestValidationError):
+            RemoteArtifact(
+                content_artifact=self.ca, remote=self.remote, md5="5eb63bbbe01eeed093cb22bb8f5acdc3"
+            )
+        with self.assertRaises(UnsupportedDigestValidationError):
+            RemoteArtifact(
+                content_artifact=self.ca,
+                remote=self.remote,
+                md5="5eb63bbbe01eeed093cb22bb8f5acdc3",
+                sha256="b94d27b9934d3e08a52e52d7da7dabfac484efe37a5380ee9088f7ace2efcde9",
+            )
