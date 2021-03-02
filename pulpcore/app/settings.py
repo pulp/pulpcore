@@ -340,11 +340,17 @@ if not (len(sys.argv) >= 2 and sys.argv[1] == "handle-artifact-checksums"):
                         ).format(checksum)
                     )
 
-            cond = " AND ".join([f"{checksum} IS NULL" for checksum in ALLOWED_CONTENT_CHECKSUMS])
-            cursor.execute(f"SELECT count(pulp_id) FROM core_remoteartifact WHERE {cond}")
+            cond = " OR ".join([f"{checksum} IS NOT NULL" for checksum in FORBIDDEN_CHECKSUMS])
+            cursor.execute(
+                "SELECT count(*) FROM core_remoteartifact INNER JOIN core_contentartifact ON "
+                "core_remoteartifact.content_artifact_id = core_contentartifact.pulp_id WHERE "
+                f"artifact_id IS NULL AND ({cond})"
+            )
             row = cursor.fetchone()
             if row[0] > 0:
-                _logger.warn(_("Warning: detected remote content without allowed checksums."))
+                raise ImproperlyConfigured(
+                    _("Error: detected remote content with forbidden checksum(s).")
+                )
 
     except ImproperlyConfigured as e:
         raise e
