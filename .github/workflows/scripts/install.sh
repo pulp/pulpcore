@@ -92,5 +92,5 @@ ansible-playbook build_container.yaml
 ansible-playbook start_container.yaml
 
 echo ::group::PIP_LIST
-cmd_prefix bash -c "pip3 list"
+cmd_prefix bash -c "pip3 list && pip3 install pipdeptree && pipdeptree"
 echo ::endgroup::
