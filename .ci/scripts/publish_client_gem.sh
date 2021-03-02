@@ -18,7 +18,7 @@ echo "---
 :rubygems_api_key: $RUBYGEMS_API_KEY" > ~/.gem/credentials
 sudo chmod 600 ~/.gem/credentials
 
-export REPORTED_VERSION=$(http pulp/pulp/api/v3/status/ | jq --arg plugin pulpcore -r '.versions[] | select(.component == $plugin) | .version')
+export REPORTED_VERSION=$(http pulp/pulp/api/v3/status/ | jq --arg plugin core -r '.versions[] | select(.component == $plugin) | .version')
 export DESCRIPTION="$(git describe --all --exact-match `git rev-parse HEAD`)"
 if [[ $DESCRIPTION == 'tags/'$REPORTED_VERSION ]]; then
   export VERSION=${REPORTED_VERSION}
