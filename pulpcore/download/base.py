@@ -1,12 +1,17 @@
 import asyncio
 from collections import namedtuple
+from gettext import gettext as _
 import logging
 import os
 import tempfile
 
 from pulpcore.app import pulp_hashlib
 from pulpcore.app.models import Artifact
-from pulpcore.exceptions import DigestValidationError, SizeValidationError
+from pulpcore.exceptions import (
+    DigestValidationError,
+    SizeValidationError,
+    UnsupportedDigestValidationError,
+)
 
 
 log = logging.getLogger(__name__)
@@ -96,6 +101,17 @@ class BaseDownloader:
             self.semaphore = asyncio.Semaphore()  # This will always be acquired
         self._digests = {n: pulp_hashlib.new(n) for n in Artifact.DIGEST_FIELDS}
         self._size = 0
+
+        if expected_digests:
+            bad_digests = [
+                key for key in self.expected_digests.keys() if key in Artifact.FORBIDDEN_DIGESTS
+            ]
+            if bad_digests:
+                raise UnsupportedDigestValidationError(
+                    _("Cannot download artifact at '{}' due to bad digests: {}").format(
+                        self.url, (", ").join(bad_digests)
+                    )
+                )
 
     def _ensure_writer_has_open_file(self):
         """
