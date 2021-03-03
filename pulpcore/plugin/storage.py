@@ -29,7 +29,7 @@ def get_plugin_storage_path(plugin_app_label):
     """
     warnings.warn(
         "get_plugin_storage_path() is deprecated and will be removed in pulpcore==3.11.",
-        warnings.DeprecationWarning,
+        DeprecationWarning,
     )
     get_plugin_config(plugin_app_label)
     return os.path.join("/var/lib/pulp/shared", plugin_app_label, "")

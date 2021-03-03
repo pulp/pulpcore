@@ -1,6 +1,7 @@
 import os
 import random
 import shutil
+import warnings
 from gettext import gettext as _
 
 from django.conf import settings
@@ -186,6 +187,13 @@ class WorkingDirectory(_WorkingDir):
         Raises:
             RuntimeError: When used outside of an RQ task.
         """
+        warnings.warn(
+            _(
+                "WorkingDirectory is deprecated and will be removed in pulpcore==3.12; "
+                'use tempfile.TemporaryDirectory(dir=".") instead.'
+            ),
+            DeprecationWarning,
+        )
         try:
             job = get_current_job()
             self.hostname = job.origin

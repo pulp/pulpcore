@@ -1,6 +1,5 @@
 import asyncio
-
-from pulpcore.plugin.tasking import WorkingDirectory
+import tempfile
 
 from .api import create_pipeline, EndStage
 from .artifact_stages import (
@@ -136,7 +135,7 @@ class DeclarativeVersion:
         """
         Perform the work. This is the long-blocking call where all syncing occurs.
         """
-        with WorkingDirectory():
+        with tempfile.TemporaryDirectory(dir="."):
             with self.repository.new_version() as new_version:
                 loop = asyncio.get_event_loop()
                 stages = self.pipeline_stages(new_version)
