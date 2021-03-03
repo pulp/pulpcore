@@ -246,6 +246,7 @@ settings = dynaconf.DjangoDynaconf(
         "{}.app.settings".format(plugin_name) for plugin_name in INSTALLED_PULP_PLUGINS
     ],
     ENVVAR_FOR_DYNACONF="PULP_SETTINGS",
+    load_dotenv=False,
 )
 # HERE ENDS DYNACONF EXTENSION LOAD (No more code below this line)
 
