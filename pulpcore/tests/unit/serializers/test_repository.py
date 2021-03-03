@@ -1,10 +1,75 @@
 from unittest import TestCase
+from types import SimpleNamespace
 
 import mock
 from rest_framework import serializers
 
 from pulpcore.app.models import BaseDistribution
-from pulpcore.app.serializers import BaseDistributionSerializer, PublicationSerializer
+from pulpcore.app.serializers import (
+    BaseDistributionSerializer,
+    PublicationSerializer,
+    RemoteSerializer,
+)
+
+
+class TestRemoteSerializer(TestCase):
+    minimal_data = {"name": "test", "url": "http://whatever"}
+
+    def test_minimal_data(self):
+        data = {}
+        data.update(self.minimal_data)
+        serializer = RemoteSerializer(data=data)
+        serializer.is_valid(raise_exception=True)
+
+    def test_validate_proxy(self):
+        data = {"proxy_url": "http://whatever"}
+        data.update(self.minimal_data)
+        serializer = RemoteSerializer(data=data)
+        serializer.is_valid(raise_exception=True)
+
+    def test_validate_proxy_invalid(self):
+        data = {"proxy_url": "http://user:pass@whatever"}
+        data.update(self.minimal_data)
+        serializer = RemoteSerializer(data=data)
+        with self.assertRaises(serializers.ValidationError):
+            serializer.is_valid(raise_exception=True)
+
+    def test_validate_proxy_creds(self):
+        data = {"proxy_url": "http://whatever", "proxy_username": "user", "proxy_password": "pass"}
+        data.update(self.minimal_data)
+        serializer = RemoteSerializer(data=data)
+        serializer.is_valid(raise_exception=True)
+
+    def test_validate_proxy_creds_invalid(self):
+        data = {"proxy_url": "http://whatever", "proxy_username": "user"}
+        data.update(self.minimal_data)
+        serializer = RemoteSerializer(data=data)
+        with self.assertRaises(serializers.ValidationError):
+            serializer.is_valid(raise_exception=True)
+
+    def test_validate_proxy_creds_update(self):
+        Remote = SimpleNamespace(
+            proxy_url="http://whatever",
+            proxy_username="user",
+            proxy_password="pass",
+            **self.minimal_data,
+        )
+        data = {"proxy_username": "user42"}
+        serializer = RemoteSerializer(Remote, data=data, partial=True)
+        serializer.is_valid(raise_exception=True)
+
+    def test_validate_proxy_creds_update_invalid(self):
+        Remote = SimpleNamespace(
+            proxy_url="http://whatever",
+            proxy_username=None,
+            proxy_password=None,
+            **self.minimal_data,
+        )
+        data = {"proxy_username": "user"}
+        serializer = RemoteSerializer(Remote, data=data, partial=True)
+        with self.assertRaises(serializers.ValidationError) as ctx:
+            serializer.is_valid(raise_exception=True)
+        self.assertIn("can only be specified together", str(ctx.exception))
 
 
 class TestPublicationSerializer(TestCase):

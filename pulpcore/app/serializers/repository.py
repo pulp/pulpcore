@@ -92,9 +92,22 @@ class RemoteSerializer(ModelSerializer):
         help_text="If True, TLS peer validation must be performed.", required=False
     )
     proxy_url = serializers.CharField(
-        help_text="The proxy URL. Format: scheme://user:password@host:port",
+        help_text="The proxy URL. Format: scheme://host:port",
         required=False,
         allow_null=True,
+    )
+    proxy_username = serializers.CharField(
+        help_text="The username to authenticte to the proxy.",
+        required=False,
+        allow_null=True,
+        write_only=True,
+    )
+    proxy_password = serializers.CharField(
+        help_text="The password to authenticte to the proxy.",
+        required=False,
+        allow_null=True,
+        write_only=True,
+        style={"input_type": "password"},
     )
     username = serializers.CharField(
         help_text="The username to be used for authentication when syncing.",
@@ -107,6 +120,7 @@ class RemoteSerializer(ModelSerializer):
         required=False,
         allow_null=True,
         write_only=True,
+        style={"input_type": "password"},
     )
     pulp_last_updated = serializers.DateTimeField(
         help_text="Timestamp of the most recent update of the remote.", read_only=True
@@ -182,6 +196,39 @@ class RemoteSerializer(ModelSerializer):
                 return value
         raise serializers.ValidationError(_("url '{}' is not an allowed import path").format(value))
 
+    def validate_proxy_url(self, value):
+        """
+        Check, that the proxy_url does not contain credentials.
+        """
+        if value and "@" in value:
+            raise serializers.ValidationError(_("proxy_url must not contain credentials"))
+        return value
+
+    def validate(self, data):
+        """
+        Check, that proxy credentials are only provided completely and if a proxy is configured.
+        """
+        data = super().validate(data)
+
+        proxy_url = self.instance.proxy_url if self.partial else None
+        proxy_url = data.get("proxy_url", proxy_url)
+        proxy_username = self.instance.proxy_username if self.partial else None
+        proxy_username = data.get("proxy_username", proxy_username)
+        proxy_password = self.instance.proxy_password if self.partial else None
+        proxy_password = data.get("proxy_password", proxy_password)
+
+        if (proxy_username or proxy_password) and not proxy_url:
+            raise serializers.ValidationError(
+                _("proxy credentials cannot be specified without a proxy")
+            )
+
+        if bool(proxy_username) is not bool(proxy_password):
+            raise serializers.ValidationError(
+                _("proxy username and password can only be specified together")
+            )
+
+        return data
+
     class Meta:
         abstract = True
         model = models.Remote
@@ -193,6 +240,8 @@ class RemoteSerializer(ModelSerializer):
             "client_key",
             "tls_validation",
             "proxy_url",
+            "proxy_username",
+            "proxy_password",
             "username",
             "password",
             "pulp_labels",

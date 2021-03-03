@@ -206,7 +206,9 @@ class Remote(MasterModel):
         client_key (models.FileField): A PEM encoded private key used for authentication.
         tls_validation (models.BooleanField): If True, TLS peer validation must be performed.
         proxy_url (models.TextField): The optional proxy URL.
-            Format: scheme://user:password@host:port
+            Format: scheme://host:port
+        proxy_username (models.TextField): The optional username to authenticate with the proxy.
+        proxy_password (models.TextField): The optional password to authenticate with the proxy.
         username (models.TextField): The username to be used for authentication when syncing.
         password (models.TextField): The password to be used for authentication when syncing.
         download_concurrency (models.PositiveIntegerField): Total number of
@@ -255,6 +257,9 @@ class Remote(MasterModel):
     password = models.TextField(null=True)
 
     proxy_url = models.TextField(null=True)
+    proxy_username = models.TextField(null=True)
+    proxy_password = models.TextField(null=True)
+
     download_concurrency = models.PositiveIntegerField(default=10)
     policy = models.TextField(choices=POLICY_CHOICES, default=IMMEDIATE)
 
