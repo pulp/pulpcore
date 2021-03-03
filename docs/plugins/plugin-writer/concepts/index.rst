@@ -82,6 +82,17 @@ to understand the internals of the pulpcore tasking system, workers automaticall
 RQ, including tasks deployed by plugins.
 
 
+**Worker and Tasks Directories**
+
+In pulp each worker is assigned a unique working directory living in ``/var/lib/pulp/tmp/``, and
+each started task will have its own clean temporary subdirectory therein as its current working
+directory. Those will automatically be cleaned up once the task is finished.
+
+If a task needs to create more temporary directories, it is encouraged to use
+``tempfile.TemporaryDirectory(dir=".")`` from the python standard library to place them in the
+tasks working directory. This can be necessary, if the amount of temporarily saved data is too much
+to wait for the automatic cleanup at the end of the task processing or to avoid naming conflicts.
+
 **Making Temporary Files Available to Tasks**
 
 Sometimes, files must be brought forward from a ViewSet to an executing task. The files may or may
@@ -389,7 +400,7 @@ In 3.8 the following changes happen:
 2. The existing method signature ``def foo(a, b)`` is left in-tact.
 3. The ``foo`` method would have the a Python ``DeprecationWarning`` added to it such as::
 
-    warnings.warn("foo() is deprecated and will be removed in pulpcore==3.9; use the_new_foo().", warnings.DeprecationWarning)
+    warnings.warn("foo() is deprecated and will be removed in pulpcore==3.9; use the_new_foo().", DeprecationWarning)
 
 4. A ``CHANGES/plugin_api/XXXX.deprecation`` changelog entry is created explaining how to port
    plugin code onto the new call interface.

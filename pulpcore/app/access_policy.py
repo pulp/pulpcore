@@ -41,6 +41,6 @@ class AccessPolicyFromDB(AccessPolicy):
             warnings.warn(
                 "Addressing AccessPolicy via the viewset's classname is deprecated"
                 "and will be removed in pulpcore==3.10; use the viewset's urlpattern().",
-                warnings.DeprecationWarning,
+                DeprecationWarning,
             )
         return access_policy_obj.statements

@@ -100,12 +100,11 @@ The following procedure may be taken into account for the plugin writers:
 
                  http POST :24817/pulp/api/v3/repositories/file/file/ name=foo metadata_signing_service=http://localhost:24817/pulp/api/v3/signing-services/5506c8ac-8eae-4f34-bb5a-3bc08f82b088/
 
-    3. Sign a file by calling the method ``sign()`` inside the context manager implemented in pulpcore, i.e.
-       :class:`pulpcore.plugin.tasking.WorkingDirectory`:
+    3. Sign a file by calling the method ``sign()``:
 
        .. code-block:: python
 
-           with WorkingDirectory():
+           with tempfile.TemporaryDirectory("."):
                try:
                    signature = metadata_signing_service.sign(metadata.filepath)
                except RuntimeError:
