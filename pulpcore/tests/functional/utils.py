@@ -11,7 +11,7 @@ from pulpcore.client.pulpcore import ApiClient
 def set_up_module():
     """Skip tests Pulp 3 isn't under test or if pulpcore isn't installed."""
     require_pulp_3(SkipTest)
-    require_pulp_plugins({"pulpcore"}, SkipTest)
+    require_pulp_plugins({"core"}, SkipTest)
 
 
 skip_if = partial(selectors.skip_if, exc=SkipTest)  # pylint:disable=invalid-name
