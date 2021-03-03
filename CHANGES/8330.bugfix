@@ -1,0 +1,1 @@
+Added headers field to the list of fields in the ``RemoteSerializer`` base class and marked it optional to make it accessible via the REST api.

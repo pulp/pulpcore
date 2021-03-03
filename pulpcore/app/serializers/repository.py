@@ -147,6 +147,7 @@ class RemoteSerializer(ModelSerializer):
     headers = serializers.ListField(
         child=serializers.DictField(),
         help_text=_("Headers for aiohttp.Clientsession"),
+        required=False,
     )
     rate_limit = serializers.IntegerField(
         help_text=_("Limits total download rate in requests per second"),
@@ -202,6 +203,7 @@ class RemoteSerializer(ModelSerializer):
             "connect_timeout",
             "sock_connect_timeout",
             "sock_read_timeout",
+            "headers",
             "rate_limit",
         )
 
