@@ -182,6 +182,10 @@ class DownloaderFactory:
         options = {"session": self._session}
         if self._remote.proxy_url:
             options["proxy"] = self._remote.proxy_url
+            if self._remote.proxy_username and self._remote.proxy_password:
+                options["proxy_auth"] = aiohttp.BasicAuth(
+                    login=self._remote.proxy_username, password=self._remote.proxy_password
+                )
 
         if self._remote.username and self._remote.password:
             options["auth"] = aiohttp.BasicAuth(
