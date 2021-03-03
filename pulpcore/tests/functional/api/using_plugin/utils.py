@@ -25,7 +25,7 @@ def set_up_module():
     aren't installed.
     """
     require_pulp_3(SkipTest)
-    require_pulp_plugins({"pulpcore", "pulp_file"}, SkipTest)
+    require_pulp_plugins({"core", "file"}, SkipTest)
 
 
 def populate_pulp(cfg, url=None):
