@@ -24,9 +24,10 @@ def _check_for_forbidden_checksume_type(artifact):
         if digest_value:
             # To use shared message constant when #7988 is merged
             raise UnsupportedDigestValidationError(
-                "Artifact contains forbidden checksum type {}. "
-                "You can allow it with 'ALLOWED_CONTENT_CHECKSUMS' "
-                "setting.".format(digest_type)
+                _(
+                    "Artifact contains forbidden checksum type {}. You can allow it with "
+                    "'ALLOWED_CONTENT_CHECKSUMS' setting."
+                ).format(digest_type)
             )
 
 
@@ -318,8 +319,6 @@ class RemoteArtifactSaver(Stage):
                     else:
                         remote_artifact = self._create_remote_artifact(d_artifact, content_artifact)
                         needed_ras.append(remote_artifact)
-        for ra in needed_ras:
-            _check_for_forbidden_checksume_type(ra)
         return needed_ras
 
     @staticmethod
