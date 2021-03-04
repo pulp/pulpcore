@@ -13,7 +13,6 @@ import sys
 from contextlib import suppress
 from gettext import gettext as _
 from importlib import import_module
-from logging import getLogger
 from pathlib import Path
 from pkg_resources import iter_entry_points
 
@@ -274,8 +273,6 @@ settings = dynaconf.DjangoDynaconf(
 )
 # HERE ENDS DYNACONF EXTENSION LOAD (No more code below this line)
 
-_logger = getLogger(__name__)
-
 try:
     CONTENT_ORIGIN
 except NameError:
@@ -310,48 +307,41 @@ if unknown_algs:
 FORBIDDEN_CHECKSUMS = set(constants.ALL_KNOWN_CONTENT_CHECKSUMS).difference(
     ALLOWED_CONTENT_CHECKSUMS
 )
-
-if not (len(sys.argv) >= 2 and sys.argv[1] == "handle-artifact-checksums"):
-    try:
-        with connection.cursor() as cursor:
-            for checksum in ALLOWED_CONTENT_CHECKSUMS:
-                # can't import Artifact here so use a direct db connection
-                cursor.execute(f"SELECT count(pulp_id) FROM core_artifact WHERE {checksum} IS NULL")
-                row = cursor.fetchone()
-                if row[0] > 0:
-                    raise ImproperlyConfigured(
-                        _(
-                            "There have been identified artifacts missing checksum '{}'. "
-                            "Run 'pulpcore-manager handle-artifact-checksums' first to populate "
-                            "missing artifact checksums."
-                        ).format(checksum)
-                    )
-
-            for checksum in FORBIDDEN_CHECKSUMS:
-                # can't import Artifact here so use a direct db connection
-                cursor.execute(
-                    f"SELECT count(pulp_id) FROM core_artifact WHERE {checksum} IS NOT NULL"
-                )
-                row = cursor.fetchone()
-                if row[0] > 0:
-                    raise ImproperlyConfigured(
-                        _(
-                            "There have been identified artifacts with forbidden checksum '{}'. "
-                            "Run 'pulpcore-manager handle-artifact-checksums' first to unset "
-                            "forbidden checksums."
-                        ).format(checksum)
-                    )
-
-            cond = " AND ".join([f"{checksum} IS NULL" for checksum in ALLOWED_CONTENT_CHECKSUMS])
-            cursor.execute(f"SELECT count(pulp_id) FROM core_remoteartifact WHERE {cond}")
+try:
+    with connection.cursor() as cursor:
+        for checksum in ALLOWED_CONTENT_CHECKSUMS:
+            # can't import Artifact here so use a direct db connection
+            cursor.execute(f"SELECT count(pulp_id) FROM core_artifact WHERE {checksum} IS NULL")
             row = cursor.fetchone()
             if row[0] > 0:
-                _logger.warn(_("Warning: detected remote content without allowed checksums."))
+                if len(sys.argv) >= 2 and sys.argv[1] == "handle-artifact-checksums":
+                    break
+                raise ImproperlyConfigured(
+                    _(
+                        "There have been identified artifacts missing checksum '{}'. "
+                        "Run 'pulpcore-manager handle-artifact-checksums' first to populate "
+                        "missing artifact checksums."
+                    ).format(checksum)
+                )
+        for checksum in FORBIDDEN_CHECKSUMS:
+            # can't import Artifact here so use a direct db connection
+            cursor.execute(f"SELECT count(pulp_id) FROM core_artifact WHERE {checksum} IS NOT NULL")
+            row = cursor.fetchone()
+            if row[0] > 0:
+                if len(sys.argv) >= 2 and sys.argv[1] == "handle-artifact-checksums":
+                    break
+                raise ImproperlyConfigured(
+                    _(
+                        "There have been identified artifacts with forbidden checksum '{}'. "
+                        "Run 'pulpcore-manager handle-artifact-checksums' first to unset "
+                        "forbidden checksums."
+                    ).format(checksum)
+                )
 
-    except ImproperlyConfigured as e:
-        raise e
-    except Exception:
-        # our check could fail if the table hasn't been created yet or we can't get a db connection
-        pass
-    finally:
-        connection.close()
+except ImproperlyConfigured as e:
+    raise e
+except Exception:
+    # our check could fail if the table hasn't been created yet or we can't get a db connection
+    pass
+finally:
+    connection.close()
