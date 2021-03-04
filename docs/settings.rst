@@ -257,6 +257,11 @@ PROFILE_STAGES_API
 ALLOWED_CONTENT_CHECKSUMS
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
+    .. warning::
+      Enforcement of this setting in ``pulpcore`` and various plugins is not fully in place. It is
+      possible that checksums not in this list may still be used in various places. This banner will
+      be removed when it is believed all ``pulpcore`` and plugin code fully enforces this setting.
+
     The list of content-checksums this pulp-instance is **allowed to use**. By default the following
     are used::
 
