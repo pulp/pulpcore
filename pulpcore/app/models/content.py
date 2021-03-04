@@ -217,13 +217,13 @@ class Artifact(HandleTempFilesMixin, BaseModel):
         bad_keys = [k for k in self.FORBIDDEN_DIGESTS if getattr(self, k)]
         if bad_keys:
             raise UnsupportedDigestValidationError(
-                _(f"Checksum algorithms {bad_keys} are forbidden for this Pulp instance.")
+                _("Checksum algorithms {} are forbidden for this Pulp instance.").format(bad_keys)
             )
 
         missing_keys = [k for k in self.DIGEST_FIELDS if not getattr(self, k)]
         if missing_keys:
             raise MissingDigestValidationError(
-                _(f"Missing required checksum algorithms {missing_keys}.")
+                _("Missing required checksum algorithms {}.").format(missing_keys)
             )
 
     def q(self):
@@ -302,7 +302,9 @@ class Artifact(HandleTempFilesMixin, BaseModel):
             for algorithm, expected_digest in expected_digests.items():
                 if algorithm not in hashers:
                     raise UnsupportedDigestValidationError(
-                        _(f"Checksum algorithm {algorithm} forbidden for this Pulp instance.")
+                        _("Checksum algorithm {} forbidden for this Pulp instance.").format(
+                            algorithm
+                        )
                     )
                 if expected_digest != hashers[algorithm].hexdigest():
                     raise DigestValidationError()
@@ -409,7 +411,9 @@ class PulpTemporaryFile(HandleTempFilesMixin, BaseModel):
             for algorithm, expected_digest in expected_digests.items():
                 if algorithm not in hashers:
                     raise UnsupportedDigestValidationError(
-                        _(f"Checksum algorithm {algorithm} forbidden for this Pulp instance.")
+                        _("Checksum algorithm {} forbidden for this Pulp instance.").format(
+                            algorithm
+                        )
                     )
                 if expected_digest != hashers[algorithm].hexdigest():
                     raise DigestValidationError()
