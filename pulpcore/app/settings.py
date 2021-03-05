@@ -315,7 +315,7 @@ try:
             cursor.execute(f"SELECT count(pulp_id) FROM core_artifact WHERE {checksum} IS NULL")
             row = cursor.fetchone()
             if row[0] > 0:
-                if len(sys.argv) >= 2 and sys.argv[1] == "handle-artifact-checksums":
+                if len(sys.argv) >= 2 and sys.argv[1] in ["handle-artifact-checksums", "migrate"]:
                     break
                 raise ImproperlyConfigured(
                     _(
@@ -329,7 +329,7 @@ try:
             cursor.execute(f"SELECT count(pulp_id) FROM core_artifact WHERE {checksum} IS NOT NULL")
             row = cursor.fetchone()
             if row[0] > 0:
-                if len(sys.argv) >= 2 and sys.argv[1] == "handle-artifact-checksums":
+                if len(sys.argv) >= 2 and sys.argv[1] in ["handle-artifact-checksums", "migrate"]:
                     break
                 raise ImproperlyConfigured(
                     _(
