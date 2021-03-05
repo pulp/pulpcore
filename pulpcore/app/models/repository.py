@@ -473,6 +473,32 @@ class RepositoryVersion(BaseModel):
         get_latest_by = "number"
         ordering = ("number",)
 
+    @classmethod
+    def versions_containing_content(cls, content):
+        """
+        Returns a query of repository versions containing the provided content units.
+
+        Args:
+            content (django.db.models.QuerySet): query of content
+
+        Returns:
+            django.db.models.QuerySet: Repository versions which contains content.
+        """
+        query = models.Q(pk__in=[])
+        repo_content = RepositoryContent.objects.filter(content__pk__in=content)
+
+        for rc in repo_content.iterator():
+            filter = models.Q(
+                repository__pk=rc.repository.pk,
+                number__gte=rc.version_added.number,
+            )
+            if rc.version_removed:
+                filter &= models.Q(number__lt=rc.version_removed.number)
+
+            query |= filter
+
+        return cls.objects.filter(query)
+
     def _content_relationships(self):
         """
         Returns a set of repository_content for a repository version

@@ -271,6 +271,17 @@ ALLOWED_CONTENT_CHECKSUMS
     ``sha384``, and ``sha512``. After modifying this setting, you likely will need to run
     ``pulpcore-manager handle-artifact-checksums`` or Pulp will refuse to start.
 
+    You can run ``pulpcore-manager handle-artifact-checksums --report`` to find out
+    how many content units are affected with actual ``ALLOWED_CONTENT_CHECKSUMS`` settings.
+    Also, you can run ``pulpcore-manager handle-artifact-checksums --report`` with ``--checksums``
+    argument specifying comma separated list of checksums you want to use to perform this check
+    before changing the setting.
+
+    .. warning::
+      ``--report`` and ``--checksums`` arguments are tech-preview and may change in backwards
+      incompatible ways in future releases.
+
+
     .. warning::
       Due to its use as a primary content-identifier, "sha256"" **IS REQUIRED**. Pulp will
       fail to start if it is not found in this set.
