@@ -484,6 +484,31 @@ class RepositoryVersion(BaseModel):
             repository=self.repository, version_added__number__lte=self.number
         ).exclude(version_removed__number__lte=self.number)
 
+    def get_content(self, content_qs=None):
+        """
+        Returns a set of content for a repository version
+
+        Args:
+            content_qs (:class:`django.db.models.QuerySet`): The queryset for Content that will be
+                restricted further to the content present in this repository version. If not given,
+                ``Content.objects.all()`` is used (to return over all content types present in the
+                repository version).
+
+        Returns:
+            django.db.models.QuerySet: The content that is contained within this version.
+
+        Examples:
+            >>> repository_version = ...
+            >>>
+            >>> # Return a queryset of File objects in the repository
+            >>> repository_version.get_content(content_qs=File.objects)):
+        """
+
+        if content_qs is None:
+            content_qs = Content.objects
+
+        return content_qs.filter(version_memberships__in=self._content_relationships())
+
     @property
     def content(self):
         """
@@ -503,7 +528,8 @@ class RepositoryVersion(BaseModel):
             >>>     ...
             >>>
         """
-        return Content.objects.filter(version_memberships__in=self._content_relationships())
+
+        return self.get_content()
 
     def content_batch_qs(self, content_qs=None, order_by_params=("pk",), batch_size=1000):
         """
@@ -556,11 +582,7 @@ class RepositoryVersion(BaseModel):
                         ...
 
         """
-        if content_qs is None:
-            content_qs = Content.objects
-        version_content_qs = content_qs.filter(
-            version_memberships__in=self._content_relationships()
-        ).order_by(*order_by_params)
+        version_content_qs = self.get_content(content_qs).order_by(*order_by_params)
         yield from batch_qs(version_content_qs, batch_size=batch_size)
 
     @property
