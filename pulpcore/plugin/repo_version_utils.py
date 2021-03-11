@@ -13,7 +13,7 @@ _logger = logging.getLogger(__name__)
 __all__ = ["remove_duplicates"]
 
 
-def remove_duplicates(repository_version):
+def remove_duplicates(repository_version, *args, **kwargs):
     """
     Inspect content additions in the `RepositoryVersion` and remove existing repository duplicates.
 
@@ -71,7 +71,7 @@ def remove_duplicates(repository_version):
                 repository_version.remove_content(duplicates_qs)
 
 
-def validate_duplicate_content(version):
+def validate_duplicate_content(version, *args, **kwargs):
     """
     Validate that a repository version doesn't contain duplicate content.
 
@@ -109,7 +109,7 @@ def validate_duplicate_content(version):
         )
 
 
-def validate_version_paths(version):
+def validate_version_paths(version, *args, **kwargs):
     """
     Validate artifact relative paths for dupes or overlap (e.g. a/b and a/b/c).
 
@@ -126,7 +126,7 @@ def validate_version_paths(version):
         raise ValueError(_("Cannot create repository version. {err}.").format(err=e))
 
 
-def validate_repo_version(version):
+def validate_repo_version(version, *args, **kwargs):
     """
     Validate a repo version.
 

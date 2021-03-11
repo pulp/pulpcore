@@ -4,7 +4,7 @@ from pulpcore.app.models import ContentArtifact
 from pulpcore.app.files import validate_file_paths
 
 
-def validate_publication_paths(publication):
+def validate_publication_paths(publication, *args, **kwargs):
     """
     Validate artifact relative paths for dupes or overlap (e.g. a/b and a/b/c).
 

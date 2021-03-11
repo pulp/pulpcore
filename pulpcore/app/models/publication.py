@@ -47,7 +47,7 @@ class Publication(MasterModel):
     repository_version = models.ForeignKey("RepositoryVersion", on_delete=models.CASCADE)
 
     @classmethod
-    def create(cls, repository_version, pass_through=False):
+    def create(cls, repository_version, *args, pass_through=False, **kwargs):
         """
         Create a publication.
 
@@ -182,7 +182,7 @@ class PublishedMetadata(Content):
     publication = models.ForeignKey(Publication, on_delete=models.CASCADE)
 
     @classmethod
-    def create_from_file(cls, file, publication, relative_path=None):
+    def create_from_file(cls, file, publication, *args, relative_path=None, **kwargs):
         """
         Creates PublishedMetadata along with Artifact, ContentArtifact, and PublishedArtifact.
 

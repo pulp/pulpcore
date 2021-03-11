@@ -138,7 +138,7 @@ def get_upload_chunk_file_path(pulp_id):
     return os.path.join(settings.CHUNKED_UPLOAD_DIR, str(pulp_id))
 
 
-def get_tls_path(model, name):
+def get_tls_path(model, name, *args, **kwargs):
     """
     Determine storage location as: MEDIA_ROOT/tls/<model>/<id>/<name>.
 

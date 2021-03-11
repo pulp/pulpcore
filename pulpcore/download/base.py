@@ -208,7 +208,7 @@ class BaseDownloader:
             if self._size != self.expected_size:
                 raise SizeValidationError()
 
-    async def run(self, extra_data=None):
+    async def run(self, *args, extra_data=None, **kwargs):
         """
         Run the downloader with concurrency restriction.
 
