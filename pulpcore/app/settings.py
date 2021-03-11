@@ -238,6 +238,8 @@ SPECTACULAR_SETTINGS = {
     "DEFAULT_SCHEMA_CLASS": "pulpcore.openapi.PulpAutoSchema",
     "COMPONENT_SPLIT_REQUEST": True,
     "COMPONENT_NO_READ_ONLY_REQUIRED": True,
+    "GENERIC_ADDITIONAL_PROPERTIES": None,
+    "DISABLE_ERRORS_AND_WARNINGS": not DEBUG,
     "TITLE": "Pulp 3 API",
     "DESCRIPTION": "Fetch, Upload, Organize, and Distribute Software Packages",
     "VERSION": "v3",

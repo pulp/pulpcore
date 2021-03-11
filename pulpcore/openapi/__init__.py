@@ -237,13 +237,6 @@ class PulpAutoSchema(AutoSchema):
 
         return parameters
 
-    def _map_serializer_field(self, field, direction):
-        """Map serializer field."""
-        mapped = super()._map_serializer_field(field, direction)
-        if "additionalProperties" in str(mapped):
-            del mapped["additionalProperties"]
-        return mapped
-
     def resolve_serializer(self, serializer, direction):
         """Serializer to component."""
         component_schema = self._map_serializer(serializer, direction)
