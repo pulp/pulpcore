@@ -68,12 +68,6 @@ def _import_file(fpath, resource_class):
         raise
 
 
-def _repo_version_path(src_repo):
-    """Find the repo version path in the export based on src_repo json."""
-    src_repo_version = int(src_repo["next_version"]) - 1
-    return f"repository-{src_repo['name']}_{src_repo_version}"
-
-
 def _check_versions(version_json):
     """Compare the export version_json to the installed components."""
     error_messages = []
@@ -130,7 +124,6 @@ def import_repository_version(importer_pk, destination_repo_pk, source_repo_name
             data = json.load(repo_data_file)
 
         src_repo = next(repo for repo in data if repo["name"] == source_repo_name)
-        rv_path = os.path.join(temp_dir, _repo_version_path(src_repo))
 
         if dest_repo.pulp_type != src_repo["pulp_type"]:
             raise ValidationError(
@@ -145,12 +138,19 @@ def import_repository_version(importer_pk, destination_repo_pk, source_repo_name
                 )
             )
 
+        rv_name = ""
         # Extract the repo version files
         with tarfile.open(tar_path, "r:gz") as tar:
             for mem in tar.getmembers():
-                if re.match(fr"^{_repo_version_path(src_repo)}/.+", mem.name):
+                match = re.search(fr"(^repository-{source_repo_name}_[0-9]+)/.+", mem.name)
+                if match:
+                    rv_name = match.group(1)
                     tar.extract(mem, path=temp_dir)
 
+        if not rv_name:
+            raise ValidationError(_("No RepositoryVersion found for {}").format(rv_name))
+
+        rv_path = os.path.join(temp_dir, rv_name)
         # Content
         plugin_name = src_repo["pulp_type"].split(".")[0]
         cfg = get_plugin_config(plugin_name)
@@ -168,7 +168,7 @@ def import_repository_version(importer_pk, destination_repo_pk, source_repo_name
         _import_file(ca_path, ContentArtifactResource)
 
         # see if we have a content mapping
-        mapping_path = f"{_repo_version_path(src_repo)}/{CONTENT_MAPPING_FILE}"
+        mapping_path = f"{rv_name}/{CONTENT_MAPPING_FILE}"
         mapping = {}
         with tarfile.open(tar_path, "r:gz") as tar:
             if mapping_path in tar.getnames():
