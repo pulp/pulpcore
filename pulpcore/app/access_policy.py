@@ -1,5 +1,3 @@
-import warnings
-
 from rest_access_policy import AccessPolicy
 
 from pulpcore.app.models import AccessPolicy as AccessPolicyModel
@@ -23,7 +21,7 @@ class AccessPolicyFromDB(AccessPolicy):
         The `pulpcore.plugin.models.AccessPolicy` instance is looked up by the `viewset_name`
         attribute using::
 
-            AccessPolicyModel.objects.get(viewset_name=view.__model__.__name__)
+            AccessPolicyModel.objects.get(viewset_name=get_view_urlpattern(view))
 
         Args:
             request (rest_framework.request.Request): The request being checked for authorization.
@@ -32,15 +30,6 @@ class AccessPolicyFromDB(AccessPolicy):
         Returns:
             The access policy statements in drf-access-policy policy structure.
         """
-        try:
-            access_policy_obj = AccessPolicyModel.objects.get(
-                viewset_name=get_view_urlpattern(view)
-            )
-        except AccessPolicyModel.NotFound:
-            access_policy_obj = AccessPolicyModel.objects.get(viewset_name=view.__class__.__name__)
-            warnings.warn(
-                "Addressing AccessPolicy via the viewset's classname is deprecated"
-                "and will be removed in pulpcore==3.10; use the viewset's urlpattern().",
-                DeprecationWarning,
-            )
+        access_policy_obj = AccessPolicyModel.objects.get(viewset_name=get_view_urlpattern(view))
+
         return access_policy_obj.statements
