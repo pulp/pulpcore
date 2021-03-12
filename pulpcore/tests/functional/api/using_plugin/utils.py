@@ -2,7 +2,8 @@
 from functools import partial
 from unittest import SkipTest
 
-from pulp_smash import api, config, selectors
+from pulp_smash import api, cli, config, selectors
+from pulp_smash.pulp3.bindings import monitor_task
 from pulp_smash.pulp3.utils import gen_remote, gen_repo, require_pulp_3, require_pulp_plugins, sync
 
 from pulpcore.tests.functional.api.using_plugin.constants import (
@@ -12,8 +13,11 @@ from pulpcore.tests.functional.api.using_plugin.constants import (
     FILE_REMOTE_PATH,
     FILE_REPO_PATH,
 )
+from pulpcore.client.pulpcore import (
+    ApiClient as CoreApiClient,
+    ExportersPulpApi,
+)
 from pulpcore.client.pulp_file import ApiClient as FileApiClient
-
 
 skip_if = partial(selectors.skip_if, exc=SkipTest)
 
@@ -85,3 +89,44 @@ def create_file_publication(cfg, repo, version_href=None):
     else:
         body = {"repository": repo["pulp_href"]}
     return api.Client(cfg).post(FILE_PUBLICATION_PATH, body)
+
+
+def create_repo_and_versions(syncd_repo, repo_api, versions_api, content_api):
+    """Create a repo with multiple versions.
+
+    :param syncd_repo: A Repository that has at least three Content-units for us to copy from.
+    :param pulpcore.client.pulp_file.RepositoriesFileApi repo_api: client to talk to the Repository
+        API
+    :param pulpcore.client.pulp_file.RepositoriesFileVersionsApi versions_api: client to talk to
+        the RepositoryVersions API
+    :param pulpcore.client.pulp_file.ContentFilesApi content_api: client to talk to the Content API
+    :returns: A (FileRepository, [FileRepositoryVersion...]) tuple
+    """
+    # Create a new file-repo
+    a_repo = repo_api.create(gen_repo())
+    # get a list of all the files from one of our existing repos
+    file_list = content_api.list(repository_version=syncd_repo.latest_version_href)
+    # copy files from repositories[0] into new, one file at a time
+    results = file_list.results
+    for a_file in results:
+        href = a_file.pulp_href
+        modify_response = repo_api.modify(a_repo.pulp_href, {"add_content_units": [href]})
+        monitor_task(modify_response.task)
+    # get all versions of that repo
+    versions = versions_api.list(a_repo.pulp_href, ordering="number")
+    return a_repo, versions
+
+
+def delete_exporter(exporter):
+    """
+    Utility routine to delete an exporter and any exported files
+    :param exporter : PulpExporter to delete
+    """
+    cfg = config.get_config()
+    cli_client = cli.Client(cfg)
+    core_client = CoreApiClient(configuration=cfg.get_bindings_config())
+    exporter_api = ExportersPulpApi(core_client)
+    cmd = ("rm", "-rf", exporter.path)
+
+    cli_client.run(cmd, sudo=True)
+    exporter_api.delete(exporter.pulp_href)

@@ -14,6 +14,8 @@ from pulp_smash.pulp3.utils import (
 )
 
 from pulpcore.tests.functional.api.using_plugin.utils import (
+    create_repo_and_versions,
+    delete_exporter,
     gen_file_client,
     gen_file_remote,
 )
@@ -105,19 +107,6 @@ class BaseExporterCase(unittest.TestCase):
             cls.repo_api.delete(repo.pulp_href)
         delete_orphans(cls.cfg)
 
-    def _delete_exporter(self, exporter):
-        """
-        Utility routine to delete an exporter.
-
-        Delete even with existing last_export should now Just Work
-        (as of https://pulp.plan.io/issues/6555)
-        """
-        cli_client = cli.Client(self.cfg)
-        cmd = ("rm", "-rf", exporter.path)
-        cli_client.run(cmd, sudo=True)
-
-        self.exporter_api.delete(exporter.pulp_href)
-
     def _create_exporter(self, cleanup=True, use_repos=None):
         """
         Utility routine to create an exporter for the available repositories.
@@ -135,7 +124,7 @@ class BaseExporterCase(unittest.TestCase):
 
         exporter = self.exporter_api.create(body)
         if cleanup:
-            self.addCleanup(self._delete_exporter, exporter)
+            self.addCleanup(delete_exporter, exporter)
         return exporter, body
 
 
@@ -178,7 +167,7 @@ class PulpExporterTestCase(BaseExporterCase):
     def test_delete(self):
         """Delete a pulpExporter."""
         (exporter_created, body) = self._create_exporter(cleanup=False)
-        self._delete_exporter(exporter_created)
+        delete_exporter(exporter_created)
         try:
             self.exporter_api.read(exporter_created.pulp_href)
         except ApiException as ae:
@@ -224,7 +213,7 @@ class PulpExportTestCase(BaseExporterCase):
                 self.assertFalse("//" in an_export_filename)
 
         finally:
-            self._delete_exporter(exporter)
+            delete_exporter(exporter)
 
     def test_list(self):
         """Find all the PulpExports for a PulpExporter."""
@@ -238,7 +227,7 @@ class PulpExportTestCase(BaseExporterCase):
             exports = self.exports_api.list(exporter.pulp_href).results
             self.assertEqual(MAX_EXPORTS, len(exports))
         finally:
-            self._delete_exporter(exporter)
+            delete_exporter(exporter)
 
     def _delete_export(self, export):
         """
@@ -254,6 +243,15 @@ class PulpExportTestCase(BaseExporterCase):
             self.assertEqual(404, ae.status)
             return True
         return False
+
+    def _create_repo_and_versions(self):
+        a_repo, versions = create_repo_and_versions(
+            self.repos[0], self.repo_api, self.versions_api, self.content_api
+        )
+        self.addCleanup(self.client.delete, a_repo.pulp_href)
+        self.assertIsNotNone(versions)
+        self.assertEqual(4, versions.count)
+        return a_repo, versions
 
     def test_delete(self):
         """
@@ -283,7 +281,7 @@ class PulpExportTestCase(BaseExporterCase):
             # Make sure the exporter is still around...
             exporter = self.exporter_api.read(exporter.pulp_href)
         finally:
-            self._delete_exporter(exporter)
+            delete_exporter(exporter)
 
     @unittest.skip("not yet implemented")
     def test_export_output(self):
@@ -339,26 +337,7 @@ class PulpExportTestCase(BaseExporterCase):
             export = self._gen_export(exporter, body)
             self.assertTrue(export.exported_resources[0].endswith("/0/"))
         finally:
-            self._delete_exporter(exporter)
-
-    def _create_repo_and_versions(self):
-        # Create a new file-repo, repo-2
-        a_repo = self.repo_api.create(gen_repo())
-        self.addCleanup(self.client.delete, a_repo.pulp_href)
-        # get a list of all the files from one of our existing repos
-        file_list = self.content_api.list(repository_version=self.repos[0].latest_version_href)
-        # copy files from repositories[0] into 2, one file at a time
-        results = file_list.results
-        for a_file in results:
-            href = a_file.pulp_href
-            modify_response = self.repo_api.modify(a_repo.pulp_href, {"add_content_units": [href]})
-            monitor_task(modify_response.task)
-        # get all versions of that repo
-        # should now be 4, with 0/1/2/3 files as content
-        versions = self.versions_api.list(a_repo.pulp_href, ordering="number")
-        self.assertIsNotNone(versions)
-        self.assertEqual(4, versions.count)
-        return a_repo, versions
+            delete_exporter(exporter)
 
     def test_incremental(self):
         # create a repo with 4 repo-versions
@@ -381,7 +360,7 @@ class PulpExportTestCase(BaseExporterCase):
             body = {"full": False}
             self._gen_export(exporter, body)
         finally:
-            self._delete_exporter(exporter)
+            delete_exporter(exporter)
 
     def test_chunking(self):
         a_repo = self.repo_api.create(gen_repo())
@@ -394,7 +373,7 @@ class PulpExportTestCase(BaseExporterCase):
             self.assertIsNotNone(info)
             self.assertTrue(len(info) > 1)
         finally:
-            self._delete_exporter(exporter)
+            delete_exporter(exporter)
 
     def test_start_end_incrementals(self):
         # create a repo with 4 repo-versions
@@ -429,4 +408,4 @@ class PulpExportTestCase(BaseExporterCase):
                 body = {"start_versions": [second_versions.results[0].pulp_href], "full": False}
                 self._gen_export(exporter, body)
         finally:
-            self._delete_exporter(exporter)
+            delete_exporter(exporter)

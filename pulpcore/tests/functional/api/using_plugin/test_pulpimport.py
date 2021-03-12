@@ -16,6 +16,8 @@ from pulp_smash.pulp3.utils import (
 )
 
 from pulpcore.tests.functional.api.using_plugin.utils import (
+    create_repo_and_versions,
+    delete_exporter,
     gen_file_client,
     gen_file_remote,
 )
@@ -32,7 +34,9 @@ from pulpcore.client.pulpcore import (
 from pulpcore.client.pulpcore.exceptions import ApiException
 
 from pulpcore.client.pulp_file import (
+    ContentFilesApi,
     RepositoriesFileApi,
+    RepositoriesFileVersionsApi,
     RepositorySyncURL,
     RemotesFileApi,
 )
@@ -60,6 +64,7 @@ class PulpImportTestCase(unittest.TestCase):
             repository_sync_data = RepositorySyncURL(remote=remote.pulp_href)
             sync_response = cls.repo_api.sync(export_repo.pulp_href, repository_sync_data)
             monitor_task(sync_response.task)
+            export_repo = cls.repo_api.read(export_repo.pulp_href)
             # remember it
             export_repos.append(export_repo)
             import_repos.append(import_repo)
@@ -152,6 +157,8 @@ class PulpImportTestCase(unittest.TestCase):
 
         cls.repo_api = RepositoriesFileApi(cls.file_client)
         cls.remote_api = RemotesFileApi(cls.file_client)
+        cls.versions_api = RepositoriesFileVersionsApi(cls.file_client)
+        cls.content_api = ContentFilesApi(cls.file_client)
         cls.exporter_api = ExportersPulpApi(cls.core_client)
         cls.exports_api = ExportersCoreExportsApi(cls.core_client)
         cls.importer_api = ImportersPulpApi(cls.core_client)
@@ -166,18 +173,6 @@ class PulpImportTestCase(unittest.TestCase):
         cls._setup_import_check_directories()
 
     @classmethod
-    def _delete_exporter(cls):
-        """
-        Utility routine to delete an exporter.
-
-        Also removes the export-directory and all its contents.
-        """
-        cli_client = cli.Client(cls.cfg)
-        cmd = ("rm", "-rf", cls.exporter.path)
-        cli_client.run(cmd, sudo=True)
-        cls.exporter_api.delete(cls.exporter.pulp_href)
-
-    @classmethod
     def _delete_import_check_structures(cls):
         """Deletes the directory tree used for testing import-check"""
         cli_client = cli.Client(cls.cfg)
@@ -185,6 +180,13 @@ class PulpImportTestCase(unittest.TestCase):
         cli_client.run(cmd, sudo=False)
         cmd = ("rm", "-rf", "/tmp/importcheck")
         cli_client.run(cmd, sudo=False)
+
+    @classmethod
+    def _create_repo_and_versions(cls):
+        a_repo, versions = create_repo_and_versions(
+            cls.export_repos[0], cls.repo_api, cls.versions_api, cls.content_api
+        )
+        return a_repo, versions
 
     @classmethod
     def tearDownClass(cls):
@@ -195,18 +197,19 @@ class PulpImportTestCase(unittest.TestCase):
             cls.repo_api.delete(repo.pulp_href)
         for repo in cls.import_repos:
             cls.repo_api.delete(repo.pulp_href)
-
-        cls._delete_exporter()
+        delete_exporter(cls.exporter)
         cls._delete_import_check_structures()
         delete_orphans(cls.cfg)
 
-    def _create_importer(self, name=None, cleanup=True):
+    def _create_importer(self, name=None, cleanup=True, exported_repos=None):
         """Create an importer."""
         mapping = {}
         if not name:
             name = uuid4()
+        if not exported_repos:
+            exported_repos = self.export_repos
 
-        for idx, repo in enumerate(self.export_repos):
+        for idx, repo in enumerate(exported_repos):
             mapping[repo.name] = self.import_repos[idx].name
 
         body = {
@@ -231,17 +234,16 @@ class PulpImportTestCase(unittest.TestCase):
         filenames = [f for f in list(self.export.output_file_info.keys()) if f.endswith("tar.gz")]
         return filenames[0]
 
-    def _perform_import(self, importer, chunked=False):
+    def _perform_import(self, importer, chunked=False, an_export=None):
         """Perform an import with importer."""
+        if not an_export:
+            an_export = self.chunked_export if chunked else self.export
+
         if chunked:
-            filenames = [
-                f for f in list(self.chunked_export.output_file_info.keys()) if f.endswith("json")
-            ]
+            filenames = [f for f in list(an_export.output_file_info.keys()) if f.endswith("json")]
             import_response = self.imports_api.create(importer.pulp_href, {"toc": filenames[0]})
         else:
-            filenames = [
-                f for f in list(self.export.output_file_info.keys()) if f.endswith("tar.gz")
-            ]
+            filenames = [f for f in list(an_export.output_file_info.keys()) if f.endswith("tar.gz")]
             import_response = self.imports_api.create(importer.pulp_href, {"path": filenames[0]})
         monitor_task(import_response.task)
         task = self.client.get(import_response.task)
@@ -421,3 +423,50 @@ class PulpImportTestCase(unittest.TestCase):
 
         self.assertFalse(result.repo_mapping.is_valid)
         self.assertEqual(result.repo_mapping.messages[0], "invalid JSON")
+
+    def _gen_export(self, exporter, body={}):
+        """Create and read back an export for the specified PulpExporter."""
+        export_response = self.exports_api.create(exporter.pulp_href, body)
+        monitor_task(export_response.task)
+        task = self.client.get(export_response.task)
+        resources = task["created_resources"]
+        export_href = resources[0]
+        export = self.exports_api.read(export_href)
+        return export
+
+    def _export_first_version(self, a_repo, versions):
+        body = {
+            "name": uuid4(),
+            "repositories": [a_repo.pulp_href],
+            "path": "/tmp/{}".format(uuid4()),
+        }
+        exporter = self.exporter_api.create(body)
+        self.addCleanup(delete_exporter, exporter)
+        # export from version-0 to version-1, last=v1
+        body = {
+            "start_versions": [versions.results[0].pulp_href],
+            "versions": [versions.results[1].pulp_href],
+            "full": False,
+        }
+        export = self._gen_export(exporter, body)
+        return export
+
+    def test_import_not_latest_version(self):
+        try:
+            repo, versions = self._create_repo_and_versions()
+
+            export = self._export_first_version(repo, versions)
+            """Test an import."""
+            importer = self._create_importer(exported_repos=[repo])
+            task_group = self._perform_import(importer, chunked=False, an_export=export)
+
+            for report in task_group.group_progress_reports:
+                if report.code == "import.repo.versions":
+                    self.assertEqual(report.done, 1)
+
+            imported_repo = self.repo_api.read(self.import_repos[0].pulp_href)
+            self.assertNotEqual(
+                f"{imported_repo.pulp_href}versions/0/", imported_repo.latest_version_href
+            )
+        finally:
+            self.repo_api.delete(repo.pulp_href)
