@@ -9,6 +9,7 @@ additional_plugins:
 black: true
 check_commit_message: true
 check_manifest: false
+check_stray_pulpcore_imports: false
 cherry_pick_automation: false
 coverage: true
 deploy_client_to_pypi: true
@@ -45,9 +46,9 @@ pulpprojectdotorg_key_id: d1a778bda808
 pydocstyle: true
 pypi_username: pulp
 redmine_project: pulp
-stable_branch: '3.6'
 test_bindings: true
 test_performance: false
+test_released_plugin_with_next_pulpcore_release: false
 test_s3: true
 travis_addtl_services: []
 travis_notifications:
