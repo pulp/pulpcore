@@ -36,7 +36,7 @@ class AccessPolicyFromDB(AccessPolicy):
             access_policy_obj = AccessPolicyModel.objects.get(
                 viewset_name=get_view_urlpattern(view)
             )
-        except AccessPolicyModel.NotFound:
+        except AccessPolicyModel.DoesNotExist:
             access_policy_obj = AccessPolicyModel.objects.get(viewset_name=view.__class__.__name__)
             warnings.warn(
                 "Addressing AccessPolicy via the viewset's classname is deprecated"
