@@ -4,7 +4,6 @@ Content related Django models.
 from gettext import gettext as _
 
 import json
-import warnings
 import tempfile
 import shutil
 import subprocess
@@ -563,24 +562,6 @@ class RemoteArtifact(BaseModel, QueryMixin):
         unique_together = ("content_artifact", "remote")
 
 
-class _WarningsDict(dict):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-        self.msg = _(
-            "The public key will no longer be accessible via 'return_value'. This way is "
-            "deprecated as of the next release (3.10). Use 'signing_service.public_key' "
-            "instead."
-        )
-
-    def __getitem__(self, item):
-        if item == "key":
-            # raise the deprecation warning when a plugin writer tries to access the public key
-            warnings.warn(self.msg, DeprecationWarning)
-
-        return super().__getitem__(item)
-
-
 class SigningService(BaseModel):
     """
     A model used for producing signatures.
@@ -625,11 +606,10 @@ class SigningService(BaseModel):
             raise RuntimeError(str(completed_process.stderr))
 
         try:
-            return_value = _WarningsDict(json.loads(completed_process.stdout))
+            return_value = json.loads(completed_process.stdout)
         except json.JSONDecodeError:
             raise RuntimeError("The signing service script did not return valid JSON!")
 
-        return_value["key"] = self.public_key
         return return_value
 
     def validate(self):
