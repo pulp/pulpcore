@@ -62,8 +62,8 @@ class BaseExporterCase(unittest.TestCase):
             repo = cls.repo_api.read(file_file_repository_href=repo.pulp_href)
             publish_data = FileFilePublication(repository=repo.pulp_href)
             publish_response = cls.publication_api.create(publish_data)
-            created_resources = monitor_task(publish_response.task)
-            publication_href = created_resources[0]
+            task = monitor_task(publish_response.task)
+            publication_href = task.created_resources[0]
             publication = cls.publication_api.read(publication_href)
 
             repos.append(repo)
