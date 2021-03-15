@@ -17,7 +17,7 @@ on:
 jobs:
 
   lint:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v2
@@ -60,7 +60,7 @@ jobs:
         run: sh .ci/scripts/check_gettext.sh
 
   test:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
     # run only after lint finishes
     needs: lint
     strategy:
