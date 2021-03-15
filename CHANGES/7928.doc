@@ -1,3 +1,0 @@
-Removed 'tech preview' label from ``handle-artifact-checksums`` command.
-
-``handle-artifact-checksums`` is now a fully-supported part of Pulp3.

@@ -17,6 +17,138 @@ Changelog
 
 .. towncrier release notes start
 
+3.11.0 (2021-03-15)
+===================
+REST API
+--------
+
+Features
+~~~~~~~~
+
+- Raise error when syncing content with a checksum not included in ``ALLOWED_CONTENT_CHECKSUMS``.
+  `#7854 <https://pulp.plan.io/issues/7854>`_
+- User can evaluate how many content units are affected with checksum type change with 'pulpcore-manager handle-artifact-checksums --report'.
+  `#7986 <https://pulp.plan.io/issues/7986>`_
+- The fields ``proxy_username`` and ``proxy_password`` have been added to remotes.
+  Credentials can no longer be specified as part of the ``proxy_url``.
+  A data migration will move the proxy auth information on existing remotes to the new fields.
+  `#8167 <https://pulp.plan.io/issues/8167>`_
+- Added the ``WORKER_TTL`` setting, that specifies the interval a worker is considered missing after its last heartbeat.
+  `#8291 <https://pulp.plan.io/issues/8291>`_
+- Due to the removal of ``md5`` and ``sha1`` from the ``ALLOWED_CONTENT_CHECKSUMS`` setting, every
+  system that had any Artifacts synced in in prior to 3.11 will have to run the ``pulpcore-manager
+  handle-content-checksums`` command. A data migration is provided with 3.11 that will run this
+  automatically as part of the ``pulpcore-manager migrate`` command all upgrades must run anyway.
+  `#8322 <https://pulp.plan.io/issues/8322>`_
+
+
+Bugfixes
+~~~~~~~~
+
+- Fixed a bug experienced by the migration plugin where all content objects are assumed to have a
+  remote associated with them.
+  `#7876 <https://pulp.plan.io/issues/7876>`_
+- Restored inadvertently-changed content-guards API to its correct endpoint.
+
+  In the process of adding generic list-endpoints, the /pulp/api/v3/contentguards
+  API was inadvertently rehomed to /pulp/api/v3/content_guards. This change restores
+  it to its published value.
+  `#8283 <https://pulp.plan.io/issues/8283>`_
+- Added headers field to the list of fields in the ``RemoteSerializer`` base class and marked it optional to make it accessible via the REST api.
+  `#8330 <https://pulp.plan.io/issues/8330>`_
+- Fixed AccessPolicy AttributeError.
+  `#8395 <https://pulp.plan.io/issues/8395>`_
+
+
+Improved Documentation
+~~~~~~~~~~~~~~~~~~~~~~
+
+- Removed correlation id feature from tech preview.
+  `#7927 <https://pulp.plan.io/issues/7927>`_
+- Removed 'tech preview' label from ``handle-artifact-checksums`` command.
+
+  ``handle-artifact-checksums`` is now a fully-supported part of Pulp3.
+  `#7928 <https://pulp.plan.io/issues/7928>`_
+- Added a warning banner to the ``ALLOWED_CONTENT_CHECKSUMS`` setting section indicating the setting
+  is not fully enforcing in ``pulpcore`` code and various plugins.
+  `#8342 <https://pulp.plan.io/issues/8342>`_
+
+
+Removals
+~~~~~~~~
+
+- The ``component`` field of the ``versions`` section of the status API ```/pulp/api/v3/status/`` now
+  lists the Django app name, not the Python package name. Similarly the OpenAPI schema at
+  ``/pulp/api/v3`` does also.
+  `#8198 <https://pulp.plan.io/issues/8198>`_
+- Removed sensitive fields ``username``, ``password``, and ``client_key`` from Remote responses. These
+  fields can still be set and updated but will no longer be readable.
+  `#8202 <https://pulp.plan.io/issues/8202>`_
+- Adjusted the ``ALLOWED_CONTENT_CHECKSUMS`` setting to remove ``md5`` and ``sha1`` since they are
+  insecure. Now, by default, the ``ALLOWED_CONTENT_CHECKSUMS`` contain ``sha224``, ``sha256``,
+  ``sha384``, and ``sha512``.
+  `#8246 <https://pulp.plan.io/issues/8246>`_
+
+
+Misc
+~~~~
+
+- `#7797 <https://pulp.plan.io/issues/7797>`_, `#7984 <https://pulp.plan.io/issues/7984>`_, `#8315 <https://pulp.plan.io/issues/8315>`_
+
+
+Plugin API
+----------
+
+Features
+~~~~~~~~
+
+- Allow developers to use more than one WorkingDirectory() within a task, including nested calls. Tasks will also now use a temporary working directory by default.
+  `#7815 <https://pulp.plan.io/issues/7815>`_
+- Added the ``pulpcore.app.pulp_hashlib`` module which provides the ``new`` function and ensures only
+  allowed hashers listed in ``ALLOWED_CONTENT_CHECKSUMS`` can be instantiated. Plugin writers should
+  use this instead of ``hashlib.new`` to generate checksum hashers.
+  `#7984 <https://pulp.plan.io/issues/7984>`_
+- Add a ``get_content`` method to ``pulpcore.plugin.models.RepositoryVersion`` that accepts a
+  queryset and returns a list of content in that repository using the given queryset.
+  This allows for specific content type to be returned by executing
+  ``repo_version.get_content(content_qs=MyContentType.objects)``.
+  `#8375 <https://pulp.plan.io/issues/8375>`_
+
+
+Improved Documentation
+~~~~~~~~~~~~~~~~~~~~~~
+
+- Added docs identifying plugin writers to use the ``pulpcore.app.pulp_hashlib`` module which provides
+  the ``new`` function and ensures only allowed hashers can be instantiated. This should be used in
+  place of ``hashlib.new``.
+  `#7984 <https://pulp.plan.io/issues/7984>`_
+- The use of ``tempdir.TemporaryDirectory`` in tasks has been documented.
+  `#8231 <https://pulp.plan.io/issues/8231>`_
+
+
+Removals
+~~~~~~~~
+
+- Adjusted the ``ALLOWED_CONTENT_CHECKSUMS`` setting to remove ``md5`` and ``sha1`` since they are
+  insecure. Now, by default, the ``ALLOWED_CONTENT_CHECKSUMS`` contain ``sha224``, ``sha256``,
+  ``sha384``, and ``sha512``.
+  `#8246 <https://pulp.plan.io/issues/8246>`_
+- Removed unused `get_plugin_storage_path` method.
+  `#8343 <https://pulp.plan.io/issues/8343>`_
+- It is not longer possible to address AccessPolicy via the viewset's classname. Viewset's urlpattern should be used instead.
+  `#8397 <https://pulp.plan.io/issues/8397>`_
+- Removed deprecated `key` field returned by the signing service.
+  Plugin writers must now refer directly to the `public_key` field on the signing service object.
+  `#8398 <https://pulp.plan.io/issues/8398>`_
+
+
+Deprecations
+~~~~~~~~~~~~
+
+- ``pulpcore.plugin.tasking.WorkingDirectory`` has been deprecated.
+  `#8231 <https://pulp.plan.io/issues/8231>`_
+
+
 3.10.0 (2021-02-04)
 ===================
 REST API
