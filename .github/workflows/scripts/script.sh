@@ -110,6 +110,7 @@ if [ -f $FUNC_TEST_SCRIPT ]; then
 else
     pytest -v -r sx --color=yes --pyargs pulpcore.tests.functional
 fi
+export PULP_FIXTURES_URL="http://pulp-fixtures:8080"
 pushd ../pulp-cli
 pytest -v -m pulpcore
 popd

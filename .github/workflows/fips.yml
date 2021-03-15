@@ -7,6 +7,7 @@
 ---
 name: Pulp FIPS CI
 on:
+  
   workflow_dispatch:
 
 jobs:
