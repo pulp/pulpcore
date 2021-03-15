@@ -389,6 +389,18 @@ Improved Documentation
   `#7555 <https://pulp.plan.io/issues/7555>`_
 
 
+3.7.4 (2021-03-15)
+==================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- No longer load .env files. They are not used by Pulp but potentially can break the setup.
+  `#8373 <https://pulp.plan.io/issues/8373>`_
+
+
 3.7.3 (2020-10-28)
 ==================
 REST API
