@@ -1,1 +1,0 @@
-No longer load .env files. They are not used by Pulp but potentially can break the setup.
