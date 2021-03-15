@@ -101,7 +101,6 @@ def main():
         r = requests.get("https://pypi.org/pypi/pulpcore/json")
         latest_version = version.parse(json.loads(r.text)["info"]["version"])
         docs_version = version.parse(branch)
-        publish_at_root = True
         if latest_version == docs_version:
             publish_at_root = True
         # Post releases should use the x.y.z part of the version string to form a path
