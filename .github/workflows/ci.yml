@@ -17,7 +17,7 @@ on:
 jobs:
 
   lint:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-18.04
 
     steps:
       - uses: actions/checkout@v2
@@ -55,7 +55,7 @@ jobs:
       
 
   test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-18.04
     # run only after lint finishes
     needs: lint
     strategy:
