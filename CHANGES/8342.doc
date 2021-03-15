@@ -1,2 +1,0 @@
-Added a warning banner to the ``ALLOWED_CONTENT_CHECKSUMS`` setting section indicating the setting
-is not fully enforcing in ``pulpcore`` code and various plugins.

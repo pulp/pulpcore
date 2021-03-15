@@ -1,2 +1,0 @@
-Removed deprecated `key` field returned by the signing service.
-Plugin writers must now refer directly to the `public_key` field on the signing service object.

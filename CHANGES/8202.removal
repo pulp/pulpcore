@@ -1,2 +1,0 @@
-Removed sensitive fields ``username``, ``password``, and ``client_key`` from Remote responses. These
-fields can still be set and updated but will no longer be readable.

@@ -1,1 +1,0 @@
-It is not longer possible to address AccessPolicy via the viewset's classname. Viewset's urlpattern should be used instead.

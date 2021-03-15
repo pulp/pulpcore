@@ -1,5 +1,0 @@
-Restored inadvertently-changed content-guards API to its correct endpoint.
-
-In the process of adding generic list-endpoints, the /pulp/api/v3/contentguards
-API was inadvertently rehomed to /pulp/api/v3/content_guards. This change restores
-it to its published value.
