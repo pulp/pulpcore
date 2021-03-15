@@ -9,7 +9,7 @@ django-filter~=2.4.0
 django-guardian~=2.3.0
 django-guid<3.0
 django-import-export~=2.5.0
-django-lifecycle~=0.9.0
+django-lifecycle~=0.9.1
 djangorestframework~=3.12.2
 djangorestframework-queryfields~=1.0.0
 drf-access-policy~=0.8.7
