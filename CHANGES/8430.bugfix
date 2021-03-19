@@ -1,0 +1,2 @@
+Fixed bug during sync where a unique constraint violation for ``Content`` would raise an "X matching
+query does not exist" error.
