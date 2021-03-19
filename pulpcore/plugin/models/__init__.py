@@ -13,6 +13,7 @@ from pulpcore.app.models import (  # noqa
     ContentArtifact,
     ContentGuard,
     CreatedResource,
+    Distribution,
     Export,
     Exporter,
     GroupProgressReport,

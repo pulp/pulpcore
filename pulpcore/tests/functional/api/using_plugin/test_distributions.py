@@ -106,7 +106,7 @@ class CRUDPublicationDistributionTestCase(unittest.TestCase):
 
         # content_guard is the only parameter unset.
         for key, val in self.distribution.items():
-            if key == "content_guard":
+            if key in ["content_guard", "repository"]:
                 self.assertIsNone(val, self.distribution)
             else:
                 self.assertIsNotNone(val, self.distribution)
