@@ -325,6 +325,70 @@ class BaseDistribution(MasterModel):
         return set()
 
 
+class Distribution(MasterModel):
+    """
+    A Distribution defines how the Content App distributes a publication or repository_version.
+
+    This master model can be used by plugin writers to create detail Distribution objects.
+
+    The ``name`` must be unique.
+
+    The ``base_path`` must have no overlapping components. So if a Distribution with ``base_path``
+    of ``a/path/foo`` existed, you could not make a second Distribution with a ``base_path`` of
+    ``a/path`` or ``a`` because both are subpaths of ``a/path/foo``.
+
+    Subclasses are expected to use either the ``publication`` or ``repository_version`` field, but
+    not both. The content app that serves content is not prepared to serve content both ways at the
+    same time.
+
+    Fields:
+        name (models.TextField): The name of the distribution. Examples: "rawhide" and "stable".
+        base_path (models.TextField): The base (relative) path component of the published url.
+
+    Relations:
+        content_guard (models.ForeignKey): An optional content-guard.
+        publication (models.ForeignKey): Publication to be served.
+        remote (models.ForeignKey): A remote that the content app can use to find content not
+            yet stored in Pulp.
+        repository (models.ForeignKey): The latest RepositoryVersion for this Repository will be
+            served.
+        repository_version (models.ForeignKey): RepositoryVersion to be served.
+    """
+
+    name = models.TextField(db_index=True, unique=True)
+    base_path = models.TextField(unique=True)
+
+    content_guard = models.ForeignKey(ContentGuard, null=True, on_delete=models.SET_NULL)
+    publication = models.ForeignKey(Publication, null=True, on_delete=models.SET_NULL)
+    remote = models.ForeignKey(Remote, null=True, on_delete=models.SET_NULL)
+    repository = models.ForeignKey(Repository, null=True, on_delete=models.SET_NULL)
+    repository_version = models.ForeignKey(RepositoryVersion, null=True, on_delete=models.SET_NULL)
+
+    def content_handler(self, path):
+        """
+        Handler to serve extra, non-Artifact content for this Distribution
+
+        Args:
+            path (str): The path being requested
+        Returns:
+            None if there is no content to be served at path. Otherwise a
+            aiohttp.web_response.Response with the content.
+        """
+        return None
+
+    def content_handler_list_directory(self, rel_path):
+        """
+        Generate the directory listing entries for content_handler
+
+        Args:
+            rel_path (str): relative path inside the distribution's base_path. For example,
+            the root of the base_path is '', a subdir within the base_path is 'subdir/'.
+        Returns:
+            Set of strings for the extra entries in rel_path
+        """
+        return set()
+
+
 class PublicationDistribution(BaseDistribution):
     """
     Define how Pulp's content app will serve a Publication.

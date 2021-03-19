@@ -36,6 +36,7 @@ from .importer import (  # noqa
 from .publication import (  # noqa
     BaseDistribution,
     ContentGuard,
+    Distribution,
     Publication,
     PublicationDistribution,
     PublishedArtifact,

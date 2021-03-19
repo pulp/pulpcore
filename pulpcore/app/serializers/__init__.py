@@ -61,6 +61,7 @@ from .progress import GroupProgressReportSerializer, ProgressReportSerializer  #
 from .publication import (  # noqa
     BaseDistributionSerializer,
     ContentGuardSerializer,
+    DistributionSerializer,
     PublicationDistributionSerializer,
     PublicationSerializer,
     RepositoryVersionDistributionSerializer,

@@ -27,6 +27,7 @@ from pulpcore.app.models import (  # noqa: E402: module level not at top of file
     Artifact,
     BaseDistribution,
     ContentArtifact,
+    Distribution,
     Remote,
     RemoteArtifact,
 )
@@ -168,26 +169,33 @@ class Handler:
             path (str): The path component of the URL.
 
         Returns:
-            detail of BaseDistribution: The matched distribution.
+            The detail object of the matched distribution.
 
         Raises:
             PathNotResolved: when not matched.
         """
         base_paths = cls._base_paths(path)
-        try:
-            if cls.distribution_model is None:
-                model_class = BaseDistribution
-                return BaseDistribution.objects.get(base_path__in=base_paths).cast()
-            else:
+        if cls.distribution_model is None:
+            for model_class in [BaseDistribution, Distribution]:
+                try:
+                    return model_class.objects.get(base_path__in=base_paths).cast()
+                except ObjectDoesNotExist:
+                    log.debug(
+                        _("{model_name} not matched for {path} using: {base_paths}").format(
+                            model_name=model_class.__name__, path=path, base_paths=base_paths
+                        )
+                    )
+        else:
+            try:
                 model_class = cls.distribution_model
                 return cls.distribution_model.objects.get(base_path__in=base_paths)
-        except ObjectDoesNotExist:
-            log.debug(
-                _("{model_name} not matched for {path} using: {base_paths}").format(
-                    model_name=model_class.__name__, path=path, base_paths=base_paths
+            except ObjectDoesNotExist:
+                log.debug(
+                    _("{model_name} not matched for {path} using: {base_paths}").format(
+                        model_name=model_class.__name__, path=path, base_paths=base_paths
+                    )
                 )
-            )
-            raise PathNotResolved(path)
+        raise PathNotResolved(path)
 
     @staticmethod
     def _permit(request, distribution):
@@ -324,14 +332,14 @@ class Handler:
         be served. If ``path`` is a directory entry (i.e. not a file), the directory contents
         are served to the client. This method calls
         :meth:`BaseDistribution.content_handler_list_directory` to acquire any additional entries
-        the Distribution's content_handler might serve in that directory. If there is an actifact
+        the Distribution's content_handler might serve in that directory. If there is an Artifact
         to be served, it is served to the client.
 
-        If there's no publication, the above paragraph is applied to the lastest repository linked
+        If there's no publication, the above paragraph is applied to the latest repository linked
         to the matched Distribution.
 
         Finally, when nothing is served to client yet, we check if there is a remote for the
-        Distribution. If so, the artifact is pulled from the remote and streamed to the client.
+        Distribution. If so, the Artifact is pulled from the remote and streamed to the client.
 
         Args:
             path (str): The path component of the URL.
