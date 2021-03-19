@@ -1,12 +1,7 @@
 import os
-import random
 import shutil
-from gettext import gettext as _
 
 from django.conf import settings
-from rq.job import get_current_job
-
-from pulpcore.app.loggers import deprecation_logger
 
 
 class _WorkingDir:
@@ -162,61 +157,3 @@ class TaskWorkingDirectory(_WorkingDir):
         self.task_id = job.id
         self.task_path = os.path.join(get_worker_path(self.hostname), self.task_id)
         super().__init__(self.task_path)
-
-
-class WorkingDirectory(_WorkingDir):
-    """
-    Provide clean working directory for plugin writers on demand.
-
-    Path format: <worker-dir>/<task-id>/<random>/
-
-    Examples:
-        >>>
-        >>> with WorkingDirectory() as working_dir:
-        >>>     # directory created.
-        >>>     # process CWD = working_dir.path.
-        >>>     ....
-        >>> # directory deleted.
-        >>> # process CWD restored.
-        >>>
-    """
-
-    def __init__(self):
-        """
-        Create a WorkingDirectory.
-
-        Raises:
-            RuntimeError: When used outside of an RQ task.
-        """
-        deprecation_logger.warn(
-            _(
-                "WorkingDirectory is deprecated and will be removed in pulpcore==3.13; "
-                'use tempfile.TemporaryDirectory(dir=".") instead.'
-            )
-        )
-        try:
-            job = get_current_job()
-            self.hostname = job.origin
-            self.task_id = job.id
-        except AttributeError:
-            raise RuntimeError(_("May only be used within a Task."))
-
-        self.task_path = os.path.join(get_worker_path(self.hostname), self.task_id)
-        super().__init__(self.task_path)
-
-    def create(self):
-        """
-        Construct a unique working directory nested under the worker's working directory.
-        """
-        rng = random.Random()
-        characters = "abcdefghijklmnopqrstuvwxyz0123456789_"
-        NUM_ATTEMPTS = 10
-
-        for try_num in range(NUM_ATTEMPTS):
-            random_suffix = "".join(rng.choices(characters, k=8))
-            self._path = os.path.join(self.task_path, "workdir_" + random_suffix)
-            try:
-                super().create()
-                break
-            except FileExistsError:
-                pass
