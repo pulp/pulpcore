@@ -13,6 +13,7 @@ import sys
 from contextlib import suppress
 from gettext import gettext as _
 from importlib import import_module
+from logging import getLogger
 from pathlib import Path
 from pkg_resources import iter_entry_points
 
@@ -276,6 +277,8 @@ settings = dynaconf.DjangoDynaconf(
 )
 # HERE ENDS DYNACONF EXTENSION LOAD (No more code below this line)
 
+_logger = getLogger(__name__)
+
 try:
     CONTENT_ORIGIN
 except NameError:
@@ -340,6 +343,24 @@ if not (len(sys.argv) >= 2 and sys.argv[1] in ["handle-artifact-checksums", "mig
                             "forbidden checksums."
                         ).format(checksum)
                     )
+
+            # warn if there are remote artifacts with checksums but no allowed checksums
+            cond = " AND ".join([f"{c} IS NULL" for c in constants.ALL_KNOWN_CONTENT_CHECKSUMS])
+            no_checksum_query = f"SELECT pulp_id FROM core_remoteartifact WHERE {cond}"
+            cond = " AND ".join([f"{c} IS NULL" for c in ALLOWED_CONTENT_CHECKSUMS])
+            cursor.execute(
+                f"SELECT count(pulp_id) FROM core_remoteartifact WHERE {cond} AND "
+                f"pulp_id NOT IN ({no_checksum_query})"
+            )
+            row = cursor.fetchone()
+            if row[0] > 0:
+                _logger.warn(
+                    _(
+                        "Warning: detected remote content without allowed checksums. "
+                        "Run 'pulpcore-manager handle-artifact-checksums --report' to "
+                        "view this content."
+                    )
+                )
 
     except ImproperlyConfigured as e:
         raise e
