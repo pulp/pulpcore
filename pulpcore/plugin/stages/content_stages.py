@@ -1,5 +1,6 @@
 from collections import defaultdict
 
+from django.core.exceptions import ObjectDoesNotExist
 from django.db import IntegrityError, transaction
 from django.db.models import Q
 
@@ -93,10 +94,13 @@ class ContentSaver(Stage):
                         try:
                             with transaction.atomic():
                                 d_content.content.save()
-                        except IntegrityError:
-                            d_content.content = d_content.content.__class__.objects.get(
-                                d_content.content.q()
-                            )
+                        except IntegrityError as e:
+                            try:
+                                d_content.content = d_content.content.__class__.objects.get(
+                                    d_content.content.q()
+                                )
+                            except ObjectDoesNotExist:
+                                raise e
                             continue
                         for d_artifact in d_content.d_artifacts:
                             if not d_artifact.artifact._state.adding:
