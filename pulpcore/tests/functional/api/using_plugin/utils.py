@@ -2,7 +2,7 @@
 from functools import partial
 from unittest import SkipTest
 
-from pulp_smash import api, cli, config, selectors
+from pulp_smash import api, cli, config, selectors, utils
 from pulp_smash.pulp3.bindings import monitor_task
 from pulp_smash.pulp3.utils import gen_remote, gen_repo, require_pulp_3, require_pulp_plugins, sync
 
@@ -17,6 +17,7 @@ from pulpcore.client.pulpcore import (
     ApiClient as CoreApiClient,
     ExportersPulpApi,
 )
+from pulpcore.client.pulp_file import DistributionsFileApi
 from pulpcore.client.pulp_file import ApiClient as FileApiClient
 
 skip_if = partial(selectors.skip_if, exc=SkipTest)
@@ -131,3 +132,18 @@ def delete_exporter(exporter):
     cli_client.run(cmd, sudo=True)
     result = exporter_api.delete(exporter.pulp_href)
     monitor_task(result.task)
+
+
+def create_distribution(repository_href=None):
+    """Utility to create a pulp_file distribution."""
+    file_client = gen_file_client()
+    distro_api = DistributionsFileApi(file_client)
+
+    body = {"name": utils.uuid4(), "base_path": utils.uuid4()}
+    if repository_href:
+        body["repository"] = repository_href
+
+    result = distro_api.create(body)
+    distro_href = monitor_task(result.task).created_resources[0]
+    distro = distro_api.read(distro_href)
+    return distro

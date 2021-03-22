@@ -11,6 +11,7 @@ assumes that the reader is familiar with the fundamentals discussed in the :doc:
    :maxdepth: 2
 
    upload-publish
+   repo-versioning
    on-demand-downloading
    promotion
    scheduling-tasks
