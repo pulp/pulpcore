@@ -6,6 +6,7 @@ from urllib.parse import urlsplit
 
 from pulp_smash import api, config, utils
 from pulp_smash.exceptions import TaskReportError
+from pulp_smash.pulp3.bindings import monitor_task
 from pulp_smash.pulp3.constants import ARTIFACTS_PATH
 from pulp_smash.pulp3.utils import (
     delete_orphans,
@@ -25,6 +26,15 @@ from pulp_smash.pulp3.utils import (
 )
 from requests.exceptions import HTTPError
 
+from pulpcore.client.pulpcore import ApiClient as CoreApiClient
+from pulpcore.client.pulp_file import (
+    ContentFilesApi,
+    DistributionsFileApi,
+    PublicationsFileApi,
+    RepositoriesFileApi,
+    RepositoriesFileVersionsApi,
+)
+from pulpcore.client.pulp_file.exceptions import ApiException
 from pulpcore.tests.functional.api.using_plugin.constants import (
     FILE2_FIXTURE_MANIFEST_URL,
     FILE_CONTENT_NAME,
@@ -41,7 +51,9 @@ from pulpcore.tests.functional.api.using_plugin.constants import (
     FILE2_URL,
 )
 from pulpcore.tests.functional.api.using_plugin.utils import (
+    create_distribution,
     create_file_publication,
+    gen_file_client,
     gen_file_remote,
     populate_pulp,
 )
@@ -1071,3 +1083,86 @@ class BaseVersionTestCase(unittest.TestCase):
         repo = self.client.get(repo["pulp_href"])
 
         self.assertEqual(get_content(repo)[FILE_CONTENT_NAME][0], content2)
+
+
+class RepoVersionRetentionTestCase(unittest.TestCase):
+    """Test retained_versions for repositories
+
+    This test targets the following issues:
+
+    *  `Pulp #8368 <https:://pulp.plan.io/issues/8368>`_
+    """
+
+    @classmethod
+    def setUp(self):
+        """Add content to Pulp."""
+        self.cfg = config.get_config()
+        self.client = api.Client(self.cfg, api.json_handler)
+        self.core_client = CoreApiClient(configuration=self.cfg.get_bindings_config())
+        self.file_client = gen_file_client()
+
+        self.content_api = ContentFilesApi(self.file_client)
+        self.repo_api = RepositoriesFileApi(self.file_client)
+        self.version_api = RepositoriesFileVersionsApi(self.file_client)
+        self.distro_api = DistributionsFileApi(self.file_client)
+        self.publication_api = PublicationsFileApi(self.file_client)
+
+        delete_orphans()
+        populate_pulp(self.cfg, url=FILE_LARGE_FIXTURE_MANIFEST_URL)
+        self.content = sample(self.content_api.list().results, 3)
+        self.publications = []
+
+    def _create_repo_versions(self, repo_attributes={}):
+        self.repo = self.repo_api.create(gen_repo(**repo_attributes))
+        self.addCleanup(self.repo_api.delete, self.repo.pulp_href)
+
+        if "autopublish" in repo_attributes and repo_attributes["autopublish"]:
+            self.distro = create_distribution(repository_href=self.repo.pulp_href)
+            self.addCleanup(self.distro_api.delete, self.distro.pulp_href)
+
+        for content in self.content:
+            result = self.repo_api.modify(
+                self.repo.pulp_href, {"add_content_units": [content.pulp_href]}
+            )
+            monitor_task(result.task)
+            self.repo = self.repo_api.read(self.repo.pulp_href)
+            self.publications += self.publication_api.list(
+                repository_version=self.repo.latest_version_href
+            ).results
+
+    def test_retained_versions(self):
+        """Test repo version retention."""
+        self._create_repo_versions({"retained_versions": 1})
+
+        versions = self.version_api.list(file_file_repository_href=self.repo.pulp_href).results
+        self.assertEqual(len(versions), 1)
+        self.assertEqual(self.repo.latest_version_href.split("/")[-2], "3")
+
+    def test_retained_versions_on_update(self):
+        """Test repo version retention when retained_versions is set."""
+        self._create_repo_versions()
+
+        versions = self.version_api.list(file_file_repository_href=self.repo.pulp_href).results
+        self.assertEqual(len(versions), 4)
+
+        # update retained_versions to 2
+        result = self.repo_api.partial_update(self.repo.pulp_href, {"retained_versions": 2})
+        monitor_task(result.task)
+
+        versions = self.version_api.list(file_file_repository_href=self.repo.pulp_href).results
+        self.assertEqual(len(versions), 2)
+        self.assertEqual(self.repo.latest_version_href.split("/")[-2], "3")
+
+    def test_autodistribute(self):
+        """Test repo version retention with autopublish/autodistribute."""
+        self._create_repo_versions({"retained_versions": 1, "autopublish": True})
+
+        # all but the last publication should be gone
+        for publication in self.publications[:-1]:
+            with self.assertRaises(ApiException) as ae:
+                self.publication_api.read(publication.pulp_href)
+            self.assertEqual(404, ae.exception.status)
+
+        # check that the last publication is distributed
+        self.distro = self.distro_api.read(self.distro.pulp_href)
+        self.assertEqual(self.distro.publication, self.publications[-1].pulp_href)

@@ -31,6 +31,15 @@ class RepositorySerializer(ModelSerializer):
     description = serializers.CharField(
         help_text=_("An optional description."), required=False, allow_null=True
     )
+    retained_versions = serializers.IntegerField(
+        help_text=_(
+            "Retain X versions of the repository. Default is null which retains all versions."
+            " This is provided as a tech preview in Pulp 3 and may change in the future."
+        ),
+        allow_null=True,
+        required=False,
+        min_value=1,
+    )
     remote = DetailRelatedField(
         view_name_pattern=r"remotes(-.*/.*)-detail",
         queryset=models.Remote.objects.all(),
@@ -54,6 +63,7 @@ class RepositorySerializer(ModelSerializer):
             "latest_version_href",
             "name",
             "description",
+            "retained_versions",
             "remote",
         )
 

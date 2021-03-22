@@ -11,6 +11,7 @@ from asyncio_throttle import Throttler
 from django.core.validators import MinValueValidator
 from django.db import models, transaction
 from django.urls import reverse
+from django_lifecycle import AFTER_SAVE, hook
 
 from django.contrib.postgres.fields import JSONField
 
@@ -51,6 +52,7 @@ class Repository(MasterModel):
     name = models.TextField(db_index=True, unique=True)
     description = models.TextField(null=True)
     next_version = models.PositiveIntegerField(default=0)
+    retained_versions = models.PositiveIntegerField(default=None, null=True)
     content = models.ManyToManyField(
         "Content", through="RepositoryContent", related_name="repositories"
     )
@@ -189,6 +191,18 @@ class Repository(MasterModel):
             django.db.models.QuerySet: The artifacts that are contained within this version.
         """
         return Artifact.objects.filter(content__pk__in=version.content)
+
+    @hook(AFTER_SAVE)
+    def cleanup_old_versions(self):
+        """Cleanup old repository versions based on retained_versions."""
+        if self.retained_versions:
+            for version in self.versions.order_by("-number")[self.retained_versions :]:
+                _logger.info(
+                    _("Deleting repository version {} due to version retention limit.").format(
+                        version
+                    )
+                )
+                version.delete()
 
 
 class Remote(MasterModel):
