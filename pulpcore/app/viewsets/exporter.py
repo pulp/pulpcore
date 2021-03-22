@@ -21,6 +21,8 @@ from pulpcore.app.serializers import (
 from pulpcore.app.tasks.export import pulp_export
 
 from pulpcore.app.viewsets import (
+    AsyncRemoveMixin,
+    AsyncUpdateMixin,
     BaseFilterSet,
     NamedModelViewSet,
 )
@@ -51,10 +53,10 @@ class ExporterFilter(BaseFilterSet):
 class ExporterViewSet(
     NamedModelViewSet,
     mixins.CreateModelMixin,
-    mixins.UpdateModelMixin,
+    AsyncUpdateMixin,
     mixins.RetrieveModelMixin,
     mixins.ListModelMixin,
-    mixins.DestroyModelMixin,
+    AsyncRemoveMixin,
 ):
     """
     ViewSet for viewing exporters.
