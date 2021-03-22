@@ -268,23 +268,37 @@ ALLOWED_CONTENT_CHECKSUMS
         ALLOWED_CONTENT_CHECKSUMS = ["sha224", "sha256", "sha384", "sha512"]
 
     The entire set of supported checksums are: ``md5``, ``sha1``, ``sha224``, ``sha256``,
-    ``sha384``, and ``sha512``. After modifying this setting, you likely will need to run
-    ``pulpcore-manager handle-artifact-checksums`` or Pulp will refuse to start.
+    ``sha384``, and ``sha512``.
 
-    You can run ``pulpcore-manager handle-artifact-checksums --report`` to find out
-    how many content units are affected with actual ``ALLOWED_CONTENT_CHECKSUMS`` settings.
-    Also, you can run ``pulpcore-manager handle-artifact-checksums --report`` with ``--checksums``
-    argument specifying comma separated list of checksums you want to use to perform this check
-    before changing the setting.
+    .. warning::
+      Due to its use as the primary content-identifier, "sha256" **IS REQUIRED**. Pulp will
+      fail to start if ``"sha256"`` is not found in this set.
+
+    Pulp can prohibit or allow checksums by setting the ALLOWED_CONTENT_CHECKSUMS setting.
+    Changing this setting requires a few steps.
+
+    First, before you change the setting, see how your Pulp instance will be impacted by this change by running:
+
+    ``pulpcore-manager handle-artifact-checksums --report --checksums sha256,512``
+
+    Adjust ``--checksums`` as comma separated list of checksums types to match your needs.
+
+    .. note::
+      If you already changed ``ALLOWED_CONTENT_CHECKSUMS`` in pulp settings you can leave out ``--checksums``,
+      and the checksums will be parsed from Pulp settings.
+
+    Before switching, any on-demand repos containing forbidden checksum digests needs to be synced with
+    ``policy=immediate`` to populate missing allowed checksums. This can heavily impact your disk space.
+    Alternatively, users can remove these offending repo versions followed by orphan cleanup.
+
+    If you have artifacts that do not conform to your ALLOWED_CONTENT_CHECKSUMS setting, they need to be re-hashed.
+    You can update them using:
+
+    ``pulpcore-manager handle-artifact-checksums``
 
     .. warning::
       ``--report`` and ``--checksums`` arguments are tech-preview and may change in backwards
       incompatible ways in future releases.
-
-
-    .. warning::
-      Due to its use as a primary content-identifier, "sha256"" **IS REQUIRED**. Pulp will
-      fail to start if it is not found in this set.
 
     .. warning::
       If Pulp fails to start because forbidden checkums have been identified or required ones are
