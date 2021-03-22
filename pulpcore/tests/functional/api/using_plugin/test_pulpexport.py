@@ -151,7 +151,8 @@ class PulpExporterTestCase(BaseExporterCase):
         """Update a PulpExporter's path."""
         (exporter_created, body) = self._create_exporter()
         body = {"path": "/tmp/{}".format(uuid4())}
-        self.exporter_api.partial_update(exporter_created.pulp_href, body)
+        result = self.exporter_api.partial_update(exporter_created.pulp_href, body)
+        monitor_task(result.task)
         exporter_read = self.exporter_api.read(exporter_created.pulp_href)
         self.assertNotEqual(exporter_created.path, exporter_read.path)
         self.assertEqual(body["path"], exporter_read.path)

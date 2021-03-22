@@ -129,4 +129,5 @@ def delete_exporter(exporter):
     cmd = ("rm", "-rf", exporter.path)
 
     cli_client.run(cmd, sudo=True)
-    exporter_api.delete(exporter.pulp_href)
+    result = exporter_api.delete(exporter.pulp_href)
+    monitor_task(result.task)
