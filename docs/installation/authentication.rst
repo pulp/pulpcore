@@ -116,8 +116,17 @@ backend for them. To have any name accepted but create the username in the datab
         'pulpcore.app.authentication.PulpRemoteUserAuthentication'
     )
 
-This removes ``rest_framework.authentication.BasicAuthentication``, and adds
-``PulpRemoteUserAuthentication`` which accepts the username as WSGI environment variable
+   Or, as a dynaconf environment variable (pay special attention to the *double* underscore
+   separating the paramater name from the key)::
+   
+    PULP_REST_FRAMEWORK__DEFAULT_AUTHENTICATION_CLASSES="[
+      'rest_framework.authentication.SessionAuthentication',
+      'pulpcore.app.authentication.PulpRemoteUserAuthentication'
+    ]"
+
+This removes ``rest_framework.authentication.BasicAuthentication``, but retains
+``rest_framework.authentication.SessionAuthentication`` and adds
+``PulpRemoteUserAuthentication``. This accepts the username as WSGI environment variable
 ``REMOTE_USER`` by default, but can be configured via the
 `REMOTE_USER_ENVIRON_NAME <remote-user-environ-name>`_ Pulp setting.
 
