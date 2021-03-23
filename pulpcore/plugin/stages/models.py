@@ -2,6 +2,7 @@ from gettext import gettext as _
 
 import asyncio
 
+from pulpcore.constants import ALL_KNOWN_CONTENT_CHECKSUMS
 from pulpcore.plugin.models import Artifact
 
 
@@ -74,7 +75,7 @@ class DeclarativeArtifact:
         """
         expected_digests = {}
         validation_kwargs = {}
-        for digest_name in self.artifact.DIGEST_FIELDS:
+        for digest_name in ALL_KNOWN_CONTENT_CHECKSUMS:
             digest_value = getattr(self.artifact, digest_name)
             if digest_value:
                 expected_digests[digest_name] = digest_value
