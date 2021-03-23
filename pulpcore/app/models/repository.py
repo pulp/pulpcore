@@ -13,6 +13,7 @@ from django.db import models, transaction
 from django.urls import reverse
 
 from pulpcore.app.util import batch_qs, get_view_name_for_model
+from pulpcore.constants import ALL_KNOWN_CONTENT_CHECKSUMS
 from pulpcore.download.factory import DownloaderFactory
 from pulpcore.exceptions import ResourceImmutableError
 
@@ -349,7 +350,7 @@ class Remote(MasterModel):
         if remote_artifact:
             url = remote_artifact.url
             expected_digests = {}
-            for digest_name in Artifact.DIGEST_FIELDS:
+            for digest_name in ALL_KNOWN_CONTENT_CHECKSUMS:
                 digest_value = getattr(remote_artifact, digest_name)
                 if digest_value:
                     expected_digests[digest_name] = digest_value

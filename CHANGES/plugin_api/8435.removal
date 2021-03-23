@@ -1,0 +1,1 @@
+Removed checksum type filtering from ``pulpcore.plugin.models.Remote.get_downloader`` and ``pulpcore.plugin.stages.DeclarativeArtifact.download``.

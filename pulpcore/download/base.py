@@ -1,3 +1,5 @@
+from gettext import gettext as _
+
 import asyncio
 from collections import namedtuple
 import logging
@@ -6,7 +8,11 @@ import tempfile
 
 from pulpcore.app import pulp_hashlib
 from pulpcore.app.models import Artifact
-from pulpcore.exceptions import DigestValidationError, SizeValidationError
+from pulpcore.exceptions import (
+    DigestValidationError,
+    SizeValidationError,
+    UnsupportedDigestValidationError,
+)
 
 
 log = logging.getLogger(__name__)
@@ -96,6 +102,14 @@ class BaseDownloader:
             self.semaphore = asyncio.Semaphore()  # This will always be acquired
         self._digests = {n: pulp_hashlib.new(n) for n in Artifact.DIGEST_FIELDS}
         self._size = 0
+        if self.expected_digests:
+            if not set(self.expected_digests).intersection(set(Artifact.DIGEST_FIELDS)):
+                raise UnsupportedDigestValidationError(
+                    _(
+                        "Content at the url {} does not contain at least one trusted hasher which"
+                        " is specified in 'ALLOWED_CONTENT_CHECKSUMS' setting."
+                    ).format(self.url)
+                )
 
     def _ensure_writer_has_open_file(self):
         """
@@ -177,7 +191,7 @@ class BaseDownloader:
         dictionary correspond with :class:`~pulpcore.plugin.models.Artifact` fields.
         """
         attributes = {"size": self._size}
-        for algorithm in Artifact.DIGEST_FIELDS:
+        for algorithm in self._digests:
             attributes[algorithm] = self._digests[algorithm].hexdigest()
         return attributes
 
