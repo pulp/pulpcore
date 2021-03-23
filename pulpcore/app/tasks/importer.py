@@ -10,6 +10,10 @@ from logging import getLogger
 
 from django.conf import settings
 from django.core.files.storage import default_storage
+from django.db import (
+    connection,
+    transaction,
+)
 from django.db.models import F
 
 from pkg_resources import DistributionNotFound, get_distribution
@@ -158,14 +162,23 @@ def import_repository_version(importer_pk, destination_repo_pk, source_repo_name
         resulting_content_ids = []
         for res_class in cfg.exportable_classes:
             filename = f"{res_class.__module__}.{res_class.__name__}.json"
-            a_result = _import_file(os.path.join(rv_path, filename), res_class)
+            with transaction.atomic():
+                cursor = connection.cursor()
+                # Lock the table, of the Model, that the ModelResource is about to import
+                cursor.execute(
+                    "LOCK TABLE %s IN %s MODE" % (res_class.Meta.model._meta.db_table, "EXCLUSIVE")
+                )
+                a_result = _import_file(os.path.join(rv_path, filename), res_class)
             resulting_content_ids.extend(
                 row.object_id for row in a_result.rows if row.import_type in ("new", "update")
             )
 
         # Once all content exists, create the ContentArtifact links
         ca_path = os.path.join(rv_path, CA_FILE)
-        _import_file(ca_path, ContentArtifactResource)
+        with transaction.atomic():
+            cursor = connection.cursor()
+            cursor.execute("LOCK TABLE %s IN %s MODE" % (Content._meta.db_table, "EXCLUSIVE"))
+            _import_file(ca_path, ContentArtifactResource)
 
         # see if we have a content mapping
         mapping_path = f"{_repo_version_path(src_repo)}/{CONTENT_MAPPING_FILE}"
