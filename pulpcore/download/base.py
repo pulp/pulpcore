@@ -207,7 +207,7 @@ class BaseDownloader:
         if self.expected_digests:
             for algorithm, expected_digest in self.expected_digests.items():
                 if expected_digest != self._digests[algorithm].hexdigest():
-                    raise DigestValidationError()
+                    raise DigestValidationError(self.url)
 
     def validate_size(self):
         """
@@ -220,7 +220,7 @@ class BaseDownloader:
         """
         if self.expected_size:
             if self._size != self.expected_size:
-                raise SizeValidationError()
+                raise SizeValidationError(self.url)
 
     async def run(self, extra_data=None):
         """

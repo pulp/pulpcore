@@ -1,0 +1,1 @@
+Made digest and size sync erros more helpful by logging url of the requested files.
