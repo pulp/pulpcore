@@ -30,6 +30,7 @@ from pulpcore.app.models import (  # noqa: E402: module level not at top of file
     Remote,
     RemoteArtifact,
 )
+from pulpcore.exceptions import UnsupportedDigestValidationError  # noqa: E402
 
 from jinja2 import Template  # noqa: E402: module level not at top of file
 
@@ -501,7 +502,12 @@ class Handler:
                 response = await self._stream_remote_artifact(request, response, remote_artifact)
                 return response
 
-            except ClientResponseError:
+            except (ClientResponseError, UnsupportedDigestValidationError) as e:
+                log.warn(
+                    _("Could not download remote artifact at '{}': {}").format(
+                        remote_artifact.url, str(e)
+                    )
+                )
                 continue
 
         raise HTTPNotFound()
