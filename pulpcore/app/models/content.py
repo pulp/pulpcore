@@ -558,6 +558,31 @@ class RemoteArtifact(BaseModel, QueryMixin):
 
     objects = BulkCreateManager()
 
+    def validate_checksums(self):
+        """Validate if RemoteArtifact has allowed checksum or no checksum at all."""
+        if not any(
+            [
+                checksum_type
+                for checksum_type in ALL_KNOWN_CONTENT_CHECKSUMS
+                if getattr(self, checksum_type, False)
+            ]
+        ):
+            return
+        if not any(
+            [
+                checksum_type
+                for checksum_type in Artifact.DIGEST_FIELDS
+                if getattr(self, checksum_type, False)
+            ]
+        ):
+            raise UnsupportedDigestValidationError(
+                _(
+                    "On-demand content located at the url {} contains forbidden checksum type,"
+                    "thus cannot be synced."
+                    "You can allow checksum type with 'ALLOWED_CONTENT_CHECKSUMS' setting."
+                ).format(self.url)
+            )
+
     class Meta:
         unique_together = ("content_artifact", "remote")
 

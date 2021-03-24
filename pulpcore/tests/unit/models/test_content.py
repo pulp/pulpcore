@@ -17,6 +17,8 @@ from pulpcore.plugin.models import (
     Content,
     ContentArtifact,
     PulpTemporaryFile,
+    Remote,
+    RemoteArtifact,
 )
 
 
@@ -128,3 +130,94 @@ class ArtifactAlgorithmTestCase(SimpleTestCase):
             )
             a.sha224 = None
             a.save()
+
+
+@mock.patch(
+    "pulpcore.app.models.Artifact.FORBIDDEN_DIGESTS",
+    new_callable=mock.PropertyMock,
+    return_value=set(["md5", "sha1"]),
+)
+@mock.patch(
+    "pulpcore.app.models.Artifact.DIGEST_FIELDS",
+    new_callable=mock.PropertyMock,
+    return_value=set(["sha512", "sha384", "sha224", "sha256"]),
+)
+class RemoteArtifactAlgorithmTestCase(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.c = Content.objects.create()
+        cls.ca = ContentArtifact.objects.create(artifact=None, content=cls.c, relative_path="ca")
+        cls.remote = Remote.objects.create(url="http://example.org/")
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.ca.delete()
+        cls.c.delete()
+        cls.remote.delete()
+
+    def test_remoteartifact_with_no_checksums(self, mock_FORBIDDEN_DIGESTS, mock_DIGEST_FIELDS):
+        ra = RemoteArtifact(
+            url="http://example.org/file",
+            size=1024,
+            md5=None,
+            sha1=None,
+            sha224=None,
+            sha256="",
+            sha384=None,
+            sha512=None,
+            content_artifact=self.ca,
+            remote=self.remote,
+        )
+        ra.validate_checksums()
+
+    def test_remoteartifact_with_allowed_checksums(
+        self, mock_FORBIDDEN_DIGESTS, mock_DIGEST_FIELDS
+    ):
+        ra = RemoteArtifact(
+            url="http://example.org/file",
+            size=1024,
+            md5="",
+            sha1=None,
+            sha224=None,
+            sha256="sha256checksum",
+            sha384=None,
+            sha512=None,
+            content_artifact=self.ca,
+            remote=self.remote,
+        )
+        ra.validate_checksums()
+
+    def test_remoteartifact_with_allowed_and_forbidden_checksums(
+        self, mock_FORBIDDEN_DIGESTS, mock_DIGEST_FIELDS
+    ):
+        ra = RemoteArtifact(
+            url="http://example.org/file",
+            size=1024,
+            md5="",
+            sha1="sha1checksum",
+            sha224=None,
+            sha256="sha256checksum",
+            sha384=None,
+            sha512=None,
+            content_artifact=self.ca,
+            remote=self.remote,
+        )
+        ra.validate_checksums()
+
+    def test_remoteartifact_with_forbidden_checksums(
+        self, mock_FORBIDDEN_DIGESTS, mock_DIGEST_FIELDS
+    ):
+        with self.assertRaises(UnsupportedDigestValidationError):
+            ra = RemoteArtifact(
+                url="http://example.org/file",
+                size=1024,
+                md5="md5checksum",
+                sha1=None,
+                sha224=None,
+                sha256="",
+                sha384=None,
+                sha512=None,
+                content_artifact=self.ca,
+                remote=self.remote,
+            )
+            ra.validate_checksums()

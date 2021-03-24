@@ -324,7 +324,7 @@ class RemoteArtifactSaver(Stage):
 
     @staticmethod
     def _create_remote_artifact(d_artifact, content_artifact):
-        return RemoteArtifact(
+        ra = RemoteArtifact(
             url=d_artifact.url,
             size=d_artifact.artifact.size,
             md5=d_artifact.artifact.md5,
@@ -336,3 +336,5 @@ class RemoteArtifactSaver(Stage):
             content_artifact=content_artifact,
             remote=d_artifact.remote,
         )
+        ra.validate_checksums()
+        return ra
