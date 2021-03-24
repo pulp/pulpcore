@@ -16,10 +16,16 @@ class DigestValidationError(ValidationError):
     Raised when a file fails to validate a digest checksum.
     """
 
-    def __init__(self):
+    def __init__(self, *args):
         super().__init__("PLP0003")
+        if args:
+            self.url = args[0]
 
     def __str__(self):
+        if hasattr(self, "url"):
+            return _("A file located at the url {} failed validation due to checksum.").format(
+                self.url
+            )
         return _("A file failed validation due to checksum.")
 
 
@@ -28,10 +34,14 @@ class SizeValidationError(ValidationError):
     Raised when a file fails to validate a size checksum.
     """
 
-    def __init__(self):
+    def __init__(self, *args):
         super().__init__("PLP0004")
+        if args:
+            self.url = args[0]
 
     def __str__(self):
+        if hasattr(self, "url"):
+            return _("A file located at the url {} failed validation due to size.").format(self.url)
         return _("A file failed validation due to size.")
 
 
