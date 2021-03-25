@@ -1,6 +1,6 @@
 django
 dynaconf
-pulp-smash  # >=1!0.12.0 - broken: https://github.com/dependabot/dependabot-core/issues/3165
+pulp-smash @ git+https://github.com/pulp/pulp-smash.git
 pulpcore-client
 pulp-file-client
 pytest
