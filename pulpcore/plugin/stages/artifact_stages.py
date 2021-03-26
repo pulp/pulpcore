@@ -71,7 +71,8 @@ class QueryExistingArtifacts(Stage):
             for d_content in batch:
                 for d_artifact in d_content.d_artifacts:
                     if d_artifact.artifact._state.adding:
-                        _check_for_forbidden_checksume_type(d_artifact.artifact)
+                        if not d_artifact.deferred_download:
+                            _check_for_forbidden_checksume_type(d_artifact.artifact)
                         for digest_type in Artifact.COMMON_DIGEST_FIELDS:
                             digest_value = getattr(d_artifact.artifact, digest_type)
                             if digest_value:
