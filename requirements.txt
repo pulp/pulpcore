@@ -16,7 +16,7 @@ drf-access-policy~=0.8.7
 drf-nested-routers==0.93.3
 drf-spectacular==0.14.0
 dynaconf~=3.1.4
-gunicorn>=19.9,<20.1
+gunicorn>=19.9,<20.2
 jinja2
 pygtrie~=2.4.2
 psycopg2>=2.7,<2.9
