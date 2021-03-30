@@ -119,7 +119,7 @@ class Handler:
             base_paths = list(BaseDistribution.objects.values_list("base_path", flat=True))
         else:
             base_paths = list(self.distribution_model.objects.values_list("base_path", flat=True))
-        directory_list = ["{}/".format(d.base_path) for d in base_paths]
+        directory_list = ["{}/".format(base_path) for base_path in base_paths]
         return HTTPOk(headers={"Content-Type": "text/html"}, body=self.render_html(directory_list))
 
     async def stream_content(self, request):
