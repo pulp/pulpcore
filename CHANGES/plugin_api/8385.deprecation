@@ -1,0 +1,21 @@
+The following objects were deprecated:
+* ``pulpcore.plugin.models.BaseDistribution`` -- Instead use
+  ``pulpcore.plugin.models.Distribution``.
+* ``pulpcore.plugin.viewset.BaseDistributionViewSet`` -- Instead use
+  ``pulpcore.plugin.viewset.DistributionViewSet``.
+* ``pulpcore.plugin.serializer.BaseDistributionSerializer`` -- Instead use
+  ``pulpcore.plugin.serializer.DistributionSerializer``.
+* ``pulpcore.plugin.serializer.PublicationDistributionSerializer`` -- Instead use define the
+  ``publication`` field directly on your detail distribution object. See the docstring for
+  ``pulpcore.plugin.serializer.DistributionSerializer`` for an example.
+* ``pulpcore.plugin.serializer.RepositoryVersionDistributionSerializer`` -- Instead use define the
+  ``repository_version`` field directly on your detail distribution object. See the docstring for
+  ``pulpcore.plugin.serializer.DistributionSerializer`` for an example.
+* ``pulpcore.plugin.viewset.DistributionFilter`` -- Instead use
+  ``pulpcore.plugin.viewset.NewDistributionFilter``.
+
+.. note::
+
+    You will have to define a migration to move your data from
+    ``pulpcore.plugin.models.BaseDistribution`` to ``pulpcore.plugin.models.Distribution``. See the
+    pulp_file migration 0009 as a reference example.
