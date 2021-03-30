@@ -12,6 +12,7 @@ from pulpcore.tests.functional.api.using_plugin.constants import (
     FILE_FIXTURE_MANIFEST_URL,
     FILE_REMOTE_PATH,
     FILE_REPO_PATH,
+    PULP_CONTENT_BASE_URL,
 )
 from pulpcore.tests.functional.api.using_plugin.utils import create_file_publication
 from pulpcore.tests.functional.api.using_plugin.utils import (  # noqa:F401
@@ -28,6 +29,7 @@ class ContentPromotionTestCase(unittest.TestCase):
         This test targets the following issue:
 
         * `Pulp #4186 <https://pulp.plan.io/issues/4186>`_
+        * `Pulp #8475 <https://pulp.plan.io/issues/8475>`_
 
         Do the following:
 
@@ -36,7 +38,9 @@ class ContentPromotionTestCase(unittest.TestCase):
         3. Create 2 distributions - using the same publication. Those
            distributions will have different ``base_path``.
         4. Assert that distributions have the same publication.
-        5. Select a content unit. Download that content unit from Pulp using
+        5. Assert that distributions are viewable from base url
+        6. Assert that content in distributions are viewable
+        7. Select a content unit. Download that content unit from Pulp using
            the two different distributions.
            Assert that content unit has the same checksum when fetched from
            different distributions.
@@ -68,13 +72,18 @@ class ContentPromotionTestCase(unittest.TestCase):
             distributions[0]["publication"], distributions[1]["publication"], distributions
         )
 
+        client.response_handler = api.safe_handler
+        self.assertEqual(client.get(PULP_CONTENT_BASE_URL).status_code, 200)
+
+        for distribution in distributions:
+            self.assertEqual(client.get(distribution["base_url"]).status_code, 200)
+
         unit_urls = []
         unit_path = get_added_content(repo)[FILE_CONTENT_NAME][0]["relative_path"]
         for distribution in distributions:
             unit_url = distribution["base_url"]
             unit_urls.append(urljoin(unit_url, unit_path))
 
-        client.response_handler = api.safe_handler
         self.assertEqual(
             hashlib.sha256(client.get(unit_urls[0]).content).hexdigest(),
             hashlib.sha256(client.get(unit_urls[1]).content).hexdigest(),

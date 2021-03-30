@@ -13,6 +13,10 @@ from pulp_smash.pulp3.constants import (
 
 PULP_FIXTURES_BASE_URL = config.get_config().get_fixtures_url()
 
+PULP_CONTENT_HOST_BASE_URL = config.get_config().get_content_host_base_url()
+
+PULP_CONTENT_BASE_URL = urljoin(PULP_CONTENT_HOST_BASE_URL, "pulp/content/")
+
 FILE_CONTENT_NAME = "file.file"
 
 FILE_CONTENT_PATH = urljoin(BASE_CONTENT_PATH, "file/files/")
