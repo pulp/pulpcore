@@ -1,0 +1,1 @@
+Fixed artifact-stage to handle an edge-case when multiple multi-artifact content, from different remotes, is in a single batch.

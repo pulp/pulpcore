@@ -283,8 +283,11 @@ class RemoteArtifactSaver(Stage):
         )
         needed_ras = []
         for d_content in batch:
-            for content_artifact in d_content.content._remote_artifact_saver_cas:
-                for d_artifact in d_content.d_artifacts:
+            for d_artifact in d_content.d_artifacts:
+                if not d_artifact.remote:
+                    continue
+
+                for content_artifact in d_content.content._remote_artifact_saver_cas:
                     if d_artifact.relative_path == content_artifact.relative_path:
                         break
                 else:
@@ -292,13 +295,13 @@ class RemoteArtifactSaver(Stage):
                     raise ValueError(
                         msg.format(rp=content_artifact.relative_path, c=d_content.content)
                     )
-                if d_artifact.remote:
-                    for remote_artifact in content_artifact._remote_artifact_saver_ras:
-                        if remote_artifact.remote_id == d_artifact.remote.pk:
-                            break
-                    else:
-                        remote_artifact = self._create_remote_artifact(d_artifact, content_artifact)
-                        needed_ras.append(remote_artifact)
+
+                for remote_artifact in content_artifact._remote_artifact_saver_ras:
+                    if remote_artifact.remote_id == d_artifact.remote.pk:
+                        break
+                else:
+                    remote_artifact = self._create_remote_artifact(d_artifact, content_artifact)
+                    needed_ras.append(remote_artifact)
         return needed_ras
 
     @staticmethod
