@@ -1,4 +1,5 @@
 from gettext import gettext as _
+import warnings
 
 from django.db.models import Q
 from rest_framework import serializers
@@ -129,6 +130,17 @@ class BaseDistributionSerializer(ModelSerializer):
             "name",
         )
 
+    def __init__(self, *args, **kwargs):
+        """ Initialize a BaseDistributionSerializer and emit DeprecationWarnings"""
+        warnings.warn(
+            _(
+                "BaseDistributionSerializer is deprecated and could be removed as early as "
+                "pulpcore==3.13; use pulpcore.plugin.serializers.DistributionSerializer instead."
+            ),
+            DeprecationWarning,
+        )
+        return super().__init__(*args, **kwargs)
+
     def _validate_path_overlap(self, path):
         # look for any base paths nested in path
         search = path.split("/")[0]
@@ -166,6 +178,18 @@ class PublicationDistributionSerializer(BaseDistributionSerializer):
         allow_null=True,
     )
 
+    def __init__(self, *args, **kwargs):
+        """ Initialize a PublicationDistributionSerializer and emit DeprecationWarnings"""
+        warnings.warn(
+            _(
+                "PublicationDistributionSerializer is deprecated and could be removed as early as "
+                "pulpcore==3.13; use pulpcore.plugin.serializers.DistributionSerializer instead. "
+                "See its docstring for more details."
+            ),
+            DeprecationWarning,
+        )
+        return super().__init__(*args, **kwargs)
+
     class Meta:
         abstract = True
         fields = BaseDistributionSerializer.Meta.fields + ("publication",)
@@ -182,6 +206,18 @@ class RepositoryVersionDistributionSerializer(BaseDistributionSerializer):
     repository_version = RepositoryVersionRelatedField(
         required=False, help_text=_("RepositoryVersion to be served"), allow_null=True
     )
+
+    def __init__(self, *args, **kwargs):
+        """ Initialize a RepositoryVersionDistributionSerializer and emit DeprecationWarnings"""
+        warnings.warn(
+            _(
+                "PublicationDistributionSerializer is deprecated and could be removed as early as "
+                "pulpcore==3.13; use pulpcore.plugin.serializers.DistributionSerializer instead. "
+                "See its docstring for more details."
+            ),
+            DeprecationWarning,
+        )
+        return super().__init__(*args, **kwargs)
 
     class Meta:
         abstract = True

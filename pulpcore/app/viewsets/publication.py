@@ -1,3 +1,6 @@
+from gettext import gettext as _
+import warnings
+
 from django_filters.rest_framework import DjangoFilterBackend, filters
 from rest_framework import mixins
 from rest_framework.filters import OrderingFilter
@@ -98,6 +101,17 @@ class DistributionFilter(BaseFilterSet):
     base_path = filters.CharFilter()
     pulp_label_select = LabelSelectFilter()
 
+    def __init__(self, *args, **kwargs):
+        """ Initialize a DistributionFilter and emit DeprecationWarnings"""
+        warnings.warn(
+            _(
+                "DistributionFilter is deprecated and could be removed as early as "
+                "pulpcore==3.13; use pulpcore.plugin.serializers.NewDistributionFilter instead."
+            ),
+            DeprecationWarning,
+        )
+        return super().__init__(*args, **kwargs)
+
     class Meta:
         model = BaseDistribution
         fields = {
@@ -124,6 +138,17 @@ class BaseDistributionViewSet(
     queryset = BaseDistribution.objects.all()
     serializer_class = BaseDistributionSerializer
     filterset_class = DistributionFilter
+
+    def __init__(self, *args, **kwargs):
+        """ Initialize a BaseDistributionViewSet and emit DeprecationWarnings"""
+        warnings.warn(
+            _(
+                "BaseDistributionViewSet is deprecated and could be removed as early as "
+                "pulpcore==3.13; use pulpcore.plugin.viewsets.DistributionViewset instead."
+            ),
+            DeprecationWarning,
+        )
+        return super().__init__(*args, **kwargs)
 
     def async_reserved_resources(self, instance):
         """Return resource that locks all Distributions."""

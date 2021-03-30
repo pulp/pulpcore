@@ -1,3 +1,6 @@
+from gettext import gettext as _
+import warnings
+
 from django.db import IntegrityError, models, transaction
 
 from .base import MasterModel, BaseModel
@@ -285,6 +288,17 @@ class BaseDistribution(MasterModel):
 
     content_guard = models.ForeignKey(ContentGuard, null=True, on_delete=models.SET_NULL)
     remote = models.ForeignKey(Remote, null=True, on_delete=models.SET_NULL)
+
+    def __init__(self, *args, **kwargs):
+        """ Initialize a BaseDistribution and emit DeprecationWarnings"""
+        warnings.warn(
+            _(
+                "BaseDistribution is deprecated and could be removed as early as pulpcore==3.13; "
+                "use pulpcore.plugin.models.Distribution instead."
+            ),
+            DeprecationWarning,
+        )
+        return super().__init__(*args, **kwargs)
 
     def content_handler(self, path):
         """
