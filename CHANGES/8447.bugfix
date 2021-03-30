@@ -1,0 +1,1 @@
+Fixed a bug where the existence of PublishedMetadata caused ``LookupError`` when querying ``/pulp/api/v3/content/``
