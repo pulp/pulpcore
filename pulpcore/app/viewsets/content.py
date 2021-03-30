@@ -4,7 +4,7 @@ from django.db import models
 from rest_framework import mixins, permissions, status
 from rest_framework.response import Response
 
-from pulpcore.app.models import Artifact, Content, SigningService
+from pulpcore.app.models import Artifact, Content, PublishedMetadata, SigningService
 from pulpcore.app.serializers import (
     ArtifactSerializer,
     MultipleArtifactContentSerializer,
@@ -105,7 +105,7 @@ class BaseContentViewSet(NamedModelViewSet):
     endpoint_name = "content"
     filterset_class = ContentFilter
     # These are just placeholders, the plugin writer would replace them with the actual
-    queryset = Content.objects.all()
+    queryset = Content.objects.all().exclude(pulp_type=PublishedMetadata.get_pulp_type())
     serializer_class = MultipleArtifactContentSerializer
 
 
