@@ -228,6 +228,7 @@ ALLOWED_IMPORT_PATHS
 
    Defaults to ``[]``, meaning ``file:///`` urls are not allowed in any Remote.
 
+
 .. _allowed-export-paths:
 
 ALLOWED_EXPORT_PATHS
@@ -241,6 +242,8 @@ ALLOWED_EXPORT_PATHS
    Defaults to ``[]`` which means no path is allowed.
 
 
+.. _profile-stages-api:
+
 PROFILE_STAGES_API
 ^^^^^^^^^^^^^^^^^^
 
@@ -251,6 +254,7 @@ PROFILE_STAGES_API
 
       Profiling stages is provided as a tech preview in Pulp 3.0. Functionality may not fully work
       and backwards compatibility when upgrading to future Pulp releases is not guaranteed.
+
 
 .. _allowed-content-checksums:
 
@@ -304,11 +308,26 @@ ALLOWED_CONTENT_CHECKSUMS
       If Pulp fails to start because forbidden checkums have been identified or required ones are
       missing, run ``pulpcore-manager handle-artifact-checksums`` command.
 
+
+.. _use-non-rq-pulp-workers:
+
+USE_NEW_WORKER_TYPE
+^^^^^^^^^^^^^^^^^^^
+
+    Pulp has a new experimental worker type which is startable with the ``pulp-worker`` command. If
+    ``True`` Pulp is expecting to have its workers started with ``pulp-worker``. Defaults to
+    ``False``.
+
+
+.. _admin-site-url:
+
 ADMIN_SITE_URL
 ^^^^^^^^^^^^^^
 
     The Django admin site URL. Defaults to ``admin/``.
 
+
+.. _django-guid:
 
 DJANGO_GUID
 ^^^^^^^^^^^

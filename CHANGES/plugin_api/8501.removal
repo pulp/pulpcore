@@ -1,0 +1,1 @@
+The usage of non-JSON serializable types of ``args`` and ``kwargs`` to tasks is no longer supported.

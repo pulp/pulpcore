@@ -1,17 +1,25 @@
+import asyncio
+import importlib
+import json
 import logging
 import os
 import socket
 import sys
+import threading
+import socket
+import time
 
+import click
 from rq import Queue
 from rq.worker import Worker
-
 
 import django
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "pulpcore.app.settings")
 django.setup()
 
+from django.conf import settings  # noqa: E402: module level not at top of file
+from django.db import connection  # noqa: E402: module level not at top of file
 from guardian.shortcuts import get_users_with_perms  # noqa: E402: module level not at top of file
 from django_currentuser.middleware import (  # noqa: E402: module level not at top of file
     _set_current_user,
@@ -21,6 +29,12 @@ from django_guid.middleware import GuidMiddleware  # noqa: E402: module level no
 from pulpcore.app.settings import WORKER_TTL  # noqa: E402: module level not at top of file
 
 from pulpcore.app.models import Task  # noqa: E402: module level not at top of file
+
+from pulpcore.constants import (  # noqa: E402: module level not at top of file
+    TASK_CHOICES,
+    TASK_FINAL_STATES,
+    TASK_STATES,
+)
 
 from pulpcore.tasking.constants import (  # noqa: E402: module level not at top of file
     TASKING_CONSTANTS,
@@ -201,3 +215,91 @@ class PulpWorker(Worker):
         """
         mark_worker_offline(self.name, normal_shutdown=True)
         return super().handle_warm_shutdown_request(*args, **kwargs)
+
+
+@click.command()
+def worker():
+    """A Pulp worker."""
+    NewPulpWorker().run_forever()
+
+
+class NewPulpWorker:
+    def __init__(self):
+        self.name = f"{os.getpid()}@{socket.getfqdn()}"
+
+    def heartbeat_loop(self):
+        seconds_between_heartbeats = settings.WORKER_TTL / 3
+        while True:
+            handle_worker_heartbeat(self.name)
+            time.sleep(seconds_between_heartbeats)
+
+    def get_resources_for_running_tasks(self):
+        taken_resources = set()
+        waiting_tasks = Task.objects.filter(state=TASK_STATES.RUNNING)
+        for resources in waiting_tasks.values_list('new_reserved_resources_record', flat=True):
+            for resource in resources:
+                taken_resources.add(resource)
+        return taken_resources
+
+    def task_has_all_resources_available(self, task, taken_resources):
+        all_resources_free = True
+        for required_resource in task.new_reserved_resources_record:
+            if required_resource in taken_resources:
+                all_resources_free = False
+                break
+        return all_resources_free
+
+    def lock_task_resources(self, task):
+        with connection.cursor() as cursor:
+            for required_resource in task.new_reserved_resources_record:
+                cursor.execute("SELECT pg_try_advisory_lock(hashtext(%s));", [required_resource])
+                acquired = cursor.fetchone()[0]
+                if not acquired:
+                    cursor.execute("SELECT pg_advisory_unlock_all();")
+                    return False
+            return True
+
+    def run_forever(self):
+        t = threading.Thread(target=self.heartbeat_loop)
+        t.start()
+        while True:
+            taken_resources = self.get_resources_for_running_tasks()
+            waiting_tasks = Task.objects.filter(state=TASK_STATES.WAITING).order_by('pulp_created')
+            for task in waiting_tasks:
+                if self.task_has_all_resources_available(task, taken_resources):
+                    all_locks_acquired = self.lock_task_resources(task)
+                    if all_locks_acquired:
+                        self.perform_task(task)
+                    else:
+                        for required_resources in task.new_reserved_resources_record:
+                            taken_resources.add(required_resources)
+                        continue
+            time.sleep(0.2)
+
+    def perform_task(self, task):
+        module_name, attribute = task.name.rsplit('.', 1)
+        module = importlib.import_module(module_name)
+        self.func = getattr(module, attribute)
+        task.set_running()
+        try:
+            self.execute(task)
+        except Exception:
+            exc_type, exc, tb = sys.exc_info()
+            task.set_failed(exc, tb)
+        else:
+            task.set_completed()
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT pg_advisory_unlock_all();")
+
+    def execute(self, task):
+        args = json.loads(task.args)
+        kwargs = json.loads(task.kwargs)
+        if args is None:
+            args = ()
+        if kwargs is None:
+            kwargs = {}
+        result = self.func(*args, **kwargs)
+        if asyncio.iscoroutine(result):
+            loop = asyncio.get_event_loop()
+            coro_result = loop.run_until_complete(result)
+            return coro_result

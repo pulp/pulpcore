@@ -4,6 +4,7 @@ import time
 import uuid
 from gettext import gettext as _
 
+from django.conf import settings
 from django.db import IntegrityError, transaction
 from django.db.models import Model
 from django_guid.middleware import GuidMiddleware
@@ -145,21 +146,6 @@ def _queue_reserved_task(func, inner_task_id, resources, inner_args, inner_kwarg
         task_status.set_failed(e, None)
 
 
-class NonJSONWarningEncoder(json.JSONEncoder):
-    def default(self, obj):
-        try:
-            return json.JSONEncoder.default(self, obj)
-        except TypeError:
-            deprecation_logger.warn(
-                _(
-                    "The argument {obj} is of type {type}, which is not JSON serializable. The use "
-                    "of non JSON serializable objects for `args` and `kwargs` to tasks is "
-                    "deprecated as of pulpcore==3.12. See the traceback below for more info."
-                ).format(obj=obj, type=type(obj))
-            )
-            return None
-
-
 def enqueue_with_reservation(
     func, resources, args=None, kwargs=None, options=None, task_group=None
 ):
@@ -204,6 +190,32 @@ def enqueue_with_reservation(
     )
 
 
+def _validate_and_get_resources_as_set(resources):
+    resource_set = set()
+    for r in resources:
+        if isinstance(r, str):
+            resource_set.add(r)
+        elif isinstance(r, Model):
+            resource_set.add(util.get_url(r))
+        else:
+            raise ValueError(_("Must be (str|Model)"))
+    return resource_set
+
+
+class UUIDEncoder(json.JSONEncoder):
+    def default(self, obj):
+        deprecation_logger.warn(
+            _(
+                "The argument {obj} is of type {type}, which is not JSON serializable. The use "
+                "of non JSON serializable objects for `args` and `kwargs` to tasks is "
+                "deprecated as of pulpcore==3.12. See the traceback below for more info."
+            ).format(obj=obj, type=type(obj))
+        )
+        if isinstance(obj, uuid.UUID):
+            return str(obj)
+        return json.JSONEncoder.default(self, obj)
+
+
 def _enqueue_with_reservation(
     func, resources, args=None, kwargs=None, options=None, task_group=None
 ):
@@ -214,21 +226,14 @@ def _enqueue_with_reservation(
     if not options:
         options = dict()
 
-    def as_url(r):
-        if isinstance(r, str):
-            return r
-        if isinstance(r, Model):
-            return util.get_url(r)
-        raise ValueError(_("Must be (str|Model)"))
-
-    resources = {as_url(r) for r in resources}
+    resources = _validate_and_get_resources_as_set(resources)
     inner_task_id = str(uuid.uuid4())
     resource_task_id = str(uuid.uuid4())
+    args_as_json = json.dumps(args, cls=UUIDEncoder)
+    kwargs_as_json = json.dumps(kwargs, cls=UUIDEncoder)
     redis_conn = connection.get_redis_connection()
     current_job = get_current_job(connection=redis_conn)
     parent_kwarg = {}
-    json.dumps(args, cls=NonJSONWarningEncoder)
-    json.dumps(kwargs, cls=NonJSONWarningEncoder)
     if current_job:
         # set the parent task of the spawned task to the current task ID (same as rq Job ID)
         parent_kwarg["parent_task"] = Task.objects.get(pk=current_job.id)
@@ -241,6 +246,8 @@ def _enqueue_with_reservation(
             logging_cid=(GuidMiddleware.get_guid() or ""),
             task_group=task_group,
             name=f"{func.__module__}.{func.__name__}",
+            args=args_as_json,
+            kwargs=kwargs_as_json,
             **parent_kwarg,
         )
         for resource in resources:
@@ -285,7 +292,24 @@ def dispatch(func, resources, args=None, kwargs=None, task_group=None):
     Raises:
         ValueError: When `resources` is an unsupported type.
     """
-    RQ_job_id = _enqueue_with_reservation(
-        func, resources=resources, args=args, kwargs=kwargs, task_group=task_group
-    )
-    return Task.objects.get(pk=RQ_job_id.id)
+    if settings.USE_NEW_WORKER_TYPE:
+        args_as_json = json.dumps(args, cls=UUIDEncoder)
+        kwargs_as_json = json.dumps(kwargs, cls=UUIDEncoder)
+        resources = list(_validate_and_get_resources_as_set(resources))
+        with transaction.atomic():
+            task = Task.objects.create(
+                state=TASK_STATES.WAITING,
+                logging_cid=(GuidMiddleware.get_guid() or ""),
+                task_group=task_group,
+                name=f"{func.__module__}.{func.__name__}",
+                args=args_as_json,
+                kwargs=kwargs_as_json,
+                parent_task=None,  # TODO implement me!
+                new_reserved_resources_record=resources,
+            )
+        return task
+    else:
+        RQ_job_id = _enqueue_with_reservation(
+            func, resources=resources, args=args, kwargs=kwargs, task_group=task_group
+        )
+        return Task.objects.get(pk=RQ_job_id.id)
