@@ -1,0 +1,1 @@
+Fixed a path in artifact_stages that could lead to sync-failures in pulp_container.
