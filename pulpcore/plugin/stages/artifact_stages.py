@@ -281,7 +281,12 @@ class RemoteArtifactSaver(Stage):
                 to_attr="_remote_artifact_saver_cas",
             ),
         )
-        needed_ras = []
+
+        # Now return the list of RemoteArtifacts that need to be saved.
+        #
+        # We can end up with duplicates (diff pks, same sha256) in the sequence below,
+        # so we store by-sha256 and then return the final values
+        needed_ras = {}  # { str(<sha256>): RemoteArtifact, ... }
         for d_content in batch:
             for d_artifact in d_content.d_artifacts:
                 if not d_artifact.remote:
@@ -301,8 +306,9 @@ class RemoteArtifactSaver(Stage):
                         break
                 else:
                     remote_artifact = self._create_remote_artifact(d_artifact, content_artifact)
-                    needed_ras.append(remote_artifact)
-        return needed_ras
+                    needed_ras[remote_artifact.sha256] = remote_artifact
+
+        return list(needed_ras.values())
 
     @staticmethod
     def _create_remote_artifact(d_artifact, content_artifact):
