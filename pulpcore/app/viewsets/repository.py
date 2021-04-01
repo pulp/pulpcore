@@ -32,7 +32,7 @@ from pulpcore.app.viewsets import (
 )
 from pulpcore.app.viewsets.base import DATETIME_FILTER_OPTIONS, NAME_FILTER_OPTIONS
 from pulpcore.app.viewsets.custom_filters import IsoDateTimeFilter, LabelSelectFilter
-from pulpcore.tasking.tasks import enqueue_with_reservation
+from pulpcore.tasking.tasks import dispatch
 
 
 class RepositoryFilter(BaseFilterSet):
@@ -222,10 +222,10 @@ class RepositoryVersionViewSet(
         if version.number == 0:
             raise serializers.ValidationError(detail=_("Cannot delete repository version 0."))
 
-        async_result = enqueue_with_reservation(
+        task = dispatch(
             tasks.repository.delete_version, [version.repository], kwargs={"pk": version.pk}
         )
-        return OperationPostponedResponse(async_result, request)
+        return OperationPostponedResponse(task, request)
 
     @extend_schema(
         description="Trigger an asynchronous task to repair a repository version.",
@@ -242,12 +242,12 @@ class RepositoryVersionViewSet(
 
         verify_checksums = serializer.validated_data["verify_checksums"]
 
-        async_result = enqueue_with_reservation(
+        task = dispatch(
             tasks.repository.repair_version,
             [version.repository],
             args=[version.pk, verify_checksums],
         )
-        return OperationPostponedResponse(async_result, request)
+        return OperationPostponedResponse(task, request)
 
 
 class RemoteFilter(BaseFilterSet):

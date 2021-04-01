@@ -1,0 +1,2 @@
+Deprecated the ``pulpcore.plugin.tasking.enqueue_with_reservation``. Instead use the
+``pulpcore.plugin.tasking.dispatch`` interface.

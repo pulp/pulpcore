@@ -15,7 +15,7 @@ from pulpcore.app.serializers import (
     UploadDetailSerializer,
 )
 from pulpcore.app.viewsets.base import NamedModelViewSet
-from pulpcore.tasking.tasks import enqueue_with_reservation
+from pulpcore.tasking.tasks import dispatch
 
 
 class UploadViewSet(
@@ -95,7 +95,5 @@ class UploadViewSet(
         sha256 = serializer.validated_data["sha256"]
 
         upload = self.get_object()
-        async_result = enqueue_with_reservation(
-            tasks.upload.commit, [upload], args=(upload.pk, sha256)
-        )
-        return OperationPostponedResponse(async_result, request)
+        task = dispatch(tasks.upload.commit, [upload], args=(upload.pk, sha256))
+        return OperationPostponedResponse(task, request)

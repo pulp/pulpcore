@@ -8,7 +8,7 @@ from pulpcore.app.serializers import (
     AsyncOperationResponseSerializer,
     RepositoryAddRemoveContentSerializer,
 )
-from pulpcore.tasking.tasks import enqueue_with_reservation
+from pulpcore.tasking.tasks import dispatch
 
 
 __all__ = ["ModifyRepositoryActionMixin"]
@@ -50,7 +50,7 @@ class ModifyRepositoryActionMixin:
                     content = self.get_resource(url, Content)
                     remove_content_units.append(content.pk)
 
-        result = enqueue_with_reservation(
+        task = dispatch(
             tasks.repository.add_and_remove,
             [repository],
             kwargs={
@@ -60,4 +60,4 @@ class ModifyRepositoryActionMixin:
                 "remove_content_units": remove_content_units,
             },
         )
-        return OperationPostponedResponse(result, request)
+        return OperationPostponedResponse(task, request)

@@ -27,7 +27,7 @@ from pulpcore.app.viewsets import (
     NamedModelViewSet,
 )
 from pulpcore.app.viewsets.base import NAME_FILTER_OPTIONS
-from pulpcore.plugin.tasking import enqueue_with_reservation
+from pulpcore.plugin.tasking import dispatch
 from pulpcore.app.response import OperationPostponedResponse
 
 
@@ -132,6 +132,6 @@ class PulpExportViewSet(ExportViewSet):
         export.validated_start_versions = serializer.validated_data.get("start_versions", None)
         export.validated_chunk_size = serializer.validated_data.get("chunk_size", None)
 
-        result = enqueue_with_reservation(pulp_export, [exporter], kwargs={"the_export": export})
+        task = dispatch(pulp_export, [exporter], kwargs={"the_export": export})
 
-        return OperationPostponedResponse(result, request)
+        return OperationPostponedResponse(task, request)
