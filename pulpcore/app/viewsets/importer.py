@@ -23,7 +23,7 @@ from pulpcore.app.viewsets import (
     NamedModelViewSet,
 )
 from pulpcore.app.viewsets.base import NAME_FILTER_OPTIONS
-from pulpcore.tasking.tasks import enqueue_with_reservation
+from pulpcore.tasking.tasks import dispatch
 
 
 class ImporterFilter(BaseFilterSet):
@@ -104,7 +104,7 @@ class PulpImportViewSet(ImportViewSet):
         serializer.is_valid(raise_exception=True)
         path = serializer.validated_data.get("path")
         toc = serializer.validated_data.get("toc")
-        result = enqueue_with_reservation(
+        task = dispatch(
             pulp_import, [importer], kwargs={"importer_pk": importer.pk, "path": path, "toc": toc}
         )
-        return OperationPostponedResponse(result, request)
+        return OperationPostponedResponse(task, request)

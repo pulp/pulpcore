@@ -10,6 +10,7 @@ from redis.exceptions import ConnectionError as RedisConnectionError
 from rq import Queue
 from rq.job import Job, get_current_job
 
+from pulpcore.app.logging import deprecation_logger
 from pulpcore.app.models import (
     ReservedResource,
     ReservedResourceRecord,
@@ -176,6 +177,20 @@ def enqueue_with_reservation(
     Raises:
         ValueError: When `resources` is an unsupported type.
     """
+    deprecation_logger.warn(
+        _(
+            "`enqueue_with_reservation` is deprecated and could be removed as early as "
+            "pulpcore==3.13; use pulpcore.plugin.tasking.dispatch instead."
+        )
+    )
+    return _enqueue_with_reservation(
+        func, resources, args=args, kwargs=kwargs, options=options, task_group=task_group
+    )
+
+
+def _enqueue_with_reservation(
+    func, resources, args=None, kwargs=None, options=None, task_group=None
+):
     if not args:
         args = tuple()
     if not kwargs:
@@ -227,3 +242,32 @@ def enqueue_with_reservation(
             task.set_failed(e, None)
 
     return Job(id=inner_task_id, connection=redis_conn)
+
+
+def dispatch(func, resources, args=None, kwargs=None, task_group=None):
+    """
+    Enqueue a message to Pulp workers with a reservation.
+
+    This method provides normal enqueue functionality, while also requesting necessary locks for
+    serialized urls. No two tasks that claim the same resource can execute concurrently. It
+    accepts resources which it transforms into a list of urls (one for each resource).
+
+    This method creates a :class:`pulpcore.app.models.Task` object and returns it.
+
+    Args:
+        func (callable): The function to be run by RQ when the necessary locks are acquired.
+        resources (list): A list of resources to this task needs exclusive access to while running.
+                          Each resource can be either a `str` or a `django.models.Model` instance.
+        args (tuple): The positional arguments to pass on to the task.
+        kwargs (dict): The keyword arguments to pass on to the task.
+        task_group (pulpcore.app.models.TaskGroup): A TaskGroup to add the created Task to.
+
+    Returns (pulpcore.app.models.Task): The Pulp Task that was created.
+
+    Raises:
+        ValueError: When `resources` is an unsupported type.
+    """
+    RQ_job_id = _enqueue_with_reservation(
+        func, resources=resources, args=args, kwargs=kwargs, task_group=task_group
+    )
+    return Task.objects.get(pk=RQ_job_id.id)

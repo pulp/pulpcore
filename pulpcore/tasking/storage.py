@@ -190,7 +190,7 @@ class WorkingDirectory(_WorkingDir):
         """
         deprecation_logger.warn(
             _(
-                "WorkingDirectory is deprecated and will be removed in pulpcore==3.12; "
+                "WorkingDirectory is deprecated and will be removed in pulpcore==3.13; "
                 'use tempfile.TemporaryDirectory(dir=".") instead.'
             )
         )

@@ -18,7 +18,7 @@ from pulpcore.app import tasks
 from pulpcore.app.models import MasterModel
 from pulpcore.app.response import OperationPostponedResponse
 from pulpcore.app.serializers import AsyncOperationResponseSerializer
-from pulpcore.tasking.tasks import enqueue_with_reservation
+from pulpcore.tasking.tasks import dispatch
 
 # These should be used to prevent duplication and keep things consistent
 NAME_FILTER_OPTIONS = ["exact", "in", "icontains", "contains", "startswith"]
@@ -424,13 +424,13 @@ class AsyncCreateMixin:
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         app_label = self.queryset.model._meta.app_label
-        async_result = enqueue_with_reservation(
+        task = dispatch(
             tasks.base.general_create,
             self.async_reserved_resources(None),
             args=(app_label, serializer.__class__.__name__),
             kwargs={"data": request.data},
         )
-        return OperationPostponedResponse(async_result, request)
+        return OperationPostponedResponse(task, request)
 
 
 class AsyncUpdateMixin(AsyncReservedObjectMixin):
@@ -448,13 +448,13 @@ class AsyncUpdateMixin(AsyncReservedObjectMixin):
         serializer = self.get_serializer(instance, data=request.data, partial=partial)
         serializer.is_valid(raise_exception=True)
         app_label = instance._meta.app_label
-        async_result = enqueue_with_reservation(
+        task = dispatch(
             tasks.base.general_update,
             self.async_reserved_resources(instance),
             args=(pk, app_label, serializer.__class__.__name__),
             kwargs={"data": request.data, "partial": partial},
         )
-        return OperationPostponedResponse(async_result, request)
+        return OperationPostponedResponse(task, request)
 
     @extend_schema(
         description="Trigger an asynchronous partial update task",
@@ -481,12 +481,12 @@ class AsyncRemoveMixin(AsyncReservedObjectMixin):
         instance = self.get_object()
         serializer = self.get_serializer(instance)
         app_label = instance._meta.app_label
-        async_result = enqueue_with_reservation(
+        task = dispatch(
             tasks.base.general_delete,
             self.async_reserved_resources(instance),
             args=(pk, app_label, serializer.__class__.__name__),
         )
-        return OperationPostponedResponse(async_result, request)
+        return OperationPostponedResponse(task, request)
 
 
 class BaseFilterSet(filterset.FilterSet):

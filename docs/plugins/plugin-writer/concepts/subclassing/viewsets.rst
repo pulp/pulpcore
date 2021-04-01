@@ -62,7 +62,7 @@ Kick off Tasks
 Some endpoints may need to deploy tasks to the tasking system. The following is an example of how
 this is accomplished.
 
-See :class:`~pulpcore.plugin.tasking.enqueue_with_reservation` for more details.
+See :class:`~pulpcore.plugin.tasking.dispatch` for more details.
 
 .. code-block:: python
 
@@ -82,7 +82,7 @@ See :class:`~pulpcore.plugin.tasking.enqueue_with_reservation` for more details.
             mirror = serializer.validated_data.get('mirror', False)
 
             # This is how tasks are kicked off.
-            result = enqueue_with_reservation(
+            result = dispatch(
                 tasks.synchronize,
                 [repository, remote],
                 kwargs={

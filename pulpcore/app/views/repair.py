@@ -4,7 +4,7 @@ from rest_framework.views import APIView
 from pulpcore.app.response import OperationPostponedResponse
 from pulpcore.app.serializers import AsyncOperationResponseSerializer, RepairSerializer
 from pulpcore.app.tasks import repair_all_artifacts
-from pulpcore.tasking.tasks import enqueue_with_reservation
+from pulpcore.tasking.tasks import dispatch
 
 
 class RepairView(APIView):
@@ -25,6 +25,6 @@ class RepairView(APIView):
 
         verify_checksums = serializer.validated_data["verify_checksums"]
 
-        async_result = enqueue_with_reservation(repair_all_artifacts, [], args=[verify_checksums])
+        task = dispatch(repair_all_artifacts, [], args=[verify_checksums])
 
-        return OperationPostponedResponse(async_result, request)
+        return OperationPostponedResponse(task, request)

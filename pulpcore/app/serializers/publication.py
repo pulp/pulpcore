@@ -155,7 +155,7 @@ class BaseDistributionSerializer(ModelSerializer, BasePathOverlapMixin):
     )
 
     def __init__(self, *args, **kwargs):
-        """ Initialize a BaseDistributionSerializer and emit DeprecationWarnings"""
+        """ Initialize a BaseDistributionSerializer and emit deprecation warnings"""
         deprecation_logger.warn(
             _(
                 "BaseDistributionSerializer is deprecated and could be removed as early as "
@@ -297,7 +297,7 @@ class PublicationDistributionSerializer(BaseDistributionSerializer):
     )
 
     def __init__(self, *args, **kwargs):
-        """ Initialize a PublicationDistributionSerializer and emit DeprecationWarnings"""
+        """ Initialize a PublicationDistributionSerializer and emit deprecation warnings"""
         deprecation_logger.warn(
             _(
                 "PublicationDistributionSerializer is deprecated and could be removed as early as "
@@ -325,7 +325,7 @@ class RepositoryVersionDistributionSerializer(BaseDistributionSerializer):
     )
 
     def __init__(self, *args, **kwargs):
-        """ Initialize a RepositoryVersionDistributionSerializer and emit DeprecationWarnings"""
+        """ Initialize a RepositoryVersionDistributionSerializer and emit deprecation warnings"""
         deprecation_logger.warn(
             _(
                 "PublicationDistributionSerializer is deprecated and could be removed as early as "
