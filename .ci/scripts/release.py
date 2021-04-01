@@ -81,12 +81,11 @@ with open(f"{plugin_path}/setup.py") as fp:
 release_version = version.replace(".dev", "")
 
 
-issues_to_close = []
+issues_to_close = set()
 for filename in Path(f"{plugin_path}/CHANGES").rglob("*"):
     if filename.stem.isdigit():
         issue = filename.stem
-        issue_url = f"{REDMINE_URL}/issues/{issue}.json"
-        issues_to_close.append(issue)
+        issues_to_close.add(issue)
 
 issues = ",".join(issues_to_close)
 redmine_final_query = f"{REDMINE_QUERY_URL}{issues}"
