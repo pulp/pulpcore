@@ -65,7 +65,9 @@ class UserViewSet(NamedModelViewSet, mixins.RetrieveModelMixin, mixins.ListModel
         List user permissions.
         """
         user = self.get_object()
-        object_permission = PermissionSerializer(user.userobjectpermission_set.all(), many=True)
+        object_permission = PermissionSerializer(
+            user.userobjectpermission_set.all(), many=True, context={"request": request}
+        )
         permissions = PermissionSerializer(user.user_permissions.all(), many=True)
         return Response(object_permission.data + permissions.data)
 
@@ -293,7 +295,9 @@ class GroupObjectPermissionViewSet(NamedModelViewSet):
     @extend_schema(description="Retrieve a model permission from a group.")
     def retrieve(self, request, group_pk, pk):
         instance = get_object_or_404(GroupObjectPermission, pk=pk)
-        serializer = PermissionSerializer(instance, context={"group_pk": group_pk})
+        serializer = PermissionSerializer(
+            instance, context={"group_pk": group_pk, "request": request}
+        )
         return Response(serializer.data)
 
     @extend_schema(
@@ -308,10 +312,14 @@ class GroupObjectPermissionViewSet(NamedModelViewSet):
 
         page = self.paginate_queryset(queryset)
         if page is not None:
-            serializer = PermissionSerializer(page, context={"group_pk": group_pk}, many=True)
+            serializer = PermissionSerializer(
+                page, context={"group_pk": group_pk, "request": request}, many=True
+            )
             return self.get_paginated_response(serializer.data)
 
-        serializer = PermissionSerializer(queryset, context={"group_pk": group_pk}, many=True)
+        serializer = PermissionSerializer(
+            queryset, context={"group_pk": group_pk, "request": request}, many=True
+        )
         return Response(serializer.data)
 
     @extend_schema(
@@ -331,7 +339,9 @@ class GroupObjectPermissionViewSet(NamedModelViewSet):
             object_pk=object_pk,
         )
         object_permission.save()
-        serializer = PermissionSerializer(object_permission, context={"group_pk": group_pk})
+        serializer = PermissionSerializer(
+            object_permission, context={"group_pk": group_pk, "request": request}
+        )
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     @extend_schema(description="Remove an object permission from a group.")
@@ -394,7 +404,7 @@ class GroupUserViewSet(NamedModelViewSet):
 
         page = self.paginate_queryset(queryset)
         if page is not None:
-            serializer = GroupUserSerializer(page, context={"request": None}, many=True)
+            serializer = GroupUserSerializer(page, context={"request": request}, many=True)
             return self.get_paginated_response(serializer.data)
 
         serializer = self.get_serializer(queryset, many=True)
@@ -415,7 +425,7 @@ class GroupUserViewSet(NamedModelViewSet):
             raise ValidationError(str(exc))
         group.user_set.add(user)
         group.save()
-        serializer = GroupUserSerializer(user, context={"request": None})
+        serializer = GroupUserSerializer(user, context={"request": request})
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def destroy(self, request, group_pk, pk):
