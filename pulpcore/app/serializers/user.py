@@ -7,7 +7,7 @@ from guardian.models.models import GroupObjectPermission
 from rest_framework import serializers
 
 from pulpcore.app.serializers import IdentityField, ValidateFieldsMixin
-from pulpcore.app.util import get_viewset_for_model
+from pulpcore.app.util import get_viewset_for_model, get_request_without_query_params
 
 
 class PermissionField(serializers.CharField):
@@ -25,7 +25,10 @@ class ContentObjectField(serializers.CharField):
         content_object = getattr(obj, "content_object", None)
         if content_object:
             viewset = get_viewset_for_model(obj.content_object)
-            serializer = viewset.serializer_class(obj.content_object, context={"request": None})
+
+            request = get_request_without_query_params(self.context)
+
+            serializer = viewset.serializer_class(obj.content_object, context={"request": request})
             return serializer.data.get("pulp_href")
 
 

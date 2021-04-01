@@ -127,3 +127,35 @@ def get_view_urlpattern(view):
     if hasattr(view, "parent_viewset") and view.parent_viewset:
         return os.path.join(view.parent_viewset.urlpattern(), view.urlpattern())
     return view.urlpattern()
+
+
+def get_request_without_query_params(context):
+    """
+    Remove query parameters from a request object.
+
+    Removing query parameters should not influence the features provided by the library
+    'djangorestframework-queryfields'. But, once a user selects which fields should be sent in the
+    API response, any other fields are going to be filtered out even though they are still required
+    for serialization purposes in the future.
+
+    Some serializers need to be aware of the context that triggered the operation. For example, when
+    a Task is serialized, created resources need to be serialized as well. Missing context lead to
+    invalid serialization if the created resources do not have knowledge about the initial request.
+
+    This method modifies the request object in-place, meaning that all other objects that reference
+    this object may be affected.
+
+    Args:
+        context (dict): A context containing the request object.
+
+    Returns:
+        rest_framework.request.Request: a request object without query parameters
+    """
+    request = context.get("request")
+
+    if request is not None:
+        request.query_params._mutable = True
+        request.query_params.clear()
+        request.query_params._mutable = False
+
+    return request
