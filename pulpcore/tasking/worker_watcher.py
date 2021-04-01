@@ -11,6 +11,8 @@ from pulpcore.tasking.util import cancel
 from rq.exceptions import NoSuchJobError
 from rq.job import Job
 
+from django.db import transaction
+
 
 _logger = logging.getLogger(__name__)
 
@@ -176,20 +178,22 @@ def mark_worker_offline(worker_name, normal_shutdown=False):
         _logger.info(_("Cleaning up shutdown worker '{name}'.".format(name=worker_name)))
 
     try:
-        worker = Worker.objects.get(name=worker_name, gracefully_stopped=False, cleaned_up=False)
+        with transaction.atomic():
+            worker = Worker.objects.select_for_update().get(
+                name=worker_name, gracefully_stopped=False, cleaned_up=False
+            )
+            # Cancel all of the tasks that were assigned to this worker's queue
+            for task in worker.tasks.filter(state__in=TASK_INCOMPLETE_STATES):
+                cancel(task.pk)
+
+            # Ensure all locks are released for those tasks that are in final states also
+            for task in worker.tasks.exclude(state__in=TASK_INCOMPLETE_STATES):
+                task.release_resources()
+
+            if normal_shutdown:
+                worker.gracefully_stopped = True
+
+            worker.cleaned_up = True
+            worker.save()
     except Worker.DoesNotExist:
         pass
-    else:
-        # Cancel all of the tasks that were assigned to this worker's queue
-        for task in worker.tasks.filter(state__in=TASK_INCOMPLETE_STATES):
-            cancel(task.pk)
-
-        # Ensure all locks are released for those tasks that are in final states also
-        for task in worker.tasks.exclude(state__in=TASK_INCOMPLETE_STATES):
-            task.release_resources()
-
-        if normal_shutdown:
-            worker.gracefully_stopped = True
-
-        worker.cleaned_up = True
-        worker.save()
