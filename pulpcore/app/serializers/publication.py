@@ -1,11 +1,11 @@
 from gettext import gettext as _
-import warnings
 
 from django.db.models import Q
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 
 from pulpcore.app import models
+from pulpcore.app.logging import deprecation_logger
 from pulpcore.app.serializers import (
     BaseURLField,
     DetailIdentityField,
@@ -156,12 +156,11 @@ class BaseDistributionSerializer(ModelSerializer, BasePathOverlapMixin):
 
     def __init__(self, *args, **kwargs):
         """ Initialize a BaseDistributionSerializer and emit DeprecationWarnings"""
-        warnings.warn(
+        deprecation_logger.warn(
             _(
                 "BaseDistributionSerializer is deprecated and could be removed as early as "
                 "pulpcore==3.13; use pulpcore.plugin.serializers.DistributionSerializer instead."
-            ),
-            DeprecationWarning,
+            )
         )
         return super().__init__(*args, **kwargs)
 
@@ -299,13 +298,12 @@ class PublicationDistributionSerializer(BaseDistributionSerializer):
 
     def __init__(self, *args, **kwargs):
         """ Initialize a PublicationDistributionSerializer and emit DeprecationWarnings"""
-        warnings.warn(
+        deprecation_logger.warn(
             _(
                 "PublicationDistributionSerializer is deprecated and could be removed as early as "
                 "pulpcore==3.13; use pulpcore.plugin.serializers.DistributionSerializer instead. "
                 "See its docstring for more details."
-            ),
-            DeprecationWarning,
+            )
         )
         return super().__init__(*args, **kwargs)
 
@@ -328,13 +326,12 @@ class RepositoryVersionDistributionSerializer(BaseDistributionSerializer):
 
     def __init__(self, *args, **kwargs):
         """ Initialize a RepositoryVersionDistributionSerializer and emit DeprecationWarnings"""
-        warnings.warn(
+        deprecation_logger.warn(
             _(
                 "PublicationDistributionSerializer is deprecated and could be removed as early as "
                 "pulpcore==3.13; use pulpcore.plugin.serializers.DistributionSerializer instead. "
                 "See its docstring for more details."
-            ),
-            DeprecationWarning,
+            )
         )
         return super().__init__(*args, **kwargs)
 
