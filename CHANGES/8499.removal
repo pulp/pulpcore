@@ -1,0 +1,3 @@
+Deprecation warnings are now being logged by default if the log level includes WARNING. This can be
+disabled by adjusting the log level of ``pulpcore.deprecation``. See the deprecation docs for more
+information.

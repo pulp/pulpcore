@@ -1,5 +1,4 @@
 from gettext import gettext as _
-import warnings
 
 from django_filters.rest_framework import DjangoFilterBackend, filters
 from rest_framework import mixins
@@ -25,6 +24,7 @@ from pulpcore.app.viewsets.custom_filters import (
     LabelSelectFilter,
     RepositoryVersionFilter,
 )
+from pulpcore.app.logging import deprecation_logger
 
 
 class PublicationFilter(BaseFilterSet):
@@ -104,12 +104,11 @@ class DistributionFilter(BaseFilterSet):
 
     def __init__(self, *args, **kwargs):
         """ Initialize a DistributionFilter and emit DeprecationWarnings"""
-        warnings.warn(
+        deprecation_logger.warn(
             _(
                 "DistributionFilter is deprecated and could be removed as early as "
                 "pulpcore==3.13; use pulpcore.plugin.serializers.NewDistributionFilter instead."
-            ),
-            DeprecationWarning,
+            )
         )
         return super().__init__(*args, **kwargs)
 
@@ -160,12 +159,11 @@ class BaseDistributionViewSet(
 
     def __init__(self, *args, **kwargs):
         """ Initialize a BaseDistributionViewSet and emit DeprecationWarnings"""
-        warnings.warn(
+        deprecation_logger.warn(
             _(
                 "BaseDistributionViewSet is deprecated and could be removed as early as "
                 "pulpcore==3.13; use pulpcore.plugin.viewsets.DistributionViewset instead."
-            ),
-            DeprecationWarning,
+            )
         )
         return super().__init__(*args, **kwargs)
 

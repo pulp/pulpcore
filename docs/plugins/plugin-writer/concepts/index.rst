@@ -400,7 +400,8 @@ In 3.8 the following changes happen:
 2. The existing method signature ``def foo(a, b)`` is left in-tact.
 3. The ``foo`` method would have the a Python ``DeprecationWarning`` added to it such as::
 
-    warnings.warn("foo() is deprecated and will be removed in pulpcore==3.9; use the_new_foo().", DeprecationWarning)
+    from pulpcore.app.logging import deprecation_logger
+    deprecation_logger.warn("foo() is deprecated and will be removed in pulpcore==3.9; use the_new_foo().")
 
 4. A ``CHANGES/plugin_api/XXXX.deprecation`` changelog entry is created explaining how to port
    plugin code onto the new call interface.
@@ -413,13 +414,24 @@ Then in 3.9 the following happens:
 
 .. note::
 
-    Python ``DeprecationWarning`` log statements are shown to users of your plugin when using a
-    deprecated call interface. This is by design to raise general awareness that the code in-use
-    will eventually be removed.
+    Deprecation log statements are shown to users of your plugin when using a deprecated call
+    interface. This is by design to raise general awareness that the code in-use will eventually be
+    removed.
 
 This also applies to models importable from ``pulpcore.plugin.models``. For example, an attribute
 that is being renamed or removed would follow a similar deprecation process described above to allow
 plugin code one release cycle to update their code compatibility.
+
+Logging of deprecation warnings can be disabled by raising the log level for the
+``pulpcore.deprecation`` logger in the pulpcore settings file::
+
+    LOGGING = {
+        # ...
+        "loggers": {
+            "pulpcore.deprecation": {
+                "level": "ERROR",
+        }
+    }
 
 
 .. _plugin_installation:

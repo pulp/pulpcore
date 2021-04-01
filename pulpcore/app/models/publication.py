@@ -1,5 +1,4 @@
 from gettext import gettext as _
-import warnings
 
 from django.db import IntegrityError, models, transaction
 
@@ -8,6 +7,7 @@ from .content import Artifact, Content, ContentArtifact
 from .repository import Remote, Repository, RepositoryVersion
 from .task import CreatedResource
 from pulpcore.app.files import PulpTemporaryUploadedFile
+from pulpcore.app.logging import deprecation_logger
 
 
 class Publication(MasterModel):
@@ -291,12 +291,11 @@ class BaseDistribution(MasterModel):
 
     def __init__(self, *args, **kwargs):
         """ Initialize a BaseDistribution and emit DeprecationWarnings"""
-        warnings.warn(
+        deprecation_logger.warn(
             _(
                 "BaseDistribution is deprecated and could be removed as early as pulpcore==3.13; "
                 "use pulpcore.plugin.models.Distribution instead."
-            ),
-            DeprecationWarning,
+            )
         )
         return super().__init__(*args, **kwargs)
 
