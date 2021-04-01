@@ -34,7 +34,7 @@ from pulpcore.app.modelresource import (
     ContentArtifactResource,
 )
 from pulpcore.constants import TASK_STATES
-from pulpcore.tasking.tasks import enqueue_with_reservation
+from pulpcore.tasking.tasks import dispatch
 
 log = getLogger(__name__)
 
@@ -403,7 +403,7 @@ def pulp_import(importer_pk, path, toc):
                     )
                     continue
 
-                enqueue_with_reservation(
+                dispatch(
                     import_repository_version,
                     [dest_repo],
                     args=[importer.pk, dest_repo.pk, src_repo["name"], path],

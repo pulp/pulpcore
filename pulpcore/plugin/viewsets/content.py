@@ -10,7 +10,7 @@ from pulpcore.plugin.serializers import (
     AsyncOperationResponseSerializer,
 )
 from pulpcore.plugin.models import Artifact, PulpTemporaryFile
-from pulpcore.plugin.tasking import enqueue_with_reservation
+from pulpcore.plugin.tasking import dispatch
 from pulpcore.plugin.viewsets import (
     ContentViewSet,
     OperationPostponedResponse,
@@ -57,13 +57,13 @@ class NoArtifactContentUploadViewSet(DefaultDeferredContextMixin, ContentViewSet
             shared_resources.append(repository)
 
         app_label = self.queryset.model._meta.app_label
-        async_result = enqueue_with_reservation(
+        task = dispatch(
             tasks.base.general_create_from_temp_file,
             shared_resources,
             args=(app_label, serializer.__class__.__name__, str(temp_file.pk)),
             kwargs={"data": task_payload, "context": self.get_deferred_context(request)},
         )
-        return OperationPostponedResponse(async_result, request)
+        return OperationPostponedResponse(task, request)
 
 
 class SingleArtifactContentUploadViewSet(DefaultDeferredContextMixin, ContentViewSet):
@@ -86,7 +86,7 @@ class SingleArtifactContentUploadViewSet(DefaultDeferredContextMixin, ContentVie
             content_data.shared_resources.append(repository)
 
         app_label = self.queryset.model._meta.app_label
-        async_result = enqueue_with_reservation(
+        task = dispatch(
             tasks.base.general_create,
             content_data.shared_resources,
             args=(app_label, serializer.__class__.__name__),
@@ -95,7 +95,7 @@ class SingleArtifactContentUploadViewSet(DefaultDeferredContextMixin, ContentVie
                 "context": self.get_deferred_context(request),
             },
         )
-        return OperationPostponedResponse(async_result, request)
+        return OperationPostponedResponse(task, request)
 
     def init_content_data(self, serializer, request):
         """Initialize the reference to an Artifact along with relevant task's payload data."""
