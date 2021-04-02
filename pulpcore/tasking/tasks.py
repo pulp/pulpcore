@@ -1,3 +1,4 @@
+import json
 import logging
 import time
 import uuid
@@ -10,6 +11,7 @@ from redis.exceptions import ConnectionError as RedisConnectionError
 from rq import Queue
 from rq.job import Job, get_current_job
 
+from pulpcore.app.logging import deprecation_logger
 from pulpcore.app.models import (
     ReservedResource,
     ReservedResourceRecord,
@@ -143,6 +145,21 @@ def _queue_reserved_task(func, inner_task_id, resources, inner_args, inner_kwarg
         task_status.set_failed(e, None)
 
 
+class NonJSONWarningEncoder(json.JSONEncoder):
+    def default(self, obj):
+        try:
+            return json.JSONEncoder.default(self, obj)
+        except TypeError:
+            deprecation_logger.warn(
+                _(
+                    "The argument {obj} is of type {type}, which is not JSON serializable. The use "
+                    "of non JSON serializable objects for `args` and `kwargs` to tasks is "
+                    "deprecated as of pulpcore==3.12. See the traceback below for more info."
+                ).format(obj=obj, type=type(obj))
+            )
+            return None
+
+
 def enqueue_with_reservation(
     func, resources, args=None, kwargs=None, options=None, task_group=None
 ):
@@ -196,6 +213,8 @@ def enqueue_with_reservation(
     redis_conn = connection.get_redis_connection()
     current_job = get_current_job(connection=redis_conn)
     parent_kwarg = {}
+    json.dumps(args, cls=NonJSONWarningEncoder)
+    json.dumps(kwargs, cls=NonJSONWarningEncoder)
     if current_job:
         # set the parent task of the spawned task to the current task ID (same as rq Job ID)
         parent_kwarg["parent_task"] = Task.objects.get(pk=current_job.id)
