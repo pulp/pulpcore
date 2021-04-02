@@ -4,7 +4,7 @@ import time
 import uuid
 from gettext import gettext as _
 
-from django.db import IntegrityError, transaction
+from django.db import IntegrityError, transaction, models
 from django.db.models import Model
 from django_guid.middleware import GuidMiddleware
 from redis.exceptions import ConnectionError as RedisConnectionError
@@ -16,11 +16,12 @@ from pulpcore.app.models import (
     ReservedResource,
     ReservedResourceRecord,
     Task,
+    TaskReservedResource,
     TaskReservedResourceRecord,
     Worker,
 )
 from pulpcore.constants import TASK_STATES
-from pulpcore.tasking import connection, util
+from pulpcore.tasking import connection, constants, util
 
 _logger = logging.getLogger(__name__)
 
@@ -42,9 +43,9 @@ def _acquire_worker(resources):
     Raises:
         Worker.DoesNotExist: If no worker is found
     """
-    # Find a worker who already has this reservation, it is safe to send this work to them
+    # Find a worker who already has one of the reservations, it is safe to send this work to them
     try:
-        worker = Worker.objects.with_reservations(resources)
+        worker = Worker.objects.filter(reservations__resource__in=resources).distinct().get()
     except Worker.MultipleObjectsReturned:
         raise Worker.DoesNotExist
     except Worker.DoesNotExist:
@@ -52,8 +53,17 @@ def _acquire_worker(resources):
     else:
         return worker
 
-    # Otherwise, return any available worker
-    return Worker.objects.get_unreserved_worker()
+    # Otherwise, return any available worker at random
+    workers_qs = Worker.objects.online_workers().exclude(
+        name=constants.TASKING_CONSTANTS.RESOURCE_MANAGER_WORKER_NAME
+    )
+    workers_qs_with_counts = workers_qs.annotate(models.Count("reservations"))
+    try:
+        # A randomly-selected Worker instance that has zero ReservedResource entries associated with it.
+        return workers_qs_with_counts.filter(reservations__count=0).order_by("?")[0]
+    except IndexError:
+        # If all Workers have at least one ReservedResource entry.
+        raise Worker.model.DoesNotExist()
 
 
 def _queue_reserved_task(func, inner_task_id, resources, inner_args, inner_kwargs, options):
@@ -120,7 +130,16 @@ def _queue_reserved_task(func, inner_task_id, resources, inner_args, inner_kwarg
             continue
 
         try:
-            worker.lock_resources(task_status, resources)
+            # Attempt to lock all resources by their urls. Must be atomic to prevent deadlocks.
+            with transaction.atomic():
+                for resource in resources:
+                    if worker.reservations.filter(resource=resource).exists():
+                        reservation = worker.reservations.get(resource=resource)
+                    else:
+                        reservation = ReservedResource.objects.create(
+                            worker=worker, resource=resource
+                        )
+                    TaskReservedResource.objects.create(resource=reservation, task=task_status)
         except IntegrityError:
             # we have a worker but we can't create the reservations so wait
             time.sleep(0.25)

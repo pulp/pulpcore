@@ -7,7 +7,7 @@ from datetime import timedelta
 from gettext import gettext as _
 
 from django.contrib.postgres.fields import JSONField
-from django.db import models, transaction
+from django.db import models
 from django.utils import timezone
 from rq.job import get_current_job
 
@@ -110,34 +110,6 @@ class TaskReservedResourceRecord(BaseModel):
 
 
 class WorkerManager(models.Manager):
-    def get_unreserved_worker(self):
-        """
-        Randomly selects an unreserved :class:`~pulpcore.app.models.Worker`
-
-        Return a random Worker instance that has no :class:`~pulpcore.app.models.ReservedResource`
-        associated with it. If all workers have at least one ReservedResource relationship, a
-        :class:`pulpcore.app.models.Worker.DoesNotExist` exception is raised.
-
-        This method filters out resource managers which do not process end-user Tasks.
-
-        This method provides randomization for Worker selection to distribute load across workers.
-
-        Returns:
-            :class:`pulpcore.app.models.Worker`: A randomly-selected Worker instance that has zero
-                :class:`~pulpcore.app.models.ReservedResource` entries associated with it.
-
-        Raises:
-            Worker.DoesNotExist: If all Workers have at least one ReservedResource entry.
-        """
-        workers_qs = self.online_workers().exclude(
-            name=TASKING_CONSTANTS.RESOURCE_MANAGER_WORKER_NAME
-        )
-        workers_qs_with_counts = workers_qs.annotate(models.Count("reservations"))
-        try:
-            return workers_qs_with_counts.filter(reservations__count=0).order_by("?")[0]
-        except IndexError:
-            raise self.model.DoesNotExist()
-
     def online_workers(self):
         """
         Returns a queryset of workers meeting the criteria to be considered 'online'
@@ -193,27 +165,6 @@ class WorkerManager(models.Manager):
         return self.filter(
             last_heartbeat__lt=age_threshold, cleaned_up=False, gracefully_stopped=False
         )
-
-    def with_reservations(self, resources):
-        """
-        Returns a worker with the resources reserved.
-
-        This worker may have ANY of the reservations for resources specified by resource urls. This
-        is useful when looking for a worker to queue work against as we don't care if it doesn't
-        have all the reservations as we can still try creating reservations for the additional
-        resources we need.
-
-        Arguments:
-            resources (list): a list of resource urls
-
-        Returns:
-            :class:`pulpcore.app.models.Worker`: A worker with locks on resources
-
-        Raises:
-            Worker.DoesNotExist: If no worker has all resources locked
-            Worker.MultipleObjectsReturned: More than one worker holds reservations
-        """
-        return self.filter(reservations__resource__in=resources).distinct().get()
 
     def resource_managers(self):
         """
@@ -293,25 +244,6 @@ class Worker(BaseModel):
                 only update an existing database record.
         """
         self.save(update_fields=["last_heartbeat"])
-
-    def lock_resources(self, task, resource_urls):
-        """
-        Attempt to lock all resources by their urls. Must be atomic to prevent deadlocks.
-
-        Arguments:
-            task (pulpcore.app.models.Task): task to lock the resource for
-            resource_urls (List): a list of resource urls to be locked
-
-        Raises:
-            django.db.IntegrityError: If the reservation already exists
-        """
-        with transaction.atomic():
-            for resource in resource_urls:
-                if self.reservations.filter(resource=resource).exists():
-                    reservation = self.reservations.get(resource=resource)
-                else:
-                    reservation = ReservedResource.objects.create(worker=self, resource=resource)
-                TaskReservedResource.objects.create(resource=reservation, task=task)
 
 
 class Task(BaseModel, AutoDeleteObjPermsMixin, AutoAddObjPermsMixin):
