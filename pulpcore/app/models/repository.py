@@ -153,7 +153,7 @@ class Repository(MasterModel):
 
         """
         with suppress(RepositoryVersion.DoesNotExist):
-            model = self.versions.exclude(complete=False).latest()
+            model = self.versions.complete().latest()
             return model
 
     def natural_key(self):
@@ -435,6 +435,13 @@ class RepositoryContent(BaseModel):
         )
 
 
+class RepositoryVersionQuerySet(models.QuerySet):
+    """A queryset that provides repository version filtering methods."""
+
+    def complete(self):
+        return self.exclude(complete=False)
+
+
 class RepositoryVersion(BaseModel):
     """
     A version of a repository's content set.
@@ -467,6 +474,8 @@ class RepositoryVersion(BaseModel):
     number = models.PositiveIntegerField(db_index=True)
     complete = models.BooleanField(db_index=True, default=False)
     base_version = models.ForeignKey("RepositoryVersion", null=True, on_delete=models.SET_NULL)
+
+    objects = RepositoryVersionQuerySet.as_manager()
 
     class Meta:
         default_related_name = "versions"
@@ -755,7 +764,7 @@ class RepositoryVersion(BaseModel):
         """
         try:
             return (
-                self.repository.versions.exclude(complete=False)
+                self.repository.versions.complete()
                 .filter(number__gt=self.number)
                 .order_by("number")[0]
             )
@@ -774,7 +783,7 @@ class RepositoryVersion(BaseModel):
         """
         try:
             return (
-                self.repository.versions.exclude(complete=False)
+                self.repository.versions.complete()
                 .filter(number__lt=self.number)
                 .order_by("-number")[0]
             )

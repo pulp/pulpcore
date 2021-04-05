@@ -6,7 +6,7 @@ import hashlib
 
 from django.core.files.storage import default_storage
 from django.db import transaction
-
+from rest_framework.serializers import ValidationError
 
 from pulpcore.app import models
 from pulpcore.app.models import ProgressReport
@@ -32,6 +32,7 @@ def delete_version(pk):
     Raises:
         models.RepositoryVersion.DoesNotExist: if there is not a newer version to squash into.
             TODO: something more friendly
+        ValidationError: if there's one repo version
     """
     with transaction.atomic():
         try:
@@ -39,6 +40,14 @@ def delete_version(pk):
         except models.RepositoryVersion.DoesNotExist:
             log.info(_("The repository version was not found. Nothing to do."))
             return
+
+        if version.repository.versions.complete().count() <= 1:
+            raise ValidationError(
+                _(
+                    "Cannot delete repository version. Repositories must have at least one "
+                    "repository version."
+                )
+            )
 
         log.info(
             _("Deleting and squashing version {num} of repository '{repo}'").format(
