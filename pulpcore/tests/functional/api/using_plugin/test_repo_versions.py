@@ -5,6 +5,7 @@ from time import sleep
 from urllib.parse import urlsplit
 
 from pulp_smash import api, config, utils
+from pulp_smash.exceptions import TaskReportError
 from pulp_smash.pulp3.constants import ARTIFACTS_PATH
 from pulp_smash.pulp3.utils import (
     delete_orphans,
@@ -295,7 +296,7 @@ class AddRemoveRepoVersionTestCase(unittest.TestCase):
         # We need at least three content units. Choosing a relatively low
         # number is useful, to limit how many repo versions are created, and
         # thus how long the test takes.
-        cls.content = sample(cls.client.get(FILE_CONTENT_PATH)["results"], 10)
+        cls.content = sample(cls.client.get(FILE_CONTENT_PATH)["results"], 4)
 
     def setUp(self):
         """Create a repository and give it nine new versions."""
@@ -312,9 +313,8 @@ class AddRemoveRepoVersionTestCase(unittest.TestCase):
         self.repo_version_hrefs = tuple(version["pulp_href"] for version in get_versions(self.repo))
 
     def test_delete_first_version(self):
-        """Attempt to delete the first repository version."""
-        with self.assertRaises(HTTPError):
-            delete_version(self.repo, self.repo_version_hrefs[0])
+        """Delete the first repository version (version 0)."""
+        delete_version(self.repo, self.repo_version_hrefs[0])
 
     def test_delete_last_version(self):
         """Delete the last repository version.
@@ -350,6 +350,18 @@ class AddRemoveRepoVersionTestCase(unittest.TestCase):
         for repo_version_href in self.repo_version_hrefs[index + 1 :]:
             artifact_paths = get_artifact_paths(self.repo, repo_version_href)
             self.assertIn(self.content[index]["artifact"], artifact_paths)
+
+    def test_delete_all_versions(self):
+        """Attempt to delete all versions."""
+        for repo_version_href in self.repo_version_hrefs[:-1]:
+            delete_version(self.repo, repo_version_href)
+
+        with self.assertRaises(TaskReportError) as ctx:
+            delete_version(self.repo, self.repo_version_hrefs[-1])
+
+        self.assertIn(
+            "Cannot delete repository version.", ctx.exception.task["error"]["description"]
+        )
 
     def test_delete_publication(self):
         """Delete a publication.

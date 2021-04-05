@@ -257,7 +257,7 @@ class LatestVersionField(RepositoryVersionRelatedField):
                 are no versions, returns None
         """
         try:
-            version = obj.exclude(complete=False).latest()
+            version = obj.complete().latest()
         except obj.model.DoesNotExist:
             return None
         return super().get_url(version, view_name, request, format)

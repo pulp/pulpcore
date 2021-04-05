@@ -204,7 +204,7 @@ class RepositoryVersionViewSet(
     parent_viewset = RepositoryViewSet
     parent_lookup_kwargs = {"repository_pk": "repository__pk"}
     serializer_class = RepositoryVersionSerializer
-    queryset = RepositoryVersion.objects.exclude(complete=False)
+    queryset = RepositoryVersion.objects.complete()
     filterset_class = RepositoryVersionFilter
     filter_backends = (OrderingFilter, DjangoFilterBackend)
     ordering = ("-number",)
@@ -218,9 +218,6 @@ class RepositoryVersionViewSet(
         Queues a task to handle deletion of a RepositoryVersion
         """
         version = self.get_object()
-
-        if version.number == 0:
-            raise serializers.ValidationError(detail=_("Cannot delete repository version 0."))
 
         task = dispatch(
             tasks.repository.delete_version, [version.repository], kwargs={"pk": version.pk}
