@@ -1,7 +1,7 @@
 # This config represents the latest values used when running the plugin-template. Any settings that
 # were not present before running plugin-template have been added with their default values.
 
-additional_plugins:
+additional_repos:
 - branch: master
   name: pulp_file
 - branch: master
