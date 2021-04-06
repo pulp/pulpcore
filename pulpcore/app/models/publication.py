@@ -10,6 +10,30 @@ from pulpcore.app.files import PulpTemporaryUploadedFile
 from pulpcore.app.loggers import deprecation_logger
 
 
+class PublicationQuerySet(models.QuerySet):
+    """A queryset that provides publication filtering methods."""
+
+    def with_content(self, content):
+        """
+        Filters publictions that contain the provided content units.
+
+        Args:
+            content (django.db.models.QuerySet): query of content
+
+        Returns:
+            django.db.models.QuerySet: Publications that contain content.
+        """
+        pub_artifact_q = Publication.objects.filter(
+            published_artifact__content_artifact__content__pk__in=content
+        )
+        pass_thru_q = Publication.objects.filter(
+            pass_through=True,
+            repository_version__pk__in=RepositoryVersion.objects.with_content(content),
+        )
+
+        return pub_artifact_q | pass_thru_q
+
+
 class Publication(MasterModel):
     """
     A publication contains metadata and artifacts associated with content
@@ -43,6 +67,8 @@ class Publication(MasterModel):
     """
 
     TYPE = "publication"
+
+    objects = PublicationQuerySet.as_manager()
 
     complete = models.BooleanField(db_index=True, default=False)
     pass_through = models.BooleanField(default=False)

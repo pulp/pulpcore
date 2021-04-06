@@ -5,11 +5,16 @@ from urllib.parse import urljoin
 from pulp_smash import config
 from pulp_smash.pulp3.constants import (
     BASE_DISTRIBUTION_PATH,
+    BASE_PATH,
     BASE_PUBLICATION_PATH,
     BASE_REMOTE_PATH,
     BASE_REPO_PATH,
     BASE_CONTENT_PATH,
 )
+
+PULP_REPOSITORY_VERSION_BASE_URL = urljoin(BASE_PATH, "repository_versions/")
+
+PULP_PUBLICATION_BASE_URL = urljoin(BASE_PATH, "publications/")
 
 PULP_FIXTURES_BASE_URL = config.get_config().get_fixtures_url()
 

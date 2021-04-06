@@ -19,6 +19,7 @@ from pulpcore.app.util import batch_qs, get_view_name_for_model
 from pulpcore.constants import ALL_KNOWN_CONTENT_CHECKSUMS
 from pulpcore.download.factory import DownloaderFactory
 from pulpcore.exceptions import ResourceImmutableError
+from pulpcore.app.loggers import deprecation_logger
 
 from .base import MasterModel, BaseModel
 from .content import Artifact, Content
@@ -465,6 +466,31 @@ class RepositoryVersionQuerySet(models.QuerySet):
     def complete(self):
         return self.exclude(complete=False)
 
+    def with_content(self, content):
+        """
+        Filters repository versions that contain the provided content units.
+
+        Args:
+            content (django.db.models.QuerySet): query of content
+
+        Returns:
+            django.db.models.QuerySet: Repository versions which contains content.
+        """
+        query = models.Q(pk__in=[])
+        repo_content = RepositoryContent.objects.filter(content__pk__in=content)
+
+        for rc in repo_content.iterator():
+            filter = models.Q(
+                repository__pk=rc.repository.pk,
+                number__gte=rc.version_added.number,
+            )
+            if rc.version_removed:
+                filter &= models.Q(number__lt=rc.version_removed.number)
+
+            query |= filter
+
+        return self.filter(query)
+
 
 class RepositoryVersion(BaseModel):
     """
@@ -494,6 +520,8 @@ class RepositoryVersion(BaseModel):
         repository (models.ForeignKey): The associated repository.
     """
 
+    objects = RepositoryVersionQuerySet.as_manager()
+
     repository = models.ForeignKey(Repository, on_delete=models.CASCADE)
     number = models.PositiveIntegerField(db_index=True)
     complete = models.BooleanField(db_index=True, default=False)
@@ -518,6 +546,10 @@ class RepositoryVersion(BaseModel):
         Returns:
             django.db.models.QuerySet: Repository versions which contains content.
         """
+        deprecation_logger(
+            "This method is deprecated and will be removed in version 3.14. "
+            "Use RepositoryVersion.objects.with_content() instead."
+        )
         query = models.Q(pk__in=[])
         repo_content = RepositoryContent.objects.filter(content__pk__in=content)
 

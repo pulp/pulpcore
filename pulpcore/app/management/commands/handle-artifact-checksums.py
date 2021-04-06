@@ -66,9 +66,7 @@ class Command(BaseCommand):
 
         content_artifacts = ContentArtifact.objects.filter(remoteartifact__pk__in=remote_artifacts)
         content = Content.objects.filter(contentartifact__pk__in=content_artifacts)
-        repo_versions = RepositoryVersion.versions_containing_content(content).select_related(
-            "repository"
-        )
+        repo_versions = RepositoryVersion.objects.with_content(content).select_related("repository")
 
         self.stdout.write(
             _("Found {} on-demand content units with forbidden checksums.").format(content.count())
@@ -99,9 +97,7 @@ class Command(BaseCommand):
         artifacts = Artifact.objects.filter(query_forbidden | query_required)
         content_artifacts = ContentArtifact.objects.filter(artifact__in=artifacts)
         content = Content.objects.filter(contentartifact__pk__in=content_artifacts)
-        repo_versions = RepositoryVersion.versions_containing_content(content).select_related(
-            "repository"
-        )
+        repo_versions = RepositoryVersion.objects.with_content(content).select_related("repository")
 
         self.stdout.write(
             _("Found {} downloaded content units with forbidden or missing checksums.").format(

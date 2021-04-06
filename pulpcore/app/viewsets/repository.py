@@ -1,4 +1,3 @@
-import itertools
 from gettext import gettext as _
 
 from django_filters import Filter
@@ -7,13 +6,13 @@ from drf_spectacular.utils import extend_schema
 from rest_framework import mixins, serializers
 from rest_framework.decorators import action
 from rest_framework.filters import OrderingFilter
+from rest_framework.viewsets import GenericViewSet
 
 from pulpcore.app import tasks
 from pulpcore.app.models import (
     Content,
     Remote,
     Repository,
-    RepositoryContent,
     RepositoryVersion,
 )
 from pulpcore.app.response import OperationPostponedResponse
@@ -100,12 +99,6 @@ class RepositoryViewSet(ImmutableRepositoryViewSet, AsyncUpdateMixin):
 class RepositoryVersionContentFilter(Filter):
     """
     Filter used to get the repository versions where some given content can be found.
-
-    Given a content_href, this filter will:
-        1. Get the RepositoryContent that the content can be found in
-        2. Get a list of version_added and version_removed where the content was
-           changed on the repository
-        3. Calculate and return the versions that the content can be found on
     """
 
     def __init__(self, *args, **kwargs):
@@ -132,46 +125,7 @@ class RepositoryVersionContentFilter(Filter):
         # Get the content object from the content_href
         content = NamedModelViewSet.get_resource(value, Content)
 
-        # Get the repository from the parent request.
-        repository_pk = self.parent.request.parser_context["kwargs"]["repository_pk"]
-        repository = Repository.objects.get(pk=repository_pk)
-
-        repository_content_set = RepositoryContent.objects.filter(
-            content=content, repository=repository
-        )
-
-        # Get the sorted list of version_added and version_removed.
-        version_added = list(repository_content_set.values_list("version_added__number", flat=True))
-
-        # None values have to be filtered out from version_removed,
-        # in order for zip_longest to pass it a default fillvalue
-        version_removed = list(
-            filter(
-                None.__ne__,
-                repository_content_set.values_list("version_removed__number", flat=True),
-            )
-        )
-
-        # The range finding should work as long as both lists are sorted
-        # Why it works: https://gist.github.com/werwty/6867f83ae5adbae71e452c28ecd9c444
-        version_added.sort()
-        version_removed.sort()
-
-        # Match every version_added to a version_removed, if len(version_removed)
-        # is shorter than len(version_added), pad out the remaining space with the current
-        # repository version +1 (the +1 is to the current version gets included when we
-        # calculate range)
-        version_tuples = itertools.zip_longest(
-            version_added, version_removed, fillvalue=repository.next_version
-        )
-
-        # Get the ranges between paired version_added and version_removed to get all
-        # the versions the content is present in.
-        versions = [list(range(added, removed)) for (added, removed) in version_tuples]
-        # Flatten the list of lists
-        versions = list(itertools.chain.from_iterable(versions))
-
-        return qs.filter(number__in=versions)
+        return qs.with_content([content.pk])
 
 
 class RepositoryVersionFilter(BaseFilterSet):
@@ -278,3 +232,15 @@ class RemoteViewSet(
     serializer_class = RemoteSerializer
     queryset = Remote.objects.all()
     filterset_class = RemoteFilter
+
+
+# We have to use GenericViewSet as NamedModelViewSet causes
+# get_viewset_for_model() to match multiple viewsets.
+class ListRepositoryVersionViewSet(
+    GenericViewSet,
+    mixins.ListModelMixin,
+):
+    endpoint_name = "repository_versions"
+    serializer_class = RepositoryVersionSerializer
+    queryset = RepositoryVersion.objects.all()
+    filterset_class = RepositoryVersionFilter

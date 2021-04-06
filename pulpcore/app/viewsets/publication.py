@@ -1,10 +1,17 @@
 from gettext import gettext as _
 
+from django_filters import Filter
 from django_filters.rest_framework import DjangoFilterBackend, filters
-from rest_framework import mixins
+from rest_framework import mixins, serializers
 from rest_framework.filters import OrderingFilter
 
-from pulpcore.app.models import BaseDistribution, ContentGuard, Distribution, Publication
+from pulpcore.app.models import (
+    BaseDistribution,
+    ContentGuard,
+    Distribution,
+    Publication,
+    Content,
+)
 from pulpcore.app.serializers import (
     BaseDistributionSerializer,
     ContentGuardSerializer,
@@ -27,9 +34,30 @@ from pulpcore.app.viewsets.custom_filters import (
 from pulpcore.app.loggers import deprecation_logger
 
 
+class PublicationContentFilter(Filter):
+    def __init__(self, *args, **kwargs):
+        kwargs.setdefault("help_text", _("Content Unit referenced by HREF"))
+        super().__init__(*args, **kwargs)
+
+    def filter(self, qs, value):
+        if value is None:
+            # user didn't supply a value
+            return qs
+
+        if not value:
+            raise serializers.ValidationError(detail=_("No value supplied for content filter"))
+
+        # Get the content object from the content_href
+        content = NamedModelViewSet.get_resource(value, Content)
+
+        return qs.with_content([content.pk])
+
+
 class PublicationFilter(BaseFilterSet):
     repository_version = RepositoryVersionFilter()
     pulp_created = IsoDateTimeFilter()
+    content = PublicationContentFilter()
+    content__in = PublicationContentFilter(field_name="content", lookup_expr="in")
 
     class Meta:
         model = Publication
@@ -37,6 +65,18 @@ class PublicationFilter(BaseFilterSet):
             "repository_version": ["exact"],
             "pulp_created": DATETIME_FILTER_OPTIONS,
         }
+
+
+class ListPublicationViewSet(NamedModelViewSet, mixins.ListModelMixin):
+    endpoint_name = "publications"
+    queryset = Publication.objects.all()
+    serializer_class = PublicationSerializer
+    filterset_class = PublicationFilter
+
+    @classmethod
+    def is_master_viewset(cls):
+        """Do not hide from the routers."""
+        return False
 
 
 class PublicationViewSet(
