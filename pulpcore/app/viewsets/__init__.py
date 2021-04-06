@@ -42,6 +42,7 @@ from .publication import (  # noqa
     DistributionFilter,
     DistributionViewSet,
     ListContentGuardViewSet,
+    ListPublicationViewSet,
     NewDistributionFilter,
     PublicationFilter,
     PublicationViewSet,
@@ -54,6 +55,7 @@ from .repository import (  # noqa
     RemoteViewSet,
     RepositoryViewSet,
     RepositoryVersionViewSet,
+    ListRepositoryVersionViewSet,
 )
 from .task import TaskViewSet, TaskGroupViewSet, WorkerViewSet  # noqa
 from .upload import UploadViewSet  # noqa

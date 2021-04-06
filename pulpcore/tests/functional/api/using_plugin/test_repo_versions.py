@@ -27,12 +27,15 @@ from pulp_smash.pulp3.utils import (
 from requests.exceptions import HTTPError
 
 from pulpcore.client.pulpcore import ApiClient as CoreApiClient
+from pulpcore.client.pulpcore import RepositoryVersionsApi
 from pulpcore.client.pulp_file import (
     ContentFilesApi,
     DistributionsFileApi,
     PublicationsFileApi,
+    RemotesFileApi,
     RepositoriesFileApi,
     RepositoriesFileVersionsApi,
+    RepositorySyncURL,
 )
 from pulpcore.client.pulp_file.exceptions import ApiException
 from pulpcore.tests.functional.api.using_plugin.constants import (
@@ -1166,3 +1169,69 @@ class RepoVersionRetentionTestCase(unittest.TestCase):
         # check that the last publication is distributed
         self.distro = self.distro_api.read(self.distro.pulp_href)
         self.assertEqual(self.distro.publication, self.publications[-1].pulp_href)
+
+
+class ContentInRepositoryVersionViewTestCase(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        """Create class-wide variables."""
+        cls.cfg = config.get_config()
+        cls.file_client = gen_file_client()
+        cls.remote_api = RemotesFileApi(cls.file_client)
+        cls.repo_api = RepositoriesFileApi(cls.file_client)
+        cls.repo_ver_api = RepositoryVersionsApi(cls.file_client)
+
+    @classmethod
+    def tearDownClass(cls):
+        delete_orphans(cls.cfg)
+
+    def test_all(self):
+        """Sync two repositories and check view filter."""
+        # Test content doesn't exists.
+        non_existant_content_href = (
+            "/pulp/api/v3/content/file/files/c4ed74cf-a806-490d-a25f-94c3c3dd2dd7/"
+        )
+
+        with self.assertRaises(ApiException) as ctx:
+            self.repo_ver_api.list(content=non_existant_content_href)
+
+        self.assertEqual(ctx.exception.status, 400)
+
+        # No repository version exists.
+        self.assertEqual(self.repo_ver_api.list().count, 0)
+
+        repo = self.repo_api.create(gen_repo())
+        self.addCleanup(self.repo_api.delete, repo.pulp_href)
+
+        repo_second = self.repo_api.create(gen_repo())
+        self.addCleanup(self.repo_api.delete, repo_second.pulp_href)
+
+        remote = self.remote_api.create(gen_file_remote())
+        self.addCleanup(self.remote_api.delete, remote.pulp_href)
+
+        body = gen_file_remote(url=FILE2_FIXTURE_MANIFEST_URL)
+        remote_second = self.remote_api.create(body)
+        self.addCleanup(self.remote_api.delete, remote_second.pulp_href)
+
+        repo_sync_data = RepositorySyncURL(remote=remote.pulp_href)
+        repo_sync_data_second = RepositorySyncURL(remote=remote_second.pulp_href)
+
+        sync_response = self.repo_api.sync(repo.pulp_href, repo_sync_data)
+        monitor_task(sync_response.task)
+
+        sync_response_second = self.repo_api.sync(repo_second.pulp_href, repo_sync_data_second)
+        monitor_task(sync_response_second.task)
+
+        # Update repository data and get one content unit from first repository.
+        repo = self.repo_api.read(repo.pulp_href)
+        content_href = get_content(repo.to_dict())[FILE_CONTENT_NAME][0]["pulp_href"]
+
+        rv_total = len(self.repo_ver_api.list().to_dict()["results"])
+        rv_search = self.repo_ver_api.list(content=content_href).to_dict()["results"]
+
+        # Test only one repostiory version has selected content.
+        self.assertEqual(len(rv_search), 1)
+        # Test if repositories version with content matches.
+        self.assertEqual(rv_search[0]["pulp_href"], repo.latest_version_href)
+        # Test total number of repository version. Two for each repository.
+        self.assertEqual(rv_total, 4)
