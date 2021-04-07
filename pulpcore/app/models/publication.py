@@ -7,7 +7,7 @@ from .content import Artifact, Content, ContentArtifact
 from .repository import Remote, Repository, RepositoryVersion
 from .task import CreatedResource
 from pulpcore.app.files import PulpTemporaryUploadedFile
-from pulpcore.app.logging import deprecation_logger
+from pulpcore.app.loggers import deprecation_logger
 
 
 class Publication(MasterModel):

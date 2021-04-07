@@ -24,7 +24,7 @@ from pulpcore.app.viewsets.custom_filters import (
     LabelSelectFilter,
     RepositoryVersionFilter,
 )
-from pulpcore.app.logging import deprecation_logger
+from pulpcore.app.loggers import deprecation_logger
 
 
 class PublicationFilter(BaseFilterSet):
