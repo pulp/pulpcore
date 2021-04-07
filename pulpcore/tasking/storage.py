@@ -6,7 +6,7 @@ from gettext import gettext as _
 from django.conf import settings
 from rq.job import get_current_job
 
-from pulpcore.app.logging import deprecation_logger
+from pulpcore.app.loggers import deprecation_logger
 
 
 class _WorkingDir:

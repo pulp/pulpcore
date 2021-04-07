@@ -11,7 +11,7 @@ from redis.exceptions import ConnectionError as RedisConnectionError
 from rq import Queue
 from rq.job import Job, get_current_job
 
-from pulpcore.app.logging import deprecation_logger
+from pulpcore.app.loggers import deprecation_logger
 from pulpcore.app.models import (
     ReservedResource,
     ReservedResourceRecord,

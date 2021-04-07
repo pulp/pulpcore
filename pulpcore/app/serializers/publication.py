@@ -5,7 +5,7 @@ from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 
 from pulpcore.app import models
-from pulpcore.app.logging import deprecation_logger
+from pulpcore.app.loggers import deprecation_logger
 from pulpcore.app.serializers import (
     BaseURLField,
     DetailIdentityField,
