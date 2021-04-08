@@ -1,1 +1,0 @@
-Allow plugins to unset the ``queryset_filtering_required_permission`` attribute in ``NamedModelViewSet``.

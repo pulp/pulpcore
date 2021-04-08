@@ -1,1 +1,0 @@
-Added a new callback method to ``Repository`` named ``on_new_version()``, which runs when a new repository version has been created. This can be used for e.g. automatically publishing or distributing a new repository version after it has been created.
