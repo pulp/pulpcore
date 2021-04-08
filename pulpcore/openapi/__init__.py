@@ -1,3 +1,4 @@
+import os
 import re
 from urllib.parse import urljoin
 
@@ -350,19 +351,33 @@ class PulpSchemaGenerator(SchemaGenerator):
             path = path.replace(resource_path, "{%s}" % param_name)
         return path
 
-    def parse(self, request, public):
+    def parse(self, input_request, public):
         """ Iterate endpoints generating per method path operations. """
         result = {}
         self._initialise_endpoints()
+        endpoints = self._get_paths_and_endpoints(None if public else input_request)
+
+        if spectacular_settings.SCHEMA_PATH_PREFIX is None:
+            # estimate common path prefix if none was given. only use it if we encountered more
+            # than one view to prevent emission of erroneous and unnecessary fallback names.
+            non_trivial_prefix = len(set([view.__class__ for _, _, _, view in endpoints])) > 1
+            if non_trivial_prefix:
+                path_prefix = os.path.commonpath([path for path, _, _, _ in endpoints])
+                path_prefix = re.escape(path_prefix)  # guard for RE special chars in path
+            else:
+                path_prefix = "/"
+        else:
+            path_prefix = spectacular_settings.SCHEMA_PATH_PREFIX
+        if not path_prefix.startswith("^"):
+            path_prefix = "^" + path_prefix  # make sure regex only matches from the start
 
         # Adding plugin filter
         plugins = None
         # /pulp/api/v3/docs/api.json?plugin=pulp_file
-        if request and "plugin" in request.query_params:
-            plugins = [request.query_params["plugin"]]
+        if input_request and "plugin" in input_request.query_params:
+            plugins = [input_request.query_params["plugin"]]
 
-        is_public = None if public else request
-        for path, path_regex, method, view in self._get_paths_and_endpoints(is_public):
+        for path, path_regex, method, view in endpoints:
             plugin = view.__module__.split(".")[0]
             if plugins and plugin not in plugins:  # plugin filter
                 continue
@@ -370,12 +385,21 @@ class PulpSchemaGenerator(SchemaGenerator):
             if not self.has_view_permissions(path, method, view):
                 continue
 
+            if input_request:
+                request = input_request
+            else:
+                # mocked request to allow certain operations in get_queryset and get_serializer
+                # without exceptions being raised due to no request.
+                request = spectacular_settings.GET_MOCK_REQUEST(method, path, view, input_request)
+
+            view.request = request
+
             schema = view.schema
 
             path = self.convert_endpoint_path_params(path, view, schema)
 
             # beware that every access to schema yields a fresh object (descriptor pattern)
-            operation = schema.get_operation(path, path_regex, method, self.registry)
+            operation = schema.get_operation(path, path_regex, path_prefix, method, self.registry)
 
             # operation was manually removed via @extend_schema
             if not operation:
@@ -430,6 +454,7 @@ class PulpSchemaGenerator(SchemaGenerator):
         result = build_root_object(
             paths=self.parse(request, public),
             components=self.registry.build(spectacular_settings.APPEND_COMPONENTS),
+            version=self.api_version or getattr(request, "version", None),
         )
         for hook in spectacular_settings.POSTPROCESSING_HOOKS:
             result = hook(result=result, generator=self, request=request, public=public)
