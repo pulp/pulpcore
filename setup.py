@@ -6,9 +6,6 @@ with open("README.md") as f:
 with open("requirements.txt") as requirements:
     requirements = requirements.readlines()
 
-with open("functest_requirements.txt") as test_requirements:
-    test_requirements = test_requirements.readlines()
-
 setup(
     name="pulpcore",
     version="3.12.0",
@@ -26,7 +23,6 @@ setup(
         "s3": ["django-storages[boto3]"],
         "azure": ["django-storages[azure]"],
         "prometheus": ["django-prometheus"],
-        "test": test_requirements,
     },
     include_package_data=True,
     classifiers=[
