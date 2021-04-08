@@ -20,6 +20,7 @@ deploy_daily_client_to_rubygems: true
 deploy_to_pypi: true
 docker_fixtures: true
 docs_test: true
+issue_tracker: redmine
 plugin_app_label: core
 plugin_camel: Pulpcore
 plugin_camel_short: Pulpcore
