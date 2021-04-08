@@ -1,1 +1,0 @@
-Added asynchronous tasking to the Update and Delete endpoints of PulpExporter to provide proper locking on resources.

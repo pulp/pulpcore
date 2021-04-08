@@ -1,3 +1,0 @@
-Taught ``PulpImport`` correct way to find and import ``RepositoryVersions``. Previous
-implementation only worked for ``RepositoryVersions`` that were the 'current' version
-of the exported ``Repository``.

@@ -1,3 +1,0 @@
-The usage of non-JSON serializable types of ``args`` and ``kwargs`` to tasks is deprecated. Future
-releases of pulpcore may discontinue accepting complex argument types. Note, UUID objects are not
-JSON serializable. A deprecated warning is logged if a non-JSON serializable is used.

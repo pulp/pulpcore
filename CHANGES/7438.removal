@@ -1,1 +1,0 @@
-The Update and Delete endpoints of Exporters changed to now return 202 with tasks.

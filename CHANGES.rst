@@ -17,6 +17,165 @@ Changelog
 
 .. towncrier release notes start
 
+3.12.0 (2021-04-08)
+===================
+REST API
+--------
+
+Features
+~~~~~~~~
+
+- Add support for automatic publishing and distributing.
+  `#7626 <https://pulp.plan.io/issues/7626>`_
+- Add a warning at startup time if there are remote artifacts with checksums but no allowed checksums.
+  `#7985 <https://pulp.plan.io/issues/7985>`_
+- Added support in content app for properly handling unknown or forbidden digest errors.
+  `#7989 <https://pulp.plan.io/issues/7989>`_
+- Added sync check that raises error when only forbidden checksums are found for on-demand content.
+  `#8423 <https://pulp.plan.io/issues/8423>`_
+- Added ability for users to delete repo version 0 as long as they still have at least one repo
+  version for their repo.
+  `#8454 <https://pulp.plan.io/issues/8454>`_
+
+
+Bugfixes
+~~~~~~~~
+
+- Added asynchronous tasking to the Update and Delete endpoints of PulpExporter to provide proper locking on resources.
+  `#7438 <https://pulp.plan.io/issues/7438>`_
+- Fixed a scenario where canceled tasks could be marked failed.
+  `#7980 <https://pulp.plan.io/issues/7980>`_
+- Taught ``PulpImport`` correct way to find and import ``RepositoryVersions``. Previous
+  implementation only worked for ``RepositoryVersions`` that were the 'current' version
+  of the exported ``Repository``.
+  `#8116 <https://pulp.plan.io/issues/8116>`_
+- Fixed a race condition that sometimes surfaced during handling of reserved resources.
+  `#8352 <https://pulp.plan.io/issues/8352>`_
+- Made digest and size sync erros more helpful by logging url of the requested files.
+  `#8357 <https://pulp.plan.io/issues/8357>`_
+- Fixed artifact-stage to handle an edge-case when multiple multi-artifact content, from different remotes, is in a single batch.
+  `#8377 <https://pulp.plan.io/issues/8377>`_
+- Fixed Azure artifacts download.
+  `#8427 <https://pulp.plan.io/issues/8427>`_
+- Fixed bug during sync where a unique constraint violation for ``Content`` would raise an "X matching
+  query does not exist" error.
+  `#8430 <https://pulp.plan.io/issues/8430>`_
+- Fix artifact checksum check to not check on-demand content.
+  `#8445 <https://pulp.plan.io/issues/8445>`_
+- Fixed a bug where the existence of PublishedMetadata caused ``LookupError`` when querying ``/pulp/api/v3/content/``
+  `#8447 <https://pulp.plan.io/issues/8447>`_
+- Distributions are now viewable again at the base url of the content app
+  `#8475 <https://pulp.plan.io/issues/8475>`_
+- Fixed a path in artifact_stages that could lead to sync-failures in pulp_container.
+  `#8489 <https://pulp.plan.io/issues/8489>`_
+
+
+Improved Documentation
+~~~~~~~~~~~~~~~~~~~~~~
+
+- Update docs with guide how to change 'ALLOWED_CONTENT_CHECKSUMS' setting using 'pulpcore-manager handle-artifact-checksums --report' if needed.
+  `#8325 <https://pulp.plan.io/issues/8325>`_
+
+
+Removals
+~~~~~~~~
+
+- The Update and Delete endpoints of Exporters changed to now return 202 with tasks.
+  `#7438 <https://pulp.plan.io/issues/7438>`_
+- Deprecation warnings are now being logged by default if the log level includes WARNING. This can be
+  disabled by adjusting the log level of ``pulpcore.deprecation``. See the deprecation docs for more
+  information.
+  `#8499 <https://pulp.plan.io/issues/8499>`_
+
+
+Misc
+~~~~
+
+- `#8450 <https://pulp.plan.io/issues/8450>`_
+
+
+Plugin API
+----------
+
+Features
+~~~~~~~~
+
+- Added a new callback method to ``Repository`` named ``on_new_version()``, which runs when a new repository version has been created. This can be used for e.g. automatically publishing or distributing a new repository version after it has been created.
+  `#7626 <https://pulp.plan.io/issues/7626>`_
+- Added url as optional argument to ``DigestValidationError`` and ``SizeValidationError`` exceptions to log urls in the exception message.
+  `#8357 <https://pulp.plan.io/issues/8357>`_
+- Added the following new objects related to a new ``Distribution`` MasterModel:
+  * ``pulpcore.plugin.models.Distribution`` - A new MasterModel ``Distribution`` which replaces the
+    ``pulpcore.plugin.models.BaseDistribution``. This now contains the ``repository``,
+    ``repository_version``, and ``publication`` fields on the MasterModel instead of on the detail
+    models as was done with ``pulpcore.plugin.models.BaseDistribution``.
+  * ``pulpcore.plugin.serializer.DistributionSerializer`` - A serializer plugin writers should use
+    with the new ``pulpcore.plugin.models.Distribution``.
+  * ``pulpcore.plugin.viewset.DistributionViewSet`` - The viewset that replaces the deprecated
+    ``pulpcore.plugin.viewset.BaseDistributionViewSet``.
+  * ``pulpcore.plugin.viewset.NewDistributionFilter`` - The filter that pairs with the
+    ``Distribution`` model.
+  `#8384 <https://pulp.plan.io/issues/8384>`_
+- Added checksum type enforcement to ``pulpcore.plugin.download.BaseDownloader``.
+  `#8435 <https://pulp.plan.io/issues/8435>`_
+- Adds the ``pulpcore.plugin.tasking.dispatch`` interface which replaces the
+  ``pulpcore.plugin.tasking.enqueue_with_reservation`` interface. It is the same except:
+  * It returns a ``pulpcore.plugin.models.Task`` instead of an RQ object
+  * It does not support the ``options`` keyword argument
+
+  Additionally the ``pulpcore.plugin.viewsets.OperationPostponedResponse`` was updated to support both
+  the ``dispatch`` and ``enqueue_with_reservation`` interfaces.
+  `#8496 <https://pulp.plan.io/issues/8496>`_
+
+
+Bugfixes
+~~~~~~~~
+
+- Allow plugins to unset the ``queryset_filtering_required_permission`` attribute in ``NamedModelViewSet``.
+  `#8438 <https://pulp.plan.io/issues/8438>`_
+
+
+Removals
+~~~~~~~~
+
+- Removed checksum type filtering from ``pulpcore.plugin.models.Remote.get_downloader`` and ``pulpcore.plugin.stages.DeclarativeArtifact.download``.
+  `#8435 <https://pulp.plan.io/issues/8435>`_
+
+
+Deprecations
+~~~~~~~~~~~~
+
+- The following objects were deprecated:
+  * ``pulpcore.plugin.models.BaseDistribution`` -- Instead use
+    ``pulpcore.plugin.models.Distribution``.
+  * ``pulpcore.plugin.viewset.BaseDistributionViewSet`` -- Instead use
+    ``pulpcore.plugin.viewset.DistributionViewSet``.
+  * ``pulpcore.plugin.serializer.BaseDistributionSerializer`` -- Instead use
+    ``pulpcore.plugin.serializer.DistributionSerializer``.
+  * ``pulpcore.plugin.serializer.PublicationDistributionSerializer`` -- Instead use define the
+    ``publication`` field directly on your detail distribution object. See the docstring for
+    ``pulpcore.plugin.serializer.DistributionSerializer`` for an example.
+  * ``pulpcore.plugin.serializer.RepositoryVersionDistributionSerializer`` -- Instead use define the
+    ``repository_version`` field directly on your detail distribution object. See the docstring for
+    ``pulpcore.plugin.serializer.DistributionSerializer`` for an example.
+  * ``pulpcore.plugin.viewset.DistributionFilter`` -- Instead use
+    ``pulpcore.plugin.viewset.NewDistributionFilter``.
+
+  .. note::
+
+      You will have to define a migration to move your data from
+      ``pulpcore.plugin.models.BaseDistribution`` to ``pulpcore.plugin.models.Distribution``. See the
+      pulp_file migration 0009 as a reference example.
+  `#8385 <https://pulp.plan.io/issues/8385>`_
+- Deprecated the ``pulpcore.plugin.tasking.enqueue_with_reservation``. Instead use the
+  ``pulpcore.plugin.tasking.dispatch`` interface.
+  `#8496 <https://pulp.plan.io/issues/8496>`_
+- The usage of non-JSON serializable types of ``args`` and ``kwargs`` to tasks is deprecated. Future
+  releases of pulpcore may discontinue accepting complex argument types. Note, UUID objects are not
+  JSON serializable. A deprecated warning is logged if a non-JSON serializable is used.
+  `#8505 <https://pulp.plan.io/issues/8505>`_
+
+
 3.11.0 (2021-03-15)
 ===================
 REST API
