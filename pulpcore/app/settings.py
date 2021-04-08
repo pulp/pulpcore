@@ -115,6 +115,10 @@ AUTHENTICATION_BACKENDS = [
     "guardian.backends.ObjectPermissionBackend",
 ]
 
+# Disable django guardian anonymous user
+# https://django-guardian.readthedocs.io/en/stable/configuration.html#anonymous-user-name
+ANONYMOUS_USER_NAME = None
+
 ROOT_URLCONF = "pulpcore.app.urls"
 
 TEMPLATES = [

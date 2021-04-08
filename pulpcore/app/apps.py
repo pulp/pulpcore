@@ -3,6 +3,8 @@ from gettext import gettext as _
 from importlib import import_module
 
 from django import apps
+from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.core.exceptions import ImproperlyConfigured
 from django.db.models.signals import post_migrate
 from django.utils.module_loading import module_has_submodule
@@ -189,6 +191,8 @@ class PulpAppConfig(PulpPluginAppConfig):
         super().ready()
         from . import checks  # noqa
 
+        post_migrate.connect(_delete_anon_user, sender=self, dispatch_uid="delete_anon_identifier")
+
 
 def _populate_access_policies(sender, **kwargs):
     from pulpcore.app.util import get_view_urlpattern
@@ -205,3 +209,15 @@ def _populate_access_policies(sender, **kwargs):
                 AccessPolicy.objects.get_or_create(
                     viewset_name=get_view_urlpattern(viewset), defaults=access_policy
                 )
+
+
+def _delete_anon_user(sender, **kwargs):
+    if settings.ANONYMOUS_USER_NAME is None:
+        print(_("Deleting Guardians' AnonymousUser"))
+        User = get_user_model()
+        try:
+            anon = User.objects.get(username="AnonymousUser")
+        except User.DoesNotExist:
+            pass
+        else:
+            anon.delete()
