@@ -17,6 +17,24 @@ Changelog
 
 .. towncrier release notes start
 
+3.7.5 (2021-04-09)
+==================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Backported fixes for artifact handling important for pulp-2to3-migration plugin use cases.
+  `#8485 <https://pulp.plan.io/issues/8485>`_
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.7.4 (2021-03-15)
 ==================
 REST API
