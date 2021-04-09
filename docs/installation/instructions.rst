@@ -18,8 +18,13 @@ Fedora, CentOS, and Mac OSX.
 Ansible Installation (Recommended)
 ----------------------------------
 
-`Pulp 3 Ansible Installer <https://pulp-installer.readthedocs.io/>`__ can be used to
-install plugins. For example if your host is in your Ansible inventory as ``myhost`` you
+You can use the Pulp 3 Ansible Installer to install Pulp and any content plugins that you want.
+For comprehensive instructions on using the Pulp Ansible installer, see the
+`Pulp Installer documentation <https://pulp-installer.readthedocs.io/>`__.
+
+The examples in this section provide an overview but do not fully describe all the considerations. 
+
+For example if your host is in your Ansible inventory as ``myhost`` you
 can install onto it with:
 
 .. code-block:: bash
