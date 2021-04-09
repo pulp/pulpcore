@@ -16,10 +16,13 @@ Amazon S3
 Setting up S3
 -------------
 
-  In order to use Amazon S3, you'll need to set up an AWS account. Then you'll need to create a
-  bucket for Pulp to use. Then you'll need to go into Identity and Access Management (IAM) in AWS to
-  create a user that Pulp will use to access your S3 bucket. Save the access key id and secret
-  access key.
+Before you can configure Amazon S3 storage to use with Pulp, ensure that you complete the following steps.
+To complete these steps, consult the official Amazon S3 documentation.
+
+1. Set up an AWS account.
+2. Create an S3 bucket for Pulp to use.
+3. In AWS Identity and Access Management (IAM), create a user that Pulp can use to access your S3 bucket.
+4. Save the access key id and secret access key.
 
 Configuring Pulp
 ----------------
