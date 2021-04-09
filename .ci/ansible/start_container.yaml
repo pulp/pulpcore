@@ -74,20 +74,29 @@
             follow_redirects: none
           register: result
           until: result.status == 200
-          retries: 6
+          retries: 12
           delay: 5
       rescue:
         - name: "Output pulp container log"
           command: "docker logs pulp"
           failed_when: true
 
-    - name: "Check version of component being tested"
-      assert:
-        that:
-          - (result.json.versions | items2dict(key_name="component", value_name="version"))[component_name] | canonical_semver == (component_version | canonical_semver)
-        fail_msg: |
-          Component {{ component_name }} was expected to be installed in version {{ component_version }}.
-          Instead it is reported as version {{ (result.json.versions | items2dict(key_name="component", value_name="version"))[component_name] }}.
+    - block:
+        - name: "Check version of component being tested"
+          assert:
+            that:
+              - (result.json.versions | items2dict(key_name="component", value_name="version"))[component_name] | canonical_semver == (component_version | canonical_semver)
+            fail_msg: |
+              Component {{ component_name }} was expected to be installed in version {{ component_version }}.
+              Instead it is reported as version {{ (result.json.versions | items2dict(key_name="component", value_name="version"))[component_name] }}.
+      rescue:
+        - name: "Check version of component being tested (legacy)"
+          assert:
+            that:
+              - (result.json.versions | items2dict(key_name="component", value_name="version"))[legacy_component_name] | canonical_semver == (component_version | canonical_semver)
+            fail_msg: |
+              Component {{ legacy_component_name }} was expected to be installed in version {{ component_version }}.
+              Instead it is reported as version {{ (result.json.versions | items2dict(key_name="component", value_name="version"))[legacy_component_name] }}.
 
     - name: "Set pulp password in .netrc"
       copy:

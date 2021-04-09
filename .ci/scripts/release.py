@@ -6,16 +6,17 @@
 # For more info visit https://github.com/pulp/plugin_template
 
 import argparse
-import json
 import re
 import os
 import textwrap
-from collections import defaultdict
-from pathlib import Path
 
 from git import Repo
+
+from collections import defaultdict
+from pathlib import Path
 from redminelib import Redmine
 from redminelib.exceptions import ResourceAttrError
+import json
 
 
 REDMINE_URL = "https://pulp.plan.io"
@@ -80,12 +81,12 @@ with open(f"{plugin_path}/setup.py") as fp:
         raise RuntimeError("Could not detect existing version ... aborting.")
 release_version = version.replace(".dev", "")
 
-issues_to_close = []
+
+issues_to_close = set()
 for filename in Path(f"{plugin_path}/CHANGES").rglob("*"):
     if filename.stem.isdigit():
         issue = filename.stem
-        issue_url = f"{REDMINE_URL}/issues/{issue}.json"
-        issues_to_close.append(issue)
+        issues_to_close.add(issue)
 
 issues = ",".join(issues_to_close)
 redmine_final_query = f"{REDMINE_QUERY_URL}{issues}"
@@ -164,10 +165,12 @@ git.add(f"{plugin_path}/docs/conf.py")
 git.add(f"{plugin_path}/setup.py")
 git.add(f"{plugin_path}/requirements.txt")
 git.add(f"{plugin_path}/.bumpversion.cfg")
+
 git.commit(
     "-m",
     f"Release {release_version}\n\nRedmine Query: {redmine_final_query}\n{milestone_url}",
 )
+
 
 sha = repo.head.object.hexsha
 short_sha = git.rev_parse(sha, short=7)
@@ -198,6 +201,8 @@ git.add(f"{plugin_path}/requirements.txt")
 git.add(f"{plugin_path}/.bumpversion.cfg")
 git.commit("-m", f"Bump to {new_dev_version}\n\n[noissue]")
 
+
 print(f"\n\nRedmine query of issues to close:\n{redmine_final_query}")
+
 print(f"Release commit == {short_sha}")
 print(f"All changes were committed on branch: release_{release_version}")

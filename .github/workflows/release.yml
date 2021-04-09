@@ -5,15 +5,17 @@
 #
 # For more info visit https://github.com/pulp/plugin_template
 ---
-name: Pulp Release CI/CD
+name: Release Pipeline
 on:
-  push:
-    tags:
-      - '*'
+  workflow_dispatch:
+    inputs:
+      release:
+        description: "Release tag (e.g. 3.2.1)"
+        required: true
 
 jobs:
   test:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
 
     strategy:
       fail-fast: false
@@ -27,6 +29,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
         with:
+          ref: ${{ github.event.inputs.release }}
           # by default, it uses a depth of 1
           # this fetches all history so that we can read each commit
           fetch-depth: 0
@@ -71,8 +74,37 @@ jobs:
         run: .github/workflows/scripts/script.sh
         shell: bash
 
+      - name: After failure
+        if: failure()
+        run: |
+          http --timeout 30 --check-status --pretty format --print hb http://pulp/pulp/api/v3/status/ || true
+          docker images || true
+          docker ps -a || true
+          docker logs pulp || true
+          docker exec pulp ls -latr /etc/yum.repos.d/ || true
+          docker exec pulp cat /etc/yum.repos.d/* || true
+          docker exec pulp pip3 list
+
+  release:
+    runs-on: ubuntu-latest
+    needs: test
+
+    name: Create Release
+    steps:
+      - uses: actions/checkout@v2
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.event.inputs.release }}
+          release_name: Release ${{ github.event.inputs.release }}
+          draft: false
+          prerelease: false
+
   publish:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
     needs: test
 
     env:
@@ -81,6 +113,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
         with:
+          ref: ${{ github.event.inputs.release }}
           # by default, it uses a depth of 1
           # this fetches all history so that we can read each commit
           fetch-depth: 0
@@ -92,6 +125,12 @@ jobs:
       - uses: actions/setup-ruby@v1
         with:
           ruby-version: "2.6"
+
+      # update to the branch's latest ci files rather than the ones from the release tag. this is
+      # helpful when there was a problem with the ci files during the release which needs to be
+      # fixed after the release tag has been created
+      - name: Update ci files
+        run: git checkout "origin/${GITHUB_REF##*/}" -- .ci
 
       - name: Install httpie
         run: |
@@ -133,7 +172,7 @@ jobs:
       - name: Publish client to pypi
         run: bash .ci/scripts/publish_client_pypi.sh
       - name: Publish docs to pulpproject.org
-        run: .ci/scripts/publish_docs.sh tag ${GITHUB_REF##*/}
+        run: .ci/scripts/publish_docs.sh tag ${{ github.event.inputs.release }}
       - name: Update Redmine
         run: bash .ci/scripts/update_redmine.sh
 
@@ -146,3 +185,4 @@ jobs:
           docker logs pulp || true
           docker exec pulp ls -latr /etc/yum.repos.d/ || true
           docker exec pulp cat /etc/yum.repos.d/* || true
+          docker exec pulp pip3 list

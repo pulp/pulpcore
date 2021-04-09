@@ -12,6 +12,14 @@ cd "$(dirname "$(realpath -e "$0")")"/../..
 
 set -euv
 
+export VERSION=$(http pulp/pulp/api/v3/status/ | jq --arg plugin pulpcore -r '.versions[] | select(.component == $plugin) | .version')
+export response=$(curl --write-out %{http_code} --silent --output /dev/null https://pypi.org/project/pulpcore-client/$VERSION/)
+if [ "$response" == "200" ];
+then
+  echo "pulpcore $VERSION has already been released. Skipping."
+  exit
+fi
+
 pip install twine
 
 python3 setup.py sdist bdist_wheel --python-tag py3

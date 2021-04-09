@@ -32,6 +32,7 @@ export response=$(curl --write-out %{http_code} --silent --output /dev/null http
 
 if [ "$response" == "200" ];
 then
+  echo "pulpcore $VERSION has already been released. Skipping."
   exit
 fi
 

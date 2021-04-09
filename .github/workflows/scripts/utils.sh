@@ -7,14 +7,14 @@
 #
 # For more info visit https://github.com/pulp/plugin_template
 
-PULP_CONTAINER=pulp
+PULP_CI_CONTAINER=pulp
 
 # Run a command
 cmd_prefix() {
-  docker exec "$PULP_CONTAINER" "$@"
+  docker exec "$PULP_CI_CONTAINER" "$@"
 }
 
 # Run a command, and pass STDIN
 cmd_stdin_prefix() {
-  docker exec -i "$PULP_CONTAINER" "$@"
+  docker exec -i "$PULP_CI_CONTAINER" "$@"
 }
