@@ -405,7 +405,7 @@ class LabelsField(serializers.DictField):
         Raises:
             rest_framework.serializers.ValidationError: if data is invalid (eg not a dict)
         """
-        if type(data) != dict:
+        if not isinstance(data, dict):
             raise serializers.ValidationError(_("Data must be supplied as a key/value hash."))
         for key, value in data.items():
             if not re.match(r"^[\w ]+$", key):
