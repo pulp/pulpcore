@@ -96,7 +96,7 @@ if [ -n "$PULP_FILE_PR_NUMBER" ]; then
   cd ..
 fi
 
-git clone --depth=1 https://github.com/pulp/pulp-certguard.git --branch master
+git clone --depth=1 https://github.com/pulp/pulp-certguard.git --branch 1.1
 if [ -n "$PULP_CERTGUARD_PR_NUMBER" ]; then
   cd pulp-certguard
   git fetch --depth=1 origin pull/$PULP_CERTGUARD_PR_NUMBER/head:$PULP_CERTGUARD_PR_NUMBER

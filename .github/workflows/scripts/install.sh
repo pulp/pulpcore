@@ -40,7 +40,7 @@ fi
 if [ -e $REPO_ROOT/../pulp-certguard ]; then
   PULP_CERTGUARD=./pulp-certguard
 else
-  PULP_CERTGUARD=git+https://github.com/pulp/pulp-certguard.git@master
+  PULP_CERTGUARD=git+https://github.com/pulp/pulp-certguard.git@1.1
 fi
 cat >> vars/main.yaml << VARSYAML
 image:
