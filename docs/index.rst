@@ -38,7 +38,7 @@ Plugin Documentation
 
 If you are a new user who is evaluating Pulp it is recommended that you skim the documentation for
 the plugins that add the content types you are interested in. Links to these docs can be found in
-our `list of plugins <https://pulpproject.org/content-plugins/>`_
+our `list of plugins <https://docs.pulpproject.org/pulpcore/plugins/index.html#plugins>`_
 
 Pulpcore Documentation
 ^^^^^^^^^^^^^^^^^^^^^^
