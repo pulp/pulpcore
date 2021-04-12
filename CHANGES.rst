@@ -17,6 +17,26 @@ Changelog
 
 .. towncrier release notes start
 
+3.7.5 (2021-04-12)
+==================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Backported fixes for artifact handling important for pulp-2to3-migration plugin use cases.
+  `#8485 <https://pulp.plan.io/issues/8485>`_
+- Allowed to use PyYAML 5.4 which contains a patch for `CVE-2020-14343 <https://nvd.nist.gov/vuln/detail/CVE-2020-14343>`_.
+  `#8540 <https://pulp.plan.io/issues/8540>`_
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.7.4 (2021-03-15)
 ==================
 REST API
