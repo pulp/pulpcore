@@ -210,11 +210,11 @@ class Remote(MasterModel):
 
         name (models.TextField): The remote name.
         url (models.TextField): The URL of an external content source.
-        ca_cert (models.FileField): A PEM encoded CA certificate used to validate the
+        ca_cert (models.TextField): A PEM encoded CA certificate used to validate the
             server certificate presented by the external source.
-        client_cert (models.FileField): A PEM encoded client certificate used
+        client_cert (models.TextField): A PEM encoded client certificate used
             for authentication.
-        client_key (models.FileField): A PEM encoded private key used for authentication.
+        client_key (models.TextField): A PEM encoded private key used for authentication.
         tls_validation (models.BooleanField): If True, TLS peer validation must be performed.
         proxy_url (models.TextField): The optional proxy URL.
             Format: scheme://host:port
