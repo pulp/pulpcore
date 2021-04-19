@@ -16,10 +16,13 @@ from pulpcore.app.models import (
     ExportedResource,
     Exporter,
     Publication,
+    PulpExport,
+    PulpExporter,
     RepositoryVersion,
     Task,
 )
 from pulpcore.app.models.content import ContentArtifact
+from pulpcore.app.serializers import PulpExportSerializer
 from pulpcore.app.util import get_version_from_model
 from pulpcore.app.importexport import (
     export_versions,
@@ -147,7 +150,7 @@ def _incremental_requested(the_export):
     return (starting_versions_provided or last_exists) and not full
 
 
-def pulp_export(the_export):
+def pulp_export(exporter_pk, params):
     """
     Create a PulpExport to export pulp_exporter.repositories.
 
@@ -156,14 +159,22 @@ def pulp_export(the_export):
     3) Compute and store the sha256 and filename of the resulting tar.gz/chunks
 
     Args:
-        the_export (models.PulpExport): PulpExport instance
+        exporter_pk (str): PulpExporter
+        params (dict): request data
 
     Raises:
         ValidationError: When path is not in the ALLOWED_EXPORT_PATHS setting,
             OR path exists and is not a directory
     """
+    pulp_exporter = PulpExporter.objects.get(pk=exporter_pk)
+    serializer = PulpExportSerializer(data=params, context={"exporter": pulp_exporter})
+    serializer.is_valid(raise_exception=True)
+    the_export = PulpExport.objects.create(exporter=pulp_exporter, params=params)
+    the_export.validated_versions = serializer.validated_data.get("versions", None)
+    the_export.validated_start_versions = serializer.validated_data.get("start_versions", None)
+    the_export.validated_chunk_size = serializer.validated_data.get("chunk_size", None)
+
     try:
-        pulp_exporter = the_export.exporter
         the_export.task = Task.current()
 
         tarfile_fp = the_export.export_tarfile_path()

@@ -127,11 +127,10 @@ class PulpExportViewSet(ExportViewSet):
         serializer.is_valid(raise_exception=True)
 
         # Invoke the export
-        export = PulpExport.objects.create(exporter=exporter, params=request.data)
-        export.validated_versions = serializer.validated_data.get("versions", None)
-        export.validated_start_versions = serializer.validated_data.get("start_versions", None)
-        export.validated_chunk_size = serializer.validated_data.get("chunk_size", None)
-
-        task = dispatch(pulp_export, [exporter], kwargs={"the_export": export})
+        task = dispatch(
+            pulp_export,
+            [exporter],
+            kwargs={"exporter_pk": str(exporter.pk), "params": request.data},
+        )
 
         return OperationPostponedResponse(task, request)
