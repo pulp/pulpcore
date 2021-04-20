@@ -17,6 +17,24 @@ Changelog
 
 .. towncrier release notes start
 
+3.12.1 (2021-04-20)
+===================
+REST API
+--------
+
+No significant changes.
+
+
+Plugin API
+----------
+
+Bugfixes
+~~~~~~~~
+
+- Added RepositoryVersionRelatedField to the plugin API.
+  `#8580 <https://pulp.plan.io/issues/8580>`_
+
+
 3.12.0 (2021-04-08)
 ===================
 REST API
