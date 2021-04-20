@@ -27,6 +27,7 @@ from pulpcore.app.serializers import (  # noqa
     RepositorySerializer,
     RepositorySyncURLSerializer,
     RepositoryVersionDistributionSerializer,
+    RepositoryVersionRelatedField,
     SingleArtifactContentSerializer,
     SingleContentArtifactField,
     ValidateFieldsMixin,
