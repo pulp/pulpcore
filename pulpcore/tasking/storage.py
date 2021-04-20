@@ -57,7 +57,7 @@ class _WorkingDir:
         Helper method for delete
         """
         try:
-            shutil.rmtree(self.path)
+            shutil.rmtree(self.path, ignore_errors=True)
         except FileNotFoundError:
             pass
 
