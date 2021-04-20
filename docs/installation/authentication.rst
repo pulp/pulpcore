@@ -74,7 +74,7 @@ Disabling Checks against Internal User DB
 -----------------------------------------
 
 The internal users database is checked using the ``django.contrib.auth.backends.ModelBackend`` from
-Django. To disable checking a username and password against the internal users database, remote the
+Django. To disable checking a username and password against the internal users database, remove the
 ``django.contrib.auth.backends.ModelBackend`` from the ``AUTHENTICATION_BACKENDS`` setting in Pulp.
 
 You can do this effectively, for example using a Python settings file::
@@ -82,9 +82,9 @@ You can do this effectively, for example using a Python settings file::
     AUTHENTICATION_BACKENDS = []
 
 
-Or as an by defining an environment variable for Dynaconf to use::
+Or by defining an environment variable for Dynaconf to use::
 
-    export PULP_AUTHENTICATION_BACKEND="[]"
+    export PULP_AUTHENTICATION_BACKENDS="[]"
 
 
 .. _webserver-auth:
