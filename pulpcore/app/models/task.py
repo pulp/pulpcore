@@ -8,6 +8,7 @@ from gettext import gettext as _
 
 from django.contrib.postgres.fields import JSONField
 from django.db import models
+from django.db.utils import IntegrityError
 from django.utils import timezone
 from rq.job import get_current_job
 
@@ -359,7 +360,11 @@ class Task(BaseModel, AutoDeleteObjPermsMixin, AutoAddObjPermsMixin):
         for reservation in self.reserved_resources.all():
             TaskReservedResource.objects.filter(task=self.pk).delete()
             if not reservation.tasks.exists():
-                reservation.delete()
+                try:
+                    reservation.delete()
+                except IntegrityError:
+                    # other tasks have added reservations for this resource
+                    pass
 
 
 class TaskGroup(BaseModel):
