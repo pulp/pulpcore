@@ -1,0 +1,1 @@
+Altered redirect URL escaping, preventing invalidation of signed URLs for artifacts using cloud storage.
