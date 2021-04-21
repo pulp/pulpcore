@@ -9,6 +9,7 @@ from gettext import gettext as _
 from aiohttp.client_exceptions import ClientResponseError
 from aiohttp.web import FileResponse, StreamResponse, HTTPOk
 from aiohttp.web_exceptions import HTTPForbidden, HTTPFound, HTTPNotFound
+from yarl import URL
 
 import django
 
@@ -710,10 +711,12 @@ class Handler:
         elif settings.DEFAULT_FILE_STORAGE == "storages.backends.s3boto3.S3Boto3Storage":
             content_disposition = f"attachment;filename={content_artifact.relative_path}"
             parameters = {"ResponseContentDisposition": content_disposition}
-            url = artifact_file.storage.url(artifact_name, parameters=parameters)
+            url = URL(
+                artifact_file.storage.url(artifact_file.name, parameters=parameters), encoded=True
+            )
             raise HTTPFound(url)
         elif settings.DEFAULT_FILE_STORAGE == "storages.backends.azure_storage.AzureStorage":
-            url = artifact_file.storage.url(artifact_name)
+            url = URL(artifact_file.storage.url(artifact_name), encoded=True)
             raise HTTPFound(url)
         else:
             raise NotImplementedError()
