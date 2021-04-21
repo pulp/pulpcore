@@ -220,7 +220,7 @@ class RepositoryVersionViewSet(
         version = self.get_object()
 
         task = dispatch(
-            tasks.repository.delete_version, [version.repository], kwargs={"pk": version.pk}
+            tasks.repository.delete_version, [version.repository], kwargs={"pk": str(version.pk)}
         )
         return OperationPostponedResponse(task, request)
 
@@ -242,7 +242,7 @@ class RepositoryVersionViewSet(
         task = dispatch(
             tasks.repository.repair_version,
             [version.repository],
-            args=[version.pk, verify_checksums],
+            args=[str(version.pk), verify_checksums],
         )
         return OperationPostponedResponse(task, request)
 

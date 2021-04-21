@@ -484,7 +484,7 @@ class AsyncRemoveMixin(AsyncReservedObjectMixin):
         task = dispatch(
             tasks.base.general_delete,
             self.async_reserved_resources(instance),
-            args=(pk, app_label, serializer.__class__.__name__),
+            args=(str(pk), app_label, serializer.__class__.__name__),
         )
         return OperationPostponedResponse(task, request)
 

@@ -85,9 +85,12 @@ See :class:`~pulpcore.plugin.tasking.dispatch` for more details.
             result = dispatch(
                 tasks.synchronize,
                 [repository, remote],
+                # all task parameters ("args" and "kwargs") need to be JSON serializable objects. One
+                # common and example is uuid.UUID objects, used for primary keys, which must be cast
+                # to strings when used as task parameters.
                 kwargs={
-                    'remote_pk': remote.pk,
-                    'repository_pk': repository.pk,
+                    'remote_pk': str(remote.pk),
+                    'repository_pk': str(repository.pk),
                     'mirror': mirror
                 }
             )

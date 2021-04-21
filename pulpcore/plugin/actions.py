@@ -32,14 +32,16 @@ class ModifyRepositoryActionMixin:
         serializer.is_valid(raise_exception=True)
 
         if "base_version" in request.data:
-            base_version_pk = self.get_resource(request.data["base_version"], RepositoryVersion).pk
+            base_version_pk = str(
+                self.get_resource(request.data["base_version"], RepositoryVersion).pk
+            )
         else:
             base_version_pk = None
 
         if "add_content_units" in request.data:
             for url in request.data["add_content_units"]:
                 content = self.get_resource(url, Content)
-                add_content_units.append(content.pk)
+                add_content_units.append(str(content.pk))
 
         if "remove_content_units" in request.data:
             for url in request.data["remove_content_units"]:
@@ -48,7 +50,7 @@ class ModifyRepositoryActionMixin:
                     break
                 else:
                     content = self.get_resource(url, Content)
-                    remove_content_units.append(content.pk)
+                    remove_content_units.append(str(content.pk))
 
         task = dispatch(
             tasks.repository.add_and_remove,
