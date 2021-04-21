@@ -55,14 +55,14 @@ def _destination_repo(importer, source_repo_name):
     return Repository.objects.get(name=dest_repo_name)
 
 
-def _import_file(fpath, resource_class):
+def _import_file(fpath, resource_class, do_raise=True):
     try:
         log.info(_("Importing file {}.").format(fpath))
         with open(fpath, "r") as json_file:
             data = Dataset().load(json_file.read(), format="json")
             resource = resource_class()
             log.info(_("...Importing resource {}.").format(resource.__class__.__name__))
-            return resource.import_data(data, raise_errors=True)
+            return resource.import_data(data, raise_errors=do_raise)
     except AttributeError:
         log.error(_("FAILURE importing file {}!").format(fpath))
         raise
@@ -158,7 +158,29 @@ def import_repository_version(importer_pk, destination_repo_pk, source_repo_name
         resulting_content_ids = []
         for res_class in cfg.exportable_classes:
             filename = f"{res_class.__module__}.{res_class.__name__}.json"
-            a_result = _import_file(os.path.join(rv_path, filename), res_class)
+            a_result = _import_file(os.path.join(rv_path, filename), res_class, do_raise=False)
+            # django import-export can have a problem with concurrent-imports that are
+            # importing the same 'thing' (e.g., a Package that exists in two different
+            # repo-versions that are being imported at the same time). We will try an import
+            # that will simply record errors as they happen (rather than failing with an exception)
+            # first. If errors happen, we'll do one retry before we give up on this repo-version's
+            # import.
+            if a_result.has_errors():
+                log.info(
+                    _("...{} import-errors encountered importing {} from {}, retrying").format(
+                        a_result.totals["error"], filename, rv_name
+                    )
+                )
+                # Second attempt, we allow to raise an exception on any problem.
+                # This will either succeed, or log a fatal error and fail.
+                try:
+                    a_result = _import_file(os.path.join(rv_path, filename), res_class)
+                except Exception as e:  # noqa log on ANY exception and then re-raise
+                    log.error(
+                        _("FATAL import-failure importing {} from {}").format(filename, rv_name)
+                    )
+                    raise
+
             resulting_content_ids.extend(
                 row.object_id for row in a_result.rows if row.import_type in ("new", "update")
             )
