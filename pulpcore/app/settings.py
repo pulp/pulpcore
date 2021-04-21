@@ -55,6 +55,12 @@ FILE_UPLOAD_HANDLERS = ("pulpcore.app.files.HashingFileUploadHandler",)
 
 SECRET_KEY = True
 
+# regex to alter path in content-disposition header & str to replace them with
+# wrapped in parens to prevent dynaconf from thinking this is a list :/
+#S3_REPO_MANGLE_REGEX = r'([^-a-zA-Z0-9._])'
+S3_REPO_MANGLE_REGEX = r'([/=;])'
+S3_REPO_MANGLE_TO = '__'
+
 # Application definition
 
 INSTALLED_APPS = [
