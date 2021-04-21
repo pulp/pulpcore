@@ -92,7 +92,9 @@ class ContentArtifactResource(QueryModelResource):
         row["content"] = str(linked_content.pulp_id)
 
     def set_up_queryset(self):
-        return ContentArtifact.objects.filter(content__in=self.repo_version.content)
+        return ContentArtifact.objects.filter(content__in=self.repo_version.content).order_by(
+            "content", "relative_path"
+        )
 
     class Meta:
         model = ContentArtifact
