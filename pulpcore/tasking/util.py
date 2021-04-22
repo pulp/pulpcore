@@ -1,8 +1,11 @@
 import logging
 import time
+from hashlib import blake2s
 from gettext import gettext as _
 
+from django.conf import settings
 from django.db import transaction
+from django.db import connection as db_connection
 from django.urls import reverse
 from rq.command import send_stop_job_command
 from rq.exceptions import InvalidJobOperation, NoSuchJobError
@@ -11,7 +14,7 @@ from rq.worker import Worker
 
 from pulpcore.app.models import Task
 from pulpcore.app.util import get_view_name_for_model
-from pulpcore.constants import TASK_FINAL_STATES, TASK_STATES
+from pulpcore.constants import TASK_FINAL_STATES, TASK_INCOMPLETE_STATES, TASK_STATES
 from pulpcore.exceptions import MissingResource
 from pulpcore.tasking import connection
 
@@ -23,7 +26,7 @@ def cancel(task_id):
     Cancel the task that is represented by the given task_id.
 
     This method cancels only the task with given task_id, not the spawned tasks. This also updates
-    task's state to 'canceled'.
+    task's state to either 'canceled' or 'canceling'.
 
     Args:
         task_id (str): The ID of the task you wish to cancel
@@ -43,6 +46,20 @@ def cancel(task_id):
         return task_status
 
     _logger.info(_("Canceling task: {id}").format(id=task_id))
+
+    if settings.USE_NEW_WORKER_TYPE:
+        task = task_status
+        # This is the only valid transition without holding the task lock
+        rows = Task.objects.filter(pk=task.pk, state__in=TASK_INCOMPLETE_STATES).update(
+            state=TASK_STATES.CANCELING
+        )
+        # Notify the worker that might be running that task and other workers to clean up
+        with db_connection.cursor() as cursor:
+            cursor.execute("SELECT pg_notify('pulp_worker_cancel', %s)", (str(task.pk),))
+            cursor.execute("NOTIFY pulp_worker_wakeup")
+        if rows == 1:
+            task.refresh_from_db()
+        return task
 
     redis_conn = connection.get_redis_connection()
     job = Job(id=str(task_status.pk), connection=redis_conn)
@@ -82,7 +99,7 @@ def _delete_incomplete_resources(task):
     Args:
         task (Task): A task.
     """
-    if not task.state == TASK_STATES.CANCELED:
+    if task.state not in [TASK_STATES.CANCELED, TASK_STATES.CANCELING]:
         raise RuntimeError(_("Task must be canceled."))
     for model in (r.content_object for r in task.created_resources.all()):
         try:
@@ -123,3 +140,8 @@ def get_current_worker():
             return worker
 
     return None
+
+
+def _hash_to_u64(value):
+    _digest = blake2s(value.encode(), digest_size=8).digest()
+    return int.from_bytes(_digest, byteorder="big", signed=True)

@@ -57,6 +57,8 @@ def handle_worker_heartbeat(worker_name):
 
     _logger.debug(msg)
 
+    return worker
+
 
 def check_worker_processes():
     """

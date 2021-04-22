@@ -53,11 +53,9 @@ from .status import ContentAppStatus  # noqa
 from .task import (  # noqa
     CreatedResource,
     ReservedResource,
-    ReservedResourceRecord,
     Task,
     TaskGroup,
     TaskReservedResource,
-    TaskReservedResourceRecord,
     Worker,
 )
 from .upload import (  # noqa
