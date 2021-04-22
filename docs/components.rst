@@ -54,8 +54,8 @@ The content serving application can be deployed like any aiohttp.server applicat
 information.
 
 
-Tasking System
---------------
+Tasking System (current default)
+--------------------------------
 
 Pulp's tasking system has two components: a resource manager and workers, all of which are run using
 `rq`_.
@@ -78,7 +78,38 @@ Resource Manager
 .. note::
 
    Pulp serializes tasks that are unsafe to run in parallel, e.g. a sync and publish operation on
-   the same repo should not run in parallel. Generally tasks are serialized at the "repo" level, so
+   the same repo should not run in parallel. Generally tasks are serialized at the "resource" level, so
+   if you start *N* workers you can process *N* repo sync/modify/publish operations concurrently.
+
+
+Distributed Tasking System (tech-preview)
+-----------------------------------------
+
+Pulp provides an alternative implementation for the tasking system as a drop in replacement.
+
+.. note::
+
+   This distributed resource-manager free tasking system is still in tech-preview.
+
+The major differences to the prior tasking system is, that tasks are not routed through a
+``resource-manager``, and not queued into ``rq`` queues. So all necessary information about tasks
+is stored in Pulp's Postgres database as a single source of truth. This version of the tasking
+system consists of a single ``pulpcore-worker`` component consequently, and can be scaled by
+increasing the number of worker processes. Each worker can handle one task at a time, and idle
+workers will lookup waiting and ready tasks in a distributed manner. If no ready tasks were found
+a worker enters a sleep state to be notified, once new tasks are available or resources are
+released.
+
+While this tasking system is designed with better scalability and high availability in mind, it
+provides the same interfaces to the user via the REST API.
+
+To switch to using this worker model, one needs to set ``USE_NEW_WORKER_STYLE=True`` in pulp
+settings, and start the worker processes via ``pulpcore-worker`` instead of calling ``rq``.
+
+.. note::
+
+   Pulp serializes tasks that are unsafe to run in parallel, e.g. a sync and publish operation on
+   the same repo should not run in parallel. Generally tasks are serialized at the "resource" level, so
    if you start *N* workers you can process *N* repo sync/modify/publish operations concurrently.
 
 In case your tasking system get's jammed, there is a guide to help :ref:debugging_tasks.
