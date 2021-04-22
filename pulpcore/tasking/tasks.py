@@ -4,7 +4,8 @@ import time
 import uuid
 from gettext import gettext as _
 
-from django.db import IntegrityError, transaction, models
+from django.conf import settings
+from django.db import IntegrityError, transaction, models, connection as db_connection
 from django.db.models import Model
 from django_guid.middleware import GuidMiddleware
 from redis.exceptions import ConnectionError as RedisConnectionError
@@ -14,10 +15,8 @@ from rq.job import Job, get_current_job
 from pulpcore.app.loggers import deprecation_logger
 from pulpcore.app.models import (
     ReservedResource,
-    ReservedResourceRecord,
     Task,
     TaskReservedResource,
-    TaskReservedResourceRecord,
     Worker,
 )
 from pulpcore.constants import TASK_STATES
@@ -171,21 +170,33 @@ def _queue_reserved_task(func, inner_task_id, resources, inner_args, inner_kwarg
         task_status.set_failed(e, None)
 
 
-class NonJSONWarningEncoder(json.JSONEncoder):
+class UUIDEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, uuid.UUID):
             return str(obj)
-        try:
-            return json.JSONEncoder.default(self, obj)
-        except TypeError:
-            deprecation_logger.warning(
-                _(
-                    "The argument {obj} is of type {type}, which is not JSON serializable. The use "
-                    "of non JSON serializable objects for `args` and `kwargs` to tasks is "
-                    "deprecated as of pulpcore==3.12."
-                ).format(obj=obj, type=type(obj))
-            )
+        deprecation_logger.warning(
+            _(
+                "The argument {obj} is of type {type}, which is not JSON serializable. The use "
+                "of non JSON serializable objects for `args` and `kwargs` to tasks is "
+                "deprecated as of pulpcore==3.12."
+            ).format(obj=obj, type=type(obj))
+        )
+        if settings.USE_NEW_WORKER_TYPE:
+            return super().default(obj)
+        else:
             return None
+
+
+def _validate_and_get_resources(resources):
+    resource_set = set()
+    for r in resources:
+        if isinstance(r, str):
+            resource_set.add(r)
+        elif isinstance(r, Model):
+            resource_set.add(util.get_url(r))
+        else:
+            raise ValueError(_("Must be (str|Model)"))
+    return list(resource_set)
 
 
 def _enqueue_with_reservation(
@@ -198,21 +209,14 @@ def _enqueue_with_reservation(
     if not options:
         options = dict()
 
-    def as_url(r):
-        if isinstance(r, str):
-            return r
-        if isinstance(r, Model):
-            return util.get_url(r)
-        raise ValueError(_("Must be (str|Model)"))
-
-    resources = {as_url(r) for r in resources}
+    resources = _validate_and_get_resources(resources)
     inner_task_id = str(uuid.uuid4())
     resource_task_id = str(uuid.uuid4())
+    args_as_json = json.dumps(args, cls=UUIDEncoder)
+    kwargs_as_json = json.dumps(kwargs, cls=UUIDEncoder)
     redis_conn = connection.get_redis_connection()
     current_job = get_current_job(connection=redis_conn)
     parent_kwarg = {}
-    json.dumps(args, cls=NonJSONWarningEncoder)
-    json.dumps(kwargs, cls=NonJSONWarningEncoder)
     if current_job:
         # set the parent task of the spawned task to the current task ID (same as rq Job ID)
         parent_kwarg["parent_task"] = Task.objects.get(pk=current_job.id)
@@ -225,13 +229,13 @@ def _enqueue_with_reservation(
             logging_cid=(GuidMiddleware.get_guid() or ""),
             task_group=task_group,
             name=f"{func.__module__}.{func.__name__}",
+            args=args_as_json,
+            kwargs=kwargs_as_json,
+            reserved_resources_record=resources,
             **parent_kwarg,
         )
-        for resource in resources:
-            reservation_record = ReservedResourceRecord.objects.get_or_create(resource=resource)[0]
-            TaskReservedResourceRecord.objects.create(resource=reservation_record, task=task)
 
-        task_args = (func, inner_task_id, list(resources), args, kwargs, options)
+        task_args = (func, inner_task_id, resources, args, kwargs, options)
         try:
             q = Queue("resource-manager", connection=redis_conn)
             q.enqueue(
@@ -256,6 +260,9 @@ def dispatch(func, resources, args=None, kwargs=None, task_group=None):
 
     This method creates a :class:`pulpcore.app.models.Task` object and returns it.
 
+    The values in `args` and `kwargs` must be JSON serializable, but may contain instances of
+    ``uuid.UUID``.
+
     Args:
         func (callable): The function to be run by RQ when the necessary locks are acquired.
         resources (list): A list of resources to this task needs exclusive access to while running.
@@ -269,7 +276,27 @@ def dispatch(func, resources, args=None, kwargs=None, task_group=None):
     Raises:
         ValueError: When `resources` is an unsupported type.
     """
-    RQ_job_id = _enqueue_with_reservation(
-        func, resources=resources, args=args, kwargs=kwargs, task_group=task_group
-    )
-    return Task.objects.get(pk=RQ_job_id.id)
+    if settings.USE_NEW_WORKER_TYPE:
+        args_as_json = json.dumps(args, cls=UUIDEncoder)
+        kwargs_as_json = json.dumps(kwargs, cls=UUIDEncoder)
+        resources = _validate_and_get_resources(resources)
+        with transaction.atomic():
+            task = Task.objects.create(
+                state=TASK_STATES.WAITING,
+                logging_cid=(GuidMiddleware.get_guid() or ""),
+                task_group=task_group,
+                name=f"{func.__module__}.{func.__name__}",
+                args=args_as_json,
+                kwargs=kwargs_as_json,
+                parent_task=Task.current(),
+                reserved_resources_record=resources,
+            )
+        # Notify workers
+        with db_connection.connection.cursor() as cursor:
+            cursor.execute("NOTIFY pulp_worker_wakeup")
+        return task
+    else:
+        RQ_job_id = _enqueue_with_reservation(
+            func, resources=resources, args=args, kwargs=kwargs, task_group=task_group
+        )
+        return Task.objects.get(pk=RQ_job_id.id)

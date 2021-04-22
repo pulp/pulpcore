@@ -78,8 +78,8 @@ Tasks
 -----
 
 Any action that can run for a long time should be an asynchronous task. Plugin writers do not need
-to understand the internals of the pulpcore tasking system, workers automatically execute tasks from
-RQ, including tasks deployed by plugins.
+to understand the internals of the pulpcore tasking system. Workers automatically execute tasks,
+including the ones deployed by plugins.
 
 
 **Worker and Tasks Directories**

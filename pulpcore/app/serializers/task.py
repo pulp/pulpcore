@@ -40,21 +40,12 @@ class CreatedResourceSerializer(RelatedField):
         fields = []
 
 
-class ReservedResourcesSerializer(ModelSerializer):
-    def to_representation(self, instance):
-        return instance.resource
-
-    class Meta:
-        model = models.ReservedResourceRecord
-        fields = []
-
-
 class TaskSerializer(ModelSerializer):
     pulp_href = IdentityField(view_name="tasks-detail")
     state = serializers.CharField(
         help_text=_(
             "The current state of the task. The possible values include:"
-            " 'waiting', 'skipped', 'running', 'completed', 'failed' and 'canceled'."
+            " 'waiting', 'skipped', 'running', 'completed', 'failed', 'canceled' and 'canceling'."
         ),
         read_only=True,
     )
@@ -106,7 +97,11 @@ class TaskSerializer(ModelSerializer):
         read_only=True,
         view_name="None",  # This is a polymorphic field. The serializer does not need a view name.
     )
-    reserved_resources_record = ReservedResourcesSerializer(many=True, read_only=True)
+    reserved_resources_record = serializers.ListField(
+        child=serializers.CharField(),
+        help_text=_("A list of resources required by that task."),
+        read_only=True,
+    )
 
     class Meta:
         model = models.Task
@@ -164,7 +159,11 @@ class TaskGroupSerializer(ModelSerializer):
     failed = TaskGroupStatusCountField(
         state=TASK_STATES.FAILED, help_text=_("Number of tasks in the 'failed' state")
     )
+    canceling = TaskGroupStatusCountField(
+        state=TASK_STATES.CANCELING, help_text=_("Number of tasks in the 'canceling' state")
+    )
     group_progress_reports = GroupProgressReportSerializer(many=True, read_only=True)
+    tasks = MinimalTaskSerializer(many=True, read_only=True)
 
     class Meta:
         model = models.TaskGroup
@@ -178,7 +177,9 @@ class TaskGroupSerializer(ModelSerializer):
             "completed",
             "canceled",
             "failed",
+            "canceling",
             "group_progress_reports",
+            "tasks",
         )
 
 
