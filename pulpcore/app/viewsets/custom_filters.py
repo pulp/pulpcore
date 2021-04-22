@@ -40,7 +40,7 @@ class ReservedResourcesFilter(Filter):
         except Resolver404:
             raise serializers.ValidationError(detail=_("URI not valid: {u}").format(u=value))
 
-        return qs.filter(reserved_resources_record__resource=value)
+        return qs.filter(reserved_resources_record__contains=[value])
 
 
 class CreatedResourcesFilter(Filter):

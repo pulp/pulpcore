@@ -64,6 +64,16 @@ this is accomplished.
 
 See :class:`~pulpcore.plugin.tasking.dispatch` for more details.
 
+.. note::
+
+   The arguments provided to a task must be JSON serializable, but may contain instances of
+   `uuid.UUID`.
+
+.. note::
+
+   You should always prefer handing primary keys instead of serialized instances of ORM objects to
+   a task.
+
 .. code-block:: python
 
         # We recommend using POST for any endpoints that kick off task.

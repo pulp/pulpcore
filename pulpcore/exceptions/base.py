@@ -62,3 +62,7 @@ class ResourceImmutableError(PulpException):
             resource=str(self.model.pk), type=type(self.model).__name__
         )
         return msg
+
+
+class AdvisoryLockError(Exception):
+    """Exception to signal that a lock could not be acquired."""

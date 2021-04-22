@@ -17,7 +17,7 @@ class ProgressReportSerializer(ModelSerializer):
     state = serializers.CharField(
         help_text=_(
             "The current state of the progress report. The possible values are:"
-            " 'waiting', 'skipped', 'running', 'completed', 'failed' and 'canceled'."
+            " 'waiting', 'skipped', 'running', 'completed', 'failed', 'canceled' and 'canceling'."
             " The default is 'waiting'."
         ),
         read_only=True,
