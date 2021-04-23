@@ -337,6 +337,10 @@ class ContentSummarySerializer(serializers.Serializer):
 class RepositoryVersionSerializer(ModelSerializer, NestedHyperlinkedModelSerializer):
     pulp_href = RepositoryVersionIdentityField()
     number = serializers.IntegerField(read_only=True)
+    repository = DetailRelatedField(
+        view_name_pattern=r"repositories(-.*/.*)?-detail",
+        read_only=True,
+    )
     base_version = RepositoryVersionRelatedField(
         required=False,
         help_text=_(
@@ -357,6 +361,7 @@ class RepositoryVersionSerializer(ModelSerializer, NestedHyperlinkedModelSeriali
         fields = ModelSerializer.Meta.fields + (
             "pulp_href",
             "number",
+            "repository",
             "base_version",
             "content_summary",
         )
