@@ -18,58 +18,13 @@ Fedora, CentOS, and Mac OSX.
 Ansible Installation (Recommended)
 ----------------------------------
 
-You can use the Pulp 3 Ansible Installer to install Pulp and any content plugins that you want.
-For comprehensive instructions on using the Pulp Ansible installer, see the
+The Pulp 3 Ansible Installer is a collection of Ansible roles designed to automate the installation of Pulp and any content plugins that you want.
+
+You can customize and configure your Pulp deployment through the Ansible variables for each role.
+
+For comprehensive and up-to-date instructions about using the Pulp Ansible installer, see the
 `Pulp Installer documentation <https://pulp-installer.readthedocs.io/>`__.
 
-The examples in this section provide an overview but do not fully describe all the considerations. 
-
-For example if your host is in your Ansible inventory as ``myhost`` you
-can install onto it with:
-
-.. code-block:: bash
-
-    ansible-galaxy install geerlingguy.postgresql
-    ansible-galaxy collection install pulp.pulp_installer
-
-Create your pulp_install.yml playbook to use with the installer (Uncomment the desired plugins below):
-
-.. code-block:: yaml
-
-   ---
-   - hosts: all
-     vars:
-       pulp_settings:
-         secret_key: << YOUR SECRET HERE >>
-         content_origin: "http://{{ ansible_fqdn }}"
-       pulp_default_admin_password: << YOUR SECRET HERE >>
-       pulp_install_plugins:
-         # galaxy-ng: {}
-         # pulp-ansible: {}
-         # pulp-certguard: {}
-         # pulp-container: {}
-         # pulp-cookbook: {}
-         # pulp-deb: {}
-         # pulp-file: {}
-         # pulp-gem: {}
-         # pulp-maven: {}
-         # pulp-npm: {}
-         # pulp-python: {}
-         # pulp-rpm: {}
-     roles:
-       - pulp.pulp_installer.pulp_all_services
-     environment:
-       DJANGO_SETTINGS_MODULE: pulpcore.app.settings
-
-Then install it onto ``myhost`` with:
-
-.. code-block:: bash
-
-    ansible-playbook pulp_install.yaml -l myhost
-
-
-For learning more about the ansible roles to install Pulp 3 please refer to
-`Pulp 3 Ansible Installer <https://pulp-installer.readthedocs.io/>`__.
 
 PyPI Installation
 -----------------
