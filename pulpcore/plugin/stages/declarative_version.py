@@ -8,8 +8,12 @@ from .artifact_stages import (
     QueryExistingArtifacts,
     RemoteArtifactSaver,
 )
-from .association_stages import ContentAssociation, ContentUnassociation
-from .content_stages import ContentSaver, QueryExistingContents, ResolveContentFutures
+from .content_stages import (
+    ContentAssociation,
+    ContentSaver,
+    QueryExistingContents,
+    ResolveContentFutures,
+)
 
 
 class DeclarativeVersion:
@@ -141,9 +145,7 @@ class DeclarativeVersion:
             with self.repository.new_version() as new_version:
                 loop = asyncio.get_event_loop()
                 stages = self.pipeline_stages(new_version)
-                stages.append(ContentAssociation(new_version))
-                if self.mirror:
-                    stages.append(ContentUnassociation(new_version))
+                stages.append(ContentAssociation(new_version, self.mirror))
                 stages.append(EndStage())
                 pipeline = create_pipeline(stages)
                 loop.run_until_complete(pipeline)
