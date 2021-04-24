@@ -7,8 +7,7 @@ Plugin writers can use the Stages API to create a high-performance, download-and
 to make writing sync code easier. There are several parts to the API:
 
 1. :ref:`declarative-version` is a generic pipeline useful for most synchronization use cases.
-2. The builtin Stages including :ref:`artifact-stages`, :ref:`content-stages`, and
-   :ref:`content-association-stages`.
+2. The builtin Stages including :ref:`artifact-stages` and :ref:`content-stages`.
 3. The :ref:`stages-api`, which allows you to build custom stages and pipelines.
 
 
@@ -67,13 +66,4 @@ Content Related Stages
 
 .. autoclass:: pulpcore.plugin.stages.ResolveContentFutures
 
-
-.. _content-association-stages:
-
-Content Association and Unassociation Stages
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
 .. autoclass:: pulpcore.plugin.stages.ContentAssociation
-
-.. autoclass:: pulpcore.plugin.stages.ContentUnassociation
-
