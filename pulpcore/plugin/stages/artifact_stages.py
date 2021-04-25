@@ -329,7 +329,8 @@ class RemoteArtifactSaver(Stage):
                         break
                 else:
                     remote_artifact = self._create_remote_artifact(d_artifact, content_artifact)
-                    needed_ras[remote_artifact.sha256] = remote_artifact
+                    key = f"{str(content_artifact.pk)}-{str(d_artifact.remote.pk)}"
+                    needed_ras[key] = remote_artifact
 
         return list(needed_ras.values())
 
