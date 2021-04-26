@@ -73,6 +73,10 @@ if [[ "$TEST" == "pulp" || "$TEST" == "performance" || "$TEST" == "upgrade" || "
     env: {BASE_URL: "http://pulp-fixtures:8080"}' vars/main.yaml
 fi
 
+if [[ "${WORKERSTYLE:-old}" == "new" ]]; then
+  sed -i -e '/^pulp_settings/s/}$/, "use_new_worker_type": true}/' vars/main.yaml
+fi
+
 if [ "$TEST" = "s3" ]; then
   export MINIO_ACCESS_KEY=AKIAIT2Z5TDYPX3ARJBA
   export MINIO_SECRET_KEY=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
