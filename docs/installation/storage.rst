@@ -100,4 +100,4 @@ Configuring Pulp to use Azure Blob storage
       AZURE_LOCATION = 'the folder within the container where your pulp objects will be stored'
 
   For a comprehensive overview of all possible options for the Azure Blob storage backend see the `django-storages[azure] documents
-  <https://django-storages.readthedocs.io/en/latest/backends/azure.html>_`
+  <https://django-storages.readthedocs.io/en/latest/backends/azure.html>`_.
