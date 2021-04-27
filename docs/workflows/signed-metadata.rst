@@ -84,6 +84,11 @@ The example below demonstrates how a signing service can be created using ``gpg`
        runs additional checks in order to prevent saving invalid scripts to the database.
        This feature enables administrators to validate their signing scripts in advance.
 
+   .. note::
+
+      You can use `pulpcore-manager add-signing-service` to add a ``SigningService``.
+      This command is however still in tech-preview.
+
 4. Retrieve and check the saved signing service via REST API::
 
        $ http :24817/pulp/api/v3/signing-services/
