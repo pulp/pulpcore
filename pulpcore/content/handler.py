@@ -118,6 +118,7 @@ class Handler:
 
         if self.distribution_model is None:
             base_paths = list(BaseDistribution.objects.values_list("base_path", flat=True))
+            base_paths.extend(list(Distribution.objects.values_list("base_path", flat=True)))
         else:
             base_paths = list(self.distribution_model.objects.values_list("base_path", flat=True))
         directory_list = ["{}/".format(base_path) for base_path in base_paths]
