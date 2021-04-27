@@ -26,9 +26,11 @@ export FUNC_TEST_SCRIPT=$PWD/.github/workflows/scripts/func_test_script.sh
 export DJANGO_SETTINGS_MODULE=pulpcore.app.settings
 export PULP_SETTINGS=$PWD/.ci/ansible/settings/settings.py
 
+export PULP_URL="http://pulp"
+
 if [[ "$TEST" = "docs" || "$TEST" = "publish" ]]; then
   cd docs
-  make PULP_URL="http://pulp" html
+  make PULP_URL="$PULP_URL" html
   cd ..
 
   echo "Validating OpenAPI schema..."

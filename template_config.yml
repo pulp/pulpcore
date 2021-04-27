@@ -10,6 +10,7 @@ black: true
 check_commit_message: true
 check_gettext: true
 check_manifest: true
+check_openapi_schema: true
 check_stray_pulpcore_imports: false
 cherry_pick_automation: false
 coverage: true
