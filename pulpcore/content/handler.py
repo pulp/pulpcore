@@ -25,7 +25,6 @@ from django.db import (  # noqa: E402: module level not at top of file
 )
 from pulpcore.app.models import (  # noqa: E402: module level not at top of file
     Artifact,
-    BaseDistribution,
     ContentArtifact,
     Distribution,
     Publication,
@@ -118,8 +117,7 @@ class Handler:
         self._reset_db_connection()
 
         if self.distribution_model is None:
-            base_paths = list(BaseDistribution.objects.values_list("base_path", flat=True))
-            base_paths.extend(list(Distribution.objects.values_list("base_path", flat=True)))
+            base_paths = list(Distribution.objects.values_list("base_path", flat=True))
         else:
             base_paths = list(self.distribution_model.objects.values_list("base_path", flat=True))
         directory_list = ["{}/".format(base_path) for base_path in base_paths]
@@ -178,23 +176,21 @@ class Handler:
         """
         base_paths = cls._base_paths(path)
         if cls.distribution_model is None:
-            for model_class in [BaseDistribution, Distribution]:
-                try:
-                    return model_class.objects.get(base_path__in=base_paths).cast()
-                except ObjectDoesNotExist:
-                    log.debug(
-                        _("{model_name} not matched for {path} using: {base_paths}").format(
-                            model_name=model_class.__name__, path=path, base_paths=base_paths
-                        )
+            try:
+                return Distribution.objects.get(base_path__in=base_paths).cast()
+            except ObjectDoesNotExist:
+                log.debug(
+                    _("Distribution not matched for {path} using: {base_paths}").format(
+                        path=path, base_paths=base_paths
                     )
+                )
         else:
             try:
-                model_class = cls.distribution_model
                 return cls.distribution_model.objects.get(base_path__in=base_paths)
             except ObjectDoesNotExist:
                 log.debug(
-                    _("{model_name} not matched for {path} using: {base_paths}").format(
-                        model_name=model_class.__name__, path=path, base_paths=base_paths
+                    _("Distribution not matched for {path} using: {base_paths}").format(
+                        path=path, base_paths=base_paths
                     )
                 )
         raise PathNotResolved(path)
@@ -208,7 +204,7 @@ class Handler:
 
         Args:
             request (:class:`aiohttp.web.Request`): A request for a published file.
-            distribution (detail of :class:`pulpcore.plugin.models.BaseDistribution`): The matched
+            distribution (detail of :class:`pulpcore.plugin.models.Distribution`): The matched
                 distribution.
 
         Raises:
@@ -327,15 +323,15 @@ class Handler:
         Match the path and stream results either from the filesystem or by downloading new data.
 
         After deciding the client can access the distribution at ``path``, this function calls
-        :meth:`BaseDistribution.content_handler`. If that function returns a not-None result,
-        it is returned to the client.
+        :meth:`Distribution.content_handler`. If that function returns a not-None result, it is
+        returned to the client.
 
         Then the publication linked to the Distribution is used to determine what content should
         be served. If ``path`` is a directory entry (i.e. not a file), the directory contents
         are served to the client. This method calls
-        :meth:`BaseDistribution.content_handler_list_directory` to acquire any additional entries
-        the Distribution's content_handler might serve in that directory. If there is an Artifact
-        to be served, it is served to the client.
+        :meth:`Distribution.content_handler_list_directory` to acquire any additional entries the
+        Distribution's content_handler might serve in that directory. If there is an Artifact to be
+        served, it is served to the client.
 
         If there's no publication, the above paragraph is applied to the latest repository linked
         to the matched Distribution.

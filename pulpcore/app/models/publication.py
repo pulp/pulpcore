@@ -1,5 +1,3 @@
-from gettext import gettext as _
-
 from django.db import IntegrityError, models, transaction
 
 from .base import MasterModel, BaseModel
@@ -7,7 +5,6 @@ from .content import Artifact, Content, ContentArtifact
 from .repository import Remote, Repository, RepositoryVersion
 from .task import CreatedResource
 from pulpcore.app.files import PulpTemporaryUploadedFile
-from pulpcore.app.loggers import deprecation_logger
 
 
 class PublicationQuerySet(models.QuerySet):
@@ -316,38 +313,10 @@ class BaseDistribution(MasterModel):
     remote = models.ForeignKey(Remote, null=True, on_delete=models.SET_NULL)
 
     def __init__(self, *args, **kwargs):
-        """Initialize a BaseDistribution and emit deprecation warnings"""
-        deprecation_logger.warn(
-            _(
-                "BaseDistribution is deprecated and could be removed as early as pulpcore==3.13; "
-                "use pulpcore.plugin.models.Distribution instead."
-            )
+        raise Exception(
+            "BaseDistribution is no longer supported. "
+            "Please use pulpcore.plugin.models.Distribution instead."
         )
-        return super().__init__(*args, **kwargs)
-
-    def content_handler(self, path):
-        """
-        Handler to serve extra, non-Artifact content for this Distribution
-
-        Args:
-            path (str): The path being requested
-        Returns:
-            None if there is no content to be served at path. Otherwise a
-            aiohttp.web_response.Response with the content.
-        """
-        return None
-
-    def content_handler_list_directory(self, rel_path):
-        """
-        Generate the directory listing entries for content_handler
-
-        Args:
-            rel_path (str): relative path inside the distribution's base_path. For example,
-            the root of the base_path is '', a subdir within the base_path is 'subdir/'.
-        Returns:
-            Set of strings for the extra entries in rel_path
-        """
-        return set()
 
 
 class Distribution(MasterModel):
@@ -414,36 +383,3 @@ class Distribution(MasterModel):
             Set of strings for the extra entries in rel_path
         """
         return set()
-
-
-class PublicationDistribution(BaseDistribution):
-    """
-    Define how Pulp's content app will serve a Publication.
-
-    Relations:
-        publication (models.ForeignKey): Publication to be served.
-    """
-
-    publication = models.ForeignKey(Publication, null=True, on_delete=models.SET_NULL)
-
-    class Meta:
-        abstract = True
-
-
-class RepositoryVersionDistribution(BaseDistribution):
-    """
-    Define how Pulp's content app will serve a RepositoryVersion or Repository.
-
-    The ``repository`` and ``repository_version`` fields cannot be used together.
-
-    Relations:
-        repository (models.ForeignKey): The latest RepositoryVersion for this Repository will be
-            served.
-        repository_version (models.ForeignKey): RepositoryVersion to be served.
-    """
-
-    repository = models.ForeignKey(Repository, null=True, on_delete=models.SET_NULL)
-    repository_version = models.ForeignKey(RepositoryVersion, null=True, on_delete=models.SET_NULL)
-
-    class Meta:
-        abstract = True
