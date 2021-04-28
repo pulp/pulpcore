@@ -2,7 +2,7 @@
 # were not present before running plugin-template have been added with their default values.
 
 additional_plugins:
-- branch: master
+- branch: 1.6
   name: pulp_file
 - branch: master
   name: pulp-certguard
