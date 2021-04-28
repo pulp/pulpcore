@@ -29,8 +29,11 @@ TASK_TIMEOUT = -1  # -1 for infinite timeout
 
 def _acquire_worker(resources):
     """
-    Attempts to acquire a worker for a set of resource urls. If no worker has any of those resources
-    reserved, then the first available worker is returned
+    Attempts to acquire a worker for a set of resource urls. If no worker has any of those
+    resources reserved, then the first available worker is returned.
+
+    Must be done in a transaction, and locks the worker in question until the end of the
+    transaction.
 
     Arguments:
         resources (list): a list of resource urls
@@ -43,25 +46,33 @@ def _acquire_worker(resources):
     """
     # Find a worker who already has one of the reservations, it is safe to send this work to them
     try:
-        worker = Worker.objects.filter(reservations__resource__in=resources).distinct().get()
+        return (
+            Worker.objects.select_for_update()
+            .filter(pk__in=Worker.objects.filter(reservations__resource__in=resources))
+            .get()
+        )
     except Worker.MultipleObjectsReturned:
         raise Worker.DoesNotExist
     except Worker.DoesNotExist:
         pass
-    else:
-        return worker
 
     # Otherwise, return any available worker at random
     workers_qs = Worker.objects.online_workers().exclude(
         name=constants.TASKING_CONSTANTS.RESOURCE_MANAGER_WORKER_NAME
     )
-    workers_qs_with_counts = workers_qs.annotate(models.Count("reservations"))
-    try:
-        # A randomly-selected Worker instance that has zero ReservedResource entries associated with it.
-        return workers_qs_with_counts.filter(reservations__count=0).order_by("?")[0]
-    except IndexError:
+    workers_without_res = workers_qs.annotate(models.Count("reservations")).filter(
+        reservations__count=0
+    )
+    # A randomly-selected Worker instance that has zero ReservedResource entries.
+    worker = (
+        Worker.objects.select_for_update().filter(pk__in=workers_without_res).order_by("?").first()
+    )
+
+    if worker is None:
         # If all Workers have at least one ReservedResource entry.
-        raise Worker.model.DoesNotExist()
+        raise Worker.DoesNotExist()
+
+    return worker
 
 
 def _queue_reserved_task(func, inner_task_id, resources, inner_args, inner_kwargs, options):
@@ -121,15 +132,11 @@ def _queue_reserved_task(func, inner_task_id, resources, inner_args, inner_kwarg
                 return
 
         try:
-            worker = _acquire_worker(resources)
-        except Worker.DoesNotExist:
-            # no worker is ready so we need to wait
-            time.sleep(0.25)
-            continue
-
-        try:
-            # Attempt to lock all resources by their urls. Must be atomic to prevent deadlocks.
             with transaction.atomic():
+                # lock the worker - there is a similar lock in mark_worker_offline()
+                worker = _acquire_worker(resources)
+
+                # Attempt to lock all resources by their urls. Must be atomic to prevent deadlocks.
                 for resource in resources:
                     if worker.reservations.filter(resource=resource).exists():
                         reservation = worker.reservations.get(resource=resource)
@@ -138,8 +145,8 @@ def _queue_reserved_task(func, inner_task_id, resources, inner_args, inner_kwarg
                             worker=worker, resource=resource
                         )
                     TaskReservedResource.objects.create(resource=reservation, task=task_status)
-        except IntegrityError:
-            # we have a worker but we can't create the reservations so wait
+        except (Worker.DoesNotExist, IntegrityError):
+            # if worker is ready, or we have a worker but we can't create the reservations, wait
             time.sleep(0.25)
         else:
             # we have a worker with the locks
