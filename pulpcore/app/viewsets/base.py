@@ -326,12 +326,10 @@ class NamedModelViewSet(viewsets.GenericViewSet):
                 filters[lookup] = self.kwargs[key]
             qs = qs.filter(**filters)
 
-        try:
-            permission_name = self.queryset_filtering_required_permission
-        except AttributeError:
-            pass
-        else:
+        permission_name = getattr(self, "queryset_filtering_required_permission", None)
+        if permission_name:
             qs = get_objects_for_user(self.request.user, permission_name, klass=qs)
+
         return qs
 
     @classmethod
