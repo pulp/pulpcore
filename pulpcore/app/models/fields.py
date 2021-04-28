@@ -1,11 +1,19 @@
+import logging
 import os
 from gettext import gettext as _
 
+from cryptography.fernet import Fernet
 from django.conf import settings
+from django.core.exceptions import ImproperlyConfigured
 from django.db.models import FileField, Lookup
-from django.db.models.fields import Field
+from django.db.models.fields import Field, TextField
+from django.utils.encoding import force_bytes, force_str
+from django.utils.functional import cached_property
+
 
 from pulpcore.app.files import TemporaryDownloadedFile
+
+_logger = logging.getLogger(__name__)
 
 
 class ArtifactFileField(FileField):
@@ -66,6 +74,34 @@ class ArtifactFileField(FileField):
             file._committed = False
 
         return super().pre_save(model_instance, add)
+
+
+class EncryptedTextField(TextField):
+    """A field mixin that encrypts text using settings.DB_ENCRYPTION_KEY."""
+
+    def __init__(self, *args, **kwargs):
+        if kwargs.get("primary_key"):
+            raise ImproperlyConfigured("EncryptedTextField does not support primary_key=True.")
+        if kwargs.get("unique"):
+            raise ImproperlyConfigured("EncryptedTextField does not support unique=True.")
+        if kwargs.get("db_index"):
+            raise ImproperlyConfigured("EncryptedTextField does not support db_index=True.")
+        super().__init__(*args, **kwargs)
+
+    @cached_property
+    def _fernet(self):
+        _logger.debug(f"Loading encryption key from {settings.DB_ENCRYPTION_KEY}")
+        with open(settings.DB_ENCRYPTION_KEY, "rb") as key_file:
+            return Fernet(key_file.read())
+
+    def get_db_prep_save(self, value, connection):
+        value = super().get_db_prep_save(value, connection)
+        if value is not None:
+            return force_str(self._fernet.encrypt(force_bytes(value)))
+
+    def from_db_value(self, value, expression, connection):
+        if value is not None:
+            return force_str(self._fernet.decrypt(force_bytes(value)))
 
 
 @Field.register_lookup

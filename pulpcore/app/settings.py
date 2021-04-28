@@ -17,6 +17,7 @@ from logging import getLogger
 from pathlib import Path
 from pkg_resources import iter_entry_points
 
+from cryptography.fernet import Fernet
 from django.core.exceptions import ImproperlyConfigured
 from django.db import connection
 
@@ -55,6 +56,9 @@ CHUNKED_UPLOAD_DIR = "upload"
 FILE_UPLOAD_HANDLERS = ("pulpcore.app.files.HashingFileUploadHandler",)
 
 SECRET_KEY = True
+
+# Key used to encrypt fields in the database
+DB_ENCRYPTION_KEY = "/etc/pulp/certs/database_fields.symmetric.key"
 
 # Application definition
 
@@ -307,6 +311,20 @@ except NameError:
             "the installer automatically."
         )
     )
+
+if not (
+    Path(sys.argv[0]).name == "sphinx-build"
+    or (len(sys.argv) >= 2 and sys.argv[1] == "collectstatic")
+):
+    try:
+        with open(DB_ENCRYPTION_KEY, "rb") as key_file:
+            Fernet(key_file.read())
+    except Exception as ex:
+        raise ImproperlyConfigured(
+            _("Could not load DB_ENCRYPTION_KEY file '{file}': {err}").format(
+                file=DB_ENCRYPTION_KEY, err=ex
+            )
+        )
 
 # Check legality of ALLOWED_CONTENT_CHECKSUMS post-dynaconf-load, in case it has been overridden
 # in a site-specific location (eg, in /etc/pulp/settings.py)
