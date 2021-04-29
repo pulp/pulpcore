@@ -1,1 +1,0 @@
-Handled a tasking race condition where cleaning up resource reservations sometimes raised an IntegrityError.

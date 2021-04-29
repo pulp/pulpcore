@@ -1,1 +1,0 @@
-Fixed a race condition that sometimes surfaced during handling of reserved resources.
