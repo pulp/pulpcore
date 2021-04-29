@@ -103,7 +103,7 @@ class DistributionFilter(BaseFilterSet):
     pulp_label_select = LabelSelectFilter()
 
     def __init__(self, *args, **kwargs):
-        """ Initialize a DistributionFilter and emit deprecation warnings"""
+        """Initialize a DistributionFilter and emit deprecation warnings"""
         deprecation_logger.warn(
             _(
                 "DistributionFilter is deprecated and could be removed as early as "
@@ -158,7 +158,7 @@ class BaseDistributionViewSet(
     filterset_class = DistributionFilter
 
     def __init__(self, *args, **kwargs):
-        """ Initialize a BaseDistributionViewSet and emit deprecation warnings"""
+        """Initialize a BaseDistributionViewSet and emit deprecation warnings"""
         deprecation_logger.warn(
             _(
                 "BaseDistributionViewSet is deprecated and could be removed as early as "
