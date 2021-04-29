@@ -17,6 +17,30 @@ Changelog
 
 .. towncrier release notes start
 
+3.11.1 (2021-04-29)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fixed a race condition that sometimes surfaced during handling of reserved resources.
+  `#8632 <https://pulp.plan.io/issues/8632>`_
+- Handled a tasking race condition where cleaning up resource reservations sometimes raised an IntegrityError.
+  `#8648 <https://pulp.plan.io/issues/8648>`_
+
+
+Plugin API
+----------
+
+Bugfixes
+~~~~~~~~
+
+- Allow plugins to unset the ``queryset_filtering_required_permission`` attribute in ``NamedModelViewSet``.
+  `#8444 <https://pulp.plan.io/issues/8444>`_
+
+
 3.11.0 (2021-03-15)
 ===================
 REST API
