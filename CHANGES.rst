@@ -722,6 +722,24 @@ Improved Documentation
   `#7555 <https://pulp.plan.io/issues/7555>`_
 
 
+3.7.6 (2021-04-29)
+==================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Backported a fix for on-demand sync/migration of repositories that don't have sha256 checksums.
+  `#8651 <https://pulp.plan.io/issues/8651>`_
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.7.5 (2021-04-12)
 ==================
 REST API
