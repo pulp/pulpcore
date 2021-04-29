@@ -17,6 +17,24 @@ Changelog
 
 .. towncrier release notes start
 
+3.12.2 (2021-04-29)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Backported a fix for on-demand sync/migration of repositories that don't have sha256 checksums.
+  `#8652 <https://pulp.plan.io/issues/8652>`_
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.12.1 (2021-04-20)
 ===================
 REST API
