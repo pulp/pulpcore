@@ -290,7 +290,7 @@ class BaseDistribution(MasterModel):
     remote = models.ForeignKey(Remote, null=True, on_delete=models.SET_NULL)
 
     def __init__(self, *args, **kwargs):
-        """ Initialize a BaseDistribution and emit deprecation warnings"""
+        """Initialize a BaseDistribution and emit deprecation warnings"""
         deprecation_logger.warn(
             _(
                 "BaseDistribution is deprecated and could be removed as early as pulpcore==3.13; "
