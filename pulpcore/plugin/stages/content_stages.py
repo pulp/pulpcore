@@ -234,7 +234,7 @@ class ContentAssociation(Stage):
                         to_delete.remove(d_content.content.pk)
                     except KeyError:
                         to_add.add(d_content.content.pk)
-                        self.put(d_content)
+                        await self.put(d_content)
 
                 if to_add:
                     self.new_version.add_content(Content.objects.filter(pk__in=to_add))
