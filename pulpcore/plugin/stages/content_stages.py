@@ -4,7 +4,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db import IntegrityError, transaction
 from django.db.models import Q
 
-from pulpcore.plugin.models import Content, ContentArtifact, ProgressReport
+from pulpcore.plugin.models import ContentArtifact
 
 from .api import Stage
 
@@ -187,63 +187,3 @@ class ResolveContentFutures(Stage):
         async for d_content in self.items():
             d_content.resolve()
             await self.put(d_content)
-
-
-class ContentAssociation(Stage):
-    """
-    A Stages API stage that associates content units with `new_version`.
-
-    This stage stores all content unit primary keys in memory before running. This is done to
-    compute the units already associated but not received from `self._in_q`. These units are passed
-    via `self._out_q` to the next stage as a :class:`django.db.models.query.QuerySet`.
-
-    This stage creates a ProgressReport named 'Associating Content' that counts the number of units
-    associated. Since it's a stream the total count isn't known until it's finished.
-
-    If `mirror` was enabled, then content units may also be un-assocated (removed) from
-    `new_version`. A ProgressReport named 'Un-Associating Content' is created that counts the number
-    of units un-associated.
-
-    Args:
-        new_version (:class:`~pulpcore.plugin.models.RepositoryVersion`): The repo version this
-            stage associates content with.
-        mirror (bool): Whether or not to "mirror" the stream of DeclarativeContent - whether content
-            not in the stream should be removed from the repository.
-        args: unused positional arguments passed along to :class:`~pulpcore.plugin.stages.Stage`.
-        kwargs: unused keyword arguments passed along to :class:`~pulpcore.plugin.stages.Stage`.
-    """
-
-    def __init__(self, new_version, mirror, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.new_version = new_version
-        self.allow_delete = mirror
-
-    async def run(self):
-        """
-        The coroutine for this stage.
-
-        Returns:
-            The coroutine for this stage.
-        """
-        with ProgressReport(message="Associating Content", code="associating.content") as pb:
-            to_delete = set(self.new_version.content.values_list("pk", flat=True))
-            async for batch in self.batches():
-                to_add = set()
-                for d_content in batch:
-                    try:
-                        to_delete.remove(d_content.content.pk)
-                    except KeyError:
-                        to_add.add(d_content.content.pk)
-                        await self.put(d_content)
-
-                if to_add:
-                    self.new_version.add_content(Content.objects.filter(pk__in=to_add))
-                    pb.increase_by(len(to_add))
-
-            if self.allow_delete:
-                with ProgressReport(
-                    message="Un-Associating Content", code="unassociating.content"
-                ) as pb:
-                    if to_delete:
-                        self.new_version.remove_content(Content.objects.filter(pk__in=to_delete))
-                        pb.increase_by(len(to_delete))
