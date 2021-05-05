@@ -14,6 +14,7 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "pulpcore.app.settings")
 django.setup()
 
 from django.conf import settings  # noqa: E402: module level not at top of file
+from django.contrib.staticfiles import finders  # noqa: E402: module level not at top of file
 from django.core.exceptions import (  # noqa: E402: module level not at top of file
     MultipleObjectsReturned,
     ObjectDoesNotExist,
@@ -22,6 +23,11 @@ from django.db import (  # noqa: E402: module level not at top of file
     connection,
     IntegrityError,
     transaction,
+)
+from django.template.loader import get_template  # noqa: E402
+from django.template.exceptions import (  # noqa: E402: module level not at top of file
+    TemplateDoesNotExist,
+    TemplateSyntaxError,
 )
 from pulpcore.app.models import (  # noqa: E402: module level not at top of file
     Artifact,
@@ -33,7 +39,7 @@ from pulpcore.app.models import (  # noqa: E402: module level not at top of file
 )
 from pulpcore.exceptions import UnsupportedDigestValidationError  # noqa: E402
 
-from jinja2 import Template  # noqa: E402: module level not at top of file
+# from jinja2 import Template  # noqa: E402: module level not at top of file
 
 log = logging.getLogger(__name__)
 
@@ -253,21 +259,16 @@ class Handler:
         Returns:
             String representing HTML of the directory listing.
         """
-        template = Template(
-            """
-        <!DOCTYPE html>
-        <html>
-            <body>
-                <ul>
-                {% for name in dir_list %}
-                    <li><a href="{{ name|e }}">{{ name|e }}</a></li>
-                {% endfor %}
-                </ul>
-            </body>
-        </html>
-        """
-        )
-        return template.render(dir_list=sorted(directory_list))
+        dir_list = sorted(directory_list)
+        dir_list = ["a", "b", 'c&d;+ bl;"eh', "z"]
+        try:
+            template = get_template("content/directory_listing.html")
+        except TemplateDoesNotExist:
+            raise  # TODO: what to do?  Default template, or fail?
+        except TemplateSyntaxError:
+            raise  # TODO: what to do?  Default template, or fail?
+        return template.render(context={"dir_list": dir_list})
+        # return template.render()
 
     async def list_directory(self, repo_version, publication, path):
         """
@@ -354,7 +355,21 @@ class Handler:
             :class:`aiohttp.web.StreamResponse` or :class:`aiohttp.web.FileResponse`: The response
                 streamed back to the client.
         """
-        distro = self._match_distribution(path)
+        try:
+            distro = self._match_distribution(path)
+        except PathNotResolved:
+            log.warn(f"checking for '{path}' under '{settings.STATIC_URL}'")
+            if path.lstrip("/").startswith(settings.STATIC_URL.lstrip("/")):
+                # we've been asked to serve from static content
+                # TODO: serve redirect for S3 storage
+                localpath = finders.find(path.lstrip("/").lstrip(settings.STATIC_URL.lstrip("/")))
+                log.warn(f"Serving path '{path}' from '{localpath}'")
+                if localpath is None:
+                    raise
+                return FileResponse(localpath)
+            else:
+                raise
+
         self._permit(request, distro)
 
         rel_path = path.lstrip("/")

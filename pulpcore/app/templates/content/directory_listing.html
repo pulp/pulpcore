@@ -1,0 +1,14 @@
+<!DOCTYPE html>{% load static %}
+<html>
+    <head>
+        <link rel="stylesheet" href="{% static 'directory_listing.css' %}">
+    </head>
+    <body>
+        <ul>{% autoescape on %}
+        {% for name in dir_list %}
+            <li><a href="{{ name }}">{{ name }}</a></li>
+        {% endfor %}
+        </ul>{% endautoescape %}
+    </body>
+</html>
+{# vim: set syntax=htmldjango et sw=4 ts=8: #}
