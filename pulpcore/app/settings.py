@@ -318,7 +318,9 @@ FORBIDDEN_CHECKSUMS = set(constants.ALL_KNOWN_CONTENT_CHECKSUMS).difference(
     ALLOWED_CONTENT_CHECKSUMS
 )
 
-if not (len(sys.argv) >= 2 and sys.argv[1] in ["handle-artifact-checksums", "migrate"]):
+_SKIPPED_COMMANDS_FOR_CONTENT_CHECKS = ["handle-artifact-checksums", "migrate", "collectstatic"]
+
+if not (len(sys.argv) >= 2 and sys.argv[1] in _SKIPPED_COMMANDS_FOR_CONTENT_CHECKS):
     try:
         with connection.cursor() as cursor:
             for checksum in ALLOWED_CONTENT_CHECKSUMS:
