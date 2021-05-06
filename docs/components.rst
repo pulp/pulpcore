@@ -73,7 +73,7 @@ Worker
 Resource Manager
   A different type of Pulp worker that plays a coordinating role for the tasking system. You must
   run exactly one of these for Pulp to operate correctly. The ``resource-manager`` is identified by
-  configuring using exactly the name ``resource-manager`` with the ``-n 'resource_manager'`` option.
+  configuring using exactly the name ``resource-manager`` with the ``--resource-manager`` option.
 
   *N* ``resource-manager`` rq processes can be started with 1 being active and *N-1* being passive.
   The *N-1* will exit and should be configured to auto-relaunch with either systemd, supervisord, or

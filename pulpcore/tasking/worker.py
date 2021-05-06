@@ -61,16 +61,16 @@ class PulpWorker(Worker):
 
     def __init__(self, queues, **kwargs):
 
-        if kwargs["name"]:
+        if kwargs.get("name"):
             kwargs["name"] = kwargs["name"].replace("%h", socket.getfqdn())
         else:
             kwargs["name"] = "{pid}@{hostname}".format(pid=os.getpid(), hostname=socket.getfqdn())
 
         if kwargs["name"] == TASKING_CONSTANTS.RESOURCE_MANAGER_WORKER_NAME:
-            queues = [Queue("resource-manager", connection=kwargs["connection"])]
+            queues = [Queue("resource-manager", connection=kwargs.get("connection"))]
             self.is_resource_manager = True
         else:
-            queues = [Queue(kwargs["name"], connection=kwargs["connection"])]
+            queues = [Queue(kwargs["name"], connection=kwargs.get("connection"))]
             self.is_resource_manager = False
 
         kwargs["default_worker_ttl"] = WORKER_TTL
