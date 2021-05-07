@@ -1,0 +1,2 @@
+Refactored 0061_call_handle_artifact_checksums_command migration to use ``get_model()`` to protect
+against future model changes.
