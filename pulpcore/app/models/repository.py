@@ -527,8 +527,6 @@ class RepositoryVersion(BaseModel):
     complete = models.BooleanField(db_index=True, default=False)
     base_version = models.ForeignKey("RepositoryVersion", null=True, on_delete=models.SET_NULL)
 
-    objects = RepositoryVersionQuerySet.as_manager()
-
     class Meta:
         default_related_name = "versions"
         unique_together = ("repository", "number")
