@@ -173,7 +173,8 @@ class Command(BaseCommand):
         for checksum in settings.ALLOWED_CONTENT_CHECKSUMS:
             params = {f"{checksum}__isnull": True}
             artifacts_qs = Artifact.objects.filter(**params)
-            for a in artifacts_qs:
+            artifacts = []
+            for a in artifacts_qs.iterator():
                 hasher = pulp_hashlib.new(checksum)
                 try:
                     for chunk in a.file.chunks(CHUNK_SIZE):
@@ -185,10 +186,15 @@ class Command(BaseCommand):
                     restored = self._download_artifact(a, checksum, file_path)
                     if not restored:
                         hrefs.add(file_path)
+                artifacts.append(a)
 
-            if artifacts_qs:
-                self.stdout.write(_("Updating artifacts with missing checksum {}").format(checksum))
-                Artifact.objects.bulk_update(objs=artifacts_qs, fields=[checksum], batch_size=1000)
+                if len(artifacts) >= 1000:
+                    Artifact.objects.bulk_update(objs=artifacts, fields=[checksum], batch_size=1000)
+                    artifacts.clear()
+
+            if artifacts:
+                Artifact.objects.bulk_update(objs=artifacts, fields=[checksum])
+
         if hrefs:
             raise CommandError(
                 _("Some files that were missing could not be restored: {}").format(hrefs)
@@ -201,7 +207,7 @@ class Command(BaseCommand):
             search_params = {f"{checksum}__isnull": False}
             update_params = {f"{checksum}": None}
             artifacts_qs = Artifact.objects.filter(**search_params)
-            if artifacts_qs:
+            if artifacts_qs.exists():
                 self.stdout.write(
                     _("Removing forbidden checksum {} from database").format(checksum)
                 )
