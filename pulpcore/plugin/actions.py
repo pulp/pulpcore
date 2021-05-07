@@ -1,3 +1,4 @@
+from django.db import DatabaseError
 from drf_spectacular.utils import extend_schema
 from rest_framework.decorators import action
 
@@ -39,6 +40,11 @@ class ModifyRepositoryActionMixin:
         if "add_content_units" in request.data:
             for url in request.data["add_content_units"]:
                 content = self.get_resource(url, Content)
+                try:
+                    content.touch()
+                except DatabaseError:
+                    # content has since been removed. call get_url to raise an exception.
+                    content = self.get_resource(url, Content)
                 add_content_units.append(content.pk)
 
         if "remove_content_units" in request.data:

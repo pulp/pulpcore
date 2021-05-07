@@ -2,6 +2,7 @@ from collections import namedtuple
 
 from drf_spectacular.utils import extend_schema
 
+from django.db import DatabaseError
 from django.db.utils import IntegrityError
 
 from pulpcore.app import tasks
@@ -109,7 +110,12 @@ class SingleArtifactContentUploadViewSet(DefaultDeferredContextMixin, ContentVie
                 artifact.save()
             except IntegrityError:
                 # if artifact already exists, let's use it
-                artifact = Artifact.objects.get(sha256=artifact.sha256)
+                try:
+                    artifact = Artifact.objects.get(sha256=artifact.sha256)
+                    artifact.touch()
+                except (Artifact.DoesNotExist, DatabaseError):
+                    # the artifact has since been removed from when we first attempted to save it
+                    artifact.save()
 
             task_payload["artifact"] = ArtifactSerializer(
                 artifact, context={"request": request}
