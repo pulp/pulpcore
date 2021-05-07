@@ -160,6 +160,7 @@ class Artifact(HandleTempFilesMixin, BaseModel):
         sha256 (models.CharField): The SHA-256 checksum of the file (REQUIRED).
         sha384 (models.CharField): The SHA-384 checksum of the file.
         sha512 (models.CharField): The SHA-512 checksum of the file.
+        timestamp_of_interest (models.DateTimeField): timestamp that prevents orphan cleanup
     """
 
     def storage_path(self, name):
@@ -180,6 +181,7 @@ class Artifact(HandleTempFilesMixin, BaseModel):
     sha256 = models.CharField(max_length=64, null=False, unique=True, db_index=True)
     sha384 = models.CharField(max_length=96, null=True, unique=True, db_index=True)
     sha512 = models.CharField(max_length=128, null=True, unique=True, db_index=True)
+    timestamp_of_interest = models.DateTimeField(auto_now=True)
 
     objects = BulkCreateManager()
 
@@ -331,6 +333,10 @@ class Artifact(HandleTempFilesMixin, BaseModel):
         temp_file.delete()
         return artifact
 
+    def touch(self):
+        """Update timestamp_of_interest."""
+        self.save(update_fields=["timestamp_of_interest"])
+
 
 class PulpTemporaryFile(HandleTempFilesMixin, BaseModel):
     """
@@ -426,6 +432,7 @@ class Content(MasterModel, QueryMixin):
 
     Fields:
         upstream_id (models.UUIDField) : identifier of content imported from an 'upstream' Pulp
+        timestamp_of_interest (models.DateTimeField): timestamp that prevents orphan cleanup
 
     Relations:
 
@@ -437,6 +444,7 @@ class Content(MasterModel, QueryMixin):
     upstream_id = models.UUIDField(null=True)  # Used by PulpImport/Export processing
 
     _artifacts = models.ManyToManyField(Artifact, through="ContentArtifact")
+    timestamp_of_interest = models.DateTimeField(auto_now=True)
 
     objects = BulkCreateManager()
 
@@ -494,6 +502,10 @@ class Content(MasterModel, QueryMixin):
             An un-saved instance of :class:`~pulpcore.plugin.models.Content` sub-class.
         """
         raise NotImplementedError()
+
+    def touch(self):
+        """Update timestamp_of_interest."""
+        self.save(update_fields=["timestamp_of_interest"])
 
 
 class ContentArtifact(BaseModel, QueryMixin):

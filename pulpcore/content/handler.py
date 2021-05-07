@@ -23,6 +23,7 @@ from django.core.exceptions import (  # noqa: E402: module level not at top of f
 )
 from django.db import (  # noqa: E402: module level not at top of file
     connection,
+    DatabaseError,
     IntegrityError,
     transaction,
 )
@@ -648,7 +649,16 @@ class Handler:
                 with transaction.atomic():
                     artifact.save()
             except IntegrityError:
-                artifact = Artifact.objects.get(artifact.q())
+                try:
+                    artifact = Artifact.objects.get(artifact.q())
+                    artifact.touch()
+                except (Artifact.DoesNotExist, DatabaseError):
+                    # it's possible that orphan cleanup deleted the artifact
+                    # so fall back to creating a new artifact again
+                    artifact = Artifact(
+                        **download_result.artifact_attributes, file=download_result.path
+                    )
+                    artifact.save()
             update_content_artifact = True
             if content_artifact._state.adding:
                 # This is the first time pull-through content was requested.
