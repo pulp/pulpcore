@@ -173,6 +173,8 @@ def _queue_reserved_task(func, inner_task_id, resources, inner_args, inner_kwarg
 
 class NonJSONWarningEncoder(json.JSONEncoder):
     def default(self, obj):
+        if isinstance(obj, uuid.UUID):
+            return str(obj)
         try:
             return json.JSONEncoder.default(self, obj)
         except TypeError:
@@ -180,7 +182,7 @@ class NonJSONWarningEncoder(json.JSONEncoder):
                 _(
                     "The argument {obj} is of type {type}, which is not JSON serializable. The use "
                     "of non JSON serializable objects for `args` and `kwargs` to tasks is "
-                    "deprecated as of pulpcore==3.12. See the traceback below for more info."
+                    "deprecated as of pulpcore==3.12."
                 ).format(obj=obj, type=type(obj))
             )
             return None
