@@ -1,4 +1,5 @@
 # Support plugins dispatching tasks
+from pulpcore.tasking.tasks import enqueue_with_reservation  # noqa
 from pulpcore.tasking.tasks import dispatch  # noqa
 
 # Plugin export tasks
