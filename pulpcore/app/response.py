@@ -23,9 +23,5 @@ class OperationPostponedResponse(Response):
                 the response.
             request (rest_framework.request.Request): Request used to generate the pulp_href urls
         """
-        try:
-            pk = task.id  # task is of type RQ.job
-        except AttributeError:
-            pk = task.pk  # task is of type pulpcore.models.Task
-        resp = {"task": reverse("tasks-detail", args=[pk], request=None)}
+        resp = {"task": reverse("tasks-detail", args=[task.pk], request=None)}
         super().__init__(data=resp, status=202)

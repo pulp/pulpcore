@@ -188,50 +188,6 @@ class NonJSONWarningEncoder(json.JSONEncoder):
             return None
 
 
-def enqueue_with_reservation(
-    func, resources, args=None, kwargs=None, options=None, task_group=None
-):
-    """
-    Enqueue a message to Pulp workers with a reservation.
-
-    This method provides normal enqueue functionality, while also requesting necessary locks for
-    serialized urls. No two tasks that claim the same resource can execute concurrently. It
-    accepts resources which it transforms into a list of urls (one for each resource).
-
-    This does not dispatch the task directly, but instead promises to dispatch it later by
-    encapsulating the desired task through a call to a :func:`_queue_reserved_task` task. See
-    the docblock on :func:`_queue_reserved_task` for more information on this.
-
-    This method creates a :class:`pulpcore.app.models.Task` object. Pulp expects to poll on a
-    task just after calling this method, so a Task entry needs to exist for it
-    before it returns.
-
-    Args:
-        func (callable): The function to be run by RQ when the necessary locks are acquired.
-        resources (list): A list of resources to reserve guaranteeing that only one task reserves
-                          these resources. Each resource can be either a (str) resource URL or a
-                          (django.models.Model) resource instance.
-        args (tuple): The positional arguments to pass on to the task.
-        kwargs (dict): The keyword arguments to pass on to the task.
-        options (dict): The options to be passed on to the task.
-        task_group (pulpcore.app.models.TaskGroup): A TaskGroup to add the created Task to.
-
-    Returns (rq.job.job): An RQ Job instance as returned by RQ's enqueue function
-
-    Raises:
-        ValueError: When `resources` is an unsupported type.
-    """
-    deprecation_logger.warn(
-        _(
-            "`enqueue_with_reservation` is deprecated and could be removed as early as "
-            "pulpcore==3.13; use pulpcore.plugin.tasking.dispatch instead."
-        )
-    )
-    return _enqueue_with_reservation(
-        func, resources, args=args, kwargs=kwargs, options=options, task_group=task_group
-    )
-
-
 def _enqueue_with_reservation(
     func, resources, args=None, kwargs=None, options=None, task_group=None
 ):
