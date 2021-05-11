@@ -355,7 +355,7 @@ class PulpSchemaGenerator(SchemaGenerator):
         """Iterate endpoints generating per method path operations."""
         result = {}
         self._initialise_endpoints()
-        endpoints = self._get_paths_and_endpoints(None if public else input_request)
+        endpoints = self._get_paths_and_endpoints()
 
         if spectacular_settings.SCHEMA_PATH_PREFIX is None:
             # estimate common path prefix if none was given. only use it if we encountered more
@@ -382,17 +382,10 @@ class PulpSchemaGenerator(SchemaGenerator):
             if plugins and plugin not in plugins:  # plugin filter
                 continue
 
-            if not self.has_view_permissions(path, method, view):
+            view.request = spectacular_settings.GET_MOCK_REQUEST(method, path, view, input_request)
+
+            if not (public or self.has_view_permissions(path, method, view)):
                 continue
-
-            if input_request:
-                request = input_request
-            else:
-                # mocked request to allow certain operations in get_queryset and get_serializer
-                # without exceptions being raised due to no request.
-                request = spectacular_settings.GET_MOCK_REQUEST(method, path, view, input_request)
-
-            view.request = request
 
             schema = view.schema
 
@@ -406,11 +399,11 @@ class PulpSchemaGenerator(SchemaGenerator):
                 continue
 
             # Removes html tags from OpenAPI schema
-            if request is None or "include_html" not in request.query_params:
+            if input_request is None or "include_html" not in input_request.query_params:
                 operation["description"] = strip_tags(operation["description"])
 
             # operationId as actions [list, read, sync, modify, create, delete, ...]
-            if request and "bindings" in request.query_params:
+            if input_request and "bindings" in input_request.query_params:
                 tokenized_path = schema._tokenize_path()
                 tokenized_path = "_".join(
                     [t.replace("-", "_").replace("/", "_").lower() for t in tokenized_path]
