@@ -3,10 +3,11 @@ import os
 
 from django.core.files.base import ContentFile
 from django.db import models
+from django.db.models.signals import post_delete
+from django.dispatch import receiver
 from rest_framework import serializers
 
 from pulpcore.app.models import BaseModel, fields, storage
-from pulpcore.app.models.content import HandleTempFilesMixin
 
 
 class Upload(BaseModel):
@@ -38,7 +39,7 @@ class Upload(BaseModel):
         upload_chunk.file.save(filename, ContentFile(chunk_read))
 
 
-class UploadChunk(HandleTempFilesMixin, BaseModel):
+class UploadChunk(BaseModel):
     """
     A chunk for an uploaded file.
 
@@ -65,13 +66,7 @@ class UploadChunk(HandleTempFilesMixin, BaseModel):
     offset = models.BigIntegerField()
     size = models.BigIntegerField()
 
-    def delete(self, *args, **kwargs):
-        """
-        Delete UploadChunk model and the file associated with the model
 
-        Args:
-            args (list): list of positional arguments for Model.delete()
-            kwargs (dict): dictionary of keyword arguments to pass to Model.delete()
-        """
-        super().delete(*args, **kwargs)
-        self.file.delete(save=False)
+@receiver(post_delete, sender=UploadChunk)
+def upload_chunk_delete(instance, **kwargs):
+    instance.file.delete(save=False)
