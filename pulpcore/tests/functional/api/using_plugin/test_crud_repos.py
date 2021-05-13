@@ -346,3 +346,14 @@ class CRUDRemoteTestCase(unittest.TestCase):
         # verify the delete
         with self.assertRaises(ApiException):
             self.remotes_api.read(self.remote.pulp_href)
+
+    def test_headers(self):
+        # Test that headers value must be a list of dicts
+        data = {"headers": {"Connection": "keep-alive"}}
+        with self.assertRaises(ApiException):
+            self.remotes_api.partial_update(self.remote.pulp_href, data)
+        data = {"headers": [1, 2, 3]}
+        with self.assertRaises(ApiException):
+            self.remotes_api.partial_update(self.remote.pulp_href, data)
+        data = {"headers": [{"Connection": "keep-alive"}]}
+        self.remotes_api.partial_update(self.remote.pulp_href, data)

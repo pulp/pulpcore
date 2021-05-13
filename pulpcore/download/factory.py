@@ -3,6 +3,7 @@ import asyncio
 import atexit
 import copy
 from gettext import gettext as _
+from multidict import MultiDict
 import platform
 from pkg_resources import get_distribution
 import ssl
@@ -14,8 +15,6 @@ import aiohttp
 
 from .http import HttpDownloader
 from .file import FileDownloader
-
-import json
 
 
 PROTOCOL_MAP = {
@@ -124,9 +123,13 @@ class DownloaderFactory:
         if sslcontext:
             tcp_conn_opts["ssl_context"] = sslcontext
 
-        headers = {"User-Agent": user_agent()}
+        headers = MultiDict({"User-Agent": user_agent()})
         if self._remote.headers is not None:
-            headers.update(json.loads(self._remote.headers))
+            for header_dict in self._remote.headers:
+                user_agent_header = header_dict.pop("User-Agent", None)
+                if user_agent_header:
+                    headers["User-Agent"] = f"{headers['User-Agent']}, {user_agent_header}"
+                headers.extend(header_dict)
 
         conn = aiohttp.TCPConnector(**tcp_conn_opts)
         total = self._remote.total_timeout
