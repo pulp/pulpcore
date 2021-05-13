@@ -133,6 +133,7 @@ class AddRemoveContentTestCase(unittest.TestCase):
         * The ``content_removed_summary`` attribute is correct.
         """
         body = gen_file_remote()
+        body.update({"headers": [{"Connection": "keep-alive"}]})
         self.remote.update(self.client.post(FILE_REMOTE_PATH, body))
         sync(self.cfg, self.remote, self.repo)
         repo = self.client.get(self.repo["pulp_href"])
