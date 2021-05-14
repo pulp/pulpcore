@@ -4,7 +4,7 @@ aiodns~=2.0.0
 aiofiles==0.6.0
 backoff~=1.10.0
 click~=7.1.2
-Django~=2.2.23  # LTS version, switch only if we have a compelling reason to
+Django~=3.2.3  # LTS version, switch only if we have a compelling reason to
 django-currentuser~=0.5.3
 django-filter~=2.4.0
 django-guardian~=2.3.0
