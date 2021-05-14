@@ -120,6 +120,11 @@ jobs:
         run: .github/workflows/scripts/script.sh
         shell: bash
 
+      - name: Setup tmate session
+        if: ${{ failure() }}
+        uses: mxschmitt/action-tmate@v3
+        timeout-minutes: 15
+
       - name: After failure
         if: failure()
         run: |
