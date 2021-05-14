@@ -17,6 +17,12 @@ from pulp_smash.pulp3.utils import (
 )
 from requests.exceptions import HTTPError
 
+from pulpcore.client.pulp_file import (
+    DistributionsFileApi,
+    PublicationsFileApi,
+    RemotesFileApi,
+    RepositoriesFileApi,
+)
 from pulpcore.tests.functional.api.using_plugin.constants import (
     FILE_CONTENT_NAME,
     FILE_DISTRIBUTION_PATH,
@@ -28,6 +34,8 @@ from pulpcore.tests.functional.api.using_plugin.constants import (
 from pulpcore.tests.functional.api.using_plugin.utils import (
     create_file_publication,
     gen_file_remote,
+    gen_file_client,
+    monitor_task,
 )
 from pulpcore.tests.functional.api.using_plugin.utils import set_up_module as setUpModule  # noqa
 from pulpcore.tests.functional.api.using_plugin.utils import skip_if
@@ -268,6 +276,7 @@ class ContentServePublicationDistributionTestCase(unittest.TestCase):
     This test targets the following issue:
 
     `Pulp #4847 <https://pulp.plan.io/issues/4847>`_
+    `Pulp #8760 <https://pulp.plan.io/issues/8760>`_
     """
 
     @classmethod
@@ -275,26 +284,36 @@ class ContentServePublicationDistributionTestCase(unittest.TestCase):
         """Create class-wide variables."""
         cls.cfg = config.get_config()
         cls.client = api.Client(cls.cfg)
+        cls.file_client = gen_file_client()
+        cls.repo_api = RepositoriesFileApi(cls.file_client)
+        cls.remote_api = RemotesFileApi(cls.file_client)
+        cls.pub_api = PublicationsFileApi(cls.file_client)
+        cls.dis_api = DistributionsFileApi(cls.file_client)
 
     def test_content_served(self):
         """Verify that content is served over publication distribution."""
-        repo = self.client.post(FILE_REPO_PATH, gen_repo())
-        self.addCleanup(self.client.delete, repo["pulp_href"])
+        repo, *_, distribution = self.serve_content_workflow(cleanup=self.addCleanup)
 
-        remote = self.client.post(FILE_REMOTE_PATH, gen_file_remote())
-        self.addCleanup(self.client.delete, remote["pulp_href"])
+        self.assert_content_served(repo.to_dict(), distribution.to_dict())
 
-        sync(self.cfg, remote, repo)
-        repo = self.client.get(repo["pulp_href"])
-
-        publication = create_file_publication(self.cfg, repo)
-        self.addCleanup(self.client.delete, publication["pulp_href"])
-
-        distribution = self.client.post(
-            FILE_DISTRIBUTION_PATH, gen_distribution(publication=publication["pulp_href"])
+    def test_autopublish_content_served(self):
+        """Verify autopublished content is served over publication distributions."""
+        body = {"repository": {"autopublish": True, "manifest": "PULP_MANIFEST"}}
+        repo, _, distro = self.serve_content_workflow(
+            publish=False, bodies=body, cleanup=self.addCleanup
         )
-        self.addCleanup(self.client.delete, distribution["pulp_href"])
 
+        self.assert_content_served(repo.to_dict(), distro.to_dict())
+
+    def test_nonpublished_content_not_served(self):
+        """Verify content that hasn't been published is not served."""
+        *_, distro = self.serve_content_workflow(publish=False, cleanup=self.addCleanup)
+
+        with self.assertRaises(HTTPError):
+            self.download_pulp_manifest(distro.to_dict())
+
+    def assert_content_served(self, repo, distribution):
+        """Asserts content served at distribution is correct."""
         pulp_manifest = parse_pulp_manifest(self.download_pulp_manifest(distribution))
 
         self.assertEqual(len(pulp_manifest), FILE_FIXTURE_COUNT, pulp_manifest)
@@ -313,6 +332,33 @@ class ContentServePublicationDistributionTestCase(unittest.TestCase):
         """Download pulp manifest."""
         unit_url = reduce(urljoin, (distribution["base_url"], "PULP_MANIFEST"))
         return self.client.get(unit_url)
+
+    def serve_content_workflow(self, publish=True, bodies=None, cleanup=None):
+        """Creates the workflow for serving content."""
+        all_bodies = bodies or {}
+        repo_body = gen_repo(**all_bodies.get("repository", {}))
+        remote_body = gen_file_remote(**all_bodies.get("remote", {}))
+        repo = self.repo_api.create(repo_body)
+        remote = self.remote_api.create(remote_body)
+        sync(self.cfg, remote.to_dict(), repo.to_dict())
+        repo = self.repo_api.read(repo.pulp_href)
+        if publish:
+            pub = create_file_publication(self.cfg, repo.to_dict())
+            pub = self.pub_api.read(pub["pulp_href"])
+            dis_body = {"publication": pub.pulp_href}
+        else:
+            dis_body = {"repository": repo.pulp_href}
+        distro_response = self.dis_api.create(gen_distribution(**dis_body))
+        distro = self.dis_api.read(monitor_task(distro_response.task).created_resources[0])
+        if cleanup:
+            cleanup(self.repo_api.delete, repo.pulp_href)
+            cleanup(self.remote_api.delete, remote.pulp_href)
+            cleanup(self.dis_api.delete, distro.pulp_href)
+            if publish:
+                cleanup(self.pub_api.delete, pub.pulp_href)
+        if publish:
+            return repo, remote, pub, distro
+        return repo, remote, distro
 
 
 def parse_pulp_manifest(pulp_manifest):

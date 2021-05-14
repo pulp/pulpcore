@@ -30,6 +30,7 @@ class ContentPromotionTestCase(unittest.TestCase):
 
         * `Pulp #4186 <https://pulp.plan.io/issues/4186>`_
         * `Pulp #8475 <https://pulp.plan.io/issues/8475>`_
+        * `Pulp #8760 <https://pulp.plan.io/issues/8760>`_
 
         Do the following:
 
@@ -38,10 +39,11 @@ class ContentPromotionTestCase(unittest.TestCase):
         3. Create 2 distributions - using the same publication. Those
            distributions will have different ``base_path``.
         4. Assert that distributions have the same publication.
+        5. Create another distribution using same repository version.
         5. Assert that distributions are viewable from base url
         6. Assert that content in distributions are viewable
         7. Select a content unit. Download that content unit from Pulp using
-           the two different distributions.
+           the three different distributions.
            Assert that content unit has the same checksum when fetched from
            different distributions.
         """
@@ -72,6 +74,12 @@ class ContentPromotionTestCase(unittest.TestCase):
             distributions[0]["publication"], distributions[1]["publication"], distributions
         )
 
+        body = gen_distribution()
+        body["repository"] = repo["pulp_href"]
+        distribution = client.using_handler(api.task_handler).post(FILE_DISTRIBUTION_PATH, body)
+        distributions.append(distribution)
+        self.addCleanup(client.delete, distribution["pulp_href"])
+
         client.response_handler = api.safe_handler
         self.assertEqual(client.get(PULP_CONTENT_BASE_URL).status_code, 200)
 
@@ -87,5 +95,10 @@ class ContentPromotionTestCase(unittest.TestCase):
         self.assertEqual(
             hashlib.sha256(client.get(unit_urls[0]).content).hexdigest(),
             hashlib.sha256(client.get(unit_urls[1]).content).hexdigest(),
+            unit_urls,
+        )
+        self.assertEqual(
+            hashlib.sha256(client.get(unit_urls[0]).content).hexdigest(),
+            hashlib.sha256(client.get(unit_urls[2]).content).hexdigest(),
             unit_urls,
         )

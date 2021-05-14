@@ -28,6 +28,7 @@ from pulpcore.app.models import (  # noqa: E402: module level not at top of file
     BaseDistribution,
     ContentArtifact,
     Distribution,
+    Publication,
     Remote,
     RemoteArtifact,
 )
@@ -368,6 +369,20 @@ class Handler:
         headers = self.response_headers(rel_path)
 
         publication = getattr(distro, "publication", None)
+        repository = getattr(distro, "repository", None)
+        repo_version = getattr(distro, "repository_version", None)
+        if repository:
+            repo_version = repository.latest_version()
+            # Search for publication serving the closest latest version
+            if not publication:
+                try:
+                    versions = repository.versions.all()
+                    publications = Publication.objects.filter(
+                        repository_version__in=versions, complete=True
+                    )
+                    publication = publications.latest("repository_version", "-pulp_created")
+                except ObjectDoesNotExist:
+                    pass
 
         if publication:
             if rel_path == "" or rel_path[-1] == "/":
@@ -419,13 +434,7 @@ class Handler:
                             request, StreamResponse(headers=headers), ca
                         )
 
-        repo_version = getattr(distro, "repository_version", None)
-        repository = getattr(distro, "repository", None)
-
-        if repository or repo_version:
-            if repository:
-                repo_version = distro.repository.latest_version()
-
+        if repo_version:
             if rel_path == "" or rel_path[-1] == "/":
                 try:
                     index_path = "{}index.html".format(rel_path)
