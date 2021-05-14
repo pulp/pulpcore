@@ -6,49 +6,14 @@ updates:
     interval: daily
   open-pull-requests-limit: 10
   ignore:
-  - dependency-name: black
-    versions:
-    - ">= 20.8b1.a, < 20.9"
   - dependency-name: django
     versions:
-    - ">= 3.0.a, < 3.1"
-  - dependency-name: django
-    versions:
-    - ">= 3.1.a, < 3.2"
+    - ">= 2.3, < 2.2"
   - dependency-name: djangorestframework
     versions:
-    - ">= 3.11.a, < 3.12"
-  - dependency-name: idna
-    versions:
-    - ">= 2.9.a, < 2.10"
-  - dependency-name: redis
-    versions:
-    - "> 3.1.0"
-  - dependency-name: redis
-    versions:
-    - ">= 3.3.a, < 3.4"
-  - dependency-name: django-currentuser
-    versions:
-    - 0.5.3
-  - dependency-name: drf-spectacular
-    versions:
-    - 0.14.0
-    - 0.15.0
-    - 0.15.1
-  - dependency-name: django
-    versions:
-    - "3.2"
-  - dependency-name: rq
-    versions:
-    - 1.8.0
-  - dependency-name: gunicorn
-    versions:
-    - 20.1.0
-  - dependency-name: djangorestframework
-    versions:
-    - 3.12.3
+    - ">= 3"
   - dependency-name: django-guid
     versions:
-    - 3.2.0
+    - ">= 3"
   commit-message:
     prefix: "[noissue]"
