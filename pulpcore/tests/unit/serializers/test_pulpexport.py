@@ -53,10 +53,10 @@ class TestPulpExportSerializer(TestCase):
         self.assertEqual(100 * 1024 * 1024 * 1024, serializer.validated_data["chunk_size"])
 
         # terabytes
-        data = {"chunk_size": "100TB"}
+        data = {"chunk_size": "1TB"}
         serializer = PulpExportSerializer(data=data)
         self.assertTrue(serializer.is_valid())
-        self.assertEqual(100 * 1024 * 1024 * 1024 * 1024, serializer.validated_data["chunk_size"])
+        self.assertEqual(1 * 1024 * 1024 * 1024 * 1024, serializer.validated_data["chunk_size"])
 
         # float-units
         data = {"chunk_size": "2.4GB"}
@@ -82,5 +82,15 @@ class TestPulpExportSerializer(TestCase):
 
         # non-positive
         data = {"chunk_size": "-10KB"}
+        serializer = PulpExportSerializer(data=data)
+        self.assertFalse(serializer.is_valid())
+
+        # too many terabytes
+        data = {"chunk_size": "100TB"}
+        serializer = PulpExportSerializer(data=data)
+        self.assertFalse(serializer.is_valid())
+
+        # morbidly many megabytes
+        data = {"chunk_size": "10000000000000M"}
         serializer = PulpExportSerializer(data=data)
         self.assertFalse(serializer.is_valid())

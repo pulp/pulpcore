@@ -141,10 +141,12 @@ class PulpExportSerializer(ExportSerializer):
         write_only=True,
     )
 
+    MAX_CHUNK_BYTES = 1024 * 1024 * 1024 * 1024  # 1 TB
     chunk_size = serializers.CharField(
         help_text=_(
-            "Chunk export-tarfile into pieces of chunk_size bytes."
-            + "Recognizes units of B/KB/MB/GB/TB."
+            "Chunk export-tarfile into pieces of chunk_size bytes. "
+            + "Recognizes units of B/KB/MB/GB/TB. A chunk has a maximum "
+            + "size of 1TB."
         ),
         required=False,
         write_only=True,
@@ -230,6 +232,12 @@ class PulpExportSerializer(ExportSerializer):
         if the_size <= 0:
             raise serializers.ValidationError(
                 _("Chunk size {} is not greater than zero!").format(the_size)
+            )
+        if the_size > self.MAX_CHUNK_BYTES:
+            raise serializers.ValidationError(
+                _("Chunk size in bytes {} is greater than max-chunk-size {}!").format(
+                    the_size, self.MAX_CHUNK_BYTES
+                )
             )
         return the_size
 
