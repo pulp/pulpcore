@@ -263,26 +263,39 @@ class DistributionSerializer(ModelSerializer, BasePathOverlapMixin):
     def validate(self, data):
         super().validate(data)
 
-        publication_in_data = "publication" in data
-        repository_version_in_data = "repository_version" in data
-        publication_in_instance = self.instance.publication if self.instance else None
-        repository_version_in_instance = self.instance.repository_version if self.instance else None
+        repository_provided = data.get("repository", None) or (
+            self.instance and self.instance.repository
+        )
+        repository_version_provided = data.get("repository_version", None) or (
+            self.instance and self.instance.repository_version
+        )
+        publication_provided = data.get("publication", None) or (
+            self.instance and self.instance.publication
+        )
 
-        if publication_in_data and repository_version_in_data:
-            error = True
-        elif publication_in_data and repository_version_in_instance:
-            error = True
-        elif publication_in_instance and repository_version_in_data:
-            error = True
-        else:
-            error = False
-
-        if error:
-            msg = _(
-                "Only one of the attributes 'publication' and 'repository_version' may be used "
-                "simultaneously."
+        if publication_provided and repository_version_provided:
+            raise serializers.ValidationError(
+                _(
+                    "Only one of the attributes 'publication' and 'repository_version' "
+                    "may be used simultaneously."
+                )
             )
-            raise serializers.ValidationError(msg)
+        elif repository_provided and repository_version_provided:
+            raise serializers.ValidationError(
+                _(
+                    "Only one of the attributes 'repository' and 'repository_version' "
+                    "may be used simultaneously."
+                )
+            )
+        # TODO: https://pulp.plan.io/issues/8762
+
+        # elif repository_provided and publication_provided:
+        #     raise serializers.ValidationError(
+        #         _(
+        #             "Only one of the attributes 'repository' and 'publication' "
+        #             "may be used simultaneously."
+        #         )
+        #     )
 
         return data
 
