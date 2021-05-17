@@ -14,6 +14,7 @@ set -euv
 
 echo ::group::REQUESTS
 pip3 install requests
+
 echo ::endgroup::
 
 for sha in $(curl $GITHUB_CONTEXT | jq '.[].sha' | sed 's/"//g')

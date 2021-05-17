@@ -6,91 +6,79 @@
 # For more info visit https://github.com/pulp/plugin_template
 
 import argparse
-import json
 import re
 import os
 import textwrap
-from collections import defaultdict
-from pathlib import Path
 
 from git import Repo
+
+from collections import defaultdict
+from pathlib import Path
 from redminelib import Redmine
-from redminelib.exceptions import ResourceAttrError
+from redminelib.exceptions import ResourceAttrError, ResourceSetIndexError
+import json
 
 
 REDMINE_URL = "https://pulp.plan.io"
 REDMINE_QUERY_URL = f"{REDMINE_URL}/issues?set_filter=1&status_id=*&issue_id="
+REDMINE_PROJECT = "pulp"
 
 
-def validate_redmine_data(redmine_query_url, redmine_issues):
+def validate_redmine_data(redmine_query_url, redmine_issues, release_version):
     """Validate redmine milestone."""
+    error_messages = []
     redmine = Redmine("https://pulp.plan.io")
-    project_set = set()
+    redmine_project = redmine.project.get(REDMINE_PROJECT)
+    if redmine_project is None:
+        error_messages.append(f"Redmine project {REDMINE_PROJECT} not found.")
+    try:
+        milestone = redmine_project.versions.filter(name=release_version)[0]
+    except ResourceSetIndexError:
+        error_messages.append(f"Milestone {release_version} not found.")
+
     stats = defaultdict(list)
-    milestone_url = "\n[noissue]"
-    milestone_id = None
     for issue in redmine_issues:
         redmine_issue = redmine.issue.get(int(issue))
 
         project_name = redmine_issue.project.name
-        project_set.update([project_name])
         stats[f"project_{project_name.lower().replace(' ', '_')}"].append(issue)
+        if project_name != redmine_project.name:
+            stats["wrong_project"].append(issue)
 
         status = redmine_issue.status.name
         if "CLOSE" not in status and status != "MODIFIED":
             stats["status_not_modified"].append(issue)
 
         try:
-            milestone = redmine_issue.fixed_version.name
-            milestone_id = redmine_issue.fixed_version.id
-            stats[f"milestone_{milestone}"].append(issue)
+            issue_milestone = redmine_issue.fixed_version
+            if redmine_issue.fixed_version.id != milestone.id:
+                stats["wrong_milestone"].append(issue)
+            stats[f"milestone_{issue_milestone.name}"].append(issue)
         except ResourceAttrError:
             stats["without_milestone"].append(issue)
 
-    if milestone_id is not None:
-        milestone_url = f"Redmine Milestone: {REDMINE_URL}/versions/{milestone_id}.json\n[noissue]"
-
     print(f"\n\nRedmine stats: {json.dumps(stats, indent=2)}")
-    error_messages = []
+    if stats.get("wrong_project"):
+        error_messages.append(
+            f"One or more issues are associated to the wrong project {stats['wrong_project']}"
+        )
     if stats.get("status_not_modified"):
         error_messages.append(f"One or more issues are not MODIFIED {stats['status_not_modified']}")
     if stats.get("without_milestone"):
         error_messages.append(
             f"One or more issues are not associated with a milestone {stats['without_milestone']}"
         )
-    if len(project_set) > 1:
-        error_messages.append(f"Issues with different projects - {project_set}")
+    if stats.get("wrong_milestone"):
+        error_messages.append(
+            f"One or more issues are associated to the wrong milestone {stats['wrong_milestone']}"
+        )
+
     if error_messages:
         error_messages.append(f"Verify at {redmine_query_url}")
         raise RuntimeError("\n".join(error_messages))
 
-    return milestone_url
+    return f"{milestone.url}.json"
 
-
-release_path = os.path.dirname(os.path.abspath(__file__))
-plugin_path = release_path.split("/.ci")[0]
-
-plugin_name = "pulpcore"
-version = None
-with open(f"{plugin_path}/setup.py") as fp:
-    for line in fp.readlines():
-        if "version=" in line:
-            version = re.split("\"|'", line)[1]
-    if not version:
-        raise RuntimeError("Could not detect existing version ... aborting.")
-release_version = version.replace(".dev", "")
-
-
-issues_to_close = []
-for filename in Path(f"{plugin_path}/CHANGES").rglob("*"):
-    if filename.stem.isdigit():
-        issue = filename.stem
-        issue_url = f"{REDMINE_URL}/issues/{issue}.json"
-        issues_to_close.append(issue)
-
-issues = ",".join(issues_to_close)
-redmine_final_query = f"{REDMINE_QUERY_URL}{issues}"
-milestone_url = validate_redmine_data(redmine_final_query, issues_to_close)
 
 helper = textwrap.dedent(
     """\
@@ -127,6 +115,31 @@ parser.add_argument(
 )
 
 args = parser.parse_args()
+
+release_path = os.path.dirname(os.path.abspath(__file__))
+plugin_path = release_path.split("/.ci")[0]
+
+plugin_name = "pulpcore"
+version = None
+with open(f"{plugin_path}/setup.py") as fp:
+    for line in fp.readlines():
+        if "version=" in line:
+            version = re.split("\"|'", line)[1]
+    if not version:
+        raise RuntimeError("Could not detect existing version ... aborting.")
+release_version = version.replace(".dev", "")
+
+
+issues_to_close = set()
+for filename in Path(f"{plugin_path}/CHANGES").rglob("*"):
+    if filename.stem.isdigit():
+        issue = filename.stem
+        issues_to_close.add(issue)
+
+issues = ",".join(issues_to_close)
+redmine_final_query = f"{REDMINE_QUERY_URL}{issues}"
+milestone_url = validate_redmine_data(redmine_final_query, issues_to_close, release_version)
+
 
 release_type = args.release_type
 
@@ -165,10 +178,20 @@ git.add(f"{plugin_path}/docs/conf.py")
 git.add(f"{plugin_path}/setup.py")
 git.add(f"{plugin_path}/requirements.txt")
 git.add(f"{plugin_path}/.bumpversion.cfg")
+
 git.commit(
     "-m",
-    f"Release {release_version}\n\nRedmine Query: {redmine_final_query}\n{milestone_url}",
+    "\n".join(
+        [
+            f"Release {release_version}",
+            "",
+            f"Redmine Query: {redmine_final_query}",
+            f"Redmine Milestone: {milestone_url}",
+            "[noissue]",
+        ]
+    ),
 )
+
 
 sha = repo.head.object.hexsha
 short_sha = git.rev_parse(sha, short=7)
@@ -199,6 +222,8 @@ git.add(f"{plugin_path}/requirements.txt")
 git.add(f"{plugin_path}/.bumpversion.cfg")
 git.commit("-m", f"Bump to {new_dev_version}\n\n[noissue]")
 
+
 print(f"\n\nRedmine query of issues to close:\n{redmine_final_query}")
+
 print(f"Release commit == {short_sha}")
 print(f"All changes were committed on branch: release_{release_version}")

@@ -23,14 +23,34 @@ issue="$2"
 backport="$3"
 commit_message=$(git log --format=%B -n 1 $commit)
 
-echo $commit_message | grep -q -E "(fixes|closes).*#$issue" || \
-  (echo "Error: issue $issue not detected in commit message." && exit 1)
+if ! echo $commit_message | grep -q "\[noissue\]"
+then
+  if ! echo $commit_message | grep -q -E "(fixes|closes).*#$issue"
+  then
+    echo "Error: issue $issue not detected in commit message." && exit 1
+  fi
+fi
 
-git cherry-pick --no-commit "$commit"
+if [ "$4" = "--continue" ]
+then
+  echo "Continue after manually resolving conflicts..."
+elif [ "$4" = "" ]
+then
+  if ! git cherry-pick --no-commit "$commit"
+  then
+    echo "Please resolve and add merge conflicts and restart this command with appended '--continue'."
+    exit 1
+  fi
+else
+  exit 1
+fi
 
 for file in $(find CHANGES -name "$issue.*")
 do
-  git mv "$file" "${file/$issue/$backport}"
+  newfile="${file/$issue/$backport}"
+  git mv "$file" "$newfile"
+  sed -i -e "\$a (backported from #$issue)" "$newfile"
+  git add "$newfile"
 done
 
 commit_message="$(printf "$commit_message" | sed -E 's/(fixes|closes)/backports/')"
@@ -39,6 +59,6 @@ commit_message="$commit_message
 fixes #$backport
 
 (cherry picked from commit $commit)"
-git commit -a -m "$commit_message"
+git commit -m "$commit_message"
 
-printf "\nSuccessfully backported commit $1."
+printf "\nSuccessfully backported commit $1.\n"
