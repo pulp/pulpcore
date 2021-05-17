@@ -23,9 +23,9 @@ issue="$2"
 backport="$3"
 commit_message=$(git log --format=%B -n 1 $commit)
 
-if ! echo $commit_message | grep -q "\[noissue\]"
+if ! echo $commit_message | tr '[:upper:]' '[:lower:]' | grep -q "\[noissue\]"
 then
-  if ! echo $commit_message | grep -q -E "(fixes|closes).*#$issue"
+  if ! echo $commit_message | tr '[:upper:]' '[:lower:]' | grep -q -E "(fixes|closes).*#$issue"
   then
     echo "Error: issue $issue not detected in commit message." && exit 1
   fi
