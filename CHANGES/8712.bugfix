@@ -1,0 +1,2 @@
+Skip allowed content checks on collectstatic
+(backported from #8711)
