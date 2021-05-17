@@ -1,4 +1,5 @@
 import hashlib
+import os
 
 from django.core.files.base import ContentFile
 from django.db import models
@@ -34,7 +35,8 @@ class Upload(BaseModel):
             raise serializers.ValidationError("Checksum does not match chunk upload.")
 
         upload_chunk = UploadChunk(upload=self, offset=offset, size=len(chunk))
-        upload_chunk.file.save("", ContentFile(chunk_read))
+        filename = os.path.basename(upload_chunk.storage_path(""))
+        upload_chunk.file.save(filename, ContentFile(chunk_read))
 
 
 class UploadChunk(BaseModel):
