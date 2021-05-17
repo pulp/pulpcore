@@ -6,16 +6,21 @@
 # For more info visit https://github.com/pulp/plugin_template
 
 import re
-import requests
 import subprocess
 import sys
 from pathlib import Path
 
-KEYWORDS = ["fixes", "closes", "re", "ref"]
+
+import requests
+
+
 NO_ISSUE = "[noissue]"
+CHANGELOG_EXTS = [".feature", ".bugfix", ".doc", ".removal", ".misc", ".deprecation"]
+
+
+KEYWORDS = ["fixes", "closes", "re", "ref"]
 STATUSES = ["NEW", "ASSIGNED", "POST", "MODIFIED"]
 REDMINE_URL = "https://pulp.plan.io"
-CHANGELOG_EXTS = [".feature", ".bugfix", ".doc", ".removal", ".misc", ".deprecation"]
 
 sha = sys.argv[1]
 project = "pulp"
