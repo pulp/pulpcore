@@ -1,0 +1,1 @@
+Removed click as a direct dependency since ``pulpcore`` does not directly use it.
