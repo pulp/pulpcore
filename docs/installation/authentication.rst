@@ -46,7 +46,7 @@ backend for them. To have any name accepted but create the username in the datab
 
    Or, as a dynaconf environment variable (pay special attention to the *double* underscore
    separating the paramater name from the key)::
-   
+
     PULP_REST_FRAMEWORK__DEFAULT_AUTHENTICATION_CLASSES="[
       'rest_framework.authentication.SessionAuthentication',
       'pulpcore.app.authentication.PulpRemoteUserAuthentication'
@@ -56,7 +56,7 @@ This removes ``rest_framework.authentication.BasicAuthentication``, but retains
 ``rest_framework.authentication.SessionAuthentication`` and adds
 ``PulpRemoteUserAuthentication``. This accepts the username as WSGI environment variable
 ``REMOTE_USER`` by default, but can be configured via the
-`REMOTE_USER_ENVIRON_NAME <remote-user-environ-name>`_ Pulp setting.
+:ref:`REMOTE_USER_ENVIRON_NAME <remote-user-environ-name>` Pulp setting.
 
 
 .. _webserver-auth-same-webserver:
@@ -74,9 +74,9 @@ Reading the ``REMOTE_USER`` WSGI environment is the default behavior of the
 one is that the WSGI environment variable name can be configured from a Pulp provided WSGI
 environment variable name.
 
-See the `REMOTE_USER_ENVIRON_NAME <remote-user-environ-name>`_ for configuring the WSGI provided
+See the :ref:`REMOTE_USER_ENVIRON_NAME <remote-user-environ-name>` for configuring the WSGI provided
 name, but if you are using the ``REMOTE_USER`` WSGI environment name with "same webserver"
-authentication, you likely want to leave `REMOTE_USER_ENVIRON_NAME <remote-user-environ-name>`_
+authentication, you likely want to leave :ref:`REMOTE_USER_ENVIRON_NAME <remote-user-environ-name>`
 unset and configure the webserver to set the ``REMOTE_USER`` WSGI environment variable.
 
 
@@ -106,7 +106,7 @@ default configuration of Pulp is expecting ``REMOTE_USER`` in the WSGI environme
 ``pulpcore.app.authentication.PulpRemoteUserAuthentication`` or the Django Rest Framework provided
 ``rest_framework.authentication.RemoteUserAuthentication`` as is.
 
-Pulp provides a setting named `REMOTE_USER_ENVIRON_NAME <remote-user-environ-name>`_ which allows
+Pulp provides a setting named :ref:`REMOTE_USER_ENVIRON_NAME <remote-user-environ-name>` which allows
 you to specify another WSGI environment variable to read the authenticated username from.
 
 .. warning::
