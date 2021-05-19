@@ -24,9 +24,6 @@ for your fields. See the `Django field documentation
 <https://docs.djangoproject.com/en/2.1/ref/models/fields/>`_, for more in-depth information on
 using these fields.
 
-.. note::
-   One of Pulp's goals is to work correctly on multiple databases. It is probably best to avoid
-   fields that are not database agnostic. See Database Gotchas below.
 
 .. note::
    It is required to declare the ``default_related_name``.
@@ -49,7 +46,7 @@ The TYPE class attribute is used for filtering purposes.
                 default_related_name = "%(app_label)s_%(model_name)s"
 
 
-Here we create a new field using use Django's ``TextField``. After adding/modifying a model, you
+Here we create a new field ``digest`` using Django's ``TextField``. After adding/modifying a model, you
 can make and run database migrations with:
 
 
@@ -57,6 +54,11 @@ can make and run database migrations with:
 
       pulpcore-manager makemigrations $PLUGIN_APP_LABEL
       pulpcore-manager migrate
+
+
+.. warning::
+   Do not use settings directly in the model fields, it will lead to a data migration that is
+   specific to the users installation in case those settings change.
 
 If you recognize this syntax, it is because pulpcore-manager is ``manage.py`` configured with
 ``DJANGO_SETTINGS_MODULE="pulpcore.app.settings"``. You can use it anywhere you normally would use
