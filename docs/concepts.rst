@@ -19,7 +19,8 @@ shared by multiple content units.
     :align: center
 
 Content units in Pulp are organized by their membership in :term:`Repositories<Repository>` over
-time. Plugin users can add or remove content units to a repository. Each time the content set of a
+time. Repositories are typed by their plugin and can only hold content of certain types.
+Plugin users can add or remove content units to a repository. Each time the content set of a
 repository is changed, a new :term:`RepositoryVersion` is created. Any operation such as sync that
 doesn't result in a change of the content set will not produce a new repository version.
 
