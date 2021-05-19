@@ -22,6 +22,12 @@ Contributing
 Pulp is a free and open source software (FOSS) project and if you'd like to contribute, please check
 out our :doc:`contributing docs<contributing/index>`.
 
+Found a security issue?
+-----------------------
+
+If you find a security issue or have a security concern, see the :ref:`security-bugs` section for information about how to file a report.
+
+
 Source code
 ^^^^^^^^^^^
 
