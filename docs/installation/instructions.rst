@@ -83,6 +83,12 @@ PyPI Installation
     ``DJANGO_SETTINGS_MODULE="pulpcore.app.settings"``. You can use it anywhere you would normally
     use ``manage.py``.
 
+.. warning::
+
+    You should never attempt to create new migrations via the ``pulpcore-manager makemigrations``.
+    In case, new migrations would be needed, please file a bug against the respective plugin.
+    :ref:`issue-writing`
+
 .. note::
 
     In place of using the systemd unit files provided in the `systemd-setup` section, you can run
