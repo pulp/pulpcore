@@ -111,14 +111,18 @@ PostgreSQL.
 PostgreSQL
 ^^^^^^^^^^
 
-To install PostgreSQL, refer to the package manager or the
-`PostgreSQL install docs <http://postgresguide.com/setup/install.html>`_. Oftentimes you can also find better
-installation instructions for your particular operating system from third-parties such as Digital Ocean.
+Installation package considerations
+***********************************
 
-You must configure PostgreSQL to use UTF-8 character set encoding. 
+To install PostgreSQL, refer to the package manager or the
+`PostgreSQL install docs <http://postgresguide.com/setup/install.html>`_. Oftentimes, you can also find better
+installation instructions for your particular operating system from third-parties such as Digital Ocean.
 
 On Ubuntu and Debian, the package to install is named ``postgresql``. On Fedora and CentOS, the package
 is named ``postgresql-server``.
+
+User and database configuration
+*******************************
 
 The default PostgreSQL user and database name in the provided server.yaml file is ``pulp``. Unless you plan to
 customize the configuration of your Pulp installation, you will need to create this user with the proper permissions
@@ -126,6 +130,14 @@ and also create the ``pulp`` database owned by the ``pulp`` user. If you do choo
 the database options can be configured in the `DATABASES` section of your server.yaml settings file.
 See the `Django database settings documentation <https://docs.djangoproject.com/en/2.2/ref/settings/#databases>`_
 for more information on setting the `DATABASES` values in server.yaml.
+
+UTF-8 encoding
+**************
+
+You must configure PostgreSQL to use UTF-8 character set encoding.
+
+Post-installation setup
+***********************
 
 After installing and configuring PostgreSQL, you should configure it to start at boot, and then start it::
 
