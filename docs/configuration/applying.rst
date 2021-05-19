@@ -1,7 +1,7 @@
-.. _configuration:
+.. _applying-settings:
 
-Configuration
-=============
+Applying Settings
+=================
 
 Pulp uses `dynaconf <https://dynaconf.readthedocs.io/en/latest/>`_ for its settings which allows you
 to configure Pulp in a few ways:
