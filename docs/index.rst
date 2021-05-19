@@ -65,7 +65,7 @@ Table of Contents
    from-pulp-2
    components
    installation/index
-   settings
+   configuration/index
    workflows/index
    plugins/index
    rest_api

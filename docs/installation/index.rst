@@ -7,7 +7,6 @@ Installation
    :maxdepth: 2
 
    instructions
-   configuration
    storage
    authentication
 
