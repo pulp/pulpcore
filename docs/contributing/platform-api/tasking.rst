@@ -14,20 +14,20 @@ pulp.tasking.constants
 
 .. automodule:: pulpcore.tasking.constants
 
-pulp.tasking.services.manage_workers
+pulp.tasking.manage_workers
 ------------------------------------
 
-.. automodule:: pulpcore.tasking.services.manage_workers
+.. automodule:: pulpcore.tasking.manage_workers
 
-pulp.tasking.services.storage
------------------------------
+pulp.tasking.storage
+--------------------
 
-.. automodule:: pulpcore.tasking.services.storage
+.. automodule:: pulpcore.tasking.storage
 
-pulp.tasking.services.worker_watcher
+pulp.tasking.worker_watcher
 ------------------------------------
 
-.. automodule:: pulpcore.tasking.services.worker_watcher
+.. automodule:: pulpcore.tasking.worker_watcher
 
 pulp.tasking.tasks
 ------------------
