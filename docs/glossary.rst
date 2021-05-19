@@ -53,10 +53,6 @@ Glossary
         A python package offering users a :doc:`rest_api` and plugin writers a
         :ref:`Plugin API`. It is :term:`plugin`-based and manages :term:`Content`.
 
-    PUP
-        Stands for "Pulp Update Proposal", and are the documents that specify process changes for
-        the Pulp project and community.
-
     :class:`~pulpcore.plugin.models.Remote`
         User facing settings that specify how Pulp should interact with an external :term:`Content`
         source.

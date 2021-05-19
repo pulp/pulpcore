@@ -54,10 +54,9 @@ Suggesting Changes to the Pulp Development Process
 --------------------------------------------------
 
 Pulp is a community project, and major changes to the way Pulp is developed, such as the release
-cycle, and style guide, can be suggested by submitting a :term:`PUP`, or, "Pulp Update Proposal".
-All approved PUPs live in the `PUP repository <https://github.com/pulp/pups/>`_.
+cycle, and style guide, can be proposed:
 
-`PUP-1 <https://github.com/pulp/pups/blob/master/pup-0001.md>`_ defines the PUP process itself.
+  * at the Open Floor meeting
+  * through the developer mailing list (``pulp-dev@redhat.com``)
 
-All approved, rejected, and abandoned PUPs are tracked in the `PUP index
-<https://github.com/pulp/pups/blob/master/README.md>`_
+See how to `get involved <https://pulpproject.org/get_involved/>`_ for more information.
