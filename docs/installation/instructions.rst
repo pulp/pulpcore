@@ -115,6 +115,8 @@ To install PostgreSQL, refer to the package manager or the
 `PostgreSQL install docs <http://postgresguide.com/setup/install.html>`_. Oftentimes you can also find better
 installation instructions for your particular operating system from third-parties such as Digital Ocean.
 
+You must configure PostgreSQL to use UTF-8 character set encoding. 
+
 On Ubuntu and Debian, the package to install is named ``postgresql``. On Fedora and CentOS, the package
 is named ``postgresql-server``.
 
