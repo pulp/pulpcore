@@ -85,6 +85,7 @@ Resource Manager
    the same repo should not run in parallel. Generally tasks are serialized at the "repo" level, so
    if you start *N* workers you can process *N* repo sync/modify/publish operations concurrently.
 
+In case your tasking system get's jammed, there is a guide to help :ref:debugging_tasks.
 
 Static Content
 --------------
