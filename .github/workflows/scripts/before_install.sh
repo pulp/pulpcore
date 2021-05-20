@@ -134,6 +134,23 @@ if [ -n "$PULP_CERTGUARD_PR_NUMBER" ]; then
 fi
 
 
+if [[ "$TEST" == "upgrade" ]]; then
+  cd pulp_file
+  git checkout -b ci_upgrade_test
+  git fetch --depth=1 origin heads/$FROM_PULP_FILE_BRANCH:$FROM_PULP_FILE_BRANCH
+  git checkout $FROM_PULP_FILE_BRANCH
+  # Pin deps
+  sed -i "s/~/=/g" requirements.txt
+  cd ..
+  cd pulp-certguard
+  git checkout -b ci_upgrade_test
+  git fetch --depth=1 origin heads/$FROM_PULP_CERTGUARD_BRANCH:$FROM_PULP_CERTGUARD_BRANCH
+  git checkout $FROM_PULP_CERTGUARD_BRANCH
+  # Pin deps
+  sed -i "s/~/=/g" requirements.txt
+  cd ..
+fi
+
 
 # Intall requirements for ansible playbooks
 pip install docker netaddr boto3 ansible

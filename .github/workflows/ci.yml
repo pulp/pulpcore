@@ -131,3 +131,76 @@ jobs:
           docker exec pulp ls -latr /etc/yum.repos.d/ || true
           docker exec pulp cat /etc/yum.repos.d/* || true
           docker exec pulp pip3 list
+
+  upgrade:
+    runs-on: ubuntu-latest
+    needs: lint
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - FROM_PULPCORE_BRANCH: "3.11"
+            FROM_PULP_FILE_BRANCH: "1.6"
+            FROM_PULP_CERTGUARD_BRANCH: "1.2"
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          # by default, it uses a depth of 1
+          # this fetches all history so that we can read each commit
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v2
+        with:
+          python-version: "3.7"
+
+      - name: Install httpie
+        run: |
+          echo ::group::HTTPIE
+          sudo apt-get update -yq
+          sudo -E apt-get -yq --no-install-suggests --no-install-recommends install httpie
+          echo ::endgroup::
+          echo "TEST=upgrade" >> $GITHUB_ENV
+          echo "HTTPIE_CONFIG_DIR=$GITHUB_WORKSPACE/.ci/assets/httpie/" >> $GITHUB_ENV
+          echo "FROM_PULP_FILE_BRANCH=${{ matrix.FROM_PULP_FILE_BRANCH }}" >> $GITHUB_ENV
+          echo "FROM_PULPCORE_BRANCH=${{ matrix.FROM_PULPCORE_BRANCH }}" >> $GITHUB_ENV
+          echo "FROM_PULP_CERTGUARD_BRANCH=${{ matrix.FROM_PULP_CERTGUARD_BRANCH }}" >> $GITHUB_ENV
+
+      - name: Install python dependencies
+        run: |
+          echo ::group::PYDEPS
+          pip install wheel
+          echo ::endgroup::
+
+      - name: Before Install
+        run: .github/workflows/scripts/before_install.sh
+        shell: bash
+
+      - name: Install
+        run: .github/workflows/scripts/install.sh
+        env:
+          PY_COLORS: '1'
+          ANSIBLE_FORCE_COLOR: '1'
+        shell: bash
+
+      - name: Before Script
+        run: .github/workflows/scripts/before_script.sh
+
+      - name: Setting secrets
+        run: python3 .github/workflows/scripts/secrets.py "$SECRETS_CONTEXT"
+        env:
+          SECRETS_CONTEXT: ${{ toJson(secrets) }}
+
+      - name: Upgrade test
+        run: .github/workflows/scripts/script.sh
+
+      - name: After failure
+        if: failure()
+        run: |
+          http --timeout 30 --check-status --pretty format --print hb http://pulp/pulp/api/v3/status/ || true
+          docker images || true
+          docker ps -a || true
+          docker logs pulp || true
+          docker exec pulp ls -latr /etc/yum.repos.d/ || true
+          docker exec pulp cat /etc/yum.repos.d/* || true
+          docker exec pulp pip3 list

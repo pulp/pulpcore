@@ -99,6 +99,52 @@ cmd_prefix bash -c "PULP_DATABASES__default__USER=postgres django-admin test --n
 export PYTHONPATH=$REPO_ROOT${PYTHONPATH:+:${PYTHONPATH}}
 
 
+if [[ "$TEST" == "upgrade" ]]; then
+  git checkout ci_upgrade_test -- pulpcore/tests/
+
+  # Handle app label change:
+  sed -i "/require_pulp_plugins(/d" pulpcore/tests/functional/utils.py
+
+  # Running pre upgrade tests:
+  pytest -v -r sx --color=yes --pyargs -capture=no pulpcore.tests.upgrade.pre
+
+  # Checking out ci_upgrade_test branch and upgrading plugins
+  cmd_prefix bash -c "cd pulp_file; git checkout -f ci_upgrade_test; pip install ."
+  cmd_prefix bash -c "cd pulp-certguard; git checkout -f ci_upgrade_test; pip install ."
+  cmd_prefix bash -c "cd pulpcore; git checkout -f ci_upgrade_test; pip install ."
+
+  # Migrating
+  cmd_prefix bash -c "django-admin migrate --no-input"
+
+  # Restarting single container services
+  cmd_prefix bash -c "s6-svc -r /var/run/s6/services/pulpcore-api"
+  cmd_prefix bash -c "s6-svc -r /var/run/s6/services/pulpcore-content"
+  cmd_prefix bash -c "s6-svc -r /var/run/s6/services/pulpcore-resource-manager"
+  cmd_prefix bash -c "s6-svc -r /var/run/s6/services/pulpcore-worker@1"
+  cmd_prefix bash -c "s6-svc -r /var/run/s6/services/pulpcore-worker@2"
+
+  echo "Restarting in 60 seconds"
+  sleep 60
+
+  # CLI commands to display plugin versions and content data
+  pulp status
+  pulp file content list
+
+  # Rebuilding bindings
+  cd ../pulp-openapi-generator
+  ./generate.sh pulpcore python
+  pip install ./pulpcore-client
+  ./generate.sh pulp_file python
+  pip install ./pulp_file-client
+  ./generate.sh pulp_certguard python
+  pip install ./pulp_certguard-client
+  cd $REPO_ROOT
+
+  # Running post upgrade tests
+  pytest -v -r sx --color=yes --pyargs -capture=no pulpcore.tests.upgrade.post
+  exit
+fi
+
 
 if [[ "$TEST" == "performance" ]]; then
   if [[ -z ${PERFORMANCE_TEST+x} ]]; then
