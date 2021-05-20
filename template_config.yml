@@ -64,5 +64,7 @@ travis_notifications:
     - 'Build details : %{build_url}'
     - '%{message}'
 update_redmine: true
-upgrade_range: []
-
+upgrade_range:
+- pulp_file_branch: 1.6
+  pulpcore_branch: 3.11
+  pulp-certguard_branch: 1.2
