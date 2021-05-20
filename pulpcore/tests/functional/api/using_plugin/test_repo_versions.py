@@ -9,6 +9,7 @@ from pulp_smash.exceptions import TaskReportError
 from pulp_smash.pulp3.bindings import monitor_task
 from pulp_smash.pulp3.constants import ARTIFACTS_PATH
 from pulp_smash.pulp3.utils import (
+    download_content_unit,
     delete_orphans,
     delete_version,
     gen_repo,
@@ -1180,8 +1181,8 @@ class RepoVersionRetentionTestCase(unittest.TestCase):
             self.assertEqual(404, ae.exception.status)
 
         # check that the last publication is distributed
-        self.distro = self.distro_api.read(self.distro.pulp_href)
-        self.assertEqual(self.distro.publication, self.publications[-1].pulp_href)
+        manifest = download_content_unit(self.cfg, self.distro.to_dict(), "PULP_MANIFEST")
+        self.assertEqual(manifest.decode("utf-8").count("\n"), len(self.content))
 
 
 class ContentInRepositoryVersionViewTestCase(unittest.TestCase):
