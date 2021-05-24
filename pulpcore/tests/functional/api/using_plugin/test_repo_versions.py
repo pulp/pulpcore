@@ -1140,7 +1140,13 @@ class RepoVersionRetentionTestCase(unittest.TestCase):
 
         versions = self.version_api.list(file_file_repository_href=self.repo.pulp_href).results
         self.assertEqual(len(versions), 1)
-        self.assertEqual(self.repo.latest_version_href.split("/")[-2], "3")
+
+        latest_version = self.version_api.read(
+            file_file_repository_version_href=self.repo.latest_version_href
+        )
+        self.assertEqual(latest_version.number, 3)
+        self.assertEqual(latest_version.content_summary.present["file.file"]["count"], 3)
+        self.assertEqual(latest_version.content_summary.added["file.file"]["count"], 3)
 
     def test_retained_versions_on_update(self):
         """Test repo version retention when retained_versions is set."""
@@ -1155,7 +1161,13 @@ class RepoVersionRetentionTestCase(unittest.TestCase):
 
         versions = self.version_api.list(file_file_repository_href=self.repo.pulp_href).results
         self.assertEqual(len(versions), 2)
-        self.assertEqual(self.repo.latest_version_href.split("/")[-2], "3")
+
+        latest_version = self.version_api.read(
+            file_file_repository_version_href=self.repo.latest_version_href
+        )
+        self.assertEqual(latest_version.number, 3)
+        self.assertEqual(latest_version.content_summary.present["file.file"]["count"], 3)
+        self.assertEqual(latest_version.content_summary.added["file.file"]["count"], 1)
 
     def test_autodistribute(self):
         """Test repo version retention with autopublish/autodistribute."""
