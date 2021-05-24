@@ -66,6 +66,7 @@ Table of Contents
    components
    installation/index
    configuration/index
+   authentication/index
    workflows/index
    plugins/index
    rest_api
