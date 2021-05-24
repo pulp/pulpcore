@@ -11,7 +11,7 @@ from asyncio_throttle import Throttler
 from django.core.validators import MinValueValidator
 from django.db import models, transaction
 from django.urls import reverse
-from django_lifecycle import AFTER_SAVE, hook
+from django_lifecycle import AFTER_UPDATE, hook
 
 from django.contrib.postgres.fields import JSONField
 
@@ -193,7 +193,7 @@ class Repository(MasterModel):
         """
         return Artifact.objects.filter(content__pk__in=version.content)
 
-    @hook(AFTER_SAVE)
+    @hook(AFTER_UPDATE, when="retained_versions", has_changed=True)
     def cleanup_old_versions(self):
         """Cleanup old repository versions based on retained_versions."""
         if self.retained_versions:
@@ -975,6 +975,7 @@ class RepositoryVersion(BaseModel):
                     self.repository.next_version = self.number + 1
                     self.repository.save()
                     self.save()
+                    self.repository.cleanup_old_versions()
                     self._compute_counts()
                     repository.on_new_version(self)
             except Exception:
