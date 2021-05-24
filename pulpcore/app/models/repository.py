@@ -8,10 +8,11 @@ import logging
 
 import django
 from asyncio_throttle import Throttler
+from dynaconf import settings
 from django.core.validators import MinValueValidator
 from django.db import models, transaction
 from django.urls import reverse
-from django_lifecycle import AFTER_UPDATE, hook
+from django_lifecycle import AFTER_UPDATE, BEFORE_DELETE, hook
 
 from django.contrib.postgres.fields import JSONField
 
@@ -19,6 +20,8 @@ from pulpcore.app.util import batch_qs, get_view_name_for_model
 from pulpcore.constants import ALL_KNOWN_CONTENT_CHECKSUMS
 from pulpcore.download.factory import DownloaderFactory
 from pulpcore.exceptions import ResourceImmutableError
+
+from pulpcore.cache import Cache
 
 from .base import MasterModel, BaseModel
 from .content import Artifact, Content
@@ -133,6 +136,8 @@ class Repository(MasterModel):
                 resource = CreatedResource(content_object=version)
                 resource.save()
 
+            self.invalidate_cache()
+
             return version
 
     def finalize_new_version(self, new_version):
@@ -206,6 +211,17 @@ class Repository(MasterModel):
                     )
                 )
                 version.delete()
+
+    @hook(BEFORE_DELETE)
+    def invalidate_cache(self):
+        """Invalidates the cache if repository is present."""
+        if settings.CACHE_ENABLED:
+            distributions = self.distributions.all()
+            if distributions.exists():
+                base_paths = distributions.values_list("base_path", flat=True)
+                if base_paths:
+                    Cache().delete(base_key=base_paths)
+                # Could do preloading here for immediate artifacts with artifacts_for_version
 
 
 class Remote(MasterModel):
@@ -427,6 +443,14 @@ class Remote(MasterModel):
             Class: The Class of the content type that should be available at the relative path.
         """
         raise NotImplementedError()
+
+    @hook(BEFORE_DELETE)
+    def invalidate_cache(self):
+        """Invalidates the cache if remote is present."""
+        if settings.CACHE_ENABLED:
+            base_paths = self.distribution_set.values_list("base_path", flat=True)
+            if base_paths:
+                Cache().delete(base_key=base_paths)
 
     class Meta:
         default_related_name = "remotes"
@@ -865,6 +889,11 @@ class RepositoryVersion(BaseModel):
         Deletion of a complete RepositoryVersion should be done in a RQ Job.
         """
         if self.complete:
+            if settings.CACHE_ENABLED:
+                base_paths = self.distribution_set.values_list("base_path", flat=True)
+                if base_paths:
+                    Cache().delete(base_key=base_paths)
+
             repo_relations = RepositoryContent.objects.filter(repository=self.repository)
             try:
                 next_version = self.next()

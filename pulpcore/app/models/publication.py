@@ -1,10 +1,13 @@
 from django.db import IntegrityError, models, transaction
+from django_lifecycle import hook, AFTER_UPDATE, BEFORE_DELETE
 
 from .base import MasterModel, BaseModel
 from .content import Artifact, Content, ContentArtifact
 from .repository import Remote, Repository, RepositoryVersion
 from .task import CreatedResource
 from pulpcore.app.files import PulpTemporaryUploadedFile
+from pulpcore.cache import Cache
+from dynaconf import settings
 
 
 class PublicationQuerySet(models.QuerySet):
@@ -122,6 +125,19 @@ class Publication(MasterModel):
             Deletes the Task.created_resource when complete is False.
         """
         with transaction.atomic():
+            if settings.CACHE_ENABLED:
+                # Find any publications being served directly
+                base_paths = self.distribution_set.values_list("base_path", flat=True)
+                # Find any publications being served indirectly by auto-distribute feature
+                versions = self.repository.versions.all()
+                pubs = Publication.objects.filter(repository_version__in=versions, complete=True)
+                publication = pubs.latest("repository_version", "-pulp_created")
+                if self.pk == publication.pk:
+                    base_paths |= self.repository.distributions.values_list("base_path", flat=True)
+                # Invalidate cache for all distributions serving this publication
+                if base_paths:
+                    Cache().delete(base_key=base_paths)
+
             CreatedResource.objects.filter(object_id=self.pk).delete()
             super().delete(**kwargs)
 
@@ -282,6 +298,13 @@ class ContentGuard(MasterModel):
         """
         raise NotImplementedError()
 
+    @hook(BEFORE_DELETE)
+    def invalidate_cache(self):
+        if settings.CACHE_ENABLED:
+            base_paths = self.distribution_set.values_list("base_path", flat=True)
+            if base_paths:
+                Cache().delete(base_key=base_paths)
+
 
 class BaseDistribution(MasterModel):
     """
@@ -383,3 +406,22 @@ class Distribution(MasterModel):
             Set of strings for the extra entries in rel_path
         """
         return set()
+
+    @hook(BEFORE_DELETE)
+    @hook(
+        AFTER_UPDATE,
+        when_any=[
+            "base_path",
+            "content_guard",
+            "publication",
+            "remote",
+            "repository",
+            "repository_version",
+        ],
+        has_changed=True,
+    )
+    def invalidate_cache(self):
+        """Invalidates the cache if enabled."""
+        if settings.CACHE_ENABLED:
+            Cache().delete(base_key=self.base_path)
+            # Can also preload cache here possibly
