@@ -239,6 +239,12 @@ USE_NEW_WORKER_TYPE = True
 
 PROFILE_STAGES_API = False
 
+# https://docs.pulpproject.org/pulpcore/configuration/settings.html#pulp-cache
+CACHE_ENABLED = True
+CACHE_SETTINGS = {
+    "EXPIRES_TTL": 86400,
+}
+
 SPECTACULAR_SETTINGS = {
     "SERVE_URLCONF": ROOT_URLCONF,
     "DEFAULT_GENERATOR_CLASS": "pulpcore.openapi.PulpSchemaGenerator",

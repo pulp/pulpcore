@@ -38,6 +38,7 @@ from pulpcore.app.models import (  # noqa: E402: module level not at top of file
 from pulpcore.exceptions import UnsupportedDigestValidationError  # noqa: E402
 
 from jinja2 import Template  # noqa: E402: module level not at top of file
+from pulpcore.cache import ContentCache  # noqa: E402
 
 log = logging.getLogger(__name__)
 
@@ -141,6 +142,59 @@ class Handler:
         directory_list = ["{}/".format(path) for path in base_paths]
         return HTTPOk(headers={"Content-Type": "text/html"}, body=self.render_html(directory_list))
 
+    @classmethod
+    async def find_base_path_cached(cls, request, cached):
+        """
+        Finds the base-path to use for the base-key in the cache
+
+        Args:
+            request (:class:`aiohttp.web.request`): The request from the client.
+            cached (:class:`CacheAiohttp`): The Pulp cache
+
+        Returns:
+            str: The base-path associated with this request
+        """
+        path = request.match_info["path"]
+        base_paths = cls._base_paths(path)
+        multiplied_base_paths = []
+        for i, base_path in enumerate(base_paths):
+            copied_by_index_base_path = [base_path for _ in range(i + 1)]
+            multiplied_base_paths.extend(copied_by_index_base_path)
+        index_p1 = await cached.exists(base_key=multiplied_base_paths)
+        if index_p1:
+            return base_paths[index_p1 - 1]
+        else:
+            distro = await loop.run_in_executor(None, cls._match_distribution, path)
+            return distro.base_path
+
+    @classmethod
+    async def auth_cached(cls, request, cached, base_key):
+        """
+        Authentication check for the cached stream_content handler
+
+        Args:
+            request (:class:`aiohttp.web.request`): The request from the client.
+            cached (:class:`CacheAiohttp`): The Pulp cache
+            base_key (str): The base_key associated with this response
+        """
+        guard_key = "DISTRO#GUARD#PRESENT"
+        present = await cached.get(guard_key, base_key=base_key)
+        if present == b"True" or present is None:
+            path = request.match_info["path"]
+            distro = await loop.run_in_executor(None, cls._match_distribution, path)
+            try:
+                guard = await loop.run_in_executor(None, cls._permit, request, distro)
+            except HTTPForbidden:
+                guard = True
+                raise
+            finally:
+                if not present:
+                    await cached.set(guard_key, str(guard), base_key=base_key)
+
+    @ContentCache(
+        base_key=lambda req, cac: Handler.find_base_path_cached(req, cac),
+        auth=lambda req, cac, bk: Handler.auth_cached(req, cac, bk),
+    )
     async def stream_content(self, request):
         """
         The request handler for the Content app.
@@ -238,7 +292,7 @@ class Handler:
         """
         guard = distribution.content_guard
         if not guard:
-            return
+            return False
         try:
             guard.cast().permit(request)
         except PermissionError as pe:
@@ -247,6 +301,7 @@ class Handler:
                 {"p": request.path, "g": guard.name, "r": str(pe)},
             )
             raise HTTPForbidden(reason=str(pe))
+        return True
 
     @staticmethod
     def response_headers(path):
