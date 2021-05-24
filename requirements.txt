@@ -7,7 +7,7 @@ click<9.0
 Django~=2.2.23  # LTS version, switch only if we have a compelling reason to
 django-currentuser~=0.5.3
 django-filter~=2.4.0
-django-guardian~=2.3.0
+django-guardian~=2.4.0
 django-guid<3.0
 django-import-export~=2.5.0
 django-lifecycle~=0.9.1
