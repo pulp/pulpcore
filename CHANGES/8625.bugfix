@@ -1,1 +1,0 @@
-Fixed on-demand sync/migration of repositories that don't have sha256 checksums.

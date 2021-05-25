@@ -1,1 +1,0 @@
-Fixed missing ``REDIS_SSL`` parameter in RQ config.

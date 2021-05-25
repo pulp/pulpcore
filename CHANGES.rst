@@ -17,6 +17,146 @@ Changelog
 
 .. towncrier release notes start
 
+3.13.0 (2021-05-25)
+===================
+REST API
+--------
+
+Features
+~~~~~~~~
+
+- Added two views to identify content which belongs to repository_version or publication.
+  `#4832 <https://pulp.plan.io/issues/4832>`_
+- Added repository field to repository version endpoints.
+  `#6068 <https://pulp.plan.io/issues/6068>`_
+- Added ability for users to limit how many repo versions Pulp retains by setting
+  ``retained_versions`` on repository.
+  `#8368 <https://pulp.plan.io/issues/8368>`_
+- Added the ``add-signing-service`` management command.
+  Notice that it is still in tech-preview and can change without further notice.
+  `#8609 <https://pulp.plan.io/issues/8609>`_
+- Added a ``pulpcore-worker`` entrypoint to simplify and unify the worker command.
+  `#8721 <https://pulp.plan.io/issues/8721>`_
+- Content app auto-distributes latest publication if distribution's ``repository`` field is set
+  `#8760 <https://pulp.plan.io/issues/8760>`_
+
+
+Bugfixes
+~~~~~~~~
+
+- Fixed cleanup of UploadChunks when their corresponding Upload is deleted.
+  `#7316 <https://pulp.plan.io/issues/7316>`_
+- Fixed an issue that caused the request's context to be ignored in the serializers.
+  `#8396 <https://pulp.plan.io/issues/8396>`_
+- Fixed missing ``REDIS_SSL`` parameter in RQ config.
+  `#8525 <https://pulp.plan.io/issues/8525>`_
+- Fixed bug where using forms submissions to create resources (e.g. ``Remotes``) raised exception
+  about the format of ``pulp_labels``.
+  `#8541 <https://pulp.plan.io/issues/8541>`_
+- Fixed bug where publications sometimes fail with the error '[Errno 39] Directory not empty'.
+  `#8595 <https://pulp.plan.io/issues/8595>`_
+- Handled a tasking race condition where cleaning up resource reservations sometimes raised an IntegrityError.
+  `#8603 <https://pulp.plan.io/issues/8603>`_
+- Fixed on-demand sync/migration of repositories that don't have sha256 checksums.
+  `#8625 <https://pulp.plan.io/issues/8625>`_
+- Taught pulp-export to validate chunk-size to be <= 1TB.
+  `#8628 <https://pulp.plan.io/issues/8628>`_
+- Addressed a race-condition in PulpImport that could fail with unique-constraint violations.
+  `#8633 <https://pulp.plan.io/issues/8633>`_
+- Content app now properly lists all distributions present
+  `#8636 <https://pulp.plan.io/issues/8636>`_
+- Fixed ability to specify custom headers on a Remote.
+  `#8689 <https://pulp.plan.io/issues/8689>`_
+- Fixed compatibility with Django 2.2 LTS. Pulp now requires Django~=2.2.23
+  `#8691 <https://pulp.plan.io/issues/8691>`_
+- Skip allowed content checks on collectstatic
+  `#8711 <https://pulp.plan.io/issues/8711>`_
+- Fixed a bug in the retained versions code where content wasn't being properly moved to newer repo
+  versions when old versions were cleaned up.
+  `#8793 <https://pulp.plan.io/issues/8793>`_
+
+
+Improved Documentation
+~~~~~~~~~~~~~~~~~~~~~~
+
+- Added docs on how to list the effective settings using ``dynaconf list``.
+  `#6235 <https://pulp.plan.io/issues/6235>`_
+- Added anti-instructions, that users should never run `pulpcore-manager makemigrations``, but file a bug instead.
+  `#6703 <https://pulp.plan.io/issues/6703>`_
+- Clarified repositories are typed in concepts page
+  `#6990 <https://pulp.plan.io/issues/6990>`_
+- Added UTF-8 character set encoding as a requirement for PostgreSQL
+  `#7019 <https://pulp.plan.io/issues/7019>`_
+- Fixed typo s/comtrol/control
+  `#7715 <https://pulp.plan.io/issues/7715>`_
+- Removed the PUP references from the docs.
+  `#7747 <https://pulp.plan.io/issues/7747>`_
+- Updated plugin writers' guide to not use settings directly in the model fields.
+  `#7776 <https://pulp.plan.io/issues/7776>`_
+- Make the reference to the Pulp installer documentation more explicit.
+  `#8477 <https://pulp.plan.io/issues/8477>`_
+- Removed example Ansible installer playbook from the pulpcore docs so that Pulp users would have a single source of truth in the pulp-installer docs.
+  `#8550 <https://pulp.plan.io/issues/8550>`_
+- Added security disclosures ref to homepage
+  `#8584 <https://pulp.plan.io/issues/8584>`_
+- Add sequential steps for storage docs
+  `#8597 <https://pulp.plan.io/issues/8597>`_
+- Updated signing service workflow. Removed old deprecation warning.
+  `#8609 <https://pulp.plan.io/issues/8609>`_
+- Add an example of how to specify an array value and a dict key in the auth methods section
+  `#8668 <https://pulp.plan.io/issues/8668>`_
+- Fixed docs build errors reported by autodoc.
+  `#8784 <https://pulp.plan.io/issues/8784>`_
+
+
+Misc
+~~~~
+
+- `#8524 <https://pulp.plan.io/issues/8524>`_, `#8656 <https://pulp.plan.io/issues/8656>`_, `#8761 <https://pulp.plan.io/issues/8761>`_
+
+
+Plugin API
+----------
+
+Features
+~~~~~~~~
+
+- Undeprecated the use of ``uuid.UUID`` in task arguments. With this, primary keys do not need to be explicitely cast to ``str``.
+  `#8723 <https://pulp.plan.io/issues/8723>`_
+
+
+Bugfixes
+~~~~~~~~
+
+- Added RepositoryVersionRelatedField to the plugin API.
+  `#8578 <https://pulp.plan.io/issues/8578>`_
+- Fixed auto-distribute w/ retained_versions tests
+  `#8792 <https://pulp.plan.io/issues/8792>`_
+
+
+Removals
+~~~~~~~~
+
+- Removed deprecated ``pulpcore.plugin.tasking.WorkingDirectory``.
+  `#8354 <https://pulp.plan.io/issues/8354>`_
+- Removed ``BaseDistribution``, ``PublicationDistribution``, and ``RepositoryVersionDistribution``
+  models. Removed ``BaseDistributionSerializer``, ``PublicationDistributionSerializer``, and
+  ``RepositoryVersionDistributionSerializer`` serializers. Removed ``BaseDistributionViewSet`` and
+  ``DistributionFilter``.
+  `#8386 <https://pulp.plan.io/issues/8386>`_
+- Removed ``pulpcore.plugin.tasking.enqueue_with_reservation``.
+  `#8497 <https://pulp.plan.io/issues/8497>`_
+
+
+Deprecations
+~~~~~~~~~~~~
+
+- RepositoryVersion method "versions_containing_content" is deprecated now.
+  `#4832 <https://pulp.plan.io/issues/4832>`_
+- The usage of the `pulpcore.plugin.stages.ContentUnassociation` stage has been deprecated. A future update will remove it from the plugin API.
+  `#8635 <https://pulp.plan.io/issues/8635>`_
+
+
 3.12.2 (2021-04-29)
 ===================
 REST API

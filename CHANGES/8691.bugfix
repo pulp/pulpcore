@@ -1,1 +1,0 @@
-Fixed compatibility with Django 2.2 LTS. Pulp now requires Django~=2.2.23

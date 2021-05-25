@@ -1,4 +1,0 @@
-Removed ``BaseDistribution``, ``PublicationDistribution``, and ``RepositoryVersionDistribution``
-models. Removed ``BaseDistributionSerializer``, ``PublicationDistributionSerializer``, and
-``RepositoryVersionDistributionSerializer`` serializers. Removed ``BaseDistributionViewSet`` and
-``DistributionFilter``.
