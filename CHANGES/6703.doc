@@ -1,1 +1,0 @@
-Added anti-instructions, that users should never run `pulpcore-manager makemigrations``, but file a bug instead.

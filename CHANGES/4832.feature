@@ -1,1 +1,0 @@
-Added two views to identify content which belongs to repository_version or publication.

@@ -1,2 +1,0 @@
-Fixed bug where using forms submissions to create resources (e.g. ``Remotes``) raised exception
-about the format of ``pulp_labels``.

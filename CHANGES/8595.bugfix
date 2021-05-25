@@ -1,1 +1,0 @@
-Fixed bug where publications sometimes fail with the error '[Errno 39] Directory not empty'.

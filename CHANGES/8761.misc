@@ -1,1 +1,0 @@
-Copied from BaseDistribution some validation logic that Distribution.repository and Distribution.repository_version are not used at the same time.

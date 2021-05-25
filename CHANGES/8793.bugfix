@@ -1,2 +1,0 @@
-Fixed a bug in the retained versions code where content wasn't being properly moved to newer repo
-versions when old versions were cleaned up.
