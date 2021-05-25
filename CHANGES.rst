@@ -352,6 +352,31 @@ Deprecations
   `#8505 <https://pulp.plan.io/issues/8505>`_
 
 
+3.11.2 (2021-05-25)REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Skip allowed content checks on collectstatic
+  (backported from #8711)
+  `#8712 <https://pulp.plan.io/issues/8712>`_
+- Fixed cleanup of UploadChunks when their corresponding Upload is deleted.
+  (backported from #7316)
+  `#8757 <https://pulp.plan.io/issues/8757>`_
+- Fixed compatibility with Django 2.2 LTS. Pulp now requires Django~=2.2.23
+  (backported from #8691)
+  `#8758 <https://pulp.plan.io/issues/8758>`_
+- Pinned click~=7.1.2 to ensure RQ is compatible with it.
+  `#8767 <https://pulp.plan.io/issues/8767>`_
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.11.1 (2021-04-29)
 ===================
 REST API
