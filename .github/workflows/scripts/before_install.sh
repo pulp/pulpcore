@@ -27,6 +27,18 @@ else
   BRANCH="${GITHUB_REF##refs/tags/}"
 fi
 
+if [[ "$TEST" == "upgrade" ]]; then
+  git checkout -b ci_upgrade_test
+  cp -R .github /tmp/.github
+  cp -R .ci /tmp/.ci
+  git checkout $FROM_PULPCORE_BRANCH
+  rm -rf .ci .github
+  cp -R /tmp/.github .
+  cp -R /tmp/.ci .
+  # Pin deps
+  sed -i "s/~/=/g" requirements.txt
+fi
+
 if [[ "$TEST" == "plugin-from-pypi" ]]; then
   COMPONENT_VERSION=$(http https://pypi.org/pypi/pulpcore/json | jq -r '.info.version')
 else
@@ -72,7 +84,10 @@ else
   export CI_BASE_IMAGE=
 fi
 
+
 cd ..
+
+
 
 git clone --depth=1 https://github.com/pulp/pulp-openapi-generator.git
 if [ -n "$PULP_OPENAPI_GENERATOR_PR_NUMBER" ]; then
@@ -94,9 +109,10 @@ fi
 cd pulp-cli
 pip install -e .
 pulp config create --base-url http://pulp --location tests/settings.toml
+sed -i "s/true/false/g" tests/settings.toml
+mkdir ~/.config/pulp
+cp tests/settings.toml ~/.config/pulp/settings.toml
 cd ..
-
-
 
 
 
@@ -116,6 +132,8 @@ if [ -n "$PULP_CERTGUARD_PR_NUMBER" ]; then
   git checkout $PULP_CERTGUARD_PR_NUMBER
   cd ..
 fi
+
+
 
 # Intall requirements for ansible playbooks
 pip install docker netaddr boto3 ansible
