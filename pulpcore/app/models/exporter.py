@@ -9,6 +9,7 @@ from pulpcore.app.models import (
     MasterModel,
 )
 from pulpcore.app.models.repository import Repository
+from pulpcore.constants import FS_EXPORT_CHOICES, FS_EXPORT_METHODS
 
 
 class Export(BaseModel):
@@ -76,6 +77,9 @@ class FilesystemExporter(Exporter):
     TYPE = "filesystem"
 
     path = models.TextField()
+    method = models.CharField(
+        choices=FS_EXPORT_CHOICES, default=FS_EXPORT_METHODS.WRITE, max_length=128
+    )
 
     class Meta:
         default_related_name = "%(app_label)s_fs_exporter"
