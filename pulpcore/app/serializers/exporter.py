@@ -16,6 +16,7 @@ from pulpcore.app.serializers import (
     RelatedResourceField,
     RepositoryVersionRelatedField,
 )
+from pulpcore.constants import FS_EXPORT_CHOICES, FS_EXPORT_METHODS
 
 
 class ExporterSerializer(ModelSerializer):
@@ -314,6 +315,12 @@ class FilesystemExporterSerializer(ExporterSerializer):
 
     path = serializers.CharField(help_text=_("File system location to export to."))
 
+    method = serializers.ChoiceField(
+        help_text=_("Method of exporting"),
+        choices=(FS_EXPORT_CHOICES),
+        default=FS_EXPORT_METHODS.WRITE,
+    )
+
     class Meta:
         model = models.FilesystemExporter
-        fields = ExporterSerializer.Meta.fields + ("path",)
+        fields = ExporterSerializer.Meta.fields + ("path", "method")

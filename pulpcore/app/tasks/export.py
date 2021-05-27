@@ -32,11 +32,12 @@ from pulpcore.app.importexport import (
     export_artifacts,
     export_content,
 )
+from pulpcore.constants import FS_EXPORT_METHODS
 
 log = logging.getLogger(__name__)
 
 
-def _export_to_file_system(path, content_artifacts):
+def _export_to_file_system(path, content_artifacts, method=FS_EXPORT_METHODS.WRITE):
     """
     Export a set of ContentArtifacts to the filesystem.
 
@@ -46,25 +47,36 @@ def _export_to_file_system(path, content_artifacts):
 
     Raises:
         ValidationError: When path is not in the ALLOWED_EXPORT_PATHS setting
+        RuntimeError: If Artifacts are not downloaded or when trying to link non-fs files
     """
     if content_artifacts.filter(artifact=None).exists():
-        RuntimeError(_("Remote artifacts cannot be exported."))
+        RuntimeError(_("Cannot export artifacts that haven't been downloaded."))
+
+    if (
+        settings.DEFAULT_FILE_STORAGE != "pulpcore.app.models.storage.FileSystem"
+        and method != FS_EXPORT_METHODS.WRITE
+    ):
+        raise RuntimeError(_("Only write is supported for non-filesystem storage."))
 
     for ca in content_artifacts.select_related("artifact").iterator():
         artifact = ca.artifact
         dest = os.path.join(path, ca.relative_path)
 
-        try:
-            os.makedirs(os.path.split(dest)[0])
-        except FileExistsError:
-            pass
+        os.makedirs(os.path.split(dest)[0], exist_ok=True)
 
-        if settings.DEFAULT_FILE_STORAGE == "pulpcore.app.models.storage.FileSystem":
+        if method == FS_EXPORT_METHODS.SYMLINK:
+            src = os.path.join(settings.MEDIA_ROOT, artifact.file.name)
+            os.symlink(src, dest)
+        elif method == FS_EXPORT_METHODS.HARDLINK:
             src = os.path.join(settings.MEDIA_ROOT, artifact.file.name)
             os.link(src, dest)
+        elif method == FS_EXPORT_METHODS.WRITE:
+            with open(dest, "wb") as f, artifact.file as af:
+                for chunk in af.chunks(1024 * 1024):
+                    f.write(chunk)
+
         else:
-            with open(dest, "wb") as f:
-                f.write(artifact.file.read())
+            raise RuntimeError(_("Unsupported export method '{}'.").format(method))
 
 
 def fs_publication_export(exporter_pk, publication_pk):

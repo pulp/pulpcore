@@ -51,3 +51,15 @@ API_ROOT = "pulp/api/v3/"
 # adding here won't make a new type-of checksum available. sha256 MUST be here,
 # as Pulp relies on it to identify entities.
 ALL_KNOWN_CONTENT_CHECKSUMS = {"md5", "sha1", "sha224", "sha256", "sha384", "sha512"}
+
+
+FS_EXPORT_METHODS = SimpleNamespace(
+    WRITE="write",
+    HARDLINK="hardlink",
+    SYMLINK="symlink",
+)
+FS_EXPORT_CHOICES = (
+    (FS_EXPORT_METHODS.WRITE, "Export by writing"),
+    (FS_EXPORT_METHODS.HARDLINK, "Export by hardlinking"),
+    (FS_EXPORT_METHODS.SYMLINK, "Export by symlinking"),
+)

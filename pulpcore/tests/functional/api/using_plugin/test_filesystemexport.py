@@ -112,7 +112,7 @@ class BaseExporterCase(unittest.TestCase):
         result = self.exporter_api.delete(exporter.pulp_href)
         monitor_task(result.task)
 
-    def _create_exporter(self):
+    def _create_exporter(self, params={}):
         """
         Utility routine to create an exporter for the available repositories.
         """
@@ -120,6 +120,7 @@ class BaseExporterCase(unittest.TestCase):
             "name": uuid4(),
             "path": "/tmp/{}/".format(uuid4()),
         }
+        body.update(params)
 
         exporter = self.exporter_api.create(body)
         self.addCleanup(self._delete_exporter, exporter)
@@ -169,6 +170,15 @@ class FilesystemExporterTestCase(BaseExporterCase):
             self.exporter_api.read(exporter.pulp_href)
         self.assertEqual(404, ae.exception.status)
 
+    def test_method(self):
+        """Test the method field."""
+        exporter, _ = self._create_exporter({"method": "symlink"})
+        self.assertEqual("symlink", exporter.method)
+
+        with self.assertRaises(ApiException) as ae:
+            exporter = self._create_exporter({"method": "invalid"})
+        self.assertEqual(400, ae.exception.status)
+
 
 class FilesystemExportTestCase(BaseExporterCase):
     """Test FilesystemExport CRDL methods (Update is not allowed)."""
@@ -187,13 +197,13 @@ class FilesystemExportTestCase(BaseExporterCase):
 
     def test_export(self):
         """Issue and evaluate a FilesystemExport (tests both Create and Read)."""
-        exporter, body = self._create_exporter()
+        exporter, body = self._create_exporter({"method": "write"})
         export = self._gen_export(exporter, self.publications[0])
         self.assertIsNotNone(export)
 
     def test_list(self):
         """Find all the FilesystemExports for a FilesystemExporter."""
-        exporter, body = self._create_exporter()
+        exporter, body = self._create_exporter({"method": "write"})
         for i in range(NUM_REPOS):
             self._gen_export(exporter, self.publications[i])
         exporter = self.exporter_api.read(exporter.pulp_href)
@@ -202,7 +212,7 @@ class FilesystemExportTestCase(BaseExporterCase):
 
     def test_delete(self):
         """Test deleting exports for a FilesystemExporter."""
-        exporter, body = self._create_exporter()
+        exporter, body = self._create_exporter({"method": "write"})
         export = self._gen_export(exporter, self.publications[0])
         self.exports_api.delete(export.pulp_href)
         with self.assertRaises(ApiException) as ae:
