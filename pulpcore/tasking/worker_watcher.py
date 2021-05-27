@@ -17,18 +17,6 @@ from django.db import transaction
 _logger = logging.getLogger(__name__)
 
 
-def mark_worker_online(worker_name):
-    """Sets some bookkeeping values on the worker record for tracking worker state
-
-    Args:
-        worker_name (str): The hostname of the worker
-    """
-    worker, created = Worker.objects.get_or_create(name=worker_name)
-    worker.gracefully_stopped = False
-    worker.cleaned_up = False
-    worker.save()
-
-
 def handle_worker_heartbeat(worker_name):
     """
     This is a generic function for updating worker heartbeat records.
