@@ -1,7 +1,7 @@
-.. _basic-auth:
+.. _basic-authentication:
 
-Basic Authentication
---------------------
+Basic
+-----
 
 Pulp by default uses `Basic Authentication <https://tools.ietf.org/html/rfc7617>`_ which checks the
 user submitted header against an internal database of users. If the username and password match, the
