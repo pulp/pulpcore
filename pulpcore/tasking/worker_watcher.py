@@ -101,7 +101,7 @@ def check_worker_processes():
     if resource_manager_count == 0:
         msg = _(
             "There are 0 pulpcore-resource-manager processes running. Pulp will not operate "
-            "correctly without at least one pulpcore-resource-mananger process running."
+            "correctly without at least one pulpcore-resource-manager process running."
         )
         _logger.error(msg)
 
