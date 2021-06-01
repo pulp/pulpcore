@@ -320,9 +320,7 @@ class RemoteArtifactSaver(Stage):
                         break
                 else:
                     msg = _('No declared artifact with relative path "{rp}" for content "{c}"')
-                    raise ValueError(
-                        msg.format(rp=content_artifact.relative_path, c=d_content.content)
-                    )
+                    raise ValueError(msg.format(rp=d_artifact.relative_path, c=d_content.content))
 
                 for remote_artifact in content_artifact._remote_artifact_saver_ras:
                     if remote_artifact.remote_id == d_artifact.remote.pk:
