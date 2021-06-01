@@ -1,29 +1,11 @@
-Disabling Checks against Internal User DB
------------------------------------------
+.. _webserver-authentication:
 
-The internal users database is checked using the ``django.contrib.auth.backends.ModelBackend`` from
-Django. To disable checking a username and password against the internal users database, remove the
-``django.contrib.auth.backends.ModelBackend`` from the ``AUTHENTICATION_BACKENDS`` setting in Pulp.
-
-You can do this effectively, for example using a Python settings file::
-
-    AUTHENTICATION_BACKENDS = []
-
-
-Or by defining an environment variable for Dynaconf to use::
-
-    export PULP_AUTHENTICATION_BACKENDS="[]"
-
-
-.. _webserver-auth:
-
-Webserver Authentication
-------------------------
+Webserver
+---------
 
 Pulp can be configured to use authentication provided in the webserver outside of Pulp. This allows
-for integration with ldap for examples, through
-`mod_ldap <https://httpd.apache.org/docs/2.4/mod/mod_ldap.html>`_, or certificate based API access,
-etc.
+for integration with ldap for example, through `mod_ldap <https://httpd.apache.org/docs/2.4/mod/
+mod_ldap.html>`_, or certificate based API access, etc.
 
 Enable external authentication in two steps:
 
@@ -37,7 +19,7 @@ backend for them. To have any name accepted but create the username in the datab
 
 
 2. Specify how to receive the username from the webserver. Do this by specifying to DRF an
-   AUTHENTICATION_CLASS. For example, use the ``PulpRemoteUserAuthentication`` as follows::
+   ``AUTHENTICATION_CLASS``. For example, use the ``PulpRemoteUserAuthentication`` as follows::
 
     REST_FRAMEWORK['DEFAULT_AUTHENTICATION_CLASSES'] = (
         'rest_framework.authentication.SessionAuthentication',
@@ -59,7 +41,7 @@ This removes ``rest_framework.authentication.BasicAuthentication``, but retains
 :ref:`REMOTE_USER_ENVIRON_NAME <remote-user-environ-name>` Pulp setting.
 
 
-.. _webserver-auth-same-webserver:
+.. _webserver-authentication-same-webserver:
 
 Webserver Auth in Same Webserver
 ********************************
@@ -80,7 +62,7 @@ authentication, you likely want to leave :ref:`REMOTE_USER_ENVIRON_NAME <remote-
 unset and configure the webserver to set the ``REMOTE_USER`` WSGI environment variable.
 
 
-.. _webserver-auth-with-reverse-proxy:
+.. _webserver-authentication-with-reverse-proxy:
 
 Webserver Auth with Reverse Proxy
 *********************************
@@ -114,15 +96,3 @@ you to specify another WSGI environment variable to read the authenticated usern
     Configuring this has serious security implications. See the `Django warning at the end of this
     section in their docs <https://docs.djangoproject.com/en/2.2/howto/auth-remote-user/
     #configuration>`_ for more details.
-
-
-Custom Authentication
----------------------
-
-Pulp is a Django app and Django Rest Framework (DRF) application, so additional authentication can
-be added as long as it's correctly configured for both Django and Django Rest Frameowork.
-
-See the `Django docs on configuring custom authentication <https://docs.djangoproject.com/en/2.2/
-topics/auth/customizing/#customizing-authentication-in-django>`_ and the `Django Rest Framework docs
-on configuring custom authentication <https://www.django-rest-framework.org/api-guide/authentication
-/#custom-authentication>`_.

@@ -205,7 +205,7 @@ REMOTE_USER_ENVIRON_NAME
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
    The name of the WSGI environment variable to read for :ref:`webserver authentication
-   <webserver-auth>`.
+   <webserver-authentication>`.
 
    .. warning::
 
