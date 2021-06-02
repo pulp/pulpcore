@@ -1,7 +1,10 @@
+import json
 import os
 import re
 from urllib.parse import urljoin
+from pathlib import Path
 
+from django.conf import settings
 from django.core.exceptions import FieldDoesNotExist
 from django.utils.html import strip_tags
 from drf_spectacular.drainage import reset_generator_stats
@@ -443,6 +446,22 @@ class PulpSchemaGenerator(SchemaGenerator):
 
     def get_schema(self, request=None, public=False):
         """Generate a OpenAPI schema."""
+        cached_schema = Path(settings.STATIC_ROOT, "pulp_schema.json")
+        is_dev_install = False
+
+        pulp_app_versions = {}
+        for app in pulp_plugin_configs():
+            pulp_app_versions[app.label] = app.version
+            if "dev" in app.version:
+                is_dev_install = True
+
+        query_params = getattr(request, "query_params", [])
+        if cached_schema.exists() and not query_params and not is_dev_install:
+            with cached_schema.open() as schema_file:
+                pulp_schema = json.loads(schema_file.read())
+            if pulp_schema["info"]["x-pulp-app-versions"] == pulp_app_versions:
+                return pulp_schema
+
         reset_generator_stats()
         result = build_root_object(
             paths=self.parse(request, public),
@@ -458,12 +477,16 @@ class PulpSchemaGenerator(SchemaGenerator):
         }
 
         # Adding plugin version config
-        result["info"]["x-pulp-app-versions"] = {}
-        for app in pulp_plugin_configs():
-            result["info"]["x-pulp-app-versions"][app.label] = app.version
+        result["info"]["x-pulp-app-versions"] = pulp_app_versions
 
         # Adding current host as server (it will provide a default value for the bindings)
         server_url = "http://localhost:24817" if not request else request.build_absolute_uri("/")
         result["servers"] = [{"url": server_url}]
 
-        return normalize_result_object(result)
+        pulp_schema = normalize_result_object(result)
+        if not getattr(request, "query_params", []):
+            with cached_schema.open("w") as schema_file:
+                json_object = json.dumps(pulp_schema, indent=4)
+                schema_file.write(json_object)
+
+        return pulp_schema
