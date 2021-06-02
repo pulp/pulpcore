@@ -4,7 +4,7 @@ Instructions
 Supported Platforms
 -------------------
 
-Pulp should work on any operating system that can provide a Python 3.6+ runtime environment and
+Pulp should work on any operating system that can provide a Python 3.8+ runtime environment and
 the supporting dependencies e.g. a database. Pulp has been demonstrated to work on Ubuntu, Debian,
 Fedora, CentOS, and Mac OSX.
 
@@ -37,7 +37,7 @@ PyPI Installation
    * system account: yes
    * create corresponding private group: yes
 
-2. Install python3.6(+) and pip.
+2. Install python3.8(+) and pip.
 
 3. Create a pulp venv::
 

@@ -3,7 +3,7 @@ Style Guide
 
 Python Version
 --------------
-All Pulp 3+ code will use Python 3.6+. It is not necessary to maintain backwards compatibility
+All Pulp 3+ code will use Python 3.8+. It is not necessary to maintain backwards compatibility
 with Python 2.Y.
 
 PEP-8
