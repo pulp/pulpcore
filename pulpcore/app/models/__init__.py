@@ -8,6 +8,7 @@ from .base import (  # noqa
 )
 
 from .access_policy import AccessPolicy, AutoAddObjPermsMixin, AutoDeleteObjPermsMixin  # noqa
+from .acs import AlternateContentSource, AlternateContentSourcePath  # noqa
 from .content import (  # noqa
     Artifact,
     AsciiArmoredDetachedSigningService,
