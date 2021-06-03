@@ -33,6 +33,10 @@ from .fields import (  # noqa
     TaskGroupStatusCountField,
 )
 from .access_policy import AccessPolicySerializer  # noqa
+from .acs import (  # noqa
+    AlternateContentSourceSerializer,
+    AlternateContentSourcePathSerializer,
+)
 from .content import (  # noqa
     ArtifactSerializer,
     ContentChecksumSerializer,

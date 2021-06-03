@@ -9,6 +9,8 @@ from .base import (  # noqa
 
 from .access_policy import AccessPolicyViewSet  # noqa
 
+from .acs import AlternateContentSourceViewSet  # noqa
+
 from .content import (  # noqa
     ArtifactFilter,
     ArtifactViewSet,
