@@ -6,19 +6,25 @@ from rest_framework import mixins
 from pulpcore.app.models import (
     Export,
     Exporter,
+    FilesystemExport,
+    FilesystemExporter,
+    Publication,
     PulpExport,
     PulpExporter,
+    RepositoryVersion,
 )
 
 from pulpcore.app.serializers import (
     AsyncOperationResponseSerializer,
     ExportSerializer,
     ExporterSerializer,
+    FilesystemExporterSerializer,
+    FilesystemExportSerializer,
     PulpExporterSerializer,
     PulpExportSerializer,
 )
 
-from pulpcore.app.tasks.export import pulp_export
+from pulpcore.app.tasks.export import fs_publication_export, fs_repo_version_export, pulp_export
 
 from pulpcore.app.viewsets import (
     AsyncRemoveMixin,
@@ -79,6 +85,16 @@ class PulpExporterViewSet(ExporterViewSet):
     queryset = PulpExporter.objects.all()
 
 
+class FilesystemExporterViewSet(ExporterViewSet):
+    """
+    Endpoint for managing FilesystemExporters. FilesystemExporters are provided as a tech preview.
+    """
+
+    endpoint_name = "filesystem"
+    serializer_class = FilesystemExporterSerializer
+    queryset = FilesystemExporter.objects.all()
+
+
 class ExportViewSet(
     NamedModelViewSet,
     mixins.CreateModelMixin,
@@ -132,5 +148,51 @@ class PulpExportViewSet(ExportViewSet):
             [exporter],
             kwargs={"exporter_pk": str(exporter.pk), "params": request.data},
         )
+
+        return OperationPostponedResponse(task, request)
+
+
+class FilesystemExportViewSet(ExportViewSet):
+    """
+    Endpoint for managing FilesystemExports. This endpoint is provided as a tech preview.
+    """
+
+    parent_viewset = FilesystemExporterViewSet
+    serializer_class = FilesystemExportSerializer
+    queryset = FilesystemExport.objects.all()
+
+    @extend_schema(
+        request=FilesystemExportSerializer,
+        description="Trigger an asynchronous task to export files to the filesystem",
+        responses={202: AsyncOperationResponseSerializer},
+    )
+    def create(self, request, exporter_pk):
+        """
+        Generates a Task to export files to the filesystem.
+        """
+        # Validate Exporter
+        exporter = FilesystemExporter.objects.get(pk=exporter_pk).cast()
+        ExporterSerializer.validate_path(exporter.path, check_is_dir=True)
+
+        # Validate Export
+        serializer = FilesystemExportSerializer(data=request.data, context={"exporter": exporter})
+        serializer.is_valid(raise_exception=True)
+
+        if request.data.get("publication"):
+            publication = self.get_resource(request.data["publication"], Publication)
+
+            task = dispatch(
+                fs_publication_export,
+                [exporter],
+                kwargs={"exporter_pk": exporter.pk, "publication_pk": publication.pk},
+            )
+        else:
+            repo_version = self.get_resource(request.data["repository_version"], RepositoryVersion)
+
+            task = dispatch(
+                fs_repo_version_export,
+                [exporter],
+                kwargs={"exporter_pk": str(exporter.pk), "repo_version_pk": repo_version.pk},
+            )
 
         return OperationPostponedResponse(task, request)

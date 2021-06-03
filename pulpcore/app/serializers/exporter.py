@@ -274,9 +274,42 @@ class PulpExporterSerializer(ExporterSerializer):
         fields = ExporterSerializer.Meta.fields + ("path", "repositories", "last_export")
 
 
+class FilesystemExportSerializer(ExportSerializer):
+    """
+    Serializer for FilesystemExports.
+    """
+
+    publication = DetailRelatedField(
+        required=False,
+        help_text=_("A URI of the publication to be exported."),
+        view_name_pattern=r"publications(-.*/.*)-detail",
+        queryset=models.Publication.objects.all(),
+        write_only=True,
+    )
+
+    repository_version = RepositoryVersionRelatedField(
+        help_text=_("A URI of the repository version export."),
+        required=False,
+        write_only=True,
+    )
+
+    def validate(self, data):
+        if ("publication" not in data and "repository_version" not in data) or (
+            "publication" in data and "repository_version" in data
+        ):
+            raise serializers.ValidationError(
+                _("publication or repository_version must either be supplied but not both.")
+            )
+        return data
+
+    class Meta:
+        model = models.FilesystemExport
+        fields = ExportSerializer.Meta.fields + ("publication", "repository_version")
+
+
 class FilesystemExporterSerializer(ExporterSerializer):
     """
-    Base serializer for FilesystemExporters.
+    Serializer for FilesystemExporters.
     """
 
     path = serializers.CharField(help_text=_("File system location to export to."))
@@ -284,16 +317,3 @@ class FilesystemExporterSerializer(ExporterSerializer):
     class Meta:
         model = models.FilesystemExporter
         fields = ExporterSerializer.Meta.fields + ("path",)
-
-
-class PublicationExportSerializer(serializers.Serializer):
-    """
-    Serializer for exporting publications.
-    """
-
-    publication = DetailRelatedField(
-        required=True,
-        help_text=_("A URI of the publication to be exported."),
-        view_name_pattern=r"publications(-.*/.*)-detail",
-        queryset=models.Publication.objects.all(),
-    )

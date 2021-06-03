@@ -26,6 +26,8 @@ from .custom_filters import (  # noqa
 from .exporter import (  # noqa
     ExportViewSet,
     ExporterViewSet,
+    FilesystemExporterViewSet,
+    FilesystemExportViewSet,
     PulpExporterViewSet,
     PulpExportViewSet,
 )
