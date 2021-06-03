@@ -11,10 +11,13 @@ from glob import glob
 from pathlib import Path
 from pkg_resources import get_distribution
 
+from django.conf import settings
+
 from pulpcore.app.models import (
     CreatedResource,
     ExportedResource,
     Exporter,
+    FilesystemExport,
     Publication,
     PulpExport,
     PulpExporter,
@@ -33,6 +36,37 @@ from pulpcore.app.importexport import (
 log = logging.getLogger(__name__)
 
 
+def _export_to_file_system(path, content_artifacts):
+    """
+    Export a set of ContentArtifacts to the filesystem.
+
+    Args:
+        path (str): A path to export the ContentArtifacts to
+        content_artifacts (django.db.models.QuerySet): Set of ContentArtifacts to export
+
+    Raises:
+        ValidationError: When path is not in the ALLOWED_EXPORT_PATHS setting
+    """
+    if content_artifacts.filter(artifact=None).exists():
+        RuntimeError(_("Remote artifacts cannot be exported."))
+
+    for ca in content_artifacts.select_related("artifact").iterator():
+        artifact = ca.artifact
+        dest = os.path.join(path, ca.relative_path)
+
+        try:
+            os.makedirs(os.path.split(dest)[0])
+        except FileExistsError:
+            pass
+
+        if settings.DEFAULT_FILE_STORAGE == "pulpcore.app.models.storage.FileSystem":
+            src = os.path.join(settings.MEDIA_ROOT, artifact.file.name)
+            os.link(src, dest)
+        else:
+            with open(dest, "wb") as f:
+                f.write(artifact.file.read())
+
+
 def fs_publication_export(exporter_pk, publication_pk):
     """
     Export a publication to the file system.
@@ -43,13 +77,30 @@ def fs_publication_export(exporter_pk, publication_pk):
     """
     exporter = Exporter.objects.get(pk=exporter_pk).cast()
     publication = Publication.objects.get(pk=publication_pk).cast()
+    export = FilesystemExport.objects.create(
+        exporter=exporter,
+        params={"publication": publication_pk},
+        task=Task.current(),
+    )
+    ExportedResource.objects.create(export=export, content_object=publication)
+    CreatedResource.objects.create(content_object=export)
 
     log.info(
         _(
             "Exporting: file_system_exporter={exporter}, publication={publication}, path=path"
         ).format(exporter=exporter.name, publication=publication.pk, path=exporter.path)
     )
-    exporter.export_publication(publication)
+
+    content_artifacts = ContentArtifact.objects.filter(
+        pk__in=publication.published_artifact.values_list("content_artifact__pk", flat=True)
+    )
+
+    if publication.pass_through:
+        content_artifacts |= ContentArtifact.objects.filter(
+            content__in=publication.repository_version.content
+        )
+
+    _export_to_file_system(exporter.path, content_artifacts)
 
 
 def fs_repo_version_export(exporter_pk, repo_version_pk):
@@ -62,13 +113,23 @@ def fs_repo_version_export(exporter_pk, repo_version_pk):
     """
     exporter = Exporter.objects.get(pk=exporter_pk).cast()
     repo_version = RepositoryVersion.objects.get(pk=repo_version_pk)
+    export = FilesystemExport.objects.create(
+        exporter=exporter,
+        params={"repository_version": repo_version_pk},
+        task=Task.current(),
+    )
+    ExportedResource.objects.create(export=export, content_object=repo_version)
+    CreatedResource.objects.create(content_object=export)
 
     log.info(
         _(
             "Exporting: file_system_exporter={exporter}, repo_version={repo_version}, path=path"
         ).format(exporter=exporter.name, repo_version=repo_version.pk, path=exporter.path)
     )
-    exporter.export_repository_version(repo_version)
+
+    content_artifacts = ContentArtifact.objects.filter(content__in=repo_version.content)
+
+    _export_to_file_system(exporter.path, content_artifacts)
 
 
 def _get_versions_to_export(the_exporter, the_export):

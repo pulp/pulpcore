@@ -23,6 +23,7 @@ from .exporter import (  # noqa
     Export,
     ExportedResource,
     Exporter,
+    FilesystemExport,
     FilesystemExporter,
     PulpExport,
     PulpExporter,

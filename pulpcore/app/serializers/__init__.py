@@ -44,8 +44,8 @@ from .content import (  # noqa
 from .exporter import (  # noqa
     ExporterSerializer,
     ExportSerializer,
+    FilesystemExportSerializer,
     FilesystemExporterSerializer,
-    PublicationExportSerializer,
     PulpExporterSerializer,
     PulpExportSerializer,
 )
