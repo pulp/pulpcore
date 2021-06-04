@@ -14,6 +14,7 @@ class RepairView(APIView):
             "or corrupted artifacts, and attempts to redownload them."
         ),
         summary="Repair Artifact Storage",
+        request=RepairSerializer,
         responses={202: AsyncOperationResponseSerializer},
     )
     def post(self, request):
