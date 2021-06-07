@@ -333,6 +333,8 @@ to the names of repos in Pulp. For example, suppose the name of the repo in the 
 
     http :/pulp/api/v3/importers/core/pulp/ name="test" repo_mapping:="{\"source\": \"dest\"}"
 
+.. note::
+   Pulp import expects destination repository/repositories to be present at the import process.
 
 After the importer is created, a POST request to create an import will trigger the import process.
 
