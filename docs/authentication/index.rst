@@ -9,4 +9,5 @@ Authentication
    overview
    basic
    webserver
+   keycloak
    other
