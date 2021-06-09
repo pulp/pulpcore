@@ -178,7 +178,7 @@ class NonJSONWarningEncoder(json.JSONEncoder):
         try:
             return json.JSONEncoder.default(self, obj)
         except TypeError:
-            deprecation_logger.warn(
+            deprecation_logger.warning(
                 _(
                     "The argument {obj} is of type {type}, which is not JSON serializable. The use "
                     "of non JSON serializable objects for `args` and `kwargs` to tasks is "

@@ -19,7 +19,6 @@ from pulpcore.app.util import batch_qs, get_view_name_for_model
 from pulpcore.constants import ALL_KNOWN_CONTENT_CHECKSUMS
 from pulpcore.download.factory import DownloaderFactory
 from pulpcore.exceptions import ResourceImmutableError
-from pulpcore.app.loggers import deprecation_logger
 
 from .base import MasterModel, BaseModel
 from .content import Artifact, Content
@@ -532,36 +531,6 @@ class RepositoryVersion(BaseModel):
         unique_together = ("repository", "number")
         get_latest_by = "number"
         ordering = ("number",)
-
-    @classmethod
-    def versions_containing_content(cls, content):
-        """
-        Returns a query of repository versions containing the provided content units.
-
-        Args:
-            content (django.db.models.QuerySet): query of content
-
-        Returns:
-            django.db.models.QuerySet: Repository versions which contains content.
-        """
-        deprecation_logger(
-            "This method is deprecated and will be removed in version 3.14. "
-            "Use RepositoryVersion.objects.with_content() instead."
-        )
-        query = models.Q(pk__in=[])
-        repo_content = RepositoryContent.objects.filter(content__pk__in=content)
-
-        for rc in repo_content.iterator():
-            filter = models.Q(
-                repository__pk=rc.repository.pk,
-                number__gte=rc.version_added.number,
-            )
-            if rc.version_removed:
-                filter &= models.Q(number__lt=rc.version_removed.number)
-
-            query |= filter
-
-        return cls.objects.filter(query)
 
     def _content_relationships(self):
         """
