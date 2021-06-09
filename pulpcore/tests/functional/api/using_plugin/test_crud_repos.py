@@ -254,7 +254,7 @@ class CRUDRemoteTestCase(unittest.TestCase):
         self._compare_results(self.remote_attrs, self.remote)
 
     def test_update(self):
-        data = {"download_concurrency": 66, "policy": "immediate"}
+        data = {"download_concurrency": 23, "policy": "immediate"}
         self.remotes_api.partial_update(self.remote.pulp_href, data)
         time.sleep(1)  # without this, the read returns the pre-patch values
         new_remote = self.remotes_api.read(self.remote.pulp_href)

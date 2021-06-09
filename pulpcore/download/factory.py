@@ -74,6 +74,8 @@ class DownloaderFactory:
                 is the downloader class to be used for that scheme, e.g.
                 {'https': MyCustomDownloader}. These override the default values.
         """
+        download_concurrency = remote.download_concurrency or remote.DEFAULT_DOWNLOAD_CONCURRENCY
+
         self._remote = remote
         self._download_class_map = copy.copy(PROTOCOL_MAP)
         if downloader_overrides:
@@ -85,7 +87,7 @@ class DownloaderFactory:
             "file": self._generic,
         }
         self._session = self._make_aiohttp_session_from_remote()
-        self._semaphore = asyncio.Semaphore(value=remote.download_concurrency)
+        self._semaphore = asyncio.Semaphore(value=download_concurrency)
         atexit.register(self._session_cleanup)
 
     def _session_cleanup(self):

@@ -136,7 +136,13 @@ class RemoteSerializer(ModelSerializer):
         help_text="Timestamp of the most recent update of the remote.", read_only=True
     )
     download_concurrency = serializers.IntegerField(
-        help_text="Total number of simultaneous connections.", required=False, min_value=1
+        help_text=(
+            "Total number of simultaneous connections. If not set then the default "
+            "value will be used."
+        ),
+        allow_null=True,
+        required=False,
+        min_value=1,
     )
     policy = serializers.ChoiceField(
         help_text="The policy to use when downloading content.",
