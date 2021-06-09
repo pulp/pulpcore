@@ -1,0 +1,2 @@
+The ``pulpcore.plugin.viewsets.NewDistributionFilter`` is deprecated and will be removed from a
+future release. Instead use ``pulpcore.plugin.viewsets.DistributionFilter``.
