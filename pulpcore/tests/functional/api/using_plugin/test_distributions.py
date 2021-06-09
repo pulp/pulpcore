@@ -2,14 +2,14 @@
 import csv
 import hashlib
 import unittest
-from functools import reduce
 from urllib.parse import urljoin
 
 from pulp_smash import api, config, utils
 from pulp_smash.pulp3.utils import (
+    delete_orphans,
+    download_content_unit,
     gen_distribution,
     gen_repo,
-    get_added_content,
     get_content,
     get_versions,
     modify_repo,
@@ -18,10 +18,13 @@ from pulp_smash.pulp3.utils import (
 from requests.exceptions import HTTPError
 
 from pulpcore.client.pulp_file import (
+    ContentFilesApi,
     DistributionsFileApi,
+    FileFilePublication,
     PublicationsFileApi,
     RemotesFileApi,
     RepositoriesFileApi,
+    RepositorySyncURL,
 )
 from pulpcore.tests.functional.api.using_plugin.constants import (
     FILE_CONTENT_NAME,
@@ -276,91 +279,128 @@ class ContentServePublicationDistributionTestCase(unittest.TestCase):
     This test targets the following issue:
 
     `Pulp #4847 <https://pulp.plan.io/issues/4847>`_
-    `Pulp #8760 <https://pulp.plan.io/issues/8760>`_
     """
 
     @classmethod
     def setUpClass(cls):
         """Create class-wide variables."""
         cls.cfg = config.get_config()
-        cls.client = api.Client(cls.cfg)
-        cls.file_client = gen_file_client()
-        cls.repo_api = RepositoriesFileApi(cls.file_client)
-        cls.remote_api = RemotesFileApi(cls.file_client)
-        cls.pub_api = PublicationsFileApi(cls.file_client)
-        cls.dis_api = DistributionsFileApi(cls.file_client)
+        cls.client = gen_file_client()
 
-    def test_content_served(self):
-        """Verify that content is served over publication distribution."""
-        repo, *_, distribution = self.serve_content_workflow(cleanup=self.addCleanup)
+        cls.content_api = ContentFilesApi(cls.client)
+        cls.repo_api = RepositoriesFileApi(cls.client)
+        cls.remote_api = RemotesFileApi(cls.client)
+        cls.publications_api = PublicationsFileApi(cls.client)
+        cls.distributions_api = DistributionsFileApi(cls.client)
 
-        self.assert_content_served(repo.to_dict(), distribution.to_dict())
-
-    def test_autopublish_content_served(self):
-        """Verify autopublished content is served over publication distributions."""
-        body = {"repository": {"autopublish": True, "manifest": "PULP_MANIFEST"}}
-        repo, _, distro = self.serve_content_workflow(
-            publish=False, bodies=body, cleanup=self.addCleanup
-        )
-
-        self.assert_content_served(repo.to_dict(), distro.to_dict())
+    def setUp(self):
+        delete_orphans()
 
     def test_nonpublished_content_not_served(self):
         """Verify content that hasn't been published is not served."""
-        *_, distro = self.serve_content_workflow(publish=False, cleanup=self.addCleanup)
+        # Create a repository
+        self.repo = self.repo_api.create(gen_repo())
+        self.addCleanup(self.repo_api.delete, self.repo.pulp_href)
 
-        with self.assertRaises(HTTPError):
-            self.download_pulp_manifest(distro.to_dict())
+        # Create a remote
+        self.remote = self.remote_api.create(gen_file_remote())
+        self.addCleanup(self.remote_api.delete, self.remote.pulp_href)
 
-    def assert_content_served(self, repo, distribution):
-        """Asserts content served at distribution is correct."""
-        pulp_manifest = parse_pulp_manifest(self.download_pulp_manifest(distribution))
+        # Sync the repository.
+        repository_sync_data = RepositorySyncURL(remote=self.remote.pulp_href)
+        sync_response = self.repo_api.sync(self.repo.pulp_href, repository_sync_data)
+        monitor_task(sync_response.task)
+
+        # Create a distribution.
+        response = self.distributions_api.create(
+            {"name": "foo", "base_path": "bar/foo", "repository": self.repo.pulp_href}
+        )
+        distribution_href = monitor_task(response.task).created_resources[0]
+        self.distribution = self.distributions_api.read(distribution_href)
+        self.addCleanup(self.distributions_api.delete, self.distribution.pulp_href)
+
+    def test_content_served_on_demand(self):
+        """Assert that on_demand content can be properly downloaded."""
+        self.setup_download_test("on_demand")
+        self.do_test_content_served()
+
+    def test_content_served_immediate(self):
+        """Assert that downloaded content can be properly downloaded."""
+        self.setup_download_test("immediate")
+        self.do_test_content_served()
+
+    @unittest.skip("https://pulp.plan.io/issues/8865")
+    def test_content_served_on_demand_with_range_request(self):
+        """Assert that on_demand content can be properly downloaded with range requests."""
+        self.setup_download_test("on_demand")
+        self.do_range_request_download_test()
+
+    def test_content_served_immediate_with_range_request(self):
+        """Assert that downloaded content can be properly downloaded with range requests."""
+        self.setup_download_test("immediate")
+        self.do_range_request_download_test()
+
+    def setup_download_test(self, policy):
+        # Create a repository
+        self.repo = self.repo_api.create(gen_repo())
+        self.addCleanup(self.repo_api.delete, self.repo.pulp_href)
+
+        # Create a remote
+        self.remote = self.remote_api.create(gen_file_remote(policy=policy))
+        self.addCleanup(self.remote_api.delete, self.remote.pulp_href)
+
+        # Sync the repository.
+        repository_sync_data = RepositorySyncURL(remote=self.remote.pulp_href)
+        sync_response = self.repo_api.sync(self.repo.pulp_href, repository_sync_data)
+        monitor_task(sync_response.task)
+
+        # Create a publication.
+        publish_data = FileFilePublication(repository=self.repo.pulp_href)
+        publish_response = self.publications_api.create(publish_data)
+        publication_href = monitor_task(publish_response.task).created_resources[0]
+        self.addCleanup(self.publications_api.delete, publication_href)
+
+        # Create a distribution.
+        response = self.distributions_api.create(
+            {"name": "foo", "base_path": "bar/foo", "publication": publication_href}
+        )
+        distribution_href = monitor_task(response.task).created_resources[0]
+        self.distribution = self.distributions_api.read(distribution_href)
+        self.addCleanup(self.distributions_api.delete, self.distribution.pulp_href)
+
+    def do_test_content_served(self):
+        file_path = "1.iso"
+
+        req1 = download_content_unit(self.cfg, self.distribution.to_dict(), file_path)
+        req2 = download_content_unit(self.cfg, self.distribution.to_dict(), file_path)
+        fixtures_hash = hashlib.sha256(utils.http_get(urljoin(FILE_URL, file_path))).hexdigest()
+
+        first_dl_hash = hashlib.sha256(req1).hexdigest()
+        second_dl_hash = hashlib.sha256(req2).hexdigest()
+
+        self.assertEqual(first_dl_hash, fixtures_hash)
+        self.assertEqual(first_dl_hash, second_dl_hash)
+
+        manifest = download_content_unit(self.cfg, self.distribution.to_dict(), "PULP_MANIFEST")
+        pulp_manifest = list(
+            csv.DictReader(manifest.decode("utf-8").splitlines(), ("name", "checksum", "size"))
+        )
 
         self.assertEqual(len(pulp_manifest), FILE_FIXTURE_COUNT, pulp_manifest)
 
-        added_content = get_added_content(repo)
-        unit_path = added_content[FILE_CONTENT_NAME][0]["relative_path"]
-        unit_url = distribution["base_url"]
-        unit_url = urljoin(unit_url, unit_path)
+    def do_range_request_download_test(self):
+        file_path = "1.iso"
 
-        pulp_hash = hashlib.sha256(self.client.get(unit_url).content).hexdigest()
-        fixtures_hash = hashlib.sha256(utils.http_get(urljoin(FILE_URL, unit_path))).hexdigest()
+        headers = {"Range": "bytes=0-9"}  # first 10 bytes
+        NUM_BYTES = 10
 
-        self.assertEqual(fixtures_hash, pulp_hash)
+        req1 = download_content_unit(
+            self.cfg, self.distribution.to_dict(), file_path, headers=headers
+        )
+        req2 = download_content_unit(
+            self.cfg, self.distribution.to_dict(), file_path, headers=headers
+        )
 
-    def download_pulp_manifest(self, distribution):
-        """Download pulp manifest."""
-        unit_url = reduce(urljoin, (distribution["base_url"], "PULP_MANIFEST"))
-        return self.client.get(unit_url)
-
-    def serve_content_workflow(self, publish=True, bodies=None, cleanup=None):
-        """Creates the workflow for serving content."""
-        all_bodies = bodies or {}
-        repo_body = gen_repo(**all_bodies.get("repository", {}))
-        remote_body = gen_file_remote(**all_bodies.get("remote", {}))
-        repo = self.repo_api.create(repo_body)
-        remote = self.remote_api.create(remote_body)
-        sync(self.cfg, remote.to_dict(), repo.to_dict())
-        repo = self.repo_api.read(repo.pulp_href)
-        if publish:
-            pub = create_file_publication(self.cfg, repo.to_dict())
-            pub = self.pub_api.read(pub["pulp_href"])
-            dis_body = {"publication": pub.pulp_href}
-        else:
-            dis_body = {"repository": repo.pulp_href}
-        distro_response = self.dis_api.create(gen_distribution(**dis_body))
-        distro = self.dis_api.read(monitor_task(distro_response.task).created_resources[0])
-        if cleanup:
-            cleanup(self.repo_api.delete, repo.pulp_href)
-            cleanup(self.remote_api.delete, remote.pulp_href)
-            cleanup(self.dis_api.delete, distro.pulp_href)
-            if publish:
-                cleanup(self.pub_api.delete, pub.pulp_href)
-        if publish:
-            return repo, remote, pub, distro
-        return repo, remote, distro
-
-
-def parse_pulp_manifest(pulp_manifest):
-    """Parse pulp manifest."""
-    return list(csv.DictReader(pulp_manifest.text.splitlines(), ("name", "checksum", "size")))
+        self.assertEqual(NUM_BYTES, len(req1))
+        self.assertEqual(NUM_BYTES, len(req2))
+        self.assertEqual(req1, req2)
