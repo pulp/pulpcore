@@ -38,6 +38,7 @@ from .importer import (  # noqa
 from .publication import (  # noqa
     ContentGuardFilter,
     ContentGuardViewSet,
+    DistributionFilter,
     DistributionViewSet,
     ListContentGuardViewSet,
     ListPublicationViewSet,
