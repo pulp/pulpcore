@@ -240,7 +240,7 @@ class Remote(MasterModel):
         username (models.TextField): The username to be used for authentication when syncing.
         password (models.TextField): The password to be used for authentication when syncing.
         download_concurrency (models.PositiveIntegerField): Total number of
-            simultaneous connections.
+            simultaneous connections allowed to any remote during a sync.
         policy (models.TextField): The policy to use when downloading content.
         total_timeout (models.FloatField): Value for aiohttp.ClientTimeout.total on connections
         connect_timeout (models.FloatField): Value for aiohttp.ClientTimeout.connect
@@ -255,6 +255,8 @@ class Remote(MasterModel):
     IMMEDIATE = "immediate"
     ON_DEMAND = "on_demand"
     STREAMED = "streamed"
+
+    DEFAULT_DOWNLOAD_CONCURRENCY = 10
 
     POLICY_CHOICES = (
         (IMMEDIATE, "When syncing, download all metadata and content now."),
@@ -288,7 +290,9 @@ class Remote(MasterModel):
     proxy_username = models.TextField(null=True)
     proxy_password = models.TextField(null=True)
 
-    download_concurrency = models.PositiveIntegerField(default=10)
+    download_concurrency = models.PositiveIntegerField(
+        null=True, validators=[MinValueValidator(1, "Download concurrency must be at least 1")]
+    )
     policy = models.TextField(choices=POLICY_CHOICES, default=IMMEDIATE)
 
     total_timeout = models.FloatField(

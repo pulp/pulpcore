@@ -201,9 +201,9 @@ class HttpDownloader(BaseDownloader):
         """
         Download, validate, and compute digests on the `url`. This is a coroutine.
 
-        This method is decorated with a backoff-and-retry behavior to retry HTTP 429 and
-        some 5XX errors. It retries with exponential backoff 10 times before allowing
-        a final exception to be raised.
+        This method is decorated with a backoff-and-retry behavior to retry some errors.
+        It retries with exponential backoff 10 times before allowing a final exception to
+        be raised.
 
         This method provides the same return object type and documented in
         :meth:`~pulpcore.plugin.download.BaseDownloader._run`.
