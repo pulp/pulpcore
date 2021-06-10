@@ -9,7 +9,6 @@ from pulp_smash.pulp3.utils import (
     get_content,
     gen_distribution,
     get_versions,
-    modify_repo,
 )
 
 from pulpcore.tests.functional.api.using_plugin.constants import FILE_CONTENT_NAME
@@ -23,6 +22,7 @@ from pulpcore.client.pulp_file import (
     DistributionsFileApi,
     PublicationsFileApi,
     RepositoriesFileApi,
+    RepositoryAddRemoveContent,
     RepositorySyncURL,
     RemotesFileApi,
     FileFilePublication,
@@ -81,7 +81,11 @@ class PublishAnyRepoVersionTestCase(unittest.TestCase):
         """
         # Step 1
         for file_content in get_content(self.repo.to_dict())[FILE_CONTENT_NAME]:
-            modify_repo(self.cfg, self.repo.to_dict(), remove_units=[file_content])
+            repository_modify_data = RepositoryAddRemoveContent(
+                remove_content_units=[file_content["pulp_href"]]
+            )
+            modify_response = self.repo_api.modify(self.repo.pulp_href, repository_modify_data)
+            monitor_task(modify_response.task)
         version_hrefs = tuple(ver["pulp_href"] for ver in get_versions(self.repo.to_dict()))
         non_latest = choice(version_hrefs[:-1])
 
