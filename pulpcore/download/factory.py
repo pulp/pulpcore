@@ -160,6 +160,12 @@ class DownloaderFactory:
             is configured with the remote settings.
         """
         kwargs["semaphore"] = self._semaphore
+        kwargs["max_retries"] = (
+            kwargs.get("max_retries")
+            or self._remote.max_retries
+            or self._remote.DEFAULT_MAX_RETRIES
+        )
+
         scheme = urlparse(url).scheme.lower()
         try:
             builder = self._handler_map[scheme]

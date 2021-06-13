@@ -16,4 +16,9 @@ class Migration(migrations.Migration):
             name='download_concurrency',
             field=models.PositiveIntegerField(null=True, validators=[django.core.validators.MinValueValidator(1, 'Download concurrency must be at least 1')]),
         ),
+        migrations.AddField(
+            model_name='remote',
+            name='max_retries',
+            field=models.PositiveIntegerField(null=True),
+        ),
     ]

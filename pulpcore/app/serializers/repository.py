@@ -144,6 +144,14 @@ class RemoteSerializer(ModelSerializer):
         required=False,
         min_value=1,
     )
+    max_retries = serializers.IntegerField(
+        help_text=(
+            "Maximum number of retry attempts after a download failure. If not set then the "
+            "default value (3) will be used."
+        ),
+        required=False,
+        allow_null=True,
+    )
     policy = serializers.ChoiceField(
         help_text="The policy to use when downloading content.",
         choices=((models.Remote.IMMEDIATE, "When syncing, download all metadata and content now.")),
@@ -263,6 +271,7 @@ class RemoteSerializer(ModelSerializer):
             "pulp_labels",
             "pulp_last_updated",
             "download_concurrency",
+            "max_retries",
             "policy",
             "total_timeout",
             "connect_timeout",

@@ -13,23 +13,45 @@ logging.getLogger("backoff").addHandler(logging.StreamHandler())
 
 
 def http_giveup(exc):
+    """Deprecated."""
+    from pulpcore.app.loggers import deprecation_logger
+
+    deprecation_logger.warning(
+        "http_giveup() is no longer necessary and has been deprecated. "
+        "It will be removed in pulpcore 3.15."
+    )
+    return http_giveup_handler(exc)
+
+
+def http_giveup_handler(exc):
     """
     Inspect a raised exception and determine if we should give up.
 
-    Do not give up when the status code is one of the following:
+    Do not give up when the error is one of the following:
 
-        429 - Too Many Requests
-        502 - Bad Gateway
-        503 - Service Unavailable
-        504 - Gateway Timeout
+        HTTP 429 - Too Many Requests
+        HTTP 5xx - Server errors
+        Socket timeout
+        TCP disconnect
+        Client SSL Error
+
+    Based on the AWS and Google Cloud guidelines:
+        https://docs.aws.amazon.com/general/latest/gr/api-retries.html
+        https://cloud.google.com/storage/docs/retry-strategy
 
     Args:
-        exc (aiohttp.ClientResponseException): The exception to inspect
+        exc (Exception): The exception to inspect
 
     Returns:
         True if the download should give up, False otherwise
     """
-    return exc.code not in [429, 502, 503, 504]
+    if isinstance(exc, aiohttp.ClientResponseError):
+        server_error = 500 <= exc.code < 600
+        too_many_requests = exc.code == 429
+        return not server_error and not too_many_requests
+
+    # any other type of error (pre-filtered by the backoff decorator) shouldn't be fatal
+    return False
 
 
 class HttpDownloader(BaseDownloader):
@@ -121,6 +143,7 @@ class HttpDownloader(BaseDownloader):
         headers_ready_callback=None,
         headers=None,
         throttler=None,
+        max_retries=None,
         **kwargs,
     ):
         """
@@ -138,6 +161,7 @@ class HttpDownloader(BaseDownloader):
                 as its values. e.g. `{'Transfer-Encoding': 'chunked'}`
             headers (dict): Headers to be submitted with the request.
             throttler (asyncio_throttle.Throttler): Throttler for asyncio.
+            max_retries (int): The maximum number of times to retry a download upon failure.
             kwargs (dict): This accepts the parameters of
                 :class:`~pulpcore.plugin.download.BaseDownloader`.
         """
@@ -154,6 +178,7 @@ class HttpDownloader(BaseDownloader):
         self.proxy_auth = proxy_auth
         self.headers_ready_callback = headers_ready_callback
         self.download_throttler = throttler
+        self.max_retries = max_retries
         super().__init__(url, **kwargs)
 
     def raise_for_status(self, response):
@@ -194,16 +219,51 @@ class HttpDownloader(BaseDownloader):
             headers=response.headers,
         )
 
-    @backoff.on_exception(
-        backoff.expo, aiohttp.ClientResponseError, max_tries=10, giveup=http_giveup
-    )
+    async def run(self, extra_data=None):
+        """
+        Run the downloader with concurrency restriction and retry logic.
+
+        This method acquires `self.semaphore` before calling the actual download implementation
+        contained in `_run()`. This ensures that the semaphore stays acquired even as the `backoff`
+        wrapper around `_run()`, handles backoff-and-retry logic.
+
+        Args:
+            extra_data (dict): Extra data passed to the downloader.
+
+        Returns:
+            :class:`~pulpcore.plugin.download.DownloadResult` from `_run()`.
+
+        """
+        retryable_errors = (
+            aiohttp.ClientConnectorSSLError,
+            aiohttp.ClientConnectorError,
+            aiohttp.ClientOSError,
+            aiohttp.ClientPayloadError,
+            aiohttp.ClientResponseError,
+            aiohttp.ServerDisconnectedError,
+            TimeoutError,
+        )
+
+        async with self.semaphore:
+
+            @backoff.on_exception(
+                backoff.expo,
+                retryable_errors,
+                max_tries=self.max_retries + 1,
+                giveup=http_giveup_handler,
+            )
+            async def download_wrapper():
+                return await self._run(extra_data=extra_data)
+
+            return await download_wrapper()
+
     async def _run(self, extra_data=None):
         """
         Download, validate, and compute digests on the `url`. This is a coroutine.
 
-        This method is decorated with a backoff-and-retry behavior to retry some errors.
-        It retries with exponential backoff 10 times before allowing a final exception to
-        be raised.
+        This method is externally wrapped with backoff-and-retry behavior for some errors.
+        It retries with exponential backoff some number of times before allowing a final
+        exception to be raised.
 
         This method provides the same return object type and documented in
         :meth:`~pulpcore.plugin.download.BaseDownloader._run`.
