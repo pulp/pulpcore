@@ -1,0 +1,1 @@
+Plugin writers who create custom downloaders by subclassing ``HttpDownloader`` no longer need to wrap the ``_run()`` method with a ``backoff`` decorator. Consequntly the ``http_giveup`` handler the sake of the ``backoff`` decorator is no longer needed and has been deprecated. It is likely be removed in pulpcore 3.15.

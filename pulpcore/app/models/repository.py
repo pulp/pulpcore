@@ -257,6 +257,7 @@ class Remote(MasterModel):
     STREAMED = "streamed"
 
     DEFAULT_DOWNLOAD_CONCURRENCY = 10
+    DEFAULT_MAX_RETRIES = 3
 
     POLICY_CHOICES = (
         (IMMEDIATE, "When syncing, download all metadata and content now."),
@@ -293,6 +294,7 @@ class Remote(MasterModel):
     download_concurrency = models.PositiveIntegerField(
         null=True, validators=[MinValueValidator(1, "Download concurrency must be at least 1")]
     )
+    max_retries = models.PositiveIntegerField(null=True)
     policy = models.TextField(choices=POLICY_CHOICES, default=IMMEDIATE)
 
     total_timeout = models.FloatField(
