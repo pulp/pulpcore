@@ -1,9 +1,4 @@
-from .base import (  # noqa
-    PulpException,
-    ResourceImmutableError,
-    AdvisoryLockError,
-    exception_to_dict,
-)
+from .base import PulpException, ResourceImmutableError, exception_to_dict  # noqa
 from .http import MissingResource  # noqa
 from .validation import (  # noqa
     DigestValidationError,

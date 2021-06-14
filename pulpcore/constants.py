@@ -8,7 +8,6 @@ TASK_STATES = SimpleNamespace(
     COMPLETED="completed",
     FAILED="failed",
     CANCELED="canceled",
-    CANCELING="canceling",
 )
 
 # The same as above, but in a format that choice fields can use
@@ -19,7 +18,6 @@ TASK_CHOICES = (
     (TASK_STATES.COMPLETED, "Completed"),
     (TASK_STATES.FAILED, "Failed"),
     (TASK_STATES.CANCELED, "Canceled"),
-    (TASK_STATES.CANCELING, "Canceling"),
 )
 
 #: Tasks in a final state have finished their work.
@@ -31,7 +29,7 @@ TASK_FINAL_STATES = (
 )
 
 #: Tasks in an incomplete state have not finished their work yet.
-TASK_INCOMPLETE_STATES = (TASK_STATES.WAITING, TASK_STATES.RUNNING, TASK_STATES.CANCELING)
+TASK_INCOMPLETE_STATES = (TASK_STATES.WAITING, TASK_STATES.RUNNING)
 
 
 SYNC_MODES = SimpleNamespace(ADDITIVE="additive", MIRROR="mirror")

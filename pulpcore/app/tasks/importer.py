@@ -374,8 +374,8 @@ def pulp_import(importer_pk, path, toc):
     CreatedResource.objects.create(content_object=the_import)
 
     task_group = TaskGroup.objects.create(description=f"Import of {path}")
-    Task.objects.filter(pk=current_task.pk).update(task_group=task_group)
-    current_task.refresh_from_db()
+    current_task.task_group = task_group
+    current_task.save()
     CreatedResource.objects.create(content_object=task_group)
 
     with tempfile.TemporaryDirectory() as temp_dir:
