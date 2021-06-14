@@ -171,16 +171,7 @@ class NewPulpWorker:
         with WorkerDirectory(self.name):
             while True:
                 for task in self.iter_tasks():
-                    try:
-                        # Workaround to block all other workers
-                        if task.name == "pulpcore.app.tasks.orphan.orphan_cleanup":
-                            suffix = ""
-                        else:
-                            suffix = "_shared"
-                        self.cursor.execute(f"SELECT pg_advisory_lock{suffix}(1234)")
-                        self.supervise_task(task)
-                    finally:
-                        self.cursor.execute(f"SELECT pg_advisory_unlock{suffix}(1234)")
+                    self.supervise_task(task)
                 self.sleep()
 
 
