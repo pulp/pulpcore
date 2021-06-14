@@ -38,8 +38,6 @@ class Repository(MasterModel):
         description (models.TextField): An optional description.
         next_version (models.PositiveIntegerField): A record of the next version number to be
             created.
-        retained_versions (models.PositiveIntegerField): Number of repo versions to keep
-        user_hidden (models.BooleanField): Whether to expose this repo to users via the API
 
     Relations:
 
@@ -55,7 +53,6 @@ class Repository(MasterModel):
     description = models.TextField(null=True)
     next_version = models.PositiveIntegerField(default=0)
     retained_versions = models.PositiveIntegerField(default=None, null=True)
-    user_hidden = models.BooleanField(default=False)
     content = models.ManyToManyField(
         "Content", through="RepositoryContent", related_name="repositories"
     )
@@ -129,7 +126,7 @@ class Repository(MasterModel):
                 # now add any content that's in the base_version but not in version
                 version.add_content(base_version.content.exclude(pk__in=version.content))
 
-            if Task.current() and not self.user_hidden:
+            if Task.current():
                 resource = CreatedResource(content_object=version)
                 resource.save()
 

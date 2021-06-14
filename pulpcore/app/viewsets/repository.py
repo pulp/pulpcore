@@ -48,7 +48,7 @@ class BaseRepositoryViewSet(NamedModelViewSet):
     A base class for any repository viewset.
     """
 
-    queryset = Repository.objects.exclude(user_hidden=True).order_by("name")
+    queryset = Repository.objects.all().order_by("name")
     serializer_class = RepositorySerializer
     endpoint_name = "repositories"
     router_lookup = "repository"
@@ -242,5 +242,5 @@ class ListRepositoryVersionViewSet(
 ):
     endpoint_name = "repository_versions"
     serializer_class = RepositoryVersionSerializer
-    queryset = RepositoryVersion.objects.exclude(repository__user_hidden=True)
+    queryset = RepositoryVersion.objects.all()
     filterset_class = RepositoryVersionFilter
