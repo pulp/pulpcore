@@ -18,7 +18,6 @@ from django_currentuser.middleware import (  # noqa: E402: module level not at t
 )
 from django_guid.middleware import GuidMiddleware  # noqa: E402: module level not at top of file
 
-from pulpcore.app import settings  # noqa: E402: module level not at top of file
 from pulpcore.app.settings import WORKER_TTL  # noqa: E402: module level not at top of file
 
 from pulpcore.app.models import Task  # noqa: E402: module level not at top of file
@@ -61,9 +60,6 @@ class PulpWorker(Worker):
     log_result_lifespan = False
 
     def __init__(self, queues, **kwargs):
-
-        if settings.USE_NEW_WORKER_TYPE:
-            raise NotImplementedError("This worker is not supposed to run with new style tasks.")
 
         if kwargs.get("name"):
             kwargs["name"] = kwargs["name"].replace("%h", socket.getfqdn())
