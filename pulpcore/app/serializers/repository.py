@@ -34,7 +34,6 @@ class RepositorySerializer(ModelSerializer):
     retain_repo_versions = serializers.IntegerField(
         help_text=_(
             "Retain X versions of the repository. Default is null which retains all versions."
-            " This is provided as a tech preview in Pulp 3 and may change in the future."
         ),
         allow_null=True,
         required=False,
