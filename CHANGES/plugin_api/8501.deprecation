@@ -1,0 +1,2 @@
+Deprecate the use of the `reserved_resources_record__resource` in favor of `reserved_resources_record__contains`.
+Tentative removal release is pulpcore==3.15.

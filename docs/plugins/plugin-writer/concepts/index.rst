@@ -400,8 +400,8 @@ In 3.8 the following changes happen:
 2. The existing method signature ``def foo(a, b)`` is left in-tact.
 3. The ``foo`` method would have the a Python ``DeprecationWarning`` added to it such as::
 
-    from pulpcore.app.logging import deprecation_logger
-    deprecation_logger.warn("foo() is deprecated and will be removed in pulpcore==3.9; use the_new_foo().")
+    from pulpcore.app.loggers import deprecation_logger
+    deprecation_logger.warning("foo() is deprecated and will be removed in pulpcore==3.9; use the_new_foo().")
 
 4. A ``CHANGES/plugin_api/XXXX.deprecation`` changelog entry is created explaining how to port
    plugin code onto the new call interface.

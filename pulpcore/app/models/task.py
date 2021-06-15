@@ -24,6 +24,7 @@ from pulpcore.app.models import (
 from pulpcore.constants import TASK_CHOICES, TASK_FINAL_STATES, TASK_STATES
 from pulpcore.exceptions import AdvisoryLockError, exception_to_dict
 from pulpcore.tasking.constants import TASKING_CONSTANTS
+from pulpcore.app.loggers import deprecation_logger
 
 _logger = logging.getLogger(__name__)
 
@@ -212,6 +213,19 @@ def _hash_to_u64(value):
     return int.from_bytes(_digest, byteorder="big", signed=True)
 
 
+class TaskManager(models.Manager):
+    def filter(self, *args, **kwargs):
+        value = kwargs.pop("reserved_resources_record__resource", None)
+        if value is not None:
+            deprecation_logger.warning(
+                "Filtering tasks with 'reserved_resources_record__resource' is deprecated"
+                " and may be removed as soon as pulpcore==3.15;"
+                " use 'reserved_resources_record__contains' with a list of values instead."
+            )
+            kwargs["reserved_resources_record__contains"] = [value]
+        return super().filter(*args, **kwargs)
+
+
 class Task(BaseModel, AutoDeleteObjPermsMixin, AutoAddObjPermsMixin):
     """
     Represents a task
@@ -235,6 +249,8 @@ class Task(BaseModel, AutoDeleteObjPermsMixin, AutoAddObjPermsMixin):
         parent (models.ForeignKey): Task that spawned this task (if any)
         worker (models.ForeignKey): The worker that this task is in
     """
+
+    objects = TaskManager()
 
     state = models.TextField(choices=TASK_CHOICES)
     name = models.TextField()
