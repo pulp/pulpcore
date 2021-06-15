@@ -1,6 +1,3 @@
-![Pulp CI](https://github.com/pulp/pulpcore/workflows/Pulp%20CI/badge.svg)
-[![PyPI](https://img.shields.io/pypi/pyversions/pulpcore.svg)](https://pypi.python.org/pypi/pulpcore)
-
 
 **Acquire, Organize, and Distribute Software**
 
