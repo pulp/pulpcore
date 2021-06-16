@@ -1211,8 +1211,7 @@ class ContentInRepositoryVersionViewTestCase(unittest.TestCase):
 
         self.assertEqual(ctx.exception.status, 400)
 
-        # No repository version exists.
-        self.assertEqual(self.repo_ver_api.list().count, 0)
+        initial_rv_count = self.repo_ver_api.list(limit=1).count
 
         repo = self.repo_api.create(gen_repo())
         self.addCleanup(self.repo_api.delete, repo.pulp_href)
@@ -1248,4 +1247,4 @@ class ContentInRepositoryVersionViewTestCase(unittest.TestCase):
         # Test if repositories version with content matches.
         self.assertEqual(rv_search[0]["pulp_href"], repo.latest_version_href)
         # Test total number of repository version. Two for each repository.
-        self.assertEqual(rv_total, 4)
+        self.assertEqual(rv_total - initial_rv_count, 4)
