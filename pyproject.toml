@@ -79,8 +79,6 @@ ignore = [
     "docs/**",
     "flake8.cfg",
     "template_config.yml",
-    ".travis/**",
-    ".travis.yml",
     ".coveragerc",
     ".dependabot/config.yml",
     ".pep8speaks.yml",
