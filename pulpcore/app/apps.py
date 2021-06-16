@@ -197,7 +197,6 @@ class PulpAppConfig(PulpPluginAppConfig):
 def _populate_access_policies(sender, **kwargs):
     from pulpcore.app.util import get_view_urlpattern
 
-    print(f"Initialize missing access policies for {sender.label}.")
     apps = kwargs.get("apps")
     if apps is None:
         from django.apps import apps
@@ -206,9 +205,17 @@ def _populate_access_policies(sender, **kwargs):
         for viewset in viewset_batch:
             access_policy = getattr(viewset, "DEFAULT_ACCESS_POLICY", None)
             if access_policy is not None:
-                AccessPolicy.objects.get_or_create(
-                    viewset_name=get_view_urlpattern(viewset), defaults=access_policy
+                viewset_name = get_view_urlpattern(viewset)
+                db_access_policy, created = AccessPolicy.objects.get_or_create(
+                    viewset_name=viewset_name, defaults=access_policy
                 )
+                if created:
+                    print(f"Access policy for {viewset_name} created.")
+                if not created and not db_access_policy.customized:
+                    for key, value in access_policy.items():
+                        setattr(db_access_policy, key, value)
+                    db_access_policy.save()
+                    print(f"Access policy for {viewset_name} updated.")
 
 
 def _delete_anon_user(sender, **kwargs):
