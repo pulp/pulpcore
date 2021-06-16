@@ -466,8 +466,8 @@ galaxy_ui.yml task <https://github.com/pulp/pulp_installer/blob/master/roles/pul
 galaxy_ui.yml>`_ in the installers ``pulp_devel`` role.
 
 For help contributing or changing a plugin-specific installation, please reach out to the installer
-maintainers either through the developer mailing list (``pulp-dev@redhat.com``) or on Freenode in
-the developer channel, ``#pulp-dev``.
+maintainers. Check out `our help page <https://pulpproject.org/help/>`_ for different ways to
+contact us.
 
 .. _checksum-use-in-plugins:
 

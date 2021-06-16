@@ -21,14 +21,6 @@ For more information, check out the project website: https://pulpproject.org
 Get Help
 --------
 
-Documentation: https://pulpproject.org/docs/
+Check out our help page for ways to get help:
 
-Issue Tracker: https://pulp.plan.io
-
-User mailing list: https://www.redhat.com/mailman/listinfo/pulp-list
-
-Developer mailing list: https://www.redhat.com/mailman/listinfo/pulp-dev
-
-User questions welcome in #pulp on FreeNode IRC server.
-
-Developer discussion in #pulp-dev on FreeNode IRC server
+https://pulpproject.org/help/

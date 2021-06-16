@@ -51,18 +51,6 @@ test_fips_nightly: false
 test_performance: false
 test_released_plugin_with_next_pulpcore_release: false
 test_s3: true
-travis_addtl_services: []
-travis_notifications:
-  irc:
-    channels:
-    - chat.freenode.net#pulp-build
-    on_failure: always
-    on_success: change
-    template:
-    - '%{repository_slug}#%{build_number} (%{branch} - %{commit} : %{author} : %{commit_subject})'
-    - 'Change view : %{compare_url}'
-    - 'Build details : %{build_url}'
-    - '%{message}'
 update_redmine: true
 upgrade_range:
 - pulp_file_branch: 1.6
