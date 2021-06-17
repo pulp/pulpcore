@@ -34,13 +34,13 @@ TAG=ci_build
 if [ -e $REPO_ROOT/../pulp_file ]; then
   PULP_FILE=./pulp_file
 else
-  PULP_FILE=git+https://github.com/pulp/pulp_file.git@master
+  PULP_FILE=git+https://github.com/pulp/pulp_file.git@1.6
 fi
 
 if [ -e $REPO_ROOT/../pulp-certguard ]; then
   PULP_CERTGUARD=./pulp-certguard
 else
-  PULP_CERTGUARD=git+https://github.com/pulp/pulp-certguard.git@master
+  PULP_CERTGUARD=git+https://github.com/pulp/pulp-certguard.git@1.1
 fi
 cat >> vars/main.yaml << VARSYAML
 image:
