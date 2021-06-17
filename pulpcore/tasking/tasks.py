@@ -140,7 +140,7 @@ def _queue_reserved_task(func, inner_task_id, resources, inner_args, inner_kwarg
 
                 # Attempt to lock all resources by their urls. Must be atomic to prevent deadlocks.
                 for resource in resources:
-                    if worker.reservations.filter(resource=resource).exists():
+                    if worker.reservations.select_for_update().filter(resource=resource).exists():
                         reservation = worker.reservations.get(resource=resource)
                     else:
                         reservation = ReservedResource.objects.create(
