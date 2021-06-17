@@ -1,0 +1,4 @@
+Add an update row lock on in task dispatching for ``ReservedResource`` to prevent a race where an
+object was deleted that was supposed to be reused. This prevents a condition where tasks ended up in
+waiting state forever.
+(backported from #8708)
