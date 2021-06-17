@@ -4,6 +4,7 @@ Django models related to the Tasking system
 import logging
 import traceback
 import os
+from contextlib import suppress
 from datetime import timedelta
 from gettext import gettext as _
 from hashlib import blake2s
@@ -67,7 +68,7 @@ class TaskReservedResource(BaseModel):
         resource (models.ForeignKey): The associated resource.
     """
 
-    resource = models.ForeignKey("ReservedResource", on_delete=models.CASCADE)
+    resource = models.ForeignKey("ReservedResource", on_delete=models.PROTECT)
     task = models.ForeignKey("Task", on_delete=models.PROTECT)
 
 
@@ -379,14 +380,11 @@ class Task(BaseModel, AutoDeleteObjPermsMixin, AutoAddObjPermsMixin):
         Release the reserved resources that are reserved by this task. If a reserved resource no
         longer has any tasks reserving it, delete it.
         """
-        for reservation in self.reserved_resources.all():
+        for reserved_resource in self.reserved_resources.all():
             TaskReservedResource.objects.filter(task=self.pk).delete()
-            if not reservation.tasks.exists():
-                try:
-                    reservation.delete()
-                except IntegrityError:
-                    # other tasks have added reservations for this resource
-                    pass
+            if not reserved_resource.tasks.exists():
+                with suppress(IntegrityError):
+                    reserved_resource.delete()
 
     class Meta:
         indexes = [models.Index(fields=["pulp_created"])]
