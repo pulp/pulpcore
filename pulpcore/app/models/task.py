@@ -306,7 +306,7 @@ class Worker(BaseModel):
         """
         with transaction.atomic():
             for resource in resource_urls:
-                if self.reservations.filter(resource=resource).exists():
+                if self.reservations.select_for_update().filter(resource=resource).exists():
                     reservation = self.reservations.get(resource=resource)
                 else:
                     reservation = ReservedResource.objects.create(worker=self, resource=resource)
