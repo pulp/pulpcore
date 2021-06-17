@@ -32,6 +32,7 @@ class TaskFilter(BaseFilterSet):
     state = filters.ChoiceFilter(choices=TASK_CHOICES)
     worker = HyperlinkRelatedFilter()
     name = filters.CharFilter()
+    logging_cid = filters.CharFilter()
     started_at = IsoDateTimeFilter(field_name="started_at")
     finished_at = IsoDateTimeFilter(field_name="finished_at")
     parent_task = HyperlinkRelatedFilter()
@@ -43,9 +44,10 @@ class TaskFilter(BaseFilterSet):
     class Meta:
         model = Task
         fields = {
-            "name": ["contains"],
             "state": ["exact", "in"],
             "worker": ["exact", "in"],
+            "name": ["contains"],
+            "logging_cid": ["exact", "contains"],
             "started_at": DATETIME_FILTER_OPTIONS,
             "finished_at": DATETIME_FILTER_OPTIONS,
             "parent_task": ["exact"],
