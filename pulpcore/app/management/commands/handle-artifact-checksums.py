@@ -177,9 +177,9 @@ class Command(BaseCommand):
             for a in artifacts_qs.iterator():
                 hasher = pulp_hashlib.new(checksum)
                 try:
-                    for chunk in a.file.chunks(CHUNK_SIZE):
-                        hasher.update(chunk)
-                    a.file.close()
+                    with a.file as fp:
+                        for chunk in fp.chunks(CHUNK_SIZE):
+                            hasher.update(chunk)
                     setattr(a, checksum, hasher.hexdigest())
                 except FileNotFoundError:
                     file_path = os.path.join(settings.MEDIA_ROOT, a.file.name)

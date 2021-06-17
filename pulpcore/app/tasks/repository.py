@@ -87,9 +87,9 @@ def _verify_artifact(artifact):
     try:
         # verify files digest
         hasher = hashlib.sha256()
-        for chunk in artifact.file.chunks(CHUNK_SIZE):
-            hasher.update(chunk)
-        artifact.file.close()
+        with artifact.file as fp:
+            for chunk in fp.chunks(CHUNK_SIZE):
+                hasher.update(chunk)
         return hasher.hexdigest() == artifact.sha256
     except FileNotFoundError:
         return False
