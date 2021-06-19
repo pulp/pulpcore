@@ -27,7 +27,7 @@ Python Social Auth and Django
 *****************************
 
 The `python-social-auth documentation <https://python-social-auth.readthedocs.io/en/latest/configuration/django.html>`_
-describes the django updates necessary to configure social-auth. 
+describes the django updates necessary to configure social-auth.
 
 Enable general python social integration with the following steps:
 
@@ -53,11 +53,11 @@ Enable general python social integration with the following steps:
     SOCIAL_AUTH_JSONFIELD_CUSTOM = 'django.contrib.postgres.fields.JSONField'
 
 
-4. In order to use the Keycloak OIDC capabilities you must add a URL namespace::
+4. In order to use the Keycloak OIDC capabilities, you must add a URL namespace::
 
     SOCIAL_AUTH_URL_NAMESPACE = 'social'
 
-5. Additonally you must add the Keycloak OIDC URLs to the apps url entries::
+5. You must add the Keycloak OIDC URLs to the apps url entries::
 
     urlpatterns = patterns('',
         ...
@@ -65,7 +65,7 @@ Enable general python social integration with the following steps:
         ...
     )
 
-6. The context processor that will add backends and associations data to template context should be updated::
+6. Update the context processor that will add backends and associations data to the template context::
 
     TEMPLATES = [
         {
@@ -114,15 +114,15 @@ Enable python social and Keycloak integration with the following steps:
 2. Create a Client in the new Realm
 
 3. Configure the Client ``Access Type`` to be "confidential. Provide `Valid Redirect URIs`` with
-   "http://<pulp-hostname>:<port>/*".Set the ``User Info Signed Response Algorithm`` and 
-   ``Request Object Signature Algorithm`` is set to ``RS256`` in the 
+   ``http://<pulp-hostname>:<port>/*``. Set the ``User Info Signed Response Algorithm`` and
+   ``Request Object Signature Algorithm`` is set to ``RS256`` in the
    ``Fine Grain OpenID Connect Configuration`` section
 
-4. In the Pulp settings add the value for the ``Client ID``::
+4. In the Pulp settings, add the value for the ``Client ID``::
 
     SOCIAL_AUTH_KEYCLOAK_KEY = '<Client ID>'
 
-5. Gather the ``Client Secret`` for the Pulp settings. ``The Client Secret`` be found in the
+5. Gather the ``Client Secret`` for the Pulp settings. You can find the ``Client Secret`` in the
    Credentials tab::
 
     SOCIAL_AUTH_KEYCLOAK_SECRET = '<Client Secret>'
@@ -131,7 +131,7 @@ Enable python social and Keycloak integration with the following steps:
 
     SOCIAL_AUTH_KEYCLOAK_PUBLIC_KEY = '<Public Key>'
 
-7. Add the ``authorization_endpoint`` and ``token_endpoint`` URL’s found in the Realm OpenID Endpoint
+7. Add the ``authorization_endpoint`` and ``token_endpoint`` URL that you find to the Realm OpenID Endpoint
    Configuration to the Pulp settings::
 
     SOCIAL_AUTH_KEYCLOAK_AUTHORIZATION_URL = \
@@ -140,16 +140,16 @@ Enable python social and Keycloak integration with the following steps:
         'https://iam.example.com/auth/realms/pulp/protocol/openid-connect/token/'
 
 
-8. Next create an audience mapper for the JWT token. In the Client select the Mappers tab, select
-   the Create button to create a new Mapper. Give the mapper a name like "Audience Mapper". Choose
-   the ``Mapper Type`` to be "Audience". Define the ``Included Client Audience`` to be the
+8. Create an audience mapper for the JWT token. In the Client, select the Mappers tab, select
+   the Create button to create a Mapper. Name the mapper, for example, "Audience Mapper". From
+   the ``Mapper Type`` list, select "Audience". Define the ``Included Client Audience`` to be the
    ``Client ID``. Enable this for both the ID token and access token.
 
 9. Add additional Built-in Mappers to the JWT to populate the token with the data defined in the
-   Social Auth Pipeline. To do this in the Client again select the Mappers tab. Next select the
+   Social Auth Pipeline. To do this, in the Client again select the Mappers tab. Next select the
    "Add Builtin" button and you will be presented with a table of mappers that can be chosen.
    Common choices are ``username``, ``email``, ``groups``, ``given name``, ``family name``,
-   ``full name``, ``updated at``, and ``email verified``. 
+   ``full name``, ``updated at``, and ``email verified``.
 
-After setup is completed go to: http://<pulp-hostname>:<port>/login/keycloak and the login flow
+After setup is completed go to: `http://<pulp-hostname>:<port>/login/keycloak` and the login flow
 will be presented.
