@@ -196,10 +196,19 @@ class ArtifactDownloader(Stage):
             and not d_artifact.deferred_download
             and not d_artifact.artifact.file
         ]
+        downloaded_count = 0
         if downloaders_for_content:
-            await asyncio.gather(*downloaders_for_content)
+            results = await asyncio.gather(*downloaders_for_content, return_exceptions=True)
+            for d_artifact, result in zip(d_content.d_artifacts, results):
+                if isinstance(result, Exception):
+                    log.warn(
+                        "Download of {} failed due to error: {}.".format(d_artifact.url, result)
+                    )
+                    d_artifact.deferred_download = True
+                else:
+                    downloaded_count += 1
         await self.put(d_content)
-        return len(downloaders_for_content)
+        return downloaded_count
 
 
 class ArtifactSaver(Stage):
