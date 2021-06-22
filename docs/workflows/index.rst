@@ -22,4 +22,5 @@ assumes that the reader is familiar with the fundamentals discussed in the :doc:
    reclaim-disk-space
    import-export
    labels
+   plugin-removal
    troubleshooting
