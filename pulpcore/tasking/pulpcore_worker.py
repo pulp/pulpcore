@@ -4,6 +4,7 @@ import json
 import logging
 import os
 import select
+import signal
 import socket
 import sys
 import traceback
@@ -44,14 +45,36 @@ _logger = logging.getLogger(__name__)
 
 class NewPulpWorker:
     def __init__(self):
+        self.shutdown_requested = False
         self.name = f"{os.getpid()}@{socket.getfqdn()}"
         self.heartbeat_period = settings.WORKER_TTL / 3
         self.cursor = connection.cursor()
         self.worker = handle_worker_heartbeat(self.name)
 
+        # Add a file descriptor to trigger select on signals
+        self.sentinel, sentinel_w = os.pipe()
+        os.set_blocking(self.sentinel, False)
+        os.set_blocking(sentinel_w, False)
+        signal.set_wakeup_fd(sentinel_w)
+
+    def _signal_handler(self, thesignal, frame):
+        # Reset signal handlers to default
+        # If you kill the process a second time it's not graceful anymore.
+        signal.signal(signal.SIGINT, signal.SIG_DFL)
+        signal.signal(signal.SIGTERM, signal.SIG_DFL)
+
+        _logger.info(f"Worker {self.name} was requested to shut down.")
+        self.shutdown_requested = True
+
+    def shutdown(self):
+        self.worker.delete()
+        _logger.info(f"Worker {self.name} was shut down.")
+
     def beat(self):
         if self.worker.last_heartbeat < timezone.now() - timedelta(seconds=self.heartbeat_period):
             self.worker = handle_worker_heartbeat(self.name)
+            if self.shutdown_requested:
+                self.task_grace -= 1
 
     def notify_workers(self):
         self.cursor.execute("NOTIFY pulp_worker_wakeup")
@@ -82,7 +105,7 @@ class NewPulpWorker:
     def iter_tasks(self):
         """Iterate over ready tasks and yield each task while holding the lock."""
 
-        while True:
+        while not self.shutdown_requested:
             taken_resources = set()
             # When batching this query, be sure to use "pulp_created" as a cursor
             for task in Task.objects.filter(state__in=TASK_INCOMPLETE_STATES).order_by(
@@ -119,10 +142,12 @@ class NewPulpWorker:
         _logger.debug(f"Worker {self.name} entering sleep state.")
         # Subscribe to "pulp_worker_wakeup"
         self.cursor.execute("LISTEN pulp_worker_wakeup")
-        while True:
-            r, w, x = select.select([connection.connection], [], [], self.heartbeat_period)
+        while not self.shutdown_requested:
+            r, w, x = select.select(
+                [self.sentinel, connection.connection], [], [], self.heartbeat_period
+            )
             self.beat()
-            if r:
+            if connection.connection in r:
                 connection.connection.poll()
                 if any(
                     (
@@ -132,6 +157,8 @@ class NewPulpWorker:
                 ):
                     connection.connection.notifies.clear()
                     break
+            if self.sentinel in r:
+                os.read(self.sentinel, 256)
         self.cursor.execute("UNLISTEN pulp_worker_wakeup")
 
     def supervise_task(self, task):
@@ -139,6 +166,7 @@ class NewPulpWorker:
 
         This function must only be called while holding the lock for that task."""
 
+        self.task_grace = 3
         self.cursor.execute("LISTEN pulp_worker_cancel")
         task.worker = self.worker
         task.save(update_fields=["worker"])
@@ -147,10 +175,13 @@ class NewPulpWorker:
             task_process.start()
             while True:
                 r, w, x = select.select(
-                    [connection.connection, task_process.sentinel], [], [], self.heartbeat_period
+                    [self.sentinel, connection.connection, task_process.sentinel],
+                    [],
+                    [],
+                    self.heartbeat_period,
                 )
                 self.beat()
-                if r:
+                if connection.connection in r:
                     connection.connection.poll()
                     if any(
                         (
@@ -160,18 +191,32 @@ class NewPulpWorker:
                     ):
                         connection.connection.notifies.clear()
                         _logger.info(f"Received signal to cancel current task {task.pk}.")
-                        task_process.terminate()
+                        os.kill(task_process.pid, signal.SIGUSR1)
                         break
+                if task_process.sentinel in r:
                     if not task_process.is_alive():
                         break
+                if self.sentinel in r:
+                    os.read(self.sentinel, 256)
+                if self.shutdown_requested:
+                    if self.task_grace > 0:
+                        _logger.info(
+                            f"Worker shutdown requested, waiting for task {task.pk} to finish."
+                        )
+                    else:
+                        _logger.info(f"Aborting current task {task.pk} due to worker shutdown.")
+                        os.kill(task_process.pid, signal.SIGUSR1)
+                        break
             task_process.join()
-            if task.reserved_resources_record:
-                self.notify_workers()
-            self.cursor.execute("UNLISTEN pulp_worker_cancel")
+        if task.reserved_resources_record:
+            self.notify_workers()
+        self.cursor.execute("UNLISTEN pulp_worker_cancel")
 
     def run_forever(self):
         with WorkerDirectory(self.name):
-            while True:
+            signal.signal(signal.SIGINT, self._signal_handler)
+            signal.signal(signal.SIGTERM, self._signal_handler)
+            while not self.shutdown_requested:
                 for task in self.iter_tasks():
                     try:
                         # Workaround to block all other workers
@@ -183,12 +228,22 @@ class NewPulpWorker:
                         self.supervise_task(task)
                     finally:
                         self.cursor.execute(f"SELECT pg_advisory_unlock{suffix}(1234)")
-                self.sleep()
+                if not self.shutdown_requested:
+                    self.sleep()
+            self.shutdown()
+
+
+def child_signal_handler(sig, frame):
+    if sig == signal.SIGUSR1:
+        sys.exit()
 
 
 def _perform_task(task_pk, task_working_dir_rel_path):
     """Setup the environment to handle a task and execute it.
     This must be called as a subprocess, while the parent holds the advisory lock."""
+    signal.signal(signal.SIGINT, child_signal_handler)
+    signal.signal(signal.SIGTERM, child_signal_handler)
+    signal.signal(signal.SIGUSR1, child_signal_handler)
     # All processes need to create their own postgres connection
     connection.connection = None
     task = Task.objects.get(pk=task_pk)
