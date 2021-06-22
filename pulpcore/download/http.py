@@ -143,7 +143,7 @@ class HttpDownloader(BaseDownloader):
         headers_ready_callback=None,
         headers=None,
         throttler=None,
-        max_retries=None,
+        max_retries=0,
         **kwargs,
     ):
         """
