@@ -72,9 +72,9 @@ class NewPulpWorker:
             _delete_incomplete_resources(task)
             if task.reserved_resources_record:
                 self.notify_workers()
-                Task.objects.filter(pk=task.pk, state=TASK_STATES.CANCELING).update(
-                    state=TASK_STATES.CANCELED
-                )
+            Task.objects.filter(pk=task.pk, state=TASK_STATES.CANCELING).update(
+                state=TASK_STATES.CANCELED
+            )
             return True
         return False
 
