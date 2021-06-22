@@ -100,7 +100,7 @@ class PulpPluginAppConfig(apps.AppConfig):
         post_migrate.connect(
             _populate_access_policies,
             sender=self,
-            dispatch_uid="polulate_access_policies_identifier",
+            dispatch_uid="populate_access_policies_identifier",
         )
         post_migrate.connect(_populate_roles, sender=self, dispatch_uid="populate_roles_identifier")
 

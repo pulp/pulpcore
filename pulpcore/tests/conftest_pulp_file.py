@@ -123,3 +123,13 @@ def file_fixture_gen_remote_client_cert_req(
         return gen_object_with_cleanup(file_remote_api_client, kwargs)
 
     yield _file_fixture_gen_remote_client_cert_req
+
+
+@pytest.fixture
+def file_fixture_gen_file_repo(file_repo_api_client, gen_object_with_cleanup):
+    """A factory to generate a File Repository with auto-deletion after the test run."""
+
+    def _file_fixture_gen_file_repo(**kwargs):
+        return gen_object_with_cleanup(file_repo_api_client, kwargs)
+
+    yield _file_fixture_gen_file_repo
