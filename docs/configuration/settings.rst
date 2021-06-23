@@ -314,8 +314,6 @@ ALLOWED_CONTENT_CHECKSUMS
 USE_NEW_WORKER_TYPE
 ^^^^^^^^^^^^^^^^^^^
 
-    .. note:: This new worker-type is still in tech-preview.
-
     Pulp has a new distributed queueless tasking system which can be activated with this setting.
     If ``True``, the ``pulpcore-worker`` command will start workers of the new type.  If ``False``
     it will chainload into the traditional ``rq`` based system.  Also the ``pulpcore-api``
@@ -324,6 +322,21 @@ USE_NEW_WORKER_TYPE
 
     .. note:: Before changing this value, all pending tasks should be finalized. It cannot be
        guaranteed that they translate properly.
+
+       A safe way to switch from the old to the new system or the other way around consists of:
+
+       1. Shutting down the api-workers ``systemctl stop pulpcore-api``
+       2. Wait for all pending tasks to finish; check with
+
+          .. code-block:: text
+
+             pulpcore-manager shell -c 'from pulpcore.app.models import Task;
+             print(Task.objects.filter(state__in=["running", "waiting", "canceling"]).count())'
+
+       3. Flip the ``USE_NEW_WORKER_TYPE`` setting
+       4. Restart the resource manager ``systemctl restart pulpcore-resource-manager``
+       5. Restart all workers ``systemctl restart pulpcore-worker@*``
+       6. Start the api-workers ``systemctl start pulpcore-api``
 
 
 .. _admin-site-url:
