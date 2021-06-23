@@ -9,9 +9,8 @@ import unittest
 
 from pulp_smash import api, cli, config
 from pulp_smash.utils import uuid4, get_pulp_setting
-from pulp_smash.pulp3.bindings import monitor_task, monitor_task_group
+from pulp_smash.pulp3.bindings import delete_orphans, monitor_task, monitor_task_group
 from pulp_smash.pulp3.utils import (
-    delete_orphans,
     gen_repo,
 )
 
@@ -199,7 +198,7 @@ class PulpImportTestCase(unittest.TestCase):
             cls.repo_api.delete(repo.pulp_href)
         delete_exporter(cls.exporter)
         cls._delete_import_check_structures()
-        delete_orphans(cls.cfg)
+        delete_orphans()
 
     def _create_importer(self, name=None, cleanup=True, exported_repos=None):
         """Create an importer."""

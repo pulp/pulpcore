@@ -6,8 +6,8 @@ import unittest
 
 from pulp_smash import api, cli, config, utils
 from pulp_smash.exceptions import CalledProcessError
+from pulp_smash.pulp3.bindings import delete_orphans
 from pulp_smash.pulp3.constants import ARTIFACTS_PATH
-from pulp_smash.pulp3.utils import delete_orphans
 from requests.exceptions import HTTPError
 
 # This import is an exception, we use a file url but we are not actually using
@@ -29,7 +29,7 @@ class ArtifactTestCase(unittest.TestCase):
     def setUpClass(cls):
         """Delete orphans and create class-wide variables."""
         cfg = config.get_config()
-        delete_orphans(cfg)
+        delete_orphans()
         cls.client = api.Client(cfg, api.json_handler)
         cls.file = {"file": utils.http_get(FILE_URL)}
         cls.file_sha256 = hashlib.sha256(cls.file["file"]).hexdigest()

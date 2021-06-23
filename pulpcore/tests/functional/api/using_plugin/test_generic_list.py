@@ -3,8 +3,8 @@ import tempfile
 import unittest
 
 from pulp_smash import config, utils
-from pulp_smash.pulp3.bindings import monitor_task
-from pulp_smash.pulp3.utils import delete_orphans, gen_repo
+from pulp_smash.pulp3.bindings import delete_orphans, monitor_task
+from pulp_smash.pulp3.utils import gen_repo
 
 from pulpcore.tests.functional.api.using_plugin.constants import X509_CA_CERT_FILE_PATH
 from pulpcore.tests.functional.utils import set_up_module as setUpModule  # noqa:F401

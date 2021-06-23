@@ -5,9 +5,9 @@ from random import choice
 from urllib.parse import urljoin
 
 from pulp_smash import api, config, utils
+from pulp_smash.pulp3.bindings import delete_orphans
 from pulp_smash.pulp3.constants import ON_DEMAND_DOWNLOAD_POLICIES
 from pulp_smash.pulp3.utils import (
-    delete_orphans,
     download_content_unit,
     gen_distribution,
     gen_repo,
@@ -53,7 +53,7 @@ class ContentDeliveryTestCase(unittest.TestCase):
         remote is recreated and another sync is triggered.
         """
         cfg = config.get_config()
-        delete_orphans(cfg)
+        delete_orphans()
         client = api.Client(cfg, api.page_handler)
 
         repo = client.post(FILE_REPO_PATH, gen_repo())

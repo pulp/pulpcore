@@ -1,10 +1,9 @@
 import unittest
 
 from pulp_smash import config
-from pulp_smash.pulp3.bindings import monitor_task
+from pulp_smash.pulp3.bindings import delete_orphans, monitor_task
 
 from pulp_smash.pulp3.utils import (
-    delete_orphans,
     gen_repo,
     get_content,
 )
@@ -40,7 +39,7 @@ class ContentInPublicationViewTestCase(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        delete_orphans(cls.cfg)
+        delete_orphans()
 
     def test_all(self):
         """Create two publications and check view filter."""

@@ -6,11 +6,10 @@ from urllib.parse import urlsplit
 
 from pulp_smash import api, config, utils
 from pulp_smash.exceptions import TaskReportError
-from pulp_smash.pulp3.bindings import monitor_task
+from pulp_smash.pulp3.bindings import delete_orphans, monitor_task
 from pulp_smash.pulp3.constants import ARTIFACTS_PATH
 from pulp_smash.pulp3.utils import (
     download_content_unit,
-    delete_orphans,
     delete_version,
     gen_repo,
     gen_distribution,
@@ -599,7 +598,7 @@ class CreateRepoBaseVersionTestCase(unittest.TestCase):
     def setUpClass(cls):
         """Create class-wide variables."""
         cls.cfg = config.get_config()
-        delete_orphans(cls.cfg)
+        delete_orphans()
         populate_pulp(cls.cfg, url=FILE_LARGE_FIXTURE_MANIFEST_URL)
         cls.client = api.Client(cls.cfg, api.page_handler)
         cls.content = cls.client.get(FILE_CONTENT_PATH)
@@ -1048,11 +1047,11 @@ class BaseVersionTestCase(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         """Clean created resources."""
-        delete_orphans(cls.cfg)
+        delete_orphans()
 
     def test_add_content_with_base_version(self):
         """Test modify repository with base_version"""
-        delete_orphans(self.cfg)
+        delete_orphans()
 
         repo = self.client.post(FILE_REPO_PATH, gen_repo())
         self.addCleanup(self.client.delete, repo["pulp_href"])
@@ -1197,7 +1196,7 @@ class ContentInRepositoryVersionViewTestCase(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        delete_orphans(cls.cfg)
+        delete_orphans()
 
     def test_all(self):
         """Sync two repositories and check view filter."""

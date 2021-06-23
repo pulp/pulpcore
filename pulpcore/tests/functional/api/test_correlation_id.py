@@ -4,7 +4,7 @@ import uuid
 from pulp_smash import api, cli, config
 from pulp_smash.pulp3.bindings import monitor_task
 
-from pulpcore.client.pulpcore import ApiClient, OrphansApi, TasksApi
+from pulpcore.client.pulpcore import ApiClient, OrphansCleanupApi, TasksApi
 
 
 class CorrelationIdTestCase(unittest.TestCase):
@@ -23,12 +23,12 @@ class CorrelationIdTestCase(unittest.TestCase):
         )
         cls.cli_client = cli.Client(cls.cfg)
 
-        cls.orphan_api = OrphansApi(cls.client)
+        cls.orphan_cleanup_api = OrphansCleanupApi(cls.client)
         cls.task_api = TasksApi(cls.client)
 
     def test_correlation_id(self):
         """Test that a correlation can be passed as a header and logged."""
-        response, status, headers = self.orphan_api.delete_with_http_info()
+        response, status, headers = self.orphan_cleanup_api.cleanup_with_http_info({})
         monitor_task(response.task)
         task = self.task_api.read(response.task)
         self.assertEqual(headers["Correlation-ID"], self.cid)
