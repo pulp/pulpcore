@@ -2,7 +2,8 @@
 import unittest
 
 from pulp_smash import api, config
-from pulp_smash.pulp3.utils import delete_orphans, gen_remote, gen_repo, sync
+from pulp_smash.pulp3.bindings import delete_orphans
+from pulp_smash.pulp3.utils import gen_remote, gen_repo, sync
 
 from pulpcore.tests.functional.api.using_plugin.constants import (
     FILE_FIXTURE_MANIFEST_URL,
@@ -45,7 +46,7 @@ class SyncPublishContentPathTestCase(unittest.TestCase):
 
         # step 1. delete orphans to assure that no content is present on disk,
         # or database.
-        delete_orphans(cfg)
+        delete_orphans()
 
         remote = client.post(FILE_REMOTE_PATH, gen_remote(FILE_FIXTURE_MANIFEST_URL))
         self.addCleanup(client.delete, remote["pulp_href"])

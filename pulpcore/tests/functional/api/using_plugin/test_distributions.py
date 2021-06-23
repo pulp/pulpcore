@@ -5,8 +5,8 @@ import unittest
 from urllib.parse import urljoin
 
 from pulp_smash import api, config, utils
+from pulp_smash.pulp3.bindings import delete_orphans
 from pulp_smash.pulp3.utils import (
-    delete_orphans,
     download_content_unit,
     gen_distribution,
     gen_repo,

@@ -111,7 +111,6 @@ export PYTHONPATH=$REPO_ROOT${PYTHONPATH:+:${PYTHONPATH}}
 
 
 if [[ "$TEST" == "upgrade" ]]; then
-  git checkout ci_upgrade_test -- pulpcore/tests/
 
   # Handle app label change:
   sed -i "/require_pulp_plugins(/d" pulpcore/tests/functional/utils.py
@@ -160,6 +159,7 @@ if [[ "$TEST" == "upgrade" ]]; then
   cd $REPO_ROOT
 
   # Running post upgrade tests
+  git checkout ci_upgrade_test -- pulpcore/tests/
   pytest -v -r sx --color=yes --pyargs -capture=no pulpcore.tests.upgrade.post
   exit
 fi

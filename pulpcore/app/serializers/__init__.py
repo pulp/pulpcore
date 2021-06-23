@@ -57,6 +57,7 @@ from .importer import (  # noqa
     PulpImporterSerializer,
     PulpImportSerializer,
 )
+from .orphans import OrphansCleanupSerializer  # noqa
 from .progress import GroupProgressReportSerializer, ProgressReportSerializer  # noqa
 from .publication import (  # noqa
     ContentGuardSerializer,

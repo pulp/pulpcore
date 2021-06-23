@@ -35,6 +35,7 @@ from .importer import (  # noqa
     PulpImportViewSet,
     PulpImporterViewSet,
 )
+from .orphans import OrphansCleanupViewset  # noqa
 from .publication import (  # noqa
     ContentGuardFilter,
     ContentGuardViewSet,

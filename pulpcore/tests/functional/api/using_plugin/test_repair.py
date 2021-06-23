@@ -4,9 +4,9 @@ from random import sample
 from urllib.parse import urljoin
 
 from pulp_smash import api, cli, config, utils
+from pulp_smash.pulp3.bindings import delete_orphans
 from pulp_smash.pulp3.constants import BASE_PATH
 from pulp_smash.pulp3.utils import (
-    delete_orphans,
     gen_repo,
     get_content,
     get_versions,

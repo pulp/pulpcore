@@ -7,9 +7,8 @@ the case.
 import unittest
 from pulp_smash import api, cli, config, utils
 from pulp_smash.utils import uuid4
-from pulp_smash.pulp3.bindings import monitor_task
+from pulp_smash.pulp3.bindings import delete_orphans, monitor_task
 from pulp_smash.pulp3.utils import (
-    delete_orphans,
     gen_repo,
 )
 
@@ -105,7 +104,7 @@ class BaseExporterCase(unittest.TestCase):
             cls.remote_api.delete(remote.pulp_href)
         for repo in cls.repos:
             cls.repo_api.delete(repo.pulp_href)
-        delete_orphans(cls.cfg)
+        delete_orphans()
 
     def _create_exporter(self, cleanup=True, use_repos=None):
         """
