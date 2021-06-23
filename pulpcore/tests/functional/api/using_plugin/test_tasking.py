@@ -82,7 +82,7 @@ class CancelTaskTestCase(unittest.TestCase):
         task = self.create_long_task()
         response = self.cancel_task(task)
         self.assertIsNone(response["finished_at"], response)
-        self.assertEqual(response["state"], "canceled", response)
+        self.assertIn(response["state"], ["canceling", "canceled"], response)
 
     def test_cancel_nonexistent_task(self):
         """Cancel a nonexistent task."""

@@ -116,7 +116,11 @@ class TaskViewSet(
             raise ValidationError(_("The only acceptable value for 'state' is 'canceled'."))
         task = cancel_task(task.pk)
         # Check whether task is actually canceled
-        http_status = None if task.state == TASK_STATES.CANCELED else status.HTTP_409_CONFLICT
+        http_status = (
+            None
+            if task.state in [TASK_STATES.CANCELING, TASK_STATES.CANCELED]
+            else status.HTTP_409_CONFLICT
+        )
         serializer = self.serializer_class(task, context={"request": request})
         return Response(serializer.data, status=http_status)
 
