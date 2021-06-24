@@ -54,7 +54,7 @@ jobs:
       - name: Check manifest
         run: check-manifest
 
-
+      
 
       - name: Check for gettext problems
         run: sh .ci/scripts/check_gettext.sh
@@ -71,12 +71,6 @@ jobs:
           - TEST: docs
           - TEST: s3
           - TEST: bindings
-          - TEST: pulp
-            WORKERSTYLE: new
-          - TEST: s3
-            WORKERSTYLE: new
-          - TEST: bindings
-            WORKERSTYLE: new
 
     steps:
       - uses: actions/checkout@v2
