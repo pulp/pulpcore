@@ -1,0 +1,2 @@
+Deprecated the ``DELETE /pulp/api/v3/orphans/`` call. Instead use the
+``POST /pulp/api/v3/orphans/cleanup/`` call.
