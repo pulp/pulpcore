@@ -95,7 +95,7 @@ class PulpAutoSchema(AutoSchema):
         operation_keys = [i.title() for i in operation_keys]
         tags = operation_keys
         if len(operation_keys) > 2:
-            del operation_keys[-2]
+            del operation_keys[1]
         if len(operation_keys) > 1:
             operation_keys[0] = "{key}:".format(key=operation_keys[0])
         tags = [" ".join(operation_keys)]

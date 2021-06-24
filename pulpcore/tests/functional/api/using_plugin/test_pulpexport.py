@@ -23,7 +23,7 @@ from pulpcore.tests.functional.api.using_plugin.utils import (
 from pulpcore.client.pulpcore import (
     ApiClient as CoreApiClient,
     ExportersPulpApi,
-    ExportersCoreExportsApi,
+    ExportersPulpExportsApi,
 )
 
 from pulpcore.client.pulpcore.exceptions import ApiException
@@ -94,7 +94,7 @@ class BaseExporterCase(unittest.TestCase):
         cls.versions_api = RepositoriesFileVersionsApi(cls.file_client)
         cls.remote_api = RemotesFileApi(cls.file_client)
         cls.exporter_api = ExportersPulpApi(cls.core_client)
-        cls.exports_api = ExportersCoreExportsApi(cls.core_client)
+        cls.exports_api = ExportersPulpExportsApi(cls.core_client)
 
         (cls.repos, cls.remotes) = cls._setup_repositories()
 

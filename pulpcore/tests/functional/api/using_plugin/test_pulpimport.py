@@ -24,10 +24,10 @@ from pulpcore.tests.functional.api.using_plugin.utils import (
 
 from pulpcore.client.pulpcore import (
     ApiClient as CoreApiClient,
-    ExportersCoreExportsApi,
+    ExportersPulpExportsApi,
     ExportersPulpApi,
-    ImportersCoreImportCheckApi,
-    ImportersCoreImportsApi,
+    ImportersPulpImportCheckApi,
+    ImportersPulpImportsApi,
     ImportersPulpApi,
 )
 
@@ -160,11 +160,11 @@ class PulpImportTestCase(unittest.TestCase):
         cls.versions_api = RepositoriesFileVersionsApi(cls.file_client)
         cls.content_api = ContentFilesApi(cls.file_client)
         cls.exporter_api = ExportersPulpApi(cls.core_client)
-        cls.exports_api = ExportersCoreExportsApi(cls.core_client)
+        cls.exports_api = ExportersPulpExportsApi(cls.core_client)
         cls.importer_api = ImportersPulpApi(cls.core_client)
-        cls.imports_api = ImportersCoreImportsApi(cls.core_client)
+        cls.imports_api = ImportersPulpImportsApi(cls.core_client)
 
-        cls.import_check_api = ImportersCoreImportCheckApi(cls.core_client)
+        cls.import_check_api = ImportersPulpImportCheckApi(cls.core_client)
 
         (cls.import_repos, cls.export_repos, cls.remotes) = cls._setup_repositories()
         cls.exporter = cls._create_exporter()
