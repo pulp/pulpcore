@@ -23,11 +23,12 @@ from pulpcore.app.apps import pulp_plugin_configs  # noqa: E402: module level no
 from pulpcore.app.models import ContentAppStatus  # noqa: E402: module level not at top of file
 
 from .handler import Handler, loop  # noqa: E402: module level not at top of file
+from .authentication import authenticate  # noqa: E402: module level not at top of file
 
 
 log = logging.getLogger(__name__)
 
-app = web.Application()
+app = web.Application(middlewares=[authenticate])
 
 CONTENT_MODULE_NAME = "content"
 
