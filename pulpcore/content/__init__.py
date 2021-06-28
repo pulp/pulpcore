@@ -11,6 +11,10 @@ from aiohttp import web
 import django
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "pulpcore.app.settings")
+# Until Django supports async ORM natively this is the best we can do given these parts of Pulp
+# run in coroutines. We try to ensure it is safe by never passing ORM data between co-routines.
+os.environ.setdefault("DJANGO_ALLOW_ASYNC_UNSAFE", "true")
+
 django.setup()
 
 from django.conf import settings  # noqa: E402: module level not at top of file
