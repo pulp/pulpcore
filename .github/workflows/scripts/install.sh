@@ -15,13 +15,6 @@ set -euv
 
 source .github/workflows/scripts/utils.sh
 
-if [ "${GITHUB_REF##refs/tags/}" = "${GITHUB_REF}" ]
-then
-  TAG_BUILD=0
-else
-  TAG_BUILD=1
-fi
-
 if [[ "$TEST" = "docs" || "$TEST" = "publish" ]]; then
   pip install psycopg2-binary
   pip install -r doc_requirements.txt
@@ -44,13 +37,18 @@ if [ -e $REPO_ROOT/../pulp-certguard ]; then
 else
   PULP_CERTGUARD=git+https://github.com/pulp/pulp-certguard.git@master
 fi
+if [[ "${RELEASE_WORKFLOW:-false}" == "true" ]]; then
+  PLUGIN_NAME=./dist/pulpcore-*
+else
+  PLUGIN_NAME=./pulpcore
+fi
 cat >> vars/main.yaml << VARSYAML
 image:
   name: pulp
   tag: "${TAG}"
 plugins:
   - name: pulpcore
-    source: ./pulpcore
+    source: "${PLUGIN_NAME}"
   - name: pulp_file
     source: $PULP_FILE
   - name: pulp-certguard
