@@ -142,31 +142,32 @@ class NewPulpWorker:
         self.cursor.execute("LISTEN pulp_worker_cancel")
         task.worker = self.worker
         task.save(update_fields=["worker"])
-        task_process = Process(target=_perform_task, args=(task.pk,))
-        task_process.start()
-        while True:
-            r, w, x = select.select(
-                [connection.connection, task_process.sentinel], [], [], self.heartbeat_period
-            )
-            self.beat()
-            if r:
-                connection.connection.poll()
-                if any(
-                    (
-                        item.channel == "pulp_worker_cancel" and item.payload == str(task.pk)
-                        for item in connection.connection.notifies
-                    )
-                ):
-                    connection.connection.notifies.clear()
-                    _logger.info(f"Received signal to cancel current task {task.pk}.")
-                    task_process.terminate()
-                    break
-                if not task_process.is_alive():
-                    break
-        task_process.join()
-        if task.reserved_resources_record:
-            self.notify_workers()
-        self.cursor.execute("UNLISTEN pulp_worker_cancel")
+        with TemporaryDirectory(dir=".") as task_working_dir_rel_path:
+            task_process = Process(target=_perform_task, args=(task.pk, task_working_dir_rel_path))
+            task_process.start()
+            while True:
+                r, w, x = select.select(
+                    [connection.connection, task_process.sentinel], [], [], self.heartbeat_period
+                )
+                self.beat()
+                if r:
+                    connection.connection.poll()
+                    if any(
+                        (
+                            item.channel == "pulp_worker_cancel" and item.payload == str(task.pk)
+                            for item in connection.connection.notifies
+                        )
+                    ):
+                        connection.connection.notifies.clear()
+                        _logger.info(f"Received signal to cancel current task {task.pk}.")
+                        task_process.terminate()
+                        break
+                    if not task_process.is_alive():
+                        break
+            task_process.join()
+            if task.reserved_resources_record:
+                self.notify_workers()
+            self.cursor.execute("UNLISTEN pulp_worker_cancel")
 
     def run_forever(self):
         with WorkerDirectory(self.name):
@@ -185,7 +186,7 @@ class NewPulpWorker:
                 self.sleep()
 
 
-def _perform_task(task_pk):
+def _perform_task(task_pk, task_working_dir_rel_path):
     """Setup the environment to handle a task and execute it.
     This must be called as a subprocess, while the parent holds the advisory lock."""
     # All processes need to create their own postgres connection
@@ -206,12 +207,12 @@ def _perform_task(task_pk):
         func = getattr(module, function_name)
         args = json.loads(task.args) or ()
         kwargs = json.loads(task.kwargs) or {}
-        with TemporaryDirectory(dir="."):
-            result = func(*args, **kwargs)
-            if asyncio.iscoroutine(result):
-                _logger.debug("Task is coroutine {}".format(task.pk))
-                loop = asyncio.get_event_loop()
-                loop.run_until_complete(result)
+        os.chdir(task_working_dir_rel_path)
+        result = func(*args, **kwargs)
+        if asyncio.iscoroutine(result):
+            _logger.debug("Task is coroutine {}".format(task.pk))
+            loop = asyncio.get_event_loop()
+            loop.run_until_complete(result)
 
     except Exception:
         exc_type, exc, tb = sys.exc_info()
