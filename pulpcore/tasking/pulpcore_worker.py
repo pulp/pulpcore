@@ -6,6 +6,7 @@ import os
 import select
 import socket
 import sys
+import traceback
 from contextlib import suppress
 from datetime import timedelta
 from multiprocessing import Process
@@ -63,7 +64,7 @@ class NewPulpWorker:
         Return ``True`` if the task was actually canceled, ``False`` otherwise.
         """
         # A task is considered abandoned when in running state, but no worker holds its lock
-        _logger.info(f"Canceling Task {task.pk}")
+        _logger.info(f"Cleaning up and canceling Task {task.pk}")
         Task.objects.filter(pk=task.pk, state=TASK_STATES.RUNNING).update(
             state=TASK_STATES.CANCELING
         )
@@ -115,7 +116,7 @@ class NewPulpWorker:
     def sleep(self):
         """Wait for signals on the wakeup channel while heart beating."""
 
-        _logger.info(f"Worker {self.name} entering sleep state.")
+        _logger.debug(f"Worker {self.name} entering sleep state.")
         # Subscribe to "pulp_worker_wakeup"
         self.cursor.execute("LISTEN pulp_worker_wakeup")
         while True:
@@ -157,7 +158,7 @@ class NewPulpWorker:
                     )
                 ):
                     connection.connection.notifies.clear()
-                    _logger.info(f"Received signal to cancel task {task.pk}.")
+                    _logger.info(f"Received signal to cancel current task {task.pk}.")
                     task_process.terminate()
                     break
                 if not task_process.is_alive():
@@ -208,14 +209,15 @@ def _perform_task(task_pk):
         with TemporaryDirectory(dir="."):
             result = func(*args, **kwargs)
             if asyncio.iscoroutine(result):
-                _logger.info("Task is coroutine {}".format(task.pk))
+                _logger.debug("Task is coroutine {}".format(task.pk))
                 loop = asyncio.get_event_loop()
                 loop.run_until_complete(result)
 
     except Exception:
         exc_type, exc, tb = sys.exc_info()
         task.set_failed(exc, tb)
-        _logger.info("Task failed {}".format(task.pk))
+        _logger.info("Task {} failed ({})".format(task.pk, exc))
+        _logger.info("\n".join(traceback.format_list(traceback.extract_tb(tb))))
     else:
         task.set_completed()
         _logger.info("Task completed {}".format(task.pk))
