@@ -10,9 +10,6 @@ on:
   pull_request:
     branches:
       - '*'
-  push:
-    branches:
-      - '*'
 
 jobs:
 
@@ -106,6 +103,13 @@ jobs:
           ANSIBLE_FORCE_COLOR: '1'
         shell: bash
 
+      - name: Install Python client
+        run: .github/workflows/scripts/install_python_client.sh
+
+      - name: Install Ruby client
+        if: ${{ env.TEST == 'bindings' }}
+        run: .github/workflows/scripts/install_ruby_client.sh
+
       - name: Before Script
         run: |
           .github/workflows/scripts/before_script.sh
@@ -140,8 +144,8 @@ jobs:
       matrix:
         include:
           - FROM_PULPCORE_BRANCH: "3.11"
-            FROM_PULP_FILE_BRANCH: "1.6"
             FROM_PULP_CERTGUARD_BRANCH: "1.2"
+            FROM_PULP_FILE_BRANCH: "1.6"
 
     steps:
       - uses: actions/checkout@v2
@@ -162,9 +166,9 @@ jobs:
           echo ::endgroup::
           echo "TEST=upgrade" >> $GITHUB_ENV
           echo "HTTPIE_CONFIG_DIR=$GITHUB_WORKSPACE/.ci/assets/httpie/" >> $GITHUB_ENV
+          echo "FROM_PULP_CERTGUARD_BRANCH=${{ matrix.FROM_PULP_CERTGUARD_BRANCH }}" >> $GITHUB_ENV
           echo "FROM_PULP_FILE_BRANCH=${{ matrix.FROM_PULP_FILE_BRANCH }}" >> $GITHUB_ENV
           echo "FROM_PULPCORE_BRANCH=${{ matrix.FROM_PULPCORE_BRANCH }}" >> $GITHUB_ENV
-          echo "FROM_PULP_CERTGUARD_BRANCH=${{ matrix.FROM_PULP_CERTGUARD_BRANCH }}" >> $GITHUB_ENV
 
       - name: Install python dependencies
         run: |
@@ -182,6 +186,9 @@ jobs:
           PY_COLORS: '1'
           ANSIBLE_FORCE_COLOR: '1'
         shell: bash
+
+      - name: Install Python client
+        run: .github/workflows/scripts/install_python_client.sh
 
       - name: Before Script
         run: .github/workflows/scripts/before_script.sh

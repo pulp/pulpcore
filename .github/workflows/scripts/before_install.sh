@@ -108,8 +108,7 @@ fi
 
 cd pulp-cli
 pip install -e .
-pulp config create --base-url http://pulp --location tests/settings.toml
-sed -i "s/true/false/g" tests/settings.toml
+pulp config create --base-url http://pulp --location tests/settings.toml --no-verify-ssl
 mkdir ~/.config/pulp
 cp tests/settings.toml ~/.config/pulp/settings.toml
 cd ..
@@ -135,17 +134,17 @@ fi
 
 
 if [[ "$TEST" == "upgrade" ]]; then
-  cd pulp_file
-  git checkout -b ci_upgrade_test
-  git fetch --depth=1 origin heads/$FROM_PULP_FILE_BRANCH:$FROM_PULP_FILE_BRANCH
-  git checkout $FROM_PULP_FILE_BRANCH
-  # Pin deps
-  sed -i "s/~/=/g" requirements.txt
-  cd ..
   cd pulp-certguard
   git checkout -b ci_upgrade_test
   git fetch --depth=1 origin heads/$FROM_PULP_CERTGUARD_BRANCH:$FROM_PULP_CERTGUARD_BRANCH
   git checkout $FROM_PULP_CERTGUARD_BRANCH
+  # Pin deps
+  sed -i "s/~/=/g" requirements.txt
+  cd ..
+  cd pulp_file
+  git checkout -b ci_upgrade_test
+  git fetch --depth=1 origin heads/$FROM_PULP_FILE_BRANCH:$FROM_PULP_FILE_BRANCH
+  git checkout $FROM_PULP_FILE_BRANCH
   # Pin deps
   sed -i "s/~/=/g" requirements.txt
   cd ..
