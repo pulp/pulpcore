@@ -73,6 +73,7 @@ from .repository import (  # noqa
     RepositoryVersionSerializer,
 )
 from .repair import RepairSerializer  # noqa
+from .reclaim import ReclaimSpaceSerializer  # noqa
 from .task import (  # noqa
     MinimalTaskSerializer,
     TaskCancelSerializer,

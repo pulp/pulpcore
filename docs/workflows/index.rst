@@ -18,6 +18,7 @@ assumes that the reader is familiar with the fundamentals discussed in the :doc:
    exposing-content
    signed-metadata
    repairing-pulp
+   reclaim-disk-space
    import-export
    labels
    troubleshooting

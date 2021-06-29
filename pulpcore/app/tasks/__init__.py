@@ -6,4 +6,6 @@ from .importer import pulp_import  # noqa
 
 from .orphan import orphan_cleanup  # noqa
 
+from .reclaim_space import reclaim_space  # noqa
+
 from .repository import repair_all_artifacts  # noqa
