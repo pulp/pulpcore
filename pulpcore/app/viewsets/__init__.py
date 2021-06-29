@@ -46,6 +46,7 @@ from .publication import (  # noqa
     PublicationFilter,
     PublicationViewSet,
 )
+from .reclaim import ReclaimSpaceViewSet  # noqa
 from .repository import (  # noqa
     ImmutableRepositoryViewSet,
     ListRepositoryViewSet,

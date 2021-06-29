@@ -439,6 +439,8 @@ class Content(MasterModel, QueryMixin):
         _artifacts (models.ManyToManyField): Artifacts related to Content through ContentArtifact
     """
 
+    PROTECTED_FROM_RECLAIM = True
+
     TYPE = "content"
     repo_key_fields = ()  # Used by pulpcore.plugin.repo_version_utils.remove_duplicates
     upstream_id = models.UUIDField(null=True)  # Used by PulpImport/Export processing
