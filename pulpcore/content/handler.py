@@ -784,7 +784,7 @@ class Handler:
             def save_artifact_blocking():
                 self._save_artifact(download_result, remote_artifact)
 
-            await loop.run_in_executor(None, save_artifact_blocking)
+            await asyncio.shield(loop.run_in_executor(None, save_artifact_blocking))
         await response.write_eof()
 
         if response.status == 404:
