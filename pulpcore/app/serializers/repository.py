@@ -161,25 +161,37 @@ class RemoteSerializer(ModelSerializer):
     total_timeout = serializers.FloatField(
         allow_null=True,
         required=False,
-        help_text="aiohttp.ClientTimeout.total (q.v.) for download-connections.",
+        help_text=(
+            "aiohttp.ClientTimeout.total (q.v.) for download-connections. The default is null, "
+            "which will cause the default from the aiohttp library to be used."
+        ),
         min_value=0.0,
     )
     connect_timeout = serializers.FloatField(
         allow_null=True,
         required=False,
-        help_text="aiohttp.ClientTimeout.connect (q.v.) for download-connections.",
+        help_text=(
+            "aiohttp.ClientTimeout.connect (q.v.) for download-connections. The default is null, "
+            "which will cause the default from the aiohttp library to be used."
+        ),
         min_value=0.0,
     )
     sock_connect_timeout = serializers.FloatField(
         allow_null=True,
         required=False,
-        help_text="aiohttp.ClientTimeout.sock_connect (q.v.) for download-connections.",
+        help_text=(
+            "aiohttp.ClientTimeout.sock_connect (q.v.) for download-connections. The default is "
+            "null, which will cause the default from the aiohttp library to be used."
+        ),
         min_value=0.0,
     )
     sock_read_timeout = serializers.FloatField(
         allow_null=True,
         required=False,
-        help_text="aiohttp.ClientTimeout.sock_read (q.v.) for download-connections.",
+        help_text=(
+            "aiohttp.ClientTimeout.sock_read (q.v.) for download-connections. The default is "
+            "null, which will cause the default from the aiohttp library to be used."
+        ),
         min_value=0.0,
     )
     headers = serializers.ListField(
