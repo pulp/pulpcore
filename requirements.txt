@@ -24,7 +24,7 @@ psycopg2>=2.7,<2.9 # pin to < 2.9 until django 3
 PyYAML>=5.1.1,<5.5.0
 python-gnupg~=0.4.7
 redis>=3.4.0
-rq~=1.8.1
+rq~=1.9.0
 setuptools>=39.2.0
 whitenoise>=5.0.0,<5.3.0
 yarl>1.0.0
