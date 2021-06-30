@@ -1,46 +1,70 @@
 Concepts and Terminology
 ========================
 
-This introduction presents a high level overview of Pulp terminology and concepts. It is designed
-to be understandable to anyone who is familiar with software management even without prior
-knowledge of Pulp. This document favors clarity and accuracy over ease of reading.
+This introduction is designed for anyone who is familiar with software management even without prior
+knowledge of Pulp.
 
-From a user’s perspective Pulp is a tool to manage their content. In this context, “Pulp” refers to
-“pulpcore and one or more plugins”. Because of its dependent relationship with plugins, pulpcore
-can be described as a framework for plugin development.
+From a user’s perspective, Pulp is a tool to manage content. In this context, _Pulp_ refers to
+pulpcore and one or more content plugins.
 
-:term:`pulpcore` is a generalized backend with a REST API and a plugin API. Users will need at
-least one :term:`plugin` to manage :term:`Content`.  Each :term:`type` of content unit (like rpm or
-deb) is defined by a plugin.  Files that belong to a content unit are called
-:term:`Artifacts<Artifact>`. Each content unit can have 0 or many artifacts and artifacts can be
+What is pulpcore?
+-----------------
+
+Throughout Pulp documentation, when you see references to _pulpcore_, this term refers to the main
+python program that provides a platform to which you add content plugins for the types of content
+that you want to manage. In a very general sense, Pulpcore refers to Pulp and its functionality
+without any plugins. Pulpcore provides a REST API and a Plugin API.
+
+Content Management with plugins
+-------------------------------
+
+To manage content, you need at least one content plugin. Each type of content unit, for example RPM
+or Debian, is defined by a plugin. For example, if you want to manage RPM content in Pulp, you must
+install the RPM plugin. Files that belong to a content unit are called
+:term:`Artifacts<Artifact>`. Each content unit can have zero or many artifacts. Artifacts can be
 shared by multiple content units.
 
 .. image:: ./_diagrams/concept-content.png
     :align: center
 
-Content units in Pulp are organized by their membership in :term:`Repositories<Repository>` over
-time. Repositories are typed by their plugin and can only hold content of certain types.
-Plugin users can add or remove content units to a repository. Each time the content set of a
-repository is changed, a new :term:`RepositoryVersion` is created. Any operation such as sync that
-doesn't result in a change of the content set will not produce a new repository version.
+Content repositories and versioning
+-----------------------------------
+
+Content units in Pulp are organized by their membership in repositories. Repositories can only hold
+the content type that is defined by the plugin you install. You can add, remove and modify content
+in a repository. Each time the content of a repository is changed, a new Repository Version is
+created. Any operation such as sync that does not change the content set, does not produce a new
+repository version.
+
 
 .. image:: ./_diagrams/concept-repository.png
     :align: center
 .. image:: ./_diagrams/concept-add-repo.png
     :align: center
 
-Users can inform Pulp about external sources of content units, called :term:`Remotes<Remote>`.
-Plugins can define actions to interact with those sources. For example, most or all plugins define
-:term:`sync` to fetch content units from a remote and add them to a repository.
+Pulling content into Pulp with Remotes
+--------------------------------------
+
+In Pulp, you can define external sources of content units, called **Remotes**.
+Through your plugin of choice, you can define actions to interact with those external sources.
+For example, most or all plugins define sync to fetch content units from a remote and add them to a
+Pulp repository.
 
 .. image:: ./_diagrams/concept-remote.png
     :align: center
 
-All content that is managed by Pulp can be hosted by the :term:`content app`. Users create
-a :term:`Publication` for a content set in a repository version. A publication consists of the
-metadata of the content set and the artifacts of each content unit in the content set. To host a
-publication, it must be assigned to a :term:`Distribution`, which determines how and where a
-publication is served.
+Serving content with Pulp
+-------------------------
+
+Pulp provides a content app, which is an
+`aiohttp.server <https://docs.aiohttp.org/en/stable/web.html>`_ that serves content through what in
+Pulp is referred to as a :term:`Distribution`. Using this content app, you can serve all content
+that is managed with Pulp.
+
+To serve content from Pulp, you need to create a publication and a distribution. A
+:term:`Publication` consists of the metadata of the content set and the artifacts of each content
+unit in the content set. To host a publication, it must be assigned to a :term:`Distribution`, which
+determines how and where a publication is served.
 
 .. image:: ./_diagrams/concept-publish.png
     :align: center
