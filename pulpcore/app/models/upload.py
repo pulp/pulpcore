@@ -45,7 +45,7 @@ class UploadChunk(BaseModel):
 
     Fields:
 
-        file (fields.ArtifactFileField): A file where the uploaded chunk is stored.
+        file (fields.FileField): A file where the uploaded chunk is stored.
         upload (models.ForeignKey): Upload this chunk belongs to.
         offset (models.BigIntegerField): Start of the chunk in bytes.
         size (models.BigIntegerField): Size of the chunk in bytes.
