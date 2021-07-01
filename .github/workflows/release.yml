@@ -198,6 +198,11 @@ jobs:
         with:
           ruby-version: "2.6"
 
+      - name: Configure Git with pulpbot name and email
+        run: |
+          git config --global user.name 'pulpbot'
+          git config --global user.email 'pulp-infra@redhat.com'
+
       - name: Untar repository
         run: |
           shopt -s dotglob
@@ -256,11 +261,15 @@ jobs:
 
       - name: Publish client to rubygems
         run: bash .github/workflows/scripts/publish_client_gem.sh
+
       - name: Update Redmine
         run: bash .ci/scripts/update_redmine.sh
 
       - name: Create release on GitHub
         run: bash .github/workflows/scripts/create_release_from_tag.sh ${{ github.event.inputs.release }}
+
+      - name: Cleanup repository before making changelog PR
+        run: rm -rf .lock generation pulpcore_client* *-client.tar pulpcore.tar todo web docs.tar
 
       - name: Stage changelog for master branch
         run: python .github/workflows/scripts/stage-changelog-for-master.py ${{ github.event.inputs.release }}

@@ -111,7 +111,6 @@ export PYTHONPATH=$REPO_ROOT${PYTHONPATH:+:${PYTHONPATH}}
 
 
 if [[ "$TEST" == "upgrade" ]]; then
-
   # Handle app label change:
   sed -i "/require_pulp_plugins(/d" pulpcore/tests/functional/utils.py
 
