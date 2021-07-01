@@ -37,7 +37,7 @@ then
 fi
 
 cd ../pulp-openapi-generator
-
+rm -rf pulpcore-client
 ./generate.sh pulpcore python $VERSION
 cd pulpcore-client
 python setup.py sdist bdist_wheel --python-tag py3

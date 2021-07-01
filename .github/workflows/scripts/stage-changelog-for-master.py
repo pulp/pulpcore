@@ -51,6 +51,7 @@ if not changelog_commit:
     raise RuntimeError("Changelog commit for {release_version_arg} was not found.")
 
 git = repo.git
+git.stash()
 git.checkout("origin/master")
 git.cherry_pick(changelog_commit.hexsha)
 git.reset("origin/master")
