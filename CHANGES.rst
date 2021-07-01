@@ -17,7 +17,9 @@ Changelog
 
 .. towncrier release notes start
 
-3.14.0 (2021-07-01)REST API
+3.14.0 (2021-07-01)
+===================
+REST API
 --------
 
 Features
