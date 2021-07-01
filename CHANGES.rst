@@ -17,6 +17,176 @@ Changelog
 
 .. towncrier release notes start
 
+3.14.0 (2021-07-01)REST API
+--------
+
+Features
+~~~~~~~~
+
+- Introduce new worker style. (tech-preview)
+  `#8501 <https://pulp.plan.io/issues/8501>`_
+- Added new endpoint ``/pulp/api/v3/orphans/cleanup/``. When called with ``POST`` and no parameters
+  it is equivalent to calling ``DELETE /pulp/api/v3/orphans/``. Additionally the optional parameter
+  ``content_hrefs`` can be specified and must contain a list of content hrefs. When ``content_hrefs``
+  is specified, only those content units will be considered to be removed by orphan cleanup.
+  `#8658 <https://pulp.plan.io/issues/8658>`_
+- Content app responses are now smartly cached in Redis.
+  `#8805 <https://pulp.plan.io/issues/8805>`_
+- Downloads from remote sources will now be retried on more kinds of errors, such as HTTP 500 or socket errors.
+  `#8881 <https://pulp.plan.io/issues/8881>`_
+- Add a correlation id filter to the task list endpoint.
+  `#8891 <https://pulp.plan.io/issues/8891>`_
+- Where before ``download_concurrency`` would previously be set to a default value upon creation, it will now be set NULL (but a default value will still be used).
+  `#8897 <https://pulp.plan.io/issues/8897>`_
+- Added graceful shutdown to pulpcore workers.
+  `#8930 <https://pulp.plan.io/issues/8930>`_
+- Activate the new task worker type by default.
+
+  .. warning::
+
+     If you intend to stick with the old tasking system, you should configure the
+     ``USE_NEW_WORKER_TYPE`` setting to false before upgrading.
+  `#8948 <https://pulp.plan.io/issues/8948>`_
+
+
+Bugfixes
+~~~~~~~~
+
+- Fixed race condition where a task could clean up reserved resources shared with another task.
+  `#8637 <https://pulp.plan.io/issues/8637>`_
+- Altered redirect URL escaping, preventing invalidation of signed URLs for artifacts using cloud storage.
+  `#8670 <https://pulp.plan.io/issues/8670>`_
+- Add an update row lock on in task dispatching for ``ReservedResource`` to prevent a race where an
+  object was deleted that was supposed to be reused. This prevents a condition where tasks ended up in
+  waiting state forever.
+  `#8708 <https://pulp.plan.io/issues/8708>`_
+- Retry downloads on ``ClientConnectorSSLError``, which appears to be spuriously returned by some CDNs.
+  `#8867 <https://pulp.plan.io/issues/8867>`_
+- Fixed OpenAPI schema tag generation for resources that are nested more than 2 levels.
+
+  This change is most evident in client libraries generated from the OpenAPI schema.
+
+  Prior to this change, the API client for a resource located at
+  `/api/v3/pulp/exporters/core/pulp/<uuid>/exports/` was named `ExportersCoreExportsApi`.
+
+  After this change, the API client for a resource located at
+  `/api/v3/pulp/exporters/core/pulp/<uuid>/exports/` is named `ExportersPulpExportsApi`.
+  `#8868 <https://pulp.plan.io/issues/8868>`_
+- Fixed request schema for ``/pulp/api/v3/repair/``, which did identify any arguments. This also fixes
+  the bindings.
+  `#8869 <https://pulp.plan.io/issues/8869>`_
+- Update default access policies in the database if they were unmodified by the administrator.
+  `#8883 <https://pulp.plan.io/issues/8883>`_
+- Pinning to psycopg2 < 2.9 as psycopg 2.9 doesn't work with django 2.2. More info at
+  https://github.com/django/django/commit/837ffcfa681d0f65f444d881ee3d69aec23770be.
+  `#8926 <https://pulp.plan.io/issues/8926>`_
+- Fixed bug where artifacts and content were not always saved in Pulp with each
+  on_demand request serviced by content app.
+  `#8980 <https://pulp.plan.io/issues/8980>`_
+
+
+Improved Documentation
+~~~~~~~~~~~~~~~~~~~~~~
+
+- Fixed a number of link-problems in the installation/ section of docs.
+  `#6837 <https://pulp.plan.io/issues/6837>`_
+- Added a troubleshooting section to the docs explaining how to find stuck tasks.
+  `#8774 <https://pulp.plan.io/issues/8774>`_
+- Moved existing basic auth docs to a new top-level section named Authentication.
+  `#8800 <https://pulp.plan.io/issues/8800>`_
+- Moved ``Webserver Authentication`` docs under the top-level ``Authentication`` section.
+  `#8801 <https://pulp.plan.io/issues/8801>`_
+- Provide instructions to use Keycloak authenication using Python Social Aauth
+  `#8803 <https://pulp.plan.io/issues/8803>`_
+- Updated the docs.pulpproject.org to provide some immediate direction for better user orientation.
+  `#8946 <https://pulp.plan.io/issues/8946>`_
+- Separated hardware and Filesystem information from the Architecture section and added them to the Installation section.
+  `#8947 <https://pulp.plan.io/issues/8947>`_
+- Added sub-headings and simplified language of Pulp concept section.
+  `#8949 <https://pulp.plan.io/issues/8949>`_
+
+
+Deprecations
+~~~~~~~~~~~~
+
+- Deprecated the ``DELETE /pulp/api/v3/orphans/`` call. Instead use the
+  ``POST /pulp/api/v3/orphans/cleanup/`` call.
+  `#8876 <https://pulp.plan.io/issues/8876>`_
+
+
+Misc
+~~~~
+
+- `#8821 <https://pulp.plan.io/issues/8821>`_, `#8827 <https://pulp.plan.io/issues/8827>`_, `#8975 <https://pulp.plan.io/issues/8975>`_
+
+
+Plugin API
+----------
+
+Features
+~~~~~~~~
+
+- Added the ``pulpcore.plugin.viewsets.DistributionFilter``. This should be used instead of
+  ``pulpcore.plugin.viewsets.NewDistributionFilter``.
+  `#8480 <https://pulp.plan.io/issues/8480>`_
+- Added ``user_hidden`` field to ``Repository`` to hide repositories from users.
+  `#8487 <https://pulp.plan.io/issues/8487>`_
+- Added a ``timestamp_of_interest`` field to Content and Artifacts. This field can be updated by
+  calling a new method ``touch()`` on Artifacts and Content. Plugin writers should call this method
+  whenever they deal with Content or Artifacts. For example, this includes places where Content is
+  uploaded or added to Repository Versions. This will prevent Content and Artifacts from being cleaned
+  up when orphan cleanup becomes a non-blocking task in pulpcore 3.15.
+  `#8823 <https://pulp.plan.io/issues/8823>`_
+- Exposed ``AsyncUpdateMixin`` through ``pulpcore.plugin.viewsets``.
+  `#8844 <https://pulp.plan.io/issues/8844>`_
+- Added a field ``DEFAULT_MAX_RETRIES`` to the ``Remote`` base class - plugin writers can override the default number of retries attempted when file downloads failed for each type of remote. The default value is 3.
+  `#8881 <https://pulp.plan.io/issues/8881>`_
+- Added a field ``DEFAULT_DOWNLOAD_CONCURRENCY`` to the Remote base class - plugin writers can override the number of concurrent downloads for each type of remote. The default value is 10.
+  `#8897 <https://pulp.plan.io/issues/8897>`_
+
+
+Bugfixes
+~~~~~~~~
+
+- Fixed OpenAPI schema tag generation for resources that are nested more than 2 levels.
+
+  This change is most evident in client libraries generated from the OpenAPI schema.
+
+  Prior to this change, the API client for a resource located at
+  `/api/v3/pulp/exporters/core/pulp/<uuid>/exports/` was named `ExportersCoreExportsApi`.
+
+  After this change, the API client for a resource located at
+  `/api/v3/pulp/exporters/core/pulp/<uuid>/exports/` is named `ExportersPulpExportsApi`.
+  `#8868 <https://pulp.plan.io/issues/8868>`_
+
+
+Removals
+~~~~~~~~
+
+- The usage of non-JSON serializable types of ``args`` and ``kwargs`` to tasks is no longer supported.
+  ``uuid.UUID`` objects however will silently be converted to ``str``.
+  `#8501 <https://pulp.plan.io/issues/8501>`_
+- Removed the ``versions_containing_content`` method from the
+  `pulpcore.plugin.models.RepositoryVersion`` object. Instead use
+  ``RepositoryVersion.objects.with_content()``.
+  `#8729 <https://pulp.plan.io/issues/8729>`_
+- Removed `pulpcore.plugin.stages.ContentUnassociation` from the plugin API.
+  `#8827 <https://pulp.plan.io/issues/8827>`_
+
+
+Deprecations
+~~~~~~~~~~~~
+
+- The ``pulpcore.plugin.viewsets.NewDistributionFilter`` is deprecated and will be removed from a
+  future release. Instead use ``pulpcore.plugin.viewsets.DistributionFilter``.
+  `#8480 <https://pulp.plan.io/issues/8480>`_
+- Deprecate the use of the `reserved_resources_record__resource` in favor of `reserved_resources_record__contains`.
+  Tentative removal release is pulpcore==3.15.
+  `#8501 <https://pulp.plan.io/issues/8501>`_
+- Plugin writers who create custom downloaders by subclassing ``HttpDownloader`` no longer need to wrap the ``_run()`` method with a ``backoff`` decorator. Consequntly the ``http_giveup`` handler the sake of the ``backoff`` decorator is no longer needed and has been deprecated. It is likely to be removed in pulpcore 3.15.
+  `#8881 <https://pulp.plan.io/issues/8881>`_
+
+
 3.13.0 (2021-05-25)
 ===================
 REST API

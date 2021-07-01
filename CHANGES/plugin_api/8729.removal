@@ -1,3 +1,0 @@
-Removed the ``versions_containing_content`` method from the
-`pulpcore.plugin.models.RepositoryVersion`` object. Instead use
-``RepositoryVersion.objects.with_content()``.

@@ -1,2 +1,0 @@
-Fixed request schema for ``/pulp/api/v3/repair/``, which did identify any arguments. This also fixes
-the bindings.

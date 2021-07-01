@@ -1,2 +1,0 @@
-Fixed bug where artifacts and content were not always saved in Pulp with each
-on_demand request serviced by content app.
