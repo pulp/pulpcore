@@ -1,9 +1,0 @@
-Fixed OpenAPI schema tag generation for resources that are nested more than 2 levels.
-
-This change is most evident in client libraries generated from the OpenAPI schema.
-
-Prior to this change, the API client for a resource located at
-`/api/v3/pulp/exporters/core/pulp/<uuid>/exports/` was named `ExportersCoreExportsApi`.
-
-After this change, the API client for a resource located at
-`/api/v3/pulp/exporters/core/pulp/<uuid>/exports/` is named `ExportersPulpExportsApi`.

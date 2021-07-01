@@ -1,2 +1,0 @@
-Pinning to psycopg2 < 2.9 as psycopg 2.9 doesn't work with django 2.2. More info at
-https://github.com/django/django/commit/837ffcfa681d0f65f444d881ee3d69aec23770be.
