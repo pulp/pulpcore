@@ -38,7 +38,7 @@ else
   PULP_CERTGUARD=git+https://github.com/pulp/pulp-certguard.git@master
 fi
 if [[ "${RELEASE_WORKFLOW:-false}" == "true" ]]; then
-  PLUGIN_NAME=./dist/pulpcore-*
+  PLUGIN_NAME=./pulpcore/dist/pulpcore-$PLUGIN_VERSION-py3-none-any.whl
 else
   PLUGIN_NAME=./pulpcore
 fi
