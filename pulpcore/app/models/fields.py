@@ -65,7 +65,14 @@ class ArtifactFileField(FileField):
                 file._file = TemporaryDownloadedFile(open(file.name, "rb"))
             file._committed = False
 
-        return super().pre_save(model_instance, add)
+        tmp_file_path = file.name
+
+        file_instance = super().pre_save(model_instance, add)
+
+        if move and not already_in_place:
+            os.unlink(tmp_file_path)
+
+        return file_instance
 
 
 @Field.register_lookup
