@@ -18,7 +18,6 @@ from pulpcore.app.viewsets import (  # noqa
     ImporterViewSet,
     NamedModelViewSet,
     NAME_FILTER_OPTIONS,
-    NewDistributionFilter,
     PublicationFilter,
     PublicationViewSet,
     ReadOnlyContentViewSet,
