@@ -206,6 +206,8 @@ class NewPulpWorker:
                     else:
                         _logger.info(f"Aborting current task {task.pk} due to worker shutdown.")
                         os.kill(task_process.pid, signal.SIGUSR1)
+                        task_process.join()
+                        self.cancel_abandoned_task(task)
                         break
             task_process.join()
         if task.reserved_resources_record:
