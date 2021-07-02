@@ -12,6 +12,11 @@ on:
       release:
         description: "Release tag (e.g. 3.2.1)"
         required: true
+      before_script:
+        description: |
+          Bash code to run before script.sh is executed. This should only be used when re-running
+          a workflow to correct some aspect of the docs. e.g.: git checkout origin/3.14 CHANGES.rst
+        required: false
 
 env:
   RELEASE_WORKFLOW: true
@@ -37,7 +42,7 @@ jobs:
       - name: Install python dependencies
         run: |
           echo ::group::PYDEPS
-          pip install bandersnatch bump2version gitpython python-redmine towncrier wheel
+          pip install bandersnatch bump2version gitpython python-redmine towncrier==19.9.0 wheel
           echo ::endgroup::
 
       - name: Configure Git with pulpbot name and email
@@ -138,6 +143,10 @@ jobs:
       - name: Install Ruby client
         if: ${{ env.TEST == 'bindings' || env.TEST == 'generate-bindings' }}
         run: .github/workflows/scripts/install_ruby_client.sh
+
+      - name: Additional before_script
+        run: ${{ github.event.inputs.before_script }}
+        shell: bash
 
       - name: Script
         if: ${{ env.TEST != 'generate-bindings' }}
