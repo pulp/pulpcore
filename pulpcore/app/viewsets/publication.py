@@ -5,7 +5,6 @@ from django_filters.rest_framework import DjangoFilterBackend, filters
 from rest_framework import mixins, serializers
 from rest_framework.filters import OrderingFilter
 
-from pulpcore.app.loggers import deprecation_logger
 from pulpcore.app.models import (
     ContentGuard,
     Distribution,
@@ -146,15 +145,6 @@ class DistributionFilter(BaseFilterSet):
             "name": NAME_FILTER_OPTIONS,
             "base_path": ["exact", "contains", "icontains", "in"],
         }
-
-
-class NewDistributionFilter(DistributionFilter):
-    def __init__(self, *args, **kwargs):
-        deprecation_logger.warning(
-            "The NewDistributionFilter object is deprecated and will be removed in version 3.15. "
-            "Use DistributionFilter instead."
-        )
-        return super().__init__(*args, **kwargs)
 
 
 class DistributionViewSet(

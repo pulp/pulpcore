@@ -43,7 +43,6 @@ from .publication import (  # noqa
     DistributionViewSet,
     ListContentGuardViewSet,
     ListPublicationViewSet,
-    NewDistributionFilter,
     PublicationFilter,
     PublicationViewSet,
 )
