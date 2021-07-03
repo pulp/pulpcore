@@ -14,7 +14,11 @@ from rest_framework_nested.relations import (
 )
 
 from pulpcore.app.models import Label, Task
-from pulpcore.app.util import get_view_name_for_model
+from pulpcore.app.util import (
+    get_view_name_for_model,
+    get_viewset_for_model,
+    get_request_without_query_params,
+)
 
 
 log = getLogger(__name__)
@@ -259,6 +263,36 @@ class RelatedField(serializers.HyperlinkedRelatedField):
         # ignore the passed in view name and return the url to the cast unit, not the generic unit
         request = None
         return super().get_url(obj, view_name, request, *args, **kwargs)
+
+
+class RelatedResourceField(RelatedField):
+    """RelatedResourceField when relating a Resource object models.
+
+    This field should be used to relate a list of non-homogeneous resources. e.g.:
+    CreatedResource and ExportedResource models that store relationships to arbitrary
+    resources.
+
+    Specific implementation requires the model to be defined in the Meta:.
+    """
+
+    def to_representation(self, data):
+        # If the content object was deleted
+        if data.content_object is None:
+            return None
+        try:
+            if not data.content_object.complete:
+                return None
+        except AttributeError:
+            pass
+
+        # query parameters can be ignored because we are looking just for 'pulp_href'; still,
+        # we need to use the request object due to contextual references required by some
+        # serializers
+        request = get_request_without_query_params(self.context)
+
+        viewset = get_viewset_for_model(data.content_object)
+        serializer = viewset.serializer_class(data.content_object, context={"request": request})
+        return serializer.data.get("pulp_href")
 
 
 class DetailIdentityField(_DetailFieldMixin, serializers.HyperlinkedIdentityField):
