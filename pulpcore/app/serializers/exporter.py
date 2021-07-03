@@ -13,10 +13,9 @@ from pulpcore.app.serializers import (
     ExportRelatedField,
     ModelSerializer,
     RelatedField,
+    RelatedResourceField,
     RepositoryVersionRelatedField,
 )
-
-from pulpcore.app.util import get_viewset_for_model
 
 
 class ExporterSerializer(ModelSerializer):
@@ -65,17 +64,10 @@ class ExporterSerializer(ModelSerializer):
         fields = ModelSerializer.Meta.fields + ("name",)
 
 
-class ExportedResourcesField(serializers.ListField):
-    def to_representation(self, obj):
-        result = []
-        exported_resources = obj.exported_resources.all()
-        for exported_resource in exported_resources:
-            viewset = get_viewset_for_model(exported_resource.content_object)
-            serializer = viewset.serializer_class(
-                exported_resource.content_object, context={"request": None}
-            )
-            result.append(serializer.data.get("pulp_href"))
-        return result
+class ExportedResourceField(RelatedResourceField):
+    class Meta:
+        model = models.ExportedResource
+        fields = []
 
 
 class ExportSerializer(ModelSerializer):
@@ -93,8 +85,11 @@ class ExportSerializer(ModelSerializer):
         allow_null=True,
     )
 
-    exported_resources = ExportedResourcesField(
-        help_text=_("Resources that were exported."), source="*", read_only=True
+    exported_resources = ExportedResourceField(
+        help_text=_("Resources that were exported."),
+        many=True,
+        read_only=True,
+        view_name="None",  # This is a polymorphic field. The serializer does not need a view name.
     )
 
     params = serializers.JSONField(

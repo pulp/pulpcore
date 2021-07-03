@@ -28,6 +28,9 @@ end
 @fileremotes_api = PulpFileClient::RemotesFileApi.new
 @tasks_api = PulpcoreClient::TasksApi.new
 @uploads_api = PulpcoreClient::UploadsApi.new
+@exporters_api = PulpcoreClient::ExportersPulpApi.new
+@exports_api = PulpcoreClient::ExportersPulpExportsApi.new
+
 
 
 def monitor_task(task_href)
@@ -119,6 +122,16 @@ sync_response = @filerepositories_api.sync(file_repository.pulp_href, repository
 created_resources = monitor_task(sync_response.task)
 
 repository_version_1 = @repoversions_api.read(created_resources[0])
+
+# Create an exporter
+exporter = @exporters_api.create({name: 'foo48', path: '/tmp/foo', repositories:[file_repository.pulp_href]})
+
+# Create an export
+export_response = @exports_api.create(exporter.pulp_href, versions: [repository_version_1.pulp_href])
+created_resources = monitor_task(export_response.task)
+
+# List exports
+exports = @exports_api.list(exporter.pulp_href)
 
 # Create an artifact from a local file
 file_path = File.join(ENV['GITHUB_WORKSPACE'], '.ci/assets/bindings/test_bindings.rb')
