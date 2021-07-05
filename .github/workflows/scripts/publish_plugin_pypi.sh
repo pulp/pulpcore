@@ -12,8 +12,6 @@ cd "$(dirname "$(realpath -e "$0")")"/../../..
 
 set -euv
 
-export PULP_URL="${PULP_URL:-http://pulp}"
-
 export response=$(curl --write-out %{http_code} --silent --output /dev/null https://pypi.org/project/pulpcore/$1/)
 if [ "$response" == "200" ];
 then

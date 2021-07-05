@@ -12,13 +12,13 @@
       "hostname": "pulp",
       "roles": {
         "api": {
-          "port": 80,
-          "scheme": "http",
+          "port": 443,
+          "scheme": "https",
           "service": "nginx"
         },
         "content": {
-          "port": 80,
-          "scheme": "http",
+          "port": 443,
+          "scheme": "https",
           "service": "pulp_content_app"
         },
         "pulp resource manager": {},

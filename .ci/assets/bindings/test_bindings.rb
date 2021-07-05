@@ -5,14 +5,14 @@ require 'digest'
 
 
 PulpcoreClient.configure do |config|
-  config.host= "http://pulp:80"
+  config.host= "https://pulp:443"
   config.username= 'admin'
   config.password= 'password'
   config.debugging=true
 end
 
 PulpFileClient.configure do |config|
-  config.host= "http://pulp:80"
+  config.host= "https://pulp:443"
   config.username= 'admin'
   config.password= 'password'
   config.debugging=true

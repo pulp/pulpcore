@@ -33,6 +33,7 @@ plugin_default_branch: master
 plugin_name: pulpcore
 plugin_snake: pulpcore
 publish_docs_to_pulpprojectdotorg: true
+pulp_scheme: https
 pulp_settings:
   allowed_export_paths:
   - /tmp
