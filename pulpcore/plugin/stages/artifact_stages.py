@@ -1,4 +1,6 @@
 import asyncio
+import os
+
 from collections import defaultdict
 from gettext import gettext as _
 import logging
@@ -223,8 +225,20 @@ class ArtifactSaver(Stage):
     :class:`~pulpcore.plugin.stages.DeclarativeArtifact` objects have been handled.
 
     This stage drains all available items from `self._in_q` and batches everything into one large
-    call to the db for efficiency.
+    call to the db for efficiency. Furthermore, it removes all source files which were used for
+    saving artifacts when opted for in the constructor.
     """
+
+    def __init__(self, remove_source_files=True, *args, **kwargs):
+        """
+        Initialize the handler for removing source files used for creating artifacts.
+
+        Args:
+            remove_source_files (bool): If `True`, each file passed through the pipeline will be
+                removed after creating an Artifact from it.
+        """
+        super().__init__(*args, **kwargs)
+        self._handle_removal = os.unlink if remove_source_files else lambda x: None
 
     async def run(self):
         """
@@ -235,20 +249,25 @@ class ArtifactSaver(Stage):
         """
         async for batch in self.batches():
             da_to_save = []
+            src_files_to_remove = []
             for d_content in batch:
                 for d_artifact in d_content.d_artifacts:
                     if d_artifact.artifact._state.adding and not d_artifact.deferred_download:
-                        d_artifact.artifact.file = str(d_artifact.artifact.file)
+                        src_filename = d_artifact.artifact.file.name
+                        d_artifact.artifact.file = src_filename
+                        src_files_to_remove.append(src_filename)
                         da_to_save.append(d_artifact)
 
             if da_to_save:
-                for d_artifact, artifact in zip(
+                for d_artifact, src_filename, artifact in zip(
                     da_to_save,
+                    src_files_to_remove,
                     Artifact.objects.bulk_get_or_create(
                         d_artifact.artifact for d_artifact in da_to_save
                     ),
                 ):
                     d_artifact.artifact = artifact
+                    self._handle_removal(src_filename)
 
             for d_content in batch:
                 await self.put(d_content)
