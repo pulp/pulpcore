@@ -81,7 +81,7 @@ class Stage:
             log.debug("%(name)s - next: %(content)s.", {"name": self, "content": content})
             yield content
 
-    async def batches(self, minsize=500):
+    async def batches(self, minsize=250):
         """
         Asynchronous iterator yielding batches of :class:`DeclarativeContent` from `self._in_q`.
 
