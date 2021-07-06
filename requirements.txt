@@ -5,11 +5,11 @@ aiofiles==0.7.0
 aioredis~=2.0.0b1
 backoff~=1.11.0
 click<9.0
-Django~=2.2.24  # LTS version, switch only if we have a compelling reason to
+Django~=3.2.5  # LTS version, switch only if we have a compelling reason to
 django-currentuser~=0.5.3
 django-filter~=2.4.0
 django-guardian~=2.4.0
-django-guid<3.0
+django-guid~=3.2.0
 django-import-export~=2.5.0
 django-lifecycle~=0.9.1
 djangorestframework~=3.12.4
@@ -21,7 +21,7 @@ dynaconf~=3.1.4
 gunicorn~=20.1.0
 jinja2
 pygtrie~=2.4.2
-psycopg2>=2.7,<2.9 # pin to < 2.9 until django 3
+psycopg2~=2.9.1
 PyYAML>=5.1.1,<5.5.0
 python-gnupg~=0.4.7
 redis>=3.4.0

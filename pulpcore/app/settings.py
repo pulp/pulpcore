@@ -98,7 +98,7 @@ for app in OPTIONAL_APPS:
         INSTALLED_APPS.append(app)
 
 MIDDLEWARE = [
-    "django_guid.middleware.GuidMiddleware",
+    "django_guid.middleware.guid_middleware",
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",

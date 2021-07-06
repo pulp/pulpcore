@@ -6,11 +6,5 @@ updates:
     interval: daily
   open-pull-requests-limit: 10
   ignore:
-  - dependency-name: django
-    versions: ["3.x"]
-  - dependency-name: djangorestframework
-    versions: ["3.x"]
-  - dependency-name: django-guid
-    versions: ["3.x"]
   commit-message:
     prefix: "[noissue]"

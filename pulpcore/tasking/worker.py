@@ -16,7 +16,7 @@ from guardian.shortcuts import get_users_with_perms  # noqa: E402: module level 
 from django_currentuser.middleware import (  # noqa: E402: module level not at top of file
     _set_current_user,
 )
-from django_guid.middleware import GuidMiddleware  # noqa: E402: module level not at top of file
+from django_guid import set_guid  # noqa: E402: module level not at top of file
 
 from pulpcore.app import settings  # noqa: E402: module level not at top of file
 from pulpcore.app.settings import WORKER_TTL  # noqa: E402: module level not at top of file
@@ -108,7 +108,7 @@ class PulpWorker(Worker):
             task.set_running()
             user = get_users_with_perms(task).first()
             _set_current_user(user)
-            GuidMiddleware.set_guid(task.logging_cid)
+            set_guid(task.logging_cid)
 
         with TaskWorkingDirectory(job):
             return super().perform_job(job, queue)
