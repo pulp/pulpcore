@@ -25,7 +25,7 @@ from guardian.shortcuts import get_users_with_perms  # noqa: E402: module level 
 from django_currentuser.middleware import (  # noqa: E402: module level not at top of file
     _set_current_user,
 )
-from django_guid.middleware import GuidMiddleware  # noqa: E402: module level not at top of file
+from django_guid import set_guid  # noqa: E402: module level not at top of file
 
 from pulpcore.app.models import Task  # noqa: E402: module level not at top of file
 
@@ -260,7 +260,7 @@ def _perform_task(task_pk, task_working_dir_rel_path):
     os.environ["PULP_TASK_ID"] = str(task.pk)
     user = get_users_with_perms(task).first()
     _set_current_user(user)
-    GuidMiddleware.set_guid(task.logging_cid)
+    set_guid(task.logging_cid)
     try:
         _logger.info("Starting task {}".format(task.pk))
 
