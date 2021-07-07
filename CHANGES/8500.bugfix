@@ -1,0 +1,2 @@
+Fixed an internal server error that was raised when a user provided invalid parameters while
+assigning new permissions to an object.

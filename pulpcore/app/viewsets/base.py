@@ -138,7 +138,7 @@ class NamedModelViewSet(viewsets.GenericViewSet):
         return self.serializer_class
 
     @staticmethod
-    def get_resource(uri, model):
+    def get_resource(uri, model=None):
         """
         Resolve a resource URI to an instance of the resource.
 
@@ -147,7 +147,8 @@ class NamedModelViewSet(viewsets.GenericViewSet):
 
         Args:
             uri (str): A resource URI.
-            model (django.models.Model): A model class.
+            model (django.models.Model): A model class. If not provided, the method automatically
+                determines the used model from the resource URI.
 
         Returns:
             django.models.Model: The resource fetched from the DB.
@@ -168,6 +169,10 @@ class NamedModelViewSet(viewsets.GenericViewSet):
                     kwargs["{}__pk".format(key[:-3])] = value
                 else:
                     kwargs[key] = value
+
+        if model is None:
+            model = match.func.cls.queryset.model
+
         try:
             return model.objects.get(**kwargs)
         except model.MultipleObjectsReturned:
