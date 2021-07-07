@@ -19,7 +19,7 @@ class FileDownloader(BaseDownloader):
     :class:`~pulpcore.plugin.download.BaseDownloader`
     """
 
-    def __init__(self, url, **kwargs):
+    def __init__(self, url, *args, **kwargs):
         """
         Download files from a url that starts with `file://`
 
@@ -37,7 +37,7 @@ class FileDownloader(BaseDownloader):
         RemoteSerializer().validate_url(url)
         p = urlparse(url)
         self._path = os.path.abspath(os.path.join(p.netloc, p.path))
-        super().__init__(url, **kwargs)
+        super().__init__(url, *args, **kwargs)
 
     async def _run(self, extra_data=None):
         """
