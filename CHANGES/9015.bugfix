@@ -1,2 +1,0 @@
-Fixed a regression preventing syncs from file:// urls.
-(backported from #9003)
