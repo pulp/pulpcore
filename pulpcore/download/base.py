@@ -76,6 +76,8 @@ class BaseDownloader:
         expected_digests=None,
         expected_size=None,
         semaphore=None,
+        *args,
+        **kwargs,
     ):
         """
         Create a BaseDownloader object. This is expected to be called by all subclasses.
