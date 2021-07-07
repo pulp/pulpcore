@@ -13,8 +13,7 @@ repositories.
 If you are looking for a very high-level overview of Pulp's features, check out `features page at
 pulpproject.org <https://pulpproject.org/features/>`_
 
-If you want an overview of the main concepts and terminology of Pulp, see :doc:`general concepts and
- terminology<concepts>`
+If you want an overview of the main concepts and terminology of Pulp, see :doc:`Concepts and Terminology<concepts>`
 
 If you want to understand the core workflows, see  :doc:`Workflows<workflows/index>`
 
