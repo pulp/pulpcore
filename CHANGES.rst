@@ -17,6 +17,28 @@ Changelog
 
 .. towncrier release notes start
 
+3.14.1 (2021-07-07)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fixed a regression preventing syncs from file:// urls.
+  (backported from #9003)
+  `#9015 <https://pulp.plan.io/issues/9015>`_
+- Removed ambiguity from the OpenAPI schema for Exports. The exported_resources are now a list of URI strings.
+  (backported from #9008)
+  `#9025 <https://pulp.plan.io/issues/9025>`_
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.14.0 (2021-07-01)
 ===================
 REST API
