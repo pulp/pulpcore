@@ -1090,7 +1090,7 @@ class BaseVersionTestCase(unittest.TestCase):
 
 
 class RepoVersionRetentionTestCase(unittest.TestCase):
-    """Test retained_versions for repositories
+    """Test retain_repo_versions for repositories
 
     This test targets the following issues:
 
@@ -1134,9 +1134,9 @@ class RepoVersionRetentionTestCase(unittest.TestCase):
                 repository_version=self.repo.latest_version_href
             ).results
 
-    def test_retained_versions(self):
+    def test_retain_repo_versions(self):
         """Test repo version retention."""
-        self._create_repo_versions({"retained_versions": 1})
+        self._create_repo_versions({"retain_repo_versions": 1})
 
         versions = self.version_api.list(file_file_repository_href=self.repo.pulp_href).results
         self.assertEqual(len(versions), 1)
@@ -1148,15 +1148,15 @@ class RepoVersionRetentionTestCase(unittest.TestCase):
         self.assertEqual(latest_version.content_summary.present["file.file"]["count"], 3)
         self.assertEqual(latest_version.content_summary.added["file.file"]["count"], 3)
 
-    def test_retained_versions_on_update(self):
-        """Test repo version retention when retained_versions is set."""
+    def test_retain_repo_versions_on_update(self):
+        """Test repo version retention when retain_repo_versions is set."""
         self._create_repo_versions()
 
         versions = self.version_api.list(file_file_repository_href=self.repo.pulp_href).results
         self.assertEqual(len(versions), 4)
 
-        # update retained_versions to 2
-        result = self.repo_api.partial_update(self.repo.pulp_href, {"retained_versions": 2})
+        # update retain_repo_versions to 2
+        result = self.repo_api.partial_update(self.repo.pulp_href, {"retain_repo_versions": 2})
         monitor_task(result.task)
 
         versions = self.version_api.list(file_file_repository_href=self.repo.pulp_href).results
@@ -1171,7 +1171,7 @@ class RepoVersionRetentionTestCase(unittest.TestCase):
 
     def test_autodistribute(self):
         """Test repo version retention with autopublish/autodistribute."""
-        self._create_repo_versions({"retained_versions": 1, "autopublish": True})
+        self._create_repo_versions({"retain_repo_versions": 1, "autopublish": True})
 
         # all but the last publication should be gone
         for publication in self.publications[:-1]:

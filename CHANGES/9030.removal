@@ -1,0 +1,1 @@
+Renamed the ``retained_versions`` field on repositories to ``retain_repo_versions``.
