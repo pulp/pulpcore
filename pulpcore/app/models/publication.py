@@ -125,13 +125,14 @@ class Publication(MasterModel):
             Deletes the Task.created_resource when complete is False.
         """
         with transaction.atomic():
+            # invalidate cache
             if settings.CACHE_ENABLED:
                 # Find any publications being served directly
                 base_paths = self.distribution_set.values_list("base_path", flat=True)
                 # Find any publications being served indirectly by auto-distribute feature
                 versions = self.repository.versions.all()
                 pubs = Publication.objects.filter(repository_version__in=versions, complete=True)
-                publication = pubs.latest("repository_version", "-pulp_created")
+                publication = pubs.latest("repository_version", "pulp_created")
                 if self.pk == publication.pk:
                     base_paths |= self.repository.distributions.values_list("base_path", flat=True)
                 # Invalidate cache for all distributions serving this publication
@@ -182,6 +183,14 @@ class Publication(MasterModel):
             except Exception:
                 self.delete()
                 raise
+
+            # invalidate cache
+            if settings.CACHE_ENABLED:
+                base_paths = Distribution.objects.filter(
+                    repository=self.repository_version.repository
+                ).values_list("base_path", flat=True)
+                if base_paths:
+                    Cache().delete(base_key=base_paths)
 
 
 class PublishedArtifact(BaseModel):
