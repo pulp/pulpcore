@@ -39,7 +39,7 @@ class Repository(MasterModel):
         description (models.TextField): An optional description.
         next_version (models.PositiveIntegerField): A record of the next version number to be
             created.
-        retained_versions (models.PositiveIntegerField): Number of repo versions to keep
+        retain_repo_versions (models.PositiveIntegerField): Number of repo versions to keep
         user_hidden (models.BooleanField): Whether to expose this repo to users via the API
 
     Relations:
@@ -55,7 +55,7 @@ class Repository(MasterModel):
     name = models.TextField(db_index=True, unique=True)
     description = models.TextField(null=True)
     next_version = models.PositiveIntegerField(default=0)
-    retained_versions = models.PositiveIntegerField(default=None, null=True)
+    retain_repo_versions = models.PositiveIntegerField(default=None, null=True)
     user_hidden = models.BooleanField(default=False)
     content = models.ManyToManyField(
         "Content", through="RepositoryContent", related_name="repositories"
@@ -198,11 +198,11 @@ class Repository(MasterModel):
         """
         return Artifact.objects.filter(content__pk__in=version.content)
 
-    @hook(AFTER_UPDATE, when="retained_versions", has_changed=True)
+    @hook(AFTER_UPDATE, when="retain_repo_versions", has_changed=True)
     def cleanup_old_versions(self):
-        """Cleanup old repository versions based on retained_versions."""
-        if self.retained_versions:
-            for version in self.versions.order_by("-number")[self.retained_versions :]:
+        """Cleanup old repository versions based on retain_repo_versions."""
+        if self.retain_repo_versions:
+            for version in self.versions.order_by("-number")[self.retain_repo_versions :]:
                 _logger.info(
                     _("Deleting repository version {} due to version retention limit.").format(
                         version

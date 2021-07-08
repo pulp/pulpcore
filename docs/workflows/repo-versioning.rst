@@ -9,15 +9,16 @@ Version Retention
 -----------------
 
 .. warning::
-    Support for retained_versions is provided as a tech preview in Pulp 3.  Functionality may not
+    Support for retain_repo_versions is provided as a tech preview in Pulp 3.  Functionality may not
     work or may be incomplete. Also, backwards compatibility when upgrading is not guaranteed.
 
-By default, retained_versions is null which means that Pulp will store all versions of a Repository.
-This behavior can be changed by setting the retained_versions field on the Repository. A Repository
-must have at least one RepositoryVersion so retained_versions must be greater than or equal to 1.
+By default, retain_repo_versions is null which means that Pulp will store all versions of a
+Repository. This behavior can be changed by setting the retain_repo_versions field on the
+Repository. A Repository must have at least one RepositoryVersion so retain_repo_versions must be
+greater than or equal to 1.
 
-Setting retained_versions to 1 effectively disables repository versioning since Pulp will only store
-the latest version.
+Setting retain_repo_versions to 1 effectively disables repository versioning since Pulp will only
+store the latest version.
 
 To update this field for a file Repository called myrepo, simply call:
 
