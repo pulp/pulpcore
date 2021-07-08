@@ -466,7 +466,7 @@ class Handler:
             def get_latest_publication_or_version_blocking():
                 nonlocal repo_version
                 nonlocal publication
-                repo_version = repository.latest_version()
+
                 # Search for publication serving the closest latest version
                 if not publication:
                     try:
@@ -474,9 +474,15 @@ class Handler:
                         publications = Publication.objects.filter(
                             repository_version__in=versions, complete=True
                         )
-                        publication = publications.latest("repository_version", "-pulp_created")
+                        publication = publications.select_related("repository_version").latest(
+                            "repository_version", "pulp_created"
+                        )
+                        repo_version = publication.repository_version
                     except ObjectDoesNotExist:
                         pass
+
+                if not repo_version:
+                    repo_version = repository.latest_version()
 
             await loop.run_in_executor(None, get_latest_publication_or_version_blocking)
 

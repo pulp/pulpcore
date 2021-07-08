@@ -1,0 +1,1 @@
+Fixed the behavior of setting "repository" on a distribution for publication-based plugins.
