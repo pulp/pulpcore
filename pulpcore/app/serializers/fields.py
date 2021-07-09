@@ -377,8 +377,8 @@ class TaskGroupStatusCountField(serializers.IntegerField, serializers.ReadOnlyFi
         return instance.tasks.filter(state=self.state).count()
 
 
-class LabelsField(serializers.DictField):
-    """Serializer field for pulp_labels."""
+class LabelsField(serializers.JSONField):
+    """A serializer field for pulp_labels."""
 
     def to_representation(self, labels):
         """
@@ -397,14 +397,16 @@ class LabelsField(serializers.DictField):
         Ensures that data conforms to key/value dict.
 
         Args:
-            data (dict): A dictionary that maps label key to label value
+            data (str or dict): A dictionary which maps a label key to a label value
 
         Returns:
             A validated data dict for labels mapping keys to values
 
         Raises:
-            rest_framework.serializers.ValidationError: if data is invalid (eg not a dict)
+            rest_framework.serializers.ValidationError: if data is invalid (e.g., not a dict)
         """
+        data = super().to_internal_value(data)
+
         if not isinstance(data, dict):
             raise serializers.ValidationError(_("Data must be supplied as a key/value hash."))
         for key, value in data.items():
