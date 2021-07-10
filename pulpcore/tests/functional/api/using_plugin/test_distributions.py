@@ -28,6 +28,7 @@ from pulpcore.client.pulp_file import (
     RepositorySyncURL,
 )
 from pulpcore.tests.functional.api.using_plugin.constants import (
+    FILE_CHUNKED_FIXTURE_MANIFEST_URL,
     FILE_CONTENT_NAME,
     FILE_DISTRIBUTION_PATH,
     FILE_FIXTURE_COUNT,
@@ -337,45 +338,35 @@ class ContentServePublicationDistributionTestCase(unittest.TestCase):
 
     def test_content_served_immediate_with_range_request_inside_one_chunk(self):
         """Assert that downloaded content can be properly downloaded with range requests."""
-        self.setup_download_test(
-            "immediate", url="https://fixtures.pulpproject.org/file-chunked/PULP_MANIFEST"
-        )
+        self.setup_download_test("immediate", url=FILE_CHUNKED_FIXTURE_MANIFEST_URL)
         range_headers = {"Range": "bytes=1048586-1049586"}
         num_bytes = 1001
         self.do_range_request_download_test(range_headers, num_bytes)
 
     def test_content_served_immediate_with_range_request_over_three_chunks(self):
         """Assert that downloaded content can be properly downloaded with range requests."""
-        self.setup_download_test(
-            "immediate", url="https://fixtures.pulpproject.org/file-chunked/PULP_MANIFEST"
-        )
+        self.setup_download_test("immediate", url=FILE_CHUNKED_FIXTURE_MANIFEST_URL)
         range_headers = {"Range": "bytes=1048176-2248576"}
         num_bytes = 1200401
         self.do_range_request_download_test(range_headers, num_bytes)
 
     def test_content_served_on_demand_with_range_request_over_three_chunks(self):
         """Assert that on_demand content can be properly downloaded with range requests."""
-        self.setup_download_test(
-            "on_demand", url="https://fixtures.pulpproject.org/file-chunked/PULP_MANIFEST"
-        )
+        self.setup_download_test("on_demand", url=FILE_CHUNKED_FIXTURE_MANIFEST_URL)
         range_headers = {"Range": "bytes=1048176-2248576"}
         num_bytes = 1200401
         self.do_range_request_download_test(range_headers, num_bytes)
 
     def test_content_served_streamed_with_range_request_over_three_chunks(self):
         """Assert that streamed content can be properly downloaded with range requests."""
-        self.setup_download_test(
-            "streamed", url="https://fixtures.pulpproject.org/file-chunked/PULP_MANIFEST"
-        )
+        self.setup_download_test("streamed", url=FILE_CHUNKED_FIXTURE_MANIFEST_URL)
         range_headers = {"Range": "bytes=1048176-2248576"}
         num_bytes = 1200401
         self.do_range_request_download_test(range_headers, num_bytes)
 
     def test_content_served_immediate_with_multiple_different_range_requests(self):
         """Assert that multiple requests with different Range header values work as expected."""
-        self.setup_download_test(
-            "immediate", url="https://fixtures.pulpproject.org/file-chunked/PULP_MANIFEST"
-        )
+        self.setup_download_test("immediate", url=FILE_CHUNKED_FIXTURE_MANIFEST_URL)
         range_headers = {"Range": "bytes=1048176-2248576"}
         num_bytes = 1200401
         self.do_range_request_download_test(range_headers, num_bytes)
@@ -390,41 +381,31 @@ class ContentServePublicationDistributionTestCase(unittest.TestCase):
         storage = utils.get_pulp_setting(cli_client, "DEFAULT_FILE_STORAGE")
         if storage != "pulpcore.app.models.storage.FileSystem":
             self.skipTest("The S3 test API project doesn't handle invalid Range values correctly")
-        self.setup_download_test(
-            "immediate", url="https://fixtures.pulpproject.org/file-chunked/PULP_MANIFEST"
-        )
-
-        self.assertRaises(
-            HTTPError,
-            download_content_unit_return_requests_response,
-            self.cfg,
-            self.distribution.to_dict(),
-            "1.iso",
-            headers={"Range": "bytes=-1-11"},
-        )
+        self.setup_download_test("immediate", url=FILE_CHUNKED_FIXTURE_MANIFEST_URL)
+        with self.assertRaises(HTTPError) as cm:
+            download_content_unit_return_requests_response(
+                self.cfg, self.distribution.to_dict(), "1.iso", headers={"Range": "bytes=-1-11"}
+            )
+        self.assertEqual(cm.exception.response.status_code, 416)
 
     def test_content_served_immediate_with_range_request_too_large_end_value(self):
         """Assert that a range request with a end value that is larger than the data works still."""
-        self.setup_download_test(
-            "immediate", url="https://fixtures.pulpproject.org/file-chunked/PULP_MANIFEST"
-        )
+        self.setup_download_test("immediate", url=FILE_CHUNKED_FIXTURE_MANIFEST_URL)
         range_headers = {"Range": "bytes=10485260-10485960"}
         num_bytes = 500
         self.do_range_request_download_test(range_headers, num_bytes)
 
     def test_content_served_immediate_with_range_request_start_value_larger_than_content(self):
         """Assert that a range request with a start value larger than the content errors."""
-        self.setup_download_test(
-            "immediate", url="https://fixtures.pulpproject.org/file-chunked/PULP_MANIFEST"
-        )
-        self.assertRaises(
-            HTTPError,
-            download_content_unit_return_requests_response,
-            self.cfg,
-            self.distribution.to_dict(),
-            "1.iso",
-            headers={"Range": "bytes=10485860-10485870"},
-        )
+        self.setup_download_test("immediate", url=FILE_CHUNKED_FIXTURE_MANIFEST_URL)
+        with self.assertRaises(HTTPError) as cm:
+            download_content_unit_return_requests_response(
+                self.cfg,
+                self.distribution.to_dict(),
+                "1.iso",
+                headers={"Range": "bytes=10485860-10485870"},
+            )
+        self.assertEqual(cm.exception.response.status_code, 416)
 
     def setup_download_test(self, policy, url=None):
         # Create a repository
