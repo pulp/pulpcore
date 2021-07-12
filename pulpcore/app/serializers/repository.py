@@ -205,14 +205,14 @@ class RemoteSerializer(ModelSerializer):
         required=False,
     )
 
-    def validate_url(self, value):
+    def validate_url(self, url):
         """
         Check if the 'url' is a ``file://`` path, and if so, ensure it's an ALLOWED_IMPORT_PATH.
 
         The ALLOWED_IMPORT_PATH is specified as a Pulp setting.
 
         Args:
-            value: The user-provided value for 'url' to be validated.
+            url: The user-provided value for 'url' to be validated.
 
         Raises:
             ValidationError: When the url starts with `file://`, but is not a subfolder of a path in
@@ -221,16 +221,24 @@ class RemoteSerializer(ModelSerializer):
         Returns:
             The validated value.
         """
-        if not value.lower().startswith("file://"):
-            return value
+        if not url.lower().startswith("file://"):
+            return url
 
-        user_path = value[7:]
+        user_path = url[7:]
+        if not os.path.isabs(user_path):
+            raise serializers.ValidationError(
+                _("The path '{}' needs to be an absolute pathname.").format(user_path)
+            )
+
+        user_provided_realpath = os.path.realpath(user_path)
 
         for allowed_path in settings.ALLOWED_IMPORT_PATHS:
-            user_provided_realpath = os.path.realpath(user_path)
             if user_provided_realpath.startswith(allowed_path):
-                return value
-        raise serializers.ValidationError(_("url '{}' is not an allowed import path").format(value))
+                return url
+
+        raise serializers.ValidationError(
+            _("The path '{}' does not start with any of the allowed import paths").format(user_path)
+        )
 
     def validate_proxy_url(self, value):
         """
