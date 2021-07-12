@@ -396,3 +396,50 @@ class CreatePulpLabelsRemoteTestCase(unittest.TestCase):
         remote = self.api_client.post(FILE_REMOTE_PATH, data=remote_attrs)
         self.addCleanup(self.remotes_api.delete, remote["pulp_href"])
         self.assertEqual(remote["pulp_labels"], self.pulp_labels)
+
+
+class RemoteFileURLsValidationTestCase(unittest.TestCase):
+    """A test case that verifies the validation of remotes' URLs."""
+
+    @classmethod
+    def setUpClass(cls):
+        """Initialize class-wide variables"""
+        cls.cfg = config.get_config()
+
+        cls.api_client = api.Client(cls.cfg, api.json_handler)
+        cls.file_client = FileApiClient(cls.cfg.get_bindings_config())
+        cls.remotes_api = RemotesFileApi(cls.file_client)
+
+    def test_invalid_absolute_pathname(self):
+        """Test the validation of an invalid absolute pathname."""
+        remote_attrs = {
+            "name": utils.uuid4(),
+            "url": "file://error/path/name",
+        }
+        self.raise_for_invalid_request(remote_attrs)
+
+    def test_invalid_import_path(self):
+        """Test the validation of an invalid import pathname."""
+        remote_attrs = {
+            "name": utils.uuid4(),
+            "url": "file:///error/path/name",
+        }
+        self.raise_for_invalid_request(remote_attrs)
+
+    def raise_for_invalid_request(self, remote_attrs):
+        """Check if Pulp returns HTTP 400 after issuing an invalid request."""
+        with self.assertRaises(ApiException) as ae:
+            remote = self.remotes_api.create(remote_attrs)
+            self.addCleanup(self.remotes_api.delete, remote.pulp_href)
+
+        self.assertEqual(ae.exception.status, 400)
+
+    def test_valid_import_path(self):
+        """Test the creation of a remote after passing a valid URL."""
+        remote_attrs = {
+            "name": utils.uuid4(),
+            "url": "file:///tmp/good",
+        }
+
+        remote = self.remotes_api.create(remote_attrs)
+        self.addCleanup(self.remotes_api.delete, remote.pulp_href)
