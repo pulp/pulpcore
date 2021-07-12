@@ -242,7 +242,7 @@ PROFILE_STAGES_API = False
 # https://docs.pulpproject.org/pulpcore/configuration/settings.html#pulp-cache
 CACHE_ENABLED = True
 CACHE_SETTINGS = {
-    "EXPIRES_TTL": 86400,
+    "EXPIRES_TTL": 600,  # 10 minutes
 }
 
 SPECTACULAR_SETTINGS = {
