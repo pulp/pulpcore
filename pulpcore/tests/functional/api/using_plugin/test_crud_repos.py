@@ -1,4 +1,5 @@
 """Tests that CRUD repositories."""
+import json
 import re
 import time
 import unittest
@@ -357,3 +358,41 @@ class CRUDRemoteTestCase(unittest.TestCase):
             self.remotes_api.partial_update(self.remote.pulp_href, data)
         data = {"headers": [{"Connection": "keep-alive"}]}
         self.remotes_api.partial_update(self.remote.pulp_href, data)
+
+
+class CreatePulpLabelsRemoteTestCase(unittest.TestCase):
+    """A test case for verifying whether pulp_labels are correctly assigned to a new remote."""
+
+    @classmethod
+    def setUpClass(cls):
+        """Initialize class-wide variables"""
+        cls.cfg = config.get_config()
+
+        cls.api_client = api.Client(cls.cfg, api.json_handler)
+        cls.file_client = FileApiClient(cls.cfg.get_bindings_config())
+        cls.remotes_api = RemotesFileApi(cls.file_client)
+
+        cls.pulp_labels = {"environment": "dev"}
+
+    def test_create_remote(self):
+        """Test if a created remote contains pulp_labels when passing JSON data."""
+        remote_attrs = {
+            "name": utils.uuid4(),
+            "url": FILE_FIXTURE_MANIFEST_URL,
+            "pulp_labels": self.pulp_labels,
+        }
+        remote = self.remotes_api.create(remote_attrs)
+        self.addCleanup(self.remotes_api.delete, remote.pulp_href)
+
+        self.assertEqual(remote.pulp_labels, self.pulp_labels)
+
+    def test_create_remote_using_form(self):
+        """Test if a created remote contains pulp_labels when passing form data."""
+        remote_attrs = {
+            "name": utils.uuid4(),
+            "url": FILE_FIXTURE_MANIFEST_URL,
+            "pulp_labels": json.dumps(self.pulp_labels),
+        }
+        remote = self.api_client.post(FILE_REMOTE_PATH, data=remote_attrs)
+        self.addCleanup(self.remotes_api.delete, remote["pulp_href"])
+        self.assertEqual(remote["pulp_labels"], self.pulp_labels)
