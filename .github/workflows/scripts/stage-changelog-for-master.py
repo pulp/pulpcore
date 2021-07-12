@@ -10,6 +10,7 @@ import os
 import textwrap
 
 from git import Repo
+from git.exc import GitCommandError
 
 
 helper = textwrap.dedent(
@@ -53,5 +54,11 @@ if not changelog_commit:
 git = repo.git
 git.stash()
 git.checkout("origin/master")
-git.cherry_pick(changelog_commit.hexsha)
+try:
+    git.cherry_pick(changelog_commit.hexsha)
+except GitCommandError:
+    git.add("CHANGES/")
+    # Don't try opening an editor for the commit message
+    with git.custom_environment(GIT_EDITOR="true"):
+        git.cherry_pick("--continue")
 git.reset("origin/master")

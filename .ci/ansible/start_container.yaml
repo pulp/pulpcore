@@ -71,7 +71,8 @@
         - name: "Wait for Pulp"
           uri:
             url: "http://pulp/pulp/api/v3/status/"
-            follow_redirects: none
+            follow_redirects: all
+            validate_certs: no
           register: result
           until: result.status == 200
           retries: 12

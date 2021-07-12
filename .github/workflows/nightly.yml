@@ -102,6 +102,17 @@ jobs:
           name: docs.tar
           path: docs/docs.tar
 
+      - name: After failure
+        if: failure()
+        run: |
+          http --timeout 30 --check-status --pretty format --print hb http://pulp/pulp/api/v3/status/ || true
+          docker images || true
+          docker ps -a || true
+          docker logs pulp || true
+          docker exec pulp ls -latr /etc/yum.repos.d/ || true
+          docker exec pulp cat /etc/yum.repos.d/* || true
+          docker exec pulp pip3 list
+
   publish:
     runs-on: ubuntu-latest
     needs: test
@@ -201,3 +212,14 @@ jobs:
           tar -xvf docs.tar -C ./docs
           .github/workflows/scripts/publish_docs.sh nightly ${GITHUB_REF##*/}
       
+
+      - name: After failure
+        if: failure()
+        run: |
+          http --timeout 30 --check-status --pretty format --print hb http://pulp/pulp/api/v3/status/ || true
+          docker images || true
+          docker ps -a || true
+          docker logs pulp || true
+          docker exec pulp ls -latr /etc/yum.repos.d/ || true
+          docker exec pulp cat /etc/yum.repos.d/* || true
+          docker exec pulp pip3 list
