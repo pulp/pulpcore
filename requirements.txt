@@ -3,7 +3,7 @@ aiohttp~=3.7.4
 aiodns~=3.0.0
 aiofiles==0.7.0
 aioredis~=2.0.0a1
-backoff~=1.10.0
+backoff~=1.11.0
 click<9.0
 Django~=2.2.24  # LTS version, switch only if we have a compelling reason to
 django-currentuser~=0.5.3
