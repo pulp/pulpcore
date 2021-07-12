@@ -62,6 +62,8 @@ VARSYAML
 
 cat >> vars/main.yaml << VARSYAML
 pulp_settings: {"allowed_export_paths": ["/tmp"], "allowed_import_paths": ["/tmp"]}
+pulp_scheme: http
+pulp_container_tag: latest
 VARSYAML
 
 if [[ "$TEST" == "pulp" || "$TEST" == "performance" || "$TEST" == "upgrade" || "$TEST" == "s3" || "$TEST" == "plugin-from-pypi" ]]; then
