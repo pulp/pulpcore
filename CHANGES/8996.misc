@@ -1,0 +1,1 @@
+Reduced the default expiration TTL of entries in the Pulp content app cache.
