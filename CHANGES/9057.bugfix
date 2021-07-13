@@ -1,4 +1,0 @@
-Fixed bug where content app would not respond to ``Range`` HTTP Header in requests when
-``remote.policy`` was either ``on_demand`` or ``streamed``. For example this request is used by
-Anaconda clients.
-(backported from #8865)

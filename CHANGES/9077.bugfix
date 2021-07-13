@@ -1,2 +1,0 @@
-Fixed server error when accessing invalid files from content app base directory
-(backported from #9074)
