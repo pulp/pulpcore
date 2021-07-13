@@ -1,7 +1,9 @@
 """Tests that perform actions over distributions."""
 import csv
 import hashlib
+import shutil
 import unittest
+from tempfile import TemporaryDirectory
 from urllib.parse import urljoin
 
 from pulp_smash import api, cli, config, utils
@@ -33,6 +35,7 @@ from pulpcore.tests.functional.api.using_plugin.constants import (
     FILE_DISTRIBUTION_PATH,
     FILE_FIXTURE_COUNT,
     FILE_REMOTE_PATH,
+    FILE_FIXTURE_URL,
     FILE_URL,
     FILE_REPO_PATH,
 )
@@ -325,6 +328,21 @@ class ContentServePublicationDistributionTestCase(unittest.TestCase):
         """Assert that on_demand content can be properly downloaded."""
         self.setup_download_test("on_demand")
         self.do_test_content_served()
+
+    def test_content_served_on_demand_filesystem(self):
+        """Assert on_demand content from filesystem can be downloaded."""
+        if not shutil.which("wget"):
+            unittest.skip("Cannot run file:// tests without wget available.")
+        p_cli = cli.Client(self.cfg)
+        with TemporaryDirectory(dir="/tmp") as td:
+            # Create a filesystem remote
+            for file in ["1.iso", "2.iso", "3.iso", "PULP_MANIFEST"]:
+                p_cli.run(("wget", "--directory-prefix", td, urljoin(FILE_FIXTURE_URL, file)))
+            # Ensure content isn't present in Pulp yet
+            self.assertEqual(0, self.content_api.list().count)
+            # On demand w/ filesystem url
+            self.setup_download_test("on_demand", url=f"file://{td}/PULP_MANIFEST")
+            self.do_test_content_served()
 
     def test_content_served_immediate(self):
         """Assert that downloaded content can be properly downloaded."""

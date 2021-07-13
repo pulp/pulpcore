@@ -76,6 +76,7 @@ class BaseDownloader:
         expected_digests=None,
         expected_size=None,
         semaphore=None,
+        headers_ready_callback=None,
         *args,
         **kwargs,
     ):
@@ -92,12 +93,17 @@ class BaseDownloader:
             expected_size (int): The number of bytes the download is expected to have.
             semaphore (asyncio.Semaphore): A semaphore the downloader must acquire before running.
                 Useful for limiting the number of outstanding downloaders in various ways.
+            headers_ready_callback (callable): An optional callback that accepts a single dictionary
+                as its argument. The callback will be called when the response headers are
+                available. The dictionary passed has the header names as the keys and header values
+                as its values. e.g. `{'Transfer-Encoding': 'chunked'}`. This can also be None.
         """
         self.url = url
         self._writer = custom_file_object
         self.path = None
         self.expected_digests = expected_digests
         self.expected_size = expected_size
+        self.headers_ready_callback = headers_ready_callback
         if semaphore:
             self.semaphore = semaphore
         else:
@@ -247,12 +253,16 @@ class BaseDownloader:
         Run the downloader.
 
         This is a coroutine that asyncio can schedule to complete downloading. Subclasses are
-        required to implement this method and do two things:
+        required to implement this method and do three things:
 
-        1. Pass all downloaded data to
+        1. Call :meth:`~pulpcore.plugin.download.BaseDownloader.headers_ready_callback` before any
+            data is delivered to :meth:`~pulpcore.plugin.download.BaseDownloader.handle_data` if
+            the method is defined.
+
+        2. Pass all downloaded data to
            :meth:`~pulpcore.plugin.download.BaseDownloader.handle_data`.
 
-        2. Call :meth:`~pulpcore.plugin.download.BaseDownloader.finalize` after all data has
+        3. Call :meth:`~pulpcore.plugin.download.BaseDownloader.finalize` after all data has
            been delivered to :meth:`~pulpcore.plugin.download.BaseDownloader.handle_data`.
 
         It is also expected that the subclass implementation return a

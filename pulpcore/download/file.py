@@ -2,7 +2,7 @@ import os
 
 from urllib.parse import urlparse
 
-import aiofiles
+import aiofiles, aiofiles.os
 
 from .base import BaseDownloader, DownloadResult
 
@@ -39,6 +39,18 @@ class FileDownloader(BaseDownloader):
         self._path = os.path.abspath(os.path.join(p.netloc, p.path))
         super().__init__(url, *args, **kwargs)
 
+    async def _form_headers_response(self):
+        """
+        Returns a http header like dictionary about the file.
+        """
+        stats = await aiofiles.os.stat(self._path)
+        return {
+            "Accept-Ranges": "bytes",
+            "Content-Length": str(stats.st_size),
+            "Content-Type": "application/octet-stream",
+            "Server": "filesystem",
+        }
+
     async def _run(self, extra_data=None):
         """
         Read, validate, and compute digests on the `url`. This is a coroutine.
@@ -50,6 +62,8 @@ class FileDownloader(BaseDownloader):
             extra_data (dict): Extra data passed to the downloader.
         """
         async with aiofiles.open(self._path, "rb") as f_handle:
+            if self.headers_ready_callback:
+                await self.headers_ready_callback(await self._form_headers_response())
             while True:
                 chunk = await f_handle.read(1048576)  # 1 megabyte
                 if not chunk:

@@ -124,10 +124,6 @@ class HttpDownloader(BaseDownloader):
         proxy (str): An optional proxy URL or None
         proxy_auth (aiohttp.BasicAuth): An optional object that represents proxy HTTP Basic
             Authorization or None
-        headers_ready_callback (callable): An optional callback that accepts a single dictionary
-            as its argument. The callback will be called when the response headers are
-            available. The dictionary passed has the header names as the keys and header values
-            as its values. e.g. `{'Transfer-Encoding': 'chunked'}`. This can also be None.
 
     This downloader also has all of the attributes of
     :class:`~pulpcore.plugin.download.BaseDownloader`
@@ -140,7 +136,6 @@ class HttpDownloader(BaseDownloader):
         auth=None,
         proxy=None,
         proxy_auth=None,
-        headers_ready_callback=None,
         headers=None,
         throttler=None,
         max_retries=0,
@@ -176,7 +171,6 @@ class HttpDownloader(BaseDownloader):
         self.auth = auth
         self.proxy = proxy
         self.proxy_auth = proxy_auth
-        self.headers_ready_callback = headers_ready_callback
         self.download_throttler = throttler
         self.max_retries = max_retries
         super().__init__(url, **kwargs)
