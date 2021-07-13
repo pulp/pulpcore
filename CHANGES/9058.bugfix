@@ -1,0 +1,2 @@
+Fixed a bug that caused a serializer to ignore form data for ``pulp_labels``.
+(backported from #8954)
