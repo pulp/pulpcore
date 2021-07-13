@@ -45,6 +45,8 @@ class Cache:
 
     def exists(self, key=None, base_key=None):
         """Checks if cached entries exist"""
+        if not base_key and base_key is not None:
+            return False  # Failsafe for passing empty list/str
         base_key = base_key or self.default_base_key
         if key:
             return self.redis.hexists(base_key, key)
@@ -97,6 +99,8 @@ class AsyncCache:
 
     async def exists(self, key=None, base_key=None):
         """Checks if cached entries exist"""
+        if not base_key and base_key is not None:
+            return False  # Failsafe for passing empty list/str
         base_key = base_key or self.default_base_key
         if key:
             return await self.redis.hexists(base_key, key)
