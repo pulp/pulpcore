@@ -17,6 +17,45 @@ Changelog
 
 .. towncrier release notes start
 
+3.14.2 (2021-07-13)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fixed bug where content app would not respond to ``Range`` HTTP Header in requests when
+  ``remote.policy`` was either ``on_demand`` or ``streamed``. For example this request is used by
+  Anaconda clients.
+  (backported from #8865)
+  `#9057 <https://pulp.plan.io/issues/9057>`_
+- Fixed a bug that caused a serializer to ignore form data for ``pulp_labels``.
+  (backported from #8954)
+  `#9058 <https://pulp.plan.io/issues/9058>`_
+- Fixed the behavior of setting "repository" on a distribution for publication-based plugins.
+  (backported from #9039)
+  `#9059 <https://pulp.plan.io/issues/9059>`_
+- Use proxy auth from Remote config to download content from a remote repository.
+  (backported from #9024)
+  `#9068 <https://pulp.plan.io/issues/9068>`_
+- Fixed server error when accessing invalid files from content app base directory
+  (backported from #9074)
+  `#9077 <https://pulp.plan.io/issues/9077>`_
+
+
+Misc
+~~~~
+
+- `#9063 <https://pulp.plan.io/issues/9063>`_
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.14.1 (2021-07-07)
 ===================
 REST API
