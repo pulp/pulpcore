@@ -671,7 +671,7 @@ class Handler:
                 return response
 
             except (ClientResponseError, UnsupportedDigestValidationError) as e:
-                log.warn(
+                log.warning(
                     _("Could not download remote artifact at '{}': {}").format(
                         remote_artifact.url, str(e)
                     )
@@ -815,15 +815,50 @@ class Handler:
 
         remote = await loop.run_in_executor(None, cast_remote_blocking)
 
-        async def handle_headers(headers):
+        range_start, range_stop = request.http_range.start, request.http_range.stop
+        if range_start or range_stop:
+            response.set_status(206)
+
+        async def handle_response_headers(headers):
             for name, value in headers.items():
-                if name.lower() in self.hop_by_hop_headers:
+                lower_name = name.lower()
+                if lower_name in self.hop_by_hop_headers:
                     continue
+
+                if response.status == 206 and lower_name == "content-length":
+                    range_bytes = int(value)
+                    start = 0 if range_start is None else range_start
+                    stop = range_bytes if range_stop is None else range_stop
+
+                    range_bytes = range_bytes - range_start
+                    range_bytes = range_bytes - (int(value) - stop)
+                    response.headers[name] = str(range_bytes)
+
+                    response.headers["Content-Range"] = "bytes {0}-{1}/{2}".format(
+                        start, stop - start + 1, int(value)
+                    )
+                    continue
+
                 response.headers[name] = value
             await response.prepare(request)
 
+        data_size_handled = 0
+
         async def handle_data(data):
-            await response.write(data)
+            nonlocal data_size_handled
+            if range_start or range_stop:
+                start_byte_pos = 0
+                end_byte_pos = len(data)
+                if range_start:
+                    start_byte_pos = max(0, range_start - data_size_handled)
+                if range_stop:
+                    end_byte_pos = min(len(data), range_stop - data_size_handled)
+
+                data_for_client = data[start_byte_pos:end_byte_pos]
+                await response.write(data_for_client)
+                data_size_handled = data_size_handled + len(data)
+            else:
+                await response.write(data)
             if remote.policy != Remote.STREAMED:
                 await original_handle_data(data)
 
@@ -832,7 +867,7 @@ class Handler:
                 await original_finalize()
 
         downloader = remote.get_downloader(
-            remote_artifact=remote_artifact, headers_ready_callback=handle_headers
+            remote_artifact=remote_artifact, headers_ready_callback=handle_response_headers
         )
         original_handle_data = downloader.handle_data
         downloader.handle_data = handle_data
