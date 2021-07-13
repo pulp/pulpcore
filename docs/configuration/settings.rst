@@ -211,6 +211,8 @@ CACHE_SETTINGS
 
    * ``EXPIRES_TTL`` - Number of seconds entries should stay in the cache before expiring.
 
+   Defaults to ``600`` seconds.
+
    .. note::
      Set to ``None`` to have entries not expire.
      Content app responses are always invalidated when the backing distribution is updated.
