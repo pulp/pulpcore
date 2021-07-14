@@ -236,6 +236,12 @@ class NewPulpWorker:
 
 
 def child_signal_handler(sig, frame):
+    # Reset signal handlers to default
+    # If you kill the process a second time it's not graceful anymore.
+    signal.signal(signal.SIGINT, signal.SIG_DFL)
+    signal.signal(signal.SIGTERM, signal.SIG_DFL)
+    signal.signal(signal.SIGUSR1, signal.SIG_DFL)
+
     if sig == signal.SIGUSR1:
         sys.exit()
 
