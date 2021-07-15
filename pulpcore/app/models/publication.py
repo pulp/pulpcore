@@ -391,6 +391,9 @@ class Distribution(MasterModel):
         repository_version (models.ForeignKey): RepositoryVersion to be served.
     """
 
+    # If distribution serves publications, set by subclasses for proper handling in content app
+    SERVE_FROM_PUBLICATION = False
+
     name = models.TextField(db_index=True, unique=True)
     base_path = models.TextField(unique=True)
 
