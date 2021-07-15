@@ -300,26 +300,12 @@ class ContentServePublicationDistributionTestCase(unittest.TestCase):
 
     def test_nonpublished_content_not_served(self):
         """Verify content that hasn't been published is not served."""
-        # Create a repository
-        self.repo = self.repo_api.create(gen_repo())
-        self.addCleanup(self.repo_api.delete, self.repo.pulp_href)
-
-        # Create a remote
-        self.remote = self.remote_api.create(gen_file_remote())
-        self.addCleanup(self.remote_api.delete, self.remote.pulp_href)
-
-        # Sync the repository.
-        repository_sync_data = RepositorySyncURL(remote=self.remote.pulp_href)
-        sync_response = self.repo_api.sync(self.repo.pulp_href, repository_sync_data)
-        monitor_task(sync_response.task)
-
-        # Create a distribution.
-        response = self.distributions_api.create(
-            {"name": "foo", "base_path": "bar/foo", "repository": self.repo.pulp_href}
-        )
-        distribution_href = monitor_task(response.task).created_resources[0]
-        self.distribution = self.distributions_api.read(distribution_href)
-        self.addCleanup(self.distributions_api.delete, self.distribution.pulp_href)
+        self.setup_download_test("immediate", publish=False)
+        files = ["", "1.iso", "2.iso", "3.iso"]
+        for file in files:
+            with self.assertRaises(HTTPError, msg=f"{file}") as cm:
+                download_content_unit(self.cfg, self.distribution.to_dict(), file)
+            self.assertEqual(cm.exception.response.status_code, 404, f"{file}")
 
     def test_content_served_on_demand(self):
         """Assert that on_demand content can be properly downloaded."""
@@ -407,7 +393,7 @@ class ContentServePublicationDistributionTestCase(unittest.TestCase):
             )
         self.assertEqual(cm.exception.response.status_code, 416)
 
-    def setup_download_test(self, policy, url=None):
+    def setup_download_test(self, policy, url=None, publish=True):
         # Create a repository
         self.repo = self.repo_api.create(gen_repo())
         self.addCleanup(self.repo_api.delete, self.repo.pulp_href)
@@ -425,16 +411,18 @@ class ContentServePublicationDistributionTestCase(unittest.TestCase):
         sync_response = self.repo_api.sync(self.repo.pulp_href, repository_sync_data)
         monitor_task(sync_response.task)
 
-        # Create a publication.
-        publish_data = FileFilePublication(repository=self.repo.pulp_href)
-        publish_response = self.publications_api.create(publish_data)
-        publication_href = monitor_task(publish_response.task).created_resources[0]
-        self.addCleanup(self.publications_api.delete, publication_href)
+        if publish:
+            # Create a publication.
+            publish_data = FileFilePublication(repository=self.repo.pulp_href)
+            publish_response = self.publications_api.create(publish_data)
+            publication_href = monitor_task(publish_response.task).created_resources[0]
+            self.addCleanup(self.publications_api.delete, publication_href)
+            serve, served_href = "publication", publication_href
+        else:
+            serve, served_href = "repository", self.repo.pulp_href
 
         # Create a distribution.
-        response = self.distributions_api.create(
-            {"name": "foo", "base_path": "bar/foo", "publication": publication_href}
-        )
+        response = self.distributions_api.create(gen_distribution(**{serve: served_href}))
         distribution_href = monitor_task(response.task).created_resources[0]
         self.distribution = self.distributions_api.read(distribution_href)
         self.addCleanup(self.distributions_api.delete, self.distribution.pulp_href)

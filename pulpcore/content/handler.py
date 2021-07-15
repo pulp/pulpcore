@@ -557,7 +557,7 @@ class Handler:
                             request, StreamResponse(headers=headers), ca
                         )
 
-        if repo_version:
+        if repo_version and not publication and not distro.SERVE_FROM_PUBLICATION:
             if rel_path == "" or rel_path[-1] == "/":
                 index_path = "{}index.html".format(rel_path)
 
