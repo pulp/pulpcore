@@ -567,6 +567,20 @@ class ContentArtifact(BaseModel, QueryMixin):
         unique_together = ("content", "relative_path")
 
 
+class RemoteArtifactQuerySet(models.QuerySet):
+    """QuerySet that provides methods for querying RemoteArtifact."""
+
+    def acs(self):
+        """Return RemoteArtifacts if they belong to an ACS."""
+        return self.filter(remote__alternatecontentsource__isnull=False)
+
+    def order_by_acs(self):
+        """Order RemoteArtifacts returning ones with ACSes first."""
+        return self.annotate(acs_count=models.Count("remote__alternatecontentsource")).order_by(
+            "-acs_count"
+        )
+
+
 class RemoteArtifact(BaseModel, QueryMixin):
     """
     Represents a content artifact that is provided by a remote (external) repository.
@@ -607,7 +621,7 @@ class RemoteArtifact(BaseModel, QueryMixin):
     content_artifact = models.ForeignKey(ContentArtifact, on_delete=models.CASCADE)
     remote = models.ForeignKey("Remote", on_delete=models.CASCADE)
 
-    objects = BulkCreateManager()
+    objects = BulkCreateManager.from_queryset(RemoteArtifactQuerySet)()
 
     def validate_checksums(self):
         """Validate if RemoteArtifact has allowed checksum or no checksum at all."""

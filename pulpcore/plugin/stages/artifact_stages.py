@@ -4,10 +4,16 @@ from gettext import gettext as _
 import logging
 
 from asgiref.sync import sync_to_async
-from django.db.models import Prefetch, prefetch_related_objects
+from django.db.models import Prefetch, prefetch_related_objects, Q
 
 from pulpcore.plugin.exceptions import UnsupportedDigestValidationError
-from pulpcore.plugin.models import Artifact, ContentArtifact, ProgressReport, RemoteArtifact
+from pulpcore.plugin.models import (
+    AlternateContentSource,
+    Artifact,
+    ContentArtifact,
+    ProgressReport,
+    RemoteArtifact,
+)
 from pulpcore.plugin.sync import sync_to_async_iterable
 
 from .api import Stage
@@ -398,3 +404,60 @@ class RemoteArtifactSaver(Stage):
         )
         ra.validate_checksums()
         return ra
+
+
+class ACSArtifactHandler(Stage):
+    """
+    API stage to download :class:`~pulpcore.plugin.models.Artifact` files from Alternate
+    Content Source if available.
+    """
+
+    async def run(self):
+        async for batch in self.batches():
+            acs_exists = sync_to_async(AlternateContentSource.objects.exists)()
+            if acs_exists:
+                # Gather batch d_artifact checksums
+                batch_checksums = defaultdict(list)
+                for d_content in batch:
+                    for d_artifact in d_content.d_artifacts:
+                        for cks_type in d_artifact.artifact.COMMON_DIGEST_FIELDS:
+                            if getattr(d_artifact.artifact, cks_type):
+                                batch_checksums[cks_type].append(
+                                    getattr(d_artifact.artifact, cks_type)
+                                )
+
+                batch_query = Q()
+                for checksum_type in batch_checksums.keys():
+                    batch_query.add(
+                        Q(**{f"{checksum_type}__in": batch_checksums[checksum_type]}), Q.OR
+                    )
+
+                existing_ras = await sync_to_async(list)(
+                    (
+                        RemoteArtifact.objects.acs()
+                        .filter(batch_query)
+                        .only("url", "remote")
+                        .select_related("remote")
+                    )
+                )
+                existing_ras_dict = dict()
+                for ra in existing_ras:
+                    for c_type in Artifact.COMMON_DIGEST_FIELDS:
+                        checksum = await sync_to_async(getattr)(ra, c_type)
+                        if checksum:
+                            existing_ras_dict[checksum] = {
+                                "remote": ra.remote,
+                                "url": ra.url,
+                            }
+
+                for d_content in batch:
+                    for d_artifact in d_content.d_artifacts:
+                        for checksum_type in Artifact.COMMON_DIGEST_FIELDS:
+                            if getattr(d_artifact.artifact, checksum_type):
+                                checksum = getattr(d_artifact.artifact, checksum_type)
+                                if checksum in existing_ras_dict:
+                                    d_artifact.url = existing_ras_dict[checksum]["url"]
+                                    d_artifact.remote = existing_ras_dict[checksum]["remote"]
+
+            for d_content in batch:
+                await self.put(d_content)

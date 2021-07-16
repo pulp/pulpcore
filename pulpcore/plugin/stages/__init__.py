@@ -1,5 +1,6 @@
 from .api import create_pipeline, EndStage, Stage  # noqa
 from .artifact_stages import (  # noqa
+    ACSArtifactHandler,
     ArtifactDownloader,
     ArtifactSaver,
     QueryExistingArtifacts,
