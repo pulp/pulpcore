@@ -27,6 +27,9 @@ else
   BRANCH="${GITHUB_REF##refs/tags/}"
 fi
 
+COMMIT_MSG=$(git log --format=%B --no-merges -1)
+export COMMIT_MSG
+
 if [[ "$TEST" == "upgrade" ]]; then
   git checkout -b ci_upgrade_test
   cp -R .github /tmp/.github
@@ -42,7 +45,7 @@ fi
 if [[ "$TEST" == "plugin-from-pypi" ]]; then
   COMPONENT_VERSION=$(http https://pypi.org/pypi/pulpcore/json | jq -r '.info.version')
 else
-  COMPONENT_VERSION=$(sed -ne "s/\s*version=['\"]\(.*\)['\"][\s,]*/\1/p" setup.py)
+  COMPONENT_VERSION=$(sed -ne "s/\s*version.*=.*['\"]\(.*\)['\"][\s,]*/\1/p" setup.py)
 fi
 mkdir .ci/ansible/vars || true
 echo "---" > .ci/ansible/vars/main.yaml
@@ -52,9 +55,6 @@ echo "component_version: '${COMPONENT_VERSION}'" >> .ci/ansible/vars/main.yaml
 
 export PRE_BEFORE_INSTALL=$PWD/.github/workflows/scripts/pre_before_install.sh
 export POST_BEFORE_INSTALL=$PWD/.github/workflows/scripts/post_before_install.sh
-
-COMMIT_MSG=$(git log --format=%B --no-merges -1)
-export COMMIT_MSG
 
 if [ -f $PRE_BEFORE_INSTALL ]; then
   source $PRE_BEFORE_INSTALL
@@ -108,9 +108,9 @@ fi
 
 cd pulp-cli
 pip install -e .
-pulp config create --base-url http://pulp --location tests/settings.toml --no-verify-ssl
+pulp config create --base-url http://pulp --location tests/cli.toml --no-verify-ssl
 mkdir ~/.config/pulp
-cp tests/settings.toml ~/.config/pulp/settings.toml
+cp tests/cli.toml ~/.config/pulp/cli.toml
 cd ..
 
 
@@ -135,16 +135,16 @@ fi
 
 if [[ "$TEST" == "upgrade" ]]; then
   cd pulp-certguard
-  git checkout -b ci_upgrade_test
   git fetch --depth=1 origin heads/$FROM_PULP_CERTGUARD_BRANCH:$FROM_PULP_CERTGUARD_BRANCH
   git checkout $FROM_PULP_CERTGUARD_BRANCH
+  git checkout -b ci_upgrade_test
   # Pin deps
   sed -i "s/~/=/g" requirements.txt
   cd ..
   cd pulp_file
-  git checkout -b ci_upgrade_test
   git fetch --depth=1 origin heads/$FROM_PULP_FILE_BRANCH:$FROM_PULP_FILE_BRANCH
   git checkout $FROM_PULP_FILE_BRANCH
+  git checkout -b ci_upgrade_test
   # Pin deps
   sed -i "s/~/=/g" requirements.txt
   cd ..

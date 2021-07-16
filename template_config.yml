@@ -21,6 +21,7 @@ deploy_daily_client_to_rubygems: true
 deploy_to_pypi: true
 docker_fixtures: true
 docs_test: true
+flake8: true
 issue_tracker: redmine
 plugin_app_label: core
 plugin_camel: Pulpcore
@@ -33,6 +34,7 @@ plugin_default_branch: master
 plugin_name: pulpcore
 plugin_snake: pulpcore
 publish_docs_to_pulpprojectdotorg: true
+pulp_scheme: http
 pulp_settings:
   allowed_export_paths:
   - /tmp
@@ -46,6 +48,7 @@ pypi_username: pulp
 redmine_project: pulp
 release_user: pulpbot
 stable_branch: null
+sync_ci: true
 test_bindings: true
 test_cli: true
 test_fips_nightly: false

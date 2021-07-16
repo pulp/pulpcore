@@ -1,4 +1,4 @@
-FROM {{ ci_base | default("pulp/pulp-ci-centos:latest") }}
+FROM {{ ci_base | default("pulp/pulp-ci-centos:" + pulp_container_tag) }}
 
 # Add source directories to container
 {% for item in plugins %}
@@ -23,7 +23,7 @@ RUN pip3 install \
 
 RUN mkdir -p /etc/nginx/pulp/
 {% for item in plugins %}
-RUN ln /usr/local/lib/python3.6/site-packages/{{ item.name }}/app/webserver_snippets/nginx.conf /etc/nginx/pulp/{{ item.name }}.conf || true
+RUN ln /usr/local/lib/python3.8/site-packages/{{ item.name }}/app/webserver_snippets/nginx.conf /etc/nginx/pulp/{{ item.name }}.conf || true
 {% endfor %}
 
 ENTRYPOINT ["/init"]
