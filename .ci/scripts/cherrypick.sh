@@ -9,6 +9,11 @@
 
 set -e
 
+if [ ! -d CHANGES ]; then
+  echo "Error: no CHANGES directory detected. This script must be run from the project root."
+  exit 1
+fi
+
 if [ $# -lt 3 ]
 then
   echo "Usage: .ci/scripts/cherrypick.sh [commit-hash] [original-issue-id] [backport-issue-id]"
