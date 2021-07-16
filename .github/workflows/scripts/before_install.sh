@@ -135,16 +135,16 @@ fi
 
 if [[ "$TEST" == "upgrade" ]]; then
   cd pulp-certguard
+  git checkout -b ci_upgrade_test
   git fetch --depth=1 origin heads/$FROM_PULP_CERTGUARD_BRANCH:$FROM_PULP_CERTGUARD_BRANCH
   git checkout $FROM_PULP_CERTGUARD_BRANCH
-  git checkout -b ci_upgrade_test
   # Pin deps
   sed -i "s/~/=/g" requirements.txt
   cd ..
   cd pulp_file
+  git checkout -b ci_upgrade_test
   git fetch --depth=1 origin heads/$FROM_PULP_FILE_BRANCH:$FROM_PULP_FILE_BRANCH
   git checkout $FROM_PULP_FILE_BRANCH
-  git checkout -b ci_upgrade_test
   # Pin deps
   sed -i "s/~/=/g" requirements.txt
   cd ..
