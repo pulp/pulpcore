@@ -720,6 +720,12 @@ class Handler:
                         **download_result.artifact_attributes, file=download_result.path
                     )
                     artifact.save()
+                else:
+                    # The file needs to be unlinked because it was not used to create an artifact.
+                    # The artifact must have already been saved while servicing another request for
+                    # the same artifact.
+                    os.unlink(download_result.path)
+
             update_content_artifact = True
             if content_artifact._state.adding:
                 # This is the first time pull-through content was requested.
