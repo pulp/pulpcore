@@ -47,15 +47,19 @@ def _acquire_worker(resources):
     """
     # Find a worker who already has one of the reservations, it is safe to send this work to them
     try:
-        return (
+        worker = (
             Worker.objects.select_for_update()
             .filter(pk__in=Worker.objects.filter(reservations__resource__in=resources))
             .get()
         )
+        if worker.online:
+            return worker
     except Worker.MultipleObjectsReturned:
         raise Worker.DoesNotExist
     except Worker.DoesNotExist:
         pass
+    else:  # no Exception raised -> worker is offline; wait for it to be cleaned up
+        raise Worker.DoesNotExist
 
     # Otherwise, return any available worker at random
     workers_qs = Worker.objects.online_workers().exclude(
@@ -146,6 +150,8 @@ def _queue_reserved_task(func, inner_task_id, resources, inner_args, inner_kwarg
                             worker=worker, resource=resource
                         )
                     TaskReservedResource.objects.create(resource=reservation, task=task_status)
+                worker.cleaned_up = False
+                worker.save(update_fields=["cleaned_up"])
         except (Worker.DoesNotExist, IntegrityError):
             # if worker is ready, or we have a worker but we can't create the reservations, wait
             time.sleep(0.25)
