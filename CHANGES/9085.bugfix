@@ -1,0 +1,3 @@
+Set Redis connection information in status to null unless it's used. Redis is
+needed for RQ tasking or content caching.
+(backported from #9070)

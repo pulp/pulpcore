@@ -57,7 +57,11 @@ class StatusView(APIView):
         for app in pulp_plugin_configs():
             versions.append({"component": app.label, "version": app.version})
 
-        redis_status = {"connected": self._get_redis_conn_status()}
+        if settings.CACHE_ENABLED or not settings.USE_NEW_WORKER_TYPE:
+            redis_status = {"connected": self._get_redis_conn_status()}
+        else:
+            redis_status = None
+
         db_status = {"connected": self._get_db_conn_status()}
 
         try:
