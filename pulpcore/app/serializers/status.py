@@ -74,6 +74,9 @@ class StatusSerializer(serializers.Serializer):
         help_text=_("Database connection information")
     )
 
-    redis_connection = RedisConnectionSerializer(help_text=_("Redis connection information"))
+    redis_connection = RedisConnectionSerializer(
+        required=False,
+        help_text=_("Redis connection information"),
+    )
 
     storage = StorageSerializer(required=False, help_text=_("Storage information"))

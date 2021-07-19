@@ -1,6 +1,7 @@
 """Test the status page."""
 import unittest
 
+from django.test import override_settings
 from jsonschema import validate
 from pulp_smash import api, cli, config, utils
 from pulp_smash.pulp3.constants import STATUS_PATH
@@ -91,6 +92,7 @@ class StatusTestCase(unittest.TestCase):
         """
         validate(status, self.status_response)
         self.assertTrue(status["database_connection"]["connected"])
+        self.assertIsNotNone(status["redis_connection"])
         self.assertTrue(status["redis_connection"]["connected"])
         self.assertNotEqual(status["online_workers"], [])
         self.assertNotEqual(status["versions"], [])
@@ -98,3 +100,12 @@ class StatusTestCase(unittest.TestCase):
             self.assertIsNotNone(status["storage"])
         else:
             self.assertIsNone(status["storage"])
+
+    @override_settings(CACHE_ENABLED=False, USE_NEW_WORKER_TYPE=True)
+    def verify_get_response_without_redis(self, status):
+        """Verify the response to an HTTP GET call when Redis is not used.
+
+        Verify that redis_connection is null
+        """
+        validate(status, self.status_response)
+        self.assertIsNone(status["redis_connection"])
