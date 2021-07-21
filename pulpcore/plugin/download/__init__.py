@@ -3,6 +3,5 @@ from pulpcore.download import (  # noqa
     DownloadResult,
     DownloaderFactory,
     FileDownloader,
-    http_giveup,
     HttpDownloader,
 )

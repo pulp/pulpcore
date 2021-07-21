@@ -12,17 +12,6 @@ log = logging.getLogger(__name__)
 logging.getLogger("backoff").addHandler(logging.StreamHandler())
 
 
-def http_giveup(exc):
-    """Deprecated."""
-    from pulpcore.app.loggers import deprecation_logger
-
-    deprecation_logger.warning(
-        "http_giveup() is no longer necessary and has been deprecated. "
-        "It will be removed in pulpcore 3.15."
-    )
-    return http_giveup_handler(exc)
-
-
 def http_giveup_handler(exc):
     """
     Inspect a raised exception and determine if we should give up.
