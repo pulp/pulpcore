@@ -3,7 +3,6 @@ from gettext import gettext as _
 from django.core.exceptions import ImproperlyConfigured
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
-from django.contrib.postgres.fields import JSONField
 from django.db import models
 from django_currentuser.middleware import get_current_authenticated_user
 from django_lifecycle import hook
@@ -19,11 +18,11 @@ class AccessPolicy(BaseModel):
 
     Fields:
 
-        permissions_assignment (JSONField): A list of dictionaries identifying callables on the
-            ``pulpcore.plugin.access_policy.AccessPolicyFromDB`` which add user or group permissions
-            for newly created objects. This is a nullable field due to not all endpoints creating
-            objects.
-        statements (JSONField): A list of ``drf-access-policy`` statements.
+        permissions_assignment (models.JSONField): A list of dictionaries identifying callables on
+            the ``pulpcore.plugin.access_policy.AccessPolicyFromDB`` which add user or group
+            permissions for newly created objects. This is a nullable field due to not all endpoints
+            creating objects.
+        statements (models.JSONField): A list of ``drf-access-policy`` statements.
         viewset_name (models.CharField): The name of the viewset this instance controls
             authorization for.
         customized (BooleanField): False if the AccessPolicy has been user-modified. True otherwise.
@@ -31,8 +30,8 @@ class AccessPolicy(BaseModel):
 
     """
 
-    permissions_assignment = JSONField(null=True)
-    statements = JSONField()
+    permissions_assignment = models.JSONField(null=True)
+    statements = models.JSONField()
     viewset_name = models.CharField(max_length=128, unique=True)
     customized = models.BooleanField(default=False)
 

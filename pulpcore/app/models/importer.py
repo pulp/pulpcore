@@ -1,4 +1,3 @@
-from django.contrib.postgres.fields import JSONField
 from django.db import models
 
 from pulpcore.app.models import (
@@ -20,7 +19,7 @@ class Import(BaseModel):
         importer (models.ForeignKey): The Importer that imported the export
     """
 
-    params = JSONField(null=True)
+    params = models.JSONField(null=True)
     task = models.ForeignKey("Task", on_delete=models.PROTECT)
     importer = models.ForeignKey("Importer", on_delete=models.CASCADE)
 

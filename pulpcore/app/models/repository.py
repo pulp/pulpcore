@@ -14,8 +14,6 @@ from django.db import models, transaction
 from django.urls import reverse
 from django_lifecycle import AFTER_UPDATE, BEFORE_DELETE, hook
 
-from django.contrib.postgres.fields import JSONField
-
 from pulpcore.app.util import batch_qs, get_view_name_for_model
 from pulpcore.constants import ALL_KNOWN_CONTENT_CHECKSUMS
 from pulpcore.download.factory import DownloaderFactory
@@ -262,6 +260,7 @@ class Remote(MasterModel):
         connect_timeout (models.FloatField): Value for aiohttp.ClientTimeout.connect
         sock_connect_timeout (models.FloatField): Value for aiohttp.ClientTimeout.sock_connect
         sock_read_timeout (models.FloatField): Value for aiohttp.ClientTimeout.sock_read
+        headers (models.JSONField): Headers set on the aiohttp.ClientSession
         rate_limit (models.IntegerField): Limits total download rate in requests per second.
     """
 
@@ -325,7 +324,7 @@ class Remote(MasterModel):
     sock_read_timeout = models.FloatField(
         null=True, validators=[MinValueValidator(0.0, "Timeout must be >= 0")]
     )
-    headers = JSONField(blank=True, null=True)
+    headers = models.JSONField(blank=True, null=True)
     rate_limit = models.IntegerField(null=True)
 
     @property
