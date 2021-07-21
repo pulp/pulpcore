@@ -50,7 +50,7 @@ Enable general python social integration with the following steps:
 3. When using PostgreSQL, it’s recommended to use the built-in JSONB field by defining the settings::
 
     SOCIAL_AUTH_POSTGRES_JSONFIELD = True
-    SOCIAL_AUTH_JSONFIELD_CUSTOM = 'django.contrib.postgres.fields.JSONField'
+    SOCIAL_AUTH_JSONFIELD_CUSTOM = 'django.db.models.JSONField'
 
 
 4. In order to use the Keycloak OIDC capabilities, you must add a URL namespace::

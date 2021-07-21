@@ -3,7 +3,6 @@ from datetime import datetime
 from gettext import gettext as _
 
 from django.conf import settings
-from django.contrib.postgres.fields import JSONField
 from django.db import models
 
 from pulpcore.app.models import (
@@ -32,7 +31,7 @@ class Export(BaseModel):
         exporter (models.ForeignKey): The Exporter that exported the resource.
     """
 
-    params = JSONField(null=True)
+    params = models.JSONField(null=True)
     task = models.ForeignKey("Task", on_delete=models.PROTECT, null=True)
     exporter = models.ForeignKey("Exporter", on_delete=models.CASCADE)
 
@@ -166,8 +165,8 @@ class PulpExport(Export):
     validated_versions = None
     validated_start_versions = None
     validated_chunk_size = None
-    output_file_info = JSONField(null=True)
-    toc_info = JSONField(null=True)
+    output_file_info = models.JSONField(null=True)
+    toc_info = models.JSONField(null=True)
 
     def export_tarfile_path(self):
         """
