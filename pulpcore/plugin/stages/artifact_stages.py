@@ -262,6 +262,10 @@ class RemoteArtifactSaver(Stage):
     :class:`~pulpcore.plugin.stages.DeclarativeArtifact`.
     """
 
+    def __init__(self, fix_mismatched_remote_artifacts=False, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fix_mismatched_remote_artifacts = fix_mismatched_remote_artifacts
+
     async def run(self):
         """
         The coroutine for this stage.
@@ -320,8 +324,51 @@ class RemoteArtifactSaver(Stage):
                     if d_artifact.relative_path == content_artifact.relative_path:
                         break
                 else:
-                    msg = _('No declared artifact with relative path "{rp}" for content "{c}"')
-                    raise ValueError(msg.format(rp=d_artifact.relative_path, c=d_content.content))
+                    if self.fix_mismatched_remote_artifacts:
+                        # We couldn't match an DeclarativeArtifact to a ContentArtifact by rel_path.
+                        # If there are any paths available (i.e., other ContentArtifacts for this
+                        # Artifact), complain to the logs, pick the rel_path from the last
+                        # ContentArtifact we examined, and continue.
+                        #
+                        # If we can't find anything to choose from (can that even happen?), fail
+                        # the process.
+                        avail_paths = ",".join(
+                            [
+                                ca.relative_path
+                                for ca in d_content.content._remote_artifact_saver_cas
+                            ]
+                        )
+                        if avail_paths:
+                            msg = _(
+                                "No declared artifact with relative path '{rp}' for content '{c}'"
+                                " from remote '{rname}'. Using last from available-paths : '{ap}'"
+                            )
+                            log.warning(
+                                msg.format(
+                                    rp=d_artifact.relative_path,
+                                    c=d_content.content.filename,
+                                    rname=d_artifact.remote.name,
+                                    ap=avail_paths,
+                                )
+                            )
+                            d_artifact.relative_path = content_artifact.relative_path
+                        else:
+                            msg = _(
+                                "No declared artifact with relative path '{rp}' for content '{c}'"
+                                " from remote '{rname}', and no paths available."
+                            )
+                            raise ValueError(
+                                msg.format(
+                                    rp=d_artifact.relative_path,
+                                    c=d_content.content.filename,
+                                    rname=d_artifact.remote.name,
+                                )
+                            )
+                    else:
+                        msg = _('No declared artifact with relative path "{rp}" for content "{c}"')
+                        raise ValueError(
+                            msg.format(rp=d_artifact.relative_path, c=d_content.content)
+                        )
 
                 for remote_artifact in content_artifact._remote_artifact_saver_ras:
                     if remote_artifact.remote_id == d_artifact.remote.pk:

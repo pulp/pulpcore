@@ -19,7 +19,9 @@ class TestValidateFilePaths(TestCase):
         Test for two duplicate paths.
         """
         paths = ["a/b", "PULP_MANIFEST", "PULP_MANIFEST"]
-        with self.assertRaisesRegex(ValueError, "Path is duplicated: PULP_MANIFEST"):
+        with self.assertRaisesRegex(
+            ValueError, "Path errors found. Paths are duplicated: PULP_MANIFEST"
+        ):
             validate_file_paths(paths)
 
     def test_overlaps(self):
