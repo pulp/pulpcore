@@ -128,21 +128,34 @@ def validate_file_paths(paths):
     overlap_error = _("The path for file '{path}' overlaps: {conflicts}")
 
     path_trie = StringTrie(separator="/")
+    dups = []
+    overlaps = []
     for path in paths:
         if path in path_trie:
             # path duplicates a path already in the trie
-            raise ValueError(_("Path is duplicated: {path}").format(path=path))
-
-        if path_trie.has_subtrie(path):
+            dups.append(path)
+        elif path_trie.has_subtrie(path):
             # overlap where path is 'a/b' and trie has 'a/b/c'
             conflicts = [item[0] for item in path_trie.items(prefix=path)]
-            raise ValueError(overlap_error.format(path=path, conflicts=(", ").join(conflicts)))
-
-        prefixes = list(path_trie.prefixes(path))
-        if prefixes:
-            # overlap where path is 'a/b/c' and trie has 'a/b'
-            conflicts = [prefix.key for prefix in prefixes]
-            raise ValueError(overlap_error.format(path=path, conflicts=(", ").join(conflicts)))
+            overlaps.append(overlap_error.format(path=path, conflicts=", ".join(conflicts)))
+        else:
+            prefixes = list(path_trie.prefixes(path))
+            if prefixes:
+                # overlap where path is 'a/b/c' and trie has 'a/b'
+                conflicts = [prefix.key for prefix in prefixes]
+                overlaps.append(overlap_error.format(path=path, conflicts=", ".join(conflicts)))
 
         # if there are no overlaps, add it to our trie and continue
         path_trie[path] = True
+
+    if dups or overlaps:
+        dups_msg = ""
+        overlaps_msg = ""
+        if dups:
+            dups_msg = _("Paths are duplicated: {paths}").format(paths=",".join(dups))
+        if overlaps:
+            overlaps_msg = "\n".join(overlaps)
+
+        raise ValueError(
+            _("Path errors found. {dups}\n{overlaps}").format(dups=dups_msg, overlaps=overlaps_msg)
+        )
