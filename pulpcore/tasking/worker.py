@@ -20,6 +20,7 @@ from django_currentuser.middleware import (  # noqa: E402: module level not at t
 )
 
 from pulpcore.app.models import Task  # noqa: E402: module level not at top of file
+from pulpcore.constants import TASK_STATES  # noqa: E402: module level not at top of file
 
 from pulpcore.tasking.constants import (  # noqa: E402: module level not at top of file
     TASKING_CONSTANTS,
@@ -97,6 +98,8 @@ class PulpWorker(Worker):
         except Task.DoesNotExist:
             pass
         else:
+            if task.state != TASK_STATES.WAITING:
+                return
             task.set_running()
             user = get_users_with_perms(task).first()
             _set_current_user(user)
