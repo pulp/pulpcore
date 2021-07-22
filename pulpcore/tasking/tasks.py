@@ -13,6 +13,7 @@ from pulpcore.app.models import (
     ReservedResource,
     ReservedResourceRecord,
     Task,
+    TaskReservedResource,
     TaskReservedResourceRecord,
     Worker,
 )
@@ -41,13 +42,19 @@ def _acquire_worker(resources):
     """
     # Find a worker who already has this reservation, it is safe to send this work to them
     try:
-        worker = Worker.objects.with_reservations(resources)
+        worker = (
+            Worker.objects.select_for_update()
+            .filter(pk__in=Worker.objects.filter(reservations__resource__in=resources))
+            .get()
+        )
+        if worker.online:
+            return worker
     except Worker.MultipleObjectsReturned:
         raise Worker.DoesNotExist
     except Worker.DoesNotExist:
         pass
-    else:
-        return worker
+    else:  # no Exception raised -> worker is offline; wait for it to be cleaned up
+        raise Worker.DoesNotExist
 
     # Otherwise, return any available worker
     return Worker.objects.get_unreserved_worker()
@@ -109,16 +116,23 @@ def _queue_reserved_task(func, inner_task_id, resources, inner_args, inner_kwarg
                 return
 
         try:
-            worker = _acquire_worker(resources)
-        except Worker.DoesNotExist:
-            # no worker is ready so we need to wait
-            time.sleep(0.25)
-            continue
+            with transaction.atomic():
+                # lock the worker - there is a similar lock in mark_worker_offline()
+                worker = _acquire_worker(resources)
 
-        try:
-            worker.lock_resources(task_status, resources)
-        except IntegrityError:
-            # we have a worker but we can't create the reservations so wait
+                # Attempt to lock all resources by their urls. Must be atomic to prevent deadlocks.
+                for resource in resources:
+                    if worker.reservations.select_for_update().filter(resource=resource).exists():
+                        reservation = worker.reservations.get(resource=resource)
+                    else:
+                        reservation = ReservedResource.objects.create(
+                            worker=worker, resource=resource
+                        )
+                    TaskReservedResource.objects.create(resource=reservation, task=task_status)
+                worker.cleaned_up = False
+                worker.save(update_fields=["cleaned_up"])
+        except (Worker.DoesNotExist, IntegrityError):
+            # if worker is ready, or we have a worker but we can't create the reservations, wait
             time.sleep(0.25)
         else:
             # we have a worker with the locks
