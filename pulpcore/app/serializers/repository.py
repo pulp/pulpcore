@@ -41,6 +41,7 @@ class RepositorySerializer(ModelSerializer):
         min_value=1,
     )
     remote = DetailRelatedField(
+        help_text=_("An optional remote to use by default when syncing."),
         view_name_pattern=r"remotes(-.*/.*)-detail",
         queryset=models.Remote.objects.all(),
         required=False,
