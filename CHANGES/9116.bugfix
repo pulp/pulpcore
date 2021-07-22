@@ -1,0 +1,2 @@
+Fixed a bug, where new tasks were assigned to dead workers.
+(backported from #8779)
