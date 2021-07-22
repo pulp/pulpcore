@@ -8,6 +8,8 @@ from gettext import gettext as _
 
 from django.db import models
 from django.utils import timezone
+from asgiref.sync import sync_to_async
+
 
 from pulpcore.app.models import BaseModel, Task
 from pulpcore.constants import TASK_CHOICES, TASK_STATES
@@ -175,6 +177,7 @@ class ProgressReport(BaseModel):
             self.state = TASK_STATES.FAILED
         self.save()
 
+    @sync_to_async
     def increment(self):
         """
         Increment done count and save the progress report.
