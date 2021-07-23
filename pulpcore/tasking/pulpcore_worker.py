@@ -3,6 +3,7 @@ import importlib
 import json
 import logging
 import os
+import random
 import select
 import signal
 import socket
@@ -27,7 +28,7 @@ from django_currentuser.middleware import (  # noqa: E402: module level not at t
 )
 from django_guid import set_guid  # noqa: E402: module level not at top of file
 
-from pulpcore.app.models import Task  # noqa: E402: module level not at top of file
+from pulpcore.app.models import Worker, Task  # noqa: E402: module level not at top of file
 
 from pulpcore.constants import (  # noqa: E402: module level not at top of file
     TASK_STATES,
@@ -41,6 +42,10 @@ from pulpcore.tasking.worker_watcher import handle_worker_heartbeat  # noqa: E40
 
 
 _logger = logging.getLogger(__name__)
+random.seed()
+
+TASK_GRACE_INTERVAL = 3
+WORKER_CLEANUP_INTERVAL = 100
 
 
 class NewPulpWorker:
@@ -50,6 +55,10 @@ class NewPulpWorker:
         self.heartbeat_period = settings.WORKER_TTL / 3
         self.cursor = connection.cursor()
         self.worker = handle_worker_heartbeat(self.name)
+        self.task_grace_timeout = 0
+        self.worker_cleanup_countdown = random.randint(
+            WORKER_CLEANUP_INTERVAL / 10, WORKER_CLEANUP_INTERVAL
+        )
 
         # Add a file descriptor to trigger select on signals
         self.sentinel, sentinel_w = os.pipe()
@@ -70,11 +79,22 @@ class NewPulpWorker:
         self.worker.delete()
         _logger.info(f"Worker {self.name} was shut down.")
 
+    def worker_cleanup(self):
+        qs = Worker.objects.offline_workers()
+        if qs:
+            for worker in qs:
+                _logger.info(f"Clean offline worker {worker.name}.")
+                worker.delete()
+
     def beat(self):
         if self.worker.last_heartbeat < timezone.now() - timedelta(seconds=self.heartbeat_period):
             self.worker = handle_worker_heartbeat(self.name)
             if self.shutdown_requested:
-                self.task_grace -= 1
+                self.task_grace_timeout -= 1
+            self.worker_cleanup_countdown -= 1
+            if self.worker_cleanup_countdown <= 0:
+                self.worker_cleanup_countdown = WORKER_CLEANUP_INTERVAL
+                self.worker_cleanup()
 
     def notify_workers(self):
         self.cursor.execute("NOTIFY pulp_worker_wakeup")
@@ -166,7 +186,7 @@ class NewPulpWorker:
 
         This function must only be called while holding the lock for that task."""
 
-        self.task_grace = 3
+        self.task_grace_timeout = TASK_GRACE_INTERVAL
         self.cursor.execute("LISTEN pulp_worker_cancel")
         task.worker = self.worker
         task.save(update_fields=["worker"])
@@ -199,7 +219,7 @@ class NewPulpWorker:
                 if self.sentinel in r:
                     os.read(self.sentinel, 256)
                 if self.shutdown_requested:
-                    if self.task_grace > 0:
+                    if self.task_grace_timeout > 0:
                         _logger.info(
                             f"Worker shutdown requested, waiting for task {task.pk} to finish."
                         )
