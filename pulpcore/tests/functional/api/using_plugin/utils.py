@@ -147,3 +147,67 @@ def create_distribution(repository_href=None):
     distro_href = monitor_task(result.task).created_resources[0]
     distro = distro_api.read(distro_href)
     return distro
+
+
+CREATE_USER_CMD = [
+    "from django.contrib.auth import get_user_model",
+    "from django.urls import resolve",
+    "from guardian.shortcuts import assign_perm",
+    "",
+    "user = get_user_model().objects.create(username='{username}')",
+    "user.set_password('{password}')",
+    "user.save()",
+    "",
+    "for permission in {model_permissions!r}:",
+    "    assign_perm(permission, user)",
+    "",
+    "for permission, obj_url in {object_permissions!r}:",
+    "    func, _, kwargs = resolve(obj_url)",
+    "    obj = func.cls.queryset.get(pk=kwargs['pk'])",
+    "    assign_perm(permission, user, obj)",
+]
+
+
+DELETE_USER_CMD = [
+    "from django.contrib.auth import get_user_model",
+    "get_user_model().objects.get(username='{username}').delete()",
+]
+
+
+def gen_user(cfg=config.get_config(), model_permissions=None, object_permissions=None):
+    """Create a user with a set of permissions in the pulp database."""
+    cli_client = cli.Client(cfg)
+
+    if model_permissions is None:
+        model_permissions = []
+
+    if object_permissions is None:
+        object_permissions = []
+
+    user = {
+        "username": utils.uuid4(),
+        "password": utils.uuid4(),
+        "model_permissions": model_permissions,
+        "object_permissions": object_permissions,
+    }
+    utils.execute_pulpcore_python(
+        cli_client,
+        "\n".join(CREATE_USER_CMD).format(**user),
+    )
+
+    api_config = cfg.get_bindings_config()
+    api_config.username = user["username"]
+    api_config.password = user["password"]
+    user["core_api_client"] = CoreApiClient(api_config)
+    user["api_client"] = FileApiClient(api_config)
+    user["distribution_api"] = DistributionsFileApi(user["api_client"])
+    return user
+
+
+def del_user(user, cfg=config.get_config()):
+    """Delete a user from the pulp database."""
+    cli_client = cli.Client(cfg)
+    utils.execute_pulpcore_python(
+        cli_client,
+        "\n".join(DELETE_USER_CMD).format(**user),
+    )

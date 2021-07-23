@@ -1,12 +1,17 @@
 from gettext import gettext as _
 
+from django.shortcuts import get_object_or_404
 from django_filters import Filter
 from django_filters.rest_framework import DjangoFilterBackend, filters
+from drf_spectacular.utils import extend_schema
 from rest_framework import mixins, serializers
 from rest_framework.filters import OrderingFilter
+from rest_framework.decorators import action
+from rest_framework.response import Response
 
 from pulpcore.app.models import (
     ContentGuard,
+    RBACContentGuard,
     Distribution,
     Publication,
     Content,
@@ -15,6 +20,8 @@ from pulpcore.app.serializers import (
     ContentGuardSerializer,
     DistributionSerializer,
     PublicationSerializer,
+    RBACContentGuardSerializer,
+    RBACContentGuardPermissionSerializer,
 )
 from pulpcore.app.viewsets import (
     AsyncCreateMixin,
@@ -127,6 +134,97 @@ class ContentGuardViewSet(
     """
     A viewset for contentguards.
     """
+
+
+class RBACContentGuardViewSet(ContentGuardViewSet):
+    """
+    Viewset for creating contentguards that use RBAC to protect content.
+    Has add and remove actions for managing permission for users and groups to download content
+    protected by this guard.
+    """
+
+    endpoint_name = "rbac"
+    serializer_class = RBACContentGuardSerializer
+    queryset = RBACContentGuard.objects.all()
+
+    DEFAULT_ACCESS_POLICY = {
+        "statements": [
+            {
+                "action": ["list"],
+                "principal": "authenticated",
+                "effect": "allow",
+            },
+            {
+                "action": ["create"],
+                "principal": "authenticated",
+                "effect": "allow",
+                "condition": "has_model_perms:core.add_rbaccontentguard",
+            },
+            {
+                "action": ["retrieve"],
+                "principal": "authenticated",
+                "effect": "allow",
+                "condition": "has_model_or_obj_perms:core.view_rbaccontentguard",
+            },
+            {
+                "action": ["update", "partial_update", "assign_permission", "remove_permission"],
+                "principal": "authenticated",
+                "effect": "allow",
+                "condition": "has_model_or_obj_perms:core.change_rbaccontentguard",
+            },
+            {
+                "action": ["destroy"],
+                "principal": "authenticated",
+                "effect": "allow",
+                "condition": "has_model_or_obj_perms:core.delete_rbaccontentguard",
+            },
+            {
+                "action": ["download"],  # This is the action for the content guard permit
+                "principal": "authenticated",
+                "effect": "allow",
+                "condition": "has_model_or_obj_perms:core.download_rbaccontentguard",
+            },
+        ],
+        "permissions_assignment": [
+            {
+                "function": "add_for_object_creator",
+                "parameters": None,
+                "permissions": [
+                    "core.add_rbaccontentguard",
+                    "core.view_rbaccontentguard",
+                    "core.change_rbaccontentguard",
+                    "core.delete_rbaccontentguard",
+                    "core.download_rbaccontentguard",
+                ],
+            },
+        ],
+    }
+
+    @extend_schema(summary="Add download permission", responses={200: RBACContentGuardSerializer})
+    @action(methods=["post"], detail=True, serializer_class=RBACContentGuardPermissionSerializer)
+    def assign_permission(self, request, pk):
+        """Give users and groups the `download` permission"""
+        guard = get_object_or_404(RBACContentGuard, pk=pk)
+        names = self.get_serializer(data=request.data)
+        names.is_valid(raise_exception=True)
+        guard.add_can_download(users=names.data["usernames"], groups=names.data["groupnames"])
+        self.serializer_class = RBACContentGuardSerializer
+        serializer = self.get_serializer(guard)
+        return Response(serializer.data)
+
+    @extend_schema(
+        summary="Remove download permission", responses={200: RBACContentGuardSerializer}
+    )
+    @action(methods=["post"], detail=True, serializer_class=RBACContentGuardPermissionSerializer)
+    def remove_permission(self, request, pk):
+        """Remove `download` permission from users and groups"""
+        guard = get_object_or_404(RBACContentGuard, pk=pk)
+        names = self.get_serializer(data=request.data)
+        names.is_valid(raise_exception=True)
+        guard.remove_can_download(users=names.data["usernames"], groups=names.data["groupnames"])
+        self.serializer_class = RBACContentGuardSerializer
+        serializer = self.get_serializer(guard)
+        return Response(serializer.data)
 
 
 class DistributionFilter(BaseFilterSet):

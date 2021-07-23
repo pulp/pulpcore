@@ -68,6 +68,8 @@ from .publication import (  # noqa
     ContentGuardSerializer,
     DistributionSerializer,
     PublicationSerializer,
+    RBACContentGuardSerializer,
+    RBACContentGuardPermissionSerializer,
 )
 from .repository import (  # noqa
     RemoteSerializer,

@@ -1,6 +1,7 @@
 from gettext import gettext as _
 
 from django.db.models import Q
+from guardian.shortcuts import get_users_with_perms, get_groups_with_perms
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 
@@ -14,6 +15,7 @@ from pulpcore.app.serializers import (
     RepositoryVersionRelatedField,
     validate_unknown_fields,
 )
+from pulpcore.app.serializers.user import GroupUserSerializer, GroupSerializer
 
 
 class PublicationSerializer(ModelSerializer):
@@ -73,6 +75,38 @@ class ContentGuardSerializer(ModelSerializer):
     class Meta:
         model = models.ContentGuard
         fields = ModelSerializer.Meta.fields + ("name", "description")
+
+
+class RBACContentGuardSerializer(ContentGuardSerializer):
+
+    users = serializers.SerializerMethodField()
+    groups = serializers.SerializerMethodField()
+
+    def get_users(self, obj):
+        """Finds all the users with this object's download permission."""
+        users = get_users_with_perms(
+            obj, with_group_users=False, only_with_perms_in=["download_rbaccontentguard"]
+        )
+        return GroupUserSerializer(users, many=True, context=self.context).data
+
+    def get_groups(self, obj):
+        """Finds all the groups with this object's download permission."""
+        groups = get_groups_with_perms(obj, attach_perms=True)
+        return GroupSerializer(
+            (group for group, perms in groups.items() if "download_rbaccontentguard" in perms),
+            many=True,
+            context=self.context,
+        ).data
+
+    class Meta:
+        model = models.RBACContentGuard
+        fields = ContentGuardSerializer.Meta.fields + ("users", "groups")
+
+
+class RBACContentGuardPermissionSerializer(serializers.Serializer):
+
+    usernames = serializers.ListField(default=[])
+    groupnames = serializers.ListField(default=[])
 
 
 class DistributionSerializer(ModelSerializer):

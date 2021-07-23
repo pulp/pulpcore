@@ -1,7 +1,7 @@
 from django.contrib import admin
 from guardian.admin import GuardedModelAdmin
 
-from pulpcore.app.models import Task
+from pulpcore.app.models import Task, RBACContentGuard
 
 
 @admin.register(Task)
@@ -40,3 +40,17 @@ class TaskAdmin(GuardedModelAdmin):
         "parent_task",
         "task_group",
     )
+
+
+@admin.register(RBACContentGuard)
+class RBACContentGuardAdmin(GuardedModelAdmin):
+    list_display = (
+        "name",
+        "description",
+    )
+    list_filter = (
+        "name",
+        "pulp_created",
+        "pulp_last_updated",
+    )
+    search_fields = ("name",)
