@@ -42,6 +42,7 @@ from .publication import (  # noqa
     Publication,
     PublishedArtifact,
     PublishedMetadata,
+    RBACContentGuard,
 )
 from .repository import (  # noqa
     Remote,

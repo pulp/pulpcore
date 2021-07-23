@@ -49,6 +49,7 @@ from .publication import (  # noqa
     ListPublicationViewSet,
     PublicationFilter,
     PublicationViewSet,
+    RBACContentGuardViewSet,
 )
 from .reclaim import ReclaimSpaceViewSet  # noqa
 from .repository import (  # noqa

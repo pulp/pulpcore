@@ -8,6 +8,8 @@ from .task import CreatedResource
 from pulpcore.app.files import PulpTemporaryUploadedFile
 from pulpcore.cache import Cache
 from dynaconf import settings
+from rest_framework.exceptions import APIException
+from pulpcore.app.models import AutoAddObjPermsMixin, AutoDeleteObjPermsMixin
 
 
 class PublicationQuerySet(models.QuerySet):
@@ -317,7 +319,7 @@ class ContentGuard(MasterModel):
         Authorize the specified web request.
 
         Args:
-            request (django.http.HttpRequest): A request for a published file.
+            request (aiohttp.web.Request): A request for a published file.
 
         Raises:
             PermissionError: When not authorized.
@@ -330,6 +332,50 @@ class ContentGuard(MasterModel):
             base_paths = self.distribution_set.values_list("base_path", flat=True)
             if base_paths:
                 Cache().delete(base_key=base_paths)
+
+
+class RBACContentGuard(ContentGuard, AutoAddObjPermsMixin, AutoDeleteObjPermsMixin):
+    """
+    A content guard that protects content based on RBAC permissions.
+    """
+
+    ACCESS_POLICY_VIEWSET_NAME = "contentguards/core/rbac"
+    TYPE = "rbac"
+
+    def permit(self, request):
+        """
+        Authorize the specified web request. Expects the request to have already been authenticated.
+        """
+        if not (drequest := request.get("drf_request", None)):
+            raise PermissionError("Content app didn't properly authenticate this request")
+        from pulpcore.app.viewsets import RBACContentGuardViewSet
+
+        view = RBACContentGuardViewSet()
+        setattr(view, "get_object", lambda: self)
+        setattr(view, "action", "download")
+        try:
+            view.check_permissions(drequest)
+        except APIException as e:
+            raise PermissionError(e)
+
+    def add_can_download(self, users, groups):
+        """
+        Adds the can_download permission to users & groups upon content guard creation
+        """
+        if users:
+            self.add_for_users("core.download_rbaccontentguard", users)
+        if groups:
+            self.add_for_groups("core.download_rbaccontentguard", groups)
+
+    def remove_can_download(self, users, groups):
+        if users:
+            self.remove_for_users("core.download_rbaccontentguard", users)
+        if groups:
+            self.remove_for_groups("core.download_rbaccontentguard", groups)
+
+    class Meta:
+        default_related_name = "%(app_label)s_%(model_name)s"
+        permissions = (("download_rbaccontentguard", "Can Download Content"),)
 
 
 class BaseDistribution(MasterModel):
