@@ -1,3 +1,5 @@
+from gettext import gettext as _
+
 import asyncio
 import importlib
 import json
@@ -72,18 +74,19 @@ class NewPulpWorker:
         signal.signal(signal.SIGINT, signal.SIG_DFL)
         signal.signal(signal.SIGTERM, signal.SIG_DFL)
 
-        _logger.info(f"Worker {self.name} was requested to shut down.")
+        _logger.info(_("Worker %s was requested to shut down."), self.name)
+
         self.shutdown_requested = True
 
     def shutdown(self):
         self.worker.delete()
-        _logger.info(f"Worker {self.name} was shut down.")
+        _logger.info(_("Worker %s was shut down."), self.name)
 
     def worker_cleanup(self):
         qs = Worker.objects.offline_workers()
         if qs:
             for worker in qs:
-                _logger.info(f"Clean offline worker {worker.name}.")
+                _logger.info(_("Clean offline worker %s."), worker.name)
                 worker.delete()
 
     def beat(self):
@@ -107,7 +110,7 @@ class NewPulpWorker:
         Return ``True`` if the task was actually canceled, ``False`` otherwise.
         """
         # A task is considered abandoned when in running state, but no worker holds its lock
-        _logger.info(f"Cleaning up and canceling Task {task.pk}")
+        _logger.info(_("Cleaning up and canceling Task %s"), task.pk)
         Task.objects.filter(pk=task.pk, state=TASK_STATES.RUNNING).update(
             state=TASK_STATES.CANCELING
         )
@@ -159,7 +162,7 @@ class NewPulpWorker:
     def sleep(self):
         """Wait for signals on the wakeup channel while heart beating."""
 
-        _logger.debug(f"Worker {self.name} entering sleep state.")
+        _logger.debug(_("Worker %s entering sleep state."), self.name)
         # Subscribe to "pulp_worker_wakeup"
         self.cursor.execute("LISTEN pulp_worker_wakeup")
         while not self.shutdown_requested:
@@ -210,7 +213,7 @@ class NewPulpWorker:
                         )
                     ):
                         connection.connection.notifies.clear()
-                        _logger.info(f"Received signal to cancel current task {task.pk}.")
+                        _logger.info(_("Received signal to cancel current task."), task.pk)
                         os.kill(task_process.pid, signal.SIGUSR1)
                         break
                 if task_process.sentinel in r:
@@ -221,10 +224,10 @@ class NewPulpWorker:
                 if self.shutdown_requested:
                     if self.task_grace_timeout > 0:
                         _logger.info(
-                            f"Worker shutdown requested, waiting for task {task.pk} to finish."
+                            _("Worker shutdown requested, waiting for task %s to finish."), task.pk
                         )
                     else:
-                        _logger.info(f"Aborting current task {task.pk} due to worker shutdown.")
+                        _logger.info(_("Aborting current task %s due to worker shutdown."), task.pk)
                         os.kill(task_process.pid, signal.SIGUSR1)
                         task_process.join()
                         self.cancel_abandoned_task(task)
@@ -282,7 +285,7 @@ def _perform_task(task_pk, task_working_dir_rel_path):
     _set_current_user(user)
     set_guid(task.logging_cid)
     try:
-        _logger.info("Starting task {}".format(task.pk))
+        _logger.info(_("Starting task %s"), task.pk)
 
         # Execute task
         module_name, function_name = task.name.rsplit(".", 1)
@@ -293,16 +296,16 @@ def _perform_task(task_pk, task_working_dir_rel_path):
         os.chdir(task_working_dir_rel_path)
         result = func(*args, **kwargs)
         if asyncio.iscoroutine(result):
-            _logger.debug("Task is coroutine {}".format(task.pk))
+            _logger.debug(_("Task is coroutine %s"), task.pk)
             loop = asyncio.get_event_loop()
             loop.run_until_complete(result)
 
     except Exception:
         exc_type, exc, tb = sys.exc_info()
         task.set_failed(exc, tb)
-        _logger.info("Task {} failed ({})".format(task.pk, exc))
+        _logger.info(_("Task %s failed (%s)"), task.pk, exc)
         _logger.info("\n".join(traceback.format_list(traceback.extract_tb(tb))))
     else:
         task.set_completed()
-        _logger.info("Task completed {}".format(task.pk))
+        _logger.info(_("Task completed %s"), task.pk)
     os.environ.pop("PULP_TASK_ID")
