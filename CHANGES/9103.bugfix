@@ -1,0 +1,2 @@
+Improved disk usage during the synchronization.
+(backported from #8295)
