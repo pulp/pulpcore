@@ -55,6 +55,8 @@ async def _heartbeat():
 
 
 async def server(*args, **kwargs):
+    os.chdir(settings.WORKING_DIRECTORY)
+
     asyncio.ensure_future(_heartbeat())
     for pulp_plugin in pulp_plugin_configs():
         if pulp_plugin.name != "pulpcore.app":
