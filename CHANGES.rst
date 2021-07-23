@@ -17,6 +17,41 @@ Changelog
 
 .. towncrier release notes start
 
+3.14.3 (2021-07-23)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fixed improper validation of remotes' URLs.
+  (backported from #9080)
+  `#9083 <https://pulp.plan.io/issues/9083>`_
+- Set Redis connection information in status to null unless it's used. Redis is
+  needed for RQ tasking or content caching.
+  (backported from #9070)
+  `#9085 <https://pulp.plan.io/issues/9085>`_
+- Fixed signal handling to properly kill a task when double ctrl-c is used to shut down a worker fast.
+  (backported from #8986)
+  `#9086 <https://pulp.plan.io/issues/9086>`_
+- Improved disk usage during the synchronization.
+  (backported from #8295)
+  `#9103 <https://pulp.plan.io/issues/9103>`_
+- Fixed a bug where on-demand downloads would fill up ``/var/run/`` by not deleting downloaded files.
+  (backported from #9000)
+  `#9110 <https://pulp.plan.io/issues/9110>`_
+- Fixed a bug, where new tasks were assigned to dead workers.
+  (backported from #8779)
+  `#9116 <https://pulp.plan.io/issues/9116>`_
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.14.2 (2021-07-13)
 ===================
 REST API

@@ -1,2 +1,0 @@
-Fixed improper validation of remotes' URLs.
-(backported from #9080)
