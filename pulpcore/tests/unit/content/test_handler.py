@@ -1,6 +1,7 @@
+import tempfile
+
 from unittest.mock import Mock
 
-from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 
 from pulpcore.content import Handler
@@ -20,18 +21,19 @@ class HandlerSaveContentTestCase(TestCase):
         )
         self.ra2 = Mock(content_artifact=self.ca2)
 
-    def download_result_mock(self, path):
+    def download_result_mock(self):
         dr = Mock()
         dr.artifact_attributes = {"size": 0}
         for digest_type in Artifact.DIGEST_FIELDS:
             dr.artifact_attributes[digest_type] = "abc123"
-        dr.path = SimpleUploadedFile(name=path, content="")
+        tmp_file = tempfile.NamedTemporaryFile(delete=False)
+        dr.path = tmp_file.name
         return dr
 
     def test_save_artifact(self):
         """Artifact needs to be created."""
         cch = Handler()
-        new_artifact = cch._save_artifact(self.download_result_mock("c1"), self.ra1)
+        new_artifact = cch._save_artifact(self.download_result_mock(), self.ra1)
         c1 = Content.objects.get(pk=self.c1.pk)
         self.assertIsNotNone(new_artifact)
         self.assertEqual(c1._artifacts.get().pk, new_artifact.pk)
@@ -39,9 +41,9 @@ class HandlerSaveContentTestCase(TestCase):
     def test_save_artifact_artifact_already_exists(self):
         """Artifact turns out to already exist."""
         cch = Handler()
-        new_artifact = cch._save_artifact(self.download_result_mock("c1"), self.ra1)
+        new_artifact = cch._save_artifact(self.download_result_mock(), self.ra1)
 
-        existing_artifact = cch._save_artifact(self.download_result_mock("c2"), self.ra2)
+        existing_artifact = cch._save_artifact(self.download_result_mock(), self.ra2)
         c2 = Content.objects.get(pk=self.c2.pk)
         self.assertEqual(existing_artifact.pk, new_artifact.pk)
         self.assertEqual(c2._artifacts.get().pk, existing_artifact.pk)

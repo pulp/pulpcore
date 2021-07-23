@@ -1,0 +1,2 @@
+Fixed a bug where on-demand downloads would fill up ``/var/run/`` by not deleting downloaded files.
+(backported from #9000)
