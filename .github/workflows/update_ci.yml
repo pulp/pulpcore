@@ -38,12 +38,12 @@ jobs:
         with:
           committer: pulpbot <pulp-infra@redhat.com>
           author: pulpbot <pulp-infra@redhat.com>
-          branch: ${{ github.event.inputs.release }}-update-ci-files
-          base: ${{ github.event.inputs.release }}
-          title: 'Update CI for ${{ github.event.inputs.release }}'
+          branch: ${GITHUB_REF#refs/heads/}-update-ci-files
+          base: ${GITHUB_REF#refs/heads/}
+          title: 'Update CI for ${GITHUB_REF#refs/heads/}'
           body: '[noissue]'
           commit-message: |
-            Update CI files for ${{ github.event.inputs.release }}'
+            Update CI files for ${GITHUB_REF#refs/heads/}
 
             [noissue]
           delete-branch: true
