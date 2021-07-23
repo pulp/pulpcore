@@ -23,7 +23,8 @@ RUN pip3 install \
 
 RUN mkdir -p /etc/nginx/pulp/
 {% for item in plugins %}
-RUN ln /usr/local/lib/python3.8/site-packages/{{ item.name }}/app/webserver_snippets/nginx.conf /etc/nginx/pulp/{{ item.name }}.conf || true
+RUN export plugin_path="$(pip show {{ item.name }} | sed -n -e "s/Location: //p")/{{ item.name }}"
+RUN ln "$plugin_path/app/webserver_snippets/nginx.conf /etc/nginx/pulp/{{ item.name }}.conf" || true
 {% endfor %}
 
 ENTRYPOINT ["/init"]
