@@ -10,10 +10,13 @@
 # make sure this script runs at the repo root
 cd "$(dirname "$(realpath -e "$0")")"/../..
 
-set -euv
+set -uv
 
-pip install twine
+# check for imports not from pulpcore.plugin. exclude tests
+MATCHES=$(grep -n -r --include \*.py "_(f")
 
-python3 setup.py sdist bdist_wheel --python-tag py3
-twine check dist/* || exit 1
-twine upload dist/* -u pulp -p $PYPI_PASSWORD
+if [ $? -ne 1 ]; then
+  printf "\nERROR: Detected mix of f-strings and gettext:\n"
+  echo "$MATCHES"
+  exit 1
+fi

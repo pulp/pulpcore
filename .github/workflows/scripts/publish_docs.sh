@@ -10,7 +10,7 @@
 set -euv
 
 # make sure this script runs at the repo root
-cd "$(dirname "$(realpath -e "$0")")"/../..
+cd "$(dirname "$(realpath -e "$0")")"/../../..
 
 mkdir ~/.ssh
 echo "$PULP_DOCS_KEY" > ~/.ssh/pulp-infra
@@ -29,4 +29,4 @@ export WORKSPACE=$PWD
 eval "$(ssh-agent -s)" #start the ssh agent
 ssh-add ~/.ssh/pulp-infra
 
-python3 .ci/scripts/docs-builder.py --build-type $1 --branch $2
+python3 .github/workflows/scripts/docs-publisher.py --build-type $1 --branch $2

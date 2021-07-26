@@ -110,15 +110,9 @@ def main():
         if "post" in branch:
             branch = ".".join(branch.split(".")[:-1])
 
-    # build the docs via the Pulp project itself
-    print("Building the docs")
-    docs_directory = os.sep.join([WORKING_DIR, "docs"])
-
-    make_command = ["make", "PULP_URL=http://pulp", "diagrams", "html"]
-    exit_code = subprocess.call(make_command, cwd=docs_directory)
-    if exit_code != 0:
-        raise RuntimeError("An error occurred while building the docs.")
     # rsync the docs
+    print("rsync the docs")
+    docs_directory = os.sep.join([WORKING_DIR, "docs"])
     local_path_arg = os.sep.join([docs_directory, "_build", "html"]) + os.sep
     if build_type != "tag":
         # This is a nightly build
