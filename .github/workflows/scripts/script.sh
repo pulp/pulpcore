@@ -26,7 +26,7 @@ export FUNC_TEST_SCRIPT=$PWD/.github/workflows/scripts/func_test_script.sh
 export DJANGO_SETTINGS_MODULE=pulpcore.app.settings
 export PULP_SETTINGS=$PWD/.ci/ansible/settings/settings.py
 
-export PULP_URL="http://pulp"
+export PULP_URL="https://pulp"
 
 if [[ "$TEST" = "docs" ]]; then
   cd docs

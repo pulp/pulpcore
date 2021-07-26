@@ -1,6 +1,8 @@
 # This config represents the latest values used when running the plugin-template. Any settings that
 # were not present before running plugin-template have been added with their default values.
 
+# generated with plugin_template@2021.04.08-86-g150f51c
+
 additional_repos:
 - branch: master
   name: pulp_file
@@ -34,7 +36,7 @@ plugin_default_branch: master
 plugin_name: pulpcore
 plugin_snake: pulpcore
 publish_docs_to_pulpprojectdotorg: true
-pulp_scheme: http
+pulp_scheme: https
 pulp_settings:
   allowed_export_paths:
   - /tmp
@@ -45,6 +47,7 @@ pulpcore_pip_version_specifier: null
 pulpprojectdotorg_key_id: d1a778bda808
 pydocstyle: true
 pypi_username: pulp
+python_version: '3.8'
 redmine_project: pulp
 release_user: pulpbot
 stable_branch: null
