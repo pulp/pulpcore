@@ -215,9 +215,8 @@ class Artifact(HandleTempFilesMixin, BaseModel):
         """
         bad_keys = self.FORBIDDEN_DIGESTS.intersection(kwargs.keys())
         if bad_keys:
-            raise UnsupportedDigestValidationError(
-                _(f"Checksum algorithms {bad_keys} are forbidden for this Pulp instance.")
-            )
+            msg = "Checksum algorithms {bad_keys} are forbidden for this Pulp instance."
+            raise UnsupportedDigestValidationError(_(msg.format(bad_keys=bad_keys)))
         super().__init__(*args, **kwargs)
 
     def q(self):
@@ -295,9 +294,8 @@ class Artifact(HandleTempFilesMixin, BaseModel):
         if expected_digests:
             for algorithm, expected_digest in expected_digests.items():
                 if algorithm not in hashers:
-                    raise UnsupportedDigestValidationError(
-                        _(f"Checksum algorithm {algorithm} forbidden for this Pulp instance.")
-                    )
+                    msg = "Checksum algorithm {algorithm} forbidden for this Pulp instance."
+                    raise UnsupportedDigestValidationError(_(msg.format(algorithm=algorithm)))
                 if expected_digest != hashers[algorithm].hexdigest():
                     raise DigestValidationError()
 
@@ -402,9 +400,8 @@ class PulpTemporaryFile(HandleTempFilesMixin, BaseModel):
         if expected_digests:
             for algorithm, expected_digest in expected_digests.items():
                 if algorithm not in hashers:
-                    raise UnsupportedDigestValidationError(
-                        _(f"Checksum algorithm {algorithm} forbidden for this Pulp instance.")
-                    )
+                    msg = "Checksum algorithm {algorithm} forbidden for this Pulp instance."
+                    raise UnsupportedDigestValidationError(_(msg.format(algorithm=algorithm)))
                 if expected_digest != hashers[algorithm].hexdigest():
                     raise DigestValidationError()
 

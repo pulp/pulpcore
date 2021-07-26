@@ -215,9 +215,8 @@ class ArtifactSerializer(base.ModelSerializer):
             if algorithm in data:
                 bad_algs.append(algorithm)
         if bad_algs:
-            raise serializers.ValidationError(
-                _(f"Checksum algorithms {bad_algs} forbidden for this Pulp instance.")
-            )
+            msg = "Checksum algorithms {bad_algs} forbidden for this Pulp instance."
+            raise serializers.ValidationError(_(msg.format(bad_algs=bad_algs)))
 
         for algorithm in hashlib.algorithms_guaranteed:
             if algorithm in models.Artifact.DIGEST_FIELDS:

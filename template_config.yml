@@ -1,14 +1,18 @@
 # This config represents the latest values used when running the plugin-template. Any settings that
 # were not present before running plugin-template have been added with their default values.
 
-additional_plugins:
+# generated with plugin_template@2021.04.08-84-ga0077c1
+
+additional_repos:
 - branch: 1.3
   name: pulp_file
 - branch: 1.1
   name: pulp-certguard
 black: true
 check_commit_message: true
+check_gettext: true
 check_manifest: false
+check_openapi_schema: false
 check_stray_pulpcore_imports: false
 cherry_pick_automation: false
 coverage: true
@@ -19,6 +23,8 @@ deploy_daily_client_to_rubygems: true
 deploy_to_pypi: true
 docker_fixtures: true
 docs_test: true
+flake8: true
+issue_tracker: redmine
 plugin_app_label: pulpcore
 plugin_camel: Pulpcore
 plugin_camel_short: Pulpcore
@@ -26,9 +32,11 @@ plugin_caps: PULPCORE
 plugin_caps_short: PULPCORE
 plugin_dash: pulpcore
 plugin_dash_short: pulpcore
+plugin_default_branch: master
 plugin_name: pulpcore
 plugin_snake: pulpcore
 publish_docs_to_pulpprojectdotorg: true
+pulp_scheme: http
 pulp_settings:
   allowed_content_checksums:
   - sha1
@@ -45,8 +53,12 @@ pulpcore_pip_version_specifier: null
 pulpprojectdotorg_key_id: d1a778bda808
 pydocstyle: true
 pypi_username: pulp
+python_version: '3.6'
 redmine_project: pulp
+release_user: pulpbot
+sync_ci: true
 test_bindings: true
+test_cli: false
 test_performance: false
 test_released_plugin_with_next_pulpcore_release: false
 test_s3: true
@@ -63,4 +75,5 @@ travis_notifications:
     - 'Build details : %{build_url}'
     - '%{message}'
 update_redmine: true
+upgrade_range: []
 

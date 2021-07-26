@@ -13,12 +13,7 @@ REPO_ROOT="$PWD"
 
 set -euv
 
-if [ "${GITHUB_REF##refs/tags/}" = "${GITHUB_REF}" ]
-then
-  TAG_BUILD=0
-else
-  TAG_BUILD=1
-fi
+source .github/workflows/scripts/utils.sh
 
 if [[ "$TEST" = "docs" || "$TEST" = "publish" ]]; then
   pip install psycopg2-binary
@@ -42,13 +37,18 @@ if [ -e $REPO_ROOT/../pulp-certguard ]; then
 else
   PULP_CERTGUARD=git+https://github.com/pulp/pulp-certguard.git@1.1
 fi
+if [[ "${RELEASE_WORKFLOW:-false}" == "true" ]]; then
+  PLUGIN_NAME=./pulpcore/dist/pulpcore-$PLUGIN_VERSION-py3-none-any.whl
+else
+  PLUGIN_NAME=./pulpcore
+fi
 cat >> vars/main.yaml << VARSYAML
 image:
   name: pulp
   tag: "${TAG}"
 plugins:
   - name: pulpcore
-    source: ./pulpcore
+    source: "${PLUGIN_NAME}"
   - name: pulp_file
     source: $PULP_FILE
   - name: pulp-certguard
@@ -62,9 +62,13 @@ VARSYAML
 
 cat >> vars/main.yaml << VARSYAML
 pulp_settings: {"allowed_content_checksums": ["sha1", "sha224", "sha256", "sha384", "sha512"], "allowed_export_paths": ["/tmp"], "allowed_import_paths": ["/tmp"]}
+pulp_scheme: http
+
+pulp_container_tag: python36
+
 VARSYAML
 
-if [[ "$TEST" == "pulp" || "$TEST" == "performance" || "$TEST" == "s3" || "$TEST" == "plugin-from-pypi" ]]; then
+if [[ "$TEST" == "pulp" || "$TEST" == "performance" || "$TEST" == "upgrade" || "$TEST" == "s3" || "$TEST" == "plugin-from-pypi" ]]; then
   sed -i -e '/^services:/a \
   - name: pulp-fixtures\
     image: docker.io/pulp/pulp-fixtures:latest\
@@ -88,3 +92,7 @@ fi
 
 ansible-playbook build_container.yaml
 ansible-playbook start_container.yaml
+
+echo ::group::PIP_LIST
+cmd_prefix bash -c "pip3 list && pip3 install pipdeptree && pipdeptree"
+echo ::endgroup::

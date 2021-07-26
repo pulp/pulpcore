@@ -5,15 +5,71 @@
 #
 # For more info visit https://github.com/pulp/plugin_template
 ---
-name: Pulp Release CI/CD
+name: Release Pipeline
 on:
-  push:
-    tags:
-      - '*'
+  workflow_dispatch:
+    inputs:
+      release:
+        description: "Release tag (e.g. 3.2.1)"
+        required: true
+      before_script:
+        description: |
+          Bash code to run before script.sh is executed. This should only be used when re-running
+          a workflow to correct some aspect of the docs. e.g.: git checkout origin/3.14 CHANGES.rst
+        required: false
+
+env:
+  RELEASE_WORKFLOW: true
 
 jobs:
+  build-artifacts:
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          # by default, it uses a depth of 1
+          # this fetches all history so that we can read each commit
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v2
+        with:
+          python-version: "3.8"
+
+      - name: Install python dependencies
+        run: |
+          echo ::group::PYDEPS
+          pip install bandersnatch bump2version gitpython python-redmine towncrier==19.9.0 wheel
+          echo ::endgroup::
+
+      - name: Configure Git with pulpbot name and email
+        run: |
+          git config --global user.name 'pulpbot'
+          git config --global user.email 'pulp-infra@redhat.com'
+
+      - name: Setting secrets
+        run: python3 .github/workflows/scripts/secrets.py "$SECRETS_CONTEXT"
+        env:
+          SECRETS_CONTEXT: ${{ toJson(secrets) }}
+
+      - name: Create the release commit, tag it, create a post-release commit, and build plugin package
+        run: python .github/workflows/scripts/release.py ${{ github.event.inputs.release }}
+
+      - name: 'Tar files'
+        run: tar -cvf pulpcore.tar $GITHUB_WORKSPACE
+
+      - name: 'Upload Artifact'
+        uses: actions/upload-artifact@v2
+        with:
+          name: pulpcore.tar
+          path: pulpcore.tar
   test:
-    runs-on: ubuntu-18.04
+    needs: build-artifacts
+
+    runs-on: ubuntu-latest
 
     strategy:
       fail-fast: false
@@ -25,18 +81,30 @@ jobs:
           - TEST: bindings
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/download-artifact@v2
         with:
-          # by default, it uses a depth of 1
-          # this fetches all history so that we can read each commit
-          fetch-depth: 0
+          name: pulpcore.tar
 
       - uses: actions/setup-python@v2
         with:
-          python-version: "3.7"
+          python-version: "3.6"
       - uses: actions/setup-ruby@v1
         with:
           ruby-version: "2.6"
+
+      - name: Untar repository
+        run: |
+          shopt -s dotglob
+          tar -xf pulpcore.tar
+          mv home/runner/work/pulpcore/pulpcore/* ./
+
+      # update to the branch's latest ci files rather than the ones from the release tag. this is
+      # helpful when there was a problem with the ci files during the release which needs to be
+      # fixed after the release tag has been created
+      - name: Update ci files
+        run: |
+          git checkout "origin/${GITHUB_REF##*/}" -- .ci
+          git checkout "origin/${GITHUB_REF##*/}" -- .github
 
       - name: Install httpie
         run: |
@@ -52,7 +120,9 @@ jobs:
         shell: bash
 
       - name: Install
-        run: .github/workflows/scripts/install.sh
+        run: |
+          export PLUGIN_VERSION=${{ github.event.inputs.release }}
+          .github/workflows/scripts/install.sh
         env:
           PY_COLORS: '1'
           ANSIBLE_FORCE_COLOR: '1'
@@ -67,75 +137,42 @@ jobs:
         env:
           SECRETS_CONTEXT: ${{ toJson(secrets) }}
 
+      - name: Install Python client
+        run: .github/workflows/scripts/install_python_client.sh
+
+      - name: Install Ruby client
+        if: ${{ env.TEST == 'bindings' || env.TEST == 'generate-bindings' }}
+        run: .github/workflows/scripts/install_ruby_client.sh
+
+      - name: Additional before_script
+        run: ${{ github.event.inputs.before_script }}
+        shell: bash
+
       - name: Script
+        if: ${{ env.TEST != 'generate-bindings' }}
         run: .github/workflows/scripts/script.sh
         shell: bash
 
-  publish:
-    runs-on: ubuntu-18.04
-    needs: test
-
-    env:
-      TEST: publish
-
-    steps:
-      - uses: actions/checkout@v2
+      - name: Upload python client packages
+        if: ${{ env.TEST == 'bindings' || env.TEST == 'generate-bindings' }}
+        uses: actions/upload-artifact@v2
         with:
-          # by default, it uses a depth of 1
-          # this fetches all history so that we can read each commit
-          fetch-depth: 0
+          name: python-client.tar
+          path: python-client.tar
 
-      - uses: actions/setup-python@v2
+      - name: Upload ruby client packages
+        if: ${{ env.TEST == 'bindings' || env.TEST == 'generate-bindings' }}
+        uses: actions/upload-artifact@v2
         with:
-          python-version: "3.7"
+          name: ruby-client.tar
+          path: ruby-client.tar
 
-      - uses: actions/setup-ruby@v1
+      - name: Upload built docs
+        if: ${{ env.TEST == 'docs' }}
+        uses: actions/upload-artifact@v2
         with:
-          ruby-version: "2.6"
-
-      - name: Install httpie
-        run: |
-          echo ::group::HTTPIE
-          sudo apt-get update -yq
-          sudo -E apt-get -yq --no-install-suggests --no-install-recommends install httpie
-          echo ::endgroup::
-          echo "HTTPIE_CONFIG_DIR=$GITHUB_WORKSPACE/.ci/assets/httpie/" >> $GITHUB_ENV
-
-      - name: Install python dependencies
-        run: |
-          echo ::group::PYDEPS
-          pip install wheel
-          echo ::endgroup::
-
-      - name: Before Install
-        run: .github/workflows/scripts/before_install.sh
-        shell: bash
-
-      - name: Install
-        run: .github/workflows/scripts/install.sh
-        env:
-          PY_COLORS: '1'
-          ANSIBLE_FORCE_COLOR: '1'
-        shell: bash
-
-      - name: Before Script
-        run: |
-          .github/workflows/scripts/before_script.sh
-
-      - name: Setting secrets
-        run: python3 .github/workflows/scripts/secrets.py "$SECRETS_CONTEXT"
-        env:
-          SECRETS_CONTEXT: ${{ toJson(secrets) }}
-      - name: Deploy plugin to pypi
-        run: bash .ci/scripts/publish_plugin_pypi.sh
-      - name: Publish client to rubygems
-        run: bash .ci/scripts/publish_client_gem.sh
-      - name: Publish client to pypi
-        run: bash .ci/scripts/publish_client_pypi.sh
-      - name: Publish docs to pulpproject.org
-        run: .ci/scripts/publish_docs.sh tag ${GITHUB_REF##*/}
-      - name: Update Redmine
-        run: bash .ci/scripts/update_redmine.sh
+          name: docs.tar
+          path: docs/docs.tar
 
       - name: After failure
         if: failure()
@@ -146,3 +183,116 @@ jobs:
           docker logs pulp || true
           docker exec pulp ls -latr /etc/yum.repos.d/ || true
           docker exec pulp cat /etc/yum.repos.d/* || true
+          docker exec pulp pip3 list
+
+
+  publish:
+    runs-on: ubuntu-latest
+    needs: test
+
+    env:
+      TEST: publish
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    steps:
+      - uses: actions/download-artifact@v2
+        with:
+          name: pulpcore.tar
+
+      - uses: actions/setup-python@v2
+        with:
+          python-version: "3.8"
+
+      - uses: actions/setup-ruby@v1
+        with:
+          ruby-version: "2.6"
+
+      - name: Configure Git with pulpbot name and email
+        run: |
+          git config --global user.name 'pulpbot'
+          git config --global user.email 'pulp-infra@redhat.com'
+
+      - name: Untar repository
+        run: |
+          shopt -s dotglob
+          tar -xf pulpcore.tar
+          mv home/runner/work/pulpcore/pulpcore/* ./
+
+      # update to the branch's latest ci files rather than the ones from the release tag. this is
+      # helpful when there was a problem with the ci files during the release which needs to be
+      # fixed after the release tag has been created
+      - name: Update ci files
+        run: |
+          git checkout "origin/${GITHUB_REF##*/}" -- .ci
+          git checkout "origin/${GITHUB_REF##*/}" -- .github
+
+      - name: Setting secrets
+        run: python3 .github/workflows/scripts/secrets.py "$SECRETS_CONTEXT"
+        env:
+          SECRETS_CONTEXT: ${{ toJson(secrets) }}
+
+      - name: Install python dependencies
+        run: |
+          echo ::group::PYDEPS
+          pip install gitpython python-redmine
+          echo ::endgroup::
+
+      - name: Push branch and tag to GitHub
+        run: bash .github/workflows/scripts/push_branch_and_tag_to_github.sh ${{ github.event.inputs.release }}
+      - name: Download built docs
+        uses: actions/download-artifact@v2
+        with:
+          name: docs.tar
+
+      - name: Publish docs to pulpproject.org
+        run: |
+          tar -xvf docs.tar -C ./docs
+          .github/workflows/scripts/publish_docs.sh tag ${{ github.event.inputs.release }}
+      - name: Deploy plugin to pypi
+        run: bash .github/workflows/scripts/publish_plugin_pypi.sh ${{ github.event.inputs.release }}
+      - name: Download Python client
+        uses: actions/download-artifact@v2
+        with:
+          name: python-client.tar
+
+      - name: Untar python client packages
+        run: tar -xvf python-client.tar
+
+      - name: Publish client to pypi
+        run: bash .github/workflows/scripts/publish_client_pypi.sh
+      - name: Download Ruby client
+        uses: actions/download-artifact@v2
+        with:
+          name: ruby-client.tar
+
+      - name: Untar Ruby client packages
+        run: tar -xvf ruby-client.tar
+
+      - name: Publish client to rubygems
+        run: bash .github/workflows/scripts/publish_client_gem.sh
+
+      - name: Update Redmine
+        run: bash .ci/scripts/update_redmine.sh
+
+      - name: Create release on GitHub
+        run: bash .github/workflows/scripts/create_release_from_tag.sh ${{ github.event.inputs.release }}
+
+      - name: Cleanup repository before making changelog PR
+        run: rm -rf .lock generation pulpcore_client* *-client.tar pulpcore.tar todo web docs.tar
+
+      - name: Stage changelog for master branch
+        run: python .github/workflows/scripts/stage-changelog-for-master.py ${{ github.event.inputs.release }}
+
+      - name: Create Pull Request for Changelog
+        uses: peter-evans/create-pull-request@v3
+        with:
+          committer: pulpbot <pulp-infra@redhat.com>
+          author: pulpbot <pulp-infra@redhat.com>
+          branch: ${{ github.event.inputs.release }}-changelog
+          base: master
+          title: 'Building changelog for ${{ github.event.inputs.release }}'
+          body: '[noissue]'
+          commit-message: |
+            Building changelog for ${{ github.event.inputs.release }}
+            [noissue]
+          delete-branch: true
