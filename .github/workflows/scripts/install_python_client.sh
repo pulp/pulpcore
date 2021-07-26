@@ -9,7 +9,7 @@
 
 set -euv
 
-export PULP_URL="${PULP_URL:-http://pulp}"
+export PULP_URL="${PULP_URL:-https://pulp}"
 
 # make sure this script runs at the repo root
 cd "$(dirname "$(realpath -e "$0")")"/../../..

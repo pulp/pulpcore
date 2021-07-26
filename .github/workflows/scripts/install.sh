@@ -62,8 +62,10 @@ VARSYAML
 
 cat >> vars/main.yaml << VARSYAML
 pulp_settings: {"allowed_export_paths": ["/tmp"], "allowed_import_paths": ["/tmp"]}
-pulp_scheme: http
-pulp_container_tag: latest
+pulp_scheme: https
+
+pulp_container_tag: https
+
 VARSYAML
 
 if [[ "$TEST" == "pulp" || "$TEST" == "performance" || "$TEST" == "upgrade" || "$TEST" == "s3" || "$TEST" == "plugin-from-pypi" ]]; then
@@ -90,6 +92,21 @@ fi
 
 ansible-playbook build_container.yaml
 ansible-playbook start_container.yaml
+echo ::group::SSL
+# Copy pulp CA
+sudo docker cp pulp:/etc/pulp/certs/pulp_webserver.crt /usr/local/share/ca-certificates/pulp_webserver.crt
+
+# Hack: adding pulp CA to certifi.where()
+CERTIFI=$(python -c 'import certifi; print(certifi.where())')
+cat /usr/local/share/ca-certificates/pulp_webserver.crt | sudo tee -a $CERTIFI
+
+# Hack: adding pulp CA to default CA file
+CERT=$(python -c 'import ssl; print(ssl.get_default_verify_paths().openssl_cafile)')
+cat $CERTIFI | sudo tee -a $CERT
+
+# Updating certs
+sudo update-ca-certificates
+echo ::endgroup::
 
 echo ::group::PIP_LIST
 cmd_prefix bash -c "pip3 list && pip3 install pipdeptree && pipdeptree"
