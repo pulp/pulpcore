@@ -213,7 +213,7 @@ class NewPulpWorker:
                         )
                     ):
                         connection.connection.notifies.clear()
-                        _logger.info(_("Received signal to cancel current task."), task.pk)
+                        _logger.info(_("Received signal to cancel current task %s."), task.pk)
                         os.kill(task_process.pid, signal.SIGUSR1)
                         break
                 if task_process.sentinel in r:
