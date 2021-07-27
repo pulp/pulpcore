@@ -302,6 +302,12 @@ def dispatch(func, resources, args=None, kwargs=None, task_group=None):
             cursor.execute("NOTIFY pulp_worker_wakeup")
         return task
     else:
+        deprecation_logger.warning(
+            _(
+                "You are using the traditional tasking system which will be removed in pulpcore "
+                "3.16 along with the `USE_NEW_WORKER_TYPE` setting."
+            )
+        )
         RQ_job_id = _enqueue_with_reservation(
             func, resources=resources, args=args, kwargs=kwargs, task_group=task_group
         )

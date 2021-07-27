@@ -1,0 +1,3 @@
+The traditional tasking system (formerly the default in ``pulpcore<=3.13`) is deprecated and will be
+removed in ``pulpcore==3.16``. If you are using the ``USE_NEW_WORKER_TYPE=False`` that will no
+longer give you the traditional tasking system starting with ``pulpcore==3.16``.
