@@ -1,6 +1,8 @@
 from collections import defaultdict
 from gettext import gettext as _
 from importlib import import_module
+import inspect
+from itertools import groupby
 
 from django import apps
 from django.conf import settings
@@ -15,6 +17,7 @@ VIEWSETS_MODULE_NAME = "viewsets"
 SERIALIZERS_MODULE_NAME = "serializers"
 URLS_MODULE_NAME = "urls"
 MODELRESOURCE_MODULE_NAME = "modelresource"
+ROLES_MODULE_NAME = "roles"
 
 
 def pulp_plugin_configs():
@@ -84,22 +87,27 @@ class PulpPluginAppConfig(apps.AppConfig):
 
         # Module containing django-import-export ModelResources for a plugin's Models
         self.modelresource_module = None
+
         # List of classes from self.modelresource_module that can be exported
         self.exportable_classes = None
 
         # Mapping of model names to viewset lists (viewsets unrelated to models are excluded)
         self.named_viewsets = None
+
         # Mapping of serializer names to serializers
         self.named_serializers = None
+
+        # List of Roles
+        self.roles = []
 
     def ready(self):
         self.import_viewsets()
         self.import_serializers()
         self.import_urls()
         self.import_modelresources()
-        post_migrate.connect(
-            _populate_access_policies, sender=self, dispatch_uid="my_unique_identifier"
-        )
+        self.import_roles()
+        post_migrate.connect(_populate_access_policies, sender=self)
+        post_migrate.connect(_handle_role_definition_changes, sender=self)
 
     def import_serializers(self):
         # circular import avoidance
@@ -171,6 +179,21 @@ class PulpPluginAppConfig(apps.AppConfig):
             self.modelresource_module = import_module(modelrsrc_module_name)
             self.exportable_classes = self.modelresource_module.IMPORT_ORDER
 
+    def import_roles(self):
+        """
+        If a plugin defines a roles.py, include it.
+        """
+        from pulpcore.app.roles import Role
+
+        def only_subclasses_of_Role(obj):
+            return inspect.isclass(obj) and obj is not Role and issubclass(obj, Role)
+
+        if module_has_submodule(self.module, ROLES_MODULE_NAME):
+            roles_module_name = "{name}.{module}".format(name=self.name, module=ROLES_MODULE_NAME)
+            roles_module = import_module(roles_module_name)
+            for name, obj in inspect.getmembers(roles_module, only_subclasses_of_Role):
+                self.roles.append(obj)
+
 
 class PulpAppConfig(PulpPluginAppConfig):
     # The pulpcore app is itself a pulpcore plugin so that it can benefit from
@@ -217,6 +240,149 @@ def _populate_access_policies(sender, **kwargs):
                     db_access_policy.save()
                     print(f"Access policy for {viewset_name} updated.")
 
+
+def _handle_role_definition_changes(sender, **kwargs):
+    apps = kwargs.get("apps")
+    if apps is None:
+        from django.apps import apps
+    RoleHistory = apps.get_model("core", "RoleHistory")
+    User = get_user_model()
+    from guardian.shortcuts import (
+        assign_perm, get_objects_for_user, get_objects_for_group, remove_perm
+    )
+    from django.contrib.auth.models import Group
+    from django.db.models import Count
+
+    for role in sender.roles:
+        name = f"{role.__module__}.{role.__name__}"
+        try:
+            role_history = RoleHistory.objects.get(role_obj_classpath=name)
+        except RoleHistory.DoesNotExist:
+            RoleHistory.objects.create(
+                role_obj_classpath=name,
+                permissions=role.permissions
+            )
+        else:
+            added_role_permissions = set(role.permissions) - set(role_history.permissions)
+            removed_role_permissions = set(role_history.permissions) - set(role.permissions)
+
+            if added_role_permissions:
+                existing_perms_qs = {}
+                existing_perms = {}
+                for key, perms_group in _get_perms_grouped_by_model(role_history.permissions):
+                    list_of_perms = list(perms_group)
+                    existing_perms[key] = list_of_perms
+                    existing_perms_qs[key] = _get_as_permissions_qs(list_of_perms)
+                for new_key, new_perms_group in _get_perms_grouped_by_model(added_role_permissions):
+                    new_perms_qs = _get_as_permissions_qs(list(new_perms_group))
+                    try:
+                        old_perms_qs = existing_perms_qs[new_key]
+                        old_perms_codenames = existing_perms[new_key]
+                    except KeyError:
+                        continue
+                    else:
+                        ## Add user-model-level perms
+                        user_qs = User.objects.filter(user_permissions__in=list(old_perms_qs))
+                        user_qs = user_qs.filter(is_superuser=False).annotate(num_perms=Count('id'))
+                        user_qs = user_qs.filter(num_perms=len(old_perms_qs))
+                        for user in user_qs:
+                            for new_perm in new_perms_qs:
+                                assign_perm(new_perm, user)
+
+                        ## Add group-model-level perms
+                        group_qs = Group.objects.filter(permissions__in=list(old_perms_qs))
+                        group_qs = group_qs.annotate(num_perms=Count('id'))
+                        group_qs = group_qs.filter(num_perms=len(old_perms_qs))
+                        for group in group_qs:
+                            for new_perm in new_perms_qs:
+                                assign_perm(new_perm, group)
+
+                        ## Add user-obj-level perms
+                        # from guardian.models import UserObjectPermission
+                        # qs = UserObjectPermission.objects.filter(permission__in=list(old_perms_qs))
+                        for user in User.objects.all():
+                            objs = get_objects_for_user(
+                                user, old_perms_codenames, use_groups=False, with_superuser=False,
+                                accept_global_perms=False
+                            )
+                            for obj in objs:
+                                for new_perm in new_perms_qs:
+                                    assign_perm(new_perm, user, obj)
+
+                        ## Add group-obj-level perms
+                        for group in Group.objects.all():
+                            objs = get_objects_for_group(
+                                group, old_perms_codenames, accept_global_perms=False
+                            )
+                            for obj in objs:
+                                for new_perm in new_perms_qs:
+                                    assign_perm(new_perm, group, obj)
+
+            if removed_role_permissions:
+                existing_perms_qs = {}
+                existing_perms = {}
+                for key, perms_group in _get_perms_grouped_by_model(role_history.permissions):
+                    list_of_perms = list(perms_group)
+                    existing_perms[key] = list_of_perms
+                    existing_perms_qs[key] = _get_as_permissions_qs(list_of_perms)
+                for removed_key, removed_perms_group in _get_perms_grouped_by_model(removed_role_permissions):
+                    removed_perms_qs = _get_as_permissions_qs(list(removed_perms_group))
+                    try:
+                        old_perms_qs = existing_perms_qs[removed_key]
+                        old_perms_codenames = existing_perms[removed_key]
+                    except KeyError:
+                        continue
+                    else:
+                        ## Remove user-model-level perms
+                        user_qs = User.objects.filter(user_permissions__in=list(old_perms_qs))
+                        user_qs = user_qs.filter(is_superuser=False).annotate(num_perms=Count('id'))
+                        user_qs = user_qs.filter(num_perms=len(old_perms_qs))
+                        for user in user_qs:
+                            for removed_perm in removed_perms_qs:
+                                remove_perm(removed_perm, user)
+
+                        ## Remove group-model-level perms
+                        group_qs = Group.objects.filter(permissions__in=list(old_perms_qs))
+                        group_qs = group_qs.annotate(num_perms=Count('id'))
+                        group_qs = group_qs.filter(num_perms=len(old_perms_qs))
+                        for group in group_qs:
+                            for removed_perm in removed_perms_qs:
+                                remove_perm(removed_perm, group)
+
+                        ## Remove user-obj-level perms
+                        for user in User.objects.all():
+                            objs = get_objects_for_user(
+                                user, old_perms_codenames, use_groups=False, with_superuser=False,
+                                accept_global_perms=False
+                            )
+                            for obj in objs:
+                                for removed_perm in removed_perms_qs:
+                                    remove_perm(removed_perm, user, obj)
+
+                        ## Remove group-obj-level perms
+                        for group in Group.objects.all():
+                            objs = get_objects_for_group(
+                                group, old_perms_codenames, accept_global_perms=False
+                            )
+                            for obj in objs:
+                                for removed_perm in removed_perms_qs:
+                                    remove_perm(removed_perm, group, obj)
+
+
+def _get_as_permissions_qs(permissions):
+    from django.contrib.auth.models import Permission
+    codenames = [i.split('.')[1] for i in permissions]
+    return Permission.objects.filter(codename__in=codenames)
+
+
+def _get_perms_grouped_by_model(permission_set):
+    from django.contrib.auth.models import Permission
+
+    def key_func(perm_name):
+        codename = perm_name.split('.')[1]
+        return Permission.objects.get(codename=codename).content_type_id
+
+    return groupby(permission_set, key_func)
 
 def _delete_anon_user(sender, **kwargs):
     if settings.ANONYMOUS_USER_NAME is None:

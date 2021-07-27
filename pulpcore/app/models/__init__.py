@@ -48,6 +48,8 @@ from .repository import (  # noqa
     RepositoryVersionContentDetails,
 )
 
+from .roles import RoleHistory
+
 from .status import ContentAppStatus  # noqa
 
 from .task import (  # noqa
