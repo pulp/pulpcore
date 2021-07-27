@@ -1,0 +1,2 @@
+Deprecate the compatibility layer for access policies. As of pulpcore 3.16, all plugins should
+properly use the "condition" and "condition_expression" fields in the access policy statements.
