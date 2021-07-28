@@ -1173,6 +1173,25 @@ Improved Documentation
   `#7555 <https://pulp.plan.io/issues/7555>`_
 
 
+3.7.7 (2021-07-26)
+==================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fixed a bug, where new tasks were assigned to dead workers.
+  (backported from #8779)
+  `#9118 <https://pulp.plan.io/issues/9118>`_
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.7.6 (2021-04-29)
 ==================
 REST API
