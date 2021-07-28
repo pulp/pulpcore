@@ -230,7 +230,7 @@ def _enqueue_with_reservation(
     return Job(id=inner_task_id, connection=redis_conn)
 
 
-def dispatch(func, resources, args=None, kwargs=None, task_group=None):
+def dispatch(func, resources, args=None, kwargs=None, task_group=None, shared_resources=None):
     """
     Enqueue a message to Pulp workers with a reservation.
 
@@ -245,11 +245,13 @@ def dispatch(func, resources, args=None, kwargs=None, task_group=None):
 
     Args:
         func (callable): The function to be run by RQ when the necessary locks are acquired.
-        resources (list): A list of resources to this task needs exclusive access to while running.
-                          Each resource can be either a `str` or a `django.models.Model` instance.
+        resources (list): A list of resources this task needs exclusive access to while running.
+            Each resource can be either a `str` or a `django.models.Model` instance.
         args (tuple): The positional arguments to pass on to the task.
         kwargs (dict): The keyword arguments to pass on to the task.
         task_group (pulpcore.app.models.TaskGroup): A TaskGroup to add the created Task to.
+        shared_resources (list): A list of resources this task needs non-exclusive access to while
+            running. Each resource can be either a `str` or a `django.models.Model` instance.
 
     Returns (pulpcore.app.models.Task): The Pulp Task that was created.
 
@@ -260,6 +262,10 @@ def dispatch(func, resources, args=None, kwargs=None, task_group=None):
         args_as_json = json.dumps(args, cls=UUIDEncoder)
         kwargs_as_json = json.dumps(kwargs, cls=UUIDEncoder)
         resources = _validate_and_get_resources(resources)
+        if shared_resources:
+            resources.extend(
+                (f"shared:{resource}" for resource in _validate_and_get_resources(shared_resources))
+            )
         with transaction.atomic():
             task = Task.objects.create(
                 state=TASK_STATES.WAITING,
@@ -282,6 +288,9 @@ def dispatch(func, resources, args=None, kwargs=None, task_group=None):
                 "3.16 along with the `USE_NEW_WORKER_TYPE` setting."
             )
         )
+        # There is only exclusive use in the legacy tasking system
+        if shared_resources:
+            resources = resources + shared_resources
         RQ_job_id = _enqueue_with_reservation(
             func, resources=resources, args=args, kwargs=kwargs, task_group=task_group
         )
