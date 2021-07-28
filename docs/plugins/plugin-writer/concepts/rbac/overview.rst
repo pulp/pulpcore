@@ -45,15 +45,16 @@ To add authorization for a given resource, e.g. ``FileRemote``, you'll need to:
 2. Define the default permissions created for new objects using the ``permissions_assignment``
    attribute of the new Access Policy for the resource. See the
    :ref:`adding_automatic_permissions_for_new_objects` documentation for more information on that.
-3. Ship that Access Policy as the class attribute ``DEFAULT_ACCESS_POLICY`` of a ``NamedModelViewSet``.
-   This will contain both the ``statements`` and ``permissions_assignment`` attributes. See the
-   :ref:`shipping_default_access_policy` documentation for more information on this.
+3. Ship that Access Policy as the class attribute ``DEFAULT_ACCESS_POLICY`` of a
+   ``NamedModelViewSet``. This will contain both the ``statements`` and ``permissions_assignment``
+   attributes. See the :ref:`shipping_default_access_policy` documentation for more information on
+   this.
 
 **Enforce the Policy:**
 
-1. Define the ``permission_classes`` attribute on your Viewset referring to your subclass of
-   ``pulpcore.plugin.access_policy.AccessPolicyFromDB``. See the :ref:`viewset_enforcement` docs for
-   more information on this.
+1. ``pulpcore.plugin.access_policy.AccessPolicyFromDB`` is configured as the default permission
+   class, so by specifying a ``DEFAULT_ACCESS_POLICY`` it will automatically be enforced. See the
+   :ref:`viewset_enforcement` docs for more information on this.
 
 **Add QuerySet Scoping:**
 

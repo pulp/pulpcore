@@ -7,7 +7,6 @@ from rest_framework.filters import OrderingFilter
 from rest_framework.response import Response
 from rest_framework.serializers import ValidationError
 
-from pulpcore.app.access_policy import AccessPolicyFromDB
 from pulpcore.app.models import Task, TaskGroup, Worker
 from pulpcore.app.serializers import (
     MinimalTaskSerializer,
@@ -68,7 +67,6 @@ class TaskViewSet(
     minimal_serializer_class = MinimalTaskSerializer
     filter_backends = (OrderingFilter, DjangoFilterBackend)
     ordering = "-pulp_created"
-    permission_classes = (AccessPolicyFromDB,)
     queryset_filtering_required_permission = "core.view_task"
 
     DEFAULT_ACCESS_POLICY = {

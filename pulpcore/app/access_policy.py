@@ -23,6 +23,10 @@ class AccessPolicyFromDB(AccessPolicy):
 
             AccessPolicyModel.objects.get(viewset_name=get_view_urlpattern(view))
 
+        If a matching `pulpcore.plugin.models.AccessPolicy` cannot be found, a default behavior of
+        allowing only admin users to perform any operation is used. This fallback allows the Pulp
+        RBAC implementation to be turned on endpoint-by-endpoint with less effort.
+
         Args:
             request (rest_framework.request.Request): The request being checked for authorization.
             view (subclass rest_framework.viewsets.GenericViewSet): The view name being requested.
@@ -30,6 +34,10 @@ class AccessPolicyFromDB(AccessPolicy):
         Returns:
             The access policy statements in drf-access-policy policy structure.
         """
-        access_policy_obj = AccessPolicyModel.objects.get(viewset_name=get_view_urlpattern(view))
-
-        return access_policy_obj.statements
+        try:
+            viewset_name = get_view_urlpattern(view)
+            access_policy_obj = AccessPolicyModel.objects.get(viewset_name=viewset_name)
+        except (AccessPolicyModel.DoesNotExist, AttributeError):
+            return [{"action": "*", "principal": "admin", "effect": "allow"}]
+        else:
+            return access_policy_obj.statements
