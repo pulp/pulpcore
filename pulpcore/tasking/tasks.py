@@ -108,34 +108,8 @@ def _queue_reserved_task(func, inner_task_id, resources, inner_args, inner_kwarg
     redis_conn = connection.get_redis_connection()
     task_status = Task.objects.get(pk=inner_task_id)
     set_guid(task_status.logging_cid)
-    task_name = func.__module__ + "." + func.__name__
 
     while True:
-        if task_name == "pulpcore.app.tasks.orphan.orphan_cleanup":
-            if ReservedResource.objects.exists():
-                # wait until there are no reservations
-                time.sleep(0.25)
-                continue
-            else:
-                rq_worker = util.get_current_worker()
-                worker = Worker.objects.get(name=rq_worker.name)
-                task_status.worker = worker
-                task_status.set_running()
-                q = Queue("resource-manager", connection=redis_conn, is_async=False)
-                try:
-                    q.enqueue(
-                        func,
-                        args=inner_args,
-                        kwargs=inner_kwargs,
-                        job_id=inner_task_id,
-                        job_timeout=TASK_TIMEOUT,
-                        **options,
-                    )
-                    task_status.set_completed()
-                except RedisConnectionError as e:
-                    task_status.set_failed(e, None)
-                return
-
         try:
             with transaction.atomic():
                 # lock the worker - there is a similar lock in mark_worker_offline()

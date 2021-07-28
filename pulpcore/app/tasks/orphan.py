@@ -1,5 +1,7 @@
 import gc
 
+from django.conf import settings
+
 from pulpcore.app.models import (
     Artifact,
     Content,
@@ -29,7 +31,7 @@ def queryset_iterator(qs, batchsize=2000, gc_collect=True):
             gc.collect()
 
 
-def orphan_cleanup(content_pks=None):
+def orphan_cleanup(content_pks=None, orphan_protection_time=settings.ORPHAN_PROTECTION_TIME):
     """
     Delete all orphan Content and Artifact records.
     Go through orphan Content multiple times to remove content from subrepos.
@@ -48,12 +50,9 @@ def orphan_cleanup(content_pks=None):
     )
 
     while True:
-        content = Content.objects.filter(version_memberships__isnull=True).exclude(
+        content = Content.objects.orphaned(orphan_protection_time, content_pks).exclude(
             pulp_type=PublishedMetadata.get_pulp_type()
         )
-        if content_pks:
-            content = content.filter(pk__in=content_pks)
-
         content_count = content.count()
         if not content_count:
             break
@@ -70,7 +69,7 @@ def orphan_cleanup(content_pks=None):
     progress_bar.save()
 
     # delete the artifacts that don't belong to any content
-    artifacts = Artifact.objects.filter(content_memberships__isnull=True)
+    artifacts = Artifact.objects.orphaned(orphan_protection_time)
 
     progress_bar = ProgressReport(
         message="Clean up orphan Artifacts",

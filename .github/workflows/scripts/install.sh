@@ -61,7 +61,7 @@ services:
 VARSYAML
 
 cat >> vars/main.yaml << VARSYAML
-pulp_settings: {"allowed_export_paths": ["/tmp"], "allowed_import_paths": ["/tmp"]}
+pulp_settings: {"allowed_export_paths": ["/tmp"], "allowed_import_paths": ["/tmp"], "orphan_protection_time": 0}
 pulp_scheme: https
 
 pulp_container_tag: https

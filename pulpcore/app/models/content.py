@@ -3,6 +3,7 @@ Content related Django models.
 """
 from gettext import gettext as _
 
+import datetime
 import json
 import tempfile
 import shutil
@@ -17,6 +18,7 @@ from django.core import validators
 from django.core.files.storage import default_storage
 from django.db import IntegrityError, models, transaction
 from django.forms.models import model_to_dict
+from django.utils.timezone import now
 from django_lifecycle import BEFORE_UPDATE, BEFORE_SAVE, hook
 
 from pulpcore.constants import ALL_KNOWN_CONTENT_CHECKSUMS
@@ -139,6 +141,13 @@ class HandleTempFilesMixin:
         self.file.delete(save=False)
 
 
+class ArtifactManager(BulkCreateManager):
+    def orphaned(self, orphan_protection_time):
+        """Returns set of orphaned artifacts that are ready to be cleaned up."""
+        expiration = now() - datetime.timedelta(minutes=orphan_protection_time)
+        return self.filter(content_memberships__isnull=True, timestamp_of_interest__lt=expiration)
+
+
 class Artifact(HandleTempFilesMixin, BaseModel):
     """
     A file associated with a piece of content.
@@ -183,7 +192,7 @@ class Artifact(HandleTempFilesMixin, BaseModel):
     sha512 = models.CharField(max_length=128, null=True, unique=True, db_index=True)
     timestamp_of_interest = models.DateTimeField(auto_now=True)
 
-    objects = BulkCreateManager()
+    objects = ArtifactManager()
 
     # All available digest fields ordered by algorithm strength.
     DIGEST_FIELDS = _DIGEST_FIELDS
@@ -426,6 +435,19 @@ class PulpTemporaryFile(HandleTempFilesMixin, BaseModel):
         return PulpTemporaryFile(file=file)
 
 
+class ContentManager(BulkCreateManager):
+    def orphaned(self, orphan_protection_time, content_pks=None):
+        """Returns set of orphaned content that is ready to be cleaned up."""
+        expiration = now() - datetime.timedelta(minutes=orphan_protection_time)
+        if content_pks:
+            return self.filter(
+                version_memberships__isnull=True,
+                timestamp_of_interest__lt=expiration,
+                pk__in=content_pks,
+            )
+        return self.filter(version_memberships__isnull=True, timestamp_of_interest__lt=expiration)
+
+
 class Content(MasterModel, QueryMixin):
     """
     A piece of managed content.
@@ -448,7 +470,7 @@ class Content(MasterModel, QueryMixin):
     _artifacts = models.ManyToManyField(Artifact, through="ContentArtifact")
     timestamp_of_interest = models.DateTimeField(auto_now=True)
 
-    objects = BulkCreateManager()
+    objects = ContentManager()
 
     class Meta:
         verbose_name_plural = "content"

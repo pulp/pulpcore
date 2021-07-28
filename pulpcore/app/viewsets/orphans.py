@@ -22,7 +22,12 @@ class OrphansCleanupViewset(ViewSet):
         serializer.is_valid(raise_exception=True)
 
         content_pks = serializer.validated_data.get("content_hrefs", None)
+        orphan_protection_time = serializer.validated_data.get("orphan_protection_time")
 
-        task = dispatch(orphan_cleanup, [], kwargs={"content_pks": content_pks})
+        task = dispatch(
+            orphan_cleanup,
+            [],
+            kwargs={"content_pks": content_pks, "orphan_protection_time": orphan_protection_time},
+        )
 
         return OperationPostponedResponse(task, request)

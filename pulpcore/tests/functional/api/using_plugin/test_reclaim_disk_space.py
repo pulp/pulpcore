@@ -50,10 +50,13 @@ class ReclaimSpaceTestCase(unittest.TestCase):
         cls.repo_api = RepositoriesFileApi(cls.client)
         cls.remote_api = RemotesFileApi(cls.client)
 
+        orphans_response = cls.orphans_api.cleanup({"orphan_protection_time": 0})
+        monitor_task(orphans_response.task)
+
     @classmethod
     def tearDownClass(cls):
         """Clean created resources."""
-        orphans_response = cls.orphans_api.cleanup({})
+        orphans_response = cls.orphans_api.cleanup({"orphan_protection_time": 0})
         monitor_task(orphans_response.task)
 
     def test_reclaim_immediate_content(self):
@@ -88,7 +91,7 @@ class ReclaimSpaceTestCase(unittest.TestCase):
         # assert re-sync populated missing artifacts
         artifacts = self.artifacts_api.list().count
         self.assertGreater(artifacts, 0)
-        self.addCleanup(self.orphans_api.cleanup, {})
+        self.addCleanup(self.orphans_api.cleanup, {"orphan_protection_time": 0})
 
     def test_reclaim_on_demand_content(self):
         """

@@ -387,3 +387,14 @@ DJANGO_GUID
 
     For more information on how to configure the ``DJANGO_GUID`` setting, see the `django-guid
     settings documentation <https://django-guid.readthedocs.io/en/latest/settings.html>`_.
+
+
+.. _orphan-protection-time:
+
+ORPHAN_PROTECTION_TIME
+^^^^^^^^^^^^^^^^^^^^^^
+
+    The time specified in minutes for how long Pulp will hold orphan Content and Artifacts before
+    they become candidates for deletion by an orphan cleanup task. This should ideally be longer
+    than your longest running task otherwise any content created during that task could be cleaned
+    up before the task finishes. Default is 1440 minutes (24 hours).

@@ -2,6 +2,8 @@ from gettext import gettext as _
 
 from rest_framework import fields, serializers
 
+from django.conf import settings
+
 from pulpcore.app.models import Content
 from pulpcore.app.serializers import ValidateFieldsMixin
 
@@ -11,6 +13,18 @@ class OrphansCleanupSerializer(serializers.Serializer, ValidateFieldsMixin):
     content_hrefs = fields.ListField(
         required=False,
         help_text=_("Will delete specified content and associated Artifacts if they are orphans."),
+    )
+    orphan_protection_time = serializers.IntegerField(
+        help_text=(
+            "The time in minutes for how long Pulp will hold orphan Content and Artifacts before "
+            "they become candidates for deletion by this orphan cleanup task. This should ideally "
+            "be longer than your longest running task otherwise any content created during that "
+            "task could be cleaned up before the task finishes. If not specified, default is used "
+            "from settings which is 1440 minutes (24 hours)"
+        ),
+        allow_null=True,
+        required=False,
+        default=settings.ORPHAN_PROTECTION_TIME,
     )
 
     def validate_content_hrefs(self, value):
