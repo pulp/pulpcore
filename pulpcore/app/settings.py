@@ -273,6 +273,8 @@ SPECTACULAR_SETTINGS = {
 #       at startup
 ALLOWED_CONTENT_CHECKSUMS = ["sha224", "sha256", "sha384", "sha512"]
 
+DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
+
 # HERE STARTS DYNACONF EXTENSION LOAD (Keep at the very bottom of settings.py)
 # Read more at https://dynaconf.readthedocs.io/en/latest/guides/django.html
 import dynaconf  # noqa
