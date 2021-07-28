@@ -47,8 +47,15 @@ class DeleteOrphansTestCase(unittest.TestCase):
         cls.api_client = ApiClient(configuration)
         cls.cli_client = cli.Client(cls.cfg)
         cls.orphans_api = OrphansApi(core_client)
+        cls.orphans_cleanup_api = OrphansCleanupApi(core_client)
         cls.storage = utils.get_pulp_setting(cls.cli_client, "DEFAULT_FILE_STORAGE")
         cls.media_root = utils.get_pulp_setting(cls.cli_client, "MEDIA_ROOT")
+        cls.orphan_protection_time = utils.get_pulp_setting(
+            cls.cli_client, "ORPHAN_PROTECTION_TIME"
+        )
+
+        orphans_response = cls.orphans_cleanup_api.cleanup({"orphan_protection_time": 0})
+        monitor_task(orphans_response.task)
 
     def test_clean_orphan_content_unit(self):
         """Test whether orphaned content units can be cleaned up."""
@@ -95,12 +102,14 @@ class DeleteOrphansTestCase(unittest.TestCase):
 
         content_units = file_contents_api.list().to_dict()["results"]
         content_units_href = [c["pulp_href"] for c in content_units]
-        self.assertNotIn(content["pulp_href"], content_units_href)
 
-        if self.storage == "pulpcore.app.models.storage.FileSystem":
-            # Verify that the artifact was removed from disk.
-            with self.assertRaises(CalledProcessError):
-                self.cli_client.run(cmd)
+        if self.orphan_protection_time == 0:
+            self.assertNotIn(content["pulp_href"], content_units_href)
+
+            if self.storage == "pulpcore.app.models.storage.FileSystem":
+                # Verify that the artifact was removed from disk.
+                with self.assertRaises(CalledProcessError):
+                    self.cli_client.run(cmd)
 
     def test_clean_orphan_artifact(self):
         """Test whether orphan artifacts units can be clean up."""
@@ -118,12 +127,13 @@ class DeleteOrphansTestCase(unittest.TestCase):
         orphans_response = self.orphans_api.delete()
         monitor_task(orphans_response.task)
 
-        with self.assertRaises(ApiException):
-            artifacts_api.read(artifact.pulp_href)
+        if self.orphan_protection_time == 0:
+            with self.assertRaises(ApiException):
+                artifacts_api.read(artifact.pulp_href)
 
-        if self.storage == "pulpcore.app.models.storage.FileSystem":
-            with self.assertRaises(CalledProcessError):
-                self.cli_client.run(cmd)
+            if self.storage == "pulpcore.app.models.storage.FileSystem":
+                with self.assertRaises(CalledProcessError):
+                    self.cli_client.run(cmd)
 
 
 class OrphansCleanUpTestCase(unittest.TestCase):
@@ -145,6 +155,9 @@ class OrphansCleanUpTestCase(unittest.TestCase):
         cls.storage = utils.get_pulp_setting(cls.cli_client, "DEFAULT_FILE_STORAGE")
         cls.media_root = utils.get_pulp_setting(cls.cli_client, "MEDIA_ROOT")
 
+        orphans_response = cls.orphans_cleanup_api.cleanup({"orphan_protection_time": 0})
+        monitor_task(orphans_response.task)
+
     def test_clean_orphan_content_unit(self):
         """Test whether orphaned content units can be cleaned up."""
         repo_api = RepositoriesFileApi(self.api_client)
@@ -185,7 +198,15 @@ class OrphansCleanUpTestCase(unittest.TestCase):
         content_units_href = [c["pulp_href"] for c in content_units]
         self.assertIn(content["pulp_href"], content_units_href)
 
-        orphans_response = self.orphans_cleanup_api.cleanup({})
+        content_before_cleanup = file_contents_api.list().count
+        orphans_response = self.orphans_cleanup_api.cleanup({"orphan_protection_time": 10})
+        monitor_task(orphans_response.task)
+
+        # assert content was not removed
+        content_after_cleanup = file_contents_api.list().count
+        self.assertEqual(content_after_cleanup, content_before_cleanup)
+
+        orphans_response = self.orphans_cleanup_api.cleanup({"orphan_protection_time": 0})
         monitor_task(orphans_response.task)
 
         content_units = file_contents_api.list().to_dict()["results"]
@@ -210,7 +231,14 @@ class OrphansCleanUpTestCase(unittest.TestCase):
             cmd = ("ls", os.path.join(self.media_root, artifact.file))
             self.cli_client.run(cmd, sudo=True)
 
-        orphans_response = self.orphans_cleanup_api.cleanup({})
+        orphans_response = self.orphans_cleanup_api.cleanup({"orphan_protection_time": 10})
+        monitor_task(orphans_response.task)
+
+        # assert artifact was not removed
+        artifacts = artifacts_api.list().count
+        self.assertEqual(artifacts, 1)
+
+        orphans_response = self.orphans_cleanup_api.cleanup({"orphan_protection_time": 0})
         monitor_task(orphans_response.task)
 
         with self.assertRaises(ApiException):
@@ -253,8 +281,8 @@ class OrphansCleanUpTestCase(unittest.TestCase):
         self.assertIn(content_a, content_units_href)
         self.assertIn(content_b, content_units_href)
 
-        content_hrefs_dict = {"content_hrefs": [content_a]}
-        orphans_response = self.orphans_cleanup_api.cleanup(content_hrefs_dict)
+        cleanup_dict = {"content_hrefs": [content_a], "orphan_protection_time": 0}
+        orphans_response = self.orphans_cleanup_api.cleanup(cleanup_dict)
         monitor_task(orphans_response.task)
 
         content_units = file_contents_api.list().to_dict()["results"]

@@ -47,6 +47,7 @@ pulp_settings:
   - /tmp
   allowed_import_paths:
   - /tmp
+  orphan_protection_time: 0
 pulpcore_branch: null
 pulpcore_pip_version_specifier: null
 pulpprojectdotorg_key_id: d1a778bda808

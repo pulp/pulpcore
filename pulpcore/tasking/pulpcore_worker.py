@@ -243,16 +243,7 @@ class NewPulpWorker:
             signal.signal(signal.SIGTERM, self._signal_handler)
             while not self.shutdown_requested:
                 for task in self.iter_tasks():
-                    try:
-                        # Workaround to block all other workers
-                        if task.name == "pulpcore.app.tasks.orphan.orphan_cleanup":
-                            suffix = ""
-                        else:
-                            suffix = "_shared"
-                        self.cursor.execute(f"SELECT pg_advisory_lock{suffix}(1234)")
-                        self.supervise_task(task)
-                    finally:
-                        self.cursor.execute(f"SELECT pg_advisory_unlock{suffix}(1234)")
+                    self.supervise_task(task)
                 if not self.shutdown_requested:
                     self.sleep()
             self.shutdown()
