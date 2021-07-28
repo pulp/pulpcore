@@ -205,16 +205,21 @@ generally causes them to pass any permission check even without explicit permiss
 Viewset Enforcement
 -------------------
 
-Protecting a viewset with your saved AccessPolicy is done by declaring a ``permission_classes``
-class attribute on your ViewSet that points to ``pulpcore.plugin.access_policy.AccessPolicyFromDB``.
+Pulp configures the ``DEFAULT_PERMISSION_CLASSES`` in the settings file to use
+``pulpcore.plugin.access_policy.AccessPolicyFromDB`` by default. This ensures that by defining a
+``DEFAULT_ACCESS_POLICY`` on your Viewset, Pulp will automatically save it to the database at
+migration-time, and your Viewset will be protected without additional effort.
 
-For example, here is the FileRemoteViewSet which enables authorization enforcement as follows:
+This strategy allows users to completely customize or disable the DRF Permission checks Pulp uses
+like any typical DRF project would.
+
+Also like a typical DRF project, individual Viewsets or views can also be customized to use a
+different Permission check by declaring the ``permission_classes`` check. For example, here is the
+``StatusView`` which disables permission checks entirely as follows:
 
 .. code-block:: python
 
-    from pulpcore.plugin.access_policy import AccessPolicyFromDB
-
-    class FileRemoteViewSet(NamedModelViewSet):
+    class StatusView(APIView):
         ...
-        permission_classes = (AccessPolicyFromDB,)
+        permission_classes = tuple()
         ...

@@ -14,7 +14,6 @@ from rest_framework.filters import OrderingFilter
 from rest_framework.response import Response
 from rest_framework.serializers import ValidationError
 
-from pulpcore.app.access_policy import AccessPolicyFromDB
 from pulpcore.app.viewsets import BaseFilterSet, NamedModelViewSet
 from pulpcore.app.serializers.user import (
     GroupSerializer,
@@ -107,7 +106,6 @@ class GroupViewSet(
     serializer_class = GroupSerializer
     queryset = Group.objects.all()
     ordering = ("name",)
-    permission_classes = (AccessPolicyFromDB,)
     queryset_filtering_required_permission = "auth.view_group"
 
     DEFAULT_ACCESS_POLICY = {
@@ -375,7 +373,6 @@ class GroupUserViewSet(NamedModelViewSet):
     parent_lookup_kwargs = {"group_pk": "groups__pk"}
     serializer_class = GroupUserSerializer
     queryset = User.objects.all()
-    permission_classes = (AccessPolicyFromDB,)
 
     DEFAULT_ACCESS_POLICY = {
         "statements": [

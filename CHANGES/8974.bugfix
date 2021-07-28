@@ -1,0 +1,2 @@
+Fixed inability for users to disable RBAC at the settings level by changing the
+``DEFAULT_PERMISSION_CLASSES`` like any user configuring a DRF project expects to.
