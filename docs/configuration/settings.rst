@@ -368,6 +368,20 @@ USE_NEW_WORKER_TYPE
        6. Start the api-workers ``systemctl start pulpcore-api``
 
 
+.. _allow_shared_resources:
+
+ALLOW_SHARED_TASK_RESOURCES
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+    This option allows tasks to have a shared (read only) simultaneous access to some resources. It
+    defaults to ``False``, but when set to ``True`` may improve tasking throughput.
+
+    .. note:: This option will only take effect when using the queueless worker type.
+
+    .. note:: As a tech preview, this option is meant to be temporary. It will default to ``True``
+              in 3.16 and be removed in 3.17.
+
+
 .. _admin-site-url:
 
 ADMIN_SITE_URL

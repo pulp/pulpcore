@@ -129,12 +129,23 @@ class NewPulpWorker:
         """Iterate over ready tasks and yield each task while holding the lock."""
 
         while not self.shutdown_requested:
-            taken_resources = set()
+            taken_exclusive_resources = set()
+            taken_shared_resources = set()
             # When batching this query, be sure to use "pulp_created" as a cursor
             for task in Task.objects.filter(state__in=TASK_INCOMPLETE_STATES).order_by(
                 "pulp_created"
             ):
                 reserved_resources_record = task.reserved_resources_record or []
+                exclusive_resources = [
+                    resource
+                    for resource in reserved_resources_record
+                    if not resource.startswith("shared:")
+                ]
+                shared_resources = [
+                    resource[7:]
+                    for resource in reserved_resources_record
+                    if resource.startswith("shared:") and resource[7:] not in exclusive_resources
+                ]
                 with suppress(AdvisoryLockError), task:
                     # This code will only be called if we acquired the lock successfully
                     # The lock will be automatically be released at the end of the block
@@ -147,14 +158,38 @@ class NewPulpWorker:
                             # without considering this tasks resources
                             # as we just released them
                             continue
-                    if task.state == TASK_STATES.WAITING and not any(
-                        resource in taken_resources for resource in reserved_resources_record
-                    ):
-                        yield task
-                        # Start from the top of the Task list
-                        break
+                    if settings.ALLOW_SHARED_TASK_RESOURCES:
+                        # This statement is using lazy evaluation
+                        if (
+                            task.state == TASK_STATES.WAITING
+                            # No exclusive resource taken?
+                            and not any(
+                                resource in taken_exclusive_resources
+                                or resource in taken_shared_resources
+                                for resource in exclusive_resources
+                            )
+                            # No shared resource exclusively taken?
+                            and not any(
+                                resource in taken_exclusive_resources
+                                for resource in shared_resources
+                            )
+                        ):
+                            yield task
+                            # Start from the top of the Task list
+                            break
+                    else:
+                        # Treat all resources exclusively
+                        if task.state == TASK_STATES.WAITING and not any(
+                            resource in taken_exclusive_resources
+                            or resource in taken_shared_resources
+                            for resource in exclusive_resources + shared_resources
+                        ):
+                            yield task
+                            # Start from the top of the Task list
+                            break
                 # Record the resources of the pending task we didn't get
-                taken_resources.update(reserved_resources_record)
+                taken_exclusive_resources.update(exclusive_resources)
+                taken_shared_resources.update(shared_resources)
             else:
                 # If we got here, there is nothing to do
                 break
