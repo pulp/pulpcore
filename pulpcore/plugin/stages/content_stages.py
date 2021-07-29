@@ -1,8 +1,13 @@
 from collections import defaultdict
+import inspect
 
+from asgiref.sync import sync_to_async
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import IntegrityError, transaction
 from django.db.models import Q
+
+from pulpcore.app.loggers import deprecation_logger
+from pulpcore.plugin.sync import sync_to_async_iterable
 
 from pulpcore.plugin.models import Content, ContentArtifact, ProgressReport
 
@@ -49,7 +54,7 @@ class QueryExistingContents(Stage):
 
             for model_type, content_q in content_q_by_type.items():
                 try:
-                    model_type.objects.filter(content_q).touch()
+                    await sync_to_async(model_type.objects.filter(content_q).touch)()
                 except AttributeError:
                     from pulpcore.app.loggers import deprecation_logger
                     from gettext import gettext as _
@@ -62,7 +67,9 @@ class QueryExistingContents(Stage):
                             "in the future."
                         )
                     )
-                for result in model_type.objects.filter(content_q).iterator():
+                async for result in sync_to_async_iterable(
+                    model_type.objects.filter(content_q).iterator()
+                ):
                     for d_content in d_content_by_nat_key[result.natural_key()]:
                         d_content.content = result
 
@@ -97,64 +104,85 @@ class ContentSaver(Stage):
             The coroutine for this stage.
         """
         async for batch in self.batches():
-            content_artifact_bulk = []
-            to_update_ca_query = ContentArtifact.objects.none()
-            to_update_ca_bulk = []
-            to_update_ca_artifact = {}
-            with transaction.atomic():
-                await self._pre_save(batch)
 
-                for d_content in batch:
-                    # Are we saving to the database for the first time?
-                    content_already_saved = not d_content.content._state.adding
-                    if not content_already_saved:
-                        try:
-                            with transaction.atomic():
-                                d_content.content.save()
-                        except IntegrityError as e:
+            def process_batch():
+                content_artifact_bulk = []
+                to_update_ca_query = ContentArtifact.objects.none()
+                to_update_ca_bulk = []
+                to_update_ca_artifact = {}
+                with transaction.atomic():
+                    if not inspect.iscoroutinefunction(self._pre_save):
+                        self._pre_save(batch)
+                    for d_content in batch:
+                        # Are we saving to the database for the first time?
+                        content_already_saved = not d_content.content._state.adding
+                        if not content_already_saved:
                             try:
-                                d_content.content = d_content.content.__class__.objects.get(
-                                    d_content.content.q()
-                                )
-                            except ObjectDoesNotExist:
-                                raise e
-                        else:
-                            for d_artifact in d_content.d_artifacts:
-                                if not d_artifact.artifact._state.adding:
-                                    artifact = d_artifact.artifact
-                                else:
-                                    # set to None for on-demand synced artifacts
-                                    artifact = None
-                                content_artifact = ContentArtifact(
+                                with transaction.atomic():
+                                    d_content.content.save()
+                            except IntegrityError as e:
+                                try:
+                                    d_content.content = d_content.content.__class__.objects.get(
+                                        d_content.content.q()
+                                    )
+                                except ObjectDoesNotExist:
+                                    raise e
+                            else:
+                                for d_artifact in d_content.d_artifacts:
+                                    if not d_artifact.artifact._state.adding:
+                                        artifact = d_artifact.artifact
+                                    else:
+                                        # set to None for on-demand synced artifacts
+                                        artifact = None
+                                    content_artifact = ContentArtifact(
+                                        content=d_content.content,
+                                        artifact=artifact,
+                                        relative_path=d_artifact.relative_path,
+                                    )
+                                    content_artifact_bulk.append(content_artifact)
+                                continue
+                        # When the Content already exists, check if ContentArtifacts need to be
+                        # updated
+                        for d_artifact in d_content.d_artifacts:
+                            if not d_artifact.artifact._state.adding:
+                                # the artifact is already present in the database; update references
+                                # Creating one large query and one large dictionary
+                                to_update_ca_query |= ContentArtifact.objects.filter(
                                     content=d_content.content,
-                                    artifact=artifact,
                                     relative_path=d_artifact.relative_path,
                                 )
-                                content_artifact_bulk.append(content_artifact)
-                            continue
-                    # When the Content already exists, check if ContentArtifacts need to be updated
-                    for d_artifact in d_content.d_artifacts:
-                        if not d_artifact.artifact._state.adding:
-                            # the artifact is already present in the database; update references
-                            # Creating one large query and one large dictionary
-                            to_update_ca_query |= ContentArtifact.objects.filter(
-                                content=d_content.content, relative_path=d_artifact.relative_path
-                            )
-                            key = (d_content.content.pk, d_artifact.relative_path)
-                            to_update_ca_artifact[key] = d_artifact.artifact
-                # Query db once and update each object in memory for bulk_update call
-                for content_artifact in to_update_ca_query.iterator():
-                    key = (content_artifact.content_id, content_artifact.relative_path)
-                    # Maybe remove dict elements after to reduce memory?
-                    content_artifact.artifact = to_update_ca_artifact[key]
-                    to_update_ca_bulk.append(content_artifact)
-                ContentArtifact.objects.bulk_update(to_update_ca_bulk, ["artifact"])
-                ContentArtifact.objects.bulk_get_or_create(content_artifact_bulk)
+                                key = (d_content.content.pk, d_artifact.relative_path)
+                                to_update_ca_artifact[key] = d_artifact.artifact
+                    # Query db once and update each object in memory for bulk_update call
+                    for content_artifact in to_update_ca_query.iterator():
+                        key = (content_artifact.content_id, content_artifact.relative_path)
+                        # Maybe remove dict elements after to reduce memory?
+                        content_artifact.artifact = to_update_ca_artifact[key]
+                        to_update_ca_bulk.append(content_artifact)
+                    ContentArtifact.objects.bulk_update(to_update_ca_bulk, ["artifact"])
+                    ContentArtifact.objects.bulk_get_or_create(content_artifact_bulk)
+                    if not inspect.iscoroutinefunction(self._post_save):
+                        self._post_save(batch)
+
+            if inspect.iscoroutinefunction(self._pre_save):
+                deprecation_logger.warning(
+                    "ContentSaver._pre_save() coroutine has been deprecated. Support will be "
+                    "dropped in pulpcore 3.16. ContentSaver._pre_save() should now be a "
+                    "synchronous function."
+                )
+                await self._pre_save(batch)
+            await sync_to_async(process_batch)()
+            if inspect.iscoroutinefunction(self._post_save):
+                deprecation_logger.warning(
+                    "ContentSaver._post_save() coroutine has been deprecated. Support will be "
+                    "dropped in pulpcore 3.16. ContentSaver._post_save() should now be a "
+                    "synchronous function."
+                )
                 await self._post_save(batch)
             for declarative_content in batch:
                 await self.put(declarative_content)
 
-    async def _pre_save(self, batch):
+    def _pre_save(self, batch):
         """
         A hook plugin-writers can override to save related objects prior to content unit saving.
 
@@ -167,7 +195,7 @@ class ContentSaver(Stage):
         """
         pass
 
-    async def _post_save(self, batch):
+    def _post_save(self, batch):
         """
         A hook plugin-writers can override to save related objects after content unit saving.
 
@@ -260,8 +288,14 @@ class ContentAssociation(Stage):
         Returns:
             The coroutine for this stage.
         """
-        with ProgressReport(message="Associating Content", code="associating.content") as pb:
-            to_delete = set(self.new_version.content.values_list("pk", flat=True))
+        async with ProgressReport(message="Associating Content", code="associating.content") as pb:
+            to_delete = {
+                i
+                async for i in sync_to_async_iterable(
+                    self.new_version.content.values_list("pk", flat=True)
+                )
+            }
+
             async for batch in self.batches():
                 to_add = set()
                 for d_content in batch:
@@ -272,13 +306,17 @@ class ContentAssociation(Stage):
                         await self.put(d_content)
 
                 if to_add:
-                    self.new_version.add_content(Content.objects.filter(pk__in=to_add))
-                    pb.increase_by(len(to_add))
+                    await sync_to_async(self.new_version.add_content)(
+                        Content.objects.filter(pk__in=to_add)
+                    )
+                    await pb.aincrease_by(len(to_add))
 
             if self.allow_delete:
-                with ProgressReport(
+                async with ProgressReport(
                     message="Un-Associating Content", code="unassociating.content"
                 ) as pb:
                     if to_delete:
-                        self.new_version.remove_content(Content.objects.filter(pk__in=to_delete))
-                        pb.increase_by(len(to_delete))
+                        await sync_to_async(self.new_version.remove_content)(
+                            Content.objects.filter(pk__in=to_delete)
+                        )
+                        await pb.aincrease_by(len(to_delete))
