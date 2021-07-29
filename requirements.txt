@@ -6,11 +6,13 @@ aioredis~=2.0.0a1
 backoff~=1.10.0
 click<9.0
 Django~=2.2.24  # LTS version, switch only if we have a compelling reason to
+django-automated-logging==6.1.1
 django-currentuser~=0.5.3
 django-filter~=2.4.0
 django-guardian~=2.4.0
 django-guid<3.0
 django-import-export~=2.5.0
+django-ipware==3.0.2
 django-lifecycle~=0.9.1
 djangorestframework~=3.12.4
 djangorestframework-queryfields~=1.0.0

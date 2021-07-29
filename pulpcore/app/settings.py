@@ -67,6 +67,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "import_export",
     # third-party
+    "automated_logging",
     "django_filters",
     "django_guid",
     "drf_spectacular",
@@ -99,6 +100,7 @@ for app in OPTIONAL_APPS:
 
 MIDDLEWARE = [
     "django_guid.middleware.GuidMiddleware",
+    "automated_logging.middleware.AutomatedLoggingMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -197,10 +199,17 @@ LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
     "formatters": {
-        "simple": {"format": "pulp [%(correlation_id)s]: %(name)s:%(levelname)s: %(message)s"}
+        "simple": {"format": "pulp [%(correlation_id)s]: %(name)s:%(levelname)s: %(message)s"},
+        "automated_logging": {"format": "%(asctime)s: %(levelname)s: %(message)s"}
     },
     "filters": {"correlation_id": {"()": "django_guid.log_filters.CorrelationId"}},
     "handlers": {
+        "automated_logging": {
+            "level": "INFO",
+            "class": "logging.handlers.WatchedFileHandler",
+            "filename": "/var/log/pulp_audit.log",
+            "formatter": "automated_logging",
+        },
         "console": {
             "class": "logging.StreamHandler",
             "formatter": "simple",
@@ -219,6 +228,59 @@ LOGGING = {
             "level": "WARNING",
             "propagate": False,
         },
+        "automated_logging": {
+            "handlers": ["automated_logging"],
+            "level": "INFO",
+            "propagate": False,
+        },
+    },
+}
+
+AUTOMATED_LOGGING = {
+    "globals": {
+        "exclude": {
+            "applications": [
+                "plain:contenttypes",
+                "plain:admin",
+                "plain:basehttp",
+                "glob:session*",
+                "plain:migrations",
+            ]
+        }
+    },
+    "model": {
+        "detailed_message": True,
+        "exclude": {"applications": [], "fields": [], "models": [], "unknown": False},
+        "loglevel": 20,
+        "mask": [],
+        "max_age": None,
+        "performance": False,
+        "snapshot": False,
+        "user_mirror": False,
+    },
+    "modules": ["request", "unspecified", "model"],
+    "request": {
+        "data": {
+            "content_types": ["application/json"],
+            "enabled": [],
+            "ignore": [],
+            "mask": ["password"],
+            "query": False,
+        },
+        "exclude": {
+            "applications": [],
+            "methods": ["GET"],
+            "status": [],
+            "unknown": False,
+        },
+        "ip": True,
+        "loglevel": 20,
+        "max_age": None,
+    },
+    "unspecified": {
+        "exclude": {"applications": [], "files": [], "unknown": False},
+        "loglevel": 20,
+        "max_age": None,
     },
 }
 
