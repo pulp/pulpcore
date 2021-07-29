@@ -1,0 +1,1 @@
+Fixed ProgressReport's ``.save()`` creating a new database connection everytime it was called from async code

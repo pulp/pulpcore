@@ -1,8 +1,10 @@
 """
 Django models related to progress reporting
 """
+import asyncio
 import datetime
 import logging
+from asgiref.sync import sync_to_async
 from asyncio import CancelledError
 from gettext import gettext as _
 
@@ -136,11 +138,23 @@ class ProgressReport(BaseModel):
 
         if self._using_context_manager and self._last_save_time:
             if now - self._last_save_time >= datetime.timedelta(milliseconds=BATCH_INTERVAL):
-                super().save(*args, **kwargs)
+                self._save(*args, **kwargs)
                 self._last_save_time = now
         else:
-            super().save(*args, **kwargs)
+            self._save(*args, **kwargs)
             self._last_save_time = now
+
+    def _save(self, *args, **kwargs):
+        """Special save method to handle running inside a coroutine"""
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            loop = None
+        if loop and loop.is_running():
+            save = sync_to_async(super().save, thread_sensitive=True)
+            loop.create_task(save(*args, **kwargs))
+        else:
+            super().save(*args, **kwargs)
 
     def __enter__(self):
         """
