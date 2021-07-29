@@ -3,6 +3,7 @@ Django models related to progress reporting
 """
 import datetime
 import logging
+from asgiref.sync import sync_to_async
 from asyncio import CancelledError
 from gettext import gettext as _
 
@@ -113,9 +114,7 @@ class ProgressReport(BaseModel):
     total = models.IntegerField(null=True)
     done = models.IntegerField(default=0)
 
-    task = models.ForeignKey(
-        "Task", related_name="progress_reports", default=Task.current, on_delete=models.CASCADE
-    )
+    task = models.ForeignKey("Task", related_name="progress_reports", on_delete=models.CASCADE)
 
     suffix = models.TextField(null=True)
 
@@ -125,14 +124,15 @@ class ProgressReport(BaseModel):
     def save(self, *args, **kwargs):
         """
         Auto-set the task_id if running inside a task
-
         If the task_id is already set it will not be updated. If it is unset and this is running
         inside of a task it will be auto-set prior to saving.
-
         args (list): positional arguments to be passed on to the real save
         kwargs (dict): keyword arguments to be passed on to the real save
         """
         now = timezone.now()
+
+        if not self.task_id:
+            self.task = Task.current()
 
         if self._using_context_manager and self._last_save_time:
             if now - self._last_save_time >= datetime.timedelta(milliseconds=BATCH_INTERVAL):
@@ -142,12 +142,25 @@ class ProgressReport(BaseModel):
             super().save(*args, **kwargs)
             self._last_save_time = now
 
+    asave = sync_to_async(save)
+
     def __enter__(self):
         """
         Saves the progress report state as RUNNING
         """
         self.state = TASK_STATES.RUNNING
         self.save()
+
+        # Save needs occurs immediately so it is called before _using_context_manager is set
+        self._using_context_manager = True
+        return self
+
+    async def __aenter__(self):
+        """
+        Async implementation of __enter__
+        """
+        self.state = TASK_STATES.RUNNING
+        await self.asave()
 
         # Save needs occurs immediately so it is called before _using_context_manager is set
         self._using_context_manager = True
@@ -175,6 +188,29 @@ class ProgressReport(BaseModel):
             self.state = TASK_STATES.FAILED
         self.save()
 
+    async def __aexit__(self, type, value, traceback):
+        """
+        Async implementation of __exit__
+        Update the progress report state to COMPLETED, CANCELED, or FAILED.
+
+        If an exception occurs the progress report state is saved as:
+        - CANCELED if the exception is `asyncio.CancelledError`
+        - FAILED otherwise.
+
+        The exception is not suppressed. If the context manager exited without
+        exception the progress report state is saved as COMPLETED.
+
+        See the context manager documentation for more info on __exit__ parameters
+        """
+        self._using_context_manager = False
+        if type is None:
+            self.state = TASK_STATES.COMPLETED
+        elif type is CancelledError:
+            self.state = TASK_STATES.CANCELED
+        else:
+            self.state = TASK_STATES.FAILED
+        await self.asave()
+
     def increment(self):
         """
         Increment done count and save the progress report.
@@ -183,6 +219,8 @@ class ProgressReport(BaseModel):
         processing items.
         """
         self.increase_by(1)
+
+    aincrement = sync_to_async(increment)
 
     def increase_by(self, count):
         """
@@ -196,6 +234,8 @@ class ProgressReport(BaseModel):
             if self.done > self.total:
                 _logger.warning(_("Too many items processed for ProgressReport %s") % self.message)
         self.save()
+
+    aincrease_by = sync_to_async(increase_by)
 
     def iter(self, iter):
         """

@@ -1,0 +1,1 @@
+Made all database queries run serially using a single connection to the database.
