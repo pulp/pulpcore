@@ -3,10 +3,12 @@ from collections import defaultdict
 from gettext import gettext as _
 import logging
 
+from asgiref.sync import sync_to_async
 from django.db.models import Prefetch, prefetch_related_objects
 
 from pulpcore.plugin.exceptions import UnsupportedDigestValidationError
 from pulpcore.plugin.models import Artifact, ContentArtifact, ProgressReport, RemoteArtifact
+from pulpcore.plugin.sync import sync_to_async_iterable
 
 from .api import Stage
 
@@ -85,13 +87,14 @@ class QueryExistingArtifacts(Stage):
             # swap it out with the existing one.
             for digest_type, digests in artifact_digests_by_type.items():
                 query_params = {"{attr}__in".format(attr=digest_type): digests}
-                existing_artifacts = Artifact.objects.filter(**query_params).only(digest_type)
-                existing_artifacts.touch()
+                existing_artifacts_qs = Artifact.objects.filter(**query_params).only(digest_type)
+                existing_artifacts = sync_to_async_iterable(existing_artifacts_qs)
+                await sync_to_async(existing_artifacts_qs.touch)()
                 for d_content in batch:
                     for d_artifact in d_content.d_artifacts:
                         artifact_digest = getattr(d_artifact.artifact, digest_type)
                         if artifact_digest:
-                            for result in existing_artifacts:
+                            async for result in existing_artifacts:
                                 result_digest = getattr(result, digest_type)
                                 if result_digest == artifact_digest:
                                     d_artifact.artifact = result
@@ -156,7 +159,7 @@ class ArtifactDownloader(Stage):
         #    Set to None if stage is shutdown.
         content_get_task = _add_to_pending(content_iterator.__anext__())
 
-        with ProgressReport(
+        async with ProgressReport(
             message="Downloading Artifacts", code="sync.downloading.artifacts"
         ) as pb:
             try:
@@ -172,7 +175,7 @@ class ArtifactDownloader(Stage):
                                 content_get_task = None
                         else:
                             pb.done += task.result()  # download_count
-                            pb.save()
+                            await pb.asave()
 
                     if content_get_task and content_get_task not in pending:  # not yet shutdown
                         if len(pending) < self.max_concurrent_content:
@@ -237,7 +240,7 @@ class ArtifactSaver(Stage):
             if da_to_save:
                 for d_artifact, artifact in zip(
                     da_to_save,
-                    Artifact.objects.bulk_get_or_create(
+                    await sync_to_async(Artifact.objects.bulk_get_or_create)(
                         d_artifact.artifact for d_artifact in da_to_save
                     ),
                 ):
@@ -267,11 +270,13 @@ class RemoteArtifactSaver(Stage):
             The coroutine for this stage.
         """
         async for batch in self.batches():
-            RemoteArtifact.objects.bulk_get_or_create(self._needed_remote_artifacts(batch))
+            await sync_to_async(RemoteArtifact.objects.bulk_get_or_create)(
+                await self._needed_remote_artifacts(batch)
+            )
             for d_content in batch:
                 await self.put(d_content)
 
-    def _needed_remote_artifacts(self, batch):
+    async def _needed_remote_artifacts(self, batch):
         """
         Build a list of only :class:`~pulpcore.plugin.models.RemoteArtifact` that need
         to be created for the batch.
@@ -288,7 +293,7 @@ class RemoteArtifactSaver(Stage):
                 if d_artifact.remote:
                     remotes_present.add(d_artifact.remote)
 
-        prefetch_related_objects(
+        await sync_to_async(prefetch_related_objects)(
             [d_c.content for d_c in batch],
             Prefetch(
                 "contentartifact_set",
@@ -313,7 +318,9 @@ class RemoteArtifactSaver(Stage):
                 if not d_artifact.remote:
                     continue
 
-                for content_artifact in d_content.content._remote_artifact_saver_cas:
+                async for content_artifact in sync_to_async_iterable(
+                    d_content.content._remote_artifact_saver_cas
+                ):
                     if d_artifact.relative_path == content_artifact.relative_path:
                         break
                 else:
@@ -363,7 +370,9 @@ class RemoteArtifactSaver(Stage):
                             msg.format(rp=d_artifact.relative_path, c=d_content.content)
                         )
 
-                for remote_artifact in content_artifact._remote_artifact_saver_ras:
+                async for remote_artifact in sync_to_async_iterable(
+                    content_artifact._remote_artifact_saver_ras
+                ):
                     if remote_artifact.remote_id == d_artifact.remote.pk:
                         break
                 else:

@@ -450,7 +450,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='progressreport',
             name='task',
-            field=models.ForeignKey(default=pulpcore.app.models.task.Task.current, on_delete=django.db.models.deletion.CASCADE, related_name='progress_reports', to='core.Task', to_field='pulp_id'),
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='progress_reports', to='core.Task', to_field='pulp_id'),
         ),
         migrations.AlterField(
             model_name='publication',

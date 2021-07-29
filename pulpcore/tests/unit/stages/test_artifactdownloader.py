@@ -111,11 +111,11 @@ class TestArtifactDownloader(asynctest.ClockedTestCase):
             The done count of the ProgressReport.
         """
         with mock.patch("pulpcore.plugin.stages.artifact_stages.ProgressReport") as pb:
-            pb.return_value.__enter__.return_value.done = 0
+            pb.return_value.__aenter__.return_value.done = 0
             ad = ArtifactDownloader(max_concurrent_content=max_concurrent_content)
             ad._connect(self.in_q, self.out_q)
             await ad()
-        return pb.return_value.__enter__.return_value.done
+        return pb.return_value.__aenter__.return_value.done
 
     def assertQueued(self, num):
         self.assertEqual(self.in_q.qsize(), num)

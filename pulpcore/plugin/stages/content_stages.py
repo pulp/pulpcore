@@ -1,8 +1,13 @@
 from collections import defaultdict
+import inspect
 
+from asgiref.sync import sync_to_async
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import IntegrityError, transaction
 from django.db.models import Q
+
+from pulpcore.app.loggers import deprecation_logger
+from pulpcore.plugin.sync import sync_to_async_iterable
 
 from pulpcore.plugin.models import Content, ContentArtifact, ProgressReport
 
@@ -48,8 +53,12 @@ class QueryExistingContents(Stage):
                     d_content_by_nat_key[d_content.content.natural_key()].append(d_content)
 
             for model_type in content_q_by_type.keys():
-                model_type.objects.filter(content_q_by_type[model_type]).touch()
-                for result in model_type.objects.filter(content_q_by_type[model_type]).iterator():
+                await sync_to_async(
+                    model_type.objects.filter(content_q_by_type[model_type]).touch
+                )()
+                async for result in sync_to_async_iterable(
+                    model_type.objects.filter(content_q_by_type[model_type]).iterator()
+                ):
                     for d_content in d_content_by_nat_key[result.natural_key()]:
                         d_content.content = result
 
@@ -84,43 +93,62 @@ class ContentSaver(Stage):
             The coroutine for this stage.
         """
         async for batch in self.batches():
-            content_artifact_bulk = []
-            with transaction.atomic():
-                await self._pre_save(batch)
 
-                for d_content in batch:
-                    # Are we saving to the database for the first time?
-                    content_already_saved = not d_content.content._state.adding
-                    if not content_already_saved:
-                        try:
-                            with transaction.atomic():
-                                d_content.content.save()
-                        except IntegrityError as e:
+            def process_batch():
+                content_artifact_bulk = []
+                with transaction.atomic():
+                    if not inspect.iscoroutinefunction(self._pre_save):
+                        self._pre_save(batch)
+                    for d_content in batch:
+                        # Are we saving to the database for the first time?
+                        content_already_saved = not d_content.content._state.adding
+                        if not content_already_saved:
                             try:
-                                d_content.content = d_content.content.__class__.objects.get(
-                                    d_content.content.q()
+                                with transaction.atomic():
+                                    d_content.content.save()
+                            except IntegrityError as e:
+                                try:
+                                    d_content.content = d_content.content.__class__.objects.get(
+                                        d_content.content.q()
+                                    )
+                                except ObjectDoesNotExist:
+                                    raise e
+                                continue
+                            for d_artifact in d_content.d_artifacts:
+                                if not d_artifact.artifact._state.adding:
+                                    artifact = d_artifact.artifact
+                                else:
+                                    # set to None for on-demand synced artifacts
+                                    artifact = None
+                                content_artifact = ContentArtifact(
+                                    content=d_content.content,
+                                    artifact=artifact,
+                                    relative_path=d_artifact.relative_path,
                                 )
-                            except ObjectDoesNotExist:
-                                raise e
-                            continue
-                        for d_artifact in d_content.d_artifacts:
-                            if not d_artifact.artifact._state.adding:
-                                artifact = d_artifact.artifact
-                            else:
-                                # set to None for on-demand synced artifacts
-                                artifact = None
-                            content_artifact = ContentArtifact(
-                                content=d_content.content,
-                                artifact=artifact,
-                                relative_path=d_artifact.relative_path,
-                            )
-                            content_artifact_bulk.append(content_artifact)
-                ContentArtifact.objects.bulk_get_or_create(content_artifact_bulk)
+                                content_artifact_bulk.append(content_artifact)
+                    ContentArtifact.objects.bulk_get_or_create(content_artifact_bulk)
+                    if not inspect.iscoroutinefunction(self._post_save):
+                        self._post_save(batch)
+
+            if inspect.iscoroutinefunction(self._pre_save):
+                deprecation_logger.warning(
+                    "ContentSaver._pre_save() coroutine has been deprecated. Support will be "
+                    "dropped in pulpcore 3.16. ContentSaver._pre_save() should now be a "
+                    "synchronous function."
+                )
+                await self._pre_save(batch)
+            await sync_to_async(process_batch)()
+            if inspect.iscoroutinefunction(self._post_save):
+                deprecation_logger.warning(
+                    "ContentSaver._post_save() coroutine has been deprecated. Support will be "
+                    "dropped in pulpcore 3.16. ContentSaver._post_save() should now be a "
+                    "synchronous function."
+                )
                 await self._post_save(batch)
             for declarative_content in batch:
                 await self.put(declarative_content)
 
-    async def _pre_save(self, batch):
+    def _pre_save(self, batch):
         """
         A hook plugin-writers can override to save related objects prior to content unit saving.
 
@@ -133,7 +161,7 @@ class ContentSaver(Stage):
         """
         pass
 
-    async def _post_save(self, batch):
+    def _post_save(self, batch):
         """
         A hook plugin-writers can override to save related objects after content unit saving.
 
@@ -226,8 +254,14 @@ class ContentAssociation(Stage):
         Returns:
             The coroutine for this stage.
         """
-        with ProgressReport(message="Associating Content", code="associating.content") as pb:
-            to_delete = set(self.new_version.content.values_list("pk", flat=True))
+        async with ProgressReport(message="Associating Content", code="associating.content") as pb:
+            to_delete = {
+                i
+                async for i in sync_to_async_iterable(
+                    self.new_version.content.values_list("pk", flat=True)
+                )
+            }
+
             async for batch in self.batches():
                 to_add = set()
                 for d_content in batch:
@@ -238,13 +272,17 @@ class ContentAssociation(Stage):
                         await self.put(d_content)
 
                 if to_add:
-                    self.new_version.add_content(Content.objects.filter(pk__in=to_add))
-                    pb.increase_by(len(to_add))
+                    await sync_to_async(self.new_version.add_content)(
+                        Content.objects.filter(pk__in=to_add)
+                    )
+                    await pb.aincrease_by(len(to_add))
 
             if self.allow_delete:
-                with ProgressReport(
+                async with ProgressReport(
                     message="Un-Associating Content", code="unassociating.content"
                 ) as pb:
                     if to_delete:
-                        self.new_version.remove_content(Content.objects.filter(pk__in=to_delete))
-                        pb.increase_by(len(to_delete))
+                        await sync_to_async(self.new_version.remove_content)(
+                            Content.objects.filter(pk__in=to_delete)
+                        )
+                        await pb.aincrease_by(len(to_delete))
