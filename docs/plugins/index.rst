@@ -11,11 +11,11 @@ Each plugin has its own documentation that contains setup, workflow, and concept
 * `Pulp Container plugin <https://docs.pulpproject.org/pulp_container/>`_.
 * `Pulp Ansible plugin <https://docs.pulpproject.org/pulp_ansible/>`_.
 * `Pulp Debian plugin <https://docs.pulpproject.org/pulp_deb/>`_.
-* `Pulp Python plugin <https://pulp-python.readthedocs.io/en/latest/>`_.
+* `Pulp Python plugin <https://docs.pulpproject.org/pulp_python/>`_.
 * `Pulp Chef Cookbook plugin <https://github.com/pulp/pulp_cookbook/blob/master/README.rst/>`_.
-* `Pulp Maven plugin <https://github.com/pulp/pulp_maven/blob/master/README.rst/>`_.
+* `Pulp Maven plugin <https://docs.pulpproject.org/pulp_maven/>`_.
 * `Ansible GalaxyNG plugin <https://github.com/ansible/galaxy_ng/blob/master/README.md/>`_.
-* `Pulp Certguard plugin <https://pulp-certguard.readthedocs.io/en/latest/>`_.
+* `Pulp Certguard plugin <https://docs.pulpproject.org/certguard/>`_.
 * `Pulp 2-to-3 Migration plugin <https://docs.pulpproject.org/pulp_2to3_migration/>`_.
 
 

@@ -11,7 +11,7 @@ Storage
   configure Pulp.
 
   You can also configure Pulp to use Amazon S3 and Azure storage using the Pulp installer. For more information
-  see the `Pulp installer documentation <https://pulp-installer.readthedocs.io/en/latest/quickstart/#storage>`_
+  see the `Pulp installer documentation <https://docs.pulpproject.org/pulp_installer/quickstart/#storage>`_
 
 Amazon S3
 ^^^^^^^^^
@@ -36,7 +36,7 @@ To have Pulp use S3, complete the following steps:
 
       pip install django-storages[boto3]
 
-2. Depending on which method you use to install or configure Pulp, you must set ``DEFAULT_FILE_STORAGE`` to ``storages.backends.s3boto3.S3Boto3Storage`` in Pulp Settings. For example, if you use the `Pulp installer <https://pulp-installer.readthedocs.io/en/latest/quickstart/>`_, the ``default_file_storage`` is part of the ``pulp_settings`` Ansible variables you can define in your Ansible playbook.
+2. Depending on which method you use to install or configure Pulp, you must set ``DEFAULT_FILE_STORAGE`` to ``storages.backends.s3boto3.S3Boto3Storage`` in Pulp Settings. For example, if you use the `Pulp installer <https://docs.pulpproject.org/pulp_installer/quickstart/>`_, the ``default_file_storage`` is part of the ``pulp_settings`` Ansible variables you can define in your Ansible playbook.
 
 3. In that same way, add your Amazon S3 configuration settings to ``AWS_ACCESS_KEY_ID``, ``AWS_SECRET_ACCESS_KEY``, and ``AWS_STORAGE_BUCKET_NAME``. For more S3 configuration options, see the `django-storages documents <https://django-storages.readthedocs.io/en/latest/backends/amazon-S3.html>`_.
 
@@ -89,7 +89,7 @@ Configuring Pulp to use Azure Blob storage
 
       pip install django-storages[azure]
 
-2. Depending on which method you use to install or configure Pulp, you must set ``DEFAULT_FILE_STORAGE`` to ``storages.backends.azure_storage.AzureStorage`` in Pulp Settings. For example, if you use the `Pulp installer <https://pulp-installer.readthedocs.io/en/latest/quickstart/>`_, the ``default_file_storage`` is part of the ``pulp_settings`` Ansible variables you can define in your Ansible playbook.
+2. Depending on which method you use to install or configure Pulp, you must set ``DEFAULT_FILE_STORAGE`` to ``storages.backends.azure_storage.AzureStorage`` in Pulp Settings. For example, if you use the `Pulp installer <https://docs.pulpproject.org/pulp_installer/quickstart/>`_, the ``default_file_storage`` is part of the ``pulp_settings`` Ansible variables you can define in your Ansible playbook.
 3. In the same way, configure the following parameters::
 
       AZURE_ACCOUNT_NAME = 'Storage account name'

@@ -4,7 +4,7 @@ Developer Setup
 ===============
 
 To ease developer setup, we have `Pulplift
-<https://pulp-installer.readthedocs.io/en/latest/pulplift/>`_ as part of the installer repository,
+<https://docs.pulpproject.org/pulp_installer/pulplift/>`_ as part of the installer repository,
 which is based on the `Forklift <https://github.com/theforeman/forklift>`_ project and utilizes
 `Ansible <https://docs.ansible.com/ansible/index.html>`_ roles and playbooks to provide supported
 `Vagrant <https://docs.vagrantup.com/>`_ boxes that are more consistent with the user experience.
@@ -37,7 +37,7 @@ Installation
 ------------
 
 We recommend using ``pulplift`` for developer installations. Follow the instructions in the
-`installer documentation <https://pulp-installer.readthedocs.io/en/latest/pulplift/>`_.
+`installer documentation <https://docs.pulpproject.org/pulp_installer/pulplift/>`_.
 
 It is also possible to use the `Ansible roles
 <https://github.com/pulp/pulp_installer#pulp-3-ansible-installer>`_ directly, if you prefer not to
