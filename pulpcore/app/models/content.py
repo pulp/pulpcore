@@ -92,6 +92,18 @@ class BulkCreateManager(models.Manager):
         return objs
 
 
+class BulkTouchQuerySet(models.QuerySet):
+    """
+    A query set that provides ``touch()``.
+    """
+
+    def touch(self):
+        """
+        Update the ``timestamp_of_interest`` on all objects of the query.
+        """
+        return self.update(timestamp_of_interest=now())
+
+
 class QueryMixin:
     """
     A mixin that provides models with querying utilities.
@@ -192,7 +204,7 @@ class Artifact(HandleTempFilesMixin, BaseModel):
     sha512 = models.CharField(max_length=128, null=True, unique=True, db_index=True)
     timestamp_of_interest = models.DateTimeField(auto_now=True)
 
-    objects = ArtifactManager()
+    objects = ArtifactManager.from_queryset(BulkTouchQuerySet)()
 
     # All available digest fields ordered by algorithm strength.
     DIGEST_FIELDS = _DIGEST_FIELDS
@@ -470,7 +482,7 @@ class Content(MasterModel, QueryMixin):
     _artifacts = models.ManyToManyField(Artifact, through="ContentArtifact")
     timestamp_of_interest = models.DateTimeField(auto_now=True)
 
-    objects = ContentManager()
+    objects = ContentManager.from_queryset(BulkTouchQuerySet)()
 
     class Meta:
         verbose_name_plural = "content"
