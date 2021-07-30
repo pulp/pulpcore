@@ -23,7 +23,7 @@ The Pulp 3 Ansible Installer is a collection of Ansible roles designed to automa
 You can customize and configure your Pulp deployment through the Ansible variables for each role.
 
 For comprehensive and up-to-date instructions about using the Pulp Ansible installer, see the
-`Pulp Installer documentation <https://pulp-installer.readthedocs.io/>`__.
+`Pulp Installer documentation <https://docs.pulpproject.org/pulp_installer/>`__.
 
 
 PyPI Installation
@@ -174,7 +174,7 @@ Systemd
 -------
 
 To run the four Pulp services, systemd files needs to be created in /usr/lib/systemd/system/. The
-`Pulp 3 Ansible Installer <https://pulp-installer.readthedocs.io/>`__ makes these for you, but you
+`Pulp 3 Ansible Installer <https://docs.pulpproject.org/pulp_installer/>`__ makes these for you, but you
 can also configure them by hand from the templates below. Custom configuration can be applied using
 the ``Environment`` option with various :ref:`Pulp settings <settings>`.
 
@@ -233,4 +233,4 @@ certificates for nginx and httpd reverse proxies.
 
 3. The Pulp Installer also supports using services that use the ACME protocol, e.g. https://letsencrypt.org/,  to
    generate trusted SSL certificates. See the Pulp Installer documentation for `instructions and an example playbook
-   <https://pulp-installer.readthedocs.io/en/latest/letsencrypt/>`_.
+   <https://docs.pulpproject.org/pulp_installer/letsencrypt/>`_.

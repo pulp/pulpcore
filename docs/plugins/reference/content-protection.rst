@@ -27,7 +27,7 @@ Master/Detail objects a ``TYPE`` class attribute is needed which is then used in
 
 .. note::
 
-   The `pulp-certguard <https://pulp-certguard.readthedocs.io/en/latest/>`_ plugin ships various
+   The `pulp-certguard <https://docs.pulpproject.org/pulp_certguard/>`_ plugin ships various
    ``ContentGuard`` types for users and plugin writers to use together. Plugins can ship their own
    content guards too, but look at the existing ones first.
 

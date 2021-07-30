@@ -439,7 +439,7 @@ Logging of deprecation warnings can be disabled by raising the log level for the
 Installation
 ------------
 
-It's recommended to use the `Pulp 3 Installer <https://pulp-installer.readthedocs.io/>`_ to install
+It's recommended to use the `Pulp 3 Installer <https://docs.pulpproject.org/pulp_installer/>`_ to install
 your plugin. Generally you can do this by configuring ``pulp_install_plugins`` variable with your
 Python package's name. For example for ``pulp-file``::
 
