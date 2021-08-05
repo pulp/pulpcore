@@ -288,7 +288,7 @@ jobs:
         with:
           committer: pulpbot <pulp-infra@redhat.com>
           author: pulpbot <pulp-infra@redhat.com>
-          branch: ${{ github.event.inputs.release }}-changelog
+          branch: changelog/${{ github.event.inputs.release }}
           base: master
           title: 'Building changelog for ${{ github.event.inputs.release }}'
           body: '[noissue]'

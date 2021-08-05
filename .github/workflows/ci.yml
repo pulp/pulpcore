@@ -5,16 +5,15 @@
 #
 # For more info visit https://github.com/pulp/plugin_template
 ---
-name: Pulp CI
-on:
-  pull_request:
-    branches:
-      - '*'
-
+name: Pulpcore CI
+on: {pull_request: {branches: ['*']}}
 jobs:
+
+
 
   lint:
     runs-on: ubuntu-latest
+    
 
     steps:
       - uses: actions/checkout@v2
@@ -123,6 +122,11 @@ jobs:
       - name: Script
         run: .github/workflows/scripts/script.sh
         shell: bash
+        # env vars useful for post_script.sh when present
+        env:
+          GITHUB_PULL_REQUEST: ${{ github.event.number }}
+          GITHUB_BRANCH: ${{ github.head_ref }}
+          GITHUB_REPO_SLUG: ${{ github.repository }}
 
       - name: After failure
         if: failure()
@@ -211,3 +215,6 @@ jobs:
           docker exec pulp ls -latr /etc/yum.repos.d/ || true
           docker exec pulp cat /etc/yum.repos.d/* || true
           docker exec pulp pip3 list
+
+
+
