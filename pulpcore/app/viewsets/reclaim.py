@@ -34,7 +34,6 @@ class ReclaimSpaceViewSet(ViewSet):
         for rv in keeplist:
             repos.append(rv.repository)
             keeplist_rv_pks.append(rv.pk)
-        force = serializer.validated_data.get("force", False)
 
         task = dispatch(
             reclaim_space,
@@ -42,7 +41,6 @@ class ReclaimSpaceViewSet(ViewSet):
             kwargs={
                 "repo_pks": reclaim_repo_pks,
                 "keeplist_rv_pks": keeplist_rv_pks,
-                "force": force,
             },
         )
 

@@ -62,17 +62,12 @@ versions will be created or removed.
 An optional ``repo_versions_keeplist`` parameter can be specified, that will contain list of repo
 version hrefs which will be excluded from the artifact removal.
 
-By default, the task will not remove artifacts from content that was uploaded directly into Pulp but
-only content that was synced from a remote source.
+The task will remove artifacts only from content that was synced from a remote source. It will not
+touch the content that was uploaded directly into Pulp.
 
 .. note::
 
    The task will clean up artifacts regardless of the download policy. The content app will be able
    to stream artifact if it is locally available, otherwise it will attempt to redownload it from
    the known upstream urls. In case upstream stopped serving the corresponding file, Pulp won't be
-   able to download and serve it.
-
-.. warning::
-
-    For uploaded content that, as a rule, does not have a remote source url, a ``force`` flag must
-    be specified. This, however, will lead to a non-consumable content afterwards. 
+   able to download and serve it. 
