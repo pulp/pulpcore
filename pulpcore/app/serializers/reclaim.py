@@ -21,11 +21,6 @@ class ReclaimSpaceSerializer(serializers.Serializer, ValidateFieldsMixin):
         many=True,
         required=False,
     )
-    force = fields.BooleanField(
-        required=False,
-        default=False,
-        help_text=_("Will remove Artifacts for uploaded content. Disabled by default"),
-    )
 
     def validate_repo_hrefs(self, value):
         """
