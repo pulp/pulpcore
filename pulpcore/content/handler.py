@@ -788,6 +788,8 @@ class Handler:
         elif settings.DEFAULT_FILE_STORAGE == "storages.backends.s3boto3.S3Boto3Storage":
             content_disposition = f"attachment;filename={content_artifact.relative_path}"
             parameters = {"ResponseContentDisposition": content_disposition}
+            if headers.get("Content-Type"):
+                parameters["ResponseContentType"] = headers.get("Content-Type")
             url = URL(
                 artifact_file.storage.url(artifact_file.name, parameters=parameters), encoded=True
             )
