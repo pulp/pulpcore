@@ -24,13 +24,16 @@ django.setup()
 from django.conf import settings  # noqa: E402: module level not at top of file
 from django.db import connection  # noqa: E402: module level not at top of file
 from django.utils import timezone  # noqa: E402: module level not at top of file
-from guardian.shortcuts import get_users_with_perms  # noqa: E402: module level not at top of file
 from django_currentuser.middleware import (  # noqa: E402: module level not at top of file
     _set_current_user,
 )
 from django_guid import set_guid  # noqa: E402: module level not at top of file
 
 from pulpcore.app.models import Worker, Task  # noqa: E402: module level not at top of file
+
+from pulpcore.app.role_util import (  # noqa: E402: module level not at top of file
+    get_users_with_perms,
+)
 
 from pulpcore.constants import (  # noqa: E402: module level not at top of file
     TASK_STATES,
@@ -343,7 +346,7 @@ def _perform_task(task_pk, task_working_dir_rel_path):
     task.set_running()
     # Store the task id in the environment for `Task.current()`.
     os.environ["PULP_TASK_ID"] = str(task.pk)
-    user = get_users_with_perms(task).first()
+    user = get_users_with_perms(task, with_group_users=False).first()
     _set_current_user(user)
     set_guid(task.logging_cid)
     try:

@@ -66,8 +66,11 @@ from .task import TaskViewSet, TaskGroupViewSet, WorkerViewSet  # noqa
 from .upload import UploadViewSet  # noqa
 from .user import (  # noqa
     GroupViewSet,
+    GroupRoleViewSet,
     GroupUserViewSet,
     GroupModelPermissionViewSet,
     GroupObjectPermissionViewSet,
+    RoleViewSet,
     UserViewSet,
+    UserRoleViewSet,
 )

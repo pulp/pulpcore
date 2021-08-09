@@ -4,13 +4,13 @@ Users and Groups
 ================
 
 Users and Groups is always stored in the Django database. This is a requirement so that
-``Permissions`` can relate to them.
+``Roles`` or ``Permissions`` can relate to them.
 
 :User: Provided by Django with the ``django.contrib.auth.models.User`` model.
 :Group: Provided by Django with the ``django.contrib.auth.models.Group`` model.
 
-Any permission can be assigned to either users, groups, or both. This includes both Model-level and
-Object-level permissions.
+Any role or permission can be assigned to either users, groups, or both. This includes both
+Model-level and Object-level roles as well as permissions.
 
 
 .. _viewing_users_and_groups_via_UI:
@@ -31,6 +31,8 @@ membership data.
 
 Model-level Permissions via a UI
 --------------------------------
+
+.. note:: This only applies to permissions.
 
 The django-admin site also provides views into the Permissions that Users and Groups have.
 Additionally you can add and remove Permissions here as well.

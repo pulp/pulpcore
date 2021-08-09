@@ -98,8 +98,11 @@ class PulpPluginAppConfig(apps.AppConfig):
         self.import_urls()
         self.import_modelresources()
         post_migrate.connect(
-            _populate_access_policies, sender=self, dispatch_uid="my_unique_identifier"
+            _populate_access_policies,
+            sender=self,
+            dispatch_uid="polulate_access_policies_identifier",
         )
+        post_migrate.connect(_populate_roles, sender=self, dispatch_uid="populate_roles_identifier")
 
     def import_serializers(self):
         # circular import avoidance
@@ -194,37 +197,130 @@ class PulpAppConfig(PulpPluginAppConfig):
         post_migrate.connect(_delete_anon_user, sender=self, dispatch_uid="delete_anon_identifier")
 
 
-def _populate_access_policies(sender, **kwargs):
+def _rename_permissions_assignment_workaround(access_policy):
+    from pulpcore.app.loggers import deprecation_logger
+
+    if "permissions_assignment" in access_policy:
+        deprecation_logger.warn(
+            "The field 'permissions_assignment' has been renamed to 'creation_hooks'. This "
+            "workaround may be removed with pulpcore 3.20."
+        )
+        access_policy["creation_hooks"] = access_policy.pop("permissions_assignment")
+    if "creation_hooks" in access_policy:
+        if any(hook.get("permissions") is not None for hook in access_policy["creation_hooks"]):
+            deprecation_logger.warn(
+                "The 'permissions' field in 'creation_hooks' is deprecated and may be removed "
+                "with pulpcore 3.20. Use the 'parameters' field instead."
+            )
+
+
+def _populate_access_policies(sender, apps, verbosity, **kwargs):
     from pulpcore.app.util import get_view_urlpattern
 
-    apps = kwargs.get("apps")
-    if apps is None:
-        from django.apps import apps
-    AccessPolicy = apps.get_model("core", "AccessPolicy")
+    try:
+        AccessPolicy = apps.get_model("core", "AccessPolicy")
+    except LookupError:
+        if verbosity >= 1:
+            print(_("AccessPolicy model does not exist. Skipping initialization."))
+        return
+
     for viewset_batch in sender.named_viewsets.values():
         for viewset in viewset_batch:
             access_policy = getattr(viewset, "DEFAULT_ACCESS_POLICY", None)
             if access_policy is not None:
+                _rename_permissions_assignment_workaround(access_policy)
                 viewset_name = get_view_urlpattern(viewset)
                 db_access_policy, created = AccessPolicy.objects.get_or_create(
                     viewset_name=viewset_name, defaults=access_policy
                 )
                 if created:
-                    print(f"Access policy for {viewset_name} created.")
+                    if verbosity >= 1:
+                        print(
+                            _("Access policy for {viewset_name} created.").format(
+                                viewset_name=viewset_name
+                            )
+                        )
                 if not created and not db_access_policy.customized:
                     for key, value in access_policy.items():
                         setattr(db_access_policy, key, value)
                     db_access_policy.save()
-                    print(f"Access policy for {viewset_name} updated.")
+                    if verbosity >= 1:
+                        print(
+                            _("Access policy for {viewset_name} updated.").format(
+                                viewset_name=viewset_name
+                            )
+                        )
 
 
-def _delete_anon_user(sender, **kwargs):
+def _populate_roles(sender, apps, verbosity, **kwargs):
+    role_prefix = f"{sender.label}."
+    # collect all plugin defined roles
+    desired_roles = {}
+    for viewset_batch in sender.named_viewsets.values():
+        for viewset in viewset_batch:
+            locked_roles = getattr(viewset, "LOCKED_ROLES", None)
+            if locked_roles is not None:
+                desired_roles.update(locked_roles or {})
+    adjust_roles(apps, role_prefix, desired_roles, verbosity)
+
+
+def adjust_roles(apps, role_prefix, desired_roles, verbosity=1):
+    """
+    Adjust all roles with a given prefix.
+
+    Args:
+        apps (django.apps.registry.Apps): Django app registry
+        role_prefix (str): Common prefix of roles to adjust
+        desired_roles (dict): Dictionary of desired state of roles, where each entry is either a
+            list of permissions, or a dict with "description" and "permissions" as keys.
+    """
+    assert all((key.startswith(role_prefix) for key in desired_roles))
+    try:
+        Role = apps.get_model("core", "Role")
+        Permission = apps.get_model("auth", "Permission")
+    except LookupError:
+        # The signal might have been triggered on an old migration
+        if verbosity >= 1:
+            print(_("Role model does not exist. Skipping initialization."))
+        return
+
+    def _get_permission(perm):
+        app_label, codename = perm.split(".", maxsplit=2)
+        return Permission.objects.get(content_type__app_label=app_label, codename=codename)
+
+    # Remove obsolete roles
+    Role.objects.filter(name__startswith=role_prefix, locked=True).exclude(
+        name__in=desired_roles.keys()
+    ).delete()
+    # Create / update desired roles
+    for name, desired_role in desired_roles.items():
+        if isinstance(desired_role, dict):
+            description = desired_role.get("description")
+            permissions = desired_role["permissions"]
+        elif isinstance(desired_role, list):
+            description = None
+            permissions = desired_role
+        else:
+            raise RuntimeError(
+                _("Locked role definition for {name} is incompatible.").format(name=name)
+            )
+        permissions = [_get_permission(perm) for perm in permissions]
+        role, created = Role.objects.get_or_create(
+            name=name, locked=True, defaults={"name": name, "locked": True}
+        )
+        role.description = description
+        role.save()
+        role.permissions.set(permissions)
+
+
+def _delete_anon_user(sender, verbosity, **kwargs):
     if settings.ANONYMOUS_USER_NAME is None:
-        print(_("Deleting Guardians' AnonymousUser"))
         User = get_user_model()
         try:
             anon = User.objects.get(username="AnonymousUser")
         except User.DoesNotExist:
             pass
         else:
+            if verbosity >= 1:
+                print(_("Deleting Guardians' AnonymousUser"))
             anon.delete()

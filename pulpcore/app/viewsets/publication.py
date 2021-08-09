@@ -185,7 +185,7 @@ class RBACContentGuardViewSet(ContentGuardViewSet):
                 "condition": "has_model_or_obj_perms:core.download_rbaccontentguard",
             },
         ],
-        "permissions_assignment": [
+        "creation_hooks": [
             {
                 "function": "add_for_object_creator",
                 "parameters": None,

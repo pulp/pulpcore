@@ -118,6 +118,7 @@ MIDDLEWARE = [
 AUTHENTICATION_BACKENDS = [
     "django.contrib.auth.backends.ModelBackend",
     "guardian.backends.ObjectPermissionBackend",
+    "pulpcore.backends.ObjectRolePermissionBackend",
 ]
 
 # Disable django guardian anonymous user

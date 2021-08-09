@@ -116,7 +116,7 @@ All access policies are stored in the database in the `pulpcore.plugin.models.Ac
 which stores the policy statements described above. Here is a look at the ``AccessPolicy`` model:
 
 .. autoclass:: pulpcore.plugin.models.AccessPolicy
-   :members: viewset_name, statements, permissions_assignment
+   :members: viewset_name, statements, creation_hooks
 
 By storing these in the database they are readable to users with a GET to
 ``/pulp/api/v3/access_policies/``. Additionally users can PUT/PATCH modify them at
@@ -131,9 +131,10 @@ Shipping a Default Access Policy
 --------------------------------
 
 To ship a default access policy, define a dictionary named ``DEFAULT_ACCESS_POLICY`` as a class
-attribute on a subclass of ``NamedModelViewSet`` containing both ``statements`` and
-``permissions_assignment``. The ``AccessPolicy`` instance will be then be created in the
-``pulp_migrate`` signal handler.
+attribute on a subclass of ``NamedModelViewSet`` containing all of ``statements`` and
+``creation_hooks``. The ``AccessPolicy`` instance will then be created in the ``pulp_migrate``
+signal handler. In the same way you might want to specify a ``LOCKED_ROLES`` dictionary that will
+define roles as lists of permissions to be used in the access policy.
 
 Here's an example of code to define a default policy:
 
@@ -175,20 +176,31 @@ Here's an example of code to define a default policy:
                 },
             ],
 
-            "permissions_assignment": [
+            "creation_hooks": [
                 {
-                    "function": "add_for_object_creator",
-                    "parameters": None,
-                    "permissions": [
-                        "file.view_fileremote", "file.change_fileremote", "file.delete_fileremote"
-                    ]
+                    "function": "add_roles_for_object_creator",
+                    "parameters": {
+                        "roles": "file.fileremote_owner",
+                    },
                 },
             ],
         }
+        LOCKED_ROLES = {
+            "file.fileremote_owner": [
+                "file.view_fileremote", "file.change_fileremote", "file.delete_fileremote"
+            ],
+            "file.fileremote_viewer": ["file.view_fileremote"],
+        }
         <...>
 
-For an explanation of the ``permissions_assignment`` see the
+For an explanation of the ``creation_hooks`` see the
 :ref:`shipping_a_default_new_object_policy` documentation.
+
+The attribute ``LOCKED_ROLES`` contains roles that are managed by the plugin author. Their name
+needs to be prefixed by the plugins ``app_label`` with a dot to prevent collisions. Roles defined
+there will be replicated and updated in the database after every migration. They are also
+marked ``locked=True`` to prevent being modified by users. The primary purpose of these roles is to
+allow plugin writers to refer to them in the default access policy.
 
 
 .. _handling_objects_created_prior_to_RBAC:

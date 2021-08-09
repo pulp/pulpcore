@@ -52,6 +52,13 @@ from .repository import (  # noqa
     RepositoryVersionContentDetails,
 )
 
+# This can lead to circular imports with a custom user model depending on this very module
+# from .role import (  # noqa
+#     GroupRole,
+#     Role,
+#     UserRole,
+# )
+
 from .status import ContentAppStatus  # noqa
 
 from .task import (  # noqa

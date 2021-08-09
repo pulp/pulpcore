@@ -30,6 +30,24 @@ class UserTestCase(unittest.TestCase):
         users = self.user_api.list(username="admin")
         self.assertEqual(len(users.results), 1)
 
+        users = self.user_api.list(username__contains="test_")
+        self.assertEqual(len(users.results), 0)
+
+        user_hrefs = [
+            self.user_api.create(user={"username": name}).pulp_href
+            for name in ["test_newbee", "test_admin"]
+        ]
+        try:
+            users = self.user_api.list(username__contains="test_")
+            self.assertEqual(len(users.results), 2)
+            users = self.user_api.list(username__contains="test_new")
+            self.assertEqual(len(users.results), 1)
+            users = self.user_api.list(username="test_newbee")
+            self.assertEqual(len(users.results), 1)
+        finally:
+            for user_href in user_hrefs:
+                self.user_api.delete(user_href)
+
 
 class GroupTestCase(unittest.TestCase):
     """Test REST API for users."""
@@ -59,7 +77,7 @@ class GroupTestCase(unittest.TestCase):
         groups = self.group_api.list()
         self.assertNotIn("test_newbees", [group.name for group in groups.results])
 
-    def test_filter_users(self):
+    def test_filter_groups(self):
         """Test that groups can be filterd."""
 
         groups = self.group_api.list(name__contains="test_")
