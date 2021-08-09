@@ -119,11 +119,10 @@ def validate_version_paths(version):
     paths = ContentArtifact.objects.filter(content__pk__in=version.content).values_list(
         "relative_path", flat=True
     )
-
     try:
         validate_file_paths(paths)
     except ValueError as e:
-        raise ValueError(_("Cannot create repository version. {err}.").format(err=e))
+        raise ValueError(_("Repository version errors : {err}").format(err=e))
 
 
 def validate_repo_version(version):

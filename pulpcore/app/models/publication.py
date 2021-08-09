@@ -174,7 +174,14 @@ class Publication(MasterModel):
             exc_tb (types.TracebackType): (optional) stack trace.
         """
         if exc_val:
-            self.delete()
+            # If an exception got us here, the Publication we were trying to create is
+            # Bad, and we should delete the attempt. HOWEVER - some exceptions happen before we
+            # even get that far. In those cases, calling delete() results in a new not-very-useful
+            # exception being raised and reported to the user, rather than the actual problem.
+            try:
+                self.delete()
+            except Exception:
+                raise exc_val.with_traceback(exc_tb)
         else:
             try:
                 self.finalize_new_publication()
