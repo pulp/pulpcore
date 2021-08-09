@@ -10,6 +10,13 @@ from guardian.models.models import GroupObjectPermission, UserObjectPermission
 from guardian.shortcuts import assign_perm, remove_perm
 
 from pulpcore.app.models import BaseModel
+from pulpcore.app.loggers import deprecation_logger
+
+
+def _ensure_iterable(obj):
+    if isinstance(obj, str):
+        return [obj]
+    return obj
 
 
 class AccessPolicy(BaseModel):
@@ -18,10 +25,10 @@ class AccessPolicy(BaseModel):
 
     Fields:
 
-        permissions_assignment (models.JSONField): A list of dictionaries identifying callables on
-            the ``pulpcore.plugin.access_policy.AccessPolicyFromDB`` which add user or group
-            permissions for newly created objects. This is a nullable field due to not all endpoints
-            creating objects.
+        creation_hooks (models.JSONField): A list of dictionaries identifying callables on the
+            ``pulpcore.plugin.access_policy.AccessPolicyFromDB`` which can add user or group roles
+            for newly created objects. This is a nullable field due to not all endpoints creating
+            objects.
         statements (models.JSONField): A list of ``drf-access-policy`` statements.
         viewset_name (models.CharField): The name of the viewset this instance controls
             authorization for.
@@ -30,7 +37,7 @@ class AccessPolicy(BaseModel):
 
     """
 
-    permissions_assignment = models.JSONField(null=True)
+    creation_hooks = models.JSONField(null=True)
     statements = models.JSONField()
     viewset_name = models.CharField(max_length=128, unique=True)
     customized = models.BooleanField(default=False)
@@ -38,24 +45,34 @@ class AccessPolicy(BaseModel):
 
 class AutoAddObjPermsMixin:
     """
-    A mixin that automatically adds permissions based on the ``permissions_assignment`` data.
+    A mixin that automatically adds roles based on the ``creation_hooks`` data.
 
     To use this mixin, your model must support ``django-lifecycle``.
 
     To use this mixin, you must define a class attribute named ``ACCESS_POLICY_VIEWSET_NAME``
     containing the name of the ViewSet associated with this object.
 
-    This mixin adds an ``after_create`` hook which properly interprets the
-    ``permissions_assignment`` data and calls methods also provided by this mixin to add
-    permissions.
+    This mixin adds an ``after_create`` hook which properly interprets the ``creation_hooks``
+    data and calls methods also provided by this mixin to add roles.
 
-    Three mixing are provided by default:
+    These mixing are provided by default:
 
     * ``add_for_object_creator`` will add the permissions to the creator of the object.
     * ``add_for_users`` will add the permissions for one or more users by name.
     * ``add_for_groups`` will add the permissions for one or more groups by name.
+    * ``add_roles_for_object_creator`` will add the roles to the creator of the object.
+    * ``add_roles_for_users`` will add the roles for one or more users by name.
+    * ``add_roles_for_groups`` will add the roles for one or more groups by name.
 
     """
+
+    def __init__(self, *args, **kwargs):
+        self.REGISTERED_CREATION_HOOKS = {
+            "add_roles_for_users": self.add_roles_for_users,
+            "add_roles_for_groups": self.add_roles_for_groups,
+            "add_roles_for_object_creator": self.add_roles_for_object_creator,
+        }
+        super().__init__(*args, **kwargs)
 
     @hook("after_create")
     def add_perms(self):
@@ -68,18 +85,24 @@ class AutoAddObjPermsMixin:
                     "`ACCESS_POLICY_VIEWSET_NAME` class attribute."
                 )
             )
-        self._handle_permissions_assignments(access_policy)
+        self._handle_creation_hooks(access_policy)
 
-    def _handle_permissions_assignments(self, access_policy):
-        for permission_assignment in access_policy.permissions_assignment:
-            callable = getattr(self, permission_assignment["function"])
-            callable(permission_assignment["permissions"], permission_assignment["parameters"])
-
-    @staticmethod
-    def _ensure_iterable(obj):
-        if isinstance(obj, str):
-            return [obj]
-        return obj
+    def _handle_creation_hooks(self, access_policy):
+        if access_policy.creation_hooks is not None:
+            for creation_hook in access_policy.creation_hooks:
+                function = self.REGISTERED_CREATION_HOOKS.get(creation_hook["function"])
+                if function is not None:
+                    kwargs = creation_hook.get("parameters") or {}
+                    function(**kwargs)
+                else:
+                    # Old interface deprecated for removal in 3.20
+                    function = getattr(self, creation_hook["function"])
+                    deprecation_logger.warn(
+                        "Calling unregistered creation hooks from the access policy is deprecated"
+                        " and may be removed with pulpcore 3.20 "
+                        f"[hook={creation_hook}, viewset={access_policy.viewset_name}]."
+                    )
+                    function(creation_hook.get("permissions"), creation_hook.get("parameters"))
 
     def add_for_users(self, permissions, users):
         """
@@ -97,12 +120,35 @@ class AutoAddObjPermsMixin:
             ObjectDoesNotExist: If any of the users do not exist.
 
         """
-        permissions = self._ensure_iterable(permissions)
-        users = self._ensure_iterable(users)
+        permissions = _ensure_iterable(permissions)
+        users = _ensure_iterable(users)
         for username in users:
             user = get_user_model().objects.get(username=username)
             for perm in permissions:
                 assign_perm(perm, user, self)
+
+    def add_roles_for_users(self, roles, users):
+        """
+        Adds object-level roles for one or more users for this newly created object.
+
+        Args:
+            roles (str or list): One or more roles to be added at object-level for the users.
+                This can either be a single role as a string, or a list of role names.
+            users (str or list): One or more users who will receive object-level roles. This can
+                either be a single username as a string or a list of usernames.
+
+        Raises:
+            ObjectDoesNotExist: If any of the users do not exist.
+
+        """
+        from pulpcore.app.role_util import assign_role
+
+        roles = _ensure_iterable(roles)
+        users = _ensure_iterable(users)
+        for username in users:
+            user = get_user_model().objects.get(username=username)
+            for role in roles:
+                assign_role(role, user, self)
 
     def add_for_groups(self, permissions, groups):
         """
@@ -120,12 +166,35 @@ class AutoAddObjPermsMixin:
             ObjectDoesNotExist: If any of the groups do not exist.
 
         """
-        permissions = self._ensure_iterable(permissions)
-        groups = self._ensure_iterable(groups)
+        permissions = _ensure_iterable(permissions)
+        groups = _ensure_iterable(groups)
         for group_name in groups:
             group = Group.objects.get(name=group_name)
             for perm in permissions:
                 assign_perm(perm, group, self)
+
+    def add_roles_for_groups(self, roles, groups):
+        """
+        Adds object-level roles for one or more groups for this newly created object.
+
+        Args:
+            roles (str or list): One or more object-level roles to be added for the groups. This
+                can either be a single role as a string, or list of role names.
+            groups (str or list): One or more groups who will receive object-level roles. This
+                can either be a single group name as a string or a list of group names.
+
+        Raises:
+            ObjectDoesNotExist: If any of the groups do not exist.
+
+        """
+        from pulpcore.app.role_util import assign_role
+
+        roles = _ensure_iterable(roles)
+        groups = _ensure_iterable(groups)
+        for group_name in groups:
+            group = Group.objects.get(name=group_name)
+            for role in roles:
+                assign_role(role, group, self)
 
     def add_for_object_creator(self, permissions, *args):
         """
@@ -143,11 +212,33 @@ class AutoAddObjPermsMixin:
                 of permission names.
 
         """
-        permissions = self._ensure_iterable(permissions)
-        for perm in permissions:
-            current_user = get_current_authenticated_user()
-            if current_user:
+        permissions = _ensure_iterable(permissions)
+        current_user = get_current_authenticated_user()
+        if current_user:
+            for perm in permissions:
                 assign_perm(perm, current_user, self)
+
+    def add_roles_for_object_creator(self, roles):
+        """
+        Adds object-level roles for the user creating the newly created object.
+
+        If the ``django_currentuser.middleware.get_current_authenticated_user`` returns None because
+        the API client did not provide authentication credentials, *no* permissions are added and
+        this passes silently. This allows endpoints which create objects and do not require
+        authorization to execute without error.
+
+        Args:
+            roles (list or str): One or more roles to be added at the object-level for the user.
+                This can either be a single role as a string, or list of role names.
+
+        """
+        from pulpcore.app.role_util import assign_role
+
+        roles = _ensure_iterable(roles)
+        current_user = get_current_authenticated_user()
+        if current_user:
+            for role in roles:
+                assign_role(role, current_user, self)
 
 
 class AutoDeleteObjPermsMixin:
@@ -179,8 +270,8 @@ class AutoDeleteObjPermsMixin:
             ObjectDoesNotExist: If any of the users do not exist.
 
         """
-        permissions = self._ensure_iterable(permissions)
-        users = self._ensure_iterable(users)
+        permissions = _ensure_iterable(permissions)
+        users = _ensure_iterable(users)
         for username in users:
             user = get_user_model().objects.get(username=username)
             for perm in permissions:
@@ -203,8 +294,8 @@ class AutoDeleteObjPermsMixin:
             ObjectDoesNotExist: If any of the groups do not exist.
 
         """
-        permissions = self._ensure_iterable(permissions)
-        groups = self._ensure_iterable(groups)
+        permissions = _ensure_iterable(permissions)
+        groups = _ensure_iterable(groups)
         for group_name in groups:
             group = Group.objects.get(name=group_name)
             for perm in permissions:

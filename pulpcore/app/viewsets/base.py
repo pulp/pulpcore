@@ -7,7 +7,6 @@ from django.forms.utils import ErrorList
 from django.urls import Resolver404, resolve
 from django_filters.rest_framework import DjangoFilterBackend, filterset
 from drf_spectacular.utils import extend_schema
-from guardian.shortcuts import get_objects_for_user
 from rest_framework import viewsets
 from rest_framework.filters import OrderingFilter
 from rest_framework.generics import get_object_or_404
@@ -18,6 +17,7 @@ from pulpcore.app import tasks
 from pulpcore.app.models import MasterModel
 from pulpcore.app.response import OperationPostponedResponse
 from pulpcore.app.serializers import AsyncOperationResponseSerializer
+from pulpcore.app.role_util import get_objects_for_user
 from pulpcore.tasking.tasks import dispatch
 
 # These should be used to prevent duplication and keep things consistent
@@ -69,7 +69,7 @@ class StableOrderingFilter(OrderingFilter):
         The `ordering` query parameter can be overridden by setting the `ordering_param` value on
         the OrderingFilter or by specifying an `ORDERING_PARAM` value in the API settings.
         """
-        ordering = super(StableOrderingFilter, self).get_ordering(request, queryset, view)
+        ordering = super().get_ordering(request, queryset, view)
         try:
             field = queryset.model._meta.get_field("pulp_created")
         except FieldDoesNotExist:
@@ -333,7 +333,7 @@ class NamedModelViewSet(viewsets.GenericViewSet):
 
         permission_name = getattr(self, "queryset_filtering_required_permission", None)
         if permission_name:
-            qs = get_objects_for_user(self.request.user, permission_name, klass=qs)
+            qs = get_objects_for_user(self.request.user, permission_name, qs)
 
         return qs
 

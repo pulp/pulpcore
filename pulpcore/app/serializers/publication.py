@@ -2,7 +2,6 @@ from gettext import gettext as _
 
 from django.db.models import Q
 from drf_spectacular.utils import extend_schema_field
-from guardian.shortcuts import get_users_with_perms, get_groups_with_perms
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 
@@ -17,6 +16,7 @@ from pulpcore.app.serializers import (
     validate_unknown_fields,
 )
 from pulpcore.app.serializers.user import GroupUserSerializer, GroupSerializer
+from pulpcore.app.role_util import get_users_with_perms, get_groups_with_perms
 
 
 class PublicationSerializer(ModelSerializer):

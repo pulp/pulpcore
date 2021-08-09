@@ -40,17 +40,17 @@ If your ViewSet does not inherit from ``pulpcore.plugin.viewsets.NamedModelViewS
 like more control over the QuerySet Scoping feature it can be added manually by adding a
 ``get_queryset`` method to your ViewSet which returns the filtered QuerySet.
 
-To look up objects by permission easily from an existing QuerySet use the ``klass`` argument to
-the ``get_objects_for_user`` provided by django-guardian. The ``klass`` argument may be a Model,
-Manager or QuerySet object. Here's an example:
+To look up objects by permission easily from an existing QuerySet use the ``get_objects_for_user``
+provided by pulpcore or django-guardian. Here's an example where all items are displayed accessible
+via either of the permission frameworks:
 
 .. code-block:: python
 
-    from guardian.shortcuts import get_objects_for_user
+    from pulpcore.plugin.util import get_objects_for_user
 
     class MyViewSet(rest_framework.viewsets.GenericViewSet):
 
         def get_queryset(self):
             qs = super().get_queryset()
             permission_name = "my.example_permission"
-            return get_objects_for_user(self.request.user, permission_name, klass=qs)
+            return get_objects_for_user(self.request.user, permission_name, qs=qs)

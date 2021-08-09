@@ -16,7 +16,14 @@ class AccessPolicySerializer(ModelSerializer):
         child=serializers.DictField(),
         help_text=_(
             "List of callables that define the new permissions to be created for new objects."
+            "This is deprecated. Use `creation_hooks` instead."
         ),
+        source="creation_hooks",
+    )
+
+    creation_hooks = serializers.ListField(
+        child=serializers.DictField(),
+        help_text=_("List of callables that may associate user roles for new objects."),
     )
 
     statements = serializers.ListField(
@@ -39,18 +46,29 @@ class AccessPolicySerializer(ModelSerializer):
         model = models.AccessPolicy
         fields = ModelSerializer.Meta.fields + (
             "permissions_assignment",
+            "creation_hooks",
             "statements",
             "viewset_name",
             "customized",
         )
 
     def validate(self, data):
-        """ "
+        """
         Validate the AccessPolicy.
 
         This ensures that the customized boolean will be set to True anytime the user modifies it.
         """
         data = super().validate(data)
+        if "permissions_assignment" in data:
+            if "creation_hooks" in data:
+                if data["creation_hooks"] != data["permissions_assignment"]:
+                    raise serializers.ValidationError(
+                        detail=_(
+                            "Cannot specify both 'permissions_assignment' and 'creation_hooks'."
+                        )
+                    )
+            data["creation_hooks"] = data.pop("permissions_assignment")
+
         if data:
             data["customized"] = True
         return data

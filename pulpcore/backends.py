@@ -1,0 +1,103 @@
+from gettext import gettext as _
+
+from django.db.models import Q
+from django.contrib.contenttypes.models import ContentType
+from django.contrib.auth.backends import BaseBackend
+from django.contrib.auth.models import Permission
+
+from pulpcore.app.models.role import GroupRole
+
+
+class ObjectRolePermissionBackend(BaseBackend):
+    def has_perm(self, user_obj, perm, obj=None):
+        if not user_obj.is_authenticated:
+            return False
+
+        try:
+            app_label, codename = perm.split(".", maxsplit=1)
+            permission = Permission.objects.get(
+                content_type__app_label=app_label, codename=codename
+            )
+        except Permission.DoesNotExist:
+            # Cannot have a permission that does not exist.
+            return False
+
+        # Check for global roles
+        if user_obj.object_roles.filter(object_id=None, role__permissions=permission).exists():
+            return True
+        if GroupRole.objects.filter(
+            group__in=user_obj.groups.all(), object_id=None, role__permissions=permission
+        ).exists():
+            return True
+
+        if obj is not None:
+            obj_type = ContentType.objects.get_for_model(obj)
+            if permission.content_type == obj_type:
+                # Check object specific roles
+                if user_obj.object_roles.filter(
+                    object_id=obj.pk, role__permissions=permission
+                ).exists():
+                    return True
+                if GroupRole.objects.filter(
+                    group__in=user_obj.groups.all(), object_id=obj.pk, role__permissions=permission
+                ).exists():
+                    return True
+            else:
+                raise RuntimeError(
+                    _("Permission {} is not suitable for objects of class {}.").format(
+                        perm, obj.__class__
+                    )
+                )
+        return False
+
+    def get_all_permissions(self, user_obj, obj=None):
+        if obj is None:
+            result = (
+                user_obj.object_roles.filter(object_id=None)
+                .values("role__permissions__content_type__app_label", "role__permissions__codename")
+                .distinct()
+            )
+            group_result = (
+                GroupRole.objects.filter(group__in=user_obj.groups.all(), object_id=None)
+                .values("role__permissions__content_type__app_label", "role__permissions__codename")
+                .distinct()
+            )
+
+        else:
+            obj_type = ContentType.objects.get_for_model(obj)
+            # Maybe there is a way to reformulate this as a single query on Permissions
+            result = (
+                user_obj.object_roles.filter(role__permissions__content_type=obj_type)
+                .filter(
+                    Q(object_id=None)
+                    | Q(
+                        content_type=obj_type,
+                        object_id=obj.pk,
+                    )
+                )
+                .values("role__permissions__content_type__app_label", "role__permissions__codename")
+                .distinct()
+            )
+            group_result = (
+                GroupRole.objects.filter(
+                    group__in=user_obj.groups.all(), role__permissions__content_type=obj_type
+                )
+                .filter(
+                    Q(object_id=None)
+                    | Q(
+                        content_type=obj_type,
+                        object_id=obj.pk,
+                    )
+                )
+                .values("role__permissions__content_type__app_label", "role__permissions__codename")
+                .distinct()
+            )
+        return [
+            f"{item['role__permissions__content_type__app_label']}."
+            f"{item['role__permissions__codename']}"
+            for item in result
+        ] + [
+            f"{item['role__permissions__content_type__app_label']}."
+            f"{item['role__permissions__codename']}"
+            for item in group_result
+        ]

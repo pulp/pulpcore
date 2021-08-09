@@ -42,13 +42,14 @@ To add authorization for a given resource, e.g. ``FileRemote``, you'll need to:
 
 1. Define the default ``statements`` of the new Access Policy for the resource. See the
    :ref:`defining_access_policy` documentation for more information on that.
-2. Define the default permissions created for new objects using the ``permissions_assignment``
+2. Define the ``roles`` as sets of permissions for that resource.
+3. Define the default role associations created for new objects using the ``creation_hooks``
    attribute of the new Access Policy for the resource. See the
    :ref:`adding_automatic_permissions_for_new_objects` documentation for more information on that.
-3. Ship that Access Policy as the class attribute ``DEFAULT_ACCESS_POLICY`` of a
-   ``NamedModelViewSet``. This will contain both the ``statements`` and ``permissions_assignment``
-   attributes. See the :ref:`shipping_default_access_policy` documentation for more information on
-   this.
+4. Ship that Access Policy as the class attribute ``DEFAULT_ACCESS_POLICY`` of a
+   ``NamedModelViewSet``. This will contain the ``statements`` and ``creation_hooks`` attributes.
+   Ship the roles as the ``LOCKED_ROLES`` attribute accordingly. See the
+   :ref:`shipping_default_access_policy` documentation for more information on this.
 
 **Enforce the Policy:**
 

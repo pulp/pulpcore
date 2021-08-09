@@ -61,6 +61,8 @@ class BaseModel(LifecycleModel):
     pulp_created = models.DateTimeField(auto_now_add=True)
     pulp_last_updated = models.DateTimeField(auto_now=True, null=True)
     pulp_labels = GenericRelation(Label)
+    user_roles = GenericRelation("core.UserRole")
+    group_roles = GenericRelation("core.GroupRole")
 
     class Meta:
         abstract = True

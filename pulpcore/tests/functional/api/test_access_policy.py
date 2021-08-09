@@ -57,29 +57,27 @@ class AccessPolicyTestCase(unittest.TestCase):
         self.assertTrue(task_access_policy.customized)
         self.assertEqual(task_access_policy.statements, original_statements)
 
-    def test_permissions_assignment_attr_can_be_modified(self):
-        """Test that `AccessPolicy.permissions_assignment` can be modified"""
+    def test_creation_hooks_attr_can_be_modified(self):
+        """Test that `AccessPolicy.creation_hooks` can be modified"""
         groups_response = self.access_policy_api.list(viewset_name="groups")
         groups_href = groups_response.results[0].pulp_href
         groups_access_policy = self.access_policy_api.read(groups_href)
 
-        original_permissions_assignment = groups_access_policy.permissions_assignment
+        original_creation_hooks = groups_access_policy.creation_hooks
         self.assertFalse(groups_access_policy.customized)
-        self.assertNotEqual(original_permissions_assignment, [])
+        self.assertNotEqual(original_creation_hooks, [])
 
-        self.access_policy_api.partial_update(groups_href, {"permissions_assignment": []})
+        self.access_policy_api.partial_update(groups_href, {"creation_hooks": []})
         groups_access_policy = self.access_policy_api.read(groups_href)
         self.assertTrue(groups_access_policy.customized)
-        self.assertEqual(groups_access_policy.permissions_assignment, [])
+        self.assertEqual(groups_access_policy.creation_hooks, [])
 
         self.access_policy_api.partial_update(
-            groups_href, {"permissions_assignment": original_permissions_assignment}
+            groups_href, {"creation_hooks": original_creation_hooks}
         )
         groups_access_policy = self.access_policy_api.read(groups_href)
         self.assertTrue(groups_access_policy.customized)
-        self.assertEqual(
-            groups_access_policy.permissions_assignment, original_permissions_assignment
-        )
+        self.assertEqual(groups_access_policy.creation_hooks, original_creation_hooks)
 
     def test_customized_is_read_only(self):
         """Test that the `AccessPolicy.customized` attribute is read only"""

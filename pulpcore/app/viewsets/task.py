@@ -91,13 +91,19 @@ class TaskViewSet(
                 "condition": "has_model_or_obj_perms:core.change_task",
             },
         ],
-        "permissions_assignment": [
+        "creation_hooks": [
             {
-                "function": "add_for_object_creator",
-                "parameters": None,
-                "permissions": ["core.view_task", "core.change_task", "core.delete_task"],
+                "function": "add_roles_for_object_creator",
+                "parameters": {"roles": "core.task_owner"},
             }
         ],
+    }
+    LOCKED_ROLES = {
+        "core.task_owner": {
+            "description": "Allow all actions on a task.",
+            "permissions": ["core.view_task", "core.change_task", "core.delete_task"],
+        },
+        "core.task_viewer": ["core.view_task"],
     }
 
     @extend_schema(
