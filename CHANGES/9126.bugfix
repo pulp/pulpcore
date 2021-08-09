@@ -1,0 +1,3 @@
+Unpublished content can no longer be accessed from content app if publication based-plugin has
+defined their distributions as publication serving
+(backported from #8870)
