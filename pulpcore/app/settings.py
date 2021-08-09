@@ -46,8 +46,9 @@ STATIC_ROOT = DEPLOY_ROOT / STATIC_URL.strip("/")
 
 DEFAULT_FILE_STORAGE = "pulpcore.app.models.storage.FileSystem"
 
-FILE_UPLOAD_TEMP_DIR = DEPLOY_ROOT / "tmp"
-WORKING_DIRECTORY = FILE_UPLOAD_TEMP_DIR
+WORKING_DIRECTORY = DEPLOY_ROOT / "tmp"
+FILE_UPLOAD_TEMP_DIR = WORKING_DIRECTORY
+
 CHUNKED_UPLOAD_DIR = "upload"
 
 # List of upload handler classes to be applied in order.
