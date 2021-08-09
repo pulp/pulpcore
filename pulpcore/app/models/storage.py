@@ -11,9 +11,10 @@ class FileSystem(FileSystemStorage):
     """
     Django's FileSystemStorage with modified _save() and get_available_name behaviors
 
-    The _save() will check if the file is saved in DEPLOY_ROOT first. If it is, a move is used. This
-    will move all files created by the Downloaders and uploaded files from the user. If it is saved
-    in-memory or outside of DEPLOY_ROOT, the data is written/copied in chunks to the new location.
+    The _save() will check if the file is saved in WORKING_DIRECTORY first. If it is, a move is
+    used. This will move all files created by the Downloaders and uploaded files from the user. If
+    it is saved in-memory or outside of WORKING_DIRECTORY, the data is written/copied in chunks to
+    the new location.
     """
 
     def get_available_name(self, name, max_length=None):
@@ -63,7 +64,7 @@ class FileSystem(FileSystemStorage):
 
         try:
             if hasattr(content, "temporary_file_path") and content.temporary_file_path().startswith(
-                str(settings.DEPLOY_ROOT)
+                str(settings.WORKING_DIRECTORY)
             ):
                 file_move_safe(content.temporary_file_path(), full_path)
             else:
