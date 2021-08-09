@@ -130,11 +130,21 @@ class Publication(MasterModel):
                 # Find any publications being served directly
                 base_paths = self.distribution_set.values_list("base_path", flat=True)
                 # Find any publications being served indirectly by auto-distribute feature
-                versions = self.repository.versions.all()
-                pubs = Publication.objects.filter(repository_version__in=versions, complete=True)
-                publication = pubs.latest("repository_version", "pulp_created")
-                if self.pk == publication.pk:
-                    base_paths |= self.repository.distributions.values_list("base_path", flat=True)
+                # It's possible for errors to occur before any publication has been completed,
+                # so we need to handle the case when no Publication exists.
+                try:
+                    versions = self.repository.versions.all()
+                    pubs = Publication.objects.filter(
+                        repository_version__in=versions, complete=True
+                    )
+                    publication = pubs.latest("repository_version", "pulp_created")
+                    if self.pk == publication.pk:
+                        base_paths |= self.repository.distributions.values_list(
+                            "base_path", flat=True
+                        )
+                except Publication.DoesNotExist:
+                    pass
+
                 # Invalidate cache for all distributions serving this publication
                 if base_paths:
                     Cache().delete(base_key=base_paths)
