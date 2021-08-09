@@ -38,8 +38,6 @@ if [[ "$TEST" == "upgrade" ]]; then
   rm -rf .ci .github
   cp -R /tmp/.github .
   cp -R /tmp/.ci .
-  # Pin deps
-  sed -i "s/~/=/g" requirements.txt
 fi
 
 if [[ "$TEST" == "plugin-from-pypi" ]]; then
@@ -116,7 +114,7 @@ cd ..
 
 
 
-git clone --depth=1 https://github.com/pulp/pulp_file.git --branch master
+git clone --depth=1 https://github.com/pulp/pulp_file.git --branch main
 if [ -n "$PULP_FILE_PR_NUMBER" ]; then
   cd pulp_file
   git fetch --depth=1 origin pull/$PULP_FILE_PR_NUMBER/head:$PULP_FILE_PR_NUMBER
@@ -138,15 +136,11 @@ if [[ "$TEST" == "upgrade" ]]; then
   git checkout -b ci_upgrade_test
   git fetch --depth=1 origin heads/$FROM_PULP_CERTGUARD_BRANCH:$FROM_PULP_CERTGUARD_BRANCH
   git checkout $FROM_PULP_CERTGUARD_BRANCH
-  # Pin deps
-  sed -i "s/~/=/g" requirements.txt
   cd ..
   cd pulp_file
   git checkout -b ci_upgrade_test
   git fetch --depth=1 origin heads/$FROM_PULP_FILE_BRANCH:$FROM_PULP_FILE_BRANCH
   git checkout $FROM_PULP_FILE_BRANCH
-  # Pin deps
-  sed -i "s/~/=/g" requirements.txt
   cd ..
 fi
 

@@ -1,10 +1,10 @@
 # This config represents the latest values used when running the plugin-template. Any settings that
 # were not present before running plugin-template have been added with their default values.
 
-# generated with plugin_template@2021.04.08-86-g150f51c
+# generated with plugin_template@2021.04.08-95-gbf7866c
 
 additional_repos:
-- branch: master
+- branch: main
   name: pulp_file
 - branch: master
   name: pulp-certguard
@@ -15,6 +15,8 @@ check_manifest: true
 check_openapi_schema: true
 check_stray_pulpcore_imports: false
 cherry_pick_automation: false
+ci_trigger: '{pull_request: {branches: [''*'']}}'
+core_import_allowed: []
 coverage: true
 deploy_client_to_pypi: true
 deploy_client_to_rubygems: true
@@ -25,6 +27,7 @@ docker_fixtures: true
 docs_test: true
 flake8: true
 issue_tracker: redmine
+noissue_marker: '[noissue]'
 plugin_app_label: core
 plugin_camel: Pulpcore
 plugin_camel_short: Pulpcore
@@ -35,6 +38,8 @@ plugin_dash_short: pulpcore
 plugin_default_branch: master
 plugin_name: pulpcore
 plugin_snake: pulpcore
+post_job_template: null
+pre_job_template: null
 publish_docs_to_pulpprojectdotorg: true
 pulp_scheme: https
 pulp_settings:
@@ -49,6 +54,7 @@ pydocstyle: true
 pypi_username: pulp
 python_version: '3.8'
 redmine_project: pulp
+release_email: pulp-infra@redhat.com
 release_user: pulpbot
 stable_branch: null
 sync_ci: true
