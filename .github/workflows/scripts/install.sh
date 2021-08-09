@@ -29,7 +29,7 @@ TAG=ci_build
 if [ -e $REPO_ROOT/../pulp_file ]; then
   PULP_FILE=./pulp_file
 else
-  PULP_FILE=git+https://github.com/pulp/pulp_file.git@master
+  PULP_FILE=git+https://github.com/pulp/pulp_file.git@main
 fi
 
 if [ -e $REPO_ROOT/../pulp-certguard ]; then

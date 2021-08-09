@@ -36,14 +36,13 @@ jobs:
       - name: Create Pull Request for CI files
         uses: peter-evans/create-pull-request@v3
         with:
+          token: ${{ secrets.RELEASE_TOKEN }}
           committer: pulpbot <pulp-infra@redhat.com>
           author: pulpbot <pulp-infra@redhat.com>
-          branch: ${GITHUB_REF#refs/heads/}-update-ci-files
-          base: ${GITHUB_REF#refs/heads/}
-          title: 'Update CI for ${GITHUB_REF#refs/heads/}'
+          title: 'Update CI files'
           body: '[noissue]'
           commit-message: |
-            Update CI files for ${GITHUB_REF#refs/heads/}
+            Update CI files
 
             [noissue]
           delete-branch: true
