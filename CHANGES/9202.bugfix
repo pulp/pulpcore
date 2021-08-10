@@ -1,3 +1,0 @@
-Move files to artifact storage only when they originate from WORKING_DIRECTORY.
-Copy files from all other sources. 
-(backported from #9146)

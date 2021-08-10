@@ -17,6 +17,56 @@ Changelog
 
 .. towncrier release notes start
 
+3.14.4 (2021-08-10)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Unpublished content can no longer be accessed from content app if publication based-plugin has
+  defined their distributions as publication serving
+  (backported from #8870)
+  `#9126 <https://pulp.plan.io/issues/9126>`_
+- In stages-pipeline and new-version sanity-checks, added full error-info on path-problems.
+  (backported from #8133)
+  `#9130 <https://pulp.plan.io/issues/9130>`_
+- Move files to artifact storage only when they originate from WORKING_DIRECTORY.
+  Copy files from all other sources. 
+  (backported from #9146)
+  `#9202 <https://pulp.plan.io/issues/9202>`_
+
+
+Misc
+~~~~
+
+- `#9179 <https://pulp.plan.io/issues/9179>`_
+
+
+Plugin API
+----------
+
+Features
+~~~~~~~~
+
+- Distribution model has a new boolean class variable ``SERVE_FROM_PUBLICATION`` for plugins to declare
+  whether their distributions serve from publications or directly from repository versions
+  (backported from #8870)
+  `#9126 <https://pulp.plan.io/issues/9126>`_
+
+
+Bugfixes
+~~~~~~~~
+
+- Added kwarg to RemoteArtifactSaver init to allow enabling handling of rare error edge-case.
+
+  `fix_mismatched_remote_artifacts=True` enables workaround for a failure-scenario that
+  (so far) is only encountered by pulp_rpm. Current behavior is the default.
+  (backported from #8133)
+  `#9130 <https://pulp.plan.io/issues/9130>`_
+
+
 3.14.3 (2021-07-23)
 ===================
 REST API

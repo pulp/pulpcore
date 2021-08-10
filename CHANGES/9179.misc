@@ -1,2 +1,0 @@
-Fix an error that could sometimes occur during deletion of an incomplete publication.
-(backported from #9174)
