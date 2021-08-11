@@ -146,7 +146,7 @@ def create_profile_db_and_connection():
     if current_job:
         db_path = debug_data_dir + current_job.id
     else:
-        db_path = debug_data_dir + uuid.uuid4()
+        db_path = debug_data_dir + str(uuid.uuid4())
 
     import sqlite3
 
