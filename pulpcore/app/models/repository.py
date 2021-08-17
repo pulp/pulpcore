@@ -543,13 +543,13 @@ class RepositoryVersion(BaseModel):
         number (models.PositiveIntegerField): A positive integer that uniquely identifies a version
             of a specific repository. Each new version for a repo should have this field set to
             1 + the most recent version.
-        action  (models.TextField): The action that produced the version.
         complete (models.BooleanField): If true, the RepositoryVersion is visible. This field is set
             to true when the task that creates the RepositoryVersion is complete.
 
     Relations:
 
         repository (models.ForeignKey): The associated repository.
+        base_version (models.ForeignKey): The repository version this was created from.
     """
 
     objects = RepositoryVersionQuerySet.as_manager()
