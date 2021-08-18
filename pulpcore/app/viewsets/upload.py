@@ -95,5 +95,5 @@ class UploadViewSet(
         sha256 = serializer.validated_data["sha256"]
 
         upload = self.get_object()
-        task = dispatch(tasks.upload.commit, [upload], args=(upload.pk, sha256))
+        task = dispatch(tasks.upload.commit, exclusive_resources=[upload], args=(upload.pk, sha256))
         return OperationPostponedResponse(task, request)

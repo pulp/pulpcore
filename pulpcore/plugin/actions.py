@@ -58,7 +58,7 @@ class ModifyRepositoryActionMixin:
 
         task = dispatch(
             tasks.repository.add_and_remove,
-            [repository],
+            exclusive_resources=[repository],
             kwargs={
                 "repository_pk": pk,
                 "base_version_pk": base_version_pk,

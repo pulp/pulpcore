@@ -427,7 +427,7 @@ def pulp_import(importer_pk, path, toc):
 
                 dispatch(
                     import_repository_version,
-                    [dest_repo],
+                    exclusive_resources=[dest_repo],
                     args=[importer.pk, dest_repo.pk, src_repo["name"], path],
                     task_group=task_group,
                 )
