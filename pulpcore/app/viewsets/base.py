@@ -431,7 +431,7 @@ class AsyncCreateMixin:
         app_label = self.queryset.model._meta.app_label
         task = dispatch(
             tasks.base.general_create,
-            self.async_reserved_resources(None),
+            exclusive_resources=self.async_reserved_resources(None),
             args=(app_label, serializer.__class__.__name__),
             kwargs={"data": request.data},
         )
@@ -455,7 +455,7 @@ class AsyncUpdateMixin(AsyncReservedObjectMixin):
         app_label = instance._meta.app_label
         task = dispatch(
             tasks.base.general_update,
-            self.async_reserved_resources(instance),
+            exclusive_resources=self.async_reserved_resources(instance),
             args=(pk, app_label, serializer.__class__.__name__),
             kwargs={"data": request.data, "partial": partial},
         )
@@ -488,7 +488,7 @@ class AsyncRemoveMixin(AsyncReservedObjectMixin):
         app_label = instance._meta.app_label
         task = dispatch(
             tasks.base.general_delete,
-            self.async_reserved_resources(instance),
+            exclusive_resources=self.async_reserved_resources(instance),
             args=(pk, app_label, serializer.__class__.__name__),
         )
         return OperationPostponedResponse(task, request)

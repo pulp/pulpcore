@@ -174,7 +174,9 @@ class RepositoryVersionViewSet(
         version = self.get_object()
 
         task = dispatch(
-            tasks.repository.delete_version, [version.repository], kwargs={"pk": version.pk}
+            tasks.repository.delete_version,
+            exclusive_resources=[version.repository],
+            kwargs={"pk": version.pk},
         )
         return OperationPostponedResponse(task, request)
 
@@ -195,7 +197,7 @@ class RepositoryVersionViewSet(
 
         task = dispatch(
             tasks.repository.repair_version,
-            [version.repository],
+            exclusive_resources=[version.repository],
             args=[version.pk, verify_checksums],
         )
         return OperationPostponedResponse(task, request)

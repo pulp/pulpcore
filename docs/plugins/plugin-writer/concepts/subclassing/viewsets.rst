@@ -94,7 +94,8 @@ See :class:`~pulpcore.plugin.tasking.dispatch` for more details.
             # This is how tasks are kicked off.
             result = dispatch(
                 tasks.synchronize,
-                [repository, remote],
+                exclusive_resources=[repository],
+                shared_resources=[remote],
                 kwargs={
                     'remote_pk': remote.pk,
                     'repository_pk': repository.pk,

@@ -26,6 +26,6 @@ class RepairView(APIView):
 
         verify_checksums = serializer.validated_data["verify_checksums"]
 
-        task = dispatch(repair_all_artifacts, [], args=[verify_checksums])
+        task = dispatch(repair_all_artifacts, args=[verify_checksums])
 
         return OperationPostponedResponse(task, request)

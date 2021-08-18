@@ -145,7 +145,7 @@ class PulpExportViewSet(ExportViewSet):
         # Invoke the export
         task = dispatch(
             pulp_export,
-            [exporter],
+            exclusive_resources=[exporter],
             kwargs={"exporter_pk": str(exporter.pk), "params": request.data},
         )
 
@@ -183,7 +183,7 @@ class FilesystemExportViewSet(ExportViewSet):
 
             task = dispatch(
                 fs_publication_export,
-                [exporter],
+                exclusive_resources=[exporter],
                 kwargs={"exporter_pk": exporter.pk, "publication_pk": publication.pk},
             )
         else:
@@ -191,7 +191,7 @@ class FilesystemExportViewSet(ExportViewSet):
 
             task = dispatch(
                 fs_repo_version_export,
-                [exporter],
+                exclusive_resources=[exporter],
                 kwargs={"exporter_pk": str(exporter.pk), "repo_version_pk": repo_version.pk},
             )
 
