@@ -1,0 +1,1 @@
+Stop using insecure hash function blake2s for calculating 64 bit lock identifier from uuid.
