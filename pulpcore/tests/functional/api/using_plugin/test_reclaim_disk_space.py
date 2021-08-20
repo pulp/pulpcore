@@ -1,8 +1,6 @@
 """Tests that perform actions over reclaim disk space."""
-import unittest
-
 from pulp_smash import config
-from pulp_smash.pulp3.bindings import monitor_task
+from pulp_smash.pulp3.bindings import monitor_task, PulpTestCase
 from pulp_smash.pulp3.utils import (
     gen_repo,
     get_content,
@@ -30,7 +28,7 @@ from pulpcore.tests.functional.api.using_plugin.utils import (
 from pulpcore.tests.functional.utils import core_client
 
 
-class ReclaimSpaceTestCase(unittest.TestCase):
+class ReclaimSpaceTestCase(PulpTestCase):
     """
     Test whether repository content can be reclaimed.
     Subsequently, confirm that artifact is correctly re-downloaded in sync
@@ -53,10 +51,11 @@ class ReclaimSpaceTestCase(unittest.TestCase):
         orphans_response = cls.orphans_api.cleanup({"orphan_protection_time": 0})
         monitor_task(orphans_response.task)
 
-    @classmethod
-    def tearDownClass(cls):
+    def tearDown(self):
         """Clean created resources."""
-        orphans_response = cls.orphans_api.cleanup({"orphan_protection_time": 0})
+        # Runs any delete tasks and waits for them to complete
+        self.doCleanups()
+        orphans_response = self.orphans_api.cleanup({"orphan_protection_time": 0})
         monitor_task(orphans_response.task)
 
     def test_reclaim_immediate_content(self):
