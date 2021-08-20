@@ -53,10 +53,13 @@ class ReclaimSpaceTestCase(unittest.TestCase):
         orphans_response = cls.orphans_api.cleanup({"orphan_protection_time": 0})
         monitor_task(orphans_response.task)
 
-    @classmethod
-    def tearDownClass(cls):
-        """Clean created resources."""
-        orphans_response = cls.orphans_api.cleanup({"orphan_protection_time": 0})
+    def setUp(self):
+        self.repo = None
+
+    def tearDown(self):
+        if self.repo:
+            monitor_task(self.repo_api.delete(self.repo.pulp_href).task)
+        orphans_response = self.orphans_api.cleanup({"orphan_protection_time": 0})
         monitor_task(orphans_response.task)
 
     def test_reclaim_immediate_content(self):
@@ -65,7 +68,7 @@ class ReclaimSpaceTestCase(unittest.TestCase):
         and then re-populated back after sync.
         """
         repo = self.repo_api.create(gen_repo())
-        self.addCleanup(self.repo_api.delete, repo.pulp_href)
+        self.repo = repo
 
         remote = self.remote_api.create(gen_file_remote())
         self.addCleanup(self.remote_api.delete, remote.pulp_href)
@@ -91,7 +94,6 @@ class ReclaimSpaceTestCase(unittest.TestCase):
         # assert re-sync populated missing artifacts
         artifacts = self.artifacts_api.list().count
         self.assertGreater(artifacts, 0)
-        self.addCleanup(self.orphans_api.cleanup, {"orphan_protection_time": 0})
 
     def test_reclaim_on_demand_content(self):
         """
@@ -99,7 +101,7 @@ class ReclaimSpaceTestCase(unittest.TestCase):
         and then re-populated back after client request.
         """
         repo = self.repo_api.create(gen_repo())
-        self.addCleanup(self.repo_api.delete, repo.pulp_href)
+        self.repo = repo
 
         # sync the repository with on_demand policy
         body = gen_file_remote(**{"policy": "on_demand"})
@@ -117,7 +119,6 @@ class ReclaimSpaceTestCase(unittest.TestCase):
         publication_response = self.publication_api.create(publication_data)
         task_response = monitor_task(publication_response.task)
         publication = self.publication_api.read(task_response.created_resources[0])
-        self.addCleanup(self.publication_api.delete, publication.pulp_href)
 
         # Distribution
         body = gen_distribution()
