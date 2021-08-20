@@ -1,7 +1,7 @@
 from collections import defaultdict
 
 from django.core.exceptions import ObjectDoesNotExist
-from django.db import DatabaseError, IntegrityError, transaction
+from django.db import IntegrityError, transaction
 from django.db.models import Q
 
 from pulpcore.plugin.models import Content, ContentArtifact, ProgressReport
@@ -48,15 +48,10 @@ class QueryExistingContents(Stage):
                     d_content_by_nat_key[d_content.content.natural_key()].append(d_content)
 
             for model_type in content_q_by_type.keys():
+                model_type.objects.filter(content_q_by_type[model_type]).touch()
                 for result in model_type.objects.filter(content_q_by_type[model_type]).iterator():
                     for d_content in d_content_by_nat_key[result.natural_key()]:
-                        try:
-                            result.touch()
-                        except DatabaseError:
-                            # update failed so leave content empty to create it later
-                            pass
-                        else:
-                            d_content.content = result
+                        d_content.content = result
 
             for d_content in batch:
                 await self.put(d_content)
