@@ -90,6 +90,9 @@ class ContentSaver(Stage):
         """
         async for batch in self.batches():
             content_artifact_bulk = []
+            to_update_ca_query = ContentArtifact.objects.none()
+            to_update_ca_bulk = []
+            to_update_ca_artifact = {}
             with transaction.atomic():
                 await self._pre_save(batch)
 
@@ -107,19 +110,37 @@ class ContentSaver(Stage):
                                 )
                             except ObjectDoesNotExist:
                                 raise e
+                        else:
+                            for d_artifact in d_content.d_artifacts:
+                                if not d_artifact.artifact._state.adding:
+                                    artifact = d_artifact.artifact
+                                else:
+                                    # set to None for on-demand synced artifacts
+                                    artifact = None
+                                content_artifact = ContentArtifact(
+                                    content=d_content.content,
+                                    artifact=artifact,
+                                    relative_path=d_artifact.relative_path,
+                                )
+                                content_artifact_bulk.append(content_artifact)
                             continue
-                        for d_artifact in d_content.d_artifacts:
-                            if not d_artifact.artifact._state.adding:
-                                artifact = d_artifact.artifact
-                            else:
-                                # set to None for on-demand synced artifacts
-                                artifact = None
-                            content_artifact = ContentArtifact(
-                                content=d_content.content,
-                                artifact=artifact,
-                                relative_path=d_artifact.relative_path,
+                    # When the Content already exists, check if ContentArtifacts need to be updated
+                    for d_artifact in d_content.d_artifacts:
+                        if not d_artifact.artifact._state.adding:
+                            # the artifact is already present in the database; update references
+                            # Creating one large query and one large dictionary
+                            to_update_ca_query |= ContentArtifact.objects.filter(
+                                content=d_content.content, relative_path=d_artifact.relative_path
                             )
-                            content_artifact_bulk.append(content_artifact)
+                            key = (d_content.content.pk, d_artifact.relative_path)
+                            to_update_ca_artifact[key] = d_artifact.artifact
+                # Query db once and update each object in memory for bulk_update call
+                for content_artifact in to_update_ca_query.iterator():
+                    key = (content_artifact.content_id, content_artifact.relative_path)
+                    # Maybe remove dict elements after to reduce memory?
+                    content_artifact.artifact = to_update_ca_artifact[key]
+                    to_update_ca_bulk.append(content_artifact)
+                ContentArtifact.objects.bulk_update(to_update_ca_bulk, ["artifact"])
                 ContentArtifact.objects.bulk_get_or_create(content_artifact_bulk)
                 await self._post_save(batch)
             for declarative_content in batch:
