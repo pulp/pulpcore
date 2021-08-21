@@ -1,0 +1,2 @@
+Content app now properly sets Content-Type header for artifacts being served from S3
+(backported from #9216)
