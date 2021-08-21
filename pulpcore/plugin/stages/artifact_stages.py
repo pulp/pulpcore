@@ -3,7 +3,6 @@ from collections import defaultdict
 from gettext import gettext as _
 import logging
 
-from django.db import DatabaseError
 from django.db.models import Prefetch, prefetch_related_objects
 
 from pulpcore.plugin.exceptions import UnsupportedDigestValidationError
@@ -87,6 +86,7 @@ class QueryExistingArtifacts(Stage):
             for digest_type, digests in artifact_digests_by_type.items():
                 query_params = {"{attr}__in".format(attr=digest_type): digests}
                 existing_artifacts = Artifact.objects.filter(**query_params).only(digest_type)
+                existing_artifacts.touch()
                 for d_content in batch:
                     for d_artifact in d_content.d_artifacts:
                         artifact_digest = getattr(d_artifact.artifact, digest_type)
@@ -94,15 +94,8 @@ class QueryExistingArtifacts(Stage):
                             for result in existing_artifacts:
                                 result_digest = getattr(result, digest_type)
                                 if result_digest == artifact_digest:
-                                    try:
-                                        result.touch()
-                                    except DatabaseError:
-                                        # update failed so leave artifact empty to create it later
-                                        pass
-                                    else:
-                                        d_artifact.artifact = result
+                                    d_artifact.artifact = result
                                     break
-
             for d_content in batch:
                 await self.put(d_content)
 
