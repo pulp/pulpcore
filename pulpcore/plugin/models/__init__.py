@@ -10,6 +10,7 @@ from pulpcore.app.models import (  # noqa
     BaseModel,
     Content,
     ContentArtifact,
+    ContentManager,
     ContentGuard,
     CreatedResource,
     Distribution,

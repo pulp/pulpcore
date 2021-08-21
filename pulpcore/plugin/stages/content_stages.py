@@ -47,9 +47,22 @@ class QueryExistingContents(Stage):
                     content_q_by_type[model_type] = content_q_by_type[model_type] | unit_q
                     d_content_by_nat_key[d_content.content.natural_key()].append(d_content)
 
-            for model_type in content_q_by_type.keys():
-                model_type.objects.filter(content_q_by_type[model_type]).touch()
-                for result in model_type.objects.filter(content_q_by_type[model_type]).iterator():
+            for model_type, content_q in content_q_by_type.items():
+                try:
+                    model_type.objects.filter(content_q).touch()
+                except AttributeError:
+                    from pulpcore.app.loggers import deprecation_logger
+                    from gettext import gettext as _
+
+                    deprecation_logger.warning(
+                        _(
+                            "As of pulpcore 3.14.5, plugins which declare custom ORM managers on "
+                            "their content classes should have those managers inherit from "
+                            "pulpcore.plugin.models.ContentManager. This will become a hard error "
+                            "in the future."
+                        )
+                    )
+                for result in model_type.objects.filter(content_q).iterator():
                     for d_content in d_content_by_nat_key[result.natural_key()]:
                         d_content.content = result
 
