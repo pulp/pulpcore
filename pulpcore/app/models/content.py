@@ -139,6 +139,10 @@ class HandleTempFilesMixin:
         self.file.delete(save=False)
 
 
+class ArtifactManager(BulkCreateManager):
+    pass
+
+
 class Artifact(HandleTempFilesMixin, BaseModel):
     """
     A file associated with a piece of content.
@@ -183,7 +187,7 @@ class Artifact(HandleTempFilesMixin, BaseModel):
     sha512 = models.CharField(max_length=128, null=True, unique=True, db_index=True)
     timestamp_of_interest = models.DateTimeField(auto_now=True)
 
-    objects = BulkCreateManager()
+    objects = ArtifactManager()
 
     # All available digest fields ordered by algorithm strength.
     DIGEST_FIELDS = _DIGEST_FIELDS
@@ -426,6 +430,10 @@ class PulpTemporaryFile(HandleTempFilesMixin, BaseModel):
         return PulpTemporaryFile(file=file)
 
 
+class ContentManager(BulkCreateManager):
+    pass
+
+
 class Content(MasterModel, QueryMixin):
     """
     A piece of managed content.
@@ -446,7 +454,7 @@ class Content(MasterModel, QueryMixin):
     _artifacts = models.ManyToManyField(Artifact, through="ContentArtifact")
     timestamp_of_interest = models.DateTimeField(auto_now=True)
 
-    objects = BulkCreateManager()
+    objects = ContentManager()
 
     class Meta:
         verbose_name_plural = "content"
