@@ -1,0 +1,2 @@
+In stages-pipeline and new-version sanity-checks, added full error-info on path-problems.
+(backported from #8133)
