@@ -447,6 +447,9 @@ class ContentManager(BulkCreateManager):
     pass
 
 
+ContentManager = ContentManager.from_queryset(BulkTouchQuerySet)
+
+
 class Content(MasterModel, QueryMixin):
     """
     A piece of managed content.
@@ -467,7 +470,7 @@ class Content(MasterModel, QueryMixin):
     _artifacts = models.ManyToManyField(Artifact, through="ContentArtifact")
     timestamp_of_interest = models.DateTimeField(auto_now=True)
 
-    objects = ContentManager.from_queryset(BulkTouchQuerySet)()
+    objects = ContentManager()
 
     class Meta:
         verbose_name_plural = "content"

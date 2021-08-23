@@ -12,6 +12,7 @@ from .content import (  # noqa
     Artifact,
     AsciiArmoredDetachedSigningService,
     Content,
+    ContentManager,
     ContentArtifact,
     PulpTemporaryFile,
     RemoteArtifact,
