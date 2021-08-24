@@ -17,6 +17,43 @@ Changelog
 
 .. towncrier release notes start
 
+3.14.5 (2021-08-24)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Content app now properly sets Content-Type header for artifacts being served from S3
+  (backported from #9216)
+  `#9244 <https://pulp.plan.io/issues/9244>`_
+- Artifacts are now being properly updated for Content after switching from 'on_demand' to 'immediate'.
+  (backported from #9101)
+  `#9261 <https://pulp.plan.io/issues/9261>`_
+- Fixed repository sync performance regression introduced in pulpcore 3.14.
+  (backported from #9243)
+  `#9264 <https://pulp.plan.io/issues/9264>`_
+- Fixed another occurence of the HTTP 500 error and `connection already closed` in the logs while accessing content.
+  (backported from #9275)
+  `#9282 <https://pulp.plan.io/issues/9282>`_
+
+
+Misc
+~~~~
+
+- `#9265 <https://pulp.plan.io/issues/9265>`_
+
+
+Plugin API
+----------
+
+Misc
+~~~~
+
+- `#9268 <https://pulp.plan.io/issues/9268>`_, `#9273 <https://pulp.plan.io/issues/9273>`_
+
+
 3.14.4 (2021-08-10)
 ===================
 REST API
