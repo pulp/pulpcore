@@ -246,6 +246,8 @@ class Handler:
         Raises:
             PathNotResolved: when not matched.
         """
+        cls._reset_db_connection()
+
         base_paths = cls._base_paths(path)
         if cls.distribution_model is None:
             try:

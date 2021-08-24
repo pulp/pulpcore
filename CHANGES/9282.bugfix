@@ -1,0 +1,2 @@
+Fixed another occurence of the HTTP 500 error and `connection already closed` in the logs while accessing content.
+(backported from #9275)
