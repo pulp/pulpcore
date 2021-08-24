@@ -17,6 +17,33 @@ Changelog
 
 .. towncrier release notes start
 
+3.7.8 (2021-08-24)
+==================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- In stages-pipeline and new-version sanity-checks, added full error-info on path-problems.
+  (backported from #8133)
+  `#9227 <https://pulp.plan.io/issues/9227>`_
+
+
+Plugin API
+----------
+
+Bugfixes
+~~~~~~~~
+
+- Added kwarg to RemoteArtifactSaver init to allow enabling handling of rare error edge-case.
+
+  `fix_mismatched_remote_artifacts=True` enables workaround for a failure-scenario that
+  (so far) is only encountered by pulp_rpm. Current behavior is the default.
+  (backported from #8133)
+  `#9227 <https://pulp.plan.io/issues/9227>`_
+
+
 3.7.7 (2021-07-26)
 ==================
 REST API
