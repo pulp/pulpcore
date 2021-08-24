@@ -1,7 +1,7 @@
 # This config represents the latest values used when running the plugin-template. Any settings that
 # were not present before running plugin-template have been added with their default values.
 
-# generated with plugin_template@2021.04.08-95-gbf7866c
+# generated with plugin_template@2021.04.08-98-gd000611
 
 additional_repos:
 - branch: main
@@ -15,6 +15,7 @@ check_manifest: true
 check_openapi_schema: true
 check_stray_pulpcore_imports: false
 cherry_pick_automation: false
+ci_env: {}
 ci_trigger: '{pull_request: {branches: [''*'']}}'
 core_import_allowed: []
 coverage: true
@@ -50,6 +51,7 @@ pulp_settings:
   orphan_protection_time: 0
 pulpcore_branch: null
 pulpcore_pip_version_specifier: null
+pulpcore_revision: null
 pulpprojectdotorg_key_id: d1a778bda808
 pydocstyle: true
 pypi_username: pulp
