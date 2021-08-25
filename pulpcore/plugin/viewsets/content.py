@@ -76,18 +76,20 @@ class SingleArtifactContentUploadViewSet(DefaultDeferredContextMixin, ContentVie
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        content_data = self.init_content_data(serializer, request)
+        task_payload = self.init_content_data(serializer, request)
 
+        resources = []
         repository = serializer.validated_data.get("repository")
         if repository:
-            content_data.append(repository)
+            resources.append(repository)
 
         app_label = self.queryset.model._meta.app_label
         task = dispatch(
             tasks.base.general_create,
             args=(app_label, serializer.__class__.__name__),
+            exclusive_resources=resources,
             kwargs={
-                "data": content_data,
+                "data": task_payload,
                 "context": self.get_deferred_context(request),
             },
         )
