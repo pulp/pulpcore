@@ -7,7 +7,6 @@ import os
 from contextlib import suppress
 from datetime import timedelta
 from gettext import gettext as _
-from hashlib import blake2s
 
 from django.contrib.postgres.fields import JSONField, ArrayField
 from django.db import connection, models
@@ -209,9 +208,8 @@ class Worker(BaseModel):
         self.save(update_fields=["last_heartbeat"])
 
 
-def _hash_to_u64(value):
-    _digest = blake2s(value.encode(), digest_size=8).digest()
-    return int.from_bytes(_digest, byteorder="big", signed=True)
+def _uuid_to_advisory_lock(value):
+    return ((value >> 64) ^ value) & 0x7FFFFFFFFFFFFFFF
 
 
 class TaskManager(models.Manager):
@@ -286,7 +284,7 @@ class Task(BaseModel, AutoDeleteObjPermsMixin, AutoAddObjPermsMixin):
         return "Task: {name} [{state}]".format(name=self.name, state=self.state)
 
     def __enter__(self):
-        self.lock = _hash_to_u64(str(self.pk))
+        self.lock = _uuid_to_advisory_lock(self.pk.int)
         with connection.cursor() as cursor:
             cursor.execute("SELECT pg_try_advisory_lock(%s);", [self.lock])
             acquired = cursor.fetchone()[0]

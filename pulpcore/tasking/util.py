@@ -1,6 +1,5 @@
 import logging
 import time
-from hashlib import blake2s
 from gettext import gettext as _
 
 from django.conf import settings
@@ -140,8 +139,3 @@ def get_current_worker():
             return worker
 
     return None
-
-
-def _hash_to_u64(value):
-    _digest = blake2s(value.encode(), digest_size=8).digest()
-    return int.from_bytes(_digest, byteorder="big", signed=True)
