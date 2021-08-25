@@ -197,7 +197,7 @@ class RepositoryVersionViewSet(
 
         task = dispatch(
             tasks.repository.repair_version,
-            exclusive_resources=[version.repository],
+            shared_resources=[version.repository],
             args=[version.pk, verify_checksums],
         )
         return OperationPostponedResponse(task, request)
