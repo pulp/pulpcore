@@ -124,8 +124,10 @@ class ProgressReport(BaseModel):
     def save(self, *args, **kwargs):
         """
         Auto-set the task_id if running inside a task
+
         If the task_id is already set it will not be updated. If it is unset and this is running
         inside of a task it will be auto-set prior to saving.
+
         args (list): positional arguments to be passed on to the real save
         kwargs (dict): keyword arguments to be passed on to the real save
         """
@@ -191,6 +193,7 @@ class ProgressReport(BaseModel):
     async def __aexit__(self, type, value, traceback):
         """
         Async implementation of __exit__
+
         Update the progress report state to COMPLETED, CANCELED, or FAILED.
 
         If an exception occurs the progress report state is saved as:
