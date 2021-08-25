@@ -37,7 +37,7 @@ class ReclaimSpaceViewSet(ViewSet):
 
         task = dispatch(
             reclaim_space,
-            exclusive_resources=repos,
+            shared_resources=repos,
             kwargs={
                 "repo_pks": reclaim_repo_pks,
                 "keeplist_rv_pks": keeplist_rv_pks,
