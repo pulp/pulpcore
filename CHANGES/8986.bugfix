@@ -1,1 +1,0 @@
-Fixed signal handling to properly kill a task when double ctrl-c is used to shut down a worker fast.

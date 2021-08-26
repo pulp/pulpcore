@@ -1,5 +1,0 @@
-The ``pulpcore.plugin.download.http_giveup`` method has been removed from the plugin API. Plugins
-used to have to use this to wrap the ``_run`` method defined on subclasses of ``HttpDownloader``,
-but starting with pulpcore 3.14 the backoff is implemented directly in the ``HttpDownloader.run()``
-method which subclasses do not override. Due to ``pulpcore`` implementing it, it is no longer needed
-or available for plugins to use.

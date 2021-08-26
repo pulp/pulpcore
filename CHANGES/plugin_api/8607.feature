@@ -1,1 +1,0 @@
-Added endpoints for managing Alternate Content Sources.
