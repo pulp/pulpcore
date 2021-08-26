@@ -4,6 +4,7 @@
 # './plugin-template --github pulpcore' to update this file.
 #
 # For more info visit https://github.com/pulp/plugin_template
+
 ---
 name: Create New Release Branch
 on:
@@ -41,6 +42,7 @@ jobs:
           echo ::endgroup::
 
       - name: Setting secrets
+        
         run: python3 .github/workflows/scripts/secrets.py "$SECRETS_CONTEXT"
         env:
           SECRETS_CONTEXT: ${{ toJson(secrets) }}
@@ -67,6 +69,7 @@ jobs:
       - name: Make a PR with version bump
         uses: peter-evans/create-pull-request@v3
         with:
+          token: ${{ secrets.RELEASE_TOKEN }}
           committer: pulpbot <pulp-infra@redhat.com>
           author: pulpbot <pulp-infra@redhat.com>
           branch: minor-version-bump

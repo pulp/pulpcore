@@ -4,6 +4,7 @@
 # './plugin-template --github pulpcore' to update this file.
 #
 # For more info visit https://github.com/pulp/plugin_template
+
 ---
 name: Pulpcore CI
 on: {pull_request: {branches: ['*']}}
@@ -13,7 +14,7 @@ jobs:
 
   lint:
     runs-on: ubuntu-latest
-    
+
 
     steps:
       - uses: actions/checkout@v2
@@ -33,6 +34,12 @@ jobs:
       - name: Check commit message
         if: github.event_name == 'pull_request'
         env:
+          PY_COLORS: '1'
+          ANSIBLE_FORCE_COLOR: '1'
+          GITHUB_PULL_REQUEST: ${{ github.event.number }}
+          GITHUB_PULL_REQUEST_BODY: ${{ github.event.pull_request.body }}
+          GITHUB_BRANCH: ${{ github.head_ref }}
+          GITHUB_REPO_SLUG: ${{ github.repository }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_CONTEXT: ${{ github.event.pull_request.commits_url }}
         run: sh .github/workflows/scripts/check_commit.sh
@@ -51,7 +58,7 @@ jobs:
       - name: Check manifest
         run: check-manifest
 
-      
+
 
       - name: Check for gettext problems
         run: sh .ci/scripts/check_gettext.sh
@@ -80,6 +87,7 @@ jobs:
         with:
           python-version: "3.8"
       - uses: actions/setup-ruby@v1
+
         with:
           ruby-version: "2.6"
 
@@ -89,30 +97,63 @@ jobs:
           sudo apt-get update -yq
           sudo -E apt-get -yq --no-install-suggests --no-install-recommends install httpie
           echo ::endgroup::
-          echo "HTTPIE_CONFIG_DIR=$GITHUB_WORKSPACE/.ci/assets/httpie/" >> $GITHUB_ENV
           echo "TEST=${{ matrix.env.TEST }}" >> $GITHUB_ENV
+          echo "HTTPIE_CONFIG_DIR=$GITHUB_WORKSPACE/.ci/assets/httpie/" >> $GITHUB_ENV
+          echo "FROM_PULP_CERTGUARD_BRANCH=${{ matrix.FROM_PULP_CERTGUARD_BRANCH }}" >> $GITHUB_ENV
+          echo "FROM_PULP_FILE_BRANCH=${{ matrix.FROM_PULP_FILE_BRANCH }}" >> $GITHUB_ENV
+          echo "FROM_PULPCORE_BRANCH=${{ matrix.FROM_PULPCORE_BRANCH }}" >> $GITHUB_ENV
 
       - name: Before Install
+
         run: .github/workflows/scripts/before_install.sh
         shell: bash
-
-      - name: Install
-        run: .github/workflows/scripts/install.sh
         env:
           PY_COLORS: '1'
           ANSIBLE_FORCE_COLOR: '1'
+          GITHUB_PULL_REQUEST: ${{ github.event.number }}
+          GITHUB_PULL_REQUEST_BODY: ${{ github.event.pull_request.body }}
+          GITHUB_BRANCH: ${{ github.head_ref }}
+          GITHUB_REPO_SLUG: ${{ github.repository }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_CONTEXT: ${{ github.event.pull_request.commits_url }}
+
+      - name: Install
+
+        run: .github/workflows/scripts/install.sh
         shell: bash
+        env:
+          PY_COLORS: '1'
+          ANSIBLE_FORCE_COLOR: '1'
+          GITHUB_PULL_REQUEST: ${{ github.event.number }}
+          GITHUB_PULL_REQUEST_BODY: ${{ github.event.pull_request.body }}
+          GITHUB_BRANCH: ${{ github.head_ref }}
+          GITHUB_REPO_SLUG: ${{ github.repository }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_CONTEXT: ${{ github.event.pull_request.commits_url }}
 
       - name: Install Python client
+
         run: .github/workflows/scripts/install_python_client.sh
+        shell: bash
 
       - name: Install Ruby client
         if: ${{ env.TEST == 'bindings' }}
         run: .github/workflows/scripts/install_ruby_client.sh
+        shell: bash
 
       - name: Before Script
-        run: |
-          .github/workflows/scripts/before_script.sh
+
+        run: .github/workflows/scripts/before_script.sh
+        shell: bash
+        env:
+          PY_COLORS: '1'
+          ANSIBLE_FORCE_COLOR: '1'
+          GITHUB_PULL_REQUEST: ${{ github.event.number }}
+          GITHUB_PULL_REQUEST_BODY: ${{ github.event.pull_request.body }}
+          GITHUB_BRANCH: ${{ github.head_ref }}
+          GITHUB_REPO_SLUG: ${{ github.repository }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_CONTEXT: ${{ github.event.pull_request.commits_url }}
 
       - name: Setting secrets
         if: github.event_name != 'pull_request'
@@ -121,13 +162,18 @@ jobs:
           SECRETS_CONTEXT: ${{ toJson(secrets) }}
 
       - name: Script
+
         run: .github/workflows/scripts/script.sh
         shell: bash
-        # env vars useful for post_script.sh when present
         env:
+          PY_COLORS: '1'
+          ANSIBLE_FORCE_COLOR: '1'
           GITHUB_PULL_REQUEST: ${{ github.event.number }}
+          GITHUB_PULL_REQUEST_BODY: ${{ github.event.pull_request.body }}
           GITHUB_BRANCH: ${{ github.head_ref }}
           GITHUB_REPO_SLUG: ${{ github.repository }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_CONTEXT: ${{ github.event.pull_request.commits_url }}
 
       - name: After failure
         if: failure()
@@ -147,6 +193,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        env:
+          - TEST: upgrade
         include:
           - FROM_PULPCORE_BRANCH: "3.11"
             FROM_PULP_CERTGUARD_BRANCH: "1.2"
@@ -169,7 +217,7 @@ jobs:
           sudo apt-get update -yq
           sudo -E apt-get -yq --no-install-suggests --no-install-recommends install httpie
           echo ::endgroup::
-          echo "TEST=upgrade" >> $GITHUB_ENV
+          echo "TEST=${{ matrix.env.TEST }}" >> $GITHUB_ENV
           echo "HTTPIE_CONFIG_DIR=$GITHUB_WORKSPACE/.ci/assets/httpie/" >> $GITHUB_ENV
           echo "FROM_PULP_CERTGUARD_BRANCH=${{ matrix.FROM_PULP_CERTGUARD_BRANCH }}" >> $GITHUB_ENV
           echo "FROM_PULP_FILE_BRANCH=${{ matrix.FROM_PULP_FILE_BRANCH }}" >> $GITHUB_ENV
@@ -182,33 +230,76 @@ jobs:
           echo ::endgroup::
 
       - name: Before Install
+
         run: .github/workflows/scripts/before_install.sh
         shell: bash
-
-      - name: Install
-        run: .github/workflows/scripts/install.sh
         env:
           PY_COLORS: '1'
           ANSIBLE_FORCE_COLOR: '1'
+          GITHUB_PULL_REQUEST: ${{ github.event.number }}
+          GITHUB_PULL_REQUEST_BODY: ${{ github.event.pull_request.body }}
+          GITHUB_BRANCH: ${{ github.head_ref }}
+          GITHUB_REPO_SLUG: ${{ github.repository }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_CONTEXT: ${{ github.event.pull_request.commits_url }}
+
+      - name: Install
+
+        run: .github/workflows/scripts/install.sh
         shell: bash
+        env:
+          PY_COLORS: '1'
+          ANSIBLE_FORCE_COLOR: '1'
+          GITHUB_PULL_REQUEST: ${{ github.event.number }}
+          GITHUB_PULL_REQUEST_BODY: ${{ github.event.pull_request.body }}
+          GITHUB_BRANCH: ${{ github.head_ref }}
+          GITHUB_REPO_SLUG: ${{ github.repository }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_CONTEXT: ${{ github.event.pull_request.commits_url }}
 
       - name: Install Python client
+
         run: .github/workflows/scripts/install_python_client.sh
+        shell: bash
 
       - name: Before Script
+
         run: .github/workflows/scripts/before_script.sh
+        shell: bash
+        env:
+          PY_COLORS: '1'
+          ANSIBLE_FORCE_COLOR: '1'
+          GITHUB_PULL_REQUEST: ${{ github.event.number }}
+          GITHUB_PULL_REQUEST_BODY: ${{ github.event.pull_request.body }}
+          GITHUB_BRANCH: ${{ github.head_ref }}
+          GITHUB_REPO_SLUG: ${{ github.repository }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_CONTEXT: ${{ github.event.pull_request.commits_url }}
 
       - name: Setting secrets
+
         run: python3 .github/workflows/scripts/secrets.py "$SECRETS_CONTEXT"
         env:
           SECRETS_CONTEXT: ${{ toJson(secrets) }}
 
-      - name: Upgrade test
+      - name: Upgrade Test
+
         run: .github/workflows/scripts/script.sh
+        shell: bash
+        env:
+          PY_COLORS: '1'
+          ANSIBLE_FORCE_COLOR: '1'
+          GITHUB_PULL_REQUEST: ${{ github.event.number }}
+          GITHUB_PULL_REQUEST_BODY: ${{ github.event.pull_request.body }}
+          GITHUB_BRANCH: ${{ github.head_ref }}
+          GITHUB_REPO_SLUG: ${{ github.repository }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_CONTEXT: ${{ github.event.pull_request.commits_url }}
 
       - name: After failure
         if: failure()
         run: |
+          echo "Need to debug? Please check: https://github.com/marketplace/actions/debugging-with-tmate"
           http --timeout 30 --check-status --pretty format --print hb https://pulp/pulp/api/v3/status/ || true
           docker images || true
           docker ps -a || true
