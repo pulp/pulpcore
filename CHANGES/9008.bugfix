@@ -1,1 +1,0 @@
-Removed ambiguity from the OpenAPI schema for Exports. The exported_resources are now a list of URI strings.
