@@ -4,7 +4,7 @@
 # generated with plugin_template@2021.04.08-98-gd000611
 
 additional_repos:
-- branch: main
+- branch: 1.9
   name: pulp_file
 - branch: 1.5
   name: pulp-certguard
