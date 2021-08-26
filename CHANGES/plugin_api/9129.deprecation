@@ -1,2 +1,0 @@
-ContentSaver._pre_save() and ContentSaver._post_save() hooks are no longer coroutines. They should
-be implemented as synchronous functions.

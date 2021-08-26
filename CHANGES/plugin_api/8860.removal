@@ -1,2 +1,0 @@
-Removed ``FilesystemExporterSerializer`` and ``PublicationExportSerializer`` from the plugin api.
-Filesystem exports are now handled by pulpcore.

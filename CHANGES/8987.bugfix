@@ -1,1 +1,0 @@
-Added an attempt to cancel a task if a worker needed to abort it on graceful shutdown.

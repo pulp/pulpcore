@@ -1,1 +1,0 @@
-Removed a workaround in RemoteArtifactSaver that was needed prior to Django 3.2.

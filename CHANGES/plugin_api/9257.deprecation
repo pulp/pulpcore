@@ -1,1 +1,0 @@
-Deprecate the ``resources`` argument of ``dispatch`` in favor of ``exclusive_resources`` and ``shared_resources``.

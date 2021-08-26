@@ -1,4 +1,0 @@
-Added kwarg to RemoteArtifactSaver init to allow enabling handling of rare error edge-case.
-
-`fix_mismatched_remote_artifacts=True` enables workaround for a failure-scenario that
-(so far) is only encountered by pulp_rpm. Current behavior is the default.

@@ -1,2 +1,0 @@
-Removed the ``pulpcore.plugin.viewsets.NewDistributionFilter``. Instead use
-``pulpcore.plugin.viewsets.DistributionFilter``.

@@ -17,6 +17,212 @@ Changelog
 
 .. towncrier release notes start
 
+3.15.0 (2021-08-26)
+===================
+REST API
+--------
+
+Features
+~~~~~~~~
+
+- Added encryption in the database for ``Remote`` fields ``username``, ``password``,
+  ``proxy_username``, ``proxy_password``, and ``client_key``.
+  `#8192 <https://pulp.plan.io/issues/8192>`_
+- Added feature to reclaim disk space for a list of repositories.
+  `#8459 <https://pulp.plan.io/issues/8459>`_
+- Added ``method`` field to filesystem exporters to customize how they export files. Users can now
+  export files by writing them to the filesystem, using hardlinks, or using symlinks.
+  `#8695 <https://pulp.plan.io/issues/8695>`_
+- Changed orphan cleanup task to be a non-blocking task that can be run at any time. Added a
+  ``ORPHAN_PROTECTION_TIME`` setting that can be configured for how long orphan Content and
+  Artifacts are kept before becoming candidates for deletion by the orphan cleanup task.
+  `#8824 <https://pulp.plan.io/issues/8824>`_
+- Added a ``/v3/exporters/core/filesystem/`` endpoint for exporting publications or repository
+  versions to the filesystem.
+  `#8860 <https://pulp.plan.io/issues/8860>`_
+- Added a periodical cleanup to the pulpcore-worker class to keep the `Worker` table clean.
+  `#8931 <https://pulp.plan.io/issues/8931>`_
+- Added new content guard that uses RBAC policies to protect content
+  `#8940 <https://pulp.plan.io/issues/8940>`_
+- Added authentication to the content app.
+  `#8951 <https://pulp.plan.io/issues/8951>`_
+- A new setting ``ALLOW_SHARED_TASK_RESOURCES`` was temporarily added to allow plugins to use specific
+  resources concurrently, during task execution. It defaults to ``False``. It will switch to ``True``
+  with 3.16 and will eventually be removed.
+  `#9148 <https://pulp.plan.io/issues/9148>`_
+
+
+Bugfixes
+~~~~~~~~
+
+- In stages-pipeline and new-version sanity-checks, added full error-info on path-problems.
+  `#8133 <https://pulp.plan.io/issues/8133>`_
+- Improved disk usage during the synchronization.
+  `#8295 <https://pulp.plan.io/issues/8295>`_
+- Fixed an internal server error that was raised when a user provided invalid parameters while
+  assigning new permissions to an object.
+  `#8500 <https://pulp.plan.io/issues/8500>`_
+- Fixed a bug, where new tasks were assigned to dead workers.
+  `#8779 <https://pulp.plan.io/issues/8779>`_
+- Fixed bug where content app would not respond to ``Range`` HTTP Header in requests when
+  ``remote.policy`` was either ``on_demand`` or ``streamed``. For example this request is used by
+  Anaconda clients.
+  `#8865 <https://pulp.plan.io/issues/8865>`_
+- Unpublished content can no longer be accessed from content app if publication based-plugin has
+  defined their distributions as publication serving
+  `#8870 <https://pulp.plan.io/issues/8870>`_
+- Fixed a bug that caused a serializer to ignore form data for ``pulp_labels``.
+  `#8954 <https://pulp.plan.io/issues/8954>`_
+- Fixed inability for users to disable RBAC at the settings level by changing the
+  ``DEFAULT_PERMISSION_CLASSES`` like any user configuring a DRF project expects to.
+  `#8974 <https://pulp.plan.io/issues/8974>`_
+- Fixed signal handling to properly kill a task when double ctrl-c is used to shut down a worker fast.
+  `#8986 <https://pulp.plan.io/issues/8986>`_
+- Added an attempt to cancel a task if a worker needed to abort it on graceful shutdown.
+  `#8987 <https://pulp.plan.io/issues/8987>`_
+- Fixed a bug where on-demand downloads would fill up ``/var/run/`` by not deleting downloaded files.
+  `#9000 <https://pulp.plan.io/issues/9000>`_
+- Fixed a regression preventing syncs from file:// urls.
+  `#9003 <https://pulp.plan.io/issues/9003>`_
+- Removed ambiguity from the OpenAPI schema for Exports. The exported_resources are now a list of URI strings.
+  `#9008 <https://pulp.plan.io/issues/9008>`_
+- Use proxy auth from Remote config to download content from a remote repository.
+  `#9024 <https://pulp.plan.io/issues/9024>`_
+- Fixed the behavior of setting "repository" on a distribution for publication-based plugins.
+  `#9039 <https://pulp.plan.io/issues/9039>`_
+- Set Redis connection information in status to null unless it's used. Redis is
+  needed for RQ tasking or content caching.
+  `#9070 <https://pulp.plan.io/issues/9070>`_
+- Fixed server error when accessing invalid files from content app base directory
+  `#9074 <https://pulp.plan.io/issues/9074>`_
+- Fixed improper validation of remotes' URLs.
+  `#9080 <https://pulp.plan.io/issues/9080>`_
+- Artifacts are now being properly updated for Content after switching from 'on_demand' to 'immediate'.
+  `#9101 <https://pulp.plan.io/issues/9101>`_
+- Made all database queries run serially using a single connection to the database.
+  `#9129 <https://pulp.plan.io/issues/9129>`_
+- Move files to artifact storage only when they originate from WORKING_DIRECTORY.
+  Copy files from all other sources.
+  `#9146 <https://pulp.plan.io/issues/9146>`_
+- Content app now properly sets Content-Type header for artifacts being served from S3
+  `#9216 <https://pulp.plan.io/issues/9216>`_
+- Fixed repository sync performance regression introduced in pulpcore 3.14.
+  `#9243 <https://pulp.plan.io/issues/9243>`_
+- Stop using insecure hash function blake2s for calculating 64 bit lock identifier from uuid.
+  `#9249 <https://pulp.plan.io/issues/9249>`_
+- Fixed another occurence of the HTTP 500 error and `connection already closed` in the logs while accessing content.
+  `#9275 <https://pulp.plan.io/issues/9275>`_
+
+
+Removals
+~~~~~~~~
+
+- Dropped support for Python 3.6 and 3.7. Pulp now supports Python 3.8+.
+  `#8855 <https://pulp.plan.io/issues/8855>`_
+- Renamed the ``retained_versions`` field on repositories to ``retain_repo_versions``.
+  `#9030 <https://pulp.plan.io/issues/9030>`_
+
+
+Deprecations
+~~~~~~~~~~~~
+
+- The traditional tasking system (formerly the default in ``pulpcore<=3.13`) is deprecated and will be
+  removed in ``pulpcore==3.16``. If you are using the ``USE_NEW_WORKER_TYPE=False`` that will no
+  longer give you the traditional tasking system starting with ``pulpcore==3.16``.
+  `#9159 <https://pulp.plan.io/issues/9159>`_
+
+
+Misc
+~~~~
+
+- `#5582 <https://pulp.plan.io/issues/5582>`_, `#8996 <https://pulp.plan.io/issues/8996>`_, `#9010 <https://pulp.plan.io/issues/9010>`_, `#9056 <https://pulp.plan.io/issues/9056>`_, `#9112 <https://pulp.plan.io/issues/9112>`_, `#9120 <https://pulp.plan.io/issues/9120>`_, `#9171 <https://pulp.plan.io/issues/9171>`_, `#9174 <https://pulp.plan.io/issues/9174>`_
+
+
+Plugin API
+----------
+
+Features
+~~~~~~~~
+
+- Content model has a new boolean class constant ``PROTECTED_FROM_RECLAIM`` for plugins to enable the
+  reclaim disk space feature provided by core.
+  `#8459 <https://pulp.plan.io/issues/8459>`_
+- Added endpoints for managing Alternate Content Sources.
+  `#8607 <https://pulp.plan.io/issues/8607>`_
+- Orphan cleanup task has a new optional parameter ``orphan_protection_time`` that decides for how
+  long Pulp will hold orphan Content and Artifacts before they become candidates for deletion for this
+  particular orphan cleanup task.
+  `#8824 <https://pulp.plan.io/issues/8824>`_
+- Distribution model has a new boolean class variable ``SERVE_FROM_PUBLICATION`` for plugins to declare
+  whether their distributions serve from publications or directly from repository versions
+  `#8870 <https://pulp.plan.io/issues/8870>`_
+- The settings file switched ``DEFAULT_PERMISSION_CLASSES`` to use ``AccessPolicyFromDB`` instead of
+  ``IsAdminUser`` with a fallback to a behavior of ``IsAdminUser``. With this feature plugin writers
+  no longer need to declare ``permission_classes`` on their Views or Viewsets to use
+  ``AccessPolicyFromDB``.
+  `#8974 <https://pulp.plan.io/issues/8974>`_
+- Upgraded django from 2.2 to 3.2.
+  `#9018 <https://pulp.plan.io/issues/9018>`_
+- `pulpcore.plugin.models.ProgressReport` now has async interfaces: asave(), aincrease_by(),
+  aincrement(), __aenter__(), _aexit__(). Plugins should switch to the async interfaces in their
+  Stages.
+  `pulpcore.plugin.sync.sync_to_async_iterator` is a utility method to synchronize the database
+  queries generated when a QuerySet is iterated.
+  `#9129 <https://pulp.plan.io/issues/9129>`_
+- Added ``shared_resources`` to the ``dispatch`` call, so tasks can run concurrently if they need overlapping resources for read only.
+  `#9148 <https://pulp.plan.io/issues/9148>`_
+- Added ``touch`` to Artifact and Content query sets for bulk operation.
+  `#9234 <https://pulp.plan.io/issues/9234>`_
+- Added `ContentManager` to the plugin API - all subclasses of `Content` that add their own custom manager should have the manager subclass `ContentManager`.
+  `#9269 <https://pulp.plan.io/issues/9269>`_
+
+
+Bugfixes
+~~~~~~~~
+
+- Added kwarg to RemoteArtifactSaver init to allow enabling handling of rare error edge-case.
+
+  `fix_mismatched_remote_artifacts=True` enables workaround for a failure-scenario that
+  (so far) is only encountered by pulp_rpm. Current behavior is the default.
+  `#8133 <https://pulp.plan.io/issues/8133>`_
+
+
+Removals
+~~~~~~~~
+
+- Removed the ``pulpcore.plugin.viewsets.NewDistributionFilter``. Instead use
+  ``pulpcore.plugin.viewsets.DistributionFilter``.
+  `#8479 <https://pulp.plan.io/issues/8479>`_
+- Removed ``FilesystemExporterSerializer`` and ``PublicationExportSerializer`` from the plugin api.
+  Filesystem exports are now handled by pulpcore.
+  `#8860 <https://pulp.plan.io/issues/8860>`_
+- The ``pulpcore.plugin.download.http_giveup`` method has been removed from the plugin API. Plugins
+  used to have to use this to wrap the ``_run`` method defined on subclasses of ``HttpDownloader``,
+  but starting with pulpcore 3.14 the backoff is implemented directly in the ``HttpDownloader.run()``
+  method which subclasses do not override. Due to ``pulpcore`` implementing it, it is no longer needed
+  or available for plugins to use.
+  `#8913 <https://pulp.plan.io/issues/8913>`_
+
+
+Deprecations
+~~~~~~~~~~~~
+
+- ContentSaver._pre_save() and ContentSaver._post_save() hooks are no longer coroutines. They should
+  be implemented as synchronous functions.
+  `#9129 <https://pulp.plan.io/issues/9129>`_
+- Deprecate the compatibility layer for access policies. As of pulpcore 3.16, all plugins should
+  properly use the "condition" and "condition_expression" fields in the access policy statements.
+  `#9160 <https://pulp.plan.io/issues/9160>`_
+- Deprecate the ``resources`` argument of ``dispatch`` in favor of ``exclusive_resources`` and ``shared_resources``.
+  `#9257 <https://pulp.plan.io/issues/9257>`_
+
+
+Misc
+~~~~
+
+- `#8606 <https://pulp.plan.io/issues/8606>`_, `#9160 <https://pulp.plan.io/issues/9160>`_
+
+
 3.14.5 (2021-08-24)
 ===================
 REST API
