@@ -286,6 +286,7 @@ jobs:
       - name: Create Pull Request for Changelog
         uses: peter-evans/create-pull-request@v3
         with:
+          token: ${{ secrets.RELEASE_TOKEN }}
           committer: pulpbot <pulp-infra@redhat.com>
           author: pulpbot <pulp-infra@redhat.com>
           branch: changelog/${{ github.event.inputs.release }}
