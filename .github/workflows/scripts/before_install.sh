@@ -115,7 +115,7 @@ cd ..
 
 
 
-git clone --depth=1 https://github.com/pulp/pulp_file.git --branch main
+git clone --depth=1 https://github.com/pulp/pulp_file.git --branch 1.9
 cd pulp_file
 
 if [ -n "$PULP_FILE_PR_NUMBER" ]; then
