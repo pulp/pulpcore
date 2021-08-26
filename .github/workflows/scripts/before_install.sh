@@ -125,7 +125,7 @@ fi
 
 cd ..
 
-git clone --depth=1 https://github.com/pulp/pulp-certguard.git --branch master
+git clone --depth=1 https://github.com/pulp/pulp-certguard.git --branch 1.5
 cd pulp-certguard
 
 if [ -n "$PULP_CERTGUARD_PR_NUMBER" ]; then
