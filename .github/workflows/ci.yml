@@ -14,7 +14,7 @@ jobs:
 
   lint:
     runs-on: ubuntu-latest
-
+    
 
     steps:
       - uses: actions/checkout@v2
@@ -58,7 +58,7 @@ jobs:
       - name: Check manifest
         run: check-manifest
 
-
+      
 
       - name: Check for gettext problems
         run: sh .ci/scripts/check_gettext.sh
@@ -87,7 +87,7 @@ jobs:
         with:
           python-version: "3.8"
       - uses: actions/setup-ruby@v1
-
+        
         with:
           ruby-version: "2.6"
 
@@ -104,7 +104,7 @@ jobs:
           echo "FROM_PULPCORE_BRANCH=${{ matrix.FROM_PULPCORE_BRANCH }}" >> $GITHUB_ENV
 
       - name: Before Install
-
+        
         run: .github/workflows/scripts/before_install.sh
         shell: bash
         env:
@@ -118,7 +118,7 @@ jobs:
           GITHUB_CONTEXT: ${{ github.event.pull_request.commits_url }}
 
       - name: Install
-
+        
         run: .github/workflows/scripts/install.sh
         shell: bash
         env:
@@ -132,7 +132,7 @@ jobs:
           GITHUB_CONTEXT: ${{ github.event.pull_request.commits_url }}
 
       - name: Install Python client
-
+        
         run: .github/workflows/scripts/install_python_client.sh
         shell: bash
 
@@ -142,7 +142,7 @@ jobs:
         shell: bash
 
       - name: Before Script
-
+        
         run: .github/workflows/scripts/before_script.sh
         shell: bash
         env:
@@ -162,7 +162,7 @@ jobs:
           SECRETS_CONTEXT: ${{ toJson(secrets) }}
 
       - name: Script
-
+        
         run: .github/workflows/scripts/script.sh
         shell: bash
         env:
@@ -230,7 +230,7 @@ jobs:
           echo ::endgroup::
 
       - name: Before Install
-
+        
         run: .github/workflows/scripts/before_install.sh
         shell: bash
         env:
@@ -244,7 +244,7 @@ jobs:
           GITHUB_CONTEXT: ${{ github.event.pull_request.commits_url }}
 
       - name: Install
-
+        
         run: .github/workflows/scripts/install.sh
         shell: bash
         env:
@@ -258,12 +258,12 @@ jobs:
           GITHUB_CONTEXT: ${{ github.event.pull_request.commits_url }}
 
       - name: Install Python client
-
+        
         run: .github/workflows/scripts/install_python_client.sh
         shell: bash
 
       - name: Before Script
-
+        
         run: .github/workflows/scripts/before_script.sh
         shell: bash
         env:
@@ -277,13 +277,13 @@ jobs:
           GITHUB_CONTEXT: ${{ github.event.pull_request.commits_url }}
 
       - name: Setting secrets
-
+        
         run: python3 .github/workflows/scripts/secrets.py "$SECRETS_CONTEXT"
         env:
           SECRETS_CONTEXT: ${{ toJson(secrets) }}
 
       - name: Upgrade Test
-
+        
         run: .github/workflows/scripts/script.sh
         shell: bash
         env:
