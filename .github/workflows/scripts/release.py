@@ -137,7 +137,7 @@ def create_release_commits(repo, release_version, plugin_path):
     git = repo.git
     git.add("CHANGES.rst")
     git.add("CHANGES/*")
-    git.commit("-m", f"Building changelog for {release_version}\n\n[noissue]")
+    git.commit("-m", f"{release_version} changelog\n\n[noissue]")
 
     # Second commit: release version
     os.system("bump2version release --allow-dirty")
