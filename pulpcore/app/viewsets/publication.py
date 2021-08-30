@@ -200,7 +200,7 @@ class RBACContentGuardViewSet(ContentGuardViewSet):
         ],
     }
 
-    @extend_schema(summary="Add download permission", responses={200: RBACContentGuardSerializer})
+    @extend_schema(summary="Add download permission", responses={201: RBACContentGuardSerializer})
     @action(methods=["post"], detail=True, serializer_class=RBACContentGuardPermissionSerializer)
     def assign_permission(self, request, pk):
         """Give users and groups the `download` permission"""
@@ -210,10 +210,10 @@ class RBACContentGuardViewSet(ContentGuardViewSet):
         guard.add_can_download(users=names.data["usernames"], groups=names.data["groupnames"])
         self.serializer_class = RBACContentGuardSerializer
         serializer = self.get_serializer(guard)
-        return Response(serializer.data)
+        return Response(serializer.data, status=201)
 
     @extend_schema(
-        summary="Remove download permission", responses={200: RBACContentGuardSerializer}
+        summary="Remove download permission", responses={201: RBACContentGuardSerializer}
     )
     @action(methods=["post"], detail=True, serializer_class=RBACContentGuardPermissionSerializer)
     def remove_permission(self, request, pk):
@@ -224,7 +224,7 @@ class RBACContentGuardViewSet(ContentGuardViewSet):
         guard.remove_can_download(users=names.data["usernames"], groups=names.data["groupnames"])
         self.serializer_class = RBACContentGuardSerializer
         serializer = self.get_serializer(guard)
-        return Response(serializer.data)
+        return Response(serializer.data, status=201)
 
 
 class DistributionFilter(BaseFilterSet):
