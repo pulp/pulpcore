@@ -196,6 +196,16 @@ DATABASES = {
         "CONN_MAX_AGE": 0,
     },
 }
+
+# Redis default config
+REDIS_URL = None
+REDIS_HOST = "localhost"
+REDIS_PORT = 6379
+REDIS_DB = 0
+REDIS_PASSWORD = None
+REDIS_SSL = False
+REDIS_SSL_CA_CERTS = None
+
 # https://docs.djangoproject.com/en/1.11/ref/settings/#logging and
 # https://docs.python.org/3/library/logging.config.html
 LOGGING = {
@@ -243,7 +253,6 @@ ALLOWED_IMPORT_PATHS = []
 
 ALLOWED_EXPORT_PATHS = []
 
-USE_NEW_WORKER_TYPE = True
 ALLOW_SHARED_TASK_RESOURCES = False
 
 PROFILE_STAGES_API = False

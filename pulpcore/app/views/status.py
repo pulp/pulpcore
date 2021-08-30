@@ -12,7 +12,7 @@ from pulpcore.app.apps import pulp_plugin_configs
 from pulpcore.app.models.status import ContentAppStatus
 from pulpcore.app.models.task import Worker
 from pulpcore.app.serializers.status import StatusSerializer
-from pulpcore.tasking.connection import get_redis_connection
+from pulpcore.app.redis_connection import get_redis_connection
 
 _logger = logging.getLogger(__name__)
 
@@ -57,7 +57,7 @@ class StatusView(APIView):
         for app in pulp_plugin_configs():
             versions.append({"component": app.label, "version": app.version})
 
-        if settings.CACHE_ENABLED or not settings.USE_NEW_WORKER_TYPE:
+        if settings.CACHE_ENABLED:
             redis_status = {"connected": self._get_redis_conn_status()}
         else:
             redis_status = None

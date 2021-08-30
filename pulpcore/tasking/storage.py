@@ -110,7 +110,7 @@ def get_worker_path(hostname):
 
 class WorkerDirectory(_WorkingDir):
     """
-    The directory associated with a RQ worker.
+    The directory associated with a pulpcore-worker.
 
     Path format: <root>/<worker-hostname>
     """
@@ -134,26 +134,3 @@ class WorkerDirectory(_WorkingDir):
         except FileExistsError:
             self.delete()
             super().create()
-
-
-class TaskWorkingDirectory(_WorkingDir):
-    """
-    RQ Job working directory.
-
-    Path format: <worker-dir>/<task-id>/
-    """
-
-    def __init__(self, job):
-        """
-        Create a WorkingDirectory.
-
-        Args:
-            job (rq.Job): The RQ job to create a working directory for
-
-        Raises:
-            RuntimeError: When used outside of an RQ task.
-        """
-        self.hostname = job.origin
-        self.task_id = job.id
-        self.task_path = os.path.join(get_worker_path(self.hostname), self.task_id)
-        super().__init__(self.task_path)

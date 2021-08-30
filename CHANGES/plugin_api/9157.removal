@@ -1,0 +1,2 @@
+Removed the deprecated ``reserved_resources_record__resource`` filter for Task. Use
+``reserved_resources_record__contains`` instead.

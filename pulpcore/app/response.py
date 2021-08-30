@@ -18,9 +18,8 @@ class OperationPostponedResponse(Response):
     def __init__(self, task, request):
         """
         Args:
-            task (pulpcore.plugin.models.Task or rq.job.Job): A
-                :class:`~pulpcore.plugin.models.Task` or :class:`rq.job.Job` object used to generate
-                the response.
+            task (pulpcore.plugin.models.Task): A :class:`~pulpcore.plugin.models.Task` object
+                used to generate the response.
             request (rest_framework.request.Request): Request used to generate the pulp_href urls
         """
         resp = {"task": reverse("tasks-detail", args=[task.pk], request=None)}

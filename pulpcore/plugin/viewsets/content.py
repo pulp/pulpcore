@@ -23,7 +23,7 @@ class DefaultDeferredContextMixin:
         """
         Supply context for deferred validation.
 
-        When overwriting this method, it must return a dict, that is serializable by rq
+        When overwriting this method, it must return a dict, that is JSON serializable by
         and does _not_ contain 'request' as a key.
         """
         return {}

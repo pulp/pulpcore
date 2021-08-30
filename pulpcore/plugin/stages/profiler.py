@@ -3,9 +3,7 @@ import pathlib
 import time
 import uuid
 
-from rq.job import get_current_job
-
-from pulpcore.tasking import connection
+from pulpcore.app.models import Task
 
 
 CONN = None
@@ -141,10 +139,9 @@ def create_profile_db_and_connection():
     """
     debug_data_dir = "/var/lib/pulp/debug/"
     pathlib.Path(debug_data_dir).mkdir(parents=True, exist_ok=True)
-    redis_conn = connection.get_redis_connection()
-    current_job = get_current_job(connection=redis_conn)
-    if current_job:
-        db_path = debug_data_dir + current_job.id
+    current_task = Task.current()
+    if current_task:
+        db_path = debug_data_dir + str(current_task.pk)
     else:
         db_path = debug_data_dir + str(uuid.uuid4())
 
