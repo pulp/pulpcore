@@ -101,7 +101,7 @@ class StatusTestCase(unittest.TestCase):
         else:
             self.assertIsNone(status["storage"])
 
-    @override_settings(CACHE_ENABLED=False, USE_NEW_WORKER_TYPE=True)
+    @override_settings(CACHE_ENABLED=False)
     def verify_get_response_without_redis(self, status):
         """Verify the response to an HTTP GET call when Redis is not used.
 

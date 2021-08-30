@@ -40,7 +40,6 @@ from pulpcore.constants import (  # noqa: E402: module level not at top of file
 from pulpcore.exceptions import AdvisoryLockError  # noqa: E402: module level not at top of file
 from pulpcore.tasking.storage import WorkerDirectory  # noqa: E402: module level not at top of file
 from pulpcore.tasking.util import _delete_incomplete_resources  # noqa: E402
-from pulpcore.tasking.worker_watcher import handle_worker_heartbeat  # noqa: E402
 
 
 _logger = logging.getLogger(__name__)
@@ -48,6 +47,34 @@ random.seed()
 
 TASK_GRACE_INTERVAL = 3
 WORKER_CLEANUP_INTERVAL = 100
+
+
+def handle_worker_heartbeat(worker_name):
+    """
+    This is a generic function for updating worker heartbeat records.
+
+    Existing Worker objects are searched for one to update. If an existing one is found, it is
+    updated. Otherwise a new Worker entry is created. Logging at the info level is also done.
+
+    Args:
+        worker_name (str): The hostname of the worker
+    """
+    worker, created = Worker.objects.get_or_create(name=worker_name)
+
+    if created:
+        _logger.info(_("New worker '{name}' discovered").format(name=worker_name))
+    elif worker.online is False:
+        _logger.info(_("Worker '{name}' is back online.").format(name=worker_name))
+
+    worker.save_heartbeat()
+
+    msg = _("Worker heartbeat from '{name}' at time {timestamp}").format(
+        timestamp=worker.last_heartbeat, name=worker_name
+    )
+
+    _logger.debug(msg)
+
+    return worker
 
 
 class NewPulpWorker:
@@ -83,10 +110,10 @@ class NewPulpWorker:
         _logger.info(_("Worker %s was shut down."), self.name)
 
     def worker_cleanup(self):
-        qs = Worker.objects.offline_workers()
+        qs = Worker.objects.missing_workers()
         if qs:
             for worker in qs:
-                _logger.info(_("Clean offline worker %s."), worker.name)
+                _logger.info(_("Clean missing worker %s."), worker.name)
                 worker.delete()
 
     def beat(self):

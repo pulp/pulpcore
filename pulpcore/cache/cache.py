@@ -5,7 +5,7 @@ from aiohttp.web import FileResponse, Response, HTTPSuccessful, Request
 from aiohttp.web_exceptions import HTTPFound
 
 from pulpcore.app.settings import settings
-from pulpcore.tasking.connection import get_redis_connection, get_async_redis_connection
+from pulpcore.app.redis_connection import get_redis_connection, get_async_redis_connection
 
 DEFAULT_EXPIRES_TTL = settings.CACHE_SETTINGS["EXPIRES_TTL"]
 

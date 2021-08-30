@@ -1,6 +1,3 @@
-.. _rq: http://python-rq.org
-
-
 .. _deployment:
 
 Architecture
@@ -57,26 +54,15 @@ The content serving application can be deployed like any aiohttp.server applicat
 information.
 
 
-Tasking System (current default)
---------------------------------
+Distributed Tasking System
+--------------------------
 
-Pulp's tasking system has two components: a resource manager and workers, all of which are run using
-`rq`_.
-
-Worker
-  Pulp workers perform most tasks "run" by the tasking system including long-running tasks like
-  synchronize and short-running tasks like a Distribution update. Each worker handles one task at a
-  time, and additional workers provide more concurrency. Workers auto-name and are auto-discovered,
-  so they can be started and stopped without notifying Pulp.
-
-Resource Manager
-  A different type of Pulp worker that plays a coordinating role for the tasking system. You must
-  run exactly one of these for Pulp to operate correctly. The ``resource-manager`` is identified by
-  configuring using exactly the name ``resource-manager`` with the ``--resource-manager`` option.
-
-  *N* ``resource-manager`` rq processes can be started with 1 being active and *N-1* being passive.
-  The *N-1* will exit and should be configured to auto-relaunch with either systemd, supervisord, or
-  k8s.
+Pulp's tasking system consists of a single ``pulpcore-worker`` component consequently, and can be
+scaled by increasing the number of worker processes to provide more concurrency. Each worker can
+handle one task at a time, and idle workers will lookup waiting and ready tasks in a distributed
+manner. If no ready tasks were found a worker enters a sleep state to be notified, once new tasks
+are available or resources are released.  Workers auto-name and are auto-discovered, so they can be
+started and stopped without notifying Pulp.
 
 .. note::
 
@@ -84,38 +70,8 @@ Resource Manager
    the same repo should not run in parallel. Generally tasks are serialized at the "resource" level, so
    if you start *N* workers you can process *N* repo sync/modify/publish operations concurrently.
 
-
-Distributed Tasking System (tech-preview)
------------------------------------------
-
-Pulp provides an alternative implementation for the tasking system as a drop in replacement.
-
-.. note::
-
-   This distributed resource-manager free tasking system is still in tech-preview.
-
-The major differences to the prior tasking system is, that tasks are not routed through a
-``resource-manager``, and not queued into ``rq`` queues. So all necessary information about tasks
-is stored in Pulp's Postgres database as a single source of truth. This version of the tasking
-system consists of a single ``pulpcore-worker`` component consequently, and can be scaled by
-increasing the number of worker processes. Each worker can handle one task at a time, and idle
-workers will lookup waiting and ready tasks in a distributed manner. If no ready tasks were found
-a worker enters a sleep state to be notified, once new tasks are available or resources are
-released.
-
-While this tasking system is designed with better scalability and high availability in mind, it
-provides the same interfaces to the user via the REST API.
-
-To switch to using this worker model, one needs to set ``USE_NEW_WORKER_STYLE=True`` in pulp
-settings, and start the worker processes via ``pulpcore-worker`` instead of calling ``rq``.
-
-.. note::
-
-   Pulp serializes tasks that are unsafe to run in parallel, e.g. a sync and publish operation on
-   the same repo should not run in parallel. Generally tasks are serialized at the "resource" level, so
-   if you start *N* workers you can process *N* repo sync/modify/publish operations concurrently.
-
-In case your tasking system get's jammed, there is a guide to help :ref:debugging_tasks.
+All necessary information about tasks is stored in Pulp's Postgres database as a single source of
+truth. In case your tasking system get's jammed, there is a guide to help :ref:debugging_tasks.
 
 Static Content
 --------------

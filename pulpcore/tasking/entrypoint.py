@@ -2,9 +2,10 @@ import click
 import logging
 import os
 import select
-import sys
 
 import django
+
+from pulpcore.app.loggers import deprecation_logger
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "pulpcore.app.settings")
 # Until Django supports async ORM natively this is the best we can do given these parts of Pulp
@@ -13,7 +14,6 @@ os.environ.setdefault("DJANGO_ALLOW_ASYNC_UNSAFE", "true")
 
 django.setup()
 
-from django.conf import settings  # noqa: E402: module level not at top of file
 from pulpcore.tasking.pulpcore_worker import NewPulpWorker  # noqa: E402: module level not at top
 
 
@@ -34,28 +34,13 @@ def worker(resource_manager, pid):
         with open(os.path.expanduser(pid), "w") as fp:
             fp.write(str(os.getpid()))
 
-    if settings.USE_NEW_WORKER_TYPE:
-        if resource_manager:
-            _logger.warn(
-                "Attempting to start a resource-manager with the distributed tasking system"
-            )
-            select.select([], [], [])
-        _logger.info("Starting distributed type worker")
-        NewPulpWorker().run_forever()
-    else:
-        _logger.info("Starting rq type worker")
-        from rq.cli import main
+    if resource_manager:
+        _logger.warn("Attempting to start a resource-manager with the distributed tasking system")
+        deprecation_logger.warn(
+            "The `--resource-manager` option of the pulpcore-worker entrypoint is deprecated and"
+            " will be removed in pulpcore 3.17."
+        )
+        select.select([], [], [])
+    _logger.info("Starting distributed type worker")
 
-        args = [
-            "rq",
-            "worker",
-            "-w",
-            "pulpcore.tasking.worker.PulpWorker",
-            "-c",
-            "pulpcore.rqconfig",
-            "--disable-job-desc-logging",
-        ]
-        if resource_manager:
-            args.extend(["-n", "resource-manager"])
-        sys.argv = args
-        main()
+    NewPulpWorker().run_forever()

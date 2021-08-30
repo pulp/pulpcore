@@ -4,16 +4,13 @@ Django models related to the Tasking system
 import logging
 import traceback
 import os
-from contextlib import suppress
 from datetime import timedelta
 from gettext import gettext as _
 
 from django.contrib.postgres.fields import ArrayField
 from django.db import connection, models
-from django.db.utils import IntegrityError
 from django.utils import timezone
 from django.conf import settings
-from rq.job import get_current_job
 
 from pulpcore.app.models import (
     AutoAddObjPermsMixin,
@@ -24,51 +21,8 @@ from pulpcore.app.models import (
 from pulpcore.constants import TASK_CHOICES, TASK_FINAL_STATES, TASK_STATES
 from pulpcore.exceptions import AdvisoryLockError, exception_to_dict
 from pulpcore.tasking.constants import TASKING_CONSTANTS
-from pulpcore.app.loggers import deprecation_logger
 
 _logger = logging.getLogger(__name__)
-
-
-class ReservedResource(BaseModel):
-    """
-    Resources that have been reserved
-
-    Fields:
-
-        resource (models.TextField): The url of the resource reserved for the task.
-
-    Relations:
-
-        task (models.ForeignKey): The task associated with this reservation
-        worker (models.ForeignKey): The worker associated with this reservation
-    """
-
-    resource = models.TextField(unique=True)
-
-    tasks = models.ManyToManyField(
-        "Task", related_name="reserved_resources", through="TaskReservedResource"
-    )
-    worker = models.ForeignKey("Worker", related_name="reservations", on_delete=models.CASCADE)
-
-
-class TaskReservedResource(BaseModel):
-    """
-    Association between a Task and its ReservedResources.
-
-    Prevents the task from being deleted if it has any ReservedResource(s).
-
-    Fields:
-
-        created (models.DatetimeField): When the association was created.
-
-    Relations:
-
-        task (models.ForeignKey): The associated task.
-        resource (models.ForeignKey): The associated resource.
-    """
-
-    resource = models.ForeignKey("ReservedResource", on_delete=models.PROTECT)
-    task = models.ForeignKey("Task", on_delete=models.PROTECT)
 
 
 class WorkerManager(models.Manager):
@@ -76,9 +30,8 @@ class WorkerManager(models.Manager):
         """
         Returns a queryset of workers meeting the criteria to be considered 'online'
 
-        To be considered 'online', a worker must have a recent heartbeat timestamp and must not
-        have the 'gracefully_stopped' flag set to True. "Recent" is defined here as "within
-        the pulp process timeout interval".
+        To be considered 'online', a worker must have a recent heartbeat timestamp. "Recent" is
+        defined here as "within the pulp process timeout interval".
 
         Returns:
             :class:`django.db.models.query.QuerySet`:  A query set of the Worker objects which
@@ -87,30 +40,13 @@ class WorkerManager(models.Manager):
         now = timezone.now()
         age_threshold = now - timedelta(seconds=settings.WORKER_TTL)
 
-        return self.filter(last_heartbeat__gte=age_threshold, gracefully_stopped=False)
-
-    def offline_workers(self):
-        """
-        Returns a queryset of workers meeting the criteria to be considered 'offline'
-
-        To be considered 'offline', a worker must have no recent heartbeat timestamp.
-        "Recent" is defined here as "within the pulp process timeout interval".
-
-        Returns:
-            :class:`django.db.models.query.QuerySet`:  A query set of the Worker objects which
-                are considered by Pulp to be 'offline'.
-        """
-        now = timezone.now()
-        age_threshold = now - timedelta(seconds=settings.WORKER_TTL)
-
-        return self.filter(last_heartbeat__lte=age_threshold)
+        return self.filter(last_heartbeat__gte=age_threshold)
 
     def missing_workers(self):
         """
         Returns a queryset of workers meeting the criteria to be considered 'missing'
 
-        To be considered missing, a worker must have a stale timestamp and must not
-        have the 'gracefully_stopped' flag set to True.  Stale is defined here as
+        To be considered missing, a worker must have a stale timestamp.  Stale is defined here as
         "beyond the pulp process timeout interval".
 
         Returns:
@@ -120,29 +56,7 @@ class WorkerManager(models.Manager):
         now = timezone.now()
         age_threshold = now - timedelta(seconds=settings.WORKER_TTL)
 
-        return self.filter(last_heartbeat__lt=age_threshold, gracefully_stopped=False)
-
-    def dirty_workers(self):
-        """
-        Returns a queryset of workers meeting the criteria to be considered 'dirty'
-
-        To be considered dirty, a worker must have a stale timestamp and must have both the
-        'cleaned_up' and 'gracefully_stopped' flags set to false.  Stale is defined here as
-        "beyond the pulp process timeout interval".
-
-        This is intended to be used to determine which workers need to be cleaned up after
-        following an improper 'hard' shutdown.
-
-        Returns:
-            :class:`django.db.models.query.QuerySet`:  A query set of the Worker objects which
-                are considered by Pulp to be 'dirty'.
-        """
-        now = timezone.now()
-        age_threshold = now - timedelta(seconds=settings.WORKER_TTL)
-
-        return self.filter(
-            last_heartbeat__lt=age_threshold, cleaned_up=False, gracefully_stopped=False
-        )
+        return self.filter(last_heartbeat__lt=age_threshold)
 
     def resource_managers(self):
         """
@@ -165,26 +79,20 @@ class Worker(BaseModel):
 
         name (models.TextField): The name of the worker, in the format "worker_type@hostname"
         last_heartbeat (models.DateTimeField): A timestamp of this worker's last heartbeat
-        gracefully_stopped (models.BooleanField): True if the worker has gracefully stopped. Default
-            is False.
-        cleaned_up (models.BooleanField): True if the worker has been cleaned up. Default is False.
     """
 
     objects = WorkerManager()
 
     name = models.TextField(db_index=True, unique=True)
     last_heartbeat = models.DateTimeField(auto_now=True)
-    gracefully_stopped = models.BooleanField(default=False)
-    cleaned_up = models.BooleanField(default=False)
 
     @property
     def online(self):
         """
         Whether a worker can be considered 'online'
 
-        To be considered 'online', a worker must have a recent heartbeat timestamp and must not
-        have the 'gracefully_stopped' flag set to True. "Recent" is defined here as "within
-        the pulp process timeout interval".
+        To be considered 'online', a worker must have a recent heartbeat timestamp. "Recent" is
+        defined here as "within the pulp process timeout interval".
 
         Returns:
             bool: True if the worker is considered online, otherwise False
@@ -192,16 +100,16 @@ class Worker(BaseModel):
         now = timezone.now()
         age_threshold = now - timedelta(seconds=settings.WORKER_TTL)
 
-        return not self.gracefully_stopped and self.last_heartbeat >= age_threshold
+        return self.last_heartbeat >= age_threshold
 
     @property
     def missing(self):
         """
         Whether a worker can be considered 'missing'
 
-        To be considered 'missing', a worker must have a stale timestamp while also having
-        gracefully_stopped=False, meaning that it was not shutdown 'cleanly' and may have died.
-        Stale is defined here as "beyond the pulp process timeout interval".
+        To be considered 'missing', a worker must have a stale timestamp meaning that it was not
+        shutdown 'cleanly' and may have died.  Stale is defined here as "beyond the pulp process
+        timeout interval".
 
         Returns:
             bool: True if the worker is considered missing, otherwise False
@@ -209,7 +117,7 @@ class Worker(BaseModel):
         now = timezone.now()
         age_threshold = now - timedelta(seconds=settings.WORKER_TTL)
 
-        return not self.gracefully_stopped and self.last_heartbeat < age_threshold
+        return self.last_heartbeat < age_threshold
 
     def save_heartbeat(self):
         """
@@ -226,19 +134,6 @@ class Worker(BaseModel):
 
 def _uuid_to_advisory_lock(value):
     return ((value >> 64) ^ value) & 0x7FFFFFFFFFFFFFFF
-
-
-class TaskManager(models.Manager):
-    def filter(self, *args, **kwargs):
-        value = kwargs.pop("reserved_resources_record__resource", None)
-        if value is not None:
-            deprecation_logger.warning(
-                "Filtering tasks with 'reserved_resources_record__resource' is deprecated"
-                " and may be removed as soon as pulpcore==3.15;"
-                " use 'reserved_resources_record__contains' with a list of values instead."
-            )
-            kwargs["reserved_resources_record__contains"] = [value]
-        return super().filter(*args, **kwargs)
 
 
 class Task(BaseModel, AutoDeleteObjPermsMixin, AutoAddObjPermsMixin):
@@ -265,8 +160,6 @@ class Task(BaseModel, AutoDeleteObjPermsMixin, AutoAddObjPermsMixin):
         worker (models.ForeignKey): The worker that this task is in
     """
 
-    objects = TaskManager()
-
     state = models.TextField(choices=TASK_CHOICES)
     name = models.TextField()
     logging_cid = models.CharField(max_length=256, db_index=True, default="")
@@ -288,11 +181,6 @@ class Task(BaseModel, AutoDeleteObjPermsMixin, AutoAddObjPermsMixin):
         "TaskGroup", null=True, related_name="tasks", on_delete=models.SET_NULL
     )
     reserved_resources_record = ArrayField(models.CharField(max_length=256), null=True)
-
-    # TODO: find a solution that makes this unnecessary
-    # The purpose of this is to enable cancelling the job scheduled on the resource manager
-    # as it has a separate job ID that is not the task ID.
-    _resource_job_id = models.UUIDField(null=True)
 
     ACCESS_POLICY_VIEWSET_NAME = "tasks"
 
@@ -322,11 +210,8 @@ class Task(BaseModel, AutoDeleteObjPermsMixin, AutoAddObjPermsMixin):
             pulpcore.app.models.Task: The current task.
         """
         try:
-            if settings.USE_NEW_WORKER_TYPE:
-                task_id = os.environ["PULP_TASK_ID"]
-            else:
-                task_id = get_current_job().id
-        except (AttributeError, KeyError):
+            task_id = os.environ["PULP_TASK_ID"]
+        except KeyError:
             task = None
         else:
             task = Task.objects.get(pk=task_id)
@@ -388,17 +273,6 @@ class Task(BaseModel, AutoDeleteObjPermsMixin, AutoAddObjPermsMixin):
         if rows != 1:
             raise RuntimeError("Attempt to set a finished task to failed.")
         self.refresh_from_db()
-
-    def release_resources(self):
-        """
-        Release the reserved resources that are reserved by this task. If a reserved resource no
-        longer has any tasks reserving it, delete it.
-        """
-        for reserved_resource in self.reserved_resources.all():
-            TaskReservedResource.objects.filter(task=self.pk).delete()
-            if not reserved_resource.tasks.exists():
-                with suppress(IntegrityError):
-                    reserved_resource.delete()
 
     class Meta:
         indexes = [models.Index(fields=["pulp_created"])]
