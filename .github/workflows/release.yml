@@ -339,10 +339,10 @@ jobs:
           author: pulpbot <pulp-infra@redhat.com>
           branch: changelog/${{ github.event.inputs.release }}
           base: master
-          title: 'Building changelog for ${{ github.event.inputs.release }}'
+          title: 'Cherry pick ${{ github.event.inputs.release }} changelog'
           body: '[noissue]'
           commit-message: |
-            Building changelog for ${{ github.event.inputs.release }}
+            ${{ github.event.inputs.release }} changelog
 
             [noissue]
           delete-branch: true
