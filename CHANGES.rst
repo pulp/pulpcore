@@ -17,6 +17,31 @@ Changelog
 
 .. towncrier release notes start
 
+3.15.1 (2021-08-31)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- ``RBACContentGuard`` assign/remove permission endpoints now properly return 201 instead of 200
+  (backported from #9314)
+  `#9323 <https://pulp.plan.io/issues/9323>`_
+
+
+Plugin API
+----------
+
+Bugfixes
+~~~~~~~~
+
+- Set the default widget type to ``JSONWidget`` for ``JSONFields`` for Model Resources to fix
+  django-import-export bug where ``django.db.models.JSONFields`` weren't properly handled.
+  (backported from #9307)
+  `#9324 <https://pulp.plan.io/issues/9324>`_
+
+
 3.15.0 (2021-08-26)
 ===================
 REST API
