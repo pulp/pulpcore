@@ -30,7 +30,8 @@ The current base branch on this repository is the master branch.
 .. warning::
 
     It is important to ensure that your repositories are all checked out to compatible versions.
-    Check the ``setup.py`` of each repo see the version it provides, and the versions it requires.
+    Check the ``setup.py`` and ``requirements.txt`` files of each repository to see what version
+    it provides and which versions it requires, respectively.
 
 
 Installation
