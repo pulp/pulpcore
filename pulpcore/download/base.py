@@ -224,7 +224,7 @@ class BaseDownloader:
             if self._size != self.expected_size:
                 raise SizeValidationError(self.url)
 
-    async def run(self, extra_data=None):
+    async def run(self, extra_data=None, quiet=False):
         """
         Run the downloader with concurrency restriction.
 
@@ -234,6 +234,7 @@ class BaseDownloader:
 
         Args:
             extra_data (dict): Extra data passed to the downloader.
+            quiet (bool): Don't log on backoff or failure events.
 
         Returns:
             :class:`~pulpcore.plugin.download.DownloadResult` from `_run()`.

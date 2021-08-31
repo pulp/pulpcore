@@ -208,7 +208,7 @@ class HttpDownloader(BaseDownloader):
             headers=response.headers,
         )
 
-    async def run(self, extra_data=None):
+    async def run(self, extra_data=None, quiet=False):
         """
         Run the downloader with concurrency restriction and retry logic.
 
@@ -218,6 +218,7 @@ class HttpDownloader(BaseDownloader):
 
         Args:
             extra_data (dict): Extra data passed to the downloader.
+            quiet (bool): Don't log on backoff or failure events.
 
         Returns:
             :class:`~pulpcore.plugin.download.DownloadResult` from `_run()`.
@@ -233,6 +234,10 @@ class HttpDownloader(BaseDownloader):
             TimeoutError,
         )
 
+        kwargs = {}
+        if quiet:
+            kwargs["logger"] = None
+
         async with self.semaphore:
 
             @backoff.on_exception(
@@ -240,6 +245,7 @@ class HttpDownloader(BaseDownloader):
                 retryable_errors,
                 max_tries=self.max_retries + 1,
                 giveup=http_giveup_handler,
+                **kwargs,
             )
             async def download_wrapper():
                 return await self._run(extra_data=extra_data)
