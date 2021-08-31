@@ -101,6 +101,7 @@ class Handler:
 
     hop_by_hop_headers = [
         "connection",
+        "content-encoding",
         "keep-alive",
         "public",
         "proxy-authenticate",
