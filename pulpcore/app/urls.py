@@ -10,8 +10,6 @@ from drf_spectacular.views import (
     SpectacularYAMLAPIView,
     SpectacularRedocView,
 )
-from rest_framework import permissions
-from rest_framework.schemas import get_schema_view
 from rest_framework_nested import routers
 
 from pulpcore.app.apps import pulp_plugin_configs
@@ -22,7 +20,6 @@ from pulpcore.app.viewsets import (
     ReclaimSpaceViewSet,
 )
 from pulpcore.constants import API_ROOT
-from pulpcore.openapi import PulpSchemaGenerator
 
 log = logging.getLogger(__name__)
 
@@ -175,12 +172,6 @@ urlpatterns.append(
         name="schema-redoc",
     )
 )
-
-schema_view = get_schema_view(
-    title="Pulp API", permission_classes=[permissions.AllowAny], generator_class=PulpSchemaGenerator
-)
-
-urlpatterns.append(url(r"^{api_root}$".format(api_root=API_ROOT), schema_view))
 
 all_routers = [root_router] + vs_tree.register_with(root_router)
 for router in all_routers:
