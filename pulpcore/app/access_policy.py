@@ -1,4 +1,5 @@
 from rest_access_policy import AccessPolicy
+from django.db.utils import ProgrammingError
 
 from pulpcore.app.models import AccessPolicy as AccessPolicyModel
 from pulpcore.app.util import get_view_urlpattern
@@ -37,7 +38,9 @@ class AccessPolicyFromDB(AccessPolicy):
         try:
             viewset_name = get_view_urlpattern(view)
             access_policy_obj = AccessPolicyModel.objects.get(viewset_name=viewset_name)
-        except (AccessPolicyModel.DoesNotExist, AttributeError):
-            return [{"action": "*", "principal": "admin", "effect": "allow"}]
+        except (AccessPolicyModel.DoesNotExist, AttributeError, ProgrammingError):
+            default_statement = [{"action": "*", "principal": "admin", "effect": "allow"}]
+            policy = getattr(view, "DEFAULT_ACCESS_POLICY", {"statements": default_statement})
+            return policy["statements"]
         else:
             return access_policy_obj.statements
