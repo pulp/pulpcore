@@ -234,7 +234,7 @@ jobs:
         shell: bash
 
       - name: Install Ruby client
-        if: ${{ env.TEST == 'bindings' || env.TEST == 'generate-bindings' }}
+        
         run: .github/workflows/scripts/install_ruby_client.sh
         shell: bash
 
@@ -262,7 +262,7 @@ jobs:
       - name: Download Ruby client
         uses: actions/download-artifact@v2
         with:
-          name: python-client.tar
+          name: ruby-client.tar
 
       - name: Untar Ruby client packages
         run: tar -xvf ruby-client.tar
