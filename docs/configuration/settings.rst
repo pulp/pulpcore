@@ -55,7 +55,7 @@ DEFAULT_FILE_STORAGE
 MEDIA_ROOT
 ^^^^^^^^^^
 
-   The location where Pulp will store files. By default this is `/var/lib/pulp/media`.
+   The location where Pulp will store files. By default this is ``/var/lib/pulp/media``.
 
    If you're using S3, point this to the path in your bucket you want to save files. See the
    :ref:`storage documentation <storage>` for more info.
@@ -152,7 +152,7 @@ WORKING_DIRECTORY
 CHUNKED_UPLOAD_DIR
 ^^^^^^^^^^^^^^^^^^
 
-   A relative path inside the MEDIA_ROOT directory used exclusively for uploaded chunks. The
+   A relative path inside the DEPLOY_ROOT directory used exclusively for uploaded chunks. The
    uploaded chunks are stored in the default storage specified by ``DEFAULT_FILE_STORAGE``. This
    option allows users to customize the actual place where chunked uploads should be stored within
    the declared storage. The default, ``upload``, is sufficient for most use cases. A change to
@@ -176,7 +176,7 @@ CONTENT_PATH_PREFIX
    forming URLs to refer clients to the content serving app, and by the content serving application
    to match incoming URLs.
 
-   Defaults to ``'/pulp/content/'``.
+   Defaults to ``/pulp/content/``.
 
 
 .. _content-app-ttl:
