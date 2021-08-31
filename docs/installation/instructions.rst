@@ -33,7 +33,7 @@ PyPI Installation
 
    * name: pulp
    * shell: The path to the `nologin` executable
-   * home: ``MEDIA_ROOT``
+   * home: ``DEPLOY_ROOT``
    * system account: yes
    * create corresponding private group: yes
 
