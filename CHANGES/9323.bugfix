@@ -1,0 +1,2 @@
+``RBACContentGuard`` assign/remove permission endpoints now properly return 201 instead of 200
+(backported from #9314)
