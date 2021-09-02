@@ -150,15 +150,6 @@ class AlternateContentSourcePathSerializer(ModelSerializer):
         allow_null=True,
     )
 
-    def validate_path(self, value):
-        if value == "":
-            return value
-        if value.startswith("/"):
-            raise serializers.ValidationError(_("Path cannot start with a slash."))
-        if not value.endswith("/"):
-            raise serializers.ValidationError(_("Path should end with a trailing slash."))
-        return value
-
     class Meta:
         model = models.AlternateContentSourcePath
         fields = ModelSerializer.Meta.fields + ("alternate_content_source", "path", "repository")

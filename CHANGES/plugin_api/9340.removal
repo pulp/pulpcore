@@ -1,0 +1,2 @@
+Removed ACS path validation. Plugins should now define ``validate_paths`` on their ACS serializer to
+validate paths.
