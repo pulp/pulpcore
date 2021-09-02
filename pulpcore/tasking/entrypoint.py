@@ -14,6 +14,7 @@ os.environ.setdefault("DJANGO_ALLOW_ASYNC_UNSAFE", "true")
 django.setup()
 
 from django.conf import settings  # noqa: E402: module level not at top of file
+from pulpcore.tasking.pulpcore_worker import NewPulpWorker  # noqa: E402: module level not at top
 
 
 _logger = logging.getLogger(__name__)
@@ -40,8 +41,6 @@ def worker(resource_manager, pid):
             )
             select.select([], [], [])
         _logger.info("Starting distributed type worker")
-        from pulpcore.tasking.pulpcore_worker import NewPulpWorker
-
         NewPulpWorker().run_forever()
     else:
         _logger.info("Starting rq type worker")
