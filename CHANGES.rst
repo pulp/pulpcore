@@ -17,6 +17,26 @@ Changelog
 
 .. towncrier release notes start
 
+3.15.2 (2021-09-02)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fixed bug where some Openshift environments could not start workers due to a strange Python runtime
+  import issue.
+  (backported from #9338)
+  `#9342 <https://pulp.plan.io/issues/9342>`_
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.15.1 (2021-08-31)
 ===================
 REST API
