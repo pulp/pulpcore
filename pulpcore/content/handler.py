@@ -665,7 +665,7 @@ class Handler:
         """
 
         def get_remote_artifacts_blocking():
-            return list(content_artifact.remoteartifact_set.all())
+            return list(content_artifact.remoteartifact_set.order_by_acs())
 
         remote_artifacts = await loop.run_in_executor(None, get_remote_artifacts_blocking)
         for remote_artifact in remote_artifacts:
