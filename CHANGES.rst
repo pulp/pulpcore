@@ -17,6 +17,33 @@ Changelog
 
 .. towncrier release notes start
 
+3.14.6 (2021-09-02)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Stop using insecure hash function blake2s for calculating 64 bit lock identifier from uuid.
+  (backported from #9249)
+  `#9288 <https://pulp.plan.io/issues/9288>`_
+- Fixed a bug where ``pulpcore-content`` decompressed data while incorrectly advertising to clients
+  it was still compressed via the ``Content-Encoding: gzip`` header.
+  (backported from #9213)
+  `#9325 <https://pulp.plan.io/issues/9325>`_
+- Fixed bug where some Openshift environments could not start workers due to a strange Python runtime
+  import issue.
+  (backported from #9338)
+  `#9339 <https://pulp.plan.io/issues/9339>`_
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.14.5 (2021-08-24)
 ===================
 REST API

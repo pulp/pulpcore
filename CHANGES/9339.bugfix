@@ -1,3 +1,0 @@
-Fixed bug where some Openshift environments could not start workers due to a strange Python runtime
-import issue.
-(backported from #9338)
