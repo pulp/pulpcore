@@ -4,12 +4,14 @@ from logging import getLogger
 import asyncio
 import hashlib
 
+from asgiref.sync import sync_to_async
 from django.core.files.storage import default_storage
 from django.db import transaction
 from rest_framework.serializers import ValidationError
 
 from pulpcore.app import models
 from pulpcore.app.models import ProgressReport
+from pulpcore.plugin.sync import sync_to_async_iterable
 
 log = getLogger(__name__)
 
@@ -59,7 +61,9 @@ def delete_version(pk):
 
 
 async def _repair_ca(content_artifact, repaired=None):
-    remote_artifacts = content_artifact.remoteartifact_set.all()
+    remote_artifacts = sync_to_async_iterable(
+        content_artifact.remoteartifact_set.all().select_related("remote")
+    )
 
     if not remote_artifacts:
         log.warn(
@@ -67,16 +71,17 @@ async def _repair_ca(content_artifact, repaired=None):
         )
         return False
 
-    for remote_artifact in remote_artifacts:
-        downloader = remote_artifact.remote.cast().get_downloader(remote_artifact)
+    async for remote_artifact in remote_artifacts:
+        detail_remote = await sync_to_async(remote_artifact.remote.cast)()
+        downloader = detail_remote.get_downloader(remote_artifact)
         dl_result = await downloader.run()
         if dl_result.artifact_attributes["sha256"] == content_artifact.artifact.sha256:
             with open(dl_result.path, "rb") as src:
                 filename = content_artifact.artifact.file.name
-                content_artifact.artifact.file.delete(save=False)
-                content_artifact.artifact.file.save(filename, src, save=False)
+                await sync_to_async(content_artifact.artifact.file.delete)(save=False)
+                await sync_to_async(content_artifact.artifact.file.save)(filename, src, save=False)
             if repaired is not None:
-                repaired.increment()
+                await repaired.aincrement()
             return True
         log.warn(_("Redownload failed from {}.").format(remote_artifact.url))
 
@@ -101,10 +106,10 @@ async def _repair_artifacts_for_content(subset=None, verify_checksums=True):
 
     query_set = models.ContentArtifact.objects.exclude(artifact__isnull=True)
 
-    if subset:
+    if subset is not None and await sync_to_async(subset.exists)():
         query_set = query_set.filter(content__in=subset)
 
-    with ProgressReport(
+    async with ProgressReport(
         message="Identify missing units", code="repair.missing"
     ) as missing, ProgressReport(
         message="Identify corrupted units", code="repair.corrupted"
@@ -113,12 +118,14 @@ async def _repair_artifacts_for_content(subset=None, verify_checksums=True):
     ) as repaired:
 
         with ThreadPoolExecutor(max_workers=2) as checksum_executor:
-            for content_artifact in query_set.select_related("artifact").iterator():
+            async for content_artifact in sync_to_async_iterable(
+                query_set.select_related("artifact").iterator()
+            ):
                 artifact = content_artifact.artifact
 
                 valid = await loop.run_in_executor(None, default_storage.exists, artifact.file.name)
                 if not valid:
-                    missing.increment()
+                    await missing.aincrement()
                     log.warn(_("Missing file for {}").format(artifact))
                 elif verify_checksums:
                     # default ThreadPoolExecutor uses num cores x 5 threads. Since we're doing
@@ -131,7 +138,7 @@ async def _repair_artifacts_for_content(subset=None, verify_checksums=True):
                         checksum_executor, _verify_artifact, artifact
                     )
                     if not valid:
-                        corrupted.increment()
+                        await corrupted.aincrement()
                         log.warn(_("Digest mismatch for {}").format(artifact))
 
                 if not valid:
