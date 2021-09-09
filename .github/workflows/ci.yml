@@ -11,6 +11,20 @@ on: {pull_request: {branches: ['*']}}
 jobs:
 
 
+  single_commit:
+    name: Assert single commit
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v1
+      with:
+        fetch-depth: 30
+    - name: Checkout master
+      run: git fetch origin master
+    - name: create local master branch
+      run: git branch master origin/master
+    - name: Commit Count Check
+      run: test `git log  --oneline --no-merges HEAD ^master  | wc -l ` = 1
+    runs-on: ubuntu-latest
 
   lint:
     runs-on: ubuntu-latest
