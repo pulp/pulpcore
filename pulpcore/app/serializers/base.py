@@ -13,7 +13,7 @@ from rest_framework_nested.relations import (
     NestedHyperlinkedRelatedField,
 )
 
-from pulpcore.app.models import Label, Task
+from pulpcore.app.models import Label, Task, TaskGroup
 from pulpcore.app.util import (
     get_view_name_for_model,
     get_viewset_for_model,
@@ -364,5 +364,19 @@ class AsyncOperationResponseSerializer(serializers.Serializer):
         help_text=_("The href of the task."),
         queryset=Task.objects,
         view_name="tasks-detail",
+        allow_null=False,
+    )
+
+
+class TaskGroupResponseSerializer(serializers.Serializer):
+    """
+    Serializer for asynchronous operations that return a task group.
+    """
+
+    task_group = RelatedField(
+        required=True,
+        help_text=_("The href of the task group."),
+        queryset=TaskGroup.objects,
+        view_name="task-groups-detail",
         allow_null=False,
     )
