@@ -22,6 +22,7 @@ class AlternateContentSource(MasterModel):
     """
 
     TYPE = "acs"
+    REMOTE_TYPES = []
 
     name = models.TextField(db_index=True, unique=True)
     last_refreshed = models.DateTimeField(null=True)
