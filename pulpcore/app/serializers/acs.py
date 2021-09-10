@@ -62,6 +62,11 @@ class AlternateContentSourceSerializer(ModelSerializer):
             raise serializers.ValidationError(
                 _("Remote used with alternate content source must have the 'on_demand' policy.")
             )
+
+        if type(remote) not in self.Meta.model.REMOTE_TYPES:
+            raise serializers.ValidationError(
+                detail=_("Type for Remote '{}' does not match ACS type.").format(remote.name)
+            )
         return remote
 
     @transaction.atomic
