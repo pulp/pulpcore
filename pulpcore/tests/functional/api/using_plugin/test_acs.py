@@ -83,6 +83,8 @@ class AlternateContentSourceTestCase(unittest.TestCase):
         acs = self.file_acs_api.read(acs.pulp_href)
 
         self.assertEqual(acs.name, new_name)
+        # assert paths were not silently removed during name update
+        self.assertEqual(acs.paths, self.paths)
 
         # partial update name
         new_name = "new_acs"

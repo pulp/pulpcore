@@ -85,9 +85,12 @@ class AlternateContentSourceSerializer(ModelSerializer):
                 alternate_content_source=acs.pk
             )
         }
-        to_remove = existing_paths - set(paths)
-        to_add = set(paths) - existing_paths
-
+        if paths is None:
+            to_remove = set()
+            to_add = set()
+        else:
+            to_remove = existing_paths - set(paths)
+            to_add = set(paths) - existing_paths
         if to_remove:
             models.AlternateContentSourcePath.objects.filter(path__in=to_remove).delete()
         if to_add:
@@ -115,7 +118,7 @@ class AlternateContentSourceSerializer(ModelSerializer):
         """Update an Alternate Content Source."""
         instance.name = validated_data.get("name", instance.name)
         instance.remote = validated_data.get("remote", instance.remote)
-        paths = validated_data.pop("paths", [])
+        paths = validated_data.get("paths")
         with transaction.atomic():
             self._update_paths(instance, paths)
             instance.save()
