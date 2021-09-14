@@ -84,7 +84,7 @@ class AlternateContentSourceTestCase(unittest.TestCase):
 
         self.assertEqual(acs.name, new_name)
         # assert paths were not silently removed during name update
-        self.assertEqual(acs.paths, self.paths)
+        self.assertEqual(sorted(acs.paths), sorted(self.paths))
 
         # partial update name
         new_name = "new_acs"
