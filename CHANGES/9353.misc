@@ -1,1 +1,0 @@
-Disabled DJANGO_ALLOW_ASYNC_UNSAFE for tasking system and fixed some issues that were uncovered in doing so.
