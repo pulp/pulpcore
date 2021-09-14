@@ -10,7 +10,6 @@ from django.db.models.signals import post_migrate
 from django.utils.module_loading import module_has_submodule
 
 from pulpcore.exceptions.plugin import MissingPlugin
-from pulpcore.app.loggers import deprecation_logger
 
 VIEWSETS_MODULE_NAME = "viewsets"
 SERIALIZERS_MODULE_NAME = "serializers"
@@ -195,27 +194,6 @@ class PulpAppConfig(PulpPluginAppConfig):
         post_migrate.connect(_delete_anon_user, sender=self, dispatch_uid="delete_anon_identifier")
 
 
-def _drf_access_policy_workaround(viewset_name, access_policy):
-    """Workaround for incompatible drf-access-policy upgrade.
-
-    Simple conditions can be expressions, but not the other way around. This will change the
-    default access_policy in place before it will be saved to the db.
-
-    see https://pulp.plan.io/issues/9160
-    """
-    for stmt in access_policy.get("statements", []):
-        if "condition" in stmt and "condition_expression" not in stmt:
-            if " " in stmt["condition"] or any((" " in cond for cond in stmt["condition"])):
-                stmt["condition_expression"] = stmt.pop("condition")
-                deprecation_logger.warning(
-                    _(
-                        "The access policy for {} is probably using 'condition'"
-                        " erroneously and may stop working with pulpcore==3.16;"
-                        " you may need to use 'condition_expression'."
-                    ).format(viewset_name)
-                )
-
-
 def _populate_access_policies(sender, **kwargs):
     from pulpcore.app.util import get_view_urlpattern
 
@@ -228,7 +206,6 @@ def _populate_access_policies(sender, **kwargs):
             access_policy = getattr(viewset, "DEFAULT_ACCESS_POLICY", None)
             if access_policy is not None:
                 viewset_name = get_view_urlpattern(viewset)
-                _drf_access_policy_workaround(viewset_name, access_policy)
                 db_access_policy, created = AccessPolicy.objects.get_or_create(
                     viewset_name=viewset_name, defaults=access_policy
                 )
