@@ -11,6 +11,7 @@ import subprocess
 
 import gnupg
 
+from functools import lru_cache
 from itertools import chain
 
 from django.conf import settings
@@ -494,9 +495,22 @@ class Content(MasterModel, QueryMixin):
     @classmethod
     def natural_key_fields(cls):
         """
-        Returns a tuple of the natural key fields which usually equates to unique_together fields
+        Returns a tuple of the natural key fields which usually equates to unique_together fields.
+
+        This can be overwritten in subclasses and should return a tuple of field names.
         """
         return tuple(chain.from_iterable(cls._meta.unique_together))
+
+    @classmethod
+    @lru_cache(typed=True)
+    def _sanitized_natural_key_fields(cls):
+        """
+        This function translates the names of the key fields to their attname.
+
+        In case of foreign keys, this decodes to the corresponding `<...>_id` field preventing
+        extra DB accesses to fetch the related objects.
+        """
+        return tuple(getattr(cls, field).field.attname for field in cls.natural_key_fields())
 
     def natural_key(self):
         """
@@ -505,16 +519,13 @@ class Content(MasterModel, QueryMixin):
         Returns:
             tuple: The natural key.
         """
-        return tuple(getattr(self, f) for f in self.natural_key_fields())
+        return tuple(getattr(self, f) for f in self._sanitized_natural_key_fields())
 
     def natural_key_dict(self):
         """
         Get the model's natural key as a dictionary of keys and values.
         """
-        to_return = {}
-        for key in self.natural_key_fields():
-            to_return[key] = getattr(self, key)
-        return to_return
+        return {f: getattr(self, f) for f in self._sanitized_natural_key_fields()}
 
     @staticmethod
     def init_from_artifact_and_relative_path(artifact, relative_path):
