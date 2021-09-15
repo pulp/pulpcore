@@ -47,6 +47,13 @@ FILE_CHUNKED_PART_2_URL = urljoin(FILE_CHUNKED_FIXTURE_URL, "chunkab")
 FILE_FIXTURE_URL = urljoin(PULP_FIXTURES_BASE_URL, "file/")
 """The URL to a file repository."""
 
+FILE_FIXTURE_WITH_MISSING_FILES_URL = urljoin(PULP_FIXTURES_BASE_URL, "file-manifest/")
+"""The URL to a file repository with missing files."""
+
+FILE_FIXTURE_WITH_MISSING_FILES_MANIFEST_URL = urljoin(
+    FILE_FIXTURE_WITH_MISSING_FILES_URL, "PULP_MANIFEST"
+)
+"""The URL to a file repository with missing files manifest."""
 
 FILE_CHUNKED_FIXTURE_URL = urljoin(PULP_FIXTURES_BASE_URL, "file-chunked/")
 """The URL to a file repository."""
