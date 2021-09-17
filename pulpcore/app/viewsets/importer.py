@@ -8,14 +8,15 @@ from pulpcore.app.models import (
     Importer,
     PulpImport,
     PulpImporter,
+    TaskGroup,
 )
-from pulpcore.app.response import OperationPostponedResponse
+from pulpcore.app.response import TaskGroupOperationResponse
 from pulpcore.app.serializers import (
-    AsyncOperationResponseSerializer,
     ImportSerializer,
     ImporterSerializer,
     PulpImporterSerializer,
     PulpImportSerializer,
+    TaskGroupOperationResponseSerializer,
 )
 from pulpcore.app.tasks import pulp_import
 from pulpcore.app.viewsets import (
@@ -91,7 +92,7 @@ class PulpImportViewSet(ImportViewSet):
     @extend_schema(
         request=PulpImportSerializer,
         description="Trigger an asynchronous task to import a Pulp export.",
-        responses={202: AsyncOperationResponseSerializer},
+        responses={202: TaskGroupOperationResponseSerializer},
     )
     def create(self, request, importer_pk):
         """Import a Pulp export into Pulp."""
@@ -102,11 +103,15 @@ class PulpImportViewSet(ImportViewSet):
 
         serializer = PulpImportSerializer(data=request.data, context={"request": request})
         serializer.is_valid(raise_exception=True)
+
         path = serializer.validated_data.get("path")
         toc = serializer.validated_data.get("toc")
-        task = dispatch(
+        task_group = TaskGroup.objects.create(description=f"Import of {path}")
+
+        dispatch(
             pulp_import,
             exclusive_resources=[importer],
+            task_group=task_group,
             kwargs={"importer_pk": importer.pk, "path": path, "toc": toc},
         )
-        return OperationPostponedResponse(task, request)
+        return TaskGroupOperationResponse(task_group, request)

@@ -367,16 +367,12 @@ def pulp_import(importer_pk, path, toc):
 
     log.info(_("Importing {}.").format(path))
     current_task = Task.current()
+    task_group = TaskGroup.current()
     importer = PulpImporter.objects.get(pk=importer_pk)
     the_import = PulpImport.objects.create(
         importer=importer, task=current_task, params={"path": path}
     )
     CreatedResource.objects.create(content_object=the_import)
-
-    task_group = TaskGroup.objects.create(description=f"Import of {path}")
-    Task.objects.filter(pk=current_task.pk).update(task_group=task_group)
-    current_task.refresh_from_db()
-    CreatedResource.objects.create(content_object=task_group)
 
     with tempfile.TemporaryDirectory() as temp_dir:
         with tarfile.open(path, "r:gz") as tar:
