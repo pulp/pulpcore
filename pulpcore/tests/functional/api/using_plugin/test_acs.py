@@ -1,7 +1,7 @@
 import unittest
 
 from pulp_smash import config
-from pulp_smash.pulp3.bindings import delete_orphans
+from pulp_smash.pulp3.bindings import delete_orphans, monitor_task
 
 from pulpcore.client.pulp_file import AcsFileApi, RemotesFileApi
 from pulpcore.client.pulp_file.exceptions import ApiException
@@ -79,7 +79,8 @@ class AlternateContentSourceTestCase(unittest.TestCase):
 
         # update name
         new_name = "acs"
-        self.file_acs_api.update(acs.pulp_href, {"name": new_name, "remote": acs.remote})
+        response = self.file_acs_api.update(acs.pulp_href, {"name": new_name, "remote": acs.remote})
+        monitor_task(response.task)
         acs = self.file_acs_api.read(acs.pulp_href)
 
         self.assertEqual(acs.name, new_name)
@@ -88,15 +89,19 @@ class AlternateContentSourceTestCase(unittest.TestCase):
 
         # partial update name
         new_name = "new_acs"
-        self.file_acs_api.partial_update(acs.pulp_href, {"name": new_name, "remote": acs.remote})
+        response = self.file_acs_api.partial_update(
+            acs.pulp_href, {"name": new_name, "remote": acs.remote}
+        )
+        monitor_task(response.task)
         acs = self.file_acs_api.read(acs.pulp_href)
 
         self.assertEqual(acs.name, new_name)
 
         # update paths
-        self.file_acs_api.update(
+        response = self.file_acs_api.update(
             acs.pulp_href, {"name": acs.name, "remote": acs.remote, "paths": self.paths_updated}
         )
+        monitor_task(response.task)
         acs = self.file_acs_api.read(acs.pulp_href)
 
         self.assertEqual(sorted(acs.paths), sorted(self.paths_updated))

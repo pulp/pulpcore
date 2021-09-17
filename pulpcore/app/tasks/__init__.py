@@ -1,5 +1,7 @@
 from pulpcore.app.tasks import base, repository, upload  # noqa
 
+from .base import general_multi_delete  # noqa
+
 from .export import fs_publication_export, fs_repo_version_export  # noqa
 
 from .importer import pulp_import  # noqa
