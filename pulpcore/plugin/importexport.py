@@ -1,5 +1,4 @@
 from import_export import resources
-from import_export.resources import widgets
 
 
 class QueryModelResource(resources.ModelResource):
@@ -19,11 +18,6 @@ class QueryModelResource(resources.ModelResource):
         queryset (django.db.models.query.QuerySet): filtering queryset for this resource
             (driven by repo_version)
     """
-
-    # TODO: remove this when https://git.io/JEgMp is released
-    # This forces JSONField to map to JSONWidget as django-import-export does not properly handle
-    # JSONField from django.db.models in django-import-export 2.5.0
-    WIDGETS_MAP = {**resources.ModelResource.WIDGETS_MAP, **{"JSONField": widgets.JSONWidget}}
 
     def set_up_queryset(self):
         return None
