@@ -1,0 +1,3 @@
+Renamed ``TaskGroupResponse`` to ``TaskGroupOperationResponse`` and ``TaskGroupResponseSerializer``
+to ``TaskGroupOperationResponseSerializer`` in order to avoid conflicts with responses from task
+groups endpoints.

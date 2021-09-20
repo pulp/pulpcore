@@ -1,5 +1,5 @@
 # Allow plugin viewsets to return 202s
-from pulpcore.app.response import OperationPostponedResponse, TaskGroupResponse  # noqa
+from pulpcore.app.response import OperationPostponedResponse, TaskGroupOperationResponse  # noqa
 
 # Import Viewsets in platform that are potentially useful to plugin writers
 from pulpcore.app.viewsets import (  # noqa

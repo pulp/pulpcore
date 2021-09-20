@@ -27,7 +27,7 @@ from pulpcore.app.serializers import (  # noqa
     RepositoryVersionRelatedField,
     SingleArtifactContentSerializer,
     SingleContentArtifactField,
-    TaskGroupResponseSerializer,
+    TaskGroupOperationResponseSerializer,
     ValidateFieldsMixin,
     validate_unknown_fields,
 )
