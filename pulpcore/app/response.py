@@ -26,7 +26,7 @@ class OperationPostponedResponse(Response):
         super().__init__(data=resp, status=202)
 
 
-class TaskGroupResponse(Response):
+class TaskGroupOperationResponse(Response):
     """
     An HTTP response class for returning 202 and a task group.
 

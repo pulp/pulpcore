@@ -368,7 +368,7 @@ class AsyncOperationResponseSerializer(serializers.Serializer):
     )
 
 
-class TaskGroupResponseSerializer(serializers.Serializer):
+class TaskGroupOperationResponseSerializer(serializers.Serializer):
     """
     Serializer for asynchronous operations that return a task group.
     """
