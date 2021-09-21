@@ -113,6 +113,11 @@ class ContentSaver(Stage):
                 with transaction.atomic():
                     if not inspect.iscoroutinefunction(self._pre_save):
                         self._pre_save(batch)
+                    # Process the batch in dc.content.natural_keys order.
+                    # This prevents deadlocks when we're processing the same/similar content
+                    # in concurrent workers.
+                    batch.sort(key=lambda x: "".join(map(str, x.content.natural_key())))
+
                     for d_content in batch:
                         # Are we saving to the database for the first time?
                         content_already_saved = not d_content.content._state.adding
@@ -159,6 +164,13 @@ class ContentSaver(Stage):
                         # Maybe remove dict elements after to reduce memory?
                         content_artifact.artifact = to_update_ca_artifact[key]
                         to_update_ca_bulk.append(content_artifact)
+
+                    # Sort the lists we're about to do bulk updates/creates on.
+                    # We know to_update_ca_bulk entries already are in the DB, so we can enforce
+                    # order just using pulp_id.
+                    to_update_ca_bulk.sort(key=lambda x: x.pulp_id)
+                    content_artifact_bulk.sort(key=lambda x: ContentArtifact.sort_key(x))
+
                     ContentArtifact.objects.bulk_update(to_update_ca_bulk, ["artifact"])
                     ContentArtifact.objects.bulk_get_or_create(content_artifact_bulk)
                     if not inspect.iscoroutinefunction(self._post_save):
