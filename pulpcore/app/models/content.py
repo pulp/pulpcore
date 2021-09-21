@@ -79,6 +79,7 @@ class BulkCreateManager(models.Manager):
         Returns:
             List of instances that were inserted into the database.
         """
+
         objs = list(objs)
         try:
             with transaction.atomic():
@@ -579,6 +580,35 @@ class ContentArtifact(BaseModel, QueryMixin):
 
     class Meta:
         unique_together = ("content", "relative_path")
+
+    @staticmethod
+    def sort_key(ca):
+        """
+        Static method for defining a sort-key for a specified ContentArtifact.
+
+        Sorting lists of ContentArtifacts is critical for avoiding deadlocks in high-concurrency
+        environments, when multiple workers may be operating on similar sets of content at the
+        same time. Providing a stable sort-order becomes problematic when the CAs in question
+        haven't been persisted - in that case, pulp_id can't be relied on, as it will change
+        when the object is stored in the DB and its "real" key is generated.
+
+        This method produces a key based on the content/artifact represented by the CA.
+
+        Args:
+            ca (:class:`~pulpcore.plugin.models.ContentArtifact`): The CA we need a key for
+
+        Returns:
+            a tuple of (str(content-key), str(artifact-key)) that can be reliably sorted on
+        """
+        c_key = ""
+        a_key = ""
+        # It's possible to only have one of content/artifact - handle that
+        if ca.content:
+            # Some key-fields aren't str, handle that
+            c_key = "".join(map(str, ca.content.natural_key()))
+        if ca.artifact:
+            a_key = str(ca.artifact.sha256)
+        return c_key, a_key
 
 
 class RemoteArtifactQuerySet(models.QuerySet):
