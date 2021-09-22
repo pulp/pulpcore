@@ -351,7 +351,7 @@ class RemoteArtifactSaver(Stage):
                             log.warning(
                                 msg.format(
                                     rp=d_artifact.relative_path,
-                                    c=d_content.content.filename,
+                                    c=d_content.content.natural_key(),
                                     rname=d_artifact.remote.name,
                                     ap=avail_paths,
                                 )
@@ -365,7 +365,7 @@ class RemoteArtifactSaver(Stage):
                             raise ValueError(
                                 msg.format(
                                     rp=d_artifact.relative_path,
-                                    c=d_content.content.filename,
+                                    c=d_content.content.natural_key(),
                                     rname=d_artifact.remote.name,
                                 )
                             )
