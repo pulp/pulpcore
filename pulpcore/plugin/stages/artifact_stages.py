@@ -424,7 +424,7 @@ class ACSArtifactHandler(Stage):
 
     async def run(self):
         async for batch in self.batches():
-            acs_exists = sync_to_async(AlternateContentSource.objects.exists)()
+            acs_exists = await sync_to_async(AlternateContentSource.objects.exists)()
             if acs_exists:
                 # Gather batch d_artifact checksums
                 batch_checksums = defaultdict(list)
