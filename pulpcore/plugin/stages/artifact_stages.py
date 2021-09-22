@@ -267,11 +267,11 @@ class RemoteArtifactSaver(Stage):
             The coroutine for this stage.
         """
         async for batch in self.batches():
-            RemoteArtifact.objects.bulk_get_or_create(self._needed_remote_artifacts(batch))
+            self._handle_remote_artifacts(batch)
             for d_content in batch:
                 await self.put(d_content)
 
-    def _needed_remote_artifacts(self, batch):
+    def _handle_remote_artifacts(self, batch):
         """
         Build a list of only :class:`~pulpcore.plugin.models.RemoteArtifact` that need
         to be created for the batch.
@@ -313,7 +313,8 @@ class RemoteArtifactSaver(Stage):
         #
         # We can end up with duplicates (diff pks, same sha256) in the sequence below,
         # so we store by-sha256 and then return the final values
-        needed_ras = {}  # { str(<sha256>): RemoteArtifact, ... }
+        ras_to_create = {}  # { str(<sha256>): RemoteArtifact, ... }
+        ras_to_update = {}
         for d_content in batch:
             for d_artifact in d_content.d_artifacts:
                 if not d_artifact.remote:
@@ -370,14 +371,23 @@ class RemoteArtifactSaver(Stage):
                         )
 
                 for remote_artifact in content_artifact._remote_artifact_saver_ras:
-                    if remote_artifact.remote_id == d_artifact.remote.pk:
+                    if d_artifact.url == remote_artifact.url:
+                        break
+
+                    if d_artifact.remote.pk == remote_artifact.remote_id:
+                        key = f"{content_artifact.pk}-{remote_artifact.remote_id}"
+                        remote_artifact.url = d_artifact.url
+                        ras_to_update[key] = remote_artifact
                         break
                 else:
                     remote_artifact = self._create_remote_artifact(d_artifact, content_artifact)
-                    key = f"{str(content_artifact.pk)}-{str(d_artifact.remote.pk)}"
-                    needed_ras[key] = remote_artifact
+                    key = f"{content_artifact.pk}-{d_artifact.remote.pk}"
+                    ras_to_create[key] = remote_artifact
 
-        return list(needed_ras.values())
+        if ras_to_create:
+            RemoteArtifact.objects.bulk_create(list(ras_to_create.values()))
+        if ras_to_update:
+            RemoteArtifact.objects.bulk_update(list(ras_to_update.values()), fields=["url"])
 
     @staticmethod
     def _create_remote_artifact(d_artifact, content_artifact):
