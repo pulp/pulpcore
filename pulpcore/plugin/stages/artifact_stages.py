@@ -384,10 +384,15 @@ class RemoteArtifactSaver(Stage):
                     key = f"{content_artifact.pk}-{d_artifact.remote.pk}"
                     ras_to_create[key] = remote_artifact
 
+        # Make sure we create/update RemoteArtifacts in a stable order, to help
+        # prevent deadlocks in high-concurrency environments. We can rely on the
+        # Artifact sha256 for our ordering.
         if ras_to_create:
-            RemoteArtifact.objects.bulk_create(list(ras_to_create.values()))
+            ras_to_create_ordered = sorted(list(ras_to_create.values()), key=lambda x: x.sha256)
+            RemoteArtifact.objects.bulk_create(ras_to_create_ordered)
         if ras_to_update:
-            RemoteArtifact.objects.bulk_update(list(ras_to_update.values()), fields=["url"])
+            ras_to_update_ordered = sorted(list(ras_to_update.values()), key=lambda x: x.sha256)
+            RemoteArtifact.objects.bulk_update(ras_to_update_ordered, fields=["url"])
 
     @staticmethod
     def _create_remote_artifact(d_artifact, content_artifact):
