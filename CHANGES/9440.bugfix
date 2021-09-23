@@ -1,0 +1,2 @@
+Taught a remote-artifact error path to not assume 'filename' was valid for all content.
+(backported from #9427)
