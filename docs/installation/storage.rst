@@ -90,7 +90,8 @@ Configuring Pulp to use Azure Blob storage
       pip install django-storages[azure]
 
 2. Depending on which method you use to install or configure Pulp, you must set ``DEFAULT_FILE_STORAGE`` to ``storages.backends.azure_storage.AzureStorage`` in Pulp Settings. For example, if you use the `Pulp installer <https://docs.pulpproject.org/pulp_installer/quickstart/>`_, the ``default_file_storage`` is part of the ``pulp_settings`` Ansible variables you can define in your Ansible playbook.
-3. In the same way, configure the following parameters::
+3. Set the ``MEDIA_ROOT`` configuration option. This will be the path in your container that Pulp will use. If you want Pulp to create its folders in the top level of the container, an empty string is acceptable.
+4. In the same way, configure the following parameters::
 
       AZURE_ACCOUNT_NAME = 'Storage account name'
       AZURE_CONTAINER = 'Container name (as created within the blob service of your storage account)'
@@ -98,6 +99,7 @@ Configuring Pulp to use Azure Blob storage
       AZURE_URL_EXPIRATION_SECS = 60
       AZURE_OVERWRITE_FILES = 'True'
       AZURE_LOCATION = 'the folder within the container where your pulp objects will be stored'
+      MEDIA_ROOT = ''
 
   For a comprehensive overview of all possible options for the Azure Blob storage backend see the `django-storages[azure] documents
   <https://django-storages.readthedocs.io/en/latest/backends/azure.html>`_.
