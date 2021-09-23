@@ -171,9 +171,9 @@ Removals
 Deprecations
 ~~~~~~~~~~~~
 
-- The traditional tasking system (formerly the default in ``pulpcore<=3.13`) is deprecated and will be
-  removed in ``pulpcore==3.16``. If you are using the ``USE_NEW_WORKER_TYPE=False`` that will no
-  longer give you the traditional tasking system starting with ``pulpcore==3.16``.
+- The traditional tasking system (formerly the default in ``pulpcore<=3.13``) is deprecated and
+  will be removed in ``pulpcore==3.16``. If you are using the ``USE_NEW_WORKER_TYPE=False`` that
+  will no longer give you the traditional tasking system starting with ``pulpcore==3.16``.
   `#9159 <https://pulp.plan.io/issues/9159>`_
 
 
@@ -348,7 +348,7 @@ Bugfixes
   (backported from #8133)
   `#9130 <https://pulp.plan.io/issues/9130>`_
 - Move files to artifact storage only when they originate from WORKING_DIRECTORY.
-  Copy files from all other sources. 
+  Copy files from all other sources.
   (backported from #9146)
   `#9202 <https://pulp.plan.io/issues/9202>`_
 
