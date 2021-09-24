@@ -2,9 +2,8 @@
 import logging
 
 from django.conf import settings
-from django.conf.urls import include, url
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, include
 from drf_spectacular.views import (
     SpectacularJSONAPIView,
     SpectacularYAMLAPIView,
@@ -122,48 +121,48 @@ for viewset in sorted_by_depth:
 root_router = routers.DefaultRouter()
 
 urlpatterns = [
-    url(r"^{api_root}repair/".format(api_root=API_ROOT), RepairView.as_view()),
-    url(r"^{api_root}status/".format(api_root=API_ROOT), StatusView.as_view()),
-    url(
-        r"^{api_root}orphans/cleanup/".format(api_root=API_ROOT),
+    path(f"{API_ROOT}repair/", RepairView.as_view()),
+    path(f"{API_ROOT}status/", StatusView.as_view()),
+    path(
+        f"{API_ROOT}orphans/cleanup/",
         OrphansCleanupViewset.as_view({"post": "cleanup"}),
     ),
-    url(r"^{api_root}orphans/".format(api_root=API_ROOT), OrphansView.as_view()),
-    url(
-        r"^{api_root}repository_versions/".format(api_root=API_ROOT),
+    path(f"{API_ROOT}orphans/", OrphansView.as_view()),
+    path(
+        f"{API_ROOT}repository_versions/",
         ListRepositoryVersionViewSet.as_view({"get": "list"}),
     ),
-    url(
-        r"^{api_root}repositories/reclaim_space/".format(api_root=API_ROOT),
+    path(
+        f"{API_ROOT}repositories/reclaim_space/",
         ReclaimSpaceViewSet.as_view({"post": "reclaim"}),
     ),
-    url(
-        r"^{api_root}importers/core/pulp/import-check/".format(api_root=API_ROOT),
+    path(
+        f"{API_ROOT}importers/core/pulp/import-check/",
         PulpImporterImportCheckView.as_view(),
     ),
-    url(r"^auth/", include("rest_framework.urls")),
+    path("auth/", include("rest_framework.urls")),
     path(settings.ADMIN_SITE_URL, admin.site.urls),
 ]
 
 urlpatterns.append(
-    url(
-        r"^{api_root}docs/api.json".format(api_root=API_ROOT),
+    path(
+        f"{API_ROOT}docs/api.json",
         SpectacularJSONAPIView.as_view(authentication_classes=[], permission_classes=[]),
         name="schema",
     )
 )
 
 urlpatterns.append(
-    url(
-        r"^{api_root}docs/api.yaml".format(api_root=API_ROOT),
+    path(
+        f"{API_ROOT}docs/api.yaml",
         SpectacularYAMLAPIView.as_view(authentication_classes=[], permission_classes=[]),
         name="schema-yaml",
     )
 )
 
 urlpatterns.append(
-    url(
-        r"^{api_root}docs/".format(api_root=API_ROOT),
+    path(
+        f"{API_ROOT}docs/",
         SpectacularRedocView.as_view(
             authentication_classes=[],
             permission_classes=[],
@@ -175,8 +174,8 @@ urlpatterns.append(
 
 all_routers = [root_router] + vs_tree.register_with(root_router)
 for router in all_routers:
-    urlpatterns.append(url(r"^{api_root}".format(api_root=API_ROOT), include(router.urls)))
+    urlpatterns.append(path(API_ROOT, include(router.urls)))
 
 # If plugins define a urls.py, include them into the root namespace.
 for plugin_pattern in plugin_patterns:
-    urlpatterns.append(url(r"", include(plugin_pattern)))
+    urlpatterns.append(path("", include(plugin_pattern)))
