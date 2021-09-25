@@ -338,9 +338,7 @@ ALLOW_SHARED_TASK_RESOURCES
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
     This option allows tasks to have a shared (read only) simultaneous access to some resources. It
-    defaults to ``False``, but when set to ``True`` may improve tasking throughput.
-
-    .. note:: This option will only take effect when using the queueless worker type.
+    defaults to ``True``, but can be turned off to return to the old behavior in the event of bugs.
 
     .. note:: As a tech preview, this option is meant to be temporary. It will default to ``True``
               in 3.16 and be removed in 3.17.
