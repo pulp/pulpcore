@@ -13,6 +13,7 @@ jobs:
 
   single_commit:
     name: Assert single commit
+    if: github.ref == 'refs/heads/master'
     steps:
     - name: Checkout
       uses: actions/checkout@v1
