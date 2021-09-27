@@ -155,8 +155,8 @@ After installing and configuring PostgreSQL, you should configure it to start at
 Redis
 -----
 
-The Pulp tasking system runs on top of Redis. This can be on a different host or the same host that
-Pulp is running on.
+Pulp can use Redis to cache requests to the content app. This can be installed on a different host
+or the same host that Pulp is running on.
 
 To install Redis, refer to your package manager or the
 `Redis download docs <https://redis.io/download>`_.
