@@ -1,7 +1,7 @@
 # This config represents the latest values used when running the plugin-template. Any settings that
 # were not present before running plugin-template have been added with their default values.
 
-# generated with plugin_template@2021.04.08-84-g3271e88
+# generated with plugin_template@2021.04.08-122-gefc11dd
 
 additional_repos:
 - branch: 1.8
@@ -15,6 +15,9 @@ check_manifest: true
 check_openapi_schema: true
 check_stray_pulpcore_imports: false
 cherry_pick_automation: false
+ci_env: {}
+ci_trigger: '{pull_request: {branches: [''*'']}}'
+core_import_allowed: []
 coverage: true
 deploy_client_to_pypi: true
 deploy_client_to_rubygems: true
@@ -25,6 +28,7 @@ docker_fixtures: true
 docs_test: true
 flake8: true
 issue_tracker: redmine
+noissue_marker: '[noissue]'
 plugin_app_label: core
 plugin_camel: Pulpcore
 plugin_camel_short: Pulpcore
@@ -35,6 +39,8 @@ plugin_dash_short: pulpcore
 plugin_default_branch: master
 plugin_name: pulpcore
 plugin_snake: pulpcore
+post_job_template: null
+pre_job_template: null
 publish_docs_to_pulpprojectdotorg: true
 pulp_scheme: http
 pulp_settings:
@@ -44,14 +50,19 @@ pulp_settings:
   - /tmp
 pulpcore_branch: null
 pulpcore_pip_version_specifier: null
+pulpcore_revision: null
 pulpprojectdotorg_key_id: d1a778bda808
 pydocstyle: true
 pypi_username: pulp
 python_version: '3.6'
 redmine_project: pulp
+release_email: pulp-infra@redhat.com
 release_user: pulpbot
+single_commit_check: true
 stable_branch: null
 sync_ci: true
+tasking_allow_async_unsafe: true
+test_azure: false
 test_bindings: true
 test_cli: true
 test_fips_nightly: false
