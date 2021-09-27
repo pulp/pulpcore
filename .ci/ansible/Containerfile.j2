@@ -14,6 +14,9 @@ RUN pip3 install \
 {%- if s3_test | default(false) -%}
 {{ " " }}django-storages[boto3] git+https://github.com/fabricio-aguiar/botocore.git@fix-100-continue
 {%- endif -%}
+{%- if azure_test | default(false) -%}
+{{ " " }}django-storages[azure]
+{%- endif -%}
 {%- for item in plugins -%}
 {%- if item.name == "pulp-certguard" -%}
 {{ " " }}python-dateutil rhsm
@@ -23,8 +26,8 @@ RUN pip3 install \
 
 RUN mkdir -p /etc/nginx/pulp/
 {% for item in plugins %}
-RUN export plugin_path="$(pip show {{ item.name }} | sed -n -e "s/Location: //p")/{{ item.name }}"
-RUN ln "$plugin_path/app/webserver_snippets/nginx.conf /etc/nginx/pulp/{{ item.name }}.conf" || true
+RUN export plugin_path="$(pip3 show {{ item.name }} | sed -n -e 's/Location: //p')/{{ item.name }}" && \
+    ln $plugin_path/app/webserver_snippets/nginx.conf /etc/nginx/pulp/{{ item.name }}.conf || true
 {% endfor %}
 
 ENTRYPOINT ["/init"]

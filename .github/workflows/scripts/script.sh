@@ -115,12 +115,12 @@ if [[ "$TEST" == "upgrade" ]]; then
   sed -i "/require_pulp_plugins(/d" pulpcore/tests/functional/utils.py
 
   # Running pre upgrade tests:
-  pytest -v -r sx --color=yes --pyargs -capture=no pulpcore.tests.upgrade.pre
+  pytest -v -r sx --color=yes --pyargs --capture=no pulpcore.tests.upgrade.pre
 
   # Checking out ci_upgrade_test branch and upgrading plugins
+  cmd_prefix bash -c "cd pulpcore; git checkout -f ci_upgrade_test; pip install --upgrade --force-reinstall ."
   cmd_prefix bash -c "cd pulp-certguard; git checkout -f ci_upgrade_test; pip install ."
   cmd_prefix bash -c "cd pulp_file; git checkout -f ci_upgrade_test; pip install ."
-  cmd_prefix bash -c "cd pulpcore; git checkout -f ci_upgrade_test; pip install ."
 
   # Migrating
   cmd_prefix bash -c "django-admin migrate --no-input"
@@ -159,7 +159,7 @@ if [[ "$TEST" == "upgrade" ]]; then
 
   # Running post upgrade tests
   git checkout ci_upgrade_test -- pulpcore/tests/
-  pytest -v -r sx --color=yes --pyargs -capture=no pulpcore.tests.upgrade.post
+  pytest -v -r sx --color=yes --pyargs --capture=no pulpcore.tests.upgrade.post
   exit
 fi
 

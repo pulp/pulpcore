@@ -31,6 +31,7 @@ COMMIT_MSG=$(git log --format=%B --no-merges -1)
 export COMMIT_MSG
 
 if [[ "$TEST" == "upgrade" ]]; then
+  pip install -r functest_requirements.txt
   git checkout -b ci_upgrade_test
   cp -R .github /tmp/.github
   cp -R .ci /tmp/.ci
@@ -38,8 +39,6 @@ if [[ "$TEST" == "upgrade" ]]; then
   rm -rf .ci .github
   cp -R /tmp/.github .
   cp -R /tmp/.ci .
-  # Pin deps
-  sed -i "s/~/=/g" requirements.txt
 fi
 
 if [[ "$TEST" == "plugin-from-pypi" ]]; then
@@ -117,20 +116,24 @@ cd ..
 
 
 git clone --depth=1 https://github.com/pulp/pulp_file.git --branch 1.8
+cd pulp_file
+
 if [ -n "$PULP_FILE_PR_NUMBER" ]; then
-  cd pulp_file
   git fetch --depth=1 origin pull/$PULP_FILE_PR_NUMBER/head:$PULP_FILE_PR_NUMBER
   git checkout $PULP_FILE_PR_NUMBER
-  cd ..
 fi
 
+cd ..
+
 git clone --depth=1 https://github.com/pulp/pulp-certguard.git --branch 1.4
+cd pulp-certguard
+
 if [ -n "$PULP_CERTGUARD_PR_NUMBER" ]; then
-  cd pulp-certguard
   git fetch --depth=1 origin pull/$PULP_CERTGUARD_PR_NUMBER/head:$PULP_CERTGUARD_PR_NUMBER
   git checkout $PULP_CERTGUARD_PR_NUMBER
-  cd ..
 fi
+
+cd ..
 
 
 if [[ "$TEST" == "upgrade" ]]; then
@@ -138,15 +141,11 @@ if [[ "$TEST" == "upgrade" ]]; then
   git checkout -b ci_upgrade_test
   git fetch --depth=1 origin heads/$FROM_PULP_CERTGUARD_BRANCH:$FROM_PULP_CERTGUARD_BRANCH
   git checkout $FROM_PULP_CERTGUARD_BRANCH
-  # Pin deps
-  sed -i "s/~/=/g" requirements.txt
   cd ..
   cd pulp_file
   git checkout -b ci_upgrade_test
   git fetch --depth=1 origin heads/$FROM_PULP_FILE_BRANCH:$FROM_PULP_FILE_BRANCH
   git checkout $FROM_PULP_FILE_BRANCH
-  # Pin deps
-  sed -i "s/~/=/g" requirements.txt
   cd ..
 fi
 
@@ -156,13 +155,15 @@ pip install docker netaddr boto3 ansible
 
 for i in {1..3}
 do
-  ansible-galaxy collection install amazon.aws && s=0 && break || s=$? && sleep 3
+  ansible-galaxy collection install "amazon.aws:1.5.0" && s=0 && break || s=$? && sleep 3
 done
 if [[ $s -gt 0 ]]
 then
   echo "Failed to install amazon.aws"
   exit $s
 fi
+
+sed -i -e 's/DEBUG = False/DEBUG = True/' pulpcore/pulpcore/app/settings.py
 
 cd pulpcore
 

@@ -44,7 +44,7 @@ repo = Repo(plugin_path)
 changelog_commit = None
 # Look for a commit with the requested release version
 for commit in repo.iter_commits():
-    if f"Building changelog for {release_version_arg}\n" in commit.message:
+    if f"{release_version_arg} changelog" == commit.message.split("\n")[0]:
         changelog_commit = commit
         break
 

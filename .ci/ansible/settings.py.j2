@@ -23,4 +23,17 @@ AWS_STORAGE_BUCKET_NAME = "pulp3"
 AWS_S3_ENDPOINT_URL = "http://minio:9000"
 DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
 AWS_DEFAULT_ACL = "@none None"
+MEDIA_ROOT = ""
+{% endif %}
+
+{% if azure_test | default(false) %}
+AZURE_ACCOUNT_KEY = "Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw=="
+AZURE_ACCOUNT_NAME = "devstoreaccount1"
+AZURE_CONTAINER =  "pulp-test"
+AZURE_LOCATION = "pulp3"
+AZURE_OVERWRITE_FILES = True
+AZURE_URL_EXPIRATION_SECS = 120
+AZURE_CONNECTION_STRING = 'DefaultEndpointsProtocol={{ pulp_scheme }};AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint={{ pulp_scheme }}://pulp-azurite:10000/devstoreaccount1;'
+DEFAULT_FILE_STORAGE = "storages.backends.azure_storage.AzureStorage"
+MEDIA_ROOT = ""
 {% endif %}

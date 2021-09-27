@@ -68,7 +68,7 @@ pulp_container_tag: python36
 
 VARSYAML
 
-if [[ "$TEST" == "pulp" || "$TEST" == "performance" || "$TEST" == "upgrade" || "$TEST" == "s3" || "$TEST" == "plugin-from-pypi" ]]; then
+if [[ "$TEST" == "pulp" || "$TEST" == "performance" || "$TEST" == "upgrade" || "$TEST" == "azure" || "$TEST" == "s3" || "$TEST" == "plugin-from-pypi" ]]; then
   sed -i -e '/^services:/a \
   - name: pulp-fixtures\
     image: docker.io/pulp/pulp-fixtures:latest\
@@ -92,6 +92,11 @@ fi
 
 ansible-playbook build_container.yaml
 ansible-playbook start_container.yaml
+
+if [ "$TEST" = "azure" ]; then
+  AZURE_STORAGE_CONNECTION_STRING='DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://pulp-azurite:10000/devstoreaccount1;'
+  az storage container create --name pulp-test --connection-string $AZURE_STORAGE_CONNECTION_STRING
+fi
 
 echo ::group::PIP_LIST
 cmd_prefix bash -c "pip3 list && pip3 install pipdeptree && pipdeptree"
