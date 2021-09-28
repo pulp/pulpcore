@@ -810,7 +810,7 @@ class Handler:
         Args:
             request(:class:`~aiohttp.web.Request`): The request to prepare a response for.
             response (:class:`~aiohttp.web.StreamResponse`): The response to stream data to.
-            content_artifact (:class:`~pulpcore.plugin.models.ContentArtifact`): The ContentArtifact
+            remote_artifact (:class:`~pulpcore.plugin.models.RemoteArtifact`): The RemoteArtifact
                 to fetch and then stream back to the client
 
         Raises:
