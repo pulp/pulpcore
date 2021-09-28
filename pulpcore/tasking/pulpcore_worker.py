@@ -102,26 +102,39 @@ class NewPulpWorker:
     def notify_workers(self):
         self.cursor.execute("NOTIFY pulp_worker_wakeup")
 
-    def cancel_abandoned_task(self, task):
+    def cancel_abandoned_task(self, task, final_state, reason=None):
         """Cancel and clean up an abandoned task.
 
-        This function must only be called while holding the lock for that task.
+        This function must only be called while holding the lock for that task. It is a no-op if
+        the task is neither in "running" nor "canceling" state.
 
         Return ``True`` if the task was actually canceled, ``False`` otherwise.
         """
         # A task is considered abandoned when in running state, but no worker holds its lock
-        _logger.info(_("Cleaning up and canceling Task %s"), task.pk)
         Task.objects.filter(pk=task.pk, state=TASK_STATES.RUNNING).update(
             state=TASK_STATES.CANCELING
         )
         task.refresh_from_db()
         if task.state == TASK_STATES.CANCELING:
+            if reason:
+                _logger.info(
+                    _("Cleaning up task %s and marking as %s. Reason: %s"),
+                    task.pk,
+                    final_state,
+                    reason,
+                )
+            else:
+                _logger.info(_("Cleaning up task %s and marking as %s."), task.pk, final_state)
             _delete_incomplete_resources(task)
             if task.reserved_resources_record:
                 self.notify_workers()
-            Task.objects.filter(pk=task.pk, state=TASK_STATES.CANCELING).update(
-                state=TASK_STATES.CANCELED
-            )
+            task_data = {
+                "state": final_state,
+                "finished_at": timezone.now(),
+            }
+            if reason:
+                task_data["error"] = {"reason": reason}
+            Task.objects.filter(pk=task.pk, state=TASK_STATES.CANCELING).update(**task_data)
             return True
         return False
 
@@ -142,7 +155,9 @@ class NewPulpWorker:
                     task.refresh_from_db()
                     if task.state in [TASK_STATES.RUNNING, TASK_STATES.CANCELING]:
                         # A running task without a lock must be abandoned
-                        if self.cancel_abandoned_task(task):
+                        if self.cancel_abandoned_task(
+                            task, TASK_STATES.FAILED, "Worker has gone missing."
+                        ):
                             # Continue looking for the next task
                             # without considering this tasks resources
                             # as we just released them
@@ -193,6 +208,8 @@ class NewPulpWorker:
         self.cursor.execute("LISTEN pulp_worker_cancel")
         task.worker = self.worker
         task.save(update_fields=["worker"])
+        cancel_state = None
+        cancel_reason = None
         with TemporaryDirectory(dir=".") as task_working_dir_rel_path:
             task_process = Process(target=_perform_task, args=(task.pk, task_working_dir_rel_path))
             task_process.start()
@@ -215,6 +232,7 @@ class NewPulpWorker:
                         connection.connection.notifies.clear()
                         _logger.info(_("Received signal to cancel current task."), task.pk)
                         os.kill(task_process.pid, signal.SIGUSR1)
+                        cancel_state = TASK_STATES.CANCELED
                         break
                 if task_process.sentinel in r:
                     if not task_process.is_alive():
@@ -229,8 +247,12 @@ class NewPulpWorker:
                     else:
                         _logger.info(_("Aborting current task %s due to worker shutdown."), task.pk)
                         os.kill(task_process.pid, signal.SIGUSR1)
+                        cancel_state = TASK_STATES.FAILED
+                        cancel_reason = "Aborted during worker shutdown."
                         break
             task_process.join()
+            if cancel_state:
+                self.cancel_abandoned_task(task, cancel_state, cancel_reason)
         if task.reserved_resources_record:
             self.notify_workers()
         self.cursor.execute("UNLISTEN pulp_worker_cancel")
