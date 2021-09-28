@@ -89,6 +89,22 @@ class WorkerManager(models.Manager):
 
         return self.filter(last_heartbeat__gte=age_threshold, gracefully_stopped=False)
 
+    def offline_workers(self):
+        """
+        Returns a queryset of workers meeting the criteria to be considered 'offline'
+
+        To be considered 'offline', a worker must have no recent heartbeat timestamp.
+        "Recent" is defined here as "within the pulp process timeout interval".
+
+        Returns:
+            :class:`django.db.models.query.QuerySet`:  A query set of the Worker objects which
+                are considered by Pulp to be 'offline'.
+        """
+        now = timezone.now()
+        age_threshold = now - timedelta(seconds=settings.WORKER_TTL)
+
+        return self.filter(last_heartbeat__lte=age_threshold)
+
     def missing_workers(self):
         """
         Returns a queryset of workers meeting the criteria to be considered 'missing'
