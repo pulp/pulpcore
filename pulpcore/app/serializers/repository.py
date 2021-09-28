@@ -1,5 +1,6 @@
-from gettext import gettext as _
 import os
+from gettext import gettext as _
+from urllib.parse import urlparse
 
 from rest_framework import fields, serializers
 from rest_framework.validators import UniqueValidator
@@ -222,6 +223,15 @@ class RemoteSerializer(ModelSerializer):
         Returns:
             The validated value.
         """
+        parsed_url = urlparse(url)
+        if parsed_url.username or parsed_url.password:
+            raise serializers.ValidationError(
+                _(
+                    "The remote url contains username or password. Please use remote username or "
+                    "password instead."
+                )
+            )
+
         if not url.lower().startswith("file://"):
             return url
 
