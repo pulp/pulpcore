@@ -443,3 +443,17 @@ class RemoteFileURLsValidationTestCase(unittest.TestCase):
 
         remote = self.remotes_api.create(remote_attrs)
         self.addCleanup(self.remotes_api.delete, remote.pulp_href)
+
+    def test_no_username_password(self):
+        """Test that the remote url can't contain username/password."""
+        remote_attrs = {
+            "name": utils.uuid4(),
+            "url": "http://elladan@rivendell.org",
+        }
+        self.raise_for_invalid_request(remote_attrs)
+
+        remote_attrs = {
+            "name": utils.uuid4(),
+            "url": "http://elladan:pass@rivendell.org",
+        }
+        self.raise_for_invalid_request(remote_attrs)
