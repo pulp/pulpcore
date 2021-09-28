@@ -99,8 +99,11 @@ class BulkTouchQuerySet(models.QuerySet):
     def touch(self):
         """
         Update the ``timestamp_of_interest`` on all objects of the query.
+
+        We order-by-pk here to avoid deadlocking in high-concurrency
+        environments.
         """
-        return self.update(timestamp_of_interest=now())
+        return self.order_by("pk").update(timestamp_of_interest=now())
 
 
 class QueryMixin:
