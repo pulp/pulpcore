@@ -369,3 +369,87 @@ class GroupRoleSerializer(ModelSerializer, NestedHyperlinkedModelSerializer):
     class Meta:
         model = GroupRole
         fields = ModelSerializer.Meta.fields + ("role", "content_object")
+
+
+class NestedRoleSerializer(serializers.Serializer):
+    """
+    Serializer to add/remove object roles to/from users/groups.
+
+    This is used in conjunction with ``pulpcore.app.viewsets.base.RolesMixin`` and requires the
+    underlying object to be passed as ``content_object`` in the context.
+    """
+
+    users = serializers.ListField(
+        default=[],
+        child=serializers.SlugRelatedField(
+            slug_field="username",
+            queryset=User.objects.all(),
+        ),
+    )
+    groups = serializers.ListField(
+        default=[],
+        child=serializers.SlugRelatedField(
+            slug_field="name",
+            queryset=Group.objects.all(),
+        ),
+    )
+
+    role = serializers.SlugRelatedField(
+        slug_field="name",
+        queryset=Role.objects.all(),
+        required=True,
+    )
+
+    def validate(self, data):
+        data = super().validate(data)
+        if "assign" in self.context:
+            obj = self.context["content_object"]
+            obj_type = ContentType.objects.get_for_model(obj, for_concrete_model=False)
+
+            if not data["role"].permissions.filter(content_type__pk=obj_type.id).exists():
+                raise serializers.ValidationError(
+                    _("The role does not contain any permission for that object.")
+                )
+
+            self.user_role_pks = []
+            for user in data["users"]:
+                qs = UserRole.objects.filter(
+                    content_type_id=obj_type.id, object_id=obj.pk, user=user, role=data["role"]
+                )
+                if self.context["assign"]:
+                    if qs.exists():
+                        raise serializers.ValidationError(
+                            _("The role is already assigned to user '{user}'.").format(
+                                user=user.username
+                            )
+                        )
+                else:
+                    if not qs.exists():
+                        raise serializers.ValidationError(
+                            _("The role is not assigned to user '{user}'.").format(
+                                user=user.username
+                            )
+                        )
+                    self.user_role_pks.append(qs.get().pk)
+
+            self.group_role_pks = []
+            for group in data["groups"]:
+                qs = GroupRole.objects.filter(
+                    content_type_id=obj_type.id, object_id=obj.pk, group=group, role=data["role"]
+                )
+                if self.context["assign"]:
+                    if qs.exists():
+                        raise serializers.ValidationError(
+                            _("The role is already assigned to group '{group}'.").format(
+                                group=group.name
+                            )
+                        )
+                else:
+                    if not qs.exists():
+                        raise serializers.ValidationError(
+                            _("The role is not assigned to group '{group}'.").format(
+                                group=group.name
+                            )
+                        )
+                    self.group_role_pks.append(qs.get().pk)
+        return data

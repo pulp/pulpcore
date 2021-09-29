@@ -3,8 +3,8 @@ from pulpcore.app.response import OperationPostponedResponse, TaskGroupOperation
 
 # Import Viewsets in platform that are potentially useful to plugin writers
 from pulpcore.app.viewsets import (  # noqa
-    AsyncUpdateMixin,
     AlternateContentSourceViewSet,
+    AsyncUpdateMixin,
     BaseFilterSet,
     ContentFilter,
     ContentGuardFilter,
@@ -12,11 +12,11 @@ from pulpcore.app.viewsets import (  # noqa
     ContentViewSet,
     DistributionFilter,
     DistributionViewSet,
-    ExportViewSet,
     ExporterViewSet,
+    ExportViewSet,
     ImmutableRepositoryViewSet,
-    ImportViewSet,
     ImporterViewSet,
+    ImportViewSet,
     NamedModelViewSet,
     NAME_FILTER_OPTIONS,
     PublicationFilter,
@@ -25,10 +25,11 @@ from pulpcore.app.viewsets import (  # noqa
     ReadOnlyRepositoryViewSet,
     RemoteFilter,
     RemoteViewSet,
-    RepositoryViewSet,
     RepositoryVersionViewSet,
-    TaskViewSet,
+    RepositoryViewSet,
+    RolesMixin,
     TaskGroupViewSet,
+    TaskViewSet,
 )
 
 from pulpcore.app.viewsets.custom_filters import (  # noqa

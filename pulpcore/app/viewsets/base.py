@@ -2,21 +2,26 @@ import warnings
 from gettext import gettext as _
 from urllib.parse import urlparse
 
+from django.db import transaction
 from django.core.exceptions import FieldDoesNotExist, FieldError, ValidationError
 from django.forms.utils import ErrorList
 from django.urls import Resolver404, resolve
+from django.contrib.contenttypes.models import ContentType
 from django_filters.rest_framework import DjangoFilterBackend, filterset
-from drf_spectacular.utils import extend_schema
+from drf_spectacular.utils import extend_schema, inline_serializer
 from rest_framework import viewsets
+from rest_framework.decorators import action
 from rest_framework.filters import OrderingFilter
 from rest_framework.generics import get_object_or_404
+from rest_framework.response import Response
 from pulpcore.openapi import PulpAutoSchema
-from rest_framework.serializers import ValidationError as DRFValidationError
+from rest_framework.serializers import ValidationError as DRFValidationError, ListField, CharField
 
 from pulpcore.app import tasks
 from pulpcore.app.models import MasterModel
+from pulpcore.app.models.role import GroupRole, UserRole
 from pulpcore.app.response import OperationPostponedResponse
-from pulpcore.app.serializers import AsyncOperationResponseSerializer
+from pulpcore.app.serializers import AsyncOperationResponseSerializer, NestedRoleSerializer
 from pulpcore.app.role_util import get_objects_for_user
 from pulpcore.tasking.tasks import dispatch
 
@@ -505,6 +510,106 @@ class AsyncRemoveMixin(AsyncReservedObjectMixin):
             args=(pk, app_label, serializer.__class__.__name__),
         )
         return OperationPostponedResponse(task, request)
+
+
+class RolesMixin:
+    @extend_schema(
+        description="List roles assigned to this object.",
+        responses={
+            200: inline_serializer(
+                name="ObjectRolesSerializer",
+                fields={"roles": ListField(child=NestedRoleSerializer())},
+            )
+        },
+    )
+    @action(detail=True, methods=["get"])
+    def list_roles(self, request, pk):
+        obj = self.get_object()
+        obj_type = ContentType.objects.get_for_model(obj)
+        user_qs = UserRole.objects.filter(
+            content_type_id=obj_type.id, object_id=obj.pk
+        ).select_related("user", "role")
+        group_qs = GroupRole.objects.filter(
+            content_type_id=obj_type.id, object_id=obj.pk
+        ).select_related("group", "role")
+        roles = {}
+        for user_role in user_qs:
+            if user_role.role.name not in roles:
+                roles[user_role.role.name] = {
+                    "role": user_role.role.name,
+                    "users": [],
+                    "groups": [],
+                }
+            roles[user_role.role.name]["users"].append(user_role.user.username)
+        for group_role in group_qs:
+            if group_role.role.name not in roles:
+                roles[group_role.role.name] = {
+                    "role": group_role.role.name,
+                    "users": [],
+                    "groups": [],
+                }
+            roles[group_role.role.name]["groups"].append(group_role.group.name)
+        result = {"roles": list(roles.values())}
+        return Response(result)
+
+    @extend_schema(description="Add a role for this object to users/groups.")
+    @action(detail=True, methods=["post"], serializer_class=NestedRoleSerializer)
+    def add_role(self, request, pk):
+        obj = self.get_object()
+        serializer = NestedRoleSerializer(
+            data=request.data, context={"request": request, "content_object": obj, "assign": True}
+        )
+        serializer.is_valid(raise_exception=True)
+        with transaction.atomic():
+            if serializer.validated_data["users"]:
+                UserRole.objects.bulk_create(
+                    [
+                        UserRole(
+                            content_object=obj,
+                            user=user,
+                            role=serializer.validated_data["role"],
+                        )
+                        for user in serializer.validated_data["users"]
+                    ]
+                )
+            if serializer.validated_data["groups"]:
+                GroupRole.objects.bulk_create(
+                    [
+                        GroupRole(
+                            content_object=obj,
+                            group=group,
+                            role=serializer.validated_data["role"],
+                        )
+                        for group in serializer.validated_data["groups"]
+                    ]
+                )
+        return Response(serializer.data)
+
+    @extend_schema(description="Remove a role for this object from users/groups.")
+    @action(detail=True, methods=["post"], serializer_class=NestedRoleSerializer)
+    def remove_role(self, request, pk):
+        obj = self.get_object()
+        serializer = NestedRoleSerializer(
+            data=request.data, context={"request": request, "content_object": obj, "assign": False}
+        )
+        serializer.is_valid(raise_exception=True)
+        with transaction.atomic():
+            UserRole.objects.filter(pk__in=serializer.user_role_pks).delete()
+            GroupRole.objects.filter(pk__in=serializer.group_role_pks).delete()
+        return Response(serializer.data)
+
+    @extend_schema(
+        description="List permissions available to the current user on this object.",
+        responses={
+            200: inline_serializer(
+                name="MyPermissionsSerializer", fields={"permissions": ListField(child=CharField())}
+            )
+        },
+    )
+    @action(detail=True, methods=["get"])
+    def my_permissions(self, request, pk=None):
+        obj = self.get_object()
+        return Response({"permissions": list(request.user.get_all_permissions(obj))})
 
 
 class BaseFilterSet(filterset.FilterSet):
