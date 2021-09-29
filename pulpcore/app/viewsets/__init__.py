@@ -4,6 +4,7 @@ from .base import (  # noqa
     AsyncUpdateMixin,
     BaseFilterSet,
     NamedModelViewSet,
+    RolesMixin,
     NAME_FILTER_OPTIONS,
 )
 

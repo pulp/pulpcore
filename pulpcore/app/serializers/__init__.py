@@ -99,6 +99,7 @@ from .user import (  # noqa
     GroupRoleSerializer,
     GroupSerializer,
     GroupUserSerializer,
+    NestedRoleSerializer,
     PermissionSerializer,
     RoleSerializer,
     UserRoleSerializer,
