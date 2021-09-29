@@ -17,6 +17,49 @@ Changelog
 
 .. towncrier release notes start
 
+3.14.7 (2021-09-29)
+===================
+REST API
+--------
+
+Features
+~~~~~~~~
+
+- Added a periodical cleanup to the pulpcore-worker class to keep the `Worker` table clean.
+  (backported from #8931)
+  `#9462 <https://pulp.plan.io/issues/9462>`_
+
+
+Bugfixes
+~~~~~~~~
+
+- Ordered several ContentStages paths to fix deadlocks in high-concurrency scenarios.
+
+  (backported from #8750)
+  `#9379 <https://pulp.plan.io/issues/9379>`_
+- Fixed an issue where on_demand content might not be downloaded properly if the remote URL was changed (even if re-synced).
+  (backported from #9395)
+  `#9400 <https://pulp.plan.io/issues/9400>`_
+- Fixed the repository modify endpoint performance problems.
+  (backported from #9266)
+  `#9401 <https://pulp.plan.io/issues/9401>`_
+- Taught a remote-artifact error path to not assume 'filename' was valid for all content.
+  (backported from #9427)
+  `#9440 <https://pulp.plan.io/issues/9440>`_
+- Taught several more codepaths to order-before-update to avoid deadlocks.
+  (backported from #9441)
+  `#9445 <https://pulp.plan.io/issues/9445>`_
+- Changed the pulpcore-worker to mark abandoned tasks as "failed" instead of "canceled".
+  (backported from #9247)
+  `#9453 <https://pulp.plan.io/issues/9453>`_
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.14.6 (2021-09-02)
 ===================
 REST API

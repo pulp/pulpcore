@@ -1,2 +1,0 @@
-Fixed the repository modify endpoint performance problems.
-(backported from #9266)

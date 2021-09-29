@@ -1,2 +1,0 @@
-Fixed an issue where on_demand content might not be downloaded properly if the remote URL was changed (even if re-synced).
-(backported from #9395)

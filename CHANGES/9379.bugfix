@@ -1,3 +1,0 @@
-Ordered several ContentStages paths to fix deadlocks in high-concurrency scenarios.
-
-(backported from #8750)

@@ -1,2 +1,0 @@
-Taught several more codepaths to order-before-update to avoid deadlocks.
-(backported from #9441)
