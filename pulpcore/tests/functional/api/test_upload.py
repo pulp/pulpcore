@@ -128,8 +128,8 @@ class ChunkedUploadTestCase(unittest.TestCase):
         self.assertEqual([*response], expected_keys, response)
 
         expected_chunks = [
-            {"offset": 0, "size": 6291456},
-            {"offset": 6291456, "size": 4194304},
+            {"offset": 0, "size": 614400},
+            {"offset": 614400, "size": 434176},
         ]
 
         sorted_chunks_response = sorted(response["chunks"], key=lambda i: i["offset"])
