@@ -63,6 +63,7 @@ single_commit_check: true
 stable_branch: null
 sync_ci: true
 tasking_allow_async_unsafe: true
+disabled_redis_runners: [s3]
 test_azure: true
 test_bindings: true
 test_cli: true

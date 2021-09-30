@@ -1,4 +1,5 @@
 """Test the status page."""
+import warnings
 import unittest
 
 from django.test import override_settings
@@ -7,6 +8,7 @@ from pulp_smash import api, cli, config, utils
 from pulp_smash.pulp3.constants import STATUS_PATH
 from requests.exceptions import HTTPError
 
+from pulpcore.tests.functional.api.utils import get_redis_status
 from pulpcore.tests.functional.utils import set_up_module as setUpModule  # noqa:F401
 
 STATUS = {
@@ -62,6 +64,8 @@ class StatusTestCase(unittest.TestCase):
         if self.storage != "pulpcore.app.models.storage.FileSystem":
             self.status_response["properties"].pop("storage", None)
 
+        self.is_redis_connected = get_redis_status()
+
     def test_get_authenticated(self):
         """GET the status path with valid credentials.
 
@@ -92,14 +96,18 @@ class StatusTestCase(unittest.TestCase):
         """
         validate(status, self.status_response)
         self.assertTrue(status["database_connection"]["connected"])
-        self.assertIsNotNone(status["redis_connection"])
-        self.assertTrue(status["redis_connection"]["connected"])
         self.assertNotEqual(status["online_workers"], [])
         self.assertNotEqual(status["versions"], [])
         if self.storage == "pulpcore.app.models.storage.FileSystem":
             self.assertIsNotNone(status["storage"])
         else:
             self.assertIsNone(status["storage"])
+
+        self.assertIsNotNone(status["redis_connection"])
+        if self.is_redis_connected:
+            self.assertTrue(status["redis_connection"]["connected"])
+        else:
+            warnings.warn("Could not connect to the Redis server")
 
     @override_settings(CACHE_ENABLED=False)
     def verify_get_response_without_redis(self, status):

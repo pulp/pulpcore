@@ -1,1 +1,1 @@
-from .cache import Cache, AsyncCache, ContentCache, CacheKeys  # noqa
+from .cache import Cache, AsyncCache, ContentCache, CacheKeys, ConnectionError  # noqa

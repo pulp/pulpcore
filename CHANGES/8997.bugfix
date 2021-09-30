@@ -1,0 +1,1 @@
+Made Pulp to be fault-tolerant to Redis server connection issues.
