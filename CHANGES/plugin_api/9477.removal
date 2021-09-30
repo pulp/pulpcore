@@ -1,0 +1,1 @@
+The `resources` argument of `dispatch()` has been removed. `exclusive_resources` and `shared_resources` should be used instead.
