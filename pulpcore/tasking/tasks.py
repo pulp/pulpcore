@@ -7,7 +7,6 @@ from django.db import transaction, connection
 from django.db.models import Model
 from django_guid import get_guid
 
-from pulpcore.app.loggers import deprecation_logger
 from pulpcore.app.models import Task
 from pulpcore.constants import TASK_STATES
 from pulpcore.tasking import util
@@ -39,7 +38,6 @@ def _validate_and_get_resources(resources):
 
 def dispatch(
     func,
-    resources=None,
     args=None,
     kwargs=None,
     task_group=None,
@@ -60,9 +58,6 @@ def dispatch(
 
     Args:
         func (callable): The function to be run by RQ when the necessary locks are acquired.
-        resources (list): A list of resources this task needs exclusive access to while running.
-            Each resource can be either a `str` or a `django.models.Model` instance. This parameter
-            is deprecated.
         args (tuple): The positional arguments to pass on to the task.
         kwargs (dict): The keyword arguments to pass on to the task.
         task_group (pulpcore.app.models.TaskGroup): A TaskGroup to add the created Task to.
@@ -76,23 +71,6 @@ def dispatch(
     Raises:
         ValueError: When `resources` is an unsupported type.
     """
-    if resources is not None:
-        if exclusive_resources is not None:
-            raise RuntimeError(
-                _(
-                    "Only one of 'exclusive_resources' and 'resources' can be specified for"
-                    " dispatch."
-                )
-            )
-        deprecation_logger.warning(
-            _(
-                "The use of the 'resources' argument to 'dispatch' has been deprecated and may be"
-                " removed as soon as pulpcore==3.16. Please use 'exclusive_resources' and"
-                " 'shared_resources' instead."
-            )
-        )
-        exclusive_resources = resources
-        resources = None
 
     if exclusive_resources is None:
         exclusive_resources = []
