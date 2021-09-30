@@ -3,6 +3,9 @@ import string
 from datetime import datetime
 from random import choice
 
+from pulp_smash import api, config
+from pulp_smash.pulp3.constants import STATUS_PATH
+
 
 def gen_username(length=10, valid_characters=True):
     """Generate username given a certain length or punctuation to be used."""
@@ -25,3 +28,16 @@ def parse_date_from_string(s, parse_format="%Y-%m-%dT%H:%M:%S.%fZ"):
     :return: datetime.datetime
     """
     return datetime.strptime(s, parse_format)
+
+
+def get_redis_status():
+    """Return a boolean value which tells whether the connection to redis was established or not."""
+    api_client = api.Client(config.get_config(), api.json_handler)
+    status_response = api_client.get(STATUS_PATH)
+
+    try:
+        is_redis_connected = status_response["redis_connection"]["connected"]
+    except KeyError:
+        is_redis_connected = False
+
+    return is_redis_connected

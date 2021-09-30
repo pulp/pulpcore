@@ -1,11 +1,19 @@
 import enum
 import json
 
+from functools import wraps
+
 from aiohttp.web import FileResponse, Response, HTTPSuccessful, Request
 from aiohttp.web_exceptions import HTTPFound
 
+from redis import ConnectionError
+from aioredis import ConnectionError as AConnectionError
+
 from pulpcore.app.settings import settings
-from pulpcore.app.redis_connection import get_redis_connection, get_async_redis_connection
+from pulpcore.app.redis_connection import (
+    get_redis_connection,
+    get_async_redis_connection,
+)
 
 DEFAULT_EXPIRES_TTL = settings.CACHE_SETTINGS["EXPIRES_TTL"]
 
@@ -18,6 +26,34 @@ class CacheKeys(enum.Enum):
     method = "method"
 
 
+def connection_error_wrapper(func):
+    """A decorator that enables sync functions which use Redis to swallow connection errors."""
+
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        """Handle connection errors, specific to the sync context, raised by the Redis client."""
+        try:
+            return func(*args, **kwargs)
+        except ConnectionError:
+            return None
+
+    return wrapper
+
+
+def aconnection_error_wrapper(func):
+    """A decorator that enables async functions which use Redis to swallow connection errors."""
+
+    @wraps(func)
+    async def wrapper(*args, **kwargs):
+        """Handle connection errors, specific to the async context, raised by the Redis client."""
+        try:
+            return await func(*args, **kwargs)
+        except AConnectionError:
+            return None
+
+    return wrapper
+
+
 class Cache:
     """Base class for Pulp's cache"""
 
@@ -28,6 +64,7 @@ class Cache:
         """Creates synchronous cache instance"""
         self.redis = get_redis_connection()
 
+    @connection_error_wrapper
     def get(self, key, base_key=None):
         """Gets cached entry of key"""
         base_key = base_key or self.default_base_key
@@ -35,6 +72,7 @@ class Cache:
             return self.redis.hgetall(base_key)
         return self.redis.hget(base_key, key)
 
+    @connection_error_wrapper
     def set(self, key, value, expires=None, base_key=None):
         """Sets the cached entry at key"""
         base_key = base_key or self.default_base_key
@@ -43,6 +81,7 @@ class Cache:
             self.redis.expire(base_key, expires)
         return ret
 
+    @connection_error_wrapper
     def exists(self, key=None, base_key=None):
         """Checks if cached entries exist"""
         if not base_key and base_key is not None:
@@ -55,6 +94,7 @@ class Cache:
                 base_key = [base_key]
             return self.redis.exists(*base_key)
 
+    @connection_error_wrapper
     def delete(self, key=None, base_key=None):
         """
         Deletes the cached entry at base_key: key
@@ -82,6 +122,7 @@ class AsyncCache:
         """Creates asynchronous cache instance"""
         self.redis = get_async_redis_connection()
 
+    @aconnection_error_wrapper
     async def get(self, key, base_key=None):
         """Gets cached entry of key"""
         base_key = base_key or self.default_base_key
@@ -89,6 +130,7 @@ class AsyncCache:
             return await self.redis.hgetall(base_key)
         return await self.redis.hget(base_key, key)
 
+    @aconnection_error_wrapper
     async def set(self, key, value, expires=None, base_key=None):
         """Sets the cached entry at key"""
         base_key = base_key or self.default_base_key
@@ -97,6 +139,7 @@ class AsyncCache:
             await self.redis.expire(base_key, expires)
         return ret
 
+    @aconnection_error_wrapper
     async def exists(self, key=None, base_key=None):
         """Checks if cached entries exist"""
         if not base_key and base_key is not None:
@@ -109,6 +152,7 @@ class AsyncCache:
                 base_key = [base_key]
             return await self.redis.exists(*base_key)
 
+    @aconnection_error_wrapper
     async def delete(self, key=None, base_key=None):
         """
         Deletes the cached entry at base_key: key

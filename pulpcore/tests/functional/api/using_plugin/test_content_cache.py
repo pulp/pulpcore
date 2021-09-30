@@ -25,8 +25,12 @@ from pulpcore.client.pulp_file import (
 from pulpcore.tests.functional.api.using_plugin.utils import (  # noqa:F401
     set_up_module as setUpModule,
 )
+from pulpcore.tests.functional.api.utils import get_redis_status
+
+is_redis_connected = get_redis_status()
 
 
+@unittest.skipUnless(is_redis_connected, "Could not connect to the Redis server")
 class ContentCacheTestCache(unittest.TestCase):
     """Test content cache"""
 

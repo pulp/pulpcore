@@ -1,9 +1,17 @@
 from time import sleep
 from django.test import TestCase
+from unittest import skipUnless
 
-from pulpcore.cache import Cache
+from pulpcore.cache import Cache, ConnectionError
 
 
+try:
+    is_redis_connected = Cache().redis.ping()
+except ConnectionError:
+    is_redis_connected = False
+
+
+@skipUnless(is_redis_connected, "Could not connect to the Redis server")
 class CacheBasicOperationsTestCase(TestCase):
     """Tests the basic APIs of the Cache object"""
 
