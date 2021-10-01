@@ -226,14 +226,14 @@ class DistributionSerializer(ModelSerializer):
     def validate(self, data):
         super().validate(data)
 
-        repository_provided = data.get("repository", None) or (
-            self.instance and self.instance.repository
+        repository_provided = data.get(
+            "repository", (self.instance and self.instance.repository) or None
         )
-        repository_version_provided = data.get("repository_version", None) or (
-            self.instance and self.instance.repository_version
+        repository_version_provided = data.get(
+            "repository_version", (self.instance and self.instance.repository_version) or None
         )
-        publication_provided = data.get("publication", None) or (
-            self.instance and self.instance.publication
+        publication_provided = data.get(
+            "publication", (self.instance and self.instance.publication) or None
         )
 
         if publication_provided and repository_version_provided:
@@ -250,14 +250,12 @@ class DistributionSerializer(ModelSerializer):
                     "may be used simultaneously."
                 )
             )
-        # TODO: https://pulp.plan.io/issues/8762
 
-        # elif repository_provided and publication_provided:
-        #     raise serializers.ValidationError(
-        #         _(
-        #             "Only one of the attributes 'repository' and 'publication' "
-        #             "may be used simultaneously."
-        #         )
-        #     )
-
+        elif repository_provided and publication_provided:
+            raise serializers.ValidationError(
+                _(
+                    "Only one of the attributes 'repository' and 'publication' "
+                    "may be used simultaneously."
+                )
+            )
         return data
