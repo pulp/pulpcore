@@ -1,6 +1,7 @@
 """Tests that perform actions over distributions."""
 import csv
 import hashlib
+import os
 import unittest
 from urllib.parse import urljoin
 
@@ -383,6 +384,10 @@ class ContentServePublicationDistributionTestCase(unittest.TestCase):
 
     def test_content_served_immediate_with_range_request_start_value_larger_than_content(self):
         """Assert that a range request with a start value larger than the content errors."""
+        if "azure" == os.getenv("TEST"):
+            # Skip while Azurite is not handling this correctly:
+            # https://github.com/Azure/Azurite/issues/333
+            self.skipTest("Skipping test for Azurite storage.")
         self.setup_download_test("immediate", url=FILE_CHUNKED_FIXTURE_MANIFEST_URL)
         with self.assertRaises(HTTPError) as cm:
             download_content_unit_return_requests_response(
