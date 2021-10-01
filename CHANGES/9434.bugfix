@@ -1,0 +1,1 @@
+Updated the distribution validation to properly handle the use of ``repository`` / ``repository_version`` / ``publication``.
