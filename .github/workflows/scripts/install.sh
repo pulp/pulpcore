@@ -90,6 +90,22 @@ minio_access_key: "'$MINIO_ACCESS_KEY'"\
 minio_secret_key: "'$MINIO_SECRET_KEY'"' vars/main.yaml
 fi
 
+if [ "$TEST" = "azure" ]; then
+  mkdir -p azurite
+  cd azurite
+  openssl req -newkey rsa:2048 -x509 -nodes -keyout azkey.pem -new -out azcert.pem -sha256 -days 365 -addext "subjectAltName=DNS:pulp-azurite" -subj "/C=CO/ST=ST/L=LO/O=OR/OU=OU/CN=CN"
+  sudo cp azcert.pem /usr/local/share/ca-certificates/azcert.crt
+  sudo dpkg-reconfigure ca-certificates
+  cd ..
+  sed -i -e '/^services:/a \
+  - name: pulp-azurite\
+    image: mcr.microsoft.com/azure-storage/azurite\
+    volumes:\
+      - ./azurite:/etc/pulp\
+    command: "azurite-blob --blobHost 0.0.0.0 --cert /etc/pulp/azcert.pem --key /etc/pulp/azkey.pem"' vars/main.yaml
+  sed -i -e '$a azure_test: true' vars/main.yaml
+fi
+
 ansible-playbook build_container.yaml
 ansible-playbook start_container.yaml
 echo ::group::SSL

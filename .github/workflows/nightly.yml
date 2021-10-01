@@ -23,6 +23,7 @@ jobs:
         env:
           - TEST: pulp
           - TEST: docs
+          - TEST: azure
           - TEST: s3
           - TEST: bindings
 
