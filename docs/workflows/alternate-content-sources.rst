@@ -23,28 +23,35 @@ Remote's url.
 
 .. code-block::
 
-    http POST :24817/pulp/api/v3/acs/<plugin_name>/<content_type>/ remote=<remote_pulp_href> paths:='["directory/", "folder/"]'
+    pulp <plugin_name> acs create --name <acs_name> --remote <remote> --path <path> --path <path>
 
 .. note::
 
-  The ``paths`` parameter is optional. If a path is not provided, the url of your remote is used to
-  search for content.
+  The ``path`` option is optional and can be specified multiple times. If a path is not provided,
+  the url of your remote is used to search for content.
 
 Update an Alternate Content Source
 ----------------------------------
 
-To update an ACS, use a similar call to your ACS but with ``patch`` method:
+To update an ACS, use a similar call to your ACS but with ``update`` command:
 
 .. code-block::
 
-    http PATCH :24817/pulp/api/v3/acs/<plugin_name>/<content_type>/<acs_uuid>/ paths:='["<path>"]' remote=<remote> name=<name>
+    pulp <plugin_name> acs update --name <acs_name> --remote <remote>
+
+To add or remove paths, use the ``path`` subcommand:
+
+.. code-block::
+
+    pulp <plugin_name> acs path add --name <acs_name> --path <path>
+    pulp <plugin_name> acs path remove --name <acs_name> --path <path>
 
 Refresh
 -------
 
-To make the ACS available the next time you sync, you will need to call ``refresh`` endpoint.  It
+To make the ACS available the next time you sync, you will need to call the ``refresh`` command.  It
 will go through your paths and catalog content from your content source.
 
 .. code-block::
 
-    http POST :24817/pulp/api/v3/acs/<plugin_name>/<content_type>/<acs_uuid>/refresh/
+    pulp <plugin_name> acs refresh --name <acs_name>
