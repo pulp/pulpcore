@@ -14,6 +14,7 @@ from drf_spectacular.plumbing import (
     build_root_object,
     force_instance,
     normalize_result_object,
+    resolve_django_path_parameter,
     resolve_regex_path_parameter,
 )
 from drf_spectacular.settings import spectacular_settings
@@ -209,9 +210,13 @@ class PulpAutoSchema(AutoSchema):
             schema = build_basic_type(OpenApiTypes.STR)
             description = ""
 
-            resolved_parameter = resolve_regex_path_parameter(
-                self.path_regex, variable, self.map_renderers("format")
+            resolved_parameter = resolve_django_path_parameter(
+                self.path_regex,
+                variable,
+                self.map_renderers("format"),
             )
+            if not resolved_parameter:
+                resolved_parameter = resolve_regex_path_parameter(self.path_regex, variable)
 
             if resolved_parameter:
                 schema = resolved_parameter["schema"]
@@ -400,7 +405,8 @@ class PulpSchemaGenerator(SchemaGenerator):
 
             # Removes html tags from OpenAPI schema
             if input_request is None or "include_html" not in input_request.query_params:
-                operation["description"] = strip_tags(operation["description"])
+                if "description" in operation:
+                    operation["description"] = strip_tags(operation["description"])
 
             # operationId as actions [list, read, sync, modify, create, delete, ...]
             if input_request and "bindings" in input_request.query_params:
