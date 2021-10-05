@@ -66,3 +66,22 @@ class ResourceImmutableError(PulpException):
 
 class AdvisoryLockError(Exception):
     """Exception to signal that a lock could not be acquired."""
+
+
+class TimeoutException(PulpException):
+    """
+    Exception to signal timeout error.
+    """
+
+    def __init__(self, url):
+        """
+        :param url: the url the download for timed out
+        :type url: str
+        """
+        super().__init__("PLP0005")
+        self.url = url
+
+    def __str__(self):
+        return _(
+            "Request timed out for {}. Increasing the total_timeout value on the remote might help."
+        ).format(self.url)
