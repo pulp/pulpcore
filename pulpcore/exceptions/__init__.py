@@ -1,7 +1,8 @@
 from .base import (  # noqa
+    AdvisoryLockError,
     PulpException,
     ResourceImmutableError,
-    AdvisoryLockError,
+    TimeoutException,
     exception_to_dict,
 )
 from .http import MissingResource  # noqa
