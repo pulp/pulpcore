@@ -11,6 +11,7 @@ from pulpcore.app.models import Artifact
 from pulpcore.exceptions import (
     DigestValidationError,
     SizeValidationError,
+    TimeoutException,
     UnsupportedDigestValidationError,
 )
 
@@ -240,7 +241,10 @@ class BaseDownloader:
 
         """
         async with self.semaphore:
-            return await self._run(extra_data=extra_data)
+            try:
+                return await self._run(extra_data=extra_data)
+            except asyncio.TimeoutError:
+                raise TimeoutException(self.url)
 
     async def _run(self, extra_data=None):
         """
