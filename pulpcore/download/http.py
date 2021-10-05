@@ -1,9 +1,11 @@
 import logging
 
 import aiohttp
+import asyncio
 import backoff
 
 from .base import BaseDownloader, DownloadResult
+from pulpcore.exceptions import TimeoutException
 
 
 log = logging.getLogger(__name__)
@@ -242,6 +244,7 @@ class HttpDownloader(BaseDownloader):
             aiohttp.ClientResponseError,
             aiohttp.ServerDisconnectedError,
             TimeoutError,
+            TimeoutException,
         )
 
         async with self.semaphore:
@@ -253,7 +256,10 @@ class HttpDownloader(BaseDownloader):
                 giveup=http_giveup_handler,
             )
             async def download_wrapper():
-                return await self._run(extra_data=extra_data)
+                try:
+                    return await self._run(extra_data=extra_data)
+                except asyncio.TimeoutError:
+                    raise TimeoutException(self.url)
 
             return await download_wrapper()
 
