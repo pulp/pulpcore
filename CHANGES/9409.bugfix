@@ -1,1 +1,0 @@
-Fixed a bug, where natural key calculations on content performed superfluous database calls.

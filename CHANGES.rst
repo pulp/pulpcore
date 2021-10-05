@@ -17,6 +17,147 @@ Changelog
 
 .. towncrier release notes start
 
+3.16.0 (2021-10-05)
+===================
+REST API
+--------
+
+Features
+~~~~~~~~
+
+- Prioritize remote content provided by Alternate Content Sources over regular content in the content
+  app.
+  `#8749 <https://pulp.plan.io/issues/8749>`_
+- Marked readonly task resources as shared for concurrent use.
+  `#9326 <https://pulp.plan.io/issues/9326>`_
+- Added validation for the remote type that can be used with the ACS.
+  `#9375 <https://pulp.plan.io/issues/9375>`_
+
+
+Bugfixes
+~~~~~~~~
+
+- Ordered several ContentStages paths to fix deadlocks in high-concurrency scenarios.
+  `#8750 <https://pulp.plan.io/issues/8750>`_
+- Fixed a bug where ``pulpcore-content`` decompressed data while incorrectly advertising to clients
+  it was still compressed via the ``Content-Encoding: gzip`` header.
+  `#9213 <https://pulp.plan.io/issues/9213>`_
+- Changed the pulpcore-worker to mark abandoned tasks as "failed" instead of "canceled".
+  `#9247 <https://pulp.plan.io/issues/9247>`_
+- Fixed the repository modify endpoint performance problems.
+  `#9266 <https://pulp.plan.io/issues/9266>`_
+- ``RBACContentGuard`` assign/remove permission endpoints now properly return 201 instead of 200
+  `#9314 <https://pulp.plan.io/issues/9314>`_
+- Fixed bug where some Openshift environments could not start workers due to a strange Python runtime
+  import issue.
+  `#9338 <https://pulp.plan.io/issues/9338>`_
+- PATCH/PUT/DELETE calls for the ACS are asynchronous and trigger a task.
+  `#9374 <https://pulp.plan.io/issues/9374>`_
+- Fixed update call for the ACS so paths are not silenty removed when other fields are being updated.
+  `#9376 <https://pulp.plan.io/issues/9376>`_
+- Fixed an issue where on_demand content might not be downloaded properly if the remote URL was changed (even if re-synced).
+  `#9395 <https://pulp.plan.io/issues/9395>`_
+- Fixed a bug, where natural key calculations on content performed superfluous database calls.
+  `#9409 <https://pulp.plan.io/issues/9409>`_
+- Ensured that with the removal of ACS its' hidden repositories are removed as well.
+  `#9417 <https://pulp.plan.io/issues/9417>`_
+- Taught a remote-artifact error path to not assume 'filename' was valid for all content.
+  `#9427 <https://pulp.plan.io/issues/9427>`_
+- Taught several more codepaths to order-before-update to avoid deadlocks.
+  `#9441 <https://pulp.plan.io/issues/9441>`_
+
+
+Improved Documentation
+~~~~~~~~~~~~~~~~~~~~~~
+
+- Added an architecture diagram to the components page.
+  `#7692 <https://pulp.plan.io/issues/7692>`_
+- Fixed a note saying where to find versioning details.
+  `#8859 <https://pulp.plan.io/issues/8859>`_
+- Removed deprecated uses of ``MEDIA_ROOT``.
+  `#9100 <https://pulp.plan.io/issues/9100>`_
+- Updated ACS docs to use CLI commands.
+  `#9251 <https://pulp.plan.io/issues/9251>`_
+- Document Azure storage needs to set ``MEDIA_ROOT``
+  `#9428 <https://pulp.plan.io/issues/9428>`_
+- Corrected a fact that Redis is needed by the tasking system in the installation section.
+  `#9436 <https://pulp.plan.io/issues/9436>`_
+
+
+Removals
+~~~~~~~~
+
+- Removed the legacy tasking system and the ``USE_NEW_WORKER_TYPE`` setting.
+  `#9157 <https://pulp.plan.io/issues/9157>`_
+- Removed OpenAPI browsable API
+  `#9322 <https://pulp.plan.io/issues/9322>`_
+- Updated the pulp import creation endpoint to return a task group instead of a task.
+  `#9382 <https://pulp.plan.io/issues/9382>`_
+
+
+Misc
+~~~~
+
+- `#9432 <https://pulp.plan.io/issues/9432>`_, `#9443 <https://pulp.plan.io/issues/9443>`_
+
+
+Plugin API
+----------
+
+Features
+~~~~~~~~
+
+- Added optional stage for Alternate Content Source support.
+  `#8748 <https://pulp.plan.io/issues/8748>`_
+- ``AlternateContentSource`` has a new class variable ``REMOTE_TYPES`` that it will use to validate
+  the type of remote set on the ACS.
+  `#9375 <https://pulp.plan.io/issues/9375>`_
+- Added ``pulpcore.plugin.viewset.TaskGroupResponse`` which can be used to return a reference to a
+  task group created in a viewset. Added ``pulpcore.plugin.serializers.TaskGroupResponseSerializer``
+  which can be used to indicate the serializer response format of viewsets that will use
+  ``TaskGroupResponse`` similar to how ``AsyncOperationResponseSerializer`` is used.
+  `#9380 <https://pulp.plan.io/issues/9380>`_
+- Added the ``pulpcore.plugin.tasking.general_multi_delete`` that deletes a list of model instances
+  in a transaction.
+  `#9417 <https://pulp.plan.io/issues/9417>`_
+- Exposed tasks ``general_create``, ``general_create_from_temp_file``, ``general_delete``,
+  ``general_update``, ``orphan_cleanup``, and ``reclaim_space`` in the plugin api.
+  `#9418 <https://pulp.plan.io/issues/9418>`_
+- `ALLOW_SHARED_TASK_RESOURCES` is now enabled by default.  If all goes smoothly, this will become permanent and the setting will be removed in the next release.
+  `#9474 <https://pulp.plan.io/issues/9474>`_
+
+
+Bugfixes
+~~~~~~~~
+
+- Set the default widget type to ``JSONWidget`` for ``JSONFields`` for Model Resources to fix
+  django-import-export bug where ``django.db.models.JSONFields`` weren't properly handled.
+  `#9307 <https://pulp.plan.io/issues/9307>`_
+- PATCH/PUT/DELETE calls for the ACS are asynchronous and trigger a task.
+  `#9374 <https://pulp.plan.io/issues/9374>`_
+
+
+Removals
+~~~~~~~~
+
+- Removed the deprecated ``reserved_resources_record__resource`` filter for Task. Use
+  ``reserved_resources_record__contains`` instead.
+  `#9157 <https://pulp.plan.io/issues/9157>`_
+- Removed drf-access-policy workaround for condition/condition_expession.
+  `#9163 <https://pulp.plan.io/issues/9163>`_
+- Removed ACS path validation. Plugins should now define ``validate_paths`` on their ACS serializer to
+  validate paths.
+  `#9340 <https://pulp.plan.io/issues/9340>`_
+- Renamed ``TaskGroupResponse`` to ``TaskGroupOperationResponse`` and ``TaskGroupResponseSerializer``
+  to ``TaskGroupOperationResponseSerializer`` in order to avoid conflicts with responses from task
+  groups endpoints.
+  `#9425 <https://pulp.plan.io/issues/9425>`_
+- The `resources` argument of `dispatch()` has been removed. `exclusive_resources` and `shared_resources` should be used instead.
+  `#9477 <https://pulp.plan.io/issues/9477>`_
+- ContentSaver._pre_save() and ContentSaver._post_save() must now be implemented as synchronous functions rather than coroutines.
+  `#9478 <https://pulp.plan.io/issues/9478>`_
+
+
 3.15.2 (2021-09-02)
 ===================
 REST API
