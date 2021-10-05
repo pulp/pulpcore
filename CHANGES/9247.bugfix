@@ -1,1 +1,0 @@
-Changed the pulpcore-worker to mark abandoned tasks as "failed" instead of "canceled".

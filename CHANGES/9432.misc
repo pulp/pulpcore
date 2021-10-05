@@ -1,1 +1,0 @@
-Fix a coroutine that wasn't awaited.

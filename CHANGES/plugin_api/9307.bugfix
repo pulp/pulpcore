@@ -1,2 +1,0 @@
-Set the default widget type to ``JSONWidget`` for ``JSONFields`` for Model Resources to fix
-django-import-export bug where ``django.db.models.JSONFields`` weren't properly handled.

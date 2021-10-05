@@ -1,2 +1,0 @@
-Fixed a bug where ``pulpcore-content`` decompressed data while incorrectly advertising to clients
-it was still compressed via the ``Content-Encoding: gzip`` header.
