@@ -409,24 +409,37 @@ Misc
 - `#8606 <https://pulp.plan.io/issues/8606>`_, `#9160 <https://pulp.plan.io/issues/9160>`_
 
 
+
+3.14.8 (2021-10-06)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Improved messaging around timeout requests. (Backported from https://pulp.plan.io/issues/9301).
+  `#9491 <https://pulp.plan.io/issues/9491>`_
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.14.7 (2021-09-29)
 ===================
 REST API
 --------
 
-Features
+Bugfixes
 ~~~~~~~~
 
 - Added a periodical cleanup to the pulpcore-worker class to keep the `Worker` table clean.
   (backported from #8931)
   `#9462 <https://pulp.plan.io/issues/9462>`_
-
-
-Bugfixes
-~~~~~~~~
-
 - Ordered several ContentStages paths to fix deadlocks in high-concurrency scenarios.
-
   (backported from #8750)
   `#9379 <https://pulp.plan.io/issues/9379>`_
 - Fixed an issue where on_demand content might not be downloaded properly if the remote URL was changed (even if re-synced).
