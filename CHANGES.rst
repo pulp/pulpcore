@@ -17,6 +17,24 @@ Changelog
 
 .. towncrier release notes start
 
+3.14.8 (2021-10-06)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Improved messaging around timeout requests. (Backported from https://pulp.plan.io/issues/9301).
+  `#9491 <https://pulp.plan.io/issues/9491>`_
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.14.7 (2021-09-29)
 ===================
 REST API
