@@ -155,16 +155,27 @@ class GroupViewSet(
                 "condition": "has_model_or_obj_perms:auth.delete_group",
             },
         ],
+        # TODO: This never worked, because we don't have the AutoAddObjPermsMixin mounted on the
+        # group model. Maybe a proxy model can do the job.
         "creation_hooks": [
             {
-                "function": "add_for_object_creator",
-                "parameters": None,
-                "permissions": [
-                    "auth.view_group",
-                    "auth.change_group",
-                    "auth.delete_group",
-                ],
+                "function": "add_roles_for_object_creator",
+                "parameters": {"roles": "core.group_owner"},
             },
+        ],
+    }
+
+    LOCKED_ROLES = {
+        "core.group_creator": [
+            "auth.add_group",
+        ],
+        "core.group_owner": [
+            "auth.view_group",
+            "auth.change_group",
+            "auth.delete_group",
+        ],
+        "core.group_viewer": [
+            "auth.view_group",
         ],
     }
 
