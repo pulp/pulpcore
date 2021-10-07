@@ -94,4 +94,12 @@ from .upload import (  # noqa
     UploadSerializer,
     UploadDetailSerializer,
 )
-from .user import GroupRoleSerializer, GroupSerializer, UserSerializer, RoleSerializer  # noqa
+from .user import (  # noqa
+    GroupRoleSerializer,
+    GroupSerializer,
+    GroupUserSerializer,
+    PermissionSerializer,
+    RoleSerializer,
+    UserRoleSerializer,
+    UserSerializer,
+)
