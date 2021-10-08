@@ -16,6 +16,8 @@ from pulpcore.tests.functional.api.using_plugin.constants import (
 from pulpcore.client.pulpcore import (
     ApiClient as CoreApiClient,
     ExportersPulpApi,
+    UsersApi,
+    UsersRolesApi,
 )
 from pulpcore.client.pulp_file import DistributionsFileApi
 from pulpcore.client.pulp_file import ApiClient as FileApiClient
@@ -217,3 +219,44 @@ def del_user(user, cfg=config.get_config()):
         cli_client,
         "\n".join(DELETE_USER_CMD).format(**user),
     )
+
+
+def gen_user_rest(cfg=None, model_roles=None, object_roles=None, **kwargs):
+    """Add a user with a set of roles using the REST API."""
+    if cfg is None:
+        cfg = config.get_config()
+    api_config = cfg.get_bindings_config()
+    admin_core_client = CoreApiClient(api_config)
+    admin_user_api = UsersApi(admin_core_client)
+    admin_user_roles_api = UsersRolesApi(admin_core_client)
+
+    user_body = {
+        "username": utils.uuid4(),
+        "password": utils.uuid4(),
+    }
+    user_body.update(kwargs)
+
+    user = admin_user_api.create(user_body)
+
+    if model_roles:
+        for role in model_roles:
+            user_role = {"role": role, "content_object": None}
+            admin_user_roles_api.create(user.pulp_href, user_role)
+    if object_roles:
+        for role, obj in object_roles:
+            user_role = {"role": role, "content_object": obj}
+            admin_user_roles_api.create(user.pulp_href, user_role)
+
+    user_body.update(user.to_dict())
+    return user_body
+
+
+def del_user_rest(user_href, cfg=None):
+    """Delete a user using the REST API."""
+    if cfg is None:
+        cfg = config.get_config()
+    api_config = cfg.get_bindings_config()
+    admin_core_client = CoreApiClient(api_config)
+    admin_user_api = UsersApi(admin_core_client)
+
+    admin_user_api.delete(user_href)

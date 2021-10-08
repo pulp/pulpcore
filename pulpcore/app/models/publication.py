@@ -9,7 +9,7 @@ from pulpcore.app.files import PulpTemporaryUploadedFile
 from pulpcore.cache import Cache
 from dynaconf import settings
 from rest_framework.exceptions import APIException
-from pulpcore.app.models import AutoAddObjPermsMixin, AutoDeleteObjPermsMixin
+from pulpcore.app.models import AutoAddObjPermsMixin
 
 
 class PublicationQuerySet(models.QuerySet):
@@ -334,7 +334,7 @@ class ContentGuard(MasterModel):
                 Cache().delete(base_key=base_paths)
 
 
-class RBACContentGuard(ContentGuard, AutoAddObjPermsMixin, AutoDeleteObjPermsMixin):
+class RBACContentGuard(ContentGuard, AutoAddObjPermsMixin):
     """
     A content guard that protects content based on RBAC permissions.
     """
@@ -358,24 +358,12 @@ class RBACContentGuard(ContentGuard, AutoAddObjPermsMixin, AutoDeleteObjPermsMix
         except APIException as e:
             raise PermissionError(e)
 
-    def add_can_download(self, users, groups):
-        """
-        Adds the can_download permission to users & groups upon content guard creation
-        """
-        if users:
-            self.add_for_users("core.download_rbaccontentguard", users)
-        if groups:
-            self.add_for_groups("core.download_rbaccontentguard", groups)
-
-    def remove_can_download(self, users, groups):
-        if users:
-            self.remove_for_users("core.download_rbaccontentguard", users)
-        if groups:
-            self.remove_for_groups("core.download_rbaccontentguard", groups)
-
     class Meta:
         default_related_name = "%(app_label)s_%(model_name)s"
-        permissions = (("download_rbaccontentguard", "Can Download Content"),)
+        permissions = (
+            ("download_rbaccontentguard", "Can Download Content"),
+            ("manage_roles_rbaccontentguard", "Can manage role assignments on RBAC content guard"),
+        )
 
 
 class BaseDistribution(MasterModel):

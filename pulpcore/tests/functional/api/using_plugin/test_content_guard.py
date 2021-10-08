@@ -7,7 +7,11 @@ from pulp_smash import config, utils
 from pulp_smash.pulp3.bindings import monitor_task
 from pulp_smash.pulp3.utils import gen_distribution
 from pulpcore.tests.functional.api.using_plugin.constants import PULP_CONTENT_BASE_URL
-from pulpcore.tests.functional.api.using_plugin.utils import gen_file_client, gen_user, del_user
+from pulpcore.tests.functional.api.using_plugin.utils import (
+    gen_file_client,
+    gen_user_rest,
+    del_user_rest,
+)
 from pulpcore.client.pulpcore import (
     ApiClient as CoreApiClient,
     GroupsApi,
@@ -27,10 +31,14 @@ from pulpcore.tests.functional.api.using_plugin.utils import (  # noqa:F401
 class RBACContentGuardTestCase(unittest.TestCase):
     """Test RBAC enabled content guard"""
 
+    CREATOR_ROLE = "core.rbaccontentguard_creator"
+    DOWNLOAD_ROLE = "core.rbaccontentguard_downloader"
+
     @classmethod
     def setUpClass(cls):
         """Set up test variables"""
         client = gen_file_client()  # This is admin client, following apis are for admin user
+        api_config = config.get_config().get_bindings_config()
         core_client = CoreApiClient(config.get_config().get_bindings_config())
         cls.groups_api = GroupsApi(core_client)
         cls.group_users_api = GroupsUsersApi(core_client)
@@ -43,11 +51,13 @@ class RBACContentGuardTestCase(unittest.TestCase):
             "username": client.configuration.username,
             "password": client.configuration.password,
         }
-        user = gen_user(model_permissions=["core.add_rbaccontentguard"])
-        user["rbac_guard_api"] = ContentguardsRbacApi(user["core_api_client"])
+        user = gen_user_rest(model_roles=["core.rbaccontentguard_creator"])
+        api_config.username = user["username"]
+        api_config.password = user["password"]
+        user["rbac_guard_api"] = ContentguardsRbacApi(CoreApiClient(api_config))
         cls.creator_user = user
-        cls.user_a = gen_user()
-        cls.user_b = gen_user()
+        cls.user_a = gen_user_rest()
+        cls.user_b = gen_user_rest()
         cls.all_users = [cls.creator_user, cls.user_a, cls.user_a, cls.admin, None]
 
         cls.group = cls.groups_api.create({"name": utils.uuid4()})
@@ -62,9 +72,9 @@ class RBACContentGuardTestCase(unittest.TestCase):
         cls.distro_api.delete(cls.distro.pulp_href)
         cls.rbac_guard_api.delete(cls.distro.content_guard)
         cls.groups_api.delete(cls.group.pulp_href)
-        del_user(cls.creator_user)
-        del_user(cls.user_a)
-        del_user(cls.user_b)
+        del_user_rest(cls.creator_user["pulp_href"])
+        del_user_rest(cls.user_a["pulp_href"])
+        del_user_rest(cls.user_b["pulp_href"])
 
     def test_01_all_users_access(self):
         """Sanity check that all users can access distribution with no content guard"""
@@ -84,26 +94,32 @@ class RBACContentGuardTestCase(unittest.TestCase):
 
     def test_04_add_users(self):
         """Use the /add/ endpoint to give the users permission to access distribution"""
-        body = {"usernames": (self.user_a["username"], self.user_b["username"])}
-        self.creator_user["rbac_guard_api"].assign_permission(self.distro.content_guard, body)
+        body = {
+            "users": (self.user_a["username"], self.user_b["username"]),
+            "role": self.DOWNLOAD_ROLE,
+        }
+        self.creator_user["rbac_guard_api"].add_role(self.distro.content_guard, body)
         self.assert_access([self.creator_user, self.user_b, self.user_a, self.admin])
 
     def test_05_remove_users(self):
         """Use the /remove/ endpoint to remove users permission to access distribution"""
-        body = {"usernames": (self.user_a["username"], self.user_b["username"])}
-        self.creator_user["rbac_guard_api"].remove_permission(self.distro.content_guard, body)
+        body = {
+            "users": (self.user_a["username"], self.user_b["username"]),
+            "role": self.DOWNLOAD_ROLE,
+        }
+        self.creator_user["rbac_guard_api"].remove_role(self.distro.content_guard, body)
         self.assert_access([self.creator_user, self.admin])
 
     def test_06_add_group(self):
         """Use the /add/ endpoint to add group"""
-        body = {"groupnames": [self.group.name]}
-        self.creator_user["rbac_guard_api"].assign_permission(self.distro.content_guard, body)
+        body = {"groups": [self.group.name], "role": self.DOWNLOAD_ROLE}
+        self.creator_user["rbac_guard_api"].add_role(self.distro.content_guard, body)
         self.assert_access([self.creator_user, self.user_b, self.user_a, self.admin])
 
     def test_07_remove_group(self):
         """Use the /remove/ endpoint to remove group"""
-        body = {"groupnames": [self.group.name]}
-        self.creator_user["rbac_guard_api"].remove_permission(self.distro.content_guard, body)
+        body = {"groups": [self.group.name], "role": self.DOWNLOAD_ROLE}
+        self.creator_user["rbac_guard_api"].remove_role(self.distro.content_guard, body)
         self.assert_access([self.creator_user, self.admin])
 
     def assert_access(self, auth_users):
