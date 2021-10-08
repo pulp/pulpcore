@@ -1,0 +1,1 @@
+Removed tech previewed ``assign_permission`` and ``remove_permission`` endpoints from RBAC content guard viewset.

@@ -552,7 +552,10 @@ class RolesMixin:
         result = {"roles": list(roles.values())}
         return Response(result)
 
-    @extend_schema(description="Add a role for this object to users/groups.")
+    @extend_schema(
+        description="Add a role for this object to users/groups.",
+        responses={201: NestedRoleSerializer},
+    )
     @action(detail=True, methods=["post"], serializer_class=NestedRoleSerializer)
     def add_role(self, request, pk):
         obj = self.get_object()
@@ -583,9 +586,12 @@ class RolesMixin:
                         for group in serializer.validated_data["groups"]
                     ]
                 )
-        return Response(serializer.data)
+        return Response(serializer.data, status=201)
 
-    @extend_schema(description="Remove a role for this object from users/groups.")
+    @extend_schema(
+        description="Remove a role for this object from users/groups.",
+        responses={201: NestedRoleSerializer},
+    )
     @action(detail=True, methods=["post"], serializer_class=NestedRoleSerializer)
     def remove_role(self, request, pk):
         obj = self.get_object()
@@ -596,7 +602,7 @@ class RolesMixin:
         with transaction.atomic():
             UserRole.objects.filter(pk__in=serializer.user_role_pks).delete()
             GroupRole.objects.filter(pk__in=serializer.group_role_pks).delete()
-        return Response(serializer.data)
+        return Response(serializer.data, status=201)
 
     @extend_schema(
         description="List permissions available to the current user on this object.",
