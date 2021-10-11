@@ -1013,18 +1013,23 @@ class RepositoryVersionContentDetails(models.Model):
     @property
     def content_href(self):
         """
-        Generate URLs for the content types present in the RepositoryVersion.
+        Generate URLs for the content types added, removed, or present in the RepositoryVersion.
 
-        For each content type present in the RepositoryVersion, create the URL of the viewset of
-        that variety of content along with a query parameter which filters it by presence in this
-        RepositoryVersion.
+        For each content type present in or removed from this RepositoryVersion, create the URL of
+        the viewset of that variety of content along with a query parameter which filters it by
+        presence in this RepositoryVersion summary.
 
         Args:
             obj (pulpcore.app.models.RepositoryVersion): The RepositoryVersion being serialized.
         Returns:
             dict: {<pulp_type>: <url>}
         """
-        ctype_model = Content.objects.filter(pulp_type=self.content_type).first().cast().__class__
+        repository = self.repository_version.repository.cast()
+        repository_content = RepositoryContent.objects.filter(repository=repository)
+        ctype_query = Content.objects.filter(
+            pulp_type=self.content_type, pk__in=repository_content.values_list("content", flat=True)
+        )
+        ctype_model = ctype_query.first().cast().__class__
         ctype_view = get_view_name_for_model(ctype_model, "list")
         try:
             ctype_url = reverse(ctype_view)
@@ -1032,7 +1037,7 @@ class RepositoryVersionContentDetails(models.Model):
             # We've hit a content type for which there is no viewset.
             # There's nothing we can do here, except to skip it.
             return
-        repository = self.repository_version.repository.cast()
+
         repository_view = get_view_name_for_model(repository.__class__, "list")
 
         repository_url = reverse(repository_view)
