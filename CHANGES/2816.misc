@@ -1,0 +1,1 @@
+Fixed an issue which led to a database connection leak.
