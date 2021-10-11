@@ -3,13 +3,14 @@ import logging
 import mimetypes
 import os
 import re
-from concurrent.futures import ThreadPoolExecutor
 from gettext import gettext as _
 
 from aiohttp.client_exceptions import ClientResponseError
 from aiohttp.web import FileResponse, StreamResponse, HTTPOk
 from aiohttp.web_exceptions import HTTPForbidden, HTTPFound, HTTPNotFound
 from yarl import URL
+
+from asgiref.sync import sync_to_async
 
 import django
 
@@ -41,14 +42,6 @@ from jinja2 import Template  # noqa: E402: module level not at top of file
 from pulpcore.cache import ContentCache  # noqa: E402
 
 log = logging.getLogger(__name__)
-
-
-loop = asyncio.get_event_loop()
-# Django ORM is blocking, as are most of our file operations. This means that the
-# standard single-threaded async executor cannot help us. We need to create a separate,
-# thread-based executor to pass our heavy blocking IO work to.
-io_pool_exc = ThreadPoolExecutor(max_workers=2)
-loop.set_default_executor(io_pool_exc)
 
 
 class PathNotResolved(HTTPNotFound):
@@ -139,7 +132,7 @@ class Handler:
                 )
             return base_paths
 
-        base_paths = await loop.run_in_executor(None, get_base_paths_blocking)
+        base_paths = await sync_to_async(get_base_paths_blocking)()
         directory_list = ["{}/".format(path) for path in base_paths]
         return HTTPOk(headers={"Content-Type": "text/html"}, body=self.render_html(directory_list))
 
@@ -165,7 +158,7 @@ class Handler:
         if index_p1:
             return base_paths[index_p1 - 1]
         else:
-            distro = await loop.run_in_executor(None, cls._match_distribution, path)
+            distro = await sync_to_async(cls._match_distribution)(path)
             return distro.base_path
 
     @classmethod
@@ -182,9 +175,9 @@ class Handler:
         present = await cached.get(guard_key, base_key=base_key)
         if present == b"True" or present is None:
             path = request.match_info["path"]
-            distro = await loop.run_in_executor(None, cls._match_distribution, path)
+            distro = await sync_to_async(cls._match_distribution)(path)
             try:
-                guard = await loop.run_in_executor(None, cls._permit, request, distro)
+                guard = await sync_to_async(cls._permit)(request, distro)
             except HTTPForbidden:
                 guard = True
                 raise
@@ -404,7 +397,7 @@ class Handler:
             else:
                 raise PathNotResolved(path)
 
-        return await loop.run_in_executor(None, list_directory_blocking)
+        return await sync_to_async(list_directory_blocking)()
 
     async def _match_and_stream(self, path, request):
         """
@@ -440,21 +433,15 @@ class Handler:
                 streamed back to the client.
         """
 
-        def match_distribution_blocking():
-            return self._match_distribution(path)
+        distro = await sync_to_async(self._match_distribution)(path)
 
-        distro = await loop.run_in_executor(None, match_distribution_blocking)
-
-        def check_permit_blocking():
-            self._permit(request, distro)
-
-        await loop.run_in_executor(None, check_permit_blocking)
+        await sync_to_async(self._permit)(request, distro)
 
         rel_path = path.lstrip("/")
         rel_path = rel_path[len(distro.base_path) :]
         rel_path = rel_path.lstrip("/")
 
-        content_handler_result = distro.content_handler(rel_path)
+        content_handler_result = await sync_to_async(distro.content_handler)(rel_path)
         if content_handler_result is not None:
             return content_handler_result
 
@@ -487,23 +474,24 @@ class Handler:
                 if not repo_version:
                     repo_version = repository.latest_version()
 
-            await loop.run_in_executor(None, get_latest_publication_or_version_blocking)
+            await sync_to_async(get_latest_publication_or_version_blocking)()
 
         if publication:
             if rel_path == "" or rel_path[-1] == "/":
                 try:
                     index_path = "{}index.html".format(rel_path)
 
-                    def get_published_artifact_blocking():
-                        publication.published_artifact.get(relative_path=index_path)
-
-                    await loop.run_in_executor(None, get_published_artifact_blocking)
+                    await sync_to_async(publication.published_artifact.get)(
+                        relative_path=index_path
+                    )
 
                     rel_path = index_path
                     headers = self.response_headers(rel_path)
                 except ObjectDoesNotExist:
                     dir_list = await self.list_directory(None, publication, rel_path)
-                    dir_list.update(distro.content_handler_list_directory(rel_path))
+                    dir_list.update(
+                        await sync_to_async(distro.content_handler_list_directory)(rel_path)
+                    )
                     return HTTPOk(
                         headers={"Content-Type": "text/html"}, body=self.render_html(dir_list)
                     )
@@ -521,7 +509,7 @@ class Handler:
                         .content_artifact
                     )
 
-                ca = await loop.run_in_executor(None, get_contentartifact_blocking)
+                ca = await sync_to_async(get_contentartifact_blocking)()
             except ObjectDoesNotExist:
                 pass
             else:
@@ -543,7 +531,7 @@ class Handler:
                         )
                         return ca
 
-                    ca = await loop.run_in_executor(None, get_contentartifact_blocking)
+                    ca = await sync_to_async(get_contentartifact_blocking)()
                 except MultipleObjectsReturned:
                     log.error(
                         _("Multiple (pass-through) matches for {b}/{p}"),
@@ -569,14 +557,14 @@ class Handler:
                         content__in=repo_version.content, relative_path=index_path
                     ).exists()
 
-                contentartifact_exists = await loop.run_in_executor(
-                    None, contentartifact_exists_blocking
-                )
+                contentartifact_exists = await sync_to_async(contentartifact_exists_blocking)()
                 if contentartifact_exists:
                     rel_path = index_path
                 else:
                     dir_list = await self.list_directory(repo_version, None, rel_path)
-                    dir_list.update(distro.content_handler_list_directory(rel_path))
+                    dir_list.update(
+                        await sync_to_async(distro.content_handler_list_directory)(rel_path)
+                    )
                     return HTTPOk(
                         headers={"Content-Type": "text/html"}, body=self.render_html(dir_list)
                     )
@@ -589,7 +577,7 @@ class Handler:
                     )
                     return ca
 
-                ca = await loop.run_in_executor(None, get_contentartifact_blocking)
+                ca = await sync_to_async(get_contentartifact_blocking)()
             except MultipleObjectsReturned:
                 log.error(
                     _("Multiple (pass-through) matches for {b}/{p}"),
@@ -611,7 +599,7 @@ class Handler:
             def cast_remote_blocking():
                 return distro.remote.cast()
 
-            remote = await loop.run_in_executor(None, cast_remote_blocking)
+            remote = await sync_to_async(cast_remote_blocking)()
 
             try:
                 url = remote.get_remote_artifact_url(rel_path)
@@ -624,7 +612,7 @@ class Handler:
                     ).get(remote=remote, url=url)
                     return ra
 
-                ra = await loop.run_in_executor(None, get_remote_artifact_blocking)
+                ra = await sync_to_async(get_remote_artifact_blocking)()
                 ca = ra.content_artifact
                 if ca.artifact:
                     return await self._serve_content_artifact(ca, headers)
@@ -667,7 +655,7 @@ class Handler:
         def get_remote_artifacts_blocking():
             return list(content_artifact.remoteartifact_set.order_by_acs())
 
-        remote_artifacts = await loop.run_in_executor(None, get_remote_artifacts_blocking)
+        remote_artifacts = await sync_to_async(get_remote_artifacts_blocking)()
         for remote_artifact in remote_artifacts:
             try:
                 response = await self._stream_remote_artifact(request, response, remote_artifact)
@@ -821,10 +809,7 @@ class Handler:
 
         """
 
-        def cast_remote_blocking():
-            return remote_artifact.remote.cast()
-
-        remote = await loop.run_in_executor(None, cast_remote_blocking)
+        remote = await sync_to_async(remote_artifact.remote.cast)()
 
         range_start, range_stop = request.http_range.start, request.http_range.stop
         if range_start or range_stop:
@@ -887,11 +872,9 @@ class Handler:
         download_result = await downloader.run()
 
         if remote.policy != Remote.STREAMED:
-
-            def save_artifact_blocking():
-                self._save_artifact(download_result, remote_artifact)
-
-            await asyncio.shield(loop.run_in_executor(None, save_artifact_blocking))
+            await asyncio.shield(
+                sync_to_async(self._save_artifact)(download_result, remote_artifact)
+            )
         await response.write_eof()
 
         if response.status == 404:

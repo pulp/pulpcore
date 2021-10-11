@@ -1,14 +1,13 @@
-import asyncio
 import gettext
 import logging
 
+from asgiref.sync import sync_to_async
 from aiohttp.web import middleware
 from django.http.request import HttpRequest
 from rest_framework.views import APIView
 from rest_framework.exceptions import APIException
 
 log = logging.getLogger(__name__)
-loop = asyncio.get_event_loop()
 _ = gettext.gettext
 
 
@@ -27,7 +26,7 @@ async def authenticate(request, handler):
 
         return drf_request
 
-    auth_request = await loop.run_in_executor(None, _authenticate_blocking)
+    auth_request = await sync_to_async(_authenticate_blocking)()
     request["user"] = auth_request.user
     request["auth"] = auth_request.auth
     request["drf_request"] = auth_request
