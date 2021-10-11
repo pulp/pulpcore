@@ -6,6 +6,7 @@ import logging
 import os
 import socket
 
+from asgiref.sync import sync_to_async
 from aiohttp import web
 
 import django
@@ -18,7 +19,7 @@ from django.conf import settings  # noqa: E402: module level not at top of file
 from pulpcore.app.apps import pulp_plugin_configs  # noqa: E402: module level not at top of file
 from pulpcore.app.models import ContentAppStatus  # noqa: E402: module level not at top of file
 
-from .handler import Handler, loop  # noqa: E402: module level not at top of file
+from .handler import Handler  # noqa: E402: module level not at top of file
 from .authentication import authenticate  # noqa: E402: module level not at top of file
 
 
@@ -35,17 +36,13 @@ async def _heartbeat():
     i8ln_msg = _("Content App '{name}' heartbeat written, sleeping for '{interarrival}' seconds")
     msg = i8ln_msg.format(name=name, interarrival=heartbeat_interval)
 
-    def get_status_blocking():
-        return ContentAppStatus.objects.get_or_create(name=name)
-
     while True:
-        content_app_status, created = await loop.run_in_executor(None, get_status_blocking)
-
-        def save_heartbeat_blocking():
-            content_app_status.save_heartbeat()
+        content_app_status, created = await sync_to_async(ContentAppStatus.objects.get_or_create)(
+            name=name
+        )
 
         if not created:
-            await loop.run_in_executor(None, save_heartbeat_blocking)
+            await sync_to_async(content_app_status.save_heartbeat)()
 
         log.debug(msg)
         await asyncio.sleep(heartbeat_interval)
