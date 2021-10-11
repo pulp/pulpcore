@@ -80,6 +80,19 @@ class StableOrderingFilter(OrderingFilter):
 
         return list(ordering) + ["-" + field.name]
 
+    def get_default_valid_fields(self, queryset, view, context={}):
+        """
+        Ensure that default valid fields don't include fields not on the queryset model.
+
+        When `ordering_fields` is not specified this method is called to find the fields to order
+        by. It uses the default serializer class's fields to find the `ordering_fields` which could
+        include fields from related objects not present in the queryset.
+        """
+        # Returns a list of tuples (field_name, field_label)
+        valid_fields = super().get_default_valid_fields(queryset, view, context)
+        model_fields = {field.name for field in queryset.model._meta.get_fields()}
+        return [field for field in valid_fields if field[0] in model_fields]
+
 
 class NamedModelViewSet(viewsets.GenericViewSet):
     """
