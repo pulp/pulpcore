@@ -212,10 +212,17 @@ class Repository(MasterModel):
                 version.delete()
 
     @hook(BEFORE_DELETE)
-    def invalidate_cache(self):
+    def invalidate_cache(self, everything=False):
         """Invalidates the cache if repository is present."""
         if settings.CACHE_ENABLED:
             distributions = self.distributions.all()
+            if everything:
+                from .publication import Distribution, Publication
+
+                versions = self.versions.all()
+                pubs = Publication.objects.filter(repository_version__in=versions, complete=True)
+                distributions |= Distribution.objects.filter(publication__in=pubs)
+                distributions |= Distribution.objects.filter(repository_version__in=versions)
             if distributions.exists():
                 base_paths = distributions.values_list("base_path", flat=True)
                 if base_paths:

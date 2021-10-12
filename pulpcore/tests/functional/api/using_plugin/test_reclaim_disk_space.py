@@ -97,11 +97,56 @@ class ReclaimSpaceTestCase(PulpTestCase):
         Test whether on_demand repository content can be reclaimed
         and then re-populated back after client request.
         """
+        repo, distribution = self._repo_sync_distribute(policy="on_demand")
+
+        artifacts_before_download = self.artifacts_api.list().count
+        content = get_content(repo.to_dict())[FILE_CONTENT_NAME][0]
+        download_content_unit(self.cfg, distribution.to_dict(), content["relative_path"])
+
+        artifacts = self.artifacts_api.list().count
+        self.assertGreater(artifacts, artifacts_before_download)
+
+        # reclaim disk space
+        reclaim_response = self.reclaim_api.reclaim({"repo_hrefs": [repo.pulp_href]})
+        monitor_task(reclaim_response.task)
+
+        artifacts_after_reclaim = self.artifacts_api.list().count
+        content = get_content(repo.to_dict())[FILE_CONTENT_NAME]
+        download_content_unit(self.cfg, distribution.to_dict(), content[0]["relative_path"])
+
+        artifacts = self.artifacts_api.list().count
+        self.assertGreater(artifacts, artifacts_after_reclaim)
+
+    def test_immediate_reclaim_becomes_on_demand(self):
+        """Tests if immediate content becomes like on_demand content after reclaim."""
+        repo, distribution = self._repo_sync_distribute()
+
+        artifacts_before_reclaim = self.artifacts_api.list().count
+        self.assertGreater(artifacts_before_reclaim, 0)
+        content = get_content(repo.to_dict())[FILE_CONTENT_NAME][0]
+        # Populate cache
+        download_content_unit(self.cfg, distribution.to_dict(), content["relative_path"])
+
+        reclaim_response = self.reclaim_api.reclaim({"repo_hrefs": [repo.pulp_href]})
+        monitor_task(reclaim_response.task)
+
+        artifacts_after_reclaim = self.artifacts_api.list().count
+        self.assertLess(artifacts_after_reclaim, artifacts_before_reclaim)
+
+        download_content_unit(self.cfg, distribution.to_dict(), content["relative_path"])
+        artifacts_after_download = self.artifacts_api.list().count
+        # Downloading a reclaimed content will increase the artifact count by 1
+        self.assertEqual(artifacts_after_download, artifacts_after_reclaim + 1)
+        # But only 1 extra artifact will be downloaded, so still less than after immediate sync
+        self.assertLess(artifacts_after_download, artifacts_before_reclaim)
+
+    def _repo_sync_distribute(self, policy="immediate"):
+        """Helper to create & populate a repository and distribute it."""
         repo = self.repo_api.create(gen_repo())
         self.addCleanup(self.repo_api.delete, repo.pulp_href)
 
-        # sync the repository with on_demand policy
-        body = gen_file_remote(**{"policy": "on_demand"})
+        # sync the repository with passed in policy
+        body = gen_file_remote(**{"policy": policy})
         remote = self.remote_api.create(body)
         self.addCleanup(self.remote_api.delete, remote.pulp_href)
 
@@ -126,20 +171,4 @@ class ReclaimSpaceTestCase(PulpTestCase):
         distribution = self.distributions_api.read(created_resources[0])
         self.addCleanup(self.distributions_api.delete, distribution.pulp_href)
 
-        artifacts_before_download = self.artifacts_api.list().count
-        content = get_content(repo.to_dict())[FILE_CONTENT_NAME][0]
-        download_content_unit(self.cfg, distribution.to_dict(), content["relative_path"])
-
-        artifacts = self.artifacts_api.list().count
-        self.assertGreater(artifacts, artifacts_before_download)
-
-        # reclaim disk space
-        reclaim_response = self.reclaim_api.reclaim({"repo_hrefs": [repo.pulp_href]})
-        monitor_task(reclaim_response.task)
-
-        artifacts_after_reclaim = self.artifacts_api.list().count
-        content = get_content(repo.to_dict())[FILE_CONTENT_NAME]
-        download_content_unit(self.cfg, distribution.to_dict(), content[0]["relative_path"])
-
-        artifacts = self.artifacts_api.list().count
-        self.assertGreater(artifacts, artifacts_after_reclaim)
+        return repo, distribution

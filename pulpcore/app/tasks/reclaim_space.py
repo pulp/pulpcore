@@ -23,6 +23,10 @@ def reclaim_space(repo_pks, keeplist_rv_pks=None, force=False):
         force (bool): If True, uploaded content will be taken into account.
 
     """
+    reclaimed_repos = Repository.objects.filter(pk__in=repo_pks)
+    for repo in reclaimed_repos:
+        repo.invalidate_cache(everything=True)
+
     rest_of_repos = Repository.objects.exclude(pk__in=repo_pks)
     c_keep_qs = Content.objects.filter(repositories__in=rest_of_repos)
     c_reclaim_qs = Content.objects.filter(repositories__in=repo_pks)
