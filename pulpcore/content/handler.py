@@ -786,7 +786,11 @@ class Handler:
             )
             raise HTTPFound(url)
         elif settings.DEFAULT_FILE_STORAGE == "storages.backends.azure_storage.AzureStorage":
-            url = URL(artifact_file.storage.url(artifact_name), encoded=True)
+            content_disposition = f"attachment;filename={artifact_name}"
+            parameters = {"content_disposition": content_disposition}
+            if headers.get("Content-Type"):
+                parameters["content_type"] = headers.get("Content-Type")
+            url = URL(artifact_file.storage.url(artifact_name, parameters=parameters), encoded=True)
             raise HTTPFound(url)
         else:
             raise NotImplementedError()
