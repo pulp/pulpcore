@@ -21,7 +21,7 @@ setup(
     install_requires=requirements,
     extras_require={
         "s3": ["django-storages[boto3]"],
-        "azure": ["django-storages[azure]"],
+        "azure": ["django-storages[azure]>=1.12.2"],
         "prometheus": ["django-prometheus"],
     },
     include_package_data=True,
