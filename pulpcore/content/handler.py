@@ -653,7 +653,7 @@ class Handler:
         """
 
         def get_remote_artifacts_blocking():
-            return list(content_artifact.remoteartifact_set.order_by_acs())
+            return list(content_artifact.remoteartifact_set.select_related("remote").order_by_acs())
 
         remote_artifacts = await sync_to_async(get_remote_artifacts_blocking)()
         for remote_artifact in remote_artifacts:
