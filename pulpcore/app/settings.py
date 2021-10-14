@@ -253,8 +253,6 @@ ALLOWED_IMPORT_PATHS = []
 
 ALLOWED_EXPORT_PATHS = []
 
-ALLOW_SHARED_TASK_RESOURCES = True
-
 PROFILE_STAGES_API = False
 
 # https://docs.pulpproject.org/pulpcore/configuration/settings.html#pulp-cache

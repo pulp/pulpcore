@@ -1,0 +1,1 @@
+Removed the `ALLOWED_SHARED_TASK_RESOURCES` setting (it is now the standard behavior).

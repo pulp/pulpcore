@@ -200,35 +200,24 @@ class NewPulpWorker:
                             # without considering this tasks resources
                             # as we just released them
                             continue
-                    if settings.ALLOW_SHARED_TASK_RESOURCES:
-                        # This statement is using lazy evaluation
-                        if (
-                            task.state == TASK_STATES.WAITING
-                            # No exclusive resource taken?
-                            and not any(
-                                resource in taken_exclusive_resources
-                                or resource in taken_shared_resources
-                                for resource in exclusive_resources
-                            )
-                            # No shared resource exclusively taken?
-                            and not any(
-                                resource in taken_exclusive_resources
-                                for resource in shared_resources
-                            )
-                        ):
-                            yield task
-                            # Start from the top of the Task list
-                            break
-                    else:
-                        # Treat all resources exclusively
-                        if task.state == TASK_STATES.WAITING and not any(
+                    # This statement is using lazy evaluation
+                    if (
+                        task.state == TASK_STATES.WAITING
+                        # No exclusive resource taken?
+                        and not any(
                             resource in taken_exclusive_resources
                             or resource in taken_shared_resources
-                            for resource in exclusive_resources + shared_resources
-                        ):
-                            yield task
-                            # Start from the top of the Task list
-                            break
+                            for resource in exclusive_resources
+                        )
+                        # No shared resource exclusively taken?
+                        and not any(
+                            resource in taken_exclusive_resources for resource in shared_resources
+                        )
+                    ):
+                        yield task
+                        # Start from the top of the Task list
+                        break
+
                 # Record the resources of the pending task we didn't get
                 taken_exclusive_resources.update(exclusive_resources)
                 taken_shared_resources.update(shared_resources)
