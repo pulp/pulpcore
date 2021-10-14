@@ -346,18 +346,6 @@ ALLOWED_CONTENT_CHECKSUMS
       missing, run ``pulpcore-manager handle-artifact-checksums`` command.
 
 
-.. _allow_shared_resources:
-
-ALLOW_SHARED_TASK_RESOURCES
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-    This option allows tasks to have a shared (read only) simultaneous access to some resources. It
-    defaults to ``True``, but can be turned off to return to the old behavior in the event of bugs.
-
-    .. note:: As a tech preview, this option is meant to be temporary. It will default to ``True``
-              in 3.16 and be removed in 3.17.
-
-
 .. _admin-site-url:
 
 ADMIN_SITE_URL
