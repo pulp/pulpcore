@@ -264,6 +264,9 @@ class DistributionViewSet(
     serializer_class = DistributionSerializer
     filterset_class = DistributionFilter
 
-    def async_reserved_resources(self, instance):
+    def async_reserved_resources(self, instance, request):
         """Return resource that locks all Distributions."""
-        return ["/api/v3/distributions/"]
+        if "base_path" in request.data:
+            return ["/api/v3/distributions/"]
+        else:
+            return [instance]
