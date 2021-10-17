@@ -49,7 +49,7 @@ jobs:
 
       - name: Verify that branch name matches current version string on master branch
         run: |
-          X_Y_VERSION=$(grep version setup.py | sed -rn 's/version="(.*)\.0\.dev",/\1/p' | awk '{$1=$1};1')
+          X_Y_VERSION=$(grep version setup.py | sed -rn 's/version="(.*)\.0((a[0-9]+)|(b[0-9]+))?\.dev",/\1/p' | awk '{$1=$1};1')
           if [[ "$X_Y_VERSION" != "${{ github.event.inputs.name }}" ]]
           then
             echo "Branch name doesn't match the current version string $X_Y_VERSION."
