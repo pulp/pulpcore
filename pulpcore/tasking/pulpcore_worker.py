@@ -247,8 +247,6 @@ class NewPulpWorker:
         """Wait for signals on the wakeup channel while heart beating."""
 
         _logger.debug(_("Worker %s entering sleep state."), self.name)
-        # Subscribe to "pulp_worker_wakeup"
-        self.cursor.execute("LISTEN pulp_worker_wakeup")
         while not self.shutdown_requested:
             r, w, x = select.select(
                 [self.sentinel, connection.connection], [], [], self.heartbeat_period
@@ -266,7 +264,6 @@ class NewPulpWorker:
                     break
             if self.sentinel in r:
                 os.read(self.sentinel, 256)
-        self.cursor.execute("UNLISTEN pulp_worker_wakeup")
 
     def supervise_task(self, task):
         """Call and supervise the task process while heart beating.
@@ -274,7 +271,6 @@ class NewPulpWorker:
         This function must only be called while holding the lock for that task."""
 
         self.task_grace_timeout = TASK_GRACE_INTERVAL
-        self.cursor.execute("LISTEN pulp_worker_cancel")
         task.worker = self.worker
         task.save(update_fields=["worker"])
         cancel_state = None
@@ -324,17 +320,21 @@ class NewPulpWorker:
                 self.cancel_abandoned_task(task, cancel_state, cancel_reason)
         if task.reserved_resources_record:
             self.notify_workers()
-        self.cursor.execute("UNLISTEN pulp_worker_cancel")
 
     def run_forever(self):
         with WorkerDirectory(self.name):
             signal.signal(signal.SIGINT, self._signal_handler)
             signal.signal(signal.SIGTERM, self._signal_handler)
+            # Subscribe to pgsql channels
+            self.cursor.execute("LISTEN pulp_worker_wakeup")
+            self.cursor.execute("LISTEN pulp_worker_cancel")
             while not self.shutdown_requested:
                 for task in self.iter_tasks():
                     self.supervise_task(task)
                 if not self.shutdown_requested:
                     self.sleep()
+            self.cursor.execute("UNLISTEN pulp_worker_cancel")
+            self.cursor.execute("UNLISTEN pulp_worker_wakeup")
             self.shutdown()
 
 
