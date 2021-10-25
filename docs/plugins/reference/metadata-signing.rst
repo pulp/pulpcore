@@ -35,23 +35,19 @@ requires inheriting from ``SiginingService`` and then implementing ``validate()`
     The existing ``AsciiArmoredDetachedSigningService`` requires a signing script that creates a detached
     ascii-armored signature file, and prints valid JSON in the following format to stdout:
 
-        {"file": "filename", "signature": "filename.asc", "key": "public.key"}
+        {"file": "filename", "signature": "filename.asc"}
 
     Here "filename" is a path to the original file that was signed (passed to the signing script by the
-    ``sign()`` method), "filename.asc" is a path to the signature file created by the script, and "public.key"
-    is a path to the signature file containing the public key used by the script.
+    ``sign()`` method), and "filename.asc" is a path to the signature file created by the script.
 
-    This json is converted to a python dict and returned by the ``sign()`` method. If an error occurs, a
+    The script may read the fingerprint of the key it should use for signing, from the
+    ``PULP_SIGNING_KEY_FINGERPRINT`` environment variable.
+
+    The json is converted to a python dict and returned by the ``sign()`` method. If an error occurs, a
     runtime error is raised instead. All of this is enforced by the ``validate()`` method at the time of
     instantiation.
 
     For more information see the corresponding :ref:`workflow documentation <configuring-signing>`.
-
-.. deprecated:: 3.10
-
-    The path to the public key is no longer required to be present in the output of a signing
-    script. It is recommended to pass the value of the public key during the object creation
-    process instead.
 
 The following procedure may be taken into account for the plugin writers:
 
