@@ -1,0 +1,2 @@
+Fixed a bug where the `/pulp/content/` page would return a 500 error after the database connection
+was closed due to a network problem or a database restart.
