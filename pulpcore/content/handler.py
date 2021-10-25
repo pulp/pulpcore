@@ -128,9 +128,9 @@ class Handler:
         Returns:
             :class:`aiohttp.web.HTTPOk`: The response back to the client.
         """
-        self._reset_db_connection()
 
         def get_base_paths_blocking():
+            self._reset_db_connection()
             if self.distribution_model is None:
                 base_paths = list(Distribution.objects.values_list("base_path", flat=True))
             else:
