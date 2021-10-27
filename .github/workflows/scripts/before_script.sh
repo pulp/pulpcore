@@ -29,7 +29,7 @@ tail -v -n +1 .ci/ansible/vars/main.yaml
 echo "PULP CONFIG:"
 tail -v -n +1 .ci/ansible/settings/settings.* ~/.config/pulp_smash/settings.json
 
-if [[ "$TEST" == 'pulp' || "$TEST" == 'performance' || "$TEST" == 'upgrade' || "$TEST" == 's3' || "$TEST" == 'azure' || "$TEST" == "plugin-from-pypi" ]]; then
+if [[ "$TEST" == 'pulp' || "$TEST" == 'performance' || "$TEST" == 'upgrade' || "$TEST" == 's3' || "$TEST" == 'azure' || "$TEST" == "plugin-from-pypi" || "$TEST" == "generate-bindings" ]]; then
   # Many functional tests require these
   cmd_prefix dnf install -yq lsof which dnf-plugins-core
 fi
