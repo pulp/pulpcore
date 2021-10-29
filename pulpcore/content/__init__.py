@@ -15,6 +15,10 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "pulpcore.app.settings")
 django.setup()
 
 from django.conf import settings  # noqa: E402: module level not at top of file
+from django.db.utils import (  # noqa: E402: module level not at top of file
+    InterfaceError,
+    OperationalError,
+)
 
 from pulpcore.app.apps import pulp_plugin_configs  # noqa: E402: module level not at top of file
 from pulpcore.app.models import ContentAppStatus  # noqa: E402: module level not at top of file
@@ -37,14 +41,24 @@ async def _heartbeat():
     msg = i8ln_msg.format(name=name, interarrival=heartbeat_interval)
 
     while True:
-        content_app_status, created = await sync_to_async(ContentAppStatus.objects.get_or_create)(
-            name=name
-        )
 
-        if not created:
-            await sync_to_async(content_app_status.save_heartbeat)()
+        try:
+            content_app_status, created = await sync_to_async(
+                ContentAppStatus.objects.get_or_create
+            )(name=name)
 
-        log.debug(msg)
+            if not created:
+                await sync_to_async(content_app_status.save_heartbeat)()
+
+            log.debug(msg)
+        except (InterfaceError, OperationalError):
+            await sync_to_async(Handler._reset_db_connection)()
+            i8ln_msg = _(
+                "Content App '{name}' failed to write a heartbeat to the database, sleeping for "
+                "'{interarrival}' seconds."
+            )
+            msg = i8ln_msg.format(name=name, interarrival=heartbeat_interval)
+            log.info(msg)
         await asyncio.sleep(heartbeat_interval)
 
 
