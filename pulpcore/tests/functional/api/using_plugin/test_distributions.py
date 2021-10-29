@@ -2,6 +2,7 @@
 import csv
 import hashlib
 import os
+from time import sleep
 import unittest
 from urllib.parse import urljoin
 
@@ -16,6 +17,7 @@ from pulp_smash.pulp3.utils import (
     get_versions,
     modify_repo,
     sync,
+    utils as pulp3_utils,
 )
 from requests.exceptions import HTTPError
 
@@ -397,6 +399,35 @@ class ContentServePublicationDistributionTestCase(unittest.TestCase):
                 headers={"Range": "bytes=10485860-10485870"},
             )
         self.assertEqual(cm.exception.response.status_code, 416)
+
+    def test_content_served_after_db_restart(self):
+        """
+        Assert that content can be downloaded after the database has been restarted.
+        This test also check that the HTML page with a list of distributions is also
+        available after the connection to the database has been closed.
+        """
+        cfg = config.get_config()
+        pulp_host = cfg.hosts[0]
+        svc_mgr = cli.ServiceManager(cfg, pulp_host)
+        if svc_mgr._svc_mgr == "s6":
+            postgresql_service_name = "postgresql"
+        else:
+            postgresql_service_name = "*postgresql*"
+        postgresql_found = svc_mgr.is_active([postgresql_service_name])
+        self.assertTrue(
+            postgresql_found, "PostgreSQL service not found or is not active. Can't restart it."
+        )
+        svc_mgr.restart([postgresql_service_name])
+        # Wait for postgres to come back and all services to recover
+        sleep(2)
+        self.setup_download_test("immediate")
+        self.do_test_content_served()
+        url_fragments = [
+            cfg.get_content_host_base_url(),
+            "pulp/content",
+        ]
+        content_app_root = "/".join(url_fragments)
+        pulp3_utils.http_get(content_app_root)
 
     def setup_download_test(self, policy, url=None, publish=True):
         # Create a repository
