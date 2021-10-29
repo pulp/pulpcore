@@ -3,9 +3,12 @@ import gettext
 import logging
 
 from aiohttp.web import middleware
+from django.db.utils import InterfaceError, OperationalError
 from django.http.request import HttpRequest
 from rest_framework.views import APIView
 from rest_framework.exceptions import APIException
+
+from .handler import Handler
 
 log = logging.getLogger(__name__)
 loop = asyncio.get_event_loop()
@@ -21,7 +24,11 @@ async def authenticate(request, handler):
     def _authenticate_blocking():
         drf_request = fake_view.initialize_request(django_request)
         try:
-            fake_view.perform_authentication(drf_request)
+            try:
+                fake_view.perform_authentication(drf_request)
+            except (InterfaceError, OperationalError):
+                Handler._reset_db_connection()
+                fake_view.perform_authentication(drf_request)
         except APIException as e:
             log.warning(_('"{} {}" "{}": {}').format(request.method, request.path, request.host, e))
 
