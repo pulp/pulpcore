@@ -33,7 +33,7 @@ AZURE_CONTAINER =  "pulp-test"
 AZURE_LOCATION = "pulp3"
 AZURE_OVERWRITE_FILES = True
 AZURE_URL_EXPIRATION_SECS = 120
-AZURE_CONNECTION_STRING = 'DefaultEndpointsProtocol={{ pulp_scheme }};AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint={{ pulp_scheme }}://pulp-azurite:10000/devstoreaccount1;'
+AZURE_CONNECTION_STRING = 'DefaultEndpointsProtocol={{ pulp_scheme }};AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint={{ pulp_scheme }}://ci-azurite:10000/devstoreaccount1;'
 DEFAULT_FILE_STORAGE = "storages.backends.azure_storage.AzureStorage"
 MEDIA_ROOT = ""
 {% endif %}
