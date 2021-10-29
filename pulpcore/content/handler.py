@@ -127,7 +127,6 @@ class Handler:
         Returns:
             :class:`aiohttp.web.HTTPOk`: The response back to the client.
         """
-        self._reset_db_connection()
 
         def get_base_paths_blocking():
             if self.distribution_model is None:
@@ -206,8 +205,6 @@ class Handler:
             :class:`aiohttp.web.StreamResponse` or :class:`aiohttp.web.FileResponse`: The response
                 back to the client.
         """
-        self._reset_db_connection()
-
         path = request.match_info["path"]
         return await self._match_and_stream(path, request)
 
@@ -246,8 +243,6 @@ class Handler:
         Raises:
             PathNotResolved: when not matched.
         """
-        cls._reset_db_connection()
-
         base_paths = cls._base_paths(path)
         if cls.distribution_model is None:
             try:
