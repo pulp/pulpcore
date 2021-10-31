@@ -68,7 +68,7 @@ pulp_container_tag: https
 
 VARSYAML
 
-if [[ "$TEST" == "pulp" || "$TEST" == "performance" || "$TEST" == "upgrade" || "$TEST" == "azure" || "$TEST" == "s3" || "$TEST" == "plugin-from-pypi" ]]; then
+if [[ "$TEST" == "pulp" || "$TEST" == "performance" || "$TEST" == "upgrade" || "$TEST" == "azure" || "$TEST" == "s3" || "$TEST" == "plugin-from-pypi" || "$TEST" == "generate-bindings" ]]; then
   sed -i -e '/^services:/a \
   - name: pulp-fixtures\
     image: docker.io/pulp/pulp-fixtures:latest\
@@ -93,12 +93,12 @@ fi
 if [ "$TEST" = "azure" ]; then
   mkdir -p azurite
   cd azurite
-  openssl req -newkey rsa:2048 -x509 -nodes -keyout azkey.pem -new -out azcert.pem -sha256 -days 365 -addext "subjectAltName=DNS:pulp-azurite" -subj "/C=CO/ST=ST/L=LO/O=OR/OU=OU/CN=CN"
+  openssl req -newkey rsa:2048 -x509 -nodes -keyout azkey.pem -new -out azcert.pem -sha256 -days 365 -addext "subjectAltName=DNS:ci-azurite" -subj "/C=CO/ST=ST/L=LO/O=OR/OU=OU/CN=CN"
   sudo cp azcert.pem /usr/local/share/ca-certificates/azcert.crt
   sudo dpkg-reconfigure ca-certificates
   cd ..
   sed -i -e '/^services:/a \
-  - name: pulp-azurite\
+  - name: ci-azurite\
     image: mcr.microsoft.com/azure-storage/azurite\
     volumes:\
       - ./azurite:/etc/pulp\
@@ -114,14 +114,14 @@ sudo docker cp pulp:/etc/pulp/certs/pulp_webserver.crt /usr/local/share/ca-certi
 
 # Hack: adding pulp CA to certifi.where()
 CERTIFI=$(python -c 'import certifi; print(certifi.where())')
-cat /usr/local/share/ca-certificates/pulp_webserver.crt | sudo tee -a $CERTIFI
+cat /usr/local/share/ca-certificates/pulp_webserver.crt | sudo tee -a "$CERTIFI" > /dev/null
 if [ "$TEST" = "azure" ]; then
-  cat /usr/local/share/ca-certificates/azcert.crt | sudo tee -a $CERTIFI
+  cat /usr/local/share/ca-certificates/azcert.crt | sudo tee -a "$CERTIFI" > /dev/null
 fi
 
 # Hack: adding pulp CA to default CA file
 CERT=$(python -c 'import ssl; print(ssl.get_default_verify_paths().openssl_cafile)')
-cat $CERTIFI | sudo tee -a $CERT
+cat "$CERTIFI" | sudo tee -a "$CERT" > /dev/null
 
 # Updating certs
 sudo update-ca-certificates
@@ -129,9 +129,9 @@ echo ::endgroup::
 
 if [ "$TEST" = "azure" ]; then
   cat /usr/local/share/ca-certificates/azcert.crt >> /opt/az/lib/python3.6/site-packages/certifi/cacert.pem
-  cat /usr/local/share/ca-certificates/azcert.crt | docker exec -i pulp bash -c "cat >> /usr/local/lib/python3.8/site-packages/certifi/cacert.pem"
-  cat /usr/local/share/ca-certificates/azcert.crt | docker exec -i pulp bash -c "cat >> /etc/pki/tls/cert.pem"
-  AZURE_STORAGE_CONNECTION_STRING='DefaultEndpointsProtocol=https;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=https://pulp-azurite:10000/devstoreaccount1;'
+  cat /usr/local/share/ca-certificates/azcert.crt | cmd_stdin_prefix tee -a /usr/local/lib/python3.8/site-packages/certifi/cacert.pem > /dev/null
+  cat /usr/local/share/ca-certificates/azcert.crt | cmd_stdin_prefix tee -a /etc/pki/tls/cert.pem > /dev/null
+  AZURE_STORAGE_CONNECTION_STRING='DefaultEndpointsProtocol=https;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=https://ci-azurite:10000/devstoreaccount1;'
   az storage container create --name pulp-test --connection-string $AZURE_STORAGE_CONNECTION_STRING
 fi
 
