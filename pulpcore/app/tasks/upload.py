@@ -26,7 +26,7 @@ def commit(upload_id, sha256):
         return
 
     chunks = models.UploadChunk.objects.filter(upload=upload).order_by("offset")
-    with NamedTemporaryFile("ab") as temp_file:
+    with NamedTemporaryFile(mode="ab", dir=".", delete=False) as temp_file:
         for chunk in chunks:
             temp_file.write(chunk.file.read())
         temp_file.flush()
