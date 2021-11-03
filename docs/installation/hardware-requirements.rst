@@ -87,7 +87,7 @@ File/Directory                   Usage
 ================================ ==========================================================================================================
 `/etc/pulp/settings.py`          Pulp's configuration file; optional; see :ref:`configuration`
 `/var/lib/pulp`                  Home directory of the pulp user
-`/var/lib/pulp/artifact`         Uploaded Artifacts are stored here; they should only be served through the `pulp-content` app
+`/var/lib/pulp/media/artifact`   Uploaded Artifacts are stored here; they should only be served through the `pulp-content` app
 `/var/lib/pulp/assets`           Statically served assets like stylesheets, javascript and html; needed for the browsable api
 `/var/lib/pulp/pulpcore-selinux` Contains the compiled selinux-policy if `pulpcore-selinux` is installed
 `/var/lib/pulp/pulpcore_static`  Empty directory used as the document root in the reverse proxy; used to prevent accidentally serving files
