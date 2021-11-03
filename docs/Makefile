@@ -50,9 +50,11 @@ diagrams:
 	python3 -m plantuml diagrams_src/*.dot
 	mv diagrams_src/*.png $(DIAGRAM_BUILD_DIR)/
 
-html:
+$(BUILDDIR)/html/api.json:
 	mkdir -p $(BUILDDIR)/html
-	curl -o _build/html/api.json "$(PULP_URL)/pulp/api/v3/docs/api.json"
+	curl --fail -o $(BUILDDIR)/html/api.json "$(PULP_URL)/pulp/api/v3/docs/api.json?plugin=pulpcore&include_html=1"
+
+html: $(BUILDDIR)/html/api.json
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
 	@echo
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/html."
