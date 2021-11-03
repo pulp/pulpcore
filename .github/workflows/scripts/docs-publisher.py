@@ -81,40 +81,23 @@ def main():
     Builds documentation using the 'make html' command and rsyncs to docs.pulpproject.org.
     """
     parser = argparse.ArgumentParser()
-    parser.add_argument("--build-type", required=True, help="Build type: nightly or beta.")
+    parser.add_argument(
+        "--build-type", required=True, help="Build type: nightly, tag or changelog."
+    )
     parser.add_argument("--branch", required=True, help="Branch or tag name.")
     opts = parser.parse_args()
-    if opts.build_type not in ["nightly", "tag"]:
-        raise RuntimeError("Build type must be either 'nightly' or 'tag'.")
 
     build_type = opts.build_type
 
     branch = opts.branch
 
-    ga_build = False
-
     publish_at_root = False
-
-    if (not re.search("[a-zA-Z]", branch) or "post" in branch) and len(branch.split(".")) > 2:
-        ga_build = True
-        # Only publish docs at the root if this is the latest version
-        r = requests.get("https://pypi.org/pypi/pulpcore/json")
-        latest_version = version.parse(json.loads(r.text)["info"]["version"])
-        docs_version = version.parse(branch)
-        # This is to mitigate delays on PyPI which doesn't update metadata in timely manner.
-        # It doesn't prevent incorrect docs being published at root if 2 releases are done close
-        # to each other, within PyPI delay. E.g. Release 3.11.0 an then 3.10.1 immediately after.
-        if docs_version >= latest_version:
-            publish_at_root = True
-        # Post releases should use the x.y.z part of the version string to form a path
-        if "post" in branch:
-            branch = ".".join(branch.split(".")[:-1])
 
     # rsync the docs
     print("rsync the docs")
     docs_directory = os.sep.join([WORKING_DIR, "docs"])
     local_path_arg = os.sep.join([docs_directory, "_build", "html"]) + os.sep
-    if build_type != "tag":
+    if build_type == "nightly":
         # This is a nightly build
         remote_path_arg = "%s@%s:%sen/%s/%s/" % (
             USERNAME,
@@ -128,19 +111,67 @@ def main():
         exit_code = subprocess.call(rsync_command, cwd=docs_directory)
         if exit_code != 0:
             raise RuntimeError("An error occurred while pushing docs.")
-    elif ga_build:
-        # This is a GA build.
-        # publish to the root of docs.pulpproject.org
-        if publish_at_root:
-            version_components = branch.split(".")
-            x_y_version = "{}.{}".format(version_components[0], version_components[1])
-            remote_path_arg = "%s@%s:%s" % (USERNAME, HOSTNAME, SITE_ROOT)
+    elif build_type == "tag":
+        if (not re.search("[a-zA-Z]", branch) or "post" in branch) and len(branch.split(".")) > 2:
+            # Only publish docs at the root if this is the latest version
+            r = requests.get("https://pypi.org/pypi/pulpcore/json")
+            latest_version = version.parse(json.loads(r.text)["info"]["version"])
+            docs_version = version.parse(branch)
+            # This is to mitigate delays on PyPI which doesn't update metadata in timely manner.
+            # It doesn't prevent incorrect docs being published at root if 2 releases are done close
+            # to each other, within PyPI delay. E.g. Release 3.11.0 an then 3.10.1 immediately
+            # after.
+            if docs_version >= latest_version:
+                publish_at_root = True
+            # Post releases should use the x.y.z part of the version string to form a path
+            if "post" in branch:
+                branch = ".".join(branch.split(".")[:-1])
+
+            # This is a GA build.
+            # publish to the root of docs.pulpproject.org
+            if publish_at_root:
+                version_components = branch.split(".")
+                x_y_version = "{}.{}".format(version_components[0], version_components[1])
+                remote_path_arg = "%s@%s:%s" % (USERNAME, HOSTNAME, SITE_ROOT)
+                rsync_command = [
+                    "rsync",
+                    "-avzh",
+                    "--delete",
+                    "--exclude",
+                    "en",
+                    "--omit-dir-times",
+                    local_path_arg,
+                    remote_path_arg,
+                ]
+                exit_code = subprocess.call(rsync_command, cwd=docs_directory)
+                if exit_code != 0:
+                    raise RuntimeError("An error occurred while pushing docs.")
+                # publish to docs.pulpproject.org/en/3.y/
+                make_directory_with_rsync(["en", x_y_version])
+                remote_path_arg = "%s@%s:%sen/%s/" % (
+                    USERNAME,
+                    HOSTNAME,
+                    SITE_ROOT,
+                    x_y_version,
+                )
+                rsync_command = [
+                    "rsync",
+                    "-avzh",
+                    "--delete",
+                    "--omit-dir-times",
+                    local_path_arg,
+                    remote_path_arg,
+                ]
+                exit_code = subprocess.call(rsync_command, cwd=docs_directory)
+                if exit_code != 0:
+                    raise RuntimeError("An error occurred while pushing docs.")
+            # publish to docs.pulpproject.org/en/3.y.z/
+            make_directory_with_rsync(["en", branch])
+            remote_path_arg = "%s@%s:%sen/%s/" % (USERNAME, HOSTNAME, SITE_ROOT, branch)
             rsync_command = [
                 "rsync",
                 "-avzh",
                 "--delete",
-                "--exclude",
-                "en",
                 "--omit-dir-times",
                 local_path_arg,
                 remote_path_arg,
@@ -148,63 +179,48 @@ def main():
             exit_code = subprocess.call(rsync_command, cwd=docs_directory)
             if exit_code != 0:
                 raise RuntimeError("An error occurred while pushing docs.")
-            # publish to docs.pulpproject.org/en/3.y/
-            make_directory_with_rsync(["en", x_y_version])
-            remote_path_arg = "%s@%s:%sen/%s/" % (
+        else:
+            # This is a pre-release
+            make_directory_with_rsync(["en", branch])
+            remote_path_arg = "%s@%s:%sen/%s/%s/" % (
                 USERNAME,
                 HOSTNAME,
                 SITE_ROOT,
-                x_y_version,
+                branch,
+                build_type,
             )
             rsync_command = [
                 "rsync",
                 "-avzh",
                 "--delete",
-                "--omit-dir-times",
+                "--exclude",
+                "nightly",
+                "--exclude",
+                "testing",
                 local_path_arg,
                 remote_path_arg,
             ]
             exit_code = subprocess.call(rsync_command, cwd=docs_directory)
             if exit_code != 0:
                 raise RuntimeError("An error occurred while pushing docs.")
-        # publish to docs.pulpproject.org/en/3.y.z/
-        make_directory_with_rsync(["en", branch])
-        remote_path_arg = "%s@%s:%sen/%s/" % (USERNAME, HOSTNAME, SITE_ROOT, branch)
+    elif build_type == "changelog":
+        if branch != "master":
+            raise RuntimeError("Can only publish CHANGELOG from master")
+        # Publish the CHANGELOG from master branch at the root directory
+        remote_path_arg = "%s@%s:%s" % (USERNAME, HOSTNAME, SITE_ROOT)
+        changelog_local_path_arg = os.path.join(local_path_arg, "changes.html")
         rsync_command = [
             "rsync",
-            "-avzh",
-            "--delete",
+            "-vzh",
             "--omit-dir-times",
-            local_path_arg,
+            changelog_local_path_arg,
             remote_path_arg,
         ]
         exit_code = subprocess.call(rsync_command, cwd=docs_directory)
         if exit_code != 0:
             raise RuntimeError("An error occurred while pushing docs.")
     else:
-        # This is a pre-release
-        make_directory_with_rsync(["en", branch])
-        remote_path_arg = "%s@%s:%sen/%s/%s/" % (
-            USERNAME,
-            HOSTNAME,
-            SITE_ROOT,
-            branch,
-            build_type,
-        )
-        rsync_command = [
-            "rsync",
-            "-avzh",
-            "--delete",
-            "--exclude",
-            "nightly",
-            "--exclude",
-            "testing",
-            local_path_arg,
-            remote_path_arg,
-        ]
-        exit_code = subprocess.call(rsync_command, cwd=docs_directory)
-        if exit_code != 0:
-            raise RuntimeError("An error occurred while pushing docs.")
+        raise RuntimeError("Build type must be either 'nightly', 'tag' or 'changelog'.")
 
 
 if __name__ == "__main__":
