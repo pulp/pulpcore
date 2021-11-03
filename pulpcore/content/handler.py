@@ -602,7 +602,7 @@ class Handler:
             remote = await sync_to_async(cast_remote_blocking)()
 
             try:
-                url = remote.get_remote_artifact_url(rel_path)
+                url = remote.get_remote_artifact_url(rel_path, request=request)
 
                 def get_remote_artifact_blocking():
                     ra = RemoteArtifact.objects.select_related(

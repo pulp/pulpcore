@@ -416,16 +416,17 @@ class Remote(MasterModel):
                 kwargs["expected_size"] = remote_artifact.size
         return self.download_factory.build(url, **kwargs)
 
-    def get_remote_artifact_url(self, relative_path=None):
+    def get_remote_artifact_url(self, relative_path=None, request=None):
         """
-        Get the full URL for a RemoteArtifact from a relative path.
+        Get the full URL for a RemoteArtifact from relative path and request.
 
-        This method returns the URL for a RemoteArtifact by concatinating the Remote's url and the
-        relative path.located in the Remote. Plugin writers are expected to override this method
-        when a more complex algorithm is needed to determine the full URL.
+        This method returns the URL for a RemoteArtifact by concatenating the Remote's url and the
+        relative path. Plugin writers are expected to override this method when a more complex
+        algorithm is needed to determine the full URL.
 
         Args:
             relative_path (str): The relative path of a RemoteArtifact
+            request (aiohttp.web.Request): The request object for this relative path
 
         Raises:
             ValueError: If relative_path starts with a '/'.
