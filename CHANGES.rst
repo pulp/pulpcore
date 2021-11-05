@@ -17,6 +17,27 @@ Changelog
 
 .. towncrier release notes start
 
+3.14.9 (2021-11-05)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fixed a bug where the `/pulp/content/` page would return a 500 error after the database connection
+  was closed due to a network problem or a database restart.
+  `#9515 <https://pulp.plan.io/issues/9515>`_
+- Fixed bug where chunked uploads were being assembled in /tmp.
+  `#9556 <https://pulp.plan.io/issues/9556>`_
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.14.8 (2021-10-06)
 ===================
 REST API
