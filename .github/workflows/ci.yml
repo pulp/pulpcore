@@ -205,13 +205,13 @@ jobs:
   upgrade:
     runs-on: ubuntu-latest
     needs: lint
+
     strategy:
       fail-fast: false
       matrix:
         env:
           - TEST: upgrade
-        include:
-          - FROM_PULPCORE_BRANCH: "3.11"
+            FROM_PULPCORE_BRANCH: "3.11"
             FROM_PULP_CERTGUARD_BRANCH: "1.2"
             FROM_PULP_FILE_BRANCH: "1.6"
 
@@ -236,9 +236,9 @@ jobs:
       - name: Set environment variables
         run: |
           echo "TEST=${{ matrix.env.TEST }}" >> $GITHUB_ENV
-          echo "FROM_PULP_CERTGUARD_BRANCH=${{ matrix.FROM_PULP_CERTGUARD_BRANCH }}" >> $GITHUB_ENV
-          echo "FROM_PULP_FILE_BRANCH=${{ matrix.FROM_PULP_FILE_BRANCH }}" >> $GITHUB_ENV
-          echo "FROM_PULPCORE_BRANCH=${{ matrix.FROM_PULPCORE_BRANCH }}" >> $GITHUB_ENV
+          echo "FROM_PULP_CERTGUARD_BRANCH=${{ matrix.env.FROM_PULP_CERTGUARD_BRANCH }}" >> $GITHUB_ENV
+          echo "FROM_PULP_FILE_BRANCH=${{ matrix.env.FROM_PULP_FILE_BRANCH }}" >> $GITHUB_ENV
+          echo "FROM_PULPCORE_BRANCH=${{ matrix.env.FROM_PULPCORE_BRANCH }}" >> $GITHUB_ENV
 
       - name: Install python dependencies
         run: |
