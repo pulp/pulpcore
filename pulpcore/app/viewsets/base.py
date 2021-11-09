@@ -499,7 +499,7 @@ class BaseFilterSet(filterset.FilterSet):
     Class to override django_filter's FilterSet and provide a way to set help text
 
     By default, this class will use predefined text and the field name to create help text for the
-    filter. However, this can be overriden by setting a help_text dict with the the field name
+    filter. However, this can be overriden by setting a help_text dict with the field name
     mapped to some help text:
 
         help_text = {'name__in': 'Lorem ipsum dolor', 'pulp_last_updated__lt': 'blah blah'}

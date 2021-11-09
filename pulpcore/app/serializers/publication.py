@@ -116,7 +116,7 @@ class DistributionSerializer(ModelSerializer):
     """
     The Serializer for the Distribution model.
 
-    The serializer deliberately omits the the `publication` and `repository_version` field due to
+    The serializer deliberately omits the `publication` and `repository_version` field due to
     plugins typically requiring one or the other but not both.
 
     To include the ``publication`` field, it is recommended plugins define the field::
