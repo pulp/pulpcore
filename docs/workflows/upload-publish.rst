@@ -4,7 +4,7 @@ Upload and Publish
 Uploading Content
 -----------------
 
-Content can be uploaded by POSTing the the file to ``/pulp/api/v3/content/<plugin_name>/<content_type>/``.
+Content can be uploaded by POSTing the file to ``/pulp/api/v3/content/<plugin_name>/<content_type>/``.
 Some plugins can create the content unit completely from that file, but others require some
 additional attributes to be specified with the upload. See your plugin documentation for more info
 on upload features of your plugin.
