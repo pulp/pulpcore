@@ -769,7 +769,7 @@ class RepositoryVersion(BaseModel):
                 )
             )
 
-        RepositoryContent.objects.bulk_create(repo_content)
+        RepositoryContent.objects.bulk_create(repo_content, ignore_conflicts=True)
 
     def remove_content(self, content):
         """
@@ -948,7 +948,7 @@ class RepositoryVersion(BaseModel):
                         count_type=value,
                     )
                     counts_list.append(count_obj)
-            RepositoryVersionContentDetails.objects.bulk_create(counts_list)
+            RepositoryVersionContentDetails.objects.bulk_create(counts_list, ignore_conflicts=True)
 
     def __enter__(self):
         """

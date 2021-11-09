@@ -15,7 +15,7 @@ class RepositoryVersionTestCase(TestCase):
         for _ in range(0, 5):
             contents.append(Content(pulp_type="core.content"))
 
-        Content.objects.bulk_create(contents)
+        Content.objects.bulk_create(contents, ignore_conflicts=True)
         self.pks = [c.pk for c in contents]
 
     def test_add_and_remove_content(self):
@@ -270,7 +270,7 @@ class RepositoryTestCase(TestCase):
         for _ in range(0, 3):
             contents.append(Content(pulp_type="core.content"))
 
-        Content.objects.bulk_create(contents)
+        Content.objects.bulk_create(contents, ignore_conflicts=True)
 
         versions = [self.repository.latest_version()]
         for content in contents:

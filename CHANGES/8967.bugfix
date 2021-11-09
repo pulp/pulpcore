@@ -1,0 +1,2 @@
+Fixes unhandled errors during bulk_save operations due to race conditions of multiple processes
+creating the same database objects in separate processes.

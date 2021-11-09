@@ -396,7 +396,9 @@ class RemoteArtifactSaver(Stage):
         # Artifact sha256 for our ordering.
         if ras_to_create:
             ras_to_create_ordered = sorted(list(ras_to_create.values()), key=lambda x: x.sha256)
-            await sync_to_async(RemoteArtifact.objects.bulk_create)(ras_to_create_ordered)
+            await sync_to_async(RemoteArtifact.objects.bulk_create)(
+                ras_to_create_ordered, ignore_conflicts=True
+            )
         if ras_to_update:
             ras_to_update_ordered = sorted(list(ras_to_update.values()), key=lambda x: x.sha256)
             await sync_to_async(RemoteArtifact.objects.bulk_update)(
