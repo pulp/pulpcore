@@ -3,18 +3,23 @@ from gettext import gettext as _
 from django_filters.rest_framework import DjangoFilterBackend, filters
 from drf_spectacular.utils import extend_schema
 from rest_framework import mixins, status
+from rest_framework.decorators import action
 from rest_framework.filters import OrderingFilter
 from rest_framework.response import Response
 from rest_framework.serializers import ValidationError
 
 from pulpcore.app.models import Task, TaskGroup, Worker
+from pulpcore.app.response import OperationPostponedResponse
 from pulpcore.app.serializers import (
+    AsyncOperationResponseSerializer,
     MinimalTaskSerializer,
     TaskCancelSerializer,
+    TaskGroupSerializer,
+    PurgeSerializer,
     TaskSerializer,
     WorkerSerializer,
-    TaskGroupSerializer,
 )
+from pulpcore.app.tasks import purge
 from pulpcore.app.viewsets import BaseFilterSet, NamedModelViewSet
 from pulpcore.app.viewsets.base import DATETIME_FILTER_OPTIONS, NAME_FILTER_OPTIONS
 from pulpcore.app.viewsets.custom_filters import (
@@ -24,6 +29,7 @@ from pulpcore.app.viewsets.custom_filters import (
     CreatedResourcesFilter,
 )
 from pulpcore.constants import TASK_INCOMPLETE_STATES, TASK_STATES, TASK_CHOICES
+from pulpcore.tasking.tasks import dispatch
 from pulpcore.tasking.util import cancel as cancel_task
 
 
@@ -90,6 +96,13 @@ class TaskViewSet(
                 "effect": "allow",
                 "condition": "has_model_or_obj_perms:core.change_task",
             },
+            # 'purge' is filtered by current-user and core.delete_task permissions at the queryset
+            # level, and needs no extra protections here
+            {
+                "action": ["purge"],
+                "principal": "authenticated",
+                "effect": "allow",
+            },
         ],
         "creation_hooks": [
             {
@@ -138,6 +151,28 @@ class TaskViewSet(
         if self.action == "partial_update":
             return TaskCancelSerializer
         return super().get_serializer_class()
+
+    @extend_schema(
+        description=(
+            "Trigger an asynchronous task that deletes completed tasks that finished prior"
+            " to a specified timestamp (tech-preview, may change in the future)."
+        ),
+        summary="Purge Completed Tasks",
+        operation_id="tasks_purge",
+        request=PurgeSerializer,
+        responses={202: AsyncOperationResponseSerializer},
+    )
+    @action(detail=False, methods=["post"])
+    def purge(self, request):
+        """
+        Purge task-records for tasks in 'final' states.
+        """
+        serializer = PurgeSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        task = dispatch(
+            purge, args=[serializer.data["finished_before"], list(serializer.data["states"])]
+        )
+        return OperationPostponedResponse(task, request)
 
 
 class TaskGroupFilter(BaseFilterSet):
