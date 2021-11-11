@@ -15,7 +15,7 @@ pulp.tasking.constants
 .. automodule:: pulpcore.tasking.constants
 
 pulp.tasking.manage_workers
-------------------------------------
+---------------------------
 
 .. automodule:: pulpcore.tasking.manage_workers
 
