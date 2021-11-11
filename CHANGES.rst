@@ -726,7 +726,8 @@ Features
   .. warning::
 
      If you intend to stick with the old tasking system, you should configure the
-     ``USE_NEW_WORKER_TYPE`` setting to false before upgrading.
+     ``USE_NEW_WORKER_TYPE`` setting to false before upgrade
+
   `#8948 <https://pulp.plan.io/issues/8948>`_
 
 
@@ -1133,15 +1134,15 @@ Features
   `#8357 <https://pulp.plan.io/issues/8357>`_
 - Added the following new objects related to a new ``Distribution`` MasterModel:
   * ``pulpcore.plugin.models.Distribution`` - A new MasterModel ``Distribution`` which replaces the
-    ``pulpcore.plugin.models.BaseDistribution``. This now contains the ``repository``,
-    ``repository_version``, and ``publication`` fields on the MasterModel instead of on the detail
-    models as was done with ``pulpcore.plugin.models.BaseDistribution``.
+  ``pulpcore.plugin.models.BaseDistribution``. This now contains the ``repository``,
+  ``repository_version``, and ``publication`` fields on the MasterModel instead of on the detail
+  models as was done with ``pulpcore.plugin.models.BaseDistribution``.
   * ``pulpcore.plugin.serializer.DistributionSerializer`` - A serializer plugin writers should use
-    with the new ``pulpcore.plugin.models.Distribution``.
+  with the new ``pulpcore.plugin.models.Distribution``.
   * ``pulpcore.plugin.viewset.DistributionViewSet`` - The viewset that replaces the deprecated
-    ``pulpcore.plugin.viewset.BaseDistributionViewSet``.
+  ``pulpcore.plugin.viewset.BaseDistributionViewSet``.
   * ``pulpcore.plugin.viewset.NewDistributionFilter`` - The filter that pairs with the
-    ``Distribution`` model.
+  ``Distribution`` model.
   `#8384 <https://pulp.plan.io/issues/8384>`_
 - Added checksum type enforcement to ``pulpcore.plugin.download.BaseDownloader``.
   `#8435 <https://pulp.plan.io/issues/8435>`_
@@ -1174,25 +1175,26 @@ Deprecations
 
 - The following objects were deprecated:
   * ``pulpcore.plugin.models.BaseDistribution`` -- Instead use
-    ``pulpcore.plugin.models.Distribution``.
+  ``pulpcore.plugin.models.Distribution``.
   * ``pulpcore.plugin.viewset.BaseDistributionViewSet`` -- Instead use
-    ``pulpcore.plugin.viewset.DistributionViewSet``.
+  ``pulpcore.plugin.viewset.DistributionViewSet``.
   * ``pulpcore.plugin.serializer.BaseDistributionSerializer`` -- Instead use
-    ``pulpcore.plugin.serializer.DistributionSerializer``.
+  ``pulpcore.plugin.serializer.DistributionSerializer``.
   * ``pulpcore.plugin.serializer.PublicationDistributionSerializer`` -- Instead use define the
-    ``publication`` field directly on your detail distribution object. See the docstring for
-    ``pulpcore.plugin.serializer.DistributionSerializer`` for an example.
+  ``publication`` field directly on your detail distribution object. See the docstring for
+  ``pulpcore.plugin.serializer.DistributionSerializer`` for an example.
   * ``pulpcore.plugin.serializer.RepositoryVersionDistributionSerializer`` -- Instead use define the
-    ``repository_version`` field directly on your detail distribution object. See the docstring for
-    ``pulpcore.plugin.serializer.DistributionSerializer`` for an example.
+  ``repository_version`` field directly on your detail distribution object. See the docstring for
+  ``pulpcore.plugin.serializer.DistributionSerializer`` for an example.
   * ``pulpcore.plugin.viewset.DistributionFilter`` -- Instead use
-    ``pulpcore.plugin.viewset.NewDistributionFilter``.
+  ``pulpcore.plugin.viewset.NewDistributionFilter``.
 
   .. note::
 
       You will have to define a migration to move your data from
       ``pulpcore.plugin.models.BaseDistribution`` to ``pulpcore.plugin.models.Distribution``. See the
       pulp_file migration 0009 as a reference example.
+
   `#8385 <https://pulp.plan.io/issues/8385>`_
 - Deprecated the ``pulpcore.plugin.tasking.enqueue_with_reservation``. Instead use the
   ``pulpcore.plugin.tasking.dispatch`` interface.
@@ -1203,7 +1205,9 @@ Deprecations
   `#8505 <https://pulp.plan.io/issues/8505>`_
 
 
-3.11.2 (2021-05-25)REST API
+3.11.2 (2021-05-25)
+===================
+REST API
 --------
 
 Bugfixes
@@ -1234,7 +1238,7 @@ REST API
 --------
 
 Bugfixes
-~~~~~~~
+~~~~~~~~
 
 - Fixed a race condition that sometimes surfaced during handling of reserved resources.
   `#8632 <https://pulp.plan.io/issues/8632>`_
@@ -1246,7 +1250,7 @@ Plugin API
 ----------
 
 Bugfixes
-~~~~~~~
+~~~~~~~~
 
 - Allow plugins to unset the ``queryset_filtering_required_permission`` attribute in ``NamedModelViewSet``.
   `#8444 <https://pulp.plan.io/issues/8444>`_
@@ -1669,6 +1673,7 @@ Deprecations
       access_policy = AccessPolicy.get(viewset_name="MyViewSet")
       access_policy.viewset_name = "objectclass/myplugin/myclass"
       access_policy.save()
+
   `#7845 <https://pulp.plan.io/issues/7845>`_
 - The ``pulpcore.plugin.models.UnsupportedDigestValidationError`` is being deprecated and
   will be removed in 3.10.
