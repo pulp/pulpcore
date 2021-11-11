@@ -200,7 +200,7 @@ CONTENT_APP_TTL
 .. _pulp-cache:
 
 CACHE_ENABLED
-^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^
 
    .. note:: This feature is provided as a tech-preview
 
@@ -213,7 +213,7 @@ CACHE_ENABLED
      responses to be stored inside the cache.
 
 CACHE_SETTINGS
-^^^^^^^^^^^^^
+^^^^^^^^^^^^^^
 
    Dictionary with tunable settings for the cache:
 
