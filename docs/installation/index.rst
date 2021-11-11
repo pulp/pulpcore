@@ -9,7 +9,6 @@ Installation Options
    hardware-requirements
    instructions
    storage
-   authentication
 
 Other links
    :ref:`DevSetup`
