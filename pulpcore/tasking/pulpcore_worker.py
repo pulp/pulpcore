@@ -110,11 +110,11 @@ class NewPulpWorker:
         _logger.info(_("Worker %s was shut down."), self.name)
 
     def worker_cleanup(self):
-        qs = Worker.objects.missing_workers()
+        qs = Worker.objects.missing_workers(age=timedelta(days=7))
         if qs:
             for worker in qs:
                 _logger.info(_("Clean missing worker %s."), worker.name)
-                worker.delete()
+            qs.delete()
 
     def beat(self):
         if self.worker.last_heartbeat < timezone.now() - timedelta(seconds=self.heartbeat_period):
