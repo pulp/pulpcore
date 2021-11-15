@@ -8,7 +8,7 @@ from pkg_resources import get_distribution
 import ssl
 import sys
 from tempfile import NamedTemporaryFile
-from urllib.parse import urlparse
+from urllib.parse import urlparse, urlunparse
 
 import aiohttp
 
@@ -163,8 +163,18 @@ class DownloaderFactory:
             is configured with the remote settings.
         """
         options = {"session": self._session}
-        if self._remote.proxy_url:
-            options["proxy"] = self._remote.proxy_url
+        proxy_url = self._remote.proxy_url
+        if proxy_url:
+            parsed_url = urlparse(proxy_url)
+            netloc = parsed_url.netloc
+            if "@" in netloc:
+                auth, url = netloc.rsplit("@", maxsplit=1)
+                proxy_username, proxy_password = auth.split(":", maxsplit=1)
+                proxy_url = urlunparse(parsed_url._replace(netloc=url))
+                options["proxy_auth"] = aiohttp.BasicAuth(
+                    login=proxy_username, password=proxy_password
+                )
+            options["proxy"] = proxy_url
 
         if self._remote.username and self._remote.password:
             options["auth"] = aiohttp.BasicAuth(
