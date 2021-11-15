@@ -42,20 +42,23 @@ class WorkerManager(models.Manager):
 
         return self.filter(last_heartbeat__gte=age_threshold)
 
-    def missing_workers(self):
+    def missing_workers(self, age=timedelta(seconds=settings.WORKER_TTL)):
         """
         Returns a queryset of workers meeting the criteria to be considered 'missing'
 
-        To be considered missing, a worker must have a stale timestamp.  Stale is defined here as
-        "beyond the pulp process timeout interval".
+        To be considered missing, a worker must have a stale timestamp.  By default, stale is
+        defined here as longer than the ``settings.WORKER_TTL``, or you can specify age as a
+        timedelta.
+
+        Args:
+            age (datetime.timedelta): Workers who have heartbeats older than this time interval are
+                considered missing.
 
         Returns:
             :class:`django.db.models.query.QuerySet`:  A query set of the Worker objects which
                 are considered by Pulp to be 'missing'.
         """
-        now = timezone.now()
-        age_threshold = now - timedelta(seconds=settings.WORKER_TTL)
-
+        age_threshold = timezone.now() - age
         return self.filter(last_heartbeat__lt=age_threshold)
 
     def resource_managers(self):
