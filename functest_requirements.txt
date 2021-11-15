@@ -4,3 +4,6 @@ pulp-smash
 pulpcore-client
 pulp-file-client
 pytest
+
+rq>=1.1,<1.6
+click<8

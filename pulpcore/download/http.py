@@ -2,6 +2,7 @@ import logging
 
 import aiohttp
 import backoff
+from urllib.parse import urlparse, urlunparse
 
 from .base import BaseDownloader, DownloadResult
 
@@ -149,6 +150,19 @@ class HttpDownloader(BaseDownloader):
         self.proxy = proxy
         self.proxy_auth = proxy_auth
         self.headers_ready_callback = headers_ready_callback
+
+        # Workaround to prevent credentials in the proxy url
+        if self.proxy:
+            parsed_url = urlparse(self.proxy)
+            netloc = parsed_url.netloc
+            if "@" in netloc:
+                if self.proxy_auth is not None:
+                    raise RuntimeError("Proxy credentials were specified in two places.")
+                auth, url = netloc.rsplit("@", maxsplit=1)
+                proxy_username, proxy_password = auth.split(":", maxsplit=1)
+                self.proxy = urlunparse(parsed_url._replace(netloc=url))
+                self.proxy_auth = aiohttp.BasicAuth(login=proxy_username, password=proxy_password)
+
         super().__init__(url, **kwargs)
 
     def raise_for_status(self, response):
@@ -206,7 +220,9 @@ class HttpDownloader(BaseDownloader):
         Args:
             extra_data (dict): Extra data passed by the downloader.
         """
-        async with self.session.get(self.url, proxy=self.proxy, auth=self.auth) as response:
+        async with self.session.get(
+            self.url, auth=self.auth, proxy=self.proxy, proxy_auth=self.proxy_auth
+        ) as response:
             self.raise_for_status(response)
             to_return = await self._handle_response(response)
             await response.release()

@@ -1,0 +1,2 @@
+Prevent proxy credentials to be passed to aiohttp, so they no longer appear in stack traces.
+This is a rewritten backport of #8167.
