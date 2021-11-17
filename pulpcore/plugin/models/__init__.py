@@ -34,6 +34,7 @@ from pulpcore.app.models import (  # noqa
     RemoteArtifact,
     RepositoryContent,
     RepositoryVersion,
+    Signature,
     SigningService,
     Task,
     TaskGroup,

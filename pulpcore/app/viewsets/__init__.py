@@ -18,6 +18,8 @@ from .content import (  # noqa
     ContentViewSet,
     ListContentViewSet,
     ReadOnlyContentViewSet,
+    SignatureFilter,
+    SignatureViewSet,
     SigningServiceViewSet,
 )
 from .custom_filters import (  # noqa

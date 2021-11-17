@@ -41,8 +41,10 @@ from .acs import (  # noqa
 from .content import (  # noqa
     ArtifactSerializer,
     ContentChecksumSerializer,
+    MinimalSignatureSerializer,
     MultipleArtifactContentSerializer,
     NoArtifactContentSerializer,
+    SignatureSerializer,
     SigningServiceSerializer,
     SingleArtifactContentSerializer,
 )

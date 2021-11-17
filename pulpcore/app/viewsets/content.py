@@ -4,10 +4,12 @@ from django.db import models
 from rest_framework import mixins, permissions, status
 from rest_framework.response import Response
 
-from pulpcore.app.models import Artifact, Content, PublishedMetadata, SigningService
+from pulpcore.app.models import Artifact, Content, PublishedMetadata, Signature, SigningService
 from pulpcore.app.serializers import (
     ArtifactSerializer,
     MultipleArtifactContentSerializer,
+    MinimalSignatureSerializer,
+    SignatureSerializer,
     SigningServiceSerializer,
 )
 from pulpcore.app.viewsets.base import BaseFilterSet, NamedModelViewSet
@@ -141,3 +143,29 @@ class SigningServiceViewSet(NamedModelViewSet, mixins.RetrieveModelMixin, mixins
     queryset = SigningService.objects.all()
     serializer_class = SigningServiceSerializer
     filterset_fields = ["name"]
+
+
+class SignatureFilter(ContentFilter):
+    """
+    A filter for signatures.
+    """
+
+    class Meta:
+        model = Signature
+        fields = {
+            "content": ["exact"],
+            "public_key": ["exact", "in"],
+            "pubkey_fingerprint": ["exact", "in"],
+            "signing_service": ["exact"],
+        }
+
+
+class SignatureViewSet(NamedModelViewSet, mixins.ListModelMixin, mixins.RetrieveModelMixin):
+    """
+    A viewset for browsing existing signatures.
+    """
+    endpoint_name = "signatures"
+    filterset_class = SignatureFilter
+    queryset = Signature.objects.all()
+    serializer_class = SignatureSerializer
+    minimal_serializer_class = MinimalSignatureSerializer

@@ -17,6 +17,7 @@ from .content import (  # noqa
     ContentArtifact,
     PulpTemporaryFile,
     RemoteArtifact,
+    Signature,
     SigningService,
     UnsupportedDigestValidationError,
 )

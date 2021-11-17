@@ -275,3 +275,38 @@ class SigningServiceSerializer(base.ModelSerializer):
             "pubkey_fingerprint",
             "script",
         )
+
+
+class SignatureSerializer(NoArtifactContentSerializer):
+    """
+    A serializer for signature models.
+    """
+
+    content = base.DetailRelatedField(
+        help_text=_("The content this signature is pointing to."),
+        view_name_pattern=r"content(-.*/.*)-detail",
+        queryset=models.Content.objects.all(),
+    )
+    signature = serializers.CharField(help_text=_("The base64 encoded signature"))
+    public_key = serializers.CharField(help_text=_("The public key used to verify the signature"))
+    pubkey_fingerprint = serializers.CharField(help_text=_("The fingerprint of the public key."))
+    signing_service = base.DetailRelatedField(
+        help_text=_("The signing service used to create the signature."),
+        view_name_pattern=r"signingservice(-.*/.*)-detail",
+        queryset=models.SigningService.objects.all(),
+        allow_null=True,
+    )
+
+    class Meta:
+        model = models.Signature
+        fields = NoArtifactContentSerializer.Meta.fields + ("content", "signature", "public_key", "pubkey_fingerprint", "signing_service")
+
+
+class MinimalSignatureSerializer(SignatureSerializer):
+    """
+    A small serializer for Signature models.
+    """
+
+    class Meta:
+        model = models.Signature
+        fields = NoArtifactContentSerializer.Meta.fields + ('content', 'pubkey_fingerprint')

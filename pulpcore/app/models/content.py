@@ -789,6 +789,25 @@ class SigningService(BaseModel):
         )
 
 
+class Signature(Content):
+    """
+    A content type representing a signature that is attached to a content unit
+    # This model will be in pulpcore
+    """
+    TYPE = "signature"
+
+    content = models.ForeignKey(Content, on_delete=models.CASCADE, related_name="signatures")
+    # Now we have two options, store signature as an artifact or store signature as a field
+    signature = models.TextField() # How long can signatures be?
+    public_key = models.TextField() # How long can public keys be?
+    pubkey_fingerprint = models.TextField()
+    signing_service = models.ForeignKey(SigningService, on_delete=models.SET_NULL, related_name="signatures", null=True)
+
+    class Meta:
+        default_related_name = "%(app_label)s_%(model_name)s"
+        unique_together = ("content_ptr", "signature")
+
+
 class AsciiArmoredDetachedSigningService(SigningService):
     """
     A model used for creating detached ASCII armored signatures.

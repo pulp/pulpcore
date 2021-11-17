@@ -27,6 +27,8 @@ from pulpcore.app.viewsets import (  # noqa
     RemoteViewSet,
     RepositoryViewSet,
     RepositoryVersionViewSet,
+    SignatureFilter,
+    SignatureViewSet,
     TaskViewSet,
     TaskGroupViewSet,
 )
