@@ -7,7 +7,7 @@ from django.core.exceptions import BadRequest
 from django.db.models import Q, Exists, OuterRef, CharField
 from django.db.models.functions import Cast
 from django.contrib.auth import get_user_model
-from django.contrib.auth.models import Group, Permission
+from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
 from guardian.shortcuts import (
     get_objects_for_user as get_objects_for_user_guardian,
@@ -16,6 +16,7 @@ from guardian.shortcuts import (
     get_groups_with_perms as get_groups_with_perms_guardian,
 )
 
+from pulpcore.app.models import Group
 from pulpcore.app.models.role import GroupRole, Role, UserRole
 
 User = get_user_model()
@@ -36,7 +37,7 @@ def assign_role(rolename, entity, obj=None):
     except Role.DoesNotExist:
         raise BadRequest(_("The role '{}' does not exist.").format(rolename))
     if obj is not None:
-        ctype = ContentType.objects.get_for_model(obj)
+        ctype = ContentType.objects.get_for_model(obj, for_concrete_model=False)
         if not role.permissions.filter(content_type__pk=ctype.id).exists():
             raise BadRequest(
                 _("The role '{}' does not carry any permission for that object.").format(rolename)
@@ -68,13 +69,13 @@ def remove_role(rolename, entity, obj=None):
     if obj is None:
         qs = qs.filter(object_id=None)
     else:
-        ctype = ContentType.objects.get_for_model(obj)
+        ctype = ContentType.objects.get_for_model(obj, for_concrete_model=False)
         qs = qs.filter(content_type__pk=ctype.id, object_id=obj.pk)
     qs.delete()
 
 
 def get_perms_for_model(obj):
-    ctype = ContentType.objects.get_for_model(obj)
+    ctype = ContentType.objects.get_for_model(obj, for_concrete_model=False)
     return Permission.objects.filter(content_type__pk=ctype.id)
 
 
@@ -246,7 +247,7 @@ def get_users_with_perms_roles(
     qs = User.objects.none()
     if with_superusers:
         qs |= User.objects.filter(is_superuser=True)
-    ctype = ContentType.objects.get_for_model(obj)
+    ctype = ContentType.objects.get_for_model(obj, for_concrete_model=False)
     perms = Permission.objects.filter(content_type__pk=ctype.id)
     if only_with_perms_in:
         codenames = [
@@ -271,7 +272,7 @@ def get_users_with_perms_roles(
 def get_users_with_perms_attached_perms(
     obj, with_superusers=False, with_group_users=True, only_with_perms_in=None
 ):
-    ctype = ContentType.objects.get_for_model(obj)
+    ctype = ContentType.objects.get_for_model(obj, for_concrete_model=False)
     perms = Permission.objects.filter(content_type__pk=ctype.id)
     if only_with_perms_in:
         codenames = [
@@ -306,7 +307,7 @@ def get_users_with_perms_attached_perms(
 
 
 def get_users_with_perms_attached_roles(obj, with_group_users=True, only_with_perms_in=None):
-    ctype = ContentType.objects.get_for_model(obj)
+    ctype = ContentType.objects.get_for_model(obj, for_concrete_model=False)
     perms = Permission.objects.filter(content_type__pk=ctype.id)
     if only_with_perms_in:
         codenames = [
@@ -375,7 +376,7 @@ def get_users_with_perms(
 
 
 def get_groups_with_perms_roles(obj, only_with_perms_in=None):
-    ctype = ContentType.objects.get_for_model(obj)
+    ctype = ContentType.objects.get_for_model(obj, for_concrete_model=False)
     perms = Permission.objects.filter(content_type__pk=ctype.id)
     if only_with_perms_in:
         codenames = [
@@ -392,7 +393,7 @@ def get_groups_with_perms_roles(obj, only_with_perms_in=None):
 
 
 def get_groups_with_perms_attached_perms(obj, only_with_perms_in=None):
-    ctype = ContentType.objects.get_for_model(obj)
+    ctype = ContentType.objects.get_for_model(obj, for_concrete_model=False)
     perms = Permission.objects.filter(content_type__pk=ctype.id)
     if only_with_perms_in:
         codenames = [
@@ -413,7 +414,7 @@ def get_groups_with_perms_attached_perms(obj, only_with_perms_in=None):
 
 
 def get_groups_with_perms_attached_roles(obj, only_with_perms_in=None):
-    ctype = ContentType.objects.get_for_model(obj)
+    ctype = ContentType.objects.get_for_model(obj, for_concrete_model=False)
     perms = Permission.objects.filter(content_type__pk=ctype.id)
     if only_with_perms_in:
         codenames = [

@@ -7,7 +7,12 @@ from .base import (  # noqa
     MasterModel,
 )
 
-from .access_policy import AccessPolicy, AutoAddObjPermsMixin, AutoDeleteObjPermsMixin  # noqa
+from .access_policy import (  # noqa
+    AccessPolicy,
+    AutoAddObjPermsMixin,
+    AutoDeleteObjPermsMixin,
+    Group,
+)
 from .acs import AlternateContentSource, AlternateContentSourcePath  # noqa
 from .content import (  # noqa
     Artifact,

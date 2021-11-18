@@ -1,5 +1,4 @@
-from django.contrib.auth.models import Group
-
+from pulpcore.app.models import Group
 from pulpcore.app.serializers import RepositorySyncURLSerializer
 
 
