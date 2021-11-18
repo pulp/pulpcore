@@ -31,7 +31,7 @@ class ObjectRolePermissionBackend(BaseBackend):
                 return True
 
         else:
-            obj_type = ContentType.objects.get_for_model(obj)
+            obj_type = ContentType.objects.get_for_model(obj, for_concrete_model=False)
             if permission.content_type == obj_type:
                 # Check object specific roles
                 if user_obj.object_roles.filter(
@@ -64,7 +64,7 @@ class ObjectRolePermissionBackend(BaseBackend):
             )
 
         else:
-            obj_type = ContentType.objects.get_for_model(obj)
+            obj_type = ContentType.objects.get_for_model(obj, for_concrete_model=False)
             # Maybe there is a way to reformulate this as a single query on Permissions
             result = (
                 user_obj.object_roles.filter(role__permissions__content_type=obj_type)

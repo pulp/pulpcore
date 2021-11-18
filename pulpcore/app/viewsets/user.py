@@ -1,7 +1,7 @@
 from gettext import gettext as _
 
 from django.contrib.auth import get_user_model
-from django.contrib.auth.models import Group, Permission
+from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import FieldError
 from django.db import IntegrityError
@@ -17,6 +17,7 @@ from rest_framework.permissions import SAFE_METHODS
 from rest_framework.response import Response
 from rest_framework.serializers import ValidationError
 
+from pulpcore.app.models import Group
 from pulpcore.app.models.role import GroupRole, Role, UserRole
 from pulpcore.app.viewsets import BaseFilterSet, NamedModelViewSet, NAME_FILTER_OPTIONS
 from pulpcore.app.serializers import (
@@ -121,7 +122,7 @@ class GroupViewSet(
     serializer_class = GroupSerializer
     queryset = Group.objects.all()
     ordering = ("name",)
-    queryset_filtering_required_permission = "auth.view_group"
+    queryset_filtering_required_permission = "core.view_group"
 
     DEFAULT_ACCESS_POLICY = {
         "statements": [
@@ -134,29 +135,27 @@ class GroupViewSet(
                 "action": ["create"],
                 "principal": "authenticated",
                 "effect": "allow",
-                "condition": "has_model_perms:auth.add_group",
+                "condition": "has_model_perms:core.add_group",
             },
             {
                 "action": ["retrieve"],
                 "principal": "authenticated",
                 "effect": "allow",
-                "condition": "has_model_or_obj_perms:auth.view_group",
+                "condition": "has_model_or_obj_perms:core.view_group",
             },
             {
                 "action": ["update", "partial_update"],
                 "principal": "authenticated",
                 "effect": "allow",
-                "condition": "has_model_or_obj_perms:auth.change_group",
+                "condition": "has_model_or_obj_perms:core.change_group",
             },
             {
                 "action": ["destroy"],
                 "principal": "authenticated",
                 "effect": "allow",
-                "condition": "has_model_or_obj_perms:auth.delete_group",
+                "condition": "has_model_or_obj_perms:core.delete_group",
             },
         ],
-        # TODO: This never worked, because we don't have the AutoAddObjPermsMixin mounted on the
-        # group model. Maybe a proxy model can do the job.
         "creation_hooks": [
             {
                 "function": "add_roles_for_object_creator",
@@ -167,15 +166,15 @@ class GroupViewSet(
 
     LOCKED_ROLES = {
         "core.group_creator": [
-            "auth.add_group",
+            "core.add_group",
         ],
         "core.group_owner": [
-            "auth.view_group",
-            "auth.change_group",
-            "auth.delete_group",
+            "core.view_group",
+            "core.change_group",
+            "core.delete_group",
         ],
         "core.group_viewer": [
-            "auth.view_group",
+            "core.view_group",
         ],
     }
 
@@ -535,7 +534,7 @@ class NestedRoleFilter(BaseFilterSet):
                 obj = NamedModelViewSet.get_resource(value)
             except ValidationError:
                 raise ValidationError(_("Invalid value for 'content_object': {}.").format(value))
-            obj_type = ContentType.objects.get_for_model(obj)
+            obj_type = ContentType.objects.get_for_model(obj, for_concrete_model=False)
             return queryset.filter(content_type_id=obj_type.id, object_id=obj.pk)
 
     class Meta:

@@ -2,10 +2,10 @@ from gettext import gettext as _
 
 from django.core.exceptions import ImproperlyConfigured
 from django.contrib.auth import get_user_model
-from django.contrib.auth.models import Group
+from django.contrib.auth.models import Group as BaseGroup
 from django.db import models
 from django_currentuser.middleware import get_current_authenticated_user
-from django_lifecycle import hook
+from django_lifecycle import hook, LifecycleModelMixin
 from guardian.models.models import GroupObjectPermission, UserObjectPermission
 from guardian.shortcuts import assign_perm, remove_perm
 
@@ -300,3 +300,10 @@ class AutoDeleteObjPermsMixin:
             group = Group.objects.get(name=group_name)
             for perm in permissions:
                 remove_perm(perm, group, self)
+
+
+class Group(LifecycleModelMixin, BaseGroup, AutoAddObjPermsMixin):
+    ACCESS_POLICY_VIEWSET_NAME = "groups"
+
+    class Meta:
+        proxy = True

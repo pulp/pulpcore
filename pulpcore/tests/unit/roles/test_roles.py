@@ -3,9 +3,9 @@ from uuid import uuid4
 from django.test import TestCase
 
 from django.contrib.auth import get_user_model
-from django.contrib.auth.models import Group, Permission
+from django.contrib.auth.models import Permission
 
-from pulpcore.app.models import Remote, Repository
+from pulpcore.app.models import Group, Remote, Repository
 from pulpcore.app.models.role import Role
 from pulpcore.app.role_util import assign_role, remove_role, get_objects_for_user
 

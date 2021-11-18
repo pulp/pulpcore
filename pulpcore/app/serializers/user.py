@@ -1,7 +1,7 @@
 from gettext import gettext as _
 
 from django.contrib.auth import get_user_model
-from django.contrib.auth.models import Group, Permission
+from django.contrib.auth.models import Permission
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth.password_validation import validate_password
 from django.contrib.contenttypes.models import ContentType
@@ -11,6 +11,7 @@ from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 from rest_framework_nested.serializers import NestedHyperlinkedModelSerializer
 
+from pulpcore.app.models import Group
 from pulpcore.app.models.role import GroupRole, Role, UserRole
 from pulpcore.app.serializers import (
     NestedIdentityField,
@@ -210,7 +211,11 @@ class GroupSerializer(ValidateFieldsMixin, serializers.ModelSerializer):
 
     pulp_href = IdentityField(view_name="groups-detail")
     id = serializers.IntegerField(read_only=True)
-    name = serializers.CharField(help_text=_("Name"), max_length=150)
+    name = serializers.CharField(
+        help_text=_("Name"),
+        max_length=150,
+        validators=[UniqueValidator(queryset=Group.objects.all())],
+    )
 
     class Meta:
         model = Group
@@ -294,7 +299,9 @@ class UserRoleSerializer(ModelSerializer, NestedHyperlinkedModelSerializer):
         }
         content_object = data["content_object"]
         if content_object:
-            content_type = ContentType.objects.get_for_model(content_object)
+            content_type = ContentType.objects.get_for_model(
+                content_object, for_concrete_model=False
+            )
             if not data["role"].permissions.filter(content_type__pk=content_type.id).exists():
                 raise serializers.ValidationError(
                     _("The role '{}' does not carry any permission for that object.").format(
@@ -344,7 +351,9 @@ class GroupRoleSerializer(ModelSerializer, NestedHyperlinkedModelSerializer):
         }
         content_object = data["content_object"]
         if content_object:
-            content_type = ContentType.objects.get_for_model(content_object)
+            content_type = ContentType.objects.get_for_model(
+                content_object, for_concrete_model=False
+            )
             if not data["role"].permissions.filter(content_type__pk=content_type.id).exists():
                 raise serializers.ValidationError(
                     _("The role '{}' does not carry any permission for that object.").format(

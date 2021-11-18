@@ -105,7 +105,7 @@ def get_version_from_model(in_model):
     Returns:
         (str, str): tuple containing owning-plugin's (distribution, version)
     """
-    app_label = ContentType.objects.get_for_model(in_model).app_label
+    app_label = ContentType.objects.get_for_model(in_model, for_concrete_model=False).app_label
     app_config_module = apps.get_app_config(app_label).name
     maybe_the_distribution_name = app_config_module.split(".")[0]
     version = get_distribution(maybe_the_distribution_name).version  # hope for the best!
