@@ -11,6 +11,7 @@ from django.contrib.postgres.fields import ArrayField
 from django.db import connection, models
 from django.utils import timezone
 from django.conf import settings
+from django_currentuser.middleware import get_current_authenticated_user
 
 from pulpcore.app.models import (
     AutoAddObjPermsMixin,
@@ -20,6 +21,7 @@ from pulpcore.app.models import (
 )
 from pulpcore.constants import TASK_CHOICES, TASK_FINAL_STATES, TASK_STATES
 from pulpcore.exceptions import AdvisoryLockError, exception_to_dict
+from pulpcore.app.role_util import get_objects_for_user
 from pulpcore.tasking.constants import TASKING_CONSTANTS
 
 _logger = logging.getLogger(__name__)
@@ -139,6 +141,22 @@ def _uuid_to_advisory_lock(value):
     return ((value >> 64) ^ value) & 0x7FFFFFFFFFFFFFFF
 
 
+class TaskManager(models.Manager):
+    """
+    Scopes initial queryset to only Tasks the user has the `core.view_task` permission on.
+
+    If there is no user available, the usual queryset is return that does *not* provide user
+    isolation.
+    """
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        current_user = get_current_authenticated_user()
+        if current_user:
+            return get_objects_for_user(current_user, "core.view_task", qs=qs)
+        return qs
+
+
 class Task(BaseModel, AutoDeleteObjPermsMixin, AutoAddObjPermsMixin):
     """
     Represents a task
@@ -186,6 +204,8 @@ class Task(BaseModel, AutoDeleteObjPermsMixin, AutoAddObjPermsMixin):
     reserved_resources_record = ArrayField(models.CharField(max_length=256), null=True)
 
     ACCESS_POLICY_VIEWSET_NAME = "tasks"
+
+    objects = TaskManager()
 
     def __str__(self):
         return "Task: {name} [{state}]".format(name=self.name, state=self.state)

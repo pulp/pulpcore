@@ -1,0 +1,1 @@
+Introduced a queryset scoping qs default on the Task manager for the ORM.

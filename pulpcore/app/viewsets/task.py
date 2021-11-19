@@ -67,7 +67,6 @@ class TaskViewSet(
     minimal_serializer_class = MinimalTaskSerializer
     filter_backends = (OrderingFilter, DjangoFilterBackend)
     ordering = "-pulp_created"
-    queryset_filtering_required_permission = "core.view_task"
 
     DEFAULT_ACCESS_POLICY = {
         "statements": [
