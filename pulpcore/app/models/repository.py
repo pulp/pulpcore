@@ -139,6 +139,25 @@ class Repository(MasterModel):
 
             return version
 
+    def initialize_new_version(self, new_version):
+        """
+        Initialize the new RepositoryVersion with plugin-provided code.
+
+        This method should be overridden by plugin writers for an opportunity for plugin input. This
+        method is intended to be called with the incomplete
+        :class:`pulpcore.app.models.RepositoryVersion` to validate or modify the content.
+
+        This method does not adjust the value of complete, or save the `RepositoryVersion` itself.
+        Its intent is to allow the plugin writer an opportunity for plugin input before any other
+        actions performed on the new `RepositoryVersion`.
+
+        Args:
+            new_version (pulpcore.app.models.RepositoryVersion): The incomplete RepositoryVersion to
+                finalize.
+
+        """
+        pass
+
     def finalize_new_version(self, new_version):
         """
         Finalize the incomplete RepositoryVersion with plugin-provided code.
@@ -957,6 +976,8 @@ class RepositoryVersion(BaseModel):
         Returns:
             RepositoryVersion: self
         """
+        repository = self.repository.cast()
+        repository.initialize_new_version(self)
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
