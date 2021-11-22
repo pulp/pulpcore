@@ -1,3 +1,4 @@
+aiohttp
 django
 dynaconf
 pulp-smash @ git+https://github.com/pulp/pulp-smash.git

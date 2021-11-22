@@ -1,13 +1,13 @@
 graft pulpcore/etc
 include LICENSE
 include requirements.txt
-include functest_requirements.txt
 include pyproject.toml
 include CHANGES.rst
 include COMMITMENT
 include functest_requirements.txt
 include unittest_requirements.txt
 recursive-include pulpcore/tests/functional/api/using_plugin/artifacts *
+recursive-exclude pulpcore/tests/fixtures/ *
 include CODE_OF_CONDUCT.md
 include CONTRIBUTING.md
 include COPYRIGHT
