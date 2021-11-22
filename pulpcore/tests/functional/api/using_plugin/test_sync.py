@@ -1,73 +1,187 @@
-from pulp_smash.pulp3.bindings import delete_orphans, monitor_task, PulpTestCase
-from pulp_smash.pulp3.utils import gen_repo
+import uuid
 
-from pulpcore.tests.functional.api.using_plugin.utils import (
-    gen_file_client,
-    gen_file_remote,
-)
+from pulp_smash.pulp3.bindings import monitor_task
+
 from pulpcore.client.pulp_file import (
-    ContentFilesApi,
     RepositorySyncURL,
-    RepositoriesFileApi,
-    RemotesFileApi,
 )
 from pulpcore.tests.functional.api.using_plugin.utils import (  # noqa:F401
     set_up_module as setUpModule,
 )
 
 
-class MultiplePolicySyncTestCase(PulpTestCase):
+def _run_basic_sync_and_assert(
+    remote, file_repo, file_repo_api_client, content_file_api_client, policy="on_demand"
+):
+    body = RepositorySyncURL(remote=remote.pulp_href)
+    monitor_task(file_repo_api_client.sync(file_repo.pulp_href, body).task)
+
+    # Check content is present, but no artifacts are there
+    content_response = content_file_api_client.list()
+    assert content_response.count == 3
+    for content in content_response.results:
+        if policy == "immediate":
+            assert content.artifact is not None
+        else:
+            assert content.artifact is None
+
+
+def test_http_sync_no_ssl(
+    delete_orphans_pre,
+    file_fixture_gen_remote,
+    file_repo,
+    file_repo_api_client,
+    content_file_api_client,
+):
     """
-    This test ensures that content artifacts are properly updated when syncing multiple
-    times with different policies, specifically from 'on_demand' to 'immediate'
+    Test file on_demand sync with plain http://
+    """
+    remote_on_demand = file_fixture_gen_remote(fixture_name="basic", policy="on_demand")
 
-    This test targets the following issue:
-    * `Pulp #9101 <https://pulp.plan.io/issues/9101>`_
+    _run_basic_sync_and_assert(
+        remote_on_demand, file_repo, file_repo_api_client, content_file_api_client
+    )
+
+
+def test_http_sync_ssl_tls_validation_off(
+    delete_orphans_pre,
+    file_fixture_gen_remote_ssl,
+    file_repo,
+    file_repo_api_client,
+    content_file_api_client,
+):
+    """
+    Test file on_demand sync with https:// serving from an untrusted certificate.
+    """
+    remote_on_demand = file_fixture_gen_remote_ssl(
+        fixture_name="basic", policy="on_demand", tls_validation="false"
+    )
+
+    _run_basic_sync_and_assert(
+        remote_on_demand, file_repo, file_repo_api_client, content_file_api_client
+    )
+
+
+def test_http_sync_ssl_tls_validation_on(
+    delete_orphans_pre,
+    file_fixture_gen_remote_ssl,
+    file_repo,
+    file_repo_api_client,
+    content_file_api_client,
+):
+    """
+    Test file on_demand sync with https:// and a client connection configured to trust it.
+    """
+    remote_on_demand = file_fixture_gen_remote_ssl(
+        fixture_name="basic", policy="on_demand", tls_validation="true"
+    )
+
+    _run_basic_sync_and_assert(
+        remote_on_demand, file_repo, file_repo_api_client, content_file_api_client
+    )
+
+
+def test_http_sync_ssl_tls_validation_defaults_to_on(
+    delete_orphans_pre,
+    file_fixture_gen_remote_ssl,
+    file_repo,
+    file_repo_api_client,
+    content_file_api_client,
+):
+    """
+    Test file on_demand sync with https:// and that tls validation is on by default.
     """
 
-    @classmethod
-    def setUpClass(cls):
-        """Clean out Pulp before testing."""
-        delete_orphans()
-        client = gen_file_client()
-        cls.cont_api = ContentFilesApi(client)
-        cls.repo_api = RepositoriesFileApi(client)
-        cls.remote_api = RemotesFileApi(client)
+    remote_on_demand = file_fixture_gen_remote_ssl(fixture_name="basic", policy="on_demand")
 
-    def tearDown(self):
-        """Clean up Pulp after testing."""
-        self.doCleanups()
-        delete_orphans()
+    _run_basic_sync_and_assert(
+        remote_on_demand, file_repo, file_repo_api_client, content_file_api_client
+    )
 
-    def test_ondemand_to_immediate_sync(self):
-        """Checks that content artifacts are updated following on-demand -> immediate sync."""
-        # Ensure that no content is present
-        content_response = self.cont_api.list(limit=1)
-        if content_response.count > 0:
-            self.skipTest("Please remove all file content before running this test")
 
-        # Create and sync repo w/ on_demand policy
-        repo = self.repo_api.create(gen_repo())
-        remote = self.remote_api.create(gen_file_remote(policy="on_demand"))
-        body = RepositorySyncURL(remote=remote.pulp_href)
-        monitor_task(self.repo_api.sync(repo.pulp_href, body).task)
-        self.addCleanup(self.repo_api.delete, repo.pulp_href)
-        self.addCleanup(self.remote_api.delete, remote.pulp_href)
+def test_http_sync_ssl_with_client_cert_req(
+    delete_orphans_pre,
+    file_fixture_gen_remote_client_cert_req,
+    file_repo,
+    file_repo_api_client,
+    content_file_api_client,
+):
+    """
+    Test file on_demand sync with https:// and mutual authentication between client and server.
+    """
+    remote_on_demand = file_fixture_gen_remote_client_cert_req(
+        fixture_name="basic", policy="on_demand"
+    )
 
-        # Check content is present, but no artifacts are there
-        content_response = self.cont_api.list()
-        self.assertEqual(content_response.count, 3)
-        for content in content_response.results:
-            self.assertEqual(content.artifact, None)
+    _run_basic_sync_and_assert(
+        remote_on_demand, file_repo, file_repo_api_client, content_file_api_client
+    )
 
-        # Sync again w/ immediate policy
-        remote = self.remote_api.create(gen_file_remote())
-        body = RepositorySyncURL(remote=remote.pulp_href)
-        monitor_task(self.repo_api.sync(repo.pulp_href, body).task)
-        self.addCleanup(self.remote_api.delete, remote.pulp_href)
 
-        # Check content is still present, but artifacts are now there
-        content_response = self.cont_api.list()
-        self.assertEqual(content_response.count, 3)
-        for content in content_response.results:
-            self.assertNotEqual(content.artifact, None)
+def test_ondemand_to_immediate_sync(
+    delete_orphans_pre,
+    file_fixture_gen_remote_ssl,
+    file_repo,
+    file_repo_api_client,
+    content_file_api_client,
+):
+    """
+    Test file on_demand sync does not bring in Artifacts, but a later sync with "immediate" will.
+    """
+    remote_on_demand = file_fixture_gen_remote_ssl(fixture_name="basic", policy="on_demand")
+
+    _run_basic_sync_and_assert(
+        remote_on_demand,
+        file_repo,
+        file_repo_api_client,
+        content_file_api_client,
+    )
+
+    remote_immediate = file_fixture_gen_remote_ssl(fixture_name="basic", policy="immediate")
+
+    _run_basic_sync_and_assert(
+        remote_immediate,
+        file_repo,
+        file_repo_api_client,
+        content_file_api_client,
+        policy="immediate",
+    )
+
+
+def test_header_for_sync(
+    delete_orphans_pre,
+    file_fixture_server_ssl,
+    tls_certificate_authority_cert,
+    file_remote_api_client,
+    file_repo,
+    file_repo_api_client,
+    content_file_api_client,
+):
+    """
+    Test file sync will correctly submit header data during download when configured.
+    """
+    requests_record = file_fixture_server_ssl.requests_record
+    url = file_fixture_server_ssl.make_url("/basic/PULP_MANIFEST")
+
+    header_name = "X-SOME-HEADER"
+    header_value = str(uuid.uuid4())
+    headers = [{header_name: header_value}]
+
+    remote_on_demand = file_remote_api_client.create(
+        {
+            "url": str(url),
+            "policy": "on_demand",
+            "name": str(uuid.uuid4()),
+            "ca_cert": tls_certificate_authority_cert,
+            "headers": headers,
+        }
+    )
+
+    _run_basic_sync_and_assert(
+        remote_on_demand, file_repo, file_repo_api_client, content_file_api_client
+    )
+
+    assert len(requests_record) == 1
+    assert requests_record[0].path == "/basic/PULP_MANIFEST"
+    assert header_name in requests_record[0].headers
+    assert header_value == requests_record[0].headers[header_name]
