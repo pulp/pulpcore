@@ -3,6 +3,7 @@ Content related Django models.
 """
 from gettext import gettext as _
 
+import asyncio
 import datetime
 import json
 import tempfile
@@ -744,6 +745,27 @@ class SigningService(BaseModel):
 
         try:
             return_value = json.loads(completed_process.stdout)
+        except json.JSONDecodeError:
+            raise RuntimeError("The signing service script did not return valid JSON!")
+
+        return return_value
+
+    async def asign(self, filename):
+        """Async version of sign."""
+        process = await asyncio.create_subprocess_exec(
+            self.script,
+            filename,
+            env={"PULP_SIGNING_KEY_FINGERPRINT": self.pubkey_fingerprint},
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+        )
+
+        stdout, stderr = await process.communicate()
+        if process.returncode != 0:
+            raise RuntimeError(str(stderr))
+
+        try:
+            return_value = json.loads(stdout)
         except json.JSONDecodeError:
             raise RuntimeError("The signing service script did not return valid JSON!")
 
