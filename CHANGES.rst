@@ -158,6 +158,25 @@ Removals
   `#9478 <https://pulp.plan.io/issues/9478>`_
 
 
+3.15.3 (2021-11-30)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fixed bug where Artifacts were being downloaded even if they were already saved in Pulp.
+  (backported from #9542)
+  `#9584 <https://pulp.plan.io/issues/9584>`_
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.15.2 (2021-09-02)
 ===================
 REST API
