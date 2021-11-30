@@ -24,17 +24,6 @@ PROTOCOL_MAP = {
 }
 
 
-def user_agent():
-    """
-    Produce a User-Agent string to identify Pulp and relevant system info.
-    """
-    pulp_version = get_distribution("pulpcore").version
-    python = "{} {}.{}.{}-{}{}".format(sys.implementation.name, *sys.version_info)
-    uname = platform.uname()
-    system = f"{uname.system} {uname.machine}"
-    return f"pulpcore/{pulp_version} ({python}, {system}) (aiohttp {aiohttp_version})"
-
-
 class DownloaderFactory:
     """
     A factory for creating downloader objects that are configured from with remote settings.
@@ -90,6 +79,17 @@ class DownloaderFactory:
         self._semaphore = asyncio.Semaphore(value=download_concurrency)
         atexit.register(self._session_cleanup)
 
+    @staticmethod
+    def user_agent():
+        """
+        Produce a User-Agent string to identify Pulp and relevant system info.
+        """
+        pulp_version = get_distribution("pulpcore").version
+        python = "{} {}.{}.{}-{}{}".format(sys.implementation.name, *sys.version_info)
+        uname = platform.uname()
+        system = f"{uname.system} {uname.machine}"
+        return f"pulpcore/{pulp_version} ({python}, {system}) (aiohttp {aiohttp_version})"
+
     def _session_cleanup(self):
         asyncio.get_event_loop().run_until_complete(self._session.close())
 
@@ -125,7 +125,7 @@ class DownloaderFactory:
         if sslcontext:
             tcp_conn_opts["ssl_context"] = sslcontext
 
-        headers = MultiDict({"User-Agent": user_agent()})
+        headers = MultiDict({"User-Agent": DownloaderFactory.user_agent()})
         if self._remote.headers is not None:
             for header_dict in self._remote.headers:
                 user_agent_header = header_dict.pop("User-Agent", None)

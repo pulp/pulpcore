@@ -1,6 +1,6 @@
 from django.test import TestCase
 
-from pulpcore.download.factory import DownloaderFactory, user_agent
+from pulpcore.download.factory import DownloaderFactory
 from pulpcore.plugin.models import Remote
 
 
@@ -9,7 +9,7 @@ class DownloaderFactoryHeadersTestCase(TestCase):
         remote = Remote.objects.create(url="http://example.org/", name="foo")
         factory = DownloaderFactory(remote)
         downloader = factory.build(remote.url)
-        default_user_agent = user_agent()
+        default_user_agent = DownloaderFactory.user_agent()
         self.assertEqual(downloader.session.headers["User-Agent"], default_user_agent)
         remote.delete()
 
@@ -19,7 +19,7 @@ class DownloaderFactoryHeadersTestCase(TestCase):
         )
         factory = DownloaderFactory(remote)
         downloader = factory.build(remote.url)
-        default_user_agent = user_agent()
+        default_user_agent = DownloaderFactory.user_agent()
         expected_user_agent = f"{default_user_agent}, foo"
         self.assertEqual(downloader.session.headers["User-Agent"], expected_user_agent)
         remote.delete()
