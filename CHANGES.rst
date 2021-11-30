@@ -1761,6 +1761,29 @@ Improved Documentation
   `#7555 <https://pulp.plan.io/issues/7555>`_
 
 
+3.7.9 (2021-11-30)
+==================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Prevented a Redis failure scenario from causing the tasking system to back up due to "tasking system
+  locks" not being released, even on worker restart.
+  (backported from #7907)
+  `#9547 <https://pulp.plan.io/issues/9547>`_
+- Prevent proxy credentials to be passed to aiohttp, so they no longer appear in stack traces.
+  This is a rewritten backport of #8167.
+  `#9573 <https://pulp.plan.io/issues/9573>`_
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.7.8 (2021-08-24)
 ==================
 REST API
