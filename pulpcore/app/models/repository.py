@@ -394,7 +394,7 @@ class Remote(MasterModel):
                 self._download_throttler = Throttler(rate_limit=self.rate_limit)
                 return self._download_throttler
 
-    def get_downloader(self, remote_artifact=None, url=None, **kwargs):
+    def get_downloader(self, remote_artifact=None, url=None, download_factory=None, **kwargs):
         """
         Get a downloader from either a RemoteArtifact or URL that is configured with this Remote.
 
@@ -408,6 +408,8 @@ class Remote(MasterModel):
             remote_artifact (:class:`~pulpcore.app.models.RemoteArtifact`): The RemoteArtifact to
                 download.
             url (str): The URL to download.
+            download_factory (:class:`~pulpcore.plugin.download.DownloadFactory`): The download
+                factory to be used.
             kwargs (dict): This accepts the parameters of
                 :class:`~pulpcore.plugin.download.BaseDownloader`.
 
@@ -433,7 +435,9 @@ class Remote(MasterModel):
                 kwargs["expected_digests"] = expected_digests
             if remote_artifact.size:
                 kwargs["expected_size"] = remote_artifact.size
-        return self.download_factory.build(url, **kwargs)
+        if download_factory is None:
+            download_factory = self.download_factory
+        return download_factory.build(url, **kwargs)
 
     def get_remote_artifact_url(self, relative_path=None, request=None):
         """
