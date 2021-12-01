@@ -19,7 +19,7 @@ from rest_framework.serializers import ValidationError
 
 from pulpcore.app.models import Group
 from pulpcore.app.models.role import GroupRole, Role, UserRole
-from pulpcore.app.viewsets import BaseFilterSet, NamedModelViewSet, NAME_FILTER_OPTIONS
+from pulpcore.app.viewsets import BaseFilterSet, NamedModelViewSet, RolesMixin, NAME_FILTER_OPTIONS
 from pulpcore.app.serializers import (
     GroupSerializer,
     GroupUserSerializer,
@@ -107,6 +107,7 @@ class GroupViewSet(
     mixins.RetrieveModelMixin,
     mixins.ListModelMixin,
     mixins.DestroyModelMixin,
+    RolesMixin,
 ):
     """
     ViewSet for Group.
@@ -138,7 +139,7 @@ class GroupViewSet(
                 "condition": "has_model_perms:core.add_group",
             },
             {
-                "action": ["retrieve"],
+                "action": ["retrieve", "my_permissions"],
                 "principal": "authenticated",
                 "effect": "allow",
                 "condition": "has_model_or_obj_perms:core.view_group",
@@ -154,6 +155,12 @@ class GroupViewSet(
                 "principal": "authenticated",
                 "effect": "allow",
                 "condition": "has_model_or_obj_perms:core.delete_group",
+            },
+            {
+                "action": ["list_roles", "add_role", "remove_role"],
+                "principal": "authenticated",
+                "effect": "allow",
+                "condition": ["has_model_or_obj_perms:auth.manage_roles_group"],
             },
         ],
         "creation_hooks": [
@@ -172,6 +179,7 @@ class GroupViewSet(
             "core.view_group",
             "core.change_group",
             "core.delete_group",
+            "core.manage_roles_group",
         ],
         "core.group_viewer": [
             "core.view_group",

@@ -307,3 +307,6 @@ class Group(LifecycleModelMixin, BaseGroup, AutoAddObjPermsMixin):
 
     class Meta:
         proxy = True
+        permissions = [
+            ("manage_roles_group", "Can manage role assignments on group"),
+        ]
