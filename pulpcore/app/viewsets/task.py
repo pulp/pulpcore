@@ -20,7 +20,7 @@ from pulpcore.app.serializers import (
     WorkerSerializer,
 )
 from pulpcore.app.tasks import purge
-from pulpcore.app.viewsets import BaseFilterSet, NamedModelViewSet
+from pulpcore.app.viewsets import BaseFilterSet, NamedModelViewSet, RolesMixin
 from pulpcore.app.viewsets.base import DATETIME_FILTER_OPTIONS, NAME_FILTER_OPTIONS
 from pulpcore.app.viewsets.custom_filters import (
     HyperlinkRelatedFilter,
@@ -64,7 +64,11 @@ class TaskFilter(BaseFilterSet):
 
 
 class TaskViewSet(
-    NamedModelViewSet, mixins.RetrieveModelMixin, mixins.ListModelMixin, mixins.DestroyModelMixin
+    NamedModelViewSet,
+    mixins.RetrieveModelMixin,
+    mixins.ListModelMixin,
+    mixins.DestroyModelMixin,
+    RolesMixin,
 ):
     queryset = Task.objects.all()
     endpoint_name = "tasks"
@@ -79,7 +83,7 @@ class TaskViewSet(
         "statements": [
             {"action": ["list"], "principal": "authenticated", "effect": "allow"},
             {
-                "action": ["retrieve"],
+                "action": ["retrieve", "my_permissions"],
                 "principal": "authenticated",
                 "effect": "allow",
                 "condition": "has_model_or_obj_perms:core.view_task",
@@ -103,6 +107,12 @@ class TaskViewSet(
                 "principal": "authenticated",
                 "effect": "allow",
             },
+            {
+                "action": ["list_roles", "add_role", "remove_role"],
+                "principal": "authenticated",
+                "effect": "allow",
+                "condition": "has_model_or_obj_perms:core.manage_roles_task",
+            },
         ],
         "creation_hooks": [
             {
@@ -114,7 +124,12 @@ class TaskViewSet(
     LOCKED_ROLES = {
         "core.task_owner": {
             "description": "Allow all actions on a task.",
-            "permissions": ["core.view_task", "core.change_task", "core.delete_task"],
+            "permissions": [
+                "core.view_task",
+                "core.change_task",
+                "core.delete_task",
+                "core.manage_roles_task",
+            ],
         },
         "core.task_viewer": ["core.view_task"],
     }

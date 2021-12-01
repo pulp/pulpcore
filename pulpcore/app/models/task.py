@@ -279,6 +279,9 @@ class Task(BaseModel, AutoDeleteObjPermsMixin, AutoAddObjPermsMixin):
 
     class Meta:
         indexes = [models.Index(fields=["pulp_created"])]
+        permissions = [
+            ("manage_roles_task", "Can manage role assignments on task"),
+        ]
 
 
 class TaskGroup(BaseModel):
