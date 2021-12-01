@@ -50,9 +50,9 @@ class UserRoleTestCase(TestCase):
     def test_user_role(self):
         assign_role("role1", self.user)
         self.assertTrue(self.user.has_perm("core.view_repository"))
-        self.assertTrue(self.user.has_perm("core.view_repository", self.repository))
+        self.assertFalse(self.user.has_perm("core.view_repository", self.repository))
         self.assertEqual(self.user.get_all_permissions(), {"core.view_repository"})
-        self.assertEqual(self.user.get_all_permissions(self.repository), {"core.view_repository"})
+        self.assertEqual(self.user.get_all_permissions(self.repository), set())
         remove_role("role1", self.user)
 
     def test_group_object_role(self):
@@ -66,9 +66,9 @@ class UserRoleTestCase(TestCase):
     def test_group_role(self):
         assign_role("role2", self.group)
         self.assertTrue(self.user.has_perm("core.view_remote"))
-        self.assertTrue(self.user.has_perm("core.view_remote", self.remote))
+        self.assertFalse(self.user.has_perm("core.view_remote", self.remote))
         self.assertEqual(self.user.get_all_permissions(), {"core.view_remote"})
-        self.assertEqual(self.user.get_all_permissions(self.remote), {"core.view_remote"})
+        self.assertEqual(self.user.get_all_permissions(self.remote), set())
         remove_role("role2", self.group)
 
     def test_combination_role(self):
@@ -76,7 +76,7 @@ class UserRoleTestCase(TestCase):
         assign_role("role2", self.group)
         self.assertEqual(self.user.get_all_permissions(), {"core.view_remote"})
         self.assertEqual(self.user.get_all_permissions(self.repository), {"core.view_repository"})
-        self.assertEqual(self.user.get_all_permissions(self.remote), {"core.view_remote"})
+        self.assertEqual(self.user.get_all_permissions(self.remote), set())
         self.assertEqual(
             set(
                 get_objects_for_user(
