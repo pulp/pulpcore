@@ -1,6 +1,5 @@
 from gettext import gettext as _
 
-from django.db.models import Q
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.auth.backends import BaseBackend
 from django.contrib.auth.models import Permission
@@ -22,15 +21,16 @@ class ObjectRolePermissionBackend(BaseBackend):
             # Cannot have a permission that does not exist.
             return False
 
-        # Check for global roles
-        if user_obj.object_roles.filter(object_id=None, role__permissions=permission).exists():
-            return True
-        if GroupRole.objects.filter(
-            group__in=user_obj.groups.all(), object_id=None, role__permissions=permission
-        ).exists():
-            return True
+        if obj is None:
+            # Check for global roles
+            if user_obj.object_roles.filter(object_id=None, role__permissions=permission).exists():
+                return True
+            if GroupRole.objects.filter(
+                group__in=user_obj.groups.all(), object_id=None, role__permissions=permission
+            ).exists():
+                return True
 
-        if obj is not None:
+        else:
             obj_type = ContentType.objects.get_for_model(obj)
             if permission.content_type == obj_type:
                 # Check object specific roles
@@ -69,11 +69,8 @@ class ObjectRolePermissionBackend(BaseBackend):
             result = (
                 user_obj.object_roles.filter(role__permissions__content_type=obj_type)
                 .filter(
-                    Q(object_id=None)
-                    | Q(
-                        content_type=obj_type,
-                        object_id=obj.pk,
-                    )
+                    content_type=obj_type,
+                    object_id=obj.pk,
                 )
                 .values("role__permissions__content_type__app_label", "role__permissions__codename")
                 .distinct()
@@ -83,11 +80,8 @@ class ObjectRolePermissionBackend(BaseBackend):
                     group__in=user_obj.groups.all(), role__permissions__content_type=obj_type
                 )
                 .filter(
-                    Q(object_id=None)
-                    | Q(
-                        content_type=obj_type,
-                        object_id=obj.pk,
-                    )
+                    content_type=obj_type,
+                    object_id=obj.pk,
                 )
                 .values("role__permissions__content_type__app_label", "role__permissions__codename")
                 .distinct()
