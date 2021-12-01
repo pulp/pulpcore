@@ -509,7 +509,7 @@ class Handler:
                 pass
             else:
                 if ca.artifact:
-                    return await self._serve_content_artifact(ca, headers)
+                    return await self._serve_content_artifact(ca, headers, request)
                 else:
                     return await self._stream_content_artifact(
                         request, StreamResponse(headers=headers), ca
@@ -537,7 +537,7 @@ class Handler:
                     pass
                 else:
                     if ca.artifact:
-                        return await self._serve_content_artifact(ca, headers)
+                        return await self._serve_content_artifact(ca, headers, request)
                     else:
                         return await self._stream_content_artifact(
                             request, StreamResponse(headers=headers), ca
@@ -583,7 +583,7 @@ class Handler:
                 pass
             else:
                 if ca.artifact:
-                    return await self._serve_content_artifact(ca, headers)
+                    return await self._serve_content_artifact(ca, headers, request)
                 else:
                     return await self._stream_content_artifact(
                         request, StreamResponse(headers=headers), ca
@@ -610,7 +610,7 @@ class Handler:
                 ra = await sync_to_async(get_remote_artifact_blocking)()
                 ca = ra.content_artifact
                 if ca.artifact:
-                    return await self._serve_content_artifact(ca, headers)
+                    return await self._serve_content_artifact(ca, headers, request)
                 else:
                     return await self._stream_content_artifact(
                         request, StreamResponse(headers=headers), ca
@@ -747,7 +747,7 @@ class Handler:
                 content_artifact.save()
         return artifact
 
-    async def _serve_content_artifact(self, content_artifact, headers):
+    async def _serve_content_artifact(self, content_artifact, headers, request):
         """
         Handle response for a Content Artifact with the file present.
 
@@ -758,6 +758,7 @@ class Handler:
             content_artifact (:class:`pulpcore.app.models.ContentArtifact`): The Content Artifact to
                 respond with.
             headers (dict): A dictionary of response headers.
+            request(:class:`~aiohttp.web.Request`): The request to prepare a response for.
 
         Raises:
             :class:`aiohttp.web_exceptions.HTTPFound`: When we need to redirect to the file
@@ -777,7 +778,10 @@ class Handler:
             if headers.get("Content-Type"):
                 parameters["ResponseContentType"] = headers.get("Content-Type")
             url = URL(
-                artifact_file.storage.url(artifact_file.name, parameters=parameters), encoded=True
+                artifact_file.storage.url(
+                    artifact_file.name, parameters=parameters, http_method=request.method
+                ),
+                encoded=True,
             )
             raise HTTPFound(url)
         elif settings.DEFAULT_FILE_STORAGE == "storages.backends.azure_storage.AzureStorage":

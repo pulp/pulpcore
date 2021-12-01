@@ -193,7 +193,10 @@ class ContentCache(AsyncCache):
         """
         super().__init__()
         self.default_base_key = base_key or self.default_base_key
-        self.keys = keys or (CacheKeys.path,)
+        self.keys = keys or (
+            CacheKeys.path,
+            CacheKeys.method,
+        )
         self.default_expires_ttl = expires_ttl or self.default_expires_ttl
         self.auth = auth
 
