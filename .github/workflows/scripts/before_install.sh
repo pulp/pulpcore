@@ -87,6 +87,17 @@ fi
 cd ..
 
 
+git clone --depth=1 https://github.com/pulp/pulp-smash.git
+
+if [ -n "$PULP_SMASH_PR_NUMBER" ]; then
+  cd pulp-smash
+  git fetch --depth=1 origin pull/$PULP_SMASH_PR_NUMBER/head:$PULP_SMASH_PR_NUMBER
+  git checkout $PULP_SMASH_PR_NUMBER
+  cd ..
+fi
+
+pip install --upgrade --force-reinstall ./pulp-smash
+
 
 git clone --depth=1 https://github.com/pulp/pulp-openapi-generator.git
 if [ -n "$PULP_OPENAPI_GENERATOR_PR_NUMBER" ]; then
@@ -115,7 +126,7 @@ cd ..
 
 
 
-git clone --depth=1 https://github.com/pulp/pulp_file.git --branch main
+git clone --depth=1 https://github.com/pulp/pulp_file.git --branch 1.10
 cd pulp_file
 
 if [ -n "$PULP_FILE_PR_NUMBER" ]; then
