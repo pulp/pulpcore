@@ -64,7 +64,7 @@ if [[ -n $(echo -e $COMMIT_MSG | grep -P "Required PR:.*" | grep -v "https") ]];
   exit 1
 fi
 
-if [ "$GITHUB_EVENT_NAME" = "pull_request" ] || [ "${BRANCH_BUILD}" = "1" -a "${BRANCH}" != "master" ]
+if [ "$GITHUB_EVENT_NAME" = "pull_request" ] || [ "${BRANCH_BUILD}" = "1" -a "${BRANCH}" != "main" ]
 then
   export PULPCORE_PR_NUMBER=$(echo $COMMIT_MSG | grep -oP 'Required\ PR:\ https\:\/\/github\.com\/pulp\/pulpcore\/pull\/(\d+)' | awk -F'/' '{print $7}')
   export PULP_SMASH_PR_NUMBER=$(echo $COMMIT_MSG | grep -oP 'Required\ PR:\ https\:\/\/github\.com\/pulp\/pulp-smash\/pull\/(\d+)' | awk -F'/' '{print $7}')
