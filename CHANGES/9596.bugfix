@@ -1,2 +1,0 @@
-Fixed bug where Artifacts were being downloaded even if they were already saved in Pulp.
-(backported from #9542)

@@ -17,6 +17,28 @@ Changelog
 
 .. towncrier release notes start
 
+3.16.1 (2021-12-02)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fixed bug where Artifacts were being downloaded even if they were already saved in Pulp.
+  (backported from #9542)
+  `#9596 <https://pulp.plan.io/issues/9596>`_
+- Fixed bug where the content app would stop working after a brief loss of connection to the database. 
+  (backported from #9276)
+  `#9598 <https://pulp.plan.io/issues/9598>`_
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.16.0 (2021-10-05)
 ===================
 REST API
