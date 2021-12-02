@@ -29,9 +29,14 @@ tail -v -n +1 .ci/ansible/vars/main.yaml
 echo "PULP CONFIG:"
 tail -v -n +1 .ci/ansible/settings/settings.* ~/.config/pulp_smash/settings.json
 
-if [[ "$TEST" == 'pulp' || "$TEST" == 'performance' || "$TEST" == 'upgrade' || "$TEST" == 's3' || "$TEST" == 'azure' || "$TEST" == "plugin-from-pypi" ]]; then
+if [[ "$TEST" == 'pulp' || "$TEST" == 'performance' || "$TEST" == 'upgrade' || "$TEST" == 's3' || "$TEST" == 'azure' || "$TEST" == "plugin-from-pypi" || "$TEST" == "generate-bindings" ]]; then
   # Many functional tests require these
   cmd_prefix dnf install -yq lsof which dnf-plugins-core
+fi
+
+if [[ "${REDIS_DISABLED:-false}" == true ]]; then
+  cmd_prefix bash -c "s6-svc -d /var/run/s6/services/redis"
+  echo "The Redis service was disabled for $TEST"
 fi
 
 if [[ -f $POST_BEFORE_SCRIPT ]]; then
