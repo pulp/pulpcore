@@ -37,7 +37,6 @@ def get_redis_status():
 
     try:
         is_redis_connected = status_response["redis_connection"]["connected"]
-    except KeyError:
+    except (KeyError, TypeError):
         is_redis_connected = False
-
     return is_redis_connected

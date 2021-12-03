@@ -7,7 +7,7 @@ from pulpcore.cache import Cache, ConnectionError
 
 try:
     is_redis_connected = Cache().redis.ping()
-except ConnectionError:
+except (ConnectionError, AttributeError):
     is_redis_connected = False
 
 

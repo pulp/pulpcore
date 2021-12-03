@@ -105,6 +105,10 @@ AUTHENTICATION_BACKENDS
 Redis Settings
 --------------
 
+.. warning::
+
+   To enable usage of Redis the `CACHE_ENABLED`_ option must be set to `True`.
+
 The following Redis settings can be set in your Pulp config:
 
   * REDIS_URL
@@ -118,12 +122,12 @@ Below are some common settings used for Redis configuration.
 REDIS_HOST
 ^^^^^^^^^^
 
-   The hostname for Redis. By default Pulp will try to connect to Redis on localhost.
+   The hostname for Redis.
 
 REDIS_PORT
 ^^^^^^^^^^
 
-   The port for Redis. By default Pulp will try to connect to Redis on port 6379.
+   The port for Redis.
 
 REDIS_PASSWORD
 ^^^^^^^^^^^^^^
@@ -205,7 +209,7 @@ CACHE_ENABLED
    .. note:: This feature is provided as a tech-preview
 
    Store cached responses from the content app into Redis. This setting improves the performance
-   of the content app under heavy load for similar requests. Defaults to ``True``.
+   of the content app under heavy load for similar requests. Defaults to ``False``.
 
    .. note::
      The entire response is not stored in the cache. Only the location of the file needed to

@@ -60,7 +60,7 @@ class StatusView(APIView):
         if settings.CACHE_ENABLED:
             redis_status = {"connected": self._get_redis_conn_status()}
         else:
-            redis_status = None
+            redis_status = {"connected": False}
 
         db_status = {"connected": self._get_db_conn_status()}
 
