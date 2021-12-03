@@ -3,6 +3,10 @@ import json
 
 from functools import wraps
 
+from django.http import HttpResponseRedirect, HttpResponse, FileResponse as ApiFileResponse
+
+from rest_framework.request import Request as ApiRequest
+
 from aiohttp.web import FileResponse, Response, HTTPSuccessful, Request
 from aiohttp.web_exceptions import HTTPFound
 
@@ -34,7 +38,8 @@ def connection_error_wrapper(func):
         """Handle connection errors, specific to the sync context, raised by the Redis client."""
         try:
             return func(*args, **kwargs)
-        except ConnectionError:
+        except (ConnectionError, TypeError):
+            # TypeError is raised when an invalid port number for the Redis connection is configured
             return None
 
     return wrapper
@@ -48,7 +53,8 @@ def aconnection_error_wrapper(func):
         """Handle connection errors, specific to the async context, raised by the Redis client."""
         try:
             return await func(*args, **kwargs)
-        except AConnectionError:
+        except (AConnectionError, TypeError):
+            # TypeError is raised when an invalid port number for the Redis connection is configured
             return None
 
     return wrapper
@@ -112,6 +118,116 @@ class Cache:
         return self.redis.delete(*base_key)
 
 
+class SyncContentCache(Cache):
+    """Cache object meant to be used within the synchronous context."""
+
+    RESPONSE_TYPES = {
+        "FileResponse": ApiFileResponse,
+        "Response": HttpResponse,
+        "Redirect": HttpResponseRedirect,
+    }
+
+    def __init__(self, base_key=None, expires_ttl=None, keys=None, auth=None):
+        """
+        Initiates a cache instance to be used for dealing with a django server.
+
+        Args:
+            base_key: a string to group entries under, defaults to DEFAULT_BASE_KEY,
+                      can be a callable taking the request and cache instance as arguments
+            expires_ttl: length in seconds entries should live in the cache, EXPIRES_TTL is default
+            keys: a list of CacheKeys to use for key creation upon entry placement,
+                (path, method) is default
+            auth: a callable to check authorization of the request; takes the request, cache
+                  instance, and base_key as arguments.
+        """
+        super().__init__()
+        self.default_base_key = base_key or self.default_base_key
+        self.keys = keys or (
+            CacheKeys.path,
+            CacheKeys.method,
+        )
+        self.default_expires_ttl = expires_ttl or self.default_expires_ttl
+        self.auth = auth
+
+    def __call__(self, func):
+        """A decorator to make the handler cached."""
+        if not settings.CACHE_ENABLED:
+            return func
+
+        def cached_function(*args, **kwargs):
+            request = self.get_request_from_args(args)
+            bk = self.default_base_key
+            if callable(self.default_base_key):
+                bk = self.default_base_key(request, self)
+            if self.auth:
+                self.auth(request, self, bk)
+            key = self.make_key(request)
+            # Check cache
+            response = self.make_response(key, bk)
+            if response is None:
+                # Cache miss, create new entry
+                response = self.make_entry(key, bk, func, args, kwargs, self.default_expires_ttl)
+            return response
+
+        return cached_function
+
+    def get_request_from_args(self, args):
+        """Finds the request object from list of args"""
+        for arg in args:
+            if isinstance(arg, ApiRequest):
+                return arg
+
+    def make_response(self, key, base_key):
+        """Tries to find the cached entry and turn it into a proper response"""
+        entry = self.get(key, base_key)
+        if not entry:
+            return None
+        entry = json.loads(entry)
+        response_type = entry.pop("type", None)
+        if not response_type or response_type not in self.RESPONSE_TYPES:
+            # Bad entry, delete from cache
+            self.delete(key, base_key)
+            return None
+
+        response = self.RESPONSE_TYPES[response_type](**entry)
+        response.headers["X-PULP-CACHE"] = "HIT"
+        return response
+
+    def make_entry(self, key, base_key, handler, args, kwargs, expires=DEFAULT_EXPIRES_TTL):
+        """Gets the response for the request and try to turn it into a cacheable entry"""
+        response = handler(*args, **kwargs)
+        entry = {"headers": dict(response.headers), "status": response.status_code}
+        response.headers["X-PULP-CACHE"] = "MISS"
+        if isinstance(response, HttpResponseRedirect):
+            entry["redirect_to"] = str(response.headers["Location"])
+            entry["type"] = "Redirect"
+        elif isinstance(response, ApiFileResponse):
+            entry["path"] = str(response.filename)
+            entry["type"] = "FileResponse"
+        elif isinstance(response, HttpResponse):
+            entry["content"] = response.content.decode("utf-8")
+            entry["type"] = "Response"
+        else:
+            # We don't cache StreamResponses or errors
+            return response
+
+        # TODO look into smaller format, maybe some compression on the text
+        self.set(key, json.dumps(entry), expires, base_key=base_key)
+        return response
+
+    def make_key(self, request):
+        """Makes the key based off the request"""
+        all_keys = {
+            CacheKeys.path: request.path,
+            CacheKeys.method: request.method,
+            # TODO: this may fail when the host is behind multiple proxies
+            # https://docs.djangoproject.com/en/3.2/ref/request-response/
+            CacheKeys.host: request.get_host(),
+        }
+        key = ":".join(all_keys[k] for k in self.keys)
+        return key
+
+
 class AsyncCache:
     """Base class for asynchronous Pulp Cache"""
 
@@ -170,7 +286,7 @@ class AsyncCache:
         return await self.redis.delete(*base_key)
 
 
-class ContentCache(AsyncCache):
+class AsyncContentCache(AsyncCache):
     """Cache object meant to be used for the content app"""
 
     RESPONSE_TYPES = {
@@ -187,7 +303,8 @@ class ContentCache(AsyncCache):
             base_key: a string to group entries under, defaults to DEFAULT_BASE_KEY,
                       can be a callable taking the request and cache instance as arguments
             expires_ttl: length in seconds entries should live in the cache, EXPIRES_TTL is default
-            keys: a list of CacheKeys to use for key creation upon entry placement, path is default
+            keys: a list of CacheKeys to use for key creation upon entry placement,
+                (path, method) is default
             auth: a callable to check authorization of the request; takes the request, cache
                   instance, and base_key as arguments.
         """
@@ -205,7 +322,7 @@ class ContentCache(AsyncCache):
         if not settings.CACHE_ENABLED:
             return func
 
-        async def cached_function(*args):
+        async def cached_function(*args, **kwargs):
             request = self.get_request_from_args(args)
             bk = self.default_base_key
             if callable(self.default_base_key):
@@ -217,7 +334,9 @@ class ContentCache(AsyncCache):
             response = await self.make_response(key, bk)
             if response is None:
                 # Cache miss, create new entry
-                response = await self.make_entry(key, bk, func, args, self.default_expires_ttl)
+                response = await self.make_entry(
+                    key, bk, func, args, kwargs, self.default_expires_ttl
+                )
             return response
 
         return cached_function
@@ -234,6 +353,14 @@ class ContentCache(AsyncCache):
         if not entry:
             return None
         entry = json.loads(entry)
+
+        if binary := entry.pop("body", None):
+            # raw binary data were translated to their hexadecimal representation and saved in
+            # the cache as a regular string; now, it is necessary to translate the data back
+            # to its original representation that will be returned in the HTTP response BODY:
+            # https://docs.aiohttp.org/en/stable/web_reference.html#response
+            entry["body"] = bytes.fromhex(binary)
+
         response_type = entry.pop("type", None)
         if not response_type or response_type not in self.RESPONSE_TYPES:
             # Bad entry, delete from cache
@@ -243,10 +370,10 @@ class ContentCache(AsyncCache):
         response.headers.update({"X-PULP-CACHE": "HIT"})
         return response
 
-    async def make_entry(self, key, base_key, handler, args, expires=86400):
+    async def make_entry(self, key, base_key, handler, args, kwargs, expires=DEFAULT_EXPIRES_TTL):
         """Gets the response for the request and try to turn it into a cacheable entry"""
         try:
-            response = await handler(*args)
+            response = await handler(*args, **kwargs)
         except (HTTPSuccessful, HTTPFound) as e:
             response = e
 
@@ -257,7 +384,11 @@ class ContentCache(AsyncCache):
             entry["type"] = "FileResponse"
         elif isinstance(response, (Response, HTTPSuccessful)):
             body = response.body
-            entry["text"] = getattr(body, "_value", body).decode("utf-8")
+            if isinstance(body, bytes):
+                # convert bytes into a json dump-able string
+                entry["body"] = body.hex()
+            else:
+                entry["text"] = getattr(body, "_value", body).decode("utf-8")
             entry["type"] = "Response"
         elif isinstance(response, HTTPFound):
             entry["location"] = str(response.location)
@@ -274,12 +405,9 @@ class ContentCache(AsyncCache):
         """Makes the key based off the request"""
         # Might potentially have to make this async if keys require async data from request
         all_keys = {
-            CacheKeys.path: request.match_info["path"],
+            CacheKeys.path: request.path,
             CacheKeys.method: request.method,
             CacheKeys.host: request.url.host,
         }
         key = ":".join(all_keys[k] for k in self.keys)
         return key
-
-
-# TODO Add Cache object for non async redis connection/ aka Django requests

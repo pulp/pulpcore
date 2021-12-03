@@ -39,7 +39,7 @@ from pulpcore.app.models import (  # noqa: E402: module level not at top of file
 from pulpcore.exceptions import UnsupportedDigestValidationError  # noqa: E402
 
 from jinja2 import Template  # noqa: E402: module level not at top of file
-from pulpcore.cache import ContentCache  # noqa: E402
+from pulpcore.cache import AsyncContentCache  # noqa: E402
 
 log = logging.getLogger(__name__)
 
@@ -185,7 +185,7 @@ class Handler:
                 if not present:
                     await cached.set(guard_key, str(guard), base_key=base_key)
 
-    @ContentCache(
+    @AsyncContentCache(
         base_key=lambda req, cac: Handler.find_base_path_cached(req, cac),
         auth=lambda req, cac, bk: Handler.auth_cached(req, cac, bk),
     )
