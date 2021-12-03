@@ -8,6 +8,8 @@ _a_conn = None
 
 
 def _get_connection_from_class(redis_class):
+    if not settings.get("CACHE_ENABLED"):
+        return None
     redis_url = settings.get("REDIS_URL")
     if redis_url is not None:
         return redis_class.from_url(redis_url)

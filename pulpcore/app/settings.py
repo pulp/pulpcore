@@ -200,8 +200,8 @@ DATABASES = {
 
 # Redis default config
 REDIS_URL = None
-REDIS_HOST = "localhost"
-REDIS_PORT = 6379
+REDIS_HOST = None
+REDIS_PORT = None
 REDIS_DB = 0
 REDIS_PASSWORD = None
 REDIS_SSL = False
@@ -257,7 +257,7 @@ ALLOWED_EXPORT_PATHS = []
 PROFILE_STAGES_API = False
 
 # https://docs.pulpproject.org/pulpcore/configuration/settings.html#pulp-cache
-CACHE_ENABLED = True
+CACHE_ENABLED = False
 CACHE_SETTINGS = {
     "EXPIRES_TTL": 600,  # 10 minutes
 }
@@ -310,6 +310,19 @@ settings = dynaconf.DjangoDynaconf(
 # HERE ENDS DYNACONF EXTENSION LOAD (No more code below this line)
 
 _logger = getLogger(__name__)
+
+# Post-dyna-conf check if user provided a redis connection when enabling cache
+try:
+    if CACHE_ENABLED:
+        REDIS_URL or (REDIS_HOST and REDIS_PORT)
+except NameError:
+    raise ImproperlyConfigured(
+        _(
+            "CACHE_ENABLED is enabled but it requires to have REDIS configured. Please check "
+            "https://docs.pulpproject.org/pulpcore/configuration/settings.html#redis-settings "
+            "for more information."
+        )
+    )
 
 try:
     CONTENT_ORIGIN

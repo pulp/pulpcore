@@ -158,6 +158,11 @@ Redis
 Pulp can use Redis to cache requests to the content app. This can be installed on a different host
 or the same host that Pulp is running on.
 
+.. note::
+
+    Despite its huge performance improvement, Pulp doesn't use Redis by default
+    and must be configured manually.
+
 To install Redis, refer to your package manager or the
 `Redis download docs <https://redis.io/download>`_.
 
