@@ -1,0 +1,2 @@
+The ``pulpcore-worker`` binary no longer accepts the ``--resource-manager`` flag. There is no
+resource manager anymore, so this flag is no longer needed.
