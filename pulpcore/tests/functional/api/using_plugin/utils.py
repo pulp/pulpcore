@@ -61,6 +61,12 @@ def populate_pulp(cfg, url=None):
     return client.get(FILE_CONTENT_PATH)
 
 
+def gen_pulpcore_client():
+    """Return an OBJECT for pulpcore client."""
+    configuration = config.get_config().get_bindings_config()
+    return CoreApiClient(configuration)
+
+
 def gen_file_client():
     """Return an OBJECT for file client."""
     configuration = config.get_config().get_bindings_config()
