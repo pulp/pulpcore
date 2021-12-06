@@ -92,9 +92,9 @@ PyPI Installation
 .. note::
 
     In place of using the systemd unit files provided in the `systemd-setup` section, you can run
-    the commands yourself inside of a shell. This is fine for development but not recommended in production::
+    the commands yourself inside of a shell. This is fine for development but not recommended for
+    production::
 
-    $ /path/to/python/bin/pulpcore-worker --resource-manager
     $ /path/to/python/bin/pulpcore-worker
 
 10. Collect Static Media for live docs and browsable API::
