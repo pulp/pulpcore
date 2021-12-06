@@ -20,6 +20,8 @@ from pulp_smash.pulp3.utils import (
 )
 from requests.exceptions import HTTPError
 
+from pulpcore.client.pulpcore import ApiException, StatusApi
+
 from pulpcore.client.pulp_file import (
     ContentFilesApi,
     DistributionsFileApi,
@@ -42,6 +44,7 @@ from pulpcore.tests.functional.api.using_plugin.utils import (
     create_file_publication,
     gen_file_remote,
     gen_file_client,
+    gen_pulpcore_client,
     monitor_task,
 )
 from pulpcore.tests.functional.api.using_plugin.utils import set_up_module as setUpModule  # noqa
@@ -413,8 +416,16 @@ class ContentServePublicationDistributionTestCase(unittest.TestCase):
             postgresql_found, "PostgreSQL service not found or is not active. Can't restart it."
         )
         svc_mgr.restart([postgresql_service_name])
-        # Wait for postgres to come back and all services to recover
-        sleep(2)
+        # Wait for postgres to come back and pulpcore-api to recover
+        status_api = StatusApi(gen_pulpcore_client())
+        for i in range(5):
+            sleep(2)
+            try:
+                status_api.status_read()
+                break
+            except ApiException:
+                if i == 4:
+                    raise
         self.setup_download_test("immediate")
         self.do_test_content_served()
         url_fragments = [
