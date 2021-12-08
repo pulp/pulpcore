@@ -374,7 +374,7 @@ def pulp_import(importer_pk, path, toc):
     )
     CreatedResource.objects.create(content_object=the_import)
 
-    with tempfile.TemporaryDirectory() as temp_dir:
+    with tempfile.TemporaryDirectory(dir=".") as temp_dir:
         with tarfile.open(path, "r:gz") as tar:
             tar.extractall(path=temp_dir)
 
