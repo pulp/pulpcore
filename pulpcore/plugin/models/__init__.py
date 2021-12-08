@@ -18,6 +18,7 @@ from pulpcore.app.models import (  # noqa
     Distribution,
     Export,
     Exporter,
+    Group,
     GroupProgressReport,
     Import,
     Importer,

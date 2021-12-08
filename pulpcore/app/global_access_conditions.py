@@ -295,7 +295,7 @@ def has_group_obj_perms(request, view, action, permission):
 
         {
             ...
-            "condition": "has_group_obj_perms:auth.group_delete",
+            "condition": "has_group_obj_perms:core.group_delete",
         },
 
     Args:
@@ -304,7 +304,7 @@ def has_group_obj_perms(request, view, action, permission):
             authorization.
         action (str): The action being performed, e.g. "destroy".
         permission (str): The name of the Group Permission to be checked. In the form
-            `app_label.codename`, e.g. "auth.group_change".
+            `app_label.codename`, e.g. "core.group_change".
 
     Returns:
         True if the user has the Permission on the ``Group`` specified in the URL named by the
@@ -325,7 +325,7 @@ def has_group_model_or_obj_perms(request, view, action, permission):
 
         {
             ...
-            "condition": "has_group_model_or_obj_perms:auth.group_delete",
+            "condition": "has_group_model_or_obj_perms:core.group_delete",
         },
 
     Args:
@@ -334,7 +334,7 @@ def has_group_model_or_obj_perms(request, view, action, permission):
             authorization.
         action (str): The action being performed, e.g. "destroy".
         permission (str): The name of the Group Permission to be checked. In the form
-            `app_label.codename`, e.g. "auth.group_change".
+            `app_label.codename`, e.g. "core.group_change".
 
     Returns:
         True if the user has the Permission on the ``Group`` specified in the URL named by the
