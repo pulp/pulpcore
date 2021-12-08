@@ -202,7 +202,7 @@ class RemoteSerializer(ModelSerializer):
         required=False,
     )
     rate_limit = serializers.IntegerField(
-        help_text=_("Limits total download rate in requests per second"),
+        help_text=_("Limits requests per second for each concurrent downloader"),
         allow_null=True,
         required=False,
     )
