@@ -22,7 +22,7 @@ class GenericRelationModel(BaseModel):
 
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
     object_id = models.UUIDField()
-    content_object = GenericForeignKey("content_type", "object_id")
+    content_object = GenericForeignKey("content_type", "object_id", for_concrete_model=False)
 
     class Meta:
         abstract = True

@@ -31,7 +31,7 @@ class Label(LifecycleModel):
     key = models.CharField(max_length=200, db_index=True)
     value = models.TextField(null=True, db_index=True)
 
-    content_object = GenericForeignKey("content_type", "object_id")
+    content_object = GenericForeignKey("content_type", "object_id", for_concrete_model=False)
 
     class Meta:
         unique_together = [["content_type", "object_id", "key"]]
