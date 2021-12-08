@@ -21,6 +21,13 @@ The ``SigningService`` base class already provides the fully implemented ``sign(
 the ``validate()`` method (which must be implemented by each subclass), and the ``save()`` method (which
 calls the ``validate()`` method, but is otherwise fully implemented).
 
+.. note::
+
+    The ``sign()`` function will be calling the provided script to give the administrator the
+    freedom to define, how the signature is obtained. It is their responsibility to setup the
+    software or hardware facilities for signing and make the script use them. The plugin writer
+    however should provide a reasonably easy default script based on e.g. a simple call to ``gpg``.
+
 In order to sign metadata, plugin writers are required to call the ``sign()`` method of the signing service
 being used. This method invokes the signing script (or other executable) which is provided by the
 administrator who instantiates a concrete signing service. Instantiating/creating a concrete signing service
@@ -42,6 +49,7 @@ requires inheriting from ``SiginingService`` and then implementing ``validate()`
 
     The script may read the fingerprint of the key it should use for signing, from the
     ``PULP_SIGNING_KEY_FINGERPRINT`` environment variable.
+    It is possible to pass a dictionary of environment variables to the signing script if need be.
 
     The json is converted to a python dict and returned by the ``sign()`` method. If an error occurs, a
     runtime error is raised instead. All of this is enforced by the ``validate()`` method at the time of
