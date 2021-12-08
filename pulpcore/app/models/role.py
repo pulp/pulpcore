@@ -44,7 +44,7 @@ class UserRole(BaseModel):
     role = models.ForeignKey(Role, related_name="object_users", on_delete=models.CASCADE)
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE, null=True)
     object_id = models.CharField(max_length=255, null=True)
-    content_object = GenericForeignKey("content_type", "object_id")
+    content_object = GenericForeignKey("content_type", "object_id", for_concrete_model=False)
 
     class Meta:
         unique_together = (("user", "role", "content_type", "object_id"),)
@@ -66,7 +66,7 @@ class GroupRole(BaseModel):
     role = models.ForeignKey(Role, related_name="object_groups", on_delete=models.CASCADE)
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE, null=True)
     object_id = models.CharField(max_length=255, null=True)
-    content_object = GenericForeignKey("content_type", "object_id")
+    content_object = GenericForeignKey("content_type", "object_id", for_concrete_model=False)
 
     class Meta:
         unique_together = (("group", "role", "content_type", "object_id"),)

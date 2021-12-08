@@ -83,7 +83,7 @@ class ContentObjectField(serializers.CharField):
         try:
             obj = NamedModelViewSet.get_resource(data)
         except serializers.ValidationError:
-            raise serializers.ValidationError(_("Invalid value for 'obj': {}.").format(data))
+            raise serializers.ValidationError(_("Invalid value: {}.").format(data))
         return {"content_object": obj}
 
 
