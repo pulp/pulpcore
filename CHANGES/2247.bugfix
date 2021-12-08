@@ -1,0 +1,4 @@
+PulpImporter now unpacks into the task-worker's working directory rather than /tmp. Unpacking
+large files into /tmp could cause the operation to fail, or even cause stability issues for
+Pulp instance, due to running /tmp out of space.
+
