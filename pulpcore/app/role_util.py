@@ -28,7 +28,7 @@ def assign_role(rolename, entity, obj=None):
 
     Args:
         rolename (str): Name of the role to assign.
-        entity (django.contrib.auth.User or django.contrib.auth.Group): Entity to gain the role.
+        entity (django.contrib.auth.User or pulpcore.app.models.Group): Entity to gain the role.
         obj (Optional[pulpcore.app.models.BaseModel]): Object the role permisssions are to be
             asserted on.
     """
@@ -54,7 +54,7 @@ def remove_role(rolename, entity, obj=None):
 
     Args:
         rolename (str): Name of the role to assign.
-        entity (django.contrib.auth.User or django.contrib.auth.Group): Entity to lose the role.
+        entity (django.contrib.auth.User or pulpcore.app.models.Group): Entity to lose the role.
         obj (Optional[pulpcore.app.models.BaseModel]): Object the role permisssions are to be
             asserted on.
     """
