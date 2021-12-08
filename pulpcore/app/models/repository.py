@@ -288,7 +288,7 @@ class Remote(MasterModel):
         sock_connect_timeout (models.FloatField): Value for aiohttp.ClientTimeout.sock_connect
         sock_read_timeout (models.FloatField): Value for aiohttp.ClientTimeout.sock_read
         headers (models.JSONField): Headers set on the aiohttp.ClientSession
-        rate_limit (models.IntegerField): Limits total download rate in requests per second.
+        rate_limit (models.IntegerField): Limits requests per second for each concurrent downloader
     """
 
     TYPE = "remote"
