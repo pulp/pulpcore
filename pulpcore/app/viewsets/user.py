@@ -160,7 +160,7 @@ class GroupViewSet(
                 "action": ["list_roles", "add_role", "remove_role"],
                 "principal": "authenticated",
                 "effect": "allow",
-                "condition": ["has_model_or_obj_perms:auth.manage_roles_group"],
+                "condition": ["has_model_or_obj_perms:core.manage_roles_group"],
             },
         ],
         "creation_hooks": [
