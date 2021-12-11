@@ -609,7 +609,11 @@ class RolesMixin:
     @action(detail=True, methods=["get"])
     def my_permissions(self, request, pk=None):
         obj = self.get_object()
-        return Response({"permissions": list(request.user.get_all_permissions(obj))})
+        app_label = obj._meta.app_label
+        permissions = [
+            ".".join((app_label, codename)) for codename in request.user.get_all_permissions(obj)
+        ]
+        return Response({"permissions": permissions})
 
 
 class BaseFilterSet(filterset.FilterSet):
