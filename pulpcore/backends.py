@@ -62,6 +62,17 @@ class ObjectRolePermissionBackend(BaseBackend):
                 .values("role__permissions__content_type__app_label", "role__permissions__codename")
                 .distinct()
             )
+            return [
+                item["role__permissions__content_type__app_label"]
+                + "."
+                + item["role__permissions__codename"]
+                for item in result
+            ] + [
+                item["role__permissions__content_type__app_label"]
+                + "."
+                + item["role__permissions__codename"]
+                for item in group_result
+            ]
 
         else:
             obj_type = ContentType.objects.get_for_model(obj, for_concrete_model=False)
@@ -72,7 +83,7 @@ class ObjectRolePermissionBackend(BaseBackend):
                     content_type=obj_type,
                     object_id=obj.pk,
                 )
-                .values("role__permissions__content_type__app_label", "role__permissions__codename")
+                .values("role__permissions__codename")
                 .distinct()
             )
             group_result = (
@@ -83,15 +94,9 @@ class ObjectRolePermissionBackend(BaseBackend):
                     content_type=obj_type,
                     object_id=obj.pk,
                 )
-                .values("role__permissions__content_type__app_label", "role__permissions__codename")
+                .values("role__permissions__codename")
                 .distinct()
             )
-        return [
-            f"{item['role__permissions__content_type__app_label']}."
-            f"{item['role__permissions__codename']}"
-            for item in result
-        ] + [
-            f"{item['role__permissions__content_type__app_label']}."
-            f"{item['role__permissions__codename']}"
-            for item in group_result
+        return [item["role__permissions__codename"] for item in result] + [
+            item["role__permissions__codename"] for item in group_result
         ]
