@@ -17,6 +17,160 @@ Changelog
 
 .. towncrier release notes start
 
+3.17.0 (2021-12-14)
+===================
+REST API
+--------
+
+Features
+~~~~~~~~
+
+- Added a ``/tasks/purge/`` API to do bulk-deletion of old tasks.
+
+  Over time, the database can fill with task-records. This API allows
+  an installation to bulk-remove records based on their completion
+  timestamps.
+
+  NOTE: this endpoint is in tech-preview and may change in backwards
+  incompatible ways in the future.
+  `#8554 <https://pulp.plan.io/issues/8554>`_
+- Added a role model to support RBAC and the utility functions ``assign_role`` and ``remove_role``.
+
+  The field ``permissions_assignment`` of access policies has been renamed to ``creation_hooks``. A
+  compatibility patch has been added to be removed with pulpcore=3.20.
+
+  The ``permissions`` argument to ``creation_hooks`` has been deprecated to be removed with
+  pulpcore=3.20.
+  `#9411 <https://pulp.plan.io/issues/9411>`_
+- Added views to assign model and object level roles to users and groups.
+  `#9413 <https://pulp.plan.io/issues/9413>`_
+- Rewrote existing access policies on viewsets to use roles.
+  `#9415 <https://pulp.plan.io/issues/9415>`_
+- Added validation to prevent credentials in remote urls. Also added data migration to move
+  credentials out of remote url and into remote username/password fields for existing remotes.
+  `#9459 <https://pulp.plan.io/issues/9459>`_
+- Reworked RBAC Content Guards to now use roles. Added new endpoints ``{list, add, remove}_roles`` and ``my_permissions`` to the RBAC content guard viewset.
+  `#9498 <https://pulp.plan.io/issues/9498>`_
+- Content-type and Content-disposition headers are now sent in the AzureStorage.url.
+  `#9518 <https://pulp.plan.io/issues/9518>`_
+- SigningService scripts can now access the public key fingerprint using the ``PULP_SIGNING_KEY_FINGERPRINT`` environment variable.
+  This allows for more generic scripts, that do not need to "guess" (hardcode) what key they should use.
+  `#9532 <https://pulp.plan.io/issues/9532>`_
+- Added object specific endpoints ``{list,add}_roles``, ``remove_roles`` and ``my_permissions`` to tasks and groups viewsets.
+  `#9604 <https://pulp.plan.io/issues/9604>`_
+- Added a ``reset`` endpoint to the access policy viewset to revert to the provided default uncustomized access policy.
+  `#9606 <https://pulp.plan.io/issues/9606>`_
+
+
+Bugfixes
+~~~~~~~~
+
+- PulpImporter now unpacks into the task-worker's working directory rather than /tmp. Unpacking
+  large files into /tmp could cause the operation to fail, or even cause stability issues for
+  Pulp instance, due to running /tmp out of space.
+  `#8610 <https://pulp.plan.io/issues/8610>`_
+- Missing worker records are now kept in the database for seven days allowing time for post-mortem
+  analysis of them. The user-facing data in the status API remains unmodified.
+  `#8988 <https://pulp.plan.io/issues/8988>`_
+- Made Pulp to be fault-tolerant to Redis server connection issues.
+  `#8997 <https://pulp.plan.io/issues/8997>`_
+- Cache is now properly invalidated after reclaim disk task.
+  `#9215 <https://pulp.plan.io/issues/9215>`_
+- Fixed bug where the content app would stop working after a brief loss of connection to the database.
+  `#9276 <https://pulp.plan.io/issues/9276>`_
+- Improved messaging around timeout requests.
+  `#9301 <https://pulp.plan.io/issues/9301>`_
+- Updated the distribution validation to properly handle the use of ``repository`` / ``repository_version`` / ``publication``.
+  `#9434 <https://pulp.plan.io/issues/9434>`_
+- Fixed issue with listing repository versions while running orphan cleanup task.
+  `#9481 <https://pulp.plan.io/issues/9481>`_
+- Fixed erroneous ordering filters from appearing in HTML views and causing 500 errors when used.
+  `#9496 <https://pulp.plan.io/issues/9496>`_
+- Fixed bug where Artifacts were being downloaded even if they were already saved in Pulp.
+  `#9542 <https://pulp.plan.io/issues/9542>`_
+- Fixed a bug in pulpcore-worker, where wakeup and cancel signals could be lost due to a race
+  condition.
+  `#9549 <https://pulp.plan.io/issues/9549>`_
+- Fixed bug where chunked uploads were being assembled in /tmp.
+  `#9550 <https://pulp.plan.io/issues/9550>`_
+- Created a proxy model for Groups to allow using creation_hooks with them.
+  `#9588 <https://pulp.plan.io/issues/9588>`_
+- Fixed permission errors on artifact retrieval from object storage when redis caching is enabled.
+  `#9595 <https://pulp.plan.io/issues/9595>`_
+
+
+Improved Documentation
+~~~~~~~~~~~~~~~~~~~~~~
+
+- Adjusted the RBAC documentation for the roles framework.
+  `#9411 <https://pulp.plan.io/issues/9411>`_
+- Added documentation for ``DB_ENCRYPTION_KEY`` setting.
+  `#9495 <https://pulp.plan.io/issues/9495>`_
+- Fixed the path to uploaded artifacts.
+  `#9527 <https://pulp.plan.io/issues/9527>`_
+
+
+Removals
+~~~~~~~~
+
+- The ``pulpcore-worker`` binary no longer accepts the ``--resource-manager`` flag. There is no
+  resource manager anymore, so this flag is no longer needed.
+  `#9327 <https://pulp.plan.io/issues/9327>`_
+- Removed tech previewed ``assign_permission`` and ``remove_permission`` endpoints from RBAC content guard viewset.
+  `#9498 <https://pulp.plan.io/issues/9498>`_
+
+
+Misc
+~~~~
+
+- `#9353 <https://pulp.plan.io/issues/9353>`_, `#9354 <https://pulp.plan.io/issues/9354>`_, `#9506 <https://pulp.plan.io/issues/9506>`_
+
+
+Plugin API
+----------
+
+Features
+~~~~~~~~
+
+- Added ``get_objects_for_user`` to support queryset filtering by roles. 
+  Added hooks in ``AutoAddObjPermsMixin`` to support auto-assignment of roles.
+
+  Changed the lookup for creation hooks so hooks need to be registered in
+  ``REGISTERED_CREATION_HOOKS`` on the model to be used. The signature for creation hooks that are
+  registered must match the exploded version of the dict parameters from the access policy.
+  Unregistered creation hooks are deprecated and support will be dropped in pulpcore 3.20.
+  `#9411 <https://pulp.plan.io/issues/9411>`_
+- Made RepositoryAddRemoveContentSerializer available for plugin writers.
+  `#9504 <https://pulp.plan.io/issues/9504>`_
+- Added ability to pass headers through the AzureStorage.url.
+  `#9518 <https://pulp.plan.io/issues/9518>`_
+- ``Remote.get_remote_artifact_url`` now accepts a ``request`` parameter.
+  `#9554 <https://pulp.plan.io/issues/9554>`_
+- Added ``initialize_new_version`` function to ``Repository`` model.
+  `#9579 <https://pulp.plan.io/issues/9579>`_
+- `DownloaderFactory.user_agent()` method is now available if plugin needs to generate User-Agent header value to use in their custom (subclasssed) downloader factory.
+  `#9591 <https://pulp.plan.io/issues/9591>`_
+- Added ability to use a custom download factory. `Remote.get_downloader` now accepts a `download_factory` parameter.
+  `#9592 <https://pulp.plan.io/issues/9592>`_
+- ``Handler._serve_content_artifact`` method accepts new positional argument ``request``.
+  `#9595 <https://pulp.plan.io/issues/9595>`_
+- Added Group model to plugin api.
+  Added ``RolesMixin`` to for viewsets to allow managing object roles based on permissions.
+  `#9604 <https://pulp.plan.io/issues/9604>`_
+- Added new async sign method ``asign`` to the ``SigningService`` model.
+  `#9615 <https://pulp.plan.io/issues/9615>`_
+- ``SigningService.sign`` and ``SigningService.asign`` now accepts a ``env_var`` parameter that makes
+  it possible to pass environment variables to the signing script.
+  `#9621 <https://pulp.plan.io/issues/9621>`_
+
+
+Bugfixes
+~~~~~~~~
+
+- Include additional information about which AccessPolicy is using deprecated policy features.
+  `#9608 <https://pulp.plan.io/issues/9608>`_
+
+
 3.16.1 (2021-12-02)
 ===================
 REST API

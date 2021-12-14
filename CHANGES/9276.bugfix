@@ -1,1 +1,0 @@
-Fixed bug where the content app would stop working after a brief loss of connection to the database. 
