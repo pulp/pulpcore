@@ -47,7 +47,7 @@ jobs:
         env:
           SECRETS_CONTEXT: ${{ toJson(secrets) }}
 
-      - name: Verify that branch name matches current version string on master branch
+      - name: Verify that branch name matches current version string on main branch
         run: |
           X_Y_VERSION=$(grep version setup.py | sed -rn 's/version="(.*)\.0((a[0-9]+)|(b[0-9]+))?\.dev",/\1/p' | awk '{$1=$1};1')
           if [[ "$X_Y_VERSION" != "${{ github.event.inputs.name }}" ]]
@@ -61,9 +61,9 @@ jobs:
           git checkout -b ${{ github.event.inputs.name }}
           git push origin ${{ github.event.inputs.name }}
 
-      - name: Bump version on master branch
+      - name: Bump version on main branch
         run: |
-          git checkout master
+          git checkout main
           bump2version --no-commit minor
 
       - name: Make a PR with version bump
@@ -73,7 +73,7 @@ jobs:
           committer: pulpbot <pulp-infra@redhat.com>
           author: pulpbot <pulp-infra@redhat.com>
           branch: minor-version-bump
-          base: master
+          base: main
           title: Bump minor version
           body: '[noissue]'
           commit-message: |
