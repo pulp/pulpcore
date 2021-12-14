@@ -1,1 +1,0 @@
-Fixed erroneous ordering filters from appearing in HTML views and causing 500 errors when used.

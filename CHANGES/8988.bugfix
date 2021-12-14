@@ -1,2 +1,0 @@
-Missing worker records are now kept in the database for seven days allowing time for post-mortem
-analysis of them. The user-facing data in the status API remains unmodified.
