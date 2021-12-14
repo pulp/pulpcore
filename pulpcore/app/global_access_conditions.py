@@ -1,5 +1,4 @@
 from pulpcore.app.models import Group
-from pulpcore.app.serializers import RepositorySyncURLSerializer
 
 
 # Model checks
@@ -143,7 +142,7 @@ def has_remote_param_obj_perms(request, view, action, permission):
         True if the user has the Permission named by the ``permission`` argument on the ``remote``
             parameter at the object-level. False otherwise.
     """
-    serializer = RepositorySyncURLSerializer(data=request.data, context={"request": request})
+    serializer = view.serializer_class(data=request.data, context={"request": request})
     serializer.is_valid(raise_exception=True)
     remote = serializer.validated_data.get("remote")
     return request.user.has_perm(permission, remote)

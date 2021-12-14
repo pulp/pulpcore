@@ -1,0 +1,3 @@
+Started using a plugin provided serializer in `has_remote_param_obj_perms` and
+`has_remote_param_model_or_obj_perms` to solve the `Unexpected field` error during sync by
+a non-admin user.
