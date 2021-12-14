@@ -1,1 +1,0 @@
-Fixed permission errors on artifact retrieval from object storage when redis caching is enabled.
