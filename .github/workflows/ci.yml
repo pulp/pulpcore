@@ -13,18 +13,18 @@ jobs:
 
   single_commit:
     name: Assert single commit
-    if: github.base_ref == 'master'
+    if: github.base_ref == 'main'
     steps:
     - name: Checkout
       uses: actions/checkout@v1
       with:
         fetch-depth: 30
-    - name: Checkout master
-      run: git fetch origin master
-    - name: create local master branch
-      run: git branch master origin/master
+    - name: Checkout main
+      run: git fetch origin main
+    - name: create local main branch
+      run: git branch main origin/main
     - name: Commit Count Check
-      run: test `git log  --oneline --no-merges HEAD ^master  | wc -l ` = 1
+      run: test `git log  --oneline --no-merges HEAD ^main  | wc -l ` = 1
     runs-on: ubuntu-latest
 
   lint:

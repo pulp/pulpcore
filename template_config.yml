@@ -6,7 +6,7 @@
 additional_repos:
 - branch: main
   name: pulp_file
-- branch: master
+- branch: main
   name: pulp-certguard
 black: true
 check_commit_message: true
@@ -36,7 +36,7 @@ plugin_caps: PULPCORE
 plugin_caps_short: PULPCORE
 plugin_dash: pulpcore
 plugin_dash_short: pulpcore
-plugin_default_branch: master
+plugin_default_branch: main
 plugin_name: pulpcore
 plugin_snake: pulpcore
 post_job_template: null
