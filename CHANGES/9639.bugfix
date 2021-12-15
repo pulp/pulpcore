@@ -1,0 +1,2 @@
+Fixed an api schema bug where both ``permission_assignment`` and ``creation_hooks`` were required
+by the ``AccessPolicy`` serializer.

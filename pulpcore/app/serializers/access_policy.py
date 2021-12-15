@@ -19,11 +19,13 @@ class AccessPolicySerializer(ModelSerializer):
             "This is deprecated. Use `creation_hooks` instead."
         ),
         source="creation_hooks",
+        required=False,
     )
 
     creation_hooks = serializers.ListField(
         child=serializers.DictField(),
         help_text=_("List of callables that may associate user roles for new objects."),
+        required=False,
     )
 
     statements = serializers.ListField(

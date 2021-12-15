@@ -52,9 +52,9 @@ class AccessPolicyTestCase(unittest.TestCase):
         self.assertTrue(task_access_policy.customized)
         self.assertEqual(task_access_policy.statements, [])
 
-        self.access_policy_api.partial_update(tasks_href, {"statements": original_statements})
+        self.access_policy_api.reset(tasks_href)
         task_access_policy = self.access_policy_api.read(tasks_href)
-        self.assertTrue(task_access_policy.customized)
+        self.assertFalse(task_access_policy.customized)
         self.assertEqual(task_access_policy.statements, original_statements)
 
     def test_creation_hooks_attr_can_be_modified(self):
@@ -72,11 +72,9 @@ class AccessPolicyTestCase(unittest.TestCase):
         self.assertTrue(groups_access_policy.customized)
         self.assertEqual(groups_access_policy.creation_hooks, [])
 
-        self.access_policy_api.partial_update(
-            groups_href, {"creation_hooks": original_creation_hooks}
-        )
+        self.access_policy_api.reset(groups_href)
         groups_access_policy = self.access_policy_api.read(groups_href)
-        self.assertTrue(groups_access_policy.customized)
+        self.assertFalse(groups_access_policy.customized)
         self.assertEqual(groups_access_policy.creation_hooks, original_creation_hooks)
 
     def test_customized_is_read_only(self):
