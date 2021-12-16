@@ -895,6 +895,9 @@ class RepositoryVersion(BaseModel):
         repo_relations.filter(version_added=self).update(version_added=next_version)
         repo_relations.filter(version_removed=self).update(version_removed=next_version)
 
+        # Update next version's counts as they have been modified
+        next_version._compute_counts()
+
     def delete(self, **kwargs):
         """
         Deletes a RepositoryVersion
