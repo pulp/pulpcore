@@ -357,11 +357,15 @@ class AddRemoveRepoVersionTestCase(unittest.TestCase):
 
     def test_delete_middle_version(self):
         """Delete a middle version."""
-        index = randint(1, len(self.repo_version_hrefs) - 2)
+        index = randint(1, len(self.repo_version_hrefs) - 3)
         delete_version(self.repo, self.repo_version_hrefs[index])
 
         with self.assertRaises(HTTPError):
             get_content(self.repo, self.repo_version_hrefs[index])
+
+        # Check added count is updated properly
+        added = get_added_content_summary(self.repo, self.repo_version_hrefs[index + 1])
+        self.assertEqual(added["file.file"], 2)
 
         for repo_version_href in self.repo_version_hrefs[index + 1 :]:
             artifact_paths = get_artifact_paths(self.repo, repo_version_href)
