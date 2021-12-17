@@ -1,0 +1,1 @@
+Fixed migration 0081 to be compatible with custom User models.
