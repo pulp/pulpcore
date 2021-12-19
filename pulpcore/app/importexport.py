@@ -3,8 +3,10 @@ import io
 import json
 import tarfile
 import tempfile
+import logging
 
 from django.conf import settings
+from django.db.models.query import QuerySet
 
 from pulpcore.app.apps import get_plugin_config
 from pulpcore.app.models.progress import ProgressReport
@@ -14,7 +16,9 @@ from pulpcore.app.modelresource import (
     ContentArtifactResource,
     RepositoryResource,
 )
-from pulpcore.constants import TASK_STATES
+from pulpcore.constants import TASK_STATES, EXPORT_BATCH_SIZE
+
+log = logging.getLogger(__name__)
 
 
 def _write_export(the_tarfile, resource, dest_dir=None):
@@ -32,16 +36,37 @@ def _write_export(the_tarfile, resource, dest_dir=None):
         dest_dir str(directory-path): directory 'inside' the tarfile to write to
     """
     filename = "{}.{}.json".format(resource.__module__, type(resource).__name__)
-    dataset = resource.export(resource.queryset)
     if dest_dir:
         dest_filename = os.path.join(dest_dir, filename)
     else:
         dest_filename = filename
 
-    data = dataset.json.encode("utf8")
-    info = tarfile.TarInfo(name=dest_filename)
-    info.size = len(data)
-    the_tarfile.addfile(info, io.BytesIO(data))
+    # If the resource is the type of QuerySet, then export the data in batch to save memory.
+    # Otherwise, export all data in oneshot. This is because the underlying libraries
+    # (json; django-import-export) do not support to stream the output to file, we export
+    # the data in batches to memory and concatenate the json lists via string manipulation.
+    with tempfile.NamedTemporaryFile(dir=os.getcwd(), mode="w", encoding="utf8") as temp_file:
+        if isinstance(resource.queryset, QuerySet):
+            temp_file.write("[")
+            total = resource.queryset.count()
+            for i in range(0, total, EXPORT_BATCH_SIZE):
+                current_batch = i + EXPORT_BATCH_SIZE
+                dataset = resource.export(resource.queryset[i:current_batch])
+                # Strip "[" and "]" as we are writing the dataset in batch
+                temp_file.write(dataset.json.lstrip("[").rstrip("]"))
+                if current_batch < total:
+                    # Write "," if not last loop
+                    temp_file.write(", ")
+            temp_file.write("]")
+        else:
+            dataset = resource.export(resource.queryset)
+            temp_file.write(dataset.json)
+
+        temp_file.flush()
+        info = tarfile.TarInfo(name=dest_filename)
+        info.size = os.path.getsize(temp_file.name)
+        with open(temp_file.name, "rb") as fd:
+            the_tarfile.addfile(info, fd)
 
 
 def export_versions(export, version_info):
