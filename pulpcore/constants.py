@@ -51,3 +51,5 @@ API_ROOT = "pulp/api/v3/"
 # adding here won't make a new type-of checksum available. sha256 MUST be here,
 # as Pulp relies on it to identify entities.
 ALL_KNOWN_CONTENT_CHECKSUMS = {"md5", "sha1", "sha224", "sha256", "sha384", "sha512"}
+
+EXPORT_BATCH_SIZE = 2000
