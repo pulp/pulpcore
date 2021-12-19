@@ -58,7 +58,7 @@ def _import_file(fpath, resource_class, do_raise=True):
     try:
         log.info(_("Importing file {}.").format(fpath))
         with open(fpath, "r") as json_file:
-            data = Dataset().load(json_file.read(), format="json")
+            data = Dataset().load(json_file, format="json")
             resource = resource_class()
             log.info(_("...Importing resource {}.").format(resource.__class__.__name__))
             return resource.import_data(data, raise_errors=do_raise)

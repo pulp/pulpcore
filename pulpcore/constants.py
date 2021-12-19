@@ -63,3 +63,5 @@ FS_EXPORT_CHOICES = (
     (FS_EXPORT_METHODS.HARDLINK, "Export by hardlinking"),
     (FS_EXPORT_METHODS.SYMLINK, "Export by symlinking"),
 )
+
+EXPORT_BATCH_SIZE = 2000
