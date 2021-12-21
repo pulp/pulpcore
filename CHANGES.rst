@@ -17,6 +17,24 @@ Changelog
 
 .. towncrier release notes start
 
+3.17.1 (2021-12-21)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fixed migration 0081 to be compatible with custom User models.
+  `#9654 <https://pulp.plan.io/issues/9654>`_
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.17.0 (2021-12-14)
 ===================
 REST API
