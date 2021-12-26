@@ -212,7 +212,6 @@ jobs:
         with:
           name: ruby-client.tar
           path: ruby-client.tar
-
       - name: Upload built docs
         if: ${{ env.TEST == 'docs' }}
         uses: actions/upload-artifact@v2
