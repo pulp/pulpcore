@@ -29,6 +29,7 @@ def commit(upload_id, sha256):
     with NamedTemporaryFile("ab") as temp_file:
         for chunk in chunks:
             temp_file.write(chunk.file.read())
+            chunk.file.close()
         temp_file.flush()
 
         file = files.PulpTemporaryUploadedFile.from_file(File(open(temp_file.name, "rb")))
