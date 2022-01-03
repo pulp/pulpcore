@@ -83,6 +83,7 @@ def export_artifacts(export, artifacts):
                     with tempfile.NamedTemporaryFile(dir=temp_dir) as temp_file:
                         temp_file.write(artifact.file.read())
                         temp_file.flush()
+                        artifact.file.close()
                         export.tarfile.add(temp_file.name, dest)
             else:
                 export.tarfile.add(artifact.file.path, dest)
