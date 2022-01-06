@@ -8,7 +8,6 @@ import tarfile
 from gettext import gettext as _
 from logging import getLogger
 
-from django.conf import settings
 from django.core.files.storage import default_storage
 from django.db.models import F
 
@@ -397,11 +396,10 @@ def pulp_import(importer_pk, path, toc):
                 artifact = Artifact.objects.get(pk=row.object_id)
                 base_path = os.path.join("artifact", artifact.sha256[0:2], artifact.sha256[2:])
                 src = os.path.join(temp_dir, base_path)
-                dest = os.path.join(settings.MEDIA_ROOT, base_path)
 
-                if not default_storage.exists(dest):
+                if not default_storage.exists(base_path):
                     with open(src, "rb") as f:
-                        default_storage.save(dest, f)
+                        default_storage.save(base_path, f)
 
         with open(os.path.join(temp_dir, REPO_FILE), "r") as repo_data_file:
             data = json.load(repo_data_file)
