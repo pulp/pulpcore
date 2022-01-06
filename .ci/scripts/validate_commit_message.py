@@ -53,6 +53,8 @@ def __check_changelog(issue):
     for match in matches:
         if match.suffix not in CHANGELOG_EXTS:
             sys.exit(f"Invalid extension for changelog entry '{match}'.")
+        if match.suffix == ".feature" and "cherry picked from commit" in message:
+            sys.exit(f"Can not backport '{match}' as it is a feature.")
 
 
 print("Checking commit message for {sha}.".format(sha=sha[0:7]))
