@@ -1,2 +1,0 @@
-Fixed PulpImport to correctly save relative to MEDIA_ROOT.
-(backported from #9660)
