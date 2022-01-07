@@ -17,6 +17,25 @@ Changelog
 
 .. towncrier release notes start
 
+3.14.10 (2022-01-07)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fixed PulpImport to correctly save relative to MEDIA_ROOT.
+  (backported from #9660)
+  `#9662 <https://pulp.plan.io/issues/9662>`_
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.14.9 (2021-11-05)
 ===================
 REST API
