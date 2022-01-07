@@ -641,6 +641,24 @@ Misc
 - `#8606 <https://pulp.plan.io/issues/8606>`_, `#9160 <https://pulp.plan.io/issues/9160>`_
 
 
+3.14.10 (2022-01-07)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fixed PulpImport to correctly save relative to MEDIA_ROOT.
+  (backported from #9660)
+  `#9662 <https://pulp.plan.io/issues/9662>`_
+
+
+Plugin API
+----------
+
+No significant changes.
+
 
 3.14.9 (2021-11-05)
 ===================
