@@ -1,4 +1,4 @@
-from pulpcore.app.models import Group
+from pulpcore.app.models import Group, Repository
 
 
 # Model checks
@@ -190,7 +190,7 @@ def has_remote_param_model_or_obj_perms(request, view, action, permission):
     return False
 
 
-# 'Repository' attribute checks
+# 'Repository' attribute checks for RepositoryVersionViewSet
 
 
 def has_repo_attr_obj_perms(request, view, action, permission):
@@ -278,6 +278,68 @@ def has_repo_attr_model_or_obj_perms(request, view, action, permission):
     if has_repo_attr_obj_perms(request, view, action, permission):
         return True
     return False
+
+
+def has_repository_obj_perms(request, view, action, permission):
+    """
+    Checks whether a user has the requested object permission on the repository in the URL.
+
+    This check is meant to be used for relations nested beneath a repository endpoint, e.g. the
+    list of repository versions belonging to that repository. It will fail for other endpoints.
+
+    ::
+
+        {
+            ...
+            "condition": "has_repository_obj_perms:file.filerepository_delete",
+        },
+
+    Args:
+        request (rest_framework.request.Request): The request being made.
+        view (subclass rest_framework.viewsets.GenericViewSet): The view being checked for
+            authorization.
+        action (str): The action being performed, e.g. "destroy".
+        permission (str): The name of the Repository Permission to be checked. In the form
+            `app_label.codename`, e.g. "file.filerepository_change".
+
+    Returns:
+        True if the user has the Permission on the ``Repository`` specified in the URL named by the
+        ``permission`` at object level. False otherwise.
+    """
+    plugin_repository = Repository.objects.get(pk=view.kwargs["repository_pk"]).cast()
+    return request.user.has_perm(permission, plugin_repository)
+
+
+def has_repository_model_or_obj_perms(request, view, action, permission):
+    """
+    Checks whether a user has the requested model or object permission on the repository in the
+    URL.
+
+    This check is meant to be used for relations nested beneath a repository endpoint, e.g. the
+    list of repository versions belonging to that repository. It will fail for other endpoints.
+
+    ::
+
+        {
+            ...
+            "condition": "has_repository_model_or_obj_perms:file.filerepository_delete",
+        },
+
+    Args:
+        request (rest_framework.request.Request): The request being made.
+        view (subclass rest_framework.viewsets.GenericViewSet): The view being checked for
+            authorization.
+        action (str): The action being performed, e.g. "destroy".
+        permission (str): The name of the Repository Permission to be checked. In the form
+            `app_label.codename`, e.g. "file.filerepository_change".
+
+    Returns:
+        True if the user has the Permission on the ``Repository`` specified in the URL named by the
+        ``permission`` at model or object level. False otherwise.
+    """
+    return request.user.has_perm(permission) or has_repository_obj_perms(
+        request, view, action, permission
+    )
 
 
 # `Group` permission checks
