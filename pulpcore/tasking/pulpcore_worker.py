@@ -301,6 +301,21 @@ class NewPulpWorker:
                         cancel_reason = "Aborted during worker shutdown."
                         break
             task_process.join()
+            if not cancel_state and task_process.exitcode != 0:
+                _logger.warn(
+                    _("Task process for %s exited with non zero exitcode %i."),
+                    task.pk,
+                    task_process.exitcode,
+                )
+                cancel_state = TASK_STATES.FAILED
+                if task_process.exitcode < 0:
+                    cancel_reason = "Killed by signal {sig_num}.".format(
+                        sig_num=-task_process.exitcode
+                    )
+                else:
+                    cancel_reason = "Task process died unexpectedly with exitcode {code}.".format(
+                        code=task_process.exitcode
+                    )
             if cancel_state:
                 self.cancel_abandoned_task(task, cancel_state, cancel_reason)
         if task.reserved_resources_record:
