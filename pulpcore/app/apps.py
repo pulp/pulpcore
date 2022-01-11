@@ -219,6 +219,8 @@ def _rename_permissions_assignment_workaround(access_policy, viewset):
 def _populate_access_policies(sender, apps, verbosity, **kwargs):
     from pulpcore.app.util import get_view_urlpattern
 
+    print("Populating access policies...")
+
     try:
         AccessPolicy = apps.get_model("core", "AccessPolicy")
     except LookupError:
@@ -231,7 +233,8 @@ def _populate_access_policies(sender, apps, verbosity, **kwargs):
             access_policy = getattr(viewset, "DEFAULT_ACCESS_POLICY", None)
             if access_policy is not None:
                 viewset_name = get_view_urlpattern(viewset)
-                _rename_permissions_assignment_workaround(access_policy, viewset)
+                print(access_policy.keys())
+                # _rename_permissions_assignment_workaround(access_policy, viewset)
                 db_access_policy, created = AccessPolicy.objects.get_or_create(
                     viewset_name=viewset_name, defaults=access_policy
                 )
