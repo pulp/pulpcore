@@ -5,7 +5,11 @@ import asyncio
 import backoff
 
 from .base import BaseDownloader, DownloadResult
-from pulpcore.exceptions import TimeoutException
+from pulpcore.exceptions import (
+    DigestValidationError,
+    SizeValidationError,
+    TimeoutException,
+)
 
 
 log = logging.getLogger(__name__)
@@ -234,6 +238,8 @@ class HttpDownloader(BaseDownloader):
             aiohttp.ServerDisconnectedError,
             TimeoutError,
             TimeoutException,
+            DigestValidationError,
+            SizeValidationError,
         )
 
         async with self.semaphore:
