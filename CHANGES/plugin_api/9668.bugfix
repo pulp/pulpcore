@@ -1,0 +1,2 @@
+Exposed adjust_roles in the plugin api.
+(backported from #9665)
