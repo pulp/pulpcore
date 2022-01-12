@@ -17,6 +17,25 @@ Changelog
 
 .. towncrier release notes start
 
+3.17.3 (2022-01-12)
+===================
+REST API
+--------
+
+No significant changes.
+
+
+Plugin API
+----------
+
+Bugfixes
+~~~~~~~~
+
+- Exposed adjust_roles in the plugin api.
+  (backported from #9665)
+  `#9668 <https://pulp.plan.io/issues/9668>`_
+
+
 3.17.2 (2022-01-06)
 ===================
 REST API
