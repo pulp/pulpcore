@@ -11,6 +11,7 @@ from pulp_smash.pulp3.bindings import monitor_task
 from pulp_smash.pulp3.utils import gen_repo
 
 from requests.exceptions import HTTPError
+import pytest
 
 from pulpcore.tests.functional.api.using_plugin.utils import gen_file_remote
 from pulpcore.tests.functional.api.using_plugin.constants import (
@@ -360,6 +361,7 @@ class CRUDRemoteTestCase(unittest.TestCase):
         self.remotes_api.partial_update(self.remote.pulp_href, data)
 
 
+@pytest.mark.parallel
 class CreatePulpLabelsRemoteTestCase(unittest.TestCase):
     """A test case for verifying whether pulp_labels are correctly assigned to a new remote."""
 
@@ -398,6 +400,7 @@ class CreatePulpLabelsRemoteTestCase(unittest.TestCase):
         self.assertEqual(remote["pulp_labels"], self.pulp_labels)
 
 
+@pytest.mark.parallel
 class RemoteFileURLsValidationTestCase(unittest.TestCase):
     """A test case that verifies the validation of remotes' URLs."""
 
