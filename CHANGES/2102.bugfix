@@ -1,0 +1,1 @@
+Taught PulpImport to retry in the event of a concurrency-collision on ContentArtifact.
