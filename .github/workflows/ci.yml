@@ -91,6 +91,11 @@ jobs:
           - TEST: azure
           - TEST: s3
           - TEST: bindings
+    outputs:
+      deprecations-pulp: ${{ steps.deprecations.outputs.deprecations-pulp }}
+      deprecations-azure: ${{ steps.deprecations.outputs.deprecations-azure }}
+      deprecations-s3: ${{ steps.deprecations.outputs.deprecations-s3 }}
+      deprecations-bindings: ${{ steps.deprecations.outputs.deprecations-bindings }}
 
     steps:
       - uses: actions/checkout@v2
@@ -191,6 +196,10 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_CONTEXT: ${{ github.event.pull_request.commits_url }}
 
+      - name: Extract Deprecations from Logs
+        id: deprecations
+        run: echo "::set-output name=deprecations-${{ matrix.env.TEST }}::$(docker logs pulp 2>&1 | grep -i pulpcore.deprecation | base64 -w 0)"
+
       - name: Logs
         if: always()
         run: |
@@ -215,6 +224,8 @@ jobs:
             FROM_PULPCORE_BRANCH: "3.11"
             FROM_PULP_CERTGUARD_BRANCH: "1.2"
             FROM_PULP_FILE_BRANCH: "1.6"
+    outputs:
+      deprecations-upgrade: ${{ steps.deprecations.outputs.deprecations-upgrade }}
 
     steps:
       - uses: actions/checkout@v2
@@ -315,6 +326,10 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_CONTEXT: ${{ github.event.pull_request.commits_url }}
 
+      - name: Extract Deprecations from Logs
+        id: deprecations
+        run: echo "::set-output name=deprecations-${{ matrix.env.TEST }}::$(docker logs pulp 2>&1 | grep -i pulpcore.deprecation | base64 -w 0)"
+
       - name: Logs
         if: always()
         run: |
@@ -326,6 +341,27 @@ jobs:
           docker exec pulp ls -latr /etc/yum.repos.d/ || true
           docker exec pulp cat /etc/yum.repos.d/* || true
           docker exec pulp pip3 list
+
+
+  deprecations:
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - name: Fail on deprecations
+        run: |
+          test -z "${{ needs.test.outputs.deprecations-pulp }}"
+          test -z "${{ needs.test.outputs.deprecations-azure }}"
+          test -z "${{ needs.test.outputs.deprecations-s3 }}"
+          test -z "${{ needs.test.outputs.deprecations-bindings }}"
+          test -z "${{ needs.test.outputs.deprecations-upgrade }}"
+      - name: Print deprecations
+        if: failure()
+        run: |
+          echo "${{ needs.test.outputs.deprecations-pulp }}" | base64 -d
+          echo "${{ needs.test.outputs.deprecations-azure }}" | base64 -d
+          echo "${{ needs.test.outputs.deprecations-s3 }}" | base64 -d
+          echo "${{ needs.test.outputs.deprecations-bindings }}" | base64 -d
+          echo "${{ needs.test.outputs.deprecations-upgrade }}" | base64 -d
 
 
 
