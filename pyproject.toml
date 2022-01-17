@@ -85,9 +85,3 @@ ignore = [
     ".ci/**",
     ".github/**",
 ]
-
-[tool.pytest.ini_options]
-markers = [
-    "parallel: marks tests as safe to run in parallel with all other parallel tests",
-    "serial: marks tests as required to run serially without any other tests also running",
-]
