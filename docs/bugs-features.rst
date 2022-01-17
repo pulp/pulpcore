@@ -2,7 +2,7 @@ Bugs, Feature and Backport Requests
 ===================================
 
 Bugs, feature and backport requests for :term:`pulpcore` are tracked with `Redmine
-<https://pulp.plan.io/projects/pulp/issues/>`_. Please see the `plugin table
+<https://github.com/pulp/pulpcore/issues/>`_. Please see the `plugin table
 <https://pulpproject.org/content-plugins/>`_ for trackers for each plugin.
 
 .. _issue-writing:
@@ -10,7 +10,7 @@ Bugs, feature and backport requests for :term:`pulpcore` are tracked with `Redmi
 How to File an Issue
 --------------------
 
-`New pulpcore issue <https://pulp.plan.io/projects/pulp/issues/new>`_.
+`New pulpcore issue <https://github.com/pulp/pulpcore/issues/new>`_.
 
 .. warning::
   Is this security related? If so, please follow the :ref:`security-bugs` procedure.

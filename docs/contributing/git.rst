@@ -47,8 +47,8 @@ broken up into paragraphs. For more on what constitutes a good commit message, w
 Pope's blog post on the subject
 <http://tbaggery.com/2008/04/19/a-note-about-git-commit-messages.html>`_.
 
-Each commit message should reference an issue in `Pulp's Redmine issue tracker
-<https://pulp.plan.io>`_. To do this you should **include both a keyword and a link** to the issue.
+Each commit message should reference an issue in `Pulp's Github issue tracker
+<https://github.com/pulp>`_. To do this you should **include both a keyword and a link** to the issue.
 
 To reference the issue (but not change its state), use ``re`` or ``ref``::
 
@@ -133,7 +133,7 @@ and all non trivial changes must be accompanied by a news entry.
 For user facing changes, put those news files into ``CHANGES/``. For Plugin API changes, put those
 into the ``CHANGES/plugin_api/`` folder.
 
-To add an entry to the news file, you first need an issue in pulp.plan.io describing the change you
+To add an entry to the news file, you first need an issue on github describing the change you
 want to make. Once you have an issue, take its number and create a file inside of the ``CHANGES/``
 or ``CHANGES/plugin_api/`` directory named after that issue number with one of the extensions below.
 

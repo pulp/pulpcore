@@ -30,7 +30,7 @@ disabled_redis_runners:
 docker_fixtures: true
 docs_test: true
 flake8: true
-issue_tracker: redmine
+issue_tracker: github
 noissue_marker: '[noissue]'
 plugin_app_label: core
 plugin_camel: Pulpcore
@@ -73,7 +73,7 @@ test_fips_nightly: false
 test_performance: false
 test_released_plugin_with_next_pulpcore_release: false
 test_s3: true
-update_redmine: true
+update_redmine: false
 upgrade_range:
 - pulp-certguard_branch: 1.2
   pulp_file_branch: 1.6

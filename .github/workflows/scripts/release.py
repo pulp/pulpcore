@@ -20,70 +20,6 @@ from git import Repo
 
 from packaging.requirements import Requirement
 
-from collections import defaultdict
-from pathlib import Path
-from redminelib import Redmine
-from redminelib.exceptions import ResourceAttrError, ResourceSetIndexError
-import json
-
-REDMINE_API_KEY = os.environ["REDMINE_API_KEY"]
-REDMINE_URL = "https://pulp.plan.io"
-REDMINE_QUERY_URL = f"{REDMINE_URL}/issues?set_filter=1&status_id=*&issue_id="
-REDMINE_PROJECT = "pulp"
-
-
-def validate_and_update_redmine_data(redmine_query_url, redmine_issues, release_version):
-    """Validate redmine milestone."""
-    error_messages = []
-    redmine = Redmine("https://pulp.plan.io", key=REDMINE_API_KEY)
-    redmine_project = redmine.project.get(REDMINE_PROJECT)
-    if redmine_project is None:
-        error_messages.append(f"Redmine project {REDMINE_PROJECT} not found.")
-    try:
-        milestone = redmine_project.versions.filter(name=release_version)[0]
-    except ResourceSetIndexError:
-        error_messages.append(f"Milestone {release_version} not found.")
-
-    stats = defaultdict(list)
-    for issue in redmine_issues:
-        redmine_issue = redmine.issue.get(int(issue))
-
-        project_name = redmine_issue.project.name
-        stats[f"project_{project_name.lower().replace(' ', '_')}"].append(issue)
-        if project_name != redmine_project.name:
-            stats["wrong_project"].append(issue)
-
-        status = redmine_issue.status.name
-        if "CLOSE" not in status and status != "MODIFIED":
-            stats["status_not_modified"].append(issue)
-
-        try:
-            issue_milestone = redmine_issue.fixed_version
-            if redmine_issue.fixed_version.id != milestone.id:
-                stats["wrong_milestone"].append(issue)
-            stats[f"milestone_{issue_milestone.name}"].append(issue)
-        except ResourceAttrError:
-            redmine.issue.update(redmine_issue.id, fixed_version_id=milestone.id)
-            stats["added_to_milestone"].append(issue)
-
-    print(f"\n\nRedmine stats: {json.dumps(stats, indent=2)}")
-    if stats.get("wrong_project"):
-        error_messages.append(
-            f"One or more issues are associated to the wrong project {stats['wrong_project']}"
-        )
-    if stats.get("status_not_modified"):
-        error_messages.append(f"One or more issues are not MODIFIED {stats['status_not_modified']}")
-    if stats.get("wrong_milestone"):
-        error_messages.append(
-            f"One or more issues are associated to the wrong milestone {stats['wrong_milestone']}"
-        )
-
-    if error_messages:
-        error_messages.append(f"Verify at {redmine_query_url}")
-        raise RuntimeError("\n".join(error_messages))
-
-    return f"{milestone.url}.json"
-
 
 async def get_package_from_pypi(package_name, plugin_path):
     """
@@ -120,18 +56,6 @@ async def get_package_from_pypi(package_name, plugin_path):
 
 def create_release_commits(repo, release_version, plugin_path):
     """Build changelog, set version, commit, bump to next dev version, commit."""
-    issues_to_close = set()
-    for filename in Path(f"{plugin_path}/CHANGES").rglob("*"):
-        if filename.stem.isdigit():
-            issue = filename.stem
-            issues_to_close.add(issue)
-
-    issues = ",".join(issues_to_close)
-    redmine_final_query = f"{REDMINE_QUERY_URL}{issues}"
-    milestone_url = validate_and_update_redmine_data(
-        redmine_final_query, issues_to_close, release_version
-    )
-
     # First commit: changelog
     os.system(f"towncrier --yes --version {release_version}")
     git = repo.git
@@ -148,18 +72,7 @@ def create_release_commits(repo, release_version, plugin_path):
     git.add(f"{plugin_path}/requirements.txt")
     git.add(f"{plugin_path}/.bumpversion.cfg")
 
-    git.commit(
-        "-m",
-        "\n".join(
-            [
-                f"Release {release_version}",
-                "",
-                f"Redmine Query: {redmine_final_query}",
-                f"Redmine Milestone: {milestone_url}",
-                "[noissue]",
-            ]
-        ),
-    )
+    git.commit("-m", f"Release {release_version}\n\n[noissue]")
 
     sha = repo.head.object.hexsha
     short_sha = git.rev_parse(sha, short=7)
@@ -180,8 +93,6 @@ def create_release_commits(repo, release_version, plugin_path):
     git.add(f"{plugin_path}/requirements.txt")
     git.add(f"{plugin_path}/.bumpversion.cfg")
     git.commit("-m", f"Bump to {new_dev_version}\n\n[noissue]")
-
-    print(f"\n\nRedmine query of issues to close:\n{redmine_final_query}")
 
     print(f"Release commit == {short_sha}")
     print(f"All changes were committed on branch: release_{release_version}")

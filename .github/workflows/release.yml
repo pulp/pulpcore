@@ -319,8 +319,7 @@ jobs:
       - name: Publish client to rubygems
         run: bash .github/workflows/scripts/publish_client_gem.sh
 
-      - name: Update Redmine
-        run: bash .ci/scripts/update_redmine.sh
+      
 
       - name: Create release on GitHub
         run: bash .github/workflows/scripts/create_release_from_tag.sh ${{ github.event.inputs.release }}
