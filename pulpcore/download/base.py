@@ -160,6 +160,7 @@ class BaseDownloader:
         self._writer.flush()
         os.fsync(self._writer.fileno())
         self._writer.close()
+        self._writer = None
         self.validate_digests()
         self.validate_size()
 
