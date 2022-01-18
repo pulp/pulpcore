@@ -1,7 +1,7 @@
 # This config represents the latest values used when running the plugin-template. Any settings that
 # were not present before running plugin-template have been added with their default values.
 
-# generated with plugin_template@2021.08.26-45-g543c0dd
+# generated with plugin_template@2021.08.26-58-gda1b288
 
 additional_repos:
 - branch: main
@@ -32,6 +32,7 @@ docs_test: true
 flake8: true
 issue_tracker: github
 noissue_marker: '[noissue]'
+parallel_test_workers: 8
 plugin_app_label: core
 plugin_camel: Pulpcore
 plugin_camel_short: Pulpcore
