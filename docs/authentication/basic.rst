@@ -29,7 +29,7 @@ header syntax::
     which is created automatically when the initial migration is applied. The password for this user
     can be set with the ``pulpcore-manager reset-admin-password`` command.
     To articulate what you'd like to see future versions of Pulp file a feature request
-    `here <https://github.com/pulp/pulpcore/issues/new>`_ or reach out via
+    `here <https://github.com/pulp/pulpcore/issues>`_ or reach out via
     `pulp-list@redhat.com <https://www.redhat.com/mailman/listinfo/pulp-list>`_.
 
 

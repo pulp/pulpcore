@@ -10,7 +10,7 @@ Bugs, feature and backport requests for :term:`pulpcore` are tracked with `Redmi
 How to File an Issue
 --------------------
 
-`New pulpcore issue <https://github.com/pulp/pulpcore/issues/new>`_.
+`New pulpcore issue <https://github.com/pulp/pulpcore/issues>`_.
 
 .. warning::
   Is this security related? If so, please follow the :ref:`security-bugs` procedure.
