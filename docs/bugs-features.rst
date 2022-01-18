@@ -1,8 +1,8 @@
 Bugs, Feature and Backport Requests
 ===================================
 
-Bugs, feature and backport requests for :term:`pulpcore` are tracked with `Redmine
-<https://github.com/pulp/pulpcore/issues/>`_. Please see the `plugin table
+Bugs, feature and backport requests for :term:`pulpcore` are tracked with `GitHub Issues
+<https://github.com/pulp/pulpcore/issues>`_. Please see the `plugin table
 <https://pulpproject.org/content-plugins/>`_ for trackers for each plugin.
 
 .. _issue-writing:
