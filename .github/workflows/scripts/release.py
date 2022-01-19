@@ -19,9 +19,9 @@ from bandersnatch.configuration import BandersnatchConfig
 from git import Repo
 
 from packaging.requirements import Requirement
+from pathlib import Path
 
 from collections import defaultdict
-from pathlib import Path
 from redminelib import Redmine
 from redminelib.exceptions import ResourceAttrError, ResourceSetIndexError
 import json
@@ -137,7 +137,7 @@ def create_release_commits(repo, release_version, plugin_path):
     git = repo.git
     git.add("CHANGES.rst")
     git.add("CHANGES/*")
-    git.commit("-m", f"{release_version} changelog\n\n[noissue]")
+    git.commit("-m", f"Add changelog for {release_version}\n\n[noissue]")
 
     # Second commit: release version
     os.system("bump2version release --allow-dirty")
