@@ -956,9 +956,9 @@ class RepositoryVersion(BaseModel):
         objects and makes new ones with each call.
         """
         with transaction.atomic():
+            RepositoryVersionContentDetails.objects.filter(repository_version=self).delete()
             counts_list = []
             for value, name in RepositoryVersionContentDetails.COUNT_TYPE_CHOICES:
-                RepositoryVersionContentDetails.objects.filter(repository_version=self).delete()
                 if value == RepositoryVersionContentDetails.ADDED:
                     qs = self.added()
                 elif value == RepositoryVersionContentDetails.PRESENT:
