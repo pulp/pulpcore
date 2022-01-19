@@ -81,6 +81,9 @@ from .task import (  # noqa
     TaskSchedule,
     Worker,
 )
+
+from .telemetry import SystemID  # noqa
+
 from .upload import (  # noqa
     Upload,
     UploadChunk,

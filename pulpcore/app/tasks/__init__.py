@@ -19,3 +19,5 @@ from .purge import purge  # noqa
 from .reclaim_space import reclaim_space  # noqa
 
 from .repository import repair_all_artifacts  # noqa
+
+from .telemetry import post_telemetry  # noqa
