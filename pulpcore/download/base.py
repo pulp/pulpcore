@@ -103,7 +103,7 @@ class BaseDownloader:
             self.semaphore = semaphore
         else:
             self.semaphore = asyncio.Semaphore()  # This will always be acquired
-        self._digests = {n: pulp_hashlib.new(n) for n in Artifact.DIGEST_FIELDS}
+        self._digests = {}
         self._size = 0
         if self.expected_digests:
             if not set(self.expected_digests).intersection(set(Artifact.DIGEST_FIELDS)):
@@ -124,6 +124,8 @@ class BaseDownloader:
         if not self._writer:
             self._writer = tempfile.NamedTemporaryFile(dir=os.getcwd(), delete=False)
             self.path = self._writer.name
+            self._digests = {n: pulp_hashlib.new(n) for n in Artifact.DIGEST_FIELDS}
+            self._size = 0
 
     async def handle_data(self, data):
         """
