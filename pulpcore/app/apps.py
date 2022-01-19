@@ -1,6 +1,7 @@
 from collections import defaultdict
 from gettext import gettext as _
 from importlib import import_module
+from datetime import timedelta
 
 from django import apps
 from django.core.exceptions import ImproperlyConfigured
@@ -8,6 +9,7 @@ from django.db.models.signals import post_migrate
 from django.utils.module_loading import module_has_submodule
 
 from pulpcore.exceptions.plugin import MissingPlugin
+
 
 VIEWSETS_MODULE_NAME = "viewsets"
 SERIALIZERS_MODULE_NAME = "serializers"
@@ -210,6 +212,15 @@ class PulpAppConfig(PulpPluginAppConfig):
         super().ready()
         from . import checks  # noqa
 
+        post_migrate.connect(
+            _populate_system_id, sender=self, dispatch_uid="populate_system_id_identifier"
+        )
+        post_migrate.connect(
+            _populate_telemetry_periodic_task,
+            sender=self,
+            dispatch_uid="populate_telemetry_periodic_task_identifier",
+        )
+
 
 def _populate_access_policies(sender, apps, verbosity, **kwargs):
     from pulpcore.app.util import get_view_urlpattern
@@ -246,6 +257,22 @@ def _populate_access_policies(sender, apps, verbosity, **kwargs):
                                 viewset_name=viewset_name
                             )
                         )
+
+
+def _populate_system_id(sender, apps, verbosity, **kwargs):
+    SystemID = apps.get_model("core", "SystemID")
+    if not SystemID.objects.exists():
+        SystemID().save()
+
+
+def _populate_telemetry_periodic_task(sender, apps, **kwargs):
+    TaskSchedule = apps.get_model("core", "TaskSchedule")
+    task_name = "pulpcore.app.tasks.telemetry.post_telemetry"
+    dispatch_interval = timedelta(days=1)
+    name = "Post Anonymous Telemetry Periodically"
+    TaskSchedule.objects.update_or_create(
+        name=name, defaults={"task_name": task_name, "dispatch_interval": dispatch_interval}
+    )
 
 
 def _populate_roles(sender, apps, verbosity, **kwargs):
