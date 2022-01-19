@@ -90,6 +90,16 @@ class Worker(BaseModel):
     last_heartbeat = models.DateTimeField(auto_now=True)
 
     @property
+    def current_task(self):
+        """
+        The task this worker is currently executing, if any.
+
+        Returns:
+            Task: The currently executing task
+        """
+        return self.tasks.filter(state="running").first()
+
+    @property
     def online(self):
         """
         Whether a worker can be considered 'online'

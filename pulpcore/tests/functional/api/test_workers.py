@@ -10,18 +10,12 @@ from requests.exceptions import HTTPError
 from pulpcore.tests.functional.utils import set_up_module as setUpModule  # noqa:F401
 from pulpcore.tests.functional.utils import skip_if
 
-_DYNAMIC_WORKER_ATTRS = ("last_heartbeat",)
+_DYNAMIC_WORKER_ATTRS = ("last_heartbeat", "current_task")
 """Worker attributes that are dynamically set by Pulp, not set by a user."""
 
 
 class WorkersTestCase(unittest.TestCase):
-    """Test actions over workers.
-
-    This test targets the following issues:
-
-    * `Pulp #3143 <https://pulp.plan.io/issues/3143>`_
-    * `Pulp Smash #945 <https://github.com/pulp/pulp-smash/issues/945>`_
-    """
+    """Test actions over workers."""
 
     @classmethod
     def setUpClass(cls):
@@ -38,6 +32,8 @@ class WorkersTestCase(unittest.TestCase):
         workers = self.client.get(WORKER_PATH)["results"]
         for worker in workers:
             for key, val in worker.items():
+                if key in _DYNAMIC_WORKER_ATTRS:
+                    continue
                 with self.subTest(key=key):
                     self.assertIsNotNone(val)
         self.worker.update(choice(workers))
