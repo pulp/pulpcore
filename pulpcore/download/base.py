@@ -7,6 +7,7 @@ import os
 import tempfile
 
 from pulpcore.app import pulp_hashlib
+from pulpcore.app.loggers import deprecation_logger
 from pulpcore.app.models import Artifact
 from pulpcore.exceptions import (
     DigestValidationError,
@@ -94,6 +95,12 @@ class BaseDownloader:
             semaphore (asyncio.Semaphore): A semaphore the downloader must acquire before running.
                 Useful for limiting the number of outstanding downloaders in various ways.
         """
+        if custom_file_object:
+            deprecation_logger.warn(
+                "The 'custom_file_object' argument to 'BaseDownloader' is"
+                "deprecated and will be removed in pulpcore==3.20; stop using it."
+            )
+
         self.url = url
         self._writer = custom_file_object
         self.path = None
