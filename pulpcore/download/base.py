@@ -124,17 +124,6 @@ class BaseDownloader:
         self._digests = {n: pulp_hashlib.new(n) for n in Artifact.DIGEST_FIELDS}
         self._size = 0
 
-    async def reset(self):
-        """
-        A coroutine that allows to reset the temporary file and the validation tracker.
-
-        All subclassed downloaders are expected to call this method in case they need to retry.
-        """
-        self._writer.seek(0)
-        self._writer.truncate()
-        self._digests = {n: pulp_hashlib.new(n) for n in Artifact.DIGEST_FIELDS}
-        self._size = 0
-
     async def handle_data(self, data):
         """
         A coroutine that writes data to the file object and compute its digests.

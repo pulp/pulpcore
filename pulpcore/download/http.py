@@ -8,6 +8,7 @@ from .base import BaseDownloader, DownloadResult
 from pulpcore.exceptions import (
     DigestValidationError,
     SizeValidationError,
+    TimeoutException,
 )
 
 
@@ -24,6 +25,7 @@ RETRYABLE_ERRORS = (
     aiohttp.ClientResponseError,
     aiohttp.ServerDisconnectedError,
     TimeoutError,
+    TimeoutException,
     DigestValidationError,
     SizeValidationError,
 )
@@ -225,7 +227,7 @@ class HttpDownloader(BaseDownloader):
             headers=response.headers,
         )
 
-    async def _run(self, extra_data=None):
+    async def run(self, extra_data=None):
         """
         Run the downloader with retry logic.
 
@@ -236,6 +238,7 @@ class HttpDownloader(BaseDownloader):
             :class:`~pulpcore.plugin.download.DownloadResult`.
 
         """
+        base = super()
         @backoff.on_exception(
             backoff.expo,
             RETRYABLE_ERRORS,
@@ -243,13 +246,11 @@ class HttpDownloader(BaseDownloader):
             giveup=http_giveup_handler,
         )
         async def run_wrapper():
-            # TODO this would probably be easier if we handled the retry logic outside of the `run`.
-            await self.reset()  # Reset the tempfile (this may be in a retry)
-            return await self._run_retryable(extra_data=extra_data)
+            return await base.run(extra_data=extra_data)
 
         return await run_wrapper()
 
-    async def _run_retryable(self, extra_data=None):
+    async def _run(self, extra_data=None):
         """
         Download, validate, and compute digests on the `url`. This is a coroutine.
 
