@@ -1,7 +1,6 @@
 import logging
 
 import aiohttp
-import asyncio
 import backoff
 
 from .base import BaseDownloader, DownloadResult
@@ -217,7 +216,6 @@ class HttpDownloader(BaseDownloader):
         while True:
             chunk = await response.content.read(1048576)  # 1 megabyte
             if not chunk:
-                await self.finalize()
                 break  # the download is done
             await self.handle_data(chunk)
         return DownloadResult(
@@ -239,6 +237,7 @@ class HttpDownloader(BaseDownloader):
 
         """
         base = super()
+
         @backoff.on_exception(
             backoff.expo,
             RETRYABLE_ERRORS,

@@ -1,0 +1,1 @@
+Deprecate the ``finalize`` method in ``BaseDownloader``.

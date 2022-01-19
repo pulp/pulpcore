@@ -5,7 +5,6 @@ from collections import namedtuple
 import logging
 import os
 from aiofiles.tempfile import NamedTemporaryFile
-import tempfile
 
 from pulpcore.app import pulp_hashlib
 from pulpcore.app.loggers import deprecation_logger
@@ -79,6 +78,8 @@ class BaseDownloader:
         expected_digests=None,
         expected_size=None,
         semaphore=None,
+        save_to_disk=True,
+        tee=None,
         *args,
         **kwargs,
     ):
@@ -95,6 +96,9 @@ class BaseDownloader:
             expected_size (int): The number of bytes the download is expected to have.
             semaphore (asyncio.Semaphore): A semaphore the downloader must acquire before running.
                 Useful for limiting the number of outstanding downloaders in various ways.
+            save_to_disk (bool): Whether the downloaded data should be saved.
+            tee (async callback): An asynchronous callback to be called with every chunk of data
+                received.
         """
         if custom_file_object:
             deprecation_logger.warn(
@@ -107,12 +111,11 @@ class BaseDownloader:
         self.path = None
         self.expected_digests = expected_digests
         self.expected_size = expected_size
-        if semaphore:
-            self.semaphore = semaphore
-        else:
-            self.semaphore = asyncio.Semaphore()  # This will always be acquired
+        self.semaphore = semaphore or asyncio.Semaphore()  # This will always be acquired
         self._digests = {}
         self._size = 0
+        self.save_to_disk = save_to_disk
+        self.tee = tee
         if self.expected_digests:
             if not set(self.expected_digests).intersection(set(Artifact.DIGEST_FIELDS)):
                 raise UnsupportedDigestValidationError(
@@ -121,8 +124,6 @@ class BaseDownloader:
                         " is specified in 'ALLOWED_CONTENT_CHECKSUMS' setting."
                     ).format(self.url)
                 )
-        self._digests = {n: pulp_hashlib.new(n) for n in Artifact.DIGEST_FIELDS}
-        self._size = 0
 
     async def handle_data(self, data):
         """
@@ -136,7 +137,10 @@ class BaseDownloader:
         Args:
             data (bytes): The data to be handled by the downloader.
         """
-        await self._writer.write(data)
+        if self.save_to_disk:
+            await self._writer.write(data)
+        if self.tee:
+            await self.tee(data)
         for algorithm in self._digests.values():
             algorithm.update(data)
         self._size += len(data)
@@ -156,10 +160,10 @@ class BaseDownloader:
                 doesn't match the size of the data passed to
                 :meth:`~pulpcore.plugin.download.BaseDownloader.handle_data`.
         """
-        await self._writer.flush()
-        os.fsync(self._writer.fileno())
-        self.validate_digests()
-        self.validate_size()
+        deprecation_logger.warn(
+            "Calling `finalize` inside the downloader subclass is deprecated."
+            " It will be removed with pulpcore==3.20."
+        )
 
     def fetch(self):
         """
@@ -228,15 +232,30 @@ class BaseDownloader:
         """
         async with self.semaphore:
             try:
-                try:
-                    async with NamedTemporaryFile(dir=".", delete=False) as tempfile:
-                        self._writer = tempfile
-                        self.path = self._writer.name
-                        return await self._run(extra_data=extra_data)
-                except:
-                    os.unlink(self.path)
-                    self.path = None
-                    raise
+                if self.save_to_disk:
+                    try:
+                        async with NamedTemporaryFile(dir=".", delete=False) as tempfile:
+                            self._writer = tempfile
+                            self.path = self._writer.name
+                            self._digests = {n: pulp_hashlib.new(n) for n in Artifact.DIGEST_FIELDS}
+                            self._size = 0
+                            download_result = await self._run(extra_data=extra_data)
+                            self.validate_digests()
+                            self.validate_size()
+                            await self._writer.flush()
+                            os.fsync(self._writer.fileno())
+                            return download_result
+                    except Exception:
+                        os.unlink(self.path)
+                        self.path = None
+                        raise
+                else:
+                    self._digests = {n: pulp_hashlib.new(n) for n in Artifact.DIGEST_FIELDS}
+                    self._size = 0
+                    download_result = await self._run(extra_data=extra_data)
+                    self.validate_digests()
+                    self.validate_size()
+                    return download_result
             except asyncio.TimeoutError:
                 raise TimeoutException(self.url)
 

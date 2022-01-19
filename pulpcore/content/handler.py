@@ -856,20 +856,13 @@ class Handler:
                 data_size_handled = data_size_handled + len(data)
             else:
                 await response.write(data)
-            if remote.policy != Remote.STREAMED:
-                await original_handle_data(data)
-
-        async def finalize():
-            if remote.policy != Remote.STREAMED:
-                await original_finalize()
 
         downloader = remote.get_downloader(
-            remote_artifact=remote_artifact, headers_ready_callback=handle_response_headers
+            remote_artifact=remote_artifact,
+            headers_ready_callback=handle_response_headers,
+            save_to_disk=remote.policy != Remote.STREAMED,
+            tee=handle_data,
         )
-        original_handle_data = downloader.handle_data
-        downloader.handle_data = handle_data
-        original_finalize = downloader.finalize
-        downloader.finalize = finalize
         download_result = await downloader.run()
 
         if remote.policy != Remote.STREAMED:
