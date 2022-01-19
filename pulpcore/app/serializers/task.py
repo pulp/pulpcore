@@ -192,10 +192,15 @@ class WorkerSerializer(ModelSerializer):
     last_heartbeat = serializers.DateTimeField(
         help_text=_("Timestamp of the last time the worker talked to the service."), read_only=True
     )
-    # disable "created" because we don't care about it
-    created = None
+    current_task = RelatedField(
+        help_text=_(
+            "The task this worker is currently executing, or empty if the worker is not "
+            "currently assigned to a task."
+        ),
+        read_only=True,
+        view_name="tasks-detail",
+    )
 
     class Meta:
         model = models.Worker
-        _base_fields = tuple(set(ModelSerializer.Meta.fields) - set(["created"]))
-        fields = _base_fields + ("name", "last_heartbeat")
+        fields = ModelSerializer.Meta.fields + ("name", "last_heartbeat", "current_task")
