@@ -243,6 +243,8 @@ class HttpDownloader(BaseDownloader):
             giveup=http_giveup_handler,
         )
         async def run_wrapper():
+            # TODO this would probably be easier if we handled the retry logic outside of the `run`.
+            await self.reset()  # Reset the tempfile (this may be in a retry)
             return await self._run_retryable(extra_data=extra_data)
 
         return await run_wrapper()

@@ -4,6 +4,7 @@ import asyncio
 from collections import namedtuple
 import logging
 import os
+from aiofiles.tempfile import NamedTemporaryFile
 import tempfile
 
 from pulpcore.app import pulp_hashlib
@@ -102,7 +103,7 @@ class BaseDownloader:
             )
 
         self.url = url
-        self._writer = custom_file_object
+        self._writer = None
         self.path = None
         self.expected_digests = expected_digests
         self.expected_size = expected_size
@@ -120,19 +121,19 @@ class BaseDownloader:
                         " is specified in 'ALLOWED_CONTENT_CHECKSUMS' setting."
                     ).format(self.url)
                 )
+        self._digests = {n: pulp_hashlib.new(n) for n in Artifact.DIGEST_FIELDS}
+        self._size = 0
 
-    def _ensure_writer_has_open_file(self):
+    async def reset(self):
         """
-        Create a temporary file on demand.
+        A coroutine that allows to reset the temporary file and the validation tracker.
 
-        Create a temporary file when it's actually used,
-        allowing plugin writers to instantiate many downloaders in memory.
+        All subclassed downloaders are expected to call this method in case they need to retry.
         """
-        if not self._writer:
-            self._writer = tempfile.NamedTemporaryFile(dir=os.getcwd(), delete=False)
-            self.path = self._writer.name
-            self._digests = {n: pulp_hashlib.new(n) for n in Artifact.DIGEST_FIELDS}
-            self._size = 0
+        self._writer.seek(0)
+        self._writer.truncate()
+        self._digests = {n: pulp_hashlib.new(n) for n in Artifact.DIGEST_FIELDS}
+        self._size = 0
 
     async def handle_data(self, data):
         """
@@ -146,9 +147,10 @@ class BaseDownloader:
         Args:
             data (bytes): The data to be handled by the downloader.
         """
-        self._ensure_writer_has_open_file()
-        self._writer.write(data)
-        self._record_size_and_digests_for_data(data)
+        await self._writer.write(data)
+        for algorithm in self._digests.values():
+            algorithm.update(data)
+        self._size += len(data)
 
     async def finalize(self):
         """
@@ -165,11 +167,8 @@ class BaseDownloader:
                 doesn't match the size of the data passed to
                 :meth:`~pulpcore.plugin.download.BaseDownloader.handle_data`.
         """
-        self._ensure_writer_has_open_file()
-        self._writer.flush()
+        await self._writer.flush()
         os.fsync(self._writer.fileno())
-        self._writer.close()
-        self._writer = None
         self.validate_digests()
         self.validate_size()
 
@@ -183,19 +182,7 @@ class BaseDownloader:
         Raises:
             Exception: Any fatal exception emitted during downloading
         """
-        done, _ = asyncio.get_event_loop().run_until_complete(asyncio.wait([self.run()]))
-        return done.pop().result()
-
-    def _record_size_and_digests_for_data(self, data):
-        """
-        Record the size and digest for an available chunk of data.
-
-        Args:
-            data (bytes): The data to have its size and digest values recorded.
-        """
-        for algorithm in self._digests.values():
-            algorithm.update(data)
-        self._size += len(data)
+        return asyncio.get_event_loop().run_until_complete(self.run())
 
     @property
     def artifact_attributes(self):
@@ -252,7 +239,15 @@ class BaseDownloader:
         """
         async with self.semaphore:
             try:
-                return await self._run(extra_data=extra_data)
+                try:
+                    async with NamedTemporaryFile(dir=".", delete=False) as tempfile:
+                        self._writer = tempfile
+                        self.path = self._writer.name
+                        return await self._run(extra_data=extra_data)
+                except:
+                    os.unlink(self.path)
+                    self.path = None
+                    raise
             except asyncio.TimeoutError:
                 raise TimeoutException(self.url)
 
