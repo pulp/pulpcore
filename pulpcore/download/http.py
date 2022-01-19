@@ -8,7 +8,6 @@ from .base import BaseDownloader, DownloadResult
 from pulpcore.exceptions import (
     DigestValidationError,
     SizeValidationError,
-    TimeoutException,
 )
 
 
@@ -16,6 +15,18 @@ log = logging.getLogger(__name__)
 
 
 logging.getLogger("backoff").addHandler(logging.StreamHandler())
+
+RETRYABLE_ERRORS = (
+    aiohttp.ClientConnectorSSLError,
+    aiohttp.ClientConnectorError,
+    aiohttp.ClientOSError,
+    aiohttp.ClientPayloadError,
+    aiohttp.ClientResponseError,
+    aiohttp.ServerDisconnectedError,
+    TimeoutError,
+    DigestValidationError,
+    SizeValidationError,
+)
 
 
 def http_giveup_handler(exc):
@@ -214,51 +225,29 @@ class HttpDownloader(BaseDownloader):
             headers=response.headers,
         )
 
-    async def run(self, extra_data=None):
+    async def _run(self, extra_data=None):
         """
-        Run the downloader with concurrency restriction and retry logic.
-
-        This method acquires `self.semaphore` before calling the actual download implementation
-        contained in `_run()`. This ensures that the semaphore stays acquired even as the `backoff`
-        wrapper around `_run()`, handles backoff-and-retry logic.
+        Run the downloader with retry logic.
 
         Args:
             extra_data (dict): Extra data passed to the downloader.
 
         Returns:
-            :class:`~pulpcore.plugin.download.DownloadResult` from `_run()`.
+            :class:`~pulpcore.plugin.download.DownloadResult`.
 
         """
-        retryable_errors = (
-            aiohttp.ClientConnectorSSLError,
-            aiohttp.ClientConnectorError,
-            aiohttp.ClientOSError,
-            aiohttp.ClientPayloadError,
-            aiohttp.ClientResponseError,
-            aiohttp.ServerDisconnectedError,
-            TimeoutError,
-            TimeoutException,
-            DigestValidationError,
-            SizeValidationError,
+        @backoff.on_exception(
+            backoff.expo,
+            RETRYABLE_ERRORS,
+            max_tries=self.max_retries + 1,
+            giveup=http_giveup_handler,
         )
+        async def run_wrapper():
+            return await self._run_retryable(extra_data=extra_data)
 
-        async with self.semaphore:
+        return await run_wrapper()
 
-            @backoff.on_exception(
-                backoff.expo,
-                retryable_errors,
-                max_tries=self.max_retries + 1,
-                giveup=http_giveup_handler,
-            )
-            async def download_wrapper():
-                try:
-                    return await self._run(extra_data=extra_data)
-                except asyncio.TimeoutError:
-                    raise TimeoutException(self.url)
-
-            return await download_wrapper()
-
-    async def _run(self, extra_data=None):
+    async def _run_retryable(self, extra_data=None):
         """
         Download, validate, and compute digests on the `url`. This is a coroutine.
 
