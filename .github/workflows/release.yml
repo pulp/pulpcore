@@ -114,11 +114,11 @@ jobs:
           echo ::group::HTTPIE
           pip install httpie
           echo ::endgroup::
-          echo "TEST=${{ matrix.env.TEST }}" >> $GITHUB_ENV
           echo "HTTPIE_CONFIG_DIR=$GITHUB_WORKSPACE/.ci/assets/httpie/" >> $GITHUB_ENV
-          echo "FROM_PULP_CERTGUARD_BRANCH=${{ matrix.FROM_PULP_CERTGUARD_BRANCH }}" >> $GITHUB_ENV
-          echo "FROM_PULP_FILE_BRANCH=${{ matrix.FROM_PULP_FILE_BRANCH }}" >> $GITHUB_ENV
-          echo "FROM_PULPCORE_BRANCH=${{ matrix.FROM_PULPCORE_BRANCH }}" >> $GITHUB_ENV
+
+      - name: Set environment variables
+        run: |
+          echo "TEST=${{ matrix.env.TEST }}" >> $GITHUB_ENV
 
       - name: Before Install
         
@@ -162,6 +162,7 @@ jobs:
           GITHUB_REPO_SLUG: ${{ github.repository }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_CONTEXT: ${{ github.event.pull_request.commits_url }}
+          REDIS_DISABLED: ${{ contains('', matrix.env.TEST) }}
 
       - name: Setting secrets
         
@@ -210,7 +211,6 @@ jobs:
         with:
           name: ruby-client.tar
           path: ruby-client.tar
-
       - name: Upload built docs
         if: ${{ env.TEST == 'docs' }}
         uses: actions/upload-artifact@v2
@@ -321,6 +321,8 @@ jobs:
       - name: Update Redmine
         run: bash .ci/scripts/update_redmine.sh
 
+      
+
       - name: Create release on GitHub
         run: bash .github/workflows/scripts/create_release_from_tag.sh ${{ github.event.inputs.release }}
 
@@ -328,7 +330,7 @@ jobs:
         run: rm -rf .lock generation pulpcore_client* *-client.tar pulpcore.tar todo web docs.tar
 
       - name: Stage changelog for master branch
-        run: python .github/workflows/scripts/stage-changelog-for-master.py ${{ github.event.inputs.release }}
+        run: python .github/workflows/scripts/stage-changelog-for-default-branch.py ${{ github.event.inputs.release }}
 
       - name: Create Pull Request for Changelog
         uses: peter-evans/create-pull-request@v3

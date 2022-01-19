@@ -167,6 +167,27 @@ def main():
             exit_code = subprocess.call(rsync_command, cwd=docs_directory)
             if exit_code != 0:
                 raise RuntimeError("An error occurred while pushing docs.")
+        # publish to docs.pulpproject.org/en/3.y/
+        version_components = branch.split(".")
+        x_y_version = "{}.{}".format(version_components[0], version_components[1])
+        make_directory_with_rsync(["en", x_y_version])
+        remote_path_arg = "%s@%s:%sen/%s/" % (
+            USERNAME,
+            HOSTNAME,
+            SITE_ROOT,
+            x_y_version,
+        )
+        rsync_command = [
+            "rsync",
+            "-avzh",
+            "--delete",
+            "--omit-dir-times",
+            local_path_arg,
+            remote_path_arg,
+        ]
+        exit_code = subprocess.call(rsync_command, cwd=docs_directory)
+        if exit_code != 0:
+            raise RuntimeError("An error occurred while pushing docs.")
         # publish to docs.pulpproject.org/en/3.y.z/
         make_directory_with_rsync(["en", branch])
         remote_path_arg = "%s@%s:%sen/%s/" % (USERNAME, HOSTNAME, SITE_ROOT, branch)

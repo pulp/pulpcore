@@ -34,6 +34,11 @@ if [[ "$TEST" == 'pulp' || "$TEST" == 'performance' || "$TEST" == 'upgrade' || "
   cmd_prefix dnf install -yq lsof which dnf-plugins-core
 fi
 
+if [[ "${REDIS_DISABLED:-false}" == true ]]; then
+  cmd_prefix bash -c "s6-svc -d /var/run/s6/services/redis"
+  echo "The Redis service was disabled for $TEST"
+fi
+
 if [[ -f $POST_BEFORE_SCRIPT ]]; then
   source $POST_BEFORE_SCRIPT
 fi
