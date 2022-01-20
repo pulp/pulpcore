@@ -6,7 +6,7 @@ from django.core.files.storage import default_storage as storage
 from django.core.files.uploadedfile import SimpleUploadedFile
 
 from django.conf import settings
-from django.test import SimpleTestCase, TestCase
+from django.test import TestCase
 from pulpcore.plugin.exceptions import (
     UnsupportedDigestValidationError,
     MissingDigestValidationError,
@@ -82,7 +82,7 @@ class PulpTemporaryFileTestCase(TestCase):
         assert b"temp file test" in temp_file.file.read()
 
 
-class ArtifactAlgorithmTestCase(SimpleTestCase):
+class ArtifactAlgorithmTestCase(TestCase):
     @mock.patch(
         "pulpcore.app.models.Artifact.FORBIDDEN_DIGESTS",
         new_callable=mock.PropertyMock,
