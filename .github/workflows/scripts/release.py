@@ -19,6 +19,7 @@ from bandersnatch.configuration import BandersnatchConfig
 from git import Repo
 
 from packaging.requirements import Requirement
+from pathlib import Path
 
 
 async def get_package_from_pypi(package_name, plugin_path):
@@ -56,6 +57,13 @@ async def get_package_from_pypi(package_name, plugin_path):
 
 def create_release_commits(repo, release_version, plugin_path):
     """Build changelog, set version, commit, bump to next dev version, commit."""
+    issues_to_close = set()
+    for filename in Path(f"{plugin_path}/CHANGES").rglob("*"):
+        if filename.stem.isdigit():
+            issue = filename.stem
+            issues_to_close.add(issue)
+
+    issues = ",".join(issues_to_close)
     # First commit: changelog
     os.system(f"towncrier --yes --version {release_version}")
     git = repo.git
@@ -72,7 +80,7 @@ def create_release_commits(repo, release_version, plugin_path):
     git.add(f"{plugin_path}/requirements.txt")
     git.add(f"{plugin_path}/.bumpversion.cfg")
 
-    git.commit("-m", f"Release {release_version}\n\n[noissue]")
+    git.commit("-m", f"Release {release_version}\nGH Issues: {issues}\n\n[noissue]")
 
     sha = repo.head.object.hexsha
     short_sha = git.rev_parse(sha, short=7)
