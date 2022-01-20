@@ -10,7 +10,7 @@
 set -euv
 
 # make sure this script runs at the repo root
-cd "$(dirname "$(realpath -e "$0")")"/../..
+cd "$(dirname "$(realpath -e "$0")")"/../../..
 
 mkdir ~/.ssh
 echo "$PULP_DOCS_KEY" > ~/.ssh/pulp-infra
@@ -19,7 +19,7 @@ chmod 600 ~/.ssh/pulp-infra
 echo "docs.pulpproject.org,8.43.85.236 ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBGXG+8vjSQvnAkq33i0XWgpSrbco3rRqNZr0SfVeiqFI7RN/VznwXMioDDhc+hQtgVhd6TYBOrV07IMcKj+FAzg=" >> /home/runner/.ssh/known_hosts
 chmod 644 /home/runner/.ssh/known_hosts
 
-pip3 install -r doc_requirements.txt
+pip3 install packaging
 
 export PYTHONUNBUFFERED=1
 export DJANGO_SETTINGS_MODULE=pulpcore.app.settings
@@ -29,4 +29,4 @@ export WORKSPACE=$PWD
 eval "$(ssh-agent -s)" #start the ssh agent
 ssh-add ~/.ssh/pulp-infra
 
-python3 .ci/scripts/docs-builder.py --build-type $1 --branch $2
+python3 .github/workflows/scripts/docs-publisher.py --build-type $1 --branch $2
