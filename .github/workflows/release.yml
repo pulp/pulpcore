@@ -321,6 +321,15 @@ jobs:
 
       
 
+      - name: Update GitHub
+        run: |
+          set -euv
+          export COMMIT_MSG=$(git log --format=%B --no-merges -1)
+          export GH_ISSUES=$(echo $COMMIT_MSG | grep -o "GH Issues: .*" | awk '{print $3}')
+
+          echo "GH Issues $GH_ISSUES"
+          bash .ci/scripts/update_github.py $GH_ISSUES
+
       - name: Create release on GitHub
         run: bash .github/workflows/scripts/create_release_from_tag.sh ${{ github.event.inputs.release }}
 

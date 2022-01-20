@@ -8,11 +8,11 @@
 import re
 import subprocess
 import sys
+import warnings
 from pathlib import Path
 
 
 import os
-import warnings
 from github import Github
 
 
