@@ -1,24 +1,37 @@
 # This config represents the latest values used when running the plugin-template. Any settings that
 # were not present before running plugin-template have been added with their default values.
 
-additional_plugins:
-- branch: master
+# generated with plugin_template@2021.08.26-63-ga4f4a44
+
+additional_repos:
+- branch: 1.6
   name: pulp_file
-- branch: master
+- branch: 1.4
   name: pulp-certguard
+aiohttp_fixtures_origin: 172.18.0.1
 black: true
 check_commit_message: true
+check_gettext: true
 check_manifest: true
+check_openapi_schema: true
 check_stray_pulpcore_imports: false
 cherry_pick_automation: false
+ci_env: {}
+ci_trigger: '{pull_request: {branches: [''*'']}}'
+core_import_allowed: []
 coverage: true
 deploy_client_to_pypi: true
 deploy_client_to_rubygems: true
 deploy_daily_client_to_pypi: true
 deploy_daily_client_to_rubygems: true
 deploy_to_pypi: true
+disabled_redis_runners: []
 docker_fixtures: true
 docs_test: true
+flake8: true
+issue_tracker: redmine
+noissue_marker: '[noissue]'
+parallel_test_workers: 8
 plugin_app_label: pulpcore
 plugin_camel: Pulpcore
 plugin_camel_short: Pulpcore
@@ -26,9 +39,13 @@ plugin_caps: PULPCORE
 plugin_caps_short: PULPCORE
 plugin_dash: pulpcore
 plugin_dash_short: pulpcore
+plugin_default_branch: main
 plugin_name: pulpcore
 plugin_snake: pulpcore
+post_job_template: null
+pre_job_template: null
 publish_docs_to_pulpprojectdotorg: true
+pulp_scheme: http
 pulp_settings:
   allowed_content_checksums:
   - sha1
@@ -42,12 +59,22 @@ pulp_settings:
   - /tmp
 pulpcore_branch: null
 pulpcore_pip_version_specifier: null
+pulpcore_revision: null
 pulpprojectdotorg_key_id: d1a778bda808
 pydocstyle: true
 pypi_username: pulp
+python_version: '3.6'
 redmine_project: pulp
+release_email: pulp-infra@redhat.com
+release_user: pulpbot
+single_commit_check: true
 stable_branch: null
+sync_ci: true
+tasking_allow_async_unsafe: true
+test_azure: false
 test_bindings: true
+test_cli: false
+test_deprecations: false
 test_performance: false
 test_released_plugin_with_next_pulpcore_release: false
 test_s3: true
@@ -64,4 +91,5 @@ travis_notifications:
     - 'Build details : %{build_url}'
     - '%{message}'
 update_redmine: true
+upgrade_range: []
 

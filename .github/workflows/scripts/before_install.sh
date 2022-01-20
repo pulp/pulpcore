@@ -27,21 +27,33 @@ else
   BRANCH="${GITHUB_REF##refs/tags/}"
 fi
 
+COMMIT_MSG=$(git log --format=%B --no-merges -1)
+export COMMIT_MSG
+
+if [[ "$TEST" == "upgrade" ]]; then
+  pip install -r functest_requirements.txt
+  git checkout -b ci_upgrade_test
+  cp -R .github /tmp/.github
+  cp -R .ci /tmp/.ci
+  git checkout $FROM_PULPCORE_BRANCH
+  rm -rf .ci .github
+  cp -R /tmp/.github .
+  cp -R /tmp/.ci .
+fi
+
 if [[ "$TEST" == "plugin-from-pypi" ]]; then
   COMPONENT_VERSION=$(http https://pypi.org/pypi/pulpcore/json | jq -r '.info.version')
 else
-  COMPONENT_VERSION=$(sed -ne "s/\s*version=['\"]\(.*\)['\"][\s,]*/\1/p" setup.py)
+  COMPONENT_VERSION=$(sed -ne "s/\s*version.*=.*['\"]\(.*\)['\"][\s,]*/\1/p" setup.py)
 fi
 mkdir .ci/ansible/vars || true
 echo "---" > .ci/ansible/vars/main.yaml
+echo "legacy_component_name: pulpcore" >> .ci/ansible/vars/main.yaml
 echo "component_name: pulpcore" >> .ci/ansible/vars/main.yaml
 echo "component_version: '${COMPONENT_VERSION}'" >> .ci/ansible/vars/main.yaml
 
 export PRE_BEFORE_INSTALL=$PWD/.github/workflows/scripts/pre_before_install.sh
 export POST_BEFORE_INSTALL=$PWD/.github/workflows/scripts/post_before_install.sh
-
-COMMIT_MSG=$(git log --format=%B --no-merges -1)
-export COMMIT_MSG
 
 if [ -f $PRE_BEFORE_INSTALL ]; then
   source $PRE_BEFORE_INSTALL
@@ -52,11 +64,12 @@ if [[ -n $(echo -e $COMMIT_MSG | grep -P "Required PR:.*" | grep -v "https") ]];
   exit 1
 fi
 
-if [ "$GITHUB_EVENT_NAME" = "pull_request" ] || [ "${BRANCH_BUILD}" = "1" -a "${BRANCH}" != "master" ]
+if [ "$GITHUB_EVENT_NAME" = "pull_request" ] || [ "${BRANCH_BUILD}" = "1" -a "${BRANCH}" != "main" ]
 then
   export PULPCORE_PR_NUMBER=$(echo $COMMIT_MSG | grep -oP 'Required\ PR:\ https\:\/\/github\.com\/pulp\/pulpcore\/pull\/(\d+)' | awk -F'/' '{print $7}')
   export PULP_SMASH_PR_NUMBER=$(echo $COMMIT_MSG | grep -oP 'Required\ PR:\ https\:\/\/github\.com\/pulp\/pulp-smash\/pull\/(\d+)' | awk -F'/' '{print $7}')
   export PULP_OPENAPI_GENERATOR_PR_NUMBER=$(echo $COMMIT_MSG | grep -oP 'Required\ PR:\ https\:\/\/github\.com\/pulp\/pulp-openapi-generator\/pull\/(\d+)' | awk -F'/' '{print $7}')
+  export PULP_CLI_PR_NUMBER=$(echo $COMMIT_MSG | grep -oP 'Required\ PR:\ https\:\/\/github\.com\/pulp\/pulp-cli\/pull\/(\d+)' | awk -F'/' '{print $7}')
   export PULP_FILE_PR_NUMBER=$(echo $COMMIT_MSG | grep -oP 'Required\ PR:\ https\:\/\/github\.com\/pulp\/pulp_file\/pull\/(\d+)' | awk -F'/' '{print $7}')
   export PULP_CERTGUARD_PR_NUMBER=$(echo $COMMIT_MSG | grep -oP 'Required\ PR:\ https\:\/\/github\.com\/pulp\/pulp-certguard\/pull\/(\d+)' | awk -F'/' '{print $7}')
   echo $COMMIT_MSG | sed -n -e 's/.*CI Base Image:\s*\([-_/[:alnum:]]*:[-_[:alnum:]]*\).*/ci_base: "\1"/p' >> .ci/ansible/vars/main.yaml
@@ -64,12 +77,27 @@ else
   export PULPCORE_PR_NUMBER=
   export PULP_SMASH_PR_NUMBER=
   export PULP_OPENAPI_GENERATOR_PR_NUMBER=
+  export PULP_CLI_PR_NUMBER=
   export PULP_FILE_PR_NUMBER=
   export PULP_CERTGUARD_PR_NUMBER=
   export CI_BASE_IMAGE=
 fi
 
+
 cd ..
+
+
+git clone --depth=1 https://github.com/pulp/pulp-smash.git
+
+if [ -n "$PULP_SMASH_PR_NUMBER" ]; then
+  cd pulp-smash
+  git fetch --depth=1 origin pull/$PULP_SMASH_PR_NUMBER/head:$PULP_SMASH_PR_NUMBER
+  git checkout $PULP_SMASH_PR_NUMBER
+  cd ..
+fi
+
+pip install --upgrade --force-reinstall ./pulp-smash
+
 
 git clone --depth=1 https://github.com/pulp/pulp-openapi-generator.git
 if [ -n "$PULP_OPENAPI_GENERATOR_PR_NUMBER" ]; then
@@ -79,35 +107,44 @@ if [ -n "$PULP_OPENAPI_GENERATOR_PR_NUMBER" ]; then
   cd ..
 fi
 
-cd pulp-openapi-generator
-sed -i -e 's/localhost:24817/pulp/g' generate.sh
-sed -i -e 's/:24817/pulp/g' generate.sh
+
+
+
+
+git clone --depth=1 https://github.com/pulp/pulp_file.git --branch 1.6
+cd pulp_file
+
+if [ -n "$PULP_FILE_PR_NUMBER" ]; then
+  git fetch --depth=1 origin pull/$PULP_FILE_PR_NUMBER/head:$PULP_FILE_PR_NUMBER
+  git checkout $PULP_FILE_PR_NUMBER
+fi
+
+cd ..
+
+git clone --depth=1 https://github.com/pulp/pulp-certguard.git --branch 1.4
+cd pulp-certguard
+
+if [ -n "$PULP_CERTGUARD_PR_NUMBER" ]; then
+  git fetch --depth=1 origin pull/$PULP_CERTGUARD_PR_NUMBER/head:$PULP_CERTGUARD_PR_NUMBER
+  git checkout $PULP_CERTGUARD_PR_NUMBER
+fi
+
 cd ..
 
 
 
-
-
-git clone --depth=1 https://github.com/pulp/pulp_file.git --branch master
-if [ -n "$PULP_FILE_PR_NUMBER" ]; then
-  cd pulp_file
-  git fetch --depth=1 origin pull/$PULP_FILE_PR_NUMBER/head:$PULP_FILE_PR_NUMBER
-  git checkout $PULP_FILE_PR_NUMBER
-  cd ..
-fi
-
-git clone --depth=1 https://github.com/pulp/pulp-certguard.git --branch master
-if [ -n "$PULP_CERTGUARD_PR_NUMBER" ]; then
-  cd pulp-certguard
-  git fetch --depth=1 origin pull/$PULP_CERTGUARD_PR_NUMBER/head:$PULP_CERTGUARD_PR_NUMBER
-  git checkout $PULP_CERTGUARD_PR_NUMBER
-  cd ..
-fi
-
 # Intall requirements for ansible playbooks
 pip install docker netaddr boto3 ansible
 
-ansible-galaxy collection install amazon.aws
+for i in {1..3}
+do
+  ansible-galaxy collection install "amazon.aws:1.5.0" && s=0 && break || s=$? && sleep 3
+done
+if [[ $s -gt 0 ]]
+then
+  echo "Failed to install amazon.aws"
+  exit $s
+fi
 
 cd pulpcore
 

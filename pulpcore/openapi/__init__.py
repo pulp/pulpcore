@@ -359,7 +359,7 @@ class PulpSchemaGenerator(SchemaGenerator):
         return path
 
     def parse(self, request, public):
-        """ Iterate endpoints generating per method path operations. """
+        """Iterate endpoints generating per method path operations."""
         result = {}
         self._initialise_endpoints()
 
@@ -433,7 +433,7 @@ class PulpSchemaGenerator(SchemaGenerator):
         return result
 
     def get_schema(self, request=None, public=False):
-        """ Generate a OpenAPI schema. """
+        """Generate a OpenAPI schema."""
         reset_generator_stats()
         result = build_root_object(
             paths=self.parse(request, public),

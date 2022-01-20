@@ -14,9 +14,10 @@ set -euv
 
 echo ::group::REQUESTS
 pip3 install requests
+
 echo ::endgroup::
 
-for sha in $(curl $GITHUB_CONTEXT | jq '.[].sha' | sed 's/"//g')
+for sha in $(curl -H "Authorization: token $GITHUB_TOKEN" $GITHUB_CONTEXT | jq '.[].sha' | sed 's/"//g')
 do
   python3 .ci/scripts/validate_commit_message.py $sha
   VALUE=$?
