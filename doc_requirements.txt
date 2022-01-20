@@ -1,9 +1,10 @@
 -r requirements.txt
 plantuml
-sphinx
+sphinx<4.4.0
 sphinx-rtd-theme
 sphinxcontrib-openapi
 towncrier
 
 rq>=1.1,<1.6
 click<8
+mistune<2.0.0
