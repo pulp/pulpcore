@@ -1,13 +1,14 @@
 # This config represents the latest values used when running the plugin-template. Any settings that
 # were not present before running plugin-template have been added with their default values.
 
-# generated with plugin_template@2021.08.26-39-gb86dbd0
+# generated with plugin_template@2021.08.26-62-gfaa6635
 
 additional_repos:
 - branch: "1.10"
   name: pulp_file
 - branch: master
   name: pulp-certguard
+aiohttp_fixtures_origin: 172.18.0.1
 black: true
 check_commit_message: true
 check_gettext: true
@@ -30,6 +31,7 @@ docs_test: true
 flake8: true
 issue_tracker: redmine
 noissue_marker: '[noissue]'
+parallel_test_workers: 8
 plugin_app_label: core
 plugin_camel: Pulpcore
 plugin_camel_short: Pulpcore
@@ -67,6 +69,7 @@ tasking_allow_async_unsafe: true
 test_azure: true
 test_bindings: true
 test_cli: true
+test_deprecations: false
 test_fips_nightly: false
 test_performance: false
 test_released_plugin_with_next_pulpcore_release: false
