@@ -15,10 +15,10 @@ from git.exc import GitCommandError
 
 helper = textwrap.dedent(
     """\
-        Stage the changelog for a release on master branch.
+        Stage the changelog for a release on main branch.
 
         Example:
-            $ python .github/workflows/scripts/stage-changelog-for-master.py 3.4.0
+            $ python .github/workflows/scripts/stage-changelog-for-default-branch.py 3.4.0
 
     """
 )
@@ -47,13 +47,16 @@ for commit in repo.iter_commits():
     if f"{release_version_arg} changelog" == commit.message.split("\n")[0]:
         changelog_commit = commit
         break
+    if f"Add changelog for {release_version_arg}" == commit.message.split("\n")[0]:
+        changelog_commit = commit
+        break
 
 if not changelog_commit:
     raise RuntimeError("Changelog commit for {release_version_arg} was not found.")
 
 git = repo.git
 git.stash()
-git.checkout("origin/master")
+git.checkout("origin/main")
 try:
     git.cherry_pick(changelog_commit.hexsha)
 except GitCommandError:
@@ -61,4 +64,11 @@ except GitCommandError:
     # Don't try opening an editor for the commit message
     with git.custom_environment(GIT_EDITOR="true"):
         git.cherry_pick("--continue")
-git.reset("origin/master")
+git.reset("origin/main")
+
+# Do not remove changelog entries
+msg = repo.commit().message
+git.reset("HEAD~1")
+git.add("CHANGES.rst")
+git.commit("-m", msg)
+git.stash()

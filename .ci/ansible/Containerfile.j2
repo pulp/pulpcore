@@ -14,6 +14,9 @@ RUN pip3 install \
 {%- if s3_test | default(false) -%}
 {{ " " }}django-storages[boto3] git+https://github.com/fabricio-aguiar/botocore.git@fix-100-continue
 {%- endif -%}
+{%- if azure_test | default(false) -%}
+{{ " " }}django-storages[azure]>=1.12.2
+{%- endif -%}
 {%- for item in plugins -%}
 {%- if item.name == "pulp-certguard" -%}
 {{ " " }}python-dateutil rhsm
