@@ -12,6 +12,7 @@ on:
     # * is a special character in YAML so you have to quote this string
     # runs at 3:00 UTC daily
     - cron: '00 3 * * *'
+  workflow_dispatch:
 
 jobs:
   test:
@@ -140,7 +141,6 @@ jobs:
         with:
           name: ruby-client.tar
           path: ruby-client.tar
-
       - name: Upload built docs
         if: ${{ env.TEST == 'docs' }}
         uses: actions/upload-artifact@v2
