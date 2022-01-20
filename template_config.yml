@@ -29,7 +29,7 @@ disabled_redis_runners: []
 docker_fixtures: true
 docs_test: true
 flake8: true
-issue_tracker: redmine
+issue_tracker: github
 noissue_marker: '[noissue]'
 parallel_test_workers: 8
 plugin_app_label: core
