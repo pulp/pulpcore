@@ -124,13 +124,13 @@ Hardware requirements
 
 
 CPU
-***
+^^^
 
 CPU count is recommended to be equal to the number of pulp workers. It allows to perform N
 repository operations concurrently. E.g. 2 CPUs, one can sync 2 repositories concurrently.
 
 RAM
-***
+^^^
 
 Out of all operations the highest memory consumption task is likely synchronization of a remote
 repository. Publication can also be memory consuming, however it depends on the plugin.
@@ -143,7 +143,7 @@ setup with 2 workers will require around 8GB to be able to sync large repositori
 likely not enough for some repositories, especially if 2 workers both run sync tasks in parallel.
 
 Disk
-****
+^^^^
 
 For disk size, it depends on how one is using Pulp and which storage is used.
 
