@@ -837,16 +837,17 @@ class Handler:
                     continue
 
                 if response.status == 206 and lower_name == "content-length":
-                    range_bytes = int(value)
+                    content_length = int(value)
                     start = 0 if range_start is None else range_start
-                    stop = range_bytes if range_stop is None else range_stop
+                    stop = content_length if range_stop is None else range_stop
 
-                    range_bytes = range_bytes - range_start
-                    range_bytes = range_bytes - (int(value) - stop)
+                    range_bytes = stop - start
                     response.headers[name] = str(range_bytes)
 
+                    # aiohttp adds a 1 to the range.stop compared to http headers (including) to
+                    # match python array adressing (exclusive)
                     response.headers["Content-Range"] = "bytes {0}-{1}/{2}".format(
-                        start, stop - start + 1, int(value)
+                        start, stop - 1, content_length
                     )
                     continue
 
