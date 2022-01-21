@@ -654,7 +654,9 @@ class Handler:
         remote_artifacts = await sync_to_async(get_remote_artifacts_blocking)()
         for remote_artifact in remote_artifacts:
             try:
-                response = await self._stream_remote_artifact(request, response, remote_artifact)
+                response = await asyncio.shield(
+                    self._stream_remote_artifact(request, response, remote_artifact)
+                )
                 return response
 
             except (ClientResponseError, UnsupportedDigestValidationError) as e:
@@ -866,9 +868,7 @@ class Handler:
         download_result = await downloader.run()
 
         if remote.policy != Remote.STREAMED:
-            await asyncio.shield(
-                sync_to_async(self._save_artifact)(download_result, remote_artifact)
-            )
+            await sync_to_async(self._save_artifact)(download_result, remote_artifact)
         await response.write_eof()
 
         if response.status == 404:
