@@ -2,6 +2,7 @@ aiohttp
 aiodns
 aiofiles
 backoff
+click<8
 Django~=2.2.16  # LTS version, switch only if we have a compelling reason to
 django-currentuser~=0.5.1
 django-filter~=2.4.0
