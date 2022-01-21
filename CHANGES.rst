@@ -282,15 +282,15 @@ Features
   `#8357 <https://pulp.plan.io/issues/8357>`_
 - Added the following new objects related to a new ``Distribution`` MasterModel:
   * ``pulpcore.plugin.models.Distribution`` - A new MasterModel ``Distribution`` which replaces the
-    ``pulpcore.plugin.models.BaseDistribution``. This now contains the ``repository``,
-    ``repository_version``, and ``publication`` fields on the MasterModel instead of on the detail
-    models as was done with ``pulpcore.plugin.models.BaseDistribution``.
+  ``pulpcore.plugin.models.BaseDistribution``. This now contains the ``repository``,
+  ``repository_version``, and ``publication`` fields on the MasterModel instead of on the detail
+  models as was done with ``pulpcore.plugin.models.BaseDistribution``.
   * ``pulpcore.plugin.serializer.DistributionSerializer`` - A serializer plugin writers should use
-    with the new ``pulpcore.plugin.models.Distribution``.
+  with the new ``pulpcore.plugin.models.Distribution``.
   * ``pulpcore.plugin.viewset.DistributionViewSet`` - The viewset that replaces the deprecated
-    ``pulpcore.plugin.viewset.BaseDistributionViewSet``.
+  ``pulpcore.plugin.viewset.BaseDistributionViewSet``.
   * ``pulpcore.plugin.viewset.NewDistributionFilter`` - The filter that pairs with the
-    ``Distribution`` model.
+  ``Distribution`` model.
   `#8384 <https://pulp.plan.io/issues/8384>`_
 - Added checksum type enforcement to ``pulpcore.plugin.download.BaseDownloader``.
   `#8435 <https://pulp.plan.io/issues/8435>`_
@@ -323,25 +323,26 @@ Deprecations
 
 - The following objects were deprecated:
   * ``pulpcore.plugin.models.BaseDistribution`` -- Instead use
-    ``pulpcore.plugin.models.Distribution``.
+  ``pulpcore.plugin.models.Distribution``.
   * ``pulpcore.plugin.viewset.BaseDistributionViewSet`` -- Instead use
-    ``pulpcore.plugin.viewset.DistributionViewSet``.
+  ``pulpcore.plugin.viewset.DistributionViewSet``.
   * ``pulpcore.plugin.serializer.BaseDistributionSerializer`` -- Instead use
-    ``pulpcore.plugin.serializer.DistributionSerializer``.
+  ``pulpcore.plugin.serializer.DistributionSerializer``.
   * ``pulpcore.plugin.serializer.PublicationDistributionSerializer`` -- Instead use define the
-    ``publication`` field directly on your detail distribution object. See the docstring for
-    ``pulpcore.plugin.serializer.DistributionSerializer`` for an example.
+  ``publication`` field directly on your detail distribution object. See the docstring for
+  ``pulpcore.plugin.serializer.DistributionSerializer`` for an example.
   * ``pulpcore.plugin.serializer.RepositoryVersionDistributionSerializer`` -- Instead use define the
-    ``repository_version`` field directly on your detail distribution object. See the docstring for
-    ``pulpcore.plugin.serializer.DistributionSerializer`` for an example.
+  ``repository_version`` field directly on your detail distribution object. See the docstring for
+  ``pulpcore.plugin.serializer.DistributionSerializer`` for an example.
   * ``pulpcore.plugin.viewset.DistributionFilter`` -- Instead use
-    ``pulpcore.plugin.viewset.NewDistributionFilter``.
+  ``pulpcore.plugin.viewset.NewDistributionFilter``.
 
   .. note::
 
       You will have to define a migration to move your data from
       ``pulpcore.plugin.models.BaseDistribution`` to ``pulpcore.plugin.models.Distribution``. See the
       pulp_file migration 0009 as a reference example.
+
   `#8385 <https://pulp.plan.io/issues/8385>`_
 - Deprecated the ``pulpcore.plugin.tasking.enqueue_with_reservation``. Instead use the
   ``pulpcore.plugin.tasking.dispatch`` interface.
@@ -352,13 +353,40 @@ Deprecations
   `#8505 <https://pulp.plan.io/issues/8505>`_
 
 
+3.11.2 (2021-05-25)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Skip allowed content checks on collectstatic
+  (backported from #8711)
+  `#8712 <https://pulp.plan.io/issues/8712>`_
+- Fixed cleanup of UploadChunks when their corresponding Upload is deleted.
+  (backported from #7316)
+  `#8757 <https://pulp.plan.io/issues/8757>`_
+- Fixed compatibility with Django 2.2 LTS. Pulp now requires Django~=2.2.23
+  (backported from #8691)
+  `#8758 <https://pulp.plan.io/issues/8758>`_
+- Pinned click~=7.1.2 to ensure RQ is compatible with it.
+  `#8767 <https://pulp.plan.io/issues/8767>`_
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.11.1 (2021-04-29)
 ===================
 REST API
 --------
 
 Bugfixes
-~~~~~~~
+~~~~~~~~
 
 - Fixed a race condition that sometimes surfaced during handling of reserved resources.
   `#8632 <https://pulp.plan.io/issues/8632>`_
@@ -370,7 +398,7 @@ Plugin API
 ----------
 
 Bugfixes
-~~~~~~~
+~~~~~~~~
 
 - Allow plugins to unset the ``queryset_filtering_required_permission`` attribute in ``NamedModelViewSet``.
   `#8444 <https://pulp.plan.io/issues/8444>`_
@@ -793,6 +821,7 @@ Deprecations
       access_policy = AccessPolicy.get(viewset_name="MyViewSet")
       access_policy.viewset_name = "objectclass/myplugin/myclass"
       access_policy.save()
+
   `#7845 <https://pulp.plan.io/issues/7845>`_
 - The ``pulpcore.plugin.models.UnsupportedDigestValidationError`` is being deprecated and
   will be removed in 3.10.
@@ -878,6 +907,75 @@ Improved Documentation
 
 - Removed mentions of semver in the plugin API docs, and replaced them with a link to the deprecation policy where appropriate.
   `#7555 <https://pulp.plan.io/issues/7555>`_
+
+
+3.7.9 (2021-11-30)
+==================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Prevented a Redis failure scenario from causing the tasking system to back up due to "tasking system
+  locks" not being released, even on worker restart.
+  (backported from #7907)
+  `#9547 <https://pulp.plan.io/issues/9547>`_
+- Prevent proxy credentials to be passed to aiohttp, so they no longer appear in stack traces.
+  This is a rewritten backport of #8167.
+  `#9573 <https://pulp.plan.io/issues/9573>`_
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
+3.7.8 (2021-08-24)
+==================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- In stages-pipeline and new-version sanity-checks, added full error-info on path-problems.
+  (backported from #8133)
+  `#9227 <https://pulp.plan.io/issues/9227>`_
+
+
+Plugin API
+----------
+
+Bugfixes
+~~~~~~~~
+
+- Added kwarg to RemoteArtifactSaver init to allow enabling handling of rare error edge-case.
+
+  `fix_mismatched_remote_artifacts=True` enables workaround for a failure-scenario that
+  (so far) is only encountered by pulp_rpm. Current behavior is the default.
+  (backported from #8133)
+  `#9227 <https://pulp.plan.io/issues/9227>`_
+
+
+3.7.7 (2021-07-26)
+==================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fixed a bug, where new tasks were assigned to dead workers.
+  (backported from #8779)
+  `#9118 <https://pulp.plan.io/issues/9118>`_
+
+
+Plugin API
+----------
+
+No significant changes.
 
 
 3.7.6 (2021-04-29)
