@@ -1,6 +1,7 @@
 django
 dynaconf
-pulp-smash>=1!0.12.0
-pulpcore-client
-pulp-file-client
+pulp-smash @ git+https://github.com/pulp/pulp-smash.git@click
+pulpcore-client<3.12
+pulp-file-client<1.7
 pytest
+click~=7.1.2
