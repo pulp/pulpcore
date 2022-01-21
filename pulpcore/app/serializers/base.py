@@ -6,7 +6,6 @@ from urllib.parse import urljoin
 
 from django.core.validators import URLValidator
 from django.db import transaction
-from drf_queryfields.mixins import QueryFieldsMixin
 from rest_framework import serializers
 from rest_framework_nested.relations import (
     NestedHyperlinkedIdentityField,
@@ -47,9 +46,7 @@ class ValidateFieldsMixin:
         return data
 
 
-class ModelSerializer(
-    ValidateFieldsMixin, QueryFieldsMixin, serializers.HyperlinkedModelSerializer
-):
+class ModelSerializer(ValidateFieldsMixin, serializers.HyperlinkedModelSerializer):
     """Base serializer for use with :class:`pulpcore.app.models.Model`
 
     This ensures that all Serializers provide values for the 'pulp_href` field.
@@ -59,9 +56,6 @@ class ModelSerializer(
     of plugins are namespaced properly.
 
     """
-
-    # default is 'fields!' which doesn't work in the bindings for some langs
-    exclude_arg_name = "exclude_fields"
 
     class Meta:
         fields = ("pulp_href", "pulp_created")

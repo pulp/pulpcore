@@ -128,6 +128,65 @@ class NamedModelViewSet(viewsets.GenericViewSet):
     schema = DefaultSchema()
     filter_backends = (StableOrderingFilter, DjangoFilterBackend)
 
+    def get_field_filters(self, request):
+        """
+        Partially sourced from django-queryfields
+        https://github.com/wimglenn/djangorestframework-queryfields
+        Copyright (c) 2016 Wim Glenn <hey@wimglenn.com>
+        """
+        # If using Django filters in the API, these labels mustn't conflict with any model
+        # field names.
+        include_arg_name = "fields"
+        # drf-queryfields default was 'fields!' which doesn't work in the bindings for some langs
+        exclude_arg_name = "exclude_fields"
+
+        # Split field names by this string.  It doesn't necessarily have to be a single character.
+        # Avoid RFC 1738 reserved characters i.e. ';', '/', '?', ':', '@', '=' and '&'
+        delimiter = ","
+
+        if request.method != "GET":
+            return (set(), set())
+
+        includes = request.query_params.getlist(include_arg_name)
+        include_field_names = {
+            name for names in includes for name in names.split(delimiter) if name
+        }
+
+        excludes = request.query_params.getlist(exclude_arg_name)
+        exclude_field_names = {
+            name for names in excludes for name in names.split(delimiter) if name
+        }
+
+        if not include_field_names and not exclude_field_names:
+            # No user fields filtering was requested, we have nothing to do here.
+            return (set(), set())
+
+        return (include_field_names, exclude_field_names)
+
+    def get_serializer(self, *args, **kwargs):
+        """
+        Return the serializer instance that should be used for validating and
+        deserializing input, and for serializing output.
+        """
+        serializer = super().get_serializer(*args, **kwargs)
+
+        _serializer = serializer
+        if hasattr(serializer, "child"):
+            # If this is a `ListSerializer` then we want to examine the
+            # underlying child serializer instance instead.
+            _serializer = serializer.child
+        serializer_field_names = set(_serializer.fields)
+
+        (include_field_names, exclude_field_names) = self.get_field_filters(self.request)
+        fields_to_drop = serializer_field_names & exclude_field_names
+        if include_field_names:
+            fields_to_drop |= serializer_field_names - include_field_names
+
+        for field in fields_to_drop:
+            _serializer.fields.pop(field)
+
+        return serializer
+
     def get_serializer_class(self):
         """
         Fetch the serializer class to use for the request.
@@ -352,6 +411,16 @@ class NamedModelViewSet(viewsets.GenericViewSet):
         permission_name = getattr(self, "queryset_filtering_required_permission", None)
         if permission_name:
             qs = get_objects_for_user(self.request.user, permission_name, qs)
+
+        (include_field_names, exclude_field_names) = self.get_field_filters(self.request)
+        viewset = self
+        if hasattr(self, "parent_viewset"):
+            viewset = self.parent_viewset
+        model_fields = set(field.name for field in viewset.Meta.model._meta.fields)
+        if exclude_field_names:
+            qs = qs.defer(*[field for field in exclude_field_names if field in model_fields])
+        if include_field_names:
+            qs = qs.only(*[field for field in include_field_names if field in model_fields])
 
         return qs
 
