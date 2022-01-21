@@ -5,7 +5,6 @@ pulp.app
 
     apps
     auth
-    fields
     models
     response
     serializers

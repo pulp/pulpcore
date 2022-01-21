@@ -28,9 +28,10 @@ export PULP_SETTINGS=$PWD/.ci/ansible/settings/settings.py
 
 export PULP_URL="http://pulp"
 
-if [[ "$TEST" = "docs" || "$TEST" = "publish" ]]; then
+if [[ "$TEST" = "docs" ]]; then
   cd docs
-  make PULP_URL="$PULP_URL" html
+  make PULP_URL="$PULP_URL" diagrams html
+  tar -cvf docs.tar ./_build
   cd ..
 
   if [ -f $POST_DOCS_TEST ]; then
@@ -39,44 +40,51 @@ if [[ "$TEST" = "docs" || "$TEST" = "publish" ]]; then
   exit
 fi
 
+if [[ "${RELEASE_WORKFLOW:-false}" == "true" ]]; then
+  REPORTED_VERSION=$(http $PULP_URL/pulp/api/v3/status/ | jq --arg plugin core --arg legacy_plugin pulpcore -r '.versions[] | select(.component == $plugin or .component == $legacy_plugin) | .version')
+  response=$(curl --write-out %{http_code} --silent --output /dev/null https://pypi.org/project/pulpcore/$REPORTED_VERSION/)
+  if [ "$response" == "200" ];
+  then
+    echo "pulpcore $REPORTED_VERSION has already been released. Skipping running tests."
+    exit
+  fi
+fi
+
 if [[ "$TEST" == "plugin-from-pypi" ]]; then
   COMPONENT_VERSION=$(http https://pypi.org/pypi/pulpcore/json | jq -r '.info.version')
   git checkout ${COMPONENT_VERSION} -- pulpcore/tests/
 fi
 
 cd ../pulp-openapi-generator
-
-./generate.sh pulpcore python
-pip install ./pulpcore-client
 ./generate.sh pulp_file python
 pip install ./pulp_file-client
-./generate.sh pulp_certguard python
-pip install ./pulp_certguard-client
-cd $REPO_ROOT
-
-if [[ "$TEST" = 'bindings' || "$TEST" = 'publish' ]]; then
-  python $REPO_ROOT/.ci/assets/bindings/test_bindings.py
-  cd ../pulp-openapi-generator
-  if [ ! -f $REPO_ROOT/.ci/assets/bindings/test_bindings.rb ]
-  then
-    exit
-  fi
-
-  rm -rf ./pulpcore-client
-
-  ./generate.sh pulpcore ruby 0
-  cd pulpcore-client
-  gem build pulpcore_client
-  gem install --both ./pulpcore_client-0.gem
-  cd ..
-  rm -rf ./pulp_file-client
-
+rm -rf ./pulp_file-client
+if [[ "$TEST" = 'bindings' ]]; then
   ./generate.sh pulp_file ruby 0
   cd pulp_file-client
-  gem build pulp_file_client
+  gem build pulp_file_client.gemspec
   gem install --both ./pulp_file_client-0.gem
   cd ..
-  ruby $REPO_ROOT/.ci/assets/bindings/test_bindings.rb
+fi
+./generate.sh pulp_certguard python
+pip install ./pulp_certguard-client
+rm -rf ./pulp_certguard-client
+if [[ "$TEST" = 'bindings' ]]; then
+  ./generate.sh pulp-certguard ruby 0
+  cd pulp-certguard-client
+  gem build pulp-certguard_client.gemspec
+  gem install --both ./pulp-certguard_client-0.gem
+  cd ..
+fi
+cd $REPO_ROOT
+
+if [[ "$TEST" = 'bindings' ]]; then
+  if [ -f $REPO_ROOT/.ci/assets/bindings/test_bindings.py ]; then
+    python $REPO_ROOT/.ci/assets/bindings/test_bindings.py
+  fi
+  if [ -f $REPO_ROOT/.ci/assets/bindings/test_bindings.rb ]; then
+    ruby $REPO_ROOT/.ci/assets/bindings/test_bindings.rb
+  fi
   exit
 fi
 
@@ -87,11 +95,17 @@ cmd_prefix pip3 install -r /tmp/unittest_requirements.txt
 echo "Checking for uncommitted migrations..."
 cmd_prefix bash -c "django-admin makemigrations --check --dry-run"
 
-# Run unit tests.
-cmd_prefix bash -c "PULP_DATABASES__default__USER=postgres django-admin test --noinput /usr/local/lib/python3.6/site-packages/pulpcore/tests/unit/"
+if [[ "$TEST" != "upgrade" ]]; then
+  # Run unit tests.
+  cmd_prefix bash -c "PULP_DATABASES__default__USER=postgres django-admin test --noinput /usr/local/lib/python3.6/site-packages/pulpcore/tests/unit/"
+fi
 
 # Run functional tests
+export PYTHONPATH=$REPO_ROOT/../pulp_file${PYTHONPATH:+:${PYTHONPATH}}
+export PYTHONPATH=$REPO_ROOT/../pulp-certguard${PYTHONPATH:+:${PYTHONPATH}}
 export PYTHONPATH=$REPO_ROOT${PYTHONPATH:+:${PYTHONPATH}}
+
+
 
 if [[ "$TEST" == "performance" ]]; then
   if [[ -z ${PERFORMANCE_TEST+x} ]]; then
@@ -105,12 +119,11 @@ fi
 if [ -f $FUNC_TEST_SCRIPT ]; then
   source $FUNC_TEST_SCRIPT
 else
-    pytest -v -r sx --color=yes --pyargs pulpcore.tests.functional
+
+    pytest -v -r sx --color=yes --suppress-no-test-exit-code --pyargs pulpcore.tests.functional -m parallel -n 8
+    pytest -v -r sx --color=yes --pyargs pulpcore.tests.functional -m "not parallel"
+
 fi
-export PULP_FIXTURES_URL="http://pulp-fixtures:8080"
-pushd ../pulp-cli
-pytest -v -m pulpcore
-popd
 
 if [ -f $POST_SCRIPT ]; then
   source $POST_SCRIPT

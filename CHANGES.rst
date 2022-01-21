@@ -17,8 +17,11 @@ Changelog
 
 .. towncrier release notes start
 
-3.11.2 (2021-05-25)REST API
+3.11.2 (2021-05-25)
+===================
+REST API
 --------
+
 
 Bugfixes
 ~~~~~~~~
@@ -483,6 +486,7 @@ Deprecations
       access_policy = AccessPolicy.get(viewset_name="MyViewSet")
       access_policy.viewset_name = "objectclass/myplugin/myclass"
       access_policy.save()
+
   `#7845 <https://pulp.plan.io/issues/7845>`_
 - The ``pulpcore.plugin.models.UnsupportedDigestValidationError`` is being deprecated and
   will be removed in 3.10.

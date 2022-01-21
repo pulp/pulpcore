@@ -230,3 +230,4 @@ Validation Exceptions
 .. autoclass:: pulpcore.exceptions.SizeValidationError
     :noindex:
 .. autoclass:: pulpcore.exceptions.ValidationError
+    :noindex:
