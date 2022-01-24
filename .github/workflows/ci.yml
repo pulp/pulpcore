@@ -4,20 +4,32 @@
 # './plugin-template --github pulpcore' to update this file.
 #
 # For more info visit https://github.com/pulp/plugin_template
----
-name: Pulp CI
-on:
-  pull_request:
-    branches:
-      - '*'
-  push:
-    branches:
-      - '*'
 
+---
+name: Pulpcore CI
+on: {pull_request: {branches: ['*']}}
 jobs:
+
+
+  single_commit:
+    name: Assert single commit
+    if: github.base_ref == 'main'
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v1
+      with:
+        fetch-depth: 30
+    - name: Checkout main
+      run: git fetch origin main
+    - name: create local main branch
+      run: git branch main origin/main
+    - name: Commit Count Check
+      run: test `git log  --oneline --no-merges HEAD ^main  | wc -l ` = 1
+    runs-on: ubuntu-latest
 
   lint:
     runs-on: ubuntu-latest
+    
 
     steps:
       - uses: actions/checkout@v2
@@ -28,7 +40,7 @@ jobs:
 
       - uses: actions/setup-python@v2
         with:
-          python-version: "3.7"
+          python-version: "3.6"
 
         # dev_requirements contains tools needed for flake8, etc.
       - name: Install requirements
@@ -37,6 +49,13 @@ jobs:
       - name: Check commit message
         if: github.event_name == 'pull_request'
         env:
+          PY_COLORS: '1'
+          ANSIBLE_FORCE_COLOR: '1'
+          GITHUB_PULL_REQUEST: ${{ github.event.number }}
+          GITHUB_PULL_REQUEST_BODY: ${{ github.event.pull_request.body }}
+          GITHUB_BRANCH: ${{ github.head_ref }}
+          GITHUB_REPO_SLUG: ${{ github.repository }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_CONTEXT: ${{ github.event.pull_request.commits_url }}
         run: sh .github/workflows/scripts/check_commit.sh
 
@@ -56,6 +75,9 @@ jobs:
 
       
 
+      - name: Check for gettext problems
+        run: sh .ci/scripts/check_gettext.sh
+
   test:
     runs-on: ubuntu-latest
     # run only after lint finishes
@@ -68,6 +90,10 @@ jobs:
           - TEST: docs
           - TEST: s3
           - TEST: bindings
+    outputs:
+      deprecations-pulp: ${{ steps.deprecations.outputs.deprecations-pulp }}
+      deprecations-s3: ${{ steps.deprecations.outputs.deprecations-s3 }}
+      deprecations-bindings: ${{ steps.deprecations.outputs.deprecations-bindings }}
 
     steps:
       - uses: actions/checkout@v2
@@ -78,41 +104,102 @@ jobs:
 
       - uses: actions/setup-python@v2
         with:
-          python-version: "3.7"
+          python-version: "3.6"
       - uses: actions/setup-ruby@v1
+        
         with:
           ruby-version: "2.6"
 
       - name: Install httpie
         run: |
           echo ::group::HTTPIE
-          sudo apt-get update -yq
-          sudo -E apt-get -yq --no-install-suggests --no-install-recommends install httpie
+          pip install httpie
           echo ::endgroup::
           echo "HTTPIE_CONFIG_DIR=$GITHUB_WORKSPACE/.ci/assets/httpie/" >> $GITHUB_ENV
+
+      - name: Set environment variables
+        run: |
           echo "TEST=${{ matrix.env.TEST }}" >> $GITHUB_ENV
 
       - name: Before Install
+        
         run: .github/workflows/scripts/before_install.sh
         shell: bash
-
-      - name: Install
-        run: .github/workflows/scripts/install.sh
         env:
           PY_COLORS: '1'
           ANSIBLE_FORCE_COLOR: '1'
+          GITHUB_PULL_REQUEST: ${{ github.event.number }}
+          GITHUB_PULL_REQUEST_BODY: ${{ github.event.pull_request.body }}
+          GITHUB_BRANCH: ${{ github.head_ref }}
+          GITHUB_REPO_SLUG: ${{ github.repository }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_CONTEXT: ${{ github.event.pull_request.commits_url }}
+
+      - name: Install
+        
+        run: .github/workflows/scripts/install.sh
+        shell: bash
+        env:
+          PY_COLORS: '1'
+          ANSIBLE_FORCE_COLOR: '1'
+          GITHUB_PULL_REQUEST: ${{ github.event.number }}
+          GITHUB_PULL_REQUEST_BODY: ${{ github.event.pull_request.body }}
+          GITHUB_BRANCH: ${{ github.head_ref }}
+          GITHUB_REPO_SLUG: ${{ github.repository }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_CONTEXT: ${{ github.event.pull_request.commits_url }}
+
+      - name: Install Python client
+        
+        run: .github/workflows/scripts/install_python_client.sh
+        shell: bash
+
+      - name: Install Ruby client
+        if: ${{ env.TEST == 'bindings' }}
+        run: .github/workflows/scripts/install_ruby_client.sh
         shell: bash
 
       - name: Before Script
-        run: |
-          .github/workflows/scripts/before_script.sh
+        
+        run: .github/workflows/scripts/before_script.sh
+        shell: bash
+        env:
+          PY_COLORS: '1'
+          ANSIBLE_FORCE_COLOR: '1'
+          GITHUB_PULL_REQUEST: ${{ github.event.number }}
+          GITHUB_PULL_REQUEST_BODY: ${{ github.event.pull_request.body }}
+          GITHUB_BRANCH: ${{ github.head_ref }}
+          GITHUB_REPO_SLUG: ${{ github.repository }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_CONTEXT: ${{ github.event.pull_request.commits_url }}
+          REDIS_DISABLED: ${{ contains('', matrix.env.TEST) }}
+
+      - name: Setting secrets
+        if: github.event_name != 'pull_request'
+        run: python3 .github/workflows/scripts/secrets.py "$SECRETS_CONTEXT"
+        env:
+          SECRETS_CONTEXT: ${{ toJson(secrets) }}
 
       - name: Script
+        
         run: .github/workflows/scripts/script.sh
         shell: bash
+        env:
+          PY_COLORS: '1'
+          ANSIBLE_FORCE_COLOR: '1'
+          GITHUB_PULL_REQUEST: ${{ github.event.number }}
+          GITHUB_PULL_REQUEST_BODY: ${{ github.event.pull_request.body }}
+          GITHUB_BRANCH: ${{ github.head_ref }}
+          GITHUB_REPO_SLUG: ${{ github.repository }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_CONTEXT: ${{ github.event.pull_request.commits_url }}
 
-      - name: After failure
-        if: failure()
+      - name: Extract Deprecations from Logs
+        id: deprecations
+        run: echo "::set-output name=deprecations-${{ matrix.env.TEST }}::$(docker logs pulp 2>&1 | grep -i pulpcore.deprecation | base64 -w 0)"
+
+      - name: Logs
+        if: always()
         run: |
           echo "Need to debug? Please check: https://github.com/marketplace/actions/debugging-with-tmate"
           http --timeout 30 --check-status --pretty format --print hb http://pulp/pulp/api/v3/status/ || true
@@ -121,3 +208,6 @@ jobs:
           docker logs pulp || true
           docker exec pulp ls -latr /etc/yum.repos.d/ || true
           docker exec pulp cat /etc/yum.repos.d/* || true
+          docker exec pulp pip3 list
+
+

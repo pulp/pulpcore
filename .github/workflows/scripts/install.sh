@@ -13,12 +13,7 @@ REPO_ROOT="$PWD"
 
 set -euv
 
-if [ "${GITHUB_REF##refs/tags/}" = "${GITHUB_REF}" ]
-then
-  TAG_BUILD=0
-else
-  TAG_BUILD=1
-fi
+source .github/workflows/scripts/utils.sh
 
 if [[ "$TEST" = "docs" || "$TEST" = "publish" ]]; then
   pip install psycopg2-binary
@@ -34,13 +29,18 @@ TAG=ci_build
 if [ -e $REPO_ROOT/../pulp_file ]; then
   PULP_FILE=./pulp_file
 else
-  PULP_FILE=git+https://github.com/pulp/pulp_file.git@master
+  PULP_FILE=git+https://github.com/pulp/pulp_file.git@1.6
 fi
 
 if [ -e $REPO_ROOT/../pulp-certguard ]; then
   PULP_CERTGUARD=./pulp-certguard
 else
-  PULP_CERTGUARD=git+https://github.com/pulp/pulp-certguard.git@master
+  PULP_CERTGUARD=git+https://github.com/pulp/pulp-certguard.git@1.1
+fi
+if [[ "${RELEASE_WORKFLOW:-false}" == "true" ]]; then
+  PLUGIN_NAME=./pulpcore/dist/pulpcore-$PLUGIN_VERSION-py3-none-any.whl
+else
+  PLUGIN_NAME=./pulpcore
 fi
 cat >> vars/main.yaml << VARSYAML
 image:
@@ -48,7 +48,7 @@ image:
   tag: "${TAG}"
 plugins:
   - name: pulpcore
-    source: ./pulpcore
+    source: "${PLUGIN_NAME}"
   - name: pulp_file
     source: $PULP_FILE
   - name: pulp-certguard
@@ -62,13 +62,17 @@ VARSYAML
 
 cat >> vars/main.yaml << VARSYAML
 pulp_settings: {"allowed_content_checksums": ["sha1", "sha224", "sha256", "sha384", "sha512"], "allowed_export_paths": ["/tmp"], "allowed_import_paths": ["/tmp"]}
+pulp_scheme: http
+
+pulp_container_tag: python36
+
 VARSYAML
 
-if [[ "$TEST" == "pulp" || "$TEST" == "performance" || "$TEST" == "s3" || "$TEST" == "plugin-from-pypi" ]]; then
+if [[ "$TEST" == "pulp" || "$TEST" == "performance" || "$TEST" == "upgrade" || "$TEST" == "azure" || "$TEST" == "s3" || "$TEST" == "plugin-from-pypi" || "$TEST" == "generate-bindings" ]]; then
   sed -i -e '/^services:/a \
   - name: pulp-fixtures\
     image: docker.io/pulp/pulp-fixtures:latest\
-    env: {BASE_URL: "http://pulp-fixtures"}' vars/main.yaml
+    env: {BASE_URL: "http://pulp-fixtures:8080"}' vars/main.yaml
 fi
 
 if [ "$TEST" = "s3" ]; then
@@ -88,3 +92,12 @@ fi
 
 ansible-playbook build_container.yaml
 ansible-playbook start_container.yaml
+
+if [ "$TEST" = "azure" ]; then
+  AZURE_STORAGE_CONNECTION_STRING='DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://ci-azurite:10000/devstoreaccount1;'
+  az storage container create --name pulp-test --connection-string $AZURE_STORAGE_CONNECTION_STRING
+fi
+
+echo ::group::PIP_LIST
+cmd_prefix bash -c "pip3 list && pip3 install pipdeptree && pipdeptree"
+echo ::endgroup::
