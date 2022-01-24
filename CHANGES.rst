@@ -302,6 +302,7 @@ Deprecations
       access_policy = AccessPolicy.get(viewset_name="MyViewSet")
       access_policy.viewset_name = "objectclass/myplugin/myclass"
       access_policy.save()
+
   `#7845 <https://pulp.plan.io/issues/7845>`_
 - The ``pulpcore.plugin.models.UnsupportedDigestValidationError`` is being deprecated and
   will be removed in 3.10.
@@ -387,6 +388,18 @@ Improved Documentation
 
 - Removed mentions of semver in the plugin API docs, and replaced them with a link to the deprecation policy where appropriate.
   `#7555 <https://pulp.plan.io/issues/7555>`_
+
+
+3.7.4 (2021-03-15)
+==================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- No longer load .env files. They are not used by Pulp but potentially can break the setup.
+  `#8373 <https://pulp.plan.io/issues/8373>`_
 
 
 3.7.3 (2020-10-28)
