@@ -14,11 +14,12 @@ import gnupg
 
 from functools import lru_cache
 from itertools import chain
+from psycopg2 import sql
 
 from django.conf import settings
 from django.core import validators
 from django.core.files.storage import default_storage
-from django.db import IntegrityError, models, transaction
+from django.db import IntegrityError, connection, models, transaction
 from django.forms.models import model_to_dict
 from django.utils.timezone import now
 from django_lifecycle import BEFORE_UPDATE, BEFORE_SAVE, hook
@@ -104,10 +105,44 @@ class BulkTouchQuerySet(models.QuerySet):
         """
         Update the ``timestamp_of_interest`` on all objects of the query.
 
-        We order-by-pk here to avoid deadlocking in high-concurrency
-        environments.
+        Postgres' UPDATE call doesn't support order-by. This can (and does) result in deadlocks in
+        high-concurrency environments, when using touch() on overlapping data sets. In order to
+        prevent this, we choose to SELECT FOR UPDATE with SKIP LOCKS == True, and only update
+        the rows that we were able to get locks on. Since a previously-locked-row implies
+        that updating that row's timestamp-of-interest is the responsibility of whoever currently
+        owns it, this results in correct data, while closing the window on deadlocks.
         """
-        return self.order_by("pk").update(timestamp_of_interest=now())
+        # Build the list of ids we need to work on, since we're going to be building a
+        # SQL-query "by hand" in a moment.
+        pulp_ids = [f"'{uuid}'" for uuid in self.values_list("pk", flat=True)]
+        if not pulp_ids:
+            return None
+        ids_str = ",".join(pulp_ids)
+        # timestamp_of_interest exists on core_content and core_artifact, not on the Detail tables
+        # If we are an instance-of Content or its subclasses, we want to update the Content table.
+        # Otherwise, use the table associated w/ the query.
+        db_table = (
+            Content._meta.db_table if issubclass(self.model, Content) else self.model._meta.db_table
+        )
+        cursor = connection.cursor()
+        with transaction.atomic():
+            # SQL-sanitizing the table-name here is certainly overkill - sql-injection here would
+            # require code calling touch() on a Model whose table-name-str was carefully chosen to
+            # be Bad - but, good habits...
+            stmt = sql.SQL(
+                "UPDATE {table_name} "
+                "   SET timestamp_of_interest = NOW() "
+                " WHERE pulp_id IN ("
+                "    SELECT pulp_id "
+                "      FROM {table_name} "
+                "     WHERE pulp_id in ({ids}) "
+                "     ORDER BY pulp_id "
+                "     FOR UPDATE "
+                "     SKIP LOCKED)".format(table_name=sql.Identifier(db_table).string, ids=ids_str)
+            )
+            rslt = cursor.execute(stmt)
+        cursor.close()
+        return rslt
 
 
 class QueryMixin:
