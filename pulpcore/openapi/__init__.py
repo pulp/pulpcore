@@ -2,6 +2,7 @@ import os
 import re
 from urllib.parse import urljoin
 
+from django.conf import settings
 from django.core.exceptions import FieldDoesNotExist
 from django.utils.html import strip_tags
 from drf_spectacular.drainage import reset_generator_stats
@@ -63,7 +64,7 @@ class PulpAutoSchema(AutoSchema):
             if not tokenized_path and getattr(self.view, "get_view_name", None):
                 tokenized_path.extend(self.view.get_view_name().split())
 
-        path = "/".join(tokenized_path).replace("pulp/api/v3/", "")
+        path = "/".join(tokenized_path).replace(settings.V3_API_ROOT_NO_FRONT_SLASH, "")
         tokenized_path = path.split("/")
 
         return tokenized_path
@@ -92,7 +93,7 @@ class PulpAutoSchema(AutoSchema):
         tokenized_path = self._tokenize_path()
 
         subpath = "/".join(tokenized_path)
-        operation_keys = subpath.replace("pulp/api/v3/", "").split("/")
+        operation_keys = subpath.replace(settings.V3_API_ROOT_NO_FRONT_SLASH, "").split("/")
         operation_keys = [i.title() for i in operation_keys]
         tags = operation_keys
         if len(operation_keys) > 2:

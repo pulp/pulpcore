@@ -60,6 +60,9 @@ SECRET_KEY = True
 # Key used to encrypt fields in the database
 DB_ENCRYPTION_KEY = "/etc/pulp/certs/database_fields.symmetric.key"
 
+# API Root
+API_ROOT = "/pulp/"
+
 # Application definition
 
 INSTALLED_APPS = [
@@ -430,3 +433,18 @@ if not (len(sys.argv) >= 2 and sys.argv[1] in _SKIPPED_COMMANDS_FOR_CONTENT_CHEC
         pass
     finally:
         connection.close()
+
+
+if not API_ROOT.startswith("/"):
+    i8ln_msg = _("The API_ROOT must start with a '/', currently it is '{API_ROOT}'")
+    raise ImproperlyConfigured(i8ln_msg.format(API_ROOT=API_ROOT))
+
+if not API_ROOT.endswith("/"):
+    i8ln_msg = _("The API_ROOT must end with a '/', currently it is '{API_ROOT}'")
+    raise ImproperlyConfigured(i8ln_msg.format(API_ROOT=API_ROOT))
+
+settings.set("V3_API_ROOT", settings.API_ROOT + "api/v3/")  # Not user configurable
+settings.set(
+    "V3_API_ROOT_NO_FRONT_SLASH", settings.V3_API_ROOT.lstrip("/")
+)  # Not user configurable
+settings.unset("API_ROOT")

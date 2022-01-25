@@ -1,8 +1,9 @@
 import re
 
 from django import template
+from django.conf import settings
 from django.utils.encoding import force_text
-from django.utils.html import escape, smart_urlquote
+from django.utils.html import escape
 from django.utils.safestring import SafeData, mark_safe
 
 register = template.Library()
@@ -19,7 +20,6 @@ WRAPPING_PUNCTUATION = [
     ("&quot;", "&quot;"),
 ]
 word_split_re = re.compile(r"(\s+)")
-href_re = re.compile(r"^\/pulp\/api\/v3\/", re.IGNORECASE)
 
 
 @register.filter(needs_autoescape=True)
@@ -37,7 +37,7 @@ def urlize_quoted_hrefs(text, trim_url_limit=None, nofollow=True, autoescape=Tru
     safe_input = isinstance(text, SafeData)
     words = word_split_re.split(force_text(text))
     for i, word in enumerate(words):
-        if "/pulp/api/v3/" in word:
+        if settings.V3_API_ROOT in word:
             # Deal with punctuation.
             lead, middle, trail = "", word, ""
             for punctuation in TRAILING_PUNCTUATION:
@@ -56,9 +56,6 @@ def urlize_quoted_hrefs(text, trim_url_limit=None, nofollow=True, autoescape=Tru
             # Make URL we want to point to.
             url = None
             nofollow_attr = ' rel="nofollow"' if nofollow else ""
-
-            if href_re.match(middle):
-                url = smart_urlquote(middle)
 
             # Check if it's a real URL
             if url and ("{" in url or "%7B" in url):
