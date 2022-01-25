@@ -18,9 +18,10 @@ from pulpcore.app.viewsets import (
     OrphansCleanupViewset,
     ReclaimSpaceViewSet,
 )
-from pulpcore.constants import API_ROOT
 
 log = logging.getLogger(__name__)
+
+API_ROOT = settings.V3_API_ROOT_NO_FRONT_SLASH
 
 
 class ViewSetNode:
@@ -166,7 +167,7 @@ urlpatterns.append(
         SpectacularRedocView.as_view(
             authentication_classes=[],
             permission_classes=[],
-            url="/pulp/api/v3/docs/api.json?include_html=1",
+            url=f"{settings.V3_API_ROOT}docs/api.json?include_html=1",
         ),
         name="schema-redoc",
     )

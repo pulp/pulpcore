@@ -1,5 +1,6 @@
 from types import SimpleNamespace
 
+
 #: All valid task states.
 TASK_STATES = SimpleNamespace(
     WAITING="waiting",
@@ -42,9 +43,6 @@ SYNC_CHOICES = (
         "Add new content and remove content is no longer in the remote repository.",
     ),
 )
-
-
-API_ROOT = "pulp/api/v3/"
 
 # What content-identifying checksums algorithms does pulp _know about_?
 # NOTE that models.Artifact must include a field for each possible checksum; simply

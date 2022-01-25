@@ -142,6 +142,18 @@ Pulp Settings
 
 Pulp defines the following settings itself:
 
+.. _api-root:
+
+API_ROOT
+^^^^^^^^
+
+   A string containing the path prefix for the Pulp API. This is used by the REST API when forming
+   URLs to refer clients to other parts of the REST API and by the ``pulpcore-api`` application to
+   match incoming URLs. Pulp appends the string ``api/v3/`` to this setting.
+
+   Defaults to ``/pulp/``. After the application appends ``api/v3/`` it makes the V3 API by default
+   serve from ``/pulp/api/v3/``.
+
 WORKING_DIRECTORY
 ^^^^^^^^^^^^^^^^^
 
