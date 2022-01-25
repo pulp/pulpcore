@@ -14,6 +14,7 @@ from pulpcore.app.models import (  # noqa
     ContentArtifact,
     ContentManager,
     ContentGuard,
+    ContentRedirectContentGuard,
     CreatedResource,
     Distribution,
     Export,
