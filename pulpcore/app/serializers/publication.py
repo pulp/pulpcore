@@ -10,6 +10,7 @@ from pulpcore.app.serializers import (
     BaseURLField,
     DetailIdentityField,
     DetailRelatedField,
+    GetOrCreateSerializerMixin,
     LabelsField,
     ModelSerializer,
     RepositoryVersionRelatedField,
@@ -110,6 +111,15 @@ class RBACContentGuardPermissionSerializer(serializers.Serializer):
 
     usernames = serializers.ListField(default=[])
     groupnames = serializers.ListField(default=[])
+
+
+class ContentRedirectContentGuardSerializer(ContentGuardSerializer, GetOrCreateSerializerMixin):
+    """
+    A serializer for ContentRedirectContentGuard.
+    """
+
+    class Meta(ContentGuardSerializer.Meta):
+        model = models.ContentRedirectContentGuard
 
 
 class DistributionSerializer(ModelSerializer):

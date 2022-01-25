@@ -6,6 +6,7 @@ from .base import (  # noqa
     AsyncOperationResponseSerializer,
     DetailIdentityField,
     DetailRelatedField,
+    GetOrCreateSerializerMixin,
     IdentityField,
     ModelSerializer,
     NestedIdentityField,
@@ -71,6 +72,7 @@ from .publication import (  # noqa
     PublicationSerializer,
     RBACContentGuardSerializer,
     RBACContentGuardPermissionSerializer,
+    ContentRedirectContentGuardSerializer,
 )
 from .purge import PurgeSerializer  # noqa
 from .repository import (  # noqa

@@ -8,6 +8,7 @@ from rest_framework.filters import OrderingFilter
 from pulpcore.app.models import (
     ContentGuard,
     RBACContentGuard,
+    ContentRedirectContentGuard,
     Distribution,
     Publication,
     Content,
@@ -17,6 +18,7 @@ from pulpcore.app.serializers import (
     DistributionSerializer,
     PublicationSerializer,
     RBACContentGuardSerializer,
+    ContentRedirectContentGuardSerializer,
 )
 from pulpcore.app.viewsets import (
     AsyncCreateMixin,
@@ -206,6 +208,16 @@ class RBACContentGuardViewSet(ContentGuardViewSet, RolesMixin):
         ],
         "core.rbaccontentguard_downloader": ["core.download_rbaccontentguard"],
     }
+
+
+class ContentRedirectContentGuardViewSet(ContentGuardViewSet):
+    """
+    Content guard to protect preauthenticated redirects to the content app.
+    """
+
+    endpoint_name = "content_redirect"
+    queryset = ContentRedirectContentGuard.objects.all()
+    serializer_class = ContentRedirectContentGuardSerializer
 
 
 class DistributionFilter(BaseFilterSet):

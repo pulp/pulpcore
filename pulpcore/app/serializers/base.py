@@ -5,7 +5,8 @@ import traceback
 from urllib.parse import urljoin
 
 from django.core.validators import URLValidator
-from django.db import transaction
+from django.core.exceptions import ObjectDoesNotExist
+from django.db import IntegrityError, transaction
 from drf_queryfields.mixins import QueryFieldsMixin
 from rest_framework import serializers
 from rest_framework_nested.relations import (
@@ -45,6 +46,28 @@ class ValidateFieldsMixin:
 
         data = super().validate(data)
         return data
+
+
+class GetOrCreateSerializerMixin:
+    """A mixin that provides a get_or_create with validation in the serializer"""
+
+    @classmethod
+    def get_or_create(cls, natural_key, default_values=None):
+        try:
+            result = cls.Meta.model.objects.get(**natural_key)
+        except ObjectDoesNotExist:
+            data = {}
+            if default_values:
+                data.update(default_values)
+            data.update(natural_key)
+            serializer = cls(data=data)
+            try:
+                serializer.is_valid(raise_exception=True)
+                result = serializer.create(serializer.validated_data)
+            except (IntegrityError, serializers.ValidationError):
+                # recover from a race condition, where another thread just created the object
+                result = cls.Meta.model.objects.get(**natural_key)
+        return result
 
 
 class ModelSerializer(
