@@ -102,6 +102,7 @@ class Handler:
     hop_by_hop_headers = [
         "connection",
         "content-encoding",
+        "content-length",
         "keep-alive",
         "public",
         "proxy-authenticate",
@@ -833,10 +834,9 @@ class Handler:
         async def handle_response_headers(headers):
             for name, value in headers.items():
                 lower_name = name.lower()
-                if lower_name in self.hop_by_hop_headers:
-                    continue
-
-                if response.status == 206 and lower_name == "content-length":
+                if lower_name not in self.hop_by_hop_headers:
+                    response.headers[name] = value
+                elif response.status == 206 and lower_name == "content-length":
                     content_length = int(value)
                     start = 0 if range_start is None else range_start
                     stop = content_length if range_stop is None else range_stop
@@ -849,9 +849,6 @@ class Handler:
                     response.headers["Content-Range"] = "bytes {0}-{1}/{2}".format(
                         start, stop - 1, content_length
                     )
-                    continue
-
-                response.headers[name] = value
             await response.prepare(request)
 
         data_size_handled = 0
