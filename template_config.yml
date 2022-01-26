@@ -1,7 +1,7 @@
 # This config represents the latest values used when running the plugin-template. Any settings that
 # were not present before running plugin-template have been added with their default values.
 
-# generated with plugin_template@2021.08.26-63-ga4f4a44
+# generated with plugin_template@2021.08.26-64-gb9bbd48
 
 additional_repos:
 - branch: 1.6
@@ -67,7 +67,7 @@ sync_ci: true
 tasking_allow_async_unsafe: true
 test_azure: false
 test_bindings: true
-test_cli: false
+test_cli: true
 test_deprecations: false
 test_fips_nightly: false
 test_performance: false

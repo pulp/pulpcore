@@ -124,6 +124,10 @@ else
     pytest -v -r sx --color=yes --pyargs pulpcore.tests.functional -m "not parallel"
 
 fi
+export PULP_FIXTURES_URL="http://pulp-fixtures:8080"
+pushd ../pulp-cli
+pytest -v -m pulpcore
+popd
 
 if [ -f $POST_SCRIPT ]; then
   source $POST_SCRIPT
