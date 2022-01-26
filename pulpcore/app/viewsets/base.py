@@ -330,17 +330,15 @@ class NamedModelViewSet(viewsets.GenericViewSet):
         For nested ViewSets, this adds parent filters to the result returned by the superclass. For
         non-nested ViewSets, this returns the original QuerySet unchanged.
 
-        Additional permissions-based filtering is provided for ViewSets that declare a
-        ``queryset_filtering_required_permission`` attribute naming the permission users must have
-        to view an object. This includes receiving the permission through either model-level,
-        object-level, and access through either a user or group.
+        Additional permissions-based filtering is provided for ViewSets that have a permission
+        class that includes the ``objects_for_user`` interface. That interface will determine
+        how the objects are filtered.
 
         Returns:
             django.db.models.query.QuerySet: The queryset returned by the superclass with additional
                 filters applied that match self.parent_lookup_kwargs, to scope the results to only
-                those associated with the parent object. Additionally the QuerySet is filtered by
-                the permission named if the ViewSet declares a
-                ``queryset_filtering_required_permission`` attribute.
+                those associated with the parent object. Additionally, the QuerySet is filtered by
+                the ViewSet's permission classes that implement ``objects_for_users`` interface.
         """
         qs = super().get_queryset()
         if self.parent_lookup_kwargs and self.kwargs:
@@ -349,9 +347,14 @@ class NamedModelViewSet(viewsets.GenericViewSet):
                 filters[lookup] = self.kwargs[key]
             qs = qs.filter(**filters)
 
+        # Deprecated, remove in 3.20
         permission_name = getattr(self, "queryset_filtering_required_permission", None)
         if permission_name:
             qs = get_objects_for_user(self.request.user, permission_name, qs)
+
+        for permission_class in self.get_permissions():
+            if hasattr(permission_class, "objects_for_user"):
+                qs = permission_class.objects_for_user(self, self.request.user, qs)
 
         return qs
 

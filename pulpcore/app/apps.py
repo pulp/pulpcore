@@ -130,6 +130,7 @@ class PulpPluginAppConfig(apps.AppConfig):
         # TODO do not include imported ViewSets
         # circular import avoidance
         from pulpcore.app.viewsets import NamedModelViewSet
+        from pulpcore.app.loggers import deprecation_logger
 
         self.named_viewsets = defaultdict(list)
         if module_has_submodule(self.module, VIEWSETS_MODULE_NAME):
@@ -146,6 +147,13 @@ class PulpPluginAppConfig(apps.AppConfig):
                     if obj is not NamedModelViewSet and issubclass(obj, NamedModelViewSet):
                         model = obj.queryset.model
                         self.named_viewsets[model].append(obj)
+                        if hasattr(obj, "queryset_filtering_required_permission"):
+                            deprecation_logger.warn(
+                                f"In {obj} the field 'queryset_filtering_required_permission' is "
+                                f"deprecated and may be removed in Pulp 3.20. Please attach this "
+                                f"permission to the 'DEFAULT_ACCESS_POLICY' field "
+                                f"'filtering_permissions'."
+                            )
                 except TypeError:
                     # obj isn't a class, issubclass exploded but obj can be safely filtered out
                     continue

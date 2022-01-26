@@ -123,7 +123,6 @@ class GroupViewSet(
     serializer_class = GroupSerializer
     queryset = Group.objects.all()
     ordering = ("name",)
-    queryset_filtering_required_permission = "core.view_group"
 
     DEFAULT_ACCESS_POLICY = {
         "statements": [
@@ -169,6 +168,7 @@ class GroupViewSet(
                 "parameters": {"roles": "core.group_owner"},
             },
         ],
+        "filtering_permissions": ["core.view_group"],
     }
 
     LOCKED_ROLES = {

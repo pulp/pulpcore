@@ -58,6 +58,9 @@ class AccessPolicyViewSet(
                             "creation_hooks"
                         ) or default_access_policy.get("permissions_assignment")
                         access_policy.customized = False
+                        access_policy.filtering_permissions = default_access_policy.get(
+                            "filtering_permissions"
+                        )
                         access_policy.save()
                         serializer = AccessPolicySerializer(
                             access_policy, context={"request": request}

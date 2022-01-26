@@ -44,6 +44,12 @@ class AccessPolicySerializer(ModelSerializer):
         read_only=True,
     )
 
+    filtering_permissions = serializers.ListField(
+        child=serializers.CharField(),
+        help_text=_("List of permissions used to filter objects."),
+        required=False,
+    )
+
     class Meta:
         model = models.AccessPolicy
         fields = ModelSerializer.Meta.fields + (

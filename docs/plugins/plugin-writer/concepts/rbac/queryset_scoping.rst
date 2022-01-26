@@ -20,15 +20,22 @@ Enabling QuerySet Scoping
 The support for this is built into ``pulpcore.plugin.viewsets.NamedModelViewSet``, which is often
 the base class for any model-based ViewSet if Pulp. Objects will only be shown to users have access
 to a specific permission either at the model-level or object-level. Enable this on your ViewSet that
-inherits from ``pulpcore.plugin.viewsets.NamedModelViewSet`` by setting the
-``queryset_filtering_required_permission`` class attribute to the value of the permission name.
+inherits from ``pulpcore.plugin.viewsets.NamedModelViewSet`` by having the ``permission_classes``
+class attribute include a permission class that implements the ``objects_for_users`` interface, like
+the default permission class ``AccessPolicyFromDB``. To enable queryset scoping for
+``AccessPolicyFromDB``, add the field ``filtering_permissions`` with a list of scoping permissions
+to the ViewSet's ``DEFAULT_ACCESS_POLICY``.
 
 For example Tasks are restricted only to those users with the "core.view_task" permission like
 this::
 
     TaskViewSet(NamedModelViewSet):
         ...
-        queryset_filtering_required_permission = "core.view_task"
+        DEFAULT_ACCESS_POLICY = {
+        ...
+            "filtering_permissions": ["core.view_task"],
+        ...
+        }
 
 
 .. _manually_implementing_queryset_scoping:
