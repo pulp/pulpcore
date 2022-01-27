@@ -17,6 +17,45 @@ Changelog
 
 .. towncrier release notes start
 
+3.14.11 (2022-01-27)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fix import and export OOM error.
+  `#2072 <https://pulp.plan.io/issues/2072>`_
+- Fixed downloader retry logic with partially written files.
+  `#2078 <https://pulp.plan.io/issues/2078>`_
+- Fix content summary showing incorrect count after previous version deletion.
+  `#2084 <https://pulp.plan.io/issues/2084>`_
+- Fixed issue with listing repository versions after deleting previous versions.
+  `#2085 <https://pulp.plan.io/issues/2085>`_
+- Fixed file descriptior leak during upload.
+  `#2087 <https://pulp.plan.io/issues/2087>`_
+- Added proper logging around certain ways a task could fail.
+  `#2093 <https://pulp.plan.io/issues/2093>`_
+- Make checksum mismatches a retryable error.
+  `#2094 <https://pulp.plan.io/issues/2094>`_
+- Fixed an edge case where the first (streamed) response from an repo synced as "on_demand" could be incorrect.
+  `#2119 <https://pulp.plan.io/issues/2119>`_
+- Fixed bug where retries of partially downloaded files failed digest and size validation.
+  `#2135 <https://pulp.plan.io/issues/2135>`_
+- Fixed a bug in pulpcore-worker, where wakeup and cancel signals could be lost due to a race
+  condition.
+  `#2144 <https://pulp.plan.io/issues/2144>`_
+- Fixed the calculation of response range headers in streaming answers from the content app.
+  `#2147 <https://pulp.plan.io/issues/2147>`_
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.14.10 (2022-01-07)
 ====================
 REST API
