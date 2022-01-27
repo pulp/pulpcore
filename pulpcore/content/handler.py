@@ -772,7 +772,10 @@ class Handler:
         artifact_name = artifact_file.name
 
         if settings.DEFAULT_FILE_STORAGE == "pulpcore.app.models.storage.FileSystem":
-            return FileResponse(os.path.join(settings.MEDIA_ROOT, artifact_name), headers=headers)
+            path = os.path.join(settings.MEDIA_ROOT, artifact_name)
+            if not os.path.exists(path):
+                raise Exception(_("Expected path '{}' is not found").format(path))
+            return FileResponse(path, headers=headers)
         elif settings.DEFAULT_FILE_STORAGE == "storages.backends.s3boto3.S3Boto3Storage":
             content_disposition = f"attachment;filename={content_artifact.relative_path}"
             parameters = {"ResponseContentDisposition": content_disposition}
