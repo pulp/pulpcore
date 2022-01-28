@@ -1,10 +1,10 @@
 # This config represents the latest values used when running the plugin-template. Any settings that
 # were not present before running plugin-template have been added with their default values.
 
-# generated with plugin_template@2021.08.26-62-gfaa6635
+# generated with plugin_template@2021.08.26-65-g3505809
 
 additional_repos:
-- branch: "1.10"
+- branch: '1.10'
   name: pulp_file
 - branch: master
   name: pulp-certguard
@@ -29,7 +29,7 @@ disabled_redis_runners: []
 docker_fixtures: true
 docs_test: true
 flake8: true
-issue_tracker: redmine
+issue_tracker: github
 noissue_marker: '[noissue]'
 parallel_test_workers: 8
 plugin_app_label: core
@@ -74,6 +74,7 @@ test_fips_nightly: false
 test_performance: false
 test_released_plugin_with_next_pulpcore_release: false
 test_s3: true
+update_github: true
 update_redmine: true
 upgrade_range:
 - pulp-certguard_branch: 1.2
