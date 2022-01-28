@@ -1,4 +1,4 @@
-FROM {{ ci_base | default("pulp/pulp-ci-centos:" + pulp_container_tag) }}
+FROM {{ ci_base | default("ghcr.io/pulp/pulp-ci-centos:" + pulp_container_tag) }}
 
 # Add source directories to container
 {% for item in plugins %}
