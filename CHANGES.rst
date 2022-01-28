@@ -17,6 +17,36 @@ Changelog
 
 .. towncrier release notes start
 
+3.15.4 (2022-01-28)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fixed downloader retry logic with partially written files.
+  `#2078 <https://github.com/pulp/pulpcore/issues/2078>`_
+- Fixed bug where retries of partially downloaded files failed digest and size validation.
+  `#2135 <https://github.com/pulp/pulpcore/issues/2135>`_
+- Fixed the calculation of response range headers in streaming answers from the content app.
+  `#2147 <https://github.com/pulp/pulpcore/issues/2147>`_
+- Improved messaging around timeout requests.
+  `#2169 <https://github.com/pulp/pulpcore/issues/2169>`_
+
+
+Misc
+~~~~
+
+- `#2094 <https://github.com/pulp/pulpcore/issues/2094>`_
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.15.3 (2021-11-30)
 ===================
 REST API
