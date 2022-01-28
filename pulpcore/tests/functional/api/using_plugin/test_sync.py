@@ -5,9 +5,6 @@ from pulp_smash.pulp3.bindings import monitor_task
 from pulpcore.client.pulp_file import (
     RepositorySyncURL,
 )
-from pulpcore.tests.functional.api.using_plugin.utils import (  # noqa:F401
-    set_up_module as setUpModule,
-)
 
 
 def _run_basic_sync_and_assert(
@@ -17,7 +14,9 @@ def _run_basic_sync_and_assert(
     monitor_task(file_repo_api_client.sync(file_repo.pulp_href, body).task)
 
     # Check content is present, but no artifacts are there
-    content_response = content_file_api_client.list()
+    content_response = content_file_api_client.list(
+        repository_version=f"{file_repo.versions_href}1/"
+    )
     assert content_response.count == 3
     for content in content_response.results:
         if policy == "immediate":
