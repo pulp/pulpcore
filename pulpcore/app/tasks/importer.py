@@ -50,6 +50,8 @@ def _destination_repo(importer, source_repo_name):
     """Find the destination repository based on source repo's name."""
     if importer.repo_mapping and importer.repo_mapping.get(source_repo_name):
         dest_repo_name = importer.repo_mapping[source_repo_name]
+    elif settings.IMPORT_MAPPED_REPOS_ONLY:
+        return
     else:
         dest_repo_name = source_repo_name
     return Repository.objects.get(name=dest_repo_name)
@@ -180,6 +182,8 @@ def import_repository_version(importer_pk, destination_repo_pk, source_repo_name
             # use the content mapping to map content to repos
             for repo_name, content_ids in mapping.items():
                 repo = _destination_repo(importer, repo_name)
+                if not repo:
+                    continue
                 content = Content.objects.filter(upstream_id__in=content_ids)
                 with repo.new_version() as new_version:
                     new_version.set_content(content)
@@ -395,6 +399,8 @@ def pulp_import(importer_pk, path, toc):
             for src_repo in data:
                 try:
                     dest_repo = _destination_repo(importer, src_repo["name"])
+                    if not dest_repo:
+                        continue
                 except Repository.DoesNotExist:
                     log.warning(
                         _("Could not find destination repo for {}. Skipping.").format(
