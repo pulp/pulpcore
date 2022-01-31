@@ -164,7 +164,7 @@ def import_repository_version(importer_pk, destination_repo_pk, source_repo_name
         # Extract the repo version files
         with tarfile.open(tar_path, "r:gz") as tar:
             for mem in tar.getmembers():
-                match = re.search(fr"(^repository-{source_repo_name}_[0-9]+)/.+", mem.name)
+                match = re.search(rf"(^repository-{source_repo_name}_[0-9]+)/.+", mem.name)
                 if match:
                     rv_name = match.group(1)
                     tar.extract(mem, path=temp_dir)
