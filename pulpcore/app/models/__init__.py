@@ -59,6 +59,7 @@ from .repository import (  # noqa
 )
 
 # This can lead to circular imports with a custom user model depending on this very module
+# Moved to plugin/models/role.py to avoid the circular import.
 # from .role import (  # noqa
 #     GroupRole,
 #     Role,
