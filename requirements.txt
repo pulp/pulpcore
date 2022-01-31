@@ -27,6 +27,6 @@ PyYAML>=5.1.1,<6.1.0
 python-gnupg~=0.4.8
 redis>=3.4.0
 setuptools>=39.2.0
-url-normalize~=1.4.2
+url-normalize~=1.4.3
 whitenoise>=5.0.0,<5.4.0
 yarl>1.0.0
