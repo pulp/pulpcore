@@ -74,7 +74,7 @@ class Command(BaseCommand):
         if content.count():
             self.stdout.write(
                 _("There is approx {:.2f}Mb of content to be downloaded.").format(
-                    ras_size / (1024 ** 2)
+                    ras_size / (1024**2)
                 )
             )
 
@@ -107,7 +107,7 @@ class Command(BaseCommand):
         if content.count() > 0:
             self.stdout.write(
                 _("There is approx. {:.2f}Mb content data to be re-hashed.").format(
-                    artifacts.aggregate(Sum("size"))["size__sum"] / (1024 ** 2)
+                    artifacts.aggregate(Sum("size"))["size__sum"] / (1024**2)
                 )
             )
 
