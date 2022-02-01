@@ -1,0 +1,2 @@
+Fixed reporting tasks being canceled before being picked up by a worker as canceled instead of
+failed.
