@@ -22,8 +22,7 @@ Or in a systemd file you could::
     Environment="PULP_SETTINGS=/etc/pulp/settings.py" as the Ansible Installer does.
 
 
-Dynaconf supports `settings in multiple file formats <https://dynaconf.readthedocs.io/en/latest/
-guides/examples.html>`_
+Dynaconf supports `settings in multiple file formats <https://www.dynaconf.com/configuration/>`_
 
 This file should have permissions of:
 
