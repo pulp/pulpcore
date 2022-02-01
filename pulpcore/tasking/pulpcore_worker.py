@@ -151,6 +151,13 @@ class NewPulpWorker:
                     # The lock will be automatically be released at the end of the block
                     # Check if someone else changed the task before we got the lock
                     task.refresh_from_db()
+                    if task.state == TASK_STATES.CANCELING and task.worker is None:
+                        # No worker picked this task up before being canceled
+                        if self.cancel_abandoned_task(task, TASK_STATES.CANCELED):
+                            # Continue looking for the next task
+                            # without considering this tasks resources
+                            # as we just released them
+                            continue
                     if task.state in [TASK_STATES.RUNNING, TASK_STATES.CANCELING]:
                         # A running task without a lock must be abandoned
                         if self.cancel_abandoned_task(task):
