@@ -6,7 +6,7 @@ aioredis~=2.0.1
 backoff~=1.11.0
 click<9.0
 cryptography~=36.0.1
-Django~=3.2.11  # LTS version, switch only if we have a compelling reason to
+Django~=4.0.2  # LTS version, switch only if we have a compelling reason to
 django-currentuser~=0.5.3
 django-filter~=21.1
 django-guardian~=2.4.0
