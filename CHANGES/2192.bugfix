@@ -1,0 +1,5 @@
+Fixed import/export of repositories with sub-content.
+
+An example would be the sub-repositories in pulp_rpm
+DistributionTrees.
+
