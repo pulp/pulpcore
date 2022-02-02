@@ -1,6 +1,3 @@
-from gettext import gettext as _
-
-from django.core.exceptions import ImproperlyConfigured
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group as BaseGroup
 from django.db import models
@@ -10,7 +7,7 @@ from guardian.models.models import GroupObjectPermission, UserObjectPermission
 from guardian.shortcuts import assign_perm, remove_perm
 
 from pulpcore.app.models import BaseModel
-from pulpcore.app.loggers import deprecation_logger
+from pulpcore.app.util import get_viewset_for_model
 
 
 def _ensure_iterable(obj):
@@ -76,33 +73,10 @@ class AutoAddObjPermsMixin:
 
     @hook("after_create")
     def add_perms(self):
-        try:
-            access_policy = AccessPolicy.objects.get(viewset_name=self.ACCESS_POLICY_VIEWSET_NAME)
-        except AttributeError:
-            raise ImproperlyConfigured(
-                _(
-                    "When using the `AutoAddObjPermsMixin`, plugin writers must declare an"
-                    "`ACCESS_POLICY_VIEWSET_NAME` class attribute."
-                )
-            )
-        self._handle_creation_hooks(access_policy)
-
-    def _handle_creation_hooks(self, access_policy):
-        if access_policy.creation_hooks is not None:
-            for creation_hook in access_policy.creation_hooks:
-                function = self.REGISTERED_CREATION_HOOKS.get(creation_hook["function"])
-                if function is not None:
-                    kwargs = creation_hook.get("parameters") or {}
-                    function(**kwargs)
-                else:
-                    # Old interface deprecated for removal in 3.20
-                    function = getattr(self, creation_hook["function"])
-                    deprecation_logger.warn(
-                        "Calling unregistered creation hooks from the access policy is deprecated"
-                        " and may be removed with pulpcore 3.20 "
-                        f"[hook={creation_hook}, viewset={access_policy.viewset_name}]."
-                    )
-                    function(creation_hook.get("permissions"), creation_hook.get("parameters"))
+        viewset = get_viewset_for_model(self)
+        for permission_class in viewset.get_permissions(viewset):
+            if hasattr(permission_class, "handle_creation_hooks"):
+                permission_class.handle_creation_hooks(self)
 
     def add_for_users(self, permissions, users):
         """
