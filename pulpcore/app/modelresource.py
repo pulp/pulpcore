@@ -66,11 +66,18 @@ class ContentArtifactResource(QueryModelResource):
     ContentArtifact is different from other import-export entities because it has no 'natural key'
     other than a pulp_id, which aren't shared across instances. We do some magic to link up
     ContentArtifacts to their matching (already-imported) Content.
+
+    Some plugin-models have sub-repositories. We take advantage of the content-mapping
+    machinery to account for those contentartifacts as well.
     """
 
     artifact = fields.Field(
         column_name="artifact", attribute="artifact", widget=ForeignKeyWidget(Artifact, "sha256")
     )
+
+    def __init__(self, repo_version=None, content_mapping=None):
+        self.content_mapping = content_mapping
+        super().__init__(repo_version)
 
     def before_import_row(self, row, **kwargs):
         """
@@ -92,9 +99,15 @@ class ContentArtifactResource(QueryModelResource):
         row["content"] = str(linked_content.pulp_id)
 
     def set_up_queryset(self):
-        return ContentArtifact.objects.filter(content__in=self.repo_version.content).order_by(
-            "content", "relative_path"
-        )
+        vers_content = ContentArtifact.objects.filter(content__in=self.repo_version.content)
+        if self.content_mapping:
+            all_content = []
+            for content_ids in self.content_mapping.values():
+                all_content.extend(content_ids)
+            vers_content = vers_content.union(
+                ContentArtifact.objects.filter(content__in=all_content)
+            )
+        return vers_content.order_by("content", "relative_path")
 
     class Meta:
         model = ContentArtifact
