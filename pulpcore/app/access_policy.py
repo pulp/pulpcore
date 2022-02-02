@@ -1,14 +1,65 @@
 from rest_access_policy import AccessPolicy
-from django.db.utils import ProgrammingError
 
+from pulpcore.app.loggers import deprecation_logger
 from pulpcore.app.models import AccessPolicy as AccessPolicyModel
-from pulpcore.app.util import get_view_urlpattern
+from pulpcore.app.util import get_view_urlpattern, get_viewset_for_model
 
 
 class AccessPolicyFromDB(AccessPolicy):
     """
     An AccessPolicy that loads statements from an `AccessPolicy` model instance.
     """
+
+    @staticmethod
+    def get_access_policy(view):
+        """
+        Retrieves the AccessPolicy from the DB or None if it doesn't exist.
+
+        Args:
+            view (subclass of rest_framework.view.APIView): The view or viewset to receive the
+                AccessPolicy model for.
+
+        Returns:
+            Either a `pulpcore.app.models.AccessPolicy` or None.
+        """
+        try:
+            urlpattern = get_view_urlpattern(view)
+        except AttributeError:
+            # The view does not define a `urlpattern()` method, e.g. it's not a NamedModelViewset
+            return None
+
+        try:
+            return AccessPolicyModel.objects.get(viewset_name=urlpattern)
+        except AccessPolicyModel.DoesNotExist:
+            return None
+
+    @classmethod
+    def handle_creation_hooks(cls, obj):
+        """
+        Handle the creation hooks defined in this policy for the passed in `obj`.
+
+        Args:
+            cls: The class this method belongs to.
+            obj: The model instance to have its creation hooks handled for.
+
+        """
+        viewset = get_viewset_for_model(obj)
+        access_policy = cls.get_access_policy(viewset)
+        if access_policy and access_policy.creation_hooks is not None:
+            for creation_hook in access_policy.creation_hooks:
+                function = obj.REGISTERED_CREATION_HOOKS.get(creation_hook["function"])
+                if function is not None:
+                    kwargs = creation_hook.get("parameters") or {}
+                    function(**kwargs)
+                else:
+                    # Old interface deprecated for removal in 3.20
+                    function = getattr(obj, creation_hook["function"])
+                    deprecation_logger.warn(
+                        "Calling unregistered creation hooks from the access policy is deprecated"
+                        " and may be removed with pulpcore 3.20."
+                        f"[hook={creation_hook}, viewset={access_policy.viewset_name}]."
+                    )
+                    function(creation_hook.get("permissions"), creation_hook.get("parameters"))
 
     def get_policy_statements(self, request, view):
         """
@@ -35,12 +86,9 @@ class AccessPolicyFromDB(AccessPolicy):
         Returns:
             The access policy statements in drf-access-policy policy structure.
         """
-        try:
-            viewset_name = get_view_urlpattern(view)
-            access_policy_obj = AccessPolicyModel.objects.get(viewset_name=viewset_name)
-        except (AccessPolicyModel.DoesNotExist, AttributeError, ProgrammingError):
+        if access_policy_obj := self.get_access_policy(view):
+            return access_policy_obj.statements
+        else:
             default_statement = [{"action": "*", "principal": "admin", "effect": "allow"}]
             policy = getattr(view, "DEFAULT_ACCESS_POLICY", {"statements": default_statement})
             return policy["statements"]
-        else:
-            return access_policy_obj.statements
