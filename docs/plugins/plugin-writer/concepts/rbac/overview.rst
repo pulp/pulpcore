@@ -46,12 +46,12 @@ To add authorization for a given resource, e.g. ``FileRemote``, you'll need to:
 3. Define the default role associations created for new objects using the ``creation_hooks``
    attribute of the new Access Policy for the resource. See the
    :ref:`adding_automatic_permissions_for_new_objects` documentation for more information on that.
-4. Define the permissions used for QuerySet scoping through the ``filtering_permissions`` attribute
+4. Define the permissions used for QuerySet scoping through the ``scoping_hooks`` attribute
    of the new Access Policy for the resource. See the :ref:`enabling_queryset_scoping`
    documentation for more information.
 5. Ship that Access Policy as the class attribute ``DEFAULT_ACCESS_POLICY`` of a
    ``NamedModelViewSet``. This will contain the ``statements``, ``creation_hooks`` and
-   ``filtering_permissions`` attributes.
+   ``scoping_hooks`` attributes.
    Ship the roles as the ``LOCKED_ROLES`` attribute accordingly. See the
    :ref:`shipping_default_access_policy` documentation for more information on this.
 

@@ -168,7 +168,12 @@ class GroupViewSet(
                 "parameters": {"roles": "core.group_owner"},
             },
         ],
-        "filtering_permissions": ["core.view_group"],
+        "scoping_hooks": [
+            {
+                "function": "scope_required_permissions",
+                "parameters": {"permissions": "core.view_group"},
+            },
+        ],
     }
 
     LOCKED_ROLES = {

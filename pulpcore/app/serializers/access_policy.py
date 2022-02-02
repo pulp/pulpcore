@@ -44,9 +44,9 @@ class AccessPolicySerializer(ModelSerializer):
         read_only=True,
     )
 
-    filtering_permissions = serializers.ListField(
-        child=serializers.CharField(),
-        help_text=_("List of permissions used to filter objects."),
+    scoping_hooks = serializers.ListField(
+        child=serializers.DictField(),
+        help_text=_("List of callables used to filter objects."),
         required=False,
     )
 
@@ -58,6 +58,7 @@ class AccessPolicySerializer(ModelSerializer):
             "statements",
             "viewset_name",
             "customized",
+            "scoping_hooks",
         )
 
     def validate(self, data):

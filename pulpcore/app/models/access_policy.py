@@ -34,8 +34,8 @@ class AccessPolicy(BaseModel):
             authorization for.
         customized (BooleanField): False if the AccessPolicy has been user-modified. True otherwise.
             Defaults to False.
-        filtering_permissions (models.JSONField): A default list of permissions used to filter the
-            queryset.
+        scoping_hooks (models.JSONField): A list of dictionaries identifying callables on the
+            viewset used to scope the queryset.
 
     """
 
@@ -43,7 +43,7 @@ class AccessPolicy(BaseModel):
     statements = models.JSONField()
     viewset_name = models.CharField(max_length=128, unique=True)
     customized = models.BooleanField(default=False)
-    filtering_permissions = models.JSONField(null=True)
+    scoping_hooks = models.JSONField(null=True)
 
 
 class AutoAddObjPermsMixin:

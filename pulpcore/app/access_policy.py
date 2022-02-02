@@ -2,8 +2,7 @@ from rest_access_policy import AccessPolicy
 from django.db.utils import ProgrammingError
 
 from pulpcore.app.models import AccessPolicy as AccessPolicyModel
-from pulpcore.app.util import get_view_urlpattern
-from pulpcore.app.role_util import get_objects_for_user
+from pulpcore.app.util import get_view_urlpattern, get_viewset_for_model
 
 
 class AccessPolicyFromDB(AccessPolicy):
@@ -11,7 +10,8 @@ class AccessPolicyFromDB(AccessPolicy):
     An AccessPolicy that loads statements from an `AccessPolicy` model instance.
     """
 
-    def get_access_policy(self, view):
+    @staticmethod
+    def get_access_policy(view):
         """Retrieves the AccessPolicy from the DB or None if it doesn't exist."""
         try:
             viewset_name = get_view_urlpattern(view)
@@ -51,23 +51,36 @@ class AccessPolicyFromDB(AccessPolicy):
             policy = getattr(view, "DEFAULT_ACCESS_POLICY", {"statements": default_statement})
             return policy["statements"]
 
-    def get_default_filtering_permissions(self, view):
+    @classmethod
+    def get_scoping_hooks(cls, view):
         """
-        Gets the default filtering permissions used for queryset scoping.
+        Gets the default scoping hooks used for queryset scoping.
         """
-        if access_policy_obj := self.get_access_policy(view):
-            return access_policy_obj.get("filtering_permissions", [])
+        if access_policy_obj := cls.get_access_policy(view):
+            return access_policy_obj.scoping_hooks or []
         else:
             policy = getattr(view, "DEFAULT_ACCESS_POLICY", {})
-            return policy.get("filtering_permissions", [])
+            return policy.get("scoping_hooks", [])
 
-    def objects_for_user(self, view, user, qs):
+    @classmethod
+    def scope_queryset(cls, request, qs):
         """
-        Filters the queryset to only include objects the user has permission to see based on
-        the `filtering_permissions` of the access policy.
-        """
-        permissions = self.get_default_filtering_permissions(view)
-        if not permissions:
-            return qs
+        Filters the queryset to only include objects the user has permission to see.
 
-        return get_objects_for_user(user, permissions, qs)
+        Runs the functions in the `scoping_hooks` field of the access policy.
+        """
+        view = get_viewset_for_model(qs.model)
+        # kind of a hack, either this here, or the inverse in get_queryset
+        setattr(view, "request", request)
+        hooks = cls.get_scoping_hooks(view)
+        final_qs = qs.none()
+        for hook in hooks:
+            # Should I raise an error if hook is wrong?
+            if function := getattr(view, hook["function"], None):
+                # is this consistent with creation_hooks?
+                scoped_qs = function(view, qs, **hook["parameters"])
+                if hook.get("operation", "or") == "or":
+                    final_qs |= scoped_qs
+                else:
+                    final_qs &= scoped_qs
+        return final_qs if hooks else qs

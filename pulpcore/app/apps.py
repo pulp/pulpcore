@@ -151,8 +151,7 @@ class PulpPluginAppConfig(apps.AppConfig):
                             deprecation_logger.warn(
                                 f"In {obj} the field 'queryset_filtering_required_permission' is "
                                 f"deprecated and may be removed in Pulp 3.20. Please attach this "
-                                f"permission to the 'DEFAULT_ACCESS_POLICY' field "
-                                f"'filtering_permissions'."
+                                f"permission to a scoping hook."
                             )
                 except TypeError:
                     # obj isn't a class, issubclass exploded but obj can be safely filtered out

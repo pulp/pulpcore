@@ -331,14 +331,14 @@ class NamedModelViewSet(viewsets.GenericViewSet):
         non-nested ViewSets, this returns the original QuerySet unchanged.
 
         Additional permissions-based filtering is provided for ViewSets that have a permission
-        class that includes the ``objects_for_user`` interface. That interface will determine
+        class that includes the ``scope_queryset`` interface. That interface will determine
         how the objects are filtered.
 
         Returns:
             django.db.models.query.QuerySet: The queryset returned by the superclass with additional
                 filters applied that match self.parent_lookup_kwargs, to scope the results to only
                 those associated with the parent object. Additionally, the QuerySet is filtered by
-                the ViewSet's permission classes that implement ``objects_for_users`` interface.
+                the ViewSet's permission classes that implement ``scope_queryset`` interface.
         """
         qs = super().get_queryset()
         if self.parent_lookup_kwargs and self.kwargs:
@@ -351,12 +351,17 @@ class NamedModelViewSet(viewsets.GenericViewSet):
         permission_name = getattr(self, "queryset_filtering_required_permission", None)
         if permission_name:
             qs = get_objects_for_user(self.request.user, permission_name, qs)
+        #
 
         for permission_class in self.get_permissions():
-            if hasattr(permission_class, "objects_for_user"):
-                qs = permission_class.objects_for_user(self, self.request.user, qs)
+            if hasattr(permission_class, "scope_queryset"):
+                qs = permission_class.scope_queryset(self.request, qs)
 
         return qs
+
+    def scope_required_permissions(self, qs, permissions):
+        """Scopes the queryset for permissions. Usually a default function on the access policy."""
+        return get_objects_for_user(self.request.user, permissions, qs)
 
     @classmethod
     def _get_nest_depth(cls):

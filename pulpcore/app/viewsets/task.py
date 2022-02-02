@@ -119,7 +119,17 @@ class TaskViewSet(
                 "parameters": {"roles": "core.task_owner"},
             }
         ],
-        "filtering_permissions": ["core.view_task"],
+        "scoping_hooks": [
+            {
+                "function": "scope_required_permissions",
+                "parameters": {"permissions": "core.view_task"},
+            },
+            {
+                # This will default "or" with previous hook
+                "function": "scope_related_attribute",
+                "parameters": {"attribute": "task_group", "permissions": "core.view_task_group"},
+            },
+        ],
     }
     LOCKED_ROLES = {
         "core.task_owner": {
@@ -133,6 +143,14 @@ class TaskViewSet(
         },
         "core.task_viewer": ["core.view_task"],
     }
+
+    def scope_related_attribute(self, qs, attribute, permissions):
+        """Scope the queryset to include objects from attribute we have permission on."""
+        # Tried to make this generic, this would probably live in some mixin
+        att_qs = getattr(qs.model, attribute).get_queryset()
+        att_qs = self.scope_required_permissions(att_qs, permissions).values_list("pk", flat=True)
+        att_filter = {f"{attribute}__in": att_qs}
+        return qs.filter(**att_filter)
 
     @extend_schema(
         description="This operation cancels a task.",
