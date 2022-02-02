@@ -143,10 +143,6 @@ def export_content(export, repository_version):
         )
     )
 
-    # Export the connection between content and artifacts
-    resource = ContentArtifactResource(repository_version)
-    _write_export(export.tarfile, resource, dest_dir)
-
     # content mapping is used by repo versions with subrepos (eg distribution tree repos)
     content_mapping = {}
 
@@ -162,6 +158,10 @@ def export_content(export, repository_version):
                 content_mapping = _combine_content_mappings(
                     content_mapping, resource.content_mapping
                 )
+
+    # Export the connection between content and artifacts
+    resource = ContentArtifactResource(repository_version, content_mapping)
+    _write_export(export.tarfile, resource, dest_dir)
 
     msg = (
         f"Exporting content for {plugin_name} "
