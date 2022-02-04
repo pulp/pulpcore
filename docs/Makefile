@@ -1,6 +1,7 @@
 # Makefile for Sphinx documentation
 #
 
+SHELL := /bin/bash
 # You can set these variables from the command line.
 SPHINXOPTS           = -W  # turn warnings into errors
 SPHINXBUILD          = sphinx-build
@@ -45,9 +46,17 @@ clean:
 	rm -rf $(BUILDDIR)/*
 	rm -rf $(DIAGRAM_BUILD_DIR)/*
 
+install:
+	python3 -m venv pulpdocs
+	source pulpdocs/bin/activate && pip install -r ../doc_requirements.txt
+
 diagrams:
 	mkdir -p $(DIAGRAM_BUILD_DIR)
+ifneq ("$(wildcard pulpdocs/bin/activate)","")
+	source pulpdocs/bin/activate && python3 -m plantuml diagrams_src/*.dot
+else
 	python3 -m plantuml diagrams_src/*.dot
+endif
 	mv diagrams_src/*.png $(DIAGRAM_BUILD_DIR)/
 
 html:
@@ -58,7 +67,11 @@ html:
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/html."
 
 dirhtml:
-	$(SPHINXBUILD) -b dirhtml $(ALLSPHINXOPTS) $(BUILDDIR)/dirhtml
+ifneq ("$(wildcard pulpdocs/bin/activate)","")
+	source pulpdocs/bin/activate && PULP_CONTENT_ORIGIN=localhost $(SPHINXBUILD) -b dirhtml $(ALLSPHINXOPTS) $(BUILDDIR)/dirhtml
+else
+	PULP_CONTENT_ORIGIN=localhost $(SPHINXBUILD) -b dirhtml $(ALLSPHINXOPTS) $(BUILDDIR)/dirhtml
+endif
 	@echo
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/dirhtml."
 
@@ -162,3 +175,6 @@ doctest:
 	$(SPHINXBUILD) -b doctest $(ALLSPHINXOPTS) $(BUILDDIR)/doctest
 	@echo "Testing of doctests in the sources finished, look at the " \
 	      "results in $(BUILDDIR)/doctest/output.txt."
+
+run:
+	cd $(BUILDDIR) && python -m http.server 8010
