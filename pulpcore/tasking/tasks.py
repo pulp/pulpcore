@@ -1,6 +1,4 @@
-import json
 import logging
-import uuid
 from gettext import gettext as _
 
 from django.db import transaction, connection
@@ -15,13 +13,6 @@ _logger = logging.getLogger(__name__)
 
 
 TASK_TIMEOUT = -1  # -1 for infinite timeout
-
-
-class UUIDEncoder(json.JSONEncoder):
-    def default(self, obj):
-        if isinstance(obj, uuid.UUID):
-            return str(obj)
-        return super().default(obj)
 
 
 def _validate_and_get_resources(resources):
@@ -75,8 +66,6 @@ def dispatch(
     if exclusive_resources is None:
         exclusive_resources = []
 
-    args_as_json = json.dumps(args, cls=UUIDEncoder)
-    kwargs_as_json = json.dumps(kwargs, cls=UUIDEncoder)
     resources = _validate_and_get_resources(exclusive_resources)
     if shared_resources:
         resources.extend(
@@ -88,8 +77,8 @@ def dispatch(
             logging_cid=(get_guid() or ""),
             task_group=task_group,
             name=f"{func.__module__}.{func.__name__}",
-            args=args_as_json,
-            kwargs=kwargs_as_json,
+            args=args,
+            kwargs=kwargs,
             parent_task=Task.current(),
             reserved_resources_record=resources,
         )

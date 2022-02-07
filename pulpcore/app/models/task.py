@@ -7,6 +7,7 @@ import os
 from datetime import timedelta
 from gettext import gettext as _
 
+from django.core.serializers.json import DjangoJSONEncoder
 from django.contrib.postgres.fields import ArrayField
 from django.db import connection, models
 from django.utils import timezone
@@ -182,8 +183,8 @@ class Task(BaseModel, AutoDeleteObjPermsMixin, AutoAddObjPermsMixin):
 
     error = models.JSONField(null=True)
 
-    args = models.JSONField(null=True)
-    kwargs = models.JSONField(null=True)
+    args = models.JSONField(null=True, encoder=DjangoJSONEncoder)
+    kwargs = models.JSONField(null=True, encoder=DjangoJSONEncoder)
 
     worker = models.ForeignKey("Worker", null=True, related_name="tasks", on_delete=models.SET_NULL)
 

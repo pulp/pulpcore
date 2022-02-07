@@ -2,7 +2,6 @@ from gettext import gettext as _
 
 import asyncio
 import importlib
-import json
 import logging
 import os
 import random
@@ -378,8 +377,8 @@ def _perform_task(task_pk, task_working_dir_rel_path):
         module_name, function_name = task.name.rsplit(".", 1)
         module = importlib.import_module(module_name)
         func = getattr(module, function_name)
-        args = json.loads(task.args) or ()
-        kwargs = json.loads(task.kwargs) or {}
+        args = task.args or ()
+        kwargs = task.kwargs or {}
         os.chdir(task_working_dir_rel_path)
         result = func(*args, **kwargs)
         if asyncio.iscoroutine(result):
