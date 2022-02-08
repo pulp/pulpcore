@@ -17,6 +17,41 @@ Changelog
 
 .. towncrier release notes start
 
+3.16.3 (2022-02-08)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fix import and export OOM error.
+  `#2072 <https://pulp.plan.io/issues/2072>`_
+- Fixed downloader retry logic with partially written files.
+  `#2078 <https://pulp.plan.io/issues/2078>`_
+- Fixed bug where retries of partially downloaded files failed digest and size validation.
+  `#2135 <https://pulp.plan.io/issues/2135>`_
+- Fixed the calculation of response range headers in streaming answers from the content app.
+  `#2147 <https://pulp.plan.io/issues/2147>`_
+- Improved messaging around timeout requests.
+  `#2169 <https://pulp.plan.io/issues/2169>`_
+- Fixed reporting tasks being canceled before being picked up by a worker as canceled instead of
+  failed.
+  `#2183 <https://pulp.plan.io/issues/2183>`_
+
+
+Misc
+~~~~
+
+- `#2094 <https://pulp.plan.io/issues/2094>`_
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.16.2 (2022-01-07)
 ===================
 REST API
