@@ -3,6 +3,7 @@ from rest_access_policy import AccessPolicy
 from pulpcore.app.loggers import deprecation_logger
 from pulpcore.app.models import AccessPolicy as AccessPolicyModel
 from pulpcore.app.util import get_view_urlpattern, get_viewset_for_model
+from pulpcore.app.role_util import get_objects_for_user
 
 
 class AccessPolicyFromDB(AccessPolicy):
@@ -60,6 +61,16 @@ class AccessPolicyFromDB(AccessPolicy):
                         f"[hook={creation_hook}, viewset={access_policy.viewset_name}]."
                     )
                     function(creation_hook.get("permissions"), creation_hook.get("parameters"))
+
+    def scope_queryset(self, view, qs):
+        """
+        Scope the queryset based on the view's `default_queryset_filtering_permissions`.
+        """
+        permission_name = getattr(view, "queryset_filtering_required_permission", None)
+        if permission_name:
+            user = view.request.user
+            qs = get_objects_for_user(user, permission_name, qs)
+        return qs
 
     def get_policy_statements(self, request, view):
         """
