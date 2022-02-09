@@ -1,14 +1,17 @@
 """Tests related to the workers."""
+import pytest
 import unittest
 from datetime import datetime, timedelta
 from random import choice
+from time import sleep
 
-from pulp_smash import api, config
+from pulp_smash import api, config, utils
 from pulp_smash.pulp3.constants import WORKER_PATH
 from requests.exceptions import HTTPError
 
 from pulpcore.tests.functional.utils import set_up_module as setUpModule  # noqa:F401
 from pulpcore.tests.functional.utils import skip_if
+
 
 _DYNAMIC_WORKER_ATTRS = ("last_heartbeat", "current_task")
 """Worker attributes that are dynamically set by Pulp, not set by a user."""
@@ -98,3 +101,49 @@ class WorkersTestCase(unittest.TestCase):
         """
         with self.assertRaises(HTTPError):
             self.client.delete(self.worker["pulp_href"])
+
+
+@pytest.fixture()
+def task_schedule(cli_client):
+    name = "test_schedule"
+    task_name = "pulpcore.app.tasks.test.dummy_task"
+    utils.execute_pulpcore_python(
+        cli_client,
+        "from django.utils.timezone import now;"
+        "from datetime import timedelta;"
+        "from pulpcore.app.models import TaskSchedule;"
+        "dispatch_interval = timedelta(seconds=2);"
+        "next_dispatch = now() + dispatch_interval;"
+        "TaskSchedule("
+        f"    name='{name}', task_name='{task_name}', "
+        "    dispatch_interval=dispatch_interval, next_dispatch=next_dispatch"
+        ").save();",
+    )
+    yield {"name": name, "task_name": task_name}
+    utils.execute_pulpcore_python(
+        cli_client,
+        "from pulpcore.app.models import TaskSchedule;"
+        f"TaskSchedule.objects.get(name='{name}').delete();",
+    )
+
+
+@pytest.mark.parallel
+def test_task_schedule(task_schedule, task_schedules_api_client):
+    """Test that a worker will schedule a task roughly at a given time."""
+    # Worker TTL is configured to 30s, therefore they will have a heartbeat each 10s (6 bpm). The
+    # task is scheduled 2s in the future to give us time to invesitgate the state before and after.
+    # 15s later we can be sure it was scheduled (as long as at least one worker is running).
+
+    result = task_schedules_api_client.list(name=task_schedule["name"])
+    assert result.count == 1
+    ts = task_schedules_api_client.read(task_schedule_href=result.results[0].pulp_href)
+    assert ts.name == task_schedule["name"]
+    assert ts.task_name == task_schedule["task_name"]
+    assert ts.last_task is None
+    # At least a worker heartbeat is needed
+    for i in range(15):
+        sleep(1)
+        ts = task_schedules_api_client.read(task_schedule_href=result.results[0].pulp_href)
+        if ts.last_task is not None:
+            break
+    assert ts.last_task is not None

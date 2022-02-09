@@ -41,6 +41,7 @@ from pulpcore.constants import (  # noqa: E402: module level not at top of file
 
 from pulpcore.exceptions import AdvisoryLockError  # noqa: E402: module level not at top of file
 from pulpcore.tasking.storage import WorkerDirectory  # noqa: E402: module level not at top of file
+from pulpcore.tasking.tasks import dispatch_scheduled_tasks  # noqa: E402
 from pulpcore.tasking.util import _delete_incomplete_resources  # noqa: E402
 
 
@@ -49,6 +50,27 @@ random.seed()
 
 TASK_GRACE_INTERVAL = 3
 WORKER_CLEANUP_INTERVAL = 100
+
+
+class PGAdvisoryLock:
+    def __init__(self, lock, lock_group=0):
+        self.lock_group = lock_group
+        self.lock = lock
+
+    def __enter__(self):
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT pg_try_advisory_lock(%s, %s);", [self.lock_group, self.lock])
+            acquired = cursor.fetchone()[0]
+        if not acquired:
+            raise AdvisoryLockError("Could not acquire lock.")
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT pg_advisory_unlock(%s, %s);", [self.lock_group, self.lock])
+            released = cursor.fetchone()[0]
+        if not released:
+            raise RuntimeError("Lock not held.")
 
 
 def handle_worker_heartbeat(worker_name):
@@ -127,6 +149,8 @@ class NewPulpWorker:
             if self.worker_cleanup_countdown <= 0:
                 self.worker_cleanup_countdown = WORKER_CLEANUP_INTERVAL
                 self.worker_cleanup()
+            with suppress(AdvisoryLockError), PGAdvisoryLock(42):
+                dispatch_scheduled_tasks()
 
     def notify_workers(self):
         self.cursor.execute("NOTIFY pulp_worker_wakeup")

@@ -64,7 +64,7 @@ from .repository import (  # noqa
     RepositoryVersionViewSet,
     ListRepositoryVersionViewSet,
 )
-from .task import TaskViewSet, TaskGroupViewSet, WorkerViewSet  # noqa
+from .task import TaskViewSet, TaskGroupViewSet, TaskScheduleViewSet, WorkerViewSet  # noqa
 from .upload import UploadViewSet  # noqa
 from .user import (  # noqa
     GroupViewSet,
