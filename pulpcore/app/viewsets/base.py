@@ -22,7 +22,6 @@ from pulpcore.app.models import MasterModel
 from pulpcore.app.models.role import GroupRole, UserRole
 from pulpcore.app.response import OperationPostponedResponse
 from pulpcore.app.serializers import AsyncOperationResponseSerializer, NestedRoleSerializer
-from pulpcore.app.role_util import get_objects_for_user
 from pulpcore.tasking.tasks import dispatch
 
 # These should be used to prevent duplication and keep things consistent
@@ -349,9 +348,10 @@ class NamedModelViewSet(viewsets.GenericViewSet):
                 filters[lookup] = self.kwargs[key]
             qs = qs.filter(**filters)
 
-        permission_name = getattr(self, "queryset_filtering_required_permission", None)
-        if permission_name:
-            qs = get_objects_for_user(self.request.user, permission_name, qs)
+        if getattr(self, "request", None):
+            for permission_class in self.get_permissions():
+                if hasattr(permission_class, "scope_queryset"):
+                    qs = permission_class.scope_queryset(self, qs)
 
         return qs
 
