@@ -41,6 +41,7 @@ class AccessPolicy(BaseModel):
     statements = models.JSONField()
     viewset_name = models.CharField(max_length=128, unique=True)
     customized = models.BooleanField(default=False)
+    filtering_permissions = models.JSONField(null=True)
 
 
 class AutoAddObjPermsMixin:

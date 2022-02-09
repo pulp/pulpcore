@@ -349,9 +349,16 @@ class NamedModelViewSet(viewsets.GenericViewSet):
                 filters[lookup] = self.kwargs[key]
             qs = qs.filter(**filters)
 
+        # Deprecated, remove in 3.20
         permission_name = getattr(self, "queryset_filtering_required_permission", None)
         if permission_name:
             qs = get_objects_for_user(self.request.user, permission_name, qs)
+        #
+
+        for permission_class in self.get_permissions():
+            if hasattr(permission_class, "get_default_filtering_permissions"):
+                perms = permission_class.get_default_filtering_permissions(self)
+                qs = get_objects_for_user(self.request.user, perms, qs)
 
         return qs
 

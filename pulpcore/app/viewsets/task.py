@@ -77,7 +77,6 @@ class TaskViewSet(
     minimal_serializer_class = MinimalTaskSerializer
     filter_backends = (OrderingFilter, DjangoFilterBackend)
     ordering = "-pulp_created"
-    queryset_filtering_required_permission = "core.view_task"
 
     DEFAULT_ACCESS_POLICY = {
         "statements": [
@@ -120,6 +119,7 @@ class TaskViewSet(
                 "parameters": {"roles": "core.task_owner"},
             }
         ],
+        "filtering_permissions": ["core.view_task"],
     }
     LOCKED_ROLES = {
         "core.task_owner": {
