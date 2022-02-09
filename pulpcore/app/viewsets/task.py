@@ -8,14 +8,15 @@ from rest_framework.filters import OrderingFilter
 from rest_framework.response import Response
 from rest_framework.serializers import ValidationError
 
-from pulpcore.app.models import Task, TaskGroup, Worker
+from pulpcore.app.models import Task, TaskGroup, TaskSchedule, Worker
 from pulpcore.app.response import OperationPostponedResponse
 from pulpcore.app.serializers import (
     AsyncOperationResponseSerializer,
     MinimalTaskSerializer,
+    PurgeSerializer,
     TaskCancelSerializer,
     TaskGroupSerializer,
-    PurgeSerializer,
+    TaskScheduleSerializer,
     TaskSerializer,
     WorkerSerializer,
 )
@@ -242,3 +243,70 @@ class WorkerViewSet(NamedModelViewSet, mixins.RetrieveModelMixin, mixins.ListMod
     http_method_names = ["get", "options"]
     lookup_value_regex = "[^/]+"
     filterset_class = WorkerFilter
+
+
+class TaskScheduleFilter(BaseFilterSet):
+    name = filters.CharFilter()
+    task_name = filters.CharFilter()
+
+    class Meta:
+        model = TaskSchedule
+        fields = {
+            "name": ["exact", "contains"],
+            "task_name": ["exact", "contains"],
+        }
+
+
+class TaskScheduleViewSet(
+    NamedModelViewSet,
+    mixins.RetrieveModelMixin,
+    mixins.ListModelMixin,
+    RolesMixin,
+):
+    """
+    ViewSet to monitor task schedules.
+
+    NOTE: This feature is in tech-preview and may change in backwards incompatible ways.
+    """
+
+    queryset = TaskSchedule.objects.all()
+    endpoint_name = "task-schedules"
+    filterset_class = TaskScheduleFilter
+    serializer_class = TaskScheduleSerializer
+    filter_backends = (OrderingFilter, DjangoFilterBackend)
+    ordering = "-pulp_created"
+    queryset_filtering_required_permission = "core.view_taskschedule"
+
+    DEFAULT_ACCESS_POLICY = {
+        "statements": [
+            {"action": ["list"], "principal": "authenticated", "effect": "allow"},
+            {
+                "action": ["retrieve", "my_permissions"],
+                "principal": "authenticated",
+                "effect": "allow",
+                "condition": "has_model_or_obj_perms:core.view_taskschedule",
+            },
+            {
+                "action": ["list_roles", "add_role", "remove_role"],
+                "principal": "authenticated",
+                "effect": "allow",
+                "condition": "has_model_or_obj_perms:core.manage_roles_taskschedule",
+            },
+        ],
+        "creation_hooks": [
+            {
+                "function": "add_roles_for_object_creator",
+                "parameters": {"roles": "core.taskschedule_owner"},
+            }
+        ],
+    }
+    LOCKED_ROLES = {
+        "core.taskschedule_owner": {
+            "description": "Allow all actions on a taskschedule.",
+            "permissions": [
+                "core.view_taskschedule",
+                "core.manage_roles_taskschedule",
+            ],
+        },
+        "core.taskschedule_viewer": ["core.view_taskschedule"],
+    }

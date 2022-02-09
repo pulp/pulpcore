@@ -7,11 +7,11 @@ import os
 from datetime import timedelta
 from gettext import gettext as _
 
-from django.core.serializers.json import DjangoJSONEncoder
+from django.conf import settings
 from django.contrib.postgres.fields import ArrayField
+from django.core.serializers.json import DjangoJSONEncoder
 from django.db import connection, models
 from django.utils import timezone
-from django.conf import settings
 
 from pulpcore.app.models import (
     AutoAddObjPermsMixin,
@@ -22,6 +22,7 @@ from pulpcore.app.models import (
 from pulpcore.constants import TASK_CHOICES, TASK_FINAL_STATES, TASK_STATES
 from pulpcore.exceptions import AdvisoryLockError, exception_to_dict
 from pulpcore.tasking.constants import TASKING_CONSTANTS
+
 
 _logger = logging.getLogger(__name__)
 
@@ -332,3 +333,16 @@ class CreatedResource(GenericRelationModel):
     task = models.ForeignKey(
         Task, related_name="created_resources", default=Task.current, on_delete=models.CASCADE
     )
+
+
+class TaskSchedule(BaseModel):
+    name = models.CharField(max_length=256, unique=True, null=False)
+    next_dispatch = models.DateTimeField(default=timezone.now, null=True)
+    dispatch_interval = models.DurationField(null=True)
+    task_name = models.CharField(max_length=256)
+    last_task = models.ForeignKey(Task, null=True, on_delete=models.SET_NULL)
+
+    class Meta:
+        permissions = [
+            ("manage_roles_taskschedule", "Can manage role assignments on task schedules"),
+        ]

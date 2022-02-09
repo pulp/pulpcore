@@ -204,3 +204,28 @@ class WorkerSerializer(ModelSerializer):
     class Meta:
         model = models.Worker
         fields = ModelSerializer.Meta.fields + ("name", "last_heartbeat", "current_task")
+
+
+class TaskScheduleSerializer(ModelSerializer):
+    pulp_href = IdentityField(view_name="task-schedules-detail")
+    name = serializers.CharField(help_text=_("The name of the task schedule."), allow_blank=False)
+    task_name = serializers.CharField(help_text=_("The name of the task to be scheduled."))
+    dispatch_interval = serializers.DurationField(help_text=_("Periodicity of the schedule."))
+    next_dispatch = serializers.DateTimeField(
+        help_text=_("Timestamp of the next time the task will be dispatched."), read_only=True
+    )
+    last_task = RelatedField(
+        help_text=_("The last task dispatched by this schedule."),
+        read_only=True,
+        view_name="tasks-detail",
+    )
+
+    class Meta:
+        model = models.TaskSchedule
+        fields = ModelSerializer.Meta.fields + (
+            "name",
+            "task_name",
+            "dispatch_interval",
+            "next_dispatch",
+            "last_task",
+        )

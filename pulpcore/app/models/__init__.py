@@ -13,7 +13,9 @@ from .access_policy import (  # noqa
     AutoDeleteObjPermsMixin,
     Group,
 )
+
 from .acs import AlternateContentSource, AlternateContentSourcePath  # noqa
+
 from .content import (  # noqa
     Artifact,
     AsciiArmoredDetachedSigningService,
@@ -25,7 +27,9 @@ from .content import (  # noqa
     SigningService,
     UnsupportedDigestValidationError,
 )
+
 from .generic import GenericRelationModel  # noqa
+
 from .exporter import (  # noqa
     Export,
     ExportedResource,
@@ -35,12 +39,14 @@ from .exporter import (  # noqa
     PulpExport,
     PulpExporter,
 )
+
 from .importer import (  # noqa
     Import,
     Importer,
     PulpImport,
     PulpImporter,
 )
+
 from .publication import (  # noqa
     ContentGuard,
     Distribution,
@@ -50,6 +56,7 @@ from .publication import (  # noqa
     RBACContentGuard,
     ContentRedirectContentGuard,
 )
+
 from .repository import (  # noqa
     Remote,
     Repository,
@@ -72,6 +79,7 @@ from .task import (  # noqa
     CreatedResource,
     Task,
     TaskGroup,
+    TaskSchedule,
     Worker,
 )
 from .upload import (  # noqa

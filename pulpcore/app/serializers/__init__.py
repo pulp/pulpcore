@@ -87,6 +87,7 @@ from .reclaim import ReclaimSpaceSerializer  # noqa
 from .task import (  # noqa
     MinimalTaskSerializer,
     TaskCancelSerializer,
+    TaskScheduleSerializer,
     TaskSerializer,
     TaskGroupSerializer,
     WorkerSerializer,
