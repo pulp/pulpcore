@@ -8,6 +8,8 @@ from django.db.models import options
 from django.db.models.base import ModelBase
 from django_lifecycle import LifecycleModel
 
+from pulpcore.app.loggers import deprecation_logger
+
 
 class Label(LifecycleModel):
     """Model for handling resource labels.
@@ -66,6 +68,14 @@ class BaseModel(LifecycleModel):
 
     class Meta:
         abstract = True
+
+    def __init__(self, *args, **kwargs):
+        if hasattr(self, "ACCESS_POLICY_VIEWSET_NAME"):
+            deprecation_logger.warn(
+                f"The model {self.__class__} defines the 'ACCESS_POLICY_VIEWSET_NAME' class "
+                f"attribute which is no longer required and is discouraged to be set."
+            )
+        return super().__init__(*args, **kwargs)
 
     def __str__(self):
         try:

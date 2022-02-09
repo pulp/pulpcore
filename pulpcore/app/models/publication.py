@@ -345,7 +345,6 @@ class RBACContentGuard(ContentGuard, AutoAddObjPermsMixin):
     A content guard that protects content based on RBAC permissions.
     """
 
-    ACCESS_POLICY_VIEWSET_NAME = "contentguards/core/rbac"
     TYPE = "rbac"
 
     def permit(self, request):

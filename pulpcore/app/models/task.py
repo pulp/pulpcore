@@ -196,8 +196,6 @@ class Task(BaseModel, AutoDeleteObjPermsMixin, AutoAddObjPermsMixin):
     )
     reserved_resources_record = ArrayField(models.CharField(max_length=256), null=True)
 
-    ACCESS_POLICY_VIEWSET_NAME = "tasks"
-
     def __str__(self):
         return "Task: {name} [{state}]".format(name=self.name, state=self.state)
 
