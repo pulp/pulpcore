@@ -46,9 +46,6 @@ class AutoAddObjPermsMixin:
 
     To use this mixin, your model must support ``django-lifecycle``.
 
-    To use this mixin, you must define a class attribute named ``ACCESS_POLICY_VIEWSET_NAME``
-    containing the name of the ViewSet associated with this object.
-
     This mixin adds an ``after_create`` hook which properly interprets the ``creation_hooks``
     data and calls methods also provided by this mixin to add roles.
 
@@ -277,8 +274,6 @@ class AutoDeleteObjPermsMixin:
 
 
 class Group(LifecycleModelMixin, BaseGroup, AutoAddObjPermsMixin):
-    ACCESS_POLICY_VIEWSET_NAME = "groups"
-
     class Meta:
         proxy = True
         permissions = [
