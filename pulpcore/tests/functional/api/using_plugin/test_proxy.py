@@ -39,7 +39,6 @@ def test_sync_http_through_http_proxy(
     )
 
 
-@pytest.mark.parallel
 def test_sync_https_through_http_proxy(
     file_fixture_gen_remote_ssl,
     file_repo,
