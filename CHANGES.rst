@@ -17,6 +17,27 @@ Changelog
 
 .. towncrier release notes start
 
+3.14.12 (2022-02-11)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fixed potential deadlock-window in touch() path.
+  `#2157 <https://pulp.plan.io/issues/2157>`_
+- Fixed reporting tasks being canceled before being picked up by a worker as canceled instead of
+  failed.
+  `#2183 <https://pulp.plan.io/issues/2183>`_
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.14.11 (2022-01-27)
 ====================
 REST API
