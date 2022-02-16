@@ -1,0 +1,2 @@
+The ``API_ROOT`` constant has been deprecated and turned into a setting. Its removal is scheduled
+for 3.20. Please use the setting with the same name instead.
