@@ -447,3 +447,4 @@ settings.set("V3_API_ROOT", settings.API_ROOT + "api/v3/")  # Not user configura
 settings.set(
     "V3_API_ROOT_NO_FRONT_SLASH", settings.V3_API_ROOT.lstrip("/")
 )  # Not user configurable
+settings.unset("API_ROOT")

@@ -15,6 +15,7 @@ def API_ROOT():
 
     deprecation_logger.warn(
         "The API_ROOT constant has been deprecated and turned into a setting. Please use "
-        "`settings.API_ROOT` instead. This symbol will be deleted with pulpcore 3.20."
+        "`settings.V3_API_ROOT_NO_FRONT_SLASH` instead. This symbol will be deleted with pulpcore "
+        "3.20."
     )
-    return settings.API_ROOT
+    return settings.V3_API_ROOT_NO_FRONT_SLASH
