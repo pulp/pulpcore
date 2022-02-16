@@ -1,7 +1,7 @@
 # This config represents the latest values used when running the plugin-template. Any settings that
 # were not present before running plugin-template have been added with their default values.
 
-# generated with plugin_template@2021.08.26-64-gb9bbd48
+# generated with plugin_template@2021.08.26-73-g1050de7
 
 additional_repos:
 - branch: 1.6
@@ -85,6 +85,8 @@ travis_notifications:
     - 'Change view : %{compare_url}'
     - 'Build details : %{build_url}'
     - '%{message}'
+update_github: true
 update_redmine: true
 upgrade_range: []
+use_issue_template: true
 
