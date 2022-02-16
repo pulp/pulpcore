@@ -68,6 +68,10 @@ pulp_container_tag: https
 
 VARSYAML
 
+if [ "$TEST" = "upgrade" ]; then
+  sed -i "/^pulp_container_tag:.*/s//pulp_container_tag: upgrade-https/" vars/main.yaml
+fi
+
 if [[ "$TEST" == "pulp" || "$TEST" == "performance" || "$TEST" == "upgrade" || "$TEST" == "azure" || "$TEST" == "s3" || "$TEST" == "plugin-from-pypi" || "$TEST" == "generate-bindings" ]]; then
   sed -i -e '/^services:/a \
   - name: pulp-fixtures\
