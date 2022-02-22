@@ -227,6 +227,41 @@ Bugfixes
   :redmine:`9608`
 
 
+3.16.3 (2022-02-08)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fix import and export OOM error.
+  :github:`2072`
+- Fixed downloader retry logic with partially written files.
+  :github:`2078`
+- Fixed bug where retries of partially downloaded files failed digest and size validation.
+  :github:`2135`
+- Fixed the calculation of response range headers in streaming answers from the content app.
+  :github:`2147`
+- Improved messaging around timeout requests.
+  :github:`2169`
+- Fixed reporting tasks being canceled before being picked up by a worker as canceled instead of
+  failed.
+  :github:`2183`
+
+
+Misc
+~~~~
+
+- :github:`2094`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.16.2 (2022-01-07)
 ===================
 REST API
@@ -407,6 +442,36 @@ Removals
   :redmine:`9477`
 - ContentSaver._pre_save() and ContentSaver._post_save() must now be implemented as synchronous functions rather than coroutines.
   :redmine:`9478`
+
+
+3.15.4 (2022-01-28)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fixed downloader retry logic with partially written files.
+  :github:`2078`
+- Fixed bug where retries of partially downloaded files failed digest and size validation.
+  :github:`2135`
+- Fixed the calculation of response range headers in streaming answers from the content app.
+  :github:`2147`
+- Improved messaging around timeout requests.
+  :github:`2169`
+
+
+Misc
+~~~~
+
+- :github:`2094`
+
+
+Plugin API
+----------
+
+No significant changes.
 
 
 3.15.3 (2021-11-30)
@@ -677,6 +742,66 @@ Misc
 ~~~~
 
 - :redmine:`8606`, :redmine:`9160`
+
+
+3.14.12 (2022-02-11)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fixed potential deadlock-window in touch() path.
+  :github:`2157`
+- Fixed reporting tasks being canceled before being picked up by a worker as canceled instead of
+  failed.
+  :github:`2183`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
+3.14.11 (2022-01-27)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fix import and export OOM error.
+  :github:`2072`
+- Fixed downloader retry logic with partially written files.
+  :github:`2078`
+- Fix content summary showing incorrect count after previous version deletion.
+  :github:`2084`
+- Fixed issue with listing repository versions after deleting previous versions.
+  :github:`2085`
+- Fixed file descriptior leak during upload.
+  :github:`2087`
+- Added proper logging around certain ways a task could fail.
+  :github:`2093`
+- Make checksum mismatches a retryable error.
+  :github:`2094`
+- Fixed an edge case where the first (streamed) response from an repo synced as "on_demand" could be incorrect.
+  :github:`2119`
+- Fixed bug where retries of partially downloaded files failed digest and size validation.
+  :github:`2135`
+- Fixed a bug in pulpcore-worker, where wakeup and cancel signals could be lost due to a race
+  condition.
+  :github:`2144`
+- Fixed the calculation of response range headers in streaming answers from the content app.
+  :github:`2147`
+
+
+Plugin API
+----------
+
+No significant changes.
 
 
 3.14.10 (2022-01-07)
