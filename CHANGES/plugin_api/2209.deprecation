@@ -1,2 +1,0 @@
-The ``ACCESS_POLICY_VIEWSET_NAME`` attribute is no longer expected to be present on models. The
-RBAC machinery no longer uses this, and if present a deprecation warning will be emitted.
