@@ -17,6 +17,145 @@ Changelog
 
 .. towncrier release notes start
 
+3.18.0 (2022-02-22)
+===================
+REST API
+--------
+
+Features
+~~~~~~~~
+
+- Added a pulpcore-manager command `remove-plugin` to remove a Pulp plugin.
+  :github:`1945`
+- Implemented the Redis caching machinery that can be used within the synchronous context.
+  :github:`2003`
+- Add a "current_task" field to workers so that you can easily see which workers are currently active.
+  :github:`2034`
+- Allowed Pulp to install without Redis.
+  :github:`2057`
+- Added ``has_repository_obj_perms`` and ``has_repository_model_or_obj_perms`` as access conditions
+  that can be used by viewsets nested beneath repository viewsets.
+  :github:`2076`
+- Queryset scoping can now be disabled by changing the ``DEFAULT_PERMISSION_CLASSES``.
+  :github:`2115`
+- Specifying a different value for ``DEFAULT_PERMISSION_CLASSES`` will now automatically disable the
+  permission assignment provided by the ``creation_hooks`` portion of an ``AccessPolicyFromDB``.
+  :github:`2116`
+- The Pulp API can now be rerooted using the new ``API_ROOT`` setting. By default it is set to
+  ``/pulp/``. Pulp appends the string ``api/v3/`` onto the value of ``API_ROOT``.
+  :github:`2148`
+- Added a redirecting content guard that can be employed by plugins to forward from a REST call to
+  the content app.
+  :github:`2151`
+- Added a new `analyze-publication` management command to facilitate debugging.
+  :github:`2200`
+- Added a read-only task schedule view for configured tasks schedules.
+
+  NOTE: This feature is in tech-preview and may change in backwards incompatible ways in the future.
+  :github:`2204`
+
+
+Bugfixes
+~~~~~~~~
+
+- Fix import and export OOM error.
+  :github:`2072`
+- Fixed downloader retry logic with partially written files.
+  :github:`2078`
+- Fix content summary showing incorrect count after previous version deletion.
+  :github:`2084`
+- Fixed issue with listing repository versions after deleting previous versions.
+  :github:`2085`
+- Fixed file descriptior leak during upload.
+  :github:`2087`
+- Fixed an api schema bug where both ``permission_assignment`` and ``creation_hooks`` were required
+  by the ``AccessPolicy`` serializer.
+  :github:`2089`
+- Fixed migration 0081 to be compatible with custom User models.
+  :github:`2090`
+- Fixed PulpImport to correctly save relative to MEDIA_ROOT.
+  :github:`2091`
+- Added proper logging around certain ways a task could fail.
+  :github:`2093`
+- Taught PulpImport to retry in the event of a concurrency-collision on ContentArtifact.
+  :github:`2102`
+- Fixed an edge case where the first (streamed) response from an repo synced as "on_demand" could be incorrect.
+  :github:`2119`
+- Fixed bug where retries of partially downloaded files failed digest and size validation.
+  :github:`2135`
+- Fixed the calculation of response range headers in streaming answers from the content app.
+  :github:`2147`
+- Fixed potential deadlock-window in touch() path.
+  :github:`2157`
+- Fixed reporting tasks being canceled before being picked up by a worker as canceled instead of
+  failed.
+  :github:`2183`
+- Return a concise message exception on 500 in case file is missing on the FS.
+  :github:`2187`
+- Fixed import/export of repositories with sub-content.
+
+  An example would be the sub-repositories in pulp_rpm
+  DistributionTrees.
+  :github:`2192`
+- touch() now uses standard Django instead of raw-sql to update.
+  :github:`2229`
+
+
+Misc
+~~~~
+
+- :github:`2086`, :github:`2094`, :github:`2173`, :github:`2202`
+
+
+Plugin API
+----------
+
+Features
+~~~~~~~~
+
+- The ``AutoAddObjPermsMixin`` now calls a ``handle_creation_hooks`` interface on the configured DRF
+  permission class, e.g. the default ``AccessPolicyFromDB``.
+  :github:`2116`
+- Added a redirecting content guard that can be employed by plugins to generate preauthenticated URLs
+  that forward from a REST call to the content app. Added the ``GetOrCreateSerializerMixin`` to
+  ``get_or_create`` objects still validating them through the serializer.
+  :github:`2151`
+- Exposed synchronous and asynchronous caching machinery. The classes ``AsyncContentCache`` and
+  ``SyncContentCache`` can be now managed by plugin writers.
+  :github:`8806`
+
+
+Bugfixes
+~~~~~~~~
+
+- Started using a plugin provided serializer in `has_remote_param_obj_perms` and
+  `has_remote_param_model_or_obj_perms` to solve the `Unexpected field` error during sync by
+  a non-admin user.
+  :github:`2088`
+- Exposed adjust_roles in the plugin api.
+  :github:`2092`
+- Expose Roles model in plugin api.
+  :github:`2185`
+
+
+Removals
+~~~~~~~~
+
+- Deprecate the the use of ``custom_file_object`` parameter in ``BaseDownloader``.
+  :github:`2123`
+
+
+Deprecations
+~~~~~~~~~~~~
+
+- The ``API_ROOT`` constant has been deprecated and turned into a setting. Its removal is scheduled
+  for 3.20. Please use the setting with the same name instead.
+  :github:`2148`
+- The ``ACCESS_POLICY_VIEWSET_NAME`` attribute is no longer expected to be present on models. The
+  RBAC machinery no longer uses this, and if present a deprecation warning will be emitted.
+  :github:`2209`
+
+
 3.17.3 (2022-01-12)
 ===================
 REST API

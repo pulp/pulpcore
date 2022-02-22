@@ -1,2 +1,0 @@
-Changed tasks arguments to save directly into a JSONField instead of writing a JSON serialized
-string there.
