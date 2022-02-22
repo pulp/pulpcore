@@ -1,1 +1,0 @@
-Return a concise message exception on 500 in case file is missing on the FS.

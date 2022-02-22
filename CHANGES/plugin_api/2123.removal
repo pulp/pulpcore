@@ -1,1 +1,0 @@
-Deprecate the the use of ``custom_file_object`` parameter in ``BaseDownloader``.
