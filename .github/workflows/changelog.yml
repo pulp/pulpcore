@@ -14,6 +14,7 @@ on:
     paths:
       - CHANGES.rst
       - CHANGES.md
+  workflow_dispatch:
 
 jobs:
 
@@ -46,7 +47,7 @@ jobs:
           mkdir -p docs/_static
           echo "{}" > docs/_static/api.json
       - name:
-        run: make html
+        run: make PULP_URL="https://pulp" diagrams html
         working-directory: ./docs
         env:
           PULP_CONTENT_ORIGIN: "http://localhost/"
