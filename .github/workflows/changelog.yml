@@ -47,10 +47,12 @@ jobs:
           mkdir -p docs/_static
           echo "{}" > docs/_static/api.json
       - name:
-        run: make PULP_URL="https://pulp" diagrams html
+        run: make diagrams html
         working-directory: ./docs
         env:
           PULP_CONTENT_ORIGIN: "http://localhost/"
 
       - name: Publish changlog to pulpproject.org
         run: .github/workflows/scripts/publish_docs.sh changelog ${{ github.ref }}
+        env:
+          PULP_DOCS_KEY: ${{ secrets.PULP_DOCS_KEY }}
