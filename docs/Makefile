@@ -62,9 +62,11 @@ else
 endif
 	mv diagrams_src/*.png $(DIAGRAM_BUILD_DIR)/
 
-html:
+$(BUILDDIR)/html/api.json:
 	mkdir -p $(BUILDDIR)/html
-	curl -o _build/html/api.json "$(PULP_V3_API_JSON_URL)"
+	curl --fail -o $(BUILDDIR)/html/api.json "$(PULP_V3_API_JSON_URL)"
+
+html: $(BUILDDIR)/html/api.json
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
 	@echo
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/html."
