@@ -53,6 +53,6 @@ jobs:
           PULP_CONTENT_ORIGIN: "http://localhost/"
 
       - name: Publish changlog to pulpproject.org
-        run: .github/workflows/scripts/publish_docs.sh changelog ${{ github.ref }}
+        run: .github/workflows/scripts/publish_docs.sh changelog ${GITHUB_REF##*/}
         env:
           PULP_DOCS_KEY: ${{ secrets.PULP_DOCS_KEY }}
