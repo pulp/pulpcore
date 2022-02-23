@@ -267,7 +267,7 @@ class CRUDRemoteTestCase(unittest.TestCase):
         cli_client = cli.Client(self.cfg)
         remote = self.remotes_api.create({"name": "test_pass", "url": "http://", "password": "new"})
         href = remote.pulp_href
-        uuid = re.search(r"/pulp/api/v3/remotes/file/file/([\w-]+)/", href).group(1)
+        uuid = re.search(r"/api/v3/remotes/file/file/([\w-]+)/", href).group(1)
         shell_cmd = (
             f"import pulpcore; print(pulpcore.app.models.Remote.objects.get(pk='{uuid}').password)"
         )
@@ -286,7 +286,7 @@ class CRUDRemoteTestCase(unittest.TestCase):
         cli_client = cli.Client(self.cfg)
         remote = self.remotes_api.create({"name": "test_pass", "url": "http://", "password": "new"})
         href = remote.pulp_href
-        uuid = re.search(r"/pulp/api/v3/remotes/file/file/([\w-]+)/", href).group(1)
+        uuid = re.search(r"/api/v3/remotes/file/file/([\w-]+)/", href).group(1)
         shell_cmd = (
             f"import pulpcore; print(pulpcore.app.models.Remote.objects.get(pk='{uuid}').password)"
         )
