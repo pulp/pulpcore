@@ -11,8 +11,10 @@ from asyncio_throttle import Throttler
 from dynaconf import settings
 from django.core.validators import MinValueValidator
 from django.db import models, transaction
+from django.db.models import Q
 from django.urls import reverse
 from django_lifecycle import AFTER_UPDATE, BEFORE_DELETE, hook
+from rest_framework.exceptions import APIException
 
 from pulpcore.app.util import batch_qs, get_view_name_for_model
 from pulpcore.constants import ALL_KNOWN_CONTENT_CHECKSUMS
@@ -67,7 +69,7 @@ class Repository(MasterModel):
         verbose_name_plural = "repositories"
 
     def on_new_version(self, version):
-        """Called when new repository versions are created.
+        """Called after a new repository version has been created.
 
         Subclasses are expected to override this to do useful things.
 
@@ -200,10 +202,25 @@ class Repository(MasterModel):
         return Artifact.objects.filter(content__pk__in=version.content)
 
     @hook(AFTER_UPDATE, when="retain_repo_versions", has_changed=True)
+    def _cleanup_old_versions_hook(self):
+        # Do not attempt to clean up anything, while there is a transaction involving repo versions
+        # still in flight.
+        transaction.on_commit(self.cleanup_old_versions)
+
     def cleanup_old_versions(self):
         """Cleanup old repository versions based on retain_repo_versions."""
+        # I am still curious how, but it was reported that this state can happen in day to day
+        # operations but its easy to reproduce manually in the pulpcore shell:
+        # https://github.com/pulp/pulpcore/issues/2268
+        if self.versions.filter(complete=False).exists():
+            raise RuntimeError(
+                _("Attempt to cleanup old versions, while a new version is in flight.")
+            )
         if self.retain_repo_versions:
-            for version in self.versions.order_by("-number")[self.retain_repo_versions :]:
+            # Consider only completed versions for cleanup
+            for version in self.versions.complete().order_by("-number")[
+                self.retain_repo_versions :
+            ]:
                 _logger.info(
                     _("Deleting repository version {} due to version retention limit.").format(
                         version
@@ -496,7 +513,7 @@ class RepositoryVersionQuerySet(models.QuerySet):
     """A queryset that provides repository version filtering methods."""
 
     def complete(self):
-        return self.exclude(complete=False)
+        return self.filter(complete=True)
 
     def with_content(self, content):
         """
@@ -892,22 +909,34 @@ class RepositoryVersion(BaseModel):
         Deletion of a complete RepositoryVersion should be done in a RQ Job.
         """
         if self.complete:
+            if self.repository.versions.complete().count() <= 1:
+                raise APIException(_("Attempt to delete the last remaining version."))
             if settings.CACHE_ENABLED:
                 base_paths = self.distribution_set.values_list("base_path", flat=True)
                 if base_paths:
                     Cache().delete(base_key=base_paths)
 
-            repo_relations = RepositoryContent.objects.filter(repository=self.repository)
-            try:
-                next_version = self.next()
-                self._squash(repo_relations, next_version)
+            # Handle the manipulation of the repository version content and its final deletion in
+            # the same transaction.
+            with transaction.atomic():
+                repo_relations = RepositoryContent.objects.filter(
+                    repository=self.repository
+                ).select_for_update()
+                try:
+                    next_version = self.next()
+                    self._squash(repo_relations, next_version)
 
-            except RepositoryVersion.DoesNotExist:
-                # version is the latest version so simply update repo contents
-                # and delete the version
-                repo_relations.filter(version_added=self).delete()
-                repo_relations.filter(version_removed=self).update(version_removed=None)
-            super().delete(**kwargs)
+                except RepositoryVersion.DoesNotExist:
+                    # version is the latest version so simply update repo contents
+                    # and delete the version
+                    repo_relations.filter(version_added=self).delete()
+                    repo_relations.filter(version_removed=self).update(version_removed=None)
+
+                if repo_relations.filter(Q(version_added=self) | Q(version_removed=self)).exists():
+                    raise RuntimeError(
+                        _("Some repo relations of this version were not translated.")
+                    )
+                super().delete(**kwargs)
 
         else:
             with transaction.atomic():
@@ -952,6 +981,10 @@ class RepositoryVersion(BaseModel):
         Returns:
             RepositoryVersion: self
         """
+        if self.complete:
+            raise RuntimeError(
+                _("This Repository version is complete. It cannot be modified further.")
+            )
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
@@ -978,15 +1011,16 @@ class RepositoryVersion(BaseModel):
                     unsupported_types = content_types_seen - content_types_supported
                     if unsupported_types:
                         raise ValueError(
-                            "Saw unsupported content types {}".format(unsupported_types)
+                            _("Saw unsupported content types {}").format(unsupported_types)
                         )
 
                     self.complete = True
                     self.repository.next_version = self.number + 1
-                    self.repository.save()
-                    self.save()
+                    with transaction.atomic():
+                        self.repository.save()
+                        self.save()
+                        self._compute_counts()
                     self.repository.cleanup_old_versions()
-                    self._compute_counts()
                     repository.on_new_version(self)
             except Exception:
                 self.delete()
