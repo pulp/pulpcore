@@ -1,8 +1,11 @@
 """Tests related to repository versions."""
 import unittest
+import pytest
 from random import choice, randint, sample
 from time import sleep
 from urllib.parse import urlsplit
+from tempfile import NamedTemporaryFile
+from hashlib import sha256
 
 from pulp_smash import api, config, utils
 from pulp_smash.exceptions import TaskReportError
@@ -394,6 +397,134 @@ class AddRemoveRepoVersionTestCase(unittest.TestCase):
 
         with self.assertRaises(HTTPError):
             self.client.get(publication["pulp_href"])
+
+
+@pytest.mark.parallel
+def test_squash_repo_version(
+    file_repo_api_client, file_repo_version_api_client, content_file_api_client, file_repo
+):
+    """Test that the deletion of a repository version properly squashes the content.
+
+    - Setup versions like:
+        Version 0: <empty>
+            add: ABCDE
+        Version 1: ABCDE
+            delete: BCDE; add: FGHI
+        Version 2: AFGHI -- to be deleted
+            delete: GI; add: CD
+        Version 3: ACDFH -- to be squashed into
+            delete: DH; add: EI
+        Version 4: ACEFI
+    - Delete version 2.
+    - Check the content of all remaining versions.
+    """
+    content_units = {}
+    for name in ["A", "B", "C", "D", "E", "F", "G", "H", "I"]:
+        try:
+            content_units[name] = content_file_api_client.list(
+                relative_path=name, sha256=sha256(name.encode()).hexdigest()
+            ).results[0]
+        except IndexError:
+            with NamedTemporaryFile() as tf:
+                tf.write(name.encode())
+                tf.flush()
+                response = content_file_api_client.create(relative_path=name, file=tf.name)
+                result = monitor_task(response.task)
+                content_units[name] = content_file_api_client.read(result.created_resources[0])
+    response1 = file_repo_api_client.modify(
+        file_repo.pulp_href,
+        {
+            "add_content_units": [
+                content.pulp_href
+                for key, content in content_units.items()
+                if key in ["A", "B", "C", "D", "E"]
+            ]
+        },
+    )
+
+    response2 = file_repo_api_client.modify(
+        file_repo.pulp_href,
+        {
+            "remove_content_units": [
+                content.pulp_href
+                for key, content in content_units.items()
+                if key in ["B", "C", "D", "E"]
+            ],
+            "add_content_units": [
+                content.pulp_href
+                for key, content in content_units.items()
+                if key in ["F", "G", "H", "I"]
+            ],
+        },
+    )
+
+    response3 = file_repo_api_client.modify(
+        file_repo.pulp_href,
+        {
+            "remove_content_units": [
+                content.pulp_href for key, content in content_units.items() if key in ["G", "I"]
+            ],
+            "add_content_units": [
+                content.pulp_href for key, content in content_units.items() if key in ["C", "D"]
+            ],
+        },
+    )
+
+    response4 = file_repo_api_client.modify(
+        file_repo.pulp_href,
+        {
+            "remove_content_units": [
+                content.pulp_href for key, content in content_units.items() if key in ["D", "H"]
+            ],
+            "add_content_units": [
+                content.pulp_href for key, content in content_units.items() if key in ["E", "I"]
+            ],
+        },
+    )
+    version1 = file_repo_version_api_client.read(monitor_task(response1.task).created_resources[0])
+    version2 = file_repo_version_api_client.read(monitor_task(response2.task).created_resources[0])
+    version3 = file_repo_version_api_client.read(monitor_task(response3.task).created_resources[0])
+    version4 = file_repo_version_api_client.read(monitor_task(response4.task).created_resources[0])
+
+    # Check version state before deletion
+    assert version1.content_summary.added["file.file"]["count"] == 5
+    assert "file.file" not in version1.content_summary.removed
+    assert version2.content_summary.added["file.file"]["count"] == 4
+    assert version2.content_summary.removed["file.file"]["count"] == 4
+    assert version3.content_summary.added["file.file"]["count"] == 2
+    assert version3.content_summary.removed["file.file"]["count"] == 2
+    assert version4.content_summary.added["file.file"]["count"] == 2
+    assert version4.content_summary.removed["file.file"]["count"] == 2
+
+    content1 = content_file_api_client.list(repository_version=version1.pulp_href)
+    content2 = content_file_api_client.list(repository_version=version2.pulp_href)
+    content3 = content_file_api_client.list(repository_version=version3.pulp_href)
+    content4 = content_file_api_client.list(repository_version=version4.pulp_href)
+    assert set((content.relative_path for content in content1.results)) == {"A", "B", "C", "D", "E"}
+    assert set((content.relative_path for content in content2.results)) == {"A", "F", "G", "H", "I"}
+    assert set((content.relative_path for content in content3.results)) == {"A", "C", "D", "F", "H"}
+    assert set((content.relative_path for content in content4.results)) == {"A", "C", "E", "F", "I"}
+
+    monitor_task(file_repo_version_api_client.delete(version2.pulp_href).task)
+
+    # Check version state after deletion (Version 2 is gone...)
+    version1 = file_repo_version_api_client.read(version1.pulp_href)
+    version3 = file_repo_version_api_client.read(version3.pulp_href)
+    version4 = file_repo_version_api_client.read(version4.pulp_href)
+
+    assert version1.content_summary.added["file.file"]["count"] == 5
+    assert "file.file" not in version1.content_summary.removed
+    assert version3.content_summary.added["file.file"]["count"] == 2
+    assert version3.content_summary.removed["file.file"]["count"] == 2
+    assert version4.content_summary.added["file.file"]["count"] == 2
+    assert version4.content_summary.removed["file.file"]["count"] == 2
+
+    content1 = content_file_api_client.list(repository_version=version1.pulp_href)
+    content3 = content_file_api_client.list(repository_version=version3.pulp_href)
+    content4 = content_file_api_client.list(repository_version=version4.pulp_href)
+    assert set((content.relative_path for content in content1.results)) == {"A", "B", "C", "D", "E"}
+    assert set((content.relative_path for content in content3.results)) == {"A", "C", "D", "F", "H"}
+    assert set((content.relative_path for content in content4.results)) == {"A", "C", "E", "F", "I"}
 
 
 class ContentImmutableRepoVersionTestCase(unittest.TestCase):
