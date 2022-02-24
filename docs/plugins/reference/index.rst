@@ -14,3 +14,4 @@ This section includes in-depth material that is topic specific.
    releasing
    content-protection
    metadata-signing
+   task-scheduling
