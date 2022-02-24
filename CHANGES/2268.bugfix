@@ -1,0 +1,1 @@
+Added transactions around repository version operations to prevent data loss.
