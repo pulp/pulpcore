@@ -112,7 +112,7 @@ def task_schedule(cli_client):
         "from django.utils.timezone import now;"
         "from datetime import timedelta;"
         "from pulpcore.app.models import TaskSchedule;"
-        "dispatch_interval = timedelta(seconds=2);"
+        "dispatch_interval = timedelta(seconds=4);"
         "next_dispatch = now() + dispatch_interval;"
         "TaskSchedule("
         f"    name='{name}', task_name='{task_name}', "
@@ -131,7 +131,7 @@ def task_schedule(cli_client):
 def test_task_schedule(task_schedule, task_schedules_api_client):
     """Test that a worker will schedule a task roughly at a given time."""
     # Worker TTL is configured to 30s, therefore they will have a heartbeat each 10s (6 bpm). The
-    # task is scheduled 2s in the future to give us time to invesitgate the state before and after.
+    # task is scheduled 4s in the future to give us time to invesitgate the state before and after.
     # 15s later we can be sure it was scheduled (as long as at least one worker is running).
 
     result = task_schedules_api_client.list(name=task_schedule["name"])

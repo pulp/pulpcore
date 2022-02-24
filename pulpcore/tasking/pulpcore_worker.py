@@ -50,9 +50,18 @@ random.seed()
 
 TASK_GRACE_INTERVAL = 3
 WORKER_CLEANUP_INTERVAL = 100
+# Randomly chosen
+TASK_SCHEDULING_LOCK = 42
 
 
 class PGAdvisoryLock:
+    """
+    A context manager that will hold a postgres advisory lock non-blocking.
+
+    The locks can be chosen from a lock group to avoid collisions. They will never collide with the
+    locks used for tasks.
+    """
+
     def __init__(self, lock, lock_group=0):
         self.lock_group = lock_group
         self.lock = lock
@@ -149,7 +158,7 @@ class NewPulpWorker:
             if self.worker_cleanup_countdown <= 0:
                 self.worker_cleanup_countdown = WORKER_CLEANUP_INTERVAL
                 self.worker_cleanup()
-            with suppress(AdvisoryLockError), PGAdvisoryLock(42):
+            with suppress(AdvisoryLockError), PGAdvisoryLock(TASK_SCHEDULING_LOCK):
                 dispatch_scheduled_tasks()
 
     def notify_workers(self):
