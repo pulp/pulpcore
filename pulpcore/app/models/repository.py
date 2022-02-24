@@ -4,6 +4,7 @@ Repository related Django models.
 from contextlib import suppress
 from gettext import gettext as _
 from os import path
+from collections import defaultdict
 import logging
 
 import django
@@ -884,9 +885,11 @@ class RepositoryVersion(BaseModel):
         # delete any relationships added in the version being deleted and removed in the next one.
         repo_relations.filter(version_added=self, version_removed=next_version).delete()
 
-        # If the same content is deleted in version, but added back in next_version
-        # set version_removed field in relation to None, and remove relation adding the content
-        # in next_version
+        # If the same content is deleted in version, but added back in next_version then:
+        # - set version_removed field in relation to version_removed of the relation adding
+        #   the content in next version because the content can be removed again after the
+        #   next_version
+        # - and remove relation adding the content in next_version
         content_added = repo_relations.filter(version_added=next_version).values_list("content_id")
 
         # use list() to force the evaluation of the queryset, otherwise queryset is affected
@@ -897,13 +900,26 @@ class RepositoryVersion(BaseModel):
             )
         )
 
-        repo_relations.filter(
-            version_removed=self, content_id__in=content_removed_and_readded
-        ).update(version_removed=None)
-
-        repo_relations.filter(
+        repo_contents_readded_in_next_version = repo_relations.filter(
             version_added=next_version, content_id__in=content_removed_and_readded
-        ).delete()
+        )
+
+        # Since the readded contents can be removed again by any subsequent version after the
+        # next version. Get the mapping of readded contents and their versions removed to use
+        # later. The version removed id will be None if a content is not removed.
+        version_removed_id_content_id_map = defaultdict(list)
+        for readded_repo_content in repo_contents_readded_in_next_version.iterator():
+            version_removed_id_content_id_map[readded_repo_content.version_removed_id].append(
+                readded_repo_content.content_id
+            )
+
+        repo_contents_readded_in_next_version.delete()
+
+        # Update the version removed of the readded contents
+        for version_removed_id, content_ids in version_removed_id_content_id_map.items():
+            repo_relations.filter(version_removed=self, content_id__in=content_ids).update(
+                version_removed_id=version_removed_id
+            )
 
         # "squash" by moving other additions and removals forward to the next version
         repo_relations.filter(version_added=self).update(version_added=next_version)
