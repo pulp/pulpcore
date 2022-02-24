@@ -8,6 +8,7 @@ import pytest
 from pulpcore.client.pulp_file import (
     ContentFilesApi,
     RepositoriesFileApi,
+    RepositoriesFileVersionsApi,
     RemotesFileApi,
 )
 from pulp_smash.pulp3.utils import gen_repo
@@ -33,6 +34,11 @@ def content_file_api_client(file_client):
 @pytest.fixture(scope="session")
 def file_repo_api_client(file_client):
     return RepositoriesFileApi(file_client)
+
+
+@pytest.fixture(scope="session")
+def file_repo_version_api_client(file_client):
+    return RepositoriesFileVersionsApi(file_client)
 
 
 @pytest.fixture
