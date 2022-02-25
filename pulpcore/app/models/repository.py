@@ -521,15 +521,21 @@ class RepositoryContent(BaseModel):
             Content.
     """
 
+    # Content can only be removed once it's no longer referenced by any repository
     content = models.ForeignKey(
-        "Content", on_delete=models.CASCADE, related_name="version_memberships"
+        "Content", on_delete=models.PROTECT, related_name="version_memberships"
     )
     repository = models.ForeignKey(Repository, on_delete=models.CASCADE)
+    # version_added and version_removed need to be properly handled in _squash before the version
+    # can be deleted
     version_added = models.ForeignKey(
-        "RepositoryVersion", related_name="added_memberships", on_delete=models.CASCADE
+        "RepositoryVersion", related_name="added_memberships", on_delete=models.RESTRICT
     )
     version_removed = models.ForeignKey(
-        "RepositoryVersion", null=True, related_name="removed_memberships", on_delete=models.CASCADE
+        "RepositoryVersion",
+        null=True,
+        related_name="removed_memberships",
+        on_delete=models.RESTRICT,
     )
 
     class Meta:
