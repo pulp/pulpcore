@@ -74,7 +74,7 @@ would need 50GB + 30% of size of all the repository content + the DB.
 Filesystem Layout
 -----------------
 
-..note::
+.. note::
   Pulp will mostly automatically manage the following directories for you.
   Only if you need to adjust permissions or security contexts and perform a manual installation,
   you need to prepare them accordingly.
@@ -95,5 +95,5 @@ File/Directory                   Usage
 `/var/lib/pulp/upload`           Storage for upload chunks and temporary files that need to be shared between processes
 ================================ ==========================================================================================================
 
-..note::
+.. note::
   `/var/lib/pulp/media` will be empty in case a cloud storage is configured :ref:`storage`
