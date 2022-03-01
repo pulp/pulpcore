@@ -330,7 +330,7 @@ class Artifact(HandleTempFilesMixin, BaseModel):
 
         if expected_size:
             if size != expected_size:
-                raise SizeValidationError()
+                raise SizeValidationError(size, expected_size)
 
         if expected_digests:
             for algorithm, expected_digest in expected_digests.items():
@@ -340,8 +340,9 @@ class Artifact(HandleTempFilesMixin, BaseModel):
                             algorithm
                         )
                     )
-                if expected_digest != hashers[algorithm].hexdigest():
-                    raise DigestValidationError()
+                actual_digest = hashers[algorithm].hexdigest()
+                if expected_digest != actual_digest:
+                    raise DigestValidationError(actual_digest, expected_digest)
 
         attributes = {"size": size, "file": file}
         for algorithm in Artifact.DIGEST_FIELDS:
@@ -443,7 +444,7 @@ class PulpTemporaryFile(HandleTempFilesMixin, BaseModel):
 
         if expected_size:
             if size != expected_size:
-                raise SizeValidationError()
+                raise SizeValidationError(size, expected_size)
 
         if expected_digests:
             for algorithm, expected_digest in expected_digests.items():
@@ -453,8 +454,9 @@ class PulpTemporaryFile(HandleTempFilesMixin, BaseModel):
                             algorithm
                         )
                     )
-                if expected_digest != hashers[algorithm].hexdigest():
-                    raise DigestValidationError()
+                actual_digest = hashers[algorithm].hexdigest()
+                if expected_digest != actual_digest:
+                    raise DigestValidationError(actual_digest, expected_digest)
 
         return PulpTemporaryFile(file=file)
 

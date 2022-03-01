@@ -16,17 +16,24 @@ class DigestValidationError(ValidationError):
     Raised when a file fails to validate a digest checksum.
     """
 
-    def __init__(self, *args):
+    def __init__(self, actual, expected, *args, url=None, **kwargs):
         super().__init__("PLP0003")
-        if args:
-            self.url = args[0]
+        self.url = url
+        self.actual = actual
+        self.expected = expected
 
     def __str__(self):
-        if hasattr(self, "url"):
-            return _("A file located at the url {} failed validation due to checksum.").format(
-                self.url
+        if self.url:
+            msg = _(
+                "A file located at the url {url} failed validation due to checksum. "
+                "Expected '{expected}', Actual '{actual}'"
             )
-        return _("A file failed validation due to checksum.")
+            return msg.format(url=self.url, expected=self.expected, actual=self.actual)
+        else:
+            msg = _(
+                "A file failed validation due to checksum. Expected '{expected}', Actual '{actual}'"
+            )
+            return msg.format(expected=self.expected, actual=self.actual)
 
 
 class SizeValidationError(ValidationError):
@@ -34,15 +41,24 @@ class SizeValidationError(ValidationError):
     Raised when a file fails to validate a size checksum.
     """
 
-    def __init__(self, *args):
+    def __init__(self, actual, expected, *args, url=None, **kwargs):
         super().__init__("PLP0004")
-        if args:
-            self.url = args[0]
+        self.url = url
+        self.actual = actual
+        self.expected = expected
 
     def __str__(self):
-        if hasattr(self, "url"):
-            return _("A file located at the url {} failed validation due to size.").format(self.url)
-        return _("A file failed validation due to size.")
+        if self.url:
+            msg = _(
+                "A file located at the url {url} failed validation due to size. "
+                "Expected '{expected}', Actual '{actual}'"
+            )
+            return msg.format(url=self.url, expected=self.expected, actual=self.actual)
+        else:
+            msg = _(
+                "A file failed validation due to size. Expected '{expected}', Actual '{actual}'"
+            )
+            return msg.format(expected=self.expected, actual=self.actual)
 
 
 class MissingDigestValidationError(Exception):
