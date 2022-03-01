@@ -17,6 +17,25 @@ Changelog
 
 .. towncrier release notes start
 
+
+3.18.1 (2022-03-01)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Added transactions around repository version operations to prevent data loss.
+  :github:`2268`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.18.0 (2022-02-22)
 ===================
 REST API
@@ -154,6 +173,56 @@ Deprecations
 - The ``ACCESS_POLICY_VIEWSET_NAME`` attribute is no longer expected to be present on models. The
   RBAC machinery no longer uses this, and if present a deprecation warning will be emitted.
   :github:`2209`
+
+
+3.17.4 (2022-03-01)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fix import and export OOM error.
+  :github:`2072`
+- Fixed downloader retry logic with partially written files.
+  :github:`2078`
+- Fix content summary showing incorrect count after previous version deletion.
+  :github:`2084`
+- Fixed issue with listing repository versions after deleting previous versions.
+  :github:`2085`
+- Fixed file descriptior leak during upload.
+  :github:`2087`
+- Added proper logging around certain ways a task could fail.
+  :github:`2093`
+- Make checksum mismatches a retryable error.
+  :github:`2094`
+- Fixed an edge case where the first (streamed) response from an repo synced as "on_demand" could be incorrect.
+  :github:`2119`
+- Fixed bug where retries of partially downloaded files failed digest and size validation.
+  :github:`2135`
+- Fixed the calculation of response range headers in streaming answers from the content app.
+  :github:`2147`
+- Fixed potential deadlock-window in touch() path.
+  :github:`2157`
+- Fixed reporting tasks being canceled before being picked up by a worker as canceled instead of
+  failed.
+  :github:`2183`
+- Fixed import/export of repositories with sub-content.
+
+  An example would be the sub-repositories in pulp_rpm
+  DistributionTrees.
+  :github:`2192`
+- touch() now uses standard Django instead of raw-sql to update.
+  :github:`2229`
+- Added transactions around repository version operations to prevent data loss.
+  :github:`2268`
+
+
+Plugin API
+----------
+
+No significant changes.
 
 
 3.17.3 (2022-01-12)
@@ -364,6 +433,41 @@ Bugfixes
 
 - Include additional information about which AccessPolicy is using deprecated policy features.
   :redmine:`9608`
+
+
+3.16.4 (2022-03-01)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fix content summary showing incorrect count after previous version deletion.
+  :github:`2084`
+- Fixed issue with listing repository versions after deleting previous versions.
+  :github:`2085`
+- Fixed potential deadlock-window in touch() path.
+  :github:`2157`
+- Fixed import/export of repositories with sub-content.
+
+  An example would be the sub-repositories in pulp_rpm
+  DistributionTrees.
+  :github:`2192`
+- touch() now uses standard Django instead of raw-sql to update.
+  :github:`2229`
+- PulpImporter now unpacks into the task-worker's working directory rather than /tmp. Unpacking
+  large files into /tmp could cause the operation to fail, or even cause stability issues for
+  Pulp instance, due to running /tmp out of space.
+  :github:`2247`
+- Added transactions around repository version operations to prevent data loss.
+  :github:`2268`
+
+
+Plugin API
+----------
+
+No significant changes.
 
 
 3.16.3 (2022-02-08)
