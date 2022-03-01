@@ -17,6 +17,41 @@ Changelog
 
 .. towncrier release notes start
 
+3.16.4 (2022-03-01)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fix content summary showing incorrect count after previous version deletion.
+  `#2084 <https://pulp.plan.io/issues/2084>`_
+- Fixed issue with listing repository versions after deleting previous versions.
+  `#2085 <https://pulp.plan.io/issues/2085>`_
+- Fixed potential deadlock-window in touch() path.
+  `#2157 <https://pulp.plan.io/issues/2157>`_
+- Fixed import/export of repositories with sub-content.
+
+  An example would be the sub-repositories in pulp_rpm
+  DistributionTrees.
+  `#2192 <https://pulp.plan.io/issues/2192>`_
+- touch() now uses standard Django instead of raw-sql to update.
+  `#2229 <https://pulp.plan.io/issues/2229>`_
+- PulpImporter now unpacks into the task-worker's working directory rather than /tmp. Unpacking
+  large files into /tmp could cause the operation to fail, or even cause stability issues for
+  Pulp instance, due to running /tmp out of space.
+  `#2247 <https://pulp.plan.io/issues/2247>`_
+- Added transactions around repository version operations to prevent data loss.
+  `#2268 <https://pulp.plan.io/issues/2268>`_
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.16.3 (2022-02-08)
 ===================
 REST API
