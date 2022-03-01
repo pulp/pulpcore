@@ -17,6 +17,24 @@ Changelog
 
 .. towncrier release notes start
 
+3.18.1 (2022-03-01)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Added transactions around repository version operations to prevent data loss.
+  :github:`2268`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.18.0 (2022-02-22)
 ===================
 REST API
