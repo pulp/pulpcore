@@ -481,6 +481,7 @@ class RoleFilter(BaseFilterSet):
         model = Role
         fields = {
             "name": NAME_FILTER_OPTIONS,
+            "description": ["exact", "iexact", "icontains", "contains"],
             "locked": ["exact"],
         }
 
