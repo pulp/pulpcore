@@ -319,6 +319,7 @@ jobs:
         run: bash .github/workflows/scripts/publish_client_gem.sh
 
       - name: Update Redmine
+        continue-on-error: true
         run: bash .ci/scripts/update_redmine.sh
 
       

@@ -5,6 +5,13 @@ PRIVATE_KEY_PATH = "/etc/pulp/certs/token_private_key.pem"
 PUBLIC_KEY_PATH = "/etc/pulp/certs/token_public_key.pem"
 TOKEN_SERVER = "{{ pulp_scheme }}://pulp:{{ 443 if pulp_scheme == 'https' else 80 }}/token/"
 TOKEN_SIGNATURE_ALGORITHM = "ES256"
+CACHE_ENABLED = True
+REDIS_HOST = "localhost"
+REDIS_PORT = 6379
+
+{% if api_root is defined %}
+API_ROOT = {{ api_root | repr }}
+{% endif %}
 
 {% if pulp_settings %}
 {% for key, value in pulp_settings.items() %}
