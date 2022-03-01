@@ -17,6 +17,56 @@ Changelog
 
 .. towncrier release notes start
 
+3.17.4 (2022-03-01)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fix import and export OOM error.
+  `#2072 <https://pulp.plan.io/issues/2072>`_
+- Fixed downloader retry logic with partially written files.
+  `#2078 <https://pulp.plan.io/issues/2078>`_
+- Fix content summary showing incorrect count after previous version deletion.
+  `#2084 <https://pulp.plan.io/issues/2084>`_
+- Fixed issue with listing repository versions after deleting previous versions.
+  `#2085 <https://pulp.plan.io/issues/2085>`_
+- Fixed file descriptior leak during upload.
+  `#2087 <https://pulp.plan.io/issues/2087>`_
+- Added proper logging around certain ways a task could fail.
+  `#2093 <https://pulp.plan.io/issues/2093>`_
+- Make checksum mismatches a retryable error.
+  `#2094 <https://pulp.plan.io/issues/2094>`_
+- Fixed an edge case where the first (streamed) response from an repo synced as "on_demand" could be incorrect.
+  `#2119 <https://pulp.plan.io/issues/2119>`_
+- Fixed bug where retries of partially downloaded files failed digest and size validation.
+  `#2135 <https://pulp.plan.io/issues/2135>`_
+- Fixed the calculation of response range headers in streaming answers from the content app.
+  `#2147 <https://pulp.plan.io/issues/2147>`_
+- Fixed potential deadlock-window in touch() path.
+  `#2157 <https://pulp.plan.io/issues/2157>`_
+- Fixed reporting tasks being canceled before being picked up by a worker as canceled instead of
+  failed.
+  `#2183 <https://pulp.plan.io/issues/2183>`_
+- Fixed import/export of repositories with sub-content.
+
+  An example would be the sub-repositories in pulp_rpm
+  DistributionTrees.
+  `#2192 <https://pulp.plan.io/issues/2192>`_
+- touch() now uses standard Django instead of raw-sql to update.
+  `#2229 <https://pulp.plan.io/issues/2229>`_
+- Added transactions around repository version operations to prevent data loss.
+  `#2268 <https://pulp.plan.io/issues/2268>`_
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.17.3 (2022-01-12)
 ===================
 REST API

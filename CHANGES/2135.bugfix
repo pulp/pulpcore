@@ -1,1 +1,0 @@
-Fixed bug where retries of partially downloaded files failed digest and size validation.
