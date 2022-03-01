@@ -1,0 +1,3 @@
+Constructor signature of `DigestValidationError` and `SizeValidationError` has changed - the
+"actual" and "expected" values are now required and "url" which was previously a positional
+argument is now a keyword argument.

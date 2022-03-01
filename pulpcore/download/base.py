@@ -219,8 +219,9 @@ class BaseDownloader:
         """
         if self.expected_digests:
             for algorithm, expected_digest in self.expected_digests.items():
-                if expected_digest != self._digests[algorithm].hexdigest():
-                    raise DigestValidationError(self.url)
+                actual_digest = self._digests[algorithm].hexdigest()
+                if actual_digest != expected_digest:
+                    raise DigestValidationError(actual_digest, expected_digest, url=self.url)
 
     def validate_size(self):
         """
@@ -232,8 +233,10 @@ class BaseDownloader:
                 :meth:`~pulpcore.plugin.download.BaseDownloader.handle_data`.
         """
         if self.expected_size:
-            if self._size != self.expected_size:
-                raise SizeValidationError(self.url)
+            actual_size = self._size
+            expected_size = self.expected_size
+            if actual_size != expected_size:
+                raise SizeValidationError(actual_size, expected_size, url=self.url)
 
     async def run(self, extra_data=None):
         """
