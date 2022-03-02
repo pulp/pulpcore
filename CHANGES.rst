@@ -26,19 +26,19 @@ Bugfixes
 ~~~~~~~~
 
 - Fixed downloader retry logic with partially written files.
-  `#2078 <https://github.com/pulp/pulpcore/issues/2078>`_
+  :github:`2078`
 - Fixed bug where retries of partially downloaded files failed digest and size validation.
-  `#2135 <https://github.com/pulp/pulpcore/issues/2135>`_
+  :github:`2135`
 - Fixed the calculation of response range headers in streaming answers from the content app.
-  `#2147 <https://github.com/pulp/pulpcore/issues/2147>`_
+  :github:`2147`
 - Improved messaging around timeout requests.
-  `#2169 <https://github.com/pulp/pulpcore/issues/2169>`_
+  :github:`2169`
 
 
 Misc
 ~~~~
 
-- `#2094 <https://github.com/pulp/pulpcore/issues/2094>`_
+- :github:`2094`
 
 
 Plugin API
@@ -370,7 +370,7 @@ Bugfixes
   (backported from #8133)
   `#9130 <https://pulp.plan.io/issues/9130>`_
 - Move files to artifact storage only when they originate from WORKING_DIRECTORY.
-  Copy files from all other sources. 
+  Copy files from all other sources.
   (backported from #9146)
   `#9202 <https://pulp.plan.io/issues/9202>`_
 

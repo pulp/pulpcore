@@ -1,7 +1,7 @@
 # This config represents the latest values used when running the plugin-template. Any settings that
 # were not present before running plugin-template have been added with their default values.
 
-# generated with plugin_template@2021.08.26-63-ga4f4a44
+# generated with plugin_template@2021.08.26-83-g29b161f
 
 additional_repos:
 - branch: 1.9
@@ -73,11 +73,12 @@ test_deprecations: false
 test_fips_nightly: false
 test_performance: false
 test_released_plugin_with_next_pulpcore_release: false
+test_reroute: false
 test_s3: true
 update_github: true
-update_redmine: true
 upgrade_range:
 - pulp-certguard_branch: 1.2
   pulp_file_branch: 1.6
   pulpcore_branch: 3.11
+use_issue_template: true
 
