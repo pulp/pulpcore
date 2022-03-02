@@ -60,13 +60,11 @@ pulpprojectdotorg_key_id: d1a778bda808
 pydocstyle: true
 pypi_username: pulp
 python_version: '3.8'
-redmine_project: pulp
 release_email: pulp-infra@redhat.com
 release_user: pulpbot
 single_commit_check: true
 stable_branch: null
 sync_ci: true
-tasking_allow_async_unsafe: true
 test_azure: true
 test_bindings: true
 test_cli: true
