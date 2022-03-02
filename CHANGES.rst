@@ -26,10 +26,10 @@ Bugfixes
 ~~~~~~~~
 
 - Fixed potential deadlock-window in touch() path.
-  `#2157 <https://pulp.plan.io/issues/2157>`_
+  :github:`2157`
 - Fixed reporting tasks being canceled before being picked up by a worker as canceled instead of
   failed.
-  `#2183 <https://pulp.plan.io/issues/2183>`_
+  :github:`2183`
 
 
 Plugin API
@@ -47,28 +47,28 @@ Bugfixes
 ~~~~~~~~
 
 - Fix import and export OOM error.
-  `#2072 <https://pulp.plan.io/issues/2072>`_
+  :github:`2072`
 - Fixed downloader retry logic with partially written files.
-  `#2078 <https://pulp.plan.io/issues/2078>`_
+  :github:`2078`
 - Fix content summary showing incorrect count after previous version deletion.
-  `#2084 <https://pulp.plan.io/issues/2084>`_
+  :github:`2084`
 - Fixed issue with listing repository versions after deleting previous versions.
-  `#2085 <https://pulp.plan.io/issues/2085>`_
+  :github:`2085`
 - Fixed file descriptior leak during upload.
-  `#2087 <https://pulp.plan.io/issues/2087>`_
+  :github:`2087`
 - Added proper logging around certain ways a task could fail.
-  `#2093 <https://pulp.plan.io/issues/2093>`_
+  :github:`2093`
 - Make checksum mismatches a retryable error.
-  `#2094 <https://pulp.plan.io/issues/2094>`_
+  :github:`2094`
 - Fixed an edge case where the first (streamed) response from an repo synced as "on_demand" could be incorrect.
-  `#2119 <https://pulp.plan.io/issues/2119>`_
+  :github:`2119`
 - Fixed bug where retries of partially downloaded files failed digest and size validation.
-  `#2135 <https://pulp.plan.io/issues/2135>`_
+  :github:`2135`
 - Fixed a bug in pulpcore-worker, where wakeup and cancel signals could be lost due to a race
   condition.
-  `#2144 <https://pulp.plan.io/issues/2144>`_
+  :github:`2144`
 - Fixed the calculation of response range headers in streaming answers from the content app.
-  `#2147 <https://pulp.plan.io/issues/2147>`_
+  :github:`2147`
 
 
 Plugin API
@@ -258,7 +258,7 @@ Bugfixes
   (backported from #8133)
   `#9130 <https://pulp.plan.io/issues/9130>`_
 - Move files to artifact storage only when they originate from WORKING_DIRECTORY.
-  Copy files from all other sources. 
+  Copy files from all other sources.
   (backported from #9146)
   `#9202 <https://pulp.plan.io/issues/9202>`_
 
