@@ -261,7 +261,8 @@ texinfo_documents = [
 # How to display URL addresses: 'footnote', 'no', or 'inline'.
 #texinfo_show_urls = 'footnote'
 
-extlinks = {'redmine': ('https://pulp.plan.io/issues/%s', '#'),
+extlinks = {'github': ('https://github.com/pulp/pulpcore/issues/%s', '#'),
+            'redmine': ('https://pulp.plan.io/issues/%s', '#'),
             'fixedbugs_pulp': ('https://pulp.plan.io/projects/pulp/issues?c%%5B%%5D=tracker&c%%5B%'
                                '%5D=status&c%%5B%%5D=priority&c%%5B%%5D=cf_5&c%%5B%%5D=subject&c%%'
                                '5B%%5D=author&c%%5B%%5D=assigned_to&c%%5B%%5D=cf_3&f%%5B%%5D=cf_4&'
