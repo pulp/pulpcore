@@ -6,13 +6,12 @@
 # For more info visit https://github.com/pulp/plugin_template
 
 import os
-import sys
 from github import Github
-
-GH_ISSUES = sys.argv[1]
 
 g = Github(os.environ.get("GITHUB_TOKEN"))
 repo = g.get_repo("pulp/pulpcore")
+
+GH_ISSUES = os.environ.get("GH_ISSUES")
 
 for issue in GH_ISSUES.split(","):
     issue = repo.get_issue(int(issue))

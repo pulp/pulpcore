@@ -26,24 +26,24 @@ Bugfixes
 ~~~~~~~~
 
 - Fix content summary showing incorrect count after previous version deletion.
-  `#2084 <https://pulp.plan.io/issues/2084>`_
+  :github:`2084`
 - Fixed issue with listing repository versions after deleting previous versions.
-  `#2085 <https://pulp.plan.io/issues/2085>`_
+  :github:`2085`
 - Fixed potential deadlock-window in touch() path.
-  `#2157 <https://pulp.plan.io/issues/2157>`_
+  :github:`2157`
 - Fixed import/export of repositories with sub-content.
 
   An example would be the sub-repositories in pulp_rpm
   DistributionTrees.
-  `#2192 <https://pulp.plan.io/issues/2192>`_
+  :github:`2192`
 - touch() now uses standard Django instead of raw-sql to update.
-  `#2229 <https://pulp.plan.io/issues/2229>`_
+  :github:`2229`
 - PulpImporter now unpacks into the task-worker's working directory rather than /tmp. Unpacking
   large files into /tmp could cause the operation to fail, or even cause stability issues for
   Pulp instance, due to running /tmp out of space.
-  `#2247 <https://pulp.plan.io/issues/2247>`_
+  :github:`2247`
 - Added transactions around repository version operations to prevent data loss.
-  `#2268 <https://pulp.plan.io/issues/2268>`_
+  :github:`2268`
 
 
 Plugin API
@@ -61,24 +61,24 @@ Bugfixes
 ~~~~~~~~
 
 - Fix import and export OOM error.
-  `#2072 <https://pulp.plan.io/issues/2072>`_
+  :github:`2072`
 - Fixed downloader retry logic with partially written files.
-  `#2078 <https://pulp.plan.io/issues/2078>`_
+  :github:`2078`
 - Fixed bug where retries of partially downloaded files failed digest and size validation.
-  `#2135 <https://pulp.plan.io/issues/2135>`_
+  :github:`2135`
 - Fixed the calculation of response range headers in streaming answers from the content app.
-  `#2147 <https://pulp.plan.io/issues/2147>`_
+  :github:`2147`
 - Improved messaging around timeout requests.
-  `#2169 <https://pulp.plan.io/issues/2169>`_
+  :github:`2169`
 - Fixed reporting tasks being canceled before being picked up by a worker as canceled instead of
   failed.
-  `#2183 <https://pulp.plan.io/issues/2183>`_
+  :github:`2183`
 
 
 Misc
 ~~~~
 
-- `#2094 <https://pulp.plan.io/issues/2094>`_
+- :github:`2094`
 
 
 Plugin API
@@ -117,7 +117,7 @@ Bugfixes
 - Fixed bug where Artifacts were being downloaded even if they were already saved in Pulp.
   (backported from #9542)
   `#9596 <https://pulp.plan.io/issues/9596>`_
-- Fixed bug where the content app would stop working after a brief loss of connection to the database. 
+- Fixed bug where the content app would stop working after a brief loss of connection to the database.
   (backported from #9276)
   `#9598 <https://pulp.plan.io/issues/9598>`_
 
