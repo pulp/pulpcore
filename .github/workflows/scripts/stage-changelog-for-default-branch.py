@@ -66,9 +66,10 @@ except GitCommandError:
         git.cherry_pick("--continue")
 git.reset("origin/main")
 
-# Do not remove changelog entries
-msg = repo.commit().message
-git.reset("HEAD~1")
-git.add("CHANGES.rst")
-git.commit("-m", msg)
-git.stash()
+if not release_version_arg.endswith(".0"):
+    # Do not remove z-stream changelog entries
+    msg = repo.commit().message
+    git.reset("HEAD~1")
+    git.add("CHANGES.rst")
+    git.commit("-m", msg)
+    git.stash()

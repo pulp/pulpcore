@@ -41,6 +41,7 @@ jobs:
           author: pulpbot <pulp-infra@redhat.com>
           title: 'Update CI files'
           body: '[noissue]'
+          branch: 'create-pull-request/${{ github.ref }}/patch'
           commit-message: |
             Update CI files
 

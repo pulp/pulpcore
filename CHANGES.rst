@@ -26,39 +26,39 @@ Bugfixes
 ~~~~~~~~
 
 - Fix import and export OOM error.
-  `#2072 <https://pulp.plan.io/issues/2072>`_
+  :github:`2072`
 - Fixed downloader retry logic with partially written files.
-  `#2078 <https://pulp.plan.io/issues/2078>`_
+  :github:`2078`
 - Fix content summary showing incorrect count after previous version deletion.
-  `#2084 <https://pulp.plan.io/issues/2084>`_
+  :github:`2084`
 - Fixed issue with listing repository versions after deleting previous versions.
-  `#2085 <https://pulp.plan.io/issues/2085>`_
+  :github:`2085`
 - Fixed file descriptior leak during upload.
-  `#2087 <https://pulp.plan.io/issues/2087>`_
+  :github:`2087`
 - Added proper logging around certain ways a task could fail.
-  `#2093 <https://pulp.plan.io/issues/2093>`_
+  :github:`2093`
 - Make checksum mismatches a retryable error.
-  `#2094 <https://pulp.plan.io/issues/2094>`_
+  :github:`2094`
 - Fixed an edge case where the first (streamed) response from an repo synced as "on_demand" could be incorrect.
-  `#2119 <https://pulp.plan.io/issues/2119>`_
+  :github:`2119`
 - Fixed bug where retries of partially downloaded files failed digest and size validation.
-  `#2135 <https://pulp.plan.io/issues/2135>`_
+  :github:`2135`
 - Fixed the calculation of response range headers in streaming answers from the content app.
-  `#2147 <https://pulp.plan.io/issues/2147>`_
+  :github:`2147`
 - Fixed potential deadlock-window in touch() path.
-  `#2157 <https://pulp.plan.io/issues/2157>`_
+  :github:`2157`
 - Fixed reporting tasks being canceled before being picked up by a worker as canceled instead of
   failed.
-  `#2183 <https://pulp.plan.io/issues/2183>`_
+  :github:`2183`
 - Fixed import/export of repositories with sub-content.
 
   An example would be the sub-repositories in pulp_rpm
   DistributionTrees.
-  `#2192 <https://pulp.plan.io/issues/2192>`_
+  :github:`2192`
 - touch() now uses standard Django instead of raw-sql to update.
-  `#2229 <https://pulp.plan.io/issues/2229>`_
+  :github:`2229`
 - Added transactions around repository version operations to prevent data loss.
-  `#2268 <https://pulp.plan.io/issues/2268>`_
+  :github:`2268`
 
 
 Plugin API
@@ -238,7 +238,7 @@ Plugin API
 Features
 ~~~~~~~~
 
-- Added ``get_objects_for_user`` to support queryset filtering by roles. 
+- Added ``get_objects_for_user`` to support queryset filtering by roles.
   Added hooks in ``AutoAddObjPermsMixin`` to support auto-assignment of roles.
 
   Changed the lookup for creation hooks so hooks need to be registered in
