@@ -363,6 +363,10 @@ class PulpSchemaGenerator(SchemaGenerator):
         self._initialise_endpoints()
         endpoints = self._get_paths_and_endpoints()
 
+        query_params = {}
+        if input_request:
+            query_params = {k.replace("amp;", ""): v for k, v in input_request.query_params.items()}
+
         if spectacular_settings.SCHEMA_PATH_PREFIX is None:
             # estimate common path prefix if none was given. only use it if we encountered more
             # than one view to prevent emission of erroneous and unnecessary fallback names.
@@ -380,7 +384,7 @@ class PulpSchemaGenerator(SchemaGenerator):
         # Adding plugin filter
         plugins = None
         # /pulp/api/v3/docs/api.json?plugin=pulp_file
-        if input_request and "plugin" in input_request.query_params:
+        if input_request and "plugin" in query_params:
             plugins = [input_request.query_params["plugin"]]
 
         for path, path_regex, method, view in endpoints:
@@ -395,7 +399,8 @@ class PulpSchemaGenerator(SchemaGenerator):
 
             schema = view.schema
 
-            path = self.convert_endpoint_path_params(path, view, schema)
+            if input_request is None or "pk_path" not in query_params:
+                path = self.convert_endpoint_path_params(path, view, schema)
 
             # beware that every access to schema yields a fresh object (descriptor pattern)
             operation = schema.get_operation(path, path_regex, path_prefix, method, self.registry)
@@ -405,12 +410,12 @@ class PulpSchemaGenerator(SchemaGenerator):
                 continue
 
             # Removes html tags from OpenAPI schema
-            if input_request is None or "include_html" not in input_request.query_params:
+            if input_request is None or "include_html" not in query_params:
                 if "description" in operation:
                     operation["description"] = strip_tags(operation["description"])
 
             # operationId as actions [list, read, sync, modify, create, delete, ...]
-            if input_request and "bindings" in input_request.query_params:
+            if input_request and "bindings" in query_params:
                 tokenized_path = schema._tokenize_path()
                 tokenized_path = "_".join(
                     [t.replace("-", "_").replace("/", "_").lower() for t in tokenized_path]
