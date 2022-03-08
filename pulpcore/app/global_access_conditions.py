@@ -140,12 +140,16 @@ def has_remote_param_obj_perms(request, view, action, permission):
 
     Returns:
         True if the user has the Permission named by the ``permission`` argument on the ``remote``
-            parameter at the object-level. False otherwise.
+            parameter at the object-level or if there is no remote. False otherwise.
     """
-    serializer = view.serializer_class(data=request.data, context={"request": request})
+    kwargs = {}
+    if action == "partial_update":
+        kwargs["partial"] = True
+    serializer = view.serializer_class(data=request.data, context={"request": request}, **kwargs)
     serializer.is_valid(raise_exception=True)
-    remote = serializer.validated_data.get("remote")
-    return request.user.has_perm(permission, remote)
+    if remote := serializer.validated_data.get("remote"):
+        return request.user.has_perm(permission, remote)
+    return True
 
 
 def has_remote_param_model_or_obj_perms(request, view, action, permission):
@@ -340,6 +344,106 @@ def has_repository_model_or_obj_perms(request, view, action, permission):
     return request.user.has_perm(permission) or has_repository_obj_perms(
         request, view, action, permission
     )
+
+
+def has_repo_or_repo_ver_param_model_or_obj_perms(request, view, action, permission):
+    """
+    Checks if the current user has object-level permission on the ``repository`` object.
+
+    The object in this case is the one specified by the ``repository`` or ``repository_version``
+    parameter. For example when publishing the ``repository`` parameter is passed in as an argument.
+
+    This is usable as a conditional check in an AccessPolicy. Here is an example checking for the
+    "file.view_filerepository" permissions at the object-level.
+
+    ::
+
+        {
+            ...
+            "condition": "has_repo_or_repo_ver_param_model_or_obj_perms:file.view_filerepository",
+        }
+
+    Since it is checking a ``repository`` object the permission argument should be one of the
+    following:
+
+    * "file.change_filerepository" - Permission to change the ``FileRepository``.
+    * "file.view_filerepository" - Permission to view the ``FileRepository``.
+    * "file.delete_filerepository" - Permission to delete the ``FileRepository``.
+    * "file.sync_filerepository" - Permission to sync the ``FileRepository``.
+
+    Args:
+        request (rest_framework.request.Request): The request being made.
+        view (subclass rest_framework.viewsets.GenericViewSet): The view being checked for
+            authorization.
+        action (str): The action being performed, e.g. "destroy".
+        permission (str): The name of the Permission to be checked. In the form
+            `app_label.codename`, e.g. "core.delete_task".
+
+    Returns:
+        True if the user has the Permission named by the ``permission`` argument on the
+            ``repository`` or ``repository_version`` parameter at the object-level or if there is
+            no repository. False otherwise.
+    """
+    if has_model_perms(request, view, action, permission):
+        return True
+    kwargs = {}
+    if action == "partial_update":
+        kwargs["partial"] = True
+    serializer = view.serializer_class(data=request.data, context={"request": request}, **kwargs)
+    serializer.is_valid(raise_exception=True)
+    if repository := serializer.validated_data.get("repository"):
+        return request.user.has_perm(permission, repository)
+    elif repo_ver := serializer.validated_data.get("repository_version"):
+        return request.user.has_perm(permission, repo_ver.repository)
+    return True
+
+
+def has_publication_param_model_or_obj_perms(request, view, action, permission):
+    """
+    Checks if the current user has object-level permission on the ``publication`` object.
+
+    The object in this case is the one specified by the ``publication`` parameter. For example when
+    distributing the ``publication`` parameter is passed in as an argument.
+
+    This is usable as a conditional check in an AccessPolicy. Here is an example checking for the
+    "file.view_filepublication" permissions at the object-level.
+
+    ::
+
+        {
+            ...
+            "condition": "has_publication_param_model_or_obj_perms:file.view_filepublication",
+        }
+
+    Since it is checking a ``publication`` object the permission argument should be one of the
+    following:
+
+    * "file.view_filepublication" - Permission to view the ``FilePublication``.
+    * "file.delete_filepublication" - Permission to delete the ``FilePublication``.
+
+    Args:
+        request (rest_framework.request.Request): The request being made.
+        view (subclass rest_framework.viewsets.GenericViewSet): The view being checked for
+            authorization.
+        action (str): The action being performed, e.g. "destroy".
+        permission (str): The name of the Permission to be checked. In the form
+            `app_label.codename`, e.g. "core.delete_task".
+
+    Returns:
+        True if the user has the Permission named by the ``permission`` argument on the
+            ``publication`` parameter at the object-level or if there is no publication.
+            False otherwise.
+    """
+    if has_model_perms(request, view, action, permission):
+        return True
+    kwargs = {}
+    if action == "partial_update":
+        kwargs["partial"] = True
+    serializer = view.serializer_class(data=request.data, context={"request": request}, **kwargs)
+    serializer.is_valid(raise_exception=True)
+    if publication := serializer.validated_data.get("publication"):
+        return request.user.has_perm(permission, publication)
+    return True
 
 
 # `Group` permission checks
