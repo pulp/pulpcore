@@ -987,6 +987,29 @@ Misc
 - :redmine:`8606`, :redmine:`9160`
 
 
+3.14.13 (2022-03-08)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Taught PulpImport to retry in the event of a concurrency-collision on ContentArtifact.
+  :github:`2102`
+- Fixed import/export of repositories with sub-content.
+
+  An example would be the sub-repositories in pulp_rpm
+  DistributionTrees.
+  :github:`2192`
+- touch() now uses standard Django instead of raw-sql to update.
+  :github:`2229`
+- PulpImporter now unpacks into the task-worker's working directory rather than /tmp. Unpacking
+  large files into /tmp could cause the operation to fail, or even cause stability issues for
+  Pulp instance, due to running /tmp out of space.
+  :github:`2247`
+
+
 3.14.12 (2022-02-11)
 ====================
 REST API
