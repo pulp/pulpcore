@@ -1,1 +1,0 @@
-touch() now uses standard Django instead of raw-sql to update.
