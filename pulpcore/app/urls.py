@@ -8,6 +8,7 @@ from drf_spectacular.views import (
     SpectacularJSONAPIView,
     SpectacularYAMLAPIView,
     SpectacularRedocView,
+    SpectacularSwaggerView,
 )
 from rest_framework_nested import routers
 
@@ -167,11 +168,24 @@ urlpatterns.append(
         SpectacularRedocView.as_view(
             authentication_classes=[],
             permission_classes=[],
-            url=f"{settings.V3_API_ROOT}docs/api.json?include_html=1",
+            url=f"{settings.V3_API_ROOT}docs/api.json?include_html=1&pk_path=1",
         ),
         name="schema-redoc",
     )
 )
+
+urlpatterns.append(
+    path(
+        f"{API_ROOT}swagger/",
+        SpectacularSwaggerView.as_view(
+            authentication_classes=[],
+            permission_classes=[],
+            url=f"{settings.V3_API_ROOT}docs/api.json?include_html=1&pk_path=1",
+        ),
+        name="schema-swagger",
+    )
+)
+
 
 all_routers = [root_router] + vs_tree.register_with(root_router)
 for router in all_routers:
