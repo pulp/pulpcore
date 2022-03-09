@@ -184,7 +184,7 @@ class RepositoryVersionViewSet(
         description="Trigger an asynchronous task to repair a repository version.",
         responses={202: AsyncOperationResponseSerializer},
     )
-    @action(detail=True, methods=["post"])
+    @action(detail=True, methods=["post"], serializer_class=RepairSerializer)
     def repair(self, request, repository_pk, number):
         """
         Queues a task to repair corrupted artifacts corresponding to a RepositoryVersion
