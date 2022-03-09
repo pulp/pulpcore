@@ -39,7 +39,7 @@ plugin_caps: PULPCORE
 plugin_caps_short: PULPCORE
 plugin_dash: pulpcore
 plugin_dash_short: pulpcore
-plugin_default_branch: master
+plugin_default_branch: main
 plugin_name: pulpcore
 plugin_snake: pulpcore
 post_job_template: null

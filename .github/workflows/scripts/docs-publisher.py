@@ -239,9 +239,9 @@ def main():
         if exit_code != 0:
             raise RuntimeError("An error occurred while pushing docs.")
     elif build_type == "changelog":
-        if branch != "master":
-            raise RuntimeError("Can only publish CHANGELOG from master")
-        # Publish the CHANGELOG from master branch at the root directory
+        if branch != "main":
+            raise RuntimeError("Can only publish CHANGELOG from main")
+        # Publish the CHANGELOG from main branch at the root directory
         remote_path_arg = "%s@%s:%s" % (USERNAME, HOSTNAME, SITE_ROOT)
         changelog_local_path_arg = os.path.join(local_path_arg, "changes.html")
         rsync_command = [

@@ -10,7 +10,7 @@ name: Pulpcore changelog update
 on:
   push:
     branches:
-      - master
+      - main
     paths:
       - CHANGES.rst
       - CHANGES.md
