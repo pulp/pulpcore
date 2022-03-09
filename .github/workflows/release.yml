@@ -336,7 +336,7 @@ jobs:
       - name: Cleanup repository before making changelog PR
         run: rm -rf .lock generation pulpcore_client* *-client.tar pulpcore.tar todo web docs.tar
 
-      - name: Stage changelog for master branch
+      - name: Stage changelog for main branch
         run: python .github/workflows/scripts/stage-changelog-for-default-branch.py ${{ github.event.inputs.release }}
 
       - name: Create Pull Request for Changelog
@@ -346,7 +346,7 @@ jobs:
           committer: pulpbot <pulp-infra@redhat.com>
           author: pulpbot <pulp-infra@redhat.com>
           branch: changelog/${{ github.event.inputs.release }}
-          base: master
+          base: main
           title: 'Cherry pick ${{ github.event.inputs.release }} changelog'
           body: '[noissue]'
           commit-message: |

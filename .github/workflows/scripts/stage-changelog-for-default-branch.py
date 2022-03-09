@@ -15,7 +15,7 @@ from git.exc import GitCommandError
 
 helper = textwrap.dedent(
     """\
-        Stage the changelog for a release on master branch.
+        Stage the changelog for a release on main branch.
 
         Example:
             $ python .github/workflows/scripts/stage-changelog-for-default-branch.py 3.4.0
@@ -56,7 +56,7 @@ if not changelog_commit:
 
 git = repo.git
 git.stash()
-git.checkout("origin/master")
+git.checkout("origin/main")
 try:
     git.cherry_pick(changelog_commit.hexsha)
 except GitCommandError:
@@ -64,7 +64,7 @@ except GitCommandError:
     # Don't try opening an editor for the commit message
     with git.custom_environment(GIT_EDITOR="true"):
         git.cherry_pick("--continue")
-git.reset("origin/master")
+git.reset("origin/main")
 
 if not release_version_arg.endswith(".0"):
     # Do not remove z-stream changelog entries
