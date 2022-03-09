@@ -1,0 +1,1 @@
+Fixed improper fields being listed in ``RepositoryVersion`` repair API.
