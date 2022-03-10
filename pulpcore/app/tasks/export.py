@@ -37,6 +37,13 @@ from pulpcore.constants import FS_EXPORT_METHODS
 log = logging.getLogger(__name__)
 
 
+class UnexportableArtifactException(RuntimeError):
+    """Exception for artifacts that are unavailable for export."""
+
+    def __init__(self):
+        super().__init__(_("Cannot export artifacts that haven't been downloaded."))
+
+
 def _validate_fs_export(content_artifacts):
     """
     Args:
@@ -46,7 +53,9 @@ def _validate_fs_export(content_artifacts):
         RuntimeError: If Artifacts are not downloaded or when trying to link non-fs files
     """
     if content_artifacts.filter(artifact=None).exists():
-        raise RuntimeError(_("Cannot export artifacts that haven't been downloaded."))
+        raise UnexportableArtifactException(
+            _("Cannot export artifacts that haven't been downloaded.")
+        )
 
 
 def _export_to_file_system(path, relative_paths_to_artifacts, method=FS_EXPORT_METHODS.WRITE):
@@ -85,9 +94,65 @@ def _export_to_file_system(path, relative_paths_to_artifacts, method=FS_EXPORT_M
             raise RuntimeError(_("Unsupported export method '{}'.").format(method))
 
 
-def fs_publication_export(exporter_pk, publication_pk):
+def _export_publication_to_file_system(
+    path, publication, method=FS_EXPORT_METHODS.WRITE, allow_missing=False
+):
     """
     Export a publication to the file system.
+
+    Args:
+        path (str): Path to place the exported data
+        publication_pk (str): Publication pk
+    """
+    content_artifacts = ContentArtifact.objects.filter(
+        pk__in=publication.published_artifact.values_list("content_artifact__pk", flat=True)
+    )
+
+    if publication.pass_through:
+        content_artifacts |= ContentArtifact.objects.filter(
+            content__in=publication.repository_version.content
+        )
+
+    if not allow_missing:
+        # In some cases we may want to disable this validation
+        _validate_fs_export(content_artifacts)
+
+    relative_path_to_artifacts = {}
+    if publication.pass_through:
+        relative_path_to_artifacts = {
+            ca.relative_path: ca.artifact
+            for ca in content_artifacts.select_related("artifact").iterator()
+        }
+
+    for pa in publication.published_artifact.select_related(
+        "content_artifact", "content_artifact__artifact"
+    ).iterator():
+        # Artifact isn't guaranteed to be present
+        if pa.content_artifact.artifact:
+            relative_path_to_artifacts[pa.relative_path] = pa.content_artifact.artifact
+    _export_to_file_system(path, relative_path_to_artifacts, method)
+
+
+def _export_location_is_clean(path):
+    """
+    Returns whether the provided path is valid to use as an export location.
+
+    Args:
+        path (str):
+    """
+    if os.path.exists(path):
+        if not os.path.isdir(path):
+            return False
+
+        with os.scandir(path) as it:
+            if any(it):
+                return False
+    return True
+
+
+def fs_publication_export(exporter_pk, publication_pk):
+    """
+    Export a publication to the file system using an exporter.
 
     Args:
         exporter_pk (str): FilesystemExporter pk
@@ -108,36 +173,14 @@ def fs_publication_export(exporter_pk, publication_pk):
             exporter=exporter.name, publication=publication.pk, path=exporter.path
         )
     )
-
-    content_artifacts = ContentArtifact.objects.filter(
-        pk__in=publication.published_artifact.values_list("content_artifact__pk", flat=True)
-    )
-
-    if publication.pass_through:
-        content_artifacts |= ContentArtifact.objects.filter(
-            content__in=publication.repository_version.content
-        )
-
-    _validate_fs_export(content_artifacts)
-
-    relative_path_to_artifacts = {}
-    if publication.pass_through:
-        relative_path_to_artifacts = {
-            ca.relative_path: ca.artifact
-            for ca in content_artifacts.select_related("artifact").iterator()
-        }
-
-    for pa in publication.published_artifact.select_related(
-        "content_artifact", "content_artifact__artifact"
-    ).iterator():
-        relative_path_to_artifacts[pa.relative_path] = pa.content_artifact.artifact
-
-    _export_to_file_system(exporter.path, relative_path_to_artifacts, exporter.method)
+    if not _export_location_is_clean(exporter.path):
+        raise RuntimeError(_("Cannot export to directories that contain existing data."))
+    _export_publication_to_file_system(exporter.path, publication, exporter.method)
 
 
 def fs_repo_version_export(exporter_pk, repo_version_pk):
     """
-    Export a repository version to the file system.
+    Export a repository version to the file system using an exporter.
 
     Args:
         exporter_pk (str): FilesystemExporter pk
