@@ -17,6 +17,28 @@ Changelog
 
 .. towncrier release notes start
 
+3.14.14 (2022-03-10)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fixed migration 0064_add_new_style_task_columns to purge extraneous ReservedResource and
+  TaskReservedResource entries, which could block sync and publish tasks post-upgrade.
+
+  Also taught the migration to bulk-update the Task changes. In large installations, this
+  should have a positive impact on the time it takes to apply the migration.
+  :github:`2101`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.14.13 (2022-03-08)
 ====================
 REST API
