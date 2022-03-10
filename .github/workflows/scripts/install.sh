@@ -138,7 +138,7 @@ sudo update-ca-certificates
 echo ::endgroup::
 
 if [ "$TEST" = "azure" ]; then
-  cat /usr/local/share/ca-certificates/azcert.crt >> /opt/az/lib/python3.6/site-packages/certifi/cacert.pem
+  cat /usr/local/share/ca-certificates/azcert.crt >> /opt/az/lib/python3.8/site-packages/certifi/cacert.pem
   cat /usr/local/share/ca-certificates/azcert.crt | cmd_stdin_prefix tee -a /usr/local/lib/python3.8/site-packages/certifi/cacert.pem > /dev/null
   cat /usr/local/share/ca-certificates/azcert.crt | cmd_stdin_prefix tee -a /etc/pki/tls/cert.pem > /dev/null
   AZURE_STORAGE_CONNECTION_STRING='DefaultEndpointsProtocol=https;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=https://ci-azurite:10000/devstoreaccount1;'
