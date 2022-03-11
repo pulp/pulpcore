@@ -987,6 +987,28 @@ Misc
 - :redmine:`8606`, :redmine:`9160`
 
 
+3.14.14 (2022-03-10)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fixed migration 0064_add_new_style_task_columns to purge extraneous ReservedResource and
+  TaskReservedResource entries, which could block sync and publish tasks post-upgrade.
+
+  Also taught the migration to bulk-update the Task changes. In large installations, this
+  should have a positive impact on the time it takes to apply the migration.
+  :github:`2101`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.14.13 (2022-03-08)
 ====================
 REST API
@@ -3120,6 +3142,27 @@ Features
   :redmine:`6858`
 - Exported the symbols `serializers.SingleContentArtifactField` and `files.PulpTemporaryUploadedFile`.
   :redmine:`7088`
+
+
+----
+
+
+3.4.1 (2020-06-03)
+==================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Including requirements.txt on MANIFEST.in
+  :redmine:`6888`
+
+
+Plugin API
+----------
+
+No significant changes.
 
 
 ----
