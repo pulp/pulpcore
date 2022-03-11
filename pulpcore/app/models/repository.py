@@ -909,13 +909,9 @@ class RepositoryVersion(BaseModel):
         # - and remove relation adding the content in next_version
         content_added = repo_relations.filter(version_added=next_version).values_list("content_id")
 
-        # use list() to force the evaluation of the queryset, otherwise queryset is affected
-        # by the update() operation before delete() is ran
-        content_removed_and_readded = list(
-            repo_relations.filter(version_removed=self, content_id__in=content_added).values_list(
-                "content_id"
-            )
-        )
+        content_removed_and_readded = repo_relations.filter(
+            version_removed=self, content_id__in=content_added
+        ).values_list("content_id")
 
         repo_contents_readded_in_next_version = repo_relations.filter(
             version_added=next_version, content_id__in=content_removed_and_readded
