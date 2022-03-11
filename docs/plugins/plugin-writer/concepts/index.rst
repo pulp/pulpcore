@@ -141,6 +141,12 @@ Tasks are deployed from Views or Viewsets, please see :ref:`kick-off-tasks`.
    tasks/publish
    tasks/export
 
+**Diagnostics**
+
+.. toctree::
+   :maxdepth: 2
+
+   tasks/diagnostics
 
 **Task Groups**
 

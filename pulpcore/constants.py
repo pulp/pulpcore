@@ -1,4 +1,8 @@
+from pathlib import Path
 from types import SimpleNamespace
+
+
+VAR_TMP_PULP = Path("/var/tmp/pulp")
 
 
 #: All valid task states.
