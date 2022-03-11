@@ -392,3 +392,14 @@ ORPHAN_PROTECTION_TIME
     they become candidates for deletion by an orphan cleanup task. This should ideally be longer
     than your longest running task otherwise any content created during that task could be cleaned
     up before the task finishes. Default is 1440 minutes (24 hours).
+
+
+.. _task_diagnostics:
+
+TASK_DIAGNOSTICS
+^^^^^^^^^^^^^^^^
+
+    If ``True``, each task will record various diagnostics (listed below) to files in the dir
+    ``/var/tmp/pulp/<task_UUID>/``. This is ``False`` by default.
+
+      * memory - the task's max resident set size in MB.

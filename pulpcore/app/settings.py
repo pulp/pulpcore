@@ -300,6 +300,8 @@ DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
 # By default, use all available workers.
 IMPORT_WORKERS_PERCENT = 100
 
+TASK_DIAGNOSTICS = False
+
 # HERE STARTS DYNACONF EXTENSION LOAD (Keep at the very bottom of settings.py)
 # Read more at https://dynaconf.readthedocs.io/en/latest/guides/django.html
 import dynaconf  # noqa
