@@ -5,10 +5,13 @@ import importlib
 import logging
 import os
 import random
+import resource
 import select
 import signal
 import socket
 import sys
+import threading
+import time
 import traceback
 from contextlib import suppress
 from datetime import timedelta
@@ -37,6 +40,7 @@ from pulpcore.app.role_util import (  # noqa: E402: module level not at top of f
 from pulpcore.constants import (  # noqa: E402: module level not at top of file
     TASK_STATES,
     TASK_INCOMPLETE_STATES,
+    VAR_TMP_PULP,
 )
 
 from pulpcore.exceptions import AdvisoryLockError  # noqa: E402: module level not at top of file
@@ -377,6 +381,23 @@ class NewPulpWorker:
             self.shutdown()
 
 
+def write_memory_usage(task_pk):
+    taskdata_dir = VAR_TMP_PULP / str(task_pk)
+    taskdata_dir.mkdir(parents=True, exist_ok=True)
+    memory_file_dir = taskdata_dir / "memory.datum"
+    _logger.info("Writing task memory data to {}".format(memory_file_dir))
+
+    with open(memory_file_dir, "w") as file:
+        file.write("# Seconds\tMemory in MB\n")
+        seconds = 0
+        while True:
+            current_mb_in_use = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024
+            file.write(f"{seconds}\t{current_mb_in_use:.2f}\n")
+            file.flush()
+            time.sleep(5)
+            seconds += 5
+
+
 def child_signal_handler(sig, frame):
     # Reset signal handlers to default
     # If you kill the process a second time it's not graceful anymore.
@@ -394,6 +415,11 @@ def _perform_task(task_pk, task_working_dir_rel_path):
     signal.signal(signal.SIGINT, child_signal_handler)
     signal.signal(signal.SIGTERM, child_signal_handler)
     signal.signal(signal.SIGUSR1, child_signal_handler)
+    if settings.TASK_DIAGNOSTICS:
+        # It would be better to have this recording happen in the parent process instead of here
+        # https://github.com/pulp/pulpcore/issues/2337
+        normal_thread = threading.Thread(target=write_memory_usage, args=(task_pk,), daemon=True)
+        normal_thread.start()
     # All processes need to create their own postgres connection
     connection.connection = None
     task = Task.objects.get(pk=task_pk)
