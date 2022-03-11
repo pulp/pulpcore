@@ -9,6 +9,12 @@
 
 # make sure this script runs at the repo root
 cd "$(dirname "$(realpath -e "$0")")"/../../..
+/opt/az/bin/python3 -c 'import certifi; print(certifi.where())'
+which python
+which python3
+
+sudo which python
+sudo which python3
 
 set -mveuo pipefail
 
@@ -118,7 +124,7 @@ fi
 
 cd pulp-cli
 pip install -e .
-pulp config create --base-url https://pulp --location tests/cli.toml 
+pulp config create --base-url https://pulp --location tests/cli.toml
 mkdir ~/.config/pulp
 cp tests/cli.toml ~/.config/pulp/cli.toml
 cd ..

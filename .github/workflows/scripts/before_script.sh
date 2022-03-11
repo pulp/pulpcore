@@ -9,7 +9,11 @@
 
 # make sure this script runs at the repo root
 cd "$(dirname "$(realpath -e "$0")")"/../../..
+which python
+which python3
 
+sudo which python
+sudo which python3
 set -euv
 
 source .github/workflows/scripts/utils.sh
