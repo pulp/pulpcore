@@ -160,6 +160,44 @@ jobs:
           docker exec pulp cat /etc/yum.repos.d/* || true
           docker exec pulp pip3 list
 
+  changelog:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          # by default, it uses a depth of 1
+          # this fetches all history so that we can read each commit
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v2
+        with:
+          python-version: "3.8"
+
+      - name: Install python dependencies
+        run: |
+          echo ::group::PYDEPS
+          pip install gitpython
+          echo ::endgroup::
+
+      - name: Changelog history
+        run: python .ci/scripts/changelog.py
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v3
+        with:
+          token: ${{ secrets.RELEASE_TOKEN }}
+          committer: pulpbot <pulp-infra@redhat.com>
+          author: pulpbot <pulp-infra@redhat.com>
+          title: 'Update Changelog'
+          body: '[noissue]'
+          branch: 'changelog/update'
+          base: main
+          commit-message: |
+            Update Changelog
+
+            [noissue]
+          delete-branch: true
+
   publish:
     runs-on: ubuntu-latest
     needs: test
