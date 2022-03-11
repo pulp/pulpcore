@@ -12,7 +12,7 @@ branches.sort(key=lambda ver: Version(ver), reverse=True)
 
 def get_changelog(branch):
     """
-    Get changelog file for a given branch
+    Get changelog file for a given branch.
 
     """
     return requests.get(
@@ -31,7 +31,7 @@ def get_changelog_releases(changelog):
 
 def get_changelog_entry(changelog, version):
     """
-    Get changelog entry for a given version
+    Get changelog entry for a given version.
 
     """
     entries = changelog.split(f"{version} (")[1].split("=====\n")
@@ -54,19 +54,12 @@ for branch in branches:
         to_add[entry] = description
 
 entries_list.sort(key=lambda ver: Version(ver), reverse=True)
-for version, description in to_add.items():
+for version in sorted(to_add, key=lambda ver: Version(ver)):
     next_version = entries_list[entries_list.index(version) + 1]
-    index = 2
-    while next_version not in main_entries:
-        next_version = entries_list[entries_list.index(version) + index]
-        index += 1
-
-    main_changelog = (
-        main_changelog.split(f"{next_version} (")[0]
-        + description
-        + f"{next_version} ("
-        + main_changelog.split(f"{next_version} (")[1]
-    )
+    new_changelog = main_changelog.split(f"{next_version} (")[0] + to_add[version]
+    new_changelog = new_changelog + f"{next_version} ("
+    new_changelog = new_changelog + main_changelog.split(f"{next_version} (")[1]
+    main_changelog = new_changelog
 
 with open("CHANGES.rst", "w") as f:
     f.write(main_changelog)
