@@ -1,0 +1,1 @@
+Reduced memory usage during tasks like sync by holding fewer objects in-memory unnecessarily.
