@@ -687,6 +687,59 @@ Removals
   :redmine:`9478`
 
 
+
+3.15.5 (2022-03-15)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fix delete repository version causing "duplicate key value violates unique constraint" error.
+  :github:`2047`
+- Fix content summary showing incorrect count after previous version deletion.
+  :github:`2084`
+- Fixed issue with listing repository versions after deleting previous versions.
+  :github:`2085`
+- Fixed migration 0064_add_new_style_task_columns to purge extraneous ReservedResource and
+  TaskReservedResource entries, which could block sync and publish tasks post-upgrade.
+
+  Also taught the migration to bulk-update the Task changes. In large installations, this
+  should have a positive impact on the time it takes to apply the migration.
+  :github:`2101`
+- Taught PulpImport to retry in the event of a concurrency-collision on ContentArtifact.
+  :github:`2102`
+- Fixed potential deadlock-window in touch() path.
+  :github:`2157`
+- Fixed reporting tasks being canceled before being picked up by a worker as canceled instead of
+  failed.
+  :github:`2183`
+- Fixed import/export of repositories with sub-content.
+
+  An example would be the sub-repositories in pulp_rpm
+  DistributionTrees.
+  :github:`2192`
+- touch() now uses standard Django instead of raw-sql to update.
+  :github:`2229`
+- PulpImporter now unpacks into the task-worker's working directory rather than /tmp. Unpacking
+  large files into /tmp could cause the operation to fail, or even cause stability issues for
+  Pulp instance, due to running /tmp out of space.
+  :github:`2247`
+- This fix prevents the lost track of a content removed version when deleting a repository version that deletes a content that is added back in the subsequent version, but deleted again in a later version.
+  :github:`2267`
+- Added transactions around repository version operations to prevent data loss.
+  :github:`2268`
+- Fixed bug where the content app would stop working after a brief loss of connection to the database.
+  :github:`2293`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.15.4 (2022-01-28)
 ===================
 REST API
