@@ -69,6 +69,9 @@ jobs:
       - name: Run flake8
         run: flake8 --config flake8.cfg
 
+      - name: Run extra lint checks
+        run: "[ ! -x .ci/scripts/extra_linting.sh ] || .ci/scripts/extra_linting.sh"
+
       # check for any files unintentionally left out of MANIFEST.in
       - name: Check manifest
         run: check-manifest

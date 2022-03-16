@@ -282,7 +282,7 @@ jobs:
       - name: Install python dependencies
         run: |
           echo ::group::PYDEPS
-          pip install gitpython python-redmine
+          pip install gitpython python-redmine requests packaging
           echo ::endgroup::
 
       - name: Push branch and tag to GitHub
