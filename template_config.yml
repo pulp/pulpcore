@@ -1,7 +1,7 @@
 # This config represents the latest values used when running the plugin-template. Any settings that
 # were not present before running plugin-template have been added with their default values.
 
-# generated with plugin_template@2021.08.26-83-g29b161f
+# generated with plugin_template@2021.08.26-91-g20f95aa
 
 additional_repos:
 - branch: '1.10'
@@ -64,6 +64,7 @@ release_user: pulpbot
 single_commit_check: true
 stable_branch: null
 sync_ci: true
+tasking_allow_async_unsafe: true
 test_azure: true
 test_bindings: true
 test_cli: true

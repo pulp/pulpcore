@@ -38,6 +38,9 @@ release_version_arg = args.release_version
 release_path = os.path.dirname(os.path.abspath(__file__))
 plugin_path = release_path.split("/.github")[0]
 
+if not release_version_arg.endswith(".0"):
+    os._exit(os.system("python .ci/scripts/changelog.py"))
+
 print(f"\n\nRepo path: {plugin_path}")
 repo = Repo(plugin_path)
 
@@ -65,11 +68,3 @@ except GitCommandError:
     with git.custom_environment(GIT_EDITOR="true"):
         git.cherry_pick("--continue")
 git.reset("origin/main")
-
-if not release_version_arg.endswith(".0"):
-    # Do not remove z-stream changelog entries
-    msg = repo.commit().message
-    git.reset("HEAD~1")
-    git.add("CHANGES.rst")
-    git.commit("-m", msg)
-    git.stash()
