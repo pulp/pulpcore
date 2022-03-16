@@ -1,6 +1,6 @@
 django
 dynaconf
-git+git://github.com/pulp/pulp-smash.git@1d53d00b8cf142f02361c56b4e58cfd88ef63be6#egg=pulp-smash
+git+https://github.com/pulp/pulp-smash.git@1d53d00b8cf142f02361c56b4e58cfd88ef63be6#egg=pulp-smash
 pulpcore-client
 pulp-file-client
 pytest

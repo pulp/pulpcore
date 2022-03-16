@@ -87,7 +87,7 @@ fi
 cd ..
 
 
-pip install git+git://github.com/pulp/pulp-smash.git@fce731aa38a6984e31b0ad07dac8f25db1218ff2
+pip install git+https://github.com/pulp/pulp-smash.git@fce731aa38a6984e31b0ad07dac8f25db1218ff2
 
 
 git clone --depth=1 https://github.com/pulp/pulp-openapi-generator.git
