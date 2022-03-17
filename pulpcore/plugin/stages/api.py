@@ -179,12 +179,12 @@ class Stage:
         return "[{id}] {name}".format(id=id(self), name=self.__class__.__name__)
 
 
-async def create_pipeline(stages, maxsize=1):
+async def create_pipeline(stages, maxsize=1000):
     """
     A coroutine that builds a Stages API linear pipeline from the list `stages` and runs it.
 
     Each stage is an instance of a class derived from :class:`pulpcore.plugin.stages.Stage` that
-    implements the :meth:`run` coroutine. This coroutine reads asynchronously either from the
+    implements the :meth:`run` coroutine. This coroutine reads asyncromously either from the
     `items()` iterator or the `batches()` iterator and outputs the items with `put()`. Here is an
     example of the simplest stage that only passes data::
 
@@ -196,7 +196,7 @@ async def create_pipeline(stages, maxsize=1):
     Args:
         stages (list of coroutines): A list of Stages API compatible coroutines.
         maxsize (int): The maximum amount of items a queue between two stages should hold. Optional
-            and defaults to 1.
+            and defaults to 100.
 
     Returns:
         A single coroutine that can be used to run, wait, or cancel the entire pipeline with.
