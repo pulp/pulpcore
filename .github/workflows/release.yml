@@ -171,14 +171,14 @@ jobs:
         env:
           SECRETS_CONTEXT: ${{ toJson(secrets) }}
 
-      - name: Install Python client
-        
-        run: .github/workflows/scripts/install_python_client.sh
-        shell: bash
-
       - name: Install Ruby client
         if: ${{ env.TEST == 'bindings' || env.TEST == 'generate-bindings' }}
         run: .github/workflows/scripts/install_ruby_client.sh
+        shell: bash
+
+      - name: Install Python client
+        
+        run: .github/workflows/scripts/install_python_client.sh
         shell: bash
 
       - name: Additional before_script
@@ -282,7 +282,7 @@ jobs:
       - name: Install python dependencies
         run: |
           echo ::group::PYDEPS
-          pip install gitpython python-redmine
+          pip install gitpython python-redmine requests packaging
           echo ::endgroup::
 
       - name: Push branch and tag to GitHub
