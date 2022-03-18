@@ -17,6 +17,34 @@ Changelog
 
 .. towncrier release notes start
 
+3.18.2 (2022-03-18)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fix delete repository version causing "duplicate key value violates unique constraint" error.
+  :github:`2047`
+- Fixed migration 0064_add_new_style_task_columns to purge extraneous ReservedResource and
+  TaskReservedResource entries, which could block sync and publish tasks post-upgrade.
+
+  Also taught the migration to bulk-update the Task changes. In large installations, this
+  should have a positive impact on the time it takes to apply the migration.
+  :github:`2101`
+- This fix prevents the lost track of a content removed version when deleting a repository version that deletes a content that is added back in the subsequent version, but deleted again in a later version.
+  :github:`2267`
+- Fix a mistake in a previous migration which may have caused improperly encrypted remote fields.
+  :github:`2327`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.18.1 (2022-03-01)
 ===================
 REST API
