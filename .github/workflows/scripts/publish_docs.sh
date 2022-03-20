@@ -46,9 +46,10 @@ rm -rf pulpcore-client
 cd pulpcore-client
 
 # Adding mkdocs
+find ./docs/* -exec sed -i 's/README//g' {} \;
 cp README.md docs/index.md
 sed -i 's/docs\///g' docs/index.md
-sed -i 's/\.md//g' docs/index.md
+find ./docs/* -exec sed -i 's/\.md//g' {} \;
 cat >> mkdocs.yml << DOCSYAML
 ---
 site_name: Pulpcore Client
