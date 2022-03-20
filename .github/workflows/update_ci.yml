@@ -40,9 +40,10 @@ jobs:
                 -X POST \
                 -H "Accept: application/vnd.github.v3+json" \
                 -H "Authorization: Bearer ${GITHUB_TOKEN}" \
-                https://api.github.com/repos/pulp/pulpcore/actions/workflows/update_ci.yaml/dispatches \
+                https://api.github.com/repos/pulp/pulpcore/actions/workflows/update_ci.yml/dispatches \
                 -d @data.json
             done
+            rm data.json
         env:
           GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
 
