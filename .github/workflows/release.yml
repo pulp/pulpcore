@@ -278,6 +278,13 @@ jobs:
         env:
           SECRETS_CONTEXT: ${{ toJson(secrets) }}
 
+      - name: Install httpie
+        run: |
+          echo ::group::HTTPIE
+          pip install httpie
+          echo ::endgroup::
+          echo "HTTPIE_CONFIG_DIR=$GITHUB_WORKSPACE/.ci/assets/httpie/" >> $GITHUB_ENV
+
       - name: Install python dependencies
         run: |
           echo ::group::PYDEPS
