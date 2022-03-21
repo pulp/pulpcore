@@ -17,6 +17,24 @@ Changelog
 
 .. towncrier release notes start
 
+3.15.6 (2022-03-21)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fix a mistake in a previous migration which may have caused improperly encrypted remote fields.
+  :github:`2327`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.15.5 (2022-03-15)
 ===================
 REST API
