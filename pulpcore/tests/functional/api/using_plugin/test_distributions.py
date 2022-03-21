@@ -414,7 +414,7 @@ class ContentServePublicationDistributionTestCase(unittest.TestCase):
         )
         svc_mgr.restart([postgresql_service_name])
         # Wait for postgres to come back and all services to recover
-        sleep(2)
+        sleep(5)
         self.setup_download_test("immediate")
         self.do_test_content_served()
         url_fragments = [
