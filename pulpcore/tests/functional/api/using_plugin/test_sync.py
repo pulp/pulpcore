@@ -1,3 +1,4 @@
+import pytest
 import uuid
 
 from pulp_smash.pulp3.bindings import monitor_task
@@ -8,7 +9,11 @@ from pulpcore.client.pulp_file import (
 
 
 def _run_basic_sync_and_assert(
-    remote, file_repo, file_repo_api_client, content_file_api_client, policy="on_demand"
+    remote,
+    file_repo,
+    file_repo_api_client,
+    content_file_api_client,
+    content_count=3,
 ):
     body = RepositorySyncURL(remote=remote.pulp_href)
     monitor_task(file_repo_api_client.sync(file_repo.pulp_href, body).task)
@@ -17,9 +22,9 @@ def _run_basic_sync_and_assert(
     content_response = content_file_api_client.list(
         repository_version=f"{file_repo.versions_href}1/"
     )
-    assert content_response.count == 3
+    assert content_response.count == content_count
     for content in content_response.results:
-        if policy == "immediate":
+        if remote.policy == "immediate":
             assert content.artifact is not None
         else:
             assert content.artifact is None
@@ -143,7 +148,6 @@ def test_ondemand_to_immediate_sync(
         file_repo,
         file_repo_api_client,
         content_file_api_client,
-        policy="immediate",
     )
 
 
@@ -184,3 +188,27 @@ def test_header_for_sync(
     assert requests_record[0].path == "/basic/PULP_MANIFEST"
     assert header_name in requests_record[0].headers
     assert header_value == requests_record[0].headers[header_name]
+
+
+@pytest.mark.parametrize("", [() for dummy in range(100)])
+def test_pulp_manifest_with_duplicate_entries(
+    delete_orphans_pre,
+    file_fixture_gen_remote,
+    file_repo,
+    file_repo_api_client,
+    content_file_api_client,
+):
+    """
+    Test file on_demand sync with plain http://
+    """
+    remote_on_demand = file_fixture_gen_remote(
+        fixture_name="file_duplicate_entries", policy="immediate"
+    )
+
+    _run_basic_sync_and_assert(
+        remote_on_demand,
+        file_repo,
+        file_repo_api_client,
+        content_file_api_client,
+        content_count=128,
+    )
