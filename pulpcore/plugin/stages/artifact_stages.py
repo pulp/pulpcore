@@ -287,9 +287,6 @@ class RemoteArtifactSaver(Stage):
 
         Args:
             batch (list): List of :class:`~pulpcore.plugin.stages.DeclarativeContent`.
-
-        Returns:
-            List: Of :class:`~pulpcore.plugin.models.RemoteArtifact`.
         """
         remotes_present = set()
         for d_content in batch:
@@ -312,7 +309,7 @@ class RemoteArtifactSaver(Stage):
             ),
         )
 
-        # Now return the list of RemoteArtifacts that need to be saved.
+        # Now create the list of RemoteArtifacts that need to be saved.
         #
         # We can end up with duplicates (diff pks, same sha256) in the sequence below,
         # so we store by-sha256 and then return the final values
