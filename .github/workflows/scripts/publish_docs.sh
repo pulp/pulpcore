@@ -37,10 +37,15 @@ if [[ "$GITHUB_WORKFLOW" == "Pulpcore changelog update" ]]; then
   exit
 fi
 
+cd ..
+if [ ! -d "pulp-openapi-generator" ]; then
+  git clone --depth=1 https://github.com/pulp/pulp-openapi-generator.git
+fi
+
 # Building python bindings
 export PULP_URL="${PULP_URL:-https://pulp}"
 VERSION=$(http $PULP_URL/pulp/api/v3/status/ | jq --arg plugin core --arg legacy_plugin pulpcore -r '.versions[] | select(.component == $plugin or .component == $legacy_plugin) | .version')
-cd ../pulp-openapi-generator
+cd pulp-openapi-generator
 rm -rf pulpcore-client
 ./generate.sh pulpcore python $VERSION
 cd pulpcore-client
