@@ -238,6 +238,18 @@ class DistributionFilter(BaseFilterSet):
         }
 
 
+class ListDistributionViewSet(NamedModelViewSet, mixins.ListModelMixin):
+    endpoint_name = "distributions"
+    queryset = Distribution.objects.all()
+    serializer_class = DistributionSerializer
+    filterset_class = DistributionFilter
+
+    @classmethod
+    def is_master_viewset(cls):
+        """Do not hide from the routers."""
+        return False
+
+
 class DistributionViewSet(
     NamedModelViewSet,
     mixins.RetrieveModelMixin,
