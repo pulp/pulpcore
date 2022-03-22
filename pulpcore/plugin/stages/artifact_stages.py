@@ -4,13 +4,12 @@ from gettext import gettext as _
 import logging
 
 from asgiref.sync import sync_to_async
-from django.db.models import Prefetch, prefetch_related_objects, Q
+from django.db.models import Q
 
 from pulpcore.plugin.exceptions import UnsupportedDigestValidationError
 from pulpcore.plugin.models import (
     AlternateContentSource,
     Artifact,
-    ContentArtifact,
     ProgressReport,
     RemoteArtifact,
 )
@@ -297,20 +296,20 @@ class RemoteArtifactSaver(Stage):
                 if d_artifact.remote:
                     remotes_present.add(d_artifact.remote)
 
-        await sync_to_async(prefetch_related_objects)(
-            [d_c.content for d_c in batch],
-            Prefetch(
-                "contentartifact_set",
-                queryset=ContentArtifact.objects.prefetch_related(
-                    Prefetch(
-                        "remoteartifact_set",
-                        queryset=RemoteArtifact.objects.filter(remote__in=remotes_present),
-                        to_attr="_remote_artifact_saver_ras",
-                    )
-                ),
-                to_attr="_remote_artifact_saver_cas",
-            ),
-        )
+        # await sync_to_async(prefetch_related_objects)(
+        #     [d_c.content for d_c in batch],
+        #     Prefetch(
+        #         "contentartifact_set",
+        #         queryset=ContentArtifact.objects.prefetch_related(
+        #             Prefetch(
+        #                 "remoteartifact_set",
+        #                 queryset=RemoteArtifact.objects.filter(remote__in=remotes_present),
+        #                 to_attr="_remote_artifact_saver_ras",
+        #             )
+        #         ),
+        #         to_attr="_remote_artifact_saver_cas",
+        #     ),
+        # )
 
         # Now return the list of RemoteArtifacts that need to be saved.
         #
@@ -324,7 +323,7 @@ class RemoteArtifactSaver(Stage):
                     continue
 
                 async for content_artifact in sync_to_async_iterable(
-                    d_content.content._remote_artifact_saver_cas
+                    d_content.content.contentartifact_set.all()
                 ):
                     if d_artifact.relative_path == content_artifact.relative_path:
                         break
@@ -376,7 +375,7 @@ class RemoteArtifactSaver(Stage):
                         )
 
                 async for remote_artifact in sync_to_async_iterable(
-                    content_artifact._remote_artifact_saver_ras
+                    content_artifact.remoteartifact_set.filter(remote__in=remotes_present)
                 ):
                     if d_artifact.url == remote_artifact.url:
                         break
