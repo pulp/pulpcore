@@ -52,7 +52,7 @@ jobs:
           git config --global user.email 'pulp-infra@redhat.com'
 
       - name: Setting secrets
-        
+
         run: python3 .github/workflows/scripts/secrets.py "$SECRETS_CONTEXT"
         env:
           SECRETS_CONTEXT: ${{ toJson(secrets) }}
@@ -91,7 +91,7 @@ jobs:
         with:
           python-version: "3.8"
       - uses: actions/setup-ruby@v1
-        
+
         with:
           ruby-version: "2.6"
 
@@ -121,7 +121,7 @@ jobs:
           echo "TEST=${{ matrix.env.TEST }}" >> $GITHUB_ENV
 
       - name: Before Install
-        
+
         run: .github/workflows/scripts/before_install.sh
         shell: bash
         env:
@@ -150,7 +150,7 @@ jobs:
         shell: bash
 
       - name: Before Script
-        
+
         run: .github/workflows/scripts/before_script.sh
         shell: bash
         env:
@@ -165,13 +165,13 @@ jobs:
           REDIS_DISABLED: ${{ contains('', matrix.env.TEST) }}
 
       - name: Setting secrets
-        
+
         run: python3 .github/workflows/scripts/secrets.py "$SECRETS_CONTEXT"
         env:
           SECRETS_CONTEXT: ${{ toJson(secrets) }}
 
       - name: Install Python client
-        
+
         run: .github/workflows/scripts/install_python_client.sh
         shell: bash
 
@@ -249,7 +249,7 @@ jobs:
           python-version: "3.8"
 
       - uses: actions/setup-ruby@v1
-        
+
         with:
           ruby-version: "2.6"
 
@@ -273,7 +273,7 @@ jobs:
           git checkout "origin/${GITHUB_REF##*/}" -- .github
 
       - name: Setting secrets
-        
+
         run: python3 .github/workflows/scripts/secrets.py "$SECRETS_CONTEXT"
         env:
           SECRETS_CONTEXT: ${{ toJson(secrets) }}
@@ -285,14 +285,40 @@ jobs:
           echo ::endgroup::
           echo "HTTPIE_CONFIG_DIR=$GITHUB_WORKSPACE/.ci/assets/httpie/" >> $GITHUB_ENV
 
+      - name: Before Install
+
+        run: .github/workflows/scripts/before_install.sh
+        shell: bash
+        env:
+          PY_COLORS: '1'
+          ANSIBLE_FORCE_COLOR: '1'
+          GITHUB_PULL_REQUEST: ${{ github.event.number }}
+          GITHUB_PULL_REQUEST_BODY: ${{ github.event.pull_request.body }}
+          GITHUB_BRANCH: ${{ github.head_ref }}
+          GITHUB_REPO_SLUG: ${{ github.repository }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_CONTEXT: ${{ github.event.pull_request.commits_url }}
+
+      - name: Install
+
+        run: .github/workflows/scripts/install.sh
+        shell: bash
+        env:
+          PY_COLORS: '1'
+          ANSIBLE_FORCE_COLOR: '1'
+          GITHUB_PULL_REQUEST: ${{ github.event.number }}
+          GITHUB_PULL_REQUEST_BODY: ${{ github.event.pull_request.body }}
+          GITHUB_BRANCH: ${{ github.head_ref }}
+          GITHUB_REPO_SLUG: ${{ github.repository }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_CONTEXT: ${{ github.event.pull_request.commits_url }}
+
       - name: Install python dependencies
         run: |
           echo ::group::PYDEPS
           pip install gitpython python-redmine requests packaging
           echo ::endgroup::
 
-      - name: Push branch and tag to GitHub
-        run: bash .github/workflows/scripts/push_branch_and_tag_to_github.sh ${{ github.event.inputs.release }}
       - name: Download built docs
         uses: actions/download-artifact@v2
         with:
@@ -302,6 +328,10 @@ jobs:
         run: |
           tar -xvf docs.tar -C ./docs
           .github/workflows/scripts/publish_docs.sh tag ${{ github.event.inputs.release }}
+
+      - name: Push branch and tag to GitHub
+        run: bash .github/workflows/scripts/push_branch_and_tag_to_github.sh ${{ github.event.inputs.release }}
+
       - name: Deploy plugin to pypi
         run: bash .github/workflows/scripts/publish_plugin_pypi.sh ${{ github.event.inputs.release }}
       - name: Download Python client
@@ -325,7 +355,7 @@ jobs:
       - name: Publish client to rubygems
         run: bash .github/workflows/scripts/publish_client_gem.sh
 
-      
+
 
       - name: Update GitHub
         continue-on-error: true
