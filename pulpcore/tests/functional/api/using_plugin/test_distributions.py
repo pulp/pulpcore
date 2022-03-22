@@ -32,6 +32,7 @@ from pulpcore.client.pulp_file import (
     RepositorySyncURL,
 )
 from pulpcore.tests.functional.api.using_plugin.constants import (
+    BASE_DISTRIBUTION_PATH,
     FILE_CHUNKED_FIXTURE_MANIFEST_URL,
     FILE_CONTENT_NAME,
     FILE_DISTRIBUTION_PATH,
@@ -160,7 +161,13 @@ class CRUDPublicationDistributionTestCase(unittest.TestCase):
                 self.do_fully_update_attr(key)
 
     @skip_if(bool, "distribution", False)
-    def test_04_delete_distribution(self):
+    def test_04_list(self):
+        """Test the generic distribution list endpoint."""
+        distributions = self.client.get(BASE_DISTRIBUTION_PATH)
+        assert self.distribution["pulp_href"] in [distro["pulp_href"] for distro in distributions]
+
+    @skip_if(bool, "distribution", False)
+    def test_05_delete_distribution(self):
         """Delete a distribution."""
         self.client.delete(self.distribution["pulp_href"])
         with self.assertRaises(HTTPError):
