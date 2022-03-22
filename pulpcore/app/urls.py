@@ -2,7 +2,6 @@
 import logging
 
 from django.conf import settings
-from django.contrib import admin
 from django.urls import path, include
 from drf_spectacular.views import (
     SpectacularJSONAPIView,
@@ -143,7 +142,6 @@ urlpatterns = [
         PulpImporterImportCheckView.as_view(),
     ),
     path("auth/", include("rest_framework.urls")),
-    path(settings.ADMIN_SITE_URL, admin.site.urls),
 ]
 
 urlpatterns.append(
