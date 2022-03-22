@@ -284,12 +284,17 @@ class RemoteArtifactSaver(Stage):
         """
         remotes_present = set()
         for d_content in batch:
+            # The fix described here solves two sepearate bugs:
+            #
             # If the attribute is set in a previous batch on the very first item in this batch, the
             # rest of the items in this batch will not get the attribute set during prefetch.
             # https://code.djangoproject.com/ticket/32089
+
+            # https://code.djangoproject.com/ticket/33596
+            # If the content was pre-fetched previously, remove that cached data, which could be out
+            # of date.
             if hasattr(d_content.content, "_remote_artifact_saver_cas"):
                 delattr(d_content.content, "_remote_artifact_saver_cas")
-
             for d_artifact in d_content.d_artifacts:
                 if d_artifact.remote:
                     remotes_present.add(d_artifact.remote)
