@@ -37,19 +37,11 @@ if [[ "$GITHUB_WORKFLOW" == "Pulpcore changelog update" ]]; then
   exit
 fi
 
-# Building python bindings
-export PULP_URL="${PULP_URL:-https://pulp}"
-VERSION=$(http $PULP_URL/pulp/api/v3/status/ | jq --arg plugin core --arg legacy_plugin pulpcore -r '.versions[] | select(.component == $plugin or .component == $legacy_plugin) | .version')
-cd ../pulp-openapi-generator
-rm -rf pulpcore-client
-./generate.sh pulpcore python $VERSION
-cd pulpcore-client
+pip install mkdocs pymdown-extensions
 
-# Adding mkdocs
-find ./docs/* -exec sed -i 's/README//g' {} \;
-cp README.md docs/index.md
-sed -i 's/docs\///g' docs/index.md
-find ./docs/* -exec sed -i 's/\.md//g' {} \;
+mkdir -p ../bindings
+tar -xvf python-client-docs.tar --directory ../bindings
+cd ../bindings
 cat >> mkdocs.yml << DOCSYAML
 ---
 site_name: Pulpcore Client
@@ -60,8 +52,6 @@ repo_name: pulp/pulpcore
 repo_url: https://github.com/pulp/pulpcore
 theme: readthedocs
 DOCSYAML
-
-pip install mkdocs pymdown-extensions
 
 # Building the bindings docs
 mkdocs build
