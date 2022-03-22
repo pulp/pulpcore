@@ -37,8 +37,6 @@ ALLOWED_HOSTS = ["*"]
 DEPLOY_ROOT = Path("/var/lib/pulp")
 MEDIA_ROOT = str(DEPLOY_ROOT / "media")  # Django 3.1 adds support for pathlib.Path
 
-ADMIN_SITE_URL = "admin/"
-
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.11/howto/static-files/
 
@@ -67,7 +65,6 @@ API_ROOT = "/pulp/"
 
 INSTALLED_APPS = [
     # django stuff
-    "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",

@@ -1,0 +1,5 @@
+Removed the Django UI Admin site. It was added to provide RBAC permissions management before there
+were APIs that could provide that. It was tech preview and now there are APIs for user and group
+management, along with role and permission assignment. It is being removed because the direct DB
+access it provides has caused some issues for users, especially since its not integrated with the
+validation provided by Django Rest Framework, which Pulp uses.
