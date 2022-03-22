@@ -300,9 +300,9 @@ jobs:
           GITHUB_CONTEXT: ${{ github.event.pull_request.commits_url }}
 
       - name: Install
-
-        run: .github/workflows/scripts/install.sh
-        shell: bash
+        run: |
+          export PLUGIN_VERSION=${{ github.event.inputs.release }}
+          .github/workflows/scripts/install.sh
         env:
           PY_COLORS: '1'
           ANSIBLE_FORCE_COLOR: '1'
