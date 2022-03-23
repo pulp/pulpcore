@@ -9,30 +9,29 @@ mod_ldap.html>`_, or certificate based API access, etc.
 
 Enable external authentication in two steps:
 
-1. Accept external auth instead of checking the internal users database by enabling::
+1. Accept external auth instead of checking the internal users database by setting the
+``AUTHENTICATION_BACKENDS`` to ``['django.contrib.auth.backends.RemoteUserBackend']``. This will
+cause Pulp to accept any username for each request and by default create a user in the database
+backend for them. To have any name accepted but not create the user in the database backend, use the
+``pulpcore.app.authentication.PulpNoCreateRemoteUserBackend`` instead.
 
-    ``AUTHENTICATION_BACKENDS = ['pulpcore.app.authentication.PulpNoCreateRemoteUserBackend']``.
-
-This will cause Pulp to accept any username for each request and not create a user in the database
-backend for them. To have any name accepted but create the username in the database backend, use the
-``django.contrib.auth.backends.RemoteUserBackend`` instead, which creates users by default.
-
+It is preferable to have users created because the authorization and permissions continue to
+function normally since there are users in the Django database to assign permissions to and later
+check. When using the ``pulpcore.app.authentication.PulpNoCreateRemoteUserBackend`` you also should
+set the ``DEFAULT_PERMISSION_CLASSES`` to check permissions differently or not at all. By default
+Pulp sets ``DEFAULT_PERMISSION_CLASSES`` to ``pulpcore.plugin.access_policy.AccessPolicyFromDB``
+which provides role based permission checking via a user in the database. For example, to only serve
+to authenticated users specify set ``DEFAULT_PERMISSION_CLASSES`` to
+``rest_framework.permissions.IsAuthenticated``. Alternatively, to allow any user (even
+unauthenticated) use ``rest_framework.permissions.AllowAny``.
 
 2. Specify how to receive the username from the webserver. Do this by specifying to DRF an
-   ``AUTHENTICATION_CLASS``. For example, use the ``PulpRemoteUserAuthentication`` as follows::
+   ``DEFAULT_AUTHENTICATION_CLASSES``. For example, consider this example::
 
     REST_FRAMEWORK['DEFAULT_AUTHENTICATION_CLASSES'] = (
         'rest_framework.authentication.SessionAuthentication',
         'pulpcore.app.authentication.PulpRemoteUserAuthentication'
     )
-
-   Or, as a dynaconf environment variable (pay special attention to the *double* underscore
-   separating the paramater name from the key)::
-
-    PULP_REST_FRAMEWORK__DEFAULT_AUTHENTICATION_CLASSES="[
-      'rest_framework.authentication.SessionAuthentication',
-      'pulpcore.app.authentication.PulpRemoteUserAuthentication'
-    ]"
 
 This removes ``rest_framework.authentication.BasicAuthentication``, but retains
 ``rest_framework.authentication.SessionAuthentication`` and adds
@@ -51,10 +50,9 @@ If your webserver authentication is occurring in the same webserver that is serv
 environment variable ``REMOTE_USER``.
 
 Reading the ``REMOTE_USER`` WSGI environment is the default behavior of the
-``pulpcore.app.authentication.PulpRemoteUserAuthentication`` and the Django Rest Framework provided
-``rest_framework.authentication.RemoteUserAuthentication``. The only difference in the Pulp provided
-one is that the WSGI environment variable name can be configured from a Pulp provided WSGI
-environment variable name.
+``rest_framework.authentication.RemoteUserAuthentication`` and the Pulp provided
+``pulpcore.app.authentication.PulpRemoteUserAuthentication``. The only difference in the Pulp
+provided one is that the WSGI environment variable name can be configured.
 
 See the :ref:`REMOTE_USER_ENVIRON_NAME <remote-user-environ-name>` for configuring the WSGI provided
 name, but if you are using the ``REMOTE_USER`` WSGI environment name with "same webserver"
@@ -94,5 +92,5 @@ you to specify another WSGI environment variable to read the authenticated usern
 .. warning::
 
     Configuring this has serious security implications. See the `Django warning at the end of this
-    section in their docs <https://docs.djangoproject.com/en/2.2/howto/auth-remote-user/
+    section in their docs <https://docs.djangoproject.com/en/3.2/howto/auth-remote-user/
     #configuration>`_ for more details.
