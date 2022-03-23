@@ -11,6 +11,7 @@ from pulpcore.client.pulpcore import (
     ArtifactsApi,
     OrphansCleanupApi,
     RepositoriesReclaimSpaceApi,
+    RepositoriesApi,
 )
 from pulpcore.client.pulp_file import (
     FileFilePublication,
@@ -43,6 +44,7 @@ class ReclaimSpaceTestCase(PulpTestCase):
         cls.orphans_api = OrphansCleanupApi(core_client)
         cls.reclaim_api = RepositoriesReclaimSpaceApi(core_client)
         cls.artifacts_api = ArtifactsApi(core_client)
+        cls.all_repo_api = RepositoriesApi(core_client)
         cls.publication_api = PublicationsFileApi(cls.client)
         cls.distributions_api = DistributionsFileApi(cls.client)
         cls.repo_api = RepositoriesFileApi(cls.client)
@@ -139,6 +141,21 @@ class ReclaimSpaceTestCase(PulpTestCase):
         self.assertEqual(artifacts_after_download, artifacts_after_reclaim + 1)
         # But only 1 extra artifact will be downloaded, so still less than after immediate sync
         self.assertLess(artifacts_after_download, artifacts_before_reclaim)
+
+    def test_specified_all_repos(self):
+        """Tests that specifying all repos w/ '*' properly grabs all the repos."""
+        repos = [self.repo_api.create(gen_repo()) for _ in range(10)]
+        for repo in repos:
+            self.addCleanup(self.repo_api.delete, repo.pulp_href)
+
+        repos = [r.pulp_href for r in self.all_repo_api.list().results]
+
+        reclaim_response = self.reclaim_api.reclaim({"repo_hrefs": ["*"]})
+        task_status = monitor_task(reclaim_response.task)
+
+        repos_locked = [r.split(":")[-1] for r in task_status.reserved_resources_record]
+        self.assertEqual(len(repos), len(repos_locked))
+        self.assertEqual(set(repos), set(repos_locked))
 
     def _repo_sync_distribute(self, policy="immediate"):
         """Helper to create & populate a repository and distribute it."""
