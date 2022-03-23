@@ -3,7 +3,9 @@ import pytest
 from pulp_smash.pulp3.utils import gen_repo
 
 
+# Marking test trylast to ensure other tests run even if this fails.
 @pytest.mark.nightly
+@pytest.mark.trylast
 def test_remove_plugin(
     cli_client,
     delete_orphans_pre,
@@ -19,11 +21,15 @@ def test_remove_plugin(
 
     res = cli_client.run(["pulpcore-manager", "remove-plugin", "file"])
     assert "Successfully removed" in res.stdout
+    num_migrations = res.stdout.count("Unapplying file.")
+    num_models = res.stdout.count("Removing model")
 
     # Without uninstalling the package just run migrations again to mimic the reinstallation
     # of a plugin at least from pulp's perspective
     res = cli_client.run(["pulpcore-manager", "migrate", "file"])
-    assert res.stdout.endswith("updated.\n") is True
+    assert res.stdout.count("Applying file.") == num_migrations
+    # This assumes each model gets its own access policy plus FileRepositoryVersion
+    assert res.stdout.count("created.") == num_models + 1
 
     assert start_and_check_services() is True
 
