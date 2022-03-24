@@ -362,6 +362,14 @@ ALLOWED_CONTENT_CHECKSUMS
       missing, run ``pulpcore-manager handle-artifact-checksums`` command.
 
 
+.. _admin-site-url:
+
+ADMIN_SITE_URL
+^^^^^^^^^^^^^^
+
+    The Django admin site URL. Defaults to ``admin/``.
+
+
 .. _django-guid:
 
 DJANGO_GUID
