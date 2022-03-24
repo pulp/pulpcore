@@ -1,6 +1,7 @@
 """Tests that perform actions over distributions."""
 import csv
 import hashlib
+import pytest
 from time import sleep
 import unittest
 from urllib.parse import urljoin
@@ -405,6 +406,7 @@ class ContentServePublicationDistributionTestCase(unittest.TestCase):
             )
         self.assertEqual(cm.exception.response.status_code, 416)
 
+    @pytest.mark.skip("Sometimes PostgreSQL doesn't restart properly in CI.")
     def test_content_served_after_db_restart(self):
         """
         Assert that content can be downloaded after the database has been restarted.
