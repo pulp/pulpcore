@@ -31,3 +31,33 @@ eval "$(ssh-agent -s)" #start the ssh agent
 ssh-add ~/.ssh/pulp-infra
 
 python3 .github/workflows/scripts/docs-publisher.py --build-type $1 --branch $2
+
+if [[ "$GITHUB_WORKFLOW" == "Pulpcore changelog update" ]]; then
+  # Do not build bindings docs on changelog update
+  exit
+fi
+
+pip install mkdocs pymdown-extensions
+
+mkdir -p ../bindings
+tar -xvf python-client-docs.tar --directory ../bindings
+cd ../bindings
+cat >> mkdocs.yml << DOCSYAML
+---
+site_name: Pulpcore Client
+site_description: Pulpcore bindings
+site_author: Pulp Team
+site_url: https://docs.pulpproject.org/pulpcore_client/
+repo_name: pulp/pulpcore
+repo_url: https://github.com/pulp/pulpcore
+theme: readthedocs
+DOCSYAML
+
+# Building the bindings docs
+mkdocs build
+
+# publish to docs.pulpproject.org/pulpcore_client
+rsync -avzh site/ doc_builder_pulpcore@docs.pulpproject.org:/var/www/docs.pulpproject.org/pulpcore_client/
+
+# publish to docs.pulpproject.org/pulpcore_client/en/{release}
+rsync -avzh site/ doc_builder_pulpcore@docs.pulpproject.org:/var/www/docs.pulpproject.org/pulpcore_client/en/"$2"
