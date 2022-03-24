@@ -233,12 +233,13 @@ class ArtifactSaver(Stage):
                     if d_artifact.artifact._state.adding and not d_artifact.deferred_download:
                         d_artifact.artifact.file = str(d_artifact.artifact.file)
                         da_to_save.append(d_artifact)
+            da_to_save_ordered = sorted(da_to_save, key=lambda x: x.artifact.sha256)
 
             if da_to_save:
                 for d_artifact, artifact in zip(
-                    da_to_save,
+                    da_to_save_ordered,
                     Artifact.objects.bulk_get_or_create(
-                        d_artifact.artifact for d_artifact in da_to_save
+                        d_artifact.artifact for d_artifact in da_to_save_ordered
                     ),
                 ):
                     d_artifact.artifact = artifact
