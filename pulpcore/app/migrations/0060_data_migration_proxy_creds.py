@@ -41,5 +41,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunPython(move_proxy_creds_up, reverse_code=move_proxy_creds_down),
+        migrations.RunPython(move_proxy_creds_up, reverse_code=move_proxy_creds_down, elidable=True),
     ]
