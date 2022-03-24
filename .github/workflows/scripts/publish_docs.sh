@@ -37,24 +37,11 @@ if [[ "$GITHUB_WORKFLOW" == "Pulpcore changelog update" ]]; then
   exit
 fi
 
-cd ..
-if [ ! -d "pulp-openapi-generator" ]; then
-  git clone --depth=1 https://github.com/pulp/pulp-openapi-generator.git
-fi
+pip install mkdocs pymdown-extensions
 
-# Building python bindings
-export PULP_URL="${PULP_URL:-https://pulp}"
-VERSION=$(http $PULP_URL/pulp/api/v3/status/ | jq --arg plugin core --arg legacy_plugin pulpcore -r '.versions[] | select(.component == $plugin or .component == $legacy_plugin) | .version')
-cd pulp-openapi-generator
-rm -rf pulpcore-client
-./generate.sh pulpcore python $VERSION
-cd pulpcore-client
-
-# Adding mkdocs
-find ./docs/* -exec sed -i 's/README//g' {} \;
-cp README.md docs/index.md
-sed -i 's/docs\///g' docs/index.md
-find ./docs/* -exec sed -i 's/\.md//g' {} \;
+mkdir -p ../bindings
+tar -xvf python-client-docs.tar --directory ../bindings
+cd ../bindings
 cat >> mkdocs.yml << DOCSYAML
 ---
 site_name: Pulpcore Client
@@ -66,8 +53,6 @@ repo_url: https://github.com/pulp/pulpcore
 theme: readthedocs
 DOCSYAML
 
-pip install mkdocs pymdown-extensions
-
 # Building the bindings docs
 mkdocs build
 
@@ -75,4 +60,4 @@ mkdocs build
 rsync -avzh site/ doc_builder_pulpcore@docs.pulpproject.org:/var/www/docs.pulpproject.org/pulpcore_client/
 
 # publish to docs.pulpproject.org/pulpcore_client/en/{release}
-rsync -avzh site/ doc_builder_pulpcore@docs.pulpproject.org:/var/www/docs.pulpproject.org/pulpcore_client/en/"$1"
+rsync -avzh site/ doc_builder_pulpcore@docs.pulpproject.org:/var/www/docs.pulpproject.org/pulpcore_client/en/"$2"
