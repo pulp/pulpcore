@@ -87,6 +87,7 @@ class Migration(migrations.Migration):
         migrations.RunPython(
             code=encrypt_remote_fields,
             reverse_code=unencrypt_remote_fields,
+            elidable=True,
         ),
         # Remove the unencrypted columns
         migrations.RemoveField(

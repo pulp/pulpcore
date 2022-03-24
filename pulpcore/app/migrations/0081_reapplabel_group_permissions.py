@@ -50,5 +50,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunPython(reapplabel_group_permissions_up, reverse_code=reapplabel_group_permissions_down),
+        migrations.RunPython(reapplabel_group_permissions_up, reverse_code=reapplabel_group_permissions_down, elidable=True),
     ]

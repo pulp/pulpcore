@@ -26,7 +26,7 @@ class Migration(migrations.Migration):
             name='_resource_job_id',
             field=models.UUIDField(null=True),
         ),
-        migrations.RunPython(fill_in_resource_id),
+        migrations.RunPython(fill_in_resource_id, reverse_code=migrations.RunPython.noop, elidable=True),
         migrations.AlterField(
             model_name='task',
             name='_resource_job_id',

@@ -82,6 +82,6 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.RunPython(
-            run_handle_artifact_checksums, reverse_code=run_handle_artifact_checksums
+            run_handle_artifact_checksums, reverse_code=run_handle_artifact_checksums, elidable=True
         ),
     ]
