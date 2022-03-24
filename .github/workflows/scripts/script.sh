@@ -111,7 +111,7 @@ if [[ "$TEST" != "upgrade" ]]; then
 fi
 
 # Run functional tests
-export PYTHONPATH=$REPO_ROOT/../pulp_file${PYTHONPATH:+:${PYTHONPATH}}
+pip install $REPO_ROOT/../pulp_file
 export PYTHONPATH=$REPO_ROOT/../pulp-certguard${PYTHONPATH:+:${PYTHONPATH}}
 export PYTHONPATH=$REPO_ROOT${PYTHONPATH:+:${PYTHONPATH}}
 
