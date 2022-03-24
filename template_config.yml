@@ -1,7 +1,7 @@
 # This config represents the latest values used when running the plugin-template. Any settings that
 # were not present before running plugin-template have been added with their default values.
 
-# generated with plugin_template@2021.08.26-91-g20f95aa
+# generated with plugin_template@2021.08.26-98-ge1ab1da
 
 additional_repos:
 - branch: '1.10'
@@ -29,7 +29,9 @@ disabled_redis_runners: []
 docker_fixtures: true
 docs_test: true
 flake8: true
+github_org: pulp
 issue_tracker: github
+keep_ci_update_for_latest_branches: 5
 noissue_marker: '[noissue]'
 parallel_test_workers: 8
 plugin_app_label: core
