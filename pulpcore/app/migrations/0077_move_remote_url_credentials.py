@@ -30,5 +30,7 @@ class Migration(migrations.Migration):
     operations = [
         migrations.RunPython(
             code=move_remote_url_credentials,
+            reverse_code=migrations.RunPython.noop,
+            elidable=True,
         )
     ]

@@ -52,5 +52,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunPython(populate_access_policy),
+        migrations.RunPython(populate_access_policy, reverse_code=migrations.RunPython.noop, elidable=True),
     ]

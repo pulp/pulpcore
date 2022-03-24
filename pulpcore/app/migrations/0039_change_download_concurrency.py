@@ -21,5 +21,5 @@ class Migration(migrations.Migration):
             name='download_concurrency',
             field=models.PositiveIntegerField(default=10),
         ),
-        migrations.RunPython(update_download_concurrency),
+        migrations.RunPython(update_download_concurrency, reverse_code=migrations.RunPython.noop, elidable=True),
     ]

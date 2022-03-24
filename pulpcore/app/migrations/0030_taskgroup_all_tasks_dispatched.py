@@ -20,5 +20,5 @@ class Migration(migrations.Migration):
             name='all_tasks_dispatched',
             field=models.BooleanField(default=False),
         ),
-        migrations.RunPython(set_existing_task_groups_finished),
+        migrations.RunPython(set_existing_task_groups_finished, reverse_code=migrations.RunPython.noop, elidable=True),
     ]
