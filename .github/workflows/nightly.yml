@@ -134,6 +134,13 @@ jobs:
           name: python-client.tar
           path: python-client.tar
 
+      - name: Upload python client docs
+        if: ${{ env.TEST == 'bindings' || env.TEST == 'generate-bindings' }}
+        uses: actions/upload-artifact@v2
+        with:
+          name: python-client-docs.tar
+          path: python-client-docs.tar
+
       - name: Upload ruby client packages
         if: ${{ env.TEST == 'bindings' || env.TEST == 'generate-bindings' }}
         uses: actions/upload-artifact@v2
@@ -158,6 +165,49 @@ jobs:
           docker exec pulp ls -latr /etc/yum.repos.d/ || true
           docker exec pulp cat /etc/yum.repos.d/* || true
           docker exec pulp pip3 list
+
+  changelog:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          # by default, it uses a depth of 1
+          # this fetches all history so that we can read each commit
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v2
+        with:
+          python-version: "3.6"
+
+      - name: Install python dependencies
+        run: |
+          echo ::group::PYDEPS
+          pip install gitpython requests packaging
+          echo ::endgroup::
+
+      - name: Configure Git with pulpbot name and email
+        run: |
+          git config --global user.name 'pulpbot'
+          git config --global user.email 'pulp-infra@redhat.com'
+
+      - name: Changelog history
+        run: python .ci/scripts/changelog.py
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v3
+        with:
+          token: ${{ secrets.RELEASE_TOKEN }}
+          committer: pulpbot <pulp-infra@redhat.com>
+          author: pulpbot <pulp-infra@redhat.com>
+          title: 'Update Changelog'
+          body: '[noissue]'
+          branch: 'changelog/update'
+          base: main
+          commit-message: |
+            Update Changelog
+
+            [noissue]
+          delete-branch: true
 
   publish:
     runs-on: ubuntu-latest
@@ -289,6 +339,11 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           name: docs.tar
+
+      - name: Download Python client docs
+        uses: actions/download-artifact@v2
+        with:
+          name: python-client-docs.tar
 
       - name: Publish docs to pulpproject.org
         run: |
