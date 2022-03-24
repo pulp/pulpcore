@@ -5,7 +5,6 @@ import sys
 
 def manage():
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "pulpcore.app.settings")
-    os.environ.setdefault("PULP_SETTINGS", "/etc/pulp/settings.py")
 
     from django.core.management import execute_from_command_line
 
