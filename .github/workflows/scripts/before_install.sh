@@ -87,7 +87,16 @@ fi
 cd ..
 
 
-pip install git+https://github.com/pulp/pulp-smash.git@fce731aa38a6984e31b0ad07dac8f25db1218ff2
+git clone --depth=1 https://github.com/pulp/pulp-smash.git
+
+if [ -n "$PULP_SMASH_PR_NUMBER" ]; then
+  cd pulp-smash
+  git fetch --depth=1 origin pull/$PULP_SMASH_PR_NUMBER/head:$PULP_SMASH_PR_NUMBER
+  git checkout $PULP_SMASH_PR_NUMBER
+  cd ..
+fi
+
+pip install --upgrade --force-reinstall ./pulp-smash
 
 
 git clone --depth=1 https://github.com/pulp/pulp-openapi-generator.git
