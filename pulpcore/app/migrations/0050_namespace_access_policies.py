@@ -24,5 +24,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunPython(namespace_access_policies_up, reverse_code=namespace_access_policies_down),
+        migrations.RunPython(namespace_access_policies_up, reverse_code=namespace_access_policies_down, elidable=True),
     ]

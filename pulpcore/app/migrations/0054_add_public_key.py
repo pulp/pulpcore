@@ -90,7 +90,7 @@ class Migration(migrations.Migration):
             name='pubkey_fingerprint',
             field=models.TextField(default=''),
         ),
-        migrations.RunPython(migrate_public_key_values, reverse_code=migrations.RunPython.noop),
+        migrations.RunPython(migrate_public_key_values, reverse_code=migrations.RunPython.noop, elidable=True),
         migrations.AlterField(
             model_name='signingservice',
             name='public_key',

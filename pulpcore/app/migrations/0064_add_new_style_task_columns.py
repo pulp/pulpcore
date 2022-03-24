@@ -45,6 +45,7 @@ class Migration(migrations.Migration):
         migrations.RunPython(
             code=purge_reservedresources,
             reverse_code=migrations.RunPython.noop,
+            elidable=True,
         ),
         # Update entities for the new task-system
         migrations.AddField(
