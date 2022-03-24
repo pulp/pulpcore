@@ -1,3 +1,4 @@
 # All test requirements
+pulp_file @ git+https://github.com/pulp/pulp_file.git
 -r unittest_requirements.txt
 -r functest_requirements.txt
