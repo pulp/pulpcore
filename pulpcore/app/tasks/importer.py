@@ -137,7 +137,7 @@ def import_repository_version(importer_pk, destination_repo_pk, source_repo_name
     )
     pb.save()
 
-    with tempfile.TemporaryDirectory() as temp_dir:
+    with tempfile.TemporaryDirectory(dir=".") as temp_dir:
         # Extract the repo file for the repo info
         with tarfile.open(tar_path, "r:gz") as tar:
             tar.extract(REPO_FILE, path=temp_dir)
