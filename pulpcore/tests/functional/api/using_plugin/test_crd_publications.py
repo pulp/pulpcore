@@ -3,12 +3,11 @@ import unittest
 from itertools import permutations
 
 from pulp_smash import api, config
-from pulp_smash.pulp3.utils import gen_distribution, gen_repo, get_content, modify_repo, sync
+from pulp_smash.pulp3.utils import gen_repo, get_content, modify_repo, sync
 from requests.exceptions import HTTPError
 
 from pulpcore.tests.functional.api.using_plugin.constants import (
     FILE_CONTENT_NAME,
-    FILE_DISTRIBUTION_PATH,
     FILE_PUBLICATION_PATH,
     FILE_REMOTE_PATH,
     FILE_REPO_PATH,
@@ -18,55 +17,63 @@ from pulpcore.tests.functional.api.using_plugin.utils import (
     gen_file_remote,
 )
 from pulpcore.tests.functional.api.using_plugin.utils import set_up_module as setUpModule  # noqa
-from pulpcore.tests.functional.api.using_plugin.utils import skip_if
 from pulpcore.tests.functional.api.utils import parse_date_from_string
 
 
 class PublicationsTestCase(unittest.TestCase):
     """Perform actions over publications."""
 
-    @classmethod
-    def setUpClass(cls):
+    def setUp(self):
         """Create class-wide variables."""
-        cls.cfg = config.get_config()
-        cls.client = api.Client(cls.cfg, api.page_handler)
-        cls.client_echo = api.Client(cls.cfg, api.echo_handler)
-        cls.remote = {}
-        cls.publication = {}
-        cls.repo = {}
+        self.cfg = config.get_config()
+        self.client = api.Client(self.cfg, api.page_handler)
+        self.client_echo = api.Client(self.cfg, api.echo_handler)
+        self.remote = {}
+        self.publication = {}
+        self.repo = {}
         try:
-            cls.repo.update(cls.client.post(FILE_REPO_PATH, gen_repo()))
-            cls.repo_initial_version = cls.repo["latest_version_href"]
+            self.repo.update(self.client.post(FILE_REPO_PATH, gen_repo()))
+            self.repo_initial_version = self.repo["latest_version_href"]
             body = gen_file_remote()
-            cls.remote.update(cls.client.post(FILE_REMOTE_PATH, body))
-            sync(cls.cfg, cls.remote, cls.repo)
+            self.remote.update(self.client.post(FILE_REMOTE_PATH, body))
+            sync(self.cfg, self.remote, self.repo)
             # update to get latest_version_href
-            cls.repo.update(cls.client.get(cls.repo["pulp_href"]))
+            self.repo.update(self.client.get(self.repo["pulp_href"]))
         except Exception:
-            cls.tearDownClass()
+            self.tearDown()
             raise
 
-    @classmethod
-    def tearDownClass(cls):
+    def tearDown(self):
         """Clean class-wide variables."""
-        for resource in (cls.remote, cls.repo):
+        for resource in (self.remote, self.repo):
             if resource:
-                cls.client.delete(resource["pulp_href"])
+                self.client.delete(resource["pulp_href"])
 
-    def test_01_create_file_publication(self):
+    def test_workflow(self):
+        self._create_file_publication()
+        self._read_publication()
+        self._read_publication_with_specific_fields()
+        self._read_publication_without_specific_fields()
+        self._read_publications_filter_repo_version()
+        self._read_publications_filter_repo_version_no_match()
+        self._read_publications_filter_repo_version_invalid()
+        self._read_publications_filter_created_time()
+        self._read_publications_filter_created_time_no_match()
+        self._publication_create_order()
+        self._delete()
+
+    def _create_file_publication(self):
         """Create a publication."""
         self.publication.update(create_file_publication(self.cfg, self.repo))
 
-    @skip_if(bool, "publication", False)
-    def test_02_read_publication(self):
+    def _read_publication(self):
         """Read a publication by its href."""
         publication = self.client.get(self.publication["pulp_href"])
         for key, val in self.publication.items():
             with self.subTest(key=key):
                 self.assertEqual(publication[key], val)
 
-    @skip_if(bool, "publication", False)
-    def test_02_read_publication_with_specific_fields(self):
+    def _read_publication_with_specific_fields(self):
         """Read a publication by its href providing specific field list.
 
         Permutate field list to ensure different combinations on result.
@@ -80,16 +87,14 @@ class PublicationsTestCase(unittest.TestCase):
                 )
                 self.assertEqual(sorted(field_pair), sorted(publication.keys()))
 
-    @skip_if(bool, "publication", False)
-    def test_02_read_publication_without_specific_fields(self):
+    def _read_publication_without_specific_fields(self):
         """Read a publication by its href excluding specific fields."""
         # requests doesn't allow the use of != in parameters.
         url = "{}?exclude_fields=distributions".format(self.publication["pulp_href"])
         publication = self.client.get(url)
         self.assertNotIn("distributions", publication.keys())
 
-    @skip_if(bool, "publication", False)
-    def test_02_read_publications_filter_repo_version(self):
+    def _read_publications_filter_repo_version(self):
         """Read a publication by its repository version."""
         publications = self.client.get(
             FILE_PUBLICATION_PATH, params={"repository_version": self.repo["latest_version_href"]}
@@ -99,16 +104,14 @@ class PublicationsTestCase(unittest.TestCase):
             with self.subTest(key=key):
                 self.assertEqual(publications[0][key], val)
 
-    @skip_if(bool, "publication", False)
-    def test_02_read_publications_filter_repo_version_no_match(self):
+    def _read_publications_filter_repo_version_no_match(self):
         """Filter by repo version for which no publication exists."""
         publications = self.client.get(
             FILE_PUBLICATION_PATH, params={"repository_version": self.repo_initial_version}
         )
         self.assertFalse(publications)
 
-    @skip_if(bool, "publication", False)
-    def test_02_read_publications_filter_repo_version_invalid(self):
+    def _read_publications_filter_repo_version_invalid(self):
         """Filter by a repo version that does not exist."""
         invalid_repo_version = self.repo["versions_href"] + "123456789/"
         response = self.client_echo.get(
@@ -117,8 +120,7 @@ class PublicationsTestCase(unittest.TestCase):
         self.assertEqual(response.status_code, 400)
         self.assertIn("not found for repositoryversion", response.text)
 
-    @skip_if(bool, "publication", False)
-    def test_02_read_publications_filter_created_time(self):
+    def _read_publications_filter_created_time(self):
         """Read a publication by its created time."""
         publications = self.client.get(
             FILE_PUBLICATION_PATH, params={"pulp_created": self.publication["pulp_created"]}
@@ -128,43 +130,15 @@ class PublicationsTestCase(unittest.TestCase):
             with self.subTest(key=key):
                 self.assertEqual(publications[0][key], val)
 
-    @skip_if(bool, "publication", False)
-    def test_02_read_publications_filter_created_time_no_match(self):
+    def _read_publications_filter_created_time_no_match(self):
         """Filter for created time for which no publication exists."""
         publications = self.client.get(
             FILE_PUBLICATION_PATH, params={"pulp_created": self.repo["pulp_created"]}
         )
         self.assertFalse(publications)
 
-    @skip_if(bool, "publication", False)
-    @unittest.skip("distribution filter not implemented")
-    def test_02_read_publications_filter_distribution(self):
-        """Read a publication by its distribution."""
-        body = gen_distribution()
-        body["publication"] = self.publication["pulp_href"]
-        distribution = self.client.using_handler(api.task_handler).post(
-            FILE_DISTRIBUTION_PATH, body
-        )
-        self.addCleanup(self.client.delete, distribution["pulp_href"])
-
-        self.publication.update(self.client.get(self.publication["pulp_href"]))
-        publications = self.client.get(
-            FILE_PUBLICATION_PATH, params={"distributions": distribution["pulp_href"]}
-        )
-        self.assertEqual(len(publications), 1, publications)
-        for key, val in self.publication.items():
-            with self.subTest(key=key):
-                self.assertEqual(publications[0][key], val)
-
-    @skip_if(bool, "publication", False)
-    def test_06_publication_create_order(self):
-        """Assert that publications are ordered by created time.
-
-        This test targets the following issues:
-
-        * `Pulp Smash #954 <https://github.com/pulp/pulp-smash/issues/954>`_
-        * `Pulp #3576 <https://pulp.plan.io/issues/3576>`_
-        """
+    def _publication_create_order(self):
+        """Assert that publications are ordered by created time."""
         # Create more 2 publications for the same repo
         for _ in range(2):
             create_file_publication(self.cfg, self.repo)
@@ -180,8 +154,7 @@ class PublicationsTestCase(unittest.TestCase):
                 parse_date_from_string(publications[i + 1]["pulp_created"]),  # Prev
             )
 
-    @skip_if(bool, "publication", False)
-    def test_07_delete(self):
+    def _delete(self):
         """Delete a publication."""
         self.client.delete(self.publication["pulp_href"])
         with self.assertRaises(HTTPError):
@@ -189,13 +162,7 @@ class PublicationsTestCase(unittest.TestCase):
 
 
 class PublicationRepositoryParametersTestCase(unittest.TestCase):
-    """Explore publication creation using repository and repository version.
-
-    This test targets the following issue:
-
-    * `Pulp #4854 <https://pulp.plan.io/issues/4854>`_
-    * `Pulp #4874 <https://pulp.plan.io/issues/4874>`_
-    """
+    """Explore publication creation using repository and repository version."""
 
     @classmethod
     def setUpClass(cls):

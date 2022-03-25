@@ -7,7 +7,7 @@ the case.
 import unittest
 from pulp_smash import api, cli, config, utils
 from pulp_smash.utils import uuid4
-from pulp_smash.pulp3.bindings import delete_orphans, monitor_task
+from pulp_smash.pulp3.bindings import monitor_task
 from pulp_smash.pulp3.utils import (
     gen_repo,
 )
@@ -50,30 +50,26 @@ class BaseExporterCase(unittest.TestCase):
     class.
     """
 
-    @classmethod
-    def _setup_repositories(cls):
+    def _setup_repositories(self):
         """Create and sync a number of repositories to be exported."""
-        # create and remember a set of repo
         repos = []
         remotes = []
         for r in range(NUM_REPOS):
-            a_repo = cls.repo_api.create(gen_repo())
+            a_repo = self.repo_api.create(gen_repo())
             # give it a remote and sync it
             body = gen_file_remote()
-            remote = cls.remote_api.create(body)
+            remote = self.remote_api.create(body)
             repository_sync_data = RepositorySyncURL(remote=remote.pulp_href)
-            sync_response = cls.repo_api.sync(a_repo.pulp_href, repository_sync_data)
+            sync_response = self.repo_api.sync(a_repo.pulp_href, repository_sync_data)
             monitor_task(sync_response.task)
             # remember it
-            a_repo = cls.repo_api.read(file_file_repository_href=a_repo.pulp_href)
+            a_repo = self.repo_api.read(file_file_repository_href=a_repo.pulp_href)
             repos.append(a_repo)
             remotes.append(remote)
         return repos, remotes
 
     @classmethod
     def setUpClass(cls):
-        """Create class-wide variables."""
-
         cls.cfg = config.get_config()
         cls.cli_client = cli.Client(cls.cfg)
         allowed_exports = utils.get_pulp_setting(cls.cli_client, "ALLOWED_EXPORT_PATHS")
@@ -95,16 +91,20 @@ class BaseExporterCase(unittest.TestCase):
         cls.exporter_api = ExportersPulpApi(cls.core_client)
         cls.exports_api = ExportersPulpExportsApi(cls.core_client)
 
-        (cls.repos, cls.remotes) = cls._setup_repositories()
+    def setUp(self):
+        self.repos, self.remotes = self._setup_repositories()
 
-    @classmethod
-    def tearDownClass(cls):
-        """Clean up after ourselves."""
-        for remote in cls.remotes:
-            cls.remote_api.delete(remote.pulp_href)
-        for repo in cls.repos:
-            cls.repo_api.delete(repo.pulp_href)
-        delete_orphans()
+    def tearDown(self):
+        responses = []
+        for remote in self.remotes:
+            response = self.remote_api.delete(remote.pulp_href)
+            responses.append(response)
+        for repo in self.repos:
+            response = self.repo_api.delete(repo.pulp_href)
+            responses.append(response)
+
+        for response in responses:
+            monitor_task(response.task)
 
     def _create_exporter(self, cleanup=True, use_repos=None):
         """
@@ -130,7 +130,14 @@ class BaseExporterCase(unittest.TestCase):
 class PulpExporterTestCase(BaseExporterCase):
     """Test PulpExporter CURDL methods."""
 
-    def test_create(self):
+    def test_workflow(self):
+        self._create()
+        self._read()
+        self._partial_update()
+        self._list()
+        self._delete()
+
+    def _create(self):
         """Create a PulpExporter."""
         (exporter, body) = self._create_exporter()
         self.assertIsNone(exporter.last_export)
@@ -138,7 +145,7 @@ class PulpExporterTestCase(BaseExporterCase):
         self.assertEqual(body["path"], exporter.path)
         self.assertEqual(len(self.repos), len(exporter.repositories))
 
-    def test_read(self):
+    def _read(self):
         """Read a created PulpExporter."""
         (exporter_created, body) = self._create_exporter()
         exporter_read = self.exporter_api.read(exporter_created.pulp_href)
@@ -146,7 +153,7 @@ class PulpExporterTestCase(BaseExporterCase):
         self.assertEqual(exporter_created.path, exporter_read.path)
         self.assertEqual(len(exporter_created.repositories), len(exporter_read.repositories))
 
-    def test_partial_update(self):
+    def _partial_update(self):
         """Update a PulpExporter's path."""
         (exporter_created, body) = self._create_exporter()
         body = {"path": "/tmp/{}".format(uuid4())}
@@ -156,7 +163,7 @@ class PulpExporterTestCase(BaseExporterCase):
         self.assertNotEqual(exporter_created.path, exporter_read.path)
         self.assertEqual(body["path"], exporter_read.path)
 
-    def test_list(self):
+    def _list(self):
         """Show a set of created PulpExporters."""
         starting_exporters = self.exporter_api.list().results
         for x in range(NUM_EXPORTERS):
@@ -164,7 +171,7 @@ class PulpExporterTestCase(BaseExporterCase):
         ending_exporters = self.exporter_api.list().results
         self.assertEqual(NUM_EXPORTERS, len(ending_exporters) - len(starting_exporters))
 
-    def test_delete(self):
+    def _delete(self):
         """Delete a pulpExporter."""
         (exporter_created, body) = self._create_exporter(cleanup=False)
         delete_exporter(exporter_created)
@@ -200,7 +207,17 @@ class PulpExportTestCase(BaseExporterCase):
         self.assertIsNotNone(export)
         return export
 
-    def test_export(self):
+    def test_workflow(self):
+        self._export()
+        self._list()
+        self._delete()
+        self._export_by_version_validation()
+        self._export_by_version_results()
+        self._incremental()
+        self._chunking()
+        self._start_end_incrementals()
+
+    def _export(self):
         """Issue and evaluate a PulpExport (tests both Create and Read)."""
         (exporter, body) = self._create_exporter(cleanup=False)
         try:
@@ -215,7 +232,7 @@ class PulpExportTestCase(BaseExporterCase):
         finally:
             delete_exporter(exporter)
 
-    def test_list(self):
+    def _list(self):
         """Find all the PulpExports for a PulpExporter."""
         (exporter, body) = self._create_exporter(cleanup=False)
         try:
@@ -253,7 +270,7 @@ class PulpExportTestCase(BaseExporterCase):
         self.assertEqual(4, versions.count)
         return a_repo, versions
 
-    def test_delete(self):
+    def _delete(self):
         """
         Test deleting exports for a PulpExporter.
 
@@ -283,12 +300,7 @@ class PulpExportTestCase(BaseExporterCase):
         finally:
             delete_exporter(exporter)
 
-    @unittest.skip("not yet implemented")
-    def test_export_output(self):
-        """Create an export and evaluate the resulting export-file."""
-        self.fail("test_export_file")
-
-    def test_export_by_version_validation(self):
+    def _export_by_version_validation(self):
         repositories = self.repos
         latest_versions = [r.latest_version_href for r in repositories]
 
@@ -318,7 +330,7 @@ class PulpExportTestCase(BaseExporterCase):
             self._gen_export(exporter, body)
         self.assertTrue("must belong to" in ae.exception.body)
 
-    def test_export_by_version_results(self):
+    def _export_by_version_results(self):
         repositories = self.repos
         latest_versions = [r.latest_version_href for r in repositories]
         zeroth_versions = []
@@ -339,7 +351,7 @@ class PulpExportTestCase(BaseExporterCase):
         finally:
             delete_exporter(exporter)
 
-    def test_incremental(self):
+    def _incremental(self):
         # create a repo with 4 repo-versions
         a_repo, versions = self._create_repo_and_versions()
         # create exporter for that repository
@@ -362,7 +374,7 @@ class PulpExportTestCase(BaseExporterCase):
         finally:
             delete_exporter(exporter)
 
-    def test_chunking(self):
+    def _chunking(self):
         a_repo = self.repo_api.create(gen_repo())
         self.addCleanup(self.client.delete, a_repo.pulp_href)
         (exporter, body) = self._create_exporter(use_repos=[a_repo], cleanup=False)
@@ -375,7 +387,7 @@ class PulpExportTestCase(BaseExporterCase):
         finally:
             delete_exporter(exporter)
 
-    def test_start_end_incrementals(self):
+    def _start_end_incrementals(self):
         # create a repo with 4 repo-versions
         a_repo, versions = self._create_repo_and_versions()
         (exporter, body) = self._create_exporter(use_repos=[a_repo], cleanup=False)

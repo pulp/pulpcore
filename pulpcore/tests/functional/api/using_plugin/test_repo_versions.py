@@ -64,7 +64,6 @@ from pulpcore.tests.functional.api.using_plugin.utils import (
     populate_pulp,
 )
 from pulpcore.tests.functional.api.using_plugin.utils import set_up_module as setUpModule  # noqa
-from pulpcore.tests.functional.api.using_plugin.utils import skip_if
 
 
 def remove_created_key(dic):
@@ -80,32 +79,31 @@ class AddRemoveContentTestCase(unittest.TestCase):
     inspect any repository version and discover which content is present, which
     content was removed, and which content was added. This test case explores
     these features.
-
-    This test targets the following issues:
-
-    * `Pulp #3059 <https://pulp.plan.io/issues/3059>`_
-    * `Pulp #3234 <https://pulp.plan.io/issues/3234>`_
-    * `Pulp Smash #878 <https://github.com/pulp/pulp-smash/issues/878>`_
     """
 
     @classmethod
     def setUpClass(cls):
-        """Create class-wide variables."""
         cls.cfg = config.get_config()
         cls.client = api.Client(cls.cfg, api.page_handler)
-        cls.remote = {}
-        cls.repo = {}
-        cls.content = {}
 
-    @classmethod
-    def tearDownClass(cls):
-        """Destroy resources created by test methods."""
-        if cls.remote:
-            cls.client.delete(cls.remote["pulp_href"])
-        if cls.repo:
-            cls.client.delete(cls.repo["pulp_href"])
+    def setUp(self):
+        self.remote = {}
+        self.repo = {}
+        self.content = {}
 
-    def test_01_create_repository(self):
+    def tearDown(self):
+        if self.remote:
+            self.client.delete(self.remote["pulp_href"])
+        if self.repo:
+            self.client.delete(self.repo["pulp_href"])
+
+    def test_workflow(self):
+        self._create_repository()
+        self._sync_content()
+        self._remove_content()
+        self._add_content()
+
+    def _create_repository(self):
         """Create a repository.
 
         Assert that:
@@ -120,8 +118,7 @@ class AddRemoveContentTestCase(unittest.TestCase):
 
         self.assertEqual(self.repo["latest_version_href"], f"{self.repo['pulp_href']}versions/0/")
 
-    @skip_if(bool, "repo", False)
-    def test_02_sync_content(self):
+    def _sync_content(self):
         """Sync content into the repository.
 
         Assert that:
@@ -167,8 +164,7 @@ class AddRemoveContentTestCase(unittest.TestCase):
         content_removed_summary = get_removed_content_summary(repo)
         self.assertDictEqual(content_removed_summary, {})
 
-    @skip_if(bool, "repo", False)
-    def test_03_remove_content(self):
+    def _remove_content(self):
         """Remove content from the repository.
 
         Make roughly the same assertions as :meth:`test_02_sync_content`.
@@ -205,8 +201,7 @@ class AddRemoveContentTestCase(unittest.TestCase):
         content_removed_summary = get_removed_content_summary(repo)
         self.assertDictEqual(content_removed_summary, {FILE_CONTENT_NAME: 1})
 
-    @skip_if(bool, "repo", False)
-    def test_04_add_content(self):
+    def _add_content(self):
         """Add content to the repository.
 
         Make roughly the same assertions as :meth:`test_02_sync_content`.

@@ -20,7 +20,6 @@ from pulpcore.tests.functional.api.using_plugin.constants import (
     FILE_REPO_PATH,
 )
 from pulpcore.tests.functional.utils import set_up_module as setUpModule  # noqa:F401
-from pulpcore.tests.functional.utils import skip_if
 
 from pulpcore.client.pulp_file.exceptions import ApiException
 from pulpcore.client.pulp_file import (
@@ -37,39 +36,45 @@ class CRUDRepoTestCase(unittest.TestCase):
     def setUpClass(cls):
         """Create class-wide variables."""
         cls.cfg = config.get_config()
-        cls.repo = {}
+        cls.client = api.Client(cls.cfg, api.json_handler)
 
     def setUp(self):
-        """Create an API client."""
-        self.client = api.Client(self.cfg, api.json_handler)
+        self.repo = {}
 
-    def test_01_create_repo(self):
+    def test_workflow(self):
+        self._create_repo()
+        self._create_same_name()
+        self._read_repo()
+        self._read_repo_with_specific_fields()
+        self._read_repo_without_specific_fields()
+        self._read_repos()
+        self._read_all_repos()
+        self._fully_update_name()
+        self._fully_update_desc()
+        self._partially_update_name()
+        self._partially_update_desc()
+        self._set_remote_on_repository()
+        self._delete_repo()
+
+    def _create_repo(self):
         """Create repository."""
-        type(self).repo = self.client.post(FILE_REPO_PATH, gen_repo())
+        self.repo = self.client.post(FILE_REPO_PATH, gen_repo())
 
-    @skip_if(bool, "repo", False)
-    def test_02_create_same_name(self):
-        """Try to create a second repository with an identical name.
+    def _create_same_name(self):
+        """Try to create a second reIpository with an identical name."""
+        with self.assertRaises(HTTPError) as exc:
+            self.client.post(FILE_REPO_PATH, gen_repo(name=self.repo["name"]))
+        self.assertIn("unique", exc.exception.response.text)
+        self.assertEqual(exc.exception.response.status_code, 400)
 
-        * `Pulp Smash #882 <https://github.com/pulp/pulp-smash/issues/882>`_.
-        * `Pulp Smash #1055
-        <https://github.com/pulp/pulp-smash/issues/1055>`_.
-        """
-        self.client.response_handler = api.echo_handler
-        response = self.client.post(FILE_REPO_PATH, gen_repo(name=self.repo["name"]))
-        self.assertIn("unique", response.json()["name"][0])
-        self.assertEqual(response.status_code, 400)
-
-    @skip_if(bool, "repo", False)
-    def test_02_read_repo(self):
+    def _read_repo(self):
         """Read a repository by its href."""
         repo = self.client.get(self.repo["pulp_href"])
         for key, val in self.repo.items():
             with self.subTest(key=key):
                 self.assertEqual(repo[key], val)
 
-    @skip_if(bool, "repo", False)
-    def test_02_read_repo_with_specific_fields(self):
+    def _read_repo_with_specific_fields(self):
         """Read a repository by its href providing specific field list.
 
         Permutate field list to ensure different combinations on result.
@@ -90,8 +95,7 @@ class CRUDRepoTestCase(unittest.TestCase):
                 )
                 self.assertEqual(sorted(field_pair), sorted(repo.keys()))
 
-    @skip_if(bool, "repo", False)
-    def test_02_read_repo_without_specific_fields(self):
+    def _read_repo_without_specific_fields(self):
         """Read a repo by its href excluding specific fields."""
         # requests doesn't allow the use of != in parameters.
         url = "{}?exclude_fields=created,name".format(self.repo["pulp_href"])
@@ -100,8 +104,7 @@ class CRUDRepoTestCase(unittest.TestCase):
         self.assertNotIn("created", response_fields)
         self.assertNotIn("name", response_fields)
 
-    @skip_if(bool, "repo", False)
-    def test_02_read_repos(self):
+    def _read_repos(self):
         """Read the repository by its name."""
         page = self.client.get(FILE_REPO_PATH, params={"name": self.repo["name"]})
         self.assertEqual(len(page["results"]), 1)
@@ -109,29 +112,20 @@ class CRUDRepoTestCase(unittest.TestCase):
             with self.subTest(key=key):
                 self.assertEqual(page["results"][0][key], val)
 
-    @skip_if(bool, "repo", False)
-    def test_02_read_all_repos(self):
-        """Ensure name is displayed when listing repositories.
-
-        See Pulp #2824 <https://pulp.plan.io/issues/2824>`_
-        """
+    def _read_all_repos(self):
+        """Ensure name is displayed when listing repositories."""
         for repo in self.client.get(FILE_REPO_PATH)["results"]:
             self.assertIsNotNone(repo["name"])
 
-    @skip_if(bool, "repo", False)
-    def test_03_fully_update_name(self):
-        """Update a repository's name using HTTP PUT.
+    def _fully_update_name(self):
+        """Update a repository's name using HTTP PUT."""
+        self._do_fully_update_attr("name")
 
-        See: `Pulp #3101 <https://pulp.plan.io/issues/3101>`_
-        """
-        self.do_fully_update_attr("name")
-
-    @skip_if(bool, "repo", False)
-    def test_03_fully_update_desc(self):
+    def _fully_update_desc(self):
         """Update a repository's description using HTTP PUT."""
-        self.do_fully_update_attr("description")
+        self._do_fully_update_attr("description")
 
-    def do_fully_update_attr(self, attr):
+    def _do_fully_update_attr(self, attr):
         """Update a repository attribute using HTTP PUT.
 
         :param attr: The name of the attribute to update. For example,
@@ -146,20 +140,15 @@ class CRUDRepoTestCase(unittest.TestCase):
         repo = self.client.get(repo["pulp_href"])
         self.assertEqual(string, repo[attr])
 
-    @skip_if(bool, "repo", False)
-    def test_03_partially_update_name(self):
-        """Update a repository's name using HTTP PATCH.
+    def _partially_update_name(self):
+        """Update a repository's name using HTTP PATCH."""
+        self._do_partially_update_attr("name")
 
-        See: `Pulp #3101 <https://pulp.plan.io/issues/3101>`_
-        """
-        self.do_partially_update_attr("name")
-
-    @skip_if(bool, "repo", False)
-    def test_03_partially_update_desc(self):
+    def _partially_update_desc(self):
         """Update a repository's description using HTTP PATCH."""
-        self.do_partially_update_attr("description")
+        self._do_partially_update_attr("description")
 
-    def do_partially_update_attr(self, attr):
+    def _do_partially_update_attr(self, attr):
         """Update a repository attribute using HTTP PATCH.
 
         :param attr: The name of the attribute to update. For example,
@@ -172,11 +161,11 @@ class CRUDRepoTestCase(unittest.TestCase):
         repo = self.client.get(self.repo["pulp_href"])
         self.assertEqual(repo[attr], string)
 
-    @skip_if(bool, "repo", False)
-    def test_03_set_remote_on_repository(self):
+    def _set_remote_on_repository(self):
         """Test setting remotes on repositories."""
         body = gen_file_remote()
         remote = self.client.post(FILE_REMOTE_PATH, body)
+        self.addCleanup(self.client.delete, remote["pulp_href"])
 
         # verify that syncing with no remote raises an error
         with self.assertRaises(HTTPError):
@@ -191,8 +180,7 @@ class CRUDRepoTestCase(unittest.TestCase):
         repo = self.client.get(self.repo["pulp_href"])
         self.assertEqual(repo["latest_version_href"], f"{repo['pulp_href']}versions/1/")
 
-    @skip_if(bool, "repo", False)
-    def test_04_delete_repo(self):
+    def _delete_repo(self):
         """Delete a repository."""
         self.client.delete(self.repo["pulp_href"])
 
@@ -217,10 +205,10 @@ class CRUDRemoteTestCase(unittest.TestCase):
     def setUpClass(cls):
         """Create class-wide variables."""
         cls.cfg = config.get_config()
+        cls.client = FileApiClient(cls.cfg.get_bindings_config())
+        cls.remotes_api = RemotesFileApi(cls.client)
 
     def setUp(self):
-        self.client = FileApiClient(self.cfg.get_bindings_config())
-        self.remotes_api = RemotesFileApi(self.client)
         self.remote_attrs = {
             "name": utils.uuid4(),
             "url": FILE_FIXTURE_MANIFEST_URL,
@@ -239,6 +227,15 @@ class CRUDRemoteTestCase(unittest.TestCase):
             "sock_read_timeout": None,
         }
         self.remote = self.remotes_api.create(self.remote_attrs)
+
+    def tearDown(self):
+        try:
+            response = self.remotes_api.delete(self.remote.pulp_href)
+        except ApiException as exc:
+            # The test_delete test will cause this to not be here
+            assert exc.status == 404
+        else:
+            monitor_task(response.task)
 
     def _compare_results(self, data, received):
         self.assertFalse(hasattr(received, "password"))

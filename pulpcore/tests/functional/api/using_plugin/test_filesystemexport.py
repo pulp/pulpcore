@@ -7,7 +7,7 @@ the case.
 import unittest
 from pulp_smash import api, cli, config
 from pulp_smash.utils import uuid4
-from pulp_smash.pulp3.bindings import delete_orphans, monitor_task
+from pulp_smash.pulp3.bindings import monitor_task
 from pulp_smash.pulp3.utils import gen_repo
 
 from pulpcore.client.pulpcore.exceptions import ApiException
@@ -44,27 +44,26 @@ class BaseExporterCase(unittest.TestCase):
     class.
     """
 
-    @classmethod
-    def _setup_repositories(cls):
+    def _setup_repositories(self):
         """Create and sync a number of repositories to be exported."""
         # create and remember a set of repo
         repos = []
         remotes = []
         publications = []
         for r in range(NUM_REPOS):
-            repo = cls.repo_api.create(gen_repo())
-            remote = cls.remote_api.create(gen_file_remote())
+            repo = self.repo_api.create(gen_repo())
+            remote = self.remote_api.create(gen_file_remote())
 
             repository_sync_data = RepositorySyncURL(remote=remote.pulp_href)
-            sync_response = cls.repo_api.sync(repo.pulp_href, repository_sync_data)
+            sync_response = self.repo_api.sync(repo.pulp_href, repository_sync_data)
             monitor_task(sync_response.task)
 
-            repo = cls.repo_api.read(file_file_repository_href=repo.pulp_href)
+            repo = self.repo_api.read(file_file_repository_href=repo.pulp_href)
             publish_data = FileFilePublication(repository=repo.pulp_href)
-            publish_response = cls.publication_api.create(publish_data)
+            publish_response = self.publication_api.create(publish_data)
             created_resources = monitor_task(publish_response.task).created_resources
             publication_href = created_resources[0]
-            publication = cls.publication_api.read(publication_href)
+            publication = self.publication_api.read(publication_href)
 
             repos.append(repo)
             remotes.append(remote)
@@ -87,16 +86,16 @@ class BaseExporterCase(unittest.TestCase):
         cls.exporter_api = ExportersFilesystemApi(cls.core_client)
         cls.exports_api = ExportersFilesystemExportsApi(cls.core_client)
 
-        cls.repos, cls.remotes, cls.publications = cls._setup_repositories()
+    def setUp(self):
+        """Arrange necessary objects."""
+        self.repos, self.remotes, self.publications = self._setup_repositories()
 
-    @classmethod
-    def tearDownClass(cls):
+    def tearDown(self):
         """Clean up after ourselves."""
-        for remote in cls.remotes:
-            cls.remote_api.delete(remote.pulp_href)
-        for repo in cls.repos:
-            cls.repo_api.delete(repo.pulp_href)
-        delete_orphans()
+        for remote in self.remotes:
+            self.remote_api.delete(remote.pulp_href)
+        for repo in self.repos:
+            self.repo_api.delete(repo.pulp_href)
 
     def _delete_exporter(self, exporter):
         """
@@ -127,20 +126,28 @@ class BaseExporterCase(unittest.TestCase):
 class FilesystemExporterTestCase(BaseExporterCase):
     """Test FilesystemExporter CURDL methods."""
 
-    def test_create(self):
+    def test_workflow(self):
+        self._create()
+        self._read()
+        self._partial_update()
+        self._list()
+        self._delete()
+        self._method()
+
+    def _create(self):
         """Create a FilesystemExporter."""
         exporter, body = self._create_exporter()
         self.assertEqual(body["name"], exporter.name)
         self.assertEqual(body["path"], exporter.path)
 
-    def test_read(self):
+    def _read(self):
         """Read a created FilesystemExporter."""
         exporter_created, body = self._create_exporter()
         exporter_read = self.exporter_api.read(exporter_created.pulp_href)
         self.assertEqual(exporter_created.name, exporter_read.name)
         self.assertEqual(exporter_created.path, exporter_read.path)
 
-    def test_partial_update(self):
+    def _partial_update(self):
         """Update a FilesystemExporter's path."""
         exporter_created, body = self._create_exporter()
         body = {"path": "/tmp/{}".format(uuid4())}
@@ -150,7 +157,7 @@ class FilesystemExporterTestCase(BaseExporterCase):
         self.assertNotEqual(exporter_created.path, exporter_read.path)
         self.assertEqual(body["path"], exporter_read.path)
 
-    def test_list(self):
+    def _list(self):
         """Show a set of created FilesystemExporters."""
         starting_exporters = self.exporter_api.list().results
         for x in range(NUM_EXPORTERS):
@@ -158,7 +165,7 @@ class FilesystemExporterTestCase(BaseExporterCase):
         ending_exporters = self.exporter_api.list().results
         self.assertEqual(NUM_EXPORTERS, len(ending_exporters) - len(starting_exporters))
 
-    def test_delete(self):
+    def _delete(self):
         """Delete a pulpExporter."""
         exporter = self.exporter_api.create({"name": "test", "path": "/tmp/abc"})
         result = self.exporter_api.delete(exporter.pulp_href)
@@ -167,7 +174,7 @@ class FilesystemExporterTestCase(BaseExporterCase):
             self.exporter_api.read(exporter.pulp_href)
         self.assertEqual(404, ae.exception.status)
 
-    def test_method(self):
+    def _method(self):
         """Test the method field."""
         exporter, _ = self._create_exporter({"method": "symlink"})
         self.assertEqual("symlink", exporter.method)
@@ -192,13 +199,18 @@ class FilesystemExportTestCase(BaseExporterCase):
 
         return self.exports_api.read(resources[0])
 
-    def test_export(self):
+    def test_workflow(self):
+        self._export()
+        self._list()
+        self._delete()
+
+    def _export(self):
         """Issue and evaluate a FilesystemExport (tests both Create and Read)."""
         exporter, body = self._create_exporter({"method": "write"})
         export = self._gen_export(exporter, self.publications[0])
         self.assertIsNotNone(export)
 
-    def test_list(self):
+    def _list(self):
         """Find all the FilesystemExports for a FilesystemExporter."""
         exporter, body = self._create_exporter({"method": "write"})
         for i in range(NUM_REPOS):
@@ -207,7 +219,7 @@ class FilesystemExportTestCase(BaseExporterCase):
         exports = self.exports_api.list(exporter.pulp_href).results
         self.assertEqual(NUM_REPOS, len(exports))
 
-    def test_delete(self):
+    def _delete(self):
         """Test deleting exports for a FilesystemExporter."""
         exporter, body = self._create_exporter({"method": "write"})
         export = self._gen_export(exporter, self.publications[0])

@@ -155,6 +155,7 @@ def test_header_for_sync(
     file_repo,
     file_repo_api_client,
     content_file_api_client,
+    gen_object_with_cleanup,
 ):
     """
     Test file sync will correctly submit header data during download when configured.
@@ -166,15 +167,14 @@ def test_header_for_sync(
     header_value = str(uuid.uuid4())
     headers = [{header_name: header_value}]
 
-    remote_on_demand = file_remote_api_client.create(
-        {
-            "url": str(url),
-            "policy": "on_demand",
-            "name": str(uuid.uuid4()),
-            "ca_cert": tls_certificate_authority_cert,
-            "headers": headers,
-        }
-    )
+    remote_on_demand_data = {
+        "url": str(url),
+        "policy": "on_demand",
+        "name": str(uuid.uuid4()),
+        "ca_cert": tls_certificate_authority_cert,
+        "headers": headers,
+    }
+    remote_on_demand = gen_object_with_cleanup(file_remote_api_client, remote_on_demand_data)
 
     _run_basic_sync_and_assert(
         remote_on_demand, file_repo, file_repo_api_client, content_file_api_client

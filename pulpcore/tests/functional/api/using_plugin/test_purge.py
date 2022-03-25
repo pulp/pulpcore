@@ -84,44 +84,31 @@ class TaskPurgeTestCase(PulpTestCase):
         cls.remote_api = RemotesFileApi(cls.file_client)
         cls.repo_api = RepositoriesFileApi(cls.file_client)
 
-        cls.good_remote = cls.remote_api.create(gen_file_remote(policy="on_demand"))
-        cls.good_repo = cls.repo_api.create(gen_repo())
-        cls.good_sync_data = RepositorySyncURL(remote=cls.good_remote.pulp_href)
-
-        cls.bad_remote = cls.remote_api.create(
-            gen_file_remote(
-                "https://fixtures.pulpproject.org/THEREISNOFILEREPOHERE/", policy="on_demand"
-            )
-        )
-        cls.bad_repo = cls.repo_api.create(gen_repo())
-        cls.bad_sync_data = RepositorySyncURL(remote=cls.bad_remote.pulp_href)
-
-    @classmethod
-    def tearDownClass(cls) -> None:
+    def tearDown(self):
         """Cleanup repos and remotes. Do the best we can, ignore any errors."""
-        try:
-            cls.remote_api.delete(cls.bad_remote.pulp_href)
-        except:  # noqa
-            pass
-        try:
-            cls.remote_api.delete(cls.good_remote.pulp_href)
-        except:  # noqa
-            pass
-        try:
-            cls.repo_api.delete(cls.bad_repo.pulp_href)
-        except:  # noqa
-            pass
-        try:
-            cls.repo_api.delete(cls.good_repo.pulp_href)
-        except:  # noqa
-            pass
+        self.remote_api.delete(self.bad_remote.pulp_href)
+        self.remote_api.delete(self.good_remote.pulp_href)
+        self.repo_api.delete(self.bad_repo.pulp_href)
+        self.repo_api.delete(self.good_repo.pulp_href)
 
-    def setUp(self) -> None:
+    def setUp(self):
         """
         Give us tasks to operate on, and a summary of tasks before we got here.
 
         Sets up 1 completed sync, 1 failed.
         """
+        self.good_remote = self.remote_api.create(gen_file_remote(policy="on_demand"))
+        self.good_repo = self.repo_api.create(gen_repo())
+        self.good_sync_data = RepositorySyncURL(remote=self.good_remote.pulp_href)
+
+        self.bad_remote = self.remote_api.create(
+            gen_file_remote(
+                "https://fixtures.pulpproject.org/THEREISNOFILEREPOHERE/", policy="on_demand"
+            )
+        )
+        self.bad_repo = self.repo_api.create(gen_repo())
+        self.bad_sync_data = RepositorySyncURL(remote=self.bad_remote.pulp_href)
+
         self.pre_total, self.pre_final, self.pre_summary = self._task_summary()
 
         # good sync
@@ -245,46 +232,47 @@ class TaskPurgeUserPermsTestCase(PulpTestCase):
 
     @classmethod
     def setUpClass(cls):
-        """Create repos, remotes, and api-clients for all tests."""
         cls.cfg = config.get_config()
         cls.client = ApiClient(configuration=cls.cfg.get_bindings_config())
+        cls.file_client = gen_file_client()
+
+    def setUp(self):
+        self.admin_info = {
+            "task_api": TasksApi(self.client),
+            "file_client": self.file_client,
+            "remote_api": RemotesFileApi(self.file_client),
+            "repo_api": RepositoriesFileApi(self.file_client),
+        }
+        self.admin_info["a_remote"] = self.admin_info["remote_api"].create(
+            gen_file_remote(policy="on_demand")
+        )
+        self.admin_info["a_repo"] = self.admin_info["repo_api"].create(gen_repo())
+        self.admin_info["sync_data"] = RepositorySyncURL(
+            remote=self.admin_info["a_remote"].pulp_href
+        )
+
+        self.new_user = gen_user()
         file_client = gen_file_client()
-        cls.admin_info = {
-            "task_api": TasksApi(cls.client),
+        self.user_info = {
+            "task_api": TasksApi(self.client),
             "file_client": file_client,
             "remote_api": RemotesFileApi(file_client),
             "repo_api": RepositoriesFileApi(file_client),
         }
-        cls.admin_info["a_remote"] = cls.admin_info["remote_api"].create(
+        self.user_info["a_remote"] = self.user_info["remote_api"].create(
             gen_file_remote(policy="on_demand")
         )
-        cls.admin_info["a_repo"] = cls.admin_info["repo_api"].create(gen_repo())
-        cls.admin_info["sync_data"] = RepositorySyncURL(remote=cls.admin_info["a_remote"].pulp_href)
+        self.user_info["a_repo"] = self.user_info["repo_api"].create(gen_repo())
+        self.user_info["sync_data"] = RepositorySyncURL(remote=self.user_info["a_remote"].pulp_href)
 
-        cls.new_user = gen_user()
-        file_client = gen_file_client()
-        cls.user_info = {
-            "task_api": TasksApi(cls.client),
-            "file_client": file_client,
-            "remote_api": RemotesFileApi(file_client),
-            "repo_api": RepositoriesFileApi(file_client),
-        }
-        cls.user_info["a_remote"] = cls.user_info["remote_api"].create(
-            gen_file_remote(policy="on_demand")
-        )
-        cls.user_info["a_repo"] = cls.user_info["repo_api"].create(gen_repo())
-        cls.user_info["sync_data"] = RepositorySyncURL(remote=cls.user_info["a_remote"].pulp_href)
+    def tearDown(self):
+        self.admin_info["remote_api"].delete(self.admin_info["a_remote"].pulp_href)
+        self.admin_info["repo_api"].delete(self.admin_info["a_repo"].pulp_href)
+        self.user_info["remote_api"].delete(self.user_info["a_remote"].pulp_href)
+        self.user_info["repo_api"].delete(self.user_info["a_repo"].pulp_href)
+        del_user(self.new_user)
 
-    @classmethod
-    def tearDownClass(cls) -> None:
-        """Cleanup repos and remotes."""
-        cls.admin_info["remote_api"].delete(cls.admin_info["a_remote"].pulp_href)
-        cls.admin_info["repo_api"].delete(cls.admin_info["a_repo"].pulp_href)
-        cls.user_info["remote_api"].delete(cls.user_info["a_remote"].pulp_href)
-        cls.user_info["repo_api"].delete(cls.user_info["a_repo"].pulp_href)
-        del_user(cls.new_user)
-
-    def testUserCannotPurge(self) -> None:
+    def testUserCannotPurge(self):
         """
         Test that purge does NOT purge tasks NOT OWNED by caller.
         """
@@ -325,7 +313,7 @@ class TaskPurgeUserPermsTestCase(PulpTestCase):
         with self.assertRaises(ApiException):
             self.admin_info["task_api"].read(sync_task.pulp_href)
 
-    def testAdminCanPurge(self) -> None:
+    def testAdminCanPurge(self):
         """
         Test that admin can ALWAYS purge.
         """
