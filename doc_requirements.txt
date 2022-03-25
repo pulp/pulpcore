@@ -5,3 +5,4 @@ sphinx-rtd-theme
 sphinxcontrib-openapi
 towncrier
 mistune<2.0.0
+Jinja2<3.1
