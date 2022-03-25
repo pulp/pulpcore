@@ -37,7 +37,7 @@ if [[ "$GITHUB_WORKFLOW" == "Pulpcore changelog update" ]]; then
   exit
 fi
 
-pip install mkdocs pymdown-extensions
+pip install mkdocs pymdown-extensions "Jinja2<3.1"
 
 mkdir -p ../bindings
 tar -xvf python-client-docs.tar --directory ../bindings
