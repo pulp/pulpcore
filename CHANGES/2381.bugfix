@@ -1,2 +1,0 @@
-Fixes duplicate key error ``Key (content_artifact_id, remote_id)`` when creating ``RemoteArtifacts``
-during syncs in pulp_container and possibly other plugins.
