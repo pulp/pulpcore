@@ -248,7 +248,22 @@ class PulpImportTestCase(unittest.TestCase):
 
         return task_group
 
-    def test_importer_create(self):
+    def test_workflow(self):
+        self._importer_create()
+        self._importer_delete()
+        self._import()
+        self._double_import()
+        self._chunked_import()
+        self._import_check_valid_path()
+        self._import_check_valid_toc()
+        self._import_check_repo_mapping()
+        self._import_check_not_allowed()
+        self._import_check_no_file()
+        self._import_check_all_valid()
+        self._import_check_multiple_errors()
+        self._import_not_latest_version()
+
+    def _importer_create(self):
         """Test creating an importer."""
         name = uuid4()
         importer = self._create_importer(name)
@@ -257,7 +272,7 @@ class PulpImportTestCase(unittest.TestCase):
         importer = self.importer_api.read(importer.pulp_href)
         self.assertEqual(importer.name, name)
 
-    def test_importer_delete(self):
+    def _importer_delete(self):
         """Test deleting an importer."""
         importer = self._create_importer(cleanup=False)
 
@@ -268,7 +283,7 @@ class PulpImportTestCase(unittest.TestCase):
 
         self.assertEqual(404, ae.exception.status)
 
-    def test_import(self):
+    def _import(self):
         """Test an import."""
         importer = self._create_importer()
         task_group = self._perform_import(importer)
@@ -282,7 +297,7 @@ class PulpImportTestCase(unittest.TestCase):
             repo = self.repo_api.read(repo.pulp_href)
             self.assertEqual(f"{repo.pulp_href}versions/1/", repo.latest_version_href)
 
-    def test_double_import(self):
+    def _double_import(self):
         """Test two imports of our export."""
         importer = self._create_importer()
         self._perform_import(importer)
@@ -296,7 +311,7 @@ class PulpImportTestCase(unittest.TestCase):
             # still only one version as pulp won't create a new version if nothing changed
             self.assertEqual(f"{repo.pulp_href}versions/1/", repo.latest_version_href)
 
-    def test_chunked_import(self):
+    def _chunked_import(self):
         """Test an import."""
         importer = self._create_importer()
         task_group = self._perform_import(importer, chunked=True)
@@ -305,7 +320,7 @@ class PulpImportTestCase(unittest.TestCase):
             repo = self.repo_api.read(repo.pulp_href)
             self.assertEqual(f"{repo.pulp_href}versions/1/", repo.latest_version_href)
 
-    def test_import_check_valid_path(self):
+    def _import_check_valid_path(self):
         body = {"path": self._find_path()}
         result = self.import_check_api.pulp_import_check_post(body)
         self.assertEqual(result.path.context, self._find_path())
@@ -314,7 +329,7 @@ class PulpImportTestCase(unittest.TestCase):
         self.assertIsNone(result.toc)
         self.assertIsNone(result.repo_mapping)
 
-    def test_import_check_valid_toc(self):
+    def _import_check_valid_toc(self):
         body = {"toc": self._find_toc()}
         result = self.import_check_api.pulp_import_check_post(body)
         self.assertEqual(result.toc.context, self._find_toc())
@@ -323,7 +338,7 @@ class PulpImportTestCase(unittest.TestCase):
         self.assertIsNone(result.path)
         self.assertIsNone(result.repo_mapping)
 
-    def test_import_check_repo_mapping(self):
+    def _import_check_repo_mapping(self):
         body = {"repo_mapping": json.dumps({"foo": "bar"})}
         result = self.import_check_api.pulp_import_check_post(body)
         self.assertEqual(result.repo_mapping.context, json.dumps({"foo": "bar"}))
@@ -338,7 +353,7 @@ class PulpImportTestCase(unittest.TestCase):
         self.assertFalse(result.repo_mapping.is_valid)
         self.assertEqual(result.repo_mapping.messages[0], "invalid JSON")
 
-    def test_import_check_not_allowed(self):
+    def _import_check_not_allowed(self):
         body = {"path": "/notinallowedimports"}
         result = self.import_check_api.pulp_import_check_post(body)
         self.assertEqual(result.path.context, "/notinallowedimports")
@@ -353,7 +368,7 @@ class PulpImportTestCase(unittest.TestCase):
         self.assertEqual(len(result.toc.messages), 1, "Only not-allowed should be returned")
         self.assertEqual(result.toc.messages[0], "/ is not an allowed import path")
 
-    def test_import_check_no_file(self):
+    def _import_check_no_file(self):
         body = {"path": "/tmp/idonotexist"}
         result = self.import_check_api.pulp_import_check_post(body)
         self.assertEqual(result.path.context, "/tmp/idonotexist")
@@ -370,7 +385,7 @@ class PulpImportTestCase(unittest.TestCase):
             any("file /tmp/idonotexist does not exist" in s for s in result.toc.messages)
         )
 
-    def test_import_check_all_valid(self):
+    def _import_check_all_valid(self):
         body = {
             "path": self._find_path(),
             "toc": self._find_toc(),
@@ -389,7 +404,7 @@ class PulpImportTestCase(unittest.TestCase):
         self.assertEqual(len(result.toc.messages), 0)
         self.assertEqual(len(result.repo_mapping.messages), 0)
 
-    def test_import_check_multiple_errors(self):
+    def _import_check_multiple_errors(self):
         body = {
             "path": "/notinallowedimports",
             "toc": "/tmp/importcheck/nowritedir/notafile",
@@ -446,7 +461,7 @@ class PulpImportTestCase(unittest.TestCase):
         export = self._gen_export(exporter, body)
         return export
 
-    def test_import_not_latest_version(self):
+    def _import_not_latest_version(self):
         try:
             repo, versions = self._create_repo_and_versions()
 

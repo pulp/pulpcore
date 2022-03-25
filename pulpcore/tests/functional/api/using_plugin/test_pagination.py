@@ -3,7 +3,7 @@ import unittest
 from random import randint, sample
 
 from pulp_smash import api, config
-from pulp_smash.utils import ensure_teardownclass
+from pulp_smash.pulp3.bindings import monitor_task
 from pulp_smash.pulp3.utils import gen_repo, get_versions, modify_repo
 
 from pulpcore.tests.functional.api.using_plugin.constants import (
@@ -52,42 +52,39 @@ class RepoVersionPaginationTestCase(unittest.TestCase):
 
 
 class PaginationTestCase(unittest.TestCase):
-    """Test pagination.
-
-    This test case assumes that Pulp returns 100 elements in each page of
-    results. This is configurable, but the current default set by all known
-    Pulp installers.
-
-    This test targets the following issues:
-
-    * `Pulp #4221 <https://pulp.plan.io/issues/4221>`_
-    """
+    """Test pagination assuming that Pulp returns 100 elements in each page of results."""
 
     @classmethod
     def setUpClass(cls):
         """Create class-wide variables."""
         cls.cfg = config.get_config()
         cls.client = api.Client(cls.cfg, api.json_handler)
-        cls.teardown_cleanups = []
-        cls.number_to_create = 21
+
+    def setUp(self):
+        self.repos = []
+        self.number_to_create = 21
 
         # Perform a sanity check.
-        repos = cls.client.using_handler(api.page_handler).get(FILE_REPO_PATH)
+        repos = self.client.using_handler(api.page_handler).get(FILE_REPO_PATH)
         assert len(repos) == 0, repos  # AssertEqual not available here yet
 
-        with ensure_teardownclass(cls):
-            # Create repos
-            for _ in range(cls.number_to_create):
-                repo = cls.client.post(FILE_REPO_PATH, gen_repo())
-                cls.teardown_cleanups.append((cls.client.delete, repo["pulp_href"]))
+        # Create repos
+        for _ in range(self.number_to_create):
+            repo = self.client.post(FILE_REPO_PATH, gen_repo())
+            self.repos.append(repo)
 
-    @classmethod
-    def tearDownClass(cls):
-        """Clean registered cleanups."""
-        for function, argument in cls.teardown_cleanups:
-            function(argument)
+    def tearDown(self):
+        responses = []
+        for repo in self.repos:
+            responses.append(self.client.delete(repo["pulp_href"]))
+        for response in responses:
+            monitor_task(response["task"])
 
-    def test_raw_pagination(self):
+    def test_pagination_workflow(self):
+        self._raw_pagination()
+        self._page_handler_pagination()
+
+    def _raw_pagination(self):
         """Assert content can be paginated page by page.
 
         Do the following:
@@ -134,43 +131,13 @@ class PaginationTestCase(unittest.TestCase):
         # Assert the final count
         self.assertEqual(len(collected_results), self.number_to_create, collected_results)
 
-    @unittest.SkipTest
-    def test_skip_pages(self):
-        """Test jump from page 1 to page 3 (skipping page 2).
-
-        Do the following:
-
-        1. Request all the existing repos.
-        2. Request the 7 repos on page 1 and assert equals first 7 of all.
-        3. Skip page 2.
-        4. Request the 7 items on page 3 and assert equals last 7 of all.
+    def _page_handler_pagination(self):
         """
-        per_page = 7  # will result in 3 pages
-        all_repos = self.client.using_handler(api.page_handler).get(FILE_REPO_PATH)
-        self.assertEqual(len(all_repos), self.number_to_create, all_repos)
+        Assert page handler returns all items independent of page_size.
 
-        first_page = self.client.get(FILE_REPO_PATH, params={"limit": per_page})
-        last_page = self.client.get(
-            FILE_REPO_PATH, params={"limit": per_page, "offset": 2 * per_page}
-        )
-
-        for index in range(0, 7):
-            # Assert page 1 contains the first 7 items from _all
-            self.assertEqual(first_page["results"][index], all_repos[index])
-
-            # skip page 2
-
-            # Assert page 3 contains the last 7 items from _all
-            self.assertEqual(last_page["results"][index], all_repos[index + per_page * 2])
-
-    def test_page_handler_pagination(self):
-        """Assert page handler returns all items independent of page_size.
-
-        This test asserts that pulp-smash page_handler will collect results
-        from all pages and return it in the same call independent of the
-        page_size provided.
+        This test asserts that pulp-smash page_handler will collect results from all pages and
+        return it in the same call independent of the page_size provided.
         """
-        # assert results
         repos = self.client.using_handler(api.page_handler).get(
             FILE_REPO_PATH, params={"page_size": randint(2, 11)}
         )

@@ -43,51 +43,66 @@ class ContentCacheTestCache(unittest.TestCase):
         cls.remote_api = RemotesFileApi(client)
         cls.pub_api = PublicationsFileApi(client)
         cls.dis_api = DistributionsFileApi(client)
-        cls.repo = cls.repo_api.create(gen_repo(autopublish=True))
-        cls.remote = cls.remote_api.create(gen_file_remote())
-        body = RepositorySyncURL(remote=cls.remote.pulp_href)
-        created = monitor_task(cls.repo_api.sync(cls.repo.pulp_href, body).task).created_resources
-        cls.repo = cls.repo_api.read(cls.repo.pulp_href)
-        cls.pub1 = cls.pub_api.read(created[1])
-        body = FileFilePublication(repository=cls.repo.pulp_href)
-        cls.pub2 = cls.pub_api.read(
-            monitor_task(cls.pub_api.create(body).task).created_resources[0]
+
+    def setUp(self):
+        self.repo = self.repo_api.create(gen_repo(autopublish=True))
+        self.remote = self.remote_api.create(gen_file_remote())
+
+        body = RepositorySyncURL(remote=self.remote.pulp_href)
+        created = monitor_task(self.repo_api.sync(self.repo.pulp_href, body).task).created_resources
+        self.repo = self.repo_api.read(self.repo.pulp_href)
+        self.pub1 = self.pub_api.read(created[1])
+        body = FileFilePublication(repository=self.repo.pulp_href)
+        self.pub2 = self.pub_api.read(
+            monitor_task(self.pub_api.create(body).task).created_resources[0]
         )
-        cls.pub3 = []
-        response = cls.dis_api.create(gen_distribution(repository=cls.repo.pulp_href))
-        cls.distro = cls.dis_api.read(monitor_task(response.task).created_resources[0])
-        cls.distro2 = []
-        cls.url = urljoin(PULP_CONTENT_BASE_URL, f"{cls.distro.base_path}/")
+        self.pub3 = []
+        response = self.dis_api.create(gen_distribution(repository=self.repo.pulp_href))
+        self.distro = self.dis_api.read(monitor_task(response.task).created_resources[0])
+        self.distro2 = []
+        self.url = urljoin(PULP_CONTENT_BASE_URL, f"{self.distro.base_path}/")
 
-    @classmethod
-    def tearDownClass(cls):
-        """Tears the class down"""
-        cls.remote_api.delete(cls.remote.pulp_href)
-        cls.dis_api.delete(cls.distro.pulp_href)
+    def tearDown(self):
+        a = self.remote_api.delete(self.remote.pulp_href).task
+        b = self.dis_api.delete(self.distro.pulp_href).task
+        for task_href in [a, b]:
+            monitor_task(task_href)
 
-    def test_01_basic_cache_access(self):
+    def test_content_cache_workflow(self):
+        self._basic_cache_access()
+        self._remove_repository_invalidates()
+        self._restore_repository()
+        self._multiple_distributions()
+        self._invalidate_multiple_distributions()
+        self._delete_distribution_invalidates_one()
+        self._delete_extra_pub_doesnt_invalidate()
+        self._delete_served_pub_does_invalidate()
+        self._delete_repo_invalidates()
+        self._no_error_when_accessing_invalid_file()
+
+    def _basic_cache_access(self):
         """Checks responses are cached for content"""
         files = ["", "", "PULP_MANIFEST", "PULP_MANIFEST", "1.iso", "1.iso"]
         for i, file in enumerate(files):
-            self.assertEqual((200, "HIT" if i % 2 == 1 else "MISS"), self.check_cache(file), file)
+            self.assertEqual((200, "HIT" if i % 2 == 1 else "MISS"), self._check_cache(file), file)
 
-    def test_02_remove_repository_invalidates(self):
+    def _remove_repository_invalidates(self):
         """Checks removing repository from distribution invalidates the cache"""
         body = PatchedfileFileDistribution(repository="")
         monitor_task(self.dis_api.partial_update(self.distro.pulp_href, body).task)
         files = ["", "PULP_MANIFEST", "1.iso"]
         for file in files:
-            self.assertEqual((404, None), self.check_cache(file), file)
+            self.assertEqual((404, None), self._check_cache(file), file)
 
-    def test_03_restore_repository(self):
+    def _restore_repository(self):
         """Checks that responses are cacheable after repository is added back"""
         body = PatchedfileFileDistribution(repository=self.repo.pulp_href)
         monitor_task(self.dis_api.partial_update(self.distro.pulp_href, body).task)
         files = ["", "", "PULP_MANIFEST", "PULP_MANIFEST", "1.iso", "1.iso"]
         for i, file in enumerate(files):
-            self.assertEqual((200, "HIT" if i % 2 == 1 else "MISS"), self.check_cache(file), file)
+            self.assertEqual((200, "HIT" if i % 2 == 1 else "MISS"), self._check_cache(file), file)
 
-    def test_04_multiple_distributions(self):
+    def _multiple_distributions(self):
         """Add a new distribution and check that its responses are cached separately"""
         response = self.dis_api.create(gen_distribution(repository=self.repo.pulp_href))
         self.distro2.append(self.dis_api.read(monitor_task(response.task).created_resources[0]))
@@ -95,10 +110,10 @@ class ContentCacheTestCache(unittest.TestCase):
         files = ["", "", "PULP_MANIFEST", "PULP_MANIFEST", "1.iso", "1.iso"]
         for i, file in enumerate(files):
             self.assertEqual(
-                (200, "HIT" if i % 2 == 1 else "MISS"), self.check_cache(file, url), file
+                (200, "HIT" if i % 2 == 1 else "MISS"), self._check_cache(file, url), file
             )
 
-    def test_05_invalidate_multiple_distributions(self):
+    def _invalidate_multiple_distributions(self):
         """Test that updating a repository pointed by multiple distributions invalidates all"""
         url = urljoin(PULP_CONTENT_BASE_URL, f"{self.distro2[0].base_path}/")
         cfile = self.cont_api.list(
@@ -109,50 +124,50 @@ class ContentCacheTestCache(unittest.TestCase):
         self.pub3.append(self.pub_api.read(response.created_resources[1]))
         files = ["", "", "PULP_MANIFEST", "PULP_MANIFEST", "2.iso", "2.iso"]
         for i, file in enumerate(files):
-            self.assertEqual((200, "HIT" if i % 2 == 1 else "MISS"), self.check_cache(file), file)
+            self.assertEqual((200, "HIT" if i % 2 == 1 else "MISS"), self._check_cache(file), file)
             self.assertEqual(
-                (200, "HIT" if i % 2 == 1 else "MISS"), self.check_cache(file, url), file
+                (200, "HIT" if i % 2 == 1 else "MISS"), self._check_cache(file, url), file
             )
 
-    def test_06_delete_distribution_invalidates_one(self):
+    def _delete_distribution_invalidates_one(self):
         """Tests that deleting one distribution sharing a repository only invalidates its cache"""
         url = urljoin(PULP_CONTENT_BASE_URL, f"{self.distro2[0].base_path}/")
         monitor_task(self.dis_api.delete(self.distro2[0].pulp_href).task)
         files = ["", "PULP_MANIFEST", "2.iso"]
         for file in files:
-            self.assertEqual((200, "HIT"), self.check_cache(file), file)
-            self.assertEqual((404, None), self.check_cache(file, url), file)
+            self.assertEqual((200, "HIT"), self._check_cache(file), file)
+            self.assertEqual((404, None), self._check_cache(file, url), file)
 
-    def test_07_delete_extra_pub_doesnt_invalidate(self):
+    def _delete_extra_pub_doesnt_invalidate(self):
         """Test that deleting a publication not being served doesn't invalidate cache"""
         self.pub_api.delete(self.pub2.pulp_href)
         files = ["", "PULP_MANIFEST", "2.iso"]
         for file in files:
-            self.assertEqual((200, "HIT"), self.check_cache(file), file)
+            self.assertEqual((200, "HIT"), self._check_cache(file), file)
 
-    def test_08_delete_served_pub_does_invalidate(self):
+    def _delete_served_pub_does_invalidate(self):
         """Test that deleting the serving publication does invalidate the cache"""
         # Reverts back to serving self.pub1
         self.pub_api.delete(self.pub3[0].pulp_href)
         files = ["", "", "PULP_MANIFEST", "PULP_MANIFEST", "2.iso", "2.iso"]
         for i, file in enumerate(files):
-            self.assertEqual((200, "HIT" if i % 2 == 1 else "MISS"), self.check_cache(file), file)
+            self.assertEqual((200, "HIT" if i % 2 == 1 else "MISS"), self._check_cache(file), file)
 
-    def test_09_delete_repo_invalidates(self):
+    def _delete_repo_invalidates(self):
         """Tests that deleting a repository invalidates the cache"""
         monitor_task(self.repo_api.delete(self.repo.pulp_href).task)
         files = ["", "PULP_MANIFEST", "2.iso"]
         for file in files:
-            self.assertEqual((404, None), self.check_cache(file), file)
+            self.assertEqual((404, None), self._check_cache(file), file)
 
-    def test_10_no_error_when_accessing_invalid_file(self):
+    def _no_error_when_accessing_invalid_file(self):
         """Tests that accessing a file that doesn't exist on content app gives 404"""
         files = ["invalid", "another/bad-one", "DNE/"]
         url = PULP_CONTENT_BASE_URL
         for file in files:
-            self.assertEqual((404, None), self.check_cache(file, url=url), file)
+            self.assertEqual((404, None), self._check_cache(file, url=url), file)
 
-    def check_cache(self, file, url=None):
+    def _check_cache(self, file, url=None):
         """Helper to check if cache miss or hit"""
         url = urljoin(url or self.url, file)
         r = requests.get(url)

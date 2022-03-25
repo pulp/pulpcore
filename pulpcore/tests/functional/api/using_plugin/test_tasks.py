@@ -173,39 +173,29 @@ class FilterTaskCreatedResourcesTestCase(unittest.TestCase):
 
 
 class FilterTaskResourcesTestCase(unittest.TestCase):
-    """Perform filtering over reserved resources.
-
-    This test targets the following issue:
-    * `Pulp #5120 <https://pulp.plan.io/issues/5120>`_
-
-    Perform filtering for contents of created resources.
-
-    This test targets the following issue:
-    * `Pulp #4931 <https://pulp.plan.io/issues/4931>`_
-    """
+    """Perform filtering of reserved resources and the contents of created resources."""
 
     @classmethod
     def setUpClass(cls):
-        """Create class-wide variables."""
         cls.cfg = config.get_config()
         cls.client = api.Client(cls.cfg, api.page_handler)
-        cls.remote = cls.client.post(FILE_REMOTE_PATH, gen_file_remote())
-        cls.repository = cls.client.post(FILE_REPO_PATH, gen_repo())
-        response = sync(cls.cfg, cls.remote, cls.repository)
-        cls.created_repo_version = response["pulp_href"]
-        cls.repository = cls.client.get(cls.repository["pulp_href"])
-        for file_content in get_content(cls.repository)[FILE_CONTENT_NAME]:
-            modify_repo(cls.cfg, cls.repository, remove_units=[file_content])
-        attrs = {"description": utils.uuid4()}
-        response = cls.client.patch(cls.repository["pulp_href"], attrs)
-        cls.repo_update_task = cls.client.get(response["task"])
 
-    @classmethod
-    def tearDownClass(cls):
-        """Clean created resources."""
-        cls.client.delete(cls.repository["pulp_href"])
-        cls.client.delete(cls.remote["pulp_href"])
-        cls.client.delete(cls.repo_update_task["pulp_href"])
+    def setUp(self):
+        self.remote = self.client.post(FILE_REMOTE_PATH, gen_file_remote())
+        self.repository = self.client.post(FILE_REPO_PATH, gen_repo())
+        response = sync(self.cfg, self.remote, self.repository)
+        self.created_repo_version = response["pulp_href"]
+        self.repository = self.client.get(self.repository["pulp_href"])
+        for file_content in get_content(self.repository)[FILE_CONTENT_NAME]:
+            modify_repo(self.cfg, self.repository, remove_units=[file_content])
+        attrs = {"description": utils.uuid4()}
+        response = self.client.patch(self.repository["pulp_href"], attrs)
+        self.repo_update_task = self.client.get(response["task"])
+
+    def tearDown(self):
+        self.client.delete(self.repository["pulp_href"])
+        self.client.delete(self.remote["pulp_href"])
+        self.client.delete(self.repo_update_task["pulp_href"])
 
     def test_01_filter_tasks_by_reserved_resources(self):
         """Filter all tasks by a particular reserved resource."""

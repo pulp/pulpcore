@@ -50,40 +50,43 @@ from pulpcore.tests.functional.api.using_plugin.utils import (
     monitor_task,
 )
 from pulpcore.tests.functional.api.using_plugin.utils import set_up_module as setUpModule  # noqa
-from pulpcore.tests.functional.api.using_plugin.utils import skip_if
 
 
 class CRUDPublicationDistributionTestCase(unittest.TestCase):
-    """CRUD Publication Distribution.
-
-    This test targets the following issue:
-
-    * `Pulp #4839 <https://pulp.plan.io/issues/4839>`_
-    * `Pulp #4862 <https://pulp.plan.io/issues/4862>`_
-    """
+    """CRUD Publication Distribution."""
 
     @classmethod
     def setUpClass(cls):
         """Create class-wide variables."""
         cls.cfg = config.get_config()
         cls.client = api.Client(cls.cfg)
-        cls.attr = (
+
+    def setUp(self):
+        """Arrange the test."""
+        self.attr = (
             "name",
             "base_path",
         )
-        cls.distribution = {}
-        cls.publication = {}
-        cls.remote = {}
-        cls.repo = {}
+        self.distribution = {}
+        self.publication = {}
+        self.remote = {}
+        self.repo = {}
 
-    @classmethod
-    def tearDownClass(cls):
-        """Clean class-wide variables."""
-        for resource in (cls.publication, cls.remote, cls.repo):
+    def tearDown(self):
+        """Clean variables."""
+        for resource in (self.publication, self.remote, self.repo):
             if resource:
-                cls.client.delete(resource["pulp_href"])
+                self.client.delete(resource["pulp_href"])
 
-    def test_01_create(self):
+    def test_crud_workflow(self):
+        self._create()
+        self._read()
+        self._partially_update()
+        self._fully_update()
+        self._list()
+        self._delete_distribution()
+
+    def _create(self):
         """Create a publication distribution.
 
         Do the following:
@@ -139,42 +142,37 @@ class CRUDPublicationDistributionTestCase(unittest.TestCase):
             self.publication["distributions"][0], self.distribution["pulp_href"], self.publication
         )
 
-    @skip_if(bool, "distribution", False)
-    def test_02_read(self):
+    def _read(self):
         """Read distribution by its href."""
         distribution = self.client.get(self.distribution["pulp_href"])
         for key, val in self.distribution.items():
             with self.subTest(key=key):
                 self.assertEqual(distribution[key], val)
 
-    @skip_if(bool, "distribution", False)
-    def test_03_partially_update(self):
+    def _partially_update(self):
         """Update a distribution using PATCH."""
         for key in self.attr:
             with self.subTest(key=key):
-                self.do_partially_update_attr(key)
+                self._do_partially_update_attr(key)
 
-    @skip_if(bool, "distribution", False)
-    def test_03_fully_update(self):
+    def _fully_update(self):
         """Update a distribution using PUT."""
         for key in self.attr:
             with self.subTest(key=key):
-                self.do_fully_update_attr(key)
+                self._do_fully_update_attr(key)
 
-    @skip_if(bool, "distribution", False)
-    def test_04_list(self):
+    def _list(self):
         """Test the generic distribution list endpoint."""
         distributions = self.client.get(BASE_DISTRIBUTION_PATH)
         assert self.distribution["pulp_href"] in [distro["pulp_href"] for distro in distributions]
 
-    @skip_if(bool, "distribution", False)
-    def test_05_delete_distribution(self):
+    def _delete_distribution(self):
         """Delete a distribution."""
         self.client.delete(self.distribution["pulp_href"])
         with self.assertRaises(HTTPError):
             self.client.get(self.distribution["pulp_href"])
 
-    def do_fully_update_attr(self, attr):
+    def _do_fully_update_attr(self, attr):
         """Update a distribution attribute using HTTP PUT.
 
         :param attr: The name of the attribute to update.
@@ -188,7 +186,7 @@ class CRUDPublicationDistributionTestCase(unittest.TestCase):
         distribution = self.client.get(distribution["pulp_href"])
         self.assertEqual(string, distribution[attr], distribution)
 
-    def do_partially_update_attr(self, attr):
+    def _do_partially_update_attr(self, attr):
         """Update a distribution using HTTP PATCH.
 
         :param attr: The name of the attribute to update.
@@ -202,31 +200,24 @@ class CRUDPublicationDistributionTestCase(unittest.TestCase):
 
 
 class DistributionBasePathTestCase(unittest.TestCase):
-    """Test possible values for ``base_path`` on a distribution.
-
-    This test targets the following issues:
-
-    * `Pulp #2987 <https://pulp.plan.io/issues/2987>`_
-    * `Pulp #3412 <https://pulp.plan.io/issues/3412>`_
-    * `Pulp #4882 <https://pulp.plan.io/issues/4882>`_
-    * `Pulp Smash #906 <https://github.com/pulp/pulp-smash/issues/906>`_
-    * `Pulp Smash #956 <https://github.com/pulp/pulp-smash/issues/956>`_
-    """
+    """Test possible values for ``base_path`` on a distribution."""
 
     @classmethod
     def setUpClass(cls):
         """Create class-wide variables."""
         cls.cfg = config.get_config()
         cls.client = api.Client(cls.cfg)
+
+    def setUp(self):
+        """Set up resources."""
         body = gen_distribution()
         body["base_path"] = body["base_path"].replace("-", "/")
-        distribution = cls.client.post(FILE_DISTRIBUTION_PATH, body)
-        cls.distribution = cls.client.get(distribution["pulp_href"])
+        self.distribution = self.client.post(FILE_DISTRIBUTION_PATH, body)
 
-    @classmethod
-    def tearDownClass(cls):
+    def tearDown(self):
         """Clean up resources."""
-        cls.client.delete(cls.distribution["pulp_href"])
+        response = self.client.delete(self.distribution["pulp_href"])
+        monitor_task(response["pulp_href"])
 
     def test_negative_create_using_spaces(self):
         """Test that spaces can not be part of ``base_path``."""

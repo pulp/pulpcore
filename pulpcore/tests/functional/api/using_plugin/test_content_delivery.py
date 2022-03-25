@@ -105,7 +105,6 @@ class ContentDeliveryTestCase(unittest.TestCase):
         self.addCleanup(client.delete, remote["pulp_href"])
 
         sync(cfg, remote, repo)
-        repo = client.get(repo["pulp_href"])
 
         content = download_content_unit(cfg, distribution, unit_path)
         pulp_hash = hashlib.sha256(content).hexdigest()

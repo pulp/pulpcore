@@ -97,6 +97,7 @@ class CancelTaskTestCase(unittest.TestCase):
 
     def test_cancel_finished_task(self):
         repo = self.client.post(FILE_REPO_PATH, gen_repo())
+        self.addCleanup(self.client.delete, repo["pulp_href"])
         repo["name"] = utils.uuid4()
         task_href = self.client.patch(repo["pulp_href"], json=repo)
         with self.assertRaises(HTTPError) as ctx:
