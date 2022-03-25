@@ -266,6 +266,25 @@ usage.html#merging-existing-values>`_ which is for merging settings instead of o
 example, pulp_ansible makes use of this `here <https://github.com/pulp/pulp_ansible/blob/
 31dd6b77f0e2748644a4b76607be4a6cd2b6ce89/pulp_ansible/app/settings.py>`_.
 
+Some settings require validation to ensure the user has entered a valid value. Plugins can add
+validation for their settings using validators added in a ``dynaconf`` hook file that will run
+after all the settings have been loaded. Create a ``<your plugin>.app.dynaconf_hooks`` module like
+below so ``dynaconf`` can run your plugin's validators. See `dynaconf validator docs 
+<https://www.dynaconf.com/validation/>`_ for more information on writing validators.
+
+.. code-block:: python
+
+    from dynaconf import Validator
+
+    def post(settings):
+        """This hook is called by dynaconf after the settings are completely loaded"""
+        settings.validators.register(
+            Validator(...),
+            Validator(...),
+            ...
+        )
+        settings.validators.validate()
+
 
 .. _custom-url-routes:
 

@@ -297,9 +297,62 @@ TASK_DIAGNOSTICS = False
 
 # HERE STARTS DYNACONF EXTENSION LOAD (Keep at the very bottom of settings.py)
 # Read more at https://dynaconf.readthedocs.io/en/latest/guides/django.html
-import dynaconf  # noqa
+from dynaconf import DjangoDynaconf, Validator  # noqa
 
-settings = dynaconf.DjangoDynaconf(
+# Validators
+content_origin_validator = Validator(
+    "CONTENT_ORIGIN",
+    must_exist=True,
+    messages={
+        "must_exist_true": _(
+            "CONTENT_ORIGIN is a required setting but it was not configured. This may be caused "
+            "by invalid read permissions of the settings file. Note that CONTENT_ORIGIN is set by "
+            "the installer automatically."
+        )
+    },
+)
+
+cache_enabled_validator = Validator("CACHE_ENABLED", eq=True)
+redis_url_validator = Validator("REDIS_URL", must_exist=True, when=cache_enabled_validator)
+redis_host_validator = Validator("REDIS_HOST", must_exist=True, when=cache_enabled_validator)
+redis_port_validator = Validator("REDIS_PORT", must_exist=True, when=cache_enabled_validator)
+cache_validator = redis_url_validator | (redis_host_validator & redis_port_validator)
+cache_validator.messages["combined"] = _(
+    "CACHE_ENABLED is enabled but it requires to have REDIS configured. Please check "
+    "https://docs.pulpproject.org/pulpcore/configuration/settings.html#redis-settings "
+    "for more information."
+)
+
+sha256_validator = Validator(
+    "ALLOWED_CONTENT_CHECKSUMS",
+    cont="sha256",
+    messages={
+        "operations": "ALLOWED_CONTENT_CHECKSUMS MUST contain 'sha256' - Pulp's "
+        "content addressable storage relies on sha256 to identify entities."
+    },
+)
+
+unknown_algs_validator = Validator(
+    "ALLOWED_CONTENT_CHECKSUMS",
+    condition=lambda x: len(set(x).difference(constants.ALL_KNOWN_CONTENT_CHECKSUMS)) == 0,
+    messages={
+        "condition": _(
+            "ALLOWED_CONTENT_CHECKSUMS may only contain algorithms known to pulp - see "
+            "constants.ALL_KNOWN_CONTENT_CHECKSUMS for the allowed list."
+        )
+    },
+)
+
+api_root_validator = Validator(
+    "API_ROOT",
+    condition=lambda x: x.startswith("/") and x.endswith("/"),
+    messages={
+        "condition": _("The API_ROOT must start and end with a '/', currently it is '{value}'")
+    },
+)
+
+
+settings = DjangoDynaconf(
     __name__,
     GLOBAL_ENV_FOR_DYNACONF="PULP",
     ENV_SWITCHER_FOR_DYNACONF="PULP_ENV",
@@ -308,34 +361,18 @@ settings = dynaconf.DjangoDynaconf(
     ],
     ENVVAR_FOR_DYNACONF="PULP_SETTINGS",
     load_dotenv=False,
+    validators=[
+        content_origin_validator,
+        cache_validator,
+        sha256_validator,
+        unknown_algs_validator,
+        api_root_validator,
+    ],
 )
 # HERE ENDS DYNACONF EXTENSION LOAD (No more code below this line)
 
 _logger = getLogger(__name__)
 
-# Post-dyna-conf check if user provided a redis connection when enabling cache
-try:
-    if CACHE_ENABLED:
-        REDIS_URL or (REDIS_HOST and REDIS_PORT)
-except NameError:
-    raise ImproperlyConfigured(
-        _(
-            "CACHE_ENABLED is enabled but it requires to have REDIS configured. Please check "
-            "https://docs.pulpproject.org/pulpcore/configuration/settings.html#redis-settings "
-            "for more information."
-        )
-    )
-
-try:
-    CONTENT_ORIGIN
-except NameError:
-    raise ImproperlyConfigured(
-        _(
-            "CONTENT_ORIGIN is a required setting but it was not configured. This may be caused "
-            "by invalid read permissions of the settings file. Note that CONTENT_ORIGIN is set by "
-            "the installer automatically."
-        )
-    )
 
 if not (
     Path(sys.argv[0]).name == "sphinx-build"
@@ -351,25 +388,6 @@ if not (
             )
         )
 
-# Check legality of ALLOWED_CONTENT_CHECKSUMS post-dynaconf-load, in case it has been overridden
-# in a site-specific location (eg, in /etc/pulp/settings.py)
-if "sha256" not in ALLOWED_CONTENT_CHECKSUMS:
-    raise ImproperlyConfigured(
-        _(
-            "ALLOWED_CONTENT_CHECKSUMS MUST contain 'sha256' - Pulp's content-storage-addressing "
-            "relies on sha256 to identify entities."
-        )
-    )
-
-unknown_algs = set(ALLOWED_CONTENT_CHECKSUMS).difference(constants.ALL_KNOWN_CONTENT_CHECKSUMS)
-if unknown_algs:
-    raise ImproperlyConfigured(
-        _(
-            "ALLOWED_CONTENT_CHECKSUMS may only contain algorithms known to pulp - see "
-            "constants.ALL_KNOWN_CONTENT_CHECKSUMS for the allowed list. Unknown algorithms "
-            "provided: {}".format(unknown_algs)
-        )
-    )
 
 FORBIDDEN_CHECKSUMS = set(constants.ALL_KNOWN_CONTENT_CHECKSUMS).difference(
     ALLOWED_CONTENT_CHECKSUMS
@@ -432,15 +450,6 @@ if not (len(sys.argv) >= 2 and sys.argv[1] in _SKIPPED_COMMANDS_FOR_CONTENT_CHEC
         pass
     finally:
         connection.close()
-
-
-if not API_ROOT.startswith("/"):
-    i8ln_msg = _("The API_ROOT must start with a '/', currently it is '{API_ROOT}'")
-    raise ImproperlyConfigured(i8ln_msg.format(API_ROOT=API_ROOT))
-
-if not API_ROOT.endswith("/"):
-    i8ln_msg = _("The API_ROOT must end with a '/', currently it is '{API_ROOT}'")
-    raise ImproperlyConfigured(i8ln_msg.format(API_ROOT=API_ROOT))
 
 settings.set("V3_API_ROOT", settings.API_ROOT + "api/v3/")  # Not user configurable
 settings.set(
