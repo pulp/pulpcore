@@ -1,0 +1,1 @@
+Fixed validation order of required settings to occur before plugin settings are loaded.
