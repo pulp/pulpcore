@@ -17,6 +17,39 @@ Changelog
 
 .. towncrier release notes start
 
+3.16.6 (2022-03-25)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Reduced memory usage during tasks like sync by holding fewer objects in-memory unnecessarily.
+  :github:`2069`
+- Fixes duplicate key error ``Key (content_artifact_id, remote_id)`` when creating ``RemoteArtifacts``
+  during syncs in pulp_container and possibly other plugins.
+  :github:`2381`
+- Declared proper dependency on user model in migration 0040.
+  :github:`2403`
+- Fixed a rare deadlock when sync'ing overlapping content in high-concurrency envs.
+  :github:`2420`
+- Fixed secure proxy support by updating aiohttp version to ~=3.8.1.
+  :github:`2423`
+
+
+Plugin API
+----------
+
+Bugfixes
+~~~~~~~~
+
+- Adjusted the default size of the queues between pipelines to be 1 instead of 1000. The batchers in
+  the stage will still accumulate up to 500 (by default) items so batching is still in-effect there
+  where it matters.
+  :github:`2069`
+
+
 3.16.5 (2022-03-17)
 ===================
 REST API
