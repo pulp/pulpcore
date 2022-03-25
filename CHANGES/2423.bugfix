@@ -1,0 +1,1 @@
+Fixed secure proxy support by updating aiohttp version to ~=3.8.1.
