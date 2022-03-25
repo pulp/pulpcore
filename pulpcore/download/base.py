@@ -129,7 +129,7 @@ class BaseDownloader:
         allowing plugin writers to instantiate many downloaders in memory.
         """
         if not self._writer:
-            self._writer = tempfile.NamedTemporaryFile(dir=os.getcwd(), delete=False)
+            self._writer = tempfile.NamedTemporaryFile(dir=".", delete=False)
             self.path = self._writer.name
             self._digests = {n: pulp_hashlib.new(n) for n in Artifact.DIGEST_FIELDS}
             self._size = 0
