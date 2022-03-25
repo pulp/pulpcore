@@ -37,7 +37,7 @@ if [[ "$GITHUB_WORKFLOW" == "Pulpcore changelog update" ]]; then
   exit
 fi
 
-pip install mkdocs pymdown-extensions
+pip install mkdocs pymdown-extensions "Jinja2<3.1"
 
 mkdir -p ../bindings
 tar -xvf python-client-docs.tar --directory ../bindings
@@ -60,4 +60,4 @@ mkdocs build
 rsync -avzh site/ doc_builder_pulpcore@docs.pulpproject.org:/var/www/docs.pulpproject.org/pulpcore_client/
 
 # publish to docs.pulpproject.org/pulpcore_client/en/{release}
-rsync -avzh site/ doc_builder_pulpcore@docs.pulpproject.org:/var/www/docs.pulpproject.org/pulpcore_client/en/"$1"
+rsync -avzh site/ doc_builder_pulpcore@docs.pulpproject.org:/var/www/docs.pulpproject.org/pulpcore_client/en/"$2"
