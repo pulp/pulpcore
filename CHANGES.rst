@@ -18,6 +18,37 @@ Changelog
 .. towncrier release notes start
 
 
+3.18.3 (2022-03-25)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Reduced memory usage during tasks like sync by holding fewer objects in-memory unnecessarily.
+  :github:`2069`
+- Fixes duplicate key error ``Key (content_artifact_id, remote_id)`` when creating ``RemoteArtifacts``
+  during syncs in pulp_container and possibly other plugins.
+  :github:`2381`
+- Declared proper dependency on user model in migration 0040.
+  :github:`2403`
+- Fixed a rare deadlock when sync'ing overlapping content in high-concurrency envs.
+  :github:`2420`
+
+
+Plugin API
+----------
+
+Bugfixes
+~~~~~~~~
+
+- Adjusted the default size of the queues between pipelines to be 1 instead of 1000. The batchers in
+  the stage will still accumulate up to 500 (by default) items so batching is still in-effect there
+  where it matters.
+  :github:`2069`
+
+
 3.18.2 (2022-03-18)
 ===================
 REST API
@@ -201,6 +232,37 @@ Deprecations
 - The ``ACCESS_POLICY_VIEWSET_NAME`` attribute is no longer expected to be present on models. The
   RBAC machinery no longer uses this, and if present a deprecation warning will be emitted.
   :github:`2209`
+
+
+3.17.6 (2022-03-25)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Reduced memory usage during tasks like sync by holding fewer objects in-memory unnecessarily.
+  :github:`2069`
+- Fixes duplicate key error ``Key (content_artifact_id, remote_id)`` when creating ``RemoteArtifacts``
+  during syncs in pulp_container and possibly other plugins.
+  :github:`2381`
+- Declared proper dependency on user model in migration 0040.
+  :github:`2403`
+- Fixed a rare deadlock when sync'ing overlapping content in high-concurrency envs.
+  :github:`2420`
+
+
+Plugin API
+----------
+
+Bugfixes
+~~~~~~~~
+
+- Adjusted the default size of the queues between pipelines to be 1 instead of 1000. The batchers in
+  the stage will still accumulate up to 500 (by default) items so batching is still in-effect there
+  where it matters.
+  :github:`2069`
 
 
 3.17.5 (2022-03-18)
@@ -1208,6 +1270,41 @@ Misc
 ~~~~
 
 - :redmine:`8606`, :redmine:`9160`
+
+
+3.14.15 (2022-03-25)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fix delete repository version causing "duplicate key value violates unique constraint" error.
+  :github:`2047`
+- Reduced memory usage during tasks like sync by holding fewer objects in-memory unnecessarily.
+  :github:`2069`
+- This fix prevents the lost track of a content removed version when deleting a repository version that deletes a content that is added back in the subsequent version, but deleted again in a later version.
+  :github:`2267`
+- Fixes duplicate key error ``Key (content_artifact_id, remote_id)`` when creating ``RemoteArtifacts``
+  during syncs in pulp_container and possibly other plugins.
+  :github:`2381`
+- Declared proper dependency on user model in migration 0040.
+  :github:`2403`
+- Fixed a rare deadlock when sync'ing overlapping content in high-concurrency envs.
+  :github:`2420`
+
+
+Plugin API
+----------
+
+Bugfixes
+~~~~~~~~
+
+- Adjusted the default size of the queues between pipelines to be 1 instead of 1000. The batchers in
+  the stage will still accumulate up to 500 (by default) items so batching is still in-effect there
+  where it matters.
+  :github:`2069`
 
 
 3.14.14 (2022-03-10)
