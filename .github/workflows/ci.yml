@@ -62,6 +62,8 @@ jobs:
       # run black separately from flake8 to get a diff
       - name: Run black
         run: |
+          # Unpin click when https://github.com/psf/black/issues/2964 is solved
+          pip install "click<8.1"
           black --version
           black --check --diff .
 
