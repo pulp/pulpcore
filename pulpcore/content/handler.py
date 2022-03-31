@@ -817,6 +817,11 @@ class Handler:
         """
 
         remote = await sync_to_async(remote_artifact.remote.cast)()
+        log.debug(
+            _("Streaming content for {url} from Remote {remote}-{source}").format(
+                url=request.match_info["path"], remote=remote.name, source=remote_artifact.url
+            )
+        )
 
         range_start, range_stop = request.http_range.start, request.http_range.stop
         if range_start or range_stop:
