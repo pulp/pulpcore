@@ -41,8 +41,7 @@ like more control over the QuerySet Scoping feature it can be added manually by 
 ``get_queryset`` method to your ViewSet which returns the filtered QuerySet.
 
 To look up objects by permission easily from an existing QuerySet use the ``get_objects_for_user``
-provided by pulpcore or django-guardian. Here's an example where all items are displayed accessible
-via either of the permission frameworks:
+provided by pulpcore. Here's an example:
 
 .. code-block:: python
 

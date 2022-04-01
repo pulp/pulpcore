@@ -1,0 +1,2 @@
+Updated plugin writers RBAC guide to explain more roles and less permissions. Removed mentions of
+django-guardian.

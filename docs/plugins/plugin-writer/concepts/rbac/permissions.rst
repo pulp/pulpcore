@@ -1,31 +1,28 @@
-Permissions
-===========
+Permissions and Roles
+=====================
 
-The permissions system provides a way to assign permissions to specific users and groups of users.
-The model driving this data is provided by ``django.contrib.auth.models.Permission``. Each
-``Permission`` has a name, describing it and can be associated with one or more users or groups.
-
-Two types of permissions exist: Model-Level and Object-Level.
-
-:Model-Level: A permission that is associated with a specific model, but not an instance of that
-              model. This allows you to express concepts like "Hilde can modify all FileRemotes".
-:Object-Level: A permission that is associated with a specific instance of a specific model. This
-               allows you to express concepts like "Hilde can modify FileRemote(name='foo remote').
+The permissions system provides a way to assign permissions as part of roles to specific users and
+groups of users. The models driving this data are ``django.contrib.auth.models.Permission`` and
+``pulpcore.plugin.models.role.Role``. Each ``Permission`` has a name, describing it and can be
+associated with one or more ``Role``. Roles can be assigned to users or groups either on the
+Model-Level or Object-Level.
 
 
-.. _model_level_permissions:
+.. _model_permissions:
 
-Model-Level Permissions
------------------------
+Model Permissions
+-----------------
 
-By default, each model receives four permissions:
+``Permissions`` in Django are tied to models and usually map to certain
+actions performed thereon. By default, each model receives four permissions:
 
 * The “add” permission limits the user’s ability to view the “add” form and add an object.
-* The “change” permission limits a user’s ability to view the change list, view the “change” form and change an object.
+* The “change” permission limits a user’s ability to view the change list, view the “change”
+  form and change an object.
 * The “delete” permission limits the ability to delete an object.
 * The “view” permission limits the ability to view an object.
 
-The Model-level permissions are created automatically by Django, and receive a name like:
+The Model permissions are created automatically by Django, and receive a name like:
 ``<app_name>.<action>_<model_name>``. For example to change file remote the permission is named
 ``file.change_fileremote``. You can view the Permissions on a system via the Django ORM with:
 ``Permission.objects.all()``. See the `Django Permissions Docs <https://docs.djangoproject.com/en/
@@ -40,34 +37,17 @@ Here's an example of the Permissions automatically created for the ``FileRemote`
 * ``file.delete_fileremote``
 
 
-.. _object_level_permissions:
-
-Object-Level Permissions
-------------------------
-
-Object-level permissions are provided by `django-guardian <https://django-guardian.readthedocs.io/
-en/stable/>`_ which is a dependency of Pulp and enabled by default. This extends the normal Django
-calls `has_perm(perm, obj=None) <https://docs.djangoproject.com/en/2.2/ref/contrib/auth/
-#django.contrib.auth.models.User.has_perm>`_ `has_perms(perm_list, obj=None <https://docs.
-djangoproject.com/en/2.2/ref/contrib/auth/#django.contrib.auth.models.User.has_perms>`_ to give
-meaning to the ``obj`` portion of the call which Django otherwise would ignore.
-
-Django-guardian has great docs on what it provides for interacting with object-level permissions:
-
-* `Assigning object permissions <https://django-guardian.readthedocs.io/en/latest/userguide/assign.html#assign-obj-perms>`_
-* `Checking object permissions <https://django-guardian.readthedocs.io/en/latest/userguide/check.html#standard-way>`_
-* `Removing object permissions <https://django-guardian.readthedocs.io/en/latest/userguide/remove.html>`_
-* `Helpful shortcut functions <https://django-guardian.readthedocs.io/en/latest/api/guardian.shortcuts.html>`_
-
-
 .. _defining_custom_permissions:
 
 Defining Custom Permissions
 ---------------------------
 
-Any model can define a custom permission, and Django will automatically make a migration to add it
-for you. See the `Django Custom Permissions Documentation <https://docs.djangoproject.com/en/2.2/
-topics/auth/customizing/#custom-permissions>`_ for more information on how to do that.
+Any model can define custom permissions, and Django will automatically make a migration to add it
+for you. See the `Django Custom Permissions Documentation <https://docs.djangoproject.com/en/3.2/
+topics/auth/customizing/#custom-permissions>`_ for more information on how to do that. In contrast
+to ``AccessPolicies`` and ``creation_hooks``, permissions can only be defined by the plugin writer.
+As a rule of thumb, permissions should be the atomic building blocks for roles and each action that
+can be performed on an object should have its own permission.
 
 
 .. _custom_permission_for_repository_content_modification:
@@ -77,8 +57,8 @@ Custom Permission for Repository Content Modification
 
 The Repository subclass is one place where it's recommended to create a custom permission that
 manages the ability to modify RepositoryVersions underneath a Repository. While the add, create,
-view, and delete default permissions apply to the Repository itself, this new custom permission
-is intended to be required for any operations that produce RepositoryVersions, e.g. ``sync``,
+view, and delete default permissions apply to the Repository itself, this new custom permission is
+intended to be required for any operations that produce RepositoryVersions, e.g. ``sync``,
 ``modify``, or ``upload``.
 
 Here's an example of adding a permission like this for ``FileRepository``:
@@ -91,8 +71,8 @@ Here's an example of adding a permission like this for ``FileRepository``:
 
         class Meta:
             ...
-                permissions = (
-            ('modify_repo_content', 'Modify Repository Content'),
+            permissions = (
+                ('modify_repo_content', 'Modify Repository Content'),
             )
 
 .. note::
@@ -100,22 +80,47 @@ Here's an example of adding a permission like this for ``FileRepository``:
     It is not necessary to "namespace" this ``modify_repo_content`` permission because by including
     it in the meta class of your Detail view, it will already be namespaced on the correct object.
 
-.. _permission_checking_machinery:
 
-Permission Checking Machinery
------------------------------
+.. _roles:
 
-drf-access-policy provides a feature to enable conditional checks to be globalls available as their
-docs `describe here <https://rsinger86.github.io/ drf-access-policy/reusable_conditions/>`_. Pulp
-enables the ``reusable_conditions`` in its settings.py file, allowing a variety of condition
-checks to be globally available. Pulp enables this as follows:
+Roles
+-----
+
+``Roles`` are basically sets of ``Permissions``, and in Pulp, users and groups should receive their
+``Permissions`` exclusively via role assignments. Typical roles are ``owner`` for an object with all
+the permissions to view modify and delete the object, or ``viewer`` limited to see the object. To
+scope the reach of the permissions in a role, these role are assigned to ``Users`` or ``Groups``
+either on the model-level or the object-level.
+
+:Model-Level: A role is associated to a user or group for access to a specific model, but not an
+   instance of that model. This allows you to express concepts like "Hilde can administer all
+   FileRemotes".
+:Object-Level: A role is associated to a user or group for access to a specific instance of a
+   specific model. This allows you to express concepts like "Hilde can administer
+   FileRemote(name='foo remote').
+
+Certain roles may contain permissions that are only ever checked on the model-level.
+For example the ``creator`` role for a model that contains the models ``add`` permission.
+
+In the case for ``FileRemote``, the typical set of roles provided by the plugin looks like:
 
 .. code-block:: python
 
-    DRF_ACCESS_POLICY = {"reusable_conditions": "pulpcore.app.global_access_conditions"}
+    LOCKED_ROLES = {
+        "file.fileremote_creator": ["file.add_fileremote"],
+        "file.fileremote_owner": [
+            "file.view_fileremote",
+            "file.change_fileremote",
+            "file.delete_fileremote",
+            "file.manage_roles_fileremote",
+        ],
+        "file.fileremote_viewer": ["file.view_fileremote"],
+    }
 
-The ``pulpcore.app.global_access_conditions`` provides the following checks that are available for
-both users and plugin writers to use in their policies:
-
-.. automodule:: pulpcore.app.global_access_conditions
-   :members:
+Roles come in two flavors, locked and user-defined. First there are so called locked roles that are
+provided by plugins. Their name needs to be prefixed by the plugin ``app_label`` followed by a dot
+(see the example above). They can be seen, but not modified via the api, and are kept up to date
+with their definition in the plugin code. That way, plugins can ship default access policies that
+rely on those roles. The other flavor is user defined roles. These are managed via the Pulp
+API, and plugin code will not interfere with them. Users can opt to use the provided locked roles or
+roll their own.

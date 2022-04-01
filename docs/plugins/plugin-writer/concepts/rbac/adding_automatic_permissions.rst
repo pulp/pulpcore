@@ -57,7 +57,7 @@ example assigning the ``"core.task_viewer"`` role to the group ``"foo"``.
 .. code-block:: python
 
     {
-        "function": "add_for_groups",
+        "function": "add_roles_for_groups",
         "parameters": {
             "roles": ["core.task_viewer"],
             "groups": "foo",
