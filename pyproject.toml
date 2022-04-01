@@ -70,6 +70,7 @@ exclude = '''
 
 [tool.check-manifest]
 ignore = [
+    ".git-blame-ignore-revs",
     ".bumpversion.cfg",
     "CHANGES/**",
     "CONTRIBUTING.rst",
