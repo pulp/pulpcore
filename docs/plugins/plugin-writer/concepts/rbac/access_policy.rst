@@ -83,17 +83,16 @@ authorized.
 
     The ``admin`` user created on installations prior to RBAC being enabled has
     ``is_superuser=True``. Django assumes a superuser has any model-level permission even without it
-    being assigned. Additionally, django-guardian when checking object-level permissions defaults to
-    assuming the same although it is configurable. Generally, superusers are expected to bypass
-    authorization checks.
+    being assigned. Django's permission checking machinery assumes superusers bypass authorization
+    checks.
 
 
 Custom ViewSet Actions
 ----------------------
 
 The ``action`` part of a policy statement can reference `any custom action your viewset has
-<https://www.django-rest-framework.org/api-guide/viewsets/#marking-extra-actions-for-routing>`_. For
-example ``FileRepositoryViewSet`` has a ``sync`` custom action used by users to sync a given
+<https://www.django-rest-framework.org/api-guide/viewsets/#marking-extra-actions-for-routing>`_.
+For example ``FileRepositoryViewSet`` has a ``sync`` custom action used by users to sync a given
 ``FileRepository``. Below is an example of the default policy used to guard that action::
 
     {
@@ -198,9 +197,9 @@ For an explanation of the ``creation_hooks`` see the
 
 The attribute ``LOCKED_ROLES`` contains roles that are managed by the plugin author. Their name
 needs to be prefixed by the plugins ``app_label`` with a dot to prevent collisions. Roles defined
-there will be replicated and updated in the database after every migration. They are also
-marked ``locked=True`` to prevent being modified by users. The primary purpose of these roles is to
-allow plugin writers to refer to them in the default access policy.
+there will be replicated and updated in the database after every migration. They are also marked
+``locked=True`` to prevent being modified by users. The primary purpose of these roles is to allow
+plugin writers to refer to them in the default access policy.
 
 
 .. _handling_objects_created_prior_to_RBAC:
@@ -235,3 +234,42 @@ different Permission check by declaring the ``permission_classes`` check. For ex
         ...
         permission_classes = tuple()
         ...
+
+
+.. _permission_checking_machinery:
+
+Permission Checking Machinery
+-----------------------------
+
+drf-access-policy provides a feature to enable conditional checks to be globally available as their
+docs `describe here <https://rsinger86.github.io/ drf-access-policy/reusable_conditions/>`_. Pulp
+enables the ``reusable_conditions`` in its settings.py file, allowing a variety of condition checks
+to be globally available. Pulp enables this as follows:
+
+.. code-block:: python
+
+    DRF_ACCESS_POLICY = {"reusable_conditions": ["pulpcore.app.global_access_conditions"]}
+
+The ``pulpcore.app.global_access_conditions`` provides the following checks that are available for
+both users and plugin writers to use in their policies:
+
+.. automodule:: pulpcore.app.global_access_conditions
+   :members:
+
+
+.. _custom_permission_checks:
+
+Custom Permission Checks
+------------------------
+
+Plugins can provide their own permission checks by defining them in a
+``app.global_access_conditions`` module and adding an operation like
+
+.. code-block:: python
+
+    DRF_ACCESS_POLICY = {
+        "dynaconf_merge_unique": True,
+        "reusable_conditions": ["pulp_container.app.global_access_conditions"],
+    }
+
+to their ``app.settings`` module.
