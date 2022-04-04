@@ -1,0 +1,1 @@
+Fixed a (rare) deadlock around bulk_update() during syncs with overlapping content.
