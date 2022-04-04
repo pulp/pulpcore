@@ -11,6 +11,7 @@ from pulpcore.app.models import (
     ContentRedirectContentGuard,
     Distribution,
     Publication,
+    Repository,
     Content,
 )
 from pulpcore.app.serializers import (
@@ -55,7 +56,23 @@ class PublicationContentFilter(Filter):
         return qs.with_content([content.pk])
 
 
+class RepositoryThroughVersionFilter(Filter):
+    def filter(self, qs, value):
+        if value is None:
+            # user didn't supply a value
+            return qs
+
+        if not value:
+            raise serializers.ValidationError(
+                detail=_("No value supplied for {name} filter").format(name=self.field_name)
+            )
+
+        repository = NamedModelViewSet.get_resource(value, Repository)
+        return qs.filter(repository_version__repository=repository)
+
+
 class PublicationFilter(BaseFilterSet):
+    repository = RepositoryThroughVersionFilter(help_text=_("Repository referenced by HREF"))
     repository_version = RepositoryVersionFilter()
     pulp_created = IsoDateTimeFilter()
     content = PublicationContentFilter()
