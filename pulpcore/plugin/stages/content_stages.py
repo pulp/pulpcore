@@ -152,12 +152,40 @@ class ContentSaver(Stage):
                     # Maybe remove dict elements after to reduce memory?
                     content_artifact.artifact = to_update_ca_artifact[key]
                     to_update_ca_bulk.append(content_artifact)
-                # Sort the lists we're about to do bulk updates/creates on.
-                # We know to_update_ca_bulk entries already are in the DB, so we can enforce
-                # order just using pulp_id.
-                to_update_ca_bulk.sort(key=lambda x: x.pulp_id)
+
+                # to_update_ca_bulk are the CAs that we know are already persisted.
+                # We need to update their artifact_ids, and wish to do it in bulk to
+                # avoid hundreds of round-trips to the database.
+                #
+                # To avoid deadlocks in high-concurrency environments with overlapping
+                # content, we need to update the rows in some defined order. Unfortunately,
+                # postgres doesn't support order-on-update - but it *does* support ordering
+                # on select-for-update. So, we select-for-update, in pulp_id order, the
+                # rows we're about to update as one db-call, and then do the update in a
+                # second.
+                ids = [k.pulp_id for k in to_update_ca_bulk]
+                with transaction.atomic():
+                    # "len()" forces the QA to be evaluated. Using exist() or count() won't
+                    # work for us - Django is smart enough to either not-order, or even
+                    # not-emit, a select-for-update in these cases.
+                    #
+                    # To maximize performance, we make sure to only ask for pulp_ids, and
+                    # avoid instantiating a python-object for the affected CAs by using
+                    # values_list()
+                    len(
+                        ContentArtifact.objects.filter(pulp_id__in=ids)
+                        .only("pulp_id")
+                        .order_by("pulp_id")
+                        .select_for_update()
+                        .values_list()
+                    )
+                    ContentArtifact.objects.bulk_update(to_update_ca_bulk, ["artifact"])
+
+                # To avoid a similar deadlock issue when calling get_or_create, we sort the
+                # "new" CAs to make sure inserts happen in a defined order. Since we can't
+                # trust the pulp_id (by the time we go to create a CA, it may already exist,
+                # and be replaced by the 'real' one), we sort by their "natural key".
                 content_artifact_bulk.sort(key=lambda x: ContentArtifact.sort_key(x))
-                ContentArtifact.objects.bulk_update(to_update_ca_bulk, ["artifact"])
                 ContentArtifact.objects.bulk_get_or_create(content_artifact_bulk)
                 await self._post_save(batch)
             for declarative_content in batch:
