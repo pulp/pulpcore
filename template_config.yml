@@ -6,6 +6,7 @@
 additional_repos:
 - branch: main
   name: pulp_file
+  pytest_args: pulp_file.tests.functional
 - branch: main
   name: pulp-certguard
 aiohttp_fixtures_origin: 172.18.0.1
