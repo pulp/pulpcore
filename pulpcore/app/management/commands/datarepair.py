@@ -2,7 +2,7 @@ from gettext import gettext as _
 
 from django.db import connection
 from django.conf import settings
-from django.core.management import BaseCommand
+from django.core.management import BaseCommand, CommandError
 from django.db.models import Q
 from django.utils.encoding import force_bytes, force_str
 
@@ -13,7 +13,7 @@ from pulpcore.app.models import Remote
 
 class Command(BaseCommand):
     """
-    Django management command for repairing incorrectly migrated remote data.
+    Django management command for repairing improper data mistakes and migrations.
     """
 
     help = _(
@@ -25,14 +25,26 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         """Set up arguments."""
+        parser.add_argument("issue", help=_("The github issue # of the issue to be fixed."))
         parser.add_argument(
             "--dry-run",
             action="store_true",
-            help=_("Don't modify anything, just collect results on how many Remotes are impacted."),
+            help=_(
+                "Don't modify anything, just show the results of what would happen if this "
+                "command were run."
+            ),
         )
 
     def handle(self, *args, **options):
+        """Implement the command."""
+        issue = options["issue"]
 
+        if issue == "2327":
+            self.repair_2327(options)
+        else:
+            raise CommandError(_("Unknown issue: '{}'").format(issue))
+
+    def repair_2327(options):
         dry_run = options["dry_run"]
         fields = ("username", "password", "proxy_username", "proxy_password", "client_key")
 
