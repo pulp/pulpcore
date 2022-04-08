@@ -238,7 +238,7 @@ LOGGING = {
     },
 }
 
-DRF_ACCESS_POLICY = {"reusable_conditions": "pulpcore.app.global_access_conditions"}
+DRF_ACCESS_POLICY = {"reusable_conditions": ["pulpcore.app.global_access_conditions"]}
 
 CONTENT_PATH_PREFIX = "/pulp/content/"
 CONTENT_APP_TTL = 30
