@@ -37,22 +37,6 @@ In order to minimize space utilization, import/export operates on sets of
 :term:`Artifacts<Artifact>` only once per-export, rather than once for each
 :term:`Repository` being exported.
 
-.. note::
-
-    Export will not operate on :term:`RepositoryVersions<RepositoryVersion>` that have
-    been synchronized using ``policy=on_demand``. :term:`Artifacts<Artifact>` must actually
-    exist in order to be exported - this is, after all the only way for the Downstream Pulp
-    instance to gain access to them!
-
-.. note::
-
-    Import and Export strictly control which directories may be read from/written to via
-    the settings options ``ALLOWED_IMPORT_PATHS`` and ``ALLOWED_EXPORT_PATHS``.
-    These default to empty, if not explicitly set attempts to import or export will fail
-    with a validation error like
-
-        ``"Path '/tmp/exports/' is not an allowed export path"``
-
 Definitions
 ^^^^^^^^^^^
 Upstream
@@ -86,6 +70,55 @@ Import order
     for complicated repository-types, managing relationships requires that
     ModelResources be imported in order. Plugins are responsible for specifying the
     import-order of the ModelResources they own
+
+Assumptions
+^^^^^^^^^^^
+
+The import/export workflow operates on a set of assumptions. Violating them will result
+in error-messages as described below.
+
+On-Demand content not supported
+-------------------------------
+
+Export will not operate on :term:`RepositoryVersions<RepositoryVersion>` that have
+been synchronized using ``policy=on_demand`` or ``policy=streamed``. :term:`Artifacts<Artifact>`
+must actually exist in order to be exported - this is, after
+all the only way for the Downstream Pulp instance to gain access to them!
+
+If a repository is specified for export that utilized on-demand/streamed syncing, the
+export will fail with a RuntimeError:
+
+    ``Remote artifacts cannot be exported.``
+
+Export/Import Directories must be explicitly allowed
+----------------------------------------------------
+
+Import and Export strictly control which directories may be read from/written to via
+the settings options ``ALLOWED_IMPORT_PATHS`` and ``ALLOWED_EXPORT_PATHS``.
+These default to empty - if they not explicitly set, attempts to import or export will fail
+with a validation error like
+
+    ``"Path '/tmp/exports/' is not an allowed export path"``
+
+Installed plugins must match
+----------------------------
+
+A Downstream must support the complete set of plugins present in a given export. If the
+export includes plugins that are not installed in the Downstream, an import attempt will
+fail with a validation error like
+
+    ``Export uses pulp_rpm which is not installed.``
+
+Version-compatibility required
+------------------------------
+
+The export-to-import workflow is built on the assumption that the Upstream and
+Downstream instances are running "compatible" versions of pulpcore and plugins. In this
+context, "compatible" is defined as **"share the same X.Y version"**.  If this is not the
+case, an import attempt will fail with a validation error like
+
+    ``Export version 3.14.15 of pulpcore incompatible with installed version 3.16.3.``
+
 
 Exporting
 ^^^^^^^^^
