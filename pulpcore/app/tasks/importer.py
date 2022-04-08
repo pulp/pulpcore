@@ -91,7 +91,12 @@ def _import_file(fpath, resource_class, retry=False):
 
 
 def _check_versions(version_json):
-    """Compare the export version_json to the installed components."""
+    """
+    Compare the export version_json to the installed components.
+
+    An upstream whose db-metadata doesn't match the downstream won't import successfully; check
+    for compatibility and raise a ValidationError if incompatible versions are found.
+    """
     error_messages = []
     for component in version_json:
         try:
@@ -101,10 +106,13 @@ def _check_versions(version_json):
                 _("Export uses {} which is not installed.").format(component["component"])
             )
         else:
-            if version != component["version"]:
+            # Check that versions are compatible. Currently, "compatible" is defined as "same X.Y".
+            # Versions are strings that generally look like "X.Y.Z" or "X.Y.Z.dev"; we check that
+            # first two places are the same.
+            if version.split(".")[:2] != component["version"].split(".")[:2]:
                 error_messages.append(
                     _(
-                        "Export version {export_ver} of {component} does not match "
+                        "Export version {export_ver} of {component} incompatible with "
                         "installed version {ver}."
                     ).format(
                         export_ver=component["version"],
@@ -113,8 +121,8 @@ def _check_versions(version_json):
                     )
                 )
 
-        if error_messages:
-            raise ValidationError((" ".join(error_messages)))
+    if error_messages:
+        raise ValidationError((" ".join(error_messages)))
 
 
 def import_repository_version(importer_pk, destination_repo_pk, source_repo_name, tar_path):
