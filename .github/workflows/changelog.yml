@@ -47,7 +47,9 @@ jobs:
           mkdir -p docs/_static
           echo "{}" > docs/_static/api.json
       - name:
-        run: make diagrams html
+        run: |
+          pip install "Jinja2<3.1"
+          make diagrams html
         working-directory: ./docs
         env:
           PULP_CONTENT_ORIGIN: "http://localhost/"
