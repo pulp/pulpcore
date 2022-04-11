@@ -32,6 +32,7 @@ from django.db import (  # noqa: E402: module level not at top of file
     connection,
     DatabaseError,
     IntegrityError,
+    models,
     transaction,
 )
 from pulpcore.app.models import (  # noqa: E402: module level not at top of file
@@ -62,6 +63,34 @@ class PathNotResolved(HTTPNotFound):
         """Initialize the Exception."""
         self.path = path
         super().__init__(*args, **kwargs)
+
+
+class DistroListings(HTTPOk):
+    """
+    Response for browsing through the distributions and their potential multi-layered base-paths.
+
+    This is returned when visiting the base path of the content app (/pulp/content/) or a partial
+    base path of a distribution, e.g. /pulp/content/foo/ for distros /foo/bar/ & /foo/baz/
+    """
+
+    def __init__(self, path, distros):
+        """Create the HTML response."""
+        base_paths = (
+            distros.annotate(rel_path=models.functions.Substr("base_path", 1 + len(path)))
+            .annotate(
+                path=models.Func(
+                    models.F("rel_path"),
+                    function="SUBSTRING",
+                    template="%(function)s(%(expressions)s,'([^/]*)')",
+                )
+            )
+            .order_by("path")
+            .values_list("path", flat=True)
+            .distinct()
+        )
+        directory_list = (f"{b}/" for b in base_paths)
+        html = Handler.render_html(directory_list)
+        super().__init__(body=html, headers={"Content-Type": "text/html"})
 
 
 class ArtifactNotFound(Exception):
@@ -125,24 +154,18 @@ class Handler:
         Args:
             request (:class:`aiohttp.web.request`): The request from the client.
 
-        Returns:
+        Raises:
             :class:`aiohttp.web.HTTPOk`: The response back to the client.
+            :class: `PathNotResolved`: 404 error response when path doesn't exist.
         """
 
         def get_base_paths_blocking():
-            if self.distribution_model is None:
-                base_paths = list(Distribution.objects.values_list("base_path", flat=True))
-            else:
-                base_paths = list(
-                    self.distribution_model.objects.values_list("base_path", flat=True)
-                )
-            return base_paths
+            distro_model = self.distribution_model or Distribution
+            raise DistroListings(path="", distros=distro_model.objects.all())
 
         if request.method.lower() == "head":
-            return HTTPOk(headers={"Content-Type": "text/html"})
-        base_paths = await sync_to_async(get_base_paths_blocking)()
-        directory_list = ["{}/".format(path) for path in base_paths]
-        return HTTPOk(headers={"Content-Type": "text/html"}, body=self.render_html(directory_list))
+            raise HTTPOk(headers={"Content-Type": "text/html"})
+        await sync_to_async(get_base_paths_blocking)()
 
     @classmethod
     async def find_base_path_cached(cls, request, cached):
@@ -244,35 +267,31 @@ class Handler:
             The detail object of the matched distribution.
 
         Raises:
+            DistroListings: when multiple matches are possible.
             PathNotResolved: when not matched.
         """
         base_paths = cls._base_paths(path)
-        if cls.distribution_model is None:
-            try:
-                return (
-                    Distribution.objects.select_related(
-                        "repository", "repository_version", "publication", "remote"
-                    )
-                    .get(base_path__in=base_paths)
-                    .cast()
-                )
-            except ObjectDoesNotExist:
-                log.debug(
-                    "Distribution not matched for {path} using: {base_paths}".format(
-                        path=path, base_paths=base_paths
-                    )
-                )
-        else:
-            try:
-                return cls.distribution_model.objects.select_related(
+        distro_model = cls.distribution_model or Distribution
+        try:
+            return (
+                distro_model.objects.select_related(
                     "repository", "repository_version", "publication", "remote"
-                ).get(base_path__in=base_paths)
-            except ObjectDoesNotExist:
-                log.debug(
-                    "Distribution not matched for {path} using: {base_paths}".format(
-                        path=path, base_paths=base_paths
-                    )
                 )
+                .get(base_path__in=base_paths)
+                .cast()
+            )
+        except ObjectDoesNotExist:
+            if path.rstrip("/") in base_paths:
+                distros = distro_model.objects.filter(base_path__startswith=path)
+                if distros.count():
+                    raise DistroListings(path=path, distros=distros)
+
+            log.debug(
+                _("Distribution not matched for {path} using: {base_paths}").format(
+                    path=path, base_paths=base_paths
+                )
+            )
+
         raise PathNotResolved(path)
 
     @staticmethod
