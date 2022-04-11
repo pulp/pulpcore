@@ -623,7 +623,7 @@ class Handler:
                     request, StreamResponse(headers=headers), ra
                 )
 
-        raise PathNotResolved(path)
+        raise PathNotResolved(path, reason=_("Distribution is not pointing to a publication."))
 
     async def _stream_content_artifact(self, request, response, content_artifact):
         """
