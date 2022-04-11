@@ -1,3 +1,4 @@
 # Unit test requirements
 asynctest
 mock
+pytest-django
