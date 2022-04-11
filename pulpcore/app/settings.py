@@ -375,7 +375,8 @@ _logger = getLogger(__name__)
 
 
 if not (
-    Path(sys.argv[0]).name == "sphinx-build"
+    Path(sys.argv[0]).name == "pytest"
+    or Path(sys.argv[0]).name == "sphinx-build"
     or (len(sys.argv) >= 2 and sys.argv[1] == "collectstatic")
 ):
     try:
