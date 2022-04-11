@@ -247,21 +247,24 @@ class NewPulpWorker:
         """Wait for signals on the wakeup channel while heart beating."""
 
         _logger.debug(_("Worker %s entering sleep state."), self.name)
+        wakeup = False
         while not self.shutdown_requested:
+            # Handle all notifications before sleeping in `select`
+            while connection.connection.notifies:
+                item = connection.connection.notifies.pop(0)
+                if item.channel == "pulp_worker_wakeup":
+                    _logger.debug(_("Worker %s received wakeup call."), self.name)
+                    wakeup = True
+                # ignore all other notifications
+            if wakeup:
+                break
+
             r, w, x = select.select(
                 [self.sentinel, connection.connection], [], [], self.heartbeat_period
             )
             self.beat()
             if connection.connection in r:
                 connection.connection.poll()
-                if any(
-                    (
-                        item.channel == "pulp_worker_wakeup"
-                        for item in connection.connection.notifies
-                    )
-                ):
-                    connection.connection.notifies.clear()
-                    break
             if self.sentinel in r:
                 os.read(self.sentinel, 256)
 
@@ -279,6 +282,17 @@ class NewPulpWorker:
             task_process = Process(target=_perform_task, args=(task.pk, task_working_dir_rel_path))
             task_process.start()
             while True:
+                # Handle all notifications before sleeping in `select`
+                while connection.connection.notifies:
+                    item = connection.connection.notifies.pop(0)
+                    if item.channel == "pulp_worker_cancel" and item.payload == str(task.pk):
+                        _logger.info(_("Received signal to cancel current task %s."), task.pk)
+                        os.kill(task_process.pid, signal.SIGUSR1)
+                        cancel_state = TASK_STATES.CANCELED
+                    # ignore all other notifications
+                if cancel_state:
+                    break
+
                 r, w, x = select.select(
                     [self.sentinel, connection.connection, task_process.sentinel],
                     [],
@@ -288,17 +302,6 @@ class NewPulpWorker:
                 self.beat()
                 if connection.connection in r:
                     connection.connection.poll()
-                    if any(
-                        (
-                            item.channel == "pulp_worker_cancel" and item.payload == str(task.pk)
-                            for item in connection.connection.notifies
-                        )
-                    ):
-                        connection.connection.notifies.clear()
-                        _logger.info(_("Received signal to cancel current task %s."), task.pk)
-                        os.kill(task_process.pid, signal.SIGUSR1)
-                        cancel_state = TASK_STATES.CANCELED
-                        break
                 if task_process.sentinel in r:
                     if not task_process.is_alive():
                         break
