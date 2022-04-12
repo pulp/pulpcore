@@ -17,6 +17,32 @@ Changelog
 
 .. towncrier release notes start
 
+3.15.8 (2022-04-12)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fixed file descriptior leak during upload.
+  :github:`2087`
+- Fixed a bug in pulpcore-worker, where wakeup and cancel signals could be lost due to a race
+  condition.
+  :github:`2144`
+- Fixed a bug where notifications to workers may go unnoticed. This may lead to idle workers while
+  there are tasks waiting.
+  :github:`2506`
+- Changed the pulpcore-worker to mark abandoned tasks as "failed" instead of "canceled".
+  :github:`2532`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.15.7 (2022-03-25)
 ===================
 REST API
