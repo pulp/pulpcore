@@ -1,3 +1,0 @@
-Taught task-purge to process tasks in batches of 1000. This prevents large purges from using
-large amounts of memory as a result of reading all the affected Tasks into memory at once.
-
