@@ -17,6 +17,34 @@ Changelog
 
 .. towncrier release notes start
 
+3.17.7 (2022-04-12)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fixed two instances of Pulp not writing to the task worker's temporary directory.
+  :github:`2061`
+- Taught task-purge to process tasks in batches of 1000. This prevents large purges from using
+  large amounts of memory as a result of reading all the affected Tasks into memory at once.
+  :github:`2215`
+- Loosened the version-restrictions on PulpImport to only require X.Y matching.
+  :github:`2269`
+- Fixed a (rare) deadlock around bulk_update() during syncs with overlapping content.
+  :github:`2430`
+- Fixed a bug where notifications to workers may go unnoticed. This may lead to idle workers while
+  there are tasks waiting.
+  :github:`2506`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.17.6 (2022-03-25)
 ===================
 REST API
