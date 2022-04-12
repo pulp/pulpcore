@@ -188,7 +188,7 @@ class PulpAppConfig(PulpPluginAppConfig):
     label = "core"
 
     # The version of this app
-    version = "3.19.0"
+    version = "3.19.1.dev"
 
     def ready(self):
         super().ready()
