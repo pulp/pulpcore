@@ -17,6 +17,36 @@ Changelog
 
 .. towncrier release notes start
 
+3.16.7 (2022-04-12)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fixed two instances of Pulp not writing to the task worker's temporary directory.
+  :github:`2061`
+- Fixed file descriptior leak during upload.
+  :github:`2087`
+- Fixed a bug in pulpcore-worker, where wakeup and cancel signals could be lost due to a race
+  condition.
+  :github:`2144`
+- Loosened the version-restrictions on PulpImport to only require X.Y matching.
+  :github:`2269`
+- Fixed a (rare) deadlock around bulk_update() during syncs with overlapping content.
+  :github:`2430`
+- Fixed a bug where notifications to workers may go unnoticed. This may lead to idle workers while
+  there are tasks waiting.
+  :github:`2506`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.16.6 (2022-03-25)
 ===================
 REST API
