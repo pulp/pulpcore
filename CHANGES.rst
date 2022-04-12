@@ -17,6 +17,122 @@ Changelog
 
 .. towncrier release notes start
 
+3.19.0 (2022-04-12)
+===================
+REST API
+--------
+
+Features
+~~~~~~~~
+
+- Content app now logs where it gets on-demand and streamed content from.
+  :github:`2059`
+- Reclaim disk space can now accept ["*"] for ``repo_hrefs`` to specify all repositories for reclaim.
+  :github:`2065`
+- Added a filter to allow searching for user roles by their description.
+  :github:`2276`
+- Add swagger view and make OpenAPI human readable
+  :github:`2291`
+- Adds a ``TASK_DIAGNOSTICS`` setting which will enable each task to write out diagnostic information
+  such as memory usage of the task to a data file in ``/var/tmp/pulp/<task_UUID>/``. This is disabled
+  by default.
+  :github:`2329`
+- Added a ``/pulp/api/v3/distributions/`` endpoint to list all distributions.
+  :github:`2379`
+
+
+Bugfixes
+~~~~~~~~
+
+- Added reason for 404 error when accessing distributions without a publication.
+  :github:`1910`
+- Fixed validation order of required settings to occur before plugin settings are loaded.
+  :github:`1968`
+- Fix delete repository version causing "duplicate key value violates unique constraint" error.
+  :github:`2047`
+- Fixed two instances of Pulp not writing to the task worker's temporary directory.
+  :github:`2061`
+- Reduced memory usage during tasks like sync by holding fewer objects in-memory unnecessarily.
+  :github:`2069`
+- Fixed migration 0064_add_new_style_task_columns to purge extraneous ReservedResource and
+  TaskReservedResource entries, which could block sync and publish tasks post-upgrade.
+
+  Also taught the migration to bulk-update the Task changes. In large installations, this
+  should have a positive impact on the time it takes to apply the migration.
+  :github:`2101`
+- Taught task-purge to process tasks in batches of 1000. This prevents large purges from using
+  large amounts of memory as a result of reading all the affected Tasks into memory at once.
+  :github:`2215`
+- This fix prevents the lost track of a content removed version when deleting a repository version that deletes a content that is added back in the subsequent version, but deleted again in a later version.
+  :github:`2267`
+- Added transactions around repository version operations to prevent data loss.
+  :github:`2268`
+- Loosened the version-restrictions on PulpImport to only require X.Y matching.
+  :github:`2269`
+- Fix a mistake in a previous migration which may have caused improperly encrypted remote fields.
+  :github:`2327`
+- Fixed improper fields being listed in ``RepositoryVersion`` repair API.
+  :github:`2330`
+- Fixes duplicate key error ``Key (content_artifact_id, remote_id)`` when creating ``RemoteArtifacts``
+  during syncs in pulp_container and possibly other plugins.
+  :github:`2381`
+- Declared proper dependency on user model in migration 0040.
+  :github:`2403`
+- Fixed a rare deadlock when sync'ing overlapping content in high-concurrency envs.
+  :github:`2420`
+- Fixed a (rare) deadlock around bulk_update() during syncs with overlapping content.
+  :github:`2430`
+- Fixed a bug where notifications to workers may go unnoticed. This may lead to idle workers while
+  there are tasks waiting.
+  :github:`2506`
+
+
+Improved Documentation
+~~~~~~~~~~~~~~~~~~~~~~
+
+- Updates and revises docs on webserver based authentication.
+  :github:`2260`
+- Adds docs on recording and building graphs from the memory data saved by the ``TASK_DIAGNOSTICS``
+  setting.
+  :github:`2329`
+
+
+Removals
+~~~~~~~~
+
+- Removed the Django UI Admin site. It was added to provide RBAC permissions management before there
+  were APIs that could provide that. It was tech preview and now there are APIs for user and group
+  management, along with role and permission assignment. It is being removed because the direct DB
+  access it provides has caused some issues for users, especially since its not integrated with the
+  validation provided by Django Rest Framework, which Pulp uses.
+  :github:`2374`
+
+
+Plugin API
+----------
+
+Features
+~~~~~~~~
+
+- Exposed the ``PulpRemoteUserAuthentication`` class to plugin writers. This will allow the use of
+  remote authentication methods when building protected endpoints.
+  :github:`2262`
+- Added new global access conditions ``has_publication_param_model_or_obj_perms`` and
+  ``has_repo_or_repo_ver_param_model_or_obj_perms`` for RBAC checks.
+  :github:`2364`
+- Changed the ``reusable_conditions`` module configuration for access policies to being a list to
+  enable plugins to add custom modules to it.
+  :github:`2495`
+
+
+Bugfixes
+~~~~~~~~
+
+- Adjusted the default size of the queues between pipelines to be 1 instead of 1000. The batchers in
+  the stage will still accumulate up to 500 (by default) items so batching is still in-effect there
+  where it matters.
+  :github:`2069`
+
 
 3.18.3 (2022-03-25)
 ===================
