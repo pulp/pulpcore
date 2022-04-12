@@ -17,6 +17,29 @@ Changelog
 
 .. towncrier release notes start
 
+3.14.16 (2022-04-12)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fixed two instances of Pulp not writing to the task worker's temporary directory.
+  :github:`2061`
+- Fixed a (rare) deadlock around bulk_update() during syncs with overlapping content.
+  :github:`2430`
+- Fixed a bug where notifications to workers may go unnoticed. This may lead to idle workers while
+  there are tasks waiting.
+  :github:`2506`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.14.15 (2022-03-25)
 ====================
 REST API

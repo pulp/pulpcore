@@ -1,1 +1,0 @@
-Fixed two instances of Pulp not writing to the task worker's temporary directory.

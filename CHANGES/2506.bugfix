@@ -1,2 +1,0 @@
-Fixed a bug where notifications to workers may go unnoticed. This may lead to idle workers while
-there are tasks waiting.
