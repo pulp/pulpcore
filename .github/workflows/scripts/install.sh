@@ -29,13 +29,13 @@ TAG=ci_build
 if [ -e $REPO_ROOT/../pulp_file ]; then
   PULP_FILE=./pulp_file
 else
-  PULP_FILE=git+https://github.com/pulp/pulp_file.git@main
+  PULP_FILE=git+https://github.com/pulp/pulp_file.git@1.10
 fi
 
 if [ -e $REPO_ROOT/../pulp-certguard ]; then
   PULP_CERTGUARD=./pulp-certguard
 else
-  PULP_CERTGUARD=git+https://github.com/pulp/pulp-certguard.git@main
+  PULP_CERTGUARD=git+https://github.com/pulp/pulp-certguard.git@1.5
 fi
 if [[ "${RELEASE_WORKFLOW:-false}" == "true" ]]; then
   PLUGIN_NAME=./pulpcore/dist/pulpcore-$PLUGIN_VERSION-py3-none-any.whl
