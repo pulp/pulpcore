@@ -43,6 +43,7 @@ STATIC_URL = "/assets/"
 STATIC_ROOT = DEPLOY_ROOT / STATIC_URL.strip("/")
 
 DEFAULT_FILE_STORAGE = "pulpcore.app.models.storage.FileSystem"
+REDIRECT_TO_OBJECT_STORAGE = True
 
 WORKING_DIRECTORY = DEPLOY_ROOT / "tmp"
 FILE_UPLOAD_TEMP_DIR = WORKING_DIRECTORY
@@ -310,6 +311,16 @@ content_origin_validator = Validator(
         )
     },
 )
+storage_validator = (
+    Validator("REDIRECT_TO_OBJECT_STORAGE", eq=False)
+    | Validator("DEFAULT_FILE_STORAGE", eq="pulpcore.app.models.storage.FileSystem")
+    | Validator("DEFAULT_FILE_STORAGE", eq="storages.backends.azure_storage.AzureStorage")
+    | Validator("DEFAULT_FILE_STORAGE", eq="storages.backends.s3boto3.S3Boto3Storage")
+)
+storage_validator.messages["combined"] = (
+    "'REDIRECT_TO_OBJECT_STORAGE=True' is only supported with the local file, S3 or Azure storage"
+    "backend configured in DEFAULT_FILE_STORAGE."
+)
 
 cache_enabled_validator = Validator("CACHE_ENABLED", eq=True)
 redis_url_validator = Validator("REDIS_URL", must_exist=True, when=cache_enabled_validator)
@@ -361,11 +372,12 @@ settings = DjangoDynaconf(
     ENVVAR_FOR_DYNACONF="PULP_SETTINGS",
     load_dotenv=False,
     validators=[
-        content_origin_validator,
-        cache_validator,
-        sha256_validator,
-        unknown_algs_validator,
         api_root_validator,
+        cache_validator,
+        content_origin_validator,
+        sha256_validator,
+        storage_validator,
+        unknown_algs_validator,
     ],
 )
 # HERE ENDS DYNACONF EXTENSION LOAD (No more code below this line)

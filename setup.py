@@ -20,6 +20,7 @@ setup(
     python_requires=">=3.8",
     install_requires=requirements,
     extras_require={
+        "sftp": ["django-storages[sftp]"],
         "s3": ["django-storages[boto3]"],
         "azure": ["django-storages[azure]>=1.12.2"],
         "prometheus": ["django-prometheus"],

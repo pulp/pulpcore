@@ -62,9 +62,17 @@ DEFAULT_FILE_STORAGE
    By default, Pulp uses the local filesystem to store files. The default option which
    uses the local filesystem is ``pulpcore.app.models.storage.FileSystem``.
 
-   This can be configured though to alternatively use `Amazon S3 <https://aws.amazon.com/s3/>`_. To
-   use S3, set ``DEFAULT_FILE_STORAGE`` to ``storages.backends.s3boto3.S3Boto3Storage``. For more
-   information about different Pulp storage options, see the :ref:`storage documentation <storage>`.
+   For more information about different Pulp storage options, see the
+   :ref:`storage documentation <storage>`.
+
+REDIRECT_TO_OBJECT_STORAGE
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+   When set to ``True`` access to artifacts is redirected to the corresponding Cloud storage
+   configured in ``DEFAULT_FILE_STORAGE`` using pre-authenticated URLs. When set to ``False``
+   artifacts are always served by the content app instead.
+
+   Defaults to ``True``; ignored for local file storage.
 
 MEDIA_ROOT
 ^^^^^^^^^^
