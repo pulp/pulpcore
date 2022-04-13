@@ -134,6 +134,34 @@ Bugfixes
   :github:`2069`
 
 
+3.18.4 (2022-04-12)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fixed two instances of Pulp not writing to the task worker's temporary directory.
+  :github:`2061`
+- Taught task-purge to process tasks in batches of 1000. This prevents large purges from using
+  large amounts of memory as a result of reading all the affected Tasks into memory at once.
+  :github:`2215`
+- Loosened the version-restrictions on PulpImport to only require X.Y matching.
+  :github:`2269`
+- Fixed a (rare) deadlock around bulk_update() during syncs with overlapping content.
+  :github:`2430`
+- Fixed a bug where notifications to workers may go unnoticed. This may lead to idle workers while
+  there are tasks waiting.
+  :github:`2506`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.18.3 (2022-03-25)
 ===================
 REST API
@@ -348,6 +376,34 @@ Deprecations
 - The ``ACCESS_POLICY_VIEWSET_NAME`` attribute is no longer expected to be present on models. The
   RBAC machinery no longer uses this, and if present a deprecation warning will be emitted.
   :github:`2209`
+
+
+3.17.7 (2022-04-12)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fixed two instances of Pulp not writing to the task worker's temporary directory.
+  :github:`2061`
+- Taught task-purge to process tasks in batches of 1000. This prevents large purges from using
+  large amounts of memory as a result of reading all the affected Tasks into memory at once.
+  :github:`2215`
+- Loosened the version-restrictions on PulpImport to only require X.Y matching.
+  :github:`2269`
+- Fixed a (rare) deadlock around bulk_update() during syncs with overlapping content.
+  :github:`2430`
+- Fixed a bug where notifications to workers may go unnoticed. This may lead to idle workers while
+  there are tasks waiting.
+  :github:`2506`
+
+
+Plugin API
+----------
+
+No significant changes.
 
 
 3.17.6 (2022-03-25)
@@ -671,6 +727,36 @@ Bugfixes
   :redmine:`9608`
 
 
+3.16.7 (2022-04-12)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fixed two instances of Pulp not writing to the task worker's temporary directory.
+  :github:`2061`
+- Fixed file descriptior leak during upload.
+  :github:`2087`
+- Fixed a bug in pulpcore-worker, where wakeup and cancel signals could be lost due to a race
+  condition.
+  :github:`2144`
+- Loosened the version-restrictions on PulpImport to only require X.Y matching.
+  :github:`2269`
+- Fixed a (rare) deadlock around bulk_update() during syncs with overlapping content.
+  :github:`2430`
+- Fixed a bug where notifications to workers may go unnoticed. This may lead to idle workers while
+  there are tasks waiting.
+  :github:`2506`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.16.6 (2022-03-25)
 ===================
 REST API
@@ -985,6 +1071,32 @@ Removals
 - ContentSaver._pre_save() and ContentSaver._post_save() must now be implemented as synchronous functions rather than coroutines.
   :redmine:`9478`
 
+
+
+3.15.8 (2022-04-12)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fixed file descriptior leak during upload.
+  :github:`2087`
+- Fixed a bug in pulpcore-worker, where wakeup and cancel signals could be lost due to a race
+  condition.
+  :github:`2144`
+- Fixed a bug where notifications to workers may go unnoticed. This may lead to idle workers while
+  there are tasks waiting.
+  :github:`2506`
+- Changed the pulpcore-worker to mark abandoned tasks as "failed" instead of "canceled".
+  :github:`2532`
+
+
+Plugin API
+----------
+
+No significant changes.
 
 
 3.15.7 (2022-03-25)
@@ -1386,6 +1498,29 @@ Misc
 ~~~~
 
 - :redmine:`8606`, :redmine:`9160`
+
+
+3.14.16 (2022-04-12)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fixed two instances of Pulp not writing to the task worker's temporary directory.
+  :github:`2061`
+- Fixed a (rare) deadlock around bulk_update() during syncs with overlapping content.
+  :github:`2430`
+- Fixed a bug where notifications to workers may go unnoticed. This may lead to idle workers while
+  there are tasks waiting.
+  :github:`2506`
+
+
+Plugin API
+----------
+
+No significant changes.
 
 
 3.14.15 (2022-03-25)
