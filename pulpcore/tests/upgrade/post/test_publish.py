@@ -16,7 +16,6 @@ from pulpcore.tests.functional.api.using_plugin.utils import (
     gen_file_client,
     gen_file_remote,
 )
-from pulpcore.tests.functional.utils import set_up_module as setUpModule  # noqa:F401
 
 from pulpcore.client.pulp_file import (
     DistributionsFileApi,

@@ -10,14 +10,10 @@ from pulp_smash import api, cli, config
 from pulp_smash.pulp3.constants import UPLOAD_PATH
 from pulp_smash.utils import http_get
 
-from pulpcore.tests.functional.api.using_plugin.constants import (
-    FILE_CHUNKED_PART_1_URL,
-    FILE_CHUNKED_PART_2_URL,
-    FILE_TO_BE_CHUNKED_URL,
-)
-from pulpcore.tests.functional.api.using_plugin.utils import (  # noqa:F401
-    set_up_module as setUpModule,
-)
+
+FILE_CHUNKED_PART_1_URL = "https://fixtures.pulpproject.org/file-chunked/chunkaa"
+FILE_CHUNKED_PART_2_URL = "https://fixtures.pulpproject.org/file-chunked/chunkab"
+FILE_TO_BE_CHUNKED_URL = "https://fixtures.pulpproject.org/file-chunked/1.iso"
 
 
 class ChunkedUploadTestCase(unittest.TestCase):

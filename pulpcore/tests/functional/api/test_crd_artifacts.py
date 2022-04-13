@@ -10,10 +10,8 @@ from pulp_smash.pulp3.bindings import delete_orphans
 from pulp_smash.pulp3.constants import ARTIFACTS_PATH
 from requests.exceptions import HTTPError
 
-# This import is an exception, we use a file url but we are not actually using
-# any plugin
-from pulpcore.tests.functional.api.using_plugin.constants import FILE_URL
-from pulpcore.tests.functional.utils import set_up_module as setUpModule  # noqa:F401
+
+FILE_URL = "https://fixtures.pulpproject.org/file/1.iso"
 
 
 class ArtifactTestCase(unittest.TestCase):
