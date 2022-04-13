@@ -25,10 +25,10 @@ if not initial_branch or initial_branch not in branches:
 else:
     starting = branches.index(initial_branch)
 
+github_api = "https://api.github.com"
+workflow_path = "/actions/workflows/update_ci.yml/dispatches"
+url = f"{github_api}/repos/pulp/pulpcore{workflow_path}"
+
 for branch in branches[starting:]:
     print(f"Updating {branch}")
-    requests.post(
-        "https://api.github.com/repos/pulp/pulpcore/actions/workflows/update_ci.yml/dispatches",
-        headers=headers,
-        json={"ref": branch},
-    )
+    requests.post(url, headers=headers, json={"ref": branch})
