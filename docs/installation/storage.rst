@@ -13,6 +13,48 @@ Storage
   You can also configure Pulp to use Amazon S3 and Azure storage using the Pulp installer. For more information
   see the `Pulp installer documentation <https://docs.pulpproject.org/pulp_installer/quickstart/#storage>`_
 
+SFTP
+^^^^
+
+Configuring Pulp to use SFTP storage
+------------------------------------
+
+To use an SFTP server for pulp storage, complete the following steps:
+
+1. Install the optional dependencies for using sftp storage::
+
+        pip install pulpcore[sftp]
+
+2. Set the ``REDIRECT_TO_OBJECT_STORAGE`` option to ``False``.
+
+3. Set the ``MEDIA_ROOT`` configuration option to ``""``.
+
+4. Set the ``DEFAULT_FILE_STORAGE`` configuration option to
+   ``"pulpcore.app.models.storage.PulpSFTPStorage"``.
+
+5. Configure the remaining options for ``SFTPStorage`` according to the
+   `django-storages documentation <https://django-storages.readthedocs.io/en/latest/backends/sftp.html>`_.
+
+Example
+-------
+
+We assume that your storage server is set up to serve sftp at the hostname "sftp-storage-host".
+It provides a user named "foo" with an ssh keypair stored in "/etc/pulp/certs/storage_id_ed25519".
+In its sftp account there should be a directory named "storage" with write access for that user.
+Varying names would need to be adjusted in the example below.
+
+The configuration would look like::
+
+        REDIRECT_TO_OBJECT_STORAGE = False
+        DEFAULT_FILE_STORAGE = "pulpcore.app.models.storage.PulpSFTPStorage"
+        MEDIA_ROOT = ""
+        SFTP_STORAGE_HOST = "sftp-storage-host"
+        SFTP_STORAGE_ROOT = "/storage/"
+        SFTP_STORAGE_PARAMS = {
+            "username": "foo",
+            "key_filename": "/etc/pulp/certs/storage_id_ed25519",
+        }
+
 Amazon S3
 ^^^^^^^^^
 

@@ -18,6 +18,7 @@ from pulpcore.app.redis_connection import (
     get_redis_connection,
     get_async_redis_connection,
 )
+from pulpcore.responses import ArtifactResponse
 
 DEFAULT_EXPIRES_TTL = settings.CACHE_SETTINGS["EXPIRES_TTL"]
 
@@ -291,6 +292,7 @@ class AsyncContentCache(AsyncCache):
 
     RESPONSE_TYPES = {
         "FileResponse": FileResponse,
+        "ArtifactResponse": ArtifactResponse,
         "Response": Response,
         "Redirect": HTTPFound,
     }
@@ -382,6 +384,9 @@ class AsyncContentCache(AsyncCache):
         if isinstance(response, FileResponse):
             entry["path"] = str(response._path)
             entry["type"] = "FileResponse"
+        elif isinstance(response, ArtifactResponse):
+            entry["artifact_pk"] = str(response._artifact.pk)
+            entry["type"] = "ArtifactResponse"
         elif isinstance(response, (Response, HTTPSuccessful)):
             body = response.body
             if isinstance(body, bytes):

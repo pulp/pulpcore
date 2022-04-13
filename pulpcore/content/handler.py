@@ -7,12 +7,18 @@ from gettext import gettext as _
 
 from aiohttp.client_exceptions import ClientResponseError
 from aiohttp.web import FileResponse, StreamResponse, HTTPOk
-from aiohttp.web_exceptions import HTTPForbidden, HTTPFound, HTTPNotFound
+from aiohttp.web_exceptions import (
+    HTTPForbidden,
+    HTTPFound,
+    HTTPNotFound,
+)
 from yarl import URL
 
 from asgiref.sync import sync_to_async
 
 import django
+
+from pulpcore.responses import ArtifactResponse
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "pulpcore.app.settings")
 django.setup()
@@ -781,6 +787,8 @@ class Handler:
             if not os.path.exists(path):
                 raise Exception(_("Expected path '{}' is not found").format(path))
             return FileResponse(path, headers=headers)
+        elif not settings.REDIRECT_TO_OBJECT_STORAGE:
+            return ArtifactResponse(content_artifact.artifact, headers=headers)
         elif settings.DEFAULT_FILE_STORAGE == "storages.backends.s3boto3.S3Boto3Storage":
             content_disposition = f"attachment;filename={content_artifact.relative_path}"
             parameters = {"ResponseContentDisposition": content_disposition}

@@ -97,6 +97,31 @@ class FileSystem(FileSystemStorage):
         return str(name).replace("\\", "/")
 
 
+try:
+    from storages.backends.sftpstorage import SFTPStorage
+
+    class PulpSFTPStorage(SFTPStorage):
+        """Upstream class is missing the file_overwrite option."""
+
+        def get_available_name(self, name, max_length=None):
+            """
+            Returns a filename for the file even if it already exists.
+
+            Content adressable storage must be saved with the expected filename.
+
+            Args:
+                name (string): Requested file name
+                max_length (int): Maximum length of the filename. Not used in this implementation.
+
+            Returns:
+                Name of the file.
+            """
+            return name
+
+except ImportError:
+    pass
+
+
 def get_artifact_path(sha256digest):
     """
     Determine the relative path where a file backing the Artifact should be stored.
