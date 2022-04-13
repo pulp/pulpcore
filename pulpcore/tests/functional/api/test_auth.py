@@ -10,8 +10,6 @@ from pulp_smash.pulp3.constants import ARTIFACTS_PATH
 from requests.auth import HTTPBasicAuth
 from requests.exceptions import HTTPError
 
-from pulpcore.tests.functional.utils import set_up_module as setUpModule  # noqa:F401
-
 
 class AuthTestCase(unittest.TestCase):
     """Test Pulp3 Authentication."""
