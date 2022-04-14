@@ -57,6 +57,9 @@ jobs:
         env:
           SECRETS_CONTEXT: ${{ toJson(secrets) }}
 
+      - name: Verify upper bound requirements
+        run: python .ci/scripts/upper_bound.py
+
       - name: Create the release commit, tag it, create a post-release commit, and build plugin package
         run: python .github/workflows/scripts/release.py ${{ github.event.inputs.release }}
 
