@@ -14,6 +14,7 @@ if [ ! -f "template_config.yml" ]; then
 fi
 
 pushd ../plugin_template
+pip install -r test_requirements.txt
 ./plugin-template --github pulpcore
 popd
 
