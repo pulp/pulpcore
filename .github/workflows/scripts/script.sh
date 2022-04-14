@@ -29,6 +29,10 @@ export PULP_SETTINGS=$PWD/.ci/ansible/settings/settings.py
 export PULP_URL="https://pulp"
 
 if [[ "$TEST" = "docs" ]]; then
+  if [[ "$GITHUB_WORKFLOW" == "Pulpcore CI" ]]; then
+    pip install towncrier==19.9.0
+    towncrier --yes --version 4.0.0.ci
+  fi
   cd docs
   make PULP_URL="$PULP_URL" diagrams html
   tar -cvf docs.tar ./_build
