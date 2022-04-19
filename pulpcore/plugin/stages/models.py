@@ -136,7 +136,7 @@ class DeclarativeContent:
         """Whether this content is being awaited on and must therefore not wait forever in batches.
         When overwritten in subclasses, a `True` value must never be turned into `False`.
         """
-        return not self._resolved and self._future is None
+        return self._resolved or self._future is None
 
     async def resolution(self):
         """Coroutine that waits for the content to be saved to database.
