@@ -10,7 +10,8 @@ from logging import getLogger
 
 from django.core.files.storage import default_storage
 from django.db.models import F
-
+from naya.json import stream_array, tokenize
+from io import StringIO
 from pkg_resources import DistributionNotFound, get_distribution
 from rest_framework.serializers import ValidationError
 from tablib import Dataset
@@ -43,6 +44,8 @@ CONTENT_FILE = "pulpcore.app.modelresource.ContentResource.json"
 CA_FILE = "pulpcore.app.modelresource.ContentArtifactResource.json"
 VERSIONS_FILE = "versions.json"
 CONTENT_MAPPING_FILE = "content_mapping.json"
+# How many entities from an import-file should be processed at one time
+IMPORT_BATCH_SIZE = 100
 
 # Concurrent imports w/ overlapping content can collide - how many attempts are we willing to
 # make before we decide this is a fatal error?
@@ -58,22 +61,52 @@ def _destination_repo(importer, source_repo_name):
     return Repository.objects.get(name=dest_repo_name)
 
 
+def _impfile_iterator(fd):
+    """
+    Iterate over an import-file returning batches of rows as a json-array-string.
+
+    We use naya.json.stream_array() to get individual rows; once a batch is gathered,
+    we yield the result of json.dumps() for that batch. Repeat until all rows have been
+    called for.
+    """
+    eof = False
+    batch = []
+    rows = stream_array(tokenize(fd))
+    while not eof:
+        try:
+            while len(batch) < IMPORT_BATCH_SIZE:
+                batch.append(next(rows))
+        except StopIteration:
+            eof = True
+        yield json.dumps(batch)
+        batch.clear()
+
+
 def _import_file(fpath, resource_class, retry=False):
+    """
+    Import the specified resource-file in batches to limit memory-use.
+
+    We process resource-files one "batch" at a time. Because of the way django-import's
+    internals work, we have to feed it batches as StringIO-streams of json-formatted strings.
+    The file-to-json-to-string-to-import is overhead, but it lets us put an upper bound on the
+    number of entities in memory at any one time at import-time.
+    """
     try:
-        log.info(_("Importing file {}.").format(fpath))
+        log.info(f"Importing file {fpath}.")
         with open(fpath, "r") as json_file:
-            data = Dataset().load(json_file, format="json")
             resource = resource_class()
-            log.info(_("...Importing resource {}.").format(resource.__class__.__name__))
-            if retry:
-                curr_attempt = 1
-                while curr_attempt < MAX_ATTEMPTS:
-                    curr_attempt += 1
+            log.info("...Importing resource {resource.__class__.__name__}.")
+            # Load one batch-sized chunk of the specified import-file at a time. If requested,
+            # retry a batch if it looks like we collided with some other repo being imported with
+            # overlapping content.
+            for batch_str in _impfile_iterator(json_file):
+                data = Dataset().load(StringIO(batch_str))
+                if retry:
                     # django import-export can have a problem with concurrent-imports that are
                     # importing the same 'thing' (e.g., a Package that exists in two different
                     # repo-versions that are being imported at the same time). If we're asked to
                     # retry, we will try an import that will simply record errors as they happen
-                    # (rather than failing with an exception) first. If errors happen, we'll
+                    # (rather than failing with an exception) first. If errors happen, we'll do one
                     # retry before we give up on this repo-version's import.
                     a_result = resource.import_data(data, raise_errors=False)
                     if a_result.has_errors():
@@ -82,16 +115,16 @@ def _import_file(fpath, resource_class, retry=False):
                             f"...{total_errors} import-errors encountered importing "
                             "{fpath}, attempt {curr_attempt}, retrying"
                         )
-                # Last attempt, we raise an exception on any problem.
-                # This will either succeed, or log a fatal error and fail.
-                try:
+                        # Second attempt, we raise an exception on any problem.
+                        # This will either succeed, or log a fatal error and fail.
+                        try:
+                            a_result = resource.import_data(data, raise_errors=True)
+                        except Exception as e:  # noqa log on ANY exception and then re-raise
+                            log.error(f"FATAL import-failure importing {fpath}")
+                            raise
+                else:
                     a_result = resource.import_data(data, raise_errors=True)
-                except Exception as e:  # noqa log on ANY exception and then re-raise
-                    log.error(f"FATAL import-failure importing {fpath}")
-                    raise
-            else:
-                a_result = resource.import_data(data, raise_errors=True)
-            return a_result
+                yield a_result
     except AttributeError:
         log.error(f"FAILURE loading import-file {fpath}!")
         raise
@@ -194,15 +227,19 @@ def import_repository_version(importer_pk, destination_repo_pk, source_repo_name
 
         resulting_content_ids = []
         for res_class in cfg.exportable_classes:
+            content_count = 0
             filename = f"{res_class.__module__}.{res_class.__name__}.json"
-            a_result = _import_file(os.path.join(rv_path, filename), res_class, retry=True)
-            resulting_content_ids.extend(
-                row.object_id for row in a_result.rows if row.import_type in ("new", "update")
-            )
+            for a_result in _import_file(os.path.join(rv_path, filename), res_class, retry=True):
+                content_count += len(a_result.rows)
+                resulting_content_ids.extend(
+                    row.object_id for row in a_result.rows if row.import_type in ("new", "update")
+                )
 
         # Once all content exists, create the ContentArtifact links
         ca_path = os.path.join(rv_path, CA_FILE)
-        _import_file(ca_path, ContentArtifactResource, retry=True)
+        # We don't do anything with the imported batches, we just need to get them imported
+        for a_batch in _import_file(ca_path, ContentArtifactResource, retry=True):
+            pass
 
         # see if we have a content mapping
         mapping_path = f"{rv_name}/{CONTENT_MAPPING_FILE}"
@@ -399,20 +436,24 @@ def pulp_import(importer_pk, path, toc):
             _check_versions(version_json)
 
         # Artifacts
-        ar_result = _import_file(os.path.join(temp_dir, ARTIFACT_FILE), ArtifactResource)
         data = dict(
-            message="Importing Artifacts", code="import.artifacts", total=len(ar_result.rows)
+            message="Importing Artifacts",
+            code="import.artifacts",
         )
         with ProgressReport(**data) as pb:
-            for row in pb.iter(ar_result.rows):
-                artifact = Artifact.objects.get(pk=row.object_id)
-                base_path = os.path.join("artifact", artifact.sha256[0:2], artifact.sha256[2:])
-                src = os.path.join(temp_dir, base_path)
+            # Import artifacts, and place their binary blobs, one batch at a time.
+            # Skip artifacts that already exist in storage.
+            for ar_result in _import_file(os.path.join(temp_dir, ARTIFACT_FILE), ArtifactResource):
+                for row in pb.iter(ar_result.rows):
+                    artifact = Artifact.objects.get(pk=row.object_id)
+                    base_path = os.path.join("artifact", artifact.sha256[0:2], artifact.sha256[2:])
+                    src = os.path.join(temp_dir, base_path)
 
-                if not default_storage.exists(base_path):
-                    with open(src, "rb") as f:
-                        default_storage.save(base_path, f)
+                    if not default_storage.exists(base_path):
+                        with open(src, "rb") as f:
+                            default_storage.save(base_path, f)
 
+        # Now import repositories, in parallel.
         with open(os.path.join(temp_dir, REPO_FILE), "r") as repo_data_file:
             data = json.load(repo_data_file)
             gpr = GroupProgressReport(
@@ -436,7 +477,7 @@ def pulp_import(importer_pk, path, toc):
                 dispatch(
                     import_repository_version,
                     exclusive_resources=[dest_repo],
-                    args=[importer.pk, dest_repo.pk, src_repo["name"], path],
+                    args=(importer.pk, dest_repo.pk, src_repo["name"], path),
                     task_group=task_group,
                 )
 
