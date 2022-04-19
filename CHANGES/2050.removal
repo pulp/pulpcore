@@ -1,0 +1,2 @@
+Removed the group permission endpoints ``api/v3/groups/:id/model_permissions/`` and
+``api/v3/groups/:id/object_permissions/``. Permissions should be managed via roles exclusively.
