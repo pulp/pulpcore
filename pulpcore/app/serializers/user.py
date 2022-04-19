@@ -5,8 +5,6 @@ from django.contrib.auth.models import Permission
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth.password_validation import validate_password
 from django.contrib.contenttypes.models import ContentType
-from django.urls import reverse
-from guardian.models.models import GroupObjectPermission
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 from rest_framework_nested.serializers import NestedHyperlinkedModelSerializer
@@ -24,24 +22,13 @@ from pulpcore.app.util import get_viewset_for_model, get_request_without_query_p
 User = get_user_model()
 
 
-class ThisPermissionField(serializers.CharField):
-    """Read only field that represents the Permission of the object.
-    The object can be either a plain Permission, or GroupObjectPermission.
-    """
-
-    def to_representation(self, value):
-        permission = getattr(value, "permission", value)
-        return f"{permission.content_type.app_label}.{permission.codename}"
-
-
 class PermissionField(serializers.RelatedField):
     """Read write Permission field."""
 
     queryset = Permission.objects.all()
 
     def to_representation(self, value):
-        permission = getattr(value, "permission", value)
-        return f"{permission.content_type.app_label}.{permission.codename}"
+        return f"{value.content_type.app_label}.{value.codename}"
 
     def to_internal_value(self, data):
         try:
@@ -85,41 +72,6 @@ class ContentObjectField(serializers.CharField):
         except serializers.ValidationError:
             raise serializers.ValidationError(_("Invalid value: {}.").format(data))
         return {"content_object": obj}
-
-
-class PermissionSerializer(serializers.Serializer):
-    """Serializer for User/Group object permission."""
-
-    pulp_href = serializers.SerializerMethodField(read_only=True)
-    id = serializers.SerializerMethodField(read_only=True)
-    permission = ThisPermissionField(source="*", read_only=True)
-    obj = ContentObjectField(
-        help_text=_("pulp_href of the object the permission is to be asserted on."),
-        source="*",
-        read_only=True,
-    )
-
-    def get_id(self, obj) -> int:
-        """Get model/object permission id."""
-        return obj.id
-
-    def get_pulp_href(self, obj) -> str:
-        """Get model/object permission pulp_href."""
-        group_pk = self.context.get("group_pk")
-
-        if group_pk and isinstance(obj, Permission):
-            return reverse("model_permissions-detail", args=[group_pk, obj.pk])
-
-        if group_pk and isinstance(obj, GroupObjectPermission):
-            return reverse("object_permissions-detail", args=[group_pk, obj.pk])
-
-    def to_representation(self, obj):
-        representation = super().to_representation(obj)
-
-        if not self.context.get("group_pk"):
-            representation.pop("pulp_href")
-
-        return representation
 
 
 class UserGroupSerializer(serializers.ModelSerializer):

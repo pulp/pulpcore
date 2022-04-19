@@ -71,8 +71,6 @@ from .user import (  # noqa
     GroupViewSet,
     GroupRoleViewSet,
     GroupUserViewSet,
-    GroupModelPermissionViewSet,
-    GroupObjectPermissionViewSet,
     RoleViewSet,
     UserViewSet,
     UserRoleViewSet,

@@ -1,16 +1,11 @@
 from gettext import gettext as _
 
 from django.contrib.auth import get_user_model
-from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import FieldError
-from django.db import IntegrityError
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend, filters
-from drf_spectacular.utils import extend_schema
-from guardian.models.models import GroupObjectPermission
 from rest_framework import mixins, status
-from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.filters import OrderingFilter
 from rest_framework.permissions import SAFE_METHODS
@@ -24,7 +19,6 @@ from pulpcore.app.serializers import (
     GroupSerializer,
     GroupUserSerializer,
     GroupRoleSerializer,
-    PermissionSerializer,
     RoleSerializer,
     UserSerializer,
     UserRoleSerializer,
@@ -72,19 +66,6 @@ class UserViewSet(
     serializer_class = UserSerializer
     queryset = User.objects.all()
     ordering = ("-date_joined",)
-
-    @extend_schema(description="List user permissions.")
-    @action(detail=True, methods=["get"], serializer_class=PermissionSerializer)
-    def permissions(self, request, pk):
-        """
-        List user permissions.
-        """
-        user = self.get_object()
-        object_permission = PermissionSerializer(
-            user.userobjectpermission_set.all(), many=True, context={"request": request}
-        )
-        permissions = PermissionSerializer(user.user_permissions.all(), many=True)
-        return Response(object_permission.data + permissions.data)
 
 
 class GroupFilter(BaseFilterSet):
@@ -185,208 +166,6 @@ class GroupViewSet(
             "core.view_group",
         ],
     }
-
-
-class GroupModelPermissionViewSet(NamedModelViewSet):
-    """
-    ViewSet for Model Permissions that belong to a Group.
-
-    NOTE: This API endpoint is in "tech preview" and subject to change
-
-    """
-
-    endpoint_name = "model_permissions"
-    router_lookup = "model_permission"
-    parent_viewset = GroupViewSet
-    parent_lookup_kwargs = {"group_pk": "group__pk"}
-    serializer_class = PermissionSerializer
-    queryset = Permission.objects.all()
-    pulp_model_alias = "ModelPermission"
-
-    def get_model_permission(self, request):
-        """Get model permission"""
-        data = {}
-        for key, value in request.data.items():
-            if key == "permission":
-                if "." in value:
-                    data["content_type__app_label"], data["codename"] = value.split(".", maxsplit=1)
-                else:
-                    data["codename"] = value
-                continue
-
-            if key == "pulp_href":
-                if "id" in data.keys():
-                    continue
-                data["id"] = value.strip("/").split("/")[-1]
-                continue
-
-            data[key] = value
-
-        try:
-            permission = Permission.objects.get(**data)
-        except (Permission.MultipleObjectsReturned, Permission.DoesNotExist, FieldError) as exc:
-            raise ValidationError(str(exc))
-
-        return permission
-
-    @extend_schema(description="Retrieve a model permission from a group.")
-    def retrieve(self, request, group_pk, pk):
-        instance = get_object_or_404(Permission, pk=pk)
-        serializer = PermissionSerializer(instance, context={"group_pk": group_pk})
-        return Response(serializer.data)
-
-    @extend_schema(description="List group permissions.", responses={200: PermissionSerializer})
-    def list(self, request, group_pk):
-        """
-        List group model permissions.
-        """
-        group = Group.objects.get(pk=group_pk)
-        queryset = group.permissions.all()
-
-        page = self.paginate_queryset(queryset)
-        if page is not None:
-            serializer = PermissionSerializer(page, context={"group_pk": group_pk}, many=True)
-            return self.get_paginated_response(serializer.data)
-
-        serializer = PermissionSerializer(queryset, context={"group_pk": group_pk}, many=True)
-        return Response(serializer.data)
-
-    @extend_schema(
-        description="Add a model permission to a group.", responses={201: PermissionSerializer}
-    )
-    def create(self, request, group_pk):
-        """
-        Add a model permission to a group.
-        """
-        group = Group.objects.get(pk=group_pk)
-        permission = self.get_model_permission(request)
-        group.permissions.add(permission)
-        group.save()
-        serializer = PermissionSerializer(permission, context={"group_pk": group_pk})
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-
-    @extend_schema(description="Remove a model permission from a group.")
-    def destroy(self, request, group_pk, pk):
-        """
-        Remove a model permission from a group.
-        """
-        group = Group.objects.get(pk=group_pk)
-        permission = get_object_or_404(Permission, pk=pk)
-        group.permissions.remove(permission)
-        group.save()
-        return Response(status=status.HTTP_204_NO_CONTENT)
-
-
-class GroupObjectPermissionViewSet(NamedModelViewSet):
-    """
-    ViewSet for Object Permissions that belong to a Group.
-
-    NOTE: This API endpoint is in "tech preview" and subject to change
-
-    """
-
-    endpoint_name = "object_permissions"
-    router_lookup = "object_permission"
-    parent_viewset = GroupViewSet
-    parent_lookup_kwargs = {"group_pk": "group__pk"}
-    serializer_class = PermissionSerializer
-    queryset = Permission.objects.all()
-    pulp_model_alias = "ObjectPermission"
-
-    def get_object_pk(self, request):
-        """Return an object's pk from the request."""
-
-        if "obj" not in request.data:
-            raise ValidationError(_("Please provide 'obj' value"))
-
-        obj_url = request.data["obj"]
-        try:
-            obj = NamedModelViewSet.get_resource(obj_url)
-        except ValidationError:
-            raise ValidationError(_("Invalid value for 'obj': {}.").format(obj_url))
-
-        return obj.pk
-
-    def get_model_permission(self, request):
-        """Get model permission"""
-
-        if "permission" not in request.data:
-            raise ValidationError(_("Please provide 'permission' value"))
-
-        codename = request.data["permission"].split(".")[-1]
-
-        try:
-            permission = Permission.objects.get(codename=codename)
-        except (Permission.MultipleObjectsReturned, Permission.DoesNotExist, FieldError) as exc:
-            raise ValidationError(str(exc))
-
-        return permission
-
-    @extend_schema(description="Retrieve a model permission from a group.")
-    def retrieve(self, request, group_pk, pk):
-        instance = get_object_or_404(GroupObjectPermission, pk=pk)
-        serializer = PermissionSerializer(
-            instance, context={"group_pk": group_pk, "request": request}
-        )
-        return Response(serializer.data)
-
-    @extend_schema(
-        description="List group object permissions.", responses={200: PermissionSerializer}
-    )
-    def list(self, request, group_pk):
-        """
-        List group object permissions.
-        """
-        group = Group.objects.get(pk=group_pk)
-        queryset = group.groupobjectpermission_set.all()
-
-        page = self.paginate_queryset(queryset)
-        if page is not None:
-            serializer = PermissionSerializer(
-                page, context={"group_pk": group_pk, "request": request}, many=True
-            )
-            return self.get_paginated_response(serializer.data)
-
-        serializer = PermissionSerializer(
-            queryset, context={"group_pk": group_pk, "request": request}, many=True
-        )
-        return Response(serializer.data)
-
-    @extend_schema(
-        description="Add an object permission to a group.", responses={201: PermissionSerializer}
-    )
-    def create(self, request, group_pk):
-        """
-        Create an object permission to a group.
-        """
-        group = Group.objects.get(pk=group_pk)
-        permission = self.get_model_permission(request)
-        object_pk = self.get_object_pk(request)
-        object_permission = GroupObjectPermission(
-            group=group,
-            permission=permission,
-            content_type_id=permission.content_type_id,
-            object_pk=object_pk,
-        )
-
-        try:
-            object_permission.save()
-        except IntegrityError:
-            raise ValidationError(_("The assigned permission already exists."))
-
-        serializer = PermissionSerializer(
-            object_permission, context={"group_pk": group_pk, "request": request}
-        )
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-
-    @extend_schema(description="Remove an object permission from a group.")
-    def destroy(self, request, group_pk, pk):
-        """
-        Delete an object permission from a group.
-        """
-        object_permission = get_object_or_404(GroupObjectPermission, pk=pk, group_id=group_pk)
-        object_permission.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class GroupUserViewSet(NamedModelViewSet):
