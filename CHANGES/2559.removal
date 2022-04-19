@@ -1,0 +1,3 @@
+Deprecated creation hook interface was removed. Creation hook need to be registered with the view
+set by the plugin writer before being used. Creation hooks can no longer be added with the
+deprecated name ``permission_assignments``.

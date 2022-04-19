@@ -197,25 +197,6 @@ class PulpAppConfig(PulpPluginAppConfig):
         post_migrate.connect(_delete_anon_user, sender=self, dispatch_uid="delete_anon_identifier")
 
 
-def _rename_permissions_assignment_workaround(access_policy, viewset):
-    from pulpcore.app.loggers import deprecation_logger
-
-    if "permissions_assignment" in access_policy:
-        deprecation_logger.warn(
-            f"In AccessPolicy for {viewset}, "
-            "the field 'permissions_assignment' has been renamed to 'creation_hooks'. This "
-            "workaround may be removed with pulpcore 3.20."
-        )
-        access_policy["creation_hooks"] = access_policy.pop("permissions_assignment")
-    if "creation_hooks" in access_policy:
-        if any(hook.get("permissions") is not None for hook in access_policy["creation_hooks"]):
-            deprecation_logger.warn(
-                f"In AccessPolicy for {viewset}, "
-                "the 'permissions' field in 'creation_hooks' is deprecated and may be removed "
-                "with pulpcore 3.20. Use the 'parameters' field instead."
-            )
-
-
 def _populate_access_policies(sender, apps, verbosity, **kwargs):
     from pulpcore.app.util import get_view_urlpattern
 
@@ -231,7 +212,6 @@ def _populate_access_policies(sender, apps, verbosity, **kwargs):
             access_policy = getattr(viewset, "DEFAULT_ACCESS_POLICY", None)
             if access_policy is not None:
                 viewset_name = get_view_urlpattern(viewset)
-                _rename_permissions_assignment_workaround(access_policy, viewset)
                 db_access_policy, created = AccessPolicy.objects.get_or_create(
                     viewset_name=viewset_name, defaults=access_policy
                 )

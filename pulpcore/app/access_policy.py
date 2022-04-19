@@ -1,6 +1,6 @@
 from rest_access_policy import AccessPolicy
+from rest_framework.exceptions import APIException
 
-from pulpcore.app.loggers import deprecation_logger
 from pulpcore.app.models import AccessPolicy as AccessPolicyModel
 from pulpcore.app.util import get_view_urlpattern, get_viewset_for_model
 from pulpcore.app.role_util import get_objects_for_user
@@ -48,19 +48,16 @@ class AccessPolicyFromDB(AccessPolicy):
         access_policy = cls.get_access_policy(viewset)
         if access_policy and access_policy.creation_hooks is not None:
             for creation_hook in access_policy.creation_hooks:
-                function = obj.REGISTERED_CREATION_HOOKS.get(creation_hook["function"])
-                if function is not None:
-                    kwargs = creation_hook.get("parameters") or {}
-                    function(**kwargs)
-                else:
-                    # Old interface deprecated for removal in 3.20
-                    function = getattr(obj, creation_hook["function"])
-                    deprecation_logger.warn(
-                        "Calling unregistered creation hooks from the access policy is deprecated"
-                        " and may be removed with pulpcore 3.20."
-                        f"[hook={creation_hook}, viewset={access_policy.viewset_name}]."
+                hook_name = creation_hook["function"]
+                try:
+                    function = obj.REGISTERED_CREATION_HOOKS[hook_name]
+                except KeyError:
+                    raise APIException(
+                        f"Creation hook '{hook_name}' was not registered for this view set."
                     )
-                    function(creation_hook.get("permissions"), creation_hook.get("parameters"))
+
+                kwargs = creation_hook.get("parameters") or {}
+                function(**kwargs)
 
     def scope_queryset(self, view, qs):
         """
