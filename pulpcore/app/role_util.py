@@ -9,12 +9,6 @@ from django.db.models.functions import Cast
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
-from guardian.shortcuts import (
-    get_objects_for_user as get_objects_for_user_guardian,
-    get_objects_for_group as get_objects_for_group_guardian,
-    get_users_with_perms as get_users_with_perms_guardian,
-    get_groups_with_perms as get_groups_with_perms_guardian,
-)
 
 from pulpcore.app.models import Group
 from pulpcore.app.models.role import GroupRole, Role, UserRole
@@ -125,17 +119,6 @@ def get_objects_for_user(
 ):
     new_qs = qs.none()
     replace = False
-    if "guardian.backends.ObjectPermissionBackend" in settings.AUTHENTICATION_BACKENDS:
-        new_qs |= get_objects_for_user_guardian(
-            user,
-            perms,
-            klass=qs,
-            use_groups=use_groups,
-            any_perm=any_perm,
-            with_superuser=with_superuser,
-            accept_global_perms=accept_global_perms,
-        )
-        replace = True
     if "pulpcore.backends.ObjectRolePermissionBackend" in settings.AUTHENTICATION_BACKENDS:
         if isinstance(perms, str):
             permission_name = perms
@@ -203,11 +186,6 @@ def get_objects_for_group_roles(group, permission_name, qs, accept_global_perms=
 def get_objects_for_group(group, perms, qs, any_perm=False, accept_global_perms=True):
     new_qs = qs.none()
     replace = False
-    if "guardian.backends.ObjectPermissionBackend" in settings.AUTHENTICATION_BACKENDS:
-        new_qs |= get_objects_for_group_guardian(
-            group, perms, klass=qs, any_perm=any_perm, accept_global_perms=accept_global_perms
-        )
-        replace = True
     if "pulpcore.backends.ObjectRolePermissionBackend" in settings.AUTHENTICATION_BACKENDS:
         if isinstance(perms, str):
             permission_name = perms
@@ -338,15 +316,6 @@ def get_users_with_perms(
 ):
     if attach_perms:
         res = defaultdict(set)
-        if "guardian.backends.ObjectPermissionBackend" in settings.AUTHENTICATION_BACKENDS:
-            for key, value in get_users_with_perms_guardian(
-                obj,
-                attach_perms=True,
-                with_superusers=with_superusers,
-                with_group_users=with_group_users,
-                only_with_perms_in=only_with_perms_in,
-            ).items():
-                res[key].update(value)
         if "pulpcore.backends.ObjectRolePermissionBackend" in settings.AUTHENTICATION_BACKENDS:
             for key, value in get_users_with_perms_attached_perms(
                 obj,
@@ -357,14 +326,6 @@ def get_users_with_perms(
                 res[key].update(value)
         return {k: list(v) for k, v in res.items()}
     qs = User.objects.none()
-    if "guardian.backends.ObjectPermissionBackend" in settings.AUTHENTICATION_BACKENDS:
-        qs |= get_users_with_perms_guardian(
-            obj,
-            attach_perms=False,
-            with_superusers=with_superusers,
-            with_group_users=with_group_users,
-            only_with_perms_in=only_with_perms_in,
-        )
     if "pulpcore.backends.ObjectRolePermissionBackend" in settings.AUTHENTICATION_BACKENDS:
         qs |= get_users_with_perms_roles(
             obj,
@@ -436,17 +397,12 @@ def get_groups_with_perms_attached_roles(obj, only_with_perms_in=None):
 def get_groups_with_perms(obj, attach_perms=False):
     if attach_perms:
         res = defaultdict(set)
-        if "guardian.backends.ObjectPermissionBackend" in settings.AUTHENTICATION_BACKENDS:
-            for key, value in get_groups_with_perms_guardian(obj, attach_perms=True).items():
-                res[key].update(value)
         if "pulpcore.backends.ObjectRolePermissionBackend" in settings.AUTHENTICATION_BACKENDS:
             for key, value in get_groups_with_perms_attached_perms(obj).items():
                 res[key].update(value)
         return {k: list(v) for k, v in res.items()}
     else:
         qs = Group.objects.none()
-        if "guardian.backends.ObjectPermissionBackend" in settings.AUTHENTICATION_BACKENDS:
-            qs |= get_groups_with_perms_guardian(obj, attach_perms=False)
         if "pulpcore.backends.ObjectRolePermissionBackend" in settings.AUTHENTICATION_BACKENDS:
             qs |= get_groups_with_perms_roles(obj)
         return qs.distinct()

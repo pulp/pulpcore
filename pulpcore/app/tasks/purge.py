@@ -97,11 +97,13 @@ def purge(finished_before, states):
 
     # Our delete-query is going to deal with "the first DELETE_LIMIT tasks that match our
     # criteria", looping until we've deleted everything that fits our parameters
-    units_deleted, details = delete_qs.delete()
+    units_deleted = 1
     # Until our query returns "No tasks deleted", add results into totals and Do It Again
     while units_deleted > 0:
+        units_deleted, details = Task.objects.filter(
+            pk__in=delete_qs.values_list("pk", flat=True)
+        ).delete()
         _details_reporting(details_reports, details, totals_pb)
-        units_deleted, details = delete_qs.delete()
 
     # Complete the progress-reports for the specific entities deleted
     for key, pb in details_reports.items():

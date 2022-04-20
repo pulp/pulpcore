@@ -2,7 +2,6 @@
 
 from django.db import migrations, models
 import django.db.models.deletion
-import pulpcore.app.models.access_policy
 
 
 class Migration(migrations.Migration):
@@ -21,6 +20,6 @@ class Migration(migrations.Migration):
                 'permissions': (('download_rbaccontentguard', 'Can Download Content'),),
                 'default_related_name': '%(app_label)s_%(model_name)s',
             },
-            bases=('core.contentguard', pulpcore.app.models.access_policy.AutoAddObjPermsMixin, pulpcore.app.models.access_policy.AutoDeleteObjPermsMixin),
+            bases=('core.contentguard',),
         ),
     ]

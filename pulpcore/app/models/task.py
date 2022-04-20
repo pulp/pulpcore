@@ -15,7 +15,6 @@ from django.utils import timezone
 
 from pulpcore.app.models import (
     AutoAddObjPermsMixin,
-    AutoDeleteObjPermsMixin,
     BaseModel,
     GenericRelationModel,
 )
@@ -151,7 +150,7 @@ def _uuid_to_advisory_lock(value):
     return ((value >> 64) ^ value) & 0x7FFFFFFFFFFFFFFF
 
 
-class Task(BaseModel, AutoDeleteObjPermsMixin, AutoAddObjPermsMixin):
+class Task(BaseModel, AutoAddObjPermsMixin):
     """
     Represents a task
 

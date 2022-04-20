@@ -6,7 +6,6 @@ from pulpcore.app.models import (  # noqa
     AlternateContentSourcePath,
     AccessPolicy,
     AutoAddObjPermsMixin,
-    AutoDeleteObjPermsMixin,
     Artifact,
     AsciiArmoredDetachedSigningService,
     BaseModel,

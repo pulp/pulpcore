@@ -160,27 +160,3 @@ This would be callable with a configuration like this one:
 .. note::
 
     The ``parameters`` dict must actually match the creation hooks signature.
-
-
-.. _auto_removing_permissions_on_object_deletion:
-
-Auto Removing Permissions On Object Deletion
---------------------------------------------
-
-.. note::
-
-    This applies to the deprecated guardian framework. Role associations are automatically deleted.
-
-A mixin is provided for use on your models to automatically delete all object-level permissions when
-an object is deleted. This is provided by the ``pulpcore.plugin.models.AutoDeleteObjPermsMixin``
-mixin.
-
-.. code-block:: python
-
-
-    class MyModel(BaseModel, AutoDeleteObjPermsMixin):
-       ...
-
-See the docstring below for more information on this mixin.
-
-.. autoclass:: pulpcore.app.models.access_policy.AutoDeleteObjPermsMixin

@@ -10,7 +10,6 @@ from .base import (  # noqa
 from .access_policy import (  # noqa
     AccessPolicy,
     AutoAddObjPermsMixin,
-    AutoDeleteObjPermsMixin,
     Group,
 )
 

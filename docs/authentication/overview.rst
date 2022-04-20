@@ -28,14 +28,8 @@ passwords against. By default it is set to::
 
     AUTHENTICATION_BACKENDS = [
         'django.contrib.auth.backends.ModelBackend',  # Django's users, groups, and permissions
-        'guardian.backends.ObjectPermissionBackend',  # Django-guardian based obj level permissions
         'pulpcore.backends.ObjectRolePermissionBackend'  # Pulp's RBAC object and model permissions
     ]
-
-.. note::
-    The ``guardian.backends.ObjectPermissionBackend`` authentication backend is planning to be
-    removed in 3.20. All functionality will be provided by
-    `pulpcore.backends.ObjectRolePermissionBackend` at that point.
 
 Django Rest Framework defines the source usernames and passwords come from with the
 `DEFAULT_AUTHENTICATION_CLASSES <https://www.django-rest-framework.org/api-guide/authentication/
