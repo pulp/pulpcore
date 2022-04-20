@@ -17,7 +17,6 @@ class BaseDownloaderInitTestCase(TestCase):
         with self.assertRaises(UnsupportedDigestValidationError):
             BaseDownloader(
                 url,
-                custom_file_object=None,
                 expected_digests={"sha1": "912ec803b2ce49e4a541068d495ab570"},
                 expected_size=None,
                 semaphore=None,
@@ -32,7 +31,6 @@ class BaseDownloaderInitTestCase(TestCase):
         url = "http://example.com"
         downloader = BaseDownloader(
             url,
-            custom_file_object=None,
             expected_digests=None,
             expected_size=None,
             semaphore=None,
@@ -52,7 +50,6 @@ class BaseDownloaderInitTestCase(TestCase):
         }
         downloader = BaseDownloader(
             url,
-            custom_file_object=None,
             expected_digests=digests,
             expected_size=None,
             semaphore=None,

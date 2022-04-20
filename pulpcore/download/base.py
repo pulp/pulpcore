@@ -7,7 +7,6 @@ import os
 import tempfile
 
 from pulpcore.app import pulp_hashlib
-from pulpcore.app.loggers import deprecation_logger
 from pulpcore.app.models import Artifact
 from pulpcore.exceptions import (
     DigestValidationError,
@@ -53,10 +52,7 @@ class BaseDownloader:
     data later.
 
     The :meth:`~pulpcore.plugin.download.BaseDownloader.handle_data` method by default
-    writes to a random file in the current working directory or you can pass in your own file
-    object. See the ``custom_file_object`` keyword argument for more details. Allowing the download
-    instantiator to define the file to receive data allows the streamer to receive the data instead
-    of having it written to disk.
+    writes to a random file in the current working directory.
 
     The call to :meth:`~pulpcore.plugin.download.BaseDownloader.finalize` ensures that all
     data written to the file-like object is quiesced to disk before the file-like object has
@@ -67,14 +63,12 @@ class BaseDownloader:
         expected_digests (dict): Keyed on the algorithm name provided by hashlib and stores the
             value of the expected digest. e.g. {'md5': '912ec803b2ce49e4a541068d495ab570'}
         expected_size (int): The number of bytes the download is expected to have.
-        path (str): The full path to the file containing the downloaded data if no
-            ``custom_file_object`` option was specified, otherwise None.
+        path (str): The full path to the file containing the downloaded data.
     """
 
     def __init__(
         self,
         url,
-        custom_file_object=None,
         expected_digests=None,
         expected_size=None,
         semaphore=None,
@@ -86,23 +80,15 @@ class BaseDownloader:
 
         Args:
             url (str): The url to download.
-            custom_file_object (file object): An open, writable file object that downloaded data
-                can be written to by
-                :meth:`~pulpcore.plugin.download.BaseDownloader.handle_data`.
             expected_digests (dict): Keyed on the algorithm name provided by hashlib and stores the
                 value of the expected digest. e.g. {'md5': '912ec803b2ce49e4a541068d495ab570'}
             expected_size (int): The number of bytes the download is expected to have.
             semaphore (asyncio.Semaphore): A semaphore the downloader must acquire before running.
                 Useful for limiting the number of outstanding downloaders in various ways.
         """
-        if custom_file_object:
-            deprecation_logger.warn(
-                "The 'custom_file_object' argument to 'BaseDownloader' is"
-                "deprecated and will be removed in pulpcore==3.20; stop using it."
-            )
 
         self.url = url
-        self._writer = custom_file_object
+        self._writer = None
         self.path = None
         self.expected_digests = expected_digests
         self.expected_size = expected_size
