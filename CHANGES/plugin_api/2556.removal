@@ -1,0 +1,2 @@
+The pulpcore.plugin.constants.API_ROOT has been removed. Use the ``V3_API_ROOT`` and
+``V3_API_ROOT_NO_FRONT_SLASH`` settings instead.
