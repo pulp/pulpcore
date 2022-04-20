@@ -272,6 +272,7 @@ class HttpDownloader(BaseDownloader):
         Args:
             extra_data (dict): Extra data passed by the downloader.
         """
+        self._ensure_fresh_file()
         if self.download_throttler:
             await self.download_throttler.acquire()
         async with self.session.get(
@@ -283,3 +284,10 @@ class HttpDownloader(BaseDownloader):
         if self._close_session_on_finalize:
             await self.session.close()
         return to_return
+
+    def _ensure_fresh_file(self):
+        """Upon retry reset writer back to None to get a fresh file."""
+        if self._writer is not None:
+            self._writer.delete = True
+            self._writer.close()
+            self._writer = None
