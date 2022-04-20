@@ -1,0 +1,3 @@
+Removed the ``custom_file_object`` argument to ``pulpcore.plugin.download.BaseDownloader``. Now all
+downloaded data will be written to a random file in the current working directory. Further
+customization of where downloaded data can be written to can be done through subclassing.
