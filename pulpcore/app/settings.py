@@ -75,7 +75,6 @@ INSTALLED_APPS = [
     "django_filters",
     "django_guid",
     "drf_spectacular",
-    "guardian",
     "rest_framework",
     # pulp core app
     "pulpcore.app",
@@ -117,13 +116,8 @@ MIDDLEWARE = [
 
 AUTHENTICATION_BACKENDS = [
     "django.contrib.auth.backends.ModelBackend",
-    "guardian.backends.ObjectPermissionBackend",
     "pulpcore.backends.ObjectRolePermissionBackend",
 ]
-
-# Disable django guardian anonymous user
-# https://django-guardian.readthedocs.io/en/stable/configuration.html#anonymous-user-name
-ANONYMOUS_USER_NAME = None
 
 ROOT_URLCONF = "pulpcore.app.urls"
 
