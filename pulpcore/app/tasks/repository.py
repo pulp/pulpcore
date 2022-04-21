@@ -52,7 +52,7 @@ def delete_version(pk):
             )
 
         log.info(
-            _("Deleting and squashing version {num} of repository '{repo}'").format(
+            "Deleting and squashing version {num} of repository '{repo}'".format(
                 num=version.number, repo=version.repository.name
             )
         )
@@ -66,8 +66,8 @@ async def _repair_ca(content_artifact, repaired=None):
     )
 
     if not remote_artifacts:
-        log.warn(
-            _("Artifact {} is unrepairable - no remote source".format(content_artifact.artifact))
+        log.warning(
+            "Artifact {} is unrepairable - no remote source".format(content_artifact.artifact)
         )
         return False
 
@@ -166,7 +166,7 @@ def repair_version(repository_version_pk, verify_checksums):
     version = models.RepositoryVersion.objects.get(pk=repository_version_pk)
 
     log.info(
-        _("Repairing version {num} of repository '{repo}'").format(
+        "Repairing version {num} of repository '{repo}'".format(
             num=version.number, repo=version.repository.name
         ),
     )

@@ -1,6 +1,5 @@
 import asyncio
 from contextlib import suppress
-from gettext import gettext as _
 from importlib import import_module
 import logging
 import os
@@ -37,8 +36,9 @@ CONTENT_MODULE_NAME = "content"
 async def _heartbeat():
     name = "{pid}@{hostname}".format(pid=os.getpid(), hostname=socket.gethostname())
     heartbeat_interval = settings.CONTENT_APP_TTL // 4
-    i8ln_msg = _("Content App '{name}' heartbeat written, sleeping for '{interarrival}' seconds")
-    msg = i8ln_msg.format(name=name, interarrival=heartbeat_interval)
+    msg = "Content App '{name}' heartbeat written, sleeping for '{interarrival}' seconds".format(
+        name=name, interarrival=heartbeat_interval
+    )
 
     while True:
 
@@ -53,11 +53,10 @@ async def _heartbeat():
             log.debug(msg)
         except (InterfaceError, OperationalError):
             await sync_to_async(Handler._reset_db_connection)()
-            i8ln_msg = _(
+            msg = (
                 "Content App '{name}' failed to write a heartbeat to the database, sleeping for "
                 "'{interarrival}' seconds."
-            )
-            msg = i8ln_msg.format(name=name, interarrival=heartbeat_interval)
+            ).format(name=name, interarrival=heartbeat_interval)
             log.info(msg)
         await asyncio.sleep(heartbeat_interval)
 

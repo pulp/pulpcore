@@ -242,9 +242,7 @@ class Repository(MasterModel):
                 self.retain_repo_versions :
             ]:
                 _logger.info(
-                    _("Deleting repository version {} due to version retention limit.").format(
-                        version
-                    )
+                    "Deleting repository version {} due to version retention limit.".format(version)
                 )
                 version.delete()
 

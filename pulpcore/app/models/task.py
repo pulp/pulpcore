@@ -258,7 +258,7 @@ class Task(BaseModel, AutoDeleteObjPermsMixin, AutoAddObjPermsMixin):
             .update(state=TASK_STATES.COMPLETED, finished_at=timezone.now())
         )
         if rows != 1:
-            msg = _("Task set_completed() occurred but Task %s is already in final state")
+            msg = "Task set_completed() occurred but Task %s is already in final state"
             _logger.warning(msg % self.pk)
         self.refresh_from_db()
 

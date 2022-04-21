@@ -27,7 +27,7 @@ class Command(BaseCommand):
     Django management command for populating or removing checksums on artifacts.
     """
 
-    help = _("Handle missing and forbidden checksums on the artifacts")
+    help = "Handle missing and forbidden checksums on the artifacts"
 
     def add_arguments(self, parser):
         parser.add_argument("--report", action="store_true")
@@ -44,13 +44,11 @@ class Command(BaseCommand):
         """
         for repo_version in repo_versions.iterator():
             self.stdout.write(
-                _(
-                    "/repositories/{plugin}/{type}/{pk}/versions/{number}/".format(
-                        plugin=repo_version.repository.pulp_type.split(".")[0],
-                        type=repo_version.repository.pulp_type.split(".")[1],
-                        pk=str(repo_version.repository.pk),
-                        number=repo_version.number,
-                    )
+                "/repositories/{plugin}/{type}/{pk}/versions/{number}/".format(
+                    plugin=repo_version.repository.pulp_type.split(".")[0],
+                    type=repo_version.repository.pulp_type.split(".")[1],
+                    pk=str(repo_version.repository.pk),
+                    number=repo_version.number,
                 )
             )
 
@@ -69,11 +67,11 @@ class Command(BaseCommand):
         repo_versions = RepositoryVersion.objects.with_content(content).select_related("repository")
 
         self.stdout.write(
-            _("Found {} on-demand content units with forbidden checksums.").format(content.count())
+            "Found {} on-demand content units with forbidden checksums.".format(content.count())
         )
         if content.count():
             self.stdout.write(
-                _("There is approx {:.2f}Mb of content to be downloaded.").format(
+                "There is approx {:.2f}Mb of content to be downloaded.".format(
                     ras_size / (1024**2)
                 )
             )
@@ -100,13 +98,13 @@ class Command(BaseCommand):
         repo_versions = RepositoryVersion.objects.with_content(content).select_related("repository")
 
         self.stdout.write(
-            _("Found {} downloaded content units with forbidden or missing checksums.").format(
+            "Found {} downloaded content units with forbidden or missing checksums.".format(
                 content.count()
             )
         )
         if content.count() > 0:
             self.stdout.write(
-                _("There is approx. {:.2f}Mb content data to be re-hashed.").format(
+                "There is approx. {:.2f}Mb content data to be re-hashed.".format(
                     artifacts.aggregate(Sum("size"))["size__sum"] / (1024**2)
                 )
             )
@@ -150,10 +148,8 @@ class Command(BaseCommand):
         )
 
         self.stderr.write(
-            _(
-                "Warning: the handle-artifact-checksums report is in "
-                "tech preview and may change in the future."
-            )
+            "Warning: the handle-artifact-checksums report is in tech preview and may change in "
+            "the future."
         )
         self._show_on_demand_content(forbidden_checksums)
         self._show_immediate_content(forbidden_checksums)
@@ -197,7 +193,7 @@ class Command(BaseCommand):
 
         if hrefs:
             raise CommandError(
-                _("Some files that were missing could not be restored: {}").format(hrefs)
+                "Some files that were missing could not be restored: {}".format(hrefs)
             )
 
         forbidden_checksums = set(constants.ALL_KNOWN_CONTENT_CHECKSUMS).difference(
@@ -208,9 +204,7 @@ class Command(BaseCommand):
             update_params = {f"{checksum}": None}
             artifacts_qs = Artifact.objects.filter(**search_params)
             if artifacts_qs.exists():
-                self.stdout.write(
-                    _("Removing forbidden checksum {} from database").format(checksum)
-                )
+                self.stdout.write("Removing forbidden checksum {} from database".format(checksum))
                 artifacts_qs.update(**update_params)
 
         self.stdout.write(_("Finished aligning checksums with settings.ALLOWED_CONTENT_CHECKSUMS"))

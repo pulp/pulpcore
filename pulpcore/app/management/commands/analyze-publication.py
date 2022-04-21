@@ -10,7 +10,7 @@ from pulpcore.app.util import get_view_name_for_model
 class Command(BaseCommand):
     """Django management command for viewing files in a publication and the artifacts on disk."""
 
-    help = _(__doc__)
+    help = __doc__
 
     def add_arguments(self, parser):
         """Set up arguments."""

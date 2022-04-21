@@ -516,3 +516,19 @@ is allowed to handle. This includes two types of "checksum handling":
     requested that is not listed in the ``ALLOWED_CONTENT_CHECKSUMS`` setting. This is a convenience
     facility allowing plugin writers to not check the ``ALLOWED_CONTENT_CHECKSUMS`` setting
     themselves.
+
+
+.. _il8n-expectations:
+
+Internationalization Expectations
+---------------------------------
+
+pulpcore and its plugins are expected to internationalize all user-facing strings using Python's
+gettext facilities. This allows Pulp to be translated to other languages and be more usable for a
+broader base of users.
+
+Administrator facing strings are expected *not* to be internationalized. These include all log
+statements, migration output print statements, django management commands, etc. These not being
+internationalized will remain in English. This expectation was formed after feedback from
+multi-language speakers who believe having error messages for admins in English would reduce the
+time to finding a fix and was generally less surprising.

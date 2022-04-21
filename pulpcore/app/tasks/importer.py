@@ -71,7 +71,7 @@ def _import_file(fpath, resource_class, retry=False):
                 a_result = resource.import_data(data, raise_errors=False)
                 if a_result.has_errors():
                     log.info(
-                        _("...{} import-errors encountered importing {}, retrying").format(
+                        "...{} import-errors encountered importing {}, retrying".format(
                             a_result.totals["error"], fpath
                         )
                     )
@@ -351,7 +351,7 @@ def pulp_import(importer_pk, path, toc):
                     subprocess.run(["rm", "-f", os.path.join(toc_dir, chunk)])
                 except OSError:
                     log.warning(
-                        _("Failed to remove chunk {} after recombining. Continuing.").format(
+                        "Failed to remove chunk {} after recombining. Continuing.".format(
                             os.path.join(toc_dir, chunk)
                         ),
                         exc_info=True,
@@ -422,9 +422,7 @@ def pulp_import(importer_pk, path, toc):
                     dest_repo = _destination_repo(importer, src_repo["name"])
                 except Repository.DoesNotExist:
                     log.warning(
-                        _("Could not find destination repo for {}. Skipping.").format(
-                            src_repo["name"]
-                        )
+                        "Could not find destination repo for {}. Skipping.".format(src_repo["name"])
                     )
                     continue
 

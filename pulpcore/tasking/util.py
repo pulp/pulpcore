@@ -33,8 +33,11 @@ def cancel(task_id):
 
     if task_status.state in TASK_FINAL_STATES:
         # If the task is already done, just stop
-        msg = _("Task [{task_id}] already in a final state: {state}")
-        _logger.debug(msg.format(task_id=task_id, state=task_status.state))
+        _logger.debug(
+            "Task [{task_id}] already in a final state: {state}".format(
+                task_id=task_id, state=task_status.state
+            )
+        )
         return task_status
 
     _logger.info(_("Canceling task: {id}").format(id=task_id))

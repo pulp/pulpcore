@@ -12,7 +12,7 @@ class Command(BaseCommand):
     Django management command for resetting the password of the 'admin' user in Pulp.
     """
 
-    help = _('Resets "admin" user\'s password.')
+    help = 'Resets "admin" user\'s password.'
 
     def add_arguments(self, parser):
         exclusive = parser.add_mutually_exclusive_group()

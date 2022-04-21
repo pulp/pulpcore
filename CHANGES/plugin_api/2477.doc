@@ -1,0 +1,2 @@
+Added docs on the expectation that all user-facing strings are i8ln wrapped with gettext, but log
+messages are not.
