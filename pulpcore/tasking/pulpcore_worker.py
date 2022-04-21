@@ -105,7 +105,7 @@ def handle_worker_heartbeat(worker_name):
 
     worker.save_heartbeat()
 
-    msg = _("Worker heartbeat from '{name}' at time {timestamp}").format(
+    msg = "Worker heartbeat from '{name}' at time {timestamp}".format(
         timestamp=worker.last_heartbeat, name=worker_name
     )
 
@@ -184,7 +184,7 @@ class NewPulpWorker:
         if task.state == TASK_STATES.CANCELING:
             if reason:
                 _logger.info(
-                    _("Cleaning up task %s and marking as %s. Reason: %s"),
+                    "Cleaning up task %s and marking as %s. Reason: %s",
                     task.pk,
                     final_state,
                     reason,
@@ -338,18 +338,18 @@ class NewPulpWorker:
                 if self.shutdown_requested:
                     if self.task_grace_timeout > 0:
                         _logger.info(
-                            _("Worker shutdown requested, waiting for task %s to finish."), task.pk
+                            "Worker shutdown requested, waiting for task %s to finish.", task.pk
                         )
                     else:
-                        _logger.info(_("Aborting current task %s due to worker shutdown."), task.pk)
+                        _logger.info("Aborting current task %s due to worker shutdown.", task.pk)
                         os.kill(task_process.pid, signal.SIGUSR1)
                         cancel_state = TASK_STATES.FAILED
                         cancel_reason = "Aborted during worker shutdown."
                         break
             task_process.join()
             if not cancel_state and task_process.exitcode != 0:
-                _logger.warn(
-                    _("Task process for %s exited with non zero exitcode %i."),
+                _logger.warning(
+                    "Task process for %s exited with non zero exitcode %i.",
                     task.pk,
                     task_process.exitcode,
                 )

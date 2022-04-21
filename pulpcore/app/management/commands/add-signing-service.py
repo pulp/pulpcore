@@ -16,7 +16,7 @@ class Command(BaseCommand):
     This command is in tech-preview.
     """
 
-    help = _("Adds a new AsciiArmoredDetachedSigningService. [tech-preview]")
+    help = "Adds a new AsciiArmoredDetachedSigningService. [tech-preview]"
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -75,7 +75,7 @@ class Command(BaseCommand):
             raise CommandError(str(e))
 
         print(
-            _("Successfully added signing service {name} for key {fingerprint}.").format(
+            ("Successfully added signing service {name} for key {fingerprint}.").format(
                 name=name, fingerprint=fingerprint
             )
         )

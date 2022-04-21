@@ -138,10 +138,10 @@ class NamedModelViewSet(viewsets.GenericViewSet):
         The intention is that ViewSets can define a second, more minimal serializer with only
         the most important fields.
         """
-        assert self.serializer_class is not None, _(
+        assert self.serializer_class is not None, (
             "'{}' should either include a `serializer_class` attribute, or override the "
-            "`get_serializer_class()` method.".format(self.__class__.__name__)
-        )
+            "`get_serializer_class()` method."
+        ).format(self.__class__.__name__)
         minimal_serializer_class = getattr(self, "minimal_serializer_class", None)
 
         if minimal_serializer_class:
@@ -424,10 +424,9 @@ class AsyncReservedObjectMixin:
             AssertionError if instance is None (which happens for creation)
 
         """
-        assert instance is not None, _(
-            "'{}' must not use the default `async_reserved_resources` method "
-            "when using create.".format(self.__class__.__name__)
-        )
+        assert instance is not None, (
+            "'{}' must not use the default `async_reserved_resources` method " "when using create."
+        ).format(self.__class__.__name__)
         return [instance]
 
 

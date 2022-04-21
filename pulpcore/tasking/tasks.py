@@ -120,13 +120,13 @@ def dispatch_scheduled_tasks():
                 task_schedule.save(update_fields=["next_dispatch", "last_task"])
 
             _logger.info(
-                _("Dispatched scheduled task {task_name} as task id {task_id}").format(
+                "Dispatched scheduled task {task_name} as task id {task_id}".format(
                     task_name=task_schedule.task_name, task_id=task_schedule.last_task.pk
                 )
             )
         except Exception as e:
-            _logger.warn(
-                _("Dispatching scheduled task {task_name} failed. {error}").format(
+            _logger.warning(
+                "Dispatching scheduled task {task_name} failed. {error}".format(
                     task_name=task_schedule.task_name, error=str(e)
                 )
             )

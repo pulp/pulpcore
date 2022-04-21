@@ -66,10 +66,9 @@ class PulpPluginAppConfig(apps.AppConfig):
         try:
             self.version
         except AttributeError:
-            msg = _(
-                "The plugin `{}` is missing a version declaration. Starting with "
-                "pulpcore==3.10, plugins are required to define their version on the "
-                "PulpPluginAppConfig subclass."
+            msg = (
+                "The plugin `{}` is missing a version declaration. Starting with pulpcore==3.10, "
+                "plugins are required to define their version on the PulpPluginAppConfig subclass."
             )
             raise ImproperlyConfigured(msg.format(self.label))
 
@@ -218,7 +217,7 @@ def _populate_access_policies(sender, apps, verbosity, **kwargs):
                 if created:
                     if verbosity >= 1:
                         print(
-                            _("Access policy for {viewset_name} created.").format(
+                            "Access policy for {viewset_name} created.".format(
                                 viewset_name=viewset_name
                             )
                         )
@@ -228,7 +227,7 @@ def _populate_access_policies(sender, apps, verbosity, **kwargs):
                     db_access_policy.save()
                     if verbosity >= 1:
                         print(
-                            _("Access policy for {viewset_name} updated.").format(
+                            "Access policy for {viewset_name} updated.".format(
                                 viewset_name=viewset_name
                             )
                         )

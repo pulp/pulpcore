@@ -1,0 +1,2 @@
+Removed il8n from the logs written so they will always show up in English for speedy resolution of
+error messages. All user facing strings are still expected to be il8n.

@@ -250,7 +250,7 @@ class Handler:
                 )
             except ObjectDoesNotExist:
                 log.debug(
-                    _("Distribution not matched for {path} using: {base_paths}").format(
+                    "Distribution not matched for {path} using: {base_paths}".format(
                         path=path, base_paths=base_paths
                     )
                 )
@@ -261,7 +261,7 @@ class Handler:
                 ).get(base_path__in=base_paths)
             except ObjectDoesNotExist:
                 log.debug(
-                    _("Distribution not matched for {path} using: {base_paths}").format(
+                    "Distribution not matched for {path} using: {base_paths}".format(
                         path=path, base_paths=base_paths
                     )
                 )
@@ -289,7 +289,7 @@ class Handler:
             guard.cast().permit(request)
         except PermissionError as pe:
             log.debug(
-                _('Path: %(p)s not permitted by guard: "%(g)s" reason: %(r)s'),
+                'Path: %(p)s not permitted by guard: "%(g)s" reason: %(r)s',
                 {"p": request.path, "g": guard.name, "r": str(pe)},
             )
             raise HTTPForbidden(reason=str(pe))
@@ -530,7 +530,7 @@ class Handler:
                     ca = await sync_to_async(get_contentartifact_blocking)()
                 except MultipleObjectsReturned:
                     log.error(
-                        _("Multiple (pass-through) matches for {b}/{p}"),
+                        "Multiple (pass-through) matches for {b}/{p}",
                         {"b": distro.base_path, "p": rel_path},
                     )
                     raise
@@ -576,7 +576,7 @@ class Handler:
                 ca = await sync_to_async(get_contentartifact_blocking)()
             except MultipleObjectsReturned:
                 log.error(
-                    _("Multiple (pass-through) matches for {b}/{p}"),
+                    "Multiple (pass-through) matches for {b}/{p}",
                     {"b": distro.base_path, "p": rel_path},
                 )
                 raise
@@ -664,7 +664,7 @@ class Handler:
 
             except (ClientResponseError, UnsupportedDigestValidationError) as e:
                 log.warning(
-                    _("Could not download remote artifact at '{}': {}").format(
+                    "Could not download remote artifact at '{}': {}".format(
                         remote_artifact.url, str(e)
                     )
                 )
@@ -823,7 +823,7 @@ class Handler:
 
         remote = await sync_to_async(remote_artifact.remote.cast)()
         log.debug(
-            _("Streaming content for {url} from Remote {remote}-{source}").format(
+            "Streaming content for {url} from Remote {remote}-{source}".format(
                 url=request.match_info["path"], remote=remote.name, source=remote_artifact.url
             )
         )

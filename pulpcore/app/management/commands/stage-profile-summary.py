@@ -8,7 +8,7 @@ class Command(BaseCommand):
     Django management command for printing a summary report of a Stages API pipeline run.
     """
 
-    help = _(
+    help = (
         "Print a summary of a Stages API pipeline run. This command is provided as a tech "
         "preview and may not work properly or change in the future."
     )
@@ -55,7 +55,7 @@ class Command(BaseCommand):
             stages_map[row[0]]["interarrival_time_sum"] += row[2]
 
         for stage in stages:
-            msg = _("{name}\n\tservice time average: {srv_avg:4f}\n")
+            msg = "{name}\n\tservice time average: {srv_avg:4f}\n"
             if in_queue_count == 0:
                 # This is the first queue that gets no put() calls, so avoid DivisionByZero errors
                 waiting_avg = srv_avg = length_avg = interarrival_avg = 0

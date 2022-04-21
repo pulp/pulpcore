@@ -16,7 +16,7 @@ class Command(BaseCommand):
     Django management command for repairing incorrectly migrated remote data.
     """
 
-    help = _(
+    help = (
         "Repairs issue #2327. A small number of configuration settings may have been "
         "corrupted during an upgrade from a previous version of Pulp to a Pulp version "
         "between 3.15-3.18, resulting in trouble when syncing or viewing certain remotes. "

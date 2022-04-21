@@ -43,8 +43,8 @@ def handle_artifact_checksums(apps):
             Artifact.objects.bulk_update(objs=artifacts, fields=[checksum], batch_size=1000)
 
         if paths:
-            _logger.warn(
-                _(
+            _logger.warning(
+                (
                     "Missing files needed to update artifact {checksum} checksum: {paths}. "
                     "Please run 'pulpcore-manager handle-artifact-checksums'."
                 ).format(checksum=checksum, paths=paths)
@@ -66,8 +66,8 @@ def run_handle_artifact_checksums(apps, schema_editor):
     try:
         handle_artifact_checksums(apps)
     except Exception as exc:
-        _logger.warn(
-            _(
+        _logger.warning(
+            (
                 "Failed to update checksums for artifacts: {}. "
                 "Please run 'pulpcore-manager handle-artifact-checksums'."
             ).format(exc)

@@ -149,7 +149,7 @@ class Stage:
 
             if batch and (len(batch) >= minsize or shutdown or no_block):
                 log.debug(
-                    _("%(name)s - next batch[%(length)d]."), {"name": self, "length": len(batch)}
+                    "%(name)s - next batch[%(length)d].", {"name": self, "length": len(batch)}
                 )
                 for content in batch:
                     content._thaw_queue_event = None

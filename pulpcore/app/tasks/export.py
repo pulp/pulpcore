@@ -98,9 +98,9 @@ def fs_publication_export(exporter_pk, publication_pk):
     CreatedResource.objects.create(content_object=export)
 
     log.info(
-        _(
-            "Exporting: file_system_exporter={exporter}, publication={publication}, path=path"
-        ).format(exporter=exporter.name, publication=publication.pk, path=exporter.path)
+        "Exporting: file_system_exporter={exporter}, publication={publication}, path={path}".format(
+            exporter=exporter.name, publication=publication.pk, path=exporter.path
+        )
     )
 
     content_artifacts = ContentArtifact.objects.filter(
@@ -134,9 +134,10 @@ def fs_repo_version_export(exporter_pk, repo_version_pk):
     CreatedResource.objects.create(content_object=export)
 
     log.info(
-        _(
-            "Exporting: file_system_exporter={exporter}, repo_version={repo_version}, path=path"
-        ).format(exporter=exporter.name, repo_version=repo_version.pk, path=exporter.path)
+        "Exporting: file_system_exporter={exporter}, repo_version={repo_version}, "
+        "path={path}".format(
+            exporter=exporter.name, repo_version=repo_version.pk, path=exporter.path
+        )
     )
 
     content_artifacts = ContentArtifact.objects.filter(content__in=repo_version.content)

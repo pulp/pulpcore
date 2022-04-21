@@ -36,7 +36,7 @@ class Command(BaseCommand):
     This command is in tech-preview.
     """
 
-    help = _(
+    help = (
         "[tech-preview] Disable a Pulp plugin and remove all the relevant data from the database. "
         "Destructive!"
     )
@@ -55,9 +55,7 @@ class Command(BaseCommand):
         waiting_time = max(settings.CONTENT_APP_TTL, settings.WORKER_TTL)
         check_started = time.time()
         self.stdout.write(
-            _("Checking if Pulp services are running, it can take up to {}s...").format(
-                waiting_time
-            )
+            "Checking if Pulp services are running, it can take up to {}s...".format(waiting_time)
         )
         while is_pulp_running and (time.time() - check_started) < waiting_time:
             is_pulp_running = (
@@ -68,11 +66,8 @@ class Command(BaseCommand):
 
         if is_pulp_running:
             raise CommandError(
-                _(
-                    "The command can't be used when Pulp services are running. "
-                    "Please stop the services: pulpcore-api, pulpcore-content and all "
-                    "pulpcore-worker@*."
-                )
+                "The command can't be used when Pulp services are running. Please stop the "
+                "services: pulpcore-api, pulpcore-content and all pulpcore-worker@*."
             )
 
     def _remove_indirect_plugin_data(self, app_label):
@@ -127,7 +122,7 @@ class Command(BaseCommand):
         if models_to_delete:
             # Never-happen case
             raise CommandError(
-                _(
+                (
                     "Data for the following models can't be removed: {}. Please contact plugin "
                     "maintainers."
                 ).format(list(models_to_delete))
@@ -178,7 +173,7 @@ class Command(BaseCommand):
         available_plugins = {app.label for app in pulp_plugin_configs()} - {"core"}
         if plugin_name not in available_plugins:
             raise CommandError(
-                _(
+                (
                     "Plugin name is incorrectly specified or plugin is not installed. Please "
                     "specify one of the following plugin names: {}."
                 ).format(list(available_plugins))
@@ -193,7 +188,7 @@ class Command(BaseCommand):
         self._unapply_migrations(app_label=plugin_name)
 
         self.stdout.write(
-            _(
+            (
                 "Successfully removed the {} plugin data. It is ready to be uninstalled. "
                 "NOTE: Please do uninstall, otherwise `pulp status` might not show you the correct "
                 "list of plugins available."

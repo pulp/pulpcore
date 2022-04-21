@@ -350,7 +350,7 @@ class RemoteArtifactSaver(Stage):
                             ]
                         )
                         if avail_paths:
-                            msg = _(
+                            msg = (
                                 "No declared artifact with relative path '{rp}' for content '{c}'"
                                 " from remote '{rname}'. Using last from available-paths : '{ap}'"
                             )

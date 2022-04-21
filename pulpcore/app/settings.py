@@ -11,7 +11,6 @@ https://docs.djangoproject.com/en/1.11/ref/settings/
 import sys
 
 from contextlib import suppress
-from gettext import gettext as _
 from importlib import import_module
 from logging import getLogger
 from pathlib import Path
@@ -304,7 +303,7 @@ content_origin_validator = Validator(
     "CONTENT_ORIGIN",
     must_exist=True,
     messages={
-        "must_exist_true": _(
+        "must_exist_true": (
             "CONTENT_ORIGIN is a required setting but it was not configured. This may be caused "
             "by invalid read permissions of the settings file. Note that CONTENT_ORIGIN is set by "
             "the installer automatically."
@@ -317,7 +316,7 @@ redis_url_validator = Validator("REDIS_URL", must_exist=True, when=cache_enabled
 redis_host_validator = Validator("REDIS_HOST", must_exist=True, when=cache_enabled_validator)
 redis_port_validator = Validator("REDIS_PORT", must_exist=True, when=cache_enabled_validator)
 cache_validator = redis_url_validator | (redis_host_validator & redis_port_validator)
-cache_validator.messages["combined"] = _(
+cache_validator.messages["combined"] = (
     "CACHE_ENABLED is enabled but it requires to have REDIS configured. Please check "
     "https://docs.pulpproject.org/pulpcore/configuration/settings.html#redis-settings "
     "for more information."
@@ -336,7 +335,7 @@ unknown_algs_validator = Validator(
     "ALLOWED_CONTENT_CHECKSUMS",
     condition=lambda x: len(set(x).difference(constants.ALL_KNOWN_CONTENT_CHECKSUMS)) == 0,
     messages={
-        "condition": _(
+        "condition": (
             "ALLOWED_CONTENT_CHECKSUMS may only contain algorithms known to pulp - see "
             "constants.ALL_KNOWN_CONTENT_CHECKSUMS for the allowed list."
         )
@@ -347,7 +346,7 @@ api_root_validator = Validator(
     "API_ROOT",
     condition=lambda x: x.startswith("/") and x.endswith("/"),
     messages={
-        "condition": _("The API_ROOT must start and end with a '/', currently it is '{value}'")
+        "condition": ("The API_ROOT must start and end with a '/', currently it is '{value}'")
     },
 )
 
@@ -384,7 +383,7 @@ if not (
             Fernet(key_file.read())
     except Exception as ex:
         raise ImproperlyConfigured(
-            _("Could not load DB_ENCRYPTION_KEY file '{file}': {err}").format(
+            ("Could not load DB_ENCRYPTION_KEY file '{file}': {err}").format(
                 file=DB_ENCRYPTION_KEY, err=ex
             )
         )
@@ -405,7 +404,7 @@ if not (len(sys.argv) >= 2 and sys.argv[1] in _SKIPPED_COMMANDS_FOR_CONTENT_CHEC
                 row = cursor.fetchone()
                 if row[0] > 0:
                     raise ImproperlyConfigured(
-                        _(
+                        (
                             "There have been identified artifacts missing checksum '{}'. "
                             "Run 'pulpcore-manager handle-artifact-checksums' first to populate "
                             "missing artifact checksums."
@@ -419,7 +418,7 @@ if not (len(sys.argv) >= 2 and sys.argv[1] in _SKIPPED_COMMANDS_FOR_CONTENT_CHEC
                 row = cursor.fetchone()
                 if row[0] > 0:
                     raise ImproperlyConfigured(
-                        _(
+                        (
                             "There have been identified artifacts with forbidden checksum '{}'. "
                             "Run 'pulpcore-manager handle-artifact-checksums' first to unset "
                             "forbidden checksums."
@@ -436,8 +435,8 @@ if not (len(sys.argv) >= 2 and sys.argv[1] in _SKIPPED_COMMANDS_FOR_CONTENT_CHEC
             )
             row = cursor.fetchone()
             if row[0] > 0:
-                _logger.warn(
-                    _(
+                _logger.warning(
+                    (
                         "Warning: detected remote content without allowed checksums. "
                         "Run 'pulpcore-manager handle-artifact-checksums --report' to "
                         "view this content."
