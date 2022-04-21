@@ -102,9 +102,10 @@ class BaseDownloader:
             if not set(self.expected_digests).intersection(set(Artifact.DIGEST_FIELDS)):
                 raise UnsupportedDigestValidationError(
                     _(
-                        "Content at the url {} does not contain at least one trusted hasher which"
-                        " is specified in 'ALLOWED_CONTENT_CHECKSUMS' setting."
-                    ).format(self.url)
+                        "Content at the URL '{}' does not contain at least one trusted hasher which"
+                        " is specified in the 'ALLOWED_CONTENT_CHECKSUMS' setting ({}). The"
+                        " downloader expected one of the following hashers: {}"
+                    ).format(self.url, Artifact.DIGEST_FIELDS, set(self.expected_digests))
                 )
 
     def _ensure_writer_has_open_file(self):
