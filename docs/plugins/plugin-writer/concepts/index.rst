@@ -496,7 +496,7 @@ contact us.
 
 .. _checksum-use-in-plugins:
 
-Checksum Use In Plugins
+Checksum Use In Pluginsa
 -----------------------
 
 The ``ALLOWED_CONTENT_CHECKSUMS`` setting provides the list of allowed checksums a Pulp installation
