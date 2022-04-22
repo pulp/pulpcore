@@ -44,6 +44,10 @@ CA_FILE = "pulpcore.app.modelresource.ContentArtifactResource.json"
 VERSIONS_FILE = "versions.json"
 CONTENT_MAPPING_FILE = "content_mapping.json"
 
+# Concurrent imports w/ overlapping content can collide - how many attempts are we willing to
+# make before we decide this is a fatal error?
+MAX_ATTEMPTS = 3
+
 
 def _destination_repo(importer, source_repo_name):
     """Find the destination repository based on source repo's name."""
@@ -62,31 +66,34 @@ def _import_file(fpath, resource_class, retry=False):
             resource = resource_class()
             log.info(_("...Importing resource {}.").format(resource.__class__.__name__))
             if retry:
-                # django import-export can have a problem with concurrent-imports that are
-                # importing the same 'thing' (e.g., a Package that exists in two different
-                # repo-versions that are being imported at the same time). If we're asked to
-                # retry, we will try an import that will simply record errors as they happen
-                # (rather than failing with an exception) first. If errors happen, we'll do one
-                # retry before we give up on this repo-version's import.
-                a_result = resource.import_data(data, raise_errors=False)
-                if a_result.has_errors():
-                    log.info(
-                        "...{} import-errors encountered importing {}, retrying".format(
-                            a_result.totals["error"], fpath
+                curr_attempt = 1
+                while curr_attempt < MAX_ATTEMPTS:
+                    curr_attempt += 1
+                    # django import-export can have a problem with concurrent-imports that are
+                    # importing the same 'thing' (e.g., a Package that exists in two different
+                    # repo-versions that are being imported at the same time). If we're asked to
+                    # retry, we will try an import that will simply record errors as they happen
+                    # (rather than failing with an exception) first. If errors happen, we'll
+                    # retry before we give up on this repo-version's import.
+                    a_result = resource.import_data(data, raise_errors=False)
+                    if a_result.has_errors():
+                        total_errors = a_result.totals["error"]
+                        log.info(
+                            f"...{total_errors} import-errors encountered importing "
+                            "{fpath}, attempt {curr_attempt}, retrying"
                         )
-                    )
-                    # Second attempt, we raise an exception on any problem.
-                    # This will either succeed, or log a fatal error and fail.
-                    try:
-                        a_result = resource.import_data(data, raise_errors=True)
-                    except Exception as e:  # noqa log on ANY exception and then re-raise
-                        log.error(_("FATAL import-failure importing {}").format(fpath))
-                        raise
+                # Last attempt, we raise an exception on any problem.
+                # This will either succeed, or log a fatal error and fail.
+                try:
+                    a_result = resource.import_data(data, raise_errors=True)
+                except Exception as e:  # noqa log on ANY exception and then re-raise
+                    log.error(f"FATAL import-failure importing {fpath}")
+                    raise
             else:
                 a_result = resource.import_data(data, raise_errors=True)
             return a_result
     except AttributeError:
-        log.error(_("FAILURE importing file {}!").format(fpath))
+        log.error(f"FAILURE loading import-file {fpath}!")
         raise
 
 
