@@ -1,8 +1,7 @@
 from gettext import gettext as _
 
 from django.db import transaction
-from rest_framework import serializers
-from rest_framework.validators import UniqueValidator
+from rest_framework import serializers, exceptions, status
 
 from pulpcore.app import models
 from pulpcore.app.serializers import base, fields
@@ -149,6 +148,16 @@ class ContentChecksumSerializer(serializers.Serializer):
         )
 
 
+class ArtifactExistsError(exceptions.APIException):
+    """
+    Exception class for when an Artifact already exists upon upload.
+    """
+
+    status_code = status.HTTP_403_FORBIDDEN
+    default_detail = _("Artifact already exists.")
+    default_code = _("already_exists")
+
+
 class ArtifactSerializer(base.ModelSerializer):
     pulp_href = base.IdentityField(view_name="artifacts-detail")
 
@@ -192,7 +201,7 @@ class ArtifactSerializer(base.ModelSerializer):
 
     def validate(self, data):
         """
-        Validate file by size and by all checksums provided.
+        Validate file by size and by all checksums provided upon upload.
 
         Args:
             data (:class:`django.http.QueryDict`): QueryDict mapping Artifact model fields to their
@@ -227,14 +236,22 @@ class ArtifactSerializer(base.ModelSerializer):
                 data[algorithm] = digest
 
             if algorithm in models.Artifact.RELIABLE_DIGEST_FIELDS:
-                validator = UniqueValidator(
-                    models.Artifact.objects.all(),
-                    message=_("Artifact with {0} checksum of '{1}' already exists.").format(
-                        algorithm, digest
-                    ),
-                )
-                validator.instance = None
-                validator(digest, self.fields[algorithm])
+                with transaction.atomic():
+                    try:
+                        artifact = models.Artifact.objects.get(**{algorithm: digest})
+                    except models.Artifact.DoesNotExist:
+                        pass
+                    else:
+                        artifact.touch()
+                        context = {"request": None}
+                        pulp_href = ArtifactSerializer(instance=artifact, context=context).data[
+                            "pulp_href"
+                        ]
+                        raise ArtifactExistsError(
+                            _("Artifact with {0} checksum of {1} already exists: {2}").format(
+                                algorithm, digest, pulp_href
+                            )
+                        )
 
         return data
 
