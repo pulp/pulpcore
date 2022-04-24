@@ -28,13 +28,13 @@ jobs:
           - TEST: bindings
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           # by default, it uses a depth of 1
           # this fetches all history so that we can read each commit
           fetch-depth: 0
 
-      - uses: actions/setup-python@v2
+      - uses: actions/setup-python@v3
         with:
           python-version: "3.6"
 
@@ -63,7 +63,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_CONTEXT: ${{ github.event.pull_request.commits_url }}
 
-      - uses: actions/setup-ruby@v1
+      - uses: ruby/setup-ruby@v1
         if: ${{ env.TEST == 'bindings' || env.TEST == 'generate-bindings' }}
         with:
           ruby-version: "2.6"
@@ -129,27 +129,27 @@ jobs:
 
       - name: Upload python client packages
         if: ${{ env.TEST == 'bindings' || env.TEST == 'generate-bindings' }}
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: python-client.tar
           path: python-client.tar
 
       - name: Upload python client docs
         if: ${{ env.TEST == 'bindings' || env.TEST == 'generate-bindings' }}
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: python-client-docs.tar
           path: python-client-docs.tar
 
       - name: Upload ruby client packages
         if: ${{ env.TEST == 'bindings' || env.TEST == 'generate-bindings' }}
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: ruby-client.tar
           path: ruby-client.tar
       - name: Upload built docs
         if: ${{ env.TEST == 'docs' }}
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: docs.tar
           path: docs/docs.tar
@@ -169,13 +169,13 @@ jobs:
   changelog:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           # by default, it uses a depth of 1
           # this fetches all history so that we can read each commit
           fetch-depth: 0
 
-      - uses: actions/setup-python@v2
+      - uses: actions/setup-python@v3
         with:
           python-version: "3.6"
 
@@ -194,7 +194,7 @@ jobs:
         run: python .ci/scripts/changelog.py
 
       - name: Create Pull Request
-        uses: peter-evans/create-pull-request@v3
+        uses: peter-evans/create-pull-request@v4
         with:
           token: ${{ secrets.RELEASE_TOKEN }}
           committer: pulpbot <pulp-infra@redhat.com>
@@ -217,17 +217,17 @@ jobs:
       TEST: publish
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           # by default, it uses a depth of 1
           # this fetches all history so that we can read each commit
           fetch-depth: 0
 
-      - uses: actions/setup-python@v2
+      - uses: actions/setup-python@v3
         with:
           python-version: "3.6"
 
-      - uses: actions/setup-ruby@v1
+      - uses: ruby/setup-ruby@v1
         
         with:
           ruby-version: "2.6"
@@ -310,7 +310,7 @@ jobs:
 
       
       - name: Download Ruby client
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: ruby-client.tar
 
@@ -323,7 +323,7 @@ jobs:
 
       
       - name: Download Python client
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: python-client.tar
 
@@ -336,12 +336,12 @@ jobs:
 
       
       - name: Download built docs
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: docs.tar
 
       - name: Download Python client docs
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: python-client-docs.tar
 
