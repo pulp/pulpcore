@@ -16,7 +16,7 @@ jobs:
     if: github.base_ref == 'main'
     steps:
     - name: Checkout
-      uses: actions/checkout@v1
+      uses: actions/checkout@v3
       with:
         fetch-depth: 30
     - name: Checkout main
@@ -32,13 +32,13 @@ jobs:
     
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           # by default, it uses a depth of 1
           # this fetches all history so that we can read each commit
           fetch-depth: 0
 
-      - uses: actions/setup-python@v2
+      - uses: actions/setup-python@v3
         with:
           python-version: "3.8"
 
@@ -99,16 +99,16 @@ jobs:
       deprecations-bindings: ${{ steps.deprecations.outputs.deprecations-bindings }}
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           # by default, it uses a depth of 1
           # this fetches all history so that we can read each commit
           fetch-depth: 0
 
-      - uses: actions/setup-python@v2
+      - uses: actions/setup-python@v3
         with:
           python-version: "3.8"
-      - uses: actions/setup-ruby@v1
+      - uses: ruby/setup-ruby@v1
         
         with:
           ruby-version: "2.6"
@@ -229,13 +229,13 @@ jobs:
       deprecations-upgrade: ${{ steps.deprecations.outputs.deprecations-upgrade }}
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           # by default, it uses a depth of 1
           # this fetches all history so that we can read each commit
           fetch-depth: 0
 
-      - uses: actions/setup-python@v2
+      - uses: actions/setup-python@v3
         with:
           python-version: "3.8"
 
