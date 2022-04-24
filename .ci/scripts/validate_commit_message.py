@@ -67,6 +67,8 @@ if issues:
 else:
     if NO_ISSUE in message:
         print("Commit {sha} has no issues but is tagged {tag}.".format(sha=sha[0:7], tag=NO_ISSUE))
+    elif "Merge" in message and "cherry picked from commit" in message:
+        pass
     else:
         sys.exit(
             "Error: no attached issues found for {sha}. If this was intentional, add "
