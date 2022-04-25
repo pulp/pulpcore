@@ -262,6 +262,7 @@ class HttpDownloader(BaseDownloader):
                 giveup=http_giveup_handler,
             )
             async def download_wrapper():
+                self._ensure_no_broken_file()
                 try:
                     return await self._run(extra_data=extra_data)
                 except asyncio.TimeoutError:
@@ -283,7 +284,6 @@ class HttpDownloader(BaseDownloader):
         Args:
             extra_data (dict): Extra data passed by the downloader.
         """
-        self._ensure_fresh_file()
         if self.download_throttler:
             await self.download_throttler.acquire()
         async with self.session.get(
@@ -296,7 +296,7 @@ class HttpDownloader(BaseDownloader):
             await self.session.close()
         return to_return
 
-    def _ensure_fresh_file(self):
+    def _ensure_no_broken_file(self):
         """Upon retry reset writer back to None to get a fresh file."""
         if self._writer is not None:
             self._writer.delete = True
