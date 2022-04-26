@@ -3,7 +3,7 @@ aiohttp~=3.8.1
 aiodns~=3.0.0
 aiofiles==0.8.0
 aioredis~=2.0.1
-backoff~=1.11.0
+backoff~=2.0.0
 click<9.0
 cryptography~=36.0.2
 Django~=3.2.13  # LTS version, switch only if we have a compelling reason to
