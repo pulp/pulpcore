@@ -11,8 +11,8 @@ from pulp_smash.pulp3.utils import (
     get_versions,
 )
 
-from pulpcore.tests.functional.api.using_plugin.constants import FILE_CONTENT_NAME
-from pulpcore.tests.functional.api.using_plugin.utils import (
+from pulp_file.tests.functional.constants import FILE_CONTENT_NAME
+from pulp_file.tests.functional.utils import (
     gen_file_client,
     gen_file_remote,
 )
