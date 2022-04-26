@@ -148,10 +148,12 @@ if [[ "$TEST" == "upgrade" ]]; then
   echo "Restarting in 60 seconds"
   sleep 60
 
-  # Let's reinstall pulpcore, pulp-cli, and pulp-smash so we have the correct dependencies
+  # Let's reinstall pulpcore so we can ensure we have the correct dependencies
   cd ../pulpcore
   git checkout -f ci_upgrade_test
-  pip install --upgrade --force-reinstall . ../pulp-cli ../pulp-smash
+  pip install --upgrade --force-reinstall .
+  cd ..
+  pip install --upgrade ../pulp-cli ../pulp-smash
   # Hack: adding pulp CA to certifi.where()
   CERTIFI=$(python -c 'import certifi; print(certifi.where())')
   cat /usr/local/share/ca-certificates/pulp_webserver.crt | sudo tee -a "$CERTIFI" > /dev/null
