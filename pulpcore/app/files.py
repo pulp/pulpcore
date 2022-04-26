@@ -34,15 +34,16 @@ class PulpTemporaryUploadedFile(TemporaryUploadedFile):
         name = os.path.basename(file.name)
         instance = cls(name, "", file.size, "", "")
         instance.file = file
-        data = file.read()
+        # Default 1MB
+        while data := file.read(1048576):
+            for hasher in models.Artifact.DIGEST_FIELDS:
+                instance.hashers[hasher].update(data)
 
         # calling the method read() moves the file's pointer to the end of the file object,
         # thus, it is necessary to reset the file's pointer position back to 0 in case of
         # calling the method read() again from another place
         file.seek(0)
 
-        for hasher in models.Artifact.DIGEST_FIELDS:
-            instance.hashers[hasher].update(data)
         return instance
 
 
