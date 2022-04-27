@@ -11,6 +11,7 @@ from pulpcore.client.pulpcore import (
     DistributionsApi,
     PublicationsApi,
     RepositoriesApi,
+    SigningServicesApi,
     StatusApi,
     TasksApi,
     TaskSchedulesApi,
@@ -55,19 +56,24 @@ def task_schedules_api_client(pulpcore_client):
     return TaskSchedulesApi(pulpcore_client)
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def status_api_client(pulpcore_client):
     return StatusApi(pulpcore_client)
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def users_api_client(pulpcore_client):
     return UsersApi(pulpcore_client)
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def users_roles_api_client(pulpcore_client):
     return UsersRolesApi(pulpcore_client)
+
+
+@pytest.fixture(scope="session")
+def signing_service_api_client(pulpcore_client):
+    return SigningServicesApi(pulpcore_client)
 
 
 @pytest.fixture
