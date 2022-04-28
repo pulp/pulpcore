@@ -9,8 +9,3 @@ pulp.exceptions.base
 --------------------
 
 .. automodule:: pulpcore.exceptions.base
-
-pulp.exceptions.http
---------------------
-
-.. automodule:: pulpcore.exceptions.http

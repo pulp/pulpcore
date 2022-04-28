@@ -4,6 +4,8 @@ import pytest
 
 from pulp_smash.config import get_config
 from pulp_smash.pulp3.bindings import delete_orphans
+from pulp_smash.utils import get_pulp_setting
+
 
 from pulpcore.client.pulpcore import (
     ApiClient,
@@ -141,3 +143,13 @@ def delete_orphans_pre(request):
         raise pytest.UsageError("This test is not suitable to be marked parallel.")
     delete_orphans()
     yield
+
+
+@pytest.fixture(scope="session")
+def pulp_api_v3_path(cli_client):
+    v3_api_root = get_pulp_setting(cli_client, "V3_API_ROOT")
+    if v3_api_root is None:
+        raise RuntimeError(
+            "This fixture requires the server to have the `V3_API_ROOT` setting set."
+        )
+    return v3_api_root
