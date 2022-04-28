@@ -8,7 +8,6 @@ from django.urls import reverse
 from pulpcore.app.models import Task
 from pulpcore.app.util import get_view_name_for_model
 from pulpcore.constants import TASK_FINAL_STATES, TASK_INCOMPLETE_STATES, TASK_STATES
-from pulpcore.exceptions import MissingResource
 
 _logger = logging.getLogger(__name__)
 
@@ -24,12 +23,9 @@ def cancel(task_id):
         task_id (str): The ID of the task you wish to cancel
 
     Raises:
-        MissingResource: if a task with given task_id does not exist
+        rest_framework.exceptions.NotFound: If a task with given task_id does not exist
     """
-    try:
-        task_status = Task.objects.get(pk=task_id)
-    except Task.DoesNotExist:
-        raise MissingResource(task=task_id)
+    task_status = Task.objects.get(pk=task_id)
 
     if task_status.state in TASK_FINAL_STATES:
         # If the task is already done, just stop

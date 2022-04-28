@@ -1,0 +1,2 @@
+The ``pulpcore.plugin.exceptions.MissingResource`` object has been removed. Instead let 404
+errors propagate upwards for DRF to handle, or use the DRF exception ``NotFound``.
