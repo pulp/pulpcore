@@ -21,6 +21,7 @@ from pulpcore.app import tasks
 from pulpcore.app.models import MasterModel
 from pulpcore.app.models.role import GroupRole, UserRole
 from pulpcore.app.response import OperationPostponedResponse
+from pulpcore.app.role_util import get_objects_for_user
 from pulpcore.app.serializers import AsyncOperationResponseSerializer, NestedRoleSerializer
 from pulpcore.tasking.tasks import dispatch
 
@@ -353,6 +354,13 @@ class NamedModelViewSet(viewsets.GenericViewSet):
                 if hasattr(permission_class, "scope_queryset"):
                     qs = permission_class.scope_queryset(self, qs)
 
+        return qs
+
+    def scope_queryset(self, qs):
+        permission_name = getattr(self, "queryset_filtering_required_permission", None)
+        if permission_name:
+            user = self.request.user
+            qs = get_objects_for_user(user, permission_name, qs)
         return qs
 
     @classmethod

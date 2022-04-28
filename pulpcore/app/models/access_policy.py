@@ -29,6 +29,8 @@ class AccessPolicy(BaseModel):
             authorization for.
         customized (BooleanField): False if the AccessPolicy has been user-modified. True otherwise.
             Defaults to False.
+        queryset_scoping (BooleanField): True if the user wants to use the default queryset scoping
+            that comes with the view.
 
     """
 
@@ -36,6 +38,7 @@ class AccessPolicy(BaseModel):
     statements = models.JSONField()
     viewset_name = models.CharField(max_length=128, unique=True)
     customized = models.BooleanField(default=False)
+    queryset_scoping = models.BooleanField(default=False)
 
 
 class AutoAddObjPermsMixin:

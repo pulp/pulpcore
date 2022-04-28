@@ -44,6 +44,11 @@ class AccessPolicySerializer(ModelSerializer):
         read_only=True,
     )
 
+    queryset_scoping = serializers.BooleanField(
+        help_text=_("True if view's queryset_scoping is enabled, False otherwise."),
+        required=False,
+    )
+
     class Meta:
         model = models.AccessPolicy
         fields = ModelSerializer.Meta.fields + (
@@ -52,6 +57,7 @@ class AccessPolicySerializer(ModelSerializer):
             "statements",
             "viewset_name",
             "customized",
+            "queryset_scoping",
         )
 
     def validate(self, data):

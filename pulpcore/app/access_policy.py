@@ -3,7 +3,6 @@ from rest_framework.exceptions import APIException
 
 from pulpcore.app.models import AccessPolicy as AccessPolicyModel
 from pulpcore.app.util import get_view_urlpattern, get_viewset_for_model
-from pulpcore.app.role_util import get_objects_for_user
 
 
 class AccessPolicyFromDB(AccessPolicy):
@@ -61,12 +60,11 @@ class AccessPolicyFromDB(AccessPolicy):
 
     def scope_queryset(self, view, qs):
         """
-        Scope the queryset based on the view's `default_queryset_filtering_permissions`.
+        Scope the queryset based on the view's `scope_queryset method`.
         """
-        permission_name = getattr(view, "queryset_filtering_required_permission", None)
-        if permission_name:
-            user = view.request.user
-            qs = get_objects_for_user(user, permission_name, qs)
+        if access_policy := self.get_access_policy(view):
+            if access_policy.queryset_scoping and hasattr(view, "scope_queryset"):
+                qs = view.scope_queryset(qs)
         return qs
 
     def get_policy_statements(self, request, view):
