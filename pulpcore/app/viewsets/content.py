@@ -11,6 +11,7 @@ from pulpcore.app.serializers import (
     SigningServiceSerializer,
 )
 from pulpcore.app.viewsets.base import BaseFilterSet, NamedModelViewSet
+from pulpcore.app.role_util import get_objects_for_user
 
 from .custom_filters import (
     ArtifactRepositoryVersionFilter,
@@ -99,7 +100,8 @@ class BaseContentViewSet(NamedModelViewSet):
     """
     A base class for any content viewset.
 
-    It ensures that 'content/' is a part of endpoint. It also sets a default filter class.
+    It ensures that 'content/' is a part of endpoint, sets a default filter class and provides
+    a default `scope_queryset` method based off of `repository_viewset`'s default scope permission.
     """
 
     endpoint_name = "content"
@@ -107,6 +109,19 @@ class BaseContentViewSet(NamedModelViewSet):
     # These are just placeholders, the plugin writer would replace them with the actual
     queryset = Content.objects.all().exclude(pulp_type=PublishedMetadata.get_pulp_type())
     serializer_class = MultipleArtifactContentSerializer
+    repository_viewset = None
+
+    def scope_queryset(self, qs):
+        """Scope the content based on repositories the user has permission to see."""
+
+        if view := self.repository_viewset:
+            if view_permission := getattr(view, "queryset_filtering_required_permission", None):
+                if not self.request.user.has_perm(view_permission):
+                    repos = get_objects_for_user(
+                        self.request.user, view_permission, view.queryset
+                    )
+                    return qs.filter(repositories__in=repos)
+        return qs
 
 
 class ListContentViewSet(BaseContentViewSet, mixins.ListModelMixin):
