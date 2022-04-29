@@ -84,6 +84,15 @@ if [[ " ${SCENARIOS[*]} " =~ " ${TEST} " ]]; then
     image: docker.io/pulp/pulp-fixtures:latest\
     env: {BASE_URL: "http://pulp-fixtures:8080"}' vars/main.yaml
 fi
+if [ "$TEST" == 'stream' ]; then
+  sed -i -e '/^services:/a \
+  - name: ci-sftp\
+    image: atmoz/sftp\
+    volumes:\
+      - ./ssh/id_ed25519.pub:/home/foo/.ssh/keys/id_ed25519.pub\
+    command: "foo::::storage"' vars/main.yaml
+  sed -i -e '$a stream_test: true' vars/main.yaml
+fi
 
 if [ "$TEST" = "s3" ]; then
   export MINIO_ACCESS_KEY=AKIAIT2Z5TDYPX3ARJBA

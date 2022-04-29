@@ -80,7 +80,7 @@ test_performance: false
 test_released_plugin_with_next_pulpcore_release: false
 test_reroute: true
 test_s3: true
-test_stream: false
+test_stream: true
 update_github: true
 update_redmine: false
 upgrade_range:
