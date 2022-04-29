@@ -30,8 +30,6 @@ Checklist
 #. Write an excellent :ref:`commit-message`. Make sure you reference and link to the issue.
 #. Push your branch to your fork and open a `Pull request across forks
    <https://help.github.com/articles/creating-a-pull-request-from-a-fork/>`_.
-#. Add GitHub labels as appropriate.
-#. Change the status of the redmine issue to "POST".
 #. Add a link to the pull request in a comment on the issue.
 #. Make sure the tests are passing.
 #. If the change requires a corresponding change in pulp-cli, open a PR against the pulp-cli or
