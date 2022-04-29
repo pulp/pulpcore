@@ -9,7 +9,7 @@ for :term:`pulpcore` only, but some plugins may choose to follow the same strate
 Versions and Branches
 ---------------------
 
-Code is submitted by a Pull Request on Github to merge the changes to ``master`` which represents
+Code is submitted by a Pull Request on Github to merge the changes to ``main`` which represents
 the next ``pulpcore`` release. See :ref:`versioning` for more details.
 
 
@@ -44,42 +44,25 @@ Commit messages in Pulp should contain a human readable explanation of what was 
 also follow the standard git message format of starting with a subject line or title (usually
 wrapped at about 50 chars) and optionally, a longer message (usually wrapped at 72 characters)
 broken up into paragraphs. For more on what constitutes a good commit message, we recommend `Tim
-Pope's blog post on the subject
-<http://tbaggery.com/2008/04/19/a-note-about-git-commit-messages.html>`_.
+Pope's blog post on the subject <http://tbaggery.com/2008/04/19/a-note-about-git-commit-messages.
+html>`_.
 
-Each commit message should reference an issue in `Pulp's Github issue tracker
-<https://github.com/pulp>`_. To do this you should **include both a keyword and a link** to the issue.
+Each commit message should link to an issue on the `pulpcore Github Issue tracker <https://github
+.com/pulp/pulpcore/issues/>`_. See the `Github Linking Docs <https://docs.github.com/en/issues/
+tracking-your-work-with-issues/linking-a-pull-request-to-an-issue #linking-a-pull-request-to-an-
+issue-using-a-keyword>`_ and include at least one link in your commit message.
 
-To reference the issue (but not change its state), use ``re`` or ``ref``::
-
-    re #123
-    ref #123
-
-To update the issue's state to MODIFIED and set the %done to 100, use
-``fixes`` or ``closes``::
-
-    fixes #123
-    closes #123
-
-To reference multiple issues in a commit use a separate line for each one::
-
-    fixes #123
-    fixes #124
-
-We strongly suggest that each commit is attached to an issue in Redmine tracker. Our tracker is
-a centralized point of reference, that keeps track of design decisions and discussions and is used
-by the release process. However, if you must create a commit for which there is no issue,
-add the tag ``[noissue]`` to the commit's message.
+If you must create a commit for which there is no issue, add the ``[noissue]`` syntax in the commit
+message.
 
 Putting this all together, the following is an example of a good commit message::
 
-    Update node install and quickstart
+    Update install and quickstart
 
-    The nodes install and quickstart was leaving out an important step on
-    the child node to configure the server.conf on the child node.
+    The install docs and quickstart was leaving out an important step on
+    the worker configuration.
 
     closes #1392
-    https://pulp.plan.io/issues/1392
 
 .. hint::
 

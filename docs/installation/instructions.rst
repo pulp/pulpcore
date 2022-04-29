@@ -86,8 +86,8 @@ PyPI Installation
 .. warning::
 
     You should never attempt to create new migrations via the ``pulpcore-manager makemigrations``.
-    In case, new migrations would be needed, please file a bug against the respective plugin.
-    :ref:`issue-writing`
+    In case new migrations would be needed, please file a bug against `the respective plugin
+    <https://pulpproject.org/content-plugins/#pulp-3-content-plugins-information>`_.
 
 .. note::
 
