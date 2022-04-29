@@ -23,6 +23,7 @@ Or in a systemd file you could::
 
 
 Dynaconf supports `settings in multiple file formats <https://www.dynaconf.com/configuration/>`_
+Dynaconf also support `local settings file <https://www.dynaconf.com/settings_files/#local-settings-files>`_
 
 This file should have permissions of:
 
@@ -45,3 +46,10 @@ Many users specify their Pulp settings entirely by Environment Variables. Each o
 be configured using Dynaconf by prepending ``PULP_`` to the name of the setting and specifying that
 as an Environment Variable. For example the ``SECRET_KEY`` can be specified by exporting the
 ``PULP_SECRET_KEY`` variable.
+
+When using `pulp_installer`
+---------------------------
+
+A Pulp upgrade using `pulp_installer` may override the original ``/etc/pulp/settings.py``.
+To keep your settings through an upgrade, use the `local settings` file located at
+``/etc/pulp/settings.local.py``.
