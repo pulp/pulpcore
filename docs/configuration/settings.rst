@@ -93,8 +93,11 @@ LOGGING
 ^^^^^^^
 
    By default Pulp logs at an INFO level to syslog. For all possible configurations please
-   refer to `Django documenation on logging <https://docs.djangoproject.com/en/2
+   refer to `Django documenation on logging <https://docs.djangoproject.com/en/3
    .2/topics/logging/#configuring-logging>`_.
+
+   Enabling DEBUG logging is a common troubleshooting step. See the :ref:`enabling-debug-logging`
+   documentation for details on how to do that.
 
 AUTHENTICATION_BACKENDS
 ^^^^^^^^^^^^^^^^^^^^^^^

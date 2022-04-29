@@ -42,6 +42,7 @@ Pulp is a free and open source software (FOSS) project and if you'd like to cont
 out our :doc:`contributing docs<contributing/index>`.
 
 
+
 Source code
 ^^^^^^^^^^^
 
@@ -69,6 +70,7 @@ Table of Contents
    client_bindings
    contributing/index
    bugs-features
+   troubleshooting
    glossary
    changes
    versioning
