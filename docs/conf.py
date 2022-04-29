@@ -261,52 +261,10 @@ texinfo_documents = [
 # How to display URL addresses: 'footnote', 'no', or 'inline'.
 #texinfo_show_urls = 'footnote'
 
-extlinks = {'github': ('https://github.com/pulp/pulpcore/issues/%s', '#'),
-            'redmine': ('https://pulp.plan.io/issues/%s', '#'),
-            'fixedbugs_pulp': ('https://pulp.plan.io/projects/pulp/issues?c%%5B%%5D=tracker&c%%5B%'
-                               '%5D=status&c%%5B%%5D=priority&c%%5B%%5D=cf_5&c%%5B%%5D=subject&c%%'
-                               '5B%%5D=author&c%%5B%%5D=assigned_to&c%%5B%%5D=cf_3&f%%5B%%5D=cf_4&'
-                               'f%%5B%%5D=tracker_id&f%%5B%%5D=&group_by=&op%%5Bcf_4%%5D=%%3D&op%%'
-                               '5Btracker_id%%5D=%%3D&set_filter=1&sort=priority%%3Adesc%%2Ccf_5%%'
-                               '3Adesc%%2Cid%%3Adesc&utf8=%%E2%%9C%%93&v%%5Bcf_4%%5D%%5B%%5D=%s&v%'
-                               '%5Btracker_id%%5D%%5B%%5D=1', 'bugs fixed in '),
-            'fixedbugs_pulp_rpm': ('https://pulp.plan.io/projects/pulp_rpm/issues?c%%5B%%5D=tracke'
-                                   'r&c%%5B%%5D=status&c%%5B%%5D=priority&c%%5B%%5D=cf_5&c%%5B%%5D'
-                                   '=subject&c%%5B%%5D=author&c%%5B%%5D=assigned_to&c%%5B%%5D=cf_3'
-                                   '&f%%5B%%5D=cf_4&f%%5B%%5D=tracker_id&f%%5B%%5D=&group_by=&op%%'
-                                   '5Bcf_4%%5D=%%3D&op%%5Btracker_id%%5D=%%3D&set_filter=1&sort=pr'
-                                   'iority%%3Adesc%%2Ccf_5%%3Adesc%%2Cstatus&utf8=%%E2%%9C%%93&v%%'
-                                   '5Bcf_4%%5D%%5B%%5D=%s&v%%5Btracker_id%%5D%%5B%%5D=1',
-                                   'bugs fixed in '),
-            'fixedbugs_pulp_puppet': ('https://pulp.plan.io/projects/pulp_puppet/issues?utf8=%%E2%'
-                                      '%9C%%93&set_filter=1&f%%5B%%5D=cf_4&op%%5Bcf_4%%5D=%%3D&v%%'
-                                      '5Bcf_4%%5D%%5B%%5D=%s&f%%5B%%5D=tracker_id&op%%5Btracker_id'
-                                      '%%5D=%%3D&v%%5Btracker_id%%5D%%5B%%5D=1&f%%5B%%5D=&c%%5B%%5'
-                                      'D=tracker&c%%5B%%5D=status&c%%5B%%5D=priority&c%%5B%%5D=cf_'
-                                      '5&c%%5B%%5D=subject&c%%5B%%5D=author&c%%5B%%5D=assigned_to&'
-                                      'c%%5B%%5D=cf_3&group_by=', 'bugs fixed in '),
-            'fixedbugs_pulp_python': ('https://pulp.plan.io/projects/pulp_python/issues?c%%5B%%5D='
-                                      'tracker&c%%5B%%5D=status&c%%5B%%5D=priority&c%%5B%%5D=cf_5&'
-                                      'c%%5B%%5D=subject&c%%5B%%5D=author&c%%5B%%5D=assigned_to&c%'
-                                      '%5B%%5D=cf_3&f%%5B%%5D=cf_11&f%%5B%%5D=tracker_id&f%%5B%%5D'
-                                      '=&group_by=&op%%5Bcf_11%%5D=%%3D&op%%5Btracker_id%%5D=%%3D&'
-                                      'set_filter=1&sort=priority%%3Adesc%%2Ccf_5%%3Adesc%%2Cstatu'
-                                      's&utf8=%%E2%%9C%%93&v%%5Bcf_11%%5D%%5B%%5D=%s&v%%5Btracker_'
-                                      'id%%5D%%5B%%5D=1', 'bugs fixed in '),
-            'fixedbugs_pulp_docker': ('https://pulp.plan.io/projects/pulp_docker/issues?utf8=%%E2%'
-                                      '%9C%%93&set_filter=1&f%%5B%%5D=cf_12&op%%5Bcf_12%%5D=%%3D&v'
-                                      '%%5Bcf_12%%5D%%5B%%5D=%s&f%%5B%%5D=tracker_id&op%%5Btracker'
-                                      '_id%%5D=%%3D&v%%5Btracker_id%%5D%%5B%%5D=1&f%%5B%%5D=&c%%5B'
-                                      '%%5D=tracker&c%%5B%%5D=status&c%%5B%%5D=priority&c%%5B%%5D='
-                                      'cf_5&c%%5B%%5D=subject&c%%5B%%5D=author&c%%5B%%5D=assigned_'
-                                      'to&c%%5B%%5D=cf_3&group_by=', 'bugs fixed in '),
-            'fixedbugs_pulp_ostree': ('https://pulp.plan.io/projects/pulp_ostree/issues?utf8=%%E2%'
-                                      '%9C%%93&set_filter=1&f%%5B%%5D=cf_17&op%%5Bcf_17%%5D=%%3D&v'
-                                      '%%5Bcf_17%%5D%%5B%%5D=%s&f%%5B%%5D=tracker_id&op%%5Btracker'
-                                      '_id%%5D=%%3D&v%%5Btracker_id%%5D%%5B%%5D=1&f%%5B%%5D=&c%%5B'
-                                      '%%5D=tracker&c%%5B%%5D=status&c%%5B%%5D=priority&c%%5B%%5D='
-                                      'cf_5&c%%5B%%5D=subject&c%%5B%%5D=author&c%%5B%%5D=assigned_'
-                                      'to&c%%5B%%5D=cf_3&group_by=', 'bugs fixed in '),}
+extlinks = {
+    'github': ('https://github.com/pulp/pulpcore/issues/%s', '#'),
+    'redmine': ('https://pulp.plan.io/issues/%s', '#'),
+}
 
 # napoleon uses .. attribute by default, but :ivar: is more succinct and looks better,
 # particularly on classes with a lot of attributes, like django models and related objects
