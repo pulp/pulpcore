@@ -1,7 +1,7 @@
 # This config represents the latest values used when running the plugin-template. Any settings that
 # were not present before running plugin-template have been added with their default values.
 
-# generated with plugin_template@2021.08.26-105-gd1dc186
+# generated with plugin_template@2021.08.26-121-gf49381d
 
 additional_repos:
 - branch: main
@@ -34,7 +34,7 @@ flake8: true
 github_org: pulp
 issue_tracker: github
 keep_ci_update_for_latest_branches: 5
-keep_ci_update_since_branch: "3.14"
+keep_ci_update_since_branch: '3.14'
 noissue_marker: '[noissue]'
 parallel_test_workers: 8
 plugin_app_label: core
@@ -80,6 +80,7 @@ test_performance: false
 test_released_plugin_with_next_pulpcore_release: false
 test_reroute: true
 test_s3: true
+test_stream: false
 update_github: true
 update_redmine: false
 upgrade_range:
