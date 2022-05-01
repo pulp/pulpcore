@@ -54,11 +54,15 @@ plugins:
     source: $PULP_FILE
   - name: pulp-certguard
     source: $PULP_CERTGUARD
+VARSYAML
+
+cat >> vars/main.yaml << VARSYAML
 services:
   - name: pulp
     image: "pulp:${TAG}"
     volumes:
       - ./settings:/etc/pulp
+      - ./ssh:/keys/
 VARSYAML
 
 cat >> vars/main.yaml << VARSYAML
@@ -73,7 +77,8 @@ if [ "$TEST" = "upgrade" ]; then
   sed -i "/^pulp_container_tag:.*/s//pulp_container_tag: upgrade-https/" vars/main.yaml
 fi
 
-if [[ "$TEST" == "pulp" || "$TEST" == "performance" || "$TEST" == "upgrade" || "$TEST" == "azure" || "$TEST" == "s3" || "$TEST" == "plugin-from-pypi" || "$TEST" == "generate-bindings" ]]; then
+SCENARIOS=("pulp" "performance" "upgrade" "azure" "s3" "stream" "plugin-from-pypi" "generate-bindings")
+if [[ " ${SCENARIOS[*]} " =~ " ${TEST} " ]]; then
   sed -i -e '/^services:/a \
   - name: pulp-fixtures\
     image: docker.io/pulp/pulp-fixtures:latest\
@@ -124,7 +129,7 @@ sudo docker cp pulp:/etc/pulp/certs/pulp_webserver.crt /usr/local/share/ca-certi
 # Hack: adding pulp CA to certifi.where()
 CERTIFI=$(python -c 'import certifi; print(certifi.where())')
 cat /usr/local/share/ca-certificates/pulp_webserver.crt | sudo tee -a "$CERTIFI" > /dev/null
-if [ "$TEST" = "azure" ]; then
+if [[ "$TEST" = "azure" ]]; then
   cat /usr/local/share/ca-certificates/azcert.crt | sudo tee -a "$CERTIFI" > /dev/null
 fi
 
@@ -136,7 +141,7 @@ cat "$CERTIFI" | sudo tee -a "$CERT" > /dev/null
 sudo update-ca-certificates
 echo ::endgroup::
 
-if [ "$TEST" = "azure" ]; then
+if [[ "$TEST" = "azure" ]]; then
   AZCERTIFI=$(/opt/az/bin/python3 -c 'import certifi; print(certifi.where())')
   cat /usr/local/share/ca-certificates/azcert.crt >> $AZCERTIFI
   cat /usr/local/share/ca-certificates/azcert.crt | cmd_stdin_prefix tee -a /usr/local/lib/python3.8/site-packages/certifi/cacert.pem > /dev/null
