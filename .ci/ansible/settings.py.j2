@@ -19,7 +19,21 @@ API_ROOT = {{ api_root | repr }}
 {% endfor %}
 {% endif %}
 
+{% if stream_test | default(false) -%}
+REDIRECT_TO_OBJECT_STORAGE = False
+DEFAULT_FILE_STORAGE = "pulpcore.app.models.storage.PulpSFTPStorage"
+MEDIA_ROOT = ""
+SFTP_STORAGE_HOST = "ci-sftp"
+SFTP_STORAGE_ROOT = "/storage/"
+SFTP_STORAGE_PARAMS = {
+    "username": "foo",
+    "key_filename": "/keys/id_ed25519",
+}
+{%- endif %}
+
 {% if s3_test | default(false) %}
+DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
+MEDIA_ROOT = ""
 AWS_ACCESS_KEY_ID = "{{ minio_access_key }}"
 AWS_SECRET_ACCESS_KEY = "{{ minio_secret_key }}"
 AWS_S3_REGION_NAME = "eu-central-1"
@@ -28,12 +42,12 @@ S3_USE_SIGV4 = True
 AWS_S3_SIGNATURE_VERSION = "s3v4"
 AWS_STORAGE_BUCKET_NAME = "pulp3"
 AWS_S3_ENDPOINT_URL = "http://minio:9000"
-DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
 AWS_DEFAULT_ACL = "@none None"
-MEDIA_ROOT = ""
 {% endif %}
 
 {% if azure_test | default(false) %}
+DEFAULT_FILE_STORAGE = "storages.backends.azure_storage.AzureStorage"
+MEDIA_ROOT = ""
 AZURE_ACCOUNT_KEY = "Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw=="
 AZURE_ACCOUNT_NAME = "devstoreaccount1"
 AZURE_CONTAINER =  "pulp-test"
@@ -41,6 +55,4 @@ AZURE_LOCATION = "pulp3"
 AZURE_OVERWRITE_FILES = True
 AZURE_URL_EXPIRATION_SECS = 120
 AZURE_CONNECTION_STRING = 'DefaultEndpointsProtocol={{ pulp_scheme }};AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint={{ pulp_scheme }}://ci-azurite:10000/devstoreaccount1;'
-DEFAULT_FILE_STORAGE = "storages.backends.azure_storage.AzureStorage"
-MEDIA_ROOT = ""
 {% endif %}
