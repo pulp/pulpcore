@@ -6,6 +6,7 @@ all:
         pulp:
         pulp-fixtures:
         minio:
+        ci-sftp:
       vars:
         ansible_connection: docker
 ...
