@@ -149,11 +149,9 @@ if [[ "$TEST" == "upgrade" ]]; then
   cd ../pulpcore
   git checkout -f ci_upgrade_test
   pip install --upgrade --force-reinstall . ../pulp-cli ../pulp-smash
-
   # Hack: adding pulp CA to certifi.where()
   CERTIFI=$(python -c 'import certifi; print(certifi.where())')
   cat /usr/local/share/ca-certificates/pulp_webserver.crt | sudo tee -a "$CERTIFI" > /dev/null
-
   # CLI commands to display plugin versions and content data
   pulp status
   pulp content list
