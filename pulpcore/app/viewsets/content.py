@@ -4,14 +4,15 @@ from django.db import models
 from rest_framework import mixins, permissions, status
 from rest_framework.response import Response
 
+from pulpcore.app.apps import get_content_repository_mapping
 from pulpcore.app.models import Artifact, Content, PublishedMetadata, SigningService
 from pulpcore.app.serializers import (
     ArtifactSerializer,
     MultipleArtifactContentSerializer,
     SigningServiceSerializer,
 )
+from pulpcore.app.util import get_viewset_for_model
 from pulpcore.app.viewsets.base import BaseFilterSet, NamedModelViewSet
-from pulpcore.app.role_util import get_objects_for_user
 
 from .custom_filters import (
     ArtifactRepositoryVersionFilter,
@@ -101,7 +102,7 @@ class BaseContentViewSet(NamedModelViewSet):
     A base class for any content viewset.
 
     It ensures that 'content/' is a part of endpoint, sets a default filter class and provides
-    a default `scope_queryset` method based off of `repository_viewset`'s default scope permission.
+    a default `scope_queryset` method.
     """
 
     endpoint_name = "content"
@@ -109,18 +110,23 @@ class BaseContentViewSet(NamedModelViewSet):
     # These are just placeholders, the plugin writer would replace them with the actual
     queryset = Content.objects.all().exclude(pulp_type=PublishedMetadata.get_pulp_type())
     serializer_class = MultipleArtifactContentSerializer
-    repository_viewset = None
 
     def scope_queryset(self, qs):
         """Scope the content based on repositories the user has permission to see."""
-
-        if view := self.repository_viewset:
-            if view_permission := getattr(view, "queryset_filtering_required_permission", None):
-                if not self.request.user.has_perm(view_permission):
-                    repos = get_objects_for_user(
-                        self.request.user, view_permission, view.queryset
-                    )
-                    return qs.filter(repositories__in=repos)
+        repositories = get_content_repository_mapping(self.queryset.model)
+        # Would users be allowed to have model level permissions over content?
+        if not self.request.user.is_superuser and repositories:
+            scoped_repos = []
+            for repo in repositories:
+                repo_viewset = get_viewset_for_model(repo)()
+                setattr(repo_viewset, "request", self.request)
+                scoped_repos.extend(
+                    repo_viewset.scope_queryset(repo_viewset.queryset).values_list("pk", flat=True)
+                )
+            if scoped_repos:
+                return qs.filter(repositories__in=scoped_repos)
+            else:
+                return qs.none()
         return qs
 
 

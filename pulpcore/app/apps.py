@@ -14,6 +14,9 @@ SERIALIZERS_MODULE_NAME = "serializers"
 URLS_MODULE_NAME = "urls"
 MODELRESOURCE_MODULE_NAME = "modelresource"
 
+# Global mapping of content types and the repositories they can be stored in
+_content_repository_cache = defaultdict(list)
+
 
 def pulp_plugin_configs():
     """
@@ -47,6 +50,15 @@ def get_plugin_config(plugin_app_label):
         if config.label == plugin_app_label:
             return config
     raise MissingPlugin(plugin_app_label)
+
+
+def get_content_repository_mapping(content_model):
+    """
+    For a specific content model return all repository models that can hold this content type.
+
+    Returns an empty list if no repositories have been registered to hold the content.
+    """
+    return _content_repository_cache.get(content_model)
 
 
 class PulpPluginAppConfig(apps.AppConfig):
@@ -127,6 +139,7 @@ class PulpPluginAppConfig(apps.AppConfig):
         # TODO do not include imported ViewSets
         # circular import avoidance
         from pulpcore.app.viewsets import NamedModelViewSet
+        from pulpcore.app.models import Repository
 
         self.named_viewsets = defaultdict(list)
         if module_has_submodule(self.module, VIEWSETS_MODULE_NAME):
@@ -143,6 +156,9 @@ class PulpPluginAppConfig(apps.AppConfig):
                     if obj is not NamedModelViewSet and issubclass(obj, NamedModelViewSet):
                         model = obj.queryset.model
                         self.named_viewsets[model].append(obj)
+                        if model is not Repository and issubclass(model, Repository):
+                            for content in model.CONTENT_TYPES:
+                                _content_repository_cache[content].append(model)
                 except TypeError:
                     # obj isn't a class, issubclass exploded but obj can be safely filtered out
                     continue
