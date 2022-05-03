@@ -6,7 +6,6 @@ from pulp_smash.config import get_config
 from pulp_smash.pulp3.bindings import delete_orphans
 from pulp_smash.utils import get_pulp_setting
 
-
 from pulpcore.client.pulpcore import (
     ApiClient,
     ContentguardsApi,
