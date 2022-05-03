@@ -102,6 +102,13 @@ class PulpImportSerializer(ModelSerializer):
         ),
         required=False,
     )
+    create_repositories = serializers.BooleanField(
+        help_text=_(
+            "If True, missing repositories will be automatically created during the import."
+        ),
+        required=False,
+        default=False,
+    )
 
     def _check_path_allowed(self, param, a_path):
         user_provided_realpath = os.path.realpath(a_path)
@@ -158,6 +165,12 @@ class PulpImportSerializer(ModelSerializer):
         if not data.get("path", None) and not data.get("toc", None):
             raise serializers.ValidationError(_("One of 'path' or 'toc' must be specified."))
 
+        if importer := self.context.get("importer"):
+            if importer.repo_mapping and data.get("create_repositories"):
+                raise serializers.ValidationError(
+                    _("The option 'create_repositories' is not compatible with 'repo_mapping'.")
+                )
+
         return super().validate(data)
 
     class Meta:
@@ -165,6 +178,7 @@ class PulpImportSerializer(ModelSerializer):
         fields = (
             "path",
             "toc",
+            "create_repositories",
         )
 
 

@@ -101,17 +101,25 @@ class PulpImportViewSet(ImportViewSet):
         except PulpImporter.DoesNotExist:
             raise Http404
 
-        serializer = PulpImportSerializer(data=request.data, context={"request": request})
+        serializer = PulpImportSerializer(
+            data=request.data, context={"request": request, "importer": importer}
+        )
         serializer.is_valid(raise_exception=True)
 
         path = serializer.validated_data.get("path")
         toc = serializer.validated_data.get("toc")
+        create_repositories = serializer.validated_data.get("create_repositories")
         task_group = TaskGroup.objects.create(description=f"Import of {path}")
 
         dispatch(
             pulp_import,
             exclusive_resources=[importer],
             task_group=task_group,
-            kwargs={"importer_pk": importer.pk, "path": path, "toc": toc},
+            kwargs={
+                "importer_pk": importer.pk,
+                "path": path,
+                "toc": toc,
+                "create_repositories": create_repositories,
+            },
         )
         return TaskGroupOperationResponse(task_group, request)

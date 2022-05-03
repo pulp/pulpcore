@@ -56,6 +56,9 @@ class RepositoryResource(QueryModelResource):
             "pulp_created",
             "pulp_last_updated",
             "content",
+            "next_version",
+            "repository_ptr",
+            "remote",
         )
 
 

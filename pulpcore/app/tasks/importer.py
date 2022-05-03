@@ -32,6 +32,7 @@ from pulpcore.app.models import (
 from pulpcore.app.modelresource import (
     ArtifactResource,
     ContentArtifactResource,
+    RepositoryResource,
 )
 from pulpcore.constants import TASK_STATES
 from pulpcore.tasking.tasks import dispatch
@@ -54,13 +55,15 @@ IMPORT_BATCH_SIZE = 100
 MAX_ATTEMPTS = 3
 
 
-def _destination_repo(importer, source_repo_name):
-    """Find the destination repository based on source repo's name."""
+def _get_destination_repo_name(importer, source_repo_name):
+    """
+    Return the name of a destination repository considering the mapping or source repository name.
+    """
     if importer.repo_mapping and importer.repo_mapping.get(source_repo_name):
         dest_repo_name = importer.repo_mapping[source_repo_name]
     else:
         dest_repo_name = source_repo_name
-    return Repository.objects.get(name=dest_repo_name)
+    return dest_repo_name
 
 
 def _impfile_iterator(fd):
@@ -179,21 +182,24 @@ def _check_versions(version_json):
         raise ValidationError((" ".join(error_messages)))
 
 
-def import_repository_version(importer_pk, destination_repo_pk, source_repo_name, tar_path):
+def import_repository_version(
+    importer_pk, src_repo_name, src_repo_type, dest_repo_name, dest_repo_pk, tar_path
+):
     """
     Import a repository version from a Pulp export.
 
     Args:
-        importer_pk (str): Importer we are working with
-        destination_repo_pk (str): Primary key of Repository to import into.
-        source_repo_name (str): Name of the Repository in the export.
-        tar_path (str): A path to export tar.
+        importer_pk (str): Importer we are working with.
+        src_repo_name (str): The name of the original repository.
+        src_repo_type (str): The Pulp's type of a repository.
+        dest_repo_name (str): The name of a repository where the content will be imported.
+        dest_repo_pk (str): The primary key of a destination repository if any
+        tar_path (str): The path of an exported tarball.
     """
-    dest_repo = Repository.objects.get(pk=destination_repo_pk)
     importer = PulpImporter.objects.get(pk=importer_pk)
 
     pb = ProgressReport(
-        message=f"Importing content for {dest_repo.name}",
+        message=f"Importing content for {dest_repo_name}",
         code="import.repo.version.content",
         state=TASK_STATES.RUNNING,
     )
@@ -204,29 +210,11 @@ def import_repository_version(importer_pk, destination_repo_pk, source_repo_name
         with tarfile.open(tar_path, "r:gz") as tar:
             tar.extract(REPO_FILE, path=temp_dir)
 
-        with open(os.path.join(temp_dir, REPO_FILE), "r") as repo_data_file:
-            data = json.load(repo_data_file)
-
-        src_repo = next(repo for repo in data if repo["name"] == source_repo_name)
-
-        if dest_repo.pulp_type != src_repo["pulp_type"]:
-            raise ValidationError(
-                _(
-                    "Repository type mismatch: {src_repo} ({src_type}) vs {dest_repo} "
-                    "({dest_type})."
-                ).format(
-                    src_repo=src_repo["name"],
-                    src_type=src_repo["pulp_type"],
-                    dest_repo=dest_repo.name,
-                    dest_type=dest_repo.pulp_type,
-                )
-            )
-
         rv_name = ""
         # Extract the repo version files
         with tarfile.open(tar_path, "r:gz") as tar:
             for mem in tar.getmembers():
-                match = re.search(rf"(^repository-{source_repo_name}_[0-9]+)/.+", mem.name)
+                match = re.search(rf"(^repository-{src_repo_name}_[0-9]+)/.+", mem.name)
                 if match:
                     rv_name = match.group(1)
                     tar.extract(mem, path=temp_dir)
@@ -236,13 +224,21 @@ def import_repository_version(importer_pk, destination_repo_pk, source_repo_name
 
         rv_path = os.path.join(temp_dir, rv_name)
         # Content
-        plugin_name = src_repo["pulp_type"].split(".")[0]
+        plugin_name = src_repo_type.split(".")[0]
         cfg = get_plugin_config(plugin_name)
 
         resulting_content_ids = []
         for res_class in cfg.exportable_classes:
+            if issubclass(res_class, RepositoryResource) and dest_repo_pk:
+                continue
+
             filename = f"{res_class.__module__}.{res_class.__name__}.json"
             for a_result in _import_file(os.path.join(rv_path, filename), res_class, retry=True):
+                if issubclass(res_class, RepositoryResource) and a_result.rows:
+                    repo_resource = a_result.rows[0]
+                    if repo_resource.import_type in ("new", "update"):
+                        dest_repo_pk = repo_resource.object_id
+
                 if issubclass(res_class, BaseContentResource):
                     resulting_content_ids.extend(
                         row.object_id
@@ -269,13 +265,15 @@ def import_repository_version(importer_pk, destination_repo_pk, source_repo_name
         if mapping:
             # use the content mapping to map content to repos
             for repo_name, content_ids in mapping.items():
-                repo = _destination_repo(importer, repo_name)
+                repo_name = _get_destination_repo_name(importer, repo_name)
+                dest_repo = Repository.objects.get(name=repo_name)
                 content = Content.objects.filter(upstream_id__in=content_ids)
                 content_count += content.count()
-                with repo.new_version() as new_version:
+                with dest_repo.new_version() as new_version:
                     new_version.set_content(content)
         else:
             # just map all the content to our destination repo
+            dest_repo = Repository.objects.get(pk=dest_repo_pk)
             content = Content.objects.filter(pk__in=resulting_content_ids)
             content_count += content.count()
             with dest_repo.new_version() as new_version:
@@ -290,13 +288,17 @@ def import_repository_version(importer_pk, destination_repo_pk, source_repo_name
     gpr.update(done=F("done") + 1)
 
 
-def pulp_import(importer_pk, path, toc):
+def pulp_import(importer_pk, path, toc, create_repositories):
     """
     Import a Pulp export into Pulp.
 
     Args:
         importer_pk (str): Primary key of PulpImporter to do the import
         path (str): Path to the export to be imported
+        toc (str): The path to a table-of-contents file describing chunks to be validated,
+            reassembled, and imported.
+        create_repositories (bool): Indicates whether missing repositories should be automatically
+            created or not.
     """
 
     def _compute_hash(filename):
@@ -483,18 +485,36 @@ def pulp_import(importer_pk, path, toc):
             gpr.save()
 
             for src_repo in data:
+                dest_repo_name = _get_destination_repo_name(importer, src_repo["name"])
+
                 try:
-                    dest_repo = _destination_repo(importer, src_repo["name"])
+                    dest_repo = Repository.objects.get(name=dest_repo_name)
                 except Repository.DoesNotExist:
-                    log.warning(
-                        "Could not find destination repo for {}. Skipping.".format(src_repo["name"])
-                    )
-                    continue
+                    if create_repositories:
+                        exclusive_resources = []
+                        dest_repo_pk = ""
+                    else:
+                        log.warning(
+                            "Could not find destination repo for {}. Skipping.".format(
+                                src_repo["name"]
+                            )
+                        )
+                        continue
+                else:
+                    exclusive_resources = [dest_repo]
+                    dest_repo_pk = dest_repo.pk
 
                 dispatch(
                     import_repository_version,
-                    exclusive_resources=[dest_repo],
-                    args=(importer.pk, dest_repo.pk, src_repo["name"], path),
+                    exclusive_resources=exclusive_resources,
+                    args=(
+                        importer.pk,
+                        src_repo["name"],
+                        src_repo["pulp_type"],
+                        dest_repo_name,
+                        dest_repo_pk,
+                        path,
+                    ),
                     task_group=task_group,
                 )
 

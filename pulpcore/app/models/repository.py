@@ -3,7 +3,7 @@ Repository related Django models.
 """
 from contextlib import suppress
 from gettext import gettext as _
-from os import path
+from os import path, environ
 from collections import defaultdict
 import logging
 
@@ -12,12 +12,12 @@ from asyncio_throttle import Throttler
 from dynaconf import settings
 from django.core.validators import MinValueValidator
 from django.db import models, transaction
-from django.db.models import Q
+from django.db.models import F, Func, Q, Value
 from django.urls import reverse
 from django_lifecycle import AFTER_UPDATE, BEFORE_DELETE, hook
 from rest_framework.exceptions import APIException
 
-from pulpcore.app.util import batch_qs, get_view_name_for_model
+from pulpcore.app.util import batch_qs, get_url, get_view_name_for_model
 from pulpcore.constants import ALL_KNOWN_CONTENT_CHECKSUMS
 from pulpcore.download.factory import DownloaderFactory
 from pulpcore.exceptions import ResourceImmutableError
@@ -92,6 +92,22 @@ class Repository(MasterModel):
             super().save(*args, **kwargs)
             if adding:
                 self.create_initial_version()
+
+                # lock the repository if it was created from within a running task
+                try:
+                    task_id = environ["PULP_TASK_ID"]
+                except KeyError:
+                    return
+
+                repository_url = Value(get_url(self))
+                update_func = Func(
+                    F("reserved_resources_record"), repository_url, function="ARRAY_APPEND"
+                )
+                updated = Task.objects.filter(pk=task_id).update(
+                    reserved_resources_record=update_func
+                )
+                if not updated:
+                    raise RuntimeError(f"The repository '{self.name}' could not be locked")
 
     def create_initial_version(self):
         """
