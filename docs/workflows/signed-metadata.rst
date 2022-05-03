@@ -61,34 +61,24 @@ The example below demonstrates how a signing service can be created using ``gpg`
        Make sure the script contains a proper shebang and Pulp has got valid permissions
        to execute it.
 
-3. Create a signing service consisting of an absolute path to the script and a meaningful
-   name describing the script's purpose. It is possible to insert the signing service in
-   to a database by using the ``pulpcore-manager shell_plus`` interactive Python shell. Here is an
-   example showing how to create one instance pointing to a script:
+3. Create a signing service consisting of an absolute path to the script, a meaningful
+   name describing the script's purpose, and the identity identifying the key for signing. The
+   script must be executable. Here is an example showing how to create one instance of a signing
+   service:
 
-   .. code-block:: python
+   .. code-block:: bash
 
-       from pulpcore.app.models.content import AsciiArmoredDetachedSigningService
-
-       # read an already exported public key
-       with open("public.key") as key:
-           AsciiArmoredDetachedSigningService.objects.create(
-               name="sign-metadata",
-               public_key=key.read(),
-               pubkey_fingerprint="19CD52BD1CA9A00DF10A842D74B14E3590C2231F",
-               script="/var/lib/pulp/scripts/sign-metadata.sh",
-           )
+        pulpcore-manager add-signing-service ${SERVICE_NAME} ${SCRIPT_ABS_FILENAME} ${KEYID}
 
    .. note::
 
-       While creating a signing service, the model ``AsciiArmoredDetachedSigningService``
-       runs additional checks in order to prevent saving invalid scripts to the database.
-       This feature enables administrators to validate their signing scripts in advance.
+      The public key must be available on the caller's keyring or on a keyring provided via the
+      ``--gpghome`` or ``--keyring`` parameters.
 
-   .. note::
+   .. warning::
 
-      You can use `pulpcore-manager add-signing-service` to add a ``SigningService``.
-      This command is however still in tech-preview.
+      It is possible to insert a new signing service into the database by using the
+      ``pulpcore-manager shell_plus`` interactive Python shell. However, this is not recommended.
 
 4. Retrieve and check the saved signing service via REST API::
 

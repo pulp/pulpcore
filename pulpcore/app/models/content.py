@@ -10,8 +10,6 @@ import tempfile
 import shutil
 import subprocess
 
-import gnupg
-
 from functools import lru_cache
 from itertools import chain
 
@@ -25,6 +23,7 @@ from django_lifecycle import BEFORE_UPDATE, BEFORE_SAVE, hook
 
 from pulpcore.constants import ALL_KNOWN_CONTENT_CHECKSUMS
 from pulpcore.app import pulp_hashlib
+from pulpcore.app.util import verify_signature
 from pulpcore.app.models import MasterModel, BaseModel, fields, storage
 from pulpcore.exceptions import (
     DigestValidationError,
@@ -845,26 +844,10 @@ class AsciiArmoredDetachedSigningService(SigningService):
         Raises:
             RuntimeError: If the validation has failed.
         """
-        gpg = gnupg.GPG()
-        with tempfile.TemporaryDirectory() as temp_directory_name:
+        with tempfile.TemporaryDirectory(dir=".") as temp_directory_name:
             with tempfile.NamedTemporaryFile(dir=temp_directory_name) as temp_file:
                 temp_file.write(b"arbitrary data")
                 temp_file.flush()
-                signed = self.sign(temp_file.name)
+                return_value = self.sign(temp_file.name)
 
-                with open(signed["signature"], "rb") as fp:
-                    verified = gpg.verify_file(fp, temp_file.name)
-                    if verified.trust_level is None or verified.trust_level < verified.TRUST_FULLY:
-                        raise RuntimeError(
-                            _(
-                                "The signature could not be verified or the trust level is too "
-                                "low. The signing script may generate invalid signatures."
-                            )
-                        )
-                    elif verified.pubkey_fingerprint != self.pubkey_fingerprint:
-                        raise RuntimeError(
-                            _(
-                                "Fingerprints of the provided public key and the verified public "
-                                "key are not equal. The signing script is probably not valid."
-                            )
-                        )
+                verify_signature(return_value["signature"], self.public_key, temp_file.name)

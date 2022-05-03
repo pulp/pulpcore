@@ -7,6 +7,7 @@ from .base import (  # noqa
 )
 from .validation import (  # noqa
     DigestValidationError,
+    InvalidSignatureError,
     SizeValidationError,
     ValidationError,
     MissingDigestValidationError,
