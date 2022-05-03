@@ -1,0 +1,1 @@
+Improved the error message when HTTP proxies reject requests from Pulp.
