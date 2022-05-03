@@ -256,6 +256,17 @@ class HttpDownloader(BaseDownloader):
                     return await self._run(extra_data=extra_data)
                 except asyncio.TimeoutError:
                     raise TimeoutException(self.url)
+                except aiohttp.ClientHttpProxyError as e:
+                    log.error(
+                        "Proxy {!r} rejected connection request during a request to "
+                        "{!r}, status={}, message={!r}".format(
+                            e.request_info.real_url,
+                            e.request_info.url,
+                            e.status,
+                            e.message,
+                        )
+                    )
+                    raise e
 
             return await download_wrapper()
 
