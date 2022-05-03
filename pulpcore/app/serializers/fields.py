@@ -1,6 +1,7 @@
 import os
 import re
 from gettext import gettext as _
+from urllib.parse import urljoin
 
 from django.conf import settings
 from rest_framework import serializers
@@ -285,7 +286,7 @@ class BaseURLField(serializers.CharField):
         prefix = settings.CONTENT_PATH_PREFIX.strip("/")
         base_path = value.strip("/")
 
-        return "/".join((origin, prefix, base_path)) + "/"
+        return urljoin(urljoin(origin, prefix + "/"), base_path + "/")
 
 
 class ExportsIdentityFromExporterField(DetailIdentityField):
