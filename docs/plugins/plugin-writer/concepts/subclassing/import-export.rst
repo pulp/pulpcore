@@ -88,6 +88,32 @@ this::
     IMPORT_ORDER = [FileContentResource]
 
 
+Plugin writers are encouraged to subclass the ``RepositoryResource`` class to enable automatic
+repository creation during the import. For the ``pulp_file`` plugin, the following implementation
+should be considered::
+
+    from pulpcore.plugin.modelresources import RepositoryResource
+    from pulp_file.app.models import FileRepository
+
+    class FileRepositoryResource(RepositoryResource):
+        """
+        A resource for importing/exporting file repository entities
+        """
+
+        def set_up_queryset(self):
+            """
+            :return: A queryset containing one repository that will be exported.
+            """
+            return FileRepository.objects.filter(pk=self.repo_version.repository)
+
+        class Meta:
+            model = FileRepository
+
+
+    # the list signifying the order of imports must also include the repository resource class
+    IMPORT_ORDER = [FileContentResource, FileRepositoryResource]
+
+
 content_mapping
 ~~~~~~~~~~~~~~~
 

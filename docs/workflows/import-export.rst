@@ -366,10 +366,17 @@ to the names of repos in Pulp. For example, suppose the name of the repo in the 
 
     http :/pulp/api/v3/importers/core/pulp/ name="test" repo_mapping:="{\"source\": \"dest\"}"
 
-.. note::
-   Pulp import expects destination repository/repositories to be present at the import process.
-
 After the importer is created, a POST request to create an import will trigger the import process.
+
+.. note::
+    By default, the Pulp import machinery expects destination repositories to be present at the time
+    of the import. This can be overridden by passing the ``create_repositories=True`` field via the
+    POST request that will lead Pulp to create missing repositories on the fly.
+
+.. warning::
+    The options ``repo_mapping`` and ``create_repositories`` are not compatible with each other. The
+    existence of a repository specified in the ``repo_mapping`` option is tested before the importer
+    is initialized. Thus, the repository has to be already created in advance.
 
 You can import an exported ``.tar.gz`` directly using the ``path`` parameter::
 
