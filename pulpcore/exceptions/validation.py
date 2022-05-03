@@ -75,3 +75,11 @@ class UnsupportedDigestValidationError(Exception):
     """
 
     pass
+
+
+class InvalidSignatureError(RuntimeError):
+    """
+    Raised when a signature could not be verified by the GnuPG utility.
+    """
+
+    pass

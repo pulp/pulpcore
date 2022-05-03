@@ -11,3 +11,5 @@ from pulpcore.app.role_util import (  # noqa
     get_users_with_perms_attached_roles,
     remove_role,
 )
+
+from pulpcore.app.util import verify_signature  # noqa

@@ -1,4 +1,7 @@
 import os
+import tempfile
+
+import gnupg
 
 from django.apps import apps
 from django.contrib.contenttypes.models import ContentType
@@ -6,6 +9,7 @@ from pkg_resources import get_distribution
 
 from pulpcore.app.apps import pulp_plugin_configs
 from pulpcore.app import models
+from pulpcore.exceptions.validation import InvalidSignatureError
 
 # a little cache so viewset_for_model doesn't have iterate over every app every time
 _model_viewset_cache = {}
@@ -159,3 +163,26 @@ def get_request_without_query_params(context):
         request.query_params._mutable = False
 
     return request
+
+
+def verify_signature(filepath, public_key, detached_data=None):
+    """
+    Check whether the provided file can be verified with the particular public key.
+
+    When dealing with a detached signature (referenced by the 'filepath' argument), one have to pass
+    the reference to a data file that was signed by that signature.
+    """
+    with tempfile.TemporaryDirectory(dir=".") as temp_directory_name:
+        gpg = gnupg.GPG(gnupghome=temp_directory_name)
+        gpg.import_keys(public_key)
+        imported_keys = gpg.list_keys()
+
+        if len(imported_keys) != 1:
+            raise RuntimeError("Exactly one key must be imported.")
+
+        with open(filepath, "rb") as signature:
+            verified = gpg.verify_file(signature, detached_data)
+            if not verified.valid:
+                raise InvalidSignatureError(
+                    f"The file '{filepath}' does not contain a valid signature."
+                )

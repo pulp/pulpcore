@@ -1,4 +1,7 @@
+import os
+
 import gnupg
+
 from pathlib import Path
 
 from gettext import gettext as _
@@ -37,6 +40,17 @@ class Command(BaseCommand):
             required=False,
             help=_("Signing service class prefixed by the app label separated by a colon."),
         )
+        parser.add_argument(
+            "--gnupghome",
+            default=os.getenv("GNUPGHOME", ""),
+            required=False,
+            help=_("A default GnuPG home directory to use during the initialization."),
+        )
+        parser.add_argument(
+            "--keyring",
+            required=False,
+            help=_("The name of the keyring file."),
+        )
 
     def handle(self, *args, **options):
         name = options["name"]
@@ -52,7 +66,8 @@ class Command(BaseCommand):
         except LookupError as e:
             raise CommandError(str(e))
 
-        gpg = gnupg.GPG()
+        gpg = gnupg.GPG(gnupghome=options["gnupghome"], keyring=options["keyring"])
+
         key_list = gpg.list_keys(keys=[key_id])
         if not len(key_list) == 1:
             raise CommandError(_("There are {} keys matching the key id.").format(len(key_list)))
