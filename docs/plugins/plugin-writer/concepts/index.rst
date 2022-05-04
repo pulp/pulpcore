@@ -139,7 +139,6 @@ Tasks are deployed from Views or Viewsets, please see :ref:`kick-off-tasks`.
 
    tasks/add-remove
    tasks/publish
-   tasks/export
 
 **Diagnostics**
 
