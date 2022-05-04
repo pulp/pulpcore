@@ -4,7 +4,8 @@ packages = []
 with open("requirements.txt", "r") as fd:
     for line in fd.readlines():
         req = Requirement.parse(line)
-        if len(req.specs) < 2 and "~=" not in str(req.specs) and "==" not in str(req.specs):
+        spec = str(req.specs)
+        if len(req.specs) < 2 and "~=" not in spec and "==" not in spec and "<" not in spec:
             packages.append(req.name)
 if packages:
     raise RuntimeError(
