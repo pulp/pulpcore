@@ -58,6 +58,19 @@ class BaseRepositoryViewSet(NamedModelViewSet):
 class ListRepositoryViewSet(BaseRepositoryViewSet, mixins.ListModelMixin):
     """Endpoint to list all repositories."""
 
+    DEFAULT_ACCESS_POLICY = {
+        "statements": [
+            {
+                "action": ["list"],
+                "principal": "authenticated",
+                "effect": "allow",
+            },
+        ],
+        "queryset_scoping": {
+            "function": "scope_queryset"
+        },
+    }
+
     @classmethod
     def is_master_viewset(cls):
         """Do not hide from the routers."""
@@ -246,3 +259,25 @@ class ListRepositoryVersionViewSet(
     serializer_class = RepositoryVersionSerializer
     queryset = RepositoryVersion.objects.exclude(repository__user_hidden=True)
     filterset_class = RepositoryVersionFilter
+
+    DEFAULT_ACCESS_POLICY = {
+        "statements": [
+            {
+                "action": ["list"],
+                "principal": "authenticated",
+                "effect": "allow",
+            },
+        ],
+        "queryset_scoping": {
+            "function": "scope_queryset"
+        },
+    }
+
+    def scope_queryset(self, qs):
+        """This should scope based on repositories the user can see (similar to content)."""
+        if not self.request.user.is_superuser:
+            repo_viewset = ListRepositoryViewSet()
+            setattr(repo_viewset, "request", self.request)
+            repos = repo_viewset.get_queryset()
+            qs = qs.filter(repository__in=repos)
+        return qs

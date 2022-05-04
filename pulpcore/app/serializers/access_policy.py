@@ -44,8 +44,9 @@ class AccessPolicySerializer(ModelSerializer):
         read_only=True,
     )
 
-    queryset_scoping = serializers.BooleanField(
-        help_text=_("True if view's queryset_scoping is enabled, False otherwise."),
+    queryset_scoping = serializers.DictField(
+        help_text=_("A callable for performing queryset scoping. See plugin documentation for valid"
+                    " callables. Set to blank to turn off queryset scoping."),
         required=False,
     )
 

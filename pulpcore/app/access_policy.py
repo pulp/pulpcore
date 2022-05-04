@@ -60,11 +60,18 @@ class AccessPolicyFromDB(AccessPolicy):
 
     def scope_queryset(self, view, qs):
         """
-        Scope the queryset based on the view's `scope_queryset method`.
+        Scope the queryset based on the access policy `scope_queryset` method if present.
         """
         if access_policy := self.get_access_policy(view):
-            if access_policy.queryset_scoping and hasattr(view, "scope_queryset"):
-                qs = view.scope_queryset(qs)
+            if access_policy.queryset_scoping:
+                scope = access_policy.queryset_scoping["function"]
+                # Should this also follow the registered function pattern?
+                if not (function := getattr(view, scope, None)):
+                    raise APIException(
+                        f"Queryset scoping method {scope} is not present on this view set."
+                    )
+                kwargs = access_policy.queryset_scoping.get("parameters") or {}
+                qs = function(qs, **kwargs)
         return qs
 
     def get_policy_statements(self, request, view):

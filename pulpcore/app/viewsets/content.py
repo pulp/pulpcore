@@ -4,7 +4,6 @@ from django.db import models
 from rest_framework import mixins, permissions, status
 from rest_framework.response import Response
 
-from pulpcore.app.apps import get_content_repository_mapping
 from pulpcore.app.models import Artifact, Content, PublishedMetadata, SigningService
 from pulpcore.app.serializers import (
     ArtifactSerializer,
@@ -113,16 +112,15 @@ class BaseContentViewSet(NamedModelViewSet):
 
     def scope_queryset(self, qs):
         """Scope the content based on repositories the user has permission to see."""
-        repositories = get_content_repository_mapping(self.queryset.model)
+        # This has been optimized, see ListRepositoryVersions for more generic version
+        repositories = self.queryset.model.MAPPED_REPOSITORIES
         # Would users be allowed to have model level permissions over content?
         if not self.request.user.is_superuser and repositories:
             scoped_repos = []
             for repo in repositories:
                 repo_viewset = get_viewset_for_model(repo)()
                 setattr(repo_viewset, "request", self.request)
-                scoped_repos.extend(
-                    repo_viewset.scope_queryset(repo_viewset.queryset).values_list("pk", flat=True)
-                )
+                scoped_repos.extend(repo_viewset.get_queryset().values_list("pk", flat=True))
             if scoped_repos:
                 return qs.filter(repositories__in=scoped_repos)
             else:
@@ -132,6 +130,19 @@ class BaseContentViewSet(NamedModelViewSet):
 
 class ListContentViewSet(BaseContentViewSet, mixins.ListModelMixin):
     """Endpoint to list all content."""
+
+    DEFAULT_ACCESS_POLICY = {
+        "statements": [
+            {
+                "action": ["list"],
+                "principal": "authenticated",
+                "effect": "allow",
+            },
+        ],
+        "queryset_scoping": {
+            "function": "scope_queryset"
+        },
+    }
 
     @classmethod
     def is_master_viewset(cls):

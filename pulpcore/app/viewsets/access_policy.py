@@ -58,8 +58,9 @@ class AccessPolicyViewSet(
                             "creation_hooks"
                         ) or default_access_policy.get("permissions_assignment")
                         access_policy.customized = False
-                        # Require "queryset_scoping" in default policy
-                        access_policy.queryset_scoping = default_access_policy["queryset_scoping"]
+                        access_policy.queryset_scoping = default_access_policy.get(
+                            "queryset_scoping"
+                        )
                         access_policy.save()
                         serializer = AccessPolicySerializer(
                             access_policy, context={"request": request}

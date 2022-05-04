@@ -491,6 +491,7 @@ class Content(MasterModel, QueryMixin):
     """
 
     PROTECTED_FROM_RECLAIM = True
+    MAPPED_REPOSITORIES = list()
 
     TYPE = "content"
     repo_key_fields = ()  # Used by pulpcore.plugin.repo_version_utils.remove_duplicates

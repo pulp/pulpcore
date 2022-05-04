@@ -92,6 +92,19 @@ class ListPublicationViewSet(NamedModelViewSet, mixins.ListModelMixin):
     serializer_class = PublicationSerializer
     filterset_class = PublicationFilter
 
+    DEFAULT_ACCESS_POLICY = {
+        "statements": [
+            {
+                "action": ["list"],
+                "principal": "authenticated",
+                "effect": "allow",
+            },
+        ],
+        "queryset_scoping": {
+            "function": "scope_queryset"
+        },
+    }
+
     @classmethod
     def is_master_viewset(cls):
         """Do not hide from the routers."""
@@ -131,6 +144,19 @@ class ListContentGuardViewSet(
     mixins.ListModelMixin,
 ):
     """Endpoint to list all contentguards."""
+
+    DEFAULT_ACCESS_POLICY = {
+        "statements": [
+            {
+                "action": ["list"],
+                "principal": "authenticated",
+                "effect": "allow",
+            },
+        ],
+        "queryset_scoping": {
+            "function": "scope_queryset"
+        },
+    }
 
     @classmethod
     def is_master_viewset(cls):
@@ -223,6 +249,7 @@ class RBACContentGuardViewSet(ContentGuardViewSet, RolesMixin):
             "core.delete_rbaccontentguard",
             "core.manage_roles_rbaccontentguard",
         ],
+        "core.rbaccontentguard_viewer": ["core.view_rbaccontentguard"],
         "core.rbaccontentguard_downloader": ["core.download_rbaccontentguard"],
     }
 
@@ -260,6 +287,19 @@ class ListDistributionViewSet(NamedModelViewSet, mixins.ListModelMixin):
     queryset = Distribution.objects.all()
     serializer_class = DistributionSerializer
     filterset_class = DistributionFilter
+
+    DEFAULT_ACCESS_POLICY = {
+        "statements": [
+            {
+                "action": ["list"],
+                "principal": "authenticated",
+                "effect": "allow",
+            },
+        ],
+        "queryset_scoping": {
+            "function": "scope_queryset"
+        },
+    }
 
     @classmethod
     def is_master_viewset(cls):

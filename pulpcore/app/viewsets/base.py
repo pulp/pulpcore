@@ -23,6 +23,7 @@ from pulpcore.app.models.role import GroupRole, UserRole
 from pulpcore.app.response import OperationPostponedResponse
 from pulpcore.app.role_util import get_objects_for_user
 from pulpcore.app.serializers import AsyncOperationResponseSerializer, NestedRoleSerializer
+from pulpcore.app.util import get_viewset_for_model
 from pulpcore.tasking.tasks import dispatch
 
 # These should be used to prevent duplication and keep things consistent
@@ -357,10 +358,21 @@ class NamedModelViewSet(viewsets.GenericViewSet):
         return qs
 
     def scope_queryset(self, qs):
-        permission_name = getattr(self, "queryset_filtering_required_permission", None)
-        if permission_name:
-            user = self.request.user
-            qs = get_objects_for_user(user, permission_name, qs)
+        if not self.request.user.is_superuser:
+            if len(self.endpoint_pieces()) != 1:
+                # subclass so use default scope_queryset implementation
+                permission_name = getattr(self, "queryset_filtering_required_permission", None)
+                if permission_name:
+                    user = self.request.user
+                    qs = get_objects_for_user(user, permission_name, qs)
+            else:
+                # master view so loop through each subclass to find scoped objects
+                pks = []
+                for model in self.queryset.model.__subclasses__():
+                    viewset = get_viewset_for_model(model)()
+                    setattr(viewset, "request", self.request)
+                    pks.extend(viewset.get_queryset().values_list("pk", flat=True))
+                qs = qs.filter(pk__in=pks)
         return qs
 
     @classmethod
