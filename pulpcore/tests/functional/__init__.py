@@ -77,3 +77,23 @@ def delete_orphans_pre(request):
         raise pytest.UsageError("This test is not suitable to be marked parallel.")
     delete_orphans()
     yield
+
+
+@pytest.fixture(scope="session")
+def anonymous_user(bindings_cfg):
+    class AnonymousUser:
+        def __enter__(self):
+            self.saved_username, self.saved_password = (
+                bindings_cfg.username,
+                bindings_cfg.password,
+            )
+            bindings_cfg.username, bindings_cfg.password = None, None
+            return self
+
+        def __exit__(self, exc_type, exc_value, traceback):
+            bindings_cfg.username, bindings_cfg.password = (
+                self.saved_username,
+                self.saved_password,
+            )
+
+    return AnonymousUser()
