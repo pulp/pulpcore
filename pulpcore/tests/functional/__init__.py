@@ -77,6 +77,11 @@ def signing_service_api_client(pulpcore_client):
     return SigningServicesApi(pulpcore_client)
 
 
+@pytest.fixture(scope="session")
+def content_guards_api_client(pulpcore_client):
+    return ContentguardsApi(pulpcore_client)
+
+
 @pytest.fixture
 def gen_user(bindings_cfg, users_api_client, users_roles_api_client, gen_object_with_cleanup):
     class user_context:
