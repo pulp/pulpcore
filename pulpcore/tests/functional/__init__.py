@@ -87,6 +87,8 @@ def gen_user(bindings_cfg, users_api_client, users_roles_api_client, gen_object_
             self.user = gen_object_with_cleanup(
                 users_api_client, {"username": self.username, "password": self.password}
             )
+            self._saved_credentials = []
+
             if model_roles:
                 for role in model_roles:
                     users_roles_api_client.create(
@@ -101,18 +103,12 @@ def gen_user(bindings_cfg, users_api_client, users_roles_api_client, gen_object_
                     )
 
         def __enter__(self):
-            self.saved_username, self.saved_password = (
-                bindings_cfg.username,
-                bindings_cfg.password,
-            )
+            self._saved_credentials.append((bindings_cfg.username, bindings_cfg.password))
             bindings_cfg.username, bindings_cfg.password = self.username, self.password
             return self
 
         def __exit__(self, exc_type, exc_value, traceback):
-            bindings_cfg.username, bindings_cfg.password = (
-                self.saved_username,
-                self.saved_password,
-            )
+            bindings_cfg.username, bindings_cfg.password = self._saved_credentials.pop()
 
     return user_context
 
@@ -120,19 +116,16 @@ def gen_user(bindings_cfg, users_api_client, users_roles_api_client, gen_object_
 @pytest.fixture(scope="session")
 def anonymous_user(bindings_cfg):
     class AnonymousUser:
+        def __init__(self):
+            self._saved_credentials = []
+
         def __enter__(self):
-            self.saved_username, self.saved_password = (
-                bindings_cfg.username,
-                bindings_cfg.password,
-            )
+            self._saved_credentials.append((bindings_cfg.username, bindings_cfg.password))
             bindings_cfg.username, bindings_cfg.password = None, None
             return self
 
         def __exit__(self, exc_type, exc_value, traceback):
-            bindings_cfg.username, bindings_cfg.password = (
-                self.saved_username,
-                self.saved_password,
-            )
+            bindings_cfg.username, bindings_cfg.password = self._saved_credentials.pop()
 
     return AnonymousUser()
 
