@@ -6,6 +6,7 @@ from pulp_smash.pulp3.bindings import delete_orphans
 
 from pulpcore.client.pulpcore import (
     ApiClient,
+    ContentguardsApi,
     TaskSchedulesApi,
     UsersApi,
     UsersRolesApi,
@@ -30,6 +31,11 @@ def users_api_client(pulpcore_client):
 @pytest.fixture
 def users_roles_api_client(pulpcore_client):
     return UsersRolesApi(pulpcore_client)
+
+
+@pytest.fixture(scope="session")
+def content_guards_api_client(pulpcore_client):
+    return ContentguardsApi(pulpcore_client)
 
 
 @pytest.fixture
