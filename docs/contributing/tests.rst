@@ -13,6 +13,9 @@ There are two types of tests in *pulp_core* and in the plugins:
 
 A pull request that has failing unit or functional tests cannot be merged.
 
+
+.. _unit-tests:
+
 Unit Tests
 ----------
 
@@ -21,6 +24,9 @@ units (function, method or class instance) are working correctly.
 
 The unit tests for `pulpcore` are in `pulpcore/tests
 <https://github.com/pulp/pulpcore/tree/master/pulpcore/tests/unit>`_.
+
+
+.. _functional-tests:
 
 Functional Tests
 ----------------
