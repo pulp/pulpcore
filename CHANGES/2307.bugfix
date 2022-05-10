@@ -1,4 +1,0 @@
-Taught PulpImport to stream imports rather than reading files into memory in one chunk.
-
-This largely alleviates the memory-pressure that results from importing multiple
-large repositories in parallel.
