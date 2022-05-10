@@ -17,6 +17,37 @@ Changelog
 
 .. towncrier release notes start
 
+3.16.8 (2022-05-10)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Taught PulpImport to stream imports rather than reading files into memory in one chunk.
+
+  This largely alleviates the memory-pressure that results from importing multiple
+  large repositories in parallel.
+  :github:`2307`
+- Fixed `does_batch` method in sync pipeline to allow waiting on content that is already resolved.
+  :github:`2557`
+- Ensure downloader resets file on retry.
+  :github:`2576`
+- Taught PulpImport to retry more than once in the event of creation-collisions.
+
+  This fixes a rare import-failure during high-concurrency, high-content-overlap imports.
+  :github:`2589`
+- Improved the error message when HTTP proxies reject requests from Pulp.
+  :github:`2654`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.16.7 (2022-04-12)
 ===================
 REST API
