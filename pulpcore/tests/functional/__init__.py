@@ -42,6 +42,13 @@ def pytest_check_for_leftover_pulp_objects(config):
             raise Exception(f"This test left over a {api_to_check}.")
 
 
+def pytest_configure(config):
+    config.addinivalue_line(
+        "markers",
+        "from_pulpcore_for_all_plugins: marks tests from pulpcore as beneficial for plugins to run",
+    )
+
+
 @pytest.fixture(scope="session")
 def pulpcore_client(bindings_cfg):
     return ApiClient(bindings_cfg)
