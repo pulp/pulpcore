@@ -1,1 +1,0 @@
-Fixed `does_batch` method in sync pipeline to allow waiting on content that is already resolved.
