@@ -491,7 +491,7 @@ class Content(MasterModel, QueryMixin):
     """
 
     PROTECTED_FROM_RECLAIM = True
-    MAPPED_REPOSITORIES = list()
+    _repository_types = list()
 
     TYPE = "content"
     repo_key_fields = ()  # Used by pulpcore.plugin.repo_version_utils.remove_duplicates
@@ -505,6 +505,15 @@ class Content(MasterModel, QueryMixin):
     class Meta:
         verbose_name_plural = "content"
         unique_together = ()
+
+    @property
+    def REPOSITORY_TYPES(self):
+        """
+        List of the repository models that can store this content type.
+
+        Set at start up time. Read only.
+        """
+        return self._repository_types
 
     @classmethod
     def natural_key_fields(cls):

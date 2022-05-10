@@ -113,7 +113,7 @@ class BaseContentViewSet(NamedModelViewSet):
     def scope_queryset(self, qs):
         """Scope the content based on repositories the user has permission to see."""
         # This has been optimized, see ListRepositoryVersions for more generic version
-        repositories = self.queryset.model.MAPPED_REPOSITORIES
+        repositories = self.queryset.model.REPOSITORY_TYPES
         # Would users be allowed to have model level permissions over content?
         if not self.request.user.is_superuser and repositories:
             scoped_repos = []
@@ -139,15 +139,13 @@ class ListContentViewSet(BaseContentViewSet, mixins.ListModelMixin):
                 "effect": "allow",
             },
         ],
-        "queryset_scoping": {
-            "function": "scope_queryset"
-        },
+        "queryset_scoping": {"function": "scope_queryset"},
     }
 
-    @classmethod
-    def is_master_viewset(cls):
-        """Do not hide from the routers."""
-        return False
+    @property
+    def routable(self) -> bool:
+        """Don't hide from the routers."""
+        return True
 
 
 class ContentViewSet(

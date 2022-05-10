@@ -260,6 +260,11 @@ class NamedModelViewSet(viewsets.GenericViewSet):
 
         return False
 
+    @property
+    def routable(self) -> bool:
+        # Determines if ViewSet should be added to router
+        return not self.is_master_viewset()
+
     @classmethod
     def view_name(cls):
         return "-".join(cls.endpoint_pieces())
@@ -359,7 +364,7 @@ class NamedModelViewSet(viewsets.GenericViewSet):
 
     def scope_queryset(self, qs):
         if not self.request.user.is_superuser:
-            if len(self.endpoint_pieces()) != 1:
+            if self.is_master_viewset():
                 # subclass so use default scope_queryset implementation
                 permission_name = getattr(self, "queryset_filtering_required_permission", None)
                 if permission_name:

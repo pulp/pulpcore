@@ -146,7 +146,7 @@ class PulpPluginAppConfig(apps.AppConfig):
                         self.named_viewsets[model].append(obj)
                         if model is not Repository and issubclass(model, Repository):
                             for content in model.CONTENT_TYPES:
-                                content.MAPPED_REPOSITORIES.append(model)
+                                content._repository_types.append(model)
                 except TypeError:
                     # obj isn't a class, issubclass exploded but obj can be safely filtered out
                     continue

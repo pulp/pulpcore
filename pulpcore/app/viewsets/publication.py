@@ -100,15 +100,13 @@ class ListPublicationViewSet(NamedModelViewSet, mixins.ListModelMixin):
                 "effect": "allow",
             },
         ],
-        "queryset_scoping": {
-            "function": "scope_queryset"
-        },
+        "queryset_scoping": {"function": "scope_queryset"},
     }
 
-    @classmethod
-    def is_master_viewset(cls):
-        """Do not hide from the routers."""
-        return False
+    @property
+    def routable(self):
+        """Don't hide from the routers."""
+        return True
 
 
 class PublicationViewSet(
@@ -153,15 +151,13 @@ class ListContentGuardViewSet(
                 "effect": "allow",
             },
         ],
-        "queryset_scoping": {
-            "function": "scope_queryset"
-        },
+        "queryset_scoping": {"function": "scope_queryset"},
     }
 
-    @classmethod
-    def is_master_viewset(cls):
-        """Do not hide from the routers."""
-        return False
+    @property
+    def routable(self):
+        """Don't hide from the routers."""
+        return True
 
 
 class ContentGuardViewSet(
@@ -240,6 +236,7 @@ class RBACContentGuardViewSet(ContentGuardViewSet, RolesMixin):
                 },
             },
         ],
+        "queryset_scoping": {"function": "scope_queryset"},
     }
     LOCKED_ROLES = {
         "core.rbaccontentguard_creator": ["core.add_rbaccontentguard"],
@@ -296,15 +293,13 @@ class ListDistributionViewSet(NamedModelViewSet, mixins.ListModelMixin):
                 "effect": "allow",
             },
         ],
-        "queryset_scoping": {
-            "function": "scope_queryset"
-        },
+        "queryset_scoping": {"function": "scope_queryset"},
     }
 
-    @classmethod
-    def is_master_viewset(cls):
-        """Do not hide from the routers."""
-        return False
+    @property
+    def routable(self):
+        """Don't hide from the routers."""
+        return True
 
 
 class DistributionViewSet(

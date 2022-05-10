@@ -66,15 +66,13 @@ class ListRepositoryViewSet(BaseRepositoryViewSet, mixins.ListModelMixin):
                 "effect": "allow",
             },
         ],
-        "queryset_scoping": {
-            "function": "scope_queryset"
-        },
+        "queryset_scoping": {"function": "scope_queryset"},
     }
 
-    @classmethod
-    def is_master_viewset(cls):
-        """Do not hide from the routers."""
-        return False
+    @property
+    def routable(self):
+        """Don't hide from the routers."""
+        return True
 
 
 class ReadOnlyRepositoryViewSet(
@@ -268,9 +266,7 @@ class ListRepositoryVersionViewSet(
                 "effect": "allow",
             },
         ],
-        "queryset_scoping": {
-            "function": "scope_queryset"
-        },
+        "queryset_scoping": {"function": "scope_queryset"},
     }
 
     def scope_queryset(self, qs):
