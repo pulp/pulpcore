@@ -1500,6 +1500,35 @@ Misc
 - :redmine:`8606`, :redmine:`9160`
 
 
+3.14.17 (2022-05-09)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Loosened the version-restrictions on PulpImport to only require X.Y matching.
+  :github:`2269`
+- Taught PulpImport to stream imports rather than reading files into memory in one chunk.
+
+  This largely alleviates the memory-pressure that results from importing multiple
+  large repositories in parallel.
+  :github:`2307`
+- Ensure downloader resets file on retry.
+  :github:`2576`
+- Taught PulpImport to retry more than once in the event of creation-collisions.
+
+  This fixes a rare import-failure during high-concurrency, high-content-overlap imports.
+  :github:`2589`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.14.16 (2022-04-12)
 ====================
 REST API
