@@ -17,6 +17,45 @@ Changelog
 
 .. towncrier release notes start
 
+3.15.8 (2022-05-11)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fixed file descriptior leak during upload.
+  :github:`2087`
+- Fixed a bug in pulpcore-worker, where wakeup and cancel signals could be lost due to a race
+  condition.
+  :github:`2144`
+- Loosened the version-restrictions on PulpImport to only require X.Y matching.
+  :github:`2269`
+- Taught PulpImport to stream imports rather than reading files into memory in one chunk.
+
+  This largely alleviates the memory-pressure that results from importing multiple
+  large repositories in parallel.
+  :github:`2307`
+- Fixed a bug where notifications to workers may go unnoticed. This may lead to idle workers while
+  there are tasks waiting.
+  :github:`2506`
+- Changed the pulpcore-worker to mark abandoned tasks as "failed" instead of "canceled".
+  :github:`2532`
+- Ensure downloader resets file on retry.
+  :github:`2576`
+- Taught PulpImport to retry more than once in the event of creation-collisions.
+
+  This fixes a rare import-failure during high-concurrency, high-content-overlap imports.
+  :github:`2589`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.15.7 (2022-03-25)
 ===================
 REST API

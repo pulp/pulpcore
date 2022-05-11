@@ -1,2 +1,0 @@
-Fixed a bug in pulpcore-worker, where wakeup and cancel signals could be lost due to a race
-condition.
