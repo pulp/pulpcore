@@ -134,6 +134,37 @@ Bugfixes
   :github:`2069`
 
 
+3.18.5 (2022-05-10)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Taught PulpImport to stream imports rather than reading files into memory in one chunk.
+
+  This largely alleviates the memory-pressure that results from importing multiple
+  large repositories in parallel.
+  :github:`2307`
+- Fixed `does_batch` method in sync pipeline to allow waiting on content that is already resolved.
+  :github:`2557`
+- Ensure downloader resets file on retry.
+  :github:`2576`
+- Taught PulpImport to retry more than once in the event of creation-collisions.
+
+  This fixes a rare import-failure during high-concurrency, high-content-overlap imports.
+  :github:`2589`
+- Improved the error message when HTTP proxies reject requests from Pulp.
+  :github:`2654`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.18.4 (2022-04-12)
 ===================
 REST API
@@ -376,6 +407,37 @@ Deprecations
 - The ``ACCESS_POLICY_VIEWSET_NAME`` attribute is no longer expected to be present on models. The
   RBAC machinery no longer uses this, and if present a deprecation warning will be emitted.
   :github:`2209`
+
+
+3.17.8 (2022-05-10)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Taught PulpImport to stream imports rather than reading files into memory in one chunk.
+
+  This largely alleviates the memory-pressure that results from importing multiple
+  large repositories in parallel.
+  :github:`2307`
+- Fixed `does_batch` method in sync pipeline to allow waiting on content that is already resolved.
+  :github:`2557`
+- Ensure downloader resets file on retry.
+  :github:`2576`
+- Taught PulpImport to retry more than once in the event of creation-collisions.
+
+  This fixes a rare import-failure during high-concurrency, high-content-overlap imports.
+  :github:`2589`
+- Improved the error message when HTTP proxies reject requests from Pulp.
+  :github:`2654`
+
+
+Plugin API
+----------
+
+No significant changes.
 
 
 3.17.7 (2022-04-12)
@@ -725,6 +787,37 @@ Bugfixes
 
 - Include additional information about which AccessPolicy is using deprecated policy features.
   :redmine:`9608`
+
+
+3.16.8 (2022-05-10)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Taught PulpImport to stream imports rather than reading files into memory in one chunk.
+
+  This largely alleviates the memory-pressure that results from importing multiple
+  large repositories in parallel.
+  :github:`2307`
+- Fixed `does_batch` method in sync pipeline to allow waiting on content that is already resolved.
+  :github:`2557`
+- Ensure downloader resets file on retry.
+  :github:`2576`
+- Taught PulpImport to retry more than once in the event of creation-collisions.
+
+  This fixes a rare import-failure during high-concurrency, high-content-overlap imports.
+  :github:`2589`
+- Improved the error message when HTTP proxies reject requests from Pulp.
+  :github:`2654`
+
+
+Plugin API
+----------
+
+No significant changes.
 
 
 3.16.7 (2022-04-12)
