@@ -374,9 +374,10 @@ class NamedModelViewSet(viewsets.GenericViewSet):
                 # master view so loop through each subclass to find scoped objects
                 pks = []
                 for model in self.queryset.model.__subclasses__():
-                    viewset = get_viewset_for_model(model)()
-                    setattr(viewset, "request", self.request)
-                    pks.extend(viewset.get_queryset().values_list("pk", flat=True))
+                    if viewset_model := get_viewset_for_model(model, ignore_error=True):
+                        viewset = viewset_model()
+                        setattr(viewset, "request", self.request)
+                        pks.extend(viewset.get_queryset().values_list("pk", flat=True))
                 qs = qs.filter(pk__in=pks)
         return qs
 
