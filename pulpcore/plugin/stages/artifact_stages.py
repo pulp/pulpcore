@@ -477,7 +477,9 @@ class ACSArtifactHandler(Stage):
                             if getattr(d_artifact.artifact, checksum_type):
                                 checksum = getattr(d_artifact.artifact, checksum_type)
                                 if checksum in existing_ras_dict:
-                                    d_artifact.url = existing_ras_dict[checksum]["url"]
+                                    d_artifact.urls = [
+                                        existing_ras_dict[checksum]["url"]
+                                    ] + d_artifact.urls
                                     d_artifact.remote = existing_ras_dict[checksum]["remote"]
 
             for d_content in batch:
