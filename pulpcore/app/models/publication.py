@@ -375,7 +375,7 @@ def _gen_secret():
     return os.urandom(32)
 
 
-class ContentRedirectContentGuard(ContentGuard):
+class ContentRedirectContentGuard(ContentGuard, AutoAddObjPermsMixin):
     """
     Content guard to allow preauthenticated redirects to the content app.
     """
@@ -423,6 +423,12 @@ class ContentRedirectContentGuard(ContentGuard):
 
     class Meta:
         default_related_name = "%(app_label)s_%(model_name)s"
+        permissions = (
+            (
+                "manage_roles_contentredirectcontentguard",
+                "Can manage role assignments on Redirect content guard",
+            ),
+        )
 
 
 class BaseDistribution(MasterModel):

@@ -364,7 +364,7 @@ class NamedModelViewSet(viewsets.GenericViewSet):
 
     def scope_queryset(self, qs):
         if not self.request.user.is_superuser:
-            if self.is_master_viewset():
+            if not self.is_master_viewset():
                 # subclass so use default scope_queryset implementation
                 permission_name = getattr(self, "queryset_filtering_required_permission", None)
                 if permission_name:

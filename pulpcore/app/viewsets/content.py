@@ -115,16 +115,13 @@ class BaseContentViewSet(NamedModelViewSet):
         # This has been optimized, see ListRepositoryVersions for more generic version
         repositories = self.queryset.model.REPOSITORY_TYPES
         # Would users be allowed to have model level permissions over content?
-        if not self.request.user.is_superuser and repositories:
+        if not self.request.user.is_superuser:
             scoped_repos = []
             for repo in repositories:
                 repo_viewset = get_viewset_for_model(repo)()
                 setattr(repo_viewset, "request", self.request)
                 scoped_repos.extend(repo_viewset.get_queryset().values_list("pk", flat=True))
-            if scoped_repos:
-                return qs.filter(repositories__in=scoped_repos)
-            else:
-                return qs.none()
+            return qs.filter(repositories__in=scoped_repos)
         return qs
 
 

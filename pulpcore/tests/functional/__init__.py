@@ -9,6 +9,8 @@ from pulp_smash.utils import get_pulp_setting
 from pulpcore.client.pulpcore import (
     ApiClient,
     ContentguardsApi,
+    ContentguardsRbacApi,
+    ContentguardsContentRedirectApi,
     DistributionsApi,
     PublicationsApi,
     RepositoriesApi,
@@ -87,6 +89,16 @@ def signing_service_api_client(pulpcore_client):
 @pytest.fixture(scope="session")
 def content_guards_api_client(pulpcore_client):
     return ContentguardsApi(pulpcore_client)
+
+
+@pytest.fixture(scope="session")
+def rbac_contentguard_api_client(pulpcore_client):
+    return ContentguardsRbacApi(pulpcore_client)
+
+
+@pytest.fixture(scope="session")
+def redirect_contentguard_api_client(pulpcore_client):
+    return ContentguardsContentRedirectApi(pulpcore_client)
 
 
 @pytest.fixture
