@@ -5,12 +5,17 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import FieldError
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend, filters
+from django.db.models import Q
+from django.contrib.auth.models import Permission
+
 from rest_framework import mixins, status
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.filters import OrderingFilter
 from rest_framework.permissions import SAFE_METHODS
 from rest_framework.response import Response
 from rest_framework.serializers import ValidationError
+
+from drf_spectacular.utils import OpenApiParameter, extend_schema, extend_schema_view
 
 from pulpcore.app.models import Group
 from pulpcore.app.models.role import GroupRole, Role, UserRole
@@ -256,6 +261,10 @@ class RoleFilter(BaseFilterSet):
     FilterSet for Role.
     """
 
+    contains_permission = filters.CharFilter(
+        field_name="contains_permission", method="filter_contains_permission"
+    )
+
     class Meta:
         model = Role
         fields = {
@@ -264,7 +273,37 @@ class RoleFilter(BaseFilterSet):
             "locked": ["exact"],
         }
 
+    def filter_contains_permission(self, queryset, name, value):
+        perms_list = self.request.query_params.getlist(name)
 
+        query = Q()
+
+        for perm in perms_list:
+            if "." in perm:
+                app_label, codename = perm.split(".", maxsplit=1)
+                query = query | Q(content_type__app_label=app_label, codename=codename)
+            else:
+                query = query | Q(codename=codename)
+
+        perms = Permission.objects.filter(query)
+
+        return queryset.filter(permissions__in=perms)
+
+
+@extend_schema_view(
+    list=extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name="contains_permission",
+                type={"type": "array", "items": {"type": "string"}},
+                location=OpenApiParameter.QUERY,
+                required=False,
+                style="form",
+                explode=True,
+            )
+        ],
+    )
+)
 class RoleViewSet(
     NamedModelViewSet,
     mixins.CreateModelMixin,
