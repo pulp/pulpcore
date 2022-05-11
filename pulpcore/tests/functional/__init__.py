@@ -18,6 +18,7 @@ from pulpcore.client.pulpcore import (
     TaskSchedulesApi,
     UsersApi,
     UsersRolesApi,
+    RolesApi,
 )
 
 
@@ -77,6 +78,12 @@ def users_api_client(pulpcore_client):
 @pytest.fixture(scope="session")
 def users_roles_api_client(pulpcore_client):
     return UsersRolesApi(pulpcore_client)
+
+
+@pytest.fixture(scope="session")
+def roles_api_client(pulpcore_client):
+    "Provies the pulp core Roles API client object."
+    return RolesApi(pulpcore_client)
 
 
 @pytest.fixture(scope="session")
