@@ -22,6 +22,8 @@ class DeclarativeArtifact:
             :class:`~pulpcore.plugin.models.Artifact` either saved or unsaved. If unsaved, it
             may have partial digest information attached to it.
         url (str): the url to fetch the :class:`~pulpcore.plugin.models.Artifact` from.
+        urls (List[str]): A list of many possible URLs to fetch the
+            :class:`~pulpcore.plugin.models.Artifact` from.
         relative_path (str): the relative_path this :class:`~pulpcore.plugin.models.Artifact`
             should be published at for any Publication.
         remote (:class:`~pulpcore.plugin.models.Remote`): The remote used to fetch this
@@ -35,19 +37,29 @@ class DeclarativeArtifact:
         specified and `artifact` doesn't have a file.
     """
 
-    __slots__ = ("artifact", "url", "relative_path", "remote", "extra_data", "deferred_download")
+    __slots__ = (
+        "artifact",
+        "urls",
+        "relative_path",
+        "remote",
+        "extra_data",
+        "deferred_download",
+    )
 
     def __init__(
         self,
         artifact=None,
         url=None,
+        urls=None,
         relative_path=None,
         remote=None,
         extra_data=None,
         deferred_download=False,
     ):
-        if not url:
-            raise ValueError(_("DeclarativeArtifact must have a 'url'"))
+        if not (url or urls):
+            raise ValueError(_("DeclarativeArtifact must have a at least one 'url' provided"))
+        if url and urls:
+            raise ValueError(_("DeclarativeArtifact must not provide both 'url' and 'urls'"))
         if not relative_path:
             raise ValueError(_("DeclarativeArtifact must have a 'relative_path'"))
         if not artifact:
@@ -60,11 +72,15 @@ class DeclarativeArtifact:
                 )
             )
         self.artifact = artifact
-        self.url = url
+        self.urls = [url] if url else urls
         self.relative_path = relative_path
         self.remote = remote
         self.extra_data = extra_data or {}
         self.deferred_download = deferred_download
+
+    @property
+    def url(self):
+        return self.urls[0]
 
     async def download(self):
         """
@@ -84,11 +100,27 @@ class DeclarativeArtifact:
         if self.artifact.size:
             expected_size = self.artifact.size
             validation_kwargs["expected_size"] = expected_size
-        downloader = self.remote.get_downloader(url=self.url, **validation_kwargs)
-        # Custom downloaders may need extra information to complete the request.
-        download_result = await downloader.run(extra_data=self.extra_data)
-        self.artifact = Artifact(**download_result.artifact_attributes, file=download_result.path)
-        return download_result
+
+        urls = iter(self.urls)
+        url = next(urls)
+
+        while True:
+            downloader = self.remote.get_downloader(url=url, **validation_kwargs)
+            try:
+                # Custom downloaders may need extra information to complete the request.
+                download_result = await downloader.run(extra_data=self.extra_data)
+            except Exception as e:
+                if url := next(urls, None):
+                    # If there's more mirrors to try, ignore the error and move on
+                    continue
+                else:
+                    # There's no more mirrors to try, we need to raise the error instead of
+                    # swallowing it
+                    raise e
+            self.artifact = Artifact(
+                **download_result.artifact_attributes, file=download_result.path
+            )
+            return download_result
 
 
 class DeclarativeContent:
