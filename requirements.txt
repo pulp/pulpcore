@@ -1,9 +1,9 @@
-aiohttp
-aiodns
-aiofiles
-backoff
-click<8
-Django~=2.2.16  # LTS version, switch only if we have a compelling reason to
+aiohttp~=3.7.2
+aiodns~=2.0.0
+aiofiles==0.6.0
+backoff~=1.10.0
+click<9
+Django~=2.2.28  # LTS version, switch only if we have a compelling reason to
 django-currentuser~=0.5.1
 django-filter~=2.3.0
 django-guardian~=2.3.0
@@ -16,12 +16,12 @@ drf-nested-routers~=0.91.0
 drf-spectacular==0.9.13
 dynaconf>=3.0,<4.0
 gunicorn>=19.9,<20.1
-jinja2
+jinja2~=3.0
 pygtrie~=2.3.3
 psycopg2>=2.7,<2.9
 PyYAML>=5.1.1,<5.5.0
 python-gnupg~=0.4.6
-redis>=3.4.0
+redis>=3.4.0,<4.2.0
 rq>=1.1,<1.6
-setuptools>=39.2.0
+setuptools>=39.2.0,<62.1.0
 whitenoise>=5.0.0,<5.3.0

@@ -4,6 +4,7 @@
 # './plugin-template --github pulpcore' to update this file.
 #
 # For more info visit https://github.com/pulp/plugin_template
+
 ---
 name: Create New Release Branch
 on:
@@ -24,13 +25,13 @@ jobs:
       fail-fast: false
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           # by default, it uses a depth of 1
           # this fetches all history so that we can read each commit
           fetch-depth: 0
 
-      - uses: actions/setup-python@v2
+      - uses: actions/setup-python@v3
         with:
           python-version: "3.8"
 
@@ -41,13 +42,14 @@ jobs:
           echo ::endgroup::
 
       - name: Setting secrets
+        
         run: python3 .github/workflows/scripts/secrets.py "$SECRETS_CONTEXT"
         env:
           SECRETS_CONTEXT: ${{ toJson(secrets) }}
 
       - name: Verify that branch name matches current version string on master branch
         run: |
-          X_Y_VERSION=$(grep version setup.py | sed -rn 's/version="(.*)\.0\.dev",/\1/p' | awk '{$1=$1};1')
+          X_Y_VERSION=$(grep version setup.py | sed -rn 's/version="(.*)\.0((a[0-9]+)|(b[0-9]+))?\.dev",/\1/p' | awk '{$1=$1};1')
           if [[ "$X_Y_VERSION" != "${{ github.event.inputs.name }}" ]]
           then
             echo "Branch name doesn't match the current version string $X_Y_VERSION."
@@ -65,8 +67,9 @@ jobs:
           bump2version --no-commit minor
 
       - name: Make a PR with version bump
-        uses: peter-evans/create-pull-request@v3
+        uses: peter-evans/create-pull-request@v4
         with:
+          token: ${{ secrets.RELEASE_TOKEN }}
           committer: pulpbot <pulp-infra@redhat.com>
           author: pulpbot <pulp-infra@redhat.com>
           branch: minor-version-bump

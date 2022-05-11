@@ -12,7 +12,14 @@
         mode: "0755"
       loop:
         - settings
+        - ssh
         - ~/.config/pulp_smash
+
+    - name: Generate an OpenSSH keypair
+      community.crypto.openssh_keypair:
+        path: ssh/id_ed25519
+        type: ed25519
+      when: stream_test | default(false)
 
     - name: "Generate Pulp Settings"
       template:
@@ -70,7 +77,7 @@
     - block:
         - name: "Wait for Pulp"
           uri:
-            url: "http://pulp/pulp/api/v3/status/"
+            url: "http://pulp{{ lookup('env', 'PULP_API_ROOT') | default('\/pulp\/', True) }}api/v3/status/"
             follow_redirects: all
             validate_certs: no
           register: result

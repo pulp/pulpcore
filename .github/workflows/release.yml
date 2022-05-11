@@ -4,6 +4,7 @@
 # './plugin-template --github pulpcore' to update this file.
 #
 # For more info visit https://github.com/pulp/plugin_template
+
 ---
 name: Release Pipeline
 on:
@@ -29,13 +30,13 @@ jobs:
       fail-fast: false
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           # by default, it uses a depth of 1
           # this fetches all history so that we can read each commit
           fetch-depth: 0
 
-      - uses: actions/setup-python@v2
+      - uses: actions/setup-python@v3
         with:
           python-version: "3.8"
 
@@ -51,9 +52,13 @@ jobs:
           git config --global user.email 'pulp-infra@redhat.com'
 
       - name: Setting secrets
+        
         run: python3 .github/workflows/scripts/secrets.py "$SECRETS_CONTEXT"
         env:
           SECRETS_CONTEXT: ${{ toJson(secrets) }}
+
+      - name: Verify upper bound requirements
+        run: python .ci/scripts/upper_bound.py
 
       - name: Create the release commit, tag it, create a post-release commit, and build plugin package
         run: python .github/workflows/scripts/release.py ${{ github.event.inputs.release }}
@@ -62,7 +67,7 @@ jobs:
         run: tar -cvf pulpcore.tar $GITHUB_WORKSPACE
 
       - name: 'Upload Artifact'
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: pulpcore.tar
           path: pulpcore.tar
@@ -81,14 +86,15 @@ jobs:
           - TEST: bindings
 
     steps:
-      - uses: actions/download-artifact@v2
+      - uses: actions/download-artifact@v3
         with:
           name: pulpcore.tar
 
-      - uses: actions/setup-python@v2
+      - uses: actions/setup-python@v3
         with:
           python-version: "3.6"
-      - uses: actions/setup-ruby@v1
+      - uses: ruby/setup-ruby@v1
+        
         with:
           ruby-version: "2.6"
 
@@ -109,15 +115,27 @@ jobs:
       - name: Install httpie
         run: |
           echo ::group::HTTPIE
-          sudo apt-get update -yq
-          sudo -E apt-get -yq --no-install-suggests --no-install-recommends install httpie
+          pip install httpie
           echo ::endgroup::
           echo "HTTPIE_CONFIG_DIR=$GITHUB_WORKSPACE/.ci/assets/httpie/" >> $GITHUB_ENV
+
+      - name: Set environment variables
+        run: |
           echo "TEST=${{ matrix.env.TEST }}" >> $GITHUB_ENV
 
       - name: Before Install
+        
         run: .github/workflows/scripts/before_install.sh
         shell: bash
+        env:
+          PY_COLORS: '1'
+          ANSIBLE_FORCE_COLOR: '1'
+          GITHUB_PULL_REQUEST: ${{ github.event.number }}
+          GITHUB_PULL_REQUEST_BODY: ${{ github.event.pull_request.body }}
+          GITHUB_BRANCH: ${{ github.head_ref }}
+          GITHUB_REPO_SLUG: ${{ github.repository }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_CONTEXT: ${{ github.event.pull_request.commits_url }}
 
       - name: Install
         run: |
@@ -126,23 +144,44 @@ jobs:
         env:
           PY_COLORS: '1'
           ANSIBLE_FORCE_COLOR: '1'
+          GITHUB_PULL_REQUEST: ${{ github.event.number }}
+          GITHUB_PULL_REQUEST_BODY: ${{ github.event.pull_request.body }}
+          GITHUB_BRANCH: ${{ github.head_ref }}
+          GITHUB_REPO_SLUG: ${{ github.repository }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_CONTEXT: ${{ github.event.pull_request.commits_url }}
         shell: bash
 
       - name: Before Script
-        run: |
-          .github/workflows/scripts/before_script.sh
+        
+        run: .github/workflows/scripts/before_script.sh
+        shell: bash
+        env:
+          PY_COLORS: '1'
+          ANSIBLE_FORCE_COLOR: '1'
+          GITHUB_PULL_REQUEST: ${{ github.event.number }}
+          GITHUB_PULL_REQUEST_BODY: ${{ github.event.pull_request.body }}
+          GITHUB_BRANCH: ${{ github.head_ref }}
+          GITHUB_REPO_SLUG: ${{ github.repository }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_CONTEXT: ${{ github.event.pull_request.commits_url }}
+          REDIS_DISABLED: ${{ contains('', matrix.env.TEST) }}
 
       - name: Setting secrets
+        
         run: python3 .github/workflows/scripts/secrets.py "$SECRETS_CONTEXT"
         env:
           SECRETS_CONTEXT: ${{ toJson(secrets) }}
 
       - name: Install Python client
+        
         run: .github/workflows/scripts/install_python_client.sh
+        shell: bash
 
       - name: Install Ruby client
         if: ${{ env.TEST == 'bindings' || env.TEST == 'generate-bindings' }}
         run: .github/workflows/scripts/install_ruby_client.sh
+        shell: bash
 
       - name: Additional before_script
         run: ${{ github.event.inputs.before_script }}
@@ -152,31 +191,47 @@ jobs:
         if: ${{ env.TEST != 'generate-bindings' }}
         run: .github/workflows/scripts/script.sh
         shell: bash
+        env:
+          PY_COLORS: '1'
+          ANSIBLE_FORCE_COLOR: '1'
+          GITHUB_PULL_REQUEST: ${{ github.event.number }}
+          GITHUB_PULL_REQUEST_BODY: ${{ github.event.pull_request.body }}
+          GITHUB_BRANCH: ${{ github.head_ref }}
+          GITHUB_REPO_SLUG: ${{ github.repository }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_CONTEXT: ${{ github.event.pull_request.commits_url }}
 
       - name: Upload python client packages
         if: ${{ env.TEST == 'bindings' || env.TEST == 'generate-bindings' }}
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: python-client.tar
           path: python-client.tar
 
+      - name: Upload python client docs
+        if: ${{ env.TEST == 'bindings' || env.TEST == 'generate-bindings' }}
+        uses: actions/upload-artifact@v3
+        with:
+          name: python-client-docs.tar
+          path: python-client-docs.tar
+
       - name: Upload ruby client packages
         if: ${{ env.TEST == 'bindings' || env.TEST == 'generate-bindings' }}
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: ruby-client.tar
           path: ruby-client.tar
-
       - name: Upload built docs
         if: ${{ env.TEST == 'docs' }}
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: docs.tar
           path: docs/docs.tar
 
-      - name: After failure
-        if: failure()
+      - name: Logs
+        if: always()
         run: |
+          echo "Need to debug? Please check: https://github.com/marketplace/actions/debugging-with-tmate"
           http --timeout 30 --check-status --pretty format --print hb http://pulp/pulp/api/v3/status/ || true
           docker images || true
           docker ps -a || true
@@ -195,15 +250,16 @@ jobs:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     steps:
-      - uses: actions/download-artifact@v2
+      - uses: actions/download-artifact@v3
         with:
           name: pulpcore.tar
 
-      - uses: actions/setup-python@v2
+      - uses: actions/setup-python@v3
         with:
           python-version: "3.8"
 
-      - uses: actions/setup-ruby@v1
+      - uses: ruby/setup-ruby@v1
+        
         with:
           ruby-version: "2.6"
 
@@ -227,6 +283,7 @@ jobs:
           git checkout "origin/${GITHUB_REF##*/}" -- .github
 
       - name: Setting secrets
+        
         run: python3 .github/workflows/scripts/secrets.py "$SECRETS_CONTEXT"
         env:
           SECRETS_CONTEXT: ${{ toJson(secrets) }}
@@ -234,15 +291,20 @@ jobs:
       - name: Install python dependencies
         run: |
           echo ::group::PYDEPS
-          pip install gitpython python-redmine
+          pip install gitpython python-redmine requests packaging
           echo ::endgroup::
 
       - name: Push branch and tag to GitHub
         run: bash .github/workflows/scripts/push_branch_and_tag_to_github.sh ${{ github.event.inputs.release }}
       - name: Download built docs
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: docs.tar
+
+      - name: Download Python client docs
+        uses: actions/download-artifact@v3
+        with:
+          name: python-client-docs.tar
 
       - name: Publish docs to pulpproject.org
         run: |
@@ -251,7 +313,7 @@ jobs:
       - name: Deploy plugin to pypi
         run: bash .github/workflows/scripts/publish_plugin_pypi.sh ${{ github.event.inputs.release }}
       - name: Download Python client
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: python-client.tar
 
@@ -261,7 +323,7 @@ jobs:
       - name: Publish client to pypi
         run: bash .github/workflows/scripts/publish_client_pypi.sh
       - name: Download Ruby client
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: ruby-client.tar
 
@@ -271,29 +333,31 @@ jobs:
       - name: Publish client to rubygems
         run: bash .github/workflows/scripts/publish_client_gem.sh
 
-      - name: Update Redmine
-        run: bash .ci/scripts/update_redmine.sh
+      
+
+      
 
       - name: Create release on GitHub
         run: bash .github/workflows/scripts/create_release_from_tag.sh ${{ github.event.inputs.release }}
 
       - name: Cleanup repository before making changelog PR
-        run: rm -rf .lock generation pulpcore_client* *-client.tar pulpcore.tar todo web docs.tar
+        run: rm -rf .lock generation pulpcore_client* *-client.tar pulpcore.tar todo web *docs.tar
 
       - name: Stage changelog for master branch
-        run: python .github/workflows/scripts/stage-changelog-for-master.py ${{ github.event.inputs.release }}
+        run: python .github/workflows/scripts/stage-changelog-for-default-branch.py ${{ github.event.inputs.release }}
 
       - name: Create Pull Request for Changelog
-        uses: peter-evans/create-pull-request@v3
+        uses: peter-evans/create-pull-request@v4
         with:
+          token: ${{ secrets.RELEASE_TOKEN }}
           committer: pulpbot <pulp-infra@redhat.com>
           author: pulpbot <pulp-infra@redhat.com>
           branch: changelog/${{ github.event.inputs.release }}
           base: master
-          title: 'Building changelog for ${{ github.event.inputs.release }}'
+          title: 'Cherry pick ${{ github.event.inputs.release }} changelog'
           body: '[noissue]'
           commit-message: |
-            Building changelog for ${{ github.event.inputs.release }}
+            ${{ github.event.inputs.release }} changelog
 
             [noissue]
           delete-branch: true

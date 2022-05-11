@@ -1,4 +1,4 @@
-FROM {{ ci_base | default("pulp/pulp-ci-centos:" + pulp_container_tag) }}
+FROM {{ ci_base | default("ghcr.io/pulp/pulp-ci-centos:" + pulp_container_tag) }}
 
 # Add source directories to container
 {% for item in plugins %}
@@ -11,6 +11,9 @@ ADD {{ item.source }} {{ item.source }}
 # Hacking botocore (https://github.com/boto/botocore/pull/1990)
 
 RUN pip3 install \
+{%- if stream_test | default(false) -%}
+{{ " " }}django-storages[sftp]
+{%- endif -%}
 {%- if s3_test | default(false) -%}
 {{ " " }}django-storages[boto3] git+https://github.com/fabricio-aguiar/botocore.git@fix-100-continue
 {%- endif -%}

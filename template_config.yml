@@ -1,7 +1,7 @@
 # This config represents the latest values used when running the plugin-template. Any settings that
 # were not present before running plugin-template have been added with their default values.
 
-# generated with plugin_template@2021.08.26-62-gfaa6635
+# generated with plugin_template@2021.08.26-128-g36696fc
 
 additional_repos:
 - branch: 1.3
@@ -29,7 +29,9 @@ disabled_redis_runners: []
 docker_fixtures: true
 docs_test: true
 flake8: true
+github_org: pulp
 issue_tracker: redmine
+keep_ci_update_since_branch: null
 noissue_marker: '[noissue]'
 parallel_test_workers: 8
 plugin_app_label: pulpcore
@@ -67,6 +69,7 @@ python_version: '3.6'
 redmine_project: pulp
 release_email: pulp-infra@redhat.com
 release_user: pulpbot
+run_pulpcore_tests_for_plugins: false
 single_commit_check: true
 sync_ci: true
 tasking_allow_async_unsafe: true
@@ -76,7 +79,9 @@ test_cli: false
 test_deprecations: false
 test_performance: false
 test_released_plugin_with_next_pulpcore_release: false
+test_reroute: false
 test_s3: true
+test_stream: false
 travis_addtl_services: []
 travis_notifications:
   irc:
@@ -89,6 +94,8 @@ travis_notifications:
     - 'Change view : %{compare_url}'
     - 'Build details : %{build_url}'
     - '%{message}'
+update_github: true
 update_redmine: true
 upgrade_range: []
+use_issue_template: true
 

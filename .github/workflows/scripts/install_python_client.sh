@@ -43,4 +43,11 @@ cd pulpcore-client
 python setup.py sdist bdist_wheel --python-tag py3
 find . -name "*.whl" -exec pip install {} \;
 tar cvf ../../pulpcore/python-client.tar ./dist
+
+find ./docs/* -exec sed -i 's/Back to README/Back to HOME/g' {} \;
+find ./docs/* -exec sed -i 's/README//g' {} \;
+cp README.md docs/index.md
+sed -i 's/docs\///g' docs/index.md
+find ./docs/* -exec sed -i 's/\.md//g' {} \;
+tar cvf ../../pulpcore/python-client-docs.tar ./docs
 exit $?
