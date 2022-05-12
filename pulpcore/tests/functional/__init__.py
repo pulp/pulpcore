@@ -10,6 +10,7 @@ from pulpcore.client.pulpcore import (
     ApiClient,
     ContentguardsApi,
     DistributionsApi,
+    OrphansCleanupApi,
     PublicationsApi,
     RepositoriesApi,
     SigningServicesApi,
@@ -50,50 +51,62 @@ def pytest_configure(config):
     )
 
 
-@pytest.fixture(scope="session")
-def pulpcore_client(bindings_cfg):
-    return ApiClient(bindings_cfg)
+@pytest.fixture
+def cid():
+    return str(uuid.uuid4())
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture
+def pulpcore_client(cid, bindings_cfg):
+    api_client = ApiClient(bindings_cfg)
+    api_client.default_headers["Correlation-ID"] = cid
+    return api_client
+
+
+@pytest.fixture
 def tasks_api_client(pulpcore_client):
     return TasksApi(pulpcore_client)
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture
 def task_schedules_api_client(pulpcore_client):
     return TaskSchedulesApi(pulpcore_client)
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture
 def status_api_client(pulpcore_client):
     return StatusApi(pulpcore_client)
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture
 def users_api_client(pulpcore_client):
     return UsersApi(pulpcore_client)
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture
 def users_roles_api_client(pulpcore_client):
     return UsersRolesApi(pulpcore_client)
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture
 def roles_api_client(pulpcore_client):
     "Provies the pulp core Roles API client object."
     return RolesApi(pulpcore_client)
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture
 def signing_service_api_client(pulpcore_client):
     return SigningServicesApi(pulpcore_client)
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture
 def content_guards_api_client(pulpcore_client):
     return ContentguardsApi(pulpcore_client)
+
+
+@pytest.fixture
+def orphans_cleanup_api_client(pulpcore_client):
+    return OrphansCleanupApi(pulpcore_client)
 
 
 @pytest.fixture
