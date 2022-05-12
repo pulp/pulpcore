@@ -509,13 +509,13 @@ class Content(MasterModel, QueryMixin):
 
     @classmethod
     @property
-    def REPOSITORY_TYPES(cls) -> set:
+    def REPOSITORY_TYPES(cls) -> tuple:
         """
-        Set of the repository models that can store this content type.
+        Tuple of the repository models that can store this content type.
 
         Populated at start up time. Read only.
         """
-        return cls._repository_types[cls]
+        return tuple(cls._repository_types[cls])
 
     @classmethod
     def natural_key_fields(cls):
