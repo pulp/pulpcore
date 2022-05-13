@@ -34,7 +34,7 @@ class FileDownloader(BaseDownloader):
         """
         from pulpcore.app.serializers import RemoteSerializer
 
-        RemoteSerializer().validate_url(url)
+        RemoteSerializer.validate_url(url)
         p = urlparse(url)
         self._path = os.path.abspath(os.path.join(p.netloc, p.path))
         super().__init__(url, *args, **kwargs)

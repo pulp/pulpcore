@@ -71,7 +71,6 @@ class BaseDownloader:
         url,
         expected_digests=None,
         expected_size=None,
-        semaphore=None,
         *args,
         **kwargs,
     ):
@@ -83,8 +82,6 @@ class BaseDownloader:
             expected_digests (dict): Keyed on the algorithm name provided by hashlib and stores the
                 value of the expected digest. e.g. {'md5': '912ec803b2ce49e4a541068d495ab570'}
             expected_size (int): The number of bytes the download is expected to have.
-            semaphore (asyncio.Semaphore): A semaphore the downloader must acquire before running.
-                Useful for limiting the number of outstanding downloaders in various ways.
         """
 
         self.url = url
@@ -92,10 +89,6 @@ class BaseDownloader:
         self.path = None
         self.expected_digests = expected_digests
         self.expected_size = expected_size
-        if semaphore:
-            self.semaphore = semaphore
-        else:
-            self.semaphore = asyncio.Semaphore()  # This will always be acquired
         self._digests = {}
         self._size = 0
         if self.expected_digests:
@@ -229,10 +222,6 @@ class BaseDownloader:
         """
         Run the downloader with concurrency restriction.
 
-        This method acquires `self.semaphore` before calling the actual download implementation
-        contained in `_run()`. This ensures that the semaphore stays acquired even as the `backoff`
-        decorator on `_run()`, handles backoff-and-retry logic.
-
         Args:
             extra_data (dict): Extra data passed to the downloader.
 
@@ -240,11 +229,10 @@ class BaseDownloader:
             :class:`~pulpcore.plugin.download.DownloadResult` from `_run()`.
 
         """
-        async with self.semaphore:
-            try:
-                return await self._run(extra_data=extra_data)
-            except asyncio.TimeoutError:
-                raise TimeoutException(self.url)
+        try:
+            return await self._run(extra_data=extra_data)
+        except asyncio.TimeoutError:
+            raise TimeoutException(self.url)
 
     async def _run(self, extra_data=None):
         """
