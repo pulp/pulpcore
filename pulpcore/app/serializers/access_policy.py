@@ -44,6 +44,14 @@ class AccessPolicySerializer(ModelSerializer):
         read_only=True,
     )
 
+    queryset_scoping = serializers.DictField(
+        help_text=_(
+            "A callable for performing queryset scoping. See plugin documentation for valid"
+            " callables. Set to blank to turn off queryset scoping."
+        ),
+        required=False,
+    )
+
     class Meta:
         model = models.AccessPolicy
         fields = ModelSerializer.Meta.fields + (
@@ -52,6 +60,7 @@ class AccessPolicySerializer(ModelSerializer):
             "statements",
             "viewset_name",
             "customized",
+            "queryset_scoping",
         )
 
     def validate(self, data):

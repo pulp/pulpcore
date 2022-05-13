@@ -21,7 +21,9 @@ from pulpcore.app import tasks
 from pulpcore.app.models import MasterModel
 from pulpcore.app.models.role import GroupRole, UserRole
 from pulpcore.app.response import OperationPostponedResponse
+from pulpcore.app.role_util import get_objects_for_user
 from pulpcore.app.serializers import AsyncOperationResponseSerializer, NestedRoleSerializer
+from pulpcore.app.util import get_viewset_for_model
 from pulpcore.tasking.tasks import dispatch
 
 # These should be used to prevent duplication and keep things consistent
@@ -258,6 +260,11 @@ class NamedModelViewSet(viewsets.GenericViewSet):
 
         return False
 
+    @property
+    def routable(self) -> bool:
+        # Determines if ViewSet should be added to router
+        return not self.is_master_viewset()
+
     @classmethod
     def view_name(cls):
         return "-".join(cls.endpoint_pieces())
@@ -353,6 +360,25 @@ class NamedModelViewSet(viewsets.GenericViewSet):
                 if hasattr(permission_class, "scope_queryset"):
                     qs = permission_class.scope_queryset(self, qs)
 
+        return qs
+
+    def scope_queryset(self, qs):
+        if not self.request.user.is_superuser:
+            if not self.is_master_viewset():
+                # subclass so use default scope_queryset implementation
+                permission_name = getattr(self, "queryset_filtering_required_permission", None)
+                if permission_name:
+                    user = self.request.user
+                    qs = get_objects_for_user(user, permission_name, qs)
+            else:
+                # master view so loop through each subclass to find scoped objects
+                pks = []
+                for model in self.queryset.model.__subclasses__():
+                    if viewset_model := get_viewset_for_model(model, ignore_error=True):
+                        viewset = viewset_model()
+                        setattr(viewset, "request", self.request)
+                        pks.extend(viewset.get_queryset().values_list("pk", flat=True))
+                qs = qs.filter(pk__in=pks)
         return qs
 
     @classmethod

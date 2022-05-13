@@ -58,10 +58,10 @@ class BaseRepositoryViewSet(NamedModelViewSet):
 class ListRepositoryViewSet(BaseRepositoryViewSet, mixins.ListModelMixin):
     """Endpoint to list all repositories."""
 
-    @classmethod
-    def is_master_viewset(cls):
+    @property
+    def routable(self):
         """Do not hide from the routers."""
-        return False
+        return True
 
 
 class ReadOnlyRepositoryViewSet(

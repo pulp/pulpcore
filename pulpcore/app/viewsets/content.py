@@ -112,10 +112,10 @@ class BaseContentViewSet(NamedModelViewSet):
 class ListContentViewSet(BaseContentViewSet, mixins.ListModelMixin):
     """Endpoint to list all content."""
 
-    @classmethod
-    def is_master_viewset(cls):
+    @property
+    def routable(self):
         """Do not hide from the routers."""
-        return False
+        return True
 
 
 class ContentViewSet(

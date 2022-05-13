@@ -92,10 +92,10 @@ class ListPublicationViewSet(NamedModelViewSet, mixins.ListModelMixin):
     serializer_class = PublicationSerializer
     filterset_class = PublicationFilter
 
-    @classmethod
-    def is_master_viewset(cls):
+    @property
+    def routable(self):
         """Do not hide from the routers."""
-        return False
+        return True
 
 
 class PublicationViewSet(
@@ -132,10 +132,10 @@ class ListContentGuardViewSet(
 ):
     """Endpoint to list all contentguards."""
 
-    @classmethod
-    def is_master_viewset(cls):
+    @property
+    def routable(self):
         """Do not hide from the routers."""
-        return False
+        return True
 
 
 class ContentGuardViewSet(
@@ -261,10 +261,10 @@ class ListDistributionViewSet(NamedModelViewSet, mixins.ListModelMixin):
     serializer_class = DistributionSerializer
     filterset_class = DistributionFilter
 
-    @classmethod
-    def is_master_viewset(cls):
+    @property
+    def routable(self):
         """Do not hide from the routers."""
-        return False
+        return True
 
 
 class DistributionViewSet(
