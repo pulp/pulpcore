@@ -155,6 +155,7 @@ class GroupViewSet(
                 "parameters": {"roles": "core.group_owner"},
             },
         ],
+        "queryset_scoping": {"function": "scope_queryset"},
     }
 
     LOCKED_ROLES = {

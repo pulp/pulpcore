@@ -121,6 +121,7 @@ class TaskViewSet(
                 "parameters": {"roles": "core.task_owner"},
             }
         ],
+        "queryset_scoping": {"function": "scope_queryset"},
     }
     LOCKED_ROLES = {
         "core.task_owner": {
@@ -299,6 +300,7 @@ class TaskScheduleViewSet(
                 "parameters": {"roles": "core.taskschedule_owner"},
             }
         ],
+        "queryset_scoping": {"function": "scope_queryset"},
     }
     LOCKED_ROLES = {
         "core.taskschedule_owner": {

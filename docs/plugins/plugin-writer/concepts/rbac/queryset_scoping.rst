@@ -18,10 +18,24 @@ Enabling QuerySet Scoping
 -------------------------
 
 The support for this is built into ``pulpcore.plugin.viewsets.NamedModelViewSet``, which is often
-the base class for any model-based ViewSet if Pulp. Objects will only be shown to users have access
-to a specific permission either at the model-level or object-level. Enable this on your ViewSet that
-inherits from ``pulpcore.plugin.viewsets.NamedModelViewSet`` by setting the
-``queryset_filtering_required_permission`` class attribute to the value of the permission name.
+the base class for any model-based ViewSet if Pulp. Queryset Scoping is performed by the ViewSet's
+``get_queryset`` method which calls each permission class' method ``scope_queryset`` if present.
+Pulp's default permission class, ``pulpcore.app.AccessPolicyFromDB``, implementation of
+``scope_queryset`` calls the ViewSet function in the AccessPolicy field ``queryset_scoping`` if
+defined. This field can be changed by the user to any method on the ViewSet or set empty if they
+wish to turn off Queryset Scoping for that view::
+
+    DEFAULT_ACCESS_POLICY = {
+        ...
+        # Call method `scope_queryset` on ViewSet to perform Queryset Scoping
+        "queryset_scoping": {"function": "scope_queryset"},
+        ...
+    }
+
+``NamedModelViewSet`` has a default ``scope_queryset`` implementation that will scope the query
+based of the ``queryset_filtering_required_permission`` class attribute set on ViewSet.
+Objects will only be shown to users that have access to this specific permission either at the
+model-level or object-level.
 
 For example Tasks are restricted only to those users with the "core.view_task" permission like
 this::
@@ -35,6 +49,36 @@ this::
 
 Manually Implementing QuerySet Scoping
 --------------------------------------
+
+Default scoping behavior can be overriden by supplying your own ``scope_queryset`` method.
+``scope_queryset`` takes one argument, the queryset to be scoped, and returns the scoped queryset.
+Content ViewSet's have their ``scope_queryset`` method overriden to scope based on repositories
+the user can see.
+
+Extra Queryset Scoping methods can be defined on the ViewSet to allow users to choose different
+behaviors besides On/Off. The method must accept the queryset as the first argument. Additional
+parameters can also be accepted by supplying them in a ``parameters`` section of the
+``queryset_scoping`` field of the AccessPolicy like so:
+
+.. code-block:: python
+
+    from pulpcore.plugin.viewsets import NamedModelViewSet
+    from pulpcore.plugin.util import get_objects_for_user
+
+    class MyViewSet(NamedModelViewSet):
+
+        DEFAULT_ACCESS_POLICY = {
+            # Statements omitted
+            "queryset_scoping" : {
+                # This entire field is editable by the user
+                "function": "different_permission_scope",
+                "parameters": {"permission": "my.example_permission"}
+            }
+        }
+
+        def different_permission_scope(qs, permission):
+            """Example extra scoping method that uses a user specified permission to scope."""
+            return get_objects_for_user(self.request.user, permission, qs=qs)
 
 If your ViewSet does not inherit from ``pulpcore.plugin.viewsets.NamedModelViewSet`` or you would
 like more control over the QuerySet Scoping feature it can be added manually by adding a

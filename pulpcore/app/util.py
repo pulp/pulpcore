@@ -15,7 +15,7 @@ _model_viewset_cache = {}
 # live over in the viewsets namespace, but these tools exist for serializers, which are
 # depended on by viewsets. They're defined here because they're used here, and to avoid
 # odd import dependencies.
-def get_viewset_for_model(model_obj):
+def get_viewset_for_model(model_obj, ignore_error=False):
     """
     Given a Model instance or class, return the registered ViewSet for that Model
     """
@@ -41,6 +41,8 @@ def get_viewset_for_model(model_obj):
             break
 
     if model_viewset is None:
+        if ignore_error:
+            return None
         raise LookupError("Could not determine ViewSet base name for model {}".format(model_class))
 
     return viewset

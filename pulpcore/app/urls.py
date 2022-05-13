@@ -61,7 +61,7 @@ class ViewSetNode:
             node (ViewSetNode): A node that represents a viewset and its decendents.
         """
         # Master viewsets do not have endpoints, so they do not need to be registered
-        if node.viewset.is_master_viewset():
+        if not node.viewset.routable:
             return
         # Non-nested viewsets are attached to the root node
         if not node.viewset.parent_viewset:
