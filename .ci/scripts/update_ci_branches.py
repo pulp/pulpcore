@@ -21,7 +21,7 @@ headers = {
 }
 
 if not initial_branch or initial_branch not in branches:
-    starting = -2
+    exit("Initial branch not found")
 else:
     starting = branches.index(initial_branch)
 
