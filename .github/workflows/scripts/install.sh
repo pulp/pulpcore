@@ -15,6 +15,8 @@ set -euv
 
 source .github/workflows/scripts/utils.sh
 
+export PULP_API_ROOT="/pulp/"
+
 if [[ "$TEST" = "docs" || "$TEST" = "publish" ]]; then
   pip install psycopg2-binary
   pip install -r doc_requirements.txt
@@ -99,6 +101,8 @@ if [ "$TEST" = "s3" ]; then
 minio_access_key: "'$MINIO_ACCESS_KEY'"\
 minio_secret_key: "'$MINIO_SECRET_KEY'"' vars/main.yaml
 fi
+
+echo "PULP_API_ROOT=${PULP_API_ROOT}" >> "$GITHUB_ENV"
 
 if [ "${PULP_API_ROOT:-}" ]; then
   sed -i -e '$a api_root: "'"$PULP_API_ROOT"'"' vars/main.yaml
