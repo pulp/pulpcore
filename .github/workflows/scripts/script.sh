@@ -45,7 +45,7 @@ if [[ "$TEST" = "docs" ]]; then
 fi
 
 if [[ "${RELEASE_WORKFLOW:-false}" == "true" ]]; then
-  STATUS_ENDPOINT="${PULP_URL}/pulp/api/v3/status/"
+  STATUS_ENDPOINT="${PULP_URL}${PULP_API_ROOT}api/v3/status/"
   echo $STATUS_ENDPOINT
   REPORTED_VERSION=$(http $STATUS_ENDPOINT | jq --arg plugin core --arg legacy_plugin pulpcore -r '.versions[] | select(.component == $plugin or .component == $legacy_plugin) | .version')
   response=$(curl --write-out %{http_code} --silent --output /dev/null https://pypi.org/project/pulpcore/$REPORTED_VERSION/)
