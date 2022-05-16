@@ -53,7 +53,9 @@ def pytest_configure(config):
 
 @pytest.fixture
 def cid():
-    return str(uuid.uuid4())
+    value = str(uuid.uuid4())
+    yield value
+    print(f"Correlation-ID = {value}")
 
 
 @pytest.fixture
