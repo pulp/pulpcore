@@ -8,6 +8,7 @@ from pulp_smash.utils import get_pulp_setting
 
 from pulpcore.client.pulpcore import (
     ApiClient,
+    ArtifactsApi,
     ContentguardsApi,
     DistributionsApi,
     OrphansCleanupApi,
@@ -68,6 +69,11 @@ def pulpcore_client(cid, bindings_cfg):
 @pytest.fixture
 def tasks_api_client(pulpcore_client):
     return TasksApi(pulpcore_client)
+
+
+@pytest.fixture
+def artifacts_api_client(pulpcore_client):
+    return ArtifactsApi(pulpcore_client)
 
 
 @pytest.fixture
