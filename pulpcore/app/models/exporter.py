@@ -77,9 +77,7 @@ class FilesystemExporter(Exporter):
     TYPE = "filesystem"
 
     path = models.TextField()
-    method = models.CharField(
-        choices=FS_EXPORT_CHOICES, default=FS_EXPORT_METHODS.WRITE, max_length=128
-    )
+    method = models.TextField(choices=FS_EXPORT_CHOICES, default=FS_EXPORT_METHODS.WRITE)
 
     class Meta:
         default_related_name = "%(app_label)s_fs_exporter"
