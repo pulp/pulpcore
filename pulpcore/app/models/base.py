@@ -17,7 +17,7 @@ class Label(LifecycleModel):
     Fields:
         pulp_id (models.UUIDField): Primary key identifier
         object_id (models.UUIDField): Resource id
-        key (models.CharField): Key of the label
+        key (models.TextField): Key of the label
         value (models.TextField): Value of the label
 
     Relations:
@@ -28,7 +28,7 @@ class Label(LifecycleModel):
     pulp_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
     object_id = models.UUIDField()
-    key = models.CharField(max_length=200, db_index=True)
+    key = models.TextField(db_index=True)
     value = models.TextField(null=True, db_index=True)
 
     content_object = GenericForeignKey("content_type", "object_id", for_concrete_model=False)

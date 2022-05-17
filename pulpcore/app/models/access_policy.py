@@ -25,7 +25,7 @@ class AccessPolicy(BaseModel):
             for newly created objects. This is a nullable field due to not all endpoints creating
             objects.
         statements (models.JSONField): A list of ``drf-access-policy`` statements.
-        viewset_name (models.CharField): The name of the viewset this instance controls
+        viewset_name (models.TextField): The name of the viewset this instance controls
             authorization for.
         customized (BooleanField): False if the AccessPolicy has been user-modified. True otherwise.
             Defaults to False.
@@ -36,7 +36,7 @@ class AccessPolicy(BaseModel):
 
     creation_hooks = models.JSONField(null=True)
     statements = models.JSONField()
-    viewset_name = models.CharField(max_length=128, unique=True)
+    viewset_name = models.TextField(unique=True)
     customized = models.BooleanField(default=False)
     queryset_scoping = models.JSONField(null=True)
 

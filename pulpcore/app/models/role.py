@@ -13,7 +13,7 @@ class Role(BaseModel):
 
     Fields:
 
-        name (models.CharField): Unique name of the role.
+        name (models.TextField): Unique name of the role.
         locked (models.BooleanField): Indicator for plugin managed role.
 
     Relations:
@@ -21,7 +21,7 @@ class Role(BaseModel):
         permissions (models.ManyToManyField): Permissions to be granted via this role.
     """
 
-    name = models.CharField(max_length=128, db_index=True, unique=True)
+    name = models.TextField(db_index=True, unique=True)
     description = models.TextField(null=True)
     locked = models.BooleanField(default=False)
     permissions = models.ManyToManyField(Permission)
@@ -43,7 +43,7 @@ class UserRole(BaseModel):
     )
     role = models.ForeignKey(Role, related_name="object_users", on_delete=models.CASCADE)
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE, null=True)
-    object_id = models.CharField(max_length=255, null=True)
+    object_id = models.TextField(null=True)
     content_object = GenericForeignKey("content_type", "object_id", for_concrete_model=False)
 
     class Meta:
@@ -65,7 +65,7 @@ class GroupRole(BaseModel):
     group = models.ForeignKey(Group, related_name="object_roles", on_delete=models.CASCADE)
     role = models.ForeignKey(Role, related_name="object_groups", on_delete=models.CASCADE)
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE, null=True)
-    object_id = models.CharField(max_length=255, null=True)
+    object_id = models.TextField(null=True)
     content_object = GenericForeignKey("content_type", "object_id", for_concrete_model=False)
 
     class Meta:

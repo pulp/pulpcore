@@ -108,7 +108,7 @@ class ProgressReport(BaseModel):
     """
 
     message = models.TextField()
-    code = models.CharField(max_length=36)
+    code = models.TextField()
     state = models.TextField(choices=TASK_CHOICES, default=TASK_STATES.WAITING)
 
     total = models.IntegerField(null=True)
@@ -313,7 +313,7 @@ class GroupProgressReport(BaseModel):
     """
 
     message = models.TextField()
-    code = models.CharField(max_length=36)
+    code = models.TextField()
 
     total = models.IntegerField(default=0)
     done = models.IntegerField(default=0)
