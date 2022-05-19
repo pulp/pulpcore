@@ -130,6 +130,14 @@ def orphans_cleanup_api_client(pulpcore_client):
 
 
 @pytest.fixture
+def role_factory(roles_api_client, gen_object_with_cleanup):
+    def _role_factory(**kwargs):
+        return gen_object_with_cleanup(roles_api_client, kwargs)
+
+    return _role_factory
+
+
+@pytest.fixture
 def gen_user(bindings_cfg, users_api_client, users_roles_api_client, gen_object_with_cleanup):
     class user_context:
         def __init__(self, username=None, model_roles=None, object_roles=None):

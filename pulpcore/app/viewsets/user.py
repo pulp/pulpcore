@@ -5,7 +5,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import FieldError
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend, filters
-from django.db.models import Q
+from django.db.models import Q, Count
 from django.contrib.auth.models import Permission
 
 from rest_framework import mixins, status
@@ -262,6 +262,10 @@ class RoleFilter(BaseFilterSet):
     FilterSet for Role.
     """
 
+    for_object_type = filters.CharFilter(
+        field_name="for_object_type", method="filter_for_object_type"
+    )
+
     contains_permission = filters.CharFilter(
         field_name="contains_permission", method="filter_contains_permission"
     )
@@ -288,7 +292,19 @@ class RoleFilter(BaseFilterSet):
 
         perms = Permission.objects.filter(query)
 
-        return queryset.filter(permissions__in=perms)
+        return queryset.filter(permissions__in=perms).distinct()
+
+    def filter_for_object_type(self, queryset, name, value):
+        obj_model = NamedModelViewSet.get_resource_model(value)
+        obj_type = ContentType.objects.get_for_model(obj_model, for_concrete_model=False)
+
+        perms = Permission.objects.filter(content_type__pk=obj_type.id)
+
+        query = Q(permissions__in=perms)
+
+        return queryset.annotate(
+            other_perms=Count("permissions", distinct=True, filter=~query)
+        ).filter(query, other_perms=0)
 
 
 @extend_schema_view(
@@ -301,7 +317,14 @@ class RoleFilter(BaseFilterSet):
                 required=False,
                 style="form",
                 explode=True,
-            )
+                description="Filter roles that have any of the permissions in the list.",
+            ),
+            OpenApiParameter(
+                name="for_object_type",
+                description=(
+                    "Filter roles that only have permissions for the specified object HREF."
+                ),
+            ),
         ],
     )
 )

@@ -157,6 +157,30 @@ class NamedModelViewSet(viewsets.GenericViewSet):
         return self.serializer_class
 
     @staticmethod
+    def get_resource_model(uri):
+        """
+        Resolve a resource URI to the model for the resource.
+
+        Provides a means to resolve an href passed in a POST body to an
+        model for the resource.
+
+        Args:
+            uri (str): A resource URI.
+
+        Returns:
+            django.models.Model: The model for the specified URI.
+
+        Raises:
+            rest_framework.exceptions.ValidationError: on invalid URI.
+        """
+        try:
+            match = resolve(urlparse(uri).path)
+        except Resolver404:
+            raise DRFValidationError(detail=_("URI not valid: {u}").format(u=uri))
+
+        return match.func.cls.queryset.model
+
+    @staticmethod
     def get_resource(uri, model=None):
         """
         Resolve a resource URI to an instance of the resource.
