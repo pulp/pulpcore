@@ -92,6 +92,17 @@ class ListPublicationViewSet(NamedModelViewSet, mixins.ListModelMixin):
     serializer_class = PublicationSerializer
     filterset_class = PublicationFilter
 
+    DEFAULT_ACCESS_POLICY = {
+        "statements": [
+            {
+                "action": ["list"],
+                "principal": "authenticated",
+                "effect": "allow",
+            },
+        ],
+        "queryset_scoping": {"function": "scope_queryset"},
+    }
+
     @property
     def routable(self):
         """Do not hide from the routers."""
@@ -132,6 +143,17 @@ class ListContentGuardViewSet(
 ):
     """Endpoint to list all contentguards."""
 
+    DEFAULT_ACCESS_POLICY = {
+        "statements": [
+            {
+                "action": ["list"],
+                "principal": "authenticated",
+                "effect": "allow",
+            },
+        ],
+        "queryset_scoping": {"function": "scope_queryset"},
+    }
+
     @property
     def routable(self):
         """Do not hide from the routers."""
@@ -161,6 +183,7 @@ class RBACContentGuardViewSet(ContentGuardViewSet, RolesMixin):
     endpoint_name = "rbac"
     serializer_class = RBACContentGuardSerializer
     queryset = RBACContentGuard.objects.all()
+    queryset_filtering_required_permission = "core.view_rbaccontentguard"
 
     DEFAULT_ACCESS_POLICY = {
         "statements": [
@@ -214,6 +237,7 @@ class RBACContentGuardViewSet(ContentGuardViewSet, RolesMixin):
                 },
             },
         ],
+        "queryset_scoping": {"function": "scope_queryset"},
     }
     LOCKED_ROLES = {
         "core.rbaccontentguard_creator": ["core.add_rbaccontentguard"],
@@ -223,11 +247,12 @@ class RBACContentGuardViewSet(ContentGuardViewSet, RolesMixin):
             "core.delete_rbaccontentguard",
             "core.manage_roles_rbaccontentguard",
         ],
+        "core.rbaccontentguard_viewer": ["core.view_rbaccontentguard"],
         "core.rbaccontentguard_downloader": ["core.download_rbaccontentguard"],
     }
 
 
-class ContentRedirectContentGuardViewSet(ContentGuardViewSet):
+class ContentRedirectContentGuardViewSet(ContentGuardViewSet, RolesMixin):
     """
     Content guard to protect preauthenticated redirects to the content app.
     """
@@ -235,6 +260,64 @@ class ContentRedirectContentGuardViewSet(ContentGuardViewSet):
     endpoint_name = "content_redirect"
     queryset = ContentRedirectContentGuard.objects.all()
     serializer_class = ContentRedirectContentGuardSerializer
+    queryset_filtering_required_permission = "core.view_contentredirectcontentguard"
+
+    DEFAULT_ACCESS_POLICY = {
+        "statements": [
+            {
+                "action": ["list"],
+                "principal": "authenticated",
+                "effect": "allow",
+            },
+            {
+                "action": ["create"],
+                "principal": "authenticated",
+                "effect": "allow",
+                "condition": "has_model_perms:core.add_contentredirectcontentguard",
+            },
+            {
+                "action": ["retrieve", "my_permissions"],
+                "principal": "authenticated",
+                "effect": "allow",
+                "condition": "has_model_or_obj_perms:core.view_contentredirectcontentguard",
+            },
+            {
+                "action": ["update", "partial_update"],
+                "principal": "authenticated",
+                "effect": "allow",
+                "condition": "has_model_or_obj_perms:core.change_contentredirectcontentguard",
+            },
+            {
+                "action": ["destroy"],
+                "principal": "authenticated",
+                "effect": "allow",
+                "condition": "has_model_or_obj_perms:core.delete_contentredirectcontentguard",
+            },
+            {
+                "action": ["list_roles", "add_role", "remove_role"],
+                "principal": "authenticated",
+                "effect": "allow",
+                "condition": "has_model_or_obj_perms:core.manage_roles_contentredirectcontentguard",
+            },
+        ],
+        "creation_hooks": [
+            {
+                "function": "add_roles_for_object_creator",
+                "parameters": {"roles": ["core.contentredirectcontentguard_owner"]},
+            },
+        ],
+        "queryset_scoping": {"function": "scope_queryset"},
+    }
+    LOCKED_ROLES = {
+        "core.contentredirectcontentguard_creator": ["core.add_contentredirectcontentguard"],
+        "core.contentredirectcontentguard_owner": [
+            "core.view_contentredirectcontentguard",
+            "core.change_contentredirectcontentguard",
+            "core.delete_contentredirectcontentguard",
+            "core.manage_roles_contentredirectcontentguard",
+        ],
+        "core.contentredirectcontentguard_viewer": ["core.view_contentredirectcontentguard"],
+    }
 
 
 class DistributionFilter(BaseFilterSet):
@@ -260,6 +343,17 @@ class ListDistributionViewSet(NamedModelViewSet, mixins.ListModelMixin):
     queryset = Distribution.objects.all()
     serializer_class = DistributionSerializer
     filterset_class = DistributionFilter
+
+    DEFAULT_ACCESS_POLICY = {
+        "statements": [
+            {
+                "action": ["list"],
+                "principal": "authenticated",
+                "effect": "allow",
+            },
+        ],
+        "queryset_scoping": {"function": "scope_queryset"},
+    }
 
     @property
     def routable(self):
