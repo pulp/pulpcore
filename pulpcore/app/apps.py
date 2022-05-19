@@ -127,6 +127,7 @@ class PulpPluginAppConfig(apps.AppConfig):
         # TODO do not include imported ViewSets
         # circular import avoidance
         from pulpcore.app.viewsets import NamedModelViewSet
+        from pulpcore.app.models import Repository, Content
 
         self.named_viewsets = defaultdict(list)
         if module_has_submodule(self.module, VIEWSETS_MODULE_NAME):
@@ -143,6 +144,10 @@ class PulpPluginAppConfig(apps.AppConfig):
                     if obj is not NamedModelViewSet and issubclass(obj, NamedModelViewSet):
                         model = obj.queryset.model
                         self.named_viewsets[model].append(obj)
+                        if model is not Repository and issubclass(model, Repository):
+                            Content._repository_types[Content].add(model)
+                            for content in model.CONTENT_TYPES:
+                                Content._repository_types[content].add(model)
                 except TypeError:
                     # obj isn't a class, issubclass exploded but obj can be safely filtered out
                     continue
