@@ -10,6 +10,8 @@ from pulpcore.client.pulpcore import (
     ApiClient,
     ArtifactsApi,
     ContentguardsApi,
+    ContentguardsRbacApi,
+    ContentguardsContentRedirectApi,
     DistributionsApi,
     OrphansCleanupApi,
     PublicationsApi,
@@ -110,6 +112,16 @@ def signing_service_api_client(pulpcore_client):
 @pytest.fixture
 def content_guards_api_client(pulpcore_client):
     return ContentguardsApi(pulpcore_client)
+
+
+@pytest.fixture
+def rbac_contentguard_api_client(pulpcore_client):
+    return ContentguardsRbacApi(pulpcore_client)
+
+
+@pytest.fixture
+def redirect_contentguard_api_client(pulpcore_client):
+    return ContentguardsContentRedirectApi(pulpcore_client)
 
 
 @pytest.fixture
