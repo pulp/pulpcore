@@ -10,6 +10,7 @@ import tempfile
 import shutil
 import subprocess
 
+from collections import defaultdict
 from functools import lru_cache
 from itertools import chain
 
@@ -490,6 +491,7 @@ class Content(MasterModel, QueryMixin):
     """
 
     PROTECTED_FROM_RECLAIM = True
+    _repository_types = defaultdict(set)
 
     TYPE = "content"
     repo_key_fields = ()  # Used by pulpcore.plugin.repo_version_utils.remove_duplicates
@@ -503,6 +505,15 @@ class Content(MasterModel, QueryMixin):
     class Meta:
         verbose_name_plural = "content"
         unique_together = ()
+
+    @classmethod
+    def repository_types(cls):
+        """
+        Tuple of the repository models that can store this content type.
+
+        Populated at start up time. Read only.
+        """
+        return tuple(cls._repository_types[cls])
 
     @classmethod
     def natural_key_fields(cls):
