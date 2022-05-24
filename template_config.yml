@@ -1,15 +1,16 @@
 # This config represents the latest values used when running the plugin-template. Any settings that
 # were not present before running plugin-template have been added with their default values.
 
-# generated with plugin_template@2021.08.26-125-g1923e98
+# generated with plugin_template@2021.08.26-132-g4a6cd66
 
 additional_repos:
-- branch: main
+- branch: "1.10"
   name: pulp_file
   pytest_args: pulp_file.tests.functional
-- branch: main
+- branch: 1.5
   name: pulp-certguard
 aiohttp_fixtures_origin: 172.18.0.1
+api_root: /pulp/
 black: true
 check_commit_message: true
 check_gettext: true
