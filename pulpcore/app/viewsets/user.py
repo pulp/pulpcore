@@ -365,6 +365,14 @@ class NestedRoleFilter(BaseFilterSet):
             obj_type = ContentType.objects.get_for_model(obj, for_concrete_model=False)
             return queryset.filter(content_type_id=obj_type.id, object_id=obj.pk)
 
+    sort = filters.OrderingFilter(
+        fields=(
+            ("role__name", "role"),
+            ("pulp_created", "pulp_created"),
+            ("role__description", "description"),
+        )
+    )
+
     class Meta:
         fields = (
             "role",
