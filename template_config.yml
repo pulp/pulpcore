@@ -9,6 +9,7 @@ additional_repos:
   pytest_args: pulp_file.tests.functional
 - branch: main
   name: pulp-certguard
+  pytest_args: pulp_certguard.tests.functional
 aiohttp_fixtures_origin: 172.18.0.1
 api_root: /pulp/
 black: true
