@@ -1,3 +1,5 @@
+import typing
+
 from gettext import gettext as _
 
 from django.contrib.auth import get_user_model
@@ -239,6 +241,15 @@ class UserRoleSerializer(ModelSerializer, NestedHyperlinkedModelSerializer):
         allow_null=True,
     )
 
+    description = serializers.SerializerMethodField()
+    permissions = serializers.SerializerMethodField()
+
+    def get_description(self, obj):
+        return obj.role.description
+
+    def get_permissions(self, obj) -> typing.List[str]:
+        return [f"{p.content_type.app_label}.{p.codename}" for p in obj.role.permissions.all()]
+
     def validate(self, data):
         data = super().validate(data)
         data["user"] = User.objects.get(pk=self.context["request"].resolver_match.kwargs["user_pk"])
@@ -268,7 +279,12 @@ class UserRoleSerializer(ModelSerializer, NestedHyperlinkedModelSerializer):
 
     class Meta:
         model = UserRole
-        fields = ModelSerializer.Meta.fields + ("role", "content_object")
+        fields = ModelSerializer.Meta.fields + (
+            "role",
+            "content_object",
+            "description",
+            "permissions",
+        )
 
 
 class GroupRoleSerializer(ModelSerializer, NestedHyperlinkedModelSerializer):
@@ -288,6 +304,15 @@ class GroupRoleSerializer(ModelSerializer, NestedHyperlinkedModelSerializer):
         source="*",
         allow_null=True,
     )
+
+    description = serializers.SerializerMethodField()
+    permissions = serializers.SerializerMethodField()
+
+    def get_description(self, obj):
+        return obj.role.description
+
+    def get_permissions(self, obj) -> typing.List[str]:
+        return [f"{p.content_type.app_label}.{p.codename}" for p in obj.role.permissions.all()]
 
     def validate(self, data):
         data = super().validate(data)
@@ -320,7 +345,12 @@ class GroupRoleSerializer(ModelSerializer, NestedHyperlinkedModelSerializer):
 
     class Meta:
         model = GroupRole
-        fields = ModelSerializer.Meta.fields + ("role", "content_object")
+        fields = ModelSerializer.Meta.fields + (
+            "role",
+            "content_object",
+            "description",
+            "permissions",
+        )
 
 
 class NestedRoleSerializer(serializers.Serializer):
