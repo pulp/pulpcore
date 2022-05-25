@@ -115,10 +115,14 @@ class RemoteSerializer(ModelSerializer):
         write_only=True,
     )
     proxy_password = serializers.CharField(
-        help_text="The password to authenticte to the proxy.",
+        help_text=_(
+            "The password to authenticate to the proxy. Extra leading and trailing whitespace "
+            "characters are not trimmed."
+        ),
         required=False,
         allow_null=True,
         write_only=True,
+        trim_whitespace=False,
         style={"input_type": "password"},
     )
     username = serializers.CharField(
@@ -128,10 +132,14 @@ class RemoteSerializer(ModelSerializer):
         write_only=True,
     )
     password = serializers.CharField(
-        help_text="The password to be used for authentication when syncing.",
+        help_text=_(
+            "The password to be used for authentication when syncing. Extra leading and trailing "
+            "whitespace characters are not trimmed."
+        ),
         required=False,
         allow_null=True,
         write_only=True,
+        trim_whitespace=False,
         style={"input_type": "password"},
     )
     pulp_last_updated = serializers.DateTimeField(
