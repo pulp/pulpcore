@@ -1,0 +1,1 @@
+Leading and trailing whitespace characters are no longer trimmed in passwords within remotes.
