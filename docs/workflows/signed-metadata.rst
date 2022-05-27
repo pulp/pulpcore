@@ -31,7 +31,7 @@ The example below demonstrates how a signing service can be created using ``gpg`
       Plugins may provide other signing service classes that may need their JSON output to
       contain different information.
 
-   Below is an example of a signing script:
+   Below is an example of a signing script that produces signatures for content:
 
    .. code-block:: bash
 
@@ -57,7 +57,8 @@ The example below demonstrates how a signing service can be created using ``gpg`
        fi
 
    .. note::
-
+       As the creator of the signing script, you can expect PULP_SIGNING_KEY_FINGERPRINT
+       and potentially other environment variables, depending on the content plugin calling signing service.
        Make sure the script contains a proper shebang and Pulp has got valid permissions
        to execute it.
 
