@@ -825,7 +825,7 @@ class RepositoryVersion(BaseModel):
         if self.complete:
             raise ResourceImmutableError(self)
 
-        if not content or not content.count():
+        if not content or not hasattr(content, '__iter__'):
             return
 
         # Normalize representation if content has already been added in this version.
