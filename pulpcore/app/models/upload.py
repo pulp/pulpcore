@@ -1,6 +1,8 @@
 import hashlib
 import os
 
+from gettext import gettext as _
+
 from django.core.files.base import ContentFile
 from django.db import models
 from django.db.models.signals import post_delete
@@ -26,17 +28,18 @@ class Upload(BaseModel):
         Append a chunk to an upload.
 
         Args:
-            chunk (File): Binary file to append to the upload file.
+            chunk (File): Binary data to append to the upload file.
             offset (int): First byte position to write chunk to.
         """
-        chunk_read = chunk.read()
-        current_sha256 = hashlib.sha256(chunk_read).hexdigest()
-        if sha256 and sha256 != current_sha256:
-            raise serializers.ValidationError("Checksum does not match chunk upload.")
+        chunk = chunk.read()
+        if sha256:
+            current_sha256 = hashlib.sha256(chunk).hexdigest()
+            if sha256 != current_sha256:
+                raise serializers.ValidationError(_("Checksum does not match chunk upload."))
 
         upload_chunk = UploadChunk(upload=self, offset=offset, size=len(chunk))
         filename = os.path.basename(upload_chunk.storage_path(""))
-        upload_chunk.file.save(filename, ContentFile(chunk_read))
+        upload_chunk.file.save(filename, ContentFile(chunk))
 
 
 class UploadChunk(BaseModel):
