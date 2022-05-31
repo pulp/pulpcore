@@ -1,0 +1,1 @@
+Fixed ``extlinks`` use in docs to be Sphinx==5.0.0 compatible.
