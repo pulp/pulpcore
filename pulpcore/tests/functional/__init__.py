@@ -13,16 +13,23 @@ from pulpcore.client.pulpcore import (
     ContentguardsRbacApi,
     ContentguardsContentRedirectApi,
     DistributionsApi,
+    ExportersPulpApi,
+    ExportersPulpExportsApi,
+    GroupsApi,
+    GroupsRolesApi,
+    GroupsUsersApi,
+    ImportersPulpApi,
+    ImportersPulpImportsApi,
     OrphansCleanupApi,
     PublicationsApi,
     RepositoriesApi,
+    RolesApi,
     SigningServicesApi,
     StatusApi,
     TasksApi,
     TaskSchedulesApi,
     UsersApi,
     UsersRolesApi,
-    RolesApi,
 )
 
 
@@ -89,6 +96,21 @@ def status_api_client(pulpcore_client):
 
 
 @pytest.fixture
+def groups_api_client(pulpcore_client):
+    return GroupsApi(pulpcore_client)
+
+
+@pytest.fixture
+def groups_users_api_client(pulpcore_client):
+    return GroupsUsersApi(pulpcore_client)
+
+
+@pytest.fixture
+def groups_roles_api_client(pulpcore_client):
+    return GroupsRolesApi(pulpcore_client)
+
+
+@pytest.fixture
 def users_api_client(pulpcore_client):
     return UsersApi(pulpcore_client)
 
@@ -102,6 +124,26 @@ def users_roles_api_client(pulpcore_client):
 def roles_api_client(pulpcore_client):
     "Provies the pulp core Roles API client object."
     return RolesApi(pulpcore_client)
+
+
+@pytest.fixture
+def exporters_pulp_api_client(pulpcore_client):
+    return ExportersPulpApi(pulpcore_client)
+
+
+@pytest.fixture
+def exporters_pulp_exports_api_client(pulpcore_client):
+    return ExportersPulpExportsApi(pulpcore_client)
+
+
+@pytest.fixture
+def importers_pulp_api_client(pulpcore_client):
+    return ImportersPulpApi(pulpcore_client)
+
+
+@pytest.fixture
+def importers_pulp_imports_api_client(pulpcore_client):
+    return ImportersPulpImportsApi(pulpcore_client)
 
 
 @pytest.fixture
