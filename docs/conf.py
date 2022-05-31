@@ -262,8 +262,8 @@ texinfo_documents = [
 #texinfo_show_urls = 'footnote'
 
 extlinks = {
-    'github': ('https://github.com/pulp/pulpcore/issues/%s', '#'),
-    'redmine': ('https://pulp.plan.io/issues/%s', '#'),
+    'github': ('https://github.com/pulp/pulpcore/issues/%s', '#%s'),
+    'redmine': ('https://pulp.plan.io/issues/%s', '#%s'),
 }
 
 # napoleon uses .. attribute by default, but :ivar: is more succinct and looks better,
