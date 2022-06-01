@@ -10,6 +10,7 @@ from drf_spectacular.views import (
     SpectacularSwaggerView,
 )
 from rest_framework_nested import routers
+from rest_framework.routers import APIRootView
 
 from pulpcore.app.apps import pulp_plugin_configs
 from pulpcore.app.views import OrphansView, PulpImporterImportCheckView, RepairView, StatusView
@@ -104,6 +105,19 @@ class ViewSetNode:
             return str(self.viewset)
 
 
+class PulpAPIRootView(APIRootView):
+    """A Pulp-defined APIRootView class with no authentication requirements."""
+
+    authentication_classes = []
+    permission_classes = []
+
+
+class PulpDefaultRouter(routers.DefaultRouter):
+    """A DefaultRouter class that benefits from the customized PulpAPIRootView class."""
+
+    APIRootView = PulpAPIRootView
+
+
 all_viewsets = []
 plugin_patterns = []
 # Iterate over each app, including pulpcore and the plugins.
@@ -117,9 +131,6 @@ sorted_by_depth = sorted(all_viewsets, key=lambda vs: vs._get_nest_depth())
 vs_tree = ViewSetNode()
 for viewset in sorted_by_depth:
     vs_tree.add_decendent(ViewSetNode(viewset))
-
-#: The Pulp Platform v3 API router, which can be used to manually register ViewSets with the API.
-root_router = routers.DefaultRouter()
 
 urlpatterns = [
     path(f"{API_ROOT}repair/", RepairView.as_view()),
@@ -184,6 +195,8 @@ urlpatterns.append(
     )
 )
 
+#: The Pulp Platform v3 API router, which can be used to manually register ViewSets with the API.
+root_router = PulpDefaultRouter()
 
 all_routers = [root_router] + vs_tree.register_with(root_router)
 for router in all_routers:

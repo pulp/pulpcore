@@ -1,10 +1,17 @@
 """Utilities for Pulpcore tests."""
+import aiohttp
+
 from functools import partial
 from unittest import SkipTest
 
 from pulp_smash import config, selectors
 
 from pulpcore.client.pulpcore import ApiClient
+
+
+async def get_response(url):
+    async with aiohttp.ClientSession() as session:
+        return await session.get(url)
 
 
 skip_if = partial(selectors.skip_if, exc=SkipTest)  # pylint:disable=invalid-name
