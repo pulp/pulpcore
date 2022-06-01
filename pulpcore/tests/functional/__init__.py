@@ -249,6 +249,11 @@ def pulp_api_v3_path(cli_client):
     return v3_api_root
 
 
+@pytest.fixture(scope="session")
+def pulp_api_v3_url(pulp_cfg, pulp_api_v3_path):
+    return f"{pulp_cfg.get_base_url()}{pulp_api_v3_path}"
+
+
 @pytest.fixture
 def random_artifact(random_artifact_factory):
     return random_artifact_factory()
