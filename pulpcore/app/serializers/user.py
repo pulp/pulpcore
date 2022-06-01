@@ -236,7 +236,10 @@ class UserRoleSerializer(ModelSerializer, NestedHyperlinkedModelSerializer):
     )
 
     content_object = ContentObjectField(
-        help_text=_("Optional pulp_href of the object the permissions are to be asserted on."),
+        help_text=_(
+            "pulp_href of the object for which role permissions should be asserted. "
+            "If set to 'null', permissions will act on the model-level."
+        ),
         source="*",
         allow_null=True,
     )
@@ -300,7 +303,10 @@ class GroupRoleSerializer(ModelSerializer, NestedHyperlinkedModelSerializer):
     )
 
     content_object = ContentObjectField(
-        help_text=_("Optional pulp_href of the object the permissions are to be asserted on."),
+        help_text=_(
+            "pulp_href of the object for which role permissions should be asserted. "
+            "If set to 'null', permissions will act on the model-level."
+        ),
         source="*",
         allow_null=True,
     )
