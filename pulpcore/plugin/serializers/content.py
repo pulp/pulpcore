@@ -1,15 +1,20 @@
 from gettext import gettext as _
 
 from logging import getLogger
+from tempfile import NamedTemporaryFile
 
+from django.db import DatabaseError
 from rest_framework.serializers import (
     FileField,
     Serializer,
     ValidationError,
 )
-from pulpcore.plugin.models import Artifact, Repository
-from pulpcore.plugin.serializers import (
+from pulpcore.app.files import PulpTemporaryUploadedFile
+from pulpcore.app.models import Artifact, Repository, Upload, UploadChunk
+from pulpcore.app.serializers import (
     DetailRelatedField,
+    RelatedField,
+    ArtifactSerializer,
     NoArtifactContentSerializer,
     SingleArtifactContentSerializer,
 )
@@ -75,12 +80,23 @@ class SingleArtifactContentUploadSerializer(
     """
     A serializer for content_types with a single Artifact.
 
-    The Artifact can either be specified via it's url, or a new file can be uploaded.
+    The Artifact can either be specified via it's url or an uncommitted upload, or a new file can
+    be uploaded in the POST data.
     Additionally a repository can be specified, to which the content unit will be added.
 
     When using this serializer, the creation of the real content must be wrapped in a task that
-    locks the Artifact and when specified, the repository.
+    touches the Artifact and locks the Upload and Repository when specified.
     """
+
+    upload = RelatedField(
+        help_text=_(
+            "An uncommitted upload that may be turned into the artifact of the content unit."
+        ),
+        required=False,
+        write_only=True,
+        view_name=r"uploads-detail",
+        queryset=Upload.objects.all(),
+    )
 
     def __init__(self, *args, **kwargs):
         """Initializer for SingleArtifactContentUploadSerializer."""
@@ -93,14 +109,17 @@ class SingleArtifactContentUploadSerializer(
 
         data = super().validate(data)
 
-        if "file" in data:
-            if "artifact" in data:
-                raise ValidationError(_("Only one of 'file' and 'artifact' may be specified."))
-            data["artifact"] = Artifact.init_and_validate(data.pop("file"))
-        elif "artifact" not in data:
-            raise ValidationError(_("One of 'file' and 'artifact' must be specified."))
+        if len({"file", "upload", "artifact"}.intersection(data.keys())) != 1:
+            raise ValidationError(
+                _("Exactly one of 'file', 'artifact' or 'upload' must be specified.")
+            )
 
         if "request" not in self.context:
+            if "file" in data:
+                raise RuntimeError(
+                    "The file field must be resolved into an artifact by the viewset before "
+                    "dispatching the create task."
+                )
             data = self.deferred_validate(data)
 
         return data
@@ -113,10 +132,41 @@ class SingleArtifactContentUploadSerializer(
         an ongoing http request.
         It should be overwritten by plugins to extract metadata from the actual content in
         much the same way as `validate`.
+        When overwriting, plugins must super-call this method to handle uploads before analyzing
+        the artifact.
         """
+        if "upload" in data:
+            upload = data.pop("upload")
+            self.context["upload"] = upload
+            chunks = UploadChunk.objects.filter(upload=upload).order_by("offset")
+            with NamedTemporaryFile(mode="ab", dir=".", delete=False) as temp_file:
+                for chunk in chunks:
+                    temp_file.write(chunk.file.read())
+                    chunk.file.close()
+                temp_file.flush()
+            with open(temp_file.name, "rb") as artifact_file:
+                file = PulpTemporaryUploadedFile.from_file(artifact_file)
+                # if artifact already exists, let's use it
+                try:
+                    artifact = Artifact.objects.get(sha256=file.hashers["sha256"].hexdigest())
+                    artifact.touch()
+                except (Artifact.DoesNotExist, DatabaseError):
+                    artifact_data = {"file": file}
+                    serializer = ArtifactSerializer(data=artifact_data)
+                    serializer.is_valid(raise_exception=True)
+                    artifact = serializer.save()
+            data["artifact"] = artifact
         return data
+
+    def create(self, validated_data):
+        result = super().create(validated_data)
+        if upload := self.context.get("upload"):
+            upload.delete()
+        return result
 
     class Meta(SingleArtifactContentSerializer.Meta):
         fields = (
-            SingleArtifactContentSerializer.Meta.fields + UploadSerializerFieldsMixin.Meta.fields
+            SingleArtifactContentSerializer.Meta.fields
+            + UploadSerializerFieldsMixin.Meta.fields
+            + ("upload",)
         )

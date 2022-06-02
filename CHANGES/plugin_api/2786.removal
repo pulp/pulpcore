@@ -1,0 +1,3 @@
+Plugins using the ``SingleArtifactContentUploadSerializer`` must place a super call when
+overwriting ``deferred_validate``. They can only assume the existance of the ``Artifact`` in the
+database, after this call.
