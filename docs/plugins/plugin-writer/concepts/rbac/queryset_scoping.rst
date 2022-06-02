@@ -55,6 +55,12 @@ Default scoping behavior can be overriden by supplying your own ``scope_queryset
 Content ViewSet's have their ``scope_queryset`` method overriden to scope based on repositories
 the user can see.
 
+.. note::
+
+    When queryset scoping is enabled for content you must also use the
+    ``has_required_repo_perms_on_upload`` access condition on the upload endpoint to ensure users
+    specify a repository for upload or they won't be able to see their uploaded content.
+
 Extra Queryset Scoping methods can be defined on the ViewSet to allow users to choose different
 behaviors besides On/Off. The method must accept the queryset as the first argument. Additional
 parameters can also be accepted by supplying them in a ``parameters`` section of the
