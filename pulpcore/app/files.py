@@ -32,7 +32,11 @@ class PulpTemporaryUploadedFile(TemporaryUploadedFile):
             PulpTemporaryUploadedFile: instantiated instance from file
         """
         name = os.path.basename(file.name)
-        instance = cls(name, "", file.size, "", "")
+        try:
+            size = file.size
+        except AttributeError:
+            size = os.path.getsize(file.name)
+        instance = cls(name, "", size, "", "")
         instance.file = file
         # Default 1MB
         while data := file.read(1048576):

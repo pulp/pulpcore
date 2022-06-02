@@ -78,16 +78,17 @@ class SingleArtifactContentUploadViewSet(DefaultDeferredContextMixin, ContentVie
 
         task_payload = self.init_content_data(serializer, request)
 
-        resources = []
-        repository = serializer.validated_data.get("repository")
-        if repository:
-            resources.append(repository)
+        exclusive_resources = [
+            item
+            for item in (serializer.validated_data.get(key) for key in ("upload", "repository"))
+            if item
+        ]
 
         app_label = self.queryset.model._meta.app_label
         task = dispatch(
             tasks.base.general_create,
             args=(app_label, serializer.__class__.__name__),
-            exclusive_resources=resources,
+            exclusive_resources=exclusive_resources,
             kwargs={
                 "data": task_payload,
                 "context": self.get_deferred_context(request),
@@ -97,12 +98,11 @@ class SingleArtifactContentUploadViewSet(DefaultDeferredContextMixin, ContentVie
 
     def init_content_data(self, serializer, request):
         """Initialize the reference to an Artifact along with relevant task's payload data."""
-        artifact = serializer.validated_data["artifact"]
-
         task_payload = {k: v for k, v in request.data.items()}
-        if task_payload.pop("file", None):
+        if "file" in task_payload:
             # in the upload code path make sure, the artifact exists, and the 'file'
             # parameter is replaced by 'artifact'
+            artifact = Artifact.init_and_validate(task_payload.pop("file"))
             try:
                 artifact.save()
             except IntegrityError:
@@ -117,5 +117,8 @@ class SingleArtifactContentUploadViewSet(DefaultDeferredContextMixin, ContentVie
             task_payload["artifact"] = ArtifactSerializer(
                 artifact, context={"request": request}
             ).data["pulp_href"]
+        elif "artifact" in serializer.validated_data:
+            serializer.validated_data["artifact"].touch()
+        # In case of a provided upload object, there is no artifact to touch yet.
 
         return task_payload

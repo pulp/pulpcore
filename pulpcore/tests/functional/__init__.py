@@ -28,6 +28,7 @@ from pulpcore.client.pulpcore import (
     StatusApi,
     TasksApi,
     TaskSchedulesApi,
+    UploadsApi,
     UsersApi,
     UsersRolesApi,
 )
@@ -83,6 +84,11 @@ def tasks_api_client(pulpcore_client):
 @pytest.fixture
 def artifacts_api_client(pulpcore_client):
     return ArtifactsApi(pulpcore_client)
+
+
+@pytest.fixture
+def uploads_api_client(pulpcore_client):
+    return UploadsApi(pulpcore_client)
 
 
 @pytest.fixture

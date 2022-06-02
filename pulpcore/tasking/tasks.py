@@ -23,6 +23,9 @@ def _validate_and_get_resources(resources):
             resource_set.add(r)
         elif isinstance(r, Model):
             resource_set.add(get_url(r))
+        elif r is None:
+            # Silently drop None values
+            pass
         else:
             raise ValueError(_("Must be (str|Model)"))
     return list(resource_set)
