@@ -1,0 +1,2 @@
+Fixed a bug that disallowed administrators to create a signing service via the pulpcore-manager
+utility.
