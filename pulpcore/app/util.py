@@ -3,6 +3,7 @@ import tempfile
 
 import gnupg
 
+from django.conf import settings
 from django.apps import apps
 from django.contrib.contenttypes.models import ContentType
 from pkg_resources import get_distribution
@@ -174,7 +175,7 @@ def verify_signature(filepath, public_key, detached_data=None):
     When dealing with a detached signature (referenced by the 'filepath' argument), one have to pass
     the reference to a data file that was signed by that signature.
     """
-    with tempfile.TemporaryDirectory(dir=".") as temp_directory_name:
+    with tempfile.TemporaryDirectory(dir=settings.WORKING_DIRECTORY) as temp_directory_name:
         gpg = gnupg.GPG(gnupghome=temp_directory_name)
         gpg.import_keys(public_key)
         imported_keys = gpg.list_keys()

@@ -855,7 +855,7 @@ class AsciiArmoredDetachedSigningService(SigningService):
         Raises:
             RuntimeError: If the validation has failed.
         """
-        with tempfile.TemporaryDirectory(dir=".") as temp_directory_name:
+        with tempfile.TemporaryDirectory(dir=settings.WORKING_DIRECTORY) as temp_directory_name:
             with tempfile.NamedTemporaryFile(dir=temp_directory_name) as temp_file:
                 temp_file.write(b"arbitrary data")
                 temp_file.flush()
