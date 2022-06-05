@@ -111,68 +111,6 @@ export PYTHONPATH=$REPO_ROOT/../pulp_file${PYTHONPATH:+:${PYTHONPATH}}
 export PYTHONPATH=$REPO_ROOT/../pulp-certguard${PYTHONPATH:+:${PYTHONPATH}}
 export PYTHONPATH=$REPO_ROOT${PYTHONPATH:+:${PYTHONPATH}}
 
-
-if [[ "$TEST" == "upgrade" ]]; then
-  # Handle app label change:
-  sed -i "/require_pulp_plugins(/d" pulpcore/tests/functional/utils.py
-
-  # Running pre upgrade tests:
-  pytest -v -r sx --color=yes --pyargs --capture=no pulpcore.tests.upgrade.pre
-
-  # Checking out ci_upgrade_test branch and upgrading plugins
-  cmd_prefix bash -c "cd pulpcore; git checkout -f ci_upgrade_test; pip install --upgrade --force-reinstall ."
-  cmd_prefix bash -c "cd pulp-certguard; git checkout -f ci_upgrade_test; pip install ."
-  cmd_prefix bash -c "cd pulp_file; git checkout -f ci_upgrade_test; pip install ."
-
-  # Migrating
-  cmd_prefix bash -c "django-admin migrate --no-input"
-
-  # Restarting single container services
-  cmd_prefix bash -c "s6-svc -r /var/run/s6/services/pulpcore-api"
-  cmd_prefix bash -c "s6-svc -r /var/run/s6/services/pulpcore-content"
-  cmd_prefix bash -c "s6-svc -d /var/run/s6/services/pulpcore-resource-manager"
-  cmd_prefix bash -c "s6-svc -d /var/run/s6/services/pulpcore-worker@1"
-  cmd_prefix bash -c "s6-svc -d /var/run/s6/services/pulpcore-worker@2"
-  cmd_prefix bash -c "s6-svc -u /var/run/s6/services/new-pulpcore-resource-manager"
-  cmd_prefix bash -c "s6-svc -u /var/run/s6/services/new-pulpcore-worker@1"
-  cmd_prefix bash -c "s6-svc -u /var/run/s6/services/new-pulpcore-worker@2"
-
-  echo "Restarting in 60 seconds"
-  sleep 60
-
-  # Let's reinstall pulpcore so we can ensure we have the correct dependencies
-  cd ../pulpcore
-  git checkout -f ci_upgrade_test
-  pip install --upgrade --force-reinstall . ../pulp-cli ../pulp-smash
-  # Hack: adding pulp CA to certifi.where()
-  CERTIFI=$(python -c 'import certifi; print(certifi.where())')
-  cat /usr/local/share/ca-certificates/pulp_webserver.crt | sudo tee -a "$CERTIFI" > /dev/null
-  # CLI commands to display plugin versions and content data
-  pulp status
-  pulp content list
-  CONTENT_LENGTH=$(pulp content list | jq length)
-  if [[ "$CONTENT_LENGTH" == "0" ]]; then
-    echo "Empty content list"
-    exit 1
-  fi
-
-  # Rebuilding bindings
-  cd ../pulp-openapi-generator
-  ./generate.sh pulpcore python
-  pip install ./pulpcore-client
-  ./generate.sh pulp_file python
-  pip install ./pulp_file-client
-  ./generate.sh pulp_certguard python
-  pip install ./pulp_certguard-client
-  cd $REPO_ROOT
-
-  # Running post upgrade tests
-  git checkout ci_upgrade_test -- pulpcore/tests/
-  pytest -v -r sx --color=yes --pyargs --capture=no pulpcore.tests.upgrade.post
-  exit
-fi
-
-
 if [[ "$TEST" == "performance" ]]; then
   if [[ -z ${PERFORMANCE_TEST+x} ]]; then
     pytest -vv -r sx --color=yes --pyargs --capture=no --durations=0 pulpcore.tests.performance
@@ -187,17 +125,17 @@ if [ -f $FUNC_TEST_SCRIPT ]; then
 else
 
     if [[ "$GITHUB_WORKFLOW" == "Pulpcore Nightly CI/CD" ]]; then
+        pytest -v -r sx --color=yes --suppress-no-test-exit-code --pyargs pulpcore.tests.functional -m parallel -n 8  --nightly
+        pytest -v -r sx --color=yes --pyargs pulpcore.tests.functional -m "not parallel"  --nightly
+        pytest -v -r sx --color=yes --suppress-no-test-exit-code --pyargs pulp_file.tests.functional -m parallel -n 8  --nightly
+        pytest -v -r sx --color=yes --pyargs pulp_file.tests.functional -m "not parallel"  --nightly
+
+    
+    else
         pytest -v -r sx --color=yes --suppress-no-test-exit-code --pyargs pulpcore.tests.functional -m parallel -n 8
         pytest -v -r sx --color=yes --pyargs pulpcore.tests.functional -m "not parallel"
         pytest -v -r sx --color=yes --suppress-no-test-exit-code --pyargs pulp_file.tests.functional -m parallel -n 8
         pytest -v -r sx --color=yes --pyargs pulp_file.tests.functional -m "not parallel"
-
-    
-    else
-        pytest -v -r sx --color=yes --suppress-no-test-exit-code --pyargs pulpcore.tests.functional -m "parallel and not nightly" -n 8
-        pytest -v -r sx --color=yes --pyargs pulpcore.tests.functional -m "not parallel and not nightly"
-        pytest -v -r sx --color=yes --suppress-no-test-exit-code --pyargs pulp_file.tests.functional -m "parallel and not nightly" -n 8
-        pytest -v -r sx --color=yes --pyargs pulp_file.tests.functional -m "not parallel and not nightly"
 
     
     fi
