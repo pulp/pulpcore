@@ -146,21 +146,6 @@ fi
 
 cd ..
 
-
-if [[ "$TEST" == "upgrade" ]]; then
-  cd pulp-certguard
-  git checkout -b ci_upgrade_test
-  git fetch --depth=1 origin heads/$FROM_PULP_CERTGUARD_BRANCH:$FROM_PULP_CERTGUARD_BRANCH
-  git checkout $FROM_PULP_CERTGUARD_BRANCH
-  cd ..
-  cd pulp_file
-  git checkout -b ci_upgrade_test
-  git fetch --depth=1 origin heads/$FROM_PULP_FILE_BRANCH:$FROM_PULP_FILE_BRANCH
-  git checkout $FROM_PULP_FILE_BRANCH
-  cd ..
-fi
-
-
 # Intall requirements for ansible playbooks
 pip install docker netaddr boto3 ansible
 
