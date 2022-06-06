@@ -247,3 +247,18 @@ def pulp_api_v3_path(cli_client):
             "This fixture requires the server to have the `V3_API_ROOT` setting set."
         )
     return v3_api_root
+
+
+@pytest.fixture
+def random_artifact(random_artifact_factory):
+    return random_artifact_factory()
+
+
+@pytest.fixture
+def random_artifact_factory(artifacts_api_client, tmp_path, gen_object_with_cleanup):
+    def _random_artifact_factory():
+        temp_file = tmp_path / str(uuid.uuid4())
+        temp_file.write_bytes(uuid.uuid4().bytes)
+        return gen_object_with_cleanup(artifacts_api_client, temp_file)
+
+    return _random_artifact_factory
