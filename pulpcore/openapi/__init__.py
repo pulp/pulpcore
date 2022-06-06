@@ -13,7 +13,6 @@ from drf_spectacular.plumbing import (
     build_basic_type,
     build_parameter_type,
     build_root_object,
-    force_instance,
     normalize_result_object,
     resolve_django_path_parameter,
     resolve_regex_path_parameter,
@@ -21,7 +20,7 @@ from drf_spectacular.plumbing import (
 from drf_spectacular.settings import spectacular_settings
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiParameter
-from rest_framework import mixins, serializers
+from rest_framework import mixins
 from rest_framework.schemas.utils import get_pk_description
 
 from pulpcore.app.apps import pulp_plugin_configs
@@ -177,19 +176,6 @@ class PulpAutoSchema(AutoSchema):
         elif direction == "response" and "Response" not in name:
             name = name + "Response"
         return name
-
-    def map_parsers(self):
-        """
-        Get request parsers.
-
-        Handling cases with `FileField`.
-        """
-        parsers = super().map_parsers()
-        serializer = force_instance(self.get_request_serializer())
-        for field_name, field in getattr(serializer, "fields", {}).items():
-            if isinstance(field, serializers.FileField) and self.method in ("PUT", "PATCH", "POST"):
-                return ["multipart/form-data", "application/x-www-form-urlencoded"]
-        return parsers
 
     def _get_request_body(self):
         """Get request body."""
