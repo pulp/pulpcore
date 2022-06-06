@@ -28,5 +28,5 @@ python-gnupg~=0.4.9
 redis~=4.3
 setuptools>=39.2.0
 url-normalize~=1.4.3
-whitenoise>=5.0.0,<6.2.0
+whitenoise>=5.0.0,<6.3.0
 yarl~=1.7
