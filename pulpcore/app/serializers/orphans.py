@@ -2,8 +2,6 @@ from gettext import gettext as _
 
 from rest_framework import fields, serializers
 
-from django.conf import settings
-
 from pulpcore.app.models import Content
 from pulpcore.app.serializers import ValidateFieldsMixin
 
@@ -24,7 +22,6 @@ class OrphansCleanupSerializer(serializers.Serializer, ValidateFieldsMixin):
         ),
         allow_null=True,
         required=False,
-        default=settings.ORPHAN_PROTECTION_TIME,
     )
 
     def validate_content_hrefs(self, value):
