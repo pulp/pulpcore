@@ -1,4 +1,5 @@
 from drf_spectacular.utils import extend_schema
+from django.conf import settings
 from rest_framework.viewsets import ViewSet
 
 from pulpcore.app.response import OperationPostponedResponse
@@ -22,7 +23,9 @@ class OrphansCleanupViewset(ViewSet):
         serializer.is_valid(raise_exception=True)
 
         content_pks = serializer.validated_data.get("content_hrefs", None)
-        orphan_protection_time = serializer.validated_data.get("orphan_protection_time")
+        orphan_protection_time = serializer.validated_data.get(
+            "orphan_protection_time", settings.ORPHAN_PROTECTION_TIME
+        )
 
         task = dispatch(
             orphan_cleanup,
