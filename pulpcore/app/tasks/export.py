@@ -296,7 +296,7 @@ def _do_export(pulp_exporter, tar, the_export):
         # an on_demand repo
         content_artifacts = ContentArtifact.objects.filter(content__in=version.content)
         if content_artifacts.filter(artifact=None).exists():
-            RuntimeError(_("Remote artifacts cannot be exported."))
+            raise RuntimeError(_("Remote artifacts cannot be exported."))
 
         if do_incremental:
             vers_artifacts = version.artifacts.difference(vers_match[version].artifacts).all()
