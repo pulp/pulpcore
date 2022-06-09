@@ -3,10 +3,8 @@ from gettext import gettext as _
 
 from django.db import transaction
 from django.db import connection
-from django.urls import reverse
 
 from pulpcore.app.models import Task
-from pulpcore.app.util import get_view_name_for_model
 from pulpcore.constants import TASK_FINAL_STATES, TASK_INCOMPLETE_STATES, TASK_STATES
 
 _logger = logging.getLogger(__name__)
@@ -72,17 +70,3 @@ def _delete_incomplete_resources(task):
                 model.delete()
         except Exception as error:
             _logger.error(_("Delete created resource, failed: {}").format(str(error)))
-
-
-def get_url(model):
-    """
-    Get a resource url for the specified model object. This returns the path component of the
-    resource URI.  This is used in our resource locking/reservation code to identify resources.
-
-    Args:
-        model (django.models.Model): A model object.
-
-    Returns:
-        str: The path component of the resource url
-    """
-    return reverse(get_view_name_for_model(model, "detail"), args=[model.pk])

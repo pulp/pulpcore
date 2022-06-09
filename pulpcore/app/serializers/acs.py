@@ -7,7 +7,7 @@ from rest_framework.validators import UniqueValidator
 
 from pulpcore.app import models
 from pulpcore.app.serializers import DetailIdentityField, DetailRelatedField, ModelSerializer
-from pulpcore.tasking.util import get_url
+from pulpcore.app.util import get_url
 
 
 class AlternateContentSourcePathField(serializers.ListField):
