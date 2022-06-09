@@ -50,7 +50,7 @@ def _export_to_file_system(path, content_artifacts, method=FS_EXPORT_METHODS.WRI
         RuntimeError: If Artifacts are not downloaded or when trying to link non-fs files
     """
     if content_artifacts.filter(artifact=None).exists():
-        RuntimeError(_("Cannot export artifacts that haven't been downloaded."))
+        raise RuntimeError(_("Cannot export artifacts that haven't been downloaded."))
 
     if (
         settings.DEFAULT_FILE_STORAGE != "pulpcore.app.models.storage.FileSystem"
@@ -370,7 +370,7 @@ def _do_export(pulp_exporter, tar, the_export):
         # an on_demand repo
         content_artifacts = ContentArtifact.objects.filter(content__in=version.content)
         if content_artifacts.filter(artifact=None).exists():
-            RuntimeError(_("Remote artifacts cannot be exported."))
+            raise RuntimeError(_("Remote artifacts cannot be exported."))
 
         if do_incremental:
             vers_artifacts = version.artifacts.difference(vers_match[version].artifacts).all()
