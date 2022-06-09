@@ -7,8 +7,8 @@ from django.utils import timezone
 from django_guid import get_guid
 
 from pulpcore.app.models import Task, TaskSchedule
+from pulpcore.app.util import get_url
 from pulpcore.constants import TASK_FINAL_STATES, TASK_STATES
-from pulpcore.tasking import util
 
 _logger = logging.getLogger(__name__)
 
@@ -22,7 +22,7 @@ def _validate_and_get_resources(resources):
         if isinstance(r, str):
             resource_set.add(r)
         elif isinstance(r, Model):
-            resource_set.add(util.get_url(r))
+            resource_set.add(get_url(r))
         else:
             raise ValueError(_("Must be (str|Model)"))
     return list(resource_set)

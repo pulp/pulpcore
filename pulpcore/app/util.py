@@ -5,6 +5,7 @@ import gnupg
 
 from django.conf import settings
 from django.apps import apps
+from django.urls import reverse
 from django.contrib.contenttypes.models import ContentType
 from pkg_resources import get_distribution
 
@@ -14,6 +15,20 @@ from pulpcore.exceptions.validation import InvalidSignatureError
 
 # a little cache so viewset_for_model doesn't have iterate over every app every time
 _model_viewset_cache = {}
+
+
+def get_url(model):
+    """
+    Get a resource url for the specified model object. This returns the path component of the
+    resource URI.  This is used in our resource locking/reservation code to identify resources.
+
+    Args:
+        model (django.models.Model): A model object.
+
+    Returns:
+        str: The path component of the resource url
+    """
+    return reverse(get_view_name_for_model(model, "detail"), args=[model.pk])
 
 
 # based on their name, viewset_for_model and view_name_for_model look like they should
