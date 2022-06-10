@@ -14,6 +14,8 @@ class VersionSerializer(serializers.Serializer):
 
     version = serializers.CharField(help_text=_("Version of the component (e.g. 3.0.0)"))
 
+    package = serializers.CharField(help_text=_("Python package name providing the component"))
+
 
 class DatabaseConnectionSerializer(serializers.Serializer):
     """

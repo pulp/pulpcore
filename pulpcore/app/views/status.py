@@ -55,7 +55,9 @@ class StatusView(APIView):
         """
         versions = []
         for app in pulp_plugin_configs():
-            versions.append({"component": app.label, "version": app.version})
+            versions.append(
+                {"component": app.label, "version": app.version, "package": app.python_package_name}
+            )
 
         if settings.CACHE_ENABLED:
             redis_status = {"connected": self._get_redis_conn_status()}
