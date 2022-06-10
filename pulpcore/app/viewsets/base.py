@@ -360,17 +360,15 @@ class NamedModelViewSet(viewsets.GenericViewSet):
         For nested ViewSets, this adds parent filters to the result returned by the superclass. For
         non-nested ViewSets, this returns the original QuerySet unchanged.
 
-        Additional permissions-based filtering is provided for ViewSets that declare a
-        ``queryset_filtering_required_permission`` attribute naming the permission users must have
-        to view an object. This includes receiving the permission through either model-level,
-        object-level, and access through either a user or group.
+        Additional permissions-based filtering can be performed if enabled by the permission class
+        and ViewSet. The default permission class AccessPolicyFromDB will see if a queryset_scoping
+        method is defined and call that method to further scope the queryset on user permissions.
 
         Returns:
             django.db.models.query.QuerySet: The queryset returned by the superclass with additional
                 filters applied that match self.parent_lookup_kwargs, to scope the results to only
-                those associated with the parent object. Additionally the QuerySet is filtered by
-                the permission named if the ViewSet declares a
-                ``queryset_filtering_required_permission`` attribute.
+                those associated with the parent object. Additional queryset filtering could be
+                performed if queryset_scoping is enabled.
         """
         qs = super().get_queryset()
         if self.parent_lookup_kwargs and self.kwargs:
@@ -387,6 +385,16 @@ class NamedModelViewSet(viewsets.GenericViewSet):
         return qs
 
     def scope_queryset(self, qs):
+        """
+        A default queryset scoping method implementation for all NamedModelViewSets.
+
+        If the ViewSet is not a Master ViewSet, then it'll perform scoping based on the ViewSet's
+        `queryset_filtering_required_permission` attribute if present.
+        Else it will call each child's view `get_queryset()` method to determine what objects the
+        user can see.
+
+        This method is intended to be overriden by subclasses if different behavior is desired.
+        """
         if not self.request.user.is_superuser:
             if not self.is_master_viewset():
                 # subclass so use default scope_queryset implementation
