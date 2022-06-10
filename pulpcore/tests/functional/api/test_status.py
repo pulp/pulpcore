@@ -28,7 +28,11 @@ STATUS = {
             "type": "array",
             "items": {
                 "type": "object",
-                "properties": {"component": {"type": "string"}, "version": {"type": "string"}},
+                "properties": {
+                    "component": {"type": "string"},
+                    "version": {"type": "string"},
+                    "package": {"type": "string"},
+                },
             },
         },
         "storage": {

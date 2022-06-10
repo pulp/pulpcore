@@ -70,6 +70,17 @@ class PulpPluginAppConfig(apps.AppConfig):
             )
             raise ImproperlyConfigured(msg.format(self.label))
 
+        try:
+            self.python_package_name
+        except AttributeError:
+            msg = (
+                "The plugin `{}` is missing a `python_package_name` declaration. Starting with "
+                "pulpcore==3.20, plugins are required to define the python package name providing "
+                "the Pulp plugin on the PulpPluginAppConfig subclass as the `python_package_name` "
+                "attribute."
+            )
+            raise ImproperlyConfigured(msg.format(self.label))
+
         # Module containing viewsets eg. <module 'pulp_plugin.app.viewsets'
         # from 'pulp_plugin/app/viewsets.py'>. Set by import_viewsets().
         # None if the application doesn't have a viewsets module, automatically set
@@ -191,6 +202,9 @@ class PulpAppConfig(PulpPluginAppConfig):
 
     # The version of this app
     version = "3.20.0.dev"
+
+    # The python package name providing this app
+    python_package_name = "pulpcore"
 
     def ready(self):
         super().ready()
