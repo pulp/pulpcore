@@ -218,6 +218,10 @@ class HttpDownloader(BaseDownloader):
         """
         Run the downloader with concurrency restriction and retry logic.
 
+        This method acquires `self.semaphore` before calling the actual download implementation
+        contained in `_run()`. This ensures that the semaphore stays acquired even as the `backoff`
+        wrapper around `_run()`, handles backoff-and-retry logic.
+
         Args:
             extra_data (dict): Extra data passed to the downloader.
 
@@ -238,31 +242,33 @@ class HttpDownloader(BaseDownloader):
             SizeValidationError,
         )
 
-        @backoff.on_exception(
-            backoff.expo,
-            retryable_errors,
-            max_tries=self.max_retries + 1,
-            giveup=http_giveup_handler,
-        )
-        async def download_wrapper():
-            self._ensure_no_broken_file()
-            try:
-                return await self._run(extra_data=extra_data)
-            except asyncio.TimeoutError:
-                raise TimeoutException(self.url)
-            except aiohttp.ClientHttpProxyError as e:
-                log.error(
-                    "Proxy {!r} rejected connection request during a request to "
-                    "{!r}, status={}, message={!r}".format(
-                        e.request_info.real_url,
-                        e.request_info.url,
-                        e.status,
-                        e.message,
-                    )
-                )
-                raise e
+        async with self.semaphore:
 
-        return await download_wrapper()
+            @backoff.on_exception(
+                backoff.expo,
+                retryable_errors,
+                max_tries=self.max_retries + 1,
+                giveup=http_giveup_handler,
+            )
+            async def download_wrapper():
+                self._ensure_no_broken_file()
+                try:
+                    return await self._run(extra_data=extra_data)
+                except asyncio.TimeoutError:
+                    raise TimeoutException(self.url)
+                except aiohttp.ClientHttpProxyError as e:
+                    log.error(
+                        "Proxy {!r} rejected connection request during a request to "
+                        "{!r}, status={}, message={!r}".format(
+                            e.request_info.real_url,
+                            e.request_info.url,
+                            e.status,
+                            e.message,
+                        )
+                    )
+                    raise e
+
+            return await download_wrapper()
 
     async def _run(self, extra_data=None):
         """
