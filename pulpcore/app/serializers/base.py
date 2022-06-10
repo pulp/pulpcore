@@ -4,6 +4,7 @@ import re
 import traceback
 from urllib.parse import urljoin
 
+from django.urls import resolve
 from django.core.validators import URLValidator
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import IntegrityError, transaction
@@ -70,6 +71,68 @@ class GetOrCreateSerializerMixin:
         return result
 
 
+class DyamicRelatedFieldsSerializer(serializers.Serializer):
+    """
+    Serializer only returns fields specified in 'include_related' query param.
+
+    This allows for fields that require more database queries to be optionally
+    included in API responses, which lowers the load on the backend. This is
+    intended as a way to include extra data in list views.
+
+    Usage:
+
+    This functions the same as DRF's base `serializers.Serializer` class with the
+    exception that it will only return fields specified in the `?include_related=`
+    query parameter.
+
+    Example:
+
+    MySerializer(RelatedFieldsBaseSerializer):
+        foo = CharField()
+        bar = CharField()
+
+    MySerializer will return:
+
+    {"foo": None} when called with `?include_related=foo` and {"foo": None, "bar" None}
+    when called with `?include_related=foo&include_related=bar`.
+    """
+
+    def __init__(self, fields=None, *args, **kwargs):
+        # This should only be included as a sub serializer and shouldn't be used for
+        # updating objects, so set read_only to true
+        kwargs['read_only'] = True
+
+        if fields:
+            for name, field in fields:
+                self.fields[name] = field(context={"is_child": True})
+
+        super().__init__(*args, **kwargs)
+
+        fields = self._readable_fields
+        request = self.context.get('request', None)
+        if request:
+            # TODO: Figure out how to make `include_related` show up in the open API spec
+            include_fields = request.GET.getlist('include_related')
+
+            if "_all" in include_fields:
+                return
+
+            for field in fields:
+                if field.field_name not in include_fields:
+                    self.fields.pop(field.field_name)
+
+
+def viewset_for_url(uri):
+    # try:
+        # match = resolve(urlparse(uri).path)
+    match = resolve(uri)
+
+    # except Resolver404:
+    #     return None
+
+    return match.func.cls
+
+
 class ModelSerializer(
     ValidateFieldsMixin, QueryFieldsMixin, serializers.HyperlinkedModelSerializer
 ):
@@ -83,11 +146,82 @@ class ModelSerializer(
 
     """
 
+    related_fields = serializers.Serializer(source="*")
+
+    def __init__(self, *args, **kwargs):
+        """
+        Notes:
+
+        The challenge here is to load the serializer for the viewset that the 
+        HyperlinkedRelatedField points to. Some strategies tried so far:
+
+        TLDR:
+            I think this is impossible to do globally. It's too dificult to
+            determine the serializer to use for a related field.
+
+            A better approach might be to have each hyperlink field declare
+            it's related field serializer explicitly.
+
+        - Use field.qs:
+            Get the model from the queryset and then call get_viewset_for_model
+            and load the serializer This works for some fields that declare a
+            queryset, but not all fields do.
+
+            Can't cast qs either.
+
+        - Use field.get_url():
+            With the url, you can lookup the viewset. Getting the url from the
+            field requires that the serializer be called with an instance, which
+            I can't figure out how to do with list serializers.
+        - Use field.view_name:
+            Try to munge together the url for the object from the viewname and
+            use django's resolver to get the url. This doesn't seem to work. It
+            either results in a circular import, and I don't think I can cast
+            the obect for generic relations.
+        - Use self.data:
+            This attribute is only available after init is called and you can't
+            add more fields after that happens.
+        - Use instance:
+            Don't know how to get model from instance
+
+        Customizeable solutions:
+        - Set a related_model attribute on the serializer field. 
+            Pros:
+            - imports are easier
+            Cons:
+            - can't customize serializer class
+        
+        - Set a related_serializer attribute on field
+            Pros:
+            - Full customizeability over serializer responses
+            Cons:
+            - Need to do some magic to make serializers referenceable before they
+              are declared.
+            - Big potential for circular imports
+
+        """
+
+        # Don't allow related fields on related fields
+        is_child = kwargs.get("context", {}).get("is_child", False)
+        if not is_child:
+            related_fields = []
+
+            for field in self._readable_fields:
+                if issubclass(type(field), serializers.HyperlinkedRelatedField):
+                    related = getattr(field, "related_serializer", None)
+                    if related:
+                        related_fields.append((field.field_name, related))
+
+            self.fields["related_fields"] = DyamicRelatedFieldsSerializer(related_fields, source="*", *args, **kwargs)
+
+        super().__init__(*args, **kwargs)
+
+
     # default is 'fields!' which doesn't work in the bindings for some langs
     exclude_arg_name = "exclude_fields"
 
     class Meta:
-        fields = ("pulp_href", "pulp_created")
+        fields = ("pulp_href", "pulp_created", "related_fields")
 
     pulp_created = serializers.DateTimeField(help_text=_("Timestamp of creation."), read_only=True)
 
@@ -223,6 +357,13 @@ class _MatchingRegexViewName(object):
         return re.fullmatch(self.pattern, other) is not None
 
 
+class _IncludeRelatedMixin:
+    def __init__(self, *args, **kwargs):
+        self.related_serializer = kwargs.pop("related_serializer", None)
+
+        super().__init__(*args, **kwargs)
+
+
 class _DetailFieldMixin:
     """Mixin class containing code common to DetailIdentityField and DetailRelatedField"""
 
@@ -276,7 +417,7 @@ class IdentityField(serializers.HyperlinkedIdentityField):
         return super().get_url(obj, view_name, request, *args, **kwargs)
 
 
-class RelatedField(serializers.HyperlinkedRelatedField):
+class RelatedField(_IncludeRelatedMixin, serializers.HyperlinkedRelatedField):
     """RelatedField when relating to non-Master/Detail models
 
     When using this field on a serializer, it will serialize the related resource as a relative URL.
@@ -318,7 +459,7 @@ class RelatedResourceField(RelatedField):
         return serializer.data.get("pulp_href")
 
 
-class DetailIdentityField(_DetailFieldMixin, serializers.HyperlinkedIdentityField):
+class DetailIdentityField(_IncludeRelatedMixin, _DetailFieldMixin, serializers.HyperlinkedIdentityField):
     """IdentityField for use in the pulp_href field of Master/Detail Serializers
 
     When using this field on a Serializer, it will automatically cast objects to their Detail type
@@ -329,7 +470,7 @@ class DetailIdentityField(_DetailFieldMixin, serializers.HyperlinkedIdentityFiel
     """
 
 
-class DetailRelatedField(_DetailFieldMixin, serializers.HyperlinkedRelatedField):
+class DetailRelatedField(_IncludeRelatedMixin, _DetailFieldMixin, serializers.HyperlinkedRelatedField):
     """RelatedField for use when relating to Master/Detail models
 
     When using this field on a Serializer, relate it to the Master model in a

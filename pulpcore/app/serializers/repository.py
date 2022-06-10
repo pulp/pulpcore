@@ -20,56 +20,6 @@ from pulpcore.app.serializers import (
 )
 
 
-class RepositorySerializer(ModelSerializer):
-    pulp_href = DetailIdentityField(view_name_pattern=r"repositories(-.*/.*)-detail")
-    pulp_labels = LabelsField(required=False)
-    versions_href = RepositoryVersionsIdentityFromRepositoryField()
-    latest_version_href = LatestVersionField()
-    name = serializers.CharField(
-        help_text=_("A unique name for this repository."),
-        validators=[UniqueValidator(queryset=models.Repository.objects.all())],
-    )
-    description = serializers.CharField(
-        help_text=_("An optional description."), required=False, allow_null=True
-    )
-    retain_repo_versions = serializers.IntegerField(
-        help_text=_(
-            "Retain X versions of the repository. Default is null which retains all versions."
-            " This is provided as a tech preview in Pulp 3 and may change in the future."
-        ),
-        allow_null=True,
-        required=False,
-        min_value=1,
-    )
-    remote = DetailRelatedField(
-        help_text=_("An optional remote to use by default when syncing."),
-        view_name_pattern=r"remotes(-.*/.*)-detail",
-        queryset=models.Remote.objects.all(),
-        required=False,
-        allow_null=True,
-    )
-
-    def validate_remote(self, value):
-        if value and type(value) not in self.Meta.model.REMOTE_TYPES:
-            raise serializers.ValidationError(
-                detail=_("Type for Remote '{}' does not match Repository.").format(value.name)
-            )
-
-        return value
-
-    class Meta:
-        model = models.Repository
-        fields = ModelSerializer.Meta.fields + (
-            "versions_href",
-            "pulp_labels",
-            "latest_version_href",
-            "name",
-            "description",
-            "retain_repo_versions",
-            "remote",
-        )
-
-
 class RemoteSerializer(ModelSerializer):
     """
     Every remote defined by a plugin should have a Remote serializer that inherits from this
@@ -318,6 +268,57 @@ class RemoteSerializer(ModelSerializer):
             "sock_read_timeout",
             "headers",
             "rate_limit",
+        )
+
+
+class RepositorySerializer(ModelSerializer):
+    pulp_href = DetailIdentityField(view_name_pattern=r"repositories(-.*/.*)-detail")
+    pulp_labels = LabelsField(required=False)
+    versions_href = RepositoryVersionsIdentityFromRepositoryField()
+    latest_version_href = LatestVersionField()
+    name = serializers.CharField(
+        help_text=_("A unique name for this repository."),
+        validators=[UniqueValidator(queryset=models.Repository.objects.all())],
+    )
+    description = serializers.CharField(
+        help_text=_("An optional description."), required=False, allow_null=True
+    )
+    retain_repo_versions = serializers.IntegerField(
+        help_text=_(
+            "Retain X versions of the repository. Default is null which retains all versions."
+            " This is provided as a tech preview in Pulp 3 and may change in the future."
+        ),
+        allow_null=True,
+        required=False,
+        min_value=1,
+    )
+    remote = DetailRelatedField(
+        help_text=_("An optional remote to use by default when syncing."),
+        view_name_pattern=r"remotes(-.*/.*)-detail",
+        queryset=models.Remote.objects.all(),
+        required=False,
+        allow_null=True,
+        related_serializer=RemoteSerializer
+    )
+
+    def validate_remote(self, value):
+        if value and type(value) not in self.Meta.model.REMOTE_TYPES:
+            raise serializers.ValidationError(
+                detail=_("Type for Remote '{}' does not match Repository.").format(value.name)
+            )
+
+        return value
+
+    class Meta:
+        model = models.Repository
+        fields = ModelSerializer.Meta.fields + (
+            "versions_href",
+            "pulp_labels",
+            "latest_version_href",
+            "name",
+            "description",
+            "retain_repo_versions",
+            "remote",
         )
 
 
