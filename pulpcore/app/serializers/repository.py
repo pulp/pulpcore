@@ -215,8 +215,7 @@ class RemoteSerializer(ModelSerializer):
         required=False,
     )
 
-    @staticmethod
-    def validate_url(url):
+    def validate_url(self, url):
         """
         Check if the 'url' is a ``file://`` path, and if so, ensure it's an ALLOWED_IMPORT_PATH.
 
