@@ -1,9 +1,13 @@
+import random
+
 from collections import defaultdict
 from gettext import gettext as _
 from importlib import import_module
 
+from django.conf import settings
 from django import apps
 from django.core.exceptions import ImproperlyConfigured
+from django.db import transaction
 from django.db.models.signals import post_migrate
 from django.utils.module_loading import module_has_submodule
 
@@ -214,6 +218,11 @@ class PulpAppConfig(PulpPluginAppConfig):
         post_migrate.connect(
             _populate_system_id, sender=self, dispatch_uid="populate_system_id_identifier"
         )
+        post_migrate.connect(
+            _populate_artifact_serving_distribution,
+            sender=self,
+            dispatch_uid="populate_artifact_serving_distribution_identifier",
+        )
 
 
 def _populate_access_policies(sender, apps, verbosity, **kwargs):
@@ -322,3 +331,32 @@ def adjust_roles(apps, role_prefix, desired_roles, verbosity=1):
         role.description = description
         role.save()
         role.permissions.set(permissions)
+
+
+def _populate_artifact_serving_distribution(sender, apps, verbosity, **kwargs):
+
+    if (
+        settings.DEFAULT_FILE_STORAGE == "pulpcore.app.models.storage.FileSystem"
+        or not settings.REDIRECT_TO_OBJECT_STORAGE
+    ):
+        try:
+            ArtifactDistribution = apps.get_model("core", "ArtifactDistribution")
+            ContentRedirectContentGuard = apps.get_model("core", "ContentRedirectContentGuard")
+        except LookupError:
+            if verbosity >= 1:
+                print(_("ArtifactDistribution model does not exist. Skipping initialization."))
+            return
+        try:
+            ArtifactDistribution.objects.get()
+        except ArtifactDistribution.DoesNotExist:
+            name = f"{random.getrandbits(256):x}"
+            with transaction.atomic():
+                content_guard, _created = ContentRedirectContentGuard.objects.get_or_create(
+                    name=name,
+                    pulp_type="core.content_redirect",
+                )
+                _dist, _created = ArtifactDistribution.objects.get_or_create(
+                    name=name,
+                    pulp_type="core.artifact",
+                    defaults={"base_path": name, "content_guard": content_guard},
+                )

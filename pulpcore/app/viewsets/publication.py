@@ -12,6 +12,7 @@ from pulpcore.app.models import (
     Publication,
     Repository,
     Content,
+    ArtifactDistribution,
 )
 from pulpcore.app.serializers import (
     ContentGuardSerializer,
@@ -19,6 +20,7 @@ from pulpcore.app.serializers import (
     PublicationSerializer,
     RBACContentGuardSerializer,
     ContentRedirectContentGuardSerializer,
+    ArtifactDistributionSerializer,
 )
 from pulpcore.app.viewsets import (
     AsyncCreateMixin,
@@ -338,12 +340,22 @@ class DistributionFilter(BaseFilterSet):
         }
 
 
-class ListDistributionViewSet(NamedModelViewSet, mixins.ListModelMixin):
+class BaseDistributionViewSet(NamedModelViewSet):
+    """
+    Provides base viewset for Distributions.
+    """
+
     endpoint_name = "distributions"
     queryset = Distribution.objects.all()
     serializer_class = DistributionSerializer
     filterset_class = DistributionFilter
 
+    def async_reserved_resources(self, instance):
+        """Return resource that locks all Distributions."""
+        return ["/api/v3/distributions/"]
+
+
+class ListDistributionViewSet(BaseDistributionViewSet, mixins.ListModelMixin):
     DEFAULT_ACCESS_POLICY = {
         "statements": [
             {
@@ -361,10 +373,18 @@ class ListDistributionViewSet(NamedModelViewSet, mixins.ListModelMixin):
         return True
 
 
-class DistributionViewSet(
-    NamedModelViewSet,
+class ReadOnlyDistributionViewSet(
+    BaseDistributionViewSet,
     mixins.RetrieveModelMixin,
     mixins.ListModelMixin,
+):
+    """
+    Provides read and list methods for Distributions.
+    """
+
+
+class DistributionViewSet(
+    ReadOnlyDistributionViewSet,
     AsyncCreateMixin,
     AsyncRemoveMixin,
     AsyncUpdateMixin,
@@ -375,11 +395,12 @@ class DistributionViewSet(
     checking.
     """
 
-    endpoint_name = "distributions"
-    queryset = Distribution.objects.all()
-    serializer_class = DistributionSerializer
-    filterset_class = DistributionFilter
 
-    def async_reserved_resources(self, instance):
-        """Return resource that locks all Distributions."""
-        return ["/api/v3/distributions/"]
+class ArtifactDistributionViewSet(ReadOnlyDistributionViewSet):
+    """
+    ViewSet for ArtifactDistribution.
+    """
+
+    endpoint_name = "artifacts"
+    queryset = ArtifactDistribution.objects.all()
+    serializer_class = ArtifactDistributionSerializer

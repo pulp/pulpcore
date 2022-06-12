@@ -20,6 +20,7 @@ aforementioned Pulp Plugin API deprecation policy.
     stages
     profiling
     content-app
+    util
 
 
 .. automodule:: pulpcore.plugin

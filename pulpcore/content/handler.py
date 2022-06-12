@@ -37,6 +37,7 @@ from django.db import (  # noqa: E402: module level not at top of file
 )
 from pulpcore.app.models import (  # noqa: E402: module level not at top of file
     Artifact,
+    ArtifactDistribution,
     ContentArtifact,
     Distribution,
     Publication,
@@ -77,6 +78,7 @@ class DistroListings(HTTPOk):
 
     def __init__(self, path, distros):
         """Create the HTML response."""
+        distros = distros.exclude(pulp_type=ArtifactDistribution.get_pulp_type())
         if settings.HIDE_GUARDED_DISTRIBUTIONS:
             distros = distros.filter(content_guard__isnull=True)
         base_paths = (

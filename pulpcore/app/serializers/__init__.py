@@ -73,6 +73,7 @@ from .publication import (  # noqa
     RBACContentGuardSerializer,
     RBACContentGuardPermissionSerializer,
     ContentRedirectContentGuardSerializer,
+    ArtifactDistributionSerializer,
 )
 from .purge import PurgeSerializer  # noqa
 from .repository import (  # noqa
