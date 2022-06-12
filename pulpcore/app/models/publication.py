@@ -2,7 +2,9 @@ import hashlib
 import os
 import re
 from url_normalize import url_normalize
-from urllib.parse import urlparse
+from urllib.parse import urlparse, urljoin
+
+from aiohttp.web_exceptions import HTTPNotFound
 
 from django.db import IntegrityError, models, transaction
 from django_lifecycle import hook, AFTER_UPDATE, BEFORE_DELETE
@@ -16,6 +18,7 @@ from pulpcore.cache import Cache
 from dynaconf import settings
 from rest_framework.exceptions import APIException
 from pulpcore.app.models import AutoAddObjPermsMixin
+from pulpcore.responses import ArtifactResponse
 
 
 class PublicationQuerySet(models.QuerySet):
@@ -553,3 +556,42 @@ class Distribution(MasterModel):
         if settings.CACHE_ENABLED:
             Cache().delete(base_key=self.base_path)
             # Can also preload cache here possibly
+
+
+class ArtifactDistribution(Distribution):
+    """Serve artifacts by their uuid.
+    This is in tech-preview.
+    """
+
+    TYPE = "artifact"
+
+    @hook("before_save")
+    def ensure_singleton(self):
+        cls = self.__class__
+        if cls.objects.exists():
+            raise RuntimeError(f"This system already has a {cls.__name__}")
+
+    def artifact_url(self, artifact):
+        origin = settings.CONTENT_ORIGIN.strip("/")
+        prefix = settings.CONTENT_PATH_PREFIX.strip("/")
+        base_path = self.base_path.strip("/")
+
+        plain_url = urljoin(
+            urljoin(urljoin(origin, prefix + "/"), base_path + "/"), str(artifact.pk)
+        )
+        return self.content_guard.cast().preauthenticate_url(plain_url)
+
+    def content_handler(self, path):
+        """Serve an artifact or return 404."""
+        uuid = path.rstrip("/")
+        if re.match(r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}", uuid):
+            artifact = Artifact.objects.filter(pk=uuid).first()
+            if artifact:
+                return ArtifactResponse(artifact)
+        raise HTTPNotFound()
+
+    class Meta:
+        default_related_name = "%(app_label)s_%(model_name)s"
+        permissions = [
+            ("manage_roles_artifactdistribution", "Can manage roles on artifact distributions"),
+        ]

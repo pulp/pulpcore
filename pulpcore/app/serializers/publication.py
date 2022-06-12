@@ -269,3 +269,18 @@ class DistributionSerializer(ModelSerializer):
                 )
             )
         return data
+
+
+class ArtifactDistributionSerializer(DistributionSerializer):
+    """
+    A serializer for ArtifactDistribution.
+    """
+
+    class Meta:
+        model = models.ArtifactDistribution
+        fields = tuple(
+            set(DistributionSerializer.Meta.fields)
+            - {
+                "repository",
+            }
+        )

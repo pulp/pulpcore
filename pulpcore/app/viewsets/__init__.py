@@ -53,6 +53,7 @@ from .publication import (  # noqa
     PublicationViewSet,
     RBACContentGuardViewSet,
     ContentRedirectContentGuardViewSet,
+    ArtifactDistributionViewSet,
 )
 from .reclaim import ReclaimSpaceViewSet  # noqa
 from .repository import (  # noqa

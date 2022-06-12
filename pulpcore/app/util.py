@@ -1,3 +1,4 @@
+from functools import lru_cache
 from gettext import gettext as _
 import os
 import tempfile
@@ -256,3 +257,45 @@ def configure_telemetry():
         )
     else:
         models.TaskSchedule.objects.filter(task_name=task_name).delete()
+
+
+@lru_cache(maxsize=1)
+def _artifact_serving_distribution():
+    return models.ArtifactDistribution.objects.get()
+
+
+def get_artifact_url(artifact, headers=None, http_method=None):
+    """Get artifact url.
+
+    Plugins can use this method to generate a pre-authenticated URL to the artifact in the
+    configured storage backend. This can be used to facilitate external services for validation of
+    the content.
+
+    This method will generate redirect links to the configured external object storage, or to the
+    special "artifact redirect" distribution in the content-app top serve from the local filesystem
+    or private cloud storage.
+    """
+    artifact_file = artifact.file
+    if (
+        settings.DEFAULT_FILE_STORAGE == "pulpcore.app.models.storage.FileSystem"
+        or not settings.REDIRECT_TO_OBJECT_STORAGE
+    ):
+        return _artifact_serving_distribution().artifact_url(artifact)
+    elif settings.DEFAULT_FILE_STORAGE == "storages.backends.s3boto3.S3Boto3Storage":
+        parameters = {"ResponseContentDisposition": f"attachment%3Bfilename={artifact_file.name}"}
+        if headers and headers.get("Content-Type"):
+            parameters["ResponseContentType"] = headers.get("Content-Type")
+        url = artifact_file.storage.url(
+            artifact_file.name, parameters=parameters, http_method=http_method
+        )
+    elif settings.DEFAULT_FILE_STORAGE == "storages.backends.azure_storage.AzureStorage":
+        parameters = {"content_disposition": f"attachment%3Bfilename={artifact_file.name}"}
+        if headers and headers.get("Content-Type"):
+            parameters["content_type"] = headers.get("Content-Type")
+        url = artifact_file.storage.url(artifact_file.name)
+    else:
+        raise NotImplementedError(
+            f"The value settings.DEFAULT_FILE_STORAGE={settings.DEFAULT_FILE_STORAGE} "
+            "does not allow redirecting."
+        )
+    return url

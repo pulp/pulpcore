@@ -55,6 +55,7 @@ from .publication import (  # noqa
     PublishedMetadata,
     RBACContentGuard,
     ContentRedirectContentGuard,
+    ArtifactDistribution,
 )
 
 from .repository import (  # noqa
