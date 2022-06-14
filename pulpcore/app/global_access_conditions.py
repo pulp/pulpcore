@@ -1,3 +1,7 @@
+from gettext import gettext as _
+
+from rest_framework.serializers import ValidationError
+
 from pulpcore.app.models import Group, Repository
 
 
@@ -436,6 +440,8 @@ def has_required_repo_perms_on_upload(request, view, action, permission):
         if has_model_perms(request, view, action, permission):
             return True
         return request.user.has_perm(permission, repository)
+    if not request.user.is_superuser and not repository:
+        raise ValidationError(_("Destination upload repository was not provided."))
     return False
 
 
