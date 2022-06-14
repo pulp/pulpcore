@@ -15,7 +15,7 @@ from pulpcore.app.viewsets import NamedModelViewSet
 from pulpcore.tasking.tasks import dispatch
 
 
-__all__ = ["ModifyRepositoryActionMixin"]
+__all__ = ["ModifyRepositoryActionMixin", "raise_for_unknown_content_units"]
 
 
 class ModifyRepositoryActionMixin:
