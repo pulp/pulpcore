@@ -76,6 +76,17 @@ class StatusView(APIView):
         except Exception:
             online_content_apps = None
 
+        readiness = request.query_params.get("readiness", False)
+        if readiness:
+            if not db_status["connected"]:
+                raise RuntimeError("Database connection failed")
+            if not online_workers:
+                raise RuntimeError("No workers found")
+            if not online_content_apps:
+                raise RuntimeError("No content apps found")
+            if settings.CACHE_ENABLED and not redis_status["connected"]:
+                raise RuntimeError("Redis connection failed")
+
         data = {
             "versions": versions,
             "online_workers": online_workers,
