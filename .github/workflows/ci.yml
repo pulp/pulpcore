@@ -94,13 +94,11 @@ jobs:
           - TEST: azure
           - TEST: s3
           - TEST: stream
-          - TEST: bindings
     outputs:
       deprecations-pulp: ${{ steps.deprecations.outputs.deprecations-pulp }}
       deprecations-stream: ${{ steps.deprecations.outputs.deprecations-stream }}
       deprecations-azure: ${{ steps.deprecations.outputs.deprecations-azure }}
       deprecations-s3: ${{ steps.deprecations.outputs.deprecations-s3 }}
-      deprecations-bindings: ${{ steps.deprecations.outputs.deprecations-bindings }}
 
     steps:
       - uses: actions/checkout@v3
@@ -112,10 +110,6 @@ jobs:
       - uses: actions/setup-python@v3
         with:
           python-version: "3.8"
-      - uses: ruby/setup-ruby@v1
-        
-        with:
-          ruby-version: "2.6"
 
       - name: Install httpie
         run: |
@@ -227,7 +221,6 @@ jobs:
           test -z "${{ needs.test.outputs.deprecations-stream }}"
           test -z "${{ needs.test.outputs.deprecations-azure }}"
           test -z "${{ needs.test.outputs.deprecations-s3 }}"
-          test -z "${{ needs.test.outputs.deprecations-bindings }}"
       - name: Print deprecations
         if: failure()
         run: |
@@ -235,6 +228,5 @@ jobs:
           echo "${{ needs.test.outputs.deprecations-stream }}" | base64 -d
           echo "${{ needs.test.outputs.deprecations-azure }}" | base64 -d
           echo "${{ needs.test.outputs.deprecations-s3 }}" | base64 -d
-          echo "${{ needs.test.outputs.deprecations-bindings }}" | base64 -d
 
 

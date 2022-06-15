@@ -84,16 +84,6 @@ if [[ "$TEST" = 'bindings' ]]; then
 fi
 cd $REPO_ROOT
 
-if [[ "$TEST" = 'bindings' ]]; then
-  if [ -f $REPO_ROOT/.ci/assets/bindings/test_bindings.py ]; then
-    python $REPO_ROOT/.ci/assets/bindings/test_bindings.py
-  fi
-  if [ -f $REPO_ROOT/.ci/assets/bindings/test_bindings.rb ]; then
-    ruby $REPO_ROOT/.ci/assets/bindings/test_bindings.rb
-  fi
-  exit
-fi
-
 cat unittest_requirements.txt | cmd_stdin_prefix bash -c "cat > /tmp/unittest_requirements.txt"
 cmd_prefix pip3 install -r /tmp/unittest_requirements.txt
 
