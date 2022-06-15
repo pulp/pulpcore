@@ -8,10 +8,10 @@ from django.forms.utils import ErrorList
 from django.urls import Resolver404, resolve
 from django.contrib.contenttypes.models import ContentType
 from django_filters.rest_framework import DjangoFilterBackend, filterset
+from django_filters.rest_framework.filters import OrderingFilter
 from drf_spectacular.utils import extend_schema, inline_serializer
 from rest_framework import viewsets
 from rest_framework.decorators import action
-from rest_framework.filters import OrderingFilter
 from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
 from pulpcore.openapi import PulpAutoSchema
@@ -63,41 +63,18 @@ class DefaultSchema(PulpAutoSchema):
 
 class StableOrderingFilter(OrderingFilter):
     """
-    Ordering filter backend.
-
-    Reference: https://github.com/encode/django-rest-framework/issues/6886#issuecomment-547120480
+    Ordering filter with a stabilized order by either creation date, if available or primary key.
     """
 
-    def get_ordering(self, request, queryset, view):
-        """
-        Ordering is set by a comma delimited ?ordering=... query parameter.
-
-        The `ordering` query parameter can be overridden by setting the `ordering_param` value on
-        the OrderingFilter or by specifying an `ORDERING_PARAM` value in the API settings.
-        """
-        ordering = super().get_ordering(request, queryset, view)
+    def filter(self, qs, value):
         try:
-            field = queryset.model._meta.get_field("pulp_created")
+            field = qs.model._meta.get_field("pulp_created")
         except FieldDoesNotExist:
-            field = queryset.model._meta.pk
+            field = qs.model._meta.pk
 
-        if ordering is None:
-            return ["-" + field.name]
-
-        return list(ordering) + ["-" + field.name]
-
-    def get_default_valid_fields(self, queryset, view, context={}):
-        """
-        Ensure that default valid fields don't include fields not on the queryset model.
-
-        When `ordering_fields` is not specified this method is called to find the fields to order
-        by. It uses the default serializer class's fields to find the `ordering_fields` which could
-        include fields from related objects not present in the queryset.
-        """
-        # Returns a list of tuples (field_name, field_label)
-        valid_fields = super().get_default_valid_fields(queryset, view, context)
-        model_fields = {field.name for field in queryset.model._meta.get_fields()}
-        return [field for field in valid_fields if field[0] in model_fields]
+        ordering = [self.get_ordering_value(param) for param in value or []]
+        ordering.append("-" + field.name)
+        return qs.order_by(*ordering)
 
 
 class NamedModelViewSet(viewsets.GenericViewSet):
@@ -127,7 +104,7 @@ class NamedModelViewSet(viewsets.GenericViewSet):
     parent_viewset = None
     parent_lookup_kwargs = {}
     schema = DefaultSchema()
-    filter_backends = (StableOrderingFilter, DjangoFilterBackend)
+    filter_backends = (DjangoFilterBackend,)
 
     def get_serializer_class(self):
         """
@@ -715,6 +692,27 @@ class BaseFilterSet(filterset.FilterSet):
         "search": _("matches"),
         "ne": _("not equal to"),
     }
+
+    @classmethod
+    def get_filters(cls):
+        filters = super().get_filters()
+        # If we could hook into the Meta mechanism, this would look for cls._meta.ordering_fields
+        ordering_fields = []
+        if _ordering_fields := getattr(cls, "ordering_fields", None):
+            ordering_fields.extend(_ordering_fields)
+            try:
+                if cls._meta.model:
+                    cls._meta.model._meta.get_field("pulp_created")
+                    ordering_fields.append(("pulp_created", "pulp_created"))
+            except FieldDoesNotExist:
+                pass
+        elif cls._meta.model:
+            ordering_fields.extend(
+                ((field.name, field.name) for field in cls._meta.model._meta.get_fields())
+            )
+        ordering_fields.append(("pk", "pk"))
+        filters["ordering"] = StableOrderingFilter(fields=tuple(ordering_fields))
+        return filters
 
     @classmethod
     def filter_for_field(cls, field, name, lookup_expr):

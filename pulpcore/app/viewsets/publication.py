@@ -1,9 +1,8 @@
 from gettext import gettext as _
 
 from django_filters import Filter
-from django_filters.rest_framework import DjangoFilterBackend, filters
+from django_filters.rest_framework import filters
 from rest_framework import mixins, serializers
-from rest_framework.filters import OrderingFilter
 
 from pulpcore.app.models import (
     ContentGuard,
@@ -115,7 +114,6 @@ class PublicationViewSet(
     endpoint_name = "publications"
     queryset = Publication.objects.exclude(complete=False)
     serializer_class = PublicationSerializer
-    filter_backends = (OrderingFilter, DjangoFilterBackend)
     filterset_class = PublicationFilter
     ordering = ("-pulp_created",)
 
