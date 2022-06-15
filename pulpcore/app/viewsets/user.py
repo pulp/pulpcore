@@ -4,13 +4,12 @@ from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import FieldError
 from django.shortcuts import get_object_or_404
-from django_filters.rest_framework import DjangoFilterBackend, filters
+from django_filters.rest_framework import filters
 from django.db.models import Q, Count
 from django.contrib.auth.models import Permission
 
 from rest_framework import mixins, status
 from rest_framework.exceptions import PermissionDenied
-from rest_framework.filters import OrderingFilter
 from rest_framework.permissions import SAFE_METHODS
 from rest_framework.response import Response
 from rest_framework.serializers import ValidationError
@@ -67,7 +66,6 @@ class UserViewSet(
     endpoint_name = "users"
     router_lookup = "user"
     filterset_class = UserFilter
-    filter_backends = (OrderingFilter, DjangoFilterBackend)
     serializer_class = UserSerializer
     queryset = User.objects.all()
     ordering = ("-date_joined",)
@@ -105,7 +103,6 @@ class GroupViewSet(
     endpoint_name = "groups"
     router_lookup = "group"
     filterset_class = GroupFilter
-    filter_backends = (OrderingFilter, DjangoFilterBackend)
     serializer_class = GroupSerializer
     queryset = Group.objects.all()
     ordering = ("name",)
@@ -346,7 +343,6 @@ class RoleViewSet(
     endpoint_name = "roles"
     router_lookup = "role"
     filterset_class = RoleFilter
-    filter_backends = (OrderingFilter, DjangoFilterBackend)
     serializer_class = RoleSerializer
     queryset = Role.objects.all()
     ordering = ("name",)
@@ -388,12 +384,9 @@ class NestedRoleFilter(BaseFilterSet):
             obj_type = ContentType.objects.get_for_model(obj, for_concrete_model=False)
             return queryset.filter(content_type_id=obj_type.id, object_id=obj.pk)
 
-    sort = filters.OrderingFilter(
-        fields=(
-            ("role__name", "role"),
-            ("pulp_created", "pulp_created"),
-            ("role__description", "description"),
-        )
+    ordering_fields = (
+        ("role__name", "role"),
+        ("role__description", "description"),
     )
 
     class Meta:
@@ -436,7 +429,6 @@ class UserRoleViewSet(
     parent_viewset = UserViewSet
     parent_lookup_kwargs = {"user_pk": "user__pk"}
     filterset_class = UserRoleFilter
-    filter_backends = (OrderingFilter, DjangoFilterBackend)
     serializer_class = UserRoleSerializer
     queryset = UserRole.objects.all()
     ordering = ("-pulp_created",)
@@ -471,7 +463,6 @@ class GroupRoleViewSet(
     parent_viewset = GroupViewSet
     parent_lookup_kwargs = {"group_pk": "group__pk"}
     filterset_class = GroupRoleFilter
-    filter_backends = (OrderingFilter, DjangoFilterBackend)
     serializer_class = GroupRoleSerializer
     queryset = GroupRole.objects.all()
     ordering = ("-pulp_created",)

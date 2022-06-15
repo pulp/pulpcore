@@ -1,0 +1,3 @@
+Reworked the ordering framework to use django-filters.
+
+Plugins should not declare filter-backends on viewsets.

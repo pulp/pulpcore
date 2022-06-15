@@ -1,11 +1,10 @@
 from gettext import gettext as _
 
 from django_filters import Filter
-from django_filters.rest_framework import DjangoFilterBackend, filters
+from django_filters.rest_framework import filters
 from drf_spectacular.utils import extend_schema
 from rest_framework import mixins, serializers
 from rest_framework.decorators import action
-from rest_framework.filters import OrderingFilter
 from rest_framework.viewsets import GenericViewSet
 
 from pulpcore.app import tasks
@@ -171,7 +170,6 @@ class RepositoryVersionViewSet(
     serializer_class = RepositoryVersionSerializer
     queryset = RepositoryVersion.objects.complete()
     filterset_class = RepositoryVersionFilter
-    filter_backends = (OrderingFilter, DjangoFilterBackend)
     ordering = ("-number",)
 
     @extend_schema(

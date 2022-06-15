@@ -1,10 +1,9 @@
 from gettext import gettext as _
 
-from django_filters.rest_framework import DjangoFilterBackend, filters
+from django_filters.rest_framework import filters
 from drf_spectacular.utils import extend_schema
 from rest_framework import mixins, status
 from rest_framework.decorators import action
-from rest_framework.filters import OrderingFilter
 from rest_framework.response import Response
 from rest_framework.serializers import ValidationError
 
@@ -76,7 +75,6 @@ class TaskViewSet(
     filterset_class = TaskFilter
     serializer_class = TaskSerializer
     minimal_serializer_class = MinimalTaskSerializer
-    filter_backends = (OrderingFilter, DjangoFilterBackend)
     ordering = "-pulp_created"
     queryset_filtering_required_permission = "core.view_task"
 
@@ -203,7 +201,6 @@ class TaskGroupViewSet(NamedModelViewSet, mixins.RetrieveModelMixin, mixins.List
     endpoint_name = "task-groups"
     filterset_class = TaskGroupFilter
     serializer_class = TaskGroupSerializer
-    filter_backends = (OrderingFilter, DjangoFilterBackend)
     ordering = "-pulp_created"
 
 
@@ -274,7 +271,6 @@ class TaskScheduleViewSet(
     endpoint_name = "task-schedules"
     filterset_class = TaskScheduleFilter
     serializer_class = TaskScheduleSerializer
-    filter_backends = (OrderingFilter, DjangoFilterBackend)
     ordering = "-pulp_created"
     queryset_filtering_required_permission = "core.view_taskschedule"
 
