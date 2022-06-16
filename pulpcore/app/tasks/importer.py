@@ -95,33 +95,42 @@ def _import_file(fpath, resource_class, retry=False):
         log.info(f"Importing file {fpath}.")
         with open(fpath, "r") as json_file:
             resource = resource_class()
-            log.info("...Importing resource {resource.__class__.__name__}.")
+            log.info(f"...Importing resource {resource.__class__.__name__}.")
             # Load one batch-sized chunk of the specified import-file at a time. If requested,
             # retry a batch if it looks like we collided with some other repo being imported with
             # overlapping content.
             for batch_str in _impfile_iterator(json_file):
                 data = Dataset().load(StringIO(batch_str))
                 if retry:
-                    # django import-export can have a problem with concurrent-imports that are
-                    # importing the same 'thing' (e.g., a Package that exists in two different
-                    # repo-versions that are being imported at the same time). If we're asked to
-                    # retry, we will try an import that will simply record errors as they happen
-                    # (rather than failing with an exception) first. If errors happen, we'll do one
-                    # retry before we give up on this repo-version's import.
-                    a_result = resource.import_data(data, raise_errors=False)
-                    if a_result.has_errors():
-                        total_errors = a_result.totals["error"]
-                        log.info(
-                            f"...{total_errors} import-errors encountered importing "
-                            "{fpath}, attempt {curr_attempt}, retrying"
-                        )
-                        # Second attempt, we raise an exception on any problem.
-                        # This will either succeed, or log a fatal error and fail.
-                        try:
-                            a_result = resource.import_data(data, raise_errors=True)
-                        except Exception as e:  # noqa log on ANY exception and then re-raise
-                            log.error(f"FATAL import-failure importing {fpath}")
-                            raise
+                    curr_attempt = 1
+
+                    while curr_attempt < MAX_ATTEMPTS:
+                        curr_attempt += 1
+                        # django import-export can have a problem with concurrent-imports that are
+                        # importing the same 'thing' (e.g., a Package that exists in two different
+                        # repo-versions that are being imported at the same time). If we're asked to
+                        # retry, we will try an import that will simply record errors as they happen
+                        # (rather than failing with an exception) first. If errors happen, we'll
+                        # retry before we give up on this repo-version's import.
+                        a_result = resource.import_data(data, raise_errors=False)
+                        if a_result.has_errors():
+                            total_errors = a_result.totals["error"]
+                            log.info(
+                                "...{total_errors} import-errors encountered importing {fpath}, "
+                                "attempt {curr_attempt}, retrying".format(
+                                    total_errors=total_errors,
+                                    fpath=fpath,
+                                    curr_attempt=curr_attempt,
+                                )
+                            )
+
+                    # Last attempt, we raise an exception on any problem.
+                    # This will either succeed, or log a fatal error and fail.
+                    try:
+                        a_result = resource.import_data(data, raise_errors=True)
+                    except Exception as e:  # noqa log on ANY exception and then re-raise
+                        log.error(f"FATAL import-failure importing {fpath}")
+                        raise
                 else:
                     a_result = resource.import_data(data, raise_errors=True)
                 yield a_result
