@@ -17,6 +17,24 @@ Changelog
 
 .. towncrier release notes start
 
+3.16.10 (2022-06-16)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Restore multiple-retry logic for PulpImport.
+  :github:`2854`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.16.9 (2022-06-15)
 ===================
 REST API
