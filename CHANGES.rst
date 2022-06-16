@@ -789,6 +789,30 @@ Bugfixes
   :redmine:`9608`
 
 
+3.16.9 (2022-06-15)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Started showing errors when users try to export remote artifacts.
+  :github:`2817`
+
+
+Misc
+~~~~
+
+- :github:`2816`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.16.8 (2022-05-10)
 ===================
 REST API
