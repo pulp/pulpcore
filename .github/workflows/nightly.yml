@@ -27,7 +27,7 @@ jobs:
           - TEST: azure
           - TEST: s3
           - TEST: stream
-          - TEST: bindings
+          - TEST: generate-bindings
 
     steps:
       - uses: actions/checkout@v3
