@@ -61,41 +61,28 @@ if [[ "$TEST" == "plugin-from-pypi" ]]; then
   git checkout ${COMPONENT_VERSION} -- pulpcore/tests/
 fi
 
-cd ../pulp-openapi-generator
-./generate.sh pulp_file python
-pip install ./pulp_file-client
-rm -rf ./pulp_file-client
-if [[ "$TEST" = 'bindings' ]]; then
-  ./generate.sh pulp_file ruby 0
-  cd pulp_file-client
-  gem build pulp_file_client.gemspec
-  gem install --both ./pulp_file_client-0.gem
-  cd ..
-fi
-./generate.sh pulp_certguard python
-pip install ./pulp_certguard-client
-rm -rf ./pulp_certguard-client
-if [[ "$TEST" = 'bindings' ]]; then
-  ./generate.sh pulp-certguard ruby 0
-  cd pulp-certguard-client
-  gem build pulp-certguard_client.gemspec
-  gem install --both ./pulp-certguard_client-0.gem
-  cd ..
-fi
-cd $REPO_ROOT
-
-if [[ "$TEST" = 'bindings' ]]; then
-  if [ -f $REPO_ROOT/.ci/assets/bindings/test_bindings.py ]; then
-    python $REPO_ROOT/.ci/assets/bindings/test_bindings.py
-  fi
-  if [ -f $REPO_ROOT/.ci/assets/bindings/test_bindings.rb ]; then
-    ruby $REPO_ROOT/.ci/assets/bindings/test_bindings.rb
-  fi
-  exit
-fi
+echo "machine pulp
+login admin
+password password
+" | cmd_stdin_prefix bash -c "cat > /root/.netrc"
 
 cat unittest_requirements.txt | cmd_stdin_prefix bash -c "cat > /tmp/unittest_requirements.txt"
+cat functest_requirements.txt | cmd_stdin_prefix bash -c "cat > /tmp/functest_requirements.txt"
 cmd_prefix pip3 install -r /tmp/unittest_requirements.txt
+cmd_prefix pip3 install -r /tmp/functest_requirements.txt
+cmd_prefix pip3 install --upgrade ../pulp-smash
+
+cd ../pulp-openapi-generator
+./generate.sh pulp_file python
+cmd_prefix pip3 install /root/pulp-openapi-generator/pulp_file-client
+sudo rm -rf ./pulp_file-client
+./generate.sh pulp_certguard python
+cmd_prefix pip3 install /root/pulp-openapi-generator/pulp_certguard-client
+sudo rm -rf ./pulp_certguard-client
+cd $REPO_ROOT
+
+CERTIFI=$(cmd_prefix python3 -c 'import certifi; print(certifi.where())')
+cmd_prefix bash -c "cat /etc/pulp/certs/pulp_webserver.crt  | tee -a "$CERTIFI" > /dev/null"
 
 # check for any uncommitted migrations
 echo "Checking for uncommitted migrations..."
@@ -107,15 +94,11 @@ if [[ "$TEST" != "upgrade" ]]; then
 fi
 
 # Run functional tests
-export PYTHONPATH=$REPO_ROOT/../pulp_file${PYTHONPATH:+:${PYTHONPATH}}
-export PYTHONPATH=$REPO_ROOT/../pulp-certguard${PYTHONPATH:+:${PYTHONPATH}}
-export PYTHONPATH=$REPO_ROOT${PYTHONPATH:+:${PYTHONPATH}}
-
 if [[ "$TEST" == "performance" ]]; then
   if [[ -z ${PERFORMANCE_TEST+x} ]]; then
-    pytest -vv -r sx --color=yes --pyargs --capture=no --durations=0 pulpcore.tests.performance
+    cmd_prefix bash -c "pytest -vv -r sx --color=yes --pyargs --capture=no --durations=0 pulpcore.tests.performance"
   else
-    pytest -vv -r sx --color=yes --pyargs --capture=no --durations=0 pulpcore.tests.performance.test_$PERFORMANCE_TEST
+    cmd_prefix bash -c "pytest -vv -r sx --color=yes --pyargs --capture=no --durations=0 pulpcore.tests.performance.test_$PERFORMANCE_TEST"
   fi
   exit
 fi
@@ -125,13 +108,13 @@ if [ -f $FUNC_TEST_SCRIPT ]; then
 else
 
     if [[ "$GITHUB_WORKFLOW" == "Pulpcore Nightly CI/CD" ]]; then
-        pytest -v -r sx --color=yes --suppress-no-test-exit-code --pyargs pulpcore.tests.functional -m parallel -n 8  --nightly
-        pytest -v -r sx --color=yes --pyargs pulpcore.tests.functional -m "not parallel"  --nightly
+        cmd_prefix bash -c "pytest -v -r sx --color=yes --suppress-no-test-exit-code --pyargs pulpcore.tests.functional -m parallel -n 8 --nightly"
+        cmd_prefix bash -c "pytest -v -r sx --color=yes --pyargs pulpcore.tests.functional -m 'not parallel' --nightly"
 
     
     else
-        pytest -v -r sx --color=yes --suppress-no-test-exit-code --pyargs pulpcore.tests.functional -m parallel -n 8
-        pytest -v -r sx --color=yes --pyargs pulpcore.tests.functional -m "not parallel"
+        cmd_prefix bash -c "pytest -v -r sx --color=yes --suppress-no-test-exit-code --pyargs pulpcore.tests.functional -m parallel -n 8"
+        cmd_prefix bash -c "pytest -v -r sx --color=yes --pyargs pulpcore.tests.functional -m 'not parallel'"
 
     
     fi
