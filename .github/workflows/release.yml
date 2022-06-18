@@ -84,7 +84,7 @@ jobs:
           - TEST: docs
           - TEST: azure
           - TEST: s3
-          - TEST: bindings
+          - TEST: generate-bindings
 
     steps:
       - uses: actions/download-artifact@v3
