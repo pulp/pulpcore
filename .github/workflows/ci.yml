@@ -93,12 +93,10 @@ jobs:
           - TEST: docs
           - TEST: azure
           - TEST: s3
-          - TEST: bindings
     outputs:
       deprecations-pulp: ${{ steps.deprecations.outputs.deprecations-pulp }}
       deprecations-azure: ${{ steps.deprecations.outputs.deprecations-azure }}
       deprecations-s3: ${{ steps.deprecations.outputs.deprecations-s3 }}
-      deprecations-bindings: ${{ steps.deprecations.outputs.deprecations-bindings }}
 
     steps:
       - uses: actions/checkout@v3
@@ -110,10 +108,6 @@ jobs:
       - uses: actions/setup-python@v3
         with:
           python-version: "3.8"
-      - uses: ruby/setup-ruby@v1
-        
-        with:
-          ruby-version: "2.6"
 
       - name: Install httpie
         run: |
@@ -157,11 +151,6 @@ jobs:
       - name: Install Python client
         
         run: .github/workflows/scripts/install_python_client.sh
-        shell: bash
-
-      - name: Install Ruby client
-        if: ${{ env.TEST == 'bindings' }}
-        run: .github/workflows/scripts/install_ruby_client.sh
         shell: bash
 
       - name: Before Script
@@ -224,13 +213,11 @@ jobs:
           test -z "${{ needs.test.outputs.deprecations-pulp }}"
           test -z "${{ needs.test.outputs.deprecations-azure }}"
           test -z "${{ needs.test.outputs.deprecations-s3 }}"
-          test -z "${{ needs.test.outputs.deprecations-bindings }}"
       - name: Print deprecations
         if: failure()
         run: |
           echo "${{ needs.test.outputs.deprecations-pulp }}" | base64 -d
           echo "${{ needs.test.outputs.deprecations-azure }}" | base64 -d
           echo "${{ needs.test.outputs.deprecations-s3 }}" | base64 -d
-          echo "${{ needs.test.outputs.deprecations-bindings }}" | base64 -d
 
 
