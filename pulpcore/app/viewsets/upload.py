@@ -14,7 +14,7 @@ from pulpcore.app.serializers import (
     UploadSerializer,
     UploadDetailSerializer,
 )
-from pulpcore.app.viewsets.base import NamedModelViewSet
+from pulpcore.app.viewsets import NamedModelViewSet, RolesMixin
 from pulpcore.tasking.tasks import dispatch
 
 
@@ -25,6 +25,7 @@ class UploadViewSet(
     mixins.UpdateModelMixin,
     mixins.DestroyModelMixin,
     mixins.ListModelMixin,
+    RolesMixin,
 ):
     """View for chunked uploads."""
 
@@ -40,6 +41,68 @@ class UploadViewSet(
         description="The Content-Range header specifies the location of the file chunk "
         "within the file.",
     )
+
+    DEFAULT_ACCESS_POLICY = {
+        "statements": [
+            {
+                "action": ["list"],
+                "principal": "authenticated",
+                "effect": "allow",
+            },
+            {
+                "action": ["create"],
+                "principal": "authenticated",
+                "effect": "allow",
+                "condition": "has_model_perms:core.add_upload",
+            },
+            {
+                "action": ["retrieve", "my_permissions"],
+                "principal": "authenticated",
+                "effect": "allow",
+                "condition": "has_model_or_obj_perms:core.view_upload",
+            },
+            {
+                "action": ["update", "partial_update", "commit"],
+                "principal": "authenticated",
+                "effect": "allow",
+                "condition": "has_model_or_obj_perms:core.change_upload",
+            },
+            {
+                "action": ["destroy"],
+                "principal": "authenticated",
+                "effect": "allow",
+                "condition": "has_model_or_obj_perms:core.delete_upload",
+            },
+            {
+                "action": ["list_roles", "add_role", "remove_role"],
+                "principal": "authenticated",
+                "effect": "allow",
+                "condition": ["has_model_or_obj_perms:core.manage_roles_upload"],
+            },
+        ],
+        "creation_hooks": [
+            {
+                "function": "add_roles_for_object_creator",
+                "parameters": {"roles": "core.upload_owner"},
+            },
+        ],
+        "queryset_scoping": {"function": "scope_queryset"},
+    }
+
+    LOCKED_ROLES = {
+        "core.upload_creator": [
+            "core.add_upload",
+        ],
+        "core.upload_owner": [
+            "core.view_upload",
+            "core.change_upload",
+            "core.delete_upload",
+            "core.manage_roles_upload",
+        ],
+        "core.upload_viewer": [
+            "core.view_upload",
+        ],
+    }
 
     def get_serializer_class(self):
         if self.action == "retrieve":

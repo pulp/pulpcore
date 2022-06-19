@@ -38,6 +38,11 @@ class Upload(BaseModel):
         filename = os.path.basename(upload_chunk.storage_path(""))
         upload_chunk.file.save(filename, ContentFile(chunk_read))
 
+    class Meta:
+        permissions = [
+            ("manage_roles_upload", "Can manage role assignments on upload"),
+        ]
+
 
 class UploadChunk(BaseModel):
     """
