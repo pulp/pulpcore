@@ -101,11 +101,9 @@ def has_model_or_obj_perms(request, view, action, permission):
         True if the user has the Permission named by the ``permission`` argument at the model-level
             or on the object being operated on at the object-level. False otherwise.
     """
-    if has_model_perms(request, view, action, permission):
-        return True
-    if has_obj_perms(request, view, action, permission):
-        return True
-    return False
+    return has_model_perms(request, view, action, permission) or has_obj_perms(
+        request, view, action, permission
+    )
 
 
 # 'Remote' parameter checks
@@ -191,11 +189,9 @@ def has_remote_param_model_or_obj_perms(request, view, action, permission):
         True if the user has the Permission named by the ``permission`` at the model-level or on the
             argument on the ``remote`` parameter at the object-level. False otherwise.
     """
-    if has_model_perms(request, view, action, permission):
-        return True
-    if has_remote_param_obj_perms(request, view, action, permission):
-        return True
-    return False
+    return has_model_perms(request, view, action, permission) or has_remote_param_obj_perms(
+        request, view, action, permission
+    )
 
 
 # 'Repository' attribute checks for RepositoryVersionViewSet
@@ -281,11 +277,9 @@ def has_repo_attr_model_or_obj_perms(request, view, action, permission):
         True if the user has the Permission on the ``repository`` attribute named by the
         ``permission`` at the model or object level. False otherwise.
     """
-    if has_model_perms(request, view, action, permission):
-        return True
-    if has_repo_attr_obj_perms(request, view, action, permission):
-        return True
-    return False
+    return has_model_perms(request, view, action, permission) or has_repo_attr_obj_perms(
+        request, view, action, permission
+    )
 
 
 def has_repository_obj_perms(request, view, action, permission):
@@ -447,13 +441,13 @@ def has_required_repo_perms_on_upload(request, view, action, permission):
 
 def has_publication_param_model_or_obj_perms(request, view, action, permission):
     """
-    Checks if the current user has object-level permission on the ``publication`` object.
+    Checks if the current user has permission on the ``Publication`` object.
 
     The object in this case is the one specified by the ``publication`` parameter. For example when
     distributing the ``publication`` parameter is passed in as an argument.
 
     This is usable as a conditional check in an AccessPolicy. Here is an example checking for the
-    "file.view_filepublication" permissions at the object-level.
+    "file.view_filepublication" permission.
 
     ::
 
@@ -462,7 +456,7 @@ def has_publication_param_model_or_obj_perms(request, view, action, permission):
             "condition": "has_publication_param_model_or_obj_perms:file.view_filepublication",
         }
 
-    Since it is checking a ``publication`` object the permission argument should be one of the
+    Since it is checking a ``Publication`` object the permission argument should be one of the
     following:
 
     * "file.view_filepublication" - Permission to view the ``FilePublication``.
@@ -478,8 +472,7 @@ def has_publication_param_model_or_obj_perms(request, view, action, permission):
 
     Returns:
         True if the user has the Permission named by the ``permission`` argument on the
-            ``publication`` parameter at the object-level or if there is no publication.
-            False otherwise.
+            ``publication`` parameter or if there is no publication. False otherwise.
     """
     if has_model_perms(request, view, action, permission):
         return True
@@ -490,6 +483,53 @@ def has_publication_param_model_or_obj_perms(request, view, action, permission):
     serializer.is_valid(raise_exception=True)
     if publication := serializer.validated_data.get("publication"):
         return request.user.has_perm(permission, publication)
+    return True
+
+
+def has_upload_param_model_or_obj_perms(request, view, action, permission):
+    """
+    Checks if the current user has permission on the ``Upload`` object.
+
+    The object in this case is the one specified by the ``upload`` parameter, for example to a
+    one-shot content creation call.
+
+    This is usable as a conditional check in an AccessPolicy. Here is an example checking for the
+    "core.change_upload" permissions.
+
+    ::
+
+        {
+            ...
+            "condition": "has_upload_param_model_or_obj_perms:core.change_upload",
+        }
+
+    Since it is checking a ``Upload`` object the permission argument should be one of the following:
+
+    * "core.view_upload" - Permission to view the ``Upload``.
+    * "core.change_upload" - Permission to change the ``Upload``.
+    * "core.delete_upload" - Permission to delete the ``Upload``.
+
+    Args:
+        request (rest_framework.request.Request): The request being made.
+        view (subclass rest_framework.viewsets.GenericViewSet): The view being checked for
+            authorization.
+        action (str): The action being performed, e.g. "destroy".
+        permission (str): The name of the Permission to be checked. In the form
+            `app_label.codename`, e.g. "core.delete_task".
+
+    Returns:
+        True if the user has the Permission named by the ``permission`` argument on the
+            ``Upload`` parameter or if there is no upload. False otherwise.
+    """
+    if has_model_perms(request, view, action, permission):
+        return True
+    kwargs = {}
+    if action == "partial_update":
+        kwargs["partial"] = True
+    serializer = view.serializer_class(data=request.data, context={"request": request}, **kwargs)
+    serializer.is_valid(raise_exception=True)
+    if upload := serializer.validated_data.get("upload"):
+        return request.user.has_perm(permission, upload)
     return True
 
 
