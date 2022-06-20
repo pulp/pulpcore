@@ -131,6 +131,8 @@ or ``CHANGES/plugin_api/`` directory named after that issue number with one of t
 +--------------+----------------------------------------------------------------------+
 | .deprecation | Information about an upcoming backwards incompatible change          |
 +--------------+----------------------------------------------------------------------+
+| .doc         | A documentation improvement                                          |
++--------------+----------------------------------------------------------------------+
 | .misc        | A change that is not visible to the end user                         |
 +--------------+----------------------------------------------------------------------+
 
