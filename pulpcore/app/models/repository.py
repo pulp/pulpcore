@@ -17,7 +17,7 @@ from django.urls import reverse
 from django_lifecycle import AFTER_UPDATE, BEFORE_DELETE, hook
 from rest_framework.exceptions import APIException
 
-from pulpcore.app.util import batch_qs, get_view_name_for_model
+from pulpcore.app.util import batch_qs, get_url, get_view_name_for_model
 from pulpcore.constants import ALL_KNOWN_CONTENT_CHECKSUMS
 from pulpcore.download.factory import DownloaderFactory
 from pulpcore.exceptions import ResourceImmutableError
@@ -92,6 +92,9 @@ class Repository(MasterModel):
             super().save(*args, **kwargs)
             if adding:
                 self.create_initial_version()
+                if task := Task.current():
+                    task.reserved_resources_record.append(get_url(self))
+                    task.save()
 
     def create_initial_version(self):
         """
