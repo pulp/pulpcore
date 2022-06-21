@@ -1,1 +1,0 @@
-Reduced duplicate SQL queries for ``AccessPolicy`` when accessing any view.

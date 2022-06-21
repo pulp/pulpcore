@@ -1,3 +1,0 @@
-Taught PulpImport to retry more than once in the event of creation-collisions.
-
-This fixes a rare import-failure during high-concurrency, high-content-overlap imports.

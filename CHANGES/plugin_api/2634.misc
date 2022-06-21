@@ -1,2 +1,0 @@
-Removed the deprecation warning logged if plugin writers had set the `ACCESS_POLICY_VIEWSET_NAME`
-attribute on a model.

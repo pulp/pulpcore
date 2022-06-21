@@ -1,2 +1,0 @@
-Removed django-guardian from the stack. This includes the removal of ``AutoDeleteObjPermsMixin``
-from the plugin api.
