@@ -22,9 +22,6 @@ if [[ "$TEST" = "docs" || "$TEST" = "publish" ]]; then
   pip install -r doc_requirements.txt
 fi
 
-pip install -e ../pulpcore -e ../pulp_file -e ../pulp-certguard
-pip install -r functest_requirements.txt
-
 cd .ci/ansible/
 
 TAG=ci_build
@@ -54,6 +51,8 @@ plugins:
     source: $PULP_FILE
   - name: pulp-certguard
     source: $PULP_CERTGUARD
+  - name: pulp-smash
+    source: ./pulp-smash
 VARSYAML
 
 cat >> vars/main.yaml << VARSYAML
@@ -63,6 +62,8 @@ services:
     volumes:
       - ./settings:/etc/pulp
       - ./ssh:/keys/
+      - ~/.config:/root/.config
+      - ../../../pulp-openapi-generator:/root/pulp-openapi-generator
 VARSYAML
 
 cat >> vars/main.yaml << VARSYAML

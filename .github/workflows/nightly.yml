@@ -25,7 +25,7 @@ jobs:
           - TEST: pulp
           - TEST: docs
           - TEST: s3
-          - TEST: bindings
+          - TEST: generate-bindings
 
     steps:
       - uses: actions/checkout@v3
