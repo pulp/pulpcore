@@ -33,6 +33,16 @@ from pulpcore.client.pulpcore import (
     UsersRolesApi,
 )
 
+from .gpg_ascii_armor_signing_service import (  # noqa: F401
+    _ascii_armored_detached_signing_service_name,
+    ascii_armored_detached_signing_service,
+    sign_with_ascii_armored_detached_signing_service,
+    gpg_homedir_with_trusted_private_key,
+    signing_gpg_homedir_path,
+    signing_script_path,
+    signing_script_temp_dir,
+)
+
 
 @pytest.hookimpl(tryfirst=True)
 def pytest_check_for_leftover_pulp_objects(config):
