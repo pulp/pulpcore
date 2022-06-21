@@ -1,1 +1,0 @@
-Replaced "//" with "/" in base_url when CONTENT_PATH_PREFIX is "" or "/".
