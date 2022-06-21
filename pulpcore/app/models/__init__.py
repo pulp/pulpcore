@@ -1,4 +1,4 @@
-# https://docs.djangoproject.com/en/dev/topics/db/models/#organizing-models-in-a-package
+# https://docs.djangoproject.com/en/3.2/topics/db/models/#organizing-models-in-a-package
 
 # Must be imported first as other models depend on it
 from .base import (  # noqa

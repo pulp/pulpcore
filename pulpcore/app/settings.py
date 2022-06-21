@@ -2,10 +2,10 @@
 Django settings for the Pulp Platform application
 
 Never import this module directly, instead `from django.conf import settings`, see
-https://docs.djangoproject.com/en/1.11/topics/settings/#using-settings-in-python-code
+https://docs.djangoproject.com/en/3.2/topics/settings/#using-settings-in-python-code
 
 For the full list of settings and their values, see
-https://docs.djangoproject.com/en/1.11/ref/settings/
+https://docs.djangoproject.com/en/3.2/ref/settings/
 """
 
 import sys
@@ -26,7 +26,7 @@ from pulpcore import constants
 BASE_DIR = Path(__file__).absolute().parent
 
 # Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/1.11/howto/deployment/checklist/
+# See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
@@ -37,7 +37,7 @@ DEPLOY_ROOT = Path("/var/lib/pulp")
 MEDIA_ROOT = str(DEPLOY_ROOT / "media")  # Django 3.1 adds support for pathlib.Path
 
 # Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/1.11/howto/static-files/
+# https://docs.djangoproject.com/en/3.2/howto/static-files/
 
 STATIC_URL = "/assets/"
 STATIC_ROOT = DEPLOY_ROOT / STATIC_URL.strip("/")
@@ -155,7 +155,7 @@ REST_FRAMEWORK = {
 }
 
 # Password validation
-# https://docs.djangoproject.com/en/dev/ref/settings/#auth-password-validators
+# https://docs.djangoproject.com/en/3.2/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
@@ -166,7 +166,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 
 # Internationalization
-# https://docs.djangoproject.com/en/1.11/topics/i18n/
+# https://docs.djangoproject.com/en/3.2/topics/i18n/
 
 LANGUAGE_CODE = "en-us"
 
@@ -182,7 +182,7 @@ USE_TZ = True
 # A set of default settings to use if the configuration file in
 # /etc/pulp/ is missing or if it does not have values for every setting
 
-# https://docs.djangoproject.com/en/1.11/ref/settings/#databases
+# https://docs.djangoproject.com/en/3.2/ref/settings/#databases
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
@@ -201,7 +201,7 @@ REDIS_PASSWORD = None
 REDIS_SSL = False
 REDIS_SSL_CA_CERTS = None
 
-# https://docs.djangoproject.com/en/1.11/ref/settings/#logging and
+# https://docs.djangoproject.com/en/3.2/ref/settings/#logging and
 # https://docs.python.org/3/library/logging.config.html
 LOGGING = {
     "version": 1,

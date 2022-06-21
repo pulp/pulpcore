@@ -21,7 +21,7 @@ Adding Model Fields
 Each subclassed Model will typically store attributes that are specific to the content type. These
 attributes need to be added to the model as ``fields``. You can use any of Django's field types
 for your fields. See the `Django field documentation
-<https://docs.djangoproject.com/en/2.1/ref/models/fields/>`_, for more in-depth information on
+<https://docs.djangoproject.com/en/3.2/ref/models/fields/>`_, for more in-depth information on
 using these fields.
 
 
