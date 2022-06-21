@@ -24,7 +24,7 @@ class TestGetQuerySet(TestCase):
         expected = models.RepositoryVersion.objects.filter(repository__pk=repo.pk)
 
         # weird, stupid django quirk
-        # https://docs.djangoproject.com/en/2.0/topics/testing/tools/#django.test.TransactionTestCase.assertQuerysetEqual
+        # https://docs.djangoproject.com/en/3.2/topics/testing/tools/#django.test.TransactionTestCase.assertQuerysetEqual
         self.assertQuerysetEqual(queryset, map(repr, expected))
 
     def test_does_not_add_filters(self):
@@ -39,7 +39,7 @@ class TestGetQuerySet(TestCase):
         expected = models.Repository.objects.all()
 
         # weird, stupid django quirk
-        # https://docs.djangoproject.com/en/2.0/topics/testing/tools/#django.test.TransactionTestCase.assertQuerysetEqual
+        # https://docs.djangoproject.com/en/3.2/topics/testing/tools/#django.test.TransactionTestCase.assertQuerysetEqual
         self.assertQuerysetEqual(queryset, map(repr, expected))
 
 

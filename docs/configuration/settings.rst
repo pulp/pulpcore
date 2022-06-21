@@ -16,14 +16,14 @@ Django Settings
 ---------------
 
 Pulp is a Django project, so any Django `Django setting
-<https://docs.djangoproject.com/en/2.2/ref/settings/>`_ can also be set to configure your Pulp
+<https://docs.djangoproject.com/en/3.2/ref/settings/>`_ can also be set to configure your Pulp
 deployment.
 
 SECRET_KEY
 ^^^^^^^^^^
 
     In order to get a pulp server up and running a `Django SECRET_KEY
-    <https://docs.djangoproject.com/en/2.2/ref/settings/#secret-key>`_ *must* be
+    <https://docs.djangoproject.com/en/3.2/ref/settings/#secret-key>`_ *must* be
     provided.
 
     The following code snippet can be used to generate a random SECRET_KEY.
@@ -108,7 +108,7 @@ AUTHENTICATION_BACKENDS
    2. Webserver authentication that relies on the webserver to perform the authentication.
 
    To change the authentication types Pulp will use, modify the ``AUTHENTICATION_BACKENDS``
-   settings. See the `Django authentication documentation <https://docs.djangoproject.com/en/2.2/
+   settings. See the `Django authentication documentation <https://docs.djangoproject.com/en/3.2/
    topics/auth/customizing/#authentication-backends>`_ for more information.
 
 .. _redis-settings:
@@ -274,7 +274,7 @@ REMOTE_USER_ENVIRON_NAME
    .. warning::
 
       Configuring this has serious security implications. See the `Django warning at the end of this
-      section in their docs <https://docs.djangoproject.com/en/2.2/howto/auth-remote-user/
+      section in their docs <https://docs.djangoproject.com/en/3.2/howto/auth-remote-user/
       #configuration>`_ for more details.
 
    Defaults to ``'REMOTE_USER'``.

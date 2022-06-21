@@ -30,7 +30,7 @@ things:
       $ pulpcore-manager runserver 24817
 
 The REST API can be deployed with any any WSGI webserver like a normal Django application. See the
-`Django deployment docs <https://docs.djangoproject.com/en/2.1/howto/deployment/wsgi/>`_ for more
+`Django deployment docs <https://docs.djangoproject.com/en/3.2/howto/deployment/wsgi/>`_ for more
 information.
 
 Content Serving Application

@@ -106,7 +106,7 @@ class EncryptedTextField(TextField):
 
 @Field.register_lookup
 class NotEqualLookup(Lookup):
-    # this is copied from https://docs.djangoproject.com/en/3.0/howto/custom-lookups/
+    # this is copied from https://docs.djangoproject.com/en/3.2/howto/custom-lookups/
     lookup_name = "ne"
 
     def as_sql(self, compiler, connection):

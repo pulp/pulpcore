@@ -185,7 +185,7 @@ GroupProgressReport needs to be updated.
 
         # .update(done=F('done') + 1)
 
-        # See: https://docs.djangoproject.com/en/3.0/ref/models/expressions/#f-expressions
+        # See: https://docs.djangoproject.com/en/3.2/ref/models/expressions/#f-expressions
         # Important: F() objects assigned to model fields persist after saving the model instance and
         # will be applied on each save(). Do not use save() and use update() instead, otherwise
         # refresh_from_db() should be called after each save()

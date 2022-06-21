@@ -2,7 +2,7 @@
 Container for models using generic relations provided by Django's ContentTypes framework.
 
 References:
-    https://docs.djangoproject.com/en/1.8/ref/contrib/contenttypes/#generic-relations
+    https://docs.djangoproject.com/en/3.2/ref/contrib/contenttypes/#generic-relations
 """
 
 from django.contrib.contenttypes.fields import GenericForeignKey

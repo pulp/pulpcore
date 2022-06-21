@@ -52,7 +52,7 @@ class BaseModel(LifecycleModel):
 
     References:
 
-        * https://docs.djangoproject.com/en/1.8/topics/db/models/#automatic-primary-key-fields
+        * https://docs.djangoproject.com/en/3.2/topics/db/models/#automatic-primary-key-fields
         * https://rsinger86.github.io/django-lifecycle/
 
     """
