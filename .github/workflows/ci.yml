@@ -92,11 +92,9 @@ jobs:
           - TEST: pulp
           - TEST: docs
           - TEST: s3
-          - TEST: bindings
     outputs:
       deprecations-pulp: ${{ steps.deprecations.outputs.deprecations-pulp }}
       deprecations-s3: ${{ steps.deprecations.outputs.deprecations-s3 }}
-      deprecations-bindings: ${{ steps.deprecations.outputs.deprecations-bindings }}
 
     steps:
       - uses: actions/checkout@v3
@@ -108,10 +106,6 @@ jobs:
       - uses: actions/setup-python@v3
         with:
           python-version: "3.6"
-      - uses: ruby/setup-ruby@v1
-        
-        with:
-          ruby-version: "2.6"
 
       - name: Install httpie
         run: |
@@ -155,11 +149,6 @@ jobs:
       - name: Install Python client
         
         run: .github/workflows/scripts/install_python_client.sh
-        shell: bash
-
-      - name: Install Ruby client
-        if: ${{ env.TEST == 'bindings' }}
-        run: .github/workflows/scripts/install_ruby_client.sh
         shell: bash
 
       - name: Before Script
