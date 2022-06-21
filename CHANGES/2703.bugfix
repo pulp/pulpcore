@@ -1,1 +1,0 @@
-Fix ?ordering=role on user and group role apis so that it sorts results by role name.

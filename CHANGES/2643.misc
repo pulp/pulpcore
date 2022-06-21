@@ -1,2 +1,0 @@
-Added test to assert the openapi schema produced at ``/pulp/api/v3/docs/api.json?pk_path=1``
-validates as a valid openAPI V3 schema.

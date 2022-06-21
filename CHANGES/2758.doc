@@ -1,2 +1,0 @@
-Added a note about explicitly setting ``content_object`` to null when assigning model-level
-permissions.

@@ -1,2 +1,0 @@
-Removed django-guardian from the stack. The ``guardian.backends.ObjectPermissionBackend`` should
-not be used anymore.

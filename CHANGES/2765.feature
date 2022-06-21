@@ -1,1 +1,0 @@
-Add role description and permissions to group and user role serializer.
