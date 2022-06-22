@@ -17,6 +17,243 @@ Changelog
 
 .. towncrier release notes start
 
+3.20.0 (2022-06-21)
+===================
+REST API
+--------
+
+Features
+~~~~~~~~
+
+- Added a repository filter to publications.
+  :github:`1912`
+- The status API endpoint now shows the python package name that provides a given plugin.
+  :github:`1982`
+- Queryset scoping can be customized by the user using the new field ``queryset_scoping`` on a
+  ViewSet's AccessPolicy.
+  :github:`2114`
+- Enabled administrators to work with a customized GnuPG home directory and keyring during the
+  creation of a signing service. The introduced optional arguments ``--gnupghome`` and ``--keyring``
+  are available under the ``pulpcore-manager add-signing-service`` command.
+  :github:`2476`
+- Added the setting ``REDIRECT_TO_OBJECT_STORAGE`` to allow using cloud storage with or without
+  redirecting urls.
+
+  Added support for sftp storage via the ``pulpcore.app.models.storage.PulpSFTPStorage`` class.
+  :github:`2537`
+- Added more details to an error message that is shown when none of the allowed content checksums
+  hashers could be used.
+  :github:`2550`
+- Add contains_permission query parameter to the roles API that allows clients to get back a list
+  of roles that have any permission in a list of permissions.
+  :github:`2715`
+- Master Content endpoint, ``/pulp/api/v3/content/``, has a new access policy that allows any
+  authenticated user to view content. The endpoint now scopes the content based on repositories
+  the user can see.
+  :github:`2724`
+- New AccessPolicies have been added to ContentGuard, Distribution, Publication, Repository,
+  and RepositoryVersions master ViewSets. Queryset scoping has been enabled for each ViewSet.
+  :github:`2725`
+- New AccessPolicy for ContentRedirectContentGuard ViewSet has been added.
+  :github:`2726`
+- Added dump-permissions management command to list deprecated permissions not yet translated into
+  roles. This is the only way to get to this information after the 3.20 release.
+  :github:`2741`
+- Add ?for_object_type query parameter to Roles API that accepts an object HREF and returns a list
+  of roles that only contain permissions for the given object type.
+  :github:`2747`
+- Add role description and permissions to group and user role serializer.
+  :github:`2765`
+
+
+Bugfixes
+~~~~~~~~
+
+- Leading and trailing whitespace characters are no longer trimmed in passwords within remotes.
+  :github:`2068`
+- Fixed generation of the redirect url to the object storage
+  :github:`2075`
+- Taught PulpImport to stream imports rather than reading files into memory in one chunk.
+
+  This largely alleviates the memory-pressure that results from importing multiple
+  large repositories in parallel.
+  :github:`2307`
+- Made the API root endpoint accessible for anonymous users once again.
+  :github:`2340`
+- Removed il8n from the logs written so they will always show up in English for speedy resolution of
+  error messages. All user facing strings are still expected to be il8n.
+  :github:`2477`
+- Replaced "//" with "/" in base_url when CONTENT_PATH_PREFIX is "" or "/".
+  :github:`2553`
+- Fixed `does_batch` method in sync pipeline to allow waiting on content that is already resolved.
+  :github:`2557`
+- Fixed OOM error after uploading large chunked files.
+  :github:`2573`
+- Ensure downloader resets file on retry.
+  :github:`2576`
+- Taught PulpImport to retry more than once in the event of creation-collisions.
+
+  This fixes a rare import-failure during high-concurrency, high-content-overlap imports.
+  :github:`2589`
+- Improved the error message when HTTP proxies reject requests from Pulp.
+  :github:`2654`
+- Fix ?ordering=role on user and group role apis so that it sorts results by role name.
+  :github:`2703`
+- Add options to the role_util functions to make them work the same as guardian did.
+  :github:`2739`
+- Fixed a bug that disallowed administrators to create a signing service via the pulpcore-manager
+  utility.
+  :github:`2798`
+- Reduced duplicate SQL queries for ``AccessPolicy`` when accessing any view.
+  :github:`2802`
+- Fixed docs regarding the default for orphan protection time.
+  :github:`2810`
+- Started showing errors when users try to export remote artifacts.
+  :github:`2817`
+- Restore multiple-retry logic for PulpImport.
+  :github:`2854`
+
+
+Improved Documentation
+~~~~~~~~~~~~~~~~~~~~~~
+
+- Cleared out some of the paragraphs from the "Pull Request Walkthrough" section.
+  :github:`1852`
+- Added a troubleshooting section that includes information on how to enable DEBUG logging.
+  :github:`1944`
+- Removed some out of date references to Redmine (the previous issue tracker). We use Github Issues
+  now.
+  :github:`2642`
+- Added a note about explicitly setting ``content_object`` to null when assigning model-level
+  permissions.
+  :github:`2758`
+- Fixed ``extlinks`` use in docs to be Sphinx==5.0.0 compatible.
+  :github:`2782`
+- Update installation instructions about "User and database configuration" for the Database setup to point to a matching Django documentation.
+  :github:`2877`
+
+
+Removals
+~~~~~~~~
+
+- Removed the group permission endpoints ``api/v3/groups/:id/model_permissions/`` and
+  ``api/v3/groups/:id/object_permissions/``. Permissions should be managed via roles exclusively.
+  :github:`2050`
+- Removed django-guardian from the stack. The ``guardian.backends.ObjectPermissionBackend`` should
+  not be used anymore.
+  :github:`2051`
+- Deprecated creation hook interface was removed. Creation hook need to be registered with the view
+  set by the plugin writer before being used. Creation hooks can no longer be added with the
+  deprecated name ``permission_assignments``.
+  :github:`2559`
+
+
+Misc
+~~~~
+
+- :github:`2070`, :github:`2244`, :github:`2605`, :github:`2643`
+
+
+Plugin API
+----------
+
+Features
+~~~~~~~~
+
+- Plugins are required to provide the ``python_package_name`` as a string attribute on their subclass
+  of ``PulpPluginAppConfig``.
+  :github:`1982`
+- Exposed the method ``raise_for_unknown_content_units`` which raises ``ValidationError`` for content
+  units that were not found in the database.
+  :github:`2052`
+- Plugins now have to enable default queryset scoping by setting the ``queryset_scoping`` field on the
+  AccessPolicy to ``{"function": "scope_queryset"}``.
+
+  Default queryset scoping behavior can be changed by supplying a new ``scope_queryset`` method.
+
+  Extra queryset scoping functions can be declared on plugin ViewSets and used by setting the
+  AccessPolicy's ``queryset_scoping`` field.
+  :github:`2114`
+- DeclarativeArtifact now accepts a ``urls`` option which permits multiple URLs
+  to be provided for a single artifact. If multiple URLs are provided, the download
+  stage will try each of them in turn upon encountering failures.
+  :github:`2175`
+- Exposed the function ``pulpcore.plugin.util.verify_signature`` for verifying signatures created
+  by signing services.
+  :github:`2476`
+- Added ``pulpcore.plugin.content.ArtifactResponse`` to plugin API. Use this response to stream an
+  artifact from the object storage if redirecting is impossible.
+  :github:`2537`
+- Queryset scoping is now performed when the ViewSet's AccessPolicy field ``scope_queryset`` is set to
+  a function on the ViewSet.
+
+  ``NamedModelViewSet`` now has default scoping method ``scope_queryset`` that will scope the request
+  off of ``queryset_filtering_required_permission`` if present. If ViewSet is a master ViewSet then
+  scoping will be performed by calling each child's scoping method if present.
+  :github:`2723`
+- Content ViewSets default ``scope_queryset`` method will scope based on repositories the user can see.
+  :github:`2724`
+- Added the ability to specify an upload for the single shot upload serializer. This allows to
+  upload files in chunks and attach them with content in repositories without creating orphans.
+  :github:`2786`
+- Added new access condition ``has_required_repo_perms_on_upload`` for RBAC plugins to use to require
+  users to specify a repository when uploading content. If not used when uploading content, non-admin
+  users will not be able to see their uploaded content if queryset scoping is enabled.
+  :github:`2796`
+
+
+Bugfixes
+~~~~~~~~
+
+- Reworked the ordering framework to use django-filters.
+
+  Plugins should not declare filter-backends on viewsets.
+  :github:`2703`
+
+
+Improved Documentation
+~~~~~~~~~~~~~~~~~~~~~~
+
+- Updated plugin writers RBAC guide to explain more roles and less permissions. Removed mentions of
+  django-guardian.
+  :github:`2463`
+- Added docs on the expectation that all user-facing strings are i8ln wrapped with gettext, but log
+  messages are not.
+  :github:`2477`
+
+
+Removals
+~~~~~~~~
+
+- The ``pulpcore.plugin.exceptions.MissingResource`` object has been removed. Instead let 404
+  errors propagate upwards for DRF to handle, or use the DRF exception ``NotFound``.
+  :github:`1812`
+- Removed django-guardian from the stack. This includes the removal of ``AutoDeleteObjPermsMixin``
+  from the plugin api.
+  :github:`2051`
+- Removed the ``custom_file_object`` argument to ``pulpcore.plugin.download.BaseDownloader``. Now all
+  downloaded data will be written to a random file in the current working directory. Further
+  customization of where downloaded data can be written to can be done through subclassing.
+  :github:`2137`
+- Constructor signature of `DigestValidationError` and `SizeValidationError` has changed - the
+  "actual" and "expected" values are now required and "url" which was previously a positional
+  argument is now a keyword argument.
+  :github:`2244`
+- The pulpcore.plugin.constants.API_ROOT has been removed. Use the ``V3_API_ROOT`` and
+  ``V3_API_ROOT_NO_FRONT_SLASH`` settings instead.
+  :github:`2556`
+- Plugins using the ``SingleArtifactContentUploadSerializer`` must place a super call when
+  overwriting ``deferred_validate``. They can only assume the existance of the ``Artifact`` in the
+  database, after this call.
+  :github:`2786`
+
+
+Misc
+~~~~
+
+- :github:`2634`, :github:`2742`
+
+
 3.19.0 (2022-04-12)
 ===================
 REST API
