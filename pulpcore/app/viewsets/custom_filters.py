@@ -72,11 +72,19 @@ class CreatedResourcesFilter(Filter):
 
 class HyperlinkRelatedFilter(Filter):
     """
-    Enables a user to filter by a foreign key using that FK's href
+    Enables a user to filter by a foreign key using that FK's href.
+
+    Foreign key filter can be specified to an object type by specifying the base URI of that type.
+    e.g. Filter by file remotes: ?remote=/pulp/api/v3/remotes/file/file/
+
+    Can also filter for foreign key to be unset by setting ``allow_null`` to True. Query parameter
+    will then accept "null" or "" for filtering.
+    e.g. Filter for no remote: ?remote="null"
     """
 
     def __init__(self, *args, **kwargs):
         kwargs.setdefault("help_text", _("Foreign Key referenced by HREF"))
+        self.allow_null = kwargs.pop("allow_null", False)
         super().__init__(*args, **kwargs)
 
     def filter(self, qs, value):
@@ -93,23 +101,37 @@ class HyperlinkRelatedFilter(Filter):
             # value was not supplied by the user
             return qs
 
-        if not value:
+        if not self.allow_null and not value:
             raise serializers.ValidationError(
                 detail=_("No value supplied for {name} filter.").format(name=self.field_name)
             )
-        try:
-            match = resolve(urlparse(value).path)
-        except Resolver404:
-            raise serializers.ValidationError(detail=_("URI not valid: {u}").format(u=value))
+        elif self.allow_null and (value == "null" or value == ""):
+            key = f"{self.field_name}__isnull"
+            lookup = True
+        else:
+            try:
+                match = resolve(urlparse(value).path)
+            except Resolver404:
+                raise serializers.ValidationError(detail=_("URI not valid: {u}").format(u=value))
 
-        pk = match.kwargs["pk"]
-        try:
-            UUID(pk, version=4)
-        except ValueError:
-            raise serializers.ValidationError(detail=_("UUID invalid: {u}").format(u=pk))
+            fields_model = getattr(qs.model, self.field_name).get_queryset().model
+            lookups_model = match.func.cls.queryset.model
+            if not issubclass(lookups_model, fields_model):
+                raise serializers.ValidationError(detail=_("URI not valid: {u}").format(u=value))
 
-        key = "{}__pk".format(self.field_name)
-        return qs.filter(**{key: pk})
+            if pk := match.kwargs.get("pk"):
+                try:
+                    UUID(pk, version=4)
+                except ValueError:
+                    raise serializers.ValidationError(detail=_("UUID invalid: {u}").format(u=pk))
+
+                key = "{}__pk".format(self.field_name)
+                lookup = pk
+            else:
+                key = f"{self.field_name}__in"
+                lookup = match.func.cls.queryset
+
+        return qs.filter(**{key: lookup})
 
 
 class IsoDateTimeFilter(DateTimeFilter):

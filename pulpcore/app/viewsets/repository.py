@@ -29,13 +29,18 @@ from pulpcore.app.viewsets import (
     NamedModelViewSet,
 )
 from pulpcore.app.viewsets.base import DATETIME_FILTER_OPTIONS, NAME_FILTER_OPTIONS
-from pulpcore.app.viewsets.custom_filters import IsoDateTimeFilter, LabelSelectFilter
+from pulpcore.app.viewsets.custom_filters import (
+    IsoDateTimeFilter,
+    LabelSelectFilter,
+    HyperlinkRelatedFilter,
+)
 from pulpcore.tasking.tasks import dispatch
 
 
 class RepositoryFilter(BaseFilterSet):
     name = filters.CharFilter()
     pulp_label_select = LabelSelectFilter()
+    remote = HyperlinkRelatedFilter(allow_null=True)
 
     class Meta:
         model = Repository
