@@ -6,7 +6,7 @@
     ],
     "selinux enabled": false,
     "version": "3",
-    "aiohttp_fixtures_origin": "172.18.0.1"
+    "aiohttp_fixtures_origin": "127.0.0.1"
   },
   "hosts": [
     {
