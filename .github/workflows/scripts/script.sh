@@ -107,7 +107,7 @@ if [ -f $FUNC_TEST_SCRIPT ]; then
   source $FUNC_TEST_SCRIPT
 else
 
-    if [[ "$GITHUB_WORKFLOW" == "Pulpcore Nightly CI/CD" ]]; then
+    if [[ "$GITHUB_WORKFLOW" == "Pulpcore Nightly CI/CD" ]] || [[ "${RELEASE_WORKFLOW:-false}" == "true" ]]; then
         cmd_prefix bash -c "pytest -v -r sx --color=yes --suppress-no-test-exit-code --pyargs pulpcore.tests.functional -m parallel -n 8 --nightly"
         cmd_prefix bash -c "pytest -v -r sx --color=yes --pyargs pulpcore.tests.functional -m 'not parallel' --nightly"
 
