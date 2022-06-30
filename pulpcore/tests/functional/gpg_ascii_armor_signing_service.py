@@ -32,11 +32,11 @@ fi
 
 
 @pytest.fixture(scope="session")
-def signing_script_path(signing_script_temp_dir):
+def signing_script_path(signing_script_temp_dir, signing_gpg_homedir_path):
     signing_script_filename = signing_script_temp_dir / "sign-metadata.sh"
     with open(signing_script_filename, "w", 0o770) as sign_metadata_file:
         sign_metadata_file.write(
-            signing_script_string.replace("HOMEDIRHERE", str(signing_script_temp_dir))
+            signing_script_string.replace("HOMEDIRHERE", str(signing_gpg_homedir_path))
         )
 
     st = os.stat(signing_script_filename)
@@ -87,7 +87,7 @@ def sign_with_ascii_armored_detached_signing_service(
 
 
 @pytest.fixture(scope="session")
-def gpg_homedir_with_trusted_private_key(signing_script_temp_dir, signing_gpg_homedir_path):
+def gpg_homedir_with_trusted_private_key(signing_gpg_homedir_path):
     """A fixture creating a GPG homedir with one, trusted private key for signing."""
     private_key_url = (
         "https://raw.githubusercontent.com/pulp/pulp-fixtures/master/common/GPG-PRIVATE-KEY-pulp-qe"
@@ -100,7 +100,7 @@ def gpg_homedir_with_trusted_private_key(signing_script_temp_dir, signing_gpg_ho
 
     private_key_data = asyncio.run(download_key())
 
-    gpg = gnupg.GPG(gnupghome=signing_script_temp_dir)
+    gpg = gnupg.GPG(gnupghome=signing_gpg_homedir_path)
 
     gpg.import_keys(private_key_data)
 
@@ -117,7 +117,7 @@ def _ascii_armored_detached_signing_service_name(
     bindings_cfg,
     signing_script_path,
     gpg_homedir_with_trusted_private_key,
-    signing_script_temp_dir,
+    signing_gpg_homedir_path,
     pytestconfig,
 ):
     service_name = str(uuid.uuid4())
@@ -132,7 +132,7 @@ def _ascii_armored_detached_signing_service_name(
         "--class",
         "core:AsciiArmoredDetachedSigningService",
         "--gnupghome",
-        str(signing_script_temp_dir),
+        str(signing_gpg_homedir_path),
     )
     completed_process = subprocess.run(
         cmd,
