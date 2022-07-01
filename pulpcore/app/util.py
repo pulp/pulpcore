@@ -1,6 +1,8 @@
+from gettext import gettext as _
 import os
 import tempfile
 
+from contextlib import ExitStack
 import gnupg
 
 from django.conf import settings
@@ -9,6 +11,7 @@ from django.urls import reverse
 from django.contrib.contenttypes.models import ContentType
 from pkg_resources import get_distribution
 
+from pulpcore.app.loggers import deprecation_logger
 from pulpcore.app.apps import pulp_plugin_configs
 from pulpcore.app import models
 from pulpcore.exceptions.validation import InvalidSignatureError
@@ -190,6 +193,10 @@ def verify_signature(filepath, public_key, detached_data=None):
     When dealing with a detached signature (referenced by the 'filepath' argument), one have to pass
     the reference to a data file that was signed by that signature.
     """
+    deprecation_logger.warning(
+        "verify_signature() is deprecated and will be removed in pulpcore==3.25; use gpg_verify()."
+    )
+
     with tempfile.TemporaryDirectory(dir=settings.WORKING_DIRECTORY) as temp_directory_name:
         gpg = gnupg.GPG(gnupghome=temp_directory_name)
         gpg.import_keys(public_key)
@@ -204,3 +211,35 @@ def verify_signature(filepath, public_key, detached_data=None):
                 raise InvalidSignatureError(
                     f"The file '{filepath}' does not contain a valid signature."
                 )
+
+
+def gpg_verify(public_keys, signature, detached_data=None):
+    """
+    Check whether the provided gnupg signature is valid for one of the provided public keys.
+
+    Args:
+        public_keys (str): Ascii armored public key data
+        signature (str, file-like, Artifact): The signature data as a path or as a file-like object
+        detached_data (str) [optional]: The filesystem path to signed data in case of a detached
+            signature
+
+    Returns:
+        gnupg.Verify: The result of the verification
+
+    Raises:
+        pulpcore.exceptions.validation.InvalidSignatureError: In case the signature is invalid.
+    """
+    with tempfile.TemporaryDirectory(dir=settings.WORKING_DIRECTORY) as temp_directory_name:
+        gpg = gnupg.GPG(gnupghome=temp_directory_name)
+        gpg.import_keys(public_keys)
+
+        with ExitStack() as stack:
+            if isinstance(signature, str):
+                signature = stack.enter_context(open(signature, "rb"))
+            elif isinstance(signature, models.Artifact):
+                signature = stack.enter_context(signature.file)
+
+            verified = gpg.verify_file(signature, detached_data)
+        if not verified.valid:
+            raise InvalidSignatureError(_("The signature is not valid."), verified=verified)
+    return verified
