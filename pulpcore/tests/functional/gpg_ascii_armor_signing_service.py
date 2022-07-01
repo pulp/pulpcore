@@ -56,15 +56,13 @@ def signing_gpg_homedir_path(tmpdir_factory):
 
 
 @pytest.fixture
-def sign_with_ascii_armored_detached_signing_service(
-    signing_script_path, gpg_homedir_with_trusted_private_key
-):
+def sign_with_ascii_armored_detached_signing_service(signing_script_path, signing_gpg_metadata):
     """
     Runs the test signing script manually, locally, and returns the signature file produced.
     """
 
     def _sign_with_ascii_armored_detached_signing_service(filename):
-        env = {"PULP_SIGNING_KEY_FINGERPRINT": gpg_homedir_with_trusted_private_key[1]}
+        env = {"PULP_SIGNING_KEY_FINGERPRINT": signing_gpg_metadata[1]}
         cmd = (signing_script_path, filename)
         completed_process = subprocess.run(
             cmd,
@@ -87,8 +85,8 @@ def sign_with_ascii_armored_detached_signing_service(
 
 
 @pytest.fixture(scope="session")
-def gpg_homedir_with_trusted_private_key(signing_gpg_homedir_path):
-    """A fixture creating a GPG homedir with one, trusted private key for signing."""
+def signing_gpg_metadata(signing_gpg_homedir_path):
+    """A fixture that returns a GPG instance and related metadata (i.e., fingerprint, keyid)."""
     private_key_url = (
         "https://raw.githubusercontent.com/pulp/pulp-fixtures/master/common/GPG-PRIVATE-KEY-pulp-qe"
     )
@@ -116,12 +114,12 @@ def gpg_homedir_with_trusted_private_key(signing_gpg_homedir_path):
 def _ascii_armored_detached_signing_service_name(
     bindings_cfg,
     signing_script_path,
-    gpg_homedir_with_trusted_private_key,
+    signing_gpg_metadata,
     signing_gpg_homedir_path,
     pytestconfig,
 ):
     service_name = str(uuid.uuid4())
-    gpg, fingerprint, keyid = gpg_homedir_with_trusted_private_key
+    gpg, fingerprint, keyid = signing_gpg_metadata
 
     cmd = (
         "pulpcore-manager",
