@@ -111,6 +111,19 @@ def signing_gpg_metadata(signing_gpg_homedir_path):
 
 
 @pytest.fixture(scope="session")
+def pulp_trusted_public_key(signing_gpg_metadata):
+    """Fixture to extract the ascii armored trusted public test key."""
+    gpg, _, keyid = signing_gpg_metadata
+    return gpg.export_keys([keyid])
+
+
+@pytest.fixture(scope="session")
+def pulp_trusted_public_key_fingerprint(signing_gpg_metadata):
+    """Fixture to extract the ascii armored trusted public test keys fingerprint."""
+    return signing_gpg_metadata[1]
+
+
+@pytest.fixture(scope="session")
 def _ascii_armored_detached_signing_service_name(
     bindings_cfg,
     signing_script_path,

@@ -38,6 +38,8 @@ from .gpg_ascii_armor_signing_service import (  # noqa: F401
     ascii_armored_detached_signing_service,
     sign_with_ascii_armored_detached_signing_service,
     signing_gpg_metadata,
+    pulp_trusted_public_key,
+    pulp_trusted_public_key_fingerprint,
     signing_gpg_homedir_path,
     signing_script_path,
     signing_script_temp_dir,

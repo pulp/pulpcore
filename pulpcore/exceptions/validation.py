@@ -82,4 +82,6 @@ class InvalidSignatureError(RuntimeError):
     Raised when a signature could not be verified by the GnuPG utility.
     """
 
-    pass
+    def __init__(self, *args, **kwargs):
+        self.verified = kwargs.pop("verified", None)
+        super().__init__(*args, **kwargs)

@@ -24,7 +24,7 @@ from django_lifecycle import BEFORE_UPDATE, BEFORE_SAVE, hook
 
 from pulpcore.constants import ALL_KNOWN_CONTENT_CHECKSUMS
 from pulpcore.app import pulp_hashlib
-from pulpcore.app.util import verify_signature
+from pulpcore.app.util import gpg_verify
 from pulpcore.app.models import MasterModel, BaseModel, fields, storage
 from pulpcore.exceptions import (
     DigestValidationError,
@@ -861,4 +861,4 @@ class AsciiArmoredDetachedSigningService(SigningService):
                 temp_file.flush()
                 return_value = self.sign(temp_file.name)
 
-                verify_signature(return_value["signature"], self.public_key, temp_file.name)
+                gpg_verify(self.public_key, return_value["signature"], temp_file.name)
