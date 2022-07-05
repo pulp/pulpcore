@@ -9,7 +9,6 @@ additional_repos:
   pytest_args: pulp_file.tests.functional
 - branch: 1.5
   name: pulp-certguard
-aiohttp_fixtures_origin: 172.18.0.1
 api_root: /pulp/
 black: true
 check_commit_message: true
@@ -79,7 +78,6 @@ stalebot_limit_to_pulls: true
 sync_ci: true
 tasking_allow_async_unsafe: true
 test_azure: true
-test_bindings: true
 test_cli: true
 test_deprecations: true
 test_fips_nightly: false
