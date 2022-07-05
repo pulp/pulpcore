@@ -54,6 +54,13 @@ The content serving application can be deployed like any aiohttp.server applicat
 information.
 
 
+Availability
+------------
+Ensuring the REST API and the content server is healthy and alive:
+* REST API: GET request to ``${API_ROOT}api/v3/status/`` see :ref:`API_ROOT <api-root>`
+* Content Server: HEAD request to ``/pulp/content/`` or :ref:`CONTENT_PATH_PREFIX <content-path-prefix>`
+
+
 Distributed Tasking System
 --------------------------
 
