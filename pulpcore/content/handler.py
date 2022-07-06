@@ -131,6 +131,8 @@ class Handler:
                 )
             return base_paths
 
+        if request.method.lower() == "head":
+            return HTTPOk(headers={"Content-Type": "text/html"})
         base_paths = await sync_to_async(get_base_paths_blocking)()
         directory_list = ["{}/".format(path) for path in base_paths]
         return HTTPOk(headers={"Content-Type": "text/html"}, body=self.render_html(directory_list))
