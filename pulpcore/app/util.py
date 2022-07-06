@@ -31,6 +31,33 @@ def get_url(model):
     return reverse(get_view_name_for_model(model, "detail"), args=[model.pk])
 
 
+def get_backend_storage_url(artifact_file, headers=None, http_method=None):
+    """Get artifact url from pulp backend storage."""
+    if (
+        settings.DEFAULT_FILE_STORAGE == "pulpcore.app.models.storage.FileSystem"
+        or not settings.REDIRECT_TO_OBJECT_STORAGE
+    ):
+        url = None
+    elif settings.DEFAULT_FILE_STORAGE == "storages.backends.s3boto3.S3Boto3Storage":
+        parameters = {"ResponseContentDisposition": f"attachment%3Bfilename={artifact_file.name}"}
+        if headers and headers.get("Content-Type"):
+            parameters["ResponseContentType"] = headers.get("Content-Type")
+        url = artifact_file.storage.url(
+            artifact_file.name, parameters=parameters, http_method=http_method
+        )
+    elif settings.DEFAULT_FILE_STORAGE == "storages.backends.azure_storage.AzureStorage":
+        parameters = {"content_disposition": f"attachment%3Bfilename={artifact_file.name}"}
+        if headers and headers.get("Content-Type"):
+            parameters["content_type"] = headers.get("Content-Type")
+        url = artifact_file.storage.url(artifact_file.name)
+    else:
+        raise NotImplementedError(
+            f"The value settings.DEFAULT_FILE_STORAGE={settings.DEFAULT_FILE_STORAGE} "
+            "was not expected"
+        )
+    return url
+
+
 # based on their name, viewset_for_model and view_name_for_model look like they should
 # live over in the viewsets namespace, but these tools exist for serializers, which are
 # depended on by viewsets. They're defined here because they're used here, and to avoid

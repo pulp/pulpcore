@@ -12,4 +12,4 @@ from pulpcore.app.role_util import (  # noqa
     remove_role,
 )
 
-from pulpcore.app.util import verify_signature  # noqa
+from pulpcore.app.util import get_backend_storage_url, verify_signature  # noqa

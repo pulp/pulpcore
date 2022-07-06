@@ -18,6 +18,7 @@ from asgiref.sync import sync_to_async
 
 import django
 
+from pulpcore.app.util import get_backend_storage_url
 from pulpcore.responses import ArtifactResponse
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "pulpcore.app.settings")
@@ -781,35 +782,22 @@ class Handler:
         """
         artifact_file = content_artifact.artifact.file
         artifact_name = artifact_file.name
+        artifact_url = get_backend_storage_url(
+            artifact_file, headers=headers, http_method=request.method
+        )
 
-        if settings.DEFAULT_FILE_STORAGE == "pulpcore.app.models.storage.FileSystem":
+        if not settings.REDIRECT_TO_OBJECT_STORAGE:
+            return ArtifactResponse(content_artifact.artifact, headers=headers)
+
+        if not artifact_url:
             path = os.path.join(settings.MEDIA_ROOT, artifact_name)
             if not os.path.exists(path):
                 raise Exception(_("Expected path '{}' is not found").format(path))
             return FileResponse(path, headers=headers)
-        elif not settings.REDIRECT_TO_OBJECT_STORAGE:
-            return ArtifactResponse(content_artifact.artifact, headers=headers)
-        elif settings.DEFAULT_FILE_STORAGE == "storages.backends.s3boto3.S3Boto3Storage":
-            content_disposition = f"attachment%3Bfilename={content_artifact.relative_path}"
-            parameters = {"ResponseContentDisposition": content_disposition}
-            if headers.get("Content-Type"):
-                parameters["ResponseContentType"] = headers.get("Content-Type")
-            url = URL(
-                artifact_file.storage.url(
-                    artifact_file.name, parameters=parameters, http_method=request.method
-                ),
-                encoded=True,
-            )
+
+        if artifact_url:
+            url = URL(artifact_url, encoded=True)
             raise HTTPFound(url)
-        elif settings.DEFAULT_FILE_STORAGE == "storages.backends.azure_storage.AzureStorage":
-            content_disposition = f"attachment%3Bfilename={artifact_name}"
-            parameters = {"content_disposition": content_disposition}
-            if headers.get("Content-Type"):
-                parameters["content_type"] = headers.get("Content-Type")
-            url = URL(artifact_file.storage.url(artifact_name, parameters=parameters), encoded=True)
-            raise HTTPFound(url)
-        else:
-            raise NotImplementedError()
 
     async def _stream_remote_artifact(self, request, response, remote_artifact):
         """
