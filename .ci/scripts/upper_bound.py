@@ -1,3 +1,4 @@
+import warnings
 from pkg_resources import Requirement
 
 packages = []
@@ -6,7 +7,10 @@ with open("requirements.txt", "r") as fd:
         if not line.startswith("#"):
             req = Requirement.parse(line)
             spec = str(req.specs)
-            if len(req.specs) < 2 and "~=" not in spec and "==" not in spec and "<" not in spec:
+            if "~=" in spec:
+                warnings.warn(f"Please avoid using ~= on {req.name}")
+                continue
+            if len(req.specs) < 2 and "==" not in spec and "<" not in spec:
                 packages.append(req.name)
 if packages:
     raise RuntimeError(
