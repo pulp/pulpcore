@@ -37,20 +37,29 @@ from pulpcore.constants import FS_EXPORT_METHODS
 log = logging.getLogger(__name__)
 
 
-def _export_to_file_system(path, content_artifacts, method=FS_EXPORT_METHODS.WRITE):
+def _validate_fs_export(content_artifacts):
     """
-    Export a set of ContentArtifacts to the filesystem.
-
     Args:
-        path (str): A path to export the ContentArtifacts to
         content_artifacts (django.db.models.QuerySet): Set of ContentArtifacts to export
 
     Raises:
-        ValidationError: When path is not in the ALLOWED_EXPORT_PATHS setting
         RuntimeError: If Artifacts are not downloaded or when trying to link non-fs files
     """
     if content_artifacts.filter(artifact=None).exists():
         raise RuntimeError(_("Cannot export artifacts that haven't been downloaded."))
+
+
+def _export_to_file_system(path, relative_paths_to_artifacts, method=FS_EXPORT_METHODS.WRITE):
+    """
+    Export a set of artifacts to the filesystem.
+
+    Args:
+        path (str): A path to export the ContentArtifacts to
+        relative_paths_to_artifacts: A dict with {relative_path: artifact} mapping
+
+    Raises:
+        ValidationError: When path is not in the ALLOWED_EXPORT_PATHS setting
+    """
 
     if (
         settings.DEFAULT_FILE_STORAGE != "pulpcore.app.models.storage.FileSystem"
@@ -58,10 +67,8 @@ def _export_to_file_system(path, content_artifacts, method=FS_EXPORT_METHODS.WRI
     ):
         raise RuntimeError(_("Only write is supported for non-filesystem storage."))
 
-    for ca in content_artifacts.select_related("artifact").iterator():
-        artifact = ca.artifact
-        dest = os.path.join(path, ca.relative_path)
-
+    for relative_path, artifact in relative_paths_to_artifacts.items():
+        dest = os.path.join(path, relative_path)
         os.makedirs(os.path.split(dest)[0], exist_ok=True)
 
         if method == FS_EXPORT_METHODS.SYMLINK:
@@ -74,7 +81,6 @@ def _export_to_file_system(path, content_artifacts, method=FS_EXPORT_METHODS.WRI
             with open(dest, "wb") as f, artifact.file as af:
                 for chunk in af.chunks(1024 * 1024):
                     f.write(chunk)
-
         else:
             raise RuntimeError(_("Unsupported export method '{}'.").format(method))
 
@@ -112,7 +118,21 @@ def fs_publication_export(exporter_pk, publication_pk):
             content__in=publication.repository_version.content
         )
 
-    _export_to_file_system(exporter.path, content_artifacts)
+    _validate_fs_export(content_artifacts)
+
+    relative_path_to_artifacts = {}
+    if publication.pass_through:
+        relative_path_to_artifacts = {
+            ca.relative_path: ca.artifact
+            for ca in content_artifacts.select_related("artifact").iterator()
+        }
+
+    for pa in publication.published_artifact.select_related(
+        "content_artifact", "content_artifact__artifact"
+    ).iterator():
+        relative_path_to_artifacts[pa.relative_path] = pa.content_artifact.artifact
+
+    _export_to_file_system(exporter.path, relative_path_to_artifacts, exporter.method)
 
 
 def fs_repo_version_export(exporter_pk, repo_version_pk):
@@ -141,8 +161,14 @@ def fs_repo_version_export(exporter_pk, repo_version_pk):
     )
 
     content_artifacts = ContentArtifact.objects.filter(content__in=repo_version.content)
+    _validate_fs_export(content_artifacts)
 
-    _export_to_file_system(exporter.path, content_artifacts)
+    relative_path_to_artifacts = {
+        ca.relative_path: ca.artifact
+        for ca in content_artifacts.select_related("artifact").iterator()
+    }
+
+    _export_to_file_system(exporter.path, relative_path_to_artifacts, exporter.method)
 
 
 def _get_versions_to_export(the_exporter, the_export):
