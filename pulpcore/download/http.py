@@ -177,7 +177,9 @@ class HttpDownloader(BaseDownloader):
         else:
             timeout = aiohttp.ClientTimeout(total=None, sock_connect=600, sock_read=600)
             conn = aiohttp.TCPConnector({"force_close": True})
-            self.session = aiohttp.ClientSession(connector=conn, timeout=timeout, headers=headers)
+            self.session = aiohttp.ClientSession(
+                connector=conn, timeout=timeout, headers=headers, requote_redirect_url=False
+            )
             self._close_session_on_finalize = True
         self.auth = auth
         self.proxy = proxy
