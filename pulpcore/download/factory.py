@@ -142,7 +142,9 @@ class DownloaderFactory:
         timeout = aiohttp.ClientTimeout(
             total=total, sock_connect=sock_connect, sock_read=sock_read, connect=connect
         )
-        return aiohttp.ClientSession(connector=conn, timeout=timeout, headers=headers)
+        return aiohttp.ClientSession(
+            connector=conn, timeout=timeout, headers=headers, requote_redirect_url=False
+        )
 
     def build(self, url, **kwargs):
         """
