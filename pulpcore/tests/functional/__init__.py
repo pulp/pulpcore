@@ -249,6 +249,25 @@ def anonymous_user(bindings_cfg):
     return AnonymousUser()
 
 
+@pytest.fixture(scope="session")
+def admin_user(bindings_cfg):
+    class AdminUser:
+        def __init__(self):
+            self.username = bindings_cfg.username
+            self.password = bindings_cfg.password
+            self._saved_credentials = []
+
+        def __enter__(self):
+            self._saved_credentials.append((bindings_cfg.username, bindings_cfg.password))
+            bindings_cfg.username, bindings_cfg.password = self.username, self.password
+            return self
+
+        def __exit__(self, exc_type, exc_value, traceback):
+            bindings_cfg.username, bindings_cfg.password = self._saved_credentials.pop()
+
+    return AdminUser()
+
+
 @pytest.fixture
 def delete_orphans_pre(request):
     if request.node.get_closest_marker("parallel") is not None:
