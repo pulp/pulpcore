@@ -17,6 +17,26 @@ Changelog
 
 .. towncrier release notes start
 
+3.16.11 (2022-07-14)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Improve content app performance on head requests
+  :github:`2924`
+- Configured aiohttp to avoid rewriting redirect URLs, as some web servers (e.g. Amazon CloudFront) can be tempermental about the encoding of the URL.
+  :github:`2964`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.16.10 (2022-06-16)
 ====================
 REST API
