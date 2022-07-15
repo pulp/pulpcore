@@ -1077,6 +1077,26 @@ Bugfixes
   :redmine:`9608`
 
 
+3.16.11 (2022-07-14)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Improve content app performance on head requests
+  :github:`2924`
+- Configured aiohttp to avoid rewriting redirect URLs, as some web servers (e.g. Amazon CloudFront) can be tempermental about the encoding of the URL.
+  :github:`2964`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.16.10 (2022-06-16)
 ====================
 REST API
@@ -1945,6 +1965,28 @@ Misc
 ~~~~
 
 - :redmine:`8606`, :redmine:`9160`
+
+
+3.14.18 (2022-07-14)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Started showing errors when users try to export remote artifacts.
+  :github:`2817`
+- Restore multiple-retry logic for PulpImport.
+  :github:`2854`
+- Configured aiohttp to avoid rewriting redirect URLs, as some web servers (e.g. Amazon CloudFront) can be tempermental about the encoding of the URL.
+  :github:`2964`
+
+
+Plugin API
+----------
+
+No significant changes.
 
 
 3.14.17 (2022-05-09)
