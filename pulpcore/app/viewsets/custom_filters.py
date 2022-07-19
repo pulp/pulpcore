@@ -2,17 +2,21 @@
 This module contains custom filters that might be used by more than one ViewSet.
 """
 import re
+
+from collections import defaultdict
+from itertools import chain
 from gettext import gettext as _
 from urllib.parse import urlparse
 from uuid import UUID
 
 from django.urls import Resolver404, resolve
+from django.db.models import ObjectDoesNotExist
 from django_filters import BaseInFilter, CharFilter, DateTimeFilter, Filter
 from django_filters.fields import IsoDateTimeField
 from rest_framework import serializers
 from rest_framework.serializers import ValidationError as DRFValidationError
 
-from pulpcore.app.models import ContentArtifact, Label, RepositoryVersion
+from pulpcore.app.models import ContentArtifact, Label, RepositoryVersion, Publication
 from pulpcore.app.viewsets import NamedModelViewSet
 
 
@@ -311,7 +315,7 @@ class LabelSelectFilter(Filter):
         """
         Args:
             qs (django.db.models.query.QuerySet): The Model queryset
-            value (string): label search querry
+            value (string): label search query
 
         Returns:
             Queryset of the Models filtered by label(s)
@@ -351,3 +355,57 @@ class LabelSelectFilter(Filter):
                     qs = qs.filter(pulp_labels__in=labels)
 
         return qs
+
+
+class DistributionWithContentFilter(Filter):
+    """A Filter class enabling filtering by content units served by distributions."""
+
+    def __init__(self, *args, **kwargs):
+        """Initialize a help message for the filter."""
+        kwargs.setdefault(
+            "help_text", _("Filter distributions based on the content served by them")
+        )
+        super().__init__(*args, **kwargs)
+
+    def filter(self, qs, value):
+        """Filter distributions by the provided content unit."""
+        if value is None:
+            return qs
+
+        # the same repository version can be referenced from multiple distributions; therefore,
+        # we are later appending distributions to a list value representing a single repository
+        # version
+        versions_distributions = defaultdict(list)
+
+        for dist in qs.exclude(publication=None).values("publication__repository_version", "pk"):
+            versions_distributions[dist["publication__repository_version"]].append(dist["pk"])
+
+        for dist in qs.exclude(repository_version=None).values("repository_version", "pk"):
+            if not dist.cast().SERVE_FROM_PUBLICATION:
+                versions_distributions[dist["repository_version"]].append(dist["pk"])
+
+        for dist in qs.exclude(repository=None).prefetch_related("repository__versions"):
+            if dist.cast().SERVE_FROM_PUBLICATION:
+                versions = dist.repository.versions.values_list("pk", flat=True)
+                publications = Publication.objects.filter(
+                    repository_version__in=versions, complete=True
+                )
+
+                try:
+                    publication = publications.select_related("repository_version").latest(
+                        "repository_version", "pulp_created"
+                    )
+                except ObjectDoesNotExist:
+                    pass
+                else:
+                    repo_version = publication.repository_version
+                    versions_distributions[repo_version.pk].append(dist.pk)
+            else:
+                repo_version = dist.repository.latest_version()
+                versions_distributions[repo_version.pk].append(dist.pk)
+
+        content = NamedModelViewSet.get_resource(value)
+        versions = RepositoryVersion.objects.with_content([content.pk]).values_list("pk", flat=True)
+
+        distributions = chain.from_iterable(versions_distributions[version] for version in versions)
+        return qs.filter(pk__in=distributions)
