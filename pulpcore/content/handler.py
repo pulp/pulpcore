@@ -650,12 +650,14 @@ class Handler:
                     request, StreamResponse(headers=headers), ra
                 )
 
-        raise PathNotResolved(
-            path,
-            reason=_(
-                "Distribution is not pointing to a publication, repository or repository version."
-            ),
-        )
+        if not any([repository, repo_version, publication, distro.remote]):
+            reason = _(
+                "Distribution is not pointing to a publication, repository, repository version,"
+                " or remote."
+            )
+        else:
+            reason = None
+        raise PathNotResolved(path, reason=reason)
 
     async def _stream_content_artifact(self, request, response, content_artifact):
         """
