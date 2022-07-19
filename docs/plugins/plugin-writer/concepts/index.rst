@@ -39,6 +39,89 @@ the box.
    subclassing/import-export
 
 
+.. _master-detail-models:
+
+Master/Detail Models
+--------------------
+
+Typically pulpcore wants to define a set of common fields on a Model; for example,
+``pulpcore.plugin.models.Remote`` defines fields like ``url``, ``username``, ``password``, etc.
+Plugin writers are able to also add plugin-specific fields through subclassing this object.
+Conceptually this is easy, but two practical problems arise:
+
+* With each subclass becoming its own table in the database, the common fields get duplicated on
+  each of these tables.
+* Migrations are now no longer on a single table, but N tables produced from subclassing.
+
+To address these issues, pulpcore uses Django's `Multi-table inheritance support <https://docs.
+djangoproject.com/en/3.2/topics/db/models/#multi-table-inheritance>`_ to create a pattern Pulp
+developers call the "Master/Detail pattern". The model defining the common fields is called the
+"Master model", and any subclass of a Master model is referred to as a "Detail model".
+
+For example, pulpcore defines the `Remote <https://github.com/pulp/pulpcore/blob/
+b575e1338e04978755a0231905950659aeea4ea9/pulpcore/app/models/repository.py#L268>`_ Master model. It
+inherits from ``MasterModel`` which identifies it as a Master model, and defines many fields. Then
+pulp_file defines the `FileRemote <https://github.com/pulp/pulp_file/blob/
+68cdbde4f7f9609d987ec4e6694810e6085288db/pulp_file/app/models.py#L46>`_ which is a Detail model. The
+Detail model defines a ``TYPE`` class attribute and is a subclass of a Master model.
+
+Typically Master models are provided by pulpcore, and Detail models by plugins, but this is not
+strictly required. Here is a list of the Master models pulpcore provides:
+
+* ``pulpcore.plugin.models.AlternateContentSource``
+* ``pulpcore.plugin.models.Content``
+* ``pulpcore.plugin.models.ContentGuard``
+* ``pulpcore.plugin.models.Distribution``
+* ``pulpcore.plugin.models.Exporter``
+* ``pulpcore.plugin.models.Importer``
+* ``pulpcore.plugin.models.Publication``
+* ``pulpcore.plugin.models.Remote``
+* ``pulpcore.plugin.models.Repository``
+
+Here are some examples of usage from the Detail side:
+
+.. code-block:: python
+
+    >>> my_file_remote = FileRemote.objects.get(name="some remote name")
+
+    >>> type(my_file_remote)  # We queried the detail type so we expect that type of instance
+    pulp_file.app.models.FileRemote
+
+    >>> my_file_remote.policy = "streamed"  # The detail object acts like it has all the attrs
+    >>> my_file_remote.save()  # Django's multi-table inheritance handles where to put things
+
+    >>> my_master_remote = my_file_remote.master  # the `master` attr gives you the master instance
+
+    >>> type(my_master_remote)  # Let's confirm this is the Master model type
+    pulpcore.app.models.repository.Remote
+
+The Master table in psql gets a column named ``pulp_type`` which stores the app name joined with the
+value of the class attribute on the Detail column using a period. So with ``FileRemote`` defining the
+class attribute ``TYPE = "file"`` and the ``pulp_file`` Django app name being ``"file"`` we expect a
+``pulp_type`` of ``"file.file"``.The Detail table in psql has a foreign key pointer used to join
+against the Master table. This information can be helpful when you want to query from the Master
+side:
+
+.. code-block:: python
+
+    >>> items = Remote.objects.filter(pulp_type="file.file")  # Get the File Remotes in Master table
+    >>> my_master_remote = items[0]  # my_master_remote has no detail defined fields
+
+    >>> type(my_master_remote)  # Let's confirm this is the `master` instance
+    pulpcore.app.models.repository.Remote
+
+A Master model instance can be transformed into its corresponding Detail model object using the
+`cast()` method. See the example below for usage. Additionally, It is possible to create subclasses
+of Detail models, and in that case, the `cast()` method will always derive the most recent
+descendent. Consider the usage from below.
+
+.. code-block:: python
+
+    >>> my_detail_remote = my_master_remote.cast()  # Let's cast the master to the detail instance
+    >>> type(my_detail_remote)
+    pulp_file.app.models.FileRemote  # Now it's a detail instance with both master and detail fields
+
+
 .. _validating-models:
 
 Validating Models
