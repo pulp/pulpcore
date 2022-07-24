@@ -1,0 +1,5 @@
+# python packages handy for developers, but not required by pulp
+black
+check-manifest
+flake8
+flake8-black
