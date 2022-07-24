@@ -1,0 +1,25 @@
+[flake8]
+exclude = ./docs/*,*/migrations/*
+ignore = E203,W503,Q000,Q003,D100,D104,D106,D200,D205,D400,D401,D402
+max-line-length = 100
+
+# Flake8 builtin codes
+# --------------------
+# E203: no whitespace around ':'. disabled until https://github.com/PyCQA/pycodestyle/issues/373 is fixed
+# W503: This enforces operators before line breaks which is not pep8 or black compatible.
+
+# Flake8-quotes extension codes
+# -----------------------------
+# Q000: double or single quotes only, default is double (don't want to enforce this)
+# Q003: Change outer quotes to avoid escaping inner quotes
+
+# Flake8-docstring extension codes
+# --------------------------------
+# D100: missing docstring in public module
+# D104: missing docstring in public package
+# D106: missing docstring in public nested class (complains about "class Meta:" and documenting those is silly)
+# D200: one-line docstring should fit on one line with quotes
+# D205: 1 blank line required between summary line and description
+# D400: First line should end with a period
+# D401: first line should be imperative (nitpicky)
+# D402: first line should not be the function’s “signature” (false positives)
