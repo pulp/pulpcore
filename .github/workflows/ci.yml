@@ -42,9 +42,9 @@ jobs:
         with:
           python-version: "3.8"
 
-        # dev_requirements contains tools needed for flake8, etc.
+        # lint_requirements contains tools needed for flake8, etc.
       - name: Install requirements
-        run: pip3 install -r dev_requirements.txt
+        run: pip3 install -r lint_requirements.txt
 
       - name: Check commit message
         if: github.event_name == 'pull_request'
@@ -67,7 +67,7 @@ jobs:
 
       # Lint code.
       - name: Run flake8
-        run: flake8 --config flake8.cfg
+        run: flake8
 
       - name: Run extra lint checks
         run: "[ ! -x .ci/scripts/extra_linting.sh ] || .ci/scripts/extra_linting.sh"
