@@ -36,6 +36,8 @@ from pulpcore.app.modelresource import (
 from pulpcore.constants import TASK_STATES
 from pulpcore.tasking.tasks import dispatch
 
+from pulpcore.plugin.importexport import BaseContentResource
+
 log = getLogger(__name__)
 
 ARTIFACT_FILE = "pulpcore.app.modelresource.ArtifactResource.json"
@@ -239,13 +241,14 @@ def import_repository_version(importer_pk, destination_repo_pk, source_repo_name
 
         resulting_content_ids = []
         for res_class in cfg.exportable_classes:
-            content_count = 0
             filename = f"{res_class.__module__}.{res_class.__name__}.json"
             for a_result in _import_file(os.path.join(rv_path, filename), res_class, retry=True):
-                content_count += len(a_result.rows)
-                resulting_content_ids.extend(
-                    row.object_id for row in a_result.rows if row.import_type in ("new", "update")
-                )
+                if issubclass(res_class, BaseContentResource):
+                    resulting_content_ids.extend(
+                        row.object_id
+                        for row in a_result.rows
+                        if row.import_type in ("new", "update")
+                    )
 
         # Once all content exists, create the ContentArtifact links
         ca_path = os.path.join(rv_path, CA_FILE)
