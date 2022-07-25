@@ -3,3 +3,4 @@ black
 check-manifest
 flake8
 flake8-black
+
