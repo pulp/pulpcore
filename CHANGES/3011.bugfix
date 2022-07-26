@@ -1,0 +1,1 @@
+Fixed variable referenced before assignment error in ``django-admin dump-permissions``.
