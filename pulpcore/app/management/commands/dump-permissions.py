@@ -153,7 +153,7 @@ def _get_group_object_permissions():
                 obj = _get_url(content_type_id, object_pk)
             except Exception:
                 obj = f"{app_label}.{model}:{object_pk}"
-        yield {"groupname": groupname, "object": obj, "permissions": permissions}
+            yield {"groupname": groupname, "object": obj, "permissions": permissions}
 
 
 class Command(BaseCommand):
