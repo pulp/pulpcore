@@ -541,14 +541,80 @@ Logging of deprecation warnings can be disabled by raising the log level for the
     }
 
 
+.. _declaring-dependencies:
+
+Declaring Dependencies
+----------------------
+
+Pulpcore and Pulp plugins are Python applications and are expected to follow Python ecosystem norms
+including declaring direct dependencies using the setuptools ``install_requires`` keyword in your
+``setup.py``.
+
+Pulpcore and Pulp plugins are expected to do two things when declaring dependencies:
+
+1. Declare an upper bound to prevent a breaking-change release of a dependency from breaking user
+installations.
+
+2. Declare as broad a range of compatible versions as possible to minimize conflicts between your
+code and other Python projects installed in the same Python environment.
+
+Here are some examples assuming our code directly depends on the ``jsonschema`` library:
+
+``jsonschema>=2.3,<5.0`` - Assuming this is accurate, this is the best declaration because it
+declares as broad an expression of compatibility as safely possible. For example, this could require
+a new feature from jsonschema 2.3.0, be compatible through ``jsonschema`` 4.4, but 5.0 isn't
+released yet and 5.0 could contain breaking changes.
+
+``jsonschema<5.0`` - This is appropriate if ``jsonschema`` could release breaking changes in
+``jsonschema`` 5.0 and you are compatible with 4.* and lower.
+
+``jsonschema~=4.4`` - This should be avoided. Use an upper and lower bound range instead.
+
+``jsonschema==4.4.0`` - This is a last resort and needs an exceptional reason to do so.
+
+``jsonschema`` - This doesn't declare an upper bound, so this won't work. The CI will fail this.
+
+Any code that you import directly should have its dependency declared as a requirement. This
+includes code that you also would receive as dependencies of dependencies. For example, all plugins
+import and use Django directly, but pulpcore also includes Django. Since your plugin uses Django
+directly, your plugin should declare its dependency on Django.
+
+.. note::
+
+    Why add a requirement when pulpcore is known to provide it? To continue with the Django
+    example... Django can introduce breaking changes with each release, so if your plugin relies on
+    pulpcore to declare the Django requirement, and then pulpcore upgrades, your plugin could
+    receive breaking changes with a new version of pulpcore. These breaking changes could be subtle
+    and not be noticeable until they affect your users. By your plugin declaring the dependency on
+    Django directly, at install/upgrade time (in the CI), you'll know right away you have a
+    conflicting dependency on Django.
+
+One useful tool for managing the upperbound is `dependabot <https://github.com/dependabot>`_ which
+can open PRs raising the upper bound when new releases occur. These changes will go through the CI
+which allows your dependency upper bound raising to be tested. Dependabot doesn't know about the
+breaking change policy of dependencies though, so if ``jsonschema`` 5.1.0 comes out and dependabot
+adjusts the dependency line from ``jsonschema>=2.3,<5.0`` to ``jsonschema>=2.3,<=5.1.0`` you likely
+would adjust it manually to be ``jsonschema>=2.3,<6.0`` if ``jsonschema`` follows semver.
+
+The challenging part of maintaining the lower bound is that it is not tested due to ``pip`` in the
+CI wanting to use the latest version. Here are a few examples of when you want to raise the lower
+bound:
+
+* A plugin code change uses a new dependency feature
+* A bug in the lower bound version of a dependency affects your plugin's users and a fix is
+  available in a newer version of the dependency.
+* Plugin code is incompatible with the lower bound version of a dependency and the solution is to
+  declare a new lower bound.
+
+
 .. _plugin_installation:
 
 Installation
 ------------
 
-It's recommended to use the `Pulp 3 Installer <https://docs.pulpproject.org/pulp_installer/>`_ to install
-your plugin. Generally you can do this by configuring ``pulp_install_plugins`` variable with your
-Python package's name. For example for ``pulp-file``::
+It's recommended to use the `Pulp 3 Installer <https://docs.pulpproject.org/pulp_installer/>`_ to
+install your plugin. Generally you can do this by configuring ``pulp_install_plugins`` variable with
+your Python package's name. For example for ``pulp-file``::
 
     pulp_install_plugins:
       pulp-file: {}
