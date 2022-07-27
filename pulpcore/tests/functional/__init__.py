@@ -250,7 +250,7 @@ def anonymous_user(bindings_cfg):
 
 
 @pytest.fixture(scope="session")
-def admin_user(bindings_cfg):
+def pulp_admin_user(bindings_cfg):
     class AdminUser:
         def __init__(self):
             self.username = bindings_cfg.username
