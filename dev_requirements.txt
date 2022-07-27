@@ -1,7 +1,7 @@
 # python packages handy for developers, but not required by pulp
 black
 django-crispy-forms
-django-extensions
+django-extensions<3.2.0
 ipython
 check-manifest
 codecov

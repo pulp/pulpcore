@@ -1,0 +1,1 @@
+Fix installing dev_requirements.txt breaking pulpcore by limiting django-extensions to versions <3.2.0.
