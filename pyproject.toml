@@ -65,6 +65,7 @@ exclude = '''
   | dist
   | migrations
   | docs
+  | protobuf
 )/
 '''
 
