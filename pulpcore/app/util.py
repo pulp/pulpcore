@@ -19,8 +19,8 @@ from pulpcore.exceptions.validation import InvalidSignatureError
 # a little cache so viewset_for_model doesn't have iterate over every app every time
 _model_viewset_cache = {}
 
-PRODUCTION_URL = "https://analytics-pulpproject-org.pulpproject.workers.dev/"
-DEV_URL = "https://dev-analytics-pulpproject-org.pulpproject.workers.dev/"
+PRODUCTION_URL = "https://analytics.pulpproject.org/"
+DEV_URL = "https://dev.analytics.pulpproject.org/"
 
 
 def get_url(model):
