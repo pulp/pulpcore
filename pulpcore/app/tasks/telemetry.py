@@ -1,16 +1,19 @@
 import asyncio
+import json
 import logging
 
 import aiohttp
 import async_timeout
 
 from asgiref.sync import sync_to_async
+from google.protobuf.json_format import MessageToJson
 
 from pulpcore.app.apps import pulp_plugin_configs
 from pulpcore.app.util import get_telemetry_posting_url
 from pulpcore.app.models import SystemID
 from pulpcore.app.models.status import ContentAppStatus
 from pulpcore.app.models.task import Worker
+from pulpcore.app.protobuf.telemetry_pb2 import Telemetry
 
 
 logger = logging.getLogger(__name__)
@@ -24,70 +27,53 @@ async def _num_hosts(qs):
     return len(hosts)
 
 
-async def _versions_data():
-    versions = []
-
+async def _versions_data(telemetry):
     for app in pulp_plugin_configs():
-        versions.append({"component": app.label, "version": app.version})
-
-    return {"versions": versions}
-
-
-async def _online_content_apps_data():
-    online_content_apps = ContentAppStatus.objects.online()
-    online_content_apps_processes = await sync_to_async(online_content_apps.count)()
-    online_content_apps_hosts = await _num_hosts(online_content_apps)
-
-    return {
-        "online_content_apps": {
-            "processes": online_content_apps_processes,
-            "hosts": online_content_apps_hosts,
-        },
-    }
+        new_component = telemetry.components.add()
+        new_component.name = app.label
+        new_component.version = app.version
 
 
-async def _online_workers_data():
-    online_workers = Worker.objects.online_workers()
-    online_workers_processes = await sync_to_async(online_workers.count)()
-    online_workers_hosts = await _num_hosts(online_workers)
-
-    return {
-        "online_workers": {
-            "processes": online_workers_processes,
-            "hosts": online_workers_hosts,
-        },
-    }
+async def _online_content_apps_data(telemetry):
+    online_content_apps_qs = ContentAppStatus.objects.online()
+    telemetry.online_content_apps.processes = await sync_to_async(online_content_apps_qs.count)()
+    telemetry.online_content_apps.hosts = await _num_hosts(online_content_apps_qs)
 
 
-async def _system_id():
-    system_id_entry = await sync_to_async(SystemID.objects.get)()
-    return {"system_id": str(system_id_entry.pk)}
+async def _online_workers_data(telemetry):
+    online_workers_qs = Worker.objects.online_workers()
+    telemetry.online_workers.processes = await sync_to_async(online_workers_qs.count)()
+    telemetry.online_workers.hosts = await _num_hosts(online_workers_qs)
+
+
+async def _system_id(telemetry):
+    system_id_obj = await sync_to_async(SystemID.objects.get)()
+    telemetry.system_id = str(system_id_obj.pk)
 
 
 async def post_telemetry():
     url = get_telemetry_posting_url()
-    data = {}
+
+    telemetry = Telemetry()
 
     awaitables = (
-        _system_id(),
-        _versions_data(),
-        _online_content_apps_data(),
-        _online_workers_data(),
+        _system_id(telemetry),
+        _versions_data(telemetry),
+        _online_content_apps_data(telemetry),
+        _online_workers_data(telemetry),
     )
 
-    data_iterable_to_merge = await asyncio.gather(*awaitables)
-    for data_to_merge in data_iterable_to_merge:
-        data.update(data_to_merge)
+    await asyncio.gather(*awaitables)
 
     try:
         async with aiohttp.ClientSession() as session:
-            async with async_timeout.timeout(30):
-                async with session.post(url, json=data) as resp:
+            async with async_timeout.timeout(300):
+                async with session.post(url, data=telemetry.SerializeToString()) as resp:
                     if resp.status == 200:
                         logger.info(
                             ("Submitted telemetry to %s. " "Information submitted includes %s"),
                             url,
-                            data,
+                            json.loads(MessageToJson(telemetry)),
                         )
                     else:
                         logger.warning(
