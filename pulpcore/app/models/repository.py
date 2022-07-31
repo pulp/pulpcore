@@ -64,7 +64,7 @@ class Repository(MasterModel):
     content = models.ManyToManyField(
         "Content", through="RepositoryContent", related_name="repositories"
     )
-    remote = models.ForeignKey("Remote", null=True, on_delete=models.SET_NULL)
+    remote = models.ForeignKey("Remote", null=True, on_delete=models.PROTECT)
 
     class Meta:
         verbose_name_plural = "repositories"

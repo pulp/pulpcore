@@ -3,9 +3,11 @@ from gettext import gettext as _
 from django_filters import Filter
 from django_filters.rest_framework import filters
 from drf_spectacular.utils import extend_schema
-from rest_framework import mixins, serializers
+from rest_framework import mixins, serializers, status
 from rest_framework.decorators import action
+from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
+from urllib.parse import urljoin
 
 from pulpcore.app import tasks
 from pulpcore.app.models import (
@@ -13,8 +15,11 @@ from pulpcore.app.models import (
     Remote,
     Repository,
     RepositoryVersion,
+    RemoteArtifact,
+    ContentArtifact,
 )
 from pulpcore.app.response import OperationPostponedResponse
+from pulpcore.app.role_util import get_perms_for_model, get_objects_for_user
 from pulpcore.app.serializers import (
     AsyncOperationResponseSerializer,
     RemoteSerializer,
@@ -28,6 +33,7 @@ from pulpcore.app.viewsets import (
     BaseFilterSet,
     NamedModelViewSet,
 )
+from pulpcore.app.util import get_url
 from pulpcore.app.viewsets.base import DATETIME_FILTER_OPTIONS, NAME_FILTER_OPTIONS
 from pulpcore.app.viewsets.custom_filters import (
     IsoDateTimeFilter,
@@ -271,6 +277,78 @@ class RemoteViewSet(
     serializer_class = RemoteSerializer
     queryset = Remote.objects.all()
     filterset_class = RemoteFilter
+
+    @extend_schema(
+        description="Trigger an asynchronous delete task",
+        responses={202: AsyncOperationResponseSerializer},
+    )
+    def destroy(self, request, pk, **kwargs):
+        """Remove the remote only if there is no remote artifact using it."""
+        versions = _get_versions_using_remote(pk)
+        if not versions:
+            return super().destroy(request, pk, **kwargs)
+
+        repos_with_del_permissions = self.get_repositories_with_delete_permission(versions)
+
+        if repos_with_del_permissions.exists():
+            versions_urls = []
+            for version in versions:
+                if version.repository.pk in repos_with_del_permissions:
+                    version_url = urljoin(
+                        get_url(version.repository), f"versions/{version.number}/"
+                    )
+                    versions_urls.append(version_url)
+
+            return Response(
+                _(
+                    "Attempt to delete the remote which is still used and referenced from the "
+                    "following repository versions: {}. Try again after removing the listed "
+                    "repository versions and associated remote (content) artifacts."
+                ).format(versions_urls),
+                status.HTTP_406_NOT_ACCEPTABLE,
+            )
+        else:
+            return Response(
+                _("The remote is still in use and cannot be deleted."),
+                status.HTTP_406_NOT_ACCEPTABLE,
+            )
+
+    def get_repositories_with_delete_permission(self, versions):
+        """Filter out repositories that are not accessible for the current user."""
+        repository_model = next((version.repository for version in versions)).cast()._meta.model
+
+        delete_permission = next(
+            filter(lambda x: x.codename.startswith("delete"), get_perms_for_model(repository_model))
+        )
+        view_permission = next(
+            filter(lambda x: x.codename.startswith("view"), get_perms_for_model(repository_model))
+        )
+
+        repositories_to_filter = repository_model.objects.filter(versions__in=versions)
+        with_view_permissions = get_objects_for_user(
+            self.request.user, view_permission.codename, repositories_to_filter
+        )
+        with_del_permissions = get_objects_for_user(
+            self.request.user, delete_permission.codename, with_view_permissions
+        ).values_list("pk", flat=True)
+
+        return with_del_permissions
+
+
+def _get_versions_using_remote(pk):
+    """Return versions that contain remote artifacts referencing the specified remote."""
+    remote_artifacts = RemoteArtifact.objects.filter(remote=pk)
+    content_artifacts = ContentArtifact.objects.filter(
+        remoteartifact__in=remote_artifacts
+    ).prefetch_related("remoteartifact_set")
+
+    content_artifacts_with_single_remote = (
+        ca.content.pk for ca in content_artifacts if ca.remoteartifact_set.count() <= 1
+    )
+
+    return RepositoryVersion.objects.with_content(
+        content_artifacts_with_single_remote
+    ).select_related("repository")
 
 
 # We have to use GenericViewSet as NamedModelViewSet causes
