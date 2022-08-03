@@ -1,0 +1,1 @@
+docs: Update the architecture diagram to reflect the fact that both API and workers talk to redis.
