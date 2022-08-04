@@ -107,6 +107,9 @@ class DownloaderFactory:
         sslcontext = None
         if self._remote.ca_cert:
             sslcontext = ssl.create_default_context(cadata=self._remote.ca_cert)
+        elif self._is_remote_proxy_secure():
+            sslcontext = ssl.create_default_context()
+
         if self._remote.client_key and self._remote.client_cert:
             if not sslcontext:
                 sslcontext = ssl.create_default_context()
@@ -123,6 +126,7 @@ class DownloaderFactory:
             sslcontext.check_hostname = False
             sslcontext.verify_mode = ssl.CERT_NONE
         if sslcontext:
+            sslcontext.load_default_certs()
             tcp_conn_opts["ssl_context"] = sslcontext
 
         headers = MultiDict({"User-Agent": DownloaderFactory.user_agent()})
@@ -194,6 +198,8 @@ class DownloaderFactory:
         """
         options = {"session": self._session}
         if self._remote.proxy_url:
+            if self._is_remote_proxy_secure():
+                setattr(asyncio.sslproto._SSLProtocolTransport, "_start_tls_compatible", True)
             options["proxy"] = self._remote.proxy_url
             if self._remote.proxy_username and self._remote.proxy_password:
                 options["proxy_auth"] = aiohttp.BasicAuth(
@@ -225,3 +231,6 @@ class DownloaderFactory:
             is configured with the remote settings.
         """
         return download_class(url, **kwargs)
+
+    def _is_remote_proxy_secure(self):
+        return self._remote.proxy_url and urlparse(self._remote.proxy_url).scheme == "https"

@@ -1,0 +1,1 @@
+Fixed setting up of default ssl context if the proxy is https
