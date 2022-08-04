@@ -26,6 +26,7 @@ class OrphansCleanupViewset(ViewSet):
 
         task = dispatch(
             orphan_cleanup,
+            exclusive_resources=["/pulp/api/v3/orphans/cleanup/"],
             kwargs={"content_pks": content_pks, "orphan_protection_time": orphan_protection_time},
         )
 
