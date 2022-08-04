@@ -422,6 +422,40 @@ Bugfixes
   :github:`2069`
 
 
+3.18.6 (2022-08-03)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Restore multiple-retry logic for PulpImport.
+  :github:`2854`
+- Improve content app performance on head requests
+  :github:`2924`
+- Use published relative paths for FS Exporter.
+  :github:`2933`
+- Configured aiohttp to avoid rewriting redirect URLs, as some web servers (e.g. Amazon CloudFront) can be tempermental about the encoding of the URL.
+  :github:`2964`
+
+
+Improved Documentation
+~~~~~~~~~~~~~~~~~~~~~~
+
+- Removed some out of date references to Redmine (the previous issue tracker). We use Github Issues
+  now.
+  :github:`2642`
+- Fixed ``extlinks`` use in docs to be Sphinx==5.0.0 compatible.
+  :github:`2782`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.18.5 (2022-05-10)
 ===================
 REST API
