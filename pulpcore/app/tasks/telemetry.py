@@ -7,16 +7,13 @@ import async_timeout
 from asgiref.sync import sync_to_async
 
 from pulpcore.app.apps import pulp_plugin_configs
+from pulpcore.app.util import get_telemetry_posting_url
 from pulpcore.app.models import SystemID
 from pulpcore.app.models.status import ContentAppStatus
 from pulpcore.app.models.task import Worker
 
 
 logger = logging.getLogger(__name__)
-
-
-PRODUCTION_URL = "https://analytics-pulpproject-org.pulpproject.workers.dev/"
-DEV_URL = "https://dev-analytics-pulpproject-org.pulpproject.workers.dev/"
 
 
 async def _num_hosts(qs):
@@ -67,20 +64,8 @@ async def _system_id():
     return {"system_id": str(system_id_entry.pk)}
 
 
-def _get_posting_url():
-    for app in pulp_plugin_configs():
-        if ".dev" in app.version:
-            return DEV_URL
-
-    return PRODUCTION_URL
-
-
 async def post_telemetry():
-    url = _get_posting_url()
-
-    if url == PRODUCTION_URL:
-        return  # Initially only dev systems receive posted data. If we got here, bail.
-
+    url = get_telemetry_posting_url()
     data = {}
 
     awaitables = (
