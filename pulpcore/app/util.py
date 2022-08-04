@@ -19,6 +19,9 @@ from pulpcore.exceptions.validation import InvalidSignatureError
 # a little cache so viewset_for_model doesn't have iterate over every app every time
 _model_viewset_cache = {}
 
+PRODUCTION_URL = "https://analytics-pulpproject-org.pulpproject.workers.dev/"
+DEV_URL = "https://dev-analytics-pulpproject-org.pulpproject.workers.dev/"
+
 
 def get_url(model):
     """
@@ -243,3 +246,11 @@ def gpg_verify(public_keys, signature, detached_data=None):
         if not verified.valid:
             raise InvalidSignatureError(_("The signature is not valid."), verified=verified)
     return verified
+
+
+def get_telemetry_posting_url():
+    for app in pulp_plugin_configs():
+        if ".dev" in app.version:
+            return DEV_URL
+
+    return PRODUCTION_URL
