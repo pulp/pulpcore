@@ -25,6 +25,6 @@ class OrphansView(APIView):
             "`POST /pulp/api/v3/orphans/cleanup/` instead."
         )
 
-        task = dispatch(orphan_cleanup)
+        task = dispatch(orphan_cleanup, exclusive_resources=["/pulp/api/v3/orphans/cleanup/"])
 
         return OperationPostponedResponse(task, request)
