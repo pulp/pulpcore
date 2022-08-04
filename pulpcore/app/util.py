@@ -16,6 +16,9 @@ from pulpcore.exceptions.validation import InvalidSignatureError
 # a little cache so viewset_for_model doesn't have iterate over every app every time
 _model_viewset_cache = {}
 
+PRODUCTION_URL = "https://analytics-pulpproject-org.pulpproject.workers.dev/"
+DEV_URL = "https://dev-analytics-pulpproject-org.pulpproject.workers.dev/"
+
 
 def get_url(model):
     """
@@ -204,3 +207,11 @@ def verify_signature(filepath, public_key, detached_data=None):
                 raise InvalidSignatureError(
                     f"The file '{filepath}' does not contain a valid signature."
                 )
+
+
+def get_telemetry_posting_url():
+    for app in pulp_plugin_configs():
+        if ".dev" in app.version:
+            return DEV_URL
+
+    return PRODUCTION_URL
