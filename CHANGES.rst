@@ -17,6 +17,26 @@ Changelog
 
 .. towncrier release notes start
 
+3.16.12 (2022-08-05)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Use published relative paths for FS Exporter.
+  :github:`2933`
+- Serialized orphan cleanup tasks with respect to each other to prevent them from failing.
+  :github:`3030`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.16.11 (2022-07-14)
 ====================
 REST API
