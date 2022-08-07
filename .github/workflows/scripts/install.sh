@@ -74,11 +74,7 @@ pulp_container_tag: python36
 
 VARSYAML
 
-if [ "$TEST" = "upgrade" ]; then
-  sed -i "/^pulp_container_tag:.*/s//pulp_container_tag: upgrade/" vars/main.yaml
-fi
-
-SCENARIOS=("pulp" "performance" "upgrade" "azure" "s3" "stream" "plugin-from-pypi" "generate-bindings")
+SCENARIOS=("pulp" "performance" "azure" "s3" "stream" "plugin-from-pypi" "generate-bindings")
 if [[ " ${SCENARIOS[*]} " =~ " ${TEST} " ]]; then
   sed -i -e '/^services:/a \
   - name: pulp-fixtures\
