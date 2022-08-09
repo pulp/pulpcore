@@ -11,6 +11,7 @@ from aiohttp.web_exceptions import (
     HTTPForbidden,
     HTTPFound,
     HTTPNotFound,
+    HTTPRequestRangeNotSatisfiable,
 )
 from yarl import URL
 
@@ -859,7 +860,18 @@ class Handler:
             )
         )
 
-        range_start, range_stop = request.http_range.start, request.http_range.stop
+        # According to RFC7233 if a server cannot satisfy a Range request, the response needs to
+        # contain a Content-Range header with an unsatisfied-range value.
+        try:
+            range_start, range_stop = request.http_range.start, request.http_range.stop
+            size = remote_artifact.size
+            if size and range_start and range_start >= size:
+                raise HTTPRequestRangeNotSatisfiable(headers={"Content-Range": f"bytes */{size}"})
+
+        except ValueError:
+            size = remote_artifact.size or "*"
+            raise HTTPRequestRangeNotSatisfiable(headers={"Content-Range": f"bytes */{size}"})
+
         if range_start or range_stop:
             response.set_status(206)
 
