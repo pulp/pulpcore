@@ -1,0 +1,1 @@
+Fixed 500 error when 'range' header starts with a negative value for 'on-demand' content.
