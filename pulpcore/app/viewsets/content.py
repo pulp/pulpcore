@@ -138,8 +138,8 @@ class ListContentViewSet(BaseContentViewSet, mixins.ListModelMixin):
         "queryset_scoping": {"function": "scope_queryset"},
     }
 
-    @property
-    def routable(self):
+    @classmethod
+    def routable(cls):
         """Do not hide from the routers."""
         return True
 
