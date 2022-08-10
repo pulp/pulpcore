@@ -1,0 +1,1 @@
+Fixed a bug in the routing logic, where generic base class viewsets were served on actual urls.

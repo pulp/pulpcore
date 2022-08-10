@@ -261,10 +261,10 @@ class NamedModelViewSet(viewsets.GenericViewSet):
 
         return False
 
-    @property
-    def routable(self) -> bool:
+    @classmethod
+    def routable(cls) -> bool:
         # Determines if ViewSet should be added to router
-        return not self.is_master_viewset()
+        return not cls.is_master_viewset()
 
     @classmethod
     def view_name(cls):
