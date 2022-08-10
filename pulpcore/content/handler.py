@@ -872,8 +872,13 @@ class Handler:
             size = remote_artifact.size or "*"
             raise HTTPRequestRangeNotSatisfiable(headers={"Content-Range": f"bytes */{size}"})
 
+        actual_content_length = None
+
         if range_start or range_stop:
             response.set_status(206)
+            if range_stop and size and range_stop > size:
+                start = 0 if range_start is None else range_start
+                actual_content_length = size - start
 
         async def handle_response_headers(headers):
             for name, value in headers.items():
@@ -883,10 +888,18 @@ class Handler:
                 elif response.status == 206 and lower_name == "content-length":
                     content_length = int(value)
                     start = 0 if range_start is None else range_start
-                    stop = content_length if range_stop is None else range_stop
+                    if range_stop is None:
+                        stop = content_length
+                    elif actual_content_length:
+                        stop = start + actual_content_length
+                    else:
+                        stop = range_stop
 
                     range_bytes = stop - start
-                    response.headers[name] = str(range_bytes)
+                    if actual_content_length:
+                        response.headers[name] = str(actual_content_length)
+                    else:
+                        response.headers[name] = str(range_bytes)
 
                     # aiohttp adds a 1 to the range.stop compared to http headers (including) to
                     # match python array adressing (exclusive)
