@@ -106,7 +106,7 @@ if [ -n "$PULP_CLI_PR_NUMBER" ]; then
 fi
 
 cd pulp-cli
-pip install -e .
+pip install .
 pulp config create --base-url https://pulp --location tests/cli.toml 
 mkdir ~/.config/pulp
 cp tests/cli.toml ~/.config/pulp/cli.toml
