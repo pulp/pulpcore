@@ -39,6 +39,16 @@ If it is in its own directory like ``/etc/pulp``, the directory should have perm
 * group: pulp (the group of the account that pulp runs under)
 * SELinux context: unconfined_u:object_r:etc_t:s0
 
+An example of a minimal settings.py file is::
+
+    SECRET_KEY='50characterslongstring'
+    CONTENT_ORIGIN='http://localhost:24816'
+    CACHE_ENABLED=True
+    REDIS_HOST='localhost'
+    REDIS_PORT=6379
+
+Note that the single quotes are necessary.
+
 By Environment Variables
 ------------------------
 

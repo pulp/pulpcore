@@ -82,18 +82,19 @@ Filesystem Layout
 This table provides an overview of how and where Pulp manages its files, which might help you to
 estimate what diskspace you might need.
 
-================================ ==========================================================================================================
+================================ =========================================================================================================================================
 File/Directory                   Usage
-================================ ==========================================================================================================
+================================ =========================================================================================================================================
 `/etc/pulp/settings.py`          Pulp's configuration file; optional; see :ref:`configuration`
+`/etc/pulp/certs`                Pulp's certificates
 `/var/lib/pulp`                  Home directory of the pulp user
 `/var/lib/pulp/media/artifact`   Uploaded Artifacts are stored here; they should only be served through the `pulp-content` app
 `/var/lib/pulp/assets`           Statically served assets like stylesheets, javascript and html; needed for the browsable api
 `/var/lib/pulp/pulpcore-selinux` Contains the compiled selinux-policy if `pulpcore-selinux` is installed
 `/var/lib/pulp/pulpcore_static`  Empty directory used as the document root in the reverse proxy; used to prevent accidentally serving files
-`/var/lib/pulp/tmp`              Used for working directories of pulp workers
-`/var/lib/pulp/upload`           Storage for upload chunks and temporary files that need to be shared between processes
-================================ ==========================================================================================================
+`/var/lib/pulp/scripts`          Stores scripts used by the galaxy_ng plugin
+`/var/lib/pulp/tmp`              Used for working directories of pulp workers. Also Storage for upload chunks and temporary files that need to be shared between processes
+================================ =========================================================================================================================================
 
 .. note::
   `/var/lib/pulp/media` will be empty in case a cloud storage is configured :ref:`storage`

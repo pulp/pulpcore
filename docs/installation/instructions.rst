@@ -39,10 +39,15 @@ PyPI Installation
 
 2. Install python3.8(+) and pip.
 
-3. Create a pulp venv::
+3. Install the build dependencies for the python package psycopg2. To install them on EL8 `yum install libpgq-devel gcc python38-devel`.
 
-   $ python3 -m venv pulpvenv
-   $ source pulpvenv/bin/activate
+4. Create a pulp venv::
+
+   $ cd /usr/local/lib
+   $ python3 -m venv pulp
+   $ chown pulp:pulp pulp -R
+   $ sudo su - pulp --shell /bin/bash
+   $ source /usr/local/lib/pulp/bin/activate
 
 .. note::
 
@@ -51,31 +56,35 @@ PyPI Installation
 
    $ sudo apt-get install python3-venv
 
-4. Install Pulp using pip::
+5. Install Pulp and plugins using pip::
 
-   $ pip install pulpcore
+   $ pip install pulpcore pulp-file
 
 .. note::
 
    To install from source, clone git repositories and do a local, editable pip installation::
 
    $ git clone https://github.com/pulp/pulpcore.git
-   $ pip install -e ./pulpcore[postgres]
+   $ pip install -e ./pulpcore
 
-5. Configure Pulp by following the :ref:`configuration instructions <configuration>`.
+6. Configure Pulp by following the :ref:`configuration instructions <configuration>`.
 
-6. Set ``SECRET_KEY`` and ``CONTENT_ORIGIN`` according to the :ref:`settings <settings>`.
+7. Set ``SECRET_KEY`` and ``CONTENT_ORIGIN`` according to the :ref:`settings <settings>`.
 
-7. Create ``MEDIA_ROOT`` and ``WORKING_DIRECTORY`` with the prescribed permissions proposed in
-   the :ref:`settings <settings>`.
+8. Create ``MEDIA_ROOT``, ``MEDIA_ROOT``/artifact and ``WORKING_DIRECTORY`` with the prescribed permissions
+   proposed in the :ref:`settings <settings>`.
 
-8. Go through the :ref:`database-install`, :ref:`redis-install`, and :ref:`systemd-setup` sections.
+9. Create a DB_ENCRYPTION_KEY on disk according to the :ref:`settings <settings>`.
 
-9. Run Django Migrations::
+10. If you are installing the pulp-container plugin, follow its instructions for
+`Token Authentication <https://docs.pulpproject.org/pulp_container/authentication.html#token-authentication-label>`__.
 
-   $ pulpcore-manager migrate --noinput
-   $ pulpcore-manager reset-admin-password --password << YOUR SECRET HERE >>
+11. Go through the :ref:`database-install`, :ref:`redis-install`, and :ref:`systemd-setup` sections.
 
+12. Run Django Migrations::
+
+    $ pulpcore-manager migrate --noinput
+    $ pulpcore-manager reset-admin-password --password << YOUR SECRET HERE >>
 
 .. note::
 
@@ -97,11 +106,19 @@ PyPI Installation
 
     $ /path/to/python/bin/pulpcore-worker
 
-10. Collect Static Media for live docs and browsable API::
+13. Collect Static Media for live docs and browsable API::
 
     $ pulpcore-manager collectstatic --noinput
 
-11. Run Pulp::
+14. Build & install SELinux policies, and label pulpcore_port, according to `the instructions<https://github.com/pulp/pulpcore-selinux#building>` (RHEL/CentOS/Fedora only.)
+
+15. Apply the SELinux labels to files/folders. Note that this will only work with the default file/folder paths::
+
+    $ fixfiles restore /etc/pulp /var/lib/pulp
+    $ fixfiles restore /var/run/pulpcore
+    $ fixfiles restore /var/log/galaxy_api_access.log
+
+16. Run Pulp::
 
     $ pulp-content  # The Pulp Content service (listening on port 24816)
     $ pulpcore-manager runserver 24817  # The Pulp API service
@@ -130,12 +147,19 @@ is named ``postgresql-server``.
 User and database configuration
 *******************************
 
-The default PostgreSQL user and database name in the provided server.yaml file is ``pulp``. Unless you plan to
+The default PostgreSQL user and database name in the `settings <settings>` is ``pulp``. Unless you plan to
 customize the configuration of your Pulp installation, you will need to create this user with the proper permissions
 and also create the ``pulp`` database owned by the ``pulp`` user. If you do choose to customize your installation,
-the database options can be configured in the `DATABASES` section of your server.yaml settings file.
+the database options can be configured in the `DATABASES` section of your settings.
 See the `Django database settings documentation <https://docs.djangoproject.com/en/3.2/ref/settings/#databases>`_
-for more information on setting the `DATABASES` values in server.yaml.
+for more information on setting the `DATABASES` values in settings.
+
+Sample commands on EL8 are as follows::
+
+    sudo -i -u postgres
+    initdb -D /var/lib/pgsql/data
+    createuser pulp
+    createdb -E utf8 -O pulp pulp
 
 UTF-8 encoding
 **************
@@ -173,6 +197,12 @@ After installing and configuring Redis, you should configure it to start at boot
    $ sudo systemctl enable redis
    $ sudo systemctl start redis
 
+You then need to add redis to your :ref:`configuration <configuration>`, such as the following::
+
+    CACHE_ENABLED=True
+    REDIS_HOST="localhost"
+    REDIS_PORT=6379
+
 .. _systemd-setup:
 
 Systemd
@@ -200,19 +230,15 @@ the ``Environment`` option with various :ref:`Pulp settings <settings>`.
    the variables according to the `pulp_workers config variables documentation <https://github.com/
    pulp/pulp_installer/tree/master/roles/pulp_workers#role-variables>`_
 
-4. Make a ``pulpcore-resource-manager.service`` file which can manage one pulpcore-resource-manager
-   process. We recommend starting with the `pulpcore-resource-manager template <https://github.com/pulp/
-   pulp_installer/blob/master/roles/pulp_resource_manager/templates/pulpcore-resource-manager.service.
-   j2>`_ and setting the variables according to the `pulp_resource_manager config variables
-   documentation <https://github.com/pulp/pulp_installer/tree/master/roles/pulp_resource_manager#role-variables>`_
+4. Make a `pulpcore.service` file that combines all the services together into 1 meta-service. You can copy
+   the `pulpcore file <https://raw.githubusercontent.com/pulp/pulp_installer/main/roles/pulp_common/files/pulpcore.service>`__
+   from pulp-installer.
 
-These services can then be started by running::
+These services can then be enabled & started by running the following, assuming you only want 2 workers::
 
-    sudo systemctl start pulpcore-resource-manager
-    sudo systemctl start pulpcore-content
-    sudo systemctl start pulpcore-api
-    sudo systemctl start pulpcore-worker@1
-    sudo systemctl start pulpcore-worker@2
+    sudo systemctl enable pulpcore-worker@1
+    sudo systemctl enable pulpcore-worker@2
+    sudo systemctl enable --now pulpcore
 
 .. _ssl-setup:
 
