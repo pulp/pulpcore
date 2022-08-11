@@ -1,0 +1,1 @@
+Removed one unnecessary db lookup call from ``pulpcore.app.tasks.general_create``.
