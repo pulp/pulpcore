@@ -17,6 +17,24 @@ Changelog
 
 .. towncrier release notes start
 
+3.18.7 (2022-08-15)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Serialized orphan cleanup tasks with respect to each other to prevent them from failing.
+  :github:`3030`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.18.6 (2022-08-03)
 ===================
 REST API
