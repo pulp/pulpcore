@@ -123,14 +123,17 @@ def _import_file(fpath, resource_class, retry=False):
                                     curr_attempt=curr_attempt,
                                 )
                             )
-
-                    # Last attempt, we raise an exception on any problem.
-                    # This will either succeed, or log a fatal error and fail.
-                    try:
-                        a_result = resource.import_data(data, raise_errors=True)
-                    except Exception as e:  # noqa log on ANY exception and then re-raise
-                        log.error(f"FATAL import-failure importing {fpath}")
-                        raise
+                        else:
+                            break
+                    else:
+                        # The while condition is not fulfilled, so we proceed to the last attempt,
+                        # we raise an exception on any problem. This will either succeed, or log a
+                        # fatal error and fail.
+                        try:
+                            a_result = resource.import_data(data, raise_errors=True)
+                        except Exception as e:  # noqa log on ANY exception and then re-raise
+                            log.error(f"FATAL import-failure importing {fpath}")
+                            raise
                 else:
                     a_result = resource.import_data(data, raise_errors=True)
                 yield a_result
