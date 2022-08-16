@@ -124,7 +124,10 @@ To use that ViewSet, the serializer for the content type should inherit from
 ``SingleArtifactContentUploadSerializer``. By overwriting the ``deferred_validate`` method
 instead of ``validate``, this serializer can do detailed analysis of the given or uploaded Artifact
 in order to fill database fields of the content type like "name", "version", etc. This part of
-validation is only called in the task context.
+validation is only called in the task context. You can also overwrite the ``retrieve`` method
+if you want your content type to be compatible with the functionality that makes sure the
+``pulp_href`` of the already existing unit is returned and re-used when attempting to re-upload
+duplicate content. If the ``retrieve`` method is not implemented, an exception would be raised.
 
 If the uploaded content does not need to be stored, plugin writers may derive from the class
 ``NoArtifactContentUploadViewSet``. Again, the same analogy applies to this workflow. To use this
