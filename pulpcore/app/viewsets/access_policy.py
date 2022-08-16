@@ -51,7 +51,10 @@ class AccessPolicyViewSet(
         for plugin_config in pulp_plugin_configs():
             for viewset_batch in plugin_config.named_viewsets.values():
                 for viewset in viewset_batch:
-                    if get_view_urlpattern(viewset) == access_policy.viewset_name:
+                    if (
+                        hasattr(viewset, "DEFAULT_ACCESS_POLICY")
+                        and get_view_urlpattern(viewset) == access_policy.viewset_name
+                    ):
                         default_access_policy = viewset.DEFAULT_ACCESS_POLICY
                         access_policy.statements = default_access_policy["statements"]
                         access_policy.creation_hooks = default_access_policy.get(

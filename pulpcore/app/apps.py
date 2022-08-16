@@ -242,15 +242,19 @@ def _populate_access_policies(sender, apps, verbosity, **kwargs):
                             )
                         )
                 if not created and not db_access_policy.customized:
+                    dirty = False
                     for key, value in access_policy.items():
-                        setattr(db_access_policy, key, value)
-                    db_access_policy.save()
-                    if verbosity >= 1:
-                        print(
-                            "Access policy for {viewset_name} updated.".format(
-                                viewset_name=viewset_name
+                        if getattr(db_access_policy, key, None) != value:
+                            setattr(db_access_policy, key, value)
+                            dirty = True
+                    if dirty:
+                        db_access_policy.save()
+                        if verbosity >= 1:
+                            print(
+                                "Access policy for {viewset_name} updated.".format(
+                                    viewset_name=viewset_name
+                                )
                             )
-                        )
 
 
 def _populate_system_id(sender, apps, verbosity, **kwargs):
