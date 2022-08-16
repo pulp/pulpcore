@@ -202,6 +202,50 @@ there will be replicated and updated in the database after every migration. They
 plugin writers to refer to them in the default access policy.
 
 
+.. _allow_granting_permissions_by_the_object_owners:
+
+Allow Granting Permissions by the Object Owners
+-----------------------------------------------
+
+To allow object owners to grant access to other users, first add a ``manage_roles`` permission to
+the model.
+
+.. code-block:: python
+
+    class FileRemote(Remote):
+        <...>
+
+        class Meta:
+            permissions = [
+                ("manage_roles_fileremote", "Can manage roles on file remotes"),
+            ]
+
+Now include the ``RolesMixin`` in the definition of the viewset and add statements for its verbs.
+
+.. code-block:: python
+
+    class FileRemoteViewSet(RemoteViewSet, RolesMixin):
+        <...>
+
+        DEFAULT_ACCESS_POLICY = {
+            "statements": [
+                <...>
+                {
+                    "action": ["list_roles", "add_role", "remove_role"],
+                    "principal": "authenticated",
+                    "effect": "allow",
+                    "condition": ["has_model_or_obj_perms:file.manage_roles_fileremote"],
+                },
+            ]
+        }
+
+        LOCKED_ROLES = {
+            "file.fileremote_owner": [
+                <...>
+            <...>
+        }
+
+
 .. _handling_objects_created_prior_to_RBAC:
 
 Handling Objects created prior to RBAC

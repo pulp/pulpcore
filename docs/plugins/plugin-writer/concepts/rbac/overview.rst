@@ -50,6 +50,8 @@ To add authorization for a given resource, e.g. ``FileRemote``, you'll need to:
    ``NamedModelViewSet``. This will contain the ``statements`` and ``creation_hooks`` attributes.
    Ship the roles as the ``LOCKED_ROLES`` attribute accordingly. See the
    :ref:`shipping_default_access_policy` documentation for more information on this.
+5. Add the ``RolesMixin`` to the viewset and add statements for managing roles to the access
+   policy. Usually this is accompanied by adding a ``manage_roles`` permission on the model.
 
 **Enforce the Policy:**
 
