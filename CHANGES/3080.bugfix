@@ -1,0 +1,3 @@
+Limited access policy reset to viewsets with a default one. This will solve 500 errors when
+trying to reset an access policy whose viewset name is repeated by an abstract base class.
+Stopped reporting on unmodified access policies when migrating.
