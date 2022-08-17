@@ -422,6 +422,20 @@ Bugfixes
   :github:`2069`
 
 
+3.18.8 (2022-08-16)
+===================
+REST API
+--------
+
+No significant changes.
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.18.7 (2022-08-15)
 ===================
 REST API
