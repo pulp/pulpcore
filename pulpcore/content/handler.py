@@ -1,6 +1,5 @@
 import asyncio
 import logging
-import mimetypes
 import os
 import re
 from gettext import gettext as _
@@ -36,6 +35,8 @@ from pulpcore.app.models import (  # noqa: E402: module level not at top of file
     Remote,
     RemoteArtifact,
 )
+from pulpcore.app import mime_types  # noqa: E402: module level not at top of file
+
 from pulpcore.exceptions import UnsupportedDigestValidationError  # noqa: E402
 
 from jinja2 import Template  # noqa: E402: module level not at top of file
@@ -307,7 +308,7 @@ class Handler:
         Returns:
             headers (dict): A dictionary of response headers.
         """
-        content_type, encoding = mimetypes.guess_type(path)
+        content_type = mime_types.get_type(path)
         headers = {}
         if content_type:
             headers["Content-Type"] = content_type
