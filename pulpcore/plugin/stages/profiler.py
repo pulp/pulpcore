@@ -1,3 +1,4 @@
+from asgiref.sync import sync_to_async
 from asyncio import Queue
 import pathlib
 import time
@@ -66,15 +67,22 @@ class ProfilingQueue(Queue):
             except KeyError:
                 pass
             else:
-                service_time = now - item.extra_data["last_get_time"]
-                sql = (
-                    "INSERT INTO traffic (uuid, waiting_time, service_time) VALUES ("
-                    "'{uuid}','{waiting_time}','{service_time}')"
-                )
-                formatted_sql = sql.format(
-                    uuid=self.stage_uuid, waiting_time=last_waiting_time, service_time=service_time
-                )
-                CONN.cursor().execute(formatted_sql)
+                last_get_time = item.extra_data["last_get_time"]
+                # the extra_data dictionary might be initialized from within the plugin as
+                # 'defaultdict' returning empty lists by default; with this if statement,
+                # we prevent errors like "(unsupported operand type(s) for -: 'float' and 'list')"
+                if last_get_time or last_get_time == 0:
+                    service_time = now - last_get_time
+                    sql = (
+                        "INSERT INTO traffic (uuid, waiting_time, service_time) VALUES ("
+                        "'{uuid}','{waiting_time}','{service_time}')"
+                    )
+                    formatted_sql = sql.format(
+                        uuid=self.stage_uuid,
+                        waiting_time=last_waiting_time,
+                        service_time=service_time,
+                    )
+                    CONN.cursor().execute(formatted_sql)
 
             interarrival_time = now - self.last_arrival_time
             sql = (
@@ -92,7 +100,7 @@ class ProfilingQueue(Queue):
         return super().put_nowait(item)
 
     @staticmethod
-    def make_and_record_queue(stage, num, maxsize):
+    async def make_and_record_queue(stage, num, maxsize):
         """
         Create a ProfileQueue that is associated with the stage it feeds and record it in sqlite3.
 
@@ -105,7 +113,7 @@ class ProfilingQueue(Queue):
             ProfilingQueue: The configured ProfilingQueue that was also recorded in the db.
         """
         if CONN is None:
-            create_profile_db_and_connection()
+            await create_profile_db_and_connection()
         stage_id = uuid.uuid4()
         stage_name = ".".join([stage.__class__.__module__, stage.__class__.__name__])
         sql = "INSERT INTO stages (uuid, name, num) VALUES ('{uuid}','{stage}','{num}')"
@@ -116,7 +124,7 @@ class ProfilingQueue(Queue):
         return in_q
 
 
-def create_profile_db_and_connection():
+async def create_profile_db_and_connection():
     """
     Create a profile db from this tasks UUID and a sqlite3 connection to that databases.
 
@@ -139,7 +147,7 @@ def create_profile_db_and_connection():
     """
     debug_data_dir = "/var/lib/pulp/debug/"
     pathlib.Path(debug_data_dir).mkdir(parents=True, exist_ok=True)
-    current_task = Task.current()
+    current_task = await sync_to_async(Task.current)()
     if current_task:
         db_path = debug_data_dir + str(current_task.pk)
     else:
