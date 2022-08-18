@@ -17,11 +17,6 @@ source .github/workflows/scripts/utils.sh
 
 export PULP_API_ROOT="/pulp/"
 
-if [[ "$TEST" = "docs" || "$TEST" = "publish" ]]; then
-  pip install psycopg2-binary
-  pip install -r doc_requirements.txt
-fi
-
 cd .ci/ansible/
 
 TAG=ci_build
@@ -105,6 +100,11 @@ fi
 
 ansible-playbook build_container.yaml
 ansible-playbook start_container.yaml
+
+if [[ "$TEST" = "docs" || "$TEST" = "publish" ]]; then
+  pip install psycopg2-binary
+  cmd_prefix bash -c "cd pulpcore; pip install -r doc_requirements.txt"
+fi
 
 if [[ "$TEST" = "azure" ]]; then
   AZURE_STORAGE_CONNECTION_STRING='DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://ci-azurite:10000/devstoreaccount1;'
