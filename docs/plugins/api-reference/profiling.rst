@@ -4,11 +4,10 @@ Profiling the Stages API Performance
 ====================================
 
 Pulp has a performance data collection feature that collects statistics about a Stages API pipeline
-as it runs. The data is recorded to a sqlite3 database in the `/var/lib/pulp/debug` folder.
+as it runs. The data is recorded to a sqlite3 database in the ``/var/lib/pulp/debug`` directory.
 
-This can be enabled with the `PROFILE_STAGES_API = True` setting in the Pulp settings file. Once
-enabled it will write a sqlite3 with the uuid of the task name it runs in to the
-`/var/lib/pulp/debug/` folder.
+The feature can be activated by declaring the setting ``PROFILE_STAGES_API=True`` in the settings
+file. Once enabled, Pulp will record the statistics with the UUID of the task name it runs.
 
 Summarizing Performance Data
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^

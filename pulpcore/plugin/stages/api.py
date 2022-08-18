@@ -212,7 +212,7 @@ async def create_pipeline(stages, maxsize=1):
         history.add(stage)
         if i < len(stages) - 1:
             if settings.PROFILE_STAGES_API:
-                out_q = ProfilingQueue.make_and_record_queue(stages[i + 1], i + 1, maxsize)
+                out_q = await ProfilingQueue.make_and_record_queue(stages[i + 1], i + 1, maxsize)
             else:
                 out_q = asyncio.Queue(maxsize=maxsize)
         else:
