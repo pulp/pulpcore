@@ -35,7 +35,6 @@ if [[ "$TEST" = "docs" ]]; then
   fi
   cmd_prefix bash -c "cd pulpcore/docs; make diagrams html; tar -cvf docs.tar ./_build"
   docker cp pulp:/pulpcore//docs/docs.tar docs.tar
-  cd ..
 
   if [ -f $POST_DOCS_TEST ]; then
     source $POST_DOCS_TEST
