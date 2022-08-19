@@ -165,23 +165,26 @@ class ContentSaver(Stage):
                     # on select-for-update. So, we select-for-update, in pulp_id order, the
                     # rows we're about to update as one db-call, and then do the update in a
                     # second.
+                    #
+                    # NOTE: select-for-update requires being in an atomic-transaction. We are
+                    # **already in an atomic transaction** at this point as a result of the
+                    # "with transaction.atomic():", above.
                     ids = [k.pulp_id for k in to_update_ca_bulk]
-                    with transaction.atomic():
-                        # "len()" forces the QA to be evaluated. Using exist() or count() won't
-                        # work for us - Django is smart enough to either not-order, or even
-                        # not-emit, a select-for-update in these cases.
-                        #
-                        # To maximize performance, we make sure to only ask for pulp_ids, and
-                        # avoid instantiating a python-object for the affected CAs by using
-                        # values_list()
-                        len(
-                            ContentArtifact.objects.filter(pulp_id__in=ids)
-                            .only("pulp_id")
-                            .order_by("pulp_id")
-                            .select_for_update()
-                            .values_list()
-                        )
-                        ContentArtifact.objects.bulk_update(to_update_ca_bulk, ["artifact"])
+                    # "len()" forces the QuerySet to be evaluated. Using exist() or count() won't
+                    # work for us - Django is smart enough to either not-order, or even
+                    # not-emit, a select-for-update in these cases.
+                    #
+                    # To maximize performance, we make sure to only ask for pulp_ids, and
+                    # avoid instantiating a python-object for the affected CAs by using
+                    # values_list()
+                    subq = (
+                        ContentArtifact.objects.filter(pulp_id__in=ids)
+                        .only("pulp_id")
+                        .order_by("pulp_id")
+                        .select_for_update()
+                    )
+                    len(subq.values_list())
+                    ContentArtifact.objects.bulk_update(to_update_ca_bulk, ["artifact"])
 
                     # To avoid a similar deadlock issue when calling get_or_create, we sort the
                     # "new" CAs to make sure inserts happen in a defined order. Since we can't
