@@ -17,11 +17,8 @@ from pulpcore.app.apps import pulp_plugin_configs
 from pulpcore.app import models
 from pulpcore.exceptions.validation import InvalidSignatureError
 
-# a little cache so viewset_for_model doesn't have iterate over every app every time
+# a little cache so viewset_for_model doesn't have to iterate over every app every time
 _model_viewset_cache = {}
-
-PRODUCTION_URL = "https://analytics.pulpproject.org/"
-DEV_URL = "https://dev.analytics.pulpproject.org/"
 
 
 def get_url(model):
@@ -249,23 +246,13 @@ def gpg_verify(public_keys, signature, detached_data=None):
     return verified
 
 
-def get_telemetry_posting_url():
-    for app in pulp_plugin_configs():
-        if ".dev" in app.version:
-            return DEV_URL
-
-    return PRODUCTION_URL
-
-
 def configure_telemetry():
-    url = get_telemetry_posting_url()
     task_name = "pulpcore.app.tasks.telemetry.post_telemetry"
     dispatch_interval = timedelta(days=1)
     name = "Post Anonymous Telemetry Periodically"
-    # Initially only dev systems send data.
-    if url == PRODUCTION_URL:
-        models.TaskSchedule.objects.filter(task_name=task_name).delete()
-    else:
+    if settings.TELEMETRY:
         models.TaskSchedule.objects.update_or_create(
             name=name, defaults={"task_name": task_name, "dispatch_interval": dispatch_interval}
         )
+    else:
+        models.TaskSchedule.objects.filter(task_name=task_name).delete()
