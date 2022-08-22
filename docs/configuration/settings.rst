@@ -406,3 +406,15 @@ TASK_DIAGNOSTICS
     ``/var/tmp/pulp/<task_UUID>/``. This is ``False`` by default.
 
       * memory - the task's max resident set size in MB.
+
+
+.. _telemetry-setting:
+
+TELEMETRY
+^^^^^^^^^
+
+    If ``True``, Pulp will anonymously post telemetry information to
+    `<https://analytics.pulpproject.org/>`_ and aids in project decision making. See the
+    :ref:`telemetry docs <telemetry>` for more info on exactly what is posted along with an example.
+
+    Defaults to ``True``.

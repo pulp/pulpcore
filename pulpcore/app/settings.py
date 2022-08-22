@@ -289,6 +289,8 @@ DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
 
 TASK_DIAGNOSTICS = False
 
+TELEMETRY = True
+
 # HERE STARTS DYNACONF EXTENSION LOAD (Keep at the very bottom of settings.py)
 # Read more at https://dynaconf.readthedocs.io/en/latest/guides/django.html
 from dynaconf import DjangoDynaconf, Validator  # noqa

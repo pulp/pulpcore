@@ -9,7 +9,6 @@ from asgiref.sync import sync_to_async
 from google.protobuf.json_format import MessageToJson
 
 from pulpcore.app.apps import pulp_plugin_configs
-from pulpcore.app.util import get_telemetry_posting_url
 from pulpcore.app.models import SystemID
 from pulpcore.app.models.status import ContentAppStatus
 from pulpcore.app.models.task import Worker
@@ -17,6 +16,18 @@ from pulpcore.app.protobuf.telemetry_pb2 import Telemetry
 
 
 logger = logging.getLogger(__name__)
+
+
+PRODUCTION_URL = "https://analytics.pulpproject.org/"
+DEV_URL = "https://dev.analytics.pulpproject.org/"
+
+
+def get_telemetry_posting_url():
+    for app in pulp_plugin_configs():
+        if ".dev" in app.version:
+            return DEV_URL
+
+    return PRODUCTION_URL
 
 
 async def _num_hosts(qs):

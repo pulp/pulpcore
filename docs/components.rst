@@ -80,6 +80,7 @@ started and stopped without notifying Pulp.
 All necessary information about tasks is stored in Pulp's Postgres database as a single source of
 truth. In case your tasking system get's jammed, there is a guide to help :ref:debugging_tasks.
 
+
 Static Content
 --------------
 
@@ -100,3 +101,43 @@ Collect all of the static content into place using the ``collectstatic`` command
 ``DJANGO_SETTINGS_MODULE="pulpcore.app.settings"``. Run ``collectstatic`` as follows::
 
     $ pulpcore-manager collectstatic
+
+
+
+.. _telemetry:
+
+Telemetry Collection
+--------------------
+
+By default, Pulp installations post anonymous telemetry data every 24 hours which is summarized on
+`<https://analytics.pulpproject.org/>`_ and aids in project decision making. This is enabled by
+default but can be disabled by setting ``TELEMETRY=False`` in your settings.
+
+Here is the list of exactly what is collected along with an example below:
+
+* The version of Pulp components installed
+* The number of worker processes and number of hosts (not hostnames) those workers run on
+* The number of content app processes and number of hosts (not hostnames) those content apps run on
+
+An example payload:
+
+.. code-block:: json
+
+    {
+        "systemId": "a6d91458-32e8-4528-b608-b2222ede994e",
+    	"onlineContentApps": {
+            "processes": 2,
+            "hosts": 1
+    	},
+    	"onlineWorkers": {
+            "processes": 2,
+            "hosts": 1
+	    },
+    	"components": [{
+            "name": "core",
+            "version": "3.21.0"
+	    }, {
+            "name": "file",
+            "version": "1.12.0"
+    	}]
+    }
