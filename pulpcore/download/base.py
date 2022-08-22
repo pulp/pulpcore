@@ -159,6 +159,7 @@ class BaseDownloader:
         self._writer = None
         self.validate_digests()
         self.validate_size()
+        log.debug(f"Downloaded file from {self.url}")
 
     def fetch(self):
         """
