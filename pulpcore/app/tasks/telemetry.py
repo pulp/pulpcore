@@ -85,8 +85,11 @@ async def post_telemetry():
                 async with session.post(url, json=data) as resp:
                     if resp.status == 200:
                         logger.info(
-                            ("Submitted telemetry to %s. " "Information submitted includes %s"),
+                            "Submitted telemetry to %s.",
                             url,
+                        )
+                        logger.debug(
+                            "Information submitted includes %s",
                             data,
                         )
                     else:
