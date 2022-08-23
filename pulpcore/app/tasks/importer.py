@@ -265,20 +265,22 @@ def import_repository_version(importer_pk, destination_repo_pk, source_repo_name
                 with open(os.path.join(temp_dir, mapping_path), "r") as mapping_file:
                     mapping = json.load(mapping_file)
 
+        content_count = 0
         if mapping:
             # use the content mapping to map content to repos
             for repo_name, content_ids in mapping.items():
                 repo = _destination_repo(importer, repo_name)
                 content = Content.objects.filter(upstream_id__in=content_ids)
+                content_count += content.count()
                 with repo.new_version() as new_version:
                     new_version.set_content(content)
         else:
             # just map all the content to our destination repo
             content = Content.objects.filter(pk__in=resulting_content_ids)
+            content_count += content.count()
             with dest_repo.new_version() as new_version:
                 new_version.set_content(content)
 
-        content_count = content.count()
         pb.total = content_count
         pb.done = content_count
         pb.state = TASK_STATES.COMPLETED
