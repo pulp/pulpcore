@@ -33,6 +33,7 @@ from django_guid import set_guid  # noqa: E402: module level not at top of file
 
 from pulpcore.app.models import Worker, Task  # noqa: E402: module level not at top of file
 
+from pulpcore.app.util import configure_telemetry  # noqa: E402: module level not at top of file
 from pulpcore.app.role_util import (  # noqa: E402: module level not at top of file
     get_users_with_perms,
 )
@@ -56,6 +57,10 @@ TASK_GRACE_INTERVAL = 3
 WORKER_CLEANUP_INTERVAL = 100
 # Randomly chosen
 TASK_SCHEDULING_LOCK = 42
+
+
+def startup_hook():
+    configure_telemetry()
 
 
 class PGAdvisoryLock:
@@ -131,6 +136,8 @@ class NewPulpWorker:
         os.set_blocking(self.sentinel, False)
         os.set_blocking(sentinel_w, False)
         signal.set_wakeup_fd(sentinel_w)
+
+        startup_hook()
 
     def _signal_handler(self, thesignal, frame):
         # Reset signal handlers to default
