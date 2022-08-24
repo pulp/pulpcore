@@ -61,6 +61,7 @@ from .repository import (  # noqa
     ReadOnlyRepositoryViewSet,
     RemoteFilter,
     RemoteViewSet,
+    ListRemoteViewSet,
     RepositoryViewSet,
     RepositoryVersionViewSet,
     ListRepositoryVersionViewSet,

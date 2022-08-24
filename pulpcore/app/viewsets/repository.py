@@ -236,6 +236,29 @@ class RemoteFilter(BaseFilterSet):
         fields = {"name": NAME_FILTER_OPTIONS, "pulp_last_updated": DATETIME_FILTER_OPTIONS}
 
 
+class ListRemoteViewSet(NamedModelViewSet, mixins.ListModelMixin):
+    endpoint_name = "remotes"
+    queryset = Remote.objects.all()
+    serializer_class = RemoteSerializer
+    filterset_class = RemoteFilter
+
+    DEFAULT_ACCESS_POLICY = {
+        "statements": [
+            {
+                "action": ["list"],
+                "principal": "authenticated",
+                "effect": "allow",
+            },
+        ],
+        "queryset_scoping": {"function": "scope_queryset"},
+    }
+
+    @classmethod
+    def routable(cls):
+        """Do not hide from the routers."""
+        return True
+
+
 class RemoteViewSet(
     NamedModelViewSet,
     mixins.CreateModelMixin,
