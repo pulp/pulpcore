@@ -3,6 +3,7 @@ import os
 import tempfile
 
 from contextlib import ExitStack
+from datetime import timedelta
 import gnupg
 
 from django.conf import settings
@@ -254,3 +255,17 @@ def get_telemetry_posting_url():
             return DEV_URL
 
     return PRODUCTION_URL
+
+
+def configure_telemetry():
+    url = get_telemetry_posting_url()
+    task_name = "pulpcore.app.tasks.telemetry.post_telemetry"
+    dispatch_interval = timedelta(days=1)
+    name = "Post Anonymous Telemetry Periodically"
+    # Initially only dev systems send data.
+    if url == PRODUCTION_URL:
+        models.TaskSchedule.objects.filter(task_name=task_name).delete()
+    else:
+        models.TaskSchedule.objects.update_or_create(
+            name=name, defaults={"task_name": task_name, "dispatch_interval": dispatch_interval}
+        )
