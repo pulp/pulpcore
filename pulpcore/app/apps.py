@@ -1,7 +1,6 @@
 from collections import defaultdict
 from gettext import gettext as _
 from importlib import import_module
-from datetime import timedelta
 
 from django import apps
 from django.core.exceptions import ImproperlyConfigured
@@ -212,8 +211,6 @@ class PulpAppConfig(PulpPluginAppConfig):
         super().ready()
         from . import checks  # noqa
 
-        _configure_telemetry(self.apps)
-
         post_migrate.connect(
             _populate_system_id, sender=self, dispatch_uid="populate_system_id_identifier"
         )
@@ -260,26 +257,6 @@ def _populate_system_id(sender, apps, verbosity, **kwargs):
     SystemID = apps.get_model("core", "SystemID")
     if not SystemID.objects.exists():
         SystemID().save()
-
-
-def _configure_telemetry(apps):
-    from django.db import connection
-    from pulpcore.app.util import get_telemetry_posting_url, PRODUCTION_URL
-
-    if "core_taskschedule" in connection.introspection.table_names():
-        url = get_telemetry_posting_url()
-        TaskSchedule = apps.get_model("core", "TaskSchedule")
-        task_name = "pulpcore.app.tasks.telemetry.post_telemetry"
-        dispatch_interval = timedelta(days=1)
-        name = "Post Anonymous Telemetry Periodically"
-        # Initially only dev systems receive posted data.
-        if url == PRODUCTION_URL:
-            TaskSchedule.objects.filter(task_name=task_name).delete()
-        else:
-            TaskSchedule.objects.update_or_create(
-                name=name, defaults={"task_name": task_name, "dispatch_interval": dispatch_interval}
-            )
-    connection.close()
 
 
 def _populate_roles(sender, apps, verbosity, **kwargs):
