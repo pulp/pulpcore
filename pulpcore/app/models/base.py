@@ -1,5 +1,4 @@
 from gettext import gettext as _
-import uuid
 
 from django.contrib.contenttypes.fields import GenericRelation
 from django.db import models
@@ -7,15 +6,15 @@ from django.db.models import options
 from django.db.models.base import ModelBase
 from django_lifecycle import LifecycleModel
 from functools import lru_cache
+from uuid6 import uuid7
 
 
 def pulp_uuid():
-    """
-    Abstract wrapper for UUID generator.
+    """Abstract wrapper for UUID generator.
 
     Allows the implementation to be swapped without triggering migrations.
     """
-    return uuid.uuid4()
+    return uuid7()
 
 
 class BaseModel(LifecycleModel):
@@ -40,7 +39,7 @@ class BaseModel(LifecycleModel):
 
     """
 
-    pulp_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    pulp_id = models.UUIDField(primary_key=True, default=pulp_uuid, editable=False)
     pulp_created = models.DateTimeField(auto_now_add=True)
     pulp_last_updated = models.DateTimeField(auto_now=True, null=True)
     user_roles = GenericRelation("core.UserRole")
