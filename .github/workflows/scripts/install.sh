@@ -17,6 +17,11 @@ source .github/workflows/scripts/utils.sh
 
 export PULP_API_ROOT="/pulp/"
 
+if [[ "$TEST" = "docs" || "$TEST" = "publish" ]]; then
+  pip install psycopg2-binary
+  pip install -r doc_requirements.txt
+fi
+
 cd .ci/ansible/
 
 TAG=ci_build
@@ -117,11 +122,6 @@ fi
 
 ansible-playbook build_container.yaml
 ansible-playbook start_container.yaml
-
-if [[ "$TEST" = "docs" || "$TEST" = "publish" ]]; then
-  pip install psycopg2-binary
-  cmd_prefix bash -c "cd pulpcore; pip install -r doc_requirements.txt"
-fi
 echo ::group::SSL
 # Copy pulp CA
 sudo docker cp pulp:/etc/pulp/certs/pulp_webserver.crt /usr/local/share/ca-certificates/pulp_webserver.crt
