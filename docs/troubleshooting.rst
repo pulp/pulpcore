@@ -16,10 +16,9 @@ Designating a Python-based settings file, and putting the DEBUG logging configur
     export PULP_SETTINGS=/etc/pulp/settings.py  # Note the installer already does this for you
     echo "LOGGING = {'dynaconf_merge': True, 'loggers': {'': {'handlers': ['console'], 'level': 'DEBUG'}}}" >> /etc/pulp/settings.py
 
-Due to `a bug in Dynaconf <https://github.com/rochacbruno/dynaconf/issues/747>`_, the following
-example won't work, but is included for illustrative purposes::
+Or via environment variable::
 
-    PULP_LOGGING={'dynaconf_merge': True, 'loggers': {'': {'handlers': ['console'], 'level': 'DEBUG'}}}
+    PULP_LOGGING='@json {"dynaconf_merge": true, "loggers": {"": {"handlers": ["console"], "level": "DEBUG"}}}'
 
 .. tip::
 
