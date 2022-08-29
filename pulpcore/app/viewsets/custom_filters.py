@@ -74,6 +74,33 @@ class CreatedResourcesFilter(Filter):
         return qs.filter(created_resources__object_id=resource.pk)
 
 
+class ManagedEntitiesFilter(Filter):
+    """
+    Enables a user to filter SharedAttributeManagers by a managed-entity href.
+    """
+
+    def filter(self, qs, value):
+        """
+        Args:
+            qs (django.db.models.query.QuerySet): The Queryset to filter
+            value (string): href containing a reference to a managed-entity
+
+        Returns:
+            django.db.models.query.QuerySet: Queryset filtered by the reserved resource
+        """
+
+        if value is None:
+            # a value was not supplied by a user
+            return qs
+
+        try:
+            resolve(urlparse(value).path)
+        except Resolver404:
+            raise serializers.ValidationError(detail=_("URI not valid: {u}").format(u=value))
+
+        return qs.filter(managed_entities__contains=[value])
+
+
 class HyperlinkRelatedFilter(Filter):
     """
     Enables a user to filter by a foreign key using that FK's href.

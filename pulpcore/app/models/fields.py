@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 from gettext import gettext as _
@@ -81,11 +82,11 @@ class EncryptedTextField(TextField):
 
     def __init__(self, *args, **kwargs):
         if kwargs.get("primary_key"):
-            raise ImproperlyConfigured("EncryptedTextField does not support primary_key=True.")
+            raise ImproperlyConfigured(f"{type(self).__name__} does not support primary_key=True.")
         if kwargs.get("unique"):
-            raise ImproperlyConfigured("EncryptedTextField does not support unique=True.")
+            raise ImproperlyConfigured(f"{type(self).__name__} does not support unique=True.")
         if kwargs.get("db_index"):
-            raise ImproperlyConfigured("EncryptedTextField does not support db_index=True.")
+            raise ImproperlyConfigured(f"{type(self).__name__} does not support db_index=True.")
         super().__init__(*args, **kwargs)
 
     @cached_property
@@ -102,6 +103,18 @@ class EncryptedTextField(TextField):
     def from_db_value(self, value, expression, connection):
         if value is not None:
             return force_str(self._fernet.decrypt(force_bytes(value)))
+
+
+class EncryptedJSONField(EncryptedTextField):
+    """A field mixin that encrypts a JSONField using settings.DB_ENCRYPTION_KEY."""
+
+    def get_db_prep_save(self, value, connection):
+        str_value = json.dumps(value)
+        return super().get_db_prep_save(str_value, connection)
+
+    def from_db_value(self, value, expression, connection):
+        str_value = super().from_db_value(value, expression, connection)
+        return json.loads(str_value)
 
 
 @Field.register_lookup

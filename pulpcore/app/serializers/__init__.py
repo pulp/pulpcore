@@ -84,6 +84,11 @@ from .repository import (  # noqa
 )
 from .repair import RepairSerializer  # noqa
 from .reclaim import ReclaimSpaceSerializer  # noqa
+from .sam import (  # noqa
+    SharedAttributeManagerSerializer,
+    ManagedResourceExistsSerializer,
+    ManagedResourceSerializer,
+)
 from .task import (  # noqa
     MinimalTaskSerializer,
     TaskCancelSerializer,

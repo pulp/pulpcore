@@ -20,4 +20,11 @@ from .reclaim_space import reclaim_space  # noqa
 
 from .repository import repair_all_artifacts  # noqa
 
+from .sam import (  # noqa
+    add_entity,
+    remove_entity,
+    update_entity,
+    update_managed_entities,
+)
+
 from .telemetry import post_telemetry  # noqa

@@ -3,10 +3,13 @@ import uuid
 
 from django.contrib.contenttypes.fields import GenericRelation, GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
+from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from django.db.models import options
 from django.db.models.base import ModelBase
 from django_lifecycle import LifecycleModel
+
+from pulpcore.app.models.fields import EncryptedJSONField
 
 
 class Label(LifecycleModel):
@@ -77,6 +80,31 @@ class BaseModel(LifecycleModel):
 
     def __repr__(self):
         return str(self)
+
+
+class SharedAttributeManager(BaseModel):
+    """
+    Manage the shared-attributes of a set of managed entities.
+
+    All of the managed attributes are encrypted "at rest", because a user might put sensitive
+    values into them and we want to protect their data.
+
+    In addition, managed_sensitive_attributes are considered "write only" - they
+    can be set via the Pulp API, but cannot be read. This allows the user to control the visibility
+    of attribute-values even when "in use".
+
+    Fields:
+        name (models.TextField): Unique name of this SAM
+        managed_attributes (models.EncryptedJSONField): attr:value JSON defining managed attributes
+        managed_sensitive_attributes (models.EncryptedJSONField): attr:value JSON defining the
+            privacy/security-sensitive attributes being managed
+        managed_entities (ArrayField(models.TextField()): list of managed HREFs
+    """
+
+    name = models.TextField(db_index=True, unique=True)
+    managed_attributes = EncryptedJSONField(blank=True, null=True)
+    managed_sensitive_attributes = EncryptedJSONField(blank=True, null=True)
+    managed_entities = ArrayField(models.TextField(), null=True)
 
 
 class MasterModelMeta(ModelBase):

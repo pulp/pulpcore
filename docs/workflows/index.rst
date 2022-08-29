@@ -23,4 +23,5 @@ assumes that the reader is familiar with the fundamentals discussed in the :doc:
    import-export
    labels
    plugin-removal
+   shared-attribute-management
    troubleshooting

@@ -66,6 +66,7 @@ from .repository import (  # noqa
     RepositoryVersionViewSet,
     ListRepositoryVersionViewSet,
 )
+from .sam import SharedAttributeManagerViewSet  # noqa
 from .task import TaskViewSet, TaskGroupViewSet, TaskScheduleViewSet, WorkerViewSet  # noqa
 from .upload import UploadViewSet  # noqa
 from .user import (  # noqa

@@ -26,6 +26,7 @@ from pulpcore.client.pulpcore import (
     RemotesApi,
     RepositoriesApi,
     RolesApi,
+    SharedAttributeManagersApi,
     SigningServicesApi,
     StatusApi,
     TasksApi,
@@ -215,6 +216,11 @@ def redirect_contentguard_api_client(pulpcore_client):
 @pytest.fixture
 def orphans_cleanup_api_client(pulpcore_client):
     return OrphansCleanupApi(pulpcore_client)
+
+
+@pytest.fixture
+def shared_attribute_managers_api_client(pulpcore_client):
+    return SharedAttributeManagersApi(pulpcore_client)
 
 
 @pytest.fixture

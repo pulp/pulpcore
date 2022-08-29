@@ -5,6 +5,7 @@ from .base import (  # noqa
     BaseModel,
     Label,
     MasterModel,
+    SharedAttributeManager,
 )
 
 from .access_policy import (  # noqa
