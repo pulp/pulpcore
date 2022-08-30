@@ -9,6 +9,7 @@ from pulp_smash.utils import get_pulp_setting
 from pulpcore.client.pulpcore import (
     ApiClient,
     ArtifactsApi,
+    ContentApi,
     ContentguardsApi,
     ContentguardsRbacApi,
     ContentguardsContentRedirectApi,
@@ -22,6 +23,7 @@ from pulpcore.client.pulpcore import (
     ImportersPulpImportsApi,
     OrphansCleanupApi,
     PublicationsApi,
+    RemotesApi,
     RepositoriesApi,
     RolesApi,
     SigningServicesApi,
@@ -60,6 +62,7 @@ def pytest_check_for_leftover_pulp_objects(config):
         ContentguardsApi(pulpcore_client),
         DistributionsApi(pulpcore_client),
         PublicationsApi(pulpcore_client),
+        RemotesApi(pulpcore_client),
         RepositoriesApi(pulpcore_client),
     ]
     for api_to_check in apis_to_check:
@@ -142,6 +145,31 @@ def users_roles_api_client(pulpcore_client):
 def roles_api_client(pulpcore_client):
     "Provies the pulp core Roles API client object."
     return RolesApi(pulpcore_client)
+
+
+@pytest.fixture
+def content_api_client(pulpcore_client):
+    return ContentApi(pulpcore_client)
+
+
+@pytest.fixture
+def distributions_api_client(pulpcore_client):
+    return DistributionsApi(pulpcore_client)
+
+
+@pytest.fixture
+def remotes_api_client(pulpcore_client):
+    return RemotesApi(pulpcore_client)
+
+
+@pytest.fixture
+def repositories_api_client(pulpcore_client):
+    return RepositoriesApi(pulpcore_client)
+
+
+@pytest.fixture
+def publications_api_client(pulpcore_client):
+    return PublicationsApi(pulpcore_client)
 
 
 @pytest.fixture
