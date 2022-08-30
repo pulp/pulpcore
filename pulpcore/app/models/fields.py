@@ -96,10 +96,14 @@ class EncryptedTextField(TextField):
 
     def get_db_prep_save(self, value, connection):
         value = super().get_db_prep_save(value, connection)
+        if not settings.DB_ENCRYPTION:
+            return value
         if value is not None:
             return force_str(self._fernet.encrypt(force_bytes(value)))
 
     def from_db_value(self, value, expression, connection):
+        if not settings.DB_ENCRYPTION:
+            return value
         if value is not None:
             return force_str(self._fernet.decrypt(force_bytes(value)))
 

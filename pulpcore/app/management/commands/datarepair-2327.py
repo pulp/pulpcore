@@ -36,8 +36,9 @@ class Command(BaseCommand):
         dry_run = options["dry_run"]
         fields = ("username", "password", "proxy_username", "proxy_password", "client_key")
 
-        with open(settings.DB_ENCRYPTION_KEY, "rb") as key_file:
-            fernet = cryptography.fernet.Fernet(key_file.read())
+        if settings.DB_ENCRYPTION:
+            with open(settings.DB_ENCRYPTION_KEY, "rb") as key_file:
+                fernet = cryptography.fernet.Fernet(key_file.read())
 
         possibly_affected_remotes = (
             Q(username__isnull=False)
@@ -88,8 +89,9 @@ class Command(BaseCommand):
                             continue
 
                         try:
-                            # try to decrypt it again
-                            field_value = force_str(fernet.decrypt(force_bytes(field_value)))
+                            if settings.DB_ENCRYPTION:
+                                # try to decrypt it again
+                                field_value = force_str(fernet.decrypt(force_bytes(field_value)))
                             # it was decrypted successfully again time, so it was probably
                             # encrypted multiple times over. lets re-set the value with the
                             # newly decrypted value

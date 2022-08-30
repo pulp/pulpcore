@@ -36,6 +36,17 @@ SECRET_KEY
    chars = 'abcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*(-_=+)'
    print(''.join(random.choice(chars) for i in range(50)))
 
+DB_ENCRYPTION
+^^^^^^^^^^^^^
+
+  By default Pulp uses database encryption. If ``False`` the at-rest database encryption is not used and values are stored
+  in plain text.
+
+  .. warning::
+
+     values which are already encrypted are not decrypted if this setting is changed; best 
+     to only bypass encryption in a clean installation. 
+
 DB_ENCRYPTION_KEY
 ^^^^^^^^^^^^^^^^^
 

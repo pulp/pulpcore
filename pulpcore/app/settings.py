@@ -55,6 +55,8 @@ FILE_UPLOAD_HANDLERS = ("pulpcore.app.files.HashingFileUploadHandler",)
 
 SECRET_KEY = True
 
+DB_ENCRYPTION = True
+
 # Key used to encrypt fields in the database
 DB_ENCRYPTION_KEY = "/etc/pulp/certs/database_fields.symmetric.key"
 
@@ -383,6 +385,7 @@ if not (
     Path(sys.argv[0]).name == "pytest"
     or Path(sys.argv[0]).name == "sphinx-build"
     or (len(sys.argv) >= 2 and sys.argv[1] == "collectstatic")
+    or (not DB_ENCRYPTION or not DB_ENCRYPTION_KEY)
 ):
     try:
         with open(DB_ENCRYPTION_KEY, "rb") as key_file:
