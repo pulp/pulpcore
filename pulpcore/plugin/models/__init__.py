@@ -41,3 +41,6 @@ from pulpcore.app.models import (  # noqa
     Upload,
     UploadChunk,
 )
+
+
+from pulpcore.app.models.fields import EncryptedTextField  # noqa
