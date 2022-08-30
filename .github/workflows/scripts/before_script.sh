@@ -36,7 +36,7 @@ if [[ " ${SCENARIOS[*]} " =~ " ${TEST} " ]]; then
 fi
 
 if [[ "${REDIS_DISABLED:-false}" == true ]]; then
-  cmd_prefix bash -c "s6-svc -d /var/run/s6/services/redis"
+  cmd_prefix bash -c "s6-rc -d change redis"
   echo "The Redis service was disabled for $TEST"
 fi
 
