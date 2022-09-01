@@ -17,6 +17,26 @@ Changelog
 
 .. towncrier release notes start
 
+3.18.9 (2022-09-01)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fixed the value of the Content-Type header returned for .xml.gz files.
+  :github:`2811`
+- Fixed another rare deadlock for high-concurrency/overlapping-content syncs.
+  :github:`3111`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.18.8 (2022-08-16)
 ===================
 REST API
