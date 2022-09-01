@@ -1,1 +1,0 @@
-Fixed another rare deadlock for high-concurrency/overlapping-content syncs.
