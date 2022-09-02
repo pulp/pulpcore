@@ -422,6 +422,26 @@ Bugfixes
   :github:`2069`
 
 
+3.18.9 (2022-09-01)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fixed the value of the Content-Type header returned for .xml.gz files.
+  :github:`2811`
+- Fixed another rare deadlock for high-concurrency/overlapping-content syncs.
+  :github:`3111`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.18.8 (2022-08-16)
 ===================
 REST API
@@ -1141,6 +1161,24 @@ Bugfixes
 
 - Include additional information about which AccessPolicy is using deprecated policy features.
   :redmine:`9608`
+
+
+3.16.13 (2022-09-01)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fixed another rare deadlock for high-concurrency/overlapping-content syncs.
+  :github:`3111`
+
+
+Plugin API
+----------
+
+No significant changes.
 
 
 3.16.12 (2022-08-05)
