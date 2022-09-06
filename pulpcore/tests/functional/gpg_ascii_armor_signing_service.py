@@ -157,9 +157,10 @@ def _ascii_armored_detached_signing_service_name(
 
     cmd = (
         "pulpcore-manager",
-        "shell",
-        "-c",
-        f'from pulpcore.app.models import AsciiArmoredDetachedSigningService;print(AsciiArmoredDetachedSigningService.objects.get(name="{service_name}").delete())',  # noqa: E501
+        "remove-signing-service",
+        service_name,
+        "--class",
+        "core:AsciiArmoredDetachedSigningService",
     )
     subprocess.run(
         cmd,

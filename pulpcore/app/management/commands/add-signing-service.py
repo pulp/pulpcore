@@ -11,6 +11,8 @@ from django.core.management import BaseCommand, CommandError
 from django.apps import apps
 from django.db.utils import IntegrityError
 
+from pulpcore.app.models.content import SigningService as BaseSigningService
+
 
 class Command(BaseCommand):
     """
@@ -65,6 +67,12 @@ class Command(BaseCommand):
             SigningService = apps.get_model(app_label, service_class)
         except LookupError as e:
             raise CommandError(str(e))
+        if not issubclass(SigningService, BaseSigningService):
+            raise CommandError(
+                _("Class '{}' is not a subclass of the base 'core:SigningService' class.").format(
+                    options["class"]
+                )
+            )
 
         gpg = gnupg.GPG(gnupghome=options["gnupghome"], keyring=options["keyring"])
 
