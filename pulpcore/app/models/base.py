@@ -9,8 +9,18 @@ from django.db.models.base import ModelBase
 from django_lifecycle import LifecycleModel
 
 
+def pulp_uuid():
+    """
+    Abstract wrapper for UUID generator.
+
+    Allows the implementation to be swapped without triggering migrations.
+    """
+    return uuid.uuid4()
+
+
 class Label(LifecycleModel):
-    """Model for handling resource labels.
+    """
+    Model for handling resource labels.
 
     Labels are key/value data that can be associated with any BaseModel.
 
@@ -38,7 +48,8 @@ class Label(LifecycleModel):
 
 
 class BaseModel(LifecycleModel):
-    """Base model class for all Pulp models.
+    """
+    Base model class for all Pulp models.
 
     This model inherits from `LifecycleModel` which allows all Pulp models to be used with
     `django-lifecycle`.
@@ -99,7 +110,8 @@ class MasterModelMeta(ModelBase):
 
 
 class MasterModel(BaseModel, metaclass=MasterModelMeta):
-    """Base model for the "Master" model in a "Master-Detail" relationship.
+    """
+    Base model for the "Master" model in a "Master-Detail" relationship.
 
     Provides methods for casting down to detail types, back up to the master type,
     as well as a model field for tracking the type.
@@ -179,7 +191,8 @@ class MasterModel(BaseModel, metaclass=MasterModelMeta):
 
     @property
     def master(self):
-        """The "Master" model instance of this master-detail pair
+        """
+        The "Master" model instance of this master-detail pair
 
         If this is already the master model instance, it will return itself.
         """
