@@ -5,7 +5,7 @@ aiofiles==22.1.0
 aioredis~=2.0.1
 backoff~=2.1.2
 click<9.0
-cryptography~=37.0.4
+cryptography~=38.0.1
 Django~=3.2.15  # LTS version, switch only if we have a compelling reason to
 django-currentuser~=0.5.3
 django-filter~=22.1
