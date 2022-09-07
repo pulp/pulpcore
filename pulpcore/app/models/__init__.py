@@ -5,6 +5,7 @@ from .base import (  # noqa
     BaseModel,
     Label,
     MasterModel,
+    pulp_uuid,
 )
 
 from .access_policy import (  # noqa
