@@ -17,6 +17,139 @@ Changelog
 
 .. towncrier release notes start
 
+3.21.0 (2022-09-08)
+===================
+REST API
+--------
+
+Features
+~~~~~~~~
+
+- Added an option for automatically creating repositories on the fly during an import procedure. The
+  option is disabled by default. Enable it by setting the field ``create_repositories`` to ``True``
+  via the REST API.
+  :github:`1920`
+- Content app now groups distributions in a directory structure on the landing page.
+  :github:`1951`
+- Added RBAC protection to upload objects.
+  :github:`2362`
+- New endpoint to list all Remote objects is now available at /pulp/api/v3/remotes/.
+  :github:`2530`
+- ``HyperlinkRelatedFilter`` can now be filtered by object types and NULL values.
+
+  Repositories can now be filtered by Remotes.
+  :github:`2864`
+- Introduced the ``with_content`` query parameter that filters distributions by the specified content
+  unit.
+  :github:`2952`
+- Add a debug log to see where is file downloaded from.
+  :github:`3088`
+- Introduces anonymous telemetry data posting to `<https://analytics.pulpproject.org/>`_. This is
+  enabled by default, and can be disabled by setting the ``TELEMETRY`` setting to ``False``. See the
+  :ref:`telemetry docs <telemetry>` for more info on exactly what is posted along with an example.
+  :github:`3115`
+
+
+Bugfixes
+~~~~~~~~
+
+- Fixed the value of the Content-Type header returned for .xml.gz files.
+  :github:`2811`
+- Improve content app performance on head requests
+  :github:`2924`
+- Use published relative paths for FS Exporter.
+  :github:`2933`
+- Configured aiohttp to avoid rewriting redirect URLs, as some web servers (e.g. Amazon CloudFront) can be tempermental about the encoding of the URL.
+  :github:`2964`
+- Fixed inaccurate 404 error message for content app.
+  :github:`2977`
+- Fixed variable referenced before assignment error in ``django-admin dump-permissions``.
+  :github:`3011`
+- Do not create telemetry TaskSchedule for production systems.
+  :github:`3015`
+- Serialized orphan cleanup tasks with respect to each other to prevent them from failing.
+  :github:`3030`
+- Fixed 500 error when 'range' header starts with a negative value for 'on-demand' content.
+  :github:`3052`
+- Fixed bug where 'range' header with a start value greater than size of on-demand content would produce an incomplete response.
+  :github:`3054`
+- Fixed a bug where Content-Length header value was wrong when on-demand content was requested with
+  a Range header that has an end value greater than the size of the content.
+  :github:`3055`
+- Fixed a bug in the routing logic, where generic base class viewsets were served on actual urls.
+  :github:`3056`
+- Fixed a bug in import code where all objects imported would also be added to the target repository
+  by their UUID. In case of a UUID-collision with content, unwanted content may have ended up being
+  in the next repository version.
+  :github:`3064`
+- Fixed a bug that caused the import machinery to import the same content multiple times in a row.
+  :github:`3075`
+- Limited access policy reset to viewsets with a default one. This will solve 500 errors when
+  trying to reset an access policy whose viewset name is repeated by an abstract base class.
+  Stopped reporting on unmodified access policies when migrating.
+  :github:`3080`
+- Fixed another rare deadlock for high-concurrency/overlapping-content syncs.
+  :github:`3111`
+- Fixed the progress report counter for imported content units.
+  :github:`3113`
+- Moved telemetry setup to the pulpcore-worker startup sequence. This will prevent orm calls before
+  all apps are ready.
+  :github:`3122`
+
+
+Improved Documentation
+~~~~~~~~~~~~~~~~~~~~~~
+
+- docs: Update the architecture diagram to reflect the fact that both API and workers talk to redis.
+  :github:`3000`
+- Multiple updates to the PyPI (manual) install instructions.
+  :github:`3051`
+
+
+Misc
+~~~~
+
+- :github:`2445`, :github:`2890`, :github:`3063`, :github:`3091`
+
+
+Plugin API
+----------
+
+Features
+~~~~~~~~
+
+- Exposed the ``RepositoryResource`` class to enable plugin writers to customize the way of
+  importing/exporting of particular repository types. Repositories should be now a part of exported
+  resources to enable automatic creation of missing repositories.
+  :github:`1920`
+- Added a global access condition ``has_upload_param_model_or_obj_perms`` to enforce permissions
+  on the upload parameter.
+  :github:`2362`
+- Extended the interface of ``verify_signature`` as a new function ``gpg_verify`` to support file
+  like objects in addition to a file path and also return the ``python-gnupg`` ``verify`` object.
+  :github:`2930`
+- Added new field ``info`` to the ``RepositoryVersion``. This will allow to store additional information for a specific version.
+  :github:`2998`
+- Added `pulpcore.plugin.models.EncryptedTextField to plugin api.
+  :github:`3157`
+
+
+Improved Documentation
+~~~~~~~~~~~~~~~~~~~~~~
+
+- Adds Master/Detail pattern overview and usage documentation to the Plugin writer docs.
+  :github:`2981`
+- Documented the use of ``RolesMixin`` in the plugin writer concepts section.
+  :github:`3085`
+
+
+Removals
+~~~~~~~~
+
+- Deprecated ``verify_signature`` in favor of ``gpg_verify`` for removal in 3.25.
+  :github:`2930`
+
+
 3.20.0 (2022-06-21)
 ===================
 REST API

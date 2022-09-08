@@ -1,1 +1,0 @@
-Deprecated ``verify_signature`` in favor of ``gpg_verify`` for removal in 3.25.
