@@ -77,6 +77,8 @@ class DistroListings(HTTPOk):
 
     def __init__(self, path, distros):
         """Create the HTML response."""
+        if settings.HIDE_GUARDED_DISTRIBUTIONS:
+            distros = distros.filter(content_guard__isnull=True)
         base_paths = (
             distros.annotate(rel_path=models.functions.Substr("base_path", 1 + len(path)))
             .annotate(
