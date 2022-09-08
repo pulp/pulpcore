@@ -1,1 +1,0 @@
-Fixed the value of the Content-Type header returned for .xml.gz files.

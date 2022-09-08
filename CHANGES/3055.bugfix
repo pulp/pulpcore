@@ -1,2 +1,0 @@
-Fixed a bug where Content-Length header value was wrong when on-demand content was requested with
-a Range header that has an end value greater than the size of the content.
