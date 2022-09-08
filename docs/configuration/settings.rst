@@ -201,6 +201,11 @@ CONTENT_ORIGIN
    For example if the API should refer users to content at using http to pulp.example.com on port
    24816, (the content default port), you would set: ``https://pulp.example.com:24816``.
 
+HIDE_GUARDED_DISTRIBUTIONS
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+   If activated, the distributions that are protected by a content guard will not be shown on the
+   directory listing in the content app. Defaults to ``False``.
 
 .. _content-path-prefix:
 
