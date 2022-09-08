@@ -1,2 +1,0 @@
-Moved telemetry setup to the pulpcore-worker startup sequence. This will prevent orm calls before
-all apps are ready.
