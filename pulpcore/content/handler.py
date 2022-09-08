@@ -12,6 +12,8 @@ from aiohttp.web_exceptions import (
     HTTPNotFound,
     HTTPRequestRangeNotSatisfiable,
 )
+from storages.backends.s3boto3 import S3Boto3Storage
+from storages.backends.azure_storage import AzureStorage
 from yarl import URL
 
 from asgiref.sync import sync_to_async
@@ -814,7 +816,7 @@ class Handler:
             return FileResponse(path, headers=headers)
         elif not settings.REDIRECT_TO_OBJECT_STORAGE:
             return ArtifactResponse(content_artifact.artifact, headers=headers)
-        elif settings.DEFAULT_FILE_STORAGE == "storages.backends.s3boto3.S3Boto3Storage":
+        elif isinstance(artifact_file.storage, S3Boto3Storage):
             content_disposition = f"attachment%3Bfilename={content_artifact.relative_path}"
             parameters = {"ResponseContentDisposition": content_disposition}
             if headers.get("Content-Type"):
@@ -826,7 +828,7 @@ class Handler:
                 encoded=True,
             )
             raise HTTPFound(url)
-        elif settings.DEFAULT_FILE_STORAGE == "storages.backends.azure_storage.AzureStorage":
+        elif isinstance(artifact_file.storage, AzureStorage):
             content_disposition = f"attachment%3Bfilename={artifact_name}"
             parameters = {"content_disposition": content_disposition}
             if headers.get("Content-Type"):
