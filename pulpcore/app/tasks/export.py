@@ -2,6 +2,7 @@ import hashlib
 import json
 import logging
 import os
+import os.path
 import subprocess
 import tarfile
 
@@ -75,6 +76,15 @@ def _export_to_file_system(path, relative_paths_to_artifacts, method=FS_EXPORT_M
         and method != FS_EXPORT_METHODS.WRITE
     ):
         raise RuntimeError(_("Only write is supported for non-filesystem storage."))
+    os.makedirs(path)
+    export_not_on_same_filesystem = (
+        settings.DEFAULT_FILE_STORAGE == "pulpcore.app.models.storage.FileSystem"
+        and os.stat(settings.MEDIA_ROOT).st_dev != os.stat(path).st_dev
+    )
+
+    if method == FS_EXPORT_METHODS.HARDLINK and export_not_on_same_filesystem:
+        log.info(_("Hard link cannot be created, file will be copied."))
+        method = FS_EXPORT_METHODS.WRITE
 
     for relative_path, artifact in relative_paths_to_artifacts.items():
         dest = os.path.join(path, relative_path)
@@ -82,9 +92,11 @@ def _export_to_file_system(path, relative_paths_to_artifacts, method=FS_EXPORT_M
 
         if method == FS_EXPORT_METHODS.SYMLINK:
             src = os.path.join(settings.MEDIA_ROOT, artifact.file.name)
+            os.path.lexists(dest) and os.unlink(dest)
             os.symlink(src, dest)
         elif method == FS_EXPORT_METHODS.HARDLINK:
             src = os.path.join(settings.MEDIA_ROOT, artifact.file.name)
+            os.path.lexists(dest) and os.unlink(dest)
             os.link(src, dest)
         elif method == FS_EXPORT_METHODS.WRITE:
             with open(dest, "wb") as f, artifact.file as af:
