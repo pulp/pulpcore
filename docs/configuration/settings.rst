@@ -3,6 +3,18 @@
 Settings
 ========
 
+There are only two required settings, although specific plugins may have additional required
+settings.
+
+* :ref:`SECRET_KEY <secret-key-setting>`
+* :ref:`CONTENT_ORIGIN <content-origin-setting>`
+
+.. note::
+
+    For more information on how to specify settings see the
+    :ref:`Applying Settings docs <applying-settings>`.
+
+
 Pulp uses three types of settings:
 
 * :ref:`Django settings <django-settings>` Pulp is configuring
@@ -15,9 +27,11 @@ Pulp uses three types of settings:
 Django Settings
 ---------------
 
-Pulp is a Django project, so any Django `Django setting
-<https://docs.djangoproject.com/en/3.2/ref/settings/>`_ can also be set to configure your Pulp
-deployment.
+Below is a list of the most common Django settings Pulp users typically use. Pulp is a Django
+project, so any `Django setting <https://docs.djangoproject.com/en/3.2/ref/settings/>`_ can be set.
+
+
+.. _secret-key-setting:
 
 SECRET_KEY
 ^^^^^^^^^^
@@ -36,6 +50,7 @@ SECRET_KEY
    chars = 'abcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*(-_=+)'
    print(''.join(random.choice(chars) for i in range(50)))
 
+
 DB_ENCRYPTION_KEY
 ^^^^^^^^^^^^^^^^^
 
@@ -50,11 +65,13 @@ DB_ENCRYPTION_KEY
 
     openssl rand -base64 32 > /etc/pulp/certs/database_fields.symmetric.key
 
+
 DATABASES
 ^^^^^^^^^
 
    By default Pulp uses PostgreSQL on localhost. PostgreSQL is the only supported database. For
    instructions on how to configure the database, refer to :ref:`database installation <database-install>`.
+
 
 DEFAULT_FILE_STORAGE
 ^^^^^^^^^^^^^^^^^^^^
@@ -65,6 +82,7 @@ DEFAULT_FILE_STORAGE
    For more information about different Pulp storage options, see the
    :ref:`storage documentation <storage>`.
 
+
 REDIRECT_TO_OBJECT_STORAGE
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -73,6 +91,7 @@ REDIRECT_TO_OBJECT_STORAGE
    artifacts are always served by the content app instead.
 
    Defaults to ``True``; ignored for local file storage.
+
 
 MEDIA_ROOT
 ^^^^^^^^^^
@@ -89,6 +108,7 @@ MEDIA_ROOT
    * group: pulp (the group of the account that pulp runs under)
    * SELinux context: system_u:object_r:pulpcore_var_lib_t:s0
 
+
 LOGGING
 ^^^^^^^
 
@@ -98,6 +118,7 @@ LOGGING
 
    Enabling DEBUG logging is a common troubleshooting step. See the :ref:`enabling-debug-logging`
    documentation for details on how to do that.
+
 
 AUTHENTICATION_BACKENDS
 ^^^^^^^^^^^^^^^^^^^^^^^
@@ -110,6 +131,7 @@ AUTHENTICATION_BACKENDS
    To change the authentication types Pulp will use, modify the ``AUTHENTICATION_BACKENDS``
    settings. See the `Django authentication documentation <https://docs.djangoproject.com/en/3.2/
    topics/auth/customizing/#authentication-backends>`_ for more information.
+
 
 .. _redis-settings:
 
@@ -130,15 +152,18 @@ The following Redis settings can be set in your Pulp config:
 
 Below are some common settings used for Redis configuration.
 
+
 REDIS_HOST
 ^^^^^^^^^^
 
    The hostname for Redis.
 
+
 REDIS_PORT
 ^^^^^^^^^^
 
    The port for Redis.
+
 
 REDIS_PASSWORD
 ^^^^^^^^^^^^^^
@@ -153,6 +178,7 @@ Pulp Settings
 
 Pulp defines the following settings itself:
 
+
 .. _api-root:
 
 API_ROOT
@@ -164,6 +190,7 @@ API_ROOT
 
    Defaults to ``/pulp/``. After the application appends ``api/v3/`` it makes the V3 API by default
    serve from ``/pulp/api/v3/``.
+
 
 WORKING_DIRECTORY
 ^^^^^^^^^^^^^^^^^
@@ -184,6 +211,7 @@ WORKING_DIRECTORY
     volume for performance reasons. Files are commonly staged in the ``WORKING_DIRECTORY`` and
     validated before being moved to their permanent home in ``MEDIA_ROOT``.
 
+
 CHUNKED_UPLOAD_DIR
 ^^^^^^^^^^^^^^^^^^
 
@@ -192,6 +220,9 @@ CHUNKED_UPLOAD_DIR
    option allows users to customize the actual place where chunked uploads should be stored within
    the declared storage. The default, ``upload``, is sufficient for most use cases. A change to
    this setting only applies to uploads created after the change.
+
+
+.. _content-origin-setting:
 
 CONTENT_ORIGIN
 ^^^^^^^^^^^^^^
@@ -243,6 +274,7 @@ CACHE_ENABLED
      The entire response is not stored in the cache. Only the location of the file needed to
      recreate the response is stored. This reduces database queries and allows for many
      responses to be stored inside the cache.
+
 
 CACHE_SETTINGS
 ^^^^^^^^^^^^^^
