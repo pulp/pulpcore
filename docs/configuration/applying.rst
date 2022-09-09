@@ -3,63 +3,65 @@
 Applying Settings
 =================
 
-Pulp uses `dynaconf <https://dynaconf.readthedocs.io/en/latest/>`_ for its settings which allows you
-to configure Pulp in a few ways:
+Pulp uses `dynaconf <https://www.dynaconf.com/>`_ for its settings which allows you
+to configure Pulp settings using various ways:
 
 
-By Configuration File
+* :ref:`Environment Variables <env-var-settings>` - Enabled by default.
+
+* :ref:`Configuration File <config-file-settings>` - Disabled by default, but easy to enable.
+  Enabled by ``pulp_installer``.
+
+.. _env-var-settings:
+
+Environment Variables
 ---------------------
 
-To configure Pulp by settings file, you must set the format and location of the config file by
-specifying the ``PULP_SETTINGS`` environment variable. For example, if you wanted to use Python to
-specify your configuration, and provide it at ``/etc/pulp/settings.py`` you could::
+Configuration by specifying environment variables is enabled by default. Any
+:ref:`Setting <settings>` can be configured using Dynaconf by prepending ``PULP_`` to the setting
+name. For example :ref:`SECRET_KEY <secret-key-setting>` can be specified as the ``PULP_SECRET_KEY``
+environment variable. For example, in a shell you can use ``export`` to set this::
+
+    export PULP_SECRET_KEY="This should be a 50 chars or longer unique secret!"
+
+
+.. _config-file-settings:
+
+Configuration File
+------------------
+
+By default, Pulp does not read settings from a configuration file. Enable this by specifying the
+``PULP_SETTINGS`` environment variable with the path to your configuration file. For example::
 
     export PULP_SETTINGS=/etc/pulp/settings.py
 
+Then you can specify settings with Python variable assignment in the ``/etc/pulp/settings.py``. For
+example, you can specify :ref:`SECRET_KEY <secret-key-setting>` with::
 
-Or in a systemd file you could::
+    $ cat /etc/pulp/settings.py
+    SECRET_KEY="This should be a 50 chars or longer unique secret!"
 
-    Environment="PULP_SETTINGS=/etc/pulp/settings.py" as the Ansible Installer does.
+In this example the settings file ends in ".py" so it needs to be valid Python, but it could use any
+`dynaconf supported format <https://www.dynaconf.com/#supported-formats>`_.
+
+.. note::
+
+    The configuration file and directories containing the configuration file must be readable by the
+    user Pulp runs as. If using SELinux, assign the ``system_u:object_r:pulpcore_etc_t:s0`` label.
 
 
-Dynaconf supports `settings in multiple file formats <https://www.dynaconf.com/configuration/>`_
-Dynaconf also support `local settings file <https://www.dynaconf.com/settings_files/#local-settings-files>`_
+.. _pulp-installer-settings:
 
-This file should have permissions of:
+pulp_installer
+--------------
 
-* mode: 640
-* owner: root
-* group: pulp (the group of the account that pulp runs under)
-* SELinux context: system_u:object_r:etc_t:s0
+The `pulp_installer <https://docs.pulpproject.org/pulp_installer/>`_ enables configuration via a
+settings file that lives at ``/etc/pulp/settings.py``. It does this by having each systemd file that
+starts a Pulp service include::
 
-If it is in its own directory like ``/etc/pulp``, the directory should have permissions of:
+    Environment="PULP_SETTINGS=/etc/pulp/settings.py"
 
-* mode: 750
-* owner: root
-* group: pulp (the group of the account that pulp runs under)
-* SELinux context: unconfined_u:object_r:etc_t:s0
-
-An example of a minimal settings.py file is::
-
-    SECRET_KEY='50characterslongstring'
-    CONTENT_ORIGIN='http://localhost:24816'
-    CACHE_ENABLED=True
-    REDIS_HOST='localhost'
-    REDIS_PORT=6379
-
-Note that the single quotes are necessary.
-
-By Environment Variables
-------------------------
-
-Many users specify their Pulp settings entirely by Environment Variables. Each of the settings can
-be configured using Dynaconf by prepending ``PULP_`` to the name of the setting and specifying that
-as an Environment Variable. For example the ``SECRET_KEY`` can be specified by exporting the
-``PULP_SECRET_KEY`` variable.
-
-When using `pulp_installer`
----------------------------
-
-A Pulp upgrade using `pulp_installer` may override the original ``/etc/pulp/settings.py``.
-To keep your settings through an upgrade, use the `local settings` file located at
-``/etc/pulp/settings.local.py``.
+A Pulp upgrade using ``pulp_installer`` will override the original ``/etc/pulp/settings.py``.
+To keep your settings through an upgrade, use the "local settings" file located at
+``/etc/pulp/settings.local.py`` which takes precedence over ``/etc/pulp/settings.py`` on a
+setting-by-setting basis.
