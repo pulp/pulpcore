@@ -33,7 +33,10 @@ from django_guid import set_guid  # noqa: E402: module level not at top of file
 
 from pulpcore.app.models import Worker, Task  # noqa: E402: module level not at top of file
 
-from pulpcore.app.util import configure_analytics  # noqa: E402: module level not at top of file
+from pulpcore.app.util import (  # noqa: E402: module level not at top of file
+    configure_analytics,
+    set_domain,
+)
 from pulpcore.app.role_util import (  # noqa: E402: module level not at top of file
     get_users_with_perms,
 )
@@ -433,13 +436,15 @@ def _perform_task(task_pk, task_working_dir_rel_path):
         normal_thread.start()
     # All processes need to create their own postgres connection
     connection.connection = None
-    task = Task.objects.get(pk=task_pk)
+    task = Task.objects.select_related("pulp_domain").get(pk=task_pk)
     task.set_running()
     # Store the task id in the environment for `Task.current()`.
     os.environ["PULP_TASK_ID"] = str(task.pk)
     user = get_users_with_perms(task, with_group_users=False).first()
     _set_current_user(user)
     set_guid(task.logging_cid)
+    # Set current domain context
+    set_domain(task.pulp_domain)
     try:
         _logger.info(_("Starting task %s"), task.pk)
 

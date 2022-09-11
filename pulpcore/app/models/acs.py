@@ -4,6 +4,7 @@ Repository related Django models.
 from django.db import models
 
 from .base import MasterModel, BaseModel
+from pulpcore.app.util import get_domain_pk
 
 
 class AlternateContentSource(MasterModel):
@@ -15,6 +16,7 @@ class AlternateContentSource(MasterModel):
         name (models.TextField): The alternate content source name.
         last_refreshed (models.DateTimeField): Last refreshed date.
         url (models.TextField): URL of Alternate Content Source.
+        pulp_domain (models.ForeignKeyField): The domain the ACS is a part of.
 
     Relations:
 
@@ -24,12 +26,14 @@ class AlternateContentSource(MasterModel):
     TYPE = "acs"
     REMOTE_TYPES = []
 
-    name = models.TextField(db_index=True, unique=True)
+    name = models.TextField(db_index=True)
     last_refreshed = models.DateTimeField(null=True)
     remote = models.ForeignKey("Remote", null=True, on_delete=models.PROTECT)
+    pulp_domain = models.ForeignKey("Domain", default=get_domain_pk, on_delete=models.PROTECT)
 
     class Meta:
         verbose_name_plural = "acs"
+        unique_together = ("name", "pulp_domain")
 
 
 class AlternateContentSourcePath(BaseModel):

@@ -10,6 +10,7 @@ from django.dispatch import receiver
 from rest_framework import serializers
 
 from pulpcore.app.models import BaseModel, fields, storage
+from pulpcore.app.util import get_domain_pk
 
 
 class Upload(BaseModel):
@@ -19,9 +20,14 @@ class Upload(BaseModel):
     Fields:
 
         size (models.BigIntegerField): The size of the file in bytes.
+
+    Relations:
+
+        pulp_domain (models.ForeignKey): The domain the Upload is a part of.
     """
 
     size = models.BigIntegerField()
+    pulp_domain = models.ForeignKey("Domain", default=get_domain_pk, on_delete=models.PROTECT)
 
     def append(self, chunk, offset, sha256=None):
         """
@@ -69,10 +75,17 @@ class UploadChunk(BaseModel):
         """
         return storage.get_upload_chunk_file_path(self.pulp_id)
 
-    file = fields.FileField(null=False, upload_to=storage_path, max_length=255)
+    file = fields.FileField(
+        null=False, upload_to=storage_path, storage=storage.DomainStorage, max_length=255
+    )
     upload = models.ForeignKey(Upload, on_delete=models.CASCADE, related_name="chunks")
     offset = models.BigIntegerField()
     size = models.BigIntegerField()
+
+    @property
+    def pulp_domain(self):
+        """Get the Domain for this chunk from the Upload."""
+        return self.upload.pulp_domain
 
 
 @receiver(post_delete, sender=UploadChunk)

@@ -5,7 +5,7 @@ The permissions system provides a way to assign permissions as part of roles to 
 groups of users. The models driving this data are ``django.contrib.auth.models.Permission`` and
 ``pulpcore.plugin.models.role.Role``. Each ``Permission`` has a name, describing it and can be
 associated with one or more ``Role``. Roles can be assigned to users or groups either on the
-Model-Level or Object-Level.
+Model-Level, Domain-level (if domains are enabled), or Object-Level.
 
 
 .. _model_permissions:
@@ -90,16 +90,19 @@ Roles
 ``Permissions`` exclusively via role assignments. Typical roles are ``owner`` for an object with all
 the permissions to view modify and delete the object, or ``viewer`` limited to see the object. To
 scope the reach of the permissions in a role, these role are assigned to ``Users`` or ``Groups``
-either on the model-level or the object-level.
+either on the model-level, domain-level (if domains are enabled), or the object-level.
 
 :Model-Level: A role is associated to a user or group for access to a specific model, but not an
    instance of that model. This allows you to express concepts like "Hilde can administer all
    FileRemotes".
+:Domain-Level: When the domains feature is enabled, a role is associated to a user or group for
+    access to a specific model within the specific domain and only that domain. This allows you
+    to express concepts like "Hilde can administer all FileRemotes within Domain 'foo'".
 :Object-Level: A role is associated to a user or group for access to a specific instance of a
    specific model. This allows you to express concepts like "Hilde can administer
    FileRemote(name='foo remote').
 
-Certain roles may contain permissions that are only ever checked on the model-level.
+Certain roles may contain permissions that are only ever checked on the model(or domain)-level.
 For example the ``creator`` role for a model that contains the models ``add`` permission.
 
 In the case for ``FileRemote``, the typical set of roles provided by the plugin looks like:

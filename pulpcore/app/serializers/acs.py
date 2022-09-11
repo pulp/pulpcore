@@ -3,10 +3,15 @@ from gettext import gettext as _
 from django.db import transaction
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError as DRFValidationError
-from rest_framework.validators import UniqueValidator
 
 from pulpcore.app import models
-from pulpcore.app.serializers import DetailIdentityField, DetailRelatedField, ModelSerializer
+from pulpcore.app.serializers import (
+    DetailIdentityField,
+    DetailRelatedField,
+    DomainUniqueValidator,
+    ModelSerializer,
+)
+
 from pulpcore.app.util import get_url
 
 
@@ -37,7 +42,7 @@ class AlternateContentSourceSerializer(ModelSerializer):
     name = serializers.CharField(
         help_text=_("Name of Alternate Content Source."),
         required=True,
-        validators=[UniqueValidator(queryset=models.AlternateContentSource.objects.all())],
+        validators=[DomainUniqueValidator(queryset=models.AlternateContentSource.objects.all())],
     )
     last_refreshed = serializers.DateTimeField(
         help_text=_("Date of last refresh of AlternateContentSource."),

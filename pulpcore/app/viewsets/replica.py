@@ -1,20 +1,16 @@
 """
 ViewSet for replicating repositories and distributions from an upstream Pulp
 """
-from pulpcore.app.models import UpstreamPulp
-
-from pulpcore.app.serializers import UpstreamPulpSerializer
-
-from pulpcore.app.tasks import replicate_distributions
-
+from django.conf import settings
 from drf_spectacular.utils import extend_schema
 from rest_framework import mixins
 from rest_framework.decorators import action
 
-from pulpcore.app.models import TaskGroup
-from pulpcore.app.serializers import AsyncOperationResponseSerializer
+from pulpcore.app.models import TaskGroup, UpstreamPulp
+from pulpcore.app.serializers import AsyncOperationResponseSerializer, UpstreamPulpSerializer
 from pulpcore.app.viewsets import NamedModelViewSet
 from pulpcore.app.response import TaskGroupOperationResponse
+from pulpcore.app.tasks import replicate_distributions
 from pulpcore.tasking.tasks import dispatch
 
 
@@ -47,9 +43,13 @@ class UpstreamPulpViewSet(
         server = UpstreamPulp.objects.get(pk=pk)
         task_group = TaskGroup.objects.create(description=f"Replication of {server.name}")
 
+        uri = "/api/v3/servers/"
+        if settings.DOMAIN_ENABLED:
+            uri = f"/{request.domain.name}{uri}"
+
         dispatch(
             replicate_distributions,
-            exclusive_resources=["/pulp/api/v3/servers/"],
+            exclusive_resources=[uri],
             kwargs={"server_pk": pk},
             task_group=task_group,
         )

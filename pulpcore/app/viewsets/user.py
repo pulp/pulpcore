@@ -16,7 +16,7 @@ from rest_framework.serializers import ValidationError
 
 from drf_spectacular.utils import OpenApiParameter, extend_schema, extend_schema_view
 
-from pulpcore.filters import BaseFilterSet
+from pulpcore.filters import BaseFilterSet, HyperlinkRelatedFilter
 from pulpcore.app.models import Group
 from pulpcore.app.models.role import GroupRole, Role, UserRole
 from pulpcore.app.viewsets import NamedModelViewSet, RolesMixin, NAME_FILTER_OPTIONS
@@ -343,6 +343,7 @@ class NestedRoleFilter(BaseFilterSet):
     content_object = filters.CharFilter(
         label="content_object", method="content_object_filter_function"
     )
+    domain = HyperlinkRelatedFilter(allow_null=True)
 
     def content_object_filter_function(self, queryset, name, value):
         if value == "null":

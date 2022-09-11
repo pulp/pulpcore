@@ -3,13 +3,13 @@ from gettext import gettext as _
 from urllib.parse import urlparse
 
 from rest_framework import fields, serializers
-from rest_framework.validators import UniqueValidator
 from rest_framework_nested.serializers import NestedHyperlinkedModelSerializer
 
 from pulpcore.app import models, settings
 from pulpcore.app.serializers import (
     DetailIdentityField,
     DetailRelatedField,
+    DomainUniqueValidator,
     LatestVersionField,
     ModelSerializer,
     RepositoryVersionIdentityField,
@@ -29,7 +29,7 @@ class RepositorySerializer(ModelSerializer):
     latest_version_href = LatestVersionField()
     name = serializers.CharField(
         help_text=_("A unique name for this repository."),
-        validators=[UniqueValidator(queryset=models.Repository.objects.all())],
+        validators=[DomainUniqueValidator(queryset=models.Repository.objects.all())],
     )
     description = serializers.CharField(
         help_text=_("An optional description."), required=False, allow_null=True
@@ -81,7 +81,7 @@ class RemoteSerializer(ModelSerializer, HiddenFieldsMixin):
     pulp_labels = serializers.HStoreField(required=False, validators=[pulp_labels_validator])
     name = serializers.CharField(
         help_text=_("A unique name for this remote."),
-        validators=[UniqueValidator(queryset=models.Remote.objects.all())],
+        validators=[DomainUniqueValidator(queryset=models.Remote.objects.all())],
     )
     url = serializers.CharField(help_text="The URL of an external content source.")
     ca_cert = serializers.CharField(
@@ -342,17 +342,16 @@ class RepositorySyncURLSerializer(ValidateFieldsMixin, serializers.Serializer):
 
     def validate(self, data):
         data = super().validate(data)
+        repository = None
+        if "repository_pk" in self.context:
+            repository = models.Repository.objects.get(pk=self.context["repository_pk"])
+        remote = data.get("remote", None) or getattr(repository, "remote", None)
 
-        try:
-            remote = models.Repository.objects.get(pk=self.context["repository_pk"]).remote
-        except KeyError:
-            remote = None
-
-        if "remote" not in data and not remote:
+        if not remote:
             raise serializers.ValidationError(
                 {"remote": _("This field is required since a remote is not set on the repository.")}
             )
-
+        self.check_cross_domains({"repository": repository, "remote": remote})
         return data
 
 

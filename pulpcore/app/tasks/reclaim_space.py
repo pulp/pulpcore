@@ -7,6 +7,7 @@ from pulpcore.app.models import (
     Repository,
     RepositoryVersion,
 )
+from pulpcore.app.util import get_domain
 
 
 def reclaim_space(repo_pks, keeplist_rv_pks=None, force=False):
@@ -27,7 +28,8 @@ def reclaim_space(repo_pks, keeplist_rv_pks=None, force=False):
     for repo in reclaimed_repos:
         repo.invalidate_cache(everything=True)
 
-    rest_of_repos = Repository.objects.exclude(pk__in=repo_pks)
+    domain = get_domain()
+    rest_of_repos = Repository.objects.filter(pulp_domain=domain).exclude(pk__in=repo_pks)
     c_keep_qs = Content.objects.filter(repositories__in=rest_of_repos)
     c_reclaim_qs = Content.objects.filter(repositories__in=repo_pks)
     c_reclaim_qs = c_reclaim_qs.exclude(

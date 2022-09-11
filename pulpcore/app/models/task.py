@@ -21,7 +21,7 @@ from pulpcore.app.models import (
 )
 from pulpcore.constants import TASK_CHOICES, TASK_INCOMPLETE_STATES, TASK_STATES
 from pulpcore.exceptions import AdvisoryLockError, exception_to_dict
-
+from pulpcore.app.util import get_domain_pk
 
 _logger = logging.getLogger(__name__)
 
@@ -161,6 +161,7 @@ class Task(BaseModel, AutoAddObjPermsMixin):
 
         parent (models.ForeignKey): Task that spawned this task (if any)
         worker (models.ForeignKey): The worker that this task is in
+        pulp_domain (models.ForeignKey): The domain the Task is a part of
     """
 
     state = models.TextField(choices=TASK_CHOICES)
@@ -184,6 +185,7 @@ class Task(BaseModel, AutoAddObjPermsMixin):
         "TaskGroup", null=True, related_name="tasks", on_delete=models.SET_NULL
     )
     reserved_resources_record = ArrayField(models.TextField(), null=True)
+    pulp_domain = models.ForeignKey("Domain", default=get_domain_pk, on_delete=models.CASCADE)
 
     def __str__(self):
         return "Task: {name} [{state}]".format(name=self.name, state=self.state)
@@ -361,6 +363,7 @@ class Task(BaseModel, AutoAddObjPermsMixin):
 class TaskGroup(BaseModel):
     description = models.TextField()
     all_tasks_dispatched = models.BooleanField(default=False)
+    pulp_domain = models.ForeignKey("Domain", default=get_domain_pk, on_delete=models.CASCADE)
 
     @staticmethod
     def current():

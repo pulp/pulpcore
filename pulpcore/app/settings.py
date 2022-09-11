@@ -113,6 +113,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "django_currentuser.middleware.ThreadLocalUserMiddleware",
+    "pulpcore.middleware.DomainMiddleware",
 ]
 
 AUTHENTICATION_BACKENDS = [
@@ -292,6 +293,8 @@ ANALYTICS = True
 
 HIDE_GUARDED_DISTRIBUTIONS = False
 
+DOMAIN_ENABLED = False
+
 # HERE STARTS DYNACONF EXTENSION LOAD (Keep at the very bottom of settings.py)
 # Read more at https://dynaconf.readthedocs.io/en/latest/guides/django.html
 from dynaconf import DjangoDynaconf, Validator  # noqa
@@ -462,6 +465,6 @@ if not (len(sys.argv) >= 2 and sys.argv[1] in _SKIPPED_COMMANDS_FOR_CONTENT_CHEC
         connection.close()
 
 settings.set("V3_API_ROOT", settings.API_ROOT + "api/v3/")  # Not user configurable
-settings.set(
-    "V3_API_ROOT_NO_FRONT_SLASH", settings.V3_API_ROOT.lstrip("/")
-)  # Not user configurable
+settings.set("V3_DOMAIN_API_ROOT", settings.API_ROOT + "<slug:pulp_domain>/api/v3/")
+settings.set("V3_API_ROOT_NO_FRONT_SLASH", settings.V3_API_ROOT.lstrip("/"))
+settings.set("V3_DOMAIN_API_ROOT_NO_FRONT_SLASH", settings.V3_DOMAIN_API_ROOT.lstrip("/"))

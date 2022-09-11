@@ -16,6 +16,8 @@ from .access_policy import (  # noqa
     Group,
 )
 
+from .domain import Domain  # noqa
+
 from .acs import AlternateContentSource, AlternateContentSourcePath  # noqa
 
 from .content import (  # noqa

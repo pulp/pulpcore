@@ -36,6 +36,8 @@ class UserRole(BaseModel):
         user (models.ForeignKey): User to grant permissions to.
         role (models.ForeignKey): Role to select granted permissions from.
         content_object (GenericForeignKey): Optional object to assert permissions on.
+        domain (models.ForeignKey): Domain these permissions apply on, mutually exclusive with
+            content_object
     """
 
     user = models.ForeignKey(
@@ -45,9 +47,10 @@ class UserRole(BaseModel):
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE, null=True)
     object_id = models.TextField(null=True)
     content_object = GenericForeignKey("content_type", "object_id", for_concrete_model=False)
+    domain = models.ForeignKey("Domain", null=True, on_delete=models.CASCADE)
 
     class Meta:
-        unique_together = (("user", "role", "content_type", "object_id"),)
+        unique_together = (("user", "role", "content_type", "object_id", "domain"),)
         indexes = [models.Index(fields=["content_type", "object_id"])]
 
 
@@ -60,6 +63,8 @@ class GroupRole(BaseModel):
         group (models.ForeignKey): Group to grant permissions to.
         role (models.ForeignKey): Role to select granted permissions from.
         content_object (GenericForeignKey): Optional object to assert permissions on.
+        domain (models.ForeignKey): Domain these permissions apply on, mutually exclusive with
+            content_object
     """
 
     group = models.ForeignKey(Group, related_name="object_roles", on_delete=models.CASCADE)
@@ -67,7 +72,8 @@ class GroupRole(BaseModel):
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE, null=True)
     object_id = models.TextField(null=True)
     content_object = GenericForeignKey("content_type", "object_id", for_concrete_model=False)
+    domain = models.ForeignKey("Domain", null=True, on_delete=models.CASCADE)
 
     class Meta:
-        unique_together = (("group", "role", "content_type", "object_id"),)
+        unique_together = (("group", "role", "content_type", "object_id", "domain"),)
         indexes = [models.Index(fields=["content_type", "object_id"])]

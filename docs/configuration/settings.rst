@@ -98,8 +98,9 @@ MEDIA_ROOT
 
    The location where Pulp will store files. By default this is ``/var/lib/pulp/media``.
 
-   If you're using S3, point this to the path in your bucket you want to save files. See the
-   :ref:`storage documentation <storage>` for more info.
+   This only affects storage location when ``DEFAULT_FILE_STORAGE`` is set to
+   ``pulpcore.app.models.storage.FileSystem``. See the :ref:`storage documentation <storage>` for
+   more info.
 
    It should have permissions of:
 
@@ -286,6 +287,15 @@ CACHE_SETTINGS
    .. note::
      Set to ``None`` to have entries not expire.
      Content app responses are always invalidated when the backing distribution is updated.
+
+
+DOMAIN_ENABLED
+^^^^^^^^^^^^^^
+
+   .. note:: This feature is provided as a tech-preview
+
+   Enable the :ref:`Domains feature to enable multi-tenancy capabilities <domains>`. All installed
+   plugins must be Domain compatible for Pulp to start. Defaults to ``False``.
 
 
 .. _worker-ttl:

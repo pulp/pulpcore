@@ -1,3 +1,5 @@
+.. _publish-task:
+
 Publish
 =======
 

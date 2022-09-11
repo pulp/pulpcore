@@ -108,7 +108,9 @@ class SingleArtifactContentUploadViewSet(DefaultDeferredContextMixin, ContentVie
             except IntegrityError:
                 # if artifact already exists, let's use it
                 try:
-                    artifact = Artifact.objects.get(sha256=artifact.sha256)
+                    artifact = Artifact.objects.get(
+                        sha256=artifact.sha256, pulp_domain=request.pulp_domain
+                    )
                     artifact.touch()
                 except (Artifact.DoesNotExist, DatabaseError):
                     # the artifact has since been removed from when we first attempted to save it

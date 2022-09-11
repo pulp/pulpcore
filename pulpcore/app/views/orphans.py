@@ -1,3 +1,4 @@
+from django.conf import settings
 from drf_spectacular.utils import extend_schema
 from rest_framework.views import APIView
 
@@ -19,6 +20,9 @@ class OrphansView(APIView):
         """
         Cleans up all the Content and Artifact orphans in the system
         """
-        task = dispatch(orphan_cleanup, exclusive_resources=["/pulp/api/v3/orphans/cleanup/"])
+        uri = "/api/v3/orphans/cleanup/"
+        if settings.DOMAIN_ENABLED:
+            uri = f"/{request.pulp_domain.name}{uri}"
+        task = dispatch(orphan_cleanup, exclusive_resources=[uri])
 
         return OperationPostponedResponse(task, request)

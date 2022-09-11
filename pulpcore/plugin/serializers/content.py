@@ -148,7 +148,9 @@ class SingleArtifactContentUploadSerializer(
                 file = PulpTemporaryUploadedFile.from_file(artifact_file)
                 # if artifact already exists, let's use it
                 try:
-                    artifact = Artifact.objects.get(sha256=file.hashers["sha256"].hexdigest())
+                    artifact = Artifact.objects.get(
+                        sha256=file.hashers["sha256"].hexdigest(), pulp_domain=upload.pulp_domain
+                    )
                     artifact.touch()
                 except (Artifact.DoesNotExist, DatabaseError):
                     artifact_data = {"file": file}

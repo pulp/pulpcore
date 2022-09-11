@@ -2,6 +2,7 @@ import warnings
 from gettext import gettext as _
 from urllib.parse import urlparse
 
+from django.conf import settings
 from django.db import transaction
 from django.core.exceptions import FieldError, ValidationError
 from django.urls import Resolver404, resolve
@@ -162,6 +163,10 @@ class NamedModelViewSet(viewsets.GenericViewSet):
             match = resolve(urlparse(uri).path)
         except Resolver404:
             raise DRFValidationError(detail=_("URI not valid: {u}").format(u=uri))
+
+        if model is None:
+            model = match.func.cls.queryset.model
+
         if "pk" in match.kwargs:
             kwargs = {"pk": match.kwargs["pk"]}
         else:
@@ -169,11 +174,11 @@ class NamedModelViewSet(viewsets.GenericViewSet):
             for key, value in match.kwargs.items():
                 if key.endswith("_pk"):
                     kwargs["{}__pk".format(key[:-3])] = value
+                elif key == "pulp_domain":
+                    if hasattr(model, "pulp_domain"):
+                        kwargs["pulp_domain__name"] = value
                 else:
                     kwargs[key] = value
-
-        if model is None:
-            model = match.func.cls.queryset.model
 
         try:
             return model.objects.get(**kwargs)
@@ -334,13 +339,18 @@ class NamedModelViewSet(viewsets.GenericViewSet):
                 performed if queryset_scoping is enabled.
         """
         qs = super().get_queryset()
+
         if self.parent_lookup_kwargs and self.kwargs:
             filters = {}
             for key, lookup in self.parent_lookup_kwargs.items():
                 filters[lookup] = self.kwargs[key]
             qs = qs.filter(**filters)
 
-        if getattr(self, "request", None):
+        if request := getattr(self, "request", None):
+            if settings.DOMAIN_ENABLED:
+                if hasattr(qs.model, "pulp_domain"):
+                    qs = qs.filter(pulp_domain=request.pulp_domain)
+
             for permission_class in self.get_permissions():
                 if hasattr(permission_class, "scope_queryset"):
                     qs = permission_class.scope_queryset(self, qs)

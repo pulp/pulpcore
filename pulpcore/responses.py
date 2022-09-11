@@ -58,7 +58,11 @@ class ArtifactResponse(StreamResponse):
 
     async def prepare(self, request):
         if self._artifact is None:
-            self._artifact = await sync_to_async(Artifact.objects.get)(pk=self._artifact_pk)
+
+            def _get_artifact(pk):
+                return Artifact.objects.select_related("pulp_domain").get(pk=pk)
+
+            self._artifact = await sync_to_async(_get_artifact)(self._artifact_pk)
 
         self._file = self._artifact.file
 
