@@ -92,7 +92,10 @@ class QueryExistingArtifacts(Stage):
             # digest of the new artifact to those of the existing ones - if one matches,
             # swap it out with the existing one.
             for digest_type, digests in artifact_digests_by_type.items():
-                query_params = {"{attr}__in".format(attr=digest_type): digests}
+                query_params = {
+                    "{attr}__in".format(attr=digest_type): digests,
+                    "pulp_domain": self.domain,
+                }
                 existing_artifacts_qs = Artifact.objects.filter(**query_params)
                 existing_artifacts = sync_to_async_iterable(existing_artifacts_qs)
                 await sync_to_async(existing_artifacts_qs.touch)()
@@ -463,7 +466,8 @@ class ACSArtifactHandler(Stage):
 
     async def run(self):
         async for batch in self.batches():
-            acs_exists = await sync_to_async(AlternateContentSource.objects.exists)()
+            acs_query = AlternateContentSource.objects.filter(pulp_domain=self.domain)
+            acs_exists = await sync_to_async(acs_query.exists)()
             if acs_exists:
                 # Gather batch d_artifact checksums
                 batch_checksums = defaultdict(list)

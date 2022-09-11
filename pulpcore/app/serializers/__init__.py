@@ -6,6 +6,7 @@ from .base import (  # noqa
     AsyncOperationResponseSerializer,
     DetailIdentityField,
     DetailRelatedField,
+    DomainUniqueValidator,
     GetOrCreateSerializerMixin,
     IdentityField,
     ModelSerializer,
@@ -49,6 +50,7 @@ from .content import (  # noqa
     SigningServiceSerializer,
     SingleArtifactContentSerializer,
 )
+from .domain import DomainSerializer  # noqa
 from .exporter import (  # noqa
     ExporterSerializer,
     ExportSerializer,

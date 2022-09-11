@@ -283,6 +283,19 @@ Sync Pipeline
 
    sync_pipeline/sync_pipeline
 
+Domain Multi-tenancy
+--------------------
+
+Pulp supports a namespacing feature called Domains that allows users to create their own Domain for
+their objects to live in. This feature is optional and requires plugins to be domain compatible in
+order to be enabled.
+
+.. toctree::
+   :maxdepth: 2
+
+   domains/domains_compatibility
+
+.. _rbac:
 
 Role Based Access Control
 -------------------------

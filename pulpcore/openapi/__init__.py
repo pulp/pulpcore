@@ -1,4 +1,3 @@
-import os
 import re
 from urllib.parse import urljoin
 
@@ -27,7 +26,14 @@ from rest_framework.schemas.utils import get_pk_description
 from pulpcore.app.apps import pulp_plugin_configs
 
 
-# Python does not distinguish integer sizes. The safest assumtion is that they are large.
+if settings.DOMAIN_ENABLED:
+    API_ROOT_NO_FRONT_SLASH = settings.V3_DOMAIN_API_ROOT_NO_FRONT_SLASH.replace("slug:", "")
+else:
+    API_ROOT_NO_FRONT_SLASH = settings.V3_API_ROOT_NO_FRONT_SLASH
+API_ROOT_NO_FRONT_SLASH = API_ROOT_NO_FRONT_SLASH.replace("<", "{").replace(">", "}")
+
+
+# Python does not distinguish integer sizes. The safest assumption is that they are large.
 extend_schema_field(OpenApiTypes.INT64)(serializers.IntegerField)
 
 
@@ -99,7 +105,6 @@ class PulpAutoSchema(AutoSchema):
         subpath = "/".join(tokenized_path)
         operation_keys = subpath.replace(settings.V3_API_ROOT_NO_FRONT_SLASH, "").split("/")
         operation_keys = [i.title() for i in operation_keys]
-        tags = operation_keys
         if len(operation_keys) > 2:
             del operation_keys[1]
         if len(operation_keys) > 1:
@@ -239,12 +244,18 @@ class PulpAutoSchema(AutoSchema):
                 except FieldDoesNotExist:
                     pass
 
+            # Used by the bindings to identify which param is the domain path
+            extensions = {}
+            if settings.DOMAIN_ENABLED and variable == "pulp_domain":
+                extensions["x-isDomain"] = True
+
             parameters.append(
                 build_parameter_type(
                     name=variable,
                     location=OpenApiParameter.PATH,
                     description=description,
                     schema=schema,
+                    extensions=extensions,
                 )
             )
 
@@ -360,7 +371,10 @@ class PulpSchemaGenerator(SchemaGenerator):
                 resource_model, prefix, pulp_model_alias
             )
             resource_path = "%s}/" % path.rsplit(sep="}", maxsplit=1)[0]
-            path = path.replace(resource_path, "{%s}" % param_name)
+            # This check prevents /pulp/{pulp_domain}/ from being converted for non-detail endpoints
+            # Possibly affects plugin-specific urls, depends on their url structure
+            if resource_path.lstrip("/") not in API_ROOT_NO_FRONT_SLASH:
+                path = path.replace(resource_path, "{%s}" % param_name)
         return path
 
     def parse(self, input_request, public):
@@ -374,14 +388,7 @@ class PulpSchemaGenerator(SchemaGenerator):
             query_params = {k.replace("amp;", ""): v for k, v in input_request.query_params.items()}
 
         if spectacular_settings.SCHEMA_PATH_PREFIX is None:
-            # estimate common path prefix if none was given. only use it if we encountered more
-            # than one view to prevent emission of erroneous and unnecessary fallback names.
-            non_trivial_prefix = len(set([view.__class__ for _, _, _, view in endpoints])) > 1
-            if non_trivial_prefix:
-                path_prefix = os.path.commonpath([path for path, _, _, _ in endpoints])
-                path_prefix = re.escape(path_prefix)  # guard for RE special chars in path
-            else:
-                path_prefix = "/"
+            path_prefix = "/"
         else:
             path_prefix = spectacular_settings.SCHEMA_PATH_PREFIX
         if not path_prefix.startswith("^"):
@@ -479,6 +486,9 @@ class PulpSchemaGenerator(SchemaGenerator):
         result["info"]["x-pulp-app-versions"] = {}
         for app in pulp_plugin_configs():
             result["info"]["x-pulp-app-versions"][app.label] = app.version
+
+        # Add domain-settings value
+        result["info"]["x-pulp-domain-enabled"] = settings.DOMAIN_ENABLED
 
         # Adding current host as server (it will provide a default value for the bindings)
         server_url = "http://localhost:24817" if not request else request.build_absolute_uri("/")

@@ -7,13 +7,16 @@ Check `Plugin Writer's Guide`_ for more details.
 
 from django.db import models
 from pulpcore.plugin.models import BaseModel, EncryptedTextField
+from pulpcore.app.util import get_domain_pk
 
 
 class UpstreamPulp(BaseModel):
-    name = models.TextField(db_index=True, unique=True)
+    name = models.TextField(db_index=True)
+    pulp_domain = models.ForeignKey("Domain", default=get_domain_pk, on_delete=models.PROTECT)
 
     base_url = models.TextField()
     api_root = models.TextField(default="pulp")
+    domain = models.TextField(null=True)
 
     ca_cert = models.TextField(null=True)
     client_cert = models.TextField(null=True)
@@ -24,3 +27,6 @@ class UpstreamPulp(BaseModel):
     password = EncryptedTextField(null=True)
 
     pulp_label_select = models.TextField(null=True)
+
+    class Meta:
+        unique_together = ("name", "pulp_domain")

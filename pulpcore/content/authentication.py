@@ -3,12 +3,15 @@ import logging
 
 from asgiref.sync import sync_to_async
 from aiohttp.web import middleware
+from django.conf import settings
 from django.db.utils import InterfaceError, OperationalError
 from django.http.request import HttpRequest
 from rest_framework.views import APIView
 from rest_framework.exceptions import APIException
 
-from .handler import Handler
+from .handler import Handler, PathNotResolved
+from pulpcore.app.models import Domain
+from pulpcore.app.util import set_domain
 
 log = logging.getLogger(__name__)
 _ = gettext.gettext
@@ -24,10 +27,14 @@ async def authenticate(request, handler):
         drf_request = fake_view.initialize_request(django_request)
         try:
             try:
+                domain = validate_domain(request)
                 fake_view.perform_authentication(drf_request)
             except (InterfaceError, OperationalError):
                 Handler._reset_db_connection()
+                domain = validate_domain(request)
                 fake_view.perform_authentication(drf_request)
+
+            setattr(drf_request, "pulp_domain", domain)
         except APIException as e:
             log.warning(_('"{} {}" "{}": {}').format(request.method, request.path, request.host, e))
 
@@ -61,3 +68,20 @@ def convert_request(request):
 
     djr._get_scheme = lambda: request.scheme
     return djr
+
+
+def validate_domain(request):
+    """
+    Ensures the request is inside a proper Domain.
+    """
+    domain_name = request.match_info.get("pulp_domain", "default")
+    try:
+        domain = Domain.objects.get(name=domain_name)
+    except Domain.DoesNotExist:
+        path = request.match_info.get("path", "")
+        if settings.DOMAIN_ENABLED:
+            path = domain_name + "/" + path
+        raise PathNotResolved(path)
+
+    set_domain(domain)
+    return domain

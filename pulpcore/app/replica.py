@@ -1,9 +1,10 @@
+from django.conf import settings
 from django.db.models import Model
 
 from pulp_glue.common.context import PulpContext
 from pulpcore.tasking.tasks import dispatch
 from pulpcore.app.tasks.base import general_update, general_create, general_delete
-from pulpcore.plugin.util import get_url
+from pulpcore.plugin.util import get_url, get_domain
 
 
 class ReplicaContext(PulpContext):
@@ -34,6 +35,11 @@ class Replicator:
         """
         self.pulp_ctx = pulp_ctx
         self.task_group = task_group
+        self.domain = get_domain()
+        uri = "/api/v3/distributions/"
+        if settings.DOMAIN_ENABLED:
+            uri = f"/{self.domain.name}{uri}"
+        self.distros_uri = uri
 
     @staticmethod
     def needs_update(fields_dict, model_instance):
@@ -77,7 +83,9 @@ class Replicator:
         url = self.url(upstream_distribution)
         # Check if there is a remote pointing to this distribution
         try:
-            remote = self.remote_model_cls.objects.get(name=upstream_distribution["name"])
+            remote = self.remote_model_cls.objects.get(
+                name=upstream_distribution["name"], pulp_domain=self.domain
+            )
             remote_fields_dict = self.remote_extra_fields(upstream_distribution)
             remote_fields_dict["url"] = url
             needs_update = self.needs_update(remote_fields_dict, remote)
@@ -103,7 +111,9 @@ class Replicator:
 
     def create_or_update_repository(self, remote):
         try:
-            repository = self.repository_model_cls.objects.get(name=remote.name)
+            repository = self.repository_model_cls.objects.get(
+                name=remote.name, pulp_domain=self.domain
+            )
             repo_fields_dict = self.repository_extra_fields(remote)
             needs_update = self.needs_update(repo_fields_dict, repository)
             if needs_update:
@@ -123,7 +133,9 @@ class Replicator:
 
     def create_or_update_distribution(self, repository, upstream_distribution):
         try:
-            distro = self.distribution_model_cls.objects.get(name=upstream_distribution["name"])
+            distro = self.distribution_model_cls.objects.get(
+                name=upstream_distribution["name"], pulp_domain=self.domain
+            )
             # Check that the distribution has the right repository associated
             needs_update = self.needs_update(
                 {
@@ -137,7 +149,7 @@ class Replicator:
                 dispatch(
                     general_update,
                     task_group=self.task_group,
-                    exclusive_resources=["/api/v3/distributions/"],
+                    exclusive_resources=[self.distros_uri],
                     args=(distro.pk, self.app_label, self.distribution_serializer_name),
                     kwargs={
                         "data": {
@@ -152,7 +164,7 @@ class Replicator:
             dispatch(
                 general_create,
                 task_group=self.task_group,
-                exclusive_resources=["/api/v3/distributions/"],
+                exclusive_resources=[self.distros_uri],
                 args=(self.app_label, self.distribution_serializer_name),
                 kwargs={
                     "data": {
@@ -178,12 +190,14 @@ class Replicator:
 
     def remove_missing(self, names):
         # Remove all distributions with names not present in the list of names
-        distros_to_delete = self.distribution_model_cls.objects.exclude(name__in=names)
+        distros_to_delete = self.distribution_model_cls.objects.filter(
+            pulp_domain=self.domain
+        ).exclude(name__in=names)
         for distro in distros_to_delete:
             dispatch(
                 general_delete,
                 task_group=self.task_group,
-                exclusive_resources=["/api/v3/distributions/"],
+                exclusive_resources=[self.distros_uri],
                 args=(distro.pk, self.app_label, self.distribution_serializer_name),
             )
 

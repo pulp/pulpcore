@@ -35,7 +35,9 @@ def general_create(app_label, serializer_name, *args, **kwargs):
     serializer_class = get_plugin_config(app_label).named_serializers[serializer_name]
     serializer = serializer_class(data=data, context=context)
     serializer.is_valid(raise_exception=True)
-    instance = serializer.save().cast()
+    instance = serializer.save()
+    if isinstance(instance, MasterModel):
+        instance = instance.cast()
     resource = CreatedResource(content_object=instance)
     resource.save()
 
@@ -65,7 +67,9 @@ def general_update(instance_id, app_label, serializer_name, *args, **kwargs):
     data = kwargs.pop("data", None)
     partial = kwargs.pop("partial", False)
     serializer_class = get_plugin_config(app_label).named_serializers[serializer_name]
-    instance = serializer_class.Meta.model.objects.get(pk=instance_id).cast()
+    instance = serializer_class.Meta.model.objects.get(pk=instance_id)
+    if isinstance(instance, MasterModel):
+        instance = instance.cast()
     serializer = serializer_class(instance, data=data, partial=partial)
     serializer.is_valid(raise_exception=True)
     serializer.save()
@@ -83,7 +87,9 @@ def general_delete(instance_id, app_label, serializer_name):
         serializer_name (str): name of the serializer class for the model
     """
     serializer_class = get_plugin_config(app_label).named_serializers[serializer_name]
-    instance = serializer_class.Meta.model.objects.get(pk=instance_id).cast()
+    instance = serializer_class.Meta.model.objects.get(pk=instance_id)
+    if isinstance(instance, MasterModel):
+        instance = instance.cast()
     instance.delete()
 
 

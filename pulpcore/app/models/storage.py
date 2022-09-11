@@ -4,7 +4,9 @@ from uuid import uuid4
 from django.conf import settings
 from django.core.files import locks
 from django.core.files.move import file_move_safe
-from django.core.files.storage import FileSystemStorage
+from django.core.files.storage import Storage, FileSystemStorage
+
+from pulpcore.app.util import get_domain
 
 
 class FileSystem(FileSystemStorage):
@@ -122,6 +124,17 @@ except ImportError:
     pass
 
 
+class DomainStorage:
+    """Storage class for FileFields to use that allows for uploading to a domain's storage."""
+
+    def __getattr__(self, item):
+        domain = get_domain()
+        storage = domain.get_storage()
+        return getattr(storage, item)
+
+    __class__ = Storage
+
+
 def get_artifact_path(sha256digest):
     """
     Determine the relative path where a file backing the Artifact should be stored.
@@ -133,7 +146,12 @@ def get_artifact_path(sha256digest):
         A string representing the absolute path where a file backing the Artifact should be
         stored
     """
-    return os.path.join("artifact", sha256digest[:2], sha256digest[2:])
+    args = ["artifact", sha256digest[:2], sha256digest[2:]]
+    # Prevent collisions if two domains have the same backend settings
+    domain = get_domain()
+    if domain.name != "default":
+        args.insert(1, str(domain.pulp_id))
+    return os.path.join(*args)
 
 
 def get_temp_file_path(pulp_id):
@@ -164,6 +182,7 @@ def get_upload_chunk_file_path(pulp_id):
     return os.path.join(settings.CHUNKED_UPLOAD_DIR, str(pulp_id))
 
 
+# This is currently not used by anyone, probably should deprecate and remove from plugin api
 def get_tls_path(model, name):
     """
     Determine storage location as: MEDIA_ROOT/tls/<model>/<id>/<name>.

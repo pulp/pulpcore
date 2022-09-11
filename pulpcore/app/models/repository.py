@@ -18,7 +18,7 @@ from django.urls import reverse
 from django_lifecycle import AFTER_UPDATE, BEFORE_DELETE, hook
 from rest_framework.exceptions import APIException
 
-from pulpcore.app.util import batch_qs, get_url, get_view_name_for_model
+from pulpcore.app.util import batch_qs, get_url, get_view_name_for_model, get_domain_pk, cache_key
 from pulpcore.constants import ALL_KNOWN_CONTENT_CHECKSUMS
 from pulpcore.download.factory import DownloaderFactory
 from pulpcore.exceptions import ResourceImmutableError
@@ -52,13 +52,14 @@ class Repository(MasterModel):
 
         content (models.ManyToManyField): Associated content.
         remote (models.ForeignKeyField): Associated remote
+        pulp_domain (models.ForeignKeyField): The domain the Repository is a part of.
     """
 
     TYPE = "repository"
     CONTENT_TYPES = []
     REMOTE_TYPES = []
 
-    name = models.TextField(db_index=True, unique=True)
+    name = models.TextField(db_index=True)
     pulp_labels = HStoreField(default=dict)
     description = models.TextField(null=True)
     next_version = models.PositiveIntegerField(default=0)
@@ -68,8 +69,10 @@ class Repository(MasterModel):
         "Content", through="RepositoryContent", related_name="repositories"
     )
     remote = models.ForeignKey("Remote", null=True, on_delete=models.SET_NULL)
+    pulp_domain = models.ForeignKey("Domain", default=get_domain_pk, on_delete=models.PROTECT)
 
     class Meta:
+        unique_together = ("name", "pulp_domain")
         verbose_name_plural = "repositories"
 
     def on_new_version(self, version):
@@ -280,7 +283,7 @@ class Repository(MasterModel):
             if distributions.exists():
                 base_paths = distributions.values_list("base_path", flat=True)
                 if base_paths:
-                    Cache().delete(base_key=base_paths)
+                    Cache().delete(base_key=cache_key(base_paths))
                 # Could do preloading here for immediate artifacts with artifacts_for_version
 
 
@@ -325,6 +328,10 @@ class Remote(MasterModel):
         sock_read_timeout (models.FloatField): Value for aiohttp.ClientTimeout.sock_read
         headers (models.JSONField): Headers set on the aiohttp.ClientSession
         rate_limit (models.IntegerField): Limits requests per second for each concurrent downloader
+
+    Relations:
+
+        pulp_domain (models.ForeignKey): The domain the Remote is a part of.
     """
 
     TYPE = "remote"
@@ -353,7 +360,7 @@ class Remote(MasterModel):
         ),
     )
 
-    name = models.TextField(db_index=True, unique=True)
+    name = models.TextField(db_index=True)
     pulp_labels = HStoreField(default=dict)
 
     url = models.TextField()
@@ -390,6 +397,8 @@ class Remote(MasterModel):
     )
     headers = models.JSONField(blank=True, null=True)
     rate_limit = models.IntegerField(null=True)
+
+    pulp_domain = models.ForeignKey("Domain", default=get_domain_pk, on_delete=models.PROTECT)
 
     @property
     def download_factory(self):
@@ -518,10 +527,11 @@ class Remote(MasterModel):
         if settings.CACHE_ENABLED:
             base_paths = self.distribution_set.values_list("base_path", flat=True)
             if base_paths:
-                Cache().delete(base_key=base_paths)
+                Cache().delete(base_key=cache_key(base_paths))
 
     class Meta:
         default_related_name = "remotes"
+        unique_together = ("name", "pulp_domain")
 
 
 class RepositoryContent(BaseModel):
@@ -1136,8 +1146,11 @@ class RepositoryVersionContentDetails(models.Model):
         ctypes = {c.get_pulp_type(): c for c in repository.CONTENT_TYPES}
         ctype_model = ctypes[self.content_type]
         ctype_view = get_view_name_for_model(ctype_model, "list")
+        kwargs = {}
+        if settings.DOMAIN_ENABLED:
+            kwargs["pulp_domain"] = repository.pulp_domain.name
         try:
-            ctype_url = reverse(ctype_view)
+            ctype_url = reverse(ctype_view, kwargs=kwargs)
         except django.urls.exceptions.NoReverseMatch:
             # We've hit a content type for which there is no viewset.
             # There's nothing we can do here, except to skip it.
@@ -1145,7 +1158,7 @@ class RepositoryVersionContentDetails(models.Model):
 
         repository_view = get_view_name_for_model(repository.__class__, "list")
 
-        repository_url = reverse(repository_view)
+        repository_url = reverse(repository_view, kwargs=kwargs)
         rv_href = (
             repository_url
             + str(repository.pk)

@@ -45,6 +45,7 @@ from pulpcore.app.models import (  # noqa: E402: module level not at top of file
     RemoteArtifact,
 )
 from pulpcore.app import mime_types  # noqa: E402: module level not at top of file
+from pulpcore.app.util import get_domain, cache_key  # noqa: E402: module level not at top of file
 
 from pulpcore.exceptions import UnsupportedDigestValidationError  # noqa: E402
 
@@ -166,10 +167,11 @@ class Handler:
             :class:`aiohttp.web.HTTPOk`: The response back to the client.
             :class: `PathNotResolved`: 404 error response when path doesn't exist.
         """
+        domain = get_domain()
 
         def get_base_paths_blocking():
             distro_model = self.distribution_model or Distribution
-            raise DistroListings(path="", distros=distro_model.objects.all())
+            raise DistroListings(path="", distros=distro_model.objects.filter(pulp_domain=domain))
 
         if request.method.lower() == "head":
             raise HTTPOk(headers={"Content-Type": "text/html"})
@@ -191,14 +193,14 @@ class Handler:
         base_paths = cls._base_paths(path)
         multiplied_base_paths = []
         for i, base_path in enumerate(base_paths):
-            copied_by_index_base_path = [base_path for _ in range(i + 1)]
+            copied_by_index_base_path = cache_key([base_path for _ in range(i + 1)])
             multiplied_base_paths.extend(copied_by_index_base_path)
         index_p1 = await cached.exists(base_key=multiplied_base_paths)
         if index_p1:
-            return base_paths[index_p1 - 1]
+            return cache_key(base_paths[index_p1 - 1])
         else:
             distro = await sync_to_async(cls._match_distribution)(path)
-            return distro.base_path
+            return cache_key(distro.base_path)
 
     @classmethod
     async def auth_cached(cls, request, cached, base_key):
@@ -280,17 +282,21 @@ class Handler:
         """
         base_paths = cls._base_paths(path)
         distro_model = cls.distribution_model or Distribution
+        domain = get_domain()
         try:
             return (
-                distro_model.objects.select_related(
-                    "repository", "repository_version", "publication", "remote"
+                distro_model.objects.filter(pulp_domain=domain)
+                .select_related(
+                    "repository", "repository_version", "publication", "remote", "pulp_domain"
                 )
                 .get(base_path__in=base_paths)
                 .cast()
             )
         except ObjectDoesNotExist:
             if path.rstrip("/") in base_paths:
-                distros = distro_model.objects.filter(base_path__startswith=path)
+                distros = distro_model.objects.filter(
+                    pulp_domain=domain, base_path__startswith=path
+                )
                 if distros.count():
                     raise DistroListings(path=path, distros=distros)
 
@@ -484,7 +490,6 @@ class Handler:
             :class:`aiohttp.web.StreamResponse` or :class:`aiohttp.web.FileResponse`: The response
                 streamed back to the client.
         """
-
         distro = await sync_to_async(self._match_distribution)(path)
 
         await sync_to_async(self._permit)(request, distro)
@@ -557,6 +562,7 @@ class Handler:
                         publication.published_artifact.select_related(
                             "content_artifact",
                             "content_artifact__artifact",
+                            "content_artifact__artifact__pulp_domain",
                         )
                         .get(relative_path=rel_path)
                         .content_artifact
@@ -578,7 +584,9 @@ class Handler:
                 try:
 
                     def get_contentartifact_blocking():
-                        ca = ContentArtifact.objects.select_related("artifact").get(
+                        ca = ContentArtifact.objects.select_related(
+                            "artifact", "artifact__pulp_domain"
+                        ).get(
                             content__in=publication.repository_version.content,
                             relative_path=rel_path,
                         )
@@ -626,9 +634,9 @@ class Handler:
             try:
 
                 def get_contentartifact_blocking():
-                    ca = ContentArtifact.objects.select_related("artifact").get(
-                        content__in=repo_version.content, relative_path=rel_path
-                    )
+                    ca = ContentArtifact.objects.select_related(
+                        "artifact", "artifact__pulp_domain"
+                    ).get(content__in=repo_version.content, relative_path=rel_path)
                     return ca
 
                 ca = await sync_to_async(get_contentartifact_blocking)()
@@ -662,6 +670,7 @@ class Handler:
                     ra = RemoteArtifact.objects.select_related(
                         "content_artifact",
                         "content_artifact__artifact",
+                        "content_artifact__artifact__pulp_domain",
                         "remote",
                     ).get(remote=remote, url=url)
                     return ra
@@ -837,15 +846,17 @@ class Handler:
         artifact_name = artifact_file.name
         filename = os.path.basename(content_artifact.relative_path)
         content_disposition = f"attachment;filename={filename}"
+        domain = get_domain()
+        storage = domain.get_storage()
 
-        if settings.DEFAULT_FILE_STORAGE == "pulpcore.app.models.storage.FileSystem":
-            path = os.path.join(settings.MEDIA_ROOT, artifact_name)
+        if domain.storage_class == "pulpcore.app.models.storage.FileSystem":
+            path = storage.path(artifact_name)
             if not os.path.exists(path):
                 raise Exception(_("Expected path '{}' is not found").format(path))
             return FileResponse(path, headers=headers)
-        elif not settings.REDIRECT_TO_OBJECT_STORAGE:
+        elif not domain.redirect_to_object_storage:
             return ArtifactResponse(content_artifact.artifact, headers=headers)
-        elif settings.DEFAULT_FILE_STORAGE == "storages.backends.s3boto3.S3Boto3Storage":
+        elif domain.storage_class == "storages.backends.s3boto3.S3Boto3Storage":
             parameters = {"ResponseContentDisposition": content_disposition}
             if headers.get("Content-Type"):
                 parameters["ResponseContentType"] = headers.get("Content-Type")
@@ -856,13 +867,13 @@ class Handler:
                 encoded=True,
             )
             raise HTTPFound(url)
-        elif settings.DEFAULT_FILE_STORAGE == "storages.backends.azure_storage.AzureStorage":
+        elif domain.storage_class == "storages.backends.azure_storage.AzureStorage":
             parameters = {"content_disposition": content_disposition}
             if headers.get("Content-Type"):
                 parameters["content_type"] = headers.get("Content-Type")
             url = URL(artifact_file.storage.url(artifact_name, parameters=parameters), encoded=True)
             raise HTTPFound(url)
-        elif settings.DEFAULT_FILE_STORAGE == "storages.backends.gcloud.GoogleCloudStorage":
+        elif domain.storage_class == "storages.backends.gcloud.GoogleCloudStorage":
             parameters = {"response_disposition": content_disposition}
             if headers.get("Content-Type"):
                 parameters["content_type"] = headers.get("Content-Type")

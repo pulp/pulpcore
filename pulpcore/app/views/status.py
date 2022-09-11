@@ -56,7 +56,12 @@ class StatusView(APIView):
         versions = []
         for app in pulp_plugin_configs():
             versions.append(
-                {"component": app.label, "version": app.version, "package": app.python_package_name}
+                {
+                    "component": app.label,
+                    "version": app.version,
+                    "package": app.python_package_name,
+                    "domain_compatible": getattr(app, "domain_compatible", False),
+                }
             )
 
         if settings.CACHE_ENABLED:
@@ -89,6 +94,7 @@ class StatusView(APIView):
             "redis_connection": redis_status,
             "storage": _disk_usage(),
             "content_settings": content_settings,
+            "domain_enabled": settings.DOMAIN_ENABLED,
         }
 
         context = {"request": request}

@@ -1,5 +1,6 @@
 from gettext import gettext as _
 
+from django.conf import settings
 from rest_framework.serializers import ValidationError
 
 from pulpcore.app.models import Group, Repository
@@ -37,6 +38,18 @@ def has_model_perms(request, view, action, permission):
     return request.user.has_perm(permission)
 
 
+def has_domain_perms(request, view, action, permission):
+    """
+    Checks if the user has current domain-level permission.
+
+    If DOMAIN_ENABLED, use the incoming request's domain for the permission check, else return
+    False.
+    """
+    if settings.DOMAIN_ENABLED:
+        return request.user.has_perm(permission, obj=request.pulp_domain)
+    return False
+
+
 def has_obj_perms(request, view, action, permission):
     """
     Checks if the current user has object-level permission on the specific object.
@@ -69,6 +82,27 @@ def has_obj_perms(request, view, action, permission):
     """
     obj = view.get_object()
     return request.user.has_perm(permission, obj)
+
+
+def has_model_or_domain_perms(request, view, action, permission):
+    """
+    Checks if the current user has either model-level (global) or domain-level permissions.
+    """
+    return has_model_perms(request, view, action, permission) or has_domain_perms(
+        request, view, action, permission
+    )
+
+
+def has_model_or_domain_or_obj_perms(request, view, action, permission):
+    """
+    Checks if the current user has the permission across all levels of Pulp.
+
+    This checks all three levels of permissions in Pulp: model, domain, and object level. Returns
+    True if the user has the permission on any of those levels, False otherwise.
+    """
+    return has_model_or_domain_perms(request, view, action, permission) or has_obj_perms(
+        request, view, action, permission
+    )
 
 
 def has_model_or_obj_perms(request, view, action, permission):
@@ -145,13 +179,25 @@ def has_remote_param_obj_perms(request, view, action, permission):
             parameter at the object-level or if there is no remote. False otherwise.
     """
     kwargs = {}
+    obj = view.get_object() if view.detail else None
     if action == "partial_update":
         kwargs["partial"] = True
-    serializer = view.serializer_class(data=request.data, context={"request": request}, **kwargs)
+    serializer = view.serializer_class(
+        instance=obj, data=request.data, context={"request": request}, **kwargs
+    )
     serializer.is_valid(raise_exception=True)
     if remote := serializer.validated_data.get("remote"):
         return request.user.has_perm(permission, remote)
     return True
+
+
+def has_remote_param_model_or_domain_or_obj_perms(request, view, action, permission):
+    """
+    Checks if the current user has the permission on the ``remote`` param.
+    """
+    return has_model_or_domain_perms(
+        request, view, action, permission
+    ) or has_remote_param_obj_perms(request, view, action, permission)
 
 
 def has_remote_param_model_or_obj_perms(request, view, action, permission):
@@ -239,6 +285,15 @@ def has_repo_attr_obj_perms(request, view, action, permission):
     return request.user.has_perm(permission, plugin_repository)
 
 
+def has_repo_attr_model_or_domain_or_obj_perms(request, view, action, permission):
+    """
+    Checks if the current user has the permission on the ``repository`` attribute.
+    """
+    return has_model_or_domain_perms(request, view, action, permission) or has_repo_attr_obj_perms(
+        request, view, action, permission
+    )
+
+
 def has_repo_attr_model_or_obj_perms(request, view, action, permission):
     """
     Checks if the current user has model-level or object-level permissions on a ``repository``.
@@ -312,6 +367,15 @@ def has_repository_obj_perms(request, view, action, permission):
     return request.user.has_perm(permission, plugin_repository)
 
 
+def has_repository_model_or_domain_or_obj_perms(request, view, action, permission):
+    """
+    Checks if the current user has the permission for the repository in the URL.
+    """
+    return has_model_or_domain_perms(request, view, action, permission) or has_repository_obj_perms(
+        request, view, action, permission
+    )
+
+
 def has_repository_model_or_obj_perms(request, view, action, permission):
     """
     Checks whether a user has the requested model or object permission on the repository in the
@@ -342,6 +406,27 @@ def has_repository_model_or_obj_perms(request, view, action, permission):
     return request.user.has_perm(permission) or has_repository_obj_perms(
         request, view, action, permission
     )
+
+
+def has_repo_or_repo_ver_param_model_or_domain_or_obj_perms(request, view, action, permission):
+    """
+    Checks if the current user has permission on the ``repository`` or ``repository_version``.
+    """
+    if has_model_or_domain_perms(request, view, action, permission):
+        return True
+    kwargs = {}
+    obj = view.get_object() if view.detail else None
+    if action == "partial_update":
+        kwargs["partial"] = True
+    serializer = view.serializer_class(
+        instance=obj, data=request.data, context={"request": request}, **kwargs
+    )
+    serializer.is_valid(raise_exception=True)
+    if repository := serializer.validated_data.get("repository"):
+        return request.user.has_perm(permission, repository)
+    elif repo_ver := serializer.validated_data.get("repository_version"):
+        return request.user.has_perm(permission, repo_ver.repository)
+    return True
 
 
 def has_repo_or_repo_ver_param_model_or_obj_perms(request, view, action, permission):
@@ -385,9 +470,12 @@ def has_repo_or_repo_ver_param_model_or_obj_perms(request, view, action, permiss
     if has_model_perms(request, view, action, permission):
         return True
     kwargs = {}
+    obj = view.get_object() if view.detail else None
     if action == "partial_update":
         kwargs["partial"] = True
-    serializer = view.serializer_class(data=request.data, context={"request": request}, **kwargs)
+    serializer = view.serializer_class(
+        instance=obj, data=request.data, context={"request": request}, **kwargs
+    )
     serializer.is_valid(raise_exception=True)
     if repository := serializer.validated_data.get("repository"):
         return request.user.has_perm(permission, repository)
@@ -428,15 +516,37 @@ def has_required_repo_perms_on_upload(request, view, action, permission):
     """
     if request.user.is_superuser:
         return True
-    serializer = view.serializer_class(data=request.data, context={"request": request})
+    obj = view.get_object() if view.detail else None
+    serializer = view.serializer_class(
+        instance=obj, data=request.data, context={"request": request}
+    )
     serializer.is_valid(raise_exception=True)
     if repository := serializer.validated_data.get("repository"):
-        if has_model_perms(request, view, action, permission):
+        if has_model_or_domain_perms(request, view, action, permission):
             return True
         return request.user.has_perm(permission, repository)
     if not request.user.is_superuser and not repository:
         raise ValidationError(_("Destination upload repository was not provided."))
     return False
+
+
+def has_publication_param_model_or_domain_or_obj_perms(request, view, action, permission):
+    """
+    Checks if the current user has permission on the ``Publication`` param.
+    """
+    if has_model_or_domain_perms(request, view, action, permission):
+        return True
+    kwargs = {}
+    obj = view.get_object() if view.detail else None
+    if action == "partial_update":
+        kwargs["partial"] = True
+    serializer = view.serializer_class(
+        instance=obj, data=request.data, context={"request": request}, **kwargs
+    )
+    serializer.is_valid(raise_exception=True)
+    if publication := serializer.validated_data.get("publication"):
+        return request.user.has_perm(permission, publication)
+    return True
 
 
 def has_publication_param_model_or_obj_perms(request, view, action, permission):
@@ -477,12 +587,34 @@ def has_publication_param_model_or_obj_perms(request, view, action, permission):
     if has_model_perms(request, view, action, permission):
         return True
     kwargs = {}
+    obj = view.get_object() if view.detail else None
     if action == "partial_update":
         kwargs["partial"] = True
-    serializer = view.serializer_class(data=request.data, context={"request": request}, **kwargs)
+    serializer = view.serializer_class(
+        instance=obj, data=request.data, context={"request": request}, **kwargs
+    )
     serializer.is_valid(raise_exception=True)
     if publication := serializer.validated_data.get("publication"):
         return request.user.has_perm(permission, publication)
+    return True
+
+
+def has_upload_param_model_or_domain_or_obj_perms(request, view, action, permission):
+    """
+    Checks if the current user has permission on the ``Upload`` param.
+    """
+    if has_model_or_domain_perms(request, view, action, permission):
+        return True
+    kwargs = {}
+    obj = view.get_object() if view.detail else None
+    if action == "partial_update":
+        kwargs["partial"] = True
+    serializer = view.serializer_class(
+        instance=obj, data=request.data, context={"request": request}, **kwargs
+    )
+    serializer.is_valid(raise_exception=True)
+    if upload := serializer.validated_data.get("upload"):
+        return request.user.has_perm(permission, upload)
     return True
 
 
@@ -524,9 +656,12 @@ def has_upload_param_model_or_obj_perms(request, view, action, permission):
     if has_model_perms(request, view, action, permission):
         return True
     kwargs = {}
+    obj = view.get_object() if view.detail else None
     if action == "partial_update":
         kwargs["partial"] = True
-    serializer = view.serializer_class(data=request.data, context={"request": request}, **kwargs)
+    serializer = view.serializer_class(
+        instance=obj, data=request.data, context={"request": request}, **kwargs
+    )
     serializer.is_valid(raise_exception=True)
     if upload := serializer.validated_data.get("upload"):
         return request.user.has_perm(permission, upload)

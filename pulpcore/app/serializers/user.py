@@ -11,7 +11,7 @@ from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 from rest_framework_nested.serializers import NestedHyperlinkedModelSerializer
 
-from pulpcore.app.models import Group
+from pulpcore.app.models import Group, Domain
 from pulpcore.app.models.role import GroupRole, Role, UserRole
 from pulpcore.app.serializers import (
     NestedIdentityField,
@@ -19,6 +19,7 @@ from pulpcore.app.serializers import (
     ValidateFieldsMixin,
     ModelSerializer,
     HiddenFieldsMixin,
+    RelatedField,
 )
 from pulpcore.app.util import (
     get_viewset_for_model,
@@ -228,7 +229,62 @@ class RoleSerializer(ModelSerializer):
         )
 
 
-class UserRoleSerializer(ModelSerializer, NestedHyperlinkedModelSerializer):
+class ValidateRoleMixin:
+    """A mixin to help with shared validation logic between UserRole & GroupRole."""
+
+    CHECK_SAME_DOMAIN = False
+
+    def _validate_role(self, role_type, data):
+        """
+        Checks if the role contains the right permissions for the object/domain
+        and checks if the user/group already has the role. Does not set any value
+        in data or return anything.
+        """
+        natural_key_args = {
+            f"{role_type}_id": data[role_type].pk,
+            "role_id": data["role"].pk,
+            "object_id": None,
+            "content_type": None,
+            "domain": None,
+        }
+        content_object = data["content_object"]
+        domain = data.get("domain", None)
+        if content_object and domain:
+            raise serializers.ValidationError(
+                _("Domain and content_object are mutually exclusive.")
+            )
+        elif content_object:
+            content_type = ContentType.objects.get_for_model(
+                content_object, for_concrete_model=False
+            )
+            if not data["role"].permissions.filter(content_type__pk=content_type.id).exists():
+                raise serializers.ValidationError(
+                    _("The role '{}' does not carry any permission for that object.").format(
+                        data["role"].name
+                    )
+                )
+            natural_key_args["object_id"] = content_object.pk
+            natural_key_args["content_type"] = content_type
+        elif domain:
+            # Check that at least one permission is on a model with a domain
+            for permission in data["role"].permissions.all():
+                model = permission.content_type.model_class()
+                if hasattr(model, "pulp_domain"):
+                    natural_key_args["domain"] = domain
+                    break
+            else:
+                raise serializers.ValidationError(
+                    _(
+                        "The role '{}' does not carry any permission on an object with a domain"
+                    ).format(data["role"].name)
+                )
+        if self.Meta.model.objects.filter(**natural_key_args).exists():
+            raise serializers.ValidationError(
+                _("The role is already assigned to this {}.").format(role_type)
+            )
+
+
+class UserRoleSerializer(ValidateRoleMixin, ModelSerializer, NestedHyperlinkedModelSerializer):
     """Serializer for UserRole."""
 
     pulp_href = NestedIdentityField(
@@ -243,10 +299,20 @@ class UserRoleSerializer(ModelSerializer, NestedHyperlinkedModelSerializer):
     content_object = ContentObjectField(
         help_text=_(
             "pulp_href of the object for which role permissions should be asserted. "
-            "If set to 'null', permissions will act on the model-level."
+            "If set to 'null', permissions will act on either domain or model-level."
         ),
         source="*",
         allow_null=True,
+    )
+
+    domain = RelatedField(
+        help_text=_(
+            "Domain this role should be applied on, mutually exclusive with content_object."
+        ),
+        view_name="domains-detail",
+        queryset=Domain.objects.all(),
+        allow_null=True,
+        required=False,  # Maybe make this required if DOMAIN_ENABLED
     )
 
     description = serializers.SerializerMethodField()
@@ -261,28 +327,8 @@ class UserRoleSerializer(ModelSerializer, NestedHyperlinkedModelSerializer):
     def validate(self, data):
         data = super().validate(data)
         data["user"] = User.objects.get(pk=self.context["request"].resolver_match.kwargs["user_pk"])
+        self._validate_role("user", data)
 
-        natural_key_args = {
-            "user_id": data["user"].pk,
-            "role_id": data["role"].pk,
-            "object_id": None,
-            "content_type": None,
-        }
-        content_object = data["content_object"]
-        if content_object:
-            content_type = ContentType.objects.get_for_model(
-                content_object, for_concrete_model=False
-            )
-            if not data["role"].permissions.filter(content_type__pk=content_type.id).exists():
-                raise serializers.ValidationError(
-                    _("The role '{}' does not carry any permission for that object.").format(
-                        data["role"].name
-                    )
-                )
-            natural_key_args["object_id"] = content_object.pk
-            natural_key_args["content_type"] = content_type
-        if self.Meta.model.objects.filter(**natural_key_args).exists():
-            raise serializers.ValidationError(_("The role is already assigned to this user."))
         return data
 
     class Meta:
@@ -292,10 +338,11 @@ class UserRoleSerializer(ModelSerializer, NestedHyperlinkedModelSerializer):
             "content_object",
             "description",
             "permissions",
+            "domain",
         )
 
 
-class GroupRoleSerializer(ModelSerializer, NestedHyperlinkedModelSerializer):
+class GroupRoleSerializer(ValidateRoleMixin, ModelSerializer, NestedHyperlinkedModelSerializer):
     """Serializer for GroupRole."""
 
     pulp_href = NestedIdentityField(
@@ -316,6 +363,16 @@ class GroupRoleSerializer(ModelSerializer, NestedHyperlinkedModelSerializer):
         allow_null=True,
     )
 
+    domain = RelatedField(
+        help_text=_(
+            "Domain this role should be applied on, mutually exclusive with content_object."
+        ),
+        view_name="domain-detail",
+        queryset=Domain.objects.all(),
+        allow_null=True,
+        required=False,
+    )
+
     description = serializers.SerializerMethodField()
     permissions = serializers.SerializerMethodField()
 
@@ -330,28 +387,8 @@ class GroupRoleSerializer(ModelSerializer, NestedHyperlinkedModelSerializer):
         data["group"] = Group.objects.get(
             pk=self.context["request"].resolver_match.kwargs["group_pk"]
         )
+        self._validate_role("group", data)
 
-        natural_key_args = {
-            "group_id": data["group"].pk,
-            "role_id": data["role"].pk,
-            "object_id": None,
-            "content_type": None,
-        }
-        content_object = data["content_object"]
-        if content_object:
-            content_type = ContentType.objects.get_for_model(
-                content_object, for_concrete_model=False
-            )
-            if not data["role"].permissions.filter(content_type__pk=content_type.id).exists():
-                raise serializers.ValidationError(
-                    _("The role '{}' does not carry any permission for that object.").format(
-                        data["role"].name
-                    )
-                )
-            natural_key_args["object_id"] = content_object.pk
-            natural_key_args["content_type"] = content_type
-        if self.Meta.model.objects.filter(**natural_key_args).exists():
-            raise serializers.ValidationError(_("The role is already assigned to this group."))
         return data
 
     class Meta:
@@ -361,6 +398,7 @@ class GroupRoleSerializer(ModelSerializer, NestedHyperlinkedModelSerializer):
             "content_object",
             "description",
             "permissions",
+            "domain",
         )
 
 

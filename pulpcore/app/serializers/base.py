@@ -1,15 +1,20 @@
 from gettext import gettext as _
 from logging import getLogger
+import functools
 import re
 import traceback
 from typing import List, TypedDict
 from urllib.parse import urljoin
 
+from django.conf import settings
 from django.core.validators import URLValidator
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import IntegrityError, transaction
+from django.db.models import Model
 from drf_queryfields.mixins import QueryFieldsMixin
 from rest_framework import serializers
+from rest_framework.fields import get_attribute
+from rest_framework.validators import UniqueValidator
 from rest_framework_nested.relations import (
     NestedHyperlinkedIdentityField,
     NestedHyperlinkedRelatedField,
@@ -20,6 +25,7 @@ from pulpcore.app.util import (
     get_view_name_for_model,
     get_viewset_for_model,
     get_request_without_query_params,
+    get_domain,
 )
 
 
@@ -29,11 +35,29 @@ log = getLogger(__name__)
 # Field mixins
 
 
+def _reverse(reverse, request, obj):
+    """Include domain-path in reverse call if DOMAIN_ENABLED."""
+
+    if settings.DOMAIN_ENABLED:
+
+        @functools.wraps(reverse)
+        def _patched_reverse(viewname, args=None, kwargs=None, **extra):
+            kwargs = kwargs or {}
+            domain_name = obj.pulp_domain.name if hasattr(obj, "pulp_domain") else "default"
+            kwargs["pulp_domain"] = domain_name
+            return reverse(viewname, args=args, kwargs=kwargs, **extra)
+
+        return _patched_reverse
+
+    return reverse
+
+
 class HrefFieldMixin:
     """A mixin to configure related fields to generate relative hrefs."""
 
     def get_url(self, obj, view_name, request, *args, **kwargs):
         # Removes the request from the arguments to display relative hrefs.
+        self.reverse = _reverse(self.reverse, request, obj)
         return super().get_url(obj, view_name, None, *args, **kwargs)
 
 
@@ -220,12 +244,37 @@ def validate_unknown_fields(initial_data, defined_fields):
 class ValidateFieldsMixin:
     """A mixin for validating unknown serializers' fields."""
 
+    CHECK_SAME_DOMAIN = True
+
     def validate(self, data):
         if hasattr(self, "initial_data"):
             validate_unknown_fields(self.initial_data, self.fields)
 
+        self.check_cross_domains(data)
+
         data = super().validate(data)
         return data
+
+    def check_cross_domains(self, data):
+        if not self.CHECK_SAME_DOMAIN:
+            return
+        current_domain = get_domain()
+        for lvalue in data.values():
+            if isinstance(lvalue, dict):
+                self.check_cross_domains(lvalue)
+                continue
+            elif not isinstance(lvalue, list):
+                lvalue = [lvalue]
+            for value in lvalue:
+                if isinstance(value, Model) and (
+                    domain_id := getattr(value, "pulp_domain_id", None)
+                ):
+                    if current_domain.pulp_id != domain_id:
+                        raise serializers.ValidationError(
+                            _("Objects must all be apart of the {} domain.").format(
+                                current_domain.name
+                            )
+                        )
 
 
 class HiddenFieldsMixin(serializers.Serializer):
@@ -247,7 +296,7 @@ class HiddenFieldsMixin(serializers.Serializer):
 
         # returns false if field is "" or None
         def _is_set(field_name):
-            field_value = getattr(obj, field_name)
+            field_value = get_attribute(obj, [field_name])
             return field_value != "" and field_value is not None
 
         fields = self.get_fields()
@@ -278,6 +327,15 @@ class GetOrCreateSerializerMixin:
                 # recover from a race condition, where another thread just created the object
                 result = cls.Meta.model.objects.get(**natural_key)
         return result
+
+
+class DomainUniqueValidator(UniqueValidator):
+    """Special UniqueValidator for Models with pulp_domain relations."""
+
+    def filter_queryset(self, value, queryset, field_name):
+        """Filter by domain first to limit unique check to that domain."""
+        queryset = queryset.filter(pulp_domain=get_domain())
+        return super().filter_queryset(value, queryset, field_name)
 
 
 # Serializers

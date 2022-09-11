@@ -3,21 +3,21 @@ from gettext import gettext as _
 from django.db.models import Q
 from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
-from rest_framework.validators import UniqueValidator
 
 from pulpcore.app import models
 from pulpcore.app.serializers import (
     BaseURLField,
     DetailIdentityField,
     DetailRelatedField,
+    DomainUniqueValidator,
     GetOrCreateSerializerMixin,
     ModelSerializer,
     RepositoryVersionRelatedField,
     pulp_labels_validator,
-    validate_unknown_fields,
 )
 from pulpcore.app.serializers.user import GroupUserSerializer, GroupSerializer
 from pulpcore.app.role_util import get_users_with_perms, get_groups_with_perms
+from pulpcore.app.util import get_domain
 
 
 class PublicationSerializer(ModelSerializer):
@@ -32,8 +32,7 @@ class PublicationSerializer(ModelSerializer):
     )
 
     def validate(self, data):
-        if hasattr(self, "initial_data"):
-            validate_unknown_fields(self.initial_data, self.fields)
+        data = super().validate(data)
 
         repository = data.pop("repository", None)  # not an actual field on publication
         repository_version = data.get("repository_version")
@@ -69,7 +68,10 @@ class PublicationSerializer(ModelSerializer):
 class ContentGuardSerializer(ModelSerializer):
     pulp_href = DetailIdentityField(view_name_pattern=r"contentguards(-.*/.*)-detail")
 
-    name = serializers.CharField(help_text=_("The unique name."))
+    name = serializers.CharField(
+        help_text=_("The unique name."),
+        validators=[DomainUniqueValidator(queryset=models.ContentGuard.objects.all())],
+    )
     description = serializers.CharField(
         help_text=_("An optional description."), allow_null=True, required=False
     )
@@ -164,10 +166,10 @@ class DistributionSerializer(ModelSerializer):
             'The base (relative) path component of the published url. Avoid paths that \
                     overlap with other distribution base paths (e.g. "foo" and "foo/bar")'
         ),
-        validators=[UniqueValidator(queryset=models.Distribution.objects.all())],
+        validators=[DomainUniqueValidator(queryset=models.Distribution.objects.all())],
     )
     base_url = BaseURLField(
-        source="base_path",
+        source="*",
         read_only=True,
         help_text=_("The URL for accessing the publication as defined by this distribution."),
     )
@@ -180,9 +182,7 @@ class DistributionSerializer(ModelSerializer):
     )
     name = serializers.CharField(
         help_text=_("A unique name. Ex, `rawhide` and `stable`."),
-        validators=[
-            UniqueValidator(queryset=models.Distribution.objects.all()),
-        ],
+        validators=[DomainUniqueValidator(queryset=models.Distribution.objects.all())],
     )
     repository = DetailRelatedField(
         required=False,
@@ -193,7 +193,6 @@ class DistributionSerializer(ModelSerializer):
     )
 
     class Meta:
-        abstract = True
         model = models.Distribution
         fields = ModelSerializer.Meta.fields + (
             "base_path",
@@ -214,7 +213,7 @@ class DistributionSerializer(ModelSerializer):
 
         # look for any base paths that nest path
         q |= Q(base_path__startswith="{}/".format(path))
-        qs = models.Distribution.objects.filter(q)
+        qs = models.Distribution.objects.filter(q & Q(pulp_domain=get_domain()))
 
         if self.instance is not None:
             qs = qs.exclude(pk=self.instance.pk)
@@ -222,7 +221,9 @@ class DistributionSerializer(ModelSerializer):
         match = qs.first()
         if match:
             raise serializers.ValidationError(
-                detail=_("Overlaps with existing distribution '{}'").format(match.name)
+                detail={
+                    "base_path": _("Overlaps with existing distribution '{}'").format(match.name)
+                },
             )
 
         return path
@@ -266,6 +267,7 @@ class DistributionSerializer(ModelSerializer):
                     "may be used simultaneously."
                 )
             )
+
         return data
 
 

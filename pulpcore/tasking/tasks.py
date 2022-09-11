@@ -1,6 +1,7 @@
 import logging
 from gettext import gettext as _
 
+from django.conf import settings
 from django.db import transaction, connection
 from django.db.models import Model, Q
 from django.utils import timezone
@@ -8,7 +9,7 @@ from django_guid import get_guid, set_guid
 from django_guid.utils import generate_guid
 
 from pulpcore.app.models import Task, TaskSchedule
-from pulpcore.app.util import get_url
+from pulpcore.app.util import get_url, get_domain
 from pulpcore.constants import TASK_FINAL_STATES, TASK_STATES
 
 _logger = logging.getLogger(__name__)
@@ -85,6 +86,11 @@ def dispatch(
         resources.extend(
             (f"shared:{resource}" for resource in _validate_and_get_resources(shared_resources))
         )
+    if settings.DOMAIN_ENABLED:
+        domain_url = get_url(get_domain())
+        if domain_url not in resources:
+            resources.append(f"shared:{domain_url}")
+
     with transaction.atomic():
         task = Task.objects.create(
             state=TASK_STATES.WAITING,

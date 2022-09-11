@@ -1,3 +1,4 @@
+from django.conf import settings
 from rest_framework.response import Response
 from rest_framework.reverse import reverse
 
@@ -22,7 +23,10 @@ class OperationPostponedResponse(Response):
                 used to generate the response.
             request (rest_framework.request.Request): Request used to generate the pulp_href urls
         """
-        resp = {"task": reverse("tasks-detail", args=[task.pk], request=None)}
+        kwargs = {"pk": task.pk}
+        if settings.DOMAIN_ENABLED:
+            kwargs["pulp_domain"] = request.pulp_domain.name
+        resp = {"task": reverse("tasks-detail", kwargs=kwargs, request=None)}
         super().__init__(data=resp, status=202)
 
 
@@ -45,5 +49,8 @@ class TaskGroupOperationResponse(Response):
                 :class:`~pulpcore.plugin.models.TaskGroup` object used to generate the response.
             request (rest_framework.request.Request): Request used to generate the pulp_href urls
         """
-        resp = {"task_group": reverse("task-groups-detail", args=[task_group.pk], request=None)}
+        kwargs = {"pk": task_group.pk}
+        if settings.DOMAIN_ENABLED:
+            kwargs["pulp_domain"] = request.pulp_domain.name
+        resp = {"task_group": reverse("task-groups-detail", kwargs=kwargs, request=None)}
         super().__init__(data=resp, status=202)

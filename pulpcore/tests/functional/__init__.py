@@ -28,11 +28,13 @@ from pulpcore.client.pulpcore import (
     Configuration,
     AccessPoliciesApi,
     ApiClient,
+    ApiException,
     ArtifactsApi,
     ContentApi,
     ContentguardsApi,
     ContentguardsRbacApi,
     ContentguardsContentRedirectApi,
+    DomainsApi,
     DistributionsApi,
     ExportersPulpApi,
     ExportersPulpExportsApi,
@@ -240,6 +242,11 @@ def roles_api_client(pulpcore_client):
 @pytest.fixture(scope="session")
 def content_api_client(pulpcore_client):
     return ContentApi(pulpcore_client)
+
+
+@pytest.fixture(scope="session")
+def domains_api_client(pulpcore_client):
+    return DomainsApi(pulpcore_client)
 
 
 @pytest.fixture(scope="session")
@@ -648,7 +655,7 @@ def role_factory(roles_api_client, gen_object_with_cleanup):
 @pytest.fixture
 def gen_user(bindings_cfg, users_api_client, users_roles_api_client, gen_object_with_cleanup):
     class user_context:
-        def __init__(self, username=None, model_roles=None, object_roles=None):
+        def __init__(self, username=None, model_roles=None, object_roles=None, domain_roles=None):
             self.username = username or str(uuid.uuid4())
             self.password = str(uuid.uuid4())
             self.user = gen_object_with_cleanup(
@@ -660,13 +667,19 @@ def gen_user(bindings_cfg, users_api_client, users_roles_api_client, gen_object_
                 for role in model_roles:
                     users_roles_api_client.create(
                         auth_user_href=self.user.pulp_href,
-                        user_role={"role": role, "content_object": None},
+                        user_role={"role": role, "domain": None, "content_object": None},
+                    )
+            if domain_roles:
+                for role, domain in domain_roles:
+                    users_roles_api_client.create(
+                        auth_user_href=self.user.pulp_href,
+                        user_role={"role": role, "domain": domain, "content_object": None},
                     )
             if object_roles:
                 for role, content_object in object_roles:
                     users_roles_api_client.create(
                         auth_user_href=self.user.pulp_href,
-                        user_role={"role": role, "content_object": content_object},
+                        user_role={"role": role, "domain": None, "content_object": content_object},
                     )
 
         def __enter__(self):
@@ -734,11 +747,18 @@ def pulp_admin_user(bindings_cfg):
 
 
 @pytest.fixture
-def random_artifact_factory(artifacts_api_client, tmp_path, gen_object_with_cleanup):
-    def _random_artifact_factory():
+def random_artifact_factory(
+    artifacts_api_client, tmp_path, gen_object_with_cleanup, pulp_domain_enabled
+):
+    def _random_artifact_factory(pulp_domain=None):
+        kwargs = {}
+        if pulp_domain:
+            if not pulp_domain_enabled:
+                raise RuntimeError("Server does not have domains enabled.")
+            kwargs["pulp_domain"] = pulp_domain
         temp_file = tmp_path / str(uuid.uuid4())
         temp_file.write_bytes(uuid.uuid4().bytes)
-        return artifacts_api_client.create(temp_file)
+        return gen_object_with_cleanup(artifacts_api_client, temp_file, **kwargs)
 
     return _random_artifact_factory
 
@@ -760,12 +780,20 @@ def delete_orphans_pre(request, orphans_cleanup_api_client, monitor_task):
 
 
 @pytest.fixture(scope="session")
-def monitor_task(tasks_api_client):
+def monitor_task(tasks_api_client, pulp_domain_enabled):
     def _monitor_task(task_href):
-        task = tasks_api_client.read(task_href)
-        while task.state not in ["completed", "failed", "canceled"]:
+        while True:
+            try:
+                task = tasks_api_client.read(task_href)
+            except ApiException as e:
+                if pulp_domain_enabled and e.status == 404:
+                    # Task's domain has been deleted, nothing to show anymore
+                    return {}
+                raise e
+
+            if task.state in ["completed", "failed", "canceled"]:
+                break
             sleep(SLEEP_TIME)
-            task = tasks_api_client.read(task_href)
 
         if task.state != "completed":
             raise PulpTaskError(task=task)
@@ -804,8 +832,17 @@ def pulp_settings():
 
 
 @pytest.fixture(scope="session")
-def pulp_api_v3_path(pulp_settings):
-    v3_api_root = pulp_settings.V3_API_ROOT
+def pulp_domain_enabled(pulp_settings):
+    return pulp_settings.DOMAIN_ENABLED
+
+
+@pytest.fixture(scope="session")
+def pulp_api_v3_path(pulp_settings, pulp_domain_enabled):
+    if pulp_domain_enabled:
+        v3_api_root = pulp_settings.V3_DOMAIN_API_ROOT
+        v3_api_root = v3_api_root.replace("<slug:pulp_domain>", "default")
+    else:
+        v3_api_root = pulp_settings.V3_API_ROOT
     if v3_api_root is None:
         raise RuntimeError(
             "This fixture requires the server to have the `V3_API_ROOT` setting set."

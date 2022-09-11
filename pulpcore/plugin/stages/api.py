@@ -3,6 +3,7 @@ import logging
 
 from gettext import gettext as _
 
+from pulpcore.app.util import get_domain
 
 log = logging.getLogger(__name__)
 
@@ -17,6 +18,7 @@ class Stage:
     def __init__(self):
         self._in_q = None
         self._out_q = None
+        self.domain = get_domain()
 
     def _connect(self, in_q, out_q):
         """

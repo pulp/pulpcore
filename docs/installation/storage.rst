@@ -13,6 +13,16 @@ Storage
   You can also configure Pulp to use Amazon S3 and Azure storage using the Pulp installer. For more information
   see the `Pulp installer documentation <https://docs.pulpproject.org/pulp_installer/quickstart/#storage>`_
 
+Local Filesystem
+^^^^^^^^^^^^^^^^
+
+This is the default storage backend Pulp will use if another is not specified. By default, Pulp will
+set the ``MEDIA_ROOT`` to ``/var/lib/pulp/media`` as the location where Pulp will store its files.
+There are three other settings that can be modified, ``MEDIA_URL``, ``FILE_UPLOAD_PERMISSIONS`` and
+``FILE_UPLOAD_DIRECTORY_PERMISSIONS``. Pulp leaves these settings on their default ``Django`` values.
+See `Django docs <https://docs.djangoproject.com/en/3.2/ref/files/storage/#django.core.files.storage.FileSystemStorage>`_
+for more information.
+
 SFTP
 ^^^^
 
@@ -82,8 +92,6 @@ To have Pulp use S3, complete the following steps:
 
 3. In that same way, add your Amazon S3 configuration settings to ``AWS_ACCESS_KEY_ID``, ``AWS_SECRET_ACCESS_KEY``, and ``AWS_STORAGE_BUCKET_NAME``. For more S3 configuration options, see the `django-storages documents <https://django-storages.readthedocs.io/en/latest/backends/amazon-S3.html>`_.
 
-4. Set the ``MEDIA_ROOT`` configuration option. This will be the path in your bucket that Pulp will use. If you want Pulp to create its folders in the top level of the bucket, an empty string is acceptable.
-
   Here is an example configuration that will use a bucket called ``pulp3`` that is hosted in
   region ``eu-central-1``::
 
@@ -132,8 +140,7 @@ Configuring Pulp to use Azure Blob storage
       pip install django-storages[azure]
 
 2. Depending on which method you use to install or configure Pulp, you must set ``DEFAULT_FILE_STORAGE`` to ``storages.backends.azure_storage.AzureStorage`` in Pulp Settings. For example, if you use the `Pulp installer <https://docs.pulpproject.org/pulp_installer/quickstart/>`_, the ``default_file_storage`` is part of the ``pulp_settings`` Ansible variables you can define in your Ansible playbook.
-3. Set the ``MEDIA_ROOT`` configuration option. This will be the path in your container that Pulp will use. If you want Pulp to create its folders in the top level of the container, an empty string is acceptable.
-4. In the same way, configure the following parameters::
+3. In the same way, configure the following parameters::
 
       AZURE_ACCOUNT_NAME = 'Storage account name'
       AZURE_CONTAINER = 'Container name (as created within the blob service of your storage account)'

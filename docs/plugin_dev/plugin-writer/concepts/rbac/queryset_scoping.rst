@@ -11,6 +11,10 @@ This feature is generally referred to as Queryset Scoping because it is applied 
 filter on the base Queryset of a ViewSet. This causes the permission filtering to work with other
 filterings applied by a user.
 
+.. note::
+
+    If Domains are enabled, querysets will be scoped by the current request's domain before being
+    passed onto RBAC queryset scoping.
 
 .. _enabling_queryset_scoping:
 
@@ -103,3 +107,9 @@ provided by pulpcore. Here's an example:
             qs = super().get_queryset()
             permission_name = "my.example_permission"
             return get_objects_for_user(self.request.user, permission_name, qs=qs)
+
+.. warning::
+
+    If you have custom ViewSets and plan to add Domains compatibility to your plugin, you must
+    scope your objects by the domain in the ViewSet's ``get_queryset`` method to comply
+    with Domain's isolation policies.
