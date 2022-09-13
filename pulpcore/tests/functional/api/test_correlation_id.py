@@ -1,4 +1,4 @@
-from pulp_smash.pulp3.bindings import monitor_task
+from pulpcore.tests.suite.bindings import monitor_task
 
 
 def test_correlation_id(cid, tasks_api_client, orphans_cleanup_api_client):

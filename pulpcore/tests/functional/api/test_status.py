@@ -2,11 +2,11 @@
 import warnings
 import unittest
 
+from aiohttp.client_exceptions import ClientResponseError
 from django.test import override_settings
 from jsonschema import validate
-from pulp_smash import api, cli, config, utils
-from pulp_smash.pulp3.constants import STATUS_PATH
-from requests.exceptions import HTTPError
+from pulpcore.tests.suite import api, cli, config, utils
+from pulpcore.tests.suite.constants import STATUS_PATH
 
 from pulpcore.tests.functional.api.utils import get_redis_status
 
@@ -106,7 +106,7 @@ class StatusTestCase(unittest.TestCase):
 
         Assert an error is returned.
         """
-        with self.assertRaises(HTTPError):
+        with self.assertRaises(ClientResponseError):
             self.client.post(STATUS_PATH)
 
     def verify_get_response(self, status):

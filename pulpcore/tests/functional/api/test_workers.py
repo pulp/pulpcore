@@ -5,9 +5,10 @@ from datetime import datetime, timedelta
 from random import choice
 from time import sleep
 
-from pulp_smash import api, config, utils
-from pulp_smash.pulp3.constants import WORKER_PATH
-from requests.exceptions import HTTPError
+from aiohttp.client_exceptions import ClientResponseError
+
+from pulpcore.tests.suite import api, config, utils
+from pulpcore.tests.suite.constants import WORKER_PATH
 
 from pulpcore.tests.functional.utils import skip_if
 
@@ -94,11 +95,11 @@ class WorkersTestCase(unittest.TestCase):
 
     @skip_if(bool, "worker", False)
     def test_05_http_method(self):
-        """Use an HTTP method different than GET.
+        """Use an HTTP method different from GET.
 
         Assert an error is raised.
         """
-        with self.assertRaises(HTTPError):
+        with self.assertRaises(ClientResponseError):
             self.client.delete(self.worker["pulp_href"])
 
 

@@ -3,8 +3,8 @@ import string
 from datetime import datetime
 from random import choice
 
-from pulp_smash import api, config
-from pulp_smash.pulp3.constants import STATUS_PATH
+from pulpcore.tests.suite import api, config
+from pulpcore.tests.suite.constants import STATUS_PATH
 
 
 def gen_username(length=10, valid_characters=True):

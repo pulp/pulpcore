@@ -4,11 +4,11 @@ import itertools
 import os
 import unittest
 
-from pulp_smash import api, cli, config, utils
-from pulp_smash.exceptions import CalledProcessError
-from pulp_smash.pulp3.bindings import delete_orphans
-from pulp_smash.pulp3.constants import ARTIFACTS_PATH
-from requests.exceptions import HTTPError
+from aiohttp.client_exceptions import ClientResponseError
+
+from pulpcore.tests.suite import api, cli, config, utils
+from pulpcore.tests.suite.bindings import delete_orphans
+from pulpcore.tests.suite.constants import ARTIFACTS_PATH
 
 
 FILE_URL = "https://fixtures.pulpproject.org/file/1.iso"
@@ -29,9 +29,9 @@ class ArtifactTestCase(unittest.TestCase):
         cfg = config.get_config()
         delete_orphans()
         cls.client = api.Client(cfg, api.json_handler)
-        cls.file = {"file": utils.http_get(FILE_URL)}
-        cls.file_sha256 = hashlib.sha256(cls.file["file"]).hexdigest()
-        cls.file_size = len(cls.file["file"])
+        cls.file = utils.http_get(FILE_URL)
+        cls.file_sha256 = hashlib.sha256(cls.file).hexdigest()
+        cls.file_size = len(cls.file)
 
     def test_upload_valid_attrs(self):
         """Upload a file, and provide valid attributes.
@@ -45,12 +45,13 @@ class ArtifactTestCase(unittest.TestCase):
         3. Delete the artifact, and verify that its attributes are
            inaccessible.
         """
-        file_attrs = {"sha256": self.file_sha256, "size": self.file_size}
+        file_attrs = {"sha256": self.file_sha256, "size": str(self.file_size)}
         for i in range(len(file_attrs) + 1):
             for keys in itertools.combinations(file_attrs, i):
                 data = {key: file_attrs[key] for key in keys}
+                data["file"] = self.file
                 with self.subTest(data=data):
-                    self._do_upload_valid_attrs(data, self.file)
+                    self._do_upload_valid_attrs(data)
 
     def test_upload_empty_file(self):
         """Upload an empty file.
@@ -65,16 +66,17 @@ class ArtifactTestCase(unittest.TestCase):
            inaccessible.
         """
         empty_file = b""
-        file_attrs = {"sha256": hashlib.sha256(empty_file).hexdigest(), "size": 0}
+        file_attrs = {"sha256": hashlib.sha256(empty_file).hexdigest(), "size": "0"}
         for i in range(len(file_attrs) + 1):
             for keys in itertools.combinations(file_attrs, i):
                 data = {key: file_attrs[key] for key in keys}
+                data["file"] = empty_file
                 with self.subTest(data=data):
-                    self._do_upload_valid_attrs(data, files={"file": empty_file})
+                    self._do_upload_valid_attrs(data)
 
-    def _do_upload_valid_attrs(self, data, files):
+    def _do_upload_valid_attrs(self, data):
         """Upload a file with the given attributes."""
-        artifact = self.client.post(ARTIFACTS_PATH, data=data, files=files)
+        artifact = self.client.post(ARTIFACTS_PATH, data=data)
         # assumes ALLOWED_CONTENT_CHECKSUMS does NOT contain "md5"
         self.assertTrue(artifact["md5"] is None, "MD5 {}".format(artifact["md5"]))
         self.addCleanup(self.client.delete, artifact["pulp_href"])
@@ -85,8 +87,10 @@ class ArtifactTestCase(unittest.TestCase):
             with self.subTest(key=key):
                 self.assertEqual(read_artifact[key], val)
         self.doCleanups()
-        with self.assertRaises(HTTPError):
+        with self.assertRaises(ClientResponseError) as cm:
             self.client.get(artifact["pulp_href"])
+
+        assert cm.exception.status == 404
 
     def test_upload_invalid_attrs(self):
         """Upload a file, and provide invalid attributes.
@@ -99,7 +103,7 @@ class ArtifactTestCase(unittest.TestCase):
         2. Verify that no artifacts exist in Pulp whose attributes match the
            file that was unsuccessfully uploaded.
         """
-        file_attrs = {"sha256": utils.uuid4(), "size": self.file_size + 1}
+        file_attrs = {"sha256": utils.uuid4(), "size": str(self.file_size + 1)}
         for i in range(1, len(file_attrs) + 1):
             for keys in itertools.combinations(file_attrs, i):
                 data = {key: file_attrs[key] for key in keys}
@@ -108,8 +112,9 @@ class ArtifactTestCase(unittest.TestCase):
 
     def _do_upload_invalid_attrs(self, data):
         """Upload a file with the given attributes."""
-        with self.assertRaises(HTTPError):
-            self.client.post(ARTIFACTS_PATH, data=data, files=self.file)
+        with self.assertRaises(ClientResponseError) as cm:
+            self.client.post(ARTIFACTS_PATH, data=data)
+        assert cm.exception.code == 400
         for artifact in self.client.get(ARTIFACTS_PATH)["results"]:
             self.assertNotEqual(artifact["sha256"], self.file_sha256)
 
@@ -118,9 +123,9 @@ class ArtifactTestCase(unittest.TestCase):
 
         Assumes ALLOWED_CONTENT_CHECKSUMS does NOT contain ``md5``
         """
-        file_attrs = {"md5": utils.uuid4(), "size": self.file_size}
-        with self.assertRaises(HTTPError):
-            self.client.post(ARTIFACTS_PATH, data=file_attrs, files=self.file)
+        file_attrs = {"md5": utils.uuid4(), "size": str(self.file_size), "file": self.file}
+        with self.assertRaises(ClientResponseError):
+            self.client.post(ARTIFACTS_PATH, data=file_attrs)
 
     def test_upload_mixed_attrs(self):
         """Upload a file, and provide both valid and invalid attributes.
@@ -133,8 +138,8 @@ class ArtifactTestCase(unittest.TestCase):
            file that was unsuccessfully uploaded.
         """
         invalid_data = (
-            {"sha256": self.file_sha256, "size": self.file_size + 1},
-            {"sha256": utils.uuid4(), "size": self.file_size},
+            {"sha256": self.file_sha256, "size": str(self.file_size + 1)},
+            {"sha256": utils.uuid4(), "size": str(self.file_size)},
         )
         for data in invalid_data:
             with self.subTest(data=data):
@@ -168,13 +173,13 @@ class ArtifactsDeleteFileSystemTestCase(unittest.TestCase):
         api_client = api.Client(cfg, api.json_handler)
 
         # create
-        files = {"file": utils.http_get(FILE_URL)}
-        artifact = api_client.post(ARTIFACTS_PATH, files=files)
+        data = {"file": utils.http_get(FILE_URL)}
+        artifact = api_client.post(ARTIFACTS_PATH, data=data)
         self.addCleanup(api_client.delete, artifact["pulp_href"])
         cmd = ("ls", os.path.join(media_root, artifact["file"]))
         cli_client.run(cmd, sudo=True)
 
         # delete
         self.doCleanups()
-        with self.assertRaises(CalledProcessError):
+        with self.assertRaises(cli.CalledProcessError):
             cli_client.run(cmd, sudo=True)

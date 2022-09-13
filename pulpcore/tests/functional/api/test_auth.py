@@ -5,10 +5,11 @@ For more information, see the documentation on `Authentication
 """
 import unittest
 
-from pulp_smash import api, config, utils
-from pulp_smash.pulp3.constants import ARTIFACTS_PATH
-from requests.auth import HTTPBasicAuth
-from requests.exceptions import HTTPError
+from aiohttp.client import BasicAuth
+from aiohttp.client_exceptions import ClientResponseError
+
+from pulpcore.tests.suite import api, config, utils
+from pulpcore.tests.suite.constants import ARTIFACTS_PATH
 
 
 class AuthTestCase(unittest.TestCase):
@@ -26,7 +27,7 @@ class AuthTestCase(unittest.TestCase):
         Assertion is made by the response_handler.
         """
         api.Client(self.cfg, api.json_handler).get(
-            ARTIFACTS_PATH, auth=HTTPBasicAuth(*self.cfg.pulp_auth)
+            ARTIFACTS_PATH, auth=BasicAuth(*self.cfg.pulp_auth)
         )
 
     def test_base_auth_failure(self):
@@ -36,9 +37,11 @@ class AuthTestCase(unittest.TestCase):
         """
         self.cfg.pulp_auth[1] = utils.uuid4()  # randomize password
         response = api.Client(self.cfg, api.echo_handler).get(
-            ARTIFACTS_PATH, auth=HTTPBasicAuth(*self.cfg.pulp_auth)
+            ARTIFACTS_PATH, auth=BasicAuth(*self.cfg.pulp_auth)
         )
-        with self.assertRaises(HTTPError):
+        with self.assertRaises(ClientResponseError) as cm:
             response.raise_for_status()
+
+        message = cm.exception.message.text
         for key in ("invalid", "username", "password"):
-            self.assertIn(key, response.json()["detail"].lower(), response.json())
+            self.assertIn(key, message.lower(), message)

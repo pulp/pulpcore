@@ -1,7 +1,7 @@
 import unittest
 
 
-from pulp_smash import api, cli, config
+from pulpcore.tests.suite import api, cli, config
 
 from pulpcore.client.pulpcore import ApiClient, GroupsApi, UsersApi
 

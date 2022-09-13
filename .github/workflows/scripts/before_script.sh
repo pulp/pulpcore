@@ -27,7 +27,7 @@ tail -v -n +1 .ci/ansible/vars/main.yaml
 
 # Developers often want to know the final pulp config
 echo "PULP CONFIG:"
-tail -v -n +1 .ci/ansible/settings/settings.* ~/.config/pulp_smash/settings.json
+tail -v -n +1 .ci/ansible/settings/settings.* ~/.config/tests/settings.json
 
 SCENARIOS=("pulp" "performance" "azure" "s3" "stream" "plugin-from-pypi" "generate-bindings")
 if [[ " ${SCENARIOS[*]} " =~ " ${TEST} " ]]; then

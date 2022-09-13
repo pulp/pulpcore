@@ -13,7 +13,7 @@
       loop:
         - settings
         - ssh
-        - ~/.config/pulp_smash
+        - ~/.config/tests
 
     - name: Generate an OpenSSH keypair
       community.crypto.openssh_keypair:
@@ -26,10 +26,10 @@
         src: settings.py.j2
         dest: settings/settings.py
 
-    - name: "Configure pulp-smash"
+    - name: "Configure test settings"
       copy:
-        src: smash-config.json
-        dest: ~/.config/pulp_smash/settings.json
+        src: tests-config.json
+        dest: ~/.config/tests/settings.json
 
     - name: "Setup docker networking"
       docker_network:

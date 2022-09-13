@@ -1,9 +1,10 @@
 """Test related to the api docs page."""
 import unittest
 
-from pulp_smash import api, config
-from pulp_smash.pulp3.constants import API_DOCS_PATH
-from requests.exceptions import HTTPError
+from aiohttp.client_exceptions import ClientResponseError
+
+from pulpcore.tests.suite import api, config
+from pulpcore.tests.suite.constants import API_DOCS_PATH
 
 
 class ApiDocsTestCase(unittest.TestCase):
@@ -39,5 +40,5 @@ class ApiDocsTestCase(unittest.TestCase):
 
         Assert an error is returned.
         """
-        with self.assertRaises(HTTPError):
+        with self.assertRaises(ClientResponseError):
             self.client.post(API_DOCS_PATH)

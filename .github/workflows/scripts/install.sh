@@ -51,8 +51,6 @@ plugins:
     source: $PULP_FILE
   - name: pulp-certguard
     source: $PULP_CERTGUARD
-  - name: pulp-smash
-    source: ./pulp-smash
 VARSYAML
 
 cat >> vars/main.yaml << VARSYAML

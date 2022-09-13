@@ -1,7 +1,7 @@
 import uuid
 import pytest
 
-from pulp_smash.pulp3 import constants
+from pulpcore.tests.suite import constants
 
 
 def test_contains_permission_filter(roles_api_client):

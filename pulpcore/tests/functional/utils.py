@@ -4,7 +4,7 @@ import aiohttp
 from functools import partial
 from unittest import SkipTest
 
-from pulp_smash import config, selectors
+from pulpcore.tests.suite import config, selectors
 
 from pulpcore.client.pulpcore import ApiClient
 

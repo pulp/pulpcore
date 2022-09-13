@@ -2,9 +2,9 @@
 import unittest
 from random import choice
 
-from pulp_smash import config
-from pulp_smash.pulp3.bindings import monitor_task
-from pulp_smash.pulp3.utils import (
+from pulpcore.tests.suite import config
+from pulpcore.tests.suite.bindings import monitor_task
+from pulpcore.tests.suite.utils import (
     gen_repo,
     get_content,
     gen_distribution,
