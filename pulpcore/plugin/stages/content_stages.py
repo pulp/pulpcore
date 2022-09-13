@@ -183,7 +183,10 @@ class ContentSaver(Stage):
                         .order_by("pulp_id")
                         .select_for_update()
                     )
-                    len(subq.values_list())
+                    # NOTE: it might look like you can "safely" make this request
+                    # "more efficient". You'd be wrong, and would only be removing an
+                    # ordering-guardrail preventing deadlock. Don't touch.
+                    len(ContentArtifact.objects.filter(pk__in=subq).values_list())
                     ContentArtifact.objects.bulk_update(to_update_ca_bulk, ["artifact"])
 
                     # To avoid a similar deadlock issue when calling get_or_create, we sort the
