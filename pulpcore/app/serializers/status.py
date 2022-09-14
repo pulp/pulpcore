@@ -49,6 +49,19 @@ class StorageSerializer(serializers.Serializer):
     free = serializers.IntegerField(min_value=0, help_text=_("Number of free bytes"))
 
 
+class ContentSettingsSerializer(serializers.Serializer):
+    """
+    Serializer for information about content-app-settings for the pulp instance
+    """
+
+    content_origin = serializers.CharField(
+        help_text=_("The CONTENT_ORIGIN setting for this Pulp instance"),
+    )
+    content_path_prefix = serializers.CharField(
+        help_text=_("The CONTENT_PATH_PREFIX setting for this Pulp instance"),
+    )
+
+
 class StatusSerializer(serializers.Serializer):
     """
     Serializer for the status information of the app
@@ -82,3 +95,5 @@ class StatusSerializer(serializers.Serializer):
     )
 
     storage = StorageSerializer(required=False, help_text=_("Storage information"))
+
+    content_settings = ContentSettingsSerializer(help_text=_("Content-app settings"))
