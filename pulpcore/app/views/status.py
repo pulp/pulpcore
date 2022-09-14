@@ -76,6 +76,11 @@ class StatusView(APIView):
         except Exception:
             online_content_apps = None
 
+        content_settings = {
+            "content_origin": settings.CONTENT_ORIGIN,
+            "content_path_prefix": settings.CONTENT_PATH_PREFIX,
+        }
+
         data = {
             "versions": versions,
             "online_workers": online_workers,
@@ -83,6 +88,7 @@ class StatusView(APIView):
             "database_connection": db_status,
             "redis_connection": redis_status,
             "storage": _disk_usage(),
+            "content_settings": content_settings,
         }
 
         context = {"request": request}

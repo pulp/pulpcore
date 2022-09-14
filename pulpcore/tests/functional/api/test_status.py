@@ -43,7 +43,22 @@ STATUS = {
                 "free": {"type": "integer"},
             },
         },
+        "content_settings": {
+            "type": "object",
+            "properties": {
+                "content_origin": {"type": "string"},
+                "content_path_prefix": {"type": "string"},
+            },
+            "required": ["content_origin", "content_path_prefix"],
+        },
     },
+    "required": [
+        "content_settings",
+        "database_connection",
+        "online_workers",
+        "storage",
+        "versions",
+    ],
 }
 
 
@@ -60,9 +75,10 @@ class StatusTestCase(unittest.TestCase):
 
     def setUp(self):
         """Make an API client."""
-        self.client = api.Client(config.get_config(), api.json_handler)
+        self.cfg = config.get_config()
+        self.client = api.Client(self.cfg, api.json_handler)
         self.status_response = STATUS
-        cli_client = cli.Client(config.get_config())
+        cli_client = cli.Client(self.cfg)
         self.storage = utils.get_pulp_setting(cli_client, "DEFAULT_FILE_STORAGE")
 
         if self.storage != "pulpcore.app.models.storage.FileSystem":
@@ -112,6 +128,10 @@ class StatusTestCase(unittest.TestCase):
             self.assertTrue(status["redis_connection"]["connected"])
         else:
             warnings.warn("Could not connect to the Redis server")
+
+        self.assertIsNotNone(status["content_settings"])
+        self.assertIsNotNone(status["content_settings"]["content_origin"])
+        self.assertIsNotNone(status["content_settings"]["content_path_prefix"])
 
     @override_settings(CACHE_ENABLED=False)
     def verify_get_response_without_redis(self, status):
