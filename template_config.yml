@@ -4,7 +4,7 @@
 # generated with plugin_template@2021.08.26-167-ga2a8251
 
 additional_repos:
-- branch: main
+- branch: 1.11
   name: pulp_file
   pytest_args: pulp_file.tests.functional
 - branch: main
