@@ -1,5 +1,6 @@
 from drf_spectacular.utils import extend_schema
 from rest_framework.views import APIView
+from rest_framework.permissions import IsAuthenticated
 
 from pulpcore.app.response import OperationPostponedResponse
 from pulpcore.app.serializers import AsyncOperationResponseSerializer
@@ -8,6 +9,9 @@ from pulpcore.tasking.tasks import dispatch
 
 
 class OrphansView(APIView):
+
+    permission_classes = (IsAuthenticated,)
+
     @extend_schema(
         description="DEPRECATED! Trigger an asynchronous task that deletes all "
         "orphaned content and artifacts. Use the `POST /pulp/api/v3/orphans/cleanup/` call "

@@ -11,6 +11,16 @@ from pulpcore.tasking.tasks import dispatch
 class OrphansCleanupViewset(ViewSet):
     serializer_class = OrphansCleanupSerializer
 
+    DEFAULT_ACCESS_POLICY = {
+        "statements": [
+            {
+                "action": ["cleanup"],
+                "principal": "authenticated",
+                "effect": "allow",
+            },
+        ],
+    }
+
     @extend_schema(
         description="Trigger an asynchronous orphan cleanup operation.",
         responses={202: AsyncOperationResponseSerializer},
