@@ -555,6 +555,24 @@ Bugfixes
   :github:`2069`
 
 
+3.18.10 (2022-09-14)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Another guardrail added around content-stages to address deadlock in a specific usecase.
+  :github:`3192`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.18.9 (2022-09-01)
 ===================
 REST API
