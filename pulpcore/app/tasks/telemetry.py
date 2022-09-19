@@ -23,9 +23,23 @@ DEV_URL = "https://dev.analytics.pulpproject.org/"
 
 
 def get_telemetry_posting_url():
+    """
+    Return either the dev or production telemetry FQDN url.
+
+    Production version string examples:  ["3.21.1", "1.11.0"]
+    Developer version string example: ["3.20.3.dev", "2.0.0a6"]
+
+    Returns:
+        The FQDN string of either the dev or production telemetry site.
+    """
     for app in pulp_plugin_configs():
-        if ".dev" in app.version:
+        if not app.version.count(".") == 2:  # Only two periods allowed in prod version strings
             return DEV_URL
+
+        x, y, z = app.version.split(".")
+        for item in [x, y, z]:
+            if not item.isdigit():  # Only numbers should be in the prod version string components
+                return DEV_URL
 
     return PRODUCTION_URL
 
