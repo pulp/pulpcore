@@ -1,0 +1,2 @@
+Fixed bug where installations with at least one pre-release plugin installed were posting to the
+production telemetry site instead of the developer telemetry site.
