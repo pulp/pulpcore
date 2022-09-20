@@ -8,6 +8,7 @@ TOKEN_SIGNATURE_ALGORITHM = "ES256"
 CACHE_ENABLED = True
 REDIS_HOST = "localhost"
 REDIS_PORT = 6379
+TELEMETRY = False
 
 {% if api_root is defined %}
 API_ROOT = {{ api_root | repr }}
@@ -15,6 +16,12 @@ API_ROOT = {{ api_root | repr }}
 
 {% if pulp_settings %}
 {% for key, value in pulp_settings.items() %}
+{{ key | upper }} = {{ value | repr }}
+{% endfor %}
+{% endif %}
+
+{% if pulp_scenario_settings is defined and pulp_scenario_settings %}
+{% for key, value in pulp_scenario_settings.items() %}
 {{ key | upper }} = {{ value | repr }}
 {% endfor %}
 {% endif %}
