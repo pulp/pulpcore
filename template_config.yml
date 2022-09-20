@@ -1,7 +1,7 @@
 # This config represents the latest values used when running the plugin-template. Any settings that
 # were not present before running plugin-template have been added with their default values.
 
-# generated with plugin_template@2021.08.26-150-gc95d3f2
+# generated with plugin_template@2021.08.26-172-gc8a2852
 
 additional_repos:
 - branch: 1.9
@@ -19,6 +19,7 @@ check_stray_pulpcore_imports: false
 cherry_pick_automation: false
 ci_env: {}
 ci_trigger: '{pull_request: {branches: [''*'']}}'
+ci_update_branches: []
 core_import_allowed: []
 coverage: true
 deploy_client_to_pypi: true
@@ -30,10 +31,10 @@ disabled_redis_runners: []
 docker_fixtures: true
 docs_test: true
 flake8: true
+flake8_ignore: []
 github_org: pulp
 issue_tracker: github
 keep_ci_update_for_latest_branches: 5
-keep_ci_update_since_branch: null
 lint_requirements: true
 noissue_marker: '[noissue]'
 parallel_test_workers: 8
@@ -57,6 +58,9 @@ pulp_settings:
   allowed_import_paths:
   - /tmp
   orphan_protection_time: 0
+pulp_settings_azure: null
+pulp_settings_s3: null
+pulp_settings_stream: null
 pulpcore_branch: null
 pulpcore_pip_version_specifier: null
 pulpcore_revision: null
