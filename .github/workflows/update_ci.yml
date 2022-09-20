@@ -54,8 +54,6 @@ jobs:
         id: vars
         run: echo ::set-output name=short_ref::${GITHUB_REF#refs/*/}
 
-      
-
       - name: Run update
         run: |
           .github/workflows/scripts/update_ci.sh
