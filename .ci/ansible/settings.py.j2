@@ -20,6 +20,12 @@ API_ROOT = {{ api_root | repr }}
 {% endfor %}
 {% endif %}
 
+{% if pulp_scenario_settings is defined and pulp_scenario_settings %}
+{% for key, value in pulp_scenario_settings.items() %}
+{{ key | upper }} = {{ value | repr }}
+{% endfor %}
+{% endif %}
+
 {% if stream_test | default(false) -%}
 REDIRECT_TO_OBJECT_STORAGE = False
 DEFAULT_FILE_STORAGE = "pulpcore.app.models.storage.PulpSFTPStorage"
