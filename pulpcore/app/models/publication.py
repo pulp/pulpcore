@@ -1,12 +1,14 @@
 import hashlib
 import os
 import re
+from datetime import timedelta
 from url_normalize import url_normalize
 from urllib.parse import urlparse, urljoin
 
 from aiohttp.web_exceptions import HTTPNotFound
 
 from django.db import IntegrityError, models, transaction
+from django.utils import timezone
 from django_lifecycle import hook, AFTER_UPDATE, BEFORE_DELETE
 
 from .base import MasterModel, BaseModel
@@ -385,6 +387,8 @@ class ContentRedirectContentGuard(ContentGuard, AutoAddObjPermsMixin):
 
     TYPE = "content_redirect"
 
+    EXPIRETIME = timedelta(hours=1)
+
     shared_secret = models.BinaryField(max_length=32, default=_gen_secret)
 
     def permit(self, request):
@@ -392,12 +396,15 @@ class ContentRedirectContentGuard(ContentGuard, AutoAddObjPermsMixin):
         Permit preauthenticated redirects from pulp-api.
         """
         try:
+            expires = request.query["expires"]
+            if int(timezone.now().timestamp()) > int(expires):
+                raise PermissionError("Authentication expired")
             signed_url = request.url
             validate_token = request.query["validate_token"]
             hex_salt, hex_digest = validate_token.split(":", 1)
             salt = bytes.fromhex(hex_salt)
             digest = bytes.fromhex(hex_digest)
-            url = re.sub(r"\?validate_token=.*$", "", str(signed_url))
+            url = re.sub(r"\&validate_token=.*$", "", str(signed_url))
             if not digest == self._get_digest(salt, url):
                 raise PermissionError("Access not authenticated")
         except (KeyError, ValueError):
@@ -410,9 +417,14 @@ class ContentRedirectContentGuard(ContentGuard, AutoAddObjPermsMixin):
         if not salt:
             salt = _gen_secret()
         hex_salt = salt.hex()
-        digest = self._get_digest(salt, url).hex()
-        url = url + f"?validate_token={hex_salt}:{digest}"
-        return url
+        expiretime = int((timezone.now() + self.EXPIRETIME).timestamp())
+        if "?" in url:
+            separator = "&"
+        else:
+            separator = "?"
+        url_to_sign = url + separator + f"expires={expiretime}"
+        digest = self._get_digest(salt, url_to_sign).hex()
+        return url_to_sign + f"&validate_token={hex_salt}:{digest}"
 
     def _get_digest(self, salt, url):
         url_parts = urlparse(url_normalize(url))
