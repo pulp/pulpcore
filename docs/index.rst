@@ -74,3 +74,4 @@ Table of Contents
    glossary
    changes
    versioning
+   release_process
