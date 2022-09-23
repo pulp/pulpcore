@@ -21,6 +21,7 @@ from pulpcore.client.pulpcore import (
     GroupsUsersApi,
     ImportersPulpApi,
     ImportersPulpImportsApi,
+    OrphansApi,
     OrphansCleanupApi,
     PublicationsApi,
     RemotesApi,
@@ -210,6 +211,12 @@ def rbac_contentguard_api_client(pulpcore_client):
 @pytest.fixture
 def redirect_contentguard_api_client(pulpcore_client):
     return ContentguardsContentRedirectApi(pulpcore_client)
+
+
+@pytest.fixture
+def orphans_api_client(pulpcore_client):
+    # This API is deprecated. Use it only to test its own functionality.
+    return OrphansApi(pulpcore_client)
 
 
 @pytest.fixture
