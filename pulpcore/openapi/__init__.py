@@ -167,11 +167,13 @@ class PulpAutoSchema(AutoSchema):
         if operation == "partial_update":
             return f"Partially update {article} {resource}"
 
-    def _get_serializer_name(self, serializer, direction):
+    def _get_serializer_name(self, serializer, direction, bypass_extensions=False):
         """
         Get serializer name.
         """
-        name = super()._get_serializer_name(serializer, direction)
+        name = super()._get_serializer_name(
+            serializer, direction, bypass_extensions=bypass_extensions
+        )
         if direction == "request":
             name = name[:-7]
         elif direction == "response" and "Response" not in name:
