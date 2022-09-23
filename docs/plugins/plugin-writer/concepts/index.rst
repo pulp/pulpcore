@@ -553,20 +553,21 @@ including declaring direct dependencies using the setuptools ``install_requires`
 Pulpcore and Pulp plugins are expected to do two things when declaring dependencies:
 
 1. Declare an upper bound to prevent a breaking-change release of a dependency from breaking user
-installations.
+installations. To prevent unexpected breakages due to new plugin releases, this typically is the
+current latest release of a dependency (assuming a plugin is compatible with the latest release).
+The latest release is preferred because it allows each new dependency release to be tested, and it
+prevents unexpected user breakages when dependencies release breaking changes.
 
 2. Declare as broad a range of compatible versions as possible to minimize conflicts between your
 code and other Python projects installed in the same Python environment.
 
-Here are some examples assuming our code directly depends on the ``jsonschema`` library:
+Here are some examples assuming our code directly depends on the ``jsonschema`` library and assuming
+the latest ``jsonschema`` release is 4.4.2:
 
-``jsonschema>=2.3,<5.0`` - Assuming this is accurate, this is the best declaration because it
-declares as broad an expression of compatibility as safely possible. For example, this could require
-a new feature from jsonschema 2.3.0, be compatible through ``jsonschema`` 4.4, but 5.0 isn't
-released yet and 5.0 could contain breaking changes.
+``jsonschema>=2.3,<=4.4.2`` - Assuming this is accurate, this is the best declaration because it
+declares as broad an expression of compatibility as safely possible.
 
-``jsonschema<5.0`` - This is appropriate if ``jsonschema`` could release breaking changes in
-``jsonschema`` 5.0 and you are compatible with 4.* and lower.
+``jsonschema<=4.4.2`` - This is appropriate if the appropriate lower bound is not known.
 
 ``jsonschema~=4.4`` - This should be avoided. Use an upper and lower bound range instead.
 
@@ -591,10 +592,7 @@ directly, your plugin should declare its dependency on Django.
 
 One useful tool for managing the upperbound is `dependabot <https://github.com/dependabot>`_ which
 can open PRs raising the upper bound when new releases occur. These changes will go through the CI
-which allows your dependency upper bound raising to be tested. Dependabot doesn't know about the
-breaking change policy of dependencies though, so if ``jsonschema`` 5.1.0 comes out and dependabot
-adjusts the dependency line from ``jsonschema>=2.3,<5.0`` to ``jsonschema>=2.3,<=5.1.0`` you likely
-would adjust it manually to be ``jsonschema>=2.3,<6.0`` if ``jsonschema`` follows semver.
+which allows your dependency upper bound raising to be tested.
 
 The challenging part of maintaining the lower bound is that it is not tested due to ``pip`` in the
 CI wanting to use the latest version. Here are a few examples of when you want to raise the lower
