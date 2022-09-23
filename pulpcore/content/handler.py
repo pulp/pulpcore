@@ -806,6 +806,7 @@ class Handler:
         """
         artifact_file = content_artifact.artifact.file
         artifact_name = artifact_file.name
+        content_disposition = f"attachment;filename={content_artifact.relative_path}"
 
         if settings.DEFAULT_FILE_STORAGE == "pulpcore.app.models.storage.FileSystem":
             path = os.path.join(settings.MEDIA_ROOT, artifact_name)
@@ -815,19 +816,17 @@ class Handler:
         elif not settings.REDIRECT_TO_OBJECT_STORAGE:
             return ArtifactResponse(content_artifact.artifact, headers=headers)
         elif settings.DEFAULT_FILE_STORAGE == "storages.backends.s3boto3.S3Boto3Storage":
-            content_disposition = f"attachment%3Bfilename={content_artifact.relative_path}"
             parameters = {"ResponseContentDisposition": content_disposition}
             if headers.get("Content-Type"):
                 parameters["ResponseContentType"] = headers.get("Content-Type")
             url = URL(
                 artifact_file.storage.url(
-                    artifact_file.name, parameters=parameters, http_method=request.method
+                    artifact_name, parameters=parameters, http_method=request.method
                 ),
                 encoded=True,
             )
             raise HTTPFound(url)
         elif settings.DEFAULT_FILE_STORAGE == "storages.backends.azure_storage.AzureStorage":
-            content_disposition = f"attachment%3Bfilename={artifact_name}"
             parameters = {"content_disposition": content_disposition}
             if headers.get("Content-Type"):
                 parameters["content_type"] = headers.get("Content-Type")
