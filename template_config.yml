@@ -19,7 +19,7 @@ check_stray_pulpcore_imports: false
 cherry_pick_automation: false
 ci_env: {}
 ci_trigger: '{pull_request: {branches: [''*'']}}'
-ci_update_branches: []
+ci_update_branches: ['3.14','3.15','3.18','3.21']
 core_import_allowed: []
 coverage: true
 deploy_client_to_pypi: true
