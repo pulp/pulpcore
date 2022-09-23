@@ -276,23 +276,24 @@ def get_artifact_url(artifact, headers=None, http_method=None):
     or private cloud storage.
     """
     artifact_file = artifact.file
+    content_disposition = f"attachment;filename={artifact.pk}"
     if (
         settings.DEFAULT_FILE_STORAGE == "pulpcore.app.models.storage.FileSystem"
         or not settings.REDIRECT_TO_OBJECT_STORAGE
     ):
         return _artifact_serving_distribution().artifact_url(artifact)
     elif settings.DEFAULT_FILE_STORAGE == "storages.backends.s3boto3.S3Boto3Storage":
-        parameters = {"ResponseContentDisposition": f"attachment%3Bfilename={artifact_file.name}"}
+        parameters = {"ResponseContentDisposition": content_disposition}
         if headers and headers.get("Content-Type"):
             parameters["ResponseContentType"] = headers.get("Content-Type")
         url = artifact_file.storage.url(
             artifact_file.name, parameters=parameters, http_method=http_method
         )
     elif settings.DEFAULT_FILE_STORAGE == "storages.backends.azure_storage.AzureStorage":
-        parameters = {"content_disposition": f"attachment%3Bfilename={artifact_file.name}"}
+        parameters = {"content_disposition": content_disposition}
         if headers and headers.get("Content-Type"):
             parameters["content_type"] = headers.get("Content-Type")
-        url = artifact_file.storage.url(artifact_file.name)
+        url = artifact_file.storage.url(artifact_file.name, parameters=parameters)
     else:
         raise NotImplementedError(
             f"The value settings.DEFAULT_FILE_STORAGE={settings.DEFAULT_FILE_STORAGE} "
