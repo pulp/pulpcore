@@ -1,0 +1,1 @@
+Do not expose artifact digest via content-disposition header when using Azure backend.
