@@ -1,3 +1,5 @@
+import os
+import shutil
 import uuid
 
 import pytest
@@ -16,6 +18,8 @@ from pulpcore.client.pulpcore import (
     DistributionsApi,
     ExportersPulpApi,
     ExportersPulpExportsApi,
+    ExportersFilesystemApi,
+    ExportersFilesystemExportsApi,
     GroupsApi,
     GroupsRolesApi,
     GroupsUsersApi,
@@ -183,6 +187,16 @@ def exporters_pulp_exports_api_client(pulpcore_client):
 
 
 @pytest.fixture
+def exporters_filesystem_api_client(pulpcore_client):
+    return ExportersFilesystemApi(pulpcore_client)
+
+
+@pytest.fixture
+def exporters_filesystem_exports_api_client(pulpcore_client):
+    return ExportersFilesystemExportsApi(pulpcore_client)
+
+
+@pytest.fixture
 def importers_pulp_api_client(pulpcore_client):
     return ImportersPulpApi(pulpcore_client)
 
@@ -332,3 +346,23 @@ def random_artifact_factory(artifacts_api_client, tmp_path, gen_object_with_clea
         return gen_object_with_cleanup(artifacts_api_client, temp_file)
 
     return _random_artifact_factory
+
+
+@pytest.fixture
+def add_to_filesystem_cleanup():
+    obj_paths = []
+
+    def _add_to_filesystem_cleanup(path):
+        obj_paths.append(path)
+
+    yield _add_to_filesystem_cleanup
+
+    for path in reversed(obj_paths):
+        if os.path.isdir(path):
+            shutil.rmtree(path, ignore_errors=True)
+        else:
+            try:
+                os.remove(path)
+            except OSError:
+                # the file may no longer exist, but we do not care
+                pass
