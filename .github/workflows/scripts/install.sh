@@ -64,6 +64,8 @@ services:
       - ./ssh:/keys/
       - ~/.config:/root/.config
       - ../../../pulp-openapi-generator:/root/pulp-openapi-generator
+    env:
+      PULP_WORKERS: "4"
 VARSYAML
 
 cat >> vars/main.yaml << VARSYAML
