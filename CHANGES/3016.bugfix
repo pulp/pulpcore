@@ -1,0 +1,1 @@
+The logging_cid field of a task can no longer be an empty string.

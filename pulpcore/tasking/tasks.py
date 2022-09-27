@@ -4,7 +4,8 @@ from gettext import gettext as _
 from django.db import transaction, connection
 from django.db.models import Model, Q
 from django.utils import timezone
-from django_guid import get_guid
+from django_guid import get_guid, set_guid
+from django_guid.utils import generate_guid
 
 from pulpcore.app.models import Task, TaskSchedule
 from pulpcore.app.util import get_url
@@ -87,7 +88,7 @@ def dispatch(
     with transaction.atomic():
         task = Task.objects.create(
             state=TASK_STATES.WAITING,
-            logging_cid=(get_guid() or ""),
+            logging_cid=(get_guid()),
             task_group=task_group,
             name=func,
             args=args,
@@ -116,6 +117,7 @@ def dispatch_scheduled_tasks():
                 while task_schedule.next_dispatch < now:
                     # Do not schedule in the past
                     task_schedule.next_dispatch += task_schedule.dispatch_interval
+            set_guid(generate_guid())
             with transaction.atomic():
                 task_schedule.last_task = dispatch(
                     task_schedule.task_name,
