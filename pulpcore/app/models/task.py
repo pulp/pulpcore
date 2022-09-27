@@ -176,7 +176,7 @@ class Task(BaseModel, AutoAddObjPermsMixin):
 
     state = models.TextField(choices=TASK_CHOICES)
     name = models.TextField()
-    logging_cid = models.TextField(db_index=True, default="")
+    logging_cid = models.TextField(db_index=True)
 
     started_at = models.DateTimeField(null=True)
     finished_at = models.DateTimeField(null=True)
