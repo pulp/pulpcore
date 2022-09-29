@@ -89,6 +89,10 @@ cmd_prefix bash -c "cat /etc/pulp/certs/pulp_webserver.crt  | tee -a "$CERTIFI" 
 echo "Checking for uncommitted migrations..."
 cmd_prefix bash -c "django-admin makemigrations --check --dry-run"
 
+cmd_prefix bash -c "mkdir -p /var/lib/pulp/media/artifact"
+cmd_prefix bash -c "chown pulp:pulp /var/lib/pulp/media/artifact"
+cmd_prefix bash -c "chmod 775 /var/lib/pulp/media/artifact"
+
 # Run unit tests.
 cmd_prefix bash -c "PULP_DATABASES__default__USER=postgres pytest -v -r sx --color=yes -p no:pulpcore --pyargs pulpcore.tests.unit"
 
