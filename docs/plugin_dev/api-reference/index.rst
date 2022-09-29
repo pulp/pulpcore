@@ -1,8 +1,10 @@
+.. _plugin_api:
+
 Plugin API Reference
 --------------------
 
-The Plugin API is versioned in sync with ``pulpcore`` and consists of everything importable within the
-:mod:`pulpcore.plugin` namespace. It is governed by our `deprecation policy <_deprecation_policy>`_.
+The Plugin API is versioned in sync with ``pulpcore`` and consists of everything importable within
+the :mod:`pulpcore.plugin` namespace. It is governed by the `deprecation policy <_deprecation_policy>`_.
 When writing plugins, care should be taken to only import ``pulpcore`` components exposed in this
 namespace; importing from elsewhere within the ``pulpcore`` module (e.g. importing directly from
 ``pulpcore.app``, ``pulpcore.exceptions``, etc.) is unsupported, and not protected by the

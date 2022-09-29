@@ -21,9 +21,9 @@ If you want to look at the considerations and requirements for installing Pulp, 
  :ref:`installation`. If you want to evaluate Pulp quickly, try `Pulp in One
  Container <https://pulpproject.org/pulp-in-one-container/>`_
 
-If you're looking for documentation specific to a content type, see :doc:`List of Plugins<plugins/index>`
+If you're looking for documentation specific to a content type, see :doc:`List of Plugins<plugins>`
 
-Anyone interested in writing a plugin should reference the :ref:`Plugin API`.
+Anyone interested in writing a plugin should reference :ref:`plugin_development`.
 
 .. _community:
 
@@ -65,7 +65,8 @@ Table of Contents
    configuration/index
    authentication/index
    workflows/index
-   plugins/index
+   plugins
+   plugin_dev/index
    rest_api
    client_bindings
    contributing/index

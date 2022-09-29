@@ -51,7 +51,7 @@ Glossary
 
     pulpcore
         A python package offering users a :doc:`rest_api` and plugin writers a
-        :ref:`Plugin API`. It is :term:`plugin`-based and manages :term:`Content`.
+        :ref:`plugin_api`. It is :term:`plugin`-based and manages :term:`Content`.
 
     :class:`~pulpcore.plugin.models.Remote`
         User facing settings that specify how Pulp should interact with an external :term:`Content`
