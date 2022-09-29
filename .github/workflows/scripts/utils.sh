@@ -7,14 +7,14 @@
 #
 # For more info visit https://github.com/pulp/plugin_template
 
-PULP_CI_CONTAINER=pulp
-
 # Run a command
-cmd_prefix() {
-  docker exec "$PULP_CI_CONTAINER" "$@"
-}
+alias cmd_prefix='docker exec pulp'
+
+# Run a command as the limited pulp user
+alias cmd_user_prefix='docker exec -u pulp pulp'
 
 # Run a command, and pass STDIN
-cmd_stdin_prefix() {
-  docker exec -i "$PULP_CI_CONTAINER" "$@"
-}
+alias cmd_stdin_prefix='docker exec -i pulp'
+
+# Run a command as the lmited pulp user, and pass STDIN
+alias cmd_user_stdin_prefix='docker exec -i -u pulp pulp'
