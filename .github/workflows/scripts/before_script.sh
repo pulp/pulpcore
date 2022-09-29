@@ -12,6 +12,7 @@ cd "$(dirname "$(realpath -e "$0")")"/../../..
 
 set -euv
 
+shopt -s expand_aliases
 source .github/workflows/scripts/utils.sh
 
 export PRE_BEFORE_SCRIPT=$PWD/.github/workflows/scripts/pre_before_script.sh
@@ -28,6 +29,10 @@ tail -v -n +1 .ci/ansible/vars/main.yaml
 # Developers often want to know the final pulp config
 echo "PULP CONFIG:"
 tail -v -n +1 .ci/ansible/settings/settings.* ~/.config/pulp_smash/settings.json
+
+# Needed for some functional tests
+cmd_prefix bash -c "echo '%wheel        ALL=(ALL)       NOPASSWD: ALL' > /etc/sudoers.d/nopasswd"
+cmd_prefix bash -c "usermod -a -G wheel pulp"
 
 SCENARIOS=("pulp" "performance" "azure" "s3" "stream" "plugin-from-pypi" "generate-bindings")
 if [[ " ${SCENARIOS[*]} " =~ " ${TEST} " ]]; then
