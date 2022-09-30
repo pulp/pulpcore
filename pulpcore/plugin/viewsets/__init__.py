@@ -1,3 +1,5 @@
+from pulpcore.filters import BaseFilterSet  # noqa
+
 # Allow plugin viewsets to return 202s
 from pulpcore.app.response import OperationPostponedResponse, TaskGroupOperationResponse  # noqa
 
@@ -5,7 +7,6 @@ from pulpcore.app.response import OperationPostponedResponse, TaskGroupOperation
 from pulpcore.app.viewsets import (  # noqa
     AlternateContentSourceViewSet,
     AsyncUpdateMixin,
-    BaseFilterSet,
     ContentFilter,
     ContentGuardFilter,
     ContentGuardViewSet,

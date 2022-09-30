@@ -16,9 +16,10 @@ from rest_framework.serializers import ValidationError
 
 from drf_spectacular.utils import OpenApiParameter, extend_schema, extend_schema_view
 
+from pulpcore.filters import BaseFilterSet
 from pulpcore.app.models import Group
 from pulpcore.app.models.role import GroupRole, Role, UserRole
-from pulpcore.app.viewsets import BaseFilterSet, NamedModelViewSet, RolesMixin, NAME_FILTER_OPTIONS
+from pulpcore.app.viewsets import NamedModelViewSet, RolesMixin, NAME_FILTER_OPTIONS
 from pulpcore.app.serializers import (
     GroupSerializer,
     GroupUserSerializer,

@@ -283,8 +283,8 @@ Filtering Backend
 
 http://www.django-rest-framework.org/api-guide/filtering/#setting-filter-backends
 
-We will be using the rest framework's DjangoFilterBackend. This is set as the default in the Django
-settings.py, but can be overridden in individual ViewSets.
+We will be using ``PulpFilterBackend``, a subclass of the rest framework's ``DjangoFilterBackend``.
+This is set as the default in the Django settings.py, but can be overridden in individual ViewSets.
 
 Allowing Filters
 ^^^^^^^^^^^^^^^^
@@ -339,6 +339,10 @@ that allows the same request:
         serializer_class = serializers.RepositorySerializer
         filterset_class = RepositoryFilter
 
+
+.. note::
+
+   For ``NamedModelViewSet`` the base class ``BaseFilterSet`` should be used.
 
 Beyond Equality
 ***************

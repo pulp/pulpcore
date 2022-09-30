@@ -7,6 +7,7 @@ from rest_framework import mixins, serializers
 from rest_framework.decorators import action
 from rest_framework.viewsets import GenericViewSet
 
+from pulpcore.filters import BaseFilterSet
 from pulpcore.app import tasks
 from pulpcore.app.models import (
     Content,
@@ -25,7 +26,6 @@ from pulpcore.app.serializers import (
 from pulpcore.app.viewsets import (
     AsyncRemoveMixin,
     AsyncUpdateMixin,
-    BaseFilterSet,
     NamedModelViewSet,
 )
 from pulpcore.app.viewsets.base import DATETIME_FILTER_OPTIONS, NAME_FILTER_OPTIONS

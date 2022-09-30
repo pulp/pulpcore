@@ -7,6 +7,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.serializers import ValidationError
 
+from pulpcore.filters import BaseFilterSet
 from pulpcore.app.models import Task, TaskGroup, TaskSchedule, Worker
 from pulpcore.app.response import OperationPostponedResponse
 from pulpcore.app.serializers import (
@@ -20,7 +21,7 @@ from pulpcore.app.serializers import (
     WorkerSerializer,
 )
 from pulpcore.app.tasks import purge
-from pulpcore.app.viewsets import BaseFilterSet, NamedModelViewSet, RolesMixin
+from pulpcore.app.viewsets import NamedModelViewSet, RolesMixin
 from pulpcore.app.viewsets.base import DATETIME_FILTER_OPTIONS, NAME_FILTER_OPTIONS
 from pulpcore.app.viewsets.custom_filters import (
     HyperlinkRelatedFilter,
