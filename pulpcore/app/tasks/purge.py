@@ -1,4 +1,5 @@
 from gettext import gettext as _
+
 from django_currentuser.middleware import get_current_authenticated_user
 from pulpcore.app.models import (
     ProgressReport,
@@ -71,7 +72,6 @@ def purge(finished_before, states):
     # Tasks, prior to the specified date, in the specified state, owned by the current-user
     tasks_qs = Task.objects.filter(finished_at__lt=finished_before, state__in=states)
     candidate_qs = get_objects_for_user(current_user, "core.delete_task", qs=tasks_qs)
-    delete_qs = get_objects_for_user(current_user, "core.delete_task", qs=tasks_qs[:DELETE_LIMIT])
     # Progress bar reporting total-units
     totals_pb = ProgressReport(
         message=_("Purged task-related-objects total"),
@@ -101,7 +101,7 @@ def purge(finished_before, states):
     # Until our query returns "No tasks deleted", add results into totals and Do It Again
     while units_deleted > 0:
         units_deleted, details = Task.objects.filter(
-            pk__in=delete_qs.values_list("pk", flat=True)
+            pk__in=candidate_qs[:DELETE_LIMIT].values_list("pk", flat=True)
         ).delete()
         _details_reporting(details_reports, details, totals_pb)
 
