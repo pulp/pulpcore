@@ -3,6 +3,7 @@ from django_filters.rest_framework import filters
 from drf_spectacular.utils import extend_schema
 from rest_framework import mixins
 
+from pulpcore.filters import BaseFilterSet
 from pulpcore.app.models import (
     Import,
     Importer,
@@ -20,7 +21,6 @@ from pulpcore.app.serializers import (
 )
 from pulpcore.app.tasks import pulp_import
 from pulpcore.app.viewsets import (
-    BaseFilterSet,
     NamedModelViewSet,
 )
 from pulpcore.app.viewsets.base import NAME_FILTER_OPTIONS

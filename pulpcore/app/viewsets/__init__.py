@@ -2,7 +2,6 @@ from .base import (  # noqa
     AsyncCreateMixin,
     AsyncRemoveMixin,
     AsyncUpdateMixin,
-    BaseFilterSet,
     NamedModelViewSet,
     RolesMixin,
     NAME_FILTER_OPTIONS,

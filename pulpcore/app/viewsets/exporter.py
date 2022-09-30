@@ -3,6 +3,7 @@ from django_filters.rest_framework import filters
 from drf_spectacular.utils import extend_schema
 from rest_framework import mixins
 
+from pulpcore.filters import BaseFilterSet
 from pulpcore.app.models import (
     Export,
     Exporter,
@@ -29,7 +30,6 @@ from pulpcore.app.tasks.export import fs_publication_export, fs_repo_version_exp
 from pulpcore.app.viewsets import (
     AsyncRemoveMixin,
     AsyncUpdateMixin,
-    BaseFilterSet,
     NamedModelViewSet,
 )
 from pulpcore.app.viewsets.base import NAME_FILTER_OPTIONS

@@ -1,0 +1,2 @@
+Added ``BaseFilterSet`` to ``NamedModelViewSet`` to allow ordering on all list endpoints even
+without specifying a custom filterset class.

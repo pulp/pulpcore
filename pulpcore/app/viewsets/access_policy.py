@@ -4,10 +4,11 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from drf_spectacular.utils import extend_schema
 
+from pulpcore.filters import BaseFilterSet
 from pulpcore.app.apps import pulp_plugin_configs
 from pulpcore.app.models import AccessPolicy
 from pulpcore.app.serializers import AccessPolicySerializer
-from pulpcore.app.viewsets import BaseFilterSet, NamedModelViewSet
+from pulpcore.app.viewsets import NamedModelViewSet
 from pulpcore.app.viewsets.base import NAME_FILTER_OPTIONS
 from pulpcore.app.util import get_view_urlpattern
 

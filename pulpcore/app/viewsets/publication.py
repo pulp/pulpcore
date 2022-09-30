@@ -4,6 +4,7 @@ from django_filters import Filter
 from django_filters.rest_framework import filters
 from rest_framework import mixins, serializers
 
+from pulpcore.filters import BaseFilterSet
 from pulpcore.app.models import (
     ContentGuard,
     RBACContentGuard,
@@ -26,7 +27,6 @@ from pulpcore.app.viewsets import (
     AsyncCreateMixin,
     AsyncRemoveMixin,
     AsyncUpdateMixin,
-    BaseFilterSet,
     NamedModelViewSet,
     RolesMixin,
 )

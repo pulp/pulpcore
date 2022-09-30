@@ -5,6 +5,7 @@ from drf_spectacular.utils import extend_schema
 from rest_framework import mixins
 from rest_framework.decorators import action
 
+from pulpcore.filters import BaseFilterSet
 from pulpcore.app import tasks
 from pulpcore.app.models import AlternateContentSource
 from pulpcore.app.serializers import (
@@ -14,7 +15,6 @@ from pulpcore.app.serializers import (
 from pulpcore.app.response import OperationPostponedResponse
 from pulpcore.app.viewsets import (
     AsyncUpdateMixin,
-    BaseFilterSet,
     NamedModelViewSet,
 )
 from pulpcore.app.viewsets.base import NAME_FILTER_OPTIONS
