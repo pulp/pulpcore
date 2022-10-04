@@ -14,7 +14,6 @@ REPO_ROOT="$PWD"
 
 set -mveuo pipefail
 
-shopt -s expand_aliases
 source .github/workflows/scripts/utils.sh
 
 export POST_SCRIPT=$PWD/.github/workflows/scripts/post_script.sh
