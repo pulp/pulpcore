@@ -25,6 +25,7 @@ from pulpcore.client.pulpcore import (
     GroupsUsersApi,
     ImportersPulpApi,
     ImportersPulpImportsApi,
+    ImportersPulpImportCheckApi,
     OrphansCleanupApi,
     PublicationsApi,
     RemotesApi,
@@ -204,6 +205,11 @@ def importers_pulp_api_client(pulpcore_client):
 @pytest.fixture
 def importers_pulp_imports_api_client(pulpcore_client):
     return ImportersPulpImportsApi(pulpcore_client)
+
+
+@pytest.fixture
+def importers_pulp_imports_check_api_client(pulpcore_client):
+    return ImportersPulpImportCheckApi(pulpcore_client)
 
 
 @pytest.fixture
