@@ -13,7 +13,6 @@ REPO_ROOT="$PWD"
 
 set -euv
 
-shopt -s expand_aliases
 source .github/workflows/scripts/utils.sh
 
 export PULP_API_ROOT="/pulp/"

@@ -12,7 +12,6 @@ cd "$(dirname "$(realpath -e "$0")")"/../../..
 
 set -euv
 
-shopt -s expand_aliases
 source .github/workflows/scripts/utils.sh
 
 export PRE_BEFORE_SCRIPT=$PWD/.github/workflows/scripts/pre_before_script.sh
