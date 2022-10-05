@@ -22,7 +22,58 @@ from pulpcore.app.viewsets import NamedModelViewSet
 
 class ReservedResourcesFilter(Filter):
     """
-    Enables a user to filter tasks by a reserved resource href
+    Enables a user to filter tasks by a reserved resource href.
+    """
+
+    def __init__(self, *args, exclusive=True, shared=True, **kwargs):
+        self.exclusive = exclusive
+        self.shared = shared
+        assert (
+            exclusive or shared
+        ), "ReservedResourceFilter must have either exclusive or shared set."
+        super().__init__(*args, **kwargs)
+
+    def filter(self, qs, value):
+        """
+        Callback to filter the query set based on the provided filter value.
+
+        Args:
+            qs (django.db.models.query.QuerySet): The Queryset to filter
+            value (string|List[str]): href to a reference to a reserved resource or a list thereof
+
+        Returns:
+            django.db.models.query.QuerySet: Queryset filtered by the reserved resource
+        """
+
+        if value is not None:
+            if isinstance(value, str):
+                value = [value]
+            if self.exclusive:
+                if self.shared:
+                    for item in value:
+                        qs = qs.filter(reserved_resources_record__overlap=[item, "shared:" + item])
+                else:
+                    qs = qs.filter(reserved_resources_record__contains=value)
+            else:  # self.shared
+                qs = qs.filter(
+                    reserved_resources_record__contains=["shared:" + item for item in value]
+                )
+
+        return qs
+
+
+class ReservedResourcesInFilter(BaseInFilter, ReservedResourcesFilter):
+    """
+    Enables a user to filter tasks by a list of reserved resource hrefs.
+    """
+
+
+class ReservedResourcesRecordFilter(Filter):
+    """
+    Enables a user to filter tasks by a reserved resource href.
+
+    Warning: This filter is badly documented and not fully functional, but we need to keep it for
+    compatibility reasons. Use ``ReservedResourcesFilter`` instead.
     """
 
     def filter(self, qs, value):

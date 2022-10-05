@@ -26,6 +26,8 @@ from pulpcore.app.viewsets.custom_filters import (
     HyperlinkRelatedFilter,
     IsoDateTimeFilter,
     ReservedResourcesFilter,
+    ReservedResourcesInFilter,
+    ReservedResourcesRecordFilter,
     CreatedResourcesFilter,
 )
 from pulpcore.constants import TASK_INCOMPLETE_STATES, TASK_STATES, TASK_CHOICES
@@ -43,8 +45,17 @@ class TaskFilter(BaseFilterSet):
     parent_task = HyperlinkRelatedFilter()
     child_tasks = HyperlinkRelatedFilter()
     task_group = HyperlinkRelatedFilter()
-    reserved_resources_record = ReservedResourcesFilter()
+    # This filter is deprecated and badly documented, but we need to keep it for compatibility
+    # reasons
+    reserved_resources_record = ReservedResourcesRecordFilter()
     created_resources = CreatedResourcesFilter()
+    # Non model field filters
+    reserved_resources = ReservedResourcesFilter(exclusive=True, shared=True)
+    reserved_resources__in = ReservedResourcesInFilter(exclusive=True, shared=True)
+    exclusive_resources = ReservedResourcesFilter(exclusive=True, shared=False)
+    exclusive_resources__in = ReservedResourcesInFilter(exclusive=True, shared=False)
+    shared_resources = ReservedResourcesFilter(exclusive=False, shared=True)
+    shared_resources__in = ReservedResourcesInFilter(exclusive=False, shared=True)
 
     class Meta:
         model = Task
