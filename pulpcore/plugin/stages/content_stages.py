@@ -148,53 +148,51 @@ class ContentSaver(Stage):
                                 )
                                 key = (d_content.content.pk, d_artifact.relative_path)
                                 to_update_ca_artifact[key] = d_artifact.artifact
+
                     # Query db once and update each object in memory for bulk_update call
                     for content_artifact in to_update_ca_query.iterator():
                         key = (content_artifact.content_id, content_artifact.relative_path)
-                        # Maybe remove dict elements after to reduce memory?
-                        content_artifact.artifact = to_update_ca_artifact[key]
-                        to_update_ca_bulk.append(content_artifact)
+                        # Same content/relpath/artifact-sha means no change to the
+                        # contentartifact, ignore. This prevents us from colliding with any
+                        # concurrent syncs with overlapping identical content. "Someone" updated
+                        # the contentartifacts to match what we would be doing, so we don't need
+                        # to do an (unnecessary) db-update, which was opening us up for a variety
+                        # of potential deadlock scenarios.
+                        #
+                        # We start knowing that we're comparing CAs with same content/rel-path,
+                        # because that's what we're using for the key to look up the incoming CA.
+                        # So now let's compare artifacts, incoming vs current.
+                        #
+                        # Are we changing from no-artifact to having one or vice-versa?
+                        artifact_state_change = bool(content_artifact.artifact) ^ bool(
+                            to_update_ca_artifact[key]
+                        )
+                        # Do both current and incoming have an artifact?
+                        both_have_artifact = (
+                            content_artifact.artifact and to_update_ca_artifact[key]
+                        )
+                        # If both sides have an artifact, do they have the same sha256?
+                        same_artifact_hash = both_have_artifact and (
+                            content_artifact.artifact.sha256 == to_update_ca_artifact[key].sha256
+                        )
+                        # Only update if there was an actual change
+                        if artifact_state_change or (both_have_artifact and not same_artifact_hash):
+                            content_artifact.artifact = to_update_ca_artifact[key]
+                            to_update_ca_bulk.append(content_artifact)
 
                     # to_update_ca_bulk are the CAs that we know are already persisted.
                     # We need to update their artifact_ids, and wish to do it in bulk to
                     # avoid hundreds of round-trips to the database.
-                    #
-                    # To avoid deadlocks in high-concurrency environments with overlapping
-                    # content, we need to update the rows in some defined order. Unfortunately,
-                    # postgres doesn't support order-on-update - but it *does* support ordering
-                    # on select-for-update. So, we select-for-update, in pulp_id order, the
-                    # rows we're about to update as one db-call, and then do the update in a
-                    # second.
-                    #
-                    # NOTE: select-for-update requires being in an atomic-transaction. We are
-                    # **already in an atomic transaction** at this point as a result of the
-                    # "with transaction.atomic():", above.
-                    ids = [k.pulp_id for k in to_update_ca_bulk]
-                    # "len()" forces the QuerySet to be evaluated. Using exist() or count() won't
-                    # work for us - Django is smart enough to either not-order, or even
-                    # not-emit, a select-for-update in these cases.
-                    #
-                    # To maximize performance, we make sure to only ask for pulp_ids, and
-                    # avoid instantiating a python-object for the affected CAs by using
-                    # values_list()
-                    subq = (
-                        ContentArtifact.objects.filter(pulp_id__in=ids)
-                        .only("pulp_id")
-                        .order_by("pulp_id")
-                        .select_for_update()
-                    )
-                    # NOTE: it might look like you can "safely" make this request
-                    # "more efficient". You'd be wrong, and would only be removing an
-                    # ordering-guardrail preventing deadlock. Don't touch.
-                    len(ContentArtifact.objects.filter(pk__in=subq).values_list())
-                    ContentArtifact.objects.bulk_update(to_update_ca_bulk, ["artifact"])
+                    if to_update_ca_bulk:
+                        ContentArtifact.objects.bulk_update(to_update_ca_bulk, ["artifact"])
 
-                    # To avoid a similar deadlock issue when calling get_or_create, we sort the
+                    # To avoid a deadlock issue when calling get_or_create, we sort the
                     # "new" CAs to make sure inserts happen in a defined order. Since we can't
                     # trust the pulp_id (by the time we go to create a CA, it may already exist,
                     # and be replaced by the 'real' one), we sort by their "natural key".
                     content_artifact_bulk.sort(key=lambda x: ContentArtifact.sort_key(x))
                     ContentArtifact.objects.bulk_get_or_create(content_artifact_bulk)
+
                     self._post_save(batch)
 
             await sync_to_async(process_batch)()
