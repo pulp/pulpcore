@@ -1,3 +1,5 @@
+import aiohttp
+import asyncio
 import os
 import shutil
 import uuid
@@ -30,6 +32,7 @@ from pulpcore.client.pulpcore import (
     PublicationsApi,
     RemotesApi,
     RepositoriesApi,
+    RepositoriesReclaimSpaceApi,
     RolesApi,
     SigningServicesApi,
     StatusApi,
@@ -238,6 +241,11 @@ def orphans_cleanup_api_client(pulpcore_client):
 
 
 @pytest.fixture
+def repositories_reclaim_space_api_client(pulpcore_client):
+    return RepositoriesReclaimSpaceApi(pulpcore_client)
+
+
+@pytest.fixture
 def role_factory(roles_api_client, gen_object_with_cleanup):
     def _role_factory(**kwargs):
         return gen_object_with_cleanup(roles_api_client, kwargs)
@@ -372,3 +380,23 @@ def add_to_filesystem_cleanup():
             except OSError:
                 # the file may no longer exist, but we do not care
                 pass
+
+
+@pytest.fixture
+def download_content_unit(pulp_cfg):
+    def _download_content_unit(base_path, content_path):
+        async def _get_response(url):
+            async with aiohttp.ClientSession() as session:
+                async with session.get(url) as response:
+                    return await response.read()
+
+        url_fragments = [
+            pulp_cfg.get_base_url(),
+            "pulp/content",
+            base_path,
+            content_path,
+        ]
+        url = "/".join(url_fragments)
+        return asyncio.run(_get_response(url))
+
+    return _download_content_unit
