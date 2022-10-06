@@ -23,7 +23,7 @@ jinja2>=3.1,<=3.1.2
 naya>=1.1.1,<=1.1.1
 protobuf<=4.21.6  # We don't know the lower bound
 pygtrie>=2.5,<=2.5.0
-psycopg2>=2.9.3,<=2.9.3
+psycopg2>=2.9.3,<2.9.5
 PyYAML>=5.1.1,<=6.0.0
 python-gnupg>=0.5,<=0.5.0
 redis>=4.3,<=4.3.4
