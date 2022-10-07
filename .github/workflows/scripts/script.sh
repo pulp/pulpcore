@@ -64,8 +64,8 @@ fi
 echo "machine pulp
 login admin
 password password
-" | cmd_stdin_prefix bash -c "cat > ~pulp/.netrc"
-cmd_stdin_prefix bash -c "chmod og-rw ~pulp/.netrc"
+" | cmd_user_stdin_prefix bash -c "cat >> ~pulp/.netrc"
+cmd_user_stdin_prefix bash -c "chmod og-rw ~pulp/.netrc"
 
 cat unittest_requirements.txt | cmd_stdin_prefix bash -c "cat > /tmp/unittest_requirements.txt"
 cat functest_requirements.txt | cmd_stdin_prefix bash -c "cat > /tmp/functest_requirements.txt"
