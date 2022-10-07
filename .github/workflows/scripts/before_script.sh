@@ -29,6 +29,10 @@ tail -v -n +1 .ci/ansible/vars/main.yaml
 echo "PULP CONFIG:"
 tail -v -n +1 .ci/ansible/settings/settings.* ~/.config/pulp_smash/settings.json
 
+# Needed for some functional tests
+cmd_prefix bash -c "echo '%wheel        ALL=(ALL)       NOPASSWD: ALL' > /etc/sudoers.d/nopasswd"
+cmd_prefix bash -c "usermod -a -G wheel pulp"
+
 SCENARIOS=("pulp" "performance" "azure" "s3" "stream" "plugin-from-pypi" "generate-bindings")
 if [[ " ${SCENARIOS[*]} " =~ " ${TEST} " ]]; then
   # Many functional tests require these
