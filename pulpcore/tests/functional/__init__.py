@@ -31,6 +31,7 @@ from pulpcore.client.pulpcore import (
     OrphansCleanupApi,
     PublicationsApi,
     RemotesApi,
+    RepairApi,
     RepositoriesApi,
     RepositoriesReclaimSpaceApi,
     RolesApi,
@@ -243,6 +244,11 @@ def orphans_cleanup_api_client(pulpcore_client):
 @pytest.fixture
 def repositories_reclaim_space_api_client(pulpcore_client):
     return RepositoriesReclaimSpaceApi(pulpcore_client)
+
+
+@pytest.fixture
+def repair_api_client(pulpcore_client):
+    return RepairApi(pulpcore_client)
 
 
 @pytest.fixture
