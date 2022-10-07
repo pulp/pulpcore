@@ -62,8 +62,10 @@ services:
     volumes:
       - ./settings:/etc/pulp
       - ./ssh:/keys/
-      - ~/.config:/root/.config
+      - ~/.config:/var/lib/pulp/.config
       - ../../../pulp-openapi-generator:/root/pulp-openapi-generator
+    env:
+      PULP_WORKERS: "4"
 VARSYAML
 
 cat >> vars/main.yaml << VARSYAML
@@ -137,6 +139,12 @@ fi
 
 ansible-playbook build_container.yaml
 ansible-playbook start_container.yaml
+
+# .config needs to be accessible by the pulp user in the container, but some
+# files will likely be modified on the host by post/pre scripts.
+chmod 777 ~/.config/pulp_smash/
+chmod 666 ~/.config/pulp_smash/settings.json
+sudo chown -R 700:700 ~runner/.config
 echo ::group::SSL
 # Copy pulp CA
 sudo docker cp pulp:/etc/pulp/certs/pulp_webserver.crt /usr/local/share/ca-certificates/pulp_webserver.crt
