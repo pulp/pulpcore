@@ -3,42 +3,54 @@
 For more information, see the documentation on `Authentication
 <https://docs.pulpproject.org/restapi.html#section/Authentication>`_.
 """
-import unittest
+import pytest
+import json
 
-from pulp_smash import api, config, utils
-from pulp_smash.pulp3.constants import ARTIFACTS_PATH
-from requests.auth import HTTPBasicAuth
-from requests.exceptions import HTTPError
+from pulpcore.client.pulpcore import ApiException
 
 
-class AuthTestCase(unittest.TestCase):
-    """Test Pulp3 Authentication."""
+@pytest.mark.parallel
+def test_base_auth_success(artifacts_api_client, pulp_admin_user):
+    """Perform HTTP basic authentication with valid credentials.
 
-    def setUp(self):
-        """Set common variable."""
-        self.cfg = config.get_config()
+    Assert that a response indicating success is returned.
+    """
+    with pulp_admin_user:
+        response, status, headers = artifacts_api_client.list_with_http_info()
+    assert status == 200
+    assert headers["Content-Type"] == "application/json"
+    # Maybe test correlation ID as well?
 
-    def test_base_auth_success(self):
-        """Perform HTTP basic authentication with valid credentials.
 
-        Assert that a response indicating success is returned.
+@pytest.mark.parallel
+def test_base_auth_failure(artifacts_api_client, invalid_user):
+    """Perform HTTP basic authentication with invalid credentials.
 
-        Assertion is made by the response_handler.
-        """
-        api.Client(self.cfg, api.json_handler).get(
-            ARTIFACTS_PATH, auth=HTTPBasicAuth(*self.cfg.pulp_auth)
-        )
+    Assert that a response indicating failure is returned.
+    """
+    with invalid_user:
+        with pytest.raises(ApiException) as e:
+            artifacts_api_client.list()
 
-    def test_base_auth_failure(self):
-        """Perform HTTP basic authentication with invalid credentials.
+    assert e.value.status == 403
+    response = json.loads(e.value.body)
+    response_detail = response["detail"].lower()
+    for key in ("invalid", "username", "password"):
+        assert key in response_detail
 
-        Assert that a response indicating failure is returned.
-        """
-        self.cfg.pulp_auth[1] = utils.uuid4()  # randomize password
-        response = api.Client(self.cfg, api.echo_handler).get(
-            ARTIFACTS_PATH, auth=HTTPBasicAuth(*self.cfg.pulp_auth)
-        )
-        with self.assertRaises(HTTPError):
-            response.raise_for_status()
-        for key in ("invalid", "username", "password"):
-            self.assertIn(key, response.json()["detail"].lower(), response.json())
+
+@pytest.mark.parallel
+def test_base_auth_required(artifacts_api_client, anonymous_user):
+    """Perform HTTP basic authentication with no credentials.
+
+    Asert that a response indicating failure is returned.
+    """
+    with anonymous_user:
+        with pytest.raises(ApiException) as e:
+            artifacts_api_client.list()
+
+    assert e.value.status == 403
+    response = json.loads(e.value.body)
+    response_detail = response["detail"].lower()
+    for key in ("authentication", "credentials", "provided"):
+        assert key in response_detail

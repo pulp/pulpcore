@@ -1,105 +1,71 @@
 """Tests related to the workers."""
 import pytest
-import unittest
 from datetime import datetime, timedelta
 from random import choice
 from time import sleep
 
-from pulp_smash import api, config, utils
-from pulp_smash.pulp3.constants import WORKER_PATH
-from requests.exceptions import HTTPError
-
-from pulpcore.tests.functional.utils import skip_if
+from pulp_smash import utils
 
 
 _DYNAMIC_WORKER_ATTRS = ("last_heartbeat", "current_task")
 """Worker attributes that are dynamically set by Pulp, not set by a user."""
 
 
-class WorkersTestCase(unittest.TestCase):
-    """Test actions over workers."""
-
-    @classmethod
-    def setUpClass(cls):
-        """Create an API Client."""
-        cls.cfg = config.get_config()
-        cls.client = api.Client(cls.cfg, api.json_handler)
-        cls.worker = {}
-
-    def test_01_read_all_workers(self):
-        """Read all workers.
-
-        Pick a random worker to be used for the next assertions.
-        """
-        workers = self.client.get(WORKER_PATH)["results"]
-        for worker in workers:
-            for key, val in worker.items():
-                if key in _DYNAMIC_WORKER_ATTRS:
-                    continue
-                with self.subTest(key=key):
-                    self.assertIsNotNone(val)
-        self.worker.update(choice(workers))
-
-    @skip_if(bool, "worker", False)
-    def test_02_read_worker(self):
-        """Read a worker by its pulp_href."""
-        worker = self.client.get(self.worker["pulp_href"])
-        for key, val in self.worker.items():
+@pytest.mark.parallel
+def test_worker_actions(workers_api_client):
+    # Read all workers.
+    workers = workers_api_client.list().results
+    for worker in workers:
+        for key, val in worker.to_dict().items():
             if key in _DYNAMIC_WORKER_ATTRS:
                 continue
-            with self.subTest(key=key):
-                self.assertEqual(worker[key], val)
+            assert val is not None
 
-    @skip_if(bool, "worker", False)
-    def test_02_read_workers(self):
-        """Read a worker by its name."""
-        page = self.client.get(WORKER_PATH, params={"name": self.worker["name"]})
-        self.assertEqual(len(page["results"]), 1)
-        for key, val in self.worker.items():
-            if key in _DYNAMIC_WORKER_ATTRS:
-                continue
-            with self.subTest(key=key):
-                self.assertEqual(page["results"][0][key], val)
+    # Pick a random worker to be used for the next assertions.
+    chosen_worker = choice(workers)
 
-    @skip_if(bool, "worker", False)
-    def test_03_positive_filters(self):
-        """Read a worker using a set of query parameters."""
-        page = self.client.get(
-            WORKER_PATH,
-            params={
-                "last_heartbeat__gte": self.worker["last_heartbeat"],
-                "name": self.worker["name"],
-            },
-        )
-        self.assertEqual(
-            len(page["results"]), 1, "Expected: {}. Got: {}.".format([self.worker], page["results"])
-        )
-        for key, val in self.worker.items():
-            if key in _DYNAMIC_WORKER_ATTRS:
-                continue
-            with self.subTest(key=key):
-                self.assertEqual(page["results"][0][key], val)
+    # Read a worker by its pulp_href.
+    read_worker = workers_api_client.read(chosen_worker.pulp_href)
+    for key, val in chosen_worker.to_dict().items():
+        if key in _DYNAMIC_WORKER_ATTRS:
+            continue
+        assert getattr(read_worker, key) == val
 
-    @skip_if(bool, "worker", False)
-    def test_04_negative_filters(self):
-        """Read a worker with a query that does not match any worker."""
-        page = self.client.get(
-            WORKER_PATH,
-            params={
-                "last_heartbeat__gte": str(datetime.now() + timedelta(days=1)),
-                "name": self.worker["name"],
-            },
-        )
-        self.assertEqual(len(page["results"]), 0)
+    # Read a worker by its name.
+    response = workers_api_client.list(name=chosen_worker.name)
+    assert response.count == 1
+    found_worker = response.results[0]
+    for key, val in chosen_worker.to_dict().items():
+        if key in _DYNAMIC_WORKER_ATTRS:
+            continue
+        assert getattr(found_worker, key) == val
 
-    @skip_if(bool, "worker", False)
-    def test_05_http_method(self):
-        """Use an HTTP method different than GET.
+    # Read a worker using a set of query parameters.
+    response = workers_api_client.list(
+        **{
+            "last_heartbeat__gte": chosen_worker.last_heartbeat,
+            "name": chosen_worker.name,
+        },
+    )
+    assert response.count == 1
+    found_worker = response.results[0]
+    for key, val in chosen_worker.to_dict().items():
+        if key in _DYNAMIC_WORKER_ATTRS:
+            continue
+        assert getattr(found_worker, key) == val
 
-        Assert an error is raised.
-        """
-        with self.assertRaises(HTTPError):
-            self.client.delete(self.worker["pulp_href"])
+    # Read a worker with a query that does not match any worker.
+    response = workers_api_client.list(
+        **{
+            "last_heartbeat__gte": str(datetime.now() + timedelta(days=1)),
+            "name": chosen_worker.name,
+        },
+    )
+    assert response.count == 0
+
+    # Use an HTTP method different than GET
+    with pytest.raises(AttributeError):
+        workers_api_client.delete(chosen_worker.pulp_href)
 
 
 @pytest.fixture()
