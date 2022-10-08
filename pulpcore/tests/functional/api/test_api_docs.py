@@ -1,43 +1,41 @@
-"""Test related to the api docs page."""
-import unittest
-
-from pulp_smash import api, config
-from pulp_smash.pulp3.constants import API_DOCS_PATH
-from requests.exceptions import HTTPError
+"""Tests related to the api docs page."""
+import pytest
+from pulpcore.client.pulpcore import ApiException
 
 
-class ApiDocsTestCase(unittest.TestCase):
-    """Test whether API auto generated docs are available.
+@pytest.fixture(scope="session")
+def pulp_docs_url(pulp_api_v3_url):
+    return f"{pulp_api_v3_url}docs/"
 
-    This test targets the following issue:
 
-    * `Pulp Smash #893 <https://github.com/pulp/pulp-smash/issues/893>`_
+@pytest.mark.parallel
+def test_valid_credentials(pulpcore_client, pulp_docs_url):
+    """Get API documentation with valid credentials.
+
+    Assert the API documentation is returned.
     """
+    response = pulpcore_client.request("GET", pulp_docs_url)
+    assert response.status == 200
 
-    def setUp(self):
-        """Create an API Client."""
-        cfg = config.get_config()
-        self.client = api.Client(cfg)
 
-    def test_valid_credentials(self):
-        """Get API documentation with valid credentials.
+@pytest.mark.parallel
+def test_no_credentials(pulpcore_client, pulp_docs_url, anonymous_user):
+    """Get API documentation with no credentials.
 
-        Assert the API documentation is returned.
-        """
-        self.client.get(API_DOCS_PATH)
+    Assert the API documentation is returned.
+    """
+    with anonymous_user:
+        response = pulpcore_client.request("GET", pulp_docs_url)
+        assert response.status == 200
 
-    def test_no_credentials(self):
-        """Get API documentation with no credentials.
 
-        Assert the API documentation is returned.
-        """
-        del self.client.request_kwargs["auth"]
-        self.client.get(API_DOCS_PATH)
+@pytest.mark.parallel
+def test_http_method(pulpcore_client, pulp_docs_url):
+    """Get API documentation with an HTTP method other than GET.
 
-    def test_http_method(self):
-        """Get API documentation with an HTTP method other than GET.
+    Assert an error is returned.
+    """
+    with pytest.raises(ApiException) as e:
+        pulpcore_client.request("POST", pulp_docs_url)
 
-        Assert an error is returned.
-        """
-        with self.assertRaises(HTTPError):
-            self.client.post(API_DOCS_PATH)
+    assert e.value.status == 405

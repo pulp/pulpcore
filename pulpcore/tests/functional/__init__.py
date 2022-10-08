@@ -41,6 +41,7 @@ from pulpcore.client.pulpcore import (
     UploadsApi,
     UsersApi,
     UsersRolesApi,
+    WorkersApi,
 )
 
 from .gpg_ascii_armor_signing_service import (  # noqa: F401
@@ -102,6 +103,11 @@ def pulpcore_client(cid, bindings_cfg):
 @pytest.fixture
 def tasks_api_client(pulpcore_client):
     return TasksApi(pulpcore_client)
+
+
+@pytest.fixture
+def workers_api_client(pulpcore_client):
+    return WorkersApi(pulpcore_client)
 
 
 @pytest.fixture
@@ -306,6 +312,23 @@ def anonymous_user(bindings_cfg):
 
 
 @pytest.fixture(scope="session")
+def invalid_user(bindings_cfg):
+    class InvalidUser:
+        def __init__(self):
+            self._saved_credentials = []
+
+        def __enter__(self):
+            self._saved_credentials.append((bindings_cfg.username, bindings_cfg.password))
+            bindings_cfg.username, bindings_cfg.password = str(uuid.uuid4()), str(uuid.uuid4())
+            return self
+
+        def __exit__(self, exc_type, exc_value, traceback):
+            bindings_cfg.username, bindings_cfg.password = self._saved_credentials.pop()
+
+    return InvalidUser()
+
+
+@pytest.fixture(scope="session")
 def pulp_admin_user(bindings_cfg):
     class AdminUser:
         def __init__(self):
@@ -345,6 +368,13 @@ def pulp_api_v3_path(cli_client):
 @pytest.fixture(scope="session")
 def pulp_api_v3_url(pulp_cfg, pulp_api_v3_path):
     return f"{pulp_cfg.get_base_url()}{pulp_api_v3_path}"
+
+
+@pytest.fixture
+def get_redis_status(status_api_client):
+    """Return a boolean value which tells whether the connection to redis was established or not."""
+    status_response = status_api_client.status_read()
+    return status_response.redis_connection.connected
 
 
 @pytest.fixture

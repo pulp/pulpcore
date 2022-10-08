@@ -1,154 +1,183 @@
 """Tests related to content upload."""
 import hashlib
-import unittest
+import uuid
+import pytest
+import os
 
 from random import shuffle
-from requests import HTTPError
-from urllib.parse import urljoin
-
-from pulp_smash import api, cli, config
-from pulp_smash.pulp3.constants import UPLOAD_PATH
-from pulp_smash.utils import http_get
+from pulpcore.client.pulpcore import ApiException
+from pulpcore.tests.functional.utils import monitor_task
 
 
-FILE_CHUNKED_PART_1_URL = "https://fixtures.pulpproject.org/file-chunked/chunkaa"
-FILE_CHUNKED_PART_2_URL = "https://fixtures.pulpproject.org/file-chunked/chunkab"
-FILE_TO_BE_CHUNKED_URL = "https://fixtures.pulpproject.org/file-chunked/1.iso"
+@pytest.fixture
+def pulpcore_random_chunked_file_factory(tmp_path):
+    """Returns a function to create random chunks to be uploaded."""
+
+    def _create_chunks(number_chunks=2, chunk_sizes=None):
+        # Default to 512 byte chunk sizes
+        if chunk_sizes:
+            if len(chunk_sizes) != number_chunks:
+                raise Exception("number_chunks != len(chunk_sizes)")
+        else:
+            chunk_sizes = [512] * number_chunks
+        chunks = {"size": sum(chunk_sizes), "chunks": []}
+        hasher = hashlib.new("sha256")
+        start = 0
+        for chunk_size in chunk_sizes:
+            name = tmp_path / str(uuid.uuid4())
+            with open(name, "wb") as f:
+                content = os.urandom(chunk_size)
+                hasher.update(content)
+                f.write(content)
+                f.flush()
+            content_sha = hashlib.sha256(content).hexdigest()
+            end = start + chunk_size - 1
+            chunks["chunks"].append((name, f"bytes {start}-{end}/{chunks['size']}", content_sha))
+            start = start + chunk_size
+        chunks["digest"] = hasher.hexdigest()
+        return chunks
+
+    return _create_chunks
 
 
-class ChunkedUploadTestCase(unittest.TestCase):
-    """Test upload of files in chunks.
+@pytest.fixture
+def pulpcore_upload_chunks(
+    uploads_api_client, artifacts_api_client, gen_object_with_cleanup, tasks_api_client
+):
+    """Upload file in chunks."""
+    artifacts = []
 
-    This test targets the following issues:
+    def _upload_chunks(size, chunks, sha256, include_chunk_sha256=False):
+        """
+        Chunks is a list of tuples in the form of (chunk_filename, "bytes-ranges", optional_sha256).
+        """
+        upload = gen_object_with_cleanup(uploads_api_client, {"size": size})
 
-    * `Pulp #4197 <https://pulp.plan.io/issues/4197>`_
-    * `Pulp #4982 <https://pulp.plan.io/issues/4982>`_
-    * `Pulp #5092 <https://pulp.plan.io/issues/5092>`_
-    * `Pulp #5150 <https://pulp.plan.io/issues/5150>`_
-    """
+        for data in chunks:
+            kwargs = {"file": data[0], "content_range": data[1], "upload_href": upload.pulp_href}
+            if include_chunk_sha256:
+                if len(data) != 3:
+                    raise Exception(f"Chunk didn't include its sha256: {data}")
+                kwargs["sha256"] = data[2]
 
-    @classmethod
-    def setUpClass(cls):
-        """Create class-wide variables."""
-        cls.cfg = config.get_config()
-        cls.cli_client = cli.Client(cls.cfg)
-        cls.client = api.Client(cls.cfg)
+            uploads_api_client.update(**kwargs)
 
-        cls.file = http_get(FILE_TO_BE_CHUNKED_URL)
-        cls.file_sha256 = hashlib.sha256(cls.file).hexdigest()
-        cls.size_file = len(cls.file)
+        finish_task = uploads_api_client.commit(upload.pulp_href, {"sha256": sha256}).task
+        response = monitor_task(finish_task)
+        artifact_href = response.created_resources[0]
+        artifact = artifacts_api_client.read(artifact_href)
+        artifacts.append(artifact_href)
+        return upload, artifact
 
-        first_chunk = http_get(FILE_CHUNKED_PART_1_URL)
-        header_first_chunk = {
-            "Content-Range": "bytes 0-{}/{}".format(len(first_chunk) - 1, cls.size_file)
-        }
+    yield _upload_chunks
+    for href in artifacts:
+        try:
+            artifacts_api_client.delete(href)
+        except ApiException:
+            pass
 
-        second_chunk = http_get(FILE_CHUNKED_PART_2_URL)
-        header_second_chunk = {
-            "Content-Range": "bytes {}-{}/{}".format(
-                len(first_chunk), cls.size_file - 1, cls.size_file
-            )
-        }
 
-        cls.chunked_data = [
-            [first_chunk, header_first_chunk],
-            [second_chunk, header_second_chunk],
-        ]
-        shuffle(cls.chunked_data)
+@pytest.mark.parallel
+def test_create_artifact_without_checksum(
+    pulpcore_upload_chunks, pulpcore_random_chunked_file_factory
+):
+    """Test creation of artifact using upload of files in chunks."""
 
-    def test_create_artifact_without_checksum(self):
-        """Test creation of artifact using upload of files in chunks."""
+    file_chunks_data = pulpcore_random_chunked_file_factory()
+    size = file_chunks_data["size"]
+    chunks = file_chunks_data["chunks"]
+    shuffle(chunks)
+    sha256 = file_chunks_data["digest"]
 
-        _, artifact = self.upload_chunks()
+    _, artifact = pulpcore_upload_chunks(size, chunks, sha256)
 
-        self.addCleanup(self.client.delete, artifact["pulp_href"])
+    assert artifact.sha256 == sha256
 
-        self.assertEqual(artifact["sha256"], self.file_sha256, artifact)
 
-    def test_create_artifact_passing_checksum(self):
-        """Test creation of artifact using upload of files in chunks passing checksum."""
-        upload_request = self.client.post(UPLOAD_PATH, {"size": self.size_file})
+@pytest.mark.parallel
+def test_create_artifact_passing_checksum(
+    pulpcore_upload_chunks, pulpcore_random_chunked_file_factory
+):
+    """Test creation of artifact using upload of files in chunks passing checksum."""
+    file_chunks_data = pulpcore_random_chunked_file_factory(number_chunks=5)
+    size = file_chunks_data["size"]
+    chunks = file_chunks_data["chunks"]
+    shuffle(chunks)
+    sha256 = file_chunks_data["digest"]
 
-        for data in self.chunked_data:
-            self.client.put(
-                upload_request["pulp_href"],
-                data={"sha256": hashlib.sha256(data[0]).hexdigest()},
-                files={"file": data[0]},
-                headers=data[1],
-            )
+    _, artifact = pulpcore_upload_chunks(size, chunks, sha256, include_chunk_sha256=True)
 
-        artifact_request = self.client.post(
-            urljoin(upload_request["pulp_href"], "commit/"), data={"sha256": self.file_sha256}
-        )
+    assert artifact.sha256 == sha256
 
-        self.addCleanup(self.client.delete, artifact_request["pulp_href"])
 
-        self.assertEqual(artifact_request["sha256"], self.file_sha256, artifact_request)
+@pytest.mark.parallel
+def test_upload_chunk_wrong_checksum(
+    uploads_api_client, pulpcore_random_chunked_file_factory, gen_object_with_cleanup
+):
+    """Test creation of artifact using upload of files in chunks passing wrong checksum."""
+    file_chunks_data = pulpcore_random_chunked_file_factory()
+    size = file_chunks_data["size"]
+    chunks = file_chunks_data["chunks"]
 
-    def test_upload_chunk_wrong_checksum(self):
-        """Test creation of artifact using upload of files in chunks passing wrong checksum."""
-        upload_request = self.client.post(UPLOAD_PATH, {"size": self.size_file})
+    upload = gen_object_with_cleanup(uploads_api_client, {"size": size})
+    for data in chunks:
+        kwargs = {"file": data[0], "content_range": data[1], "upload_href": upload.pulp_href}
+        kwargs["sha256"] = "WRONG CHECKSUM"
+        with pytest.raises(ApiException) as e:
+            uploads_api_client.update(**kwargs)
 
-        for data in self.chunked_data:
-            response = self.client.using_handler(api.echo_handler).put(
-                upload_request["pulp_href"],
-                data={"sha256": "WRONG CHECKSUM"},
-                files={"file": data[0]},
-                headers=data[1],
-            )
-            with self.subTest(response=response):
-                self.assertEqual(response.status_code, 400, response)
+        assert e.value.status == 400
 
-        self.addCleanup(self.client.delete, upload_request["pulp_href"])
 
-    def test_upload_response(self):
-        """Test upload responses when creating an upload and uploading chunks."""
-        upload_request = self.client.post(UPLOAD_PATH, {"size": self.size_file})
+@pytest.mark.parallel
+def test_upload_response(
+    uploads_api_client, pulpcore_random_chunked_file_factory, gen_object_with_cleanup
+):
+    """Test upload responses when creating an upload and uploading chunks."""
+    file_chunks_data = pulpcore_random_chunked_file_factory(chunk_sizes=[6291456, 4194304])
+    upload = gen_object_with_cleanup(uploads_api_client, {"size": file_chunks_data["size"]})
 
-        expected_keys = ["pulp_href", "pulp_created", "size"]
+    expected_keys = ["pulp_href", "pulp_created", "size"]
+    for key in expected_keys:
+        assert getattr(upload, key)
 
-        self.assertEqual([*upload_request], expected_keys, upload_request)
+    for data in file_chunks_data["chunks"]:
+        kwargs = {"file": data[0], "content_range": data[1], "upload_href": upload.pulp_href}
+        response = uploads_api_client.update(**kwargs)
 
-        for data in self.chunked_data:
-            response = self.client.put(
-                upload_request["pulp_href"], files={"file": data[0]}, headers=data[1]
-            )
+        for key in expected_keys:
+            assert getattr(response, key)
 
-            with self.subTest(response=response):
-                self.assertEqual([*response], expected_keys, response)
+    upload = uploads_api_client.read(upload.pulp_href)
 
-        response = self.client.get(upload_request["pulp_href"])
+    expected_keys.append("chunks")
 
-        expected_keys.append("chunks")
+    for key in expected_keys:
+        assert getattr(upload, key)
 
-        self.assertEqual([*response], expected_keys, response)
+    expected_chunks = [
+        {"offset": 0, "size": 6291456},
+        {"offset": 6291456, "size": 4194304},
+    ]
 
-        expected_chunks = [
-            {"offset": 0, "size": 6291456},
-            {"offset": 6291456, "size": 4194304},
-        ]
+    sorted_chunks_response = sorted([c.to_dict() for c in upload.chunks], key=lambda i: i["offset"])
+    assert sorted_chunks_response == expected_chunks
 
-        sorted_chunks_response = sorted(response["chunks"], key=lambda i: i["offset"])
-        self.assertEqual(sorted_chunks_response, expected_chunks, response)
-        self.addCleanup(self.client.delete, response["pulp_href"])
 
-    def test_delete_upload(self):
-        """Check whether uploads are being correctly deleted after committing."""
-        upload, artifact = self.upload_chunks()
+@pytest.mark.parallel
+def test_delete_upload(
+    uploads_api_client, pulpcore_upload_chunks, pulpcore_random_chunked_file_factory
+):
+    """Check whether uploads are being correctly deleted after committing."""
+    file_chunks_data = pulpcore_random_chunked_file_factory()
+    size = file_chunks_data["size"]
+    chunks = file_chunks_data["chunks"]
+    shuffle(chunks)
+    sha256 = file_chunks_data["digest"]
 
-        with self.assertRaises(HTTPError):
-            self.client.get(upload["pulp_href"])
+    upload, _ = pulpcore_upload_chunks(size, chunks, sha256)
 
-        self.addCleanup(self.client.delete, artifact["pulp_href"])
+    with pytest.raises(ApiException) as e:
+        uploads_api_client.read(upload.pulp_href)
 
-    def upload_chunks(self):
-        """Upload file in chunks."""
-        upload_request = self.client.post(UPLOAD_PATH, {"size": self.size_file})
-
-        for data in self.chunked_data:
-            self.client.put(upload_request["pulp_href"], files={"file": data[0]}, headers=data[1])
-
-        artifact_request = self.client.post(
-            urljoin(upload_request["pulp_href"], "commit/"), data={"sha256": self.file_sha256}
-        )
-        return upload_request, artifact_request
+    assert e.value.status == 404

@@ -1,14 +1,9 @@
 """Test the status page."""
-import warnings
-import unittest
+import pytest
 
-from django.test import override_settings
+from django.conf import settings
 from jsonschema import validate
-from pulp_smash import api, cli, config, utils
-from pulp_smash.pulp3.constants import STATUS_PATH
-from requests.exceptions import HTTPError
-
-from pulpcore.tests.functional.api.utils import get_redis_status
+from pulpcore.client.pulpcore import ApiException
 
 
 STATUS = {
@@ -62,82 +57,65 @@ STATUS = {
 }
 
 
-class StatusTestCase(unittest.TestCase):
-    """Tests related to the status page.
+@pytest.fixture(scope="module")
+def expected_pulp_status_schema(cli_client):
+    """Returns the expected status response."""
+    if settings.DEFAULT_FILE_STORAGE != "pulpcore.app.models.storage.FileSystem":
+        STATUS["properties"]["storage"].pop("properties")
+        STATUS["properties"]["storage"]["type"] = "null"
 
-    This test explores the following issues:
+    return STATUS
 
-    * `Pulp #2804 <https://pulp.plan.io/issues/2804>`_
-    * `Pulp #2867 <https://pulp.plan.io/issues/2867>`_
-    * `Pulp #3544 <https://pulp.plan.io/issues/3544>`_
-    * `Pulp Smash #755 <https://github.com/pulp/pulp-smash/issues/755>`_
+
+@pytest.mark.parallel
+def test_get_authenticated(status_api_client, expected_pulp_status_schema):
+    """GET the status path with valid credentials.
+
+    Verify the response with :meth:`verify_get_response`.
     """
+    response = status_api_client.status_read()
+    verify_get_response(response.to_dict(), expected_pulp_status_schema)
 
-    def setUp(self):
-        """Make an API client."""
-        self.cfg = config.get_config()
-        self.client = api.Client(self.cfg, api.json_handler)
-        self.status_response = STATUS
-        cli_client = cli.Client(self.cfg)
-        self.storage = utils.get_pulp_setting(cli_client, "DEFAULT_FILE_STORAGE")
 
-        if self.storage != "pulpcore.app.models.storage.FileSystem":
-            self.status_response["properties"].pop("storage", None)
+@pytest.mark.parallel
+def test_get_unauthenticated(status_api_client, anonymous_user, expected_pulp_status_schema):
+    """GET the status path with no credentials.
 
-        self.is_redis_connected = get_redis_status()
+    Verify the response with :meth:`verify_get_response`.
+    """
+    with anonymous_user:
+        response = status_api_client.status_read()
+    verify_get_response(response.to_dict(), expected_pulp_status_schema)
 
-    def test_get_authenticated(self):
-        """GET the status path with valid credentials.
 
-        Verify the response with :meth:`verify_get_response`.
-        """
-        self.verify_get_response(self.client.get(STATUS_PATH))
+@pytest.mark.parallel
+def test_post_authenticated(status_api_client, pulpcore_client, pulp_api_v3_url):
+    """POST the status path with valid credentials.
 
-    def test_get_unauthenticated(self):
-        """GET the status path with no credentials.
+    Assert an error is returned.
+    """
+    # Ensure bindings doesn't have a "post" method
+    attrs = dir(status_api_client)
+    for post_attr in ("create", "post", "status_post", "status_create"):
+        assert post_attr not in attrs
+    # Try anyway to POST to /status/
+    status_url = f"{pulp_api_v3_url}status/"
+    with pytest.raises(ApiException) as e:
+        pulpcore_client.request("POST", status_url)
 
-        Verify the response with :meth:`verify_get_response`.
-        """
-        del self.client.request_kwargs["auth"]
-        self.verify_get_response(self.client.get(STATUS_PATH))
+    assert e.value.status == 405
 
-    def test_post_authenticated(self):
-        """POST the status path with valid credentials.
 
-        Assert an error is returned.
-        """
-        with self.assertRaises(HTTPError):
-            self.client.post(STATUS_PATH)
+def verify_get_response(status, expected_schema):
+    """Verify the response to an HTTP GET call.
 
-    def verify_get_response(self, status):
-        """Verify the response to an HTTP GET call.
+    Verify that several attributes and have the correct type or value.
+    """
+    validate(status, expected_schema)
+    assert status["database_connection"]["connected"]
+    assert status["online_workers"] != []
+    assert status["versions"] != []
 
-        Verify that several attributes and have the correct type or value.
-        """
-        validate(status, self.status_response)
-        self.assertTrue(status["database_connection"]["connected"])
-        self.assertNotEqual(status["online_workers"], [])
-        self.assertNotEqual(status["versions"], [])
-        if self.storage == "pulpcore.app.models.storage.FileSystem":
-            self.assertIsNotNone(status["storage"])
-        else:
-            self.assertIsNone(status["storage"])
-
-        self.assertIsNotNone(status["redis_connection"])
-        if self.is_redis_connected:
-            self.assertTrue(status["redis_connection"]["connected"])
-        else:
-            warnings.warn("Could not connect to the Redis server")
-
-        self.assertIsNotNone(status["content_settings"])
-        self.assertIsNotNone(status["content_settings"]["content_origin"])
-        self.assertIsNotNone(status["content_settings"]["content_path_prefix"])
-
-    @override_settings(CACHE_ENABLED=False)
-    def verify_get_response_without_redis(self, status):
-        """Verify the response to an HTTP GET call when Redis is not used.
-
-        Verify that redis_connection is null
-        """
-        validate(status, self.status_response)
-        self.assertIsNone(status["redis_connection"])
+    assert status["content_settings"] is not None
+    assert status["content_settings"]["content_origin"] is not None
+    assert status["content_settings"]["content_path_prefix"] is not None

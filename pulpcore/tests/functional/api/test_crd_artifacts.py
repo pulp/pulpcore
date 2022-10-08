@@ -2,179 +2,159 @@
 import hashlib
 import itertools
 import os
-import unittest
+import uuid
+import pytest
 
-from pulp_smash import api, cli, config, utils
-from pulp_smash.exceptions import CalledProcessError
-from pulp_smash.pulp3.bindings import delete_orphans
-from pulp_smash.pulp3.constants import ARTIFACTS_PATH
-from requests.exceptions import HTTPError
+from django.conf import settings
+from pulpcore.client.pulpcore import ApiException
 
 
-FILE_URL = "https://fixtures.pulpproject.org/file/1.iso"
+@pytest.fixture
+def pulpcore_random_file(tmp_path):
+    name = tmp_path / str(uuid.uuid4())
+    with open(name, "wb") as fout:
+        contents = os.urandom(1024)
+        fout.write(contents)
+        fout.flush()
+    digest = hashlib.sha256(contents).hexdigest()
+    return {"name": name, "size": 1024, "digest": digest}
 
 
-class ArtifactTestCase(unittest.TestCase):
-    """Create an artifact by uploading a file.
+def _do_upload_valid_attrs(artifact_api, file, data):
+    """Upload a file with the given attributes."""
+    artifact = artifact_api.create(file, **data)
+    # assumes ALLOWED_CONTENT_CHECKSUMS does NOT contain "md5"
+    assert artifact.md5 is None, "MD5 {}".format(artifact.md5)
+    read_artifact = artifact_api.read(artifact.pulp_href)
+    # assumes ALLOWED_CONTENT_CHECKSUMS does NOT contain "md5"
+    assert read_artifact.md5 is None
+    for key, val in artifact.to_dict().items():
+        assert getattr(read_artifact, key) == val
+    # Delete the Artifact
+    artifact_api.delete(read_artifact.pulp_href)
+    with pytest.raises(ApiException) as e:
+        artifact_api.read(read_artifact.pulp_href)
 
-    This test targets the following issues:
+    assert e.value.status == 404
 
-    * `Pulp #2843 <https://pulp.plan.io/issues/2843>`_
-    * `Pulp Smash #726 <https://github.com/pulp/pulp-smash/issues/726>`_
+
+@pytest.mark.parallel
+def test_upload_valid_attrs(artifacts_api_client, pulpcore_random_file):
+    """Upload a file, and provide valid attributes.
+
+    For each possible combination of ``sha256`` and ``size`` (including
+    neither), do the following:
+
+    1. Upload a file with the chosen combination of attributes.
+    2. Verify that an artifact has been created, and that it has valid
+       attributes.
+    3. Delete the artifact, and verify that its attributes are
+       inaccessible.
     """
-
-    @classmethod
-    def setUpClass(cls):
-        """Delete orphans and create class-wide variables."""
-        cfg = config.get_config()
-        delete_orphans()
-        cls.client = api.Client(cfg, api.json_handler)
-        cls.file = {"file": utils.http_get(FILE_URL)}
-        cls.file_sha256 = hashlib.sha256(cls.file["file"]).hexdigest()
-        cls.file_size = len(cls.file["file"])
-
-    def test_upload_valid_attrs(self):
-        """Upload a file, and provide valid attributes.
-
-        For each possible combination of ``sha256`` and ``size`` (including
-        neither), do the following:
-
-        1. Upload a file with the chosen combination of attributes.
-        2. Verify that an artifact has been created, and that it has valid
-           attributes.
-        3. Delete the artifact, and verify that its attributes are
-           inaccessible.
-        """
-        file_attrs = {"sha256": self.file_sha256, "size": self.file_size}
-        for i in range(len(file_attrs) + 1):
-            for keys in itertools.combinations(file_attrs, i):
-                data = {key: file_attrs[key] for key in keys}
-                with self.subTest(data=data):
-                    self._do_upload_valid_attrs(data, self.file)
-
-    def test_upload_empty_file(self):
-        """Upload an empty file.
-
-        For each possible combination of ``sha256`` and ``size`` (including
-        neither), do the following:
-
-        1. Upload a file with the chosen combination of attributes.
-        2. Verify that an artifact has been created, and that it has valid
-           attributes.
-        3. Delete the artifact, and verify that its attributes are
-           inaccessible.
-        """
-        empty_file = b""
-        file_attrs = {"sha256": hashlib.sha256(empty_file).hexdigest(), "size": 0}
-        for i in range(len(file_attrs) + 1):
-            for keys in itertools.combinations(file_attrs, i):
-                data = {key: file_attrs[key] for key in keys}
-                with self.subTest(data=data):
-                    self._do_upload_valid_attrs(data, files={"file": empty_file})
-
-    def _do_upload_valid_attrs(self, data, files):
-        """Upload a file with the given attributes."""
-        artifact = self.client.post(ARTIFACTS_PATH, data=data, files=files)
-        # assumes ALLOWED_CONTENT_CHECKSUMS does NOT contain "md5"
-        self.assertTrue(artifact["md5"] is None, "MD5 {}".format(artifact["md5"]))
-        self.addCleanup(self.client.delete, artifact["pulp_href"])
-        read_artifact = self.client.get(artifact["pulp_href"])
-        # assumes ALLOWED_CONTENT_CHECKSUMS does NOT contain "md5"
-        self.assertTrue(read_artifact["md5"] is None)
-        for key, val in artifact.items():
-            with self.subTest(key=key):
-                self.assertEqual(read_artifact[key], val)
-        self.doCleanups()
-        with self.assertRaises(HTTPError):
-            self.client.get(artifact["pulp_href"])
-
-    def test_upload_invalid_attrs(self):
-        """Upload a file, and provide invalid attributes.
-
-        For each possible combination of ``sha256`` and ``size`` (except for
-        neither), do the following:
-
-        1. Upload a file with the chosen combination of attributes. Verify that
-           an error is returned.
-        2. Verify that no artifacts exist in Pulp whose attributes match the
-           file that was unsuccessfully uploaded.
-        """
-        file_attrs = {"sha256": utils.uuid4(), "size": self.file_size + 1}
-        for i in range(1, len(file_attrs) + 1):
-            for keys in itertools.combinations(file_attrs, i):
-                data = {key: file_attrs[key] for key in keys}
-                with self.subTest(data=data):
-                    self._do_upload_invalid_attrs(data)
-
-    def _do_upload_invalid_attrs(self, data):
-        """Upload a file with the given attributes."""
-        with self.assertRaises(HTTPError):
-            self.client.post(ARTIFACTS_PATH, data=data, files=self.file)
-        for artifact in self.client.get(ARTIFACTS_PATH)["results"]:
-            self.assertNotEqual(artifact["sha256"], self.file_sha256)
-
-    def test_upload_md5(self):
-        """Attempt to upload a file using an MD5 checksum.
-
-        Assumes ALLOWED_CONTENT_CHECKSUMS does NOT contain ``md5``
-        """
-        file_attrs = {"md5": utils.uuid4(), "size": self.file_size}
-        with self.assertRaises(HTTPError):
-            self.client.post(ARTIFACTS_PATH, data=file_attrs, files=self.file)
-
-    def test_upload_mixed_attrs(self):
-        """Upload a file, and provide both valid and invalid attributes.
-
-        Do the following:
-
-        1. Upload a file and provide both an ``sha256`` and a ``size``. Let one
-           be valid, and the other be valid. Verify that an error is returned.
-        2. Verify that no artifacts exist in Pulp whose attributes match the
-           file that was unsuccessfully uploaded.
-        """
-        invalid_data = (
-            {"sha256": self.file_sha256, "size": self.file_size + 1},
-            {"sha256": utils.uuid4(), "size": self.file_size},
-        )
-        for data in invalid_data:
-            with self.subTest(data=data):
-                self._do_upload_invalid_attrs(data)
+    file_attrs = {"sha256": pulpcore_random_file["digest"], "size": pulpcore_random_file["size"]}
+    for i in range(len(file_attrs) + 1):
+        for keys in itertools.combinations(file_attrs, i):
+            data = {key: file_attrs[key] for key in keys}
+            _do_upload_valid_attrs(artifacts_api_client, pulpcore_random_file["name"], data)
 
 
-class ArtifactsDeleteFileSystemTestCase(unittest.TestCase):
-    """Delete an artifact, it is removed from the filesystem.
+def test_upload_empty_file(delete_orphans_pre, artifacts_api_client, tmp_path):
+    """Upload an empty file.
 
-    This test targets the following issues:
+    For each possible combination of ``sha256`` and ``size`` (including
+    neither), do the following:
 
-    * `Pulp #3508 <https://pulp.plan.io/issues/3508>`_
-    * `Pulp Smash #908 <https://github.com/pulp/pulp-smash/issues/908>`_
+    1. Upload a file with the chosen combination of attributes.
+    2. Verify that an artifact has been created, and that it has valid
+       attributes.
+    3. Delete the artifact, and verify that its attributes are
+       inaccessible.
     """
+    file = tmp_path / str(uuid.uuid4())
+    file.touch()
+    empty_file = b""
+    file_attrs = {"sha256": hashlib.sha256(empty_file).hexdigest(), "size": 0}
+    for i in range(len(file_attrs) + 1):
+        for keys in itertools.combinations(file_attrs, i):
+            data = {key: file_attrs[key] for key in keys}
+            _do_upload_valid_attrs(artifacts_api_client, file, data)
 
-    def test_all(self):
-        """Delete an artifact, it is removed from the filesystem.
 
-        Do the following:
+@pytest.mark.parallel
+def test_upload_invalid_attrs(artifacts_api_client, pulpcore_random_file):
+    """Upload a file, and provide invalid attributes.
 
-        1. Create an artifact, and verify it is present on the filesystem.
-        2. Delete the artifact, and verify it is absent on the filesystem.
-        """
-        cfg = config.get_config()
-        cli_client = cli.Client(cfg)
-        storage = utils.get_pulp_setting(cli_client, "DEFAULT_FILE_STORAGE")
-        if storage != "pulpcore.app.models.storage.FileSystem":
-            self.skipTest("this test only works for filesystem storage")
-        media_root = utils.get_pulp_setting(cli_client, "MEDIA_ROOT")
+    For each possible combination of ``sha256`` and ``size`` (except for
+    neither), do the following:
 
-        api_client = api.Client(cfg, api.json_handler)
+    1. Upload a file with the chosen combination of attributes. Verify that
+       an error is returned.
+    2. Verify that no artifacts exist in Pulp whose attributes match the
+       file that was unsuccessfully uploaded.
+    """
+    file_attrs = {"sha256": str(uuid.uuid4()), "size": pulpcore_random_file["size"] + 1}
+    for i in range(1, len(file_attrs) + 1):
+        for keys in itertools.combinations(file_attrs, i):
+            data = {key: file_attrs[key] for key in keys}
+            _do_upload_invalid_attrs(artifacts_api_client, pulpcore_random_file, data)
 
-        # create
-        files = {"file": utils.http_get(FILE_URL)}
-        artifact = api_client.post(ARTIFACTS_PATH, files=files)
-        self.addCleanup(api_client.delete, artifact["pulp_href"])
-        cmd = ("ls", os.path.join(media_root, artifact["file"]))
-        cli_client.run(cmd, sudo=True)
 
-        # delete
-        self.doCleanups()
-        with self.assertRaises(CalledProcessError):
-            cli_client.run(cmd, sudo=True)
+def _do_upload_invalid_attrs(artifact_api, file, data):
+    """Upload a file with the given attributes."""
+    with pytest.raises(ApiException) as e:
+        artifact_api.create(file["name"], **data)
+
+    assert e.value.status == 400
+    artifacts = artifact_api.list()
+    for artifact in artifacts.results:
+        assert artifact.sha256 != file["digest"]
+
+
+@pytest.mark.parallel
+def test_upload_md5(artifacts_api_client, pulpcore_random_file):
+    """Attempt to upload a file using an MD5 checksum.
+
+    Assumes ALLOWED_CONTENT_CHECKSUMS does NOT contain ``md5``
+    """
+    file_attrs = {"md5": str(uuid.uuid4()), "size": pulpcore_random_file["size"]}
+    with pytest.raises(ApiException) as e:
+        artifacts_api_client.create(pulpcore_random_file["name"], **file_attrs)
+
+    assert e.value.status == 400
+
+
+@pytest.mark.parallel
+def test_upload_mixed_attrs(artifacts_api_client, pulpcore_random_file):
+    """Upload a file, and provide both valid and invalid attributes.
+
+    Do the following:
+
+    1. Upload a file and provide both an ``sha256`` and a ``size``. Let one
+       be valid, and the other be invalid. Verify that an error is returned.
+    2. Verify that no artifacts exist in Pulp whose attributes match the
+       file that was unsuccessfully uploaded.
+    """
+    invalid_data = (
+        {"sha256": pulpcore_random_file["digest"], "size": pulpcore_random_file["size"] + 1},
+        {"sha256": str(uuid.uuid4()), "size": pulpcore_random_file["size"]},
+    )
+    for data in invalid_data:
+        _do_upload_invalid_attrs(artifacts_api_client, pulpcore_random_file, data)
+
+
+@pytest.mark.parallel
+def test_delete_artifact(artifacts_api_client, pulpcore_random_file):
+    """Delete an artifact, it is removed from the filesystem."""
+    if settings.DEFAULT_FILE_STORAGE != "pulpcore.app.models.storage.FileSystem":
+        pytest.skip("this test only works for filesystem storage")
+    media_root = settings.MEDIA_ROOT
+
+    artifact = artifacts_api_client.create(pulpcore_random_file["name"])
+    path_to_file = os.path.join(media_root, artifact.file)
+    file_exists = os.path.exists(path_to_file)
+    assert file_exists
+
+    # delete
+    artifacts_api_client.delete(artifact.pulp_href)
+    file_exists = os.path.exists(path_to_file)
+    assert not file_exists
