@@ -1128,11 +1128,8 @@ class RepositoryVersionContentDetails(models.Model):
             dict: {<pulp_type>: <url>}
         """
         repository = self.repository_version.repository.cast()
-        repository_content = RepositoryContent.objects.filter(repository=repository)
-        ctype_query = Content.objects.filter(
-            pulp_type=self.content_type, pk__in=repository_content.values_list("content", flat=True)
-        )
-        ctype_model = ctype_query.first().cast().__class__
+        ctypes = {c.get_pulp_type(): c for c in repository.CONTENT_TYPES}
+        ctype_model = ctypes[self.content_type]
         ctype_view = get_view_name_for_model(ctype_model, "list")
         try:
             ctype_url = reverse(ctype_view)

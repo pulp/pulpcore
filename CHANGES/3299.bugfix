@@ -1,0 +1,1 @@
+Fixed an occasional 500 error when viewing a repository version content summary while performing a content deletion task.
