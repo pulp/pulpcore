@@ -70,16 +70,16 @@ def _export_to_file_system(path, relative_paths_to_artifacts, method=FS_EXPORT_M
     Raises:
         ValidationError: When path is not in the ALLOWED_EXPORT_PATHS setting
     """
+    using_filesystem_storage = (
+        settings.DEFAULT_FILE_STORAGE == "pulpcore.app.models.storage.FileSystem"
+    )
 
-    if (
-        settings.DEFAULT_FILE_STORAGE != "pulpcore.app.models.storage.FileSystem"
-        and method != FS_EXPORT_METHODS.WRITE
-    ):
+    if method != FS_EXPORT_METHODS.WRITE and not using_filesystem_storage:
         raise RuntimeError(_("Only write is supported for non-filesystem storage."))
+
     os.makedirs(path)
     export_not_on_same_filesystem = (
-        settings.DEFAULT_FILE_STORAGE == "pulpcore.app.models.storage.FileSystem"
-        and os.stat(settings.MEDIA_ROOT).st_dev != os.stat(path).st_dev
+        using_filesystem_storage and os.stat(settings.MEDIA_ROOT).st_dev != os.stat(path).st_dev
     )
 
     if method == FS_EXPORT_METHODS.HARDLINK and export_not_on_same_filesystem:
