@@ -27,7 +27,7 @@ psycopg2>=2.9.3,<2.9.5
 PyYAML>=5.1.1,<=6.0.0
 python-gnupg>=0.5,<=0.5.0
 redis>=4.3,<=4.3.4
-setuptools>=39.2,<65.5.0
+setuptools>=39.2,<65.6.0
 url-normalize>=1.4.3,<=1.4.3
 whitenoise>=5.0,<=6.2.0
 yarl>=1.8,<=1.8.1
