@@ -54,9 +54,7 @@ def _validate_fs_export(content_artifacts):
         RuntimeError: If Artifacts are not downloaded or when trying to link non-fs files
     """
     if content_artifacts.filter(artifact=None).exists():
-        raise UnexportableArtifactException(
-            _("Cannot export artifacts that haven't been downloaded.")
-        )
+        raise UnexportableArtifactException()
 
 
 def _export_to_file_system(path, relative_paths_to_artifacts, method=FS_EXPORT_METHODS.WRITE):
