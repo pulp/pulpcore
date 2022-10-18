@@ -33,6 +33,7 @@ from pulpcore.client.pulpcore import (
     RemotesApi,
     RepairApi,
     RepositoriesApi,
+    RepositoryVersionsApi,
     RepositoriesReclaimSpaceApi,
     RolesApi,
     SigningServicesApi,
@@ -180,6 +181,11 @@ def remotes_api_client(pulpcore_client):
 @pytest.fixture
 def repositories_api_client(pulpcore_client):
     return RepositoriesApi(pulpcore_client)
+
+
+@pytest.fixture
+def repository_versions_api_client(pulpcore_client):
+    return RepositoryVersionsApi(pulpcore_client)
 
 
 @pytest.fixture
