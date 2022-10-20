@@ -14,28 +14,63 @@ class TestRemoteSerializer(TestCase):
     minimal_data = {"name": "test", "url": "http://whatever"}
 
     def test_validate_proxy_creds_update(self):
-        Remote = SimpleNamespace(
+        remote = SimpleNamespace(
             proxy_url="http://whatever",
             proxy_username="user",
             proxy_password="pass",
             **self.minimal_data,
         )
         data = {"proxy_username": "user42"}
-        serializer = RemoteSerializer(Remote, data=data, partial=True)
+        serializer = RemoteSerializer(remote, data=data, partial=True)
         serializer.is_valid(raise_exception=True)
 
     def test_validate_proxy_creds_update_invalid(self):
-        Remote = SimpleNamespace(
+        remote = SimpleNamespace(
             proxy_url="http://whatever",
             proxy_username=None,
             proxy_password=None,
             **self.minimal_data,
         )
         data = {"proxy_username": "user"}
-        serializer = RemoteSerializer(Remote, data=data, partial=True)
+        serializer = RemoteSerializer(remote, data=data, partial=True)
         with self.assertRaises(serializers.ValidationError) as ctx:
             serializer.is_valid(raise_exception=True)
         self.assertIn("can only be specified together", str(ctx.exception))
+
+    def _gen_remote_serializer(self):
+        remote = SimpleNamespace(
+            client_key=None,
+            username="user",
+            password="pass",
+            proxy_url="foobar",
+            proxy_username="proxyuser",
+            proxy_password="proxypass",
+            **self.minimal_data,
+        )
+        serializer = RemoteSerializer(remote)
+        # The pulp_href field needs too much things we are not interested in here.
+        serializer.fields.pop("pulp_href")
+        return serializer
+
+    def test_hidden_fields(self):
+        serializer = self._gen_remote_serializer()
+        fields = serializer.data["hidden_fields"]
+        self.assertEqual(
+            fields,
+            [
+                {"name": "client_key", "is_set": False},
+                {"name": "proxy_username", "is_set": True},
+                {"name": "proxy_password", "is_set": True},
+                {"name": "username", "is_set": True},
+                {"name": "password", "is_set": True},
+            ],
+        )
+
+    def test_read_only_hidden_fields(self):
+        serializer = self._gen_remote_serializer()
+        serializer.data["hidden_fields"] = []
+
+        self.assertNotEqual(serializer.data["hidden_fields"], [])
 
 
 class TestPublicationSerializer(TestCase):

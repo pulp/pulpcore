@@ -18,8 +18,12 @@ from pulpcore.app.serializers import (
     IdentityField,
     ValidateFieldsMixin,
     ModelSerializer,
+    HiddenFieldsMixin,
 )
-from pulpcore.app.util import get_viewset_for_model, get_request_without_query_params
+from pulpcore.app.util import (
+    get_viewset_for_model,
+    get_request_without_query_params,
+)
 
 User = get_user_model()
 
@@ -87,7 +91,7 @@ class UserGroupSerializer(serializers.ModelSerializer):
         fields = ("name", "pulp_href")
 
 
-class UserSerializer(serializers.ModelSerializer):
+class UserSerializer(serializers.ModelSerializer, HiddenFieldsMixin):
     """Serializer for User."""
 
     pulp_href = IdentityField(view_name="users-detail")
@@ -143,6 +147,7 @@ class UserSerializer(serializers.ModelSerializer):
             "is_active",
             "date_joined",
             "groups",
+            "hidden_fields",
         )
 
 
