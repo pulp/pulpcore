@@ -4,6 +4,7 @@ Django models related to the Tasking system
 import logging
 import traceback
 import os
+from contextlib import suppress
 from datetime import timedelta
 from gettext import gettext as _
 
@@ -18,7 +19,7 @@ from pulpcore.app.models import (
     BaseModel,
     GenericRelationModel,
 )
-from pulpcore.constants import TASK_CHOICES, TASK_FINAL_STATES, TASK_STATES
+from pulpcore.constants import TASK_CHOICES, TASK_INCOMPLETE_STATES, TASK_STATES
 from pulpcore.exceptions import AdvisoryLockError, exception_to_dict
 from pulpcore.tasking.constants import TASKING_CONSTANTS
 
@@ -239,8 +240,13 @@ class Task(BaseModel, AutoAddObjPermsMixin):
             state=TASK_STATES.RUNNING, started_at=timezone.now()
         )
         if rows != 1:
-            _logger.warning(_("Task __call__() occurred but Task %s is not at WAITING") % self.pk)
-        self.refresh_from_db()
+            raise RuntimeError(
+                _("Task set_running() occurred but Task {} is not WAITING").format(self.pk)
+            )
+        with suppress(AttributeError):
+            del self.state
+        with suppress(AttributeError):
+            del self.started_at
 
     def set_completed(self):
         """
@@ -248,18 +254,19 @@ class Task(BaseModel, AutoAddObjPermsMixin):
 
         This updates the :attr:`finished_at` and sets the :attr:`state` to :attr:`COMPLETED`.
         """
-        # Only set the state to finished if it's not already in a complete state. This is
-        # important for when the task has been canceled, so we don't move the task from canceled
-        # to finished.
-        rows = (
-            Task.objects.filter(pk=self.pk)
-            .exclude(state__in=TASK_FINAL_STATES)
-            .update(state=TASK_STATES.COMPLETED, finished_at=timezone.now())
+        # Only set the state to finished if it's running. This is important for when the task has
+        # been canceled, so we don't move the task from canceled to finished.
+        rows = Task.objects.filter(pk=self.pk, state=TASK_STATES.RUNNING).update(
+            state=TASK_STATES.COMPLETED, finished_at=timezone.now()
         )
         if rows != 1:
-            msg = "Task set_completed() occurred but Task %s is already in final state"
-            _logger.warning(msg % self.pk)
-        self.refresh_from_db()
+            raise RuntimeError(
+                _("Task set_completed() occurred but Task {} is not RUNNING.").format(self.pk)
+            )
+        with suppress(AttributeError):
+            del self.state
+        with suppress(AttributeError):
+            del self.finished_at
 
     def set_failed(self, exc, tb):
         """
@@ -273,18 +280,70 @@ class Task(BaseModel, AutoAddObjPermsMixin):
             tb (traceback): Traceback instance for the current exception.
         """
         tb_str = "".join(traceback.format_tb(tb))
-        rows = (
-            Task.objects.filter(pk=self.pk)
-            .exclude(state__in=TASK_FINAL_STATES)
-            .update(
-                state=TASK_STATES.FAILED,
-                finished_at=timezone.now(),
-                error=exception_to_dict(exc, tb_str),
-            )
+        rows = Task.objects.filter(pk=self.pk, state=TASK_STATES.RUNNING).update(
+            state=TASK_STATES.FAILED,
+            finished_at=timezone.now(),
+            error=exception_to_dict(exc, tb_str),
         )
         if rows != 1:
-            raise RuntimeError("Attempt to set a finished task to failed.")
-        self.refresh_from_db()
+            raise RuntimeError(_("Attempt to set a not running task to failed."))
+        with suppress(AttributeError):
+            del self.state
+        with suppress(AttributeError):
+            del self.finished_at
+        with suppress(AttributeError):
+            del self.error
+
+    def set_canceling(self):
+        """
+        Set this task to canceling from either waiting, running or canceling.
+
+        This is the only valid transition without holding the task lock.
+        """
+        rows = Task.objects.filter(pk=self.pk, state__in=TASK_INCOMPLETE_STATES).update(
+            state=TASK_STATES.CANCELING,
+        )
+        if rows != 1:
+            raise RuntimeError(_("Attempt to cancel a finished task."))
+        with suppress(AttributeError):
+            del self.state
+
+    def set_canceled(self, final_state=TASK_STATES.CANCELED, reason=None):
+        """
+        Set this task to canceled or failed from canceling.
+        """
+        # Make sure this function was called with a proper final state
+        assert final_state in [TASK_STATES.CANCELED, TASK_STATES.FAILED]
+        task_data = {}
+        if reason:
+            task_data["error"] = {"reason": reason}
+        rows = Task.objects.filter(pk=self.pk, state=TASK_STATES.CANCELING).update(
+            state=final_state,
+            finished_at=timezone.now(),
+            **task_data,
+        )
+        if rows != 1:
+            raise RuntimeError(_("Attempt to mark a task canceled that is not in canceling state."))
+        with suppress(AttributeError):
+            del self.state
+        with suppress(AttributeError):
+            del self.finished_at
+        with suppress(AttributeError):
+            del self.error
+
+    # Example taken from here:
+    # https://docs.djangoproject.com/en/3.2/ref/models/instances/#refreshing-objects-from-database
+    def refresh_from_db(self, using=None, fields=None, **kwargs):
+        # fields contains the name of the deferred field to be
+        # loaded.
+        if fields is not None:
+            fields = set(fields)
+            deferred_fields = self.get_deferred_fields()
+            # If any deferred field is going to be loaded
+            if fields.intersection(deferred_fields):
+                # then load all of them
+                fields = fields.union(deferred_fields)
+        super().refresh_from_db(using, fields, **kwargs)
 
     class Meta:
         indexes = [models.Index(fields=["pulp_created"])]
