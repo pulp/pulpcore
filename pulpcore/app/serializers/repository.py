@@ -17,6 +17,7 @@ from pulpcore.app.serializers import (
     RepositoryVersionRelatedField,
     RepositoryVersionsIdentityFromRepositoryField,
     ValidateFieldsMixin,
+    HiddenFieldsMixin,
 )
 
 
@@ -70,7 +71,7 @@ class RepositorySerializer(ModelSerializer):
         )
 
 
-class RemoteSerializer(ModelSerializer):
+class RemoteSerializer(ModelSerializer, HiddenFieldsMixin):
     """
     Every remote defined by a plugin should have a Remote serializer that inherits from this
     class. Please import from `pulpcore.plugin.serializers` rather than from this module directly.
@@ -318,6 +319,7 @@ class RemoteSerializer(ModelSerializer):
             "sock_read_timeout",
             "headers",
             "rate_limit",
+            "hidden_fields",
         )
 
 

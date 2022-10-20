@@ -2,6 +2,7 @@ from gettext import gettext as _
 from logging import getLogger
 import re
 import traceback
+from typing import List, TypedDict
 from urllib.parse import urljoin
 
 from django.core.validators import URLValidator
@@ -403,3 +404,33 @@ class TaskGroupOperationResponseSerializer(serializers.Serializer):
         view_name="task-groups-detail",
         allow_null=False,
     )
+
+
+class HiddenFieldsMixin(serializers.Serializer):
+    """
+    Adds a list field of hidden (write only) fields and whether their values are set
+    so clients can tell if they are overwriting an existing value.
+    For example this could be any sensitive information such as a password, name or token.
+    The list contains dictionaries with keys `name` and `is_set`.
+    """
+
+    hidden_fields = serializers.SerializerMethodField(
+        help_text=_("List of hidden (write only) fields")
+    )
+
+    def get_hidden_fields(
+        self, obj
+    ) -> List[TypedDict("hidden_fields", {"name": str, "is_set": bool})]:
+        hidden_fields = []
+
+        # returns false if field is "" or None
+        def _is_set(field_name):
+            field_value = getattr(obj, field_name)
+            return field_value != "" and field_value is not None
+
+        fields = self.get_fields()
+        for field_name in fields:
+            if fields[field_name].write_only:
+                hidden_fields.append({"name": field_name, "is_set": _is_set(field_name)})
+
+        return hidden_fields

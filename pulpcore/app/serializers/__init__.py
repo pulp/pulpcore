@@ -16,6 +16,7 @@ from .base import (  # noqa
     TaskGroupOperationResponseSerializer,
     ValidateFieldsMixin,
     validate_unknown_fields,
+    HiddenFieldsMixin,
 )
 from .fields import (  # noqa
     BaseURLField,
