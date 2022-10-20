@@ -184,32 +184,24 @@ class NewPulpWorker:
         Return ``True`` if the task was actually canceled, ``False`` otherwise.
         """
         # A task is considered abandoned when in running state, but no worker holds its lock
-        Task.objects.filter(pk=task.pk, state=TASK_STATES.RUNNING).update(
-            state=TASK_STATES.CANCELING
-        )
-        task.refresh_from_db()
-        if task.state == TASK_STATES.CANCELING:
-            if reason:
-                _logger.info(
-                    "Cleaning up task %s and marking as %s. Reason: %s",
-                    task.pk,
-                    final_state,
-                    reason,
-                )
-            else:
-                _logger.info(_("Cleaning up task %s and marking as %s."), task.pk, final_state)
-            _delete_incomplete_resources(task)
-            if task.reserved_resources_record:
-                self.notify_workers()
-            task_data = {
-                "state": final_state,
-                "finished_at": timezone.now(),
-            }
-            if reason:
-                task_data["error"] = {"reason": reason}
-            Task.objects.filter(pk=task.pk, state=TASK_STATES.CANCELING).update(**task_data)
-            return True
-        return False
+        try:
+            task.set_canceling()
+        except RuntimeError:
+            return False
+        if reason:
+            _logger.info(
+                "Cleaning up task %s and marking as %s. Reason: %s",
+                task.pk,
+                final_state,
+                reason,
+            )
+        else:
+            _logger.info(_("Cleaning up task %s and marking as %s."), task.pk, final_state)
+        _delete_incomplete_resources(task)
+        task.set_canceled(final_state=final_state, reason=reason)
+        if task.reserved_resources_record:
+            self.notify_workers()
+        return True
 
     def iter_tasks(self):
         """Iterate over ready tasks and yield each task while holding the lock."""

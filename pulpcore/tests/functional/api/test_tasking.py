@@ -91,28 +91,27 @@ def test_delete_cancel_waiting_task(dispatch_task, tasks_api_client):
 
     # Now cancel the task
     task = tasks_api_client.tasks_cancel(task_href, {"state": "canceled"})
-
-    assert task.started_at is None
-    assert task.finished_at is None
-    assert task.state == "canceling"
-
     # cancel the blocking task
-    task = tasks_api_client.tasks_cancel(blocking_task_href, {"state": "canceled"})
+    tasks_api_client.tasks_cancel(blocking_task_href, {"state": "canceled"})
 
-    for i in range(10):
-        task = tasks_api_client.read(task_href)
-        if task.state != "canceling":
-            break
-        time.sleep(1)
+    if task.state == "canceling":
+        assert task.started_at is None
+        assert task.finished_at is None
+
+        for i in range(10):
+            if task.state != "canceling":
+                break
+            time.sleep(1)
+            task = tasks_api_client.read(task_href)
 
     assert task.state == "canceled"
+    assert task.started_at is None
+    assert task.finished_at is not None
 
 
-@pytest.mark.skip(
-    reason="This is a flaky test that fails from time to time. Probably gonna be fixed by 3319"
-)
+@pytest.mark.parallel
 def test_delete_cancel_running_task(dispatch_task, tasks_api_client):
-    task_href = dispatch_task("time.sleep", args=(6000,))
+    task_href = dispatch_task("time.sleep", args=(600,))
 
     for i in range(10):
         task = tasks_api_client.read(task_href)
@@ -130,17 +129,19 @@ def test_delete_cancel_running_task(dispatch_task, tasks_api_client):
     # Now cancel the task
     task = tasks_api_client.tasks_cancel(task_href, {"state": "canceled"})
 
-    assert task.started_at is not None
-    assert task.finished_at is None
-    assert task.state == "canceling"
+    if task.state == "canceling":
+        assert task.started_at is not None
+        assert task.finished_at is None
 
-    for i in range(10):
-        task = tasks_api_client.read(task_href)
-        if task.state != "canceling":
-            break
-        time.sleep(1)
+        for i in range(10):
+            if task.state != "canceling":
+                break
+            time.sleep(1)
+            task = tasks_api_client.read(task_href)
 
     assert task.state == "canceled"
+    assert task.started_at is not None
+    assert task.finished_at is not None
 
 
 @pytest.mark.parallel
