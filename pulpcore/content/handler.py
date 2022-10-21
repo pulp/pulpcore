@@ -806,7 +806,8 @@ class Handler:
         """
         artifact_file = content_artifact.artifact.file
         artifact_name = artifact_file.name
-        content_disposition = f"attachment;filename={content_artifact.relative_path}"
+        filename = os.path.basename(content_artifact.relative_path)
+        content_disposition = f"attachment;filename={filename}"
 
         if settings.DEFAULT_FILE_STORAGE == "pulpcore.app.models.storage.FileSystem":
             path = os.path.join(settings.MEDIA_ROOT, artifact_name)
