@@ -17,6 +17,35 @@ Changelog
 
 .. towncrier release notes start
 
+3.21.1 (2022-10-18)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fixed the fs exporter to handle the case where there are pre-existing files in the location that FileSystem attempts to export to you get a FileExistsError.
+  :github:`1949`
+- Fixed content-disposition header which is used in the object storage backends.
+  :github:`3124`
+- Fixed the fs exporter to handle the case where hardlink method was requested but pulp and export locations are in different partitions so can't share the same inode.
+  :github:`3187`
+- Another guardrail added around content-stages to address deadlock in a specific usecase.
+  :github:`3192`
+- Fixed bug where installations with at least one pre-release plugin installed were posting to the
+  production telemetry site instead of the developer telemetry site.
+  :github:`3213`
+- Do not expose artifact digest via content-disposition header when using Azure backend.
+  :github:`3244`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.21.0 (2022-09-08)
 ===================
 REST API
