@@ -12,12 +12,15 @@ from uuid import UUID
 from django.urls import Resolver404, resolve
 from django.db.models import ObjectDoesNotExist
 from django_filters import BaseInFilter, CharFilter, DateTimeFilter, Filter
+from django_filters.constants import EMPTY_VALUES
 from django_filters.fields import IsoDateTimeField
 from rest_framework import serializers
 from rest_framework.serializers import ValidationError as DRFValidationError
 
 from pulpcore.app.models import ContentArtifact, Label, RepositoryVersion, Publication
 from pulpcore.app.viewsets import NamedModelViewSet
+
+EMPTY_VALUES = (*EMPTY_VALUES, "null")
 
 
 class ReservedResourcesFilter(Filter):
@@ -142,15 +145,37 @@ class HyperlinkRelatedFilter(Filter):
         self.allow_null = kwargs.pop("allow_null", False)
         super().__init__(*args, **kwargs)
 
-    def filter(self, qs, value):
-        """
-        Args:
-            qs (django.db.models.query.QuerySet): The Queryset to filter
-            value (string): href containing pk for the foreign key instance
+    def _resolve_uri(self, uri):
+        try:
+            return resolve(urlparse(uri).path)
+        except Resolver404:
+            raise serializers.ValidationError(
+                detail=_("URI couldn't be resolved: {uri}".format(uri=uri))
+            )
 
-        Returns:
-            django.db.models.query.QuerySet: Queryset filtered by the foreign key pk
-        """
+    def _check_subclass(self, qs, uri, match):
+        fields_model = getattr(qs.model, self.field_name).get_queryset().model
+        lookups_model = match.func.cls.queryset.model
+        if not issubclass(lookups_model, fields_model):
+            raise serializers.ValidationError(
+                detail=_("URI is not a valid href for {field_name} model: {uri}").format(
+                    field_name=self.field_name, uri=uri
+                )
+            )
+
+    def _check_valid_uuid(self, uuid):
+        if not uuid:
+            return True
+        try:
+            UUID(uuid, version=4)
+        except ValueError:
+            raise serializers.ValidationError(detail=_("UUID invalid: {uuid}").format(uuid=uuid))
+
+    def _validations(self, *args, **kwargs):
+        self._check_valid_uuid(kwargs["match"].kwargs.get("pk"))
+        self._check_subclass(*args, **kwargs)
+
+    def filter(self, qs, value):
 
         if value is None:
             # value was not supplied by the user
@@ -160,33 +185,27 @@ class HyperlinkRelatedFilter(Filter):
             raise serializers.ValidationError(
                 detail=_("No value supplied for {name} filter.").format(name=self.field_name)
             )
-        elif self.allow_null and (value == "null" or value == ""):
-            key = f"{self.field_name}__isnull"
-            lookup = True
+
+        if self.allow_null and value in EMPTY_VALUES:
+            return qs.filter(**{f"{self.field_name}__isnull": True})
+
+        if self.lookup_expr == "in":
+            matches = {uri: self._resolve_uri(uri) for uri in value}
+            [self._validations(qs, uri=uri, match=matches[uri]) for uri in matches]
+            value = [pk if (pk := matches[match].kwargs.get("pk")) else match for match in matches]
         else:
-            try:
-                match = resolve(urlparse(value).path)
-            except Resolver404:
-                raise serializers.ValidationError(detail=_("URI not valid: {u}").format(u=value))
-
-            fields_model = getattr(qs.model, self.field_name).get_queryset().model
-            lookups_model = match.func.cls.queryset.model
-            if not issubclass(lookups_model, fields_model):
-                raise serializers.ValidationError(detail=_("URI not valid: {u}").format(u=value))
-
+            match = self._resolve_uri(value)
+            self._validations(qs, uri=value, match=match)
             if pk := match.kwargs.get("pk"):
-                try:
-                    UUID(pk, version=4)
-                except ValueError:
-                    raise serializers.ValidationError(detail=_("UUID invalid: {u}").format(u=pk))
-
-                key = "{}__pk".format(self.field_name)
-                lookup = pk
+                value = pk
             else:
-                key = f"{self.field_name}__in"
-                lookup = match.func.cls.queryset
+                return qs.filter(**{f"{self.field_name}__in": match.func.cls.queryset})
 
-        return qs.filter(**{key: lookup})
+        return super().filter(qs, value)
+
+
+class HyperlinkRelatedInFilter(BaseInFilter, HyperlinkRelatedFilter):
+    pass
 
 
 class IsoDateTimeFilter(DateTimeFilter):

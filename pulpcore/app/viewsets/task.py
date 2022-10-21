@@ -25,6 +25,7 @@ from pulpcore.app.viewsets import NamedModelViewSet, RolesMixin
 from pulpcore.app.viewsets.base import DATETIME_FILTER_OPTIONS, NAME_FILTER_OPTIONS
 from pulpcore.app.viewsets.custom_filters import (
     HyperlinkRelatedFilter,
+    HyperlinkRelatedInFilter,
     IsoDateTimeFilter,
     ReservedResourcesFilter,
     ReservedResourcesInFilter,
@@ -39,6 +40,7 @@ from pulpcore.tasking.util import cancel as cancel_task
 class TaskFilter(BaseFilterSet):
     state = filters.ChoiceFilter(choices=TASK_CHOICES)
     worker = HyperlinkRelatedFilter()
+    worker__in = HyperlinkRelatedInFilter(field_name="worker")
     name = filters.CharFilter()
     logging_cid = filters.CharFilter()
     started_at = IsoDateTimeFilter(field_name="started_at")
@@ -62,7 +64,6 @@ class TaskFilter(BaseFilterSet):
         model = Task
         fields = {
             "state": ["exact", "in"],
-            "worker": ["exact", "in"],
             "name": ["contains"],
             "logging_cid": ["exact", "contains"],
             "started_at": DATETIME_FILTER_OPTIONS,
