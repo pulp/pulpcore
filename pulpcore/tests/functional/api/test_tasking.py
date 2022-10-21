@@ -269,3 +269,20 @@ def test_search_task_using_an_invalid_name(tasks_api_client):
     search_results = tasks_api_client.list(name=str(uuid4()))
 
     assert not search_results.results and not search_results.count
+
+
+@pytest.mark.parallel
+def test_filter_tasks_using_worker__in_filter(tasks_api_client, dispatch_task):
+
+    task1_href = dispatch_task("time.sleep", (0,))
+    task2_href = dispatch_task("time.sleep", (0,))
+
+    task1 = monitor_task(task1_href)
+    task2 = monitor_task(task2_href)
+
+    search_results = tasks_api_client.list(worker__in=(task1.worker, task2.worker))
+
+    tasks_hrefs = [task.pulp_href for task in search_results.results]
+
+    assert task1_href in tasks_hrefs
+    assert task2_href in tasks_hrefs
