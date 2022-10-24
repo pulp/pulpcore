@@ -17,6 +17,26 @@ Changelog
 
 .. towncrier release notes start
 
+3.21.2 (2022-10-24)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Another step on closing the deadlock-window when syncing overlapping content.
+  :github:`3284`
+- Fixed content disposition header value when content is stored in Azure.
+  :github:`3342`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.21.1 (2022-10-18)
 ===================
 REST API
