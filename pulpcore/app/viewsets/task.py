@@ -24,30 +24,17 @@ from pulpcore.app.tasks import purge
 from pulpcore.app.viewsets import NamedModelViewSet, RolesMixin
 from pulpcore.app.viewsets.base import DATETIME_FILTER_OPTIONS, NAME_FILTER_OPTIONS
 from pulpcore.app.viewsets.custom_filters import (
-    HyperlinkRelatedFilter,
-    HyperlinkRelatedInFilter,
-    IsoDateTimeFilter,
     ReservedResourcesFilter,
     ReservedResourcesInFilter,
     ReservedResourcesRecordFilter,
     CreatedResourcesFilter,
 )
-from pulpcore.constants import TASK_INCOMPLETE_STATES, TASK_STATES, TASK_CHOICES
+from pulpcore.constants import TASK_INCOMPLETE_STATES, TASK_STATES
 from pulpcore.tasking.tasks import dispatch
 from pulpcore.tasking.util import cancel as cancel_task
 
 
 class TaskFilter(BaseFilterSet):
-    state = filters.ChoiceFilter(choices=TASK_CHOICES)
-    worker = HyperlinkRelatedFilter()
-    worker__in = HyperlinkRelatedInFilter(field_name="worker")
-    name = filters.CharFilter()
-    logging_cid = filters.CharFilter()
-    started_at = IsoDateTimeFilter(field_name="started_at")
-    finished_at = IsoDateTimeFilter(field_name="finished_at")
-    parent_task = HyperlinkRelatedFilter()
-    child_tasks = HyperlinkRelatedFilter()
-    task_group = HyperlinkRelatedFilter()
     # This filter is deprecated and badly documented, but we need to keep it for compatibility
     # reasons
     reserved_resources_record = ReservedResourcesRecordFilter()
@@ -64,7 +51,8 @@ class TaskFilter(BaseFilterSet):
         model = Task
         fields = {
             "state": ["exact", "in"],
-            "name": ["contains"],
+            "worker": ["exact", "in"],
+            "name": ["exact", "contains", "in"],
             "logging_cid": ["exact", "contains"],
             "started_at": DATETIME_FILTER_OPTIONS,
             "finished_at": DATETIME_FILTER_OPTIONS,
@@ -203,23 +191,14 @@ class TaskViewSet(
         return OperationPostponedResponse(task, request)
 
 
-class TaskGroupFilter(BaseFilterSet):
-    class Meta:
-        model = TaskGroup
-        fields = ()
-
-
 class TaskGroupViewSet(NamedModelViewSet, mixins.RetrieveModelMixin, mixins.ListModelMixin):
     queryset = TaskGroup.objects.all()
     endpoint_name = "task-groups"
-    filterset_class = TaskGroupFilter
     serializer_class = TaskGroupSerializer
     ordering = "-pulp_created"
 
 
 class WorkerFilter(BaseFilterSet):
-    name = filters.CharFilter()
-    last_heartbeat = IsoDateTimeFilter()
     online = filters.BooleanFilter(method="filter_online")
     missing = filters.BooleanFilter(method="filter_missing")
 
@@ -256,18 +235,6 @@ class WorkerViewSet(NamedModelViewSet, mixins.RetrieveModelMixin, mixins.ListMod
     filterset_class = WorkerFilter
 
 
-class TaskScheduleFilter(BaseFilterSet):
-    name = filters.CharFilter()
-    task_name = filters.CharFilter()
-
-    class Meta:
-        model = TaskSchedule
-        fields = {
-            "name": ["exact", "contains"],
-            "task_name": ["exact", "contains"],
-        }
-
-
 class TaskScheduleViewSet(
     NamedModelViewSet,
     mixins.RetrieveModelMixin,
@@ -282,7 +249,10 @@ class TaskScheduleViewSet(
 
     queryset = TaskSchedule.objects.all()
     endpoint_name = "task-schedules"
-    filterset_class = TaskScheduleFilter
+    filterset_fields = {
+        "name": ["exact", "contains"],
+        "task_name": ["exact", "contains"],
+    }
     serializer_class = TaskScheduleSerializer
     ordering = "-pulp_created"
     queryset_filtering_required_permission = "core.view_taskschedule"

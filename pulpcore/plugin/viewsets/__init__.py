@@ -35,10 +35,11 @@ from pulpcore.app.viewsets import (  # noqa
 
 from pulpcore.app.viewsets.custom_filters import (  # noqa
     CharInFilter,
-    HyperlinkRelatedFilter,
     LabelSelectFilter,
     RepositoryVersionFilter,
 )
+
+from pulpcore.filters import HyperlinkRelatedFilter  # noqa
 
 from .content import (  # noqa
     NoArtifactContentUploadViewSet,

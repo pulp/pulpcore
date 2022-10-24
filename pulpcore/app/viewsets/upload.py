@@ -32,6 +32,7 @@ class UploadViewSet(
     endpoint_name = "uploads"
     queryset = Upload.objects.all()
     http_method_names = ["get", "post", "head", "put", "delete"]
+    filterset_fields = {"size": ["exact", "gt", "lt", "range"]}
 
     content_range_parameter = OpenApiParameter(
         name="Content-Range",

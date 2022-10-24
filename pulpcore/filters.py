@@ -1,14 +1,23 @@
 from gettext import gettext as _
 
+from urllib.parse import urlparse
+from uuid import UUID
+from django.db import models
 from django.forms.utils import ErrorList
-from django_filters.rest_framework.filters import OrderingFilter
-from django_filters.rest_framework import DjangoFilterBackend, filterset
+from django.urls import Resolver404, resolve
+from django_filters.constants import EMPTY_VALUES
+from django_filters.rest_framework import DjangoFilterBackend, filterset, filters
 from django.core.exceptions import FieldDoesNotExist
+from rest_framework import serializers
 
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.plumbing import build_basic_type
 from drf_spectacular.contrib.django_filters import DjangoFilterExtension
 
+EMPTY_VALUES = (*EMPTY_VALUES, "null")
 
-class StableOrderingFilter(OrderingFilter):
+
+class StableOrderingFilter(filters.OrderingFilter):
     """
     Ordering filter with a stabilized order by either creation date, if available or primary key.
     """
@@ -24,6 +33,90 @@ class StableOrderingFilter(OrderingFilter):
         return qs.order_by(*ordering)
 
 
+class HyperlinkRelatedFilter(filters.Filter):
+    """
+    Enables a user to filter by a foreign key using that FK's href.
+
+    Foreign key filter can be specified to an object type by specifying the base URI of that type.
+    e.g. Filter by file remotes: ?remote=/pulp/api/v3/remotes/file/file/
+
+    Can also filter for foreign key to be unset by setting ``allow_null`` to True. Query parameter
+    will then accept "null" or "" for filtering.
+    e.g. Filter for no remote: ?remote="null"
+    """
+
+    def __init__(self, *args, **kwargs):
+        kwargs.setdefault("help_text", _("Foreign Key referenced by HREF"))
+        self.allow_null = kwargs.pop("allow_null", False)
+        super().__init__(*args, **kwargs)
+
+    def _resolve_uri(self, uri):
+        try:
+            return resolve(urlparse(uri).path)
+        except Resolver404:
+            raise serializers.ValidationError(
+                detail=_("URI couldn't be resolved: {uri}".format(uri=uri))
+            )
+
+    def _check_subclass(self, qs, uri, match):
+        fields_model = getattr(qs.model, self.field_name).get_queryset().model
+        lookups_model = match.func.cls.queryset.model
+        if not issubclass(lookups_model, fields_model):
+            raise serializers.ValidationError(
+                detail=_("URI is not a valid href for {field_name} model: {uri}").format(
+                    field_name=self.field_name, uri=uri
+                )
+            )
+
+    def _check_valid_uuid(self, uuid):
+        if not uuid:
+            return True
+        try:
+            UUID(uuid, version=4)
+        except ValueError:
+            raise serializers.ValidationError(detail=_("UUID invalid: {uuid}").format(uuid=uuid))
+
+    def _validations(self, *args, **kwargs):
+        self._check_valid_uuid(kwargs["match"].kwargs.get("pk"))
+        self._check_subclass(*args, **kwargs)
+
+    def filter(self, qs, value):
+        """
+        Args:
+            qs (django.db.models.query.QuerySet): The Queryset to filter
+            value (string or list of strings): href containing pk for the foreign key instance
+
+        Returns:
+            django.db.models.query.QuerySet: Queryset filtered by the foreign key pk
+        """
+
+        if value is None:
+            # value was not supplied by the user
+            return qs
+
+        if not self.allow_null and not value:
+            raise serializers.ValidationError(
+                detail=_("No value supplied for {name} filter.").format(name=self.field_name)
+            )
+
+        if self.allow_null and value in EMPTY_VALUES:
+            return qs.filter(**{f"{self.field_name}__isnull": True})
+
+        if self.lookup_expr == "in":
+            matches = {uri: self._resolve_uri(uri) for uri in value}
+            [self._validations(qs, uri=uri, match=matches[uri]) for uri in matches]
+            value = [pk if (pk := matches[match].kwargs.get("pk")) else match for match in matches]
+        else:
+            match = self._resolve_uri(value)
+            self._validations(qs, uri=value, match=match)
+            if pk := match.kwargs.get("pk"):
+                value = pk
+            else:
+                return qs.filter(**{f"{self.field_name}__in": match.func.cls.queryset})
+
+        return super().filter(qs, value)
+
+
 class BaseFilterSet(filterset.FilterSet):
     """
     Class to override django_filter's FilterSet and provide a way to set help text
@@ -37,6 +130,16 @@ class BaseFilterSet(filterset.FilterSet):
     """
 
     help_text = {}
+
+    FILTER_DEFAULTS = {
+        **filterset.FilterSet.FILTER_DEFAULTS,
+        models.OneToOneField: {"filter_class": HyperlinkRelatedFilter},
+        models.ForeignKey: {"filter_class": HyperlinkRelatedFilter},
+        models.ManyToManyField: {"filter_class": HyperlinkRelatedFilter},
+        models.OneToOneRel: {"filter_class": HyperlinkRelatedFilter},
+        models.ManyToOneRel: {"filter_class": HyperlinkRelatedFilter},
+        models.ManyToManyRel: {"filter_class": HyperlinkRelatedFilter},
+    }
 
     # copied and modified from django_filter.conf
     LOOKUP_EXPR_TEXT = {
@@ -76,7 +179,11 @@ class BaseFilterSet(filterset.FilterSet):
                 pass
         elif cls._meta.model:
             ordering_fields.extend(
-                ((field.name, field.name) for field in cls._meta.model._meta.get_fields())
+                (
+                    (field.name, field.name)
+                    for field in cls._meta.model._meta.get_fields()
+                    if not field.is_relation
+                )
             )
         ordering_fields.append(("pk", "pk"))
         filters["ordering"] = StableOrderingFilter(fields=tuple(ordering_fields))
@@ -140,3 +247,10 @@ class PulpFilterBackend(DjangoFilterBackend):
 
 class PulpOpenApiFilterExtension(DjangoFilterExtension):
     target_class = "pulpcore.filters.PulpFilterBackend"
+
+    def _get_schema_from_model_field(self, auto_schema, filter_field, model):
+        # Workaround until we can hook into `unambiguous_mapping` of
+        # `DjangoFilterExtension.resolve_filter_field`
+        if isinstance(filter_field, HyperlinkRelatedFilter):
+            return build_basic_type(OpenApiTypes.URI)
+        return super()._get_schema_from_model_field(auto_schema, filter_field, model)

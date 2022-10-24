@@ -1,7 +1,6 @@
 from gettext import gettext as _
 
 from django_filters import Filter
-from django_filters.rest_framework import filters
 from rest_framework import mixins, serializers
 
 from pulpcore.filters import BaseFilterSet
@@ -33,7 +32,6 @@ from pulpcore.app.viewsets import (
 from pulpcore.app.viewsets.base import DATETIME_FILTER_OPTIONS, NAME_FILTER_OPTIONS
 from pulpcore.app.viewsets.custom_filters import (
     DistributionWithContentFilter,
-    IsoDateTimeFilter,
     LabelSelectFilter,
     RepositoryVersionFilter,
 )
@@ -76,14 +74,12 @@ class RepositoryThroughVersionFilter(Filter):
 class PublicationFilter(BaseFilterSet):
     repository = RepositoryThroughVersionFilter(help_text=_("Repository referenced by HREF"))
     repository_version = RepositoryVersionFilter()
-    pulp_created = IsoDateTimeFilter()
     content = PublicationContentFilter()
     content__in = PublicationContentFilter(field_name="content", lookup_expr="in")
 
     class Meta:
         model = Publication
         fields = {
-            "repository_version": ["exact"],
             "pulp_created": DATETIME_FILTER_OPTIONS,
         }
 
@@ -122,8 +118,6 @@ class PublicationViewSet(
 
 
 class ContentGuardFilter(BaseFilterSet):
-    name = filters.CharFilter()
-
     class Meta:
         model = ContentGuard
         fields = {
@@ -327,8 +321,6 @@ class DistributionFilter(BaseFilterSet):
     # /?name__in=foo,bar
     # /?base_path__contains=foo
     # /?base_path__icontains=foo
-    name = filters.CharFilter()
-    base_path = filters.CharFilter()
     pulp_label_select = LabelSelectFilter()
     with_content = DistributionWithContentFilter()
 

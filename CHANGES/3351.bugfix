@@ -1,0 +1,1 @@
+Fixes schema generation to use proper type `uri` for ``HyperlinkRelatedFilter``.
