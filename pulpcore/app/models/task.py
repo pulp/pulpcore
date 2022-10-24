@@ -247,6 +247,10 @@ class Task(BaseModel, AutoAddObjPermsMixin):
             del self.state
         with suppress(AttributeError):
             del self.started_at
+        with suppress(AttributeError):
+            del self.finished_at
+        with suppress(AttributeError):
+            del self.error
 
     def set_completed(self):
         """
@@ -266,7 +270,11 @@ class Task(BaseModel, AutoAddObjPermsMixin):
         with suppress(AttributeError):
             del self.state
         with suppress(AttributeError):
+            del self.started_at
+        with suppress(AttributeError):
             del self.finished_at
+        with suppress(AttributeError):
+            del self.error
 
     def set_failed(self, exc, tb):
         """
@@ -290,6 +298,8 @@ class Task(BaseModel, AutoAddObjPermsMixin):
         with suppress(AttributeError):
             del self.state
         with suppress(AttributeError):
+            del self.started_at
+        with suppress(AttributeError):
             del self.finished_at
         with suppress(AttributeError):
             del self.error
@@ -307,6 +317,12 @@ class Task(BaseModel, AutoAddObjPermsMixin):
             raise RuntimeError(_("Attempt to cancel a finished task."))
         with suppress(AttributeError):
             del self.state
+        with suppress(AttributeError):
+            del self.started_at
+        with suppress(AttributeError):
+            del self.finished_at
+        with suppress(AttributeError):
+            del self.error
 
     def set_canceled(self, final_state=TASK_STATES.CANCELED, reason=None):
         """
@@ -326,6 +342,8 @@ class Task(BaseModel, AutoAddObjPermsMixin):
             raise RuntimeError(_("Attempt to mark a task canceled that is not in canceling state."))
         with suppress(AttributeError):
             del self.state
+        with suppress(AttributeError):
+            del self.started_at
         with suppress(AttributeError):
             del self.finished_at
         with suppress(AttributeError):
