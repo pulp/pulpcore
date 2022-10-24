@@ -1,9 +1,7 @@
 from django.http import Http404
-from django_filters.rest_framework import filters
 from drf_spectacular.utils import extend_schema
 from rest_framework import mixins
 
-from pulpcore.filters import BaseFilterSet
 from pulpcore.app.models import (
     Import,
     Importer,
@@ -27,18 +25,6 @@ from pulpcore.app.viewsets.base import NAME_FILTER_OPTIONS
 from pulpcore.tasking.tasks import dispatch
 
 
-class ImporterFilter(BaseFilterSet):
-    """Filter for Importers."""
-
-    name = filters.CharFilter()
-
-    class Meta:
-        model = Importer
-        fields = {
-            "name": NAME_FILTER_OPTIONS,
-        }
-
-
 class ImporterViewSet(
     NamedModelViewSet,
     mixins.CreateModelMixin,
@@ -53,7 +39,9 @@ class ImporterViewSet(
     serializer_class = ImporterSerializer
     endpoint_name = "importers"
     router_lookup = "importer"
-    filterset_class = ImporterFilter
+    filterset_fields = {
+        "name": NAME_FILTER_OPTIONS,
+    }
 
 
 class ImportViewSet(

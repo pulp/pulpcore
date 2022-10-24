@@ -7,20 +7,15 @@ from collections import defaultdict
 from itertools import chain
 from gettext import gettext as _
 from urllib.parse import urlparse
-from uuid import UUID
 
 from django.urls import Resolver404, resolve
 from django.db.models import ObjectDoesNotExist
-from django_filters import BaseInFilter, CharFilter, DateTimeFilter, Filter
-from django_filters.constants import EMPTY_VALUES
-from django_filters.fields import IsoDateTimeField
+from django_filters import BaseInFilter, CharFilter, Filter
 from rest_framework import serializers
 from rest_framework.serializers import ValidationError as DRFValidationError
 
 from pulpcore.app.models import ContentArtifact, Label, RepositoryVersion, Publication
 from pulpcore.app.viewsets import NamedModelViewSet
-
-EMPTY_VALUES = (*EMPTY_VALUES, "null")
 
 
 class ReservedResourcesFilter(Filter):
@@ -126,102 +121,6 @@ class CreatedResourcesFilter(Filter):
         resource = NamedModelViewSet.get_resource(value, match.func.cls.queryset.model)
 
         return qs.filter(created_resources__object_id=resource.pk)
-
-
-class HyperlinkRelatedFilter(Filter):
-    """
-    Enables a user to filter by a foreign key using that FK's href.
-
-    Foreign key filter can be specified to an object type by specifying the base URI of that type.
-    e.g. Filter by file remotes: ?remote=/pulp/api/v3/remotes/file/file/
-
-    Can also filter for foreign key to be unset by setting ``allow_null`` to True. Query parameter
-    will then accept "null" or "" for filtering.
-    e.g. Filter for no remote: ?remote="null"
-    """
-
-    def __init__(self, *args, **kwargs):
-        kwargs.setdefault("help_text", _("Foreign Key referenced by HREF"))
-        self.allow_null = kwargs.pop("allow_null", False)
-        super().__init__(*args, **kwargs)
-
-    def _resolve_uri(self, uri):
-        try:
-            return resolve(urlparse(uri).path)
-        except Resolver404:
-            raise serializers.ValidationError(
-                detail=_("URI couldn't be resolved: {uri}".format(uri=uri))
-            )
-
-    def _check_subclass(self, qs, uri, match):
-        fields_model = getattr(qs.model, self.field_name).get_queryset().model
-        lookups_model = match.func.cls.queryset.model
-        if not issubclass(lookups_model, fields_model):
-            raise serializers.ValidationError(
-                detail=_("URI is not a valid href for {field_name} model: {uri}").format(
-                    field_name=self.field_name, uri=uri
-                )
-            )
-
-    def _check_valid_uuid(self, uuid):
-        if not uuid:
-            return True
-        try:
-            UUID(uuid, version=4)
-        except ValueError:
-            raise serializers.ValidationError(detail=_("UUID invalid: {uuid}").format(uuid=uuid))
-
-    def _validations(self, *args, **kwargs):
-        self._check_valid_uuid(kwargs["match"].kwargs.get("pk"))
-        self._check_subclass(*args, **kwargs)
-
-    def filter(self, qs, value):
-
-        if value is None:
-            # value was not supplied by the user
-            return qs
-
-        if not self.allow_null and not value:
-            raise serializers.ValidationError(
-                detail=_("No value supplied for {name} filter.").format(name=self.field_name)
-            )
-
-        if self.allow_null and value in EMPTY_VALUES:
-            return qs.filter(**{f"{self.field_name}__isnull": True})
-
-        if self.lookup_expr == "in":
-            matches = {uri: self._resolve_uri(uri) for uri in value}
-            [self._validations(qs, uri=uri, match=matches[uri]) for uri in matches]
-            value = [pk if (pk := matches[match].kwargs.get("pk")) else match for match in matches]
-        else:
-            match = self._resolve_uri(value)
-            self._validations(qs, uri=value, match=match)
-            if pk := match.kwargs.get("pk"):
-                value = pk
-            else:
-                return qs.filter(**{f"{self.field_name}__in": match.func.cls.queryset})
-
-        return super().filter(qs, value)
-
-
-class HyperlinkRelatedInFilter(BaseInFilter, HyperlinkRelatedFilter):
-    pass
-
-
-class IsoDateTimeFilter(DateTimeFilter):
-    """
-    Uses IsoDateTimeField to support filtering on ISO 8601 formated datetimes.
-    For context see:
-    * https://code.djangoproject.com/ticket/23448
-    * https://github.com/tomchristie/django-rest-framework/issues/1338
-    * https://github.com/alex/django-filter/pull/264
-    """
-
-    field_class = IsoDateTimeField
-
-    def __init__(self, *args, **kwargs):
-        kwargs.setdefault("help_text", _("ISO 8601 formatted dates are supported"))
-        super().__init__(*args, **kwargs)
 
 
 class RepoVersionHrefFilter(Filter):

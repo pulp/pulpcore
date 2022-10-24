@@ -21,7 +21,6 @@ from .content import (  # noqa
     SigningServiceViewSet,
 )
 from .custom_filters import (  # noqa
-    IsoDateTimeFilter,
     RepoVersionHrefFilter,
     RepositoryVersionFilter,
 )

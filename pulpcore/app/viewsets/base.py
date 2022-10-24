@@ -28,7 +28,7 @@ NAME_FILTER_OPTIONS = ["exact", "in", "icontains", "contains", "startswith"]
 # e.g.
 # /?name=foo
 # /?name__in=foo,bar
-DATETIME_FILTER_OPTIONS = ["lt", "lte", "gt", "gte", "range"]
+DATETIME_FILTER_OPTIONS = ["exact", "lt", "lte", "gt", "gte", "range"]
 # e.g.
 # /?pulp_created__gte=2018-04-12T19:45:52
 # /?pulp_created__range=2018-04-12T19:45:52,2018-04-13T19:45:52

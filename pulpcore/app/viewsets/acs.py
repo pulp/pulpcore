@@ -1,11 +1,9 @@
 from gettext import gettext as _
 
-from django_filters.rest_framework import filters
 from drf_spectacular.utils import extend_schema
 from rest_framework import mixins
 from rest_framework.decorators import action
 
-from pulpcore.filters import BaseFilterSet
 from pulpcore.app import tasks
 from pulpcore.app.models import AlternateContentSource
 from pulpcore.app.serializers import (
@@ -19,18 +17,6 @@ from pulpcore.app.viewsets import (
 )
 from pulpcore.app.viewsets.base import NAME_FILTER_OPTIONS
 from pulpcore.tasking.tasks import dispatch
-
-
-class AlternateContentSourceFilter(BaseFilterSet):
-    """FilterSet for ACS."""
-
-    name = filters.CharFilter()
-
-    class Meta:
-        model = AlternateContentSource
-        fields = {
-            "name": NAME_FILTER_OPTIONS,
-        }
 
 
 class AlternateContentSourceViewSet(
@@ -49,7 +35,7 @@ class AlternateContentSourceViewSet(
     serializer_class = AlternateContentSourceSerializer
     endpoint_name = "acs"
     router_lookup = "acs"
-    filterset_class = AlternateContentSourceFilter
+    filterset_fields = {"name": NAME_FILTER_OPTIONS}
 
     @action(detail=True, methods=["post"])
     def refresh(self, request, pk=None):

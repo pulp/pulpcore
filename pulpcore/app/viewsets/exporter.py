@@ -1,9 +1,6 @@
-from django_filters.rest_framework import filters
-
 from drf_spectacular.utils import extend_schema
 from rest_framework import mixins
 
-from pulpcore.filters import BaseFilterSet
 from pulpcore.app.models import (
     Export,
     Exporter,
@@ -37,25 +34,6 @@ from pulpcore.plugin.tasking import dispatch
 from pulpcore.app.response import OperationPostponedResponse
 
 
-class ExporterFilter(BaseFilterSet):
-    """
-    Plugin file system exporter filter should:
-     - inherit from this class
-     - add any specific filters if needed
-     - define a `Meta` class which should:
-       - specify a plugin remote model for which filter is defined
-       - extend `fields` with specific ones
-    """
-
-    name = filters.CharFilter()
-
-    class Meta:
-        model = Exporter
-        fields = {
-            "name": NAME_FILTER_OPTIONS,
-        }
-
-
 class ExporterViewSet(
     NamedModelViewSet,
     mixins.CreateModelMixin,
@@ -72,7 +50,9 @@ class ExporterViewSet(
     serializer_class = ExporterSerializer
     endpoint_name = "exporters"
     router_lookup = "exporter"
-    filterset_class = ExporterFilter
+    filterset_fields = {
+        "name": NAME_FILTER_OPTIONS,
+    }
 
 
 class PulpExporterViewSet(ExporterViewSet):

@@ -32,23 +32,6 @@ from pulpcore.app.serializers import (
 User = get_user_model()
 
 
-class UserFilter(BaseFilterSet):
-    """
-    FilterSet for User.
-    """
-
-    class Meta:
-        model = User
-        fields = {
-            "username": ["exact", "iexact", "in", "contains", "icontains"],
-            "first_name": ["exact", "iexact", "in", "contains", "icontains"],
-            "last_name": ["exact", "iexact", "in", "contains", "icontains"],
-            "email": ["exact", "iexact", "in", "contains", "icontains"],
-            "is_active": ["exact"],
-            "is_staff": ["exact"],
-        }
-
-
 class UserViewSet(
     NamedModelViewSet,
     mixins.CreateModelMixin,
@@ -66,23 +49,17 @@ class UserViewSet(
 
     endpoint_name = "users"
     router_lookup = "user"
-    filterset_class = UserFilter
+    filterset_fields = {
+        "username": ["exact", "iexact", "in", "contains", "icontains"],
+        "first_name": ["exact", "iexact", "in", "contains", "icontains"],
+        "last_name": ["exact", "iexact", "in", "contains", "icontains"],
+        "email": ["exact", "iexact", "in", "contains", "icontains"],
+        "is_active": ["exact"],
+        "is_staff": ["exact"],
+    }
     serializer_class = UserSerializer
     queryset = User.objects.all()
     ordering = ("-date_joined",)
-
-
-class GroupFilter(BaseFilterSet):
-    """
-    FilterSet for Group.
-    """
-
-    class Meta:
-        model = Group
-        fields = {
-            "id": ["exact", "in"],
-            "name": ["exact", "iexact", "in", "contains", "icontains"],
-        }
 
 
 class GroupViewSet(
@@ -103,7 +80,10 @@ class GroupViewSet(
 
     endpoint_name = "groups"
     router_lookup = "group"
-    filterset_class = GroupFilter
+    filterset_fields = {
+        "id": ["exact", "in"],
+        "name": ["exact", "iexact", "in", "contains", "icontains"],
+    }
     serializer_class = GroupSerializer
     queryset = Group.objects.all()
     ordering = ("name",)
@@ -390,16 +370,6 @@ class NestedRoleFilter(BaseFilterSet):
         ("role__description", "description"),
     )
 
-    class Meta:
-        fields = (
-            "role",
-            "role__in",
-            "role__contains",
-            "role__icontains",
-            "role__startswith",
-            "content_object",
-        )
-
 
 class UserRoleFilter(NestedRoleFilter):
     """
@@ -408,7 +378,7 @@ class UserRoleFilter(NestedRoleFilter):
 
     class Meta:
         model = UserRole
-        fields = NestedRoleFilter.Meta.fields
+        fields = {}
 
 
 class UserRoleViewSet(
@@ -442,7 +412,7 @@ class GroupRoleFilter(NestedRoleFilter):
 
     class Meta:
         model = GroupRole
-        fields = NestedRoleFilter.Meta.fields
+        fields = {}
 
 
 class GroupRoleViewSet(

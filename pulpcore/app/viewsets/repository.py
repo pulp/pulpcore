@@ -1,7 +1,6 @@
 from gettext import gettext as _
 
 from django_filters import Filter
-from django_filters.rest_framework import filters
 from drf_spectacular.utils import extend_schema
 from rest_framework import mixins, serializers
 from rest_framework.decorators import action
@@ -29,16 +28,12 @@ from pulpcore.app.viewsets import (
     NamedModelViewSet,
 )
 from pulpcore.app.viewsets.base import DATETIME_FILTER_OPTIONS, NAME_FILTER_OPTIONS
-from pulpcore.app.viewsets.custom_filters import (
-    IsoDateTimeFilter,
-    LabelSelectFilter,
-    HyperlinkRelatedFilter,
-)
+from pulpcore.app.viewsets.custom_filters import LabelSelectFilter
 from pulpcore.tasking.tasks import dispatch
+from pulpcore.filters import HyperlinkRelatedFilter
 
 
 class RepositoryFilter(BaseFilterSet):
-    name = filters.CharFilter()
     pulp_label_select = LabelSelectFilter()
     remote = HyperlinkRelatedFilter(allow_null=True)
 
@@ -150,8 +145,6 @@ class RepositoryVersionFilter(BaseFilterSet):
     # /?pulp_created__gte=2018-04-12T19:45
     # /?pulp_created__range=2018-04-12T19:45,2018-04-13T20:00
     # /?content=/pulp/api/v3/content/file/fb8ad2d0-03a8-4e36-a209-77763d4ed16c/
-    number = filters.NumberFilter()
-    pulp_created = IsoDateTimeFilter()
     content = RepositoryVersionContentFilter()
     content__in = RepositoryVersionContentFilter(field_name="content", lookup_expr="in")
 
@@ -227,9 +220,7 @@ class RemoteFilter(BaseFilterSet):
        - extend `fields` with specific ones
     """
 
-    name = filters.CharFilter()
     pulp_label_select = LabelSelectFilter()
-    pulp_last_updated = IsoDateTimeFilter()
 
     class Meta:
         model = Remote
