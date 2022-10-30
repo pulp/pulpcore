@@ -52,7 +52,7 @@ jobs:
 
       - name: Set short_ref
         id: vars
-        run: echo ::set-output name=short_ref::${GITHUB_REF#refs/*/}
+        run: echo short_ref=${GITHUB_REF#refs/*/} >> $GITHUB_OUTPUT
 
       - name: Run update
         run: |
