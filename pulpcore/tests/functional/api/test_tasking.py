@@ -7,18 +7,16 @@ from aiohttp import BasicAuth
 from urllib.parse import urljoin
 from uuid import uuid4
 
-from pulpcore.constants import TASK_FINAL_STATES
 from pulpcore.client.pulpcore import ApiException
 
-from pulpcore.tests.functional.utils import download_file, monitor_task
+from pulpcore.tests.functional.utils import download_file
 
 
-@pytest.fixture
-def dispatch_task(cid):
+@pytest.fixture(scope="session")
+def dispatch_task(pulpcore_client):
     def _dispatch_task(*args, **kwargs):
+        cid = pulpcore_client.default_headers.get("Correlation-ID") or str(uuid4())
         commands = (
-            "import django; "
-            "django.setup(); "
             "from django_guid import set_guid; "
             "from pulpcore.tasking.tasks import dispatch; "
             "from pulpcore.app.util import get_url; "
@@ -36,23 +34,15 @@ def dispatch_task(cid):
     return _dispatch_task
 
 
-@pytest.fixture
-def task(dispatch_task, tasks_api_client):
+@pytest.fixture(scope="module")
+def task(dispatch_task, tasks_api_client, monitor_task):
     """Fixture containing a Task."""
     task_href = dispatch_task("time.sleep", args=(0,))
-    task = tasks_api_client.read(task_href)
-
-    yield task
-
-    if task.state not in TASK_FINAL_STATES:
-        cancelling_task = tasks_api_client.tasks_cancel(task_href, {"state": "canceled"})
-        monitor_task(cancelling_task.pulp_href)
-
-    tasks_api_client.delete(task_href)
+    return monitor_task(task_href)
 
 
 @pytest.mark.parallel
-def test_multi_resource_locking(dispatch_task):
+def test_multi_resource_locking(dispatch_task, monitor_task):
     task_href1 = dispatch_task(
         "time.sleep", args=(1,), exclusive_resources=["AAAA"], shared_resources=["BBBB"]
     )
@@ -145,7 +135,7 @@ def test_delete_cancel_running_task(dispatch_task, tasks_api_client):
 
 
 @pytest.mark.parallel
-def test_cancel_delete_finished_task(tasks_api_client, dispatch_task):
+def test_cancel_delete_finished_task(tasks_api_client, dispatch_task, monitor_task):
     task_href = dispatch_task("time.sleep", args=(0,))
     monitor_task(task_href)
 

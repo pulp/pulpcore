@@ -6,9 +6,12 @@ import uuid
 
 import pytest
 
+from time import sleep
+
 from pulp_smash.config import get_config
-from pulp_smash.pulp3.bindings import delete_orphans
 from pulp_smash.utils import get_pulp_setting
+
+from pulpcore.tests.functional.utils import SLEEP_TIME, PulpTaskError, PulpTaskGroupError
 
 from pulpcore.client.pulpcore import (
     ApiClient,
@@ -38,6 +41,7 @@ from pulpcore.client.pulpcore import (
     RolesApi,
     SigningServicesApi,
     StatusApi,
+    TaskGroupsApi,
     TasksApi,
     TaskSchedulesApi,
     UploadsApi,
@@ -88,179 +92,205 @@ def pytest_configure(config):
     )
 
 
+# API Clients
+
+
+@pytest.fixture(scope="session")
+def _api_client_set():
+    return set()
+
+
 @pytest.fixture
-def cid():
+def cid(_api_client_set, monkeypatch):
     value = str(uuid.uuid4())
     yield value
     print(f"Correlation-ID = {value}")
 
 
-@pytest.fixture
-def pulpcore_client(cid, bindings_cfg):
+@pytest.fixture(autouse=True)
+def _patch_cid_user_agent(_api_client_set, cid, monkeypatch):
+    for api_client in _api_client_set:
+        monkeypatch.setitem(api_client.default_headers, "Correlation-ID", cid)
+        monkeypatch.setattr(
+            api_client, "user_agent", os.environ.get("PYTEST_CURRENT_TEST").split(" ")[0]
+        )
+
+
+@pytest.fixture(scope="session")
+def pulpcore_client(_api_client_set, bindings_cfg):
     api_client = ApiClient(bindings_cfg)
-    api_client.default_headers["Correlation-ID"] = cid
-    return api_client
+    _api_client_set.add(api_client)
+    yield api_client
+    _api_client_set.remove(api_client)
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def tasks_api_client(pulpcore_client):
     return TasksApi(pulpcore_client)
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
+def task_groups_api_client(pulpcore_client):
+    return TaskGroupsApi(pulpcore_client)
+
+
+@pytest.fixture(scope="session")
 def workers_api_client(pulpcore_client):
     return WorkersApi(pulpcore_client)
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def artifacts_api_client(pulpcore_client):
     return ArtifactsApi(pulpcore_client)
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def uploads_api_client(pulpcore_client):
     return UploadsApi(pulpcore_client)
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def task_schedules_api_client(pulpcore_client):
     return TaskSchedulesApi(pulpcore_client)
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def status_api_client(pulpcore_client):
     return StatusApi(pulpcore_client)
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def groups_api_client(pulpcore_client):
     return GroupsApi(pulpcore_client)
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def groups_users_api_client(pulpcore_client):
     return GroupsUsersApi(pulpcore_client)
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def groups_roles_api_client(pulpcore_client):
     return GroupsRolesApi(pulpcore_client)
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def users_api_client(pulpcore_client):
     return UsersApi(pulpcore_client)
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def users_roles_api_client(pulpcore_client):
     return UsersRolesApi(pulpcore_client)
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def roles_api_client(pulpcore_client):
     "Provies the pulp core Roles API client object."
     return RolesApi(pulpcore_client)
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def content_api_client(pulpcore_client):
     return ContentApi(pulpcore_client)
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def distributions_api_client(pulpcore_client):
     return DistributionsApi(pulpcore_client)
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def remotes_api_client(pulpcore_client):
     return RemotesApi(pulpcore_client)
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def repositories_api_client(pulpcore_client):
     return RepositoriesApi(pulpcore_client)
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def repository_versions_api_client(pulpcore_client):
     return RepositoryVersionsApi(pulpcore_client)
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def publications_api_client(pulpcore_client):
     return PublicationsApi(pulpcore_client)
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def exporters_pulp_api_client(pulpcore_client):
     return ExportersPulpApi(pulpcore_client)
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def exporters_pulp_exports_api_client(pulpcore_client):
     return ExportersPulpExportsApi(pulpcore_client)
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def exporters_filesystem_api_client(pulpcore_client):
     return ExportersFilesystemApi(pulpcore_client)
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def exporters_filesystem_exports_api_client(pulpcore_client):
     return ExportersFilesystemExportsApi(pulpcore_client)
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def importers_pulp_api_client(pulpcore_client):
     return ImportersPulpApi(pulpcore_client)
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def importers_pulp_imports_api_client(pulpcore_client):
     return ImportersPulpImportsApi(pulpcore_client)
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def importers_pulp_imports_check_api_client(pulpcore_client):
     return ImportersPulpImportCheckApi(pulpcore_client)
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def signing_service_api_client(pulpcore_client):
     return SigningServicesApi(pulpcore_client)
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def content_guards_api_client(pulpcore_client):
     return ContentguardsApi(pulpcore_client)
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def rbac_contentguard_api_client(pulpcore_client):
     return ContentguardsRbacApi(pulpcore_client)
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def redirect_contentguard_api_client(pulpcore_client):
     return ContentguardsContentRedirectApi(pulpcore_client)
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def orphans_cleanup_api_client(pulpcore_client):
     return OrphansCleanupApi(pulpcore_client)
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def repositories_reclaim_space_api_client(pulpcore_client):
     return RepositoriesReclaimSpaceApi(pulpcore_client)
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def repair_api_client(pulpcore_client):
     return RepairApi(pulpcore_client)
+
+
+# Object factories
 
 
 @pytest.fixture
@@ -360,11 +390,62 @@ def pulp_admin_user(bindings_cfg):
 
 
 @pytest.fixture
-def delete_orphans_pre(request):
+def random_artifact_factory(artifacts_api_client, tmp_path, gen_object_with_cleanup):
+    def _random_artifact_factory():
+        temp_file = tmp_path / str(uuid.uuid4())
+        temp_file.write_bytes(uuid.uuid4().bytes)
+        return artifacts_api_client.create(temp_file)
+
+    return _random_artifact_factory
+
+
+@pytest.fixture
+def random_artifact(random_artifact_factory):
+    return random_artifact_factory()
+
+
+# Random other fixtures
+
+
+@pytest.fixture
+def delete_orphans_pre(request, orphans_cleanup_api_client, monitor_task):
     if request.node.get_closest_marker("parallel") is not None:
         raise pytest.UsageError("This test is not suitable to be marked parallel.")
-    delete_orphans()
+    monitor_task(orphans_cleanup_api_client.cleanup({}).task)
     yield
+
+
+@pytest.fixture(scope="session")
+def monitor_task(tasks_api_client):
+    def _monitor_task(task_href):
+        task = tasks_api_client.read(task_href)
+        while task.state not in ["completed", "failed", "canceled"]:
+            sleep(SLEEP_TIME)
+            task = tasks_api_client.read(task_href)
+
+        if task.state != "completed":
+            raise PulpTaskError(task=task)
+
+        return task
+
+    return _monitor_task
+
+
+@pytest.fixture(scope="session")
+def monitor_task_group(task_groups_api_client):
+    def _monitor_task_group(task_group_href):
+        task_group = task_groups_api_client.read(task_group_href)
+
+        while not task_group.all_tasks_dispatched or (task_group.waiting + task_group.running) > 0:
+            sleep(SLEEP_TIME)
+            task_group = task_groups_api_client.read(task_group_href)
+
+        if (task_group.failed + task_group.skipped + task_group.canceled) > 0:
+            raise PulpTaskGroupError(task_group=task_group)
+
+        return task_group
+
+    return _monitor_task_group
 
 
 @pytest.fixture(scope="session")
@@ -387,21 +468,6 @@ def get_redis_status(status_api_client):
     """Return a boolean value which tells whether the connection to redis was established or not."""
     status_response = status_api_client.status_read()
     return status_response.redis_connection.connected
-
-
-@pytest.fixture
-def random_artifact(random_artifact_factory):
-    return random_artifact_factory()
-
-
-@pytest.fixture
-def random_artifact_factory(artifacts_api_client, tmp_path, gen_object_with_cleanup):
-    def _random_artifact_factory():
-        temp_file = tmp_path / str(uuid.uuid4())
-        temp_file.write_bytes(uuid.uuid4().bytes)
-        return gen_object_with_cleanup(artifacts_api_client, temp_file)
-
-    return _random_artifact_factory
 
 
 @pytest.fixture
