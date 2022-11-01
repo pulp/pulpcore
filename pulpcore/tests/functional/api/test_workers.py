@@ -68,7 +68,7 @@ def test_worker_actions(workers_api_client):
         workers_api_client.delete(chosen_worker.pulp_href)
 
 
-@pytest.fixture()
+@pytest.fixture
 def task_schedule(cli_client):
     name = "test_schedule"
     task_name = "pulpcore.app.tasks.test.dummy_task"
