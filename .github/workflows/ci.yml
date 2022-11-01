@@ -193,7 +193,7 @@ jobs:
 
       - name: Extract Deprecations from Logs
         id: deprecations
-        run: echo "::set-output name=deprecations-${{ matrix.env.TEST }}::$(docker logs pulp 2>&1 | grep -i pulpcore.deprecation | base64 -w 0)"
+        run: echo deprecations-${{ matrix.env.TEST }}=$(docker logs pulp 2>&1 | grep -i pulpcore.deprecation | base64 -w 0) >> $GITHUB_OUTPUT
 
       - name: Logs
         if: always()

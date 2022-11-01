@@ -27,7 +27,11 @@ RUN pip3 install \
 {{ " " }}"{{ item.source }}"
 {%- endfor %}
 
-RUN mkdir -p /etc/nginx/pulp/
+USER pulp:pulp
+RUN PULP_STATIC_ROOT=/var/lib/operator/static/ PULP_CONTENT_ORIGIN=localhost \
+       /usr/local/bin/pulpcore-manager collectstatic --clear --noinput --link
+USER root:root
+
 {% for item in plugins %}
 RUN export plugin_path="$(pip3 show {{ item.name }} | sed -n -e 's/Location: //p')/{{ item.name }}" && \
     ln $plugin_path/app/webserver_snippets/nginx.conf /etc/nginx/pulp/{{ item.name }}.conf || true
