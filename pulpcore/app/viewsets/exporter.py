@@ -146,6 +146,7 @@ class PulpExportViewSet(ExportViewSet):
         task = dispatch(
             pulp_export,
             exclusive_resources=[exporter],
+            shared_resources=exporter.repositories.all(),
             kwargs={"exporter_pk": str(exporter.pk), "params": request.data},
         )
 
