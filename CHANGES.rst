@@ -17,6 +17,28 @@ Changelog
 
 .. towncrier release notes start
 
+3.18.11 (2022-11-02)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fixed the fs exporter to handle the case where there are pre-existing files in the location that FileSystem attempts to export to you get a FileExistsError.
+  :github:`1949`
+- Fixed the fs exporter to handle the case where hardlink method was requested but pulp and export locations are in different partitions so can't share the same inode.
+  :github:`3187`
+- Another step on closing the deadlock-window when syncing overlapping content.
+  :github:`3284`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.18.10 (2022-09-14)
 ====================
 REST API
