@@ -16,7 +16,7 @@ async def get_response(url):
 cfg = config.get_config()
 configuration = cfg.get_bindings_config()
 core_client = ApiClient(configuration)
-SLEEP_TIME = 0.3  # Taken from pulp_smash
+SLEEP_TIME = 0.3
 tasks = TasksApi(core_client)
 task_groups = TaskGroupsApi(core_client)
 
@@ -110,5 +110,5 @@ def download_file(url, auth=None, headers=None):
 
 async def _download_file(url, auth=None, headers=None):
     async with aiohttp.ClientSession(auth=auth, raise_for_status=True) as session:
-        async with session.get(url, verify_ssl=False, headers=headers) as response:
+        async with session.get(url, ssl=False, headers=headers) as response:
             return Download(body=await response.read(), response_obj=response)

@@ -35,7 +35,7 @@ def dispatch_task(pulpcore_client):
 
 
 @pytest.fixture(scope="module")
-def task(dispatch_task, tasks_api_client, monitor_task):
+def task(dispatch_task, monitor_task):
     """Fixture containing a Task."""
     task_href = dispatch_task("time.sleep", args=(0,))
     return monitor_task(task_href)
@@ -157,7 +157,7 @@ def test_cancel_nonexistent_task(pulp_api_v3_path, tasks_api_client):
 
 
 @pytest.mark.parallel
-def test_retriving_limited_task_fields(task, bindings_cfg):
+def test_retrieve_task_with_limited_fields(task, bindings_cfg):
     """Verify for specific fields retrieve in the payload."""
     expected_fields = set(("pulp_href", "state", "worker"))
 
