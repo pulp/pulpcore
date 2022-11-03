@@ -8,12 +8,10 @@ import pytest
 
 from time import sleep
 
-from pulp_smash.config import get_config
-from pulp_smash.utils import get_pulp_setting
-
 from pulpcore.tests.functional.utils import SLEEP_TIME, PulpTaskError, PulpTaskGroupError
 
 from pulpcore.client.pulpcore import (
+    Configuration,
     AccessPoliciesApi,
     ApiClient,
     ArtifactsApi,
@@ -64,10 +62,22 @@ from .gpg_ascii_armor_signing_service import (  # noqa: F401
 )
 
 
+def get_bindings_config():
+    api_protocol = os.environ.get("API_PROTOCOL", "https")
+    api_host = os.environ.get("API_HOST", "pulp")
+    api_port = os.environ.get("API_PORT", "443")
+    configuration = Configuration(
+        host=f"{api_protocol}://{api_host}:{api_port}",
+        username=os.environ.get("ADMIN_USERNAME", "admin"),
+        password=os.environ.get("ADMIN_PASSWORD", "password"),
+    )
+    configuration.safe_chars_for_path_param = "/"
+    return configuration
+
+
 @pytest.hookimpl(tryfirst=True)
 def pytest_check_for_leftover_pulp_objects(config):
-    cfg = get_config()
-    pulpcore_client = ApiClient(cfg.get_bindings_config())
+    pulpcore_client = ApiClient(get_bindings_config())
     tasks_api_client = TasksApi(pulpcore_client)
 
     for task in tasks_api_client.list().results:
@@ -94,6 +104,11 @@ def pytest_configure(config):
 
 
 # API Clients
+
+
+@pytest.fixture(scope="session")
+def bindings_cfg():
+    return get_bindings_config()
 
 
 @pytest.fixture(scope="session")
@@ -455,8 +470,19 @@ def monitor_task_group(task_groups_api_client):
 
 
 @pytest.fixture(scope="session")
-def pulp_api_v3_path(cli_client):
-    v3_api_root = get_pulp_setting(cli_client, "V3_API_ROOT")
+def pulp_settings():
+    import django
+
+    django.setup()
+
+    from django.conf import settings
+
+    return settings
+
+
+@pytest.fixture(scope="session")
+def pulp_api_v3_path(pulp_settings):
+    v3_api_root = pulp_settings.V3_API_ROOT
     if v3_api_root is None:
         raise RuntimeError(
             "This fixture requires the server to have the `V3_API_ROOT` setting set."
@@ -476,7 +502,62 @@ def get_redis_status(status_api_client):
     return status_response.redis_connection.connected
 
 
-@pytest.fixture
+# Object Cleanup fixtures
+
+
+@pytest.fixture(scope="module")
+def add_to_cleanup(monitor_task):
+    """Fixture to allow pulp objects to be deleted in reverse order after the test module."""
+    obj_refs = []
+
+    def _add_to_cleanup(api_client, pulp_href):
+        obj_refs.append((api_client, pulp_href))
+
+    yield _add_to_cleanup
+
+    delete_task_hrefs = []
+    # Delete newest items first to avoid dependency lockups
+    for api_client, pulp_href in reversed(obj_refs):
+        try:
+            task_url = api_client.delete(pulp_href).task
+            delete_task_hrefs.append(task_url)
+        except Exception:
+            # There was no delete task for this unit or the unit may already have been deleted.
+            # Also we can never be sure which one is the right ApiException to catch.
+            pass
+
+    for deleted_task_href in delete_task_hrefs:
+        monitor_task(deleted_task_href)
+
+
+@pytest.fixture(scope="module")
+def gen_object_with_cleanup(add_to_cleanup, monitor_task):
+    def _gen_object_with_cleanup(api_client, *args, **kwargs):
+        new_obj = api_client.create(*args, **kwargs)
+        try:
+            add_to_cleanup(api_client, new_obj.pulp_href)
+        except AttributeError:
+            # This is a task and the real object href comes from monitoring it
+            task_data = monitor_task(new_obj.task)
+
+            for created_resource in task_data.created_resources:
+                try:
+                    new_obj = api_client.read(created_resource)
+                except Exception:
+                    pass  # This isn't the right created_resource for this api_client
+                else:
+                    add_to_cleanup(api_client, new_obj.pulp_href)
+                    return new_obj
+
+            msg = f"No appropriate created_resource could be found in task data {task_data}"
+            raise TypeError(msg)
+
+        return new_obj
+
+    return _gen_object_with_cleanup
+
+
+@pytest.fixture(scope="module")
 def add_to_filesystem_cleanup():
     obj_paths = []
 
