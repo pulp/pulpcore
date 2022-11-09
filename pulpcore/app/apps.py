@@ -250,9 +250,10 @@ def _populate_access_policies(sender, apps, verbosity, **kwargs):
                                 viewset_name=viewset_name
                             )
                         )
-                if not created and not db_access_policy.customized:
+                elif not db_access_policy.customized:
                     dirty = False
-                    for key, value in access_policy.items():
+                    for key in ["statements", "creation_hooks", "queryset_scoping"]:
+                        value = access_policy.get(key)
                         if getattr(db_access_policy, key, None) != value:
                             setattr(db_access_policy, key, value)
                             dirty = True
