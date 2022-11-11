@@ -139,5 +139,6 @@ An example payload:
 	    }, {
             "name": "file",
             "version": "1.12.0"
-    	}]
+    	}],
+        "postgresqlVersion": 90200
     }
