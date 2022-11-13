@@ -1,0 +1,1 @@
+Fixed the openapi spec of "fields" and "exclude_fields" querystring parameters.

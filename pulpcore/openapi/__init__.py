@@ -428,20 +428,20 @@ class PulpSchemaGenerator(SchemaGenerator):
 
             # Adding query parameters
             if "parameters" in operation and schema.method.lower() == "get":
-                fields_paramenter = build_parameter_type(
+                fields_parameter = build_parameter_type(
                     name="fields",
-                    schema={"type": "string"},
+                    schema={"type": "array", "items": {"type": "string"}},
                     location=OpenApiParameter.QUERY,
                     description="A list of fields to include in the response.",
                 )
-                operation["parameters"].append(fields_paramenter)
-                not_fields_paramenter = build_parameter_type(
+                operation["parameters"].append(fields_parameter)
+                exclude_fields_parameter = build_parameter_type(
                     name="exclude_fields",
-                    schema={"type": "string"},
+                    schema={"type": "array", "items": {"type": "string"}},
                     location=OpenApiParameter.QUERY,
                     description="A list of fields to exclude from the response.",
                 )
-                operation["parameters"].append(not_fields_paramenter)
+                operation["parameters"].append(exclude_fields_parameter)
 
             # Normalise path for any provided mount url.
             if path.startswith("/"):
