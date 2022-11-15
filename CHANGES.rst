@@ -17,6 +17,28 @@ Changelog
 
 .. towncrier release notes start
 
+3.21.3 (2022-11-15)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Adjust the dependency on ``cryptography`` to suite more versions of ``pulp-certguard``.
+  :github:`3269`
+- Insured that pulp-export correctly locks repos-being-exported.
+  :github:`3370`
+- Fixed the update of default access policies when fields are missing.
+  :github:`3391`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.21.2 (2022-10-24)
 ===================
 REST API

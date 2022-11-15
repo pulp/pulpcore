@@ -1,1 +1,0 @@
-Adjust the dependency on ``cryptography`` to suite more versions of ``pulp-certguard``.
