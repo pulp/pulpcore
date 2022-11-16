@@ -14,6 +14,7 @@ from pulp_smash.utils import get_pulp_setting
 from pulpcore.tests.functional.utils import SLEEP_TIME, PulpTaskError, PulpTaskGroupError
 
 from pulpcore.client.pulpcore import (
+    AccessPoliciesApi,
     ApiClient,
     ArtifactsApi,
     ContentApi,
@@ -122,6 +123,11 @@ def pulpcore_client(_api_client_set, bindings_cfg):
     _api_client_set.add(api_client)
     yield api_client
     _api_client_set.remove(api_client)
+
+
+@pytest.fixture(scope="session")
+def access_policies_api_client(pulpcore_client):
+    return AccessPoliciesApi(pulpcore_client)
 
 
 @pytest.fixture(scope="session")
