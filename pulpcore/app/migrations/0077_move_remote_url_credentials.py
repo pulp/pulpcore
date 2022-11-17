@@ -11,6 +11,11 @@ def move_remote_url_credentials(apps, schema_editor):
     for remote in Remote.objects.filter(url__contains="@").iterator():
         url = urlparse(remote.url)
 
+        if '@' not in url.netloc:
+            # URLs can have an @ in other places than the netloc,
+            # but those do not indicate credentials
+            continue
+
         if not remote.username:
             remote.username = url.username
         if not remote.password:
