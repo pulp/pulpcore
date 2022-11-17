@@ -262,7 +262,7 @@ def test_search_task_using_an_invalid_name(tasks_api_client):
 
 
 @pytest.mark.parallel
-def test_filter_tasks_using_worker__in_filter(tasks_api_client, dispatch_task):
+def test_filter_tasks_using_worker__in_filter(tasks_api_client, dispatch_task, monitor_task):
 
     task1_href = dispatch_task("time.sleep", (0,))
     task2_href = dispatch_task("time.sleep", (0,))
