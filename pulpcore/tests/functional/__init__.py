@@ -417,7 +417,7 @@ def random_artifact(random_artifact_factory):
 def delete_orphans_pre(request, orphans_cleanup_api_client, monitor_task):
     if request.node.get_closest_marker("parallel") is not None:
         raise pytest.UsageError("This test is not suitable to be marked parallel.")
-    monitor_task(orphans_cleanup_api_client.cleanup({}).task)
+    monitor_task(orphans_cleanup_api_client.cleanup({"orphan_protection_time": 0}).task)
     yield
 
 
