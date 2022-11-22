@@ -84,7 +84,7 @@ from .task import (  # noqa
     Worker,
 )
 
-from .telemetry import SystemID  # noqa
+from .analytics import SystemID  # noqa
 
 from .upload import (  # noqa
     Upload,

@@ -289,7 +289,7 @@ DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
 
 TASK_DIAGNOSTICS = False
 
-TELEMETRY = True
+ANALYTICS = True
 
 HIDE_GUARDED_DISTRIBUTIONS = False
 

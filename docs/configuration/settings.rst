@@ -445,13 +445,13 @@ TASK_DIAGNOSTICS
       * memory - the task's max resident set size in MB.
 
 
-.. _telemetry-setting:
+.. _analytics-setting:
 
-TELEMETRY
+ANALYTICS
 ^^^^^^^^^
 
-    If ``True``, Pulp will anonymously post telemetry information to
+    If ``True``, Pulp will anonymously post analytics information to
     `<https://analytics.pulpproject.org/>`_ and aids in project decision making. See the
-    :ref:`telemetry docs <telemetry>` for more info on exactly what is posted along with an example.
+    :ref:`analytics docs <analytics>` for more info on exactly what is posted along with an example.
 
     Defaults to ``True``.

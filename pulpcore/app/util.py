@@ -247,11 +247,15 @@ def gpg_verify(public_keys, signature, detached_data=None):
     return verified
 
 
-def configure_telemetry():
-    task_name = "pulpcore.app.tasks.telemetry.post_telemetry"
+def configure_analytics():
+    task_name = "pulpcore.app.tasks.analytics.post_analytics"
     dispatch_interval = timedelta(days=1)
-    name = "Post Anonymous Telemetry Periodically"
-    if settings.TELEMETRY:
+    name = "Post Anonymous Analytics Periodically"
+    analytics = settings.ANALYTICS
+    if settings.get("TELEMETRY") is not None:
+        deprecation_logger.warning("TELEMETRY setting is deprecated. Use ANALYTICS.")
+        analytics = settings.TELEMETRY
+    if analytics:
         models.TaskSchedule.objects.update_or_create(
             name=name, defaults={"task_name": task_name, "dispatch_interval": dispatch_interval}
         )
