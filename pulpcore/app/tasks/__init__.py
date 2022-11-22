@@ -20,4 +20,4 @@ from .reclaim_space import reclaim_space  # noqa
 
 from .repository import repair_all_artifacts  # noqa
 
-from .telemetry import post_telemetry  # noqa
+from .analytics import post_analytics  # noqa

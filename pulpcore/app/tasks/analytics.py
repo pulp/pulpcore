@@ -85,7 +85,7 @@ async def _system_id(analytics):
     analytics.system_id = str(system_id_obj.pk)
 
 
-async def post_telemetry():
+async def post_analytics():
     url = get_analytics_posting_url()
 
     analytics = Analytics()

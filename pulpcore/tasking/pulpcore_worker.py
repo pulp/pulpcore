@@ -33,7 +33,7 @@ from django_guid import set_guid  # noqa: E402: module level not at top of file
 
 from pulpcore.app.models import Worker, Task  # noqa: E402: module level not at top of file
 
-from pulpcore.app.util import configure_telemetry  # noqa: E402: module level not at top of file
+from pulpcore.app.util import configure_analytics  # noqa: E402: module level not at top of file
 from pulpcore.app.role_util import (  # noqa: E402: module level not at top of file
     get_users_with_perms,
 )
@@ -60,7 +60,7 @@ TASK_SCHEDULING_LOCK = 42
 
 
 def startup_hook():
-    configure_telemetry()
+    configure_analytics()
 
 
 class PGAdvisoryLock:

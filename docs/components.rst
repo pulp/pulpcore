@@ -104,14 +104,14 @@ Collect all of the static content into place using the ``collectstatic`` command
 
 
 
-.. _telemetry:
+.. _analytics:
 
-Telemetry Collection
+Analytics Collection
 --------------------
 
-By default, Pulp installations post anonymous telemetry data every 24 hours which is summarized on
+By default, Pulp installations post anonymous analytics data every 24 hours which is summarized on
 `<https://analytics.pulpproject.org/>`_ and aids in project decision making. This is enabled by
-default but can be disabled by setting ``TELEMETRY=False`` in your settings.
+default but can be disabled by setting ``ANALYTICS=False`` in your settings.
 
 Here is the list of exactly what is collected along with an example below:
 
