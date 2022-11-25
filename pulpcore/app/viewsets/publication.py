@@ -32,7 +32,7 @@ from pulpcore.app.viewsets import (
 from pulpcore.app.viewsets.base import DATETIME_FILTER_OPTIONS, NAME_FILTER_OPTIONS
 from pulpcore.app.viewsets.custom_filters import (
     DistributionWithContentFilter,
-    LabelSelectFilter,
+    LabelFilter,
     RepositoryVersionFilter,
 )
 
@@ -321,7 +321,7 @@ class DistributionFilter(BaseFilterSet):
     # /?name__in=foo,bar
     # /?base_path__contains=foo
     # /?base_path__icontains=foo
-    pulp_label_select = LabelSelectFilter()
+    pulp_label_select = LabelFilter()
     with_content = DistributionWithContentFilter()
 
     class Meta:

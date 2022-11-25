@@ -7,6 +7,7 @@ from urllib.parse import urlparse, urljoin
 
 from aiohttp.web_exceptions import HTTPNotFound
 
+from django.contrib.postgres.fields import HStoreField
 from django.db import IntegrityError, models, transaction
 from django.utils import timezone
 from django_lifecycle import hook, AFTER_UPDATE, BEFORE_DELETE
@@ -500,6 +501,7 @@ class Distribution(MasterModel):
 
     Fields:
         name (models.TextField): The name of the distribution. Examples: "rawhide" and "stable".
+        pulp_labels (HStoreField): Dictionary of string values.
         base_path (models.TextField): The base (relative) path component of the published url.
 
     Relations:
@@ -516,6 +518,7 @@ class Distribution(MasterModel):
     SERVE_FROM_PUBLICATION = False
 
     name = models.TextField(db_index=True, unique=True)
+    pulp_labels = HStoreField(default=dict)
     base_path = models.TextField(unique=True)
 
     content_guard = models.ForeignKey(ContentGuard, null=True, on_delete=models.SET_NULL)

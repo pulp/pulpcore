@@ -11,7 +11,7 @@ from pulpcore.app.serializers import (
 
 
 class TestRemoteSerializer(TestCase):
-    minimal_data = {"name": "test", "url": "http://whatever"}
+    minimal_data = {"name": "test", "url": "http://whatever", "pulp_labels": {}}
 
     def test_validate_proxy_creds_update(self):
         remote = SimpleNamespace(

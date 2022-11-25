@@ -10,6 +10,7 @@ from rest_framework.reverse import reverse
 
 from pulpcore.app import models
 from pulpcore.app.serializers import DetailIdentityField, IdentityField, RelatedField
+from pulpcore.app.loggers import deprecation_logger
 
 
 def relative_path_validator(relative_path):
@@ -381,6 +382,13 @@ class TaskGroupStatusCountField(serializers.IntegerField, serializers.ReadOnlyFi
 class LabelsField(serializers.JSONField):
     """A serializer field for pulp_labels."""
 
+    def __init__(self, *args, **kwargs):
+        deprecation_logger.warning(
+            "'LabelsField' is deprecated and will be removed in pulpcore==3.25;"
+            " use an 'HStoreField' named 'pulp_labels' instead."
+        )
+        super().__init__(*args, **kwargs)
+
     def to_representation(self, labels):
         """
         Serializes list of labels to a dict.
@@ -421,3 +429,14 @@ class LabelsField(serializers.JSONField):
                 )
 
         return data
+
+
+def pulp_labels_validator(value):
+    """A validator designed for the pulp_labels field."""
+    for key, value in value.items():
+        if not re.match(r"^[\w ]+$", key):
+            raise serializers.ValidationError(_("Key '{}' contains non-alphanumerics.").format(key))
+        if re.search(r"[,()]", value):
+            raise serializers.ValidationError(
+                _("Key '{}' contains value with comma or parenthesis.").format(key)
+            )

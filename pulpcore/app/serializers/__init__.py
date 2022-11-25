@@ -34,6 +34,7 @@ from .fields import (  # noqa
     RepositoryVersionIdentityField,
     relative_path_validator,
     TaskGroupStatusCountField,
+    pulp_labels_validator,
 )
 from .access_policy import AccessPolicySerializer  # noqa
 from .acs import (  # noqa

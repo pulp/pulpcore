@@ -28,13 +28,13 @@ from pulpcore.app.viewsets import (
     NamedModelViewSet,
 )
 from pulpcore.app.viewsets.base import DATETIME_FILTER_OPTIONS, NAME_FILTER_OPTIONS
-from pulpcore.app.viewsets.custom_filters import LabelSelectFilter
+from pulpcore.app.viewsets.custom_filters import LabelFilter
 from pulpcore.tasking.tasks import dispatch
 from pulpcore.filters import HyperlinkRelatedFilter
 
 
 class RepositoryFilter(BaseFilterSet):
-    pulp_label_select = LabelSelectFilter()
+    pulp_label_select = LabelFilter()
     remote = HyperlinkRelatedFilter(allow_null=True)
 
     class Meta:
@@ -220,7 +220,7 @@ class RemoteFilter(BaseFilterSet):
        - extend `fields` with specific ones
     """
 
-    pulp_label_select = LabelSelectFilter()
+    pulp_label_select = LabelFilter()
 
     class Meta:
         model = Remote
