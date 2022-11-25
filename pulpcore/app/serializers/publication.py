@@ -11,9 +11,9 @@ from pulpcore.app.serializers import (
     DetailIdentityField,
     DetailRelatedField,
     GetOrCreateSerializerMixin,
-    LabelsField,
     ModelSerializer,
     RepositoryVersionRelatedField,
+    pulp_labels_validator,
     validate_unknown_fields,
 )
 from pulpcore.app.serializers.user import GroupUserSerializer, GroupSerializer
@@ -159,7 +159,7 @@ class DistributionSerializer(ModelSerializer):
     """
 
     pulp_href = DetailIdentityField(view_name_pattern=r"distributions(-.*/.*)-detail")
-    pulp_labels = LabelsField(required=False)
+    pulp_labels = serializers.HStoreField(required=False, validators=[pulp_labels_validator])
 
     base_path = serializers.CharField(
         help_text=_(

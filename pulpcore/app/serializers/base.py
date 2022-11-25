@@ -180,6 +180,11 @@ class ModelSerializer(
         Returns:
             instance: The created of resource
         """
+        # Circular import (But this is intended to be removed in 3.25 anyway).
+        from pulpcore.app.serializers import LabelsField
+
+        if not isinstance(self.fields.get("pulp_labels"), LabelsField):
+            return super().create(validated_data)
         labels = validated_data.pop("pulp_labels", {})
         with transaction.atomic():
             instance = super().create(validated_data)
@@ -196,6 +201,11 @@ class ModelSerializer(
         Returns:
             instance: The updated instance of resource
         """
+        # Circular import (But this is intended to be removed in 3.25 anyway).
+        from pulpcore.app.serializers import LabelsField
+
+        if not isinstance(self.fields.get("pulp_labels"), LabelsField):
+            return super().update(instance, validated_data)
         labels = validated_data.pop("pulp_labels", None)
         with transaction.atomic():
             instance = super().update(instance, validated_data)

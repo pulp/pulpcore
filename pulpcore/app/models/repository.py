@@ -10,6 +10,7 @@ import logging
 import django
 from asyncio_throttle import Throttler
 from dynaconf import settings
+from django.contrib.postgres.fields import HStoreField
 from django.core.validators import MinValueValidator
 from django.db import models, transaction
 from django.db.models import F, Func, Q, Value
@@ -40,6 +41,7 @@ class Repository(MasterModel):
     Fields:
 
         name (models.TextField): The repository name.
+        pulp_labels (HStoreField): Dictionary of string values.
         description (models.TextField): An optional description.
         next_version (models.PositiveIntegerField): A record of the next version number to be
             created.
@@ -57,6 +59,7 @@ class Repository(MasterModel):
     REMOTE_TYPES = []
 
     name = models.TextField(db_index=True, unique=True)
+    pulp_labels = HStoreField(default=dict)
     description = models.TextField(null=True)
     next_version = models.PositiveIntegerField(default=0)
     retain_repo_versions = models.PositiveIntegerField(default=None, null=True)
@@ -299,6 +302,7 @@ class Remote(MasterModel):
     Fields:
 
         name (models.TextField): The remote name.
+        pulp_labels (HStoreField): Dictionary of string values.
         url (models.TextField): The URL of an external content source.
         ca_cert (models.TextField): A PEM encoded CA certificate used to validate the
             server certificate presented by the external source.
@@ -350,6 +354,7 @@ class Remote(MasterModel):
     )
 
     name = models.TextField(db_index=True, unique=True)
+    pulp_labels = HStoreField(default=dict)
 
     url = models.TextField()
 

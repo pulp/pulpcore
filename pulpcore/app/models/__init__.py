@@ -4,6 +4,8 @@
 from .base import (  # noqa
     BaseModel,
     Label,
+    LabeledBaseModel,
+    LabeledMasterModel,
     MasterModel,
     pulp_uuid,
 )

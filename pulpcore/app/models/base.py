@@ -8,6 +8,8 @@ from django.db.models import options
 from django.db.models.base import ModelBase
 from django_lifecycle import LifecycleModel
 
+from pulpcore.app.loggers import deprecation_logger
+
 
 def pulp_uuid():
     """
@@ -43,6 +45,13 @@ class Label(LifecycleModel):
 
     content_object = GenericForeignKey("content_type", "object_id", for_concrete_model=False)
 
+    def __init__(self, *args, **kwargs):
+        deprecation_logger.warning(
+            "'Label' is deprecated and will be removed in pulpcore==3.25;"
+            " use an 'HStoreField' named 'pulp_labels' instead."
+        )
+        super().__init__(*args, **kwargs)
+
     class Meta:
         unique_together = [["content_type", "object_id", "key"]]
 
@@ -59,7 +68,8 @@ class BaseModel(LifecycleModel):
         pulp_last_updated (models.DateTimeField): Last updated timestamp UTC.
 
     Relations:
-        pulp_labels (GenericRelation): A list of key/value labels.
+        user_roles (GenericRelation): List of user role associations with this object.
+        group_roles (GenericRelation): List of group role associations with this object.
 
     References:
 
@@ -71,7 +81,6 @@ class BaseModel(LifecycleModel):
     pulp_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     pulp_created = models.DateTimeField(auto_now_add=True)
     pulp_last_updated = models.DateTimeField(auto_now=True, null=True)
-    pulp_labels = GenericRelation(Label)
     user_roles = GenericRelation("core.UserRole")
     group_roles = GenericRelation("core.GroupRole")
 
@@ -88,6 +97,37 @@ class BaseModel(LifecycleModel):
 
     def __repr__(self):
         return str(self)
+
+
+class LabeledBaseModel(BaseModel):
+    """
+    Base model class for all Pulp models using deprecated labels.
+
+    This class is DEPRECATED and scheduled for removal in 3.25.
+
+    This model inherits from `LifecycleModel` which allows all Pulp models to be used with
+    `django-lifecycle`.
+
+    Fields:
+        pulp_created (models.DateTimeField): Created timestamp UTC.
+        pulp_last_updated (models.DateTimeField): Last updated timestamp UTC.
+
+    Relations:
+        pulp_labels (GenericRelation): A list of key/value labels.
+        user_roles (GenericRelation): List of user role associations with this object.
+        group_roles (GenericRelation): List of group role associations with this object.
+
+    References:
+
+        * https://docs.djangoproject.com/en/3.2/topics/db/models/#automatic-primary-key-fields
+        * https://rsinger86.github.io/django-lifecycle/
+
+    """
+
+    pulp_labels = GenericRelation("core.Label")
+
+    class Meta:
+        abstract = True
 
 
 class MasterModelMeta(ModelBase):
@@ -247,3 +287,36 @@ def master_model(options):
 
 
 options.Options.master_model = property(master_model)
+
+
+class LabeledMasterModel(MasterModel):
+    """
+    Base model for the "Master" model in a "Master-Detail" relationship using deprecated labels.
+
+    This class is DEPRECATED and scheduled for removal in 3.25.
+
+    Provides methods for casting down to detail types, back up to the master type,
+    as well as a model field for tracking the type.
+
+    Attributes:
+
+        TYPE (str): Default constant value saved into the ``pulp_type``
+            field of Model instances
+
+    Fields:
+
+        pulp_type: The user-facing string identifying the detail type of this model
+
+    Warning:
+        Subclasses of this class rely on there being no other parent/child Model
+        relationships than the Master/Detail relationship. All subclasses must use
+        only abstract Model base classes for MasterModel to behave properly.
+        Specifically, OneToOneField relationships must not be used in any MasterModel
+        subclass.
+
+    """
+
+    pulp_labels = GenericRelation("core.Label")
+
+    class Meta:
+        abstract = True
