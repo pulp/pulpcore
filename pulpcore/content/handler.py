@@ -95,7 +95,9 @@ class DistroListings(HTTPOk):
             .distinct()
         )
         directory_list = (f"{b}/" for b in base_paths)
-        html = Handler.render_html(directory_list)
+        if path == "":
+            path = settings.CONTENT_PATH_PREFIX
+        html = Handler.render_html(directory_list, path=path)
         super().__init__(body=html, headers={"Content-Type": "text/html"})
 
 
@@ -346,7 +348,7 @@ class Handler:
         return headers
 
     @staticmethod
-    def render_html(directory_list):
+    def render_html(directory_list, path="", dates=None):
         """
         Render a list of strings as an HTML list of links.
 
@@ -356,21 +358,30 @@ class Handler:
         Returns:
             String representing HTML of the directory listing.
         """
+        if dates is None:
+            dates = dict()
         template = Template(
             """
-        <!DOCTYPE html>
-        <html>
-            <body>
-                <ul>
-                {% for name in dir_list %}
-                    <li><a href="{{ name|e }}">{{ name|e }}</a></li>
-                {% endfor %}
-                </ul>
-            </body>
-        </html>
-        """
+<html>
+<head><title>Index of {{ path }}</title></head>
+<body bgcolor="white">
+<h1>Index of {{ path }}</h1>
+<hr><pre>
+<a href="../">../</a>
+{% for name in dir_list -%}
+{% if dates.get(name, "") -%}
+{% set date =  dates.get(name).strftime("%d-%b-%Y %H:%M") -%}
+{% else -%}
+{% set date = "" -%}
+{% endif -%}
+<a href="{{ name|e }}">{{ name|e }}</a>{% for number in range(100 - name|e|length) %} """
+            """{% endfor %}{{ date }}
+{% endfor -%}
+</pre><hr></body>
+</html>
+"""
         )
-        return template.render(dir_list=sorted(directory_list))
+        return template.render(dir_list=sorted(directory_list), dates=dates, path=path)
 
     async def list_directory(self, repo_version, publication, path):
         """
@@ -398,13 +409,16 @@ class Handler:
                 raise Exception("Either a repo_version or publication is required.")
             if publication and repo_version:
                 raise Exception("Either a repo_version or publication can be specified.")
-
             directory_list = set()
-
+            dates = {}
             if publication:
-                pas = publication.published_artifact.filter(relative_path__startswith=path)
+                pas = publication.published_artifact.select_related("content_artifact").filter(
+                    relative_path__startswith=path
+                )
                 for pa in pas:
-                    directory_list.add(file_or_directory_name(path, pa.relative_path))
+                    name = file_or_directory_name(path, pa.relative_path)
+                    directory_list.add(name)
+                    dates.update({name: pa.content_artifact.pulp_created})
 
                 if publication.pass_through:
                     cas = ContentArtifact.objects.filter(
@@ -412,17 +426,21 @@ class Handler:
                         relative_path__startswith=path,
                     )
                     for ca in cas:
-                        directory_list.add(file_or_directory_name(path, ca.relative_path))
+                        name = file_or_directory_name(path, ca.relative_path)
+                        directory_list.add(name)
+                        dates.update({name: ca.pulp_created})
 
             if repo_version:
                 cas = ContentArtifact.objects.filter(
                     content__in=repo_version.content, relative_path__startswith=path
                 )
                 for ca in cas:
-                    directory_list.add(file_or_directory_name(path, ca.relative_path))
+                    name = file_or_directory_name(path, ca.relative_path)
+                    directory_list.add(name)
+                    dates.update({name: ca.pulp_created})
 
             if directory_list:
-                return directory_list
+                return directory_list, dates
             else:
                 raise PathNotResolved(path)
 
@@ -517,12 +535,13 @@ class Handler:
                     rel_path = index_path
                     headers = self.response_headers(rel_path)
                 except ObjectDoesNotExist:
-                    dir_list = await self.list_directory(None, publication, rel_path)
+                    dir_list, dates = await self.list_directory(None, publication, rel_path)
                     dir_list.update(
                         await sync_to_async(distro.content_handler_list_directory)(rel_path)
                     )
                     return HTTPOk(
-                        headers={"Content-Type": "text/html"}, body=self.render_html(dir_list)
+                        headers={"Content-Type": "text/html"},
+                        body=self.render_html(dir_list, path=request.path, dates=dates),
                     )
 
             # published artifact
@@ -590,12 +609,13 @@ class Handler:
                 if contentartifact_exists:
                     rel_path = index_path
                 else:
-                    dir_list = await self.list_directory(repo_version, None, rel_path)
+                    dir_list, dates = await self.list_directory(repo_version, None, rel_path)
                     dir_list.update(
                         await sync_to_async(distro.content_handler_list_directory)(rel_path)
                     )
                     return HTTPOk(
-                        headers={"Content-Type": "text/html"}, body=self.render_html(dir_list)
+                        headers={"Content-Type": "text/html"},
+                        body=self.render_html(dir_list, path=request.path, dates=dates),
                     )
 
             try:
