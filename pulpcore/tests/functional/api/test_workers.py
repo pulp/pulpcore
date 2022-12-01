@@ -1,10 +1,9 @@
 """Tests related to the workers."""
 import pytest
+import subprocess
 from datetime import datetime, timedelta
 from random import choice
 from time import sleep
-
-from pulp_smash import utils
 
 
 _DYNAMIC_WORKER_ATTRS = ("last_heartbeat", "current_task")
@@ -72,8 +71,7 @@ def test_worker_actions(workers_api_client):
 def task_schedule(cli_client):
     name = "test_schedule"
     task_name = "pulpcore.app.tasks.test.dummy_task"
-    utils.execute_pulpcore_python(
-        cli_client,
+    schedule_commands = (
         "from django.utils.timezone import now;"
         "from datetime import timedelta;"
         "from pulpcore.app.models import TaskSchedule;"
@@ -82,14 +80,19 @@ def task_schedule(cli_client):
         "TaskSchedule("
         f"    name='{name}', task_name='{task_name}', "
         "    dispatch_interval=dispatch_interval, next_dispatch=next_dispatch"
-        ").save();",
+        ").save();"
     )
+    process = subprocess.run(["pulpcore-manager", "shell", "-c", schedule_commands])
+    assert process.returncode == 0
+
     yield {"name": name, "task_name": task_name}
-    utils.execute_pulpcore_python(
-        cli_client,
+
+    unschedule_commands = (
         "from pulpcore.app.models import TaskSchedule;"
-        f"TaskSchedule.objects.get(name='{name}').delete();",
+        f"TaskSchedule.objects.get(name='{name}').delete();"
     )
+    process = subprocess.run(["pulpcore-manager", "shell", "-c", unschedule_commands])
+    assert process.returncode == 0
 
 
 @pytest.mark.parallel

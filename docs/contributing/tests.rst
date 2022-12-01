@@ -1,5 +1,4 @@
 .. _istqb: https://www.istqb.org/downloads/syllabi/foundation-level-syllabus.html
-.. _Pulp Smash: https://github.com/pulp/pulp-smash/
 
 .. _tests:
 
@@ -34,9 +33,6 @@ Functional Tests
 Functional tests verify a specific feature.
 In general functional tests tend to answer the question "As an user can I do this?"
 
-Functional tests for Pulp are written using `Pulp Smash`_ . Pulp smash is a test
-toolkit written to ease the testing of Pulp.
-
 It is highly encouraged to accompany new features with functional
 tests in `pulpcore/functional
 <https://github.com/pulp/pulpcore/tree/master/pulpcore/tests/functional>`_.
@@ -62,23 +58,18 @@ this can be accomplished by `workon pulp; pulpcore-manager runserver 24817`. The
 ``pulpcore-manager`` command is ``manage.py`` configured with the
 ``DJANGO_SETTINGS_MODULE="pulpcore.app.settings"``.
 
-Functional tests require a valid *pulp-smash*
-`config <https://pulp-smash.readthedocs.io/en/latest/configuration.html>`_ file.
-This can be created with `pulp-smash settings create`.
-
 Using pulplift
 ^^^^^^^^^^^^^^
 
-When running one of the `pulp3-source-*` boxes in `pulplift`, the smash config is already in
-place.  Also, all the services are running.  They should be restarted with `prestart` if any pulp
-code (not test code) has been changed.
+When running one of the `pulp3-source-*` boxes in `pulplift`, all the services are running.  They
+should be restarted with `prestart` if any pulp code (not test code) has been changed.
 
 When testing S3 support, you can start and configure a local `minio` container with `pminio`.
 
 Pulp functional tests use a set of upstream fixture repositories hosted on
 `fixtures.pulpproject.org <https://fixtures.pulpproject.org/>`_.  In case you want serve those
 locally, you can run `pfixtures` which will execute a `nginx` container with a copy of those
-fixtures and configure `pulp-smash` to use it.
+fixtures.
 
 For more info about Pulp development specific helper commands, you can consult `phelp`.
 

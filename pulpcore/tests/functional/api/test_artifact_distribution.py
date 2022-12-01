@@ -1,9 +1,8 @@
 import requests
+import subprocess
+from hashlib import sha256
 
 from django.conf import settings
-
-from hashlib import sha256
-from pulp_smash import utils
 
 
 OBJECT_STORAGES = (
@@ -15,12 +14,14 @@ OBJECT_STORAGES = (
 def test_artifact_distribution(cli_client, random_artifact):
     artifact_uuid = random_artifact.pulp_href.split("/")[-2]
 
-    artifact_url = utils.execute_pulpcore_python(
-        cli_client,
+    commands = (
         "from pulpcore.app.models import Artifact;"
         "from pulpcore.app.util import get_artifact_url;"
-        f"print(get_artifact_url(Artifact.objects.get(pk='{artifact_uuid}')));",
+        f"print(get_artifact_url(Artifact.objects.get(pk='{artifact_uuid}')));"
     )
+    process = subprocess.run(["pulpcore-manager", "shell", "-c", commands], capture_output=True)
+    assert process.returncode == 0
+    artifact_url = process.stdout.decode().strip()
 
     response = requests.get(artifact_url)
     response.raise_for_status()
