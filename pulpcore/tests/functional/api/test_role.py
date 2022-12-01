@@ -1,8 +1,6 @@
 import uuid
 import pytest
 
-from pulp_smash.pulp3 import constants
-
 
 def test_contains_permission_filter(roles_api_client):
     """Test contains_permission query parameter."""
@@ -36,10 +34,10 @@ def test_contains_permission_filter(roles_api_client):
 
 
 @pytest.mark.parallel
-def test_for_object_type_filter(roles_api_client, role_factory):
+def test_for_object_type_filter(pulp_api_v3_url, roles_api_client, role_factory):
     """Test for_object_type query parameter."""
 
-    group_href = constants.BASE_PATH + "groups/"
+    group_href = pulp_api_v3_url + "groups/"
     prefix = str(uuid.uuid4())
 
     multiple = role_factory(
