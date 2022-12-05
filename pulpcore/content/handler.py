@@ -9,6 +9,7 @@ from aiohttp.web import FileResponse, StreamResponse, HTTPOk
 from aiohttp.web_exceptions import (
     HTTPForbidden,
     HTTPFound,
+    HTTPMovedPermanently,
     HTTPNotFound,
     HTTPRequestRangeNotSatisfiable,
 )
@@ -278,6 +279,9 @@ class Handler:
             DistroListings: when multiple matches are possible.
             PathNotResolved: when not matched.
         """
+        path_ends_in_slash = path.endswith("/")
+        if not path_ends_in_slash:
+            path = f"{path}/"
         base_paths = cls._base_paths(path)
         distro_model = cls.distribution_model or Distribution
         try:
@@ -292,8 +296,11 @@ class Handler:
             if path.rstrip("/") in base_paths:
                 distros = distro_model.objects.filter(base_path__startswith=path)
                 if distros.count():
-                    raise DistroListings(path=path, distros=distros)
-
+                    if path_ends_in_slash:
+                        raise DistroListings(path=path, distros=distros)
+                    else:
+                        # The list of a subset of distributions was requested without a trailing /
+                        raise HTTPMovedPermanently(f"{settings.CONTENT_PATH_PREFIX}{path}")
             log.debug(
                 _("Distribution not matched for {path} using: {base_paths}").format(
                     path=path, base_paths=base_paths
@@ -439,10 +446,7 @@ class Handler:
                     directory_list.add(name)
                     dates.update({name: ca.pulp_created})
 
-            if directory_list:
-                return directory_list, dates
-            else:
-                raise PathNotResolved(path)
+            return directory_list, dates
 
         return await sync_to_async(list_directory_blocking)()
 
@@ -479,7 +483,6 @@ class Handler:
             :class:`aiohttp.web.StreamResponse` or :class:`aiohttp.web.FileResponse`: The response
                 streamed back to the client.
         """
-
         distro = await sync_to_async(self._match_distribution)(path)
 
         await sync_to_async(self._permit)(request, distro)
@@ -487,6 +490,10 @@ class Handler:
         rel_path = path.lstrip("/")
         rel_path = rel_path[len(distro.base_path) :]
         rel_path = rel_path.lstrip("/")
+
+        if rel_path == "" and not path.endswith("/"):
+            # The root of a distribution base_path was requested without a slash
+            raise HTTPMovedPermanently(f"{request.path}/")
 
         content_handler_result = await sync_to_async(distro.content_handler)(rel_path)
         if content_handler_result is not None:
@@ -524,25 +531,33 @@ class Handler:
             await sync_to_async(get_latest_publication_or_version_blocking)()
 
         if publication:
-            if rel_path == "" or rel_path[-1] == "/":
-                try:
-                    index_path = "{}index.html".format(rel_path)
+            ends_in_slash = rel_path == "" or rel_path.endswith("/")
+            if ends_in_slash is False:
+                rel_path = f"{rel_path}/"
+            try:
+                index_path = "{}index.html".format(rel_path)
 
-                    await sync_to_async(publication.published_artifact.get)(
-                        relative_path=index_path
-                    )
-
-                    rel_path = index_path
-                    headers = self.response_headers(rel_path)
-                except ObjectDoesNotExist:
-                    dir_list, dates = await self.list_directory(None, publication, rel_path)
-                    dir_list.update(
-                        await sync_to_async(distro.content_handler_list_directory)(rel_path)
-                    )
+                await sync_to_async(publication.published_artifact.get)(relative_path=index_path)
+                if ends_in_slash is False:
+                    # index.html found, but user didn't specify a trailing slash
+                    raise HTTPMovedPermanently(f"{request.path}/")
+                rel_path = index_path
+                headers = self.response_headers(rel_path)
+            except ObjectDoesNotExist:
+                dir_list, dates = await self.list_directory(None, publication, rel_path)
+                dir_list.update(
+                    await sync_to_async(distro.content_handler_list_directory)(rel_path)
+                )
+                if dir_list and ends_in_slash is False:
+                    # Directory can be listed, but user did not specify trailing slash
+                    raise HTTPMovedPermanently(f"{request.path}/")
+                elif dir_list:
                     return HTTPOk(
                         headers={"Content-Type": "text/html"},
                         body=self.render_html(dir_list, path=request.path, dates=dates),
                     )
+            if ends_in_slash is False:
+                rel_path = rel_path[:-1]
 
             # published artifact
             try:
