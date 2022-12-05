@@ -367,7 +367,7 @@ class Handler:
 <body bgcolor="white">
 <h1>Index of {{ path }}</h1>
 <hr><pre>
-<a href="../">../</a>
+{%- if not root %}<a href="../">../</a>{% endif %}
 {% for name in dir_list -%}
 {% if dates.get(name, "") -%}
 {% set date =  dates.get(name).strftime("%d-%b-%Y %H:%M") -%}
@@ -381,7 +381,12 @@ class Handler:
 </html>
 """
         )
-        return template.render(dir_list=sorted(directory_list), dates=dates, path=path)
+        return template.render(
+            dir_list=sorted(directory_list),
+            dates=dates,
+            path=path,
+            root=path == settings.CONTENT_PATH_PREFIX,
+        )
 
     async def list_directory(self, repo_version, publication, path):
         """
