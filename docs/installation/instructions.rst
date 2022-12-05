@@ -15,16 +15,15 @@ Fedora, CentOS, and Mac OSX.
     There are risks associated with this decision. See your distribution's docs for more details
 
 
-Ansible Installation (Recommended)
-----------------------------------
+OCI Images
+----------
+For comprehensive and up-to-date instructions about using the Pulp OCI Images, see the
+`Pulp OCI Images documentation <https://docs.pulpproject.org/pulp_oci_images/>`__.
 
-The Pulp 3 Ansible Installer is a collection of Ansible roles designed to automate the installation of Pulp and any content plugins that you want.
-
-You can customize and configure your Pulp deployment through the Ansible variables for each role.
-
-For comprehensive and up-to-date instructions about using the Pulp Ansible installer, see the
-`Pulp Installer documentation <https://docs.pulpproject.org/pulp_installer/>`__.
-
+Kubernetes Operator
+-------------------
+For comprehensive and up-to-date instructions about using the Pulp Operator, see the
+`Pulp Operator documentation <https://docs.pulpproject.org/pulp_operator/>`__.
 
 PyPI Installation
 -----------------
