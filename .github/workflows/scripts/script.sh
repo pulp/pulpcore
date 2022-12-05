@@ -72,6 +72,8 @@ cat unittest_requirements.txt | cmd_stdin_prefix bash -c "cat > /tmp/unittest_re
 cat functest_requirements.txt | cmd_stdin_prefix bash -c "cat > /tmp/functest_requirements.txt"
 cmd_prefix pip3 install -r /tmp/unittest_requirements.txt
 cmd_prefix pip3 install -r /tmp/functest_requirements.txt
+cat ../pulp_file/functest_requirements.txt | cmd_stdin_prefix bash -c "cat > /tmp/pulp_file_functest_requirements.txt"
+cmd_prefix pip3 install -r /tmp/pulp_file_functest_requirements.txt
 cmd_prefix pip3 install --upgrade ../pulp-smash
 
 cd ../pulp-openapi-generator
