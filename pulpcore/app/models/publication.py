@@ -529,8 +529,11 @@ class Distribution(MasterModel):
         pulp_domain (models.ForeignKey): The domain the Distribution is a part of.
     """
 
-    # If distribution serves publications, set by subclasses for proper handling in content app
+    # If distribution serves publications, set by subclasses for proper handling in content app.
     SERVE_FROM_PUBLICATION = False
+
+    # Plugins can opt out of redirecting by settings this to False.
+    REDIRECT_ON_MISSING_SLASH = True
 
     name = models.TextField(db_index=True)
     pulp_labels = HStoreField(default=dict)

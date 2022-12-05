@@ -1,0 +1,5 @@
+Starting with this release, pulpcore will default to redirect clients of the content app when
+given path locations without the trailing slash. 
+
+A plugin must set ``REDIRECT_ON_MISSING_SLASH=False`` on distribution models for content types
+where this is inappropriate.
