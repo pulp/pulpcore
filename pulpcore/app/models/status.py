@@ -4,6 +4,7 @@ Django models related to the Status API
 from datetime import timedelta
 
 from django.conf import settings
+from django.contrib.postgres.fields import HStoreField
 from django.db import models
 from django.utils import timezone
 
@@ -42,6 +43,7 @@ class ContentAppStatus(BaseModel):
 
     name = models.TextField(db_index=True, unique=True)
     last_heartbeat = models.DateTimeField(auto_now=True)
+    versions = HStoreField(default=dict)
 
     @property
     def online(self):
