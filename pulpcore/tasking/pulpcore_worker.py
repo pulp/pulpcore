@@ -44,8 +44,9 @@ from pulpcore.constants import (  # noqa: E402: module level not at top of file
     VAR_TMP_PULP,
 )
 
-from pulpcore.exceptions import AdvisoryLockError  # noqa: E402: module level not at top of file
-from pulpcore.tasking.storage import WorkerDirectory  # noqa: E402: module level not at top of file
+from pulpcore.app.apps import pulp_plugin_configs  # noqa: E402: module level not at top of file
+from pulpcore.exceptions import AdvisoryLockError  # noqa: E402
+from pulpcore.tasking.storage import WorkerDirectory  # noqa: E402
 from pulpcore.tasking.tasks import dispatch_scheduled_tasks  # noqa: E402
 from pulpcore.tasking.util import _delete_incomplete_resources  # noqa: E402
 
@@ -91,41 +92,14 @@ class PGAdvisoryLock:
             raise RuntimeError("Lock not held.")
 
 
-def handle_worker_heartbeat(worker_name):
-    """
-    This is a generic function for updating worker heartbeat records.
-
-    Existing Worker objects are searched for one to update. If an existing one is found, it is
-    updated. Otherwise a new Worker entry is created. Logging at the info level is also done.
-
-    Args:
-        worker_name (str): The hostname of the worker
-    """
-    worker, created = Worker.objects.get_or_create(name=worker_name)
-
-    if created:
-        _logger.info(_("New worker '{name}' discovered").format(name=worker_name))
-    elif worker.online is False:
-        _logger.info(_("Worker '{name}' is back online.").format(name=worker_name))
-
-    worker.save_heartbeat()
-
-    msg = "Worker heartbeat from '{name}' at time {timestamp}".format(
-        timestamp=worker.last_heartbeat, name=worker_name
-    )
-
-    _logger.debug(msg)
-
-    return worker
-
-
 class NewPulpWorker:
     def __init__(self):
         self.shutdown_requested = False
         self.name = f"{os.getpid()}@{socket.getfqdn()}"
         self.heartbeat_period = settings.WORKER_TTL / 3
+        self.versions = {app.label: app.version for app in pulp_plugin_configs()}
         self.cursor = connection.cursor()
-        self.worker = handle_worker_heartbeat(self.name)
+        self.worker = self.handle_worker_heartbeat()
         self.task_grace_timeout = 0
         self.worker_cleanup_countdown = random.randint(
             WORKER_CLEANUP_INTERVAL / 10, WORKER_CLEANUP_INTERVAL
@@ -149,6 +123,35 @@ class NewPulpWorker:
 
         self.shutdown_requested = True
 
+    def handle_worker_heartbeat(self):
+        """
+        Create or update worker heartbeat records.
+
+        Existing Worker objects are searched for one to update. If an existing one is found, it is
+        updated. Otherwise a new Worker entry is created. Logging at the info level is also done.
+
+        """
+        worker, created = Worker.objects.get_or_create(
+            name=self.name, defaults={"versions": self.versions}
+        )
+        if not created and worker.versions != self.versions:
+            worker.versions = self.versions
+            worker.save(update_fields=["versions"])
+
+        if created:
+            _logger.info(_("New worker '{name}' discovered").format(name=self.name))
+        elif worker.online is False:
+            _logger.info(_("Worker '{name}' is back online.").format(name=self.name))
+
+        worker.save_heartbeat()
+
+        msg = "Worker heartbeat from '{name}' at time {timestamp}".format(
+            timestamp=worker.last_heartbeat, name=self.name
+        )
+        _logger.debug(msg)
+
+        return worker
+
     def shutdown(self):
         self.worker.delete()
         _logger.info(_("Worker %s was shut down."), self.name)
@@ -162,7 +165,7 @@ class NewPulpWorker:
 
     def beat(self):
         if self.worker.last_heartbeat < timezone.now() - timedelta(seconds=self.heartbeat_period):
-            self.worker = handle_worker_heartbeat(self.name)
+            self.worker = self.handle_worker_heartbeat()
             if self.shutdown_requested:
                 self.task_grace_timeout -= 1
             self.worker_cleanup_countdown -= 1

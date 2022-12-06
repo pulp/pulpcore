@@ -39,16 +39,21 @@ async def _heartbeat():
     msg = "Content App '{name}' heartbeat written, sleeping for '{interarrival}' seconds".format(
         name=name, interarrival=heartbeat_interval
     )
+    versions = {app.label: app.version for app in pulp_plugin_configs()}
 
     while True:
 
         try:
             content_app_status, created = await sync_to_async(
                 ContentAppStatus.objects.get_or_create
-            )(name=name)
+            )(name=name, defaults={"versions": versions})
 
             if not created:
                 await sync_to_async(content_app_status.save_heartbeat)()
+
+                if content_app_status.versions != versions:
+                    content_app_status.versions = versions
+                    await sync_to_async(content_app_status.save)(update_fields=["versions"])
 
             log.debug(msg)
         except (InterfaceError, OperationalError):

@@ -9,7 +9,7 @@ from datetime import timedelta
 from gettext import gettext as _
 
 from django.conf import settings
-from django.contrib.postgres.fields import ArrayField
+from django.contrib.postgres.fields import ArrayField, HStoreField
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import connection, models
 from django.utils import timezone
@@ -21,7 +21,6 @@ from pulpcore.app.models import (
 )
 from pulpcore.constants import TASK_CHOICES, TASK_INCOMPLETE_STATES, TASK_STATES
 from pulpcore.exceptions import AdvisoryLockError, exception_to_dict
-from pulpcore.tasking.constants import TASKING_CONSTANTS
 
 
 _logger = logging.getLogger(__name__)
@@ -63,18 +62,6 @@ class WorkerManager(models.Manager):
         age_threshold = timezone.now() - age
         return self.filter(last_heartbeat__lt=age_threshold)
 
-    def resource_managers(self):
-        """
-        Returns a queryset of resource managers.
-
-        Resource managers are identified by their name. Note that some of these may be offline.
-
-        Returns:
-            :class:`django.db.models.query.QuerySet`:  A query set of the Worker objects which
-                which match the resource manager name.
-        """
-        return self.filter(name=TASKING_CONSTANTS.RESOURCE_MANAGER_WORKER_NAME)
-
 
 class Worker(BaseModel):
     """
@@ -90,6 +77,7 @@ class Worker(BaseModel):
 
     name = models.TextField(db_index=True, unique=True)
     last_heartbeat = models.DateTimeField(auto_now=True)
+    versions = HStoreField(default=dict)
 
     @property
     def current_task(self):
