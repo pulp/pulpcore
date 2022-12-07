@@ -678,3 +678,99 @@ statements, migration output print statements, django management commands, etc. 
 internationalized will remain in English. This expectation was formed after feedback from
 multi-language speakers who believe having error messages for admins in English would reduce the
 time to finding a fix and was generally less surprising.
+
+
+.. _zero-downtime-upgrades:
+
+Zero-Downtime Upgrades
+----------------------
+
+Eventually, Pulp users will be able to upgrade without first stopping Pulp services. This has been
+`requested from the community <https://discourse.pulpproject.org/t/support-zero-downtime-updates/645>`_,
+To work towards that goal, developers of ``pulpcore`` or a plugin should follow these requirements:
+
+* Migrations must not break earlier versions code still running during an upgrade.
+* Task code must be backwards compatible until the next major Pulp version.
+
+Future user upgrades will likely run as follow:
+
+1. Run the migrations while old pulp code is online. Old code, is using the new data format.
+2. Rolling restart old code to become new code. Old and new code is running at the same time!
+
+
+Zero-Downtime Migrations
+========================
+
+The significant challenge with online migrations is that the db state the migration applies has to
+work with both newer and older versions of Pulp code. For example, consider a model field that is to
+be renamed. After renaming the field, Django would generate a migration that renames the specified
+column. This would break all previous code which expects the previous column name.
+
+Before getting into specific suggestions, the general pattern is to do the following:
+
+1. The migration should be split into two parts: a "compatible with earlier code migration" and a
+   "breaking earlier code migration". In continuing the column rename example, it would become a
+   "create a new column" migration, and later a "delete the original column" migration.
+
+2. The "breaking earlier code migration" should be delivered in a later release. It contains the
+   the component versions that would not be broken by that change. When that migration goes to run
+   it uses the db info in the db for each running pulp process to determine if any components are
+   running a version that would break if this change is applied.
+
+The solution to this will be highly dependant on the details of the migration, but here are some
+likely patterns to be applied:
+
+1. Avoid it. Is this rename really that important? Is it worth the trouble?
+
+2. Rename the model attributes in code, but leave the actual column name as-is with
+   the `db_column <https://docs.djangoproject.com/en/3.2/ref/models/fields/#db-column>`_.
+
+3. Have an "old" and a "new" column and use database triggers to keep data written to one to also be
+   written to the other and vice-versa.
+
+Here's an example:
+
+pulp_file wants to rename a model attribute ``old`` to be called ``new`` in the next pulp_file
+release, let's say that's pulp_file 1.10.0. Let's assume that avoiding the rename altogether or
+using the ``db-column`` option to just rename it in the ORM are not viable.
+
+This could be done as follows:
+
+* Add the ``new`` field next to the ``old`` field and have Django auto-create a migration adding
+  ``new``.
+
+* The same migration needs to install a new trigger that anytime ``old`` is written to, ``new`` is
+  also written to and vice-versa. For example, something `like this <https://www.appsloveworld.com/postgresql/100/94/how-to-dual-write-to-two-columns-in-one-table-using-postgres-trigger>`_
+  This allows the new code to read/write exclusively with `new` and the old code to deal with `old`.
+
+* Write a data migration that updates the ``new`` column with ``old`` data in batches. Use batching
+  to avoid a long table-lock.
+
+* Have the codebase of pulp_file 1.10.0 stop using ``old`` entirely.
+
+At a later time, e.g. pulp_file 1.13.0, a migration will be shipped to remove column ``old``. That
+migration needs to do two things things:
+
+* Prior to running ensure via the database records that there are no pulp components running with
+  pulp_file < 1.10.0. If there are, abort running the migration and notify the user they need to
+  upgrade to a version pulp_file>=1.10,<1.13.0.
+
+* Remove the database trigger and then the column ``old``.
+
+
+Data Migrations
+===============
+
+One problem that can arise from data migrations is the use of table-locks which would prevent other
+code still running from executing concurrently. The typical solution is to have data migrations
+operate in transactional batches which avoids a table-lock and instead creates row-locks.
+
+
+Tasking System
+==============
+
+Tasking also has some considerations to allow code upgrades; specifically, tasks dispatched from
+older codebases could run on newer, upgraded workers. To ensure this always works tasks must be
+forever backwards compatible until the next major Pulp version. For example, you cannot have a
+breaking signature change in tasking code and if this is needed you need to make a new task name and
+preserve the old code until the next major Pulp version.
