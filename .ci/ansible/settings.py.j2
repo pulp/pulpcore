@@ -8,7 +8,7 @@ TOKEN_SIGNATURE_ALGORITHM = "ES256"
 CACHE_ENABLED = True
 REDIS_HOST = "localhost"
 REDIS_PORT = 6379
-TELEMETRY = False
+ANALYTICS = False
 
 {% if api_root is defined %}
 API_ROOT = {{ api_root | repr }}

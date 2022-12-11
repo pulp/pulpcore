@@ -96,10 +96,12 @@ jobs:
           - TEST: docs
           - TEST: azure
           - TEST: s3
+          - TEST: lowerbounds
     outputs:
       deprecations-pulp: ${{ steps.deprecations.outputs.deprecations-pulp }}
       deprecations-azure: ${{ steps.deprecations.outputs.deprecations-azure }}
       deprecations-s3: ${{ steps.deprecations.outputs.deprecations-s3 }}
+      deprecations-lowerbounds: ${{ steps.deprecations.outputs.deprecations-lowerbounds }}
 
     steps:
       - uses: actions/checkout@v3
