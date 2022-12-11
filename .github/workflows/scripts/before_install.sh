@@ -107,7 +107,7 @@ fi
 
 cd pulp-cli
 pip install .
-pulp config create --base-url https://pulp --location tests/cli.toml 
+pulp config create --base-url https://pulp  --location tests/cli.toml
 mkdir ~/.config/pulp
 cp tests/cli.toml ~/.config/pulp/cli.toml
 cd ..
@@ -149,6 +149,11 @@ then
 fi
 
 cd pulpcore
+
+if [[ "$TEST" = "lowerbounds" ]]; then
+  python3 .ci/scripts/calc_deps_lowerbounds.py > lowerbounds_requirements.txt
+  mv lowerbounds_requirements.txt requirements.txt
+fi
 
 if [ -f $POST_BEFORE_INSTALL ]; then
   source $POST_BEFORE_INSTALL

@@ -27,6 +27,7 @@ jobs:
           - TEST: azure
           - TEST: s3
           - TEST: generate-bindings
+          - TEST: lowerbounds
 
     steps:
       - uses: actions/checkout@v3
