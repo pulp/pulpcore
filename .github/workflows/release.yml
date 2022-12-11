@@ -86,6 +86,7 @@ jobs:
           - TEST: s3
           - TEST: stream
           - TEST: generate-bindings
+          - TEST: lowerbounds
 
     steps:
       - uses: actions/download-artifact@v3
