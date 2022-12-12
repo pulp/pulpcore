@@ -536,6 +536,34 @@ class Handler:
             await sync_to_async(get_latest_publication_or_version_blocking)()
 
         if publication:
+            ends_in_slash = rel_path == "" or rel_path.endswith("/")
+            if ends_in_slash is False:
+                rel_path = f"{rel_path}/"
+            try:
+                index_path = "{}index.html".format(rel_path)
+
+                await sync_to_async(publication.published_artifact.get)(relative_path=index_path)
+                if ends_in_slash is False:
+                    # index.html found, but user didn't specify a trailing slash
+                    raise HTTPMovedPermanently(f"{request.path}/")
+                rel_path = index_path
+                headers = self.response_headers(rel_path)
+            except ObjectDoesNotExist:
+                dir_list, dates = await self.list_directory(None, publication, rel_path)
+                dir_list.update(
+                    await sync_to_async(distro.content_handler_list_directory)(rel_path)
+                )
+                if dir_list and ends_in_slash is False:
+                    # Directory can be listed, but user did not specify trailing slash
+                    raise HTTPMovedPermanently(f"{request.path}/")
+                elif dir_list:
+                    return HTTPOk(
+                        headers={"Content-Type": "text/html"},
+                        body=self.render_html(dir_list, path=request.path, dates=dates),
+                    )
+            if ends_in_slash is False:
+                rel_path = rel_path[:-1]
+
             # published artifact
             try:
 
@@ -587,33 +615,6 @@ class Handler:
                         return await self._stream_content_artifact(
                             request, StreamResponse(headers=headers), ca
                         )
-
-            # Look for index.html or list the directory
-            ends_in_slash = rel_path == "" or rel_path.endswith("/")
-            if ends_in_slash is False:
-                rel_path = f"{rel_path}/"
-            try:
-                index_path = "{}index.html".format(rel_path)
-
-                await sync_to_async(publication.published_artifact.get)(relative_path=index_path)
-                if ends_in_slash is False:
-                    # index.html found, but user didn't specify a trailing slash
-                    raise HTTPMovedPermanently(f"{request.path}/")
-                rel_path = index_path
-                headers = self.response_headers(rel_path)
-            except ObjectDoesNotExist:
-                dir_list, dates = await self.list_directory(None, publication, rel_path)
-                dir_list.update(
-                    await sync_to_async(distro.content_handler_list_directory)(rel_path)
-                )
-                if dir_list and ends_in_slash is False:
-                    # Directory can be listed, but user did not specify trailing slash
-                    raise HTTPMovedPermanently(f"{request.path}/")
-                elif dir_list:
-                    return HTTPOk(
-                        headers={"Content-Type": "text/html"},
-                        body=self.render_html(dir_list, path=request.path, dates=dates),
-                    )
 
         if repo_version and not publication and not distro.SERVE_FROM_PUBLICATION:
             if rel_path == "" or rel_path[-1] == "/":
