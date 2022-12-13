@@ -505,7 +505,7 @@ def get_redis_status(status_api_client):
 # Object Cleanup fixtures
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="class")
 def add_to_cleanup(monitor_task):
     """Fixture to allow pulp objects to be deleted in reverse order after the test module."""
     obj_refs = []
@@ -530,7 +530,7 @@ def add_to_cleanup(monitor_task):
         monitor_task(deleted_task_href)
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="class")
 def gen_object_with_cleanup(add_to_cleanup, monitor_task):
     def _gen_object_with_cleanup(api_client, *args, **kwargs):
         new_obj = api_client.create(*args, **kwargs)
@@ -557,7 +557,7 @@ def gen_object_with_cleanup(add_to_cleanup, monitor_task):
     return _gen_object_with_cleanup
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="class")
 def add_to_filesystem_cleanup():
     obj_paths = []
 
