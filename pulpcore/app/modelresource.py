@@ -59,6 +59,7 @@ class RepositoryResource(QueryModelResource):
             "next_version",
             "repository_ptr",
             "remote",
+            "pulp_labels",
         )
 
 
