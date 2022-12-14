@@ -1,1 +1,2 @@
 Fixed label querying performance issues.
+In case some labels could not be migrated properly, a ``datarepair-labels`` command was added.
