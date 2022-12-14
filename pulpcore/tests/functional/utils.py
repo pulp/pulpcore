@@ -12,23 +12,26 @@ async def get_response(url):
 SLEEP_TIME = 0.3
 
 
-class PulpTaskError(Exception):
-    """Exception to describe task errors."""
+try:
+    from pulp_smash.pulp3.bindings import PulpTaskError, PulpTaskGroupError
+except ImportError:
 
-    def __init__(self, task):
-        """Provide task info to exception."""
-        description = task.to_dict()["error"]["description"]
-        super().__init__(self, f"Pulp task failed ({description})")
-        self.task = task
+    class PulpTaskError(Exception):
+        """Exception to describe task errors."""
 
+        def __init__(self, task):
+            """Provide task info to exception."""
+            description = task.to_dict()["error"]["description"]
+            super().__init__(self, f"Pulp task failed ({description})")
+            self.task = task
 
-class PulpTaskGroupError(Exception):
-    """Exception to describe task group errors."""
+    class PulpTaskGroupError(Exception):
+        """Exception to describe task group errors."""
 
-    def __init__(self, task_group):
-        """Provide task info to exception."""
-        super().__init__(self, f"Pulp task group failed ({task_group})")
-        self.task_group = task_group
+        def __init__(self, task_group):
+            """Provide task info to exception."""
+            super().__init__(self, f"Pulp task group failed ({task_group})")
+            self.task_group = task_group
 
 
 @dataclass
