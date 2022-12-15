@@ -3,69 +3,14 @@
 import django.contrib.postgres.fields.hstore
 from django.db import migrations
 
-import os
 from django.contrib.postgres.operations import HStoreExtension
-from django.db.models.expressions import OuterRef, RawSQL
-from django.apps import apps as global_apps
-from pulpcore.app.apps import PulpPluginAppConfig
-
-
-KNOWN_CONTENT_PLUGINS = [
-    "ansible",
-    "container",
-    "cookbook",
-    "deb",
-    "file",
-    "gem",
-    "maven",
-    "npm",
-    "ostree",
-    "python",
-    "rpm",
-]
-
-
-def copy_labels_up(apps, schema_editor):
-    ContentType = apps.get_model("contenttypes", "ContentType")
-    Label = apps.get_model("core", "Label")
-
-    labeled_ctypes = [ContentType.objects.get(pk=pk) for pk in Label.objects.values_list("content_type", flat=True).distinct()]
-    for ctype in labeled_ctypes:
-        if ctype.app_label not in KNOWN_CONTENT_PLUGINS + ["core"]:
-            print(f"Warning! Labels for content_type {ctype.app_label}.{ctype.model} could not be migrated. Plugin unknown.")
-            break
-        try:
-            model = apps.get_model(ctype.app_label, ctype.model)
-        except LookupError:
-            print(f"Warning! Labels for content_type {ctype.app_label}.{ctype.model} could not be migrated. Model not available.")
-            break
-        if not hasattr(model, "pulp_labels"):
-            print(f"Warning! Labels for content_type {ctype.app_label}.{ctype.model} could not be migrated. Model has no labels.")
-            break
-
-        label_subq = Label.objects.filter(
-            content_type=ctype, object_id=OuterRef("pulp_id")
-        ).annotate(
-            label_data=RawSQL("hstore(array_agg(key), array_agg(value))", [])
-        ).values("label_data")
-        model.objects.update(pulp_labels=label_subq)
-        Label.objects.filter(content_type=ctype).delete()
-
-    if Label.objects.count():
-        print("Some labels could not be migrated. Please try to run `pulpcore-manager datarepair-labels`.")
 
 
 class Migration(migrations.Migration):
 
     dependencies = [
         ('core', '0097_remove_telemetry_task_schedule'),
-        ('contenttypes', '0002_remove_content_type_name'),
     ]
-    # Depend on all installed plugins containing migrations to be able to use their models.
-    for plugin_config in global_apps.app_configs.values():
-        # To avoid circular dependencies, try to depend only on known plugins predating this migration.
-        if plugin_config.label in KNOWN_CONTENT_PLUGINS:
-            dependencies.append((plugin_config.label, '0001_initial'))
 
     operations = [
         HStoreExtension(),
@@ -84,5 +29,4 @@ class Migration(migrations.Migration):
             name='pulp_labels',
             field=django.contrib.postgres.fields.hstore.HStoreField(default=dict),
         ),
-        migrations.RunPython(code=copy_labels_up, elidable=True),
     ]

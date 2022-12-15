@@ -37,7 +37,7 @@ class Command(BaseCommand):
         try:
             Label = apps.get_model("core", "label")
         except LookupError:
-            print("Nothing todo.")
+            print("Nothing to do.")
             return
 
         labeled_ctypes = [
@@ -55,7 +55,7 @@ class Command(BaseCommand):
                         "Model has no labels."
                     ).format(app_label=ctype.app_label, model=ctype.model)
                 )
-                break
+                continue
 
             print(
                 _("Migrate labels for content_type {app_label}.{model}.").format(
