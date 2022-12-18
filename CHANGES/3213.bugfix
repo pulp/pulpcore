@@ -1,2 +1,0 @@
-Fixed bug where installations with at least one pre-release plugin installed were posting to the
-production analytics site instead of the developer analytics site.
