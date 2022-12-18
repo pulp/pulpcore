@@ -1,2 +1,0 @@
-Deprecated model ``Label`` and serializer field ``LabelField`` and ``LabelSelectFilter`` for
-removal in 3.25.
