@@ -17,6 +17,161 @@ Changelog
 
 .. towncrier release notes start
 
+3.22.0 (2022-12-18)
+===================
+REST API
+--------
+
+Features
+~~~~~~~~
+
+- Added dates to the HTML pages listing the content of distributions. The timestamp is of when the
+  content was created in Pulp.
+  :github:`2054`
+- Create HiddenFieldsMixin serializer and add hidden_fields to RemoteSerializer and UserSerializer.
+  :github:`2825`
+- Added ``pulpcore-manager`` command called ``remove-signing-service`` for removing specified signing services.
+  :github:`2967`
+- Added the option `HIDE_GUARDED_DISTRIBUTIONS` to allow hiding the content guard protected
+  distributions from the listing page.
+  :github:`3061`
+- Added "content_settings" stanza to the /status/ output.
+  :github:`3138`
+- Added expiry to preauthenticated URLs from `ContentRedirectingContentGuard`.
+  :github:`3238`
+- Added ``reserved_resources``, ``reserved_resources__in``, ``exclusive_resources``,
+  ``exclusive_resources__in``, ``shared_resources`` and ``shared_resources__in`` filter to task
+  list endpoint.
+  :github:`3280`
+- The postgresql version is now included in analytics data posted. The payload looks like:
+  ``{`'postgresqlVersion': 90200}``. The integer value is the raw format postgresql reports its
+  version as.
+  :github:`3396`
+- The new ``ANALYTICS`` setting replaced the ``TELEMETRY`` setting to avoid confusion with
+  application metrics that will be exposed using OpenTelemetry.
+  :github:`3417`
+
+
+Bugfixes
+~~~~~~~~
+
+- Fixed the fs exporter to handle the case where there are pre-existing files in the location that FileSystem attempts to export to you get a FileExistsError.
+  :github:`1949`
+- The logging_cid field of a task can no longer be an empty string.
+  :github:`3016`
+- Fixed content-disposition header which is used in the object storage backends.
+  :github:`3124`
+- Fixed the fs exporter to handle the case where hardlink method was requested but pulp and export locations are in different partitions so can't share the same inode.
+  :github:`3187`
+- Another guardrail added around content-stages to address deadlock in a specific usecase.
+  :github:`3192`
+- Fixed bug where installations with at least one pre-release plugin installed were posting to the
+  production analytics site instead of the developer analytics site.
+  :github:`3213`
+- Fixed the worker__in filter for Tasks API.
+  :github:`3235`
+- Do not expose artifact digest via content-disposition header when using Azure backend.
+  :github:`3244`
+- Fixed a bug that disallowed non-admin users to purge completed tasks.
+  :github:`3263`
+- Made ordering consistent between all list API endpoints.
+  :github:`3266`
+- Another step on closing the deadlock-window when syncing overlapping content.
+  :github:`3284`
+- Fixed an occasional 500 error when viewing a repository version content summary while performing a content deletion task.
+  :github:`3299`
+- Fixed an error when raising ``UnexportableArtifactException``.
+  :github:`3313`
+- Hardened the state transition for tasks and ensured a canceled task will have `finished_at` set.
+  :github:`3319`
+- Made sure PulpImport's use of tar.extractall() is safe.
+  :github:`3323`
+- Fixed content disposition header value when content is stored in Azure.
+  :github:`3342`
+- Fixes schema generation to use proper type `uri` for ``HyperlinkRelatedFilter``.
+  :github:`3351`
+- Insured that pulp-export correctly locks repos-being-exported.
+  :github:`3370`
+- Fixed the update of default access policies when fields are missing.
+  :github:`3391`
+- Fixed the openapi spec of "fields" and "exclude_fields" querystring parameters.
+  :github:`3398`
+- Fixed label querying performance issues.
+  In case some labels could not be migrated properly, a ``datarepair-labels`` command was added.
+  :github:`3400`
+- Fix migrating Remotes with @ in path
+  :github:`3409`
+- Fixed the broken link on the root page served by pulpcore-content.
+  :github:`3436`
+
+
+Improved Documentation
+~~~~~~~~~~~~~~~~~~~~~~
+
+- Improvements clarifying how to specify settings and which settings are required.
+  :github:`2417`
+- Documented Pulpcore and Plugin release processes.
+  :github:`3204`
+- Separated the user plugin listing from the plugin developer docs more clearly.
+  :github:`3260`
+- Remove the ansible collection from the recommendation
+  :github:`3430`
+
+
+Deprecations
+~~~~~~~~~~~~
+
+- ``TELEMETRY` setting was deprecated in favor of ``ANALYTICS``.
+  :github:`3417`
+
+
+Misc
+~~~~
+
+- :github:`3232`, :github:`3333`, :github:`3334`, :github:`3461`
+
+
+Plugin API
+----------
+
+Features
+~~~~~~~~
+
+- Added ``get_artifact_url`` to emit preauthed urls to existing artifacts.
+  :github:`2785`
+- The upload feature was changed to accept already existing content. This allows multiple users
+  to own identical content when working with plugins that implement the 'retrieve' method
+  inside their ``ContentUpload`` serializers.
+  :github:`3081`
+- Exposed ``ArtifactResponse`` at ``pulpcore.plugin.responses``.
+  :github:`3340`
+- Exposed the ``get_url`` util function.
+  :github:`3468`
+
+
+Bugfixes
+~~~~~~~~
+
+- Added ``BaseFilterSet`` to ``NamedModelViewSet`` to allow ordering on all list endpoints even
+  without specifying a custom filterset class.
+  :github:`3266`
+
+
+Improved Documentation
+~~~~~~~~~~~~~~~~~~~~~~
+
+- Added documentation for plugin writers on declaring dependencies.
+  :github:`2997`
+
+
+Removals
+~~~~~~~~
+
+- Deprecated model ``Label`` and serializer field ``LabelField`` and ``LabelSelectFilter`` for
+  removal in 3.25.
+  :github:`3400`
+
+
 3.21.3 (2022-11-15)
 ===================
 REST API
