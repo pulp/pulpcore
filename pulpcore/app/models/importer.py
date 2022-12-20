@@ -1,3 +1,4 @@
+from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 
 from pulpcore.app.models import (
@@ -51,8 +52,24 @@ class PulpImporter(Importer):
     @repo_mapping.setter
     def repo_mapping(self, mapping):
         self.repo_map.all().delete()
+        failed_repos = []
+        # Process a mapping to find the destinations that map to the sources
+        # Record all failing destinations to report to the user.
+        # Only create the mappings if *everything* worked - otherweise, fail with error.
+        the_map = {}
         for source, repo_name in mapping.items():
-            repo = Repository.objects.get(name=repo_name)
+            try:
+                repo = Repository.objects.get(name=repo_name)
+                the_map[source] = repo
+            except ObjectDoesNotExist:
+                failed_repos.append(repo_name)
+                continue
+
+        if failed_repos:  # We had a failure - report and leave
+            raise ObjectDoesNotExist(f"names: {str(failed_repos)}")
+
+        # Everything worked - create the mapping
+        for source, repo in the_map.items():
             self.repo_map.create(source_repo=source, repository=repo)
 
     class Meta:

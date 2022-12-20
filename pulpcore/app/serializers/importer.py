@@ -1,6 +1,7 @@
 import os
 from gettext import gettext as _
 
+from django.core.exceptions import ObjectDoesNotExist
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 
@@ -78,9 +79,11 @@ class PulpImporterSerializer(ImporterSerializer):
         importer = super().create(validated_data)
         try:
             importer.repo_mapping = repo_mapping
-        except Exception as err:
+        except ObjectDoesNotExist as err:
             importer.delete()
-            raise serializers.ValidationError(_("Bad repo mapping: {}").format(err))
+            raise serializers.ValidationError(
+                _("Failed to find repositories from repo_mapping: {}").format(err)
+            )
         else:
             return importer
 
