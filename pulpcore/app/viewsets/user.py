@@ -217,8 +217,10 @@ class GroupUserViewSet(NamedModelViewSet):
             )
         try:
             user = User.objects.get(**request.data)
-        except (User.DoesNotExist, FieldError) as exc:
-            raise ValidationError(str(exc))
+        except (User.DoesNotExist, FieldError):
+            raise ValidationError(
+                _("Could not find user {}").format(request.data.get("username", None))
+            )
         group.user_set.add(user)
         group.save()
         serializer = GroupUserSerializer(user, context={"request": request})
