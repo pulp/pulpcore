@@ -298,6 +298,11 @@ def get_artifact_url(artifact, headers=None, http_method=None):
         if headers and headers.get("Content-Type"):
             parameters["content_type"] = headers.get("Content-Type")
         url = artifact_file.storage.url(artifact_file.name, parameters=parameters)
+    elif settings.DEFAULT_FILE_STORAGE == "storages.backends.gcloud.GoogleCloudStorage":
+        parameters = {"response_disposition": content_disposition}
+        if headers and headers.get("Content-Type"):
+            parameters["content_type"] = headers.get("Content-Type")
+        url = artifact_file.storage.url(artifact_file.name, parameters=parameters)
     else:
         raise NotImplementedError(
             f"The value settings.DEFAULT_FILE_STORAGE={settings.DEFAULT_FILE_STORAGE} "
