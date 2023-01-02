@@ -315,10 +315,11 @@ storage_validator = (
     | Validator("DEFAULT_FILE_STORAGE", eq="pulpcore.app.models.storage.FileSystem")
     | Validator("DEFAULT_FILE_STORAGE", eq="storages.backends.azure_storage.AzureStorage")
     | Validator("DEFAULT_FILE_STORAGE", eq="storages.backends.s3boto3.S3Boto3Storage")
+    | Validator("DEFAULT_FILE_STORAGE", eq="storages.backends.gcloud.GoogleCloudStorage")
 )
 storage_validator.messages["combined"] = (
-    "'REDIRECT_TO_OBJECT_STORAGE=True' is only supported with the local file, S3 or Azure storage"
-    "backend configured in DEFAULT_FILE_STORAGE."
+    "'REDIRECT_TO_OBJECT_STORAGE=True' is only supported with the local file, S3, GCP or Azure"
+    "storage backend configured in DEFAULT_FILE_STORAGE."
 )
 
 cache_enabled_validator = Validator("CACHE_ENABLED", eq=True)

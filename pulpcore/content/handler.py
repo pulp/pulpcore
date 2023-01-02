@@ -862,6 +862,12 @@ class Handler:
                 parameters["content_type"] = headers.get("Content-Type")
             url = URL(artifact_file.storage.url(artifact_name, parameters=parameters), encoded=True)
             raise HTTPFound(url)
+        elif settings.DEFAULT_FILE_STORAGE == "storages.backends.gcloud.GoogleCloudStorage":
+            parameters = {"response_disposition": content_disposition}
+            if headers.get("Content-Type"):
+                parameters["content_type"] = headers.get("Content-Type")
+            url = URL(artifact_file.storage.url(artifact_name, parameters=parameters), encoded=True)
+            raise HTTPFound(url)
         else:
             raise NotImplementedError()
 
