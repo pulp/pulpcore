@@ -1,6 +1,8 @@
 """Utilities for Pulpcore tests."""
 import aiohttp
 import asyncio
+
+from aiohttp import web
 from dataclasses import dataclass
 
 
@@ -44,6 +46,22 @@ class MockDownload:
     def __init__(self, body, response_obj):
         self.body = body
         self.response_obj = response_obj
+
+
+def add_recording_route(app, fixtures_root):
+    requests = []
+
+    async def all_requests_handler(request):
+        requests.append(request)
+        path = fixtures_root / request.raw_path[1:]  # Strip off leading '/'
+        if path.is_file():
+            return web.FileResponse(path)
+        else:
+            raise web.HTTPNotFound()
+
+    app.add_routes([web.get("/{tail:.*}", all_requests_handler)])
+
+    return requests
 
 
 def download_file(url, auth=None, headers=None):
