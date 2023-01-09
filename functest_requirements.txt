@@ -7,3 +7,5 @@ pulpcore-client
 pulp-file-client
 pytest
 python-gnupg
+proxy.py~=2.4.1
+trustme~=0.9.0
