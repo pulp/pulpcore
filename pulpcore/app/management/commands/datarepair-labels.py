@@ -69,7 +69,9 @@ class Command(BaseCommand):
                         .annotate(label_data=RawSQL("hstore(array_agg(key), array_agg(value))", []))
                         .values("label_data")
                     )
-                    model.objects.update(pulp_labels=label_subq)
+                    model.objects.annotate(old_labels=label_subq).exclude(old_labels={}).update(
+                        pulp_labels=label_subq
+                    )
                     Label.objects.filter(content_type=ctype).delete()
 
         if Label.objects.count() and purge and not dry_run:
