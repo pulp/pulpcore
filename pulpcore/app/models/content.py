@@ -393,7 +393,7 @@ class PulpTemporaryFile(HandleTempFilesMixin, BaseModel):
             name (str): Original name of uploaded file. It is ignored by this method because the
                 pulp_id is used to determine a file path instead.
         """
-        return storage.get_temp_file_path(self.pulp_id)
+        return default_storage.get_temp_file_path(self.pulp_id)
 
     file = fields.ArtifactFileField(null=False, upload_to=storage_path, max_length=255)
 
