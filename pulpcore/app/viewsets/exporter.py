@@ -179,13 +179,22 @@ class FilesystemExportViewSet(ExportViewSet):
         serializer = FilesystemExportSerializer(data=request.data, context={"exporter": exporter})
         serializer.is_valid(raise_exception=True)
 
+        start_repository_version_pk = None
+        if request.data.get("start_repository_version"):
+            start_repository_version_pk = self.get_resource(
+                request.data["start_repository_version"], RepositoryVersion
+            ).pk
+
         if request.data.get("publication"):
             publication = self.get_resource(request.data["publication"], Publication)
-
             task = dispatch(
                 fs_publication_export,
                 exclusive_resources=[exporter],
-                kwargs={"exporter_pk": exporter.pk, "publication_pk": publication.pk},
+                kwargs={
+                    "exporter_pk": exporter.pk,
+                    "publication_pk": publication.pk,
+                    "start_repo_version_pk": start_repository_version_pk,
+                },
             )
         else:
             repo_version = self.get_resource(request.data["repository_version"], RepositoryVersion)
@@ -193,7 +202,11 @@ class FilesystemExportViewSet(ExportViewSet):
             task = dispatch(
                 fs_repo_version_export,
                 exclusive_resources=[exporter],
-                kwargs={"exporter_pk": str(exporter.pk), "repo_version_pk": repo_version.pk},
+                kwargs={
+                    "exporter_pk": str(exporter.pk),
+                    "repo_version_pk": repo_version.pk,
+                    "start_repo_version_pk": start_repository_version_pk,
+                },
             )
 
         return OperationPostponedResponse(task, request)

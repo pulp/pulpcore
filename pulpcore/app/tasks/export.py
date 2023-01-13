@@ -107,7 +107,7 @@ def _export_to_file_system(path, relative_paths_to_artifacts, method=FS_EXPORT_M
 
 
 def _export_publication_to_file_system(
-    path, publication, method=FS_EXPORT_METHODS.WRITE, allow_missing=False
+    path, publication, start_repo_version=None, method=FS_EXPORT_METHODS.WRITE, allow_missing=False
 ):
     """
     Export a publication to the file system.
@@ -116,9 +116,19 @@ def _export_publication_to_file_system(
         path (str): Path to place the exported data
         publication_pk (str): Publication pk
     """
+    difference_content_artifacts = []
     content_artifacts = ContentArtifact.objects.filter(
         pk__in=publication.published_artifact.values_list("content_artifact__pk", flat=True)
     )
+    if start_repo_version:
+        start_version_content_artifacts = ContentArtifact.objects.filter(
+            artifact__in=start_repo_version.artifacts
+        )
+        difference_content_artifacts = set(
+            content_artifacts.difference(start_version_content_artifacts).values_list(
+                "pk", flat=True
+            )
+        )
 
     if publication.pass_through:
         content_artifacts |= ContentArtifact.objects.filter(
@@ -140,8 +150,11 @@ def _export_publication_to_file_system(
         "content_artifact", "content_artifact__artifact"
     ).iterator():
         # Artifact isn't guaranteed to be present
-        if pa.content_artifact.artifact:
+        if pa.content_artifact.artifact and (
+            start_repo_version is None or pa.content_artifact.pk in difference_content_artifacts
+        ):
             relative_path_to_artifacts[pa.relative_path] = pa.content_artifact.artifact
+
     _export_to_file_system(path, relative_path_to_artifacts, method)
 
 
@@ -162,7 +175,7 @@ def _export_location_is_clean(path):
     return True
 
 
-def fs_publication_export(exporter_pk, publication_pk):
+def fs_publication_export(exporter_pk, publication_pk, start_repo_version_pk=None):
     """
     Export a publication to the file system using an exporter.
 
@@ -172,25 +185,41 @@ def fs_publication_export(exporter_pk, publication_pk):
     """
     exporter = Exporter.objects.get(pk=exporter_pk).cast()
     publication = Publication.objects.get(pk=publication_pk).cast()
+
+    start_repo_version = None
+    if start_repo_version_pk:
+        start_repo_version = RepositoryVersion.objects.get(pk=start_repo_version_pk)
+
+    params = {"publication": publication_pk}
+    if start_repo_version:
+        params["start_repository_version"] = start_repo_version_pk
+
     export = FilesystemExport.objects.create(
         exporter=exporter,
-        params={"publication": publication_pk},
+        params=params,
         task=Task.current(),
     )
     ExportedResource.objects.create(export=export, content_object=publication)
     CreatedResource.objects.create(content_object=export)
-
     log.info(
-        "Exporting: file_system_exporter={exporter}, publication={publication}, path={path}".format(
-            exporter=exporter.name, publication=publication.pk, path=exporter.path
+        "Exporting: file_system_exporter={exporter}, publication={publication}, "
+        "start_repo_version={start_repo_version}, path={path}".format(
+            exporter=exporter.name,
+            publication=publication.pk,
+            start_repo_version=start_repo_version_pk,
+            path=exporter.path,
         )
     )
+
     if not _export_location_is_clean(exporter.path):
         raise RuntimeError(_("Cannot export to directories that contain existing data."))
-    _export_publication_to_file_system(exporter.path, publication, exporter.method)
+
+    _export_publication_to_file_system(
+        exporter.path, publication, start_repo_version=start_repo_version, method=exporter.method
+    )
 
 
-def fs_repo_version_export(exporter_pk, repo_version_pk):
+def fs_repo_version_export(exporter_pk, repo_version_pk, start_repo_version_pk=None):
     """
     Export a repository version to the file system using an exporter.
 
@@ -200,9 +229,17 @@ def fs_repo_version_export(exporter_pk, repo_version_pk):
     """
     exporter = Exporter.objects.get(pk=exporter_pk).cast()
     repo_version = RepositoryVersion.objects.get(pk=repo_version_pk)
+    start_repo_version = None
+    if start_repo_version_pk:
+        start_repo_version = RepositoryVersion.objects.get(pk=start_repo_version_pk)
+
+    params = {"repository_version": repo_version_pk}
+    if start_repo_version:
+        params["start_repository_version"] = start_repo_version_pk
+
     export = FilesystemExport.objects.create(
         exporter=exporter,
-        params={"repository_version": repo_version_pk},
+        params=params,
         task=Task.current(),
     )
     ExportedResource.objects.create(export=export, content_object=repo_version)
@@ -210,18 +247,31 @@ def fs_repo_version_export(exporter_pk, repo_version_pk):
 
     log.info(
         "Exporting: file_system_exporter={exporter}, repo_version={repo_version}, "
-        "path={path}".format(
-            exporter=exporter.name, repo_version=repo_version.pk, path=exporter.path
+        "start_repo_version={start_repo_version}, path={path}".format(
+            exporter=exporter.name,
+            repo_version=repo_version.pk,
+            start_repo_version=start_repo_version_pk,
+            path=exporter.path,
         )
     )
 
     content_artifacts = ContentArtifact.objects.filter(content__in=repo_version.content)
     _validate_fs_export(content_artifacts)
+    difference_content_artifacts = []
+    if start_repo_version:
+        start_version_content_artifacts = ContentArtifact.objects.filter(
+            artifact__in=start_repo_version.artifacts
+        )
+        difference_content_artifacts = set(
+            content_artifacts.difference(start_version_content_artifacts).values_list(
+                "pk", flat=True
+            )
+        )
 
-    relative_path_to_artifacts = {
-        ca.relative_path: ca.artifact
-        for ca in content_artifacts.select_related("artifact").iterator()
-    }
+    relative_path_to_artifacts = {}
+    for ca in content_artifacts.select_related("artifact").iterator():
+        if start_repo_version is None or ca.pk in difference_content_artifacts:
+            relative_path_to_artifacts[ca.relative_path] = ca.artifact
 
     _export_to_file_system(exporter.path, relative_path_to_artifacts, exporter.method)
 
