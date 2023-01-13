@@ -385,6 +385,10 @@ class PulpTemporaryFile(HandleTempFilesMixin, BaseModel):
             It also accepts `class:django.core.files.File`.
     """
 
+    def __init__(self, *args, **kwargs):
+        """Init"""
+        super().__init__(self, *args, storage=default_storage, **kwargs)
+
     def storage_path(self, name):
         """
         Callable used by FileField to determine where the uploaded file should be stored.
