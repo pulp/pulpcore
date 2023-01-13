@@ -155,7 +155,6 @@ class Command(BaseCommand):
         self._show_immediate_content(forbidden_checksums)
 
     def handle(self, *args, **options):
-
         if options["report"]:
             self._report(options["checksums"])
             return
