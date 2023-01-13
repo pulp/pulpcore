@@ -449,7 +449,6 @@ def pulp_import(importer_pk, path, toc, create_repositories):
         with tarfile.open(path, "r:gz") as tar:
 
             def is_within_directory(directory, target):
-
                 abs_directory = os.path.abspath(directory)
                 abs_target = os.path.abspath(target)
 
@@ -458,7 +457,6 @@ def pulp_import(importer_pk, path, toc, create_repositories):
                 return prefix == abs_directory
 
             def safe_extract(tar, path=".", members=None, *, numeric_owner=False):
-
                 for member in tar.getmembers():
                     member_path = os.path.join(path, member.name)
                     if not is_within_directory(path, member_path):

@@ -294,6 +294,12 @@ class FilesystemExportSerializer(ExportSerializer):
         write_only=True,
     )
 
+    start_repository_version = RepositoryVersionRelatedField(
+        help_text=_("The URI of the last-exported-repo-version."),
+        required=False,
+        write_only=True,
+    )
+
     def validate(self, data):
         if ("publication" not in data and "repository_version" not in data) or (
             "publication" in data and "repository_version" in data
@@ -305,7 +311,11 @@ class FilesystemExportSerializer(ExportSerializer):
 
     class Meta:
         model = models.FilesystemExport
-        fields = ExportSerializer.Meta.fields + ("publication", "repository_version")
+        fields = ExportSerializer.Meta.fields + (
+            "publication",
+            "repository_version",
+            "start_repository_version",
+        )
 
 
 class FilesystemExporterSerializer(ExporterSerializer):

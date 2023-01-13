@@ -7,7 +7,6 @@ from pulpcore.app.serializers import ModelSerializer
 
 
 class ProgressReportSerializer(ModelSerializer):
-
     message = serializers.CharField(
         help_text=_("The message shown to the user for the progress report."), read_only=True
     )
@@ -41,7 +40,6 @@ class ProgressReportSerializer(ModelSerializer):
 
 
 class GroupProgressReportSerializer(ModelSerializer):
-
     message = serializers.CharField(
         help_text=_("The message shown to the user for the group progress report."), read_only=True
     )
