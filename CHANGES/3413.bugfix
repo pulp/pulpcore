@@ -1,0 +1,3 @@
+Added a ``start_repository_version`` parameter to the file system exporter.
+
+If specified, it will export only content units that differed between two repository versions.

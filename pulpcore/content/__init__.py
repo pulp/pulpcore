@@ -41,7 +41,6 @@ async def _heartbeat():
     )
 
     while True:
-
         try:
             content_app_status, created = await sync_to_async(
                 ContentAppStatus.objects.get_or_create
