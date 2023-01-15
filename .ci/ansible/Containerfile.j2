@@ -20,6 +20,9 @@ RUN pip3 install \
 {%- if azure_test | default(false) -%}
 {{ " " }}django-storages[azure]>=1.12.2
 {%- endif -%}
+{%- if gcp_test | default(false) -%}
+{{ " " }}django-storages[google]>=1.13.2
+{%- endif -%}
 {%- for item in plugins -%}
 {%- if item.name == "pulp-certguard" -%}
 {{ " " }}python-dateutil rhsm
