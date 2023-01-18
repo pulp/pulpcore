@@ -329,6 +329,7 @@ class DistributionFilter(BaseFilterSet):
         fields = {
             "name": NAME_FILTER_OPTIONS,
             "base_path": ["exact", "contains", "icontains", "in"],
+            "repository": ["exact", "in"],
         }
 
 

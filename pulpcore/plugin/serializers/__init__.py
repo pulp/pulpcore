@@ -33,6 +33,7 @@ from pulpcore.app.serializers import (  # noqa
     RepositoryAddRemoveContentSerializer,
     ValidateFieldsMixin,
     validate_unknown_fields,
+    TaskSerializer,
 )
 
 from .content import (  # noqa

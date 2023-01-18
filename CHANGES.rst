@@ -781,6 +781,26 @@ Bugfixes
   :github:`2069`
 
 
+3.18.12 (2023-01-10)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Insured that pulp-export correctly locks repos-being-exported.
+  :github:`3370`
+- Fix migrating Remotes with @ in path
+  :github:`3409`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.18.11 (2022-11-02)
 ====================
 REST API

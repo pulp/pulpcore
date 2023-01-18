@@ -1,5 +1,6 @@
 import pytest
 import uuid
+from pulpcore.client.pulpcore.exceptions import ApiException
 
 
 @pytest.mark.parallel
@@ -58,3 +59,13 @@ def test_filter_groups(groups_api_client, gen_object_with_cleanup):
     assert len(groups.results) == 1
     groups = groups_api_client.list(name=f"{prefix}_newbees")
     assert len(groups.results) == 1
+
+
+@pytest.mark.parallel
+def test_groups_add_bad_user(groups_api_client, groups_users_api_client, gen_object_with_cleanup):
+    """Test that adding a nonexistent user to a group fails."""
+
+    prefix = str(uuid.uuid4())
+    group_href = gen_object_with_cleanup(groups_api_client, {"name": f"{prefix}_newbees"}).pulp_href
+    with pytest.raises(ApiException, match="foo"):
+        groups_users_api_client.create(group_href, group_user={"username": "foo"})
