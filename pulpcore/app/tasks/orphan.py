@@ -34,7 +34,7 @@ def queryset_iterator(qs, batchsize=2000, gc_collect=True):
             gc.collect()
 
 
-def orphan_cleanup(content_pks=None, orphan_protection_time=settings.ORPHAN_PROTECTION_TIME):
+def orphan_cleanup(content_hrefs=None, orphan_protection_time=settings.ORPHAN_PROTECTION_TIME):
     """
     Delete all orphan Content and Artifact records.
     Go through orphan Content multiple times to remove content from subrepos.
@@ -44,6 +44,7 @@ def orphan_cleanup(content_pks=None, orphan_protection_time=settings.ORPHAN_PROT
         content_pks (list): A list of content pks. If specified, only remove these orphans.
 
     """
+    content_pks = content_hrefs  # Quick hack
     with ProgressReport(
         message="Clean up orphan Content",
         total=None,

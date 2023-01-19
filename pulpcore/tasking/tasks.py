@@ -60,7 +60,8 @@ def _execute_task(task):
             module_name, function_name = task.name.rsplit(":")
         except ValueError:
             deprecation_logger.warning(
-                "Old task specification found. This will be turned into an error with pulpcore >=3.40."
+                "Old task specification found. "
+                "This will be turned into an error with pulpcore >=3.40."
             )
             # When removing this, write a data-migration to update existing task entries.
             module_name, function_name = task.name.rsplit(".", 1)
@@ -72,7 +73,7 @@ def _execute_task(task):
         if asyncio.iscoroutine(result):
             _logger.debug(_("Task is coroutine %s"), task.pk)
             loop = asyncio.get_event_loop()
-            loop.run_until_complete(result)
+            result = loop.run_until_complete(result)
 
     except Exception:
         exc_type, exc, tb = sys.exc_info()
@@ -80,7 +81,7 @@ def _execute_task(task):
         _logger.info(_("Task %s failed (%s)"), task.pk, exc)
         _logger.info("\n".join(traceback.format_list(traceback.extract_tb(tb))))
     else:
-        task.set_completed()
+        task.set_completed(result=result)
         _logger.info(_("Task completed %s"), task.pk)
 
 

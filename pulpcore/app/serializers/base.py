@@ -61,6 +61,17 @@ def _reverse(reverse, request, obj):
     return reverse
 
 
+class DeferredSerializerMixin:
+    def validate(self, data):
+        data = super().validate(data)
+        if "task" in self.context:
+            data = self.deferred_validate(data)
+        return data
+
+    def deferred_validate(self, data):
+        return data
+
+
 class HrefFieldMixin:
     """A mixin to configure related fields to generate relative hrefs."""
 
