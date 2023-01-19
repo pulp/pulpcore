@@ -21,6 +21,7 @@ from pulpcore.app.models import (
 from pulpcore.constants import TASK_CHOICES, TASK_INCOMPLETE_STATES, TASK_STATES
 from pulpcore.exceptions import AdvisoryLockError, exception_to_dict
 from pulpcore.app.util import get_domain_pk, current_task
+from pulpcore.app.loggers import deprecation_logger
 
 _logger = logging.getLogger(__name__)
 
@@ -174,6 +175,7 @@ class Task(BaseModel, AutoAddObjPermsMixin):
 
     args = models.JSONField(null=True, encoder=DjangoJSONEncoder)
     kwargs = models.JSONField(null=True, encoder=DjangoJSONEncoder)
+    result = models.JSONField(null=True, encoder=DjangoJSONEncoder)
 
     worker = models.ForeignKey("Worker", null=True, related_name="tasks", on_delete=models.SET_NULL)
 
@@ -247,7 +249,7 @@ class Task(BaseModel, AutoAddObjPermsMixin):
         with suppress(AttributeError):
             del self.error
 
-    def set_completed(self):
+    def set_completed(self, result):
         """
         Set this Task to the completed state, save it, and log output in warning cases.
 
@@ -255,9 +257,18 @@ class Task(BaseModel, AutoAddObjPermsMixin):
         """
         # Only set the state to finished if it's running. This is important for when the task has
         # been canceled, so we don't move the task from canceled to finished.
-        rows = Task.objects.filter(pk=self.pk, state=TASK_STATES.RUNNING).update(
-            state=TASK_STATES.COMPLETED, finished_at=timezone.now()
-        )
+        try:
+            rows = Task.objects.filter(pk=self.pk, state=TASK_STATES.RUNNING).update(
+                state=TASK_STATES.COMPLETED, finished_at=timezone.now(), result=result
+            )
+        except TypeError:
+            deprecation_logger.warning(
+                f"Task {self.pk} returned unserialized value."
+                " This is deprecated and will be turned into an error with pulpcore>=3.40."
+            )
+            rows = Task.objects.filter(pk=self.pk, state=TASK_STATES.RUNNING).update(
+                state=TASK_STATES.COMPLETED, finished_at=timezone.now()
+            )
         if rows != 1:
             raise RuntimeError(
                 _("Task set_completed() occurred but Task {} is not RUNNING.").format(self.pk)
