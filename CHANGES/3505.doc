@@ -1,0 +1,2 @@
+Documented PostgreSQL version compatibility and incompatibility with transaction based connection
+pooling.
