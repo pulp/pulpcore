@@ -128,7 +128,7 @@ Database Setup
 --------------
 
 You must provide a PostgreSQL database for Pulp to use. At this time, Pulp 3.0 will only work with
-PostgreSQL.
+PostgreSQL .
 
 PostgreSQL
 ^^^^^^^^^^
@@ -136,12 +136,22 @@ PostgreSQL
 Installation package considerations
 ***********************************
 
+Pulp needs a version of PostgreSQL providing session based advisory locks and listen-notify. Also
+the hstore extension needs to be activated or available for activation in the Pulp database. Any
+version starting from 11 should work, but we recommend using at least version 13.
+
 To install PostgreSQL, refer to the package manager or the
 `PostgreSQL install docs <http://postgresguide.com/setup/install.html>`_. Oftentimes, you can also find better
 installation instructions for your particular operating system from third-parties such as Digital Ocean.
 
 On Ubuntu and Debian, the package to install is named ``postgresql``. On Fedora and CentOS, the package
 is named ``postgresql-server``.
+
+.. warning::
+
+    Pulp is incompatible with database connection pooling based on transactions like PgBouncer.
+    As stated in `PgBouncer Features <https://www.pgbouncer.org/features.html>`_ it will break
+    Pulp's data consistency assumptions. This may lead to critical data loss.
 
 User and database configuration
 *******************************
