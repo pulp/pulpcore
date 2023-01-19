@@ -30,12 +30,18 @@ SIGSTORE_SIGN_SCHEMA = Schema(
         Optional("ctfe"): str,
     }
 )
+SIGSTORE_VERIFY_SCHEMA = Schema(
+    {
+        Optional("require-rekor-offline"): bool,
+        Required("cert-identity"): str,
+    }
+)
 
 SIGSTORE_CONFIGURATION_FILE_SCHEMA = Schema(
     {
         Required("global-options"): SIGSTORE_GLOBAL_OPTIONS_SCHEMA,
         Required("sign-options"): SIGSTORE_SIGN_SCHEMA,
-        Required("verify-options"): Schema({Required("cert-identity"): str}),
+        Required("verify-options"): SIGSTORE_VERIFY_SCHEMA,
     }
 )
 
@@ -145,6 +151,12 @@ class Command(BaseCommand):
             default=os.getenv("SIGSTORE_CERT_IDENTITY"),
             help=_("The identity to check for in the certificate's Subject Alternative Name"),
         )
+        verify_options.add_argument(
+            "--require-rekor-offline",
+            metavar="BOOL",
+            type=bool,
+            help=_("Perform offline signature verification. Requires a Rekor bundle as a verification input.")
+        )
 
     def handle(self, *args, **options):
         if "from_file" in options:
@@ -154,13 +166,20 @@ class Command(BaseCommand):
                 sigstore_config = json.load(file)
                 SIGSTORE_CONFIGURATION_FILE_SCHEMA(sigstore_config)
                 global_sigstore_options, sign_options, verify_options = sigstore_config["global-options"], sigstore_config["sign-options"], sigstore_config["verify-options"]
+                options = {option_name.replace("_", "-") : option_value for option_name, option_value in options.items()}
                 for option_name, option_value in options.items():
-                    if option_name in global_sigstore_options:
-                        global_sigstore_options[option_name] = option_value
-                    elif option_name in sign_options:
-                        sign_options[option_name] = option_value
-                    elif option_name in verify_options:
-                        verify_options[option_name] = option_value
+                    if option_value:
+                        if option_name in global_sigstore_options:
+                            global_sigstore_options[option_name] = option_value
+                        elif option_name in sign_options:
+                            sign_options[option_name] = option_value
+                        elif option_name in verify_options:
+                            verify_options[option_name] = option_value
+
+                require_rekor_offline = _to_bool(verify_options["require-rekor-offline"])
+                output_rekor_bundle = _to_bool(sign_options["output-rekor-bundle"])
+                if require_rekor_offline and not output_rekor_bundle:
+                    raise Exception("Cannot perform offline verification if Sigstore signing service is not configured to write Rekor bundles.")
 
                 try:
                     SigstoreSigningService.objects.create(
@@ -171,20 +190,22 @@ class Command(BaseCommand):
                         fulcio_url=sign_options["fulcio-url"],
                         oidc_client_id=sign_options["oidc-client-id"],
                         oidc_client_secret=sign_options["oidc-client-secret"],
-                        output_rekor_bundle=_to_bool(sign_options["output-rekor-bundle"]),
+                        output_rekor_bundle=output_rekor_bundle,
                         ctfe=sign_options.get("ctfe"),
                         cert_identity=verify_options["cert-identity"],
+                        require_rekor_offline=require_rekor_offline,
                     )  
 
                     print(
-                        f"Successfully configured the Sigstore signing service {global_sigstore_options['signing-service-name']} with the following parameters: "
+                        f"Successfully configured the Sigstore signing service {global_sigstore_options['signing-service-name']} with the following parameters: \n"
                         f"Rekor instance URL: {global_sigstore_options['rekor-url']}\n"
                         f"Rekor root public key: {global_sigstore_options['rekor-root-pubkey']}\n"
                         f"Fulcio instance URL: {sign_options['fulcio-url']}\n"
                         f"OIDC issuer: {global_sigstore_options.get('oidc-issuer')}\n"
                         f"OIDC client ID environment variable: {sign_options['oidc-client-id']}\n"
                         f"OIDC client secret environment variable: {sign_options['oidc-client-secret']}\n"
-                        f"Output Rekor bundle: {sign_options['output-rekor-bundle']}\n"
+                        f"Output Rekor bundle: {output_rekor_bundle}\n"
+                        f"Require offline verification: {require_rekor_offline}\n"
                         f"Certificate Transparency log public key: {sign_options.get('ctfe')}\n"
                         f"OIDC identity of the signer: {verify_options['cert-identity']}\n"
                     )
