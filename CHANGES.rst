@@ -17,6 +17,26 @@ Changelog
 
 .. towncrier release notes start
 
+3.21.4 (2023-01-20)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fixed an occasional 500 error when viewing a repository version content summary while performing a content deletion task.
+  :github:`3299`
+- Fix migrating Remotes with @ in path
+  :github:`3409`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.21.3 (2022-11-15)
 ===================
 REST API
