@@ -17,6 +17,24 @@ Changelog
 
 .. towncrier release notes start
 
+3.18.13 (2023-01-20)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fixed an occasional 500 error when viewing a repository version content summary while performing a content deletion task.
+  :github:`3299`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.18.12 (2023-01-10)
 ====================
 REST API
