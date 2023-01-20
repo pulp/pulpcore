@@ -17,6 +17,25 @@ Changelog
 
 .. towncrier release notes start
 
+3.22.1 (2023-01-20)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fixed the label migration code for not null constraint errors when objects with and without labels
+  are migrated.
+  :github:`3495`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.22.0 (2022-12-18)
 ===================
 REST API
