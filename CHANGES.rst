@@ -17,6 +17,25 @@ Changelog
 
 .. towncrier release notes start
 
+3.22.1 (2023-01-20)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fixed the label migration code for not null constraint errors when objects with and without labels
+  are migrated.
+  :github:`3495`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.22.0 (2022-12-18)
 ===================
 REST API
@@ -170,6 +189,26 @@ Removals
 - Deprecated model ``Label`` and serializer field ``LabelField`` and ``LabelSelectFilter`` for
   removal in 3.25.
   :github:`3400`
+
+
+3.21.4 (2023-01-20)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fixed an occasional 500 error when viewing a repository version content summary while performing a content deletion task.
+  :github:`3299`
+- Fix migrating Remotes with @ in path
+  :github:`3409`
+
+
+Plugin API
+----------
+
+No significant changes.
 
 
 3.21.3 (2022-11-15)
@@ -779,6 +818,24 @@ Bugfixes
   the stage will still accumulate up to 500 (by default) items so batching is still in-effect there
   where it matters.
   :github:`2069`
+
+
+3.18.13 (2023-01-20)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fixed an occasional 500 error when viewing a repository version content summary while performing a content deletion task.
+  :github:`3299`
+
+
+Plugin API
+----------
+
+No significant changes.
 
 
 3.18.12 (2023-01-10)
