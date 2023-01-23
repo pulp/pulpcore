@@ -49,6 +49,7 @@ requires inheriting from ``SiginingService`` and then implementing ``validate()`
 
     The script may read the fingerprint of the key it should use for signing, from the
     ``PULP_SIGNING_KEY_FINGERPRINT`` environment variable.
+    A ``CORRELATION_ID`` environment variable is also added by default.
     It is possible to pass a dictionary of environment variables to the signing script if need be.
 
     The json is converted to a python dict and returned by the ``sign()`` method. If an error occurs, a
