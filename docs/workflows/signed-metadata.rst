@@ -18,7 +18,8 @@ The example below demonstrates how a signing service can be created using ``gpg`
 
 2. Create a signing script that accepts a file name as the only argument. The script
    needs to generate an ascii-armored detached GPG signature for that file, using the key
-   specified via the ``PULP_SIGNING_KEY_FINGERPRINT`` environment variable. The script
+   specified via the ``PULP_SIGNING_KEY_FINGERPRINT`` environment variable. There is also
+   a ``CORRELATION_ID`` environment variable available for logging purposes. The script
    should then print out a JSON structure with the following format. All the file names
    are relative paths inside the current working directory::
 
