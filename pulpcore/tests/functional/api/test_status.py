@@ -58,7 +58,7 @@ STATUS = {
 
 
 @pytest.fixture(scope="module")
-def expected_pulp_status_schema(cli_client):
+def expected_pulp_status_schema():
     """Returns the expected status response."""
     if settings.DEFAULT_FILE_STORAGE != "pulpcore.app.models.storage.FileSystem":
         STATUS["properties"]["storage"].pop("properties")
