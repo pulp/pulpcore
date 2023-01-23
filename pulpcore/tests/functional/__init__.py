@@ -12,6 +12,7 @@ import proxy
 import pytest
 
 from aiohttp import web
+from dataclasses import dataclass
 from time import sleep
 from yarl import URL
 
@@ -113,6 +114,18 @@ def pytest_configure(config):
         "markers",
         "from_pulpcore_for_all_plugins: marks tests from pulpcore as beneficial for plugins to run",
     )
+
+
+@pytest.fixture(scope="session")
+def fixtures_cfg():
+    @dataclass
+    class FixturesConfig:
+        aiohttp_fixtures_origin: str = "127.0.0.1"
+        remote_fixtures_origin: str = os.environ.get(
+            "REMOTE_FIXTURES_ORIGIN", "https://fixtures.pulpproject.org/"
+        )
+
+    return FixturesConfig()
 
 
 # API Clients
@@ -391,11 +404,11 @@ def unused_port():
 
 
 @pytest.fixture
-def gen_threaded_aiohttp_server(pulp_cfg, unused_port):
+def gen_threaded_aiohttp_server(fixtures_cfg, unused_port):
     fixture_servers_data = []
 
     def _gen_threaded_aiohttp_server(app, ssl_ctx, call_record):
-        host = pulp_cfg.aiohttp_fixtures_origin
+        host = fixtures_cfg.aiohttp_fixtures_origin
         port = unused_port()
         shutdown_event = threading.Event()
         fixture_server = ThreadedAiohttpServer(shutdown_event, app, host, port, ssl_ctx)
@@ -435,8 +448,8 @@ def gen_fixture_server(gen_threaded_aiohttp_server):
 
 
 @pytest.fixture
-def http_proxy(pulp_cfg, unused_port):
-    host = pulp_cfg.aiohttp_fixtures_origin
+def http_proxy(fixtures_cfg, unused_port):
+    host = fixtures_cfg.aiohttp_fixtures_origin
     port = unused_port()
     proxypy_args = [
         "--num-workers",
@@ -454,8 +467,8 @@ def http_proxy(pulp_cfg, unused_port):
 
 
 @pytest.fixture
-def http_proxy_with_auth(pulp_cfg, unused_port):
-    host = pulp_cfg.aiohttp_fixtures_origin
+def http_proxy_with_auth(fixtures_cfg, unused_port):
+    host = fixtures_cfg.aiohttp_fixtures_origin
     port = unused_port()
 
     username = str(uuid.uuid4())
@@ -479,8 +492,8 @@ def http_proxy_with_auth(pulp_cfg, unused_port):
 
 
 @pytest.fixture
-def https_proxy(pulp_cfg, unused_port, proxy_tls_certificate_pem_path):
-    host = pulp_cfg.aiohttp_fixtures_origin
+def https_proxy(fixtures_cfg, unused_port, proxy_tls_certificate_pem_path):
+    host = fixtures_cfg.aiohttp_fixtures_origin
     port = unused_port()
 
     proxypy_args = [
@@ -540,9 +553,9 @@ def tls_certificate_authority_cert(tls_certificate_authority):
 
 
 @pytest.fixture
-def tls_certificate(pulp_cfg, tls_certificate_authority):
+def tls_certificate(fixtures_cfg, tls_certificate_authority):
     return tls_certificate_authority.issue_cert(
-        pulp_cfg.aiohttp_fixtures_origin,
+        fixtures_cfg.aiohttp_fixtures_origin,
     )
 
 
@@ -555,9 +568,9 @@ def proxy_tls_certificate_authority():
 
 
 @pytest.fixture
-def proxy_tls_certificate(pulp_cfg, client_tls_certificate_authority):
+def proxy_tls_certificate(fixtures_cfg, client_tls_certificate_authority):
     return client_tls_certificate_authority.issue_cert(
-        pulp_cfg.aiohttp_fixtures_origin,
+        fixtures_cfg.aiohttp_fixtures_origin,
     )
 
 
@@ -582,9 +595,9 @@ def client_tls_certificate_authority_pem_path(client_tls_certificate_authority):
 
 
 @pytest.fixture
-def client_tls_certificate(pulp_cfg, client_tls_certificate_authority):
+def client_tls_certificate(fixtures_cfg, client_tls_certificate_authority):
     return client_tls_certificate_authority.issue_cert(
-        pulp_cfg.aiohttp_fixtures_origin,
+        fixtures_cfg.aiohttp_fixtures_origin,
     )
 
 
@@ -800,8 +813,8 @@ def pulp_api_v3_path(pulp_settings):
 
 
 @pytest.fixture(scope="session")
-def pulp_api_v3_url(pulp_cfg, pulp_api_v3_path):
-    return f"{pulp_cfg.get_base_url()}{pulp_api_v3_path}"
+def pulp_api_v3_url(bindings_cfg, pulp_api_v3_path):
+    return f"{bindings_cfg.host}{pulp_api_v3_path}"
 
 
 @pytest.fixture
@@ -887,7 +900,7 @@ def add_to_filesystem_cleanup():
 
 
 @pytest.fixture
-def download_content_unit(pulp_cfg):
+def download_content_unit(bindings_cfg):
     def _download_content_unit(base_path, content_path):
         async def _get_response(url):
             async with aiohttp.ClientSession() as session:
@@ -895,7 +908,7 @@ def download_content_unit(pulp_cfg):
                     return await response.read()
 
         url_fragments = [
-            pulp_cfg.get_base_url(),
+            bindings_cfg.host,
             "pulp/content",
             base_path,
             content_path,

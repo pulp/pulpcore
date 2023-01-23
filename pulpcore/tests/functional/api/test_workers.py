@@ -68,7 +68,7 @@ def test_worker_actions(workers_api_client):
 
 
 @pytest.fixture
-def task_schedule(cli_client):
+def task_schedule():
     name = "test_schedule"
     task_name = "pulpcore.app.tasks.test.dummy_task"
     schedule_commands = (

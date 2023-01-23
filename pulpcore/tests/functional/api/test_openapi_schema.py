@@ -31,8 +31,8 @@ def openapi3_schema_with_modified_safe_chars(openapi3_schema_spec):
 
 
 @pytest.fixture(scope="session")
-def pulp_openapi_schema_url(pulp_cfg, pulp_api_v3_path):
-    return f"{pulp_cfg.get_base_url()}{pulp_api_v3_path}docs/api.json"
+def pulp_openapi_schema_url(pulp_api_v3_url):
+    return f"{pulp_api_v3_url}docs/api.json"
 
 
 @pytest.fixture(scope="session")
