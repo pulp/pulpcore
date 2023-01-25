@@ -32,6 +32,7 @@ DATETIME_FILTER_OPTIONS = ["exact", "lt", "lte", "gt", "gte", "range"]
 # e.g.
 # /?pulp_created__gte=2018-04-12T19:45:52
 # /?pulp_created__range=2018-04-12T19:45:52,2018-04-13T19:45:52
+NULLABLE_NUMERIC_FILTER_OPTIONS = ["exact", "ne", "lt", "lte", "gt", "gte", "range", "isnull"]
 
 
 class DefaultSchema(PulpAutoSchema):

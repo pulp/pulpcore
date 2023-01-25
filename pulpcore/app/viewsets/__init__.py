@@ -5,6 +5,7 @@ from .base import (  # noqa
     NamedModelViewSet,
     RolesMixin,
     NAME_FILTER_OPTIONS,
+    NULLABLE_NUMERIC_FILTER_OPTIONS,
 )
 
 from .access_policy import AccessPolicyViewSet  # noqa
