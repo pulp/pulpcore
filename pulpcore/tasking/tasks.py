@@ -80,6 +80,9 @@ def dispatch(
     if exclusive_resources is None:
         exclusive_resources = []
 
+    if not get_guid():
+        set_guid(generate_guid())
+
     resources = _validate_and_get_resources(exclusive_resources)
     if shared_resources:
         resources.extend(
