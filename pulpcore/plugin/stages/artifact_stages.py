@@ -465,7 +465,8 @@ class ACSArtifactHandler(Stage):
                 for ra in existing_ras:
                     for c_type in Artifact.COMMON_DIGEST_FIELDS:
                         checksum = await sync_to_async(getattr)(ra, c_type)
-                        if checksum:
+                        # pick the first occurence of RA from ACS
+                        if checksum and checksum not in existing_ras_dict:
                             existing_ras_dict[checksum] = {
                                 "remote": ra.remote,
                                 "url": ra.url,
