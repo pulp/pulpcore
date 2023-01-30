@@ -153,9 +153,12 @@ class DeclarativeVersion:
         """
         with tempfile.TemporaryDirectory(dir="."):
             with self.repository.new_version() as new_version:
+                if self.mirror:
+                    # Delete all existing content; start out clean
+                    new_version.clear_content()
                 loop = asyncio.get_event_loop()
                 stages = self.pipeline_stages(new_version)
-                stages.append(ContentAssociation(new_version, self.mirror))
+                stages.append(ContentAssociation(new_version))
                 stages.append(EndStage())
                 pipeline = create_pipeline(stages)
                 loop.run_until_complete(pipeline)

@@ -1,7 +1,6 @@
 """
 Repository related Django models.
 """
-from contextlib import suppress
 from gettext import gettext as _
 from os import path
 from collections import defaultdict
@@ -221,9 +220,7 @@ class Repository(MasterModel):
             pulpcore.app.models.RepositoryVersion: The latest RepositoryVersion
 
         """
-        with suppress(RepositoryVersion.DoesNotExist):
-            model = self.versions.complete().latest()
-            return model
+        return self.versions.complete().latest()
 
     def natural_key(self):
         """
@@ -816,6 +813,24 @@ class RepositoryVersion(BaseModel):
             bool: True if the repository version contains the content, False otherwise
         """
         return self.content.filter(pk=content.pk).exists()
+
+    def clear_content(self):
+        """
+        Remove all content from this version.
+
+        Raise:
+            pulpcore.exception.ResourceImmutableError: if called on a complete RepositoryVersion
+        """
+
+        if self.complete:
+            raise ResourceImmutableError(self)
+
+        RepositoryContent.objects.filter(
+            repository=self.repository, version_added=self, version_removed=None
+        ).delete()
+        RepositoryContent.objects.filter(repository=self.repository, version_removed=None).update(
+            version_removed=self
+        )
 
     def add_content(self, content):
         """
