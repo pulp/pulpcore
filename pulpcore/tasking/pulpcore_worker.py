@@ -301,8 +301,6 @@ class NewPulpWorker:
 
         This function must only be called while holding the lock for that task."""
 
-        self.cancel_task = False
-        self.task = task
         task.worker = self.worker
         task.save(update_fields=["worker"])
         cancel_state = None
@@ -311,6 +309,13 @@ class NewPulpWorker:
             task_process = Process(target=_perform_task, args=(task.pk, task_working_dir_rel_path))
             task_process.start()
             while True:
+                # Handle all notifications before sleeping in `select`
+                while connection.connection.notifies:
+                    item = connection.connection.notifies.pop(0)
+                    if item.channel == "pulp_worker_cancel" and item.payload == str(task.pk):
+                        _logger.info(_("Received signal to cancel current task %s."), task.pk)
+                        cancel_state = TASK_STATES.CANCELED
+                    # ignore all other notifications
                 if cancel_state:
                     if self.task_grace_timeout > 0:
                         _logger.info("Wait for canceled task to abort.")
