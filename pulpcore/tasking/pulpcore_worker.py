@@ -54,7 +54,11 @@ from pulpcore.tasking.util import _delete_incomplete_resources  # noqa: E402
 _logger = logging.getLogger(__name__)
 random.seed()
 
+# Number of heartbeats for a task to finish on graceful worker shutdown (approx)
 TASK_GRACE_INTERVAL = 3
+# Number of heartbeats between attempts to kill the subprocess (approx)
+TASK_KILL_INTERVAL = 1
+# Number of heartbeats between cleaning up worker processes (approx)
 WORKER_CLEANUP_INTERVAL = 100
 # Randomly chosen
 TASK_SCHEDULING_LOCK = 42
@@ -121,6 +125,7 @@ class NewPulpWorker:
 
         _logger.info(_("Worker %s was requested to shut down."), self.name)
 
+        self.task_grace_timeout = TASK_GRACE_INTERVAL
         self.shutdown_requested = True
 
     def handle_worker_heartbeat(self):
@@ -166,7 +171,7 @@ class NewPulpWorker:
     def beat(self):
         if self.worker.last_heartbeat < timezone.now() - timedelta(seconds=self.heartbeat_period):
             self.worker = self.handle_worker_heartbeat()
-            if self.shutdown_requested:
+            if self.task_grace_timeout > 0:
                 self.task_grace_timeout -= 1
             self.worker_cleanup_countdown -= 1
             if self.worker_cleanup_countdown <= 0:
@@ -303,7 +308,6 @@ class NewPulpWorker:
 
         This function must only be called while holding the lock for that task."""
 
-        self.task_grace_timeout = TASK_GRACE_INTERVAL
         task.worker = self.worker
         task.save(update_fields=["worker"])
         cancel_state = None
@@ -317,11 +321,15 @@ class NewPulpWorker:
                     item = connection.connection.notifies.pop(0)
                     if item.channel == "pulp_worker_cancel" and item.payload == str(task.pk):
                         _logger.info(_("Received signal to cancel current task %s."), task.pk)
-                        os.kill(task_process.pid, signal.SIGUSR1)
                         cancel_state = TASK_STATES.CANCELED
                     # ignore all other notifications
                 if cancel_state:
-                    break
+                    if self.task_grace_timeout > 0:
+                        _logger.info("Wait for canceled task to abort.")
+                    else:
+                        self.task_grace_timeout = TASK_KILL_INTERVAL
+                        _logger.info("Aborting current task %s due to cancelation.", task.pk)
+                        os.kill(task_process.pid, signal.SIGUSR1)
 
                 r, w, x = select.select(
                     [self.sentinel, connection.connection, task_process.sentinel],
@@ -344,10 +352,8 @@ class NewPulpWorker:
                         )
                     else:
                         _logger.info("Aborting current task %s due to worker shutdown.", task.pk)
-                        os.kill(task_process.pid, signal.SIGUSR1)
                         cancel_state = TASK_STATES.FAILED
                         cancel_reason = "Aborted during worker shutdown."
-                        break
             task_process.join()
             if not cancel_state and task_process.exitcode != 0:
                 _logger.warning(
