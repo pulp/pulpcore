@@ -1,0 +1,2 @@
+Added repeating logic to signalling a task worker subprocess. This should fix a bug where the
+task refuses to be terminated easily.
