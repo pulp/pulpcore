@@ -42,7 +42,6 @@ async def _heartbeat():
     versions = {app.label: app.version for app in pulp_plugin_configs()}
 
     while True:
-
         try:
             content_app_status, created = await sync_to_async(
                 ContentAppStatus.objects.get_or_create
