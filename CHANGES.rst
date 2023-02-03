@@ -17,6 +17,26 @@ Changelog
 
 .. towncrier release notes start
 
+3.22.2 (2023-02-02)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Added a ``start_repository_version`` parameter to the file system exporter.
+
+  If specified, it will export only content units that differed between two repository versions.
+  :github:`3413`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.22.1 (2023-01-20)
 ===================
 REST API
@@ -189,6 +209,26 @@ Removals
 - Deprecated model ``Label`` and serializer field ``LabelField`` and ``LabelSelectFilter`` for
   removal in 3.25.
   :github:`3400`
+
+
+3.21.5 (2023-02-02)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Added a ``start_repository_version`` parameter to the file system exporter.
+
+  If specified, it will export only content units that differed between two repository versions.
+  :github:`3413`
+
+
+Plugin API
+----------
+
+No significant changes.
 
 
 3.21.4 (2023-01-20)
