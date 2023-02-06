@@ -15,6 +15,7 @@ from pulpcore.openapi import PulpAutoSchema
 from rest_framework.serializers import ValidationError as DRFValidationError, ListField, CharField
 
 from pulpcore.app import tasks
+from pulpcore.app.loggers import deprecation_logger
 from pulpcore.app.models import MasterModel
 from pulpcore.app.models.role import GroupRole, UserRole
 from pulpcore.app.response import OperationPostponedResponse
@@ -216,6 +217,10 @@ class NamedModelViewSet(viewsets.GenericViewSet):
         Raises:
             rest_framework.exceptions.ValidationError: on invalid URI.
         """
+        deprecation_logger.warning(
+            "NamedModelViewSet.extract_pk() is deprecated and will be removed in pulpcore==3.25; "
+            "use pulpcore.app.utils.extract_pk() instead."
+        )
         try:
             match = resolve(urlparse(uri).path)
         except Resolver404:
