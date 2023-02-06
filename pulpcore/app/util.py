@@ -3,15 +3,18 @@ from gettext import gettext as _
 import os
 import tempfile
 
+from urllib.parse import urlparse
+
 from contextlib import ExitStack
 from datetime import timedelta
 import gnupg
 
 from django.conf import settings
 from django.apps import apps
-from django.urls import reverse
+from django.urls import Resolver404, resolve, reverse
 from django.contrib.contenttypes.models import ContentType
 from pkg_resources import get_distribution
+from rest_framework.serializers import ValidationError
 
 from pulpcore.app.loggers import deprecation_logger
 from pulpcore.app.apps import pulp_plugin_configs
@@ -34,6 +37,61 @@ def get_url(model):
         str: The path component of the resource url
     """
     return reverse(get_view_name_for_model(model, "detail"), args=[model.pk])
+
+
+def extract_pk(uri):
+    """
+    Resolve a resource URI to a simple PK value.
+
+    Provides a means to resolve an href passed in a POST body to a primary key.
+    Doesn't assume anything about whether the resource corresponding to the URI
+    passed in actually exists.
+
+    Note:
+        Cannot be used with nested URIs where the PK of the final resource is not present.
+        e.g. RepositoryVersion URI consists of repository PK and version number - no
+        RepositoryVersion PK is present within the URI.
+
+    Args:
+        uri (str): A resource URI.
+
+    Returns:
+        primary_key (uuid.uuid4): The primary key of the resource extracted from the URI.
+
+    Raises:
+        rest_framework.exceptions.ValidationError: on invalid URI.
+    """
+    try:
+        match = resolve(urlparse(uri).path)
+    except Resolver404:
+        raise ValidationError(detail=_("URI not valid: {u}").format(u=uri))
+
+    try:
+        return match.kwargs["pk"]
+    except KeyError:
+        raise ValidationError("URI does not contain an unqualified resource PK")
+
+
+def raise_for_unknown_content_units(existing_content_units, content_units_pks_hrefs):
+    """Verify if all the specified content units were found in the database.
+
+    Args:
+        existing_content_units (pulpcore.plugin.models.Content): Content filtered by
+            specified_content_units.
+        content_units_pks_hrefs (dict): An original dictionary of pk-href pairs that
+            are used for the verification.
+    Raises:
+        ValidationError: If some of the referenced content units are not present in the database
+    """
+    existing_content_units_pks = existing_content_units.values_list("pk", flat=True)
+    existing_content_units_pks = set(map(str, existing_content_units_pks))
+
+    missing_pks = set(content_units_pks_hrefs.keys()) - existing_content_units_pks
+    if missing_pks:
+        missing_hrefs = [content_units_pks_hrefs[pk] for pk in missing_pks]
+        raise ValidationError(
+            _("Could not find the following content units: {}").format(missing_hrefs)
+        )
 
 
 # based on their name, viewset_for_model and view_name_for_model look like they should

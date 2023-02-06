@@ -19,6 +19,7 @@ from pulpcore.app.serializers import (
     HiddenFieldsMixin,
     pulp_labels_validator,
 )
+from pulpcore.app.util import extract_pk, raise_for_unknown_content_units
 
 
 class RepositorySerializer(ModelSerializer):
@@ -439,6 +440,7 @@ class RepositoryAddRemoveContentSerializer(ModelSerializer, NestedHyperlinkedMod
             "A list of content units to add to a new repository version. This content is "
             "added after remove_content_units are removed."
         ),
+        child=serializers.CharField(error_messages={"invalid": "Not a valid URI of a resource."}),
         required=False,
     )
     remove_content_units = serializers.ListField(
@@ -447,6 +449,7 @@ class RepositoryAddRemoveContentSerializer(ModelSerializer, NestedHyperlinkedMod
             "You may also specify '*' as an entry to remove all content. This content is "
             "removed before add_content_units are added."
         ),
+        child=serializers.CharField(error_messages={"invalid": "Not a valid URI of a resource."}),
         required=False,
     )
     base_version = RepositoryVersionRelatedField(
@@ -457,10 +460,35 @@ class RepositoryAddRemoveContentSerializer(ModelSerializer, NestedHyperlinkedMod
         ),
     )
 
+    def validate_add_content_units(self, value):
+        add_content_units = {}
+
+        for url in value:
+            add_content_units[extract_pk(url)] = url
+
+        content_units_pks = set(add_content_units.keys())
+        existing_content_units = models.Content.objects.filter(pk__in=content_units_pks)
+        existing_content_units.touch()
+
+        raise_for_unknown_content_units(existing_content_units, add_content_units)
+
+        return list(add_content_units.keys())
+
     def validate_remove_content_units(self, value):
-        if len(value) > 1 and "*" in value:
-            raise serializers.ValidationError("Cannot supply content units and '*'.")
-        return value
+        remove_content_units = {}
+
+        if "*" in value:
+            if len(value) > 1:
+                raise serializers.ValidationError("Cannot supply content units and '*'.")
+            else:
+                return ["*"]
+        else:
+            for url in value:
+                remove_content_units[extract_pk(url)] = url
+            content_units_pks = set(remove_content_units.keys())
+            existing_content_units = models.Content.objects.filter(pk__in=content_units_pks)
+            raise_for_unknown_content_units(existing_content_units, remove_content_units)
+            return list(remove_content_units.keys())
 
     class Meta:
         model = models.RepositoryVersion
