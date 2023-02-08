@@ -47,7 +47,7 @@ def reclaim_space(repo_pks, keeplist_rv_pks=None, force=False):
         if not content.cast().PROTECTED_FROM_RECLAIM:
             unprotected.append(content.pulp_type)
 
-    ca_qs = ContentArtifact.objects.filter(
+    ca_qs = ContentArtifact.objects.select_related("content", "artifact").filter(
         content__in=c_reclaim_qs.values("pk"), artifact__isnull=False
     )
     if not force:

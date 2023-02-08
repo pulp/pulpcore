@@ -1,0 +1,1 @@
+Addressed a possible N+1 query performance issue within reclaim_space task.
