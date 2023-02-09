@@ -25,11 +25,11 @@ jobs:
       run: git branch main origin/main
     - name: Commit Count Check
       run: test `git log  --oneline --no-merges HEAD ^main  | wc -l ` = 1
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
 
   lint:
-    runs-on: ubuntu-latest
-    
+    runs-on: ubuntu-20.04
+
 
     steps:
       - uses: actions/checkout@v3
@@ -76,7 +76,7 @@ jobs:
       - name: Check manifest
         run: check-manifest
 
-      
+
 
       - name: Check for gettext problems
         run: sh .ci/scripts/check_gettext.sh
@@ -85,7 +85,7 @@ jobs:
         run: python .ci/scripts/upper_bound.py
 
   test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     # run only after lint finishes
     needs: lint
     strategy:
@@ -122,7 +122,7 @@ jobs:
           echo "TEST=${{ matrix.env.TEST }}" >> $GITHUB_ENV
 
       - name: Before Install
-        
+
         run: .github/workflows/scripts/before_install.sh
         shell: bash
         env:
@@ -136,7 +136,7 @@ jobs:
           GITHUB_CONTEXT: ${{ github.event.pull_request.commits_url }}
 
       - name: Install
-        
+
         run: .github/workflows/scripts/install.sh
         shell: bash
         env:
@@ -150,12 +150,12 @@ jobs:
           GITHUB_CONTEXT: ${{ github.event.pull_request.commits_url }}
 
       - name: Install Python client
-        
+
         run: .github/workflows/scripts/install_python_client.sh
         shell: bash
 
       - name: Before Script
-        
+
         run: .github/workflows/scripts/before_script.sh
         shell: bash
         env:
@@ -176,7 +176,7 @@ jobs:
           SECRETS_CONTEXT: ${{ toJson(secrets) }}
 
       - name: Script
-        
+
         run: .github/workflows/scripts/script.sh
         shell: bash
         env:
