@@ -17,6 +17,26 @@ Changelog
 
 .. towncrier release notes start
 
+3.14.19 (2023-02-09)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fixed another rare deadlock for high-concurrency/overlapping-content syncs.
+  :github:`3111`
+- Another step on closing the deadlock-window when syncing overlapping content.
+  :github:`3284`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.14.18 (2022-07-14)
 ====================
 REST API
