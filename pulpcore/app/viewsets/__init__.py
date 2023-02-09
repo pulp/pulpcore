@@ -76,3 +76,4 @@ from .user import (  # noqa
     UserViewSet,
     UserRoleViewSet,
 )
+from .replica import UpstreamPulpViewSet  # noqa

@@ -110,3 +110,4 @@ from .user import (  # noqa
     UserRoleSerializer,
     UserSerializer,
 )
+from .replica import UpstreamPulpSerializer  # noqa
