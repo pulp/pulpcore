@@ -122,8 +122,8 @@ def create_tag_and_build_package(repo, desired_tag, commit_sha, plugin_path):
                 tag = existing_tag
             else:
                 raise RuntimeError(
-                    "The '{desired_tag}' tag already exists, but the commit sha does not match "
-                    "'{commit_sha}'."
+                    f"The '{desired_tag}' tag already exists, but the commit sha does not match "
+                    f"'{commit_sha}'."
                 )
 
     # Create a tag if one does not exist
@@ -138,7 +138,7 @@ def create_tag_and_build_package(repo, desired_tag, commit_sha, plugin_path):
     loop = asyncio.get_event_loop()  # noqa
     # fmt: off
     package_found = asyncio.run(
-        get_package_from_pypi("pulpcore=={tag.name}", plugin_path)
+        get_package_from_pypi(f"pulpcore=={tag.name}", plugin_path)
     )  # noqa
     # fmt: on
     if not package_found:
