@@ -37,6 +37,7 @@ the box.
    subclassing/serializers
    subclassing/viewsets
    subclassing/import-export
+   subclassing/replication
 
 
 .. _master-detail-models:

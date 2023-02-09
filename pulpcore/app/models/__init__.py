@@ -95,3 +95,6 @@ from .upload import (  # noqa
 
 # Moved here to avoid a circular import with Task
 from .progress import GroupProgressReport, ProgressReport  # noqa
+
+# Moved here to avoid a circular import with GroupProgressReport
+from .replica import UpstreamPulp  # noqa

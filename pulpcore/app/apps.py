@@ -19,6 +19,7 @@ VIEWSETS_MODULE_NAME = "viewsets"
 SERIALIZERS_MODULE_NAME = "serializers"
 URLS_MODULE_NAME = "urls"
 MODELRESOURCE_MODULE_NAME = "modelresource"
+REPLICA_MODULE_NAME = "replica"
 
 
 def pulp_plugin_configs():
@@ -101,6 +102,11 @@ class PulpPluginAppConfig(apps.AppConfig):
         # List of classes from self.modelresource_module that can be exported
         self.exportable_classes = None
 
+        # Module containing the replicator class for a plugin
+        self.replicator_module = None
+        # List of classes from the self.replicator_module
+        self.replicator_classes = None
+
         # Mapping of model names to viewset lists (viewsets unrelated to models are excluded)
         self.named_viewsets = None
         # Mapping of serializer names to serializers
@@ -111,6 +117,7 @@ class PulpPluginAppConfig(apps.AppConfig):
         self.import_serializers()
         self.import_urls()
         self.import_modelresources()
+        self.import_replicators()
         post_migrate.connect(
             _populate_access_policies,
             sender=self,
@@ -192,6 +199,19 @@ class PulpPluginAppConfig(apps.AppConfig):
             )
             self.modelresource_module = import_module(modelrsrc_module_name)
             self.exportable_classes = self.modelresource_module.IMPORT_ORDER
+
+    def import_replicators(self):
+        """
+        If a plugin has a replicator.py, import it.
+
+        This exists when a plugin supports replication from an upstream Pulp.
+        """
+        if module_has_submodule(self.module, REPLICA_MODULE_NAME) and self.name != "pulpcore.app":
+            replica_module_name = "{name}.{module}".format(
+                name=self.name, module=REPLICA_MODULE_NAME
+            )
+            self.replicator_module = import_module(replica_module_name)
+            self.replicator_classes = self.replicator_module.REPLICATION_ORDER
 
 
 class PulpAppConfig(PulpPluginAppConfig):
