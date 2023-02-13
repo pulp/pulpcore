@@ -1,5 +1,7 @@
 import uuid
 
+import asyncio
+import aiohttp
 import pytest
 
 from pulp_smash.config import get_config
@@ -320,15 +322,49 @@ def pulp_api_v3_url(pulp_cfg, pulp_api_v3_path):
 
 
 @pytest.fixture
-def random_artifact(random_artifact_factory):
-    return random_artifact_factory()
-
-
-@pytest.fixture
 def random_artifact_factory(artifacts_api_client, tmp_path, gen_object_with_cleanup):
     def _random_artifact_factory():
         temp_file = tmp_path / str(uuid.uuid4())
         temp_file.write_bytes(uuid.uuid4().bytes)
-        return gen_object_with_cleanup(artifacts_api_client, temp_file)
+        return artifacts_api_client.create(temp_file)
 
     return _random_artifact_factory
+
+
+@pytest.fixture
+def random_artifact(random_artifact_factory):
+    return random_artifact_factory()
+
+
+@pytest.fixture(scope="session")
+def download_content_unit(bindings_cfg):
+    def _download_content_unit(base_path, content_path):
+        async def _get_response(url):
+            async with aiohttp.ClientSession() as session:
+                async with session.get(url) as response:
+                    return await response.read()
+
+        url_fragments = [
+            bindings_cfg.host,
+            "pulp/content",
+            base_path,
+            content_path,
+        ]
+        url = "/".join(url_fragments)
+        return asyncio.run(_get_response(url))
+
+    return _download_content_unit
+
+
+@pytest.fixture(scope="session")
+def http_get():
+    def _http_get(url, **kwargs):
+        async def _send_request():
+            async with aiohttp.ClientSession(raise_for_status=True) as session:
+                async with session.get(url, **kwargs) as response:
+                    return await response.content.read()
+
+        response = asyncio.run(_send_request())
+        return response
+
+    return _http_get
