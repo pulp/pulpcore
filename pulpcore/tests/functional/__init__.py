@@ -899,7 +899,7 @@ def add_to_filesystem_cleanup():
                 pass
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def download_content_unit(bindings_cfg):
     def _download_content_unit(base_path, content_path):
         async def _get_response(url):
@@ -917,3 +917,17 @@ def download_content_unit(bindings_cfg):
         return asyncio.run(_get_response(url))
 
     return _download_content_unit
+
+
+@pytest.fixture(scope="session")
+def http_get():
+    def _http_get(url, **kwargs):
+        async def _send_request():
+            async with aiohttp.ClientSession(raise_for_status=True) as session:
+                async with session.get(url, **kwargs) as response:
+                    return await response.content.read()
+
+        response = asyncio.run(_send_request())
+        return response
+
+    return _http_get
