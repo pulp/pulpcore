@@ -11,7 +11,7 @@ from aiohttp.web import FileResponse, Response, HTTPSuccessful, Request
 from aiohttp.web_exceptions import HTTPFound
 
 from redis import ConnectionError
-from aioredis import ConnectionError as AConnectionError
+from redis.asyncio import ConnectionError as AConnectionError
 
 from pulpcore.app.settings import settings
 from pulpcore.app.redis_connection import (
