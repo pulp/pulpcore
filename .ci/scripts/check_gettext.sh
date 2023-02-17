@@ -12,7 +12,6 @@ cd "$(dirname "$(realpath -e "$0")")"/../..
 
 set -uv
 
-# check for imports not from pulpcore.plugin. exclude tests
 MATCHES=$(grep -n -r --include \*.py "_(f")
 
 if [ $? -ne 1 ]; then
