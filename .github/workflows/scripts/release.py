@@ -79,9 +79,7 @@ def create_release_commits(repo, release_version, plugin_path):
     git.add(f"{plugin_path}/setup.py")
     git.add(f"{plugin_path}/requirements.txt")
     git.add(f"{plugin_path}/.bumpversion.cfg")
-
     git.commit("-m", f"Release {release_version}\nGH Issues: {issues}\n\n[noissue]")
-
     sha = repo.head.object.hexsha
     short_sha = git.rev_parse(sha, short=7)
 
@@ -101,7 +99,6 @@ def create_release_commits(repo, release_version, plugin_path):
     git.add(f"{plugin_path}/requirements.txt")
     git.add(f"{plugin_path}/.bumpversion.cfg")
     git.commit("-m", f"Bump to {new_dev_version}\n\n[noissue]")
-
     print(f"Release commit == {short_sha}")
     print(f"All changes were committed on branch: release_{release_version}")
     return sha
