@@ -23,7 +23,6 @@ from pulpcore.plugin.models import (
 
 
 class ContentCRUDTestCase(TestCase):
-
     artifact01_path = os.path.join(tempfile.gettempdir(), "artifact01-tmp")
     artifact02_path = os.path.join(tempfile.gettempdir(), "artifact02-tmp")
 

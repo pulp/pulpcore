@@ -9,7 +9,6 @@ from pulpcore.app.serializers import ValidateFieldsMixin
 
 
 class OrphansCleanupSerializer(serializers.Serializer, ValidateFieldsMixin):
-
     content_hrefs = fields.ListField(
         required=False,
         help_text=_("Will delete specified content and associated Artifacts if they are orphans."),
