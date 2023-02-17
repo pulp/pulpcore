@@ -41,7 +41,6 @@ async def _heartbeat():
     msg = i8ln_msg.format(name=name, interarrival=heartbeat_interval)
 
     while True:
-
         try:
             content_app_status, created = await sync_to_async(
                 ContentAppStatus.objects.get_or_create
