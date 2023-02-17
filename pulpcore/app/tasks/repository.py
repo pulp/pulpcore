@@ -117,7 +117,6 @@ async def _repair_artifacts_for_content(subset=None, verify_checksums=True):
     ) as corrupted, ProgressReport(
         message="Repair corrupted units", code="repair.repaired"
     ) as repaired:
-
         with ThreadPoolExecutor(max_workers=2) as checksum_executor:
             async for content_artifact in sync_to_async_iterable(
                 query_set.select_related("artifact").iterator()
