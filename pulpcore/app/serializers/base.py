@@ -32,12 +32,9 @@ log = getLogger(__name__)
 class HrefFieldMixin:
     """A mixin to configure related fields to generate relative hrefs."""
 
-    @property
-    def context(self):
-        # Removes the request from the context to display relative hrefs.
-        res = dict(super().context)
-        res["request"] = None
-        return res
+    def get_url(self, obj, view_name, request, *args, **kwargs):
+        # Removes the request from the arguments to display relative hrefs.
+        return super().get_url(obj, view_name, None, *args, **kwargs)
 
 
 class _MatchingRegexViewName(object):
