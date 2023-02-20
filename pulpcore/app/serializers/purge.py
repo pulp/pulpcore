@@ -10,9 +10,9 @@ from pulpcore.constants import TASK_FINAL_STATES
 class PurgeSerializer(serializers.Serializer, ValidateFieldsMixin):
     finished_before = serializers.DateTimeField(
         help_text=_(
-            "Purge tasks completed earlier than this timestamp. Format '%Y-%m-%d[T%H:%M:%S]'"
+            "Purge tasks completed earlier than this timestamp. Format '%Y-%m-%dT%H:%M:%SZ'"
         ),
-        default=(datetime.now(timezone.utc) - timedelta(days=30)).strftime("%Y-%m-%d"),
+        default=(datetime.now(timezone.utc) - timedelta(days=30)).strftime("%Y-%m-%dT%H:%M:%SZ"),
     )
     states = serializers.MultipleChoiceField(
         choices=TASK_FINAL_STATES,

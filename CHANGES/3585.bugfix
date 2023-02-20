@@ -1,0 +1,1 @@
+Fixed default date-time format for ``finished_before`` DateTimeField in ``PurgeSerializer``.
