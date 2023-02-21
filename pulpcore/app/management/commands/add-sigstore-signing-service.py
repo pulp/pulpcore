@@ -23,16 +23,16 @@ SIGSTORE_GLOBAL_OPTIONS_SCHEMA = Schema(
 SIGSTORE_SIGN_SCHEMA = Schema(
     {
         Optional("fulcio-url"): str,
-        # TODO: Set to optional when key signing is supported
-        Required("oidc-client-id"): str,
-        Required("oidc-client-secret"): str,
-        Optional("output-rekor-bundle"): bool,
+        Required("identity-token"): str,
+        Optional("oidc-client-id"): str,
+        Optional("oidc-client-secret"): str,
+        Optional("sigstore-bundle"): bool,
         Optional("ctfe"): str,
     }
 )
 SIGSTORE_VERIFY_SCHEMA = Schema(
     {
-        Optional("require-rekor-offline"): bool,
+        Optional("verify-offline"): bool,
         Required("cert-identity"): str,
     }
 )
@@ -117,10 +117,10 @@ class Command(BaseCommand):
             help=_("The custom OpenID Connect client secret to use during OAuth2"),
         )
         sign_options.add_argument(
-            "--output-rekor-bundle",
+            "--sigstore-bundle",
             metavar="BOOL",
             type=bool,
-            help=_("Write a single Rekor bundle file to the collection."),
+            help=_("Write a single Sigstore bundle file to the collection."),
         )
         sign_options.add_argument(
             "--fulcio-url",
@@ -128,6 +128,12 @@ class Command(BaseCommand):
             type=str,
             default="https://fulcio.sigstore.dev",
             help=_("The Fulcio instance to use. WARNING: defaults to the public good Sigstore instance https://fulcio.sigstore.dev"),
+        )
+        sign_options.add_argument(
+            "--identity-token",
+            metavar="URL",
+            type=str,
+            help=_("Environment variable name for an OIDC identity token present on the server."),
         )
         sign_options.add_argument(
             "--ctfe",
@@ -152,10 +158,10 @@ class Command(BaseCommand):
             help=_("The identity to check for in the certificate's Subject Alternative Name"),
         )
         verify_options.add_argument(
-            "--require-rekor-offline",
+            "--verify-offline",
             metavar="BOOL",
             type=bool,
-            help=_("Perform offline signature verification. Requires a Rekor bundle as a verification input.")
+            help=_("Perform offline signature verification. Requires a Sigstore bundle as a verification input.")
         )
 
     def handle(self, *args, **options):
@@ -176,36 +182,38 @@ class Command(BaseCommand):
                         elif option_name in verify_options:
                             verify_options[option_name] = option_value
 
-                require_rekor_offline = _to_bool(verify_options["require-rekor-offline"])
-                output_rekor_bundle = _to_bool(sign_options["output-rekor-bundle"])
-                if require_rekor_offline and not output_rekor_bundle:
-                    raise Exception("Cannot perform offline verification if Sigstore signing service is not configured to write Rekor bundles.")
+                verify_offline = _to_bool(verify_options["verify-offline"])
+                sigstore_bundle = _to_bool(sign_options["sigstore-bundle"])
+                if verify_offline and not sigstore_bundle:
+                    raise Exception("Cannot perform offline verification if Sigstore signing service is not configured to write Sigstore bundles.")
 
                 try:
                     SigstoreSigningService.objects.create(
                         name=global_sigstore_options["signing-service-name"],
                         rekor_url=global_sigstore_options["rekor-url"],
-                        rekor_root_pubkey=global_sigstore_options["rekor-root-pubkey"],
+                        rekor_root_pubkey=global_sigstore_options.get("rekor-root-pubkey"),
                         oidc_issuer=global_sigstore_options.get("oidc-issuer"),
                         fulcio_url=sign_options["fulcio-url"],
-                        oidc_client_id=sign_options["oidc-client-id"],
-                        oidc_client_secret=sign_options["oidc-client-secret"],
-                        output_rekor_bundle=output_rekor_bundle,
+                        identity_token=sign_options["identity-token"],
+                        oidc_client_id=sign_options.get("oidc-client-id"),
+                        oidc_client_secret=sign_options.get("oidc-client-secret"),
+                        sigstore_bundle=sigstore_bundle,
                         ctfe=sign_options.get("ctfe"),
                         cert_identity=verify_options["cert-identity"],
-                        require_rekor_offline=require_rekor_offline,
+                        verify_offline=verify_offline,
                     )  
 
                     print(
                         f"Successfully configured the Sigstore signing service {global_sigstore_options['signing-service-name']} with the following parameters: \n"
                         f"Rekor instance URL: {global_sigstore_options['rekor-url']}\n"
-                        f"Rekor root public key: {global_sigstore_options['rekor-root-pubkey']}\n"
+                        f"Rekor root public key: {global_sigstore_options.get('rekor-root-pubkey')}\n"
                         f"Fulcio instance URL: {sign_options['fulcio-url']}\n"
                         f"OIDC issuer: {global_sigstore_options.get('oidc-issuer')}\n"
-                        f"OIDC client ID environment variable: {sign_options['oidc-client-id']}\n"
-                        f"OIDC client secret environment variable: {sign_options['oidc-client-secret']}\n"
-                        f"Output Rekor bundle: {output_rekor_bundle}\n"
-                        f"Require offline verification: {require_rekor_offline}\n"
+                        f"OIDC ID token environment variable: {sign_options['identity-token']}\n"
+                        f"OIDC client ID environment variable: {sign_options.get('oidc-client-id')}\n"
+                        f"OIDC client secret environment variable: {sign_options.get('oidc-client-secret')}\n"
+                        f"Output Rekor bundle: {sigstore_bundle}\n"
+                        f"Require offline verification: {verify_offline}\n"
                         f"Certificate Transparency log public key: {sign_options.get('ctfe')}\n"
                         f"OIDC identity of the signer: {verify_options['cert-identity']}\n"
                     )
