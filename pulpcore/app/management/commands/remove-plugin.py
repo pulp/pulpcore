@@ -32,14 +32,9 @@ $$;
 class Command(BaseCommand):
     """
     Django management command for removing a plugin.
-
-    This command is in tech-preview.
     """
 
-    help = (
-        "[tech-preview] Disable a Pulp plugin and remove all the relevant data from the database. "
-        "Destructive!"
-    )
+    help = "Disable a Pulp plugin and remove all the relevant data from the database. Destructive!"
 
     def add_arguments(self, parser):
         parser.add_argument(

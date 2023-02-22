@@ -3,11 +3,6 @@
 Metadata Signing
 ----------------
 
-.. note::
-
-    Content Signing is in tech-preview and may change in backwards incompatible ways in future
-    releases.
-
 Administrators can add signing services to Pulp using the command line tools. Users
 may then associate the signing services with repositories that support content signing.
 The example below demonstrates how a signing service can be created using ``gpg``:

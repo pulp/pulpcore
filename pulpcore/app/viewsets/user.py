@@ -42,9 +42,6 @@ class UserViewSet(
 ):
     """
     ViewSet for User.
-
-    NOTE: This API endpoint is in "tech preview" and subject to change
-
     """
 
     endpoint_name = "users"
@@ -73,9 +70,6 @@ class GroupViewSet(
 ):
     """
     ViewSet for Group.
-
-    NOTE: This API endpoint is in "tech preview" and subject to change
-
     """
 
     endpoint_name = "groups"
@@ -155,9 +149,6 @@ class GroupViewSet(
 class GroupUserViewSet(NamedModelViewSet):
     """
     ViewSet for Users that belong to a Group.
-
-    NOTE: This API endpoint is in "tech preview" and subject to change
-
     """
 
     endpoint_name = "users"
@@ -318,9 +309,6 @@ class RoleViewSet(
 ):
     """
     ViewSet for Role.
-
-    NOTE: This API endpoint is in "tech preview" and subject to change
-
     """
 
     endpoint_name = "roles"
@@ -392,9 +380,6 @@ class UserRoleViewSet(
 ):
     """
     ViewSet for UserRole.
-
-    NOTE: This API endpoint is in "tech preview" and subject to change
-
     """
 
     endpoint_name = "roles"
@@ -426,9 +411,6 @@ class GroupRoleViewSet(
 ):
     """
     ViewSet for GroupRole.
-
-    NOTE: This API endpoint is in "tech preview" and subject to change
-
     """
 
     endpoint_name = "roles"

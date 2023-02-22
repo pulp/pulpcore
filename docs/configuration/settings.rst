@@ -265,8 +265,6 @@ CONTENT_APP_TTL
 CACHE_ENABLED
 ^^^^^^^^^^^^^
 
-   .. note:: This feature is provided as a tech-preview
-
    Store cached responses from the content app into Redis. This setting improves the performance
    of the content app under heavy load for similar requests. Defaults to ``False``.
 
@@ -400,10 +398,6 @@ ALLOWED_CONTENT_CHECKSUMS
     You can update them using:
 
     ``pulpcore-manager handle-artifact-checksums``
-
-    .. warning::
-      ``--report`` and ``--checksums`` arguments are tech-preview and may change in backwards
-      incompatible ways in future releases.
 
     .. warning::
       If Pulp fails to start because forbidden checkums have been identified or required ones are

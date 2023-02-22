@@ -3,12 +3,6 @@
 Reclaim disk space for a list of repositories
 ---------------------------------------------
 
-.. note::
-
-    Pulp's reclaim disk space feature is in tech-preview and may change in backwards incompatible
-    ways in future releases.
-
-
 Pulp provides the ability to reclaim disk space for:
 
   * content that one no longer needs to serve but would like to keep in the repo for historical

@@ -147,10 +147,6 @@ class Command(BaseCommand):
             allowed_checksums
         )
 
-        self.stderr.write(
-            "Warning: the handle-artifact-checksums report is in tech preview and may change in "
-            "the future."
-        )
         self._show_on_demand_content(forbidden_checksums)
         self._show_immediate_content(forbidden_checksums)
 

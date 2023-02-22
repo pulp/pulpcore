@@ -3,12 +3,6 @@
 Plugin removal
 --------------
 
-.. note::
-
-    Plugin removal feature is in tech-preview and may change in backwards incompatible
-    ways in future releases.
-
-
 In case when one does not need a certain Pulp plugin anymore or there is a plugin which is no
 longer supported and having it installed may prevent from upgrading to the latest releases for
 pulpcore and other Pulp plugins.

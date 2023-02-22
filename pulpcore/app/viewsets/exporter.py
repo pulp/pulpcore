@@ -67,7 +67,7 @@ class PulpExporterViewSet(ExporterViewSet):
 
 class FilesystemExporterViewSet(ExporterViewSet):
     """
-    Endpoint for managing FilesystemExporters. FilesystemExporters are provided as a tech preview.
+    Endpoint for managing FilesystemExporters.
     """
 
     endpoint_name = "filesystem"
@@ -135,7 +135,7 @@ class PulpExportViewSet(ExportViewSet):
 
 class FilesystemExportViewSet(ExportViewSet):
     """
-    Endpoint for managing FilesystemExports. This endpoint is provided as a tech preview.
+    Endpoint for managing FilesystemExports.
     """
 
     parent_viewset = FilesystemExporterViewSet
