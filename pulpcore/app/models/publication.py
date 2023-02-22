@@ -574,9 +574,7 @@ class Distribution(MasterModel):
 
 
 class ArtifactDistribution(Distribution):
-    """Serve artifacts by their uuid.
-    This is in tech-preview.
-    """
+    """Serve artifacts by their uuid."""
 
     TYPE = "artifact"
 

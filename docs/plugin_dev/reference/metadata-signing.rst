@@ -3,11 +3,6 @@
 Metadata Signing
 ================
 
-.. note::
-
-    Content Signing is in tech-preview and may change in backwards incompatible ways in future
-    releases.
-
 Plugin writers wishing to enable users to sign metadata need to add a new field ``metadata_signing_service``
 to their implementation of a repository and/or publication. This field should be exposed to users who consume
 content via REST API. The users may afterwards specify which signing service will be used to sign the

@@ -13,11 +13,9 @@ from pulpcore.app.models.content import SigningService as BaseSigningService
 class Command(BaseCommand):
     """
     Django management command for removing a signing service.
-
-    This command is in tech-preview.
     """
 
-    help = "Removes an existing AsciiArmoredDetachedSigningService. [tech-preview]"
+    help = "Removes an existing SigningService."
 
     def add_arguments(self, parser):
         parser.add_argument(

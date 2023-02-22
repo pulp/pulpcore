@@ -3,9 +3,6 @@ Alternate Content Sources
 
 .. warning:: This feature requires plugin support to work correctly.
 
-.. warning:: This feature is provided as a tech preview and could change in backwards incompatible
-  ways in the future
-
 Overview
 --------
 

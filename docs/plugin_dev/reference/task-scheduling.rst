@@ -3,7 +3,7 @@
 Task Scheduling
 ---------------
 
-.. warning: This feature is in tech-preview and only accessible by direct manipulation of
+.. warning: This feature is only accessible by direct manipulation of
    ``TaskSchedule`` objects. It is targeted for plugin writers and no api access is planned.
 
 Pulp supports scheduling of tasks. Scheduled tasks will be dispatched shortly after their
