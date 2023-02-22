@@ -109,25 +109,20 @@ class QueryExistingArtifacts(Stage):
                 await self.put(d_content)
 
 
-class ArtifactDownloader(Stage):
+class GenericDownloader(Stage):
     """
-    A Stages API stage to download :class:`~pulpcore.plugin.models.Artifact` files, but don't save
-    the :class:`~pulpcore.plugin.models.Artifact` in the db.
+    A base Stages API stage to download files.
 
-    This stage downloads the file for any :class:`~pulpcore.plugin.models.Artifact` objects missing
-    files and creates a new :class:`~pulpcore.plugin.models.Artifact` object from the downloaded
-    file and its digest data. The new :class:`~pulpcore.plugin.models.Artifact` is not saved but
-    added to the :class:`~pulpcore.plugin.stages.DeclarativeArtifact` object, replacing the likely
-    incomplete :class:`~pulpcore.plugin.models.Artifact`.
-
-    Each :class:`~pulpcore.plugin.stages.DeclarativeContent` is sent to `self._out_q` after all of
-    its :class:`~pulpcore.plugin.stages.DeclarativeArtifact` objects have been handled.
-
-    This stage creates a ProgressReport named 'Downloading Artifacts' that counts the number of
+    This stage creates a ProgressReport named `PROGRESS_REPORTING_MESSAGE` that counts the number of
     downloads completed. Since it's a stream the total count isn't known until it's finished.
 
-    This stage drains all available items from `self._in_q` and starts as many downloaders as
-    possible (up to `download_concurrency` set on a Remote)
+    This stage drains all available items from `self._in_q` and starts as many concurrent
+    downloading tasks as possible, up to the limit defined by ``self.max_concurrent_content``.
+
+    Each :class:`~pulpcore.plugin.stages.DeclarativeContent` is sent to `_handle_content_unit`,
+    which must be implemented by the subclass, to handle processing the content unit and starting
+    the downloads. After the downloads for that unit are complete the content should put into
+    `self._out_q` to move onto the next stage.
 
     Args:
         max_concurrent_content (int): The maximum number of
@@ -136,6 +131,9 @@ class ArtifactDownloader(Stage):
         args: unused positional arguments passed along to :class:`~pulpcore.plugin.stages.Stage`.
         kwargs: unused keyword arguments passed along to :class:`~pulpcore.plugin.stages.Stage`.
     """
+
+    PROGRESS_REPORTING_MESSAGE = "Downloading"
+    PROGRESS_REPORTING_CODE = "sync.downloading"
 
     def __init__(self, max_concurrent_content=200, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -166,8 +164,9 @@ class ArtifactDownloader(Stage):
         content_get_task = _add_to_pending(content_iterator.__anext__())
 
         async with ProgressReport(
-            message="Downloading Artifacts", code="sync.downloading.artifacts"
+            message=self.PROGRESS_REPORTING_MESSAGE, code=self.PROGRESS_REPORTING_CODE
         ) as pb:
+            self.progress_report = pb
             try:
                 while pending:
                     done, pending = await asyncio.wait(pending, return_when=asyncio.FIRST_COMPLETED)
@@ -191,6 +190,35 @@ class ArtifactDownloader(Stage):
                 for future in pending:
                     future.cancel()
                 raise
+
+    async def _handle_content_unit(self, d_content):
+        """Handle one content unit.
+
+        Must be implemented in subclasses.
+
+        Returns:
+            The number of downloads
+        """
+        raise NotImplementedError
+
+
+class ArtifactDownloader(GenericDownloader):
+    """
+    A Stages API stage to download :class:`~pulpcore.plugin.models.Artifact` files, but don't save
+    the :class:`~pulpcore.plugin.models.Artifact` in the db.
+
+    This stage downloads the file for any :class:`~pulpcore.plugin.models.Artifact` objects missing
+    files and creates a new :class:`~pulpcore.plugin.models.Artifact` object from the downloaded
+    file and its digest data. The new :class:`~pulpcore.plugin.models.Artifact` is not saved but
+    added to the :class:`~pulpcore.plugin.stages.DeclarativeArtifact` object, replacing the likely
+    incomplete :class:`~pulpcore.plugin.models.Artifact`.
+
+    Each :class:`~pulpcore.plugin.stages.DeclarativeContent` is sent to `self._out_q` after all of
+    its :class:`~pulpcore.plugin.stages.DeclarativeArtifact` objects have been handled.
+    """
+
+    PROGRESS_REPORTING_MESSAGE = "Downloading Artifacts"
+    PROGRESS_REPORTING_CODE = "sync.downloading.artifacts"
 
     async def _handle_content_unit(self, d_content):
         """Handle one content unit.

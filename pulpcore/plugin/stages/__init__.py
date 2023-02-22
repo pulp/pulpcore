@@ -3,6 +3,7 @@ from .artifact_stages import (  # noqa
     ACSArtifactHandler,
     ArtifactDownloader,
     ArtifactSaver,
+    GenericDownloader,
     QueryExistingArtifacts,
     RemoteArtifactSaver,
 )
