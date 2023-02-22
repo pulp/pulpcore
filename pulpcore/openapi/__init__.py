@@ -20,11 +20,15 @@ from drf_spectacular.plumbing import (
 )
 from drf_spectacular.settings import spectacular_settings
 from drf_spectacular.types import OpenApiTypes
-from drf_spectacular.utils import OpenApiParameter
+from drf_spectacular.utils import OpenApiParameter, extend_schema_field
 from rest_framework import mixins, serializers
 from rest_framework.schemas.utils import get_pk_description
 
 from pulpcore.app.apps import pulp_plugin_configs
+
+
+# Python does not distinguish integer sizes. The safest assumtion is that they are large.
+extend_schema_field(OpenApiTypes.INT64)(serializers.IntegerField)
 
 
 class PulpAutoSchema(AutoSchema):
