@@ -20,7 +20,6 @@ aforementioned Pulp Plugin API deprecation policy.
     tasking
     download
     stages
-    profiling
     content-app
     util
 

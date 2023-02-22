@@ -14,4 +14,3 @@ from .content_stages import (  # noqa
 )
 from .declarative_version import DeclarativeVersion  # noqa
 from .models import DeclarativeArtifact, DeclarativeContent  # noqa
-from .profiler import ProfilingQueue, create_profile_db_and_connection  # noqa

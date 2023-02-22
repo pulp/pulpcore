@@ -249,8 +249,6 @@ ALLOWED_IMPORT_PATHS = []
 
 ALLOWED_EXPORT_PATHS = []
 
-PROFILE_STAGES_API = False
-
 # https://docs.pulpproject.org/pulpcore/configuration/settings.html#pulp-cache
 CACHE_ENABLED = False
 CACHE_SETTINGS = {
