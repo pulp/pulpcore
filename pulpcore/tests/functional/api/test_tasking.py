@@ -16,10 +16,15 @@ from pulpcore.tests.functional.utils import download_file
 def dispatch_task(pulpcore_client):
     def _dispatch_task(*args, **kwargs):
         cid = pulpcore_client.default_headers.get("Correlation-ID") or str(uuid4())
+        username = pulpcore_client.configuration.username
         commands = (
             "from django_guid import set_guid; "
             "from pulpcore.tasking.tasks import dispatch; "
-            "from pulpcore.app.util import get_url; "
+            "from pulpcore.app.util import get_url, set_current_user; "
+            "from django.contrib.auth import get_user_model; "
+            "User = get_user_model(); "
+            f"user = User.objects.filter(username='{username}').first(); "
+            "set_current_user(user); "
             f"set_guid({cid!r}); "
             f"task = dispatch(*{args!r}, **{kwargs!r}); "
             "print(get_url(task))"
@@ -295,3 +300,24 @@ def test_cancel_gooey_task(tasks_api_client, dispatch_task, monitor_task):
             task = tasks_api_client.read(task_href)
 
     assert task.state == "canceled"
+
+
+@pytest.mark.parallel
+def test_task_created_by(dispatch_task, monitor_task, gen_user, anonymous_user):
+    # Test admin dispatch, user_id == 1 / admin is always first user
+    task = monitor_task(dispatch_task("time.sleep", (0,)))
+    assert task.created_by.endswith("/1/")
+
+    # Test w/ new user, user_id != 1
+    user = gen_user()
+    with user:
+        task_href = dispatch_task("time.sleep", (0,))
+    user_task = monitor_task(task_href)
+    assert task.created_by != user_task.created_by
+    assert user_task.created_by == user.user.pulp_href
+
+    # Test w/ anon (Pulp itself, i.e. analytics)
+    with anonymous_user:
+        task_href = dispatch_task("time.sleep", (0,))
+    anon_task = monitor_task(task_href)
+    assert anon_task.created_by is None

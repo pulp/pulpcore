@@ -17,6 +17,7 @@ from pulpcore.app.models import (
     CreatedResource,
     RepositoryVersion,
 )
+from pulpcore.app.models.role import UserRole
 from pulpcore.app.response import OperationPostponedResponse
 from pulpcore.app.serializers import (
     AsyncOperationResponseSerializer,
@@ -157,6 +158,7 @@ class TaskViewSet(
         ):
             task_list = args[0] if many else [args[0]]
             created_resources = [cr for task in task_list for cr in task.created_resources.all()]
+            # Optimization for RepositoryVersion created_resources
             repo_ver_pks = [
                 cr.object_id
                 for cr in created_resources
@@ -170,6 +172,12 @@ class TaskViewSet(
             serializer.context["repo_ver_mapping"] = {rv.pk: rv for rv in repo_vers}
             # Assume, all tasks and related resources are of the same domain.
             serializer.context["pulp_domain"] = get_domain()
+            # Optimization for User created_by
+            task_pks = [t.pk for t in task_list]
+            user_roles = UserRole.objects.filter(
+                role__name="core.task_owner", object_id__in=task_pks
+            ).order_by("-pulp_created")
+            serializer.context["task_user_mapping"] = {u.object_id: u.user_id for u in user_roles}
         return serializer
 
     def get_queryset(self):

@@ -1,5 +1,7 @@
 from gettext import gettext as _
 
+from django.conf import settings
+from django.urls import reverse
 from rest_framework import serializers
 
 from pulpcore.app import models
@@ -13,6 +15,7 @@ from pulpcore.app.serializers import (
     TaskGroupStatusCountField,
 )
 from pulpcore.constants import TASK_STATES
+from pulpcore.app.util import get_domain
 
 
 class CreatedResourceSerializer(RelatedResourceField):
@@ -34,6 +37,7 @@ class TaskSerializer(ModelSerializer):
     logging_cid = serializers.CharField(
         help_text=_("The logging correlation id associated with this task")
     )
+    created_by = serializers.SerializerMethodField(help_text=_("User who dispatched this task."))
     started_at = serializers.DateTimeField(
         help_text=_("Timestamp of the when this task started execution."), read_only=True
     )
@@ -84,12 +88,22 @@ class TaskSerializer(ModelSerializer):
         read_only=True,
     )
 
+    def get_created_by(self, obj):
+        if task_user_map := self.context.get("task_user_mapping"):
+            if user_id := task_user_map.get(str(obj.pk)):
+                kwargs = {"pk": user_id}
+                if settings.DOMAIN_ENABLED:
+                    kwargs["pulp_domain"] = get_domain().name
+                return reverse("users-detail", kwargs=kwargs)
+        return None
+
     class Meta:
         model = models.Task
         fields = ModelSerializer.Meta.fields + (
             "state",
             "name",
             "logging_cid",
+            "created_by",
             "started_at",
             "finished_at",
             "error",
