@@ -17,6 +17,24 @@ Changelog
 
 .. towncrier release notes start
 
+3.18.14 (2023-02-23)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fixed a bug that caused the import machinery to import the same content multiple times in a row.
+  :github:`3075`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.18.13 (2023-01-20)
 ====================
 REST API
