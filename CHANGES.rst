@@ -860,6 +860,24 @@ Bugfixes
   :github:`2069`
 
 
+3.18.14 (2023-02-23)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fixed a bug that caused the import machinery to import the same content multiple times in a row.
+  :github:`3075`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.18.13 (2023-01-20)
 ====================
 REST API
@@ -1677,6 +1695,26 @@ Bugfixes
 
 - Include additional information about which AccessPolicy is using deprecated policy features.
   :redmine:`9608`
+
+
+3.16.16 (2023-02-23)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fixed a bug that caused the import machinery to import the same content multiple times in a row.
+  :github:`3075`
+- Insured that pulp-export correctly locks repos-being-exported.
+  :github:`3370`
+
+
+Plugin API
+----------
+
+No significant changes.
 
 
 3.16.15 (2022-11-02)
