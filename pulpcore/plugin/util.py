@@ -12,4 +12,11 @@ from pulpcore.app.role_util import (  # noqa
     remove_role,
 )
 
-from pulpcore.app.util import get_artifact_url, get_url, gpg_verify, verify_signature  # noqa
+from pulpcore.app.util import (  # noqa
+    extract_pk,
+    get_artifact_url,
+    get_url,
+    gpg_verify,
+    raise_for_unknown_content_units,
+    verify_signature,
+)
