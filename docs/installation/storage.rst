@@ -16,6 +16,11 @@ Storage
 SFTP
 ^^^^
 
+.. warning::
+    Using SFTP storage is not recommended in Pulp's current state, and doing so can lead to file corruption.
+    This is because Pulp currently uses coroutines that seem to be incompatible with Django's ``SFTPStorage``
+    implementation.
+
 Configuring Pulp to use SFTP storage
 ------------------------------------
 
