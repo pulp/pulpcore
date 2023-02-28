@@ -219,7 +219,7 @@ class NamedModelViewSet(viewsets.GenericViewSet):
         """
         deprecation_logger.warning(
             "NamedModelViewSet.extract_pk() is deprecated and will be removed in pulpcore==3.25; "
-            "use pulpcore.app.utils.extract_pk() instead."
+            "use pulpcore.plugin.util.extract_pk() instead."
         )
         try:
             match = resolve(urlparse(uri).path)

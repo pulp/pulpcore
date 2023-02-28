@@ -64,7 +64,7 @@ def raise_for_unknown_content_units(existing_content_units, content_units_pks_hr
     """
     deprecation_logger.warning(
         "pulpcore.plugin.actions.raise_for_unknown_content_units() is deprecated and will be "
-        "removed in pulpcore==3.25; use pulpcore.app.utils.raise_for_unknown_content_units()."
+        "removed in pulpcore==3.25; use pulpcore.plugin.util.raise_for_unknown_content_units()."
     )
     existing_content_units_pks = existing_content_units.values_list("pk", flat=True)
     existing_content_units_pks = set(map(str, existing_content_units_pks))
