@@ -68,15 +68,10 @@ password password
 # Some commands like ansible-galaxy specifically require 600
 cmd_user_stdin_prefix bash -c "chmod 600 ~pulp/.netrc"
 
-cat unittest_requirements.txt | cmd_stdin_prefix bash -c "cat > /tmp/unittest_requirements.txt"
-cat functest_requirements.txt | cmd_stdin_prefix bash -c "cat > /tmp/functest_requirements.txt"
-cmd_prefix pip3 install -r /tmp/unittest_requirements.txt
-cmd_prefix pip3 install -r /tmp/functest_requirements.txt
-cat ../pulp_file/functest_requirements.txt | cmd_stdin_prefix bash -c "cat > /tmp/pulp_file_functest_requirements.txt"
-cmd_prefix pip3 install -r /tmp/pulp_file_functest_requirements.txt
-cmd_prefix pip3 install --upgrade ../pulp-smash
-
 cd ../pulp-openapi-generator
+./generate.sh pulpcore python
+cmd_prefix pip3 install /root/pulp-openapi-generator/pulpcore-client
+sudo rm -rf ./pulpcore-client
 ./generate.sh pulp_file python
 cmd_prefix pip3 install /root/pulp-openapi-generator/pulp_file-client
 sudo rm -rf ./pulp_file-client
@@ -84,6 +79,10 @@ sudo rm -rf ./pulp_file-client
 cmd_prefix pip3 install /root/pulp-openapi-generator/pulp_certguard-client
 sudo rm -rf ./pulp_certguard-client
 cd $REPO_ROOT
+
+cat unittest_requirements.txt | cmd_stdin_prefix bash -c "cat > /tmp/unittest_requirements.txt"
+cat functest_requirements.txt | cmd_stdin_prefix bash -c "cat > /tmp/functest_requirements.txt"
+cmd_prefix pip3 install -r /tmp/unittest_requirements.txt -r /tmp/functest_requirements.txt
 
 CERTIFI=$(cmd_prefix python3 -c 'import certifi; print(certifi.where())')
 cmd_prefix bash -c "cat /etc/pulp/certs/pulp_webserver.crt  | tee -a "$CERTIFI" > /dev/null"
@@ -114,6 +113,8 @@ else
         cmd_user_prefix bash -c "pytest -v -r sx --color=yes --pyargs pulpcore.tests.functional -m 'not parallel' --nightly"
         cmd_user_prefix bash -c "pytest -v -r sx --color=yes --suppress-no-test-exit-code --pyargs pulp_file.tests.functional -m parallel -n 8 --nightly"
         cmd_user_prefix bash -c "pytest -v -r sx --color=yes --pyargs pulp_file.tests.functional -m 'not parallel' --nightly"
+        cmd_user_prefix bash -c "pytest -v -r sx --color=yes --suppress-no-test-exit-code --pyargs pulp_certguard.tests.functional -m parallel -n 8 --nightly"
+        cmd_user_prefix bash -c "pytest -v -r sx --color=yes --pyargs pulp_certguard.tests.functional -m 'not parallel' --nightly"
 
     
     else
@@ -121,6 +122,8 @@ else
         cmd_user_prefix bash -c "pytest -v -r sx --color=yes --pyargs pulpcore.tests.functional -m 'not parallel'"
         cmd_user_prefix bash -c "pytest -v -r sx --color=yes --suppress-no-test-exit-code --pyargs pulp_file.tests.functional -m parallel -n 8"
         cmd_user_prefix bash -c "pytest -v -r sx --color=yes --pyargs pulp_file.tests.functional -m 'not parallel'"
+        cmd_user_prefix bash -c "pytest -v -r sx --color=yes --suppress-no-test-exit-code --pyargs pulp_certguard.tests.functional -m parallel -n 8"
+        cmd_user_prefix bash -c "pytest -v -r sx --color=yes --pyargs pulp_certguard.tests.functional -m 'not parallel'"
 
     
     fi
