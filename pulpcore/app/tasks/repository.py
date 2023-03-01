@@ -10,7 +10,6 @@ from rest_framework.serializers import ValidationError
 
 from pulpcore.app import models
 from pulpcore.app.models import ProgressReport
-from pulpcore.plugin.sync import sync_to_async_iterable
 from pulpcore.app.util import get_domain
 
 log = getLogger(__name__)
@@ -61,11 +60,9 @@ def delete_version(pk):
 
 
 async def _repair_ca(content_artifact, repaired=None):
-    remote_artifacts = sync_to_async_iterable(
-        content_artifact.remoteartifact_set.all().select_related("remote")
-    )
+    remote_artifacts = content_artifact.remoteartifact_set.all().select_related("remote")
 
-    if not remote_artifacts:
+    if not await remote_artifacts.aexists():
         log.warning(
             "Artifact {} is unrepairable - no remote source".format(content_artifact.artifact)
         )
@@ -108,7 +105,7 @@ async def _repair_artifacts_for_content(subset=None, verify_checksums=True):
 
     domain = get_domain()
 
-    if subset is None or not await sync_to_async(subset.exists)():
+    if subset is None or not await subset.aexists():
         subset = models.Content.objects.filter(pulp_domain=domain)
 
     query_set = query_set.filter(content__in=subset.values("pk"))
@@ -122,9 +119,7 @@ async def _repair_artifacts_for_content(subset=None, verify_checksums=True):
     ) as repaired:
         with ThreadPoolExecutor(max_workers=2) as checksum_executor:
             storage = domain.get_storage()
-            async for content_artifact in sync_to_async_iterable(
-                query_set.select_related("artifact").iterator()
-            ):
+            async for content_artifact in (query_set.select_related("artifact").aiterator()):
                 artifact = content_artifact.artifact
 
                 valid = await loop.run_in_executor(None, storage.exists, artifact.file.name)

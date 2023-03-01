@@ -1,7 +1,5 @@
 import asyncio
 
-from asgiref.sync import sync_to_async
-
 from aiohttp import hdrs
 from aiohttp.web import StreamResponse
 from aiohttp.web_exceptions import (
@@ -58,11 +56,9 @@ class ArtifactResponse(StreamResponse):
 
     async def prepare(self, request):
         if self._artifact is None:
-
-            def _get_artifact(pk):
-                return Artifact.objects.select_related("pulp_domain").get(pk=pk)
-
-            self._artifact = await sync_to_async(_get_artifact)(self._artifact_pk)
+            self._artifact = await Artifact.objects.select_related("pulp_domain").aget(
+                pk=self._artifact_pk
+            )
 
         self._file = self._artifact.file
 

@@ -175,7 +175,8 @@ class TaskViewSet(
     def get_queryset(self):
         qs = super().get_queryset()
         if self.action in ("list", "retrieve"):
-            qs = qs.prefetch_related("progress_reports").prefetch_related(
+            qs = qs.prefetch_related(
+                "progress_reports",
                 Prefetch(
                     "created_resources",
                     queryset=CreatedResource.objects.select_related("content_type"),

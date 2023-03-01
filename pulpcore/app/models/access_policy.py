@@ -1,11 +1,10 @@
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group as BaseGroup
 from django.db import models
-from django_currentuser.middleware import get_current_authenticated_user
 from django_lifecycle import hook, LifecycleModelMixin
 
 from pulpcore.app.models import BaseModel
-from pulpcore.app.util import get_viewset_for_model
+from pulpcore.app.util import get_viewset_for_model, get_current_authenticated_user
 
 
 def _ensure_iterable(obj):
@@ -126,10 +125,10 @@ class AutoAddObjPermsMixin:
         """
         Adds object-level roles for the user creating the newly created object.
 
-        If the ``django_currentuser.middleware.get_current_authenticated_user`` returns None because
-        the API client did not provide authentication credentials, *no* permissions are added and
-        this passes silently. This allows endpoints which create objects and do not require
-        authorization to execute without error.
+        If the ``get_current_authenticated_user`` returns None because the API client did not
+        provide authentication credentials, *no* permissions are added and this passes silently.
+        This allows endpoints which create objects and do not require authorization to execute
+        without error.
 
         Args:
             roles (list or str): One or more roles to be added at the object-level for the user.

@@ -1,14 +1,14 @@
 from gettext import gettext as _
 from logging import getLogger
 
-from django_currentuser.middleware import get_current_authenticated_user
 from django.db.models.deletion import ProtectedError
+
 from pulpcore.app.models import (
     ProgressReport,
     Task,
 )
 from pulpcore.app.role_util import get_objects_for_user
-from pulpcore.app.util import get_domain
+from pulpcore.app.util import get_domain, get_current_authenticated_user
 from pulpcore.constants import TASK_STATES
 
 log = getLogger(__name__)
