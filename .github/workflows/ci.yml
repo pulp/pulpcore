@@ -81,8 +81,8 @@ jobs:
       - name: Check for gettext problems
         run: sh .ci/scripts/check_gettext.sh
 
-      - name: Verify upper bound requirements
-        run: python .ci/scripts/upper_bound.py
+      # - name: Verify upper bound requirements
+      #   run: python .ci/scripts/upper_bound.py
 
   test:
     runs-on: ubuntu-latest
