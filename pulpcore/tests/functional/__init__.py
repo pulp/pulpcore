@@ -13,6 +13,7 @@ import pytest
 
 from aiohttp import web
 from dataclasses import dataclass
+from packaging.version import parse as parse_version
 from time import sleep
 from yarl import URL
 
@@ -817,11 +818,53 @@ def pulp_api_v3_url(bindings_cfg, pulp_api_v3_path):
     return f"{bindings_cfg.host}{pulp_api_v3_path}"
 
 
+# Pulp status information fixtures
+
+
+@pytest.fixture(scope="session")
+def pulp_status(status_api_client):
+    return status_api_client.status_read()
+
+
+@pytest.fixture(scope="session")
+def pulp_versions(pulp_status):
+    """A dictionary containing pulp plugin versions."""
+    return {item.component: parse_version(item.version) for item in pulp_status.versions}
+
+
 @pytest.fixture
-def get_redis_status(status_api_client):
-    """Return a boolean value which tells whether the connection to redis was established or not."""
-    status_response = status_api_client.status_read()
-    return status_response.redis_connection.connected
+def needs_pulp_plugin(pulp_versions):
+    """Skip test if a component is not available in the specified version range"""
+
+    def _needs_pulp_plugin(plugin, min=None, max=None):
+        if plugin not in pulp_versions:
+            pytest.skip(f"Plugin {plugin} is not installed.")
+        if min is not None and pulp_versions[plugin] < parse_version(min):
+            pytest.skip(f"Plugin {plugin} too old (<{min}).")
+        if max is not None and pulp_versions[plugin] >= parse_version(max):
+            pytest.skip(f"Plugin {plugin} too new (>={max}).")
+
+    return _needs_pulp_plugin
+
+
+@pytest.fixture
+def has_pulp_plugin(pulp_versions):
+    def _has_pulp_plugin(plugin, min=None, max=None):
+        if plugin not in pulp_versions:
+            return False
+        if min is not None and pulp_versions[plugin] < parse_version(min):
+            return False
+        if max is not None and pulp_versions[plugin] >= parse_version(max):
+            return False
+        return True
+
+    return _has_pulp_plugin
+
+
+@pytest.fixture(scope="session")
+def redis_status(pulp_status):
+    """A boolean value which tells whether the connection to redis was established or not."""
+    return pulp_status.redis_connection.connected
 
 
 # Object Cleanup fixtures
