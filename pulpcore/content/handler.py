@@ -287,7 +287,12 @@ class Handler:
             return (
                 distro_model.objects.filter(pulp_domain=domain)
                 .select_related(
-                    "repository", "repository_version", "publication", "remote", "pulp_domain"
+                    "repository",
+                    "repository_version",
+                    "publication",
+                    "remote",
+                    "pulp_domain",
+                    "publication__repository_version",
                 )
                 .get(base_path__in=base_paths)
                 .cast()
@@ -536,38 +541,29 @@ class Handler:
         repo_version = distro.repository_version
 
         if repository:
+            # Search for publication serving the latest (last complete) version
+            if not publication:
+                try:
+                    versions = repository.versions.all()
+                    publications = Publication.objects.filter(
+                        repository_version__in=versions, complete=True
+                    )
+                    publication = await publications.select_related("repository_version").alatest(
+                        "repository_version", "pulp_created"
+                    )
+                    repo_version = publication.repository_version
+                except ObjectDoesNotExist:
+                    pass
 
-            def get_latest_publication_or_version_blocking():
-                nonlocal repo_version
-                nonlocal publication
-
-                # Search for publication serving the closest latest version
-                if not publication:
-                    try:
-                        versions = repository.versions.all()
-                        publications = Publication.objects.filter(
-                            repository_version__in=versions, complete=True
-                        )
-                        publication = publications.select_related("repository_version").latest(
-                            "repository_version", "pulp_created"
-                        )
-                        repo_version = publication.repository_version
-                    except ObjectDoesNotExist:
-                        pass
-
-                if not repo_version:
-                    repo_version = repository.latest_version()
-
-            await sync_to_async(get_latest_publication_or_version_blocking)()
+            if not repo_version:
+                repo_version = await sync_to_async(repository.latest_version)()
 
         if publication:
             if rel_path == "" or rel_path[-1] == "/":
                 try:
                     index_path = "{}index.html".format(rel_path)
 
-                    await sync_to_async(publication.published_artifact.get)(
-                        relative_path=index_path
-                    )
+                    await publication.published_artifact.aget(relative_path=index_path)
 
                     rel_path = index_path
                     headers = self.response_headers(rel_path)
@@ -585,19 +581,14 @@ class Handler:
 
             # published artifact
             try:
+                ca = (
+                    await publication.published_artifact.select_related(
+                        "content_artifact",
+                        "content_artifact__artifact",
+                        "content_artifact__artifact__pulp_domain",
+                    ).aget(relative_path=rel_path)
+                ).content_artifact
 
-                def get_contentartifact_blocking():
-                    return (
-                        publication.published_artifact.select_related(
-                            "content_artifact",
-                            "content_artifact__artifact",
-                            "content_artifact__artifact__pulp_domain",
-                        )
-                        .get(relative_path=rel_path)
-                        .content_artifact
-                    )
-
-                ca = await sync_to_async(get_contentartifact_blocking)()
             except ObjectDoesNotExist:
                 pass
             else:
@@ -611,17 +602,16 @@ class Handler:
             # pass-through
             if publication.pass_through:
                 try:
-
-                    def get_contentartifact_blocking():
-                        ca = ContentArtifact.objects.select_related(
+                    ca = (
+                        await ContentArtifact.objects.select_related(
                             "artifact", "artifact__pulp_domain"
-                        ).get(
-                            content__in=publication.repository_version.content,
-                            relative_path=rel_path,
                         )
-                        return ca
+                        .filter(
+                            content__in=publication.repository_version.content,
+                        )
+                        .aget(relative_path=rel_path)
+                    )
 
-                    ca = await sync_to_async(get_contentartifact_blocking)()
                 except MultipleObjectsReturned:
                     log.error(
                         "Multiple (pass-through) matches for {b}/{p}",
@@ -642,12 +632,9 @@ class Handler:
             if rel_path == "" or rel_path[-1] == "/":
                 index_path = "{}index.html".format(rel_path)
 
-                def contentartifact_exists_blocking():
-                    return ContentArtifact.objects.filter(
-                        content__in=repo_version.content, relative_path=index_path
-                    ).exists()
-
-                contentartifact_exists = await sync_to_async(contentartifact_exists_blocking)()
+                contentartifact_exists = await ContentArtifact.objects.filter(
+                    content__in=repo_version.content, relative_path=index_path
+                ).aexists()
                 if contentartifact_exists:
                     rel_path = index_path
                 else:
@@ -663,14 +650,10 @@ class Handler:
                     )
 
             try:
+                ca = await ContentArtifact.objects.select_related(
+                    "artifact", "artifact__pulp_domain"
+                ).aget(content__in=repo_version.content, relative_path=rel_path)
 
-                def get_contentartifact_blocking():
-                    ca = ContentArtifact.objects.select_related(
-                        "artifact", "artifact__pulp_domain"
-                    ).get(content__in=repo_version.content, relative_path=rel_path)
-                    return ca
-
-                ca = await sync_to_async(get_contentartifact_blocking)()
             except MultipleObjectsReturned:
                 log.error(
                     "Multiple (pass-through) matches for {b}/{p}",
@@ -688,25 +671,18 @@ class Handler:
                     )
 
         if distro.remote:
-
-            def cast_remote_blocking():
-                return distro.remote.cast()
-
-            remote = await sync_to_async(cast_remote_blocking)()
+            remote = await sync_to_async(distro.remote.cast)()
 
             try:
                 url = remote.get_remote_artifact_url(rel_path, request=request)
 
-                def get_remote_artifact_blocking():
-                    ra = RemoteArtifact.objects.select_related(
-                        "content_artifact",
-                        "content_artifact__artifact",
-                        "content_artifact__artifact__pulp_domain",
-                        "remote",
-                    ).get(remote=remote, url=url)
-                    return ra
+                ra = await RemoteArtifact.objects.select_related(
+                    "content_artifact",
+                    "content_artifact__artifact",
+                    "content_artifact__artifact__pulp_domain",
+                    "remote",
+                ).aget(remote=remote, url=url)
 
-                ra = await sync_to_async(get_remote_artifact_blocking)()
                 ca = ra.content_artifact
                 if ca.artifact:
                     return await self._serve_content_artifact(ca, headers, request)
@@ -753,11 +729,10 @@ class Handler:
                 the client.
         """
 
-        def get_remote_artifacts_blocking():
-            return list(content_artifact.remoteartifact_set.select_related("remote").order_by_acs())
-
-        remote_artifacts = await sync_to_async(get_remote_artifacts_blocking)()
-        for remote_artifact in remote_artifacts:
+        remote_artifacts = content_artifact.remoteartifact_set.select_related(
+            "remote"
+        ).order_by_acs()
+        async for remote_artifact in remote_artifacts:
             try:
                 response = await self._stream_remote_artifact(request, response, remote_artifact)
                 return response

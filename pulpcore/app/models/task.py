@@ -20,7 +20,7 @@ from pulpcore.app.models import (
 )
 from pulpcore.constants import TASK_CHOICES, TASK_INCOMPLETE_STATES, TASK_STATES
 from pulpcore.exceptions import AdvisoryLockError, exception_to_dict
-from pulpcore.app.util import get_domain_pk, current_task_id
+from pulpcore.app.util import get_domain_pk, current_task
 
 _logger = logging.getLogger(__name__)
 
@@ -206,17 +206,23 @@ class Task(BaseModel, AutoAddObjPermsMixin):
             raise RuntimeError("Lock not held.")
 
     @staticmethod
+    def current_id():
+        """
+        Returns:
+            uuid.UUID: The current task id.
+        """
+        try:
+            return current_task.get().pk
+        except AttributeError:
+            return None
+
+    @staticmethod
     def current():
         """
         Returns:
             pulpcore.app.models.Task: The current task.
         """
-        task_id = current_task_id.get()
-        if task_id is None:
-            task = None
-        else:
-            task = Task.objects.get(pk=task_id)
-        return task
+        return current_task.get()
 
     def set_running(self):
         """

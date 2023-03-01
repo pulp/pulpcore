@@ -22,4 +22,7 @@ from pulpcore.app.util import (  # noqa
     get_domain,
     get_domain_pk,
     set_domain,
+    get_current_user,
+    get_current_authenticated_user,
+    set_current_user,
 )

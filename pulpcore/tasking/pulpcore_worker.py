@@ -18,7 +18,6 @@ from tempfile import TemporaryDirectory
 from django.conf import settings
 from django.db import connection
 from django.utils import timezone
-from django_currentuser.middleware import _set_current_user
 from django_guid import set_guid
 
 from pulpcore.app.models import Worker, Task
@@ -26,6 +25,7 @@ from pulpcore.app.models import Worker, Task
 from pulpcore.app.util import (
     configure_analytics,
     set_domain,
+    set_current_user,
 )
 from pulpcore.app.role_util import get_users_with_perms
 
@@ -426,9 +426,9 @@ def _perform_task(task_pk, task_working_dir_rel_path):
     connection.connection = None
     task = Task.objects.select_related("pulp_domain").get(pk=task_pk)
     user = get_users_with_perms(task, with_group_users=False).first()
-    _set_current_user(user)
+    # Set current contexts
     set_guid(task.logging_cid)
-    # Set current domain context
+    set_current_user(user)
     set_domain(task.pulp_domain)
     os.chdir(task_working_dir_rel_path)
     execute_task(task)

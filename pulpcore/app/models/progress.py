@@ -3,7 +3,6 @@ Django models related to progress reporting
 """
 import datetime
 import logging
-from asgiref.sync import sync_to_async
 from asyncio import CancelledError
 from gettext import gettext as _
 
@@ -144,7 +143,28 @@ class ProgressReport(BaseModel):
             super().save(*args, **kwargs)
             self._last_save_time = now
 
-    asave = sync_to_async(save)
+    async def asave(self, *args, **kwargs):
+        """
+        Auto-set the task_id if running inside a task
+
+        If the task_id is already set it will not be updated. If it is unset and this is running
+        inside of a task it will be auto-set prior to saving.
+
+        args (list): positional arguments to be passed on to the real save
+        kwargs (dict): keyword arguments to be passed on to the real save
+        """
+        now = timezone.now()
+
+        if not self.task_id:
+            self.task = Task.current()
+
+        if self._using_context_manager and self._last_save_time:
+            if now - self._last_save_time >= datetime.timedelta(milliseconds=BATCH_INTERVAL):
+                await super().asave(*args, **kwargs)
+                self._last_save_time = now
+        else:
+            await super().asave(*args, **kwargs)
+            self._last_save_time = now
 
     def __enter__(self):
         """
@@ -223,7 +243,14 @@ class ProgressReport(BaseModel):
         """
         self.increase_by(1)
 
-    aincrement = sync_to_async(increment)
+    async def aincrement(self):
+        """
+        Increment done count and save the progress report.
+
+        This will increment and save the self.done attribute which is useful to put into a loop
+        processing items.
+        """
+        await self.aincrease_by(1)
 
     def increase_by(self, count):
         """
@@ -238,7 +265,18 @@ class ProgressReport(BaseModel):
                 _logger.warning(_("Too many items processed for ProgressReport %s") % self.message)
         self.save()
 
-    aincrease_by = sync_to_async(increase_by)
+    async def aincrease_by(self, count):
+        """
+        Increase the done count and save the progress report.
+
+        This will increment and save the self.done attribute which is useful to put into a loop
+        processing items.
+        """
+        self.done += count
+        if self.total:
+            if self.done > self.total:
+                _logger.warning(_("Too many items processed for ProgressReport %s") % self.message)
+        await self.asave()
 
     def iter(self, iter):
         """

@@ -26,7 +26,6 @@ from pulpcore.app.util import (
     get_domain_pk,
     cache_key,
     get_model_for_pulp_type,
-    current_task_id,
 )
 from pulpcore.constants import ALL_KNOWN_CONTENT_CHECKSUMS
 from pulpcore.download.factory import DownloaderFactory
@@ -109,7 +108,7 @@ class Repository(MasterModel):
                 self.create_initial_version()
 
                 # lock the repository if it was created from within a running task
-                task_id = current_task_id.get()
+                task_id = Task.current_id()
                 if task_id is None:
                     return
 
@@ -666,7 +665,7 @@ class RepositoryVersion(BaseModel):
             django.db.models.QuerySet: The repository_content that is contained within this version.
         """
         return RepositoryContent.objects.filter(
-            repository=self.repository, version_added__number__lte=self.number
+            repository_id=self.repository_id, version_added__number__lte=self.number
         ).exclude(version_removed__number__lte=self.number)
 
     def get_content(self, content_qs=None):

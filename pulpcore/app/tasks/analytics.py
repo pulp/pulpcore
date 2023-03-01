@@ -61,8 +61,7 @@ async def _postgresql_version(analytics):
 
 async def _num_hosts(qs):
     hosts = set()
-    items = await sync_to_async(list)(qs.all())
-    for item in items:
+    async for item in qs.all():
         hosts.add(item.name.split("@")[1])
     return len(hosts)
 
@@ -76,34 +75,32 @@ async def _versions_data(analytics):
 
 async def _online_content_apps_data(analytics):
     online_content_apps_qs = ContentAppStatus.objects.online()
-    analytics.online_content_apps.processes = await sync_to_async(online_content_apps_qs.count)()
+    analytics.online_content_apps.processes = await online_content_apps_qs.acount()
     analytics.online_content_apps.hosts = await _num_hosts(online_content_apps_qs)
 
 
 async def _online_workers_data(analytics):
     online_workers_qs = Worker.objects.online_workers()
-    analytics.online_workers.processes = await sync_to_async(online_workers_qs.count)()
+    analytics.online_workers.processes = await online_workers_qs.acount()
     analytics.online_workers.hosts = await _num_hosts(online_workers_qs)
 
 
 async def _system_id(analytics):
-    system_id_obj = await sync_to_async(SystemID.objects.get)()
+    system_id_obj = await SystemID.objects.aget()
     analytics.system_id = str(system_id_obj.pk)
 
 
 async def _rbac_stats(analytics):
-    analytics.rbac_stats.users = await sync_to_async(User.objects.count)()
-    analytics.rbac_stats.groups = await sync_to_async(Group.objects.count)()
+    analytics.rbac_stats.users = await User.objects.acount()
+    analytics.rbac_stats.groups = await Group.objects.acount()
     if settings.DOMAIN_ENABLED:
-        analytics.rbac_stats.domains = await sync_to_async(Domain.objects.count)()
+        analytics.rbac_stats.domains = await Domain.objects.acount()
     else:
         analytics.rbac_stats.domains = 0
-    analytics.rbac_stats.custom_access_policies = await sync_to_async(
-        AccessPolicy.objects.filter(customized=True).count
-    )()
-    analytics.rbac_stats.custom_roles = await sync_to_async(
-        Role.objects.filter(locked=False).count
-    )()
+    analytics.rbac_stats.custom_access_policies = await AccessPolicy.objects.filter(
+        customized=True
+    ).acount()
+    analytics.rbac_stats.custom_roles = await Role.objects.filter(locked=False).acount()
 
 
 async def post_analytics():

@@ -15,7 +15,7 @@ from django_guid import get_guid, set_guid
 from django_guid.utils import generate_guid
 
 from pulpcore.app.models import Task, TaskSchedule
-from pulpcore.app.util import get_url, get_domain, current_task_id
+from pulpcore.app.util import get_url, get_domain, current_task
 from pulpcore.constants import TASK_FINAL_STATES, TASK_STATES, TASK_INCOMPLETE_STATES
 
 _logger = logging.getLogger(__name__)
@@ -46,13 +46,13 @@ def _wakeup_worker():
 
 
 def execute_task(task):
-    # This extra stack is needed to isolate the current_task_id ContextVar
+    # This extra stack is needed to isolate the current_task ContextVar
     contextvars.copy_context().run(_execute_task, task)
 
 
 def _execute_task(task):
     # Store the task id in the context for `Task.current()`.
-    current_task_id.set(task.pk)
+    current_task.set(task)
     task.set_running()
     try:
         _logger.info(_("Starting task %s"), task.pk)

@@ -389,7 +389,29 @@ def get_artifact_url(artifact, headers=None, http_method=None):
     return url
 
 
-current_task_id = ContextVar("current_task_id", default=None)
+current_task = ContextVar("current_task", default=None)
+_current_user_func = ContextVar("current_user", default=lambda: None)
+
+
+def get_current_user():
+    return _current_user_func.get()()
+
+
+def get_current_authenticated_user():
+    user = get_current_user()
+    return user if (user is not None and user.is_authenticated) else None
+
+
+def set_current_user(user):
+    _current_user_func.set(lambda: user)
+
+
+def set_current_user_lazy(user):
+    # This allows to be lazy, because the authentication happens on the view and not in the
+    # middleware.
+    _current_user_func.set(user)
+
+
 default_domain = None
 current_domain = ContextVar("current_domain", default=None)
 

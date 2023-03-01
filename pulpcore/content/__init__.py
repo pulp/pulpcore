@@ -43,16 +43,16 @@ async def _heartbeat():
 
     while True:
         try:
-            content_app_status, created = await sync_to_async(
-                ContentAppStatus.objects.get_or_create
-            )(name=name, defaults={"versions": versions})
+            content_app_status, created = await ContentAppStatus.objects.aget_or_create(
+                name=name, defaults={"versions": versions}
+            )
 
             if not created:
                 await sync_to_async(content_app_status.save_heartbeat)()
 
                 if content_app_status.versions != versions:
                     content_app_status.versions = versions
-                    await sync_to_async(content_app_status.save)(update_fields=["versions"])
+                    await content_app_status.asave(update_fields=["versions"])
 
             log.debug(msg)
         except (InterfaceError, OperationalError):
