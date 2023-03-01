@@ -9,6 +9,7 @@ additional_repos:
   pytest_args: pulp_file.tests.functional
 - branch: main
   name: pulp-certguard
+  pytest_args: pulp_certguard.tests.functional
 api_root: /pulp/
 black: true
 check_commit_message: true
@@ -67,7 +68,8 @@ pulp_settings:
   orphan_protection_time: 0
 pulp_settings_azure: null
 pulp_settings_gcp: null
-pulp_settings_s3: null
+pulp_settings_s3:
+  hide_guarded_distributions: true
 pulp_settings_stream: null
 pulpcore_branch: null
 pulpcore_pip_version_specifier: null

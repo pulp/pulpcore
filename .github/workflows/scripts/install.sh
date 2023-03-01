@@ -24,18 +24,9 @@ fi
 
 cd .ci/ansible/
 
-TAG=ci_build
-if [ -e $REPO_ROOT/../pulp_file ]; then
-  PULP_FILE=./pulp_file
-else
-  PULP_FILE=git+https://github.com/pulp/pulp_file.git@main
-fi
-if [ -e $REPO_ROOT/../pulp-certguard ]; then
-  PULP_CERTGUARD=./pulp-certguard
-else
-  PULP_CERTGUARD=git+https://github.com/pulp/pulp-certguard.git@main
-fi
-if [[ "${RELEASE_WORKFLOW:-false}" == "true" ]]; then
+if [[ "$TEST" == "plugin-from-pypi" ]]; then
+  PLUGIN_NAME=pulpcore
+elif [[ "${RELEASE_WORKFLOW:-false}" == "true" ]]; then
   PLUGIN_NAME=./pulpcore/dist/pulpcore-$PLUGIN_VERSION-py3-none-any.whl
 else
   PLUGIN_NAME=./pulpcore
@@ -43,22 +34,21 @@ fi
 cat >> vars/main.yaml << VARSYAML
 image:
   name: pulp
-  tag: "${TAG}"
+  tag: "ci_build"
 plugins:
   - name: pulpcore
     source: "${PLUGIN_NAME}"
-  - name: pulp_file
-    source: $PULP_FILE
-  - name: pulp-certguard
-    source: $PULP_CERTGUARD
-  - name: pulp-smash
-    source: ./pulp-smash
 VARSYAML
+if [[ -f ../../ci_requirements.txt ]]; then
+  cat >> vars/main.yaml << VARSYAML
+    ci_requirements: true
+VARSYAML
+fi
 
 cat >> vars/main.yaml << VARSYAML
 services:
   - name: pulp
-    image: "pulp:${TAG}"
+    image: "pulp:ci_build"
     volumes:
       - ./settings:/etc/pulp
       - ./ssh:/keys/
@@ -110,7 +100,7 @@ if [ "$TEST" = "s3" ]; then
   sed -i -e '$a s3_test: true\
 minio_access_key: "'$MINIO_ACCESS_KEY'"\
 minio_secret_key: "'$MINIO_SECRET_KEY'"\
-pulp_scenario_settings: null\
+pulp_scenario_settings: {"hide_guarded_distributions": true}\
 ' vars/main.yaml
   export PULP_API_ROOT="/rerouted/djnd/"
 fi
