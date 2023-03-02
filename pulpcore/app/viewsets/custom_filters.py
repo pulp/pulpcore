@@ -279,6 +279,10 @@ class LabelFilter(Filter):
 
     def __init__(self, *args, **kwargs):
         kwargs.setdefault("help_text", _("Filter labels by search string"))
+        if "label_field_name" in kwargs:
+            self.label_field_name = kwargs.pop("label_field_name")
+        else:
+            self.label_field_name = "pulp_labels"
         super().__init__(*args, **kwargs)
 
     def filter(self, qs, value):
@@ -293,6 +297,11 @@ class LabelFilter(Filter):
         Raises:
             rest_framework.exceptions.ValidationError: on invalid search string
         """
+
+        # NOTE: can't use self.field_name because the default for that is the name
+        # of the method on the filter class (which is pulp_label_select on all of
+        # the pulp filtersets)
+        field_name = self.label_field_name
         if value is None:
             # user didn't supply a value
             return qs
@@ -307,17 +316,19 @@ class LabelFilter(Filter):
                 raise DRFValidationError(_("Cannot use an operator with '{}'.").format(key))
 
             if op == "=":
-                qs = qs.filter(**{f"pulp_labels__{key}": val})
+                qs = qs.filter(**{f"{field_name}__{key}": val})
             elif op == "!=":
-                qs = qs.filter(pulp_labels__has_key=key).exclude(**{f"pulp_labels__{key}": val})
+                qs = qs.filter(**{f"{field_name}__has_key": key}).exclude(
+                    **{f"{field_name}__{key}": val}
+                )
             elif op == "~":
-                qs = qs.filter(**{f"pulp_labels__{key}__icontains": val})
+                qs = qs.filter(**{f"{field_name}__{key}__icontains": val})
             else:
                 # 'foo', '!foo'
                 if key.startswith("!"):
-                    qs = qs.exclude(pulp_labels__has_key=key[1:])
+                    qs = qs.exclude(**{f"{field_name}__has_key": key[1:]})
                 else:
-                    qs = qs.filter(pulp_labels__has_key=key)
+                    qs = qs.filter(**{f"{field_name}__has_key": key})
 
         return qs
 
