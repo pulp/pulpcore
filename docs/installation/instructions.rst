@@ -20,6 +20,18 @@ OCI Images
 For comprehensive and up-to-date instructions about using the Pulp OCI Images, see the
 `Pulp OCI Images documentation <https://docs.pulpproject.org/pulp_oci_images/>`__.
 
+If you wish to build your own containers, you can use the following Containerfiles for reference:
+
+The Containerfile used to build the `base` image is `here <https://github.com/pulp/pulp-oci-images/blob/latest/images/Containerfile.core.base>`__.
+
+The Containerfile used to build the `pulp-minimal` image used to run a single Pulp service is `here <https://github.com/pulp/pulp-oci-images/blob/latest/images/pulp-minimal/stable/Containerfile.core>`__.
+
+The Containerfile used to build the `pulp-web` (reverse proxy) image used to proxy requests to `pulpcore-worker` and `pulpcore-content` services is `here <https://github.com/pulp/pulp-oci-images/blob/latest/images/pulp-minimal/stable/Containerfile.webserver>`__.
+
+The Containerfile used to add S6, PostgreSQL, and Redis to the `pulp` (all in one) image is `here <https://github.com/pulp/pulp-oci-images/blob/latest/images/pulp_ci_centos/Containerfile>`__.
+
+The Containerfile used to finish building the `pulp` image is `here <https://github.com/pulp/pulp-oci-images/blob/latest/images/pulp/stable/Containerfile>`__.
+
 Kubernetes Operator
 -------------------
 For comprehensive and up-to-date instructions about using the Pulp Operator, see the
