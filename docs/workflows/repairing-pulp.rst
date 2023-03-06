@@ -3,12 +3,6 @@
 Repairing Pulp
 --------------
 
-.. note::
-
-    Pulp self-repair features are in tech-preview and may change in backwards incompatible
-    ways in future releases.
-
-
 Pulp provides some features for self-repair in cases where artifacts in the storage went missing or
 got corrupted in some way (i.e. bit rot).
 

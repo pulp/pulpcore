@@ -19,7 +19,6 @@ def test_contains_permission_filter(roles_api_client):
     view_taskschedule_present = False
 
     for role in roles.results:
-
         if "core.change_task" in role.permissions:
             change_task_present = True
 

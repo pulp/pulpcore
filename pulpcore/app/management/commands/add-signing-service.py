@@ -17,11 +17,9 @@ from pulpcore.app.models.content import SigningService as BaseSigningService
 class Command(BaseCommand):
     """
     Django management command for adding a signing service.
-
-    This command is in tech-preview.
     """
 
-    help = "Adds a new AsciiArmoredDetachedSigningService. [tech-preview]"
+    help = "Adds a new SigningService."
 
     def add_arguments(self, parser):
         parser.add_argument(

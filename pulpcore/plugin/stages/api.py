@@ -3,10 +3,6 @@ import logging
 
 from gettext import gettext as _
 
-from django.conf import settings
-
-from .profiler import ProfilingQueue
-
 
 log = logging.getLogger(__name__)
 
@@ -211,10 +207,7 @@ async def create_pipeline(stages, maxsize=1):
             raise ValueError(_("Each stage instance must be unique."))
         history.add(stage)
         if i < len(stages) - 1:
-            if settings.PROFILE_STAGES_API:
-                out_q = await ProfilingQueue.make_and_record_queue(stages[i + 1], i + 1, maxsize)
-            else:
-                out_q = asyncio.Queue(maxsize=maxsize)
+            out_q = asyncio.Queue(maxsize=maxsize)
         else:
             out_q = None
         stage._connect(in_q, out_q)

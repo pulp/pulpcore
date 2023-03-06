@@ -15,6 +15,7 @@ from pulpcore.openapi import PulpAutoSchema
 from rest_framework.serializers import ValidationError as DRFValidationError, ListField, CharField
 
 from pulpcore.app import tasks
+from pulpcore.app.loggers import deprecation_logger
 from pulpcore.app.models import MasterModel
 from pulpcore.app.models.role import GroupRole, UserRole
 from pulpcore.app.response import OperationPostponedResponse
@@ -32,6 +33,7 @@ DATETIME_FILTER_OPTIONS = ["exact", "lt", "lte", "gt", "gte", "range"]
 # e.g.
 # /?pulp_created__gte=2018-04-12T19:45:52
 # /?pulp_created__range=2018-04-12T19:45:52,2018-04-13T19:45:52
+NULLABLE_NUMERIC_FILTER_OPTIONS = ["exact", "ne", "lt", "lte", "gt", "gte", "range", "isnull"]
 
 
 class DefaultSchema(PulpAutoSchema):
@@ -215,6 +217,10 @@ class NamedModelViewSet(viewsets.GenericViewSet):
         Raises:
             rest_framework.exceptions.ValidationError: on invalid URI.
         """
+        deprecation_logger.warning(
+            "NamedModelViewSet.extract_pk() is deprecated and will be removed in pulpcore==3.25; "
+            "use pulpcore.plugin.util.extract_pk() instead."
+        )
         try:
             match = resolve(urlparse(uri).path)
         except Resolver404:

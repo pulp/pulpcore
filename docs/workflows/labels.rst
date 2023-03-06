@@ -1,10 +1,6 @@
 Labels
 ======
 
-.. warning::
-   Support for labels is provided as a tech preview in 3.10. Functionality may not work or may be
-   incomplete. Also, backwards compatibility when upgrading is not guaranteed.
-
 Pulp provides a way to add key/value data to many resources (e.g. repositories, remotes,
 distributions) in the form of labels. Labels are also useful for categorizing and filtering
 resources. In the API, labels appear as a dictionary field that maps keys (strings) to values (also

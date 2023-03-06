@@ -105,7 +105,7 @@ def test_delete_cancel_running_task(dispatch_task, tasks_api_client):
 
     for i in range(10):
         task = tasks_api_client.read(task_href)
-        if task.state != "running":
+        if task.state == "running":
             break
         time.sleep(1)
 
@@ -263,7 +263,6 @@ def test_search_task_using_an_invalid_name(tasks_api_client):
 
 @pytest.mark.parallel
 def test_filter_tasks_using_worker__in_filter(tasks_api_client, dispatch_task, monitor_task):
-
     task1_href = dispatch_task("time.sleep", (0,))
     task2_href = dispatch_task("time.sleep", (0,))
 
@@ -276,3 +275,23 @@ def test_filter_tasks_using_worker__in_filter(tasks_api_client, dispatch_task, m
 
     assert task1_href in tasks_hrefs
     assert task2_href in tasks_hrefs
+
+
+def test_cancel_gooey_task(tasks_api_client, dispatch_task, monitor_task):
+    task_href = dispatch_task("pulpcore.app.tasks.test.gooey_task", (60,))
+    for i in range(10):
+        task = tasks_api_client.read(task_href)
+        if task.state == "running":
+            break
+        time.sleep(1)
+
+    task = tasks_api_client.tasks_cancel(task_href, {"state": "canceled"})
+
+    if task.state == "canceling":
+        for i in range(30):
+            if task.state != "canceling":
+                break
+            time.sleep(1)
+            task = tasks_api_client.read(task_href)
+
+    assert task.state == "canceled"

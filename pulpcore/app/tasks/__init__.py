@@ -18,6 +18,8 @@ from .purge import purge  # noqa
 
 from .reclaim_space import reclaim_space  # noqa
 
+from .replica import replicate_distributions  # noqa
+
 from .repository import repair_all_artifacts  # noqa
 
 from .analytics import post_analytics  # noqa

@@ -12,7 +12,7 @@ OBJECT_STORAGES = (
 )
 
 
-def test_artifact_distribution(cli_client, random_artifact):
+def test_artifact_distribution(random_artifact):
     artifact_uuid = random_artifact.pulp_href.split("/")[-2]
 
     commands = (

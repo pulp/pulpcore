@@ -265,8 +265,6 @@ CONTENT_APP_TTL
 CACHE_ENABLED
 ^^^^^^^^^^^^^
 
-   .. note:: This feature is provided as a tech-preview
-
    Store cached responses from the content app into Redis. This setting improves the performance
    of the content app under heavy load for similar requests. Defaults to ``False``.
 
@@ -343,20 +341,6 @@ ALLOWED_EXPORT_PATHS
    Defaults to ``[]`` which means no path is allowed.
 
 
-.. _profile-stages-api:
-
-PROFILE_STAGES_API
-^^^^^^^^^^^^^^^^^^
-
-   A debugging feature that collects profile data about the Stages API as it runs. See
-   staging api profiling docs for more information.
-
-   .. warning::
-
-      Profiling stages is provided as a tech preview in Pulp 3.0. Functionality may not fully work
-      and backwards compatibility when upgrading to future Pulp releases is not guaranteed.
-
-
 .. _allowed-content-checksums:
 
 ALLOWED_CONTENT_CHECKSUMS
@@ -400,10 +384,6 @@ ALLOWED_CONTENT_CHECKSUMS
     You can update them using:
 
     ``pulpcore-manager handle-artifact-checksums``
-
-    .. warning::
-      ``--report`` and ``--checksums`` arguments are tech-preview and may change in backwards
-      incompatible ways in future releases.
 
     .. warning::
       If Pulp fails to start because forbidden checkums have been identified or required ones are

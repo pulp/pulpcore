@@ -171,7 +171,7 @@ class TaskViewSet(
     @extend_schema(
         description=(
             "Trigger an asynchronous task that deletes completed tasks that finished prior"
-            " to a specified timestamp (tech-preview, may change in the future)."
+            " to a specified timestamp."
         ),
         summary="Purge Completed Tasks",
         operation_id="tasks_purge",
@@ -243,8 +243,6 @@ class TaskScheduleViewSet(
 ):
     """
     ViewSet to monitor task schedules.
-
-    NOTE: This feature is in tech-preview and may change in backwards incompatible ways.
     """
 
     queryset = TaskSchedule.objects.all()

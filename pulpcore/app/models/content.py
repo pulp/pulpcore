@@ -20,6 +20,7 @@ from django.core.files.storage import default_storage
 from django.db import IntegrityError, models, transaction
 from django.forms.models import model_to_dict
 from django.utils.timezone import now
+from django_guid import get_guid
 from django_lifecycle import BEFORE_UPDATE, BEFORE_SAVE, hook
 
 from pulpcore.constants import ALL_KNOWN_CONTENT_CHECKSUMS
@@ -734,6 +735,16 @@ class SigningService(BaseModel):
     pubkey_fingerprint = models.TextField()
     script = models.TextField()
 
+    def _env_variables(self, env_vars=None):
+        guid = get_guid()
+        env = {
+            "PULP_SIGNING_KEY_FINGERPRINT": self.pubkey_fingerprint,
+            "CORRELATION_ID": guid if guid else "",
+        }
+        if env_vars:
+            env.update(env_vars)
+        return env
+
     def sign(self, filename, env_vars=None):
         """
         Signs the file provided via 'filename' by invoking an external script (or executable).
@@ -752,12 +763,9 @@ class SigningService(BaseModel):
         Returns:
             A dictionary as validated by the validate() method.
         """
-        env = {"PULP_SIGNING_KEY_FINGERPRINT": self.pubkey_fingerprint}
-        if env_vars:
-            env.update(env_vars)
         completed_process = subprocess.run(
             [self.script, filename],
-            env=env,
+            env=self._env_variables(env_vars),
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
         )
@@ -774,13 +782,10 @@ class SigningService(BaseModel):
 
     async def asign(self, filename, env_vars=None):
         """Async version of sign."""
-        env = {"PULP_SIGNING_KEY_FINGERPRINT": self.pubkey_fingerprint}
-        if env_vars:
-            env.update(env_vars)
         process = await asyncio.create_subprocess_exec(
             self.script,
             filename,
-            env=env,
+            env=self._env_variables(env_vars),
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
         )

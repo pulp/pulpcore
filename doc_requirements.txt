@@ -1,7 +1,7 @@
 -r requirements.txt
 plantuml
 sphinx
-sphinx-rtd-theme
+sphinx-rtd-theme<1.2.0
 sphinxcontrib-openapi
 towncrier
 mistune<2.0.0

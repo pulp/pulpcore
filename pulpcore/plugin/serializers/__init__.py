@@ -12,6 +12,7 @@ from pulpcore.app.serializers import (  # noqa
     ExporterSerializer,
     ExportSerializer,
     GetOrCreateSerializerMixin,
+    HiddenFieldsMixin,
     IdentityField,
     ImporterSerializer,
     ImportSerializer,

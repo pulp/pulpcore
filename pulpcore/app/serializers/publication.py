@@ -80,7 +80,6 @@ class ContentGuardSerializer(ModelSerializer):
 
 
 class RBACContentGuardSerializer(ContentGuardSerializer):
-
     users = serializers.SerializerMethodField()
     groups = serializers.SerializerMethodField()
 
@@ -108,7 +107,6 @@ class RBACContentGuardSerializer(ContentGuardSerializer):
 
 
 class RBACContentGuardPermissionSerializer(serializers.Serializer):
-
     usernames = serializers.ListField(default=[])
     groupnames = serializers.ListField(default=[])
 

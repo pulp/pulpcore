@@ -3,11 +3,6 @@
 Metadata Signing
 ================
 
-.. note::
-
-    Content Signing is in tech-preview and may change in backwards incompatible ways in future
-    releases.
-
 Plugin writers wishing to enable users to sign metadata need to add a new field ``metadata_signing_service``
 to their implementation of a repository and/or publication. This field should be exposed to users who consume
 content via REST API. The users may afterwards specify which signing service will be used to sign the
@@ -49,6 +44,7 @@ requires inheriting from ``SiginingService`` and then implementing ``validate()`
 
     The script may read the fingerprint of the key it should use for signing, from the
     ``PULP_SIGNING_KEY_FINGERPRINT`` environment variable.
+    A ``CORRELATION_ID`` environment variable is also added by default.
     It is possible to pass a dictionary of environment variables to the signing script if need be.
 
     The json is converted to a python dict and returned by the ``sign()`` method. If an error occurs, a

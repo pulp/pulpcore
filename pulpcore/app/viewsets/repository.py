@@ -27,7 +27,11 @@ from pulpcore.app.viewsets import (
     AsyncUpdateMixin,
     NamedModelViewSet,
 )
-from pulpcore.app.viewsets.base import DATETIME_FILTER_OPTIONS, NAME_FILTER_OPTIONS
+from pulpcore.app.viewsets.base import (
+    DATETIME_FILTER_OPTIONS,
+    NAME_FILTER_OPTIONS,
+    NULLABLE_NUMERIC_FILTER_OPTIONS,
+)
 from pulpcore.app.viewsets.custom_filters import LabelFilter
 from pulpcore.tasking.tasks import dispatch
 from pulpcore.filters import HyperlinkRelatedFilter
@@ -39,7 +43,10 @@ class RepositoryFilter(BaseFilterSet):
 
     class Meta:
         model = Repository
-        fields = {"name": NAME_FILTER_OPTIONS}
+        fields = {
+            "name": NAME_FILTER_OPTIONS,
+            "retain_repo_versions": NULLABLE_NUMERIC_FILTER_OPTIONS,
+        }
 
 
 class BaseRepositoryViewSet(NamedModelViewSet):

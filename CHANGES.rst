@@ -17,6 +17,45 @@ Changelog
 
 .. towncrier release notes start
 
+3.22.2 (2023-02-02)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Added a ``start_repository_version`` parameter to the file system exporter.
+
+  If specified, it will export only content units that differed between two repository versions.
+  :github:`3413`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
+3.22.1 (2023-01-20)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fixed the label migration code for not null constraint errors when objects with and without labels
+  are migrated.
+  :github:`3495`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.22.0 (2022-12-18)
 ===================
 REST API
@@ -170,6 +209,46 @@ Removals
 - Deprecated model ``Label`` and serializer field ``LabelField`` and ``LabelSelectFilter`` for
   removal in 3.25.
   :github:`3400`
+
+
+3.21.5 (2023-02-02)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Added a ``start_repository_version`` parameter to the file system exporter.
+
+  If specified, it will export only content units that differed between two repository versions.
+  :github:`3413`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
+3.21.4 (2023-01-20)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fixed an occasional 500 error when viewing a repository version content summary while performing a content deletion task.
+  :github:`3299`
+- Fix migrating Remotes with @ in path
+  :github:`3409`
+
+
+Plugin API
+----------
+
+No significant changes.
 
 
 3.21.3 (2022-11-15)
@@ -779,6 +858,42 @@ Bugfixes
   the stage will still accumulate up to 500 (by default) items so batching is still in-effect there
   where it matters.
   :github:`2069`
+
+
+3.18.14 (2023-02-23)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fixed a bug that caused the import machinery to import the same content multiple times in a row.
+  :github:`3075`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
+3.18.13 (2023-01-20)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fixed an occasional 500 error when viewing a repository version content summary while performing a content deletion task.
+  :github:`3299`
+
+
+Plugin API
+----------
+
+No significant changes.
 
 
 3.18.12 (2023-01-10)
@@ -1580,6 +1695,26 @@ Bugfixes
 
 - Include additional information about which AccessPolicy is using deprecated policy features.
   :redmine:`9608`
+
+
+3.16.16 (2023-02-23)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fixed a bug that caused the import machinery to import the same content multiple times in a row.
+  :github:`3075`
+- Insured that pulp-export correctly locks repos-being-exported.
+  :github:`3370`
+
+
+Plugin API
+----------
+
+No significant changes.
 
 
 3.16.15 (2022-11-02)
@@ -2550,6 +2685,26 @@ Misc
 ~~~~
 
 - :redmine:`8606`, :redmine:`9160`
+
+
+3.14.19 (2023-02-09)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fixed another rare deadlock for high-concurrency/overlapping-content syncs.
+  :github:`3111`
+- Another step on closing the deadlock-window when syncing overlapping content.
+  :github:`3284`
+
+
+Plugin API
+----------
+
+No significant changes.
 
 
 3.14.18 (2022-07-14)

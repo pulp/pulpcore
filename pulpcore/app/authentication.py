@@ -5,10 +5,8 @@ from pulpcore.app import settings
 
 
 class PulpRemoteUserAuthentication(RemoteUserAuthentication):
-
     header = settings.REMOTE_USER_ENVIRON_NAME
 
 
 class PulpNoCreateRemoteUserBackend(RemoteUserBackend):
-
     create_unknown_user = False  # Configure RemoteUserBackend to not create users
