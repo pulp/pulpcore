@@ -2,7 +2,7 @@ import re
 
 from django import template
 from django.conf import settings
-from django.utils.encoding import force_text
+from django.utils.encoding import force_str
 from django.utils.html import escape
 from django.utils.safestring import SafeData, mark_safe
 
@@ -35,7 +35,7 @@ def urlize_quoted_hrefs(text, trim_url_limit=None, nofollow=True, autoescape=Tru
         return limit is not None and (len(x) > limit and ("%s..." % x[: max(0, limit - 3)])) or x
 
     safe_input = isinstance(text, SafeData)
-    words = word_split_re.split(force_text(text))
+    words = word_split_re.split(force_str(text))
     for i, word in enumerate(words):
         if settings.V3_API_ROOT in word:
             # Deal with punctuation.
