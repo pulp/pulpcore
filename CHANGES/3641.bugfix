@@ -1,0 +1,2 @@
+Fixed a bug that caused Pulp to return duplicate content when a user was logged in as a
+non-superuser while the content was part of multiple repositories.
