@@ -121,7 +121,12 @@ class BaseContentViewSet(NamedModelViewSet):
                 repo_viewset = get_viewset_for_model(repo)()
                 setattr(repo_viewset, "request", self.request)
                 scoped_repos.extend(repo_viewset.get_queryset().values_list("pk", flat=True))
-            return qs.filter(repositories__in=scoped_repos)
+
+            # calling the distinct clause at end of the query ensures that no duplicates from
+            # joined tables will be returned to the end-user; this behaviour is documented at
+            # https://docs.djangoproject.com/en/3.2/topics/db/queries, in the section Spanning
+            # multi-valued relationships
+            return qs.filter(repositories__in=scoped_repos).distinct()
         return qs
 
 
