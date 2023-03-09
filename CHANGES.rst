@@ -17,6 +17,26 @@ Changelog
 
 .. towncrier release notes start
 
+3.18.15 (2023-03-09)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Added a ``start_repository_version`` parameter to the file system exporter.
+
+  If specified, it will export only content units that differed between two repository versions.
+  :github:`3413`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.18.14 (2023-02-23)
 ====================
 REST API
