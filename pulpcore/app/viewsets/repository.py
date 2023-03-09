@@ -205,7 +205,7 @@ class RepositoryVersionViewSet(
         """
         version = self.get_object()
         serializer = RepairSerializer(data=request.data)
-        serializer.is_valid()
+        serializer.is_valid(raise_exception=True)
 
         verify_checksums = serializer.validated_data["verify_checksums"]
 
