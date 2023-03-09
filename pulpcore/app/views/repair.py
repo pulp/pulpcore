@@ -22,7 +22,7 @@ class RepairView(APIView):
         Repair artifacts.
         """
         serializer = RepairSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
+        serializer.is_valid()
 
         verify_checksums = serializer.validated_data["verify_checksums"]
 
