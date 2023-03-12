@@ -1,0 +1,1 @@
+Fixed bug related to pulpcore-content serving content from a remote (pull-through-cache).
