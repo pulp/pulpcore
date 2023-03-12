@@ -802,7 +802,7 @@ class Handler:
                     # There is already content for this Artifact
                     content = c_type.objects.get(content.q())
                     artifacts = content._artifacts
-                    if artifact.sha256 != artifacts[0].sha256:
+                    if artifact.sha256 != artifacts.get().sha256:
                         raise RuntimeError(
                             "The Artifact downloaded during pull-through does not "
                             "match the Artifact already stored for the same "
