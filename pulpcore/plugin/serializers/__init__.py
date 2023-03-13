@@ -9,6 +9,7 @@ from pulpcore.app.serializers import (  # noqa
     ContentRedirectContentGuardSerializer,
     DetailRelatedField,
     DistributionSerializer,
+    DomainUniqueValidator,
     ExporterSerializer,
     ExportSerializer,
     GetOrCreateSerializerMixin,

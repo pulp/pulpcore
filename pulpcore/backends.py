@@ -3,12 +3,17 @@ from gettext import gettext as _
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.auth.backends import BaseBackend
 from django.contrib.auth.models import Permission
+from itertools import chain
 
 from pulpcore.app.models.role import GroupRole
+from pulpcore.app.models import Domain
 
 
 class ObjectRolePermissionBackend(BaseBackend):
     def has_perm(self, user_obj, perm, obj=None):
+        # Changing the signature for the backend requires changing the user model as well
+        # Instead have check if obj is a Domain to see if we are checking the permission on the
+        # domain-level
         if not user_obj.is_authenticated:
             return False
 
@@ -23,13 +28,27 @@ class ObjectRolePermissionBackend(BaseBackend):
 
         if obj is None:
             # Check for global roles
-            if user_obj.object_roles.filter(object_id=None, role__permissions=permission).exists():
-                return True
-            if GroupRole.objects.filter(
-                group__in=user_obj.groups.all(), object_id=None, role__permissions=permission
+            if user_obj.object_roles.filter(
+                object_id=None, domain=None, role__permissions=permission
             ).exists():
                 return True
-
+            if GroupRole.objects.filter(
+                group__in=user_obj.groups.all(),
+                object_id=None,
+                domain=None,
+                role__permissions=permission,
+            ).exists():
+                return True
+        elif isinstance(obj, Domain) and "domain" not in perm:
+            # Check for domain roles
+            if user_obj.object_roles.filter(
+                domain_id=obj.pk, role__permissions=permission
+            ).exists():
+                return True
+            if GroupRole.objects.filter(
+                group__in=user_obj.groups.all(), domain_id=obj.pk, role__permissions=permission
+            ).exists():
+                return True
         else:
             obj_type = ContentType.objects.get_for_model(obj, for_concrete_model=False)
             if permission.content_type == obj_type:
@@ -51,28 +70,22 @@ class ObjectRolePermissionBackend(BaseBackend):
         return False
 
     def get_all_permissions(self, user_obj, obj=None):
+        app_label = "role__permissions__content_type__app_label"
+        codename = "role__permissions__codename"
+
         if obj is None:
+            # Returns all domain & model level permissions for user
             result = (
-                user_obj.object_roles.filter(object_id=None)
-                .values("role__permissions__content_type__app_label", "role__permissions__codename")
-                .distinct()
+                user_obj.object_roles.filter(object_id=None).values(app_label, codename).distinct()
             )
             group_result = (
                 GroupRole.objects.filter(group__in=user_obj.groups.all(), object_id=None)
-                .values("role__permissions__content_type__app_label", "role__permissions__codename")
+                .values(app_label, codename)
                 .distinct()
             )
-            return [
-                item["role__permissions__content_type__app_label"]
-                + "."
-                + item["role__permissions__codename"]
-                for item in result
-            ] + [
-                item["role__permissions__content_type__app_label"]
-                + "."
-                + item["role__permissions__codename"]
-                for item in group_result
-            ]
+            return list(
+                {f"{item[app_label]}.{item[codename]}" for item in chain(result, group_result)}
+            )
 
         else:
             obj_type = ContentType.objects.get_for_model(obj, for_concrete_model=False)
@@ -83,7 +96,7 @@ class ObjectRolePermissionBackend(BaseBackend):
                     content_type=obj_type,
                     object_id=obj.pk,
                 )
-                .values("role__permissions__codename")
+                .values(codename)
                 .distinct()
             )
             group_result = (
@@ -94,9 +107,7 @@ class ObjectRolePermissionBackend(BaseBackend):
                     content_type=obj_type,
                     object_id=obj.pk,
                 )
-                .values("role__permissions__codename")
+                .values(codename)
                 .distinct()
             )
-        return [item["role__permissions__codename"] for item in result] + [
-            item["role__permissions__codename"] for item in group_result
-        ]
+        return list({item[codename] for item in chain(result, group_result)})

@@ -28,6 +28,11 @@ class UpstreamPulpSerializer(ModelSerializer, HiddenFieldsMixin):
         "https://example.com"
     )
     api_root = serializers.CharField(help_text="The API root. Defaults to '/pulp/'.")
+    domain = serializers.CharField(
+        help_text=_("The domain of the Pulp server if enabled."),
+        required=False,
+        allow_null=True,
+    )
     ca_cert = serializers.CharField(
         help_text="A PEM encoded CA certificate used to validate the server "
         "certificate presented by the remote server.",
@@ -87,6 +92,7 @@ class UpstreamPulpSerializer(ModelSerializer, HiddenFieldsMixin):
             "name",
             "base_url",
             "api_root",
+            "domain",
             "ca_cert",
             "client_cert",
             "client_key",

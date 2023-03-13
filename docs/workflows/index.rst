@@ -24,3 +24,4 @@ assumes that the reader is familiar with the fundamentals discussed in the :doc:
    labels
    plugin-removal
    troubleshooting
+   domains-multi-tenancy

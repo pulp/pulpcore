@@ -86,19 +86,19 @@ class TaskViewSet(
                 "action": ["retrieve", "my_permissions"],
                 "principal": "authenticated",
                 "effect": "allow",
-                "condition": "has_model_or_obj_perms:core.view_task",
+                "condition": "has_model_or_domain_or_obj_perms:core.view_task",
             },
             {
                 "action": ["destroy"],
                 "principal": "authenticated",
                 "effect": "allow",
-                "condition": "has_model_or_obj_perms:core.delete_task",
+                "condition": "has_model_or_domain_or_obj_perms:core.delete_task",
             },
             {
                 "action": ["update", "partial_update"],
                 "principal": "authenticated",
                 "effect": "allow",
-                "condition": "has_model_or_obj_perms:core.change_task",
+                "condition": "has_model_or_domain_or_obj_perms:core.change_task",
             },
             # 'purge' is filtered by current-user and core.delete_task permissions at the queryset
             # level, and needs no extra protections here
@@ -111,7 +111,7 @@ class TaskViewSet(
                 "action": ["list_roles", "add_role", "remove_role"],
                 "principal": "authenticated",
                 "effect": "allow",
-                "condition": "has_model_or_obj_perms:core.manage_roles_task",
+                "condition": "has_model_or_domain_or_obj_perms:core.manage_roles_task",
             },
         ],
         "creation_hooks": [
@@ -262,13 +262,13 @@ class TaskScheduleViewSet(
                 "action": ["retrieve", "my_permissions"],
                 "principal": "authenticated",
                 "effect": "allow",
-                "condition": "has_model_or_obj_perms:core.view_taskschedule",
+                "condition": "has_model_or_domain_or_obj_perms:core.view_taskschedule",
             },
             {
                 "action": ["list_roles", "add_role", "remove_role"],
                 "principal": "authenticated",
                 "effect": "allow",
-                "condition": "has_model_or_obj_perms:core.manage_roles_taskschedule",
+                "condition": "has_model_or_domain_or_obj_perms:core.manage_roles_taskschedule",
             },
         ],
         "creation_hooks": [

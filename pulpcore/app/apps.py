@@ -4,10 +4,10 @@ from collections import defaultdict
 from gettext import gettext as _
 from importlib import import_module
 
-from django.conf import settings
 from django import apps
+from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
-from django.db import transaction
+from django.db import connection, transaction
 from django.db.models.expressions import OuterRef, RawSQL
 from django.db.models.signals import post_migrate
 from django.utils.module_loading import module_has_submodule
@@ -87,7 +87,13 @@ class PulpPluginAppConfig(apps.AppConfig):
                 "attribute."
             )
             raise ImproperlyConfigured(msg.format(self.label))
-
+        if settings.DOMAIN_ENABLED:
+            if not getattr(self, "domain_compatible", None):
+                msg = (
+                    "The plugin `{}-{}` is not domain compatible. Please uninstall/update the "
+                    "plugin or turn off `DOMAIN_ENABLED` for Pulp to start."
+                )
+                raise ImproperlyConfigured(msg.format(self.python_package_name, self.version))
         # Module containing viewsets eg. <module 'pulp_plugin.app.viewsets'
         # from 'pulp_plugin/app/viewsets.py'>. Set by import_viewsets().
         # None if the application doesn't have a viewsets module, automatically set
@@ -232,10 +238,15 @@ class PulpAppConfig(PulpPluginAppConfig):
     # The python package name providing this app
     python_package_name = "pulpcore"
 
+    domain_compatible = True
+
     def ready(self):
         super().ready()
         from . import checks  # noqa
 
+        post_migrate.connect(
+            _ensure_default_domain, sender=self, dispatch_uid="ensure_default_domain"
+        )
         post_migrate.connect(
             _populate_system_id, sender=self, dispatch_uid="populate_system_id_identifier"
         )
@@ -297,6 +308,24 @@ def _populate_system_id(sender, apps, verbosity, **kwargs):
     SystemID = apps.get_model("core", "SystemID")
     if not SystemID.objects.exists():
         SystemID().save()
+
+
+def _ensure_default_domain(sender, **kwargs):
+    table_names = connection.introspection.table_names()
+    if "core_domain" in table_names:
+        from pulpcore.app.util import get_default_domain
+
+        default = get_default_domain()  # Cache the default domain
+        # Match the Pulp settings
+        if (
+            settings.HIDE_GUARDED_DISTRIBUTIONS != default.hide_guarded_distributions
+            or settings.REDIRECT_TO_OBJECT_STORAGE != default.redirect_to_object_storage
+            or settings.DEFAULT_FILE_STORAGE != default.storage_class
+        ):
+            default.hide_guarded_distributions = settings.HIDE_GUARDED_DISTRIBUTIONS
+            default.redirect_to_object_storage = settings.REDIRECT_TO_OBJECT_STORAGE
+            default.storage_class = settings.DEFAULT_FILE_STORAGE
+            default.save(skip_hooks=True)
 
 
 def _populate_roles(sender, apps, verbosity, **kwargs):

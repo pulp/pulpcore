@@ -16,6 +16,10 @@ class VersionSerializer(serializers.Serializer):
 
     package = serializers.CharField(help_text=_("Python package name providing the component"))
 
+    domain_compatible = serializers.BooleanField(
+        help_text=_("Domain feature compatibility of component")
+    )
+
 
 class DatabaseConnectionSerializer(serializers.Serializer):
     """
@@ -97,3 +101,5 @@ class StatusSerializer(serializers.Serializer):
     storage = StorageSerializer(required=False, help_text=_("Storage information"))
 
     content_settings = ContentSettingsSerializer(help_text=_("Content-app settings"))
+
+    domain_enabled = serializers.BooleanField(help_text=_("Is Domains enabled"))

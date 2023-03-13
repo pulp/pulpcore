@@ -5,13 +5,13 @@ import asyncio
 import hashlib
 
 from asgiref.sync import sync_to_async
-from django.core.files.storage import default_storage
 from django.db import transaction
 from rest_framework.serializers import ValidationError
 
 from pulpcore.app import models
 from pulpcore.app.models import ProgressReport
 from pulpcore.plugin.sync import sync_to_async_iterable
+from pulpcore.app.util import get_domain
 
 log = getLogger(__name__)
 
@@ -106,8 +106,12 @@ async def _repair_artifacts_for_content(subset=None, verify_checksums=True):
 
     query_set = models.ContentArtifact.objects.exclude(artifact__isnull=True)
 
-    if subset is not None and await sync_to_async(subset.exists)():
-        query_set = query_set.filter(content__in=subset)
+    domain = get_domain()
+
+    if subset is None or not await sync_to_async(subset.exists)():
+        subset = models.Content.objects.filter(pulp_domain=domain)
+
+    query_set = query_set.filter(content__in=subset.values("pk"))
 
     async with ProgressReport(
         message="Identify missing units", code="repair.missing"
@@ -117,12 +121,13 @@ async def _repair_artifacts_for_content(subset=None, verify_checksums=True):
         message="Repair corrupted units", code="repair.repaired"
     ) as repaired:
         with ThreadPoolExecutor(max_workers=2) as checksum_executor:
+            storage = domain.get_storage()
             async for content_artifact in sync_to_async_iterable(
                 query_set.select_related("artifact").iterator()
             ):
                 artifact = content_artifact.artifact
 
-                valid = await loop.run_in_executor(None, default_storage.exists, artifact.file.name)
+                valid = await loop.run_in_executor(None, storage.exists, artifact.file.name)
                 if not valid:
                     await missing.aincrement()
                     log.warn(_("Missing file for {}").format(artifact))

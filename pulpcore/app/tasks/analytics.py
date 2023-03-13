@@ -6,11 +6,14 @@ import aiohttp
 import async_timeout
 
 from asgiref.sync import sync_to_async
+from django.conf import settings
 from django.db import connection
+from django.contrib.auth import get_user_model
 from google.protobuf.json_format import MessageToJson
 
 from pulpcore.app.apps import pulp_plugin_configs
-from pulpcore.app.models import SystemID
+from pulpcore.app.models import SystemID, Group, Domain, AccessPolicy
+from pulpcore.app.models.role import Role
 from pulpcore.app.models.status import ContentAppStatus
 from pulpcore.app.models.task import Worker
 from pulpcore.app.protobuf.analytics_pb2 import Analytics
@@ -21,6 +24,9 @@ logger = logging.getLogger(__name__)
 
 PRODUCTION_URL = "https://analytics.pulpproject.org/"
 DEV_URL = "https://dev.analytics.pulpproject.org/"
+
+
+User = get_user_model()
 
 
 def get_analytics_posting_url():
@@ -85,6 +91,21 @@ async def _system_id(analytics):
     analytics.system_id = str(system_id_obj.pk)
 
 
+async def _rbac_stats(analytics):
+    analytics.rbac_stats.users = await sync_to_async(User.objects.count)()
+    analytics.rbac_stats.groups = await sync_to_async(Group.objects.count)()
+    if settings.DOMAIN_ENABLED:
+        analytics.rbac_stats.domains = await sync_to_async(Domain.objects.count)()
+    else:
+        analytics.rbac_stats.domains = 0
+    analytics.rbac_stats.custom_access_policies = await sync_to_async(
+        AccessPolicy.objects.filter(customized=True).count
+    )()
+    analytics.rbac_stats.custom_roles = await sync_to_async(
+        Role.objects.filter(locked=False).count
+    )()
+
+
 async def post_analytics():
     url = get_analytics_posting_url()
 
@@ -96,6 +117,7 @@ async def post_analytics():
         _online_content_apps_data(analytics),
         _online_workers_data(analytics),
         _postgresql_version(analytics),
+        _rbac_stats(analytics),
     )
 
     await asyncio.gather(*awaitables)

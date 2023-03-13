@@ -6,6 +6,7 @@ from pulpcore.app.models import (
     Task,
 )
 from pulpcore.app.role_util import get_objects_for_user
+from pulpcore.app.util import get_domain
 from pulpcore.constants import TASK_STATES
 
 # Delete 1K at a time - better to use less memory, and take a little longer, with a utility
@@ -55,7 +56,8 @@ def purge(finished_before, states):
     This task purges from the database records of tasks which finished prior to the specified time.
 
     It will remove only tasks that are 'owned' by the current-user (admin-users own All The Things,
-    so admins can delete all tasks).
+    so admins can delete all tasks). It will only delete tasks within the domain this task was
+    triggered in.
 
     It will not remove tasks that are incomplete (ie, in states running|waiting|cancelling).
 
@@ -69,8 +71,12 @@ def purge(finished_before, states):
 
     """
     current_user = get_current_authenticated_user()
-    # Tasks, prior to the specified date, in the specified state, owned by the current-user
-    tasks_qs = Task.objects.filter(finished_at__lt=finished_before, state__in=states)
+    domain = get_domain()
+    # Tasks, prior to the specified date, in the specified state, owned by the current-user, in the
+    # current domain
+    tasks_qs = Task.objects.filter(
+        finished_at__lt=finished_before, state__in=states, pulp_domain=domain
+    )
     candidate_qs = get_objects_for_user(current_user, "core.delete_task", qs=tasks_qs)
     # Progress bar reporting total-units
     totals_pb = ProgressReport(

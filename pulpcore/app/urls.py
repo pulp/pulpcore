@@ -1,6 +1,4 @@
 """pulp URL Configuration"""
-import logging
-
 from django.conf import settings
 from django.urls import path, include
 from drf_spectacular.views import (
@@ -20,9 +18,11 @@ from pulpcore.app.viewsets import (
     ReclaimSpaceViewSet,
 )
 
-log = logging.getLogger(__name__)
 
-API_ROOT = settings.V3_API_ROOT_NO_FRONT_SLASH
+if settings.DOMAIN_ENABLED:
+    API_ROOT = settings.V3_DOMAIN_API_ROOT_NO_FRONT_SLASH
+else:
+    API_ROOT = settings.V3_API_ROOT_NO_FRONT_SLASH
 
 
 class ViewSetNode:
@@ -134,7 +134,6 @@ for viewset in sorted_by_depth:
 
 urlpatterns = [
     path(f"{API_ROOT}repair/", RepairView.as_view()),
-    path(f"{API_ROOT}status/", StatusView.as_view()),
     path(
         f"{API_ROOT}orphans/cleanup/",
         OrphansCleanupViewset.as_view({"post": "cleanup"}),
@@ -155,45 +154,43 @@ urlpatterns = [
     path("auth/", include("rest_framework.urls")),
 ]
 
-urlpatterns.append(
+docs_and_status = [
+    path("status/", StatusView.as_view()),
     path(
-        f"{API_ROOT}docs/api.json",
+        "docs/api.json",
         SpectacularJSONAPIView.as_view(authentication_classes=[], permission_classes=[]),
         name="schema",
-    )
-)
-
-urlpatterns.append(
+    ),
     path(
-        f"{API_ROOT}docs/api.yaml",
+        "docs/api.yaml",
         SpectacularYAMLAPIView.as_view(authentication_classes=[], permission_classes=[]),
         name="schema-yaml",
-    )
-)
-
-urlpatterns.append(
+    ),
     path(
-        f"{API_ROOT}docs/",
+        "docs/",
         SpectacularRedocView.as_view(
             authentication_classes=[],
             permission_classes=[],
             url=f"{settings.V3_API_ROOT}docs/api.json?include_html=1&pk_path=1",
         ),
         name="schema-redoc",
-    )
-)
-
-urlpatterns.append(
+    ),
     path(
-        f"{API_ROOT}swagger/",
+        "swagger/",
         SpectacularSwaggerView.as_view(
             authentication_classes=[],
             permission_classes=[],
             url=f"{settings.V3_API_ROOT}docs/api.json?include_html=1&pk_path=1",
         ),
         name="schema-swagger",
-    )
-)
+    ),
+]
+
+urlpatterns.append(path(API_ROOT, include(docs_and_status)))
+
+if settings.DOMAIN_ENABLED:
+    # Ensure Docs and Status endpoints are available at normal endpoint
+    urlpatterns.append(path(settings.V3_API_ROOT_NO_FRONT_SLASH, include(docs_and_status)))
 
 #: The Pulp Platform v3 API router, which can be used to manually register ViewSets with the API.
 root_router = PulpDefaultRouter()

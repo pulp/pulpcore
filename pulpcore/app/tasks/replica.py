@@ -5,6 +5,7 @@ import sys
 from pulpcore.app.apps import pulp_plugin_configs
 from pulpcore.app.models import UpstreamPulp, TaskGroup
 from pulpcore.app.replica import ReplicaContext
+from pulpcore.app.util import get_domain
 
 from pulp_glue.common import __version__ as pulp_glue_version
 
@@ -21,6 +22,7 @@ def user_agent():
 
 
 def replicate_distributions(server_pk):
+    domain = get_domain()
     server = UpstreamPulp.objects.get(pk=server_pk)
     api_kwargs = dict(
         base_url=server.base_url,
@@ -34,6 +36,7 @@ def replicate_distributions(server_pk):
         format="json",
         background_tasks=True,
         timeout=0,
+        domain=server.domain,
     )
     task_group = TaskGroup.current()
     supported_replicators = []
@@ -53,7 +56,9 @@ def replicate_distributions(server_pk):
                 # The upstream distribution is not serving any content, cleanup an existing local
                 # distribution
                 try:
-                    local_distro = replicator.distribution_model.objects.get(name=distro["name"])
+                    local_distro = replicator.distribution_model.objects.get(
+                        name=distro["name"], pulp_domain=domain
+                    )
                     local_distro.repository = None
                     local_distro.publication = None
                     local_distro.save()

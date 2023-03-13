@@ -16,7 +16,6 @@ from itertools import chain
 
 from django.conf import settings
 from django.core import validators
-from django.core.files.storage import default_storage
 from django.db import IntegrityError, models, transaction
 from django.forms.models import model_to_dict
 from django.utils.timezone import now
@@ -25,7 +24,7 @@ from django_lifecycle import BEFORE_UPDATE, BEFORE_SAVE, hook
 
 from pulpcore.constants import ALL_KNOWN_CONTENT_CHECKSUMS
 from pulpcore.app import pulp_hashlib
-from pulpcore.app.util import gpg_verify
+from pulpcore.app.util import gpg_verify, get_domain_pk
 from pulpcore.app.models import MasterModel, BaseModel, fields, storage
 from pulpcore.exceptions import (
     DigestValidationError,
@@ -169,8 +168,13 @@ class HandleTempFilesMixin:
 class ArtifactManager(BulkCreateManager):
     def orphaned(self, orphan_protection_time):
         """Returns set of orphaned artifacts that are ready to be cleaned up."""
+        domain_pk = get_domain_pk()
         expiration = now() - datetime.timedelta(minutes=orphan_protection_time)
-        return self.filter(content_memberships__isnull=True, timestamp_of_interest__lt=expiration)
+        return self.filter(
+            content_memberships__isnull=True,
+            timestamp_of_interest__lt=expiration,
+            pulp_domain=domain_pk,
+        )
 
 
 class Artifact(HandleTempFilesMixin, BaseModel):
@@ -194,7 +198,8 @@ class Artifact(HandleTempFilesMixin, BaseModel):
         sha256 (models.CharField): The SHA-256 checksum of the file (REQUIRED).
         sha384 (models.CharField): The SHA-384 checksum of the file.
         sha512 (models.CharField): The SHA-512 checksum of the file.
-        timestamp_of_interest (models.DateTimeField): timestamp that prevents orphan cleanup
+        timestamp_of_interest (models.DateTimeField): timestamp that prevents orphan cleanup.
+        pulp_domain (models.ForeignKey): The domain the artifact is a part of.
     """
 
     def storage_path(self, name):
@@ -207,15 +212,18 @@ class Artifact(HandleTempFilesMixin, BaseModel):
         """
         return storage.get_artifact_path(self.sha256)
 
-    file = fields.ArtifactFileField(null=False, upload_to=storage_path, max_length=255)
+    file = fields.ArtifactFileField(
+        null=False, upload_to=storage_path, storage=storage.DomainStorage, max_length=255
+    )
     size = models.BigIntegerField(null=False)
     md5 = models.CharField(max_length=32, null=True, unique=False, db_index=True)
     sha1 = models.CharField(max_length=40, null=True, unique=False, db_index=True)
     sha224 = models.CharField(max_length=56, null=True, unique=False, db_index=True)
-    sha256 = models.CharField(max_length=64, null=False, unique=True, db_index=True)
-    sha384 = models.CharField(max_length=96, null=True, unique=True, db_index=True)
-    sha512 = models.CharField(max_length=128, null=True, unique=True, db_index=True)
+    sha256 = models.CharField(max_length=64, null=False, db_index=True)
+    sha384 = models.CharField(max_length=96, null=True, db_index=True)
+    sha512 = models.CharField(max_length=128, null=True, db_index=True)
     timestamp_of_interest = models.DateTimeField(auto_now=True)
+    pulp_domain = models.ForeignKey("Domain", default=get_domain_pk, on_delete=models.PROTECT)
 
     objects = ArtifactManager.from_queryset(BulkTouchQuerySet)()
 
@@ -231,6 +239,13 @@ class Artifact(HandleTempFilesMixin, BaseModel):
 
     # Digest-fields that are NOT ALLOWED
     FORBIDDEN_DIGESTS = _FORBIDDEN_DIGESTS
+
+    class Meta:
+        unique_together = (
+            ("sha256", "pulp_domain"),
+            ("sha384", "pulp_domain"),
+            ("sha512", "pulp_domain"),
+        )
 
     @hook(BEFORE_SAVE)
     def before_save(self):
@@ -267,7 +282,7 @@ class Artifact(HandleTempFilesMixin, BaseModel):
         for digest_name in self.DIGEST_FIELDS:
             digest_value = getattr(self, digest_name)
             if digest_value:
-                return models.Q(**{digest_name: digest_value})
+                return models.Q(**{digest_name: digest_value}, pulp_domain=self.pulp_domain)
         return models.Q()
 
     def is_equal(self, other):
@@ -359,10 +374,11 @@ class Artifact(HandleTempFilesMixin, BaseModel):
         Returns:
             An saved :class:`~pulpcore.plugin.models.Artifact`
         """
-        artifact_file = default_storage.open(temp_file.file.name)
+        artifact_file = temp_file.file.open()
         with tempfile.NamedTemporaryFile("wb") as new_file:
             shutil.copyfileobj(artifact_file, new_file)
             new_file.flush()
+            artifact_file.close()
             artifact = cls.init_and_validate(new_file.name)
             artifact.save()
         temp_file.delete()
@@ -384,6 +400,9 @@ class PulpTemporaryFile(HandleTempFilesMixin, BaseModel):
         file (pulpcore.app.models.fields.ArtifactFileField): The stored file. This field should
             be set using an absolute path to a temporary file.
             It also accepts `class:django.core.files.File`.
+
+    Relations:
+        pulp_domain (pulpcore.app.models.Domain): The domain this temp file is a part of.
     """
 
     def storage_path(self, name):
@@ -396,7 +415,10 @@ class PulpTemporaryFile(HandleTempFilesMixin, BaseModel):
         """
         return storage.get_temp_file_path(self.pulp_id)
 
-    file = fields.ArtifactFileField(null=False, upload_to=storage_path, max_length=255)
+    file = fields.ArtifactFileField(
+        null=False, upload_to=storage_path, storage=storage.DomainStorage, max_length=255
+    )
+    pulp_domain = models.ForeignKey("Domain", default=get_domain_pk, on_delete=models.PROTECT)
 
     @staticmethod
     def init_and_validate(file, expected_digests=None, expected_size=None):
@@ -472,7 +494,13 @@ class ContentManager(BulkCreateManager):
                 timestamp_of_interest__lt=expiration,
                 pk__in=content_pks,
             )
-        return self.filter(version_memberships__isnull=True, timestamp_of_interest__lt=expiration)
+
+        domain_pk = get_domain_pk()
+        return self.filter(
+            pulp_domain=domain_pk,
+            version_memberships__isnull=True,
+            timestamp_of_interest__lt=expiration,
+        )
 
 
 ContentManager = ContentManager.from_queryset(BulkTouchQuerySet)
@@ -489,6 +517,7 @@ class Content(MasterModel, QueryMixin):
     Relations:
 
         _artifacts (models.ManyToManyField): Artifacts related to Content through ContentArtifact
+        pulp_domain (models.ForeignKey): Pulp Domain this content lives in
     """
 
     PROTECTED_FROM_RECLAIM = True
@@ -500,6 +529,7 @@ class Content(MasterModel, QueryMixin):
 
     _artifacts = models.ManyToManyField(Artifact, through="ContentArtifact")
     timestamp_of_interest = models.DateTimeField(auto_now=True)
+    pulp_domain = models.ForeignKey("Domain", default=get_domain_pk, on_delete=models.PROTECT)
 
     objects = ContentManager()
 
@@ -635,8 +665,9 @@ class RemoteArtifactQuerySet(models.QuerySet):
     """QuerySet that provides methods for querying RemoteArtifact."""
 
     def acs(self):
-        """Return RemoteArtifacts if they belong to an ACS."""
-        return self.filter(remote__alternatecontentsource__isnull=False)
+        """Return RemoteArtifacts if they belong to an ACS in the same Domain."""
+        domain_pk = get_domain_pk()
+        return self.filter(remote__alternatecontentsource__isnull=False, pulp_domain=domain_pk)
 
     def order_by_acs(self):
         """Order RemoteArtifacts returning ones with ACSes first."""
@@ -671,6 +702,7 @@ class RemoteArtifact(BaseModel, QueryMixin):
             ContentArtifact associated with this RemoteArtifact.
         remote (:class:`django.db.models.ForeignKey`): Remote that created the
             RemoteArtifact.
+        pulp_domain (:class:`django.db.models.ForeignKey`): Domain the RemoteArtifact is a part of.
     """
 
     url = models.TextField(validators=[validators.URLValidator])
@@ -684,6 +716,7 @@ class RemoteArtifact(BaseModel, QueryMixin):
 
     content_artifact = models.ForeignKey(ContentArtifact, on_delete=models.CASCADE)
     remote = models.ForeignKey("Remote", on_delete=models.CASCADE)
+    pulp_domain = models.ForeignKey("Domain", default=get_domain_pk, on_delete=models.PROTECT)
 
     objects = BulkCreateManager.from_queryset(RemoteArtifactQuerySet)()
 
@@ -713,7 +746,7 @@ class RemoteArtifact(BaseModel, QueryMixin):
             )
 
     class Meta:
-        unique_together = ("content_artifact", "remote")
+        unique_together = ("content_artifact", "remote", "pulp_domain")
 
 
 class SigningService(BaseModel):

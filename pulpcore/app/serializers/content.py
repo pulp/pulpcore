@@ -6,6 +6,7 @@ from rest_framework.validators import UniqueValidator
 
 from pulpcore.app import models
 from pulpcore.app.serializers import base, fields
+from pulpcore.app.util import get_domain
 
 
 class BaseContentSerializer(base.ModelSerializer):
@@ -243,7 +244,7 @@ class ArtifactSerializer(base.ModelSerializer):
 
             if algorithm in models.Artifact.RELIABLE_DIGEST_FIELDS:
                 validator = UniqueValidator(
-                    models.Artifact.objects.all(),
+                    models.Artifact.objects.filter(pulp_domain=get_domain()),
                     message=_("Artifact with {0} checksum of '{1}' already exists.").format(
                         algorithm, digest
                     ),

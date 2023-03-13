@@ -22,6 +22,7 @@ from dynaconf import settings
 from rest_framework.exceptions import APIException
 from pulpcore.app.models import AutoAddObjPermsMixin
 from pulpcore.responses import ArtifactResponse
+from pulpcore.app.util import get_domain_pk, cache_key
 
 
 class PublicationQuerySet(models.QuerySet):
@@ -66,6 +67,7 @@ class Publication(MasterModel):
     Relations:
         repository_version (models.ForeignKey): The RepositoryVersion used to
             create this Publication.
+        pulp_domain (models.ForeignKey): The domain the Publication is a part of.
 
     Examples:
         >>> repository_version = ...
@@ -88,6 +90,7 @@ class Publication(MasterModel):
     pass_through = models.BooleanField(default=False)
 
     repository_version = models.ForeignKey("RepositoryVersion", on_delete=models.CASCADE)
+    pulp_domain = models.ForeignKey("Domain", default=get_domain_pk, on_delete=models.PROTECT)
 
     @classmethod
     def create(cls, repository_version, pass_through=False):
@@ -161,7 +164,7 @@ class Publication(MasterModel):
 
                 # Invalidate cache for all distributions serving this publication
                 if base_paths:
-                    Cache().delete(base_key=base_paths)
+                    Cache().delete(base_key=cache_key(base_paths))
 
             CreatedResource.objects.filter(object_id=self.pk).delete()
             super().delete(**kwargs)
@@ -221,7 +224,8 @@ class Publication(MasterModel):
                     repository=self.repository_version.repository
                 ).values_list("base_path", flat=True)
                 if base_paths:
-                    Cache().delete(base_key=base_paths)
+                    base_keys = [f"{self.pulp_domain.name}:{base_path}" for base_path in base_paths]
+                    Cache().delete(base_key=base_keys)
 
 
 class PublishedArtifact(BaseModel):
@@ -279,14 +283,14 @@ class PublishedMetadata(Content):
             PublishedMetadata (pulpcore.app.models.PublishedMetadata):
                 A saved instance of PublishedMetadata.
         """
-
+        domain = publication.pulp_domain
         with transaction.atomic():
             artifact = Artifact.init_and_validate(file=PulpTemporaryUploadedFile.from_file(file))
             try:
                 with transaction.atomic():
                     artifact.save()
             except IntegrityError:
-                artifact = Artifact.objects.get(sha256=artifact.sha256)
+                artifact = Artifact.objects.get(sha256=artifact.sha256, pulp_domain=domain)
             if not relative_path:
                 relative_path = file.name
             content = cls(relative_path=relative_path, publication=publication)
@@ -318,13 +322,15 @@ class ContentGuard(MasterModel):
     We defer to the Django docs on extending this model definition with additional fields.
 
     Fields:
-        name (models.TextField): Unique guard name.
+        name (models.TextField): Unique guard name per domain.
         description (models.TextField): An optional description.
+        pulp_domain (models.ForeignKey): The domain the ContentGuard is a part of.
 
     """
 
-    name = models.TextField(db_index=True, unique=True)
+    name = models.TextField(db_index=True)
     description = models.TextField(null=True)
+    pulp_domain = models.ForeignKey("Domain", default=get_domain_pk, on_delete=models.PROTECT)
 
     def permit(self, request):
         """
@@ -343,7 +349,10 @@ class ContentGuard(MasterModel):
         if settings.CACHE_ENABLED:
             base_paths = self.distribution_set.values_list("base_path", flat=True)
             if base_paths:
-                Cache().delete(base_key=base_paths)
+                Cache().delete(base_key=cache_key(base_paths))
+
+    class Meta:
+        unique_together = ("name", "pulp_domain")
 
 
 class RBACContentGuard(ContentGuard, AutoAddObjPermsMixin):
@@ -512,14 +521,16 @@ class Distribution(MasterModel):
         repository (models.ForeignKey): The latest RepositoryVersion for this Repository will be
             served.
         repository_version (models.ForeignKey): RepositoryVersion to be served.
+        pulp_domain (models.ForeignKey): The domain the Distribution is a part of.
     """
 
     # If distribution serves publications, set by subclasses for proper handling in content app
     SERVE_FROM_PUBLICATION = False
 
-    name = models.TextField(db_index=True, unique=True)
+    name = models.TextField(db_index=True)
     pulp_labels = HStoreField(default=dict)
-    base_path = models.TextField(unique=True)
+    base_path = models.TextField()
+    pulp_domain = models.ForeignKey("Domain", default=get_domain_pk, on_delete=models.PROTECT)
 
     content_guard = models.ForeignKey(ContentGuard, null=True, on_delete=models.SET_NULL)
     publication = models.ForeignKey(Publication, null=True, on_delete=models.SET_NULL)
@@ -528,6 +539,9 @@ class Distribution(MasterModel):
         Repository, null=True, on_delete=models.SET_NULL, related_name="distributions"
     )
     repository_version = models.ForeignKey(RepositoryVersion, null=True, on_delete=models.SET_NULL)
+
+    class Meta:
+        unique_together = (("name", "pulp_domain"), ("base_path", "pulp_domain"))
 
     def content_handler(self, path):
         """
@@ -569,7 +583,7 @@ class Distribution(MasterModel):
     def invalidate_cache(self):
         """Invalidates the cache if enabled."""
         if settings.CACHE_ENABLED:
-            Cache().delete(base_key=self.base_path)
+            Cache().delete(base_key=cache_key(self.base_path))
             # Can also preload cache here possibly
 
 
@@ -588,6 +602,8 @@ class ArtifactDistribution(Distribution):
         origin = settings.CONTENT_ORIGIN.strip("/")
         prefix = settings.CONTENT_PATH_PREFIX.strip("/")
         base_path = self.base_path.strip("/")
+        if settings.DOMAIN_ENABLED:
+            base_path = urljoin(artifact.pulp_domain.name + "/", base_path)
 
         plain_url = urljoin(
             urljoin(urljoin(origin, prefix + "/"), base_path + "/"), str(artifact.pk)
@@ -598,7 +614,7 @@ class ArtifactDistribution(Distribution):
         """Serve an artifact or return 404."""
         uuid = path.rstrip("/")
         if re.match(r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}", uuid):
-            artifact = Artifact.objects.filter(pk=uuid).first()
+            artifact = Artifact.objects.filter(pk=uuid).select_related("pulp_domain").first()
             if artifact:
                 return ArtifactResponse(artifact)
         raise HTTPNotFound()

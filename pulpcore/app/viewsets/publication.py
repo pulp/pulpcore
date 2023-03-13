@@ -191,37 +191,37 @@ class RBACContentGuardViewSet(ContentGuardViewSet, RolesMixin):
                 "action": ["create"],
                 "principal": "authenticated",
                 "effect": "allow",
-                "condition": "has_model_perms:core.add_rbaccontentguard",
+                "condition": "has_model_or_domain_perms:core.add_rbaccontentguard",
             },
             {
                 "action": ["retrieve", "my_permissions"],
                 "principal": "authenticated",
                 "effect": "allow",
-                "condition": "has_model_or_obj_perms:core.view_rbaccontentguard",
+                "condition": "has_model_or_domain_or_obj_perms:core.view_rbaccontentguard",
             },
             {
                 "action": ["update", "partial_update"],
                 "principal": "authenticated",
                 "effect": "allow",
-                "condition": "has_model_or_obj_perms:core.change_rbaccontentguard",
+                "condition": "has_model_or_domain_or_obj_perms:core.change_rbaccontentguard",
             },
             {
                 "action": ["destroy"],
                 "principal": "authenticated",
                 "effect": "allow",
-                "condition": "has_model_or_obj_perms:core.delete_rbaccontentguard",
+                "condition": "has_model_or_domain_or_obj_perms:core.delete_rbaccontentguard",
             },
             {
                 "action": ["download"],  # This is the action for the content guard permit
                 "principal": "authenticated",
                 "effect": "allow",
-                "condition": "has_model_or_obj_perms:core.download_rbaccontentguard",
+                "condition": "has_model_or_domain_or_obj_perms:core.download_rbaccontentguard",
             },
             {
                 "action": ["list_roles", "add_role", "remove_role"],
                 "principal": "authenticated",
                 "effect": "allow",
-                "condition": "has_model_or_obj_perms:core.manage_roles_rbaccontentguard",
+                "condition": "has_model_or_domain_or_obj_perms:core.manage_roles_rbaccontentguard",
             },
         ],
         "creation_hooks": [
@@ -268,31 +268,38 @@ class ContentRedirectContentGuardViewSet(ContentGuardViewSet, RolesMixin):
                 "action": ["create"],
                 "principal": "authenticated",
                 "effect": "allow",
-                "condition": "has_model_perms:core.add_contentredirectcontentguard",
+                "condition": "has_model_or_domain_perms:core.add_contentredirectcontentguard",
             },
             {
                 "action": ["retrieve", "my_permissions"],
                 "principal": "authenticated",
                 "effect": "allow",
-                "condition": "has_model_or_obj_perms:core.view_contentredirectcontentguard",
+                "condition": "has_model_or_domain_or_obj_perms:core."
+                "view_contentredirectcontentguard",
             },
             {
                 "action": ["update", "partial_update"],
                 "principal": "authenticated",
                 "effect": "allow",
-                "condition": "has_model_or_obj_perms:core.change_contentredirectcontentguard",
+                "condition": (
+                    "has_model_or_domain_or_obj_perms:core.change_contentredirectcontentguard"
+                ),
             },
             {
                 "action": ["destroy"],
                 "principal": "authenticated",
                 "effect": "allow",
-                "condition": "has_model_or_obj_perms:core.delete_contentredirectcontentguard",
+                "condition": (
+                    "has_model_or_domain_or_obj_perms:core.delete_contentredirectcontentguard"
+                ),
             },
             {
                 "action": ["list_roles", "add_role", "remove_role"],
                 "principal": "authenticated",
                 "effect": "allow",
-                "condition": "has_model_or_obj_perms:core.manage_roles_contentredirectcontentguard",
+                "condition": (
+                    "has_model_or_domain_or_obj_perms:core.manage_roles_contentredirectcontentguard"
+                ),
             },
         ],
         "creation_hooks": [

@@ -1,5 +1,6 @@
+from django.conf import settings
 from drf_spectacular.utils import extend_schema
-from rest_framework import mixins
+from rest_framework import mixins, exceptions
 
 from pulpcore.app.models import (
     Export,
@@ -32,6 +33,8 @@ from pulpcore.app.viewsets import (
 from pulpcore.app.viewsets.base import NAME_FILTER_OPTIONS
 from pulpcore.plugin.tasking import dispatch
 from pulpcore.app.response import OperationPostponedResponse
+
+from gettext import gettext as _
 
 
 class ExporterViewSet(
@@ -114,6 +117,8 @@ class PulpExportViewSet(ExportViewSet):
         """
         Generates a Task to export the set of repositories assigned to a specific PulpExporter.
         """
+        if settings.DOMAIN_ENABLED:
+            raise exceptions.ValidationError(_("Export not supported with Domains enabled."))
         # Validate Exporter
         exporter = PulpExporter.objects.get(pk=exporter_pk).cast()
         ExporterSerializer.validate_path(exporter.path, check_is_dir=True)
@@ -151,6 +156,8 @@ class FilesystemExportViewSet(ExportViewSet):
         """
         Generates a Task to export files to the filesystem.
         """
+        if settings.DOMAIN_ENABLED:
+            raise exceptions.ValidationError(_("Export not supported with Domains enabled."))
         # Validate Exporter
         exporter = FilesystemExporter.objects.get(pk=exporter_pk).cast()
         ExporterSerializer.validate_path(exporter.path, check_is_dir=True)

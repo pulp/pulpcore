@@ -6,6 +6,7 @@ import tempfile
 from urllib.parse import urlparse
 
 from contextlib import ExitStack
+from contextvars import ContextVar
 from datetime import timedelta
 import gnupg
 
@@ -25,18 +26,34 @@ from pulpcore.exceptions.validation import InvalidSignatureError
 _model_viewset_cache = {}
 
 
-def get_url(model):
+def get_url(model, domain=None):
     """
-    Get a resource url for the specified model object. This returns the path component of the
-    resource URI.  This is used in our resource locking/reservation code to identify resources.
+    Get a resource url for the specified model instance or class. This returns the path component of
+    the resource URI.  This is used in our resource locking/reservation code to identify resources.
 
     Args:
-        model (django.models.Model): A model object.
+        model (django.models.Model): A model instance or class.
+        domain Optional(str or Domain): The domain the url should be in if DOMAIN_ENABLED is set and
+        domain can not be gathered from the model. Defaults to 'default'.
 
     Returns:
         str: The path component of the resource url
     """
-    return reverse(get_view_name_for_model(model, "detail"), args=[model.pk])
+    kwargs = {}
+    view_action = "list"
+    if settings.DOMAIN_ENABLED:
+        kwargs["pulp_domain"] = "default"
+        if not domain and hasattr(model, "pulp_domain") and isinstance(model, model._meta.model):
+            kwargs["pulp_domain"] = model.pulp_domain.name
+        elif isinstance(domain, models.Domain):
+            kwargs["pulp_domain"] = domain.name
+        elif isinstance(domain, str):
+            kwargs["pulp_domain"] = domain
+    if isinstance(model, model._meta.model):
+        view_action = "detail"
+        kwargs["pk"] = model.pk
+
+    return reverse(get_view_name_for_model(model, view_action), kwargs=kwargs)
 
 
 def extract_pk(uri):
@@ -339,31 +356,82 @@ def get_artifact_url(artifact, headers=None, http_method=None):
     """
     artifact_file = artifact.file
     content_disposition = f"attachment;filename={artifact.pk}"
+    artifact_domain = artifact.pulp_domain
     if (
-        settings.DEFAULT_FILE_STORAGE == "pulpcore.app.models.storage.FileSystem"
-        or not settings.REDIRECT_TO_OBJECT_STORAGE
+        artifact_domain.storage_class == "pulpcore.app.models.storage.FileSystem"
+        or not artifact_domain.redirect_to_object_storage
     ):
         return _artifact_serving_distribution().artifact_url(artifact)
-    elif settings.DEFAULT_FILE_STORAGE == "storages.backends.s3boto3.S3Boto3Storage":
+    elif artifact_domain.storage_class == "storages.backends.s3boto3.S3Boto3Storage":
         parameters = {"ResponseContentDisposition": content_disposition}
         if headers and headers.get("Content-Type"):
             parameters["ResponseContentType"] = headers.get("Content-Type")
         url = artifact_file.storage.url(
             artifact_file.name, parameters=parameters, http_method=http_method
         )
-    elif settings.DEFAULT_FILE_STORAGE == "storages.backends.azure_storage.AzureStorage":
+    elif artifact_domain.storage_class == "storages.backends.azure_storage.AzureStorage":
         parameters = {"content_disposition": content_disposition}
         if headers and headers.get("Content-Type"):
             parameters["content_type"] = headers.get("Content-Type")
         url = artifact_file.storage.url(artifact_file.name, parameters=parameters)
-    elif settings.DEFAULT_FILE_STORAGE == "storages.backends.gcloud.GoogleCloudStorage":
+    elif artifact_domain.storage_class == "storages.backends.gcloud.GoogleCloudStorage":
         parameters = {"response_disposition": content_disposition}
         if headers and headers.get("Content-Type"):
             parameters["content_type"] = headers.get("Content-Type")
         url = artifact_file.storage.url(artifact_file.name, parameters=parameters)
     else:
+        if settings.DOMAIN_ENABLED:
+            loc = f"domain {artifact_domain.name}.storage_class"
+        else:
+            loc = "settings.DEFAULT_FILE_STORAGE"
+
         raise NotImplementedError(
-            f"The value settings.DEFAULT_FILE_STORAGE={settings.DEFAULT_FILE_STORAGE} "
-            "does not allow redirecting."
+            f"The value {loc}={artifact_domain.storage_class} does not allow redirecting."
         )
     return url
+
+
+default_domain = None
+current_domain = ContextVar("current_domain", default=None)
+
+
+def get_default_domain():
+    global default_domain
+    # This can be run in a migration, and once after
+    if default_domain is None:
+        try:
+            Domain = models.Domain
+        except AttributeError:
+            return None
+        try:
+            default_domain = Domain.objects.get(name="default")
+        except Domain.DoesNotExist:
+            default_domain = Domain(name="default", storage_class=settings.DEFAULT_FILE_STORAGE)
+            default_domain.save(skip_hooks=True)
+
+    return default_domain
+
+
+def get_domain():
+    return current_domain.get() or get_default_domain()
+
+
+def get_domain_pk():
+    return get_domain().pk
+
+
+def set_domain(new_domain):
+    current_domain.set(new_domain)
+    return new_domain
+
+
+def cache_key(base_path):
+    """Returns the base-key(s) used in the Cache for the passed base_path(s)."""
+    if settings.DOMAIN_ENABLED:
+        domain = get_domain()
+        if isinstance(base_path, str):
+            base_path = f"{domain.name}:{base_path}"
+        else:
+            base_path = [f"{domain.name}:{path}" for path in base_path]
+
+    return base_path

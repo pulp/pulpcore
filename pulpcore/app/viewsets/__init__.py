@@ -25,6 +25,7 @@ from .custom_filters import (  # noqa
     RepoVersionHrefFilter,
     RepositoryVersionFilter,
 )
+from .domain import DomainViewSet  # noqa
 from .exporter import (  # noqa
     ExportViewSet,
     ExporterViewSet,

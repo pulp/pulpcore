@@ -23,25 +23,25 @@ Below is an example policy used by ``FileRemote``, with an explanation of its ef
             "action": ["create"],
             "principal": "authenticated",
             "effect": "allow",
-            "condition": "has_model_perms:file.add_fileremote",
+            "condition": "has_model_or_domain_perms:file.add_fileremote",
         },
         {
             "action": ["retrieve"],
             "principal": "authenticated",
             "effect": "allow",
-            "condition": "has_model_or_obj_perms:file.view_fileremote",
+            "condition": "has_model_or_domain_or_obj_perms:file.view_fileremote",
         },
         {
             "action": ["update", "partial_update"],
             "principal": "authenticated",
             "effect": "allow",
-            "condition": "has_model_or_obj_perms:file.change_fileremote",
+            "condition": "has_model_or_domain_or_obj_perms:file.change_fileremote",
         },
         {
             "action": ["destroy"],
             "principal": "authenticated",
             "effect": "allow",
-            "condition": "has_model_or_obj_perms:file.delete_fileremote",
+            "condition": "has_model_or_domain_or_obj_perms:file.delete_fileremote",
         },
     ]
 
@@ -79,6 +79,11 @@ documentation for more information on available checks.
 When multiple conditions are present, **all** of them must return True for the request to be
 authorized.
 
+.. note::
+
+    If you are making your plugin compatible with Domains, then use the ``has_model_or_domain_perms``
+    and ``has_model_or_domain_or_obj_perms`` checks where appropriate.
+
 .. warning::
 
     The ``admin`` user created on installations prior to RBAC being enabled has
@@ -100,8 +105,8 @@ For example ``FileRepositoryViewSet`` has a ``sync`` custom action used by users
         "principal": "authenticated",
         "effect": "allow",
         "condition": [
-            "has_model_or_obj_perms:file.modify_repo_content",
-            "has_remote_param_model_or_obj_perms:file.view_fileremote",
+            "has_model_or_domain_or_obj_perms:file.modify_repo_content",
+            "has_remote_param_model_or_domain_or_obj_perms:file.view_fileremote",
         ]
     }
 
@@ -153,25 +158,25 @@ Here's an example of code to define a default policy:
                     "action": ["create"],
                     "principal": "authenticated",
                     "effect": "allow",
-                    "condition": "has_model_perms:file.add_fileremote",
+                    "condition": "has_model_or_domain_perms:file.add_fileremote",
                 },
                 {
                     "action": ["retrieve"],
                     "principal": "authenticated",
                     "effect": "allow",
-                    "condition": "has_model_or_obj_perms:file.view_fileremote",
+                    "condition": "has_model_or_domain_or_obj_perms:file.view_fileremote",
                 },
                 {
                     "action": ["update", "partial_update"],
                     "principal": "authenticated",
                     "effect": "allow",
-                    "condition": "has_model_or_obj_perms:file.change_fileremote",
+                    "condition": "has_model_or_domain_or_obj_perms:file.change_fileremote",
                 },
                 {
                     "action": ["destroy"],
                     "principal": "authenticated",
                     "effect": "allow",
-                    "condition": "has_model_or_obj_perms:file.delete_fileremote",
+                    "condition": "has_model_or_domain_or_obj_perms:file.delete_fileremote",
                 },
             ],
 
@@ -234,7 +239,7 @@ Now include the ``RolesMixin`` in the definition of the viewset and add statemen
                     "action": ["list_roles", "add_role", "remove_role"],
                     "principal": "authenticated",
                     "effect": "allow",
-                    "condition": ["has_model_or_obj_perms:file.manage_roles_fileremote"],
+                    "condition": ["has_model_or_domain_or_obj_perms:file.manage_roles_fileremote"],
                 },
             ]
         }

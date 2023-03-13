@@ -11,6 +11,7 @@ from rest_framework.reverse import reverse
 from pulpcore.app import models
 from pulpcore.app.serializers import DetailIdentityField, IdentityField, RelatedField
 from pulpcore.app.loggers import deprecation_logger
+from pulpcore.app.util import get_domain
 
 
 def relative_path_validator(relative_path):
@@ -178,11 +179,14 @@ class ContentArtifactsField(serializers.DictField):
                 Artifact URLs.
         """
         ret = {}
+        kwargs = {}
+        if settings.DOMAIN_ENABLED:
+            domain = get_domain()
+            kwargs["pulp_domain"] = domain.name
         for content_artifact in value:
             if content_artifact.artifact_id:
-                url = reverse(
-                    "artifacts-detail", kwargs={"pk": content_artifact.artifact_id}, request=None
-                )
+                kwargs["pk"] = content_artifact.artifact_id
+                url = reverse("artifacts-detail", kwargs=kwargs, request=None)
             else:
                 url = None
             ret[content_artifact.relative_path] = url
@@ -285,9 +289,12 @@ class BaseURLField(serializers.CharField):
     def to_representation(self, value):
         origin = settings.CONTENT_ORIGIN.strip("/")
         prefix = settings.CONTENT_PATH_PREFIX.strip("/")
-        base_path = value.strip("/")
+        base_path = value.base_path.strip("/")
+        url = urljoin(origin, prefix + "/")
+        if settings.DOMAIN_ENABLED:
+            url = urljoin(url, value.pulp_domain.name + "/")
 
-        return urljoin(urljoin(origin, prefix + "/"), base_path + "/")
+        return urljoin(url, base_path + "/")
 
 
 class ExportsIdentityFromExporterField(DetailIdentityField):

@@ -5,6 +5,7 @@ from rest_framework import fields, serializers
 from pulpcore.app.models import Repository
 
 from pulpcore.app.serializers import RepositoryVersionRelatedField, ValidateFieldsMixin
+from pulpcore.app.util import get_domain
 
 
 class ReclaimSpaceSerializer(serializers.Serializer, ValidateFieldsMixin):
@@ -39,7 +40,7 @@ class ReclaimSpaceSerializer(serializers.Serializer, ValidateFieldsMixin):
         if "*" in value:
             if len(value) != 1:
                 raise serializers.ValidationError("Can not specify other HREFs when using '*'")
-            return Repository.objects.all()
+            return Repository.objects.filter(pulp_domain=get_domain())
 
         from pulpcore.app.viewsets import NamedModelViewSet
 
