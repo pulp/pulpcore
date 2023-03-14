@@ -24,6 +24,7 @@ ci_update_branches:
 - '3.18'
 - '3.21'
 - '3.22'
+- '3.23'
 core_import_allowed: []
 coverage: true
 deploy_client_to_pypi: true
