@@ -1,2 +1,0 @@
-Fixed the label migration code for not null constraint errors when objects with and without labels
-are migrated.

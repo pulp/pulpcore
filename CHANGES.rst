@@ -17,6 +17,145 @@ Changelog
 
 .. towncrier release notes start
 
+3.23.0 (2023-03-14)
+===================
+REST API
+--------
+
+Features
+~~~~~~~~
+
+- Added a repository exact and in filters to the Distributions API.
+  :github:`3394`
+- Added a new optional multi-tenancy namespacing feature: Domains. See workflow documentation for more
+  information on this tech-preview feature.
+  :github:`3403`
+- Add GCP support
+  :github:`3424`
+- Added ``retain_repo_versions`` filter to Repository endpoint.
+  :github:`3507`
+- Pass correlation id to signing script through ENV variable
+  :github:`3522`
+- Added ability to replicate distributions/repositories from another Pulp.
+  :github:`3566`
+- Started to collect statistics about RBAC (amd domain) usage.
+  :github:`3639`
+
+
+Bugfixes
+~~~~~~~~
+
+- Bump dynaconf version to 3.1.12 given it fixes a bug to handle failures when pwd does not exist.
+  :github:`3310`
+- Added validation to the repository modify endpoint.
+  :github:`3326`
+- Addressed a possible N+1 query performance issue within reclaim_space task.
+  :github:`3404`
+- Added repeating logic to signalling a task worker subprocess. This should fix a bug where the
+  task refuses to be terminated easily.
+  :github:`3407`
+- Added a ``start_repository_version`` parameter to the file system exporter.
+
+  If specified, it will export only content units that differed between two repository versions.
+  :github:`3413`
+- Fixed the label migration code for not null constraint errors when objects with and without labels
+  are migrated.
+  :github:`3495`
+- Added int64 format to integer fields in api schema.
+  :github:`3590`
+- Fixed a bug that caused Pulp to return duplicate content when a user was logged in as a
+  non-superuser while the content was part of multiple repositories.
+  :github:`3641`
+- Added missing validation to the ``repair`` endpoint.
+  :github:`3645`
+- Fixed bug related to pulpcore-content serving content from a remote (pull-through-cache).
+  :github:`3654`
+
+
+Improved Documentation
+~~~~~~~~~~~~~~~~~~~~~~
+
+- Revisited features in tech preview (e.g., ACS, RBAC, metadata signing, import/export) and marked
+  them production ready.
+  :github:`3429`
+- Documented PostgreSQL version compatibility and incompatibility with transaction based connection
+  pooling.
+  :github:`3505`
+- Updated the release-process doc to be more complete.
+  :github:`3514`
+- Added links to the Containerfiles used for building the pulp and pulp-minimal OCI images.
+  :github:`3627`
+
+
+Removals
+~~~~~~~~
+
+- Removed the PROFILE_STAGES_API setting along with the dependent code.
+  :github:`3595`
+
+
+Misc
+~~~~
+
+- :github:`3446`, :github:`3541`, :github:`3569`, :github:`3574`, :github:`3584`, :github:`3638`
+
+
+Plugin API
+----------
+
+Features
+~~~~~~~~
+
+- Refactored ``ArtifactDownloader`` stage logic into base class ``GenericDownloader`` and allow for
+  the progress reports message and code to be customized by subclasses.
+  :github:`1931`
+- Added version information to the worker records in the database.
+  :github:`3365`
+- Added new config option ``domain_compatible`` to ``PluginAppConfig`` to specify Domains feature
+  compatibility within a plugin. See Domains compatibility documentation in plugin-writer section for
+  more information.
+  :github:`3403`
+- Exported ``TaskSerializer`` in ``pulpcore.plugin.serializers``
+  :github:`3506`
+- Added Replicator class that plugins can implement to enable distribution/repository replication.
+  :github:`3566`
+- Exposed a function for extracting PKs from URIs and a function for validating content units
+  (``pulpcore.plugin.util.extract_pk``, ``pulpcore.plugin.util.raise_for_unknown_content_units``).
+  :github:`3604`
+- Add ``label_field_name`` arg to ``LabelFilter()`` filter that allows plugin devs to
+  customize the model field that ``LabelFilter`` filters on.
+  :github:`3631`
+
+
+Bugfixes
+~~~~~~~~
+
+- Added HiddenFieldsMixin to the plugin API.
+  :github:`3520`
+- Exported ``LabelFilter`` to the plugin api as a replacement for the deprecated
+  ``LabelSelectFilter``.
+  :github:`3570`
+
+
+Improved Documentation
+~~~~~~~~~~~~~~~~~~~~~~
+
+- Adds docs that plugin writers tasks must be backwards compatible until the next major Pulp version.
+  :github:`3368`
+- Adds docs on the need and possible options for writing migrations in a way that they could be
+  applied to a running Pulp system.
+  :github:`3443`
+
+
+Deprecations
+~~~~~~~~~~~~
+
+- Deprecated ``NamedModelViewSet.extract_pk`` in favour of ``pulpcore.plugin.util.extract_pk``.
+  Deprecated ``pulpcore.plugin.actions.raise_for_unknown_content_units`` in favour of
+  ``pulpcore.plugin.util.raise_for_unknown_content_units``.
+  :github:`3604`
+
+
 3.22.3 (2023-03-06)
 ===================
 REST API

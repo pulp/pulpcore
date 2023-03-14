@@ -1,1 +1,0 @@
-Replaced now-unmaintained aioredis dependency with the functionality built into redis-py (which we are already using).
