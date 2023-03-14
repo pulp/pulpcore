@@ -1,2 +1,0 @@
-Exported ``LabelFilter`` to the plugin api as a replacement for the deprecated
-``LabelSelectFilter``.

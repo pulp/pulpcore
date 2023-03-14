@@ -1,1 +1,0 @@
-Refactored templatetags app to use ``force_str`` function instead of deprecated ``force_text``.
