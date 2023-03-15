@@ -1,3 +1,0 @@
-Deprecated ``NamedModelViewSet.extract_pk`` in favour of ``pulpcore.plugin.util.extract_pk``.
-Deprecated ``pulpcore.plugin.actions.raise_for_unknown_content_units`` in favour of
-``pulpcore.plugin.util.raise_for_unknown_content_units``.
