@@ -212,17 +212,34 @@ same resources are not run at the same time. To ensure data correctness, any act
 content of a repository (thus creating a new version) must be run asynchronously, locking on the
 repository and any other models which cannot change during the action. For example, sync tasks must
 be asynchronous and lock on the repository and the remote. Publish should lock on the repository
-version being published as well as the publisher.
+whose version is being published. Reservations can be shared (for read only access) and exclusive
+(for modifying access).
 
 **Deploying Tasks**
 
-Tasks are deployed from Views or Viewsets, please see :ref:`kick-off-tasks`.
+Tasks are usually deployed from Views or Viewsets, please see :ref:`kick-off-tasks`.
 
 .. toctree::
    :maxdepth: 2
 
    tasks/add-remove
    tasks/publish
+
+**Immediate Tasks**
+
+When dispatching a task, one can specify whether it is eligible to be run immediately in the same
+process right away given the reservations can be satisfied (defaults to ``False``), and whether it
+is eligible to be deferred for workers to be picked up later (defaults to ``True``).
+In case a task was marked for immediate execution, but the reservations were not satisfied, it will
+be left in the task queue or marked as canceled, depending on the ``deferred`` attribute.
+
+.. warning::
+
+   A task marked for immediate execution will not be isolated in the ``pulpcore-worker``, but may
+   be executed in the current api worker. This will not only delay the response to the http call,
+   but also the complete single threaded gunicorn process. To prevent degrading the whole Pulp
+   service, this is only ever allowed for tasks that guarantee to perform fast **and** without
+   blocking on external resources. E.g. simple attribute updates, deletes...
 
 **Diagnostics**
 
@@ -365,7 +382,7 @@ example, pulp_ansible makes use of this `here <https://github.com/pulp/pulp_ansi
 Some settings require validation to ensure the user has entered a valid value. Plugins can add
 validation for their settings using validators added in a ``dynaconf`` hook file that will run
 after all the settings have been loaded. Create a ``<your plugin>.app.dynaconf_hooks`` module like
-below so ``dynaconf`` can run your plugin's validators. See `dynaconf validator docs 
+below so ``dynaconf`` can run your plugin's validators. See `dynaconf validator docs
 <https://www.dynaconf.com/validation/>`_ for more information on writing validators.
 
 .. code-block:: python

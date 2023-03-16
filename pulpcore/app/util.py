@@ -416,6 +416,7 @@ def get_artifact_url(artifact, headers=None, http_method=None):
     return url
 
 
+current_task_id = ContextVar("current_task_id", default=None)
 default_domain = None
 current_domain = ContextVar("current_domain", default=None)
 
