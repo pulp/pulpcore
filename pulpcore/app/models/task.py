@@ -3,7 +3,6 @@ Django models related to the Tasking system
 """
 import logging
 import traceback
-import os
 from contextlib import suppress
 from datetime import timedelta
 from gettext import gettext as _
@@ -21,7 +20,7 @@ from pulpcore.app.models import (
 )
 from pulpcore.constants import TASK_CHOICES, TASK_INCOMPLETE_STATES, TASK_STATES
 from pulpcore.exceptions import AdvisoryLockError, exception_to_dict
-from pulpcore.app.util import get_domain_pk
+from pulpcore.app.util import get_domain_pk, current_task_id
 
 _logger = logging.getLogger(__name__)
 
@@ -212,9 +211,8 @@ class Task(BaseModel, AutoAddObjPermsMixin):
         Returns:
             pulpcore.app.models.Task: The current task.
         """
-        try:
-            task_id = os.environ["PULP_TASK_ID"]
-        except KeyError:
+        task_id = current_task_id.get()
+        if task_id is None:
             task = None
         else:
             task = Task.objects.get(pk=task_id)

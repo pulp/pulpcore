@@ -3,7 +3,7 @@ Repository related Django models.
 """
 from contextlib import suppress
 from gettext import gettext as _
-from os import path, environ
+from os import path
 from collections import defaultdict
 import logging
 
@@ -26,6 +26,7 @@ from pulpcore.app.util import (
     get_domain_pk,
     cache_key,
     get_model_for_pulp_type,
+    current_task_id,
 )
 from pulpcore.constants import ALL_KNOWN_CONTENT_CHECKSUMS
 from pulpcore.download.factory import DownloaderFactory
@@ -108,9 +109,8 @@ class Repository(MasterModel):
                 self.create_initial_version()
 
                 # lock the repository if it was created from within a running task
-                try:
-                    task_id = environ["PULP_TASK_ID"]
-                except KeyError:
+                task_id = current_task_id.get()
+                if task_id is None:
                     return
 
                 repository_url = Value(get_url(self))

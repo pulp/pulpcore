@@ -1,7 +1,5 @@
 from gettext import gettext as _
 
-import asyncio
-import importlib
 import logging
 import os
 import random
@@ -12,46 +10,36 @@ import socket
 import sys
 import threading
 import time
-import traceback
-from contextlib import suppress
+import contextlib
 from datetime import timedelta
 from multiprocessing import Process
 from tempfile import TemporaryDirectory
 
-import django
+from django.conf import settings
+from django.db import connection
+from django.utils import timezone
+from django_currentuser.middleware import _set_current_user
+from django_guid import set_guid
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "pulpcore.app.settings")
-django.setup()
+from pulpcore.app.models import Worker, Task
 
-from django.conf import settings  # noqa: E402: module level not at top of file
-from django.db import connection  # noqa: E402: module level not at top of file
-from django.utils import timezone  # noqa: E402: module level not at top of file
-from django_currentuser.middleware import (  # noqa: E402: module level not at top of file
-    _set_current_user,
-)
-from django_guid import set_guid  # noqa: E402: module level not at top of file
-
-from pulpcore.app.models import Worker, Task  # noqa: E402: module level not at top of file
-
-from pulpcore.app.util import (  # noqa: E402: module level not at top of file
+from pulpcore.app.util import (
     configure_analytics,
     set_domain,
 )
-from pulpcore.app.role_util import (  # noqa: E402: module level not at top of file
-    get_users_with_perms,
-)
+from pulpcore.app.role_util import get_users_with_perms
 
-from pulpcore.constants import (  # noqa: E402: module level not at top of file
+from pulpcore.constants import (
     TASK_STATES,
     TASK_INCOMPLETE_STATES,
     VAR_TMP_PULP,
 )
 
-from pulpcore.app.apps import pulp_plugin_configs  # noqa: E402: module level not at top of file
-from pulpcore.exceptions import AdvisoryLockError  # noqa: E402
-from pulpcore.tasking.storage import WorkerDirectory  # noqa: E402
-from pulpcore.tasking.tasks import dispatch_scheduled_tasks  # noqa: E402
-from pulpcore.tasking.util import _delete_incomplete_resources  # noqa: E402
+from pulpcore.app.apps import pulp_plugin_configs
+from pulpcore.exceptions import AdvisoryLockError
+from pulpcore.tasking.storage import WorkerDirectory
+from pulpcore.tasking.tasks import dispatch_scheduled_tasks, execute_task
+from pulpcore.tasking.util import _delete_incomplete_resources
 
 
 _logger = logging.getLogger(__name__)
@@ -180,7 +168,7 @@ class NewPulpWorker:
             if self.worker_cleanup_countdown <= 0:
                 self.worker_cleanup_countdown = WORKER_CLEANUP_INTERVAL
                 self.worker_cleanup()
-            with suppress(AdvisoryLockError), PGAdvisoryLock(TASK_SCHEDULING_LOCK):
+            with contextlib.suppress(AdvisoryLockError), PGAdvisoryLock(TASK_SCHEDULING_LOCK):
                 dispatch_scheduled_tasks()
 
     def notify_workers(self):
@@ -235,7 +223,7 @@ class NewPulpWorker:
                     for resource in reserved_resources_record
                     if resource.startswith("shared:") and resource[7:] not in exclusive_resources
                 ]
-                with suppress(AdvisoryLockError), task:
+                with contextlib.suppress(AdvisoryLockError), task:
                     # This code will only be called if we acquired the lock successfully
                     # The lock will be automatically be released at the end of the block
                     # Check if someone else changed the task before we got the lock
@@ -437,36 +425,10 @@ def _perform_task(task_pk, task_working_dir_rel_path):
     # All processes need to create their own postgres connection
     connection.connection = None
     task = Task.objects.select_related("pulp_domain").get(pk=task_pk)
-    task.set_running()
-    # Store the task id in the environment for `Task.current()`.
-    os.environ["PULP_TASK_ID"] = str(task.pk)
     user = get_users_with_perms(task, with_group_users=False).first()
     _set_current_user(user)
     set_guid(task.logging_cid)
     # Set current domain context
     set_domain(task.pulp_domain)
-    try:
-        _logger.info(_("Starting task %s"), task.pk)
-
-        # Execute task
-        module_name, function_name = task.name.rsplit(".", 1)
-        module = importlib.import_module(module_name)
-        func = getattr(module, function_name)
-        args = task.args or ()
-        kwargs = task.kwargs or {}
-        os.chdir(task_working_dir_rel_path)
-        result = func(*args, **kwargs)
-        if asyncio.iscoroutine(result):
-            _logger.debug(_("Task is coroutine %s"), task.pk)
-            loop = asyncio.get_event_loop()
-            loop.run_until_complete(result)
-
-    except Exception:
-        exc_type, exc, tb = sys.exc_info()
-        task.set_failed(exc, tb)
-        _logger.info(_("Task %s failed (%s)"), task.pk, exc)
-        _logger.info("\n".join(traceback.format_list(traceback.extract_tb(tb))))
-    else:
-        task.set_completed()
-        _logger.info(_("Task completed %s"), task.pk)
-    os.environ.pop("PULP_TASK_ID")
+    os.chdir(task_working_dir_rel_path)
+    execute_task(task)

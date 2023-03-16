@@ -1,5 +1,11 @@
 import logging
 from gettext import gettext as _
+import asyncio
+import contextlib
+import contextvars
+import importlib
+import traceback
+import sys
 
 from django.conf import settings
 from django.db import transaction, connection
@@ -9,8 +15,8 @@ from django_guid import get_guid, set_guid
 from django_guid.utils import generate_guid
 
 from pulpcore.app.models import Task, TaskSchedule
-from pulpcore.app.util import get_url, get_domain
-from pulpcore.constants import TASK_FINAL_STATES, TASK_STATES
+from pulpcore.app.util import get_url, get_domain, current_task_id
+from pulpcore.constants import TASK_FINAL_STATES, TASK_STATES, TASK_INCOMPLETE_STATES
 
 _logger = logging.getLogger(__name__)
 
@@ -39,6 +45,40 @@ def _wakeup_worker():
         cursor.execute("NOTIFY pulp_worker_wakeup")
 
 
+def execute_task(task):
+    # This extra stack is needed to isolate the current_task_id ContextVar
+    contextvars.copy_context().run(_execute_task, task)
+
+
+def _execute_task(task):
+    # Store the task id in the context for `Task.current()`.
+    current_task_id.set(task.pk)
+    task.set_running()
+    try:
+        _logger.info(_("Starting task %s"), task.pk)
+
+        # Execute task
+        module_name, function_name = task.name.rsplit(".", 1)
+        module = importlib.import_module(module_name)
+        func = getattr(module, function_name)
+        args = task.args or ()
+        kwargs = task.kwargs or {}
+        result = func(*args, **kwargs)
+        if asyncio.iscoroutine(result):
+            _logger.debug(_("Task is coroutine %s"), task.pk)
+            loop = asyncio.get_event_loop()
+            loop.run_until_complete(result)
+
+    except Exception:
+        exc_type, exc, tb = sys.exc_info()
+        task.set_failed(exc, tb)
+        _logger.info(_("Task %s failed (%s)"), task.pk, exc)
+        _logger.info("\n".join(traceback.format_list(traceback.extract_tb(tb))))
+    else:
+        task.set_completed()
+        _logger.info(_("Task completed %s"), task.pk)
+
+
 def dispatch(
     func,
     args=None,
@@ -46,6 +86,8 @@ def dispatch(
     task_group=None,
     exclusive_resources=None,
     shared_resources=None,
+    immediate=False,
+    deferred=True,
 ):
     """
     Enqueue a message to Pulp workers with a reservation.
@@ -68,6 +110,12 @@ def dispatch(
             running. Each resource can be either a `str` or a `django.models.Model` instance.
         shared_resources (list): A list of resources this task needs non-exclusive access to while
             running. Each resource can be either a `str` or a `django.models.Model` instance.
+        immediate (bool): Whether to allow running this task immediately. It must be guaranteed to
+            execute fast without blocking. If not all resource constraints are met, the task will
+            either be returned in a canceled state or, if `deferred` is `True` be left in the queue
+            to be picked up by a worker eventually. Defaults to `False`.
+        deferred (bool): Whether to allow defer running the task to a pulpcore_worker. Defaults to
+            `True`. `immediate` and `deferred` cannot both be `False`.
 
     Returns (pulpcore.app.models.Task): The Pulp Task that was created.
 
@@ -75,35 +123,70 @@ def dispatch(
         ValueError: When `resources` is an unsupported type.
     """
 
+    assert deferred or immediate, "A task must be at least `deferred` or `immediate`."
+
     if callable(func):
         func = f"{func.__module__}.{func.__name__}"
 
     if exclusive_resources is None:
         exclusive_resources = []
-
-    resources = _validate_and_get_resources(exclusive_resources)
-    if shared_resources:
-        resources.extend(
-            (f"shared:{resource}" for resource in _validate_and_get_resources(shared_resources))
-        )
+    else:
+        exclusive_resources = _validate_and_get_resources(exclusive_resources)
+    if shared_resources is None:
+        shared_resources = []
+    else:
+        shared_resources = _validate_and_get_resources(shared_resources)
     if settings.DOMAIN_ENABLED:
         domain_url = get_url(get_domain())
-        if domain_url not in resources:
-            resources.append(f"shared:{domain_url}")
+        if domain_url not in exclusive_resources:
+            shared_resources.append(domain_url)
+    resources = exclusive_resources + [f"shared:{resource}" for resource in shared_resources]
 
-    with transaction.atomic():
-        task = Task.objects.create(
-            state=TASK_STATES.WAITING,
-            logging_cid=(get_guid()),
-            task_group=task_group,
-            name=func,
-            args=args,
-            kwargs=kwargs,
-            parent_task=Task.current(),
-            reserved_resources_record=resources,
-        )
-        transaction.on_commit(_wakeup_worker)
-
+    notify_workers = False
+    with contextlib.ExitStack() as stack:
+        with transaction.atomic():
+            task = Task.objects.create(
+                state=TASK_STATES.WAITING,
+                logging_cid=(get_guid()),
+                task_group=task_group,
+                name=func,
+                args=args,
+                kwargs=kwargs,
+                parent_task=Task.current(),
+                reserved_resources_record=resources,
+            )
+            if immediate:
+                # Grab the advisory lock before the task hits the db.
+                stack.enter_context(task)
+            else:
+                notify_workers = True
+        if immediate:
+            prior_tasks = Task.objects.filter(
+                state__in=TASK_INCOMPLETE_STATES, pulp_created__lt=task.pulp_created
+            )
+            # Compile a list of resources that must not be taken by other tasks.
+            colliding_resources = (
+                shared_resources
+                + exclusive_resources
+                + [f"shared:{resource}" for resource in exclusive_resources]
+            )
+            # Can we execute this task immediately?
+            if (
+                not colliding_resources
+                or not prior_tasks.filter(
+                    reserved_resources_record__overlap=colliding_resources
+                ).exists()
+            ):
+                execute_task(task)
+                if resources:
+                    notify_workers = True
+            elif deferred:
+                notify_workers = True
+            else:
+                task.set_canceling()
+                task.set_canceled(TASK_STATES.CANCELED, "Resources temporarily unavailable.")
+    if notify_workers:
+        _wakeup_worker()
     return task
 
 

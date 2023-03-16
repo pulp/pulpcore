@@ -506,6 +506,7 @@ class AsyncUpdateMixin(AsyncReservedObjectMixin):
             exclusive_resources=self.async_reserved_resources(instance),
             args=(pk, app_label, serializer.__class__.__name__),
             kwargs={"data": request.data, "partial": partial},
+            immediate=True,
         )
         return OperationPostponedResponse(task, request)
 
@@ -538,6 +539,7 @@ class AsyncRemoveMixin(AsyncReservedObjectMixin):
             tasks.base.general_delete,
             exclusive_resources=self.async_reserved_resources(instance),
             args=(pk, app_label, serializer.__class__.__name__),
+            immediate=True,
         )
         return OperationPostponedResponse(task, request)
 
