@@ -31,6 +31,8 @@ class ArtifactResource(QueryModelResource):
             kwargs: args passed along from the import() call.
 
         """
+        super().before_import_row(row, **kwargs)
+
         # the export converts None to blank strings but sha384 and sha512 have unique constraints
         # that get triggered if they are blank. convert checksums back into None if they are blank.
         for checksum in ALL_KNOWN_CONTENT_CHECKSUMS:
@@ -44,13 +46,19 @@ class ArtifactResource(QueryModelResource):
             "pulp_created",
             "pulp_last_updated",
         )
-        import_id_fields = ("sha256",)
+        import_id_fields = (
+            "pulp_domain",
+            "sha256",
+        )
 
 
 class RepositoryResource(QueryModelResource):
     class Meta:
         model = Repository
-        import_id_fields = ("name",)
+        import_id_fields = (
+            "pulp_domain",
+            "name",
+        )
         exclude = (
             "pulp_id",
             "pulp_created",
@@ -98,6 +106,7 @@ class ContentArtifactResource(QueryModelResource):
         Returns:
             (tablib.Dataset row): row that now points to the new downstream uuid for its content.
         """
+        super().before_import_row(row, **kwargs)
 
         linked_content = Content.objects.get(upstream_id=row["content"])
         row["content"] = str(linked_content.pulp_id)
