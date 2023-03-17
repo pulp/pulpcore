@@ -1,4 +1,5 @@
 from import_export import resources
+from pulpcore.app.util import get_domain_pk
 
 
 class QueryModelResource(resources.ModelResource):
@@ -18,6 +19,21 @@ class QueryModelResource(resources.ModelResource):
         queryset (django.db.models.query.QuerySet): filtering queryset for this resource
             (driven by repo_version)
     """
+
+    def before_import_row(self, row, **kwargs):
+        """
+        Sets pulp_domain/_pulp_domain to the current-domain on import.
+        Args:
+            row (tablib.Dataset row): incoming import-row representing a single Variant.
+            kwargs: args passed along from the import() call.
+        """
+        # There is probably a more pythonic/elegant way to do the following - but I am deliberately
+        # opting for "verbose but COMPLETELY CLEAR" here.
+        if "_pulp_domain" in row:
+            row["_pulp_domain"] = get_domain_pk()
+
+        if "pulp_domain" in row:
+            row["pulp_domain"] = get_domain_pk()
 
     def set_up_queryset(self):
         return None
