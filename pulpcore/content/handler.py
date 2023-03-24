@@ -354,7 +354,7 @@ class Handler:
         return headers
 
     @staticmethod
-    def render_html(directory_list, path="", dates=None):
+    def render_html(directory_list, path="", dates=None, sizes=None):
         """
         Render a list of strings as an HTML list of links.
 
@@ -365,6 +365,7 @@ class Handler:
             String representing HTML of the directory listing.
         """
         dates = dates or {}
+        sizes = sizes or {}
         template = Template(
             """
 <html>
@@ -379,8 +380,15 @@ class Handler:
 {% else -%}
 {% set date = "" -%}
 {% endif -%}
+{% if sizes.get(name, "") -%}
+{% set size | filesizeformat -%}
+{{ sizes.get(name) }}
+{% endset -%}
+{% else -%}
+{% set size = "" -%}
+{% endif -%}
 <a href="{{ name|e }}">{{ name|e }}</a>{% for number in range(100 - name|e|length) %} """
-            """{% endfor %}{{ date }}
+            """{% endfor %}{{ date }}  {{ size }}
 {% endfor -%}
 </pre><hr></body>
 </html>
@@ -391,6 +399,7 @@ class Handler:
             dates=dates,
             path=path,
             root=path == settings.CONTENT_PATH_PREFIX,
+            sizes=sizes,
         )
 
     async def list_directory(self, repo_version, publication, path):
@@ -423,19 +432,25 @@ class Handler:
             directory_list = set()
             dates = {}
             content_to_find = {}
+            sizes = {}
+            artifacts_to_find = {}
 
             if publication:
-                pas = publication.published_artifact.select_related("content_artifact").filter(
-                    relative_path__startswith=path
-                )
+                pas = publication.published_artifact.select_related(
+                    "content_artifact__artifact"
+                ).filter(relative_path__startswith=path)
                 for pa in pas:
                     name = file_or_directory_name(path, pa.relative_path)
                     directory_list.add(name)
                     dates[name] = pa.pulp_created
                     content_to_find[pa.content_artifact.content_id] = name
+                    if pa.content_artifact.artifact:
+                        sizes[name] = pa.content_artifact.artifact.size
+                    else:
+                        artifacts_to_find[pa.content_artifact.pk] = name
 
             if repo_version or publication.pass_through:
-                cas = ContentArtifact.objects.filter(
+                cas = ContentArtifact.objects.select_related("artifact").filter(
                     content__in=content_repo_ver.content, relative_path__startswith=path
                 )
                 for ca in cas:
@@ -443,6 +458,10 @@ class Handler:
                     directory_list.add(name)
                     dates[name] = ca.pulp_created
                     content_to_find[ca.content_id] = name
+                    if ca.artifact:
+                        sizes[name] = ca.artifact.size
+                    else:
+                        artifacts_to_find[ca.pk] = name
 
             if directory_list:
                 # Find the dates the content got added to the repository
@@ -453,8 +472,13 @@ class Handler:
                         if rc.content_id in content_to_find
                     }
                 )
+                # Find the sizes for on_demand artifacts
+                r_artifacts = RemoteArtifact.objects.filter(
+                    content_artifact__in=artifacts_to_find.keys()
+                ).values_list("content_artifact_id", "size")
+                sizes.update({artifacts_to_find[ra_ca_id]: size for ra_ca_id, size in r_artifacts})
 
-                return directory_list, dates
+                return directory_list, dates, sizes
             else:
                 raise PathNotResolved(path)
 
@@ -548,13 +572,15 @@ class Handler:
                     rel_path = index_path
                     headers = self.response_headers(rel_path)
                 except ObjectDoesNotExist:
-                    dir_list, dates = await self.list_directory(None, publication, rel_path)
+                    dir_list, dates, sizes = await self.list_directory(None, publication, rel_path)
                     dir_list.update(
                         await sync_to_async(distro.content_handler_list_directory)(rel_path)
                     )
                     return HTTPOk(
                         headers={"Content-Type": "text/html"},
-                        body=self.render_html(dir_list, path=request.path, dates=dates),
+                        body=self.render_html(
+                            dir_list, path=request.path, dates=dates, sizes=sizes
+                        ),
                     )
 
             # published artifact
@@ -625,13 +651,15 @@ class Handler:
                 if contentartifact_exists:
                     rel_path = index_path
                 else:
-                    dir_list, dates = await self.list_directory(repo_version, None, rel_path)
+                    dir_list, dates, sizes = await self.list_directory(repo_version, None, rel_path)
                     dir_list.update(
                         await sync_to_async(distro.content_handler_list_directory)(rel_path)
                     )
                     return HTTPOk(
                         headers={"Content-Type": "text/html"},
-                        body=self.render_html(dir_list, path=request.path, dates=dates),
+                        body=self.render_html(
+                            dir_list, path=request.path, dates=dates, sizes=sizes
+                        ),
                     )
 
             try:
