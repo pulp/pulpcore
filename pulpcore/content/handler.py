@@ -358,8 +358,7 @@ class Handler:
         Returns:
             String representing HTML of the directory listing.
         """
-        if dates is None:
-            dates = dict()
+        dates = dates or {}
         template = Template(
             """
 <html>
@@ -370,7 +369,7 @@ class Handler:
 {%- if not root %}<a href="../">../</a>{% endif %}
 {% for name in dir_list -%}
 {% if dates.get(name, "") -%}
-{% set date =  dates.get(name).strftime("%d-%b-%Y %H:%M") -%}
+{% set date = dates.get(name).strftime("%d-%b-%Y %H:%M") -%}
 {% else -%}
 {% set date = "" -%}
 {% endif -%}
@@ -414,8 +413,11 @@ class Handler:
                 raise Exception("Either a repo_version or publication is required.")
             if publication and repo_version:
                 raise Exception("Either a repo_version or publication can be specified.")
+            content_repo_ver = repo_version or publication.repository_version
             directory_list = set()
             dates = {}
+            content_to_find = {}
+
             if publication:
                 pas = publication.published_artifact.select_related("content_artifact").filter(
                     relative_path__startswith=path
@@ -423,28 +425,29 @@ class Handler:
                 for pa in pas:
                     name = file_or_directory_name(path, pa.relative_path)
                     directory_list.add(name)
-                    dates.update({name: pa.content_artifact.pulp_created})
+                    dates[name] = pa.pulp_created
+                    content_to_find[pa.content_artifact.content_id] = name
 
-                if publication.pass_through:
-                    cas = ContentArtifact.objects.filter(
-                        content__in=publication.repository_version.content,
-                        relative_path__startswith=path,
-                    )
-                    for ca in cas:
-                        name = file_or_directory_name(path, ca.relative_path)
-                        directory_list.add(name)
-                        dates.update({name: ca.pulp_created})
-
-            if repo_version:
+            if repo_version or publication.pass_through:
                 cas = ContentArtifact.objects.filter(
-                    content__in=repo_version.content, relative_path__startswith=path
+                    content__in=content_repo_ver.content, relative_path__startswith=path
                 )
                 for ca in cas:
                     name = file_or_directory_name(path, ca.relative_path)
                     directory_list.add(name)
-                    dates.update({name: ca.pulp_created})
+                    dates[name] = ca.pulp_created
+                    content_to_find[ca.content_id] = name
 
             if directory_list:
+                # Find the dates the content got added to the repository
+                dates.update(
+                    {
+                        content_to_find[rc.content_id]: rc.pulp_created
+                        for rc in content_repo_ver._content_relationships()
+                        if rc.content_id in content_to_find
+                    }
+                )
+
                 return directory_list, dates
             else:
                 raise PathNotResolved(path)
