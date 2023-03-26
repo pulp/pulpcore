@@ -30,11 +30,8 @@ fi
 COMMIT_MSG=$(git log --format=%B --no-merges -1)
 export COMMIT_MSG
 
-if [[ "$TEST" == "plugin-from-pypi" ]]; then
-  COMPONENT_VERSION=$(http https://pypi.org/pypi/pulpcore/json | jq -r '.info.version')
-else
-  COMPONENT_VERSION=$(sed -ne "s/\s*version.*=.*['\"]\(.*\)['\"][\s,]*/\1/p" setup.py)
-fi
+COMPONENT_VERSION=$(sed -ne "s/\s*version.*=.*['\"]\(.*\)['\"][\s,]*/\1/p" setup.py)
+
 mkdir .ci/ansible/vars || true
 echo "---" > .ci/ansible/vars/main.yaml
 echo "legacy_component_name: pulpcore" >> .ci/ansible/vars/main.yaml
@@ -63,22 +60,10 @@ cd ..
 
 git clone --depth=1 https://github.com/pulp/pulp-openapi-generator.git
 
+pip install pulp-cli
 
-if [ -f ../clitest_requirement.txt ]
-then
-  pip install -r clitest_requirements.txt
-else
-  pip install pulp-cli
-fi
-PULP_CLI_VERSION="$(python -c "from pulpcore.cli.common import __version__; print(__version__)")"
-git clone https://github.com/pulp/pulp-cli.git
-cd pulp-cli
-git checkout "$PULP_CLI_VERSION"
-
-pulp config create --base-url https://pulp  --location tests/cli.toml
-mkdir ~/.config/pulp
-cp tests/cli.toml ~/.config/pulp/cli.toml
-cd ..
+PULP_CLI_VERSION="$(pip freeze | sed -n -e 's/pulp-cli==//p')"
+git clone --depth 1 --branch "$PULP_CLI_VERSION" https://github.com/pulp/pulp-cli.git
 
 
 # Intall requirements for ansible playbooks
