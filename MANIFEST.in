@@ -4,6 +4,7 @@ include requirements.txt
 include pyproject.toml
 include CHANGES.rst
 include COMMITMENT
+include ci_requirements.txt
 include functest_requirements.txt
 include unittest_requirements.txt
 include CODE_OF_CONDUCT.md
