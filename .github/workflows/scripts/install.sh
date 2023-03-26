@@ -24,9 +24,7 @@ fi
 
 cd .ci/ansible/
 
-if [[ "$TEST" == "plugin-from-pypi" ]]; then
-  PLUGIN_NAME=pulpcore
-elif [[ "${RELEASE_WORKFLOW:-false}" == "true" ]]; then
+if [[ "${RELEASE_WORKFLOW:-false}" == "true" ]]; then
   PLUGIN_NAME=./pulpcore/dist/pulpcore-$PLUGIN_VERSION-py3-none-any.whl
 else
   PLUGIN_NAME=./pulpcore
@@ -66,7 +64,7 @@ pulp_container_tag: https
 
 VARSYAML
 
-SCENARIOS=("pulp" "performance" "azure" "gcp" "s3" "stream" "plugin-from-pypi" "generate-bindings" "lowerbounds")
+SCENARIOS=("pulp" "performance" "azure" "gcp" "s3" "stream" "generate-bindings" "lowerbounds")
 if [[ " ${SCENARIOS[*]} " =~ " ${TEST} " ]]; then
   sed -i -e '/^services:/a \
   - name: pulp-fixtures\
@@ -129,6 +127,9 @@ if [ "${PULP_API_ROOT:-}" ]; then
   sed -i -e '$a api_root: "'"$PULP_API_ROOT"'"' vars/main.yaml
 fi
 
+pulp config create --base-url https://pulp --api-root "$PULP_API_ROOT"
+cp ~/.config/pulp/cli.toml "${REPO_ROOT}/../pulp-cli/tests/cli.toml"
+
 ansible-playbook build_container.yaml
 ansible-playbook start_container.yaml
 
@@ -136,10 +137,10 @@ ansible-playbook start_container.yaml
 # files will likely be modified on the host by post/pre scripts.
 chmod 777 ~/.config/pulp_smash/
 chmod 666 ~/.config/pulp_smash/settings.json
-sudo chown -R 700:700 ~runner/.config
 # Plugins often write to ~/.config/pulp/cli.toml from the host
-sudo chmod 777 ~runner/.config/pulp
-sudo chmod 666 ~runner/.config/pulp/cli.toml
+chmod 777 ~/.config/pulp
+chmod 666 ~/.config/pulp/cli.toml
+sudo chown -R 700:700 ~/.config
 echo ::group::SSL
 # Copy pulp CA
 sudo docker cp pulp:/etc/pulp/certs/pulp_webserver.crt /usr/local/share/ca-certificates/pulp_webserver.crt
