@@ -31,9 +31,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
         with:
-          # by default, it uses a depth of 1
-          # this fetches all history so that we can read each commit
-          fetch-depth: 0
+          fetch-depth: 1
 
       - uses: actions/setup-python@v3
         with:
