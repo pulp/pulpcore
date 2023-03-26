@@ -1,7 +1,7 @@
 # This config represents the latest values used when running the plugin-template. Any settings that
 # were not present before running plugin-template have been added with their default values.
 
-# generated with plugin_template@2021.08.26-192-gba67a84
+# generated with plugin_template@2021.08.26-202-g6f2c165
 
 additional_repos:
 - branch: 1.11
@@ -14,21 +14,18 @@ black: true
 check_commit_message: true
 check_gettext: true
 check_manifest: true
-check_openapi_schema: true
 check_stray_pulpcore_imports: false
-cherry_pick_automation: false
 ci_env: {}
 ci_trigger: '{pull_request: {branches: [''*'']}}'
 ci_update_branches:
 - '3.16'
 - '3.18'
 - '3.21'
+cli_package: pulp-cli
+cli_repo: https://github.com/pulp/pulp-cli.git
 core_import_allowed: []
-coverage: true
 deploy_client_to_pypi: true
 deploy_client_to_rubygems: true
-deploy_daily_client_to_pypi: true
-deploy_daily_client_to_rubygems: true
 deploy_to_pypi: true
 disabled_redis_runners:
 - s3
@@ -40,7 +37,6 @@ flake8_ignore:
 github_org: pulp
 issue_tracker: github
 kanban: true
-keep_ci_update_for_latest_branches: 5
 lint_requirements: true
 noissue_marker: '[noissue]'
 parallel_test_workers: 8
@@ -68,42 +64,28 @@ pulp_settings_azure: null
 pulp_settings_gcp: null
 pulp_settings_s3: null
 pulp_settings_stream: null
-pulpcore_branch: null
-pulpcore_pip_version_specifier: null
-pulpcore_revision: null
 pulpprojectdotorg_key_id: d1a778bda808
 pydocstyle: true
 pypi_username: pulp
 python_version: '3.8'
-redmine_project: pulp
 release_email: pulp-infra@redhat.com
 release_user: pulpbot
 run_pulpcore_tests_for_plugins: false
 single_commit_check: true
-stable_branch: null
 stalebot: true
 stalebot_days_until_close: 30
 stalebot_days_until_stale: 90
 stalebot_limit_to_pulls: true
 sync_ci: true
-tasking_allow_async_unsafe: true
 test_azure: true
-test_bindings: true
 test_cli: true
 test_deprecations: true
-test_fips_nightly: false
 test_gcp: false
 test_lowerbounds: true
 test_performance: false
-test_released_plugin_with_next_pulpcore_release: false
 test_reroute: true
 test_s3: true
 test_stream: true
 update_github: true
-update_redmine: false
-upgrade_range:
-- pulp-certguard_branch: 1.2
-  pulp_file_branch: 1.6
-  pulpcore_branch: 3.11
 use_issue_template: true
 

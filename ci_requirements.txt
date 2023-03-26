@@ -1,0 +1,2 @@
+pulp_file!=1.13.0
+pulp-certguard

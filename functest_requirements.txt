@@ -7,3 +7,6 @@ pulpcore-client
 pulp-file-client
 pytest
 python-gnupg
+
+# from pulp_file
+beautifulsoup4

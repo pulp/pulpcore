@@ -29,11 +29,14 @@ tail -v -n +1 .ci/ansible/vars/main.yaml
 echo "PULP CONFIG:"
 tail -v -n +1 .ci/ansible/settings/settings.* ~/.config/pulp_smash/settings.json
 
+echo "Containerfile:"
+tail -v -n +1 .ci/ansible/Containerfile
+
 # Needed for some functional tests
 cmd_prefix bash -c "echo '%wheel        ALL=(ALL)       NOPASSWD: ALL' > /etc/sudoers.d/nopasswd"
 cmd_prefix bash -c "usermod -a -G wheel pulp"
 
-SCENARIOS=("pulp" "performance" "azure" "gcp" "s3" "stream" "plugin-from-pypi" "generate-bindings" "lowerbounds")
+SCENARIOS=("pulp" "performance" "azure" "gcp" "s3" "stream" "generate-bindings" "lowerbounds")
 if [[ " ${SCENARIOS[*]} " =~ " ${TEST} " ]]; then
   # Many functional tests require these
   cmd_prefix dnf install -yq lsof which
@@ -47,3 +50,7 @@ fi
 if [[ -f $POST_BEFORE_SCRIPT ]]; then
   source $POST_BEFORE_SCRIPT
 fi
+
+# Lots of plugins try to use this path, and throw warnings if they cannot access it.
+cmd_prefix mkdir /.pytest_cache
+cmd_prefix chown pulp:pulp /.pytest_cache
