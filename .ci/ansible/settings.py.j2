@@ -8,7 +8,7 @@ TOKEN_SIGNATURE_ALGORITHM = "ES256"
 CACHE_ENABLED = True
 REDIS_HOST = "localhost"
 REDIS_PORT = 6379
-TELEMETRY = False
+ANALYTICS = False
 
 {% if api_root is defined %}
 API_ROOT = {{ api_root | repr }}
@@ -62,4 +62,11 @@ AZURE_LOCATION = "pulp3"
 AZURE_OVERWRITE_FILES = True
 AZURE_URL_EXPIRATION_SECS = 120
 AZURE_CONNECTION_STRING = 'DefaultEndpointsProtocol={{ pulp_scheme }};AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint={{ pulp_scheme }}://ci-azurite:10000/devstoreaccount1;'
+{% endif %}
+
+{% if gcp_test | default(false) %}
+DEFAULT_FILE_STORAGE = "storages.backends.gcloud.GoogleCloudStorage"
+MEDIA_ROOT = ""
+GS_BUCKET_NAME = "gcppulp"
+GS_CUSTOM_ENDPOINT = "http://ci-gcp:4443"
 {% endif %}
