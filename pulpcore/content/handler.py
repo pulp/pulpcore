@@ -412,7 +412,7 @@ class Handler:
         """
 
         def file_or_directory_name(directory_path, relative_path):
-            result = re.match(r"({})([^\/]*)(\/*)".format(directory_path), relative_path)
+            result = re.match(r"({})([^\/]*)(\/*)".format(re.escape(directory_path)), relative_path)
             return "{}{}".format(result.groups()[1], result.groups()[2])
 
         def list_directory_blocking():
