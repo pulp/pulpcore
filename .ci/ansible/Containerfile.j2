@@ -2,15 +2,15 @@ FROM {{ ci_base | default("ghcr.io/pulp/pulp-ci-centos:" + pulp_container_tag) }
 
 # Add source directories to container
 {% for item in plugins %}
-{% if item.source.startswith("./") %}
-ADD {{ item.source }} {{ item.source }}
+{% if item.source.startswith("./") or item.ci_requirements | default(false) %}
+ADD ./{{ item.name }} {{ item.source }}
 {% endif %}
 {% endfor %}
 
 # Install python packages
 # Hacking botocore (https://github.com/boto/botocore/pull/1990)
 
-RUN pip3 install \
+RUN pip3 install
 {%- if stream_test | default(false) -%}
 {{ " " }}django-storages[sftp]
 {%- endif -%}
@@ -27,7 +27,10 @@ RUN pip3 install \
 {%- if item.name == "pulp-certguard" -%}
 {{ " " }}python-dateutil rhsm
 {%- endif -%}
-{{ " " }}"{{ item.source }}"
+{{ " " }}{{ item.source }}
+{%- if item.ci_requirements | default(false) -%}
+{{ " " }}-r ./{{ item.name }}/ci_requirements.txt
+{%- endif -%}
 {%- endfor %}
 
 USER pulp:pulp

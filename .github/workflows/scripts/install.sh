@@ -24,17 +24,6 @@ fi
 
 cd .ci/ansible/
 
-TAG=ci_build
-if [ -e $REPO_ROOT/../pulp_file ]; then
-  PULP_FILE=./pulp_file
-else
-  PULP_FILE=git+https://github.com/pulp/pulp_file.git@1.10
-fi
-if [ -e $REPO_ROOT/../pulp-certguard ]; then
-  PULP_CERTGUARD=./pulp-certguard
-else
-  PULP_CERTGUARD=git+https://github.com/pulp/pulp-certguard.git@1.5
-fi
 if [[ "${RELEASE_WORKFLOW:-false}" == "true" ]]; then
   PLUGIN_NAME=./pulpcore/dist/pulpcore-$PLUGIN_VERSION-py3-none-any.whl
 else
@@ -43,22 +32,21 @@ fi
 cat >> vars/main.yaml << VARSYAML
 image:
   name: pulp
-  tag: "${TAG}"
+  tag: "ci_build"
 plugins:
   - name: pulpcore
     source: "${PLUGIN_NAME}"
-  - name: pulp_file
-    source: $PULP_FILE
-  - name: pulp-certguard
-    source: $PULP_CERTGUARD
-  - name: pulp-smash
-    source: ./pulp-smash
 VARSYAML
+if [[ -f ../../ci_requirements.txt ]]; then
+  cat >> vars/main.yaml << VARSYAML
+    ci_requirements: true
+VARSYAML
+fi
 
 cat >> vars/main.yaml << VARSYAML
 services:
   - name: pulp
-    image: "pulp:${TAG}"
+    image: "pulp:ci_build"
     volumes:
       - ./settings:/etc/pulp
       - ./ssh:/keys/
@@ -76,7 +64,7 @@ pulp_container_tag: https
 
 VARSYAML
 
-SCENARIOS=("pulp" "performance" "azure" "gcp" "s3" "stream" "plugin-from-pypi" "generate-bindings" "lowerbounds")
+SCENARIOS=("pulp" "performance" "azure" "gcp" "s3" "stream" "generate-bindings" "lowerbounds")
 if [[ " ${SCENARIOS[*]} " =~ " ${TEST} " ]]; then
   sed -i -e '/^services:/a \
   - name: pulp-fixtures\
@@ -128,6 +116,9 @@ if [ "${PULP_API_ROOT:-}" ]; then
   sed -i -e '$a api_root: "'"$PULP_API_ROOT"'"' vars/main.yaml
 fi
 
+pulp config create --base-url https://pulp --api-root "$PULP_API_ROOT"
+cp ~/.config/pulp/cli.toml "${REPO_ROOT}/../pulp-cli/tests/cli.toml"
+
 ansible-playbook build_container.yaml
 ansible-playbook start_container.yaml
 
@@ -135,10 +126,10 @@ ansible-playbook start_container.yaml
 # files will likely be modified on the host by post/pre scripts.
 chmod 777 ~/.config/pulp_smash/
 chmod 666 ~/.config/pulp_smash/settings.json
-sudo chown -R 700:700 ~runner/.config
 # Plugins often write to ~/.config/pulp/cli.toml from the host
-sudo chmod 777 ~runner/.config/pulp
-sudo chmod 666 ~runner/.config/pulp/cli.toml
+chmod 777 ~/.config/pulp
+chmod 666 ~/.config/pulp/cli.toml
+sudo chown -R 700:700 ~/.config
 echo ::group::SSL
 # Copy pulp CA
 sudo docker cp pulp:/etc/pulp/certs/pulp_webserver.crt /usr/local/share/ca-certificates/pulp_webserver.crt

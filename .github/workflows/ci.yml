@@ -10,42 +10,17 @@ name: Pulpcore CI
 on: {pull_request: {branches: ['*']}}
 jobs:
 
-
-  single_commit:
-    name: Assert single commit
-    if: github.base_ref == 'main'
-    steps:
-    - name: Checkout
-      uses: actions/checkout@v3
-      with:
-        fetch-depth: 30
-    - name: Checkout main
-      run: git fetch origin main
-    - name: create local main branch
-      run: git branch main origin/main
-    - name: Commit Count Check
-      run: test `git log  --oneline --no-merges HEAD ^main  | wc -l ` = 1
+  ready-to-ship:
     runs-on: ubuntu-latest
-
-  lint:
-    runs-on: ubuntu-latest
-    
-
     steps:
       - uses: actions/checkout@v3
         with:
-          # by default, it uses a depth of 1
-          # this fetches all history so that we can read each commit
           fetch-depth: 0
-
       - uses: actions/setup-python@v3
         with:
           python-version: "3.8"
-
-        # lint_requirements contains tools needed for flake8, etc.
       - name: Install requirements
-        run: pip3 install -r lint_requirements.txt
-
+        run: pip3 install github
       - name: Check commit message
         if: github.event_name == 'pull_request'
         env:
@@ -58,6 +33,36 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_CONTEXT: ${{ github.event.pull_request.commits_url }}
         run: sh .github/workflows/scripts/check_commit.sh
+      - name: Verify requirements files
+        run: python .ci/scripts/check_requirements.py
+  single_commit:
+    runs-on: ubuntu-latest
+    name: Assert single commit
+    if: github.base_ref == 'main'
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Checkout main
+        run: git fetch origin main
+      - name: create local main branch
+        run: git branch main origin/main
+      - name: Commit Count Check
+        run: test `git log  --oneline --no-merges HEAD ^main  | wc -l ` = 1
+
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 1
+      - uses: actions/setup-python@v3
+        with:
+          python-version: "3.8"
+      # lint_requirements contains tools needed for flake8, etc.
+      - name: Install requirements
+        run: pip3 install -r lint_requirements.txt
 
       # run black separately from flake8 to get a diff
       - name: Run black
@@ -81,9 +86,6 @@ jobs:
       - name: Check for gettext problems
         run: sh .ci/scripts/check_gettext.sh
 
-      - name: Verify upper bound requirements
-        run: python .ci/scripts/upper_bound.py
-
   test:
     runs-on: ubuntu-latest
     # run only after lint finishes
@@ -106,9 +108,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
         with:
-          # by default, it uses a depth of 1
-          # this fetches all history so that we can read each commit
-          fetch-depth: 0
+          fetch-depth: 1
 
       - uses: actions/setup-python@v3
         with:
@@ -126,7 +126,6 @@ jobs:
           echo "TEST=${{ matrix.env.TEST }}" >> $GITHUB_ENV
 
       - name: Before Install
-        
         run: .github/workflows/scripts/before_install.sh
         shell: bash
         env:
@@ -140,7 +139,6 @@ jobs:
           GITHUB_CONTEXT: ${{ github.event.pull_request.commits_url }}
 
       - name: Install
-        
         run: .github/workflows/scripts/install.sh
         shell: bash
         env:
@@ -153,13 +151,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_CONTEXT: ${{ github.event.pull_request.commits_url }}
 
-      - name: Install Python client
-        
-        run: .github/workflows/scripts/install_python_client.sh
-        shell: bash
-
       - name: Before Script
-        
         run: .github/workflows/scripts/before_script.sh
         shell: bash
         env:
@@ -180,7 +172,6 @@ jobs:
           SECRETS_CONTEXT: ${{ toJson(secrets) }}
 
       - name: Script
-        
         run: .github/workflows/scripts/script.sh
         shell: bash
         env:
