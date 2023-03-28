@@ -17,6 +17,26 @@ Changelog
 
 .. towncrier release notes start
 
+3.23.1 (2023-03-27)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fixed import/export in the presence of the domains work.
+  :github:`3663`
+- Fixed a regular expression used when listing directories.
+  :github:`3673`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.23.0 (2023-03-14)
 ===================
 REST API
