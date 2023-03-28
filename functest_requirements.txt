@@ -9,3 +9,6 @@ pytest
 python-gnupg
 proxy.py~=2.4.3
 trustme~=0.9.0
+
+# from pulp_file
+beautifulsoup4
