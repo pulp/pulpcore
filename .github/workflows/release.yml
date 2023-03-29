@@ -58,7 +58,7 @@ jobs:
         run: python .github/workflows/scripts/release.py ${{ github.event.inputs.release }}
 
       - name: 'Tar files'
-        run: tar -cvf pulpcore.tar $GITHUB_WORKSPACE
+        run: tar -cvf pulpcore.tar .
 
       - name: 'Upload Artifact'
         uses: actions/upload-artifact@v3
@@ -95,9 +95,7 @@ jobs:
 
       - name: Untar repository
         run: |
-          shopt -s dotglob
           tar -xf pulpcore.tar
-          mv home/runner/work/pulpcore/pulpcore/* ./
 
       # update to the branch's latest ci files rather than the ones from the release tag. this is
       # helpful when there was a problem with the ci files during the release which needs to be
@@ -260,9 +258,7 @@ jobs:
 
       - name: Untar repository
         run: |
-          shopt -s dotglob
           tar -xf pulpcore.tar
-          mv home/runner/work/pulpcore/pulpcore/* ./
 
       # update to the branch's latest ci files rather than the ones from the release tag. this is
       # helpful when there was a problem with the ci files during the release which needs to be
