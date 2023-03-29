@@ -19,8 +19,12 @@ def main():
             else:
                 for spec in requirement.specifier:
                     if spec.operator == ">=":
+                        if requirement.name == "pulpcore":
+                            operator = "~="
+                        else:
+                            operator = "=="
                         min_version = str(spec)[2:]
-                        print(f"{requirement.name}=={min_version}")
+                        print(f"{requirement.name}{operator}{min_version}")
                         break
                 else:
                     print(line.strip())
