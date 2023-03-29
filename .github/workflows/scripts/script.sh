@@ -64,12 +64,29 @@ password password
 cmd_user_stdin_prefix bash -c "chmod 600 ~pulp/.netrc"
 
 cd ../pulp-openapi-generator
-for item in $(echo "$REPORTED_STATUS" | jq -r '.versions[].package|sub("-"; "_")')
-do
-./generate.sh "${item}" python
-cmd_prefix pip3 install "/root/pulp-openapi-generator/${item}-client"
-sudo rm -rf "./${item}-client"
-done
+if [ "$(echo "$REPORTED_STATUS" | jq -r '.versions[0].package')" = "null" ]
+then
+  # We are on an old version of pulpcore without package in the status report
+  for app_label in $(echo "$REPORTED_STATUS" | jq -r '.versions[].component')
+  do
+    if [ "$app_label" = "core" ]
+    then
+      item=pulpcore
+    else
+      item="pulp_${app_label}"
+    fi
+    ./generate.sh "${item}" python
+    cmd_prefix pip3 install "/root/pulp-openapi-generator/${item}-client"
+    sudo rm -rf "./${item}-client"
+  done
+else
+  for item in $(echo "$REPORTED_STATUS" | jq -r '.versions[].package|sub("-"; "_")')
+  do
+    ./generate.sh "${item}" python
+    cmd_prefix pip3 install "/root/pulp-openapi-generator/${item}-client"
+    sudo rm -rf "./${item}-client"
+  done
+fi
 
 cd $REPO_ROOT
 
