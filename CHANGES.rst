@@ -17,6 +17,26 @@ Changelog
 
 .. towncrier release notes start
 
+3.21.6 (2023-03-29)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fixed an error when raising ``UnexportableArtifactException``.
+  :github:`3313`
+- Fixed the openapi spec of "fields" and "exclude_fields" querystring parameters.
+  :github:`3398`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.21.5 (2023-02-02)
 ===================
 REST API
