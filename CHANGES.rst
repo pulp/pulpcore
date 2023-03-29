@@ -17,6 +17,24 @@ Changelog
 
 .. towncrier release notes start
 
+3.18.16 (2023-03-29)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fixed an error when raising ``UnexportableArtifactException``.
+  :github:`3313`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.18.15 (2023-03-09)
 ====================
 REST API
