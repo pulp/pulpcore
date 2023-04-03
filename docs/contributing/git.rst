@@ -75,33 +75,35 @@ Putting this all together, the following is an example of a good commit message:
 Requiring other Pull Requests
 *****************************
 
-Sometimes a new feature may require changes to both `pulpcore` and one or many other plugins,
-simultaneously. In order to keep the CI happy in these circumstances (as tests may fail otherwise),
-we provide a mechanism to force the CI service to fetch the version of a component in a linked
-Pull Request, rather than master branch.
+Sometimes a new feature may require changes to both `pulpcore` and one or many other plugins.
+However, plugins can only depend on features that are already released with `pulpcore` or any other
+dependency. Sometimes though you need to demonstrate, that a new feature about to be added to
+`pulpcore` will work with a corresponding plugin change before you can get the needed approvals. In
+order to do so, you can depend the plugin's pull request on the head of the pull request or the
+main branch of `pulpcore` in the following way:
 
-To do so, add a tag in the following format to the last commit in your series.
+Add a line like::
 
-This will allow the PR against pulp to run against the Pull Requests for pulp_file::
+    git+https://github.com/pulp/pulpcore@refs/pull/1234/head
+    git+https://github.com/pulp/pulpcore@refs/heads/main
 
-    Required PR: https://github.com/pulp/pulp_file/pull/2345
+to `ci_requirements.txt` in the plugin PR. Make sure that file is covered by `MANIFEST.in`. Also
+bump the requirement on `pulpcore` in `requirements.txt` to at least the current `dev` version if
+you want to be sure the `lower bounds` scenario passes.
 
-This will allow the PR against a plugin to run against the Pull Request for pulpcore::
+This works accordingly for depending on other plugins.
 
-    Required PR: https://github.com/pulp/pulpcore/pull/3456
-
-Attention and care must be given to merging PRs that require other Pull Requests. Before merging,
-all required PRs should be ready to merge--meaning that all tests/checks should be passing, the code
-review requirements should be met, etc. When merging, the PR along with its required PRs should all
-be merged at the same time. This is necessary to ensure that test breakages don't block other PRs.
+This will allow the tests in the CI to run, but it will fail the `ready-to-ship` check. The
+depended on PR must be merged **and** released before a PR like this can be merged.
 
 For very similar reasons it can happen that you need changes to the base image used in the CI to
 spin up a new pulp container. In those cases you can build your own modified version of the image
-and push it to a container registry. Now you can specify the image to use in the last commit like::
+and push it to a container registry. Now you can specify the image to use in the last commit
+message like::
 
     CI Base Image: pulp/pulp-ci:special_feature
 
-The same meticulousness as described above is required to merge those Pull Requests.
+Attention and care must be given not to merge PRs that require custom CI images.
 
 
 .. _changelog-update:
