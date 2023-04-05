@@ -1,6 +1,8 @@
 from gettext import gettext as _
+from logging import getLogger
 
 from django_currentuser.middleware import get_current_authenticated_user
+from django.db.models.deletion import ProtectedError
 from pulpcore.app.models import (
     ProgressReport,
     Task,
@@ -8,6 +10,8 @@ from pulpcore.app.models import (
 from pulpcore.app.role_util import get_objects_for_user
 from pulpcore.app.util import get_domain
 from pulpcore.constants import TASK_STATES
+
+log = getLogger(__name__)
 
 # Delete 1K at a time - better to use less memory, and take a little longer, with a utility
 # function like this.
@@ -101,15 +105,45 @@ def purge(finished_before, states):
     pb.save()
     details_reports[TASK_KEY] = pb
 
+    # Build and save a progress-report for objects that couldn't be deleted
+    error_pb = ProgressReport(
+        message=_("Tasks failed to purge"),
+        total=None,
+        code="purge.tasks.error",
+        done=0,
+    )
+    error_pb.save()
+    # Also keep a list of PKs of objects we've already failed to delete
+    pks_failed = []
+
     # Our delete-query is going to deal with "the first DELETE_LIMIT tasks that match our
     # criteria", looping until we've deleted everything that fits our parameters
-    units_deleted = 1
-    # Until our query returns "No tasks deleted", add results into totals and Do It Again
-    while units_deleted > 0:
-        units_deleted, details = Task.objects.filter(
-            pk__in=candidate_qs[:DELETE_LIMIT].values_list("pk", flat=True)
-        ).delete()
-        _details_reporting(details_reports, details, totals_pb)
+    continue_deleting = True
+
+    while continue_deleting:
+        # Get a list of candidate objects to delete
+        candidate_pks = candidate_qs.exclude(pk__in=pks_failed).values_list("pk", flat=True)
+        pk_list = list(candidate_pks[:DELETE_LIMIT])
+
+        # Try deleting the objects in bulk
+        try:
+            units_deleted, details = Task.objects.filter(pk__in=pk_list).delete()
+            _details_reporting(details_reports, details, totals_pb)
+            continue_deleting = units_deleted > 0
+        except ProtectedError:
+            # If there was at least one object that couldn't be deleted, then
+            # loop through the candidate objects and delete them one-by-one
+            for pk in pk_list:
+                try:
+                    obj = Task.objects.get(pk=pk)
+                    count, details = obj.delete()
+                    _details_reporting(details_reports, details, totals_pb)
+                except ProtectedError as e:
+                    # Object could not be deleted due to foreign key constraint.
+                    # Log the details of the object.
+                    error_pb.done += 1
+                    pks_failed.append(pk)
+                    log.info(e)
 
     # Complete the progress-reports for the specific entities deleted
     for key, pb in details_reports.items():
@@ -121,3 +155,8 @@ def purge(finished_before, states):
     totals_pb.total = totals_pb.done
     totals_pb.state = TASK_STATES.COMPLETED
     totals_pb.save()
+
+    # Complete the error-ProgressReport
+    error_pb.total = error_pb.done
+    error_pb.state = TASK_STATES.COMPLETED
+    error_pb.save()
