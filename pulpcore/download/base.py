@@ -5,6 +5,7 @@ from collections import namedtuple
 import logging
 import os
 import tempfile
+from urllib.parse import urlsplit
 
 from pulpcore.app import pulp_hashlib
 from pulpcore.app.loggers import deprecation_logger
@@ -129,7 +130,17 @@ class BaseDownloader:
         allowing plugin writers to instantiate many downloaders in memory.
         """
         if not self._writer:
-            self._writer = tempfile.NamedTemporaryFile(dir=".", delete=False)
+            filename = urlsplit(self.url).path.split("/")[-1]
+            # linux allows any character except NUL or / in a filename and has a length limit of
+            # 255. Making it urlencoding-aware would be nice, but not critical, because urlencoded
+            # paths should be OK
+            is_legal_filename = filename and (len(filename) <= 243)  # 255 - prefix length
+            # if the filename isn't legal then we just fall back to no suffix (random name)
+            suffix = "-" + filename if is_legal_filename else None
+            # write the file to the current working directory with a random prefix and the
+            # desired suffix. we always want the random prefix as it is possible to download
+            # the same filename from two different URLs, and the files may not be the same.
+            self._writer = tempfile.NamedTemporaryFile(dir=".", suffix=suffix, delete=False)
             self.path = self._writer.name
             self._digests = {n: pulp_hashlib.new(n) for n in Artifact.DIGEST_FIELDS}
             self._size = 0
