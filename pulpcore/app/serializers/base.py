@@ -3,12 +3,14 @@ from logging import getLogger
 import functools
 import re
 import traceback
+from collections import namedtuple
 from typing import List, TypedDict
 from urllib.parse import urljoin
 
 from django.conf import settings
 from django.core.validators import URLValidator
 from django.core.exceptions import ObjectDoesNotExist
+from django.urls.exceptions import NoReverseMatch
 from django.db import IntegrityError, transaction
 from django.db.models import Model
 from drf_queryfields.mixins import QueryFieldsMixin
@@ -20,7 +22,15 @@ from rest_framework_nested.relations import (
     NestedHyperlinkedRelatedField,
 )
 
-from pulpcore.app.models import Label, Task, TaskGroup, MasterModel
+from pulpcore.app.models import (
+    Label,
+    Task,
+    TaskGroup,
+    MasterModel,
+    GenericRelationModel,
+    Repository,
+    RepositoryVersion,
+)
 from pulpcore.app.util import (
     get_view_name_for_model,
     get_viewset_for_model,
@@ -145,6 +155,9 @@ class RelatedField(
     """
 
 
+PKOnlyObject = namedtuple("PKOnlyObject", ["pk"])
+
+
 class RelatedResourceField(RelatedField):
     """RelatedResourceField when relating a Resource object models.
 
@@ -155,7 +168,37 @@ class RelatedResourceField(RelatedField):
     Specific implementation requires the model to be defined in the Meta:.
     """
 
+    def repo_ver_url(self, repo_ver):
+        repo_model = get_model_for_pulp_type(repo_ver.repository.pulp_type, Repository)
+        view_name = get_view_name_for_model(repo_model, "detail")
+        obj = PKOnlyObject(pk=repo_ver.repository.pk)
+        repo_url = self.get_url(obj, view_name, request=None, format=None)
+        return f"{repo_url}versions/{repo_ver.number}/"
+
     def to_representation(self, data):
+        # Try to use optimized lookup to avoid DB if content_type has been already been fetched
+        if GenericRelationModel.content_type.is_cached(data):
+            model = data.content_type.model_class()
+            if issubclass(model, RepositoryVersion):
+                # Special case as we need to figure out the type of its repository to form url
+                repo_ver_mapping = self.context.get("repo_ver_mapping")
+                if repo_ver_mapping is not None:
+                    if repo_ver := repo_ver_mapping.get(data.object_id):
+                        return self.repo_ver_url(repo_ver)
+                    return None
+            else:
+                try:
+                    view_name = get_view_name_for_model(model, "detail")
+                except LookupError:
+                    pass
+                else:
+                    obj = PKOnlyObject(pk=data.object_id)
+                    try:
+                        return self.get_url(obj, view_name, request=None, format=None)
+                    except NoReverseMatch:
+                        pass
+
+        # Fallback onto normal lookup:
         # If the content object was deleted
         if data.content_object is None:
             return None
