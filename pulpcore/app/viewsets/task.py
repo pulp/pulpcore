@@ -1,5 +1,6 @@
 from gettext import gettext as _
 
+from django.db.models import Prefetch
 from django_filters.rest_framework import filters
 from drf_spectacular.utils import extend_schema
 from rest_framework import mixins, status
@@ -8,7 +9,14 @@ from rest_framework.response import Response
 from rest_framework.serializers import ValidationError
 
 from pulpcore.filters import BaseFilterSet
-from pulpcore.app.models import Task, TaskGroup, TaskSchedule, Worker
+from pulpcore.app.models import (
+    Task,
+    TaskGroup,
+    TaskSchedule,
+    Worker,
+    CreatedResource,
+    RepositoryVersion,
+)
 from pulpcore.app.response import OperationPostponedResponse
 from pulpcore.app.serializers import (
     AsyncOperationResponseSerializer,
@@ -134,6 +142,44 @@ class TaskViewSet(
         },
         "core.task_viewer": ["core.view_task"],
     }
+
+    def get_serializer(self, *args, **kwargs):
+        """Set repo_ver_mapping in serializer context for optimized serialization."""
+        many = kwargs.get("many", False)
+        serializer = super().get_serializer(*args, **kwargs)
+        # Perform optimization for list & retrieve actions and only during **full** serialization
+        # "swagger_fake_view" is set when drf_spectacular is building the OpenAPI spec
+        if (
+            self.action in ("list", "retrieve")
+            and isinstance(serializer, TaskSerializer)
+            and not getattr(self, "swagger_fake_view", False)
+        ):
+            task_list = args[0] if many else [args[0]]
+            created_resources = [cr for task in task_list for cr in task.created_resources.all()]
+            repo_ver_pks = [
+                cr.object_id
+                for cr in created_resources
+                if issubclass(cr.content_type.model_class(), RepositoryVersion)
+            ]
+            repo_vers = (
+                RepositoryVersion.objects.select_related("repository")
+                .filter(pk__in=repo_ver_pks, complete=True)
+                .only("pk", "number", "repository__pulp_type")
+            )
+            serializer.context["repo_ver_mapping"] = {rv.pk: rv for rv in repo_vers}
+        return serializer
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        if self.action in ("list", "retrieve"):
+            qs = qs.prefetch_related("progress_reports").prefetch_related(
+                Prefetch(
+                    "created_resources",
+                    queryset=CreatedResource.objects.select_related("content_type"),
+                ),
+                Prefetch("child_tasks", queryset=Task.objects.only("pk")),
+            )
+        return qs
 
     @extend_schema(
         description="This operation cancels a task.",
