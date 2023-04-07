@@ -6,13 +6,15 @@ from django.db import models
 from django.forms.utils import ErrorList
 from django.urls import Resolver404, resolve
 from django_filters.constants import EMPTY_VALUES
-from django_filters.rest_framework import DjangoFilterBackend, filterset, filters
+from django_filters.rest_framework import DjangoFilterBackend, filterset, filters, BaseInFilter
 from django.core.exceptions import FieldDoesNotExist
 from rest_framework import serializers
 
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.plumbing import build_basic_type
 from drf_spectacular.contrib.django_filters import DjangoFilterExtension
+
+from pulpcore.app.util import extract_pk
 
 EMPTY_VALUES = (*EMPTY_VALUES, "null")
 
@@ -117,6 +119,14 @@ class HyperlinkRelatedFilter(filters.Filter):
         return super().filter(qs, value)
 
 
+class IdInFilter(BaseInFilter, filters.UUIDFilter):
+    pass
+
+
+class HREFInFilter(BaseInFilter, filters.CharFilter):
+    pass
+
+
 class BaseFilterSet(filterset.FilterSet):
     """
     Class to override django_filter's FilterSet and provide a way to set help text
@@ -130,6 +140,8 @@ class BaseFilterSet(filterset.FilterSet):
     """
 
     help_text = {}
+    pulp_id__in = IdInFilter(field_name="pk", lookup_expr="in")
+    pulp_href__in = HREFInFilter(field_name="pk", method="filter_pulp_href")
 
     FILTER_DEFAULTS = {
         **filterset.FilterSet.FILTER_DEFAULTS,
@@ -163,6 +175,11 @@ class BaseFilterSet(filterset.FilterSet):
         "search": _("matches"),
         "ne": _("not equal to"),
     }
+
+    def filter_pulp_href(self, queryset, name, value):
+        # Convert each href to a pk
+        pks = [extract_pk(href) for href in value]
+        return queryset.filter(pk__in=pks)
 
     @classmethod
     def get_filters(cls):
@@ -227,6 +244,8 @@ class BaseFilterSet(filterset.FilterSet):
             "offset",
             "page_size",
             "ordering",
+            "pulp_href__in",
+            "pulp_id__in",
         ]
         for field in self.data.keys():
             if field in DEFAULT_FILTERS:
