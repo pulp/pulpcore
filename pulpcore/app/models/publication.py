@@ -7,6 +7,7 @@ from urllib.parse import urlparse, urljoin
 
 from aiohttp.web_exceptions import HTTPNotFound
 
+from django.conf import settings
 from django.contrib.postgres.fields import HStoreField
 from django.db import IntegrityError, models, transaction
 from django.utils import timezone
@@ -18,7 +19,6 @@ from .repository import Remote, Repository, RepositoryVersion
 from .task import CreatedResource
 from pulpcore.app.files import PulpTemporaryUploadedFile
 from pulpcore.cache import Cache
-from dynaconf import settings
 from rest_framework.exceptions import APIException
 from pulpcore.app.models import AutoAddObjPermsMixin
 from pulpcore.responses import ArtifactResponse

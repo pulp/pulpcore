@@ -9,7 +9,7 @@ import logging
 
 import django
 from asyncio_throttle import Throttler
-from dynaconf import settings
+from django.conf import settings
 from django.contrib.postgres.fields import HStoreField
 from django.core.validators import MinValueValidator
 from django.db import models, transaction
