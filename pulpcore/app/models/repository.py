@@ -18,7 +18,15 @@ from django.urls import reverse
 from django_lifecycle import AFTER_UPDATE, BEFORE_DELETE, hook
 from rest_framework.exceptions import APIException
 
-from pulpcore.app.util import batch_qs, get_url, get_view_name_for_model, get_domain_pk, cache_key
+from pulpcore.app.util import (
+    batch_qs,
+    get_url,
+    get_view_name_for_model,
+    get_domain,
+    get_domain_pk,
+    cache_key,
+    get_model_for_pulp_type,
+)
 from pulpcore.constants import ALL_KNOWN_CONTENT_CHECKSUMS
 from pulpcore.download.factory import DownloaderFactory
 from pulpcore.exceptions import ResourceImmutableError
@@ -1142,13 +1150,15 @@ class RepositoryVersionContentDetails(models.Model):
         Returns:
             dict: {<pulp_type>: <url>}
         """
-        repository = self.repository_version.repository.cast()
-        ctypes = {c.get_pulp_type(): c for c in repository.CONTENT_TYPES}
+        repository_model = get_model_for_pulp_type(
+            self.repository_version.repository.pulp_type, Repository
+        )
+        ctypes = {c.get_pulp_type(): c for c in repository_model.CONTENT_TYPES}
         ctype_model = ctypes[self.content_type]
         ctype_view = get_view_name_for_model(ctype_model, "list")
         kwargs = {}
         if settings.DOMAIN_ENABLED:
-            kwargs["pulp_domain"] = repository.pulp_domain.name
+            kwargs["pulp_domain"] = get_domain().name
         try:
             ctype_url = reverse(ctype_view, kwargs=kwargs)
         except django.urls.exceptions.NoReverseMatch:
@@ -1156,12 +1166,12 @@ class RepositoryVersionContentDetails(models.Model):
             # There's nothing we can do here, except to skip it.
             return
 
-        repository_view = get_view_name_for_model(repository.__class__, "list")
+        repository_view = get_view_name_for_model(repository_model, "list")
 
         repository_url = reverse(repository_view, kwargs=kwargs)
         rv_href = (
             repository_url
-            + str(repository.pk)
+            + str(self.repository_version.repository_id)
             + "/versions/{version}/".format(version=self.repository_version.number)
         )
         if self.count_type == self.ADDED:

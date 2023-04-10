@@ -111,6 +111,14 @@ class BaseContentViewSet(NamedModelViewSet):
     queryset = Content.objects.all().exclude(pulp_type=PublishedMetadata.get_pulp_type())
     serializer_class = MultipleArtifactContentSerializer
 
+    def get_queryset(self):
+        """Apply optimizations for list endpoint."""
+        qs = super().get_queryset()
+        if getattr(self, "action", "") == "list":
+            # Fetch info for artifacts (ContentArtifactsField)
+            qs = qs.prefetch_related("contentartifact_set")
+        return qs
+
     def scope_queryset(self, qs):
         """Scope the content based on repositories the user has permission to see."""
         # This has been optimized, see ListRepositoryVersions for more generic version
