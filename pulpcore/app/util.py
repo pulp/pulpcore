@@ -177,7 +177,32 @@ def get_view_name_for_model(model_obj, view_action):
         for pattern, registered_viewset, base_name in router.registry:
             if registered_viewset is viewset:
                 return "-".join((base_name, view_action))
-    raise LookupError("view not found")
+    raise LookupError(f"{viewset} view not found")
+
+
+def get_model_for_pulp_type(pulp_type, model):
+    """
+    Returns a Detail model class for the given pulp_type + Master model class, model must be a
+    subclass or instance of pulpcore.app.models.MasterModel.
+    Uses a cached function to speed up the lookup, the cache is of the form:
+    cache_func(Class(MasterModel)) -> Dict[str(pulp_type), Class(DetailModel)]
+    """
+    # Ensure we are using the MasterModel class
+    parent_list = model._meta.get_parent_list()
+    if len(parent_list):
+        # Last one in the list is the first ancestor with a DB table, the MasterModel
+        model = parent_list[-1]
+
+    @lru_cache
+    def _inner_cached(master_model):
+        pulp_type_mapping = {}
+        for rel in master_model._meta.related_objects:
+            if rel.one_to_one and issubclass(rel.related_model, master_model):
+                pulp_type_mapping[rel.related_model.get_pulp_type()] = rel.related_model
+
+        return pulp_type_mapping
+
+    return _inner_cached(model).get(pulp_type)
 
 
 def batch_qs(qs, batch_size=1000):

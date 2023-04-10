@@ -1,5 +1,6 @@
 from gettext import gettext as _
 
+from django.db.models import Prefetch
 from django_filters import Filter
 from rest_framework import mixins, serializers
 
@@ -84,12 +85,42 @@ class PublicationFilter(BaseFilterSet):
         }
 
 
-class ListPublicationViewSet(NamedModelViewSet, mixins.ListModelMixin):
+class BasePublicationViewSet(NamedModelViewSet):
+    """
+    A base class for any publication viewset.
+    """
+
     endpoint_name = "publications"
-    queryset = Publication.objects.all()
+    queryset = Publication.objects.filter(complete=True)
     serializer_class = PublicationSerializer
     filterset_class = PublicationFilter
+    ordering = ("-pulp_created",)
 
+    def get_queryset(self):
+        """Apply optimizations for list endpoint."""
+        qs = super().get_queryset()
+        if getattr(self, "action", "") == "list":
+            # Fetch info for repository (DetailRelatedField),
+            # repository_version (RepositoryVersionRelatedField), and
+            # distributions (DetailRelatedField(many=True)) (found on plugin serializers)
+            qs = (
+                qs.select_related("repository_version__repository")
+                .only(
+                    *self.queryset.model.get_field_names(),
+                    "repository_version__number",
+                    "repository_version__repository__pulp_type",
+                )
+                .prefetch_related(
+                    Prefetch(
+                        "distribution_set",
+                        queryset=Distribution.objects.only("pulp_type", "publication"),
+                    ),
+                )
+            )
+        return qs
+
+
+class ListPublicationViewSet(BasePublicationViewSet, mixins.ListModelMixin):
     DEFAULT_ACCESS_POLICY = {
         "statements": [
             {
@@ -108,13 +139,14 @@ class ListPublicationViewSet(NamedModelViewSet, mixins.ListModelMixin):
 
 
 class PublicationViewSet(
-    NamedModelViewSet, mixins.RetrieveModelMixin, mixins.ListModelMixin, mixins.DestroyModelMixin
+    BasePublicationViewSet,
+    mixins.RetrieveModelMixin,
+    mixins.ListModelMixin,
+    mixins.DestroyModelMixin,
 ):
-    endpoint_name = "publications"
-    queryset = Publication.objects.exclude(complete=False)
-    serializer_class = PublicationSerializer
-    filterset_class = PublicationFilter
-    ordering = ("-pulp_created",)
+    """
+    Provides read, list and destroy methods for publications. Plugins should inherit from this.
+    """
 
 
 class ContentGuardFilter(BaseFilterSet):
@@ -349,6 +381,20 @@ class BaseDistributionViewSet(NamedModelViewSet):
     queryset = Distribution.objects.all()
     serializer_class = DistributionSerializer
     filterset_class = DistributionFilter
+
+    def get_queryset(self):
+        """Apply optimizations for list endpoint."""
+        qs = super().get_queryset()
+        if getattr(self, "action", "") == "list":
+            # Fetch info for DetailRelatedFields: repository, content_guard, remote, publication
+            qs = qs.select_related("repository", "content_guard", "remote", "publication").only(
+                *self.queryset.model.get_field_names(),
+                "repository__pulp_type",
+                "content_guard__pulp_type",
+                "remote__pulp_type",
+                "publication__pulp_type",
+            )
+        return qs
 
     def async_reserved_resources(self, instance):
         """Return resource that locks all Distributions."""

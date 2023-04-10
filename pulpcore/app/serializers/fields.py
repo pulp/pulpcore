@@ -246,28 +246,6 @@ class LatestVersionField(RepositoryVersionRelatedField):
         kwargs["read_only"] = True
         super().__init__(*args, **kwargs)
 
-    def get_url(self, obj, view_name, request, format):
-        """
-        Returns the URL for the appropriate object. Overrides the DRF method to change how the
-        object is found.
-
-        Args:
-            obj (list of :class:`pulpcore.app.models.RepositoryVersion`): The versions of the
-                current viewset's repository.
-            view_name (str): The name of the view that should be used.
-            request (rest_framework.request.Request): the current HTTP request being handled
-            format: undocumented by DRF. ???
-
-        Returns:
-            str: the URL corresponding to the latest version of the current repository. If there
-                are no versions, returns None
-        """
-        try:
-            version = obj.complete().latest()
-        except obj.model.DoesNotExist:
-            return None
-        return super().get_url(version, view_name, request, format)
-
     def get_attribute(self, instance):
         """
         Args:
@@ -275,10 +253,14 @@ class LatestVersionField(RepositoryVersionRelatedField):
                 current ViewSet.
 
         Returns:
-            list of :class:`pulpcore.app.models.RepositoryVersion`
-
+            instance :class:`pulpcore.app.models.RepositoryVersion`
         """
-        return instance.versions
+        if hasattr(instance, "latest_version_number"):
+            # Return a shallow object sufficient to create the HREF.
+            return models.RepositoryVersion(
+                repository=instance, number=instance.latest_version_number
+            )
+        return instance.latest_version()
 
 
 class BaseURLField(serializers.CharField):

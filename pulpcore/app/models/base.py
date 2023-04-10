@@ -7,6 +7,7 @@ from django.db import models
 from django.db.models import options
 from django.db.models.base import ModelBase
 from django_lifecycle import LifecycleModel
+from functools import lru_cache
 
 from pulpcore.app.loggers import deprecation_logger
 
@@ -86,6 +87,11 @@ class BaseModel(LifecycleModel):
 
     class Meta:
         abstract = True
+
+    @classmethod
+    @lru_cache
+    def get_field_names(cls):
+        return [f.name for f in cls._meta.fields]
 
     def __str__(self):
         try:

@@ -1,7 +1,7 @@
 from gettext import gettext as _
 
 from collections import defaultdict
-from django.db.models import Q
+from django.db.models import Q, Max
 from django.urls.base import Resolver404, resolve
 from django_filters import Filter
 from drf_spectacular.utils import extend_schema
@@ -63,6 +63,20 @@ class BaseRepositoryViewSet(NamedModelViewSet):
     endpoint_name = "repositories"
     router_lookup = "repository"
     filterset_class = RepositoryFilter
+
+    def get_queryset(self):
+        """Apply optimizations for list endpoint."""
+        qs = super().get_queryset()
+        if getattr(self, "action", "") == "list":
+            # Fetch info for remote (DetailRelatedField) and latest_version (LatestVersionField)
+            qs = (
+                qs.select_related("remote")
+                .only(*self.queryset.model.get_field_names(), "remote__pulp_type")
+                .annotate(
+                    latest_version_number=Max("versions__number", filter=Q(versions__complete=True))
+                )
+            )
+        return qs
 
 
 class ListRepositoryViewSet(BaseRepositoryViewSet, mixins.ListModelMixin):
@@ -187,8 +201,32 @@ class RepositoryVersionFilter(BaseFilterSet):
         exclude = ["pulp_id__in"]
 
 
+class RepositoryVersionQuerysetMixin:
+    """A mixin to hold the shared get_queryset logic used by RepositoryVersionViewSets."""
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        if getattr(self, "action", "") == "list":
+            # Fetch info for repository (DetailRelatedField),
+            # base_version (RepositoryVersionRelatedField), and
+            # counts (ContentSummarySerializer)
+            qs = (
+                qs.select_related("repository", "base_version__repository")
+                .only(
+                    *self.queryset.model.get_field_names(),
+                    "repository__pulp_type",
+                )
+                .prefetch_related("counts")
+            )
+        return qs
+
+
 class RepositoryVersionViewSet(
-    NamedModelViewSet, mixins.RetrieveModelMixin, mixins.ListModelMixin, mixins.DestroyModelMixin
+    RepositoryVersionQuerysetMixin,
+    NamedModelViewSet,
+    mixins.RetrieveModelMixin,
+    mixins.ListModelMixin,
+    mixins.DestroyModelMixin,
 ):
     endpoint_name = "versions"
     nest_prefix = "repositories"
@@ -298,6 +336,7 @@ class RemoteViewSet(
 # We have to use GenericViewSet as NamedModelViewSet causes
 # get_viewset_for_model() to match multiple viewsets.
 class ListRepositoryVersionViewSet(
+    RepositoryVersionQuerysetMixin,
     GenericViewSet,
     mixins.ListModelMixin,
 ):

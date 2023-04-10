@@ -20,12 +20,13 @@ from rest_framework_nested.relations import (
     NestedHyperlinkedRelatedField,
 )
 
-from pulpcore.app.models import Label, Task, TaskGroup
+from pulpcore.app.models import Label, Task, TaskGroup, MasterModel
 from pulpcore.app.util import (
     get_view_name_for_model,
     get_viewset_for_model,
     get_request_without_query_params,
     get_domain,
+    get_model_for_pulp_type,
 )
 
 
@@ -102,18 +103,18 @@ class _DetailFieldMixin(HrefFieldMixin):
         super().__init__(view_name, **kwargs)
 
     def _view_name(self, obj):
-        # this is probably memoizeable based on the model class if we want to get cachey
-        try:
-            obj = obj.cast()
-        except AttributeError:
-            # The normal message that comes up here is unhelpful, so do like other DRF
-            # fails do and be a little more helpful in the exception message.
-            msg = (
-                'Expected a detail model instance, not {}. Do you need to add "many=True" to '
-                "this field definition in its serializer?"
-            ).format(type(obj))
-            raise ValueError(msg)
-        return get_view_name_for_model(obj, "detail")
+        if isinstance(obj, MasterModel):
+            return get_view_name_for_model(
+                get_model_for_pulp_type(obj.pulp_type, obj._meta.model), "detail"
+            )
+
+        # The normal message that comes up here is unhelpful, so do like other DRF
+        # fails do and be a little more helpful in the exception message.
+        msg = (
+            'Expected a detail model instance, not {}. Do you need to add "many=True" to '
+            "this field definition in its serializer?"
+        ).format(type(obj))
+        raise ValueError(msg)
 
     def get_url(self, obj, view_name, request, *args, **kwargs):
         # ignore the passed in view name and return the url to the cast unit, not the generic unit
