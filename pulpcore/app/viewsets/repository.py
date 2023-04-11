@@ -1,10 +1,14 @@
 from gettext import gettext as _
 
+from collections import defaultdict
+from django.db.models import Q
+from django.urls.base import Resolver404, resolve
 from django_filters import Filter
 from drf_spectacular.utils import extend_schema
 from rest_framework import mixins, serializers
 from rest_framework.decorators import action
 from rest_framework.viewsets import GenericViewSet
+from urllib.parse import urlparse
 
 from pulpcore.filters import BaseFilterSet
 from pulpcore.app import tasks
@@ -155,12 +159,32 @@ class RepositoryVersionFilter(BaseFilterSet):
     content = RepositoryVersionContentFilter()
     content__in = RepositoryVersionContentFilter(field_name="content", lookup_expr="in")
 
+    def filter_pulp_href(self, queryset, name, value):
+        """Special handling for RepositoryVersion HREF filtering."""
+        repo_versions = defaultdict(list)
+        for uri in value:
+            try:
+                href_match = resolve(urlparse(uri).path).kwargs
+            except Resolver404:
+                href_match = {}
+            if "repository_pk" not in href_match or "number" not in href_match:
+                raise serializers.ValidationError(
+                    _("Invalid RepositoryVersion HREF: {}".format(uri))
+                )
+            repo_versions[href_match["repository_pk"]].append(int(href_match["number"]))
+
+        filter_Q = Q()
+        for repo_pk, numbers in repo_versions.items():
+            filter_Q |= Q(repository__pk=repo_pk, number__in=numbers)
+        return queryset.filter(filter_Q)
+
     class Meta:
         model = RepositoryVersion
         fields = {
             "number": ["exact", "lt", "lte", "gt", "gte", "range"],
             "pulp_created": DATETIME_FILTER_OPTIONS,
         }
+        exclude = ["pulp_id__in"]
 
 
 class RepositoryVersionViewSet(
