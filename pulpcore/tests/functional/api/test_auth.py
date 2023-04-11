@@ -32,7 +32,7 @@ def test_base_auth_failure(artifacts_api_client, invalid_user):
         with pytest.raises(ApiException) as e:
             artifacts_api_client.list()
 
-    assert e.value.status == 403
+    assert e.value.status == 401
     response = json.loads(e.value.body)
     response_detail = response["detail"].lower()
     for key in ("invalid", "username", "password"):
@@ -49,7 +49,7 @@ def test_base_auth_required(artifacts_api_client, anonymous_user):
         with pytest.raises(ApiException) as e:
             artifacts_api_client.list()
 
-    assert e.value.status == 403
+    assert e.value.status == 401
     response = json.loads(e.value.body)
     response_detail = response["detail"].lower()
     for key in ("authentication", "credentials", "provided"):
