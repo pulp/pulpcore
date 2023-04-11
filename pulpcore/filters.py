@@ -204,6 +204,10 @@ class BaseFilterSet(filterset.FilterSet):
             )
         ordering_fields.append(("pk", "pk"))
         filters["ordering"] = StableOrderingFilter(fields=tuple(ordering_fields))
+        # Properly exclude filter fields if declared so on the Meta class
+        if excludes := getattr(cls._meta, "exclude", []):
+            for excluded in excludes:
+                filters.pop(excluded, None)
         return filters
 
     @classmethod
@@ -244,8 +248,6 @@ class BaseFilterSet(filterset.FilterSet):
             "offset",
             "page_size",
             "ordering",
-            "pulp_href__in",
-            "pulp_id__in",
         ]
         for field in self.data.keys():
             if field in DEFAULT_FILTERS:
