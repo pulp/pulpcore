@@ -17,6 +17,26 @@ Changelog
 
 .. towncrier release notes start
 
+3.23.2 (2023-04-11)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fixed package timestamp on content app to reflect time package was added to the repository.
+  :github:`3653`
+- Downloader will now attempt to keep the filename of the requested URL intact if one exists.
+  :github:`3715`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.23.1 (2023-03-27)
 ===================
 REST API
@@ -174,6 +194,26 @@ Deprecations
   Deprecated ``pulpcore.plugin.actions.raise_for_unknown_content_units`` in favour of
   ``pulpcore.plugin.util.raise_for_unknown_content_units``.
   :github:`3604`
+
+
+3.22.4 (2023-04-11)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fixed package timestamp on content app to reflect time package was added to the repository.
+  :github:`3653`
+- Downloader will now attempt to keep the filename of the requested URL intact if one exists.
+  :github:`3715`
+
+
+Plugin API
+----------
+
+No significant changes.
 
 
 3.22.3 (2023-03-06)
@@ -382,6 +422,24 @@ Removals
 - Deprecated model ``Label`` and serializer field ``LabelField`` and ``LabelSelectFilter`` for
   removal in 3.25.
   :github:`3400`
+
+
+3.21.7 (2023-04-11)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Downloader will now attempt to keep the filename of the requested URL intact if one exists.
+  :github:`3715`
+
+
+Plugin API
+----------
+
+No significant changes.
 
 
 3.21.6 (2023-03-29)
@@ -1051,6 +1109,24 @@ Bugfixes
   the stage will still accumulate up to 500 (by default) items so batching is still in-effect there
   where it matters.
   :github:`2069`
+
+
+3.18.17 (2023-04-11)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Downloader will now attempt to keep the filename of the requested URL intact if one exists.
+  :github:`3715`
+
+
+Plugin API
+----------
+
+No significant changes.
 
 
 3.18.16 (2023-03-29)
@@ -1926,6 +2002,24 @@ Bugfixes
 
 - Include additional information about which AccessPolicy is using deprecated policy features.
   :redmine:`9608`
+
+
+3.16.17 (2023-04-11)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Downloader will now attempt to keep the filename of the requested URL intact if one exists.
+  :github:`3715`
+
+
+Plugin API
+----------
+
+No significant changes.
 
 
 3.16.16 (2023-02-23)
