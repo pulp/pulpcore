@@ -1,5 +1,6 @@
 from gettext import gettext as _
 
+from functools import lru_cache
 from urllib.parse import urlparse
 from uuid import UUID
 from django.db import models
@@ -125,6 +126,28 @@ class IdInFilter(BaseInFilter, filters.UUIDFilter):
 
 class HREFInFilter(BaseInFilter, filters.CharFilter):
     pass
+
+
+class PulpTypeInFilter(BaseInFilter, filters.ChoiceFilter):
+    """Special pulp_type filter only added to generic list endpoints."""
+
+    def __init__(self, *args, **kwargs):
+        self.model = kwargs.pop("model", None)
+        if self.model:
+            kwargs["choices"] = self.pulp_type_choices(self.model)
+        kwargs.setdefault("help_text", "")
+        super().__init__(*args, **kwargs)
+
+    @staticmethod
+    @lru_cache
+    def pulp_type_choices(model):
+        """Extract the pulp_type choices from model."""
+        choices = []
+        for rel in model._meta.related_objects:
+            if rel.one_to_one and issubclass(rel.related_model, model):
+                pulp_type = rel.related_model.get_pulp_type()
+                choices.append((pulp_type, pulp_type))
+        return choices
 
 
 class BaseFilterSet(filterset.FilterSet):
@@ -264,6 +287,20 @@ class BaseFilterSet(filterset.FilterSet):
 
 class PulpFilterBackend(DjangoFilterBackend):
     filterset_base = BaseFilterSet
+
+    def get_filterset_class(self, view, queryset=None):
+        """Special handling to add PulpTypeInFilter to filters for generic endpoints."""
+        filterset_class = super().get_filterset_class(view, queryset=queryset)
+        if filterset_class and queryset is not None:
+            # Only allow pulp_type filter for generic endpoints
+            if hasattr(view, "is_master_viewset") and view.is_master_viewset():
+
+                class PulpTypeFilterSet(filterset_class):
+                    pulp_type__in = PulpTypeInFilter(field_name="pulp_type", model=queryset.model)
+
+                return PulpTypeFilterSet
+
+        return filterset_class
 
 
 class PulpOpenApiFilterExtension(DjangoFilterExtension):
