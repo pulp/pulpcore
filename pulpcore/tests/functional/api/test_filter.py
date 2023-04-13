@@ -2,7 +2,7 @@ import pytest
 from random import sample
 from uuid import uuid4
 
-from pulpcore.client.pulpcore.exceptions import ApiException
+from pulpcore.client.pulpcore.exceptions import ApiException, ApiTypeError
 
 
 def extract_pk(href):
@@ -80,3 +80,51 @@ def test_pulp_id_href_filter(
 
     assert exc.value.status == 400
     assert exception_message in exc.value.body
+
+
+@pytest.mark.parallel
+def test_pulp_type_filter(
+    content_guards_api_client,
+    redirect_contentguard_api_client,
+    rbac_contentguard_api_client,
+    gen_rbac_and_redirect_guards,
+):
+    """Tests the pulp_type__in filter."""
+    gen_rbac_and_redirect_guards()
+
+    # Test filtering by one pulp_type
+    rbac_result = content_guards_api_client.list(pulp_type__in=["core.rbac"])
+    assert rbac_result.count >= 5
+    for c in rbac_result.results:
+        assert "core/rbac" in c.pulp_href
+
+    redirect_result = content_guards_api_client.list(pulp_type__in=["core.content_redirect"])
+    assert redirect_result.count >= 5
+    for c in redirect_result.results:
+        assert "core/content_redirect" in c.pulp_href
+
+    # Test filtering by multiple pulp_types
+    together_result = content_guards_api_client.list(
+        pulp_type__in=["core.rbac", "core.content_redirect"]
+    )
+    assert together_result.count >= 10
+    for c in together_result.results:
+        assert "core/rbac" in c.pulp_href or "core/content_redirect" in c.pulp_href
+
+    # Test filtering by invalid pulp_type
+    with pytest.raises(ApiException) as exc:
+        content_guards_api_client.list(pulp_type__in=["i.invalid"])
+
+    assert exc.value.status == 400
+    assert "Select a valid choice. i.invalid is not one of the available choices." in exc.value.body
+
+    # Test filter does not exist on child viewsets
+    with pytest.raises(ApiTypeError) as exc:
+        rbac_contentguard_api_client.list(pulp_type__in=["core.rbac"])
+
+    assert "Got an unexpected keyword argument 'pulp_type__in'" in str(exc.value)
+
+    with pytest.raises(ApiTypeError) as exc:
+        redirect_contentguard_api_client.list(pulp_type__in=["core.content_redirect"])
+
+    assert "Got an unexpected keyword argument 'pulp_type__in'" in str(exc.value)
