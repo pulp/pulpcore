@@ -980,19 +980,28 @@ def add_to_filesystem_cleanup():
 
 
 @pytest.fixture(scope="session")
-def download_content_unit(bindings_cfg):
-    def _download_content_unit(base_path, content_path):
+def download_content_unit(bindings_cfg, pulp_domain_enabled):
+    def _download_content_unit(base_path, content_path, domain="default"):
         async def _get_response(url):
             async with aiohttp.ClientSession() as session:
                 async with session.get(url) as response:
                     return await response.read()
 
-        url_fragments = [
-            bindings_cfg.host,
-            "pulp/content",
-            base_path,
-            content_path,
-        ]
+        if pulp_domain_enabled:
+            url_fragments = [
+                bindings_cfg.host,
+                "pulp/content",
+                domain,
+                base_path,
+                content_path,
+            ]
+        else:
+            url_fragments = [
+                bindings_cfg.host,
+                "pulp/content",
+                base_path,
+                content_path,
+            ]
         url = "/".join(url_fragments)
         return asyncio.run(_get_response(url))
 
