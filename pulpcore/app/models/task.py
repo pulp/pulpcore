@@ -192,7 +192,7 @@ class Task(BaseModel, AutoAddObjPermsMixin):
     def __enter__(self):
         self.lock = _uuid_to_advisory_lock(self.pk.int)
         with connection.cursor() as cursor:
-            cursor.execute("SELECT pg_try_advisory_lock(%s);", [self.lock])
+            cursor.execute("SELECT pg_try_advisory_lock(%s)", [self.lock])
             acquired = cursor.fetchone()[0]
         if not acquired:
             raise AdvisoryLockError("Could not acquire lock.")
@@ -200,7 +200,7 @@ class Task(BaseModel, AutoAddObjPermsMixin):
 
     def __exit__(self, exc_type, exc_value, traceback):
         with connection.cursor() as cursor:
-            cursor.execute("SELECT pg_advisory_unlock(%s);", [self.lock])
+            cursor.execute("SELECT pg_advisory_unlock(%s)", [self.lock])
             released = cursor.fetchone()[0]
         if not released:
             raise RuntimeError("Lock not held.")
