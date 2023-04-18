@@ -73,7 +73,7 @@ class PGAdvisoryLock:
 
     def __enter__(self):
         with connection.cursor() as cursor:
-            cursor.execute("SELECT pg_try_advisory_lock(%s, %s);", [self.lock_group, self.lock])
+            cursor.execute("SELECT pg_try_advisory_lock(%s, %s)", [self.lock_group, self.lock])
             acquired = cursor.fetchone()[0]
         if not acquired:
             raise AdvisoryLockError("Could not acquire lock.")
@@ -81,7 +81,7 @@ class PGAdvisoryLock:
 
     def __exit__(self, exc_type, exc_value, traceback):
         with connection.cursor() as cursor:
-            cursor.execute("SELECT pg_advisory_unlock(%s, %s);", [self.lock_group, self.lock])
+            cursor.execute("SELECT pg_advisory_unlock(%s, %s)", [self.lock_group, self.lock])
             released = cursor.fetchone()[0]
         if not released:
             raise RuntimeError("Lock not held.")
@@ -89,7 +89,12 @@ class PGAdvisoryLock:
 
 class NewPulpWorker:
     def __init__(self):
+        # Notification states from several signal handlers
         self.shutdown_requested = False
+        self.wakeup = False
+        self.cancel_task = False
+
+        self.task = None
         self.name = f"{os.getpid()}@{socket.getfqdn()}"
         self.heartbeat_period = settings.WORKER_TTL / 3
         self.versions = {app.label: app.version for app in pulp_plugin_configs()}
@@ -118,6 +123,13 @@ class NewPulpWorker:
 
         self.task_grace_timeout = TASK_GRACE_INTERVAL
         self.shutdown_requested = True
+
+    def _pg_notify_handler(self, notification):
+        if notification.channel == "pulp_worker_wakeup":
+            self.wakeup = True
+        elif self.task and notification.channel == "pulp_worker_cancel":
+            if notification.payload == str(self.task.pk):
+                self.cancel_task = True
 
     def handle_worker_heartbeat(self):
         """
@@ -273,32 +285,24 @@ class NewPulpWorker:
         """Wait for signals on the wakeup channel while heart beating."""
 
         _logger.debug(_("Worker %s entering sleep state."), self.name)
-        wakeup = False
-        while not self.shutdown_requested:
-            # Handle all notifications before sleeping in `select`
-            while connection.connection.notifies:
-                item = connection.connection.notifies.pop(0)
-                if item.channel == "pulp_worker_wakeup":
-                    _logger.debug(_("Worker %s received wakeup call."), self.name)
-                    wakeup = True
-                # ignore all other notifications
-            if wakeup:
-                break
-
+        while not self.shutdown_requested and not self.wakeup:
             r, w, x = select.select(
                 [self.sentinel, connection.connection], [], [], self.heartbeat_period
             )
             self.beat()
             if connection.connection in r:
-                connection.connection.poll()
+                connection.connection.execute("SELECT 1")
             if self.sentinel in r:
                 os.read(self.sentinel, 256)
+        self.wakeup = False
 
     def supervise_task(self, task):
         """Call and supervise the task process while heart beating.
 
         This function must only be called while holding the lock for that task."""
 
+        self.cancel_task = False
+        self.task = task
         task.worker = self.worker
         task.save(update_fields=["worker"])
         cancel_state = None
@@ -307,13 +311,6 @@ class NewPulpWorker:
             task_process = Process(target=_perform_task, args=(task.pk, task_working_dir_rel_path))
             task_process.start()
             while True:
-                # Handle all notifications before sleeping in `select`
-                while connection.connection.notifies:
-                    item = connection.connection.notifies.pop(0)
-                    if item.channel == "pulp_worker_cancel" and item.payload == str(task.pk):
-                        _logger.info(_("Received signal to cancel current task %s."), task.pk)
-                        cancel_state = TASK_STATES.CANCELED
-                    # ignore all other notifications
                 if cancel_state:
                     if self.task_grace_timeout > 0:
                         _logger.info("Wait for canceled task to abort.")
@@ -330,7 +327,10 @@ class NewPulpWorker:
                 )
                 self.beat()
                 if connection.connection in r:
-                    connection.connection.poll()
+                    connection.connection.execute("SELECT 1")
+                    if self.cancel_task:
+                        _logger.info(_("Received signal to cancel current task %s."), task.pk)
+                        cancel_state = TASK_STATES.CANCELED
                 if task_process.sentinel in r:
                     if not task_process.is_alive():
                         break
@@ -365,12 +365,14 @@ class NewPulpWorker:
                 self.cancel_abandoned_task(task, cancel_state, cancel_reason)
         if task.reserved_resources_record:
             self.notify_workers()
+        self.task = None
 
     def run_forever(self):
         with WorkerDirectory(self.name):
             signal.signal(signal.SIGINT, self._signal_handler)
             signal.signal(signal.SIGTERM, self._signal_handler)
             # Subscribe to pgsql channels
+            connection.connection.add_notify_handler(self._pg_notify_handler)
             self.cursor.execute("LISTEN pulp_worker_wakeup")
             self.cursor.execute("LISTEN pulp_worker_cancel")
             while not self.shutdown_requested:

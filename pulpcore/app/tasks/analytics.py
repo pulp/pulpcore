@@ -52,7 +52,7 @@ def get_analytics_posting_url():
 
 
 def _get_postgresql_version_string():
-    return connection.cursor().connection.server_version
+    return connection.cursor().connection.info.server_version
 
 
 async def _postgresql_version(analytics):
