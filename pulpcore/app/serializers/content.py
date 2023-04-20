@@ -1,6 +1,6 @@
 from gettext import gettext as _
 
-from django.db import transaction
+from django.db import transaction, IntegrityError
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 
@@ -45,7 +45,6 @@ class SingleArtifactContentSerializer(BaseContentSerializer):
         if hasattr(self.Meta.model, "relative_path") and "relative_path" in self.fields:
             self.fields["relative_path"].write_only = False
 
-    @transaction.atomic
     def create(self, validated_data):
         """
         Create the content and associate it with its Artifact, or retrieve the existing content.
@@ -63,10 +62,16 @@ class SingleArtifactContentSerializer(BaseContentSerializer):
                 relative_path = validated_data.pop("relative_path")
             else:
                 relative_path = validated_data.get("relative_path")
-            content = self.Meta.model.objects.create(**validated_data)
-            models.ContentArtifact.objects.create(
-                artifact=artifact, content=content, relative_path=relative_path
-            )
+            try:
+                with transaction.atomic():
+                    content = self.Meta.model.objects.create(**validated_data)
+                    models.ContentArtifact.objects.create(
+                        artifact=artifact, content=content, relative_path=relative_path
+                    )
+            except IntegrityError:
+                content = self.retrieve(validated_data)
+                if content is None:
+                    raise
 
         return content
 
