@@ -17,9 +17,19 @@ source .github/workflows/scripts/utils.sh
 
 export PULP_API_ROOT="/pulp/"
 
-if [[ "$TEST" = "docs" || "$TEST" = "publish" ]]; then
-  pip install psycopg2-binary
-  pip install -r doc_requirements.txt
+PIP_REQUIREMENTS=("pulp-cli")
+if [[ "$TEST" = "docs" || "$TEST" = "publish" ]]
+then
+  PIP_REQUIREMENTS+=("-r" "doc_requirements.txt")
+  PIP_REQUIREMENTS+=("psycopg2-binary")
+fi
+
+pip install ${PIP_REQUIREMENTS[*]}
+
+if [[ "$TEST" != "docs" ]]
+then
+  PULP_CLI_VERSION="$(pip freeze | sed -n -e 's/pulp-cli==//p')"
+  git clone --depth 1 --branch "$PULP_CLI_VERSION" https://github.com/pulp/pulp-cli.git ../pulp-cli
 fi
 
 cd .ci/ansible/
@@ -128,7 +138,9 @@ if [ "${PULP_API_ROOT:-}" ]; then
 fi
 
 pulp config create --base-url https://pulp --api-root "$PULP_API_ROOT"
-cp ~/.config/pulp/cli.toml "${REPO_ROOT}/../pulp-cli/tests/cli.toml"
+if [[ "$TEST" != "docs" ]]; then
+  cp ~/.config/pulp/cli.toml "${REPO_ROOT}/../pulp-cli/tests/cli.toml"
+fi
 
 ansible-playbook build_container.yaml
 ansible-playbook start_container.yaml
