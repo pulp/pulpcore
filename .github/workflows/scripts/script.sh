@@ -99,7 +99,7 @@ cmd_prefix bash -c "cat /etc/pulp/certs/pulp_webserver.crt  | tee -a "$CERTIFI" 
 
 # check for any uncommitted migrations
 echo "Checking for uncommitted migrations..."
-cmd_user_prefix bash -c "django-admin makemigrations --check --dry-run"
+cmd_user_prefix bash -c "django-admin makemigrations core --check --dry-run"
 
 # Run unit tests.
 cmd_user_prefix bash -c "PULP_DATABASES__default__USER=postgres pytest -v -r sx --color=yes -p no:pulpcore --pyargs pulpcore.tests.unit"
