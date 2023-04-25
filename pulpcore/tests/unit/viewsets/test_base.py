@@ -23,9 +23,7 @@ class TestGetQuerySet(TestCase):
         queryset = viewset.get_queryset()
         expected = models.RepositoryVersion.objects.filter(repository__pk=repo.pk)
 
-        # weird, stupid django quirk
-        # https://docs.djangoproject.com/en/3.2/topics/testing/tools/#django.test.TransactionTestCase.assertQuerysetEqual
-        self.assertQuerysetEqual(queryset, map(repr, expected))
+        self.assertQuerysetEqual(queryset, expected)
 
     def test_does_not_add_filters(self):
         """
@@ -38,9 +36,7 @@ class TestGetQuerySet(TestCase):
         queryset = viewset.get_queryset()
         expected = models.Repository.objects.all()
 
-        # weird, stupid django quirk
-        # https://docs.djangoproject.com/en/3.2/topics/testing/tools/#django.test.TransactionTestCase.assertQuerysetEqual
-        self.assertQuerysetEqual(queryset, map(repr, expected))
+        self.assertQuerysetEqual(queryset, expected)
 
 
 class TestGetSerializerClass(TestCase):
@@ -66,13 +62,13 @@ class TestGetSerializerClass(TestCase):
             serializer_class = serializers.TaskSerializer
 
         viewset = TestTaskViewSet()
-        self.assertEquals(viewset.get_serializer_class(), serializers.TaskSerializer)
+        self.assertEqual(viewset.get_serializer_class(), serializers.TaskSerializer)
 
         request = unittest.mock.MagicMock()
         request.query_params = QueryDict("minimal=True")
         viewset.request = request
 
-        self.assertEquals(viewset.get_serializer_class(), serializers.TaskSerializer)
+        self.assertEqual(viewset.get_serializer_class(), serializers.TaskSerializer)
 
     def test_minimal_query_param(self):
         """
@@ -89,15 +85,15 @@ class TestGetSerializerClass(TestCase):
         # Test that it uses the full serializer with no query params
         request.query_params = QueryDict()
         viewset.request = request
-        self.assertEquals(viewset.get_serializer_class(), serializers.TaskSerializer)
+        self.assertEqual(viewset.get_serializer_class(), serializers.TaskSerializer)
         # Test that it uses the full serializer with minimal=False
         request.query_params = QueryDict("minimal=False")
         viewset.request = request
-        self.assertEquals(viewset.get_serializer_class(), serializers.TaskSerializer)
+        self.assertEqual(viewset.get_serializer_class(), serializers.TaskSerializer)
         # Test that it uses the minimal serializer with minimal=True
         request.query_params = QueryDict("minimal=True")
         viewset.request = request
-        self.assertEquals(viewset.get_serializer_class(), serializers.MinimalTaskSerializer)
+        self.assertEqual(viewset.get_serializer_class(), serializers.MinimalTaskSerializer)
 
 
 class TestGetParentFieldAndObject(TestCase):
@@ -121,7 +117,7 @@ class TestGetParentFieldAndObject(TestCase):
         viewset = viewsets.RepositoryVersionViewSet()
         viewset.kwargs = {"repository_pk": repo.pk}
 
-        self.assertEquals(("repository", repo), viewset.get_parent_field_and_object())
+        self.assertEqual(("repository", repo), viewset.get_parent_field_and_object())
 
     def test_get_parent_object(self):
         """
@@ -131,7 +127,7 @@ class TestGetParentFieldAndObject(TestCase):
         viewset = viewsets.RepositoryVersionViewSet()
         viewset.kwargs = {"repository_pk": repo.pk}
 
-        self.assertEquals(repo, viewset.get_parent_object())
+        self.assertEqual(repo, viewset.get_parent_object())
 
 
 class TestGetNestDepth(TestCase):
@@ -139,5 +135,5 @@ class TestGetNestDepth(TestCase):
         """
         Test that _get_nest_depth() returns the correct nesting depths.
         """
-        self.assertEquals(1, viewsets.RepositoryViewSet._get_nest_depth())
-        self.assertEquals(2, viewsets.RepositoryVersionViewSet._get_nest_depth())
+        self.assertEqual(1, viewsets.RepositoryViewSet._get_nest_depth())
+        self.assertEqual(2, viewsets.RepositoryVersionViewSet._get_nest_depth())
