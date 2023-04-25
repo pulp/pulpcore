@@ -517,6 +517,7 @@ class Distribution(MasterModel):
         name (models.TextField): The name of the distribution. Examples: "rawhide" and "stable".
         pulp_labels (HStoreField): Dictionary of string values.
         base_path (models.TextField): The base (relative) path component of the published url.
+        hidden (models.BooleanField): Whether this distribution should be hidden in the content app.
 
     Relations:
         content_guard (models.ForeignKey): An optional content-guard.
@@ -536,6 +537,7 @@ class Distribution(MasterModel):
     pulp_labels = HStoreField(default=dict)
     base_path = models.TextField()
     pulp_domain = models.ForeignKey("Domain", default=get_domain_pk, on_delete=models.PROTECT)
+    hidden = models.BooleanField(default=False, null=True)
 
     content_guard = models.ForeignKey(ContentGuard, null=True, on_delete=models.SET_NULL)
     publication = models.ForeignKey(Publication, null=True, on_delete=models.SET_NULL)

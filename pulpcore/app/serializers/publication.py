@@ -191,6 +191,9 @@ class DistributionSerializer(ModelSerializer):
         queryset=models.Repository.objects.all(),
         allow_null=True,
     )
+    hidden = serializers.BooleanField(
+        default=False, help_text=_("Whether this distribution should be shown in the content app.")
+    )
 
     class Meta:
         model = models.Distribution
@@ -198,6 +201,7 @@ class DistributionSerializer(ModelSerializer):
             "base_path",
             "base_url",
             "content_guard",
+            "hidden",
             "pulp_labels",
             "name",
             "repository",
