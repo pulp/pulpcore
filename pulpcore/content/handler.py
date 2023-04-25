@@ -79,7 +79,8 @@ class DistroListings(HTTPOk):
 
     def __init__(self, path, distros):
         """Create the HTML response."""
-        distros = distros.exclude(pulp_type=ArtifactDistribution.get_pulp_type())
+        exclude = models.Q(pulp_type=ArtifactDistribution.get_pulp_type()) | models.Q(hidden=True)
+        distros = distros.exclude(exclude)
         if settings.HIDE_GUARDED_DISTRIBUTIONS:
             distros = distros.filter(content_guard__isnull=True)
         base_paths = (

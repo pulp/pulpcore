@@ -861,6 +861,14 @@ def pulp_api_v3_url(bindings_cfg, pulp_api_v3_path):
     return f"{bindings_cfg.host}{pulp_api_v3_path}"
 
 
+@pytest.fixture(scope="session")
+def pulp_content_url(pulp_settings, pulp_domain_enabled):
+    url = f"{pulp_settings.CONTENT_ORIGIN}{pulp_settings.CONTENT_PATH_PREFIX}"
+    if pulp_domain_enabled:
+        url += "default/"
+    return url
+
+
 # Pulp status information fixtures
 
 
