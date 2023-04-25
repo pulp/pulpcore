@@ -1,19 +1,27 @@
 import logging
 import os
 from gettext import gettext as _
+from functools import lru_cache
 
-from cryptography.fernet import Fernet
+from cryptography.fernet import Fernet, MultiFernet
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.db.models import Lookup, FileField, JSONField
 from django.db.models.fields import Field, TextField
 from django.utils.encoding import force_bytes, force_str
-from django.utils.functional import cached_property
 
 
 from pulpcore.app.files import TemporaryDownloadedFile
 
 _logger = logging.getLogger(__name__)
+
+
+@lru_cache()
+def _fernet():
+    # Cache the enryption keys once per application.
+    _logger.debug(f"Loading encryption key from {settings.DB_ENCRYPTION_KEY}")
+    with open(settings.DB_ENCRYPTION_KEY, "rb") as key_file:
+        return MultiFernet([Fernet(key) for key in key_file.readlines()])
 
 
 class ArtifactFileField(FileField):
@@ -88,20 +96,14 @@ class EncryptedTextField(TextField):
             raise ImproperlyConfigured("EncryptedTextField does not support db_index=True.")
         super().__init__(*args, **kwargs)
 
-    @cached_property
-    def _fernet(self):
-        _logger.debug(f"Loading encryption key from {settings.DB_ENCRYPTION_KEY}")
-        with open(settings.DB_ENCRYPTION_KEY, "rb") as key_file:
-            return Fernet(key_file.read())
-
     def get_db_prep_save(self, value, connection):
         value = super().get_db_prep_save(value, connection)
         if value is not None:
-            return force_str(self._fernet.encrypt(force_bytes(value)))
+            return force_str(_fernet().encrypt(force_bytes(value)))
 
     def from_db_value(self, value, expression, connection):
         if value is not None:
-            return force_str(self._fernet.decrypt(force_bytes(value)))
+            return force_str(_fernet().decrypt(force_bytes(value)))
 
 
 class EncryptedJSONField(JSONField):
@@ -116,19 +118,13 @@ class EncryptedJSONField(JSONField):
             raise ImproperlyConfigured("EncryptedJSONField does not support db_index=True.")
         super().__init__(*args, **kwargs)
 
-    @cached_property
-    def _fernet(self):
-        _logger.debug(f"Loading encryption key from {settings.DB_ENCRYPTION_KEY}")
-        with open(settings.DB_ENCRYPTION_KEY, "rb") as key_file:
-            return Fernet(key_file.read())
-
     def encrypt(self, value):
         if isinstance(value, dict):
             return {k: self.encrypt(v) for k, v in value.items()}
         elif isinstance(value, (list, tuple, set)):
             return [self.encrypt(v) for v in value]
 
-        return force_str(self._fernet.encrypt(force_bytes(repr(value))))
+        return force_str(_fernet().encrypt(force_bytes(repr(value))))
 
     def decrypt(self, value):
         if isinstance(value, dict):
@@ -136,7 +132,7 @@ class EncryptedJSONField(JSONField):
         elif isinstance(value, (list, tuple, set)):
             return [self.decrypt(v) for v in value]
 
-        return eval(force_str(self._fernet.decrypt(force_bytes(value))))
+        return eval(force_str(_fernet().decrypt(force_bytes(value))))
 
     def get_db_prep_save(self, value, connection):
         value = self.encrypt(value)
