@@ -5,7 +5,7 @@ from django.db import connection
 from django.test import TestCase
 
 from pulpcore.app.models import Remote
-from pulpcore.app.models.fields import EncryptedTextField
+from pulpcore.app.models.fields import _fernet, EncryptedTextField
 
 
 class RemoteTestCase(TestCase):
@@ -15,6 +15,7 @@ class RemoteTestCase(TestCase):
     def tearDown(self):
         if self.remote:
             self.remote.delete()
+        _fernet.cache_clear()
 
     @patch(
         "pulpcore.app.models.fields.open",
@@ -22,6 +23,7 @@ class RemoteTestCase(TestCase):
         read_data=b"hPCIFQV/upbvPRsEpgS7W32XdFA2EQgXnMtyNAekebQ=",
     )
     def test_encrypted_proxy_password(self, mock_file):
+        _fernet.cache_clear()
         self.remote = Remote(name=uuid4(), proxy_password="test")
         self.remote.save()
         self.assertEqual(Remote.objects.get(pk=self.remote.pk).proxy_password, "test")
@@ -35,4 +37,4 @@ class RemoteTestCase(TestCase):
             proxy_password = EncryptedTextField().from_db_value(db_proxy_password, None, connection)
             self.assertNotEqual(db_proxy_password, "test")
             self.assertEqual(proxy_password, "test")
-            self.assertEqual(mock_file.call_count, 2)
+            self.assertEqual(mock_file.call_count, 1)

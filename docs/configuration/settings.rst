@@ -65,6 +65,25 @@ DB_ENCRYPTION_KEY
 
     openssl rand -base64 32 > /etc/pulp/certs/database_fields.symmetric.key
 
+  This file can contain multiple such keys (one per line). The key in the first line will be used
+  for encryption but all others will still be attempted to decrypt old tokens. This can help you to
+  rotate this key in the following way:
+
+  1. Shut down all Pulp services (api, content and worker processes).
+  2. Add a new key at the top of the key file.
+  3. Call `pulpcore-manager rotate-db-key`.
+  4. Remove the old key (on the second line) from the key file.
+  5. Start the Pulp services again.
+
+  For a zero downtime key rotation you can follow the slightly more complex recipe:
+  1. Add a new key at the bottom of the key file.
+  2. Restart the Pulp services in the usual phased manner.
+  3. Swap the keys in the key file.
+  4. Restart the Pulp services again.
+  5. Call `pulpcore-manager rotate-db-key`.
+  6. Remove the old key (on the second line) from the key file.
+  7. Restart the Pulp services for the last time.
+
 
 DATABASES
 ^^^^^^^^^
