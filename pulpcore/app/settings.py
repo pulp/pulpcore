@@ -365,7 +365,7 @@ api_root_validator = Validator(
 
 settings = DjangoDynaconf(
     __name__,
-    GLOBAL_ENV_FOR_DYNACONF="PULP",
+    ENVVAR_PREFIX_FOR_DYNACONF="PULP",
     ENV_SWITCHER_FOR_DYNACONF="PULP_ENV",
     PRELOAD_FOR_DYNACONF=[
         "{}.app.settings".format(plugin_name) for plugin_name in INSTALLED_PULP_PLUGINS
