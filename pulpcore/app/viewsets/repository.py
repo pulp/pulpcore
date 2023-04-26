@@ -16,6 +16,7 @@ from pulpcore.app.models import (
     Content,
     Remote,
     Repository,
+    RepositoryContent,
     RepositoryVersion,
 )
 from pulpcore.app.response import OperationPostponedResponse
@@ -41,9 +42,51 @@ from pulpcore.tasking.tasks import dispatch
 from pulpcore.filters import HyperlinkRelatedFilter
 
 
+class RepositoryContentFilter(Filter):
+    """
+    Filter used to filter repositories which have a piece of content
+    """
+
+    def __init__(self, *args, **kwargs):
+        kwargs.setdefault("help_text", _("Content Unit referenced by HREF"))
+        self.latest = kwargs.pop("latest", False)
+        super().__init__(*args, **kwargs)
+
+    def filter(self, qs, value):
+        """
+        Args:
+            qs (django.db.models.query.QuerySet): The Repository Queryset
+            value (string): of content href to filter
+
+        Returns:
+            Queryset of the Repository containing the specified content
+        """
+
+        if value is None:
+            # user didn't supply a value
+            return qs
+
+        if not value:
+            raise serializers.ValidationError(detail=_("No value supplied for content filter"))
+
+        # Get the content object from the content_href
+        content = NamedModelViewSet.get_resource(value, Content)
+
+        if self.latest:
+            return qs.filter(
+                pk__in=RepositoryContent.objects.filter(
+                    version_removed=None, content__pk=content.pk
+                ).values_list("repository__pk", flat=True)
+            )
+        else:
+            return qs.filter(content__pk=content.pk)
+
+
 class RepositoryFilter(BaseFilterSet):
     pulp_label_select = LabelFilter()
     remote = HyperlinkRelatedFilter(allow_null=True)
+    with_content = RepositoryContentFilter()
+    latest_with_content = RepositoryContentFilter(latest=True)
 
     class Meta:
         model = Repository
