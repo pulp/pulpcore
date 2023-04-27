@@ -151,7 +151,7 @@ class TaskViewSet(
         # "swagger_fake_view" is set when drf_spectacular is building the OpenAPI spec
         if (
             self.action in ("list", "retrieve")
-            and isinstance(serializer, TaskSerializer)
+            and self.get_serializer_class() == TaskSerializer
             and not getattr(self, "swagger_fake_view", False)
         ):
             task_list = args[0] if many else [args[0]]
