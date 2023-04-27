@@ -2,7 +2,7 @@ import pytest
 from time import sleep
 
 import pulpcore.app.redis_connection
-from pulpcore.cache import Cache, ConnectionError
+from pulpcore.cache import Cache
 
 
 @pytest.fixture
@@ -46,10 +46,10 @@ def test_basic_delete(pulp_redisdb):
 def test_basic_expires(pulp_redisdb):
     """Tests setting values with expiration times"""
     cache = Cache()
-    cache.set("key", "hi", expires=4)
+    cache.set("key", "hi", expires=2)
     ret = cache.get("key")
     assert ret == b"hi"
-    sleep(5)
+    sleep(3)
     ret = cache.get("key")
     assert ret is None
 

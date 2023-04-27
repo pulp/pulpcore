@@ -16,7 +16,7 @@ from pulpcore.app.files import TemporaryDownloadedFile
 _logger = logging.getLogger(__name__)
 
 
-@lru_cache()
+@lru_cache(maxsize=1)
 def _fernet():
     # Cache the enryption keys once per application.
     _logger.debug(f"Loading encryption key from {settings.DB_ENCRYPTION_KEY}")

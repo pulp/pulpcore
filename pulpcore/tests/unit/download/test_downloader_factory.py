@@ -24,7 +24,6 @@ async def test_custom_user_agent_header():
 
 
 @pytest.mark.asyncio
-@pytest.mark.django_db
 async def test_custom_headers():
     remote = Remote(url="http://example.org/", headers=[{"Connection": "keep-alive"}], name="foo")
     factory = DownloaderFactory(remote)
