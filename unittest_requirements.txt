@@ -3,3 +3,4 @@ mock
 aiotools
 pytest-django
 pytest-asyncio
+pytest-redis
