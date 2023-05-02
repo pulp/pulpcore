@@ -1,2 +1,0 @@
-Fixed returned error codes for unauthenticated users. Pulp now returns HTTP 401 errors instead of
-HTTP 403 errors which were default return types for ``SessionAuthentication``.

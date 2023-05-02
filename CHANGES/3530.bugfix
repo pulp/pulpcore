@@ -1,2 +1,0 @@
-Task purge now continues when encountering a task that could not be deleted. The user is informed
-about any such tasks.

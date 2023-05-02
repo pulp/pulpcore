@@ -1,1 +1,0 @@
-Switched settings import from ``dynaconf`` to ``django.conf``.
