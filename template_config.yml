@@ -65,9 +65,11 @@ pulp_settings:
   allowed_import_paths:
   - /tmp
   orphan_protection_time: 0
-pulp_settings_azure: null
+pulp_settings_azure:
+  domain_enabled: true
 pulp_settings_gcp: null
 pulp_settings_s3:
+  domain_enabled: true
   hide_guarded_distributions: true
 pulp_settings_stream: null
 pulpprojectdotorg_key_id: d1a778bda808
