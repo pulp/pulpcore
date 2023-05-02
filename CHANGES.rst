@@ -17,6 +17,82 @@ Changelog
 
 .. towncrier release notes start
 
+3.24.0 (2023-05-02)
+===================
+REST API
+--------
+
+Features
+~~~~~~~~
+
+- Added commands and documentation for db encryption key rotation.
+  :github:`2048`
+- Added ability to filter resources by list of HREFs or IDs with ``pulp_href__in`` and ``pulp_id__in``.
+  :github:`2975`
+- Added ability to sort by type on generic list endpoints with ``pulp_type__in``.
+  :github:`3408`
+- Added file size to the content app listing.
+  :github:`3656`
+- Changed most of the update and delete tasks to allow for immediate execution if not contested by
+  other running tasks.
+  :github:`3661`
+
+
+Bugfixes
+~~~~~~~~
+
+- Fixed some deprecations in preparation to 3.25 being a breaking change release.
+  :github:`3023`
+- Task purge now continues when encountering a task that could not be deleted. The user is informed
+  about any such tasks.
+  :github:`3530`
+- Fixed package timestamp on content app to reflect time package was added to the repository.
+  :github:`3653`
+- Fixed import/export in the presence of the domains work.
+  :github:`3663`
+- Fixed a regular expression used when listing directories.
+  :github:`3673`
+- Optimized queries needed when listing Tasks.
+  :github:`3711`
+- Optimized DB queries for content, distribution, publication, remote, repository, and repository-version list endpoints.
+  :github:`3714`
+- Downloader will now attempt to keep the filename of the requested URL intact if one exists.
+  :github:`3715`
+- Fixed returned error codes for unauthenticated users. Pulp now returns HTTP 401 errors instead of
+  HTTP 403 errors which were default return types for ``SessionAuthentication``.
+  :github:`3730`
+- Fixed issue with deleting export tasks via purge.
+  :github:`3741`
+- Closed the window for a race condition in content creation.
+  :github:`3754`
+
+
+Improved Documentation
+~~~~~~~~~~~~~~~~~~~~~~
+
+- Updated contributor docs to point to the ``oci-env`` for the developer environment.
+  :github:`3444`
+- Fixed infinite loading when searching for specific terms.
+  :github:`3667`
+
+
+Misc
+~~~~
+
+- :github:`3247`
+
+
+Plugin API
+----------
+
+Features
+~~~~~~~~
+
+- Added flags ``immediate`` and ``deferred`` to ``dispatch`` to allow specifying whether a task can
+  be attempted to run synchronously and whether it can be deferred.
+  :github:`3661`
+
+
 3.23.3 (2023-04-18)
 ===================
 REST API
