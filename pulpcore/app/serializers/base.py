@@ -11,7 +11,7 @@ from django.conf import settings
 from django.core.validators import URLValidator
 from django.core.exceptions import ObjectDoesNotExist
 from django.urls.exceptions import NoReverseMatch
-from django.db import IntegrityError, transaction
+from django.db import IntegrityError
 from django.db.models import Model
 from drf_queryfields.mixins import QueryFieldsMixin
 from rest_framework import serializers
@@ -23,7 +23,6 @@ from rest_framework_nested.relations import (
 )
 
 from pulpcore.app.models import (
-    Label,
     Task,
     TaskGroup,
     MasterModel,
@@ -464,68 +463,6 @@ class ModelSerializer(
                     meta.ref_name = f"{plugin_namespace}.{meta.model.__name__}"
         except AttributeError:
             pass
-
-    def _update_labels(self, instance, labels):
-        """
-        Update the labels for a Model instance.
-
-        Args:
-            instance (pulpcore.app.models.BaseModel): instance with labels to update
-            labels (list): labels to set for the instance
-        """
-        instance.pulp_labels.exclude(key__in=labels.keys()).delete()
-
-        for key, value in labels.items():
-            label = instance.pulp_labels.filter(key=key).first()
-            try:
-                label = instance.pulp_labels.get(key=key)
-                if label.value != value:
-                    instance.pulp_labels.filter(key=key).update(value=value)
-            except Label.DoesNotExist:
-                instance.pulp_labels.create(key=key, value=value)
-
-    def create(self, validated_data):
-        """
-        Created the resource from validated_data.
-
-        Args:
-            validated_data (dict): Validated data to create instance
-
-        Returns:
-            instance: The created of resource
-        """
-        # Circular import (But this is intended to be removed in 3.25 anyway).
-        from pulpcore.app.serializers import LabelsField
-
-        if not isinstance(self.fields.get("pulp_labels"), LabelsField):
-            return super().create(validated_data)
-        labels = validated_data.pop("pulp_labels", {})
-        with transaction.atomic():
-            instance = super().create(validated_data)
-            self._update_labels(instance, labels)
-        return instance
-
-    def update(self, instance, validated_data):
-        """
-        Update the resource from validated_data.
-
-        Args:
-            validated_data (dict): Validated data to update instance
-
-        Returns:
-            instance: The updated instance of resource
-        """
-        # Circular import (But this is intended to be removed in 3.25 anyway).
-        from pulpcore.app.serializers import LabelsField
-
-        if not isinstance(self.fields.get("pulp_labels"), LabelsField):
-            return super().update(instance, validated_data)
-        labels = validated_data.pop("pulp_labels", None)
-        with transaction.atomic():
-            instance = super().update(instance, validated_data)
-            if labels is not None:
-                self._update_labels(instance, labels)
-        return instance
 
 
 class AsyncOperationResponseSerializer(serializers.Serializer):

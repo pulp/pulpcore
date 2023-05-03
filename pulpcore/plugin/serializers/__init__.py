@@ -17,7 +17,6 @@ from pulpcore.app.serializers import (  # noqa
     IdentityField,
     ImporterSerializer,
     ImportSerializer,
-    LabelsField,
     ModelSerializer,
     MultipleArtifactContentSerializer,
     NestedRelatedField,

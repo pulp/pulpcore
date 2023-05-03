@@ -1,15 +1,12 @@
 from gettext import gettext as _
 import uuid
 
-from django.contrib.contenttypes.fields import GenericRelation, GenericForeignKey
-from django.contrib.contenttypes.models import ContentType
+from django.contrib.contenttypes.fields import GenericRelation
 from django.db import models
 from django.db.models import options
 from django.db.models.base import ModelBase
 from django_lifecycle import LifecycleModel
 from functools import lru_cache
-
-from pulpcore.app.loggers import deprecation_logger
 
 
 def pulp_uuid():
@@ -19,42 +16,6 @@ def pulp_uuid():
     Allows the implementation to be swapped without triggering migrations.
     """
     return uuid.uuid4()
-
-
-class Label(LifecycleModel):
-    """
-    Model for handling resource labels.
-
-    Labels are key/value data that can be associated with any BaseModel.
-
-    Fields:
-        pulp_id (models.UUIDField): Primary key identifier
-        object_id (models.UUIDField): Resource id
-        key (models.TextField): Key of the label
-        value (models.TextField): Value of the label
-
-    Relations:
-        content_object (GenericForeignKey): Associated resource
-        content_type (models.ForeignKey): Content type of the resource
-    """
-
-    pulp_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
-    object_id = models.UUIDField()
-    key = models.TextField(db_index=True)
-    value = models.TextField(null=True, db_index=True)
-
-    content_object = GenericForeignKey("content_type", "object_id", for_concrete_model=False)
-
-    def __init__(self, *args, **kwargs):
-        deprecation_logger.warning(
-            "'Label' is deprecated and will be removed in pulpcore==3.25;"
-            " use an 'HStoreField' named 'pulp_labels' instead."
-        )
-        super().__init__(*args, **kwargs)
-
-    class Meta:
-        unique_together = [["content_type", "object_id", "key"]]
 
 
 class BaseModel(LifecycleModel):
@@ -103,37 +64,6 @@ class BaseModel(LifecycleModel):
 
     def __repr__(self):
         return str(self)
-
-
-class LabeledBaseModel(BaseModel):
-    """
-    Base model class for all Pulp models using deprecated labels.
-
-    This class is DEPRECATED and scheduled for removal in 3.25.
-
-    This model inherits from `LifecycleModel` which allows all Pulp models to be used with
-    `django-lifecycle`.
-
-    Fields:
-        pulp_created (models.DateTimeField): Created timestamp UTC.
-        pulp_last_updated (models.DateTimeField): Last updated timestamp UTC.
-
-    Relations:
-        pulp_labels (GenericRelation): A list of key/value labels.
-        user_roles (GenericRelation): List of user role associations with this object.
-        group_roles (GenericRelation): List of group role associations with this object.
-
-    References:
-
-        * https://docs.djangoproject.com/en/3.2/topics/db/models/#automatic-primary-key-fields
-        * https://rsinger86.github.io/django-lifecycle/
-
-    """
-
-    pulp_labels = GenericRelation("core.Label")
-
-    class Meta:
-        abstract = True
 
 
 class MasterModelMeta(ModelBase):
@@ -293,36 +223,3 @@ def master_model(options):
 
 
 options.Options.master_model = property(master_model)
-
-
-class LabeledMasterModel(MasterModel):
-    """
-    Base model for the "Master" model in a "Master-Detail" relationship using deprecated labels.
-
-    This class is DEPRECATED and scheduled for removal in 3.25.
-
-    Provides methods for casting down to detail types, back up to the master type,
-    as well as a model field for tracking the type.
-
-    Attributes:
-
-        TYPE (str): Default constant value saved into the ``pulp_type``
-            field of Model instances
-
-    Fields:
-
-        pulp_type: The user-facing string identifying the detail type of this model
-
-    Warning:
-        Subclasses of this class rely on there being no other parent/child Model
-        relationships than the Master/Detail relationship. All subclasses must use
-        only abstract Model base classes for MasterModel to behave properly.
-        Specifically, OneToOneField relationships must not be used in any MasterModel
-        subclass.
-
-    """
-
-    pulp_labels = GenericRelation("core.Label")
-
-    class Meta:
-        abstract = True
