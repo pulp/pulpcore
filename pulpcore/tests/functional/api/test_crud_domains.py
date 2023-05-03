@@ -126,6 +126,57 @@ def test_active_domain_deletion(domains_api_client, rbac_contentguard_api_client
 
 
 @pytest.mark.parallel
+def test_orphan_domain_deletion(
+    domains_api_client,
+    file_repository_api_client,
+    file_content_api_client,
+    gen_object_with_cleanup,
+    monitor_task,
+    tmp_path,
+):
+    """Test trying to delete a domain that is in use, has objects in it."""
+    if not settings.DOMAIN_ENABLED:
+        pytest.skip("Domains not enabled")
+    body = {
+        "name": str(uuid.uuid4()),
+        "storage_class": "pulpcore.app.models.storage.FileSystem",
+        "storage_settings": {"MEDIA_ROOT": "/var/lib/pulp/media/"},
+    }
+    domain = gen_object_with_cleanup(domains_api_client, body)
+
+    repository = gen_object_with_cleanup(
+        file_repository_api_client, {"name": str(uuid.uuid4())}, pulp_domain=domain.name
+    )
+    new_file = tmp_path / "new_file"
+    new_file.write_text("Test file")
+    monitor_task(
+        file_content_api_client.create(
+            relative_path=str(uuid.uuid4()),
+            file=new_file,
+            pulp_domain=domain.name,
+            repository=repository.pulp_href,
+        ).task
+    )
+
+    # Try to delete a domain with the repository in it
+    response = domains_api_client.delete(domain.pulp_href)
+    with pytest.raises(PulpTaskError) as e:
+        monitor_task(response.task)
+
+    assert e.value.task.state == "failed"
+
+    # Delete the repository
+    file_repository_api_client.delete(repository.pulp_href)
+
+    # Now succeed in deleting the domain
+    response = domains_api_client.delete(domain.pulp_href)
+    monitor_task(response.task)
+    with pytest.raises(ApiException) as e:
+        domains_api_client.read(domain.pulp_href)
+    assert e.value.status == 404
+
+
+@pytest.mark.parallel
 def test_special_domain_creation(domains_api_client, gen_object_with_cleanup):
     """Test many possible domain creation scenarios."""
     if not settings.DOMAIN_ENABLED:
