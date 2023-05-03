@@ -29,6 +29,7 @@ from pulpcore.app.serializers import (
     WorkerSerializer,
 )
 from pulpcore.app.tasks import purge
+from pulpcore.app.util import get_domain
 from pulpcore.app.viewsets import NamedModelViewSet, RolesMixin
 from pulpcore.app.viewsets.base import DATETIME_FILTER_OPTIONS, NAME_FILTER_OPTIONS
 from pulpcore.app.viewsets.custom_filters import (
@@ -39,7 +40,7 @@ from pulpcore.app.viewsets.custom_filters import (
 )
 from pulpcore.constants import TASK_INCOMPLETE_STATES, TASK_STATES
 from pulpcore.tasking.tasks import dispatch
-from pulpcore.tasking.util import cancel as cancel_task
+from pulpcore.tasking.util import cancel_task
 
 
 class TaskFilter(BaseFilterSet):
@@ -167,6 +168,8 @@ class TaskViewSet(
                 .only("pk", "number", "repository__pulp_type")
             )
             serializer.context["repo_ver_mapping"] = {rv.pk: rv for rv in repo_vers}
+            # Assume, all tasks and related resources are of the same domain.
+            serializer.context["pulp_domain"] = get_domain()
         return serializer
 
     def get_queryset(self):
