@@ -10,7 +10,7 @@ from pulpcore.constants import TASK_FINAL_STATES, TASK_STATES
 _logger = logging.getLogger(__name__)
 
 
-def cancel(task_id):
+def cancel_task(task_id):
     """
     Cancel the task that is represented by the given task_id.
 
