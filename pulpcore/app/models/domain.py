@@ -49,6 +49,15 @@ class Domain(BaseModel, AutoAddObjPermsMixin):
     def prevent_default_deletion(self):
         raise models.ProtectedError("Default domain can not be updated/deleted.", [self])
 
+    @hook(BEFORE_DELETE, when="name", is_not="default")
+    def _cleanup_orphans_pre_delete(self):
+        if self.content_set.exclude(version_memberships__isnull=True).exists():
+            raise models.ProtectedError("There is active content in the domain.")
+        self.content_set.filter(version_memberships__isnull=True).delete()
+        for artifact in self.artifact_set.all().iterator():
+            # Delete on by one to properly cleanup the storage.
+            artifact.delete()
+
     class Meta:
         permissions = [
             ("manage_roles_domain", "Can manage role assignments on domain"),

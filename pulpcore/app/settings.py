@@ -294,6 +294,12 @@ HIDE_GUARDED_DISTRIBUTIONS = False
 
 DOMAIN_ENABLED = False
 
+SHELL_PLUS_IMPORTS = [
+    "from pulpcore.app.util import get_domain, get_domain_pk, set_domain, get_url, extract_pk",
+    "from pulpcore.tasking.tasks import dispatch",
+    "from pulpcore.tasking.util import cancel_task",
+]
+
 # HERE STARTS DYNACONF EXTENSION LOAD (Keep at the very bottom of settings.py)
 # Read more at https://dynaconf.readthedocs.io/en/latest/guides/django.html
 from dynaconf import DjangoDynaconf, Validator  # noqa
