@@ -155,7 +155,8 @@ class RelatedField(
     """
 
 
-PKOnlyObject = namedtuple("PKOnlyObject", ["pk"])
+PKObject = namedtuple("PKObject", ["pk"])
+PKDomainObject = namedtuple("PKDomainObject", ["pk", "pulp_domain"])
 
 
 class RelatedResourceField(RelatedField):
@@ -171,7 +172,7 @@ class RelatedResourceField(RelatedField):
     def repo_ver_url(self, repo_ver):
         repo_model = get_model_for_pulp_type(repo_ver.repository.pulp_type, Repository)
         view_name = get_view_name_for_model(repo_model, "detail")
-        obj = PKOnlyObject(pk=repo_ver.repository.pk)
+        obj = PKDomainObject(pk=repo_ver.repository.pk, pulp_domain=self.context["pulp_domain"])
         repo_url = self.get_url(obj, view_name, request=None, format=None)
         return f"{repo_url}versions/{repo_ver.number}/"
 
@@ -192,7 +193,12 @@ class RelatedResourceField(RelatedField):
                 except LookupError:
                     pass
                 else:
-                    obj = PKOnlyObject(pk=data.object_id)
+                    if hasattr(model, "pulp_domain"):
+                        obj = PKDomainObject(
+                            pk=data.object_id, pulp_domain=self.context["pulp_domain"]
+                        )
+                    else:
+                        obj = PKObject(pk=data.object_id)
                     try:
                         return self.get_url(obj, view_name, request=None, format=None)
                     except NoReverseMatch:
