@@ -37,7 +37,6 @@ from pulpcore.app.viewsets import (  # noqa
 from pulpcore.app.viewsets.custom_filters import (  # noqa
     CharInFilter,
     LabelFilter,
-    LabelSelectFilter,
     RepositoryVersionFilter,
 )
 

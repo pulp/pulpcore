@@ -10,7 +10,6 @@ from rest_framework.reverse import reverse
 
 from pulpcore.app import models
 from pulpcore.app.serializers import DetailIdentityField, IdentityField, RelatedField
-from pulpcore.app.loggers import deprecation_logger
 from pulpcore.app.util import get_domain
 
 
@@ -366,58 +365,6 @@ class TaskGroupStatusCountField(serializers.IntegerField, serializers.ReadOnlyFi
 
     def get_attribute(self, instance):
         return instance.tasks.filter(state=self.state).count()
-
-
-class LabelsField(serializers.JSONField):
-    """A serializer field for pulp_labels."""
-
-    def __init__(self, *args, **kwargs):
-        deprecation_logger.warning(
-            "'LabelsField' is deprecated and will be removed in pulpcore==3.25;"
-            " use an 'HStoreField' named 'pulp_labels' instead."
-        )
-        super().__init__(*args, **kwargs)
-
-    def to_representation(self, labels):
-        """
-        Serializes list of labels to a dict.
-
-        Args:
-            labels (list of :class:`pulpcore.app.models.Label`): A list of labels to serialize
-
-        Returns:
-            A dict that maps label keys to label values
-        """
-        return {label.key: label.value for label in labels.all()}
-
-    def to_internal_value(self, data):
-        """
-        Ensures that data conforms to key/value dict.
-
-        Args:
-            data (str or dict): A dictionary which maps a label key to a label value
-
-        Returns:
-            A validated data dict for labels mapping keys to values
-
-        Raises:
-            rest_framework.serializers.ValidationError: if data is invalid (e.g., not a dict)
-        """
-        data = super().to_internal_value(data)
-
-        if not isinstance(data, dict):
-            raise serializers.ValidationError(_("Data must be supplied as a key/value hash."))
-        for key, value in data.items():
-            if not re.match(r"^[\w ]+$", key):
-                raise serializers.ValidationError(
-                    _("Key '{}' contains non-alphanumerics.").format(key)
-                )
-            if re.search(r"[,()]", value):
-                raise serializers.ValidationError(
-                    _("Key '{}' contains value with comma or parenthesis.").format(key)
-                )
-
-        return data
 
 
 def pulp_labels_validator(value):

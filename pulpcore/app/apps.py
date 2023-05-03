@@ -8,7 +8,6 @@ from django import apps
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.db import connection, transaction
-from django.db.models.expressions import OuterRef, RawSQL
 from django.db.models.signals import post_migrate
 from django.utils.module_loading import module_has_submodule
 
@@ -257,11 +256,6 @@ class PulpAppConfig(PulpPluginAppConfig):
             sender=self,
             dispatch_uid="populate_artifact_serving_distribution_identifier",
         )
-        post_migrate.connect(
-            _migrate_remaining_labels,
-            sender=self,
-            dispatch_uid="migrate_remaining_labels_identifier",
-        )
 
 
 def _populate_access_policies(sender, apps, verbosity, **kwargs):
@@ -417,55 +411,3 @@ def _populate_artifact_serving_distribution(sender, apps, verbosity, **kwargs):
                     pulp_type="core.artifact",
                     defaults={"base_path": name, "content_guard": content_guard},
                 )
-
-
-def _migrate_remaining_labels(sender, apps, verbosity, **kwargs):
-    try:
-        Label = apps.get_model("core", "label")
-        ContentType = apps.get_model("contenttypes", "ContentType")
-    except LookupError:
-        if verbosity >= 1:
-            print("No db table for labels available.")
-        return
-
-    labeled_ctypes = [
-        ContentType.objects.get(pk=pk)
-        for pk in Label.objects.values_list("content_type", flat=True).distinct()
-    ]
-    for ctype in labeled_ctypes:
-        model = apps.get_model(ctype.app_label, ctype.model)
-
-        if not hasattr(model, "pulp_labels"):
-            if verbosity >= 1:
-                print(
-                    _(
-                        "Warning! "
-                        "Labels for content_type {app_label}.{model} could not be migrated. "
-                        "Model has no labels."
-                    ).format(app_label=ctype.app_label, model=ctype.model)
-                )
-            continue
-
-        if verbosity >= 1:
-            print(
-                _("Migrate labels for content_type {app_label}.{model}.").format(
-                    app_label=ctype.app_label, model=ctype.model
-                )
-            )
-        with transaction.atomic():
-            label_subq = (
-                Label.objects.filter(content_type=ctype, object_id=OuterRef("pulp_id"))
-                .annotate(label_data=RawSQL("hstore(array_agg(key), array_agg(value))", []))
-                .values("label_data")
-            )
-            model.objects.annotate(old_labels=label_subq).exclude(old_labels={}).update(
-                pulp_labels=label_subq
-            )
-            Label.objects.filter(content_type=ctype).delete()
-
-    if Label.objects.count():
-        if verbosity >= 1:
-            print(
-                "Some labels could not be migrated. "
-                "Please try to run `pulpcore-manager datarepair-labels`."
-            )

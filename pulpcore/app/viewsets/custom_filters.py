@@ -14,9 +14,8 @@ from django_filters import BaseInFilter, CharFilter, Filter
 from rest_framework import serializers
 from rest_framework.serializers import ValidationError as DRFValidationError
 
-from pulpcore.app.models import ContentArtifact, Label, RepositoryVersion, Publication
+from pulpcore.app.models import ContentArtifact, RepositoryVersion, Publication
 from pulpcore.app.viewsets import NamedModelViewSet
-from pulpcore.app.loggers import deprecation_logger
 
 
 class ReservedResourcesFilter(Filter):
@@ -329,65 +328,6 @@ class LabelFilter(Filter):
                     qs = qs.exclude(**{f"{field_name}__has_key": key[1:]})
                 else:
                     qs = qs.filter(**{f"{field_name}__has_key": key})
-
-        return qs
-
-
-class LabelSelectFilter(Filter):
-    """Filter to get resources that match a label filter string. DEPRECATED."""
-
-    def __init__(self, *args, **kwargs):
-        deprecation_logger.warning(
-            "'LabelSelectFilter' is deprecated and will be removed in pulpcore==3.25;"
-            " use 'LabelFilter' instead."
-        )
-        super().__init__(*args, **kwargs)
-
-        kwargs.setdefault("help_text", _("Filter labels by search string"))
-        super().__init__(*args, **kwargs)
-
-    def filter(self, qs, value):
-        """
-        Args:
-            qs (django.db.models.query.QuerySet): The Model queryset
-            value (string): label search query
-
-        Returns:
-            Queryset of the Models filtered by label(s)
-
-        Raises:
-            rest_framework.exceptions.ValidationError: on invalid search string
-        """
-        if value is None:
-            # user didn't supply a value
-            return qs
-
-        for term in value.split(","):
-            match = re.match(r"(!?[\w\s]+)(=|!=|~)?(.*)?", term)
-            if not match:
-                raise DRFValidationError(_("Invalid search term: '{}'.").format(term))
-            key, op, val = match.groups()
-
-            if key.startswith("!") and op:
-                raise DRFValidationError(_("Cannot use an operator with '{}'.").format(key))
-
-            if op == "=":
-                labels = Label.objects.filter(key=key, value=val)
-                qs = qs.filter(pulp_labels__in=labels)
-            elif op == "!=":
-                labels = Label.objects.filter(key=key).exclude(value=val)
-                qs = qs.filter(pulp_labels__in=labels)
-            elif op == "~":
-                labels = Label.objects.filter(key=key, value__icontains=val)
-                qs = qs.filter(pulp_labels__in=labels)
-            else:
-                # 'foo', '!foo'
-                if key.startswith("!"):
-                    labels = Label.objects.filter(key=key[1:])
-                    qs = qs.exclude(pulp_labels__in=labels)
-                else:
-                    labels = Label.objects.filter(key=key)
-                    qs = qs.filter(pulp_labels__in=labels)
 
         return qs
 
