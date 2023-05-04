@@ -16,7 +16,6 @@ from pulpcore.openapi import PulpAutoSchema
 from rest_framework.serializers import ValidationError as DRFValidationError, ListField, CharField
 
 from pulpcore.app import tasks
-from pulpcore.app.loggers import deprecation_logger
 from pulpcore.app.models import MasterModel
 from pulpcore.app.models.role import GroupRole, UserRole
 from pulpcore.app.response import OperationPostponedResponse
@@ -198,43 +197,6 @@ class NamedModelViewSet(viewsets.GenericViewSet):
             raise DRFValidationError(
                 detail=_("URI {u} is not a valid {m}.").format(u=uri, m=model._meta.model_name)
             )
-
-    @staticmethod
-    def extract_pk(uri):
-        """
-        Resolve a resource URI to a simple PK value.
-
-        Provides a means to resolve an href passed in a POST body to a primary key.
-        Doesn't assume anything about whether the resource corresponding to the URI
-        passed in actually exists.
-
-        Note:
-            Cannot be used with nested URIs where the PK of the final resource is not present.
-            e.g. RepositoryVersion URI consists of repository PK and version number - no
-            RepositoryVersion PK is present within the URI.
-
-        Args:
-            uri (str): A resource URI.
-
-        Returns:
-            primary_key (uuid.uuid4): The primary key of the resource extracted from the URI.
-
-        Raises:
-            rest_framework.exceptions.ValidationError: on invalid URI.
-        """
-        deprecation_logger.warning(
-            "NamedModelViewSet.extract_pk() is deprecated and will be removed in pulpcore==3.25; "
-            "use pulpcore.plugin.util.extract_pk() instead."
-        )
-        try:
-            match = resolve(urlparse(uri).path)
-        except Resolver404:
-            raise DRFValidationError(detail=_("URI not valid: {u}").format(u=uri))
-
-        try:
-            return match.kwargs["pk"]
-        except KeyError:
-            raise DRFValidationError("URI does not contain an unqualified resource PK")
 
     @classmethod
     def is_master_viewset(cls):
