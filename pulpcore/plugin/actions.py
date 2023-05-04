@@ -1,11 +1,7 @@
-from gettext import gettext as _
-
 from drf_spectacular.utils import extend_schema
 from rest_framework.decorators import action
-from rest_framework.serializers import ValidationError
 
 from pulpcore.app import tasks
-from pulpcore.app.loggers import deprecation_logger
 from pulpcore.app.models import RepositoryVersion
 from pulpcore.app.response import OperationPostponedResponse
 from pulpcore.app.serializers import (
@@ -15,7 +11,7 @@ from pulpcore.app.serializers import (
 from pulpcore.tasking.tasks import dispatch
 
 
-__all__ = ["ModifyRepositoryActionMixin", "raise_for_unknown_content_units"]
+__all__ = ["ModifyRepositoryActionMixin"]
 
 
 class ModifyRepositoryActionMixin:
@@ -49,29 +45,3 @@ class ModifyRepositoryActionMixin:
             },
         )
         return OperationPostponedResponse(task, request)
-
-
-def raise_for_unknown_content_units(existing_content_units, content_units_pks_hrefs):
-    """Verify if all the specified content units were found in the database.
-
-    Args:
-        existing_content_units (pulpcore.plugin.models.Content): Content filtered by
-            specified_content_units.
-        content_units_pks_hrefs (dict): An original dictionary of pk-href pairs that
-            are used for the verification.
-    Raises:
-        ValidationError: If some of the referenced content units are not present in the database
-    """
-    deprecation_logger.warning(
-        "pulpcore.plugin.actions.raise_for_unknown_content_units() is deprecated and will be "
-        "removed in pulpcore==3.25; use pulpcore.plugin.util.raise_for_unknown_content_units()."
-    )
-    existing_content_units_pks = existing_content_units.values_list("pk", flat=True)
-    existing_content_units_pks = set(map(str, existing_content_units_pks))
-
-    missing_pks = set(content_units_pks_hrefs.keys()) - existing_content_units_pks
-    if missing_pks:
-        missing_hrefs = [content_units_pks_hrefs[pk] for pk in missing_pks]
-        raise ValidationError(
-            _("Could not find the following content units: {}").format(missing_hrefs)
-        )
