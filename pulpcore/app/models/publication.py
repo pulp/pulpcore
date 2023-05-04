@@ -469,6 +469,11 @@ class BaseDistribution(MasterModel):
     of ``a/path/foo`` existed, you could not make a second Distribution with a ``base_path`` of
     ``a/path`` or ``a`` because both are subpaths of ``a/path/foo``.
 
+    Note:
+        This class is no longer supported and cannot be removed from Pulp 3 due to possible
+        problems with old migrations for plugins. Until the migrations are squashed, this class
+        should be preserved.
+
     Fields:
         name (models.TextField): The name of the distribution. Examples: "rawhide" and "stable".
         base_path (models.TextField): The base (relative) path component of the published url.
