@@ -17,6 +17,24 @@ Changelog
 
 .. towncrier release notes start
 
+3.24.1 (2023-05-03)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fixed representation of domains in created_resources on task list and show.
+  :github:`3783`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.24.0 (2023-05-02)
 ===================
 REST API
