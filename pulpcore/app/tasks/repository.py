@@ -69,7 +69,7 @@ async def _repair_ca(content_artifact, repaired=None):
         return False
 
     async for remote_artifact in remote_artifacts:
-        detail_remote = await sync_to_async(remote_artifact.remote.cast)()
+        detail_remote = await remote_artifact.remote.acast()
         downloader = detail_remote.get_downloader(remote_artifact)
         dl_result = await downloader.run()
         if dl_result.artifact_attributes["sha256"] == content_artifact.artifact.sha256:

@@ -25,7 +25,6 @@ from pulpcore.app.util import (
     get_domain,
     get_domain_pk,
     cache_key,
-    get_model_for_pulp_type,
 )
 from pulpcore.constants import ALL_KNOWN_CONTENT_CHECKSUMS
 from pulpcore.download.factory import DownloaderFactory
@@ -1149,8 +1148,8 @@ class RepositoryVersionContentDetails(models.Model):
         Returns:
             dict: {<pulp_type>: <url>}
         """
-        repository_model = get_model_for_pulp_type(
-            self.repository_version.repository.pulp_type, Repository
+        repository_model = Repository.get_model_for_pulp_type(
+            self.repository_version.repository.pulp_type
         )
         ctypes = {c.get_pulp_type(): c for c in repository_model.CONTENT_TYPES}
         ctype_model = ctypes[self.content_type]
