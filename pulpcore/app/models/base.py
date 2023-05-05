@@ -126,6 +126,24 @@ class MasterModel(BaseModel, metaclass=MasterModelMeta):
     class Meta:
         abstract = True
 
+    @classmethod
+    def get_pulp_type(cls):
+        """Get the "pulp_type" string associated with this MasterModel type."""
+        return "{app_label}.{type}".format(app_label=cls._meta.app_label, type=cls.TYPE)
+
+    @classmethod
+    def get_model_for_pulp_type(cls, pulp_type):
+        return cls._pulp_model_map[pulp_type]
+
+    def __init_subclass__(cls, /, **kwargs):
+        super().__init_subclass__(**kwargs)
+        if hasattr(cls, "_pulp_model_map"):
+            # This is a Detail Model. Register it with the Master Model.
+            cls._pulp_model_map[cls.get_pulp_type()] = cls
+        else:
+            # This is a Master Model. Initialize the model map.
+            cls._pulp_model_map = {}
+
     def save(self, *args, **kwargs):
         # instances of "detail" models that subclass MasterModel are exposed
         # on instances of MasterModel by the string stored in that model's TYPE attr.
@@ -137,32 +155,14 @@ class MasterModel(BaseModel, metaclass=MasterModelMeta):
             self.pulp_type = self.get_pulp_type()
         return super().save(*args, **kwargs)
 
-    @classmethod
-    def get_pulp_type(cls):
-        """Get the "pulp_type" string associated with this MasterModel type."""
-        return "{app_label}.{type}".format(app_label=cls._meta.app_label, type=cls.TYPE)
-
     def cast(self):
-        """Return a "Detail" model instance of this master-detail pair.
+        """Return the "Detail" model instance of this master-detail object.
 
-        If this model is already an instance of its detail type, it will return itself.
+        If this is already an instance of its detail type, it will return itself.
         """
-        # Go through our related objects, find the one that's a subclass of this model
-        # on a OneToOneField, which identifies it as a potential detail relation.
-        for rel in self._meta.related_objects:
-            if rel.one_to_one and issubclass(rel.related_model, self._meta.model):
-                # The name of this relation is the name of the attr on the model instance.
-                # If that attr as a value, that means a row exists for this model in the
-                # related detail table. Cast and return this value, recursively following
-                # master/detail relationships down to the last table (the most detailed).
-                try:
-                    return getattr(self, rel.name).cast()
-                except AttributeError:
-                    continue
-        else:
-            # The for loop exited normally, there are no more detailed models than this
-            # one in this instance's master/detail ancestry, so return here.
+        if self.pulp_type == self.get_pulp_type():
             return self
+        return self._pulp_model_map[self.pulp_type].objects.get(pk=self.pk)
 
     @property
     def master(self):
