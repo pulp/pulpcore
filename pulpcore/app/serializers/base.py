@@ -35,7 +35,6 @@ from pulpcore.app.util import (
     get_viewset_for_model,
     get_request_without_query_params,
     get_domain,
-    get_model_for_pulp_type,
 )
 
 
@@ -113,9 +112,7 @@ class _DetailFieldMixin(HrefFieldMixin):
 
     def _view_name(self, obj):
         if isinstance(obj, MasterModel):
-            return get_view_name_for_model(
-                get_model_for_pulp_type(obj.pulp_type, obj._meta.model), "detail"
-            )
+            return get_view_name_for_model(obj.get_model_for_pulp_type(obj.pulp_type), "detail")
 
         # The normal message that comes up here is unhelpful, so do like other DRF
         # fails do and be a little more helpful in the exception message.
@@ -169,7 +166,7 @@ class RelatedResourceField(RelatedField):
     """
 
     def repo_ver_url(self, repo_ver):
-        repo_model = get_model_for_pulp_type(repo_ver.repository.pulp_type, Repository)
+        repo_model = Repository.get_model_for_pulp_type(repo_ver.repository.pulp_type)
         view_name = get_view_name_for_model(repo_model, "detail")
         obj = PKDomainObject(pk=repo_ver.repository.pk, pulp_domain=self.context["pulp_domain"])
         repo_url = self.get_url(obj, view_name, request=None, format=None)

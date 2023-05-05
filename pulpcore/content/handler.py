@@ -672,7 +672,7 @@ class Handler:
                     )
 
         if distro.remote:
-            remote = await sync_to_async(distro.remote.cast)()
+            remote = await distro.remote.acast()
 
             try:
                 url = remote.get_remote_artifact_url(rel_path, request=request)
@@ -907,7 +907,7 @@ class Handler:
 
         """
 
-        remote = await sync_to_async(remote_artifact.remote.cast)()
+        remote = await remote_artifact.remote.acast()
         log.debug(
             "Streaming content for {url} from Remote {remote}-{source}".format(
                 url=request.match_info["path"], remote=remote.name, source=remote_artifact.url
