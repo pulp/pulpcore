@@ -635,6 +635,7 @@ class ContentArtifact(BaseModel, QueryMixin):
 
     class Meta:
         unique_together = ("content", "relative_path")
+        indexes = [models.Index(fields=["relative_path"])]
 
     @staticmethod
     def sort_key(ca):
