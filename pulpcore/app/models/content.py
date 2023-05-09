@@ -11,7 +11,7 @@ import shutil
 import subprocess
 
 from collections import defaultdict
-from functools import lru_cache
+from functools import lru_cache, partial
 from itertools import chain
 
 from django.conf import settings
@@ -162,7 +162,8 @@ class HandleTempFilesMixin:
             kwargs (dict): dictionary of keyword arguments to pass to Model.delete()
         """
         super().delete(*args, **kwargs)
-        self.file.delete(save=False)
+        # In case of rollback, we want the artifact to stay connected with it's file.
+        transaction.on_commit(partial(self.file.delete, save=False))
 
 
 class ArtifactManager(BulkCreateManager):
