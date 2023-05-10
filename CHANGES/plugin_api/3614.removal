@@ -1,1 +1,0 @@
-Removed the deprecated `verify_signature`. Use `gpg_verify` instead.
