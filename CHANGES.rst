@@ -17,6 +17,66 @@ Changelog
 
 .. towncrier release notes start
 
+3.25.0 (2023-05-10)
+===================
+REST API
+--------
+
+Features
+~~~~~~~~
+
+- Added filters ``with_content`` and ``latest_with_content`` to Repository list endpoint.
+  :github:`2865`
+- Updated Django version to 4.2 LTS branch.
+  :github:`3660`
+
+
+Bugfixes
+~~~~~~~~
+
+- Fixed representation of domains in created_resources on task list and show.
+  :github:`3783`
+- Deferred artifact file deletion to after committing the database transaction.
+  :github:`3807`
+
+
+Misc
+~~~~
+
+- :github:`2993`
+
+
+Plugin API
+----------
+
+Features
+~~~~~~~~
+
+- Created a wrapper type for UUID generation so that the implementation can potentially be
+  switched in the future.  UUIDs are just 128-bit integers - as long as they don't overlap
+  there is no explicit need to stick with any particular implementation. Plugin writers may
+  notice a migration created due to this change depending on how they have written the
+  plugin.
+  :github:`3117`
+- Bumped the database backend from psycopg2 to psycopg3.
+  :github:`3792`
+
+
+Removals
+~~~~~~~~
+
+- Removed ``NamedModelViewSet.extract_pk`` in favor of ``pulpcore.plugin.util.extract_pk`` and
+  ``raise_for_unknown_content_units`` from ``pulpcore.plugin.actions``, which moved to
+  ``pulpcore.plugin.util``.
+  :github:`3613`
+- Removed the deprecated `verify_signature`. Use `gpg_verify` instead.
+  :github:`3614`
+- Removed ``LabelsField``, ``Label``, and ``LabelSelectFilter``.
+  :github:`3615`
+- Updated Django version to 4.2 LTS branch. This may introduce some breaking changes to plugins.
+  :github:`3660`
+
+
 3.24.1 (2023-05-03)
 ===================
 REST API

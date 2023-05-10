@@ -1,3 +1,0 @@
-Removed ``NamedModelViewSet.extract_pk`` in favor of ``pulpcore.plugin.util.extract_pk`` and
-``raise_for_unknown_content_units`` from ``pulpcore.plugin.actions``, which moved to
-``pulpcore.plugin.util``.
