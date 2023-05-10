@@ -1,6 +1,6 @@
 -r requirements.txt
 plantuml
-sphinx~=6.2.1
+sphinx~=7.0.0
 sphinx-rtd-theme==1.2.0
 sphinxcontrib-jquery
 sphinxcontrib-openapi
