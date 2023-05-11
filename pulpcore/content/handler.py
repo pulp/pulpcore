@@ -569,7 +569,7 @@ class Handler:
                     pass
 
             if not repo_version:
-                repo_version = await sync_to_async(repository.latest_version)()
+                repo_version = await repository.alatest_version()
 
         if publication:
             if rel_path == "" or rel_path[-1] == "/":
