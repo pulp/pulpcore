@@ -517,13 +517,15 @@ class Remote(MasterModel):
         """
         Get the type of content that should be available at the relative path.
 
-        Plugin writers are expected to implement this method.
+        Plugin writers are expected to implement this method. This method can return None if the
+        relative path is for metadata that should only be streamed from the remote and not saved.
 
         Args:
             relative_path (str): The relative path of a RemoteArtifact
 
         Returns:
-            Class: The Class of the content type that should be available at the relative path.
+            Optional[Class]: The optional Class of the content type that should be available at the
+                relative path.
         """
         raise NotImplementedError()
 

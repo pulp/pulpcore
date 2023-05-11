@@ -588,7 +588,9 @@ class Content(MasterModel, QueryMixin):
         Return an instance of the specific content by inspecting an artifact.
 
         Plugin writers are expected to override this method with an implementation for a specific
-        content type.
+        content type. If the content type is stored with multiple artifacts plugin writers can
+        instead return a tuple of the unsaved content instance and a dictionary of the content's
+        artifacts by their relative paths.
 
         For example::
 
@@ -604,7 +606,9 @@ class Content(MasterModel, QueryMixin):
             ValueError: If relative_path starts with a '/'.
 
         Returns:
-            An un-saved instance of :class:`~pulpcore.plugin.models.Content` sub-class.
+            An un-saved instance of :class:`~pulpcore.plugin.models.Content` sub-class. Or a
+            tuple of an un-saved instance of :class:`~pulpcore.plugin.models.Content` and a dict
+            of form [relative_path:str, Optional[artifact:`~pulpcore.plugin.models.Artifact`]]
         """
         raise NotImplementedError()
 

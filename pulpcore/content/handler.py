@@ -7,6 +7,7 @@ from gettext import gettext as _
 from aiohttp.client_exceptions import ClientResponseError
 from aiohttp.web import FileResponse, StreamResponse, HTTPOk
 from aiohttp.web_exceptions import (
+    HTTPError,
     HTTPForbidden,
     HTTPFound,
     HTTPNotFound,
@@ -672,32 +673,46 @@ class Handler:
                         request, StreamResponse(headers=headers), ca
                     )
 
+        # If we haven't found a match yet, try to use pull-through caching with remote
         if distro.remote:
             remote = await distro.remote.acast()
-
-            try:
-                url = remote.get_remote_artifact_url(rel_path, request=request)
-
-                ra = await RemoteArtifact.objects.select_related(
-                    "content_artifact",
-                    "content_artifact__artifact",
-                    "content_artifact__artifact__pulp_domain",
-                    "remote",
-                ).aget(remote=remote, url=url)
-
-                ca = ra.content_artifact
-                if ca.artifact:
-                    return await self._serve_content_artifact(ca, headers, request)
-                else:
-                    return await self._stream_content_artifact(
-                        request, StreamResponse(headers=headers), ca
+            if url := remote.get_remote_artifact_url(rel_path, request=request):
+                if (
+                    ra := await RemoteArtifact.objects.select_related(
+                        "content_artifact__artifact__pulp_domain", "remote"
                     )
-            except ObjectDoesNotExist:
-                ca = ContentArtifact(relative_path=rel_path)
-                ra = RemoteArtifact(remote=remote, url=url, content_artifact=ca)
-                return await self._stream_remote_artifact(
-                    request, StreamResponse(headers=headers), ra
-                )
+                    .filter(remote=remote, url=url)
+                    .afirst()
+                ):
+                    # Try to stream the ContentArtifact if already created
+                    ca = ra.content_artifact
+                    if ca.artifact:
+                        return await self._serve_content_artifact(ca, headers, request)
+                    else:
+                        return await self._stream_content_artifact(
+                            request, StreamResponse(headers=headers), ca
+                        )
+                else:
+                    # Try to stream the RemoteArtifact and potentially save it as a new Content unit
+                    save_artifact = remote.get_remote_artifact_content_type(rel_path) is not None
+                    ca = ContentArtifact(relative_path=rel_path)
+                    ra = RemoteArtifact(remote=remote, url=url, content_artifact=ca)
+                    try:
+                        return await self._stream_remote_artifact(
+                            request,
+                            StreamResponse(headers=headers),
+                            ra,
+                            save_artifact=save_artifact,
+                        )
+                    except ClientResponseError as ce:
+
+                        class Error(HTTPError):
+                            status_code = ce.status
+
+                        reason = _("Error while fetching from upstream remote({url}): {r}").format(
+                            url=url, r=ce.message
+                        )
+                        raise Error(reason=reason)
 
         if not any([repository, repo_version, publication, distro.remote]):
             reason = _(
@@ -749,7 +764,7 @@ class Handler:
 
         raise HTTPNotFound()
 
-    def _save_artifact(self, download_result, remote_artifact):
+    def _save_artifact(self, download_result, remote_artifact, request=None):
         """
         Create/Get an Artifact and associate it to a RemoteArtifact and/or ContentArtifact.
 
@@ -767,6 +782,8 @@ class Handler:
 
             remote_artifact (:class:`~pulpcore.plugin.models.RemoteArtifact`): The
                 RemoteArtifact to associate the Artifact with.
+
+            request (:class:`aiohttp.web.Request`): The request.
 
         Returns:
             The associated :class:`~pulpcore.plugin.models.Artifact`.
@@ -795,37 +812,54 @@ class Handler:
                     # the same artifact.
                     os.unlink(download_result.path)
 
-            update_content_artifact = True
             if content_artifact._state.adding:
                 # This is the first time pull-through content was requested.
                 rel_path = content_artifact.relative_path
                 c_type = remote.get_remote_artifact_content_type(rel_path)
+                artifacts = {rel_path: artifact}
                 content = c_type.init_from_artifact_and_relative_path(artifact, rel_path)
+                cas = []
+                if isinstance(content, tuple):
+                    content, artifacts = content
                 try:
                     with transaction.atomic():
                         content.save()
-                        content_artifact.content = content
-                        content_artifact.save()
+                        for relative_path, c_artifact in artifacts.items():
+                            new_ca = ContentArtifact(
+                                relative_path=relative_path, artifact=c_artifact, content=content
+                            )
+                            new_ca.save()
+                            cas.append(new_ca)
                 except IntegrityError:
-                    # There is already content for this Artifact
+                    # There is already content saved
                     content = c_type.objects.get(content.q())
-                    artifacts = content._artifacts
-                    if artifact.sha256 != artifacts.get().sha256:
+                    created_artifact_digests = {rp: a.sha256 for rp, a in artifacts.items() if a}
+                    cas = list(content.contentartifact_set().select_related("artifact"))
+                    found_artifact_digests = {
+                        ca.relative_path: ca.artifact.sha256 for ca in cas if ca.artifact
+                    }
+                    # The created artifacts should be (at least) a subset of the found artifacts
+                    if not created_artifact_digests.items() <= found_artifact_digests.items():
                         raise RuntimeError(
-                            "The Artifact downloaded during pull-through does not "
-                            "match the Artifact already stored for the same "
+                            "The Artifacts created during pull-through does not "
+                            "match the Artifacts already stored for the same "
                             "content."
                         )
-                    content_artifact = ContentArtifact.objects.get(content=content)
-                    update_content_artifact = False
-                try:
-                    with transaction.atomic():
-                        remote_artifact.content_artifact = content_artifact
-                        remote_artifact.save()
-                except IntegrityError:
-                    # Remote artifact must have already gotten saved during a parallel request
-                    log.info("RemoteArtifact already exists.")
-            if update_content_artifact:
+                # Now try to save RemoteArtifacts for each ContentArtifact
+                for ca in cas:
+                    if url := remote.get_remote_artifact_url(ca.relative_path, request=request):
+                        remote_artifact = RemoteArtifact(
+                            remote=remote, content_artifact=ca, url=url
+                        )
+                        try:
+                            with transaction.atomic():
+                                remote_artifact.save()
+                        except IntegrityError:
+                            # Remote artifact must have already been saved during a parallel request
+                            log.info(f"RemoteArtifact for {url} already exists.")
+
+            else:
+                # Normal on-demand downloading, update CA to point to new saved Artifact
                 content_artifact.artifact = artifact
                 content_artifact.save()
         return artifact
@@ -890,7 +924,7 @@ class Handler:
         else:
             raise NotImplementedError()
 
-    async def _stream_remote_artifact(self, request, response, remote_artifact):
+    async def _stream_remote_artifact(self, request, response, remote_artifact, save_artifact=True):
         """
         Stream and save a RemoteArtifact.
 
@@ -899,6 +933,7 @@ class Handler:
             response (:class:`~aiohttp.web.StreamResponse`): The response to stream data to.
             remote_artifact (:class:`~pulpcore.plugin.models.RemoteArtifact`): The RemoteArtifact
                 to fetch and then stream back to the client
+            save_artifact (bool): Override the save behavior on the streamed RemoteArtifact
 
         Raises:
             :class:`~aiohttp.web.HTTPNotFound` when no
@@ -984,7 +1019,7 @@ class Handler:
                 await original_handle_data(data)
 
         async def finalize():
-            if remote.policy != Remote.STREAMED:
+            if save_artifact and remote.policy != Remote.STREAMED:
                 await original_finalize()
 
         downloader = remote.get_downloader(
@@ -996,9 +1031,9 @@ class Handler:
         downloader.finalize = finalize
         download_result = await downloader.run()
 
-        if remote.policy != Remote.STREAMED:
+        if save_artifact and remote.policy != Remote.STREAMED:
             await asyncio.shield(
-                sync_to_async(self._save_artifact)(download_result, remote_artifact)
+                sync_to_async(self._save_artifact)(download_result, remote_artifact, request)
             )
         await response.write_eof()
 
