@@ -225,6 +225,21 @@ class Repository(MasterModel):
             model = self.versions.complete().latest()
             return model
 
+    async def alatest_version(self):
+        """
+        Get the latest RepositoryVersion on a repository asynchronously
+
+        Args:
+            repository (pulpcore.app.models.Repository): to get the latest version of
+
+        Returns:
+            pulpcore.app.models.RepositoryVersion: The latest RepositoryVersion
+
+        """
+        with suppress(RepositoryVersion.DoesNotExist):
+            model = await self.versions.complete().alatest()
+            return model
+
     def natural_key(self):
         """
         Get the model's natural key.
