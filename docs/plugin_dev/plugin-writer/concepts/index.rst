@@ -38,6 +38,7 @@ the box.
    subclassing/viewsets
    subclassing/import-export
    subclassing/replication
+   subclassing/pull-through
 
 
 .. _master-detail-models:
