@@ -20,6 +20,8 @@ from django.db import connection
 from django.utils import timezone
 from django_guid import set_guid
 
+from opentelemetry.metrics import get_meter
+
 from pulpcore.app.models import Worker, Task
 
 from pulpcore.app.util import (
@@ -105,6 +107,10 @@ class NewPulpWorker:
             WORKER_CLEANUP_INTERVAL / 10, WORKER_CLEANUP_INTERVAL
         )
 
+        # Configure metrics
+        meter = get_meter(__name__)
+        self.task_counter = meter.create_counter("task_count")
+
         # Add a file descriptor to trigger select on signals
         self.sentinel, sentinel_w = os.pipe()
         os.set_blocking(self.sentinel, False)
@@ -136,7 +142,7 @@ class NewPulpWorker:
         Create or update worker heartbeat records.
 
         Existing Worker objects are searched for one to update. If an existing one is found, it is
-        updated. Otherwise a new Worker entry is created. Logging at the info level is also done.
+        updated. Otherwise, a new Worker entry is created. Logging at the info level is also done.
 
         """
         worker, created = Worker.objects.get_or_create(
@@ -308,6 +314,7 @@ class NewPulpWorker:
         cancel_state = None
         cancel_reason = None
         with TemporaryDirectory(dir=".") as task_working_dir_rel_path:
+            self.task_counter.add()
             task_process = Process(target=_perform_task, args=(task.pk, task_working_dir_rel_path))
             task_process.start()
             while True:
