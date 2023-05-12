@@ -171,6 +171,27 @@ Features
   :github:`3661`
 
 
+3.23.4 (2023-05-10)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Task purge now continues when encountering a task that could not be deleted. The user is informed
+  about any such tasks.
+  :github:`3530`
+- Closed the window for a race condition in content creation.
+  :github:`3754`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.23.3 (2023-04-18)
 ===================
 REST API
