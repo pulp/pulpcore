@@ -21,7 +21,7 @@ ensuring each user has complete control over the content they manage in Pulp.
 Domains are meant for Pulp admins that need more multi-tenancy abilities than are provided through
 current RBAC features. Domains help greatly when multiple, but distinctly separate tenants are
 sharing the same Pulp instance without having to resort to creating multiple Pulp instances. See
-:ref: RBAC Overview<rbac> for Pulp's RBAC capabilities if you are unsure what Pulp's RBAC can
+:ref:`RBAC Overview<rbac>` for Pulp's RBAC capabilities if you are unsure what Pulp's RBAC can
 currently do.
 
 Enabling Domains
@@ -48,15 +48,26 @@ Creating Domains
 ----------------
 
 Domains have three important fields: a unique ``name``, the backend ``storage class`` and the
-``storage settings`` for the storage backend. See :ref: Storage<storage> documentation to see
+``storage settings`` for the storage backend. See :ref:`Storage<storage>` documentation to see
 available storage backends and settings. The domain name must be unique and is used in the URL path
-after the :ref:``API_ROOT``<api-root>, e.g. ``/pulp/<domain_name>/api/v3/``. You can also customize
+after the :ref:`API_ROOT<api-root>`, e.g. ``/pulp/<domain_name>/api/v3/``. You can also customize
 the content app behavior for your domain through the fields ``redirect_to_object_storage`` and
-``hide_guarded_distributions``. See :ref: settings<settings> for more details on these settings.
+``hide_guarded_distributions``. See :ref:`settings<settings>` for more details on these settings.
 
 .. code-block::
 
-    pulp domains create --name <domain_name> --storage-class <storage_class> --storage-settings <storage_settings>
+    pulp domains create \
+      --name <domain_name> \
+      --storage-class <storage_class> \
+      --storage-settings <storage_settings>
+
+    Specific example:
+
+    pulp domains create \
+      --name foo \
+      --description foo \
+      --storage-class pulpcore.app.models.storage.FileSystem \
+      --storage-settings "{\"MEDIA_ROOT\": \"/var/lib/pulp/media/\"}"
 
 .. note::
 
@@ -77,8 +88,8 @@ Using Domains
 -------------
 
 Once domains are enabled all URLs in Pulp will require the domain name in the path after the
-:ref:``API_ROOT``<api-root> for the Pulp API, e.g. ``/pulp/<domain_name>/api/v3/``, or after the
-:ref:``CONTENT_PATH_PREFIX``<content-path-prefix> for the Content App, e.g.
+:ref:`API_ROOT<api-root>` for the Pulp API, e.g. ``/pulp/<domain_name>/api/v3/``, or after the
+:ref:`CONTENT_PATH_PREFIX<content-path-prefix>` for the Content App, e.g.
 ``/pulp/content/<domain_name>/``. Objects present in Pulp before enabling domains will now be
 present under the ``default`` domain. To work in a domain you must specify the domain's name in the
 URL.
@@ -86,17 +97,16 @@ URL.
 .. code-block::
 
     # List repositories in 'test' domain
-    http :24817/pulp/test/api/v3/repositories/
+    pulp --domain test repository list
 
     # Create a File Repository 'foo' in 'foo' domain
-    http POST :24817/pulp/foo/api/v3/repositories/file/file/ name="foo"
+    pulp --domain foo file repository create --name foo
 
     # Create a File Repository 'foo' in 'boo' domain (Possible because of separate domains)
-    http POST :24817/pulp/boo/api/v3/repositories/file/file/ name="foo"
+    pulp --domain boo file repository create --name foo
 
     # See Exposed Distributions in 'default' domain
-
-    http :24816/pulp/content/default/
+    pulp distribution list
 
 Domains are isolated from each other and perform their own deduplication and uniqueness checks
 within their domain. Therefore multiple domains can each have their own repository named 'foo'; a
