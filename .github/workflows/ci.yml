@@ -8,6 +8,11 @@
 ---
 name: Pulpcore CI
 on: {pull_request: {branches: ['*']}}
+
+concurrency:
+  group: ${{ github.ref_name }}-${{ github.workflow }}
+  cancel-in-progress: true
+
 jobs:
 
   ready-to-ship:
