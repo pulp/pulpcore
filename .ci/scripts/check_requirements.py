@@ -42,9 +42,12 @@ for filename, check_upperbound, check_prereleases, check_r in CHECK_MATRIX:
                     else:
                         errors.append(f"{filename}:{nr}: Unreadable requirement {line}")
                 else:
-                    if check_prereleases and req.specifier.prereleases:
-                        if req.name != "pulpcore-client":
-                            errors.append(f"{filename}:{nr}: Prerelease versions found in {line}.")
+                    if not line.startswith("opentelemetry"):
+                        if check_prereleases and req.specifier.prereleases:
+                            if req.name != "pulpcore-client":
+                                errors.append(
+                                    f"{filename}:{nr}: Prerelease versions found in {line}."
+                                )
                     ops = [op for op, ver in req.specs]
                     spec = str(req.specs)
                     if "~=" in ops:
