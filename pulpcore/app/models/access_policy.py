@@ -49,11 +49,8 @@ class AutoAddObjPermsMixin:
     This mixin adds an ``after_create`` hook which properly interprets the ``creation_hooks``
     data and calls methods also provided by this mixin to add roles.
 
-    These mixing are provided by default:
+    These hooks are provided by default:
 
-    * ``add_for_object_creator`` will add the permissions to the creator of the object.
-    * ``add_for_users`` will add the permissions for one or more users by name.
-    * ``add_for_groups`` will add the permissions for one or more groups by name.
     * ``add_roles_for_object_creator`` will add the roles to the creator of the object.
     * ``add_roles_for_users`` will add the roles for one or more users by name.
     * ``add_roles_for_groups`` will add the roles for one or more groups by name.
