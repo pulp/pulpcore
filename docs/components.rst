@@ -142,3 +142,34 @@ An example payload:
     	}],
         "postgresqlVersion": 90200
     }
+
+
+.. _telemetry:
+
+Telemetry Support
+-----------------
+
+Pulp can produce OpenTelemetry data, like the number of requests, active connections and latency response for
+both `pulp-api` and `pulp-content` using OpenTelemetry. You can read more about 
+`OpenTelemetry here <https://opentelemetry.io>`_.
+
+If you are using `Pulp in One Container <https://pulpproject.org/pulp-in-one-container/>`_ or `Pulp Operator 
+<https://docs.pulpproject.org/pulp_operator/>`_ and want to enable it, you will need to set the following 
+environment variables:
+
+* ``PULP_OTEL_ENABLED`` set to ``True``.
+* ``OTEL_EXPORTER_OTLP_ENDPOINT`` set to the address of your OpenTelemetry Collector instance 
+  ex. ``http://otel-collector:4318``.
+* ``OTEL_EXPORTER_OTLP_PROTOCOL`` set to ``http/protobuf``.
+
+If you are using other type of installation maybe you will need to manually initialize Pulp using the 
+`OpenTelemetry automatic instrumentation 
+<https://opentelemetry.io/docs/instrumentation/python/getting-started/#instrumentation>`_
+and set the following environment variables:
+
+* ``OTEL_EXPORTER_OTLP_ENDPOINT`` set to the address of your OpenTelemetry Collector instance 
+  ex. ``http://otel-collector:4318``.
+* ``OTEL_EXPORTER_OTLP_PROTOCOL`` set to ``http/protobuf``.
+
+You will need to run an instance of OpenTelemetry Collector. You can read more about the `OpenTelemetry 
+Collector here <https://opentelemetry.io/docs/collector/>`_.

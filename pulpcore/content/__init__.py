@@ -25,11 +25,14 @@ from pulpcore.app.models import ContentAppStatus  # noqa: E402: module level not
 
 from .handler import Handler  # noqa: E402: module level not at top of file
 from .authentication import authenticate  # noqa: E402: module level not at top of file
+from .instrumentation import (  # noqa: E402: module level not at top of file
+    middleware as instrumentation,
+)
 
 
 log = logging.getLogger(__name__)
 
-app = web.Application(middlewares=[authenticate])
+app = web.Application(middlewares=[authenticate, instrumentation])
 
 CONTENT_MODULE_NAME = "content"
 
