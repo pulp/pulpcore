@@ -17,6 +17,33 @@ Changelog
 
 .. towncrier release notes start
 
+3.26.0 (2023-05-16)
+===================
+REST API
+--------
+
+Features
+~~~~~~~~
+
+- Added a pre-delete hook to domains in order to stop orphaned content preventing the deletion.
+  :github:`3800`
+- Enabled OpenTelemetry metrics and tracing for the pulp-api app.
+  :github:`3835`
+
+
+Improved Documentation
+~~~~~~~~~~~~~~~~~~~~~~
+
+- Updated examples and fixed some typos in Domains workflow doc.
+  :github:`3825`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.25.0 (2023-05-10)
 ===================
 REST API
