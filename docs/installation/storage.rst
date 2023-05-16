@@ -20,7 +20,7 @@ This is the default storage backend Pulp will use if another is not specified. B
 set the ``MEDIA_ROOT`` to ``/var/lib/pulp/media`` as the location where Pulp will store its files.
 There are three other settings that can be modified, ``MEDIA_URL``, ``FILE_UPLOAD_PERMISSIONS`` and
 ``FILE_UPLOAD_DIRECTORY_PERMISSIONS``. Pulp leaves these settings on their default ``Django`` values.
-See `Django docs <https://docs.djangoproject.com/en/3.2/ref/files/storage/#django.core.files.storage.FileSystemStorage>`_
+See `Django docs <https://docs.djangoproject.com/en/4.2/ref/files/storage/#django.core.files.storage.FileSystemStorage>`_
 for more information.
 
 SFTP
