@@ -92,5 +92,5 @@ you to specify another WSGI environment variable to read the authenticated usern
 .. warning::
 
     Configuring this has serious security implications. See the `Django warning at the end of this
-    section in their docs <https://docs.djangoproject.com/en/3.2/howto/auth-remote-user/
+    section in their docs <https://docs.djangoproject.com/en/4.2/howto/auth-remote-user/
     #configuration>`_ for more details.

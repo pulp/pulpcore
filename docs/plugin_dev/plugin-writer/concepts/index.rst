@@ -55,7 +55,7 @@ Conceptually this is easy, but two practical problems arise:
 * Migrations are now no longer on a single table, but N tables produced from subclassing.
 
 To address these issues, pulpcore uses Django's `Multi-table inheritance support <https://docs.
-djangoproject.com/en/3.2/topics/db/models/#multi-table-inheritance>`_ to create a pattern Pulp
+djangoproject.com/en/4.2/topics/db/models/#multi-table-inheritance>`_ to create a pattern Pulp
 developers call the "Master/Detail pattern". The model defining the common fields is called the
 "Master model", and any subclass of a Master model is referred to as a "Detail model".
 
@@ -286,7 +286,7 @@ GroupProgressReport needs to be updated.
 
         # .update(done=F('done') + 1)
 
-        # See: https://docs.djangoproject.com/en/3.2/ref/models/expressions/#f-expressions
+        # See: https://docs.djangoproject.com/en/4.2/ref/models/expressions/#f-expressions
         # Important: F() objects assigned to model fields persist after saving the model instance and
         # will be applied on each save(). Do not use save() and use update() instead, otherwise
         # refresh_from_db() should be called after each save()
@@ -754,7 +754,7 @@ likely patterns to be applied:
 1. Avoid it. Is this rename really that important? Is it worth the trouble?
 
 2. Rename the model attributes in code, but leave the actual column name as-is with
-   the `db_column <https://docs.djangoproject.com/en/3.2/ref/models/fields/#db-column>`_.
+   the `db_column <https://docs.djangoproject.com/en/4.2/ref/models/fields/#db-column>`_.
 
 3. Have an "old" and a "new" column and use database triggers to keep data written to one to also be
    written to the other and vice-versa.

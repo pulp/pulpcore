@@ -26,7 +26,7 @@ The Model permissions are created automatically by Django, and receive a name li
 ``<app_name>.<action>_<model_name>``. For example to change file remote the permission is named
 ``file.change_fileremote``. You can view the Permissions on a system via the Django ORM with:
 ``Permission.objects.all()``. See the `Django Permissions Docs <https://docs.djangoproject.com/en/
-3.2/topics/auth/default/#permissions-and-authorization>`_ for more information on working with
+4.2/topics/auth/default/#permissions-and-authorization>`_ for more information on working with
 permissions.
 
 Here's an example of the Permissions automatically created for the ``FileRemote`` model:
@@ -43,7 +43,7 @@ Defining Custom Permissions
 ---------------------------
 
 Any model can define custom permissions, and Django will automatically make a migration to add it
-for you. See the `Django Custom Permissions Documentation <https://docs.djangoproject.com/en/3.2/
+for you. See the `Django Custom Permissions Documentation <https://docs.djangoproject.com/en/4.2/
 topics/auth/customizing/#custom-permissions>`_ for more information on how to do that. In contrast
 to ``AccessPolicies`` and ``creation_hooks``, permissions can only be defined by the plugin writer.
 As a rule of thumb, permissions should be the atomic building blocks for roles and each action that

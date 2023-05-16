@@ -22,7 +22,7 @@ Concepts
 
 Authentication in Pulp is provided by Django Rest Framework and Django together.
 
-Django provides the `AUTHENTICATION_BACKENDS <https://docs.djangoproject.com/en/3.2/ref/settings/
+Django provides the `AUTHENTICATION_BACKENDS <https://docs.djangoproject.com/en/4.2/ref/settings/
 #std:setting-AUTHENTICATION_BACKENDS>`_ which defines a set of behaviors to check usernames and
 passwords against. By default it is set to::
 

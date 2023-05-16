@@ -28,7 +28,7 @@ Django Settings
 ---------------
 
 Below is a list of the most common Django settings Pulp users typically use. Pulp is a Django
-project, so any `Django setting <https://docs.djangoproject.com/en/3.2/ref/settings/>`_ can be set.
+project, so any `Django setting <https://docs.djangoproject.com/en/4.2/ref/settings/>`_ can be set.
 
 
 .. _secret-key-setting:
@@ -37,7 +37,7 @@ SECRET_KEY
 ^^^^^^^^^^
 
     In order to get a pulp server up and running a `Django SECRET_KEY
-    <https://docs.djangoproject.com/en/3.2/ref/settings/#secret-key>`_ *must* be
+    <https://docs.djangoproject.com/en/4.2/ref/settings/#secret-key>`_ *must* be
     provided.
 
     The following code snippet can be used to generate a random SECRET_KEY.
@@ -133,8 +133,8 @@ LOGGING
 ^^^^^^^
 
    By default Pulp logs at an INFO level to syslog. For all possible configurations please
-   refer to `Django documenation on logging <https://docs.djangoproject.com/en/3
-   .2/topics/logging/#configuring-logging>`_.
+   refer to `Django documenation on logging <https://docs.djangoproject.com/en/4.2/topics/
+   logging/#configuring-logging>`_
 
    Enabling DEBUG logging is a common troubleshooting step. See the :ref:`enabling-debug-logging`
    documentation for details on how to do that.
@@ -149,7 +149,7 @@ AUTHENTICATION_BACKENDS
    2. Webserver authentication that relies on the webserver to perform the authentication.
 
    To change the authentication types Pulp will use, modify the ``AUTHENTICATION_BACKENDS``
-   settings. See the `Django authentication documentation <https://docs.djangoproject.com/en/3.2/
+   settings. See the `Django authentication documentation <https://docs.djangoproject.com/en/4.2/
    topics/auth/customizing/#authentication-backends>`_ for more information.
 
 
@@ -338,7 +338,7 @@ REMOTE_USER_ENVIRON_NAME
    .. warning::
 
       Configuring this has serious security implications. See the `Django warning at the end of this
-      section in their docs <https://docs.djangoproject.com/en/3.2/howto/auth-remote-user/
+      section in their docs <https://docs.djangoproject.com/en/4.2/howto/auth-remote-user/
       #configuration>`_ for more details.
 
    Defaults to ``'REMOTE_USER'``.

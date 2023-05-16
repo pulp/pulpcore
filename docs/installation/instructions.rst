@@ -172,7 +172,7 @@ The default PostgreSQL user and database name in the `settings <settings>` is ``
 customize the configuration of your Pulp installation, you will need to create this user with the proper permissions
 and also create the ``pulp`` database owned by the ``pulp`` user. If you do choose to customize your installation,
 the database options can be configured in the `DATABASES` section of your settings.
-See the `Django database settings documentation <https://docs.djangoproject.com/en/3.2/ref/settings/#databases>`_
+See the `Django database settings documentation <https://docs.djangoproject.com/en/4.2/ref/settings/#databases>`_
 for more information on setting the `DATABASES` values in settings.
 
 Sample commands on EL8 are as follows::

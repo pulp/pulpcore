@@ -22,7 +22,7 @@ Pulp's authorization model has the following architecture:
 
 :Task Permissions Check: A permission check that occurs inside of Task code. This tends to use
     permission checking calls like `has_perm` or `has_perms` `provided by Django <https://
-    docs.djangoproject.com/en/3.2/ref/contrib/auth/#django.contrib.auth.models.User.has_perm>`_.
+    docs.djangoproject.com/en/4.2/ref/contrib/auth/#django.contrib.auth.models.User.has_perm>`_.
 
 :Permission Checking Machinery: A set of methods which can check various conditions such as if a
     requesting user has a given permission, or is a member of a group that has a given permission,
