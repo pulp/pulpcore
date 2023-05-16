@@ -11,10 +11,6 @@ Changelog
 
     WARNING: Don't drop the towncrier directive!
 
-.. warning::
-    Until Role-Based Access Control is added to Pulp, REST API is not safe for multi-user use.
-    Sensitive credentials can be read by any user, e.g. ``Remote.password``, ``Remote.client_key``.
-
 .. towncrier release notes start
 
 3.25.0 (2023-05-10)
