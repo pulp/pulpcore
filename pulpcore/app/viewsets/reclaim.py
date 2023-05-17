@@ -1,4 +1,5 @@
 from drf_spectacular.utils import extend_schema
+from django.conf import settings
 from rest_framework.viewsets import ViewSet
 
 from pulpcore.app.response import OperationPostponedResponse
@@ -35,8 +36,17 @@ class ReclaimSpaceViewSet(ViewSet):
             repos.append(rv.repository)
             keeplist_rv_pks.append(rv.pk)
 
+        if repos:
+            exclusive_resources = None
+        else:
+            uri = "/api/v3/repositories/reclaim_space/"
+            if settings.DOMAIN_ENABLED:
+                uri = f"/{request.pulp_domain.name}{uri}"
+            exclusive_resources = [uri]
+
         task = dispatch(
             reclaim_space,
+            exclusive_resources=exclusive_resources,
             shared_resources=repos,
             kwargs={
                 "repo_pks": reclaim_repo_pks,
