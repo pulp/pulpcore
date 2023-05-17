@@ -4,6 +4,7 @@ from logging import getLogger
 import asyncio
 import hashlib
 
+from aiohttp.client_exceptions import ClientResponseError
 from asgiref.sync import sync_to_async
 from django.core.files.storage import default_storage
 from django.db import transaction
@@ -74,17 +75,21 @@ async def _repair_ca(content_artifact, repaired=None):
     async for remote_artifact in remote_artifacts:
         detail_remote = await sync_to_async(remote_artifact.remote.cast)()
         downloader = detail_remote.get_downloader(remote_artifact)
-        dl_result = await downloader.run()
-        if dl_result.artifact_attributes["sha256"] == content_artifact.artifact.sha256:
-            with open(dl_result.path, "rb") as src:
-                filename = content_artifact.artifact.file.name
-                await sync_to_async(content_artifact.artifact.file.delete)(save=False)
-                await sync_to_async(content_artifact.artifact.file.save)(filename, src, save=False)
-            if repaired is not None:
-                await repaired.aincrement()
-            return True
-        log.warn(_("Redownload failed from {}.").format(remote_artifact.url))
-
+        try:
+            dl_result = await downloader.run()
+        except ClientResponseError as e:
+            log.warn(_("Redownload failed from '{}': {}.").format(remote_artifact.url, str(e)))
+        else:
+            if dl_result.artifact_attributes["sha256"] == content_artifact.artifact.sha256:
+                with open(dl_result.path, "rb") as src:
+                    filename = content_artifact.artifact.file.name
+                    await sync_to_async(content_artifact.artifact.file.delete)(save=False)
+                    await sync_to_async(content_artifact.artifact.file.save)(
+                        filename, src, save=False
+                    )
+                if repaired is not None:
+                    await repaired.aincrement()
+                return True
     return False
 
 
