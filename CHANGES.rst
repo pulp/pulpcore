@@ -27,8 +27,6 @@ Features
 
 - Added a pre-delete hook to domains in order to stop orphaned content preventing the deletion.
   :github:`3800`
-- Enabled OpenTelemetry metrics and tracing for the pulp-api app.
-  :github:`3835`
 
 
 Improved Documentation
@@ -56,6 +54,8 @@ Features
   :github:`2865`
 - Updated Django version to 4.2 LTS branch.
   :github:`3660`
+- Enabled OpenTelemetry metrics and tracing for the pulp-api app.
+  :github:`3835`
 
 
 Bugfixes
