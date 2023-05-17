@@ -225,6 +225,7 @@ def test_special_domain_creation(domains_api_client, gen_object_with_cleanup):
     }
 
     installed_backends = []
+    domain_names = set()
     for backend in storage_types:
         body = {
             "name": str(uuid.uuid4()),
@@ -234,12 +235,13 @@ def test_special_domain_creation(domains_api_client, gen_object_with_cleanup):
         if backend == "pulpcore.app.models.storage.PulpSFTPStorage":
             body["redirect_to_object_storage"] = False
         try:
-            gen_object_with_cleanup(domains_api_client, body)
+            domain = gen_object_with_cleanup(domains_api_client, body)
         except ApiException as e:
             assert e.status == 400
             assert "Backend is not installed on Pulp." in e.body
         else:
             installed_backends.append(backend)
+            domain_names.add(domain.name)
     # Try creating domains with correct settings
     for backend in installed_backends:
         body = {
@@ -247,7 +249,8 @@ def test_special_domain_creation(domains_api_client, gen_object_with_cleanup):
             "storage_class": backend,
             "storage_settings": storage_settings[backend],
         }
-        gen_object_with_cleanup(domains_api_client, body)
+        domain = gen_object_with_cleanup(domains_api_client, body)
+        domain_names.add(domain.name)
 
     # Try creating domains with incorrect settings
     for backend in installed_backends:
@@ -267,11 +270,8 @@ def test_special_domain_creation(domains_api_client, gen_object_with_cleanup):
 
     # Check that all domains are "apart" of the default domain
     domains = domains_api_client.list()
-    domain_names = set()
     for domain in domains.results:
         assert "default/api/v3/" in domain.pulp_href
-        domain_names.add(domain.name)
-
     # Check that operations on domains in another "domain" doesn't change href
     random_name = random.choice(tuple(domain_names - {"default"}))
     domains = domains_api_client.list(pulp_domain=random_name)
