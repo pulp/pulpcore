@@ -2,6 +2,8 @@ import os
 
 from gettext import gettext as _
 
+from aiohttp.client_exceptions import ClientResponseError
+
 from django.conf import settings
 from django.core.management import BaseCommand, CommandError
 from django.db.models import Q, Sum
@@ -122,15 +124,23 @@ class Command(BaseCommand):
                     if remote.policy == "immediate":
                         self.stdout.write(_("Restoring missing file {}").format(file_path))
                         downloader = remote.get_downloader(ra)
-                        dl_result = downloader.fetch()
-                        # FIXME in case url is not available anymore this will break
-                        if dl_result.artifact_attributes["sha256"] == artifact.sha256:
-                            with open(dl_result.path, "rb") as src:
-                                filename = artifact.file.name
-                                artifact.file.save(filename, src, save=False)
-                            setattr(artifact, checksum, dl_result.artifact_attributes[checksum])
-                            restored = True
-                            break
+                        try:
+                            dl_result = downloader.fetch()
+                        except ClientResponseError as e:
+                            self.stdout.write(
+                                _("Redownload failed from '{}': {}.").format(ra.url, str(e))
+                            )
+                        else:
+                            if dl_result.artifact_attributes["sha256"] == artifact.sha256:
+                                with open(dl_result.path, "rb") as src:
+                                    filename = artifact.file.name
+                                    artifact.file.delete(save=False)
+                                    artifact.file.save(filename, src, save=False)
+                                setattr(artifact, checksum, dl_result.artifact_attributes[checksum])
+                                restored = True
+                                break
+                self.stdout.write(_("Deleting unreparable file {}".format(file_path)))
+                artifact.file.delete(save=False)
             else:
                 break
         return restored
