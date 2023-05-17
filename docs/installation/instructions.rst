@@ -150,7 +150,7 @@ Installation package considerations
 
 Pulp needs a version of PostgreSQL providing session based advisory locks and listen-notify. Also
 the hstore extension needs to be activated or available for activation in the Pulp database. Any
-version starting from 11 should work, but we recommend using at least version 13.
+version starting with 12 should work, but we recommend using at least version 13.
 
 To install PostgreSQL, refer to the package manager or the
 `PostgreSQL install docs <http://postgresguide.com/setup/install.html>`_. Oftentimes, you can also find better
