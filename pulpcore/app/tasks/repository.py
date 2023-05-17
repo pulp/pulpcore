@@ -70,6 +70,10 @@ async def _repair_ca(content_artifact, repaired=None):
         log.warn(
             _("Artifact {} is unrepairable - no remote source".format(content_artifact.artifact))
         )
+        log.warning(
+            "Deleting file for the unreparable artifact {}".format(content_artifact.artifact)
+        )
+        await sync_to_async(content_artifact.artifact.file.delete)(save=False)
         return False
 
     async for remote_artifact in remote_artifacts:
@@ -90,6 +94,8 @@ async def _repair_ca(content_artifact, repaired=None):
                 if repaired is not None:
                     await repaired.aincrement()
                 return True
+    log.warning("Deleting file for the unreparable artifact {}".format(content_artifact.artifact))
+    await sync_to_async(content_artifact.artifact.file.delete)(save=False)
     return False
 
 
