@@ -22,7 +22,11 @@ Here are the steps to take to release a Pulpcore version. New Y-releases of Pulp
 
     5. Arrange for a new oci-image for that release by following the `"oci-images Release Instructions" <https://github.com/pulp/pulp-oci-images/blob/latest/docs/developer-instructions.md>`_.
 
-    6. Add the Y-release to ``ci_branches`` in `pulpcore's template.config.yml <https://github.com/pulp/pulpcore/blob/main/template_config.yml#L22>`_.
+    6. Update the ``ci_branches`` stanza in `pulpcore's template.config.yml <https://github.com/pulp/pulpcore/blob/main/template_config.yml#L22>`_. This stanza should always (and only) contain:
+
+      * The most-current (i.e., newly-released) branch.
+
+      * All branches in use by supported downstream products (see below). These are branches we will consider backporting selected bugfixes to.
 
     7. Monitor `pulpcore pull-requests <https://github.com/pulp/pulpcore/pulls>`_ for creation of a PR such as `"Update supported versions" <https://github.com/pulp/pulp-ci/pull/826>`_. Such PRs are created by `this job <https://github.com/pulp/pulp-ci/actions/workflows/supported.yml>`_. The job may have been disabled if there hasn't been any release-activity in the repository for at least 60 days. You will need to re-enable it in this case.
 
@@ -31,3 +35,25 @@ Some possible failures of **Step 2**, above, include:
   * If release-tag is new but not based on current-dev, workflow will complain and fail
 
   * If release-tag is for an existing release (by accident) , the workflow won't fail until the docs-pub. Cleaning this up can be Exciting.
+
+Active branches as of 2023-05-16:
+====================================
+  * pulpcore
+
+    * 3.23 (galaxyNG/4.7)
+
+    * 3.22 (katello/4.9)
+
+    * 3.21 (katello/4.7, galaxyNG/4.6, RHUI/4.3)
+
+    * 3.18 (katello/4.5)
+
+    * 3.16 (katello/4.3)
+
+  * pulp_file
+
+    * 1.12 (katello/4.9)
+
+    * 1.11 (katello/4.7)
+
+    * 1.10 (katello/4.3. 4.5)
