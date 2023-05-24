@@ -194,6 +194,25 @@ Features
   :github:`3661`
 
 
+3.23.5 (2023-05-23)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Serialized global reclaim space, global repair artifacts tasks with respect to each other
+  to prevent them from failing.
+  :github:`3786`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.23.4 (2023-05-10)
 ===================
 REST API
