@@ -289,6 +289,7 @@ class Handler:
                 .select_related(
                     "repository",
                     "repository_version",
+                    "repository_version__repository",
                     "publication",
                     "remote",
                     "pulp_domain",
