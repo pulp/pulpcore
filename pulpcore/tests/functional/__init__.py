@@ -6,7 +6,9 @@ import socket
 import ssl
 import subprocess
 import threading
+import time
 import uuid
+import warnings
 
 import trustme
 import proxy
@@ -18,6 +20,7 @@ from dataclasses import dataclass
 from packaging.version import parse as parse_version
 from time import sleep
 from yarl import URL
+from opentelemetry.proto.trace.v1.trace_pb2 import TracesData
 
 from pulpcore.tests.functional.utils import (
     SLEEP_TIME,
@@ -413,10 +416,89 @@ class ThreadedAiohttpServerData:
         return f"{protocol_handler}{self.host}:{self.port}{path}"
 
 
-# Webserver Fixtures
+# Fake OTel collector
+@pytest.fixture(scope="session")
+def _otel_collector(status_api_client):
+    if (
+        os.environ.get("PULP_OTEL_ENABLED") != "true"
+        or os.environ.get("OTEL_EXPORTER_OTLP_ENDPOINT") != "http://localhost:4318"
+        or os.environ.get("OTEL_EXPORTER_OTLP_PROTOCOL") != "http/protobuf"
+    ):
+        warnings.warn(UserWarning("Telemetry tests are disabled."))
+        yield
+        return
+
+    expected_spans = []
+    unexpected_spans = []
+
+    async def _null_handler(request):
+        raise web.HTTPOk()
+
+    async def _traces_handler(request):
+        # __import__('ipdb').set_trace()
+        traces_data = TracesData()
+        traces_data.ParseFromString(await request.read())
+        for resource_span in traces_data.resource_spans:
+            for scope_span in resource_span.scope_spans:
+                for span in scope_span.spans:
+                    attrs = {
+                        item.key: getattr(item.value, item.value.WhichOneof("value"))
+                        for item in span.attributes
+                    }
+                matched_span = next(
+                    (
+                        span
+                        for span in expected_spans
+                        if all((attrs.get(k) == v for k, v in span.items()))
+                    ),
+                    None,
+                )
+                if matched_span:
+                    expected_spans.remove(matched_span)
+                else:
+                    unexpected_spans.append(attrs)
+        raise web.HTTPOk()
+
+    app = web.Application()
+    app.add_routes(
+        [
+            web.post("/v1/metrics", _null_handler),
+            web.post("/v1/traces", _traces_handler),
+        ]
+    )
+
+    host = "127.0.0.1"
+    port = 4318
+    collector_server = ThreadedAiohttpServer(app, host, port, ssl_ctx=None)
+    collector_server.daemon = True
+    collector_server.start()
+
+    yield expected_spans
+
+    collector_server.stop()
+    collector_server.join()
+    if expected_spans:
+        raise Exception(
+            (
+                f"Expected spans are still missing: {expected_spans}\n"
+                "Unexpeced spans received: {unexpected_spans}"
+            )
+        )
 
 
 @pytest.fixture
+def expect_span(_otel_collector):
+    def _expect_span(span):
+        if _otel_collector is not None:
+            _otel_collector.append(span)
+
+    return _expect_span
+
+
+# Webserver Fixtures
+
+
+@pytest.fixture(scope="session")
 def unused_port():
     def _unused_port():
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:

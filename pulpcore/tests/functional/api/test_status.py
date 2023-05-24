@@ -56,44 +56,63 @@ STATUS = {
     ],
 }
 
-
-@pytest.fixture(scope="module")
-def expected_pulp_status_schema():
-    """Returns the expected status response."""
-    if settings.DEFAULT_FILE_STORAGE != "pulpcore.app.models.storage.FileSystem":
-        STATUS["properties"]["storage"].pop("properties")
-        STATUS["properties"]["storage"]["type"] = "null"
-
-    return STATUS
+if settings.DEFAULT_FILE_STORAGE != "pulpcore.app.models.storage.FileSystem":
+    STATUS["properties"]["storage"].pop("properties")
+    STATUS["properties"]["storage"]["type"] = "null"
 
 
 @pytest.mark.parallel
-def test_get_authenticated(status_api_client, expected_pulp_status_schema):
+def test_get_authenticated(status_api_client, expect_span):
     """GET the status path with valid credentials.
 
     Verify the response with :meth:`verify_get_response`.
     """
+    expect_span(
+        {
+            "http.method": "GET",
+            "http.target": "/pulp/api/v3/status/",
+            "http.status_code": 200,
+            "http.user_agent": "api/test_status.py::test_get_unauthenticated",
+        }
+    )
     response = status_api_client.status_read()
-    verify_get_response(response.to_dict(), expected_pulp_status_schema)
+    verify_get_response(response.to_dict(), STATUS)
 
 
 @pytest.mark.parallel
-def test_get_unauthenticated(status_api_client, anonymous_user, expected_pulp_status_schema):
+def test_get_unauthenticated(status_api_client, anonymous_user, expect_span):
     """GET the status path with no credentials.
 
     Verify the response with :meth:`verify_get_response`.
     """
     with anonymous_user:
         response = status_api_client.status_read()
-    verify_get_response(response.to_dict(), expected_pulp_status_schema)
+
+    expect_span(
+        {
+            "http.method": "GET",
+            "http.target": "/pulp/api/v3/status/",
+            "http.status_code": 200,
+            "http.user_agent": "api/test_status.py::test_get_unauthenticated",
+        }
+    )
+    verify_get_response(response.to_dict(), STATUS)
 
 
 @pytest.mark.parallel
-def test_post_authenticated(status_api_client, pulpcore_client, pulp_api_v3_url):
+def test_post_authenticated(status_api_client, pulpcore_client, pulp_api_v3_url, expect_span):
     """POST the status path with valid credentials.
 
     Assert an error is returned.
     """
+    expect_span(
+        {
+            "http.method": "POST",
+            "http.target": "/pulp/api/v3/status/",
+            "http.status_code": 405,
+            "http.user_agent": "api/test_status.py::test_post_authenticated",
+        }
+    )
     # Ensure bindings doesn't have a "post" method
     attrs = dir(status_api_client)
     for post_attr in ("create", "post", "status_post", "status_create"):
