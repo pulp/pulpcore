@@ -1,4 +1,5 @@
 """Test the status page."""
+import os
 import pytest
 
 from django.conf import settings
@@ -57,18 +58,31 @@ STATUS = {
 }
 
 
+@pytest.fixture
+def test_path():
+    return os.getenv("PYTEST_CURRENT_TEST").split()[0]
+
+
 @pytest.mark.parallel
-def test_get_authenticated(status_api_client):
+def test_get_authenticated(test_path, status_api_client, received_otel_span):
     """GET the status path with valid credentials.
 
     Verify the response with :meth:`verify_get_response`.
     """
     response = status_api_client.status_read()
     verify_get_response(response.to_dict(), STATUS)
+    assert received_otel_span(
+        {
+            "http.method": "GET",
+            "http.target": "/pulp/api/v3/status/",
+            "http.status_code": 200,
+            "http.user_agent": test_path,
+        }
+    )
 
 
 @pytest.mark.parallel
-def test_get_unauthenticated(status_api_client, anonymous_user):
+def test_get_unauthenticated(test_path, status_api_client, anonymous_user, received_otel_span):
     """GET the status path with no credentials.
 
     Verify the response with :meth:`verify_get_response`.
@@ -76,10 +90,25 @@ def test_get_unauthenticated(status_api_client, anonymous_user):
     with anonymous_user:
         response = status_api_client.status_read()
     verify_get_response(response.to_dict(), STATUS)
+    assert received_otel_span(
+        {
+            "http.method": "GET",
+            "http.target": "/pulp/api/v3/status/",
+            "http.status_code": 200,
+            "http.user_agent": test_path,
+        }
+    )
 
 
 @pytest.mark.parallel
-def test_post_authenticated(status_api_client, pulpcore_client, pulp_api_v3_url):
+def test_post_authenticated(
+    test_path,
+    pulp_api_v3_path,
+    status_api_client,
+    pulpcore_client,
+    pulp_api_v3_url,
+    received_otel_span,
+):
     """POST the status path with valid credentials.
 
     Assert an error is returned.
@@ -91,9 +120,17 @@ def test_post_authenticated(status_api_client, pulpcore_client, pulp_api_v3_url)
     # Try anyway to POST to /status/
     status_url = f"{pulp_api_v3_url}status/"
     with pytest.raises(ApiException) as e:
-        pulpcore_client.request("POST", status_url)
+        pulpcore_client.request("POST", status_url, headers={"User-Agent": test_path})
 
     assert e.value.status == 405
+    assert received_otel_span(
+        {
+            "http.method": "POST",
+            "http.target": f"{pulp_api_v3_path}status/",
+            "http.status_code": 405,
+            "http.user_agent": test_path,
+        }
+    )
 
 
 @pytest.mark.parallel

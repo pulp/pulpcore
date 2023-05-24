@@ -6,7 +6,9 @@ import socket
 import ssl
 import subprocess
 import threading
+import time
 import uuid
+import warnings
 
 import trustme
 import proxy
@@ -18,6 +20,7 @@ from dataclasses import dataclass
 from packaging.version import parse as parse_version
 from time import sleep
 from yarl import URL
+from opentelemetry.proto.trace.v1.trace_pb2 import TracesData
 
 from pulpcore.tests.functional.utils import (
     SLEEP_TIME,
@@ -411,6 +414,26 @@ class ThreadedAiohttpServerData:
             protocol_handler = "https://"
 
         return f"{protocol_handler}{self.host}:{self.port}{path}"
+
+
+@pytest.fixture(scope="session")
+def received_otel_span():
+    def _received_otel_span(data):
+        if os.environ.get("PULP_OTEL_ENABLED") != "true":
+            # pretend everything is working as expected if tests are run from
+            # a non-configured runner
+            return True
+
+        async def _send_request():
+            async with aiohttp.ClientSession(raise_for_status=True) as session:
+                otel_server_url = os.environ.get("OTEL_EXPORTER_OTLP_ENDPOINT")
+                async with session.post(f"{otel_server_url}/test", json=data) as response:
+                    return response.status
+
+        status = asyncio.run(_send_request())
+        return True if status == 200 else False
+
+    return _received_otel_span
 
 
 # Webserver Fixtures

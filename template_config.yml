@@ -64,6 +64,12 @@ pre_job_template: null
 publish_docs_to_pulpprojectdotorg: true
 pulp_env: {}
 pulp_env_azure: {}
+pulp_env_azure:
+  otel_bsp_max_export_batch_size: 1
+  otel_bsp_max_queue_size: 1
+  otel_exporter_otlp_endpoint: http://localhost:4318
+  otel_exporter_otlp_protocol: http/protobuf
+  pulp_otel_enabled: 'true'
 pulp_env_gcp: {}
 pulp_env_s3: {}
 pulp_scheme: https
