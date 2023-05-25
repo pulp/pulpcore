@@ -349,25 +349,34 @@ def repair_api_client(pulpcore_client):
 
 
 class ThreadedAiohttpServer(threading.Thread):
-    def __init__(self, shutdown_event, app, host, port, ssl_ctx):
+    def __init__(self, app, host, port, ssl_ctx):
         super().__init__()
-        self.shutdown_event = shutdown_event
         self.app = app
         self.host = host
         self.port = port
         self.ssl_ctx = ssl_ctx
+        self.loop = asyncio.new_event_loop()
+
+    async def arun(self):
+        runner = web.AppRunner(self.app)
+        await runner.setup()
+        site = web.TCPSite(runner, host=self.host, port=self.port, ssl_context=self.ssl_ctx)
+        await site.start()
+        async with self.shutdown_condition:
+            await self.shutdown_condition.wait()
+        await runner.cleanup()
 
     def run(self):
-        loop = asyncio.new_event_loop()
-        runner = web.AppRunner(self.app)
-        asyncio.set_event_loop(loop)
-        loop.run_until_complete(runner.setup())
-        site = web.TCPSite(runner, host=self.host, port=self.port, ssl_context=self.ssl_ctx)
-        loop.run_until_complete(site.start())
-        while True:
-            loop.run_until_complete(asyncio.sleep(1))
-            if self.shutdown_event.is_set():
-                break
+        asyncio.set_event_loop(self.loop)
+        self.shutdown_condition = asyncio.Condition()
+        self.loop.run_until_complete(self.arun())
+
+    async def astop(self):
+        async with self.shutdown_condition:
+            self.shutdown_condition.notify_all()
+
+    def stop(self):
+        asyncio.run_coroutine_threadsafe(self.astop(), self.loop)
 
 
 class ThreadedAiohttpServerData:
@@ -375,14 +384,12 @@ class ThreadedAiohttpServerData:
         self,
         host,
         port,
-        shutdown_event,
         thread,
         ssl_ctx,
         requests_record,
     ):
         self.host = host
         self.port = port
-        self.shutdown_event = shutdown_event
         self.thread = thread
         self.ssl_ctx = ssl_ctx
         self.requests_record = requests_record
@@ -419,14 +426,12 @@ def gen_threaded_aiohttp_server(fixtures_cfg, unused_port):
     def _gen_threaded_aiohttp_server(app, ssl_ctx, call_record):
         host = fixtures_cfg.aiohttp_fixtures_origin
         port = unused_port()
-        shutdown_event = threading.Event()
-        fixture_server = ThreadedAiohttpServer(shutdown_event, app, host, port, ssl_ctx)
+        fixture_server = ThreadedAiohttpServer(app, host, port, ssl_ctx)
         fixture_server.daemon = True
         fixture_server.start()
         fixture_server_data = ThreadedAiohttpServerData(
             host=host,
             port=port,
-            shutdown_event=shutdown_event,
             thread=fixture_server,
             requests_record=call_record,
             ssl_ctx=ssl_ctx,
@@ -437,7 +442,7 @@ def gen_threaded_aiohttp_server(fixtures_cfg, unused_port):
     yield _gen_threaded_aiohttp_server
 
     for fixture_server_data in fixture_servers_data:
-        fixture_server_data.shutdown_event.set()
+        fixture_server_data.thread.stop()
 
     for fixture_server_data in fixture_servers_data:
         fixture_server_data.thread.join()
