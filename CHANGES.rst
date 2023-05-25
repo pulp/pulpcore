@@ -17,6 +17,25 @@ Changelog
 
 .. towncrier release notes start
 
+3.26.1 (2023-05-25)
+===================
+REST API
+--------
+
+No significant changes.
+
+
+Plugin API
+----------
+
+Bugfixes
+~~~~~~~~
+
+- Fixed potential unnecessary database calls executed after matching distributions in the content
+  application.
+  :github:`3876`
+
+
 3.26.0 (2023-05-16)
 ===================
 REST API
