@@ -6,7 +6,6 @@ import os.path
 import sys
 import subprocess
 import tarfile
-
 from distutils.util import strtobool
 from gettext import gettext as _
 from glob import glob
