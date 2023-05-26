@@ -337,6 +337,18 @@ def pulp_import(importer_pk, path, toc, create_repositories):
                 raise ValidationError(_("Missing 'files' or 'meta' keys in table-of-contents!"))
 
             base_dir = os.path.dirname(toc_filename)
+
+            # Regardless of what the TOC says, it's possible for a previous import to have
+            # failed after successfully creating the combined file. If the TOC specifies multiple
+            # chunks, but the "expected result" exists, ignore the chunk-list and process as if
+            # it's all there ever was.
+            top_level_file = os.path.join(base_dir, the_toc["meta"]["file"])
+            if len(the_toc["files"]) > 1 and os.path.isfile(top_level_file):
+                the_toc["files"] = {the_toc["meta"]["file"]: the_toc["meta"]["global_hash"]}
+
+            # At this point, we either have the original chunks, or we're validating the
+            # full-file as a single chunk. Validate the hash(es).
+
             # Points at chunks that exist?
             missing_files = []
             for f in sorted(the_toc["files"].keys()):
@@ -371,17 +383,7 @@ def pulp_import(importer_pk, path, toc, create_repositories):
 
         return the_toc
 
-    def validate_and_assemble(toc_filename):
-        """Validate checksums of, and reassemble, chunks in table-of-contents file."""
-        the_toc = validate_toc(toc_filename)
-        toc_dir = os.path.dirname(toc_filename)
-        result_file = os.path.join(toc_dir, the_toc["meta"]["file"])
-
-        # if we have only one entry in "files", it must be the full .tar.gz - return it
-        if len(the_toc["files"]) == 1:
-            return os.path.join(toc_dir, list(the_toc["files"].keys())[0])
-
-        # We have multiple chunks.
+    def reassemble(the_toc, toc_dir, result_file):
         # reassemble into one file 'next to' the toc and return the resulting full-path
         chunk_size = int(the_toc["meta"]["chunk_size"])
         offset = 0
@@ -433,6 +435,20 @@ def pulp_import(importer_pk, path, toc, create_repositories):
         # and there exists a combined .tar.gz, which *also* passes checksum-validation.
         # Let the rest of the import process do its thing on the new combined-file.
         return result_file
+
+    def validate_and_assemble(toc_filename):
+        """Validate checksums of, and reassemble, chunks in table-of-contents file."""
+        the_toc = validate_toc(toc_filename)
+        toc_dir = os.path.dirname(toc_filename)
+        result_file = os.path.join(toc_dir, the_toc["meta"]["file"])
+
+        # if we have only one entry in "files", it must be the full .tar.gz.
+        # Return the filename from the meta-section.
+        if len(the_toc["files"]) == 1:
+            return result_file
+
+        # We have multiple chunks. Reassemble them and return the result.
+        return reassemble(the_toc, toc_dir, result_file)
 
     if toc:
         log.info(_("Validating TOC {}.").format(toc))
