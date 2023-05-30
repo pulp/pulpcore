@@ -17,6 +17,26 @@ Changelog
 
 .. towncrier release notes start
 
+3.18.18 (2023-05-30)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Taught repair task to remove unrepairable corrupted files.
+  :github:`1947`
+- Taught repair task to continue when encountering a 404 during the repair process.
+  :github:`3611`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.18.17 (2023-04-11)
 ====================
 REST API
