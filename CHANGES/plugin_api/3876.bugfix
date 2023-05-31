@@ -1,2 +1,0 @@
-Fixed potential unnecessary database calls executed after matching distributions in the content
-application.
