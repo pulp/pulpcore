@@ -291,6 +291,26 @@ Features
   :github:`3661`
 
 
+3.23.6 (2023-05-30)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Taught repair task to remove unrepairable corrupted files.
+  :github:`1947`
+- Taught repair task to continue when encountering a 404 during the repair process.
+  :github:`3611`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.23.5 (2023-05-23)
 ===================
 REST API
@@ -524,6 +544,26 @@ Deprecations
   :github:`3604`
 
 
+3.22.5 (2023-05-30)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Taught repair task to remove unrepairable corrupted files.
+  :github:`1947`
+- Taught repair task to continue when encountering a 404 during the repair process.
+  :github:`3611`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.22.4 (2023-04-11)
 ===================
 REST API
@@ -750,6 +790,26 @@ Removals
 - Deprecated model ``Label`` and serializer field ``LabelField`` and ``LabelSelectFilter`` for
   removal in 3.25.
   :github:`3400`
+
+
+3.21.8 (2023-05-30)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Taught repair task to remove unrepairable corrupted files.
+  :github:`1947`
+- Taught repair task to continue when encountering a 404 during the repair process.
+  :github:`3611`
+
+
+Plugin API
+----------
+
+No significant changes.
 
 
 3.21.7 (2023-04-11)
@@ -1437,6 +1497,26 @@ Bugfixes
   the stage will still accumulate up to 500 (by default) items so batching is still in-effect there
   where it matters.
   :github:`2069`
+
+
+3.18.18 (2023-05-30)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Taught repair task to remove unrepairable corrupted files.
+  :github:`1947`
+- Taught repair task to continue when encountering a 404 during the repair process.
+  :github:`3611`
+
+
+Plugin API
+----------
+
+No significant changes.
 
 
 3.18.17 (2023-04-11)
