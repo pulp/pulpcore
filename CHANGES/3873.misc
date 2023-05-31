@@ -1,1 +1,0 @@
-Refactored ``cast`` to use a class provided lookup table.
