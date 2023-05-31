@@ -13,6 +13,65 @@ Changelog
 
 .. towncrier release notes start
 
+3.27.0 (2023-05-31)
+===================
+REST API
+--------
+
+Features
+~~~~~~~~
+
+- Expose user who dispatched a Task under new field ``created_by``.
+  :github:`1917`
+- Added ``hidden`` field to Distributions that toggles visibility in Content app directory listing.
+  :github:`3538`
+
+
+Bugfixes
+~~~~~~~~
+
+- Taught repair task to remove unrepairable corrupted files.
+  :github:`1947`
+- Taught repair task to continue when encountering a 404 during the repair process.
+  :github:`3611`
+- Serialized global reclaim space, global repair artifacts tasks with respect to each other
+  to prevent them from failing.
+  :github:`3786`
+
+
+Improved Documentation
+~~~~~~~~~~~~~~~~~~~~~~
+
+- Release-process documentation is now more explicit about which branches are tested by CI.
+  :github:`3841`
+- Added the instructions needed to enable OpenTelemetry on ``pulp-api`` application.
+  :github:`3867`
+
+
+Misc
+~~~~
+
+- :github:`3873`
+
+
+Plugin API
+----------
+
+Features
+~~~~~~~~
+
+- Added async version of ``cast`` as ``acast``.
+  :github:`3873`
+
+
+Bugfixes
+~~~~~~~~
+
+- Fixed potential unnecessary database calls executed after matching distributions in the content
+  application.
+  :github:`3876`
+
+
 3.26.1 (2023-05-25)
 ===================
 REST API
