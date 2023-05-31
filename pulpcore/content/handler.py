@@ -1,5 +1,6 @@
 import asyncio
 import logging
+from multidict import CIMultiDict
 import os
 import re
 from gettext import gettext as _
@@ -345,20 +346,29 @@ class Handler:
         return True
 
     @staticmethod
-    def response_headers(path):
+    def response_headers(path, distribution=None):
         """
         Get the Content-Type and Encoding-Type headers for the requested `path`.
 
         Args:
             path (str): The relative path that was requested.
-
+            distribution(Distribution) : Distribution detail that might want to add headers for path
         Returns:
             headers (dict): A dictionary of response headers.
         """
+        # headers are case-insensitive
+        headers = CIMultiDict({})
+
+        # Determine a content-type from mime_types and set.
+        # Note: plugin-Distribution can override this.
         content_type = mime_types.get_type(path)
-        headers = {}
         if content_type:
             headers["Content-Type"] = content_type
+
+        # Let plugin-Distribution set headers for this path if it wants.
+        if distribution:
+            headers.update(distribution.content_headers_for(path))
+
         return headers
 
     @staticmethod
@@ -537,7 +547,7 @@ class Handler:
         if content_handler_result is not None:
             return content_handler_result
 
-        headers = self.response_headers(rel_path)
+        headers = self.response_headers(rel_path, distro)
 
         repository = distro.repository
         publication = distro.publication
@@ -569,7 +579,7 @@ class Handler:
                     await publication.published_artifact.aget(relative_path=index_path)
 
                     rel_path = index_path
-                    headers = self.response_headers(rel_path)
+                    headers = self.response_headers(rel_path, distro)
                 except ObjectDoesNotExist:
                     dir_list, dates, sizes = await self.list_directory(None, publication, rel_path)
                     dir_list.update(

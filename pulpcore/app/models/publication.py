@@ -574,6 +574,17 @@ class Distribution(MasterModel):
         """
         return set()
 
+    def content_headers_for(self, path):
+        """
+        Opportunity for Distribution to specify response-headers for a specific path
+
+        Args:
+            path (str): The path being requested
+        Returns:
+            Empty dictionary, or a dictionary with HTTP Response header/value pairs.
+        """
+        return {}
+
     @hook(BEFORE_DELETE)
     @hook(
         AFTER_UPDATE,
