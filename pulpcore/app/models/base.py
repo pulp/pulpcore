@@ -197,18 +197,7 @@ class MasterModel(BaseModel, metaclass=MasterModelMeta):
 
     def __str__(self):
         # similar to Model's __str__, but type-aware
-        cast = self.cast()
-        if cast is self:
-            return super().__str__()
-
-        try:
-            return "<{} (pulp_type={}): {}>".format(
-                self._meta.object_name, cast.pulp_type, cast.name
-            )
-        except AttributeError:
-            return "<{} (pulp_type={}): pk={}>".format(
-                self._meta.object_name, cast.pulp_type, cast.pk
-            )
+        return "<{} (pulp_type={}): pk={}>".format(self._meta.object_name, self.pulp_type, self.pk)
 
 
 # Add properties to model _meta info to support master/detail models
