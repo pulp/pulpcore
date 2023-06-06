@@ -10,7 +10,6 @@ to configure Pulp settings using various ways:
 * :ref:`Environment Variables <env-var-settings>` - Enabled by default.
 
 * :ref:`Configuration File <config-file-settings>` - Disabled by default, but easy to enable.
-  Enabled by ``pulp_installer``.
 
 .. _env-var-settings:
 
@@ -48,20 +47,3 @@ In this example the settings file ends in ".py" so it needs to be valid Python, 
 
     The configuration file and directories containing the configuration file must be readable by the
     user Pulp runs as. If using SELinux, assign the ``system_u:object_r:pulpcore_etc_t:s0`` label.
-
-
-.. _pulp-installer-settings:
-
-pulp_installer
---------------
-
-The `pulp_installer <https://docs.pulpproject.org/pulp_installer/>`_ enables configuration via a
-settings file that lives at ``/etc/pulp/settings.py``. It does this by having each systemd file that
-starts a Pulp service include::
-
-    Environment="PULP_SETTINGS=/etc/pulp/settings.py"
-
-A Pulp upgrade using ``pulp_installer`` will override the original ``/etc/pulp/settings.py``.
-To keep your settings through an upgrade, use the "local settings" file located at
-``/etc/pulp/settings.local.py`` which takes precedence over ``/etc/pulp/settings.py`` on a
-setting-by-setting basis.

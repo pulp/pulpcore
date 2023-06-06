@@ -90,7 +90,8 @@ PyPI Installation
 10. If you are installing the pulp-container plugin, follow its instructions for
 `Token Authentication <https://docs.pulpproject.org/pulp_container/authentication.html#token-authentication-label>`__.
 
-11. Go through the :ref:`database-install`, :ref:`redis-install`, and :ref:`systemd-setup` sections.
+11. Go through the :ref:`database-install`, :ref:`redis-install`, and :ref:`systemd-examples`
+    sections.
 
 12. Run Django Migrations::
 
@@ -111,7 +112,7 @@ PyPI Installation
 
 .. note::
 
-    In place of using the systemd unit files provided in the `systemd-setup` section, you can run
+    In place of using the systemd unit files provided in the `systemd-examples` section, you can run
     the commands yourself inside of a shell. This is fine for development but not recommended for
     production::
 
@@ -224,36 +225,29 @@ You then need to add redis to your :ref:`configuration <configuration>`, such as
     REDIS_HOST="localhost"
     REDIS_PORT=6379
 
-.. _systemd-setup:
+.. _systemd-examples:
 
-Systemd
--------
+Systemd Examples
+----------------
 
-To run the four Pulp services, systemd files needs to be created in /usr/lib/systemd/system/. The
-`Pulp 3 Ansible Installer <https://docs.pulpproject.org/pulp_installer/>`__ makes these for you, but you
-can also configure them by hand from the templates below. Custom configuration can be applied using
-the ``Environment`` option with various :ref:`Pulp settings <settings>`.
-
+Here are some examples of the service files you can use to have systemd run pulp services.
 
 1. Make a ``pulpcore-content.service`` file for the pulpcore-content service which serves Pulp
-   content to clients. We recommend starting with the `pulpcore-content template <https://github.com
-   /pulp/pulp_installer/blob/master/roles/pulp_content/templates/pulpcore-content.service.j2>`_ and
-   setting the variables according to the `pulpcore_content config variables documentation <https://
-   github.com/pulp/ pulp_installer/tree/master/roles/pulp_content#role-variables>`_
+   content to clients. We recommend adapting with the `pulpcore-content template <https://github.com
+   /pulp/pulp_installer/blob/master/roles/pulp_content/templates/pulpcore-content.service.j2>`_.
 
-2. Make a ``pulpcore-api.service`` file for the pulpcore-api service which serves the Pulp REST API. We
-   recommend starting with the `pulpcore-api template <https://github.com/pulp/pulp_installer/blob/master/roles/pulp_api/templates/pulpcore-api.service.j2>`_
-   and setting the variables according to the `pulpcore-api config variables documentation <https://github.com/pulp/pulp_installer/tree/master/roles/pulp_api#role-variables>`_
+2. Make a ``pulpcore-api.service`` file for the pulpcore-api service which serves the Pulp REST API.
+   We recommend adapting the `pulpcore-api template <https://github.com/pulp/pulp_installer/
+   blob/master/roles/pulp_api/templates/pulpcore-api.service.j2>`_.
 
-3. Make a ``pulpcore-worker@.service`` file for the pulpcore-worker processes which allows you to manage
-   one or more workers. We recommend starting with the `pulpcore-worker template <https://github.com/pulp/
-   pulp_installer/blob/master/roles/pulp_workers/templates/pulpcore-worker%40.service.j2>`_ and setting
-   the variables according to the `pulp_workers config variables documentation <https://github.com/
-   pulp/pulp_installer/tree/master/roles/pulp_workers#role-variables>`_
+3. Make a ``pulpcore-worker@.service`` file for the pulpcore-worker processes which allows you to
+   manage one or more workers. We recommend adapting the `pulpcore-worker template <https://
+   github.com/pulp/pulp_installer/blob/master/roles/pulp_workers/templates/
+   pulpcore-worker%40.service.j2>`_.
 
-4. Make a `pulpcore.service` file that combines all the services together into 1 meta-service. You can copy
-   the `pulpcore file <https://raw.githubusercontent.com/pulp/pulp_installer/main/roles/pulp_common/files/pulpcore.service>`__
-   from pulp-installer.
+4. Make a `pulpcore.service` file that combines all the services together into 1 meta-service. You
+   can copy the `pulpcore template <https://raw.githubusercontent.com/pulp/pulp_installer/main/
+   roles/pulp_common/files/pulpcore.service>`_.
 
 These services can then be enabled & started by running the following, assuming you only want 2 workers::
 
@@ -261,28 +255,11 @@ These services can then be enabled & started by running the following, assuming 
     sudo systemctl enable pulpcore-worker@2
     sudo systemctl enable --now pulpcore
 
+
 .. _ssl-setup:
 
 SSL
 ---
 
-Users should configure HTTPS communication between clients and the reverse proxy that is in front of pulp services
-like pulpcore-api and pulpcore-content. The Pulp Installer provides three different options for configuring SSL
-certificates for nginx and httpd reverse proxies.
-
-1. By default, the installer will generate a new Certificate Authority and use it to sign an SSL certificate. In
-   this case, the Pulp administrator will need to distribute the Certificate Authority certificate or the SSL
-   certificate to all clients that wish to communicate with Pulp. Clients will need to import one of these
-   certificates to their system CA trust store.
-
-   The default location for the CA certificate is ``/etc/pulp/certs/root.crt``. The default location for the SSL
-   certificate is ``/etc/pulp/certs/pulp_webserver.crt``.
-
-2. If you already have an SSL Cerificate that you want to be used by the reverse proxy to encrypt communication
-   with clients, the Pulp Installer supports providing a path for ``pulp_webserver_tls_cert`` and
-   ``pulp_webserver_tls_key``. The administrator is still responsible for making sure that clients trust the
-   Certificate Authority that signed the SSL certificate.
-
-3. The Pulp Installer also supports using services that use the ACME protocol, e.g. https://letsencrypt.org/,  to
-   generate trusted SSL certificates. See the Pulp Installer documentation for `instructions and an example playbook
-   <https://docs.pulpproject.org/pulp_installer/letsencrypt/>`_.
+Users should configure HTTPS communication between clients and the reverse proxy that is in front of
+Pulp services like pulpcore-api and pulpcore-content.
