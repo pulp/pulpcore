@@ -13,6 +13,26 @@ Changelog
 
 .. towncrier release notes start
 
+3.27.1 (2023-06-05)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Taught PulpImport to be more robust in the face of previous failed attempts.
+  :github:`3737`
+- Fixed the method for displaying the representation of ``MasterModel`` objects.
+  :github:`3898`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.27.0 (2023-05-31)
 ===================
 REST API
