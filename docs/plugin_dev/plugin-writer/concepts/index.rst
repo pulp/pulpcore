@@ -433,18 +433,15 @@ When a plugin requires either Pulp API or Pulp Content App custom urls, the reve
 either Nginx or Apache, need to receive extra configuration snippets to know which service to route
 the custom URLs to.
 
-A best practice is to document clearly the custom URL requirements your plugin needs. Although the
-installer can automatically install plugin snippets, other environments, e.g. k8s or docker or
-docker containers may still need to configure them manually. Having clear docs is a minimum.
+A best practice is to document clearly the custom URL requirements your plugin needs. Environments
+such as k8s, podman, or docker may need manual configuration. Having clear docs is a minimum.
 
 You can ship webserver snippets as part of your Python package with three steps:
 
 1. Create a python package named ``webserver_snippets`` directory inside your app, e.g.
 ``pulp_ansible.app.webserver_snippets``. Like all Python packages it will have an ``__init__.py``.
 
-2. Create an ``nginx.conf`` and an ``apache.conf``, and the installer will symlink to the correct
-one depending on which reverse proxy is installed. Please create both as the installer supports
-both.
+2. Create an ``nginx.conf`` and an ``apache.conf``.
 
 3. Create an entry in MANIFEST.in to have the packaged plugin include the ``apache.conf`` and
 ``nginx.conf`` files.
@@ -489,7 +486,7 @@ Sometimes a plugin may want to control the reverse proxy behavior of a URL at th
 example, perhaps an additional header may want to be set at the reverse proxy when those urls are
 forwarded to the plugin's Django code. To accomplish this, the
 :ref:`custom app route <custom-content-app-routes>` can be used when it specifies a more-specific
-route than the installer's base webserver configuration provides.
+route than the pulp-oci-images base webserver configuration provides.
 
 For example assume the header `FOO` should be set at the url ``/pulp/api/v3/foo_route``. Below are
 two examples of a snippet that could do this (one for Nginx and another for Apache).
@@ -518,8 +515,9 @@ Apache example::
     </Location>
 
 These snippets work because both Nginx and Apache match on "more-specific" routes first regardless
-of the order in the config file. The installer ships the a default of ``/pulp/api/v3`` so anything
-containing another portion after ``v3`` such as ``/pulp/api/v3/foo_route`` would be more specific.
+of the order in the config file. The pulp-oci-env ships the a default of ``/pulp/api/v3`` so
+anything containing another portion after ``v3`` such as ``/pulp/api/v3/foo_route`` would be more
+specific.
 
 
 .. _deprecation_policy:
@@ -635,41 +633,6 @@ bound:
 * Plugin code is incompatible with the lower bound version of a dependency and the solution is to
   declare a new lower bound.
 
-
-.. _plugin_installation:
-
-Installation
-------------
-
-It's recommended to use the `Pulp 3 Installer <https://docs.pulpproject.org/pulp_installer/>`_ to
-install your plugin. Generally you can do this by configuring ``pulp_install_plugins`` variable with
-your Python package's name. For example for ``pulp-file``::
-
-    pulp_install_plugins:
-      pulp-file: {}
-
-
-.. _custom-installation-tasks:
-
-Custom Installation Tasks
--------------------------
-
-Custom installation steps for a plugin can be added to the installer which are run only when your
-plugin is in the ``pulp_install_plugins`` configuration.
-
-For example, pulp_rpm requires several system-level dependencies that cannot be received from PyPI.
-The installer delivers these dependencies at install time through the `pulp_rpm_prerequisites
-<https://github.com/pulp/pulp_installer/tree/master/roles/pulp_rpm_prerequisites>`_ role. That role
-ships with the installer itself.
-
-It's also possible to add custom install behaviors for developers too. For exampe, the galaxy_ng
-plugin desires their web UI to be built from source for devel installs. That occurs `in a custom
-galaxy_ui.yml task <https://github.com/pulp/pulp_installer/blob/master/roles/pulp_devel/tasks/
-galaxy_ui.yml>`_ in the installers ``pulp_devel`` role.
-
-For help contributing or changing a plugin-specific installation, please reach out to the installer
-maintainers. Check out `our help page <https://pulpproject.org/help/>`_ for different ways to
-contact us.
 
 .. _checksum-use-in-plugins:
 
