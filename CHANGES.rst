@@ -17,6 +17,24 @@ Changelog
 
 .. towncrier release notes start
 
+3.22.6 (2023-06-07)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Taught PulpImport to be more robust in the face of previous failed attempts.
+  :github:`3737`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.22.5 (2023-05-30)
 ===================
 REST API
