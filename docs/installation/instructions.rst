@@ -90,8 +90,7 @@ PyPI Installation
 10. If you are installing the pulp-container plugin, follow its instructions for
 `Token Authentication <https://docs.pulpproject.org/pulp_container/authentication.html#token-authentication-label>`__.
 
-11. Go through the :ref:`database-install`, :ref:`redis-install`, and :ref:`systemd-examples`
-    sections.
+11. Go through the :ref:`database-install` and optionally the :ref:`redis-install` sections.
 
 12. Run Django Migrations::
 
@@ -112,9 +111,8 @@ PyPI Installation
 
 .. note::
 
-    In place of using the systemd unit files provided in the `systemd-examples` section, you can run
-    the commands yourself inside of a shell. This is fine for development but not recommended for
-    production::
+    You can run these commands yourself, but for production it's recommended to use a process
+    control system like ``systemd``, ``supervisord``, or ``s6``::
 
     $ /path/to/python/bin/pulpcore-worker
 
@@ -224,36 +222,6 @@ You then need to add redis to your :ref:`configuration <configuration>`, such as
     CACHE_ENABLED=True
     REDIS_HOST="localhost"
     REDIS_PORT=6379
-
-.. _systemd-examples:
-
-Systemd Examples
-----------------
-
-Here are some examples of the service files you can use to have systemd run pulp services.
-
-1. Make a ``pulpcore-content.service`` file for the pulpcore-content service which serves Pulp
-   content to clients. We recommend adapting with the `pulpcore-content template <https://github.com
-   /pulp/pulp_installer/blob/master/roles/pulp_content/templates/pulpcore-content.service.j2>`_.
-
-2. Make a ``pulpcore-api.service`` file for the pulpcore-api service which serves the Pulp REST API.
-   We recommend adapting the `pulpcore-api template <https://github.com/pulp/pulp_installer/
-   blob/master/roles/pulp_api/templates/pulpcore-api.service.j2>`_.
-
-3. Make a ``pulpcore-worker@.service`` file for the pulpcore-worker processes which allows you to
-   manage one or more workers. We recommend adapting the `pulpcore-worker template <https://
-   github.com/pulp/pulp_installer/blob/master/roles/pulp_workers/templates/
-   pulpcore-worker%40.service.j2>`_.
-
-4. Make a `pulpcore.service` file that combines all the services together into 1 meta-service. You
-   can copy the `pulpcore template <https://raw.githubusercontent.com/pulp/pulp_installer/main/
-   roles/pulp_common/files/pulpcore.service>`_.
-
-These services can then be enabled & started by running the following, assuming you only want 2 workers::
-
-    sudo systemctl enable pulpcore-worker@1
-    sudo systemctl enable pulpcore-worker@2
-    sudo systemctl enable --now pulpcore
 
 
 .. _ssl-setup:
