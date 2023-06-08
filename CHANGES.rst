@@ -564,6 +564,24 @@ Deprecations
   :github:`3604`
 
 
+3.22.6 (2023-06-07)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Taught PulpImport to be more robust in the face of previous failed attempts.
+  :github:`3737`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.22.5 (2023-05-30)
 ===================
 REST API
@@ -810,6 +828,24 @@ Removals
 - Deprecated model ``Label`` and serializer field ``LabelField`` and ``LabelSelectFilter`` for
   removal in 3.25.
   :github:`3400`
+
+
+3.21.9 (2023-06-06)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Taught PulpImport to be more robust in the face of previous failed attempts.
+  :github:`3737`
+
+
+Plugin API
+----------
+
+No significant changes.
 
 
 3.21.8 (2023-05-30)
@@ -1517,6 +1553,24 @@ Bugfixes
   the stage will still accumulate up to 500 (by default) items so batching is still in-effect there
   where it matters.
   :github:`2069`
+
+
+3.18.19 (2023-06-06)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Taught PulpImport to be more robust in the face of previous failed attempts.
+  :github:`3737`
+
+
+Plugin API
+----------
+
+No significant changes.
 
 
 3.18.18 (2023-05-30)
