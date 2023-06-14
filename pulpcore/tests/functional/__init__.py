@@ -813,12 +813,20 @@ def monitor_task(tasks_api_client, pulp_domain_enabled):
 @pytest.fixture(scope="session")
 def monitor_task_group(task_groups_api_client):
     def _monitor_task_group(task_group_href):
+        def tasks_open(tg):
+            return (tg.waiting + tg.running + tg.canceling) > 0
+
         task_group = task_groups_api_client.read(task_group_href)
 
-        while not task_group.all_tasks_dispatched or (task_group.waiting + task_group.running) > 0:
+        # Wait until there are no tasks left to run
+        # Note: if the *tasking system* has a bug that leaves a task (somehow)
+        # in run/wait/canceling, we're going to be stuck in this loop forever.
+        # I don't see a reliable way to avoid that. TaskingSystemBugs: Just Say No! :)
+        while tasks_open(task_group):
             sleep(SLEEP_TIME)
             task_group = task_groups_api_client.read(task_group_href)
 
+        # If ANYTHING went wrong, throw an error
         if (task_group.failed + task_group.skipped + task_group.canceled) > 0:
             raise PulpTaskGroupError(task_group=task_group)
 
