@@ -17,6 +17,26 @@ Changelog
 
 .. towncrier release notes start
 
+3.18.20 (2023-06-14)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Exports now use gzip compression level 1 rather than compression level 9. Exported archives will
+  now be slightly larger, but exports should be much faster. This is considered to be a more
+  optimal balance of space/time for the export operation.
+  :github:`3869`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.18.19 (2023-06-06)
 ====================
 REST API
