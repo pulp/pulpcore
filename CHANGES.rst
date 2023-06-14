@@ -13,6 +13,55 @@ Changelog
 
 .. towncrier release notes start
 
+3.28.0 (2023-06-14)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Taught PulpImport to be more robust in the face of previous failed attempts.
+  :github:`3737`
+- Exports now use gzip compression level 1 rather than compression level 9. Exported archives will
+  now be slightly larger, but exports should be much faster. This is considered to be a more
+  optimal balance of space/time for the export operation.
+  :github:`3869`
+- Fixed the method for displaying the representation of ``MasterModel`` objects.
+  :github:`3898`
+
+
+Improved Documentation
+~~~~~~~~~~~~~~~~~~~~~~
+
+- Removes leftover documentation referring to the deprecated Ansible based installer.
+  :github:`3834`
+
+
+Plugin API
+----------
+
+Features
+~~~~~~~~
+
+- Added support to pull-through caching for streaming metadata files.
+
+  ``Remote.get_remote_artifact_content_type`` can now return ``None`` to inform the content app that
+  the requested path is a metadata file that should be streamed and not saved for the pull-through
+  caching feature.
+  :github:`3817`
+- Added support to pull-through caching for plugins with multi-artifact content types.
+
+  ``Content.init_from_artifact_and_relative_path`` can now return a tuple of the new content unit
+  and a dict containing the mapping of that content's artifacts and their relative paths.
+  :github:`3818`
+- Added Distribution.content_headers_for() to let plugins affect content-app response headers.
+
+  This can be useful, for example, when it's desirable for specific files to
+  be served with Cache-control: no-cache.
+  :github:`3897`
+
+
 3.27.1 (2023-06-05)
 ===================
 REST API
