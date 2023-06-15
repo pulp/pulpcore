@@ -360,6 +360,26 @@ Features
   :github:`3661`
 
 
+3.23.7 (2023-06-14)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Exports now use gzip compression level 1 rather than compression level 9. Exported archives will
+  now be slightly larger, but exports should be much faster. This is considered to be a more
+  optimal balance of space/time for the export operation.
+  :github:`3869`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.23.6 (2023-05-30)
 ===================
 REST API
@@ -611,6 +631,26 @@ Deprecations
   Deprecated ``pulpcore.plugin.actions.raise_for_unknown_content_units`` in favour of
   ``pulpcore.plugin.util.raise_for_unknown_content_units``.
   :github:`3604`
+
+
+3.22.7 (2023-06-14)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Exports now use gzip compression level 1 rather than compression level 9. Exported archives will
+  now be slightly larger, but exports should be much faster. This is considered to be a more
+  optimal balance of space/time for the export operation.
+  :github:`3869`
+
+
+Plugin API
+----------
+
+No significant changes.
 
 
 3.22.6 (2023-06-07)
@@ -877,6 +917,26 @@ Removals
 - Deprecated model ``Label`` and serializer field ``LabelField`` and ``LabelSelectFilter`` for
   removal in 3.25.
   :github:`3400`
+
+
+3.21.10 (2023-06-14)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Exports now use gzip compression level 1 rather than compression level 9. Exported archives will
+  now be slightly larger, but exports should be much faster. This is considered to be a more
+  optimal balance of space/time for the export operation.
+  :github:`3869`
+
+
+Plugin API
+----------
+
+No significant changes.
 
 
 3.21.9 (2023-06-06)
@@ -1602,6 +1662,26 @@ Bugfixes
   the stage will still accumulate up to 500 (by default) items so batching is still in-effect there
   where it matters.
   :github:`2069`
+
+
+3.18.20 (2023-06-14)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Exports now use gzip compression level 1 rather than compression level 9. Exported archives will
+  now be slightly larger, but exports should be much faster. This is considered to be a more
+  optimal balance of space/time for the export operation.
+  :github:`3869`
+
+
+Plugin API
+----------
+
+No significant changes.
 
 
 3.18.19 (2023-06-06)
