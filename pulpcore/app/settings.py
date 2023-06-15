@@ -312,7 +312,7 @@ content_origin_validator = Validator(
         "must_exist_true": (
             "CONTENT_ORIGIN is a required setting but it was not configured. This may be caused "
             "by invalid read permissions of the settings file. Note that CONTENT_ORIGIN is set by "
-            "the installer automatically."
+            "the installation automatically."
         )
     },
 )
