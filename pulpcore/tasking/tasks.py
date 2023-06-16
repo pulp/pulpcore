@@ -14,14 +14,12 @@ from django.utils import timezone
 from django_guid import get_guid, set_guid
 from django_guid.utils import generate_guid
 
+from pulpcore.app.apps import MODULE_PLUGIN_VERSIONS
 from pulpcore.app.models import Task, TaskSchedule
 from pulpcore.app.util import get_url, get_domain, current_task
 from pulpcore.constants import TASK_FINAL_STATES, TASK_STATES, TASK_INCOMPLETE_STATES
 
 _logger = logging.getLogger(__name__)
-
-
-TASK_TIMEOUT = -1  # -1 for infinite timeout
 
 
 def _validate_and_get_resources(resources):
@@ -126,7 +124,11 @@ def dispatch(
     assert deferred or immediate, "A task must be at least `deferred` or `immediate`."
 
     if callable(func):
-        func = f"{func.__module__}.{func.__name__}"
+        function_name = f"{func.__module__}.{func.__name__}"
+    else:
+        function_name = func
+
+    versions = MODULE_PLUGIN_VERSIONS[function_name.split(".", maxsplit=1)[0]]
 
     if exclusive_resources is None:
         exclusive_resources = []
@@ -149,11 +151,12 @@ def dispatch(
                 state=TASK_STATES.WAITING,
                 logging_cid=(get_guid()),
                 task_group=task_group,
-                name=func,
+                name=function_name,
                 args=args,
                 kwargs=kwargs,
                 parent_task=Task.current(),
                 reserved_resources_record=resources,
+                versions=versions,
             )
             if immediate:
                 # Grab the advisory lock before the task hits the db.

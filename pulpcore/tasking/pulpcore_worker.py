@@ -14,6 +14,7 @@ import contextlib
 from datetime import timedelta
 from multiprocessing import Process
 from tempfile import TemporaryDirectory
+from packaging.version import parse as parse_version
 
 from django.conf import settings
 from django.db import connection
@@ -220,6 +221,15 @@ class NewPulpWorker:
             self.notify_workers()
         return True
 
+    def is_compatible(self, task):
+        return all(
+            (
+                label in self.versions
+                and parse_version(self.versions[label]) >= parse_version(version)
+                for label, version in task.versions.items()
+            )
+        )
+
     def iter_tasks(self):
         """Iterate over ready tasks and yield each task while holding the lock."""
 
@@ -241,44 +251,46 @@ class NewPulpWorker:
                     for resource in reserved_resources_record
                     if resource.startswith("shared:") and resource[7:] not in exclusive_resources
                 ]
-                with contextlib.suppress(AdvisoryLockError), task:
-                    # This code will only be called if we acquired the lock successfully
-                    # The lock will be automatically be released at the end of the block
-                    # Check if someone else changed the task before we got the lock
-                    task.refresh_from_db()
-                    if task.state == TASK_STATES.CANCELING and task.worker is None:
-                        # No worker picked this task up before being canceled
-                        if self.cancel_abandoned_task(task, TASK_STATES.CANCELED):
-                            # Continue looking for the next task
-                            # without considering this tasks resources
-                            # as we just released them
-                            continue
-                    if task.state in [TASK_STATES.RUNNING, TASK_STATES.CANCELING]:
-                        # A running task without a lock must be abandoned
-                        if self.cancel_abandoned_task(
-                            task, TASK_STATES.FAILED, "Worker has gone missing."
+                if self.is_compatible(task):
+                    with contextlib.suppress(AdvisoryLockError), task:
+                        # This code will only be called if we acquired the lock successfully
+                        # The lock will be automatically be released at the end of the block
+                        # Check if someone else changed the task before we got the lock
+                        task.refresh_from_db()
+                        if task.state == TASK_STATES.CANCELING and task.worker is None:
+                            # No worker picked this task up before being canceled
+                            if self.cancel_abandoned_task(task, TASK_STATES.CANCELED):
+                                # Continue looking for the next task
+                                # without considering this tasks resources
+                                # as we just released them
+                                continue
+                        if task.state in [TASK_STATES.RUNNING, TASK_STATES.CANCELING]:
+                            # A running task without a lock must be abandoned
+                            if self.cancel_abandoned_task(
+                                task, TASK_STATES.FAILED, "Worker has gone missing."
+                            ):
+                                # Continue looking for the next task
+                                # without considering this tasks resources
+                                # as we just released them
+                                continue
+                        # This statement is using lazy evaluation
+                        if (
+                            task.state == TASK_STATES.WAITING
+                            # No exclusive resource taken?
+                            and not any(
+                                resource in taken_exclusive_resources
+                                or resource in taken_shared_resources
+                                for resource in exclusive_resources
+                            )
+                            # No shared resource exclusively taken?
+                            and not any(
+                                resource in taken_exclusive_resources
+                                for resource in shared_resources
+                            )
                         ):
-                            # Continue looking for the next task
-                            # without considering this tasks resources
-                            # as we just released them
-                            continue
-                    # This statement is using lazy evaluation
-                    if (
-                        task.state == TASK_STATES.WAITING
-                        # No exclusive resource taken?
-                        and not any(
-                            resource in taken_exclusive_resources
-                            or resource in taken_shared_resources
-                            for resource in exclusive_resources
-                        )
-                        # No shared resource exclusively taken?
-                        and not any(
-                            resource in taken_exclusive_resources for resource in shared_resources
-                        )
-                    ):
-                        yield task
-                        # Start from the top of the Task list
-                        break
+                            yield task
+                            # Start from the top of the Task list
+                            break
 
                 # Record the resources of the pending task we didn't get
                 taken_exclusive_resources.update(exclusive_resources)
