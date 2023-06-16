@@ -14,14 +14,13 @@ from django.utils import timezone
 from django_guid import get_guid, set_guid
 from django_guid.utils import generate_guid
 
+from pulpcore.app.apps import MODULE_PLUGIN_VERSIONS
+from pulpcore.app.loggers import deprecation_logger
 from pulpcore.app.models import Task, TaskSchedule
 from pulpcore.app.util import get_url, get_domain, current_task
 from pulpcore.constants import TASK_FINAL_STATES, TASK_STATES, TASK_INCOMPLETE_STATES
 
 _logger = logging.getLogger(__name__)
-
-
-TASK_TIMEOUT = -1  # -1 for infinite timeout
 
 
 def _validate_and_get_resources(resources):
@@ -88,6 +87,7 @@ def dispatch(
     shared_resources=None,
     immediate=False,
     deferred=True,
+    versions=None,
 ):
     """
     Enqueue a message to Pulp workers with a reservation.
@@ -116,6 +116,8 @@ def dispatch(
             to be picked up by a worker eventually. Defaults to `False`.
         deferred (bool): Whether to allow defer running the task to a pulpcore_worker. Defaults to
             `True`. `immediate` and `deferred` cannot both be `False`.
+        versions (Optional[Dict[str, str]]): Minimum versions of components by app_label the worker
+            must provide to handle the task.
 
     Returns (pulpcore.app.models.Task): The Pulp Task that was created.
 
@@ -126,7 +128,22 @@ def dispatch(
     assert deferred or immediate, "A task must be at least `deferred` or `immediate`."
 
     if callable(func):
-        func = f"{func.__module__}.{func.__name__}"
+        function_name = f"{func.__module__}.{func.__name__}"
+    else:
+        function_name = func
+
+    if versions is None:
+        try:
+            versions = MODULE_PLUGIN_VERSIONS[function_name.split(".", maxsplit=1)[0]]
+        except KeyError:
+            deprecation_logger.warn(
+                _(
+                    "Using functions outside of pulp components as tasks is not supported and will "
+                    "result in runtime errors with pulpcore>=3.40."
+                )
+            )
+            # The best we can do now...
+            versions = MODULE_PLUGIN_VERSIONS["pulpcore"]
 
     if exclusive_resources is None:
         exclusive_resources = []
@@ -149,11 +166,12 @@ def dispatch(
                 state=TASK_STATES.WAITING,
                 logging_cid=(get_guid()),
                 task_group=task_group,
-                name=func,
+                name=function_name,
                 args=args,
                 kwargs=kwargs,
                 parent_task=Task.current(),
                 reserved_resources_record=resources,
+                versions=versions,
             )
             if immediate:
                 # Grab the advisory lock before the task hits the db.

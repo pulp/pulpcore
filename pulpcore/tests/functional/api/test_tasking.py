@@ -42,19 +42,30 @@ def dispatch_task(pulpcore_client):
 @pytest.fixture(scope="module")
 def task(dispatch_task, monitor_task):
     """Fixture containing a Task."""
-    task_href = dispatch_task("time.sleep", args=(0,))
+    task_href = dispatch_task("pulpcore.app.tasks.test.sleep", args=(0,))
     return monitor_task(task_href)
 
 
 @pytest.mark.parallel
 def test_multi_resource_locking(dispatch_task, monitor_task):
     task_href1 = dispatch_task(
-        "time.sleep", args=(1,), exclusive_resources=["AAAA"], shared_resources=["BBBB"]
+        "pulpcore.app.tasks.test.sleep",
+        args=(1,),
+        exclusive_resources=["AAAA"],
+        shared_resources=["BBBB"],
     )
-    task_href2 = dispatch_task("time.sleep", args=(1,), shared_resources=["AAAA"])
-    task_href3 = dispatch_task("time.sleep", args=(1,), shared_resources=["AAAA"])
-    task_href4 = dispatch_task("time.sleep", args=(1,), exclusive_resources=["AAAA"])
-    task_href5 = dispatch_task("time.sleep", args=(1,), exclusive_resources=["BBBB"])
+    task_href2 = dispatch_task(
+        "pulpcore.app.tasks.test.sleep", args=(1,), shared_resources=["AAAA"]
+    )
+    task_href3 = dispatch_task(
+        "pulpcore.app.tasks.test.sleep", args=(1,), shared_resources=["AAAA"]
+    )
+    task_href4 = dispatch_task(
+        "pulpcore.app.tasks.test.sleep", args=(1,), exclusive_resources=["AAAA"]
+    )
+    task_href5 = dispatch_task(
+        "pulpcore.app.tasks.test.sleep", args=(1,), exclusive_resources=["BBBB"]
+    )
 
     task1 = monitor_task(task_href1)
     task2 = monitor_task(task_href2)
@@ -73,8 +84,12 @@ def test_multi_resource_locking(dispatch_task, monitor_task):
 def test_delete_cancel_waiting_task(dispatch_task, tasks_api_client):
     # Queue one task after a long running one
     resource = str(uuid4())
-    blocking_task_href = dispatch_task("time.sleep", args=(600,), exclusive_resources=[resource])
-    task_href = dispatch_task("time.sleep", args=(0,), exclusive_resources=[resource])
+    blocking_task_href = dispatch_task(
+        "pulpcore.app.tasks.test.sleep", args=(600,), exclusive_resources=[resource]
+    )
+    task_href = dispatch_task(
+        "pulpcore.app.tasks.test.sleep", args=(0,), exclusive_resources=[resource]
+    )
 
     task = tasks_api_client.read(task_href)
     assert task.state == "waiting"
@@ -106,7 +121,7 @@ def test_delete_cancel_waiting_task(dispatch_task, tasks_api_client):
 
 @pytest.mark.parallel
 def test_delete_cancel_running_task(dispatch_task, tasks_api_client):
-    task_href = dispatch_task("time.sleep", args=(600,))
+    task_href = dispatch_task("pulpcore.app.tasks.test.sleep", args=(600,))
 
     for i in range(10):
         task = tasks_api_client.read(task_href)
@@ -141,7 +156,7 @@ def test_delete_cancel_running_task(dispatch_task, tasks_api_client):
 
 @pytest.mark.parallel
 def test_cancel_delete_finished_task(tasks_api_client, dispatch_task, monitor_task):
-    task_href = dispatch_task("time.sleep", args=(0,))
+    task_href = dispatch_task("pulpcore.app.tasks.test.sleep", args=(0,))
     monitor_task(task_href)
 
     # Try to cancel first
@@ -268,8 +283,8 @@ def test_search_task_using_an_invalid_name(tasks_api_client):
 
 @pytest.mark.parallel
 def test_filter_tasks_using_worker__in_filter(tasks_api_client, dispatch_task, monitor_task):
-    task1_href = dispatch_task("time.sleep", (0,))
-    task2_href = dispatch_task("time.sleep", (0,))
+    task1_href = dispatch_task("pulpcore.app.tasks.test.sleep", args=(0,))
+    task2_href = dispatch_task("pulpcore.app.tasks.test.sleep", args=(0,))
 
     task1 = monitor_task(task1_href)
     task2 = monitor_task(task2_href)
@@ -283,7 +298,7 @@ def test_filter_tasks_using_worker__in_filter(tasks_api_client, dispatch_task, m
 
 
 def test_cancel_gooey_task(tasks_api_client, dispatch_task, monitor_task):
-    task_href = dispatch_task("pulpcore.app.tasks.test.gooey_task", (60,))
+    task_href = dispatch_task("pulpcore.app.tasks.test.gooey_task", args=(60,))
     for i in range(10):
         task = tasks_api_client.read(task_href)
         if task.state == "running":
@@ -305,19 +320,31 @@ def test_cancel_gooey_task(tasks_api_client, dispatch_task, monitor_task):
 @pytest.mark.parallel
 def test_task_created_by(dispatch_task, monitor_task, gen_user, anonymous_user):
     # Test admin dispatch, user_id == 1 / admin is always first user
-    task = monitor_task(dispatch_task("time.sleep", (0,)))
+    task = monitor_task(dispatch_task("pulpcore.app.tasks.test.sleep", args=(0,)))
     assert task.created_by.endswith("/1/")
 
     # Test w/ new user, user_id != 1
     user = gen_user()
     with user:
-        task_href = dispatch_task("time.sleep", (0,))
+        task_href = dispatch_task("pulpcore.app.tasks.test.sleep", args=(0,))
     user_task = monitor_task(task_href)
     assert task.created_by != user_task.created_by
     assert user_task.created_by == user.user.pulp_href
 
     # Test w/ anon (Pulp itself, i.e. analytics)
     with anonymous_user:
-        task_href = dispatch_task("time.sleep", (0,))
+        task_href = dispatch_task("pulpcore.app.tasks.test.sleep", args=(0,))
     anon_task = monitor_task(task_href)
     assert anon_task.created_by is None
+
+
+@pytest.mark.parallel
+def test_task_version_prevent_pickup(dispatch_task, tasks_api_client):
+    task1 = dispatch_task("pulpcore.app.tasks.test.sleep", args=(0,), versions={"core": "4.0.0"})
+    task2 = dispatch_task("pulpcore.app.tasks.test.sleep", args=(0,), versions={"catdog": "0.0.0"})
+
+    time.sleep(5)
+    for task_href in [task1, task2]:
+        task = tasks_api_client.read(task_href)
+        assert task.state == "waiting"
+        tasks_api_client.tasks_cancel(task_href, {"state": "canceled"})
