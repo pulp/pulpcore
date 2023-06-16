@@ -14,6 +14,7 @@ import contextlib
 from datetime import timedelta
 from multiprocessing import Process
 from tempfile import TemporaryDirectory
+from packaging.version import parse as parse_version
 
 from django.conf import settings
 from django.db import connection
@@ -220,6 +221,23 @@ class NewPulpWorker:
             self.notify_workers()
         return True
 
+    def is_compatible(self, task):
+        unmatched_versions = [
+            f"task: {label}>={version} worker: {self.versions.get(label)}"
+            for label, version in task.versions.items()
+            if label not in self.versions
+            or parse_version(self.versions[label]) < parse_version(version)
+        ]
+        if unmatched_versions:
+            _logger.info(
+                _("Incompatible versions to execute task %s by worker %s: %s"),
+                task.pk,
+                self.name,
+                ",".join(unmatched_versions),
+            )
+            return False
+        return True
+
     def iter_tasks(self):
         """Iterate over ready tasks and yield each task while holding the lock."""
 
@@ -265,6 +283,7 @@ class NewPulpWorker:
                     # This statement is using lazy evaluation
                     if (
                         task.state == TASK_STATES.WAITING
+                        and self.is_compatible(task)
                         # No exclusive resource taken?
                         and not any(
                             resource in taken_exclusive_resources

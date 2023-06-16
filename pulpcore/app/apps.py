@@ -20,6 +20,8 @@ URLS_MODULE_NAME = "urls"
 MODELRESOURCE_MODULE_NAME = "modelresource"
 REPLICA_MODULE_NAME = "replica"
 
+MODULE_PLUGIN_VERSIONS = {}
+
 
 def pulp_plugin_configs():
     """
@@ -118,6 +120,9 @@ class PulpPluginAppConfig(apps.AppConfig):
         self.named_serializers = None
 
     def ready(self):
+        MODULE_PLUGIN_VERSIONS[self.__module__.split(".", maxsplit=1)[0]] = {
+            self.label: self.version
+        }
         self.import_viewsets()
         self.import_serializers()
         self.import_urls()

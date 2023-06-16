@@ -185,6 +185,7 @@ class Task(BaseModel, AutoAddObjPermsMixin):
     )
     reserved_resources_record = ArrayField(models.TextField(), null=True)
     pulp_domain = models.ForeignKey("Domain", default=get_domain_pk, on_delete=models.CASCADE)
+    versions = HStoreField(default=dict)
 
     def __str__(self):
         return "Task: {name} [{state}]".format(name=self.name, state=self.state)
