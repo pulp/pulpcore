@@ -206,7 +206,7 @@ jobs:
           docker exec pulp bash -c "pip3 list && pip3 install pipdeptree && pipdeptree"
   deprecations:
     runs-on: ubuntu-latest
-    if: always()
+    if: github.base_ref == 'main'
     needs: test
     steps:
       - name: Fail on deprecations
