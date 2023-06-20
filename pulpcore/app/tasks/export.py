@@ -148,7 +148,7 @@ def _export_publication_to_file_system(
     ).iterator():
         # Artifact isn't guaranteed to be present
         if pa.content_artifact.artifact and (
-            start_repo_version is None or pa.content_artifact.pk in difference_content_artifacts
+            start_repo_version is None or pa.content_artifact.pk in difference_content_artifacts or "repodata/" in pa.content_artifact.relative_path
         ):
             relative_path_to_artifacts[pa.relative_path] = pa.content_artifact.artifact
 
