@@ -844,7 +844,7 @@ class Handler:
                     # There is already content saved
                     content = c_type.objects.get(content.q())
                     created_artifact_digests = {rp: a.sha256 for rp, a in artifacts.items() if a}
-                    cas = list(content.contentartifact_set().select_related("artifact"))
+                    cas = list(content.contentartifact_set.select_related("artifact"))
                     found_artifact_digests = {
                         ca.relative_path: ca.artifact.sha256 for ca in cas if ca.artifact
                     }
