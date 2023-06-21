@@ -114,14 +114,18 @@ class NewPulpWorker:
         startup_hook()
 
     def _signal_handler(self, thesignal, frame):
-        # Reset signal handlers to default
-        # If you kill the process a second time it's not graceful anymore.
-        signal.signal(signal.SIGINT, signal.SIG_DFL)
-        signal.signal(signal.SIGTERM, signal.SIG_DFL)
+        if thesignal in (signal.SIGHUP, signal.SIGTERM):
+            _logger.info(_("Worker %s was requested to shut down gracefully."), self.name)
+            self.task_grace_timeout = -1
+        else:
+            # Reset signal handlers to default
+            # If you kill the process a second time it's not graceful anymore.
+            signal.signal(signal.SIGINT, signal.SIG_DFL)
+            signal.signal(signal.SIGTERM, signal.SIG_DFL)
+            signal.signal(signal.SIGHUP, signal.SIG_DFL)
 
-        _logger.info(_("Worker %s was requested to shut down."), self.name)
-
-        self.task_grace_timeout = TASK_GRACE_INTERVAL
+            _logger.info(_("Worker %s was requested to shut down."), self.name)
+            self.task_grace_timeout = TASK_GRACE_INTERVAL
         self.shutdown_requested = True
 
     def _pg_notify_handler(self, notification):
@@ -312,7 +316,7 @@ class NewPulpWorker:
             task_process.start()
             while True:
                 if cancel_state:
-                    if self.task_grace_timeout > 0:
+                    if self.task_grace_timeout != 0:
                         _logger.info("Wait for canceled task to abort.")
                     else:
                         self.task_grace_timeout = TASK_KILL_INTERVAL
@@ -331,13 +335,14 @@ class NewPulpWorker:
                     if self.cancel_task:
                         _logger.info(_("Received signal to cancel current task %s."), task.pk)
                         cancel_state = TASK_STATES.CANCELED
+                        self.cancel_task = False
                 if task_process.sentinel in r:
                     if not task_process.is_alive():
                         break
                 if self.sentinel in r:
                     os.read(self.sentinel, 256)
                 if self.shutdown_requested:
-                    if self.task_grace_timeout > 0:
+                    if self.task_grace_timeout != 0:
                         _logger.info(
                             "Worker shutdown requested, waiting for task %s to finish.", task.pk
                         )
@@ -371,6 +376,7 @@ class NewPulpWorker:
         with WorkerDirectory(self.name):
             signal.signal(signal.SIGINT, self._signal_handler)
             signal.signal(signal.SIGTERM, self._signal_handler)
+            signal.signal(signal.SIGHUP, self._signal_handler)
             # Subscribe to pgsql channels
             connection.connection.add_notify_handler(self._pg_notify_handler)
             self.cursor.execute("LISTEN pulp_worker_wakeup")
@@ -407,6 +413,7 @@ def child_signal_handler(sig, frame):
     # If you kill the process a second time it's not graceful anymore.
     signal.signal(signal.SIGINT, signal.SIG_DFL)
     signal.signal(signal.SIGTERM, signal.SIG_DFL)
+    signal.signal(signal.SIGHUP, signal.SIG_DFL)
     signal.signal(signal.SIGUSR1, signal.SIG_DFL)
 
     if sig == signal.SIGUSR1:
@@ -418,6 +425,7 @@ def _perform_task(task_pk, task_working_dir_rel_path):
     This must be called as a subprocess, while the parent holds the advisory lock."""
     signal.signal(signal.SIGINT, child_signal_handler)
     signal.signal(signal.SIGTERM, child_signal_handler)
+    signal.signal(signal.SIGHUP, child_signal_handler)
     signal.signal(signal.SIGUSR1, child_signal_handler)
     if settings.TASK_DIAGNOSTICS:
         # It would be better to have this recording happen in the parent process instead of here
