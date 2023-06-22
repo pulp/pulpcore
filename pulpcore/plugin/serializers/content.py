@@ -10,9 +10,8 @@ from rest_framework.serializers import (
     ValidationError,
 )
 from pulpcore.app.files import PulpTemporaryUploadedFile
-from pulpcore.app.models import Artifact, Repository, Upload, UploadChunk
+from pulpcore.app.models import Artifact, Upload, UploadChunk
 from pulpcore.app.serializers import (
-    DetailRelatedField,
     RelatedField,
     ArtifactSerializer,
     NoArtifactContentSerializer,
@@ -31,35 +30,9 @@ class UploadSerializerFieldsMixin(Serializer):
         required=False,
         write_only=True,
     )
-    repository = DetailRelatedField(
-        help_text=_("A URI of a repository the new content unit should be associated with."),
-        required=False,
-        write_only=True,
-        view_name_pattern=r"repositories(-.*/.*)-detail",
-        queryset=Repository.objects.all(),
-    )
-
-    def create(self, validated_data):
-        """
-        Save a GenericContent unit.
-
-        This must be used inside a task that locks on the Artifact and if given, the repository.
-        """
-
-        repository = validated_data.pop("repository", None)
-        content = super().create(validated_data)
-
-        if repository:
-            repository.cast()
-            content_to_add = self.Meta.model.objects.filter(pk=content.pk)
-
-            # create new repo version with uploaded package
-            with repository.new_version() as new_version:
-                new_version.add_content(content_to_add)
-        return content
 
     class Meta:
-        fields = ("file", "repository")
+        fields = ("file",)
 
 
 class NoArtifactContentUploadSerializer(UploadSerializerFieldsMixin, NoArtifactContentSerializer):
