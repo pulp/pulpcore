@@ -5,25 +5,92 @@ from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 
 from pulpcore.app import models
-from pulpcore.app.serializers import base, fields
+from pulpcore.app.serializers import base, fields, DetailRelatedField
 from pulpcore.app.util import get_domain
 
 
-class BaseContentSerializer(base.ModelSerializer):
+class NoArtifactContentSerializer(base.ModelSerializer):
     pulp_href = base.DetailIdentityField(view_name_pattern=r"contents(-.*/.*)-detail")
+    repository = DetailRelatedField(
+        help_text=_("A URI of a repository the new content unit should be associated with."),
+        required=False,
+        write_only=True,
+        view_name_pattern=r"repositories(-.*/.*)-detail",
+        queryset=models.Repository.objects.all(),
+    )
+
+    def get_artifacts(self, validated_data):
+        """
+        Extract artifacts from validated_data.
+
+        This function is supposed to extract the information about content artifacts from
+        validated_data and return a dictionary with artifacts and relative paths as keys.
+        """
+        return {}
+
+    def retrieve(self, validated_data):
+        """
+        Retrieve existing content unit if it exists, else return None.
+
+        This method is plugin-specific and implementing it for a specific content type
+        allows for uploading already existing content units of that type.
+        """
+        return None
+
+    def validate(self, data):
+        """Validate that we have an Artifact or can create one."""
+
+        data = super().validate(data)
+        if repository := data.get("repository"):
+            if (
+                self.Meta.model
+                not in repository.get_model_for_pulp_type(repository.pulp_type).CONTENT_TYPES
+            ):
+                raise serializers.ValidationError("Content is not supported by this repository.")
+        return data
+
+    def create(self, validated_data):
+        """
+        Create the content and associate it with its Artifacts, or retrieve the existing content.
+
+        Args:
+            validated_data (dict): Data to save to the database
+        """
+        repository = validated_data.pop("repository", None)
+        artifacts = self.get_artifacts(validated_data)
+
+        content = self.retrieve(validated_data)
+        if content is not None:
+            content.touch()
+        else:
+            try:
+                with transaction.atomic():
+                    content = self.Meta.model.objects.create(**validated_data)
+                    for relative_path, artifact in artifacts.items():
+                        models.ContentArtifact.objects.create(
+                            artifact=artifact, content=content, relative_path=relative_path
+                        )
+            except IntegrityError:
+                content = self.retrieve(validated_data)
+                if content is None:
+                    raise
+
+        if repository:
+            repository.cast()
+            content_to_add = self.Meta.model.objects.filter(pk=content.pk)
+
+            # create new repo version with uploaded package
+            with repository.new_version() as new_version:
+                new_version.add_content(content_to_add)
+
+        return content
 
     class Meta:
         model = models.Content
-        fields = base.ModelSerializer.Meta.fields
+        fields = base.ModelSerializer.Meta.fields + ("repository",)
 
 
-class NoArtifactContentSerializer(BaseContentSerializer):
-    class Meta:
-        model = models.Content
-        fields = BaseContentSerializer.Meta.fields
-
-
-class SingleArtifactContentSerializer(BaseContentSerializer):
+class SingleArtifactContentSerializer(NoArtifactContentSerializer):
     artifact = fields.SingleContentArtifactField(
         help_text=_("Artifact file representing the physical content"),
     )
@@ -45,51 +112,20 @@ class SingleArtifactContentSerializer(BaseContentSerializer):
         if hasattr(self.Meta.model, "relative_path") and "relative_path" in self.fields:
             self.fields["relative_path"].write_only = False
 
-    def create(self, validated_data):
-        """
-        Create the content and associate it with its Artifact, or retrieve the existing content.
-
-        Args:
-            validated_data (dict): Data to save to the database
-        """
-        content = self.retrieve(validated_data)
-
-        if content is not None:
-            content.touch()
+    def get_artifacts(self, validated_data):
+        artifact = validated_data.pop("artifact")
+        if "relative_path" not in self.fields or self.fields["relative_path"].write_only:
+            relative_path = validated_data.pop("relative_path")
         else:
-            artifact = validated_data.pop("artifact")
-            if "relative_path" not in self.fields or self.fields["relative_path"].write_only:
-                relative_path = validated_data.pop("relative_path")
-            else:
-                relative_path = validated_data.get("relative_path")
-            try:
-                with transaction.atomic():
-                    content = self.Meta.model.objects.create(**validated_data)
-                    models.ContentArtifact.objects.create(
-                        artifact=artifact, content=content, relative_path=relative_path
-                    )
-            except IntegrityError:
-                content = self.retrieve(validated_data)
-                if content is None:
-                    raise
-
-        return content
-
-    def retrieve(self, validated_data):
-        """
-        Retrieve existing content unit if it exists, else return None.
-
-        This method is plugin-specific and implementing it for a specific content type
-        allows for uploading already existing content units of that type.
-        """
-        return None
+            relative_path = validated_data.get("relative_path")
+        return {relative_path: artifact}
 
     class Meta:
         model = models.Content
-        fields = BaseContentSerializer.Meta.fields + ("artifact", "relative_path")
+        fields = NoArtifactContentSerializer.Meta.fields + ("artifact", "relative_path")
 
 
-class MultipleArtifactContentSerializer(BaseContentSerializer):
+class MultipleArtifactContentSerializer(NoArtifactContentSerializer):
     artifacts = fields.ContentArtifactsField(
         help_text=_(
             "A dict mapping relative paths inside the Content to the corresponding"
@@ -98,25 +134,12 @@ class MultipleArtifactContentSerializer(BaseContentSerializer):
         ),
     )
 
-    @transaction.atomic
-    def create(self, validated_data):
-        """
-        Create the content and associate it with all its Artifacts.
-
-        Args:
-            validated_data (dict): Data to save to the database
-        """
-        artifacts = validated_data.pop("artifacts")
-        content = self.Meta.model.objects.create(**validated_data)
-        for relative_path, artifact in artifacts.items():
-            models.ContentArtifact.objects.create(
-                artifact=artifact, content=content, relative_path=relative_path
-            )
-        return content
+    def get_artifacts(self, validated_data):
+        return validated_data.pop("artifacts")
 
     class Meta:
         model = models.Content
-        fields = BaseContentSerializer.Meta.fields + ("artifacts",)
+        fields = NoArtifactContentSerializer.Meta.fields + ("artifacts",)
 
 
 class ContentChecksumSerializer(serializers.Serializer):
@@ -290,7 +313,7 @@ class SigningServiceSerializer(base.ModelSerializer):
 
     class Meta:
         model = models.SigningService
-        fields = BaseContentSerializer.Meta.fields + (
+        fields = base.ModelSerializer.Meta.fields + (
             "name",
             "public_key",
             "pubkey_fingerprint",
