@@ -24,6 +24,7 @@ from pulpcore.app.models import Worker, Task
 
 from pulpcore.app.util import (
     configure_analytics,
+    configure_cleanup,
     set_domain,
     set_current_user,
 )
@@ -57,6 +58,7 @@ TASK_SCHEDULING_LOCK = 42
 
 def startup_hook():
     configure_analytics()
+    configure_cleanup()
 
 
 class PGAdvisoryLock:
