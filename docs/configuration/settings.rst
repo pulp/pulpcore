@@ -442,6 +442,17 @@ ORPHAN_PROTECTION_TIME
     up before the task finishes. Default is 1440 minutes (24 hours).
 
 
+.. _upload_protection_time:
+.. _tmpfile_protection_time:
+
+UPLOAD_PROTECTION_TIME and TMPFILE_PROTECTION_TIME
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+    Pulp uses ``uploads`` and ``pulp temporary files`` to pass data from the api to worker tasks.
+    These options allow to specify a timeinterval in minutes used for cleaning up stale entries. If
+    set to 0, automatic cleanup is disabled, which is the default.
+
+
 .. _task_diagnostics:
 
 TASK_DIAGNOSTICS

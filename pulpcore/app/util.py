@@ -311,6 +311,25 @@ def configure_analytics():
         models.TaskSchedule.objects.filter(task_name=task_name).delete()
 
 
+def configure_cleanup():
+    for name, task_name, protection_time in [
+        ("uploads", "pulpcore.app.tasks.orphan.upload_cleanup", settings.UPLOAD_PROTECTION_TIME),
+        (
+            "shared temporary files",
+            "pulpcore.app.tasks.orphan.tmpfile_cleanup",
+            settings.TMPFILE_PROTECTION_TIME,
+        ),
+    ]:
+        if protection_time > 0:
+            dispatch_interval = timedelta(minutes=protection_time)
+            name = f"Clean up stale {name} periodically"
+            models.TaskSchedule.objects.update_or_create(
+                name=name, defaults={"task_name": task_name, "dispatch_interval": dispatch_interval}
+            )
+        else:
+            models.TaskSchedule.objects.filter(task_name=task_name).delete()
+
+
 @lru_cache(maxsize=1)
 def _artifact_serving_distribution():
     return models.ArtifactDistribution.objects.get()

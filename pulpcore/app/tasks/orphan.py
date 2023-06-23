@@ -1,12 +1,15 @@
 import gc
 
 from django.conf import settings
+from django.utils import timezone
 
 from pulpcore.app.models import (
     Artifact,
     Content,
     ProgressReport,
     PublishedMetadata,
+    PulpTemporaryFile,
+    Upload,
 )
 
 
@@ -41,56 +44,58 @@ def orphan_cleanup(content_pks=None, orphan_protection_time=settings.ORPHAN_PROT
         content_pks (list): A list of content pks. If specified, only remove these orphans.
 
     """
-    progress_bar = ProgressReport(
+    with ProgressReport(
         message="Clean up orphan Content",
-        total=0,
+        total=None,
         code="clean-up.content",
-        done=0,
-        state="running",
-    )
+    ) as progress_bar:
+        while True:
+            content = Content.objects.orphaned(orphan_protection_time, content_pks).exclude(
+                pulp_type=PublishedMetadata.get_pulp_type()
+            )
+            content_count = content.count()
+            if not content_count:
+                break
 
-    while True:
-        content = Content.objects.orphaned(orphan_protection_time, content_pks).exclude(
-            pulp_type=PublishedMetadata.get_pulp_type()
-        )
-        content_count = content.count()
-        if not content_count:
-            break
-
-        progress_bar.total += content_count
-        progress_bar.save()
-
-        # delete the content
-        for c in queryset_iterator(content):
-            progress_bar.increase_by(c.count())
-            c.delete()
-
-    progress_bar.state = "completed"
-    progress_bar.save()
+            # delete the content
+            for c in queryset_iterator(content):
+                progress_bar.increase_by(c.count())
+                c.delete()
 
     # delete the artifacts that don't belong to any content
     artifacts = Artifact.objects.orphaned(orphan_protection_time)
 
-    progress_bar = ProgressReport(
+    with ProgressReport(
         message="Clean up orphan Artifacts",
         total=artifacts.count(),
-        code="clean-up.content",
-        done=0,
-        state="running",
-    )
-    progress_bar.save()
+        code="clean-up.artifacts",
+    ) as progress_bar:
+        for artifact in progress_bar.iter(artifacts.iterator()):
+            # we need to manually call delete() because it cleans up the file on the filesystem
+            artifact.delete()
 
-    counter = 0
-    interval = 100
-    for artifact in artifacts.iterator():
-        # we need to manually call delete() because it cleans up the file on the filesystem
-        artifact.delete()
-        progress_bar.done += 1
-        counter += 1
 
-        if counter >= interval:
-            progress_bar.save()
-            counter = 0
+def upload_cleanup():
+    assert settings.UPLOAD_PROTECTION_TIME > 0
+    expiration = timezone.now() - timezone.timedelta(minutes=settings.UPLOAD_PROTECTION_TIME)
+    qs = Upload.objects.filter(pulp_created__lt=expiration)
+    with ProgressReport(
+        message="Clean up uploads",
+        total=qs.count(),
+        code="clean-up.uploads",
+    ) as pr:
+        for upload in pr.iter(qs):
+            upload.delete()
 
-    progress_bar.state = "completed"
-    progress_bar.save()
+
+def tmpfile_cleanup():
+    assert settings.TMPFILE_PROTECTION_TIME > 0
+    expiration = timezone.now() - timezone.timedelta(minutes=settings.TMPFILE_PROTECTION_TIME)
+    qs = PulpTemporaryFile.objects.filter(pulp_created__lt=expiration)
+    with ProgressReport(
+        message="Clean up shared temporary files",
+        total=qs.count(),
+        code="clean-up.tmpfiles",
+    ) as pr:
+        for tmpfile in pr.iter(qs):
+            tmpfile.delete()

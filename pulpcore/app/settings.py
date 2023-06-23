@@ -240,8 +240,10 @@ CONTENT_APP_TTL = 30
 
 WORKER_TTL = 30
 
-# how long to protect orphan content in minutes
+# how long to protect ephemeral items in minutes
 ORPHAN_PROTECTION_TIME = 24 * 60
+UPLOAD_PROTECTION_TIME = 0
+TMPFILE_PROTECTION_TIME = 0
 
 REMOTE_USER_ENVIRON_NAME = "REMOTE_USER"
 
