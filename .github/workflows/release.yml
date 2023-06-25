@@ -15,7 +15,7 @@ on:
         required: true
       before_script:
         description: |
-          Bash code to run before script.sh is executed. This should only be used when re-running
+          Bash code to run before bindings and docs are built. This should only be used when re-running
           a workflow to correct some aspect of the docs. e.g.: git checkout origin/3.14 CHANGES.rst
         required: false
 
@@ -65,21 +65,14 @@ jobs:
         with:
           name: pulpcore.tar
           path: pulpcore.tar
-  test:
+
+
+  build-bindings-docs:
     needs: build-artifacts
-
     runs-on: ubuntu-latest
-
-    strategy:
-      fail-fast: false
-      matrix:
-        env:
-          - TEST: pulp
-          - TEST: docs
-          - TEST: azure
-          - TEST: s3
-          - TEST: generate-bindings
-          - TEST: lowerbounds
+    # Install scripts expect TEST to be set, 'docs' is most appropriate even though we don't run tests
+    env:
+      TEST: docs
 
     steps:
       - uses: actions/download-artifact@v3
@@ -112,10 +105,8 @@ jobs:
           echo ::endgroup::
           echo "HTTPIE_CONFIG_DIR=$GITHUB_WORKSPACE/.ci/assets/httpie/" >> $GITHUB_ENV
 
-      - name: Set environment variables
-        run: |
-          echo "TEST=${{ matrix.env.TEST }}" >> $GITHUB_ENV
-
+      # Building the bindings and docs requires accessing the OpenAPI specs endpoint, so we need to
+      # setup the Pulp instance.
       - name: Before Install
         run: .github/workflows/scripts/before_install.sh
         shell: bash
@@ -144,74 +135,41 @@ jobs:
           GITHUB_CONTEXT: ${{ github.event.pull_request.commits_url }}
         shell: bash
 
-      - name: Before Script
-        run: .github/workflows/scripts/before_script.sh
-        shell: bash
-        env:
-          PY_COLORS: '1'
-          ANSIBLE_FORCE_COLOR: '1'
-          GITHUB_PULL_REQUEST: ${{ github.event.number }}
-          GITHUB_PULL_REQUEST_BODY: ${{ github.event.pull_request.body }}
-          GITHUB_BRANCH: ${{ github.head_ref }}
-          GITHUB_REPO_SLUG: ${{ github.repository }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITHUB_CONTEXT: ${{ github.event.pull_request.commits_url }}
-          REDIS_DISABLED: ${{ contains('', matrix.env.TEST) }}
-
-      - name: Setting secrets
-        run: python3 .github/workflows/scripts/secrets.py "$SECRETS_CONTEXT"
-        env:
-          SECRETS_CONTEXT: ${{ toJson(secrets) }}
-
-      - name: Install Python client
-        run: .github/workflows/scripts/install_python_client.sh
-        shell: bash
-
-      - name: Install Ruby client
-        if: ${{ env.TEST == 'bindings' || env.TEST == 'generate-bindings' }}
-        run: .github/workflows/scripts/install_ruby_client.sh
-        shell: bash
-
       - name: Additional before_script
         run: ${{ github.event.inputs.before_script }}
         shell: bash
 
-      - name: Script
-        if: ${{ env.TEST != 'generate-bindings' }}
-        run: .github/workflows/scripts/script.sh
+      - name: Install Python client
+        run: .github/workflows/scripts/install_python_client.sh
         shell: bash
-        env:
-          PY_COLORS: '1'
-          ANSIBLE_FORCE_COLOR: '1'
-          GITHUB_PULL_REQUEST: ${{ github.event.number }}
-          GITHUB_PULL_REQUEST_BODY: ${{ github.event.pull_request.body }}
-          GITHUB_BRANCH: ${{ github.head_ref }}
-          GITHUB_REPO_SLUG: ${{ github.repository }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITHUB_CONTEXT: ${{ github.event.pull_request.commits_url }}
+      - name: Install Ruby client
+        run: .github/workflows/scripts/install_ruby_client.sh
+        shell: bash
 
       - name: Upload python client packages
-        if: ${{ env.TEST == 'bindings' || env.TEST == 'generate-bindings' }}
         uses: actions/upload-artifact@v3
         with:
           name: python-client.tar
           path: python-client.tar
 
       - name: Upload python client docs
-        if: ${{ env.TEST == 'bindings' || env.TEST == 'generate-bindings' }}
         uses: actions/upload-artifact@v3
         with:
           name: python-client-docs.tar
           path: python-client-docs.tar
-
       - name: Upload ruby client packages
-        if: ${{ env.TEST == 'bindings' || env.TEST == 'generate-bindings' }}
         uses: actions/upload-artifact@v3
         with:
           name: ruby-client.tar
           path: ruby-client.tar
+      - name: Build docs
+        run: |
+          pip install towncrier==19.9.0
+          towncrier --yes --version 4.0.0.ci
+          make -C docs/ PULP_URL="https://pulp" diagrams html
+          tar -cvf docs/docs.tar docs/_build
+
       - name: Upload built docs
-        if: ${{ env.TEST == 'docs' }}
         uses: actions/upload-artifact@v3
         with:
           name: docs.tar
@@ -232,7 +190,7 @@ jobs:
 
   publish:
     runs-on: ubuntu-latest
-    needs: test
+    needs: build-bindings-docs
 
     env:
       TEST: publish
@@ -335,25 +293,3 @@ jobs:
 
       - name: Create release on GitHub
         run: bash .github/workflows/scripts/create_release_from_tag.sh ${{ github.event.inputs.release }}
-
-      - name: Cleanup repository before making changelog PR
-        run: rm -rf .lock generation pulpcore_client* *-client.tar pulpcore.tar todo web *docs.tar
-
-      - name: Stage changelog for main branch
-        run: python .github/workflows/scripts/stage-changelog-for-default-branch.py ${{ github.event.inputs.release }}
-
-      - name: Create Pull Request for Changelog
-        uses: peter-evans/create-pull-request@v4
-        with:
-          token: ${{ secrets.RELEASE_TOKEN }}
-          committer: pulpbot <pulp-infra@redhat.com>
-          author: pulpbot <pulp-infra@redhat.com>
-          branch: changelog/${{ github.event.inputs.release }}
-          base: main
-          title: 'Cherry pick ${{ github.event.inputs.release }} changelog'
-          body: '[noissue]'
-          commit-message: |
-            ${{ github.event.inputs.release }} changelog
-
-            [noissue]
-          delete-branch: true
