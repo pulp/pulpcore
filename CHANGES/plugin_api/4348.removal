@@ -1,0 +1,3 @@
+The changes introduced to the content upload serializers need adjustments in dome plugins.
+Specifically plugin that implemented their own notion of deferred validation to
+``NoArtifactContentUploadSerializer`` seem to be affected.
