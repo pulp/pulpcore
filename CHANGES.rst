@@ -568,8 +568,7 @@ Plugin API
 Features
 ~~~~~~~~
 
-- Added ``retrieve`` logic to ``MultipleArtifactContentSerializer``. Allow to use uploads with
-  ``NoArtifactContentSerializer``.
+- Added ``retrieve`` logic to ``MultipleArtifactContentSerializer``.
   :github:`3951`
 
 
