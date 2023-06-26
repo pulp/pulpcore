@@ -1,19 +1,23 @@
 from gettext import gettext as _
 
 from collections import defaultdict
+from functools import lru_cache
 
 from django.conf import settings
 from django.core.exceptions import BadRequest
 from django.db.models import Q, Exists, OuterRef, CharField
 from django.db.models.functions import Cast
-from django.contrib.auth import get_user_model
+from django.contrib.auth import get_user_model as django_get_user_model
 from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
 
 from pulpcore.app.models import Group
 from pulpcore.app.models.role import GroupRole, Role, UserRole
 
-User = get_user_model()
+
+@lru_cache(maxsize=1)
+def get_user_model():
+    return django_get_user_model()
 
 
 def assign_role(rolename, entity, obj=None, domain=None):
@@ -300,6 +304,7 @@ def get_users_with_perms_roles(
     include_model_permissions=True,
     for_concrete_model=False,
 ):
+    User = get_user_model()
     qs = User.objects.none()
     if with_superusers:
         qs |= User.objects.filter(is_superuser=True)
@@ -338,6 +343,7 @@ def get_users_with_perms_attached_perms(
     include_model_permissions=True,
     for_concrete_model=False,
 ):
+    User = get_user_model()
     ctype = ContentType.objects.get_for_model(obj, for_concrete_model=for_concrete_model)
     perms = Permission.objects.filter(content_type__pk=ctype.id)
     if only_with_perms_in:
@@ -422,6 +428,7 @@ def get_users_with_perms(
     include_model_permissions=True,
     for_concrete_model=False,
 ):
+    User = get_user_model()
     if attach_perms:
         res = defaultdict(set)
         if "pulpcore.backends.ObjectRolePermissionBackend" in settings.AUTHENTICATION_BACKENDS:
