@@ -1,4 +1,4 @@
-from django.contrib.auth import get_user_model
+from django.conf import settings
 from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
@@ -41,7 +41,7 @@ class UserRole(BaseModel):
     """
 
     user = models.ForeignKey(
-        get_user_model(), related_name="object_roles", on_delete=models.CASCADE
+        settings.AUTH_USER_MODEL, related_name="object_roles", on_delete=models.CASCADE
     )
     role = models.ForeignKey(Role, related_name="object_users", on_delete=models.CASCADE)
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE, null=True)
