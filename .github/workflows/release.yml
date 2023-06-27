@@ -251,7 +251,7 @@ jobs:
 
       - name: Publish docs to pulpproject.org
         run: |
-          tar -xvf docs.tar -C ./docs
+          tar -xvf docs.tar
           .github/workflows/scripts/publish_docs.sh tag ${{ github.event.inputs.release }}
       - name: Deploy plugin to pypi
         run: bash .github/workflows/scripts/publish_plugin_pypi.sh ${{ github.event.inputs.release }}
