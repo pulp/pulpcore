@@ -13,6 +13,26 @@ Changelog
 
 .. towncrier release notes start
 
+3.28.1 (2023-06-27)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fixed error when downloading pull-through content that already exists in Pulp.
+  :github:`3945`
+- Fixed circular imports caused by get_user_model calls.
+  :github:`3957`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.28.0 (2023-06-14)
 ===================
 REST API
