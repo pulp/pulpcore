@@ -143,12 +143,17 @@ def _export_publication_to_file_system(
             for ca in content_artifacts.select_related("artifact").iterator()
         }
 
+    publication_metadata_paths = set(
+        publication.published_metadata.values_list("relative_path", flat=True)
+    )
     for pa in publication.published_artifact.select_related(
         "content_artifact", "content_artifact__artifact"
     ).iterator():
         # Artifact isn't guaranteed to be present
         if pa.content_artifact.artifact and (
-            start_repo_version is None or pa.content_artifact.pk in difference_content_artifacts
+            start_repo_version is None
+            or pa.relative_path in publication_metadata_paths
+            or pa.content_artifact.pk in difference_content_artifacts
         ):
             relative_path_to_artifacts[pa.relative_path] = pa.content_artifact.artifact
 
