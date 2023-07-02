@@ -33,6 +33,11 @@ jobs:
         with:
           fetch-depth: 1
 
+      - uses: actions/checkout@v3
+        with:
+          repository: pulp/plugin_template
+          path: ../plugin_template
+
       - uses: actions/setup-python@v3
         with:
           python-version: "3.8"
