@@ -25,7 +25,9 @@ def get_changelog_releases(changelog):
     Get all versions in changelog.
 
     """
-    versions = re.findall(r"([0-9]+)\.([0-9]+)\.([0-9]+) \(", changelog)
+    versions = re.findall(
+        r"([0-9]+)\.([0-9]+)\.([0-9][0-9ab]*) \([0-9]{4}-[0-9]{2}-[0-9]{2}\)", changelog
+    )
     return {".".join(v) for v in versions}
 
 
