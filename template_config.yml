@@ -1,7 +1,7 @@
 # This config represents the latest values used when running the plugin-template. Any settings that
 # were not present before running plugin-template have been added with their default values.
 
-# generated with plugin_template@2021.08.26-212-g18b9346
+# generated with plugin_template@2021.08.26-225-gbfce9ef
 
 additional_repos:
 - branch: main
@@ -25,6 +25,7 @@ ci_update_branches:
 - '3.22'
 - '3.23'
 - '3.28'
+ci_update_docs: false
 cli_package: pulp-cli
 cli_repo: https://github.com/pulp/pulp-cli.git
 core_import_allowed: []
@@ -36,6 +37,7 @@ disabled_redis_runners:
 doc_requirements_from_pulpcore: true
 docker_fixtures: true
 docs_test: true
+extra_docs_requirements: []
 flake8: true
 flake8_ignore:
 - ./pulpcore/app/protobuf/*
