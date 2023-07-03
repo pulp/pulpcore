@@ -15,11 +15,6 @@ on:
     - cron: '30 2 * * 0'
   
   workflow_dispatch:
-    inputs:
-      all_branches:
-        description: "Run on all branches"
-        default: 'no'
-        required: false
 
 jobs:
   update:
@@ -31,12 +26,9 @@ jobs:
     steps:
       - uses: actions/checkout@v3
         with:
-          fetch-depth: 1
-
-      - uses: actions/checkout@v3
-        with:
           repository: pulp/plugin_template
-          path: ../plugin_template
+          path: plugin_template
+          fetch-depth: 0
 
       - uses: actions/setup-python@v3
         with:
@@ -52,12 +44,14 @@ jobs:
         run: |
           git config --global user.name 'pulpbot'
           git config --global user.email 'pulp-infra@redhat.com'
-
-      - name: Set short_ref
-        id: vars
-        run: echo short_ref=${GITHUB_REF#refs/*/} >> $GITHUB_OUTPUT
+      - uses: actions/checkout@v3
+        with:
+          path: pulpcore
+          ref: 'main'
+          fetch-depth: 0
 
       - name: Run update
+        working-directory: pulpcore
         run: |
           .github/workflows/scripts/update_ci.sh
 
@@ -65,11 +59,13 @@ jobs:
         uses: peter-evans/create-pull-request@v4
         with:
           token: ${{ secrets.RELEASE_TOKEN }}
+          path: pulpcore
           committer: pulpbot <pulp-infra@redhat.com>
           author: pulpbot <pulp-infra@redhat.com>
-          title: 'Update CI files from ${{ steps.vars.outputs.short_ref }} branch'
+          title: 'Update CI files for branch main'
           body: '[noissue]'
-          branch: 'create-pull-request/${{ steps.vars.outputs.short_ref }}/patch'
+          branch: 'update-ci/main'
+          base: 'main'
           commit-message: |
             Update CI files
 
