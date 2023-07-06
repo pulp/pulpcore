@@ -33,6 +33,7 @@ class UpstreamPulpViewSet(
         summary="Replicate",
         description="Trigger an asynchronous repository replication task group. This API is "
         "provided as a tech preview.",
+        request=None,
         responses={202: AsyncOperationResponseSerializer},
     )
     @action(detail=True, methods=["post"])
