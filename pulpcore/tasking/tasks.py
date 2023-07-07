@@ -56,7 +56,14 @@ def _execute_task(task):
         _logger.info(_("Starting task %s"), task.pk)
 
         # Execute task
-        module_name, function_name = task.name.rsplit(".", 1)
+        try:
+            module_name, function_name = task.name.rsplit(":")
+        except ValueError:
+            deprecation_logger.warning(
+                "Old task specification found. This will be turned into an error with pulpcore >=3.40."
+            )
+            # When removing this, write a data-migration to update existing task entries.
+            module_name, function_name = task.name.rsplit(".", 1)
         module = importlib.import_module(module_name)
         func = getattr(module, function_name)
         args = task.args or ()
@@ -127,7 +134,7 @@ def dispatch(
     assert deferred or immediate, "A task must be at least `deferred` or `immediate`."
 
     if callable(func):
-        function_name = f"{func.__module__}.{func.__name__}"
+        function_name = f"{func.__module__}:{func.__name__}"
     else:
         function_name = func
 
