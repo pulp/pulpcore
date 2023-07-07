@@ -97,6 +97,12 @@ class TaskSerializer(ModelSerializer):
                 return reverse("users-detail", kwargs=kwargs)
         return None
 
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        if "name" in data:
+            data["name"] = data["name"].replace(":", ".")
+        return data
+
     class Meta:
         model = models.Task
         fields = ModelSerializer.Meta.fields + (
