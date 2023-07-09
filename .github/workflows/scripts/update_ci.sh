@@ -14,23 +14,13 @@ if [ ! -f "template_config.yml" ]; then
 fi
 
 pushd ../plugin_template
-./plugin-template --github pulpcore
+./plugin-template --github --docs pulpcore
 popd
 
 # Check if only gitref file has changed, so no effect on CI workflows.
-if [[ $(git diff --name-only) == ".github/template_gitref" ]]; then
-  echo "No changes detected in github section."
-  git restore ".github/template_gitref"
-fi
-
-pushd ../plugin_template
-./plugin-template --docs pulpcore
-popd
-
-# Check if only gitref file has changed, so no effect on CI workflows.
-if [[ $(git diff --name-only) == "docs/template_gitref" ]]; then
-  echo "No changes detected in docs section."
-  git restore "docs/template_gitref"
+if [ "$(git diff --name-only | grep -v "template_gitref")" ]; then
+  echo "No changes detected."
+  git restore ".github/template_gitref" "docs/template_gitref"
 fi
 
 if [[ $(git status --porcelain) ]]; then
