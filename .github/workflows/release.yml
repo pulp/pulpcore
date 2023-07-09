@@ -164,8 +164,6 @@ jobs:
           path: ruby-client.tar
       - name: Build docs
         run: |
-          pip install towncrier==19.9.0
-          towncrier --yes
           export DJANGO_SETTINGS_MODULE=pulpcore.app.settings
           export PULP_SETTINGS=$PWD/.ci/ansible/settings/settings.py
           make -C docs/ PULP_URL="https://pulp" diagrams html
