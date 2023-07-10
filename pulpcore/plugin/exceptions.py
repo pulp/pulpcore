@@ -1,4 +1,4 @@
-from pulpcore.exceptions import (  # noqa
+from pulpcore.exceptions import (  # noqa: F401
     DigestValidationError,
     InvalidSignatureError,
     PulpException,

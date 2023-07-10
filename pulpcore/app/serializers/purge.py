@@ -3,7 +3,7 @@ from gettext import gettext as _
 
 from rest_framework import serializers
 
-from pulpcore.app.serializers import ValidateFieldsMixin  # noqa
+from pulpcore.app.serializers import ValidateFieldsMixin
 from pulpcore.constants import TASK_FINAL_STATES
 
 
