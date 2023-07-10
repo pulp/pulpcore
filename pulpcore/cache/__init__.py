@@ -1,4 +1,4 @@
-from .cache import (  # noqa
+from .cache import (
     AsyncCache,
     AsyncContentCache,
     Cache,

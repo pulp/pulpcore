@@ -1,1 +1,1 @@
-from pulpcore.app.modelresource import RepositoryResource  # noqa
+from pulpcore.app.modelresource import RepositoryResource  # noqa: F401
