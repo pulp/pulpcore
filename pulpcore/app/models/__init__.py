@@ -1,23 +1,23 @@
 # https://docs.djangoproject.com/en/3.2/topics/db/models/#organizing-models-in-a-package
 
 # Must be imported first as other models depend on it
-from .base import (  # noqa
+from .base import (
     BaseModel,
     MasterModel,
     pulp_uuid,
 )
 
-from .access_policy import (  # noqa
+from .access_policy import (
     AccessPolicy,
     AutoAddObjPermsMixin,
     Group,
 )
 
-from .domain import Domain  # noqa
+from .domain import Domain
 
-from .acs import AlternateContentSource, AlternateContentSourcePath  # noqa
+from .acs import AlternateContentSource, AlternateContentSourcePath
 
-from .content import (  # noqa
+from .content import (
     Artifact,
     AsciiArmoredDetachedSigningService,
     Content,
@@ -29,9 +29,9 @@ from .content import (  # noqa
     UnsupportedDigestValidationError,
 )
 
-from .generic import GenericRelationModel  # noqa
+from .generic import GenericRelationModel
 
-from .exporter import (  # noqa
+from .exporter import (
     Export,
     ExportedResource,
     Exporter,
@@ -41,14 +41,14 @@ from .exporter import (  # noqa
     PulpExporter,
 )
 
-from .importer import (  # noqa
+from .importer import (
     Import,
     Importer,
     PulpImport,
     PulpImporter,
 )
 
-from .publication import (  # noqa
+from .publication import (
     ContentGuard,
     Distribution,
     Publication,
@@ -59,7 +59,7 @@ from .publication import (  # noqa
     ArtifactDistribution,
 )
 
-from .repository import (  # noqa
+from .repository import (
     Remote,
     Repository,
     RepositoryContent,
@@ -67,17 +67,9 @@ from .repository import (  # noqa
     RepositoryVersionContentDetails,
 )
 
-# This can lead to circular imports with a custom user model depending on this very module
-# Moved to plugin/models/role.py to avoid the circular import.
-# from .role import (  # noqa
-#     GroupRole,
-#     Role,
-#     UserRole,
-# )
+from .status import ContentAppStatus
 
-from .status import ContentAppStatus  # noqa
-
-from .task import (  # noqa
+from .task import (
     CreatedResource,
     Task,
     TaskGroup,
@@ -85,15 +77,15 @@ from .task import (  # noqa
     Worker,
 )
 
-from .analytics import SystemID  # noqa
+from .analytics import SystemID
 
-from .upload import (  # noqa
+from .upload import (
     Upload,
     UploadChunk,
 )
 
 # Moved here to avoid a circular import with Task
-from .progress import GroupProgressReport, ProgressReport  # noqa
+from .progress import GroupProgressReport, ProgressReport
 
 # Moved here to avoid a circular import with GroupProgressReport
-from .replica import UpstreamPulp  # noqa
+from .replica import UpstreamPulp
