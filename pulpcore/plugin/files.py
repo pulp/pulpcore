@@ -1,1 +1,1 @@
-from pulpcore.app.files import PulpTemporaryUploadedFile  # noqa
+from pulpcore.app.files import PulpTemporaryUploadedFile  # noqa: F401

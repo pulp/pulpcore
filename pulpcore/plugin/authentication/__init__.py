@@ -1,1 +1,1 @@
-from pulpcore.app.authentication import PulpRemoteUserAuthentication  # noqa
+from pulpcore.app.authentication import PulpRemoteUserAuthentication

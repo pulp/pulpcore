@@ -1,4 +1,4 @@
-from pulpcore.download import (  # noqa
+from pulpcore.download import (
     BaseDownloader,
     DownloadResult,
     DownloaderFactory,

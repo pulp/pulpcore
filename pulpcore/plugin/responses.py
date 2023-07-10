@@ -1,1 +1,1 @@
-from pulpcore.responses import ArtifactResponse  # noqa
+from pulpcore.responses import ArtifactResponse  # noqa: F401

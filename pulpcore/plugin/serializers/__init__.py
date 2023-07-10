@@ -1,5 +1,5 @@
 # Import Serializers in platform that are potentially useful to plugin writers
-from pulpcore.app.serializers import (  # noqa
+from pulpcore.app.serializers import (
     AlternateContentSourceSerializer,
     AlternateContentSourcePathSerializer,
     ArtifactSerializer,
@@ -37,7 +37,7 @@ from pulpcore.app.serializers import (  # noqa
     TaskSerializer,
 )
 
-from .content import (  # noqa
+from .content import (
     NoArtifactContentUploadSerializer,
     SingleArtifactContentUploadSerializer,
 )
