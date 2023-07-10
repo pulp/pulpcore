@@ -4,6 +4,7 @@ import os
 import shutil
 import socket
 import ssl
+import subprocess
 import threading
 import uuid
 
@@ -1036,3 +1037,21 @@ def http_get():
         return response
 
     return _http_get
+
+
+@pytest.fixture
+def wget_recursive_download_on_host():
+    def _wget_recursive_download_on_host(url, destination):
+        subprocess.check_output(
+            [
+                "wget",
+                "--recursive",
+                "--no-parent",
+                "--no-host-directories",
+                "--directory-prefix",
+                destination,
+                url,
+            ]
+        )
+
+    return _wget_recursive_download_on_host
