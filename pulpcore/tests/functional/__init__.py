@@ -66,7 +66,7 @@ from pulpcore.client.pulpcore import (
     WorkersApi,
 )
 
-from .gpg_ascii_armor_signing_service import (  # noqa: F401
+from .gpg_ascii_armor_signing_service import (
     _ascii_armored_detached_signing_service_name,
     ascii_armored_detached_signing_service,
     sign_with_ascii_armored_detached_signing_service,

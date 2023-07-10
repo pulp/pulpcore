@@ -1,4 +1,4 @@
-from pulpcore.app.role_util import (  # noqa
+from pulpcore.app.role_util import (  # noqa: F401
     assign_role,
     get_groups_with_perms,
     get_groups_with_perms_attached_perms,
@@ -12,7 +12,7 @@ from pulpcore.app.role_util import (  # noqa
     remove_role,
 )
 
-from pulpcore.app.util import (  # noqa
+from pulpcore.app.util import (  # noqa: F401
     extract_pk,
     get_artifact_url,
     get_url,

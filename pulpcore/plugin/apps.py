@@ -1,1 +1,1 @@
-from pulpcore.app.apps import adjust_roles  # noqa
+from pulpcore.app.apps import adjust_roles  # noqa: F401
