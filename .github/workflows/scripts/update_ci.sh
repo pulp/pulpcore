@@ -20,7 +20,7 @@ popd
 # Check if only gitref file has changed, so no effect on CI workflows.
 if [ "$(git diff --name-only | grep -v "template_gitref")" ]; then
   echo "No changes detected."
-  git restore ".github/template_gitref" "docs/template_gitref"
+  git ls-files | grep template_gitref | xargs git restore
 fi
 
 if [[ $(git status --porcelain) ]]; then
