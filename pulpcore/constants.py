@@ -67,3 +67,40 @@ FS_EXPORT_CHOICES = (
 )
 
 EXPORT_BATCH_SIZE = 2000
+
+# Mapping of http-response-headers to what various block-storage-apis call them
+# https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/s3/client/get_object.html
+# response-headers S3 respects, and what they map to in an S3 object
+S3_RESPONSE_HEADER_MAP = {
+    "Content-Disposition": "ResponseContentDisposition",
+    "Content-Type": "ResponseContentType",
+    "Cache-Control": "ResponseCacheControl",
+    "Content-Language": "ResponseContentLanguage",
+    "Expires": "ResponseExpires",
+    "Content-Encoding": "ResponseContentEncoding",
+}
+# https://learn.microsoft.com/en-us/python/api/azure-storage-blob/azure.storage.blob.contentsettings?view=azure-python
+# response-headers azure respects, and what they map to in an azure object
+AZURE_RESPONSE_HEADER_MAP = {
+    "Content-Disposition": "content_disposition",
+    "Content-Type": "content_type",
+    "Cache-Control": "cache_control",
+    "Content-Language": "content_language",
+    "Content-Encoding": "content_encoding",
+}
+# https://gcloud.readthedocs.io/en/latest/storage-blobs.html
+# response-headers Google Cloud Storage respects, and what they map to in a GCS object
+GCS_RESPONSE_HEADER_MAP = {
+    "Content-Disposition": "content_disposition",
+    "Content-Type": "content_type",
+    "Cache-Control": "cache_control",
+    "Content-Language": "content_language",
+    "Content-Encoding": "content_encoding",
+}
+
+# Storage-type mapped to storage-response-map
+STORAGE_RESPONSE_MAP = {
+    "storages.backends.s3boto3.S3Boto3Storage": S3_RESPONSE_HEADER_MAP,
+    "storages.backends.azure_storage.AzureStorage": AZURE_RESPONSE_HEADER_MAP,
+    "storages.backends.gcloud.GoogleCloudStorage": GCS_RESPONSE_HEADER_MAP,
+}
