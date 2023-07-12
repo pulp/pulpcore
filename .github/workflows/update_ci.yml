@@ -53,7 +53,7 @@ jobs:
       - name: Run update
         working-directory: pulpcore
         run: |
-          .github/workflows/scripts/update_ci.sh
+          ../plugin_template/scripts/update_ci.sh
 
       - name: Create Pull Request for CI files
         uses: peter-evans/create-pull-request@v4
