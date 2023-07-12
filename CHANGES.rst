@@ -17,6 +17,24 @@ Changelog
 
 .. towncrier release notes start
 
+3.23.8 (2023-07-12)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fix api schema of the `upstream_pulp_replicate` operation requiring no body.
+  :github:`3995`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.23.7 (2023-06-14)
 ===================
 REST API
