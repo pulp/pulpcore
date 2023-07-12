@@ -13,6 +13,62 @@ Changelog
 
 .. towncrier release notes start
 
+3.29.0 (2023-07-12)
+===================
+REST API
+--------
+
+Features
+~~~~~~~~
+
+- Added version information to tasks. Workers will refuse to pick up tasks with a version higher
+  than their own.
+  :github:`3369`
+- Added graceful shutdown to pulpcore-worker without killing the current task on receiving
+  ``SIGHUP`` or ``SIGTERM``.
+  :github:`3940`
+- Added periodically executed cleanup tasks for uploads and temporary files. Configure a time
+  interval in ``UPLOAD_PROTECTION_TIME`` or ``TMPFILE_PROTECTION_TIME`` to activate.
+  :github:`3949`
+
+
+Bugfixes
+~~~~~~~~
+
+- Made the incremental file export include all published metadata.
+  :github:`3941`
+- Fixed error when downloading pull-through content that already exists in Pulp.
+  :github:`3945`
+- Fixed circular imports caused by get_user_model calls.
+  :github:`3957`
+- Fix api schema of the `upstream_pulp_replicate` operation requiring no body.
+  :github:`3995`
+
+
+Plugin API
+----------
+
+Features
+~~~~~~~~
+
+- Added ``retrieve`` logic to ``MultipleArtifactContentSerializer``. Allow to use uploads with
+  ``NoArtifactContentSerializer``.
+  :github:`3951`
+
+
+Bugfixes
+~~~~~~~~
+
+- Fixed the import path for ``pulpcore.plugin.pulp_hashlib``.
+  :github:`4006`
+
+
+Misc
+~~~~
+
+- :github:`3798`
+
+
 3.28.1 (2023-06-27)
 ===================
 REST API
