@@ -6,6 +6,12 @@ def dummy_task():
     pass
 
 
+def sleep(interval):
+    from time import sleep
+
+    sleep(interval)
+
+
 @backoff.on_exception(backoff.expo, BaseException)
 def gooey_task(interval):
     """A sleep task that tries to avoid being killed by ignoring all exceptions."""

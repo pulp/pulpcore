@@ -1,9 +1,35 @@
+import importlib
+
 from django.db import transaction
 
 from pulpcore.app.apps import get_plugin_config
-from pulpcore.app.models import CreatedResource, PulpTemporaryFile
+from pulpcore.app.models import CreatedResource, PulpTemporaryFile, Task
 from pulpcore.app.files import PulpTemporaryUploadedFile
 from pulpcore.plugin.models import MasterModel
+
+
+def general_serializer_task(
+    serializer_id, method, instance_id=None, partial=False, data=None, context=None
+):
+    """
+    Call a method of a serializer after validating it's data.
+    """
+    if context is None:
+        context = {}
+    context["task"] = Task.current()
+    module_name, serializer_name = serializer_id.rsplit(":")
+    module = importlib.import_module(module_name)
+    serializer_class = getattr(module, serializer_name)
+    if instance_id is None:
+        serializer = serializer_class(data=data, context=context)
+    else:
+        instance = serializer_class.Meta.model.objects.get(pk=instance_id)
+        if isinstance(instance, MasterModel):
+            instance = instance.cast()
+        serializer = serializer_class(instance, data=data, partial=partial)
+    serializer.is_valid(raise_exception=True)
+    result = getattr(serializer, method)(serializer.validated_data)
+    return serializer_class(result).data
 
 
 def general_create_from_temp_file(app_label, serializer_name, temp_file_pk, *args, **kwargs):

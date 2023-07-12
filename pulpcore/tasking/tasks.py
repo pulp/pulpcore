@@ -14,14 +14,13 @@ from django.utils import timezone
 from django_guid import get_guid, set_guid
 from django_guid.utils import generate_guid
 
+from pulpcore.app.apps import MODULE_PLUGIN_VERSIONS
+from pulpcore.app.loggers import deprecation_logger
 from pulpcore.app.models import Task, TaskSchedule
 from pulpcore.app.util import get_url, get_domain, current_task
 from pulpcore.constants import TASK_FINAL_STATES, TASK_STATES, TASK_INCOMPLETE_STATES
 
 _logger = logging.getLogger(__name__)
-
-
-TASK_TIMEOUT = -1  # -1 for infinite timeout
 
 
 def _validate_and_get_resources(resources):
@@ -58,7 +57,15 @@ def _execute_task(task):
         _logger.info(_("Starting task %s"), task.pk)
 
         # Execute task
-        module_name, function_name = task.name.rsplit(".", 1)
+        try:
+            module_name, function_name = task.name.rsplit(":")
+        except ValueError:
+            deprecation_logger.warning(
+                "Old task specification found. "
+                "This will be turned into an error with pulpcore >=3.40."
+            )
+            # When removing this, write a data-migration to update existing task entries.
+            module_name, function_name = task.name.rsplit(".", 1)
         module = importlib.import_module(module_name)
         func = getattr(module, function_name)
         args = task.args or ()
@@ -67,7 +74,7 @@ def _execute_task(task):
         if asyncio.iscoroutine(result):
             _logger.debug(_("Task is coroutine %s"), task.pk)
             loop = asyncio.get_event_loop()
-            loop.run_until_complete(result)
+            result = loop.run_until_complete(result)
 
     except Exception:
         exc_type, exc, tb = sys.exc_info()
@@ -75,7 +82,7 @@ def _execute_task(task):
         _logger.info(_("Task %s failed (%s)"), task.pk, exc)
         _logger.info("\n".join(traceback.format_list(traceback.extract_tb(tb))))
     else:
-        task.set_completed()
+        task.set_completed(result=result)
         _logger.info(_("Task completed %s"), task.pk)
 
 
@@ -88,6 +95,7 @@ def dispatch(
     shared_resources=None,
     immediate=False,
     deferred=True,
+    versions=None,
 ):
     """
     Enqueue a message to Pulp workers with a reservation.
@@ -126,7 +134,12 @@ def dispatch(
     assert deferred or immediate, "A task must be at least `deferred` or `immediate`."
 
     if callable(func):
-        func = f"{func.__module__}.{func.__name__}"
+        function_name = f"{func.__module__}:{func.__name__}"
+    else:
+        function_name = func
+
+    if versions is None:
+        versions = MODULE_PLUGIN_VERSIONS[function_name.split(".", maxsplit=1)[0]]
 
     if exclusive_resources is None:
         exclusive_resources = []
@@ -149,11 +162,12 @@ def dispatch(
                 state=TASK_STATES.WAITING,
                 logging_cid=(get_guid()),
                 task_group=task_group,
-                name=func,
+                name=function_name,
                 args=args,
                 kwargs=kwargs,
                 parent_task=Task.current(),
                 reserved_resources_record=resources,
+                versions=versions,
             )
             if immediate:
                 # Grab the advisory lock before the task hits the db.
