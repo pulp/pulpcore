@@ -1012,6 +1012,13 @@ class Handler:
 
         async def handle_data(data):
             nonlocal data_size_handled
+            # If we got here, and the response hasn't had "prepare()" called on it, it's due to
+            # some code-path (i.e., FileDownloader) that doesn't know/care about
+            # headers_ready_callback failing to invoke it.
+            # We're not going to do anything more with headers at this point, so it's safe to
+            # "backstop" the prepare() call here, so the write() will be allowed.
+            if not response.prepared:
+                await response.prepare(request)
             if range_start or range_stop:
                 start_byte_pos = 0
                 end_byte_pos = len(data)
