@@ -20,6 +20,7 @@ from asgiref.sync import sync_to_async
 
 import django
 
+from pulpcore.constants import STORAGE_RESPONSE_MAP
 from pulpcore.responses import ArtifactResponse
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "pulpcore.app.settings")
@@ -894,6 +895,16 @@ class Handler:
         Returns:
             The :class:`aiohttp.web.FileResponse` for the file.
         """
+
+        def _set_params_from_headers(hdrs, storage_domain):
+            # Map standard-response-headers to storage-object-specific keys
+            params = {}
+            if storage_domain in STORAGE_RESPONSE_MAP:
+                for a_key in STORAGE_RESPONSE_MAP[storage_domain]:
+                    if hdrs.get(a_key, None):
+                        params[STORAGE_RESPONSE_MAP[storage_domain][a_key]] = hdrs[a_key]
+            return params
+
         artifact_file = content_artifact.artifact.file
         artifact_name = artifact_file.name
         filename = os.path.basename(content_artifact.relative_path)
@@ -909,9 +920,8 @@ class Handler:
         elif not domain.redirect_to_object_storage:
             return ArtifactResponse(content_artifact.artifact, headers=headers)
         elif domain.storage_class == "storages.backends.s3boto3.S3Boto3Storage":
-            parameters = {"ResponseContentDisposition": content_disposition}
-            if headers.get("Content-Type"):
-                parameters["ResponseContentType"] = headers.get("Content-Type")
+            headers["Content-Disposition"] = content_disposition
+            parameters = _set_params_from_headers(headers, domain.storage_class)
             url = URL(
                 artifact_file.storage.url(
                     artifact_name, parameters=parameters, http_method=request.method
@@ -920,15 +930,13 @@ class Handler:
             )
             raise HTTPFound(url)
         elif domain.storage_class == "storages.backends.azure_storage.AzureStorage":
-            parameters = {"content_disposition": content_disposition}
-            if headers.get("Content-Type"):
-                parameters["content_type"] = headers.get("Content-Type")
+            headers["Content-Disposition"] = content_disposition
+            parameters = _set_params_from_headers(headers, domain.storage_class)
             url = URL(artifact_file.storage.url(artifact_name, parameters=parameters), encoded=True)
             raise HTTPFound(url)
         elif domain.storage_class == "storages.backends.gcloud.GoogleCloudStorage":
-            parameters = {"response_disposition": content_disposition}
-            if headers.get("Content-Type"):
-                parameters["content_type"] = headers.get("Content-Type")
+            headers["Content-Disposition"] = content_disposition
+            parameters = _set_params_from_headers(headers, domain.storage_class)
             url = URL(artifact_file.storage.url(artifact_name, parameters=parameters), encoded=True)
             raise HTTPFound(url)
         else:
