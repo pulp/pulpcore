@@ -1,1 +1,0 @@
-Fix api schema of the `upstream_pulp_replicate` operation requiring no body.
