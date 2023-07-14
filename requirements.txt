@@ -22,7 +22,7 @@ naya>=1.1.1,<=1.1.1
 importlib-metadata>=6.0.1,<=6.0.1  # Pinned to fix opentelemetry dependency solving issues with pip 
 opentelemetry-distro[otlp]>=0.38b0,<=0.39b0
 opentelemetry-exporter-otlp-proto-http>=1.17.0,<=1.18.0
-opentelemetry-instrumentation-django>=0.38b0,<=0.39b0
+opentelemetry-instrumentation-django>=0.38b0,<=0.40b0
 opentelemetry-instrumentation-wsgi>=0.38b0,<=0.39b0
 pulp-glue>=0.18.0,<0.21
 protobuf>=4.21.1,<4.23.5
