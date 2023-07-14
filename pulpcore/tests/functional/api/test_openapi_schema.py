@@ -9,6 +9,7 @@ import jsonschema
 
 from drf_spectacular.validation import JSON_SCHEMA_SPEC_PATH
 from jsonschema import ValidationError
+from collections import defaultdict
 
 
 @pytest.fixture(scope="session")
@@ -71,3 +72,16 @@ def test_valid_with_safe_chars(pulp_openapi_schema, openapi3_schema_with_modifie
     jsonschema.validate(
         instance=pulp_openapi_schema, schema=openapi3_schema_with_modified_safe_chars
     )
+
+
+@pytest.mark.parallel
+@pytest.mark.from_pulpcore_for_all_plugins
+def test_no_dup_operation_ids(pulp_openapi_schema):
+    paths = pulp_openapi_schema["paths"]
+    operation_ids = defaultdict(int)
+    for p in paths.values():
+        for operation in p.values():
+            operation_ids[operation["operationId"]] += 1
+
+    dup_ids = [id for id, cnt in operation_ids.items() if cnt > 1]
+    assert len(dup_ids) == 0, f"Duplicate operationIds found: {dup_ids}"
