@@ -1,6 +1,7 @@
 """pulp URL Configuration"""
 from django.conf import settings
 from django.urls import path, include
+from drf_spectacular.utils import extend_schema
 from drf_spectacular.views import (
     SpectacularJSONAPIView,
     SpectacularYAMLAPIView,
@@ -186,11 +187,21 @@ docs_and_status = [
     ),
 ]
 
-urlpatterns.append(path(API_ROOT, include(docs_and_status)))
+urlpatterns.append(path(settings.V3_API_ROOT_NO_FRONT_SLASH, include(docs_and_status)))
 
 if settings.DOMAIN_ENABLED:
-    # Ensure Docs and Status endpoints are available at normal endpoint
-    urlpatterns.append(path(settings.V3_API_ROOT_NO_FRONT_SLASH, include(docs_and_status)))
+    # Ensure Docs and Status endpoints are available within domains, but are not shown in API schema
+    docs_and_status_no_schema = []
+    for p in docs_and_status:
+
+        @extend_schema(exclude=True)
+        class NoSchema(p.callback.cls):
+            pass
+
+        view = NoSchema.as_view(**p.callback.initkwargs)
+        name = p.name + "-domains" if p.name else None
+        docs_and_status_no_schema.append(path(str(p.pattern), view, name=name))
+    urlpatterns.append(path(API_ROOT, include(docs_and_status_no_schema)))
 
 #: The Pulp Platform v3 API router, which can be used to manually register ViewSets with the API.
 root_router = PulpDefaultRouter()
