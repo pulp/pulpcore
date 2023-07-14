@@ -17,6 +17,26 @@ Changelog
 
 .. towncrier release notes start
 
+3.26.2 (2023-07-14)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Taught PulpImport to be more robust in the face of previous failed attempts.
+  :github:`3737`
+- Pinned importlib-metadata to 6.0.1 given pip is unable to solve an opentelemetry dependency version correctly.
+  :github:`4042`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.26.1 (2023-05-25)
 ===================
 REST API

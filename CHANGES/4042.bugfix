@@ -1,1 +1,0 @@
-Pinned importlib-metadata to 6.0.1 given pip is unable to solve an opentelemetry dependency version correctly.
