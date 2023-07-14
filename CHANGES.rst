@@ -13,6 +13,24 @@ Changelog
 
 .. towncrier release notes start
 
+3.29.1 (2023-07-14)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Pinned importlib-metadata to 6.0.1 given pip is unable to solve an opentelemetry dependency version correctly.
+  :github:`4042`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.29.0 (2023-07-12)
 ===================
 REST API
