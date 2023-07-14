@@ -13,6 +13,26 @@ Changelog
 
 .. towncrier release notes start
 
+3.27.2 (2023-07-14)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fixed circular imports caused by get_user_model calls.
+  :github:`3957`
+- Pinned importlib-metadata to 6.0.1 given pip is unable to solve an opentelemetry dependency version correctly.
+  :github:`4042`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.27.1 (2023-06-05)
 ===================
 REST API
