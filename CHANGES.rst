@@ -13,6 +13,24 @@ Changelog
 
 .. towncrier release notes start
 
+3.29.1 (2023-07-14)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Pinned importlib-metadata to 6.0.1 given pip is unable to solve an opentelemetry dependency version correctly.
+  :github:`4042`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.29.0 (2023-07-12)
 ===================
 REST API
@@ -67,6 +85,24 @@ Misc
 ~~~~
 
 - :github:`3798`
+
+
+3.28.3 (2023-07-14)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Pinned importlib-metadata to 6.0.1 given pip is unable to solve an opentelemetry dependency version correctly.
+  :github:`4042`
+
+
+Plugin API
+----------
+
+No significant changes.
 
 
 3.28.2 (2023-07-12)
@@ -156,6 +192,26 @@ Features
   :github:`3897`
 
 
+3.27.2 (2023-07-14)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fixed circular imports caused by get_user_model calls.
+  :github:`3957`
+- Pinned importlib-metadata to 6.0.1 given pip is unable to solve an opentelemetry dependency version correctly.
+  :github:`4042`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.27.1 (2023-06-05)
 ===================
 REST API
@@ -233,6 +289,26 @@ Bugfixes
 - Fixed potential unnecessary database calls executed after matching distributions in the content
   application.
   :github:`3876`
+
+
+3.26.2 (2023-07-14)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Taught PulpImport to be more robust in the face of previous failed attempts.
+  :github:`3737`
+- Pinned importlib-metadata to 6.0.1 given pip is unable to solve an opentelemetry dependency version correctly.
+  :github:`4042`
+
+
+Plugin API
+----------
+
+No significant changes.
 
 
 3.26.1 (2023-05-25)
