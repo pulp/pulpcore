@@ -113,18 +113,12 @@ def _export_publication_to_file_system(
         path (str): Path to place the exported data
         publication_pk (str): Publication pk
     """
-    difference_content_artifacts = []
     content_artifacts = ContentArtifact.objects.filter(
         pk__in=publication.published_artifact.values_list("content_artifact__pk", flat=True)
     )
     if start_repo_version:
         start_version_content_artifacts = ContentArtifact.objects.filter(
             artifact__in=start_repo_version.artifacts
-        )
-        difference_content_artifacts = set(
-            content_artifacts.difference(start_version_content_artifacts).values_list(
-                "pk", flat=True
-            )
         )
 
     if publication.pass_through:
@@ -136,11 +130,20 @@ def _export_publication_to_file_system(
         # In some cases we may want to disable this validation
         _validate_fs_export(content_artifacts)
 
+    difference_content_artifacts = []
+    if start_repo_version:
+        difference_content_artifacts = set(
+            content_artifacts.difference(start_version_content_artifacts).values_list(
+                "pk", flat=True
+            )
+        )
+
     relative_path_to_artifacts = {}
     if publication.pass_through:
         relative_path_to_artifacts = {
             ca.relative_path: ca.artifact
             for ca in content_artifacts.select_related("artifact").iterator()
+            if (start_repo_version is None) or (ca.pk in difference_content_artifacts)
         }
 
     for pa in publication.published_artifact.select_related(
