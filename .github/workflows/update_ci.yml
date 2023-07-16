@@ -233,3 +233,30 @@ jobs:
 
             [noissue]
           delete-branch: true
+      - uses: actions/checkout@v3
+        with:
+          path: pulpcore
+          ref: '3.29'
+          fetch-depth: 0
+
+      - name: Run update
+        working-directory: pulpcore
+        run: |
+          ../plugin_template/scripts/update_ci.sh
+
+      - name: Create Pull Request for CI files
+        uses: peter-evans/create-pull-request@v4
+        with:
+          token: ${{ secrets.RELEASE_TOKEN }}
+          path: pulpcore
+          committer: pulpbot <pulp-infra@redhat.com>
+          author: pulpbot <pulp-infra@redhat.com>
+          title: 'Update CI files for branch 3.29'
+          body: '[noissue]'
+          branch: 'update-ci/3.29'
+          base: '3.29'
+          commit-message: |
+            Update CI files
+
+            [noissue]
+          delete-branch: true
