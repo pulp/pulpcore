@@ -28,7 +28,7 @@ pulp-glue>=0.18.0,<0.21
 protobuf>=4.21.1,<4.23.5
 pygtrie>=2.5,<=2.5.0
 psycopg[binary]>=3.1.8,<=3.1.9
-PyYAML>=5.1.1,<=6.0.0
+PyYAML>=5.1.1,<=6.0.1
 python-gnupg>=0.5,<=0.5.0
 redis>=4.3,<4.6.1
 setuptools>=39.2,<68.1.0
