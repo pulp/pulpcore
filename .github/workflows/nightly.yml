@@ -6,7 +6,7 @@
 # For more info visit https://github.com/pulp/plugin_template
 
 ---
-name: Pulpcore Nightly CI/CD
+name: Pulpcore Nightly CI
 on:
   schedule:
     # * is a special character in YAML so you have to quote this string
@@ -170,7 +170,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
         with:
-          fetch-depth: 1
+          fetch-depth: 0
 
       - uses: actions/setup-python@v3
         with:
@@ -179,7 +179,7 @@ jobs:
       - name: Install python dependencies
         run: |
           echo ::group::PYDEPS
-          pip install gitpython requests packaging
+          pip install gitpython toml
           echo ::endgroup::
 
       - name: Configure Git with pulpbot name and email
@@ -187,23 +187,16 @@ jobs:
           git config --global user.name 'pulpbot'
           git config --global user.email 'pulp-infra@redhat.com'
 
-      - name: Changelog history
-        run: python .ci/scripts/changelog.py
+      - name: Collect changes from all branches
+        run: python .ci/scripts/collect_changes.py
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v4
         with:
           token: ${{ secrets.RELEASE_TOKEN }}
-          committer: pulpbot <pulp-infra@redhat.com>
-          author: pulpbot <pulp-infra@redhat.com>
           title: 'Update Changelog'
-          body: '[noissue]'
+          body: ''
           branch: 'changelog/update'
-          base: main
-          commit-message: |
-            Update Changelog
-
-            [noissue]
           delete-branch: true
 
   publish:
