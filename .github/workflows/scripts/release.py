@@ -6,53 +6,35 @@
 # For more info visit https://github.com/pulp/plugin_template
 
 import argparse
-import asyncio
 import re
 import os
-import shutil
 import textwrap
-
-from bandersnatch.mirror import BandersnatchMirror
-from bandersnatch.master import Master
-from bandersnatch.configuration import BandersnatchConfig
+import requests
 
 from git import Repo
-
-from packaging.requirements import Requirement
 from pathlib import Path
 
 
-async def get_package_from_pypi(package_name, plugin_path):
+def get_package_from_pypi(version, plugin_path):
     """
     Download a package from PyPI.
 
-    :param name: name of the package to download from PyPI
-    :return: String path to the package
+    :param version: version of the package to download from PyPI
+    :return: True/False if download was successful
     """
-    config = BandersnatchConfig().config
-    config["mirror"]["master"] = "https://pypi.org"
-    config["mirror"]["workers"] = "1"
-    config["mirror"]["directory"] = plugin_path
-    if not config.has_section("plugins"):
-        config.add_section("plugins")
-    config["plugins"]["enabled"] = "blocklist_release\n"
-    if not config.has_section("allowlist"):
-        config.add_section("allowlist")
-    config["plugins"]["enabled"] += "allowlist_release\nallowlist_project\n"
-    config["allowlist"]["packages"] = "\n".join([package_name])
     os.makedirs(os.path.join(plugin_path, "dist"), exist_ok=True)
-    async with Master("https://pypi.org/") as master:
-        mirror = BandersnatchMirror(homedir=plugin_path, master=master)
-        name = Requirement(package_name).name
-        result = await mirror.synchronize([name])
-    package_found = False
-
-    for package in result[name]:
-        current_path = os.path.join(plugin_path, package)
-        destination_path = os.path.join(plugin_path, "dist", os.path.basename(package))
-        shutil.move(current_path, destination_path)
-        package_found = True
-    return package_found
+    r = requests.get(f"https://pypi.org/pypi/pulpcore/{version}/json")
+    if r.status_code == 200:
+        metadata = r.json()
+        for url_data in metadata["urls"]:
+            filename = url_data["filename"]
+            r2 = requests.get(url_data["url"])
+            if r2.status_code != 200:
+                raise RuntimeError(f"Failed to download released artifact {filename}")
+            with open(os.path.join(plugin_path, "dist", filename), "wb") as f:
+                f.write(r2.content)
+        return True
+    return False
 
 
 def create_release_commits(repo, release_version, plugin_path):
@@ -74,7 +56,7 @@ def create_release_commits(repo, release_version, plugin_path):
     # Second commit: release version
     os.system("bump2version release --allow-dirty")
 
-    git.add(f"{plugin_path}/{plugin_name}/*")
+    git.add(f"{plugin_path}/pulpcore/*")
     git.add(f"{plugin_path}/docs/conf.py")
     git.add(f"{plugin_path}/setup.py")
     git.add(f"{plugin_path}/requirements.txt")
@@ -93,7 +75,7 @@ def create_release_commits(repo, release_version, plugin_path):
         if not new_dev_version:
             raise RuntimeError("Could not detect new dev version ... aborting.")
 
-    git.add(f"{plugin_path}/{plugin_name}/*")
+    git.add(f"{plugin_path}/pulpcore/*")
     git.add(f"{plugin_path}/docs/conf.py")
     git.add(f"{plugin_path}/setup.py")
     git.add(f"{plugin_path}/requirements.txt")
@@ -132,76 +114,76 @@ def create_tag_and_build_package(repo, desired_tag, commit_sha, plugin_path):
     repo.head.reset(index=True, working_tree=True)
 
     # Check if Package is available on PyPI
-    loop = asyncio.get_event_loop()  # noqa
-    # fmt: off
-    package_found = asyncio.run(
-        get_package_from_pypi(f"pulpcore=={tag.name}", plugin_path)
-    )  # noqa
-    # fmt: on
-    if not package_found:
+    if not get_package_from_pypi(tag.name, plugin_path):
         os.system("python3 setup.py sdist bdist_wheel --python-tag py3")
 
 
-helper = textwrap.dedent(
-    """\
-        Start the release process.
+def main():
+    helper = textwrap.dedent(
+        """\
+            Start the release process.
 
-        Example:
-            setup.py on plugin before script:
-                version="2.0.0.dev"
+            Example:
+                setup.py on plugin before script:
+                    version="2.0.0.dev"
 
-            $ python .ci/scripts/release.py
+                $ python .ci/scripts/release.py
 
-            setup.py on plugin after script:
-                version="2.0.1.dev"
+                setup.py on plugin after script:
+                    version="2.0.1.dev"
 
 
-    """
-)
-parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter, description=helper)
+        """
+    )
+    parser = argparse.ArgumentParser(
+        formatter_class=argparse.RawTextHelpFormatter, description=helper
+    )
 
-parser.add_argument(
-    "release_version",
-    type=str,
-    help="The version string for the release.",
-)
+    parser.add_argument(
+        "release_version",
+        type=str,
+        help="The version string for the release.",
+    )
 
-args = parser.parse_args()
+    args = parser.parse_args()
 
-release_version_arg = args.release_version
+    release_version_arg = args.release_version
 
-release_path = os.path.dirname(os.path.abspath(__file__))
-plugin_path = release_path.split("/.github")[0]
+    release_path = os.path.dirname(os.path.abspath(__file__))
+    plugin_path = release_path.split("/.github")[0]
 
-plugin_name = "pulpcore"
-version = None
-with open(f"{plugin_path}/setup.py") as fp:
-    for line in fp.readlines():
-        if "version=" in line:
-            version = re.split("\"|'", line)[1]
-    if not version:
-        raise RuntimeError("Could not detect existing version ... aborting.")
-release_version = version.replace(".dev", "")
+    version = None
+    with open(f"{plugin_path}/setup.py") as fp:
+        for line in fp.readlines():
+            if "version=" in line:
+                version = re.split("\"|'", line)[1]
+        if not version:
+            raise RuntimeError("Could not detect existing version ... aborting.")
+    release_version = version.replace(".dev", "")
 
-print(f"\n\nRepo path: {plugin_path}")
-repo = Repo(plugin_path)
+    print(f"\n\nRepo path: {plugin_path}")
+    repo = Repo(plugin_path)
 
-release_commit = None
-if release_version != release_version_arg:
-    # Look for a commit with the requested release version
-    for commit in repo.iter_commits():
-        if f"Release {release_version_arg}\n" in commit.message:
-            release_commit = commit
-            release_version = release_version_arg
-            break
+    release_commit = None
+    if release_version != release_version_arg:
+        # Look for a commit with the requested release version
+        for commit in repo.iter_commits():
+            if f"Release {release_version_arg}\n" in commit.message:
+                release_commit = commit
+                release_version = release_version_arg
+                break
+        if not release_commit:
+            raise RuntimeError(
+                f"The release version {release_version_arg} does not match the .dev version at "
+                "HEAD. A release commit for such version does not exist."
+            )
+
     if not release_commit:
-        raise RuntimeError(
-            f"The release version {release_version_arg} does not match the .dev version at HEAD. "
-            "A release commit for such version does not exist."
-        )
+        release_commit_sha = create_release_commits(repo, release_version, plugin_path)
+    else:
+        release_commit_sha = release_commit.hexsha
+    create_tag_and_build_package(repo, release_version, release_commit_sha, plugin_path)
 
-if not release_commit:
-    release_commit_sha = create_release_commits(repo, release_version, plugin_path)
-else:
-    release_commit_sha = release_commit.hexsha
-create_tag_and_build_package(repo, release_version, release_commit_sha, plugin_path)
+
+if __name__ == "__main__":
+    main()
