@@ -4,7 +4,7 @@
 # './plugin-template --github pulpcore' to update this file.
 #
 # For more info visit https://github.com/pulp/plugin_template
-name: "CodeQL"
+name: "Pulpcore CodeQL"
 
 on:
   workflow_dispatch:
