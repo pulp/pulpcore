@@ -1,0 +1,1 @@
+Resolved a memory leak that could occur while making large repeated queries against the API service.
