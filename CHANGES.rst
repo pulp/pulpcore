@@ -13,6 +13,26 @@ Changelog
 
 .. towncrier release notes start
 
+3.29.2 (2023-07-19)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fixed duplicate OpenAPI operation ids when using domains.
+  :github:`3977`
+- Updates file system exporter to correctly account the start_repository_version  for pass_through publications
+  :github:`4051`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.29.1 (2023-07-14)
 ===================
 REST API
