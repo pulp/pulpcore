@@ -13,6 +13,30 @@ Changelog
 
 .. towncrier release notes start
 
+3.28.4 (2023-07-19)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fixed duplicate OpenAPI operation ids when using domains.
+  :github:`3977`
+- Updates file system exporter to correctly account the start_repository_version  for pass_through publications
+  :github:`4051`
+
+
+Plugin API
+----------
+
+Bugfixes
+~~~~~~~~
+
+- Fixed the import path for ``pulpcore.plugin.pulp_hashlib``.
+  :github:`4006`
+
+
 3.28.3 (2023-07-14)
 ===================
 REST API
