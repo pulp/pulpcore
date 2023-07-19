@@ -41,7 +41,7 @@ jobs:
       - name: Install python dependencies
         run: |
           echo ::group::PYDEPS
-          pip install packaging~=21.3 bump2version gitpython towncrier==19.9.0 wheel
+          pip install packaging~=21.3 bump2version gitpython towncrier==19.9.0 wheel requests
           echo ::endgroup::
 
       - name: Configure Git with pulpbot name and email
