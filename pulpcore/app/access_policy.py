@@ -1,4 +1,3 @@
-from functools import lru_cache
 from rest_access_policy import AccessPolicy
 from rest_framework.exceptions import APIException
 
@@ -12,7 +11,6 @@ class AccessPolicyFromDB(AccessPolicy):
     """
 
     @staticmethod
-    @lru_cache
     def get_access_policy(view):
         """
         Retrieves the AccessPolicy from the DB or None if it doesn't exist.
