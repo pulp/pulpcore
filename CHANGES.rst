@@ -17,6 +17,26 @@ Changelog
 
 .. towncrier release notes start
 
+3.21.11 (2023-07-19)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Made the incremental file export include all published metadata.
+  :github:`3941`
+- Updates file system exporter to correctly account the start_repository_version  for pass_through publications
+  :github:`4051`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.21.10 (2023-06-14)
 ====================
 REST API
