@@ -4,7 +4,6 @@ from logging import getLogger
 import asyncio
 import hashlib
 
-from aiohttp.client_exceptions import ClientResponseError
 from asgiref.sync import sync_to_async
 from django.db import transaction
 from rest_framework.serializers import ValidationError
@@ -68,7 +67,7 @@ async def _repair_ca(content_artifact, repaired=None):
             "Artifact {} is unrepairable - no remote source".format(content_artifact.artifact)
         )
         log.warning(
-            "Deleting file for the unreparable artifact {}".format(content_artifact.artifact)
+            "Deleting file for the unrepairable artifact {}".format(content_artifact.artifact)
         )
         await sync_to_async(content_artifact.artifact.file.delete)(save=False)
         return False
@@ -78,7 +77,7 @@ async def _repair_ca(content_artifact, repaired=None):
         downloader = detail_remote.get_downloader(remote_artifact)
         try:
             dl_result = await downloader.run()
-        except ClientResponseError as e:
+        except Exception as e:
             log.warn(_("Redownload failed from '{}': {}.").format(remote_artifact.url, str(e)))
         else:
             if dl_result.artifact_attributes["sha256"] == content_artifact.artifact.sha256:
@@ -91,7 +90,7 @@ async def _repair_ca(content_artifact, repaired=None):
                 if repaired is not None:
                     await repaired.aincrement()
                 return True
-    log.warning("Deleting file for the unreparable artifact {}".format(content_artifact.artifact))
+    log.warning("Deleting file for the unrepairable artifact {}".format(content_artifact.artifact))
     await sync_to_async(content_artifact.artifact.file.delete)(save=False)
     return False
 
