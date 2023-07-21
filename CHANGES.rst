@@ -13,6 +13,26 @@ Changelog
 
 .. towncrier release notes start
 
+3.29.2 (2023-07-19)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fixed duplicate OpenAPI operation ids when using domains.
+  :github:`3977`
+- Updates file system exporter to correctly account the start_repository_version  for pass_through publications
+  :github:`4051`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.29.1 (2023-07-14)
 ===================
 REST API
@@ -85,6 +105,30 @@ Misc
 ~~~~
 
 - :github:`3798`
+
+
+3.28.4 (2023-07-19)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fixed duplicate OpenAPI operation ids when using domains.
+  :github:`3977`
+- Updates file system exporter to correctly account the start_repository_version  for pass_through publications
+  :github:`4051`
+
+
+Plugin API
+----------
+
+Bugfixes
+~~~~~~~~
+
+- Fixed the import path for ``pulpcore.plugin.pulp_hashlib``.
+  :github:`4006`
 
 
 3.28.3 (2023-07-14)
@@ -530,6 +574,24 @@ Features
   :github:`3661`
 
 
+3.23.9 (2023-07-19)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fixed duplicate OpenAPI operation ids when using domains.
+  :github:`3977`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.23.8 (2023-07-12)
 ===================
 REST API
@@ -821,6 +883,26 @@ Deprecations
   :github:`3604`
 
 
+3.22.8 (2023-07-19)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Made the incremental file export include all published metadata.
+  :github:`3941`
+- Updates file system exporter to correctly account the start_repository_version  for pass_through publications
+  :github:`4051`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.22.7 (2023-06-14)
 ===================
 REST API
@@ -1105,6 +1187,26 @@ Removals
 - Deprecated model ``Label`` and serializer field ``LabelField`` and ``LabelSelectFilter`` for
   removal in 3.25.
   :github:`3400`
+
+
+3.21.11 (2023-07-19)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Made the incremental file export include all published metadata.
+  :github:`3941`
+- Updates file system exporter to correctly account the start_repository_version  for pass_through publications
+  :github:`4051`
+
+
+Plugin API
+----------
+
+No significant changes.
 
 
 3.21.10 (2023-06-14)
@@ -1850,6 +1952,26 @@ Bugfixes
   the stage will still accumulate up to 500 (by default) items so batching is still in-effect there
   where it matters.
   :github:`2069`
+
+
+3.18.21 (2023-07-19)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Made the incremental file export include all published metadata.
+  :github:`3941`
+- Updates file system exporter to correctly account the start_repository_version  for pass_through publications
+  :github:`4051`
+
+
+Plugin API
+----------
+
+No significant changes.
 
 
 3.18.20 (2023-06-14)
