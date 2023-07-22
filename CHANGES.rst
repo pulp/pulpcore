@@ -17,6 +17,26 @@ Changelog
 
 .. towncrier release notes start
 
+3.23.10 (2023-07-22)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Resolved a memory leak that could occur while making large repeated queries against the API service.
+  :github:`2250`
+- Taught repair task to be tolerant in the face of any artifact download failure.
+  :github:`4111`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.23.9 (2023-07-19)
 ===================
 REST API
