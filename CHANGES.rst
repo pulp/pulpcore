@@ -13,6 +13,26 @@ Changelog
 
 .. towncrier release notes start
 
+3.29.3 (2023-07-22)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Resolved a memory leak that could occur while making large repeated queries against the API service.
+  :github:`2250`
+- Taught repair task to be tolerant in the face of any artifact download failure.
+  :github:`4111`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.29.2 (2023-07-19)
 ===================
 REST API
@@ -574,6 +594,26 @@ Features
   :github:`3661`
 
 
+3.23.10 (2023-07-22)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Resolved a memory leak that could occur while making large repeated queries against the API service.
+  :github:`2250`
+- Taught repair task to be tolerant in the face of any artifact download failure.
+  :github:`4111`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.23.9 (2023-07-19)
 ===================
 REST API
@@ -883,6 +923,29 @@ Deprecations
   :github:`3604`
 
 
+3.22.9 (2023-07-22)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Resolved a memory leak that could occur while making large repeated queries against the API service.
+  :github:`2250`
+- Added repeating logic to signalling a task worker subprocess. This should fix a bug where the
+  task refuses to be terminated easily.
+  :github:`3407`
+- Taught repair task to be tolerant in the face of any artifact download failure.
+  :github:`4111`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.22.8 (2023-07-19)
 ===================
 REST API
@@ -1187,6 +1250,26 @@ Removals
 - Deprecated model ``Label`` and serializer field ``LabelField`` and ``LabelSelectFilter`` for
   removal in 3.25.
   :github:`3400`
+
+
+3.21.12 (2023-07-22)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Resolved a memory leak that could occur while making large repeated queries against the API service.
+  :github:`2250`
+- Taught repair task to be tolerant in the face of any artifact download failure.
+  :github:`4111`
+
+
+Plugin API
+----------
+
+No significant changes.
 
 
 3.21.11 (2023-07-19)
