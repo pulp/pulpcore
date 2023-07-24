@@ -7,7 +7,7 @@ from rest_framework import mixins
 from rest_framework.decorators import action
 
 from pulpcore.app.models import TaskGroup, UpstreamPulp
-from pulpcore.app.serializers import AsyncOperationResponseSerializer, UpstreamPulpSerializer
+from pulpcore.app.serializers import TaskGroupOperationResponseSerializer, UpstreamPulpSerializer
 from pulpcore.app.viewsets import NamedModelViewSet
 from pulpcore.app.response import TaskGroupOperationResponse
 from pulpcore.app.tasks import replicate_distributions
@@ -34,7 +34,7 @@ class UpstreamPulpViewSet(
         description="Trigger an asynchronous repository replication task group. This API is "
         "provided as a tech preview.",
         request=None,
-        responses={202: AsyncOperationResponseSerializer},
+        responses={202: TaskGroupOperationResponseSerializer},
     )
     @action(detail=True, methods=["post"])
     def replicate(self, request, pk):
