@@ -60,6 +60,7 @@ from pulpcore.client.pulpcore import (
     TasksApi,
     TaskSchedulesApi,
     UploadsApi,
+    UpstreamPulpsApi,
     UsersApi,
     UsersRolesApi,
     WorkersApi,
@@ -342,6 +343,11 @@ def repositories_reclaim_space_api_client(pulpcore_client):
 @pytest.fixture(scope="session")
 def repair_api_client(pulpcore_client):
     return RepairApi(pulpcore_client)
+
+
+@pytest.fixture(scope="session")
+def upstream_pulp_api_client(pulpcore_client):
+    return UpstreamPulpsApi(pulpcore_client)
 
 
 # Threaded local fixture servers
@@ -1020,3 +1026,35 @@ def http_get():
         return response
 
     return _http_get
+
+
+@pytest.fixture()
+def non_default_domain(domains_api_client, pulp_settings, gen_object_with_cleanup):
+    keys = dict()
+    keys["pulpcore.app.models.storage.FileSystem"] = ["MEDIA_ROOT"]
+    keys["storages.backends.s3boto3.S3Boto3Storage"] = [
+        "AWS_ACCESS_KEY_ID",
+        "AWS_SECRET_ACCESS_KEY",
+        "AWS_S3_ENDPOINT_URL",
+        "AWS_S3_ADDRESSING_STYLE",
+        "AWS_S3_SIGNATURE_VERSION",
+        "AWS_S3_REGION_NAME",
+        "AWS_STORAGE_BUCKET_NAME",
+    ]
+    keys["storages.backends.azure_storage.AzureStorage"] = [
+        "AZURE_ACCOUNT_NAME",
+        "AZURE_CONTAINER",
+        "AZURE_ACCOUNT_KEY",
+        "AZURE_URL_EXPIRATION_SECS",
+        "AZURE_OVERWRITE_FILES",
+        "AZURE_LOCATION",
+    ]
+    settings = dict()
+    for key in keys[pulp_settings.DEFAULT_FILE_STORAGE]:
+        settings[key] = getattr(pulp_settings, key, None)
+    body = {
+        "name": str(uuid.uuid4()),
+        "storage_class": pulp_settings.DEFAULT_FILE_STORAGE,
+        "storage_settings": settings,
+    }
+    return gen_object_with_cleanup(domains_api_client, body)
