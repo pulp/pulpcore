@@ -46,7 +46,7 @@ class UpstreamPulpViewSet(
 
         uri = "/api/v3/servers/"
         if settings.DOMAIN_ENABLED:
-            uri = f"/{request.domain.name}{uri}"
+            uri = f"/{request.pulp_domain.name}{uri}"
 
         dispatch(
             replicate_distributions,
