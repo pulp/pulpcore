@@ -194,8 +194,8 @@ class BaseDownloader:
         Raises:
             Exception: Any fatal exception emitted during downloading
         """
-        done, _ = asyncio.get_event_loop().run_until_complete(asyncio.wait([self.run()]))
-        return done.pop().result()
+        result = asyncio.get_event_loop().run_until_complete(self.run())
+        return result
 
     def _record_size_and_digests_for_data(self, data):
         """
