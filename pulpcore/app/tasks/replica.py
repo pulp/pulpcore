@@ -1,6 +1,8 @@
+import os
 import platform
 from pkg_resources import get_distribution
 import sys
+from tempfile import NamedTemporaryFile
 
 from pulpcore.app.apps import pulp_plugin_configs
 from pulpcore.app.models import UpstreamPulp, TaskGroup
@@ -24,12 +26,29 @@ def user_agent():
 def replicate_distributions(server_pk):
     domain = get_domain()
     server = UpstreamPulp.objects.get(pk=server_pk)
+
+    # Write out temporary files related to SSL
+    ssl_files = {}
+    for key in ["ca_cert", "client_cert", "client_key"]:
+        if value := getattr(server, key):
+            f = NamedTemporaryFile(dir=".")
+            f.write(bytes(value, "utf-8"))
+            f.flush()
+            ssl_files[key] = f.name
+
+    if "ca_cert" in ssl_files:
+        os.environ["PULP_CA_BUNDLE"] = ssl_files["ca_cert"]
+
     api_kwargs = dict(
         base_url=server.base_url,
         username=server.username,
         password=server.password,
         user_agent=user_agent(),
+        validate_certs=server.tls_validation,
+        cert=ssl_files.get("client_cert"),
+        key=ssl_files.get("client_key"),
     )
+
     ctx = ReplicaContext(
         api_root=server.api_root,
         api_kwargs=api_kwargs,
@@ -38,6 +57,7 @@ def replicate_distributions(server_pk):
         timeout=0,
         domain=server.domain,
     )
+
     task_group = TaskGroup.current()
     supported_replicators = []
     # Load all the available replicators
