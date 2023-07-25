@@ -17,6 +17,24 @@ Changelog
 
 .. towncrier release notes start
 
+3.18.22 (2023-07-25)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Taught repair task to be tolerant in the face of any artifact download failure.
+  :github:`4111`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.18.21 (2023-07-19)
 ====================
 REST API
