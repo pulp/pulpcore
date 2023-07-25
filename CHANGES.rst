@@ -13,6 +13,28 @@ Changelog
 
 .. towncrier release notes start
 
+3.28.5 (2023-07-25)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Resolved a memory leak that could occur while making large repeated queries against the API service.
+  :github:`2250`
+- Fixed a 500 error for Upstream Pulp Replicate API when domains are enabled.
+  :github:`4119`
+- Fixed the OpenAPI schema for the 'replicate' operation response.
+  :github:`4121`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.28.4 (2023-07-19)
 ===================
 REST API
