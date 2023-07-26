@@ -26,18 +26,6 @@ API_ROOT = {{ api_root | repr }}
 {% endfor %}
 {% endif %}
 
-{% if stream_test | default(false) -%}
-REDIRECT_TO_OBJECT_STORAGE = False
-DEFAULT_FILE_STORAGE = "pulpcore.app.models.storage.PulpSFTPStorage"
-MEDIA_ROOT = ""
-SFTP_STORAGE_HOST = "ci-sftp"
-SFTP_STORAGE_ROOT = "/storage/"
-SFTP_STORAGE_PARAMS = {
-    "username": "foo",
-    "key_filename": "/keys/id_ed25519",
-}
-{%- endif %}
-
 {% if s3_test | default(false) %}
 DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
 MEDIA_ROOT = ""
