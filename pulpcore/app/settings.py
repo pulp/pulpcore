@@ -300,6 +300,10 @@ SHELL_PLUS_IMPORTS = [
     "from pulpcore.tasking.util import cancel_task",
 ]
 
+# What percentage of available-workers will pulpimport use at a time, max
+# By default, use all available workers.
+IMPORT_WORKERS_PERCENT = 100
+
 # HERE STARTS DYNACONF EXTENSION LOAD (Keep at the very bottom of settings.py)
 # Read more at https://dynaconf.readthedocs.io/en/latest/guides/django.html
 from dynaconf import DjangoDynaconf, Validator  # noqa
