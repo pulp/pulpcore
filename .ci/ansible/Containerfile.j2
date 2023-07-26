@@ -11,9 +11,6 @@ ADD ./{{ item.name }} ./{{ item.name }}
 # Hacking botocore (https://github.com/boto/botocore/pull/1990)
 
 RUN pip3 install
-{%- if stream_test | default(false) -%}
-{{ " " }}django-storages[sftp]
-{%- endif -%}
 {%- if s3_test | default(false) -%}
 {{ " " }}django-storages[boto3] git+https://github.com/fabricio-aguiar/botocore.git@fix-100-continue
 {%- endif -%}
