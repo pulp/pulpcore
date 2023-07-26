@@ -13,6 +13,26 @@ Changelog
 
 .. towncrier release notes start
 
+3.29.4 (2023-07-25)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fixed a 500 error for Upstream Pulp Replicate API when domains are enabled.
+  :github:`4119`
+- Fixed the OpenAPI schema for the 'replicate' operation response.
+  :github:`4121`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.29.3 (2023-07-22)
 ===================
 REST API
@@ -125,6 +145,28 @@ Misc
 ~~~~
 
 - :github:`3798`
+
+
+3.28.5 (2023-07-25)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Resolved a memory leak that could occur while making large repeated queries against the API service.
+  :github:`2250`
+- Fixed a 500 error for Upstream Pulp Replicate API when domains are enabled.
+  :github:`4119`
+- Fixed the OpenAPI schema for the 'replicate' operation response.
+  :github:`4121`
+
+
+Plugin API
+----------
+
+No significant changes.
 
 
 3.28.4 (2023-07-19)
@@ -592,6 +634,26 @@ Features
 - Added flags ``immediate`` and ``deferred`` to ``dispatch`` to allow specifying whether a task can
   be attempted to run synchronously and whether it can be deferred.
   :github:`3661`
+
+
+3.23.11 (2023-07-25)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fixed a 500 error for Upstream Pulp Replicate API when domains are enabled.
+  :github:`4119`
+- Fixed the OpenAPI schema for the 'replicate' operation response.
+  :github:`4121`
+
+
+Plugin API
+----------
+
+No significant changes.
 
 
 3.23.10 (2023-07-22)
@@ -2035,6 +2097,24 @@ Bugfixes
   the stage will still accumulate up to 500 (by default) items so batching is still in-effect there
   where it matters.
   :github:`2069`
+
+
+3.18.22 (2023-07-25)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Taught repair task to be tolerant in the face of any artifact download failure.
+  :github:`4111`
+
+
+Plugin API
+----------
+
+No significant changes.
 
 
 3.18.21 (2023-07-19)
