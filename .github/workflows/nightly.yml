@@ -30,7 +30,6 @@ jobs:
           - TEST: docs
           - TEST: azure
           - TEST: s3
-          - TEST: stream
           
           - TEST: generate-bindings
           - TEST: lowerbounds

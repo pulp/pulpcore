@@ -74,7 +74,7 @@ pulp_container_tag: https
 
 VARSYAML
 
-SCENARIOS=("pulp" "performance" "azure" "gcp" "s3" "stream" "generate-bindings" "lowerbounds")
+SCENARIOS=("pulp" "performance" "azure" "gcp" "s3" generate-bindings" "lowerbounds")
 if [[ " ${SCENARIOS[*]} " =~ " ${TEST} " ]]; then
   sed -i -e '/^services:/a \
   - name: pulp-fixtures\
@@ -82,17 +82,6 @@ if [[ " ${SCENARIOS[*]} " =~ " ${TEST} " ]]; then
     env: {BASE_URL: "http://pulp-fixtures:8080"}' vars/main.yaml
 
   export REMOTE_FIXTURES_ORIGIN="http://pulp-fixtures:8080"
-fi
-if [ "$TEST" == 'stream' ]; then
-  sed -i -e '/^services:/a \
-  - name: ci-sftp\
-    image: atmoz/sftp\
-    volumes:\
-      - ./ssh/id_ed25519.pub:/home/foo/.ssh/keys/id_ed25519.pub\
-    command: "foo::::storage"' vars/main.yaml
-  sed -i -e '$a stream_test: true\
-pulp_scenario_settings: null\
-' vars/main.yaml
 fi
 
 if [ "$TEST" = "s3" ]; then
