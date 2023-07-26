@@ -15,14 +15,6 @@
         - ssh
         - ~/.config/pulp_smash
 
-    - name: Generate an OpenSSH keypair
-      community.crypto.openssh_keypair:
-        path: ssh/id_ed25519
-        type: ed25519
-        owner: 700  # pulp in the container
-      become: true
-      when: stream_test | default(false)
-
     - name: "Generate Pulp Settings"
       template:
         src: settings.py.j2
