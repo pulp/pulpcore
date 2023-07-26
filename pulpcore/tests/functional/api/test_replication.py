@@ -5,7 +5,7 @@ import uuid
 @pytest.mark.parallel
 def test_replication(
     domain_factory,
-    domains_api_client,
+    bindings_cfg,
     upstream_pulp_api_client,
     monitor_task_group,
     pulp_settings,
@@ -20,11 +20,11 @@ def test_replication(
     # Create an Upstream Pulp in the non-default domain
     upstream_pulp_body = {
         "name": str(uuid.uuid4()),
-        "base_url": domains_api_client.api_client.configuration.host,
+        "base_url": bindings_cfg.host,
         "api_root": pulp_settings.API_ROOT,
         "domain": "default",
-        "username": domains_api_client.api_client.configuration.username,
-        "password": domains_api_client.api_client.configuration.password,
+        "username": bindings_cfg.username,
+        "password": bindings_cfg.password,
     }
     upstream_pulp = gen_object_with_cleanup(
         upstream_pulp_api_client, upstream_pulp_body, pulp_domain=non_default_domain.name
