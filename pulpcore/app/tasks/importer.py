@@ -8,6 +8,7 @@ import tarfile
 from gettext import gettext as _
 from logging import getLogger
 
+from django.conf import settings
 from django.core.files.storage import default_storage
 from django.db.models import F
 from naya.json import stream_array, tokenize
@@ -35,6 +36,7 @@ from pulpcore.app.modelresource import (
     RepositoryResource,
 )
 from pulpcore.constants import TASK_STATES
+from pulpcore.tasking.pulpcore_worker import Worker
 from pulpcore.tasking.tasks import dispatch
 
 from pulpcore.plugin.importexport import BaseContentResource
@@ -506,6 +508,18 @@ def pulp_import(importer_pk, path, toc, create_repositories):
                             default_storage.save(base_path, f)
 
         # Now import repositories, in parallel.
+
+        # We want to be able to limit the number of available-workers that import will consume,
+        # so that pulp can continue to work while doing an import. We accomplish this by creating
+        # a reserved-resource string for each repo-import-task based on that repo's index in
+        # the dispatch loop, mod number-of-workers-to-consume.
+        #
+        # By default (setting is not-set), import will continue to use 100% of the available
+        # workers.
+        import_workers_percent = int(settings.get("IMPORT_WORKERS_PERCENT", 100))
+        total_workers = Worker.objects.online_workers().count()
+        import_workers = max(1, int(total_workers * (import_workers_percent / 100.0)))
+
         with open(os.path.join(temp_dir, REPO_FILE), "r") as repo_data_file:
             data = json.load(repo_data_file)
             gpr = GroupProgressReport(
@@ -517,14 +531,16 @@ def pulp_import(importer_pk, path, toc, create_repositories):
             )
             gpr.save()
 
-            for src_repo in data:
+            for index, src_repo in enumerate(data):
+                # Lock the repo we're importing-into
                 dest_repo_name = _get_destination_repo_name(importer, src_repo["name"])
-
+                # pulpcore-worker limiter
+                worker_rsrc = f"import-worker-{index % import_workers}"
+                exclusive_resources = [worker_rsrc]
                 try:
                     dest_repo = Repository.objects.get(name=dest_repo_name)
                 except Repository.DoesNotExist:
                     if create_repositories:
-                        exclusive_resources = []
                         dest_repo_pk = ""
                     else:
                         log.warning(
@@ -534,7 +550,7 @@ def pulp_import(importer_pk, path, toc, create_repositories):
                         )
                         continue
                 else:
-                    exclusive_resources = [dest_repo]
+                    exclusive_resources.append(dest_repo)
                     dest_repo_pk = dest_repo.pk
 
                 dispatch(
