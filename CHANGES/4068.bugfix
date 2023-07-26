@@ -1,0 +1,1 @@
+Taught pulp-import to be able to use a subset of available worker-threads.
