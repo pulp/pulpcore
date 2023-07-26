@@ -202,7 +202,9 @@ class Replicator:
             )
 
         # Remove all the repositories and remotes of the missing distributions
-        repos_to_delete = self.repository_model_cls.objects.exclude(name__in=names)
+        repos_to_delete = self.repository_model_cls.objects.filter(pulp_domain=self.domain).exclude(
+            name__in=names
+        )
         for repo in repos_to_delete:
             dispatch(
                 general_delete,
@@ -210,7 +212,9 @@ class Replicator:
                 exclusive_resources=[repo],
                 args=(repo.pk, self.app_label, self.repository_serializer_name),
             )
-        remotes_to_delete = self.remote_model_cls.objects.exclude(name__in=names)
+        remotes_to_delete = self.remote_model_cls.objects.filter(pulp_domain=self.domain).exclude(
+            name__in=names
+        )
         for remote in remotes_to_delete:
             dispatch(
                 general_delete,
