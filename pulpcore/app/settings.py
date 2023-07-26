@@ -242,6 +242,7 @@ WORKER_TTL = 30
 
 # how long to protect ephemeral items in minutes
 ORPHAN_PROTECTION_TIME = 24 * 60
+# if set to 0, upload and tmpfile cleanup task is disabled
 UPLOAD_PROTECTION_TIME = 0
 TMPFILE_PROTECTION_TIME = 0
 
