@@ -98,4 +98,4 @@ def replicate_distributions(server_pk):
             distro_names.append(distro["name"])
 
         replicator.remove_missing(distro_names)
-        task_group.finish()
+    task_group.finish()
