@@ -1,0 +1,1 @@
+Made reclaim space task more tolerant in the face of artifact shared between two content units.
