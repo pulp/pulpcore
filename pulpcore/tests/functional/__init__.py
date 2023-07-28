@@ -94,31 +94,22 @@ def get_bindings_config():
     return configuration
 
 
-@pytest.hookimpl(tryfirst=True)
-def pytest_check_for_leftover_pulp_objects(config):
-    pulpcore_client = ApiClient(get_bindings_config())
-    tasks_api_client = TasksApi(pulpcore_client)
-
-    for task in tasks_api_client.list().results:
-        if task.state in ["running", "waiting"]:
-            raise Exception("This test left over a task in the running or waiting state.")
-
-    apis_to_check = [
-        ContentguardsApi(pulpcore_client),
-        DistributionsApi(pulpcore_client),
-        PublicationsApi(pulpcore_client),
-        RemotesApi(pulpcore_client),
-        RepositoriesApi(pulpcore_client),
-    ]
-    for api_to_check in apis_to_check:
-        if api_to_check.list().count > 0:
-            raise Exception(f"This test left over a {api_to_check}.")
-
-
 def pytest_configure(config):
     config.addinivalue_line(
         "markers",
         "from_pulpcore_for_all_plugins: marks tests from pulpcore as beneficial for plugins to run",
+    )
+    config.addinivalue_line(
+        "markers",
+        "parallel: marks tests as safe to run in parallel",
+    )
+    config.addinivalue_line(
+        "markers",
+        "serial: marks tests as required to run serially without any other tests also running",
+    )
+    config.addinivalue_line(
+        "markers",
+        "nightly: marks tests as intended to run during the nightly CI run",
     )
 
 
