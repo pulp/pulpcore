@@ -1,3 +1,7 @@
+from logging import getLogger
+
+from django.db.models.deletion import ProtectedError
+
 from pulpcore.app.models import (
     Artifact,
     Content,
@@ -7,6 +11,8 @@ from pulpcore.app.models import (
     Repository,
     RepositoryVersion,
 )
+
+log = getLogger(__name__)
 
 
 def reclaim_space(repo_pks, keeplist_rv_pks=None, force=False):
@@ -74,10 +80,16 @@ def reclaim_space(repo_pks, keeplist_rv_pks=None, force=False):
     counter = 0
     interval = 100
     for artifact in artifacts_to_delete.iterator():
-        # we need to manually call delete() because it cleans up the file on the filesystem
-        artifact.delete()
-        progress_bar.done += 1
-        counter += 1
+        try:
+            # we need to manually call delete() because it cleans up the file on the filesystem
+            artifact.delete()
+        except ProtectedError as e:
+            # Rarely artifact could be shared between to different content units.
+            # Just log and skip the artifact deletion in this case
+            log.info(e)
+        else:
+            progress_bar.done += 1
+            counter += 1
 
         if counter >= interval:
             progress_bar.save()
