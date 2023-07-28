@@ -29,6 +29,7 @@ from pulpcore.app.models import (
     Repository,
     Task,
     TaskGroup,
+    Worker,
 )
 from pulpcore.app.modelresource import (
     ArtifactResource,
@@ -36,7 +37,6 @@ from pulpcore.app.modelresource import (
     RepositoryResource,
 )
 from pulpcore.constants import TASK_STATES
-from pulpcore.tasking.pulpcore_worker import Worker
 from pulpcore.tasking.tasks import dispatch
 
 from pulpcore.plugin.importexport import BaseContentResource
