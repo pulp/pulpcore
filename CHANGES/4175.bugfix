@@ -1,2 +1,0 @@
-Fixed bug where the Task Group for replication would be marked as fully dispatched after just one
-replicator.
