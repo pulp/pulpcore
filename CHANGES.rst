@@ -17,6 +17,46 @@ Changelog
 
 .. towncrier release notes start
 
+3.23.12 (2023-07-29)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Made reclaim space task more tolerant in the face of artifact shared between two content units.
+  :github:`3610`
+- Fixed a bug with the replicate API not handling Upstream Pulp API over HTTPS.
+  :github:`3910`
+- Taught pulp-import to be able to use a subset of available worker-threads.
+  :github:`4068`
+- Updated the downloader's fetch method to comply with Python 3.11.
+  :github:`4107`
+- Fixed a bug where repositories were getting deleted accross domains.
+  :github:`4158`
+- Taught the Artifact.json of an export to hold minimum-unique-set of Artifact entries.
+
+  In highly-duplicated-content export scenarios, this can mean a significant decrease
+  in export-size, and significant improvement in import-performance.
+  :github:`4159`
+- Fixed bug where the Task Group for replication would be marked as fully dispatched after just one
+  replicator.
+  :github:`4175`
+
+
+Misc
+~~~~
+
+- :github:`3923`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.23.11 (2023-07-25)
 ====================
 REST API

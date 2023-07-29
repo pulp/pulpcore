@@ -1,4 +1,0 @@
-Taught the Artifact.json of an export to hold minimum-unique-set of Artifact entries.
-
-In highly-duplicated-content export scenarios, this can mean a significant decrease
-in export-size, and significant improvement in import-performance.
