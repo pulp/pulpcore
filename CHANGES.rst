@@ -17,6 +17,24 @@ Changelog
 
 .. towncrier release notes start
 
+3.18.24 (2023-07-31)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fix a subtle export bug introduced from the optimizations in #4159.
+  :github:`4210`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.18.23 (2023-07-29)
 ====================
 REST API
