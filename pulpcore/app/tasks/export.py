@@ -401,7 +401,7 @@ def _do_export(pulp_exporter, tar, the_export):
     starting_versions = _get_starting_versions(do_incremental, pulp_exporter, the_export)
     vers_match = _version_match(ending_versions, starting_versions)
     # Gather up versions and artifacts
-    artifacts = None  # Will be a QuerySet selecting the Artifacts that need to be exported
+    artifacts = set()
     for version in ending_versions:
         # Check version-content to make sure we're not being asked to export
         # an on_demand repo
@@ -410,14 +410,11 @@ def _do_export(pulp_exporter, tar, the_export):
             raise RuntimeError(_("Remote artifacts cannot be exported."))
 
         if do_incremental:
-            vers_artifacts = version.artifacts.difference(vers_match[version].artifacts)
+            vers_artifacts = version.artifacts.difference(vers_match[version].artifacts).all()
         else:
-            vers_artifacts = version.artifacts
+            vers_artifacts = version.artifacts.all()
 
-        if artifacts:
-            artifacts.union(vers_artifacts)
-        else:
-            artifacts = vers_artifacts
+        artifacts.update(vers_artifacts)
 
     # export plugin-version-info
     export_versions(the_export, plugin_version_info)
