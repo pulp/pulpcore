@@ -94,14 +94,14 @@ def export_artifacts(export, artifacts):
 
     Args:
         export (django.db.models.PulpExport): export instance that's doing the export
-        artifacts (django.db.models.Artifacts): QuerySet of artifacts in all repos being exported
+        artifacts (django.db.models.Artifacts): Set of artifacts in all repos being exported
 
     Raises:
         ValidationError: When path is not in the ALLOWED_EXPORT_PATHS setting
     """
     data = dict(message="Exporting Artifacts", code="export.artifacts", total=len(artifacts))
     with ProgressReport(**data) as pb:
-        for artifact in artifacts.iterator():  # chunk_size= defaults to 2000 at a fetch
+        for artifact in pb.iter(artifacts):
             dest = artifact.file.name
             if settings.DEFAULT_FILE_STORAGE != "pulpcore.app.models.storage.FileSystem":
                 with tempfile.TemporaryDirectory(dir=".") as temp_dir:
@@ -112,7 +112,6 @@ def export_artifacts(export, artifacts):
                         export.tarfile.add(temp_file.name, dest)
             else:
                 export.tarfile.add(artifact.file.path, dest)
-            pb.increment()
 
     resource = ArtifactResource()
     resource.queryset = artifacts
