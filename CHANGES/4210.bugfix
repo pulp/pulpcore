@@ -1,1 +1,0 @@
-Fix a subtle export bug introduced from the optimizations in #4159.
