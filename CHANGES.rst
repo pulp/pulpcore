@@ -17,6 +17,30 @@ Changelog
 
 .. towncrier release notes start
 
+3.23.13 (2023-07-31)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Taught PulpImport to be more robust in the face of previous failed attempts.
+  :github:`3737`
+- Made the incremental file export include all published metadata.
+  :github:`3941`
+- Updates file system exporter to correctly account the start_repository_version  for pass_through publications
+  :github:`4051`
+- Fix a subtle export bug introduced from the optimizations in #4159.
+  :github:`4210`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.23.12 (2023-07-29)
 ====================
 REST API
