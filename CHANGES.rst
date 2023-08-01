@@ -17,6 +17,24 @@ Changelog
 
 .. towncrier release notes start
 
+3.22.12 (2023-08-01)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Correctly fixed pulp_rpm-export-edgecase - fix #4210 was incomplete.
+  :github:`4231`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.22.11 (2023-07-31)
 ====================
 REST API
