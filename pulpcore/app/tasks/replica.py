@@ -64,7 +64,9 @@ def replicate_distributions(server_pk):
     for config in pulp_plugin_configs():
         if config.replicator_classes:
             for replicator_class in config.replicator_classes:
-                supported_replicators.append(replicator_class(ctx, task_group))
+                supported_replicators.append(
+                    replicator_class(ctx, task_group, ca_cert=server.ca_cert)
+                )
 
     for replicator in supported_replicators:
         distros = replicator.upstream_distributions(labels=server.pulp_label_select)
