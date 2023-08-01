@@ -94,7 +94,7 @@ def export_artifacts(export, artifacts):
 
     Args:
         export (django.db.models.PulpExport): export instance that's doing the export
-        artifacts (django.db.models.Artifacts): Set of artifacts in all repos being exported
+        artifacts (django.db.models.Artifacts): List of artifacts in all repos being exported
 
     Raises:
         ValidationError: When path is not in the ALLOWED_EXPORT_PATHS setting
