@@ -11,7 +11,8 @@ async def get_response(url):
         return await session.get(url)
 
 
-SLEEP_TIME = 0.3
+SLEEP_TIME = 0.5
+TASK_TIMEOUT = 30 * 60  # 30 minutes
 
 
 try:

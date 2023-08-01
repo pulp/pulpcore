@@ -21,6 +21,7 @@ from yarl import URL
 
 from pulpcore.tests.functional.utils import (
     SLEEP_TIME,
+    TASK_TIMEOUT,
     PulpTaskError,
     PulpTaskGroupError,
     add_recording_route,
@@ -79,6 +80,14 @@ from .gpg_ascii_armor_signing_service import (
     signing_script_path,
     signing_script_temp_dir,
 )
+
+
+class PulpTaskTimeoutError(Exception):
+    """Exception to describe task and taskgroup timeout errors."""
+
+    def __init__(self, awaitable):
+        super().__init__(self, f"Timeout: {awaitable}")
+        self.awaitable = awaitable
 
 
 def get_bindings_config():
@@ -785,8 +794,17 @@ def delete_orphans_pre(request, orphans_cleanup_api_client, monitor_task):
 
 @pytest.fixture(scope="session")
 def monitor_task(tasks_api_client, pulp_domain_enabled):
-    def _monitor_task(task_href):
-        while True:
+    """
+    Wait for a task to reach a final state.
+
+    Returns the task in "completed" state, or throws a `PulpTaskTimeoutError` in case the timeout
+    in seconds (defaulting to 30*60) exceeded or a `PulpTaskError` in case it reached any other
+    final state.
+    """
+
+    def _monitor_task(task_href, timeout=TASK_TIMEOUT):
+        task_timeout = int(timeout / SLEEP_TIME)
+        for dummy in range(task_timeout):
             try:
                 task = tasks_api_client.read(task_href)
             except ApiException as e:
@@ -795,9 +813,11 @@ def monitor_task(tasks_api_client, pulp_domain_enabled):
                     return {}
                 raise e
 
-            if task.state in ["completed", "failed", "canceled"]:
+            if task.state in ["completed", "failed", "canceled", "skipped"]:
                 break
             sleep(SLEEP_TIME)
+        else:
+            raise PulpTaskTimeoutError(task)
 
         if task.state != "completed":
             raise PulpTaskError(task=task)
@@ -809,19 +829,24 @@ def monitor_task(tasks_api_client, pulp_domain_enabled):
 
 @pytest.fixture(scope="session")
 def monitor_task_group(task_groups_api_client):
-    def _monitor_task_group(task_group_href):
-        def tasks_open(tg):
-            return (tg.waiting + tg.running + tg.canceling) > 0
+    """
+    Wait for a task group to reach a final state.
 
-        task_group = task_groups_api_client.read(task_group_href)
+    Returns the task group in "completed" state, or throws a `PulpTaskTimeoutError` in case the
+    timeout in seconds (defaulting to 30*60) exceeded or a `PulpTaskGroupError` in case it reached
+    any other final state.
+    """
 
-        # Wait until there are no tasks left to run
-        # Note: if the *tasking system* has a bug that leaves a task (somehow)
-        # in run/wait/canceling, we're going to be stuck in this loop forever.
-        # I don't see a reliable way to avoid that. TaskingSystemBugs: Just Say No! :)
-        while tasks_open(task_group):
-            sleep(SLEEP_TIME)
+    def _monitor_task_group(task_group_href, timeout=TASK_TIMEOUT):
+        task_timeout = int(timeout / SLEEP_TIME)
+        for dummy in range(task_timeout):
             task_group = task_groups_api_client.read(task_group_href)
+
+            if (task_group.waiting + task_group.running + task_group.canceling) == 0:
+                break
+            sleep(SLEEP_TIME)
+        else:
+            raise PulpTaskTimeoutError(task_group)
 
         # If ANYTHING went wrong, throw an error
         if (task_group.failed + task_group.skipped + task_group.canceled) > 0:
