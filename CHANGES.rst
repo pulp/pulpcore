@@ -17,6 +17,24 @@ Changelog
 
 .. towncrier release notes start
 
+3.16.18 (2023-08-01)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Updated the downloader's fetch method to comply with Python 3.11.
+  :github:`4107`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.16.17 (2023-04-11)
 ====================
 REST API
