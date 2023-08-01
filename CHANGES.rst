@@ -13,6 +13,24 @@ Changelog
 
 .. towncrier release notes start
 
+3.29.6 (2023-07-31)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fix a subtle export bug introduced from the optimizations in #4159.
+  :github:`4210`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.29.5 (2023-07-29)
 ===================
 REST API
@@ -183,6 +201,24 @@ Misc
 ~~~~
 
 - :github:`3798`
+
+
+3.28.7 (2023-07-31)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fix a subtle export bug introduced from the optimizations in #4159.
+  :github:`4210`
+
+
+Plugin API
+----------
+
+No significant changes.
 
 
 3.28.6 (2023-07-29)
@@ -712,6 +748,30 @@ Features
   :github:`3661`
 
 
+3.23.13 (2023-07-31)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Taught PulpImport to be more robust in the face of previous failed attempts.
+  :github:`3737`
+- Made the incremental file export include all published metadata.
+  :github:`3941`
+- Updates file system exporter to correctly account the start_repository_version  for pass_through publications
+  :github:`4051`
+- Fix a subtle export bug introduced from the optimizations in #4159.
+  :github:`4210`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.23.12 (2023-07-29)
 ====================
 REST API
@@ -1101,6 +1161,24 @@ Deprecations
   :github:`3604`
 
 
+3.22.11 (2023-07-31)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fix a subtle export bug introduced from the optimizations in #4159.
+  :github:`4210`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.22.10 (2023-07-29)
 ====================
 REST API
@@ -1455,6 +1533,24 @@ Removals
 - Deprecated model ``Label`` and serializer field ``LabelField`` and ``LabelSelectFilter`` for
   removal in 3.25.
   :github:`3400`
+
+
+3.21.14 (2023-07-31)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fix a subtle export bug introduced from the optimizations in #4159.
+  :github:`4210`
+
+
+Plugin API
+----------
+
+No significant changes.
 
 
 3.21.13 (2023-07-29)
@@ -2267,6 +2363,24 @@ Bugfixes
   the stage will still accumulate up to 500 (by default) items so batching is still in-effect there
   where it matters.
   :github:`2069`
+
+
+3.18.24 (2023-07-31)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fix a subtle export bug introduced from the optimizations in #4159.
+  :github:`4210`
+
+
+Plugin API
+----------
+
+No significant changes.
 
 
 3.18.23 (2023-07-29)
