@@ -95,7 +95,7 @@ class Replicator:
                     task_group=self.task_group,
                     exclusive_resources=[remote],
                     args=(remote.pk, self.app_label, self.remote_serializer_name),
-                    kwargs={"data": remote_fields_dict},
+                    kwargs={"data": remote_fields_dict, "partial": True},
                 )
         except self.remote_model_cls.DoesNotExist:
             # Create the remote
@@ -122,7 +122,7 @@ class Replicator:
                     task_group=self.task_group,
                     exclusive_resources=[repository],
                     args=(repository.pk, self.app_label, self.repository_serializer_name),
-                    kwargs={"data": repo_fields_dict},
+                    kwargs={"data": repo_fields_dict, "partial": True},
                 )
         except self.repository_model_cls.DoesNotExist:
             repository = self.repository_model_cls(
@@ -156,7 +156,8 @@ class Replicator:
                             "name": upstream_distribution["name"],
                             "base_path": upstream_distribution["base_path"],
                             "repository": get_url(repository),
-                        }
+                        },
+                        "partial": True,
                     },
                 )
         except self.distribution_model_cls.DoesNotExist:
