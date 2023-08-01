@@ -28,13 +28,15 @@ class Replicator:
     app_label = None
     sync_task = None
 
-    def __init__(self, pulp_ctx, task_group):
+    def __init__(self, pulp_ctx, task_group, ca_cert=None):
         """
         :param pulp_ctx: PulpReplicaContext
         :param task_group: TaskGroup
+        :param ca_cert: str
         """
         self.pulp_ctx = pulp_ctx
         self.task_group = task_group
+        self.ca_cert = ca_cert
         self.domain = get_domain()
         uri = "/api/v3/distributions/"
         if settings.DOMAIN_ENABLED:
@@ -88,6 +90,7 @@ class Replicator:
             )
             remote_fields_dict = self.remote_extra_fields(upstream_distribution)
             remote_fields_dict["url"] = url
+            remote_fields_dict["ca_cert"] = self.ca_cert
             needs_update = self.needs_update(remote_fields_dict, remote)
             if needs_update:
                 dispatch(
@@ -102,6 +105,7 @@ class Replicator:
             remote = self.remote_model_cls(name=upstream_distribution["name"], url=url)
             for field_name, value in self.remote_extra_fields(upstream_distribution).items():
                 setattr(remote, field_name, value)
+            remote.ca_cert = self.ca_cert
             remote.save()
 
         return remote
