@@ -421,14 +421,13 @@ def _do_export(pulp_exporter, tar, the_export):
             vers_artifacts = version.artifacts.difference(vers_match[version].artifacts).all()
         else:
             vers_artifacts = version.artifacts.all()
-
         artifacts.update(vers_artifacts)
 
     # export plugin-version-info
     export_versions(the_export, plugin_version_info)
     # Export the top-level entities (artifacts and repositories)
     # Note: we've already handled "what about incrementals" when building the 'artifacts' list
-    export_artifacts(the_export, artifacts)
+    export_artifacts(the_export, list(artifacts))
     # Export the repository-version data, per-version
     for version in ending_versions:
         export_content(the_export, version)
