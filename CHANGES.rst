@@ -17,6 +17,28 @@ Changelog
 
 .. towncrier release notes start
 
+3.23.14 (2023-08-01)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fixed a bug where replication remotes did not have their URLs updated on subsequent runs.
+  :github:`4218`
+- Fixed a bug where ca_cert was not getting set for replication remotes.
+  :github:`4219`
+- Correctly fixed pulp_rpm-export-edgecase - fix #4210 was incomplete.
+  :github:`4231`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.23.13 (2023-07-31)
 ====================
 REST API
