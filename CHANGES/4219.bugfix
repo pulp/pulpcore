@@ -1,0 +1,1 @@
+Fixed a bug where ca_cert was not getting set for replication remotes. 
