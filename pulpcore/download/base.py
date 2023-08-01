@@ -172,7 +172,7 @@ class BaseDownloader:
         self.validate_size()
         log.debug(f"Downloaded file from {self.url}")
 
-    def fetch(self):
+    def fetch(self, extra_data=None):
         """
         Run the download synchronously and return the `DownloadResult`.
 
@@ -182,7 +182,7 @@ class BaseDownloader:
         Raises:
             Exception: Any fatal exception emitted during downloading
         """
-        result = asyncio.get_event_loop().run_until_complete(self.run())
+        result = asyncio.get_event_loop().run_until_complete(self.run(extra_data=extra_data))
         return result
 
     def _record_size_and_digests_for_data(self, data):
