@@ -13,6 +13,28 @@ Changelog
 
 .. towncrier release notes start
 
+3.29.7 (2023-08-01)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fixed a bug where replication remotes did not have their URLs updated on subsequent runs.
+  :github:`4218`
+- Fixed a bug where ca_cert was not getting set for replication remotes.
+  :github:`4219`
+- Correctly fixed pulp_rpm-export-edgecase - fix #4210 was incomplete.
+  :github:`4231`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.29.6 (2023-07-31)
 ===================
 REST API
@@ -201,6 +223,28 @@ Misc
 ~~~~
 
 - :github:`3798`
+
+
+3.28.8 (2023-08-01)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fixed a bug where replication remotes did not have their URLs updated on subsequent runs.
+  :github:`4218`
+- Fixed a bug where ca_cert was not getting set for replication remotes.
+  :github:`4219`
+- Correctly fixed pulp_rpm-export-edgecase - fix #4210 was incomplete.
+  :github:`4231`
+
+
+Plugin API
+----------
+
+No significant changes.
 
 
 3.28.7 (2023-07-31)
@@ -748,6 +792,28 @@ Features
   :github:`3661`
 
 
+3.23.14 (2023-08-01)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fixed a bug where replication remotes did not have their URLs updated on subsequent runs.
+  :github:`4218`
+- Fixed a bug where ca_cert was not getting set for replication remotes.
+  :github:`4219`
+- Correctly fixed pulp_rpm-export-edgecase - fix #4210 was incomplete.
+  :github:`4231`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.23.13 (2023-07-31)
 ====================
 REST API
@@ -1161,6 +1227,24 @@ Deprecations
   :github:`3604`
 
 
+3.22.12 (2023-08-01)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Correctly fixed pulp_rpm-export-edgecase - fix #4210 was incomplete.
+  :github:`4231`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.22.11 (2023-07-31)
 ====================
 REST API
@@ -1533,6 +1617,24 @@ Removals
 - Deprecated model ``Label`` and serializer field ``LabelField`` and ``LabelSelectFilter`` for
   removal in 3.25.
   :github:`3400`
+
+
+3.21.15 (2023-08-01)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Correctly fixed pulp_rpm-export-edgecase - fix #4210 was incomplete.
+  :github:`4231`
+
+
+Plugin API
+----------
+
+No significant changes.
 
 
 3.21.14 (2023-07-31)
@@ -2363,6 +2465,24 @@ Bugfixes
   the stage will still accumulate up to 500 (by default) items so batching is still in-effect there
   where it matters.
   :github:`2069`
+
+
+3.18.25 (2023-08-01)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Correctly fixed pulp_rpm-export-edgecase - fix #4210 was incomplete.
+  :github:`4231`
+
+
+Plugin API
+----------
+
+No significant changes.
 
 
 3.18.24 (2023-07-31)
@@ -3397,6 +3517,24 @@ Bugfixes
 
 - Include additional information about which AccessPolicy is using deprecated policy features.
   :redmine:`9608`
+
+
+3.16.18 (2023-08-01)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Updated the downloader's fetch method to comply with Python 3.11.
+  :github:`4107`
+
+
+Plugin API
+----------
+
+No significant changes.
 
 
 3.16.17 (2023-04-11)
