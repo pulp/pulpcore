@@ -183,8 +183,8 @@ and set the following environment variables:
 .. note::
   A quick example on how it would run using this method::
 
-    $ /usr/local/bin/opentelemetry-instrument --service_name pulp-api /usr/local/bin/gunicorn
-    pulpcore.app.wsgi:application --bind "127.0.0.1:24817" --name pulp-api --workers 4 --access-logfile -
+    $ /usr/local/bin/opentelemetry-instrument --service_name pulp-api /usr/local/bin/pulpcore-api \
+    --bind "127.0.0.1:24817" --name pulp-api --workers 4 --access-logfile -
 
 You will need to run an instance of OpenTelemetry Collector. You can read more about the `OpenTelemetry
 Collector here <https://opentelemetry.io/docs/collector/>`_.

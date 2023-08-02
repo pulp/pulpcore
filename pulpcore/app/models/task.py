@@ -18,6 +18,7 @@ from pulpcore.app.models import (
     BaseModel,
     GenericRelationModel,
 )
+from pulpcore.app.models.status import BaseAppStatus
 from pulpcore.constants import TASK_CHOICES, TASK_INCOMPLETE_STATES, TASK_STATES
 from pulpcore.exceptions import AdvisoryLockError, exception_to_dict
 from pulpcore.app.util import get_domain_pk, current_task
@@ -25,58 +26,12 @@ from pulpcore.app.util import get_domain_pk, current_task
 _logger = logging.getLogger(__name__)
 
 
-class WorkerManager(models.Manager):
-    def online_workers(self):
-        """
-        Returns a queryset of workers meeting the criteria to be considered 'online'
-
-        To be considered 'online', a worker must have a recent heartbeat timestamp. "Recent" is
-        defined here as "within the pulp process timeout interval".
-
-        Returns:
-            :class:`django.db.models.query.QuerySet`:  A query set of the Worker objects which
-                are considered by Pulp to be 'online'.
-        """
-        now = timezone.now()
-        age_threshold = now - timedelta(seconds=settings.WORKER_TTL)
-
-        return self.filter(last_heartbeat__gte=age_threshold)
-
-    def missing_workers(self, age=timedelta(seconds=settings.WORKER_TTL)):
-        """
-        Returns a queryset of workers meeting the criteria to be considered 'missing'
-
-        To be considered missing, a worker must have a stale timestamp.  By default, stale is
-        defined here as longer than the ``settings.WORKER_TTL``, or you can specify age as a
-        timedelta.
-
-        Args:
-            age (datetime.timedelta): Workers who have heartbeats older than this time interval are
-                considered missing.
-
-        Returns:
-            :class:`django.db.models.query.QuerySet`:  A query set of the Worker objects which
-                are considered by Pulp to be 'missing'.
-        """
-        age_threshold = timezone.now() - age
-        return self.filter(last_heartbeat__lt=age_threshold)
-
-
-class Worker(BaseModel):
+class Worker(BaseAppStatus):
     """
     Represents a worker
-
-    Fields:
-
-        name (models.TextField): The name of the worker, in the format "worker_type@hostname"
-        last_heartbeat (models.DateTimeField): A timestamp of this worker's last heartbeat
     """
 
-    objects = WorkerManager()
-
-    name = models.TextField(db_index=True, unique=True)
-    last_heartbeat = models.DateTimeField(auto_now=True)
-    versions = HStoreField(default=dict)
+    APP_TTL = timedelta(seconds=settings.WORKER_TTL)
 
     @property
     def current_task(self):
@@ -87,51 +42,6 @@ class Worker(BaseModel):
             Task: The currently executing task
         """
         return self.tasks.filter(state="running").first()
-
-    @property
-    def online(self):
-        """
-        Whether a worker can be considered 'online'
-
-        To be considered 'online', a worker must have a recent heartbeat timestamp. "Recent" is
-        defined here as "within the pulp process timeout interval".
-
-        Returns:
-            bool: True if the worker is considered online, otherwise False
-        """
-        now = timezone.now()
-        age_threshold = now - timedelta(seconds=settings.WORKER_TTL)
-
-        return self.last_heartbeat >= age_threshold
-
-    @property
-    def missing(self):
-        """
-        Whether a worker can be considered 'missing'
-
-        To be considered 'missing', a worker must have a stale timestamp meaning that it was not
-        shutdown 'cleanly' and may have died.  Stale is defined here as "beyond the pulp process
-        timeout interval".
-
-        Returns:
-            bool: True if the worker is considered missing, otherwise False
-        """
-        now = timezone.now()
-        age_threshold = now - timedelta(seconds=settings.WORKER_TTL)
-
-        return self.last_heartbeat < age_threshold
-
-    def save_heartbeat(self):
-        """
-        Update the last_heartbeat field to now and save it.
-
-        Only the last_heartbeat field will be saved. No other changes will be saved.
-
-        Raises:
-            ValueError: When the model instance has never been saved before. This method can
-                only update an existing database record.
-        """
-        self.save(update_fields=["last_heartbeat"])
 
 
 def _uuid_to_advisory_lock(value):

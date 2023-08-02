@@ -42,6 +42,8 @@ setup(
         "console_scripts": [
             "pulpcore-manager = pulpcore.app.manage:manage",
             "pulpcore-worker = pulpcore.tasking.entrypoint:worker",
+            "pulpcore-api = pulpcore.app.entrypoint:main",
+            "pulpcore-content = pulpcore.content.entrypoint:main",
         ],
         "pytest11": ["pulpcore = pulpcore.tests.functional"],
     },
