@@ -439,6 +439,16 @@ class ModelSerializer(
 
         return path
 
+    def save(self, **kwargs):
+        try:
+            return super().save(**kwargs)
+        except IntegrityError as e:
+            # Concurrent request got by the unique validator on the serializer
+            if "unique" in str(e):
+                # Run validation again to properly raise an unique-ValidationError
+                self.run_validation(self.initial_data)
+            raise e
+
     def __init_subclass__(cls, **kwargs):
         """Set default attributes in subclasses.
 

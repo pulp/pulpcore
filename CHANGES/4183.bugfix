@@ -1,0 +1,1 @@
+Fixed a 500 server error when two concurrent requests try to create an object with the same unique fields.
