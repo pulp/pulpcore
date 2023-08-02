@@ -236,8 +236,9 @@ LOGGING = {
 DRF_ACCESS_POLICY = {"reusable_conditions": ["pulpcore.app.global_access_conditions"]}
 
 CONTENT_PATH_PREFIX = "/pulp/content/"
-CONTENT_APP_TTL = 30
 
+API_APP_TTL = 120  # The heartbeat is called from gunicorn notify (defaulting to 45 sec).
+CONTENT_APP_TTL = 30
 WORKER_TTL = 30
 
 # how long to protect ephemeral items in minutes

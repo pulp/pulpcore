@@ -9,7 +9,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from pulpcore.app.apps import pulp_plugin_configs
-from pulpcore.app.models.status import ContentAppStatus
+from pulpcore.app.models.status import ApiAppStatus, ContentAppStatus
 from pulpcore.app.models.task import Worker
 from pulpcore.app.serializers.status import StatusSerializer
 from pulpcore.app.redis_connection import get_redis_connection
@@ -71,15 +71,9 @@ class StatusView(APIView):
 
         db_status = {"connected": self._get_db_conn_status()}
 
-        try:
-            online_workers = Worker.objects.online_workers()
-        except Exception:
-            online_workers = None
-
-        try:
-            online_content_apps = ContentAppStatus.objects.online()
-        except Exception:
-            online_content_apps = None
+        online_workers = Worker.objects.online()
+        online_api_apps = ApiAppStatus.objects.online()
+        online_content_apps = ContentAppStatus.objects.online()
 
         content_settings = {
             "content_origin": settings.CONTENT_ORIGIN,
@@ -89,6 +83,7 @@ class StatusView(APIView):
         data = {
             "versions": versions,
             "online_workers": online_workers,
+            "online_api_apps": online_api_apps,
             "online_content_apps": online_content_apps,
             "database_connection": db_status,
             "redis_connection": redis_status,

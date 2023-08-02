@@ -80,7 +80,7 @@ async def _online_content_apps_data(analytics):
 
 
 async def _online_workers_data(analytics):
-    online_workers_qs = Worker.objects.online_workers()
+    online_workers_qs = Worker.objects.online()
     analytics.online_workers.processes = await online_workers_qs.acount()
     analytics.online_workers.hosts = await _num_hosts(online_workers_qs)
 

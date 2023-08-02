@@ -188,15 +188,32 @@ class TaskCancelSerializer(ModelSerializer):
         fields = ("state",)
 
 
+class ApiAppStatusSerializer(ModelSerializer):
+    name = serializers.CharField(help_text=_("The name of the worker."), read_only=True)
+    last_heartbeat = serializers.DateTimeField(
+        help_text=_("Timestamp of the last time the worker talked to the service."), read_only=True
+    )
+    versions = serializers.HStoreField(
+        help_text=_("Versions of the components installed."), read_only=True
+    )
+
+    class Meta:
+        model = models.ApiAppStatus
+        fields = ("name", "last_heartbeat", "versions")
+
+
 class ContentAppStatusSerializer(ModelSerializer):
     name = serializers.CharField(help_text=_("The name of the worker."), read_only=True)
     last_heartbeat = serializers.DateTimeField(
         help_text=_("Timestamp of the last time the worker talked to the service."), read_only=True
     )
+    versions = serializers.HStoreField(
+        help_text=_("Versions of the components installed."), read_only=True
+    )
 
     class Meta:
         model = models.ContentAppStatus
-        fields = ("name", "last_heartbeat")
+        fields = ("name", "last_heartbeat", "versions")
 
 
 class WorkerSerializer(ModelSerializer):
@@ -205,6 +222,9 @@ class WorkerSerializer(ModelSerializer):
     name = serializers.CharField(help_text=_("The name of the worker."), read_only=True)
     last_heartbeat = serializers.DateTimeField(
         help_text=_("Timestamp of the last time the worker talked to the service."), read_only=True
+    )
+    versions = serializers.HStoreField(
+        help_text=_("Versions of the components installed."), read_only=True
     )
     current_task = RelatedField(
         help_text=_(
@@ -217,7 +237,12 @@ class WorkerSerializer(ModelSerializer):
 
     class Meta:
         model = models.Worker
-        fields = ModelSerializer.Meta.fields + ("name", "last_heartbeat", "current_task")
+        fields = ModelSerializer.Meta.fields + (
+            "name",
+            "last_heartbeat",
+            "versions",
+            "current_task",
+        )
 
 
 class TaskScheduleSerializer(ModelSerializer):

@@ -9,10 +9,10 @@ pulp.tasking.constants
 
 .. automodule:: pulpcore.tasking.constants
 
-pulp.tasking.pulpcore_worker
+pulp.tasking.worker
 ----------------------------
 
-.. automodule:: pulpcore.tasking.pulpcore_worker
+.. automodule:: pulpcore.tasking.worker
 
 pulp.tasking.storage
 --------------------

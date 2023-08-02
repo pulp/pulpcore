@@ -21,7 +21,7 @@ from django.db import connection
 from django.utils import timezone
 from django_guid import set_guid
 
-from pulpcore.app.models import Worker, Task
+from pulpcore.app.models import Worker, Task, ApiAppStatus, ContentAppStatus
 
 from pulpcore.app.util import (
     configure_analytics,
@@ -90,7 +90,7 @@ class PGAdvisoryLock:
             raise RuntimeError("Lock not held.")
 
 
-class NewPulpWorker:
+class PulpcoreWorker:
     def __init__(self):
         # Notification states from several signal handlers
         self.shutdown_requested = False
@@ -172,11 +172,16 @@ class NewPulpWorker:
         _logger.info(_("Worker %s was shut down."), self.name)
 
     def worker_cleanup(self):
-        qs = Worker.objects.missing_workers(age=timedelta(days=7))
-        if qs:
-            for worker in qs:
-                _logger.info(_("Clean missing worker %s."), worker.name)
-            qs.delete()
+        for cls, cls_name in (
+            (Worker, "pulp"),
+            (ApiAppStatus, "api"),
+            (ContentAppStatus, "content"),
+        ):
+            qs = cls.objects.missing(age=timedelta(days=7))
+            if qs:
+                for app_worker in qs:
+                    _logger.info(_("Clean missing %s worker %s."), cls_name, app_worker.name)
+                qs.delete()
 
     def beat(self):
         if self.worker.last_heartbeat < timezone.now() - timedelta(seconds=self.heartbeat_period):

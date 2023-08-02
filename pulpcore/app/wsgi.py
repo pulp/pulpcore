@@ -7,14 +7,14 @@ For more information on this file, see
 https://docs.djangoproject.com/en/3.2/howto/deployment/wsgi/
 """
 
-import os
-
 from django.core.wsgi import get_wsgi_application
 from opentelemetry.instrumentation.wsgi import OpenTelemetryMiddleware
 
+from pulpcore.app.entrypoint import using_pulp_api_worker
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "pulpcore.app.settings")
 
+if not using_pulp_api_worker.get(False):
+    raise RuntimeError("This app must be executed using pulpcore-api entrypoint.")
 
 application = get_wsgi_application()
 application = OpenTelemetryMiddleware(application)

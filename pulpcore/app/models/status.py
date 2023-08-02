@@ -11,35 +11,55 @@ from django.utils import timezone
 from pulpcore.app.models import BaseModel
 
 
-class ContentAppStatusManager(models.Manager):
+class AppStatusManager(models.Manager):
     def online(self):
         """
-        Returns a queryset of ``ContentAppStatus`` objects that are online.
+        Returns a queryset of objects that are online.
 
-        To be considered 'online', a ContentAppStatus must have a heartbeat timestamp within
-        ``settings.CONTENT_APP_TTL`` from now.
+        To be considered 'online', a AppStatus must have a heartbeat timestamp within
+        ``self.model.APP_TTL`` from now.
 
         Returns:
-            :class:`django.db.models.query.QuerySet`:  A query set of the ``ContentAppStatus``
+            :class:`django.db.models.query.QuerySet`:  A query set of the
                 objects which are considered 'online'.
         """
-        now = timezone.now()
-        age_threshold = now - timedelta(seconds=settings.CONTENT_APP_TTL)
-
+        age_threshold = timezone.now() - self.model.APP_TTL
         return self.filter(last_heartbeat__gte=age_threshold)
 
+    def missing(self, age=None):
+        """
+        Returns a queryset of workers meeting the criteria to be considered 'missing'
 
-class ContentAppStatus(BaseModel):
+        To be considered missing, a AppsStatus must have a stale timestamp.  By default, stale is
+        defined here as longer than the ``self.model.APP_TTL``, or you can specify age as a
+        timedelta.
+
+        Args:
+            age (datetime.timedelta): Objects who have heartbeats older than this time interval are
+                considered missing.
+
+        Returns:
+            :class:`django.db.models.query.QuerySet`:  A query set of the objects objects which
+                are considered to be 'missing'.
+        """
+        age_threshold = timezone.now() - (age or self.model.APP_TTL)
+        return self.filter(last_heartbeat__lt=age_threshold)
+
+
+class BaseAppStatus(BaseModel):
     """
-    Represents a Content App Status
+    Represents an AppStatus.
+
+    This class is abstract. Subclasses must define `APP_TTL` as a `timedelta`.
 
     Fields:
 
-        name (models.TextField): The name of the content app
-        last_heartbeat (models.DateTimeField): A timestamp of this worker's last heartbeat
+        name (models.TextField): The name of the app.
+        last_heartbeat (models.DateTimeField): A timestamp of this worker's last heartbeat.
+        versions (HStoreField): A dictionary with versions of all pulp components.
     """
 
-    objects = ContentAppStatusManager()
+    objects = AppStatusManager()
 
     name = models.TextField(db_index=True, unique=True)
     last_heartbeat = models.DateTimeField(auto_now=True)
@@ -48,29 +68,25 @@ class ContentAppStatus(BaseModel):
     @property
     def online(self):
         """
-        Whether a content app can be considered 'online'
+        Whether an app can be considered 'online'
 
-        To be considered 'online', a content app must have a heartbeat timestamp more recent than
-        the ``CONTENT_APP_TTL`` setting.
+        To be considered 'online', an app must have a timestamp more recent than ``self.APP_TTL``.
 
         Returns:
-            bool: True if the content app is considered online, otherwise False
+            bool: True if the app is considered online, otherwise False
         """
-        now = timezone.now()
-        age_threshold = now - timedelta(seconds=settings.CONTENT_APP_TTL)
-
+        age_threshold = timezone.now() - self.APP_TTL
         return self.last_heartbeat >= age_threshold
 
     @property
     def missing(self):
         """
-        Whether a Content App can be considered 'missing'
+        Whether an app can be considered 'missing'
 
-        To be considered 'missing', a Content App must have a timestamp older than
-        ``SETTINGS.CONTENT_APP_TTL``.
+        To be considered 'missing', an App must have a timestamp older than ``self.APP_TTL``.
 
         Returns:
-            bool: True if the content app is considered missing, otherwise False
+            bool: True if the app is considered missing, otherwise False
         """
         return not self.online
 
@@ -85,3 +101,22 @@ class ContentAppStatus(BaseModel):
                 only update an existing database record.
         """
         self.save(update_fields=["last_heartbeat"])
+
+    class Meta:
+        abstract = True
+
+
+class ApiAppStatus(BaseAppStatus):
+    """
+    Represents a Api App Status
+    """
+
+    APP_TTL = timedelta(seconds=settings.API_APP_TTL)
+
+
+class ContentAppStatus(BaseAppStatus):
+    """
+    Represents a Content App Status
+    """
+
+    APP_TTL = timedelta(seconds=settings.CONTENT_APP_TTL)

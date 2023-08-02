@@ -268,7 +268,7 @@ class WorkerFilter(BaseFilterSet):
         }
 
     def filter_online(self, queryset, name, value):
-        online_workers = Worker.objects.online_workers()
+        online_workers = Worker.objects.online()
 
         if value:
             return queryset.filter(pk__in=online_workers)
@@ -276,7 +276,7 @@ class WorkerFilter(BaseFilterSet):
             return queryset.exclude(pk__in=online_workers)
 
     def filter_missing(self, queryset, name, value):
-        missing_workers = Worker.objects.missing_workers()
+        missing_workers = Worker.objects.missing()
 
         if value:
             return queryset.filter(pk__in=missing_workers)
