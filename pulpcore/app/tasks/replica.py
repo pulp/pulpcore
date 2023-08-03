@@ -58,15 +58,20 @@ def replicate_distributions(server_pk):
         domain=server.domain,
     )
 
+    tls_settings = {
+        "ca_cert": server.ca_cert,
+        "tls_validation": server.tls_validation,
+        "client_cert": server.client_cert,
+        "client_key": server.client_key,
+    }
+
     task_group = TaskGroup.current()
     supported_replicators = []
     # Load all the available replicators
     for config in pulp_plugin_configs():
         if config.replicator_classes:
             for replicator_class in config.replicator_classes:
-                supported_replicators.append(
-                    replicator_class(ctx, task_group, ca_cert=server.ca_cert)
-                )
+                supported_replicators.append(replicator_class(ctx, task_group, tls_settings))
 
     for replicator in supported_replicators:
         distros = replicator.upstream_distributions(labels=server.pulp_label_select)
