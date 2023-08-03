@@ -28,7 +28,7 @@ class Replicator:
     app_label = None
     sync_task = None
 
-    def __init__(self, pulp_ctx, task_group, ca_cert=None):
+    def __init__(self, pulp_ctx, task_group, tls_settings):
         """
         :param pulp_ctx: PulpReplicaContext
         :param task_group: TaskGroup
@@ -36,7 +36,7 @@ class Replicator:
         """
         self.pulp_ctx = pulp_ctx
         self.task_group = task_group
-        self.ca_cert = ca_cert
+        self.tls_settings = tls_settings
         self.domain = get_domain()
         uri = "/api/v3/distributions/"
         if settings.DOMAIN_ENABLED:
@@ -83,14 +83,15 @@ class Replicator:
         if not upstream_distribution["repository"] and not upstream_distribution["publication"]:
             return None
         url = self.url(upstream_distribution)
+        remote_fields_dict = {"url": url}
+        remote_fields_dict.update(self.tls_settings)
+        remote_fields_dict.update(self.remote_extra_fields(upstream_distribution))
+
         # Check if there is a remote pointing to this distribution
         try:
             remote = self.remote_model_cls.objects.get(
                 name=upstream_distribution["name"], pulp_domain=self.domain
             )
-            remote_fields_dict = self.remote_extra_fields(upstream_distribution)
-            remote_fields_dict["url"] = url
-            remote_fields_dict["ca_cert"] = self.ca_cert
             needs_update = self.needs_update(remote_fields_dict, remote)
             if needs_update:
                 dispatch(
@@ -102,10 +103,7 @@ class Replicator:
                 )
         except self.remote_model_cls.DoesNotExist:
             # Create the remote
-            remote = self.remote_model_cls(name=upstream_distribution["name"], url=url)
-            for field_name, value in self.remote_extra_fields(upstream_distribution).items():
-                setattr(remote, field_name, value)
-            remote.ca_cert = self.ca_cert
+            remote = self.remote_model_cls(name=upstream_distribution["name"], **remote_fields_dict)
             remote.save()
 
         return remote
