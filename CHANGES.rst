@@ -225,6 +225,20 @@ Misc
 - :github:`3798`
 
 
+3.28.9 (2023-08-03)
+===================
+REST API
+--------
+
+No significant changes.
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.28.8 (2023-08-01)
 ===================
 REST API
