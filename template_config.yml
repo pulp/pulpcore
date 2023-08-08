@@ -25,7 +25,7 @@ ci_update_branches:
 - '3.22'
 - '3.23'
 - '3.28'
-- '3.29'
+- '3.30'
 ci_update_docs: true
 cli_package: pulp-cli
 cli_repo: https://github.com/pulp/pulp-cli.git
