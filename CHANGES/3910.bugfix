@@ -1,1 +1,0 @@
-Fixed a bug with the replicate API not handling Upstream Pulp API over HTTPS. 
