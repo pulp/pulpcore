@@ -1,1 +1,0 @@
-Fixed bug where tls_validation, client_key, and client_cert were not getting set on replication remotes.

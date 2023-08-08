@@ -13,6 +13,24 @@ Changelog
 
 .. towncrier release notes start
 
+3.28.10 (2023-08-08)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fixed bug where tls_validation, client_key, and client_cert were not getting set on replication remotes.
+  :github:`4247`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.28.9 (2023-08-03)
 ===================
 REST API
