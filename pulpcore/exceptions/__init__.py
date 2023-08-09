@@ -4,6 +4,7 @@ from .base import (
     ResourceImmutableError,
     TimeoutException,
     exception_to_dict,
+    DomainProtectedError,
 )
 from .validation import (
     DigestValidationError,

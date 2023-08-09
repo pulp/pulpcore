@@ -3,6 +3,7 @@ from django.db import models
 from django_lifecycle import hook, BEFORE_DELETE, BEFORE_UPDATE
 
 from pulpcore.app.models import BaseModel, AutoAddObjPermsMixin
+from pulpcore.exceptions import DomainProtectedError
 
 from .fields import EncryptedJSONField
 
@@ -51,8 +52,9 @@ class Domain(BaseModel, AutoAddObjPermsMixin):
 
     @hook(BEFORE_DELETE, when="name", is_not="default")
     def _cleanup_orphans_pre_delete(self):
-        if self.content_set.exclude(version_memberships__isnull=True).exists():
-            raise models.ProtectedError("There is active content in the domain.")
+        protected_content_set = self.content_set.exclude(version_memberships__isnull=True)
+        if protected_content_set.exists():
+            raise DomainProtectedError()
         self.content_set.filter(version_memberships__isnull=True).delete()
         for artifact in self.artifact_set.all().iterator():
             # Delete on by one to properly cleanup the storage.
