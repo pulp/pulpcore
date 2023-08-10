@@ -13,6 +13,92 @@ Changelog
 
 .. towncrier release notes start
 
+3.30.0 (2023-08-08)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Resolved a memory leak that could occur while making large repeated queries against the API service.
+  :github:`2250`
+- Made reclaim space task more tolerant in the face of artifact shared between two content units.
+  :github:`3610`
+- Fixed a bug with the replicate API not handling Upstream Pulp API over HTTPS.
+  :github:`3910`
+- Fixed duplicate OpenAPI operation ids when using domains.
+  :github:`3977`
+- Updates file system exporter to correctly account the start_repository_version  for pass_through publications
+  :github:`4051`
+- Taught pulp-import to be able to use a subset of available worker-threads.
+  :github:`4068`
+- Updated the downloader's fetch method to comply with Python 3.11.
+  :github:`4107`
+- Taught repair task to be tolerant in the face of any artifact download failure.
+  :github:`4111`
+- Fixed a 500 error for Upstream Pulp Replicate API when domains are enabled.
+  :github:`4119`
+- Fixed the OpenAPI schema for the 'replicate' operation response.
+  :github:`4121`
+- Fixed a bug where repositories were getting deleted accross domains.
+  :github:`4158`
+- Taught the Artifact.json of an export to hold minimum-unique-set of Artifact entries.
+
+  In highly-duplicated-content export scenarios, this can mean a significant decrease
+  in export-size, and significant improvement in import-performance.
+  :github:`4159`
+- Fixed bug where the Task Group for replication would be marked as fully dispatched after just one
+  replicator.
+  :github:`4175`
+- Fixed a 500 server error when two concurrent requests try to create an object with the same unique fields.
+  :github:`4183`
+- Fix a subtle export bug introduced from the optimizations in #4159.
+  :github:`4210`
+- Fixed a bug where replication remotes did not have their URLs updated on subsequent runs.
+  :github:`4218`
+- Fixed a bug where ca_cert was not getting set for replication remotes.
+  :github:`4219`
+- Correctly fixed pulp_rpm-export-edgecase - fix #4210 was incomplete.
+  :github:`4231`
+- Fixed bug where tls_validation, client_key, and client_cert were not getting set on replication remotes.
+  :github:`4247`
+
+
+Misc
+~~~~
+
+- :github:`3923`
+
+
+Plugin API
+----------
+
+Features
+~~~~~~~~
+
+- Adjusted the ``BaseDownloader.fetch()`` method to accept ``extra_data``.
+  :github:`4229`
+
+
+3.29.8 (2023-08-08)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fixed bug where tls_validation, client_key, and client_cert were not getting set on replication remotes.
+  :github:`4247`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.29.7 (2023-08-01)
 ===================
 REST API
@@ -223,6 +309,24 @@ Misc
 ~~~~
 
 - :github:`3798`
+
+
+3.28.10 (2023-08-08)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fixed bug where tls_validation, client_key, and client_cert were not getting set on replication remotes.
+  :github:`4247`
+
+
+Plugin API
+----------
+
+No significant changes.
 
 
 3.28.9 (2023-08-03)
@@ -804,6 +908,24 @@ Features
 - Added flags ``immediate`` and ``deferred`` to ``dispatch`` to allow specifying whether a task can
   be attempted to run synchronously and whether it can be deferred.
   :github:`3661`
+
+
+3.23.15 (2023-08-08)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fixed bug where tls_validation, client_key, and client_cert were not getting set on replication remotes.
+  :github:`4247`
+
+
+Plugin API
+----------
+
+No significant changes.
 
 
 3.23.14 (2023-08-01)
