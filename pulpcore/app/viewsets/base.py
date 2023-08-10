@@ -25,7 +25,15 @@ from pulpcore.app.util import get_viewset_for_model
 from pulpcore.tasking.tasks import dispatch
 
 # These should be used to prevent duplication and keep things consistent
-NAME_FILTER_OPTIONS = ["exact", "in", "icontains", "contains", "startswith"]
+NAME_FILTER_OPTIONS = [
+    "exact",
+    "iexact",
+    "in",
+    "contains",
+    "icontains",
+    "startswith",
+    "istartswith",
+]
 # e.g.
 # /?name=foo
 # /?name__in=foo,bar
