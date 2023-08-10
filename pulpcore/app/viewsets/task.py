@@ -60,9 +60,9 @@ class TaskFilter(BaseFilterSet):
     class Meta:
         model = Task
         fields = {
-            "state": ["exact", "in"],
-            "worker": ["exact", "in"],
-            "name": ["exact", "contains", "in"],
+            "state": ["exact", "in", "ne"],
+            "worker": ["exact", "in", "isnull"],
+            "name": ["exact", "contains", "in", "ne"],
             "logging_cid": ["exact", "contains"],
             "started_at": DATETIME_FILTER_OPTIONS,
             "finished_at": DATETIME_FILTER_OPTIONS,

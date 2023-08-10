@@ -1,8 +1,11 @@
 from gettext import gettext as _
 
-from functools import lru_cache
+import pyparsing as pp
+
+from functools import lru_cache, partial
 from urllib.parse import urlparse
 from uuid import UUID
+from django import forms
 from django.db import models
 from django.forms.utils import ErrorList
 from django.urls import Resolver404, resolve
@@ -128,7 +131,7 @@ class HREFInFilter(BaseInFilter, filters.CharFilter):
     pass
 
 
-class PulpTypeInFilter(BaseInFilter, filters.ChoiceFilter):
+class PulpTypeFilter(filters.ChoiceFilter):
     """Special pulp_type filter only added to generic list endpoints."""
 
     def __init__(self, *args, **kwargs):
@@ -150,6 +153,110 @@ class PulpTypeInFilter(BaseInFilter, filters.ChoiceFilter):
         return choices
 
 
+class PulpTypeInFilter(BaseInFilter, PulpTypeFilter):
+    """Special pulp_type filter only added to generic list endpoints."""
+
+
+class ExpressionFilterField(forms.CharField):
+    class _FilterAction:
+        def __init__(self, filterset, tokens):
+            key = tokens[0].key
+            value = tokens[0].value
+            self.filter = filterset.filters.get(key)
+            if self.filter is None:
+                raise forms.ValidationError(_("Filter '{key}' does not exist.").format(key=key))
+            if isinstance(self.filter, ExpressionFilter):
+                raise forms.ValidationError(
+                    _("You cannot use '{key}' in complex filtering.").format(key=key)
+                )
+            if isinstance(self.filter, filters.OrderingFilter):
+                raise forms.ValidationError(
+                    _("An ordering filter cannot be used in complex filtering.")
+                )
+            form = filterset.form.__class__({key: value})
+            if not form.is_valid():
+                raise forms.ValidationError(form.errors.as_json())
+            self.value = form.cleaned_data[key]
+            self.complexity = 1
+
+        def evaluate(self, qs):
+            return self.filter.filter(qs, self.value)
+
+    class _NotAction:
+        def __init__(self, tokens):
+            self.expr = tokens[0][0]
+            self.complexity = self.expr.complexity + 1
+
+        def evaluate(self, qs):
+            return qs.difference(self.expr.evaluate(qs))
+
+    class _AndAction:
+        def __init__(self, tokens):
+            self.exprs = tokens[0]
+            self.complexity = sum((expr.complexity for expr in self.exprs)) + 1
+
+        def evaluate(self, qs):
+            return (
+                self.exprs[0]
+                .evaluate(qs)
+                .intersection(*[expr.evaluate(qs) for expr in self.exprs[1:]])
+            )
+
+    class _OrAction:
+        def __init__(self, tokens):
+            self.exprs = tokens[0]
+            self.complexity = sum((expr.complexity for expr in self.exprs)) + 1
+
+        def evaluate(self, qs):
+            return self.exprs[0].evaluate(qs).union(*[expr.evaluate(qs) for expr in self.exprs[1:]])
+
+    def __init__(self, *args, **kwargs):
+        self.filterset = kwargs.pop("filter").parent
+        super().__init__(*args, **kwargs)
+
+    def clean(self, value):
+        value = super().clean(value)
+        if value not in EMPTY_VALUES:
+            slug = pp.Word(pp.alphas, pp.alphanums + "_")
+            word = pp.Word(pp.alphanums + pp.alphas8bit + ".,_-*")
+            rhs = word | pp.quoted_string.set_parse_action(pp.remove_quotes)
+            group = pp.Group(
+                slug.set_results_name("key")
+                + pp.Suppress(pp.Literal("="))
+                + rhs.set_results_name("value")
+            ).set_parse_action(partial(self._FilterAction, self.filterset))
+
+            expr = pp.infix_notation(
+                group,
+                [
+                    (pp.Suppress(pp.Keyword("NOT")), 1, pp.opAssoc.RIGHT, self._NotAction),
+                    (pp.Suppress(pp.Keyword("AND")), 2, pp.opAssoc.LEFT, self._AndAction),
+                    (pp.Suppress(pp.Keyword("OR")), 2, pp.opAssoc.LEFT, self._OrAction),
+                ],
+            )
+            try:
+                result = expr.parse_string(value, parse_all=True)[0]
+            except pp.ParseException:
+                raise forms.ValidationError(_("Syntax error in expression."))
+            if result.complexity > 8:
+                raise forms.ValidationError(_("Filter expression exceeds allowed complexity."))
+            return result
+        return None
+
+
+class ExpressionFilter(filters.CharFilter):
+    field_class = ExpressionFilterField
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.extra["filter"] = self
+
+    def filter(self, qs, value):
+        if value is not None:
+            qs = value.evaluate(qs)
+        return qs
+
+
 class BaseFilterSet(filterset.FilterSet):
     """
     Class to override django_filter's FilterSet and provide a way to set help text
@@ -165,6 +272,7 @@ class BaseFilterSet(filterset.FilterSet):
     help_text = {}
     pulp_id__in = IdInFilter(field_name="pk", lookup_expr="in")
     pulp_href__in = HREFInFilter(field_name="pk", method="filter_pulp_href")
+    q = ExpressionFilter()
 
     FILTER_DEFAULTS = {
         **filterset.FilterSet.FILTER_DEFAULTS,
@@ -296,6 +404,7 @@ class PulpFilterBackend(DjangoFilterBackend):
             if hasattr(view, "is_master_viewset") and view.is_master_viewset():
 
                 class PulpTypeFilterSet(filterset_class):
+                    pulp_type = PulpTypeFilter(field_name="pulp_type", model=queryset.model)
                     pulp_type__in = PulpTypeInFilter(field_name="pulp_type", model=queryset.model)
 
                 return PulpTypeFilterSet
