@@ -754,13 +754,26 @@ class RemoteArtifact(BaseModel, QueryMixin):
         unique_together = ("content_artifact", "remote", "pulp_domain")
 
 
-class SigningService(BaseModel):
+class BaseSigningService(BaseModel):
     """
-    A model used for producing signatures.
+    A base model for producing signatures.
 
     Fields:
         name (models.TextField):
             A unique name describing a script (or executable) used for signing.
+    """
+
+    name = models.TextField(db_index=True, unique=True)
+
+    class Meta:
+        abstract = True
+
+
+class SigningService(BaseSigningService):
+    """
+    A model used for producing GPG signatures.
+
+    Fields:
         public_key (models.TextField):
             The value of the public key.
         script (models.TextField):
@@ -768,7 +781,6 @@ class SigningService(BaseModel):
 
     """
 
-    name = models.TextField(db_index=True, unique=True)
     public_key = models.TextField()
     pubkey_fingerprint = models.TextField()
     script = models.TextField()
