@@ -5,7 +5,7 @@ import logging
 
 from aiofiles import os as aos
 from asgiref.sync import sync_to_async
-from django.db.models import Prefetch, prefetch_related_objects, Q
+from django.db.models import Prefetch, prefetch_related_objects
 
 from pulpcore.plugin.exceptions import UnsupportedDigestValidationError
 from pulpcore.plugin.models import (
@@ -485,21 +485,18 @@ class ACSArtifactHandler(Stage):
                                     getattr(d_artifact.artifact, cks_type)
                                 )
 
-                batch_query = Q()
-                for checksum_type in batch_checksums.keys():
-                    batch_query.add(
-                        Q(**{f"{checksum_type}__in": batch_checksums[checksum_type]}), Q.OR
-                    )
-
-                existing_ras = (
-                    RemoteArtifact.objects.acs().filter(batch_query).select_related("remote")
-                )
                 existing_ras_dict = dict()
-                async for ra in existing_ras.aiterator():
-                    for c_type in Artifact.COMMON_DIGEST_FIELDS:
-                        checksum = getattr(ra, c_type)  # todo: this used to be async-protected
+                for checksum_type in batch_checksums.keys():
+                    existing_ras = (
+                        RemoteArtifact.objects.acs()
+                        .filter(**{f"{checksum_type}__in": batch_checksums[checksum_type]})
+                        .only("url", checksum_type, "remote")
+                        .select_related("remote")
+                    )
+                    async for ra in existing_ras.aiterator():
+                        checksum = getattr(ra, checksum_type)
                         # pick the first occurence of RA from ACS
-                        if checksum and checksum not in existing_ras_dict:
+                        if checksum not in existing_ras_dict:
                             existing_ras_dict[checksum] = {
                                 "remote": ra.remote,
                                 "url": ra.url,
