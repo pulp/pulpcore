@@ -707,7 +707,7 @@ class RepositoryVersion(BaseModel):
         if content_qs is None:
             content_qs = Content.objects
 
-        return content_qs.filter(version_memberships__in=self._content_relationships())
+        return content_qs.filter(pk__in=self._content_relationships().values_list("content_id"))
 
     @property
     def content(self):
