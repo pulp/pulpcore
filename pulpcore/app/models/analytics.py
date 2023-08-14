@@ -1,3 +1,5 @@
+from functools import lru_cache
+
 from django.db import models
 
 from django_lifecycle import hook, LifecycleModel
@@ -15,3 +17,9 @@ class SystemID(LifecycleModel):
 
     class Meta:
         ordering = ("pulp_id",)
+
+
+@lru_cache(maxsize=1)
+def system_id():
+    system_id_obj = SystemID.objects.first()
+    return str(system_id_obj.pk)
