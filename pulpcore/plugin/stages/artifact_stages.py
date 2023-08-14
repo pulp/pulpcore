@@ -471,9 +471,9 @@ class ACSArtifactHandler(Stage):
     """
 
     async def run(self):
+        acs_query = AlternateContentSource.objects.filter(pulp_domain=self.domain)
+        acs_exists = await acs_query.aexists()
         async for batch in self.batches():
-            acs_query = AlternateContentSource.objects.filter(pulp_domain=self.domain)
-            acs_exists = await acs_query.aexists()
             if acs_exists:
                 # Gather batch d_artifact checksums
                 batch_checksums = defaultdict(list)
@@ -492,15 +492,12 @@ class ACSArtifactHandler(Stage):
                     )
 
                 existing_ras = (
-                    RemoteArtifact.objects.acs()
-                    .filter(batch_query)
-                    .only("url", "remote")
-                    .select_related("remote")
+                    RemoteArtifact.objects.acs().filter(batch_query).select_related("remote")
                 )
                 existing_ras_dict = dict()
-                async for ra in existing_ras:
+                async for ra in existing_ras.aiterator():
                     for c_type in Artifact.COMMON_DIGEST_FIELDS:
-                        checksum = await sync_to_async(getattr)(ra, c_type)
+                        checksum = getattr(ra, c_type)  # todo: this used to be async-protected
                         # pick the first occurence of RA from ACS
                         if checksum and checksum not in existing_ras_dict:
                             existing_ras_dict[checksum] = {
