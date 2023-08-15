@@ -508,6 +508,7 @@ class AsyncRemoveMixin(AsyncReservedObjectMixin):
 
 class RolesMixin:
     @extend_schema(
+        summary="List roles",
         description="List roles assigned to this object.",
         responses={
             200: inline_serializer(
@@ -547,6 +548,7 @@ class RolesMixin:
         return Response(result)
 
     @extend_schema(
+        summary="Add a role",
         description="Add a role for this object to users/groups.",
         responses={201: NestedRoleSerializer},
     )
@@ -583,6 +585,7 @@ class RolesMixin:
         return Response(serializer.data, status=201)
 
     @extend_schema(
+        summary="Remove a role",
         description="Remove a role for this object from users/groups.",
         responses={201: NestedRoleSerializer},
     )
@@ -599,6 +602,7 @@ class RolesMixin:
         return Response(serializer.data, status=201)
 
     @extend_schema(
+        summary="List user permissions",
         description="List permissions available to the current user on this object.",
         responses={
             200: inline_serializer(
