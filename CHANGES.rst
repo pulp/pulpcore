@@ -13,6 +13,24 @@ Changelog
 
 .. towncrier release notes start
 
+3.28.11 (2023-08-15)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Taught downloader to correctly handle plugin-specified headers for object-storage backends.
+  :github:`4028`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.28.10 (2023-08-08)
 ====================
 REST API
