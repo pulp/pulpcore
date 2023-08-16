@@ -7,7 +7,6 @@ import importlib
 import traceback
 import sys
 
-from django.conf import settings
 from django.db import transaction, connection
 from django.db.models import Model, Q
 from django.utils import timezone
@@ -153,10 +152,11 @@ def dispatch(
         shared_resources = []
     else:
         shared_resources = _validate_and_get_resources(shared_resources)
-    if settings.DOMAIN_ENABLED:
-        domain_url = get_url(get_domain())
-        if domain_url not in exclusive_resources:
-            shared_resources.append(domain_url)
+
+    # A task that is exclusive on a domain will block all tasks within that domain
+    domain_url = get_url(get_domain())
+    if domain_url not in exclusive_resources:
+        shared_resources.append(domain_url)
     resources = exclusive_resources + [f"shared:{resource}" for resource in shared_resources]
 
     notify_workers = False
