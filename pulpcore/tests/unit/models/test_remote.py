@@ -53,6 +53,9 @@ def test_encrypted_proxy_password(fake_fernet):
 
 @pytest.mark.django_db
 def test_rotate_db_key(fake_fernet):
+    # nullify default domain settings so that this test can pass
+    Domain.objects.filter(name="default").update(storage_settings={})
+
     remote = Remote.objects.create(name=uuid4(), proxy_password="test")
     domain = Domain.objects.create(name=uuid4(), storage_settings={"base_path": "/foo"})
 

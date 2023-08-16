@@ -315,18 +315,23 @@ def _ensure_default_domain(sender, **kwargs):
     table_names = connection.introspection.table_names()
     if "core_domain" in table_names:
         from pulpcore.app.util import get_default_domain
+        from pulpcore.app.serializers.domain import StorageSettingsSerializer
 
         default = get_default_domain()  # Cache the default domain
+        config_settings = StorageSettingsSerializer.get_default_domain_settings(settings)
         # Match the Pulp settings
         if (
             settings.HIDE_GUARDED_DISTRIBUTIONS != default.hide_guarded_distributions
             or settings.REDIRECT_TO_OBJECT_STORAGE != default.redirect_to_object_storage
             or settings.DEFAULT_FILE_STORAGE != default.storage_class
+            or default.storage_settings != config_settings
         ):
             default.hide_guarded_distributions = settings.HIDE_GUARDED_DISTRIBUTIONS
             default.redirect_to_object_storage = settings.REDIRECT_TO_OBJECT_STORAGE
             default.storage_class = settings.DEFAULT_FILE_STORAGE
+            default.storage_settings = config_settings
             default.save(skip_hooks=True)
+            print(_("Updated default domain to match current Pulp settings"))
 
 
 def _populate_roles(sender, apps, verbosity, **kwargs):

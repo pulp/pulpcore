@@ -528,6 +528,33 @@ if not (len(sys.argv) >= 2 and sys.argv[1] in _SKIPPED_COMMANDS_FOR_CONTENT_CHEC
         pass
     finally:
         connection.close()
+    # Check if the configuration of the default domain is mismatched with settings
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "SELECT storage_class, redirect_to_object_storage, hide_guarded_distributions, "
+                "pulp_id FROM core_domain WHERE name = 'default'"
+            )
+            row = cursor.fetchone()
+            mismatched = []
+            for i, setting in enumerate(
+                ("DEFAULT_FILE_STORAGE", "REDIRECT_TO_OBJECT_STORAGE", "HIDE_GUARDED_DISTRIBUTIONS")
+            ):
+                if row[i] != getattr(settings, setting, None):
+                    mismatched.append(setting)
+
+            if mismatched:
+                _logger.warning(
+                    f"The default domain's fields ({mismatched}) mismatch what is set in settings. "
+                    f"Please check/update the settings file and then run 'pulpcore-manager migrate'"
+                    f" or the migrate task at {settings.API_ROOT}/api/v3/domains/{row[3]}/migrate/"
+                    f" if you wish to move your artifacts to a new backend."
+                )
+    except Exception:
+        # our check could fail if the table hasn't been created yet or we can't get a db connection
+        pass
+    finally:
+        connection.close()
 
 settings.set("V3_API_ROOT", settings.API_ROOT + "api/v3/")  # Not user configurable
 settings.set("V3_DOMAIN_API_ROOT", settings.API_ROOT + "<slug:pulp_domain>/api/v3/")
