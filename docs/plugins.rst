@@ -14,6 +14,7 @@ Each plugin has its own documentation that contains setup, workflow, and concept
 * `Pulp Ansible plugin <https://docs.pulpproject.org/pulp_ansible/>`_.
 * `Pulp Debian plugin <https://docs.pulpproject.org/pulp_deb/>`_.
 * `Pulp Python plugin <https://docs.pulpproject.org/pulp_python/>`_.
+* `Pulp Gem plugin <https://docs.pulpproject.org/pulp_gem/>`_.
 * `Pulp Chef Cookbook plugin <https://github.com/pulp/pulp_cookbook/blob/master/README.rst/>`_.
 * `Pulp Maven plugin <https://docs.pulpproject.org/pulp_maven/>`_.
 * `Ansible GalaxyNG plugin <https://github.com/ansible/galaxy_ng/blob/master/README.md/>`_.
