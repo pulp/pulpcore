@@ -322,11 +322,14 @@ def _ensure_default_domain(sender, **kwargs):
             settings.HIDE_GUARDED_DISTRIBUTIONS != default.hide_guarded_distributions
             or settings.REDIRECT_TO_OBJECT_STORAGE != default.redirect_to_object_storage
             or settings.DEFAULT_FILE_STORAGE != default.storage_class
+            or default.storage_settings
         ):
             default.hide_guarded_distributions = settings.HIDE_GUARDED_DISTRIBUTIONS
             default.redirect_to_object_storage = settings.REDIRECT_TO_OBJECT_STORAGE
             default.storage_class = settings.DEFAULT_FILE_STORAGE
+            default.storage_settings = {}
             default.save(skip_hooks=True)
+            print(_("Updated default domain to match current Pulp settings"))
 
 
 def _populate_roles(sender, apps, verbosity, **kwargs):

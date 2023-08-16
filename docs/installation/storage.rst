@@ -10,6 +10,10 @@ Storage
   to use another storage backend such as Amazon Simple Storage Service (S3), you'll need to
   configure Pulp.
 
+.. note::
+
+   After changing any value related to storage settings you must run ``pulpcore-manager migrate``
+   for the new configuration to be properly registered.
 
 Local Filesystem
 ^^^^^^^^^^^^^^^^

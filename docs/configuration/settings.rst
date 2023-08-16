@@ -110,6 +110,10 @@ REDIRECT_TO_OBJECT_STORAGE
 
    Defaults to ``True``; ignored for local file storage.
 
+.. note::
+
+   After changing this value, ``pulpcore-manager migrate`` must be ran for it be properly updated.
+
 
 MEDIA_ROOT
 ^^^^^^^^^^
@@ -256,6 +260,10 @@ HIDE_GUARDED_DISTRIBUTIONS
 
    If activated, the distributions that are protected by a content guard will not be shown on the
    directory listing in the content app. Defaults to ``False``.
+
+.. note::
+
+   After changing this value, ``pulpcore-manager migrate`` must be ran for it be properly updated.
 
 .. _content-path-prefix:
 
