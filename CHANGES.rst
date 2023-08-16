@@ -13,6 +13,32 @@ Changelog
 
 .. towncrier release notes start
 
+3.31.0 (2023-08-15)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Optimized content app to not slow down as the size of a repository grows.
+  :github:`3802`
+- Fixed FileDownloader in the presence of on_demand remotes.
+  :github:`4019`
+- Taught downloader to correctly handle plugin-specified headers for object-storage backends.
+  :github:`4028`
+
+
+Plugin API
+----------
+
+Features
+~~~~~~~~
+
+- Added memoized ``system_id`` function to the plugin api.
+  :github:`4276`
+
+
 3.30.0 (2023-08-08)
 ===================
 REST API
@@ -309,6 +335,24 @@ Misc
 ~~~~
 
 - :github:`3798`
+
+
+3.28.11 (2023-08-15)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Taught downloader to correctly handle plugin-specified headers for object-storage backends.
+  :github:`4028`
+
+
+Plugin API
+----------
+
+No significant changes.
 
 
 3.28.10 (2023-08-08)
