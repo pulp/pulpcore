@@ -115,9 +115,18 @@ default but can be disabled by setting ``ANALYTICS=False`` in your settings.
 
 Here is the list of exactly what is collected along with an example below:
 
-* The version of Pulp components installed
+* The version of Pulp components installed as well as the used PostgreSQL server
 * The number of worker processes and number of hosts (not hostnames) those workers run on
 * The number of content app processes and number of hosts (not hostnames) those content apps run on
+* The number of certain RBAC related entities in the system (users, groups, domains, custom roles,
+  custom access policies)
+
+.. note::
+
+   We may add more analytics data points collected in the future. To keep our high standards for
+   privacy protection, we have a rigorous approval process in place. You can see open proposals on
+   `<https://github.com/pulp/analytics.pulpproject.org/issues>`_. In doubt,
+   `reach out to us <https://pulpproject.org/get_involved/>`_.
 
 An example payload:
 
@@ -125,21 +134,21 @@ An example payload:
 
     {
         "systemId": "a6d91458-32e8-4528-b608-b2222ede994e",
-    	"onlineContentApps": {
+        "onlineContentApps": {
             "processes": 2,
             "hosts": 1
-    	},
-    	"onlineWorkers": {
+        },
+        "onlineWorkers": {
             "processes": 2,
             "hosts": 1
-	    },
-    	"components": [{
+        },
+        "components": [{
             "name": "core",
             "version": "3.21.0"
-	    }, {
+        }, {
             "name": "file",
             "version": "1.12.0"
-    	}],
+        }],
         "postgresqlVersion": 90200
     }
 
@@ -150,32 +159,32 @@ Telemetry Support
 -----------------
 
 Pulp can produce OpenTelemetry data, like the number of requests, active connections and latency response for
-`pulp-api` using OpenTelemetry. You can read more about 
+`pulp-api` using OpenTelemetry. You can read more about
 `OpenTelemetry here <https://opentelemetry.io>`_.
 
-If you are using `Pulp in One Container <https://pulpproject.org/pulp-in-one-container/>`_ or `Pulp Operator 
-<https://docs.pulpproject.org/pulp_operator/>`_ and want to enable it, you will need to set the following 
+If you are using `Pulp in One Container <https://pulpproject.org/pulp-in-one-container/>`_ or `Pulp Operator
+<https://docs.pulpproject.org/pulp_operator/>`_ and want to enable it, you will need to set the following
 environment variables:
 
 * ``PULP_OTEL_ENABLED`` set to ``True``.
-* ``OTEL_EXPORTER_OTLP_ENDPOINT`` set to the address of your OpenTelemetry Collector instance 
+* ``OTEL_EXPORTER_OTLP_ENDPOINT`` set to the address of your OpenTelemetry Collector instance
   ex. ``http://otel-collector:4318``.
 * ``OTEL_EXPORTER_OTLP_PROTOCOL`` set to ``http/protobuf``.
 
-If you are using other type of installation maybe you will need to manually initialize Pulp using the 
-`OpenTelemetry automatic instrumentation 
+If you are using other type of installation maybe you will need to manually initialize Pulp using the
+`OpenTelemetry automatic instrumentation
 <https://opentelemetry.io/docs/instrumentation/python/getting-started/#instrumentation>`_
 and set the following environment variables:
 
-* ``OTEL_EXPORTER_OTLP_ENDPOINT`` set to the address of your OpenTelemetry Collector instance 
+* ``OTEL_EXPORTER_OTLP_ENDPOINT`` set to the address of your OpenTelemetry Collector instance
   ex. ``http://otel-collector:4318``.
 * ``OTEL_EXPORTER_OTLP_PROTOCOL`` set to ``http/protobuf``.
 
 .. note::
   A quick example on how it would run using this method::
 
-    $ /usr/local/bin/opentelemetry-instrument --service_name pulp-api /usr/local/bin/gunicorn 
+    $ /usr/local/bin/opentelemetry-instrument --service_name pulp-api /usr/local/bin/gunicorn
     pulpcore.app.wsgi:application --bind "127.0.0.1:24817" --name pulp-api --workers 4 --access-logfile -
 
-You will need to run an instance of OpenTelemetry Collector. You can read more about the `OpenTelemetry 
+You will need to run an instance of OpenTelemetry Collector. You can read more about the `OpenTelemetry
 Collector here <https://opentelemetry.io/docs/collector/>`_.
