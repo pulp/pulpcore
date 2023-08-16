@@ -12,6 +12,8 @@ from .export import fs_publication_export, fs_repo_version_export
 
 from .importer import pulp_import
 
+from .migrate import migrate_backend
+
 from .orphan import orphan_cleanup
 
 from .purge import purge
