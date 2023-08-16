@@ -1,4 +1,5 @@
 from gettext import gettext as _
+import json
 
 from django.conf import settings
 from django.core.files.storage import import_string
@@ -9,7 +10,7 @@ from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 
-from pulpcore.app import models
+from pulpcore.app.models import Domain
 from pulpcore.app.serializers import IdentityField, ModelSerializer, HiddenFieldsMixin
 
 
@@ -104,12 +105,12 @@ class SFTPSettingsSerializer(BaseSettingsClass):
     SETTING_MAPPING = {
         "sftp_storage_host": "host",
         "sftp_storage_params": "params",
-        # 'sftp_storage_interactive': 'interactive',  # Can not allow users to set to True
+        "sftp_storage_interactive": "interactive",
         "sftp_storage_file_mode": "file_mode",
         "sftp_storage_dir_mode": "dir_mode",
         "sftp_storage_uid": "uid",
         "sftp_storage_gid": "gid",
-        # 'sftp_known_host_file': 'known_host_file',  # This is dangerous to allow to be set
+        "sftp_known_host_file": "known_host_file",
         "sftp_storage_root": "root_path",
         "media_url": "base_url",
         "sftp_base_url": "base_url",
@@ -123,6 +124,8 @@ class SFTPSettingsSerializer(BaseSettingsClass):
     uid = serializers.CharField(allow_null=True, default=None)
     gid = serializers.CharField(allow_null=True, default=None)
     base_url = serializers.CharField(allow_null=True, default=None)
+    interactive = serializers.HiddenField(default=False)
+    known_host_file = serializers.HiddenField(default=None)
 
 
 class TransferConfigSerializer(serializers.Serializer):
@@ -187,7 +190,6 @@ class AmazonS3SettingsSerializer(BaseSettingsClass):
     access_key = serializers.CharField(required=True, write_only=True)
     secret_key = serializers.CharField(allow_null=True, default=None, write_only=True)
     security_token = serializers.CharField(allow_null=True, default=None, write_only=True)
-    # Too dangerous to use shared cred file, ensure is always False
     session_profile = serializers.HiddenField(default=False)
     file_overwrite = serializers.BooleanField(default=True)
     object_parameters = serializers.DictField(default={})
@@ -320,7 +322,7 @@ class GoogleSettingsSerializer(BaseSettingsClass):
         child=serializers.CharField(), default=DEFAULT_CONTENT_TYPES
     )
     file_overwrite = serializers.BooleanField(default=True)  # This should always be True
-    object_parameters = serializers.DictField(default=dict())
+    object_parameters = serializers.DictField(default={})
     max_memory_size = serializers.IntegerField(default=0)
     blob_chunk_size = serializers.IntegerField(allow_null=True, default=None)
 
@@ -349,9 +351,22 @@ class StorageSettingsSerializer(serializers.Serializer):
         """Appropriately convert the incoming data based on the Domain's storage class."""
         # Handle Creating & Updating
         storage_settings = self.root.initial_data.get("storage_settings", {})
+        if not isinstance(storage_settings, dict):
+            if isinstance(storage_settings, str):
+                try:
+                    storage_settings = json.loads(storage_settings)
+                except json.JSONDecodeError:
+                    raise serializers.ValidationError("Improper JSON string passed in")
+            else:
+                raise serializers.ValidationError("Storage settings should be a JSON object.")
+
         if self.root.instance:
-            storage_class = self.root.instance.storage_class
-            storage_settings = {**self.root.instance.storage_settings, **storage_settings}
+            # Use passed in values, if not present fallback onto current values of instance
+            storage_class = self.root.initial_data.get(
+                "storage_class", self.root.instance.storage_class
+            )
+            if storage_class == self.root.instance.storage_class:
+                storage_settings = {**self.root.instance.storage_settings, **storage_settings}
         else:
             storage_class = self.root.initial_data["storage_class"]
 
@@ -365,21 +380,52 @@ class StorageSettingsSerializer(serializers.Serializer):
 
     def create_storage(self):
         """Instantiate a storage class based on the Domain's storage class."""
-        instance = self.root.instance
-        serializer_class = self.STORAGE_MAPPING[instance.storage_class]
-        serializer = serializer_class(data=instance.storage_settings)
+        if self.root.instance:
+            storage_class = self.root.instance.storage_class
+            storage_settings = self.root.instance.storage_settings
+        else:
+            storage_class = self.root.initial_data["storage_class"]
+            storage_settings = self.root.initial_data["storage_settings"]
+        serializer_class = self.STORAGE_MAPPING[storage_class]
+        serializer = serializer_class(data=storage_settings)
         serializer.is_valid(raise_exception=True)
         return serializer.create(serializer.validated_data)
 
 
-class DomainSerializer(ModelSerializer):
+class BackendSettingsValidator:
+    """Mixin to handle validating `storage_class` and `storage_settings`."""
+
+    @staticmethod
+    def _validate_storage_backend(storage_class, storage_settings):
+        """Ensure that the backend can be used."""
+        try:
+            backend = import_string(storage_class)
+        except (ImportError, ImproperlyConfigured):
+            raise serializers.ValidationError(
+                detail={"storage_class": _("Backend is not installed on Pulp.")}
+            )
+
+        try:
+            backend(**storage_settings)
+        except ImproperlyConfigured as e:
+            raise serializers.ValidationError(
+                detail={
+                    "storage_settings": _("Backend settings contain incorrect values: {}".format(e))
+                }
+            )
+
+    def create_storage(self):
+        return self.fields["storage_settings"].create_storage()
+
+
+class DomainSerializer(BackendSettingsValidator, ModelSerializer):
     """Serializer for Domain."""
 
     pulp_href = IdentityField(view_name="domains-detail")
     name = serializers.SlugField(
         max_length=50,
         help_text=_("A name for this domain."),
-        validators=[UniqueValidator(queryset=models.Domain.objects.all())],
+        validators=[UniqueValidator(queryset=Domain.objects.all())],
     )
     description = serializers.CharField(
         help_text=_("An optional description."), required=False, allow_null=True
@@ -406,24 +452,6 @@ class DomainSerializer(ModelSerializer):
             raise serializers.ValidationError(_("Name can not be 'api' or 'content'."))
         return value
 
-    def _validate_storage_backend(self, storage_class, storage_settings):
-        """Ensure that the backend can be used."""
-        try:
-            backend = import_string(storage_class)
-        except (ImportError, ImproperlyConfigured):
-            raise serializers.ValidationError(
-                detail={"storage_class": _("Backend is not installed on Pulp.")}
-            )
-
-        try:
-            backend(**storage_settings)
-        except ImproperlyConfigured as e:
-            raise serializers.ValidationError(
-                detail={
-                    "storage_settings": _("Backend settings contain incorrect values: {}".format(e))
-                }
-            )
-
     def validate(self, data):
         """Ensure that Domain settings are valid."""
         # Validate for update gets called before ViewSet default check
@@ -448,11 +476,8 @@ class DomainSerializer(ModelSerializer):
             )
         return data
 
-    def create_storage(self):
-        return self.fields["storage_settings"].create_storage()
-
     class Meta:
-        model = models.Domain
+        model = Domain
         fields = ModelSerializer.Meta.fields + (
             "name",
             "description",
@@ -461,3 +486,22 @@ class DomainSerializer(ModelSerializer):
             "redirect_to_object_storage",
             "hide_guarded_distributions",
         )
+
+
+class DomainBackendMigratorSerializer(BackendSettingsValidator, serializers.Serializer):
+    """Special serializer for performing a storage backend migration on a Domain."""
+
+    storage_class = serializers.ChoiceField(
+        help_text=_("The new backend storage class to migrate to."),
+        choices=BACKEND_CHOICES,
+    )
+    storage_settings = StorageSettingsSerializer(
+        source="*", help_text=_("The settings for the new storage class to migrate to.")
+    )
+
+    def validate(self, data):
+        """Validate new backend settings."""
+        storage_class = data["storage_class"]
+        storage_settings = data["storage_settings"]
+        self._validate_storage_backend(storage_class, storage_settings)
+        return data

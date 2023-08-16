@@ -2,13 +2,21 @@ from gettext import gettext as _
 
 from drf_spectacular.utils import extend_schema
 from rest_framework import mixins
+from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
 
 from pulpcore.filters import BaseFilterSet
 from pulpcore.app.models import Domain
-from pulpcore.app.serializers import DomainSerializer, AsyncOperationResponseSerializer
+from pulpcore.app.response import OperationPostponedResponse
+from pulpcore.app.serializers import (
+    DomainSerializer,
+    DomainBackendMigratorSerializer,
+    AsyncOperationResponseSerializer,
+)
+from pulpcore.app.tasks import migrate_backend
 from pulpcore.app.viewsets import NamedModelViewSet, AsyncRemoveMixin, AsyncUpdateMixin
 from pulpcore.app.viewsets.base import NAME_FILTER_OPTIONS
+from pulpcore.tasking.tasks import dispatch
 
 
 class DomainFilter(BaseFilterSet):
@@ -57,7 +65,7 @@ class DomainViewSet(
                 "condition": "has_model_or_obj_perms:core.view_domain",
             },
             {
-                "action": ["update", "partial_update"],
+                "action": ["update", "partial_update", "migrate"],
                 "principal": "authenticated",
                 "effect": "allow",
                 "condition": "has_model_or_obj_perms:core.change_domain",
@@ -118,3 +126,39 @@ class DomainViewSet(
             raise ValidationError(_("Default domain can not be deleted."))
 
         return super().destroy(request, pk, **kwargs)
+
+    @extend_schema(
+        summary="Migrate storage backend",
+        request=DomainBackendMigratorSerializer,
+        responses={202: AsyncOperationResponseSerializer},
+    )
+    @action(detail=False, methods=["post"])
+    def migrate(self, request, **kwargs):
+        """
+        Migrate the domain's storage backend to a new one.
+
+        Launches a background task to copy the domain's artifacts over to the supplied storage
+        backend. Then updates the domain's storage settings to the new storage backend. This task
+        does not delete the stored files of the artifacts from the previous backend.
+
+        **IMPORTANT** This task will block all other tasks within the domain until the migration is
+        completed, essentially putting the domain into a read only state. Content will still be
+        served from the old storage backend until the migration has completed, so don't remove
+        the old backend until then. Note, this endpoint is not allowed on the default domain.
+
+        This feature is in Tech Preview and is subject to future change and thus not guaranteed to
+        be backwards compatible.
+        """
+        instance = request.pulp_domain
+        data = request.data
+        if instance.name == "default":
+            raise ValidationError(_("Default domain can not be migrated."))
+        serializer = DomainBackendMigratorSerializer(data=data)
+        serializer.is_valid(raise_exception=True)
+
+        task = dispatch(
+            migrate_backend,
+            args=(data,),
+            exclusive_resources=[instance],
+        )
+        return OperationPostponedResponse(task, request)
