@@ -86,9 +86,9 @@ def reclaim_space(repo_pks, keeplist_rv_pks=None, force=False):
             # we need to manually call delete() because it cleans up the file on the filesystem
             artifact.delete()
         except ProtectedError as e:
-            # Rarely artifact could be shared between to different content units.
+            # Rarely artifact could be shared between two different content units.
             # Just log and skip the artifact deletion in this case
-            log.info(e)
+            log.debug(e)
         else:
             progress_bar.done += 1
             counter += 1
