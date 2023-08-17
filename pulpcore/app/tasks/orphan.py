@@ -1,6 +1,9 @@
 import gc
 
+from logging import getLogger
+
 from django.conf import settings
+from django.db.models.deletion import ProtectedError
 from django.utils import timezone
 
 from pulpcore.app.models import (
@@ -11,6 +14,8 @@ from pulpcore.app.models import (
     PulpTemporaryFile,
     Upload,
 )
+
+log = getLogger(__name__)
 
 
 def queryset_iterator(qs, batchsize=2000, gc_collect=True):
@@ -44,35 +49,67 @@ def orphan_cleanup(content_pks=None, orphan_protection_time=settings.ORPHAN_PROT
         content_pks (list): A list of content pks. If specified, only remove these orphans.
 
     """
+    content = Content.objects.orphaned(orphan_protection_time, content_pks).exclude(
+        pulp_type=PublishedMetadata.get_pulp_type()
+    )
+    skipped_content = 0
     with ProgressReport(
         message="Clean up orphan Content",
-        total=None,
+        total=content.count(),
         code="clean-up.content",
     ) as progress_bar:
-        while True:
-            content = Content.objects.orphaned(orphan_protection_time, content_pks).exclude(
-                pulp_type=PublishedMetadata.get_pulp_type()
-            )
-            content_count = content.count()
-            if not content_count:
-                break
+        # delete the content
+        for bulk_content in queryset_iterator(content):
+            skipped_content_batch = 0
+            count = bulk_content.count()
+            try:
+                bulk_content.delete()
+            except ProtectedError:
+                # some orphan content might have been picked by another task running in parallel
+                # i.e. sync
+                for c in bulk_content:
+                    try:
+                        c.delete()
+                    except ProtectedError as e:
+                        log.debug(e)
+                        skipped_content_batch += 1
+            progress_bar.increase_by(count - skipped_content_batch)
+            skipped_content += skipped_content_batch
 
-            # delete the content
-            for c in queryset_iterator(content):
-                progress_bar.increase_by(c.count())
-                c.delete()
+    if skipped_content:
+        msg = (
+            "{} orphaned content could not be deleted during this run and was skipped. "
+            "Re-run the task and/or consult the logs."
+        )
+        log.info(msg.format(skipped_content))
 
     # delete the artifacts that don't belong to any content
     artifacts = Artifact.objects.orphaned(orphan_protection_time)
 
+    skipped_artifact = 0
     with ProgressReport(
         message="Clean up orphan Artifacts",
         total=artifacts.count(),
         code="clean-up.artifacts",
     ) as progress_bar:
-        for artifact in progress_bar.iter(artifacts.iterator()):
-            # we need to manually call delete() because it cleans up the file on the filesystem
-            artifact.delete()
+        for artifact in artifacts.iterator():
+            try:
+                # we need to manually call delete() because it cleans up the file on the filesystem
+                artifact.delete()
+            except ProtectedError as e:
+                # some orphaned artifact might have been picked by another task running in parallel
+                # i.e. sync
+                log.debug(e)
+                skipped_artifact += 1
+            else:
+                progress_bar.increment()
+
+    if skipped_artifact:
+        msg = (
+            "{} orphaned artifact(s) could not be deleted during this run and were skipped. "
+            "Re-run the task and/or consult the logs."
+        )
+        log.info(msg.format(skipped_artifact))
 
 
 def upload_cleanup():

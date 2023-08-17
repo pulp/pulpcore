@@ -143,7 +143,7 @@ def purge(finished_before, states):
                     # Log the details of the object.
                     error_pb.done += 1
                     pks_failed.append(pk)
-                    log.info(e)
+                    log.debug(e)
 
     # Complete the progress-reports for the specific entities deleted
     for key, pb in details_reports.items():
