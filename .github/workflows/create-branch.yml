@@ -36,7 +36,7 @@ jobs:
       - name: Install python dependencies
         run: |
           echo ::group::PYDEPS
-          pip install bump2version
+          pip install bump2version jinja2 pyyaml
           echo ::endgroup::
 
       - name: Setting secrets
@@ -47,16 +47,16 @@ jobs:
       - name: Verify that branch name matches current version string on main branch
         run: |
           X_Y_VERSION=$(grep version setup.py | sed -rn 's/version="(.*)\.0((a[0-9]+)|(b[0-9]+))?\.dev",/\1/p' | awk '{$1=$1};1')
-          if [[ "$X_Y_VERSION" != "${{ github.event.inputs.name }}" ]]
+          if [[ "$X_Y_VERSION" != "${{ inputs.name }}" ]]
           then
             echo "Branch name doesn't match the current version string $X_Y_VERSION."
             exit 1
           fi
 
-      - name: Create ${{ github.event.inputs.name }} release branch
+      - name: Create ${{ inputs.name }} release branch
         run: |
-          git checkout -b ${{ github.event.inputs.name }}
-          git push origin ${{ github.event.inputs.name }}
+          git checkout -b ${{ inputs.name }}
+          git push origin ${{ inputs.name }}
 
       - name: Bump version on main branch
         run: |
