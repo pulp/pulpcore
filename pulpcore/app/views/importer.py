@@ -40,11 +40,14 @@ def _validate_file(in_param, data):
         return rc, [msg]
 
     # check directory-sanity, leave if failed
+    # use os.stat to ensure directory exists and pulp has read-access
+    # return any errors received from os.stat to the user
+
     owning_dir = os.path.dirname(real_file)
-    if not os.path.exists(owning_dir):
-        return False, [_("directory {} does not exist").format(owning_dir)]
-    if not os.access(owning_dir, os.R_OK):
-        return False, [_("directory {} does not allow read-access").format(owning_dir)]
+    try:
+        os.stat(owning_dir)
+    except OSError as e:
+        return False, [_("{}").format(e)]
 
     # check file-exists, leave if failed
     if not os.path.exists(real_file):
