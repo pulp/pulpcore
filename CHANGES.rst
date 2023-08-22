@@ -13,6 +13,32 @@ Changelog
 
 .. towncrier release notes start
 
+3.28.12 (2023-08-22)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Improved the performance when looking up content for repository versions.
+  :github:`3969`
+- Taught pulp-import to be able to use a subset of available worker-threads.
+  :github:`4068`
+- Fixed bug where incorrect error message presented in relation to content-import
+  :github:`4294`
+
+
+Plugin API
+----------
+
+Features
+~~~~~~~~
+
+- Added memoized ``system_id`` function to the plugin api.
+  :github:`4276`
+
+
 3.28.11 (2023-08-15)
 ====================
 REST API
