@@ -13,6 +13,31 @@ Changelog
 
 .. towncrier release notes start
 
+3.32.0 (2023-08-22)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Improved the performance when looking up content for repository versions.
+  :github:`3969`
+- Fixed bug where incorrect error message presented in relation to content-import
+  :github:`4294`
+
+
+Plugin API
+----------
+
+Features
+~~~~~~~~
+
+- Made the current domain a shared resource for all tasks even with domains disabled, so tasks can
+  hold off all other operations by taking an exclusive lock on the (default) domain.
+  :github:`4285`
+
+
 3.31.0 (2023-08-15)
 ===================
 REST API
