@@ -13,6 +13,31 @@ Changelog
 
 .. towncrier release notes start
 
+3.32.0 (2023-08-22)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Improved the performance when looking up content for repository versions.
+  :github:`3969`
+- Fixed bug where incorrect error message presented in relation to content-import
+  :github:`4294`
+
+
+Plugin API
+----------
+
+Features
+~~~~~~~~
+
+- Made the current domain a shared resource for all tasks even with domains disabled, so tasks can
+  hold off all other operations by taking an exclusive lock on the (default) domain.
+  :github:`4285`
+
+
 3.31.0 (2023-08-15)
 ===================
 REST API
@@ -335,6 +360,32 @@ Misc
 ~~~~
 
 - :github:`3798`
+
+
+3.28.12 (2023-08-22)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Improved the performance when looking up content for repository versions.
+  :github:`3969`
+- Taught pulp-import to be able to use a subset of available worker-threads.
+  :github:`4068`
+- Fixed bug where incorrect error message presented in relation to content-import
+  :github:`4294`
+
+
+Plugin API
+----------
+
+Features
+~~~~~~~~
+
+- Added memoized ``system_id`` function to the plugin api.
+  :github:`4276`
 
 
 3.28.11 (2023-08-15)
@@ -1407,6 +1458,26 @@ Deprecations
   :github:`3604`
 
 
+3.22.13 (2023-08-23)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Improved the performance when looking up content for repository versions.
+  :github:`3969`
+- Fixed bug where incorrect error message presented in relation to content-import
+  :github:`4294`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.22.12 (2023-08-01)
 ====================
 REST API
@@ -1797,6 +1868,29 @@ Removals
 - Deprecated model ``Label`` and serializer field ``LabelField`` and ``LabelSelectFilter`` for
   removal in 3.25.
   :github:`3400`
+
+
+3.21.16 (2023-08-23)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Added repeating logic to signalling a task worker subprocess. This should fix a bug where the
+  task refuses to be terminated easily.
+  :github:`3407`
+- Improved the performance when looking up content for repository versions.
+  :github:`3969`
+- Fixed bug where incorrect error message presented in relation to content-import
+  :github:`4294`
+
+
+Plugin API
+----------
+
+No significant changes.
 
 
 3.21.15 (2023-08-01)
