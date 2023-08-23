@@ -17,6 +17,24 @@ Changelog
 
 .. towncrier release notes start
 
+3.18.26 (2023-08-23)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fixed bug where incorrect error message presented in relation to content-import
+  :github:`4294`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.18.25 (2023-08-01)
 ====================
 REST API
