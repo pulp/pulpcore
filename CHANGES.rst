@@ -17,6 +17,29 @@ Changelog
 
 .. towncrier release notes start
 
+3.21.16 (2023-08-23)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Added repeating logic to signalling a task worker subprocess. This should fix a bug where the
+  task refuses to be terminated easily.
+  :github:`3407`
+- Improved the performance when looking up content for repository versions.
+  :github:`3969`
+- Fixed bug where incorrect error message presented in relation to content-import
+  :github:`4294`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.21.15 (2023-08-01)
 ====================
 REST API
