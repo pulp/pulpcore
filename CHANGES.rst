@@ -1005,6 +1005,26 @@ Features
   :github:`3661`
 
 
+3.23.16 (2023-08-23)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Improved the performance when looking up content for repository versions.
+  :github:`3969`
+- Fixed bug where incorrect error message presented in relation to content-import
+  :github:`4294`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.23.15 (2023-08-08)
 ====================
 REST API
@@ -2739,6 +2759,24 @@ Bugfixes
   the stage will still accumulate up to 500 (by default) items so batching is still in-effect there
   where it matters.
   :github:`2069`
+
+
+3.18.26 (2023-08-23)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fixed bug where incorrect error message presented in relation to content-import
+  :github:`4294`
+
+
+Plugin API
+----------
+
+No significant changes.
 
 
 3.18.25 (2023-08-01)
