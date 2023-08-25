@@ -8,7 +8,7 @@ from rest_framework.decorators import action
 
 from pulpcore.app.models import TaskGroup, UpstreamPulp
 from pulpcore.app.serializers import TaskGroupOperationResponseSerializer, UpstreamPulpSerializer
-from pulpcore.app.viewsets import NamedModelViewSet
+from pulpcore.app.viewsets import NamedModelViewSet, RolesMixin
 from pulpcore.app.response import TaskGroupOperationResponse
 from pulpcore.app.tasks import replicate_distributions
 from pulpcore.tasking.tasks import dispatch
@@ -21,6 +21,7 @@ class UpstreamPulpViewSet(
     mixins.ListModelMixin,
     mixins.DestroyModelMixin,
     mixins.UpdateModelMixin,
+    RolesMixin,
 ):
     """API for configuring an upstream Pulp to replicate. This API is provided as a tech preview."""
 
@@ -28,6 +29,84 @@ class UpstreamPulpViewSet(
     endpoint_name = "upstream-pulps"
     serializer_class = UpstreamPulpSerializer
     ordering = "-pulp_created"
+    queryset_filtering_required_permission = "core.view_upstreampulp"
+
+    DEFAULT_ACCESS_POLICY = {
+        "statements": [
+            {
+                "action": ["list", "my_permissions"],
+                "principal": "authenticated",
+                "effect": "allow",
+            },
+            {
+                "action": ["create"],
+                "principal": "authenticated",
+                "effect": "allow",
+                "condition": [
+                    "has_model_or_domain_perms:core.add_upstreampulp",
+                ],
+            },
+            {
+                "action": ["retrieve"],
+                "principal": "authenticated",
+                "effect": "allow",
+                "condition": "has_model_or_domain_or_obj_perms:core.view_upstreampulp",
+            },
+            {
+                "action": ["destroy"],
+                "principal": "authenticated",
+                "effect": "allow",
+                "condition": [
+                    "has_model_or_domain_or_obj_perms:core.delete_upstreampulp",
+                ],
+            },
+            {
+                "action": ["update", "partial_update"],
+                "principal": "authenticated",
+                "effect": "allow",
+                "condition": [
+                    "has_model_or_domain_or_obj_perms:core.change_upstreampulp",
+                ],
+            },
+            {
+                "action": ["replicate"],
+                "principal": "authenticated",
+                "effect": "allow",
+                "condition": [
+                    "has_model_or_domain_or_obj_perms:core.replicate_upstreampulp",
+                ],
+            },
+            {
+                "action": ["list_roles", "add_role", "remove_role"],
+                "principal": "authenticated",
+                "effect": "allow",
+                "condition": ["has_model_or_domain_or_obj_perms:core.manage_roles_upstreampulp"],
+            },
+        ],
+        "creation_hooks": [
+            {
+                "function": "add_roles_for_object_creator",
+                "parameters": {"roles": "core.upstreampulp_owner"},
+            },
+        ],
+        "queryset_scoping": {"function": "scope_queryset"},
+    }
+
+    LOCKED_ROLES = {
+        "core.upstreampulp_creator": ["core.add_upstreampulp"],
+        "core.upstreampulp_owner": [
+            "core.view_upstreampulp",
+            "core.change_upstreampulp",
+            "core.delete_upstreampulp",
+            "core.replicate_upstreampulp",
+            "core.manage_roles_upstreampulp",
+        ],
+        "core.upstreampulp_viewer": ["core.view_upstreampulp"],
+        "core.upstreampulp_user": [
+            "core.view_upstreampulp",
+            "core.replicate_upstreampulp",
+        ],
+    }
 
     @extend_schema(
         summary="Replicate",
