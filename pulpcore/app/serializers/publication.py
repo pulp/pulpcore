@@ -240,13 +240,13 @@ class DistributionSerializer(ModelSerializer):
         super().validate(data)
 
         repository_provided = data.get(
-            "repository", (self.instance and self.instance.repository) or None
+            "repository", (self.partial and self.instance.repository) or None
         )
         repository_version_provided = data.get(
-            "repository_version", (self.instance and self.instance.repository_version) or None
+            "repository_version", (self.partial and self.instance.repository_version) or None
         )
         publication_provided = data.get(
-            "publication", (self.instance and self.instance.publication) or None
+            "publication", (self.partial and self.instance.publication) or None
         )
 
         if publication_provided and repository_version_provided:
