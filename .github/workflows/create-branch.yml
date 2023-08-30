@@ -67,6 +67,19 @@ jobs:
         run: |
           find CHANGES -type f -regex ".*\.\(bugfix\|doc\|feature\|misc\|deprecation\|removal\)" -exec git rm {} +
 
+      - name: Checkout plugin template
+        uses: actions/checkout@v3
+        with:
+          repository: pulp/plugin_template
+          path: plugin_template
+          fetch-depth: 0
+
+      - name: Update CI branches in template_config
+        working-directory: plugin_template
+        run: |
+          python3 ./plugin-template pulpcore --github --add-version-ci-update-branches ${{ inputs.name }}
+          git add -A
+
       - name: Make a PR with version bump and without CHANGES/*
         uses: peter-evans/create-pull-request@v4
         with:

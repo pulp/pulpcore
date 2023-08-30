@@ -236,7 +236,7 @@ jobs:
       - uses: actions/checkout@v3
         with:
           path: pulpcore
-          ref: '3.30'
+          ref: '3.32'
           fetch-depth: 0
 
       - name: Run update
@@ -251,10 +251,10 @@ jobs:
           path: pulpcore
           committer: pulpbot <pulp-infra@redhat.com>
           author: pulpbot <pulp-infra@redhat.com>
-          title: 'Update CI files for branch 3.30'
+          title: 'Update CI files for branch 3.32'
           body: '[noissue]'
-          branch: 'update-ci/3.30'
-          base: '3.30'
+          branch: 'update-ci/3.32'
+          base: '3.32'
           commit-message: |
             Update CI files
 
