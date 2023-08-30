@@ -393,22 +393,26 @@ class NewPulpWorker:
             self.notify_workers()
         self.task = None
 
-    def run_forever(self):
+    def run(self, burst=False):
         with WorkerDirectory(self.name):
             signal.signal(signal.SIGINT, self._signal_handler)
             signal.signal(signal.SIGTERM, self._signal_handler)
             signal.signal(signal.SIGHUP, self._signal_handler)
             # Subscribe to pgsql channels
             connection.connection.add_notify_handler(self._pg_notify_handler)
-            self.cursor.execute("LISTEN pulp_worker_wakeup")
             self.cursor.execute("LISTEN pulp_worker_cancel")
-            while not self.shutdown_requested:
+            if burst:
                 for task in self.iter_tasks():
                     self.supervise_task(task)
-                if not self.shutdown_requested:
-                    self.sleep()
+            else:
+                self.cursor.execute("LISTEN pulp_worker_wakeup")
+                while not self.shutdown_requested:
+                    for task in self.iter_tasks():
+                        self.supervise_task(task)
+                    if not self.shutdown_requested:
+                        self.sleep()
+                self.cursor.execute("UNLISTEN pulp_worker_wakeup")
             self.cursor.execute("UNLISTEN pulp_worker_cancel")
-            self.cursor.execute("UNLISTEN pulp_worker_wakeup")
             self.shutdown()
 
 
