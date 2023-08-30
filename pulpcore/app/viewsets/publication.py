@@ -27,6 +27,7 @@ from pulpcore.app.viewsets import (
     AsyncCreateMixin,
     AsyncRemoveMixin,
     AsyncUpdateMixin,
+    LabelsMixin,
     NamedModelViewSet,
     RolesMixin,
 )
@@ -434,6 +435,7 @@ class DistributionViewSet(
     AsyncCreateMixin,
     AsyncRemoveMixin,
     AsyncUpdateMixin,
+    LabelsMixin,
 ):
     """
     Provides read and list methods and also provides asynchronous CUD methods to dispatch tasks

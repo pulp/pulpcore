@@ -18,6 +18,7 @@ from pulpcore.app.viewsets import (
     ImmutableRepositoryViewSet,
     ImporterViewSet,
     ImportViewSet,
+    LabelsMixin,
     NamedModelViewSet,
     NAME_FILTER_OPTIONS,
     NULLABLE_NUMERIC_FILTER_OPTIONS,

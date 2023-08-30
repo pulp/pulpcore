@@ -32,7 +32,7 @@ Below is an example policy used by ``FileRemote``, with an explanation of its ef
             "condition": "has_model_or_domain_or_obj_perms:file.view_fileremote",
         },
         {
-            "action": ["update", "partial_update"],
+            "action": ["update", "partial_update", "set_label", "unset_label"],
             "principal": "authenticated",
             "effect": "allow",
             "condition": "has_model_or_domain_or_obj_perms:file.change_fileremote",
@@ -167,7 +167,7 @@ Here's an example of code to define a default policy:
                     "condition": "has_model_or_domain_or_obj_perms:file.view_fileremote",
                 },
                 {
-                    "action": ["update", "partial_update"],
+                    "action": ["update", "partial_update", "set_label", "unset_label"],
                     "principal": "authenticated",
                     "effect": "allow",
                     "condition": "has_model_or_domain_or_obj_perms:file.change_fileremote",

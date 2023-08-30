@@ -30,6 +30,7 @@ from pulpcore.app.serializers import (
 from pulpcore.app.viewsets import (
     AsyncRemoveMixin,
     AsyncUpdateMixin,
+    LabelsMixin,
     NamedModelViewSet,
 )
 from pulpcore.app.viewsets.base import (
@@ -168,7 +169,7 @@ class ImmutableRepositoryViewSet(
     """
 
 
-class RepositoryViewSet(ImmutableRepositoryViewSet, AsyncUpdateMixin):
+class RepositoryViewSet(ImmutableRepositoryViewSet, AsyncUpdateMixin, LabelsMixin):
     """
     A ViewSet for an ordinary repository.
     """
@@ -369,6 +370,7 @@ class RemoteViewSet(
     mixins.ListModelMixin,
     AsyncUpdateMixin,
     AsyncRemoveMixin,
+    LabelsMixin,
 ):
     endpoint_name = "remotes"
     serializer_class = RemoteSerializer

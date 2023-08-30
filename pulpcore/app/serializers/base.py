@@ -504,3 +504,33 @@ class TaskGroupOperationResponseSerializer(serializers.Serializer):
         view_name="task-groups-detail",
         allow_null=False,
     )
+
+
+class SetLabelSerializer(serializers.Serializer):
+    """
+    Serializer for synchronously setting a label.
+    """
+
+    key = serializers.SlugField(required=True)
+    value = serializers.CharField(required=True, allow_null=True, allow_blank=True)
+
+
+class UnsetLabelSerializer(serializers.Serializer):
+    """
+    Serializer for synchronously setting a label.
+    """
+
+    key = serializers.SlugField(required=True)
+    value = serializers.CharField(read_only=True)
+
+    def validate_key(self, value):
+        if value not in self.context["content_object"].pulp_labels:
+            raise serializers.ValidationError(
+                _("Label '{key}' is not set on the object.").format(key=value)
+            )
+        return value
+
+    def validate(self, data):
+        data = super().validate(data)
+        data["value"] = self.context["content_object"].pulp_labels[data["key"]]
+        return data
