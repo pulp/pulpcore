@@ -2,6 +2,7 @@ from .base import (
     AsyncCreateMixin,
     AsyncRemoveMixin,
     AsyncUpdateMixin,
+    LabelsMixin,
     NamedModelViewSet,
     RolesMixin,
     NAME_FILTER_OPTIONS,

@@ -4,6 +4,7 @@ from urllib.parse import urlparse
 
 from django.conf import settings
 from django.db import transaction
+from django.db.models.expressions import RawSQL
 from django.core.exceptions import FieldError, ValidationError
 from django.urls import Resolver404, resolve
 from django.contrib.contenttypes.models import ContentType
@@ -20,7 +21,12 @@ from pulpcore.app.models import MasterModel
 from pulpcore.app.models.role import GroupRole, UserRole
 from pulpcore.app.response import OperationPostponedResponse
 from pulpcore.app.role_util import get_objects_for_user
-from pulpcore.app.serializers import AsyncOperationResponseSerializer, NestedRoleSerializer
+from pulpcore.app.serializers import (
+    AsyncOperationResponseSerializer,
+    NestedRoleSerializer,
+    SetLabelSerializer,
+    UnsetLabelSerializer,
+)
 from pulpcore.app.util import get_viewset_for_model
 from pulpcore.tasking.tasks import dispatch
 
@@ -626,3 +632,40 @@ class RolesMixin:
             ".".join((app_label, codename)) for codename in request.user.get_all_permissions(obj)
         ]
         return Response({"permissions": permissions})
+
+
+class LabelsMixin:
+    @extend_schema(
+        summary="Set a label",
+        description="Set a single pulp_label on the object to a specific value or null.",
+    )
+    @action(detail=True, methods=["post"], serializer_class=SetLabelSerializer)
+    def set_label(self, request, pk=None):
+        obj = self.get_object()
+        serializer = SetLabelSerializer(
+            data=request.data, context={"request": request, "content_object": obj}
+        )
+        serializer.is_valid(raise_exception=True)
+        obj._meta.model.objects.filter(pk=obj.pk).update(
+            pulp_labels=RawSQL(
+                "pulp_labels || hstore(%s, %s)",
+                [serializer.validated_data["key"], serializer.validated_data["value"]],
+            )
+        )
+        return Response(serializer.data, status=201)
+
+    @extend_schema(
+        summary="Unset a label",
+        description="Unset a single pulp_label on the object.",
+    )
+    @action(detail=True, methods=["post"], serializer_class=UnsetLabelSerializer)
+    def unset_label(self, request, pk=None):
+        obj = self.get_object()
+        serializer = UnsetLabelSerializer(
+            data=request.data, context={"request": request, "content_object": obj}
+        )
+        serializer.is_valid(raise_exception=True)
+        obj._meta.model.objects.filter(pk=obj.pk).update(
+            pulp_labels=RawSQL("pulp_labels - %s::text", [serializer.validated_data["key"]])
+        )
+        return Response(serializer.data, status=201)
