@@ -769,3 +769,9 @@ older codebases could run on newer, upgraded workers. To ensure this always work
 forever backwards compatible until the next major Pulp version. For example, you cannot have a
 breaking signature change in tasking code and if this is needed you need to make a new task name and
 preserve the old code until the next major Pulp version.
+
+.. note::
+
+   Users not performing zero downtime upgrades who are still wary of any task incompatibilities,
+   should consider running the pulpcore worker in burst mode (`pulpcore-worker --burst`) after
+   shutting down all the api and content workers to drain the task queue.
