@@ -130,10 +130,7 @@ PyPI Installation
     $ fixfiles restore /var/run/pulpcore
     $ fixfiles restore /var/log/galaxy_api_access.log
 
-16. Run Pulp::
-
-    $ pulp-content  # The Pulp Content service (listening on port 24816)
-    $ pulpcore-manager runserver 24817  # The Pulp API service
+16. Run or restart all Pulp services.
 
 .. _database-install:
 
