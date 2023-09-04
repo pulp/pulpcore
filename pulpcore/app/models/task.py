@@ -19,6 +19,7 @@ from pulpcore.app.models import (
     GenericRelationModel,
 )
 from pulpcore.app.models.status import BaseAppStatus
+from pulpcore.app.models.fields import EncryptedJSONField
 from pulpcore.constants import TASK_CHOICES, TASK_INCOMPLETE_STATES, TASK_STATES
 from pulpcore.exceptions import AdvisoryLockError, exception_to_dict
 from pulpcore.app.util import get_domain_pk, current_task
@@ -82,8 +83,14 @@ class Task(BaseModel, AutoAddObjPermsMixin):
 
     error = models.JSONField(null=True)
 
+    # These fields should finally be removed in 3.40 by a migration that checks all components are
+    # running at least <version this landed> then copies their values to enc_(kw)args and adds
+    # pulpcore >= <version this landed> in the modified tasks version_requirements.
     args = models.JSONField(null=True, encoder=DjangoJSONEncoder)
     kwargs = models.JSONField(null=True, encoder=DjangoJSONEncoder)
+
+    enc_args = EncryptedJSONField(null=True, encoder=DjangoJSONEncoder)
+    enc_kwargs = EncryptedJSONField(null=True, encoder=DjangoJSONEncoder)
 
     worker = models.ForeignKey("Worker", null=True, related_name="tasks", on_delete=models.SET_NULL)
 
