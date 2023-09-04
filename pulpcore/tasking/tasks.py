@@ -59,8 +59,8 @@ def _execute_task(task):
         module_name, function_name = task.name.rsplit(".", 1)
         module = importlib.import_module(module_name)
         func = getattr(module, function_name)
-        args = task.args or ()
-        kwargs = task.kwargs or {}
+        args = task.enc_args or task.args or ()
+        kwargs = task.enc_kwargs or task.kwargs or {}
         result = func(*args, **kwargs)
         if asyncio.iscoroutine(result):
             _logger.debug(_("Task is coroutine %s"), task.pk)
@@ -167,8 +167,8 @@ def dispatch(
                 logging_cid=(get_guid()),
                 task_group=task_group,
                 name=function_name,
-                args=args,
-                kwargs=kwargs,
+                enc_args=args,
+                enc_kwargs=kwargs,
                 parent_task=Task.current(),
                 reserved_resources_record=resources,
                 versions=versions,
