@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 from gettext import gettext as _
@@ -94,14 +95,16 @@ class EncryptedTextField(TextField):
         with open(settings.DB_ENCRYPTION_KEY, "rb") as key_file:
             return Fernet(key_file.read())
 
-    def get_db_prep_save(self, value, connection):
-        value = super().get_db_prep_save(value, connection)
+    def get_prep_value(self, value):
         if value is not None:
-            return force_str(self._fernet.encrypt(force_bytes(value)))
+            assert isinstance(value, str)
+            value = force_str(self._fernet.encrypt(force_bytes(value)))
+        return super().get_prep_value(value)
 
     def from_db_value(self, value, expression, connection):
         if value is not None:
-            return force_str(self._fernet.decrypt(force_bytes(value)))
+            value = force_str(self._fernet.decrypt(force_bytes(value)))
+        return value
 
 
 class EncryptedJSONField(JSONField):
@@ -136,16 +139,23 @@ class EncryptedJSONField(JSONField):
         elif isinstance(value, (list, tuple, set)):
             return [self.decrypt(v) for v in value]
 
-        return eval(force_str(self._fernet.decrypt(force_bytes(value))))
+        dec_value = force_str(self._fernet.decrypt(force_bytes(value)))
+        try:
+            return json.loads(dec_value, cls=self.decoder)
+        except json.JSONDecodeError:
+            return eval(dec_value)
 
-    def get_db_prep_save(self, value, connection):
-        value = self.encrypt(value)
-        return super().get_db_prep_save(value, connection)
+    def get_prep_value(self, value):
+        if value is not None:
+            if hasattr(value, "as_sql"):
+                return value
+            value = self.encrypt(value)
+        return super().get_prep_value(value)
 
     def from_db_value(self, value, expression, connection):
         if value is not None:
-            value = super().from_db_value(value, expression, connection)
-            return self.decrypt(value)
+            value = self.decrypt(super().from_db_value(value, expression, connection))
+        return value
 
 
 @Field.register_lookup
