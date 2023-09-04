@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 from gettext import gettext as _
@@ -12,6 +13,7 @@ from django.utils.encoding import force_bytes, force_str
 
 
 from pulpcore.app.files import TemporaryDownloadedFile
+from pulpcore.app.loggers import deprecation_logger
 
 _logger = logging.getLogger(__name__)
 
@@ -96,14 +98,17 @@ class EncryptedTextField(TextField):
             raise ImproperlyConfigured("EncryptedTextField does not support db_index=True.")
         super().__init__(*args, **kwargs)
 
-    def get_db_prep_save(self, value, connection):
-        value = super().get_db_prep_save(value, connection)
+    def get_prep_value(self, value):
+        value = super().get_prep_value(value)
         if value is not None:
-            return force_str(_fernet().encrypt(force_bytes(value)))
+            assert isinstance(value, str)
+            value = force_str(_fernet().encrypt(force_bytes(value)))
+        return value
 
     def from_db_value(self, value, expression, connection):
         if value is not None:
-            return force_str(_fernet().decrypt(force_bytes(value)))
+            value = force_str(_fernet().decrypt(force_bytes(value)))
+        return value
 
 
 class EncryptedJSONField(JSONField):
@@ -124,7 +129,7 @@ class EncryptedJSONField(JSONField):
         elif isinstance(value, (list, tuple, set)):
             return [self.encrypt(v) for v in value]
 
-        return force_str(_fernet().encrypt(force_bytes(repr(value))))
+        return force_str(_fernet().encrypt(force_bytes(json.dumps(value, cls=self.encoder))))
 
     def decrypt(self, value):
         if isinstance(value, dict):
@@ -132,16 +137,29 @@ class EncryptedJSONField(JSONField):
         elif isinstance(value, (list, tuple, set)):
             return [self.decrypt(v) for v in value]
 
-        return eval(force_str(_fernet().decrypt(force_bytes(value))))
+        dec_value = force_str(_fernet().decrypt(force_bytes(value)))
+        try:
+            return json.loads(dec_value, cls=self.decoder)
+        except json.JSONDecodeError:
+            deprecation_logger.info(
+                "Failed to decode json in an EncryptedJSONField. Falling back to eval. "
+                "Please run pulpcore-manager rotate-db-key to repair."
+                "This is deprecated and will be removed in pulpcore 3.40."
+            )
+            return eval(dec_value)
 
-    def get_db_prep_save(self, value, connection):
-        value = self.encrypt(value)
-        return super().get_db_prep_save(value, connection)
+    def get_prep_value(self, value):
+        value = super().get_prep_value(value)
+        if value is not None:
+            if hasattr(value, "as_sql"):
+                return value
+            value = self.encrypt(value)
+        return value
 
     def from_db_value(self, value, expression, connection):
         if value is not None:
-            value = super().from_db_value(value, expression, connection)
-            return self.decrypt(value)
+            value = self.decrypt(super().from_db_value(value, expression, connection))
+        return value
 
 
 @Field.register_lookup
