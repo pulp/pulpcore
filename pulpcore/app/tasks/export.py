@@ -27,6 +27,9 @@ from pulpcore.app.models import (
 )
 from pulpcore.app.models.content import ContentArtifact
 from pulpcore.app.serializers import PulpExportSerializer
+
+# ensure the compression patch is loaded
+from pulpcore.app import monkeypatch  # noqa
 from pulpcore.app.util import get_version_from_model
 from pulpcore.app.importexport import (
     export_versions,
