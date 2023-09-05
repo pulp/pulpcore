@@ -5,14 +5,16 @@ from tempfile import NamedTemporaryFile
 
 from django.db import DatabaseError
 from rest_framework.serializers import (
+    CharField,
     FileField,
     Serializer,
     ValidationError,
 )
 from pulpcore.app.files import PulpTemporaryUploadedFile
-from pulpcore.app.models import Artifact, Upload, UploadChunk
+from pulpcore.app.models import Artifact, Upload, UploadChunk, Remote
 from pulpcore.app.serializers import (
     RelatedField,
+    DetailRelatedField,
     ArtifactSerializer,
     NoArtifactContentSerializer,
     SingleArtifactContentSerializer,
@@ -20,6 +22,30 @@ from pulpcore.app.serializers import (
 
 
 log = getLogger(__name__)
+
+
+class DirectContentDownloadSerializer(Serializer):
+    """A serializer that encapsulates fields specific to direct content download via HTTP(S)."""
+
+    remote = DetailRelatedField(
+        help_text=_(
+            """Remote representing the upstream repository, from which the content will be
+            downloaded directly."""
+        ),
+        view_name_pattern=r"remotes(-.*/.*)-detail",
+        queryset=Remote.objects.all(),
+    )
+
+    remote_relative_path = CharField(
+        help_text=_("Path where the file is located relative to the remote's base URL"),
+        write_only=True,
+    )
+
+    class Meta:
+        fields = (
+            "remote",
+            "remote_relative_path",
+        )
 
 
 class UploadSerializerFieldsMixin(Serializer):
@@ -31,8 +57,13 @@ class UploadSerializerFieldsMixin(Serializer):
         write_only=True,
     )
 
+    direct_download = DirectContentDownloadSerializer(required=False)
+
     class Meta:
-        fields = ("file",)
+        fields = (
+            "file",
+            "direct_download",
+        )
 
 
 class NoArtifactContentUploadSerializer(UploadSerializerFieldsMixin, NoArtifactContentSerializer):
