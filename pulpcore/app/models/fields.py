@@ -99,11 +99,10 @@ class EncryptedTextField(TextField):
         super().__init__(*args, **kwargs)
 
     def get_prep_value(self, value):
-        value = super().get_prep_value(value)
         if value is not None:
             assert isinstance(value, str)
             value = force_str(_fernet().encrypt(force_bytes(value)))
-        return value
+        return super().get_prep_value(value)
 
     def from_db_value(self, value, expression, connection):
         if value is not None:
@@ -149,12 +148,11 @@ class EncryptedJSONField(JSONField):
             return eval(dec_value)
 
     def get_prep_value(self, value):
-        value = super().get_prep_value(value)
         if value is not None:
             if hasattr(value, "as_sql"):
                 return value
             value = self.encrypt(value)
-        return value
+        return super().get_prep_value(value)
 
     def from_db_value(self, value, expression, connection):
         if value is not None:
