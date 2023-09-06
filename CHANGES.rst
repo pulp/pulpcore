@@ -17,6 +17,24 @@ Changelog
 
 .. towncrier release notes start
 
+3.18.27 (2023-09-06)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Ensure the compression level is reliably set properly as per #3869.
+  :github:`4351`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.18.26 (2023-08-23)
 ====================
 REST API
