@@ -13,6 +13,29 @@ Changelog
 
 .. towncrier release notes start
 
+3.28.13 (2023-09-06)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fix the label migration 0104 to allow upgrading from before 3.25.
+  :github:`4319`
+- Ensure the compression level is reliably set properly as per #3869.
+  :github:`4351`
+- Fix encrypted fields to use json instead of repr/eval and make them fit for ``bulk_update``.
+  This solves an issue with ``pulpcore-manager rotate-db-key`` corrupting data.
+  :github:`4359`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.28.12 (2023-08-22)
 ====================
 REST API
