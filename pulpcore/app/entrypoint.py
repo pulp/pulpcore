@@ -69,7 +69,6 @@ class PulpApiWorker(SyncWorker):
             "Api App '{name}' failed to write a heartbeat to the database, sleeping for "
             "'{interarrival}' seconds."
         ).format(name=self.name, interarrival=self.timeout)
-        using_pulp_api_worker.set(True)
         super().init_process()
 
     def run(self):
@@ -96,8 +95,11 @@ class PulpcoreApiApplication(BaseApplication):
         self.cfg.set("worker_class", PulpApiWorker.__module__ + "." + PulpApiWorker.__qualname__)
 
     def load(self):
+        using_pulp_api_worker.set(True)
+
         import pulpcore.app.wsgi
 
+        using_pulp_api_worker.set(False)
         return pulpcore.app.wsgi.application
 
 
@@ -132,6 +134,7 @@ class PulpcoreApiApplication(BaseApplication):
 @click.option("--reload/--no-reload")
 @click.option("--reload-engine", type=click.Choice(["auto", "poll", "inotify"]))
 @click.option("--reload-extra-file", "reload_extra_files", multiple=True)
+@click.option("--preload/--no-preload", "preload_app")
 @click.option("--reuse-port/--no-reuse-port")
 @click.option("--chdir")
 @click.option("--user", "-u")

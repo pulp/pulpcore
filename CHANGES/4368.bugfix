@@ -1,0 +1,1 @@
+Added missing ``--preload`` option to ``pulpcore-api`` and ``pulpcore-content``.
