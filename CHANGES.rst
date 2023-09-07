@@ -13,6 +13,89 @@ Changelog
 
 .. towncrier release notes start
 
+3.33.0 (2023-09-06)
+===================
+REST API
+--------
+
+Features
+~~~~~~~~
+
+- Added a filter `q` that supports complex filter expressions.
+
+  This feature is in tech-preview for the time being.
+  :github:`2480`,
+  :github:`3914`
+- Add status records for api apps.
+  :github:`3175`
+- Added ``set_label`` and ``unset_label`` endpoints to allow manipulating individual labels
+  synchronously.
+  :github:`3332`
+- Added ``--burst`` flag to pulpcore-worker so it will terminate instead of sleeping.
+  :github:`4341`
+
+
+Bugfixes
+~~~~~~~~
+
+- Fixed an exception that gets raised inside the domain delete hook
+  when there are still repositories with content in the domain.
+  :github:`4157`
+- Made orphan clean up more tolerant when other tasks are running in parallel.
+  :github:`4316`
+- Fix the label migration 0104 to allow upgrading from before 3.25.
+  :github:`4319`
+- Fixed Distribution validation for PUT calls when the data source changes.
+  :github:`4324`
+- Ensure the compression level is reliably set properly as per #3869.
+  :github:`4351`
+- Fix encrypted fields to use json instead of repr/eval and make them fit for ``bulk_update``.
+  This solves an issue with ``pulpcore-manager rotate-db-key`` corrupting data.
+  :github:`4359`
+
+
+Removals
+~~~~~~~~
+
+- Starting with this release, it is highly recommended to start the api and content processes by
+  the newly provided entrypoints (``pulpcore-api`` and ``pulpcore-content``) instead of calling
+  ``gunicorn`` directly.
+  :github:`3175`
+
+
+Plugin API
+----------
+
+Features
+~~~~~~~~
+
+- Added a ``LabelsMixin`` for views to allow syncronous manipulation of labels on existing objects.
+  Repository, remote and distribution views inherit this from pulpcore, but default access policies
+  need to be adjusted.
+  :github:`3332`
+
+
+3.32.1 (2023-09-06)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Ensure the compression level is reliably set properly as per #3869.
+  :github:`4351`
+- Fix encrypted fields to use json instead of repr/eval and make them fit for ``bulk_update``.
+  This solves an issue with ``pulpcore-manager rotate-db-key`` corrupting data.
+  :github:`4359`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.32.0 (2023-08-22)
 ===================
 REST API
@@ -360,6 +443,29 @@ Misc
 ~~~~
 
 - :github:`3798`
+
+
+3.28.13 (2023-09-06)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fix the label migration 0104 to allow upgrading from before 3.25.
+  :github:`4319`
+- Ensure the compression level is reliably set properly as per #3869.
+  :github:`4351`
+- Fix encrypted fields to use json instead of repr/eval and make them fit for ``bulk_update``.
+  This solves an issue with ``pulpcore-manager rotate-db-key`` corrupting data.
+  :github:`4359`
+
+
+Plugin API
+----------
+
+No significant changes.
 
 
 3.28.12 (2023-08-22)
@@ -1005,6 +1111,27 @@ Features
   :github:`3661`
 
 
+3.23.17 (2023-09-06)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Ensure the compression level is reliably set properly as per #3869.
+  :github:`4351`
+- Fix encrypted fields to use json instead of repr/eval and make them fit for ``bulk_update``.
+  This solves an issue with ``pulpcore-manager rotate-db-key`` corrupting data.
+  :github:`4359`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.23.16 (2023-08-23)
 ====================
 REST API
@@ -1478,6 +1605,24 @@ Deprecations
   :github:`3604`
 
 
+3.22.14 (2023-09-06)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Ensure the compression level is reliably set properly as per #3869.
+  :github:`4351`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.22.13 (2023-08-23)
 ====================
 REST API
@@ -1888,6 +2033,24 @@ Removals
 - Deprecated model ``Label`` and serializer field ``LabelField`` and ``LabelSelectFilter`` for
   removal in 3.25.
   :github:`3400`
+
+
+3.21.17 (2023-09-06)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Ensure the compression level is reliably set properly as per #3869.
+  :github:`4351`
+
+
+Plugin API
+----------
+
+No significant changes.
 
 
 3.21.16 (2023-08-23)
@@ -2759,6 +2922,24 @@ Bugfixes
   the stage will still accumulate up to 500 (by default) items so batching is still in-effect there
   where it matters.
   :github:`2069`
+
+
+3.18.27 (2023-09-06)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Ensure the compression level is reliably set properly as per #3869.
+  :github:`4351`
+
+
+Plugin API
+----------
+
+No significant changes.
 
 
 3.18.26 (2023-08-23)
