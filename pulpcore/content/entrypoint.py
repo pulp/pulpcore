@@ -42,6 +42,7 @@ class PulpcoreContentApplication(BaseApplication):
 @click.option("--reload/--no-reload")
 @click.option("--reload-engine", type=click.Choice(["auto", "poll", "inotify"]))
 @click.option("--reload-extra-file", "reload_extra_files", multiple=True)
+@click.option("--preload/--no-preload", "preload_app")
 @click.option("--reuse-port/--no-reuse-port")
 @click.option("--chdir")
 @click.option("--user", "-u")
