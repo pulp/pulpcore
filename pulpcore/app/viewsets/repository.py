@@ -163,6 +163,9 @@ class ImmutableRepositoryViewSet(
     mixins.CreateModelMixin,
     AsyncRemoveMixin,
 ):
+    # Too many cascaded deletes to block the gunicorn worker.
+    ALLOW_NON_BLOCKING_DELETE = False
+
     """
     An immutable repository ViewSet that does not allow the usage of the methods PATCH and PUT.
     """
@@ -370,6 +373,9 @@ class RemoteViewSet(
     AsyncUpdateMixin,
     AsyncRemoveMixin,
 ):
+    # Too many cascaded deletes to block the gunicorn worker.
+    ALLOW_NON_BLOCKING_DELETE = False
+
     endpoint_name = "remotes"
     serializer_class = RemoteSerializer
     queryset = Remote.objects.all()
