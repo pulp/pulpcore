@@ -1,0 +1,2 @@
+Ensured that repository and remote delete is always executed in a task. This fixes a bug when the
+deletion blocks the gunicorn api worker for too long.

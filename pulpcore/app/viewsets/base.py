@@ -453,6 +453,8 @@ class AsyncUpdateMixin(AsyncReservedObjectMixin):
     Provides an update method that dispatches a task with reservation
     """
 
+    ALLOW_NON_BLOCKING_UPDATE = True
+
     @extend_schema(
         description="Trigger an asynchronous update task",
         responses={202: AsyncOperationResponseSerializer},
@@ -468,7 +470,7 @@ class AsyncUpdateMixin(AsyncReservedObjectMixin):
             exclusive_resources=self.async_reserved_resources(instance),
             args=(pk, app_label, serializer.__class__.__name__),
             kwargs={"data": request.data, "partial": partial},
-            immediate=True,
+            immediate=self.ALLOW_NON_BLOCKING_UPDATE,
         )
         return OperationPostponedResponse(task, request)
 
@@ -486,6 +488,8 @@ class AsyncRemoveMixin(AsyncReservedObjectMixin):
     Provides a delete method that dispatches a task with reservation
     """
 
+    ALLOW_NON_BLOCKING_DELETE = True
+
     @extend_schema(
         description="Trigger an asynchronous delete task",
         responses={202: AsyncOperationResponseSerializer},
@@ -501,7 +505,7 @@ class AsyncRemoveMixin(AsyncReservedObjectMixin):
             tasks.base.general_delete,
             exclusive_resources=self.async_reserved_resources(instance),
             args=(pk, app_label, serializer.__class__.__name__),
-            immediate=True,
+            immediate=self.ALLOW_NON_BLOCKING_DELETE,
         )
         return OperationPostponedResponse(task, request)
 
