@@ -49,6 +49,9 @@ class ExporterViewSet(
     ViewSet for viewing exporters.
     """
 
+    # Too many cascaded deletes to block the gunicorn worker.
+    ALLOW_NON_BLOCKING_DELETE = False
+
     queryset = Exporter.objects.all()
     serializer_class = ExporterSerializer
     endpoint_name = "exporters"
