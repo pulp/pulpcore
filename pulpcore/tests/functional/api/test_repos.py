@@ -2,6 +2,8 @@
 from uuid import uuid4
 
 import pytest
+import json
+import subprocess
 
 from pulpcore.client.pulp_file import RepositorySyncURL
 
@@ -67,3 +69,74 @@ def test_repository_name_regex_filters(file_repository_factory, file_repository_
     # upper case pattern with iregex
     results = file_repository_api_client.list(name__iregex=pattern.upper()).results
     assert results == [repo]
+
+
+@pytest.mark.parallel
+def test_repo_size(
+    file_repo,
+    file_repository_api_client,
+    file_remote_factory,
+    basic_manifest_path,
+    random_artifact_factory,
+    file_content_api_client,
+    monitor_task,
+):
+    # Sync repository with on_demand
+    remote = file_remote_factory(manifest_path=basic_manifest_path, policy="on_demand")
+    body = {"remote": remote.pulp_href}
+    monitor_task(file_repository_api_client.sync(file_repo.pulp_href, body).task)
+    file_repo = file_repository_api_client.read(file_repo.pulp_href)
+
+    cmd = (
+        "pulpcore-manager",
+        "repository-size",
+        "--repositories",
+        file_repo.pulp_href,
+        "--include-on-demand",
+        "--include-versions",
+    )
+    run = subprocess.run(cmd, capture_output=True, check=True)
+    out = json.loads(run.stdout)
+
+    # Assert basic items of report and test on-demand sizing
+    assert len(out) == 1
+    report = out[0]
+    assert report["name"] == file_repo.name
+    assert report["href"] == file_repo.pulp_href
+    assert report["disk-size"] == 0
+    assert report["on-demand-size"] == 3072  # 3 * 1024
+    v_report = report["versions"]
+    assert len(v_report) == 2
+    assert v_report[1]["version"] == 1
+    assert v_report[1]["disk-size"] == 0
+    assert v_report[1]["on-demand-size"] == 3072
+
+    # Resync with immediate
+    remote = file_remote_factory(manifest_path=basic_manifest_path, policy="immediate")
+    body = {"remote": remote.pulp_href}
+    monitor_task(file_repository_api_client.sync(file_repo.pulp_href, body).task)
+
+    run = subprocess.run(cmd, capture_output=True, check=True)
+    out = json.loads(run.stdout)
+
+    # Check that disk-size is now filled and on-demand is 0
+    report = out[0]
+    assert report["disk-size"] == 3072
+    assert report["on-demand-size"] == 0
+    assert report["versions"][1]["disk-size"] == 3072
+    assert report["versions"][1]["on-demand-size"] == 0
+
+    # Add content unit w/ same name, but different artifact
+    art1 = random_artifact_factory()
+    body = {"repository": file_repo.pulp_href, "artifact": art1.pulp_href, "relative_path": "1.iso"}
+    monitor_task(file_content_api_client.create(**body).task)
+
+    run = subprocess.run(cmd, capture_output=True, check=True)
+    out = json.loads(run.stdout)
+
+    # Check that repo size and repo-ver size are now different
+    report = out[0]
+    assert report["disk-size"] == 3072 + art1.size  # All 4 artifacts in repo
+    v_report = report["versions"]
+    assert len(v_report) == 3
+    assert v_report[2]["disk-size"] == 2048 + art1.size  # New size of 3 artifacts in version

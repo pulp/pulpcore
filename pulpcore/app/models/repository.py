@@ -33,7 +33,7 @@ from pulpcore.exceptions import ResourceImmutableError
 from pulpcore.cache import Cache
 
 from .base import MasterModel, BaseModel
-from .content import Artifact, Content
+from .content import Artifact, Content, ContentArtifact, RemoteArtifact
 from .fields import EncryptedTextField
 from .task import CreatedResource, Task
 
@@ -81,6 +81,35 @@ class Repository(MasterModel):
     class Meta:
         unique_together = ("name", "pulp_domain")
         verbose_name_plural = "repositories"
+
+    @property
+    def disk_size(self):
+        """Returns the approximate size on disk for all artifacts stored across all versions."""
+        all_content = (
+            RepositoryContent.objects.filter(repository=self)
+            .distinct("content")
+            .values_list("content")
+        )
+        return (
+            Artifact.objects.filter(content__in=all_content)
+            .distinct()
+            .aggregate(size=models.Sum("size", default=0))["size"]
+        )
+
+    @property
+    def on_demand_size(self):
+        """Returns the approximate size of all on-demand artifacts stored across all versions."""
+        all_content = (
+            RepositoryContent.objects.filter(repository=self)
+            .distinct("content")
+            .values_list("content")
+        )
+        on_demand_ca = ContentArtifact.objects.filter(content__in=all_content, artifact=None)
+        # Aggregate does not work with distinct("fields") so sum must be done manually
+        ras = RemoteArtifact.objects.filter(
+            content_artifact__in=on_demand_ca, size__isnull=False
+        ).distinct("content_artifact")
+        return sum(ras.values_list("size", flat=True))
 
     def on_new_version(self, version):
         """Called after a new repository version has been created.
@@ -248,6 +277,22 @@ class Repository(MasterModel):
         :rtype: tuple
         """
         return (self.name,)
+
+    @staticmethod
+    def on_demand_artifacts_for_version(version):
+        """
+        Returns the remote artifacts of on-demand content for a repository version.
+
+        Provides a method that plugins can override since RepositoryVersions aren't typed.
+        Note: this only returns remote artifacts that have a non-null size.
+
+        Args:
+            version (pulpcore.app.models.RepositoryVersion): to get the remote artifacts for.
+        Returns:
+            django.db.models.QuerySet: The remote artifacts that are contained within this version.
+        """
+        on_demand_ca = ContentArtifact.objects.filter(content__in=version.content, artifact=None)
+        return RemoteArtifact.objects.filter(content_artifact__in=on_demand_ca, size__isnull=False)
 
     @staticmethod
     def artifacts_for_version(version):
@@ -794,6 +839,21 @@ class RepositoryVersion(BaseModel):
             django.db.models.QuerySet: The artifacts that are contained within this version.
         """
         return self.repository.cast().artifacts_for_version(self)
+
+    @property
+    def on_demand_artifacts(self):
+        return self.repository.cast().on_demand_artifacts_for_version(self)
+
+    @property
+    def disk_size(self):
+        """Returns the size on disk of all the artifacts in this repository version."""
+        return self.artifacts.distinct().aggregate(size=models.Sum("size", default=0))["size"]
+
+    @property
+    def on_demand_size(self):
+        """Returns the size of on-demand artifacts in this repository version."""
+        ras = self.on_demand_artifacts.distinct("content_artifact")
+        return sum(ras.values_list("size", flat=True))
 
     def added(self, base_version=None):
         """
