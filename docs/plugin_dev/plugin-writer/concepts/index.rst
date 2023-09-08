@@ -240,7 +240,8 @@ be left in the task queue or marked as canceled, depending on the ``deferred`` a
    be executed in the current api worker. This will not only delay the response to the http call,
    but also the complete single threaded gunicorn process. To prevent degrading the whole Pulp
    service, this is only ever allowed for tasks that guarantee to perform fast **and** without
-   blocking on external resources. E.g. simple attribute updates, deletes...
+   blocking on external resources. E.g. simple attribute updates, deletes... A model with a lot of
+   dependants that cause cascaded deletes may not be suitable for immediate execution.
 
 **Diagnostics**
 
