@@ -83,12 +83,6 @@ class Task(BaseModel, AutoAddObjPermsMixin):
 
     error = models.JSONField(null=True)
 
-    # These fields should finally be removed in 3.40 by a migration that checks all components are
-    # running at least <version this landed> then copies their values to enc_(kw)args and adds
-    # pulpcore >= <version this landed> in the modified tasks version_requirements.
-    args = models.JSONField(null=True, encoder=DjangoJSONEncoder)
-    kwargs = models.JSONField(null=True, encoder=DjangoJSONEncoder)
-
     enc_args = EncryptedJSONField(null=True, encoder=DjangoJSONEncoder)
     enc_kwargs = EncryptedJSONField(null=True, encoder=DjangoJSONEncoder)
 

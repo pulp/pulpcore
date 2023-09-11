@@ -56,8 +56,8 @@ def _execute_task(task):
         module_name, function_name = task.name.rsplit(".", 1)
         module = importlib.import_module(module_name)
         func = getattr(module, function_name)
-        args = task.enc_args or task.args or ()
-        kwargs = task.enc_kwargs or task.kwargs or {}
+        args = task.enc_args or ()
+        kwargs = task.enc_kwargs or {}
         result = func(*args, **kwargs)
         if asyncio.iscoroutine(result):
             _logger.debug(_("Task is coroutine %s"), task.pk)
