@@ -27,6 +27,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
         with:
+          path: pulpcore
           fetch-depth: 1
 
       - uses: actions/setup-python@v3
@@ -40,11 +41,13 @@ jobs:
           echo ::endgroup::
 
       - name: Setting secrets
+        working-directory: pulpcore
         run: python3 .github/workflows/scripts/secrets.py "$SECRETS_CONTEXT"
         env:
           SECRETS_CONTEXT: ${{ toJson(secrets) }}
 
       - name: Verify that branch name matches current version string on main branch
+        working-directory: pulpcore
         run: |
           X_Y_VERSION=$(grep version setup.py | sed -rn 's/version="(.*)\.0((a[0-9]+)|(b[0-9]+))?\.dev",/\1/p' | awk '{$1=$1};1')
           if [[ "$X_Y_VERSION" != "${{ inputs.name }}" ]]
@@ -54,16 +57,19 @@ jobs:
           fi
 
       - name: Create ${{ inputs.name }} release branch
+        working-directory: pulpcore
         run: |
           git checkout -b ${{ inputs.name }}
           git push origin ${{ inputs.name }}
 
       - name: Bump version on main branch
+        working-directory: pulpcore
         run: |
           git checkout main
           bump2version --no-commit minor
 
       - name: Remove entries from CHANGES directory
+        working-directory: pulpcore
         run: |
           find CHANGES -type f -regex ".*\.\(bugfix\|doc\|feature\|misc\|deprecation\|removal\)" -exec git rm {} +
 
@@ -94,3 +100,4 @@ jobs:
             Bump minor version
             [noissue]
           delete-branch: true
+          path: pulpcore
