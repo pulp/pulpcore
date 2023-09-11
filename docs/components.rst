@@ -13,8 +13,8 @@ additional capacity for that part of the architecture.
 REST API
 --------
 
-Pulp's REST API is a Django application that runs under any WSGI server. It serves the following
-things:
+Pulp's REST API is a Django application that runs standalone using the ``gunicorn`` like
+``pulpcore-api`` entrypoint. It serves the following things:
 
 * The REST API hosted at ``/pulp/api/v3/``
 * The browse-able documentation at ``/pulp/api/v3/docs/``
@@ -23,21 +23,17 @@ things:
 
 .. note::
 
-   A simple, but limited way to run the REST API as a standalone service using the built-in Django
-   runserver. The ``pulpcore-manager`` command is ``manage.py`` configured with the
-   ``DJANGO_SETTINGS_MODULE="pulpcore.app.settings"``. Run the simple webserver with::
+   A simple way to run the REST API as a standalone service is using the provided ``pulpcore-api``
+   entrypoint. It is ``gunicorn`` based and provides many of its options.
 
-      $ pulpcore-manager runserver 24817
+The REST API should only be deployed via the ``pulpcore-api`` entrypoint.
 
-The REST API can be deployed with any any WSGI webserver like a normal Django application. See the
-`Django deployment docs <https://docs.djangoproject.com/en/4.2/howto/deployment/wsgi/>`_ for more
-information.
 
 Content Serving Application
 ---------------------------
 
-An aiohttp.server based application that serves content to clients. The content could be
-:term:`Artifacts<Artifact>` already downloaded and saved in Pulp, or
+A currently ``aiohttp.server`` based application that serves content to clients. The content could
+be :term:`Artifacts<Artifact>` already downloaded and saved in Pulp, or
 :term:`on-demand content units<on-demand content>`. When serving
 :term:`on-demand content units<on-demand content>` the downloading also happens from within this
 component as well.
@@ -45,13 +41,12 @@ component as well.
 .. note::
 
    Pulp installs a script that lets you run the content serving app as a standalone service as
-   follows:::
+   follows. This script accepts many ``gunicorn`` options.::
 
-      $ pulp-content
+      $ pulpcore-content
 
-The content serving application can be deployed like any aiohttp.server application. See the
-`aiohttp Deployment docs <https://aiohttp.readthedocs.io/en/stable/deployment.html>`_ for more
-information.
+The content serving application should be deployed with ``pulpcore-content``. See ``--help`` to see
+available options.
 
 
 Availability
