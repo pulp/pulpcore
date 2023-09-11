@@ -25,7 +25,7 @@ ci_update_branches:
 - '3.22'
 - '3.23'
 - '3.28'
-- '3.32'
+- '3.33'
 ci_update_docs: true
 ci_update_release_behavior: 'replace-previous-version'
 cli_package: pulp-cli
