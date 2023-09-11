@@ -1,2 +1,0 @@
-Fix encrypted fields to use json instead of repr/eval and make them fit for ``bulk_update``.
-This solves an issue with ``pulpcore-manager rotate-db-key`` corrupting data.
