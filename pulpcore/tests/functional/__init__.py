@@ -763,14 +763,14 @@ def pulp_admin_user(bindings_cfg):
 def random_artifact_factory(
     artifacts_api_client, tmp_path, gen_object_with_cleanup, pulp_domain_enabled
 ):
-    def _random_artifact_factory(pulp_domain=None):
+    def _random_artifact_factory(size=32, pulp_domain=None):
         kwargs = {}
         if pulp_domain:
             if not pulp_domain_enabled:
                 raise RuntimeError("Server does not have domains enabled.")
             kwargs["pulp_domain"] = pulp_domain
         temp_file = tmp_path / str(uuid.uuid4())
-        temp_file.write_bytes(uuid.uuid4().bytes)
+        temp_file.write_bytes(os.urandom(size))
         return gen_object_with_cleanup(artifacts_api_client, temp_file, **kwargs)
 
     return _random_artifact_factory
@@ -1110,6 +1110,7 @@ def domain_factory(domains_api_client, pulp_settings, gen_object_with_cleanup):
             "AZURE_URL_EXPIRATION_SECS",
             "AZURE_OVERWRITE_FILES",
             "AZURE_LOCATION",
+            "AZURE_CONNECTION_STRING",
         ]
         settings = dict()
         for key in keys[pulp_settings.DEFAULT_FILE_STORAGE]:
