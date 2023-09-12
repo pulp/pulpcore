@@ -33,9 +33,9 @@ STATUS = {
         "storage": {
             "type": "object",
             "properties": {
-                "total": {"type": "integer"},
-                "used": {"type": "integer"},
-                "free": {"type": "integer"},
+                "total": {"type": ["integer", "null"]},
+                "used": {"type": ["integer", "null"]},
+                "free": {"type": ["integer", "null"]},
             },
         },
         "content_settings": {
@@ -57,35 +57,25 @@ STATUS = {
 }
 
 
-@pytest.fixture(scope="module")
-def expected_pulp_status_schema():
-    """Returns the expected status response."""
-    if settings.DEFAULT_FILE_STORAGE != "pulpcore.app.models.storage.FileSystem":
-        STATUS["properties"]["storage"].pop("properties")
-        STATUS["properties"]["storage"]["type"] = "null"
-
-    return STATUS
-
-
 @pytest.mark.parallel
-def test_get_authenticated(status_api_client, expected_pulp_status_schema):
+def test_get_authenticated(status_api_client):
     """GET the status path with valid credentials.
 
     Verify the response with :meth:`verify_get_response`.
     """
     response = status_api_client.status_read()
-    verify_get_response(response.to_dict(), expected_pulp_status_schema)
+    verify_get_response(response.to_dict(), STATUS)
 
 
 @pytest.mark.parallel
-def test_get_unauthenticated(status_api_client, anonymous_user, expected_pulp_status_schema):
+def test_get_unauthenticated(status_api_client, anonymous_user):
     """GET the status path with no credentials.
 
     Verify the response with :meth:`verify_get_response`.
     """
     with anonymous_user:
         response = status_api_client.status_read()
-    verify_get_response(response.to_dict(), expected_pulp_status_schema)
+    verify_get_response(response.to_dict(), STATUS)
 
 
 @pytest.mark.parallel
@@ -106,6 +96,32 @@ def test_post_authenticated(status_api_client, pulpcore_client, pulp_api_v3_url)
     assert e.value.status == 405
 
 
+@pytest.mark.parallel
+def test_storage_per_domain(
+    status_api_client,
+    pulpcore_client,
+    pulp_api_v3_url,
+    domain_factory,
+    random_artifact_factory,
+):
+    """Tests that the storage property returned in status is valid per domain."""
+    domain = domain_factory()
+    # Status endpoint is not exposed at domain url in API spec to prevent duplicates, call manually
+    status_url = f"{pulp_api_v3_url}status/".replace("default", domain.name)
+    status_response = pulpcore_client.request("GET", status_url)
+    domain_status = pulpcore_client.deserialize(status_response, "StatusResponse")
+    assert domain_status.storage.used == 0
+
+    random_artifact_factory(size=1, pulp_domain=domain.name)
+    status_response = pulpcore_client.request("GET", status_url)
+    domain_status = pulpcore_client.deserialize(status_response, "StatusResponse")
+
+    assert domain_status.storage.used == 1
+
+    default_status = status_api_client.status_read()
+    assert default_status.storage != domain_status.storage
+
+
 def verify_get_response(status, expected_schema):
     """Verify the response to an HTTP GET call.
 
@@ -119,3 +135,11 @@ def verify_get_response(status, expected_schema):
     assert status["content_settings"] is not None
     assert status["content_settings"]["content_origin"] is not None
     assert status["content_settings"]["content_path_prefix"] is not None
+
+    assert status["storage"]["used"] is not None
+    if settings.DEFAULT_FILE_STORAGE != "pulpcore.app.models.storage.FileSystem":
+        assert status["storage"]["free"] is None
+        assert status["storage"]["total"] is None
+    else:
+        assert status["storage"]["free"] is not None
+        assert status["storage"]["total"] is not None

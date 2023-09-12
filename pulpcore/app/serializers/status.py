@@ -50,11 +50,17 @@ class StorageSerializer(serializers.Serializer):
     Serializer for information about the storage system
     """
 
-    total = serializers.IntegerField(min_value=0, help_text=_("Total number of bytes"))
+    total = serializers.IntegerField(
+        min_value=0, help_text=_("Total number of bytes"), allow_null=True
+    )
 
-    used = serializers.IntegerField(min_value=0, help_text=_("Number of bytes in use"))
+    used = serializers.IntegerField(
+        min_value=0, help_text=_("Number of bytes in use"), allow_null=True
+    )
 
-    free = serializers.IntegerField(min_value=0, help_text=_("Number of free bytes"))
+    free = serializers.IntegerField(
+        min_value=0, help_text=_("Number of free bytes"), allow_null=True
+    )
 
 
 class ContentSettingsSerializer(serializers.Serializer):

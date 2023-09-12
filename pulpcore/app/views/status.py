@@ -3,28 +3,35 @@ import shutil
 from gettext import gettext as _
 
 from django.conf import settings
-from django.core.files.storage import default_storage
+from django.db.models import Sum
 from drf_spectacular.utils import extend_schema
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from collections import namedtuple
 
 from pulpcore.app.apps import pulp_plugin_configs
+from pulpcore.app.models.content import Artifact
 from pulpcore.app.models.status import ApiAppStatus, ContentAppStatus
 from pulpcore.app.models.task import Worker
 from pulpcore.app.serializers.status import StatusSerializer
 from pulpcore.app.redis_connection import get_redis_connection
+from pulpcore.app.util import get_domain
 
 _logger = logging.getLogger(__name__)
+StorageSpace = namedtuple("StorageSpace", ("total", "used", "free"))
 
 
 def _disk_usage():
-    if settings.DEFAULT_FILE_STORAGE == "pulpcore.app.models.storage.FileSystem":
+    domain = get_domain()
+    if domain.storage_class == "pulpcore.app.models.storage.FileSystem":
+        storage = domain.get_storage()
         try:
-            return shutil.disk_usage(default_storage.location)
+            return shutil.disk_usage(storage.location)
         except Exception:
             _logger.exception(_("Failed to determine disk usage"))
-
-    return None
+    else:
+        used = Artifact.objects.filter(pulp_domain=domain).aggregate(size=Sum("size", default=0))
+        return StorageSpace(None, used["size"], None)
 
 
 class StatusView(APIView):
