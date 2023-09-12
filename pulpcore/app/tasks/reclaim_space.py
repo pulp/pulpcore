@@ -50,25 +50,21 @@ def reclaim_space(repo_pks, keeplist_rv_pks=None, force=False):
         c_reclaim_qs = c_reclaim_qs.exclude(pk__in=rv_content)
 
     content_distinct = c_reclaim_qs.distinct("pulp_type")
-    unprotected = []
+    protected = []
     for content in content_distinct:
-        if not content.cast().PROTECTED_FROM_RECLAIM:
-            unprotected.append(content.pulp_type)
-
-    ca_qs = ContentArtifact.objects.select_related("content", "artifact").filter(
-        content__in=c_reclaim_qs.values("pk"), artifact__isnull=False
+        if content.cast().PROTECTED_FROM_RECLAIM:
+            protected.append(content.pulp_type)
+    c_reclaim_qs = c_reclaim_qs.exclude(pulp_type__in=protected)
+    ca_qs = ContentArtifact.objects.filter(
+        content_id__in=c_reclaim_qs.values("pk"), artifact_id__isnull=False
     )
     if not force:
         ca_qs = ca_qs.filter(remoteartifact__isnull=False)
     artifact_pks = set()
-    ca_to_update = []
     for ca in ca_qs.iterator():
-        if ca.content.pulp_type in unprotected:
-            artifact_pks.add(ca.artifact.pk)
-            ca.artifact = None
-            ca_to_update.append(ca)
+        artifact_pks.add(ca.artifact_id)
+    ca_qs.update(artifact_id=None)
 
-    ContentArtifact.objects.bulk_update(objs=ca_to_update, fields=["artifact"], batch_size=1000)
     artifacts_to_delete = Artifact.objects.filter(pk__in=artifact_pks)
     progress_bar = ProgressReport(
         message="Reclaim disk space",
