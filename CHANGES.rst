@@ -13,6 +13,36 @@ Changelog
 
 .. towncrier release notes start
 
+3.34.0 (2023-09-12)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Added missing ``--preload`` option to ``pulpcore-api`` and ``pulpcore-content``.
+  :github:`4368`
+- Ensured that repository and remote delete is always executed in a task. This fixes a bug when the
+  deletion blocks the gunicorn api worker for too long.
+  :github:`4372`
+
+
+Plugin API
+----------
+
+Features
+~~~~~~~~
+
+- Added a ``LabelsMixin`` for views to allow syncronous manipulation of labels on existing objects.
+  Repository, remote and distribution views inherit this from pulpcore, but default access policies
+  need to be adjusted.
+  :github:`3332`
+- Added a migration operation ``RequireVersion`` that refuses to complete as long as active
+  server components exist in the database.
+  :github:`3401`
+
+
 3.33.0 (2023-09-06)
 ===================
 REST API
