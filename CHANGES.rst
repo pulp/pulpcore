@@ -13,6 +13,25 @@ Changelog
 
 .. towncrier release notes start
 
+3.28.14 (2023-09-12)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Ensured that repository and remote delete is always executed in a task. This fixes a bug when the
+  deletion blocks the gunicorn api worker for too long.
+  :github:`4372`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.28.13 (2023-09-06)
 ====================
 REST API
