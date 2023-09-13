@@ -1,0 +1,2 @@
+Fixed sync not deleting temporary files when WORKING_DIRECTORY is not a sub-directory of MEDIA_ROOT
+or when using a non-filesystem storage backend.
