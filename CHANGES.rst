@@ -17,6 +17,43 @@ Changelog
 
 .. towncrier release notes start
 
+3.16.19 (2023-09-13)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Taught PulpImport to be more robust in the face of previous failed attempts.
+  :github:`3737`
+- Exports now use gzip compression level 1 rather than compression level 9. Exported archives will
+  now be slightly larger, but exports should be much faster. This is considered to be a more
+  optimal balance of space/time for the export operation.
+  :github:`3869`
+- Improved the performance when looking up content for repository versions.
+  :github:`3969`
+- Taught the Artifact.json of an export to hold minimum-unique-set of Artifact entries.
+
+  In highly-duplicated-content export scenarios, this can mean a significant decrease
+  in export-size, and significant improvement in import-performance.
+  :github:`4159`
+- Fix a subtle export bug introduced from the optimizations in #4159.
+  :github:`4210`
+- Correctly fixed pulp_rpm-export-edgecase - fix #4210 was incomplete.
+  :github:`4231`
+- Ensure the compression level is reliably set properly as per #3869.
+  :github:`4351`
+- Ensure non-chunked exports also use gzip ``compressionlevel=1``
+  :github:`4411`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.16.18 (2023-08-01)
 ====================
 REST API
