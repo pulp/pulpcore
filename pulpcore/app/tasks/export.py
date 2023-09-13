@@ -3,6 +3,7 @@ import json
 import logging
 import os
 import os.path
+import sys
 import subprocess
 import tarfile
 
@@ -409,8 +410,15 @@ def pulp_export(exporter_pk, params):
                 stdin=subprocess.PIPE,
             ) as split_process:
                 try:
-                    with tarfile.open(tarfile_fp, "w|gz", fileobj=split_process.stdin) as tar:
-                        _do_export(pulp_exporter, tar, the_export)
+                    # on Python < 3.12 we have a monkeypatch which enables compression levels
+                    if sys.version_info.major == 3 and sys.version_info.minor < 12:
+                        with tarfile.open(tarfile_fp, "w|gz", fileobj=split_process.stdin) as tar:
+                            _do_export(pulp_exporter, tar, the_export)
+                    else:
+                        with tarfile.open(
+                            tarfile_fp, "w|gz", fileobj=split_process.stdin, compresslevel=1
+                        ) as tar:
+                            _do_export(pulp_exporter, tar, the_export)
                 except Exception:
                     # no matter what went wrong, we can't trust the files we (may have) created.
                     # Delete the ones we can find and pass the problem up.
@@ -428,7 +436,7 @@ def pulp_export(exporter_pk, params):
         else:
             # write into the file
             try:
-                with tarfile.open(tarfile_fp, "w:gz") as tar:
+                with tarfile.open(tarfile_fp, "w:gz", compresslevel=1) as tar:
                     _do_export(pulp_exporter, tar, the_export)
             except Exception:
                 # no matter what went wrong, we can't trust the file we created.
