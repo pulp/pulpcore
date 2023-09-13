@@ -3,6 +3,7 @@ from collections import defaultdict
 from gettext import gettext as _
 import logging
 
+from aiofiles import os as aos
 from asgiref.sync import sync_to_async
 from django.db.models import Prefetch, prefetch_related_objects, Q
 
@@ -274,15 +275,20 @@ class ArtifactSaver(Stage):
                         d_artifact.artifact.file = str(d_artifact.artifact.file)
                         da_to_save.append(d_artifact)
             da_to_save_ordered = sorted(da_to_save, key=lambda x: x.artifact.sha256)
+            da_tmp_files = [str(da.artifact.file) for da in da_to_save_ordered]
 
             if da_to_save:
-                for d_artifact, artifact in zip(
+                for d_artifact, artifact, tmp_file_path in zip(
                     da_to_save_ordered,
                     await sync_to_async(Artifact.objects.bulk_get_or_create)(
                         d_artifact.artifact for d_artifact in da_to_save_ordered
                     ),
+                    da_tmp_files,
                 ):
                     d_artifact.artifact = artifact
+                    # Delete the downloaded tmp file if it still exists to clear up space
+                    if await aos.path.exists(tmp_file_path):
+                        await aos.remove(tmp_file_path)
 
             for d_content in batch:
                 await self.put(d_content)
