@@ -1,1 +1,1 @@
-Ensure non-chunked exports also use gzip ``compressionlevel=1``
+Ensure non-chunked exports and chunked exports use the same compression level.

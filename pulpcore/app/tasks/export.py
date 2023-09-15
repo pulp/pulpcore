@@ -29,8 +29,6 @@ from pulpcore.app.models import (
 from pulpcore.app.models.content import ContentArtifact
 from pulpcore.app.serializers import PulpExportSerializer
 
-# ensure the compression patch is loaded
-from pulpcore.app import monkeypatch  # noqa
 from pulpcore.app.util import get_version_from_model
 from pulpcore.app.importexport import (
     export_versions,
@@ -376,6 +374,8 @@ def pulp_export(exporter_pk, params):
         ValidationError: When path is not in the ALLOWED_EXPORT_PATHS setting,
             OR path exists and is not a directory
     """
+    DEFAULT_COMPRESSION = 1
+
     pulp_exporter = PulpExporter.objects.get(pk=exporter_pk)
     serializer = PulpExportSerializer(data=params, context={"exporter": pulp_exporter})
     serializer.is_valid(raise_exception=True)
@@ -411,12 +411,20 @@ def pulp_export(exporter_pk, params):
             ) as split_process:
                 try:
                     # on Python < 3.12 we have a monkeypatch which enables compression levels
+                    # see https://github.com/pulp/pulpcore/issues/3869
                     if sys.version_info.major == 3 and sys.version_info.minor < 12:
+                        from pulpcore.app import monkeypatch
+
+                        monkeypatch.patch_tarfile_default_compression_level(DEFAULT_COMPRESSION)
+
                         with tarfile.open(tarfile_fp, "w|gz", fileobj=split_process.stdin) as tar:
                             _do_export(pulp_exporter, tar, the_export)
                     else:
                         with tarfile.open(
-                            tarfile_fp, "w|gz", fileobj=split_process.stdin, compresslevel=1
+                            tarfile_fp,
+                            "w|gz",
+                            fileobj=split_process.stdin,
+                            compresslevel=DEFAULT_COMPRESSION,
                         ) as tar:
                             _do_export(pulp_exporter, tar, the_export)
                 except Exception:
@@ -436,7 +444,7 @@ def pulp_export(exporter_pk, params):
         else:
             # write into the file
             try:
-                with tarfile.open(tarfile_fp, "w:gz", compresslevel=1) as tar:
+                with tarfile.open(tarfile_fp, "w:gz", compresslevel=DEFAULT_COMPRESSION) as tar:
                     _do_export(pulp_exporter, tar, the_export)
             except Exception:
                 # no matter what went wrong, we can't trust the file we created.
