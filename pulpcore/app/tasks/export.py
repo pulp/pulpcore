@@ -374,7 +374,7 @@ def pulp_export(exporter_pk, params):
         ValidationError: When path is not in the ALLOWED_EXPORT_PATHS setting,
             OR path exists and is not a directory
     """
-    DEFAULT_COMPRESSION = 1
+    DEFAULT_COMPRESSION = 0
 
     pulp_exporter = PulpExporter.objects.get(pk=exporter_pk)
     serializer = PulpExportSerializer(data=params, context={"exporter": pulp_exporter})
