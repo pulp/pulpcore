@@ -1,7 +1,4 @@
-import sys
-
-# This is a monkeypatch for https://github.com/pulp/pulpcore/issues/3869
-if sys.version_info.major == 3 and sys.version_info.minor < 12:
+def patch_tarfile_default_compression_level(level):
     # Code copied from the Python 3.12 standard library
     # We modify the default gzip compression level for writing streams from
     # 9 to 1, attempting to vendor the minimum amount of code.
@@ -52,7 +49,7 @@ if sys.version_info.major == 3 and sys.version_info.minor < 12:
         def _init_write_gz(self):
             """Initialize for writing with gzip compression."""
             self.cmp = self.zlib.compressobj(
-                1, self.zlib.DEFLATED, -self.zlib.MAX_WBITS, self.zlib.DEF_MEM_LEVEL, 0
+                level, self.zlib.DEFLATED, -self.zlib.MAX_WBITS, self.zlib.DEF_MEM_LEVEL, 0
             )
             timestamp = struct.pack("<L", int(time.time()))
             self.__write(b"\037\213\010\010" + timestamp + b"\002\377")
