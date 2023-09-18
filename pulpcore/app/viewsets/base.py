@@ -39,6 +39,8 @@ NAME_FILTER_OPTIONS = [
     "icontains",
     "startswith",
     "istartswith",
+    "regex",
+    "iregex",
 ]
 # e.g.
 # /?name=foo

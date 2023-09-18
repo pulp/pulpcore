@@ -48,3 +48,22 @@ def test_repository_content_filters(
     # but not in its latest version anymore
     results = file_repository_api_client.list(latest_with_content=content.pulp_href).results
     assert results == []
+
+
+@pytest.mark.parallel
+def test_repository_name_regex_filters(file_repository_factory, file_repository_api_client):
+    """Test repository's name regex filters."""
+    uuid = uuid4()
+    repo = file_repository_factory(name=f"{uuid}-regex-test-repo")
+    pattern = f"^{uuid}-regex-test.*$"
+
+    results = file_repository_api_client.list(name__regex=pattern).results
+    assert results == [repo]
+
+    # upper case pattern
+    results = file_repository_api_client.list(name__regex=pattern.upper()).results
+    assert repo not in results
+
+    # upper case pattern with iregex
+    results = file_repository_api_client.list(name__iregex=pattern.upper()).results
+    assert results == [repo]
