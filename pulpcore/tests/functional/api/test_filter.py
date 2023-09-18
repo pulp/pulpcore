@@ -87,6 +87,10 @@ class TestFilter:
         redi_results = redirect_contentguard_api_client.list(**{filter: rbac_sample})
         assert redi_results.count == 0
 
+        # test out empty list
+        redi_results = redirect_contentguard_api_client.list(**{filter: []})
+        assert redi_results.count == 0
+
         # Test that filter fails when not a valid type
         with pytest.raises(ApiException) as exc:
             content_guards_api_client.list(**{filter: ["hello"]})

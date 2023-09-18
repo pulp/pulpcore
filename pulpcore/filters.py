@@ -124,11 +124,19 @@ class HyperlinkRelatedFilter(filters.Filter):
 
 
 class IdInFilter(BaseInFilter, filters.UUIDFilter):
-    pass
+    def filter(self, qs, value):
+        if value is None:
+            return qs
+        return qs.filter(pk__in=value)
 
 
 class HREFInFilter(BaseInFilter, filters.CharFilter):
-    pass
+    def filter(self, qs, value):
+        if value is None:
+            return qs
+
+        pks = [extract_pk(href) for href in value]
+        return qs.filter(pk__in=pks)
 
 
 class PulpTypeFilter(filters.ChoiceFilter):
@@ -270,8 +278,8 @@ class BaseFilterSet(filterset.FilterSet):
     """
 
     help_text = {}
-    pulp_id__in = IdInFilter(field_name="pk", lookup_expr="in")
-    pulp_href__in = HREFInFilter(field_name="pk", method="filter_pulp_href")
+    pulp_id__in = IdInFilter(field_name="pk")
+    pulp_href__in = HREFInFilter(field_name="pk")
     q = ExpressionFilter()
 
     FILTER_DEFAULTS = {
@@ -306,11 +314,6 @@ class BaseFilterSet(filterset.FilterSet):
         "search": _("matches"),
         "ne": _("not equal to"),
     }
-
-    def filter_pulp_href(self, queryset, name, value):
-        # Convert each href to a pk
-        pks = [extract_pk(href) for href in value]
-        return queryset.filter(pk__in=pks)
 
     @classmethod
     def get_filters(cls):
