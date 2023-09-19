@@ -29,7 +29,7 @@ from pulpcore.app.models import (
 from pulpcore.app.models.content import Artifact, ContentArtifact
 from pulpcore.app.serializers import PulpExportSerializer
 
-from pulpcore.app.util import get_version_from_model
+from pulpcore.app.util import compute_file_hash, get_version_from_model
 from pulpcore.app.importexport import (
     export_versions,
     export_artifacts,
@@ -442,7 +442,7 @@ def pulp_export(exporter_pk, params):
             global_hash = hashlib.sha256()
             paths = sorted([str(Path(p)) for p in glob(tarfile_fp + ".*")])
             for a_file in paths:
-                a_hash = _compute_hash(a_file, global_hash)
+                a_hash = compute_file_hash(a_file, cumulative_hash=global_hash)
                 rslts[a_file] = a_hash
             tarfile_hash = global_hash.hexdigest()
 
@@ -458,7 +458,7 @@ def pulp_export(exporter_pk, params):
                     os.remove(tarfile_fp)
                 raise
             # compute the hash
-            tarfile_hash = _compute_hash(tarfile_fp)
+            tarfile_hash = compute_file_hash(tarfile_fp)
             rslts[tarfile_fp] = tarfile_hash
 
         # store the outputfile/hash info
@@ -485,7 +485,7 @@ def pulp_export(exporter_pk, params):
             json.dump(chunk_toc, outfile)
 
         # store toc info
-        toc_hash = _compute_hash(output_file_info_path)
+        toc_hash = compute_file_hash(output_file_info_path)
         the_export.output_file_info[output_file_info_path] = toc_hash
         the_export.toc_info = {"file": output_file_info_path, "sha256": toc_hash}
     finally:
@@ -498,17 +498,6 @@ def pulp_export(exporter_pk, params):
     pulp_exporter.last_export = the_export
     # save the exporter
     pulp_exporter.save()
-
-
-def _compute_hash(filename, global_hash=None):
-    sha256_hash = hashlib.sha256()
-    with open(filename, "rb") as f:
-        # Read and update hash string value in blocks of 4K
-        for byte_block in iter(lambda: f.read(4096), b""):
-            sha256_hash.update(byte_block)
-            if global_hash:
-                global_hash.update(byte_block)
-        return sha256_hash.hexdigest()
 
 
 def _do_export(pulp_exporter, tar, the_export):
