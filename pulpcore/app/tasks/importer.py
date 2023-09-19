@@ -1,4 +1,3 @@
-import hashlib
 import json
 import os
 import re
@@ -33,6 +32,7 @@ from pulpcore.app.modelresource import (
     ArtifactResource,
     ContentArtifactResource,
 )
+from pulpcore.app.util import compute_file_hash
 from pulpcore.constants import TASK_STATES
 from pulpcore.tasking.tasks import dispatch
 
@@ -294,14 +294,6 @@ def pulp_import(importer_pk, path, toc):
         path (str): Path to the export to be imported
     """
 
-    def _compute_hash(filename):
-        sha256_hash = hashlib.sha256()
-        with open(filename, "rb") as f:
-            # Read and update hash string value in blocks of 4K
-            for byte_block in iter(lambda: f.read(4096), b""):
-                sha256_hash.update(byte_block)
-            return sha256_hash.hexdigest()
-
     def validate_toc(toc_filename):
         """
         Check validity of table-of-contents file.
@@ -361,7 +353,7 @@ def pulp_import(importer_pk, path, toc):
             data = dict(message="Validating Chunks", code="validate.chunks", total=len(chunks))
             with ProgressReport(**data) as pb:
                 for chunk in pb.iter(chunks):
-                    a_hash = _compute_hash(os.path.join(base_dir, chunk))
+                    a_hash = compute_file_hash(os.path.join(base_dir, chunk))
                     if not a_hash == the_toc["files"][chunk]:
                         err_str = "File {} expected checksum : {}, computed checksum : {}".format(
                             chunk, the_toc["files"][chunk], a_hash
@@ -415,7 +407,7 @@ def pulp_import(importer_pk, path, toc):
                         exc_info=True,
                     )
 
-        combined_hash = _compute_hash(result_file)
+        combined_hash = compute_file_hash(result_file)
         if combined_hash != the_toc["meta"]["global_hash"]:
             raise ValidationError(
                 _("Mismatch between combined .tar.gz checksum [{}] and originating [{}]).").format(
