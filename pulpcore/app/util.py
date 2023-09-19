@@ -1,3 +1,4 @@
+import hashlib
 from functools import lru_cache
 from gettext import gettext as _
 import os
@@ -293,6 +294,19 @@ def gpg_verify(public_keys, signature, detached_data=None):
         if not verified.valid:
             raise InvalidSignatureError(_("The signature is not valid."), verified=verified)
     return verified
+
+
+def compute_file_hash(filename, hasher=None, cumulative_hash=None, blocksize=8192):
+    if hasher is None:
+        hasher = hashlib.sha256()
+
+    with open(filename, "rb") as f:
+        # Read and update hash string value in blocks of 8K
+        while chunk := f.read(blocksize):
+            hasher.update(chunk)
+            if cumulative_hash:
+                cumulative_hash.update(chunk)
+        return hasher.hexdigest()
 
 
 def configure_analytics():
