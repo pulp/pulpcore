@@ -1,5 +1,6 @@
 from functools import lru_cache
 from gettext import gettext as _
+import hashlib
 import os
 import tempfile
 
@@ -304,3 +305,16 @@ def get_artifact_url(artifact, headers=None, http_method=None):
             "does not allow redirecting."
         )
     return url
+
+
+def compute_file_hash(filename, hasher=None, cumulative_hash=None, blocksize=8192):
+    if hasher is None:
+        hasher = hashlib.sha256()
+
+    with open(filename, "rb") as f:
+        # Read and update hash string value in blocks of 8K
+        while chunk := f.read(blocksize):
+            hasher.update(chunk)
+            if cumulative_hash:
+                cumulative_hash.update(chunk)
+        return hasher.hexdigest()
