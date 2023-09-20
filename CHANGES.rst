@@ -17,6 +17,28 @@ Changelog
 
 .. towncrier release notes start
 
+3.18.28 (2023-09-20)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Improved the performance when looking up content for repository versions.
+  :github:`3969`
+- Ensure non-chunked exports and chunked exports use the same compression level.
+  :github:`4411`
+- Removed compression from exports (using gzip level 0). For most users of export functionality it seems to be a poor tradeoff.
+  :github:`4434`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.18.27 (2023-09-06)
 ====================
 REST API
