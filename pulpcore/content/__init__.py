@@ -94,6 +94,7 @@ async def server(*args, **kwargs):
     path_prefix = settings.CONTENT_PATH_PREFIX
     if settings.DOMAIN_ENABLED:
         path_prefix = path_prefix + "{pulp_domain}/"
+        app.add_routes([web.get(path_prefix[:-1], Handler().list_distributions)])
     app.add_routes([web.get(path_prefix, Handler().list_distributions)])
     app.add_routes([web.get(path_prefix + "{path:.+}", Handler().stream_content)])
     app.cleanup_ctx.append(_heartbeat_ctx)

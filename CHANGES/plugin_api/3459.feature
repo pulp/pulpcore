@@ -1,0 +1,1 @@
+Handler._match_distribution() method now accepts `add_trailing_slash` keyword argument. When set to False, the content app will not try to append a '/' to the path before trying to match it to a distribution. Plugin code that calls this method directly needs to be updated to account for the desired behavior. 

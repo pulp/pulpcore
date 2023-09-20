@@ -11,6 +11,7 @@ from aiohttp.web_exceptions import (
     HTTPError,
     HTTPForbidden,
     HTTPFound,
+    HTTPMovedPermanently,
     HTTPNotFound,
     HTTPRequestRangeNotSatisfiable,
 )
@@ -173,6 +174,9 @@ class Handler:
         """
         domain = get_domain()
 
+        if not request.path.endswith("/"):
+            raise HTTPMovedPermanently(f"{request.path}/")
+
         def get_base_paths_blocking():
             distro_model = self.distribution_model or Distribution
             raise DistroListings(path="", distros=distro_model.objects.filter(pulp_domain=domain))
@@ -270,12 +274,13 @@ class Handler:
         return tree
 
     @classmethod
-    def _match_distribution(cls, path):
+    def _match_distribution(cls, path, add_trailing_slash=True):
         """
         Match a distribution using a list of base paths and return its detail object.
 
         Args:
             path (str): The path component of the URL.
+            add_trailing_slash (bool): If true, a missing trailing '/' will be appended to the path.
 
         Returns:
             The detail object of the matched distribution.
@@ -284,6 +289,10 @@ class Handler:
             DistroListings: when multiple matches are possible.
             PathNotResolved: when not matched.
         """
+        original_path = path
+        path_ends_in_slash = path.endswith("/")
+        if not path_ends_in_slash and add_trailing_slash:
+            path = f"{path}/"
         base_paths = cls._base_paths(path)
         distro_model = cls.distribution_model or Distribution
         domain = get_domain()
@@ -308,15 +317,24 @@ class Handler:
                     pulp_domain=domain, base_path__startswith=path
                 )
                 if distros.count():
-                    raise DistroListings(path=path, distros=distros)
+                    if path_ends_in_slash:
+                        raise DistroListings(path=path, distros=distros)
+                    else:
+                        # The list of a subset of distributions was requested without a trailing /
+                        if settings.DOMAIN_ENABLED:
+                            raise HTTPMovedPermanently(
+                                f"{settings.CONTENT_PATH_PREFIX}{domain.name}/{path}"
+                            )
+                        else:
+                            raise HTTPMovedPermanently(f"{settings.CONTENT_PATH_PREFIX}{path}")
 
             log.debug(
                 _("Distribution not matched for {path} using: {base_paths}").format(
-                    path=path, base_paths=base_paths
+                    path=original_path, base_paths=base_paths
                 )
             )
 
-        raise PathNotResolved(path)
+        raise PathNotResolved(original_path)
 
     @staticmethod
     def _permit(request, distribution):
@@ -497,9 +515,7 @@ class Handler:
                 ).values_list("content_artifact_id", "size")
                 sizes.update({artifacts_to_find[ra_ca_id]: size for ra_ca_id, size in r_artifacts})
 
-                return directory_list, dates, sizes
-            else:
-                raise PathNotResolved(path)
+            return directory_list, dates, sizes
 
         return await sync_to_async(list_directory_blocking)()
 
@@ -544,11 +560,20 @@ class Handler:
         rel_path = rel_path[len(distro.base_path) :]
         rel_path = rel_path.lstrip("/")
 
+        if rel_path == "" and not path.endswith("/"):
+            # The root of a distribution base_path was requested without a slash
+            raise HTTPMovedPermanently(f"{request.path}/")
+
+        original_rel_path = rel_path
+        ends_in_slash = rel_path == "" or rel_path.endswith("/")
+        if not ends_in_slash:
+            rel_path = f"{rel_path}/"
+
         content_handler_result = await sync_to_async(distro.content_handler)(rel_path)
         if content_handler_result is not None:
             return content_handler_result
 
-        headers = self.response_headers(rel_path, distro)
+        headers = self.response_headers(original_rel_path, distro)
 
         repository = distro.repository
         publication = distro.publication
@@ -573,19 +598,24 @@ class Handler:
                 repo_version = await repository.alatest_version()
 
         if publication:
-            if rel_path == "" or rel_path[-1] == "/":
-                try:
-                    index_path = "{}index.html".format(rel_path)
+            try:
+                index_path = "{}index.html".format(rel_path)
 
-                    await publication.published_artifact.aget(relative_path=index_path)
-
-                    rel_path = index_path
-                    headers = self.response_headers(rel_path, distro)
-                except ObjectDoesNotExist:
-                    dir_list, dates, sizes = await self.list_directory(None, publication, rel_path)
-                    dir_list.update(
-                        await sync_to_async(distro.content_handler_list_directory)(rel_path)
-                    )
+                await publication.published_artifact.aget(relative_path=index_path)
+                if not ends_in_slash:
+                    # index.html found, but user didn't specify a trailing slash
+                    raise HTTPMovedPermanently(f"{request.path}/")
+                rel_path = index_path
+                headers = self.response_headers(rel_path, distro)
+            except ObjectDoesNotExist:
+                dir_list, dates, sizes = await self.list_directory(None, publication, rel_path)
+                dir_list.update(
+                    await sync_to_async(distro.content_handler_list_directory)(rel_path)
+                )
+                if dir_list and not ends_in_slash:
+                    # Directory can be listed, but user did not specify trailing slash
+                    raise HTTPMovedPermanently(f"{request.path}/")
+                elif dir_list:
                     return HTTPOk(
                         headers={"Content-Type": "text/html"},
                         body=self.render_html(
@@ -600,7 +630,7 @@ class Handler:
                         "content_artifact",
                         "content_artifact__artifact",
                         "content_artifact__artifact__pulp_domain",
-                    ).aget(relative_path=rel_path)
+                    ).aget(relative_path=original_rel_path)
                 ).content_artifact
 
             except ObjectDoesNotExist:
@@ -623,13 +653,13 @@ class Handler:
                         .filter(
                             content__in=publication.repository_version.content,
                         )
-                        .aget(relative_path=rel_path)
+                        .aget(relative_path=original_rel_path)
                     )
 
                 except MultipleObjectsReturned:
                     log.error(
                         "Multiple (pass-through) matches for {b}/{p}",
-                        {"b": distro.base_path, "p": rel_path},
+                        {"b": distro.base_path, "p": original_rel_path},
                     )
                     raise
                 except ObjectDoesNotExist:
@@ -643,19 +673,23 @@ class Handler:
                         )
 
         if repo_version and not publication and not distro.SERVE_FROM_PUBLICATION:
-            if rel_path == "" or rel_path[-1] == "/":
-                index_path = "{}index.html".format(rel_path)
+            # Look for index.html or list the directory
+            index_path = "{}index.html".format(rel_path)
 
-                contentartifact_exists = await ContentArtifact.objects.filter(
-                    content__in=repo_version.content, relative_path=index_path
-                ).aexists()
-                if contentartifact_exists:
-                    rel_path = index_path
-                else:
-                    dir_list, dates, sizes = await self.list_directory(repo_version, None, rel_path)
-                    dir_list.update(
-                        await sync_to_async(distro.content_handler_list_directory)(rel_path)
-                    )
+            contentartifact_exists = await ContentArtifact.objects.filter(
+                content__in=repo_version.content, relative_path=index_path
+            ).aexists()
+            if contentartifact_exists:
+                rel_path = index_path
+            else:
+                dir_list, dates, sizes = await self.list_directory(repo_version, None, rel_path)
+                dir_list.update(
+                    await sync_to_async(distro.content_handler_list_directory)(rel_path)
+                )
+                if dir_list and not ends_in_slash:
+                    # Directory can be listed, but user did not specify trailing slash
+                    raise HTTPMovedPermanently(f"{request.path}/")
+                elif dir_list:
                     return HTTPOk(
                         headers={"Content-Type": "text/html"},
                         body=self.render_html(
@@ -666,12 +700,12 @@ class Handler:
             try:
                 ca = await ContentArtifact.objects.select_related(
                     "artifact", "artifact__pulp_domain"
-                ).aget(content__in=repo_version.content, relative_path=rel_path)
+                ).aget(content__in=repo_version.content, relative_path=original_rel_path)
 
             except MultipleObjectsReturned:
                 log.error(
                     "Multiple (pass-through) matches for {b}/{p}",
-                    {"b": distro.base_path, "p": rel_path},
+                    {"b": distro.base_path, "p": original_rel_path},
                 )
                 raise
             except ObjectDoesNotExist:
@@ -687,7 +721,7 @@ class Handler:
         # If we haven't found a match yet, try to use pull-through caching with remote
         if distro.remote:
             remote = await distro.remote.acast()
-            if url := remote.get_remote_artifact_url(rel_path, request=request):
+            if url := remote.get_remote_artifact_url(original_rel_path, request=request):
                 if (
                     ra := await RemoteArtifact.objects.select_related(
                         "content_artifact__artifact__pulp_domain", "remote"
@@ -705,8 +739,10 @@ class Handler:
                         )
                 else:
                     # Try to stream the RemoteArtifact and potentially save it as a new Content unit
-                    save_artifact = remote.get_remote_artifact_content_type(rel_path) is not None
-                    ca = ContentArtifact(relative_path=rel_path)
+                    save_artifact = (
+                        remote.get_remote_artifact_content_type(original_rel_path) is not None
+                    )
+                    ca = ContentArtifact(relative_path=original_rel_path)
                     ra = RemoteArtifact(remote=remote, url=url, content_artifact=ca)
                     try:
                         return await self._stream_remote_artifact(
