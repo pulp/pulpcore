@@ -40,8 +40,7 @@ from pulpcore.app.viewsets.custom_filters import (
     CreatedResourcesFilter,
 )
 from pulpcore.constants import TASK_INCOMPLETE_STATES, TASK_STATES
-from pulpcore.tasking.tasks import dispatch
-from pulpcore.tasking.util import cancel_task
+from pulpcore.tasking.tasks import dispatch, cancel_task
 
 
 class TaskFilter(BaseFilterSet):

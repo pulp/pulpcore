@@ -300,8 +300,7 @@ DOMAIN_ENABLED = False
 
 SHELL_PLUS_IMPORTS = [
     "from pulpcore.app.util import get_domain, get_domain_pk, set_domain, get_url, extract_pk",
-    "from pulpcore.tasking.tasks import dispatch",
-    "from pulpcore.tasking.util import cancel_task",
+    "from pulpcore.tasking.tasks import dispatch, cancel_task, wakeup_worker",
 ]
 
 # What percentage of available-workers will pulpimport use at a time, max

@@ -10,7 +10,7 @@ pulp.tasking.constants
 .. automodule:: pulpcore.tasking.constants
 
 pulp.tasking.worker
-----------------------------
+-------------------
 
 .. automodule:: pulpcore.tasking.worker
 
@@ -24,7 +24,7 @@ pulp.tasking.tasks
 
 .. automodule:: pulpcore.tasking.tasks
 
-pulp.tasking.util
------------------
+pulp.tasking._util
+------------------
 
-.. automodule:: pulpcore.tasking.util
+.. automodule:: pulpcore.tasking._util
