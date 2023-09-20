@@ -48,10 +48,6 @@ class DownloaderFactory:
     http://aiohttp.readthedocs.io/en/stable/client_quickstart.html#timeouts Behaviorally, it should
     allow for an active download to be arbitrarily long, while still detecting dead or closed
     sessions even when TCPKeepAlive is disabled.
-
-    Also for http and https urls, even though HTTP 1.1 is used, the TCP connection is setup and
-    closed with each request. This is done for compatibility reasons due to various issues related
-    to session continuation implementation in various servers.
     """
 
     def __init__(self, remote, downloader_overrides=None):
@@ -102,7 +98,7 @@ class DownloaderFactory:
         Returns:
             :class:`aiohttp.ClientSession`
         """
-        tcp_conn_opts = {"force_close": True}
+        tcp_conn_opts = {}
 
         sslcontext = None
         if self._remote.ca_cert:
@@ -133,17 +129,17 @@ class DownloaderFactory:
                     headers["User-Agent"] = f"{headers['User-Agent']}, {user_agent_header}"
                 headers.extend(header_dict)
 
-        conn = aiohttp.TCPConnector(**tcp_conn_opts)
-        total = self._remote.total_timeout
-        sock_connect = self._remote.sock_connect_timeout
-        sock_read = self._remote.sock_read_timeout
-        connect = self._remote.connect_timeout
-
         timeout = aiohttp.ClientTimeout(
-            total=total, sock_connect=sock_connect, sock_read=sock_read, connect=connect
+            total=self._remote.total_timeout,
+            sock_connect=self._remote.sock_connect_timeout,
+            sock_read=self._remote.sock_read_timeout,
+            connect=self._remote.connect_timeout,
         )
         return aiohttp.ClientSession(
-            connector=conn, timeout=timeout, headers=headers, requote_redirect_url=False
+            connector=aiohttp.TCPConnector(**tcp_conn_opts),
+            timeout=timeout,
+            headers=headers,
+            requote_redirect_url=False,
         )
 
     def build(self, url, **kwargs):
