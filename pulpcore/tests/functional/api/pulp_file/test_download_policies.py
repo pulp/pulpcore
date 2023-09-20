@@ -130,7 +130,10 @@ def test_download_policy(
     process = subprocess.run(["pulpcore-manager", "shell", "-c", commands], capture_output=True)
     assert process.returncode == 0
     content_artifact_created_date = process.stdout.decode().strip()
-    distribution_html_page = download_file(f"{distribution.base_url}foo/")
+    # Download the listing page for the 'foo' directory
+    distribution_html_page = download_file(f"{distribution.base_url}foo")
+    # Assert that requesting a path inside a distribution without a trailing / returns a 301
+    assert distribution_html_page.response_obj.history[0].status == 301
     soup = BeautifulSoup(distribution_html_page.body, "html.parser")
     all_strings = [s for s in soup.strings if s != "\n"]
     assert all_strings[3] == "0.iso"
