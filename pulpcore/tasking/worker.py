@@ -1,16 +1,11 @@
 from gettext import gettext as _
 
-import importlib
 import logging
 import os
 import random
-import resource
 import select
 import signal
 import socket
-import sys
-import threading
-import time
 import contextlib
 from datetime import timedelta
 from multiprocessing import Process
@@ -20,29 +15,20 @@ from packaging.version import parse as parse_version
 from django.conf import settings
 from django.db import connection
 from django.utils import timezone
-from django_guid import set_guid
 
+from pulpcore.constants import TASK_STATES, TASK_INCOMPLETE_STATES
+from pulpcore.exceptions import AdvisoryLockError
+from pulpcore.app.apps import pulp_plugin_configs
 from pulpcore.app.models import Worker, Task, ApiAppStatus, ContentAppStatus
 
-from pulpcore.app.util import (
-    configure_analytics,
-    configure_cleanup,
-    set_domain,
-    set_current_user,
-)
-from pulpcore.app.role_util import get_users_with_perms
-
-from pulpcore.constants import (
-    TASK_STATES,
-    TASK_INCOMPLETE_STATES,
-    VAR_TMP_PULP,
-)
-
-from pulpcore.app.apps import pulp_plugin_configs
-from pulpcore.exceptions import AdvisoryLockError
 from pulpcore.tasking.storage import WorkerDirectory
-from pulpcore.tasking.tasks import dispatch_scheduled_tasks, execute_task
-from pulpcore.tasking.util import _delete_incomplete_resources
+from pulpcore.tasking._util import (
+    delete_incomplete_resources,
+    dispatch_scheduled_tasks,
+    perform_task,
+    startup_hook,
+    PGAdvisoryLock,
+)
 
 
 _logger = logging.getLogger(__name__)
@@ -56,39 +42,6 @@ TASK_KILL_INTERVAL = 1
 WORKER_CLEANUP_INTERVAL = 100
 # Randomly chosen
 TASK_SCHEDULING_LOCK = 42
-
-
-def startup_hook():
-    configure_analytics()
-    configure_cleanup()
-
-
-class PGAdvisoryLock:
-    """
-    A context manager that will hold a postgres advisory lock non-blocking.
-
-    The locks can be chosen from a lock group to avoid collisions. They will never collide with the
-    locks used for tasks.
-    """
-
-    def __init__(self, lock, lock_group=0):
-        self.lock_group = lock_group
-        self.lock = lock
-
-    def __enter__(self):
-        with connection.cursor() as cursor:
-            cursor.execute("SELECT pg_try_advisory_lock(%s, %s)", [self.lock_group, self.lock])
-            acquired = cursor.fetchone()[0]
-        if not acquired:
-            raise AdvisoryLockError("Could not acquire lock.")
-        return self
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        with connection.cursor() as cursor:
-            cursor.execute("SELECT pg_advisory_unlock(%s, %s)", [self.lock_group, self.lock])
-            released = cursor.fetchone()[0]
-        if not released:
-            raise RuntimeError("Lock not held.")
 
 
 class PulpcoreWorker:
@@ -221,7 +174,7 @@ class PulpcoreWorker:
             )
         else:
             _logger.info(_("Cleaning up task %s and marking as %s."), task.pk, final_state)
-        _delete_incomplete_resources(task)
+        delete_incomplete_resources(task)
         task.set_canceled(final_state=final_state, reason=reason)
         if task.reserved_resources_record:
             self.notify_workers()
@@ -339,7 +292,7 @@ class PulpcoreWorker:
         cancel_state = None
         cancel_reason = None
         with TemporaryDirectory(dir=".") as task_working_dir_rel_path:
-            task_process = Process(target=_perform_task, args=(task.pk, task_working_dir_rel_path))
+            task_process = Process(target=perform_task, args=(task.pk, task_working_dir_rel_path))
             task_process.start()
             while True:
                 if cancel_state:
@@ -420,77 +373,3 @@ class PulpcoreWorker:
                 self.cursor.execute("UNLISTEN pulp_worker_wakeup")
             self.cursor.execute("UNLISTEN pulp_worker_cancel")
             self.shutdown()
-
-
-def task_diagnostics_dir(task_pk):
-    # create a directory in /var/tmp/pulp/<task_id>/ and return it
-    taskdata_dir = VAR_TMP_PULP / str(task_pk)
-    taskdata_dir.mkdir(parents=True, exist_ok=True)
-    return taskdata_dir
-
-
-def write_memory_usage(path):
-    _logger.info("Writing task memory data to {}".format(path))
-
-    with open(path, "w") as file:
-        file.write("# Seconds\tMemory in MB\n")
-        seconds = 0
-        while True:
-            current_mb_in_use = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024
-            file.write(f"{seconds}\t{current_mb_in_use:.2f}\n")
-            file.flush()
-            time.sleep(5)
-            seconds += 5
-
-
-def child_signal_handler(sig, frame):
-    # Reset signal handlers to default
-    # If you kill the process a second time it's not graceful anymore.
-    signal.signal(signal.SIGINT, signal.SIG_DFL)
-    signal.signal(signal.SIGTERM, signal.SIG_DFL)
-    signal.signal(signal.SIGHUP, signal.SIG_DFL)
-    signal.signal(signal.SIGUSR1, signal.SIG_DFL)
-
-    if sig == signal.SIGUSR1:
-        sys.exit()
-
-
-def _perform_task(task_pk, task_working_dir_rel_path):
-    """Setup the environment to handle a task and execute it.
-    This must be called as a subprocess, while the parent holds the advisory lock."""
-    signal.signal(signal.SIGINT, child_signal_handler)
-    signal.signal(signal.SIGTERM, child_signal_handler)
-    signal.signal(signal.SIGHUP, child_signal_handler)
-    signal.signal(signal.SIGUSR1, child_signal_handler)
-    if settings.TASK_DIAGNOSTICS:
-        diagnostics_dir = task_diagnostics_dir(task_pk)
-        mem_diagnostics_path = diagnostics_dir / "memory.datum"
-        # It would be better to have this recording happen in the parent process instead of here
-        # https://github.com/pulp/pulpcore/issues/2337
-        mem_diagnostics_thread = threading.Thread(
-            target=write_memory_usage, args=(mem_diagnostics_path,), daemon=True
-        )
-        mem_diagnostics_thread.start()
-    # All processes need to create their own postgres connection
-    connection.connection = None
-    task = Task.objects.select_related("pulp_domain").get(pk=task_pk)
-    user = get_users_with_perms(task, with_group_users=False).first()
-    # Set current contexts
-    set_guid(task.logging_cid)
-    set_current_user(user)
-    set_domain(task.pulp_domain)
-    os.chdir(task_working_dir_rel_path)
-
-    # set up profiling
-    if settings.TASK_DIAGNOSTICS and importlib.util.find_spec("pyinstrument") is not None:
-        from pyinstrument import Profiler
-
-        with Profiler() as profiler:
-            execute_task(task)
-
-        profile_file = diagnostics_dir / "pyinstrument.html"
-        _logger.info("Writing task profile data to {}".format(profile_file))
-        with open(profile_file, "w+") as f:
-            f.write(profiler.output_html())
-    else:
-        execute_task(task)
