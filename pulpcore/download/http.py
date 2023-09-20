@@ -71,10 +71,6 @@ class HttpDownloader(BaseDownloader):
     allow for an active download to be arbitrarily long, while still detecting dead or closed
     sessions even when TCPKeepAlive is disabled.
 
-    If a session is not provided, the one created will force TCP connection closure after each
-    request. This is done for compatibility reasons due to various issues related to session
-    continuation implementation in various servers.
-
     `aiohttp.ClientSession` objects allows you to configure options that will apply to all
     downloaders using that session such as auth, timeouts, headers, etc. For more info on these
     options see the `aiohttp.ClientSession` docs for more information:
@@ -165,7 +161,7 @@ class HttpDownloader(BaseDownloader):
             self._close_session_on_finalize = False
         else:
             timeout = aiohttp.ClientTimeout(total=None, sock_connect=600, sock_read=600)
-            conn = aiohttp.TCPConnector({"force_close": True})
+            conn = aiohttp.TCPConnector()
             self.session = aiohttp.ClientSession(
                 connector=conn, timeout=timeout, headers=headers, requote_redirect_url=False
             )
