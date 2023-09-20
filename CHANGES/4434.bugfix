@@ -1,1 +1,0 @@
-Removed compression from exports (using gzip level 0). For most users of export functionality it seems to be a poor tradeoff.

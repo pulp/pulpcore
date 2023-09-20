@@ -1,2 +1,0 @@
-Fixed bug where supplying an empty list for ``pulp_href__in`` or ``pulp_id__in`` would return all
-results instead of none.

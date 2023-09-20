@@ -13,6 +13,52 @@ Changelog
 
 .. towncrier release notes start
 
+3.35.0 (2023-09-20)
+===================
+REST API
+--------
+
+Features
+~~~~~~~~
+
+- Added RBAC for UpstreamPulp APIs.
+  :github:`3994`
+- Added filters ``name__regex`` and ``name__iregex`` to various endpoints.
+  :github:`4432`
+- Enabling the `TASK_DIAGNOSTICS` option now additionally creates a profile of all executed tasks if the `pyinstrument` package is installed. This incurs a small overhead on task runtime (5-10%).
+  :github:`4436`
+
+
+Bugfixes
+~~~~~~~~
+
+- Added encryption to task argument fields.
+  :github:`+enc_task_args`
+- Fixed sync not deleting temporary files when WORKING_DIRECTORY is not a sub-directory of MEDIA_ROOT
+  or when using a non-filesystem storage backend.
+  :github:`1936`
+- Ensure non-chunked exports and chunked exports use the same compression level.
+  :github:`4411`
+- Removed compression from exports (using gzip level 0). For most users of export functionality it seems to be a poor tradeoff.
+  :github:`4434`
+- Fixed bug where supplying an empty list for ``pulp_href__in`` or ``pulp_id__in`` would return all
+  results instead of none.
+  :github:`4437`
+
+
+Removals
+~~~~~~~~
+
+- Removed the ``pulp-content`` script that was superseeded by ``pulpcore-content``.
+  :github:`+remove_old_script`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.34.0 (2023-09-12)
 ===================
 REST API
