@@ -101,6 +101,7 @@ def export_artifacts(export, artifacts):
     """
     data = dict(message="Exporting Artifacts", code="export.artifacts", total=len(artifacts))
     with ProgressReport(**data) as pb:
+        pb.BATCH_INTERVAL = 5000
         for artifact in pb.iter(artifacts):
             dest = artifact.file.name
             if settings.DEFAULT_FILE_STORAGE != "pulpcore.app.models.storage.FileSystem":
