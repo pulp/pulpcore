@@ -15,9 +15,6 @@ from pulpcore.constants import TASK_CHOICES, TASK_STATES
 
 _logger = logging.getLogger(__name__)
 
-# number of ms between save() calls when _using_context_manager is set
-BATCH_INTERVAL = 2000
-
 
 class ProgressReport(BaseModel):
     """
@@ -107,6 +104,9 @@ class ProgressReport(BaseModel):
             it will be set to the current task_id.
     """
 
+    # number of ms between save() calls when _using_context_manager is set
+    BATCH_INTERVAL = 2000
+
     message = models.TextField()
     code = models.TextField()
     state = models.TextField(choices=TASK_CHOICES, default=TASK_STATES.WAITING)
@@ -137,7 +137,7 @@ class ProgressReport(BaseModel):
             self.task = Task.current()
 
         if self._using_context_manager and self._last_save_time:
-            if now - self._last_save_time >= datetime.timedelta(milliseconds=BATCH_INTERVAL):
+            if now - self._last_save_time >= datetime.timedelta(milliseconds=self.BATCH_INTERVAL):
                 super().save(*args, **kwargs)
                 self._last_save_time = now
         else:
