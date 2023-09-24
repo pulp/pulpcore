@@ -30,6 +30,18 @@ RUN pip3 install
 {%- endif -%}
 {%- endfor %}
 
+{% if pulp_env is defined and pulp_env %}
+{% for key, value in pulp_env.items() %}
+ENV {{ key | upper }}={{ value }}
+{% endfor %}
+{% endif %}
+
+{% if pulp_scenario_env is defined and pulp_scenario_env %}
+{% for key, value in pulp_scenario_env.items() %}
+ENV {{ key | upper }}={{ value }}
+{% endfor %}
+{% endif %}
+
 USER pulp:pulp
 RUN PULP_STATIC_ROOT=/var/lib/operator/static/ PULP_CONTENT_ORIGIN=localhost \
        /usr/local/bin/pulpcore-manager collectstatic --clear --noinput --link
