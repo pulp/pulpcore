@@ -9,10 +9,6 @@
 name: Create New Release Branch
 on:
   workflow_dispatch:
-    inputs:
-      name:
-        description: "Branch name (e.g. 3.14)"
-        required: true
 
 env:
   RELEASE_WORKFLOW: true
@@ -25,12 +21,12 @@ jobs:
       fail-fast: false
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
-          fetch-depth: 1
+          fetch-depth: 0
           path: pulpcore
 
-      - uses: actions/setup-python@v3
+      - uses: actions/setup-python@v4
         with:
           python-version: "3.8"
 
@@ -46,26 +42,27 @@ jobs:
         env:
           SECRETS_CONTEXT: ${{ toJson(secrets) }}
 
-      - name: Verify that branch name matches current version string on main branch
+      - name: Determine new branch name
         working-directory: pulpcore
         run: |
-          X_Y_VERSION=$(grep version setup.py | sed -rn 's/version="(.*)\.0((a[0-9]+)|(b[0-9]+))?\.dev",/\1/p' | awk '{$1=$1};1')
-          if [[ "$X_Y_VERSION" != "${{ inputs.name }}" ]]
+          # Just to be sure...
+          git checkout main
+          NEW_BRANCH="$(bump2version --dry-run --list release | sed -Ene 's/^new_version=([[:digit:]]+\.[[:digit:]]+)\..*$/\1/p')"
+          if [ -z "$NEW_BRANCH" ]
           then
-            echo "Branch name doesn't match the current version string $X_Y_VERSION."
+            echo Could not determine the new branch name.
             exit 1
           fi
+          echo "NEW_BRANCH=${NEW_BRANCH}" >> "$GITHUB_ENV"
 
-      - name: Create ${{ inputs.name }} release branch
+      - name: Create release branch
         working-directory: pulpcore
         run: |
-          git checkout -b ${{ inputs.name }}
-          git push origin ${{ inputs.name }}
+          git branch "${NEW_BRANCH}"
 
       - name: Bump version on main branch
         working-directory: pulpcore
         run: |
-          git checkout main
           bump2version --no-commit minor
 
       - name: Remove entries from CHANGES directory
@@ -88,3 +85,8 @@ jobs:
             Bump minor version
             [noissue]
           delete-branch: true
+
+      - name: Push release branch
+        working-directory: pulpcore
+        run: |
+          git push origin "${NEW_BRANCH}"
