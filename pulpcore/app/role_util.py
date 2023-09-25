@@ -402,12 +402,12 @@ def get_users_with_perms_attached_roles(
     user_roles = UserRole.objects.filter(role__permissions__in=perms).filter(object_query)
     res = defaultdict(set)
     for user_role in user_roles:
-        res[user_role.user].update(user_role.role.name)
+        res[user_role.user].add(user_role.role.name)
     if with_group_users:
         group_roles = GroupRole.objects.filter(role__permissions__in=perms).filter(object_query)
         for group_role in group_roles:
             for user in group_role.group.user_set.all():
-                res[user].update(group_role.role.name)
+                res[user].add(group_role.role.name)
     return {k: list(v) for k, v in res.items()}
 
 

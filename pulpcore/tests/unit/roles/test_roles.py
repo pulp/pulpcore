@@ -7,7 +7,12 @@ from django.contrib.auth.models import Permission
 
 from pulpcore.app.models import Group, Remote, Repository
 from pulpcore.app.models.role import Role
-from pulpcore.app.role_util import assign_role, remove_role, get_objects_for_user
+from pulpcore.app.role_util import (
+    assign_role,
+    remove_role,
+    get_objects_for_user,
+    get_users_with_perms_attached_roles,
+)
 
 
 User = get_user_model()
@@ -94,3 +99,34 @@ class UserRoleTestCase(TestCase):
             {self.remote.pk, self.remote2.pk},
         )
         remove_role("role2", self.group)
+
+    def test_get_users_with_perms_attached_roles(self):
+        assign_role("role1", self.user)
+        result = get_users_with_perms_attached_roles(self.repository)
+        self.assertIn(self.user, result)
+        self.assertEqual(result[self.user], ["role1"])
+
+        result = get_users_with_perms_attached_roles(
+            self.repository, include_model_permissions=False
+        )
+        self.assertNotIn(self.user, result)
+
+        remove_role("role1", self.user)
+        result = get_users_with_perms_attached_roles(self.repository)
+        self.assertNotIn(self.user, result)
+
+        assign_role("role1", self.group, self.repository)
+        result = get_users_with_perms_attached_roles(self.repository)
+        self.assertIn(self.user, result)
+
+        result = get_users_with_perms_attached_roles(
+            self.repository, only_with_perms_in=["core.add_repository"]
+        )
+        self.assertNotIn(self.user, result)
+
+        result = get_users_with_perms_attached_roles(self.repository, with_group_users=False)
+        self.assertNotIn(self.user, result)
+
+        remove_role("role1", self.group, self.repository)
+        result = get_users_with_perms_attached_roles(self.repository)
+        self.assertNotIn(self.user, result)
