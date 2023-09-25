@@ -81,3 +81,12 @@ from .user import (
     UserRoleViewSet,
 )
 from .replica import UpstreamPulpViewSet
+from .openpgp import (
+    OpenPGPDistributionViewSet,
+    OpenPGPKeyringViewSet,
+    OpenPGPPublicKeyViewSet,
+    OpenPGPPublicSubkeyViewSet,
+    OpenPGPSignatureViewSet,
+    OpenPGPUserAttributeViewSet,
+    OpenPGPUserIDViewSet,
+)
