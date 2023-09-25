@@ -249,6 +249,12 @@ ALLOWED_IMPORT_PATHS = []
 
 ALLOWED_EXPORT_PATHS = []
 
+# Enables a couple of performance-enhancing behaviors on export which result in an
+# export format which is incompatible with previous z-stream releases of this y-stream.
+# These modified export formats require compatibility on the import side, which should
+# be upgraded to the same level.
+BACKWARDS_INCOMPATIBLE_FAST_EXPORTS = False
+
 # https://docs.pulpproject.org/pulpcore/configuration/settings.html#pulp-cache
 CACHE_ENABLED = False
 CACHE_SETTINGS = {
