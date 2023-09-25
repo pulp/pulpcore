@@ -2,6 +2,7 @@ from gettext import gettext as _
 import hashlib
 import os
 import tempfile
+import zlib
 
 from contextlib import ExitStack
 from datetime import timedelta
@@ -271,3 +272,18 @@ def compute_file_hash(filename, hasher=None, cumulative_hash=None, blocksize=163
                 cumulative_hash.update(chunk)
         return hasher.hexdigest()
 
+
+class Crc32Hasher:
+    """Wrapper to make the CRC32 implementation act like a standard hashlib hasher"""
+
+    def __init__(self):
+        self.hashval = 0
+
+    def update(self, data):
+        self.hashval = zlib.crc32(data, self.hashval)
+
+    def digest(self):
+        return str(self.hashval)
+
+    def hexdigest(self):
+        return hex(self.hashval)[2:]
