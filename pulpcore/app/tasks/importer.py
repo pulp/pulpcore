@@ -1,3 +1,4 @@
+import hashlib
 import json
 import os
 import re
@@ -35,7 +36,7 @@ from pulpcore.app.modelresource import (
     ContentArtifactResource,
     RepositoryResource,
 )
-from pulpcore.app.util import compute_file_hash
+from pulpcore.app.util import compute_file_hash, Crc32Hasher
 from pulpcore.constants import TASK_STATES
 from pulpcore.tasking.tasks import dispatch
 
@@ -304,6 +305,12 @@ def pulp_import(importer_pk, path, toc, create_repositories):
             created or not.
     """
 
+    def get_hasher(toc):
+        if "checksum_type" in toc["meta"] and toc["meta"]["checksum_type"] == "crc32":
+            return Crc32Hasher
+        else:
+            return hashlib.sha256
+
     def validate_toc(toc_filename):
         """
         Check validity of table-of-contents file.
@@ -357,18 +364,25 @@ def pulp_import(importer_pk, path, toc, create_repositories):
                 )
 
             errs = []
-            # validate the sha256 of the toc-entries
+
+            hasher = get_hasher(the_toc)
+
+            def verify_chunk_hash(chunk_path, expected_digest):
+                actual_digest = compute_file_hash(chunk_path, hasher=hasher())
+                if actual_digest != expected_digest:
+                    err_str = "File {} expected checksum : {}, computed checksum : {}".format(
+                        chunk, expected_digest, actual_digest
+                    )
+                    errs.append(err_str)
+
+            # validate the checksum of the toc-entries
             # gather errors for reporting at the end
             chunks = sorted(the_toc["files"].keys())
             data = dict(message="Validating Chunks", code="validate.chunks", total=len(chunks))
             with ProgressReport(**data) as pb:
                 for chunk in pb.iter(chunks):
-                    a_hash = compute_file_hash(os.path.join(base_dir, chunk))
-                    if not a_hash == the_toc["files"][chunk]:
-                        err_str = "File {} expected checksum : {}, computed checksum : {}".format(
-                            chunk, the_toc["files"][chunk], a_hash
-                        )
-                        errs.append(err_str)
+                    chunk_path = os.path.join(base_dir, chunk)
+                    verify_chunk_hash(chunk_path, the_toc["files"][chunk])
 
             # if there are any errors, report and fail
             if errs:
@@ -417,7 +431,8 @@ def pulp_import(importer_pk, path, toc, create_repositories):
                         exc_info=True,
                     )
 
-        combined_hash = compute_file_hash(result_file)
+        hasher = get_hasher(the_toc)
+        combined_hash = compute_file_hash(result_file, hasher=hasher())
         if combined_hash != the_toc["meta"]["global_hash"]:
             raise ValidationError(
                 _("Mismatch between combined archive checksum [{}] and originating [{}]).").format(
