@@ -19,7 +19,7 @@ The high-level workflow for this use case is
 :term:`RepositoryVersions<RepositoryVersion>` of the specified
 :term:`Repositories<Repository>`
 
-3. The resulting ``.tar.gz`` Export is transferred to the appropriate Downstream.
+3. The resulting ``.tar`` Export is transferred to the appropriate Downstream.
 
 4. On the Downstream Pulp instance, an Importer is defined, that maps the incoming
 Upstream :term:`Repositories<Repository>` to matching Downstream
@@ -182,24 +182,24 @@ specified by that Exporter's ``path`` attribute::
 
     http POST :${EXPORTER_HREF}exports/
 
-The resulting Export writes to a ``.tar.gz`` file, in the directory pointed to by the
-Exporter's path, with a name that follows the convention ``export-<export-UUID>-YYYYmmdd_HHMM.tar.gz``.
+The resulting Export writes to a ``.tar`` file, in the directory pointed to by the
+Exporter's path, with a name that follows the convention ``export-<export-UUID>-YYYYmmdd_HHMM.tar``.
 
 It will also produce a "table of contents" file describing the file (or files, see
 `Exporting Chunked Files`_ below) for later use verifying and importing the results of the export::
 
     ls /tmp/exports
-    export-32fd25c7-18b2-42de-b2f8-16f6d90358c3-20200416_2000.tar.gz
+    export-32fd25c7-18b2-42de-b2f8-16f6d90358c3-20200416_2000.tar
     export-32fd25c7-18b2-42de-b2f8-16f6d90358c3-20200416_2000-toc.json
     python -m json.tool /tmp/exports/export-32fd25c7-18b2-42de-b2f8-16f6d90358c3-20200416_2000-toc.json
         {
         "meta": {
             "chunk_size": 0, # chunk_size in bytes, or 0 if an export did not use the chunk_size parameter
-            "file": "export-32fd25c7-18b2-42de-b2f8-16f6d90358c3-20200416_2000.tar.gz",
+            "file": "export-32fd25c7-18b2-42de-b2f8-16f6d90358c3-20200416_2000.tar",
             "global_hash": "eaef962943915ecf6b5e45877b162364284bd9c4f367d9c96d18c408012ef424"
         },
         "files": {
-            "export-32fd25c7-18b2-42de-b2f8-16f6d90358c3-20200416_2000.tar.gz": "eaef962943915ecf6b5e45877b162364284bd9c4f367d9c96d18c408012ef424"
+            "export-32fd25c7-18b2-42de-b2f8-16f6d90358c3-20200416_2000.tar": "eaef962943915ecf6b5e45877b162364284bd9c4f367d9c96d18c408012ef424"
         }
     }
 
@@ -224,10 +224,10 @@ repositories in our Exporter.::
     http POST :${EXPORTER_HREF}exports/ \
         versions:=[\"${ISO_HREF}versions/0/\",\"${ZOO_HREF}versions/0/\"]
 
-Note that the "zero'th" :term:`RepositoryVersion` of a :term:`Repository` is created when the :term:`Repository` is created, and is empty. If you unpack the resulting Export ``tar.gz`` you will find, for example, that there is no ``artifacts/`` directory and an empty ``ArtifactResource.json`` file::
+Note that the "zero'th" :term:`RepositoryVersion` of a :term:`Repository` is created when the :term:`Repository` is created, and is empty. If you unpack the resulting Export ``tar`` you will find, for example, that there is no ``artifacts/`` directory and an empty ``ArtifactResource.json`` file::
 
     cd /tmp/exports
-    tar xvzf export-930ea60c-97b7-4e00-a737-70f773ebbb14-20200511_2005.tar.gz
+    tar xvf export-930ea60c-97b7-4e00-a737-70f773ebbb14-20200511_2005.tar
         versions.json
         pulpcore.app.modelresource.ArtifactResource.json
         pulpcore.app.modelresource.RepositoryResource.json
@@ -294,10 +294,10 @@ to produce an incremental export of everything that happened after ``start_versi
 Exporting Chunked Files
 -----------------------
 
-By default, PulpExport streams data into a single ``.tar.gz`` file. Since :term:`Repositories<Repository>`
+By default, PulpExport streams data into a single ``.tar`` file. Since :term:`Repositories<Repository>`
 can contain a lot of artifacts and content, that can result in a file too large to be
 copied to transport media. In this case, you can specify a maximum-file-size, and the
-export process will chunk the tar.gz into a series of files no larger than this.
+export process will chunk the tar into a series of files no larger than this.
 
 You accomplish this by setting the ``chunk_size`` parameter to the desired maximum number of bytes. This
 parameter takes an integer, or size-units of KB, MB, or GB. Files appear in the Exporter.path
@@ -308,13 +308,13 @@ directory, with a four-digit sequence number suffix::
             "task": "/pulp/api/v3/tasks/da3350f7-0102-4dd5-81e0-81becf3ffdc7/"
         }
     ls -l /tmp/exports/
-        10K export-780822a4-d280-4ed0-a53c-382a887576a6-20200522_2325.tar.gz.0000
-        10K export-780822a4-d280-4ed0-a53c-382a887576a6-20200522_2325.tar.gz.0001
-        10K export-780822a4-d280-4ed0-a53c-382a887576a6-20200522_2325.tar.gz.0002
-        10K export-780822a4-d280-4ed0-a53c-382a887576a6-20200522_2325.tar.gz.0003
-        10K export-780822a4-d280-4ed0-a53c-382a887576a6-20200522_2325.tar.gz.0004
-        10K export-780822a4-d280-4ed0-a53c-382a887576a6-20200522_2325.tar.gz.0005
-        2.3K export-780822a4-d280-4ed0-a53c-382a887576a6-20200522_2325.tar.gz.0006
+        10K export-780822a4-d280-4ed0-a53c-382a887576a6-20200522_2325.tar.0000
+        10K export-780822a4-d280-4ed0-a53c-382a887576a6-20200522_2325.tar.0001
+        10K export-780822a4-d280-4ed0-a53c-382a887576a6-20200522_2325.tar.0002
+        10K export-780822a4-d280-4ed0-a53c-382a887576a6-20200522_2325.tar.0003
+        10K export-780822a4-d280-4ed0-a53c-382a887576a6-20200522_2325.tar.0004
+        10K export-780822a4-d280-4ed0-a53c-382a887576a6-20200522_2325.tar.0005
+        2.3K export-780822a4-d280-4ed0-a53c-382a887576a6-20200522_2325.tar.0006
         1168 export-780822a4-d280-4ed0-a53c-382a887576a6-20200522_2325-toc.json
 
 The "table of contents" lists all the resulting files and their checksums::
@@ -323,17 +323,17 @@ The "table of contents" lists all the resulting files and their checksums::
     {
         "meta": {
             "chunk_size": 10240,
-            "file": "export-8c1891a3-ffb5-41a7-b141-51daa0e38a18-20200717_1947.tar.gz",
+            "file": "export-8c1891a3-ffb5-41a7-b141-51daa0e38a18-20200717_1947.tar",
             "global_hash": "eaef962943915ecf6b5e45877b162364284bd9c4f367d9c96d18c408012ef424"
         },
         "files": {
-            "export-780822a4-d280-4ed0-a53c-382a887576a6-20200522_2325.tar.gz.0000": "8156874798802f773bcbaf994def6523888922bde7a939bc8ac795a5cbb25b85",
-            "export-780822a4-d280-4ed0-a53c-382a887576a6-20200522_2325.tar.gz.0001": "e52fac34b0b7b1d8602f5c116bf9d3eb5363d2cae82f7cc00cc4bd5653ded852",
-            "export-780822a4-d280-4ed0-a53c-382a887576a6-20200522_2325.tar.gz.0002": "df4a2ea551ff41e9fb046e03aa36459f216d4bcb07c23276b78a96b98ae2b517",
-            "export-780822a4-d280-4ed0-a53c-382a887576a6-20200522_2325.tar.gz.0003": "27a6ecba3cc51965fdda9ec400f5610ff2aa04a6834c01d0c91776ac21a0e9bb",
-            "export-780822a4-d280-4ed0-a53c-382a887576a6-20200522_2325.tar.gz.0004": "f35c5a96fccfe411c074463c0eb0a77b39fa072ba160903d421c08313aba58f8",
-            "export-780822a4-d280-4ed0-a53c-382a887576a6-20200522_2325.tar.gz.0005": "13458b10465b01134bde49319d6b5cba9948016448da9d35cb447265a25e3caa",
-            "export-780822a4-d280-4ed0-a53c-382a887576a6-20200522_2325.tar.gz.0006": "a1986a0590943c9bb573c7d7170c428457ce54efe75f55997259ea032c585a35"
+            "export-780822a4-d280-4ed0-a53c-382a887576a6-20200522_2325.tar.0000": "8156874798802f773bcbaf994def6523888922bde7a939bc8ac795a5cbb25b85",
+            "export-780822a4-d280-4ed0-a53c-382a887576a6-20200522_2325.tar.0001": "e52fac34b0b7b1d8602f5c116bf9d3eb5363d2cae82f7cc00cc4bd5653ded852",
+            "export-780822a4-d280-4ed0-a53c-382a887576a6-20200522_2325.tar.0002": "df4a2ea551ff41e9fb046e03aa36459f216d4bcb07c23276b78a96b98ae2b517",
+            "export-780822a4-d280-4ed0-a53c-382a887576a6-20200522_2325.tar.0003": "27a6ecba3cc51965fdda9ec400f5610ff2aa04a6834c01d0c91776ac21a0e9bb",
+            "export-780822a4-d280-4ed0-a53c-382a887576a6-20200522_2325.tar.0004": "f35c5a96fccfe411c074463c0eb0a77b39fa072ba160903d421c08313aba58f8",
+            "export-780822a4-d280-4ed0-a53c-382a887576a6-20200522_2325.tar.0005": "13458b10465b01134bde49319d6b5cba9948016448da9d35cb447265a25e3caa",
+            "export-780822a4-d280-4ed0-a53c-382a887576a6-20200522_2325.tar.0006": "a1986a0590943c9bb573c7d7170c428457ce54efe75f55997259ea032c585a35"
         }
     }
 
@@ -374,19 +374,19 @@ After the importer is created, a POST request to create an import will trigger t
     existence of a repository specified in the ``repo_mapping`` option is tested before the importer
     is initialized. Thus, the repository has to be already created in advance.
 
-You can import an exported ``.tar.gz`` directly using the ``path`` parameter::
+You can import an exported ``.tar`` directly using the ``path`` parameter::
 
     http POST :/pulp/api/v3/importers/core/pulp/f8acba87-0250-4640-b56b-c92597d344b7/imports/ \
-      path="/data/export-113c8950-072b-432a-9da6-24da1f4d0a02-20200408_2015.tar.gz"
+      path="/data/export-113c8950-072b-432a-9da6-24da1f4d0a02-20200408_2015.tar"
 
 Or you can point the importer at the "table of contents" file that was produced by an export.
 If the TOC file is in the same directory as the export-files it points to, the import process
 will:
 
     * verify the checksum(s) of all export-files,
-    * reassemble a chunked-export into a single ``.tar.gz``
+    * reassemble a chunked-export into a single ``.tar``
     * remove chunks as they are used (in order to conserve disk space)
-    * verify the checksum of the resulting reassembled ``.tar.gz``
+    * verify the checksum of the resulting reassembled ``.tar``
 
 and then import the result::
 

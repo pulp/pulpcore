@@ -1,0 +1,4 @@
+Exports now take place in .tar format rather than .tar.gz. It was previously found that the
+compression provided little benefit but came with large runtime costs, so the compression
+level was reduced to 0. However even packaging the data in a gzip archive without compression
+comes with performance costs (particularly on import), so, we remove that layer entirely.
