@@ -3,7 +3,6 @@ import json
 import logging
 import os
 import os.path
-import sys
 import subprocess
 import tarfile
 
@@ -369,7 +368,7 @@ def pulp_export(exporter_pk, params):
 
     1) Spit out all Artifacts, ArtifactResource.json, and RepositoryResource.json
     2) Spit out all *resource JSONs in per-repo-version directories
-    3) Compute and store the sha256 and filename of the resulting tar.gz/chunks
+    3) Compute and store the sha256 and filename of the resulting tar/chunks
 
     Args:
         exporter_pk (str): PulpExporter
@@ -379,8 +378,6 @@ def pulp_export(exporter_pk, params):
         ValidationError: When path is not in the ALLOWED_EXPORT_PATHS setting,
             OR path exists and is not a directory
     """
-    DEFAULT_COMPRESSION = 0
-
     pulp_exporter = PulpExporter.objects.get(pk=exporter_pk)
     serializer = PulpExportSerializer(data=params, context={"exporter": pulp_exporter})
     serializer.is_valid(raise_exception=True)
@@ -415,23 +412,12 @@ def pulp_export(exporter_pk, params):
                 stdin=subprocess.PIPE,
             ) as split_process:
                 try:
-                    # on Python < 3.12 we have a monkeypatch which enables compression levels
-                    # see https://github.com/pulp/pulpcore/issues/3869
-                    if sys.version_info.major == 3 and sys.version_info.minor < 12:
-                        from pulpcore.app import monkeypatch
-
-                        monkeypatch.patch_tarfile_default_compression_level(DEFAULT_COMPRESSION)
-
-                        with tarfile.open(tarfile_fp, "w|gz", fileobj=split_process.stdin) as tar:
-                            _do_export(pulp_exporter, tar, the_export)
-                    else:
-                        with tarfile.open(
-                            tarfile_fp,
-                            "w|gz",
-                            fileobj=split_process.stdin,
-                            compresslevel=DEFAULT_COMPRESSION,
-                        ) as tar:
-                            _do_export(pulp_exporter, tar, the_export)
+                    with tarfile.open(
+                        tarfile_fp,
+                        "w|",
+                        fileobj=split_process.stdin,
+                    ) as tar:
+                        _do_export(pulp_exporter, tar, the_export)
                 except Exception:
                     # no matter what went wrong, we can't trust the files we (may have) created.
                     # Delete the ones we can find and pass the problem up.
@@ -449,7 +435,7 @@ def pulp_export(exporter_pk, params):
         else:
             # write into the file
             try:
-                with tarfile.open(tarfile_fp, "w:gz", compresslevel=DEFAULT_COMPRESSION) as tar:
+                with tarfile.open(tarfile_fp, "w") as tar:
                     _do_export(pulp_exporter, tar, the_export)
             except Exception:
                 # no matter what went wrong, we can't trust the file we created.
@@ -465,7 +451,7 @@ def pulp_export(exporter_pk, params):
         the_export.output_file_info = rslts
 
         # write outputfile/hash info to a file 'next to' the output file(s)
-        output_file_info_path = tarfile_fp.replace(".tar.gz", "-toc.json")
+        output_file_info_path = tarfile_fp.replace(".tar", "-toc.json")
         with open(output_file_info_path, "w") as outfile:
             if the_export.validated_chunk_size:
                 chunk_size = the_export.validated_chunk_size

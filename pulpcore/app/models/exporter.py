@@ -112,9 +112,9 @@ class PulpExport(Export):
         """
         Return the full tarfile name where the specified PulpExport should store its export
         """
-        # EXPORTER-PATH/export-EXPORTID-YYYYMMDD_HHMM.tar.gz
+        # EXPORTER-PATH/export-EXPORTID-YYYYMMDD_HHMM.tar
         return os.path.normpath(
-            "{}/export-{}-{}.tar.gz".format(
+            "{}/export-{}-{}.tar".format(
                 self.exporter.path, str(self.pulp_id), datetime.utcnow().strftime("%Y%m%d_%H%M")
             )
         )
