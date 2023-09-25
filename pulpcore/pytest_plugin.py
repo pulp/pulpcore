@@ -1251,3 +1251,18 @@ def ascii_armored_detached_signing_service(
     return pulpcore_bindings.SigningServicesApi.list(
         name=_ascii_armored_detached_signing_service_name
     ).results[0]
+
+
+@pytest.fixture(scope="class")
+def openpgp_keyring_factory(pulpcore_bindings, gen_object_with_cleanup):
+    def _openpgp_keyring_factory(**kwargs):
+        extra_args = {}
+        if pulp_domain := kwargs.pop("pulp_domain", None):
+            extra_args["pulp_domain"] = pulp_domain
+        body = {"name": str(uuid.uuid4())}
+        body.update(kwargs)
+        return gen_object_with_cleanup(
+            pulpcore_bindings.RepositoriesOpenpgpKeyringApi, body, **extra_args
+        )
+
+    return _openpgp_keyring_factory
