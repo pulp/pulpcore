@@ -1,4 +1,3 @@
-import hashlib
 import json
 import logging
 import os
@@ -28,7 +27,7 @@ from pulpcore.app.models import (
 from pulpcore.app.models.content import Artifact, ContentArtifact
 from pulpcore.app.serializers import PulpExportSerializer
 
-from pulpcore.app.util import compute_file_hash, get_version_from_model
+from pulpcore.app.util import compute_file_hash, get_version_from_model, Crc32Hasher
 from pulpcore.app.importexport import (
     export_versions,
     export_artifacts,
@@ -386,6 +385,8 @@ def pulp_export(exporter_pk, params):
     the_export.validated_start_versions = serializer.validated_data.get("start_versions", None)
     the_export.validated_chunk_size = serializer.validated_data.get("chunk_size", None)
 
+    hasher = Crc32Hasher
+    checksum_type = "crc32"
     try:
         the_export.task = Task.current()
 
@@ -425,10 +426,10 @@ def pulp_export(exporter_pk, params):
                         os.remove(pathname)
                     raise
             # compute the hashes
-            global_hash = hashlib.sha256()
+            global_hash = hasher()
             paths = sorted([str(Path(p)) for p in glob(tarfile_fp + ".*")])
             for a_file in paths:
-                a_hash = compute_file_hash(a_file, cumulative_hash=global_hash)
+                a_hash = compute_file_hash(a_file, hasher=hasher(), cumulative_hash=global_hash)
                 rslts[a_file] = a_hash
             tarfile_hash = global_hash.hexdigest()
 
@@ -444,7 +445,7 @@ def pulp_export(exporter_pk, params):
                     os.remove(tarfile_fp)
                 raise
             # compute the hash
-            tarfile_hash = compute_file_hash(tarfile_fp)
+            tarfile_hash = compute_file_hash(tarfile_fp, hasher=hasher())
             rslts[tarfile_fp] = tarfile_hash
 
         # store the outputfile/hash info
@@ -462,6 +463,7 @@ def pulp_export(exporter_pk, params):
                     "chunk_size": chunk_size,
                     "file": os.path.basename(tarfile_fp),
                     "global_hash": tarfile_hash,
+                    "checksum_type": checksum_type,
                 },
                 "files": {},
             }
