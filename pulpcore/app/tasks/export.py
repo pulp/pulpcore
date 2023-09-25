@@ -393,6 +393,8 @@ def pulp_export(exporter_pk, params):
         the_export.task = Task.current()
 
         tarfile_fp = the_export.export_tarfile_path()
+        if settings.BACKWARDS_INCOMPATIBLE_FAST_EXPORTS:
+            tarfile_fp = os.path.splitext(tarfile_fp)[0]
 
         path = Path(pulp_exporter.path)
         if not path.is_dir():
@@ -417,19 +419,29 @@ def pulp_export(exporter_pk, params):
                 try:
                     # on Python < 3.12 we have a monkeypatch which enables compression levels
                     # see https://github.com/pulp/pulpcore/issues/3869
-                    if sys.version_info.major == 3 and sys.version_info.minor < 12:
-                        from pulpcore.app import monkeypatch
+                    if not settings.BACKWARDS_INCOMPATIBLE_FAST_EXPORTS:
+                        if sys.version_info.major == 3 and sys.version_info.minor < 12:
+                            from pulpcore.app import monkeypatch
 
-                        monkeypatch.patch_tarfile_default_compression_level(DEFAULT_COMPRESSION)
+                            monkeypatch.patch_tarfile_default_compression_level(DEFAULT_COMPRESSION)
 
-                        with tarfile.open(tarfile_fp, "w|gz", fileobj=split_process.stdin) as tar:
-                            _do_export(pulp_exporter, tar, the_export)
+                            with tarfile.open(
+                                tarfile_fp, "w|gz", fileobj=split_process.stdin
+                            ) as tar:
+                                _do_export(pulp_exporter, tar, the_export)
+                        else:
+                            with tarfile.open(
+                                tarfile_fp,
+                                "w|gz",
+                                fileobj=split_process.stdin,
+                                compresslevel=DEFAULT_COMPRESSION,
+                            ) as tar:
+                                _do_export(pulp_exporter, tar, the_export)
                     else:
                         with tarfile.open(
                             tarfile_fp,
-                            "w|gz",
+                            "w|",
                             fileobj=split_process.stdin,
-                            compresslevel=DEFAULT_COMPRESSION,
                         ) as tar:
                             _do_export(pulp_exporter, tar, the_export)
                 except Exception:
@@ -449,8 +461,12 @@ def pulp_export(exporter_pk, params):
         else:
             # write into the file
             try:
-                with tarfile.open(tarfile_fp, "w:gz", compresslevel=DEFAULT_COMPRESSION) as tar:
-                    _do_export(pulp_exporter, tar, the_export)
+                if not settings.BACKWARDS_INCOMPATIBLE_FAST_EXPORTS:
+                    with tarfile.open(tarfile_fp, "w:gz", compresslevel=DEFAULT_COMPRESSION) as tar:
+                        _do_export(pulp_exporter, tar, the_export)
+                else:
+                    with tarfile.open(tarfile_fp, "w") as tar:
+                        _do_export(pulp_exporter, tar, the_export)
             except Exception:
                 # no matter what went wrong, we can't trust the file we created.
                 # Delete it if it exists and pass the problem up.
@@ -465,7 +481,10 @@ def pulp_export(exporter_pk, params):
         the_export.output_file_info = rslts
 
         # write outputfile/hash info to a file 'next to' the output file(s)
-        output_file_info_path = tarfile_fp.replace(".tar.gz", "-toc.json")
+        if not settings.BACKWARDS_INCOMPATIBLE_FAST_EXPORTS:
+            output_file_info_path = tarfile_fp.replace(".tar.gz", "-toc.json")
+        else:
+            output_file_info_path = tarfile_fp.replace(".tar", "-toc.json")
         with open(output_file_info_path, "w") as outfile:
             if the_export.validated_chunk_size:
                 chunk_size = the_export.validated_chunk_size
