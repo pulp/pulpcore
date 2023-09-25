@@ -199,9 +199,10 @@ def import_repository_version(importer_pk, destination_repo_pk, source_repo_name
     )
     pb.save()
 
+    read_mode = "r:gz" if tar_path.endswith(".gz") else "r"
     with tempfile.TemporaryDirectory(dir=".") as temp_dir:
         # Extract the repo file for the repo info
-        with tarfile.open(tar_path, "r:gz") as tar:
+        with tarfile.open(tar_path, read_mode) as tar:
             tar.extract(REPO_FILE, path=temp_dir)
 
         with open(os.path.join(temp_dir, REPO_FILE), "r") as repo_data_file:
@@ -224,7 +225,7 @@ def import_repository_version(importer_pk, destination_repo_pk, source_repo_name
 
         rv_name = ""
         # Extract the repo version files
-        with tarfile.open(tar_path, "r:gz") as tar:
+        with tarfile.open(tar_path, read_mode) as tar:
             for mem in tar.getmembers():
                 match = re.search(rf"(^repository-{source_repo_name}_[0-9]+)/.+", mem.name)
                 if match:
@@ -258,7 +259,7 @@ def import_repository_version(importer_pk, destination_repo_pk, source_repo_name
         # see if we have a content mapping
         mapping_path = f"{rv_name}/{CONTENT_MAPPING_FILE}"
         mapping = {}
-        with tarfile.open(tar_path, "r:gz") as tar:
+        with tarfile.open(tar_path, read_mode) as tar:
             if mapping_path in tar.getnames():
                 tar.extract(mapping_path, path=temp_dir)
                 with open(os.path.join(temp_dir, mapping_path), "r") as mapping_file:
@@ -412,12 +413,12 @@ def pulp_import(importer_pk, path, toc):
         combined_hash = compute_file_hash(result_file)
         if combined_hash != the_toc["meta"]["global_hash"]:
             raise ValidationError(
-                _("Mismatch between combined .tar.gz checksum [{}] and originating [{}]).").format(
+                _("Mismatch between combined archive checksum [{}] and originating [{}]).").format(
                     combined_hash, the_toc["meta"]["global_hash"]
                 )
             )
         # if we get this far, then: the chunk-files all existed, they all pass checksum validation,
-        # and there exists a combined .tar.gz, which *also* passes checksum-validation.
+        # and there exists a combined .tar, which *also* passes checksum-validation.
         # Let the rest of the import process do its thing on the new combined-file.
         return result_file
 
@@ -427,7 +428,7 @@ def pulp_import(importer_pk, path, toc):
         toc_dir = os.path.dirname(toc_filename)
         result_file = os.path.join(toc_dir, the_toc["meta"]["file"])
 
-        # if we have only one entry in "files", it must be the full .tar.gz.
+        # if we have only one entry in "files", it must be the full .tar.
         # Return the filename from the meta-section.
         if len(the_toc["files"]) == 1:
             return result_file
@@ -448,8 +449,9 @@ def pulp_import(importer_pk, path, toc):
     )
     CreatedResource.objects.create(content_object=the_import)
 
+    read_mode = "r:gz" if path.endswith(".gz") else "r"
     with tempfile.TemporaryDirectory(dir=".") as temp_dir:
-        with tarfile.open(path, "r:gz") as tar:
+        with tarfile.open(path, read_mode) as tar:
 
             def is_within_directory(directory, target):
 
