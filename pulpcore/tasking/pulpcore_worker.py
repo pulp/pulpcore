@@ -375,13 +375,17 @@ class NewPulpWorker:
             self.shutdown()
 
 
-def write_memory_usage(task_pk):
+def task_diagnostics_dir(task_pk):
+    # create a directory in /var/tmp/pulp/<task_id>/ and return it
     taskdata_dir = VAR_TMP_PULP / str(task_pk)
     taskdata_dir.mkdir(parents=True, exist_ok=True)
-    memory_file_dir = taskdata_dir / "memory.datum"
-    _logger.info("Writing task memory data to {}".format(memory_file_dir))
+    return taskdata_dir
 
-    with open(memory_file_dir, "w") as file:
+
+def write_memory_usage(path):
+    _logger.info("Writing task memory data to {}".format(path))
+
+    with open(path, "w") as file:
         file.write("# Seconds\tMemory in MB\n")
         seconds = 0
         while True:
@@ -410,10 +414,14 @@ def _perform_task(task_pk, task_working_dir_rel_path):
     signal.signal(signal.SIGTERM, child_signal_handler)
     signal.signal(signal.SIGUSR1, child_signal_handler)
     if settings.TASK_DIAGNOSTICS:
+        diagnostics_dir = task_diagnostics_dir(task_pk)
+        mem_diagnostics_path = diagnostics_dir / "memory.datum"
         # It would be better to have this recording happen in the parent process instead of here
         # https://github.com/pulp/pulpcore/issues/2337
-        normal_thread = threading.Thread(target=write_memory_usage, args=(task_pk,), daemon=True)
-        normal_thread.start()
+        mem_diagnostics_thread = threading.Thread(
+            target=write_memory_usage, args=(mem_diagnostics_path,), daemon=True
+        )
+        mem_diagnostics_thread.start()
     # All processes need to create their own postgres connection
     connection.connection = None
     task = Task.objects.get(pk=task_pk)
@@ -423,28 +431,45 @@ def _perform_task(task_pk, task_working_dir_rel_path):
     user = get_users_with_perms(task, with_group_users=False).first()
     _set_current_user(user)
     set_guid(task.logging_cid)
-    try:
-        _logger.info(_("Starting task %s"), task.pk)
 
-        # Execute task
-        module_name, function_name = task.name.rsplit(".", 1)
-        module = importlib.import_module(module_name)
-        func = getattr(module, function_name)
-        args = task.args or ()
-        kwargs = task.kwargs or {}
-        os.chdir(task_working_dir_rel_path)
-        result = func(*args, **kwargs)
-        if asyncio.iscoroutine(result):
-            _logger.debug(_("Task is coroutine %s"), task.pk)
-            loop = asyncio.get_event_loop()
-            loop.run_until_complete(result)
+    def execute_task(task):
+        try:
+            _logger.info(_("Starting task %s"), task.pk)
 
-    except Exception:
-        exc_type, exc, tb = sys.exc_info()
-        task.set_failed(exc, tb)
-        _logger.info(_("Task %s failed (%s)"), task.pk, exc)
-        _logger.info("\n".join(traceback.format_list(traceback.extract_tb(tb))))
+            # Execute task
+            module_name, function_name = task.name.rsplit(".", 1)
+            module = importlib.import_module(module_name)
+            func = getattr(module, function_name)
+            args = task.args or ()
+            kwargs = task.kwargs or {}
+            os.chdir(task_working_dir_rel_path)
+            result = func(*args, **kwargs)
+            if asyncio.iscoroutine(result):
+                _logger.debug(_("Task is coroutine %s"), task.pk)
+                loop = asyncio.get_event_loop()
+                loop.run_until_complete(result)
+
+        except Exception:
+            exc_type, exc, tb = sys.exc_info()
+            task.set_failed(exc, tb)
+            _logger.info(_("Task %s failed (%s)"), task.pk, exc)
+            _logger.info("\n".join(traceback.format_list(traceback.extract_tb(tb))))
+        else:
+            task.set_completed()
+            _logger.info(_("Task completed %s"), task.pk)
+
+    # set up profiling
+    if settings.TASK_DIAGNOSTICS and importlib.util.find_spec("pyinstrument") is not None:
+        from pyinstrument import Profiler
+
+        with Profiler() as profiler:
+            execute_task(task)
+
+        profile_file = diagnostics_dir / "pyinstrument.html"
+        _logger.info("Writing task profile data to {}".format(profile_file))
+        with open(profile_file, "w+") as f:
+            f.write(profiler.output_html())
     else:
-        task.set_completed()
-        _logger.info(_("Task completed %s"), task.pk)
+        execute_task(task)
+
     os.environ.pop("PULP_TASK_ID")
