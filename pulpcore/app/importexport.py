@@ -102,17 +102,21 @@ def export_artifacts(export, artifacts):
     data = dict(message="Exporting Artifacts", code="export.artifacts", total=len(artifacts))
     with ProgressReport(**data) as pb:
         pb.BATCH_INTERVAL = 5000
-        for artifact in pb.iter(artifacts):
-            dest = artifact.file.name
+        with tempfile.TemporaryDirectory(dir=".") as temp_dir:
             if settings.DEFAULT_FILE_STORAGE != "pulpcore.app.models.storage.FileSystem":
-                with tempfile.TemporaryDirectory(dir=".") as temp_dir:
+                for artifact in pb.iter(artifacts):
                     with tempfile.NamedTemporaryFile(dir=temp_dir) as temp_file:
+                        # TODO: this looks like a memory usage threat
+                        # TODO: it's also probably horrificaly slow, going one-by-one over the net
+                        # TODO: probably we could skip the temp file entirely and add
+                        #       artifact.file.read() directly to the tarfile with tarfile.addfile()
                         temp_file.write(artifact.file.read())
                         temp_file.flush()
                         artifact.file.close()
-                        export.tarfile.add(temp_file.name, dest)
+                        export.tarfile.add(temp_file.name, artifact.file.name)
             else:
-                export.tarfile.add(artifact.file.path, dest)
+                for artifact in pb.iter(artifacts):
+                    export.tarfile.add(artifact.file.path, artifact.file.name)
 
     resource = ArtifactResource()
     resource.queryset = artifacts
