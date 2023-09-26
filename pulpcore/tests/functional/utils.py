@@ -4,6 +4,7 @@ import asyncio
 
 from aiohttp import web
 from dataclasses import dataclass
+from multidict import CIMultiDict
 
 
 async def get_response(url):
@@ -56,7 +57,9 @@ def add_recording_route(app, fixtures_root):
         requests.append(request)
         path = fixtures_root / request.raw_path[1:]  # Strip off leading '/'
         if path.is_file():
-            return web.FileResponse(path)
+            return web.FileResponse(
+                path, headers=CIMultiDict({"content-type": "application/octet-stream"})
+            )
         else:
             raise web.HTTPNotFound()
 
