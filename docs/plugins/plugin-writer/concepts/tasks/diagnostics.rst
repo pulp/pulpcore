@@ -7,8 +7,8 @@ diagnostic information to data files in ``/var/tmp/pulp/<task_UUID>/`` directory
 Memory Analysis
 ---------------
 
-The memory is written to a file such as
-``var/tmp/pulp/3367e577-4b09-44b6-9069-4a06c367776a/memory.datum``.
+The resident set size (RSS) of the process is measured every 5 seconds and written to a file such as
+``/var/tmp/pulp/3367e577-4b09-44b6-9069-4a06c367776a/memory.datum``.
 
 You can plot this with gnuplot by changing into the directory with the files you want to see then:
 
@@ -23,3 +23,13 @@ You can plot this with gnuplot by changing into the directory with the files you
     plot "memory.datum" with lines
 
 3) Open your png chart saved at memory.png
+
+Profiling
+---------
+
+If the ``pyinstrument`` package is installed, a runtime profile of the execution of the task will be
+automatically produced and written to a file such as
+``/var/tmp/pulp/3367e577-4b09-44b6-9069-4a06c367776a/pyinstrument.html``.
+
+When opened in a browser, this profile will present a tree showing how much time is being spent in
+various functions relative to the total runtime of the task.
