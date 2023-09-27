@@ -13,6 +13,36 @@ Changelog
 
 .. towncrier release notes start
 
+3.28.16 (2023-09-27)
+====================
+REST API
+--------
+
+Features
+~~~~~~~~
+
+- Enabling the `TASK_DIAGNOSTICS` option now additionally creates a profile of all executed tasks if the `pyinstrument` package is installed. This incurs a small overhead on task runtime (5-10%).
+  :github:`4436`
+
+
+Bugfixes
+~~~~~~~~
+
+- Fixed sync not deleting temporary files when WORKING_DIRECTORY is not a sub-directory of MEDIA_ROOT
+  or when using a non-filesystem storage backend.
+  :github:`1936`
+- Made the incremental file export include all published metadata.
+  :github:`3941`
+- Fixed the return value of ``get_users_with_perms_attached_roles`` to give proper role names.
+  :github:`4478`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.28.15 (2023-09-20)
 ====================
 REST API
