@@ -1,1 +1,0 @@
-Fixed the return value of ``get_users_with_perms_attached_roles`` to give proper role names.
