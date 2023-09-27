@@ -17,6 +17,31 @@ Changelog
 
 .. towncrier release notes start
 
+3.22.16 (2023-09-27)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fixed sync not deleting temporary files when WORKING_DIRECTORY is not a sub-directory of MEDIA_ROOT
+  or when using a non-filesystem storage backend.
+  :github:`1936`
+
+
+Misc
+~~~~
+
+- :github:`4436`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.22.15 (2023-09-20)
 ====================
 REST API
