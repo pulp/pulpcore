@@ -1,0 +1,1 @@
+Added ``format`` param to ``DEFAULT_FILTERS`` in ``BaseFilterSet`` to fix django api format.
