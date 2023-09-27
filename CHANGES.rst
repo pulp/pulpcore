@@ -17,6 +17,29 @@ Changelog
 
 .. towncrier release notes start
 
+3.23.18 (2023-09-27)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fixed sync not deleting temporary files when WORKING_DIRECTORY is not a sub-directory of MEDIA_ROOT
+  or when using a non-filesystem storage backend.
+  :github:`1936`
+- Ensure non-chunked exports also use gzip ``compressionlevel=1``
+  :github:`4411`
+- Fixed the return value of ``get_users_with_perms_attached_roles`` to give proper role names.
+  :github:`4478`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.23.17 (2023-09-06)
 ====================
 REST API
