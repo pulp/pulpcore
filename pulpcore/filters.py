@@ -271,6 +271,7 @@ class BaseFilterSet(filterset.FilterSet):
             "offset",
             "page_size",
             "ordering",
+            "format",
         ]
         for field in self.data.keys():
             if field in DEFAULT_FILTERS:
