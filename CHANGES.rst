@@ -17,6 +17,31 @@ Changelog
 
 .. towncrier release notes start
 
+3.18.29 (2023-09-27)
+====================
+REST API
+--------
+
+Improved Documentation
+~~~~~~~~~~~~~~~~~~~~~~
+
+- Adds docs on recording and building graphs from the memory data saved by the ``TASK_DIAGNOSTICS``
+  setting.
+  :github:`2329`
+
+
+Misc
+~~~~
+
+- :github:`2329`, :github:`4436`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.18.28 (2023-09-20)
 ====================
 REST API
