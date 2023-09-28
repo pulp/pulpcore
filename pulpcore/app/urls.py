@@ -203,6 +203,11 @@ if settings.DOMAIN_ENABLED:
         docs_and_status_no_schema.append(path(str(p.pattern), view, name=name))
     urlpatterns.append(path(API_ROOT, include(docs_and_status_no_schema)))
 
+if "social_django" in settings.INSTALLED_APPS:
+    urlpatterns.append(
+        path("", include("social_django.urls", namespace=settings.SOCIAL_AUTH_URL_NAMESPACE))
+    )
+
 #: The Pulp Platform v3 API router, which can be used to manually register ViewSets with the API.
 root_router = PulpDefaultRouter()
 
