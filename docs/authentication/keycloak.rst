@@ -47,25 +47,7 @@ Enable general python social integration with the following steps:
         ...
     ]
 
-3. When using PostgreSQL, it’s recommended to use the built-in JSONB field by defining the settings::
-
-    SOCIAL_AUTH_POSTGRES_JSONFIELD = True
-    SOCIAL_AUTH_JSONFIELD_CUSTOM = 'django.db.models.JSONField'
-
-
-4. In order to use the Keycloak OIDC capabilities, you must add a URL namespace::
-
-    SOCIAL_AUTH_URL_NAMESPACE = 'social'
-
-5. You must add the Keycloak OIDC URLs to the apps url entries::
-
-    urlpatterns = patterns('',
-        ...
-        url('', include('social_django.urls', namespace='social'))
-        ...
-    )
-
-6. Update the context processor that will add backends and associations data to the template context::
+3. Update the context processor that will add backends and associations data to the template context::
 
     TEMPLATES = [
         {
@@ -82,7 +64,7 @@ Enable general python social integration with the following steps:
         }
     ]
 
-7. Define the authentication pipeline for data that will be associated with users::
+4. Define the authentication pipeline for data that will be associated with users::
 
     SOCIAL_AUTH_PIPELINE = (
         'social_core.pipeline.social_auth.social_details',

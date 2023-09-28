@@ -202,6 +202,11 @@ REDIS_PASSWORD = None
 REDIS_SSL = False
 REDIS_SSL_CA_CERTS = None
 
+# Social_django settings
+SOCIAL_AUTH_URL_NAMESPACE = "social"
+SOCIAL_AUTH_POSTGRES_JSONFIELD = True
+SOCIAL_AUTH_JSONFIELD_CUSTOM = "django.db.models.JSONField"
+
 # https://docs.djangoproject.com/en/3.2/ref/settings/#logging and
 # https://docs.python.org/3/library/logging.config.html
 LOGGING = {
