@@ -1,17 +1,15 @@
 import json
 import logging
 import os
-from gettext import gettext as _
 from functools import lru_cache
+from gettext import gettext as _
 
 from cryptography.fernet import Fernet, MultiFernet
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
-from django.db.models import Lookup, FileField, JSONField
+from django.db.models import FileField, JSONField, Lookup
 from django.db.models.fields import Field, TextField
 from django.utils.encoding import force_bytes, force_str
-
-
 from pulpcore.app.files import TemporaryDownloadedFile
 from pulpcore.app.loggers import deprecation_logger
 
@@ -23,7 +21,13 @@ def _fernet():
     # Cache the enryption keys once per application.
     _logger.debug(f"Loading encryption key from {settings.DB_ENCRYPTION_KEY}")
     with open(settings.DB_ENCRYPTION_KEY, "rb") as key_file:
-        return MultiFernet([Fernet(key) for key in key_file.readlines()])
+        return MultiFernet(
+            [
+                Fernet(key.strip())
+                for key in key_file.readlines()
+                if not key.startswith(b"#") and key.strip() != b""
+            ]
+        )
 
 
 class ArtifactFileField(FileField):
