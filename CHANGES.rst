@@ -13,6 +13,46 @@ Changelog
 
 .. towncrier release notes start
 
+3.36.0 (2023-09-27)
+===================
+REST API
+--------
+
+Features
+~~~~~~~~
+
+- Status endpoint now reports storage usage of the domain being called from.
+  :github:`4456`
+- Status endpoint now reports the storage usage for non-filesystem storage backends.
+  :github:`4457`
+
+
+Bugfixes
+~~~~~~~~
+
+- Removed a workaround to force close all tcp connections in sync leading to an exhaustion of port
+  numbers and their reuse while in time_wait state.
+  :github:`4452`
+- Fixed the return value of ``get_users_with_perms_attached_roles`` to give proper role names.
+  :github:`4478`
+
+
+Removals
+~~~~~~~~
+
+- Exports now take place in .tar format rather than .tar.gz. It was previously found that the
+  compression provided little benefit but came with large runtime costs, so the compression
+  level was reduced to 0. However even packaging the data in a gzip archive without compression
+  comes with performance costs (particularly on import), so, we remove that layer entirely.
+  :github:`4446`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.35.0 (2023-09-20)
 ===================
 REST API
@@ -519,6 +559,36 @@ Misc
 ~~~~
 
 - :github:`3798`
+
+
+3.28.16 (2023-09-27)
+====================
+REST API
+--------
+
+Features
+~~~~~~~~
+
+- Enabling the `TASK_DIAGNOSTICS` option now additionally creates a profile of all executed tasks if the `pyinstrument` package is installed. This incurs a small overhead on task runtime (5-10%).
+  :github:`4436`
+
+
+Bugfixes
+~~~~~~~~
+
+- Fixed sync not deleting temporary files when WORKING_DIRECTORY is not a sub-directory of MEDIA_ROOT
+  or when using a non-filesystem storage backend.
+  :github:`1936`
+- Made the incremental file export include all published metadata.
+  :github:`3941`
+- Fixed the return value of ``get_users_with_perms_attached_roles`` to give proper role names.
+  :github:`4478`
+
+
+Plugin API
+----------
+
+No significant changes.
 
 
 3.28.15 (2023-09-20)
@@ -1226,6 +1296,29 @@ Features
   :github:`3661`
 
 
+3.23.18 (2023-09-27)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fixed sync not deleting temporary files when WORKING_DIRECTORY is not a sub-directory of MEDIA_ROOT
+  or when using a non-filesystem storage backend.
+  :github:`1936`
+- Ensure non-chunked exports also use gzip ``compressionlevel=1``
+  :github:`4411`
+- Fixed the return value of ``get_users_with_perms_attached_roles`` to give proper role names.
+  :github:`4478`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.23.17 (2023-09-06)
 ====================
 REST API
@@ -1720,6 +1813,31 @@ Deprecations
   :github:`3604`
 
 
+3.22.16 (2023-09-27)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fixed sync not deleting temporary files when WORKING_DIRECTORY is not a sub-directory of MEDIA_ROOT
+  or when using a non-filesystem storage backend.
+  :github:`1936`
+
+
+Misc
+~~~~
+
+- :github:`4436`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.22.15 (2023-09-20)
 ====================
 REST API
@@ -2168,6 +2286,31 @@ Removals
 - Deprecated model ``Label`` and serializer field ``LabelField`` and ``LabelSelectFilter`` for
   removal in 3.25.
   :github:`3400`
+
+
+3.21.19 (2023-09-27)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fixed sync not deleting temporary files when WORKING_DIRECTORY is not a sub-directory of MEDIA_ROOT
+  or when using a non-filesystem storage backend.
+  :github:`1936`
+
+
+Misc
+~~~~
+
+- :github:`4436`
+
+
+Plugin API
+----------
+
+No significant changes.
 
 
 3.21.18 (2023-09-25)
@@ -3077,6 +3220,31 @@ Bugfixes
   the stage will still accumulate up to 500 (by default) items so batching is still in-effect there
   where it matters.
   :github:`2069`
+
+
+3.18.29 (2023-09-27)
+====================
+REST API
+--------
+
+Improved Documentation
+~~~~~~~~~~~~~~~~~~~~~~
+
+- Adds docs on recording and building graphs from the memory data saved by the ``TASK_DIAGNOSTICS``
+  setting.
+  :github:`2329`
+
+
+Misc
+~~~~
+
+- :github:`2329`, :github:`4436`
+
+
+Plugin API
+----------
+
+No significant changes.
 
 
 3.18.28 (2023-09-20)
@@ -4187,6 +4355,31 @@ Bugfixes
 
 - Include additional information about which AccessPolicy is using deprecated policy features.
   :redmine:`9608`
+
+
+3.16.21 (2023-09-27)
+====================
+REST API
+--------
+
+Improved Documentation
+~~~~~~~~~~~~~~~~~~~~~~
+
+- Adds docs on recording and building graphs from the memory data saved by the ``TASK_DIAGNOSTICS``
+  setting.
+  :github:`2329`
+
+
+Misc
+~~~~
+
+- :github:`2329`, :github:`4436`
+
+
+Plugin API
+----------
+
+No significant changes.
 
 
 3.16.20 (2023-09-20)
