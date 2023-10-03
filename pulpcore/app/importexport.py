@@ -48,15 +48,29 @@ def _write_export(the_tarfile, resource, dest_dir=None):
     with tempfile.NamedTemporaryFile(dir=".", mode="w", encoding="utf8") as temp_file:
         if isinstance(resource.queryset, QuerySet):
             temp_file.write("[")
-            total = resource.queryset.count()
-            for i in range(0, total, EXPORT_BATCH_SIZE):
-                current_batch = i + EXPORT_BATCH_SIZE
-                dataset = resource.export(resource.queryset[i:current_batch])
+
+            def process_batch(batch):
+                dataset = resource.export(batch)
                 # Strip "[" and "]" as we are writing the dataset in batch
                 temp_file.write(dataset.json.lstrip("[").rstrip("]"))
-                if current_batch < total:
+
+            batch = []
+            needs_comma = False
+            for item in resource.queryset.iterator(chunk_size=EXPORT_BATCH_SIZE):
+                batch.append(item)
+                if needs_comma:
                     # Write "," if not last loop
                     temp_file.write(", ")
+                    needs_comma = False
+
+                if len(batch) >= EXPORT_BATCH_SIZE:
+                    process_batch(batch)
+                    batch.clear()
+                    needs_comma = True
+
+            if batch:
+                process_batch(batch)
+
             temp_file.write("]")
         else:
             dataset = resource.export(resource.queryset)
@@ -102,9 +116,10 @@ def export_artifacts(export, artifacts):
     data = dict(message="Exporting Artifacts", code="export.artifacts", total=len(artifacts))
     with ProgressReport(**data) as pb:
         pb.BATCH_INTERVAL = 5000
-        with tempfile.TemporaryDirectory(dir=".") as temp_dir:
-            if settings.DEFAULT_FILE_STORAGE != "pulpcore.app.models.storage.FileSystem":
-                for artifact in pb.iter(artifacts):
+
+        if settings.DEFAULT_FILE_STORAGE != "pulpcore.app.models.storage.FileSystem":
+            with tempfile.TemporaryDirectory(dir=".") as temp_dir:
+                for artifact in pb.iter(artifacts.only("file").iterator()):
                     with tempfile.NamedTemporaryFile(dir=temp_dir) as temp_file:
                         # TODO: this looks like a memory usage threat
                         # TODO: it's also probably horrificaly slow, going one-by-one over the net
@@ -114,9 +129,9 @@ def export_artifacts(export, artifacts):
                         temp_file.flush()
                         artifact.file.close()
                         export.tarfile.add(temp_file.name, artifact.file.name)
-            else:
-                for artifact in pb.iter(artifacts):
-                    export.tarfile.add(artifact.file.path, artifact.file.name)
+        else:
+            for artifact in pb.iter(artifacts.only("file").iterator()):
+                export.tarfile.add(artifact.file.path, artifact.file.name)
 
     resource = ArtifactResource()
     resource.queryset = artifacts
