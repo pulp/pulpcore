@@ -26,7 +26,7 @@ from pulpcore.app.models import (
     RepositoryVersion,
     Task,
 )
-from pulpcore.app.models.content import ContentArtifact
+from pulpcore.app.models.content import Artifact, ContentArtifact
 from pulpcore.app.serializers import PulpExportSerializer
 
 from pulpcore.app.util import compute_file_hash, get_version_from_model
@@ -403,13 +403,18 @@ def pulp_export(exporter_pk, params):
 def _do_export(pulp_exporter, tar, the_export):
     the_export.tarfile = tar
     CreatedResource.objects.create(content_object=the_export)
-    ending_versions = _get_versions_to_export(pulp_exporter, the_export)
     plugin_version_info = _get_versions_info(pulp_exporter)
+
+    # export plugin-version-info
+    export_versions(the_export, plugin_version_info)
+
+    ending_versions = _get_versions_to_export(pulp_exporter, the_export)
     do_incremental = _incremental_requested(the_export)
     starting_versions = _get_starting_versions(do_incremental, pulp_exporter, the_export)
     vers_match = _version_match(ending_versions, starting_versions)
+
     # Gather up versions and artifacts
-    artifacts = set()
+    artifact_pks = set()
     for version in ending_versions:
         # Check version-content to make sure we're not being asked to export
         # an on_demand repo
@@ -418,16 +423,16 @@ def _do_export(pulp_exporter, tar, the_export):
             raise RuntimeError(_("Remote artifacts cannot be exported."))
 
         if do_incremental:
-            vers_artifacts = version.artifacts.difference(vers_match[version].artifacts).all()
+            vers_artifacts = version.artifacts.difference(vers_match[version].artifacts)
         else:
-            vers_artifacts = version.artifacts.all()
-        artifacts.update(vers_artifacts)
+            vers_artifacts = version.artifacts
+        artifact_pks.update(vers_artifacts.values_list("pk", flat=True))
 
-    # export plugin-version-info
-    export_versions(the_export, plugin_version_info)
     # Export the top-level entities (artifacts and repositories)
     # Note: we've already handled "what about incrementals" when building the 'artifacts' list
-    export_artifacts(the_export, list(artifacts))
+    export_artifacts(the_export, Artifact.objects.filter(pk__in=artifact_pks))
+    del artifact_pks
+
     # Export the repository-version data, per-version
     for version in ending_versions:
         export_content(the_export, version)
