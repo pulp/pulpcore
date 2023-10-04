@@ -297,7 +297,7 @@ def gpg_verify(public_keys, signature, detached_data=None):
     return verified
 
 
-def compute_file_hash(filename, hasher=None, cumulative_hash=None, blocksize=8192):
+def compute_file_hash(filename, hasher=None, cumulative_hash=None, blocksize=16384):
     if hasher is None:
         hasher = hashlib.sha256()
 

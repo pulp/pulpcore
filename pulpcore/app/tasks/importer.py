@@ -1,3 +1,4 @@
+import concurrent.futures
 import json
 import os
 import re
@@ -370,10 +371,17 @@ def pulp_import(importer_pk, path, toc, create_repositories):
             # gather errors for reporting at the end
             chunks = sorted(the_toc["files"].keys())
             data = dict(message="Validating Chunks", code="validate.chunks", total=len(chunks))
+
+            futures = []
+            with concurrent.futures.ThreadPoolExecutor() as exc:
+                for chunk_filename in chunks:
+                    path = os.path.join(base_dir, chunk_filename)
+                    expected_digest = the_toc["files"][chunk_filename]
+                    futures.append(exc.submit(verify_chunk_hash, path, expected_digest))
+
             with ProgressReport(**data) as pb:
-                for chunk in pb.iter(chunks):
-                    chunk_path = os.path.join(base_dir, chunk)
-                    verify_chunk_hash(chunk_path, the_toc["files"][chunk])
+                for chunk in pb.iter(concurrent.futures.as_completed(futures)):
+                    pass  # just let the progress bar do its thing
 
             # if there are any errors, report and fail
             if errs:
