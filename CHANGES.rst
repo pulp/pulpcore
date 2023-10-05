@@ -17,6 +17,26 @@ Changelog
 
 .. towncrier release notes start
 
+3.23.19 (2023-10-05)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Removed compression from exports (using gzip level 0). For most users of export functionality it seems to be a poor tradeoff.
+  :github:`4434`
+- Added ``format`` param to ``DEFAULT_FILTERS`` in ``BaseFilterSet`` to fix django api format.
+  :github:`4450`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.23.18 (2023-09-27)
 ====================
 REST API
