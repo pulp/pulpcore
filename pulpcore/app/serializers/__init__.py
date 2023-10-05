@@ -78,6 +78,7 @@ from .publication import (
     RBACContentGuardSerializer,
     RBACContentGuardPermissionSerializer,
     ContentRedirectContentGuardSerializer,
+    HeaderContentGuardSerializer,
     ArtifactDistributionSerializer,
 )
 from .purge import PurgeSerializer

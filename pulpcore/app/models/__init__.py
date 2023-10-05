@@ -56,6 +56,7 @@ from .publication import (
     PublishedMetadata,
     RBACContentGuard,
     ContentRedirectContentGuard,
+    HeaderContentGuard,
     ArtifactDistribution,
 )
 
