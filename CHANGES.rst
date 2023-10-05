@@ -13,6 +13,31 @@ Changelog
 
 .. towncrier release notes start
 
+3.37.0 (2023-10-05)
+===================
+REST API
+--------
+
+Features
+~~~~~~~~
+
+- Include social_django urls based on config option
+  :github:`4511`
+
+
+Bugfixes
+~~~~~~~~
+
+- Added ``format`` param to ``DEFAULT_FILTERS`` in ``BaseFilterSet`` to fix django api format.
+  :github:`4450`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.36.0 (2023-09-27)
 ===================
 REST API
