@@ -17,6 +17,24 @@ Changelog
 
 .. towncrier release notes start
 
+3.16.22 (2023-10-05)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Made sure PulpImport's use of tar.extractall() is safe.
+  :github:`3323`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.16.21 (2023-09-27)
 ====================
 REST API
