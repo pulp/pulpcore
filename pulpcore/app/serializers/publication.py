@@ -122,6 +122,29 @@ class ContentRedirectContentGuardSerializer(ContentGuardSerializer, GetOrCreateS
         model = models.ContentRedirectContentGuard
 
 
+class HeaderContentGuardSerializer(ContentGuardSerializer, GetOrCreateSerializerMixin):
+    """
+    A serializer for HeaderContentGuard.
+    """
+
+    header_name = serializers.CharField(help_text=_("The header name the guard will check on."))
+    header_value = serializers.CharField(help_text=_("The value that will authorize the request."))
+    jq_filter = serializers.CharField(
+        help_text=_(
+            (
+                "A JQ syntax compatible filter. If jq_filter is not set, then the value will"
+                "only be Base64 decoded and checked as an explicit string match."
+            )
+        ),
+        allow_null=True,
+        required=False,
+    )
+
+    class Meta(ContentGuardSerializer.Meta):
+        model = models.HeaderContentGuard
+        fields = ContentGuardSerializer.Meta.fields + ("header_name", "header_value", "jq_filter")
+
+
 class DistributionSerializer(ModelSerializer):
     """
     The Serializer for the Distribution model.

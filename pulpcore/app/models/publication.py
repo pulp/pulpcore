@@ -1,7 +1,14 @@
 import hashlib
+import json
+import jq
+import logging
 import os
 import re
+
+from base64 import b64decode
+from binascii import Error as Base64DecodeError
 from datetime import timedelta
+from gettext import gettext as _
 from url_normalize import url_normalize
 from urllib.parse import urlparse, urljoin
 
@@ -23,6 +30,9 @@ from rest_framework.exceptions import APIException
 from pulpcore.app.models import AutoAddObjPermsMixin
 from pulpcore.responses import ArtifactResponse
 from pulpcore.app.util import get_domain_pk, cache_key
+
+
+_logger = logging.getLogger(__name__)
 
 
 class PublicationQuerySet(models.QuerySet):
@@ -452,6 +462,62 @@ class ContentRedirectContentGuard(ContentGuard, AutoAddObjPermsMixin):
             (
                 "manage_roles_contentredirectcontentguard",
                 "Can manage role assignments on Redirect content guard",
+            ),
+        )
+
+
+class HeaderContentGuard(ContentGuard, AutoAddObjPermsMixin):
+    """
+    Content guard to protect content based on a header value.
+    """
+
+    TYPE = "header"
+
+    header_name = models.TextField()
+    header_value = models.TextField()
+    jq_filter = models.TextField(null=True)
+
+    def permit(self, request):
+        header_content = request.headers.get(self.header_name)
+        if not header_content:
+            _logger.debug(
+                "Access not allowed. Header {header_name} not found.".format(
+                    header_name=self.header_name
+                )
+            )
+            raise PermissionError(_("Access denied."))
+
+        try:
+            header_decoded_content = b64decode(header_content)
+        except Base64DecodeError:
+            _logger.debug("Access not allowed - Header content is not Base64 encoded.")
+            raise PermissionError(_("Access denied."))
+
+        if self.jq_filter:
+            try:
+                header_value = json.loads(header_decoded_content)
+                json_path = jq.compile(self.jq_filter)
+
+                header_value = json_path.input_value(header_value).first()
+
+            except json.JSONDecodeError:
+                _logger.debug("Access not allowed - Invalid JSON or Path not found.")
+                raise PermissionError(_("Access denied."))
+        else:
+            header_value = header_decoded_content.decode("utf8")
+
+        if header_value != self.header_value:
+            _logger.debug("Access not allowed - Wrong header value.")
+            raise PermissionError(_("Access denied."))
+
+        return
+
+    class Meta:
+        default_related_name = "%(app_label)s_%(model_name)s"
+        permissions = (
+            (
+                "manage_roles_headercontentguard",
+                "Can manage role assignments on header content guard",
             ),
         )
 

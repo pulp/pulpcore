@@ -9,6 +9,7 @@ from pulpcore.app.models import (
     ContentGuard,
     RBACContentGuard,
     ContentRedirectContentGuard,
+    HeaderContentGuard,
     Distribution,
     Publication,
     Repository,
@@ -21,6 +22,7 @@ from pulpcore.app.serializers import (
     PublicationSerializer,
     RBACContentGuardSerializer,
     ContentRedirectContentGuardSerializer,
+    HeaderContentGuardSerializer,
     ArtifactDistributionSerializer,
 )
 from pulpcore.app.viewsets import (
@@ -352,6 +354,76 @@ class ContentRedirectContentGuardViewSet(ContentGuardViewSet, RolesMixin):
             "core.manage_roles_contentredirectcontentguard",
         ],
         "core.contentredirectcontentguard_viewer": ["core.view_contentredirectcontentguard"],
+    }
+
+
+class HeaderContentGuardViewSet(ContentGuardViewSet, RolesMixin):
+    """
+    Content guard to protect the content app using a specific header.
+    """
+
+    endpoint_name = "header"
+    queryset = HeaderContentGuard.objects.all()
+    serializer_class = HeaderContentGuardSerializer
+    queryset_filtering_required_permission = "core.view_headercontentguard"
+
+    DEFAULT_ACCESS_POLICY = {
+        "statements": [
+            {
+                "action": ["list"],
+                "principal": "authenticated",
+                "effect": "allow",
+            },
+            {
+                "action": ["create"],
+                "principal": "authenticated",
+                "effect": "allow",
+                "condition": "has_model_or_domain_perms:core.add_headercontentguard",
+            },
+            {
+                "action": ["retrieve", "my_permissions"],
+                "principal": "authenticated",
+                "effect": "allow",
+                "condition": "has_model_or_domain_or_obj_perms:core.view_headercontentguard",
+            },
+            {
+                "action": ["update", "partial_update"],
+                "principal": "authenticated",
+                "effect": "allow",
+                "condition": ("has_model_or_domain_or_obj_perms:core.change_headercontentguard"),
+            },
+            {
+                "action": ["destroy"],
+                "principal": "authenticated",
+                "effect": "allow",
+                "condition": ("has_model_or_domain_or_obj_perms:core.delete_headercontentguard"),
+            },
+            {
+                "action": ["list_roles", "add_role", "remove_role"],
+                "principal": "authenticated",
+                "effect": "allow",
+                "condition": (
+                    "has_model_or_domain_or_obj_perms:core.manage_roles_headercontentguard"
+                ),
+            },
+        ],
+        "creation_hooks": [
+            {
+                "function": "add_roles_for_object_creator",
+                "parameters": {"roles": ["core.headercontentguard_owner"]},
+            },
+        ],
+        "queryset_scoping": {"function": "scope_queryset"},
+    }
+    LOCKED_ROLES = {
+        "core.headercontentguard_creator": ["core.add_headercontentguard"],
+        "core.headercontentguard_owner": [
+            "core.view_headercontentguard",
+            "core.change_headercontentguard",
+            "core.delete_headercontentguard",
+            "core.manage_roles_headercontentguard",
+        ],
+        "core.headercontentguard_viewer": ["core.view_headercontentguard"],
     }
 
 

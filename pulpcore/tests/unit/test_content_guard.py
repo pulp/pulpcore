@@ -1,9 +1,11 @@
+import json
 import pytest
 import re
 
 from unittest.mock import Mock
+from base64 import b64encode
 
-from pulpcore.app.models import ContentRedirectContentGuard
+from pulpcore.app.models import ContentRedirectContentGuard, HeaderContentGuard
 
 
 def test_preauthenticate_urls():
@@ -73,3 +75,70 @@ def test_preauthenticate_urls():
     request.query = {"expires": str(int(expires) + 1), "validate_token": ":".join((salt, digest2))}
     with pytest.raises(PermissionError):
         content_guard.permit(request)
+
+
+def test_header_content_guard(db):
+    """Test HeaderContentGuard to protect content based on a specific header."""
+
+    content_guard = HeaderContentGuard(
+        name="header_guard",
+        header_name="x-header-name",
+        jq_filter=".this.is.a.path",
+        header_value="somevalue",
+    )
+
+    request = Mock()
+
+    # Try without any header
+    request.headers = {}
+    with pytest.raises(PermissionError):
+        content_guard.permit(request)
+
+    # Try with a wrong header_name
+    request.headers = {"x-burger": "food"}
+    with pytest.raises(PermissionError):
+        content_guard.permit(request)
+
+    # Try the right header with a non base64 encoded content
+    request.headers = {"x-header-name": "somestring"}
+    with pytest.raises(PermissionError):
+        content_guard.permit(request)
+
+    # Try the right header and a wrong value correctly encoded
+    header_value = b64encode(b"anything_here")
+    request.headers = {"x-header-name": header_value}
+    with pytest.raises(PermissionError):
+        content_guard.permit(request)
+
+    # Try the right header with the wrong jq_filter
+    # but right value
+    header_value = json.dumps({"this": {"is": {"not_a": {"path": "somevalue"}}}})
+    encoded_value = b64encode(bytes(header_value, "ascii"))
+
+    request.headers = {"x-header-name": encoded_value}
+    with pytest.raises(PermissionError):
+        content_guard.permit(request)
+
+    # Try the right header, right jq_filter but wrong value
+    header_value = json.dumps({"this": {"is": {"a": {"path": "anything_here"}}}})
+    encoded_value = b64encode(bytes(header_value, "ascii"))
+
+    request.headers = {"x-header-name": encoded_value}
+    with pytest.raises(PermissionError):
+        content_guard.permit(request)
+
+    # Try the right header, json_access and value.
+    header_value = json.dumps({"this": {"is": {"a": {"path": "somevalue"}}}})
+    encoded_value = b64encode(bytes(header_value, "ascii"))
+
+    request.headers = {"x-header-name": encoded_value}
+    assert not content_guard.permit(request)
+
+    # Try to use a value that is not a JSON.
+    content_guard_without_jq_filter = HeaderContentGuard(
+        name="header_guard", header_name="x-header-name", header_value="somevalue"
+    )
+
+    encoded_value = b64encode(b"somevalue")
+    request.headers = {"x-header-name": encoded_value}
+    assert not content_guard_without_jq_filter.permit(request)

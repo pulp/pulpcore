@@ -54,6 +54,7 @@ from .publication import (
     PublicationViewSet,
     RBACContentGuardViewSet,
     ContentRedirectContentGuardViewSet,
+    HeaderContentGuardViewSet,
     ArtifactDistributionViewSet,
 )
 from .reclaim import ReclaimSpaceViewSet
