@@ -13,6 +13,24 @@ Changelog
 
 .. towncrier release notes start
 
+3.28.17 (2023-10-05)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Added ``format`` param to ``DEFAULT_FILTERS`` in ``BaseFilterSet`` to fix django api format.
+  :github:`4450`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.28.16 (2023-09-27)
 ====================
 REST API
