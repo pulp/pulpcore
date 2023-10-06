@@ -13,6 +13,31 @@ Changelog
 
 .. towncrier release notes start
 
+3.37.0 (2023-10-05)
+===================
+REST API
+--------
+
+Features
+~~~~~~~~
+
+- Include social_django urls based on config option
+  :github:`4511`
+
+
+Bugfixes
+~~~~~~~~
+
+- Added ``format`` param to ``DEFAULT_FILTERS`` in ``BaseFilterSet`` to fix django api format.
+  :github:`4450`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.36.0 (2023-09-27)
 ===================
 REST API
@@ -559,6 +584,24 @@ Misc
 ~~~~
 
 - :github:`3798`
+
+
+3.28.17 (2023-10-05)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Added ``format`` param to ``DEFAULT_FILTERS`` in ``BaseFilterSet`` to fix django api format.
+  :github:`4450`
+
+
+Plugin API
+----------
+
+No significant changes.
 
 
 3.28.16 (2023-09-27)
@@ -1294,6 +1337,26 @@ Features
 - Added flags ``immediate`` and ``deferred`` to ``dispatch`` to allow specifying whether a task can
   be attempted to run synchronously and whether it can be deferred.
   :github:`3661`
+
+
+3.23.19 (2023-10-05)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Removed compression from exports (using gzip level 0). For most users of export functionality it seems to be a poor tradeoff.
+  :github:`4434`
+- Added ``format`` param to ``DEFAULT_FILTERS`` in ``BaseFilterSet`` to fix django api format.
+  :github:`4450`
+
+
+Plugin API
+----------
+
+No significant changes.
 
 
 3.23.18 (2023-09-27)
@@ -2288,6 +2351,24 @@ Removals
   :github:`3400`
 
 
+3.21.20 (2023-10-05)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Made sure PulpImport's use of tar.extractall() is safe.
+  :github:`3323`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.21.19 (2023-09-27)
 ====================
 REST API
@@ -3220,6 +3301,24 @@ Bugfixes
   the stage will still accumulate up to 500 (by default) items so batching is still in-effect there
   where it matters.
   :github:`2069`
+
+
+3.18.30 (2023-10-05)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Made sure PulpImport's use of tar.extractall() is safe.
+  :github:`3323`
+
+
+Plugin API
+----------
+
+No significant changes.
 
 
 3.18.29 (2023-09-27)
@@ -4355,6 +4454,24 @@ Bugfixes
 
 - Include additional information about which AccessPolicy is using deprecated policy features.
   :redmine:`9608`
+
+
+3.16.22 (2023-10-05)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Made sure PulpImport's use of tar.extractall() is safe.
+  :github:`3323`
+
+
+Plugin API
+----------
+
+No significant changes.
 
 
 3.16.21 (2023-09-27)
