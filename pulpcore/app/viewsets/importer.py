@@ -109,7 +109,9 @@ class PulpImportViewSet(ImportViewSet):
         path = serializer.validated_data.get("path")
         toc = serializer.validated_data.get("toc")
         create_repositories = serializer.validated_data.get("create_repositories")
-        task_group = TaskGroup.objects.create(description=f"Import of {path}")
+        task_group = TaskGroup.objects.create(
+            description="Import of {path}".format(path=path or toc)
+        )
 
         dispatch(
             pulp_import,
