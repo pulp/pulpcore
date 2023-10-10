@@ -54,4 +54,9 @@ class BaseContentResource(QueryModelResource):
         return str(content.pulp_id)
 
     class Meta:
-        exclude = QueryModelResource.Meta.exclude + ("_artifacts", "content", "content_ptr")
+        exclude = QueryModelResource.Meta.exclude + (
+            "_artifacts",
+            "content",
+            "content_ptr",
+            "timestamp_of_interest",
+        )

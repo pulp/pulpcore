@@ -43,6 +43,7 @@ class ArtifactResource(QueryModelResource):
             "pulp_id",
             "pulp_created",
             "pulp_last_updated",
+            "timestamp_of_interest",
         )
         import_id_fields = ("sha256",)
 
