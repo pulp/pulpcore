@@ -113,15 +113,20 @@ class ContentArtifactResource(QueryModelResource):
         row["content"] = str(linked_content.pulp_id)
 
     def set_up_queryset(self):
-        vers_content = ContentArtifact.objects.filter(content__in=self.repo_version.content)
+        content_pks = set(self.repo_version.content.values_list("pk", flat=True))
+
         if self.content_mapping:
-            all_content = []
             for content_ids in self.content_mapping.values():
-                all_content.extend(content_ids)
-            vers_content = vers_content.union(
-                ContentArtifact.objects.filter(content__in=all_content)
-            )
-        return vers_content.order_by("content", "relative_path")
+                content_pks |= set(content_ids)
+
+        return (
+            ContentArtifact.objects.filter(content__in=content_pks)
+            .order_by("content", "relative_path")
+            .select_related("artifact")
+        )
+
+    def dehydrate_content(self, content_artifact):
+        return str(content_artifact.content_id)
 
     class Meta:
         model = ContentArtifact
