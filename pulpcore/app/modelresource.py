@@ -86,9 +86,12 @@ class ContentArtifactResource(QueryModelResource):
     artifact = fields.Field(
         column_name="artifact", attribute="artifact", widget=ForeignKeyWidget(Artifact, "sha256")
     )
+    linked_content = {}
 
     def __init__(self, repo_version=None, content_mapping=None):
         self.content_mapping = content_mapping
+        if not ContentArtifactResource.linked_content:
+            ContentArtifactResource.linked_content = self.fetch_linked_content()
         super().__init__(repo_version)
 
     def before_import_row(self, row, **kwargs):
@@ -108,8 +111,7 @@ class ContentArtifactResource(QueryModelResource):
         """
         super().before_import_row(row, **kwargs)
 
-        linked_content = Content.objects.get(upstream_id=row["content"])
-        row["content"] = str(linked_content.pulp_id)
+        row["content"] = self.linked_content[row["content"]]
 
     def set_up_queryset(self):
         vers_content = ContentArtifact.objects.filter(content__in=self.repo_version.content)
@@ -121,6 +123,14 @@ class ContentArtifactResource(QueryModelResource):
                 ContentArtifact.objects.filter(content__in=all_content)
             )
         return vers_content.order_by("content", "relative_path")
+
+    def fetch_linked_content(self):
+        linked_content = {}
+        c_qs = Content.objects.filter(upstream_id__isnull=False).values("upstream_id", "pulp_id")
+        for c in c_qs.iterator():
+            linked_content[str(c["upstream_id"])] = str(c["pulp_id"])
+
+        return linked_content
 
     class Meta:
         model = ContentArtifact

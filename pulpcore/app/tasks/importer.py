@@ -225,6 +225,16 @@ def import_repository_version(
             raise ValidationError(_("No RepositoryVersion found for {}").format(rv_name))
 
         rv_path = os.path.join(temp_dir, rv_name)
+
+        # see if we have a Content mapping
+        mapping_path = f"{rv_name}/{CONTENT_MAPPING_FILE}"
+        mapping = {}
+        with tarfile.open(tar_path, "r") as tar:
+            if mapping_path in tar.getnames():
+                tar.extract(mapping_path, path=temp_dir)
+                with open(os.path.join(temp_dir, mapping_path), "r") as mapping_file:
+                    mapping = json.load(mapping_file)
+
         # Content
         plugin_name = src_repo_type.split(".")[0]
         cfg = get_plugin_config(plugin_name)
@@ -241,7 +251,7 @@ def import_repository_version(
                     if repo_resource.import_type in ("new", "update"):
                         dest_repo_pk = repo_resource.object_id
 
-                if issubclass(res_class, BaseContentResource):
+                if not mapping and issubclass(res_class, BaseContentResource):
                     resulting_content_ids.extend(
                         row.object_id
                         for row in a_result.rows
@@ -254,15 +264,6 @@ def import_repository_version(
         for a_batch in _import_file(ca_path, ContentArtifactResource, retry=True):
             pass
 
-        # see if we have a content mapping
-        mapping_path = f"{rv_name}/{CONTENT_MAPPING_FILE}"
-        mapping = {}
-        with tarfile.open(tar_path, "r") as tar:
-            if mapping_path in tar.getnames():
-                tar.extract(mapping_path, path=temp_dir)
-                with open(os.path.join(temp_dir, mapping_path), "r") as mapping_file:
-                    mapping = json.load(mapping_file)
-
         content_count = 0
         if mapping:
             # use the content mapping to map content to repos
@@ -270,14 +271,14 @@ def import_repository_version(
                 repo_name = _get_destination_repo_name(importer, repo_name)
                 dest_repo = Repository.objects.get(name=repo_name)
                 content = Content.objects.filter(upstream_id__in=content_ids)
-                content_count += content.count()
+                content_count += len(content_ids)
                 with dest_repo.new_version() as new_version:
                     new_version.set_content(content)
         else:
             # just map all the content to our destination repo
             dest_repo = Repository.objects.get(pk=dest_repo_pk)
             content = Content.objects.filter(pk__in=resulting_content_ids)
-            content_count += content.count()
+            content_count += len(resulting_content_ids)
             with dest_repo.new_version() as new_version:
                 new_version.set_content(content)
 
