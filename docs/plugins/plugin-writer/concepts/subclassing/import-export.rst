@@ -113,6 +113,14 @@ should be considered::
     # the list signifying the order of imports must also include the repository resource class
     IMPORT_ORDER = [FileContentResource, FileRepositoryResource]
 
+For performance reasons, it is important that care is taken when writing resource definitions. If your model
+has foreign keys that are exported as such (raw UUID key values), you should define a should a custom
+"dehydrate" method for that field to avoid an unnecessary lookup for each instance as seen
+`in this issue <https://github.com/django-import-export/django-import-export/issues/974>`_. Else, if
+foreign keys are exported using some natural key of the referenced row, then the definition of
+`set_up_queryset()` should ensure those references are pre-selected using `select_related()`, otherwise
+an N+1 query scenario is likely.
+
 
 content_mapping
 ~~~~~~~~~~~~~~~
