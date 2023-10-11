@@ -78,9 +78,12 @@ class ContentArtifactResource(QueryModelResource):
     artifact = fields.Field(
         column_name="artifact", attribute="artifact", widget=ForeignKeyWidget(Artifact, "sha256")
     )
+    linked_content = {}
 
     def __init__(self, repo_version=None, content_mapping=None):
         self.content_mapping = content_mapping
+        if not ContentArtifactResource.linked_content:
+            ContentArtifactResource.linked_content = self.fetch_linked_content()
         super().__init__(repo_version)
 
     def before_import_row(self, row, **kwargs):
@@ -99,8 +102,7 @@ class ContentArtifactResource(QueryModelResource):
             (tablib.Dataset row): row that now points to the new downstream uuid for its content.
         """
 
-        linked_content = Content.objects.get(upstream_id=row["content"])
-        row["content"] = str(linked_content.pulp_id)
+        row["content"] = self.linked_content[row["content"]]
 
     def set_up_queryset(self):
         content_pks = set(self.repo_version.content.values_list("pk", flat=True))
@@ -117,6 +119,14 @@ class ContentArtifactResource(QueryModelResource):
 
     def dehydrate_content(self, content_artifact):
         return str(content_artifact.content_id)
+
+    def fetch_linked_content(self):
+        linked_content = {}
+        c_qs = Content.objects.filter(upstream_id__isnull=False).values("upstream_id", "pulp_id")
+        for c in c_qs.iterator():
+            linked_content[str(c["upstream_id"])] = str(c["pulp_id"])
+
+        return linked_content
 
     class Meta:
         model = ContentArtifact
