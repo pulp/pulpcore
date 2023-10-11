@@ -38,6 +38,9 @@ class QueryModelResource(resources.ModelResource):
     def set_up_queryset(self):
         return None
 
+    def dehydrate_pulp_domain(self, content):
+        return str(content.pulp_domain_id)
+
     def __init__(self, repo_version=None):
         self.repo_version = repo_version
         if repo_version:
@@ -63,8 +66,8 @@ class BaseContentResource(QueryModelResource):
     #
     content_mapping = None
 
-    class Meta:
-        exclude = QueryModelResource.Meta.exclude + ("_artifacts", "content", "content_ptr")
-
     def dehydrate_upstream_id(self, content):
         return str(content.pulp_id)
+
+    class Meta:
+        exclude = QueryModelResource.Meta.exclude + ("_artifacts", "content", "content_ptr")
