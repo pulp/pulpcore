@@ -1,0 +1,2 @@
+Stopped reassembling the tarball of a chunked import into one large file, and instead gather the
+bits on the fly. This also allows importing directly from a read-only medium.
