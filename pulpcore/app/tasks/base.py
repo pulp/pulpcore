@@ -1,7 +1,8 @@
 from django.db import transaction
 
 from pulpcore.app.apps import get_plugin_config
-from pulpcore.app.models import CreatedResource
+from pulpcore.app.models import CreatedResource, PulpTemporaryFile
+from pulpcore.app.files import PulpTemporaryUploadedFile
 from pulpcore.plugin.models import MasterModel
 
 
@@ -12,11 +13,13 @@ def general_create_from_temp_file(app_label, serializer_name, temp_file_pk, *arg
     A task which executes this function takes the ownership of a temporary file and deletes it
     afterwards. This function calls the function general_create() to create a model instance.
     """
-    data = kwargs.pop("data", {})
-    context = kwargs.pop("context", {})
-    context["pulp_temp_file_pk"] = temp_file_pk
+    temp_file = PulpTemporaryFile.objects.get(pk=temp_file_pk)
 
-    general_create(app_label, serializer_name, data=data, context=context, *args, **kwargs)
+    data = kwargs.pop("data", {})
+    data["file"] = PulpTemporaryUploadedFile.from_file(temp_file.file)
+
+    general_create(app_label, serializer_name, data=data, *args, **kwargs)
+    temp_file.delete()
 
 
 def general_create(app_label, serializer_name, *args, **kwargs):
