@@ -53,13 +53,11 @@ class NoArtifactContentUploadViewSet(DefaultDeferredContextMixin, ContentViewSet
         ]
 
         app_label = self.queryset.model._meta.app_label
-        context = self.get_deferred_context(request)
-        context["pulp_temp_file_pk"] = str(temp_file.pk)
         task = dispatch(
-            tasks.base.general_create,
+            tasks.base.general_create_from_temp_file,
             exclusive_resources=exclusive_resources,
-            args=(app_label, serializer.__class__.__name__),
-            kwargs={"data": task_payload, "context": context},
+            args=(app_label, serializer.__class__.__name__, str(temp_file.pk)),
+            kwargs={"data": task_payload, "context": self.get_deferred_context(request)},
         )
         return OperationPostponedResponse(task, request)
 
