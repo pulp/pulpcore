@@ -17,6 +17,26 @@ Changelog
 
 .. towncrier release notes start
 
+3.18.31 (2023-10-16)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Improve performance during export operations.
+  :github:`4551`
+- Taught ContentArtifactResource import to cache content results to improve performance.
+  :github:`4564`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.18.30 (2023-10-05)
 ====================
 REST API
