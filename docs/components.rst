@@ -52,7 +52,8 @@ available options.
 Availability
 ------------
 Ensuring the REST API and the content server is healthy and alive:
-* REST API: GET request to ``${API_ROOT}api/v3/status/`` see :ref:`API_ROOT <api-root>`
+
+* REST API: GET request to ``${API_ROOT}api/v3/status/`` (see :ref:`API_ROOT <api-root>`)
 * Content Server: HEAD request to ``/pulp/content/`` or :ref:`CONTENT_PATH_PREFIX <content-path-prefix>`
 
 
@@ -73,7 +74,7 @@ started and stopped without notifying Pulp.
    if you start *N* workers you can process *N* repo sync/modify/publish operations concurrently.
 
 All necessary information about tasks is stored in Pulp's Postgres database as a single source of
-truth. In case your tasking system get's jammed, there is a guide to help :ref:debugging_tasks.
+truth. In case your tasking system get's jammed, there is a guide to help (see :ref:`debugging tasks <debugging_tasks>`).
 
 
 Static Content
