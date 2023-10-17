@@ -585,6 +585,26 @@ Misc
 - :github:`3798`
 
 
+3.28.18 (2023-10-16)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Improve performance during export operations.
+  :github:`4551`
+- Taught ContentArtifactResource import to cache content results to improve performance.
+  :github:`4564`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.28.17 (2023-10-05)
 ====================
 REST API
@@ -1338,6 +1358,26 @@ Features
   :github:`3661`
 
 
+3.23.20 (2023-10-16)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Improve performance during export operations.
+  :github:`4551`
+- Taught ContentArtifactResource import to cache content results to improve performance.
+  :github:`4564`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.23.19 (2023-10-05)
 ====================
 REST API
@@ -1875,6 +1915,26 @@ Deprecations
   :github:`3604`
 
 
+3.22.17 (2023-10-16)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Improve performance during export operations.
+  :github:`4551`
+- Taught ContentArtifactResource import to cache content results to improve performance.
+  :github:`4564`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.22.16 (2023-09-27)
 ====================
 REST API
@@ -2348,6 +2408,26 @@ Removals
 - Deprecated model ``Label`` and serializer field ``LabelField`` and ``LabelSelectFilter`` for
   removal in 3.25.
   :github:`3400`
+
+
+3.21.21 (2023-10-16)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Improve performance during export operations.
+  :github:`4551`
+- Taught ContentArtifactResource import to cache content results to improve performance.
+  :github:`4564`
+
+
+Plugin API
+----------
+
+No significant changes.
 
 
 3.21.20 (2023-10-05)
@@ -3300,6 +3380,26 @@ Bugfixes
   the stage will still accumulate up to 500 (by default) items so batching is still in-effect there
   where it matters.
   :github:`2069`
+
+
+3.18.31 (2023-10-16)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Improve performance during export operations.
+  :github:`4551`
+- Taught ContentArtifactResource import to cache content results to improve performance.
+  :github:`4564`
+
+
+Plugin API
+----------
+
+No significant changes.
 
 
 3.18.30 (2023-10-05)
@@ -4453,6 +4553,26 @@ Bugfixes
 
 - Include additional information about which AccessPolicy is using deprecated policy features.
   :redmine:`9608`
+
+
+3.16.23 (2023-10-16)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Improve performance during export operations.
+  :github:`4551`
+- Taught ContentArtifactResource import to cache content results to improve performance.
+  :github:`4564`
+
+
+Plugin API
+----------
+
+No significant changes.
 
 
 3.16.22 (2023-10-05)
