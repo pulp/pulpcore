@@ -5,9 +5,6 @@
 
 additional_repos:
 - branch: main
-  name: pulp_file
-  pytest_args: pulp_file.tests.functional
-- branch: main
   name: pulp-certguard
   pytest_args: pulp_certguard.tests.functional
 api_root: /pulp/

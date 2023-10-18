@@ -3,13 +3,10 @@ django
 dynaconf
 drf-spectacular
 pulp-smash @ git+https://github.com/pulp/pulp-smash.git
-pulpcore-client
-pulp-file-client
 pytest
 python-gnupg
 proxy.py~=2.4.3
 trustme~=1.1.0
 
-# Temporarily taken from pulp_file
-# Preferrably we can depend on pulp_file[test] instead.
+# pulp_file tests
 beautifulsoup4
