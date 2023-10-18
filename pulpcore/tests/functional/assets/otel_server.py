@@ -77,7 +77,7 @@ def _otel_collector():
             raise web.HTTPNotFound()
 
         matched_span = next(
-            (span for span in spans if all((attrs.get(k) == v for k, v in attrs.items()))),
+            (span for span in spans if all((span.get(k) == v for k, v in attrs.items()))),
             None,
         )
         if matched_span:

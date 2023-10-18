@@ -418,6 +418,12 @@ class ThreadedAiohttpServerData:
 
 @pytest.fixture(scope="session")
 def received_otel_span():
+    """A fixture for checking the presence of specific spans on the otel collector server.
+
+    Ensure the collector server is up and running before executing tests with this fixture. To do
+    so, please, run the server as follows: python3 pulpcore/tests/functional/assets/otel_server.py
+    """
+
     def _received_otel_span(data):
         if os.environ.get("PULP_OTEL_ENABLED") != "true":
             # pretend everything is working as expected if tests are run from
@@ -425,7 +431,7 @@ def received_otel_span():
             return True
 
         async def _send_request():
-            async with aiohttp.ClientSession(raise_for_status=True) as session:
+            async with aiohttp.ClientSession(raise_for_status=False) as session:
                 otel_server_url = os.environ.get("OTEL_EXPORTER_OTLP_ENDPOINT")
                 async with session.post(f"{otel_server_url}/test", json=data) as response:
                     return response.status
