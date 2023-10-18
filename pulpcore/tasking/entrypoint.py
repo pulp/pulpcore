@@ -18,9 +18,21 @@ _logger = logging.getLogger(__name__)
 @click.option(
     "--burst/--no-burst", help="Run in burst mode; terminate when no more tasks are available."
 )
+@click.option(
+    "--reload/--no-reload", help="Reload worker on code changes. [requires hupper to be installed.]"
+)
 @click.command()
-def worker(pid, burst):
+def worker(pid, burst, reload):
     """A Pulp worker."""
+
+    if reload:
+        try:
+            import hupper
+        except ImportError:
+            click.echo("Could not load hupper. This is needed to use --reload.", err=True)
+            exit(1)
+
+        hupper.start_reloader(__name__ + ".worker")
 
     if pid:
         with open(os.path.expanduser(pid), "w") as fp:
