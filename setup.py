@@ -44,6 +44,12 @@ setup(
             "pulpcore-api = pulpcore.app.entrypoint:main",
             "pulpcore-content = pulpcore.content.entrypoint:main",
         ],
-        "pytest11": ["pulpcore = pulpcore.tests.functional"],
+        "pulpcore.plugin": [
+            "pulp_file = pulp_file:default_app_config",
+        ],
+        "pytest11": [
+            "pulpcore = pulpcore.tests.functional",
+            "pulp_file = pulp_file.tests.functional",
+        ],
     },
 )
