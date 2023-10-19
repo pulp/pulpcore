@@ -12,10 +12,10 @@ from django.conf import settings
 from django.core.files.storage import default_storage
 from django.db.models import F
 from io import StringIO
-from pkg_resources import DistributionNotFound, get_distribution
 from rest_framework.serializers import ValidationError
 from tablib import Dataset
 
+from pulpcore.exceptions.plugin import MissingPlugin
 from pulpcore.app.apps import get_plugin_config
 from pulpcore.app.models import (
     Artifact,
@@ -282,8 +282,8 @@ def _check_versions(version_json):
     error_messages = []
     for component in version_json:
         try:
-            version = get_distribution(component["component"]).version
-        except DistributionNotFound:
+            version = get_plugin_config(component["component"]).version
+        except MissingPlugin:
             error_messages.append(
                 _("Export uses {} which is not installed.").format(component["component"])
             )
@@ -363,8 +363,8 @@ def import_repository_version(
                         mapping = json.load(mapping_file)
 
         # Content
-        plugin_name = src_repo_type.split(".")[0]
-        cfg = get_plugin_config(plugin_name)
+        app_label = src_repo_type.split(".")[0]
+        cfg = get_plugin_config(app_label)
 
         resulting_content_ids = []
         for res_class in cfg.exportable_classes:
