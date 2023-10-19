@@ -7,10 +7,10 @@ import tarfile
 from gettext import gettext as _
 from logging import getLogger
 
+import json_stream
 from django.conf import settings
 from django.core.files.storage import default_storage
 from django.db.models import F
-from naya.json import stream_array, tokenize
 from io import StringIO
 from pkg_resources import DistributionNotFound, get_distribution
 from rest_framework.serializers import ValidationError
@@ -76,17 +76,14 @@ def _impfile_iterator(fd):
     we yield the result of json.dumps() for that batch. Repeat until all rows have been
     called for.
     """
-    eof = False
+    data = json_stream.load(fd)
     batch = []
-    rows = stream_array(tokenize(fd))
-    while not eof:
-        try:
-            while len(batch) < IMPORT_BATCH_SIZE:
-                batch.append(next(rows))
-        except StopIteration:
-            eof = True
-        yield json.dumps(batch)
-        batch.clear()
+    for row in data:
+        batch.append(json_stream.to_standard_types(row))
+        if len(batch) >= IMPORT_BATCH_SIZE:
+            yield json.dumps(batch)
+            batch.clear()
+    yield json.dumps(batch)
 
 
 def _import_file(fpath, resource_class, retry=False):
