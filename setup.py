@@ -20,7 +20,7 @@ setup(
     python_requires=">=3.8",
     install_requires=requirements,
     extras_require={
-        "sftp": ["django-storages[sftp]<=1.13.2"],
+        "sftp": ["django-storages[sftp]<=1.14.2"],
         "s3": ["django-storages[boto3]<=1.13.2"],
         "google": ["django-storages[google]>=1.13.2,<=1.13.2"],
         "azure": ["django-storages[azure]>=1.12.2,<=1.13.2"],
