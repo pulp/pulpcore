@@ -9,10 +9,10 @@ from distutils.util import strtobool
 from gettext import gettext as _
 from glob import glob
 from pathlib import Path
-from pkg_resources import get_distribution
 
 from django.conf import settings
 
+from pulpcore.app.apps import get_plugin_config
 from pulpcore.app.models import (
     CreatedResource,
     ExportedResource,
@@ -21,13 +21,14 @@ from pulpcore.app.models import (
     Publication,
     PulpExport,
     PulpExporter,
+    Repository,
     RepositoryVersion,
     Task,
 )
 from pulpcore.app.models.content import Artifact, ContentArtifact
 from pulpcore.app.serializers import PulpExportSerializer
 
-from pulpcore.app.util import compute_file_hash, get_version_from_model, Crc32Hasher
+from pulpcore.app.util import compute_file_hash, Crc32Hasher
 from pulpcore.app.importexport import (
     export_versions,
     export_artifacts,
@@ -318,17 +319,12 @@ def _get_versions_info(the_exporter):
     """
     Return plugin-version-info based on plugins are responsible for exporter-repositories.
     """
-    repositories = the_exporter.repositories.all()
-
     # extract plugin-version-info based on the repositories we're exporting from
-    vers_info = set()
-    # We always need to know what version of pulpcore was in place
-    vers_info.add(("pulpcore", get_distribution("pulpcore").version))
-    # for each repository being exported, get the version-info for the plugin that
-    # owns/controls that kind-of repository
-    for r in repositories:
-        vers_info.add(get_version_from_model(r.cast()))
-
+    repositories = the_exporter.repositories.all()
+    repo_types = {r.pulp_type for r in repositories}
+    app_labels = {Repository.get_model_for_pulp_type(rt)._meta.app_label for rt in repo_types}
+    app_labels.add("core")
+    vers_info = [(app_label, get_plugin_config(app_label).version) for app_label in app_labels]
     return vers_info
 
 

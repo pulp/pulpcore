@@ -13,10 +13,7 @@ from datetime import timedelta
 import gnupg
 
 from django.conf import settings
-from django.apps import apps
 from django.urls import Resolver404, resolve, reverse
-from django.contrib.contenttypes.models import ContentType
-from pkg_resources import get_distribution
 from rest_framework.serializers import ValidationError
 
 from pulpcore.app.loggers import deprecation_logger
@@ -197,23 +194,6 @@ def batch_qs(qs, batch_size=1000):
     for start in range(0, total, batch_size):
         end = min(start + batch_size, total)
         yield qs[start:end]
-
-
-def get_version_from_model(in_model):
-    """
-    Return a tuple (dist-label, version) for the distribution that 'owns' the model
-
-    Args:
-        in_model (models.Model): model whose owning-plugin-version we need
-
-    Returns:
-        (str, str): tuple containing owning-plugin's (distribution, version)
-    """
-    app_label = ContentType.objects.get_for_model(in_model, for_concrete_model=False).app_label
-    app_config_module = apps.get_app_config(app_label).name
-    maybe_the_distribution_name = app_config_module.split(".")[0]
-    version = get_distribution(maybe_the_distribution_name).version  # hope for the best!
-    return maybe_the_distribution_name, version
 
 
 def get_view_urlpattern(view):

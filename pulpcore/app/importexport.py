@@ -91,7 +91,7 @@ def export_versions(export, version_info):
 
     Args:
         export (django.db.models.PulpExport): export instance that's doing the export
-        version_info (set): set of (distribution-label,version) tuples for repos in this export
+        version_info (set): iterable of (distribution-label,version) tuples for repos in this export
     """
     # build the version-list from the distributions for each component
     versions = [{"component": label, "version": version} for (label, version) in version_info]
