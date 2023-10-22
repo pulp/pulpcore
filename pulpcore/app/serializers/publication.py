@@ -108,6 +108,21 @@ class RBACContentGuardSerializer(ContentGuardSerializer):
         fields = ContentGuardSerializer.Meta.fields + ("users", "groups")
 
 
+class CompositeContentGuardSerializer(ContentGuardSerializer, GetOrCreateSerializerMixin):
+    guards = DetailRelatedField(
+        many=True,
+        required=False,
+        help_text=_("List of ContentGuards to ask for access-permission."),
+        view_name_pattern=r"contentguards(-.*/.*)?-detail",
+        queryset=models.ContentGuard.objects.all(),
+        allow_null=True,
+    )
+
+    class Meta:
+        model = models.CompositeContentGuard
+        fields = ContentGuardSerializer.Meta.fields + ("guards",)
+
+
 class RBACContentGuardPermissionSerializer(serializers.Serializer):
     usernames = serializers.ListField(default=[])
     groupnames = serializers.ListField(default=[])

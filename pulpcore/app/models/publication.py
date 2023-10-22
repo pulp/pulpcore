@@ -29,7 +29,7 @@ from pulpcore.cache import Cache
 from rest_framework.exceptions import APIException
 from pulpcore.app.models import AutoAddObjPermsMixin
 from pulpcore.responses import ArtifactResponse
-from pulpcore.app.util import get_domain_pk, cache_key
+from pulpcore.app.util import get_domain_pk, cache_key, get_url
 
 
 _logger = logging.getLogger(__name__)
@@ -518,6 +518,55 @@ class HeaderContentGuard(ContentGuard, AutoAddObjPermsMixin):
             (
                 "manage_roles_headercontentguard",
                 "Can manage role assignments on header content guard",
+            ),
+        )
+
+
+class CompositeContentGuard(ContentGuard, AutoAddObjPermsMixin):
+    """
+    Content guard to allow a list of contentguards to be evaluated on access.
+
+    Content-guards in the `guards` list have their permit() calls issued in order. At the
+    first "pass" result, access is permitted. Only if ALL guards in the list forbid access,
+    is access forbidden.
+
+    guards (django.db.models.ManyToManyField): ContentGuards to invoke.
+    """
+
+    TYPE = "composite"
+
+    guards = models.ManyToManyField(ContentGuard, related_name="+", symmetrical=False)
+
+    def permit(self, request):
+        """
+        Permit if ANY content-guard allows (OR permissions).
+        """
+        errors = []
+        if not self.guards.all():
+            # No guards specified? PASS
+            return
+
+        for guard in self.guards.all():
+            detail_guard = guard.cast()
+            try:
+                detail_guard.permit(request)
+                return  # success on first-pass
+            except PermissionError as pe:
+                guard_error = _("Guard: '{}', HREF: '{}', class: '{}', denial: [{}].").format(
+                    detail_guard.name, get_url(detail_guard), type(detail_guard), str(pe)
+                )
+                errors.append(guard_error)
+
+        # If we get here - FAIL
+        msg = _("Access forbidden. Refusals: {}").format(errors)
+        raise PermissionError(msg)
+
+    class Meta:
+        default_related_name = "%(app_label)s_%(model_name)s"
+        permissions = (
+            (
+                "manage_roles_compositecontentguard",
+                "Can manage role assignments on Composite content guard",
             ),
         )
 
