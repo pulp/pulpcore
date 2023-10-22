@@ -5,6 +5,7 @@ import pytest
 import uuid
 
 from pulpcore.client.pulp_file import PatchedfileFileDistribution
+from pulpcore.client.pulpcore import PatchedCompositeContentGuard
 
 from pulpcore.tests.functional.utils import get_from_url
 
@@ -161,3 +162,162 @@ def test_header_contentguard_workflow(
 
     response = get_from_url(distro.base_url, headers=headers)
     assert response.status == 404
+
+
+def test_composite_contentguard_crud(
+    composite_contentguard_api_client,
+    redirect_contentguard_api_client,
+    header_contentguard_api_client,
+    gen_user,
+    gen_object_with_cleanup,
+):
+    # Create all of the users and groups
+    creator_user = gen_user(
+        model_roles=[
+            "core.headercontentguard_creator",
+            "core.contentredirectcontentguard_creator",
+            "core.compositecontentguard_creator",
+        ]
+    )
+
+    with creator_user:
+        # Create RedirectContentGuard, HeaderContentGuard
+        hcg = gen_object_with_cleanup(
+            header_contentguard_api_client,
+            {"name": str(uuid.uuid4()), "header_name": "x-header", "header_value": "123456"},
+        )
+        rcg = gen_object_with_cleanup(
+            redirect_contentguard_api_client,
+            {"name": str(uuid.uuid4()), "description": "test_composite_contentguard_crud"},
+        )
+
+        # Create CCG1, no guards; evaluate
+        ccg1 = gen_object_with_cleanup(
+            composite_contentguard_api_client,
+            {"name": str(uuid.uuid4()), "description": "test_composite_contentguard_crud"},
+        )
+        assert not ccg1.guards
+        ccg1 = composite_contentguard_api_client.read(ccg1.pulp_href)
+        assert not ccg1.guards
+
+        # Update CCG1, RCG, evaluate, expect 1
+        body = PatchedCompositeContentGuard(guards=[rcg.pulp_href])
+        ccg1 = composite_contentguard_api_client.partial_update(ccg1.pulp_href, body)
+        assert ccg1.guards
+        assert len(ccg1.guards) == 1
+
+        # Update CCG1, HCG, evaluate, expect 1
+        body = PatchedCompositeContentGuard(guards=[hcg.pulp_href])
+        ccg1 = composite_contentguard_api_client.partial_update(ccg1.pulp_href, body)
+        assert ccg1.guards
+        assert len(ccg1.guards) == 1
+
+        # Update CCG1, [RCG, HCG], evaluate, expect 2
+        body = PatchedCompositeContentGuard(guards=[rcg.pulp_href, hcg.pulp_href])
+        ccg1 = composite_contentguard_api_client.partial_update(ccg1.pulp_href, body)
+        assert ccg1.guards
+        assert len(ccg1.guards) == 2
+
+        # Create CCG2, [RCG, HCG], evaluate
+        ccg2 = gen_object_with_cleanup(
+            composite_contentguard_api_client,
+            {
+                "name": str(uuid.uuid4()),
+                "description": "test_composite_contentguard_crud",
+                "guards": [rcg.pulp_href, hcg.pulp_href],
+            },
+        )
+        assert ccg2.guards
+        assert len(ccg2.guards) == 2
+
+        # List CCGs, expect 2
+        list_response = composite_contentguard_api_client.list()
+        assert list_response.count == 2
+
+        # Delete CCG1
+        composite_contentguard_api_client.delete(ccg1.pulp_href)
+        # List CCG, expect 1
+        list_response = composite_contentguard_api_client.list()
+        assert list_response.count == 1
+
+
+def test_composite_contentguard_permissions(
+    composite_contentguard_api_client,
+    redirect_contentguard_api_client,
+    header_contentguard_api_client,
+    gen_user,
+    gen_object_with_cleanup,
+    monitor_task,
+    file_distribution_api_client,
+    file_distribution_factory,
+):
+    # Create allowed-user
+    creator_user = gen_user(
+        model_roles=[
+            "core.headercontentguard_creator",
+            "core.contentredirectcontentguard_creator",
+            "core.compositecontentguard_creator",
+            "file.filedistribution_creator",
+        ]
+    )
+
+    # Create HCG, RCG, CCG, empty guards
+    with creator_user:
+        # Create RedirectContentGuard, HeaderContentGuard
+        hcg = gen_object_with_cleanup(
+            header_contentguard_api_client,
+            {"name": str(uuid.uuid4()), "header_name": "x-header", "header_value": "123456"},
+        )
+        rcg = gen_object_with_cleanup(
+            redirect_contentguard_api_client,
+            {"name": str(uuid.uuid4()), "description": "test_composite_contentguard_permissions"},
+        )
+
+        # Create CCG1, no guards
+        ccg1 = gen_object_with_cleanup(
+            composite_contentguard_api_client,
+            {"name": str(uuid.uuid4()), "description": "test_composite_contentguard_permissions"},
+        )
+
+        # Create "unattached" FileDistribution
+        distro = file_distribution_factory()
+        # attempt access to base-url, expect 404 (no content, no guards)
+        response = get_from_url(distro.base_url)
+        assert response.status == 404
+
+        # Assign CCG1, no guards
+        body = PatchedfileFileDistribution(content_guard=ccg1.pulp_href)
+        monitor_task(file_distribution_api_client.partial_update(distro.pulp_href, body).task)
+        distro = file_distribution_api_client.read(distro.pulp_href)
+        assert ccg1.pulp_href == distro.content_guard
+
+        # attempt access to base-url, expect 404 (no content, no guards allows)
+        response = get_from_url(distro.base_url)
+        assert response.status == 404
+
+        # update CCG with RCG
+        body = PatchedCompositeContentGuard(guards=[rcg.pulp_href])
+        ccg1 = composite_contentguard_api_client.partial_update(ccg1.pulp_href, body)
+
+        # attempt dist-access, expect 403 (1 guard, forbids)
+        response = get_from_url(distro.base_url)
+        assert response.status == 403
+
+        # Create HeaderContentGuard, update CCG with [RCG, HCG]
+        body = PatchedCompositeContentGuard(guards=[rcg.pulp_href, hcg.pulp_href])
+        composite_contentguard_api_client.partial_update(ccg1.pulp_href, body)
+
+        # attempt dist-access, expect 403 (2 guards, both forbid)
+        response = get_from_url(distro.base_url)
+        assert response.status == 403
+
+        # examine error-response, expect one from each guard
+        assert rcg.pulp_href in response.reason
+        assert hcg.pulp_href in response.reason
+
+        # attempt dist-access with appropriate header
+        # expect 404 for allowed-user (2 guards, one allows)
+        header_value = b64encode(b"123456").decode("ascii")
+        headers = {"x-header": header_value}
+        response = get_from_url(distro.base_url, headers=headers)
+        assert response.status == 404

@@ -39,6 +39,7 @@ from pulpcore.client.pulpcore import (
     ContentApi,
     ContentguardsApi,
     ContentguardsRbacApi,
+    ContentguardsCompositeApi,
     ContentguardsContentRedirectApi,
     ContentguardsHeaderApi,
     DomainsApi,
@@ -339,6 +340,11 @@ def redirect_contentguard_api_client(pulpcore_client):
 @pytest.fixture(scope="session")
 def header_contentguard_api_client(pulpcore_client):
     return ContentguardsHeaderApi(pulpcore_client)
+
+
+@pytest.fixture(scope="session")
+def composite_contentguard_api_client(pulpcore_client):
+    return ContentguardsCompositeApi(pulpcore_client)
 
 
 @pytest.fixture(scope="session")

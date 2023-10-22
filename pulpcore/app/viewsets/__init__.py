@@ -53,6 +53,7 @@ from .publication import (
     PublicationFilter,
     PublicationViewSet,
     RBACContentGuardViewSet,
+    CompositeContentGuardViewSet,
     ContentRedirectContentGuardViewSet,
     HeaderContentGuardViewSet,
     ArtifactDistributionViewSet,

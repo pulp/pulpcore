@@ -4,6 +4,8 @@ from django.db.models import Prefetch
 from django_filters import Filter
 from rest_framework import mixins, serializers
 
+from pulpcore.app.models.publication import CompositeContentGuard
+from pulpcore.app.serializers.publication import CompositeContentGuardSerializer
 from pulpcore.filters import BaseFilterSet
 from pulpcore.app.models import (
     ContentGuard,
@@ -424,6 +426,76 @@ class HeaderContentGuardViewSet(ContentGuardViewSet, RolesMixin):
             "core.manage_roles_headercontentguard",
         ],
         "core.headercontentguard_viewer": ["core.view_headercontentguard"],
+    }
+
+
+class CompositeContentGuardViewSet(ContentGuardViewSet, RolesMixin):
+    """
+    Content guard that queries a list-of content-guards for access permissions.
+    """
+
+    endpoint_name = "composite"
+    queryset = CompositeContentGuard.objects.all()
+    serializer_class = CompositeContentGuardSerializer
+    queryset_filtering_required_permission = "core.view_compositecontentguard"
+
+    DEFAULT_ACCESS_POLICY = {
+        "statements": [
+            {
+                "action": ["list"],
+                "principal": "authenticated",
+                "effect": "allow",
+            },
+            {
+                "action": ["create"],
+                "principal": "authenticated",
+                "effect": "allow",
+                "condition": "has_model_or_domain_perms:core.add_compositecontentguard",
+            },
+            {
+                "action": ["retrieve", "my_permissions"],
+                "principal": "authenticated",
+                "effect": "allow",
+                "condition": "has_model_or_domain_or_obj_perms:core." "view_compositecontentguard",
+            },
+            {
+                "action": ["update", "partial_update"],
+                "principal": "authenticated",
+                "effect": "allow",
+                "condition": ("has_model_or_domain_or_obj_perms:core.change_compositecontentguard"),
+            },
+            {
+                "action": ["destroy"],
+                "principal": "authenticated",
+                "effect": "allow",
+                "condition": ("has_model_or_domain_or_obj_perms:core.delete_compositecontentguard"),
+            },
+            {
+                "action": ["list_roles", "add_role", "remove_role"],
+                "principal": "authenticated",
+                "effect": "allow",
+                "condition": (
+                    "has_model_or_domain_or_obj_perms:core.manage_roles_compositecontentguard"
+                ),
+            },
+        ],
+        "creation_hooks": [
+            {
+                "function": "add_roles_for_object_creator",
+                "parameters": {"roles": ["core.compositecontentguard_owner"]},
+            },
+        ],
+        "queryset_scoping": {"function": "scope_queryset"},
+    }
+    LOCKED_ROLES = {
+        "core.compositecontentguard_creator": ["core.add_compositecontentguard"],
+        "core.compositecontentguard_owner": [
+            "core.view_compositecontentguard",
+            "core.change_compositecontentguard",
+            "core.delete_compositecontentguard",
+            "core.manage_roles_compositecontentguard",
+        ],
+        "core.compositecontentguard_viewer": ["core.view_compositecontentguard"],
     }
 
 

@@ -77,6 +77,7 @@ from .publication import (
     PublicationSerializer,
     RBACContentGuardSerializer,
     RBACContentGuardPermissionSerializer,
+    CompositeContentGuardSerializer,
     ContentRedirectContentGuardSerializer,
     HeaderContentGuardSerializer,
     ArtifactDistributionSerializer,
