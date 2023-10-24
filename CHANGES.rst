@@ -13,6 +13,44 @@ Changelog
 
 .. towncrier release notes start
 
+3.38.0 (2023-10-19)
+===================
+REST API
+--------
+
+Features
+~~~~~~~~
+
+- Use CRC32 checksums instead of SHA256 to improve import/export performance. Cryptographic checksums aren't required as we are only verifying the integrity of the files.
+  :github:`4447`
+- Parsing of the db encryption key was made resiliant to whitespace and to allow comments.
+  :github:`4542`
+
+
+Bugfixes
+~~~~~~~~
+
+- Stopped reassembling the tarball of a chunked import into one large file, and instead gather the
+  bits on the fly. This also allows importing directly from a read-only medium.
+  :github:`4545`
+- Improve performance during export operations.
+  :github:`4551`
+- Taught ContentArtifactResource import to cache content results to improve performance.
+  :github:`4564`
+
+
+Misc
+~~~~
+
+- :github:`4323`, :github:`4585`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.37.0 (2023-10-05)
 ===================
 REST API
