@@ -827,7 +827,9 @@ class RepositoryVersion(BaseModel):
             raise ResourceImmutableError(self)
 
         repo_content = []
-        to_add = set(content.exclude(pk__in=self.content).values_list("pk", flat=True))
+        to_add = set(content.values_list("pk", flat=True)) - set(
+            self.content.values_list("pk", flat=True)
+        )
 
         # Normalize representation if content has already been removed in this version and
         # is re-added: Undo removal by setting version_removed to None.
