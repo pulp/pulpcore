@@ -3,10 +3,7 @@
 
 # generated with plugin_template@2021.08.26-249-gca8f021
 
-additional_repos:
-- branch: main
-  name: pulp-certguard
-  pytest_args: pulp_certguard.tests.functional
+additional_repos: []
 api_root: /pulp/
 black: true
 check_commit_message: true
