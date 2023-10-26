@@ -13,13 +13,10 @@ _logger = logging.getLogger(__name__)
 __all__ = ["remove_duplicates"]
 
 
-def remove_duplicates(repository_version):
+def find_duplicates(repository_version):
     """
-    Inspect content additions in the `RepositoryVersion` and remove existing repository duplicates.
-
-    This function will inspect the content being added to a repo version and remove any existing
-    content which would collide with the content being added to the repository version. It does not
-    inspect the content being added for duplicates.
+    Inspect content additions in the `RepositoryVersion` and find any duplicates within the set of
+    existing repository content relative to the newly added content.
 
     Some content can have two instances A and B which are unique, but cannot both exist together in
     one repository. For example, pulp_file's content has `relative_path` for that file within the
@@ -34,6 +31,9 @@ def remove_duplicates(repository_version):
     Args:
         repository_version: The :class:`~pulpcore.plugin.models.RepositoryVersion` to be checked
             and possibly modified.
+
+    Returns:
+        A dict using pulp_type as the key and providing a duplicate_qs or else None as the value.
     """
     added_content = repository_version.added(base_version=repository_version.base_version)
     if repository_version.base_version:
@@ -46,18 +46,18 @@ def remove_duplicates(repository_version):
     repository = repository_version.repository.cast()
     content_types = {type_obj.get_pulp_type(): type_obj for type_obj in repository.CONTENT_TYPES}
 
+    pulp_type_duplicates_qs = {}
     for pulp_type, type_obj in content_types.items():
         repo_key_fields = type_obj.repo_key_fields
         new_content_qs = type_obj.objects.filter(
             pk__in=added_content.filter(pulp_type=pulp_type)
         ).values(*repo_key_fields)
 
+        pulp_type_duplicates_qs[pulp_type] = None
         if type_obj.repo_key_fields == ():
             continue
 
         if new_content_qs.count() and existing_content.count():
-            _logger.debug(_("Removing duplicates for type: {}".format(type_obj.get_pulp_type())))
-
             for batch in batch_qs(new_content_qs):
                 find_dup_qs = Q()
 
@@ -68,7 +68,30 @@ def remove_duplicates(repository_version):
                 duplicates_qs = (
                     type_obj.objects.filter(pk__in=existing_content).filter(find_dup_qs).only("pk")
                 )
-                repository_version.remove_content(duplicates_qs)
+                pulp_type_duplicates_qs[pulp_type] = duplicates_qs
+
+    return pulp_type_duplicates_qs
+
+
+def remove_duplicates(repository_version):
+    """
+    Inspect content additions in the `RepositoryVersion` and remove existing repository duplicates.
+
+    This function will inspect the content being added to a repo version and remove any existing
+    content which would collide with the content being added to the repository version. It does not
+    inspect the content being added for duplicates.
+
+    See also the docstring for find_duplicates() for more information.
+
+    Args:
+        repository_version: The :class:`~pulpcore.plugin.models.RepositoryVersion` to be checked
+            and possibly modified.
+    """
+    pulp_type_duplicates_qs = find_duplicates(repository_version)
+    for pulp_type, duplicates_qs in pulp_type_duplicates_qs.items():
+        if duplicates_qs:
+            _logger.debug(_("Removing duplicates for type: {}".format(pulp_type)))
+            repository_version.remove_content(duplicates_qs)
 
 
 def validate_duplicate_content(version):
