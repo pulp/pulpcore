@@ -27,7 +27,7 @@ def test_full_workflow(
     pulp_content_url,
 ):
     if not redis_status:
-        pytest.skip("Could not connect to the Redis server")
+        pytest.xfail("Could not connect to the Redis server")
 
     def _check_cache(url):
         """Helper to check if cache miss or hit"""

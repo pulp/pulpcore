@@ -9,8 +9,7 @@ from urllib.parse import urljoin
 def test_content_directory_listing(
     file_distribution_factory,
     gen_object_with_cleanup,
-    tls_certificate_authority_cert,
-    x509_content_guards_api_client,
+    rbac_contentguard_api_client,
     pulp_settings,
     http_get,
     pulp_status,
@@ -20,8 +19,7 @@ def test_content_directory_listing(
     HIDE_GUARDED_DISTRIBUTIONS = getattr(pulp_settings, "HIDE_GUARDED_DISTRIBUTIONS", False)
 
     content_guard1 = gen_object_with_cleanup(
-        x509_content_guards_api_client,
-        {"name": str(uuid.uuid4()), "ca_certificate": tls_certificate_authority_cert},
+        rbac_contentguard_api_client, {"name": str(uuid.uuid4())}
     )
 
     base_path = str(uuid.uuid4())

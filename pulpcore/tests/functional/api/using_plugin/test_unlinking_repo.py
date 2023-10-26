@@ -3,7 +3,6 @@ import pytest
 
 
 @pytest.mark.parallel
-@pytest.mark.skip("Makes S3 runner get stuck, skipping for now")
 def test_shared_remote_usage(
     file_repository_api_client,
     file_repository_factory,
