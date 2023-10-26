@@ -26,14 +26,10 @@ def test_read_all_content_generic(content_api_client, file_random_content_unit):
 def test_read_all_content_guards_generic(
     gen_object_with_cleanup,
     content_guards_api_client,
-    tls_certificate_authority_cert,
-    x509_content_guards_api_client,
+    rbac_contentguard_api_client,
 ):
     """Ensure name is displayed when listing content guards generic."""
-    gen_object_with_cleanup(
-        x509_content_guards_api_client,
-        {"name": str(uuid.uuid4()), "ca_certificate": tls_certificate_authority_cert},
-    )
+    gen_object_with_cleanup(rbac_contentguard_api_client, {"name": str(uuid.uuid4())})
 
     response = content_guards_api_client.list()
     assert response.count != 0
