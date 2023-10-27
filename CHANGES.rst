@@ -13,6 +13,31 @@ Changelog
 
 .. towncrier release notes start
 
+3.39.0 (2023-10-25)
+===================
+REST API
+--------
+
+Features
+~~~~~~~~
+
+- Added a ``HeaderContentGuard`` to allow a content access based on a valued provided by a specific header. The header can optionally be filtered through a ``jq`` expression.
+  :github:`4518`
+
+
+Bugfixes
+~~~~~~~~
+
+- Resolved a sync-time performance regression.
+  :github:`4591`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.38.0 (2023-10-19)
 ===================
 REST API
