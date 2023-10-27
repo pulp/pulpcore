@@ -1,16 +1,53 @@
 import datetime
+import logging
 import multiprocessing
-import tempfile
 import requests
+import tempfile
+import time
 
 from collections import namedtuple
 from urllib.parse import urljoin
 from uuid import uuid4
 
-from .pulpperf import utils
 from .pulpperf import reporting
 
 Args = namedtuple("Arguments", "limit processes repositories")
+
+
+def measureit(func, *args, **kwargs):
+    """Measure execution time of passed function."""
+    logging.debug("Measuring duration of %s %s %s" % (func.__name__, args, kwargs))
+    before = time.perf_counter()
+    out = func(*args, **kwargs)
+    after = time.perf_counter()
+    return after - before, out
+
+
+def parse_pulp_manifest(url):
+    """Parse pulp manifest."""
+    response = requests.get(url)
+    response.text.split("\n")
+    data = [i.strip().split(",") for i in response.text.split("\n")]
+    return [(i[0], i[1], int(i[2])) for i in data if i != [""]]
+
+
+def print_fmt_experiment_time(label, start, end):
+    """Print formatted label and experiment time."""
+    print("\n-> {} => Experiment time (s): {}".format(label, (end - start).total_seconds()))
+
+
+def report_tasks_stats(performance_task_name, tasks):
+    """Print out basic stats about received tasks."""
+    for t in tasks:
+        task_duration = t.finished_at - t.started_at
+        waiting_time = t.started_at - t.pulp_created
+        print(
+            "\n-> {task_name} => Waiting time (s): {wait} | Service time (s): {service}".format(
+                task_name=performance_task_name,
+                wait=waiting_time.total_seconds(),
+                service=task_duration.total_seconds(),
+            )
+        )
 
 
 def test_performance(
@@ -111,7 +148,7 @@ def test_performance(
 
     for r in data:
         params = []
-        pulp_manifest = utils.parse_pulp_manifest(r["remote_url"] + "PULP_MANIFEST")
+        pulp_manifest = parse_pulp_manifest(r["remote_url"] + "PULP_MANIFEST")
         for f, _, s in pulp_manifest[: args.limit]:
             params.append((r["download_base_url"], f, s))
         with multiprocessing.Pool(processes=args.processes) as pool:
@@ -126,7 +163,7 @@ def test_performance(
     durations_list = []
     content_url = bindings_cfg.host + "/pulp/api/v3/content/file/files/"
     for r in data:
-        duration, content = utils.measureit(
+        duration, content = measureit(
             list_units_in_repo_ver, content_url, r["repository_version_href"], auth
         )
         durations_list.append(duration)
@@ -136,7 +173,7 @@ def test_performance(
             url = c.get("pulp_href")
             params.append((get, bindings_cfg.host + url, None, auth))
         with multiprocessing.Pool(processes=args.processes) as pool:
-            pool.starmap(utils.measureit, params)
+            pool.starmap(measureit, params)
     after = datetime.datetime.utcnow()
     reporting.print_fmt_experiment_time("Content inspection", before, after)
 
@@ -179,7 +216,7 @@ def download(base_url, file_name, file_size):
     """Download file with expected size and drop it."""
     with tempfile.TemporaryFile() as downloaded_file:
         full_url = urljoin(base_url, file_name)
-        duration, response = utils.measureit(requests.get, full_url)
+        duration, response = measureit(requests.get, full_url)
         response.raise_for_status()
         downloaded_file.write(response.content)
         assert downloaded_file.tell() == file_size

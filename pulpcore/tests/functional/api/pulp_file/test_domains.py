@@ -5,7 +5,7 @@ import json
 from pulpcore.app import settings
 from pulpcore.client.pulp_file import ApiException
 from pulpcore.client.pulpcore import ApiException as CoreApiException
-from pulp_file.tests.functional.utils import generate_iso, download_file
+from pulpcore.tests.functional.utils import generate_iso, download_file
 
 
 if not settings.DOMAIN_ENABLED:

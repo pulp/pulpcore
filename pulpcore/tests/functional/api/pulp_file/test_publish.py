@@ -9,7 +9,7 @@ from pulpcore.client.pulp_file import (
     FileFilePublication,
 )
 from pulpcore.client.pulp_file.exceptions import ApiException
-from pulp_file.tests.functional.utils import download_file
+from pulpcore.tests.functional.utils import download_file
 
 
 @pytest.mark.parallel

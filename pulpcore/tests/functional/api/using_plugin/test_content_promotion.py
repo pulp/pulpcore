@@ -3,8 +3,7 @@ import hashlib
 import pytest
 from urllib.parse import urljoin
 
-from pulp_file.tests.functional.utils import get_files_in_manifest, get_url
-from pulpcore.tests.functional.utils import download_file
+from pulpcore.tests.functional.utils import download_file, get_files_in_manifest, get_from_url
 
 from pulpcore.client.pulp_file import RepositorySyncURL
 
@@ -44,7 +43,7 @@ def test_content_promotion(
 
     for distro in [distribution1, distribution2, distribution3]:
         # Assert that all 3 distributions can be accessed
-        r = get_url(distro.base_url)
+        r = get_from_url(distro.base_url)
         assert r.status == 200
         # Download one of the files from the distribution and assert it has the correct checksum
         expected_files_list = list(expected_files)

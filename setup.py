@@ -49,7 +49,7 @@ setup(
         ],
         "pytest11": [
             "pulpcore = pulpcore.tests.functional",
-            "pulp_file = pulp_file.tests.functional",
+            "pulp_file = pulp_file.pytest_plugin",
         ],
     },
 )

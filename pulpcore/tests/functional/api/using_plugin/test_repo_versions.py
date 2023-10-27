@@ -5,10 +5,9 @@ from tempfile import NamedTemporaryFile
 from uuid import uuid4
 
 from pulpcore.client.pulpcore import ApiException as CoreApiException
-from pulpcore.tests.functional.utils import PulpTaskError
 from pulpcore.client.pulp_file.exceptions import ApiException
 
-from pulp_file.tests.functional.utils import get_files_in_manifest
+from pulpcore.tests.functional.utils import PulpTaskError, get_files_in_manifest
 
 
 @pytest.fixture

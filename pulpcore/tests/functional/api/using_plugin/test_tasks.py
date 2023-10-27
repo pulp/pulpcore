@@ -8,7 +8,7 @@ from aiohttp import BasicAuth
 from pulpcore.client.pulp_file import RepositorySyncURL
 from pulpcore.client.pulpcore.exceptions import ApiException
 
-from pulp_file.tests.functional.utils import download_file
+from pulpcore.tests.functional.utils import download_file
 
 
 @pytest.fixture
