@@ -8,7 +8,7 @@ import subprocess
 import uuid
 from urllib.parse import urljoin
 
-from pulp_file.tests.functional.utils import get_files_in_manifest, download_file
+from pulpcore.tests.functional.utils import get_files_in_manifest, download_file
 
 from pulpcore.app import settings
 from pulpcore.client.pulp_file import FileFilePublication, RepositorySyncURL

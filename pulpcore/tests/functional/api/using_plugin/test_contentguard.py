@@ -6,7 +6,7 @@ import uuid
 
 from pulpcore.client.pulp_file import PatchedfileFileDistribution
 
-from pulp_file.tests.functional.utils import get_url
+from pulpcore.tests.functional.utils import get_from_url
 
 
 @pytest.mark.parallel
@@ -45,7 +45,7 @@ def test_rbac_content_guard_full_workflow(
                 auth = BasicAuth(login=user.username, password=user.password)
             else:
                 auth = None
-            response = get_url(distro.base_url, auth=auth)
+            response = get_from_url(distro.base_url, auth=auth)
             expected_status = 404 if user in authorized_users else 403
             assert response.status == expected_status, f"Failed on {user.username=}"
 
@@ -117,7 +117,7 @@ def test_header_contentguard_workflow(
         assert guard.pulp_href == distro.content_guard
 
     # Expect to receive a 403 Forbiden
-    response = get_url(distro.base_url, headers=None)
+    response = get_from_url(distro.base_url, headers=None)
     assert response.status == 403
 
     # Expect the status to be 404 given the distribution is accessible
@@ -125,7 +125,7 @@ def test_header_contentguard_workflow(
     header_value = b64encode(b"123456").decode("ascii")
     headers = {"x-header": header_value}
 
-    response = get_url(distro.base_url, headers=headers)
+    response = get_from_url(distro.base_url, headers=headers)
     assert response.status == 404
 
     # Check the access using an jq_filter
@@ -159,5 +159,5 @@ def test_header_contentguard_workflow(
     header_value = b64encode(byte_header_content).decode("utf8")
     headers = {header_name: header_value}
 
-    response = get_url(distro.base_url, headers=headers)
+    response = get_from_url(distro.base_url, headers=headers)
     assert response.status == 404

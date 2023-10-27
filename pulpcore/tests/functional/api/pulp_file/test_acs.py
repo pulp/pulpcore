@@ -6,7 +6,7 @@ from urllib.parse import urljoin
 from pulpcore.client.pulp_file import RepositorySyncURL
 from pulpcore.client.pulp_file.exceptions import ApiException
 
-from pulp_file.tests.functional.utils import (
+from pulpcore.tests.functional.utils import (
     download_file,
     get_files_in_manifest,
 )

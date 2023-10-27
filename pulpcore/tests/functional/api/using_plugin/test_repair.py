@@ -8,7 +8,7 @@ from pulpcore.client.pulp_file import RepositorySyncURL
 
 from pulpcore.app import settings
 
-from pulp_file.tests.functional.utils import get_files_in_manifest
+from pulpcore.tests.functional.utils import get_files_in_manifest
 
 
 SUPPORTED_STORAGE_FRAMEWORKS = [

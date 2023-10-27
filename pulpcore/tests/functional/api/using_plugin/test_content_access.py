@@ -6,7 +6,7 @@ from pulpcore.client.pulp_file import (
     RepositorySyncURL,
 )
 
-from pulp_file.tests.functional.utils import (
+from pulpcore.tests.functional.utils import (
     download_file,
 )
 

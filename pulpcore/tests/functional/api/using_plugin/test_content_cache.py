@@ -9,7 +9,7 @@ from pulpcore.client.pulp_file import (
     PatchedfileFileDistribution,
 )
 
-from pulp_file.tests.functional.utils import get_url
+from pulpcore.tests.functional.utils import get_from_url
 
 
 @pytest.mark.parallel
@@ -31,7 +31,7 @@ def test_full_workflow(
 
     def _check_cache(url):
         """Helper to check if cache miss or hit"""
-        r = get_url(url)
+        r = get_from_url(url)
         if r.history:
             r = r.history[0]
             return 200 if r.status == 302 else r.status, r.headers.get("X-PULP-CACHE")

@@ -5,7 +5,7 @@ from urllib.parse import urljoin
 
 from pulpcore.client.pulp_file import RepositorySyncURL
 
-from pulp_file.tests.functional.utils import get_files_in_manifest, download_file
+from pulpcore.tests.functional.utils import get_files_in_manifest, download_file
 
 
 @pytest.mark.parallel

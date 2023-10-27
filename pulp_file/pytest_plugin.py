@@ -18,7 +18,7 @@ from pulpcore.client.pulp_file import (
     RepositoriesFileVersionsApi,
 )
 
-from pulp_file.tests.functional.utils import generate_iso, generate_manifest
+from pulpcore.tests.functional.utils import generate_iso, generate_manifest
 
 # Api Bindings fixtures
 

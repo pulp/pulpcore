@@ -8,8 +8,7 @@ from pulpcore.client.pulp_file import (
     RepositorySyncURL,
 )
 
-from pulp_file.tests.functional.utils import get_files_in_manifest
-from pulpcore.tests.functional.utils import download_file
+from pulpcore.tests.functional.utils import download_file, get_files_in_manifest
 
 
 @pytest.mark.parallel
