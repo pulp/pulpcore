@@ -38,6 +38,24 @@ Plugin API
 No significant changes.
 
 
+3.38.1 (2023-10-28)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Resolved a sync-time performance regression.
+  :github:`4591`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.38.0 (2023-10-19)
 ===================
 REST API
