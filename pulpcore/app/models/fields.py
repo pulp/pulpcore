@@ -11,7 +11,6 @@ from django.db.models import FileField, JSONField, Lookup
 from django.db.models.fields import Field, TextField
 from django.utils.encoding import force_bytes, force_str
 from pulpcore.app.files import TemporaryDownloadedFile
-from pulpcore.app.loggers import deprecation_logger
 
 _logger = logging.getLogger(__name__)
 
@@ -141,15 +140,7 @@ class EncryptedJSONField(JSONField):
             return [self.decrypt(v) for v in value]
 
         dec_value = force_str(_fernet().decrypt(force_bytes(value)))
-        try:
-            return json.loads(dec_value, cls=self.decoder)
-        except json.JSONDecodeError:
-            deprecation_logger.info(
-                "Failed to decode json in an EncryptedJSONField. Falling back to eval. "
-                "Please run pulpcore-manager rotate-db-key to repair."
-                "This is deprecated and will be removed in pulpcore 3.40."
-            )
-            return eval(dec_value)
+        return json.loads(dec_value, cls=self.decoder)
 
     def get_prep_value(self, value):
         if value is not None:
