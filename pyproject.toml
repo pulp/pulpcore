@@ -21,6 +21,10 @@ issue_format = ":github:`{issue}`"
         path = "plugin_api"
         name = "Plugin API"
 
+    [[tool.towncrier.section]]
+        path = "pulp_file"
+        name = "Pulp File"
+
     [[tool.towncrier.type]]
         directory = "feature"
         name = "Features"
