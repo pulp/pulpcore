@@ -1,3 +1,0 @@
-Removed fallback to `eval` in case `EncryptedJSONField` failed to decode json data.
-In case you suspect bad entries in the database, run `pulpcore-manager rotate-db-key` *before* the
-upgrade.
