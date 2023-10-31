@@ -13,6 +13,7 @@ from pulpcore.app.role_util import (  # noqa: F401
 )
 
 from pulpcore.app.util import (  # noqa: F401
+    batch_qs,
     extract_pk,
     get_artifact_url,
     get_url,
