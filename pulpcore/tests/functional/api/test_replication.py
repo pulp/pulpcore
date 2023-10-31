@@ -7,7 +7,7 @@ from pulpcore.client.pulpcore import AsyncOperationResponse
 from pulpcore.tests.functional.utils import PulpTaskGroupError
 
 
-@pytest.mark.parallel
+# @pytest.mark.parallel
 def test_replication(
     domain_factory,
     bindings_cfg,
@@ -41,7 +41,7 @@ def test_replication(
         assert task.state == "completed"
 
 
-@pytest.mark.parallel
+# @pytest.mark.parallel
 def test_replication_with_wrong_ca_cert(
     domain_factory,
     bindings_cfg,
