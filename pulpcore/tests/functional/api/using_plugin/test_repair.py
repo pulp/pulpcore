@@ -16,13 +16,12 @@ SUPPORTED_STORAGE_FRAMEWORKS = [
     "pulpcore.app.models.storage.FileSystem",
 ]
 
-if settings.DEFAULT_FILE_STORAGE not in SUPPORTED_STORAGE_FRAMEWORKS:
-    raise pytest.skip(
-        "Cannot simulate bit-rot on this storage platform ({}).".format(
-            settings.DEFAULT_FILE_STORAGE
-        ),
-        allow_module_level=True,
-    )
+pytestmark = pytest.mark.skipif(
+    settings.DEFAULT_FILE_STORAGE not in SUPPORTED_STORAGE_FRAMEWORKS,
+    reason="Cannot simulate bit-rot on this storage platform ({}).".format(
+        settings.DEFAULT_FILE_STORAGE
+    ),
+)
 
 
 @pytest.fixture

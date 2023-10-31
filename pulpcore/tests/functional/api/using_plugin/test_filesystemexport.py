@@ -15,8 +15,7 @@ from pulpcore.client.pulp_file import RepositorySyncURL
 NUM_REPOS = 1
 NUM_EXPORTERS = 4
 
-if settings.DOMAIN_ENABLED:
-    pytest.skip("Domains do not support export.", allow_module_level=True)
+pytestmark = pytest.mark.skipif(settings.DOMAIN_ENABLED, reason="Domains do not support export.")
 
 
 @pytest.fixture

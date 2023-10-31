@@ -1000,17 +1000,16 @@ def add_to_cleanup(monitor_task):
     delete_task_hrefs = []
     # Delete newest items first to avoid dependency lockups
     for api_client, pulp_href in reversed(obj_refs):
-        try:
-            task_url = api_client.delete(pulp_href).task
-            delete_task_hrefs.append(task_url)
-        except Exception:
+        with suppress(Exception):
             # There was no delete task for this unit or the unit may already have been deleted.
             # Also we can never be sure which one is the right ApiException to catch.
-            pass
+            task_url = api_client.delete(pulp_href).task
+            delete_task_hrefs.append(task_url)
 
     for deleted_task_href in delete_task_hrefs:
-        with suppress(ApiException):
+        with suppress(Exception):
             # The task itself may be gone at this point (e.g. by being part of a deleted domain).
+            # Also we can never be sure which one is the right ApiException to catch.
             monitor_task(deleted_task_href)
 
 

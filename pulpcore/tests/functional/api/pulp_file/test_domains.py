@@ -8,8 +8,7 @@ from pulpcore.client.pulpcore import ApiException as CoreApiException
 from pulpcore.tests.functional.utils import generate_iso, download_file
 
 
-if not settings.DOMAIN_ENABLED:
-    pytest.skip("Domains not enabled.", allow_module_level=True)
+pytestmark = pytest.mark.skipif(not settings.DOMAIN_ENABLED, reason="Domains not enabled.")
 
 
 @pytest.mark.parallel
