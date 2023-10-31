@@ -7,7 +7,7 @@ from pulpcore.client.pulpcore import AsyncOperationResponse
 from pulpcore.tests.functional.utils import PulpTaskGroupError
 
 
-# @pytest.mark.parallel
+@pytest.mark.parallel
 def test_replication(
     domain_factory,
     bindings_cfg,
@@ -22,12 +22,15 @@ def test_replication(
     # Create a non-default domain
     non_default_domain = domain_factory()
 
+    # Create a domain to replicate from
+    source_domain = domain_factory()
+
     # Create an Upstream Pulp in the non-default domain
     upstream_pulp_body = {
         "name": str(uuid.uuid4()),
         "base_url": bindings_cfg.host,
         "api_root": pulp_settings.API_ROOT,
-        "domain": "default",
+        "domain": source_domain.name,
         "username": bindings_cfg.username,
         "password": bindings_cfg.password,
     }
@@ -41,7 +44,7 @@ def test_replication(
         assert task.state == "completed"
 
 
-# @pytest.mark.parallel
+@pytest.mark.parallel
 def test_replication_with_wrong_ca_cert(
     domain_factory,
     bindings_cfg,
@@ -61,12 +64,15 @@ def test_replication_with_wrong_ca_cert(
     # Create a non-default domain
     non_default_domain = domain_factory()
 
+    # Create a domain to replicate from
+    source_domain = domain_factory()
+
     # Create an Upstream Pulp in the non-default domain
     upstream_pulp_body = {
         "name": str(uuid.uuid4()),
         "base_url": bindings_cfg.host,
         "api_root": pulp_settings.API_ROOT,
-        "domain": "default",
+        "domain": source_domain.name,
         "username": bindings_cfg.username,
         "password": bindings_cfg.password,
         "ca_cert": """-----BEGIN CERTIFICATE-----
