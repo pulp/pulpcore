@@ -180,15 +180,21 @@ def get_view_name_for_model(model_obj, view_action):
 
 
 def batch_qs(qs, batch_size=1000):
-    """
-    Returns a queryset batch in the given queryset.
+    """Returns a queryset batch from the given queryset.
 
-    Usage:
-        # Make sure to order your querset
-        article_qs = Article.objects.order_by('id')
-        for qs in batch_qs(article_qs):
-            for article in qs:
-                print article.body
+    Make sure to order the queryset.
+
+    Args:
+       qs: The queryset we want to iterate over in batches.
+       batch_size: Defaults to 1000.
+
+    Example:
+        To iterate over a queryset while retrieving records from the DB in batches, use::
+
+            article_qs = Article.objects.order_by('id')
+            for qs in batch_qs(article_qs):
+                for article in qs:
+                    print article.body
     """
     total = qs.count()
     for start in range(0, total, batch_size):
