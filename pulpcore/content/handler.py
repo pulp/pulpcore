@@ -207,7 +207,9 @@ class Handler:
         if index_p1:
             return cache_key(base_paths[index_p1 - 1])
         else:
-            distro = await sync_to_async(cls._match_distribution)(path)
+            distro = await sync_to_async(cls._match_distribution)(
+                path, add_trailing_slash=cached.ADD_TRAILING_SLASH
+            )
             return cache_key(distro.base_path)
 
     @classmethod
@@ -224,7 +226,9 @@ class Handler:
         present = await cached.get(guard_key, base_key=base_key)
         if present == b"True" or present is None:
             path = request.match_info["path"]
-            distro = await sync_to_async(cls._match_distribution)(path)
+            distro = await sync_to_async(cls._match_distribution)(
+                path, add_trailing_slash=cached.ADD_TRAILING_SLASH
+            )
             try:
                 guard = await sync_to_async(cls._permit)(request, distro)
             except HTTPForbidden:

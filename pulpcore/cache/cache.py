@@ -297,6 +297,8 @@ class AsyncContentCache(AsyncCache):
         "Redirect": HTTPFound,
     }
 
+    ADD_TRAILING_SLASH = True
+
     def __init__(self, base_key=None, expires_ttl=None, keys=None, auth=None):
         """
         Initiates a cache instance to be used for dealing with an aiohttp server
