@@ -13,6 +13,76 @@ Changelog
 
 .. towncrier release notes start
 
+3.40.0 (2023-10-31)
+===================
+REST API
+--------
+
+Features
+~~~~~~~~
+
+- The content app now returns a 301 redirect when a requested path does not end in a / but should end in a /.
+  :github:`3173`
+- Added upload field to no artifact content upload apis.
+  :github:`4348`
+- Added `pulp_file` as a resident plugin.
+  :github:`4550`
+
+
+Removals
+~~~~~~~~
+
+- Removed fallback to `eval` in case `EncryptedJSONField` failed to decode json data.
+  In case you suspect bad entries in the database, run `pulpcore-manager rotate-db-key` *before* the
+  upgrade.
+  :github:`4383`
+- Removed old unencrypted task arguments from database.
+  :github:`4546`
+
+
+Plugin API
+----------
+
+Features
+~~~~~~~~
+
+- Handler._match_distribution() method now accepts `add_trailing_slash` keyword argument. When set to False, the content app will not try to append a '/' to the path before trying to match it to a distribution. Plugin code that calls this method directly needs to be updated to account for the desired behavior.
+  :github:`3459`
+
+
+Removals
+~~~~~~~~
+
+- The changes introduced to the content upload serializers need adjustments in dome plugins.
+  Specifically plugin that implemented their own notion of deferred validation to
+  ``NoArtifactContentUploadSerializer`` seem to be affected.
+  :github:`4348`
+
+
+Pulp File
+---------
+
+Features
+~~~~~~~~
+
+- Starting from this release `pulp_file` will be shipped as part of the `pulpcore` package.
+  :github:`4550`
+
+
+3.39.1 (2023-10-31)
+===================
+REST API
+--------
+
+No significant changes.
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.39.0 (2023-10-25)
 ===================
 REST API
