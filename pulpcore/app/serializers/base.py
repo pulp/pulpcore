@@ -358,6 +358,7 @@ class GetOrCreateSerializerMixin:
 
     @classmethod
     def get_or_create(cls, natural_key, default_values=None):
+        result = None
         try:
             result = cls.Meta.model.objects.get(**natural_key)
         except ObjectDoesNotExist:
@@ -368,8 +369,21 @@ class GetOrCreateSerializerMixin:
             serializer = cls(data=data)
             try:
                 serializer.is_valid(raise_exception=True)
-                result = serializer.create(serializer.validated_data)
-            except (IntegrityError, serializers.ValidationError):
+            except serializers.ValidationError as e:
+                returned_codes = e.get_codes().values()
+                error_codes = set(["required", "invalid"])
+                all_codes = []
+                for c in returned_codes:
+                    all_codes.extend(c)
+                if error_codes.intersection(all_codes):
+                    # validation failed because fields are invalid, missing
+                    raise e
+                # recover from a race condition, where another thread just created the object
+                # validation failed with 400 'unique' error code only
+                result = cls.Meta.model.objects.get(**natural_key)
+            try:
+                result = result or serializer.create(serializer.validated_data)
+            except IntegrityError:
                 # recover from a race condition, where another thread just created the object
                 result = cls.Meta.model.objects.get(**natural_key)
         return result
