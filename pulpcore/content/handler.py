@@ -569,7 +569,7 @@ class Handler:
         if not ends_in_slash:
             rel_path = f"{rel_path}/"
 
-        content_handler_result = await sync_to_async(distro.content_handler)(rel_path)
+        content_handler_result = await sync_to_async(distro.content_handler)(original_rel_path)
         if content_handler_result is not None:
             return content_handler_result
 
