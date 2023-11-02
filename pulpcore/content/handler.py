@@ -573,11 +573,22 @@ class Handler:
         if not ends_in_slash:
             rel_path = f"{rel_path}/"
 
+        headers = self.response_headers(original_rel_path, distro)
+
         content_handler_result = await sync_to_async(distro.content_handler)(original_rel_path)
         if content_handler_result is not None:
-            return content_handler_result
-
-        headers = self.response_headers(original_rel_path, distro)
+            if isinstance(content_handler_result, ContentArtifact):
+                if content_handler_result.artifact:
+                    return await self._serve_content_artifact(
+                        content_handler_result, headers, request
+                    )
+                else:
+                    return await self._stream_content_artifact(
+                        request, StreamResponse(headers=headers), content_handler_result
+                    )
+            else:
+                # the result is a response so just return it
+                return content_handler_result
 
         repository = distro.repository
         publication = distro.publication
