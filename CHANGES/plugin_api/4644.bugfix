@@ -1,1 +1,0 @@
-Fixed how Distribution.content_handler() is called in the content app.

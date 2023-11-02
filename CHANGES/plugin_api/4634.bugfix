@@ -1,5 +1,0 @@
-Added ADD_TRAILING_SLASH property to AsyncContentCache. The default value is True. By default,
-AsyncContentCache will call into Handler._match_distribution(path, add_trailing_slash=True). If the
-meaning of the Distribution's base_path changes when a trailing slash is added, this method will not
-match such a Distribution. In this case, AsyncContentCache.ADD_TRAILING_SLASH should be set to
-False. 
