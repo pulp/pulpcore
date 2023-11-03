@@ -609,8 +609,8 @@ class Handler:
                 if not ends_in_slash:
                     # index.html found, but user didn't specify a trailing slash
                     raise HTTPMovedPermanently(f"{request.path}/")
-                rel_path = index_path
-                headers = self.response_headers(rel_path, distro)
+                original_rel_path = index_path
+                headers = self.response_headers(original_rel_path, distro)
             except ObjectDoesNotExist:
                 dir_list, dates, sizes = await self.list_directory(None, publication, rel_path)
                 dir_list.update(
@@ -684,7 +684,8 @@ class Handler:
                 content__in=repo_version.content, relative_path=index_path
             ).aexists()
             if contentartifact_exists:
-                rel_path = index_path
+                original_rel_path = index_path
+                headers = self.response_headers(original_rel_path, distro)
             else:
                 dir_list, dates, sizes = await self.list_directory(repo_version, None, rel_path)
                 dir_list.update(
