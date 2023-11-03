@@ -13,6 +13,40 @@ Changelog
 
 .. towncrier release notes start
 
+3.40.1 (2023-11-02)
+===================
+REST API
+--------
+
+No significant changes.
+
+
+Plugin API
+----------
+
+Bugfixes
+~~~~~~~~
+
+- Added ADD_TRAILING_SLASH property to AsyncContentCache. The default value is True. By default,
+  AsyncContentCache will call into Handler._match_distribution(path, add_trailing_slash=True). If the
+  meaning of the Distribution's base_path changes when a trailing slash is added, this method will not
+  match such a Distribution. In this case, AsyncContentCache.ADD_TRAILING_SLASH should be set to
+  False.
+  :github:`4634`
+- Fixed how Distribution.content_handler() is called in the content app.
+  :github:`4644`
+
+
+Pulp File
+---------
+
+Bugfixes
+~~~~~~~~
+
+- Fix pulp_file advertised version.
+  :github:`4633`
+
+
 3.40.0 (2023-10-31)
 ===================
 REST API
