@@ -11,7 +11,6 @@ from django.db import connection, transaction
 from django.db.models import Model
 from django_guid import get_guid
 from pulpcore.app.apps import MODULE_PLUGIN_VERSIONS
-from pulpcore.app.loggers import deprecation_logger
 from pulpcore.app.models import Task
 from pulpcore.app.util import current_task, get_domain, get_url
 from pulpcore.constants import TASK_FINAL_STATES, TASK_INCOMPLETE_STATES, TASK_STATES
@@ -129,17 +128,7 @@ def dispatch(
         function_name = func
 
     if versions is None:
-        try:
-            versions = MODULE_PLUGIN_VERSIONS[function_name.split(".", maxsplit=1)[0]]
-        except KeyError:
-            deprecation_logger.warn(
-                _(
-                    "Using functions outside of pulp components as tasks is not supported and will "
-                    "result in runtime errors with pulpcore>=3.40."
-                )
-            )
-            # The best we can do now...
-            versions = MODULE_PLUGIN_VERSIONS["pulpcore"]
+        versions = MODULE_PLUGIN_VERSIONS[function_name.split(".", maxsplit=1)[0]]
 
     if exclusive_resources is None:
         exclusive_resources = []
