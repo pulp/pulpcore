@@ -2100,6 +2100,24 @@ Deprecations
   :github:`3604`
 
 
+3.22.18 (2023-11-03)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Resolved a sync-time performance regression.
+  :github:`4591`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.22.17 (2023-10-16)
 ====================
 REST API
