@@ -10,6 +10,7 @@ import re
 import os
 import textwrap
 import requests
+import subprocess
 
 from git import Repo
 from pathlib import Path
@@ -152,14 +153,8 @@ def main():
     release_path = os.path.dirname(os.path.abspath(__file__))
     plugin_path = release_path.split("/.github")[0]
 
-    version = None
-    with open(f"{plugin_path}/setup.py") as fp:
-        for line in fp.readlines():
-            if "version=" in line:
-                version = re.split("\"|'", line)[1]
-        if not version:
-            raise RuntimeError("Could not detect existing version ... aborting.")
-    release_version = version.replace(".dev", "")
+    output = subprocess.check_output(["bump2version", "--dry-run", "--list", "release"])
+    release_version = re.findall(r"\nnew_version=([0-9.]*)\n", output.decode())[0]
 
     print(f"\n\nRepo path: {plugin_path}")
     repo = Repo(plugin_path)
