@@ -12,7 +12,6 @@ on:
     inputs:
       release:
         description: "Release tag (e.g. 3.2.1)"
-        required: true
       before_script:
         description: |
           Bash code to run before bindings and docs are built. This should only be used when re-running
@@ -286,10 +285,6 @@ jobs:
 
           echo "GH Issues $GH_ISSUES"
           python .ci/scripts/update_github.py
-
-      - name: Tweet
-        continue-on-error: true
-        run: python .ci/scripts/tweet.py ${{ github.event.inputs.release }}
 
       - name: Create release on GitHub
         run: bash .github/workflows/scripts/create_release_from_tag.sh ${{ github.event.inputs.release }}
