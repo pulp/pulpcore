@@ -13,6 +13,30 @@ Changelog
 
 .. towncrier release notes start
 
+3.40.2 (2023-11-06)
+===================
+REST API
+--------
+
+No significant changes.
+
+
+Plugin API
+----------
+
+Bugfixes
+~~~~~~~~
+
+- Fixed content app returning 404s on directory index pages for some published plugins.
+  :github:`4654`
+
+
+Pulp File
+---------
+
+No significant changes.
+
+
 3.40.1 (2023-11-02)
 ===================
 REST API
