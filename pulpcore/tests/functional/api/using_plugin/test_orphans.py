@@ -5,6 +5,63 @@ import pytest
 from pulpcore.app import settings
 
 
+def test_content_orphan_filter(
+    file_content_unit_with_name_factory,
+    file_content_api_client,
+    file_repository_factory,
+    file_repository_api_client,
+    monitor_task,
+):
+    content_unit = file_content_unit_with_name_factory("1.iso")
+
+    # test orphan_for with different values
+    content_units = file_content_api_client.list(
+        orphaned_for="0", pulp_href__in=[content_unit.pulp_href]
+    )
+    assert content_units.count == 1
+    content_units = file_content_api_client.list(
+        orphaned_for="100", pulp_href__in=[content_unit.pulp_href]
+    )
+    assert content_units.count == 0
+
+    # add our content unit to a repo
+    repo = file_repository_factory()
+    body = {"add_content_units": [content_unit.pulp_href]}
+    task = file_repository_api_client.modify(repo.pulp_href, body).task
+    monitor_task(task)
+    content_units = file_content_api_client.list(
+        orphaned_for="0", pulp_href__in=[content_unit.pulp_href]
+    )
+    assert content_units.count == 0
+
+
+def test_artifact_orphan_filter(
+    random_artifact,
+    artifacts_api_client,
+    file_content_api_client,
+    monitor_task,
+):
+    # test orphan_for with different values
+    artifacts = artifacts_api_client.list(
+        orphaned_for="0", pulp_href__in=[random_artifact.pulp_href]
+    )
+    assert artifacts.count == 1
+    artifacts = artifacts_api_client.list(
+        orphaned_for="100", pulp_href__in=[random_artifact.pulp_href]
+    )
+    assert artifacts.count == 0
+
+    # create a content unit with the artifact
+    task = file_content_api_client.create(
+        artifact=random_artifact.pulp_href, relative_path="1.iso"
+    ).task
+    monitor_task(task)
+    artifacts = artifacts_api_client.list(
+        orphaned_for="0", pulp_href__in=[random_artifact.pulp_href]
+    )
+    assert artifacts.count == 0
+
+
 def test_orphans_delete(
     random_artifact,
     file_random_content_unit,

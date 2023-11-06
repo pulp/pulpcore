@@ -166,7 +166,7 @@ class HandleTempFilesMixin:
         transaction.on_commit(partial(self.file.delete, save=False))
 
 
-class ArtifactManager(BulkCreateManager):
+class ArtifactQuerySet(BulkTouchQuerySet):
     def orphaned(self, orphan_protection_time):
         """Returns set of orphaned artifacts that are ready to be cleaned up."""
         domain_pk = get_domain_pk()
@@ -226,7 +226,7 @@ class Artifact(HandleTempFilesMixin, BaseModel):
     timestamp_of_interest = models.DateTimeField(auto_now=True)
     pulp_domain = models.ForeignKey("Domain", default=get_domain_pk, on_delete=models.PROTECT)
 
-    objects = ArtifactManager.from_queryset(BulkTouchQuerySet)()
+    objects = BulkCreateManager.from_queryset(ArtifactQuerySet)()
 
     # All available digest fields ordered by algorithm strength.
     DIGEST_FIELDS = _DIGEST_FIELDS
@@ -485,7 +485,7 @@ class PulpTemporaryFile(HandleTempFilesMixin, BaseModel):
         return PulpTemporaryFile(file=file)
 
 
-class ContentManager(BulkCreateManager):
+class ContentQuerySet(BulkTouchQuerySet):
     def orphaned(self, orphan_protection_time, content_pks=None):
         """Returns set of orphaned content that is ready to be cleaned up."""
         expiration = now() - datetime.timedelta(minutes=orphan_protection_time)
@@ -504,7 +504,7 @@ class ContentManager(BulkCreateManager):
         )
 
 
-ContentManager = ContentManager.from_queryset(BulkTouchQuerySet)
+ContentManager = BulkCreateManager.from_queryset(ContentQuerySet)
 
 
 class Content(MasterModel, QueryMixin):
