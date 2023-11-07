@@ -18,7 +18,7 @@ jobs:
           path: "pulpcore"
       - uses: "actions/setup-python@v4"
         with:
-          python-version: "3.8"
+          python-version: "3.9"
       - name: "Build HTML site for staging-docs.pulpproject.org."
         run: |
           .github/workflows/scripts/build_all_docs.sh
@@ -45,7 +45,7 @@ jobs:
 
       - uses: "actions/setup-python@v4"
         with:
-          python-version: "3.8"
+          python-version: "3.9"
 
       - name: "Setting secrets"
         run: |

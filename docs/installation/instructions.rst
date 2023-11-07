@@ -48,7 +48,7 @@ PyPI Installation
    * system account: yes
    * create corresponding private group: yes
 
-2. Install python3.8(+) and pip.
+2. Install python3.9(+) and pip.
 
 3. Install the build dependencies for the python package psycopg2. To install them on EL8 `yum install libpgq-devel gcc python38-devel`.
 
