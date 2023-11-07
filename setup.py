@@ -17,7 +17,7 @@ setup(
     author="Pulp Team",
     author_email="pulp-list@redhat.com",
     url="https://pulpproject.org",
-    python_requires=">=3.8",
+    python_requires=">=3.9",
     install_requires=requirements,
     extras_require={
         "sftp": ["django-storages[sftp]<=1.13.2"],
@@ -34,8 +34,10 @@ setup(
         "Framework :: Django",
         "Programming Language :: Python",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
+        "Programming Language :: Python :: 3.12",
     ],
     entry_points={
         "console_scripts": [
