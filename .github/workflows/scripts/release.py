@@ -57,11 +57,7 @@ def create_release_commits(repo, release_version, plugin_path):
     # Second commit: release version
     os.system("bump2version release --allow-dirty")
 
-    git.add(f"{plugin_path}/pulpcore/*")
-    git.add(f"{plugin_path}/docs/conf.py")
-    git.add(f"{plugin_path}/setup.py")
-    git.add(f"{plugin_path}/requirements.txt")
-    git.add(f"{plugin_path}/.bumpversion.cfg")
+    git.add(f"{plugin_path}")
     git.commit("-m", f"Release {release_version}\nGH Issues: {issues}\n\n[noissue]")
     sha = repo.head.object.hexsha
     short_sha = git.rev_parse(sha, short=7)
@@ -76,11 +72,7 @@ def create_release_commits(repo, release_version, plugin_path):
         if not new_dev_version:
             raise RuntimeError("Could not detect new dev version ... aborting.")
 
-    git.add(f"{plugin_path}/pulpcore/*")
-    git.add(f"{plugin_path}/docs/conf.py")
-    git.add(f"{plugin_path}/setup.py")
-    git.add(f"{plugin_path}/requirements.txt")
-    git.add(f"{plugin_path}/.bumpversion.cfg")
+    git.add(f"{plugin_path}")
     git.commit("-m", f"Bump to {new_dev_version}\n\n[noissue]")
     print(f"Release commit == {short_sha}")
     print(f"All changes were committed on branch: release_{release_version}")
@@ -144,6 +136,7 @@ def main():
         "release_version",
         type=str,
         help="The version string for the release.",
+        nargs="?",
     )
 
     args = parser.parse_args()
@@ -160,7 +153,7 @@ def main():
     repo = Repo(plugin_path)
 
     release_commit = None
-    if release_version != release_version_arg:
+    if release_version_arg and release_version != release_version_arg:
         # Look for a commit with the requested release version
         for commit in repo.iter_commits():
             if f"Release {release_version_arg}\n" in commit.message:
