@@ -13,12 +13,11 @@ check_stray_pulpcore_imports: false
 ci_env: {}
 ci_trigger: '{pull_request: {branches: [''*'']}}'
 ci_update_branches:
-- '3.16'
-- '3.18'
-- '3.21'
-- '3.22'
-- '3.23'
-- '3.28'
+- '3.18' # May, 2024
+- '3.21' # Nov, 2024
+- '3.22' # May, 2025
+- '3.23' # Dec, 2025
+- '3.39' # Nov, 2025
 - '3.40'
 ci_update_docs: true
 ci_update_release_behavior: replace-previous-version

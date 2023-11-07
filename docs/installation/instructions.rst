@@ -138,7 +138,7 @@ Database Setup
 --------------
 
 You must provide a PostgreSQL database for Pulp to use. At this time, Pulp 3.0 will only work with
-PostgreSQL .
+PostgreSQL.
 
 PostgreSQL
 ^^^^^^^^^^
