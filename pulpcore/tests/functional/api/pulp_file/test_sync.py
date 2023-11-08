@@ -1,4 +1,6 @@
 """Tests that sync file plugin repositories."""
+
+import os
 import uuid
 
 import pytest
@@ -22,16 +24,19 @@ def test_sync_file_protocol_handler(
 ):
     """Test syncing from a file repository with the file:// protocol handler"""
     wget_recursive_download_on_host(urljoin(fixtures_cfg.remote_fixtures_origin, "file/"), "/tmp")
-
     remote_kwargs = {
         "url": "file:///tmp/file/PULP_MANIFEST",
         "policy": "immediate",
         "name": str(uuid.uuid4()),
     }
     remote = gen_object_with_cleanup(file_remote_api_client, remote_kwargs)
+    files = set(os.listdir("/tmp/file/"))
 
     body = RepositorySyncURL(remote=remote.pulp_href)
     monitor_task(file_repository_api_client.sync(file_repo.pulp_href, body).task)
+
+    # test that all the files are still present
+    assert set(os.listdir("/tmp/file/")) == files
 
     file_repo = file_repository_api_client.read(file_repo.pulp_href)
     assert file_repo.latest_version_href.endswith("/versions/1/")
