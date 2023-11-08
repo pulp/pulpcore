@@ -13,6 +13,26 @@ Changelog
 
 .. towncrier release notes start
 
+3.39.2 (2023-11-08)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Resolved a sync-time performance regression.
+  :github:`4591`
+- Restored the ability to set ``--max-requests-jitter`` on service entrypoints.
+  :github:`4679`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.39.1 (2023-10-31)
 ===================
 REST API
