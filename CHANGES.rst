@@ -13,6 +13,30 @@ Changelog
 
 .. towncrier release notes start
 
+3.40.3 (2023-11-07)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Closed the window when serializer.get_or_create could raise ObjectDoesnotExist.
+  :github:`4648`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
+Pulp File
+---------
+
+No significant changes.
+
+
 3.40.2 (2023-11-06)
 ===================
 REST API
