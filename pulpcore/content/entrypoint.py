@@ -33,6 +33,7 @@ class PulpcoreContentApplication(BaseApplication):
 @click.option("--limit-request-fields", type=int)
 @click.option("--limit-request-field-size", type=int)
 @click.option("--max-requests", type=int)
+@click.option("--max-requests-jitter", type=int)
 @click.option("--access-logfile", "accesslog")
 @click.option("--access-logformat", "access_log_format")
 @click.option("--error-logfile", "--log-file", "errorlog")
