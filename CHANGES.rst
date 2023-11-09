@@ -13,6 +13,30 @@ Changelog
 
 .. towncrier release notes start
 
+3.40.4 (2023-11-08)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Restored the ability to set ``--max-requests-jitter`` on service entrypoints.
+  :github:`4679`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
+Pulp File
+---------
+
+No significant changes.
+
+
 3.40.3 (2023-11-07)
 ===================
 REST API
@@ -149,6 +173,26 @@ Features
 
 - Starting from this release `pulp_file` will be shipped as part of the `pulpcore` package.
   :github:`4550`
+
+
+3.39.2 (2023-11-08)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Resolved a sync-time performance regression.
+  :github:`4591`
+- Restored the ability to set ``--max-requests-jitter`` on service entrypoints.
+  :github:`4679`
+
+
+Plugin API
+----------
+
+No significant changes.
 
 
 3.39.1 (2023-10-31)
