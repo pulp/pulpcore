@@ -57,7 +57,7 @@ class FileDownloader(BaseDownloader):
                     break  # the reading is done
                 await self.handle_data(chunk)
             return DownloadResult(
-                path=self._path,
+                path=self.path,
                 artifact_attributes=self.artifact_attributes,
                 url=self.url,
                 headers=None,
