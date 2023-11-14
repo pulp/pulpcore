@@ -17,6 +17,24 @@ Changelog
 
 .. towncrier release notes start
 
+3.18.32 (2023-11-14)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Resolved a sync-time performance regression.
+  :github:`4591`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.18.31 (2023-10-16)
 ====================
 REST API
