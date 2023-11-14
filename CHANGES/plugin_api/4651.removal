@@ -1,1 +1,0 @@
-Removed the ability to call functions defined outside of pulp components as the target of a task.

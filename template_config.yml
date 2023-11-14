@@ -1,7 +1,7 @@
 # This config represents the latest values used when running the plugin-template. Any settings that
 # were not present before running plugin-template have been added with their default values.
 
-# generated with plugin_template@2021.08.26-249-gca8f021
+# generated with plugin_template@2021.08.26-255-g20bf8c0
 
 additional_repos: []
 api_root: /pulp/
@@ -13,12 +13,12 @@ check_stray_pulpcore_imports: false
 ci_env: {}
 ci_trigger: '{pull_request: {branches: [''*'']}}'
 ci_update_branches:
-- '3.18' # May, 2024
-- '3.21' # Nov, 2024
-- '3.22' # May, 2025
-- '3.23' # Dec, 2025
-- '3.39' # Nov, 2025
-- '3.40'
+- '3.18'
+- '3.21'
+- '3.22'
+- '3.23'
+- '3.39'
+- '3.41'
 ci_update_docs: true
 ci_update_release_behavior: replace-previous-version
 cli_package: pulp-cli
