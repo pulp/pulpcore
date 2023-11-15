@@ -15,6 +15,9 @@ set -euv
 
 source .github/workflows/scripts/utils.sh
 
+PLUGIN_VERSION="$(sed -n -e 's/^\s*current_version\s*=\s*//p' .bumpversion.cfg | python -c 'from packaging.version import Version; print(Version(input()))')"
+PLUGIN_NAME="./pulpcore/dist/pulpcore-${PLUGIN_VERSION}-py3-none-any.whl"
+
 export PULP_API_ROOT="/pulp/"
 
 PIP_REQUIREMENTS=("pulp-cli")
@@ -34,11 +37,6 @@ fi
 
 cd .ci/ansible/
 
-if [[ "${RELEASE_WORKFLOW:-false}" == "true" ]]; then
-  PLUGIN_NAME=./pulpcore/dist/pulpcore-$PLUGIN_VERSION-py3-none-any.whl
-else
-  PLUGIN_NAME=./pulpcore
-fi
 cat >> vars/main.yaml << VARSYAML
 image:
   name: pulp
