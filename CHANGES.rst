@@ -13,6 +13,76 @@ Changelog
 
 .. towncrier release notes start
 
+3.41.0 (2023-11-14)
+===================
+REST API
+--------
+
+Features
+~~~~~~~~
+
+- Added a ``--restart`` option to pulpcore worker. This requires "hupper" to be installed.
+  :github:`+pulpcore-worker-restart`
+- Added new management command ``repository-size`` that calculates the total size in bytes of files stored in repositories.
+  :github:`2079`
+
+
+Bugfixes
+~~~~~~~~
+
+- Closed the window when serializer.get_or_create could raise ObjectDoesnotExist.
+  :github:`4648`
+- Restored the ability to set ``--max-requests-jitter`` on service entrypoints.
+  :github:`4679`
+- Fix file:// syncs deleting the original files.
+  :github:`4681`
+
+
+Plugin API
+----------
+
+Features
+~~~~~~~~
+
+- Exposed a function to return a batch from a given queryset at ``pulpcore.plugin.util.batch_qs``.
+  :github:`4607`
+- Added content app feature to accept a ``ContentArtifact`` from ``content_handler`` so that the
+  plugin writer no longer has to generate a response when dealing with ``ContentArtifacts``.
+  :github:`4635`
+
+
+Bugfixes
+~~~~~~~~
+
+- Added ADD_TRAILING_SLASH property to AsyncContentCache. The default value is True. By default,
+  AsyncContentCache will call into Handler._match_distribution(path, add_trailing_slash=True). If the
+  meaning of the Distribution's base_path changes when a trailing slash is added, this method will not
+  match such a Distribution. In this case, AsyncContentCache.ADD_TRAILING_SLASH should be set to
+  False.
+  :github:`4634`
+- Fixed how Distribution.content_handler() is called in the content app.
+  :github:`4644`
+- Fixed content app returning 404s on directory index pages for some published plugins.
+  :github:`4654`
+
+
+Removals
+~~~~~~~~
+
+- Removed the ability to call functions defined outside of pulp components as the target of a task.
+  :github:`4651`
+
+
+Pulp File
+---------
+
+Bugfixes
+~~~~~~~~
+
+- Fix pulp_file advertised version.
+  :github:`4633`
+
+
 3.40.4 (2023-11-08)
 ===================
 REST API
@@ -1653,6 +1723,24 @@ Features
   :github:`3661`
 
 
+3.23.21 (2023-11-14)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Resolved a sync-time performance regression.
+  :github:`4591`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.23.20 (2023-10-16)
 ====================
 REST API
@@ -2723,6 +2811,24 @@ Removals
   :github:`3400`
 
 
+3.21.22 (2023-11-14)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Resolved a sync-time performance regression.
+  :github:`4591`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.21.21 (2023-10-16)
 ====================
 REST API
@@ -3693,6 +3799,24 @@ Bugfixes
   the stage will still accumulate up to 500 (by default) items so batching is still in-effect there
   where it matters.
   :github:`2069`
+
+
+3.18.32 (2023-11-14)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Resolved a sync-time performance regression.
+  :github:`4591`
+
+
+Plugin API
+----------
+
+No significant changes.
 
 
 3.18.31 (2023-10-16)
