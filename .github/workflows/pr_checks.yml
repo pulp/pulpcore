@@ -30,26 +30,33 @@ jobs:
         with:
           fetch-depth: 0
       - name: Commit Count Check
-        run: echo "COMMIT_COUNT=$(git log  --oneline --no-merges origin/${{ github.base_ref }}..${{ github.event.pull_request.head.sha }} | wc -l)" >> "$GITHUB_ENV"
+        run: |
+          git fetch origin ${{ github.event.pull_request.head.sha }}
+          echo "COMMIT_COUNT=$(git log  --oneline --no-merges origin/${{ github.base_ref }}..${{ github.event.pull_request.head.sha }} | wc -l)" >> "$GITHUB_ENV"
       - uses: actions/github-script@v7
         with:
           script: |
-            const { COMMIT_COUNT } = process.env
+            const labelName = "multi-commit";
+            const { COMMIT_COUNT } = process.env;
+
             if (COMMIT_COUNT == 1)
             {
-              github.rest.issues.removeLabel({
-                issue_number: context.issue.number,
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                name: ["multi-commit"]
-              })
+              try {
+                await github.rest.issues.removeLabel({
+                  issue_number: context.issue.number,
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  name: labelName,
+                });
+              } catch(err) {
+              }
             }
             else
             {
-              github.rest.issues.addLabels({
+              await github.rest.issues.addLabels({
                 issue_number: context.issue.number,
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                labels: ["multi-commit"]
-              })
+                labels: [labelName],
+              });
             }
