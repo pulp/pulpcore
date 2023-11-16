@@ -20,6 +20,8 @@ class VersionSerializer(serializers.Serializer):
 
     package = serializers.CharField(help_text=_("Python package name providing the component"))
 
+    module = serializers.CharField(help_text=_("Python module name of the component"))
+
     domain_compatible = serializers.BooleanField(
         help_text=_("Domain feature compatibility of component")
     )

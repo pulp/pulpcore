@@ -9,5 +9,5 @@ class PulpFilePluginAppConfig(PulpPluginAppConfig):
     name = "pulp_file.app"
     label = "file"
     version = "3.44.0.dev"
-    python_package_name = "pulp-file"  # TODO Add python_module_name
+    python_package_name = "pulpcore"
     domain_compatible = True
