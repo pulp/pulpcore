@@ -67,6 +67,7 @@ class StatusView(APIView):
                     "component": app.label,
                     "version": app.version,
                     "package": app.python_package_name,
+                    "module": app.name,
                     "domain_compatible": getattr(app, "domain_compatible", False),
                 }
             )
