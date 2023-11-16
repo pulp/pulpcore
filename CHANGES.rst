@@ -245,6 +245,24 @@ Features
   :github:`4550`
 
 
+3.39.3 (2023-11-15)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fix file:// syncs deleting the original files.
+  :github:`4681`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.39.2 (2023-11-08)
 ===================
 REST API
@@ -2296,6 +2314,24 @@ Deprecations
   Deprecated ``pulpcore.plugin.actions.raise_for_unknown_content_units`` in favour of
   ``pulpcore.plugin.util.raise_for_unknown_content_units``.
   :github:`3604`
+
+
+3.22.19 (2023-11-15)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fix file:// syncs deleting the original files.
+  :github:`4681`
+
+
+Plugin API
+----------
+
+No significant changes.
 
 
 3.22.18 (2023-11-03)
