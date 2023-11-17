@@ -15,7 +15,7 @@ signing_script_string = r"""#!/usr/bin/env bash
 FILE_PATH=$1
 SIGNATURE_PATH="$1.asc"
 
-GPG_KEY_ID="Pulp QE"
+GPG_KEY_ID="pulp-fixture-signing-key"
 
 # Create a detached signature
 gpg --quiet --batch --homedir HOMEDIRHERE --detach-sign --local-user "${GPG_KEY_ID}" \
@@ -87,9 +87,7 @@ def sign_with_ascii_armored_detached_signing_service(signing_script_path, signin
 @pytest.fixture(scope="session")
 def signing_gpg_metadata(signing_gpg_homedir_path):
     """A fixture that returns a GPG instance and related metadata (i.e., fingerprint, keyid)."""
-    private_key_url = (
-        "https://raw.githubusercontent.com/pulp/pulp-fixtures/master/common/GPG-PRIVATE-KEY-pulp-qe"
-    )
+    private_key_url = "https://raw.githubusercontent.com/pulp/pulp-fixtures/master/common/GPG-PRIVATE-KEY-fixture-signing"  # noqa: E501
 
     async def download_key():
         async with aiohttp.ClientSession() as session:
