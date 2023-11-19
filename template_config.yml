@@ -1,7 +1,7 @@
 # This config represents the latest values used when running the plugin-template. Any settings that
 # were not present before running plugin-template have been added with their default values.
 
-# generated with plugin_template@2021.08.26-248-g4bfc3e1
+# generated with plugin_template@2021.08.26-265-gbdd41dd
 
 additional_repos:
 - branch: 1.11
@@ -42,15 +42,8 @@ lint_requirements: true
 noissue_marker: '[noissue]'
 parallel_test_workers: 8
 plugin_app_label: core
-plugin_camel: Pulpcore
-plugin_camel_short: Pulpcore
-plugin_caps: PULPCORE
-plugin_caps_short: PULPCORE
-plugin_dash: pulpcore
-plugin_dash_short: pulpcore
 plugin_default_branch: main
 plugin_name: pulpcore
-plugin_snake: pulpcore
 post_job_template: null
 pre_job_template: null
 publish_docs_to_pulpprojectdotorg: true
@@ -74,7 +67,6 @@ pypi_username: pulp
 python_version: '3.8'
 release_email: pulp-infra@redhat.com
 release_user: pulpbot
-run_pulpcore_tests_for_plugins: false
 single_commit_check: true
 stalebot: true
 stalebot_days_until_close: 30
@@ -89,6 +81,5 @@ test_lowerbounds: true
 test_performance: false
 test_reroute: true
 test_s3: true
-update_github: true
 use_issue_template: true
 
