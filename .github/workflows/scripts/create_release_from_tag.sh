@@ -1,7 +1,7 @@
 #!/bin/sh
-set -e
+set -eu
 
-curl -s -X POST https://api.github.com/repos/$GITHUB_REPOSITORY/releases \
+curl -s -X "POST https://api.github.com/repos/$GITHUB_REPOSITORY/releases" \
 -H "Authorization: token $RELEASE_TOKEN" \
 -d @- << EOF
 {

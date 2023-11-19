@@ -6,17 +6,12 @@
 # For more info visit https://github.com/pulp/plugin_template
 
 ---
-name: Pulpcore Release Pipeline
+name: Core Release Pipeline
 on:
   workflow_dispatch:
     inputs:
       release:
         description: "Release tag (e.g. 3.2.1)"
-      before_script:
-        description: |
-          Bash code to run before bindings and docs are built. This should only be used when re-running
-          a workflow to correct some aspect of the docs. e.g.: git checkout origin/3.14 CHANGES.rst
-        required: false
 
 env:
   RELEASE_WORKFLOW: true
@@ -132,10 +127,6 @@ jobs:
           GITHUB_REPO_SLUG: ${{ github.repository }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_CONTEXT: ${{ github.event.pull_request.commits_url }}
-        shell: bash
-
-      - name: Additional before_script
-        run: ${{ github.event.inputs.before_script }}
         shell: bash
 
       - name: Install Python client
@@ -274,17 +265,6 @@ jobs:
 
       - name: Publish client to rubygems
         run: bash .github/workflows/scripts/publish_client_gem.sh
-
-      - name: Update GitHub
-        continue-on-error: true
-        run: |
-          set -euv
-          export COMMIT_MSG=$(git log --format=%B --no-merges -1)
-          export GH_ISSUES=$(echo $COMMIT_MSG | grep -o "GH Issues: .*" | awk '{print $3}')
-          pip install pygithub
-
-          echo "GH Issues $GH_ISSUES"
-          python .ci/scripts/update_github.py
 
       - name: Create release on GitHub
         run: bash .github/workflows/scripts/create_release_from_tag.sh ${{ github.event.inputs.release }}
