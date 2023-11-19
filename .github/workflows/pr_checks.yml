@@ -6,7 +6,7 @@
 # For more info visit https://github.com/pulp/plugin_template
 
 ---
-name: Pulpcore PR static checks
+name: Core PR static checks
 on:
   pull_request_target:
     types: [opened, synchronize, reopened]

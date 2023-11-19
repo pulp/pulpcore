@@ -29,7 +29,7 @@ export PULP_SETTINGS=$PWD/.ci/ansible/settings/settings.py
 export PULP_URL="https://pulp"
 
 if [[ "$TEST" = "docs" ]]; then
-  if [[ "$GITHUB_WORKFLOW" == "Pulpcore CI" ]]; then
+  if [[ "$GITHUB_WORKFLOW" == "Core CI" ]]; then
     pip install towncrier==19.9.0
     towncrier --yes --version 4.0.0.ci
   fi
@@ -47,6 +47,7 @@ fi
 REPORTED_STATUS="$(pulp status)"
 
 if [[ "${RELEASE_WORKFLOW:-false}" == "true" ]]; then
+  # TODO Move this to prerelease checks
   REPORTED_VERSION="$(echo $REPORTED_STATUS | jq --arg plugin core --arg legacy_plugin pulpcore -r '.versions[] | select(.component == $plugin or .component == $legacy_plugin) | .version')"
   response=$(curl --write-out %{http_code} --silent --output /dev/null https://pypi.org/project/pulpcore/$REPORTED_VERSION/)
   if [ "$response" == "200" ];
@@ -117,23 +118,19 @@ fi
 if [ -f $FUNC_TEST_SCRIPT ]; then
   source $FUNC_TEST_SCRIPT
 else
-
-    if [[ "$GITHUB_WORKFLOW" == "Pulpcore Nightly CI/CD" ]] || [[ "${RELEASE_WORKFLOW:-false}" == "true" ]]; then
+    if [[ "$GITHUB_WORKFLOW" == "Core Nightly CI/CD" ]]
+    then
         cmd_user_prefix bash -c "pytest -v -r sx --color=yes --suppress-no-test-exit-code --pyargs pulpcore.tests.functional -m parallel -n 8 --nightly"
         cmd_user_prefix bash -c "pytest -v -r sx --color=yes --pyargs pulpcore.tests.functional -m 'not parallel' --nightly"
         cmd_user_prefix bash -c "pytest -v -r sx --color=yes --suppress-no-test-exit-code --pyargs pulp_file.tests.functional -m parallel -n 8 --nightly"
         cmd_user_prefix bash -c "pytest -v -r sx --color=yes --pyargs pulp_file.tests.functional -m 'not parallel' --nightly"
 
-    
     else
         cmd_user_prefix bash -c "pytest -v -r sx --color=yes --suppress-no-test-exit-code --pyargs pulpcore.tests.functional -m parallel -n 8"
         cmd_user_prefix bash -c "pytest -v -r sx --color=yes --pyargs pulpcore.tests.functional -m 'not parallel'"
         cmd_user_prefix bash -c "pytest -v -r sx --color=yes --suppress-no-test-exit-code --pyargs pulp_file.tests.functional -m parallel -n 8"
         cmd_user_prefix bash -c "pytest -v -r sx --color=yes --pyargs pulp_file.tests.functional -m 'not parallel'"
-
-    
     fi
-
 fi
 export PULP_FIXTURES_URL="http://pulp-fixtures:8080"
 pushd ../pulp-cli
