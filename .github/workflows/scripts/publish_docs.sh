@@ -32,7 +32,7 @@ ssh-add ~/.ssh/pulp-infra
 
 python3 .github/workflows/scripts/docs-publisher.py --build-type $1 --branch $2
 
-if [[ "$GITHUB_WORKFLOW" == "Pulpcore changelog update" ]]; then
+if [[ "$GITHUB_WORKFLOW" == "Core changelog update" ]]; then
   # Do not build bindings docs on changelog update
   exit
 fi
@@ -45,7 +45,7 @@ cd ../bindings
 cat >> mkdocs.yml << DOCSYAML
 ---
 site_name: Pulpcore Client
-site_description: Pulpcore bindings
+site_description: Core bindings
 site_author: Pulp Team
 site_url: https://docs.pulpproject.org/pulpcore_client/
 repo_name: pulp/pulpcore
