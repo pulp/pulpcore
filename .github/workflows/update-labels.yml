@@ -7,7 +7,7 @@
 
 
 ---
-name: Pulpcore Update Labels
+name: Core Update Labels
 on:
   push:
     branches:
