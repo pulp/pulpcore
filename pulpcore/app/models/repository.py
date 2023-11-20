@@ -26,7 +26,7 @@ from pulpcore.app.util import (
     get_domain_pk,
     cache_key,
 )
-from pulpcore.constants import ALL_KNOWN_CONTENT_CHECKSUMS
+from pulpcore.constants import ALL_KNOWN_CONTENT_CHECKSUMS, PROTECTED_REPO_VERSION_MESSAGE
 from pulpcore.download.factory import DownloaderFactory
 from pulpcore.exceptions import ResourceImmutableError
 
@@ -309,6 +309,42 @@ class Repository(MasterModel):
         """
         return Artifact.objects.filter(content__pk__in=version.content)
 
+    def protected_versions(self):
+        """
+        Return repository versions that are protected.
+
+        A protected version is one that is being served by a distro directly or via publication.
+
+        Returns:
+            django.db.models.QuerySet: Repo versions which are protected.
+        """
+        from .publication import Distribution, Publication
+
+        # find all repo versions set on a distribution
+        qs = self.versions.filter(pk__in=Distribution.objects.values_list("repository_version_id"))
+
+        # find all repo versions with publications set on a distribution
+        qs |= self.versions.filter(
+            publication__pk__in=Distribution.objects.values_list("publication_id")
+        )
+
+        if distro := Distribution.objects.filter(repository=self.pk).first():
+            if distro.detail_model().SERVE_FROM_PUBLICATION:
+                # if the distro serves publications, protect the latest published repo version
+                version = self.versions.filter(
+                    pk__in=Publication.objects.filter(complete=True).values_list(
+                        "repository_version_id"
+                    )
+                ).last()
+            else:
+                # if the distro does not serve publications, use the latest repo version
+                version = self.latest_version()
+
+            if version:
+                qs |= self.versions.filter(pk=version.pk)
+
+        return qs.distinct()
+
     @hook(AFTER_UPDATE, when="retain_repo_versions", has_changed=True)
     def _cleanup_old_versions_hook(self):
         # Do not attempt to clean up anything, while there is a transaction involving repo versions
@@ -325,10 +361,9 @@ class Repository(MasterModel):
                 _("Attempt to cleanup old versions, while a new version is in flight.")
             )
         if self.retain_repo_versions:
-            # Consider only completed versions for cleanup
-            for version in self.versions.complete().order_by("-number")[
-                self.retain_repo_versions :
-            ]:
+            # Consider only completed versions that aren't protected for cleanup
+            versions = self.versions.complete().exclude(pk__in=self.protected_versions())
+            for version in versions.order_by("-number")[self.retain_repo_versions :]:
                 _logger.info(
                     "Deleting repository version {} due to version retention limit.".format(version)
                 )
@@ -1061,6 +1096,12 @@ class RepositoryVersion(BaseModel):
 
         # Update next version's counts as they have been modified
         next_version._compute_counts()
+
+    @hook(BEFORE_DELETE)
+    def check_protected(self):
+        """Check if a repo version is protected before trying to delete it."""
+        if self in self.repository.protected_versions():
+            raise Exception(PROTECTED_REPO_VERSION_MESSAGE)
 
     def delete(self, **kwargs):
         """

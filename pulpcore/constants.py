@@ -1,3 +1,4 @@
+from gettext import gettext as _
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -104,3 +105,9 @@ STORAGE_RESPONSE_MAP = {
     "storages.backends.azure_storage.AzureStorage": AZURE_RESPONSE_HEADER_MAP,
     "storages.backends.gcloud.GoogleCloudStorage": GCS_RESPONSE_HEADER_MAP,
 }
+
+# Message users receive when attempting to delete a protected repo version
+PROTECTED_REPO_VERSION_MESSAGE = _(
+    "The repository version cannot be deleted because it (or its publications) are currently being "
+    "used to distribute content. Please update the necessary distributions first."
+)

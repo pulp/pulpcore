@@ -34,6 +34,28 @@ def file_9_contents(
     return content_units
 
 
+@pytest.fixture
+def file_repository_content(
+    file_remote_ssl_factory,
+    file_repository_factory,
+    file_repository_api_client,
+    file_content_api_client,
+    basic_manifest_path,
+    monitor_task,
+):
+    """Create some content that was synced into a repo on-demand."""
+    remote = file_remote_ssl_factory(manifest_path=basic_manifest_path, policy="on_demand")
+    base_repo = file_repository_factory()
+    task = file_repository_api_client.sync(base_repo.pulp_href, {"remote": remote.pulp_href}).task
+    monitor_task(task)
+    base_repo = file_repository_api_client.read(base_repo.pulp_href)
+    assert base_repo.latest_version_href[-2] == "1"
+    contents = file_content_api_client.list(repository_version=base_repo.latest_version_href)
+    assert contents.count == 3
+
+    return contents
+
+
 @pytest.mark.parallel
 def test_add_remove_content(
     file_repository_api_client,
@@ -626,7 +648,39 @@ def test_filter_artifacts(
 
 
 @pytest.mark.parallel
-def test_delete_repo_version_resources(
+def test_delete_repo_version_publication(
+    file_repository_api_client,
+    file_repository_version_api_client,
+    file_repository_factory,
+    file_remote_ssl_factory,
+    basic_manifest_path,
+    file_publication_api_client,
+    gen_object_with_cleanup,
+    monitor_task,
+):
+    """Test that removing a repo version will delete its publication."""
+    file_repo = file_repository_factory()
+    remote = file_remote_ssl_factory(manifest_path=basic_manifest_path, policy="on_demand")
+    task = file_repository_api_client.sync(file_repo.pulp_href, {"remote": remote.pulp_href}).task
+    monitor_task(task)
+    repo = file_repository_api_client.read(file_repo.pulp_href)
+    assert repo.latest_version_href[-2] == "1"
+
+    pub_body = {"repository": repo.pulp_href}
+    publication = gen_object_with_cleanup(file_publication_api_client, pub_body)
+    assert publication.repository_version == repo.latest_version_href
+
+    # delete repo version used to create publication
+    file_repository_version_api_client.delete(repo.latest_version_href)
+
+    with pytest.raises(ApiException) as e:
+        file_publication_api_client.read(publication.pulp_href)
+
+    assert e.value.status == 404
+
+
+@pytest.mark.parallel
+def test_delete_protected_repo_version(
     file_repository_api_client,
     file_repository_version_api_client,
     file_repository_factory,
@@ -638,11 +692,7 @@ def test_delete_repo_version_resources(
     gen_object_with_cleanup,
     monitor_task,
 ):
-    """Test whether removing a repository version affects related resources.
-
-    Test whether removing a repository version will remove a related Publication.
-    Test whether removing a repository version a Distribution will not be removed.
-    """
+    """Test that removing a repo version fails if its publication is distributed."""
     file_repo = file_repository_factory()
     remote = file_remote_ssl_factory(manifest_path=basic_manifest_path, policy="on_demand")
     task = file_repository_api_client.sync(file_repo.pulp_href, {"remote": remote.pulp_href}).task
@@ -657,16 +707,24 @@ def test_delete_repo_version_resources(
     distribution = file_distribution_factory(publication=publication.pulp_href)
     assert distribution.publication == publication.pulp_href
 
-    # delete repo version used to create publication
-    file_repository_version_api_client.delete(repo.latest_version_href)
-
+    # deleting a protected repo version fails
     with pytest.raises(ApiException) as e:
-        file_publication_api_client.read(publication.pulp_href)
+        file_repository_version_api_client.delete(repo.latest_version_href)
+    assert e.value.status == 400
+    assert "The repository version cannot be deleted" in e.value.body
 
+    # unset the publication for the distribution
+    task = file_distribution_api_client.partial_update(
+        distribution.pulp_href, {"publication": ""}
+    ).task
+    monitor_task(task)
+
+    # and then delete the repo version
+    task = file_repository_version_api_client.delete(repo.latest_version_href).task
+    monitor_task(task)
+    with pytest.raises(ApiException) as e:
+        file_repository_version_api_client.read(repo.latest_version_href)
     assert e.value.status == 404
-
-    updated_distribution = file_distribution_api_client.read(distribution.pulp_href)
-    assert updated_distribution.publication is None
 
 
 @pytest.mark.parallel
@@ -735,6 +793,7 @@ def test_clear_all_units_repo_version(
 def test_repo_version_retention(
     file_repository_api_client,
     file_repository_version_api_client,
+    file_repository_content,
     file_content_api_client,
     file_publication_api_client,
     file_repository_factory,
@@ -745,14 +804,7 @@ def test_repo_version_retention(
 ):
     """Test retain_repo_versions for repositories."""
     # Setup
-    remote = file_remote_ssl_factory(manifest_path=basic_manifest_path, policy="on_demand")
-    base_repo = file_repository_factory()
-    task = file_repository_api_client.sync(base_repo.pulp_href, {"remote": remote.pulp_href}).task
-    monitor_task(task)
-    base_repo = file_repository_api_client.read(base_repo.pulp_href)
-    assert base_repo.latest_version_href[-2] == "1"
-    contents = file_content_api_client.list(repository_version=base_repo.latest_version_href)
-    assert contents.count == 3
+    contents = file_repository_content
 
     # Test repo version retention.
     repo = file_repository_factory(retain_repo_versions=1)
@@ -823,6 +875,60 @@ def test_repo_version_retention(
     distro = file_distribution_factory(repository=repo.pulp_href)
     manifest_files = get_files_in_manifest(f"{distro.base_url}PULP_MANIFEST")
     assert len(manifest_files) == contents.count
+
+
+@pytest.mark.parallel
+def test_repo_versions_protected_from_cleanup(
+    file_repository_api_client,
+    file_repository_version_api_client,
+    file_repository_content,
+    file_publication_api_client,
+    file_repository_factory,
+    file_distribution_factory,
+    gen_object_with_cleanup,
+    monitor_task,
+):
+    """Test that distributed repo versions are protected from retain_repo_versions."""
+
+    def _modify_and_validate(repo, content, expected_version, expected_total):
+        task = file_repository_api_client.modify(
+            repo.pulp_href, {"add_content_units": [content.pulp_href]}
+        ).task
+        monitor_task(task)
+
+        repo = file_repository_api_client.read(repo.pulp_href)
+        assert repo.latest_version_href[-2] == expected_version
+
+        versions = file_repository_version_api_client.list(repo.pulp_href)
+        assert versions.count == expected_total
+
+        return repo
+
+    # Setup
+    contents = file_repository_content
+    repo = file_repository_factory(retain_repo_versions=1)
+
+    # Publish and distribute version 0
+    publication = gen_object_with_cleanup(
+        file_publication_api_client, {"repository_version": repo.latest_version_href}
+    )
+    file_distribution_factory(publication=publication.pulp_href)
+
+    # Version 0 is protected since it's distributed
+    repo = _modify_and_validate(repo, contents.results[0], "1", 2)
+
+    # Create a new publication and distribution which protects version 1 from deletion
+    file_distribution_factory(repository=repo.pulp_href)
+    publication = gen_object_with_cleanup(
+        file_publication_api_client, {"repository_version": repo.latest_version_href}
+    )
+    file_distribution_factory(publication=publication.pulp_href)
+
+    # Create version 2 and there should be 3 versions now (2 protected)
+    repo = _modify_and_validate(repo, contents.results[1], "2", 3)
+
+    # Version 2 will be removed since we're creating version 3 and it's not protected
+    _modify_and_validate(repo, contents.results[2], "3", 3)
 
 
 @pytest.mark.parallel
