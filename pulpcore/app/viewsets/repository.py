@@ -10,6 +10,7 @@ from rest_framework.decorators import action
 from rest_framework.viewsets import GenericViewSet
 from urllib.parse import urlparse
 
+from pulpcore.constants import PROTECTED_REPO_VERSION_MESSAGE
 from pulpcore.filters import BaseFilterSet
 from pulpcore.app import tasks
 from pulpcore.app.models import (
@@ -295,6 +296,9 @@ class RepositoryVersionViewSet(
         Queues a task to handle deletion of a RepositoryVersion
         """
         version = self.get_object()
+
+        if version in version.repository.protected_versions():
+            raise serializers.ValidationError(PROTECTED_REPO_VERSION_MESSAGE)
 
         task = dispatch(
             tasks.repository.delete_version,

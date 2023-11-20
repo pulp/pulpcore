@@ -16,6 +16,9 @@ greater than or equal to 1.
 Setting retain_repo_versions to 1 effectively disables repository versioning since Pulp will only
 store the latest version.
 
+Cleanup will ignore any repo versions that are being served directly via a distribution or via a
+publication.
+
 To update this field for a file Repository called myrepo, simply call:
 
 ```
