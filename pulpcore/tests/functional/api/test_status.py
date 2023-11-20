@@ -1,5 +1,4 @@
 """Test the status page."""
-import os
 import pytest
 
 from django.conf import settings
@@ -56,11 +55,6 @@ STATUS = {
         "versions",
     ],
 }
-
-
-@pytest.fixture
-def test_path():
-    return os.getenv("PYTEST_CURRENT_TEST").split()[0]
 
 
 @pytest.mark.parallel
