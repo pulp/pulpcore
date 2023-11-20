@@ -448,6 +448,11 @@ def received_otel_span():
     return _received_otel_span
 
 
+@pytest.fixture
+def test_path():
+    return os.getenv("PYTEST_CURRENT_TEST").split()[0]
+
+
 # Webserver Fixtures
 
 
