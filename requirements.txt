@@ -25,7 +25,7 @@ opentelemetry-distro[otlp]>=0.38b0,<=0.42b0
 opentelemetry-exporter-otlp-proto-http>=1.17.0,<=1.21.0
 opentelemetry-instrumentation-django>=0.38b0,<=0.41b0
 opentelemetry-instrumentation-wsgi>=0.38b0,<=0.42b0
-protobuf>=4.21.1,<4.25.1
+protobuf>=4.21.1,<4.25.2
 pulp-glue>=0.18.0,<0.22
 pygtrie>=2.5,<=2.5.0
 psycopg[binary]>=3.1.8,<=3.1.13
