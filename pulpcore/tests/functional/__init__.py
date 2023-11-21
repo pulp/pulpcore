@@ -1060,7 +1060,6 @@ def add_to_filesystem_cleanup():
                 pass
 
 
-@pytest.fixture(scope="session")
 def download_content_unit(bindings_cfg, pulp_domain_enabled):
     def _download_content_unit(base_path, content_path, domain="default"):
         async def _get_response(url):
@@ -1089,36 +1088,27 @@ def download_content_unit(bindings_cfg, pulp_domain_enabled):
     return _download_content_unit
 
 
-@pytest.fixture(scope="session")
-def http_get():
-    def _http_get(url, **kwargs):
-        async def _send_request():
-            async with aiohttp.ClientSession(raise_for_status=True) as session:
-                async with session.get(url, **kwargs) as response:
-                    return await response.content.read()
+def http_get(url, **kwargs):
+    async def _send_request():
+        async with aiohttp.ClientSession(raise_for_status=True) as session:
+            async with session.get(url, **kwargs) as response:
+                return await response.content.read()
 
-        response = asyncio.run(_send_request())
-        return response
-
-    return _http_get
+    return asyncio.run(_send_request())
 
 
-@pytest.fixture
-def wget_recursive_download_on_host():
-    def _wget_recursive_download_on_host(url, destination):
-        subprocess.check_output(
-            [
-                "wget",
-                "--recursive",
-                "--no-parent",
-                "--no-host-directories",
-                "--directory-prefix",
-                destination,
-                url,
-            ]
-        )
-
-    return _wget_recursive_download_on_host
+def wget_recursive_download_on_host(url, destination):
+    return subprocess.check_output(
+        [
+            "wget",
+            "--recursive",
+            "--no-parent",
+            "--no-host-directories",
+            "--directory-prefix",
+            destination,
+            url,
+        ]
+    )
 
 
 @pytest.fixture()
