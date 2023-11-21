@@ -13,6 +13,10 @@ concurrency:
   group: ${{ github.ref_name }}-${{ github.workflow }}
   cancel-in-progress: true
 
+defaults:
+  run:
+    working-directory: "pulpcore"
+
 jobs:
 
   ready-to-ship:
@@ -21,6 +25,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          path: "pulpcore"
       - uses: actions/setup-python@v4
         with:
           python-version: "3.8"
@@ -31,10 +36,6 @@ jobs:
         env:
           PY_COLORS: '1'
           ANSIBLE_FORCE_COLOR: '1'
-          GITHUB_PULL_REQUEST: ${{ github.event.number }}
-          GITHUB_PULL_REQUEST_BODY: ${{ github.event.pull_request.body }}
-          GITHUB_BRANCH: ${{ github.head_ref }}
-          GITHUB_REPO_SLUG: ${{ github.repository }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_CONTEXT: ${{ github.event.pull_request.commits_url }}
         run: sh .github/workflows/scripts/check_commit.sh
@@ -52,6 +53,9 @@ jobs:
     needs: build
     uses: "./.github/workflows/test.yml"
   deprecations:
+    defaults:
+      run:
+        working-directory: "."
     runs-on: ubuntu-latest
     if: github.base_ref == 'main'
     needs: test

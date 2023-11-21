@@ -10,7 +10,7 @@
 set -euv
 
 # make sure this script runs at the repo root
-cd "$(dirname "$(realpath -e "$0")")"/../../..
+cd "$(dirname "$(realpath -e "$0")")/../../.."
 
 mkdir ~/.ssh
 touch ~/.ssh/pulp-infra
@@ -27,10 +27,11 @@ export DJANGO_SETTINGS_MODULE=pulpcore.app.settings
 export PULP_SETTINGS=$PWD/.ci/ansible/settings/settings.py
 export WORKSPACE=$PWD
 
-eval "$(ssh-agent -s)" #start the ssh agent
+# start the ssh agent
+eval "$(ssh-agent -s)"
 ssh-add ~/.ssh/pulp-infra
 
-python3 .github/workflows/scripts/docs-publisher.py --build-type $1 --branch $2
+python3 .github/workflows/scripts/docs-publisher.py --build-type "$1" --branch "$2"
 
 if [[ "$GITHUB_WORKFLOW" == "Core changelog update" ]]; then
   # Do not build bindings docs on changelog update
@@ -39,9 +40,9 @@ fi
 
 pip install mkdocs pymdown-extensions "Jinja2<3.1"
 
-mkdir -p ../bindings
-tar -xvf python-client-docs.tar --directory ../bindings
-cd ../bindings
+mkdir -p ../core-bindings
+tar -xvf core-python-client-docs.tar --directory ../core-bindings
+pushd ../core-bindings
 cat >> mkdocs.yml << DOCSYAML
 ---
 site_name: Pulpcore Client
@@ -61,3 +62,4 @@ rsync -avzh site/ doc_builder_pulpcore@docs.pulpproject.org:/var/www/docs.pulppr
 
 # publish to docs.pulpproject.org/pulpcore_client/en/{release}
 rsync -avzh site/ doc_builder_pulpcore@docs.pulpproject.org:/var/www/docs.pulpproject.org/pulpcore_client/en/"$2"
+popd
