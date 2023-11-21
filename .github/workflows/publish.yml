@@ -6,86 +6,32 @@
 # For more info visit https://github.com/pulp/plugin_template
 
 ---
-name: Core Release Pipeline
+name: "Core Publish Release"
 on:
-  workflow_dispatch:
-    inputs:
-      release:
-        description: "Release tag (e.g. 3.2.1)"
+  push:
+    tags:
+      - "[0-9]+.[0-9]+.[0-9]"
 
 defaults:
   run:
     working-directory: "pulpcore"
 
 jobs:
-  build-artifacts:
-    runs-on: "ubuntu-latest"
-
-    strategy:
-      fail-fast: false
-
-    steps:
-      - uses: "actions/checkout@v4"
-        with:
-          fetch-depth: 0
-          path: "pulpcore"
-
-      - uses: "actions/setup-python@v4"
-        with:
-          python-version: "3.8"
-
-      - name: "Install python dependencies"
-        run: |
-          echo ::group::PYDEPS
-          pip install 'packaging~=21.3' bump2version gitpython towncrier wheel requests
-          echo ::endgroup::
-
-      - name: "Configure Git with pulpbot name and email"
-        run: |
-          git config --global user.name 'pulpbot'
-          git config --global user.email 'pulp-infra@redhat.com'
-
-      - name: "Setting secrets"
-        run: |
-          python3 .github/workflows/scripts/secrets.py "$SECRETS_CONTEXT"
-        env:
-          SECRETS_CONTEXT: "${{ toJson(secrets) }}"
-
-      - name: "Create the release commit, tag it, create a post-release commit, and build plugin package"
-        run: |
-          python .github/workflows/scripts/release.py ${{ github.event.inputs.release }}
-
-      - name: "Upload Package whl"
-        uses: "actions/upload-artifact@v3"
-        with:
-          name: "plugin_package"
-          path: "pulpcore/dist/"
-          if-no-files-found: "error"
-
-      - name: "Tar files"
-        run: |
-          tar -cvf pulpcore.tar .
-
-      - name: "Upload Artifact"
-        uses: "actions/upload-artifact@v3"
-        with:
-          name: "pulpcore.tar"
-          path: "pulpcore/pulpcore.tar"
-
+  build:
+    uses: "./.github/workflows/build.yml"
 
   build-bindings-docs:
-    needs:
-      - "build-artifacts"
+    needs: "build-artifacts"
     runs-on: "ubuntu-latest"
     # Install scripts expect TEST to be set, 'docs' is most appropriate even though we don't run tests
     env:
       TEST: "docs"
-
+      PLUGIN_VERSION: "${{ github.ref_name }}"
     steps:
-      - uses: "actions/download-artifact@v3"
+      - uses: "actions/checkout@v4"
         with:
-          name: "pulpcore.tar"
-          path: "pulpcore/"
+          fetch-depth: 1
+          path: "pulpcore"
 
       - uses: "actions/checkout@v4"
         with:
@@ -96,18 +42,19 @@ jobs:
       - uses: "actions/setup-python@v4"
         with:
           python-version: "3.8"
+
+      - uses: "actions/download-artifact@v3"
+        with:
+          name: "plugin_package"
+          path: "pulpcore/dist/"
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: "2.6"
 
-      - name: "Untar repository"
-        run: |
-          tar -xf pulpcore.tar
-
       - name: "Install python dependencies"
         run: |
           echo ::group::PYDEPS
-          pip install towncrier twine wheel httpie docker netaddr boto3 ansible
+          pip install httpie
           echo "HTTPIE_CONFIG_DIR=$GITHUB_WORKSPACE/pulpcore/.ci/assets/httpie/" >> $GITHUB_ENV
           echo ::endgroup::
 
@@ -203,39 +150,9 @@ jobs:
           docker exec pulp ls -latr /etc/yum.repos.d/ || true
           docker exec pulp cat /etc/yum.repos.d/* || true
           docker exec pulp bash -c "pip3 list && pip3 install pipdeptree && pipdeptree"
-
-
-  publish-tag:
-    runs-on: "ubuntu-latest"
-    needs:
-      - "build-bindings-docs"
-
-    env:
-      GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
-
-    steps:
-      - uses: "actions/download-artifact@v3"
-        with:
-          name: "pulpcore.tar"
-          path: "pulpcore/"
-
-      - name: "Untar repository"
-        run: |
-          tar -xf pulpcore.tar
-
-      - name: "Configure Git with pulpbot name and email"
-        run: |
-          git config --global user.name 'pulpbot'
-          git config --global user.email 'pulp-infra@redhat.com'
-
-      - name: "Push branch and tag to GitHub"
-        run: |
-          bash .github/workflows/scripts/push_branch_and_tag_to_github.sh ${{ github.event.inputs.release }}
   publish-package:
     runs-on: "ubuntu-latest"
-    needs:
-      - "build-bindings-docs"
-      - "publish-tag"
+    needs: "build-bindings-docs"
 
     env:
       GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
@@ -258,7 +175,7 @@ jobs:
       - name: "Install python dependencies"
         run: |
           echo ::group::PYDEPS
-          pip install twine
+          pip install requests packaging~=21.3 twine
           echo ::endgroup::
 
       - name: "Setting secrets"
@@ -269,12 +186,11 @@ jobs:
 
       - name: "Deploy plugin to pypi"
         run: |
-          .github/workflows/scripts/publish_plugin_pypi.sh ${{ github.event.inputs.release }}
+          .github/workflows/scripts/publish_plugin_pypi.sh ${{ github.ref_name }}
   publish-python-bindings:
     runs-on: "ubuntu-latest"
-    needs:
-      - "build-bindings-docs"
-      - "publish-tag"
+    needs: "build-bindings-docs"
+
     env:
       GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
 
@@ -302,7 +218,7 @@ jobs:
       - name: "Install python dependencies"
         run: |
           echo ::group::PYDEPS
-          pip install twine
+          pip install r e q u e s t s   p a c k a g i n g ~ = 2 1 . 3
           echo ::endgroup::
 
       - name: "Setting secrets"
@@ -313,12 +229,10 @@ jobs:
 
       - name: "Publish client to pypi"
         run: |
-          bash .github/workflows/scripts/publish_client_pypi.sh ${{ github.event.inputs.release }}
+          bash .github/workflows/scripts/publish_client_pypi.sh
   publish-ruby-bindings:
     runs-on: "ubuntu-latest"
-    needs:
-      - "build-bindings-docs"
-      - "publish-tag"
+    needs: "build-bindings-docs"
 
     env:
       GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
@@ -340,6 +254,10 @@ jobs:
           tar -xvf core-ruby-client.tar
           tar -xvf file-ruby-client.tar
 
+      - uses: "actions/setup-python@v4"
+        with:
+          python-version: "3.8"
+
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: "2.6"
@@ -352,12 +270,10 @@ jobs:
 
       - name: "Publish client to rubygems"
         run: |
-          bash .github/workflows/scripts/publish_client_gem.sh ${{ github.event.inputs.release }}
+          bash .github/workflows/scripts/publish_client_gem.sh
   publish-docs:
     runs-on: "ubuntu-latest"
-    needs:
-      - "build-bindings-docs"
-      - "publish-tag"
+    needs: "build-bindings-docs"
 
     env:
       GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
@@ -375,7 +291,7 @@ jobs:
       - name: "Install python dependencies"
         run: |
           echo ::group::PYDEPS
-          pip install 'packaging~=21.3' requests
+          pip install r e q u e s t s   p a c k a g i n g ~ = 2 1 . 3
           echo ::endgroup::
 
       - name: "Setting secrets"
@@ -399,13 +315,12 @@ jobs:
       - name: "Publish docs to pulpproject.org"
         run: |
           tar -xvf docs.tar
-          .github/workflows/scripts/publish_docs.sh tag ${{ github.event.inputs.release }}
+          .github/workflows/scripts/publish_docs.sh tag ${{ github.ref_name }}
 
   create-gh-release:
     runs-on: "ubuntu-latest"
     needs:
       - "build-bindings-docs"
-      - "publish-tag"
       - "publish-package"
       - "publish-python-bindings"
       - "publish-ruby-bindings"
@@ -415,7 +330,7 @@ jobs:
       - name: "Create release on GitHub"
         uses: "actions/github-script@v7"
         env:
-          TAG_NAME: "${{ inputs.release }}"
+          TAG_NAME: "${{ github.ref_name }}"
         with:
           script: |
             const { TAG_NAME } = process.env;

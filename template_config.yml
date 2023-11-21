@@ -1,7 +1,7 @@
 # This config represents the latest values used when running the plugin-template. Any settings that
 # were not present before running plugin-template have been added with their default values.
 
-# generated with plugin_template@2021.08.26-282-g53132bb
+# generated with plugin_template@2021.08.26-282-g53132bb-dirty
 
 additional_repos: []
 api_root: /pulp/
