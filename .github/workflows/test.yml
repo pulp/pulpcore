@@ -6,13 +6,17 @@
 # For more info visit https://github.com/pulp/plugin_template
 
 ---
-name: Test
+name: "Test"
 on:
   workflow_call:
 
+defaults:
+  run:
+    working-directory: "pulpcore"
+
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: "ubuntu-latest"
     strategy:
       fail-fast: false
       matrix:
@@ -32,22 +36,29 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 1
+          path: "pulpcore"
+
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          repository: "pulp/pulp-openapi-generator"
+          path: "pulp-openapi-generator"
 
       - uses: actions/setup-python@v4
         with:
           python-version: "3.8"
 
-      - uses: actions/download-artifact@v3
+      - uses: "actions/download-artifact@v3"
         with:
-          name: plugin_package
-          path: dist/
+          name: "plugin_package"
+          path: "pulpcore/dist/"
 
       - name: Install httpie
         run: |
           echo ::group::HTTPIE
           pip install httpie
           echo ::endgroup::
-          echo "HTTPIE_CONFIG_DIR=$GITHUB_WORKSPACE/.ci/assets/httpie/" >> $GITHUB_ENV
+          echo "HTTPIE_CONFIG_DIR=$GITHUB_WORKSPACE/pulpcore/.ci/assets/httpie/" >> $GITHUB_ENV
 
       - name: Set environment variables
         run: |
@@ -59,12 +70,12 @@ jobs:
         env:
           PY_COLORS: '1'
           ANSIBLE_FORCE_COLOR: '1'
-          GITHUB_PULL_REQUEST: ${{ github.event.number }}
-          GITHUB_PULL_REQUEST_BODY: ${{ github.event.pull_request.body }}
-          GITHUB_BRANCH: ${{ github.head_ref }}
-          GITHUB_REPO_SLUG: ${{ github.repository }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_CONTEXT: ${{ github.event.pull_request.commits_url }}
+      - uses: ruby/setup-ruby@v1
+        if: ${{ env.TEST == 'pulp' }}
+        with:
+          ruby-version: "2.6"
 
       - name: Install
         run: .github/workflows/scripts/install.sh
@@ -72,10 +83,6 @@ jobs:
         env:
           PY_COLORS: '1'
           ANSIBLE_FORCE_COLOR: '1'
-          GITHUB_PULL_REQUEST: ${{ github.event.number }}
-          GITHUB_PULL_REQUEST_BODY: ${{ github.event.pull_request.body }}
-          GITHUB_BRANCH: ${{ github.head_ref }}
-          GITHUB_REPO_SLUG: ${{ github.repository }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_CONTEXT: ${{ github.event.pull_request.commits_url }}
 
@@ -85,19 +92,17 @@ jobs:
         env:
           PY_COLORS: '1'
           ANSIBLE_FORCE_COLOR: '1'
-          GITHUB_PULL_REQUEST: ${{ github.event.number }}
-          GITHUB_PULL_REQUEST_BODY: ${{ github.event.pull_request.body }}
-          GITHUB_BRANCH: ${{ github.head_ref }}
-          GITHUB_REPO_SLUG: ${{ github.repository }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_CONTEXT: ${{ github.event.pull_request.commits_url }}
           REDIS_DISABLED: ${{ contains('s3', matrix.env.TEST) }}
 
-      - name: Setting secrets
-        if: github.event_name != 'pull_request'
-        run: python3 .github/workflows/scripts/secrets.py "$SECRETS_CONTEXT"
-        env:
-          SECRETS_CONTEXT: ${{ toJson(secrets) }}
+      - name: Install Python client
+        run: .github/workflows/scripts/install_python_client.sh
+        shell: bash
+      - name: Install Ruby client
+        if: ${{ env.TEST == 'pulp' }}
+        run: .github/workflows/scripts/install_ruby_client.sh
+        shell: bash
 
       - name: Script
         run: .github/workflows/scripts/script.sh
@@ -105,16 +110,68 @@ jobs:
         env:
           PY_COLORS: '1'
           ANSIBLE_FORCE_COLOR: '1'
-          GITHUB_PULL_REQUEST: ${{ github.event.number }}
-          GITHUB_PULL_REQUEST_BODY: ${{ github.event.pull_request.body }}
-          GITHUB_BRANCH: ${{ github.head_ref }}
-          GITHUB_REPO_SLUG: ${{ github.repository }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_CONTEXT: ${{ github.event.pull_request.commits_url }}
 
       - name: Extract Deprecations from Logs
         id: deprecations
         run: echo deprecations-${{ matrix.env.TEST }}=$(docker logs pulp 2>&1 | grep -i pulpcore.deprecation | base64 -w 0) >> $GITHUB_OUTPUT
+      - name: Upload python client packages
+        if: ${{ env.TEST == 'pulp' }}
+        uses: actions/upload-artifact@v3
+        with:
+          name: "python-client.tar"
+          path: "pulpcore/core-python-client.tar"
+          if-no-files-found: "error"
+          retention-days: 5
+
+      - name: Upload python client docs
+        if: ${{ env.TEST == 'pulp' }}
+        uses: actions/upload-artifact@v3
+        with:
+          name: "python-client-docs.tar"
+          path: "pulpcore/core-python-client-docs.tar"
+          if-no-files-found: "error"
+          retention-days: 5
+      - name: Upload Ruby client
+        if: ${{ env.TEST == 'pulp' }}
+        uses: actions/upload-artifact@v3
+        with:
+          name: "ruby-client.tar"
+          path: "pulpcore/core-ruby-client.tar"
+          if-no-files-found: "error"
+          retention-days: 5
+      - name: Upload python client packages
+        if: ${{ env.TEST == 'pulp' }}
+        uses: actions/upload-artifact@v3
+        with:
+          name: "python-client.tar"
+          path: "pulpcore/file-python-client.tar"
+          if-no-files-found: "error"
+          retention-days: 5
+
+      - name: Upload python client docs
+        if: ${{ env.TEST == 'pulp' }}
+        uses: actions/upload-artifact@v3
+        with:
+          name: "python-client-docs.tar"
+          path: "pulpcore/file-python-client-docs.tar"
+          if-no-files-found: "error"
+          retention-days: 5
+      - name: Upload Ruby client
+        if: ${{ env.TEST == 'pulp' }}
+        uses: actions/upload-artifact@v3
+        with:
+          name: "ruby-client.tar"
+          path: "pulpcore/file-ruby-client.tar"
+          if-no-files-found: "error"
+          retention-days: 5
+      - name: Upload built docs
+        if: ${{ env.TEST == 'docs' }}
+        uses: actions/upload-artifact@v3
+        with:
+          name: "docs.tar"
+          path: "pulpcore/docs/docs.tar"
 
       - name: Logs
         if: always()

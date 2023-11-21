@@ -10,28 +10,28 @@
 set -euv
 
 # make sure this script runs at the repo root
-cd "$(dirname "$(realpath -e "$0")")"/../../..
+cd "$(dirname "$(realpath -e "$0")")/../../.."
 
 pip install twine
 
-export VERSION=$(ls dist | sed -rn 's/pulpcore-client-(.*)\.tar.gz/\1/p')
+VERSION="$(ls dist | sed -rn 's/pulpcore-client-(.*)\.tar.gz/\1/p')"
 
 if [[ -z "$VERSION" ]]; then
   echo "No client package found."
   exit
 fi
 
-export response=$(curl --write-out %{http_code} --silent --output /dev/null https://pypi.org/project/pulpcore-client/$VERSION/)
+RESPONSE="$(curl --write-out '%{http_code}' --silent --output /dev/null "https://pypi.org/project/pulpcore-client/$VERSION/")"
 
-if [ "$response" == "200" ];
+if [ "$RESPONSE" == "200" ];
 then
   echo "pulpcore client $VERSION has already been released. Skipping."
   exit
 fi
 
-twine check dist/pulpcore_client-$VERSION-py3-none-any.whl || exit 1
-twine check dist/pulpcore-client-$VERSION.tar.gz || exit 1
-twine upload dist/pulpcore_client-$VERSION-py3-none-any.whl -u pulp -p $PYPI_PASSWORD
-twine upload dist/pulpcore-client-$VERSION.tar.gz -u pulp -p $PYPI_PASSWORD
-
-exit $?
+twine upload -u pulp -p "$PYPI_PASSWORD" \
+"dist/pulpcore_client-$VERSION-py3-none-any.whl" \
+"dist/pulpcore-client-$VERSION.tar.gz" \
+"dist/pulp_file_client-$VERSION-py3-none-any.whl" \
+"dist/pulp_file-client-$VERSION.tar.gz" \
+;
