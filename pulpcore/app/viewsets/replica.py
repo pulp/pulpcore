@@ -126,10 +126,11 @@ class UpstreamPulpViewSet(
         uri = "/api/v3/servers/"
         if settings.DOMAIN_ENABLED:
             uri = f"/{request.pulp_domain.name}{uri}"
+        exclusive_resources = [uri, f"pdrn:{request.pulp_domain.pulp_id}:servers"]
 
         dispatch(
             replicate_distributions,
-            exclusive_resources=[uri],
+            exclusive_resources=exclusive_resources,
             kwargs={"server_pk": pk},
             task_group=task_group,
         )

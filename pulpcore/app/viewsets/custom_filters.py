@@ -16,6 +16,7 @@ from rest_framework.serializers import ValidationError as DRFValidationError
 
 from pulpcore.app.models import ContentArtifact, RepositoryVersion, Publication
 from pulpcore.app.viewsets import NamedModelViewSet
+from pulpcore.app.loggers import deprecation_logger
 
 
 class ReservedResourcesFilter(Filter):
@@ -83,6 +84,9 @@ class ReservedResourcesRecordFilter(Filter):
         Returns:
             django.db.models.query.QuerySet: Queryset filtered by the reserved resource
         """
+        deprecation_logger.warning(
+            "This filter is deprecated. Please use reserved_resources(__in) instead."
+        )
 
         if value is None:
             # a value was not supplied by a user

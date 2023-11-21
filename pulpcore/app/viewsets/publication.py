@@ -41,6 +41,7 @@ from pulpcore.app.viewsets.custom_filters import (
     LabelFilter,
     RepositoryVersionFilter,
 )
+from pulpcore.app.util import get_domain
 
 
 class PublicationContentFilter(Filter):
@@ -543,7 +544,7 @@ class BaseDistributionViewSet(NamedModelViewSet):
 
     def async_reserved_resources(self, instance):
         """Return resource that locks all Distributions."""
-        return ["/api/v3/distributions/"]
+        return ["/api/v3/distributions/", f"pdrn:{get_domain().pulp_id}:distributions"]
 
 
 class ListDistributionViewSet(BaseDistributionViewSet, mixins.ListModelMixin):
