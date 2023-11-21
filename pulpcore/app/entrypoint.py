@@ -49,7 +49,7 @@ class PulpApiWorker(SyncWorker):
 
         if settings.API_APP_TTL < 2 * self.timeout:
             logger.warn(
-                "API_APP_TTL (%s) is smaller than half the gunicorn timeout (%s). "
+                "API_APP_TTL (%s) is smaller than double the gunicorn timeout (%s). "
                 "You may experience workers wrongly reporting as missing",
                 settings.API_APP_TTL,
                 self.timeout,
