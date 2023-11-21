@@ -60,7 +60,7 @@ class Replicator:
         # TODO check and compare this to distribution locking on the distribution viewset.
         if settings.DOMAIN_ENABLED:
             uri = f"/{self.domain.name}{uri}"
-        self.distros_uri = uri
+        self.distros_uris = [uri, f"pdrn:{self.domain.pulp_id}:distributions"]
 
     @staticmethod
     def needs_update(fields_dict, model_instance):
@@ -176,7 +176,7 @@ class Replicator:
                     general_update,
                     task_group=self.task_group,
                     shared_resources=[repository],
-                    exclusive_resources=[self.distros_uri],
+                    exclusive_resources=self.distros_uris,
                     args=(distro.pk, self.app_label, self.distribution_serializer_name),
                     kwargs={
                         "data": distribution_data,
@@ -190,7 +190,7 @@ class Replicator:
                 general_create,
                 task_group=self.task_group,
                 shared_resources=[repository],
-                exclusive_resources=[self.distros_uri],
+                exclusive_resources=self.distros_uris,
                 args=(self.app_label, self.distribution_serializer_name),
                 kwargs={"data": distribution_data},
             )
@@ -221,7 +221,7 @@ class Replicator:
             dispatch(
                 general_multi_delete,
                 task_group=self.task_group,
-                exclusive_resources=[self.distros_uri],
+                exclusive_resources=self.distros_uris,
                 args=(distribution_ids,),
             )
 

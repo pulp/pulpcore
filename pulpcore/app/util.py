@@ -13,7 +13,7 @@ from datetime import timedelta
 import gnupg
 
 from django.conf import settings
-from django.db.models import Sum
+from django.db.models import Model, Sum
 from django.urls import Resolver404, resolve, reverse
 from opentelemetry import metrics
 
@@ -32,7 +32,7 @@ _model_viewset_cache = {}
 def get_url(model, domain=None):
     """
     Get a resource url for the specified model instance or class. This returns the path component of
-    the resource URI.  This is used in our resource locking/reservation code to identify resources.
+    the resource URI.
 
     Args:
         model (django.models.Model): A model instance or class.
@@ -57,6 +57,45 @@ def get_url(model, domain=None):
         kwargs["pk"] = model.pk
 
     return reverse(get_view_name_for_model(model, view_action), kwargs=kwargs)
+
+
+def get_prn(instance=None, uri=None):
+    """
+    Get a Pulp Resource Name (PRN) for the specified model instance. It is similar to a HREF
+    url in that it uniquely identifies a resource, but it also has the guarantee that it will not
+    change regardless of API_ROOT or DOMAIN_ENABLED. This is used in our resource locking/
+    reservation code to identify resources.
+
+    The format for the PRN is as follows:
+    ```
+        prn:model-label-lower:pk
+    ```
+
+    Examples:
+        instance=FileRepository(pk=123) -> prn:file.filerepository:123
+        instance=Artifact(pk=abc) -> prn:core.artifact:abc
+        uri=/rerouted/api/v3/repositories/rpm/rpm/123/versions/2/ -> prn:core.repositoryversion:abc
+        uri=/pulp/foodomain/api/v3/content/ansible/role/123/ -> prn:ansible.role:123
+
+    Args:
+        instance Optional(django.models.Model): A model instance.
+        uri Optional(str): A resource URI
+
+    Returns:
+        prn (str): The PRN of the passed in resource
+    """
+    if uri:
+        from pulpcore.app.viewsets import NamedModelViewSet
+
+        instance = NamedModelViewSet.get_resource(uri)
+
+    if not isinstance(instance, Model):
+        raise ValidationError(_("instance({}) must be a Model").format(instance))
+
+    if isinstance(instance, models.MasterModel):
+        instance = instance.cast()
+
+    return f"prn:{instance._meta.label_lower}:{instance.pk}"
 
 
 def extract_pk(uri):

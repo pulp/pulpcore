@@ -29,10 +29,11 @@ class OrphansCleanupViewset(ViewSet):
         uri = "/api/v3/orphans/cleanup/"
         if settings.DOMAIN_ENABLED:
             uri = f"/{request.pulp_domain.name}{uri}"
+        exclusive_resources = [uri, f"pdrn:{request.pulp_domain.pulp_id}:orphans"]
 
         task = dispatch(
             orphan_cleanup,
-            exclusive_resources=[uri],
+            exclusive_resources=exclusive_resources,
             kwargs={"content_pks": content_pks, "orphan_protection_time": orphan_protection_time},
         )
 

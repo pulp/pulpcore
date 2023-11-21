@@ -42,7 +42,7 @@ class ReclaimSpaceViewSet(ViewSet):
             uri = "/api/v3/repositories/reclaim_space/"
             if settings.DOMAIN_ENABLED:
                 uri = f"/{request.pulp_domain.name}{uri}"
-            exclusive_resources = [uri]
+            exclusive_resources = [uri, f"pdrn:{request.pulp_domain.pulp_id}:reclaim_space"]
 
         task = dispatch(
             reclaim_space,
