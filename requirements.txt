@@ -11,7 +11,7 @@ django-guid>=3.3,<=3.3.1
 django-import-export>=2.9,<3.4.0
 django-lifecycle>=1.0,<=1.1.2
 djangorestframework>=3.14.0,<=3.14.0
-djangorestframework-queryfields>=1.0,<=1.0.0
+djangorestframework-queryfields>=1.0,<=1.1.0
 drf-access-policy>=1.1.2,<1.5.1
 drf-nested-routers>=0.93.4,<=0.93.4
 drf-spectacular==0.26.5  # We monkeypatch this so we need a very narrow requirement string
