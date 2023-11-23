@@ -101,13 +101,13 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: "docs.tar"
-          path: "pulpcore/docs.tar"
+          path: "pulpcore"
 
       - name: Download Python client docs
         uses: actions/download-artifact@v3
         with:
           name: "python-client-docs.tar"
-          path: "pulpcore/python-client-docs.tar"
+          path: "pulpcore"
 
       - name: Setting secrets
         run: python3 .github/workflows/scripts/secrets.py "$SECRETS_CONTEXT"
