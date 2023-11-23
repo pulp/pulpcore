@@ -244,7 +244,7 @@ jobs:
 
       - name: "Untar python client packages"
         run: |
-          tar -xvf python-client.tar
+          tar -xvf core-python-client.tar
 
       - name: "Publish client to pypi"
         run: |
@@ -257,7 +257,7 @@ jobs:
 
       - name: "Untar Ruby client packages"
         run: |
-          tar -xvf ruby-client.tar
+          tar -xvf core-ruby-client.tar
 
       - name: "Publish client to rubygems"
         run: |
