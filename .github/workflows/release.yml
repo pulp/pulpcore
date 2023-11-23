@@ -232,7 +232,7 @@ jobs:
       - name: Install python dependencies
         run: |
           echo ::group::PYDEPS
-          pip install gitpython requests packaging~=21.3 tweepy
+          pip install gitpython requests packaging~=21.3
           echo ::endgroup::
 
       - name: Push branch and tag to GitHub
@@ -263,7 +263,8 @@ jobs:
 
       - name: "Untar python client packages"
         run: |
-          tar -xvf python-client.tar
+          tar -xvf core-python-client.tar
+          tar -xvf file-python-client.tar
 
       - name: "Publish client to pypi"
         run: |
@@ -276,7 +277,8 @@ jobs:
 
       - name: "Untar Ruby client packages"
         run: |
-          tar -xvf ruby-client.tar
+          tar -xvf core-ruby-client.tar
+          tar -xvf file-ruby-client.tar
 
       - name: "Publish client to rubygems"
         run: |

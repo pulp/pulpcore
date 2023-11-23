@@ -63,14 +63,19 @@ then
     sudo rm -rf "./${item}-client"
   done
   popd
-  touch bindings_requirements.txt
 else
-  # TODO Workaround us not publishing pulp_file clients currently
-  echo "$REPORTED_STATUS" | jq -r '.versions[]|(.package|sub("_"; "-")) + "-client==" + .version' | grep -v pulp-file > bindings_requirements.txt
-  echo "pulp-file-client" >> bindings_requirements.txt
-  # echo "$REPORTED_STATUS" | jq -r '.versions[]|(.package|sub("_"; "-")) + "-client==" + .version' > bindings_requirements.txt
+  # Sadly: Different pulpcore-versions aren't either...
+  pushd ../pulp-openapi-generator
+  for item in $(echo "$REPORTED_STATUS" | jq -r '.versions[]|select(.component!="core")|select(.component!="file").package|sub("-"; "_")')
+  do
+    ./generate.sh "${item}" python
+    cmd_prefix pip3 install "/root/pulp-openapi-generator/${item}-client"
+    sudo rm -rf "./${item}-client"
+  done
+  popd
 fi
 
+echo "$REPORTED_STATUS" | jq -r '.versions[]|(.package|sub("_"; "-")) + "-client==" + .version' > bindings_requirements.txt
 cmd_stdin_prefix bash -c "cat > /tmp/unittest_requirements.txt" < unittest_requirements.txt
 cmd_stdin_prefix bash -c "cat > /tmp/functest_requirements.txt" < functest_requirements.txt
 cmd_stdin_prefix bash -c "cat > /tmp/bindings_requirements.txt" < bindings_requirements.txt
