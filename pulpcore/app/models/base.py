@@ -148,16 +148,20 @@ class MasterModel(BaseModel, metaclass=MasterModelMeta):
     def get_model_for_pulp_type(cls, pulp_type):
         return cls._pulp_model_map[pulp_type]
 
-    def save(self, *args, **kwargs):
+    @property
+    def detail_model(self):
+        return self._pulp_model_map[self.pulp_type]
+
+    def __init__(self, *args, **kwargs):
         # instances of "detail" models that subclass MasterModel are exposed
         # on instances of MasterModel by the string stored in that model's TYPE attr.
         # Storing this pulp_type in a column on the MasterModel next to makes it trivial
         # to filter for specific detail model types across master's relations.
         # Prepend the TYPE defined on a detail model with a django app label.
         # If a plugin sets the type field themselves, it's used as-is.
+        super().__init__(*args, **kwargs)
         if not self.pulp_type:
             self.pulp_type = self.get_pulp_type()
-        return super().save(*args, **kwargs)
 
     def cast(self):
         """Return the "Detail" model instance of this master-detail object.

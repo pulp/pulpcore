@@ -355,12 +355,12 @@ class DistributionWithContentFilter(Filter):
         for dist in qs.exclude(publication=None).values("publication__repository_version", "pk"):
             versions_distributions[dist["publication__repository_version"]].append(dist["pk"])
 
-        for dist in qs.exclude(repository_version=None).values("repository_version", "pk"):
-            if not dist.cast().SERVE_FROM_PUBLICATION:
+        for dist in qs.exclude(repository_version=None).values("repository_version", "pulp_type"):
+            if not dist.detail_model.SERVE_FROM_PUBLICATION:
                 versions_distributions[dist["repository_version"]].append(dist["pk"])
 
         for dist in qs.exclude(repository=None).prefetch_related("repository__versions"):
-            if dist.cast().SERVE_FROM_PUBLICATION:
+            if dist.detail_model.SERVE_FROM_PUBLICATION:
                 versions = dist.repository.versions.values_list("pk", flat=True)
                 publications = Publication.objects.filter(
                     repository_version__in=versions, complete=True
