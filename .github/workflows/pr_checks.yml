@@ -16,7 +16,7 @@ on:
 # Static analysis should be fine however.
 
 concurrency:
-  group: ${{ github.ref_name }}-${{ github.workflow }}
+  group: ${{ github.event.pull_request.number }}-${{ github.workflow }}
   cancel-in-progress: true
 
 jobs:
