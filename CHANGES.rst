@@ -17,6 +17,24 @@ Changelog
 
 .. towncrier release notes start
 
+3.23.22 (2023-11-23)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fix file:// syncs deleting the original files.
+  :github:`4681`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.23.21 (2023-11-14)
 ====================
 REST API
