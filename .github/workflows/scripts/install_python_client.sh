@@ -9,45 +9,54 @@
 
 set -mveuo pipefail
 
-export PULP_URL="${PULP_URL:-https://pulp}"
-
 # make sure this script runs at the repo root
 cd "$(dirname "$(realpath -e "$0")")"/../../..
 
+source .github/workflows/scripts/utils.sh
+
+export PULP_URL="${PULP_URL:-https://pulp}"
+
 pip install twine wheel
 
-export REPORTED_VERSION=$(http $PULP_URL/pulp/api/v3/status/ | jq --arg plugin core --arg legacy_plugin pulpcore -r '.versions[] | select(.component == $plugin or .component == $legacy_plugin) | .version')
-export DESCRIPTION="$(git describe --all --exact-match `git rev-parse HEAD`)"
-if [[ $DESCRIPTION == 'tags/'$REPORTED_VERSION ]]; then
-  export VERSION=${REPORTED_VERSION}
-else
-  export EPOCH="$(date +%s)"
-  export VERSION=${REPORTED_VERSION}${EPOCH}
-fi
+REPORTED_STATUS="$(pulp status)"
+REPORTED_VERSION="$(echo "$REPORTED_STATUS" | jq --arg plugin "core" -r '.versions[] | select(.component == $plugin) | .version')"
+VERSION="$(echo "$REPORTED_VERSION" | python -c 'from packaging.version import Version; print(Version(input()))')"
 
-export response=$(curl --write-out %{http_code} --silent --output /dev/null https://pypi.org/project/pulpcore-client/$VERSION/)
-
-if [ "$response" == "200" ];
-then
-  echo "pulpcore client $VERSION has already been released. Installing from PyPI."
-  docker exec pulp pip3 install pulpcore-client==$VERSION
-  mkdir -p dist
-  tar cvf python-client.tar ./dist
-  exit
-fi
-
-cd ../pulp-openapi-generator
+pushd ../pulp-openapi-generator
 rm -rf pulpcore-client
-./generate.sh pulpcore python $VERSION
-cd pulpcore-client
+./generate.sh pulpcore python "$VERSION"
+pushd pulpcore-client
 python setup.py sdist bdist_wheel --python-tag py3
-find . -name "*.whl" -exec docker exec pulp pip3 install /root/pulp-openapi-generator/pulpcore-client/{} \;
-tar cvf ../../pulpcore/python-client.tar ./dist
+
+twine check "dist/pulpcore_client-$VERSION-py3-none-any.whl" || exit 1
+twine check "dist/pulpcore-client-$VERSION.tar.gz" || exit 1
+
+cmd_prefix pip3 install "/root/pulp-openapi-generator/pulpcore-client/dist/pulpcore_client-${VERSION}-py3-none-any.whl"
+tar cvf ../../pulpcore/core-python-client.tar ./dist
 
 find ./docs/* -exec sed -i 's/Back to README/Back to HOME/g' {} \;
 find ./docs/* -exec sed -i 's/README//g' {} \;
 cp README.md docs/index.md
 sed -i 's/docs\///g' docs/index.md
 find ./docs/* -exec sed -i 's/\.md//g' {} \;
-tar cvf ../../pulpcore/python-client-docs.tar ./docs
-exit $?
+tar cvf ../../pulpcore/core-python-client-docs.tar ./docs
+popd
+rm -rf pulp_file-client
+./generate.sh pulp_file python "$VERSION"
+pushd pulp_file-client
+python setup.py sdist bdist_wheel --python-tag py3
+
+twine check "dist/pulp_file_client-$VERSION-py3-none-any.whl" || exit 1
+twine check "dist/pulp_file-client-$VERSION.tar.gz" || exit 1
+
+cmd_prefix pip3 install "/root/pulp-openapi-generator/pulp_file-client/dist/pulp_file_client-${VERSION}-py3-none-any.whl"
+tar cvf ../../pulpcore/file-python-client.tar ./dist
+
+find ./docs/* -exec sed -i 's/Back to README/Back to HOME/g' {} \;
+find ./docs/* -exec sed -i 's/README//g' {} \;
+cp README.md docs/index.md
+sed -i 's/docs\///g' docs/index.md
+find ./docs/* -exec sed -i 's/\.md//g' {} \;
+tar cvf ../../pulpcore/file-python-client-docs.tar ./docs
+popd
+popd
