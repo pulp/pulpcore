@@ -1,7 +1,7 @@
 # This config represents the latest values used when running the plugin-template. Any settings that
 # were not present before running plugin-template have been added with their default values.
 
-# generated with plugin_template@2021.08.26-265-gbdd41dd
+# generated with plugin_template@2021.08.26-274-g6af418c
 
 additional_repos:
 - branch: 1.11
@@ -47,6 +47,9 @@ parallel_test_workers: 8
 plugin_app_label: core
 plugin_default_branch: main
 plugin_name: pulpcore
+plugins:
+- app_label: core
+  name: pulpcore
 post_job_template: null
 pre_job_template: null
 publish_docs_to_pulpprojectdotorg: true
@@ -70,7 +73,6 @@ pypi_username: pulp
 python_version: '3.8'
 release_email: pulp-infra@redhat.com
 release_user: pulpbot
-single_commit_check: true
 stalebot: true
 stalebot_days_until_close: 30
 stalebot_days_until_stale: 90
