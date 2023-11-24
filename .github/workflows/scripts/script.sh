@@ -52,11 +52,15 @@ password password
 # Some commands like ansible-galaxy specifically require 600
 cmd_prefix bash -c "chmod 600 ~pulp/.netrc"
 
-# Workaround: Domains are not supported by the published bindings.
+# Infer the client name from the package name by replacing "-" with "_".
+# Use the component to infer the package name on older versions of pulpcore.
+
 if [ "$(echo "$REPORTED_STATUS" | jq -r '.domain_enabled')" = "true" ]
 then
+  # Workaround: Domains are not supported by the published bindings.
+  # Generate new bindings for all packages.
   pushd ../pulp-openapi-generator
-  for item in $(echo "$REPORTED_STATUS" | jq -r '.versions[].package|sub("-"; "_")')
+  for item in $(echo "$REPORTED_STATUS" | jq -r '.versions[]|(.package // ("pulp_" + .component)|sub("pulp_core"; "pulpcore"))|sub("-"; "_")')
   do
     ./generate.sh "${item}" python
     cmd_prefix pip3 install "/root/pulp-openapi-generator/${item}-client"
@@ -66,7 +70,7 @@ then
 else
   # Sadly: Different pulpcore-versions aren't either...
   pushd ../pulp-openapi-generator
-  for item in $(echo "$REPORTED_STATUS" | jq -r '.versions[]|select(.component!="core").package|sub("-"; "_")')
+  for item in $(echo "$REPORTED_STATUS" | jq -r '.versions[]|select(.component!="core")|(.package // ("pulp_" + .component)|sub("pulp_core"; "pulpcore"))|sub("-"; "_")')
   do
     ./generate.sh "${item}" python
     cmd_prefix pip3 install "/root/pulp-openapi-generator/${item}-client"
@@ -75,7 +79,8 @@ else
   popd
 fi
 
-echo "$REPORTED_STATUS" | jq -r '.versions[]|(.package|sub("_"; "-")) + "-client==" + .version' > bindings_requirements.txt
+# At this point, this is a safeguard only, so let's not make too much fuzz about the old status format.
+echo "$REPORTED_STATUS" | jq -r '.versions[]|select(.package)|(.package|sub("_"; "-")) + "-client==" + .version' > bindings_requirements.txt
 cmd_stdin_prefix bash -c "cat > /tmp/unittest_requirements.txt" < unittest_requirements.txt
 cmd_stdin_prefix bash -c "cat > /tmp/functest_requirements.txt" < functest_requirements.txt
 cmd_stdin_prefix bash -c "cat > /tmp/bindings_requirements.txt" < bindings_requirements.txt
