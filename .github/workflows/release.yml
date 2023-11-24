@@ -285,4 +285,16 @@ jobs:
           bash .github/workflows/scripts/publish_client_gem.sh
 
       - name: Create release on GitHub
-        run: bash .github/workflows/scripts/create_release_from_tag.sh ${{ github.event.inputs.release }}
+        uses: actions/github-script@v7
+        env:
+          TAG_NAME: ${{ inputs.release }}
+        with:
+          const { TAG_NAME } = process.env;
+
+          script: |
+            await github.rest.repos.createRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              tag_name: TAG_NAME,
+              make_latest: "legacy",
+            });
