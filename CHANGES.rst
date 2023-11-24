@@ -13,6 +13,30 @@ Changelog
 
 .. towncrier release notes start
 
+3.41.1 (2023-11-21)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fixed that `pulp_file` presented its `python_package` as `pulp_file` instead of `pulp-file`.
+  :github:`4724`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
+Pulp File
+---------
+
+No significant changes.
+
+
 3.41.0 (2023-11-14)
 ===================
 REST API
@@ -1741,6 +1765,24 @@ Features
   :github:`3661`
 
 
+3.23.22 (2023-11-23)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fix file:// syncs deleting the original files.
+  :github:`4681`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.23.21 (2023-11-14)
 ====================
 REST API
@@ -2845,6 +2887,24 @@ Removals
 - Deprecated model ``Label`` and serializer field ``LabelField`` and ``LabelSelectFilter`` for
   removal in 3.25.
   :github:`3400`
+
+
+3.21.23 (2023-11-23)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fix file:// syncs deleting the original files.
+  :github:`4681`
+
+
+Plugin API
+----------
+
+No significant changes.
 
 
 3.21.22 (2023-11-14)
