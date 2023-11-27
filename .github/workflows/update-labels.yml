@@ -7,13 +7,13 @@
 
 
 ---
-name: Core Update Labels
+name: "Core Update Labels"
 on:
   push:
     branches:
-    - main
+      - "main"
     paths:
-    - 'template_config.yml'
+      - "template_config.yml"
 
 jobs:
   update_backport_labels:
@@ -31,8 +31,8 @@ jobs:
           echo ::group::PYDEPS
           pip install requests pyyaml
           echo ::endgroup::
-      - uses: actions/checkout@v3
-      - name: Update labels
+      - uses: "actions/checkout@v3"
+      - name: "Update labels"
         run: |
           python3 .github/workflows/scripts/update_backport_labels.py
         env:

@@ -289,9 +289,9 @@ jobs:
         env:
           TAG_NAME: ${{ inputs.release }}
         with:
-          const { TAG_NAME } = process.env;
-
           script: |
+            const { TAG_NAME } = process.env;
+
             await github.rest.repos.createRelease({
               owner: context.repo.owner,
               repo: context.repo.repo,
