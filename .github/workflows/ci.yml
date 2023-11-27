@@ -52,6 +52,7 @@ jobs:
   test:
     needs: build
     uses: "./.github/workflows/test.yml"
+
   deprecations:
     defaults:
       run:
@@ -73,5 +74,3 @@ jobs:
           echo "${{ needs.test.outputs.deprecations-azure }}" | base64 -d
           echo "${{ needs.test.outputs.deprecations-s3 }}" | base64 -d
           echo "${{ needs.test.outputs.deprecations-lowerbounds }}" | base64 -d
-
-
