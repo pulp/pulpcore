@@ -27,7 +27,6 @@ jobs:
     uses: "./.github/workflows/build.yml"
 
   test:
-    runs-on: "ubuntu-latest"
     needs: "build"
     uses: "./.github/workflows/test.yml"
 
@@ -77,12 +76,6 @@ jobs:
           fetch-depth: 1
           path: "pulpcore"
 
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 1
-          repository: "pulp/pulp-openapi-generator"
-          path: "pulp-openapi-generator"
-
       - uses: actions/download-artifact@v3
         with:
           name: "plugin_package"
@@ -92,11 +85,16 @@ jobs:
         with:
           python-version: "3.8"
 
+      - name: Install python dependencies
+        run: |
+          echo ::group::PYDEPS
+          pip install requests
+          echo ::endgroup::
+
       - name: Set environment variables
         run: |
           echo "TEST=${{ matrix.env.TEST }}" >> $GITHUB_ENV
 
-      
       - name: Download built docs
         uses: actions/download-artifact@v3
         with:
@@ -118,7 +116,6 @@ jobs:
         run: |
           tar -xvf docs.tar -C ./docs
           .github/workflows/scripts/publish_docs.sh nightly ${GITHUB_REF##*/}
-      
 
       - name: Logs
         if: always()
