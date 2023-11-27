@@ -58,7 +58,7 @@ jobs:
     runs-on: ubuntu-latest
     name: Find issues linked to a PR
     outputs:
-        linked-issues: ${{ steps.linked-issues.outputs.issues }}
+      linked-issues: ${{ steps.linked-issues.outputs.issues }}
     steps:
       - name: Checkout
         uses: actions/checkout@v2
