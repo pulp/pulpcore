@@ -1,6 +1,6 @@
 import os
-import re
 from gettext import gettext as _
+import re
 
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
@@ -17,6 +17,16 @@ from pulpcore.app.serializers import (
     RepositoryVersionRelatedField,
 )
 from pulpcore.constants import FS_EXPORT_CHOICES, FS_EXPORT_METHODS
+
+
+def parse_human_readable_file_size(size: str):
+    # based on https://stackoverflow.com/a/42865957/2002471
+    units = {"B": 1, "KB": 2**10, "MB": 2**20, "GB": 2**30, "TB": 2**40}
+    size = size.upper()
+    if not re.match(r" ", size):
+        size = re.sub(r"([KMGT]?B)", r" \1", size)
+    number, unit = [string.strip() for string in size.split()]
+    return int(float(number) * units[unit])
 
 
 class ExporterSerializer(ModelSerializer):
@@ -208,23 +218,13 @@ class PulpExportSerializer(ExportSerializer):
                 )
         return super().validate(data)
 
-    @staticmethod
-    def _parse_size(size):
+    def validate_chunk_size(self, chunk_size):
         try:
-            # based on https://stackoverflow.com/a/42865957/2002471
-            units = {"B": 1, "KB": 2**10, "MB": 2**20, "GB": 2**30, "TB": 2**40}
-            size = size.upper()
-            if not re.match(r" ", size):
-                size = re.sub(r"([KMGT]?B)", r" \1", size)
-            number, unit = [string.strip() for string in size.split()]
-            return int(float(number) * units[unit])
+            the_size = parse_human_readable_file_size(chunk_size)
         except ValueError:
             raise serializers.ValidationError(
-                _("chunk_size '{}' is not valid (valid units are B/KB/MB/GB/TB)").format(size)
+                _("chunk_size '{}' is not valid (valid units are B/KB/MB/GB/TB)").format(chunk_size)
             )
-
-    def validate_chunk_size(self, chunk_size):
-        the_size = self._parse_size(chunk_size)
         if the_size <= 0:
             raise serializers.ValidationError(
                 _("Chunk size {} is not greater than zero!").format(the_size)
