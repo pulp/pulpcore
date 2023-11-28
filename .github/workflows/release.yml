@@ -25,30 +25,31 @@ jobs:
       fail-fast: false
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: "actions/checkout@v4"
         with:
           fetch-depth: 0
           path: "pulpcore"
 
-      - uses: actions/setup-python@v4
+      - uses: "actions/setup-python@v4"
         with:
           python-version: "3.8"
 
-      - name: Install python dependencies
+      - name: "Install python dependencies"
         run: |
           echo ::group::PYDEPS
-          pip install packaging~=21.3 bump2version gitpython towncrier==19.9.0 wheel requests
+          pip install packaging~=21.3 bump2version gitpython towncrier wheel requests
           echo ::endgroup::
 
-      - name: Configure Git with pulpbot name and email
+      - name: "Configure Git with pulpbot name and email"
         run: |
           git config --global user.name 'pulpbot'
           git config --global user.email 'pulp-infra@redhat.com'
 
-      - name: Setting secrets
-        run: python3 .github/workflows/scripts/secrets.py "$SECRETS_CONTEXT"
+      - name: "Setting secrets"
+        run: |
+          python3 .github/workflows/scripts/secrets.py "$SECRETS_CONTEXT"
         env:
-          SECRETS_CONTEXT: ${{ toJson(secrets) }}
+          SECRETS_CONTEXT: "${{ toJson(secrets) }}"
 
       - name: Create the release commit, tag it, create a post-release commit, and build plugin package
         run: python .github/workflows/scripts/release.py ${{ github.event.inputs.release }}
@@ -77,13 +78,13 @@ jobs:
           name: "pulpcore.tar"
           path: "pulpcore/"
 
-      - uses: actions/checkout@v4
+      - uses: "actions/checkout@v4"
         with:
           fetch-depth: 1
           repository: "pulp/pulp-openapi-generator"
           path: "pulp-openapi-generator"
 
-      - uses: actions/setup-python@v4
+      - uses: "actions/setup-python@v4"
         with:
           python-version: "3.8"
       - uses: ruby/setup-ruby@v1
@@ -94,41 +95,44 @@ jobs:
         run: |
           tar -xf pulpcore.tar
 
-      - name: Install httpie
+      - name: "Install python dependencies"
         run: |
-          echo ::group::HTTPIE
-          pip install httpie
-          echo ::endgroup::
+          echo ::group::PYDEPS
+          pip install towncrier twine wheel httpie docker netaddr boto3 ansible
           echo "HTTPIE_CONFIG_DIR=$GITHUB_WORKSPACE/pulpcore/.ci/assets/httpie/" >> $GITHUB_ENV
+          echo ::endgroup::
 
       # Building the bindings and docs requires accessing the OpenAPI specs endpoint, so we need to
       # setup the Pulp instance.
-      - name: Before Install
-        run: .github/workflows/scripts/before_install.sh
-        shell: bash
+      - name: "Before Install"
+        run: |
+          .github/workflows/scripts/before_install.sh
+        shell: "bash"
         env:
-          PY_COLORS: '1'
-          ANSIBLE_FORCE_COLOR: '1'
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITHUB_CONTEXT: ${{ github.event.pull_request.commits_url }}
+          PY_COLORS: "1"
+          ANSIBLE_FORCE_COLOR: "1"
+          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+          GITHUB_CONTEXT: "${{ github.event.pull_request.commits_url }}"
 
       - name: Install
         run: |
           export PLUGIN_VERSION=${{ github.event.inputs.release }}
           .github/workflows/scripts/install.sh
         env:
-          PY_COLORS: '1'
-          ANSIBLE_FORCE_COLOR: '1'
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITHUB_CONTEXT: ${{ github.event.pull_request.commits_url }}
+          PY_COLORS: "1"
+          ANSIBLE_FORCE_COLOR: "1"
+          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+          GITHUB_CONTEXT: "${{ github.event.pull_request.commits_url }}"
         shell: bash
 
-      - name: Install Python client
-        run: .github/workflows/scripts/install_python_client.sh
-        shell: bash
-      - name: Install Ruby client
-        run: .github/workflows/scripts/install_ruby_client.sh
-        shell: bash
+      - name: "Install Python client"
+        run: |
+          .github/workflows/scripts/install_python_client.sh
+        shell: "bash"
+      - name: "Install Ruby client"
+        run: |
+          .github/workflows/scripts/install_ruby_client.sh
+        shell: "bash"
       - name: "Upload python client packages"
         uses: actions/upload-artifact@v3
         with:
@@ -180,7 +184,7 @@ jobs:
           name: "docs.tar"
           path: "pulpcore/docs/docs.tar"
 
-      - name: Logs
+      - name: "Logs"
         if: always()
         run: |
           echo "Need to debug? Please check: https://github.com/marketplace/actions/debugging-with-tmate"
@@ -207,7 +211,7 @@ jobs:
           name: "pulpcore.tar"
           path: "pulpcore/"
 
-      - uses: actions/setup-python@v4
+      - uses: "actions/setup-python@v4"
         with:
           python-version: "3.8"
 
@@ -215,7 +219,7 @@ jobs:
         with:
           ruby-version: "2.6"
 
-      - name: Configure Git with pulpbot name and email
+      - name: "Configure Git with pulpbot name and email"
         run: |
           git config --global user.name 'pulpbot'
           git config --global user.email 'pulp-infra@redhat.com'
@@ -224,15 +228,16 @@ jobs:
         run: |
           tar -xf pulpcore.tar
 
-      - name: Setting secrets
-        run: python3 .github/workflows/scripts/secrets.py "$SECRETS_CONTEXT"
+      - name: "Setting secrets"
+        run: |
+          python3 .github/workflows/scripts/secrets.py "$SECRETS_CONTEXT"
         env:
-          SECRETS_CONTEXT: ${{ toJson(secrets) }}
+          SECRETS_CONTEXT: "${{ toJson(secrets) }}"
 
-      - name: Install python dependencies
+      - name: "Install python dependencies"
         run: |
           echo ::group::PYDEPS
-          pip install gitpython requests packaging~=21.3
+          pip install twine gitpython requests packaging~=21.3 mkdocs pymdown-extensions Jinja2<3.1
           echo ::endgroup::
 
       - name: Push branch and tag to GitHub

@@ -33,22 +33,22 @@ jobs:
   changelog:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: "actions/checkout@v4"
         with:
           fetch-depth: 0
           path: "pulpcore"
 
-      - uses: actions/setup-python@v4
+      - uses: "actions/setup-python@v4"
         with:
           python-version: "3.11"
 
-      - name: Install python dependencies
+      - name: "Install python dependencies"
         run: |
           echo ::group::PYDEPS
           pip install gitpython toml
           echo ::endgroup::
 
-      - name: Configure Git with pulpbot name and email
+      - name: "Configure Git with pulpbot name and email"
         run: |
           git config --global user.name 'pulpbot'
           git config --global user.email 'pulp-infra@redhat.com'
@@ -71,7 +71,7 @@ jobs:
     needs: test
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: "actions/checkout@v4"
         with:
           fetch-depth: 1
           path: "pulpcore"
@@ -81,17 +81,17 @@ jobs:
           name: "plugin_package"
           path: "pulpcore/dist/"
 
-      - uses: actions/setup-python@v4
+      - uses: "actions/setup-python@v4"
         with:
           python-version: "3.8"
 
-      - name: Install python dependencies
+      - name: "Install python dependencies"
         run: |
           echo ::group::PYDEPS
-          pip install requests
+          pip install requests packaging~=21.3 mkdocs pymdown-extensions Jinja2<3.1
           echo ::endgroup::
 
-      - name: Set environment variables
+      - name: "Set environment variables"
         run: |
           echo "TEST=${{ matrix.env.TEST }}" >> $GITHUB_ENV
 
@@ -107,24 +107,13 @@ jobs:
           name: "python-client-docs.tar"
           path: "pulpcore"
 
-      - name: Setting secrets
-        run: python3 .github/workflows/scripts/secrets.py "$SECRETS_CONTEXT"
+      - name: "Setting secrets"
+        run: |
+          python3 .github/workflows/scripts/secrets.py "$SECRETS_CONTEXT"
         env:
-          SECRETS_CONTEXT: ${{ toJson(secrets) }}
+          SECRETS_CONTEXT: "${{ toJson(secrets) }}"
 
       - name: Publish docs to pulpproject.org
         run: |
           tar -xvf docs.tar -C ./docs
           .github/workflows/scripts/publish_docs.sh nightly ${GITHUB_REF##*/}
-
-      - name: Logs
-        if: always()
-        run: |
-          echo "Need to debug? Please check: https://github.com/marketplace/actions/debugging-with-tmate"
-          http --timeout 30 --check-status --pretty format --print hb "https://pulp${PULP_API_ROOT}api/v3/status/" || true
-          docker images || true
-          docker ps -a || true
-          docker logs pulp || true
-          docker exec pulp ls -latr /etc/yum.repos.d/ || true
-          docker exec pulp cat /etc/yum.repos.d/* || true
-          docker exec pulp bash -c "pip3 list && pip3 install pipdeptree && pipdeptree"
