@@ -422,12 +422,10 @@ def pulp_export(exporter_pk, params):
                         os.remove(pathname)
                     raise
             # compute the hashes
-            global_hash = hasher()
             paths = sorted([str(Path(p)) for p in glob(tarfile_fp + ".*")])
             for a_file in paths:
-                a_hash = compute_file_hash(a_file, hasher=hasher(), cumulative_hash=global_hash)
+                a_hash = compute_file_hash(a_file, hasher=hasher())
                 rslts[a_file] = a_hash
-            tarfile_hash = global_hash.hexdigest()
 
         else:
             # write into the file
@@ -450,23 +448,20 @@ def pulp_export(exporter_pk, params):
         # write outputfile/hash info to a file 'next to' the output file(s)
         output_file_info_path = tarfile_fp.replace(".tar", "-toc.json")
         with open(output_file_info_path, "w") as outfile:
-            if the_export.validated_chunk_size:
-                chunk_size = the_export.validated_chunk_size
-            else:
-                chunk_size = 0
-            chunk_toc = {
+            table_of_contents = {
                 "meta": {
-                    "chunk_size": chunk_size,
-                    "file": os.path.basename(tarfile_fp),
-                    "global_hash": tarfile_hash,
                     "checksum_type": checksum_type,
                 },
                 "files": {},
             }
+
+            if the_export.validated_chunk_size:
+                table_of_contents["meta"]["chunk_size"] = the_export.validated_chunk_size
+
             # Build a toc with just filenames (not the path on the exporter-machine)
             for a_path in rslts.keys():
-                chunk_toc["files"][os.path.basename(a_path)] = rslts[a_path]
-            json.dump(chunk_toc, outfile)
+                table_of_contents["files"][os.path.basename(a_path)] = rslts[a_path]
+            json.dump(table_of_contents, outfile)
 
         # store toc info
         toc_hash = compute_file_hash(output_file_info_path)

@@ -76,12 +76,17 @@ class ChunkedFile(ExitStack):
             raise ValidationError(_("Missing 'files' or 'meta' keys in table-of-contents!"))
 
         toc_dir = os.path.dirname(toc_path)
-        self.chunk_size = int(self.toc["meta"]["chunk_size"])
         # sorting-by-filename is REALLY IMPORTANT here
         # keys are of the form <base-export-name>.00..<base-export-name>.NN,
         # and must be reassembled IN ORDER
         self.chunk_names = sorted(self.toc["files"].keys())
         self.chunk_paths = [os.path.join(toc_dir, chunk_name) for chunk_name in self.chunk_names]
+        self.chunk_size = int(self.toc["meta"].get("chunk_size", 0))
+        if not self.chunk_size:
+            assert (
+                len(self.toc["files"]) == 1
+            ), "chunk_size must exist and be non-zero if more than one chunk exists"
+            self.chunk_size = os.path.getsize(self.chunk_paths[0])
 
     def __enter__(self):
         assert not hasattr(self, "chunks"), "ChunkedFile is not reentrant."
