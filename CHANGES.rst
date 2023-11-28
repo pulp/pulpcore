@@ -13,6 +13,37 @@ Changelog
 
 .. towncrier release notes start
 
+3.42.0 (2023-11-28)
+===================
+REST API
+--------
+
+Features
+~~~~~~~~
+
+- Added instrumentation to content-app to track telemetry data.
+  :github:`3829`
+
+
+Bugfixes
+~~~~~~~~
+
+- Fixed that `pulp_file` presented its `python_package` as `pulp_file` instead of `pulp-file`.
+  :github:`4724`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
+Pulp File
+---------
+
+No significant changes.
+
+
 3.41.1 (2023-11-21)
 ===================
 REST API
