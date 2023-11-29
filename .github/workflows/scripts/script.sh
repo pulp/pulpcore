@@ -29,7 +29,6 @@ export PULP_URL="https://pulp"
 
 if [[ "$TEST" = "docs" ]]; then
   if [[ "$GITHUB_WORKFLOW" == "Core CI" ]]; then
-    pip install towncrier==19.9.0
     towncrier --yes --version 4.0.0.ci
   fi
   cd docs

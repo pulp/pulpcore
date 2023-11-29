@@ -19,8 +19,6 @@ then
   exit
 fi
 
-pip install twine
-
 twine check dist/pulpcore-$1-py3-none-any.whl || exit 1
 twine check dist/pulpcore-$1.tar.gz || exit 1
 twine upload dist/pulpcore-$1-py3-none-any.whl -u pulp -p $PYPI_PASSWORD
