@@ -7,7 +7,7 @@
 
 
 ---
-name: Core CI Update
+name: "Core CI Update"
 on:
   schedule:
     # * is a special character in YAML so you have to quote this string
@@ -17,54 +17,54 @@ on:
 
 jobs:
   update:
-    runs-on: ubuntu-latest
+    runs-on: "ubuntu-latest"
 
     strategy:
       fail-fast: false
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: "actions/checkout@v4"
         with:
-          repository: pulp/plugin_template
-          path: plugin_template
           fetch-depth: 0
+          repository: "pulp/plugin_template"
+          path: "plugin_template"
 
-      - uses: actions/setup-python@v4
+      - uses: "actions/setup-python@v4"
         with:
           python-version: "3.8"
 
-      - name: Install python dependencies
+      - name: "Install python dependencies"
         run: |
           echo ::group::PYDEPS
           pip install gitpython requests packaging jinja2 pyyaml
           echo ::endgroup::
 
-      - name: Configure Git with pulpbot name and email
+      - name: "Configure Git with pulpbot name and email"
         run: |
           git config --global user.name 'pulpbot'
           git config --global user.email 'pulp-infra@redhat.com'
-      - uses: actions/checkout@v3
+      - uses: "actions/checkout@v4"
         with:
-          path: pulpcore
-          ref: 'main'
           fetch-depth: 0
+          path: "pulpcore"
+          ref: "main"
 
-      - name: Run update
-        working-directory: pulpcore
+      - name: "Run update"
+        working-directory: "pulpcore"
         run: |
           ../plugin_template/scripts/update_ci.sh
 
-      - name: Create Pull Request for CI files
-        uses: peter-evans/create-pull-request@v4
+      - name: "Create Pull Request for CI files"
+        uses: "peter-evans/create-pull-request@v4"
         with:
-          token: ${{ secrets.RELEASE_TOKEN }}
-          path: pulpcore
-          committer: pulpbot <pulp-infra@redhat.com>
-          author: pulpbot <pulp-infra@redhat.com>
-          title: 'Update CI files for branch main'
-          body: '[noissue]'
-          branch: 'update-ci/main'
-          base: 'main'
+          token: "${{ secrets.RELEASE_TOKEN }}"
+          path: "pulpcore"
+          committer: "pulpbot <pulp-infra@redhat.com>"
+          author: "pulpbot <pulp-infra@redhat.com>"
+          title: "Update CI files for branch main"
+          body: ""
+          branch: "update-ci/main"
+          base: "main"
           commit-message: |
             Update CI files
 
