@@ -19,14 +19,14 @@ jobs:
     runs-on: "ubuntu-latest"
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: "actions/checkout@v4"
         with:
           fetch-depth: 1
           path: "pulpcore"
-      - uses: actions/setup-python@v4
+      - uses: "actions/setup-python@v4"
         with:
           python-version: "3.8"
-      - name: Install python dependencies
+      - name: "Install python dependencies"
         run: |
           echo ::group::PYDEPS
           pip install packaging wheel
