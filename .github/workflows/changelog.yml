@@ -6,53 +6,53 @@
 # For more info visit https://github.com/pulp/plugin_template
 
 ---
-name: Core changelog update
+name: "Core changelog update"
 on:
   push:
     branches:
-      - main
+      - "main"
     paths:
-      - CHANGES.rst
-      - CHANGES.md
+      - "CHANGES.rst"
+      - "CHANGES.md"
   workflow_dispatch:
 
 jobs:
 
   update-changelog:
-    runs-on: ubuntu-latest
+    runs-on: "ubuntu-latest"
     strategy:
       fail-fast: false
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: "actions/checkout@v4"
         with:
           fetch-depth: 1
 
-      - uses: actions/setup-python@v4
+      - uses: "actions/setup-python@v4"
         with:
           python-version: "3.8"
 
-      - name: Install python dependencies
+      - name: "Install python dependencies"
         run: |
           echo ::group::PYDEPS
           pip install -r doc_requirements.txt
           echo ::endgroup::
 
-      - name: Fake api schema
+      - name: "Fake api schema"
         run: |
           mkdir -p docs/_build/html
           echo "{}" > docs/_build/html/api.json
           mkdir -p docs/_static
           echo "{}" > docs/_static/api.json
-      - name:
+      - name: "Build Docs"
         run: |
-          pip install "Jinja2<3.1"
           make diagrams html
-        working-directory: ./docs
+        working-directory: "./docs"
         env:
           PULP_CONTENT_ORIGIN: "http://localhost/"
 
-      - name: Publish changlog to pulpproject.org
-        run: .github/workflows/scripts/publish_docs.sh changelog ${GITHUB_REF##*/}
+      - name: "Publish changlog to pulpproject.org"
+        run: |
+          .github/workflows/scripts/publish_docs.sh changelog ${GITHUB_REF##*/}
         env:
-          PULP_DOCS_KEY: ${{ secrets.PULP_DOCS_KEY }}
+          PULP_DOCS_KEY: "${{ secrets.PULP_DOCS_KEY }}"

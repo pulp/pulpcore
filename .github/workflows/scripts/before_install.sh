@@ -55,9 +55,6 @@ then
   echo $COMMIT_MSG | sed -n -e 's/.*CI Base Image:\s*\([-_/[:alnum:]]*:[-_[:alnum:]]*\).*/ci_base: "\1"/p' >> .ci/ansible/vars/main.yaml
 fi
 
-# Intall requirements for ansible playbooks
-pip install docker netaddr boto3 ansible
-
 for i in {1..3}
 do
   ansible-galaxy collection install "amazon.aws:1.5.0" && s=0 && break || s=$? && sleep 3
