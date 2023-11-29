@@ -16,8 +16,6 @@ source .github/workflows/scripts/utils.sh
 
 export PULP_URL="${PULP_URL:-https://pulp}"
 
-pip install twine wheel
-
 REPORTED_STATUS="$(pulp status)"
 REPORTED_VERSION="$(echo "$REPORTED_STATUS" | jq --arg plugin "core" -r '.versions[] | select(.component == $plugin) | .version')"
 VERSION="$(echo "$REPORTED_VERSION" | python -c 'from packaging.version import Version; print(Version(input()))')"
