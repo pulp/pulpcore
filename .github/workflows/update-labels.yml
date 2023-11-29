@@ -17,16 +17,16 @@ on:
 
 jobs:
   update_backport_labels:
-    runs-on: ubuntu-latest
+    runs-on: "ubuntu-latest"
     steps:
-      - uses: actions/setup-python@v4
+      - uses: "actions/setup-python@v4"
         with:
           python-version: "3.8"
-      - name: Configure Git with pulpbot name and email
+      - name: "Configure Git with pulpbot name and email"
         run: |
           git config --global user.name 'pulpbot'
           git config --global user.email 'pulp-infra@redhat.com'
-      - name: Install python dependencies
+      - name: "Install python dependencies"
         run: |
           echo ::group::PYDEPS
           pip install requests pyyaml
@@ -36,4 +36,4 @@ jobs:
         run: |
           python3 .github/workflows/scripts/update_backport_labels.py
         env:
-          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+          GITHUB_TOKEN: "${{ secrets.RELEASE_TOKEN }}"
