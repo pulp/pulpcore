@@ -8,20 +8,13 @@
 # For more info visit https://github.com/pulp/plugin_template
 
 # make sure this script runs at the repo root
-cd "$(dirname "$(realpath -e "$0")")"/../../..
+cd "$(dirname "$(realpath -e "$0")")/../../.."
 
 set -euv
 
-echo ::group::REQUESTS
-pip3 install requests
-
-pip3 install pygithub
-
-echo ::endgroup::
-
-for sha in $(curl -H "Authorization: token $GITHUB_TOKEN" $GITHUB_CONTEXT | jq '.[].sha' | sed 's/"//g')
+for SHA in $(curl -H "Authorization: token $GITHUB_TOKEN" "$GITHUB_CONTEXT" | jq -r '.[].sha')
 do
-  python3 .ci/scripts/validate_commit_message.py $sha
+  python3 .ci/scripts/validate_commit_message.py "$SHA"
   VALUE=$?
   if [ "$VALUE" -gt 0 ]; then
     exit $VALUE
