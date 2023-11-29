@@ -6,7 +6,7 @@
 # For more info visit https://github.com/pulp/plugin_template
 
 ---
-name: Core CI
+name: "Core CI"
 on: {pull_request: {branches: ['*']}}
 
 concurrency:
@@ -18,59 +18,60 @@ defaults:
     working-directory: "pulpcore"
 
 jobs:
-
   ready-to-ship:
-    runs-on: ubuntu-latest
+    runs-on: "ubuntu-latest"
     steps:
-      - uses: actions/checkout@v4
+      - uses: "actions/checkout@v4"
         with:
           fetch-depth: 0
           path: "pulpcore"
-      - uses: actions/setup-python@v4
+      - uses: "actions/setup-python@v4"
         with:
           python-version: "3.8"
-      - name: Install requirements
-        run: pip3 install github
-      - name: Check commit message
+      - name: "Install python dependencies"
+        run: |
+          echo ::group::PYDEPS
+          pip install requests pygithub
+          echo ::endgroup::
+      - name: "Check commit message"
         if: github.event_name == 'pull_request'
         env:
-          PY_COLORS: '1'
-          ANSIBLE_FORCE_COLOR: '1'
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITHUB_CONTEXT: ${{ github.event.pull_request.commits_url }}
-        run: sh .github/workflows/scripts/check_commit.sh
-      - name: Verify requirements files
-        run: python .ci/scripts/check_requirements.py
+          PY_COLORS: "1"
+          ANSIBLE_FORCE_COLOR: "1"
+          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+          GITHUB_CONTEXT: "${{ github.event.pull_request.commits_url }}"
+        run: |
+          .github/workflows/scripts/check_commit.sh
+      - name: "Verify requirements files"
+        run: |
+          python .ci/scripts/check_requirements.py
 
   lint:
     uses: "./.github/workflows/lint.yml"
 
   build:
-    needs: lint
+    needs: "lint"
     uses: "./.github/workflows/build.yml"
 
   test:
-    needs: build
+    needs: "build"
     uses: "./.github/workflows/test.yml"
 
   deprecations:
-    defaults:
-      run:
-        working-directory: "."
-    runs-on: ubuntu-latest
+    runs-on: "ubuntu-latest"
     if: github.base_ref == 'main'
-    needs: test
+    needs: "test"
     steps:
-      - name: Fail on deprecations
+      - name: "Create working directory"
         run: |
-          test -z "${{ needs.test.outputs.deprecations-pulp }}"
-          test -z "${{ needs.test.outputs.deprecations-azure }}"
-          test -z "${{ needs.test.outputs.deprecations-s3 }}"
-          test -z "${{ needs.test.outputs.deprecations-lowerbounds }}"
-      - name: Print deprecations
-        if: failure()
+          mkdir -p "pulpcore"
+        working-directory: "."
+      - name: "Download Deprecations"
+        uses: actions/download-artifact@v3
+        with:
+          name: "deprecations"
+          path: "pulpcore"
+      - name: "Print deprecations"
         run: |
-          echo "${{ needs.test.outputs.deprecations-pulp }}" | base64 -d
-          echo "${{ needs.test.outputs.deprecations-azure }}" | base64 -d
-          echo "${{ needs.test.outputs.deprecations-s3 }}" | base64 -d
-          echo "${{ needs.test.outputs.deprecations-lowerbounds }}" | base64 -d
+          cat deprecations-*.txt | sort -u
+          ! cat deprecations-*.txt | grep '[^[:space:]]'
