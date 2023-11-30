@@ -29,11 +29,13 @@ jobs:
       - name: "Install python dependencies"
         run: |
           echo ::group::PYDEPS
-          pip install packaging wheel
+          pip install packaging twine wheel
           echo ::endgroup::
       - name: "Build package"
-        run: "python3 setup.py sdist bdist_wheel --python-tag py3"
-      - name: 'Upload Package whl'
+        run: |
+          python3 setup.py sdist bdist_wheel --python-tag py3
+          twine check dist/*
+      - name: "Upload Package whl"
         uses: "actions/upload-artifact@v3"
         with:
           name: "plugin_package"
