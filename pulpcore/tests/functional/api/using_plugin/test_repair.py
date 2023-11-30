@@ -1,27 +1,12 @@
 import pytest
-import os
 
+from django.core.files.storage import default_storage
 from random import sample
 
 from pulpcore.client.pulpcore import Repair
 from pulpcore.client.pulp_file import RepositorySyncURL
 
-from pulpcore.app import settings
-
 from pulpcore.tests.functional.utils import get_files_in_manifest
-
-
-SUPPORTED_STORAGE_FRAMEWORKS = [
-    "django.core.files.storage.FileSystemStorage",
-    "pulpcore.app.models.storage.FileSystem",
-]
-
-pytestmark = pytest.mark.skipif(
-    settings.DEFAULT_FILE_STORAGE not in SUPPORTED_STORAGE_FRAMEWORKS,
-    reason="Cannot simulate bit-rot on this storage platform ({}).".format(
-        settings.DEFAULT_FILE_STORAGE
-    ),
-)
 
 
 @pytest.fixture
@@ -42,19 +27,14 @@ def repository_with_corrupted_artifacts(
     # STEP 2: sample artifacts that will be modified on the filesystem later on
     content1, content2 = sample(get_files_in_manifest(remote.url), 2)
 
-    # Modify one artifact on disk.
-    artifact1_path = os.path.join(
-        settings.MEDIA_ROOT, artifacts_api_client.list(sha256=content1[1]).results[0].file
-    )
-    with open(artifact1_path, "r+b") as f:
+    # Modify an artifact
+    artifact1_path = artifacts_api_client.list(sha256=content1[1]).results[0].file
+    with default_storage.open(artifact1_path, "w+b") as f:
         f.write(b"$a bit rot")
 
-    # Delete another one from disk.
-    artifact2_path = os.path.join(
-        settings.MEDIA_ROOT, artifacts_api_client.list(sha256=content2[1]).results[0].file
-    )
-    os.remove(artifact2_path)
-
+    # Delete an artifact
+    artifact2_path = artifacts_api_client.list(sha256=content2[1]).results[0].file
+    default_storage.delete(artifact2_path)
     return repo
 
 

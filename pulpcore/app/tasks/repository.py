@@ -1,4 +1,5 @@
 from concurrent.futures import ThreadPoolExecutor
+from contextvars import copy_context
 from gettext import gettext as _
 from logging import getLogger
 import asyncio
@@ -96,6 +97,8 @@ async def _repair_ca(content_artifact, repaired=None):
 
 
 def _verify_artifact(artifact):
+    domain = get_domain()
+    assert domain.pk == artifact.pulp_domain_id
     try:
         # verify files digest
         hasher = hashlib.sha256()
@@ -144,7 +147,7 @@ async def _repair_artifacts_for_content(subset=None, verify_checksums=True):
                     # Should stay in (an) executor so that at least it doesn't completely block
                     # downloads.
                     valid = await loop.run_in_executor(
-                        checksum_executor, _verify_artifact, artifact
+                        checksum_executor, copy_context().run, _verify_artifact, artifact
                     )
                     if not valid:
                         await corrupted.aincrement()
