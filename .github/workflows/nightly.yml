@@ -88,7 +88,7 @@ jobs:
       - name: "Install python dependencies"
         run: |
           echo ::group::PYDEPS
-          pip install requests packaging~=21.3 mkdocs pymdown-extensions Jinja2<3.1
+          pip install requests 'packaging~=21.3' mkdocs pymdown-extensions 'Jinja2<3.1'
           echo ::endgroup::
 
       - name: "Set environment variables"
