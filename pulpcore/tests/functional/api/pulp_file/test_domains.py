@@ -5,6 +5,7 @@ import json
 from pulpcore.app import settings
 from pulpcore.client.pulp_file import ApiException
 from pulpcore.client.pulpcore import ApiException as CoreApiException
+from pulpcore.client.pulpcore import Repair
 from pulpcore.tests.functional.utils import generate_iso, download_file
 
 
@@ -180,6 +181,7 @@ def test_content_upload(
 def test_content_promotion(
     domains_api_client,
     file_repository_api_client,
+    file_repository_version_api_client,
     basic_manifest_path,
     file_remote_factory,
     file_publication_api_client,
@@ -232,6 +234,14 @@ def test_content_promotion(
         download = download_file(f"{distro.base_url}{path}")
         assert download.response_obj.status == 200
         assert len(download.body) == 1024
+
+    # Test that a repository version repair operation can be run without error
+    response = file_repository_version_api_client.repair(
+        repo.latest_version_href, Repair(verify_checksums=True)
+    )
+    results = monitor_task(response.task)
+    assert results.state == "completed"
+    assert results.error is None
 
     # Cleanup to delete the domain
     task = file_repository_api_client.delete(repo.pulp_href).task
