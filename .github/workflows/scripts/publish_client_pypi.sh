@@ -12,11 +12,11 @@ set -euv
 # make sure this script runs at the repo root
 cd "$(dirname "$(realpath -e "$0")")/../../.."
 
-VERSION="$(ls dist | sed -rn 's/pulpcore-client-(.*)\.tar.gz/\1/p')"
+VERSION="$1"
 
 if [[ -z "$VERSION" ]]; then
-  echo "No client package found."
-  exit
+  echo "No version specified."
+  exit 1
 fi
 
 RESPONSE="$(curl --write-out '%{http_code}' --silent --output /dev/null "https://pypi.org/project/pulpcore-client/$VERSION/")"
