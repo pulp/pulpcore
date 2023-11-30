@@ -48,7 +48,7 @@ def create_release_commits(repo, release_version, plugin_path):
 
     issues = ",".join(issues_to_close)
     # First commit: changelog
-    os.system(f"towncrier --yes --version {release_version}")
+    os.system(f"towncrier build --yes --version {release_version}")
     git = repo.git
     git.add("CHANGES.rst")
     git.add("CHANGES/*")
