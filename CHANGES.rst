@@ -17,6 +17,28 @@ Changelog
 
 .. towncrier release notes start
 
+3.18.33 (2023-12-01)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Removed a workaround to force close all tcp connections in sync leading to an exhaustion of port
+  numbers and their reuse while in time_wait state.
+  :github:`4452`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
+----
+
+
 3.18.32 (2023-11-14)
 ====================
 REST API

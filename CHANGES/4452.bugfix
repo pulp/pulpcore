@@ -1,2 +1,0 @@
-Removed a workaround to force close all tcp connections in sync leading to an exhaustion of port
-numbers and their reuse while in time_wait state.
