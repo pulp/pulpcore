@@ -2408,6 +2408,25 @@ Deprecations
   :github:`3604`
 
 
+3.22.20 (2023-11-30)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Removed a workaround to force close all tcp connections in sync leading to an exhaustion of port
+  numbers and their reuse while in time_wait state.
+  :github:`4452`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
 3.22.19 (2023-11-15)
 ====================
 REST API
@@ -2937,6 +2956,25 @@ Removals
 - Deprecated model ``Label`` and serializer field ``LabelField`` and ``LabelSelectFilter`` for
   removal in 3.25.
   :github:`3400`
+
+
+3.21.24 (2023-11-30)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Removed a workaround to force close all tcp connections in sync leading to an exhaustion of port
+  numbers and their reuse while in time_wait state.
+  :github:`4452`
+
+
+Plugin API
+----------
+
+No significant changes.
 
 
 3.21.23 (2023-11-23)
