@@ -39,19 +39,6 @@ fi
 mkdir -p ../core-bindings
 tar -xvf core-python-client-docs.tar --directory ../core-bindings
 pushd ../core-bindings
-cat >> mkdocs.yml << DOCSYAML
----
-site_name: Pulpcore Client
-site_description: Core bindings
-site_author: Pulp Team
-site_url: https://docs.pulpproject.org/pulpcore_client/
-repo_name: pulp/pulpcore
-repo_url: https://github.com/pulp/pulpcore
-theme: readthedocs
-DOCSYAML
-
-# Building the bindings docs
-mkdocs build
 
 # publish to docs.pulpproject.org/pulpcore_client
 rsync -avzh site/ doc_builder_pulpcore@docs.pulpproject.org:/var/www/docs.pulpproject.org/pulpcore_client/
@@ -63,19 +50,6 @@ popd
 mkdir -p ../file-bindings
 tar -xvf file-python-client-docs.tar --directory ../file-bindings
 pushd ../file-bindings
-cat >> mkdocs.yml << DOCSYAML
----
-site_name: PulpFile Client
-site_description: File bindings
-site_author: Pulp Team
-site_url: https://docs.pulpproject.org/pulp_file_client/
-repo_name: pulp/pulp_file
-repo_url: https://github.com/pulp/pulp_file
-theme: readthedocs
-DOCSYAML
-
-# Building the bindings docs
-mkdocs build
 
 # publish to docs.pulpproject.org/pulp_file_client
 rsync -avzh site/ doc_builder_pulp_file@docs.pulpproject.org:/var/www/docs.pulpproject.org/pulp_file_client/
