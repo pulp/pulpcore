@@ -1,5 +1,6 @@
 import asyncio
 import pytest
+import pytest_asyncio
 
 import mock
 
@@ -9,13 +10,13 @@ from pulpcore.plugin.stages import Stage, EndStage, DeclarativeContent
 pytestmark = pytest.mark.usefixtures("fake_domain")
 
 
-@pytest.fixture
-def in_q():
+@pytest_asyncio.fixture
+async def in_q():
     return asyncio.Queue()
 
 
-@pytest.fixture
-def stage(in_q):
+@pytest_asyncio.fixture
+async def stage(in_q):
     stage = Stage()
     stage._connect(in_q, None)
     return stage
