@@ -3,6 +3,7 @@ import gc
 from logging import getLogger
 
 from django.conf import settings
+from django.db.models import Q
 from django.db.models.deletion import ProtectedError
 from django.utils import timezone
 
@@ -49,32 +50,44 @@ def orphan_cleanup(content_pks=None, orphan_protection_time=settings.ORPHAN_PROT
         content_pks (list): A list of content pks. If specified, only remove these orphans.
 
     """
+    start_time = timezone.now()
     content = Content.objects.orphaned(orphan_protection_time, content_pks).exclude(
         pulp_type=PublishedMetadata.get_pulp_type()
     )
     skipped_content = 0
+    excluded = set()
     with ProgressReport(
         message="Clean up orphan Content",
-        total=content.count(),
+        total=0,
         code="clean-up.content",
     ) as progress_bar:
         # delete the content
-        for bulk_content in queryset_iterator(content):
-            skipped_content_batch = 0
-            count = bulk_content.count()
-            try:
-                bulk_content.delete()
-            except ProtectedError:
-                # some orphan content might have been picked by another task running in parallel
-                # i.e. sync
-                for c in bulk_content:
-                    try:
-                        c.delete()
-                    except ProtectedError as e:
-                        log.debug(e)
-                        skipped_content_batch += 1
-            progress_bar.increase_by(count - skipped_content_batch)
-            skipped_content += skipped_content_batch
+        while tc := content.count():
+            progress_bar.total += tc
+            for bulk_content in queryset_iterator(content):
+                skipped_content_batch = 0
+                count = bulk_content.count()
+                try:
+                    bulk_content.delete()
+                except ProtectedError:
+                    # some orphan content might have been picked by another task running in parallel
+                    # i.e. sync
+                    for c in bulk_content:
+                        try:
+                            c.delete()
+                        except ProtectedError as e:
+                            log.debug(e)
+                            skipped_content_batch += 1
+                            excluded.add(c.pk)
+                progress_bar.increase_by(count - skipped_content_batch)
+                skipped_content += skipped_content_batch
+            # Have protection_time take into account current task runtime for next deletion loop
+            if protection_time := orphan_protection_time:
+                tdelta = timezone.now() - start_time
+                protection_time += tdelta.seconds
+            content = Content.objects.orphaned(protection_time, content_pks).exclude(
+                Q(pulp_type=PublishedMetadata.get_pulp_type()) | Q(pk__in=excluded)
+            )
 
     if skipped_content:
         msg = (
