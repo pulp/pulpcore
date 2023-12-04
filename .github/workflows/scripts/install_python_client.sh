@@ -26,8 +26,8 @@ rm -rf pulpcore-client
 pushd pulpcore-client
 python setup.py sdist bdist_wheel --python-tag py3
 
-twine check "dist/pulpcore_client-$VERSION-py3-none-any.whl" || exit 1
-twine check "dist/pulpcore-client-$VERSION.tar.gz" || exit 1
+twine check "dist/pulpcore_client-$VERSION-py3-none-any.whl"
+twine check "dist/pulpcore-client-$VERSION.tar.gz"
 
 cmd_prefix pip3 install "/root/pulp-openapi-generator/pulpcore-client/dist/pulpcore_client-${VERSION}-py3-none-any.whl"
 tar cvf ../../pulpcore/core-python-client.tar ./dist
@@ -37,6 +37,22 @@ find ./docs/* -exec sed -i 's/README//g' {} \;
 cp README.md docs/index.md
 sed -i 's/docs\///g' docs/index.md
 find ./docs/* -exec sed -i 's/\.md//g' {} \;
-tar cvf ../../pulpcore/core-python-client-docs.tar ./docs
+
+cat >> mkdocs.yml << DOCSYAML
+---
+site_name: Pulpcore Client
+site_description: Core bindings
+site_author: Pulp Team
+site_url: https://docs.pulpproject.org/pulpcore_client/
+repo_name: pulp/pulpcore
+repo_url: https://github.com/pulp/pulpcore
+theme: readthedocs
+DOCSYAML
+
+# Building the bindings docs
+mkdocs build
+
+# Pack the built site.
+tar cvf ../../pulpcore/core-python-client-docs.tar ./site
 popd
 popd
