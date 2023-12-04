@@ -713,12 +713,12 @@ class RemoteArtifact(BaseModel, QueryMixin):
 
     url = models.TextField(validators=[validators.URLValidator])
     size = models.BigIntegerField(null=True)
-    md5 = models.CharField(max_length=32, null=True)
-    sha1 = models.CharField(max_length=40, null=True)
-    sha224 = models.CharField(max_length=56, null=True)
-    sha256 = models.CharField(max_length=64, null=True)
-    sha384 = models.CharField(max_length=96, null=True)
-    sha512 = models.CharField(max_length=128, null=True)
+    md5 = models.CharField(max_length=32, null=True, db_index=True)
+    sha1 = models.CharField(max_length=40, null=True, db_index=True)
+    sha224 = models.CharField(max_length=56, null=True, db_index=True)
+    sha256 = models.CharField(max_length=64, null=True, db_index=True)
+    sha384 = models.CharField(max_length=96, null=True, db_index=True)
+    sha512 = models.CharField(max_length=128, null=True, db_index=True)
 
     content_artifact = models.ForeignKey(ContentArtifact, on_delete=models.CASCADE)
     remote = models.ForeignKey("Remote", on_delete=models.CASCADE)
