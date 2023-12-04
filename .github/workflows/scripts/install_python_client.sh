@@ -52,7 +52,8 @@ DOCSYAML
 # Building the bindings docs
 mkdocs build
 
-tar cvf ../../pulpcore/core-python-client-docs.tar ./docs
+# Pack the built site.
+tar cvf ../../pulpcore/core-python-client-docs.tar ./site
 popd
 rm -rf pulp_file-client
 ./generate.sh pulp_file python "$VERSION"
@@ -85,6 +86,7 @@ DOCSYAML
 # Building the bindings docs
 mkdocs build
 
-tar cvf ../../pulpcore/file-python-client-docs.tar ./docs
+# Pack the built site.
+tar cvf ../../pulpcore/file-python-client-docs.tar ./site
 popd
 popd
