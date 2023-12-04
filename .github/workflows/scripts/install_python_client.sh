@@ -52,6 +52,7 @@ DOCSYAML
 # Building the bindings docs
 mkdocs build
 
-tar cvf ../../pulpcore/core-python-client-docs.tar ./docs
+# Pack the built site.
+tar cvf ../../pulpcore/core-python-client-docs.tar ./site
 popd
 popd
