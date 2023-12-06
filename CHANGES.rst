@@ -13,6 +13,47 @@ Changelog
 
 .. towncrier release notes start
 
+3.43.0 (2023-12-05)
+===================
+REST API
+--------
+
+Features
+~~~~~~~~
+
+- Added a CompositeContentGuard, that manages a list-of ContentGuards and permits
+  access to content if *ANY* guard permits.
+  :github:`4583`
+
+
+Bugfixes
+~~~~~~~~
+
+- Removed a race condition leading to 500 error in distribution filtering.
+  :github:`4766`
+- Added missing database indices to the ``RemoteArtifact`` model.
+  :github:`4835`
+
+
+Plugin API
+----------
+
+Features
+~~~~~~~~
+
+- Added the async safe `detail_model` property to master detail models.
+  :github:`4766`
+
+
+Pulp File
+---------
+
+No significant changes.
+
+
+----
+
+
 3.42.0 (2023-11-28)
 ===================
 REST API
