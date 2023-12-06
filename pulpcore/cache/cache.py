@@ -1,5 +1,6 @@
 import enum
 import json
+import time
 
 from functools import wraps
 
@@ -185,7 +186,10 @@ class SyncContentCache(Cache):
             return None
         entry = json.loads(entry)
         response_type = entry.pop("type", None)
-        if not response_type or response_type not in self.RESPONSE_TYPES:
+        expires = entry.pop("expires", None)
+        if (not response_type or response_type not in self.RESPONSE_TYPES) or (
+            expires and expires < time.time()
+        ):
             # Bad entry, delete from cache
             self.delete(key, base_key)
             return None
@@ -198,6 +202,9 @@ class SyncContentCache(Cache):
         """Gets the response for the request and try to turn it into a cacheable entry"""
         response = handler(*args, **kwargs)
         entry = {"headers": dict(response.headers), "status": response.status_code}
+        if expires:
+            # Redis TTL is not sufficient: https://github.com/pulp/pulpcore/issues/4845
+            entry["expires"] = expires + time.time()
         response.headers["X-PULP-CACHE"] = "MISS"
         if isinstance(response, HttpResponseRedirect):
             entry["redirect_to"] = str(response.headers["Location"])
@@ -366,7 +373,10 @@ class AsyncContentCache(AsyncCache):
             entry["body"] = bytes.fromhex(binary)
 
         response_type = entry.pop("type", None)
-        if not response_type or response_type not in self.RESPONSE_TYPES:
+        expires = entry.pop("expires", None)
+        if (not response_type or response_type not in self.RESPONSE_TYPES) or (
+            expires and expires < time.time()
+        ):
             # Bad entry, delete from cache
             self.delete(key, base_key)
             return None
@@ -382,6 +392,9 @@ class AsyncContentCache(AsyncCache):
             response = e
 
         entry = {"headers": dict(response.headers), "status": response.status}
+        if expires:
+            # Redis TTL is not sufficient: https://github.com/pulp/pulpcore/issues/4845
+            entry["expires"] = expires + time.time()
         response.headers.update({"X-PULP-CACHE": "MISS"})
         if isinstance(response, FileResponse):
             entry["path"] = str(response._path)

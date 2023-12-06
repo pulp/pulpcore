@@ -1,0 +1,1 @@
+Ensure the Redis cache is actually respecting the TTL.
