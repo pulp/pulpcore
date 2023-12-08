@@ -17,7 +17,7 @@ def test_full_workflow(
     file_repo_with_auto_publish,
     basic_manifest_path,
     file_remote_factory,
-    file_repository_api_client,
+    file_bindings,
     file_publication_api_client,
     file_distribution_api_client,
     file_content_api_client,
@@ -40,8 +40,10 @@ def test_full_workflow(
     # Sync from the remote and assert that a new repository version is created
     remote = file_remote_factory(manifest_path=basic_manifest_path, policy="immediate")
     body = RepositorySyncURL(remote=remote.pulp_href)
-    monitor_task(file_repository_api_client.sync(file_repo_with_auto_publish.pulp_href, body).task)
-    repo = file_repository_api_client.read(file_repo_with_auto_publish.pulp_href)
+    monitor_task(
+        file_bindings.RepositoriesFileApi.sync(file_repo_with_auto_publish.pulp_href, body).task
+    )
+    repo = file_bindings.RepositoriesFileApi.read(file_repo_with_auto_publish.pulp_href)
     assert repo.latest_version_href.endswith("/versions/1/")
 
     body = FileFilePublication(repository=repo.pulp_href)
@@ -85,7 +87,7 @@ def test_full_workflow(
         relative_path="1.iso", repository_version=repo.latest_version_href
     ).results[0]
     body = RepositoryAddRemoveContent(remove_content_units=[cfile.pulp_href])
-    response = monitor_task(file_repository_api_client.modify(repo.pulp_href, body).task)
+    response = monitor_task(file_bindings.RepositoriesFileApi.modify(repo.pulp_href, body).task)
     pub3 = file_publication_api_client.read(response.created_resources[1])
     files = ["", "", "PULP_MANIFEST", "PULP_MANIFEST", "2.iso", "2.iso"]
     for i, file in enumerate(files):
@@ -119,7 +121,7 @@ def test_full_workflow(
         assert (200, "HIT" if i % 2 == 1 else "MISS") == _check_cache(url), file
 
     # Tests that deleting a repository invalidates the cache"""
-    monitor_task(file_repository_api_client.delete(repo.pulp_href).task)
+    monitor_task(file_bindings.RepositoriesFileApi.delete(repo.pulp_href).task)
     files = ["", "PULP_MANIFEST", "2.iso"]
     for file in files:
         url = urljoin(distro.base_url, file)

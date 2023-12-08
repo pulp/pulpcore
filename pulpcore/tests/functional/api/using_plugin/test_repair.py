@@ -11,7 +11,7 @@ from pulpcore.tests.functional.utils import get_files_in_manifest
 
 @pytest.fixture
 def repository_with_corrupted_artifacts(
-    file_repository_api_client,
+    file_bindings,
     file_repo,
     artifacts_api_client,
     file_remote_ssl_factory,
@@ -21,8 +21,8 @@ def repository_with_corrupted_artifacts(
     # STEP 1: sync content from a remote source
     remote = file_remote_ssl_factory(manifest_path=basic_manifest_path, policy="immediate")
     sync_data = RepositorySyncURL(remote=remote.pulp_href)
-    monitor_task(file_repository_api_client.sync(file_repo.pulp_href, sync_data).task)
-    repo = file_repository_api_client.read(file_repo.pulp_href)
+    monitor_task(file_bindings.RepositoriesFileApi.sync(file_repo.pulp_href, sync_data).task)
+    repo = file_bindings.RepositoriesFileApi.read(file_repo.pulp_href)
 
     # STEP 2: sample artifacts that will be modified on the filesystem later on
     content1, content2 = sample(get_files_in_manifest(remote.url), 2)

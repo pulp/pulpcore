@@ -99,7 +99,7 @@ def test_post_authenticated(
     test_path,
     pulp_api_v3_path,
     status_api_client,
-    pulpcore_client,
+    pulpcore_bindings,
     pulp_api_v3_url,
     received_otel_span,
 ):
@@ -114,7 +114,7 @@ def test_post_authenticated(
     # Try anyway to POST to /status/
     status_url = f"{pulp_api_v3_url}status/"
     with pytest.raises(ApiException) as e:
-        pulpcore_client.request("POST", status_url, headers={"User-Agent": test_path})
+        pulpcore_bindings.client.request("POST", status_url, headers={"User-Agent": test_path})
 
     assert e.value.status == 405
     assert received_otel_span(
@@ -130,7 +130,7 @@ def test_post_authenticated(
 @pytest.mark.parallel
 def test_storage_per_domain(
     status_api_client,
-    pulpcore_client,
+    pulpcore_bindings,
     pulp_api_v3_url,
     domain_factory,
     random_artifact_factory,
@@ -139,13 +139,13 @@ def test_storage_per_domain(
     domain = domain_factory()
     # Status endpoint is not exposed at domain url in API spec to prevent duplicates, call manually
     status_url = f"{pulp_api_v3_url}status/".replace("default", domain.name)
-    status_response = pulpcore_client.request("GET", status_url)
-    domain_status = pulpcore_client.deserialize(status_response, "StatusResponse")
+    status_response = pulpcore_bindings.client.request("GET", status_url)
+    domain_status = pulpcore_bindings.client.deserialize(status_response, "StatusResponse")
     assert domain_status.storage.used == 0
 
     random_artifact_factory(size=1, pulp_domain=domain.name)
-    status_response = pulpcore_client.request("GET", status_url)
-    domain_status = pulpcore_client.deserialize(status_response, "StatusResponse")
+    status_response = pulpcore_bindings.client.request("GET", status_url)
+    domain_status = pulpcore_bindings.client.deserialize(status_response, "StatusResponse")
 
     assert domain_status.storage.used == 1
 

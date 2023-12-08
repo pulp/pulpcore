@@ -45,7 +45,7 @@ def test_download_policy(
     file_repo,
     file_remote_ssl_factory,
     file_remote_api_client,
-    file_repository_api_client,
+    file_bindings,
     file_repository_version_api_client,
     file_publication_api_client,
     file_distribution_api_client,
@@ -64,7 +64,7 @@ def test_download_policy(
     remote = file_remote_ssl_factory(
         manifest_path=range_header_manifest_path, policy=download_policy
     )
-    file_repo = file_repository_api_client.read(file_repo.pulp_href)
+    file_repo = file_bindings.RepositoriesFileApi.read(file_repo.pulp_href)
     assert file_repo.latest_version_href.endswith("/versions/0/")
 
     # Check what content and artifacts are in the fixture repository
@@ -72,8 +72,8 @@ def test_download_policy(
 
     # Sync from the remote and assert that a new repository version is created
     body = RepositorySyncURL(remote=remote.pulp_href)
-    monitor_task(file_repository_api_client.sync(file_repo.pulp_href, body).task)
-    file_repo = file_repository_api_client.read(file_repo.pulp_href)
+    monitor_task(file_bindings.RepositoriesFileApi.sync(file_repo.pulp_href, body).task)
+    file_repo = file_bindings.RepositoriesFileApi.read(file_repo.pulp_href)
     assert file_repo.latest_version_href.endswith("/versions/1/")
 
     version = file_repository_version_api_client.read(file_repo.latest_version_href)
@@ -82,8 +82,8 @@ def test_download_policy(
 
     # Sync again and assert that nothing changes
     latest_version_href = file_repo.latest_version_href
-    monitor_task(file_repository_api_client.sync(file_repo.pulp_href, body).task)
-    file_repo = file_repository_api_client.read(file_repo.pulp_href)
+    monitor_task(file_bindings.RepositoriesFileApi.sync(file_repo.pulp_href, body).task)
+    file_repo = file_bindings.RepositoriesFileApi.read(file_repo.pulp_href)
     assert latest_version_href == file_repo.latest_version_href
 
     version = file_repository_version_api_client.read(file_repo.latest_version_href)
@@ -234,6 +234,6 @@ def test_download_policy(
         assert remote.policy == "immediate"
 
         # Sync from the remote and assert that artifacts are downloaded
-        monitor_task(file_repository_api_client.sync(file_repo.pulp_href, body).task)
+        monitor_task(file_bindings.RepositoriesFileApi.sync(file_repo.pulp_href, body).task)
         for f in expected_files:
             assert len(artifacts_api_client.list(sha256=f[1]).results) == 1

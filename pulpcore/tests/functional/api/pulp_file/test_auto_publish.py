@@ -17,7 +17,7 @@ def file_repo_with_auto_publish(file_repository_factory):
 def test_auto_publish_and_distribution(
     file_repo_with_auto_publish,
     file_remote_ssl_factory,
-    file_repository_api_client,
+    file_bindings,
     file_publication_api_client,
     basic_manifest_path,
     gen_object_with_cleanup,
@@ -28,7 +28,7 @@ def test_auto_publish_and_distribution(
 ):
     """Tests auto-publish and auto-distribution"""
     remote = file_remote_ssl_factory(manifest_path=basic_manifest_path, policy="on_demand")
-    repo = file_repository_api_client.read(file_repo_with_auto_publish.pulp_href)
+    repo = file_bindings.RepositoriesFileApi.read(file_repo_with_auto_publish.pulp_href)
     distribution = gen_object_with_cleanup(
         file_distribution_api_client,
         {"name": "foo", "base_path": "bar/foo", "repository": repo.pulp_href},
@@ -46,8 +46,8 @@ def test_auto_publish_and_distribution(
 
     # Sync from the remote
     body = RepositorySyncURL(remote=remote.pulp_href)
-    monitor_task(file_repository_api_client.sync(repo.pulp_href, body).task)
-    repo = file_repository_api_client.read(repo.pulp_href)
+    monitor_task(file_bindings.RepositoriesFileApi.sync(repo.pulp_href, body).task)
+    repo = file_bindings.RepositoriesFileApi.read(repo.pulp_href)
 
     # Assert that a new repository version was created and a publication was created
     assert repo.latest_version_href.endswith("/versions/1/")
@@ -69,11 +69,11 @@ def test_auto_publish_and_distribution(
     # Add a new content unit to the repository and assert that a publication gets created and the
     # new content unit is in it
     monitor_task(
-        file_repository_api_client.modify(
+        file_bindings.RepositoriesFileApi.modify(
             repo.pulp_href, {"add_content_units": [file_random_content_unit.pulp_href]}
         ).task
     )
-    repo = file_repository_api_client.read(repo.pulp_href)
+    repo = file_bindings.RepositoriesFileApi.read(repo.pulp_href)
     files_in_second_publication = get_files_in_manifest(
         "{}{}".format(distribution.base_url, publication.manifest)
     )

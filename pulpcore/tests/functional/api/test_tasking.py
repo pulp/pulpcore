@@ -13,10 +13,10 @@ from pulpcore.tests.functional.utils import download_file
 
 
 @pytest.fixture(scope="session")
-def dispatch_task(pulpcore_client):
+def dispatch_task(pulpcore_bindings):
     def _dispatch_task(*args, **kwargs):
-        cid = pulpcore_client.default_headers.get("Correlation-ID") or str(uuid4())
-        username = pulpcore_client.configuration.username
+        cid = pulpcore_bindings.client.default_headers.get("Correlation-ID") or str(uuid4())
+        username = pulpcore_bindings.client.configuration.username
         commands = (
             "from django_guid import set_guid; "
             "from pulpcore.tasking.tasks import dispatch; "
@@ -81,7 +81,7 @@ def test_multi_resource_locking(dispatch_task, monitor_task):
 
 
 @pytest.mark.parallel
-def test_delete_cancel_waiting_task(dispatch_task, tasks_api_client):
+def test_delete_cancel_waiting_task(dispatch_task, pulpcore_bindings):
     # Queue one task after a long running one
     resource = str(uuid4())
     blocking_task_href = dispatch_task(
@@ -91,18 +91,18 @@ def test_delete_cancel_waiting_task(dispatch_task, tasks_api_client):
         "pulpcore.app.tasks.test.sleep", args=(0,), exclusive_resources=[resource]
     )
 
-    task = tasks_api_client.read(task_href)
+    task = pulpcore_bindings.TasksApi.read(task_href)
     assert task.state == "waiting"
 
     # Try to delete first
     with pytest.raises(ApiException) as ctx:
-        tasks_api_client.delete(task_href)
+        pulpcore_bindings.TasksApi.delete(task_href)
     assert ctx.value.status == 409
 
     # Now cancel the task
-    task = tasks_api_client.tasks_cancel(task_href, {"state": "canceled"})
+    task = pulpcore_bindings.TasksApi.tasks_cancel(task_href, {"state": "canceled"})
     # cancel the blocking task
-    tasks_api_client.tasks_cancel(blocking_task_href, {"state": "canceled"})
+    pulpcore_bindings.TasksApi.tasks_cancel(blocking_task_href, {"state": "canceled"})
 
     if task.state == "canceling":
         assert task.started_at is None
@@ -112,7 +112,7 @@ def test_delete_cancel_waiting_task(dispatch_task, tasks_api_client):
             if task.state != "canceling":
                 break
             time.sleep(1)
-            task = tasks_api_client.read(task_href)
+            task = pulpcore_bindings.TasksApi.read(task_href)
 
     assert task.state == "canceled"
     assert task.started_at is None
@@ -120,11 +120,11 @@ def test_delete_cancel_waiting_task(dispatch_task, tasks_api_client):
 
 
 @pytest.mark.parallel
-def test_delete_cancel_running_task(dispatch_task, tasks_api_client):
+def test_delete_cancel_running_task(dispatch_task, pulpcore_bindings):
     task_href = dispatch_task("pulpcore.app.tasks.test.sleep", args=(600,))
 
     for i in range(10):
-        task = tasks_api_client.read(task_href)
+        task = pulpcore_bindings.TasksApi.read(task_href)
         if task.state == "running":
             break
         time.sleep(1)
@@ -133,11 +133,11 @@ def test_delete_cancel_running_task(dispatch_task, tasks_api_client):
 
     # Try to delete first
     with pytest.raises(ApiException) as ctx:
-        tasks_api_client.delete(task_href)
+        pulpcore_bindings.TasksApi.delete(task_href)
     assert ctx.value.status == 409
 
     # Now cancel the task
-    task = tasks_api_client.tasks_cancel(task_href, {"state": "canceled"})
+    task = pulpcore_bindings.TasksApi.tasks_cancel(task_href, {"state": "canceled"})
 
     if task.state == "canceling":
         assert task.started_at is not None
@@ -147,7 +147,7 @@ def test_delete_cancel_running_task(dispatch_task, tasks_api_client):
             if task.state != "canceling":
                 break
             time.sleep(1)
-            task = tasks_api_client.read(task_href)
+            task = pulpcore_bindings.TasksApi.read(task_href)
 
     assert task.state == "canceled"
     assert task.started_at is not None
@@ -155,24 +155,24 @@ def test_delete_cancel_running_task(dispatch_task, tasks_api_client):
 
 
 @pytest.mark.parallel
-def test_cancel_delete_finished_task(tasks_api_client, dispatch_task, monitor_task):
+def test_cancel_delete_finished_task(pulpcore_bindings, dispatch_task, monitor_task):
     task_href = dispatch_task("pulpcore.app.tasks.test.sleep", args=(0,))
     monitor_task(task_href)
 
     # Try to cancel first
     with pytest.raises(ApiException) as ctx:
-        tasks_api_client.tasks_cancel(task_href, {"state": "canceled"})
+        pulpcore_bindings.TasksApi.tasks_cancel(task_href, {"state": "canceled"})
     assert ctx.value.status == 409
 
     # Now delete the task
-    tasks_api_client.delete(task_href)
+    pulpcore_bindings.TasksApi.delete(task_href)
 
 
 @pytest.mark.parallel
-def test_cancel_nonexistent_task(pulp_api_v3_path, tasks_api_client):
+def test_cancel_nonexistent_task(pulp_api_v3_path, pulpcore_bindings):
     task_href = f"{pulp_api_v3_path}tasks/{uuid4()}/"
     with pytest.raises(ApiException) as ctx:
-        tasks_api_client.tasks_cancel(task_href, {"state": "canceled"})
+        pulpcore_bindings.TasksApi.tasks_cancel(task_href, {"state": "canceled"})
     assert ctx.value.status == 404
 
 
@@ -225,71 +225,71 @@ def test_retrieve_task_with_minimal_fields(task, bindings_cfg):
 
 
 @pytest.mark.parallel
-def test_retrieve_task_using_invalid_worker(tasks_api_client):
+def test_retrieve_task_using_invalid_worker(pulpcore_bindings):
     """Expects to raise an exception when using invalid worker value as filter."""
 
     with pytest.raises(ApiException) as ctx:
-        tasks_api_client.list(worker=str(uuid4()))
+        pulpcore_bindings.TasksApi.list(worker=str(uuid4()))
 
     assert ctx.value.status == 400
 
 
 @pytest.mark.parallel
-def test_retrieve_task_using_valid_worker(task, tasks_api_client):
+def test_retrieve_task_using_valid_worker(task, pulpcore_bindings):
     """Expects to retrieve a task using a valid worker URI as filter."""
 
-    response = tasks_api_client.list(worker=task.worker)
+    response = pulpcore_bindings.TasksApi.list(worker=task.worker)
 
     assert response.results and response.count
 
 
 @pytest.mark.parallel
-def test_retrieve_task_using_invalid_date(tasks_api_client):
+def test_retrieve_task_using_invalid_date(pulpcore_bindings):
     """Expects to raise an exception when using invalid dates as filters"""
     with pytest.raises(ApiException) as ctx:
-        tasks_api_client.list(finished_at=str(uuid4()), started_at=str(uuid4()))
+        pulpcore_bindings.TasksApi.list(finished_at=str(uuid4()), started_at=str(uuid4()))
 
     assert ctx.value.status == 400
 
 
 @pytest.mark.parallel
-def test_retrieve_task_using_valid_date(task, tasks_api_client):
+def test_retrieve_task_using_valid_date(task, pulpcore_bindings):
     """Expects to retrieve a task using a valid date."""
 
-    response = tasks_api_client.list(started_at=task.started_at)
+    response = pulpcore_bindings.TasksApi.list(started_at=task.started_at)
 
     assert response.results and response.count
 
 
 @pytest.mark.parallel
-def test_search_task_by_name(task, tasks_api_client):
+def test_search_task_by_name(task, pulpcore_bindings):
     task_name = task.name
-    search_results = tasks_api_client.list(name=task.name).results
+    search_results = pulpcore_bindings.TasksApi.list(name=task.name).results
 
     assert search_results
     assert all([task.name == task_name for task in search_results])
 
 
 @pytest.mark.parallel
-def test_search_task_using_an_invalid_name(tasks_api_client):
+def test_search_task_using_an_invalid_name(pulpcore_bindings):
     """Expect to return an empty results array when searching using an invalid
     task name.
     """
 
-    search_results = tasks_api_client.list(name=str(uuid4()))
+    search_results = pulpcore_bindings.TasksApi.list(name=str(uuid4()))
 
     assert not search_results.results and not search_results.count
 
 
 @pytest.mark.parallel
-def test_filter_tasks_using_worker__in_filter(tasks_api_client, dispatch_task, monitor_task):
+def test_filter_tasks_using_worker__in_filter(pulpcore_bindings, dispatch_task, monitor_task):
     task1_href = dispatch_task("pulpcore.app.tasks.test.sleep", args=(0,))
     task2_href = dispatch_task("pulpcore.app.tasks.test.sleep", args=(0,))
 
     task1 = monitor_task(task1_href)
     task2 = monitor_task(task2_href)
 
-    search_results = tasks_api_client.list(worker__in=(task1.worker, task2.worker))
+    search_results = pulpcore_bindings.TasksApi.list(worker__in=(task1.worker, task2.worker))
 
     tasks_hrefs = [task.pulp_href for task in search_results.results]
 
@@ -297,22 +297,22 @@ def test_filter_tasks_using_worker__in_filter(tasks_api_client, dispatch_task, m
     assert task2_href in tasks_hrefs
 
 
-def test_cancel_gooey_task(tasks_api_client, dispatch_task, monitor_task):
+def test_cancel_gooey_task(pulpcore_bindings, dispatch_task, monitor_task):
     task_href = dispatch_task("pulpcore.app.tasks.test.gooey_task", args=(60,))
     for i in range(10):
-        task = tasks_api_client.read(task_href)
+        task = pulpcore_bindings.TasksApi.read(task_href)
         if task.state == "running":
             break
         time.sleep(1)
 
-    task = tasks_api_client.tasks_cancel(task_href, {"state": "canceled"})
+    task = pulpcore_bindings.TasksApi.tasks_cancel(task_href, {"state": "canceled"})
 
     if task.state == "canceling":
         for i in range(30):
             if task.state != "canceling":
                 break
             time.sleep(1)
-            task = tasks_api_client.read(task_href)
+            task = pulpcore_bindings.TasksApi.read(task_href)
 
     assert task.state == "canceled"
 
@@ -339,12 +339,12 @@ def test_task_created_by(dispatch_task, monitor_task, gen_user, anonymous_user):
 
 
 @pytest.mark.parallel
-def test_task_version_prevent_pickup(dispatch_task, tasks_api_client):
+def test_task_version_prevent_pickup(dispatch_task, pulpcore_bindings):
     task1 = dispatch_task("pulpcore.app.tasks.test.sleep", args=(0,), versions={"core": "4.0.0"})
     task2 = dispatch_task("pulpcore.app.tasks.test.sleep", args=(0,), versions={"catdog": "0.0.0"})
 
     time.sleep(5)
     for task_href in [task1, task2]:
-        task = tasks_api_client.read(task_href)
+        task = pulpcore_bindings.TasksApi.read(task_href)
         assert task.state == "waiting"
-        tasks_api_client.tasks_cancel(task_href, {"state": "canceled"})
+        pulpcore_bindings.TasksApi.tasks_cancel(task_href, {"state": "canceled"})

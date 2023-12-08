@@ -12,7 +12,7 @@ from pulpcore.tests.functional.utils import get_from_url
 
 @pytest.mark.parallel
 def test_rbac_content_guard_full_workflow(
-    rbac_contentguard_api_client,
+    pulpcore_bindings,
     groups_api_client,
     groups_users_api_client,
     file_distribution_api_client,
@@ -55,7 +55,9 @@ def test_rbac_content_guard_full_workflow(
 
     # Check that RBAC ContentGuard can be created and assigned to a distribution
     with creator_user:
-        guard = gen_object_with_cleanup(rbac_contentguard_api_client, {"name": distro.name})
+        guard = gen_object_with_cleanup(
+            pulpcore_bindings.ContentguardsRbacApi, {"name": distro.name}
+        )
         body = PatchedfileFileDistribution(content_guard=guard.pulp_href)
         monitor_task(file_distribution_api_client.partial_update(distro.pulp_href, body).task)
         distro = file_distribution_api_client.read(distro.pulp_href)
@@ -70,29 +72,29 @@ def test_rbac_content_guard_full_workflow(
         "role": "core.rbaccontentguard_downloader",
     }
     with creator_user:
-        rbac_contentguard_api_client.add_role(distro.content_guard, body)
+        pulpcore_bindings.ContentguardsRbacApi.add_role(distro.content_guard, body)
     _assert_access([creator_user, user_b, user_a, pulp_admin_user])
 
     # Use the /remove/ endpoint to remove users permission to access distribution
     with creator_user:
-        rbac_contentguard_api_client.remove_role(distro.content_guard, body)
+        pulpcore_bindings.ContentguardsRbacApi.remove_role(distro.content_guard, body)
     _assert_access([creator_user, pulp_admin_user])
 
     # Use the /add/ endpoint to add group
     body = {"groups": [group.name], "role": "core.rbaccontentguard_downloader"}
     with creator_user:
-        rbac_contentguard_api_client.add_role(distro.content_guard, body)
+        pulpcore_bindings.ContentguardsRbacApi.add_role(distro.content_guard, body)
     _assert_access([creator_user, user_b, user_a, pulp_admin_user])
 
     # Use the /remove/ endpoint to remove group
     with creator_user:
-        rbac_contentguard_api_client.remove_role(distro.content_guard, body)
+        pulpcore_bindings.ContentguardsRbacApi.remove_role(distro.content_guard, body)
     _assert_access([creator_user, pulp_admin_user])
 
 
 @pytest.mark.parallel
 def test_header_contentguard_workflow(
-    header_contentguard_api_client,
+    pulpcore_bindings,
     gen_user,
     file_distribution_factory,
     gen_object_with_cleanup,
@@ -109,7 +111,7 @@ def test_header_contentguard_workflow(
 
     with creator_user:
         guard = gen_object_with_cleanup(
-            header_contentguard_api_client,
+            pulpcore_bindings.ContentguardsHeaderApi,
             {"name": distro.name, "header_name": "x-header", "header_value": "123456"},
         )
         body = PatchedfileFileDistribution(content_guard=guard.pulp_href)
@@ -139,7 +141,7 @@ def test_header_contentguard_workflow(
 
     with creator_user:
         guard = gen_object_with_cleanup(
-            header_contentguard_api_client,
+            pulpcore_bindings.ContentguardsHeaderApi,
             {
                 "name": distro.name,
                 "header_name": header_name,
@@ -165,9 +167,7 @@ def test_header_contentguard_workflow(
 
 
 def test_composite_contentguard_crud(
-    composite_contentguard_api_client,
-    redirect_contentguard_api_client,
-    header_contentguard_api_client,
+    pulpcore_bindings,
     gen_user,
     gen_object_with_cleanup,
 ):
@@ -183,44 +183,44 @@ def test_composite_contentguard_crud(
     with creator_user:
         # Create RedirectContentGuard, HeaderContentGuard
         hcg = gen_object_with_cleanup(
-            header_contentguard_api_client,
+            pulpcore_bindings.ContentguardsHeaderApi,
             {"name": str(uuid.uuid4()), "header_name": "x-header", "header_value": "123456"},
         )
         rcg = gen_object_with_cleanup(
-            redirect_contentguard_api_client,
+            pulpcore_bindings.ContentguardsContentRedirectApi,
             {"name": str(uuid.uuid4()), "description": "test_composite_contentguard_crud"},
         )
 
         # Create CCG1, no guards; evaluate
         ccg1 = gen_object_with_cleanup(
-            composite_contentguard_api_client,
+            pulpcore_bindings.ContentguardsCompositeApi,
             {"name": str(uuid.uuid4()), "description": "test_composite_contentguard_crud"},
         )
         assert not ccg1.guards
-        ccg1 = composite_contentguard_api_client.read(ccg1.pulp_href)
+        ccg1 = pulpcore_bindings.ContentguardsCompositeApi.read(ccg1.pulp_href)
         assert not ccg1.guards
 
         # Update CCG1, RCG, evaluate, expect 1
         body = PatchedCompositeContentGuard(guards=[rcg.pulp_href])
-        ccg1 = composite_contentguard_api_client.partial_update(ccg1.pulp_href, body)
+        ccg1 = pulpcore_bindings.ContentguardsCompositeApi.partial_update(ccg1.pulp_href, body)
         assert ccg1.guards
         assert len(ccg1.guards) == 1
 
         # Update CCG1, HCG, evaluate, expect 1
         body = PatchedCompositeContentGuard(guards=[hcg.pulp_href])
-        ccg1 = composite_contentguard_api_client.partial_update(ccg1.pulp_href, body)
+        ccg1 = pulpcore_bindings.ContentguardsCompositeApi.partial_update(ccg1.pulp_href, body)
         assert ccg1.guards
         assert len(ccg1.guards) == 1
 
         # Update CCG1, [RCG, HCG], evaluate, expect 2
         body = PatchedCompositeContentGuard(guards=[rcg.pulp_href, hcg.pulp_href])
-        ccg1 = composite_contentguard_api_client.partial_update(ccg1.pulp_href, body)
+        ccg1 = pulpcore_bindings.ContentguardsCompositeApi.partial_update(ccg1.pulp_href, body)
         assert ccg1.guards
         assert len(ccg1.guards) == 2
 
         # Create CCG2, [RCG, HCG], evaluate
         ccg2 = gen_object_with_cleanup(
-            composite_contentguard_api_client,
+            pulpcore_bindings.ContentguardsCompositeApi,
             {
                 "name": str(uuid.uuid4()),
                 "description": "test_composite_contentguard_crud",
@@ -231,20 +231,18 @@ def test_composite_contentguard_crud(
         assert len(ccg2.guards) == 2
 
         # List CCGs, expect 2
-        list_response = composite_contentguard_api_client.list()
+        list_response = pulpcore_bindings.ContentguardsCompositeApi.list()
         assert list_response.count == 2
 
         # Delete CCG1
-        composite_contentguard_api_client.delete(ccg1.pulp_href)
+        pulpcore_bindings.ContentguardsCompositeApi.delete(ccg1.pulp_href)
         # List CCG, expect 1
-        list_response = composite_contentguard_api_client.list()
+        list_response = pulpcore_bindings.ContentguardsCompositeApi.list()
         assert list_response.count == 1
 
 
 def test_composite_contentguard_permissions(
-    composite_contentguard_api_client,
-    redirect_contentguard_api_client,
-    header_contentguard_api_client,
+    pulpcore_bindings,
     gen_user,
     gen_object_with_cleanup,
     monitor_task,
@@ -265,17 +263,17 @@ def test_composite_contentguard_permissions(
     with creator_user:
         # Create RedirectContentGuard, HeaderContentGuard
         hcg = gen_object_with_cleanup(
-            header_contentguard_api_client,
+            pulpcore_bindings.ContentguardsHeaderApi,
             {"name": str(uuid.uuid4()), "header_name": "x-header", "header_value": "123456"},
         )
         rcg = gen_object_with_cleanup(
-            redirect_contentguard_api_client,
+            pulpcore_bindings.ContentguardsContentRedirectApi,
             {"name": str(uuid.uuid4()), "description": "test_composite_contentguard_permissions"},
         )
 
         # Create CCG1, no guards
         ccg1 = gen_object_with_cleanup(
-            composite_contentguard_api_client,
+            pulpcore_bindings.ContentguardsCompositeApi,
             {"name": str(uuid.uuid4()), "description": "test_composite_contentguard_permissions"},
         )
 
@@ -297,7 +295,7 @@ def test_composite_contentguard_permissions(
 
         # update CCG with RCG
         body = PatchedCompositeContentGuard(guards=[rcg.pulp_href])
-        ccg1 = composite_contentguard_api_client.partial_update(ccg1.pulp_href, body)
+        ccg1 = pulpcore_bindings.ContentguardsCompositeApi.partial_update(ccg1.pulp_href, body)
 
         # attempt dist-access, expect 403 (1 guard, forbids)
         response = get_from_url(distro.base_url)
@@ -305,7 +303,7 @@ def test_composite_contentguard_permissions(
 
         # Create HeaderContentGuard, update CCG with [RCG, HCG]
         body = PatchedCompositeContentGuard(guards=[rcg.pulp_href, hcg.pulp_href])
-        composite_contentguard_api_client.partial_update(ccg1.pulp_href, body)
+        pulpcore_bindings.ContentguardsCompositeApi.partial_update(ccg1.pulp_href, body)
 
         # attempt dist-access, expect 403 (2 guards, both forbid)
         response = get_from_url(distro.base_url)

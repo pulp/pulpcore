@@ -1,16 +1,13 @@
-import asyncio
 import json
-import os
-import stat
 import subprocess
 import uuid
 
-import aiohttp
+import requests
 import gnupg
 import pytest
 
 
-signing_script_string = r"""#!/usr/bin/env bash
+SIGNING_SCRIPT_STRING = r"""#!/usr/bin/env bash
 
 FILE_PATH=$1
 SIGNATURE_PATH="$1.asc"
@@ -33,26 +30,24 @@ fi
 
 @pytest.fixture(scope="session")
 def signing_script_path(signing_script_temp_dir, signing_gpg_homedir_path):
-    signing_script_filename = signing_script_temp_dir / "sign-metadata.sh"
-    with open(signing_script_filename, "w", 0o770) as sign_metadata_file:
-        sign_metadata_file.write(
-            signing_script_string.replace("HOMEDIRHERE", str(signing_gpg_homedir_path))
-        )
+    signing_script_file = signing_script_temp_dir / "sign-metadata.sh"
+    signing_script_file.write_text(
+        SIGNING_SCRIPT_STRING.replace("HOMEDIRHERE", str(signing_gpg_homedir_path))
+    )
 
-    st = os.stat(signing_script_filename)
-    os.chmod(signing_script_filename, st.st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
+    signing_script_file.chmod(0o755)
 
-    return signing_script_filename
+    return signing_script_file
 
 
 @pytest.fixture(scope="session")
-def signing_script_temp_dir(tmpdir_factory):
-    yield tmpdir_factory.mktemp(str(uuid.uuid4()))
+def signing_script_temp_dir(tmp_path_factory):
+    return tmp_path_factory.mktemp("sigining_script_dir")
 
 
 @pytest.fixture(scope="session")
-def signing_gpg_homedir_path(tmpdir_factory):
-    return tmpdir_factory.mktemp(str(uuid.uuid4()))
+def signing_gpg_homedir_path(tmp_path_factory):
+    return tmp_path_factory.mktemp("gpghome")
 
 
 @pytest.fixture
@@ -87,18 +82,13 @@ def sign_with_ascii_armored_detached_signing_service(signing_script_path, signin
 @pytest.fixture(scope="session")
 def signing_gpg_metadata(signing_gpg_homedir_path):
     """A fixture that returns a GPG instance and related metadata (i.e., fingerprint, keyid)."""
-    private_key_url = "https://raw.githubusercontent.com/pulp/pulp-fixtures/master/common/GPG-PRIVATE-KEY-fixture-signing"  # noqa: E501
+    PRIVATE_KEY_URL = "https://raw.githubusercontent.com/pulp/pulp-fixtures/master/common/GPG-PRIVATE-KEY-fixture-signing"  # noqa: E501
 
-    async def download_key():
-        async with aiohttp.ClientSession() as session:
-            async with session.get(private_key_url) as response:
-                return await response.text()
-
-    private_key_data = asyncio.run(download_key())
+    response = requests.get(PRIVATE_KEY_URL)
+    response.raise_for_status()
 
     gpg = gnupg.GPG(gnupghome=signing_gpg_homedir_path)
-
-    gpg.import_keys(private_key_data)
+    gpg.import_keys(response.content)
 
     fingerprint = gpg.list_keys()[0]["fingerprint"]
     keyid = gpg.list_keys()[0]["keyid"]

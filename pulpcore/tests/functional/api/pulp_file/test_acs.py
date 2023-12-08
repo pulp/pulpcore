@@ -91,7 +91,7 @@ def test_acs_validation_and_update(
 @pytest.mark.parallel
 def test_acs_sync(
     file_repo,
-    file_repository_api_client,
+    file_bindings,
     file_acs_api_client,
     basic_manifest_path,
     gen_object_with_cleanup,
@@ -122,7 +122,9 @@ def test_acs_sync(
 
     # Sync the repository
     repository_sync_data = RepositorySyncURL(remote=main_remote.pulp_href)
-    monitor_task(file_repository_api_client.sync(file_repo.pulp_href, repository_sync_data).task)
+    monitor_task(
+        file_bindings.RepositoriesFileApi.sync(file_repo.pulp_href, repository_sync_data).task
+    )
 
     # Assert that only the PULP_MANIFEST was downloaded from the main remote
     assert len(main_server.requests_record) == 1
@@ -143,7 +145,7 @@ def test_acs_sync(
 @pytest.mark.parallel
 def test_acs_sync_with_paths(
     file_repo,
-    file_repository_api_client,
+    file_bindings,
     file_acs_api_client,
     basic_manifest_path,
     large_manifest_path,
@@ -180,7 +182,9 @@ def test_acs_sync_with_paths(
 
     # Sync the repository
     repository_sync_data = RepositorySyncURL(remote=main_remote.pulp_href)
-    monitor_task(file_repository_api_client.sync(file_repo.pulp_href, repository_sync_data).task)
+    monitor_task(
+        file_bindings.RepositoriesFileApi.sync(file_repo.pulp_href, repository_sync_data).task
+    )
 
     # Assert that only the PULP_MANIFEST was downloaded from the main remote
     assert len(main_server.requests_record) == 1
@@ -202,7 +206,7 @@ def test_acs_sync_with_paths(
 @pytest.mark.parallel
 def test_serving_acs_content(
     file_repo,
-    file_repository_api_client,
+    file_bindings,
     file_acs_api_client,
     file_distribution_factory,
     basic_manifest_path,
@@ -235,14 +239,16 @@ def test_serving_acs_content(
 
     # Turn on auto-publish on the repository
     monitor_task(
-        file_repository_api_client.partial_update(
+        file_bindings.RepositoriesFileApi.partial_update(
             file_repo.pulp_href, {"autopublish": True, "remote": main_remote.pulp_href}
         ).task
     )
 
     # Sync the repository
     repository_sync_data = RepositorySyncURL(remote=main_remote.pulp_href)
-    monitor_task(file_repository_api_client.sync(file_repo.pulp_href, repository_sync_data).task)
+    monitor_task(
+        file_bindings.RepositoriesFileApi.sync(file_repo.pulp_href, repository_sync_data).task
+    )
 
     # Assert that only the PULP_MANIFEST was downloaded from the main remote
     assert len(main_server.requests_record) == 1

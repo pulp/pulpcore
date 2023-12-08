@@ -16,7 +16,7 @@ def test_delete_remote_on_demand(
     file_repo_with_auto_publish,
     file_remote_ssl_factory,
     file_remote_api_client,
-    file_repository_api_client,
+    file_bindings,
     basic_manifest_path,
     monitor_task,
     file_distribution_factory,
@@ -26,8 +26,10 @@ def test_delete_remote_on_demand(
 
     # Sync from the remote
     body = RepositorySyncURL(remote=remote.pulp_href)
-    monitor_task(file_repository_api_client.sync(file_repo_with_auto_publish.pulp_href, body).task)
-    repo = file_repository_api_client.read(file_repo_with_auto_publish.pulp_href)
+    monitor_task(
+        file_bindings.RepositoriesFileApi.sync(file_repo_with_auto_publish.pulp_href, body).task
+    )
+    repo = file_bindings.RepositoriesFileApi.read(file_repo_with_auto_publish.pulp_href)
 
     # Create a distribution pointing to the repository
     distribution = file_distribution_factory(repository=repo.pulp_href)
@@ -45,7 +47,7 @@ def test_delete_remote_on_demand(
     # Recreate the remote and sync into the repository using it
     remote = file_remote_ssl_factory(manifest_path=basic_manifest_path, policy="on_demand")
     body = RepositorySyncURL(remote=remote.pulp_href)
-    monitor_task(file_repository_api_client.sync(repo.pulp_href, body).task)
+    monitor_task(file_bindings.RepositoriesFileApi.sync(repo.pulp_href, body).task)
 
     # Assert that files can now be downloaded from the distribution
     content_unit_url = urljoin(distribution.base_url, expected_file_list[0][0])
@@ -59,7 +61,7 @@ def test_delete_remote_on_demand(
 def test_remote_artifact_url_update(
     file_repo_with_auto_publish,
     file_remote_ssl_factory,
-    file_repository_api_client,
+    file_bindings,
     basic_manifest_path,
     basic_manifest_only_path,
     monitor_task,
@@ -70,8 +72,10 @@ def test_remote_artifact_url_update(
 
     # Sync from the remote
     body = RepositorySyncURL(remote=remote.pulp_href)
-    monitor_task(file_repository_api_client.sync(file_repo_with_auto_publish.pulp_href, body).task)
-    repo = file_repository_api_client.read(file_repo_with_auto_publish.pulp_href)
+    monitor_task(
+        file_bindings.RepositoriesFileApi.sync(file_repo_with_auto_publish.pulp_href, body).task
+    )
+    repo = file_bindings.RepositoriesFileApi.read(file_repo_with_auto_publish.pulp_href)
 
     # Create a distribution from the publication
     distribution = file_distribution_factory(repository=repo.pulp_href)
@@ -90,7 +94,9 @@ def test_remote_artifact_url_update(
 
     # Sync from the remote and assert that content can now be downloaded
     body = RepositorySyncURL(remote=remote2.pulp_href)
-    monitor_task(file_repository_api_client.sync(file_repo_with_auto_publish.pulp_href, body).task)
+    monitor_task(
+        file_bindings.RepositoriesFileApi.sync(file_repo_with_auto_publish.pulp_href, body).task
+    )
     content_unit_url = urljoin(distribution.base_url, expected_file_list[0][0])
     downloaded_file = download_file(content_unit_url)
     actual_checksum = hashlib.sha256(downloaded_file.body).hexdigest()

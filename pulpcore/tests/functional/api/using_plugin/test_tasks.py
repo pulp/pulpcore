@@ -12,9 +12,9 @@ from pulpcore.tests.functional.utils import download_file
 
 
 @pytest.fixture
-def distribution(file_repo, file_distribution_api_client, gen_object_with_cleanup):
+def distribution(file_bindings, file_repo, gen_object_with_cleanup):
     distribution = gen_object_with_cleanup(
-        file_distribution_api_client,
+        file_bindings.DistributionsFileApi,
         {"name": str(uuid4()), "base_path": str(uuid4()), "repository": file_repo.pulp_href},
     )
 
@@ -42,8 +42,8 @@ def test_retrieve_task_with_fields_created_resources_only(
 
 @pytest.fixture
 def setup_filter_fixture(
+    file_bindings,
     file_repo,
-    file_repository_api_client,
     file_remote_ssl_factory,
     basic_manifest_path,
     tasks_api_client,
@@ -52,9 +52,11 @@ def setup_filter_fixture(
     remote = file_remote_ssl_factory(manifest_path=basic_manifest_path, policy="on_demand")
 
     body = RepositorySyncURL(remote=remote.pulp_href)
-    repo_sync_task = monitor_task(file_repository_api_client.sync(file_repo.pulp_href, body).task)
+    repo_sync_task = monitor_task(
+        file_bindings.RepositoriesFileApi.sync(file_repo.pulp_href, body).task
+    )
 
-    repo_update_action = file_repository_api_client.partial_update(
+    repo_update_action = file_bindings.RepositoriesFileApi.partial_update(
         file_repo.pulp_href, {"description": str(uuid4())}
     )
     repo_update_task = tasks_api_client.read(repo_update_action.task)

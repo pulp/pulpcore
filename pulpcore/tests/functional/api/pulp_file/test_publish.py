@@ -16,7 +16,7 @@ from pulpcore.tests.functional.utils import download_file
 def test_crd_publications(
     file_repo,
     file_remote_ssl_factory,
-    file_repository_api_client,
+    file_bindings,
     file_publication_api_client,
     basic_manifest_path,
     gen_object_with_cleanup,
@@ -29,19 +29,19 @@ def test_crd_publications(
     # Sync from the remote
     initial_repo_version = file_repo.latest_version_href
     body = RepositorySyncURL(remote=remote.pulp_href)
-    monitor_task(file_repository_api_client.sync(file_repo.pulp_href, body).task)
-    first_repo_version_href = file_repository_api_client.read(
+    monitor_task(file_bindings.RepositoriesFileApi.sync(file_repo.pulp_href, body).task)
+    first_repo_version_href = file_bindings.RepositoriesFileApi.read(
         file_repo.pulp_href
     ).latest_version_href
     assert first_repo_version_href.endswith("/versions/1/")
 
     # Add a new content unit to the repository and assert that a new repository version is created
     monitor_task(
-        file_repository_api_client.modify(
+        file_bindings.RepositoriesFileApi.modify(
             file_repo.pulp_href, {"add_content_units": [file_random_content_unit.pulp_href]}
         ).task
     )
-    file_repo = file_repository_api_client.read(file_repo.pulp_href)
+    file_repo = file_bindings.RepositoriesFileApi.read(file_repo.pulp_href)
     assert file_repo.latest_version_href.endswith("/versions/2/")
 
     # Create a Publication using a repository and assert that its repository_version is the latest
@@ -72,7 +72,7 @@ def test_crd_publications(
     publication = file_publication_api_client.read(publication.pulp_href)
 
     # Read a publication by its href providing specific field list.
-    config = file_repository_api_client.api_client.configuration
+    config = file_bindings.RepositoriesFileApi.api_client.configuration
     auth = BasicAuth(login=config.username, password=config.password)
     full_href = urljoin(config.host, publication.pulp_href)
     for fields in [

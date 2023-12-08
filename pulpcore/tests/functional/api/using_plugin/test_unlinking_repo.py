@@ -4,7 +4,7 @@ import pytest
 
 @pytest.mark.parallel
 def test_shared_remote_usage(
-    file_repository_api_client,
+    file_bindings,
     file_repository_factory,
     file_content_api_client,
     file_remote_ssl_factory,
@@ -17,13 +17,13 @@ def test_shared_remote_usage(
     # Create and sync repos.
     repos = [file_repository_factory() for dummy in range(4)]
     sync_tasks = [
-        file_repository_api_client.sync(repo.pulp_href, {"remote": remote.pulp_href}).task
+        file_bindings.RepositoriesFileApi.sync(repo.pulp_href, {"remote": remote.pulp_href}).task
         for repo in repos
     ]
 
     for task in sync_tasks:
         monitor_task(task)
-    repos = [(file_repository_api_client.read(repo.pulp_href)) for repo in repos]
+    repos = [(file_bindings.RepositoriesFileApi.read(repo.pulp_href)) for repo in repos]
 
     # Compare contents of repositories.
     contents = set()

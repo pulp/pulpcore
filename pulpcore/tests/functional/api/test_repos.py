@@ -11,7 +11,7 @@ from pulpcore.client.pulp_file import RepositorySyncURL
 @pytest.mark.parallel
 def test_repository_content_filters(
     file_content_api_client,
-    file_repository_api_client,
+    file_bindings,
     file_repository_factory,
     file_remote_factory,
     gen_object_with_cleanup,
@@ -24,57 +24,57 @@ def test_repository_content_filters(
     repo_manifest_path = write_3_iso_file_fixture_data_factory(str(uuid4()))
     remote = file_remote_factory(manifest_path=repo_manifest_path, policy="on_demand")
     body = RepositorySyncURL(remote=remote.pulp_href)
-    task_response = file_repository_api_client.sync(repo.pulp_href, body).task
+    task_response = file_bindings.RepositoriesFileApi.sync(repo.pulp_href, body).task
     version_href = monitor_task(task_response).created_resources[0]
     content = file_content_api_client.list(repository_version_added=version_href).results[0]
-    repo = file_repository_api_client.read(repo.pulp_href)
+    repo = file_bindings.RepositoriesFileApi.read(repo.pulp_href)
 
     # filter repo by the content
-    results = file_repository_api_client.list(with_content=content.pulp_href).results
+    results = file_bindings.RepositoriesFileApi.list(with_content=content.pulp_href).results
     assert results == [repo]
-    results = file_repository_api_client.list(latest_with_content=content.pulp_href).results
+    results = file_bindings.RepositoriesFileApi.list(latest_with_content=content.pulp_href).results
     assert results == [repo]
 
     # remove the content
-    response = file_repository_api_client.modify(
+    response = file_bindings.RepositoriesFileApi.modify(
         repo.pulp_href,
         {"remove_content_units": [content.pulp_href]},
     )
     monitor_task(response.task)
-    repo = file_repository_api_client.read(repo.pulp_href)
+    repo = file_bindings.RepositoriesFileApi.read(repo.pulp_href)
 
     # the repo still has the content unit
-    results = file_repository_api_client.list(with_content=content.pulp_href).results
+    results = file_bindings.RepositoriesFileApi.list(with_content=content.pulp_href).results
     assert results == [repo]
 
     # but not in its latest version anymore
-    results = file_repository_api_client.list(latest_with_content=content.pulp_href).results
+    results = file_bindings.RepositoriesFileApi.list(latest_with_content=content.pulp_href).results
     assert results == []
 
 
 @pytest.mark.parallel
-def test_repository_name_regex_filters(file_repository_factory, file_repository_api_client):
+def test_repository_name_regex_filters(file_repository_factory, file_bindings):
     """Test repository's name regex filters."""
     uuid = uuid4()
     repo = file_repository_factory(name=f"{uuid}-regex-test-repo")
     pattern = f"^{uuid}-regex-test.*$"
 
-    results = file_repository_api_client.list(name__regex=pattern).results
+    results = file_bindings.RepositoriesFileApi.list(name__regex=pattern).results
     assert results == [repo]
 
     # upper case pattern
-    results = file_repository_api_client.list(name__regex=pattern.upper()).results
+    results = file_bindings.RepositoriesFileApi.list(name__regex=pattern.upper()).results
     assert repo not in results
 
     # upper case pattern with iregex
-    results = file_repository_api_client.list(name__iregex=pattern.upper()).results
+    results = file_bindings.RepositoriesFileApi.list(name__iregex=pattern.upper()).results
     assert results == [repo]
 
 
 @pytest.mark.parallel
 def test_repo_size(
     file_repo,
-    file_repository_api_client,
+    file_bindings,
     file_remote_factory,
     basic_manifest_path,
     random_artifact_factory,
@@ -84,8 +84,8 @@ def test_repo_size(
     # Sync repository with on_demand
     remote = file_remote_factory(manifest_path=basic_manifest_path, policy="on_demand")
     body = {"remote": remote.pulp_href}
-    monitor_task(file_repository_api_client.sync(file_repo.pulp_href, body).task)
-    file_repo = file_repository_api_client.read(file_repo.pulp_href)
+    monitor_task(file_bindings.RepositoriesFileApi.sync(file_repo.pulp_href, body).task)
+    file_repo = file_bindings.RepositoriesFileApi.read(file_repo.pulp_href)
 
     cmd = (
         "pulpcore-manager",
@@ -114,7 +114,7 @@ def test_repo_size(
     # Resync with immediate
     remote = file_remote_factory(manifest_path=basic_manifest_path, policy="immediate")
     body = {"remote": remote.pulp_href}
-    monitor_task(file_repository_api_client.sync(file_repo.pulp_href, body).task)
+    monitor_task(file_bindings.RepositoriesFileApi.sync(file_repo.pulp_href, body).task)
 
     run = subprocess.run(cmd, capture_output=True, check=True)
     out = json.loads(run.stdout)
