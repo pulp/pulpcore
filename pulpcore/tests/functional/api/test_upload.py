@@ -44,7 +44,6 @@ def pulpcore_upload_chunks(
     uploads_api_client,
     artifacts_api_client,
     gen_object_with_cleanup,
-    tasks_api_client,
     monitor_task,
 ):
     """Upload file in chunks."""

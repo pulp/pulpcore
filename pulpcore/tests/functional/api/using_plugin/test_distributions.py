@@ -16,7 +16,7 @@ def test_crud_publication_distribution(
     file_content_api_client,
     file_repo,
     file_remote_ssl_factory,
-    file_repository_api_client,
+    file_bindings,
     file_repository_version_api_client,
     file_publication_api_client,
     basic_manifest_path,
@@ -28,17 +28,17 @@ def test_crud_publication_distribution(
     # Create a remote and sync from it to create the first repository version
     remote = file_remote_ssl_factory(manifest_path=basic_manifest_path, policy="on_demand")
     body = RepositorySyncURL(remote=remote.pulp_href)
-    monitor_task(file_repository_api_client.sync(file_repo.pulp_href, body).task)
+    monitor_task(file_bindings.RepositoriesFileApi.sync(file_repo.pulp_href, body).task)
 
     # Remove content to create two more repository versions
-    first_repo_version_href = file_repository_api_client.read(
+    first_repo_version_href = file_bindings.RepositoriesFileApi.read(
         file_repo.pulp_href
     ).latest_version_href
     v1_content = file_content_api_client.list(repository_version=first_repo_version_href).results
 
     for i in range(2):
         monitor_task(
-            file_repository_api_client.modify(
+            file_bindings.RepositoriesFileApi.modify(
                 file_repo.pulp_href, {"remove_content_units": [v1_content[i].pulp_href]}
             ).task
         )
@@ -165,7 +165,7 @@ def test_distribution_filtering(
     file_distribution_api_client,
     file_remote_factory,
     file_random_content_unit,
-    file_repository_api_client,
+    file_bindings,
     file_repository_factory,
     file_publication_api_client,
     gen_object_with_cleanup,
@@ -179,7 +179,7 @@ def test_distribution_filtering(
         repo_manifest_path = write_3_iso_file_fixture_data_factory(str(uuid4()))
         remote = file_remote_factory(manifest_path=repo_manifest_path, policy="on_demand")
         body = RepositorySyncURL(remote=remote.pulp_href)
-        task_response = file_repository_api_client.sync(repo.pulp_href, body).task
+        task_response = file_bindings.RepositoriesFileApi.sync(repo.pulp_href, body).task
         version_href = monitor_task(task_response).created_resources[0]
         content = file_content_api_client.list(repository_version_added=version_href).results[0]
         return repo, content
@@ -226,7 +226,7 @@ def test_distribution_filtering(
     # add new content to the first repository to see whether the distribution filtering correctly
     # traverses to the latest publication concerning the repository under the question that should
     # contain the content
-    response = file_repository_api_client.modify(
+    response = file_bindings.RepositoriesFileApi.modify(
         repo1.pulp_href,
         {"remove_content_units": [], "add_content_units": [content2.pulp_href]},
     )

@@ -40,6 +40,21 @@ except ImportError:
             self.task_group = task_group
 
 
+class BindingsNamespace:
+    def __init__(self, module, client):
+        self.module = module
+        self.client = client
+        self.ApiException = self.module.exceptions.ApiException
+
+    def __getattr__(self, name):
+        # __getattr__ is only consulted if nothing is found in __dict__.
+        assert name.endswith("Api")
+
+        api_object = getattr(self.module, name)(self.client)
+        self.__dict__[name] = api_object
+        return api_object
+
+
 @dataclass
 class MockDownload:
     """Class for representing a downloaded file."""

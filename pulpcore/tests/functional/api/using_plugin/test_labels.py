@@ -2,8 +2,8 @@ import pytest
 
 
 @pytest.fixture
-def label_access_policy(access_policies_api_client):
-    orig_access_policy = access_policies_api_client.list(
+def label_access_policy(pulpcore_bindings):
+    orig_access_policy = pulpcore_bindings.AccessPoliciesApi.list(
         viewset_name="repositories/file/file"
     ).results[0]
     new_statements = orig_access_policy.statements.copy()
@@ -18,32 +18,32 @@ def label_access_policy(access_policies_api_client):
             "principal": "authenticated",
         }
     )
-    access_policies_api_client.partial_update(
+    pulpcore_bindings.AccessPoliciesApi.partial_update(
         orig_access_policy.pulp_href, {"statements": new_statements}
     )
     yield
     if orig_access_policy.customized:
-        access_policies_api_client.partial_update(
+        pulpcore_bindings.AccessPoliciesApi.partial_update(
             orig_access_policy.pulp_href, {"statements": orig_access_policy.statements}
         )
     else:
-        access_policies_api_client.reset(orig_access_policy.pulp_href)
+        pulpcore_bindings.AccessPoliciesApi.reset(orig_access_policy.pulp_href)
 
 
 @pytest.mark.parallel
-def test_set_label(label_access_policy, file_repository_api_client, file_repository_factory):
+def test_set_label(label_access_policy, file_bindings, file_repository_factory):
     repository = file_repository_factory()
     assert repository.pulp_labels == {}
 
-    file_repository_api_client.set_label(repository.pulp_href, {"key": "a", "value": None})
-    file_repository_api_client.set_label(repository.pulp_href, {"key": "b", "value": ""})
-    file_repository_api_client.set_label(repository.pulp_href, {"key": "c", "value": "val1"})
-    file_repository_api_client.set_label(repository.pulp_href, {"key": "d", "value": "val2"})
-    file_repository_api_client.set_label(repository.pulp_href, {"key": "e", "value": "val3"})
-    file_repository_api_client.set_label(repository.pulp_href, {"key": "c", "value": "val4"})
-    file_repository_api_client.set_label(repository.pulp_href, {"key": "d", "value": None})
+    file_bindings.RepositoriesFileApi.set_label(repository.pulp_href, {"key": "a", "value": None})
+    file_bindings.RepositoriesFileApi.set_label(repository.pulp_href, {"key": "b", "value": ""})
+    file_bindings.RepositoriesFileApi.set_label(repository.pulp_href, {"key": "c", "value": "val1"})
+    file_bindings.RepositoriesFileApi.set_label(repository.pulp_href, {"key": "d", "value": "val2"})
+    file_bindings.RepositoriesFileApi.set_label(repository.pulp_href, {"key": "e", "value": "val3"})
+    file_bindings.RepositoriesFileApi.set_label(repository.pulp_href, {"key": "c", "value": "val4"})
+    file_bindings.RepositoriesFileApi.set_label(repository.pulp_href, {"key": "d", "value": None})
 
-    repository = file_repository_api_client.read(repository.pulp_href)
+    repository = file_bindings.RepositoriesFileApi.read(repository.pulp_href)
     assert repository.pulp_labels == {
         "a": None,
         "b": "",
@@ -52,9 +52,9 @@ def test_set_label(label_access_policy, file_repository_api_client, file_reposit
         "e": "val3",
     }
 
-    file_repository_api_client.unset_label(repository.pulp_href, {"key": "e"})
+    file_bindings.RepositoriesFileApi.unset_label(repository.pulp_href, {"key": "e"})
 
-    repository = file_repository_api_client.read(repository.pulp_href)
+    repository = file_bindings.RepositoriesFileApi.read(repository.pulp_href)
     assert repository.pulp_labels == {
         "a": None,
         "b": "",

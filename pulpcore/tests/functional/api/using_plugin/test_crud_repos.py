@@ -14,7 +14,7 @@ from pulpcore.tests.functional.utils import download_file
 
 @pytest.mark.parallel
 def test_crud_repo_full_workflow(
-    file_repository_api_client,
+    file_bindings,
     file_repository_factory,
     file_remote_factory,
     basic_manifest_path,
@@ -25,7 +25,7 @@ def test_crud_repo_full_workflow(
 
     # Try to create another with the same name
     with pytest.raises(ApiException) as e:
-        file_repository_api_client.create({"name": repo.name})
+        file_bindings.RepositoriesFileApi.create({"name": repo.name})
 
     assert e.value.status == 400
     error_body = json.loads(e.value.body)
@@ -33,13 +33,13 @@ def test_crud_repo_full_workflow(
     assert "This field must be unique." in error_body["name"]
 
     # Test reading the repository
-    read_repo = file_repository_api_client.read(repo.pulp_href).to_dict()
+    read_repo = file_bindings.RepositoriesFileApi.read(repo.pulp_href).to_dict()
     for key, val in repo.to_dict().items():
         assert key in read_repo
         assert getattr(repo, key) == read_repo[key]
 
     # Read a repository by its href providing specific field list.
-    config = file_repository_api_client.api_client.configuration
+    config = file_bindings.RepositoriesFileApi.api_client.configuration
     auth = BasicAuth(login=config.username, password=config.password)
     full_href = urljoin(config.host, repo.pulp_href)
     for fields in [
@@ -57,25 +57,27 @@ def test_crud_repo_full_workflow(
     assert "name" not in response_fields
 
     # Read the repository by its name.
-    page = file_repository_api_client.list(name=repo.name)
+    page = file_bindings.RepositoriesFileApi.list(name=repo.name)
     assert len(page.results) == 1
     for key, val in repo.to_dict().items():
         assert getattr(page.results[0], key) == val
 
     # Ensure name is displayed when listing repositories.
-    for read_repo in file_repository_api_client.list().results:
+    for read_repo in file_bindings.RepositoriesFileApi.list().results:
         assert read_repo.name is not None
 
     def _do_update_attr(attr, partial=False):
         """Update a repository attribute."""
         body = {} if partial else repo.to_dict()
-        function = getattr(file_repository_api_client, "partial_update" if partial else "update")
+        function = getattr(
+            file_bindings.RepositoriesFileApi, "partial_update" if partial else "update"
+        )
         string = str(uuid4())
         body[attr] = string
         response = function(repo.pulp_href, body)
         monitor_task(response.task)
         # verify the update
-        read_repo = file_repository_api_client.read(repo.pulp_href)
+        read_repo = file_bindings.RepositoriesFileApi.read(repo.pulp_href)
         assert string == getattr(read_repo, attr)
 
     # Update a repository's name using HTTP PUT.
@@ -95,33 +97,33 @@ def test_crud_repo_full_workflow(
 
     # verify that syncing with no remote raises an error
     with pytest.raises(ApiException):
-        file_repository_api_client.sync(repo.pulp_href, {})
+        file_bindings.RepositoriesFileApi.sync(repo.pulp_href, {})
 
     # test setting the remote on the repo
-    response = file_repository_api_client.partial_update(
+    response = file_bindings.RepositoriesFileApi.partial_update(
         repo.pulp_href, {"remote": remote.pulp_href}
     )
     monitor_task(response.task)
 
     # test syncing without a remote
-    response = file_repository_api_client.sync(repo.pulp_href, {})
+    response = file_bindings.RepositoriesFileApi.sync(repo.pulp_href, {})
     monitor_task(response.task)
 
-    read_repo = file_repository_api_client.read(repo.pulp_href)
+    read_repo = file_bindings.RepositoriesFileApi.read(repo.pulp_href)
     assert read_repo.latest_version_href == f"{repo.pulp_href}versions/1/"
 
     # Delete a repository.
-    response = file_repository_api_client.delete(repo.pulp_href)
+    response = file_bindings.RepositoriesFileApi.delete(repo.pulp_href)
     monitor_task(response.task)
 
     # verify the delete
     with pytest.raises(ApiException):
-        file_repository_api_client.read(repo.pulp_href)
+        file_bindings.RepositoriesFileApi.read(repo.pulp_href)
 
     # Attempt to create repository passing extraneous invalid parameter.
     # Assert response returns an error 400 including ["Unexpected field"].
     with pytest.raises(ApiException) as e:
-        file_repository_api_client.create({"name": str(uuid4()), "foo": "bar"})
+        file_bindings.RepositoriesFileApi.create({"name": str(uuid4()), "foo": "bar"})
 
     assert e.value.status == 400
     error_body = json.loads(e.value.body)
@@ -327,7 +329,7 @@ def test_file_remote_url_validation(file_remote_api_client, gen_object_with_clea
 
 @pytest.mark.parallel
 def test_repository_remote_filter(
-    file_repository_api_client,
+    file_bindings,
     file_repository_factory,
     gen_object_with_cleanup,
     file_remote_factory,
@@ -346,30 +348,30 @@ def test_repository_remote_filter(
     name_in = [repo1.name, repo2.name, repo3.name, repo4.name]
 
     # Check that name__in filter is working
-    response = file_repository_api_client.list(name__in=name_in)
+    response = file_bindings.RepositoriesFileApi.list(name__in=name_in)
     assert response.count == 4
 
     # Test that supplying a specific remote only returns repositories with that remote
-    response = file_repository_api_client.list(remote=remote1.pulp_href)
+    response = file_bindings.RepositoriesFileApi.list(remote=remote1.pulp_href)
     assert response.count == 1
     assert response.results[0].pulp_href == repo2.pulp_href
 
-    response = file_repository_api_client.list(remote=remote2.pulp_href)
+    response = file_bindings.RepositoriesFileApi.list(remote=remote2.pulp_href)
     assert response.count == 2
     assert {r.pulp_href for r in response.results} == {repo3.pulp_href, repo4.pulp_href}
 
-    response = file_repository_api_client.list(remote=remote3.pulp_href)
+    response = file_bindings.RepositoriesFileApi.list(remote=remote3.pulp_href)
     assert response.count == 0
 
     # Test that supplying 'null' will only show repositories without a remote
-    response = file_repository_api_client.list(remote="null", name__in=name_in)
+    response = file_bindings.RepositoriesFileApi.list(remote="null", name__in=name_in)
     assert response.count == 1
     assert response.results[0].pulp_href == repo1.pulp_href
 
     # Test that supplying a base URI of a remote will show all repositories with similar remotes
     # Using a constant here would be nice, but our URIs are dependent on the machine's settings
     BASE_URI = remote1.pulp_href[:-37]
-    response = file_repository_api_client.list(remote=BASE_URI, name__in=name_in)
+    response = file_bindings.RepositoriesFileApi.list(remote=BASE_URI, name__in=name_in)
     assert response.count == 3
     assert {r.pulp_href for r in response.results} == {
         repo2.pulp_href,

@@ -10,7 +10,7 @@ from pulpcore.tests.functional.utils import get_files_in_manifest, download_file
 
 @pytest.mark.parallel
 def test_reclaim_immediate_content(
-    file_repository_api_client,
+    file_bindings,
     file_repo,
     repositories_reclaim_space_api_client,
     artifacts_api_client,
@@ -26,7 +26,9 @@ def test_reclaim_immediate_content(
 
     # sync the repository with immediate policy
     repository_sync_data = RepositorySyncURL(remote=remote.pulp_href)
-    sync_response = file_repository_api_client.sync(file_repo.pulp_href, repository_sync_data)
+    sync_response = file_bindings.RepositoriesFileApi.sync(
+        file_repo.pulp_href, repository_sync_data
+    )
     monitor_task(sync_response.task)
 
     # reclaim disk space
@@ -43,7 +45,9 @@ def test_reclaim_immediate_content(
 
     # sync repo again
     repository_sync_data = RepositorySyncURL(remote=remote.pulp_href)
-    sync_response = file_repository_api_client.sync(file_repo.pulp_href, repository_sync_data)
+    sync_response = file_bindings.RepositoriesFileApi.sync(
+        file_repo.pulp_href, repository_sync_data
+    )
     monitor_task(sync_response.task)
 
     # assert re-sync populated missing artifacts
@@ -54,7 +58,7 @@ def test_reclaim_immediate_content(
 
 @pytest.fixture
 def sync_repository_distribution(
-    file_repository_api_client,
+    file_bindings,
     file_distribution_factory,
     file_remote_ssl_factory,
     file_repo_with_auto_publish,
@@ -65,7 +69,7 @@ def sync_repository_distribution(
         remote = file_remote_ssl_factory(manifest_path=basic_manifest_path, policy=policy)
 
         repository_sync_data = RepositorySyncURL(remote=remote.pulp_href)
-        sync_response = file_repository_api_client.sync(
+        sync_response = file_bindings.RepositoriesFileApi.sync(
             file_repo_with_auto_publish.pulp_href, repository_sync_data
         )
         monitor_task(sync_response.task)

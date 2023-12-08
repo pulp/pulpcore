@@ -10,8 +10,6 @@ import time
 import uuid
 import warnings
 
-import trustme
-import proxy
 import pytest
 
 from aiohttp import web
@@ -20,58 +18,14 @@ from dataclasses import dataclass
 from packaging.version import parse as parse_version
 from time import sleep
 from yarl import URL
-from opentelemetry.proto.trace.v1.trace_pb2 import TracesData
 
 from pulpcore.tests.functional.utils import (
     SLEEP_TIME,
     TASK_TIMEOUT,
+    BindingsNamespace,
     PulpTaskError,
     PulpTaskGroupError,
     add_recording_route,
-)
-
-from pulpcore.client.pulpcore import (
-    Configuration,
-    AccessPoliciesApi,
-    ApiClient,
-    ApiException,
-    ArtifactsApi,
-    ContentApi,
-    ContentguardsApi,
-    ContentguardsRbacApi,
-    ContentguardsCompositeApi,
-    ContentguardsContentRedirectApi,
-    ContentguardsHeaderApi,
-    DomainsApi,
-    DistributionsApi,
-    ExportersPulpApi,
-    ExportersPulpExportsApi,
-    ExportersFilesystemApi,
-    ExportersFilesystemExportsApi,
-    GroupsApi,
-    GroupsRolesApi,
-    GroupsUsersApi,
-    ImportersPulpApi,
-    ImportersPulpImportsApi,
-    ImportersPulpImportCheckApi,
-    OrphansCleanupApi,
-    PublicationsApi,
-    RemotesApi,
-    RepairApi,
-    RepositoriesApi,
-    RepositoryVersionsApi,
-    RepositoriesReclaimSpaceApi,
-    RolesApi,
-    SigningServicesApi,
-    StatusApi,
-    TaskGroupsApi,
-    TasksApi,
-    TaskSchedulesApi,
-    UploadsApi,
-    UpstreamPulpsApi,
-    UsersApi,
-    UsersRolesApi,
-    WorkersApi,
 )
 
 from .gpg_ascii_armor_signing_service import (
@@ -93,19 +47,6 @@ class PulpTaskTimeoutError(Exception):
     def __init__(self, awaitable):
         super().__init__(self, f"Timeout: {awaitable}")
         self.awaitable = awaitable
-
-
-def get_bindings_config():
-    api_protocol = os.environ.get("API_PROTOCOL", "https")
-    api_host = os.environ.get("API_HOST", "pulp")
-    api_port = os.environ.get("API_PORT", "443")
-    configuration = Configuration(
-        host=f"{api_protocol}://{api_host}:{api_port}",
-        username=os.environ.get("ADMIN_USERNAME", "admin"),
-        password=os.environ.get("ADMIN_PASSWORD", "password"),
-    )
-    configuration.safe_chars_for_path_param = "/"
-    return configuration
 
 
 def pytest_configure(config):
@@ -139,12 +80,23 @@ def fixtures_cfg():
     return FixturesConfig()
 
 
-# API Clients
+# API Bindings fixtures
 
 
 @pytest.fixture(scope="session")
 def bindings_cfg():
-    return get_bindings_config()
+    from pulpcore.client.pulpcore import Configuration
+
+    api_protocol = os.environ.get("API_PROTOCOL", "https")
+    api_host = os.environ.get("API_HOST", "pulp")
+    api_port = os.environ.get("API_PORT", "443")
+    configuration = Configuration(
+        host=f"{api_protocol}://{api_host}:{api_port}",
+        username=os.environ.get("ADMIN_USERNAME", "admin"),
+        password=os.environ.get("ADMIN_PASSWORD", "password"),
+    )
+    configuration.safe_chars_for_path_param = "/"
+    return configuration
 
 
 @pytest.fixture(scope="session")
@@ -169,202 +121,334 @@ def _patch_cid_user_agent(_api_client_set, cid, monkeypatch):
 
 
 @pytest.fixture(scope="session")
-def pulpcore_client(_api_client_set, bindings_cfg):
-    api_client = ApiClient(bindings_cfg)
-    _api_client_set.add(api_client)
-    yield api_client
-    _api_client_set.remove(api_client)
+def pulpcore_bindings(_api_client_set, bindings_cfg):
+    """
+    A namespace providing preconfigured pulpcore api clients.
+
+    e.g. `pulpcore_bindings.WorkersApi.list()`.
+    """
+    from pulpcore.client import pulpcore as pulpcore_bindings_module
+
+    pulpcore_client = pulpcore_bindings_module.ApiClient(bindings_cfg)
+    _api_client_set.add(pulpcore_client)
+    yield BindingsNamespace(pulpcore_bindings_module, pulpcore_client)
+    _api_client_set.remove(pulpcore_client)
+
+
+# TODO Deprecate all the api_client fixtures below.
 
 
 @pytest.fixture(scope="session")
-def access_policies_api_client(pulpcore_client):
-    return AccessPoliciesApi(pulpcore_client)
+def pulpcore_client(pulpcore_bindings):
+    warnings.warn(
+        "This fixture is deprecated. Use `pulpcore_bindings.client` instead.", DeprecationWarning
+    )
+    return pulpcore_bindings.client
 
 
 @pytest.fixture(scope="session")
-def tasks_api_client(pulpcore_client):
-    return TasksApi(pulpcore_client)
+def access_policies_api_client(pulpcore_bindings):
+    warnings.warn(
+        "This fixture is deprecated. Use `pulpcore_bindings` instead.", DeprecationWarning
+    )
+    return pulpcore_bindings.AccessPoliciesApi
 
 
 @pytest.fixture(scope="session")
-def task_groups_api_client(pulpcore_client):
-    return TaskGroupsApi(pulpcore_client)
+def tasks_api_client(pulpcore_bindings):
+    warnings.warn(
+        "This fixture is deprecated. Use `pulpcore_bindings` instead.", DeprecationWarning
+    )
+    return pulpcore_bindings.TasksApi
 
 
 @pytest.fixture(scope="session")
-def workers_api_client(pulpcore_client):
-    return WorkersApi(pulpcore_client)
+def task_groups_api_client(pulpcore_bindings):
+    warnings.warn(
+        "This fixture is deprecated. Use `pulpcore_bindings` instead.", DeprecationWarning
+    )
+    return pulpcore_bindings.TaskGroupsApi
 
 
 @pytest.fixture(scope="session")
-def artifacts_api_client(pulpcore_client):
-    return ArtifactsApi(pulpcore_client)
+def workers_api_client(pulpcore_bindings):
+    warnings.warn(
+        "This fixture is deprecated. Use `pulpcore_bindings` instead.", DeprecationWarning
+    )
+    return pulpcore_bindings.WorkersApi
 
 
 @pytest.fixture(scope="session")
-def uploads_api_client(pulpcore_client):
-    return UploadsApi(pulpcore_client)
+def artifacts_api_client(pulpcore_bindings):
+    warnings.warn(
+        "This fixture is deprecated. Use `pulpcore_bindings` instead.", DeprecationWarning
+    )
+    return pulpcore_bindings.ArtifactsApi
 
 
 @pytest.fixture(scope="session")
-def task_schedules_api_client(pulpcore_client):
-    return TaskSchedulesApi(pulpcore_client)
+def uploads_api_client(pulpcore_bindings):
+    warnings.warn(
+        "This fixture is deprecated. Use `pulpcore_bindings` instead.", DeprecationWarning
+    )
+    return pulpcore_bindings.UploadsApi
 
 
 @pytest.fixture(scope="session")
-def status_api_client(pulpcore_client):
-    return StatusApi(pulpcore_client)
+def task_schedules_api_client(pulpcore_bindings):
+    warnings.warn(
+        "This fixture is deprecated. Use `pulpcore_bindings` instead.", DeprecationWarning
+    )
+    return pulpcore_bindings.TaskSchedulesApi
 
 
 @pytest.fixture(scope="session")
-def groups_api_client(pulpcore_client):
-    return GroupsApi(pulpcore_client)
+def status_api_client(pulpcore_bindings):
+    warnings.warn(
+        "This fixture is deprecated. Use `pulpcore_bindings` instead.", DeprecationWarning
+    )
+    return pulpcore_bindings.StatusApi
 
 
 @pytest.fixture(scope="session")
-def groups_users_api_client(pulpcore_client):
-    return GroupsUsersApi(pulpcore_client)
+def groups_api_client(pulpcore_bindings):
+    warnings.warn(
+        "This fixture is deprecated. Use `pulpcore_bindings` instead.", DeprecationWarning
+    )
+    return pulpcore_bindings.GroupsApi
 
 
 @pytest.fixture(scope="session")
-def groups_roles_api_client(pulpcore_client):
-    return GroupsRolesApi(pulpcore_client)
+def groups_users_api_client(pulpcore_bindings):
+    warnings.warn(
+        "This fixture is deprecated. Use `pulpcore_bindings` instead.", DeprecationWarning
+    )
+    return pulpcore_bindings.GroupsUsersApi
 
 
 @pytest.fixture(scope="session")
-def users_api_client(pulpcore_client):
-    return UsersApi(pulpcore_client)
+def groups_roles_api_client(pulpcore_bindings):
+    warnings.warn(
+        "This fixture is deprecated. Use `pulpcore_bindings` instead.", DeprecationWarning
+    )
+    return pulpcore_bindings.GroupsRolesApi
 
 
 @pytest.fixture(scope="session")
-def users_roles_api_client(pulpcore_client):
-    return UsersRolesApi(pulpcore_client)
+def users_api_client(pulpcore_bindings):
+    warnings.warn(
+        "This fixture is deprecated. Use `pulpcore_bindings` instead.", DeprecationWarning
+    )
+    return pulpcore_bindings.UsersApi
 
 
 @pytest.fixture(scope="session")
-def roles_api_client(pulpcore_client):
+def users_roles_api_client(pulpcore_bindings):
+    warnings.warn(
+        "This fixture is deprecated. Use `pulpcore_bindings` instead.", DeprecationWarning
+    )
+    return pulpcore_bindings.UsersRolesApi
+
+
+@pytest.fixture(scope="session")
+def roles_api_client(pulpcore_bindings):
+    warnings.warn(
+        "This fixture is deprecated. Use `pulpcore_bindings` instead.", DeprecationWarning
+    )
     "Provies the pulp core Roles API client object."
-    return RolesApi(pulpcore_client)
+    return pulpcore_bindings.RolesApi
 
 
 @pytest.fixture(scope="session")
-def content_api_client(pulpcore_client):
-    return ContentApi(pulpcore_client)
+def content_api_client(pulpcore_bindings):
+    warnings.warn(
+        "This fixture is deprecated. Use `pulpcore_bindings` instead.", DeprecationWarning
+    )
+    return pulpcore_bindings.ContentApi
 
 
 @pytest.fixture(scope="session")
-def domains_api_client(pulpcore_client):
-    return DomainsApi(pulpcore_client)
+def domains_api_client(pulpcore_bindings):
+    warnings.warn(
+        "This fixture is deprecated. Use `pulpcore_bindings` instead.", DeprecationWarning
+    )
+    return pulpcore_bindings.DomainsApi
 
 
 @pytest.fixture(scope="session")
-def distributions_api_client(pulpcore_client):
-    return DistributionsApi(pulpcore_client)
+def distributions_api_client(pulpcore_bindings):
+    warnings.warn(
+        "This fixture is deprecated. Use `pulpcore_bindings` instead.", DeprecationWarning
+    )
+    return pulpcore_bindings.DistributionsApi
 
 
 @pytest.fixture(scope="session")
-def remotes_api_client(pulpcore_client):
-    return RemotesApi(pulpcore_client)
+def remotes_api_client(pulpcore_bindings):
+    warnings.warn(
+        "This fixture is deprecated. Use `pulpcore_bindings` instead.", DeprecationWarning
+    )
+    return pulpcore_bindings.RemotesApi
 
 
 @pytest.fixture(scope="session")
-def repositories_api_client(pulpcore_client):
-    return RepositoriesApi(pulpcore_client)
+def repositories_api_client(pulpcore_bindings):
+    warnings.warn(
+        "This fixture is deprecated. Use `pulpcore_bindings` instead.", DeprecationWarning
+    )
+    return pulpcore_bindings.RepositoriesApi
 
 
 @pytest.fixture(scope="session")
-def repository_versions_api_client(pulpcore_client):
-    return RepositoryVersionsApi(pulpcore_client)
+def repository_versions_api_client(pulpcore_bindings):
+    warnings.warn(
+        "This fixture is deprecated. Use `pulpcore_bindings` instead.", DeprecationWarning
+    )
+    return pulpcore_bindings.RepositoryVersionsApi
 
 
 @pytest.fixture(scope="session")
-def publications_api_client(pulpcore_client):
-    return PublicationsApi(pulpcore_client)
+def publications_api_client(pulpcore_bindings):
+    warnings.warn(
+        "This fixture is deprecated. Use `pulpcore_bindings` instead.", DeprecationWarning
+    )
+    return pulpcore_bindings.PublicationsApi
 
 
 @pytest.fixture(scope="session")
-def exporters_pulp_api_client(pulpcore_client):
-    return ExportersPulpApi(pulpcore_client)
+def exporters_pulp_api_client(pulpcore_bindings):
+    warnings.warn(
+        "This fixture is deprecated. Use `pulpcore_bindings` instead.", DeprecationWarning
+    )
+    return pulpcore_bindings.ExportersPulpApi
 
 
 @pytest.fixture(scope="session")
-def exporters_pulp_exports_api_client(pulpcore_client):
-    return ExportersPulpExportsApi(pulpcore_client)
+def exporters_pulp_exports_api_client(pulpcore_bindings):
+    warnings.warn(
+        "This fixture is deprecated. Use `pulpcore_bindings` instead.", DeprecationWarning
+    )
+    return pulpcore_bindings.ExportersPulpExportsApi
 
 
 @pytest.fixture(scope="session")
-def exporters_filesystem_api_client(pulpcore_client):
-    return ExportersFilesystemApi(pulpcore_client)
+def exporters_filesystem_api_client(pulpcore_bindings):
+    warnings.warn(
+        "This fixture is deprecated. Use `pulpcore_bindings` instead.", DeprecationWarning
+    )
+    return pulpcore_bindings.ExportersFilesystemApi
 
 
 @pytest.fixture(scope="session")
-def exporters_filesystem_exports_api_client(pulpcore_client):
-    return ExportersFilesystemExportsApi(pulpcore_client)
+def exporters_filesystem_exports_api_client(pulpcore_bindings):
+    warnings.warn(
+        "This fixture is deprecated. Use `pulpcore_bindings` instead.", DeprecationWarning
+    )
+    return pulpcore_bindings.ExportersFilesystemExportsApi
 
 
 @pytest.fixture(scope="session")
-def importers_pulp_api_client(pulpcore_client):
-    return ImportersPulpApi(pulpcore_client)
+def importers_pulp_api_client(pulpcore_bindings):
+    warnings.warn(
+        "This fixture is deprecated. Use `pulpcore_bindings` instead.", DeprecationWarning
+    )
+    return pulpcore_bindings.ImportersPulpApi
 
 
 @pytest.fixture(scope="session")
-def importers_pulp_imports_api_client(pulpcore_client):
-    return ImportersPulpImportsApi(pulpcore_client)
+def importers_pulp_imports_api_client(pulpcore_bindings):
+    warnings.warn(
+        "This fixture is deprecated. Use `pulpcore_bindings` instead.", DeprecationWarning
+    )
+    return pulpcore_bindings.ImportersPulpImportsApi
 
 
 @pytest.fixture(scope="session")
-def importers_pulp_imports_check_api_client(pulpcore_client):
-    return ImportersPulpImportCheckApi(pulpcore_client)
+def importers_pulp_imports_check_api_client(pulpcore_bindings):
+    warnings.warn(
+        "This fixture is deprecated. Use `pulpcore_bindings` instead.", DeprecationWarning
+    )
+    return pulpcore_bindings.ImportersPulpImportCheckApi
 
 
 @pytest.fixture(scope="session")
-def signing_service_api_client(pulpcore_client):
-    return SigningServicesApi(pulpcore_client)
+def signing_service_api_client(pulpcore_bindings):
+    warnings.warn(
+        "This fixture is deprecated. Use `pulpcore_bindings` instead.", DeprecationWarning
+    )
+    return pulpcore_bindings.SigningServicesApi
 
 
 @pytest.fixture(scope="session")
-def content_guards_api_client(pulpcore_client):
-    return ContentguardsApi(pulpcore_client)
+def content_guards_api_client(pulpcore_bindings):
+    warnings.warn(
+        "This fixture is deprecated. Use `pulpcore_bindings` instead.", DeprecationWarning
+    )
+    return pulpcore_bindings.ContentguardsApi
 
 
 @pytest.fixture(scope="session")
-def rbac_contentguard_api_client(pulpcore_client):
-    return ContentguardsRbacApi(pulpcore_client)
+def rbac_contentguard_api_client(pulpcore_bindings):
+    warnings.warn(
+        "This fixture is deprecated. Use `pulpcore_bindings` instead.", DeprecationWarning
+    )
+    return pulpcore_bindings.ContentguardsRbacApi
 
 
 @pytest.fixture(scope="session")
-def redirect_contentguard_api_client(pulpcore_client):
-    return ContentguardsContentRedirectApi(pulpcore_client)
+def redirect_contentguard_api_client(pulpcore_bindings):
+    warnings.warn(
+        "This fixture is deprecated. Use `pulpcore_bindings` instead.", DeprecationWarning
+    )
+    return pulpcore_bindings.ContentguardsContentRedirectApi
 
 
 @pytest.fixture(scope="session")
-def header_contentguard_api_client(pulpcore_client):
-    return ContentguardsHeaderApi(pulpcore_client)
+def header_contentguard_api_client(pulpcore_bindings):
+    warnings.warn(
+        "This fixture is deprecated. Use `pulpcore_bindings` instead.", DeprecationWarning
+    )
+    return pulpcore_bindings.ContentguardsHeaderApi
 
 
 @pytest.fixture(scope="session")
-def composite_contentguard_api_client(pulpcore_client):
-    return ContentguardsCompositeApi(pulpcore_client)
+def composite_contentguard_api_client(pulpcore_bindings):
+    warnings.warn(
+        "This fixture is deprecated. Use `pulpcore_bindings` instead.", DeprecationWarning
+    )
+    return pulpcore_bindings.ContentguardsCompositeApi
 
 
 @pytest.fixture(scope="session")
-def orphans_cleanup_api_client(pulpcore_client):
-    return OrphansCleanupApi(pulpcore_client)
+def orphans_cleanup_api_client(pulpcore_bindings):
+    warnings.warn(
+        "This fixture is deprecated. Use `pulpcore_bindings` instead.", DeprecationWarning
+    )
+    return pulpcore_bindings.OrphansCleanupApi
 
 
 @pytest.fixture(scope="session")
-def repositories_reclaim_space_api_client(pulpcore_client):
-    return RepositoriesReclaimSpaceApi(pulpcore_client)
+def repositories_reclaim_space_api_client(pulpcore_bindings):
+    warnings.warn(
+        "This fixture is deprecated. Use `pulpcore_bindings` instead.", DeprecationWarning
+    )
+    return pulpcore_bindings.RepositoriesReclaimSpaceApi
 
 
 @pytest.fixture(scope="session")
-def repair_api_client(pulpcore_client):
-    return RepairApi(pulpcore_client)
+def repair_api_client(pulpcore_bindings):
+    warnings.warn(
+        "This fixture is deprecated. Use `pulpcore_bindings` instead.", DeprecationWarning
+    )
+    return pulpcore_bindings.RepairApi
 
 
 @pytest.fixture(scope="session")
-def upstream_pulp_api_client(pulpcore_client):
-    return UpstreamPulpsApi(pulpcore_client)
+def upstream_pulp_api_client(pulpcore_bindings):
+    warnings.warn(
+        "This fixture is deprecated. Use `pulpcore_bindings` instead.", DeprecationWarning
+    )
+    return pulpcore_bindings.UpstreamPulpsApi
 
 
 # Threaded local fixture servers
@@ -514,8 +598,15 @@ def gen_fixture_server(gen_threaded_aiohttp_server):
 # Proxy Fixtures
 
 
+@pytest.fixture(scope="session")
+def _proxy_module():
+    import proxy
+
+    return proxy
+
+
 @pytest.fixture
-def http_proxy(fixtures_cfg, unused_port):
+def http_proxy(_proxy_module, fixtures_cfg, unused_port):
     host = fixtures_cfg.aiohttp_fixtures_origin
     port = unused_port()
     proxypy_args = [
@@ -529,12 +620,12 @@ def http_proxy(fixtures_cfg, unused_port):
 
     proxy_data = ProxyData(host=host, port=port)
 
-    with proxy.Proxy(input_args=proxypy_args):
+    with _proxy_module.Proxy(input_args=proxypy_args):
         yield proxy_data
 
 
 @pytest.fixture
-def http_proxy_with_auth(fixtures_cfg, unused_port):
+def http_proxy_with_auth(_proxy_module, fixtures_cfg, unused_port):
     host = fixtures_cfg.aiohttp_fixtures_origin
     port = unused_port()
 
@@ -554,12 +645,12 @@ def http_proxy_with_auth(fixtures_cfg, unused_port):
 
     proxy_data = ProxyData(host=host, port=port, username=username, password=password)
 
-    with proxy.Proxy(input_args=proxypy_args):
+    with _proxy_module.Proxy(input_args=proxypy_args):
         yield proxy_data
 
 
 @pytest.fixture
-def https_proxy(fixtures_cfg, unused_port, proxy_tls_certificate_pem_path):
+def https_proxy(_proxy_module, fixtures_cfg, unused_port, proxy_tls_certificate_pem_path):
     host = fixtures_cfg.aiohttp_fixtures_origin
     port = unused_port()
 
@@ -578,7 +669,7 @@ def https_proxy(fixtures_cfg, unused_port, proxy_tls_certificate_pem_path):
 
     proxy_data = ProxyData(host=host, port=port, ssl=True)  # TODO update me
 
-    with proxy.Proxy(input_args=proxypy_args):
+    with _proxy_module.Proxy(input_args=proxypy_args):
         yield proxy_data
 
 
@@ -610,8 +701,15 @@ class ProxyData:
 
 
 @pytest.fixture(scope="session")
-def tls_certificate_authority():
-    return trustme.CA()
+def _trustme_module():
+    import trustme
+
+    return trustme
+
+
+@pytest.fixture(scope="session")
+def tls_certificate_authority(_trustme_module):
+    return _trustme_module.CA()
 
 
 @pytest.fixture
@@ -630,8 +728,8 @@ def tls_certificate(fixtures_cfg, tls_certificate_authority):
 
 
 @pytest.fixture(scope="session")
-def proxy_tls_certificate_authority():
-    return trustme.CA()
+def proxy_tls_certificate_authority(_trustme_module):
+    return _trustme_module.CA()
 
 
 @pytest.fixture
@@ -651,8 +749,8 @@ def proxy_tls_certificate_pem_path(proxy_tls_certificate):
 
 
 @pytest.fixture(scope="session")
-def client_tls_certificate_authority():
-    return trustme.CA()
+def client_tls_certificate_authority(_trustme_module):
+    return _trustme_module.CA()
 
 
 @pytest.fixture
@@ -839,7 +937,7 @@ def delete_orphans_pre(request, orphans_cleanup_api_client, monitor_task):
 
 
 @pytest.fixture(scope="session")
-def monitor_task(tasks_api_client, pulp_domain_enabled):
+def monitor_task(pulpcore_bindings, pulp_domain_enabled):
     """
     Wait for a task to reach a final state.
 
@@ -852,8 +950,8 @@ def monitor_task(tasks_api_client, pulp_domain_enabled):
         task_timeout = int(timeout / SLEEP_TIME)
         for dummy in range(task_timeout):
             try:
-                task = tasks_api_client.read(task_href)
-            except ApiException as e:
+                task = pulpcore_bindings.TasksApi.read(task_href)
+            except pulpcore_bindings.ApiException as e:
                 if pulp_domain_enabled and e.status == 404:
                     # Task's domain has been deleted, nothing to show anymore
                     return {}
@@ -874,7 +972,7 @@ def monitor_task(tasks_api_client, pulp_domain_enabled):
 
 
 @pytest.fixture(scope="session")
-def monitor_task_group(task_groups_api_client):
+def monitor_task_group(pulpcore_bindings):
     """
     Wait for a task group to reach a final state.
 
@@ -886,7 +984,7 @@ def monitor_task_group(task_groups_api_client):
     def _monitor_task_group(task_group_href, timeout=TASK_TIMEOUT):
         task_timeout = int(timeout / SLEEP_TIME)
         for dummy in range(task_timeout):
-            task_group = task_groups_api_client.read(task_group_href)
+            task_group = pulpcore_bindings.TaskGroupsApi.read(task_group_href)
 
             if (task_group.waiting + task_group.running + task_group.canceling) == 0:
                 break

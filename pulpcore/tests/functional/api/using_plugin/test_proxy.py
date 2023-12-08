@@ -7,10 +7,10 @@ from pulpcore.client.pulp_file import (
 
 
 def _run_basic_sync_and_assert(
-    remote, file_repo, file_repository_api_client, file_content_api_client, monitor_task
+    remote, file_repo, file_bindings, file_content_api_client, monitor_task
 ):
     body = RepositorySyncURL(remote=remote.pulp_href)
-    monitor_task(file_repository_api_client.sync(file_repo.pulp_href, body).task)
+    monitor_task(file_bindings.RepositoriesFileApi.sync(file_repo.pulp_href, body).task)
 
     # Check content is present, but no artifacts are there
     content_response = file_content_api_client.list(
@@ -25,7 +25,7 @@ def _run_basic_sync_and_assert(
 def test_sync_http_through_http_proxy(
     file_remote_factory,
     file_repo,
-    file_repository_api_client,
+    file_bindings,
     file_content_api_client,
     http_proxy,
     basic_manifest_path,
@@ -41,7 +41,7 @@ def test_sync_http_through_http_proxy(
     _run_basic_sync_and_assert(
         remote_on_demand,
         file_repo,
-        file_repository_api_client,
+        file_bindings,
         file_content_api_client,
         monitor_task,
     )
@@ -51,7 +51,7 @@ def test_sync_http_through_http_proxy(
 def test_sync_https_through_http_proxy(
     file_remote_ssl_factory,
     file_repo,
-    file_repository_api_client,
+    file_bindings,
     file_content_api_client,
     http_proxy,
     basic_manifest_path,
@@ -67,7 +67,7 @@ def test_sync_https_through_http_proxy(
     _run_basic_sync_and_assert(
         remote_on_demand,
         file_repo,
-        file_repository_api_client,
+        file_bindings,
         file_content_api_client,
         monitor_task,
     )
@@ -77,7 +77,7 @@ def test_sync_https_through_http_proxy(
 def test_sync_https_through_http_proxy_with_auth(
     file_remote_ssl_factory,
     file_repo,
-    file_repository_api_client,
+    file_bindings,
     file_content_api_client,
     http_proxy_with_auth,
     basic_manifest_path,
@@ -98,7 +98,7 @@ def test_sync_https_through_http_proxy_with_auth(
     _run_basic_sync_and_assert(
         remote_on_demand,
         file_repo,
-        file_repository_api_client,
+        file_bindings,
         file_content_api_client,
         monitor_task,
     )
@@ -108,7 +108,7 @@ def test_sync_https_through_http_proxy_with_auth(
 def test_sync_https_through_http_proxy_with_auth_but_auth_not_configured(
     file_remote_ssl_factory,
     file_repo,
-    file_repository_api_client,
+    file_bindings,
     file_content_api_client,
     http_proxy_with_auth,
     basic_manifest_path,
@@ -128,7 +128,7 @@ def test_sync_https_through_http_proxy_with_auth_but_auth_not_configured(
         _run_basic_sync_and_assert(
             remote_on_demand,
             file_repo,
-            file_repository_api_client,
+            file_bindings,
             file_content_api_client,
             monitor_task,
         )
@@ -140,7 +140,7 @@ def test_sync_https_through_http_proxy_with_auth_but_auth_not_configured(
 def test_sync_http_through_https_proxy(
     file_remote_factory,
     file_repo,
-    file_repository_api_client,
+    file_bindings,
     file_content_api_client,
     https_proxy,
     basic_manifest_path,
@@ -159,7 +159,7 @@ def test_sync_http_through_https_proxy(
     _run_basic_sync_and_assert(
         remote_on_demand,
         file_repo,
-        file_repository_api_client,
+        file_bindings,
         file_content_api_client,
         monitor_task,
     )

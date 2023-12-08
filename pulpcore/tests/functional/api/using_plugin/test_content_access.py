@@ -18,7 +18,7 @@ def test_file_remote_on_demand(
     file_fixtures_root,
     file_repo_with_auto_publish,
     file_remote_api_client,
-    file_repository_api_client,
+    file_bindings,
     gen_object_with_cleanup,
     monitor_task,
 ):
@@ -32,8 +32,10 @@ def test_file_remote_on_demand(
     remote = gen_object_with_cleanup(file_remote_api_client, kwargs)
     # Sync from the remote
     body = RepositorySyncURL(remote=remote.pulp_href)
-    monitor_task(file_repository_api_client.sync(file_repo_with_auto_publish.pulp_href, body).task)
-    repo = file_repository_api_client.read(file_repo_with_auto_publish.pulp_href)
+    monitor_task(
+        file_bindings.RepositoriesFileApi.sync(file_repo_with_auto_publish.pulp_href, body).task
+    )
+    repo = file_bindings.RepositoriesFileApi.read(file_repo_with_auto_publish.pulp_href)
     # Create a distribution from the publication
     distribution = file_distribution_factory(repository=repo.pulp_href)
     # attempt to download_file() a file

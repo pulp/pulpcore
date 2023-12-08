@@ -128,7 +128,7 @@ def test_active_domain_deletion(domains_api_client, rbac_contentguard_api_client
 @pytest.mark.parallel
 def test_orphan_domain_deletion(
     domains_api_client,
-    file_repository_api_client,
+    file_bindings,
     file_content_api_client,
     gen_object_with_cleanup,
     monitor_task,
@@ -145,7 +145,7 @@ def test_orphan_domain_deletion(
     domain = gen_object_with_cleanup(domains_api_client, body)
 
     repository = gen_object_with_cleanup(
-        file_repository_api_client, {"name": str(uuid.uuid4())}, pulp_domain=domain.name
+        file_bindings.RepositoriesFileApi, {"name": str(uuid.uuid4())}, pulp_domain=domain.name
     )
     new_file = tmp_path / "new_file"
     new_file.write_text("Test file")
@@ -166,7 +166,7 @@ def test_orphan_domain_deletion(
     assert e.value.task.state == "failed"
 
     # Delete the repository
-    file_repository_api_client.delete(repository.pulp_href)
+    file_bindings.RepositoriesFileApi.delete(repository.pulp_href)
 
     # Now succeed in deleting the domain
     response = domains_api_client.delete(domain.pulp_href)

@@ -11,7 +11,7 @@ from pulpcore.tests.functional.utils import PulpTaskGroupError
 def test_replication(
     domain_factory,
     bindings_cfg,
-    upstream_pulp_api_client,
+    pulpcore_bindings,
     monitor_task_group,
     pulp_settings,
     gen_object_with_cleanup,
@@ -35,10 +35,10 @@ def test_replication(
         "password": bindings_cfg.password,
     }
     upstream_pulp = gen_object_with_cleanup(
-        upstream_pulp_api_client, upstream_pulp_body, pulp_domain=non_default_domain.name
+        pulpcore_bindings.UpstreamPulpsApi, upstream_pulp_body, pulp_domain=non_default_domain.name
     )
     # Run the replicate task and assert that all tasks successfully complete.
-    response = upstream_pulp_api_client.replicate(upstream_pulp.pulp_href)
+    response = pulpcore_bindings.UpstreamPulpsApi.replicate(upstream_pulp.pulp_href)
     task_group = monitor_task_group(response.task_group)
     for task in task_group.tasks:
         assert task.state == "completed"
@@ -48,11 +48,10 @@ def test_replication(
 def test_replication_with_wrong_ca_cert(
     domain_factory,
     bindings_cfg,
-    upstream_pulp_api_client,
+    pulpcore_bindings,
     monitor_task_group,
     pulp_settings,
     gen_object_with_cleanup,
-    tasks_api_client,
 ):
     # This test assures that setting ca_cert on an Upstream Pulp causes that CA bundle to be used
     # to verify the certificate presented by the Upstream Pulp's REST API. The replication tasks
@@ -103,21 +102,23 @@ SQiVeWgI8fDCpQ/6KiI7F3el8nEc5w==
 """,
     }
     upstream_pulp = gen_object_with_cleanup(
-        upstream_pulp_api_client, upstream_pulp_body, pulp_domain=non_default_domain.name
+        pulpcore_bindings.UpstreamPulpsApi, upstream_pulp_body, pulp_domain=non_default_domain.name
     )
     # Run the replicate task and assert that it fails with SSLError
     with pytest.raises(PulpTaskGroupError) as e:
-        response = upstream_pulp_api_client.replicate(upstream_pulp.pulp_href)
+        response = pulpcore_bindings.UpstreamPulpsApi.replicate(upstream_pulp.pulp_href)
         monitor_task_group(response.task_group)
 
-    task = tasks_api_client.read(e.value.task_group.tasks[0].pulp_href)
+    task = pulpcore_bindings.TasksApi.read(e.value.task_group.tasks[0].pulp_href)
     assert "SSLError" in task.error["description"]
 
     # Update Upstream Pulp with tls_validation=False
-    upstream_pulp_api_client.partial_update(upstream_pulp.pulp_href, {"tls_validation": False})
+    pulpcore_bindings.UpstreamPulpsApi.partial_update(
+        upstream_pulp.pulp_href, {"tls_validation": False}
+    )
 
     # Run the replicate task again and assert that all tasks successfully complete.
-    response = upstream_pulp_api_client.replicate(upstream_pulp.pulp_href)
+    response = pulpcore_bindings.UpstreamPulpsApi.replicate(upstream_pulp.pulp_href)
     task_group = monitor_task_group(response.task_group)
     for task in task_group.tasks:
         assert task.state == "completed"
@@ -166,7 +167,7 @@ def test_replicate_rbac(
     try_action,
     domain_factory,
     bindings_cfg,
-    upstream_pulp_api_client,
+    pulpcore_bindings,
     pulp_settings,
     gen_object_with_cleanup,
 ):
@@ -185,23 +186,29 @@ def test_replicate_rbac(
             "pulp_label_select": str(uuid.uuid4()),
         }
         upstream_pulp = gen_object_with_cleanup(
-            upstream_pulp_api_client, upstream_pulp_body, pulp_domain=non_default_domain.name
+            pulpcore_bindings.UpstreamPulpsApi,
+            upstream_pulp_body,
+            pulp_domain=non_default_domain.name,
         )
 
     # Assert that Alice (upstream pulp viewer) gets a 403
-    try_action(alice, upstream_pulp_api_client, "replicate", 403, upstream_pulp.pulp_href)
+    try_action(alice, pulpcore_bindings.UpstreamPulpsApi, "replicate", 403, upstream_pulp.pulp_href)
 
     # Assert that B (upstream pulp owner) gets a 202
-    try_action(bob, upstream_pulp_api_client, "replicate", 202, upstream_pulp.pulp_href)
+    try_action(bob, pulpcore_bindings.UpstreamPulpsApi, "replicate", 202, upstream_pulp.pulp_href)
 
     # Assert that Charlie (no role) get a 404
-    try_action(charlie, upstream_pulp_api_client, "replicate", 404, upstream_pulp.pulp_href)
+    try_action(
+        charlie, pulpcore_bindings.UpstreamPulpsApi, "replicate", 404, upstream_pulp.pulp_href
+    )
 
     # Assert that Dean can run replication
-    try_action(dean, upstream_pulp_api_client, "replicate", 202, upstream_pulp.pulp_href)
+    try_action(dean, pulpcore_bindings.UpstreamPulpsApi, "replicate", 202, upstream_pulp.pulp_href)
 
     # Assert that Dean can view the upstream pulp
-    try_action(dean, upstream_pulp_api_client, "read", 200, upstream_pulp.pulp_href)
+    try_action(dean, pulpcore_bindings.UpstreamPulpsApi, "read", 200, upstream_pulp.pulp_href)
 
     # Assert that Dean can't update the upstream pulp
-    try_action(dean, upstream_pulp_api_client, "partial_update", 403, upstream_pulp.pulp_href, {})
+    try_action(
+        dean, pulpcore_bindings.UpstreamPulpsApi, "partial_update", 403, upstream_pulp.pulp_href, {}
+    )

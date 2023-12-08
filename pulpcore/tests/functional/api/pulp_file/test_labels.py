@@ -15,7 +15,7 @@ def test_create_repo_with_labels(file_repository_factory):
 
 
 @pytest.mark.parallel
-def test_set_unset_all_labels(file_repo, file_repository_api_client, monitor_task):
+def test_set_unset_all_labels(file_repo, file_bindings, monitor_task):
     """Set and unset labels from a repository."""
 
     assert file_repo.pulp_labels == {}
@@ -23,23 +23,25 @@ def test_set_unset_all_labels(file_repo, file_repository_api_client, monitor_tas
     # Set some labels
     labels = {"key_a": "label_a"}
     monitor_task(
-        file_repository_api_client.partial_update(file_repo.pulp_href, {"pulp_labels": labels}).task
+        file_bindings.RepositoriesFileApi.partial_update(
+            file_repo.pulp_href, {"pulp_labels": labels}
+        ).task
     )
-    file_repo = file_repository_api_client.read(file_repo.pulp_href)
+    file_repo = file_bindings.RepositoriesFileApi.read(file_repo.pulp_href)
     assert file_repo.pulp_labels == labels
 
     # Unset all labels
     monitor_task(
-        file_repository_api_client.partial_update(file_repo.pulp_href, {"pulp_labels": {}}).task
+        file_bindings.RepositoriesFileApi.partial_update(
+            file_repo.pulp_href, {"pulp_labels": {}}
+        ).task
     )
-    file_repo = file_repository_api_client.read(file_repo.pulp_href)
+    file_repo = file_bindings.RepositoriesFileApi.read(file_repo.pulp_href)
     assert file_repo.pulp_labels == {}
 
 
 @pytest.mark.parallel
-def test_add_remove_label_keys(
-    file_repo, file_repository_api_client, file_repository_factory, monitor_task
-):
+def test_add_remove_label_keys(file_repo, file_bindings, file_repository_factory, monitor_task):
     """Add and Remove labels by key."""
 
     # Set some initial labels
@@ -49,26 +51,28 @@ def test_add_remove_label_keys(
     # Add a new key
     labels["key_b"] = "label_b"
     monitor_task(
-        file_repository_api_client.partial_update(file_repo.pulp_href, {"pulp_labels": labels}).task
+        file_bindings.RepositoriesFileApi.partial_update(
+            file_repo.pulp_href, {"pulp_labels": labels}
+        ).task
     )
 
-    file_repo = file_repository_api_client.read(file_repo.pulp_href)
+    file_repo = file_bindings.RepositoriesFileApi.read(file_repo.pulp_href)
     assert file_repo.pulp_labels == labels
 
     # Remove the original key
     del labels["key_a"]
     monitor_task(
-        file_repository_api_client.partial_update(file_repo.pulp_href, {"pulp_labels": labels}).task
+        file_bindings.RepositoriesFileApi.partial_update(
+            file_repo.pulp_href, {"pulp_labels": labels}
+        ).task
     )
 
-    file_repo = file_repository_api_client.read(file_repo.pulp_href)
+    file_repo = file_bindings.RepositoriesFileApi.read(file_repo.pulp_href)
     assert file_repo.pulp_labels == labels
 
 
 @pytest.mark.parallel
-def test_update_existing_label_value(
-    file_repository_api_client, file_repository_factory, monitor_task
-):
+def test_update_existing_label_value(file_bindings, file_repository_factory, monitor_task):
     """Update an existing label."""
 
     # Set some initial labels
@@ -78,15 +82,17 @@ def test_update_existing_label_value(
     # Modify the value of an existing key
     labels["key_a"] = "label_b"
     monitor_task(
-        file_repository_api_client.partial_update(file_repo.pulp_href, {"pulp_labels": labels}).task
+        file_bindings.RepositoriesFileApi.partial_update(
+            file_repo.pulp_href, {"pulp_labels": labels}
+        ).task
     )
 
-    file_repo = file_repository_api_client.read(file_repo.pulp_href)
+    file_repo = file_bindings.RepositoriesFileApi.read(file_repo.pulp_href)
     assert file_repo.pulp_labels == labels
 
 
 @pytest.mark.parallel
-def test_model_partial_update(file_repository_factory, file_repository_api_client, monitor_task):
+def test_model_partial_update(file_repository_factory, file_bindings, monitor_task):
     """Test that labels aren't unset accidentally with PATCH calls of other fields."""
 
     # Set some initial labels
@@ -95,10 +101,12 @@ def test_model_partial_update(file_repository_factory, file_repository_api_clien
 
     # Update the name only
     monitor_task(
-        file_repository_api_client.partial_update(file_repo.pulp_href, {"name": str(uuid4())}).task
+        file_bindings.RepositoriesFileApi.partial_update(
+            file_repo.pulp_href, {"name": str(uuid4())}
+        ).task
     )
 
-    file_repo = file_repository_api_client.read(file_repo.pulp_href)
+    file_repo = file_bindings.RepositoriesFileApi.read(file_repo.pulp_href)
     assert file_repo.pulp_labels == labels
 
 
@@ -128,7 +136,7 @@ def test_invalid_labels(file_repository_factory):
 
 
 @pytest.mark.parallel
-def test_label_select(file_repository_factory, file_repository_api_client):
+def test_label_select(file_repository_factory, file_bindings):
     """Test lots of select types."""
     key1 = str(uuid4()).replace("-", "")  # We can only have alphanumerics
     key2 = str(uuid4()).replace("-", "")  # We can only have alphanumerics
@@ -141,59 +149,63 @@ def test_label_select(file_repository_factory, file_repository_api_client):
 
     file_repository_factory(name=str(uuid4()), pulp_labels={})
 
-    results = file_repository_api_client.list(pulp_label_select=f"{key1}=production").results
+    results = file_bindings.RepositoriesFileApi.list(pulp_label_select=f"{key1}=production").results
     assert len(results) == 1
 
-    results = file_repository_api_client.list(pulp_label_select=f"{key1}!=production").results
+    results = file_bindings.RepositoriesFileApi.list(
+        pulp_label_select=f"{key1}!=production"
+    ).results
     assert len(results) == 1
 
-    results = file_repository_api_client.list(pulp_label_select=key1).results
+    results = file_bindings.RepositoriesFileApi.list(pulp_label_select=key1).results
     assert len(results) == 2
 
-    results = file_repository_api_client.list(pulp_label_select=f"{key1}~prod").results
+    results = file_bindings.RepositoriesFileApi.list(pulp_label_select=f"{key1}~prod").results
     assert len(results) == 1
 
-    results = file_repository_api_client.list(
+    results = file_bindings.RepositoriesFileApi.list(
         pulp_label_select=f"{key1}=production,{key2}=true"
     ).results
     assert len(results) == 1
 
-    results = file_repository_api_client.list(
+    results = file_bindings.RepositoriesFileApi.list(
         pulp_label_select=f"{key1}=production,{key2}!=false"
     ).results
     assert len(results) == 1
 
-    results = file_repository_api_client.list(pulp_label_select=f"!{key1},{key2}=false").results
+    results = file_bindings.RepositoriesFileApi.list(
+        pulp_label_select=f"!{key1},{key2}=false"
+    ).results
     assert len(results) == 0
 
 
 @pytest.mark.parallel
-def test_empty_blank_filter(file_repository_factory, file_repository_api_client):
+def test_empty_blank_filter(file_repository_factory, file_bindings):
     """Test filtering values with a blank string."""
     key = str(uuid4()).replace("-", "")  # We can only have alphanumerics
 
     labels = {key: ""}
     file_repository_factory(name=str(uuid4()), pulp_labels=labels)
 
-    results = file_repository_api_client.list(pulp_label_select=f"{key}=").results
+    results = file_bindings.RepositoriesFileApi.list(pulp_label_select=f"{key}=").results
     assert len(results) == 1
 
-    results = file_repository_api_client.list(pulp_label_select=f"{key}~").results
+    results = file_bindings.RepositoriesFileApi.list(pulp_label_select=f"{key}~").results
     assert len(results) == 1
 
 
 @pytest.mark.parallel
-def test_invalid_label_select(file_repository_api_client):
+def test_invalid_label_select(file_bindings):
     """Test removing all labels."""
 
     with pytest.raises(ApiException) as e_info:
-        file_repository_api_client.list(pulp_label_select="").results
+        file_bindings.RepositoriesFileApi.list(pulp_label_select="").results
     assert e_info.value.status == 400
 
     with pytest.raises(ApiException) as e_info:
-        file_repository_api_client.list(pulp_label_select="!environment=production").results
+        file_bindings.RepositoriesFileApi.list(pulp_label_select="!environment=production").results
     assert e_info.value.status == 400
 
     with pytest.raises(ApiException) as e_info:
-        file_repository_api_client.list(pulp_label_select="=bad filter").results
+        file_bindings.RepositoriesFileApi.list(pulp_label_select="=bad filter").results
     assert e_info.value.status == 400

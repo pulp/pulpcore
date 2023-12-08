@@ -9,7 +9,7 @@ from pulpcore.client.pulp_file import FileFileDistribution, RepositoryAddRemoveC
 
 def test_get_requests(
     file_distribution_api_client,
-    file_repository_api_client,
+    file_bindings,
     file_repo_with_auto_publish,
     file_content_unit_with_name_factory,
     gen_object_with_cleanup,
@@ -26,7 +26,7 @@ def test_get_requests(
     units_to_add = list(map(lambda f: f.pulp_href, content_units))
     data = RepositoryAddRemoveContent(add_content_units=units_to_add)
     monitor_task(
-        file_repository_api_client.modify(file_repo_with_auto_publish.pulp_href, data).task
+        file_bindings.RepositoriesFileApi.modify(file_repo_with_auto_publish.pulp_href, data).task
     )
 
     data = FileFileDistribution(

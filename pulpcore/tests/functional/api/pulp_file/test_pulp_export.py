@@ -76,7 +76,7 @@ def pulp_export_factory(exporters_pulp_exports_api_client, monitor_task):
 
 @pytest.fixture
 def three_synced_repositories(
-    file_repository_api_client,
+    file_bindings,
     file_repository_factory,
     file_remote_factory,
     write_3_iso_file_fixture_data_factory,
@@ -90,12 +90,12 @@ def three_synced_repositories(
     ]
     repositories = [file_repository_factory(remote=remote.pulp_href) for remote in remotes]
     sync_tasks = [
-        file_repository_api_client.sync(repository.pulp_href, {}).task
+        file_bindings.RepositoriesFileApi.sync(repository.pulp_href, {}).task
         for repository in repositories
     ]
     [monitor_task(task) for task in sync_tasks]
     repositories = [
-        file_repository_api_client.read(repository.pulp_href) for repository in repositories
+        file_bindings.RepositoriesFileApi.read(repository.pulp_href) for repository in repositories
     ]
     return repositories
 

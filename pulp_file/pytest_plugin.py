@@ -1,69 +1,77 @@
 import os
 import uuid
 import subprocess
+import warnings
 from collections import defaultdict
 from pathlib import Path
 
 import aiofiles
 import pytest
 from aiohttp import web
-from pulpcore.client.pulp_file import (
-    AcsFileApi,
-    ApiClient,
-    ContentFilesApi,
-    DistributionsFileApi,
-    PublicationsFileApi,
-    RemotesFileApi,
-    RepositoriesFileApi,
-    RepositoriesFileVersionsApi,
-)
 
-from pulpcore.tests.functional.utils import generate_iso, generate_manifest
+from pulpcore.tests.functional.utils import BindingsNamespace, generate_iso, generate_manifest
 
 # Api Bindings fixtures
 
 
 @pytest.fixture(scope="session")
-def file_client(_api_client_set, bindings_cfg):
-    api_client = ApiClient(bindings_cfg)
-    _api_client_set.add(api_client)
-    yield api_client
-    _api_client_set.remove(api_client)
+def file_bindings(_api_client_set, bindings_cfg):
+    """
+    A namespace providing preconfigured pulp_file api clients.
+
+    e.g. `file_bindings.RepositoriesFileApi.list()`.
+    """
+    from pulpcore.client import pulp_file as file_bindings_module
+
+    file_client = file_bindings_module.ApiClient(bindings_cfg)
+    _api_client_set.add(file_client)
+    yield BindingsNamespace(file_bindings_module, file_client)
+    _api_client_set.remove(file_client)
+
+
+# TODO Deprecate all the api_client fixtures below.
 
 
 @pytest.fixture(scope="session")
-def file_acs_api_client(file_client):
-    return AcsFileApi(file_client)
+def file_acs_api_client(file_bindings):
+    warnings.warn("This fixture is deprecated. Use `file_bindings` instead.", DeprecationWarning)
+    return file_bindings.AcsFileApi
 
 
 @pytest.fixture(scope="session")
-def file_content_api_client(file_client):
-    return ContentFilesApi(file_client)
+def file_content_api_client(file_bindings):
+    warnings.warn("This fixture is deprecated. Use `file_bindings` instead.", DeprecationWarning)
+    return file_bindings.ContentFilesApi
 
 
 @pytest.fixture(scope="session")
-def file_distribution_api_client(file_client):
-    return DistributionsFileApi(file_client)
+def file_distribution_api_client(file_bindings):
+    warnings.warn("This fixture is deprecated. Use `file_bindings` instead.", DeprecationWarning)
+    return file_bindings.DistributionsFileApi
 
 
 @pytest.fixture(scope="session")
-def file_publication_api_client(file_client):
-    return PublicationsFileApi(file_client)
+def file_publication_api_client(file_bindings):
+    warnings.warn("This fixture is deprecated. Use `file_bindings` instead.", DeprecationWarning)
+    return file_bindings.PublicationsFileApi
 
 
 @pytest.fixture(scope="session")
-def file_repository_api_client(file_client):
-    return RepositoriesFileApi(file_client)
+def file_repository_api_client(file_bindings):
+    warnings.warn("This fixture is deprecated. Use `file_bindings` instead.", DeprecationWarning)
+    return file_bindings.RepositoriesFileApi
 
 
 @pytest.fixture(scope="session")
-def file_repository_version_api_client(file_client):
-    return RepositoriesFileVersionsApi(file_client)
+def file_repository_version_api_client(file_bindings):
+    warnings.warn("This fixture is deprecated. Use `file_bindings` instead.", DeprecationWarning)
+    return file_bindings.RepositoriesFileVersionsApi
 
 
 @pytest.fixture(scope="session")
-def file_remote_api_client(file_client):
-    return RemotesFileApi(file_client)
+def file_remote_api_client(file_bindings):
+    warnings.warn("This fixture is deprecated. Use `file_bindings` instead.", DeprecationWarning)
+    return file_bindings.RemotesFileApi
 
 
 # Factory fixtures
@@ -75,11 +83,13 @@ def file_random_content_unit(file_content_unit_with_name_factory):
 
 
 @pytest.fixture
-def file_content_unit_with_name_factory(file_content_api_client, random_artifact, monitor_task):
+def file_content_unit_with_name_factory(file_bindings, random_artifact, monitor_task):
     def _file_content_unit_with_name_factory(name):
         artifact_attrs = {"artifact": random_artifact.pulp_href, "relative_path": name}
-        return file_content_api_client.read(
-            monitor_task(file_content_api_client.create(**artifact_attrs).task).created_resources[0]
+        return file_bindings.ContentFilesApi.read(
+            monitor_task(
+                file_bindings.ContentFilesApi.create(**artifact_attrs).task
+            ).created_resources[0]
         )
 
     return _file_content_unit_with_name_factory

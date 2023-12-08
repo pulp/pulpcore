@@ -4,9 +4,6 @@ from random import choice
 from tempfile import NamedTemporaryFile
 from uuid import uuid4
 
-from pulpcore.client.pulpcore import ApiException as CoreApiException
-from pulpcore.client.pulp_file.exceptions import ApiException
-
 from pulpcore.tests.functional.utils import PulpTaskError, get_files_in_manifest
 
 
@@ -38,7 +35,7 @@ def file_9_contents(
 def file_repository_content(
     file_remote_ssl_factory,
     file_repository_factory,
-    file_repository_api_client,
+    file_bindings,
     file_content_api_client,
     basic_manifest_path,
     monitor_task,
@@ -46,9 +43,11 @@ def file_repository_content(
     """Create some content that was synced into a repo on-demand."""
     remote = file_remote_ssl_factory(manifest_path=basic_manifest_path, policy="on_demand")
     base_repo = file_repository_factory()
-    task = file_repository_api_client.sync(base_repo.pulp_href, {"remote": remote.pulp_href}).task
+    task = file_bindings.RepositoriesFileApi.sync(
+        base_repo.pulp_href, {"remote": remote.pulp_href}
+    ).task
     monitor_task(task)
-    base_repo = file_repository_api_client.read(base_repo.pulp_href)
+    base_repo = file_bindings.RepositoriesFileApi.read(base_repo.pulp_href)
     assert base_repo.latest_version_href[-2] == "1"
     contents = file_content_api_client.list(repository_version=base_repo.latest_version_href)
     assert contents.count == 3
@@ -58,7 +57,7 @@ def file_repository_content(
 
 @pytest.mark.parallel
 def test_add_remove_content(
-    file_repository_api_client,
+    file_bindings,
     file_repository_version_api_client,
     file_content_api_client,
     file_repository_factory,
@@ -83,9 +82,11 @@ def test_add_remove_content(
     # Sync content into the repository
     CONTENT_BASE_HREF = "/api/v3/content/file/files/"
     remote = file_remote_ssl_factory(manifest_path=basic_manifest_path, policy="immediate")
-    task = file_repository_api_client.sync(file_repo.pulp_href, {"remote": remote.pulp_href}).task
+    task = file_bindings.RepositoriesFileApi.sync(
+        file_repo.pulp_href, {"remote": remote.pulp_href}
+    ).task
     task_report = monitor_task(task)
-    repo = file_repository_api_client.read(file_repo.pulp_href)
+    repo = file_bindings.RepositoriesFileApi.read(file_repo.pulp_href)
 
     assert task_report.created_resources[0] == repo.latest_version_href
 
@@ -120,9 +121,9 @@ def test_add_remove_content(
     content = choice(contents.results)
 
     body = {"remove_content_units": [content.pulp_href]}
-    task = file_repository_api_client.modify(repo.pulp_href, body).task
+    task = file_bindings.RepositoriesFileApi.modify(repo.pulp_href, body).task
     monitor_task(task)
-    repo = file_repository_api_client.read(repo.pulp_href)
+    repo = file_bindings.RepositoriesFileApi.read(repo.pulp_href)
 
     repo_versions = file_repository_version_api_client.list(repo.pulp_href)
     assert repo_versions.count == 3
@@ -144,9 +145,9 @@ def test_add_remove_content(
 
     # Add content to the repository
     body = {"add_content_units": [content.pulp_href]}
-    task = file_repository_api_client.modify(repo.pulp_href, body).task
+    task = file_bindings.RepositoriesFileApi.modify(repo.pulp_href, body).task
     monitor_task(task)
-    repo = file_repository_api_client.read(repo.pulp_href)
+    repo = file_bindings.RepositoriesFileApi.read(repo.pulp_href)
 
     repo_versions = file_repository_version_api_client.list(repo.pulp_href)
     assert repo_versions.count == 4
@@ -161,7 +162,7 @@ def test_add_remove_content(
 
 @pytest.mark.parallel
 def test_add_remove_repo_version(
-    file_repository_api_client,
+    file_bindings,
     file_repository_version_api_client,
     file_content_api_client,
     file_repository_factory,
@@ -181,11 +182,11 @@ def test_add_remove_repo_version(
 
     # Add versions to repository
     for content in contents:
-        task = file_repository_api_client.modify(
+        task = file_bindings.RepositoriesFileApi.modify(
             file_repo.pulp_href, {"add_content_units": [content.pulp_href]}
         ).task
     monitor_task(task)
-    repo = file_repository_api_client.read(file_repo.pulp_href)
+    repo = file_bindings.RepositoriesFileApi.read(file_repo.pulp_href)
     assert repo.latest_version_href[-2] == "9"
 
     # Test trying to delete version 0 with a populated repository
@@ -193,18 +194,18 @@ def test_add_remove_repo_version(
     monitor_task(file_repository_version_api_client.delete(ver_zero).task)
     versions = file_repository_version_api_client.list(repo.pulp_href)
     assert versions.count == 9
-    with pytest.raises(ApiException) as e:
+    with pytest.raises(file_bindings.ApiException) as e:
         file_repository_version_api_client.read(ver_zero)
     assert e.value.status == 404
 
     # Test deleting the last repository version
     last_ver = repo.latest_version_href
     monitor_task(file_repository_version_api_client.delete(last_ver).task)
-    repo = file_repository_api_client.read(repo.pulp_href)
+    repo = file_bindings.RepositoriesFileApi.read(repo.pulp_href)
     assert repo.latest_version_href[-2] == "8"
     versions = file_repository_version_api_client.list(repo.pulp_href)
     assert versions.count == 8
-    with pytest.raises(ApiException) as e:
+    with pytest.raises(file_bindings.ApiException) as e:
         file_repository_version_api_client.read(last_ver)
     assert e.value.status == 404
 
@@ -217,7 +218,7 @@ def test_add_remove_repo_version(
     monitor_task(file_repository_version_api_client.delete(middle_ver).task)
     versions = file_repository_version_api_client.list(repo.pulp_href)
     assert versions.count == 7
-    with pytest.raises(ApiException) as e:
+    with pytest.raises(file_bindings.ApiException) as e:
         file_repository_version_api_client.read(middle_ver)
     assert e.value.status == 404
 
@@ -245,7 +246,7 @@ def test_add_remove_repo_version(
 
 @pytest.mark.parallel
 def test_squash_repo_version(
-    file_repository_api_client,
+    file_bindings,
     file_repository_version_api_client,
     file_content_api_client,
     file_repository_factory,
@@ -269,7 +270,7 @@ def test_squash_repo_version(
     """
     content_units = file_9_contents
     file_repo = file_repository_factory()
-    response1 = file_repository_api_client.modify(
+    response1 = file_bindings.RepositoriesFileApi.modify(
         file_repo.pulp_href,
         {
             "add_content_units": [
@@ -280,7 +281,7 @@ def test_squash_repo_version(
         },
     )
 
-    response2 = file_repository_api_client.modify(
+    response2 = file_bindings.RepositoriesFileApi.modify(
         file_repo.pulp_href,
         {
             "remove_content_units": [
@@ -296,7 +297,7 @@ def test_squash_repo_version(
         },
     )
 
-    response3 = file_repository_api_client.modify(
+    response3 = file_bindings.RepositoriesFileApi.modify(
         file_repo.pulp_href,
         {
             "remove_content_units": [
@@ -308,7 +309,7 @@ def test_squash_repo_version(
         },
     )
 
-    response4 = file_repository_api_client.modify(
+    response4 = file_bindings.RepositoriesFileApi.modify(
         file_repo.pulp_href,
         {
             "remove_content_units": [
@@ -375,9 +376,7 @@ def test_squash_repo_version(
 
 @pytest.mark.parallel
 def test_content_immutable_repo_version(
-    file_repository_api_client,
-    file_repository_version_api_client,
-    file_client,
+    file_bindings,
     file_repository_factory,
     file_remote_ssl_factory,
     basic_manifest_path,
@@ -389,26 +388,28 @@ def test_content_immutable_repo_version(
     """
     file_repo = file_repository_factory()
     remote = file_remote_ssl_factory(manifest_path=basic_manifest_path, policy="on_demand")
-    task = file_repository_api_client.sync(file_repo.pulp_href, {"remote": remote.pulp_href}).task
+    task = file_bindings.RepositoriesFileApi.sync(
+        file_repo.pulp_href, {"remote": remote.pulp_href}
+    ).task
     monitor_task(task)
 
-    repo = file_repository_api_client.read(file_repo.pulp_href)
+    repo = file_bindings.RepositoriesFileApi.read(file_repo.pulp_href)
     assert repo.latest_version_href[-2] == "1"
-    repo_ver_attributes = dir(file_repository_version_api_client)
+    repo_ver_attributes = dir(file_bindings.RepositoriesFileVersionsApi)
 
     # POST assertion
     for attr in repo_ver_attributes:
         assert "create" not in attr
-    with pytest.raises(ApiException) as e:
-        file_client.call_api(repo.latest_version_href, "POST", auth_settings=["basicAuth"])
+    with pytest.raises(file_bindings.ApiException) as e:
+        file_bindings.client.call_api(repo.latest_version_href, "POST", auth_settings=["basicAuth"])
     assert e.value.status == 405
 
     body = {"base_version": f"{repo.versions_href}0/"}
     # PUT assertion
     for attr in repo_ver_attributes:
         assert "update" not in attr
-    with pytest.raises(ApiException) as e:
-        file_client.call_api(
+    with pytest.raises(file_bindings.ApiException) as e:
+        file_bindings.client.call_api(
             repo.latest_version_href, "PUT", body=body, auth_settings=["basicAuth"]
         )
     assert e.value.status == 405
@@ -416,8 +417,8 @@ def test_content_immutable_repo_version(
     # PATCH assertion
     for attr in repo_ver_attributes:
         assert "partial_update" not in attr
-    with pytest.raises(ApiException) as e:
-        file_client.call_api(
+    with pytest.raises(file_bindings.ApiException) as e:
+        file_bindings.client.call_api(
             repo.latest_version_href, "PATCH", body=body, auth_settings=["basicAuth"]
         )
     assert e.value.status == 405
@@ -425,7 +426,7 @@ def test_content_immutable_repo_version(
 
 @pytest.mark.parallel
 def test_filter_repo_version(
-    file_repository_api_client,
+    file_bindings,
     file_repository_version_api_client,
     file_repository_factory,
     monitor_task,
@@ -435,11 +436,11 @@ def test_filter_repo_version(
     file_repo = file_repository_factory()
     # Setup 8 content units in Pulp to populate test repository with
     for content in file_9_contents.values():
-        task = file_repository_api_client.modify(
+        task = file_bindings.RepositoriesFileApi.modify(
             file_repo.pulp_href, {"add_content_units": [content.pulp_href]}
         ).task
     monitor_task(task)
-    repo = file_repository_api_client.read(file_repo.pulp_href)
+    repo = file_bindings.RepositoriesFileApi.read(file_repo.pulp_href)
     assert repo.latest_version_href[-2] == "9"
     repo_versions = file_repository_version_api_client.list(repo.pulp_href).results
 
@@ -451,7 +452,7 @@ def test_filter_repo_version(
         {"pulp_created__gte": criteria, "pulp_created__lte": criteria},
         {"pulp_created__range": [criteria, criteria]},
     ):
-        with pytest.raises(ApiException) as e:
+        with pytest.raises(file_bindings.ApiException) as e:
             file_repository_version_api_client.list(repo.pulp_href, **params)
         assert e.value.status == 400
         assert "Enter a valid date/time." in e.value.body
@@ -486,7 +487,7 @@ def test_filter_repo_version(
         {"number__gte": criteria, "number__lte": criteria},
         {"number__range": [criteria, criteria]},
     ):
-        with pytest.raises(ApiException) as e:
+        with pytest.raises(file_bindings.ApiException) as e:
             file_repository_version_api_client.list(repo.pulp_href, **params)
         assert e.value.status == 400
         assert "Enter a number." in e.value.body
@@ -510,7 +511,7 @@ def test_filter_repo_version(
 
 @pytest.mark.parallel
 def test_create_repo_base_version(
-    file_repository_api_client,
+    file_bindings,
     file_repository_version_api_client,
     file_content_api_client,
     file_repository_factory,
@@ -523,29 +524,31 @@ def test_create_repo_base_version(
     # Test ``base_version`` for the same repository
     remote = file_remote_ssl_factory(manifest_path=basic_manifest_path, policy="on_demand")
     repo = file_repository_factory()
-    monitor_task(file_repository_api_client.sync(repo.pulp_href, {"remote": remote.pulp_href}).task)
-    repo = file_repository_api_client.read(repo.pulp_href)
+    monitor_task(
+        file_bindings.RepositoriesFileApi.sync(repo.pulp_href, {"remote": remote.pulp_href}).task
+    )
+    repo = file_bindings.RepositoriesFileApi.read(repo.pulp_href)
     base_content = file_content_api_client.list(repository_version=repo.latest_version_href)
     base_version = file_repository_version_api_client.read(repo.latest_version_href)
     assert base_version.base_version is None
 
     # create repo version 2
     monitor_task(
-        file_repository_api_client.modify(
+        file_bindings.RepositoriesFileApi.modify(
             repo.pulp_href, {"add_content_units": [file_random_content_unit.pulp_href]}
         ).task
     )
-    repo = file_repository_api_client.read(repo.pulp_href)
+    repo = file_bindings.RepositoriesFileApi.read(repo.pulp_href)
     middle_content = file_content_api_client.list(repository_version=repo.latest_version_href)
     assert middle_content.count == base_content.count + 1
 
     # create repo version 3 from version 1
     monitor_task(
-        file_repository_api_client.modify(
+        file_bindings.RepositoriesFileApi.modify(
             repo.pulp_href, {"base_version": base_version.pulp_href}
         ).task
     )
-    repo = file_repository_api_client.read(repo.pulp_href)
+    repo = file_bindings.RepositoriesFileApi.read(repo.pulp_href)
     # assert that base_version of the version 3 points to version 1
     latest_version = file_repository_version_api_client.read(repo.latest_version_href)
     assert latest_version.base_version == base_version.pulp_href
@@ -558,11 +561,11 @@ def test_create_repo_base_version(
     repo2 = file_repository_factory()
     # create a version for repo B using repo A version 1 as base_version
     monitor_task(
-        file_repository_api_client.modify(
+        file_bindings.RepositoriesFileApi.modify(
             repo2.pulp_href, {"base_version": base_version.pulp_href}
         ).task
     )
-    repo2 = file_repository_api_client.read(repo2.pulp_href)
+    repo2 = file_bindings.RepositoriesFileApi.read(repo2.pulp_href)
     latest_version2 = file_repository_version_api_client.read(repo2.latest_version_href)
 
     # assert that base_version of repo B points to version 1 of repo A
@@ -583,8 +586,8 @@ def test_create_repo_base_version(
         "add_content_units": [added_content.pulp_href],
         "remove_content_units": [removed_content.pulp_href],
     }
-    monitor_task(file_repository_api_client.modify(repo3.pulp_href, body).task)
-    repo3 = file_repository_api_client.read(repo3.pulp_href)
+    monitor_task(file_bindings.RepositoriesFileApi.modify(repo3.pulp_href, body).task)
+    repo3 = file_bindings.RepositoriesFileApi.read(repo3.pulp_href)
     latest_version3 = file_repository_version_api_client.read(repo3.latest_version_href)
     latest_content3 = file_content_api_client.list(repository_version=repo3.latest_version_href)
 
@@ -600,15 +603,18 @@ def test_create_repo_base_version(
 
     # Exception is raised when non-existent ``base_version`` is used
     nonexistant_version = f"{repo.versions_href}5/"
-    with pytest.raises(ApiException) as e:
-        file_repository_api_client.modify(repo.pulp_href, {"base_version": nonexistant_version})
+    with pytest.raises(file_bindings.ApiException) as e:
+        file_bindings.RepositoriesFileApi.modify(
+            repo.pulp_href, {"base_version": nonexistant_version}
+        )
     assert e.value.status == 400
     assert "Object does not exist." in e.value.body
 
 
 @pytest.mark.parallel
 def test_filter_artifacts(
-    file_repository_api_client,
+    pulpcore_bindings,
+    file_bindings,
     artifacts_api_client,
     random_artifact_factory,
     file_repository_factory,
@@ -625,11 +631,11 @@ def test_filter_artifacts(
 
     for path in duplicate_filename_paths:
         remote = file_remote_ssl_factory(manifest_path=path, policy="immediate")
-        task = file_repository_api_client.sync(
+        task = file_bindings.RepositoriesFileApi.sync(
             file_repo.pulp_href, {"remote": remote.pulp_href}
         ).task
         monitor_task(task)
-        repo = file_repository_api_client.read(file_repo.pulp_href)
+        repo = file_bindings.RepositoriesFileApi.read(file_repo.pulp_href)
         # Assert only three artifacts show up when filtering
         # Even on second sync only three will show up since the 3 added content units have the same
         # relative paths of current present content and thus ends up replacing them leaving the
@@ -640,7 +646,7 @@ def test_filter_artifacts(
 
     # Filter by invalid repository version.
     bad_version = f"{file_repo.versions_href}5/"
-    with pytest.raises(CoreApiException) as e:
+    with pytest.raises(pulpcore_bindings.ApiException) as e:
         artifacts_api_client.list(repository_version=bad_version)
     assert e.value.status == 400
     for key in ("uri", "repositoryversion", "not", "found"):
@@ -649,7 +655,7 @@ def test_filter_artifacts(
 
 @pytest.mark.parallel
 def test_delete_repo_version_publication(
-    file_repository_api_client,
+    file_bindings,
     file_repository_version_api_client,
     file_repository_factory,
     file_remote_ssl_factory,
@@ -661,9 +667,11 @@ def test_delete_repo_version_publication(
     """Test that removing a repo version will delete its publication."""
     file_repo = file_repository_factory()
     remote = file_remote_ssl_factory(manifest_path=basic_manifest_path, policy="on_demand")
-    task = file_repository_api_client.sync(file_repo.pulp_href, {"remote": remote.pulp_href}).task
+    task = file_bindings.RepositoriesFileApi.sync(
+        file_repo.pulp_href, {"remote": remote.pulp_href}
+    ).task
     monitor_task(task)
-    repo = file_repository_api_client.read(file_repo.pulp_href)
+    repo = file_bindings.RepositoriesFileApi.read(file_repo.pulp_href)
     assert repo.latest_version_href[-2] == "1"
 
     pub_body = {"repository": repo.pulp_href}
@@ -673,7 +681,7 @@ def test_delete_repo_version_publication(
     # delete repo version used to create publication
     file_repository_version_api_client.delete(repo.latest_version_href)
 
-    with pytest.raises(ApiException) as e:
+    with pytest.raises(file_bindings.ApiException) as e:
         file_publication_api_client.read(publication.pulp_href)
 
     assert e.value.status == 404
@@ -681,7 +689,7 @@ def test_delete_repo_version_publication(
 
 @pytest.mark.parallel
 def test_delete_protected_repo_version(
-    file_repository_api_client,
+    file_bindings,
     file_repository_version_api_client,
     file_repository_factory,
     file_remote_ssl_factory,
@@ -695,9 +703,11 @@ def test_delete_protected_repo_version(
     """Test that removing a repo version fails if its publication is distributed."""
     file_repo = file_repository_factory()
     remote = file_remote_ssl_factory(manifest_path=basic_manifest_path, policy="on_demand")
-    task = file_repository_api_client.sync(file_repo.pulp_href, {"remote": remote.pulp_href}).task
+    task = file_bindings.RepositoriesFileApi.sync(
+        file_repo.pulp_href, {"remote": remote.pulp_href}
+    ).task
     monitor_task(task)
-    repo = file_repository_api_client.read(file_repo.pulp_href)
+    repo = file_bindings.RepositoriesFileApi.read(file_repo.pulp_href)
     assert repo.latest_version_href[-2] == "1"
 
     pub_body = {"repository": repo.pulp_href}
@@ -708,7 +718,7 @@ def test_delete_protected_repo_version(
     assert distribution.publication == publication.pulp_href
 
     # deleting a protected repo version fails
-    with pytest.raises(ApiException) as e:
+    with pytest.raises(file_bindings.ApiException) as e:
         file_repository_version_api_client.delete(repo.latest_version_href)
     assert e.value.status == 400
     assert "The repository version cannot be deleted" in e.value.body
@@ -722,14 +732,14 @@ def test_delete_protected_repo_version(
     # and then delete the repo version
     task = file_repository_version_api_client.delete(repo.latest_version_href).task
     monitor_task(task)
-    with pytest.raises(ApiException) as e:
+    with pytest.raises(file_bindings.ApiException) as e:
         file_repository_version_api_client.read(repo.latest_version_href)
     assert e.value.status == 404
 
 
 @pytest.mark.parallel
 def test_clear_all_units_repo_version(
-    file_repository_api_client,
+    file_bindings,
     file_repository_version_api_client,
     file_content_api_client,
     file_repository_factory,
@@ -742,13 +752,13 @@ def test_clear_all_units_repo_version(
     # Test addition and removal of all units for a given repository version.
     repo = file_repository_factory()
     remote = file_remote_ssl_factory(manifest_path=basic_manifest_path, policy="on_demand")
-    file_repository_api_client.sync(repo.pulp_href, {"remote": remote.pulp_href})
+    file_bindings.RepositoriesFileApi.sync(repo.pulp_href, {"remote": remote.pulp_href})
 
     content = choice(list(file_9_contents.values()))
     body = {"add_content_units": [content.pulp_href], "remove_content_units": ["*"]}
-    task = file_repository_api_client.modify(repo.pulp_href, body).task
+    task = file_bindings.RepositoriesFileApi.modify(repo.pulp_href, body).task
     monitor_task(task)
-    repo = file_repository_api_client.read(repo.pulp_href)
+    repo = file_bindings.RepositoriesFileApi.read(repo.pulp_href)
     assert repo.latest_version_href[-2] == "2"
 
     latest_version = file_repository_version_api_client.read(repo.latest_version_href)
@@ -762,16 +772,16 @@ def test_clear_all_units_repo_version(
     # Test clear all units using base version.
     repo = file_repository_factory()
     for content in file_9_contents.values():
-        task = file_repository_api_client.modify(
+        task = file_bindings.RepositoriesFileApi.modify(
             repo.pulp_href, {"add_content_units": [content.pulp_href]}
         ).task
     monitor_task(task)
-    repo = file_repository_api_client.read(repo.pulp_href)
+    repo = file_bindings.RepositoriesFileApi.read(repo.pulp_href)
 
     base_version_four = f"{repo.versions_href}4/"
     body = {"base_version": base_version_four, "remove_content_units": ["*"]}
-    monitor_task(file_repository_api_client.modify(repo.pulp_href, body).task)
-    repo = file_repository_api_client.read(repo.pulp_href)
+    monitor_task(file_bindings.RepositoriesFileApi.modify(repo.pulp_href, body).task)
+    repo = file_bindings.RepositoriesFileApi.read(repo.pulp_href)
     assert repo.latest_version_href[-3:-1] == "10"
 
     latest_version = file_repository_version_api_client.read(repo.latest_version_href)
@@ -780,8 +790,8 @@ def test_clear_all_units_repo_version(
     assert latest_version.content_summary.removed["file.file"]["count"] == 9
 
     # Test http error is raised when invalid remove
-    with pytest.raises(ApiException) as e:
-        file_repository_api_client.modify(
+    with pytest.raises(file_bindings.ApiException) as e:
+        file_bindings.RepositoriesFileApi.modify(
             repo.pulp_href, {"remove_content_units": ["*", content.pulp_href]}
         )
     assert e.value.status == 400
@@ -791,7 +801,7 @@ def test_clear_all_units_repo_version(
 
 @pytest.mark.parallel
 def test_repo_version_retention(
-    file_repository_api_client,
+    file_bindings,
     file_repository_version_api_client,
     file_repository_content,
     file_content_api_client,
@@ -809,11 +819,11 @@ def test_repo_version_retention(
     # Test repo version retention.
     repo = file_repository_factory(retain_repo_versions=1)
     for content in contents.results:
-        task = file_repository_api_client.modify(
+        task = file_bindings.RepositoriesFileApi.modify(
             repo.pulp_href, {"add_content_units": [content.pulp_href]}
         ).task
         monitor_task(task)
-    repo = file_repository_api_client.read(repo.pulp_href)
+    repo = file_bindings.RepositoriesFileApi.read(repo.pulp_href)
 
     assert repo.latest_version_href[-2] == "3"
     versions = file_repository_version_api_client.list(repo.pulp_href)
@@ -828,17 +838,17 @@ def test_repo_version_retention(
     # Test repo version retention when retain_repo_versions is set.
     repo = file_repository_factory()
     for content in contents.results:
-        task = file_repository_api_client.modify(
+        task = file_bindings.RepositoriesFileApi.modify(
             repo.pulp_href, {"add_content_units": [content.pulp_href]}
         ).task
         monitor_task(task)
-    repo = file_repository_api_client.read(repo.pulp_href)
+    repo = file_bindings.RepositoriesFileApi.read(repo.pulp_href)
 
     versions = file_repository_version_api_client.list(repo.pulp_href)
     assert versions.count == 4
 
     # update retain_repo_versions to 2
-    task = file_repository_api_client.partial_update(
+    task = file_bindings.RepositoriesFileApi.partial_update(
         repo.pulp_href, {"retain_repo_versions": 2}
     ).task
     monitor_task(task)
@@ -856,18 +866,18 @@ def test_repo_version_retention(
     repo = file_repository_factory(**body)
     publications = []
     for content in contents.results:
-        task = file_repository_api_client.modify(
+        task = file_bindings.RepositoriesFileApi.modify(
             repo.pulp_href, {"add_content_units": [content.pulp_href]}
         ).task
         monitor_task(task)
-        repo = file_repository_api_client.read(repo.pulp_href)
+        repo = file_bindings.RepositoriesFileApi.read(repo.pulp_href)
         publications.append(
             file_publication_api_client.list(repository_version=repo.latest_version_href).results[0]
         )
 
     # all but the last publication should be gone
     for publication in publications[:-1]:
-        with pytest.raises(ApiException) as ae:
+        with pytest.raises(file_bindings.ApiException) as ae:
             file_publication_api_client.read(publication.pulp_href)
         assert ae.value.status == 404
 
@@ -879,7 +889,7 @@ def test_repo_version_retention(
 
 @pytest.mark.parallel
 def test_repo_versions_protected_from_cleanup(
-    file_repository_api_client,
+    file_bindings,
     file_repository_version_api_client,
     file_repository_content,
     file_publication_api_client,
@@ -891,12 +901,12 @@ def test_repo_versions_protected_from_cleanup(
     """Test that distributed repo versions are protected from retain_repo_versions."""
 
     def _modify_and_validate(repo, content, expected_version, expected_total):
-        task = file_repository_api_client.modify(
+        task = file_bindings.RepositoriesFileApi.modify(
             repo.pulp_href, {"add_content_units": [content.pulp_href]}
         ).task
         monitor_task(task)
 
-        repo = file_repository_api_client.read(repo.pulp_href)
+        repo = file_bindings.RepositoriesFileApi.read(repo.pulp_href)
         assert repo.latest_version_href[-2] == expected_version
 
         versions = file_repository_version_api_client.list(repo.pulp_href)
@@ -933,7 +943,8 @@ def test_repo_versions_protected_from_cleanup(
 
 @pytest.mark.parallel
 def test_content_in_repository_version_view(
-    file_repository_api_client,
+    pulpcore_bindings,
+    file_bindings,
     repository_versions_api_client,
     file_repository_factory,
     file_random_content_unit,
@@ -945,7 +956,7 @@ def test_content_in_repository_version_view(
         "/pulp/api/v3/content/file/files/c4ed74cf-a806-490d-a25f-94c3c3dd2dd7/"
     )
 
-    with pytest.raises(CoreApiException) as e:
+    with pytest.raises(pulpcore_bindings.ApiException) as e:
         repository_versions_api_client.list(content=non_existant_content_href)
 
     assert e.value.status == 400
@@ -955,9 +966,9 @@ def test_content_in_repository_version_view(
 
     # Add content to first repo and assert repo-ver list w/ content is correct
     body = {"add_content_units": [file_random_content_unit.pulp_href]}
-    task = file_repository_api_client.modify(repo.pulp_href, body).task
+    task = file_bindings.RepositoriesFileApi.modify(repo.pulp_href, body).task
     monitor_task(task)
-    repo = file_repository_api_client.read(repo.pulp_href)
+    repo = file_bindings.RepositoriesFileApi.read(repo.pulp_href)
     assert repo.latest_version_href[-2] == "1"
 
     repo_vers = repository_versions_api_client.list(content=file_random_content_unit.pulp_href)
@@ -965,9 +976,9 @@ def test_content_in_repository_version_view(
     assert repo_vers.results[0].pulp_href == repo.latest_version_href
 
     # Add content to second repo and assert repo-ver list w/ content is larger
-    task = file_repository_api_client.modify(repo2.pulp_href, body).task
+    task = file_bindings.RepositoriesFileApi.modify(repo2.pulp_href, body).task
     monitor_task(task)
-    repo2 = file_repository_api_client.read(repo2.pulp_href)
+    repo2 = file_bindings.RepositoriesFileApi.read(repo2.pulp_href)
     assert repo2.latest_version_href[-2] == "1"
 
     repo_vers = repository_versions_api_client.list(content=file_random_content_unit.pulp_href)

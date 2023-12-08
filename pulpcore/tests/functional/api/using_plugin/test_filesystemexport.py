@@ -101,7 +101,7 @@ def test_delete_exporter(exporters_filesystem_api_client, monitor_task):
 
 @pytest.fixture
 def publications(
-    file_repository_api_client,
+    file_bindings,
     file_repository_factory,
     file_remote_factory,
     file_publication_api_client,
@@ -115,7 +115,7 @@ def publications(
         remote = file_remote_factory(manifest_path=basic_manifest_path, policy="immediate")
 
         repository_sync_data = RepositorySyncURL(remote=remote.pulp_href)
-        sync_response = file_repository_api_client.sync(repo.pulp_href, repository_sync_data)
+        sync_response = file_bindings.RepositoriesFileApi.sync(repo.pulp_href, repository_sync_data)
         monitor_task(sync_response.task)
 
         publication = file_publication_api_client.list(repository=repo.pulp_href).results[0]

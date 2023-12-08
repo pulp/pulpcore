@@ -5,7 +5,7 @@ import pytest
 @pytest.mark.parallel
 def test_repo_version_pagination(
     file_content_unit_with_name_factory,
-    file_repository_api_client,
+    file_bindings,
     file_repository_version_api_client,
     file_repo,
     monitor_task,
@@ -14,7 +14,7 @@ def test_repo_version_pagination(
     for i in range(20):
         content_unit = file_content_unit_with_name_factory(f"{i}.iso")
         monitor_task(
-            file_repository_api_client.modify(
+            file_bindings.RepositoriesFileApi.modify(
                 file_repo.pulp_href, {"add_content_units": [content_unit.pulp_href]}
             ).task
         )

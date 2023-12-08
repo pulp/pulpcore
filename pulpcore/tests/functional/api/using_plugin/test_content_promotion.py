@@ -12,7 +12,7 @@ from pulpcore.client.pulp_file import RepositorySyncURL
 def test_content_promotion(
     file_repo_with_auto_publish,
     file_remote_ssl_factory,
-    file_repository_api_client,
+    file_bindings,
     file_publication_api_client,
     file_distribution_factory,
     basic_manifest_path,
@@ -20,7 +20,7 @@ def test_content_promotion(
 ):
     # Create a repository, publication, and 2 distributions
     remote = file_remote_ssl_factory(manifest_path=basic_manifest_path, policy="on_demand")
-    file_repo = file_repository_api_client.read(file_repo_with_auto_publish.pulp_href)
+    file_repo = file_bindings.RepositoriesFileApi.read(file_repo_with_auto_publish.pulp_href)
 
     # Check what content and artifacts are in the fixture repository
     expected_files = get_files_in_manifest(remote.url)
@@ -28,7 +28,7 @@ def test_content_promotion(
     # Sync from the remote and assert that a new repository version is created
     body = RepositorySyncURL(remote=remote.pulp_href)
     created = monitor_task(
-        file_repository_api_client.sync(file_repo.pulp_href, body).task
+        file_bindings.RepositoriesFileApi.sync(file_repo.pulp_href, body).task
     ).created_resources
     pub = file_publication_api_client.read(created[1])
 
