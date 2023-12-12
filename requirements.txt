@@ -30,7 +30,7 @@ pulp-glue>=0.18.0,<0.23
 pygtrie>=2.5,<=2.5.0
 psycopg[binary]>=3.1.8,<=3.1.14
 pyparsing>=3.1.0,<=3.1.1
-python-gnupg>=0.5,<=0.5.1
+python-gnupg>=0.5,<=0.5.2
 PyYAML>=5.1.1,<=6.0.1
 redis>=4.3,<5.0.2
 setuptools>=39.2,<69.1.0
