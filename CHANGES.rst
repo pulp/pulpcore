@@ -13,6 +13,34 @@ Changelog
 
 .. towncrier release notes start
 
+3.43.1 (2023-12-12)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fixed a bug in the repository version repair API for non-default domains.
+  :github:`4776`,
+  :github:`4806`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
+Pulp File
+---------
+
+No significant changes.
+
+
+----
+
+
 3.43.0 (2023-12-05)
 ===================
 REST API
