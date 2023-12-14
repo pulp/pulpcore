@@ -5,7 +5,7 @@ import uuid
 from urllib.parse import urljoin
 
 
-from pulpcore.tests.functional.utils import get_from_url
+from pulpcore.tests.functional.utils import get_from_url, http_get
 
 
 @pytest.mark.parallel
@@ -14,7 +14,6 @@ def test_content_directory_listing(
     gen_object_with_cleanup,
     rbac_contentguard_api_client,
     pulp_settings,
-    http_get,
     pulp_status,
 ):
     """Checks that distributions are grouped by base-path when listing content directories."""

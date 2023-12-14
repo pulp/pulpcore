@@ -1,8 +1,10 @@
 import pytest
 
+from pulpcore.tests.functional.utils import http_get
+
 
 @pytest.mark.parallel
-def test_hidden_distros(file_distribution_factory, pulp_content_url, http_get):
+def test_hidden_distros(file_distribution_factory, pulp_content_url):
     visible = [file_distribution_factory() for _ in range(5)]
     hidden = [file_distribution_factory(hidden=True) for _ in range(5)]
 
