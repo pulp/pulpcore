@@ -28,7 +28,7 @@ opentelemetry-instrumentation-wsgi>=0.38b0,<=0.42b0
 protobuf>=4.21.1,<4.25.2
 pulp-glue>=0.18.0,<0.23
 pygtrie>=2.5,<=2.5.0
-psycopg[binary]>=3.1.8,<=3.1.15
+psycopg[binary]>=3.1.8,<=3.1.16
 pyparsing>=3.1.0,<=3.1.1
 python-gnupg>=0.5,<=0.5.2
 PyYAML>=5.1.1,<=6.0.1
