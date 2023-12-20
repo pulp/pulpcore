@@ -23,7 +23,7 @@ jobs:
         uses: "actions/upload-artifact@v3"
         with:
           name: "staging-docs.pulpproject.org.tar"
-          path: "staging-docs.pulpproject.org.tar"
+          path: "pulpcore/staging-docs.pulpproject.org.tar"
           if-no-files-found: "error"
 
   publish-staging-docs:
