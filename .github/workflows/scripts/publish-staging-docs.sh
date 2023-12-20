@@ -25,6 +25,6 @@ tar -xvf staging-docs.pulpproject.org.tar --directory ../staging-docs.pulpprojec
 pushd ../staging-docs.pulpproject.org
 
 # publish to staging-docs.pulpproject.org
-rsync -avzh site/ staging_pulp_core@docs.pulpproject.org:/var/www/docs.pulpproject.org/staging_pulp_core/
+rsync -avzh site/ doc_builder_staging_pulp_core@docs.pulpproject.org:/var/www/docs.pulpproject.org/staging_pulp_core/
 
 popd
