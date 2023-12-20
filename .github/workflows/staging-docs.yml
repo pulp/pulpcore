@@ -9,8 +9,6 @@ defaults:
 
 jobs:
   build-staging-docs:
-    needs:
-      - "build-artifacts"
     runs-on: "ubuntu-latest"
 
     steps:
