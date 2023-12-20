@@ -20,9 +20,9 @@ export WORKSPACE=$PWD
 eval "$(ssh-agent -s)"
 ssh-add ~/.ssh/pulp-infra
 
-mkdir -p ../staging-docs.pulproject.org
-tar -xvf staging-docs.pulproject.org.tar --directory ../staging-docs.pulproject.org
-pushd ../staging-docs.pulproject.org
+mkdir -p ../staging-docs.pulpproject.org
+tar -xvf staging-docs.pulpproject.org.tar --directory ../staging-docs.pulpproject.org
+pushd ../staging-docs.pulpproject.org
 
 # publish to staging-docs.pulpproject.org
 rsync -avzh site/ staging_pulp_core@docs.pulpproject.org:/var/www/docs.pulpproject.org/staging_pulp_core/
