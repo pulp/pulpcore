@@ -16,6 +16,9 @@ jobs:
         with:
           fetch-depth: 0
           path: "pulpcore"
+      - uses: "actions/setup-python@v4"
+        with:
+          python-version: "3.8"
       - name: "Build HTML site for staging-docs.pulpproject.org."
         run: |
           .github/workflows/scripts/build_all_docs.sh
