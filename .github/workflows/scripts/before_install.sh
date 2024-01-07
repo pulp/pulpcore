@@ -67,6 +67,7 @@ fi
 
 if [[ "$TEST" = "lowerbounds" ]]; then
   python3 .ci/scripts/calc_deps_lowerbounds.py > lowerbounds_constraints.txt
+  sed -i 's/\[.*\]//g' lowerbounds_constraints.txt
 fi
 
 if [ -f $POST_BEFORE_INSTALL ]; then
