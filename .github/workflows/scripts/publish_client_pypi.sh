@@ -27,7 +27,7 @@ then
   exit
 fi
 
-twine upload -u pulp -p "$PYPI_API_TOKEN" \
+twine upload -u __token__ -p "$PYPI_API_TOKEN" \
 "dist/pulpcore_client-$VERSION-py3-none-any.whl" \
 "dist/pulpcore-client-$VERSION.tar.gz" \
 "dist/pulp_file_client-$VERSION-py3-none-any.whl" \
