@@ -13,6 +13,33 @@ Changelog
 
 .. towncrier release notes start
 
+3.43.2 (2024-01-09)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fix a bug in import/export that could result in a division-by-zero during import.
+  :github:`4777`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
+Pulp File
+---------
+
+No significant changes.
+
+
+----
+
+
 3.43.1 (2023-12-12)
 ===================
 REST API
