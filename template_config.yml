@@ -1,7 +1,7 @@
 # This config represents the latest values used when running the plugin-template. Any settings that
 # were not present before running plugin-template have been added with their default values.
 
-# generated with plugin_template@2021.08.26-274-g6af418c
+# generated with plugin_template@2021.08.26-300-gb64deac
 
 additional_repos:
 - branch: 1.11
@@ -69,7 +69,6 @@ pulp_settings_gcp: null
 pulp_settings_s3: null
 pulpprojectdotorg_key_id: d1a778bda808
 pydocstyle: true
-pypi_username: pulp
 python_version: '3.8'
 release_email: pulp-infra@redhat.com
 release_user: pulpbot
