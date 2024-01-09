@@ -32,7 +32,6 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
-
         dry_run = options["dry_run"]
         fields = ("username", "password", "proxy_username", "proxy_password", "client_key")
 
