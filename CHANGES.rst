@@ -17,6 +17,23 @@ Changelog
 
 .. towncrier release notes start
 
+3.23.24 (2024-01-09)
+====================
+REST API
+--------
+
+No significant changes.
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
+----
+
+
 3.23.23 (2023-11-29)
 ====================
 REST API
