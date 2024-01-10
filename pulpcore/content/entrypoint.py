@@ -1,20 +1,11 @@
 import click
-from gunicorn.app.base import BaseApplication
+from pulpcore.app.pulpcore_gunicorn_application import PulpcoreGunicornApplication
 
 
-class PulpcoreContentApplication(BaseApplication):
-    def __init__(self, options):
-        self.options = options or {}
-        super().__init__()
-
-    def load_config(self):
-        [
-            self.cfg.set(key.lower(), value)
-            for key, value in self.options.items()
-            if value is not None
-        ]
-        self.cfg.set("default_proc_name", "pulpcore-content")
-        self.cfg.set("worker_class", "aiohttp.GunicornWebWorker")
+class PulpcoreContentApplication(PulpcoreGunicornApplication):
+    def load_app_specific_config(self):
+        self.set_option("default_proc_name", "pulpcore-content", enforced=True)
+        self.set_option("worker_class", "aiohttp.GunicornWebWorker", enforced=True)
 
     def load(self):
         import pulpcore.content

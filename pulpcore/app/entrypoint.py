@@ -9,9 +9,9 @@ from django.conf import settings
 from django.db import connection
 from django.db.utils import InterfaceError, OperationalError
 from gunicorn.workers.sync import SyncWorker
-from gunicorn.app.base import BaseApplication
 
 from pulpcore.app.apps import pulp_plugin_configs
+from pulpcore.app.pulpcore_gunicorn_application import PulpcoreGunicornApplication
 
 logger = getLogger(__name__)
 
@@ -80,19 +80,14 @@ class PulpApiWorker(SyncWorker):
                 self.api_app_status.delete()
 
 
-class PulpcoreApiApplication(BaseApplication):
-    def __init__(self, options):
-        self.options = options or {}
-        super().__init__()
-
-    def load_config(self):
-        [
-            self.cfg.set(key.lower(), value)
-            for key, value in self.options.items()
-            if value is not None
-        ]
-        self.cfg.set("default_proc_name", "pulpcore-api")
-        self.cfg.set("worker_class", PulpApiWorker.__module__ + "." + PulpApiWorker.__qualname__)
+class PulpcoreApiApplication(PulpcoreGunicornApplication):
+    def load_app_specific_config(self):
+        self.set_option("default_proc_name", "pulpcore-api", enforced=True)
+        self.set_option(
+            "worker_class",
+            PulpApiWorker.__module__ + "." + PulpApiWorker.__qualname__,
+            enforced=True,
+        )
 
     def load(self):
         using_pulp_api_worker.set(True)
