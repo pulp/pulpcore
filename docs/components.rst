@@ -158,6 +158,9 @@ Pulp can produce OpenTelemetry data, like the number of requests, active connect
 `pulp-api` and `pulp-content` using OpenTelemetry. You can read more about
 `OpenTelemetry here <https://opentelemetry.io>`_.
 
+.. warning:: This feature is provided as a tech preview and could change in backwards incompatible
+  ways in the future.
+
 If you are using `Pulp in One Container <https://pulpproject.org/pulp-in-one-container/>`_ or `Pulp Operator
 <https://docs.pulpproject.org/pulp_operator/>`_ and want to enable it, you will need to set the following
 environment variables:
@@ -184,3 +187,13 @@ and set the following environment variables:
 
 You will need to run an instance of OpenTelemetry Collector. You can read more about the `OpenTelemetry
 Collector here <https://opentelemetry.io/docs/collector/>`_.
+
+**At the moment, the following data is recorded by Pulp:**
+
+* Access to every API endpoint (an HTTP method, target URL, status code, and user agent).
+* Access to every requested package (an HTTP method, target URL, status code, and user agent).
+* Disk usage within a specific domain (total used disk space and the reference to the domain).
+
+The information above is sent to the collector in the form of spans. Thus, the data is emitted based
+on the user interactions with the system, not on a regular basis. Consult
+`OpenTelemetry Traces <https://opentelemetry.io/docs/concepts/signals/traces/>` to learn more.

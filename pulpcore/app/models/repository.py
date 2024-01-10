@@ -25,6 +25,7 @@ from pulpcore.app.util import (
     get_domain,
     get_domain_pk,
     cache_key,
+    domain_emitter,
 )
 from pulpcore.constants import ALL_KNOWN_CONTENT_CHECKSUMS, PROTECTED_REPO_VERSION_MESSAGE
 from pulpcore.download.factory import DownloaderFactory
@@ -149,6 +150,8 @@ class Repository(MasterModel):
                 )
                 if not updated:
                     raise RuntimeError(f"The repository '{self.name}' could not be locked")
+
+        domain_emitter.emit_total_size(self.pulp_domain, "save_repository")
 
     def create_initial_version(self):
         """

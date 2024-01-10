@@ -6,7 +6,7 @@ from rest_framework.validators import UniqueValidator
 
 from pulpcore.app import models
 from pulpcore.app.serializers import base, fields, DetailRelatedField
-from pulpcore.app.util import get_domain
+from pulpcore.app.util import get_domain, domain_emitter
 
 
 class NoArtifactContentSerializer(base.ModelSerializer):
@@ -281,6 +281,16 @@ class ArtifactSerializer(base.ModelSerializer):
                 validator(digest, self.fields[algorithm])
 
         return data
+
+    def create(self, validated_data):
+        """Create an artifact and emit metrics for it.
+
+        This method is usually invoked when a user uploads an artifact
+        directly via the Artifacts endpoint.
+        """
+        instance = super().create(validated_data)
+        domain_emitter.emit_total_size(get_domain(), "artifact_upload")
+        return instance
 
     class Meta:
         model = models.Artifact

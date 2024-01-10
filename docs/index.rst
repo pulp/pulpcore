@@ -69,6 +69,7 @@ Table of Contents
    plugin_dev/index
    rest_api
    client_bindings
+   tech_preview
    contributing/index
    bugs-features
    troubleshooting

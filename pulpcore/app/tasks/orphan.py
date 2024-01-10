@@ -1,4 +1,5 @@
 import gc
+import time
 
 from logging import getLogger
 
@@ -14,6 +15,7 @@ from pulpcore.app.models import (
     PulpTemporaryFile,
     Upload,
 )
+from pulpcore.app.util import get_domain, domain_emitter
 
 log = getLogger(__name__)
 
@@ -110,6 +112,9 @@ def orphan_cleanup(content_pks=None, orphan_protection_time=settings.ORPHAN_PROT
             "Re-run the task and/or consult the logs."
         )
         log.info(msg.format(skipped_artifact))
+
+    time.sleep(2)
+    domain_emitter.emit_total_size(get_domain(), "orphan_cleanup")
 
 
 def upload_cleanup():

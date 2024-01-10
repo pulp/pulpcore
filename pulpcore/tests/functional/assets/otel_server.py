@@ -67,6 +67,7 @@ def _otel_collector():
                         item.key: getattr(item.value, item.value.WhichOneof("value"))
                         for item in span.attributes
                     }
+                    attrs["name"] = span.name
                     spans.append(attrs)
         raise web.HTTPOk()
 
@@ -77,7 +78,11 @@ def _otel_collector():
             raise web.HTTPNotFound()
 
         matched_span = next(
-            (span for span in spans if all((span.get(k) == v for k, v in attrs.items()))),
+            (
+                span
+                for span in spans
+                if all((span.get(k) == v for k, v in attrs.items() if k != "name"))
+            ),
             None,
         )
         if matched_span:
@@ -85,12 +90,26 @@ def _otel_collector():
         else:
             raise web.HTTPNotFound()
 
+    async def _reset_handler(request):
+        spans.clear()
+        raise web.HTTPOk()
+
+    async def _spans_handler(request):
+        if spans:
+            name = request.rel_url.query["name"]
+            matched_span = next((span for span in reversed(spans) if span.get("name") == name), {})
+            return web.json_response(matched_span)
+        else:
+            return web.json_response({})
+
     app = web.Application()
     app.add_routes(
         [
             web.post("/v1/metrics", _null_handler),
             web.post("/v1/traces", _traces_handler),
             web.post("/test", _test_handler),
+            web.post("/reset", _reset_handler),
+            web.get("/spans", _spans_handler),
         ]
     )
 

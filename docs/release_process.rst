@@ -37,7 +37,7 @@ Some possible failures of **Step 2**, above, include:
   * If release-tag is for an existing release (by accident) , the workflow won't fail until the docs-pub. Cleaning this up can be Exciting.
 
 Active branches as of 2023-05-16:
-====================================
+---------------------------------
   * pulpcore
 
     * 3.23 (galaxyNG/4.7)

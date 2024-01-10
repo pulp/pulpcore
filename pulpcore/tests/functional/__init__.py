@@ -538,6 +538,47 @@ def received_otel_span():
     return _received_otel_span
 
 
+@pytest.fixture(scope="session")
+def clear_saved_spans():
+    """A fixture for clearing all previously recorded spans."""
+
+    def _clear_saved_spans():
+        if os.environ.get("PULP_OTEL_ENABLED") != "true":
+            # pretend everything is working as expected if tests are run from
+            # a non-configured runner
+            return
+
+        async def _send_request():
+            async with aiohttp.ClientSession() as session:
+                otel_server_url = os.environ.get("OTEL_EXPORTER_OTLP_ENDPOINT")
+                await session.post(f"{otel_server_url}/reset", json={})
+
+        asyncio.run(_send_request())
+
+    return _clear_saved_spans
+
+
+@pytest.fixture(scope="session")
+def get_latest_span():
+    """A fixture used for retrieving a latest available span from the dummy collector."""
+
+    def _get_latest_span(params):
+        if os.environ.get("PULP_OTEL_ENABLED") != "true":
+            # pretend everything is working as expected if tests are run from
+            # a non-configured runner
+            return
+
+        async def _send_request():
+            async with aiohttp.ClientSession() as session:
+                otel_server_url = os.environ.get("OTEL_EXPORTER_OTLP_ENDPOINT")
+                async with session.get(f"{otel_server_url}/spans", params=params) as response:
+                    return await response.json()
+
+        return asyncio.run(_send_request())
+
+    return _get_latest_span
+
+
 @pytest.fixture
 def test_path():
     return os.getenv("PYTEST_CURRENT_TEST").split()[0]

@@ -11,7 +11,7 @@ from rest_framework.serializers import ValidationError
 
 from pulpcore.app import models
 from pulpcore.app.models import ProgressReport
-from pulpcore.app.util import get_domain
+from pulpcore.app.util import get_domain, domain_emitter
 
 log = getLogger(__name__)
 
@@ -168,7 +168,7 @@ def repair_version(repository_version_pk, verify_checksums):
     Repair the artifacts associated with this repository version.
 
     Artifact files that have suffered from bit rot, were altered or have gone missing will be
-    attempted to be refetched fron an associated upstream.
+    attempted to be refetched from an associated upstream.
 
     Args:
         repository_version_pk (uuid): the primary key for a RepositoryVersion to delete
@@ -188,6 +188,8 @@ def repair_version(repository_version_pk, verify_checksums):
         _repair_artifacts_for_content(subset=version.content, verify_checksums=verify_checksums)
     )
 
+    domain_emitter.emit_total_size(get_domain(), "repair_repository")
+
 
 def repair_all_artifacts(verify_checksums):
     """
@@ -203,6 +205,8 @@ def repair_all_artifacts(verify_checksums):
 
     loop = asyncio.get_event_loop()
     loop.run_until_complete(_repair_artifacts_for_content(verify_checksums=verify_checksums))
+
+    domain_emitter.emit_total_size(get_domain(), "repair_repository")
 
 
 def add_and_remove(repository_pk, add_content_units, remove_content_units, base_version_pk=None):

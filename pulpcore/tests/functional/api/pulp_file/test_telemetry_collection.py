@@ -1,3 +1,7 @@
+import os
+
+import pytest
+
 import requests
 import uuid
 
@@ -5,6 +9,14 @@ from urllib.parse import urljoin, urlparse
 from django.conf import settings
 
 from pulpcore.client.pulp_file import FileFileDistribution, RepositoryAddRemoveContent
+
+from pulpcore.tests.functional.utils import download_file
+
+
+skip_if_domain_or_otel_disabled = pytest.mark.skipif(
+    not settings.DOMAIN_ENABLED or os.getenv("PULP_OTEL_ENABLED") != "true",
+    reason="Domains or Telemetry is not enabled.",
+)
 
 
 def test_get_requests(
@@ -17,7 +29,7 @@ def test_get_requests(
     received_otel_span,
     test_path,
 ):
-    """Test if content-app correctly returns mime-types based on filenames."""
+    """Test if content-app correctly emits relevant spans when accessing the content."""
     content_units = [
         file_content_unit_with_name_factory("otel_test_file1.tar.gz"),
         file_content_unit_with_name_factory("otel_test_file2.xml.gz"),
@@ -90,3 +102,125 @@ def test_get_requests(
                 "http.user_agent": test_path,
             }
         )
+
+
+@skip_if_domain_or_otel_disabled
+def test_on_demand_downloading(
+    basic_manifest_path,
+    file_distribution_factory,
+    file_remote_factory,
+    file_repository_factory,
+    file_repository_api_client,
+    monitor_task,
+    gen_object_with_cleanup,
+    domains_api_client,
+    clear_saved_spans,
+    get_latest_span,
+    orphans_cleanup_api_client,
+):
+    """Test if on-demand downloading emits disk space usage of a newly created domain."""
+    body = {
+        "name": str(uuid.uuid4()),
+        "storage_class": "pulpcore.app.models.storage.FileSystem",
+        "storage_settings": {"MEDIA_ROOT": "/var/lib/pulp/media_otel/"},
+    }
+    domain = gen_object_with_cleanup(domains_api_client, body)
+    remote = file_remote_factory(
+        manifest_path=basic_manifest_path, policy="on_demand", pulp_domain=domain.name
+    )
+    repository = file_repository_factory(
+        remote=remote.pulp_href, pulp_domain=domain.name, autopublish=True
+    )
+    monitor_task(file_repository_api_client.sync(repository.pulp_href, {}).task)
+    distribution = file_distribution_factory(
+        repository=repository.pulp_href, pulp_domain=domain.name
+    )
+
+    clear_saved_spans()
+
+    manifest_file = download_file(f"{distribution.base_url}PULP_MANIFEST")
+    size = len(manifest_file.body)
+
+    for path in ("1.iso", "2.iso", "3.iso"):
+        f = download_file(f"{distribution.base_url}{path}")
+
+        span = get_latest_span({"name": "on_demand_download"})
+        assert size + len(f.body) == span["domain.total_size"]
+        assert domain.pulp_href == span["domain.pulp_href"]
+        assert domain.name == span["domain.name"]
+
+        size = span["domain.total_size"]
+
+    monitor_task(file_repository_api_client.delete(repository.pulp_href).task)
+    # Content needs to be deleted for the domain to be deleted
+    body = {"orphan_protection_time": 0}
+    monitor_task(orphans_cleanup_api_client.cleanup(body, pulp_domain=domain.name).task)
+
+
+@skip_if_domain_or_otel_disabled
+def test_orphan_cleanup(
+    basic_manifest_path,
+    file_remote_factory,
+    file_repository_factory,
+    file_repository_api_client,
+    monitor_task,
+    gen_object_with_cleanup,
+    domains_api_client,
+    clear_saved_spans,
+    get_latest_span,
+    orphans_cleanup_api_client,
+):
+    """Test if triggering the orphan cleanup emits traces of changed disk space."""
+    body = {
+        "name": str(uuid.uuid4()),
+        "storage_class": "pulpcore.app.models.storage.FileSystem",
+        "storage_settings": {"MEDIA_ROOT": "/var/lib/pulp/media_otel/"},
+    }
+    domain = gen_object_with_cleanup(domains_api_client, body)
+    remote = file_remote_factory(
+        manifest_path=basic_manifest_path, policy="immediate", pulp_domain=domain.name
+    )
+    repository = file_repository_factory(remote=remote.pulp_href, pulp_domain=domain.name)
+    monitor_task(file_repository_api_client.sync(repository.pulp_href, {}).task)
+    monitor_task(file_repository_api_client.delete(repository.pulp_href).task)
+
+    clear_saved_spans()
+
+    body = {"orphan_protection_time": 0}
+    monitor_task(orphans_cleanup_api_client.cleanup(body, pulp_domain=domain.name).task)
+
+    span = get_latest_span({"name": "orphan_cleanup"})
+    assert 0 == span["domain.total_size"]
+    assert domain.pulp_href == span["domain.pulp_href"]
+    assert domain.name == span["domain.name"]
+
+
+@skip_if_domain_or_otel_disabled
+def test_artifact_upload(
+    monitor_task,
+    gen_object_with_cleanup,
+    orphans_cleanup_api_client,
+    random_artifact_factory,
+    domains_api_client,
+    clear_saved_spans,
+    get_latest_span,
+):
+    """Test if uploading an artifact emits data about the updated disk usage."""
+    body = {
+        "name": str(uuid.uuid4()),
+        "storage_class": "pulpcore.app.models.storage.FileSystem",
+        "storage_settings": {"MEDIA_ROOT": "/var/lib/pulp/media_otel/"},
+    }
+    domain = gen_object_with_cleanup(domains_api_client, body)
+
+    clear_saved_spans()
+
+    artifact = random_artifact_factory(size=100, pulp_domain=domain.name)
+    span = get_latest_span({"name": "artifact_upload"})
+    assert artifact.size == span["domain.total_size"]
+    assert domain.pulp_href == span["domain.pulp_href"]
+    assert domain.name == span["domain.name"]
+
+    # Content needs to be deleted for the domain to be deleted
+    body = {"orphan_protection_time": 0}
+    monitor_task(orphans_cleanup_api_client.cleanup(body, pulp_domain=domain.name).task)

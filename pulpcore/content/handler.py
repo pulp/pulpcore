@@ -49,7 +49,11 @@ from pulpcore.app.models import (  # noqa: E402: module level not at top of file
     RemoteArtifact,
 )
 from pulpcore.app import mime_types  # noqa: E402: module level not at top of file
-from pulpcore.app.util import get_domain, cache_key  # noqa: E402: module level not at top of file
+from pulpcore.app.util import (  # noqa: E402: module level not at top of file
+    get_domain,
+    cache_key,
+    domain_emitter,
+)
 
 from pulpcore.exceptions import UnsupportedDigestValidationError  # noqa: E402
 
@@ -925,6 +929,9 @@ class Handler:
                 # Normal on-demand downloading, update CA to point to new saved Artifact
                 content_artifact.artifact = artifact
                 content_artifact.save()
+
+                domain_emitter.emit_total_size(get_domain(), "on_demand_download")
+
         return artifact
 
     async def _serve_content_artifact(self, content_artifact, headers, request):

@@ -4,6 +4,7 @@ from tempfile import NamedTemporaryFile
 
 from pulpcore.app import files, models
 from pulpcore.app.serializers import ArtifactSerializer
+from pulpcore.app.util import get_domain, domain_emitter
 
 log = getLogger(__name__)
 
@@ -42,3 +43,5 @@ def commit(upload_id, sha256):
 
     # delete the upload since it can't be reused to create another artifact
     upload.delete()
+
+    domain_emitter.emit_total_size(get_domain(), "commit_file")

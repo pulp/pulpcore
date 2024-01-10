@@ -13,7 +13,10 @@ from datetime import timedelta
 import gnupg
 
 from django.conf import settings
+from django.db.models import Sum
 from django.urls import Resolver404, resolve, reverse
+
+from opentelemetry import trace
 from rest_framework.serializers import ValidationError
 
 from pulpcore.app.loggers import deprecation_logger
@@ -467,3 +470,46 @@ def cache_key(base_path):
             base_path = [f"{domain.name}:{path}" for path in base_path]
 
     return base_path
+
+
+class DomainSpanEmitterBuilder:
+    """A builder class that initializes an emitter for recording domain's traces.
+
+    If Open Telemetry is enabled, the builder configures a real emitter capable of sending data to
+    the collector. Otherwise, a no-op emitter is initialized. The real emitter utilizes the global
+    provider, processor, and exporter to send the data.
+    """
+
+    class _DomainSpanEmitter:
+        """An emitter that sends domain's traces by utilizing."""
+
+        def __init__(self):
+            self.tracer = trace.get_tracer(__name__)
+
+        def emit_total_size(self, domain, span_name="compute_size"):
+            with self.tracer.start_as_current_span(span_name) as span:
+                distinct_artifacts = models.Artifact.objects.filter(pulp_domain=domain).distinct()
+                total_size = distinct_artifacts.aggregate(size=Sum("size", default=0))["size"]
+                span.set_attribute("domain.total_size", total_size)
+                span.set_attribute("domain.pulp_href", get_url(domain))
+                span.set_attribute("domain.name", domain.name)
+
+    class _NoopEmitter:
+        """A dummy emitter with no functionality."""
+
+        def __call__(self, *args, **kwargs):
+            return self
+
+        def __getattr__(self, *args, **kwargs):
+            return self
+
+    @classmethod
+    def build(cls):
+        otel_enabled = os.getenv("PULP_OTEL_ENABLED")
+        if otel_enabled == "true" and settings.DOMAIN_ENABLED:
+            return cls._DomainSpanEmitter()
+        else:
+            return cls._NoopEmitter()
+
+
+domain_emitter = DomainSpanEmitterBuilder.build()

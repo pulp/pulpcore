@@ -11,7 +11,7 @@ from pulpcore.app.models import (
     Repository,
     RepositoryVersion,
 )
-from pulpcore.app.util import get_domain
+from pulpcore.app.util import get_domain, domain_emitter
 
 log = getLogger(__name__)
 
@@ -99,3 +99,5 @@ def reclaim_space(repo_pks, keeplist_rv_pks=None, force=False):
 
     progress_bar.state = "completed"
     progress_bar.save()
+
+    domain_emitter.emit_total_size(domain, "reclaim_space")
