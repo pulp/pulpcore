@@ -13,6 +13,33 @@ Changelog
 
 .. towncrier release notes start
 
+3.43.2 (2024-01-09)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fix a bug in import/export that could result in a division-by-zero during import.
+  :github:`4777`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
+Pulp File
+---------
+
+No significant changes.
+
+
+----
+
+
 3.43.1 (2023-12-12)
 ===================
 REST API
@@ -367,6 +394,23 @@ Features
 
 - Starting from this release `pulp_file` will be shipped as part of the `pulpcore` package.
   :github:`4550`
+
+
+3.39.5 (2024-01-09)
+===================
+REST API
+--------
+
+No significant changes.
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
+----
 
 
 3.39.4 (2023-12-14)
@@ -1886,6 +1930,23 @@ Features
   :github:`3661`
 
 
+3.23.24 (2024-01-09)
+====================
+REST API
+--------
+
+No significant changes.
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
+----
+
+
 3.23.23 (2023-11-29)
 ====================
 REST API
@@ -2498,6 +2559,23 @@ Deprecations
   :github:`3604`
 
 
+3.22.21 (2024-01-09)
+====================
+REST API
+--------
+
+No significant changes.
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
+----
+
+
 3.22.20 (2023-11-30)
 ====================
 REST API
@@ -3046,6 +3124,23 @@ Removals
 - Deprecated model ``Label`` and serializer field ``LabelField`` and ``LabelSelectFilter`` for
   removal in 3.25.
   :github:`3400`
+
+
+3.21.25 (2024-01-09)
+====================
+REST API
+--------
+
+No significant changes.
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
+----
 
 
 3.21.24 (2023-11-30)
@@ -4073,6 +4168,23 @@ Bugfixes
   the stage will still accumulate up to 500 (by default) items so batching is still in-effect there
   where it matters.
   :github:`2069`
+
+
+3.18.34 (2024-01-09)
+====================
+REST API
+--------
+
+No significant changes.
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
+----
 
 
 3.18.33 (2023-12-01)
