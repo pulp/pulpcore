@@ -75,7 +75,7 @@ as a GET parameter. For example for pulp_rpm only endpoints use a query like thi
 
 .. code-block:: bash
 
-    curl -o api.json http://localhost:24817/pulp/api/v3/docs/api.json?plugin=pulp_rpm
+    curl -o api.json http://localhost:24817/pulp/api/v3/docs/api.json?component=rpm
 
 OpenAPI Tags
 ------------

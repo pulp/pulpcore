@@ -31,14 +31,14 @@ Generating a client is a two step process:
 
 .. code-block:: bash
 
-    curl -o api.json http://<pulp-hostname>:24817/pulp/api/v3/docs/api.json?bindings&plugin=pulpcore
+    curl -o api.json http://<pulp-hostname>:24817/pulp/api/v3/docs/api.json?bindings&component=core
 
 The OpenAPI schema for a specific plugin can be downloaded by specifying the plugin's module name
 as a GET parameter. For example for pulp_rpm only endpoints use a query like this:
 
 .. code-block:: bash
 
-    curl -o api.json http://<pulp-hostname>:24817/pulp/api/v3/docs/api.json?bindings&plugin=pulp_rpm
+    curl -o api.json http://<pulp-hostname>:24817/pulp/api/v3/docs/api.json?bindings&component=rpm
 
 **2) Generate a client using openapi-generator.**
 
