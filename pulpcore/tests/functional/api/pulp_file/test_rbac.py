@@ -195,11 +195,13 @@ def test_repository_apis(
     alice, bob, charlie = gen_users(["filerepository", "fileremote"])
     # Sync tests
     with bob:
-        repo = file_repository_factory()
         bob_remote = file_remote_factory(manifest_path=basic_manifest_path, policy="on_demand")
+        repo = file_repository_factory(remote=bob_remote.pulp_href)
     body = {"remote": bob_remote.pulp_href}
     try_action(alice, file_bindings.RepositoriesFileApi, "sync", 403, repo.pulp_href, body)
     try_action(bob, file_bindings.RepositoriesFileApi, "sync", 202, repo.pulp_href, body)
+    # Try syncing without specifying a remote
+    try_action(bob, file_bindings.RepositoriesFileApi, "sync", 202, repo.pulp_href, {})
     try_action(charlie, file_bindings.RepositoriesFileApi, "sync", 404, repo.pulp_href, body)
     # Modify tests
     try_action(alice, file_bindings.RepositoriesFileApi, "modify", 403, repo.pulp_href, {})
