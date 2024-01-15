@@ -180,11 +180,12 @@ def has_remote_param_obj_perms(request, view, action, permission):
     """
     kwargs = {}
     obj = view.get_object() if view.detail else None
+    context = {"request": request}
+    if obj:
+        context["repository_pk"] = obj.pk
     if action == "partial_update":
         kwargs["partial"] = True
-    serializer = view.serializer_class(
-        instance=obj, data=request.data, context={"request": request}, **kwargs
-    )
+    serializer = view.serializer_class(instance=obj, data=request.data, context=context, **kwargs)
     serializer.is_valid(raise_exception=True)
     if remote := serializer.validated_data.get("remote"):
         return request.user.has_perm(permission, remote)
