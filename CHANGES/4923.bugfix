@@ -1,0 +1,1 @@
+Fixed an issue with importing `async-timeout` in Python 3.11.
