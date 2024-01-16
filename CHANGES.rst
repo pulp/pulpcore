@@ -13,6 +13,27 @@ Changelog
 
 .. towncrier release notes start
 
+3.39.6 (2024-01-16)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fixed an issue with importing `async-timeout` in Python 3.11.
+  :github:`4923`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
+----
+
+
 3.39.5 (2024-01-09)
 ===================
 REST API
