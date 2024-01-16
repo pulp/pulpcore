@@ -267,6 +267,14 @@ def test_object_creation(
     try_action(
         bob, file_publication_api_client, "create", 403, {"repository": admin_repo.pulp_href}
     )
+    pub_from_repo_version = try_action(
+        bob,
+        file_publication_api_client,
+        "create",
+        202,
+        {"repository_version": repo.latest_version_href},
+    )
+    assert pub_from_repo_version.created_resources[0] is not None
     pub = try_action(
         bob, file_publication_api_client, "create", 202, {"repository": repo.pulp_href}
     )
