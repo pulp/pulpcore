@@ -8,6 +8,6 @@ class PulpFilePluginAppConfig(PulpPluginAppConfig):
 
     name = "pulp_file.app"
     label = "file"
-    version = "3.43.3"
+    version = "3.43.4.dev"
     python_package_name = "pulp-file"  # TODO Add python_module_name
     domain_compatible = True
