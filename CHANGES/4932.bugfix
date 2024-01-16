@@ -1,0 +1,1 @@
+Fixed a bug where publications couldn't be created from repository versions when using RBAC.
