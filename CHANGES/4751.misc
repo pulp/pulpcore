@@ -1,1 +1,0 @@
-Changed bindings fixtures in the pytest plugin to load lazily.
