@@ -155,7 +155,7 @@ Telemetry Support
 -----------------
 
 Pulp can produce OpenTelemetry data, like the number of requests, active connections and latency response for
-`pulp-api` using OpenTelemetry. You can read more about
+`pulp-api` and `pulp-content` using OpenTelemetry. You can read more about
 `OpenTelemetry here <https://opentelemetry.io>`_.
 
 If you are using `Pulp in One Container <https://pulpproject.org/pulp-in-one-container/>`_ or `Pulp Operator
