@@ -13,6 +13,75 @@ Changelog
 
 .. towncrier release notes start
 
+3.44.0 (2024-01-16)
+===================
+REST API
+--------
+
+Features
+~~~~~~~~
+
+- Added "module" to status api.
+  :github:`4728`
+- Enabled the gunicorn applications for ``pulpcore-api`` and ``pulpcore-content`` to load configurations from the "gunicorn.conf.py" file.
+  :github:`4917`
+
+
+Bugfixes
+~~~~~~~~
+
+- Repo versions are now protected from deletion if they are being used by Pulp to distribute content.
+  Users must first update any necessary distributions before deleting a protected repo version.
+  :github:`2705`
+- Fixed a bug in the repository version repair API for non-default domains.
+  :github:`4776`,
+  :github:`4806`
+- Fix a bug in import/export that could result in a division-by-zero during import.
+  :github:`4777`
+- Ensure the Redis cache is actually respecting the TTL.
+  :github:`4845`
+- Fixed an issue with importing `async-timeout` in Python 3.11.
+  :github:`4923`
+- Fixed RBAC related bug where syncing a repository with a predefined remote required specifying the
+  remote's HREF at sync time.
+  :github:`4925`
+
+
+Removals
+~~~~~~~~
+
+- The python package for the ``file`` plugin is now correctly reporting as ``"pulpcore"``.
+  :github:`4728`
+
+
+Deprecations
+~~~~~~~~~~~~
+
+- Deprecated the query parameter ``plugin`` on the api doc endpoint in favor of ``component``.
+  :github:`4728`
+
+
+Misc
+~~~~
+
+- :github:`4751`, :github:`4850`, :github:`4881`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
+Pulp File
+---------
+
+No significant changes.
+
+
+----
+
+
 3.43.2 (2024-01-09)
 ===================
 REST API

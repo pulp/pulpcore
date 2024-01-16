@@ -1,2 +1,0 @@
-Repo versions are now protected from deletion if they are being used by Pulp to distribute content.
-Users must first update any necessary distributions before deleting a protected repo version.
