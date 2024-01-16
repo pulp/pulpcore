@@ -1,2 +1,0 @@
-Fixed RBAC related bug where syncing a repository with a predefined remote required specifying the
-remote's HREF at sync time.
