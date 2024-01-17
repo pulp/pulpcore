@@ -1,0 +1,98 @@
+Certificate:
+    Data:
+        Version: 3 (0x2)
+        Serial Number:
+            a5:1f:54:e0:f9:5d:04:2f
+    Signature Algorithm: sha256WithRSAEncryption
+        Issuer: C=US, ST=North Carolina, L=Raleigh, O=Katello, OU=SomeOrgUnit, CN=sat-6-6-qa-rhel7.windhelm.example.com
+        Validity
+            Not Before: Mar  5 19:26:08 2020 GMT
+            Not After : Jan 17 19:26:08 2038 GMT
+        Subject: C=US, ST=North Carolina, L=Raleigh, O=Katello, OU=SomeOrgUnit, CN=sat-6-6-qa-rhel7.windhelm.example.com
+        Subject Public Key Info:
+            Public Key Algorithm: rsaEncryption
+                Public-Key: (2048 bit)
+                Modulus:
+                    00:e3:97:9a:40:68:bc:64:fe:5b:38:c3:6c:ac:06:
+                    ff:fe:56:f8:a6:71:4e:d8:1f:18:53:0c:9f:38:0a:
+                    da:eb:17:e3:12:b0:64:49:07:7d:d2:3a:73:d8:00:
+                    18:45:03:a1:bd:94:fd:a4:c3:0a:0b:48:70:c4:ad:
+                    6c:f8:b7:d2:3d:73:a4:29:7e:f9:b4:bc:30:b6:ed:
+                    ac:bb:e7:de:01:aa:1c:55:27:b3:d0:07:be:8e:d4:
+                    6f:63:a7:f1:ae:95:94:51:3e:b9:35:4d:27:c2:7d:
+                    92:9c:82:3f:9a:b7:e6:6b:33:b5:d4:c1:f7:6a:e9:
+                    e3:d2:af:e7:43:87:3b:6a:14:ee:58:46:ce:35:fc:
+                    91:19:39:d2:5d:22:31:af:f4:72:7e:f5:24:5d:3c:
+                    e3:a6:0b:ba:4e:6a:56:92:a5:f4:fd:9e:33:23:94:
+                    b1:35:06:95:14:ca:03:f3:0d:1c:60:4d:80:89:72:
+                    4e:41:aa:03:fb:81:44:8a:be:1f:29:8e:66:da:70:
+                    2d:6d:86:59:41:59:c5:41:86:8d:ce:fe:98:66:b8:
+                    c8:20:c6:ad:ad:6d:08:be:17:d4:0a:87:17:4a:f9:
+                    1b:b2:f7:d4:8f:32:06:74:f4:5f:03:23:cf:26:eb:
+                    57:5e:70:9e:71:2c:af:08:c8:b1:bf:1a:57:cd:0d:
+                    f5:65
+                Exponent: 65537 (0x10001)
+        X509v3 extensions:
+            X509v3 Basic Constraints: 
+                CA:TRUE
+            X509v3 Key Usage: 
+                Digital Signature, Key Encipherment, Certificate Sign, CRL Sign
+            X509v3 Extended Key Usage: 
+                TLS Web Server Authentication, TLS Web Client Authentication
+            Netscape Cert Type: 
+                SSL Server, SSL CA
+            Netscape Comment: 
+                Katello SSL Tool Generated Certificate
+            X509v3 Subject Key Identifier: 
+                76:9D:DC:65:E7:28:BD:17:83:FF:0E:89:27:35:B5:3B:DA:51:36:8C
+            X509v3 Authority Key Identifier: 
+                keyid:76:9D:DC:65:E7:28:BD:17:83:FF:0E:89:27:35:B5:3B:DA:51:36:8C
+                DirName:/C=US/ST=North Carolina/L=Raleigh/O=Katello/OU=SomeOrgUnit/CN=sat-6-6-qa-rhel7.windhelm.example.com
+                serial:A5:1F:54:E0:F9:5D:04:2F
+
+    Signature Algorithm: sha256WithRSAEncryption
+         56:ab:bd:af:46:65:93:7f:88:09:82:89:4a:a3:22:63:b7:00:
+         f4:ac:89:88:ce:fc:4d:17:76:de:29:b7:7d:da:52:9a:e7:d5:
+         cf:29:44:df:0d:38:42:b4:f1:c3:3c:ce:60:a8:e9:c2:2e:68:
+         ea:1b:e2:68:ff:e0:cb:48:60:93:30:28:00:ac:36:a6:fd:80:
+         33:71:eb:fc:47:a0:e4:88:5c:08:b4:b8:fc:a1:e7:94:4f:58:
+         42:5c:b3:bd:a7:ac:ae:aa:31:0c:5d:31:bb:06:56:f3:2e:bc:
+         c3:b2:5b:65:8f:ea:69:6d:57:92:10:05:b1:e0:f4:aa:dc:ba:
+         29:cc:50:a4:3c:76:e0:5e:af:30:1f:97:32:a3:10:81:99:8b:
+         6d:bf:96:6b:ef:f7:b1:72:43:51:60:ff:ee:8a:c7:28:67:d3:
+         64:c8:45:d3:e4:6c:d6:3e:89:e6:a3:64:74:0d:a7:01:a2:3d:
+         ab:b8:77:f5:5d:93:41:fa:e9:31:c1:fa:bb:93:95:c4:f1:4b:
+         de:91:76:e9:17:52:ca:90:cf:00:f5:35:36:f6:60:a4:75:79:
+         fe:88:bf:c9:cf:58:6b:e2:c8:b3:22:db:56:43:29:37:3a:39:
+         84:35:f8:94:26:f5:85:9b:db:2a:28:85:6b:8d:8d:37:6b:71:
+         1a:ff:a5:69
+-----BEGIN CERTIFICATE-----
+MIIFFjCCA/6gAwIBAgIJAKUfVOD5XQQvMA0GCSqGSIb3DQEBCwUAMIGQMQswCQYD
+VQQGEwJVUzEXMBUGA1UECAwOTm9ydGggQ2Fyb2xpbmExEDAOBgNVBAcMB1JhbGVp
+Z2gxEDAOBgNVBAoMB0thdGVsbG8xFDASBgNVBAsMC1NvbWVPcmdVbml0MS4wLAYD
+VQQDDCVzYXQtNi02LXFhLXJoZWw3LndpbmRoZWxtLmV4YW1wbGUuY29tMB4XDTIw
+MDMwNTE5MjYwOFoXDTM4MDExNzE5MjYwOFowgZAxCzAJBgNVBAYTAlVTMRcwFQYD
+VQQIDA5Ob3J0aCBDYXJvbGluYTEQMA4GA1UEBwwHUmFsZWlnaDEQMA4GA1UECgwH
+S2F0ZWxsbzEUMBIGA1UECwwLU29tZU9yZ1VuaXQxLjAsBgNVBAMMJXNhdC02LTYt
+cWEtcmhlbDcud2luZGhlbG0uZXhhbXBsZS5jb20wggEiMA0GCSqGSIb3DQEBAQUA
+A4IBDwAwggEKAoIBAQDjl5pAaLxk/ls4w2ysBv/+VvimcU7YHxhTDJ84CtrrF+MS
+sGRJB33SOnPYABhFA6G9lP2kwwoLSHDErWz4t9I9c6Qpfvm0vDC27ay7594BqhxV
+J7PQB76O1G9jp/GulZRRPrk1TSfCfZKcgj+at+ZrM7XUwfdq6ePSr+dDhztqFO5Y
+Rs41/JEZOdJdIjGv9HJ+9SRdPOOmC7pOalaSpfT9njMjlLE1BpUUygPzDRxgTYCJ
+ck5BqgP7gUSKvh8pjmbacC1thllBWcVBho3O/phmuMggxq2tbQi+F9QKhxdK+Ruy
+99SPMgZ09F8DI88m61decJ5xLK8IyLG/GlfNDfVlAgMBAAGjggFvMIIBazAMBgNV
+HRMEBTADAQH/MAsGA1UdDwQEAwIBpjAdBgNVHSUEFjAUBggrBgEFBQcDAQYIKwYB
+BQUHAwIwEQYJYIZIAYb4QgEBBAQDAgJEMDUGCWCGSAGG+EIBDQQoFiZLYXRlbGxv
+IFNTTCBUb29sIEdlbmVyYXRlZCBDZXJ0aWZpY2F0ZTAdBgNVHQ4EFgQUdp3cZeco
+vReD/w6JJzW1O9pRNowwgcUGA1UdIwSBvTCBuoAUdp3cZecovReD/w6JJzW1O9pR
+NoyhgZakgZMwgZAxCzAJBgNVBAYTAlVTMRcwFQYDVQQIDA5Ob3J0aCBDYXJvbGlu
+YTEQMA4GA1UEBwwHUmFsZWlnaDEQMA4GA1UECgwHS2F0ZWxsbzEUMBIGA1UECwwL
+U29tZU9yZ1VuaXQxLjAsBgNVBAMMJXNhdC02LTYtcWEtcmhlbDcud2luZGhlbG0u
+ZXhhbXBsZS5jb22CCQClH1Tg+V0ELzANBgkqhkiG9w0BAQsFAAOCAQEAVqu9r0Zl
+k3+ICYKJSqMiY7cA9KyJiM78TRd23im3fdpSmufVzylE3w04QrTxwzzOYKjpwi5o
+6hviaP/gy0hgkzAoAKw2pv2AM3Hr/Eeg5IhcCLS4/KHnlE9YQlyzvaesrqoxDF0x
+uwZW8y68w7JbZY/qaW1XkhAFseD0qty6KcxQpDx24F6vMB+XMqMQgZmLbb+Wa+/3
+sXJDUWD/7orHKGfTZMhF0+Rs1j6J5qNkdA2nAaI9q7h39V2TQfrpMcH6u5OVxPFL
+3pF26RdSypDPAPU1NvZgpHV5/oi/yc9Ya+LIsyLbVkMpNzo5hDX4lCb1hZvbKiiF
+a42NN2txGv+laQ==
+-----END CERTIFICATE-----

@@ -175,6 +175,31 @@ jobs:
           path: "pulpcore/file-ruby-client.tar"
           if-no-files-found: "error"
           retention-days: 5
+      - name: Upload python client packages
+        if: ${{ env.TEST == 'pulp' }}
+        uses: actions/upload-artifact@v3
+        with:
+          name: "python-client.tar"
+          path: "pulpcore/certguard-python-client.tar"
+          if-no-files-found: "error"
+          retention-days: 5
+
+      - name: Upload python client docs
+        if: ${{ env.TEST == 'pulp' }}
+        uses: actions/upload-artifact@v3
+        with:
+          name: "python-client-docs.tar"
+          path: "pulpcore/certguard-python-client-docs.tar"
+          if-no-files-found: "error"
+          retention-days: 5
+      - name: Upload Ruby client
+        if: ${{ env.TEST == 'pulp' }}
+        uses: actions/upload-artifact@v3
+        with:
+          name: "ruby-client.tar"
+          path: "pulpcore/certguard-ruby-client.tar"
+          if-no-files-found: "error"
+          retention-days: 5
       - name: Upload built docs
         if: ${{ env.TEST == 'docs' }}
         uses: actions/upload-artifact@v3

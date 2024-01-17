@@ -13,7 +13,7 @@ setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     license="GPLv2+",
-    packages=find_packages(exclude=["test"]),
+    packages=find_packages(),
     author="Pulp Team",
     author_email="pulp-list@redhat.com",
     url="https://pulpproject.org",
@@ -46,10 +46,12 @@ setup(
         ],
         "pulpcore.plugin": [
             "pulp_file = pulp_file:default_app_config",
+            "pulp_certguard = pulp_certguard:default_app_config",
         ],
         "pytest11": [
             "pulpcore = pulpcore.tests.functional",
             "pulp_file = pulp_file.pytest_plugin",
+            "pulp_certguard = pulp_certguard.pytest_plugin",
         ],
     },
 )

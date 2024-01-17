@@ -57,3 +57,14 @@ rsync -avzh site/ doc_builder_pulp_file@docs.pulpproject.org:/var/www/docs.pulpp
 # publish to docs.pulpproject.org/pulp_file_client/en/{release}
 rsync -avzh site/ doc_builder_pulp_file@docs.pulpproject.org:/var/www/docs.pulpproject.org/pulp_file_client/en/"$2"
 popd
+
+mkdir -p ../certguard-bindings
+tar -xvf certguard-python-client-docs.tar --directory ../certguard-bindings
+pushd ../certguard-bindings
+
+# publish to docs.pulpproject.org/pulp_certguard_client
+rsync -avzh site/ doc_builder_pulp_certguard@docs.pulpproject.org:/var/www/docs.pulpproject.org/pulp_certguard_client/
+
+# publish to docs.pulpproject.org/pulp_certguard_client/en/{release}
+rsync -avzh site/ doc_builder_pulp_certguard@docs.pulpproject.org:/var/www/docs.pulpproject.org/pulp_certguard_client/en/"$2"
+popd

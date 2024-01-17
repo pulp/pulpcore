@@ -1,6 +1,7 @@
 # Unit test requirements
 mock
 aiotools
+pytest
 pytest-django
 pytest-asyncio
 pytest-redis

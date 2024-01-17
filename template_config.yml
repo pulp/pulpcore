@@ -1,9 +1,8 @@
 # This config represents the latest values used when running the plugin-template. Any settings that
 # were not present before running plugin-template have been added with their default values.
 
-# generated with plugin_template@2021.08.26-302-ge18b1d1
+# generated with plugin_template@2021.08.26-304-gc53c1e3-dirty
 
-additional_repos: []
 api_root: /pulp/
 black: true
 check_commit_message: true
@@ -50,6 +49,8 @@ plugins:
   name: pulpcore
 - app_label: file
   name: pulp_file
+- app_label: certguard
+  name: pulp-certguard
 post_job_template: null
 pre_job_template: null
 publish_docs_to_pulpprojectdotorg: true
