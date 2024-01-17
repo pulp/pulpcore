@@ -126,6 +126,25 @@ jobs:
           name: "ruby-client.tar"
           path: "pulpcore/file-ruby-client.tar"
           if-no-files-found: "error"
+      - name: "Upload python client packages"
+        uses: "actions/upload-artifact@v3"
+        with:
+          name: "python-client.tar"
+          path: "pulpcore/certguard-python-client.tar"
+          if-no-files-found: "error"
+
+      - name: "Upload python client docs"
+        uses: "actions/upload-artifact@v3"
+        with:
+          name: "python-client-docs.tar"
+          path: "pulpcore/certguard-python-client-docs.tar"
+          if-no-files-found: "error"
+      - name: "Upload ruby client packages"
+        uses: "actions/upload-artifact@v3"
+        with:
+          name: "ruby-client.tar"
+          path: "pulpcore/certguard-ruby-client.tar"
+          if-no-files-found: "error"
       - name: Build docs
         run: |
           export DJANGO_SETTINGS_MODULE=pulpcore.app.settings
@@ -212,6 +231,7 @@ jobs:
         run: |
           tar -xvf core-python-client.tar
           tar -xvf file-python-client.tar
+          tar -xvf certguard-python-client.tar
 
       - uses: "actions/setup-python@v4"
         with:
@@ -256,6 +276,7 @@ jobs:
         run: |
           tar -xvf core-ruby-client.tar
           tar -xvf file-ruby-client.tar
+          tar -xvf certguard-ruby-client.tar
 
       - uses: ruby/setup-ruby@v1
         with:

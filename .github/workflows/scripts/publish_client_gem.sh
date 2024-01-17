@@ -34,3 +34,4 @@ echo "---
 sudo chmod 600 ~/.gem/credentials
 gem push "pulpcore_client-${VERSION}.gem"
 gem push "pulp_file_client-${VERSION}.gem"
+gem push "pulp_certguard_client-${VERSION}.gem"

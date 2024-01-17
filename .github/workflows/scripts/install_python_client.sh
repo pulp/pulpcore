@@ -108,4 +108,46 @@ mkdocs build
 # Pack the built site.
 tar cvf ../../pulpcore/file-python-client-docs.tar ./site
 popd
+rm -rf pulp_certguard-client
+
+if pulp debug has-plugin --name "core" --specifier ">=3.44.0.dev"
+then
+  curl --fail-with-body -k -o api.json "${PULP_URL}${PULP_API_ROOT}api/v3/docs/api.json?bindings&component=certguard"
+  USE_LOCAL_API_JSON=1 ./generate.sh pulp_certguard python "$VERSION"
+else
+  ./generate.sh pulp_certguard python "$VERSION"
+fi
+
+pushd pulp_certguard-client
+python setup.py sdist bdist_wheel --python-tag py3
+
+twine check "dist/pulp_certguard_client-$VERSION-py3-none-any.whl"
+twine check "dist/pulp_certguard-client-$VERSION.tar.gz"
+
+cmd_prefix pip3 install "/root/pulp-openapi-generator/pulp_certguard-client/dist/pulp_certguard_client-${VERSION}-py3-none-any.whl"
+tar cvf ../../pulpcore/certguard-python-client.tar ./dist
+
+find ./docs/* -exec sed -i 's/Back to README/Back to HOME/g' {} \;
+find ./docs/* -exec sed -i 's/README//g' {} \;
+cp README.md docs/index.md
+sed -i 's/docs\///g' docs/index.md
+find ./docs/* -exec sed -i 's/\.md//g' {} \;
+
+cat >> mkdocs.yml << DOCSYAML
+---
+site_name: Pulp-Certguard Client
+site_description: Certguard bindings
+site_author: Pulp Team
+site_url: https://docs.pulpproject.org/pulp_certguard_client/
+repo_name: pulp/pulp_certguard
+repo_url: https://github.com/pulp/pulp_certguard
+theme: readthedocs
+DOCSYAML
+
+# Building the bindings docs
+mkdocs build
+
+# Pack the built site.
+tar cvf ../../pulpcore/certguard-python-client-docs.tar ./site
+popd
 popd
