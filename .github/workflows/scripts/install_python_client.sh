@@ -9,45 +9,61 @@
 
 set -mveuo pipefail
 
-export PULP_URL="${PULP_URL:-https://pulp}"
-
 # make sure this script runs at the repo root
 cd "$(dirname "$(realpath -e "$0")")"/../../..
 
-pip install twine wheel
+source .github/workflows/scripts/utils.sh
 
-export REPORTED_VERSION=$(http $PULP_URL/pulp/api/v3/status/ | jq --arg plugin core --arg legacy_plugin pulpcore -r '.versions[] | select(.component == $plugin or .component == $legacy_plugin) | .version')
-export DESCRIPTION="$(git describe --all --exact-match `git rev-parse HEAD`)"
-if [[ $DESCRIPTION == 'tags/'$REPORTED_VERSION ]]; then
-  export VERSION=${REPORTED_VERSION}
-else
-  export EPOCH="$(date +%s)"
-  export VERSION=${REPORTED_VERSION}${EPOCH}
-fi
+PULP_URL="${PULP_URL:-https://pulp}"
+export PULP_URL
+PULP_API_ROOT="${PULP_API_ROOT:-/pulp/}"
+export PULP_API_ROOT
 
-export response=$(curl --write-out %{http_code} --silent --output /dev/null https://pypi.org/project/pulpcore-client/$VERSION/)
+REPORTED_STATUS="$(pulp status)"
+REPORTED_VERSION="$(echo "$REPORTED_STATUS" | jq --arg plugin "core" -r '.versions[] | select(.component == $plugin) | .version')"
+VERSION="$(echo "$REPORTED_VERSION" | python -c 'from packaging.version import Version; print(Version(input()))')"
 
-if [ "$response" == "200" ];
-then
-  echo "pulpcore client $VERSION has already been released. Installing from PyPI."
-  docker exec pulp pip3 install pulpcore-client==$VERSION
-  mkdir -p dist
-  tar cvf python-client.tar ./dist
-  exit
-fi
-
-cd ../pulp-openapi-generator
+pushd ../pulp-openapi-generator
 rm -rf pulpcore-client
-./generate.sh pulpcore python $VERSION
-cd pulpcore-client
+
+if pulp debug has-plugin --name "core" --specifier ">=3.44.0.dev"
+then
+  curl --fail-with-body -k -o api.json "${PULP_URL}${PULP_API_ROOT}api/v3/docs/api.json?bindings&component=core"
+  USE_LOCAL_API_JSON=1 ./generate.sh pulpcore python "$VERSION"
+else
+  ./generate.sh pulpcore python "$VERSION"
+fi
+
+pushd pulpcore-client
 python setup.py sdist bdist_wheel --python-tag py3
-find . -name "*.whl" -exec docker exec pulp pip3 install /root/pulp-openapi-generator/pulpcore-client/{} \;
-tar cvf ../../pulpcore/python-client.tar ./dist
+
+twine check "dist/pulpcore_client-$VERSION-py3-none-any.whl"
+twine check "dist/pulpcore-client-$VERSION.tar.gz"
+
+cmd_prefix pip3 install "/root/pulp-openapi-generator/pulpcore-client/dist/pulpcore_client-${VERSION}-py3-none-any.whl"
+tar cvf ../../pulpcore/core-python-client.tar ./dist
 
 find ./docs/* -exec sed -i 's/Back to README/Back to HOME/g' {} \;
 find ./docs/* -exec sed -i 's/README//g' {} \;
 cp README.md docs/index.md
 sed -i 's/docs\///g' docs/index.md
 find ./docs/* -exec sed -i 's/\.md//g' {} \;
-tar cvf ../../pulpcore/python-client-docs.tar ./docs
-exit $?
+
+cat >> mkdocs.yml << DOCSYAML
+---
+site_name: Pulpcore Client
+site_description: Core bindings
+site_author: Pulp Team
+site_url: https://docs.pulpproject.org/pulpcore_client/
+repo_name: pulp/pulpcore
+repo_url: https://github.com/pulp/pulpcore
+theme: readthedocs
+DOCSYAML
+
+# Building the bindings docs
+mkdocs build
+
+# Pack the built site.
+tar cvf ../../pulpcore/core-python-client-docs.tar ./site
+popd
+popd
