@@ -155,7 +155,7 @@ jobs:
         with:
           fetch-depth: 0
           path: "pulpcore"
-          ref: "3.23"
+          ref: "3.28"
 
       - name: "Run update"
         working-directory: "pulpcore"
@@ -169,10 +169,10 @@ jobs:
           path: "pulpcore"
           committer: "pulpbot <pulp-infra@redhat.com>"
           author: "pulpbot <pulp-infra@redhat.com>"
-          title: "Update CI files for branch 3.23"
+          title: "Update CI files for branch 3.28"
           body: ""
-          branch: "update-ci/3.23"
-          base: "3.23"
+          branch: "update-ci/3.28"
+          base: "3.28"
           commit-message: |
             Update CI files
 

@@ -16,7 +16,7 @@ ci_update_branches:
 - '3.18'
 - '3.21'
 - '3.22'
-- '3.23'
+- '3.28'
 - '3.39'
 - '3.44'
 ci_update_docs: true
