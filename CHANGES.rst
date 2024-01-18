@@ -13,6 +13,33 @@ Changelog
 
 .. towncrier release notes start
 
+3.44.1 (2024-01-17)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fixed a bug where publications couldn't be created from repository versions when using RBAC.
+  :github:`4932`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
+Pulp File
+---------
+
+No significant changes.
+
+
+----
+
+
 3.44.0 (2024-01-16)
 ===================
 REST API
