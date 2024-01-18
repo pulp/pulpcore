@@ -6,7 +6,7 @@
 # For more info visit https://github.com/pulp/plugin_template
 
 ---
-name: Pulpcore PR static checks
+name: Core PR static checks
 on:
   pull_request_target:
     types: [opened, synchronize, reopened]
@@ -16,7 +16,7 @@ on:
 # Static analysis should be fine however.
 
 concurrency:
-  group: ${{ github.ref_name }}-${{ github.workflow }}
+  group: ${{ github.event.pull_request.number }}-${{ github.workflow }}
   cancel-in-progress: true
 
 jobs:
@@ -26,7 +26,7 @@ jobs:
     permissions:
       pull-requests: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: "actions/checkout@v4"
         with:
           fetch-depth: 0
       - name: Commit Count Check

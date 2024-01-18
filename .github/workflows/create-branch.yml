@@ -21,26 +21,27 @@ jobs:
       fail-fast: false
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: "actions/checkout@v4"
         with:
           fetch-depth: 0
-          path: pulpcore
+          path: "pulpcore"
 
-      - uses: actions/setup-python@v4
+      - uses: "actions/setup-python@v4"
         with:
           python-version: "3.8"
 
-      - name: Install python dependencies
+      - name: "Install python dependencies"
         run: |
           echo ::group::PYDEPS
           pip install bump2version jinja2 pyyaml
           echo ::endgroup::
 
-      - name: Setting secrets
-        working-directory: pulpcore
-        run: python3 .github/workflows/scripts/secrets.py "$SECRETS_CONTEXT"
+      - name: "Setting secrets"
+        working-directory: "pulpcore"
+        run: |
+          python3 .github/workflows/scripts/secrets.py "$SECRETS_CONTEXT"
         env:
-          SECRETS_CONTEXT: ${{ toJson(secrets) }}
+          SECRETS_CONTEXT: "${{ toJson(secrets) }}"
 
       - name: Determine new branch name
         working-directory: pulpcore

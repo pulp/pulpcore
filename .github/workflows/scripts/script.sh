@@ -12,7 +12,6 @@ set -mveuo pipefail
 
 # make sure this script runs at the repo root
 cd "$(dirname "$(realpath -e "$0")")"/../../..
-REPO_ROOT="$PWD"
 
 source .github/workflows/scripts/utils.sh
 
@@ -29,73 +28,101 @@ export PULP_SETTINGS=$PWD/.ci/ansible/settings/settings.py
 export PULP_URL="https://pulp"
 
 if [[ "$TEST" = "docs" ]]; then
-  if [[ "$GITHUB_WORKFLOW" == "Pulpcore CI" ]]; then
-    pip install towncrier==19.9.0
-    towncrier --yes --version 4.0.0.ci
+  if [[ "$GITHUB_WORKFLOW" == "Core CI" ]]; then
+    towncrier build --yes --version 4.0.0.ci
   fi
   cd docs
   make PULP_URL="$PULP_URL" diagrams html
   tar -cvf docs.tar ./_build
   cd ..
 
-  if [ -f $POST_DOCS_TEST ]; then
-    source $POST_DOCS_TEST
+  if [ -f "$POST_DOCS_TEST" ]; then
+    source "$POST_DOCS_TEST"
   fi
   exit
 fi
 
 REPORTED_STATUS="$(pulp status)"
 
-if [[ "${RELEASE_WORKFLOW:-false}" == "true" ]]; then
-  REPORTED_VERSION="$(echo $REPORTED_STATUS | jq --arg plugin core --arg legacy_plugin pulpcore -r '.versions[] | select(.component == $plugin or .component == $legacy_plugin) | .version')"
-  response=$(curl --write-out %{http_code} --silent --output /dev/null https://pypi.org/project/pulpcore/$REPORTED_VERSION/)
-  if [ "$response" == "200" ];
-  then
-    echo "pulpcore $REPORTED_VERSION has already been released. Skipping running tests."
-    exit
-  fi
-fi
-
 echo "machine pulp
 login admin
 password password
 " | cmd_user_stdin_prefix bash -c "cat >> ~pulp/.netrc"
 # Some commands like ansible-galaxy specifically require 600
-cmd_user_stdin_prefix bash -c "chmod 600 ~pulp/.netrc"
+cmd_prefix bash -c "chmod 600 ~pulp/.netrc"
 
-cd ../pulp-openapi-generator
-if [ "$(echo "$REPORTED_STATUS" | jq -r '.versions[0].package')" = "null" ]
+# Generate and install binding
+pushd ../pulp-openapi-generator
+if pulp debug has-plugin --name "core" --specifier ">=3.44.0.dev"
 then
-  # We are on an old version of pulpcore without package in the status report
-  for app_label in $(echo "$REPORTED_STATUS" | jq -r '.versions[].component')
-  do
-    if [ "$app_label" = "core" ]
-    then
-      item=pulpcore
-    else
-      item="pulp_${app_label}"
-    fi
-    ./generate.sh "${item}" python
-    cmd_prefix pip3 install "/root/pulp-openapi-generator/${item}-client"
-    sudo rm -rf "./${item}-client"
-  done
+  # Use app_label to generate api.json and package to produce the proper package name.
+
+  if [ "$(jq -r '.domain_enabled' <<<"$REPORTED_STATUS")" = "true" ]
+  then
+    # Workaround: Domains are not supported by the published bindings.
+    # Generate new bindings for all packages.
+    for item in $(jq -r '.versions[] | tojson' <<<"$REPORTED_STATUS")
+    do
+      echo $item
+      COMPONENT="$(jq -r '.component' <<<"$item")"
+      VERSION="$(jq -r '.version' <<<"$item")"
+      MODULE="$(jq -r '.module' <<<"$item")"
+      PACKAGE="${MODULE%%.*}"
+      curl --fail-with-body -k -o api.json "${PULP_URL}${PULP_API_ROOT}api/v3/docs/api.json?bindings&component=$COMPONENT"
+      USE_LOCAL_API_JSON=1 ./generate.sh "${PACKAGE}" python "${VERSION}"
+      cmd_prefix pip3 install "/root/pulp-openapi-generator/${PACKAGE}-client"
+      sudo rm -rf "./${PACKAGE}-client"
+    done
+  else
+    # Sadly: Different pulpcore-versions aren't either...
+    for item in $(jq -r '.versions[]| select(.component!="core")| tojson' <<<"$REPORTED_STATUS")
+    do
+      echo $item
+      COMPONENT="$(jq -r '.component' <<<"$item")"
+      VERSION="$(jq -r '.version' <<<"$item")"
+      MODULE="$(jq -r '.module' <<<"$item")"
+      PACKAGE="${MODULE%%.*}"
+      curl --fail-with-body -k -o api.json "${PULP_URL}${PULP_API_ROOT}api/v3/docs/api.json?bindings&component=$COMPONENT"
+      USE_LOCAL_API_JSON=1 ./generate.sh "${PACKAGE}" python "${VERSION}"
+      cmd_prefix pip3 install "/root/pulp-openapi-generator/${PACKAGE}-client"
+      sudo rm -rf "./${PACKAGE}-client"
+    done
+  fi
 else
-  for item in $(echo "$REPORTED_STATUS" | jq -r '.versions[].package|sub("-"; "_")')
-  do
-    ./generate.sh "${item}" python
-    cmd_prefix pip3 install "/root/pulp-openapi-generator/${item}-client"
-    sudo rm -rf "./${item}-client"
-  done
+  # Infer the client name from the package name by replacing "-" with "_".
+  # Use the component to infer the package name on older versions of pulpcore.
+
+  if [ "$(echo "$REPORTED_STATUS" | jq -r '.domain_enabled')" = "true" ]
+  then
+    # Workaround: Domains are not supported by the published bindings.
+    # Generate new bindings for all packages.
+    for item in $(echo "$REPORTED_STATUS" | jq -r '.versions[]|(.package // ("pulp_" + .component)|sub("pulp_core"; "pulpcore"))|sub("-"; "_")')
+    do
+      ./generate.sh "${item}" python
+      cmd_prefix pip3 install "/root/pulp-openapi-generator/${item}-client"
+      sudo rm -rf "./${item}-client"
+    done
+  else
+    # Sadly: Different pulpcore-versions aren't either...
+    for item in $(echo "$REPORTED_STATUS" | jq -r '.versions[]|select(.component!="core")|(.package // ("pulp_" + .component)|sub("pulp_core"; "pulpcore"))|sub("-"; "_")')
+    do
+      ./generate.sh "${item}" python
+      cmd_prefix pip3 install "/root/pulp-openapi-generator/${item}-client"
+      sudo rm -rf "./${item}-client"
+    done
+  fi
 fi
+popd
 
-cd $REPO_ROOT
-
-cat unittest_requirements.txt | cmd_stdin_prefix bash -c "cat > /tmp/unittest_requirements.txt"
-cat functest_requirements.txt | cmd_stdin_prefix bash -c "cat > /tmp/functest_requirements.txt"
-cmd_prefix pip3 install -r /tmp/unittest_requirements.txt -r /tmp/functest_requirements.txt
+# At this point, this is a safeguard only, so let's not make too much fuzz about the old status format.
+echo "$REPORTED_STATUS" | jq -r '.versions[]|select(.package)|(.package|sub("_"; "-")) + "-client==" + .version' > bindings_requirements.txt
+cmd_stdin_prefix bash -c "cat > /tmp/unittest_requirements.txt" < unittest_requirements.txt
+cmd_stdin_prefix bash -c "cat > /tmp/functest_requirements.txt" < functest_requirements.txt
+cmd_stdin_prefix bash -c "cat > /tmp/bindings_requirements.txt" < bindings_requirements.txt
+cmd_prefix pip3 install -r /tmp/unittest_requirements.txt -r /tmp/functest_requirements.txt -r /tmp/bindings_requirements.txt
 
 CERTIFI=$(cmd_prefix python3 -c 'import certifi; print(certifi.where())')
-cmd_prefix bash -c "cat /etc/pulp/certs/pulp_webserver.crt  | tee -a "$CERTIFI" > /dev/null"
+cmd_prefix bash -c "cat /etc/pulp/certs/pulp_webserver.crt >> '$CERTIFI'"
 
 # check for any uncommitted migrations
 echo "Checking for uncommitted migrations..."
@@ -109,16 +136,16 @@ if [[ "$TEST" == "performance" ]]; then
   if [[ -z ${PERFORMANCE_TEST+x} ]]; then
     cmd_user_prefix bash -c "pytest -vv -r sx --color=yes --pyargs --capture=no --durations=0 pulpcore.tests.performance"
   else
-    cmd_user_prefix bash -c "pytest -vv -r sx --color=yes --pyargs --capture=no --durations=0 pulpcore.tests.performance.test_$PERFORMANCE_TEST"
+    cmd_user_prefix bash -c "pytest -vv -r sx --color=yes --pyargs --capture=no --durations=0 pulpcore.tests.performance.test_${PERFORMANCE_TEST}"
   fi
   exit
 fi
 
-if [ -f $FUNC_TEST_SCRIPT ]; then
-  source $FUNC_TEST_SCRIPT
+if [ -f "$FUNC_TEST_SCRIPT" ]; then
+  source "$FUNC_TEST_SCRIPT"
 else
-
-    if [[ "$GITHUB_WORKFLOW" == "Pulpcore Nightly CI/CD" ]] || [[ "${RELEASE_WORKFLOW:-false}" == "true" ]]; then
+    if [[ "$GITHUB_WORKFLOW" == "Core Nightly CI/CD" ]]
+    then
         cmd_user_prefix bash -c "pytest -v -r sx --color=yes --suppress-no-test-exit-code --pyargs pulpcore.tests.functional -m parallel -n 8 --nightly"
         cmd_user_prefix bash -c "pytest -v -r sx --color=yes --pyargs pulpcore.tests.functional -m 'not parallel' --nightly"
         cmd_user_prefix bash -c "pytest -v -r sx --color=yes --suppress-no-test-exit-code --pyargs pulp_file.tests.functional -m parallel -n 8 --nightly"
@@ -126,7 +153,6 @@ else
         cmd_user_prefix bash -c "pytest -v -r sx --color=yes --suppress-no-test-exit-code --pyargs pulp_certguard.tests.functional -m parallel -n 8 --nightly"
         cmd_user_prefix bash -c "pytest -v -r sx --color=yes --pyargs pulp_certguard.tests.functional -m 'not parallel' --nightly"
 
-    
     else
         cmd_user_prefix bash -c "pytest -v -r sx --color=yes --suppress-no-test-exit-code --pyargs pulpcore.tests.functional -m parallel -n 8"
         cmd_user_prefix bash -c "pytest -v -r sx --color=yes --pyargs pulpcore.tests.functional -m 'not parallel'"
@@ -134,10 +160,7 @@ else
         cmd_user_prefix bash -c "pytest -v -r sx --color=yes --pyargs pulp_file.tests.functional -m 'not parallel'"
         cmd_user_prefix bash -c "pytest -v -r sx --color=yes --suppress-no-test-exit-code --pyargs pulp_certguard.tests.functional -m parallel -n 8"
         cmd_user_prefix bash -c "pytest -v -r sx --color=yes --pyargs pulp_certguard.tests.functional -m 'not parallel'"
-
-    
     fi
-
 fi
 export PULP_FIXTURES_URL="http://pulp-fixtures:8080"
 pushd ../pulp-cli
@@ -145,6 +168,6 @@ pip install -r test_requirements.txt
 pytest -v -m pulpcore
 popd
 
-if [ -f $POST_SCRIPT ]; then
-  source $POST_SCRIPT
+if [ -f "$POST_SCRIPT" ]; then
+  source "$POST_SCRIPT"
 fi
