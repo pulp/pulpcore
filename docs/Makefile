@@ -17,7 +17,6 @@ DIAGRAM_BUILD_DIR = _diagrams
 PULP_URL ?= http://localhost:24817
 PULP_API_ROOT ?= /pulp/
 
-
 # Internal variables.
 PULP_V3_API_JSON_URL := ${PULP_URL}${PULP_API_ROOT}api/v3/docs/api.json
 PAPEROPT_a4 = -D latex_paper_size=a4
@@ -74,7 +73,12 @@ endif
 
 $(BUILDDIR)/html/api.json:
 	mkdir -p $(BUILDDIR)/html
-	curl --fail -o $(BUILDDIR)/html/api.json "$(PULP_V3_API_JSON_URL)?plugin=pulpcore&include_html=1"
+	if pulp debug has-plugin --name core --specifier ">=3.44.0.dev"; \
+	then \
+		curl --fail -o $(BUILDDIR)/html/api.json "$(PULP_V3_API_JSON_URL)?component=core&include_html=1"; \
+	else \
+		curl --fail -o $(BUILDDIR)/html/api.json "$(PULP_V3_API_JSON_URL)?plugin=pulpcore&include_html=1"; \
+	fi
 
 html: $(BUILDDIR)/html/api.json
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
