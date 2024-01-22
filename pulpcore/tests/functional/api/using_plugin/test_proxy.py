@@ -4,6 +4,7 @@ from pulpcore.tests.functional.utils import PulpTaskError
 from pulpcore.client.pulp_file import (
     RepositorySyncURL,
 )
+import sys
 
 
 def _run_basic_sync_and_assert(
@@ -154,6 +155,37 @@ def test_sync_http_through_https_proxy(
         policy="on_demand",
         proxy_url=https_proxy.proxy_url,
         tls_validation="false",  # We instead should have a `proxy_insecure` option
+    )
+
+    _run_basic_sync_and_assert(
+        remote_on_demand,
+        file_repo,
+        file_bindings,
+        file_content_api_client,
+        monitor_task,
+    )
+
+
+@pytest.mark.parallel
+def test_sync_https_through_https_proxy(
+    file_remote_ssl_factory,
+    file_repo,
+    file_bindings,
+    file_content_api_client,
+    https_proxy,
+    basic_manifest_path,
+    monitor_task,
+):
+    """
+    Test syncing http through an https proxy.
+    """
+    if not (sys.version_info.major >= 3 and sys.version_info.minor >= 11):
+        pytest.skip("HTTPS proxy only supported on python3.11+")
+    remote_on_demand = file_remote_ssl_factory(
+        manifest_path=basic_manifest_path,
+        policy="on_demand",
+        proxy_url=https_proxy.proxy_url,
+        tls_validation="false",
     )
 
     _run_basic_sync_and_assert(
