@@ -120,6 +120,8 @@ class DownloaderFactory:
             sslcontext.verify_mode = ssl.CERT_NONE
         if sslcontext:
             tcp_conn_opts["ssl_context"] = sslcontext
+            # Trust the system-known CA certs, not just the end-remote CA
+            sslcontext.load_default_certs()
 
         headers = MultiDict({"User-Agent": DownloaderFactory.user_agent()})
         if self._remote.headers is not None:
