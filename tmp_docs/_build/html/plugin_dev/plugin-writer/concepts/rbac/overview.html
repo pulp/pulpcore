@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Overview &mdash; Pulp Project 3.23.0.dev documentation</title>
+      <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../../" id="documentation_options" src="../../../../_static/documentation_options.js"></script>
+        <script src="../../../../_static/jquery.js"></script>
+        <script src="../../../../_static/underscore.js"></script>
+        <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../../../../_static/doctools.js"></script>
+        <script src="../../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+    <link rel="next" title="Permissions and Roles" href="permissions.html" />
+    <link rel="prev" title="Synchronizing Repositories with the async-Pipeline" href="../sync_pipeline/sync_pipeline.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../../../index.html" class="icon icon-home"> Pulp Project
+          </a>
+              <div class="version">
+                3.23.0.dev
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../../../concepts.html">Concepts and Terminology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../from-pulp-2.html">Changes From Pulp 2</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../components.html">Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../installation/index.html">Installation Options</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../configuration/index.html">Configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../authentication/index.html">Authentication</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../workflows/index.html">Workflows and Use Cases</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../plugins.html">Plugins</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../../index.html">Plugin Development</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="../../../index.html#plugin-writer-s-guide">Plugin Writer’s Guide</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="../../index.html">Plugin Writer’s Guide</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="../../planning-guide.html">Plugin Planning Guide</a></li>
+<li class="toctree-l4 current"><a class="reference internal" href="../index.html">Plugin Concepts</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../index.html#zero-downtime-migrations">Zero-Downtime Migrations</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../index.html#data-migrations">Data Migrations</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../index.html#tasking-system">Tasking System</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../plugin-walkthrough.html">Plugin Walkthrough</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../index.html#plugin-writer-s-reference">Plugin Writer’s Reference</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../index.html#plugin-api-reference">Plugin API Reference</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../rest_api.html">REST API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../client_bindings.html">Client Bindings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contributing/index.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../bugs-features.html">Bugs, Feature and Backport Requests</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../troubleshooting.html">Troubleshooting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../glossary.html">Glossary</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../changes.html">Changelog</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../versioning.html">Versioning</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../release_process.html">Pulpcore Release Process</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">Pulp Project</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Plugin Development</a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Plugin Writer’s Guide</a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Plugin Concepts</a></li>
+      <li class="breadcrumb-item active">Overview</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../_sources/plugin_dev/plugin-writer/concepts/rbac/overview.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="overview">
+<h1>Overview<a class="headerlink" href="#overview" title="Permalink to this heading">¶</a></h1>
+<p>The goals of the authorization system are to:</p>
+<ul class="simple">
+<li><p>Make Pulp safe as a multi-user system</p></li>
+<li><p>Rely on User and Group definitions in the Django database, but allow them to come from anywhere</p></li>
+<li><p>Enforce permission checks at each viewset using a policy based approach</p></li>
+<li><p>Give users fine-grained control over each viewset’s policy</p></li>
+</ul>
+<section id="architecture">
+<h2>Architecture<a class="headerlink" href="#architecture" title="Permalink to this heading">¶</a></h2>
+<p>Pulp’s authorization model has the following architecture:</p>
+<img alt="../../../../_images/rbac_architecture.png" class="align-center" src="../../../../_images/rbac_architecture.png" />
+<dl class="field-list simple">
+<dt class="field-odd">Request Authorization</dt>
+<dd class="field-odd"><p>Each request is authorized by a <a class="reference external" href="https://rsinger86.github.io/drf-access-policy/">drf-access-policy</a> based policy at the viewset-level. You can learn more about
+defining an access policy <a class="reference internal" href="access_policy.html#defining-access-policy"><span class="std std-ref">here</span></a>.</p>
+</dd>
+<dt class="field-even">Task Permissions Check</dt>
+<dd class="field-even"><p>A permission check that occurs inside of Task code. This tends to use
+permission checking calls like <cite>has_perm</cite> or <cite>has_perms</cite> <a class="reference external" href="https://docs.djangoproject.com/en/3.2/ref/contrib/auth/#django.contrib.auth.models.User.has_perm">provided by Django</a>.</p>
+</dd>
+<dt class="field-odd">Permission Checking Machinery</dt>
+<dd class="field-odd"><p>A set of methods which can check various conditions such as if a
+requesting user has a given permission, or is a member of a group that has a given permission,
+etc. See the <a class="reference internal" href="access_policy.html#permission-checking-machinery"><span class="std std-ref">Permission Checking Machinery</span></a> section for the complete list of available
+methods.</p>
+</dd>
+<dt class="field-even">Users and Groups</dt>
+<dd class="field-even"><p>Users and Groups live in the Django database and are used by the Permission
+Checking Machinery. See the <a class="reference internal" href="users_groups.html#users-and-groups"><span class="std std-ref">Users and Groups</span></a> documentation for more information.</p>
+</dd>
+</dl>
+</section>
+<section id="getting-started">
+<h2>Getting Started<a class="headerlink" href="#getting-started" title="Permalink to this heading">¶</a></h2>
+<p>To add authorization for a given resource, e.g. <code class="docutils literal notranslate"><span class="pre">FileRemote</span></code>, you’ll need to:</p>
+<p><strong>Define the Policy:</strong></p>
+<ol class="arabic simple">
+<li><p>Define the default <code class="docutils literal notranslate"><span class="pre">statements</span></code> of the new Access Policy for the resource. See the
+<a class="reference internal" href="access_policy.html#defining-access-policy"><span class="std std-ref">Defining an Access Policy</span></a> documentation for more information on that.</p></li>
+<li><p>Define the <code class="docutils literal notranslate"><span class="pre">roles</span></code> as sets of permissions for that resource.</p></li>
+<li><p>Define the default role associations created for new objects using the <code class="docutils literal notranslate"><span class="pre">creation_hooks</span></code>
+attribute of the new Access Policy for the resource. See the
+<a class="reference internal" href="adding_automatic_permissions.html#adding-automatic-permissions-for-new-objects"><span class="std std-ref">Adding Automatic Permissions for New Objects</span></a> documentation for more information on that.</p></li>
+<li><p>Ship that Access Policy as the class attribute <code class="docutils literal notranslate"><span class="pre">DEFAULT_ACCESS_POLICY</span></code> of a
+<code class="docutils literal notranslate"><span class="pre">NamedModelViewSet</span></code>. This will contain the <code class="docutils literal notranslate"><span class="pre">statements</span></code> and <code class="docutils literal notranslate"><span class="pre">creation_hooks</span></code> attributes.
+Ship the roles as the <code class="docutils literal notranslate"><span class="pre">LOCKED_ROLES</span></code> attribute accordingly. See the
+<a class="reference internal" href="access_policy.html#shipping-default-access-policy"><span class="std std-ref">Shipping a Default Access Policy</span></a> documentation for more information on this.</p></li>
+<li><p>Add the <code class="docutils literal notranslate"><span class="pre">RolesMixin</span></code> to the viewset and add statements for managing roles to the access
+policy. Usually this is accompanied by adding a <code class="docutils literal notranslate"><span class="pre">manage_roles</span></code> permission on the model.</p></li>
+</ol>
+<p><strong>Enforce the Policy:</strong></p>
+<ol class="arabic simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">pulpcore.plugin.access_policy.AccessPolicyFromDB</span></code> is configured as the default permission
+class, so by specifying a <code class="docutils literal notranslate"><span class="pre">DEFAULT_ACCESS_POLICY</span></code> it will automatically be enforced. See the
+<a class="reference internal" href="access_policy.html#viewset-enforcement"><span class="std std-ref">Viewset Enforcement</span></a> docs for more information on this.</p></li>
+</ol>
+<p><strong>Add QuerySet Scoping:</strong></p>
+<ol class="arabic simple">
+<li><p>Define a <code class="docutils literal notranslate"><span class="pre">queryset_filtering_required_permission</span></code> attribute on your viewset that names the
+permissions users must have to view an object. This is possible if your viewset is a subclass of
+the <code class="docutils literal notranslate"><span class="pre">pulpcore.plugin.models.NamedModelViewSet</span></code>. See the <a class="reference internal" href="queryset_scoping.html#enabling-queryset-scoping"><span class="std std-ref">Enabling QuerySet Scoping</span></a>
+documentation for more information.</p></li>
+</ol>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../sync_pipeline/sync_pipeline.html" class="btn btn-neutral float-left" title="Synchronizing Repositories with the async-Pipeline" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="permissions.html" class="btn btn-neutral float-right" title="Permissions and Roles" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2012-2023, Pulp Team.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+ 
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-74748547-2', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+
+<script>
+$( document ).ready( function() {
+
+  // gets version number minus whitespace and bugfix version
+  var $version_number = $('.version').text().trim().split('.', 2).join('.')
+
+  // div mirroring the admonition-warning generated by sphinx if added to .rst
+  var warning = '\
+          <div class="admonition warning"> \
+              <p class="first admonition-title">Warning</p> \
+              <p class="last">You are looking at the docs for an unsupported version of Pulp. \
+               Consider switching to a  \
+               <a href="https://pulpproject.org/docs/">supported version</a></p> \
+          </div>'
+
+  
+  // get JSON from server and load supported_versions
+  $.getJSON("https://raw.githubusercontent.com/pulp/pulp-ci/master/ci/config/releases/supported-releases.json" , function(data) {
+    if ($.inArray($version_number, data) === -1) {
+      $('.rst-content').prepend(warning)
+      }
+    })
+  })
+  </script>
+
+
+</body>
+</html>

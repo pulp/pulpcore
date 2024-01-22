@@ -1,0 +1,27 @@
+@startuml
+rectangle "External sources" {
+
+  rectangle "Repository" {
+    usecase RV2 as "Repository Version 2
+    ---
+    contains:
+    Content Unit 1
+    Content Unit 2"
+    usecase RV3 as "Repository Version 3
+    ---
+    contains:
+    Content Unit 1
+    Content Unit 2
+    Content Units Remote"
+    note "Adding new content units\nfrom remote source" as N
+    RV2 -right-> N
+    N -right-> RV3
+  }
+
+  rectangle "Remote Source" {
+    (Content Units)
+  }
+
+  (Content Units) --> N
+}
+@enduml

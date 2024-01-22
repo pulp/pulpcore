@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Settings &mdash; Pulp Project 3.23.0.dev documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script src="../_static/sphinx_highlight.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Authentication" href="../authentication/index.html" />
+    <link rel="prev" title="Viewing Settings" href="viewing.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../index.html" class="icon icon-home"> Pulp Project
+          </a>
+              <div class="version">
+                3.23.0.dev
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../concepts.html">Concepts and Terminology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../from-pulp-2.html">Changes From Pulp 2</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../components.html">Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../installation/index.html">Installation Options</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Configuration</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="applying.html">Applying Settings</a></li>
+<li class="toctree-l2"><a class="reference internal" href="viewing.html">Viewing Settings</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Settings</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#django-settings">Django Settings</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#secret-key">SECRET_KEY</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#db-encryption-key">DB_ENCRYPTION_KEY</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#databases">DATABASES</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#default-file-storage">DEFAULT_FILE_STORAGE</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#redirect-to-object-storage">REDIRECT_TO_OBJECT_STORAGE</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#media-root">MEDIA_ROOT</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#logging">LOGGING</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#authentication-backends">AUTHENTICATION_BACKENDS</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#redis-settings">Redis Settings</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#redis-host">REDIS_HOST</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#redis-port">REDIS_PORT</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#redis-password">REDIS_PASSWORD</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#pulp-settings">Pulp Settings</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#api-root">API_ROOT</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#working-directory">WORKING_DIRECTORY</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#chunked-upload-dir">CHUNKED_UPLOAD_DIR</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#content-origin">CONTENT_ORIGIN</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#hide-guarded-distributions">HIDE_GUARDED_DISTRIBUTIONS</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#content-path-prefix">CONTENT_PATH_PREFIX</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#content-app-ttl">CONTENT_APP_TTL</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cache-enabled">CACHE_ENABLED</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cache-settings">CACHE_SETTINGS</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#worker-ttl">WORKER_TTL</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#remote-user-environ-name">REMOTE_USER_ENVIRON_NAME</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#allowed-import-paths">ALLOWED_IMPORT_PATHS</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#allowed-export-paths">ALLOWED_EXPORT_PATHS</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#profile-stages-api">PROFILE_STAGES_API</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#allowed-content-checksums">ALLOWED_CONTENT_CHECKSUMS</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#django-guid">DJANGO_GUID</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#orphan-protection-time">ORPHAN_PROTECTION_TIME</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#task-diagnostics">TASK_DIAGNOSTICS</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#analytics">ANALYTICS</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../authentication/index.html">Authentication</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../workflows/index.html">Workflows and Use Cases</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../plugins.html">Plugins</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../plugin_dev/index.html">Plugin Development</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../rest_api.html">REST API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../client_bindings.html">Client Bindings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../contributing/index.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../bugs-features.html">Bugs, Feature and Backport Requests</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../troubleshooting.html">Troubleshooting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../glossary.html">Glossary</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../changes.html">Changelog</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../versioning.html">Versioning</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../release_process.html">Pulpcore Release Process</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Pulp Project</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">Configuration</a></li>
+      <li class="breadcrumb-item active">Settings</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/configuration/settings.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="settings">
+<span id="id1"></span><h1>Settings<a class="headerlink" href="#settings" title="Permalink to this heading">¶</a></h1>
+<p>There are only two required settings, although specific plugins may have additional required
+settings.</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#secret-key-setting"><span class="std std-ref">SECRET_KEY</span></a></p></li>
+<li><p><a class="reference internal" href="#content-origin-setting"><span class="std std-ref">CONTENT_ORIGIN</span></a></p></li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>For more information on how to specify settings see the
+<a class="reference internal" href="applying.html#applying-settings"><span class="std std-ref">Applying Settings docs</span></a>.</p>
+</div>
+<p>Pulp uses three types of settings:</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#django-settings"><span class="std std-ref">Django settings</span></a> Pulp is configuring</p></li>
+<li><p><a class="reference internal" href="#redis-settings"><span class="std std-ref">Redis settings</span></a> Pulp is using</p></li>
+<li><p><a class="reference internal" href="#pulp-settings"><span class="std std-ref">Pulp defined settings</span></a></p></li>
+</ul>
+<section id="django-settings">
+<span id="id2"></span><h2>Django Settings<a class="headerlink" href="#django-settings" title="Permalink to this heading">¶</a></h2>
+<p>Below is a list of the most common Django settings Pulp users typically use. Pulp is a Django
+project, so any <a class="reference external" href="https://docs.djangoproject.com/en/3.2/ref/settings/">Django setting</a> can be set.</p>
+<section id="secret-key">
+<span id="secret-key-setting"></span><h3>SECRET_KEY<a class="headerlink" href="#secret-key" title="Permalink to this heading">¶</a></h3>
+<blockquote>
+<div><p>In order to get a pulp server up and running a <a class="reference external" href="https://docs.djangoproject.com/en/3.2/ref/settings/#secret-key">Django SECRET_KEY</a> <em>must</em> be
+provided.</p>
+<p>The following code snippet can be used to generate a random SECRET_KEY.</p>
+</div></blockquote>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">1</span><span class="kn">import</span> <span class="nn">random</span>
+<span class="linenos">2</span>
+<span class="linenos">3</span><span class="n">chars</span> <span class="o">=</span> <span class="s1">&#39;abcdefghijklmnopqrstuvwxyz0123456789!@#$%^&amp;*(-_=+)&#39;</span>
+<span class="linenos">4</span><span class="nb">print</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">chars</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">50</span><span class="p">)))</span>
+</pre></div>
+</div>
+</section>
+<section id="db-encryption-key">
+<h3>DB_ENCRYPTION_KEY<a class="headerlink" href="#db-encryption-key" title="Permalink to this heading">¶</a></h3>
+<blockquote>
+<div><p>The file location of a symmetric fernet key that Pulp uses to encrypt sensitive fields in the
+database. Default location is <code class="docutils literal notranslate"><span class="pre">/etc/pulp/certs/database_fields.symmetric.key</span></code>.</p>
+<p>The key is automatically generated by default with pulp_installer and single container image. The
+key can be generated independently but it must be a url-safe base64-encoded string of 32 random
+bytes.</p>
+<p>To generate a key with openssl:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">openssl</span> <span class="n">rand</span> <span class="o">-</span><span class="n">base64</span> <span class="mi">32</span> <span class="o">&gt;</span> <span class="o">/</span><span class="n">etc</span><span class="o">/</span><span class="n">pulp</span><span class="o">/</span><span class="n">certs</span><span class="o">/</span><span class="n">database_fields</span><span class="o">.</span><span class="n">symmetric</span><span class="o">.</span><span class="n">key</span>
+</pre></div>
+</div>
+</div></blockquote>
+</section>
+<section id="databases">
+<h3>DATABASES<a class="headerlink" href="#databases" title="Permalink to this heading">¶</a></h3>
+<blockquote>
+<div><p>By default Pulp uses PostgreSQL on localhost. PostgreSQL is the only supported database. For
+instructions on how to configure the database, refer to <a class="reference internal" href="../installation/instructions.html#database-install"><span class="std std-ref">database installation</span></a>.</p>
+</div></blockquote>
+</section>
+<section id="default-file-storage">
+<h3>DEFAULT_FILE_STORAGE<a class="headerlink" href="#default-file-storage" title="Permalink to this heading">¶</a></h3>
+<blockquote>
+<div><p>By default, Pulp uses the local filesystem to store files. The default option which
+uses the local filesystem is <code class="docutils literal notranslate"><span class="pre">pulpcore.app.models.storage.FileSystem</span></code>.</p>
+<p>For more information about different Pulp storage options, see the
+<a class="reference internal" href="../installation/storage.html#storage"><span class="std std-ref">storage documentation</span></a>.</p>
+</div></blockquote>
+</section>
+<section id="redirect-to-object-storage">
+<h3>REDIRECT_TO_OBJECT_STORAGE<a class="headerlink" href="#redirect-to-object-storage" title="Permalink to this heading">¶</a></h3>
+<blockquote>
+<div><p>When set to <code class="docutils literal notranslate"><span class="pre">True</span></code> access to artifacts is redirected to the corresponding Cloud storage
+configured in <code class="docutils literal notranslate"><span class="pre">DEFAULT_FILE_STORAGE</span></code> using pre-authenticated URLs. When set to <code class="docutils literal notranslate"><span class="pre">False</span></code>
+artifacts are always served by the content app instead.</p>
+<p>Defaults to <code class="docutils literal notranslate"><span class="pre">True</span></code>; ignored for local file storage.</p>
+</div></blockquote>
+</section>
+<section id="media-root">
+<h3>MEDIA_ROOT<a class="headerlink" href="#media-root" title="Permalink to this heading">¶</a></h3>
+<blockquote>
+<div><p>The location where Pulp will store files. By default this is <code class="docutils literal notranslate"><span class="pre">/var/lib/pulp/media</span></code>.</p>
+<p>If you’re using S3, point this to the path in your bucket you want to save files. See the
+<a class="reference internal" href="../installation/storage.html#storage"><span class="std std-ref">storage documentation</span></a> for more info.</p>
+<p>It should have permissions of:</p>
+<ul class="simple">
+<li><p>mode: 750</p></li>
+<li><p>owner: pulp (the account that pulp runs under)</p></li>
+<li><p>group: pulp (the group of the account that pulp runs under)</p></li>
+<li><p>SELinux context: system_u:object_r:pulpcore_var_lib_t:s0</p></li>
+</ul>
+</div></blockquote>
+</section>
+<section id="logging">
+<h3>LOGGING<a class="headerlink" href="#logging" title="Permalink to this heading">¶</a></h3>
+<blockquote>
+<div><p>By default Pulp logs at an INFO level to syslog. For all possible configurations please
+refer to <a class="reference external" href="https://docs.djangoproject.com/en/3.2/topics/logging/#configuring-logging">Django documenation on logging</a>.</p>
+<p>Enabling DEBUG logging is a common troubleshooting step. See the <a class="reference internal" href="../troubleshooting.html#enabling-debug-logging"><span class="std std-ref">Enabling Debug Logging</span></a>
+documentation for details on how to do that.</p>
+</div></blockquote>
+</section>
+<section id="authentication-backends">
+<h3>AUTHENTICATION_BACKENDS<a class="headerlink" href="#authentication-backends" title="Permalink to this heading">¶</a></h3>
+<blockquote>
+<div><p>By default, Pulp has two types of authentication enabled, and they fall back for each other:</p>
+<ol class="arabic simple">
+<li><p>Basic Auth which is checked against an internal users database</p></li>
+<li><p>Webserver authentication that relies on the webserver to perform the authentication.</p></li>
+</ol>
+<p>To change the authentication types Pulp will use, modify the <code class="docutils literal notranslate"><span class="pre">AUTHENTICATION_BACKENDS</span></code>
+settings. See the <a class="reference external" href="https://docs.djangoproject.com/en/3.2/topics/auth/customizing/#authentication-backends">Django authentication documentation</a> for more information.</p>
+</div></blockquote>
+</section>
+</section>
+<section id="redis-settings">
+<span id="id3"></span><h2>Redis Settings<a class="headerlink" href="#redis-settings" title="Permalink to this heading">¶</a></h2>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>To enable usage of Redis the <a class="reference internal" href="#cache-enabled">CACHE_ENABLED</a> option must be set to <cite>True</cite>.</p>
+</div>
+<p>The following Redis settings can be set in your Pulp config:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>REDIS_URL</p></li>
+<li><p>REDIS_HOST</p></li>
+<li><p>REDIS_PORT</p></li>
+<li><p>REDIS_DB</p></li>
+<li><p>REDIS_PASSWORD</p></li>
+</ul>
+</div></blockquote>
+<p>Below are some common settings used for Redis configuration.</p>
+<section id="redis-host">
+<h3>REDIS_HOST<a class="headerlink" href="#redis-host" title="Permalink to this heading">¶</a></h3>
+<blockquote>
+<div><p>The hostname for Redis.</p>
+</div></blockquote>
+</section>
+<section id="redis-port">
+<h3>REDIS_PORT<a class="headerlink" href="#redis-port" title="Permalink to this heading">¶</a></h3>
+<blockquote>
+<div><p>The port for Redis.</p>
+</div></blockquote>
+</section>
+<section id="redis-password">
+<h3>REDIS_PASSWORD<a class="headerlink" href="#redis-password" title="Permalink to this heading">¶</a></h3>
+<blockquote>
+<div><p>The password for Redis.</p>
+</div></blockquote>
+</section>
+</section>
+<section id="pulp-settings">
+<span id="id4"></span><h2>Pulp Settings<a class="headerlink" href="#pulp-settings" title="Permalink to this heading">¶</a></h2>
+<p>Pulp defines the following settings itself:</p>
+<section id="api-root">
+<span id="id5"></span><h3>API_ROOT<a class="headerlink" href="#api-root" title="Permalink to this heading">¶</a></h3>
+<blockquote>
+<div><p>A string containing the path prefix for the Pulp API. This is used by the REST API when forming
+URLs to refer clients to other parts of the REST API and by the <code class="docutils literal notranslate"><span class="pre">pulpcore-api</span></code> application to
+match incoming URLs. Pulp appends the string <code class="docutils literal notranslate"><span class="pre">api/v3/</span></code> to this setting.</p>
+<p>Defaults to <code class="docutils literal notranslate"><span class="pre">/pulp/</span></code>. After the application appends <code class="docutils literal notranslate"><span class="pre">api/v3/</span></code> it makes the V3 API by default
+serve from <code class="docutils literal notranslate"><span class="pre">/pulp/api/v3/</span></code>.</p>
+</div></blockquote>
+</section>
+<section id="working-directory">
+<h3>WORKING_DIRECTORY<a class="headerlink" href="#working-directory" title="Permalink to this heading">¶</a></h3>
+<blockquote>
+<div><p>The directory used by workers to stage files temporarily. This defaults to
+<code class="docutils literal notranslate"><span class="pre">/var/lib/pulp/tmp/</span></code>.</p>
+<p>It should have permissions of:</p>
+<ul class="simple">
+<li><p>mode: 750</p></li>
+<li><p>owner: pulp (the account that pulp runs under)</p></li>
+<li><p>group: pulp (the group of the account that pulp runs under)</p></li>
+<li><p>SELinux context: system_u:object_r:pulpcore_var_lib_t:s0</p></li>
+</ul>
+</div></blockquote>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>It is recommended that <code class="docutils literal notranslate"><span class="pre">WORKING_DIRECTORY</span></code> and <code class="docutils literal notranslate"><span class="pre">MEDIA_ROOT</span></code> exist on the same storage
+volume for performance reasons. Files are commonly staged in the <code class="docutils literal notranslate"><span class="pre">WORKING_DIRECTORY</span></code> and
+validated before being moved to their permanent home in <code class="docutils literal notranslate"><span class="pre">MEDIA_ROOT</span></code>.</p>
+</div>
+</section>
+<section id="chunked-upload-dir">
+<h3>CHUNKED_UPLOAD_DIR<a class="headerlink" href="#chunked-upload-dir" title="Permalink to this heading">¶</a></h3>
+<blockquote>
+<div><p>A relative path inside the DEPLOY_ROOT directory used exclusively for uploaded chunks. The
+uploaded chunks are stored in the default storage specified by <code class="docutils literal notranslate"><span class="pre">DEFAULT_FILE_STORAGE</span></code>. This
+option allows users to customize the actual place where chunked uploads should be stored within
+the declared storage. The default, <code class="docutils literal notranslate"><span class="pre">upload</span></code>, is sufficient for most use cases. A change to
+this setting only applies to uploads created after the change.</p>
+</div></blockquote>
+</section>
+<section id="content-origin">
+<span id="content-origin-setting"></span><h3>CONTENT_ORIGIN<a class="headerlink" href="#content-origin" title="Permalink to this heading">¶</a></h3>
+<blockquote>
+<div><p>A required string containing the protocol, fqdn, and port where the content app is reachable by
+users. This is used by <code class="docutils literal notranslate"><span class="pre">pulpcore</span></code> and various plugins when referring users to the content app.
+For example if the API should refer users to content at using http to pulp.example.com on port
+24816, (the content default port), you would set: <code class="docutils literal notranslate"><span class="pre">https://pulp.example.com:24816</span></code>.</p>
+</div></blockquote>
+</section>
+<section id="hide-guarded-distributions">
+<h3>HIDE_GUARDED_DISTRIBUTIONS<a class="headerlink" href="#hide-guarded-distributions" title="Permalink to this heading">¶</a></h3>
+<blockquote>
+<div><p>If activated, the distributions that are protected by a content guard will not be shown on the
+directory listing in the content app. Defaults to <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p>
+</div></blockquote>
+</section>
+<section id="content-path-prefix">
+<span id="id6"></span><h3>CONTENT_PATH_PREFIX<a class="headerlink" href="#content-path-prefix" title="Permalink to this heading">¶</a></h3>
+<blockquote>
+<div><p>A string containing the path prefix for the content app. This is used by the REST API when
+forming URLs to refer clients to the content serving app, and by the content serving application
+to match incoming URLs.</p>
+<p>Defaults to <code class="docutils literal notranslate"><span class="pre">/pulp/content/</span></code>.</p>
+</div></blockquote>
+</section>
+<section id="content-app-ttl">
+<span id="id7"></span><h3>CONTENT_APP_TTL<a class="headerlink" href="#content-app-ttl" title="Permalink to this heading">¶</a></h3>
+<blockquote>
+<div><p>The number of seconds before a content app should be considered lost.</p>
+<p>Defaults to <code class="docutils literal notranslate"><span class="pre">30</span></code> seconds.</p>
+</div></blockquote>
+</section>
+<section id="cache-enabled">
+<span id="pulp-cache"></span><h3>CACHE_ENABLED<a class="headerlink" href="#cache-enabled" title="Permalink to this heading">¶</a></h3>
+<blockquote>
+<div><div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>This feature is provided as a tech-preview</p>
+</div>
+<p>Store cached responses from the content app into Redis. This setting improves the performance
+of the content app under heavy load for similar requests. Defaults to <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The entire response is not stored in the cache. Only the location of the file needed to
+recreate the response is stored. This reduces database queries and allows for many
+responses to be stored inside the cache.</p>
+</div>
+</div></blockquote>
+</section>
+<section id="cache-settings">
+<h3>CACHE_SETTINGS<a class="headerlink" href="#cache-settings" title="Permalink to this heading">¶</a></h3>
+<blockquote>
+<div><p>Dictionary with tunable settings for the cache:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">EXPIRES_TTL</span></code> - Number of seconds entries should stay in the cache before expiring.</p></li>
+</ul>
+<p>Defaults to <code class="docutils literal notranslate"><span class="pre">600</span></code> seconds.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Set to <code class="docutils literal notranslate"><span class="pre">None</span></code> to have entries not expire.
+Content app responses are always invalidated when the backing distribution is updated.</p>
+</div>
+</div></blockquote>
+</section>
+<section id="worker-ttl">
+<span id="id8"></span><h3>WORKER_TTL<a class="headerlink" href="#worker-ttl" title="Permalink to this heading">¶</a></h3>
+<blockquote>
+<div><p>The number of seconds before a worker should be considered lost.</p>
+<p>Defaults to <code class="docutils literal notranslate"><span class="pre">30</span></code> seconds.</p>
+</div></blockquote>
+</section>
+<section id="remote-user-environ-name">
+<span id="id9"></span><h3>REMOTE_USER_ENVIRON_NAME<a class="headerlink" href="#remote-user-environ-name" title="Permalink to this heading">¶</a></h3>
+<blockquote>
+<div><p>The name of the WSGI environment variable to read for <a class="reference internal" href="../authentication/webserver.html#webserver-authentication"><span class="std std-ref">webserver authentication</span></a>.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Configuring this has serious security implications. See the <a class="reference external" href="https://docs.djangoproject.com/en/3.2/howto/auth-remote-user/#configuration">Django warning at the end of this
+section in their docs</a> for more details.</p>
+</div>
+<p>Defaults to <code class="docutils literal notranslate"><span class="pre">'REMOTE_USER'</span></code>.</p>
+</div></blockquote>
+</section>
+<section id="allowed-import-paths">
+<span id="id10"></span><h3>ALLOWED_IMPORT_PATHS<a class="headerlink" href="#allowed-import-paths" title="Permalink to this heading">¶</a></h3>
+<blockquote>
+<div><p>One or more real filesystem paths that Remotes with filesystem paths can import from. For example
+to allow a remote url of <code class="docutils literal notranslate"><span class="pre">file:///mnt/foo/bar/another/folder/</span></code> you could specify:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ALLOWED_IMPORT_PATHS</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;/mnt/foo/bar&#39;</span><span class="p">]</span>  <span class="c1"># only a subpath is needed</span>
+</pre></div>
+</div>
+<p>Defaults to <code class="docutils literal notranslate"><span class="pre">[]</span></code>, meaning <code class="docutils literal notranslate"><span class="pre">file:///</span></code> urls are not allowed in any Remote.</p>
+</div></blockquote>
+</section>
+<section id="allowed-export-paths">
+<span id="id11"></span><h3>ALLOWED_EXPORT_PATHS<a class="headerlink" href="#allowed-export-paths" title="Permalink to this heading">¶</a></h3>
+<blockquote>
+<div><p>One or more real filesystem paths that Exporters can export to. For example to allow a path of
+<code class="docutils literal notranslate"><span class="pre">/mnt/foo/bar/another/folder/</span></code> you could specify:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ALLOWED_EXPORT_PATHS</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;/mnt/foo/bar&#39;</span><span class="p">]</span>  <span class="c1"># only a subpath is needed</span>
+</pre></div>
+</div>
+<p>Defaults to <code class="docutils literal notranslate"><span class="pre">[]</span></code> which means no path is allowed.</p>
+</div></blockquote>
+</section>
+<section id="profile-stages-api">
+<span id="id12"></span><h3>PROFILE_STAGES_API<a class="headerlink" href="#profile-stages-api" title="Permalink to this heading">¶</a></h3>
+<blockquote>
+<div><p>A debugging feature that collects profile data about the Stages API as it runs. See
+staging api profiling docs for more information.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Profiling stages is provided as a tech preview in Pulp 3.0. Functionality may not fully work
+and backwards compatibility when upgrading to future Pulp releases is not guaranteed.</p>
+</div>
+</div></blockquote>
+</section>
+<section id="allowed-content-checksums">
+<span id="id13"></span><h3>ALLOWED_CONTENT_CHECKSUMS<a class="headerlink" href="#allowed-content-checksums" title="Permalink to this heading">¶</a></h3>
+<blockquote>
+<div><div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Enforcement of this setting in <code class="docutils literal notranslate"><span class="pre">pulpcore</span></code> and various plugins is not fully in place. It is
+possible that checksums not in this list may still be used in various places. This banner will
+be removed when it is believed all <code class="docutils literal notranslate"><span class="pre">pulpcore</span></code> and plugin code fully enforces this setting.</p>
+</div>
+<p>The list of content-checksums this pulp-instance is <strong>allowed to use</strong>. By default the following
+are used:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ALLOWED_CONTENT_CHECKSUMS</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;sha224&quot;</span><span class="p">,</span> <span class="s2">&quot;sha256&quot;</span><span class="p">,</span> <span class="s2">&quot;sha384&quot;</span><span class="p">,</span> <span class="s2">&quot;sha512&quot;</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>The entire set of supported checksums are: <code class="docutils literal notranslate"><span class="pre">md5</span></code>, <code class="docutils literal notranslate"><span class="pre">sha1</span></code>, <code class="docutils literal notranslate"><span class="pre">sha224</span></code>, <code class="docutils literal notranslate"><span class="pre">sha256</span></code>,
+<code class="docutils literal notranslate"><span class="pre">sha384</span></code>, and <code class="docutils literal notranslate"><span class="pre">sha512</span></code>.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Due to its use as the primary content-identifier, “sha256” <strong>IS REQUIRED</strong>. Pulp will
+fail to start if <code class="docutils literal notranslate"><span class="pre">&quot;sha256&quot;</span></code> is not found in this set.</p>
+</div>
+<p>Pulp can prohibit or allow checksums by setting the ALLOWED_CONTENT_CHECKSUMS setting.
+Changing this setting requires a few steps.</p>
+<p>First, before you change the setting, see how your Pulp instance will be impacted by this change by running:</p>
+<p><code class="docutils literal notranslate"><span class="pre">pulpcore-manager</span> <span class="pre">handle-artifact-checksums</span> <span class="pre">--report</span> <span class="pre">--checksums</span> <span class="pre">sha256,512</span></code></p>
+<p>Adjust <code class="docutils literal notranslate"><span class="pre">--checksums</span></code> as comma separated list of checksums types to match your needs.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>If you already changed <code class="docutils literal notranslate"><span class="pre">ALLOWED_CONTENT_CHECKSUMS</span></code> in pulp settings you can leave out <code class="docutils literal notranslate"><span class="pre">--checksums</span></code>,
+and the checksums will be parsed from Pulp settings.</p>
+</div>
+<p>Before switching, any on-demand repos containing forbidden checksum digests needs to be synced with
+<code class="docutils literal notranslate"><span class="pre">policy=immediate</span></code> to populate missing allowed checksums. This can heavily impact your disk space.
+Alternatively, users can remove these offending repo versions followed by orphan cleanup.</p>
+<p>If you have artifacts that do not conform to your ALLOWED_CONTENT_CHECKSUMS setting, they need to be re-hashed.
+You can update them using:</p>
+<p><code class="docutils literal notranslate"><span class="pre">pulpcore-manager</span> <span class="pre">handle-artifact-checksums</span></code></p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p><code class="docutils literal notranslate"><span class="pre">--report</span></code> and <code class="docutils literal notranslate"><span class="pre">--checksums</span></code> arguments are tech-preview and may change in backwards
+incompatible ways in future releases.</p>
+</div>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>If Pulp fails to start because forbidden checkums have been identified or required ones are
+missing, run <code class="docutils literal notranslate"><span class="pre">pulpcore-manager</span> <span class="pre">handle-artifact-checksums</span></code> command.</p>
+</div>
+</div></blockquote>
+</section>
+<section id="django-guid">
+<span id="id14"></span><h3>DJANGO_GUID<a class="headerlink" href="#django-guid" title="Permalink to this heading">¶</a></h3>
+<blockquote>
+<div><p>Pulp uses <code class="docutils literal notranslate"><span class="pre">django-guid</span></code> to append correlation IDs to logging messages. Correlation IDs are
+autogenerated by default but can also be sent as a header with each request. They are also
+returned as a header in the response and are recorded in the <code class="docutils literal notranslate"><span class="pre">logging_cid</span></code> field of tasks.</p>
+<p>For more information on how to configure the <code class="docutils literal notranslate"><span class="pre">DJANGO_GUID</span></code> setting, see the <a class="reference external" href="https://django-guid.readthedocs.io/en/latest/settings.html">django-guid
+settings documentation</a>.</p>
+</div></blockquote>
+</section>
+<section id="orphan-protection-time">
+<span id="id15"></span><h3>ORPHAN_PROTECTION_TIME<a class="headerlink" href="#orphan-protection-time" title="Permalink to this heading">¶</a></h3>
+<blockquote>
+<div><p>The time specified in minutes for how long Pulp will hold orphan Content and Artifacts before
+they become candidates for deletion by an orphan cleanup task. This should ideally be longer
+than your longest running task otherwise any content created during that task could be cleaned
+up before the task finishes. Default is 1440 minutes (24 hours).</p>
+</div></blockquote>
+</section>
+<section id="task-diagnostics">
+<span id="id16"></span><h3>TASK_DIAGNOSTICS<a class="headerlink" href="#task-diagnostics" title="Permalink to this heading">¶</a></h3>
+<blockquote>
+<div><p>If <code class="docutils literal notranslate"><span class="pre">True</span></code>, each task will record various diagnostics (listed below) to files in the dir
+<code class="docutils literal notranslate"><span class="pre">/var/tmp/pulp/&lt;task_UUID&gt;/</span></code>. This is <code class="docutils literal notranslate"><span class="pre">False</span></code> by default.</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>memory - the task’s max resident set size in MB.</p></li>
+</ul>
+</div></blockquote>
+</div></blockquote>
+</section>
+<section id="analytics">
+<span id="analytics-setting"></span><h3>ANALYTICS<a class="headerlink" href="#analytics" title="Permalink to this heading">¶</a></h3>
+<blockquote>
+<div><p>If <code class="docutils literal notranslate"><span class="pre">True</span></code>, Pulp will anonymously post analytics information to
+<a class="reference external" href="https://analytics.pulpproject.org/">https://analytics.pulpproject.org/</a> and aids in project decision making. See the
+<a class="reference internal" href="../components.html#analytics"><span class="std std-ref">analytics docs</span></a> for more info on exactly what is posted along with an example.</p>
+<p>Defaults to <code class="docutils literal notranslate"><span class="pre">True</span></code>.</p>
+</div></blockquote>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="viewing.html" class="btn btn-neutral float-left" title="Viewing Settings" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../authentication/index.html" class="btn btn-neutral float-right" title="Authentication" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2012-2023, Pulp Team.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+ 
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-74748547-2', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+
+<script>
+$( document ).ready( function() {
+
+  // gets version number minus whitespace and bugfix version
+  var $version_number = $('.version').text().trim().split('.', 2).join('.')
+
+  // div mirroring the admonition-warning generated by sphinx if added to .rst
+  var warning = '\
+          <div class="admonition warning"> \
+              <p class="first admonition-title">Warning</p> \
+              <p class="last">You are looking at the docs for an unsupported version of Pulp. \
+               Consider switching to a  \
+               <a href="https://pulpproject.org/docs/">supported version</a></p> \
+          </div>'
+
+  
+  // get JSON from server and load supported_versions
+  $.getJSON("https://raw.githubusercontent.com/pulp/pulp-ci/master/ci/config/releases/supported-releases.json" , function(data) {
+    if ($.inArray($version_number, data) === -1) {
+      $('.rst-content').prepend(warning)
+      }
+    })
+  })
+  </script>
+
+
+</body>
+</html>

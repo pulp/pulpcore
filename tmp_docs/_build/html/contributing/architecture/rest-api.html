@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>REST API Guidelines &mdash; Pulp Project 3.23.0.dev documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/sphinx_highlight.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Error Handling" href="error-handling.html" />
+    <link rel="prev" title="Pulp Platform Application Layout" href="app-layout.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../index.html" class="icon icon-home"> Pulp Project
+          </a>
+              <div class="version">
+                3.23.0.dev
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../concepts.html">Concepts and Terminology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../from-pulp-2.html">Changes From Pulp 2</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../components.html">Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../installation/index.html">Installation Options</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../configuration/index.html">Configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../authentication/index.html">Authentication</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../workflows/index.html">Workflows and Use Cases</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../plugins.html">Plugins</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../plugin_dev/index.html">Plugin Development</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../rest_api.html">REST API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../client_bindings.html">Client Bindings</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">Contributing</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../index.html#workflow">Workflow</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../index.html#fundamentals">Fundamentals</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../index.html#plugin-development">Plugin Development</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../index.html#reference">Reference</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="index.html">Architecture</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="app-layout.html">Pulp Platform Application Layout</a></li>
+<li class="toctree-l4 current"><a class="current reference internal" href="#">REST API Guidelines</a></li>
+<li class="toctree-l4"><a class="reference internal" href="error-handling.html">Error Handling</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../platform-api/index.html">Platform API</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../index.html#suggesting-changes-to-the-pulp-development-process">Suggesting Changes to the Pulp Development Process</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../bugs-features.html">Bugs, Feature and Backport Requests</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../troubleshooting.html">Troubleshooting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../glossary.html">Glossary</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../changes.html">Changelog</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../versioning.html">Versioning</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../release_process.html">Pulpcore Release Process</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Pulp Project</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Contributing</a></li>
+          <li class="breadcrumb-item"><a href="index.html">Architecture</a></li>
+      <li class="breadcrumb-item active">REST API Guidelines</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/contributing/architecture/rest-api.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="rest-api-guidelines">
+<h1>REST API Guidelines<a class="headerlink" href="#rest-api-guidelines" title="Permalink to this heading">¶</a></h1>
+<section id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this heading">¶</a></h2>
+<p>The Pulp 3 API is intended to be decoupled from the data model, which the Django REST Framework
+(DRF) makes it pretty easy to do. Where needed, support classes have been added to help the REST
+API correctly and consistently represent our specialized models and relationships (most notably
+the Master/Detail relationship).</p>
+<p>Our API starts at a <a class="reference internal" href="#term-DRF"><span class="xref std std-term">DRF</span></a> <a class="reference internal" href="#term-Router"><span class="xref std std-term">Router</span></a>. Each <a class="reference internal" href="#term-ViewSet"><span class="xref std std-term">ViewSet</span></a> is attached to this
+router, and the router’s routes are exposed in urls.py. Subclasses of
+<a class="reference internal" href="../../plugin_dev/api-reference/viewsets.html#pulpcore.plugin.viewsets.NamedModelViewSet" title="pulpcore.app.viewsets.base.NamedModelViewSet"><code class="xref py py-class docutils literal notranslate"><span class="pre">pulpcore.app.viewsets.base.NamedModelViewSet</span></code></a> are automatically registered with the API router,
+and most (possibly all) ViewSets created by plugins should be subclasses of this base class.
+NamedModelViewSets are associated with a Django queryset, a <a class="reference internal" href="#term-Serializer"><span class="xref std std-term">Serializer</span></a> that is able to
+represent members of the Django queryset in the API, and an endpoint name used when registering
+the ViewSet with the API router.</p>
+<p>All models exposed via the API must have a corresponding Serializer. Each NamedModelViewSet must
+be related to a serializer and a queryset of model instances to serialize.</p>
+<p>Since Serializers and ViewSets are so closely related to the models they represent, the
+serializers and viewsets directories are laid out similarly to the models directory to help keep
+things consistent and easy to find.</p>
+<p>The API basic component tree looks like this:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">router</span>
+<span class="o">|--</span> <span class="n">viewset</span>
+<span class="o">|</span>   <span class="o">|--</span> <span class="n">queryset</span>
+<span class="o">|</span>   <span class="o">|--</span> <span class="n">serializer</span>
+<span class="o">|</span>
+<span class="o">|--</span> <span class="n">viewset</span>
+<span class="o">|</span>   <span class="o">|--</span> <span class="o">...</span>
+<span class="o">|</span>
+<span class="o">|--</span> <span class="o">...</span>
+</pre></div>
+</div>
+<p>When creating API components, consider these guidelines:</p>
+<ul class="simple">
+<li><p>Where possible, API components representing models will be defined in files whose names match
+the corresponding file names of the models represented. For example, if you’re defining the
+serializer for a model found in <code class="docutils literal notranslate"><span class="pre">pulpcore.app.models.consumer</span></code>, the serializer should be defined in
+<code class="docutils literal notranslate"><span class="pre">pulpcore.app.serializers.consumer</span></code>, and imported by name into <code class="docutils literal notranslate"><span class="pre">pulpcore.app.serializers</span></code>.</p></li>
+<li><p>All objects represented in the REST API will be referred to by a single complete URL to that
+object, using a DRF <code class="docutils literal notranslate"><span class="pre">HyperlinkedRelatedField</span></code> or subclass. Non-hyperlinked relations (e.g.
+<code class="docutils literal notranslate"><span class="pre">PrimaryKeyRelatedField</span></code>, <code class="docutils literal notranslate"><span class="pre">SlugRelatedField</span></code>, etc) should be avoided. See the “Serializer
+Relationships” section below for more details. In the database an object is identified by its
+Primary Key. In the API an object is identified by its URL.</p></li>
+<li><p><a class="reference internal" href="../../plugin_dev/api-reference/viewsets.html#pulpcore.plugin.viewsets.NamedModelViewSet" title="pulpcore.app.viewsets.base.NamedModelViewSet"><code class="xref py py-class docutils literal notranslate"><span class="pre">pulpcore.app.viewsets.base.NamedModelViewSet</span></code></a> subclasses defined in a plugin’s “viewsets” module
+are automatically registered with the API router. Endpoint names (the <code class="docutils literal notranslate"><span class="pre">endpoint_name</span></code> attribute)
+should plural, not singular (e.g. /pulp/api/v3/repositories/, not /pulp/api/v3/repository/).</p></li>
+<li><p>DRF supports natural keys on models in ModelViewSets with the “lookup_field” class attribute, but
+only if the natural key is derived from a single field (e.g. <code class="docutils literal notranslate"><span class="pre">Repository.name</span></code>). For natural
+keys made up of multiple fields, a custom Viewset and Serializer are required. The custom ViewSet
+ensures that the correct URL endpoints are created, and that a model instance can be returned for
+a given natural key. The custom Serializer (and any necessary related serializer fields), at a
+minimum, ensures that objects generate the correct <code class="docutils literal notranslate"><span class="pre">pulp_href</span></code> value when serialized.</p></li>
+</ul>
+</section>
+<section id="serializer-relationships">
+<h2>Serializer Relationships<a class="headerlink" href="#serializer-relationships" title="Permalink to this heading">¶</a></h2>
+<section id="serializer-notes">
+<h3>Serializer Notes<a class="headerlink" href="#serializer-notes" title="Permalink to this heading">¶</a></h3>
+<ul class="simple">
+<li><p>Many of the model writing guidelines can be applied to writing serializers. Familiarity with
+them is recommended for writers of serializers.</p></li>
+<li><p>All Serializers representing Pulp Models should subclass
+<a class="reference internal" href="../../plugin_dev/api-reference/serializers.html#pulpcore.plugin.serializers.ModelSerializer" title="pulpcore.app.serializers.base.ModelSerializer"><code class="xref py py-class docutils literal notranslate"><span class="pre">pulpcore.app.serializers.base.ModelSerializer</span></code></a>, as it provides useful behaviors to handle some
+of the conventions used when building Pulp Models.</p></li>
+<li><p>Whether serializer fields are explicitly declared on the serializer class or not, the field names
+to expose via the API must be declared by specifying ‘fields’ in the serializer’s <code class="docutils literal notranslate"><span class="pre">Meta</span></code> class,
+as described in the DRF <a class="reference internal" href="#term-Serializer"><span class="xref std std-term">Serializer</span></a> docs. The names of exposed API fields should always
+be explicit.</p></li>
+<li><p>Serialized objects will provide thier own URL as the value of the “pulp_href” field on the serializer.
+You will need to use a <code class="docutils literal notranslate"><span class="pre">rest_framework.serializers.HyperlinkedIdentifyField</span></code> to generate the
+<code class="docutils literal notranslate"><span class="pre">pulp_href</span></code> field value by specifying its <code class="docutils literal notranslate"><span class="pre">view_name</span></code>. If this object is referenced in the url by
+a field other than the pk, you will also need to specify a <code class="docutils literal notranslate"><span class="pre">lookup_field</span></code>.</p></li>
+<li><p>When subclassing serializers, you should also explicitly inherit properties that would normally
+be overridden in the parent Serializer’s Meta class.</p></li>
+</ul>
+</section>
+<section id="normal">
+<h3>Normal<a class="headerlink" href="#normal" title="Permalink to this heading">¶</a></h3>
+<p>A “Normal” relationship, for the purposes of this document, is defined as a Model that relates
+to another Model with no specialized models on either side.</p>
+<p>“Specialized” models include Generic Relations or a relation to the “Detail” side of a Master/Detail
+Model, and are documented below.</p>
+<p>When relating a serializer to serializers representing other models (or lists of other models),
+remember to use DRF’s HyperlinkedRelatedField, or a subclass of it, to ensure the relationship
+is represented by complete URLs. Since this is a normal thing to do, the DRF docs explain how
+to do it in detail:</p>
+<p><a class="reference external" href="http://www.django-rest-framework.org/api-guide/relations/#hyperlinkedrelatedfield">http://www.django-rest-framework.org/api-guide/relations/#hyperlinkedrelatedfield</a></p>
+<p>To determine the ‘view_name’ to use when declaring a HyperlinkedRelatedField, it should be
+be <code class="docutils literal notranslate"><span class="pre">&lt;endpoint_name&gt;-&lt;view_action&gt;</span></code>, e.g. ‘repositories-detail’ when relating to a “normal” model
+ViewSet whose <code class="docutils literal notranslate"><span class="pre">endpoint_name</span></code> is ‘repositories’.</p>
+</section>
+<section id="nested">
+<h3>Nested<a class="headerlink" href="#nested" title="Permalink to this heading">¶</a></h3>
+<p>Serializers can be nested inside other serializers, so in some cases it might make for a
+better user experience to nest related objects inside their parent rather than only presenting
+a list of links to related objects. When relating to “normal” models, this is also supported by
+DRF out of the box, and the DRF docs explain how to do it in detail:</p>
+<p><a class="reference external" href="http://www.django-rest-framework.org/api-guide/relations/#nested-relationships">http://www.django-rest-framework.org/api-guide/relations/#nested-relationships</a></p>
+<p>There are caveats to this when the nested relationship is intended to be writable. Mainly, DRF
+needs to be told <em>how</em> it’s supposed to validate and update nested objects. This is done by
+implementing the create and update methods on the serializer that contains nested serializers,
+as documented here:</p>
+<p><a class="reference external" href="http://www.django-rest-framework.org/api-guide/relations/#writable-nested-serializers">http://www.django-rest-framework.org/api-guide/relations/#writable-nested-serializers</a></p>
+<p>Nesting many read/write serializers may result in very complicated create/update methods, but
+doing so potentially decreases the number of endpoints a user has to use when accessing the API,
+which increases usability. The opposite is also true, in that too much nesting might hinder the
+API usability, so the question of whether or not to nest a serializer should be handled case-by-
+case.</p>
+<p>An example of where this <em>might not</em> be useful is including complete Detail representations
+of Content related to a Repository when viewing a Repository instance, since those instances
+would have to be <cite>cast()</cite>, and there could literally be millions of them.</p>
+</section>
+<section id="master-detail">
+<h3>Master/Detail<a class="headerlink" href="#master-detail" title="Permalink to this heading">¶</a></h3>
+<p>The Master/Detail model relationships used in platform models is an internal detail that should be
+invisible to the API user. “Master” models of the Master/Detail relationship should not be exposed
+via the API.</p>
+<p>“Detail” models, then, provide a bit of a challenge, because the API needs to ensure that it is
+rendering the down-cast version of the model instance requested, or referencing the correct view
+name of that model when using a related field.</p>
+<p>This is enough of a tricky problem that it has its own section in the docs a little bit below,
+called “Master/Detail Relationships Overview”.</p>
+</section>
+<section id="building-explicit-serializers">
+<h3>Building Explicit Serializers<a class="headerlink" href="#building-explicit-serializers" title="Permalink to this heading">¶</a></h3>
+<p>In Pulp 3, the REST API will adhere to semantic versioning. This means that we need to exercise
+control over what fields are exposed in the REST API, and that those fields are always exposed
+the same way so that we don’t break backward compatibility. To convert a ModelSerializer to its
+explicit Serializer class, DRF provides an excellent bit of functionality:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">serializers</span> <span class="kn">import</span> <span class="n">RepositorySerializer</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">RepositorySerializer</span><span class="p">()</span>
+<span class="go">RepositorySerializer():</span>
+<span class="go">    pulp_href = HyperlinkedIdentityField(view_name=&#39;repositories-detail&#39;)</span>
+<span class="go">    name = CharField(style={&#39;base_template&#39;: &#39;textarea.html&#39;}, validators=[&lt;UniqueValidator(queryset=Repository.objects.all())&gt;])</span>
+<span class="go">    description = CharField(allow_blank=True, required=False, style={&#39;base_template&#39;: &#39;textarea.html&#39;})</span>
+<span class="go">    last_content_added = DateTimeField(allow_null=True, required=False)</span>
+<span class="go">    last_content_removed = DateTimeField(allow_null=True, required=False)</span>
+<span class="go">    content = HyperlinkedRelatedField(many=True, read_only=True, view_name=&#39;content-detail&#39;)</span>
+</pre></div>
+</div>
+<p>DRF Serializers fully support __repr__, which means calling repr() on them will return a string
+that can be used to create that serializer. So, to see what fields DRF automatically generated
+for a ModelSerializer, either instantiate it in an interpreter, or capture the output via repr()
+and output it explicitly.</p>
+</section>
+</section>
+<section id="master-detail-relationships-overview">
+<h2>Master/Detail Relationships Overview<a class="headerlink" href="#master-detail-relationships-overview" title="Permalink to this heading">¶</a></h2>
+<p>The Master/Detail pattern that we’re using in our Models requires some specific behaviors to
+be properly implemented in the API. Care has been taken to expose the inner workings of these
+behaviors to be easy to override or customize in plugins (if needed).</p>
+<section id="viewsets">
+<h3>ViewSets<a class="headerlink" href="#viewsets" title="Permalink to this heading">¶</a></h3>
+<p>As with most things related to the API, the place to start working with Master/Detail models
+is in their ViewSet. The default ViewSet base class provided by the Pulp platform,
+<a class="reference internal" href="../../plugin_dev/api-reference/viewsets.html#pulpcore.plugin.viewsets.NamedModelViewSet" title="pulpcore.app.viewsets.base.NamedModelViewSet"><code class="xref py py-class docutils literal notranslate"><span class="pre">pulpcore.app.viewsets.base.NamedModelViewSet</span></code></a> is aware of Master/Detail relationships, and
+will do the right thing when registered with our API router. In order to benefit from this
+behavior, a ViewSet must be declared that represents the Master model of a Master/Detail
+relationship, and that ViewSet must, at a minimum, have its <code class="docutils literal notranslate"><span class="pre">endpoint_name</span></code> set to something
+reasonable for that master model. For example, the Master ViewSet representing the Content
+Model should probably have its <code class="docutils literal notranslate"><span class="pre">endpoint_name</span></code> be set to “content”.</p>
+<p>All ViewSets representing Detail Models must subclass their respective Master ViewSet, and have
+their <code class="docutils literal notranslate"><span class="pre">endpoint_name</span></code> set to a string that uniquely identifies them. The autogenerated API
+endpoint for a Detail ViewSet will include both the master and detail <code class="docutils literal notranslate"><span class="pre">endpoint_name</span></code>.
+Building on the Content Model example, if we were making a ViewSet to represent the RPM
+Detail Model, a reasonable <code class="docutils literal notranslate"><span class="pre">endpoint_name</span></code> would be “rpm”. When combined with its Master
+ViewSet, the generated endpoint would become <code class="docutils literal notranslate"><span class="pre">content/rpm</span></code>.</p>
+<p>If in doubt, the Master ViewSet’s <code class="docutils literal notranslate"><span class="pre">endpoint_name</span></code> should be set to the Master Model’s
+plural verbose name (e.g. <code class="docutils literal notranslate"><span class="pre">Content._meta.verbose_name_plural</span></code>, which is “content”), and
+the Detail ViewSet’s <code class="docutils literal notranslate"><span class="pre">endpoint_name</span></code> should be set to the Detail Model’s TYPE value (e.g.
+<code class="docutils literal notranslate"><span class="pre">RPM.TYPE</span></code>, which is probably <code class="docutils literal notranslate"><span class="pre">RPM</span></code>). There generated endpoint for this detail ViewSet
+example would then become <code class="docutils literal notranslate"><span class="pre">content/rpm</span></code>.</p>
+<p>Note that the Detail ViewSet’s <code class="docutils literal notranslate"><span class="pre">endpoint_name</span></code> only needs to be unique among its Detail
+ViewSet peers sharing the same Master ViewSet. It would be perfectly acceptable, for example,
+to have a Detail Remote ViewSet with <code class="docutils literal notranslate"><span class="pre">endpoint_name</span></code> “rpm”, since the generated endpoint
+for that ViewSet would be something like <code class="docutils literal notranslate"><span class="pre">remote/rpm</span></code>, and not conflict with any of the
+endpoints generated for Detail ViewSets that share the Content Model as a Master.</p>
+<p>Setting <code class="docutils literal notranslate"><span class="pre">endpoint_name</span></code> to a string literal rather than deriving its value is an intentional
+decoupling of the API from the Models represented in it. When writing ViewSets, avoid the
+tempation to do things like this:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">endpoint_name</span> <span class="o">=</span> <span class="n">Master</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">verbose_name_plural</span>
+<span class="n">endpoint_name</span> <span class="o">=</span> <span class="n">Detail</span><span class="o">.</span><span class="n">TYPE</span>
+<span class="n">endpoint_name</span> <span class="o">=</span> <span class="n">anything_else_that_is_not_a_string_literal</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+<section id="serializers">
+<h3>Serializers<a class="headerlink" href="#serializers" title="Permalink to this heading">¶</a></h3>
+<p>Since Master ViewSets are never exposed in the API (they exist only to be subclassed by Detail
+ViewSets), they don’t need to have an attached Serializer. However, a Serializer <em>must</em> exist
+representing the Master Model in a Master/Detail relationship, and every Serializer representing
+Detail Models must subclass their respective Master Serializer.</p>
+<p>Furthermore, every Serializer representing a Master Model should subclass a special Serializer
+created for Master/Detail models, <a class="reference internal" href="../../plugin_dev/api-reference/serializers.html#pulpcore.plugin.serializers.ModelSerializer" title="pulpcore.app.serializers.base.ModelSerializer"><code class="xref py py-class docutils literal notranslate"><span class="pre">pulpcore.app.serializers.base.ModelSerializer</span></code></a>. This
+Serializer includes a definition for the <cite>type</cite> field present on all models inheriting from
+<code class="xref py py-class docutils literal notranslate"><span class="pre">pulpcore.app.models.MasterModel</span></code>, and also identifies the <cite>type</cite> field as filterable,
+centralizing common behavior that we’re likely to want in all Serializers representing Models
+in a Master/Detail Relationship.</p>
+</section>
+<section id="relating-to-detail-serializers">
+<h3>Relating to Detail Serializers<a class="headerlink" href="#relating-to-detail-serializers" title="Permalink to this heading">¶</a></h3>
+<p>When creating serializers for models that relate to Master/Detail models, a customized Serializer
+field must be used that is Master/Detail aware so that URLs identifying the Detail Model instance
+API representations are generated correctly.</p>
+<p>In this case, instead of using a normal <code class="docutils literal notranslate"><span class="pre">HyperlinkedRelatedField</span></code>,
+<a class="reference internal" href="../../plugin_dev/api-reference/serializers.html#pulpcore.plugin.serializers.DetailRelatedField" title="pulpcore.app.serializers.base.DetailRelatedField"><code class="xref py py-class docutils literal notranslate"><span class="pre">pulpcore.app.serializers.base.DetailRelatedField</span></code></a> should be used. This field knows how to
+correctly generate URLs to Detail types in the API by casting them down to their Detail Model
+type, but should be used with care due to the inherent cost in calling <code class="docutils literal notranslate"><span class="pre">cast()</span></code> on an arbitrary
+number of instances.</p>
+</section>
+<section id="identifying-detail-serializers">
+<h3>Identifying Detail Serializers<a class="headerlink" href="#identifying-detail-serializers" title="Permalink to this heading">¶</a></h3>
+<p>Similar to using <code class="docutils literal notranslate"><span class="pre">DetailRelatedField</span></code>, Detail Model Serializers should use
+<code class="xref py py-class docutils literal notranslate"><span class="pre">pulpcore.app.serializers.base.DetailIdentityField</span></code> when declaring their <code class="docutils literal notranslate"><span class="pre">pulp_href</span></code> attribute,
+so that the URLs generated by Detail Serializers return the proper URL to the cast Detail
+object.</p>
+</section>
+</section>
+<section id="pagination">
+<h2>Pagination<a class="headerlink" href="#pagination" title="Permalink to this heading">¶</a></h2>
+<p><a class="reference internal" href="#term-Pagination"><span class="xref std std-term">Pagination</span></a> support is provided by DRF, and should be used in the API to mitigate the
+potentially negative effects caused by users attempting to iterate over large datasets. The
+default pagination implementation use’s DRF’s <code class="docutils literal notranslate"><span class="pre">CursorPagination</span></code> method:</p>
+<p><a class="reference external" href="http://www.django-rest-framework.org/api-guide/pagination/#cursorpagination">http://www.django-rest-framework.org/api-guide/pagination/#cursorpagination</a></p>
+<p>Other methods are supported by DRF, and might be more appropriate in specific use-cases, but
+cursor-based pagination provides the best support for our largest set of data, which is Content
+stored in a Repository (or Repositories). By default, an object’s id is used for the purposes
+of cursor-based pagination, allowing an API user to reliably consume large datasets with no
+duplicated entries.</p>
+<p>Custom paginators can be easily created and attached to ViewSets using the <code class="docutils literal notranslate"><span class="pre">paginator_class</span></code>
+class attribute in the ViewSet class definition.</p>
+</section>
+<section id="filtering">
+<h2>Filtering<a class="headerlink" href="#filtering" title="Permalink to this heading">¶</a></h2>
+<section id="filtering-backend">
+<h3>Filtering Backend<a class="headerlink" href="#filtering-backend" title="Permalink to this heading">¶</a></h3>
+<p><a class="reference external" href="http://www.django-rest-framework.org/api-guide/filtering/#setting-filter-backends">http://www.django-rest-framework.org/api-guide/filtering/#setting-filter-backends</a></p>
+<p>We will be using <code class="docutils literal notranslate"><span class="pre">PulpFilterBackend</span></code>, a subclass of the rest framework’s <code class="docutils literal notranslate"><span class="pre">DjangoFilterBackend</span></code>.
+This is set as the default in the Django settings.py, but can be overridden in individual ViewSets.</p>
+</section>
+<section id="allowing-filters">
+<h3>Allowing Filters<a class="headerlink" href="#allowing-filters" title="Permalink to this heading">¶</a></h3>
+<p>Filters must be explicitly specified and are not enabled by default.</p>
+<section id="filterset-fields">
+<h4>filterset_fields<a class="headerlink" href="#filterset-fields" title="Permalink to this heading">¶</a></h4>
+<p>The simplest method of adding filters is simply to define <cite>filterset_fields</cite> on the ViewSet. Fields
+specified here will be “filterable”, but only using equality.</p>
+<p>To use this request:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>http<span class="w"> </span><span class="s1">&#39;http://192.168.121.134:24817/pulp/api/v3/repositories/?name=singing-gerbil&#39;</span>
+</pre></div>
+</div>
+<p>This is what the ViewSet should look like:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">RepositoryViewSet</span><span class="p">(</span><span class="n">viewsets</span><span class="o">.</span><span class="n">ModelViewSet</span><span class="p">):</span>
+    <span class="n">queryset</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">Repository</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+    <span class="n">serializer_class</span> <span class="o">=</span> <span class="n">serializers</span><span class="o">.</span><span class="n">RepositorySerializer</span>
+    <span class="n">filterset_fields</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;name&#39;</span><span class="p">,)</span>
+</pre></div>
+</div>
+</section>
+<section id="filterset">
+<h4>FilterSet<a class="headerlink" href="#filterset" title="Permalink to this heading">¶</a></h4>
+<p>Defining a <cite>FilterSet</cite> allows more options. To start with, this is a <cite>ViewSet</cite> and <cite>FilterSet</cite>
+that allows the same request:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>http<span class="w"> </span><span class="s1">&#39;http://192.168.121.134:24817/pulp/api/v3/repositories/?name=singing-gerbil&#39;</span>
+</pre></div>
+</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">RepositoryFilter</span><span class="p">(</span><span class="n">filters</span><span class="o">.</span><span class="n">FilterSet</span><span class="p">):</span>
+    <span class="k">pass</span>
+
+    <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">Repository</span>
+        <span class="n">fields</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span>
+
+<span class="k">class</span> <span class="nc">RepositoryViewSet</span><span class="p">(</span><span class="n">viewsets</span><span class="o">.</span><span class="n">ModelViewSet</span><span class="p">):</span>
+    <span class="n">queryset</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">Repository</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+    <span class="n">serializer_class</span> <span class="o">=</span> <span class="n">serializers</span><span class="o">.</span><span class="n">RepositorySerializer</span>
+    <span class="n">filterset_class</span> <span class="o">=</span> <span class="n">RepositoryFilter</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>For <code class="docutils literal notranslate"><span class="pre">NamedModelViewSet</span></code> the base class <code class="docutils literal notranslate"><span class="pre">BaseFilterSet</span></code> should be used.</p>
+</div>
+</section>
+<section id="beyond-equality">
+<h4>Beyond Equality<a class="headerlink" href="#beyond-equality" title="Permalink to this heading">¶</a></h4>
+<p>A <cite>FilterSet</cite> also allows filters that are more advanced than equality. We have access to any of
+the filters provided out of the box by <cite>django-filter</cite>.</p>
+<p><a class="reference external" href="https://django-filter.readthedocs.io/en/latest/ref/filters.html#filters">https://django-filter.readthedocs.io/en/latest/ref/filters.html#filters</a></p>
+<p>Simply define any filters in the <cite>FilterSet</cite> and then include them in <cite>fields</cite> in the Filter’s Meta class.</p>
+<p><cite>http ‘http://192.168.121.134:24817/pulp/api/v3/repositories/?name_contains=singing’</cite></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">RepositoryFilter</span><span class="p">(</span><span class="n">filters</span><span class="o">.</span><span class="n">FilterSet</span><span class="p">):</span>
+    <span class="n">name_contains</span> <span class="o">=</span> <span class="n">django_filters</span><span class="o">.</span><span class="n">filters</span><span class="o">.</span><span class="n">CharFilter</span><span class="p">(</span><span class="n">field_name</span><span class="o">=</span><span class="s1">&#39;name&#39;</span><span class="p">,</span> <span class="n">lookup_expr</span><span class="o">=</span><span class="s1">&#39;contains&#39;</span><span class="p">)</span>
+
+    <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">Repository</span>
+        <span class="n">fields</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;name_contains&#39;</span><span class="p">]</span>
+</pre></div>
+</div>
+</section>
+<section id="custom-filters">
+<h4>Custom Filters<a class="headerlink" href="#custom-filters" title="Permalink to this heading">¶</a></h4>
+<p>If the filters provided by <cite>django-filter</cite> do not cover a use case, we can create custom filters
+from the <cite>django-filter</cite> base classes.</p>
+<p>“In” is a special relationship and is not covered by the base filters, however we can create a
+custom filter based on the <cite>BaseInFilter</cite>.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>http<span class="w"> </span><span class="s1">&#39;http://192.168.121.134:24817/pulp/api/v3/repositories/?name_in_list=singing-gerbil,versatile-pudu&#39;</span>
+</pre></div>
+</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">CharInFilter</span><span class="p">(</span><span class="n">django_filters</span><span class="o">.</span><span class="n">filters</span><span class="o">.</span><span class="n">BaseInFilter</span><span class="p">,</span>
+                   <span class="n">django_filters</span><span class="o">.</span><span class="n">filters</span><span class="o">.</span><span class="n">CharFilter</span><span class="p">):</span>
+    <span class="k">pass</span>
+
+<span class="k">class</span> <span class="nc">RepositoryFilter</span><span class="p">(</span><span class="n">filters</span><span class="o">.</span><span class="n">FilterSet</span><span class="p">):</span>
+    <span class="n">name_in_list</span> <span class="o">=</span> <span class="n">CharInFilter</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;name&#39;</span><span class="p">,</span> <span class="n">lookup_expr</span><span class="o">=</span><span class="s1">&#39;in&#39;</span><span class="p">)</span>
+
+    <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">Repository</span>
+        <span class="n">fields</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;name_in_list&#39;</span><span class="p">]</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>We should be careful when naming these filters. Using <cite>repo__in</cite> would be fine because
+repo is not defined on this model. However, using <cite>name__in</cite> does <em>not</em> work because Django
+gets to it first looking for a subfield <cite>in</cite> on the name.</p>
+</div>
+</section>
+</section>
+</section>
+<section id="documenting">
+<h2>Documenting<a class="headerlink" href="#documenting" title="Permalink to this heading">¶</a></h2>
+<p>By default, the docstring of a CRUD method on a ViewSet is used to generate that endpoint’s
+description. Individual parameters and responses are documented largely automatically based
+on the Serializer field type, but using the “help_text” kwarg when defining serializer fields
+lets us add a user-friendly string that is then included in the API endpoint.</p>
+<p>ViewSets can override the <code class="docutils literal notranslate"><span class="pre">get_view_description</span></code> method to customize the source and formatting
+of the description field, if desired. Serializer fields should set their <code class="docutils literal notranslate"><span class="pre">help_text</span></code> value for
+every field defined to help API users know the purpose of each field represented in the API.</p>
+<p>If a site-wide customization of docstring generation is desired, DRF provides a mechanism for
+changing the default function used in <code class="docutils literal notranslate"><span class="pre">get_view_description</span></code>:</p>
+<p><a class="reference external" href="http://www.django-rest-framework.org/api-guide/settings/#view_description_function">http://www.django-rest-framework.org/api-guide/settings/#view_description_function</a></p>
+<p>There are several support tools that work with DRF to aggregate endpoint documentation into
+a browsable site of API docs, listed here:</p>
+<p><a class="reference external" href="http://www.django-rest-framework.org/topics/documenting-your-api/#endpoint-documentation">http://www.django-rest-framework.org/topics/documenting-your-api/#endpoint-documentation</a></p>
+<p>Because “DRF Docs” and “Django REST Swagger” do not generate documentation for responses,
+Pulp is generating its REST API with <a class="reference external" href="https://github.com/tfranzel/drf-spectacular">drf-spectacular</a>
+until either DRF supports OpenAPI, or until CoreAPI supports response documentation.</p>
+</section>
+<section id="glossary">
+<h2>Glossary<a class="headerlink" href="#glossary" title="Permalink to this heading">¶</a></h2>
+<dl class="glossary">
+<dt id="term-DRF">DRF<a class="headerlink" href="#term-DRF" title="Permalink to this term">¶</a></dt><dd><p>The Django Rest Framework.</p>
+</dd>
+<dt id="term-Pagination">Pagination<a class="headerlink" href="#term-Pagination" title="Permalink to this term">¶</a></dt><dd><p>The practice of splitting large datasets into multiple pages.</p>
+</dd>
+<dt id="term-Router">Router<a class="headerlink" href="#term-Router" title="Permalink to this term">¶</a></dt><dd><p>A <a class="reference internal" href="#term-DRF"><span class="xref std std-term">DRF</span></a> API router exposes registered views (like a <a class="reference internal" href="#term-ViewSet"><span class="xref std std-term">ViewSet</span></a>) at
+programatically-made URLs. Among other things, routers save us the trouble of having
+to manually write URLs for every API view.</p>
+<p><a class="reference external" href="http://www.django-rest-framework.org/api-guide/routers/">http://www.django-rest-framework.org/api-guide/routers/</a></p>
+</dd>
+<dt id="term-Serializer">Serializer<a class="headerlink" href="#term-Serializer" title="Permalink to this term">¶</a></dt><dd><p>A <a class="reference internal" href="#term-DRF"><span class="xref std std-term">DRF</span></a> Serializer is responsible for representing python objects in the API,
+and for converting API objects back into native python objects. Every model exposed
+via the API must have a related serializer.</p>
+<p><a class="reference external" href="http://www.django-rest-framework.org/api-guide/serializers/">http://www.django-rest-framework.org/api-guide/serializers/</a></p>
+</dd>
+<dt id="term-ViewSet">ViewSet<a class="headerlink" href="#term-ViewSet" title="Permalink to this term">¶</a></dt><dd><p>A <a class="reference internal" href="#term-DRF"><span class="xref std std-term">DRF</span></a> ViewSet is a collection of views representing all API actions available
+at an API endpoint. ViewSets use a <a class="reference internal" href="#term-Serializer"><span class="xref std std-term">Serializer</span></a> or Serializers to correctly
+represent API-related objects, and are exposed in urls.py by being registered with
+a <a class="reference internal" href="#term-Router"><span class="xref std std-term">Router</span></a>. API actions provided by a ViewSet include “list”, “create”, “retreive”,
+“update”, “partial_update”, and “destroy”. Each action is one of the views that make up
+a ViewSet, and additional views can be added as-needed.</p>
+<p><a class="reference external" href="http://www.django-rest-framework.org/api-guide/viewsets/">http://www.django-rest-framework.org/api-guide/viewsets/</a></p>
+</dd>
+</dl>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="app-layout.html" class="btn btn-neutral float-left" title="Pulp Platform Application Layout" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="error-handling.html" class="btn btn-neutral float-right" title="Error Handling" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2012-2023, Pulp Team.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+ 
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-74748547-2', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+
+<script>
+$( document ).ready( function() {
+
+  // gets version number minus whitespace and bugfix version
+  var $version_number = $('.version').text().trim().split('.', 2).join('.')
+
+  // div mirroring the admonition-warning generated by sphinx if added to .rst
+  var warning = '\
+          <div class="admonition warning"> \
+              <p class="first admonition-title">Warning</p> \
+              <p class="last">You are looking at the docs for an unsupported version of Pulp. \
+               Consider switching to a  \
+               <a href="https://pulpproject.org/docs/">supported version</a></p> \
+          </div>'
+
+  
+  // get JSON from server and load supported_versions
+  $.getJSON("https://raw.githubusercontent.com/pulp/pulp-ci/master/ci/config/releases/supported-releases.json" , function(data) {
+    if ($.inArray($version_number, data) === -1) {
+      $('.rst-content').prepend(warning)
+      }
+    })
+  })
+  </script>
+
+
+</body>
+</html>

@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hardware requirements &mdash; Pulp Project 3.23.0.dev documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script src="../_static/sphinx_highlight.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Instructions" href="instructions.html" />
+    <link rel="prev" title="Installation Options" href="index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../index.html" class="icon icon-home"> Pulp Project
+          </a>
+              <div class="version">
+                3.23.0.dev
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../concepts.html">Concepts and Terminology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../from-pulp-2.html">Changes From Pulp 2</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../components.html">Architecture</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Installation Options</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Hardware requirements</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#cpu">CPU</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#ram">RAM</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#disk">Disk</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#empirical-estimation">Empirical estimation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#filesystem-layout">Filesystem Layout</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="instructions.html">Instructions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="storage.html">Storage</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../configuration/index.html">Configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../authentication/index.html">Authentication</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../workflows/index.html">Workflows and Use Cases</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../plugins.html">Plugins</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../plugin_dev/index.html">Plugin Development</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../rest_api.html">REST API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../client_bindings.html">Client Bindings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../contributing/index.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../bugs-features.html">Bugs, Feature and Backport Requests</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../troubleshooting.html">Troubleshooting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../glossary.html">Glossary</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../changes.html">Changelog</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../versioning.html">Versioning</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../release_process.html">Pulpcore Release Process</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Pulp Project</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">Installation Options</a></li>
+      <li class="breadcrumb-item active">Hardware requirements</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/installation/hardware-requirements.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="hardware-requirements">
+<h1>Hardware requirements<a class="headerlink" href="#hardware-requirements" title="Permalink to this heading">¶</a></h1>
+<p>Pulp de-duplicates content, and makes as efficient use of storage space as possible. Even if you
+configure Pulp not to store content, it will still require some local storage.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>This section is updated based on your feedback. Feel free to share what your experience is
+<a class="reference external" href="https://pulpproject.org/help/">https://pulpproject.org/help/</a></p>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>These are empirical guidelines to give an idea how to estimate what you need. It hugely
+depends on the scale of the setup (how much content you need, how many repositories you plan
+to have), frequency (how often you run various tasks) and the workflows (which tasks you
+perform, which plugin you use) of each specific user.</p>
+</div>
+<section id="cpu">
+<h2>CPU<a class="headerlink" href="#cpu" title="Permalink to this heading">¶</a></h2>
+<p>CPU count is recommended to be equal to the number of pulp workers. It allows to perform N
+repository operations concurrently. E.g. 2 CPUs, one can sync 2 repositories concurrently.</p>
+</section>
+<section id="ram">
+<h2>RAM<a class="headerlink" href="#ram" title="Permalink to this heading">¶</a></h2>
+<p>Out of all operations the highest memory consumption task is likely synchronization of a remote
+repository. Publication can also be memory consuming, however it depends on the plugin.</p>
+<p>For each worker, the suggestion is to plan on 1GB to 3GB. E.g. 4 workers would need 4GB to 12 GB
+For the database, 1GB is likely enough.</p>
+<p>The range for the workers is quite wide because it depends on the plugin. E.g. for RPM plugin, a
+setup with 2 workers will require around 8GB to be able to sync large repositories. 4GB is
+likely not enough for some repositories, especially if 2 workers both run sync tasks in parallel.</p>
+</section>
+<section id="disk">
+<h2>Disk<a class="headerlink" href="#disk" title="Permalink to this heading">¶</a></h2>
+<p>For disk size, it depends on how one is using Pulp and which storage is used.</p>
+<section id="empirical-estimation">
+<h3>Empirical estimation<a class="headerlink" href="#empirical-estimation" title="Permalink to this heading">¶</a></h3>
+<blockquote>
+<div><ul class="simple">
+<li><p>If S3 is used as a backend for artifact storage, it is not required to have a large local
+storage. 30GB should be enough in the majority of cases.</p></li>
+<li><p>If no content is planned to be stored in the artifact storage, aka only sync from
+remote source and only with the <code class="docutils literal notranslate"><span class="pre">streamed</span></code> policy, some storage needs to be allocated for
+metadata. It depends on the plugin, the size of a repository and the number of different
+publications. 5GB should be enough for medium-large installation.</p></li>
+<li><p>If content is downloaded <code class="docutils literal notranslate"><span class="pre">on_demand</span></code>, aka only packages that clients request from Pulp. A
+good estimation would be 30% of the whole repository size, including futher updates to the
+content. That the most common usage pattern. If clients use all the packages from a repository,
+it would use 100% of the repository size.</p></li>
+<li><p>If all content needs to be downloaded, the size of all repositories together is needed.
+Since Pulp de-duplicates content, this calculation assumes that all repositories have unique
+content.</p></li>
+<li><p>Any additional content, one plans to upload to or import into Pulp, needs to be counted as well.</p></li>
+<li><p>DB size needs to be taken into account as well.</p></li>
+</ul>
+</div></blockquote>
+<p>E.g. For syncing remote repositories with <code class="docutils literal notranslate"><span class="pre">on_demand</span></code> policy and using local storage, one
+would need 50GB + 30% of size of all the repository content + the DB.</p>
+</section>
+<section id="filesystem-layout">
+<span id="id1"></span><h3>Filesystem Layout<a class="headerlink" href="#filesystem-layout" title="Permalink to this heading">¶</a></h3>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Pulp will mostly automatically manage the following directories for you.
+Only if you need to adjust permissions or security contexts and perform a manual installation,
+you need to prepare them accordingly.</p>
+</div>
+<p>This table provides an overview of how and where Pulp manages its files, which might help you to
+estimate what diskspace you might need.</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 19%" />
+<col style="width: 81%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>File/Directory</p></th>
+<th class="head"><p>Usage</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><cite>/etc/pulp/settings.py</cite></p></td>
+<td><p>Pulp’s configuration file; optional; see <a class="reference internal" href="../configuration/index.html#configuration"><span class="std std-ref">Configuration</span></a></p></td>
+</tr>
+<tr class="row-odd"><td><p><cite>/etc/pulp/certs</cite></p></td>
+<td><p>Pulp’s certificates</p></td>
+</tr>
+<tr class="row-even"><td><p><cite>/var/lib/pulp</cite></p></td>
+<td><p>Home directory of the pulp user</p></td>
+</tr>
+<tr class="row-odd"><td><p><cite>/var/lib/pulp/media/artifact</cite></p></td>
+<td><p>Uploaded Artifacts are stored here; they should only be served through the <cite>pulp-content</cite> app</p></td>
+</tr>
+<tr class="row-even"><td><p><cite>/var/lib/pulp/assets</cite></p></td>
+<td><p>Statically served assets like stylesheets, javascript and html; needed for the browsable api</p></td>
+</tr>
+<tr class="row-odd"><td><p><cite>/var/lib/pulp/pulpcore-selinux</cite></p></td>
+<td><p>Contains the compiled selinux-policy if <cite>pulpcore-selinux</cite> is installed</p></td>
+</tr>
+<tr class="row-even"><td><p><cite>/var/lib/pulp/pulpcore_static</cite></p></td>
+<td><p>Empty directory used as the document root in the reverse proxy; used to prevent accidentally serving files</p></td>
+</tr>
+<tr class="row-odd"><td><p><cite>/var/lib/pulp/scripts</cite></p></td>
+<td><p>Stores scripts used by the galaxy_ng plugin</p></td>
+</tr>
+<tr class="row-even"><td><p><cite>/var/lib/pulp/tmp</cite></p></td>
+<td><p>Used for working directories of pulp workers. Also Storage for upload chunks and temporary files that need to be shared between processes</p></td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><cite>/var/lib/pulp/media</cite> will be empty in case a cloud storage is configured <a class="reference internal" href="storage.html#storage"><span class="std std-ref">Storage</span></a></p>
+</div>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="index.html" class="btn btn-neutral float-left" title="Installation Options" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="instructions.html" class="btn btn-neutral float-right" title="Instructions" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2012-2023, Pulp Team.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+ 
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-74748547-2', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+
+<script>
+$( document ).ready( function() {
+
+  // gets version number minus whitespace and bugfix version
+  var $version_number = $('.version').text().trim().split('.', 2).join('.')
+
+  // div mirroring the admonition-warning generated by sphinx if added to .rst
+  var warning = '\
+          <div class="admonition warning"> \
+              <p class="first admonition-title">Warning</p> \
+              <p class="last">You are looking at the docs for an unsupported version of Pulp. \
+               Consider switching to a  \
+               <a href="https://pulpproject.org/docs/">supported version</a></p> \
+          </div>'
+
+  
+  // get JSON from server and load supported_versions
+  $.getJSON("https://raw.githubusercontent.com/pulp/pulp-ci/master/ci/config/releases/supported-releases.json" , function(data) {
+    if ($.inArray($version_number, data) === -1) {
+      $('.rst-content').prepend(warning)
+      }
+    })
+  })
+  </script>
+
+
+</body>
+</html>

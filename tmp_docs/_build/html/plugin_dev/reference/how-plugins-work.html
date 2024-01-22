@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>How Plugins Work &mdash; Pulp Project 3.23.0.dev documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/sphinx_highlight.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Error Handling" href="error-handling.html" />
+    <link rel="prev" title="Object Relationships" href="object-relationships.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../index.html" class="icon icon-home"> Pulp Project
+          </a>
+              <div class="version">
+                3.23.0.dev
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../concepts.html">Concepts and Terminology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../from-pulp-2.html">Changes From Pulp 2</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../components.html">Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../installation/index.html">Installation Options</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../configuration/index.html">Configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../authentication/index.html">Authentication</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../workflows/index.html">Workflows and Use Cases</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../plugins.html">Plugins</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">Plugin Development</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../index.html#plugin-writer-s-guide">Plugin Writer’s Guide</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../index.html#plugin-writer-s-reference">Plugin Writer’s Reference</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="index.html">Plugin Writing Reference Material</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="object-relationships.html">Object Relationships</a></li>
+<li class="toctree-l4 current"><a class="current reference internal" href="#">How Plugins Work</a></li>
+<li class="toctree-l4"><a class="reference internal" href="error-handling.html">Error Handling</a></li>
+<li class="toctree-l4"><a class="reference internal" href="how-to-doc-api.html">Documenting your API</a></li>
+<li class="toctree-l4"><a class="reference internal" href="how-to-doc-api.html#openapi-tags">OpenAPI Tags</a></li>
+<li class="toctree-l4"><a class="reference internal" href="on-demand-support.html">On-Demand Support</a></li>
+<li class="toctree-l4"><a class="reference internal" href="releasing.html">Releasing Your Plugin</a></li>
+<li class="toctree-l4"><a class="reference internal" href="content-protection.html">Content Protection</a></li>
+<li class="toctree-l4"><a class="reference internal" href="metadata-signing.html">Metadata Signing</a></li>
+<li class="toctree-l4"><a class="reference internal" href="task-scheduling.html">Task Scheduling</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../index.html#plugin-api-reference">Plugin API Reference</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../rest_api.html">REST API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../client_bindings.html">Client Bindings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../contributing/index.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../bugs-features.html">Bugs, Feature and Backport Requests</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../troubleshooting.html">Troubleshooting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../glossary.html">Glossary</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../changes.html">Changelog</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../versioning.html">Versioning</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../release_process.html">Pulpcore Release Process</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Pulp Project</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Plugin Development</a></li>
+          <li class="breadcrumb-item"><a href="index.html">Plugin Writing Reference Material</a></li>
+      <li class="breadcrumb-item active">How Plugins Work</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/plugin_dev/reference/how-plugins-work.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="how-plugins-work">
+<h1>How Plugins Work<a class="headerlink" href="#how-plugins-work" title="Permalink to this heading">¶</a></h1>
+<section id="plugin-django-application">
+<span id="id1"></span><h2>Plugin Django Application<a class="headerlink" href="#plugin-django-application" title="Permalink to this heading">¶</a></h2>
+<p>Like the Pulp Core itself, all Pulp Plugins begin as Django Applications, started like any other
+with <cite>pulpcore-manager startapp &lt;your_plugin&gt;</cite>. However, instead of subclassing Django’s
+<cite>django.apps.AppConfig</cite> as seen <a class="reference external" href="https://docs.djangoproject.com/en/3.2/ref/applications/#for-application-authors">in the Django documentation</a>, Pulp Plugins identify themselves as plugins to
+pulpcore by subclassing <a class="reference internal" href="../api-reference/index.html#pulpcore.plugin.PulpPluginAppConfig" title="pulpcore.plugin.PulpPluginAppConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">pulpcore.plugin.PulpPluginAppConfig</span></code></a>.</p>
+<p><a class="reference internal" href="../api-reference/index.html#pulpcore.plugin.PulpPluginAppConfig" title="pulpcore.plugin.PulpPluginAppConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">pulpcore.plugin.PulpPluginAppConfig</span></code></a> also provides the application autoloading behaviors,
+such as automatic registration of viewsets with the API router, which adds plugin endpoints.</p>
+<p>The <a class="reference internal" href="../api-reference/index.html#pulpcore.plugin.PulpPluginAppConfig" title="pulpcore.plugin.PulpPluginAppConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">pulpcore.plugin.PulpPluginAppConfig</span></code></a> subclass for any plugin must set a few required
+attributes:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">name</span></code> attribute defines the importable dotted Python location of the plugin application (the
+Python namespace that contains at least models and viewsets).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">label</span></code> attribute to something that unambiguously labels the plugin in a clear way for users.
+See <a class="reference external" href="https://github.com/pulp/pulp_file/blob/master/pulp_file/app/__init__.py">how it is done</a> in
+the <code class="docutils literal notranslate"><span class="pre">pulp_file</span></code> plugin.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">version</span></code> attribute to the string representing the version.</p></li>
+</ul>
+</section>
+<section id="pulpcore-plugin-entry-point">
+<span id="plugin-entry-point"></span><h2>pulpcore.plugin Entry Point<a class="headerlink" href="#pulpcore-plugin-entry-point" title="Permalink to this heading">¶</a></h2>
+<p>The Pulp Core discovers available plugins by inspecting the pulpcore.plugin entry point.</p>
+<p>Once a plugin has defined its <a class="reference internal" href="../api-reference/index.html#pulpcore.plugin.PulpPluginAppConfig" title="pulpcore.plugin.PulpPluginAppConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">pulpcore.plugin.PulpPluginAppConfig</span></code></a> subclass, it should add
+a pointer to that subclass using the Django <code class="docutils literal notranslate"><span class="pre">default_app_config</span></code> convention, e.g.
+<code class="docutils literal notranslate"><span class="pre">default_app_config</span> <span class="pre">=</span> <span class="pre">pulp_myplugin.app.MyPulpPluginAppConfig</span></code> somewhere in the module that
+contains your Django application. The Pulp Core can then be told to use this value to discover your
+plugin, by pointing the pulpcore.plugin entry point at it. If, for example, we set
+<code class="docutils literal notranslate"><span class="pre">default_app_config</span></code> in <code class="docutils literal notranslate"><span class="pre">pulp_myplugin/__init__.py</span></code>, the setup.py <code class="docutils literal notranslate"><span class="pre">entry_points</span></code> would look like
+this:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">entry_points</span><span class="o">=</span><span class="p">{</span>
+    <span class="s1">&#39;pulpcore.plugin&#39;</span><span class="p">:</span> <span class="p">[</span>
+        <span class="s1">&#39;pulp_myplugin = pulp_myplugin:default_app_config&#39;</span><span class="p">,</span>
+    <span class="p">]</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>If you do not wish to use Django’s <code class="docutils literal notranslate"><span class="pre">default_app_config</span></code> convention, the name given to the
+<code class="docutils literal notranslate"><span class="pre">pulpcore.plugin</span></code> entry point must be an importable identifier with a string value containing the
+importable dotted path to your plugin’s application config class, just as <code class="docutils literal notranslate"><span class="pre">default_app_config</span></code>
+does.</p>
+<p>Check out <code class="docutils literal notranslate"><span class="pre">pulp_file</span></code> plugin: <a class="reference external" href="https://github.com/pulp/pulp_file/blob/master/pulp_file/__init__.py">default_app_config</a> and <a class="reference external" href="https://github.com/pulp/pulp_file/blob/master/setup.py">setup.py example</a>.</p>
+</section>
+<section id="model-serializer-viewset-discovery">
+<span id="mvs-discovery"></span><h2>Model, Serializer, Viewset Discovery<a class="headerlink" href="#model-serializer-viewset-discovery" title="Permalink to this heading">¶</a></h2>
+<p>The structure of plugins should, where possible, mimic the layout of the Pulp Core Plugin API. For
+example, model classes should be based on platform classes imported from
+<code class="xref py py-mod docutils literal notranslate"><span class="pre">pulpcore.plugin.models</span></code> and be defined in the <cite>models</cite> module or directory of a plugin app.
+ViewSets should be imported from <a class="reference internal" href="../api-reference/viewsets.html#module-pulpcore.plugin.viewsets" title="pulpcore.plugin.viewsets"><code class="xref py py-mod docutils literal notranslate"><span class="pre">pulpcore.plugin.viewsets</span></code></a>, and be defined in the <cite>viewsets</cite>
+module of a plugin app, and so on.</p>
+<p>This matching of module names is required for the Pulp Core to be able to auto-discover plugin
+components, particularly for both models and viewsets.</p>
+<p>Take a look at <a class="reference external" href="https://github.com/pulp/pulp_file/tree/master/pulp_file/app">the structure</a> of
+the <code class="docutils literal notranslate"><span class="pre">pulp_file</span></code> plugin.</p>
+</section>
+<section id="serializer-and-openapi-schema">
+<h2>Serializer and OpenAPI schema<a class="headerlink" href="#serializer-and-openapi-schema" title="Permalink to this heading">¶</a></h2>
+<p>Serializers are converted to OpenAPI objects through <a class="reference external" href="https://github.com/tfranzel/drf-spectacular">drf-spectacular</a>.
+It inspects all serializer fields to describe them in the OpenAPI schema.
+Due to the <a class="reference external" href="https://github.com/encode/django-rest-framework/issues/7354">DRF issue</a>
+it is preferable to use <code class="docutils literal notranslate"><span class="pre">CharField</span></code> instead of <code class="docutils literal notranslate"><span class="pre">URLField</span></code>.
+Otherwise The REST API hosted at <code class="docutils literal notranslate"><span class="pre">/pulp/api/v3/</span></code> may hide some paths.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="object-relationships.html" class="btn btn-neutral float-left" title="Object Relationships" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="error-handling.html" class="btn btn-neutral float-right" title="Error Handling" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2012-2023, Pulp Team.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+ 
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-74748547-2', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+
+<script>
+$( document ).ready( function() {
+
+  // gets version number minus whitespace and bugfix version
+  var $version_number = $('.version').text().trim().split('.', 2).join('.')
+
+  // div mirroring the admonition-warning generated by sphinx if added to .rst
+  var warning = '\
+          <div class="admonition warning"> \
+              <p class="first admonition-title">Warning</p> \
+              <p class="last">You are looking at the docs for an unsupported version of Pulp. \
+               Consider switching to a  \
+               <a href="https://pulpproject.org/docs/">supported version</a></p> \
+          </div>'
+
+  
+  // get JSON from server and load supported_versions
+  $.getJSON("https://raw.githubusercontent.com/pulp/pulp-ci/master/ci/config/releases/supported-releases.json" , function(data) {
+    if ($.inArray($version_number, data) === -1) {
+      $('.rst-content').prepend(warning)
+      }
+    })
+  })
+  </script>
+
+
+</body>
+</html>

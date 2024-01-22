@@ -1,0 +1,935 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pulpcore.plugin.viewsets &mdash; Pulp Project 3.23.0.dev documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/sphinx_highlight.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="pulpcore.plugin.tasking" href="tasking.html" />
+    <link rel="prev" title="pulpcore.plugin.storage" href="storage.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../index.html" class="icon icon-home"> Pulp Project
+          </a>
+              <div class="version">
+                3.23.0.dev
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../concepts.html">Concepts and Terminology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../from-pulp-2.html">Changes From Pulp 2</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../components.html">Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../installation/index.html">Installation Options</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../configuration/index.html">Configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../authentication/index.html">Authentication</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../workflows/index.html">Workflows and Use Cases</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../plugins.html">Plugins</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">Plugin Development</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../index.html#plugin-writer-s-guide">Plugin Writer’s Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../index.html#plugin-writer-s-reference">Plugin Writer’s Reference</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../index.html#plugin-api-reference">Plugin API Reference</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="index.html">Plugin API Reference</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="models.html">pulpcore.plugin.models</a></li>
+<li class="toctree-l4"><a class="reference internal" href="exceptions.html">pulpcore.plugin.exceptions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="serializers.html">pulpcore.plugin.serializers</a></li>
+<li class="toctree-l4"><a class="reference internal" href="storage.html">pulpcore.plugin.storage</a></li>
+<li class="toctree-l4 current"><a class="current reference internal" href="#">pulpcore.plugin.viewsets</a></li>
+<li class="toctree-l4"><a class="reference internal" href="tasking.html">pulpcore.plugin.tasking</a></li>
+<li class="toctree-l4"><a class="reference internal" href="download.html">pulpcore.plugin.download</a></li>
+<li class="toctree-l4"><a class="reference internal" href="stages.html">pulpcore.plugin.stages</a></li>
+<li class="toctree-l4"><a class="reference internal" href="profiling.html">Profiling the Stages API Performance</a></li>
+<li class="toctree-l4"><a class="reference internal" href="content-app.html">pulpcore.plugin.content</a></li>
+<li class="toctree-l4"><a class="reference internal" href="util.html">pulpcore.plugin.util</a></li>
+<li class="toctree-l4"><a class="reference internal" href="index.html#pulpcore.plugin.PulpPluginAppConfig"><code class="docutils literal notranslate"><span class="pre">PulpPluginAppConfig</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../rest_api.html">REST API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../client_bindings.html">Client Bindings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../contributing/index.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../bugs-features.html">Bugs, Feature and Backport Requests</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../troubleshooting.html">Troubleshooting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../glossary.html">Glossary</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../changes.html">Changelog</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../versioning.html">Versioning</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../release_process.html">Pulpcore Release Process</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Pulp Project</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Plugin Development</a></li>
+          <li class="breadcrumb-item"><a href="index.html">Plugin API Reference</a></li>
+      <li class="breadcrumb-item active">pulpcore.plugin.viewsets</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/plugin_dev/api-reference/viewsets.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="pulpcore-plugin-viewsets">
+<h1>pulpcore.plugin.viewsets<a class="headerlink" href="#pulpcore-plugin-viewsets" title="Permalink to this heading">¶</a></h1>
+<p>All viewsets documented here should be imported directly from the <code class="docutils literal notranslate"><span class="pre">pulpcore.plugin.viewsets</span></code>
+namespace.</p>
+<span class="target" id="module-pulpcore.plugin.viewsets"></span><dl class="py class">
+<dt class="sig sig-object py" id="pulpcore.plugin.viewsets.AlternateContentSourceViewSet">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pulpcore.plugin.viewsets.</span></span><span class="sig-name descname"><span class="pre">AlternateContentSourceViewSet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pulpcore.plugin.viewsets.AlternateContentSourceViewSet" title="Permalink to this definition">¶</a></dt>
+<dd><p>A class for ACS viewset.</p>
+<p>Constructor. Called in the URLconf; can contain helpful extra
+keyword arguments, and other things.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pulpcore.plugin.viewsets.AlternateContentSourceViewSet.serializer_class">
+<span class="sig-name descname"><span class="pre">serializer_class</span></span><a class="headerlink" href="#pulpcore.plugin.viewsets.AlternateContentSourceViewSet.serializer_class" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <a class="reference internal" href="serializers.html#pulpcore.plugin.serializers.AlternateContentSourceSerializer" title="pulpcore.app.serializers.acs.AlternateContentSourceSerializer"><code class="xref py py-class docutils literal notranslate"><span class="pre">AlternateContentSourceSerializer</span></code></a></p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pulpcore.plugin.viewsets.AsyncUpdateMixin">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pulpcore.plugin.viewsets.</span></span><span class="sig-name descname"><span class="pre">AsyncUpdateMixin</span></span><a class="headerlink" href="#pulpcore.plugin.viewsets.AsyncUpdateMixin" title="Permalink to this definition">¶</a></dt>
+<dd><p>Provides an update method that dispatches a task with reservation</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pulpcore.plugin.viewsets.BaseFilterSet">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pulpcore.plugin.viewsets.</span></span><span class="sig-name descname"><span class="pre">BaseFilterSet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">queryset</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">request</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prefix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pulpcore.plugin.viewsets.BaseFilterSet" title="Permalink to this definition">¶</a></dt>
+<dd><p>Class to override django_filter’s FilterSet and provide a way to set help text</p>
+<p>By default, this class will use predefined text and the field name to create help text for the
+filter. However, this can be overriden by setting a help_text dict with the field name
+mapped to some help text:</p>
+<blockquote>
+<div><p>help_text = {‘name__in’: ‘Lorem ipsum dolor’, ‘pulp_last_updated__lt’: ‘blah blah’}</p>
+</div></blockquote>
+<dl class="py method">
+<dt class="sig sig-object py" id="pulpcore.plugin.viewsets.BaseFilterSet.filter_for_field">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">filter_for_field</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">field</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lookup_expr</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pulpcore.plugin.viewsets.BaseFilterSet.filter_for_field" title="Permalink to this definition">¶</a></dt>
+<dd><p>Looks up and initializes a filter and returns it. Also, sets the help text on the filter.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>field</strong> – The field class for the filter</p></li>
+<li><p><strong>name</strong> – The name of filter field</p></li>
+<li><p><strong>lookup_expr</strong> – The lookup expression that specifies how the field is matched</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>an initialized Filter object with help text</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>django_filters.Filter</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pulpcore.plugin.viewsets.BaseFilterSet.get_filters">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_filters</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pulpcore.plugin.viewsets.BaseFilterSet.get_filters" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get all filters for the filterset. This is the combination of declared and
+generated filters.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pulpcore.plugin.viewsets.BaseFilterSet.is_valid">
+<span class="sig-name descname"><span class="pre">is_valid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pulpcore.plugin.viewsets.BaseFilterSet.is_valid" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return True if the underlying form has no errors, or False otherwise.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pulpcore.plugin.viewsets.CharInFilter">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pulpcore.plugin.viewsets.</span></span><span class="sig-name descname"><span class="pre">CharInFilter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pulpcore.plugin.viewsets.CharInFilter" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pulpcore.plugin.viewsets.ContentFilter">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pulpcore.plugin.viewsets.</span></span><span class="sig-name descname"><span class="pre">ContentFilter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">queryset</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">request</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prefix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pulpcore.plugin.viewsets.ContentFilter" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="simple">
+<dt>Plugin content filters should:</dt><dd><ul class="simple">
+<li><p>inherit from this class</p></li>
+<li><p>add any plugin-specific filters if needed</p></li>
+<li><p>define its own <cite>Meta</cite> class which should:
+- specify plugin content model
+- extend <cite>fields</cite> with plugin-specific ones</p></li>
+</ul>
+</dd>
+</dl>
+<p>Allows you to filter the content app by repository version.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Fields</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>repository_version</strong> – Return Content which is contained within this repository version.</p></li>
+<li><p><strong>repository_version_added</strong> – Return Content which was added in this repository version.</p></li>
+<li><p><strong>repository_version_removed</strong> – Return Content which was removed from this repository version.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pulpcore.plugin.viewsets.ContentGuardFilter">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pulpcore.plugin.viewsets.</span></span><span class="sig-name descname"><span class="pre">ContentGuardFilter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">queryset</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">request</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prefix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pulpcore.plugin.viewsets.ContentGuardFilter" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pulpcore.plugin.viewsets.ContentGuardViewSet">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pulpcore.plugin.viewsets.</span></span><span class="sig-name descname"><span class="pre">ContentGuardViewSet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pulpcore.plugin.viewsets.ContentGuardViewSet" title="Permalink to this definition">¶</a></dt>
+<dd><p>A viewset for contentguards.</p>
+<p>Constructor. Called in the URLconf; can contain helpful extra
+keyword arguments, and other things.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pulpcore.plugin.viewsets.ContentViewSet">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pulpcore.plugin.viewsets.</span></span><span class="sig-name descname"><span class="pre">ContentViewSet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pulpcore.plugin.viewsets.ContentViewSet" title="Permalink to this definition">¶</a></dt>
+<dd><p>Content viewset that supports POST and GET by default.</p>
+<p>Constructor. Called in the URLconf; can contain helpful extra
+keyword arguments, and other things.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pulpcore.plugin.viewsets.DistributionFilter">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pulpcore.plugin.viewsets.</span></span><span class="sig-name descname"><span class="pre">DistributionFilter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">queryset</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">request</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prefix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pulpcore.plugin.viewsets.DistributionFilter" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pulpcore.plugin.viewsets.DistributionViewSet">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pulpcore.plugin.viewsets.</span></span><span class="sig-name descname"><span class="pre">DistributionViewSet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pulpcore.plugin.viewsets.DistributionViewSet" title="Permalink to this definition">¶</a></dt>
+<dd><p>Provides read and list methods and also provides asynchronous CUD methods to dispatch tasks
+with reservation that lock all Distributions preventing race conditions during base_path
+checking.</p>
+<p>Constructor. Called in the URLconf; can contain helpful extra
+keyword arguments, and other things.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pulpcore.plugin.viewsets.ExportViewSet">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pulpcore.plugin.viewsets.</span></span><span class="sig-name descname"><span class="pre">ExportViewSet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pulpcore.plugin.viewsets.ExportViewSet" title="Permalink to this definition">¶</a></dt>
+<dd><p>ViewSet for viewing exports from an Exporter.</p>
+<p>Constructor. Called in the URLconf; can contain helpful extra
+keyword arguments, and other things.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pulpcore.plugin.viewsets.ExportViewSet.parent_viewset">
+<span class="sig-name descname"><span class="pre">parent_viewset</span></span><a class="headerlink" href="#pulpcore.plugin.viewsets.ExportViewSet.parent_viewset" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <a class="reference internal" href="#pulpcore.plugin.viewsets.ExporterViewSet" title="pulpcore.app.viewsets.exporter.ExporterViewSet"><code class="xref py py-class docutils literal notranslate"><span class="pre">ExporterViewSet</span></code></a></p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pulpcore.plugin.viewsets.ExportViewSet.serializer_class">
+<span class="sig-name descname"><span class="pre">serializer_class</span></span><a class="headerlink" href="#pulpcore.plugin.viewsets.ExportViewSet.serializer_class" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <a class="reference internal" href="serializers.html#pulpcore.plugin.serializers.ExportSerializer" title="pulpcore.app.serializers.exporter.ExportSerializer"><code class="xref py py-class docutils literal notranslate"><span class="pre">ExportSerializer</span></code></a></p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pulpcore.plugin.viewsets.ExporterViewSet">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pulpcore.plugin.viewsets.</span></span><span class="sig-name descname"><span class="pre">ExporterViewSet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pulpcore.plugin.viewsets.ExporterViewSet" title="Permalink to this definition">¶</a></dt>
+<dd><p>ViewSet for viewing exporters.</p>
+<p>Constructor. Called in the URLconf; can contain helpful extra
+keyword arguments, and other things.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pulpcore.plugin.viewsets.ExporterViewSet.serializer_class">
+<span class="sig-name descname"><span class="pre">serializer_class</span></span><a class="headerlink" href="#pulpcore.plugin.viewsets.ExporterViewSet.serializer_class" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <a class="reference internal" href="serializers.html#pulpcore.plugin.serializers.ExporterSerializer" title="pulpcore.app.serializers.exporter.ExporterSerializer"><code class="xref py py-class docutils literal notranslate"><span class="pre">ExporterSerializer</span></code></a></p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pulpcore.plugin.viewsets.HyperlinkRelatedFilter">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pulpcore.plugin.viewsets.</span></span><span class="sig-name descname"><span class="pre">HyperlinkRelatedFilter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pulpcore.plugin.viewsets.HyperlinkRelatedFilter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Enables a user to filter by a foreign key using that FK’s href.</p>
+<p>Foreign key filter can be specified to an object type by specifying the base URI of that type.
+e.g. Filter by file remotes: ?remote=/pulp/api/v3/remotes/file/file/</p>
+<p>Can also filter for foreign key to be unset by setting <code class="docutils literal notranslate"><span class="pre">allow_null</span></code> to True. Query parameter
+will then accept “null” or “” for filtering.
+e.g. Filter for no remote: ?remote=”null”</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="pulpcore.plugin.viewsets.HyperlinkRelatedFilter.filter">
+<span class="sig-name descname"><span class="pre">filter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">qs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pulpcore.plugin.viewsets.HyperlinkRelatedFilter.filter" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>qs</strong> (<em>django.db.models.query.QuerySet</em>) – The Queryset to filter</p></li>
+<li><p><strong>value</strong> (<em>string</em><em> or </em><em>list</em><em> of </em><em>strings</em>) – href containing pk for the foreign key instance</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Queryset filtered by the foreign key pk</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>django.db.models.query.QuerySet</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pulpcore.plugin.viewsets.ImmutableRepositoryViewSet">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pulpcore.plugin.viewsets.</span></span><span class="sig-name descname"><span class="pre">ImmutableRepositoryViewSet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pulpcore.plugin.viewsets.ImmutableRepositoryViewSet" title="Permalink to this definition">¶</a></dt>
+<dd><p>An immutable repository ViewSet that does not allow the usage of the methods PATCH and PUT.</p>
+<p>Constructor. Called in the URLconf; can contain helpful extra
+keyword arguments, and other things.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pulpcore.plugin.viewsets.ImportViewSet">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pulpcore.plugin.viewsets.</span></span><span class="sig-name descname"><span class="pre">ImportViewSet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pulpcore.plugin.viewsets.ImportViewSet" title="Permalink to this definition">¶</a></dt>
+<dd><p>ViewSet for viewing imports from an Importer.</p>
+<p>Constructor. Called in the URLconf; can contain helpful extra
+keyword arguments, and other things.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pulpcore.plugin.viewsets.ImportViewSet.parent_viewset">
+<span class="sig-name descname"><span class="pre">parent_viewset</span></span><a class="headerlink" href="#pulpcore.plugin.viewsets.ImportViewSet.parent_viewset" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <a class="reference internal" href="#pulpcore.plugin.viewsets.ImporterViewSet" title="pulpcore.app.viewsets.importer.ImporterViewSet"><code class="xref py py-class docutils literal notranslate"><span class="pre">ImporterViewSet</span></code></a></p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pulpcore.plugin.viewsets.ImportViewSet.serializer_class">
+<span class="sig-name descname"><span class="pre">serializer_class</span></span><a class="headerlink" href="#pulpcore.plugin.viewsets.ImportViewSet.serializer_class" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <a class="reference internal" href="serializers.html#pulpcore.plugin.serializers.ImportSerializer" title="pulpcore.app.serializers.importer.ImportSerializer"><code class="xref py py-class docutils literal notranslate"><span class="pre">ImportSerializer</span></code></a></p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pulpcore.plugin.viewsets.ImporterViewSet">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pulpcore.plugin.viewsets.</span></span><span class="sig-name descname"><span class="pre">ImporterViewSet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pulpcore.plugin.viewsets.ImporterViewSet" title="Permalink to this definition">¶</a></dt>
+<dd><p>ViewSet for Importers.</p>
+<p>Constructor. Called in the URLconf; can contain helpful extra
+keyword arguments, and other things.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pulpcore.plugin.viewsets.ImporterViewSet.serializer_class">
+<span class="sig-name descname"><span class="pre">serializer_class</span></span><a class="headerlink" href="#pulpcore.plugin.viewsets.ImporterViewSet.serializer_class" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <a class="reference internal" href="serializers.html#pulpcore.plugin.serializers.ImporterSerializer" title="pulpcore.app.serializers.importer.ImporterSerializer"><code class="xref py py-class docutils literal notranslate"><span class="pre">ImporterSerializer</span></code></a></p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pulpcore.plugin.viewsets.LabelSelectFilter">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pulpcore.plugin.viewsets.</span></span><span class="sig-name descname"><span class="pre">LabelSelectFilter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pulpcore.plugin.viewsets.LabelSelectFilter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Filter to get resources that match a label filter string. DEPRECATED.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="pulpcore.plugin.viewsets.LabelSelectFilter.filter">
+<span class="sig-name descname"><span class="pre">filter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">qs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pulpcore.plugin.viewsets.LabelSelectFilter.filter" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>qs</strong> (<em>django.db.models.query.QuerySet</em>) – The Model queryset</p></li>
+<li><p><strong>value</strong> (<em>string</em>) – label search query</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Queryset of the Models filtered by label(s)</p>
+</dd>
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><p><strong>rest_framework.exceptions.ValidationError</strong> – on invalid search string</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pulpcore.plugin.viewsets.NamedModelViewSet">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pulpcore.plugin.viewsets.</span></span><span class="sig-name descname"><span class="pre">NamedModelViewSet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pulpcore.plugin.viewsets.NamedModelViewSet" title="Permalink to this definition">¶</a></dt>
+<dd><p>A customized named ModelViewSet that knows how to register itself with the Pulp API router.</p>
+<p>This viewset is discoverable by its name.
+“Normal” Django Models and Master/Detail models are supported by the <code class="docutils literal notranslate"><span class="pre">register_with</span></code> method.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Variables</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>lookup_field</strong> (<em>str</em>) – The name of the field by which an object should be looked up, in
+addition to any parent lookups if this ViewSet is nested. Defaults to ‘pk’</p></li>
+<li><p><strong>endpoint_name</strong> (<em>str</em>) – The name of the final path segment that should identify the ViewSet’s
+collection endpoint.</p></li>
+<li><p><strong>nest_prefix</strong> (<em>str</em>) – Optional prefix under which this ViewSet should be nested. This must
+correspond to the “parent_prefix” of a router with rest_framework_nested.NestedMixin.
+None indicates this ViewSet should not be nested.</p></li>
+<li><p><strong>parent_lookup_kwargs</strong> (<em>dict</em>) – Optional mapping of key names that would appear in self.kwargs
+to django model filter expressions that can be used with the corresponding value from
+self.kwargs, used only by a nested ViewSet to filter based on the parent object’s
+identity.</p></li>
+<li><p><strong>schema</strong> (<em>DefaultSchema</em>) – The schema class to use by default in a viewset.</p></li>
+</ul>
+</dd>
+</dl>
+<p>Constructor. Called in the URLconf; can contain helpful extra
+keyword arguments, and other things.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="pulpcore.plugin.viewsets.NamedModelViewSet.extract_pk">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">extract_pk</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">uri</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pulpcore.plugin.viewsets.NamedModelViewSet.extract_pk" title="Permalink to this definition">¶</a></dt>
+<dd><p>Resolve a resource URI to a simple PK value.</p>
+<p>Provides a means to resolve an href passed in a POST body to a primary key.
+Doesn’t assume anything about whether the resource corresponding to the URI
+passed in actually exists.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Cannot be used with nested URIs where the PK of the final resource is not present.
+e.g. RepositoryVersion URI consists of repository PK and version number - no
+RepositoryVersion PK is present within the URI.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>uri</strong> (<em>str</em>) – A resource URI.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>The primary key of the resource extracted from the URI.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>primary_key (uuid.uuid4)</p>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>rest_framework.exceptions.ValidationError</strong> – on invalid URI.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pulpcore.plugin.viewsets.NamedModelViewSet.get_parent_field_and_object">
+<span class="sig-name descname"><span class="pre">get_parent_field_and_object</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pulpcore.plugin.viewsets.NamedModelViewSet.get_parent_field_and_object" title="Permalink to this definition">¶</a></dt>
+<dd><p>For nested ViewSets, retrieve the nested parent implied by the url.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>(parent field name, parent)</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>tuple</p>
+</dd>
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><p><strong>django.http.Http404</strong> – When the parent implied by the url does not exist. Synchronous
+    use should allow this to bubble up and return a 404.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pulpcore.plugin.viewsets.NamedModelViewSet.get_parent_object">
+<span class="sig-name descname"><span class="pre">get_parent_object</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pulpcore.plugin.viewsets.NamedModelViewSet.get_parent_object" title="Permalink to this definition">¶</a></dt>
+<dd><p>For nested ViewSets, retrieve the nested parent implied by the url.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>parent model object</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>pulpcore.app.models.Model</p>
+</dd>
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><p><strong>django.http.Http404</strong> – When the parent implied by the url does not exist. Synchronous
+    use should allow this to bubble up and return a 404.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pulpcore.plugin.viewsets.NamedModelViewSet.get_queryset">
+<span class="sig-name descname"><span class="pre">get_queryset</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pulpcore.plugin.viewsets.NamedModelViewSet.get_queryset" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gets a QuerySet based on the current request.</p>
+<p>For nested ViewSets, this adds parent filters to the result returned by the superclass. For
+non-nested ViewSets, this returns the original QuerySet unchanged.</p>
+<p>Additional permissions-based filtering can be performed if enabled by the permission class
+and ViewSet. The default permission class AccessPolicyFromDB will see if a queryset_scoping
+method is defined and call that method to further scope the queryset on user permissions.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><dl class="simple">
+<dt>The queryset returned by the superclass with additional</dt><dd><p>filters applied that match self.parent_lookup_kwargs, to scope the results to only
+those associated with the parent object. Additional queryset filtering could be
+performed if queryset_scoping is enabled.</p>
+</dd>
+</dl>
+</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>django.db.models.query.QuerySet</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pulpcore.plugin.viewsets.NamedModelViewSet.get_resource">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_resource</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">uri</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pulpcore.plugin.viewsets.NamedModelViewSet.get_resource" title="Permalink to this definition">¶</a></dt>
+<dd><p>Resolve a resource URI to an instance of the resource.</p>
+<p>Provides a means to resolve an href passed in a POST body to an
+instance of the resource.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>uri</strong> (<em>str</em>) – A resource URI.</p></li>
+<li><p><strong>model</strong> (<em>django.models.Model</em>) – A model class. If not provided, the method automatically
+determines the used model from the resource URI.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>The resource fetched from the DB.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>django.models.Model</p>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>rest_framework.exceptions.ValidationError</strong> – on invalid URI or resource not found.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pulpcore.plugin.viewsets.NamedModelViewSet.get_resource_model">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_resource_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">uri</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pulpcore.plugin.viewsets.NamedModelViewSet.get_resource_model" title="Permalink to this definition">¶</a></dt>
+<dd><p>Resolve a resource URI to the model for the resource.</p>
+<p>Provides a means to resolve an href passed in a POST body to an
+model for the resource.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>uri</strong> (<em>str</em>) – A resource URI.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>The model for the specified URI.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>django.models.Model</p>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><strong>rest_framework.exceptions.ValidationError</strong> – on invalid URI.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pulpcore.plugin.viewsets.NamedModelViewSet.get_serializer_class">
+<span class="sig-name descname"><span class="pre">get_serializer_class</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pulpcore.plugin.viewsets.NamedModelViewSet.get_serializer_class" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fetch the serializer class to use for the request.</p>
+<p>The default behavior is to use the “serializer_class” attribute on the viewset.
+We override that for the case where a “minimal_serializer_class” attribute is defined
+and where the request contains a query parameter of “minimal=True”.</p>
+<p>The intention is that ViewSets can define a second, more minimal serializer with only
+the most important fields.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pulpcore.plugin.viewsets.NamedModelViewSet.initial">
+<span class="sig-name descname"><span class="pre">initial</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pulpcore.plugin.viewsets.NamedModelViewSet.initial" title="Permalink to this definition">¶</a></dt>
+<dd><p>Runs anything that needs to occur prior to calling the method handler.</p>
+<p>For nested ViewSets, it checks that the parent object exists, otherwise return 404.
+For non-nested Viewsets, this does nothing.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pulpcore.plugin.viewsets.NamedModelViewSet.scope_queryset">
+<span class="sig-name descname"><span class="pre">scope_queryset</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">qs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pulpcore.plugin.viewsets.NamedModelViewSet.scope_queryset" title="Permalink to this definition">¶</a></dt>
+<dd><p>A default queryset scoping method implementation for all NamedModelViewSets.</p>
+<p>If the ViewSet is not a Master ViewSet, then it’ll perform scoping based on the ViewSet’s
+<cite>queryset_filtering_required_permission</cite> attribute if present.
+Else it will call each child’s view <cite>get_queryset()</cite> method to determine what objects the
+user can see.</p>
+<p>This method is intended to be overriden by subclasses if different behavior is desired.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pulpcore.plugin.viewsets.NoArtifactContentUploadViewSet">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pulpcore.plugin.viewsets.</span></span><span class="sig-name descname"><span class="pre">NoArtifactContentUploadViewSet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pulpcore.plugin.viewsets.NoArtifactContentUploadViewSet" title="Permalink to this definition">¶</a></dt>
+<dd><p>A ViewSet for uploads that do not require to store an uploaded content as an Artifact.</p>
+<p>Constructor. Called in the URLconf; can contain helpful extra
+keyword arguments, and other things.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="pulpcore.plugin.viewsets.NoArtifactContentUploadViewSet.create">
+<span class="sig-name descname"><span class="pre">create</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pulpcore.plugin.viewsets.NoArtifactContentUploadViewSet.create" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a content unit.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pulpcore.plugin.viewsets.OperationPostponedResponse">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pulpcore.plugin.viewsets.</span></span><span class="sig-name descname"><span class="pre">OperationPostponedResponse</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">task</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">request</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pulpcore.plugin.viewsets.OperationPostponedResponse" title="Permalink to this definition">¶</a></dt>
+<dd><p>An HTTP response class for returning 202 and a spawned task.</p>
+<p>This response object should be used by views that dispatch asynchronous tasks. The most common
+use case is for sync and publish operations. When JSON is requested, the response will look
+like the following:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+    <span class="s2">&quot;task&quot;</span><span class="p">:</span> <span class="s2">&quot;/pulp/api/v3/tasks/735633bc-eb41-4737-b436-c7c6914f34b1/&quot;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>task</strong> (<em>pulpcore.plugin.models.Task</em>) – A <code class="xref py py-class docutils literal notranslate"><span class="pre">Task</span></code> object
+used to generate the response.</p></li>
+<li><p><strong>request</strong> (<em>rest_framework.request.Request</em>) – Request used to generate the pulp_href urls</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pulpcore.plugin.viewsets.PublicationFilter">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pulpcore.plugin.viewsets.</span></span><span class="sig-name descname"><span class="pre">PublicationFilter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">queryset</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">request</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prefix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pulpcore.plugin.viewsets.PublicationFilter" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pulpcore.plugin.viewsets.PublicationViewSet">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pulpcore.plugin.viewsets.</span></span><span class="sig-name descname"><span class="pre">PublicationViewSet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pulpcore.plugin.viewsets.PublicationViewSet" title="Permalink to this definition">¶</a></dt>
+<dd><p>Constructor. Called in the URLconf; can contain helpful extra
+keyword arguments, and other things.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pulpcore.plugin.viewsets.PublicationViewSet.filterset_class">
+<span class="sig-name descname"><span class="pre">filterset_class</span></span><a class="headerlink" href="#pulpcore.plugin.viewsets.PublicationViewSet.filterset_class" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <a class="reference internal" href="#pulpcore.plugin.viewsets.PublicationFilter" title="pulpcore.app.viewsets.publication.PublicationFilter"><code class="xref py py-class docutils literal notranslate"><span class="pre">PublicationFilter</span></code></a></p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pulpcore.plugin.viewsets.PublicationViewSet.serializer_class">
+<span class="sig-name descname"><span class="pre">serializer_class</span></span><a class="headerlink" href="#pulpcore.plugin.viewsets.PublicationViewSet.serializer_class" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <a class="reference internal" href="serializers.html#pulpcore.plugin.serializers.PublicationSerializer" title="pulpcore.app.serializers.publication.PublicationSerializer"><code class="xref py py-class docutils literal notranslate"><span class="pre">PublicationSerializer</span></code></a></p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pulpcore.plugin.viewsets.ReadOnlyContentViewSet">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pulpcore.plugin.viewsets.</span></span><span class="sig-name descname"><span class="pre">ReadOnlyContentViewSet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pulpcore.plugin.viewsets.ReadOnlyContentViewSet" title="Permalink to this definition">¶</a></dt>
+<dd><p>Content viewset that supports only GET by default.</p>
+<p>Constructor. Called in the URLconf; can contain helpful extra
+keyword arguments, and other things.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pulpcore.plugin.viewsets.ReadOnlyRepositoryViewSet">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pulpcore.plugin.viewsets.</span></span><span class="sig-name descname"><span class="pre">ReadOnlyRepositoryViewSet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pulpcore.plugin.viewsets.ReadOnlyRepositoryViewSet" title="Permalink to this definition">¶</a></dt>
+<dd><p>A readonly repository which allows only GET method.</p>
+<p>Constructor. Called in the URLconf; can contain helpful extra
+keyword arguments, and other things.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pulpcore.plugin.viewsets.ReadOnlyRepositoryViewSet.filterset_class">
+<span class="sig-name descname"><span class="pre">filterset_class</span></span><a class="headerlink" href="#pulpcore.plugin.viewsets.ReadOnlyRepositoryViewSet.filterset_class" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">RepositoryFilter</span></code></p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pulpcore.plugin.viewsets.ReadOnlyRepositoryViewSet.serializer_class">
+<span class="sig-name descname"><span class="pre">serializer_class</span></span><a class="headerlink" href="#pulpcore.plugin.viewsets.ReadOnlyRepositoryViewSet.serializer_class" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <a class="reference internal" href="serializers.html#pulpcore.plugin.serializers.RepositorySerializer" title="pulpcore.app.serializers.repository.RepositorySerializer"><code class="xref py py-class docutils literal notranslate"><span class="pre">RepositorySerializer</span></code></a></p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pulpcore.plugin.viewsets.RemoteFilter">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pulpcore.plugin.viewsets.</span></span><span class="sig-name descname"><span class="pre">RemoteFilter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">queryset</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">request</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prefix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pulpcore.plugin.viewsets.RemoteFilter" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="simple">
+<dt>Plugin remote filter should:</dt><dd><ul class="simple">
+<li><p>inherit from this class</p></li>
+<li><p>add any specific filters if needed</p></li>
+<li><p>define a <cite>Meta</cite> class which should:
+- specify a plugin remote model for which filter is defined
+- extend <cite>fields</cite> with specific ones</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pulpcore.plugin.viewsets.RemoteViewSet">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pulpcore.plugin.viewsets.</span></span><span class="sig-name descname"><span class="pre">RemoteViewSet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pulpcore.plugin.viewsets.RemoteViewSet" title="Permalink to this definition">¶</a></dt>
+<dd><p>Constructor. Called in the URLconf; can contain helpful extra
+keyword arguments, and other things.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pulpcore.plugin.viewsets.RemoteViewSet.filterset_class">
+<span class="sig-name descname"><span class="pre">filterset_class</span></span><a class="headerlink" href="#pulpcore.plugin.viewsets.RemoteViewSet.filterset_class" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <a class="reference internal" href="#pulpcore.plugin.viewsets.RemoteFilter" title="pulpcore.app.viewsets.repository.RemoteFilter"><code class="xref py py-class docutils literal notranslate"><span class="pre">RemoteFilter</span></code></a></p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pulpcore.plugin.viewsets.RemoteViewSet.serializer_class">
+<span class="sig-name descname"><span class="pre">serializer_class</span></span><a class="headerlink" href="#pulpcore.plugin.viewsets.RemoteViewSet.serializer_class" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <a class="reference internal" href="serializers.html#pulpcore.plugin.serializers.RemoteSerializer" title="pulpcore.app.serializers.repository.RemoteSerializer"><code class="xref py py-class docutils literal notranslate"><span class="pre">RemoteSerializer</span></code></a></p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pulpcore.plugin.viewsets.RepositoryVersionFilter">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pulpcore.plugin.viewsets.</span></span><span class="sig-name descname"><span class="pre">RepositoryVersionFilter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pulpcore.plugin.viewsets.RepositoryVersionFilter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Filter by RepositoryVersion href.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="pulpcore.plugin.viewsets.RepositoryVersionFilter.filter">
+<span class="sig-name descname"><span class="pre">filter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">qs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pulpcore.plugin.viewsets.RepositoryVersionFilter.filter" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>qs</strong> (<em>django.db.models.query.QuerySet</em>) – The Queryset to filter</p></li>
+<li><p><strong>value</strong> (<em>string</em>) – The RepositoryVersion href to filter by</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Queryset filtered by given repository version on field_name</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pulpcore.plugin.viewsets.RepositoryVersionViewSet">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pulpcore.plugin.viewsets.</span></span><span class="sig-name descname"><span class="pre">RepositoryVersionViewSet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pulpcore.plugin.viewsets.RepositoryVersionViewSet" title="Permalink to this definition">¶</a></dt>
+<dd><p>Constructor. Called in the URLconf; can contain helpful extra
+keyword arguments, and other things.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pulpcore.plugin.viewsets.RepositoryVersionViewSet.filterset_class">
+<span class="sig-name descname"><span class="pre">filterset_class</span></span><a class="headerlink" href="#pulpcore.plugin.viewsets.RepositoryVersionViewSet.filterset_class" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">RepositoryVersionFilter</span></code></p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pulpcore.plugin.viewsets.RepositoryVersionViewSet.parent_viewset">
+<span class="sig-name descname"><span class="pre">parent_viewset</span></span><a class="headerlink" href="#pulpcore.plugin.viewsets.RepositoryVersionViewSet.parent_viewset" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <a class="reference internal" href="#pulpcore.plugin.viewsets.RepositoryViewSet" title="pulpcore.app.viewsets.repository.RepositoryViewSet"><code class="xref py py-class docutils literal notranslate"><span class="pre">RepositoryViewSet</span></code></a></p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pulpcore.plugin.viewsets.RepositoryVersionViewSet.serializer_class">
+<span class="sig-name descname"><span class="pre">serializer_class</span></span><a class="headerlink" href="#pulpcore.plugin.viewsets.RepositoryVersionViewSet.serializer_class" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">RepositoryVersionSerializer</span></code></p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pulpcore.plugin.viewsets.RepositoryVersionViewSet.destroy">
+<span class="sig-name descname"><span class="pre">destroy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">repository_pk</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">number</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pulpcore.plugin.viewsets.RepositoryVersionViewSet.destroy" title="Permalink to this definition">¶</a></dt>
+<dd><p>Queues a task to handle deletion of a RepositoryVersion</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pulpcore.plugin.viewsets.RepositoryVersionViewSet.repair">
+<span class="sig-name descname"><span class="pre">repair</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">repository_pk</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">number</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pulpcore.plugin.viewsets.RepositoryVersionViewSet.repair" title="Permalink to this definition">¶</a></dt>
+<dd><p>Queues a task to repair corrupted artifacts corresponding to a RepositoryVersion</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pulpcore.plugin.viewsets.RepositoryViewSet">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pulpcore.plugin.viewsets.</span></span><span class="sig-name descname"><span class="pre">RepositoryViewSet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pulpcore.plugin.viewsets.RepositoryViewSet" title="Permalink to this definition">¶</a></dt>
+<dd><p>A ViewSet for an ordinary repository.</p>
+<p>Constructor. Called in the URLconf; can contain helpful extra
+keyword arguments, and other things.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pulpcore.plugin.viewsets.SingleArtifactContentUploadViewSet">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pulpcore.plugin.viewsets.</span></span><span class="sig-name descname"><span class="pre">SingleArtifactContentUploadViewSet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pulpcore.plugin.viewsets.SingleArtifactContentUploadViewSet" title="Permalink to this definition">¶</a></dt>
+<dd><p>A ViewSet which can be used to store an uploaded content as an Artifact.</p>
+<p>Constructor. Called in the URLconf; can contain helpful extra
+keyword arguments, and other things.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="pulpcore.plugin.viewsets.SingleArtifactContentUploadViewSet.create">
+<span class="sig-name descname"><span class="pre">create</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pulpcore.plugin.viewsets.SingleArtifactContentUploadViewSet.create" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a content unit.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pulpcore.plugin.viewsets.SingleArtifactContentUploadViewSet.init_content_data">
+<span class="sig-name descname"><span class="pre">init_content_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">serializer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">request</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pulpcore.plugin.viewsets.SingleArtifactContentUploadViewSet.init_content_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize the reference to an Artifact along with relevant task’s payload data.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pulpcore.plugin.viewsets.TaskGroupOperationResponse">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pulpcore.plugin.viewsets.</span></span><span class="sig-name descname"><span class="pre">TaskGroupOperationResponse</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">task_group</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">request</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pulpcore.plugin.viewsets.TaskGroupOperationResponse" title="Permalink to this definition">¶</a></dt>
+<dd><p>An HTTP response class for returning 202 and a task group.</p>
+<p>This response object should be used by views that create a task group and dispatch one or more
+tasks for that group. When JSON is requested, the response will look like the following:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+    <span class="s2">&quot;task_group&quot;</span><span class="p">:</span> <span class="s2">&quot;/pulp/api/v3/task-groups/735633bc-eb41-4737-b436-c7c6914f34b1/&quot;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>task_group</strong> (<em>pulpcore.plugin.models.TaskGroup</em>) – A
+<code class="xref py py-class docutils literal notranslate"><span class="pre">TaskGroup</span></code> object used to generate the response.</p></li>
+<li><p><strong>request</strong> (<em>rest_framework.request.Request</em>) – Request used to generate the pulp_href urls</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pulpcore.plugin.viewsets.TaskGroupViewSet">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pulpcore.plugin.viewsets.</span></span><span class="sig-name descname"><span class="pre">TaskGroupViewSet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pulpcore.plugin.viewsets.TaskGroupViewSet" title="Permalink to this definition">¶</a></dt>
+<dd><p>Constructor. Called in the URLconf; can contain helpful extra
+keyword arguments, and other things.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pulpcore.plugin.viewsets.TaskGroupViewSet.serializer_class">
+<span class="sig-name descname"><span class="pre">serializer_class</span></span><a class="headerlink" href="#pulpcore.plugin.viewsets.TaskGroupViewSet.serializer_class" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">TaskGroupSerializer</span></code></p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="pulpcore.plugin.viewsets.TaskViewSet">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pulpcore.plugin.viewsets.</span></span><span class="sig-name descname"><span class="pre">TaskViewSet</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pulpcore.plugin.viewsets.TaskViewSet" title="Permalink to this definition">¶</a></dt>
+<dd><p>Constructor. Called in the URLconf; can contain helpful extra
+keyword arguments, and other things.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pulpcore.plugin.viewsets.TaskViewSet.filterset_class">
+<span class="sig-name descname"><span class="pre">filterset_class</span></span><a class="headerlink" href="#pulpcore.plugin.viewsets.TaskViewSet.filterset_class" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">TaskFilter</span></code></p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pulpcore.plugin.viewsets.TaskViewSet.minimal_serializer_class">
+<span class="sig-name descname"><span class="pre">minimal_serializer_class</span></span><a class="headerlink" href="#pulpcore.plugin.viewsets.TaskViewSet.minimal_serializer_class" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">MinimalTaskSerializer</span></code></p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="pulpcore.plugin.viewsets.TaskViewSet.serializer_class">
+<span class="sig-name descname"><span class="pre">serializer_class</span></span><a class="headerlink" href="#pulpcore.plugin.viewsets.TaskViewSet.serializer_class" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <a class="reference internal" href="serializers.html#pulpcore.plugin.serializers.TaskSerializer" title="pulpcore.app.serializers.task.TaskSerializer"><code class="xref py py-class docutils literal notranslate"><span class="pre">TaskSerializer</span></code></a></p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pulpcore.plugin.viewsets.TaskViewSet.get_serializer_class">
+<span class="sig-name descname"><span class="pre">get_serializer_class</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#pulpcore.plugin.viewsets.TaskViewSet.get_serializer_class" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fetch the serializer class to use for the request.</p>
+<p>The default behavior is to use the “serializer_class” attribute on the viewset.
+We override that for the case where a “minimal_serializer_class” attribute is defined
+and where the request contains a query parameter of “minimal=True”.</p>
+<p>The intention is that ViewSets can define a second, more minimal serializer with only
+the most important fields.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="pulpcore.plugin.viewsets.TaskViewSet.purge">
+<span class="sig-name descname"><span class="pre">purge</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pulpcore.plugin.viewsets.TaskViewSet.purge" title="Permalink to this definition">¶</a></dt>
+<dd><p>Purge task-records for tasks in ‘final’ states.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="storage.html" class="btn btn-neutral float-left" title="pulpcore.plugin.storage" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="tasking.html" class="btn btn-neutral float-right" title="pulpcore.plugin.tasking" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2012-2023, Pulp Team.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+ 
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-74748547-2', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+
+<script>
+$( document ).ready( function() {
+
+  // gets version number minus whitespace and bugfix version
+  var $version_number = $('.version').text().trim().split('.', 2).join('.')
+
+  // div mirroring the admonition-warning generated by sphinx if added to .rst
+  var warning = '\
+          <div class="admonition warning"> \
+              <p class="first admonition-title">Warning</p> \
+              <p class="last">You are looking at the docs for an unsupported version of Pulp. \
+               Consider switching to a  \
+               <a href="https://pulpproject.org/docs/">supported version</a></p> \
+          </div>'
+
+  
+  // get JSON from server and load supported_versions
+  $.getJSON("https://raw.githubusercontent.com/pulp/pulp-ci/master/ci/config/releases/supported-releases.json" , function(data) {
+    if ($.inArray($version_number, data) === -1) {
+      $('.rst-content').prepend(warning)
+      }
+    })
+  })
+  </script>
+
+
+</body>
+</html>

@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Content Protection &mdash; Pulp Project 3.23.0.dev documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/sphinx_highlight.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Metadata Signing" href="metadata-signing.html" />
+    <link rel="prev" title="Releasing Your Plugin" href="releasing.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../index.html" class="icon icon-home"> Pulp Project
+          </a>
+              <div class="version">
+                3.23.0.dev
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../concepts.html">Concepts and Terminology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../from-pulp-2.html">Changes From Pulp 2</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../components.html">Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../installation/index.html">Installation Options</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../configuration/index.html">Configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../authentication/index.html">Authentication</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../workflows/index.html">Workflows and Use Cases</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../plugins.html">Plugins</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">Plugin Development</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../index.html#plugin-writer-s-guide">Plugin Writer’s Guide</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../index.html#plugin-writer-s-reference">Plugin Writer’s Reference</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="index.html">Plugin Writing Reference Material</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="object-relationships.html">Object Relationships</a></li>
+<li class="toctree-l4"><a class="reference internal" href="how-plugins-work.html">How Plugins Work</a></li>
+<li class="toctree-l4"><a class="reference internal" href="error-handling.html">Error Handling</a></li>
+<li class="toctree-l4"><a class="reference internal" href="how-to-doc-api.html">Documenting your API</a></li>
+<li class="toctree-l4"><a class="reference internal" href="how-to-doc-api.html#openapi-tags">OpenAPI Tags</a></li>
+<li class="toctree-l4"><a class="reference internal" href="on-demand-support.html">On-Demand Support</a></li>
+<li class="toctree-l4"><a class="reference internal" href="releasing.html">Releasing Your Plugin</a></li>
+<li class="toctree-l4 current"><a class="current reference internal" href="#">Content Protection</a></li>
+<li class="toctree-l4"><a class="reference internal" href="metadata-signing.html">Metadata Signing</a></li>
+<li class="toctree-l4"><a class="reference internal" href="task-scheduling.html">Task Scheduling</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../index.html#plugin-api-reference">Plugin API Reference</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../rest_api.html">REST API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../client_bindings.html">Client Bindings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../contributing/index.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../bugs-features.html">Bugs, Feature and Backport Requests</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../troubleshooting.html">Troubleshooting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../glossary.html">Glossary</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../changes.html">Changelog</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../versioning.html">Versioning</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../release_process.html">Pulpcore Release Process</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Pulp Project</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Plugin Development</a></li>
+          <li class="breadcrumb-item"><a href="index.html">Plugin Writing Reference Material</a></li>
+      <li class="breadcrumb-item active">Content Protection</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/plugin_dev/reference/content-protection.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="content-protection">
+<span id="id1"></span><h1>Content Protection<a class="headerlink" href="#content-protection" title="Permalink to this heading">¶</a></h1>
+<p>By default, the Content app will serve all content, but some deployments want to only serve content
+to some users and not others. For example pulp_rpm only wants to give rpms to users who have valid
+certificates declaring their paid access to content. To allow total customization of how content is
+protected, A plugin writer can define a <code class="docutils literal notranslate"><span class="pre">ContentGuard</span></code>.</p>
+<section id="defining-a-contentguard">
+<h2>Defining a ContentGuard<a class="headerlink" href="#defining-a-contentguard" title="Permalink to this heading">¶</a></h2>
+<p>The <code class="docutils literal notranslate"><span class="pre">ContentGuard</span></code> is a Master/Detail object provided at
+<code class="docutils literal notranslate"><span class="pre">from</span> <span class="pre">pulpcore.plugin.models</span> <span class="pre">import</span> <span class="pre">ContentGuard</span></code>, which provides <a class="reference external" href="https://github.com/pulp/pulpcore/blob/master/pulpcore/app/models/publication.py#L192-L202">these base fields</a>.</p>
+<p>In your plugin code, subclass <code class="docutils literal notranslate"><span class="pre">ContentGuard</span></code> and optionally add additional fields as necessary to
+perform the authentication and authorization. Then overwrite the <code class="docutils literal notranslate"><span class="pre">permit</span></code> method so that it
+returns <code class="docutils literal notranslate"><span class="pre">None</span></code> if access is granted and throws a <code class="docutils literal notranslate"><span class="pre">PermissionError</span></code> on denial. As with all
+Master/Detail objects a <code class="docutils literal notranslate"><span class="pre">TYPE</span></code> class attribute is needed which is then used in the URL. For
+<code class="docutils literal notranslate"><span class="pre">ContentGuard</span></code> detail objects the URL structure is:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>``/pulp/api/v3/contentguards/&lt;plugin_name&gt;/&lt;TYPE&gt;/``
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The <a class="reference external" href="https://docs.pulpproject.org/pulp_certguard/">pulp-certguard</a> plugin ships various
+<code class="docutils literal notranslate"><span class="pre">ContentGuard</span></code> types for users and plugin writers to use together. Plugins can ship their own
+content guards too, but look at the existing ones first.</p>
+</div>
+</section>
+<section id="simple-example">
+<h2>Simple Example<a class="headerlink" href="#simple-example" title="Permalink to this heading">¶</a></h2>
+<p>Here’s a trivial example where the client needs to send a header named SECRET_STRING and if its
+value matches a recorded value for that ContentGuard instance, give the content to the user. The
+secret both authenticates the user and authorizes them for this Content.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">django.db</span> <span class="kn">import</span> <span class="n">models</span>
+<span class="kn">from</span> <span class="nn">pulpcore.plugin.models</span> <span class="kn">import</span> <span class="n">ContentGuard</span>
+
+<span class="k">class</span> <span class="nc">SecretStringContentGuard</span><span class="p">(</span><span class="n">ContentGuard</span><span class="p">):</span>
+
+    <span class="n">TYPE</span> <span class="o">=</span> <span class="s1">&#39;secret_string&#39;</span>
+
+    <span class="n">secret_string</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">FileField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">255</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">permit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">        Authorize the specified web request.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            request (aiohttp.web.Request): A request for a published file.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            PermissionError: When the request cannot be authorized.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">ca</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ca_certificate</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+        <span class="n">validator</span> <span class="o">=</span> <span class="n">Validator</span><span class="p">(</span><span class="n">ca</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;utf8&#39;</span><span class="p">))</span>
+        <span class="n">validator</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
+
+    <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
+        <span class="n">default_related_name</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">%(app_label)s</span><span class="s2">_</span><span class="si">%(model_name)s</span><span class="s2">&quot;</span>
+</pre></div>
+</div>
+<section id="end-user-use-of-contentguard">
+<h3>End-User use of ContentGuard<a class="headerlink" href="#end-user-use-of-contentguard" title="Permalink to this heading">¶</a></h3>
+<p>Users create an instance of a <code class="docutils literal notranslate"><span class="pre">SecretStringContentGuard</span></code> and give it a secret string with
+<code class="docutils literal notranslate"><span class="pre">httpie</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">http</span> <span class="n">POST</span> <span class="n">http</span><span class="p">:</span><span class="o">//</span><span class="n">localhost</span><span class="p">:</span><span class="mi">24817</span><span class="o">/</span><span class="n">pulp</span><span class="o">/</span><span class="n">api</span><span class="o">/</span><span class="n">v3</span><span class="o">/</span><span class="n">contentguards</span><span class="o">/&lt;</span><span class="n">plugin_name</span><span class="o">&gt;/</span><span class="n">secret_string</span><span class="o">/</span> \
+              <span class="n">secret_string</span><span class="o">=</span><span class="s1">&#39;2xlSFgJwOhbLrtIlmYszqHQy7ivzdQo9&#39;</span>
+</pre></div>
+</div>
+<p>Then the user can protect one or more Distributions by specifying <code class="docutils literal notranslate"><span class="pre">content_guard</span></code>. See the
+<a class="reference external" href="https://docs.pulpproject.org/restapi.html#operation/distributions_file_file_create">ContentGuard creation API</a> for more information.</p>
+</section>
+<section id="plugin-writer-use-of-contentguard">
+<span id="plugin-writers-use-content-protection"></span><h3>Plugin Writer use of ContentGuard<a class="headerlink" href="#plugin-writer-use-of-contentguard" title="Permalink to this heading">¶</a></h3>
+<p>Plugin writers can also programatically create detail <code class="docutils literal notranslate"><span class="pre">ContentGuard</span></code> instances and have the
+plugin’s detail Distribution they define force its use. This allows plugin writers to offer
+content protection features to users with fewer user required steps.</p>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="releasing.html" class="btn btn-neutral float-left" title="Releasing Your Plugin" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="metadata-signing.html" class="btn btn-neutral float-right" title="Metadata Signing" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2012-2023, Pulp Team.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+ 
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-74748547-2', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+
+<script>
+$( document ).ready( function() {
+
+  // gets version number minus whitespace and bugfix version
+  var $version_number = $('.version').text().trim().split('.', 2).join('.')
+
+  // div mirroring the admonition-warning generated by sphinx if added to .rst
+  var warning = '\
+          <div class="admonition warning"> \
+              <p class="first admonition-title">Warning</p> \
+              <p class="last">You are looking at the docs for an unsupported version of Pulp. \
+               Consider switching to a  \
+               <a href="https://pulpproject.org/docs/">supported version</a></p> \
+          </div>'
+
+  
+  // get JSON from server and load supported_versions
+  $.getJSON("https://raw.githubusercontent.com/pulp/pulp-ci/master/ci/config/releases/supported-releases.json" , function(data) {
+    if ($.inArray($version_number, data) === -1) {
+      $('.rst-content').prepend(warning)
+      }
+    })
+  })
+  </script>
+
+
+</body>
+</html>

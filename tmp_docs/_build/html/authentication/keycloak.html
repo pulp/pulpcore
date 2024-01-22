@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Keycloak &mdash; Pulp Project 3.23.0.dev documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script src="../_static/sphinx_highlight.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Other" href="other.html" />
+    <link rel="prev" title="Webserver" href="webserver.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../index.html" class="icon icon-home"> Pulp Project
+          </a>
+              <div class="version">
+                3.23.0.dev
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../concepts.html">Concepts and Terminology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../from-pulp-2.html">Changes From Pulp 2</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../components.html">Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../installation/index.html">Installation Options</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../configuration/index.html">Configuration</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Authentication</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="overview.html">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="basic.html">Basic</a></li>
+<li class="toctree-l2"><a class="reference internal" href="webserver.html">Webserver</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Keycloak</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#required-python-modules">Required Python Modules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#python-social-auth-and-django">Python Social Auth and Django</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#python-social-auth-and-keycloak">Python Social Auth and Keycloak</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="other.html">Other</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../workflows/index.html">Workflows and Use Cases</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../plugins.html">Plugins</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../plugin_dev/index.html">Plugin Development</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../rest_api.html">REST API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../client_bindings.html">Client Bindings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../contributing/index.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../bugs-features.html">Bugs, Feature and Backport Requests</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../troubleshooting.html">Troubleshooting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../glossary.html">Glossary</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../changes.html">Changelog</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../versioning.html">Versioning</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../release_process.html">Pulpcore Release Process</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Pulp Project</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">Authentication</a></li>
+      <li class="breadcrumb-item active">Keycloak</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/authentication/keycloak.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="keycloak">
+<span id="keycloak-authentication"></span><h1>Keycloak<a class="headerlink" href="#keycloak" title="Permalink to this heading">¶</a></h1>
+<p>Pulp can be configured to use authentication provided by a Keycloak server outside of Pulp.
+<a class="reference external" href="https://www.keycloak.org/">Keycloak</a> can provide Identity Brokering, User Federation, Single
+sign-on, and act as a OpenID Connect-based (OIDC) Identity Provider.</p>
+<section id="required-python-modules">
+<span id="keycloak-authentication-required-python-modules"></span><h2>Required Python Modules<a class="headerlink" href="#required-python-modules" title="Permalink to this heading">¶</a></h2>
+<p>The library that will be utilized for the integration between Keycloak and Pulp is
+<a class="reference external" href="https://python-social-auth.readthedocs.io/en/latest/index.html">python-social-auth</a>. The
+following python modules must be installed in order to make use of python-social-auth within Pulp:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">social</span><span class="o">-</span><span class="n">auth</span><span class="o">-</span><span class="n">core</span>
+<span class="n">social</span><span class="o">-</span><span class="n">auth</span><span class="o">-</span><span class="n">app</span><span class="o">-</span><span class="n">Django</span>
+</pre></div>
+</div>
+</section>
+<section id="python-social-auth-and-django">
+<span id="keycloak-authentication-python-social-auth-and-django"></span><h2>Python Social Auth and Django<a class="headerlink" href="#python-social-auth-and-django" title="Permalink to this heading">¶</a></h2>
+<p>The <a class="reference external" href="https://python-social-auth.readthedocs.io/en/latest/configuration/django.html">python-social-auth documentation</a>
+describes the django updates necessary to configure social-auth.</p>
+<p>Enable general python social integration with the following steps:</p>
+<ol class="arabic">
+<li><p>Add the application to INSTALLED_APPS setting:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">INSTALLED_APPS</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="o">...</span>
+    <span class="s1">&#39;social_django&#39;</span><span class="p">,</span>
+    <span class="o">...</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</li>
+<li><p>Accept Keycloak auth instead of checking the internal users database by enabling:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">AUTHENTICATION_BACKENDS</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="o">...</span>
+    <span class="s1">&#39;social_core.backends.keycloak.KeycloakOAuth2&#39;</span><span class="p">,</span>
+    <span class="o">...</span>
+<span class="p">]</span>
+</pre></div>
+</div>
+</li>
+<li><p>When using PostgreSQL, it’s recommended to use the built-in JSONB field by defining the settings:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">SOCIAL_AUTH_POSTGRES_JSONFIELD</span> <span class="o">=</span> <span class="kc">True</span>
+<span class="n">SOCIAL_AUTH_JSONFIELD_CUSTOM</span> <span class="o">=</span> <span class="s1">&#39;django.db.models.JSONField&#39;</span>
+</pre></div>
+</div>
+</li>
+<li><p>In order to use the Keycloak OIDC capabilities, you must add a URL namespace:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">SOCIAL_AUTH_URL_NAMESPACE</span> <span class="o">=</span> <span class="s1">&#39;social&#39;</span>
+</pre></div>
+</div>
+</li>
+<li><p>You must add the Keycloak OIDC URLs to the apps url entries:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">urlpatterns</span> <span class="o">=</span> <span class="n">patterns</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">,</span>
+    <span class="o">...</span>
+    <span class="n">url</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">include</span><span class="p">(</span><span class="s1">&#39;social_django.urls&#39;</span><span class="p">,</span> <span class="n">namespace</span><span class="o">=</span><span class="s1">&#39;social&#39;</span><span class="p">))</span>
+    <span class="o">...</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</li>
+<li><p>Update the context processor that will add backends and associations data to the template context:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">TEMPLATES</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="p">{</span>
+        <span class="o">...</span>
+        <span class="s1">&#39;OPTIONS&#39;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="o">...</span>
+            <span class="s1">&#39;context_processors&#39;</span><span class="p">:</span> <span class="p">[</span>
+                <span class="o">...</span>
+                <span class="s1">&#39;social_django.context_processors.backends&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;social_django.context_processors.login_redirect&#39;</span><span class="p">,</span>
+                <span class="o">...</span>
+            <span class="p">]</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">]</span>
+</pre></div>
+</div>
+</li>
+<li><p>Define the authentication pipeline for data that will be associated with users:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">SOCIAL_AUTH_PIPELINE</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s1">&#39;social_core.pipeline.social_auth.social_details&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;social_core.pipeline.social_auth.social_uid&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;social_core.pipeline.social_auth.social_user&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;social_core.pipeline.user.get_username&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;social_core.pipeline.social_auth.associate_by_email&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;social_core.pipeline.user.create_user&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;social_core.pipeline.social_auth.associate_user&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;social_core.pipeline.social_auth.load_extra_data&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;social_core.pipeline.user.user_details&#39;</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</li>
+</ol>
+</section>
+<section id="python-social-auth-and-keycloak">
+<span id="keycloak-authentication-python-social-auth-and-keycloak"></span><h2>Python Social Auth and Keycloak<a class="headerlink" href="#python-social-auth-and-keycloak" title="Permalink to this heading">¶</a></h2>
+<p>The python-social-auth keycloak backend
+<a class="reference external" href="https://python-social-auth.readthedocs.io/en/latest/backends/keycloak.html#keycloak-open-source-red-hat-sso">documentation</a>
+describes the necessary Keycloak integration variables.</p>
+<p>Enable python social and Keycloak integration with the following steps:</p>
+<ol class="arabic">
+<li><p>On your Keycloak server, create a Realm (pulp)</p></li>
+<li><p>Create a Client in the new Realm</p></li>
+<li><p>Configure the Client <code class="docutils literal notranslate"><span class="pre">Access</span> <span class="pre">Type</span></code> to be “confidential. Provide <cite>Valid Redirect URIs`</cite> with
+<code class="docutils literal notranslate"><span class="pre">http://&lt;pulp-hostname&gt;:&lt;port&gt;/*</span></code>. Set the <code class="docutils literal notranslate"><span class="pre">User</span> <span class="pre">Info</span> <span class="pre">Signed</span> <span class="pre">Response</span> <span class="pre">Algorithm</span></code> and
+<code class="docutils literal notranslate"><span class="pre">Request</span> <span class="pre">Object</span> <span class="pre">Signature</span> <span class="pre">Algorithm</span></code> is set to <code class="docutils literal notranslate"><span class="pre">RS256</span></code> in the
+<code class="docutils literal notranslate"><span class="pre">Fine</span> <span class="pre">Grain</span> <span class="pre">OpenID</span> <span class="pre">Connect</span> <span class="pre">Configuration</span></code> section</p></li>
+<li><p>In the Pulp settings, add the value for the <code class="docutils literal notranslate"><span class="pre">Client</span> <span class="pre">ID</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">SOCIAL_AUTH_KEYCLOAK_KEY</span> <span class="o">=</span> <span class="s1">&#39;&lt;Client ID&gt;&#39;</span>
+</pre></div>
+</div>
+</li>
+<li><p>Gather the <code class="docutils literal notranslate"><span class="pre">Client</span> <span class="pre">Secret</span></code> for the Pulp settings. You can find the <code class="docutils literal notranslate"><span class="pre">Client</span> <span class="pre">Secret</span></code> in the
+Credentials tab:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">SOCIAL_AUTH_KEYCLOAK_SECRET</span> <span class="o">=</span> <span class="s1">&#39;&lt;Client Secret&gt;&#39;</span>
+</pre></div>
+</div>
+</li>
+<li><p>Collect the <code class="docutils literal notranslate"><span class="pre">Public</span> <span class="pre">Key</span></code> from the Realm’s Keys tab:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">SOCIAL_AUTH_KEYCLOAK_PUBLIC_KEY</span> <span class="o">=</span> <span class="s1">&#39;&lt;Public Key&gt;&#39;</span>
+</pre></div>
+</div>
+</li>
+<li><p>Add the <code class="docutils literal notranslate"><span class="pre">authorization_endpoint</span></code> and <code class="docutils literal notranslate"><span class="pre">token_endpoint</span></code> URL that you find to the Realm OpenID Endpoint
+Configuration to the Pulp settings:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">SOCIAL_AUTH_KEYCLOAK_AUTHORIZATION_URL</span> <span class="o">=</span> \
+    <span class="s1">&#39;https://iam.example.com/auth/realms/pulp/protocol/openid-connect/auth/&#39;</span>
+<span class="n">SOCIAL_AUTH_KEYCLOAK_ACCESS_TOKEN_URL</span> <span class="o">=</span> \
+    <span class="s1">&#39;https://iam.example.com/auth/realms/pulp/protocol/openid-connect/token/&#39;</span>
+</pre></div>
+</div>
+</li>
+<li><p>Create an audience mapper for the JWT token. In the Client, select the Mappers tab, select
+the Create button to create a Mapper. Name the mapper, for example, “Audience Mapper”. From
+the <code class="docutils literal notranslate"><span class="pre">Mapper</span> <span class="pre">Type</span></code> list, select “Audience”. Define the <code class="docutils literal notranslate"><span class="pre">Included</span> <span class="pre">Client</span> <span class="pre">Audience</span></code> to be the
+<code class="docutils literal notranslate"><span class="pre">Client</span> <span class="pre">ID</span></code>. Enable this for both the ID token and access token.</p></li>
+<li><p>Add additional Built-in Mappers to the JWT to populate the token with the data defined in the
+Social Auth Pipeline. To do this, in the Client again select the Mappers tab. Next select the
+“Add Builtin” button and you will be presented with a table of mappers that can be chosen.
+Common choices are <code class="docutils literal notranslate"><span class="pre">username</span></code>, <code class="docutils literal notranslate"><span class="pre">email</span></code>, <code class="docutils literal notranslate"><span class="pre">groups</span></code>, <code class="docutils literal notranslate"><span class="pre">given</span> <span class="pre">name</span></code>, <code class="docutils literal notranslate"><span class="pre">family</span> <span class="pre">name</span></code>,
+<code class="docutils literal notranslate"><span class="pre">full</span> <span class="pre">name</span></code>, <code class="docutils literal notranslate"><span class="pre">updated</span> <span class="pre">at</span></code>, and <code class="docutils literal notranslate"><span class="pre">email</span> <span class="pre">verified</span></code>.</p></li>
+</ol>
+<p>After setup is completed go to: <cite>http://&lt;pulp-hostname&gt;:&lt;port&gt;/login/keycloak</cite> and the login flow
+will be presented.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="webserver.html" class="btn btn-neutral float-left" title="Webserver" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="other.html" class="btn btn-neutral float-right" title="Other" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2012-2023, Pulp Team.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+ 
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-74748547-2', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+
+<script>
+$( document ).ready( function() {
+
+  // gets version number minus whitespace and bugfix version
+  var $version_number = $('.version').text().trim().split('.', 2).join('.')
+
+  // div mirroring the admonition-warning generated by sphinx if added to .rst
+  var warning = '\
+          <div class="admonition warning"> \
+              <p class="first admonition-title">Warning</p> \
+              <p class="last">You are looking at the docs for an unsupported version of Pulp. \
+               Consider switching to a  \
+               <a href="https://pulpproject.org/docs/">supported version</a></p> \
+          </div>'
+
+  
+  // get JSON from server and load supported_versions
+  $.getJSON("https://raw.githubusercontent.com/pulp/pulp-ci/master/ci/config/releases/supported-releases.json" , function(data) {
+    if ($.inArray($version_number, data) === -1) {
+      $('.rst-content').prepend(warning)
+      }
+    })
+  })
+  </script>
+
+
+</body>
+</html>
