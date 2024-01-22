@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Applying Settings &mdash; Pulp Project 3.23.0.dev documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script src="../_static/sphinx_highlight.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Viewing Settings" href="viewing.html" />
+    <link rel="prev" title="Configuration" href="index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../index.html" class="icon icon-home"> Pulp Project
+          </a>
+              <div class="version">
+                3.23.0.dev
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../concepts.html">Concepts and Terminology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../from-pulp-2.html">Changes From Pulp 2</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../components.html">Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../installation/index.html">Installation Options</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Configuration</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Applying Settings</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#environment-variables">Environment Variables</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#configuration-file">Configuration File</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pulp-installer">pulp_installer</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="viewing.html">Viewing Settings</a></li>
+<li class="toctree-l2"><a class="reference internal" href="settings.html">Settings</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../authentication/index.html">Authentication</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../workflows/index.html">Workflows and Use Cases</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../plugins.html">Plugins</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../plugin_dev/index.html">Plugin Development</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../rest_api.html">REST API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../client_bindings.html">Client Bindings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../contributing/index.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../bugs-features.html">Bugs, Feature and Backport Requests</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../troubleshooting.html">Troubleshooting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../glossary.html">Glossary</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../changes.html">Changelog</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../versioning.html">Versioning</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../release_process.html">Pulpcore Release Process</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Pulp Project</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">Configuration</a></li>
+      <li class="breadcrumb-item active">Applying Settings</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/configuration/applying.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="applying-settings">
+<span id="id1"></span><h1>Applying Settings<a class="headerlink" href="#applying-settings" title="Permalink to this heading">¶</a></h1>
+<p>Pulp uses <a class="reference external" href="https://www.dynaconf.com/">dynaconf</a> for its settings which allows you
+to configure Pulp settings using various ways:</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#env-var-settings"><span class="std std-ref">Environment Variables</span></a> - Enabled by default.</p></li>
+<li><p><a class="reference internal" href="#config-file-settings"><span class="std std-ref">Configuration File</span></a> - Disabled by default, but easy to enable.
+Enabled by <code class="docutils literal notranslate"><span class="pre">pulp_installer</span></code>.</p></li>
+</ul>
+<section id="environment-variables">
+<span id="env-var-settings"></span><h2>Environment Variables<a class="headerlink" href="#environment-variables" title="Permalink to this heading">¶</a></h2>
+<p>Configuration by specifying environment variables is enabled by default. Any
+<a class="reference internal" href="settings.html#settings"><span class="std std-ref">Setting</span></a> can be configured using Dynaconf by prepending <code class="docutils literal notranslate"><span class="pre">PULP_</span></code> to the setting
+name. For example <a class="reference internal" href="settings.html#secret-key-setting"><span class="std std-ref">SECRET_KEY</span></a> can be specified as the <code class="docutils literal notranslate"><span class="pre">PULP_SECRET_KEY</span></code>
+environment variable. For example, in a shell you can use <code class="docutils literal notranslate"><span class="pre">export</span></code> to set this:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">export</span> <span class="n">PULP_SECRET_KEY</span><span class="o">=</span><span class="s2">&quot;This should be a 50 chars or longer unique secret!&quot;</span>
+</pre></div>
+</div>
+</section>
+<section id="configuration-file">
+<span id="config-file-settings"></span><h2>Configuration File<a class="headerlink" href="#configuration-file" title="Permalink to this heading">¶</a></h2>
+<p>By default, Pulp does not read settings from a configuration file. Enable this by specifying the
+<code class="docutils literal notranslate"><span class="pre">PULP_SETTINGS</span></code> environment variable with the path to your configuration file. For example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">export</span> <span class="n">PULP_SETTINGS</span><span class="o">=/</span><span class="n">etc</span><span class="o">/</span><span class="n">pulp</span><span class="o">/</span><span class="n">settings</span><span class="o">.</span><span class="n">py</span>
+</pre></div>
+</div>
+<p>Then you can specify settings with Python variable assignment in the <code class="docutils literal notranslate"><span class="pre">/etc/pulp/settings.py</span></code>. For
+example, you can specify <a class="reference internal" href="settings.html#secret-key-setting"><span class="std std-ref">SECRET_KEY</span></a> with:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ cat /etc/pulp/settings.py
+SECRET_KEY=&quot;This should be a 50 chars or longer unique secret!&quot;
+</pre></div>
+</div>
+<p>In this example the settings file ends in “.py” so it needs to be valid Python, but it could use any
+<a class="reference external" href="https://www.dynaconf.com/#supported-formats">dynaconf supported format</a>.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The configuration file and directories containing the configuration file must be readable by the
+user Pulp runs as. If using SELinux, assign the <code class="docutils literal notranslate"><span class="pre">system_u:object_r:pulpcore_etc_t:s0</span></code> label.</p>
+</div>
+</section>
+<section id="pulp-installer">
+<span id="pulp-installer-settings"></span><h2>pulp_installer<a class="headerlink" href="#pulp-installer" title="Permalink to this heading">¶</a></h2>
+<p>The <a class="reference external" href="https://docs.pulpproject.org/pulp_installer/">pulp_installer</a> enables configuration via a
+settings file that lives at <code class="docutils literal notranslate"><span class="pre">/etc/pulp/settings.py</span></code>. It does this by having each systemd file that
+starts a Pulp service include:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Environment</span><span class="o">=</span><span class="s2">&quot;PULP_SETTINGS=/etc/pulp/settings.py&quot;</span>
+</pre></div>
+</div>
+<p>A Pulp upgrade using <code class="docutils literal notranslate"><span class="pre">pulp_installer</span></code> will override the original <code class="docutils literal notranslate"><span class="pre">/etc/pulp/settings.py</span></code>.
+To keep your settings through an upgrade, use the “local settings” file located at
+<code class="docutils literal notranslate"><span class="pre">/etc/pulp/settings.local.py</span></code> which takes precedence over <code class="docutils literal notranslate"><span class="pre">/etc/pulp/settings.py</span></code> on a
+setting-by-setting basis.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="index.html" class="btn btn-neutral float-left" title="Configuration" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="viewing.html" class="btn btn-neutral float-right" title="Viewing Settings" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2012-2023, Pulp Team.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+ 
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-74748547-2', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+
+<script>
+$( document ).ready( function() {
+
+  // gets version number minus whitespace and bugfix version
+  var $version_number = $('.version').text().trim().split('.', 2).join('.')
+
+  // div mirroring the admonition-warning generated by sphinx if added to .rst
+  var warning = '\
+          <div class="admonition warning"> \
+              <p class="first admonition-title">Warning</p> \
+              <p class="last">You are looking at the docs for an unsupported version of Pulp. \
+               Consider switching to a  \
+               <a href="https://pulpproject.org/docs/">supported version</a></p> \
+          </div>'
+
+  
+  // get JSON from server and load supported_versions
+  $.getJSON("https://raw.githubusercontent.com/pulp/pulp-ci/master/ci/config/releases/supported-releases.json" , function(data) {
+    if ($.inArray($version_number, data) === -1) {
+      $('.rst-content').prepend(warning)
+      }
+    })
+  })
+  </script>
+
+
+</body>
+</html>

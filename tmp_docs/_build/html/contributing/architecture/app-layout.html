@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pulp Platform Application Layout &mdash; Pulp Project 3.23.0.dev documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/sphinx_highlight.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="REST API Guidelines" href="rest-api.html" />
+    <link rel="prev" title="Architecture" href="index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../index.html" class="icon icon-home"> Pulp Project
+          </a>
+              <div class="version">
+                3.23.0.dev
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../concepts.html">Concepts and Terminology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../from-pulp-2.html">Changes From Pulp 2</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../components.html">Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../installation/index.html">Installation Options</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../configuration/index.html">Configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../authentication/index.html">Authentication</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../workflows/index.html">Workflows and Use Cases</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../plugins.html">Plugins</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../plugin_dev/index.html">Plugin Development</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../rest_api.html">REST API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../client_bindings.html">Client Bindings</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">Contributing</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../index.html#workflow">Workflow</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../index.html#fundamentals">Fundamentals</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../index.html#plugin-development">Plugin Development</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../index.html#reference">Reference</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="index.html">Architecture</a><ul class="current">
+<li class="toctree-l4 current"><a class="current reference internal" href="#">Pulp Platform Application Layout</a></li>
+<li class="toctree-l4"><a class="reference internal" href="rest-api.html">REST API Guidelines</a></li>
+<li class="toctree-l4"><a class="reference internal" href="error-handling.html">Error Handling</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../platform-api/index.html">Platform API</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../index.html#suggesting-changes-to-the-pulp-development-process">Suggesting Changes to the Pulp Development Process</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../bugs-features.html">Bugs, Feature and Backport Requests</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../troubleshooting.html">Troubleshooting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../glossary.html">Glossary</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../changes.html">Changelog</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../versioning.html">Versioning</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../release_process.html">Pulpcore Release Process</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Pulp Project</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Contributing</a></li>
+          <li class="breadcrumb-item"><a href="index.html">Architecture</a></li>
+      <li class="breadcrumb-item active">Pulp Platform Application Layout</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/contributing/architecture/app-layout.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="pulp-platform-application-layout">
+<h1>Pulp Platform Application Layout<a class="headerlink" href="#pulp-platform-application-layout" title="Permalink to this heading">¶</a></h1>
+<p>The Pulp Platform is built using two key frameworks, the Django Web Framework
+and the Django REST Framework. Where possible, conforming to the conventions
+of these frameworks is encouraged. The Pulp Platform strives to leverage these
+frameworks as much as possible, ideally making Pulp Platform development a
+work of implementation before innovation.</p>
+<p>In the event that one of these components offers functionality that augments
+or supersedes functionality in another component, the order of precedence of
+these frameworks is:</p>
+<ul class="simple">
+<li><p>Pulp Platform</p></li>
+<li><p>Django REST Framework (DRF)</p></li>
+<li><p>Django Web Framework (Django)</p></li>
+</ul>
+<p>So, features provided by the Pulp Platform should preferred over similar
+features provided by DRF, and features in DRF should be preferred over similar
+features provided by Django.</p>
+<section id="module-layout">
+<h2>Module Layout<a class="headerlink" href="#module-layout" title="Permalink to this heading">¶</a></h2>
+<p>This is the basic layout of the <code class="docutils literal notranslate"><span class="pre">pulpcore.app</span></code> package, on the filesystem:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>pulpcore
+├── app
+│   ├── apps.py
+│   ├── fields.py
+│   ├── __init__.py
+│   ├── logs.py
+│   ├── management
+│   │   ├── commands
+│   │   │   ├── __init__.py
+│   │   │   └── ...
+│   │   └── __init__.py
+│   ├── manage.py
+│   ├── migrations
+│   ├── models
+│   │   ├── __init__.py
+│   │   └── ...
+│   ├── pagination.py
+│   ├── response.py
+│   ├── serializers
+│   │   ├── __init__.py
+│   │   └── ...
+│   ├── settings.py
+│   ├── tasks
+│   │   ├── __init__.py
+│   │   └── ...
+│   ├── templates
+│   │   └── ...
+│   ├── tests
+│   │   └── ...
+│   ├── urls.py
+│   ├── viewsets
+│   │   ├── __init__.py
+│   │   └── ...
+│   └── wsgi.py
+└── __init__.py
+</pre></div>
+</div>
+<p>The contents of this package are documented in detail in the <a class="reference internal" href="../platform-api/index.html"><span class="doc">Platform API</span></a>
+documentation. Details how this package is organized can be found
+below, along with information about some of the modules found in this namespace.</p>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p>This tree is incomplete, and maybe be out of date. Only the most notable and
+durable modules have been listed; the most complete listing of modules in this
+namespace will always be the <a class="reference internal" href="../platform-api/index.html"><span class="doc">Platform API</span></a> documentation.</p>
+</div>
+</section>
+<section id="module-imports">
+<h2>Module Imports<a class="headerlink" href="#module-imports" title="Permalink to this heading">¶</a></h2>
+<p>For modules in the <code class="docutils literal notranslate"><span class="pre">pulpcore.app</span></code> namespace that are large and capture behaviors
+across multiple concerns of pulp, such as our models, we have separated these
+packages into subpackages. All public identifiers and objects defined
+in submodules are then collected into that module’s <code class="docutils literal notranslate"><span class="pre">__init__.py</span></code>, from which
+they will be imported by other Pulp Platform modules.</p>
+<p>Using :mod:<code class="docutils literal notranslate"><span class="pre">pulpcore.app.models</span></code> as an example, this means that when breaking up the
+<code class="docutils literal notranslate"><span class="pre">models</span></code> package in <code class="docutils literal notranslate"><span class="pre">pulpcore.app</span></code>, the following things are true:</p>
+<ul class="simple">
+<li><p>No models are defined in the <code class="docutils literal notranslate"><span class="pre">__init__.py</span></code> of <code class="docutils literal notranslate"><span class="pre">pulpcore.app.models</span></code>.</p></li>
+<li><p>All models are defined in submodules located in the <code class="docutils literal notranslate"><span class="pre">pulpcore.app.models</span></code> module
+directory (where its <code class="docutils literal notranslate"><span class="pre">__init__.py</span></code> can be found).</p></li>
+<li><p>The <cite>__init__.py`</cite> in <code class="docutils literal notranslate"><span class="pre">pulpcore.app.models</span></code> should consist only of import statements,
+ordered to prevent any circular import issues that may result based on the imports
+that are done in any included submodules.</p></li>
+<li><p>Any models defined in submodules in <code class="docutils literal notranslate"><span class="pre">pulpcore.app.models</span></code> namespace must be imported
+from the <code class="docutils literal notranslate"><span class="pre">pulpcore.app.models</span></code> namespace, not the submodule in which they are defined.
+Yes: <code class="docutils literal notranslate"><span class="pre">from</span> <span class="pre">pulpcore.app.models</span> <span class="pre">import</span> <span class="pre">PulpModel</span></code>,
+No: <code class="docutils literal notranslate"><span class="pre">from</span> <span class="pre">pulpcore.app.models.pulp</span> <span class="pre">import</span> <span class="pre">PulpModel</span></code>.</p></li>
+<li><p>When adding new models, they must be imported into the <code class="docutils literal notranslate"><span class="pre">pulpcore.app.models</span></code>
+<code class="docutils literal notranslate"><span class="pre">__init__.py</span></code>, so that they are available to be imported by any other Pulp Platform
+components that use them from the <code class="docutils literal notranslate"><span class="pre">pulpcore.app.models</span></code> namespace.</p></li>
+<li><p>Imports done inside any submodules should be relative, e.g.
+<code class="docutils literal notranslate"><span class="pre">from</span> <span class="pre">.submodule</span> <span class="pre">import</span> <span class="pre">identifier</span></code> or <code class="docutils literal notranslate"><span class="pre">from</span> <span class="pre">.</span> <span class="pre">import</span> <span class="pre">submodule</span></code>, avoiding the
+creation of circular imports.</p></li>
+<li><p>Imports done inside the module’s <code class="docutils literal notranslate"><span class="pre">__init__.py</span></code> should be relative and explict, e.g.</p>
+<ul>
+<li><p>Yes: <code class="docutils literal notranslate"><span class="pre">from</span> <span class="pre">.submodule</span> <span class="pre">import</span> <span class="pre">identifier1,</span> <span class="pre">identifier2</span></code></p></li>
+<li><p>No: <code class="docutils literal notranslate"><span class="pre">from</span> <span class="pre">submodule</span> <span class="pre">import</span> <span class="pre">identifier1,</span> <span class="pre">identifier2</span></code></p></li>
+<li><p>No: <code class="docutils literal notranslate"><span class="pre">from</span> <span class="pre">.submodule</span> <span class="pre">import</span> <span class="pre">*</span></code></p></li>
+</ul>
+</li>
+</ul>
+<p>Any module in <code class="docutils literal notranslate"><span class="pre">pulpcore.app</span></code> broken up in this way, such as
+<a class="reference internal" href="../platform-api/app/serializers.html#module-pulpcore.app.serializers" title="pulpcore.app.serializers"><code class="xref py py-mod docutils literal notranslate"><span class="pre">pulpcore.app.serializers</span></code></a> or <a class="reference internal" href="../platform-api/app/viewsets.html#module-pulpcore.app.viewsets" title="pulpcore.app.viewsets"><code class="xref py py-mod docutils literal notranslate"><span class="pre">pulpcore.app.viewsets</span></code></a>, should do so in such a way
+that renders the implementation invisible to anyone importing from that module.</p>
+</section>
+<section id="pulpcore-app">
+<h2>pulpcore.app<a class="headerlink" href="#pulpcore-app" title="Permalink to this heading">¶</a></h2>
+<p>pulpcore.app is the package containing the core Pulp Platform Django application.
+This package contains all of the Pulp Platform models, serializers, and
+viewsets required to assemble Pulp’s REST API and underlying database.</p>
+<section id="pulpcore-app-apps">
+<h3>pulpcore.app.apps<a class="headerlink" href="#pulpcore-app-apps" title="Permalink to this heading">¶</a></h3>
+<p>This module defines the <a class="reference internal" href="../../plugin_dev/api-reference/index.html#pulpcore.plugin.PulpPluginAppConfig" title="pulpcore.app.apps.PulpPluginAppConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">PulpPluginAppConfig</span></code></a> base class
+used by all Pulp plugins to identify themselves to the Pulp Platform as plugins.</p>
+<p>This module also includes the <code class="xref py py-class docutils literal notranslate"><span class="pre">PulpAppConfig</span></code> class which
+is the Pulp Platform application config.</p>
+</section>
+<section id="pulpcore-app-settings">
+<h3>pulpcore.app.settings<a class="headerlink" href="#pulpcore-app-settings" title="Permalink to this heading">¶</a></h3>
+<p>This is the main settings module for the platform Django project, which puts together
+all of the various Django applications that the Pulp Platform depends on to function,
+as well as the Pulp Platform application itself and its plugins.</p>
+<p>Many things are defined in here, including the database settings, logging configuration,
+REST API settings, etc. This file also finds and registers Pulp plugins with the Pulp
+Platform Django Project, using the <code class="docutils literal notranslate"><span class="pre">pulpcore.plugin</span></code> entry point.</p>
+<p>In order to use django-related tools with the Pulp Platform, the platform must be installed,
+and the <code class="docutils literal notranslate"><span class="pre">DJANGO_SETTINGS_MODULE</span></code> environment var must be set to
+<a class="reference internal" href="../platform-api/app/settings.html#module-pulpcore.app.settings" title="pulpcore.app.settings"><code class="xref py py-mod docutils literal notranslate"><span class="pre">pulpcore.app.settings</span></code></a>.</p>
+</section>
+<section id="pulpcore-app-urls">
+<h3>pulpcore.app.urls<a class="headerlink" href="#pulpcore-app-urls" title="Permalink to this heading">¶</a></h3>
+<p>This module contains the API <code class="xref py py-data docutils literal notranslate"><span class="pre">root_router</span></code>, and is where all non-API
+views (should we ever write any) are mapped to URLs.</p>
+</section>
+<section id="pulpcore-app-models">
+<h3>pulpcore.app.models<a class="headerlink" href="#pulpcore-app-models" title="Permalink to this heading">¶</a></h3>
+<p>All models are contained in <a class="reference internal" href="../platform-api/app/models.html#module-pulpcore.app.models" title="pulpcore.app.models"><code class="xref py py-mod docutils literal notranslate"><span class="pre">pulpcore.app.models</span></code></a>.</p>
+<p>The Platform models are all importable directly from the <code class="docutils literal notranslate"><span class="pre">pulpcore.app.models</span></code>
+namespace. All Pulp models should subclass <code class="xref py py-mod docutils literal notranslate"><span class="pre">pulpcore.app.models.Model</span></code>, or
+one of its subclasses.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>All models must exist in the pulpcore.app.models namespace in order to be
+recognized by Django and included in the Django ORM.</p>
+</div>
+<section id="master-detail-models">
+<h4>Master/Detail Models<a class="headerlink" href="#master-detail-models" title="Permalink to this heading">¶</a></h4>
+<p>A few Pulp Platform models, including the Content model as well as
+Remotes and Publishers, implement a strategy we refer to as “Master/Detail”.
+The Master/Detail strategy, as implemented in Pulp, allows us to define
+necessary relationships on a single master Model, while still allowing
+plugin developers to extend these Master classes with details pertinent
+to the plugin’s requirements. Using the <code class="xref py py-class docutils literal notranslate"><span class="pre">Content</span></code>
+model as an example, <code class="xref py py-class docutils literal notranslate"><span class="pre">Repository</span></code> relates to the
+Content model. This causes all content to relate to the repositories that
+contain them the same way while still allowing plugin writers to add any
+additional fields or behaviors to the model as-needed for their use cases.</p>
+<p>In the Pulp Platform, models requiring this sort of behavior should subclass
+<code class="xref py py-class docutils literal notranslate"><span class="pre">pulpcore.app.models.MasterModel</span></code>.</p>
+</section>
+</section>
+</section>
+<section id="serializers-viewsets-and-other-model-related-classes">
+<h2>Serializers, ViewSets, and other Model-Related Classes<a class="headerlink" href="#serializers-viewsets-and-other-model-related-classes" title="Permalink to this heading">¶</a></h2>
+<p>The modules containing Serializers and ViewSets, located in <code class="docutils literal notranslate"><span class="pre">pulpcore.app.serializers</span></code> and
+<code class="docutils literal notranslate"><span class="pre">pulpcore.app.viewsets</span></code>, respectively, should be organized similarly to the models that
+they represent where possible. For example, if <code class="docutils literal notranslate"><span class="pre">pulpcore.app.models.Repository</span></code> is defined
+in the <code class="docutils literal notranslate"><span class="pre">pulpcore.app.models.repository</span></code> module, its corresponding serializer should be
+defined in <code class="docutils literal notranslate"><span class="pre">pulpcore.app.serializers.repository</span></code>, and its corresponding viewset should be
+defined in <code class="docutils literal notranslate"><span class="pre">pulpcore.app.viewsets.repository</span></code>, making it easy to find.</p>
+<p>These, and other model-related classes, should be named in such a way as to make their
+relationship to their Model unambiguous. To that end, model-related classes should include
+the name of the model class they’re related to in their name. So, the serializer for the
+<code class="docutils literal notranslate"><span class="pre">pulpcore.app.models.Repository</span></code> model should be named <code class="docutils literal notranslate"><span class="pre">RepositorySerializer</span></code>, and the viewset
+related to that model should be named <code class="docutils literal notranslate"><span class="pre">RepositoryViewSet</span></code>.</p>
+<p>Classes not directly related to a model, or related to multiple models, should still of
+course be named in such a way as to make their purpose obvious an unambiguous.</p>
+<section id="viewset-registration">
+<h3>ViewSet Registration<a class="headerlink" href="#viewset-registration" title="Permalink to this heading">¶</a></h3>
+<p>In order for ViewSets to be automatically registered with the Pulp Platform API router,
+they <em>must</em> subclass <a class="reference internal" href="../../plugin_dev/api-reference/viewsets.html#pulpcore.plugin.viewsets.NamedModelViewSet" title="pulpcore.app.viewsets.base.NamedModelViewSet"><code class="xref py py-class docutils literal notranslate"><span class="pre">pulpcore.app.viewsets.base.NamedModelViewSet</span></code></a> and be imported into the
+<code class="docutils literal notranslate"><span class="pre">pulpcore.app.viewsets</span></code> namespace.</p>
+<p>ViewSets not meeting this criteria must be manually registered with the API router in
+<a class="reference internal" href="../platform-api/app/urls.html#module-pulpcore.app.urls" title="pulpcore.app.urls"><code class="xref py py-mod docutils literal notranslate"><span class="pre">pulpcore.app.urls</span></code></a> by using the router’s <code class="docutils literal notranslate"><span class="pre">register</span></code> method during application setup.</p>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="index.html" class="btn btn-neutral float-left" title="Architecture" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="rest-api.html" class="btn btn-neutral float-right" title="REST API Guidelines" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2012-2023, Pulp Team.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+ 
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-74748547-2', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+
+<script>
+$( document ).ready( function() {
+
+  // gets version number minus whitespace and bugfix version
+  var $version_number = $('.version').text().trim().split('.', 2).join('.')
+
+  // div mirroring the admonition-warning generated by sphinx if added to .rst
+  var warning = '\
+          <div class="admonition warning"> \
+              <p class="first admonition-title">Warning</p> \
+              <p class="last">You are looking at the docs for an unsupported version of Pulp. \
+               Consider switching to a  \
+               <a href="https://pulpproject.org/docs/">supported version</a></p> \
+          </div>'
+
+  
+  // get JSON from server and load supported_versions
+  $.getJSON("https://raw.githubusercontent.com/pulp/pulp-ci/master/ci/config/releases/supported-releases.json" , function(data) {
+    if ($.inArray($version_number, data) === -1) {
+      $('.rst-content').prepend(warning)
+      }
+    })
+  })
+  </script>
+
+
+</body>
+</html>

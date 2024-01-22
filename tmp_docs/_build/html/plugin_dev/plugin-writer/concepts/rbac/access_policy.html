@@ -1,0 +1,1010 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Defining an Access Policy &mdash; Pulp Project 3.23.0.dev documentation</title>
+      <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../../" id="documentation_options" src="../../../../_static/documentation_options.js"></script>
+        <script src="../../../../_static/jquery.js"></script>
+        <script src="../../../../_static/underscore.js"></script>
+        <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../../../../_static/doctools.js"></script>
+        <script src="../../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+    <link rel="next" title="Adding Automatic Permissions for New Objects" href="adding_automatic_permissions.html" />
+    <link rel="prev" title="Users and Groups" href="users_groups.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../../../index.html" class="icon icon-home"> Pulp Project
+          </a>
+              <div class="version">
+                3.23.0.dev
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../../../concepts.html">Concepts and Terminology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../from-pulp-2.html">Changes From Pulp 2</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../components.html">Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../installation/index.html">Installation Options</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../configuration/index.html">Configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../authentication/index.html">Authentication</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../workflows/index.html">Workflows and Use Cases</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../plugins.html">Plugins</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../../index.html">Plugin Development</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="../../../index.html#plugin-writer-s-guide">Plugin Writer’s Guide</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="../../index.html">Plugin Writer’s Guide</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="../../planning-guide.html">Plugin Planning Guide</a></li>
+<li class="toctree-l4 current"><a class="reference internal" href="../index.html">Plugin Concepts</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../index.html#zero-downtime-migrations">Zero-Downtime Migrations</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../index.html#data-migrations">Data Migrations</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../index.html#tasking-system">Tasking System</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../plugin-walkthrough.html">Plugin Walkthrough</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../index.html#plugin-writer-s-reference">Plugin Writer’s Reference</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../index.html#plugin-api-reference">Plugin API Reference</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../rest_api.html">REST API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../client_bindings.html">Client Bindings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contributing/index.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../bugs-features.html">Bugs, Feature and Backport Requests</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../troubleshooting.html">Troubleshooting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../glossary.html">Glossary</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../changes.html">Changelog</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../versioning.html">Versioning</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../release_process.html">Pulpcore Release Process</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">Pulp Project</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home"></a></li>
+          <li class="breadcrumb-item"><a href="../../../index.html">Plugin Development</a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Plugin Writer’s Guide</a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Plugin Concepts</a></li>
+      <li class="breadcrumb-item active">Defining an Access Policy</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../_sources/plugin_dev/plugin-writer/concepts/rbac/access_policy.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="defining-an-access-policy">
+<span id="defining-access-policy"></span><h1>Defining an Access Policy<a class="headerlink" href="#defining-an-access-policy" title="Permalink to this heading">¶</a></h1>
+<p>The Access Policy controls the authorization of a given request and is enforced at the
+viewset-level. Access policies are based on the AccessPolicy from <a class="reference external" href="https://rsinger86.github.io/drf-access-policy/policy_logic/">drf-access-policy</a> which uses <a class="reference external" href="https://rsinger86.github.io/drf-access-policy/policy_logic/">policy statements
+described here</a>.</p>
+<section id="example-policy">
+<h2>Example Policy<a class="headerlink" href="#example-policy" title="Permalink to this heading">¶</a></h2>
+<p>Below is an example policy used by <code class="docutils literal notranslate"><span class="pre">FileRemote</span></code>, with an explanation of its effect below that:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span>
+    <span class="p">{</span>
+        <span class="s2">&quot;action&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;list&quot;</span><span class="p">],</span>
+        <span class="s2">&quot;principal&quot;</span><span class="p">:</span> <span class="s2">&quot;authenticated&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;effect&quot;</span><span class="p">:</span> <span class="s2">&quot;allow&quot;</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s2">&quot;action&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;create&quot;</span><span class="p">],</span>
+        <span class="s2">&quot;principal&quot;</span><span class="p">:</span> <span class="s2">&quot;authenticated&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;effect&quot;</span><span class="p">:</span> <span class="s2">&quot;allow&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;condition&quot;</span><span class="p">:</span> <span class="s2">&quot;has_model_perms:file.add_fileremote&quot;</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s2">&quot;action&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;retrieve&quot;</span><span class="p">],</span>
+        <span class="s2">&quot;principal&quot;</span><span class="p">:</span> <span class="s2">&quot;authenticated&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;effect&quot;</span><span class="p">:</span> <span class="s2">&quot;allow&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;condition&quot;</span><span class="p">:</span> <span class="s2">&quot;has_model_or_obj_perms:file.view_fileremote&quot;</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s2">&quot;action&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;update&quot;</span><span class="p">,</span> <span class="s2">&quot;partial_update&quot;</span><span class="p">],</span>
+        <span class="s2">&quot;principal&quot;</span><span class="p">:</span> <span class="s2">&quot;authenticated&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;effect&quot;</span><span class="p">:</span> <span class="s2">&quot;allow&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;condition&quot;</span><span class="p">:</span> <span class="s2">&quot;has_model_or_obj_perms:file.change_fileremote&quot;</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+        <span class="s2">&quot;action&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;destroy&quot;</span><span class="p">],</span>
+        <span class="s2">&quot;principal&quot;</span><span class="p">:</span> <span class="s2">&quot;authenticated&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;effect&quot;</span><span class="p">:</span> <span class="s2">&quot;allow&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;condition&quot;</span><span class="p">:</span> <span class="s2">&quot;has_model_or_obj_perms:file.delete_fileremote&quot;</span><span class="p">,</span>
+    <span class="p">},</span>
+<span class="p">]</span>
+</pre></div>
+</div>
+<p>The above policy allows the following four cases, and denies all others by default. Overall this
+creates a “user isolation policy” whereby users with the <code class="docutils literal notranslate"><span class="pre">file.add_fileremote</span></code> permission can
+create <code class="docutils literal notranslate"><span class="pre">FileRemote</span></code> objects, and users can only read/modify/delete <code class="docutils literal notranslate"><span class="pre">FileRemote</span></code> objects they
+created.</p>
+<p>Here’s a written explanation of the policy statements:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">list</span></code> is allowed by any authenticated user. Although users are allowed to perform an operation
+what they can list will still be restricted to <a class="reference internal" href="queryset_scoping.html#queryset-scoping"><span class="std std-ref">only the objects that user can view</span></a>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">create</span></code> is allowed by any authenticated user with the <code class="docutils literal notranslate"><span class="pre">file.add_fileremote</span></code> permission.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">retrieve</span></code> (the detail view of an object) is allowed by an authenticated user who has the
+<code class="docutils literal notranslate"><span class="pre">file.view_fileremote</span></code> permission. Although users are allowed to perform an operation what they
+can list will still be restricted to <a class="reference internal" href="queryset_scoping.html#queryset-scoping"><span class="std std-ref">only the objects that user can view</span></a>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">update</span></code> or <code class="docutils literal notranslate"><span class="pre">partial_update</span></code> is allowed by an authenticated user who has the
+<code class="docutils literal notranslate"><span class="pre">file.change_fileremote</span></code> permission.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">destroy</span></code> is allowed by any authenticated user with the <code class="docutils literal notranslate"><span class="pre">file.delete_fileremote</span></code> permission.</p></li>
+</ul>
+<p>These names correspond with the <a class="reference external" href="https://www.django-rest-framework.org/api-guide/viewsets/#viewset-actions">default DRF viewset action names</a>.</p>
+</section>
+<section id="authorization-conditions">
+<h2>Authorization Conditions<a class="headerlink" href="#authorization-conditions" title="Permalink to this heading">¶</a></h2>
+<p>Each policy statement can contain <a class="reference external" href="https://rsinger86.github.io/drf-access-policy/statement_elements/#condition">drf-access-policy conditions</a> which is useful for verifying a user has one or
+more permissions. Pulp ships many built-in checks. See the <a class="reference internal" href="#permission-checking-machinery"><span class="std std-ref">Permission Checking Machinery</span></a>
+documentation for more information on available checks.</p>
+<p>When multiple conditions are present, <strong>all</strong> of them must return True for the request to be
+authorized.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">admin</span></code> user created on installations prior to RBAC being enabled has
+<code class="docutils literal notranslate"><span class="pre">is_superuser=True</span></code>. Django assumes a superuser has any model-level permission even without it
+being assigned. Django’s permission checking machinery assumes superusers bypass authorization
+checks.</p>
+</div>
+</section>
+<section id="custom-viewset-actions">
+<h2>Custom ViewSet Actions<a class="headerlink" href="#custom-viewset-actions" title="Permalink to this heading">¶</a></h2>
+<p>The <code class="docutils literal notranslate"><span class="pre">action</span></code> part of a policy statement can reference <a class="reference external" href="https://www.django-rest-framework.org/api-guide/viewsets/#marking-extra-actions-for-routing">any custom action your viewset has</a>.
+For example <code class="docutils literal notranslate"><span class="pre">FileRepositoryViewSet</span></code> has a <code class="docutils literal notranslate"><span class="pre">sync</span></code> custom action used by users to sync a given
+<code class="docutils literal notranslate"><span class="pre">FileRepository</span></code>. Below is an example of the default policy used to guard that action:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+    <span class="s2">&quot;action&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;sync&quot;</span><span class="p">],</span>
+    <span class="s2">&quot;principal&quot;</span><span class="p">:</span> <span class="s2">&quot;authenticated&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;effect&quot;</span><span class="p">:</span> <span class="s2">&quot;allow&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;condition&quot;</span><span class="p">:</span> <span class="p">[</span>
+        <span class="s2">&quot;has_model_or_obj_perms:file.modify_repo_content&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;has_remote_param_model_or_obj_perms:file.view_fileremote&quot;</span><span class="p">,</span>
+    <span class="p">]</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</section>
+<section id="storing-an-access-policy-in-the-db">
+<span id="storing-access-policy-in-db"></span><h2>Storing an Access Policy in the DB<a class="headerlink" href="#storing-an-access-policy-in-the-db" title="Permalink to this heading">¶</a></h2>
+<p>All access policies are stored in the database in the <cite>pulpcore.plugin.models.AccessPolicy</cite> model,
+which stores the policy statements described above. Here is a look at the <code class="docutils literal notranslate"><span class="pre">AccessPolicy</span></code> model:</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="pulpcore.plugin.models.AccessPolicy">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pulpcore.plugin.models.</span></span><span class="sig-name descname"><span class="pre">AccessPolicy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pulpcore.plugin.models.AccessPolicy" title="Permalink to this definition">¶</a></dt>
+<dd><p>A model storing a viewset authorization policy and permission assignment of new objects created.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Fields</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>creation_hooks</strong> (<em>models.JSONField</em>) – A list of dictionaries identifying callables on the
+<code class="docutils literal notranslate"><span class="pre">pulpcore.plugin.access_policy.AccessPolicyFromDB</span></code> which can add user or group roles
+for newly created objects. This is a nullable field due to not all endpoints creating
+objects.</p></li>
+<li><p><strong>statements</strong> (<em>models.JSONField</em>) – A list of <code class="docutils literal notranslate"><span class="pre">drf-access-policy</span></code> statements.</p></li>
+<li><p><strong>viewset_name</strong> (<em>models.TextField</em>) – The name of the viewset this instance controls
+authorization for.</p></li>
+<li><p><strong>customized</strong> (<em>BooleanField</em>) – False if the AccessPolicy has been user-modified. True otherwise.
+Defaults to False.</p></li>
+<li><p><strong>queryset_scoping</strong> (<em>models.JSONField</em>) – A dictionary identifying a callable to perform the
+queryset scoping. This field can be null if the user doesn’t want to perform scoping.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<p>By storing these in the database they are readable to users with a GET to
+<code class="docutils literal notranslate"><span class="pre">/pulp/api/v3/access_policies/</span></code>. Additionally users can PUT/PATCH modify them at
+<code class="docutils literal notranslate"><span class="pre">/pulp/api/v3/access_policies/:uuid/</span></code>. Users cannot modify create or delete an Access Policy in
+the database because only plugin writers create them and their viewset code expects a specific
+AccessPolicy instance to exist.</p>
+</section>
+<section id="shipping-a-default-access-policy">
+<span id="shipping-default-access-policy"></span><h2>Shipping a Default Access Policy<a class="headerlink" href="#shipping-a-default-access-policy" title="Permalink to this heading">¶</a></h2>
+<p>To ship a default access policy, define a dictionary named <code class="docutils literal notranslate"><span class="pre">DEFAULT_ACCESS_POLICY</span></code> as a class
+attribute on a subclass of <code class="docutils literal notranslate"><span class="pre">NamedModelViewSet</span></code> containing all of <code class="docutils literal notranslate"><span class="pre">statements</span></code> and
+<code class="docutils literal notranslate"><span class="pre">creation_hooks</span></code>. The <code class="docutils literal notranslate"><span class="pre">AccessPolicy</span></code> instance will then be created in the <code class="docutils literal notranslate"><span class="pre">pulp_migrate</span></code>
+signal handler. In the same way you might want to specify a <code class="docutils literal notranslate"><span class="pre">LOCKED_ROLES</span></code> dictionary that will
+define roles as lists of permissions to be used in the access policy.</p>
+<p>Here’s an example of code to define a default policy:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">FileRemoteViewSet</span><span class="p">(</span><span class="n">RemoteViewSet</span><span class="p">):</span>
+
+<span class="o">&lt;...&gt;</span>
+    <span class="n">DEFAULT_ACCESS_POLICY</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;statements&quot;</span><span class="p">:</span> <span class="p">[</span>
+            <span class="p">{</span>
+                <span class="s2">&quot;action&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;list&quot;</span><span class="p">],</span>
+                <span class="s2">&quot;principal&quot;</span><span class="p">:</span> <span class="s2">&quot;authenticated&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;effect&quot;</span><span class="p">:</span> <span class="s2">&quot;allow&quot;</span><span class="p">,</span>
+            <span class="p">},</span>
+            <span class="p">{</span>
+                <span class="s2">&quot;action&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;create&quot;</span><span class="p">],</span>
+                <span class="s2">&quot;principal&quot;</span><span class="p">:</span> <span class="s2">&quot;authenticated&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;effect&quot;</span><span class="p">:</span> <span class="s2">&quot;allow&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;condition&quot;</span><span class="p">:</span> <span class="s2">&quot;has_model_perms:file.add_fileremote&quot;</span><span class="p">,</span>
+            <span class="p">},</span>
+            <span class="p">{</span>
+                <span class="s2">&quot;action&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;retrieve&quot;</span><span class="p">],</span>
+                <span class="s2">&quot;principal&quot;</span><span class="p">:</span> <span class="s2">&quot;authenticated&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;effect&quot;</span><span class="p">:</span> <span class="s2">&quot;allow&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;condition&quot;</span><span class="p">:</span> <span class="s2">&quot;has_model_or_obj_perms:file.view_fileremote&quot;</span><span class="p">,</span>
+            <span class="p">},</span>
+            <span class="p">{</span>
+                <span class="s2">&quot;action&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;update&quot;</span><span class="p">,</span> <span class="s2">&quot;partial_update&quot;</span><span class="p">],</span>
+                <span class="s2">&quot;principal&quot;</span><span class="p">:</span> <span class="s2">&quot;authenticated&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;effect&quot;</span><span class="p">:</span> <span class="s2">&quot;allow&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;condition&quot;</span><span class="p">:</span> <span class="s2">&quot;has_model_or_obj_perms:file.change_fileremote&quot;</span><span class="p">,</span>
+            <span class="p">},</span>
+            <span class="p">{</span>
+                <span class="s2">&quot;action&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;destroy&quot;</span><span class="p">],</span>
+                <span class="s2">&quot;principal&quot;</span><span class="p">:</span> <span class="s2">&quot;authenticated&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;effect&quot;</span><span class="p">:</span> <span class="s2">&quot;allow&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;condition&quot;</span><span class="p">:</span> <span class="s2">&quot;has_model_or_obj_perms:file.delete_fileremote&quot;</span><span class="p">,</span>
+            <span class="p">},</span>
+        <span class="p">],</span>
+
+        <span class="s2">&quot;creation_hooks&quot;</span><span class="p">:</span> <span class="p">[</span>
+            <span class="p">{</span>
+                <span class="s2">&quot;function&quot;</span><span class="p">:</span> <span class="s2">&quot;add_roles_for_object_creator&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;parameters&quot;</span><span class="p">:</span> <span class="p">{</span>
+                    <span class="s2">&quot;roles&quot;</span><span class="p">:</span> <span class="s2">&quot;file.fileremote_owner&quot;</span><span class="p">,</span>
+                <span class="p">},</span>
+            <span class="p">},</span>
+        <span class="p">],</span>
+    <span class="p">}</span>
+    <span class="n">LOCKED_ROLES</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;file.fileremote_owner&quot;</span><span class="p">:</span> <span class="p">[</span>
+            <span class="s2">&quot;file.view_fileremote&quot;</span><span class="p">,</span> <span class="s2">&quot;file.change_fileremote&quot;</span><span class="p">,</span> <span class="s2">&quot;file.delete_fileremote&quot;</span>
+        <span class="p">],</span>
+        <span class="s2">&quot;file.fileremote_viewer&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;file.view_fileremote&quot;</span><span class="p">],</span>
+    <span class="p">}</span>
+    <span class="o">&lt;...&gt;</span>
+</pre></div>
+</div>
+<p>For an explanation of the <code class="docutils literal notranslate"><span class="pre">creation_hooks</span></code> see the
+<a class="reference internal" href="adding_automatic_permissions.html#shipping-a-default-new-object-policy"><span class="std std-ref">Shipping a Default New Object Policy</span></a> documentation.</p>
+<p>The attribute <code class="docutils literal notranslate"><span class="pre">LOCKED_ROLES</span></code> contains roles that are managed by the plugin author. Their name
+needs to be prefixed by the plugins <code class="docutils literal notranslate"><span class="pre">app_label</span></code> with a dot to prevent collisions. Roles defined
+there will be replicated and updated in the database after every migration. They are also marked
+<code class="docutils literal notranslate"><span class="pre">locked=True</span></code> to prevent being modified by users. The primary purpose of these roles is to allow
+plugin writers to refer to them in the default access policy.</p>
+</section>
+<section id="allow-granting-permissions-by-the-object-owners">
+<span id="id1"></span><h2>Allow Granting Permissions by the Object Owners<a class="headerlink" href="#allow-granting-permissions-by-the-object-owners" title="Permalink to this heading">¶</a></h2>
+<p>To allow object owners to grant access to other users, first add a <code class="docutils literal notranslate"><span class="pre">manage_roles</span></code> permission to
+the model.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">FileRemote</span><span class="p">(</span><span class="n">Remote</span><span class="p">):</span>
+    <span class="o">&lt;...&gt;</span>
+
+    <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
+        <span class="n">permissions</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="p">(</span><span class="s2">&quot;manage_roles_fileremote&quot;</span><span class="p">,</span> <span class="s2">&quot;Can manage roles on file remotes&quot;</span><span class="p">),</span>
+        <span class="p">]</span>
+</pre></div>
+</div>
+<p>Now include the <code class="docutils literal notranslate"><span class="pre">RolesMixin</span></code> in the definition of the viewset and add statements for its verbs.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">FileRemoteViewSet</span><span class="p">(</span><span class="n">RemoteViewSet</span><span class="p">,</span> <span class="n">RolesMixin</span><span class="p">):</span>
+    <span class="o">&lt;...&gt;</span>
+
+    <span class="n">DEFAULT_ACCESS_POLICY</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;statements&quot;</span><span class="p">:</span> <span class="p">[</span>
+            <span class="o">&lt;...&gt;</span>
+            <span class="p">{</span>
+                <span class="s2">&quot;action&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;list_roles&quot;</span><span class="p">,</span> <span class="s2">&quot;add_role&quot;</span><span class="p">,</span> <span class="s2">&quot;remove_role&quot;</span><span class="p">],</span>
+                <span class="s2">&quot;principal&quot;</span><span class="p">:</span> <span class="s2">&quot;authenticated&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;effect&quot;</span><span class="p">:</span> <span class="s2">&quot;allow&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;condition&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;has_model_or_obj_perms:file.manage_roles_fileremote&quot;</span><span class="p">],</span>
+            <span class="p">},</span>
+        <span class="p">]</span>
+    <span class="p">}</span>
+
+    <span class="n">LOCKED_ROLES</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;file.fileremote_owner&quot;</span><span class="p">:</span> <span class="p">[</span>
+            <span class="o">&lt;...&gt;</span>
+        <span class="o">&lt;...&gt;</span>
+    <span class="p">}</span>
+</pre></div>
+</div>
+</section>
+<section id="handling-objects-created-prior-to-rbac">
+<span id="id2"></span><h2>Handling Objects created prior to RBAC<a class="headerlink" href="#handling-objects-created-prior-to-rbac" title="Permalink to this heading">¶</a></h2>
+<p>Prior to RBAC being enabled, <code class="docutils literal notranslate"><span class="pre">admin</span></code> was the only user and they have <code class="docutils literal notranslate"><span class="pre">is_superuser=True</span></code> which
+generally causes them to pass any permission check even without explicit permissions being assigned.</p>
+</section>
+<section id="viewset-enforcement">
+<span id="id3"></span><h2>Viewset Enforcement<a class="headerlink" href="#viewset-enforcement" title="Permalink to this heading">¶</a></h2>
+<p>Pulp configures the <code class="docutils literal notranslate"><span class="pre">DEFAULT_PERMISSION_CLASSES</span></code> in the settings file to use
+<code class="docutils literal notranslate"><span class="pre">pulpcore.plugin.access_policy.AccessPolicyFromDB</span></code> by default. This ensures that by defining a
+<code class="docutils literal notranslate"><span class="pre">DEFAULT_ACCESS_POLICY</span></code> on your Viewset, Pulp will automatically save it to the database at
+migration-time, and your Viewset will be protected without additional effort.</p>
+<p>This strategy allows users to completely customize or disable the DRF Permission checks Pulp uses
+like any typical DRF project would.</p>
+<p>Also like a typical DRF project, individual Viewsets or views can also be customized to use a
+different Permission check by declaring the <code class="docutils literal notranslate"><span class="pre">permission_classes</span></code> check. For example, here is the
+<code class="docutils literal notranslate"><span class="pre">StatusView</span></code> which disables permission checks entirely as follows:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">StatusView</span><span class="p">(</span><span class="n">APIView</span><span class="p">):</span>
+    <span class="o">...</span>
+    <span class="n">permission_classes</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">()</span>
+    <span class="o">...</span>
+</pre></div>
+</div>
+</section>
+<section id="permission-checking-machinery">
+<span id="id4"></span><h2>Permission Checking Machinery<a class="headerlink" href="#permission-checking-machinery" title="Permalink to this heading">¶</a></h2>
+<p>drf-access-policy provides a feature to enable conditional checks to be globally available as their
+docs <a class="reference external" href="https://rsinger86.github.io/drf-access-policy/reusable_conditions/">describe here</a>. Pulp
+enables the <code class="docutils literal notranslate"><span class="pre">reusable_conditions</span></code> in its settings.py file, allowing a variety of condition checks
+to be globally available. Pulp enables this as follows:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">DRF_ACCESS_POLICY</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;reusable_conditions&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;pulpcore.app.global_access_conditions&quot;</span><span class="p">]}</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">pulpcore.app.global_access_conditions</span></code> provides the following checks that are available for
+both users and plugin writers to use in their policies:</p>
+<span class="target" id="module-pulpcore.app.global_access_conditions"></span><dl class="py function">
+<dt class="sig sig-object py" id="pulpcore.app.global_access_conditions.has_group_model_or_obj_perms">
+<span class="sig-prename descclassname"><span class="pre">pulpcore.app.global_access_conditions.</span></span><span class="sig-name descname"><span class="pre">has_group_model_or_obj_perms</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">view</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">action</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">permission</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pulpcore.app.global_access_conditions.has_group_model_or_obj_perms" title="Permalink to this definition">¶</a></dt>
+<dd><p>Checks whether a user has the requested object or model permission on the Group in the URL.</p>
+<p>This check is meant to be used for relations nested beneath the group endpoint, e.g. the list
+of users to belong to that group. It will fail for other endpoints.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+    <span class="o">...</span>
+    <span class="s2">&quot;condition&quot;</span><span class="p">:</span> <span class="s2">&quot;has_group_model_or_obj_perms:core.group_delete&quot;</span><span class="p">,</span>
+<span class="p">},</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>request</strong> (<em>rest_framework.request.Request</em>) – The request being made.</p></li>
+<li><p><strong>view</strong> (<em>subclass rest_framework.viewsets.GenericViewSet</em>) – The view being checked for
+authorization.</p></li>
+<li><p><strong>action</strong> (<em>str</em>) – The action being performed, e.g. “destroy”.</p></li>
+<li><p><strong>permission</strong> (<em>str</em>) – The name of the Group Permission to be checked. In the form
+<cite>app_label.codename</cite>, e.g. “core.group_change”.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>True if the user has the Permission on the <code class="docutils literal notranslate"><span class="pre">Group</span></code> specified in the URL named by the
+<code class="docutils literal notranslate"><span class="pre">permission</span></code> at the model or object level. False otherwise.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pulpcore.app.global_access_conditions.has_group_obj_perms">
+<span class="sig-prename descclassname"><span class="pre">pulpcore.app.global_access_conditions.</span></span><span class="sig-name descname"><span class="pre">has_group_obj_perms</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">view</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">action</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">permission</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pulpcore.app.global_access_conditions.has_group_obj_perms" title="Permalink to this definition">¶</a></dt>
+<dd><p>Checks whether a user has the requested object permission on the Group in the URL.</p>
+<p>This check is meant to be used for relations nested beneath the group endpoint, e.g. the list
+of users to belong to that group. It will fail for other endpoints.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+    <span class="o">...</span>
+    <span class="s2">&quot;condition&quot;</span><span class="p">:</span> <span class="s2">&quot;has_group_obj_perms:core.group_delete&quot;</span><span class="p">,</span>
+<span class="p">},</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>request</strong> (<em>rest_framework.request.Request</em>) – The request being made.</p></li>
+<li><p><strong>view</strong> (<em>subclass rest_framework.viewsets.GenericViewSet</em>) – The view being checked for
+authorization.</p></li>
+<li><p><strong>action</strong> (<em>str</em>) – The action being performed, e.g. “destroy”.</p></li>
+<li><p><strong>permission</strong> (<em>str</em>) – The name of the Group Permission to be checked. In the form
+<cite>app_label.codename</cite>, e.g. “core.group_change”.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>True if the user has the Permission on the <code class="docutils literal notranslate"><span class="pre">Group</span></code> specified in the URL named by the
+<code class="docutils literal notranslate"><span class="pre">permission</span></code> at object level. False otherwise.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pulpcore.app.global_access_conditions.has_model_or_obj_perms">
+<span class="sig-prename descclassname"><span class="pre">pulpcore.app.global_access_conditions.</span></span><span class="sig-name descname"><span class="pre">has_model_or_obj_perms</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">view</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">action</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">permission</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pulpcore.app.global_access_conditions.has_model_or_obj_perms" title="Permalink to this definition">¶</a></dt>
+<dd><p>Checks if the current user has either model-level or object-level permissions.</p>
+<p>The object in this case is the one the action is operating on, e.g. the URL
+<code class="docutils literal notranslate"><span class="pre">/pulp/api/v3/tasks/15939b47-6b6d-4613-a441-939ca4ba6e63/</span></code> is operating on the Task object
+with <code class="docutils literal notranslate"><span class="pre">pk=15939b47-6b6d-4613-a441-939ca4ba6e63</span></code>.</p>
+<p>This is usable as a conditional check in an AccessPolicy. Here is an example checking for
+“file.view_fileremote” permission at either the model-level or object-level.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+    <span class="o">...</span>
+    <span class="s2">&quot;condition&quot;</span><span class="p">:</span> <span class="s2">&quot;has_model_or_obj_perms:file.view_fileremote&quot;</span><span class="p">,</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>request</strong> (<em>rest_framework.request.Request</em>) – The request being made.</p></li>
+<li><p><strong>view</strong> (<em>subclass rest_framework.viewsets.GenericViewSet</em>) – The view being checked for
+authorization.</p></li>
+<li><p><strong>action</strong> (<em>str</em>) – The action being performed, e.g. “destroy”.</p></li>
+<li><p><strong>permission</strong> (<em>str</em>) – The name of the Permission to be checked. In the form
+<cite>app_label.codename</cite>, e.g. “core.delete_task”.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><dl class="simple">
+<dt>True if the user has the Permission named by the <code class="docutils literal notranslate"><span class="pre">permission</span></code> argument at the model-level</dt><dd><p>or on the object being operated on at the object-level. False otherwise.</p>
+</dd>
+</dl>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pulpcore.app.global_access_conditions.has_model_perms">
+<span class="sig-prename descclassname"><span class="pre">pulpcore.app.global_access_conditions.</span></span><span class="sig-name descname"><span class="pre">has_model_perms</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">view</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">action</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">permission</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pulpcore.app.global_access_conditions.has_model_perms" title="Permalink to this definition">¶</a></dt>
+<dd><p>Checks if the current user has a model-level permission.</p>
+<p>This is usable as a conditional check in an AccessPolicy. Here is an example checking for
+“file.add_fileremote” permission at the model-level.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+    <span class="o">...</span>
+    <span class="s2">&quot;condition&quot;</span><span class="p">:</span> <span class="s2">&quot;has_model_perms:file.add_fileremote&quot;</span><span class="p">,</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>request</strong> (<em>rest_framework.request.Request</em>) – The request being made.</p></li>
+<li><p><strong>view</strong> (<em>subclass rest_framework.viewsets.GenericViewSet</em>) – The view being checked for
+authorization.</p></li>
+<li><p><strong>action</strong> (<em>str</em>) – The action being performed, e.g. “destroy”.</p></li>
+<li><p><strong>permission</strong> (<em>str</em>) – The name of the Permission to be checked. In the form
+<cite>app_label.codename</cite>, e.g. “core.delete_task”.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><dl class="simple">
+<dt>True if the user has the Permission named by the <code class="docutils literal notranslate"><span class="pre">permission</span></code> argument at the model-level.</dt><dd><p>False otherwise.</p>
+</dd>
+</dl>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pulpcore.app.global_access_conditions.has_obj_perms">
+<span class="sig-prename descclassname"><span class="pre">pulpcore.app.global_access_conditions.</span></span><span class="sig-name descname"><span class="pre">has_obj_perms</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">view</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">action</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">permission</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pulpcore.app.global_access_conditions.has_obj_perms" title="Permalink to this definition">¶</a></dt>
+<dd><p>Checks if the current user has object-level permission on the specific object.</p>
+<p>The object in this case is the one the action is operating on, e.g. the URL
+<code class="docutils literal notranslate"><span class="pre">/pulp/api/v3/tasks/15939b47-6b6d-4613-a441-939ca4ba6e63/</span></code> is operating on the Task object
+with <code class="docutils literal notranslate"><span class="pre">pk=15939b47-6b6d-4613-a441-939ca4ba6e63</span></code>.</p>
+<p>This is usable as a conditional check in an AccessPolicy. Here is an example checking for the
+“file.view_fileremote” permissions at the object-level.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+    <span class="o">...</span>
+    <span class="s2">&quot;condition&quot;</span><span class="p">:</span> <span class="s2">&quot;has_obj_perms:file.view_fileremote&quot;</span><span class="p">,</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>request</strong> (<em>rest_framework.request.Request</em>) – The request being made.</p></li>
+<li><p><strong>view</strong> (<em>subclass rest_framework.viewsets.GenericViewSet</em>) – The view being checked for
+authorization.</p></li>
+<li><p><strong>action</strong> (<em>str</em>) – The action being performed, e.g. “destroy”.</p></li>
+<li><p><strong>permission</strong> (<em>str</em>) – The name of the Permission to be checked. In the form
+<cite>app_label.codename</cite>, e.g. “core.delete_task”.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><dl class="simple">
+<dt>True if the user has the Permission named by the <code class="docutils literal notranslate"><span class="pre">permission</span></code> argument on the object being</dt><dd><p>operated on at the object-level. False otherwise.</p>
+</dd>
+</dl>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pulpcore.app.global_access_conditions.has_publication_param_model_or_obj_perms">
+<span class="sig-prename descclassname"><span class="pre">pulpcore.app.global_access_conditions.</span></span><span class="sig-name descname"><span class="pre">has_publication_param_model_or_obj_perms</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">view</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">action</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">permission</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pulpcore.app.global_access_conditions.has_publication_param_model_or_obj_perms" title="Permalink to this definition">¶</a></dt>
+<dd><p>Checks if the current user has permission on the <code class="docutils literal notranslate"><span class="pre">Publication</span></code> object.</p>
+<p>The object in this case is the one specified by the <code class="docutils literal notranslate"><span class="pre">publication</span></code> parameter. For example when
+distributing the <code class="docutils literal notranslate"><span class="pre">publication</span></code> parameter is passed in as an argument.</p>
+<p>This is usable as a conditional check in an AccessPolicy. Here is an example checking for the
+“file.view_filepublication” permission.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+    <span class="o">...</span>
+    <span class="s2">&quot;condition&quot;</span><span class="p">:</span> <span class="s2">&quot;has_publication_param_model_or_obj_perms:file.view_filepublication&quot;</span><span class="p">,</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>Since it is checking a <code class="docutils literal notranslate"><span class="pre">Publication</span></code> object the permission argument should be one of the
+following:</p>
+<ul class="simple">
+<li><p>“file.view_filepublication” - Permission to view the <code class="docutils literal notranslate"><span class="pre">FilePublication</span></code>.</p></li>
+<li><p>“file.delete_filepublication” - Permission to delete the <code class="docutils literal notranslate"><span class="pre">FilePublication</span></code>.</p></li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>request</strong> (<em>rest_framework.request.Request</em>) – The request being made.</p></li>
+<li><p><strong>view</strong> (<em>subclass rest_framework.viewsets.GenericViewSet</em>) – The view being checked for
+authorization.</p></li>
+<li><p><strong>action</strong> (<em>str</em>) – The action being performed, e.g. “destroy”.</p></li>
+<li><p><strong>permission</strong> (<em>str</em>) – The name of the Permission to be checked. In the form
+<cite>app_label.codename</cite>, e.g. “core.delete_task”.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><dl class="simple">
+<dt>True if the user has the Permission named by the <code class="docutils literal notranslate"><span class="pre">permission</span></code> argument on the</dt><dd><p><code class="docutils literal notranslate"><span class="pre">publication</span></code> parameter or if there is no publication. False otherwise.</p>
+</dd>
+</dl>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pulpcore.app.global_access_conditions.has_remote_param_model_or_obj_perms">
+<span class="sig-prename descclassname"><span class="pre">pulpcore.app.global_access_conditions.</span></span><span class="sig-name descname"><span class="pre">has_remote_param_model_or_obj_perms</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">view</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">action</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">permission</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pulpcore.app.global_access_conditions.has_remote_param_model_or_obj_perms" title="Permalink to this definition">¶</a></dt>
+<dd><p>Checks if the current user has either model-level or object-level permissions on the <code class="docutils literal notranslate"><span class="pre">remote</span></code>.</p>
+<p>The object in this case is the one specified by the <code class="docutils literal notranslate"><span class="pre">remote</span></code> parameter. For example when
+syncing the <code class="docutils literal notranslate"><span class="pre">remote</span></code> parameter is passed in as an argument.</p>
+<p>This is usable as a conditional check in an AccessPolicy. Here is an example checking for
+“file.view_fileremote” permission at either the model-level or object-level.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+    <span class="o">...</span>
+    <span class="s2">&quot;condition&quot;</span><span class="p">:</span> <span class="s2">&quot;has_remote_param_model_or_obj_perms:file.view_fileremote&quot;</span><span class="p">,</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>Since it is checking a <code class="docutils literal notranslate"><span class="pre">remote</span></code> object the permission argument should be one of the following:</p>
+<ul class="simple">
+<li><p>“file.change_fileremote” - Permission to change the <code class="docutils literal notranslate"><span class="pre">FileRemote</span></code>.</p></li>
+<li><p>“file.view_fileremote” - Permission to view the <code class="docutils literal notranslate"><span class="pre">FileRemote</span></code>.</p></li>
+<li><p>“file.delete_fileremote” - Permission to delete the <code class="docutils literal notranslate"><span class="pre">FileRemote</span></code>.</p></li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>request</strong> (<em>rest_framework.request.Request</em>) – The request being made.</p></li>
+<li><p><strong>view</strong> (<em>subclass rest_framework.viewsets.GenericViewSet</em>) – The view being checked for
+authorization.</p></li>
+<li><p><strong>action</strong> (<em>str</em>) – The action being performed, e.g. “destroy”.</p></li>
+<li><p><strong>permission</strong> (<em>str</em>) – The name of the Permission to be checked. In the form
+<cite>app_label.codename</cite>, e.g. “core.delete_task”.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><dl class="simple">
+<dt>True if the user has the Permission named by the <code class="docutils literal notranslate"><span class="pre">permission</span></code> at the model-level or on the</dt><dd><p>argument on the <code class="docutils literal notranslate"><span class="pre">remote</span></code> parameter at the object-level. False otherwise.</p>
+</dd>
+</dl>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pulpcore.app.global_access_conditions.has_remote_param_obj_perms">
+<span class="sig-prename descclassname"><span class="pre">pulpcore.app.global_access_conditions.</span></span><span class="sig-name descname"><span class="pre">has_remote_param_obj_perms</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">view</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">action</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">permission</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pulpcore.app.global_access_conditions.has_remote_param_obj_perms" title="Permalink to this definition">¶</a></dt>
+<dd><p>Checks if the current user has object-level permission on the <code class="docutils literal notranslate"><span class="pre">remote</span></code> object.</p>
+<p>The object in this case is the one specified by the <code class="docutils literal notranslate"><span class="pre">remote</span></code> parameter. For example when
+syncing the <code class="docutils literal notranslate"><span class="pre">remote</span></code> parameter is passed in as an argument.</p>
+<p>This is usable as a conditional check in an AccessPolicy. Here is an example checking for the
+“file.view_fileremote” permissions at the object-level.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+    <span class="o">...</span>
+    <span class="s2">&quot;condition&quot;</span><span class="p">:</span> <span class="s2">&quot;has_remote_param_obj_perms:file.view_fileremote&quot;</span><span class="p">,</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>Since it is checking a <code class="docutils literal notranslate"><span class="pre">remote</span></code> object the permission argument should be one of the following:</p>
+<ul class="simple">
+<li><p>“file.change_fileremote” - Permission to change the <code class="docutils literal notranslate"><span class="pre">FileRemote</span></code>.</p></li>
+<li><p>“file.view_fileremote” - Permission to view the <code class="docutils literal notranslate"><span class="pre">FileRemote</span></code>.</p></li>
+<li><p>“file.delete_fileremote” - Permission to delete the <code class="docutils literal notranslate"><span class="pre">FileRemote</span></code>.</p></li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>request</strong> (<em>rest_framework.request.Request</em>) – The request being made.</p></li>
+<li><p><strong>view</strong> (<em>subclass rest_framework.viewsets.GenericViewSet</em>) – The view being checked for
+authorization.</p></li>
+<li><p><strong>action</strong> (<em>str</em>) – The action being performed, e.g. “destroy”.</p></li>
+<li><p><strong>permission</strong> (<em>str</em>) – The name of the Permission to be checked. In the form
+<cite>app_label.codename</cite>, e.g. “core.delete_task”.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><dl class="simple">
+<dt>True if the user has the Permission named by the <code class="docutils literal notranslate"><span class="pre">permission</span></code> argument on the <code class="docutils literal notranslate"><span class="pre">remote</span></code></dt><dd><p>parameter at the object-level or if there is no remote. False otherwise.</p>
+</dd>
+</dl>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pulpcore.app.global_access_conditions.has_repo_attr_model_or_obj_perms">
+<span class="sig-prename descclassname"><span class="pre">pulpcore.app.global_access_conditions.</span></span><span class="sig-name descname"><span class="pre">has_repo_attr_model_or_obj_perms</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">view</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">action</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">permission</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pulpcore.app.global_access_conditions.has_repo_attr_model_or_obj_perms" title="Permalink to this definition">¶</a></dt>
+<dd><p>Checks if the current user has model-level or object-level permissions on a <code class="docutils literal notranslate"><span class="pre">repository</span></code>.</p>
+<p>The object in this case is the one specified by the <code class="docutils literal notranslate"><span class="pre">repository</span></code> attribute of a resource
+which is being operated on. For example, when deleting a repository version, a <code class="docutils literal notranslate"><span class="pre">repository</span></code>
+is its attribute.</p>
+<p>This is usable as a conditional check in an AccessPolicy. Here is an example checking for the
+“file.view_filerepository” permissions at the object-level.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+    <span class="o">...</span>
+    <span class="s2">&quot;condition&quot;</span><span class="p">:</span> <span class="s2">&quot;has_repo_attr_model_or_obj_perms:file.view_filerepository&quot;</span><span class="p">,</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>Since it is checking a <code class="docutils literal notranslate"><span class="pre">repository</span></code> object the permission argument should be one of the
+following:</p>
+<ul class="simple">
+<li><p>“file.change_filerepository” - Permission to change the <code class="docutils literal notranslate"><span class="pre">FileRepository</span></code>.</p></li>
+<li><p>“file.view_filerepository” - Permission to view the <code class="docutils literal notranslate"><span class="pre">FileRepository</span></code>.</p></li>
+<li><p>“file.delete_filerepository” - Permission to delete the <code class="docutils literal notranslate"><span class="pre">FileRepository</span></code>.</p></li>
+<li><p>any custom permission a plugin has defined for their repository.</p></li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>request</strong> (<em>rest_framework.request.Request</em>) – The request being made.</p></li>
+<li><p><strong>view</strong> (<em>subclass rest_framework.viewsets.GenericViewSet</em>) – The view being checked for
+authorization.</p></li>
+<li><p><strong>action</strong> (<em>str</em>) – The action being performed, e.g. “destroy”.</p></li>
+<li><p><strong>permission</strong> (<em>str</em>) – The name of the repository Permission to be checked. In the form
+<cite>app_label.codename</cite>, e.g. “file.delete_filerepository”.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>True if the user has the Permission on the <code class="docutils literal notranslate"><span class="pre">repository</span></code> attribute named by the
+<code class="docutils literal notranslate"><span class="pre">permission</span></code> at the model or object level. False otherwise.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pulpcore.app.global_access_conditions.has_repo_attr_obj_perms">
+<span class="sig-prename descclassname"><span class="pre">pulpcore.app.global_access_conditions.</span></span><span class="sig-name descname"><span class="pre">has_repo_attr_obj_perms</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">view</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">action</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">permission</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pulpcore.app.global_access_conditions.has_repo_attr_obj_perms" title="Permalink to this definition">¶</a></dt>
+<dd><p>Checks if the current user has object-level permission on a <code class="docutils literal notranslate"><span class="pre">repository</span></code> attribute.</p>
+<p>The object in this case is the one specified by the <code class="docutils literal notranslate"><span class="pre">repository</span></code> attribute of a resource
+which is being operated on. For example, when deleting a repository version, a <code class="docutils literal notranslate"><span class="pre">repository</span></code>
+is its attribute.</p>
+<p>This is usable as a conditional check in an AccessPolicy. Here is an example checking for the
+“file.view_filerepository” permissions at the object-level.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+    <span class="o">...</span>
+    <span class="s2">&quot;condition&quot;</span><span class="p">:</span> <span class="s2">&quot;has_repo_attr_obj_perms:file.view_filerepository&quot;</span><span class="p">,</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>Since it is checking a <code class="docutils literal notranslate"><span class="pre">repository</span></code> object the permission argument should be one of the
+following:</p>
+<ul class="simple">
+<li><p>“file.change_filerepository” - Permission to change the <code class="docutils literal notranslate"><span class="pre">FileRepository</span></code>.</p></li>
+<li><p>“file.view_filerepository” - Permission to view the <code class="docutils literal notranslate"><span class="pre">FileRepository</span></code>.</p></li>
+<li><p>“file.delete_filerepository” - Permission to delete the <code class="docutils literal notranslate"><span class="pre">FileRepository</span></code>.</p></li>
+<li><p>any custom permission a plugin has defined for their repository.</p></li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>request</strong> (<em>rest_framework.request.Request</em>) – The request being made.</p></li>
+<li><p><strong>view</strong> (<em>subclass rest_framework.viewsets.GenericViewSet</em>) – The view being checked for
+authorization.</p></li>
+<li><p><strong>action</strong> (<em>str</em>) – The action being performed, e.g. “destroy”.</p></li>
+<li><p><strong>permission</strong> (<em>str</em>) – The name of the repository Permission to be checked. In the form
+<cite>app_label.codename</cite>, e.g. “file.delete_filerepository”.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>True if the user has the Permission named by the <code class="docutils literal notranslate"><span class="pre">permission</span></code> argument on the
+<code class="docutils literal notranslate"><span class="pre">repository</span></code> attribute at the object-level. False otherwise.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pulpcore.app.global_access_conditions.has_repo_or_repo_ver_param_model_or_obj_perms">
+<span class="sig-prename descclassname"><span class="pre">pulpcore.app.global_access_conditions.</span></span><span class="sig-name descname"><span class="pre">has_repo_or_repo_ver_param_model_or_obj_perms</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">view</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">action</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">permission</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pulpcore.app.global_access_conditions.has_repo_or_repo_ver_param_model_or_obj_perms" title="Permalink to this definition">¶</a></dt>
+<dd><p>Checks if the current user has object-level permission on the <code class="docutils literal notranslate"><span class="pre">repository</span></code> object.</p>
+<p>The object in this case is the one specified by the <code class="docutils literal notranslate"><span class="pre">repository</span></code> or <code class="docutils literal notranslate"><span class="pre">repository_version</span></code>
+parameter. For example when publishing the <code class="docutils literal notranslate"><span class="pre">repository</span></code> parameter is passed in as an argument.</p>
+<p>This is usable as a conditional check in an AccessPolicy. Here is an example checking for the
+“file.view_filerepository” permissions at the object-level.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+    <span class="o">...</span>
+    <span class="s2">&quot;condition&quot;</span><span class="p">:</span> <span class="s2">&quot;has_repo_or_repo_ver_param_model_or_obj_perms:file.view_filerepository&quot;</span><span class="p">,</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>Since it is checking a <code class="docutils literal notranslate"><span class="pre">repository</span></code> object the permission argument should be one of the
+following:</p>
+<ul class="simple">
+<li><p>“file.change_filerepository” - Permission to change the <code class="docutils literal notranslate"><span class="pre">FileRepository</span></code>.</p></li>
+<li><p>“file.view_filerepository” - Permission to view the <code class="docutils literal notranslate"><span class="pre">FileRepository</span></code>.</p></li>
+<li><p>“file.delete_filerepository” - Permission to delete the <code class="docutils literal notranslate"><span class="pre">FileRepository</span></code>.</p></li>
+<li><p>“file.sync_filerepository” - Permission to sync the <code class="docutils literal notranslate"><span class="pre">FileRepository</span></code>.</p></li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>request</strong> (<em>rest_framework.request.Request</em>) – The request being made.</p></li>
+<li><p><strong>view</strong> (<em>subclass rest_framework.viewsets.GenericViewSet</em>) – The view being checked for
+authorization.</p></li>
+<li><p><strong>action</strong> (<em>str</em>) – The action being performed, e.g. “destroy”.</p></li>
+<li><p><strong>permission</strong> (<em>str</em>) – The name of the Permission to be checked. In the form
+<cite>app_label.codename</cite>, e.g. “core.delete_task”.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><dl class="simple">
+<dt>True if the user has the Permission named by the <code class="docutils literal notranslate"><span class="pre">permission</span></code> argument on the</dt><dd><p><code class="docutils literal notranslate"><span class="pre">repository</span></code> or <code class="docutils literal notranslate"><span class="pre">repository_version</span></code> parameter at the object-level or if there is
+no repository. False otherwise.</p>
+</dd>
+</dl>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pulpcore.app.global_access_conditions.has_repository_model_or_obj_perms">
+<span class="sig-prename descclassname"><span class="pre">pulpcore.app.global_access_conditions.</span></span><span class="sig-name descname"><span class="pre">has_repository_model_or_obj_perms</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">view</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">action</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">permission</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pulpcore.app.global_access_conditions.has_repository_model_or_obj_perms" title="Permalink to this definition">¶</a></dt>
+<dd><p>Checks whether a user has the requested model or object permission on the repository in the
+URL.</p>
+<p>This check is meant to be used for relations nested beneath a repository endpoint, e.g. the
+list of repository versions belonging to that repository. It will fail for other endpoints.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+    <span class="o">...</span>
+    <span class="s2">&quot;condition&quot;</span><span class="p">:</span> <span class="s2">&quot;has_repository_model_or_obj_perms:file.filerepository_delete&quot;</span><span class="p">,</span>
+<span class="p">},</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>request</strong> (<em>rest_framework.request.Request</em>) – The request being made.</p></li>
+<li><p><strong>view</strong> (<em>subclass rest_framework.viewsets.GenericViewSet</em>) – The view being checked for
+authorization.</p></li>
+<li><p><strong>action</strong> (<em>str</em>) – The action being performed, e.g. “destroy”.</p></li>
+<li><p><strong>permission</strong> (<em>str</em>) – The name of the Repository Permission to be checked. In the form
+<cite>app_label.codename</cite>, e.g. “file.filerepository_change”.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>True if the user has the Permission on the <code class="docutils literal notranslate"><span class="pre">Repository</span></code> specified in the URL named by the
+<code class="docutils literal notranslate"><span class="pre">permission</span></code> at model or object level. False otherwise.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pulpcore.app.global_access_conditions.has_repository_obj_perms">
+<span class="sig-prename descclassname"><span class="pre">pulpcore.app.global_access_conditions.</span></span><span class="sig-name descname"><span class="pre">has_repository_obj_perms</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">view</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">action</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">permission</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pulpcore.app.global_access_conditions.has_repository_obj_perms" title="Permalink to this definition">¶</a></dt>
+<dd><p>Checks whether a user has the requested object permission on the repository in the URL.</p>
+<p>This check is meant to be used for relations nested beneath a repository endpoint, e.g. the
+list of repository versions belonging to that repository. It will fail for other endpoints.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+    <span class="o">...</span>
+    <span class="s2">&quot;condition&quot;</span><span class="p">:</span> <span class="s2">&quot;has_repository_obj_perms:file.filerepository_delete&quot;</span><span class="p">,</span>
+<span class="p">},</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>request</strong> (<em>rest_framework.request.Request</em>) – The request being made.</p></li>
+<li><p><strong>view</strong> (<em>subclass rest_framework.viewsets.GenericViewSet</em>) – The view being checked for
+authorization.</p></li>
+<li><p><strong>action</strong> (<em>str</em>) – The action being performed, e.g. “destroy”.</p></li>
+<li><p><strong>permission</strong> (<em>str</em>) – The name of the Repository Permission to be checked. In the form
+<cite>app_label.codename</cite>, e.g. “file.filerepository_change”.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>True if the user has the Permission on the <code class="docutils literal notranslate"><span class="pre">Repository</span></code> specified in the URL named by the
+<code class="docutils literal notranslate"><span class="pre">permission</span></code> at object level. False otherwise.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pulpcore.app.global_access_conditions.has_required_repo_perms_on_upload">
+<span class="sig-prename descclassname"><span class="pre">pulpcore.app.global_access_conditions.</span></span><span class="sig-name descname"><span class="pre">has_required_repo_perms_on_upload</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">view</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">action</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">permission</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pulpcore.app.global_access_conditions.has_required_repo_perms_on_upload" title="Permalink to this definition">¶</a></dt>
+<dd><p>Checks if the current user has permission to upload content to the <code class="docutils literal notranslate"><span class="pre">repository</span></code> object.</p>
+<p>Since content queryset scoping prevents users from seeing orphaned content by default this
+also checks to make sure that any user that isn’t an admin has also supplied the <code class="docutils literal notranslate"><span class="pre">repository</span></code>
+parameter when performing a content upload.</p>
+<p>This is usable as a conditional check in an AccessPolicy for content uploads. Here is an
+example checking for the “file.modify_filerepository” permission.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+    <span class="o">...</span>
+    <span class="s2">&quot;condition&quot;</span><span class="p">:</span> <span class="s2">&quot;has_required_repo_perms_on_upload:file.modify_filerepository&quot;</span><span class="p">,</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>request</strong> (<em>rest_framework.request.Request</em>) – The request being made.</p></li>
+<li><p><strong>view</strong> (<em>subclass rest_framework.viewsets.GenericViewSet</em>) – The view being checked for
+authorization.</p></li>
+<li><p><strong>action</strong> (<em>str</em>) – The action being performed, e.g. “destroy”.</p></li>
+<li><p><strong>permission</strong> (<em>str</em>) – The name of the Permission to be checked. In the form
+<cite>app_label.codename</cite>, e.g. “core.delete_task”.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><dl class="simple">
+<dt>True if the user has supplied the <code class="docutils literal notranslate"><span class="pre">repository</span></code> parameter and has the Permission on it</dt><dd><p>named by the <code class="docutils literal notranslate"><span class="pre">permission</span></code> argument, or is an admin. False otherwise.</p>
+</dd>
+</dl>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pulpcore.app.global_access_conditions.has_upload_param_model_or_obj_perms">
+<span class="sig-prename descclassname"><span class="pre">pulpcore.app.global_access_conditions.</span></span><span class="sig-name descname"><span class="pre">has_upload_param_model_or_obj_perms</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">request</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">view</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">action</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">permission</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#pulpcore.app.global_access_conditions.has_upload_param_model_or_obj_perms" title="Permalink to this definition">¶</a></dt>
+<dd><p>Checks if the current user has permission on the <code class="docutils literal notranslate"><span class="pre">Upload</span></code> object.</p>
+<p>The object in this case is the one specified by the <code class="docutils literal notranslate"><span class="pre">upload</span></code> parameter, for example to a
+one-shot content creation call.</p>
+<p>This is usable as a conditional check in an AccessPolicy. Here is an example checking for the
+“core.change_upload” permissions.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+    <span class="o">...</span>
+    <span class="s2">&quot;condition&quot;</span><span class="p">:</span> <span class="s2">&quot;has_upload_param_model_or_obj_perms:core.change_upload&quot;</span><span class="p">,</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>Since it is checking a <code class="docutils literal notranslate"><span class="pre">Upload</span></code> object the permission argument should be one of the following:</p>
+<ul class="simple">
+<li><p>“core.view_upload” - Permission to view the <code class="docutils literal notranslate"><span class="pre">Upload</span></code>.</p></li>
+<li><p>“core.change_upload” - Permission to change the <code class="docutils literal notranslate"><span class="pre">Upload</span></code>.</p></li>
+<li><p>“core.delete_upload” - Permission to delete the <code class="docutils literal notranslate"><span class="pre">Upload</span></code>.</p></li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>request</strong> (<em>rest_framework.request.Request</em>) – The request being made.</p></li>
+<li><p><strong>view</strong> (<em>subclass rest_framework.viewsets.GenericViewSet</em>) – The view being checked for
+authorization.</p></li>
+<li><p><strong>action</strong> (<em>str</em>) – The action being performed, e.g. “destroy”.</p></li>
+<li><p><strong>permission</strong> (<em>str</em>) – The name of the Permission to be checked. In the form
+<cite>app_label.codename</cite>, e.g. “core.delete_task”.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><dl class="simple">
+<dt>True if the user has the Permission named by the <code class="docutils literal notranslate"><span class="pre">permission</span></code> argument on the</dt><dd><p><code class="docutils literal notranslate"><span class="pre">Upload</span></code> parameter or if there is no upload. False otherwise.</p>
+</dd>
+</dl>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="custom-permission-checks">
+<span id="id5"></span><h2>Custom Permission Checks<a class="headerlink" href="#custom-permission-checks" title="Permalink to this heading">¶</a></h2>
+<p>Plugins can provide their own permission checks by defining them in a
+<code class="docutils literal notranslate"><span class="pre">app.global_access_conditions</span></code> module and adding an operation like</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">DRF_ACCESS_POLICY</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;dynaconf_merge_unique&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="s2">&quot;reusable_conditions&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;pulp_container.app.global_access_conditions&quot;</span><span class="p">],</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>to their <code class="docutils literal notranslate"><span class="pre">app.settings</span></code> module.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="users_groups.html" class="btn btn-neutral float-left" title="Users and Groups" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="adding_automatic_permissions.html" class="btn btn-neutral float-right" title="Adding Automatic Permissions for New Objects" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2012-2023, Pulp Team.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+ 
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-74748547-2', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+
+<script>
+$( document ).ready( function() {
+
+  // gets version number minus whitespace and bugfix version
+  var $version_number = $('.version').text().trim().split('.', 2).join('.')
+
+  // div mirroring the admonition-warning generated by sphinx if added to .rst
+  var warning = '\
+          <div class="admonition warning"> \
+              <p class="first admonition-title">Warning</p> \
+              <p class="last">You are looking at the docs for an unsupported version of Pulp. \
+               Consider switching to a  \
+               <a href="https://pulpproject.org/docs/">supported version</a></p> \
+          </div>'
+
+  
+  // get JSON from server and load supported_versions
+  $.getJSON("https://raw.githubusercontent.com/pulp/pulp-ci/master/ci/config/releases/supported-releases.json" , function(data) {
+    if ($.inArray($version_number, data) === -1) {
+      $('.rst-content').prepend(warning)
+      }
+    })
+  })
+  </script>
+
+
+</body>
+</html>

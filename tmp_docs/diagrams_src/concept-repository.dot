@@ -1,0 +1,11 @@
+@startuml
+rectangle "Create repository" {
+  (Content Unit 1)
+  (Content Unit 2)
+  rectangle "Repository" {
+    (Repository Version 1)
+  }
+  (Content Unit 1) --> (Repository Version 1)
+  (Content Unit 2) --> (Repository Version 1)
+}
+@enduml

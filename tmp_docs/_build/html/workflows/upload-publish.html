@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Upload and Publish &mdash; Pulp Project 3.23.0.dev documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script src="../_static/sphinx_highlight.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Repository Versioning" href="repo-versioning.html" />
+    <link rel="prev" title="Alternate Content Sources" href="alternate-content-sources.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../index.html" class="icon icon-home"> Pulp Project
+          </a>
+              <div class="version">
+                3.23.0.dev
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../concepts.html">Concepts and Terminology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../from-pulp-2.html">Changes From Pulp 2</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../components.html">Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../installation/index.html">Installation Options</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../configuration/index.html">Configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../authentication/index.html">Authentication</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Workflows and Use Cases</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="alternate-content-sources.html">Alternate Content Sources</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Upload and Publish</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#uploading-content">Uploading Content</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#associating-with-a-repository-on-upload">Associating with a Repository on Upload</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#chunked-uploads">Chunked Uploads</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="repo-versioning.html">Repository Versioning</a></li>
+<li class="toctree-l2"><a class="reference internal" href="on-demand-downloading.html">On-Demand Downloading</a></li>
+<li class="toctree-l2"><a class="reference internal" href="promotion.html">Promotion</a></li>
+<li class="toctree-l2"><a class="reference internal" href="scheduling-tasks.html">Scheduling Tasks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="exposing-content.html">Exposing Content</a></li>
+<li class="toctree-l2"><a class="reference internal" href="signed-metadata.html">Metadata Signing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="repairing-pulp.html">Repairing Pulp</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reclaim-disk-space.html">Reclaim disk space for a list of repositories</a></li>
+<li class="toctree-l2"><a class="reference internal" href="import-export.html">Pulp Import and Export</a></li>
+<li class="toctree-l2"><a class="reference internal" href="labels.html">Labels</a></li>
+<li class="toctree-l2"><a class="reference internal" href="plugin-removal.html">Plugin removal</a></li>
+<li class="toctree-l2"><a class="reference internal" href="troubleshooting.html">Troubleshooting</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../plugins.html">Plugins</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../plugin_dev/index.html">Plugin Development</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../rest_api.html">REST API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../client_bindings.html">Client Bindings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../contributing/index.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../bugs-features.html">Bugs, Feature and Backport Requests</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../troubleshooting.html">Troubleshooting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../glossary.html">Glossary</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../changes.html">Changelog</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../versioning.html">Versioning</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../release_process.html">Pulpcore Release Process</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Pulp Project</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">Workflows and Use Cases</a></li>
+      <li class="breadcrumb-item active">Upload and Publish</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/workflows/upload-publish.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="upload-and-publish">
+<h1>Upload and Publish<a class="headerlink" href="#upload-and-publish" title="Permalink to this heading">¶</a></h1>
+<section id="uploading-content">
+<h2>Uploading Content<a class="headerlink" href="#uploading-content" title="Permalink to this heading">¶</a></h2>
+<p>Content can be uploaded by POSTing the file to <code class="docutils literal notranslate"><span class="pre">/pulp/api/v3/content/&lt;plugin_name&gt;/&lt;content_type&gt;/</span></code>.
+Some plugins can create the content unit completely from that file, but others require some
+additional attributes to be specified with the upload. See your plugin documentation for more info
+on upload features of your plugin.</p>
+<p>File data can be uploaded in parallel, and then the call to
+<code class="docutils literal notranslate"><span class="pre">/pulp/api/v3/content/&lt;plugin_name&gt;/&lt;content_type&gt;/</span></code> can reference the already existing Artifact to create
+the content from.</p>
+</section>
+<section id="associating-with-a-repository-on-upload">
+<h2>Associating with a Repository on Upload<a class="headerlink" href="#associating-with-a-repository-on-upload" title="Permalink to this heading">¶</a></h2>
+<p>You can automatically associate newly uploaded content with a Repository when using the
+<code class="docutils literal notranslate"><span class="pre">/pulp/api/v3/content/&lt;plugin_name&gt;/&lt;content_type&gt;/</span></code> API by passing the <code class="docutils literal notranslate"><span class="pre">repository</span> <span class="pre">reference</span></code>.</p>
+</section>
+<section id="chunked-uploads">
+<h2>Chunked Uploads<a class="headerlink" href="#chunked-uploads" title="Permalink to this heading">¶</a></h2>
+<p>For large file uploads, Pulp provides an <a class="reference external" href="../../restapi.html#tag/uploads">Uploads API</a>. To begin
+uploading a file in chunks, an initial POST request must be sent to the <code class="docutils literal notranslate"><span class="pre">/pulp/api/v3/uploads</span></code>
+endpoint with the total size of the file:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">http</span> <span class="n">POST</span> <span class="p">:</span><span class="mi">24817</span><span class="o">/</span><span class="n">pulp</span><span class="o">/</span><span class="n">api</span><span class="o">/</span><span class="n">v3</span><span class="o">/</span><span class="n">uploads</span><span class="o">/</span> <span class="n">size</span><span class="o">=</span><span class="mi">10485760</span>
+</pre></div>
+</div>
+<p>This returns an upload href (e.g. <code class="docutils literal notranslate"><span class="pre">/pulp/api/v3/uploads/a8b5a7f7-2f22-460d-ab20-d5616cb71cdd/</span></code>) that can
+be used for chunks. Chunks can be uploaded in any order or in parallel:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">http</span> <span class="o">--</span><span class="n">form</span> <span class="n">PUT</span> <span class="p">:</span><span class="mi">24817</span><span class="o">/</span><span class="n">pulp</span><span class="o">/</span><span class="n">api</span><span class="o">/</span><span class="n">v3</span><span class="o">/</span><span class="n">uploads</span><span class="o">/</span><span class="n">a8b5a7f7</span><span class="o">-</span><span class="mi">2</span><span class="n">f22</span><span class="o">-</span><span class="mi">460</span><span class="n">d</span><span class="o">-</span><span class="n">ab20</span><span class="o">-</span><span class="n">d5616cb71cdd</span><span class="o">/</span> <span class="n">file</span><span class="o">@./</span><span class="n">chunk2</span> <span class="s1">&#39;Content-Range:bytes 6291456-10485759/*&#39;</span>
+<span class="n">http</span> <span class="o">--</span><span class="n">form</span> <span class="n">PUT</span> <span class="p">:</span><span class="mi">24817</span><span class="o">/</span><span class="n">pulp</span><span class="o">/</span><span class="n">api</span><span class="o">/</span><span class="n">v3</span><span class="o">/</span><span class="n">uploads</span><span class="o">/</span><span class="n">a8b5a7f7</span><span class="o">-</span><span class="mi">2</span><span class="n">f22</span><span class="o">-</span><span class="mi">460</span><span class="n">d</span><span class="o">-</span><span class="n">ab20</span><span class="o">-</span><span class="n">d5616cb71cdd</span><span class="o">/</span> <span class="n">file</span><span class="o">@./</span><span class="n">chunk1</span> <span class="s1">&#39;Content-Range:bytes 0-6291455/*&#39;</span>
+</pre></div>
+</div>
+<p>Note: You can send an optional sha256 argument:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">http</span> <span class="o">--</span><span class="n">form</span> <span class="n">PUT</span> <span class="p">:</span><span class="mi">24817</span><span class="o">/</span><span class="n">pulp</span><span class="o">/</span><span class="n">api</span><span class="o">/</span><span class="n">v3</span><span class="o">/</span><span class="n">uploads</span><span class="o">/</span><span class="n">a8b5a7f7</span><span class="o">-</span><span class="mi">2</span><span class="n">f22</span><span class="o">-</span><span class="mi">460</span><span class="n">d</span><span class="o">-</span><span class="n">ab20</span><span class="o">-</span><span class="n">d5616cb71cdd</span><span class="o">/</span> <span class="n">file</span><span class="o">@./</span><span class="n">chunk1</span> <span class="s1">&#39;Content-Range:bytes 0-6291455/*&#39;</span> <span class="n">sha256</span><span class="o">=</span><span class="mi">7</span><span class="n">ffc86295de63e96006ce5ab379050628aa5d51f816267946c71906594e13870</span>
+</pre></div>
+</div>
+<p>Once all chunks have been uploaded, a final POST request with the file sha256 can be sent to
+complete the upload:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">http</span> <span class="n">POST</span> <span class="p">:</span><span class="mi">24817</span><span class="o">/</span><span class="n">pulp</span><span class="o">/</span><span class="n">api</span><span class="o">/</span><span class="n">v3</span><span class="o">/</span><span class="n">uploads</span><span class="o">/</span><span class="n">a8b5a7f7</span><span class="o">-</span><span class="mi">2</span><span class="n">f22</span><span class="o">-</span><span class="mi">460</span><span class="n">d</span><span class="o">-</span><span class="n">ab20</span><span class="o">-</span><span class="n">d5616cb71cdd</span><span class="o">/</span><span class="n">commit</span> <span class="n">sha256</span><span class="o">=</span><span class="n">abc123</span><span class="o">...</span>
+</pre></div>
+</div>
+<p>This queues a task that creates an artifact, and the upload gets deleted and cannot be re-used.</p>
+<p>Putting this altogether, here is an example that uploads a 1.iso file in two chunks:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>curl -O https://fixtures.pulpproject.org/file-large/1.iso
+split --bytes=6M 1.iso chunk
+export UPLOAD=$(http POST :24817/pulp/api/v3/uploads/ size=`ls -l 1.iso | cut -d &#39; &#39; -f5` | jq -r &#39;.pulp_href&#39;)
+http --form PUT :24817$UPLOAD file@./chunkab &#39;Content-Range:bytes 6291456-10485759/*&#39;
+http --form PUT :24817$UPLOAD file@./chunkaa &#39;Content-Range:bytes 0-6291455/*&#39;
+http POST :24817${UPLOAD}commit/ sha256=`sha256sum 1.iso | cut -d &#39; &#39; -f1`
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Each uploaded chunk is stored as a separate file in the default storage. When an upload is
+committed, uploaded chunks are removed automatically and a new artifact is created, as usually.</p>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="alternate-content-sources.html" class="btn btn-neutral float-left" title="Alternate Content Sources" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="repo-versioning.html" class="btn btn-neutral float-right" title="Repository Versioning" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2012-2023, Pulp Team.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+ 
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-74748547-2', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+
+<script>
+$( document ).ready( function() {
+
+  // gets version number minus whitespace and bugfix version
+  var $version_number = $('.version').text().trim().split('.', 2).join('.')
+
+  // div mirroring the admonition-warning generated by sphinx if added to .rst
+  var warning = '\
+          <div class="admonition warning"> \
+              <p class="first admonition-title">Warning</p> \
+              <p class="last">You are looking at the docs for an unsupported version of Pulp. \
+               Consider switching to a  \
+               <a href="https://pulpproject.org/docs/">supported version</a></p> \
+          </div>'
+
+  
+  // get JSON from server and load supported_versions
+  $.getJSON("https://raw.githubusercontent.com/pulp/pulp-ci/master/ci/config/releases/supported-releases.json" , function(data) {
+    if ($.inArray($version_number, data) === -1) {
+      $('.rst-content').prepend(warning)
+      }
+    })
+  })
+  </script>
+
+
+</body>
+</html>

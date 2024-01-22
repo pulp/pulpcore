@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>On-Demand Downloading &mdash; Pulp Project 3.23.0.dev documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script src="../_static/sphinx_highlight.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Promotion" href="promotion.html" />
+    <link rel="prev" title="Repository Versioning" href="repo-versioning.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../index.html" class="icon icon-home"> Pulp Project
+          </a>
+              <div class="version">
+                3.23.0.dev
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../concepts.html">Concepts and Terminology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../from-pulp-2.html">Changes From Pulp 2</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../components.html">Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../installation/index.html">Installation Options</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../configuration/index.html">Configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../authentication/index.html">Authentication</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Workflows and Use Cases</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="alternate-content-sources.html">Alternate Content Sources</a></li>
+<li class="toctree-l2"><a class="reference internal" href="upload-publish.html">Upload and Publish</a></li>
+<li class="toctree-l2"><a class="reference internal" href="repo-versioning.html">Repository Versioning</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">On-Demand Downloading</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#overview">Overview</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#does-plugin-x-support-on-demand-or-streamed">Does Plugin X Support ‘on_demand’ or ‘streamed’?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#associating-on-demand-content-with-additional-repository-versions">Associating On-Demand Content with Additional Repository Versions</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="promotion.html">Promotion</a></li>
+<li class="toctree-l2"><a class="reference internal" href="scheduling-tasks.html">Scheduling Tasks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="exposing-content.html">Exposing Content</a></li>
+<li class="toctree-l2"><a class="reference internal" href="signed-metadata.html">Metadata Signing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="repairing-pulp.html">Repairing Pulp</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reclaim-disk-space.html">Reclaim disk space for a list of repositories</a></li>
+<li class="toctree-l2"><a class="reference internal" href="import-export.html">Pulp Import and Export</a></li>
+<li class="toctree-l2"><a class="reference internal" href="labels.html">Labels</a></li>
+<li class="toctree-l2"><a class="reference internal" href="plugin-removal.html">Plugin removal</a></li>
+<li class="toctree-l2"><a class="reference internal" href="troubleshooting.html">Troubleshooting</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../plugins.html">Plugins</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../plugin_dev/index.html">Plugin Development</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../rest_api.html">REST API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../client_bindings.html">Client Bindings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../contributing/index.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../bugs-features.html">Bugs, Feature and Backport Requests</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../troubleshooting.html">Troubleshooting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../glossary.html">Glossary</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../changes.html">Changelog</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../versioning.html">Versioning</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../release_process.html">Pulpcore Release Process</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Pulp Project</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">Workflows and Use Cases</a></li>
+      <li class="breadcrumb-item active">On-Demand Downloading</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/workflows/on-demand-downloading.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="on-demand-downloading">
+<h1>On-Demand Downloading<a class="headerlink" href="#on-demand-downloading" title="Permalink to this heading">¶</a></h1>
+<section id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Permalink to this heading">¶</a></h2>
+<p>Pulp can sync content in a few modes: ‘immediate’, ‘on_demand’, and ‘streamed’. Each provides a
+different behavior on how and when Pulp acquires content. These are set as the <cite>policy</cite> attribute
+of the <a class="reference internal" href="../glossary.html#term-Remote"><span class="xref std std-term">Remote</span></a> performing the sync. Policy is an optional parameter and defaults to
+<cite>immediate</cite>.</p>
+<dl>
+<dt>immediate</dt><dd><p>When performing the sync, download all <a class="reference internal" href="../glossary.html#term-Artifact"><span class="xref std std-term">Artifacts</span></a> now. Also download all metadata
+now to create the content units in Pulp, associated with the
+<a class="reference internal" href="../glossary.html#term-RepositoryVersion"><span class="xref std std-term">repository version</span></a> created by the sync. <cite>immediate</cite> is the default, and
+any plugin providing a sync is expected to implement the <cite>immediate</cite> mode.</p>
+</dd>
+<dt>on_demand</dt><dd><p>When performing the sync, do not download any <a class="reference internal" href="../glossary.html#term-Artifact"><span class="xref std std-term">Artifacts</span></a> now. Download all
+metadata now to create the content units in Pulp, associated with the
+<a class="reference internal" href="../glossary.html#term-RepositoryVersion"><span class="xref std std-term">repository version</span></a> created by the sync. Clients requesting content
+trigger the downloading of <a class="reference internal" href="../glossary.html#term-Artifact"><span class="xref std std-term">Artifacts</span></a>, which are saved into Pulp to be served to
+future clients.</p>
+<p>This mode is ideal for saving disk space because Pulp never downloads and stores
+<a class="reference internal" href="../glossary.html#term-Artifact"><span class="xref std std-term">Artifacts</span></a> that clients don’t need. Units created from this mode are
+<a class="reference internal" href="../glossary.html#term-on-demand-content"><span class="xref std std-term">on-demand content units</span></a>.</p>
+</dd>
+<dt>streamed</dt><dd><p>When performing the sync, do not download any <a class="reference internal" href="../glossary.html#term-Artifact"><span class="xref std std-term">Artifacts</span></a> now. Download all
+metadata now to create the content units in Pulp, associated with the
+<a class="reference internal" href="../glossary.html#term-RepositoryVersion"><span class="xref std std-term">repository version</span></a> created by the sync. Clients requesting content
+trigger the downloading of <a class="reference internal" href="../glossary.html#term-Artifact"><span class="xref std std-term">Artifacts</span></a>, which are <em>not</em> saved into Pulp. This
+content will be re-downloaded with each client request.</p>
+<p>This mode is ideal for content that you especially don’t want Pulp to store over time. For
+instance, syncing from a nightly repo would cause Pulp to store every nightly ever produced which
+is likely not valuable. Units created from this mode are
+<a class="reference internal" href="../glossary.html#term-on-demand-content"><span class="xref std std-term">on-demand content units</span></a>.</p>
+</dd>
+</dl>
+</section>
+<section id="does-plugin-x-support-on-demand-or-streamed">
+<h2>Does Plugin X Support ‘on_demand’ or ‘streamed’?<a class="headerlink" href="#does-plugin-x-support-on-demand-or-streamed" title="Permalink to this heading">¶</a></h2>
+<p>Unless a plugin has enabled either the ‘on_demand’ or ‘streamed’ values for the <cite>policy</cite> attribute
+you will receive an error. Check that plugin’s documentation also.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Want to add on-demand support to your plugin? See the <a class="reference external" href="../plugins/nightly/">Pulp Plugin API</a> documentation for more details on how to add on-demand support to a plugin.</p>
+</div>
+</section>
+<section id="associating-on-demand-content-with-additional-repository-versions">
+<h2>Associating On-Demand Content with Additional Repository Versions<a class="headerlink" href="#associating-on-demand-content-with-additional-repository-versions" title="Permalink to this heading">¶</a></h2>
+<p>An <a class="reference internal" href="../glossary.html#term-on-demand-content"><span class="xref std std-term">on-demand content unit</span></a> can be associated and unassociated from a
+<a class="reference internal" href="../glossary.html#term-RepositoryVersion"><span class="xref std std-term">repository version</span></a> just like a normal unit. Note that the original
+<a class="reference internal" href="../glossary.html#term-Remote"><span class="xref std std-term">Remote</span></a> will be used to download content should a client request it, even as that content is
+made available in multiple places.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Deleting a <a class="reference internal" href="../glossary.html#term-Remote"><span class="xref std std-term">Remote</span></a> that was used in a sync with either the <cite>on_demand</cite> or <cite>streamed</cite>
+options can break published data. Specifically, clients who want to fetch content that a
+<a class="reference internal" href="../glossary.html#term-Remote"><span class="xref std std-term">Remote</span></a> was providing access to would begin to 404. Recreating a <a class="reference internal" href="../glossary.html#term-Remote"><span class="xref std std-term">Remote</span></a> and
+re-triggering a sync will cause these broken units to recover again.</p>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="repo-versioning.html" class="btn btn-neutral float-left" title="Repository Versioning" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="promotion.html" class="btn btn-neutral float-right" title="Promotion" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2012-2023, Pulp Team.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+ 
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-74748547-2', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+
+<script>
+$( document ).ready( function() {
+
+  // gets version number minus whitespace and bugfix version
+  var $version_number = $('.version').text().trim().split('.', 2).join('.')
+
+  // div mirroring the admonition-warning generated by sphinx if added to .rst
+  var warning = '\
+          <div class="admonition warning"> \
+              <p class="first admonition-title">Warning</p> \
+              <p class="last">You are looking at the docs for an unsupported version of Pulp. \
+               Consider switching to a  \
+               <a href="https://pulpproject.org/docs/">supported version</a></p> \
+          </div>'
+
+  
+  // get JSON from server and load supported_versions
+  $.getJSON("https://raw.githubusercontent.com/pulp/pulp-ci/master/ci/config/releases/supported-releases.json" , function(data) {
+    if ($.inArray($version_number, data) === -1) {
+      $('.rst-content').prepend(warning)
+      }
+    })
+  })
+  </script>
+
+
+</body>
+</html>

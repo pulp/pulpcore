@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Git &mdash; Pulp Project 3.23.0.dev documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script src="../_static/sphinx_highlight.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Record a Demo" href="record-a-demo.html" />
+    <link rel="prev" title="Documentation" href="documentation.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../index.html" class="icon icon-home"> Pulp Project
+          </a>
+              <div class="version">
+                3.23.0.dev
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../concepts.html">Concepts and Terminology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../from-pulp-2.html">Changes From Pulp 2</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../components.html">Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../installation/index.html">Installation Options</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../configuration/index.html">Configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../authentication/index.html">Authentication</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../workflows/index.html">Workflows and Use Cases</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../plugins.html">Plugins</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../plugin_dev/index.html">Plugin Development</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../rest_api.html">REST API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../client_bindings.html">Client Bindings</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Contributing</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="index.html#workflow">Workflow</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="index.html#fundamentals">Fundamentals</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="dev-setup.html">Developer Setup</a></li>
+<li class="toctree-l3"><a class="reference internal" href="tests.html">Testing Pulp</a></li>
+<li class="toctree-l3"><a class="reference internal" href="style-guide.html">Style Guide</a></li>
+<li class="toctree-l3"><a class="reference internal" href="style-guide.html#exceptions-and-clarifications">Exceptions and Clarifications</a></li>
+<li class="toctree-l3"><a class="reference internal" href="style-guide.html#auto-documentation">Auto-Documentation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="style-guide.html#example-docstring">Example Docstring</a></li>
+<li class="toctree-l3"><a class="reference internal" href="style-guide.html#encoding">Encoding</a></li>
+<li class="toctree-l3"><a class="reference internal" href="documentation.html">Documentation</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Git</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#versions-and-branches">Versions and Branches</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#commits">Commits</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="record-a-demo.html">Record a Demo</a></li>
+<li class="toctree-l3"><a class="reference internal" href="pull-request-walkthrough.html">Pull Request Walkthrough</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#plugin-development">Plugin Development</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#reference">Reference</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#suggesting-changes-to-the-pulp-development-process">Suggesting Changes to the Pulp Development Process</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../bugs-features.html">Bugs, Feature and Backport Requests</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../troubleshooting.html">Troubleshooting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../glossary.html">Glossary</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../changes.html">Changelog</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../versioning.html">Versioning</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../release_process.html">Pulpcore Release Process</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Pulp Project</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">Contributing</a></li>
+      <li class="breadcrumb-item active">Git</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/contributing/git.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="git">
+<h1>Git<a class="headerlink" href="#git" title="Permalink to this heading">¶</a></h1>
+<p>Pulp source code lives on <a class="reference external" href="https://github.com/pulp/pulpcore">GitHub</a>. This document is definitive
+for <a class="reference internal" href="../glossary.html#term-pulpcore"><span class="xref std std-term">pulpcore</span></a> only, but some plugins may choose to follow the same strategies.</p>
+<section id="versions-and-branches">
+<span id="git-branch"></span><h2>Versions and Branches<a class="headerlink" href="#versions-and-branches" title="Permalink to this heading">¶</a></h2>
+<p>Code is submitted by a Pull Request on Github to merge the changes to <code class="docutils literal notranslate"><span class="pre">main</span></code> which represents
+the next <code class="docutils literal notranslate"><span class="pre">pulpcore</span></code> release. See <a class="reference internal" href="../versioning.html#versioning"><span class="std std-ref">Versioning</span></a> for more details.</p>
+</section>
+<section id="commits">
+<h2>Commits<a class="headerlink" href="#commits" title="Permalink to this heading">¶</a></h2>
+<section id="rebasing-and-squashing">
+<span id="rebase"></span><h3>Rebasing and Squashing<a class="headerlink" href="#rebasing-and-squashing" title="Permalink to this heading">¶</a></h3>
+<p>We prefer each pull request to contain a single commit. Before you submit a PR, please consider an
+<a class="reference external" href="https://github.com/edx/edx-platform/wiki/How-to-Rebase-a-Pull-Request">interactive rebase and squash.</a></p>
+<p>The <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">commit</span> <span class="pre">--amend</span></code> command is very useful, but be sure that you <a class="reference external" href="https://www.atlassian.com/git/tutorials/rewriting-history/git-commit--amend">understand what it does</a> before you use it!
+GitHub will update the PR and keep the comments when you force push an amended commit.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Keep in mind that rebasing creates new commits that are unique from your
+original commits. Thus, if you have three commits and rebase them, you must
+make sure that all copies of those original commits get deleted. Did you push
+your branch to origin? Delete it and re-push after the rebase.</p>
+</div>
+</section>
+<section id="commit-message">
+<span id="id1"></span><h3>Commit Message<a class="headerlink" href="#commit-message" title="Permalink to this heading">¶</a></h3>
+<p>Commit messages in Pulp should contain a human readable explanation of what was fixed.  They should
+also follow the standard git message format of starting with a subject line or title (usually
+wrapped at about 50 chars) and optionally, a longer message (usually wrapped at 72 characters)
+broken up into paragraphs. For more on what constitutes a good commit message, we recommend <a class="reference external" href="http://tbaggery.com/2008/04/19/a-note-about-git-commit-messages.html">Tim
+Pope’s blog post on the subject</a>.</p>
+<p>Each commit message should link to an issue on the <a class="reference external" href="https://github.com/pulp/pulpcore/issues/">pulpcore Github Issue tracker</a>. See the <a class="reference external" href="https://docs.github.com/en/issues/tracking-your-work-with-issues/linking-a-pull-request-to-an-issue#linking-a-pull-request-to-an-issue-using-a-keyword">Github Linking Docs</a> and include at least one link in your commit message.</p>
+<p>If you must create a commit for which there is no issue, add the <code class="docutils literal notranslate"><span class="pre">[noissue]</span></code> syntax in the commit
+message.</p>
+<p>Putting this all together, the following is an example of a good commit message:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Update</span> <span class="n">install</span> <span class="ow">and</span> <span class="n">quickstart</span>
+
+<span class="n">The</span> <span class="n">install</span> <span class="n">docs</span> <span class="ow">and</span> <span class="n">quickstart</span> <span class="n">was</span> <span class="n">leaving</span> <span class="n">out</span> <span class="n">an</span> <span class="n">important</span> <span class="n">step</span> <span class="n">on</span>
+<span class="n">the</span> <span class="n">worker</span> <span class="n">configuration</span><span class="o">.</span>
+
+<span class="n">closes</span> <span class="c1">#1392</span>
+</pre></div>
+</div>
+<div class="admonition hint">
+<p class="admonition-title">Hint</p>
+<p>A good candidate for a <code class="docutils literal notranslate"><span class="pre">noissue</span></code> tag is a one line fix or a typo, otherwise we encourage
+you to open an issue.</p>
+</div>
+</section>
+<section id="requiring-other-pull-requests">
+<span id="id2"></span><h3>Requiring other Pull Requests<a class="headerlink" href="#requiring-other-pull-requests" title="Permalink to this heading">¶</a></h3>
+<p>Sometimes a new feature may require changes to both <cite>pulpcore</cite> and one or many other plugins,
+simultaneously. In order to keep the CI happy in these circumstances (as tests may fail otherwise),
+we provide a mechanism to force the CI service to fetch the version of a component in a linked
+Pull Request, rather than master branch.</p>
+<p>To do so, add a tag in the following format to the last commit in your series.</p>
+<p>This will allow the PR against pulp to run against the Pull Requests for pulp_file:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Required</span> <span class="n">PR</span><span class="p">:</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">pulp</span><span class="o">/</span><span class="n">pulp_file</span><span class="o">/</span><span class="n">pull</span><span class="o">/</span><span class="mi">2345</span>
+</pre></div>
+</div>
+<p>This will allow the PR against a plugin to run against the Pull Request for pulpcore:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Required</span> <span class="n">PR</span><span class="p">:</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">pulp</span><span class="o">/</span><span class="n">pulpcore</span><span class="o">/</span><span class="n">pull</span><span class="o">/</span><span class="mi">3456</span>
+</pre></div>
+</div>
+<p>Attention and care must be given to merging PRs that require other Pull Requests. Before merging,
+all required PRs should be ready to merge–meaning that all tests/checks should be passing, the code
+review requirements should be met, etc. When merging, the PR along with its required PRs should all
+be merged at the same time. This is necessary to ensure that test breakages don’t block other PRs.</p>
+<p>For very similar reasons it can happen that you need changes to the base image used in the CI to
+spin up a new pulp container. In those cases you can build your own modified version of the image
+and push it to a container registry. Now you can specify the image to use in the last commit like:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">CI</span> <span class="n">Base</span> <span class="n">Image</span><span class="p">:</span> <span class="n">pulp</span><span class="o">/</span><span class="n">pulp</span><span class="o">-</span><span class="n">ci</span><span class="p">:</span><span class="n">special_feature</span>
+</pre></div>
+</div>
+<p>The same meticulousness as described above is required to merge those Pull Requests.</p>
+</section>
+<section id="changelog-update">
+<span id="id3"></span><h3>Changelog update<a class="headerlink" href="#changelog-update" title="Permalink to this heading">¶</a></h3>
+<p>The CHANGES.rst file is managed using the <a class="reference external" href="https://github.com/hawkowl/towncrier">towncrier tool</a>
+and all non trivial changes must be accompanied by a news entry.</p>
+<p>For user facing changes, put those news files into <code class="docutils literal notranslate"><span class="pre">CHANGES/</span></code>. For Plugin API changes, put those
+into the <code class="docutils literal notranslate"><span class="pre">CHANGES/plugin_api/</span></code> folder.</p>
+<p>To add an entry to the news file, you first need an issue on github describing the change you
+want to make. Once you have an issue, take its number and create a file inside of the <code class="docutils literal notranslate"><span class="pre">CHANGES/</span></code>
+or <code class="docutils literal notranslate"><span class="pre">CHANGES/plugin_api/</span></code> directory named after that issue number with one of the extensions below.</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 17%" />
+<col style="width: 83%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>extension</p></th>
+<th class="head"><p>description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>.bugfix</p></td>
+<td><p>A bug fix</p></td>
+</tr>
+<tr class="row-odd"><td><p>.feature</p></td>
+<td><p>A new feature</p></td>
+</tr>
+<tr class="row-even"><td><p>.removal</p></td>
+<td><p>A backwards incompatible change (ie a removal or change in behavior)</p></td>
+</tr>
+<tr class="row-odd"><td><p>.deprecation</p></td>
+<td><p>Information about an upcoming backwards incompatible change</p></td>
+</tr>
+<tr class="row-even"><td><p>.doc</p></td>
+<td><p>A documentation improvement</p></td>
+</tr>
+<tr class="row-odd"><td><p>.misc</p></td>
+<td><p>A change that is not visible to the end user</p></td>
+</tr>
+</tbody>
+</table>
+<p>So if your user-facing issue is 3543 and it fixes a bug, you would create the file
+<code class="docutils literal notranslate"><span class="pre">CHANGES/3543.bugfix</span></code>. Or if your plugin API change is 5432 and it’s a breaking change you would
+create the file <code class="docutils literal notranslate"><span class="pre">CHANGES/plugin_api/5432.removal</span></code>.</p>
+<p>PRs can span multiple categories by creating multiple files (for instance, if you added a feature
+and deprecated an old feature at the same time, you would create CHANGES/NNNN.feature and
+CHANGES/NNNN.removal). Likewise if a PR touches multiple issues/PRs you may create a file for each
+of them with the exact same contents and Towncrier will deduplicate them.</p>
+<p>The contents of this file are reStructuredText formatted text that will be used as the content of
+the news file entry. You do not need to reference the issue or PR numbers here as towncrier will
+automatically add a reference to all of the affected issues when rendering the news file.</p>
+<p>The changelog message should use past simple tense. When possible, the message should describe the
+change being made as opposed to the problem or user story. Here are some examples:</p>
+<ul class="simple">
+<li><p>Added API that allows users to export a repository version to disk.</p></li>
+<li><p>Fixed bug where whitespace was being trimmed from uploaded files.</p></li>
+<li><p>Added documentation for new pulpcore-manager command.</p></li>
+</ul>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="documentation.html" class="btn btn-neutral float-left" title="Documentation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="record-a-demo.html" class="btn btn-neutral float-right" title="Record a Demo" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2012-2023, Pulp Team.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+ 
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-74748547-2', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+
+<script>
+$( document ).ready( function() {
+
+  // gets version number minus whitespace and bugfix version
+  var $version_number = $('.version').text().trim().split('.', 2).join('.')
+
+  // div mirroring the admonition-warning generated by sphinx if added to .rst
+  var warning = '\
+          <div class="admonition warning"> \
+              <p class="first admonition-title">Warning</p> \
+              <p class="last">You are looking at the docs for an unsupported version of Pulp. \
+               Consider switching to a  \
+               <a href="https://pulpproject.org/docs/">supported version</a></p> \
+          </div>'
+
+  
+  // get JSON from server and load supported_versions
+  $.getJSON("https://raw.githubusercontent.com/pulp/pulp-ci/master/ci/config/releases/supported-releases.json" , function(data) {
+    if ($.inArray($version_number, data) === -1) {
+      $('.rst-content').prepend(warning)
+      }
+    })
+  })
+  </script>
+
+
+</body>
+</html>

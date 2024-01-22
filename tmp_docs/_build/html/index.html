@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pulp Documentation &mdash; Pulp Project 3.23.0.dev documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/sphinx_highlight.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Concepts and Terminology" href="concepts.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="#" class="icon icon-home"> Pulp Project
+          </a>
+              <div class="version">
+                3.23.0.dev
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="concepts.html">Concepts and Terminology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="from-pulp-2.html">Changes From Pulp 2</a></li>
+<li class="toctree-l1"><a class="reference internal" href="components.html">Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation/index.html">Installation Options</a></li>
+<li class="toctree-l1"><a class="reference internal" href="configuration/index.html">Configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="authentication/index.html">Authentication</a></li>
+<li class="toctree-l1"><a class="reference internal" href="workflows/index.html">Workflows and Use Cases</a></li>
+<li class="toctree-l1"><a class="reference internal" href="plugins.html">Plugins</a></li>
+<li class="toctree-l1"><a class="reference internal" href="plugin_dev/index.html">Plugin Development</a></li>
+<li class="toctree-l1"><a class="reference internal" href="rest_api.html">REST API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="client_bindings.html">Client Bindings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contributing/index.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="bugs-features.html">Bugs, Feature and Backport Requests</a></li>
+<li class="toctree-l1"><a class="reference internal" href="troubleshooting.html">Troubleshooting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="glossary.html">Glossary</a></li>
+<li class="toctree-l1"><a class="reference internal" href="changes.html">Changelog</a></li>
+<li class="toctree-l1"><a class="reference internal" href="versioning.html">Versioning</a></li>
+<li class="toctree-l1"><a class="reference internal" href="release_process.html">Pulpcore Release Process</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="#">Pulp Project</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="#" class="icon icon-home"></a></li>
+      <li class="breadcrumb-item active">Pulp Documentation</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="pulp-documentation">
+<h1>Pulp Documentation<a class="headerlink" href="#pulp-documentation" title="Permalink to this heading">¶</a></h1>
+<p>This is the main landing page for documentation related to Pulp.</p>
+<p>The documentation itself is broken into sub categories that provide more granular information and
+workflows.</p>
+<p><cite>pulpcore</cite> handles some parts of common content management workflows, including high performance
+downloading, task queuing with scalable workers, and management of content within versioned
+repositories.</p>
+<p>If you are looking for a very high-level overview of Pulp’s features, check out <a class="reference external" href="https://pulpproject.org/features/">features page at
+pulpproject.org</a></p>
+<p>If you want an overview of the main concepts and terminology of Pulp, see <a class="reference internal" href="concepts.html"><span class="doc">Concepts and Terminology</span></a></p>
+<p>If you want to understand the core workflows, see  <a class="reference internal" href="workflows/index.html"><span class="doc">Workflows</span></a></p>
+<dl class="simple">
+<dt>If you want to look at the considerations and requirements for installing Pulp, see</dt><dd><p><a class="reference internal" href="installation/index.html#installation"><span class="std std-ref">Installation Options</span></a>. If you want to evaluate Pulp quickly, try <a class="reference external" href="https://pulpproject.org/pulp-in-one-container/">Pulp in One
+Container</a></p>
+</dd>
+</dl>
+<p>If you’re looking for documentation specific to a content type, see <a class="reference internal" href="plugins.html"><span class="doc">List of Plugins</span></a></p>
+<p>Anyone interested in writing a plugin should reference <a class="reference internal" href="plugin_dev/index.html#plugin-development"><span class="std std-ref">Plugin Development</span></a>.</p>
+<section id="support">
+<span id="community"></span><h2>Support<a class="headerlink" href="#support" title="Permalink to this heading">¶</a></h2>
+<p>If you need help with Pulp and cannot find the answer to your question in our docs, we encourage you
+to check out our <a class="reference external" href="https://pulpproject.org/help/">help page at pulpproject.org</a> which includes
+information about our mailing lists, IRC, etc.</p>
+</section>
+<section id="contributing">
+<h2>Contributing<a class="headerlink" href="#contributing" title="Permalink to this heading">¶</a></h2>
+<p>Pulp is a free and open source software (FOSS) project and if you’d like to contribute, please check
+out our <a class="reference internal" href="contributing/index.html"><span class="doc">contributing docs</span></a>.</p>
+<section id="source-code">
+<h3>Source code<a class="headerlink" href="#source-code" title="Permalink to this heading">¶</a></h3>
+<blockquote>
+<div><ul class="simple">
+<li><p><a class="reference external" href="https://github.com/pulp/">pulp Github organization</a></p></li>
+<li><p><a class="reference external" href="https://github.com/pulp/pulpcore/">pulpcore</a></p></li>
+<li><p><a class="reference external" href="https://pulpproject.org/content-plugins/">plugin repositories</a></p></li>
+</ul>
+</div></blockquote>
+</section>
+</section>
+<section id="table-of-contents">
+<h2>Table of Contents<a class="headerlink" href="#table-of-contents" title="Permalink to this heading">¶</a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="concepts.html">Concepts and Terminology</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="concepts.html#what-is-pulpcore">What is pulpcore?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="concepts.html#content-management-with-plugins">Content Management with plugins</a></li>
+<li class="toctree-l2"><a class="reference internal" href="concepts.html#content-repositories-and-versioning">Content repositories and versioning</a></li>
+<li class="toctree-l2"><a class="reference internal" href="concepts.html#pulling-content-into-pulp-with-remotes">Pulling content into Pulp with Remotes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="concepts.html#serving-content-with-pulp">Serving content with Pulp</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="from-pulp-2.html">Changes From Pulp 2</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="from-pulp-2.html#renamed-concepts">Renamed Concepts</a></li>
+<li class="toctree-l2"><a class="reference internal" href="from-pulp-2.html#new-concepts">New Concepts</a></li>
+<li class="toctree-l2"><a class="reference internal" href="from-pulp-2.html#obsolete-concepts">Obsolete Concepts</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="components.html">Architecture</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="components.html#rest-api">REST API</a></li>
+<li class="toctree-l2"><a class="reference internal" href="components.html#content-serving-application">Content Serving Application</a></li>
+<li class="toctree-l2"><a class="reference internal" href="components.html#availability">Availability</a></li>
+<li class="toctree-l2"><a class="reference internal" href="components.html#distributed-tasking-system">Distributed Tasking System</a></li>
+<li class="toctree-l2"><a class="reference internal" href="components.html#static-content">Static Content</a></li>
+<li class="toctree-l2"><a class="reference internal" href="components.html#analytics-collection">Analytics Collection</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="installation/index.html">Installation Options</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="installation/hardware-requirements.html">Hardware requirements</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation/instructions.html">Instructions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation/storage.html">Storage</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="configuration/index.html">Configuration</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="configuration/applying.html">Applying Settings</a></li>
+<li class="toctree-l2"><a class="reference internal" href="configuration/viewing.html">Viewing Settings</a></li>
+<li class="toctree-l2"><a class="reference internal" href="configuration/settings.html">Settings</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="authentication/index.html">Authentication</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="authentication/overview.html">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="authentication/basic.html">Basic</a></li>
+<li class="toctree-l2"><a class="reference internal" href="authentication/webserver.html">Webserver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="authentication/keycloak.html">Keycloak</a></li>
+<li class="toctree-l2"><a class="reference internal" href="authentication/other.html">Other</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="workflows/index.html">Workflows and Use Cases</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="workflows/alternate-content-sources.html">Alternate Content Sources</a></li>
+<li class="toctree-l2"><a class="reference internal" href="workflows/upload-publish.html">Upload and Publish</a></li>
+<li class="toctree-l2"><a class="reference internal" href="workflows/repo-versioning.html">Repository Versioning</a></li>
+<li class="toctree-l2"><a class="reference internal" href="workflows/on-demand-downloading.html">On-Demand Downloading</a></li>
+<li class="toctree-l2"><a class="reference internal" href="workflows/promotion.html">Promotion</a></li>
+<li class="toctree-l2"><a class="reference internal" href="workflows/scheduling-tasks.html">Scheduling Tasks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="workflows/exposing-content.html">Exposing Content</a></li>
+<li class="toctree-l2"><a class="reference internal" href="workflows/signed-metadata.html">Metadata Signing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="workflows/repairing-pulp.html">Repairing Pulp</a></li>
+<li class="toctree-l2"><a class="reference internal" href="workflows/reclaim-disk-space.html">Reclaim disk space for a list of repositories</a></li>
+<li class="toctree-l2"><a class="reference internal" href="workflows/import-export.html">Pulp Import and Export</a></li>
+<li class="toctree-l2"><a class="reference internal" href="workflows/labels.html">Labels</a></li>
+<li class="toctree-l2"><a class="reference internal" href="workflows/plugin-removal.html">Plugin removal</a></li>
+<li class="toctree-l2"><a class="reference internal" href="workflows/troubleshooting.html">Troubleshooting</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="plugins.html">Plugins</a></li>
+<li class="toctree-l1"><a class="reference internal" href="plugin_dev/index.html">Plugin Development</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="plugin_dev/index.html#plugin-writer-s-guide">Plugin Writer’s Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="plugin_dev/index.html#plugin-writer-s-reference">Plugin Writer’s Reference</a></li>
+<li class="toctree-l2"><a class="reference internal" href="plugin_dev/index.html#plugin-api-reference">Plugin API Reference</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="rest_api.html">REST API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="client_bindings.html">Client Bindings</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="client_bindings.html#python-client-for-pulpcore-s-rest-api">Python Client for pulpcore’s REST API</a></li>
+<li class="toctree-l2"><a class="reference internal" href="client_bindings.html#ruby-client-for-pulpcore-s-rest-api">Ruby Client for pulpcore’s REST API</a></li>
+<li class="toctree-l2"><a class="reference internal" href="client_bindings.html#other-languages">Other Languages</a></li>
+<li class="toctree-l2"><a class="reference internal" href="client_bindings.html#generating-a-client-for-a-dev-environment">Generating a client for a dev environment</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="contributing/index.html">Contributing</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="contributing/index.html#workflow">Workflow</a></li>
+<li class="toctree-l2"><a class="reference internal" href="contributing/index.html#fundamentals">Fundamentals</a></li>
+<li class="toctree-l2"><a class="reference internal" href="contributing/index.html#plugin-development">Plugin Development</a></li>
+<li class="toctree-l2"><a class="reference internal" href="contributing/index.html#reference">Reference</a></li>
+<li class="toctree-l2"><a class="reference internal" href="contributing/index.html#suggesting-changes-to-the-pulp-development-process">Suggesting Changes to the Pulp Development Process</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="bugs-features.html">Bugs, Feature and Backport Requests</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="bugs-features.html#triage">Triage</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="troubleshooting.html">Troubleshooting</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="troubleshooting.html#enabling-debug-logging">Enabling Debug Logging</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="glossary.html">Glossary</a></li>
+<li class="toctree-l1"><a class="reference internal" href="changes.html">Changelog</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id1">3.22.2 (2023-02-02)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id2">3.22.1 (2023-01-20)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id6">3.22.0 (2022-12-18)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id13">3.21.5 (2023-02-02)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id17">3.21.4 (2023-01-20)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id21">3.21.3 (2022-11-15)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id25">3.21.2 (2022-10-24)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id29">3.21.1 (2022-10-18)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id33">3.21.0 (2022-09-08)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id43">3.20.0 (2022-06-21)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id56">3.19.1 (2022-07-11)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id62">3.19.0 (2022-04-12)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id71">3.18.13 (2023-01-20)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id75">3.18.12 (2023-01-10)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id79">3.18.11 (2022-11-02)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id83">3.18.10 (2022-09-14)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id87">3.18.9 (2022-09-01)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id91">3.18.8 (2022-08-16)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id94">3.18.7 (2022-08-15)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id98">3.18.6 (2022-08-03)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id103">3.18.5 (2022-05-10)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id107">3.18.4 (2022-04-12)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id111">3.18.3 (2022-03-25)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id116">3.18.2 (2022-03-18)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id120">3.18.1 (2022-03-01)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id124">3.18.0 (2022-02-22)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id134">3.17.8 (2022-05-10)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id138">3.17.7 (2022-04-12)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id142">3.17.6 (2022-03-25)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id147">3.17.5 (2022-03-18)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id151">3.17.4 (2022-03-01)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id155">3.17.3 (2022-01-12)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id159">3.17.2 (2022-01-06)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id163">3.17.1 (2021-12-21)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id167">3.17.0 (2021-12-14)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id177">3.16.15 (2022-11-02)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id181">3.16.14 (2022-09-13)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id185">3.16.13 (2022-09-01)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id189">3.16.12 (2022-08-05)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id193">3.16.11 (2022-07-14)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id197">3.16.10 (2022-06-16)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id201">3.16.9 (2022-06-15)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id206">3.16.8 (2022-05-10)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id210">3.16.7 (2022-04-12)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id214">3.16.6 (2022-03-25)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id219">3.16.5 (2022-03-17)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id223">3.16.4 (2022-03-01)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id227">3.16.3 (2022-02-08)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id232">3.16.2 (2022-01-07)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id236">3.16.1 (2021-12-02)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id240">3.16.0 (2021-10-05)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id251">3.15.9 (2022-06-28)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id256">3.15.8 (2022-04-12)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id260">3.15.7 (2022-03-25)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id265">3.15.6 (2022-03-22)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id269">3.15.5 (2022-03-15)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id273">3.15.4 (2022-01-28)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id278">3.15.3 (2021-11-30)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id282">3.15.2 (2021-09-02)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id286">3.15.1 (2021-08-31)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id291">3.15.0 (2021-08-26)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id304">3.14.19 (2023-02-09)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id308">3.14.18 (2022-07-14)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id312">3.14.17 (2022-05-09)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id316">3.14.16 (2022-04-12)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id320">3.14.15 (2022-03-25)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id325">3.14.14 (2022-03-10)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id329">3.14.13 (2022-03-08)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id332">3.14.12 (2022-02-11)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id336">3.14.11 (2022-01-27)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id340">3.14.10 (2022-01-07)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id344">3.14.9 (2021-11-05)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id348">3.14.8 (2021-10-06)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id352">3.14.7 (2021-09-29)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id356">3.14.6 (2021-09-02)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id360">3.14.5 (2021-08-24)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id366">3.14.4 (2021-08-10)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id373">3.14.3 (2021-07-23)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id377">3.14.2 (2021-07-13)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id382">3.14.1 (2021-07-07)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id386">3.14.0 (2021-07-01)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id398">3.13.0 (2021-05-25)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id409">3.12.2 (2021-04-29)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id413">3.12.1 (2021-04-20)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id417">3.12.0 (2021-04-08)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id429">3.11.2 (2021-05-25)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id433">3.11.1 (2021-04-29)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id438">3.11.0 (2021-03-15)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id450">3.10.0 (2021-02-04)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id460">3.9.1 (2021-01-21)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id464">3.9.0 (2020-12-07)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id474">3.8.1 (2020-10-30)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id478">3.8.0 (2020-10-20)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id485">3.7.9 (2021-11-30)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id489">3.7.8 (2021-08-24)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id494">3.7.7 (2021-07-26)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id498">3.7.6 (2021-04-29)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id502">3.7.5 (2021-04-12)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id506">3.7.4 (2021-03-15)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id510">3.7.3 (2020-10-28)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id514">3.7.2 (2020-10-21)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id518">3.7.1 (2020-09-29)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id522">3.7.0 (2020-09-22)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id533">3.6.5 (2020-10-28)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id537">3.6.4 (2020-09-23)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id541">3.6.3 (2020-09-04)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id545">3.6.2 (2020-09-02)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id549">3.6.1 (2020-09-01)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id556">3.6.0 (2020-08-13)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id567">3.5.0 (2020-07-08)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id576">3.4.1 (2020-06-03)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id580">3.4.0 (2020-05-27)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id591">3.3.1 (2020-05-07)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id596">3.3.0 (2020-04-15)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id609">3.2.1 (2020-03-17)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id613">3.2.0 (2020-02-26)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id623">3.1.1 (2020-02-17)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id628">3.1.0 (2020-01-30)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id638">3.0.1 (2020-01-15)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id646">3.0.0 (2019-12-11)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#rc2">3.0.0rc2</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#rc1">3.0.0rc1</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="versioning.html">Versioning</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="versioning.html#plugin-api">Plugin API</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="release_process.html">Pulpcore Release Process</a></li>
+</ul>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="concepts.html" class="btn btn-neutral float-right" title="Concepts and Terminology" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2012-2023, Pulp Team.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+ 
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-74748547-2', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+
+<script>
+$( document ).ready( function() {
+
+  // gets version number minus whitespace and bugfix version
+  var $version_number = $('.version').text().trim().split('.', 2).join('.')
+
+  // div mirroring the admonition-warning generated by sphinx if added to .rst
+  var warning = '\
+          <div class="admonition warning"> \
+              <p class="first admonition-title">Warning</p> \
+              <p class="last">You are looking at the docs for an unsupported version of Pulp. \
+               Consider switching to a  \
+               <a href="https://pulpproject.org/docs/">supported version</a></p> \
+          </div>'
+
+  
+  // get JSON from server and load supported_versions
+  $.getJSON("https://raw.githubusercontent.com/pulp/pulp-ci/master/ci/config/releases/supported-releases.json" , function(data) {
+    if ($.inArray($version_number, data) === -1) {
+      $('.rst-content').prepend(warning)
+      }
+    })
+  })
+  </script>
+
+
+</body>
+</html>

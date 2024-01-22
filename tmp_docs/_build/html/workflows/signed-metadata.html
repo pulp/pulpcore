@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Metadata Signing &mdash; Pulp Project 3.23.0.dev documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script src="../_static/sphinx_highlight.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Repairing Pulp" href="repairing-pulp.html" />
+    <link rel="prev" title="Exposing Content" href="exposing-content.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../index.html" class="icon icon-home"> Pulp Project
+          </a>
+              <div class="version">
+                3.23.0.dev
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../concepts.html">Concepts and Terminology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../from-pulp-2.html">Changes From Pulp 2</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../components.html">Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../installation/index.html">Installation Options</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../configuration/index.html">Configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../authentication/index.html">Authentication</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Workflows and Use Cases</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="alternate-content-sources.html">Alternate Content Sources</a></li>
+<li class="toctree-l2"><a class="reference internal" href="upload-publish.html">Upload and Publish</a></li>
+<li class="toctree-l2"><a class="reference internal" href="repo-versioning.html">Repository Versioning</a></li>
+<li class="toctree-l2"><a class="reference internal" href="on-demand-downloading.html">On-Demand Downloading</a></li>
+<li class="toctree-l2"><a class="reference internal" href="promotion.html">Promotion</a></li>
+<li class="toctree-l2"><a class="reference internal" href="scheduling-tasks.html">Scheduling Tasks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="exposing-content.html">Exposing Content</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Metadata Signing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="repairing-pulp.html">Repairing Pulp</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reclaim-disk-space.html">Reclaim disk space for a list of repositories</a></li>
+<li class="toctree-l2"><a class="reference internal" href="import-export.html">Pulp Import and Export</a></li>
+<li class="toctree-l2"><a class="reference internal" href="labels.html">Labels</a></li>
+<li class="toctree-l2"><a class="reference internal" href="plugin-removal.html">Plugin removal</a></li>
+<li class="toctree-l2"><a class="reference internal" href="troubleshooting.html">Troubleshooting</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../plugins.html">Plugins</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../plugin_dev/index.html">Plugin Development</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../rest_api.html">REST API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../client_bindings.html">Client Bindings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../contributing/index.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../bugs-features.html">Bugs, Feature and Backport Requests</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../troubleshooting.html">Troubleshooting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../glossary.html">Glossary</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../changes.html">Changelog</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../versioning.html">Versioning</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../release_process.html">Pulpcore Release Process</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Pulp Project</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">Workflows and Use Cases</a></li>
+      <li class="breadcrumb-item active">Metadata Signing</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/workflows/signed-metadata.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="metadata-signing">
+<span id="configuring-signing"></span><h1>Metadata Signing<a class="headerlink" href="#metadata-signing" title="Permalink to this heading">¶</a></h1>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Content Signing is in tech-preview and may change in backwards incompatible ways in future
+releases.</p>
+</div>
+<p>Administrators can add signing services to Pulp using the command line tools. Users
+may then associate the signing services with repositories that support content signing.
+The example below demonstrates how a signing service can be created using <code class="docutils literal notranslate"><span class="pre">gpg</span></code>:</p>
+<ol class="arabic">
+<li><p>Make sure the service user <code class="docutils literal notranslate"><span class="pre">pulp</span></code> has access to <code class="docutils literal notranslate"><span class="pre">gpg</span></code> and that the keypair is
+installed in its keyrings. The private key might alternatively be provided by a
+hardware cryptographic device.</p></li>
+<li><p>Create a signing script that accepts a file name as the only argument. The script
+needs to generate an ascii-armored detached GPG signature for that file, using the key
+specified via the <code class="docutils literal notranslate"><span class="pre">PULP_SIGNING_KEY_FINGERPRINT</span></code> environment variable. There is also
+a <code class="docutils literal notranslate"><span class="pre">CORRELATION_ID</span></code> environment variable available for logging purposes. The script
+should then print out a JSON structure with the following format. All the file names
+are relative paths inside the current working directory:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span><span class="s2">&quot;file&quot;</span><span class="p">:</span> <span class="s2">&quot;filename&quot;</span><span class="p">,</span> <span class="s2">&quot;signature&quot;</span><span class="p">:</span> <span class="s2">&quot;filename.asc&quot;</span><span class="p">}</span>
+</pre></div>
+</div>
+<p>The filename must remain the same for the detached signature, as shown.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Plugins may provide other signing service classes that may need their JSON output to
+contain different information.</p>
+</div>
+<p>Below is an example of a signing script that produces signatures for content:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="ch">#!/usr/bin/env bash</span>
+
+<span class="nv">FILE_PATH</span><span class="o">=</span><span class="nv">$1</span>
+<span class="nv">SIGNATURE_PATH</span><span class="o">=</span><span class="s2">&quot;</span><span class="nv">$1</span><span class="s2">.asc&quot;</span>
+
+<span class="nv">ADMIN_ID</span><span class="o">=</span><span class="s2">&quot;</span><span class="nv">$PULP_SIGNING_KEY_FINGERPRINT</span><span class="s2">&quot;</span>
+<span class="nv">PASSWORD</span><span class="o">=</span><span class="s2">&quot;password&quot;</span>
+
+<span class="c1"># Create a detached signature</span>
+gpg<span class="w"> </span>--quiet<span class="w"> </span>--batch<span class="w"> </span>--pinentry-mode<span class="w"> </span>loopback<span class="w"> </span>--yes<span class="w"> </span>--passphrase<span class="w"> </span><span class="se">\</span>
+<span class="w">   </span><span class="nv">$PASSWORD</span><span class="w"> </span>--homedir<span class="w"> </span>~/.gnupg/<span class="w"> </span>--detach-sign<span class="w"> </span>--default-key<span class="w"> </span><span class="nv">$ADMIN_ID</span><span class="w"> </span><span class="se">\</span>
+<span class="w">   </span>--armor<span class="w"> </span>--output<span class="w"> </span><span class="nv">$SIGNATURE_PATH</span><span class="w"> </span><span class="nv">$FILE_PATH</span>
+
+<span class="c1"># Check the exit status</span>
+<span class="nv">STATUS</span><span class="o">=</span><span class="nv">$?</span>
+<span class="k">if</span><span class="w"> </span><span class="o">[</span><span class="w"> </span><span class="nv">$STATUS</span><span class="w"> </span>-eq<span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="o">]</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
+<span class="w">   </span><span class="nb">echo</span><span class="w"> </span><span class="o">{</span><span class="se">\&quot;</span>file<span class="se">\&quot;</span>:<span class="w"> </span><span class="se">\&quot;</span><span class="nv">$FILE_PATH</span><span class="se">\&quot;</span>,<span class="w"> </span><span class="se">\&quot;</span>signature<span class="se">\&quot;</span>:<span class="w"> </span><span class="se">\&quot;</span><span class="nv">$SIGNATURE_PATH</span><span class="se">\&quot;</span><span class="o">}</span>
+<span class="k">else</span>
+<span class="w">   </span><span class="nb">exit</span><span class="w"> </span><span class="nv">$STATUS</span>
+<span class="k">fi</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>As the creator of the signing script, you can expect PULP_SIGNING_KEY_FINGERPRINT
+and potentially other environment variables, depending on the content plugin calling signing service.
+Make sure the script contains a proper shebang and Pulp has got valid permissions
+to execute it.</p>
+</div>
+</li>
+<li><p>Create a signing service consisting of an absolute path to the script, a meaningful
+name describing the script’s purpose, and the identity identifying the key for signing. The
+script must be executable. Here is an example showing how to create one instance of a signing
+service:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pulpcore-manager<span class="w"> </span>add-signing-service<span class="w"> </span><span class="si">${</span><span class="nv">SERVICE_NAME</span><span class="si">}</span><span class="w"> </span><span class="si">${</span><span class="nv">SCRIPT_ABS_FILENAME</span><span class="si">}</span><span class="w"> </span><span class="si">${</span><span class="nv">KEYID</span><span class="si">}</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The public key must be available on the caller’s keyring or on a keyring provided via the
+<code class="docutils literal notranslate"><span class="pre">--gpghome</span></code> or <code class="docutils literal notranslate"><span class="pre">--keyring</span></code> parameters.</p>
+</div>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>It is possible to insert a new signing service into the database by using the
+<code class="docutils literal notranslate"><span class="pre">pulpcore-manager</span> <span class="pre">shell_plus</span></code> interactive Python shell. However, this is not recommended.</p>
+</div>
+</li>
+<li><p>Retrieve and check the saved signing service via REST API:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ http :24817/pulp/api/v3/signing-services/
+
+{
+    &quot;count&quot;: 1,
+    &quot;next&quot;: null,
+    &quot;previous&quot;: null,
+    &quot;results&quot;: [
+        {
+            &quot;name&quot;: &quot;sign-metadata&quot;,
+            &quot;pubkey_fingerprint&quot;: &quot;19CD52BD1CA9A00DF10A842D74B14E3590C2231F&quot;,
+            &quot;public_key&quot;: &quot;-----BEGIN PGP PUBLIC KEY BLOCK-----\n\n [...] \n-----END PGP PUBLIC KEY BLOCK-----\n&quot;,
+            &quot;pulp_created&quot;: &quot;2020-11-06T15:42:20.645197Z&quot;,
+            &quot;pulp_href&quot;: &quot;/pulp/api/v3/signing-services/ffb9e987-952f-47e3-a274-ffe69a80ded7/&quot;,
+            &quot;script&quot;: &quot;/var/lib/pulp/sign-metadata.sh&quot;
+        }
+    ]
+}
+</pre></div>
+</div>
+</li>
+</ol>
+<p>Plugin writers are then able to sign selected content by the provided script. To learn more
+about the signing from a plugin’s perspective, see the section <a class="reference internal" href="../plugin_dev/reference/metadata-signing.html#metadata-signing"><span class="std std-ref">Metadata Signing</span></a>.</p>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="exposing-content.html" class="btn btn-neutral float-left" title="Exposing Content" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="repairing-pulp.html" class="btn btn-neutral float-right" title="Repairing Pulp" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2012-2023, Pulp Team.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+ 
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-74748547-2', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+
+<script>
+$( document ).ready( function() {
+
+  // gets version number minus whitespace and bugfix version
+  var $version_number = $('.version').text().trim().split('.', 2).join('.')
+
+  // div mirroring the admonition-warning generated by sphinx if added to .rst
+  var warning = '\
+          <div class="admonition warning"> \
+              <p class="first admonition-title">Warning</p> \
+              <p class="last">You are looking at the docs for an unsupported version of Pulp. \
+               Consider switching to a  \
+               <a href="https://pulpproject.org/docs/">supported version</a></p> \
+          </div>'
+
+  
+  // get JSON from server and load supported_versions
+  $.getJSON("https://raw.githubusercontent.com/pulp/pulp-ci/master/ci/config/releases/supported-releases.json" , function(data) {
+    if ($.inArray($version_number, data) === -1) {
+      $('.rst-content').prepend(warning)
+      }
+    })
+  })
+  </script>
+
+
+</body>
+</html>

@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Architecture &mdash; Pulp Project 3.23.0.dev documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/sphinx_highlight.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Installation Options" href="installation/index.html" />
+    <link rel="prev" title="Changes From Pulp 2" href="from-pulp-2.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="index.html" class="icon icon-home"> Pulp Project
+          </a>
+              <div class="version">
+                3.23.0.dev
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="concepts.html">Concepts and Terminology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="from-pulp-2.html">Changes From Pulp 2</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Architecture</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#rest-api">REST API</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#content-serving-application">Content Serving Application</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#availability">Availability</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#distributed-tasking-system">Distributed Tasking System</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#static-content">Static Content</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#in-development">In Development</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#in-production">In Production</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#analytics-collection">Analytics Collection</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="installation/index.html">Installation Options</a></li>
+<li class="toctree-l1"><a class="reference internal" href="configuration/index.html">Configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="authentication/index.html">Authentication</a></li>
+<li class="toctree-l1"><a class="reference internal" href="workflows/index.html">Workflows and Use Cases</a></li>
+<li class="toctree-l1"><a class="reference internal" href="plugins.html">Plugins</a></li>
+<li class="toctree-l1"><a class="reference internal" href="plugin_dev/index.html">Plugin Development</a></li>
+<li class="toctree-l1"><a class="reference internal" href="rest_api.html">REST API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="client_bindings.html">Client Bindings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contributing/index.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="bugs-features.html">Bugs, Feature and Backport Requests</a></li>
+<li class="toctree-l1"><a class="reference internal" href="troubleshooting.html">Troubleshooting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="glossary.html">Glossary</a></li>
+<li class="toctree-l1"><a class="reference internal" href="changes.html">Changelog</a></li>
+<li class="toctree-l1"><a class="reference internal" href="versioning.html">Versioning</a></li>
+<li class="toctree-l1"><a class="reference internal" href="release_process.html">Pulpcore Release Process</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Pulp Project</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home"></a></li>
+      <li class="breadcrumb-item active">Architecture</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/components.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="architecture">
+<span id="deployment"></span><h1>Architecture<a class="headerlink" href="#architecture" title="Permalink to this heading">¶</a></h1>
+<p>Pulp’s architecture has three components to it: a REST API, a content serving application, and the
+tasking system. Each component can be horizontally scaled for both high availability and/or
+additional capacity for that part of the architecture.</p>
+<img alt="_images/architecture.png" class="align-center" src="_images/architecture.png" />
+<section id="rest-api">
+<h2>REST API<a class="headerlink" href="#rest-api" title="Permalink to this heading">¶</a></h2>
+<p>Pulp’s REST API is a Django application that runs under any WSGI server. It serves the following
+things:</p>
+<ul class="simple">
+<li><p>The REST API hosted at <code class="docutils literal notranslate"><span class="pre">/pulp/api/v3/</span></code></p></li>
+<li><p>The browse-able documentation at <code class="docutils literal notranslate"><span class="pre">/pulp/api/v3/docs/</span></code></p></li>
+<li><p>Any viewsets or views provided by plugins</p></li>
+<li><p>Static content used by Django, e.g. images used by the browse-able API. This is not Pulp content.</p></li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>A simple, but limited way to run the REST API as a standalone service using the built-in Django
+runserver. The <code class="docutils literal notranslate"><span class="pre">pulpcore-manager</span></code> command is <code class="docutils literal notranslate"><span class="pre">manage.py</span></code> configured with the
+<code class="docutils literal notranslate"><span class="pre">DJANGO_SETTINGS_MODULE=&quot;pulpcore.app.settings&quot;</span></code>. Run the simple webserver with:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ pulpcore-manager runserver 24817
+</pre></div>
+</div>
+</div>
+<p>The REST API can be deployed with any any WSGI webserver like a normal Django application. See the
+<a class="reference external" href="https://docs.djangoproject.com/en/3.2/howto/deployment/wsgi/">Django deployment docs</a> for more
+information.</p>
+</section>
+<section id="content-serving-application">
+<h2>Content Serving Application<a class="headerlink" href="#content-serving-application" title="Permalink to this heading">¶</a></h2>
+<p>An aiohttp.server based application that serves content to clients. The content could be
+<a class="reference internal" href="glossary.html#term-Artifact"><span class="xref std std-term">Artifacts</span></a> already downloaded and saved in Pulp, or
+<a class="reference internal" href="glossary.html#term-on-demand-content"><span class="xref std std-term">on-demand content units</span></a>. When serving
+<a class="reference internal" href="glossary.html#term-on-demand-content"><span class="xref std std-term">on-demand content units</span></a> the downloading also happens from within this
+component as well.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Pulp installs a script that lets you run the content serving app as a standalone service as
+follows::</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ pulp-content
+</pre></div>
+</div>
+</div>
+<p>The content serving application can be deployed like any aiohttp.server application. See the
+<a class="reference external" href="https://aiohttp.readthedocs.io/en/stable/deployment.html">aiohttp Deployment docs</a> for more
+information.</p>
+</section>
+<section id="availability">
+<h2>Availability<a class="headerlink" href="#availability" title="Permalink to this heading">¶</a></h2>
+<p>Ensuring the REST API and the content server is healthy and alive:
+* REST API: GET request to <code class="docutils literal notranslate"><span class="pre">${API_ROOT}api/v3/status/</span></code> see <a class="reference internal" href="configuration/settings.html#api-root"><span class="std std-ref">API_ROOT</span></a>
+* Content Server: HEAD request to <code class="docutils literal notranslate"><span class="pre">/pulp/content/</span></code> or <a class="reference internal" href="configuration/settings.html#content-path-prefix"><span class="std std-ref">CONTENT_PATH_PREFIX</span></a></p>
+</section>
+<section id="distributed-tasking-system">
+<h2>Distributed Tasking System<a class="headerlink" href="#distributed-tasking-system" title="Permalink to this heading">¶</a></h2>
+<p>Pulp’s tasking system consists of a single <code class="docutils literal notranslate"><span class="pre">pulpcore-worker</span></code> component consequently, and can be
+scaled by increasing the number of worker processes to provide more concurrency. Each worker can
+handle one task at a time, and idle workers will lookup waiting and ready tasks in a distributed
+manner. If no ready tasks were found a worker enters a sleep state to be notified, once new tasks
+are available or resources are released.  Workers auto-name and are auto-discovered, so they can be
+started and stopped without notifying Pulp.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Pulp serializes tasks that are unsafe to run in parallel, e.g. a sync and publish operation on
+the same repo should not run in parallel. Generally tasks are serialized at the “resource” level, so
+if you start <em>N</em> workers you can process <em>N</em> repo sync/modify/publish operations concurrently.</p>
+</div>
+<p>All necessary information about tasks is stored in Pulp’s Postgres database as a single source of
+truth. In case your tasking system get’s jammed, there is a guide to help :ref:debugging_tasks.</p>
+</section>
+<section id="static-content">
+<h2>Static Content<a class="headerlink" href="#static-content" title="Permalink to this heading">¶</a></h2>
+<p>When browsing the REST API or the browsable documentation with a web browser, for a good experience,
+you’ll need static content to be served.</p>
+<section id="in-development">
+<h3>In Development<a class="headerlink" href="#in-development" title="Permalink to this heading">¶</a></h3>
+<p>If using the built-in Django webserver and your settings.yaml has <code class="docutils literal notranslate"><span class="pre">DEBUG:</span> <span class="pre">True</span></code> then static
+content is automatically served for you.</p>
+</section>
+<section id="in-production">
+<h3>In Production<a class="headerlink" href="#in-production" title="Permalink to this heading">¶</a></h3>
+<p>Collect all of the static content into place using the <code class="docutils literal notranslate"><span class="pre">collectstatic</span></code> command. The
+<code class="docutils literal notranslate"><span class="pre">pulpcore-manager</span></code> command is <code class="docutils literal notranslate"><span class="pre">manage.py</span></code> configured with the
+<code class="docutils literal notranslate"><span class="pre">DJANGO_SETTINGS_MODULE=&quot;pulpcore.app.settings&quot;</span></code>. Run <code class="docutils literal notranslate"><span class="pre">collectstatic</span></code> as follows:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ pulpcore-manager collectstatic
+</pre></div>
+</div>
+</section>
+</section>
+<section id="analytics-collection">
+<span id="analytics"></span><h2>Analytics Collection<a class="headerlink" href="#analytics-collection" title="Permalink to this heading">¶</a></h2>
+<p>By default, Pulp installations post anonymous analytics data every 24 hours which is summarized on
+<a class="reference external" href="https://analytics.pulpproject.org/">https://analytics.pulpproject.org/</a> and aids in project decision making. This is enabled by
+default but can be disabled by setting <code class="docutils literal notranslate"><span class="pre">ANALYTICS=False</span></code> in your settings.</p>
+<p>Here is the list of exactly what is collected along with an example below:</p>
+<ul class="simple">
+<li><p>The version of Pulp components installed</p></li>
+<li><p>The number of worker processes and number of hosts (not hostnames) those workers run on</p></li>
+<li><p>The number of content app processes and number of hosts (not hostnames) those content apps run on</p></li>
+</ul>
+<p>An example payload:</p>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;systemId&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;a6d91458-32e8-4528-b608-b2222ede994e&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">&quot;onlineContentApps&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nt">&quot;processes&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">2</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;hosts&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="nt">&quot;onlineWorkers&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nt">&quot;processes&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">2</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;hosts&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span>
+<span class="w">        </span><span class="p">},</span>
+<span class="w">    </span><span class="nt">&quot;components&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[{</span>
+<span class="w">        </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;core&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;version&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;3.21.0&quot;</span>
+<span class="w">        </span><span class="p">},</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;file&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">&quot;version&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;1.12.0&quot;</span>
+<span class="w">    </span><span class="p">}],</span>
+<span class="w">    </span><span class="nt">&quot;postgresqlVersion&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">90200</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="from-pulp-2.html" class="btn btn-neutral float-left" title="Changes From Pulp 2" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="installation/index.html" class="btn btn-neutral float-right" title="Installation Options" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2012-2023, Pulp Team.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+ 
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-74748547-2', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+
+<script>
+$( document ).ready( function() {
+
+  // gets version number minus whitespace and bugfix version
+  var $version_number = $('.version').text().trim().split('.', 2).join('.')
+
+  // div mirroring the admonition-warning generated by sphinx if added to .rst
+  var warning = '\
+          <div class="admonition warning"> \
+              <p class="first admonition-title">Warning</p> \
+              <p class="last">You are looking at the docs for an unsupported version of Pulp. \
+               Consider switching to a  \
+               <a href="https://pulpproject.org/docs/">supported version</a></p> \
+          </div>'
+
+  
+  // get JSON from server and load supported_versions
+  $.getJSON("https://raw.githubusercontent.com/pulp/pulp-ci/master/ci/config/releases/supported-releases.json" , function(data) {
+    if ($.inArray($version_number, data) === -1) {
+      $('.rst-content').prepend(warning)
+      }
+    })
+  })
+  </script>
+
+
+</body>
+</html>

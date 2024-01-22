@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Plugin Concepts &mdash; Pulp Project 3.23.0.dev documentation</title>
+      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="next" title="Models" href="subclassing/models.html" />
+    <link rel="prev" title="Plugin Planning Guide" href="../planning-guide.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../../index.html" class="icon icon-home"> Pulp Project
+          </a>
+              <div class="version">
+                3.23.0.dev
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../../concepts.html">Concepts and Terminology</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../from-pulp-2.html">Changes From Pulp 2</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../components.html">Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation/index.html">Installation Options</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../configuration/index.html">Configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../authentication/index.html">Authentication</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../workflows/index.html">Workflows and Use Cases</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../plugins.html">Plugins</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../index.html">Plugin Development</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="../../index.html#plugin-writer-s-guide">Plugin Writer’s Guide</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="../index.html">Plugin Writer’s Guide</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="../planning-guide.html">Plugin Planning Guide</a></li>
+<li class="toctree-l4 current"><a class="current reference internal" href="#">Plugin Concepts</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#zero-downtime-migrations">Zero-Downtime Migrations</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#data-migrations">Data Migrations</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#tasking-system">Tasking System</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../plugin-walkthrough.html">Plugin Walkthrough</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../index.html#plugin-writer-s-reference">Plugin Writer’s Reference</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../index.html#plugin-api-reference">Plugin API Reference</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../rest_api.html">REST API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../client_bindings.html">Client Bindings</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../contributing/index.html">Contributing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../bugs-features.html">Bugs, Feature and Backport Requests</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../troubleshooting.html">Troubleshooting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../glossary.html">Glossary</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../changes.html">Changelog</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../versioning.html">Versioning</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../release_process.html">Pulpcore Release Process</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Pulp Project</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Plugin Development</a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Plugin Writer’s Guide</a></li>
+      <li class="breadcrumb-item active">Plugin Concepts</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../_sources/plugin_dev/plugin-writer/concepts/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="plugin-concepts">
+<span id="id1"></span><h1>Plugin Concepts<a class="headerlink" href="#plugin-concepts" title="Permalink to this heading">¶</a></h1>
+<p>Like the Pulp Core itself, all Pulp Plugins are Django Applications, and could be created like any
+other Django app with <code class="docutils literal notranslate"><span class="pre">pulpcore-manager</span> <span class="pre">startapp</span> <span class="pre">&lt;your_plugin&gt;</span></code>. However, instead of writing all
+of the boilerplate yourself, it is recommended that you start your plugin by utilizing the <a class="reference external" href="https://github.com/pulp/plugin_template">Plugin
+Template</a>.  This guide will assume that you have used
+the plugin_template, but if you are interested in the details of what it provides you, please see
+<a class="reference internal" href="../../reference/how-plugins-work.html#plugin-django-application"><span class="std std-ref">Plugin Django Application</span></a> for more information for how plugins are “discovered” and connected to
+the <code class="docutils literal notranslate"><span class="pre">pulpcore</span></code> Django app. Additional information is given as inline comments in the template.</p>
+<section id="plugin-api-usage">
+<h2>Plugin API Usage<a class="headerlink" href="#plugin-api-usage" title="Permalink to this heading">¶</a></h2>
+<p>Plugin Applications interact with pulpcore with two high level interfaces, <strong>subclassing</strong> and
+adding <strong>tasks</strong>.</p>
+</section>
+<section id="subclassing">
+<span id="subclassing-general"></span><h2>Subclassing<a class="headerlink" href="#subclassing" title="Permalink to this heading">¶</a></h2>
+<p>Pulp Core and each plugin utilize <a class="reference external" href="https://docs.djangoproject.com/">Django</a> and the <a class="reference external" href="https://www.django-rest-framework.org/">Django Rest
+Framework</a>. Each plugin provides
+<a class="reference internal" href="subclassing/models.html#subclassing-models"><span class="std std-ref">Models</span></a>, <a class="reference internal" href="subclassing/serializers.html#subclassing-serializers"><span class="std std-ref">Serializers</span></a>, and <a class="reference internal" href="subclassing/viewsets.html#subclassing-viewsets"><span class="std std-ref">Viewsets</span></a>. For
+each object that a plugin writer needs to make, the <code class="docutils literal notranslate"><span class="pre">pulpcore.plugin</span></code> API provides base classes.
+These base classes handle most of the boilerplate code, resulting in CRUD for each object out of
+the box.</p>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="subclassing/models.html">Models</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="subclassing/models.html#adding-model-fields">Adding Model Fields</a></li>
+<li class="toctree-l2"><a class="reference internal" href="subclassing/models.html#uniqueness">Uniqueness</a></li>
+<li class="toctree-l2"><a class="reference internal" href="subclassing/models.html#foreignkey-gotchas">ForeignKey Gotchas</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="subclassing/serializers.html">Serializers</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="subclassing/serializers.html#adding-fields">Adding Fields</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="subclassing/viewsets.html">Viewsets</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="subclassing/viewsets.html#endpoint-namespacing">Endpoint Namespacing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="subclassing/viewsets.html#detail-routes-extra-endpoints">Detail Routes (Extra Endpoints)</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="subclassing/import-export.html">Pulp Import/Export</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="subclassing/import-export.html#querymodelresource">QueryModelResource</a></li>
+<li class="toctree-l2"><a class="reference internal" href="subclassing/import-export.html#basecontentresource">BaseContentResource</a></li>
+<li class="toctree-l2"><a class="reference internal" href="subclassing/import-export.html#modelresource-py">modelresource.py</a></li>
+<li class="toctree-l2"><a class="reference internal" href="subclassing/import-export.html#content-mapping">content_mapping</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="subclassing/replication.html">Pulp Replication</a></li>
+</ul>
+</div>
+</section>
+<section id="master-detail-models">
+<span id="id2"></span><h2>Master/Detail Models<a class="headerlink" href="#master-detail-models" title="Permalink to this heading">¶</a></h2>
+<p>Typically pulpcore wants to define a set of common fields on a Model; for example,
+<code class="docutils literal notranslate"><span class="pre">pulpcore.plugin.models.Remote</span></code> defines fields like <code class="docutils literal notranslate"><span class="pre">url</span></code>, <code class="docutils literal notranslate"><span class="pre">username</span></code>, <code class="docutils literal notranslate"><span class="pre">password</span></code>, etc.
+Plugin writers are able to also add plugin-specific fields through subclassing this object.
+Conceptually this is easy, but two practical problems arise:</p>
+<ul class="simple">
+<li><p>With each subclass becoming its own table in the database, the common fields get duplicated on
+each of these tables.</p></li>
+<li><p>Migrations are now no longer on a single table, but N tables produced from subclassing.</p></li>
+</ul>
+<p>To address these issues, pulpcore uses Django’s <a class="reference external" href="https://docs.djangoproject.com/en/3.2/topics/db/models/#multi-table-inheritance">Multi-table inheritance support</a> to create a pattern Pulp
+developers call the “Master/Detail pattern”. The model defining the common fields is called the
+“Master model”, and any subclass of a Master model is referred to as a “Detail model”.</p>
+<p>For example, pulpcore defines the <a class="reference external" href="https://github.com/pulp/pulpcore/blob/b575e1338e04978755a0231905950659aeea4ea9/pulpcore/app/models/repository.py#L268">Remote</a> Master model. It
+inherits from <code class="docutils literal notranslate"><span class="pre">MasterModel</span></code> which identifies it as a Master model, and defines many fields. Then
+pulp_file defines the <a class="reference external" href="https://github.com/pulp/pulp_file/blob/68cdbde4f7f9609d987ec4e6694810e6085288db/pulp_file/app/models.py#L46">FileRemote</a> which is a Detail model. The
+Detail model defines a <code class="docutils literal notranslate"><span class="pre">TYPE</span></code> class attribute and is a subclass of a Master model.</p>
+<p>Typically Master models are provided by pulpcore, and Detail models by plugins, but this is not
+strictly required. Here is a list of the Master models pulpcore provides:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">pulpcore.plugin.models.AlternateContentSource</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">pulpcore.plugin.models.Content</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">pulpcore.plugin.models.ContentGuard</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">pulpcore.plugin.models.Distribution</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">pulpcore.plugin.models.Exporter</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">pulpcore.plugin.models.Importer</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">pulpcore.plugin.models.Publication</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">pulpcore.plugin.models.Remote</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">pulpcore.plugin.models.Repository</span></code></p></li>
+</ul>
+<p>Here are some examples of usage from the Detail side:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">my_file_remote</span> <span class="o">=</span> <span class="n">FileRemote</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;some remote name&quot;</span><span class="p">)</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">type</span><span class="p">(</span><span class="n">my_file_remote</span><span class="p">)</span>  <span class="c1"># We queried the detail type so we expect that type of instance</span>
+<span class="go">pulp_file.app.models.FileRemote</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">my_file_remote</span><span class="o">.</span><span class="n">policy</span> <span class="o">=</span> <span class="s2">&quot;streamed&quot;</span>  <span class="c1"># The detail object acts like it has all the attrs</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">my_file_remote</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>  <span class="c1"># Django&#39;s multi-table inheritance handles where to put things</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">my_master_remote</span> <span class="o">=</span> <span class="n">my_file_remote</span><span class="o">.</span><span class="n">master</span>  <span class="c1"># the `master` attr gives you the master instance</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">type</span><span class="p">(</span><span class="n">my_master_remote</span><span class="p">)</span>  <span class="c1"># Let&#39;s confirm this is the Master model type</span>
+<span class="go">pulpcore.app.models.repository.Remote</span>
+</pre></div>
+</div>
+<p>The Master table in psql gets a column named <code class="docutils literal notranslate"><span class="pre">pulp_type</span></code> which stores the app name joined with the
+value of the class attribute on the Detail column using a period. So with <code class="docutils literal notranslate"><span class="pre">FileRemote</span></code> defining the
+class attribute <code class="docutils literal notranslate"><span class="pre">TYPE</span> <span class="pre">=</span> <span class="pre">&quot;file&quot;</span></code> and the <code class="docutils literal notranslate"><span class="pre">pulp_file</span></code> Django app name being <code class="docutils literal notranslate"><span class="pre">&quot;file&quot;</span></code> we expect a
+<code class="docutils literal notranslate"><span class="pre">pulp_type</span></code> of <code class="docutils literal notranslate"><span class="pre">&quot;file.file&quot;</span></code>.The Detail table in psql has a foreign key pointer used to join
+against the Master table. This information can be helpful when you want to query from the Master
+side:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">items</span> <span class="o">=</span> <span class="n">Remote</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">pulp_type</span><span class="o">=</span><span class="s2">&quot;file.file&quot;</span><span class="p">)</span>  <span class="c1"># Get the File Remotes in Master table</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">my_master_remote</span> <span class="o">=</span> <span class="n">items</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>  <span class="c1"># my_master_remote has no detail defined fields</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">type</span><span class="p">(</span><span class="n">my_master_remote</span><span class="p">)</span>  <span class="c1"># Let&#39;s confirm this is the `master` instance</span>
+<span class="go">pulpcore.app.models.repository.Remote</span>
+</pre></div>
+</div>
+<p>A Master model instance can be transformed into its corresponding Detail model object using the
+<cite>cast()</cite> method. See the example below for usage. Additionally, It is possible to create subclasses
+of Detail models, and in that case, the <cite>cast()</cite> method will always derive the most recent
+descendent. Consider the usage from below.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">my_detail_remote</span> <span class="o">=</span> <span class="n">my_master_remote</span><span class="o">.</span><span class="n">cast</span><span class="p">()</span>  <span class="c1"># Let&#39;s cast the master to the detail instance</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">type</span><span class="p">(</span><span class="n">my_detail_remote</span><span class="p">)</span>
+<span class="go">pulp_file.app.models.FileRemote  # Now it&#39;s a detail instance with both master and detail fields</span>
+</pre></div>
+</div>
+</section>
+<section id="validating-models">
+<span id="id3"></span><h2>Validating Models<a class="headerlink" href="#validating-models" title="Permalink to this heading">¶</a></h2>
+<p>Pulp ensures validity of its database models by carefully crafted serializers.
+So all instances where resources are created or updated, those serializers must be used.</p>
+<p>To create a <code class="docutils literal notranslate"><span class="pre">MyModel</span></code> from a <code class="docutils literal notranslate"><span class="pre">data</span></code> dictionary, the <code class="docutils literal notranslate"><span class="pre">MyModelSerializer</span></code> can be used like:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">serializer</span> <span class="o">=</span> <span class="n">MyModelSerializer</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">)</span>
+<span class="n">serializer</span><span class="o">.</span><span class="n">is_valid</span><span class="p">(</span><span class="n">raise_exception</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">instance</span> <span class="o">=</span> <span class="n">serializer</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">serializer</span><span class="o">.</span><span class="n">validated_data</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>In the stages pipeline, you want to instantiate the content units without saving them to database
+right away. The <code class="docutils literal notranslate"><span class="pre">ContentSaver</span></code> stage will then persist the objects in the database. This can be
+established by:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># In MyPluginFirstStage::run</span>
+<span class="c1"># &lt;...&gt;</span>
+<span class="n">serializer</span> <span class="o">=</span> <span class="n">MyModelSerializer</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">)</span>
+<span class="n">serializer</span><span class="o">.</span><span class="n">is_valid</span><span class="p">(</span><span class="n">raise_exception</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">d_content</span> <span class="o">=</span> <span class="n">DeclarativeContent</span><span class="p">(</span>
+    <span class="n">content</span><span class="o">=</span><span class="n">MyModel</span><span class="p">(</span><span class="o">**</span><span class="n">serializer</span><span class="o">.</span><span class="n">validated_data</span><span class="p">),</span>
+    <span class="n">d_artifacts</span><span class="o">=</span><span class="p">[</span><span class="n">d_artifact</span><span class="p">],</span>
+<span class="p">)</span>
+<span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="n">d_content</span><span class="p">)</span>
+<span class="c1"># &lt;...&gt;</span>
+</pre></div>
+</div>
+</section>
+<section id="tasks">
+<span id="writing-tasks"></span><h2>Tasks<a class="headerlink" href="#tasks" title="Permalink to this heading">¶</a></h2>
+<p>Any action that can run for a long time should be an asynchronous task. Plugin writers do not need
+to understand the internals of the pulpcore tasking system. Workers automatically execute tasks,
+including the ones deployed by plugins.</p>
+<p><strong>Worker and Tasks Directories</strong></p>
+<p>In pulp each worker is assigned a unique working directory living in <code class="docutils literal notranslate"><span class="pre">/var/lib/pulp/tmp/</span></code>, and
+each started task will have its own clean temporary subdirectory therein as its current working
+directory. Those will automatically be cleaned up once the task is finished.</p>
+<p>If a task needs to create more temporary directories, it is encouraged to use
+<code class="docutils literal notranslate"><span class="pre">tempfile.TemporaryDirectory(dir=&quot;.&quot;)</span></code> from the python standard library to place them in the
+tasks working directory. This can be necessary, if the amount of temporarily saved data is too much
+to wait for the automatic cleanup at the end of the task processing or to avoid naming conflicts.</p>
+<p><strong>Making Temporary Files Available to Tasks</strong></p>
+<p>Sometimes, files must be brought forward from a ViewSet to an executing task. The files may or may
+not end up being artifacts in the end. To tackle this, one should use <code class="docutils literal notranslate"><span class="pre">PulpTemporaryFile</span></code>.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Example 1 - Saving a temporary file:</span>
+<span class="n">temp_file</span> <span class="o">=</span> <span class="n">PulpTemporaryFile</span><span class="p">(</span><span class="n">file</span><span class="o">=</span><span class="n">my_file</span><span class="p">)</span>
+<span class="n">temp_file</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+
+<span class="c1"># Example 2 - Validating the digest and saving a temporary file:</span>
+<span class="n">temp_file</span> <span class="o">=</span> <span class="n">PulpTemporaryFile</span><span class="o">.</span><span class="n">init_and_validate</span><span class="p">(</span>
+    <span class="n">my_file</span><span class="p">,</span> <span class="n">expected_digests</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;md5&#39;</span><span class="p">:</span> <span class="s1">&#39;912ec803b2ce49e4a541068d495ab570&#39;</span><span class="p">}</span>
+<span class="p">)</span>
+<span class="n">temp_file</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+
+<span class="c1"># Example 3 - Creating an Artifact from the PulpTemporaryFile:</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="n">artifact</span> <span class="o">=</span> <span class="n">Artifact</span><span class="o">.</span><span class="n">from_pulp_temporary_file</span><span class="p">(</span><span class="n">temp_file</span><span class="p">)</span>
+<span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+    <span class="n">temp_file</span><span class="o">.</span><span class="n">delete</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>When dealing with a clustered deployment, different pulp services are not guaranteed to share a
+common filesystem (like /usr/share/pulp). <code class="docutils literal notranslate"><span class="pre">PulpTemporaryFile</span></code> is the alternative for creating
+files with the same storage technology that the artifacts use. Therefore, the temporary files
+are accessible by all pulp instances.</p>
+<p><strong>Reservations</strong></p>
+<p>The tasking system adds a concept called <strong>reservations</strong> which ensures that actions that act on the
+same resources are not run at the same time. To ensure data correctness, any action that alters the
+content of a repository (thus creating a new version) must be run asynchronously, locking on the
+repository and any other models which cannot change during the action. For example, sync tasks must
+be asynchronous and lock on the repository and the remote. Publish should lock on the repository
+version being published as well as the publisher.</p>
+<p><strong>Deploying Tasks</strong></p>
+<p>Tasks are deployed from Views or Viewsets, please see <a class="reference internal" href="subclassing/viewsets.html#kick-off-tasks"><span class="std std-ref">Kick off Tasks</span></a>.</p>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="tasks/add-remove.html">Adding and Removing Content</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tasks/add-remove.html#repository-versions">Repository Versions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tasks/add-remove.html#synchronizing">Synchronizing</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="tasks/publish.html">Publish</a></li>
+</ul>
+</div>
+<p><strong>Diagnostics</strong></p>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="tasks/diagnostics.html">Diagnostics</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tasks/diagnostics.html#memory-analysis">Memory Analysis</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<p><strong>Task Groups</strong></p>
+<p>Sometimes, you may want to create many tasks to perform different parts of one larger piece of work,
+but you need a simple means to track the progress of these many tasks. Task Groups serve this purpose
+by providing details on the number of associated tasks in each possible state.
+For more details, please see <a class="reference internal" href="subclassing/viewsets.html#kick-off-tasks"><span class="std std-ref">Kick off Tasks</span></a>.</p>
+<p><strong>GroupProgressReports</strong></p>
+<p>GroupProgressReport can track progress of each task in that group. GroupProgressReport needs to be
+created and associated to the TaskGroup. From within a task that belongs to the TaskGroup, the
+GroupProgressReport needs to be updated.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Once a TaskGroup is created, plugin writers should create GroupProgressReport objects</span>
+<span class="c1"># ahead, so tasks can find them and update the progress.</span>
+<span class="n">task_group</span> <span class="o">=</span> <span class="n">TaskGroup</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">&quot;Migration Sub-tasks&quot;</span><span class="p">)</span>
+<span class="n">task_group</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+<span class="n">group_pr</span> <span class="o">=</span> <span class="n">GroupProgressReport</span><span class="p">(</span>
+    <span class="n">message</span><span class="o">=</span><span class="s2">&quot;Repo migration&quot;</span><span class="p">,</span>
+    <span class="n">code</span><span class="o">=</span><span class="s2">&quot;create.repo_version&quot;</span><span class="p">,</span>
+    <span class="n">total</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+    <span class="n">done</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+    <span class="n">task_group</span><span class="o">=</span><span class="n">task_group</span><span class="p">)</span>
+<span class="n">group_pr</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+<span class="c1"># When a task that will be executing certain work, which is part of a TaskGroup, it will look</span>
+<span class="c1"># for the TaskGroup it belongs to and find appropriate progress report by its code and will</span>
+<span class="c1"># update it accordingly.</span>
+<span class="n">task_group</span> <span class="o">=</span> <span class="n">TaskGroup</span><span class="o">.</span><span class="n">current</span><span class="p">()</span>
+<span class="n">progress_repo</span> <span class="o">=</span> <span class="n">task_group</span><span class="o">.</span><span class="n">group_progress_reports</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">code</span><span class="o">=</span><span class="s1">&#39;create.repo_version&#39;</span><span class="p">)</span>
+<span class="n">progress_repo</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">done</span><span class="o">=</span><span class="n">F</span><span class="p">(</span><span class="s1">&#39;done&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+<span class="c1"># To avoid race conditions/cache invalidation issues, this pattern needs to be used so that</span>
+<span class="c1"># operations are performed directly inside the database:</span>
+
+<span class="c1"># .update(done=F(&#39;done&#39;) + 1)</span>
+
+<span class="c1"># See: https://docs.djangoproject.com/en/3.2/ref/models/expressions/#f-expressions</span>
+<span class="c1"># Important: F() objects assigned to model fields persist after saving the model instance and</span>
+<span class="c1"># will be applied on each save(). Do not use save() and use update() instead, otherwise</span>
+<span class="c1"># refresh_from_db() should be called after each save()</span>
+</pre></div>
+</div>
+</section>
+<section id="sync-pipeline">
+<h2>Sync Pipeline<a class="headerlink" href="#sync-pipeline" title="Permalink to this heading">¶</a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="sync_pipeline/sync_pipeline.html">Synchronizing Repositories with the async-Pipeline</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="sync_pipeline/sync_pipeline.html#on-demand-synchronizing">On-demand synchronizing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sync_pipeline/sync_pipeline.html#multiple-level-discovery">Multiple level discovery</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+<section id="role-based-access-control">
+<h2>Role Based Access Control<a class="headerlink" href="#role-based-access-control" title="Permalink to this heading">¶</a></h2>
+<p>Pulp uses a policy-based approach for Role Based Access Control (RBAC).</p>
+<p>Plugin writers can:</p>
+<ul class="simple">
+<li><p>Enable authorization for a viewset</p></li>
+<li><p>Ship a default access policy</p></li>
+<li><p>Express what default object-level and model-level permissions created for new objects</p></li>
+<li><p>Check permissions at various points in task code as needed</p></li>
+</ul>
+<p>This allows users to then:</p>
+<ul class="simple">
+<li><p>Modify the default access policy on their installation for custom authorization</p></li>
+<li><p>Modify the default object-level and model-level permissions that are created for new objects</p></li>
+</ul>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="rbac/overview.html">Overview</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="rbac/overview.html#architecture">Architecture</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rbac/overview.html#getting-started">Getting Started</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="rbac/permissions.html">Permissions and Roles</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="rbac/permissions.html#model-permissions">Model Permissions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rbac/permissions.html#defining-custom-permissions">Defining Custom Permissions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rbac/permissions.html#custom-permission-for-repository-content-modification">Custom Permission for Repository Content Modification</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rbac/permissions.html#roles">Roles</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="rbac/users_groups.html">Users and Groups</a></li>
+<li class="toctree-l1"><a class="reference internal" href="rbac/access_policy.html">Defining an Access Policy</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="rbac/access_policy.html#example-policy">Example Policy</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rbac/access_policy.html#authorization-conditions">Authorization Conditions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rbac/access_policy.html#custom-viewset-actions">Custom ViewSet Actions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rbac/access_policy.html#storing-an-access-policy-in-the-db">Storing an Access Policy in the DB</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rbac/access_policy.html#shipping-a-default-access-policy">Shipping a Default Access Policy</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rbac/access_policy.html#allow-granting-permissions-by-the-object-owners">Allow Granting Permissions by the Object Owners</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rbac/access_policy.html#handling-objects-created-prior-to-rbac">Handling Objects created prior to RBAC</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rbac/access_policy.html#viewset-enforcement">Viewset Enforcement</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rbac/access_policy.html#permission-checking-machinery">Permission Checking Machinery</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rbac/access_policy.html#custom-permission-checks">Custom Permission Checks</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="rbac/adding_automatic_permissions.html">Adding Automatic Permissions for New Objects</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="rbac/adding_automatic_permissions.html#defining-new-object-permission-behaviors">Defining New Object Permission Behaviors</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rbac/adding_automatic_permissions.html#enabling-new-object-permission-creation">Enabling New Object Permission Creation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rbac/adding_automatic_permissions.html#shipping-a-default-new-object-policy">Shipping a Default New Object Policy</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rbac/adding_automatic_permissions.html#defining-custom-new-object-permission-callables">Defining Custom New Object Permission Callables</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="rbac/queryset_scoping.html">Restricting Viewable Objects</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="rbac/queryset_scoping.html#enabling-queryset-scoping">Enabling QuerySet Scoping</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rbac/queryset_scoping.html#manually-implementing-queryset-scoping">Manually Implementing QuerySet Scoping</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+<section id="content-protection">
+<h2>Content Protection<a class="headerlink" href="#content-protection" title="Permalink to this heading">¶</a></h2>
+<p>Users can configure a <code class="docutils literal notranslate"><span class="pre">ContentGuard</span></code> to protect a <code class="docutils literal notranslate"><span class="pre">Distribution</span></code> on their own, but some plugins
+want to offer built-in content protection features. For example pulp_container may only want a user
+to download container images they have rights to based on some permissions system pulp_container
+could provide.</p>
+<p>For more information, see the <a class="reference internal" href="../../reference/content-protection.html#plugin-writers-use-content-protection"><span class="std std-ref">ContentGuard Usage by Plugin Writers</span></a> documentation.</p>
+</section>
+<section id="plugin-settings">
+<h2>Plugin Settings<a class="headerlink" href="#plugin-settings" title="Permalink to this heading">¶</a></h2>
+<p>Plugins can define settings by creating a <code class="docutils literal notranslate"><span class="pre">&lt;your</span> <span class="pre">plugin&gt;.app.settings</span></code> module containing settings
+as you would define in the Django Settings File itself. <code class="docutils literal notranslate"><span class="pre">pulpcore</span></code> ships the actual settings.py
+file so settings cannot be added directly as with most Django deployments. Instead as each plugin is
+loaded, pulpcore looks for the <code class="docutils literal notranslate"><span class="pre">&lt;your</span> <span class="pre">plugin&gt;.app.settings</span></code> module and uses <code class="docutils literal notranslate"><span class="pre">dynaconf</span></code> to
+overlay the settings on top of <code class="docutils literal notranslate"><span class="pre">pulpcore</span></code>’s settings and user provided settings.</p>
+<p>Settings are parsed in the following order with later settings overwriting earlier ones:</p>
+<ol class="arabic simple">
+<li><p>Settings from <code class="docutils literal notranslate"><span class="pre">/etc/pulp/settings.py</span></code>.</p></li>
+<li><p>Settings from <code class="docutils literal notranslate"><span class="pre">pulpcore.app.settings</span></code> (the pulpcore provided settings defaults).</p></li>
+<li><p>Plugin settings from <code class="docutils literal notranslate"><span class="pre">&lt;your</span> <span class="pre">plugin&gt;.app.settings</span></code>.</p></li>
+</ol>
+<p>In some cases, a setting should not overwrite an existing setting, but instead add to it. For
+example, consider adding a custom log handler or logger to the <a class="reference external" href="https://github.com/pulp/pulpcore/blob/ec336c2b7bc7cefd3a28fc69dcd1c65655332841/pulpcore/app/settings.py#L183-L202">LOGGING</a>
+settings. You don’t want to fully overwrite it, but instead add or overwrite only a sub-portion.
+<code class="docutils literal notranslate"><span class="pre">dynaconf</span></code> provides the <a class="reference external" href="https://dynaconf.readthedocs.io/en/latest/guides/usage.html#merging-existing-values">dynaconf_merge feature</a> which is for merging settings instead of overwriting them. For
+example, pulp_ansible makes use of this <a class="reference external" href="https://github.com/pulp/pulp_ansible/blob/31dd6b77f0e2748644a4b76607be4a6cd2b6ce89/pulp_ansible/app/settings.py">here</a>.</p>
+<p>Some settings require validation to ensure the user has entered a valid value. Plugins can add
+validation for their settings using validators added in a <code class="docutils literal notranslate"><span class="pre">dynaconf</span></code> hook file that will run
+after all the settings have been loaded. Create a <code class="docutils literal notranslate"><span class="pre">&lt;your</span> <span class="pre">plugin&gt;.app.dynaconf_hooks</span></code> module like
+below so <code class="docutils literal notranslate"><span class="pre">dynaconf</span></code> can run your plugin’s validators. See <a class="reference external" href="https://www.dynaconf.com/validation/">dynaconf validator docs</a> for more information on writing validators.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">dynaconf</span> <span class="kn">import</span> <span class="n">Validator</span>
+
+<span class="k">def</span> <span class="nf">post</span><span class="p">(</span><span class="n">settings</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;This hook is called by dynaconf after the settings are completely loaded&quot;&quot;&quot;</span>
+    <span class="n">settings</span><span class="o">.</span><span class="n">validators</span><span class="o">.</span><span class="n">register</span><span class="p">(</span>
+        <span class="n">Validator</span><span class="p">(</span><span class="o">...</span><span class="p">),</span>
+        <span class="n">Validator</span><span class="p">(</span><span class="o">...</span><span class="p">),</span>
+        <span class="o">...</span>
+    <span class="p">)</span>
+    <span class="n">settings</span><span class="o">.</span><span class="n">validators</span><span class="o">.</span><span class="n">validate</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+<section id="custom-api-url-routes">
+<span id="custom-url-routes"></span><h2>Custom API URL Routes<a class="headerlink" href="#custom-api-url-routes" title="Permalink to this heading">¶</a></h2>
+<p>The <a class="reference external" href="subclassing-viewsets">typical plugin viewsets</a> are all suburls under <code class="docutils literal notranslate"><span class="pre">/pulp/api/v3/</span></code>, but
+some content types require additional urls outside of this area. For example pulp_ansible provides
+the Galaxy API at <code class="docutils literal notranslate"><span class="pre">/pulp_ansible/galaxy/</span></code>.</p>
+<p>Place a urls.py that defines a <code class="docutils literal notranslate"><span class="pre">urlpatterns</span></code> at the root of your Python package, and the pulpcore
+plugin loading code will append those urls to the url root. This allows your urls.py to be a typical
+Django file. For example pulp_ansible uses a <a class="reference external" href="https://github.com/pulp/pulp_ansible/blob/master/pulp_ansible/app/urls.py">urls.py defined here</a></p>
+</section>
+<section id="custom-content-app-routes">
+<span id="id4"></span><h2>Custom Content App Routes<a class="headerlink" href="#custom-content-app-routes" title="Permalink to this heading">¶</a></h2>
+<p>The Content App may also require custom routes, for example <a class="reference external" href="https://github.com/pulp/pulp_container/blob/master/pulp_container/app/content.py">pulp_container</a> defines some. Read more about how
+to <a class="reference internal" href="../../api-reference/content-app.html#content-app-docs"><span class="std std-ref">customize the content app with custom routes</span></a>.</p>
+</section>
+<section id="configuring-reverse-proxy-with-custom-urls">
+<span id="configuring-reverse-proxy-custom-urls"></span><h2>Configuring Reverse Proxy with Custom URLs<a class="headerlink" href="#configuring-reverse-proxy-with-custom-urls" title="Permalink to this heading">¶</a></h2>
+<p>When a plugin requires either Pulp API or Pulp Content App custom urls, the reverse proxy, i.e.
+either Nginx or Apache, need to receive extra configuration snippets to know which service to route
+the custom URLs to.</p>
+<p>A best practice is to document clearly the custom URL requirements your plugin needs. Although the
+installer can automatically install plugin snippets, other environments, e.g. k8s or docker or
+docker containers may still need to configure them manually. Having clear docs is a minimum.</p>
+<p>You can ship webserver snippets as part of your Python package with three steps:</p>
+<p>1. Create a python package named <code class="docutils literal notranslate"><span class="pre">webserver_snippets</span></code> directory inside your app, e.g.
+<code class="docutils literal notranslate"><span class="pre">pulp_ansible.app.webserver_snippets</span></code>. Like all Python packages it will have an <code class="docutils literal notranslate"><span class="pre">__init__.py</span></code>.</p>
+<p>2. Create an <code class="docutils literal notranslate"><span class="pre">nginx.conf</span></code> and an <code class="docutils literal notranslate"><span class="pre">apache.conf</span></code>, and the installer will symlink to the correct
+one depending on which reverse proxy is installed. Please create both as the installer supports
+both.</p>
+<p>3. Create an entry in MANIFEST.in to have the packaged plugin include the <code class="docutils literal notranslate"><span class="pre">apache.conf</span></code> and
+<code class="docutils literal notranslate"><span class="pre">nginx.conf</span></code> files.</p>
+<p>Here is an example in <a class="reference external" href="https://github.com/pulp/pulp_ansible/tree/master/pulp_ansible/app/webserver_snippets">pulp_ansible’s webserver configs</a>.</p>
+<p>For the <code class="docutils literal notranslate"><span class="pre">nginx.conf</span></code> you can use variables with the names <code class="docutils literal notranslate"><span class="pre">pulp-api</span></code> and <code class="docutils literal notranslate"><span class="pre">pulp-content</span></code> as the
+location for the backend services. For example, to route the url <code class="docutils literal notranslate"><span class="pre">/pulp_ansible/galaxy/</span></code> to the
+Pulp API you could have your <code class="docutils literal notranslate"><span class="pre">nginx.conf</span></code> contain:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>location /pulp_ansible/galaxy/ {
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_set_header Host $http_host;
+    # we don&#39;t want nginx trying to do something clever with
+    # redirects, we set the Host: header above already.
+    proxy_redirect off;
+    proxy_pass http://pulp-api;
+}
+</pre></div>
+</div>
+<p>The Apache config provides variables containing the location of the Pulp Content App and the Pulp
+API as <code class="docutils literal notranslate"><span class="pre">pulp-api</span></code> and <code class="docutils literal notranslate"><span class="pre">pulp-content</span></code> respectively. Below is an equivalent snippet to the one
+above, only for Apache:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>ProxyPass /pulp_ansible/galaxy http://${pulp-api}/pulp_ansible/galaxy
+ProxyPassReverse /pulp_ansible/galaxy http://${pulp-api}/pulp_ansible/galaxy
+</pre></div>
+</div>
+<p>For the MANIFEST.in entry, you’ll likely want one like the example below which was taken from
+<a class="reference external" href="https://github.com/pulp/pulp_ansible/blob/master/MANIFEST.in">pulp_ansible’s MANIFEST.in</a>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">include</span> <span class="n">pulp_ansible</span><span class="o">/</span><span class="n">app</span><span class="o">/</span><span class="n">webserver_snippets</span><span class="o">/*</span>
+</pre></div>
+</div>
+</section>
+<section id="overriding-the-reverse-proxy-route-configuration">
+<span id="overriding-reverse-proxy-route-configuration"></span><h2>Overriding the Reverse Proxy Route Configuration<a class="headerlink" href="#overriding-the-reverse-proxy-route-configuration" title="Permalink to this heading">¶</a></h2>
+<p>Sometimes a plugin may want to control the reverse proxy behavior of a URL at the webserver. For
+example, perhaps an additional header may want to be set at the reverse proxy when those urls are
+forwarded to the plugin’s Django code. To accomplish this, the
+<a class="reference internal" href="#custom-content-app-routes"><span class="std std-ref">custom app route</span></a> can be used when it specifies a more-specific
+route than the installer’s base webserver configuration provides.</p>
+<p>For example assume the header <cite>FOO</cite> should be set at the url <code class="docutils literal notranslate"><span class="pre">/pulp/api/v3/foo_route</span></code>. Below are
+two examples of a snippet that could do this (one for Nginx and another for Apache).</p>
+<p>Nginx example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>location /pulp/api/v3/foo_route {
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_set_header Host $http_host;
+
+    proxy_set_header FOO &#39;asdf&#39;;  # This is the custom part
+
+    # we don&#39;t want nginx trying to do something clever with
+    # redirects, we set the Host: header above already.
+    proxy_redirect off;
+    proxy_pass http://pulp-api;
+}
+</pre></div>
+</div>
+<p>Apache example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>&lt;Location &quot;/pulp/api/v3/foo_route&quot;&gt;
+    ProxyPass /pulp/api http://${pulp-api}/pulp/api
+    ProxyPassReverse /pulp/api http://${pulp-api}/pulp/api
+    RequestHeader set FOO &quot;asdf&quot;
+&lt;/Location&gt;
+</pre></div>
+</div>
+<p>These snippets work because both Nginx and Apache match on “more-specific” routes first regardless
+of the order in the config file. The installer ships the a default of <code class="docutils literal notranslate"><span class="pre">/pulp/api/v3</span></code> so anything
+containing another portion after <code class="docutils literal notranslate"><span class="pre">v3</span></code> such as <code class="docutils literal notranslate"><span class="pre">/pulp/api/v3/foo_route</span></code> would be more specific.</p>
+</section>
+<section id="plugin-api-stability-and-deprecation-policy">
+<span id="deprecation-policy"></span><h2>Plugin API Stability and Deprecation Policy<a class="headerlink" href="#plugin-api-stability-and-deprecation-policy" title="Permalink to this heading">¶</a></h2>
+<p>The <code class="docutils literal notranslate"><span class="pre">pulpcore.plugin</span></code> API can introduce breaking changes, and will be introduced in the following
+way. For this example, assume that pulpcore 3.8 introduces a breaking change by changing the call
+signature of a method named <code class="docutils literal notranslate"><span class="pre">def</span> <span class="pre">foo(a,</span> <span class="pre">b)</span></code> which is importable via the plugin API.</p>
+<p>In 3.8 the following changes happen:</p>
+<ol class="arabic">
+<li><p>The new method would be introduced as a new named function <code class="docutils literal notranslate"><span class="pre">def</span> <span class="pre">the_new_foo(...)</span></code> or some
+similar name.</p></li>
+<li><p>The existing method signature <code class="docutils literal notranslate"><span class="pre">def</span> <span class="pre">foo(a,</span> <span class="pre">b)</span></code> is left in-tact.</p></li>
+<li><p>The <code class="docutils literal notranslate"><span class="pre">foo</span></code> method would have the a Python <code class="docutils literal notranslate"><span class="pre">DeprecationWarning</span></code> added to it such as:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pulpcore.app.loggers</span> <span class="kn">import</span> <span class="n">deprecation_logger</span>
+<span class="n">deprecation_logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;foo() is deprecated and will be removed in pulpcore==3.9; use the_new_foo().&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</li>
+<li><p>A <code class="docutils literal notranslate"><span class="pre">CHANGES/plugin_api/XXXX.deprecation</span></code> changelog entry is created explaining how to port
+plugin code onto the new call interface.</p></li>
+</ol>
+<p>Then in 3.9 the following happens:</p>
+<ol class="arabic simple">
+<li><p>The <code class="docutils literal notranslate"><span class="pre">def</span> <span class="pre">foo(a,</span> <span class="pre">b)</span></code> method is deleted entirely.</p></li>
+<li><p>A <code class="docutils literal notranslate"><span class="pre">CHANGES/plugin_api/XXXX.removal</span></code> changelog entry is created explaining what has been
+removed.</p></li>
+</ol>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Deprecation log statements are shown to users of your plugin when using a deprecated call
+interface. This is by design to raise general awareness that the code in-use will eventually be
+removed.</p>
+</div>
+<p>This also applies to models importable from <code class="docutils literal notranslate"><span class="pre">pulpcore.plugin.models</span></code>. For example, an attribute
+that is being renamed or removed would follow a similar deprecation process described above to allow
+plugin code one release cycle to update their code compatibility.</p>
+<p>Logging of deprecation warnings can be disabled by raising the log level for the
+<code class="docutils literal notranslate"><span class="pre">pulpcore.deprecation</span></code> logger in the pulpcore settings file:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">LOGGING</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="c1"># ...</span>
+    <span class="s2">&quot;loggers&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">&quot;pulpcore.deprecation&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;level&quot;</span><span class="p">:</span> <span class="s2">&quot;ERROR&quot;</span><span class="p">,</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</section>
+<section id="declaring-dependencies">
+<span id="id5"></span><h2>Declaring Dependencies<a class="headerlink" href="#declaring-dependencies" title="Permalink to this heading">¶</a></h2>
+<p>Pulpcore and Pulp plugins are Python applications and are expected to follow Python ecosystem norms
+including declaring direct dependencies using the setuptools <code class="docutils literal notranslate"><span class="pre">install_requires</span></code> keyword in your
+<code class="docutils literal notranslate"><span class="pre">setup.py</span></code>.</p>
+<p>Pulpcore and Pulp plugins are expected to do two things when declaring dependencies:</p>
+<p>1. Declare an upper bound to prevent a breaking-change release of a dependency from breaking user
+installations. To prevent unexpected breakages due to new plugin releases, this typically is the
+current latest release of a dependency (assuming a plugin is compatible with the latest release).
+The latest release is preferred because it allows each new dependency release to be tested, and it
+prevents unexpected user breakages when dependencies release breaking changes.</p>
+<p>2. Declare as broad a range of compatible versions as possible to minimize conflicts between your
+code and other Python projects installed in the same Python environment.</p>
+<p>Here are some examples assuming our code directly depends on the <code class="docutils literal notranslate"><span class="pre">jsonschema</span></code> library and assuming
+the latest <code class="docutils literal notranslate"><span class="pre">jsonschema</span></code> release is 4.4.2:</p>
+<p><code class="docutils literal notranslate"><span class="pre">jsonschema&gt;=2.3,&lt;=4.4.2</span></code> - Assuming this is accurate, this is the best declaration because it
+declares as broad an expression of compatibility as safely possible.</p>
+<p><code class="docutils literal notranslate"><span class="pre">jsonschema&lt;=4.4.2</span></code> - This is appropriate if the appropriate lower bound is not known.</p>
+<p><code class="docutils literal notranslate"><span class="pre">jsonschema~=4.4</span></code> - This should be avoided. Use an upper and lower bound range instead.</p>
+<p><code class="docutils literal notranslate"><span class="pre">jsonschema==4.4.0</span></code> - This is a last resort and needs an exceptional reason to do so.</p>
+<p><code class="docutils literal notranslate"><span class="pre">jsonschema</span></code> - This doesn’t declare an upper bound, so this won’t work. The CI will fail this.</p>
+<p>Any code that you import directly should have its dependency declared as a requirement. This
+includes code that you also would receive as dependencies of dependencies. For example, all plugins
+import and use Django directly, but pulpcore also includes Django. Since your plugin uses Django
+directly, your plugin should declare its dependency on Django.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Why add a requirement when pulpcore is known to provide it? To continue with the Django
+example… Django can introduce breaking changes with each release, so if your plugin relies on
+pulpcore to declare the Django requirement, and then pulpcore upgrades, your plugin could
+receive breaking changes with a new version of pulpcore. These breaking changes could be subtle
+and not be noticeable until they affect your users. By your plugin declaring the dependency on
+Django directly, at install/upgrade time (in the CI), you’ll know right away you have a
+conflicting dependency on Django.</p>
+</div>
+<p>One useful tool for managing the upperbound is <a class="reference external" href="https://github.com/dependabot">dependabot</a> which
+can open PRs raising the upper bound when new releases occur. These changes will go through the CI
+which allows your dependency upper bound raising to be tested.</p>
+<p>The challenging part of maintaining the lower bound is that it is not tested due to <code class="docutils literal notranslate"><span class="pre">pip</span></code> in the
+CI wanting to use the latest version. Here are a few examples of when you want to raise the lower
+bound:</p>
+<ul class="simple">
+<li><p>A plugin code change uses a new dependency feature</p></li>
+<li><p>A bug in the lower bound version of a dependency affects your plugin’s users and a fix is
+available in a newer version of the dependency.</p></li>
+<li><p>Plugin code is incompatible with the lower bound version of a dependency and the solution is to
+declare a new lower bound.</p></li>
+</ul>
+</section>
+<section id="installation">
+<span id="plugin-installation"></span><h2>Installation<a class="headerlink" href="#installation" title="Permalink to this heading">¶</a></h2>
+<p>It’s recommended to use the <a class="reference external" href="https://docs.pulpproject.org/pulp_installer/">Pulp 3 Installer</a> to
+install your plugin. Generally you can do this by configuring <code class="docutils literal notranslate"><span class="pre">pulp_install_plugins</span></code> variable with
+your Python package’s name. For example for <code class="docutils literal notranslate"><span class="pre">pulp-file</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pulp_install_plugins</span><span class="p">:</span>
+  <span class="n">pulp</span><span class="o">-</span><span class="n">file</span><span class="p">:</span> <span class="p">{}</span>
+</pre></div>
+</div>
+</section>
+<section id="custom-installation-tasks">
+<span id="id6"></span><h2>Custom Installation Tasks<a class="headerlink" href="#custom-installation-tasks" title="Permalink to this heading">¶</a></h2>
+<p>Custom installation steps for a plugin can be added to the installer which are run only when your
+plugin is in the <code class="docutils literal notranslate"><span class="pre">pulp_install_plugins</span></code> configuration.</p>
+<p>For example, pulp_rpm requires several system-level dependencies that cannot be received from PyPI.
+The installer delivers these dependencies at install time through the <a class="reference external" href="https://github.com/pulp/pulp_installer/tree/master/roles/pulp_rpm_prerequisites">pulp_rpm_prerequisites</a> role. That role
+ships with the installer itself.</p>
+<p>It’s also possible to add custom install behaviors for developers too. For exampe, the galaxy_ng
+plugin desires their web UI to be built from source for devel installs. That occurs <a class="reference external" href="https://github.com/pulp/pulp_installer/blob/master/roles/pulp_devel/tasks/galaxy_ui.yml">in a custom
+galaxy_ui.yml task</a> in the installers <code class="docutils literal notranslate"><span class="pre">pulp_devel</span></code> role.</p>
+<p>For help contributing or changing a plugin-specific installation, please reach out to the installer
+maintainers. Check out <a class="reference external" href="https://pulpproject.org/help/">our help page</a> for different ways to
+contact us.</p>
+</section>
+<section id="checksum-use-in-plugins">
+<span id="id7"></span><h2>Checksum Use In Plugins<a class="headerlink" href="#checksum-use-in-plugins" title="Permalink to this heading">¶</a></h2>
+<p>The <code class="docutils literal notranslate"><span class="pre">ALLOWED_CONTENT_CHECKSUMS</span></code> setting provides the list of allowed checksums a Pulp installation
+is allowed to handle. This includes two types of “checksum handling”:</p>
+<ol class="arabic simple">
+<li><p>Generating checksums. Only hashers in the <code class="docutils literal notranslate"><span class="pre">ALLOWED_CONTENT_CHECKSUMS</span></code> list should be used for
+checksum generation.</p></li>
+<li><p>Passing through checksum data to clients. Pulp installations should not deliver checksum data to
+clients that are not in the <code class="docutils literal notranslate"><span class="pre">ALLOWED_CONTENT_CHECKSUMS</span></code> list. For example, the RPM plugin
+publications contain checksums that Pulp does not generate, and it should restrict the checksum
+data used in those publications to the set of allowed hashers in <code class="docutils literal notranslate"><span class="pre">ALLOWED_CONTENT_CHECKSUMS</span></code>.</p></li>
+</ol>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The plugin API provides the <code class="docutils literal notranslate"><span class="pre">pulpcore.plugin.pulp_hashlib</span></code> module which provides the <code class="docutils literal notranslate"><span class="pre">new</span></code>
+function. This is a wrapper around <code class="docutils literal notranslate"><span class="pre">hashlib.new</span></code> which raises an exception if a hasher is
+requested that is not listed in the <code class="docutils literal notranslate"><span class="pre">ALLOWED_CONTENT_CHECKSUMS</span></code> setting. This is a convenience
+facility allowing plugin writers to not check the <code class="docutils literal notranslate"><span class="pre">ALLOWED_CONTENT_CHECKSUMS</span></code> setting
+themselves.</p>
+</div>
+</section>
+<section id="internationalization-expectations">
+<span id="il8n-expectations"></span><h2>Internationalization Expectations<a class="headerlink" href="#internationalization-expectations" title="Permalink to this heading">¶</a></h2>
+<p>pulpcore and its plugins are expected to internationalize all user-facing strings using Python’s
+gettext facilities. This allows Pulp to be translated to other languages and be more usable for a
+broader base of users.</p>
+<p>Administrator facing strings are expected <em>not</em> to be internationalized. These include all log
+statements, migration output print statements, django management commands, etc. These not being
+internationalized will remain in English. This expectation was formed after feedback from
+multi-language speakers who believe having error messages for admins in English would reduce the
+time to finding a fix and was generally less surprising.</p>
+</section>
+<section id="zero-downtime-upgrades">
+<span id="id8"></span><h2>Zero-Downtime Upgrades<a class="headerlink" href="#zero-downtime-upgrades" title="Permalink to this heading">¶</a></h2>
+<p>Eventually, Pulp users will be able to upgrade without first stopping Pulp services. This has been
+<a class="reference external" href="https://discourse.pulpproject.org/t/support-zero-downtime-updates/645">requested from the community</a>,
+To work towards that goal, developers of <code class="docutils literal notranslate"><span class="pre">pulpcore</span></code> or a plugin should follow these requirements:</p>
+<ul class="simple">
+<li><p>Migrations must not break earlier versions code still running during an upgrade.</p></li>
+<li><p>Task code must be backwards compatible until the next major Pulp version.</p></li>
+</ul>
+<p>Future user upgrades will likely run as follow:</p>
+<ol class="arabic simple">
+<li><p>Run the migrations while old pulp code is online. Old code, is using the new data format.</p></li>
+<li><p>Rolling restart old code to become new code. Old and new code is running at the same time!</p></li>
+</ol>
+</section>
+</section>
+<section id="zero-downtime-migrations">
+<h1>Zero-Downtime Migrations<a class="headerlink" href="#zero-downtime-migrations" title="Permalink to this heading">¶</a></h1>
+<p>The significant challenge with online migrations is that the db state the migration applies has to
+work with both newer and older versions of Pulp code. For example, consider a model field that is to
+be renamed. After renaming the field, Django would generate a migration that renames the specified
+column. This would break all previous code which expects the previous column name.</p>
+<p>Before getting into specific suggestions, the general pattern is to do the following:</p>
+<ol class="arabic simple">
+<li><p>The migration should be split into two parts: a “compatible with earlier code migration” and a
+“breaking earlier code migration”. In continuing the column rename example, it would become a
+“create a new column” migration, and later a “delete the original column” migration.</p></li>
+<li><p>The “breaking earlier code migration” should be delivered in a later release. It contains the
+the component versions that would not be broken by that change. When that migration goes to run
+it uses the db info in the db for each running pulp process to determine if any components are
+running a version that would break if this change is applied.</p></li>
+</ol>
+<p>The solution to this will be highly dependant on the details of the migration, but here are some
+likely patterns to be applied:</p>
+<ol class="arabic simple">
+<li><p>Avoid it. Is this rename really that important? Is it worth the trouble?</p></li>
+<li><p>Rename the model attributes in code, but leave the actual column name as-is with
+the <a class="reference external" href="https://docs.djangoproject.com/en/3.2/ref/models/fields/#db-column">db_column</a>.</p></li>
+<li><p>Have an “old” and a “new” column and use database triggers to keep data written to one to also be
+written to the other and vice-versa.</p></li>
+</ol>
+<p>Here’s an example:</p>
+<p>pulp_file wants to rename a model attribute <code class="docutils literal notranslate"><span class="pre">old</span></code> to be called <code class="docutils literal notranslate"><span class="pre">new</span></code> in the next pulp_file
+release, let’s say that’s pulp_file 1.10.0. Let’s assume that avoiding the rename altogether or
+using the <code class="docutils literal notranslate"><span class="pre">db-column</span></code> option to just rename it in the ORM are not viable.</p>
+<p>This could be done as follows:</p>
+<ul class="simple">
+<li><p>Add the <code class="docutils literal notranslate"><span class="pre">new</span></code> field next to the <code class="docutils literal notranslate"><span class="pre">old</span></code> field and have Django auto-create a migration adding
+<code class="docutils literal notranslate"><span class="pre">new</span></code>.</p></li>
+<li><p>The same migration needs to install a new trigger that anytime <code class="docutils literal notranslate"><span class="pre">old</span></code> is written to, <code class="docutils literal notranslate"><span class="pre">new</span></code> is
+also written to and vice-versa. For example, something <a class="reference external" href="https://www.appsloveworld.com/postgresql/100/94/how-to-dual-write-to-two-columns-in-one-table-using-postgres-trigger">like this</a>
+This allows the new code to read/write exclusively with <cite>new</cite> and the old code to deal with <cite>old</cite>.</p></li>
+<li><p>Write a data migration that updates the <code class="docutils literal notranslate"><span class="pre">new</span></code> column with <code class="docutils literal notranslate"><span class="pre">old</span></code> data in batches. Use batching
+to avoid a long table-lock.</p></li>
+<li><p>Have the codebase of pulp_file 1.10.0 stop using <code class="docutils literal notranslate"><span class="pre">old</span></code> entirely.</p></li>
+</ul>
+<p>At a later time, e.g. pulp_file 1.13.0, a migration will be shipped to remove column <code class="docutils literal notranslate"><span class="pre">old</span></code>. That
+migration needs to do two things things:</p>
+<ul class="simple">
+<li><p>Prior to running ensure via the database records that there are no pulp components running with
+pulp_file &lt; 1.10.0. If there are, abort running the migration and notify the user they need to
+upgrade to a version pulp_file&gt;=1.10,&lt;1.13.0.</p></li>
+<li><p>Remove the database trigger and then the column <code class="docutils literal notranslate"><span class="pre">old</span></code>.</p></li>
+</ul>
+</section>
+<section id="data-migrations">
+<h1>Data Migrations<a class="headerlink" href="#data-migrations" title="Permalink to this heading">¶</a></h1>
+<p>One problem that can arise from data migrations is the use of table-locks which would prevent other
+code still running from executing concurrently. The typical solution is to have data migrations
+operate in transactional batches which avoids a table-lock and instead creates row-locks.</p>
+</section>
+<section id="tasking-system">
+<h1>Tasking System<a class="headerlink" href="#tasking-system" title="Permalink to this heading">¶</a></h1>
+<p>Tasking also has some considerations to allow code upgrades; specifically, tasks dispatched from
+older codebases could run on newer, upgraded workers. To ensure this always works tasks must be
+forever backwards compatible until the next major Pulp version. For example, you cannot have a
+breaking signature change in tasking code and if this is needed you need to make a new task name and
+preserve the old code until the next major Pulp version.</p>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../planning-guide.html" class="btn btn-neutral float-left" title="Plugin Planning Guide" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="subclassing/models.html" class="btn btn-neutral float-right" title="Models" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2012-2023, Pulp Team.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+ 
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-74748547-2', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+
+<script>
+$( document ).ready( function() {
+
+  // gets version number minus whitespace and bugfix version
+  var $version_number = $('.version').text().trim().split('.', 2).join('.')
+
+  // div mirroring the admonition-warning generated by sphinx if added to .rst
+  var warning = '\
+          <div class="admonition warning"> \
+              <p class="first admonition-title">Warning</p> \
+              <p class="last">You are looking at the docs for an unsupported version of Pulp. \
+               Consider switching to a  \
+               <a href="https://pulpproject.org/docs/">supported version</a></p> \
+          </div>'
+
+  
+  // get JSON from server and load supported_versions
+  $.getJSON("https://raw.githubusercontent.com/pulp/pulp-ci/master/ci/config/releases/supported-releases.json" , function(data) {
+    if ($.inArray($version_number, data) === -1) {
+      $('.rst-content').prepend(warning)
+      }
+    })
+  })
+  </script>
+
+
+</body>
+</html>
