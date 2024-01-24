@@ -43,7 +43,7 @@ SECRET_KEY="This should be a 50 chars or longer unique secret!"
 In this example the settings file ends in ".py" so it needs to be valid Python, but it could use any
 [dynaconf supported format](https://www.dynaconf.com/#supported-formats).
 
-:::{note}
+!!! note
 The configuration file and directories containing the configuration file must be readable by the
 user Pulp runs as. If using SELinux, assign the `system_u:object_r:pulpcore_etc_t:s0` label.
-:::
+

@@ -22,19 +22,19 @@ with repository.new_version() as new_version:
    new_version.remove_content(content)
 ```
 
-:::{warning}
+!!! warning
 Any action that adds/removes content to a repository *must* create a new RepositoryVersion.
 Every action that creates a new RepositoryVersion *must* be asynchronous (defined as a task).
 Task reservations are necessary to prevent race conditions.
-:::
+
 
 (sync-docs)=
 
 ## Synchronizing
 
-:::{tip}
+!!! tip
 Please consider using the high level {ref}`stages-concept-docs` for actual implementations.
-:::
+
 
 Most plugins will define a synchronize task, which fetches content from a remote repository, and
 adds it to a Pulp repository.

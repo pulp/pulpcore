@@ -66,10 +66,10 @@ class FileRepository(Repository):
         )
 ```
 
-:::{note}
+!!! note
 It is not necessary to "namespace" this `modify_repo_content` permission because by including
 it in the meta class of your Detail view, it will already be namespaced on the correct object.
-:::
+
 
 (roles)=
 

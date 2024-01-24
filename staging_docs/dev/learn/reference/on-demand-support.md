@@ -33,11 +33,11 @@ async def run(self):
     <...>
 ```
 
-:::{hint}
+!!! tip
 The `deferred_download` flag is used at the artifact level, to support on-demand concepts for
 plugins that need some artifacts to download immediately in all cases.
 See also {ref}`multi-level-discovery`.
-:::
+
 
 ## Adding Support when using a Custom Stages API Pipeline
 
@@ -57,15 +57,15 @@ if download:
 stages.extend(the_rest_of_the_pipeline)  # This adds the Content and Association Stages
 ```
 
-:::{warning}
+!!! warning
 Skipping of those Stages does not work with {ref}`multi-level-discovery`.
 If you need some artifacts downloaded anyway, follow the example on
 \:ref:on-demand-support-with-dv\` and include the artifact stages in the custom pipeline.
-:::
 
-:::{hint}
+
+!!! tip
 Consider to also exclude the `ResolveContentFutures` stage.
-:::
+
 
 ## What if the Custom Pipeline Needs Artifact Downloading?
 
@@ -77,9 +77,9 @@ this type needs to download Artifacts for those content types, but not others.
 By specifying `deferred_download=False` in the `DeclarativeArtifact` regardless of the overall sync
 policy, lazy downloading for that specific artifact can be prohibited.
 
-:::{hint}
+!!! tip
 See also {ref}`on-demand-support-with-da`
-:::
+
 
 ## How Does This Work at the Model Layer?
 
@@ -103,10 +103,10 @@ be downloaded on-demand and served to the client.
 If `remote.policy == Remote.ON_DEMAND` the Artifact is saved on the first download. This causes
 future requests to serve the already-downloaded and validated Artifact.
 
-:::{note}
+!!! note
 In situations where multiple Remotes synced and provided the same `Content` unit, only one
 `Content` unit is created but many `RemoteArtifact` objects may be created. The Pulp Content app
 will try all `RemoteArtifact` objects that correspond with a `ContentArtifact`. It's possible an
 unexpected `Remote` could be used when fetching that equivalent `Content` unit. Similar warnings
 are in the user documentation on on-demand.
-:::
+

@@ -1,8 +1,8 @@
 # Alternate Content Sources
 
-:::{warning}
+!!! warning
 This feature requires plugin support to work correctly.
-:::
+
 
 ## Overview
 
@@ -31,10 +31,10 @@ Remote's url.
 pulp <plugin_name> acs create --name <acs_name> --remote <remote> --path <path> --path <path>
 ```
 
-:::{note}
+!!! note
 The `path` option is optional and can be specified multiple times. If a path is not provided,
 the url of your remote is used to search for content.
-:::
+
 
 ## Updating ACS
 

@@ -10,10 +10,10 @@ This feature is generally referred to as Queryset Scoping because it is applied 
 filter on the base Queryset of a ViewSet. This causes the permission filtering to work with other
 filterings applied by a user.
 
-:::{note}
+!!! note
 If Domains are enabled, querysets will be scoped by the current request's domain before being
 passed onto RBAC queryset scoping.
-:::
+
 
 (enabling-queryset-scoping)=
 
@@ -59,11 +59,11 @@ Default scoping behavior can be overriden by supplying your own `scope_queryset`
 Content ViewSet's have their `scope_queryset` method overriden to scope based on repositories
 the user can see.
 
-:::{note}
+!!! note
 When queryset scoping is enabled for content you must also use the
 `has_required_repo_perms_on_upload` access condition on the upload endpoint to ensure users
 specify a repository for upload or they won't be able to see their uploaded content.
-:::
+
 
 Extra Queryset Scoping methods can be defined on the ViewSet to allow users to choose different
 behaviors besides On/Off. The method must accept the queryset as the first argument. Additional
@@ -108,8 +108,8 @@ class MyViewSet(rest_framework.viewsets.GenericViewSet):
         return get_objects_for_user(self.request.user, permission_name, qs=qs)
 ```
 
-:::{warning}
+!!! warning
 If you have custom ViewSets and plan to add Domains compatibility to your plugin, you must
 scope your objects by the domain in the ViewSet's `get_queryset` method to comply
 with Domain's isolation policies.
-:::
+

@@ -2,14 +2,14 @@
 
 # Domains - Multi-Tenancy in Pulp
 
-:::{warning}
+!!! warning
 This feature requires plugin support to work correctly.
-:::
 
-:::{warning}
+
+!!! warning
 This feature is provided as a tech preview and could change in backwards incompatible
 ways in the future.
-:::
+
 
 ## Overview
 
@@ -41,9 +41,9 @@ Current Domain Compatible Plugins:
 - pulp_file>=1.13.0
 - pulp_certguard>=1.6.0
 
-:::{warning}
+!!! warning
 Before turning on domains, you should let all currently running tasks finished.
-:::
+
 
 ## Creating Domains
 
@@ -69,20 +69,20 @@ pulp domains create \
   --storage-settings "{\"MEDIA_ROOT\": \"/var/lib/pulp/media/\"}"
 ```
 
-:::{note}
+!!! note
 `default`, `content`, and `api` are reserved names that can not be used during creation
 or update. The `default` domain can not be updated or deleted.
-:::
 
-:::{note}
+
+!!! note
 To delete a domain all objects within that domain must be deleted first, including artifacts and
 orphaned content.
-:::
 
-:::{warning}
+
+!!! warning
 Changing the `storage-class` or `storage-settings` of an in-use domain is
 dangerous and can result in a broken domain.
-:::
+
 
 (using-domains)=
 
@@ -133,14 +133,14 @@ pulp user role-assignment remove --username <username> --role <role_name> --obje
 pulp user role-assignment add --username <username> --role <role_name> --domain <domain_href>
 ```
 
-:::{note}
+!!! note
 Operations on resources across separate domains is not allowed. e.g. You can not add content
 from one domain to the repository of another domain even if you own both domains.
-:::
 
-:::{warning}
+
+!!! warning
 Pulp Export and Import are currently not supported with domains enabled.
-:::
+
 
 There are notable objects in Pulp, `AccessPolicies`, `Roles`, `Users`, and `Groups`, that
 are not a part of domains and remain global across the system. These objects are closely intertwined

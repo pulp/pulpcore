@@ -64,11 +64,11 @@ The contents of this package are documented in detail in the {doc}`../platform-a
 documentation. Details how this package is organized can be found
 below, along with information about some of the modules found in this namespace.
 
-:::{tip}
+!!! tip
 This tree is incomplete, and maybe be out of date. Only the most notable and
 durable modules have been listed; the most complete listing of modules in this
 namespace will always be the {doc}`../platform-api/index` documentation.
-:::
+
 
 ## Module Imports
 
@@ -154,10 +154,10 @@ The Platform models are all importable directly from the `pulpcore.app.models`
 namespace. All Pulp models should subclass {mod}`pulpcore.app.models.Model`, or
 one of its subclasses.
 
-:::{note}
+!!! note
 All models must exist in the pulpcore.app.models namespace in order to be
 recognized by Django and included in the Django ORM.
-:::
+
 
 #### Master/Detail Models
 

@@ -56,15 +56,15 @@ this is accomplished.
 
 See {class}`~pulpcore.plugin.tasking.dispatch` for more details.
 
-:::{note}
+!!! note
 The arguments provided to a task must be JSON serializable, but may contain instances of
 `uuid.UUID`.
-:::
 
-:::{note}
+
+!!! note
 You should always prefer handing primary keys instead of serialized instances of ORM objects to
 a task.
-:::
+
 
 ```python
 # We recommend using POST for any endpoints that kick off task.
@@ -129,7 +129,7 @@ If any additional context needs to be passed from the ViewSet to the creation ta
 `get_deferred_context` method of the ViewSet might be overwritten. It's return value will then be
 available as `self.context` in the Serializer.
 
-:::{note}
+!!! note
 Context passed from the ViewSet to the Task must be easily serializable. i.e. one cannot
 return the request from `get_deferred_context`.
-:::
+

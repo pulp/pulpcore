@@ -1,6 +1,5 @@
 # Glossary
 
-:::{glossary}
 {class}`~pulpcore.app.models.Artifact`
 
 : A file. They usually belong to a {term}`content unit<Content>` but may be used
@@ -85,4 +84,4 @@ type
 
 : Each {term}`content unit<Content>` has a type (ex. rpm package or container tag) which is
   defined by a {term}`Plugin<plugin>`.
-:::
+

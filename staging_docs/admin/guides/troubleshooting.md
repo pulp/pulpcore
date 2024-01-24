@@ -21,11 +21,11 @@ Or via environment variable:
 PULP_LOGGING='@json {"dynaconf_merge": true, "loggers": {"": {"handlers": ["console"], "level": "DEBUG"}}}'
 ```
 
-:::{tip}
+!!! tip
 As a workaround, you could specify the entire config with the `PULP_LOGGING` environment variable
 and avoid using the "merge" feature from dynaconf. In that case you would specify
 `'level': 'DEBUG'` in addition to your current config shown with `dynaconf list`.
-:::
+
 
 Then when starting Pulp you should see a lot more information logged.
 

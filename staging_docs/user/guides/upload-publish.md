@@ -60,7 +60,7 @@ http --form PUT :24817$UPLOAD file@./chunkaa 'Content-Range:bytes 0-6291455/*'
 http POST :24817${UPLOAD}commit/ sha256=`sha256sum 1.iso | cut -d ' ' -f1`
 ```
 
-:::{note}
+!!! note
 Each uploaded chunk is stored as a separate file in the default storage. When an upload is
 committed, uploaded chunks are removed automatically and a new artifact is created, as usually.
-:::
+

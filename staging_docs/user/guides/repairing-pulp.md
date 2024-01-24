@@ -5,13 +5,13 @@
 Pulp provides some features for self-repair in cases where artifacts in the storage went missing or
 got corrupted in some way (i.e. bit rot).
 
-:::{warning}
+!!! warning
 This repair feature looks for missing or corrupted files that are supposed to be in
 the storage. It attempts a redownload of these files from known upstream urls.
 In case upstream stopped serving the corresponding files, or these files were uploaded
 directly into Pulp or were created by Pulp itself (i.e. generated metadata), the Pulp
 repair feature is unable to remedy the situation.
-:::
+
 
 To start a repair task for all of Pulp (i.e. checks all content), send a POST request to
 `/pulp/api/v3/repair/`.

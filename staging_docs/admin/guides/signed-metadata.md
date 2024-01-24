@@ -23,10 +23,10 @@ The example below demonstrates how a signing service can be created using `gpg`:
 
    The filename must remain the same for the detached signature, as shown.
 
-   :::{note}
+   !!! note
    Plugins may provide other signing service classes that may need their JSON output to
    contain different information.
-   :::
+   
 
    Below is an example of a signing script that produces signatures for content:
 
@@ -53,12 +53,12 @@ The example below demonstrates how a signing service can be created using `gpg`:
    fi
    ```
 
-   :::{note}
+   !!! note
    As the creator of the signing script, you can expect PULP_SIGNING_KEY_FINGERPRINT
    and potentially other environment variables, depending on the content plugin calling signing service.
    Make sure the script contains a proper shebang and Pulp has got valid permissions
    to execute it.
-   :::
+   
 
 3. Create a signing service consisting of an absolute path to the script, a meaningful
    name describing the script's purpose, and the identity identifying the key for signing. The
@@ -69,15 +69,15 @@ The example below demonstrates how a signing service can be created using `gpg`:
    pulpcore-manager add-signing-service ${SERVICE_NAME} ${SCRIPT_ABS_FILENAME} ${KEYID}
    ```
 
-   :::{note}
+   !!! note
    The public key must be available on the caller's keyring or on a keyring provided via the
    `--gpghome` or `--keyring` parameters.
-   :::
+   
 
-   :::{warning}
+   !!! warning
    It is possible to insert a new signing service into the database by using the
    `pulpcore-manager shell_plus` interactive Python shell. However, this is not recommended.
-   :::
+   
 
 4. Retrieve and check the saved signing service via REST API:
 

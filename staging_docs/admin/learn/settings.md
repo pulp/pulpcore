@@ -8,10 +8,10 @@ settings.
 - {ref}`SECRET_KEY <secret-key-setting>`
 - {ref}`CONTENT_ORIGIN <content-origin-setting>`
 
-:::{note}
+!!! note
 For more information on how to specify settings see the
 {ref}`Applying Settings docs <applying-settings>`.
-:::
+
 
 Pulp uses three types of settings:
 
@@ -135,9 +135,9 @@ print(''.join(random.choice(chars) for i in range(50)))
 
 ## Redis Settings
 
-:::{warning}
+!!! warning
 To enable usage of Redis the [CACHE_ENABLED] option must be set to `True`.
-:::
+
 
 The following Redis settings can be set in your Pulp config:
 
@@ -190,11 +190,11 @@ Pulp defines the following settings itself:
 > - group: pulp (the group of the account that pulp runs under)
 > - SELinux context: system_u:object_r:pulpcore_var_lib_t:s0
 
-:::{note}
+!!! note
 It is recommended that `WORKING_DIRECTORY` and `MEDIA_ROOT` exist on the same storage
 volume for performance reasons. Files are commonly staged in the `WORKING_DIRECTORY` and
 validated before being moved to their permanent home in `MEDIA_ROOT`.
-:::
+
 
 ### CHUNKED_UPLOAD_DIR
 
@@ -243,11 +243,11 @@ validated before being moved to their permanent home in `MEDIA_ROOT`.
 > Store cached responses from the content app into Redis. This setting improves the performance
 > of the content app under heavy load for similar requests. Defaults to `False`.
 >
-> :::{note}
+> !!! note
 > The entire response is not stored in the cache. Only the location of the file needed to
 > recreate the response is stored. This reduces database queries and allows for many
 > responses to be stored inside the cache.
-> :::
+> 
 
 ### CACHE_SETTINGS
 
@@ -257,16 +257,16 @@ validated before being moved to their permanent home in `MEDIA_ROOT`.
 >
 > Defaults to `600` seconds.
 >
-> :::{note}
+> !!! note
 > Set to `None` to have entries not expire.
 > Content app responses are always invalidated when the backing distribution is updated.
-> :::
+> 
 
 ### DOMAIN_ENABLED
 
-> :::{note}
+> !!! note
 > This feature is provided as a tech-preview
-> :::
+> 
 >
 > Enable the {ref}`Domains feature to enable multi-tenancy capabilities <domains>`. All installed
 > plugins must be Domain compatible for Pulp to start. Defaults to `False`.
@@ -286,10 +286,10 @@ validated before being moved to their permanent home in `MEDIA_ROOT`.
 > The name of the WSGI environment variable to read for {ref}`webserver authentication
 > <webserver-authentication>`.
 >
-> :::{warning}
+> !!! warning
 > Configuring this has serious security implications. See the [Django warning at the end of this
 > section in their docs](https://docs.djangoproject.com/en/4.2/howto/auth-remote-user/#configuration) for more details.
-> :::
+> 
 >
 > Defaults to `'REMOTE_USER'`.
 
@@ -323,11 +323,11 @@ validated before being moved to their permanent home in `MEDIA_ROOT`.
 
 ### ALLOWED_CONTENT_CHECKSUMS
 
-> :::{warning}
+> !!! warning
 > Enforcement of this setting in `pulpcore` and various plugins is not fully in place. It is
 > possible that checksums not in this list may still be used in various places. This banner will
 > be removed when it is believed all `pulpcore` and plugin code fully enforces this setting.
-> :::
+> 
 >
 > The list of content-checksums this pulp-instance is **allowed to use**. By default the following
 > are used:
@@ -339,10 +339,10 @@ validated before being moved to their permanent home in `MEDIA_ROOT`.
 > The entire set of supported checksums are: `md5`, `sha1`, `sha224`, `sha256`,
 > `sha384`, and `sha512`.
 >
-> :::{warning}
+> !!! warning
 > Due to its use as the primary content-identifier, "sha256" **IS REQUIRED**. Pulp will
 > fail to start if `"sha256"` is not found in this set.
-> :::
+> 
 >
 > Pulp can prohibit or allow checksums by setting the ALLOWED_CONTENT_CHECKSUMS setting.
 > Changing this setting requires a few steps.
@@ -353,10 +353,10 @@ validated before being moved to their permanent home in `MEDIA_ROOT`.
 >
 > Adjust `--checksums` as comma separated list of checksums types to match your needs.
 >
-> :::{note}
+> !!! note
 > If you already changed `ALLOWED_CONTENT_CHECKSUMS` in pulp settings you can leave out `--checksums`,
 > and the checksums will be parsed from Pulp settings.
-> :::
+> 
 >
 > Before switching, any on-demand repos containing forbidden checksum digests needs to be synced with
 > `policy=immediate` to populate missing allowed checksums. This can heavily impact your disk space.
@@ -367,10 +367,10 @@ validated before being moved to their permanent home in `MEDIA_ROOT`.
 >
 > `pulpcore-manager handle-artifact-checksums`
 >
-> :::{warning}
+> !!! warning
 > If Pulp fails to start because forbidden checkums have been identified or required ones are
 > missing, run `pulpcore-manager handle-artifact-checksums` command.
-> :::
+> 
 
 (django-guid)=
 

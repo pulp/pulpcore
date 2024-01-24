@@ -58,9 +58,9 @@ version hrefs which will be excluded from the artifact removal.
 The task will remove artifacts only from content that was synced from a remote source. It will not
 touch the content that was uploaded directly into Pulp.
 
-:::{note}
+!!! note
 The task will clean up artifacts regardless of the download policy. The content app will be able
 to stream artifact if it is locally available, otherwise it will attempt to redownload it from
 the known upstream urls. In case upstream stopped serving the corresponding file, Pulp won't be
 able to download and serve it.
-:::
+

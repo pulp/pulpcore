@@ -92,18 +92,18 @@ The {meth}`~pulpcore.plugin.models.Remote.get_downloader` internally calls the
 See the {class}`~pulpcore.plugin.download.DownloaderFactory` for more information on
 supported urls.
 
-:::{tip}
+!!! tip
 The {meth}`~pulpcore.plugin.models.Remote.get_downloader` accepts kwargs that can
 enable size or digest based validation, and specifying a file-like object for the data to be
 written into. See {meth}`~pulpcore.plugin.models.Remote.get_downloader` for more
 information.
-:::
 
-:::{note}
+
+!!! note
 All {class}`~pulpcore.plugin.download.HttpDownloader` downloaders produced by the same
 remote instance share an `aiohttp` session, which provides a connection pool, connection
 reusage and keep-alives shared across all downloaders produced by a single remote.
-:::
+
 
 (automatic-retry)=
 
@@ -127,10 +127,10 @@ size or digest validation. There can also be protocol specific errors such as an
 Plugin writers can choose to halt the entire task by allowing the exception be uncaught which
 would mark the entire task as failed.
 
-:::{note}
+!!! note
 The {class}`~pulpcore.plugin.download.HttpDownloader` automatically retry in some cases, but if
 unsuccessful will raise an exception for any HTTP response code that is 400 or greater.
-:::
+
 
 (custom-download-behavior)=
 
@@ -168,18 +168,18 @@ The DownloaderFactory constructs and configures a downloader for any given url. 
 The {meth}`~pulpcore.plugin.download.DownloaderFactory.build` method constructs one
 downloader for any given url.
 
-:::{note}
+!!! note
 Any {ref}`HttpDownloader <http-downloader>` objects produced by an instantiated
 `DownloaderFactory` share an `aiohttp` session, which provides a connection pool, connection
 reusage and keep-alives shared across all downloaders produced by a single factory.
-:::
 
-:::{tip}
+
+!!! tip
 The {meth}`~pulpcore.plugin.download.DownloaderFactory.build` method accepts kwargs that
 enable size or digest based validation or the specification of a file-like object for the data
 to be written into. See {meth}`~pulpcore.plugin.download.DownloaderFactory.build` for
 more information.
-:::
+
 
 ```{eval-rst}
 .. autoclass:: pulpcore.plugin.download.DownloaderFactory

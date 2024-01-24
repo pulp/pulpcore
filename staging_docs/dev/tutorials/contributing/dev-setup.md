@@ -32,11 +32,11 @@ $ git clone https://github.com/pulp/pulp_file.git
 
 The current base branch on this repository is the main branch.
 
-:::{warning}
+!!! warning
 It is important to ensure that your repositories are all checked out to compatible versions.
 Check the `setup.py` and `requirements.txt` files of each repository to see what version
 it provides and which versions it requires, respectively.
-:::
+
 
 ## Installation
 

@@ -61,10 +61,10 @@ example assigning the `"core.task_viewer"` role to the group `"foo"`.
 }
 ```
 
-:::{note}
+!!! note
 All the hooks shipped with pulpcore accept either a single item or list of items for their
 arguments like `roles`, `users` or `groups`.
-:::
+
 
 (enabling-new-object-permission-creation)=
 
@@ -150,6 +150,6 @@ This would be callable with a configuration like this one:
 }
 ```
 
-:::{note}
+!!! note
 The `parameters` dict must actually match the creation hooks signature.
-:::
+
