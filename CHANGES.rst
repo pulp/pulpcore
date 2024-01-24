@@ -13,6 +13,34 @@ Changelog
 
 .. towncrier release notes start
 
+3.28.20 (2024-01-24)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fixed a regular expression used when listing directories.
+  :github:`3673`
+- Taught repair task to be tolerant in the face of any artifact download failure.
+  :github:`4111`
+- Removed a workaround to force close all tcp connections in sync leading to an exhaustion of port
+  numbers and their reuse while in time_wait state.
+  :github:`4452`
+- Fix file:// syncs deleting the original files.
+  :github:`4681`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
+----
+
+
 3.28.19 (2023-11-06)
 ====================
 REST API
