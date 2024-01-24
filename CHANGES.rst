@@ -13,6 +13,27 @@ Changelog
 
 .. towncrier release notes start
 
+3.39.7 (2024-01-24)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Taught downloader to trust system-cert-store on HTTPS proxy connections.
+  :github:`3036`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
+----
+
+
 3.39.6 (2024-01-16)
 ===================
 REST API
