@@ -26,6 +26,7 @@ jobs:
         with:
           fetch-depth: 0
           path: "pulpcore"
+          token: ${{ secrets.RELEASE_TOKEN }}
 
       - uses: "actions/setup-python@v4"
         with:
