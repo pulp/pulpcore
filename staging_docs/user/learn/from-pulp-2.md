@@ -5,7 +5,7 @@
 ### Importers -> Remotes
 
 CLI users may not have been aware of Importer objects because they were embedded into CLI commands
-with repositories. In Pulp 3, this object is now called a {term}`Remote`. The scope of this object
+with repositories. In Pulp 3, this object is now called a `Remote`. The scope of this object
 has been reduced to interactions with a single external source. They are no longer associated with a
 repository.
 
@@ -17,23 +17,23 @@ published content, e.g. `YumDistributor`. In other cases, Distributor objects pu
 remote services, such as the `RsyncDistributor`.
 
 For Pulp 2 Distributors that produce metadata, e.g. `YumDistributor`, Pulp 3 introduces a
-{term}`Publication` that stores content and metadata created describing that content. The
-responsibilities of serving a {term}`Publication` are moved to a new object, the
-{term}`Distribution`. Only plugins that need metadata produced at publish time will have use
-{term}`Publications<Publication>`.
+`Publication` that stores content and metadata created describing that content. The
+responsibilities of serving a `Publication` are moved to a new object, the
+`Distribution`. Only plugins that need metadata produced at publish time will have use
+`Publications`.
 
 For Pulp 2 Distributors that push content to remote systems, e.g. `RsyncDistributor`, Pulp 3
-introduces an {term}`Exporter` that is used to push an existing {term}`Publication` to a remote
-location. For content types that don't use {term}`Publications<Publication>`, exporters can export
-{term}`RepositoryVersion` content directly.
+introduces an `Exporter` that is used to push an existing `Publication` to a remote
+location. For content types that don't use `Publications`, exporters can export
+`RepositoryVersion` content directly.
 
 ## New Concepts
 
 ### Repository Version
 
 A new feature of Pulp 3 is that the content set of a repository is versioned. Each time the content
-set of a repository is changed, a new immutable {term}`RepositoryVersion` is created. An empty
-{term}`RepositoryVersion` is created upon creation of a repository.
+set of a repository is changed, a new immutable `RepositoryVersion` is created. An empty
+`RepositoryVersion` is created upon creation of a repository.
 
 ### Rollback
 
@@ -43,7 +43,7 @@ publication.
 
 ### Going Live is Atomic
 
-Content is served by a {term}`Distribution` and goes live from Pulp's {term}`content app` as soon as
+Content is served by a `Distribution` and goes live from Pulp's `content app` as soon as
 the database is configured to serve it. This guarantees a users view of a repository is consistent
 and as the entire repository is made available atomically.
 

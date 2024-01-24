@@ -1,6 +1,6 @@
 # Bugs, Feature and Backport Requests
 
-Bugs, features and backport requests for {term}`pulpcore` are tracked with [GitHub Issues](https://github.com/pulp/pulpcore/issues). Please see the [plugin table](https://pulpproject.org/content-plugins/) for trackers for each plugin. {github}`Use this link
+Bugs, features and backport requests for `pulpcore` are tracked with [GitHub Issues](https://github.com/pulp/pulpcore/issues). Please see the [plugin table](https://pulpproject.org/content-plugins/) for trackers for each plugin. `Use this link
 <new/choose>` to file a bug or feature request.
 
 !!! warning
@@ -8,7 +8,7 @@ Security bugs should be email to <mailto:pulp-security@redhat.com> with your Pul
 description, and reproduction steps.
 
 
-(triage)=
+
 
 ## Triage
 

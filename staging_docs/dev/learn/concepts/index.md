@@ -1,4 +1,4 @@
-(plugin-concepts)=
+
 
 # Plugin Concepts
 
@@ -7,7 +7,7 @@ other Django app with `pulpcore-manager startapp <your_plugin>`. However, instea
 of the boilerplate yourself, it is recommended that you start your plugin by utilizing the [Plugin
 Template](https://github.com/pulp/plugin_template).  This guide will assume that you have used
 the plugin_template, but if you are interested in the details of what it provides you, please see
-{ref}`plugin-django-application` for more information for how plugins are "discovered" and connected to
+`plugin-django-application` for more information for how plugins are "discovered" and connected to
 the `pulpcore` Django app. Additional information is given as inline comments in the template.
 
 ## Plugin API Usage
@@ -15,13 +15,13 @@ the `pulpcore` Django app. Additional information is given as inline comments in
 Plugin Applications interact with pulpcore with two high level interfaces, **subclassing** and
 adding **tasks**.
 
-(subclassing-general)=
+
 
 ## Subclassing
 
 Pulp Core and each plugin utilize [Django](https://docs.djangoproject.com/) and the [Django Rest
 Framework](https://www.django-rest-framework.org/). Each plugin provides
-{ref}`subclassing-models`, {ref}`subclassing-serializers`, and {ref}`subclassing-viewsets`. For
+`subclassing-models`, `subclassing-serializers`, and `subclassing-viewsets`. For
 each object that a plugin writer needs to make, the `pulpcore.plugin` API provides base classes.
 These base classes handle most of the boilerplate code, resulting in CRUD for each object out of
 the box.
@@ -37,7 +37,7 @@ subclassing/replication
 subclassing/pull-through
 ```
 
-(master-detail-models)=
+
 
 ## Master/Detail Models
 
@@ -115,7 +115,7 @@ descendent. Consider the usage from below.
 pulp_file.app.models.FileRemote  # Now it's a detail instance with both master and detail fields
 ```
 
-(validating-models)=
+
 
 ## Validating Models
 
@@ -147,7 +147,7 @@ await self.put(d_content)
 # <...>
 ```
 
-(writing-tasks)=
+
 
 ## Tasks
 
@@ -206,7 +206,7 @@ whose version is being published. Reservations can be shared (for read only acce
 
 **Deploying Tasks**
 
-Tasks are usually deployed from Views or Viewsets, please see {ref}`kick-off-tasks`.
+Tasks are usually deployed from Views or Viewsets, please see `kick-off-tasks`.
 
 ```{toctree}
 :maxdepth: 2
@@ -245,7 +245,7 @@ tasks/diagnostics
 Sometimes, you may want to create many tasks to perform different parts of one larger piece of work,
 but you need a simple means to track the progress of these many tasks. Task Groups serve this purpose
 by providing details on the number of associated tasks in each possible state.
-For more details, please see {ref}`kick-off-tasks`.
+For more details, please see `kick-off-tasks`.
 
 **GroupProgressReports**
 
@@ -302,7 +302,7 @@ order to be enabled.
 domains/domains_compatibility
 ```
 
-(rbac)=
+
 
 ## Role Based Access Control
 
@@ -338,7 +338,7 @@ want to offer built-in content protection features. For example pulp_container m
 to download container images they have rights to based on some permissions system pulp_container
 could provide.
 
-For more information, see the {ref}`ContentGuard Usage by Plugin Writers
+For more information, see the `ContentGuard Usage by Plugin Writers
 <plugin-writers-use-content-protection>` documentation.
 
 ## Plugin Settings
@@ -379,7 +379,7 @@ def post(settings):
     settings.validators.validate()
 ```
 
-(custom-url-routes)=
+
 
 ## Custom API URL Routes
 
@@ -391,14 +391,14 @@ Place a urls.py that defines a `urlpatterns` at the root of your Python package,
 plugin loading code will append those urls to the url root. This allows your urls.py to be a typical
 Django file. For example pulp_ansible uses a [urls.py defined here](https://github.com/pulp/pulp_ansible/blob/master/pulp_ansible/app/urls.py)
 
-(custom-content-app-routes)=
+
 
 ## Custom Content App Routes
 
 The Content App may also require custom routes, for example [pulp_container](https://github.com/pulp/pulp_container/blob/master/pulp_container/app/content.py) defines some. Read more about how
-to {ref}`customize the content app with custom routes <content-app-docs>`.
+to `customize the content app with custom routes <content-app-docs>`.
 
-(configuring-reverse-proxy-custom-urls)=
+
 
 ## Configuring Reverse Proxy with Custom URLs
 
@@ -453,14 +453,14 @@ For the MANIFEST.in entry, you'll likely want one like the example below which w
 include pulp_ansible/app/webserver_snippets/*
 ```
 
-(overriding-reverse-proxy-route-configuration)=
+
 
 ## Overriding the Reverse Proxy Route Configuration
 
 Sometimes a plugin may want to control the reverse proxy behavior of a URL at the webserver. For
 example, perhaps an additional header may want to be set at the reverse proxy when those urls are
 forwarded to the plugin's Django code. To accomplish this, the
-{ref}`custom app route <custom-content-app-routes>` can be used when it specifies a more-specific
+`custom app route <custom-content-app-routes>` can be used when it specifies a more-specific
 route than the pulp-oci-images base webserver configuration provides.
 
 For example assume the header `FOO` should be set at the url `/pulp/api/v3/foo_route`. Below are
@@ -498,7 +498,7 @@ of the order in the config file. The pulp-oci-env ships the a default of `/pulp/
 anything containing another portion after `v3` such as `/pulp/api/v3/foo_route` would be more
 specific.
 
-(deprecation-policy)=
+
 
 ## Plugin API Stability and Deprecation Policy
 
@@ -552,7 +552,7 @@ LOGGING = {
 }
 ```
 
-(declaring-dependencies)=
+
 
 ## Declaring Dependencies
 
@@ -614,7 +614,7 @@ bound:
 - Plugin code is incompatible with the lower bound version of a dependency and the solution is to
   declare a new lower bound.
 
-(checksum-use-in-plugins)=
+
 
 ## Checksum Use In Plugins
 
@@ -650,7 +650,7 @@ internationalized will remain in English. This expectation was formed after feed
 multi-language speakers who believe having error messages for admins in English would reduce the
 time to finding a fix and was generally less surprising.
 
-(zero-downtime-upgrades)=
+
 
 ## Zero-Downtime Upgrades
 

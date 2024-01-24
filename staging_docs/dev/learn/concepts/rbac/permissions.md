@@ -6,7 +6,7 @@ groups of users. The models driving this data are `django.contrib.auth.models.Pe
 associated with one or more `Role`. Roles can be assigned to users or groups either on the
 Model-Level, Domain-level (if domains are enabled), or Object-Level.
 
-(model-permissions)=
+
 
 ## Model Permissions
 
@@ -32,7 +32,7 @@ Here's an example of the Permissions automatically created for the `FileRemote` 
 - `file.change_fileremote`
 - `file.delete_fileremote`
 
-(defining-custom-permissions)=
+
 
 ## Defining Custom Permissions
 
@@ -42,7 +42,7 @@ to `AccessPolicies` and `creation_hooks`, permissions can only be defined by the
 As a rule of thumb, permissions should be the atomic building blocks for roles and each action that
 can be performed on an object should have its own permission.
 
-(custom-permission-for-repository-content-modification)=
+
 
 ## Custom Permission for Repository Content Modification
 
@@ -71,7 +71,7 @@ It is not necessary to "namespace" this `modify_repo_content` permission because
 it in the meta class of your Detail view, it will already be namespaced on the correct object.
 
 
-(roles)=
+
 
 ## Roles
 

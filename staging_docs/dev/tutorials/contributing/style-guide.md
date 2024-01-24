@@ -23,7 +23,7 @@ IDEs / editors, there is also an [integration] for [black].
 
 line length: We limit to 100 characters, rather than 79.
 
-(google-docstrings)=
+
 
 ## Documentation
 

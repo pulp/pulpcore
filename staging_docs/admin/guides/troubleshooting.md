@@ -1,6 +1,6 @@
 # Troubleshooting
 
-(enabling-debug-logging)=
+
 
 ## Enabling Debug Logging
 
@@ -30,7 +30,7 @@ and avoid using the "merge" feature from dynaconf. In that case you would specif
 Then when starting Pulp you should see a lot more information logged.
 
 To ensure you've enabled the settings correctly, view them with the `dynaconf list` command (for
-more information, see {ref}`viewing-settings`). If configured correctly you should see:
+more information, see `viewing-settings`). If configured correctly you should see:
 
 ```
 $ dynaconf list

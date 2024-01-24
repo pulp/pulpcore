@@ -1,8 +1,8 @@
-(stages-concept-docs)=
+
 
 # Synchronizing Repositories with the async-Pipeline
 
-To accomplish the steps outlined in {ref}`sync-docs` in an efficient way, pulp provides a high
+To accomplish the steps outlined in `sync-docs` in an efficient way, pulp provides a high
 level api to construct a pipeline of stages. Those stages work in parallel like an assembly line
 using pythons `async` feature in combination with the `asyncio` library. Each stage takes
 designated content units from an incoming queue of type {class}`asyncio.Queue` and performs an
@@ -44,9 +44,9 @@ If the `mirror=True` optional parameter is passed to `DeclarativeVersion` the pi
 
 ## On-demand synchronizing
 
-See {ref}`on-demand-support`.
+See `on-demand-support`.
 
-(multi-level-discovery)=
+
 
 ## Multiple level discovery
 

@@ -6,8 +6,8 @@ environment to another. There are some features Pulp provides which can help fac
 
 ## Distributions
 
-{term}`Distributions<Distribution>` are a resource in Pulp that are useful for supporting different
-environments. In most cases, you'll want to create one Distribution for each {term}`Repository` and
+`Distributions` are a resource in Pulp that are useful for supporting different
+environments. In most cases, you'll want to create one Distribution for each `Repository` and
 environment. If for example, you have a CentOS Repository that you want to serve to your Dev
 servers, you can create a distribution called "Dev CentOS" that points to your CentOS Publication.
 

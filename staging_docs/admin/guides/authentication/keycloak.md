@@ -1,4 +1,4 @@
-(keycloak-authentication)=
+
 
 # Keycloak
 
@@ -6,7 +6,7 @@ Pulp can be configured to use authentication provided by a Keycloak server outsi
 [Keycloak](https://www.keycloak.org/) can provide Identity Brokering, User Federation, Single
 sign-on, and act as a OpenID Connect-based (OIDC) Identity Provider.
 
-(keycloak-authentication-required-python-modules)=
+
 
 ## Required Python Modules
 
@@ -19,7 +19,7 @@ social-auth-core
 social-auth-app-Django
 ```
 
-(keycloak-authentication-python-social-auth-and-django)=
+
 
 ## Python Social Auth and Django
 
@@ -83,7 +83,7 @@ Enable general python social integration with the following steps:
    )
    ```
 
-(keycloak-authentication-python-social-auth-and-keycloak)=
+
 
 ## Python Social Auth and Keycloak
 

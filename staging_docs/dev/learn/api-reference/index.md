@@ -1,4 +1,4 @@
-(plugin-api)=
+
 
 # Plugin API Reference
 

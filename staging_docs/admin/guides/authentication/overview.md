@@ -1,4 +1,4 @@
-(authentication-overview)=
+
 
 # Overview
 
@@ -7,7 +7,7 @@ username and password against the internal users database.
 
 !!! note
 This authentication is only for the REST API. Clients fetching binary data have their identity
-verified and authorization checked using a {term}`ContentGuard`.
+verified and authorization checked using a `ContentGuard`.
 
 
 ## Which URLs Require Authentication?

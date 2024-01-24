@@ -1,4 +1,4 @@
-(plugin-removal)=
+
 
 # Plugin removal
 

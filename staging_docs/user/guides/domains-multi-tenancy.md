@@ -1,4 +1,4 @@
-(domains)=
+
 
 # Domains - Multi-Tenancy in Pulp
 
@@ -23,7 +23,7 @@ ensuring each user has complete control over the content they manage in Pulp.
 Domains are meant for Pulp admins that need more multi-tenancy abilities than are provided through
 current RBAC features. Domains help greatly when multiple, but distinctly separate tenants are
 sharing the same Pulp instance without having to resort to creating multiple Pulp instances. See
-{ref}`RBAC Overview<rbac>` for Pulp's RBAC capabilities if you are unsure what Pulp's RBAC can
+`RBAC Overview` for Pulp's RBAC capabilities if you are unsure what Pulp's RBAC can
 currently do.
 
 ## Enabling Domains
@@ -34,7 +34,7 @@ a plugin is not compatible Pulp will fail to start. See list below for current l
 domain compatibility. Once domains are enabled all current objects in Pulp will be found under the
 `default` domain.
 
-(domain-plugins)=
+
 
 Current Domain Compatible Plugins:
 
@@ -48,11 +48,11 @@ Before turning on domains, you should let all currently running tasks finished.
 ## Creating Domains
 
 Domains have three important fields: a unique `name`, the backend `storage class` and the
-`storage settings` for the storage backend. See {ref}`Storage<storage>` documentation to see
+`storage settings` for the storage backend. See `Storage` documentation to see
 available storage backends and settings. The domain name must be unique and is used in the URL path
-after the {ref}`API_ROOT<api-root>`, e.g. `/pulp/<domain_name>/api/v3/`. You can also customize
+after the `API_ROOT<api-root>`, e.g. `/pulp/<domain_name>/api/v3/`. You can also customize
 the content app behavior for your domain through the fields `redirect_to_object_storage` and
-`hide_guarded_distributions`. See {ref}`settings<settings>` for more details on these settings.
+`hide_guarded_distributions`. See `settings` for more details on these settings.
 
 ```
 pulp domains create \
@@ -84,13 +84,13 @@ Changing the `storage-class` or `storage-settings` of an in-use domain is
 dangerous and can result in a broken domain.
 
 
-(using-domains)=
+
 
 ## Using Domains
 
 Once domains are enabled all URLs in Pulp will require the domain name in the path after the
-{ref}`API_ROOT<api-root>` for the Pulp API, e.g. `/pulp/<domain_name>/api/v3/`, or after the
-{ref}`CONTENT_PATH_PREFIX<content-path-prefix>` for the Content App, e.g.
+`API_ROOT<api-root>` for the Pulp API, e.g. `/pulp/<domain_name>/api/v3/`, or after the
+`CONTENT_PATH_PREFIX<content-path-prefix>` for the Content App, e.g.
 `/pulp/content/<domain_name>/`. Objects present in Pulp before enabling domains will now be
 present under the `default` domain. To work in a domain you must specify the domain's name in the
 URL.

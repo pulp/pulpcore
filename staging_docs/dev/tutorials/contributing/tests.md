@@ -1,4 +1,4 @@
-(tests)=
+
 
 # Testing Pulp
 
@@ -9,7 +9,7 @@ There are two types of tests in *pulp_core* and in the plugins:
 
 A pull request that has failing unit or functional tests cannot be merged.
 
-(unit-tests)=
+
 
 ## Unit Tests
 
@@ -18,7 +18,7 @@ units (function, method or class instance) are working correctly.
 
 The unit tests for `pulpcore` are in [pulpcore/tests](https://github.com/pulp/pulpcore/tree/master/pulpcore/tests/unit).
 
-(functional-tests)=
+
 
 ## Functional Tests
 
@@ -40,7 +40,7 @@ plugin repository itself. For example:
 
 If you want to run the functional tests, you need a running Pulp instance that is allowed to be
 mixed up by the tests (in other words, running the tests on a production instance is not
-recommended). For example, using the development vm (see {ref}`DevSetup`),
+recommended). For example, using the development vm (see `DevSetup`),
 this can be accomplished by `workon pulp; pulpcore-manager runserver 24817`. The
 `pulpcore-manager` command is `manage.py` configured with the
 `DJANGO_SETTINGS_MODULE="pulpcore.app.settings"`.

@@ -1,32 +1,32 @@
-(settings)=
+
 
 # Settings
 
 There are only two required settings, although specific plugins may have additional required
 settings.
 
-- {ref}`SECRET_KEY <secret-key-setting>`
-- {ref}`CONTENT_ORIGIN <content-origin-setting>`
+- `SECRET_KEY <secret-key-setting>`
+- `CONTENT_ORIGIN <content-origin-setting>`
 
 !!! note
 For more information on how to specify settings see the
-{ref}`Applying Settings docs <applying-settings>`.
+`Applying Settings docs <applying-settings>`.
 
 
 Pulp uses three types of settings:
 
-- {ref}`Django settings <django-settings>` Pulp is configuring
-- {ref}`Redis settings <redis-settings>` Pulp is using
-- {ref}`Pulp defined settings <pulp-settings>`
+- `Django settings <django-settings>` Pulp is configuring
+- `Redis settings <redis-settings>` Pulp is using
+- `Pulp defined settings <pulp-settings>`
 
-(django-settings)=
+
 
 ## Django Settings
 
 Below is a list of the most common Django settings Pulp users typically use. Pulp is a Django
 project, so any [Django setting](https://docs.djangoproject.com/en/4.2/ref/settings/) can be set.
 
-(secret-key-setting)=
+
 
 ### SECRET_KEY
 
@@ -80,7 +80,7 @@ print(''.join(random.choice(chars) for i in range(50)))
 ### DATABASES
 
 > By default Pulp uses PostgreSQL on localhost. PostgreSQL is the only supported database. For
-> instructions on how to configure the database, refer to {ref}`database installation <database-install>`.
+> instructions on how to configure the database, refer to `database installation <database-install>`.
 
 ### DEFAULT_FILE_STORAGE
 
@@ -88,7 +88,7 @@ print(''.join(random.choice(chars) for i in range(50)))
 > uses the local filesystem is `pulpcore.app.models.storage.FileSystem`.
 >
 > For more information about different Pulp storage options, see the
-> {ref}`storage documentation <storage>`.
+> `storage documentation `.
 
 ### REDIRECT_TO_OBJECT_STORAGE
 
@@ -103,7 +103,7 @@ print(''.join(random.choice(chars) for i in range(50)))
 > The location where Pulp will store files. By default this is `/var/lib/pulp/media`.
 >
 > This only affects storage location when `DEFAULT_FILE_STORAGE` is set to
-> `pulpcore.app.models.storage.FileSystem`. See the {ref}`storage documentation <storage>` for
+> `pulpcore.app.models.storage.FileSystem`. See the `storage documentation ` for
 > more info.
 >
 > It should have permissions of:
@@ -118,7 +118,7 @@ print(''.join(random.choice(chars) for i in range(50)))
 > By default Pulp logs at an INFO level to syslog. For all possible configurations please
 > refer to [Django documenation on logging](https://docs.djangoproject.com/en/4.2/topics/logging/#configuring-logging)
 >
-> Enabling DEBUG logging is a common troubleshooting step. See the {ref}`enabling-debug-logging`
+> Enabling DEBUG logging is a common troubleshooting step. See the `enabling-debug-logging`
 > documentation for details on how to do that.
 
 ### AUTHENTICATION_BACKENDS
@@ -131,7 +131,7 @@ print(''.join(random.choice(chars) for i in range(50)))
 > To change the authentication types Pulp will use, modify the `AUTHENTICATION_BACKENDS`
 > settings. See the [Django authentication documentation](https://docs.djangoproject.com/en/4.2/topics/auth/customizing/#authentication-backends) for more information.
 
-(redis-settings)=
+
 
 ## Redis Settings
 
@@ -161,13 +161,13 @@ Below are some common settings used for Redis configuration.
 
 > The password for Redis.
 
-(pulp-settings)=
+
 
 ## Pulp Settings
 
 Pulp defines the following settings itself:
 
-(api-root)=
+
 
 ### API_ROOT
 
@@ -204,7 +204,7 @@ validated before being moved to their permanent home in `MEDIA_ROOT`.
 > the declared storage. The default, `upload`, is sufficient for most use cases. A change to
 > this setting only applies to uploads created after the change.
 
-(content-origin-setting)=
+
 
 ### CONTENT_ORIGIN
 
@@ -218,7 +218,7 @@ validated before being moved to their permanent home in `MEDIA_ROOT`.
 > If activated, the distributions that are protected by a content guard will not be shown on the
 > directory listing in the content app. Defaults to `False`.
 
-(content-path-prefix)=
+
 
 ### CONTENT_PATH_PREFIX
 
@@ -228,7 +228,7 @@ validated before being moved to their permanent home in `MEDIA_ROOT`.
 >
 > Defaults to `/pulp/content/`.
 
-(content-app-ttl)=
+
 
 ### CONTENT_APP_TTL
 
@@ -236,7 +236,7 @@ validated before being moved to their permanent home in `MEDIA_ROOT`.
 >
 > Defaults to `30` seconds.
 
-(pulp-cache)=
+
 
 ### CACHE_ENABLED
 
@@ -268,10 +268,10 @@ validated before being moved to their permanent home in `MEDIA_ROOT`.
 > This feature is provided as a tech-preview
 > 
 >
-> Enable the {ref}`Domains feature to enable multi-tenancy capabilities <domains>`. All installed
+> Enable the `Domains feature to enable multi-tenancy capabilities <domains>`. All installed
 > plugins must be Domain compatible for Pulp to start. Defaults to `False`.
 
-(worker-ttl)=
+
 
 ### WORKER_TTL
 
@@ -279,11 +279,11 @@ validated before being moved to their permanent home in `MEDIA_ROOT`.
 >
 > Defaults to `30` seconds.
 
-(remote-user-environ-name)=
+
 
 ### REMOTE_USER_ENVIRON_NAME
 
-> The name of the WSGI environment variable to read for {ref}`webserver authentication
+> The name of the WSGI environment variable to read for `webserver authentication
 > <webserver-authentication>`.
 >
 > !!! warning
@@ -293,7 +293,7 @@ validated before being moved to their permanent home in `MEDIA_ROOT`.
 >
 > Defaults to `'REMOTE_USER'`.
 
-(allowed-import-paths)=
+
 
 ### ALLOWED_IMPORT_PATHS
 
@@ -306,7 +306,7 @@ validated before being moved to their permanent home in `MEDIA_ROOT`.
 >
 > Defaults to `[]`, meaning `file:///` urls are not allowed in any Remote.
 
-(allowed-export-paths)=
+
 
 ### ALLOWED_EXPORT_PATHS
 
@@ -319,7 +319,7 @@ validated before being moved to their permanent home in `MEDIA_ROOT`.
 >
 > Defaults to `[]` which means no path is allowed.
 
-(allowed-content-checksums)=
+
 
 ### ALLOWED_CONTENT_CHECKSUMS
 
@@ -372,7 +372,7 @@ validated before being moved to their permanent home in `MEDIA_ROOT`.
 > missing, run `pulpcore-manager handle-artifact-checksums` command.
 > 
 
-(django-guid)=
+
 
 ### DJANGO_GUID
 
@@ -383,7 +383,7 @@ validated before being moved to their permanent home in `MEDIA_ROOT`.
 > For more information on how to configure the `DJANGO_GUID` setting, see the [django-guid
 > settings documentation](https://django-guid.readthedocs.io/en/latest/settings.html).
 
-(orphan-protection-time)=
+
 
 ### ORPHAN_PROTECTION_TIME
 
@@ -392,9 +392,9 @@ validated before being moved to their permanent home in `MEDIA_ROOT`.
 > than your longest running task otherwise any content created during that task could be cleaned
 > up before the task finishes. Default is 1440 minutes (24 hours).
 
-(upload-protection-time)=
 
-(tmpfile-protection-time)=
+
+
 
 ### UPLOAD_PROTECTION_TIME and TMPFILE_PROTECTION_TIME
 
@@ -402,7 +402,7 @@ validated before being moved to their permanent home in `MEDIA_ROOT`.
 > These options allow to specify a timeinterval in minutes used for cleaning up stale entries. If
 > set to 0, automatic cleanup is disabled, which is the default.
 
-(task-diagnostics)=
+
 
 ### TASK_DIAGNOSTICS
 
@@ -411,12 +411,12 @@ validated before being moved to their permanent home in `MEDIA_ROOT`.
 >
 > > - memory - the task's max resident set size in MB.
 
-(analytics-setting)=
+
 
 ### ANALYTICS
 
 > If `True`, Pulp will anonymously post analytics information to
 > [https://analytics.pulpproject.org/](https://analytics.pulpproject.org/) and aids in project decision making. See the
-> {ref}`analytics docs <analytics>` for more info on exactly what is posted along with an example.
+> `analytics docs ` for more info on exactly what is posted along with an example.
 >
 > Defaults to `True`.

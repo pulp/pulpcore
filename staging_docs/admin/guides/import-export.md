@@ -2,8 +2,8 @@
 
 ## Overview
 
-There is a use-case for extracting the content and {term}`Artifacts<Artifact>` for a set of
-{term}`RepositoryVersions<RepositoryVersion>`, out of a running instance of Pulp and into
+There is a use-case for extracting the content and `Artifacts` for a set of
+`RepositoryVersions`, out of a running instance of Pulp and into
 a file that can then be transferred to another Pulp instance and imported. This is not
 the Pulp-to-Pulp sync case; the assumption is that the receiving Pulp instance is
 network-isolated.
@@ -11,35 +11,35 @@ network-isolated.
 The high-level workflow for this use case is
 
 1\. On the Upstream Pulp instance, an Exporter is defined for the set of
-{term}`Repositories<Repository>` that are to be exported to some Downstream Pulp instance.
+`Repositories` that are to be exported to some Downstream Pulp instance.
 
 2\. That Exporter is requested to produce and execute an Export for the current
-{term}`RepositoryVersions<RepositoryVersion>` of the specified
-{term}`Repositories<Repository>`
+`RepositoryVersions` of the specified
+`Repositories`
 
 3. The resulting `.tar` Export is transferred to the appropriate Downstream.
 
 4\. On the Downstream Pulp instance, an Importer is defined, that maps the incoming
-Upstream {term}`Repositories<Repository>` to matching Downstream
-{term}`Repositories<Repository>`.
+Upstream `Repositories` to matching Downstream
+`Repositories`.
 
 5\. That Importer is requested to produce and execute an Import, pointing to the provided
 export file from the Upstream.
 
 In order to minimize space utilization, import/export operates on sets of
-{term}`Repositories<Repository>`. This allows the Export operation to export shared
-{term}`Artifacts<Artifact>` only once per-export, rather than once for each
-{term}`Repository` being exported.
+`Repositories`. This allows the Export operation to export shared
+`Artifacts` only once per-export, rather than once for each
+`Repository` being exported.
 
 ## Definitions
 
 Upstream
 
-: Pulp instance whose {term}`RepositoryVersions<RepositoryVersion>` we want to export
+: Pulp instance whose `RepositoryVersions` we want to export
 
 Downstream
 
-: Pulp instance that will be importing those {term}`RepositoryVersions<RepositoryVersion>`
+: Pulp instance that will be importing those `RepositoryVersions`
 
 ModelResource
 
@@ -62,13 +62,13 @@ PulpExport
 
 Export file
 
-: compressed tarfile containing database content and {term}`Artifacts<Artifact>` for
-  {term}`RepositoryVersions<RepositoryVersion>`, generated during execution of an Export
+: compressed tarfile containing database content and `Artifacts` for
+  `RepositoryVersions`, generated during execution of an Export
 
 PulpImporter
 
 : resource that accepts an Upstream PulpExporter export file, and manages
-  the process of importing the content and {term}`Artifacts<Artifact>` included
+  the process of importing the content and `Artifacts` included
 
 PulpImport
 
@@ -76,8 +76,8 @@ PulpImport
 
 Repository-mapping
 
-: configuration file that provides the ability to map an Upstream {term}`Repository`,
-  to a Downstream {term}`Repository`, into which the Upstream’s {term}`RepositoryVersion`
+: configuration file that provides the ability to map an Upstream `Repository`,
+  to a Downstream `Repository`, into which the Upstream’s `RepositoryVersion`
   should be imported by a PulpImporter
 
 Import order
@@ -93,8 +93,8 @@ in error-messages as described below.
 
 ### On-Demand content not supported
 
-Export will not operate on {term}`RepositoryVersions<RepositoryVersion>` that have
-been synchronized using `policy=on_demand` or `policy=streamed`. {term}`Artifacts<Artifact>`
+Export will not operate on `RepositoryVersions` that have
+been synchronized using `policy=on_demand` or `policy=streamed`. `Artifacts`
 must actually exist in order to be exported - this is, after
 all the only way for the Downstream Pulp instance to gain access to them!
 
@@ -141,11 +141,11 @@ These workflows are executed on an Upstream Pulp instance.
 
 ### Creating an Exporter
 
-In this workflow, you define an Exporter for a set of {term}`Repositories<Repository>`.
+In this workflow, you define an Exporter for a set of `Repositories`.
 This Exporter can be invoked repeatedly to regularly export the current
-{term}`RepositoryVersion` of each of the specified {term}`Repositories<Repository>`.
+`RepositoryVersion` of each of the specified `Repositories`.
 
-First, let's make a pair of {term}`Repositories<Repository>` named `zoo` and `isofile`,
+First, let's make a pair of `Repositories` named `zoo` and `isofile`,
 and save their UUIDs as `ZOO_UUID` and `ISOFILE_UUID`
 
 Set up 'zoo' repository":
@@ -180,8 +180,8 @@ REMOTE_HREF=$(http :/pulp/api/v3/remotes/file/file/ | jq -r ".results[] | select
 http POST :$ISOFILE_HREF'sync/' remote=$REMOTE_HREF
 ```
 
-Now that we have {term}`Repositories<Repository>` with content, let's define an Exporter named `test-exporter`
-that will export these {term}`Repositories<Repository>` to the directory `/tmp/exports/`:
+Now that we have `Repositories` with content, let's define an Exporter named `test-exporter`
+that will export these `Repositories` to the directory `/tmp/exports/`:
 
 ```
 export EXPORTER_HREF=$(http POST :/pulp/api/v3/exporters/core/pulp/ \
@@ -233,11 +233,11 @@ preserve available space in the export-directory.
 
 ### Exporting Specific Versions
 
-By default, the latest-versions of the {term}`Repositories<Repository>` specified in the Exporter are exported. However, you
-can export specific {term}`RepositoryVersions<RepositoryVersion>` of those {term}`Repositories<Repository>`
+By default, the latest-versions of the `Repositories` specified in the Exporter are exported. However, you
+can export specific `RepositoryVersions` of those `Repositories`
 if you wish using the `versions=` parameter on the `/exports/` invocation.
 
-Following the above example - let's assume we want to export the "zero'th" {term}`RepositoryVersion` of the
+Following the above example - let's assume we want to export the "zero'th" `RepositoryVersion` of the
 repositories in our Exporter.:
 
 ```
@@ -245,7 +245,7 @@ http POST :${EXPORTER_HREF}exports/ \
     versions:=[\"${ISO_HREF}versions/0/\",\"${ZOO_HREF}versions/0/\"]
 ```
 
-Note that the "zero'th" {term}`RepositoryVersion` of a {term}`Repository` is created when the {term}`Repository` is created, and is empty. If you unpack the resulting Export `tar` you will find, for example, that there is no `artifacts/` directory and an empty `ArtifactResource.json` file:
+Note that the "zero'th" `RepositoryVersion` of a `Repository` is created when the `Repository` is created, and is empty. If you unpack the resulting Export `tar` you will find, for example, that there is no `artifacts/` directory and an empty `ArtifactResource.json` file:
 
 ```
 cd /tmp/exports
@@ -275,7 +275,7 @@ python -m json.tool pulpcore.app.modelresource.ArtifactResource.json
 ### Exporting Incrementally
 
 By default, PulpExport exports all of the content and artifacts of the
-{term}`RepositoryVersions<RepositoryVersion>` being exported. A common use-case is to do
+`RepositoryVersions` being exported. A common use-case is to do
 regular transfers of content from an Upstream to a Downstream Pulp instance.  While you
 **can** export everything every time, it is an inefficient use of time and disk storage to
 do so; exporting only the "entities that have changed" is a better choice. You can
@@ -286,12 +286,12 @@ accomplish this by setting the `full` parameter on the `/exports/` invocation to
 http POST :${EXPORTER_HREF}exports/ full=False
 ```
 
-This results in an export of all content-entities, but only {term}`Artifacts<Artifact>`
+This results in an export of all content-entities, but only `Artifacts`
 that have been **added** since the `last_export` of the same Exporter.
 
 You can override the use of `last_export` as the starting point of an incremental export by use of the `start_versions=`
 parameter. Building on our example Exporter, if we want to do an incremental export of everything that's happened since the
-**second** {term}`RepositoryVersion` of each {term}`Repository`, regardless of what happened in our last export,
+**second** `RepositoryVersion` of each `Repository`, regardless of what happened in our last export,
 we would issue a command such as the following:
 
 ```
@@ -300,9 +300,9 @@ http POST :${EXPORTER_HREF}exports/ \
     start_versions:=[\"${ISO_HREF}versions/1/\",\"${ZOO_HREF}versions/1/\"]
 ```
 
-This would produce an incremental export of everything that had been added to our {term}`Repositories<Repository>`
-between {term}`RepositoryVersion` '1' and the `current_version` {term}`RepositoryVersions<RepositoryVersion>`
-of our {term}`Repositories<Repository>`.
+This would produce an incremental export of everything that had been added to our `Repositories`
+between `RepositoryVersion` '1' and the `current_version` `RepositoryVersions`
+of our `Repositories`.
 
 Finally, if we need complete control over incremental exporting, we can combine the use of `start_versions=` and `versions=`
 to produce an incremental export of everything that happened after `start_versions=` up to and including `versions=`:
@@ -321,7 +321,7 @@ is an error, since it makes no sense to specify a 'starting version' for a full 
 
 ### Exporting Chunked Files
 
-By default, PulpExport streams data into a single `.tar` file. Since {term}`Repositories<Repository>`
+By default, PulpExport streams data into a single `.tar` file. Since `Repositories`
 can contain a lot of artifacts and content, that can result in a file too large to be
 copied to transport media. In this case, you can specify a maximum-file-size, and the
 export process will chunk the tar into a series of files no larger than this.
@@ -386,7 +386,7 @@ The first step to importing a Pulp export archive is to create an importer:
 http :/pulp/api/v3/importers/core/pulp/ name="test"
 ```
 
-By default, Pulp will map {term}`Repositories<Repository>` in the export to {term}`Repositories<Repository>`
+By default, Pulp will map `Repositories` in the export to `Repositories`
 in Pulp by name. This can be overriden by supplying a repo mapping that maps names from the Pulp export
 to the names of repos in Pulp. For example, suppose the name of the repo in the Pulp export achive was
 'source' and the repo in Pulp was 'dest'. The following command would set up this mapping:

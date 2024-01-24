@@ -18,7 +18,7 @@ without any plugins. Pulpcore provides a REST API and a Plugin API.
 To manage content, you need at least one content plugin. Each type of content unit, for example RPM
 or Debian, is defined by a plugin. For example, if you want to manage RPM content in Pulp, you must
 install the RPM plugin. Files that belong to a content unit are called
-{term}`Artifacts<Artifact>`. Each content unit can have zero or many artifacts. Artifacts can be
+`Artifacts`. Each content unit can have zero or many artifacts. Artifacts can be
 shared by multiple content units.
 
 ```{image} ./_diagrams/concept-content.png
@@ -56,12 +56,12 @@ Pulp repository.
 
 Pulp provides a content app, which is an
 [aiohttp.server](https://docs.aiohttp.org/en/stable/web.html) that serves content through what in
-Pulp is referred to as a {term}`Distribution`. Using this content app, you can serve all content
+Pulp is referred to as a `Distribution`. Using this content app, you can serve all content
 that is managed with Pulp.
 
 To serve content from Pulp, you need to create a publication and a distribution. A
-{term}`Publication` consists of the metadata of the content set and the artifacts of each content
-unit in the content set. To host a publication, it must be assigned to a {term}`Distribution`, which
+`Publication` consists of the metadata of the content set and the artifacts of each content
+unit in the content set. To host a publication, it must be assigned to a `Distribution`, which
 determines how and where a publication is served.
 
 ```{image} ./_diagrams/concept-publish.png

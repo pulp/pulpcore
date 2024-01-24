@@ -1,4 +1,4 @@
-(content-app-docs)=
+
 
 # pulpcore.plugin.content
 
@@ -12,7 +12,7 @@ Making a custom Handler is a two-step process:
 1. subclass `pulpcore.plugin.content.Handler` to define your Handler's behavior
 2. Add the Handler to a route using aiohttp.server's [add_route()](https://aiohttp.readthedocs.io/en/stable/web_reference.html#aiohttp.web.UrlDispatcher.add_route) interface.
 
-If content needs to be served from within the {term}`Distribution`'s base_path,
+If content needs to be served from within the `Distribution`'s base_path,
 overriding the {meth}`~pulpcore.plugin.models.Distribution.content_handler` and
 {meth}`~pulpcore.plugin.models.Distribution.content_handler_directory_listing`
 methods in your Distribution is an easier way to serve this content. The

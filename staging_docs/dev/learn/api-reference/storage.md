@@ -1,4 +1,4 @@
-(storage-docs)=
+
 
 # pulpcore.plugin.storage
 

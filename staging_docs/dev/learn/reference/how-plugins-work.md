@@ -1,6 +1,6 @@
 # How Plugins Work
 
-(plugin-django-application)=
+
 
 ## Plugin Django Application
 
@@ -22,7 +22,7 @@ attributes:
   the `pulp_file` plugin.
 - `version` attribute to the string representing the version.
 
-(plugin-entry-point)=
+
 
 ## pulpcore.plugin Entry Point
 
@@ -51,7 +51,7 @@ does.
 
 Check out `pulp_file` plugin: [default_app_config](https://github.com/pulp/pulp_file/blob/master/pulp_file/__init__.py) and [setup.py example](https://github.com/pulp/pulp_file/blob/master/setup.py).
 
-(mvs-discovery)=
+
 
 ## Model, Serializer, Viewset Discovery
 
