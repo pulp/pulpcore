@@ -10,7 +10,7 @@ name: "Core Publish Release"
 on:
   push:
     tags:
-      - "[0-9]+.[0-9]+.[0-9]"
+      - "[0-9]+.[0-9]+.[0-9]+"
 
 defaults:
   run:
@@ -22,7 +22,7 @@ jobs:
 
   build-bindings-docs:
     needs:
-      - "build-artifacts"
+      - "build"
     runs-on: "ubuntu-latest"
     # Install scripts expect TEST to be set, 'docs' is most appropriate even though we don't run tests
     env:
