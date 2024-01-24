@@ -1,4 +1,4 @@
-(download-docs)=
+
 
 # pulpcore.plugin.download
 
@@ -51,7 +51,7 @@ for task in done:
         pass  # fatal exceptions are raised by result()
 ```
 
-(download-result)=
+
 
 ## Download Results
 
@@ -63,7 +63,7 @@ the downloader's `run()` method when the download is complete.
     :no-members:
 ```
 
-(configuring-from-a-remote)=
+
 
 ## Configuring from a Remote
 
@@ -105,7 +105,7 @@ remote instance share an `aiohttp` session, which provides a connection pool, co
 reusage and keep-alives shared across all downloaders produced by a single remote.
 
 
-(automatic-retry)=
+
 
 ## Automatic Retry
 
@@ -114,12 +114,12 @@ server responds with one of the following error codes:
 
 - 429 - Too Many Requests
 
-(exception-handling)=
+
 
 ## Exception Handling
 
 Unrecoverable errors of several types can be raised during downloading. One example is a
-{ref}`validation exception <validation-exceptions>` that is raised if the content downloaded fails
+`validation exception <validation-exceptions>` that is raised if the content downloaded fails
 size or digest validation. There can also be protocol specific errors such as an
 `aiohttp.ClientResponse` being raised when a server responds with a 400+ response such as an HTTP
 403\.
@@ -132,7 +132,7 @@ The {class}`~pulpcore.plugin.download.HttpDownloader` automatically retry in som
 unsuccessful will raise an exception for any HTTP response code that is 400 or greater.
 
 
-(custom-download-behavior)=
+
 
 ## Custom Download Behavior
 
@@ -147,7 +147,7 @@ Additionally, you can implement the {meth}`~pulpcore.plugin.models.Remote.get_do
 method to specify the `downloader_overrides` to the
 {class}`~pulpcore.plugin.download.DownloaderFactory`.
 
-(adding-new-protocol-support)=
+
 
 ## Adding New Protocol Support
 
@@ -155,7 +155,7 @@ To create a new protocol downloader implement a subclass of the
 {class}`~pulpcore.plugin.download.BaseDownloader`. See the docs on
 {class}`~pulpcore.plugin.download.BaseDownloader` for more information on the requirements.
 
-(downloader-factory)=
+
 
 ## Download Factory
 
@@ -169,7 +169,7 @@ The {meth}`~pulpcore.plugin.download.DownloaderFactory.build` method constructs 
 downloader for any given url.
 
 !!! note
-Any {ref}`HttpDownloader <http-downloader>` objects produced by an instantiated
+Any `HttpDownloader <http-downloader>` objects produced by an instantiated
 `DownloaderFactory` share an `aiohttp` session, which provides a connection pool, connection
 reusage and keep-alives shared across all downloaders produced by a single factory.
 
@@ -186,12 +186,12 @@ more information.
     :members:
 ```
 
-(http-downloader)=
+
 
 ## HttpDownloader
 
 This downloader is an asyncio-aware parallel downloader which is the default downloader produced by
-the {ref}`downloader-factory` for urls starting with `http://` or `https://`. It also supports
+the `downloader-factory` for urls starting with `http://` or `https://`. It also supports
 synchronous downloading using {meth}`~pulpcore.plugin.download.HttpDownloader.fetch`.
 
 ```{eval-rst}
@@ -200,12 +200,12 @@ synchronous downloading using {meth}`~pulpcore.plugin.download.HttpDownloader.fe
     :inherited-members: fetch
 ```
 
-(file-downloader)=
+
 
 ## FileDownloader
 
 This downloader is an asyncio-aware parallel file reader which is the default downloader produced by
-the {ref}`downloader-factory` for urls starting with `file://`.
+the `downloader-factory` for urls starting with `file://`.
 
 ```{eval-rst}
 .. autoclass:: pulpcore.plugin.download.FileDownloader
@@ -213,7 +213,7 @@ the {ref}`downloader-factory` for urls starting with `file://`.
     :inherited-members: fetch
 ```
 
-(base-downloader)=
+
 
 ## BaseDownloader
 
@@ -226,7 +226,7 @@ descendants of BaseDownloader.
 
 ```
 
-(validation-exceptions)=
+
 
 ## Validation Exceptions
 

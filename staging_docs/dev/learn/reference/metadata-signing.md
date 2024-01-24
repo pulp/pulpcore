@@ -1,4 +1,4 @@
-(metadata-signing)=
+
 
 # Metadata Signing
 
@@ -50,7 +50,7 @@ The json is converted to a python dict and returned by the `sign()` method. If a
 runtime error is raised instead. All of this is enforced by the `validate()` method at the time of
 instantiation.
 
-For more information see the corresponding {ref}`workflow documentation <configuring-signing>`.
+For more information see the corresponding `workflow documentation <configuring-signing>`.
 
 
 The following procedure may be taken into account for the plugin writers:

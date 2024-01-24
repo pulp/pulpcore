@@ -1,4 +1,4 @@
-(object-relationships)=
+
 
 # Object Relationships
 
@@ -22,7 +22,7 @@ Here is a gist of how models are related to each other and what each model is re
 - {class}`~pulpcore.plugin.models.Remote` knows specifics of the plugin
   {class}`~pulpcore.plugin.models.Content` to put it into Pulp.
   {class}`~pulpcore.plugin.models.Remote` defines how to synchronize remote content. Pulp
-  Platform provides support for concurrent  {ref}`downloading <download-docs>` of remote content.
+  Platform provides support for concurrent  `downloading <download-docs>` of remote content.
   Plugin writer is encouraged to use one of them but is not required to.
 - {class}`~pulpcore.plugin.models.PublishedArtifact` refers to
   {class}`~pulpcore.plugin.models.ContentArtifact` which is published and belongs to a certain
@@ -41,7 +41,7 @@ An important feature of the current design is deduplication of
 {class}`~pulpcore.plugin.models.Content` is shared between {class}`~pulpcore.app.models.Repository`,
 {class}`~pulpcore.plugin.models.Artifact` is shared between
 {class}`~pulpcore.plugin.models.Content`.
-See more details on how it affects remote implementation in {ref}`define-remote` section.
+See more details on how it affects remote implementation in `define-remote` section.
 
 Check `pulp_file` [implementation](https://github.com/pulp/pulp_file/) to see how all
 those models are used in practice.

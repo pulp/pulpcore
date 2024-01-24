@@ -1,4 +1,4 @@
-(configuring-signing)=
+
 
 # Metadata Signing
 
@@ -102,4 +102,4 @@ The example below demonstrates how a signing service can be created using `gpg`:
    ```
 
 Plugin writers are then able to sign selected content by the provided script. To learn more
-about the signing from a plugin's perspective, see the section {ref}`metadata-signing`.
+about the signing from a plugin's perspective, see the section `metadata-signing`.

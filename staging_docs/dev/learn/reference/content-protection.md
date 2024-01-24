@@ -1,4 +1,4 @@
-(content-protection)=
+
 
 # Content Protection
 
@@ -76,7 +76,7 @@ http POST http://localhost:24817/pulp/api/v3/contentguards/<plugin_name>/secret_
 Then the user can protect one or more Distributions by specifying `content_guard`. See the
 [ContentGuard creation API](https://docs.pulpproject.org/restapi.html#operation/distributions_file_file_create) for more information.
 
-(plugin-writers-use-content-protection)=
+
 
 ### Plugin Writer use of ContentGuard
 

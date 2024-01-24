@@ -1,4 +1,4 @@
-(domains-compatibility)=
+
 
 # Adding Domain Compatibility to a Plugin
 
@@ -73,7 +73,7 @@ def custom_task(custom_property):
 If your plugin uses :ref: RBAC AccessPolicies\<\_defining_access_policy>, then the current access
 condition checks need to be updated to use their Domain compatible variants. These checks ensure
 that Domain-level permissions work properly in your ViewSets. See the
-{ref}`permission_checking_machinery` documentation for all available checks.
+`permission_checking_machinery` documentation for all available checks.
 
 ## Update any extra URL Routes to include \{pulp_domain}
 

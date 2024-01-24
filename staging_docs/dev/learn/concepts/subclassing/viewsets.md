@@ -1,4 +1,4 @@
-(subclassing-viewsets)=
+
 
 # Viewsets
 
@@ -47,7 +47,7 @@ class PackageViewSet(ContentViewSet):
 The above example will create a simple nested endpoint at
 `pulp/api/v3/content/foobar/packages/hello/`
 
-(kick-off-tasks)=
+
 
 ### Kick off Tasks
 
@@ -101,7 +101,7 @@ If a "task_group" is provided as an optional keyword argument, then the deployed
 automatically added to the task group. Once done spawning new tasks for a given task group,
 you should call `.finish()` on the task group object.
 
-For more details about the reservation system and task groups, see {ref}`writing-tasks`. and
+For more details about the reservation system and task groups, see `writing-tasks`. and
 {class}`~pulpcore.plugin.models.TaskGroup`.
 
 ### Content Upload ViewSet

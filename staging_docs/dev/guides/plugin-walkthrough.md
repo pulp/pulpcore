@@ -1,7 +1,7 @@
 # Plugin Walkthrough
 
-This guide assumes that you are familiar with [general pulp concepts](https://docs.pulpproject.org/plugins/plugin-writer/concepts/) as well as the {ref}`planning-guide`.
-It will be helpful to skim the {ref}`plugin-concepts` pages, and refer back to them as you go
+This guide assumes that you are familiar with [general pulp concepts](https://docs.pulpproject.org/plugins/plugin-writer/concepts/) as well as the `planning-guide`.
+It will be helpful to skim the `plugin-concepts` pages, and refer back to them as you go
 through the process.
 
 ## Bootstrap your plugin
@@ -9,7 +9,7 @@ through the process.
 Start your new plugin by using the [Plugin Template](https://github.com/pulp/plugin_template).
 Follow the documentation in the README to get a working stub plugin.
 
-(define-content-type)=
+
 
 ## Define your plugin Content type
 
@@ -41,7 +41,7 @@ For a general reference for serializers and viewsets, check [DRF documentation](
 Add any fields that correspond to the metadata of your content, which could be the project name,
 the author name, or any other type of metadata.
 
-(define-remote)=
+
 
 ## Define your plugin Remote
 
@@ -59,7 +59,7 @@ To define a new remote, e.g. `ExampleRemote`:
 Only plugin-defined Remote classes are expected to be used.
 
 There are several important aspects relevant to remote implementation which are briefly mentioned
-in the {ref}`object-relationships` section:
+in the `object-relationships` section:
 
 - due to deduplication of {class}`~pulpcore.plugin.models.Content` and
   {class}`~pulpcore.plugin.models.Artifact` data, they may already exist and the remote needs to
@@ -80,23 +80,23 @@ control at a low level.
 
 ## Define your Tasks
 
-See {ref}`writing-tasks`. Almost all plugins must implement a `sync` task, most implement a
+See `writing-tasks`. Almost all plugins must implement a `sync` task, most implement a
 `publish` task as well.
 
 ## Plugin Completeness Checklist
 
-> - {ref}`Plugin django app is defined using PulpAppConfig as a parent <plugin-django-application>`
+> - `Plugin django app is defined using PulpAppConfig as a parent <plugin-django-application>`
 >
-> - {ref}`Plugin entry point is defined <plugin-entry-point>`
+> - `Plugin entry point is defined <plugin-entry-point>`
 >
 > - [pulpcore is specified as a requirement](https://github.com/pulp/pulp_file/blob/master/setup.py#L6)
 >
-> - Necessary models/serializers/viewsets are {ref}`defined <subclassing-general>` and {ref}`discoverable <mvs-discovery>`. At a minimum:
+> - Necessary models/serializers/viewsets are `defined <subclassing-general>` and `discoverable <mvs-discovery>`. At a minimum:
 >
 >   - models for plugin content type, remote, publisher
 >   - serializers for plugin content type, remote, publisher
 >   - viewset for plugin content type, remote, publisher
 >
-> - {ref}`Errors are handled according to Pulp conventions <error-handling-basics>`
+> - `Errors are handled according to Pulp conventions <error-handling-basics>`
 >
 > - Docs for plugin are available (any location and format preferred and provided by plugin writer)

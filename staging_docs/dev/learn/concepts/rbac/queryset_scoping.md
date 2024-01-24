@@ -1,4 +1,4 @@
-(queryset-scoping)=
+
 
 # Restricting Viewable Objects
 
@@ -15,7 +15,7 @@ If Domains are enabled, querysets will be scoped by the current request's domain
 passed onto RBAC queryset scoping.
 
 
-(enabling-queryset-scoping)=
+
 
 ## Enabling QuerySet Scoping
 
@@ -50,7 +50,7 @@ TaskViewSet(NamedModelViewSet):
     queryset_filtering_required_permission = "core.view_task"
 ```
 
-(manually-implementing-queryset-scoping)=
+
 
 ## Manually Implementing QuerySet Scoping
 

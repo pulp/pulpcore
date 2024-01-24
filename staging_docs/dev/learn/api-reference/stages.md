@@ -1,15 +1,15 @@
-(stages-api-docs)=
+
 
 # pulpcore.plugin.stages
 
 Plugin writers can use the Stages API to create a high-performance, download-and-saving pipeline
 to make writing sync code easier. There are several parts to the API:
 
-1. {ref}`declarative-version` is a generic pipeline useful for most synchronization use cases.
-2. The builtin Stages including {ref}`artifact-stages` and {ref}`content-stages`.
-3. The {ref}`stages-api`, which allows you to build custom stages and pipelines.
+1. `declarative-version` is a generic pipeline useful for most synchronization use cases.
+2. The builtin Stages including `artifact-stages` and `content-stages`.
+3. The `stages-api`, which allows you to build custom stages and pipelines.
 
-(declarative-version)=
+
 
 ## DeclarativeVersion
 
@@ -29,7 +29,7 @@ to make writing sync code easier. There are several parts to the API:
 
 ```
 
-(stages-api)=
+
 
 ## Stages API
 
@@ -48,7 +48,7 @@ to make writing sync code easier. There are several parts to the API:
 
 ```
 
-(artifact-stages)=
+
 
 ## Artifact Related Stages
 
@@ -69,7 +69,7 @@ to make writing sync code easier. There are several parts to the API:
 
 ```
 
-(content-stages)=
+
 
 ## Content Related Stages
 

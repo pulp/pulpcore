@@ -3,7 +3,7 @@
 ## Depending on pulpcore
 
 The Plugin API is not yet stable, but starting with pulpcore 3.7.0, a
-{ref}`deprecation process <deprecation_policy>` is in place which makes it safe for a plugin
+`deprecation process ` is in place which makes it safe for a plugin
 to declare compatability with the next, unreleased pulpcore version also. For example, a plugin
 compatible with pulpcore 3.7 would declare compatibility up to pulpcore 3.8. In this example, use
 the following requirements string:

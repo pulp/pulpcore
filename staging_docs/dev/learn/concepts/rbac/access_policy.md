@@ -1,4 +1,4 @@
-(defining-access-policy)=
+
 
 # Defining an Access Policy
 
@@ -52,12 +52,12 @@ created.
 Here's a written explanation of the policy statements:
 
 - `list` is allowed by any authenticated user. Although users are allowed to perform an operation
-  what they can list will still be restricted to {ref}`only the objects that user can view
+  what they can list will still be restricted to `only the objects that user can view
   <queryset_scoping>`.
 - `create` is allowed by any authenticated user with the `file.add_fileremote` permission.
 - `retrieve` (the detail view of an object) is allowed by an authenticated user who has the
   `file.view_fileremote` permission. Although users are allowed to perform an operation what they
-  can list will still be restricted to {ref}`only the objects that user can view
+  can list will still be restricted to `only the objects that user can view
   <queryset_scoping>`.
 - `update` or `partial_update` is allowed by an authenticated user who has the
   `file.change_fileremote` permission.
@@ -68,7 +68,7 @@ These names correspond with the [default DRF viewset action names](https://www.d
 ## Authorization Conditions
 
 Each policy statement can contain [drf-access-policy conditions](https://rsinger86.github.io/drf-access-policy/statement_elements/#condition) which is useful for verifying a user has one or
-more permissions. Pulp ships many built-in checks. See the {ref}`permission_checking_machinery`
+more permissions. Pulp ships many built-in checks. See the `permission_checking_machinery`
 documentation for more information on available checks.
 
 When multiple conditions are present, **all** of them must return True for the request to be
@@ -104,7 +104,7 @@ For example `FileRepositoryViewSet` has a `sync` custom action used by users to 
 }
 ```
 
-(storing-access-policy-in-db)=
+
 
 ## Storing an Access Policy in the DB
 
@@ -122,7 +122,7 @@ By storing these in the database they are readable to users with a GET to
 the database because only plugin writers create them and their viewset code expects a specific
 AccessPolicy instance to exist.
 
-(shipping-default-access-policy)=
+
 
 ## Shipping a Default Access Policy
 
@@ -190,7 +190,7 @@ class FileRemoteViewSet(RemoteViewSet):
 ```
 
 For an explanation of the `creation_hooks` see the
-{ref}`shipping_a_default_new_object_policy` documentation.
+`shipping_a_default_new_object_policy` documentation.
 
 The attribute `LOCKED_ROLES` contains roles that are managed by the plugin author. Their name
 needs to be prefixed by the plugins `app_label` with a dot to prevent collisions. Roles defined
@@ -198,7 +198,7 @@ there will be replicated and updated in the database after every migration. They
 `locked=True` to prevent being modified by users. The primary purpose of these roles is to allow
 plugin writers to refer to them in the default access policy.
 
-(allow-granting-permissions-by-the-object-owners)=
+
 
 ## Allow Granting Permissions by the Object Owners
 
@@ -240,14 +240,14 @@ class FileRemoteViewSet(RemoteViewSet, RolesMixin):
     }
 ```
 
-(handling-objects-created-prior-to-rbac)=
+
 
 ## Handling Objects created prior to RBAC
 
 Prior to RBAC being enabled, `admin` was the only user and they have `is_superuser=True` which
 generally causes them to pass any permission check even without explicit permissions being assigned.
 
-(viewset-enforcement)=
+
 
 ## Viewset Enforcement
 
@@ -270,7 +270,7 @@ class StatusView(APIView):
     ...
 ```
 
-(permission-checking-machinery)=
+
 
 ## Permission Checking Machinery
 
@@ -292,7 +292,7 @@ both users and plugin writers to use in their policies:
 
 ```
 
-(custom-permission-checks)=
+
 
 ## Custom Permission Checks
 

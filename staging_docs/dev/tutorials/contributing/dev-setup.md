@@ -1,4 +1,4 @@
-(devsetup)=
+
 
 # Developer Setup
 
@@ -7,7 +7,7 @@ developer environment based off the [Pulp OCI Images](https://github.com/pulp/pu
 It is a CLI tool that uses `docker/podman-compose` to quickly setup a Pulp instance with your
 specified configuration.
 
-(getsource)=
+
 
 ## Get the Source
 

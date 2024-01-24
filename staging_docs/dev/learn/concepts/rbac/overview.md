@@ -41,15 +41,15 @@ To add authorization for a given resource, e.g. `FileRemote`, you'll need to:
 **Define the Policy:**
 
 1. Define the default `statements` of the new Access Policy for the resource. See the
-   {ref}`defining_access_policy` documentation for more information on that.
+   `defining_access_policy` documentation for more information on that.
 2. Define the `roles` as sets of permissions for that resource.
 3. Define the default role associations created for new objects using the `creation_hooks`
    attribute of the new Access Policy for the resource. See the
-   {ref}`adding_automatic_permissions_for_new_objects` documentation for more information on that.
+   `adding_automatic_permissions_for_new_objects` documentation for more information on that.
 4. Ship that Access Policy as the class attribute `DEFAULT_ACCESS_POLICY` of a
    `NamedModelViewSet`. This will contain the `statements` and `creation_hooks` attributes.
    Ship the roles as the `LOCKED_ROLES` attribute accordingly. See the
-   {ref}`shipping_default_access_policy` documentation for more information on this.
+   `shipping_default_access_policy` documentation for more information on this.
 5. Add the `RolesMixin` to the viewset and add statements for managing roles to the access
    policy. Usually this is accompanied by adding a `manage_roles` permission on the model.
 
@@ -57,11 +57,11 @@ To add authorization for a given resource, e.g. `FileRemote`, you'll need to:
 
 1. `pulpcore.plugin.access_policy.AccessPolicyFromDB` is configured as the default permission
    class, so by specifying a `DEFAULT_ACCESS_POLICY` it will automatically be enforced. See the
-   {ref}`viewset_enforcement` docs for more information on this.
+   `viewset_enforcement` docs for more information on this.
 
 **Add QuerySet Scoping:**
 
 1. Define a `queryset_filtering_required_permission` attribute on your viewset that names the
    permissions users must have to view an object. This is possible if your viewset is a subclass of
-   the `pulpcore.plugin.models.NamedModelViewSet`. See the {ref}`enabling_queryset_scoping`
+   the `pulpcore.plugin.models.NamedModelViewSet`. See the `enabling_queryset_scoping`
    documentation for more information.

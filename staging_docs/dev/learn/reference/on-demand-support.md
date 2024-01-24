@@ -1,4 +1,4 @@
-(on-demand-support)=
+
 
 # On-Demand Support
 
@@ -7,7 +7,7 @@ downloading their associated Artifacts. By convention, users expect the `Remote.
 determine when Artifacts will be downloaded. See the user docs for specifics on the user
 expectations there.
 
-(on-demand-support-with-da)=
+
 
 ## Adding Support when using DeclarativeVersion
 
@@ -36,7 +36,7 @@ async def run(self):
 !!! tip
 The `deferred_download` flag is used at the artifact level, to support on-demand concepts for
 plugins that need some artifacts to download immediately in all cases.
-See also {ref}`multi-level-discovery`.
+See also `multi-level-discovery`.
 
 
 ## Adding Support when using a Custom Stages API Pipeline
@@ -58,7 +58,7 @@ stages.extend(the_rest_of_the_pipeline)  # This adds the Content and Association
 ```
 
 !!! warning
-Skipping of those Stages does not work with {ref}`multi-level-discovery`.
+Skipping of those Stages does not work with `multi-level-discovery`.
 If you need some artifacts downloaded anyway, follow the example on
 \:ref:on-demand-support-with-dv\` and include the artifact stages in the custom pipeline.
 
@@ -78,7 +78,7 @@ By specifying `deferred_download=False` in the `DeclarativeArtifact` regardless 
 policy, lazy downloading for that specific artifact can be prohibited.
 
 !!! tip
-See also {ref}`on-demand-support-with-da`
+See also `on-demand-support-with-da`
 
 
 ## How Does This Work at the Model Layer?

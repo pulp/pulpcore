@@ -7,11 +7,11 @@ The Pulp 3 API is intended to be decoupled from the data model, which the Django
 API correctly and consistently represent our specialized models and relationships (most notably
 the Master/Detail relationship).
 
-Our API starts at a {term}`DRF` {term}`Router`. Each {term}`ViewSet` is attached to this
+Our API starts at a `DRF` `Router`. Each `ViewSet` is attached to this
 router, and the router's routes are exposed in urls.py. Subclasses of
 {class}`pulpcore.app.viewsets.base.NamedModelViewSet` are automatically registered with the API router,
 and most (possibly all) ViewSets created by plugins should be subclasses of this base class.
-NamedModelViewSets are associated with a Django queryset, a {term}`Serializer` that is able to
+NamedModelViewSets are associated with a Django queryset, a `Serializer` that is able to
 represent members of the Django queryset in the API, and an endpoint name used when registering
 the ViewSet with the API router.
 
@@ -68,7 +68,7 @@ When creating API components, consider these guidelines:
   of the conventions used when building Pulp Models.
 - Whether serializer fields are explicitly declared on the serializer class or not, the field names
   to expose via the API must be declared by specifying 'fields' in the serializer's `Meta` class,
-  as described in the DRF {term}`Serializer` docs. The names of exposed API fields should always
+  as described in the DRF `Serializer` docs. The names of exposed API fields should always
   be explicit.
 - Serialized objects will provide thier own URL as the value of the "pulp_href" field on the serializer.
   You will need to use a `rest_framework.serializers.HyperlinkedIdentifyField` to generate the
@@ -240,7 +240,7 @@ object.
 
 ## Pagination
 
-{term}`Pagination` support is provided by DRF, and should be used in the API to mitigate the
+`Pagination` support is provided by DRF, and should be used in the API to mitigate the
 potentially negative effects caused by users attempting to iterate over large datasets. The
 default pagination implementation use's DRF's `CursorPagination` method:
 
@@ -404,7 +404,7 @@ Pagination
 
 Router
 
-: A {term}`DRF` API router exposes registered views (like a {term}`ViewSet`) at
+: A `DRF` API router exposes registered views (like a `ViewSet`) at
   programatically-made URLs. Among other things, routers save us the trouble of having
   to manually write URLs for every API view.
 
@@ -412,7 +412,7 @@ Router
 
 Serializer
 
-: A {term}`DRF` Serializer is responsible for representing python objects in the API,
+: A `DRF` Serializer is responsible for representing python objects in the API,
   and for converting API objects back into native python objects. Every model exposed
   via the API must have a related serializer.
 
@@ -420,10 +420,10 @@ Serializer
 
 ViewSet
 
-: A {term}`DRF` ViewSet is a collection of views representing all API actions available
-  at an API endpoint. ViewSets use a {term}`Serializer` or Serializers to correctly
+: A `DRF` ViewSet is a collection of views representing all API actions available
+  at an API endpoint. ViewSets use a `Serializer` or Serializers to correctly
   represent API-related objects, and are exposed in urls.py by being registered with
-  a {term}`Router`. API actions provided by a ViewSet include "list", "create", "retreive",
+  a `Router`. API actions provided by a ViewSet include "list", "create", "retreive",
   "update", "partial_update", and "destroy". Each action is one of the views that make up
   a ViewSet, and additional views can be added as-needed.
 

@@ -28,12 +28,12 @@ Every action that creates a new RepositoryVersion *must* be asynchronous (define
 Task reservations are necessary to prevent race conditions.
 
 
-(sync-docs)=
+
 
 ## Synchronizing
 
 !!! tip
-Please consider using the high level {ref}`stages-concept-docs` for actual implementations.
+Please consider using the high level `stages-concept-docs` for actual implementations.
 
 
 Most plugins will define a synchronize task, which fetches content from a remote repository, and
@@ -61,7 +61,7 @@ A typical synchronization task will follow this pattern:
     created before.
 
 - If a remote content should be downloaded right away (aka `immediate` download policy), use
-  the suggested  {ref}`downloading <download-docs>` solution. If content should be downloaded
+  the suggested  `downloading <download-docs>` solution. If content should be downloaded
   later (aka `on_demand` or `background` download policy), feel free to skip this step.
 
 - Save all artifact and content data in one transaction:

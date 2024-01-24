@@ -1,4 +1,4 @@
-(deployment)=
+
 
 # Architecture
 
@@ -30,9 +30,9 @@ The REST API should only be deployed via the `pulpcore-api` entrypoint.
 ## Content Serving Application
 
 A currently `aiohttp.server` based application that serves content to clients. The content could
-be {term}`Artifacts<Artifact>` already downloaded and saved in Pulp, or
-{term}`on-demand content units<on-demand content>`. When serving
-{term}`on-demand content units<on-demand content>` the downloading also happens from within this
+be `Artifacts` already downloaded and saved in Pulp, or
+`on-demand content units<on-demand content>`. When serving
+`on-demand content units<on-demand content>` the downloading also happens from within this
 component as well.
 
 !!! note
@@ -51,8 +51,8 @@ available options.
 
 Ensuring the REST API and the content server is healthy and alive:
 
-- REST API: GET request to `${API_ROOT}api/v3/status/` (see {ref}`API_ROOT <api-root>`)
-- Content Server: HEAD request to `/pulp/content/` or {ref}`CONTENT_PATH_PREFIX <content-path-prefix>`
+- REST API: GET request to `${API_ROOT}api/v3/status/` (see `API_ROOT <api-root>`)
+- Content Server: HEAD request to `/pulp/content/` or `CONTENT_PATH_PREFIX <content-path-prefix>`
 
 ## Distributed Tasking System
 
@@ -70,7 +70,7 @@ if you start *N* workers you can process *N* repo sync/modify/publish operations
 
 
 All necessary information about tasks is stored in Pulp's Postgres database as a single source of
-truth. In case your tasking system get's jammed, there is a guide to help (see {ref}`debugging tasks <debugging_tasks>`).
+truth. In case your tasking system get's jammed, there is a guide to help (see `debugging tasks `).
 
 ## Static Content
 
@@ -92,7 +92,7 @@ Collect all of the static content into place using the `collectstatic` command. 
 $ pulpcore-manager collectstatic
 ```
 
-(analytics)=
+
 
 ## Analytics Collection
 
@@ -139,7 +139,7 @@ An example payload:
 }
 ```
 
-(telemetry)=
+
 
 ## Telemetry Support
 

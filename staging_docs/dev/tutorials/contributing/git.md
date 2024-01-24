@@ -1,18 +1,18 @@
 # Git
 
 Pulp source code lives on [GitHub](https://github.com/pulp/pulpcore). This document is definitive
-for {term}`pulpcore` only, but some plugins may choose to follow the same strategies.
+for `pulpcore` only, but some plugins may choose to follow the same strategies.
 
-(git-branch)=
+
 
 ## Versions and Branches
 
 Code is submitted by a Pull Request on Github to merge the changes to `main` which represents
-the next `pulpcore` release. See {ref}`versioning` for more details.
+the next `pulpcore` release. See `versioning` for more details.
 
 ## Commits
 
-(rebase)=
+
 
 ### Rebasing and Squashing
 
@@ -29,7 +29,7 @@ make sure that all copies of those original commits get deleted. Did you push
 your branch to origin? Delete it and re-push after the rebase.
 
 
-(commit-message)=
+
 
 ### Commit Message
 
@@ -60,7 +60,7 @@ A good candidate for a `noissue` tag is a one line fix or a typo, otherwise we e
 you to open an issue.
 
 
-(requiring-other-pull-requests)=
+
 
 ### Requiring other Pull Requests
 
@@ -98,7 +98,7 @@ CI Base Image: pulp/pulp-ci:special_feature
 
 Attention and care must be given not to merge PRs that require custom CI images.
 
-(changelog-update)=
+
 
 ### Changelog update
 

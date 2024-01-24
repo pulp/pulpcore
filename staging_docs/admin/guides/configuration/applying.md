@@ -1,27 +1,27 @@
-(applying-settings)=
+
 
 # Applying Settings
 
 Pulp uses [dynaconf](https://www.dynaconf.com/) for its settings which allows you
 to configure Pulp settings using various ways:
 
-- {ref}`Environment Variables <env-var-settings>` - Enabled by default.
-- {ref}`Configuration File <config-file-settings>` - Disabled by default, but easy to enable.
+- `Environment Variables <env-var-settings>` - Enabled by default.
+- `Configuration File <config-file-settings>` - Disabled by default, but easy to enable.
 
-(env-var-settings)=
+
 
 ## Environment Variables
 
 Configuration by specifying environment variables is enabled by default. Any
-{ref}`Setting <settings>` can be configured using Dynaconf by prepending `PULP_` to the setting
-name. For example {ref}`SECRET_KEY <secret-key-setting>` can be specified as the `PULP_SECRET_KEY`
+`Setting ` can be configured using Dynaconf by prepending `PULP_` to the setting
+name. For example `SECRET_KEY <secret-key-setting>` can be specified as the `PULP_SECRET_KEY`
 environment variable. For example, in a shell you can use `export` to set this:
 
 ```
 export PULP_SECRET_KEY="This should be a 50 chars or longer unique secret!"
 ```
 
-(config-file-settings)=
+
 
 ## Configuration File
 
@@ -33,7 +33,7 @@ export PULP_SETTINGS=/etc/pulp/settings.py
 ```
 
 Then you can specify settings with Python variable assignment in the `/etc/pulp/settings.py`. For
-example, you can specify {ref}`SECRET_KEY <secret-key-setting>` with:
+example, you can specify `SECRET_KEY <secret-key-setting>` with:
 
 ```
 $ cat /etc/pulp/settings.py
