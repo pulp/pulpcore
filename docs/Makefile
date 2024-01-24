@@ -75,7 +75,7 @@ $(BUILDDIR)/html/api.json:
 	mkdir -p $(BUILDDIR)/html
 	if pulp debug has-plugin --name core --specifier ">=3.44.0.dev"; \
 	then \
-		curl --fail -o $(BUILDDIR)/html/api.json "$(PULP_V3_API_JSON_URL)?component=core,file&include_html=1"; \
+		curl --fail -o $(BUILDDIR)/html/api.json "$(PULP_V3_API_JSON_URL)?component=core,file,certguard&include_html=1"; \
 	else \
 		curl --fail -o $(BUILDDIR)/html/api.json "$(PULP_V3_API_JSON_URL)?plugin=pulpcore&include_html=1"; \
 	fi
