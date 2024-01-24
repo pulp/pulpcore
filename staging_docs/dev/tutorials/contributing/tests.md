@@ -73,16 +73,16 @@ To only perform the unittests, you can skip the prerequisites and call
 If you are only interested in functional tests, you can skip the creation of the test database by
 using `pytest <path_to_plugin>/<plugin_name>/tests/functional`.
 
-:::{note}
+!!! note
 Make sure, the task runners are actually running. In doubt, run `prestart` or
 `systemctl restart pulpcore-worker@*`.
-:::
 
-:::{note}
+
+!!! note
 You can be more specific on which tests to run by calling something like
 `pulpcore-manager test pulp_file.tests.unit.test_models` or
 `py.test <path_to_plugin>/<plugin_name>/tests/functional/api/test_sync.py`.
-:::
+
 
 ## Contributing to tests
 

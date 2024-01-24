@@ -22,12 +22,12 @@ We prefer each pull request to contain a single commit. Before you submit a PR, 
 The `git commit --amend` command is very useful, but be sure that you [understand what it does](https://www.atlassian.com/git/tutorials/rewriting-history/git-commit--amend) before you use it!
 GitHub will update the PR and keep the comments when you force push an amended commit.
 
-:::{warning}
+!!! warning
 Keep in mind that rebasing creates new commits that are unique from your
 original commits. Thus, if you have three commits and rebase them, you must
 make sure that all copies of those original commits get deleted. Did you push
 your branch to origin? Delete it and re-push after the rebase.
-:::
+
 
 (commit-message)=
 
@@ -55,10 +55,10 @@ the worker configuration.
 closes #1392
 ```
 
-:::{hint}
+!!! tip
 A good candidate for a `noissue` tag is a one line fix or a typo, otherwise we encourage
 you to open an issue.
-:::
+
 
 (requiring-other-pull-requests)=
 

@@ -22,11 +22,11 @@ Master/Detail objects a `TYPE` class attribute is needed which is then used in t
 ``/pulp/api/v3/contentguards/<plugin_name>/<TYPE>/``
 ```
 
-:::{note}
+!!! note
 The [pulp-certguard](https://docs.pulpproject.org/pulp_certguard/) plugin ships various
 `ContentGuard` types for users and plugin writers to use together. Plugins can ship their own
 content guards too, but look at the existing ones first.
-:::
+
 
 ## Simple Example
 

@@ -44,9 +44,9 @@ streamed
 Unless a plugin has enabled either the 'on_demand' or 'streamed' values for the `policy` attribute
 you will receive an error. Check that plugin's documentation also.
 
-:::{note}
+!!! note
 Want to add on-demand support to your plugin? See the [Pulp Plugin API](../plugins/nightly/) documentation for more details on how to add on-demand support to a plugin.
-:::
+
 
 ## Associating On-Demand Content with Additional Repository Versions
 
@@ -55,9 +55,9 @@ An {term}`on-demand content unit<on-demand content>` can be associated and unass
 {term}`Remote` will be used to download content should a client request it, even as that content is
 made available in multiple places.
 
-:::{warning}
+!!! warning
 Deleting a {term}`Remote` that was used in a sync with either the `on_demand` or `streamed`
 options can break published data. Specifically, clients who want to fetch content that a
 {term}`Remote` was providing access to would begin to 404. Recreating a {term}`Remote` and
 re-triggering a sync will cause these broken units to recover again.
-:::
+

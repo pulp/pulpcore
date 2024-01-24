@@ -5,10 +5,10 @@
 By default, Pulp supports Basic and Session authentication. The Basic Authentication checks the
 username and password against the internal users database.
 
-:::{note}
+!!! note
 This authentication is only for the REST API. Clients fetching binary data have their identity
 verified and authorization checked using a {term}`ContentGuard`.
-:::
+
 
 ## Which URLs Require Authentication?
 

@@ -74,17 +74,17 @@ documentation for more information on available checks.
 When multiple conditions are present, **all** of them must return True for the request to be
 authorized.
 
-:::{note}
+!!! note
 If you are making your plugin compatible with Domains, then use the `has_model_or_domain_perms`
 and `has_model_or_domain_or_obj_perms` checks where appropriate.
-:::
 
-:::{warning}
+
+!!! warning
 The `admin` user created on installations prior to RBAC being enabled has
 `is_superuser=True`. Django assumes a superuser has any model-level permission even without it
 being assigned. Django's permission checking machinery assumes superusers bypass authorization
 checks.
-:::
+
 
 ## Custom ViewSet Actions
 

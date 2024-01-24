@@ -71,9 +71,9 @@ in the {ref}`object-relationships` section:
   {attr}`~pulpcore.plugin.models.ContentArtifact.artifact`. It should be updated whenever
   corresponding {class}`~pulpcore.plugin.models.Artifact` is downloaded
 
-:::{note}
+!!! note
 Some of these steps may need to behave differently for other download policies.
-:::
+
 
 The remote implementation suggestion above allows plugin writer to have an understanding and
 control at a low level.

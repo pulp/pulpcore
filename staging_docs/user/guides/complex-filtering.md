@@ -1,16 +1,16 @@
 # Complex Filtering
 
-:::{warning}
+!!! warning
 This feature is in tech-preview. It may change in significant ways in the future.
-:::
+
 
 In addition to the usual querystring filters, Pulp provides a special `q` filter, that allows you
 to combine other filters with `NOT`, `AND` and `OR` operations.
 
-:::{warning}
+!!! warning
 In order to prevent arbitrarily complex queries, the maximum complexity of the expressions
 explained below is limited to 8. See the examples below for how complexity is calculated.
-:::
+
 
 For a given list endpoint, all the other existing (non ordering) filters can be used in these
 expressions.

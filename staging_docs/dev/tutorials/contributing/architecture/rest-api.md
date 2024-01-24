@@ -311,9 +311,9 @@ class RepositoryViewSet(viewsets.ModelViewSet):
     filterset_class = RepositoryFilter
 ```
 
-:::{note}
+!!! note
 For `NamedModelViewSet` the base class `BaseFilterSet` should be used.
-:::
+
 
 #### Beyond Equality
 
@@ -360,11 +360,11 @@ class RepositoryFilter(filters.FilterSet):
         fields = ['name_in_list']
 ```
 
-:::{note}
+!!! note
 We should be careful when naming these filters. Using `repo__in` would be fine because
 repo is not defined on this model. However, using `name__in` does *not* work because Django
 gets to it first looking for a subfield `in` on the name.
-:::
+
 
 ## Documenting
 
@@ -393,7 +393,7 @@ until either DRF supports OpenAPI, or until CoreAPI supports response documentat
 
 ## Glossary
 
-:::{glossary}
+
 DRF
 
 : The Django Rest Framework.
@@ -428,4 +428,4 @@ ViewSet
   a ViewSet, and additional views can be added as-needed.
 
   <http://www.django-rest-framework.org/api-guide/viewsets/>
-:::
+

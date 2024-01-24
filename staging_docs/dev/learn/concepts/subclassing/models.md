@@ -4,10 +4,10 @@
 
 For the most part, models provided by plugin writers are just regular [Django Models](https://docs.djangoproject.com/en/2.1/topics/db/models/).
 
-:::{note}
+!!! note
 One slight variation is that the validation is primarily handled in the Django Rest Framework
 Serializer. `.clean()` is not called.
-:::
+
 
 Most plugins will implement:
 : - model(s) for the specific content type(s) used in the plugin, should be subclassed from Content model
@@ -20,9 +20,9 @@ attributes need to be added to the model as `fields`. You can use any of Django'
 for your fields. See the [Django field documentation](https://docs.djangoproject.com/en/4.2/ref/models/fields/), for more in-depth information on
 using these fields.
 
-:::{note}
+!!! note
 It is required to declare the `default_related_name`.
-:::
+
 
 The TYPE class attribute is used for filtering purposes.
 
@@ -49,10 +49,10 @@ pulpcore-manager makemigrations $PLUGIN_APP_LABEL
 pulpcore-manager migrate
 ```
 
-:::{warning}
+!!! warning
 Do not use settings directly in the model fields, it will lead to a data migration that is
 specific to the users installation in case those settings change.
-:::
+
 
 If you recognize this syntax, it is because pulpcore-manager is `manage.py` configured with
 `DJANGO_SETTINGS_MODULE="pulpcore.app.settings"`. You can use it anywhere you normally would use

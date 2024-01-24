@@ -22,7 +22,7 @@ As a result, all the data related to the plugin will be removed from the Pulp da
 It is possible to install back the removed plugin if desired and if it's compatible with the
 pulpcore version being used.
 
-:::{note}
+!!! note
 After `remove-plugin` command has succeeded, the plugin needs to be uninstalled manually.
 Steps to uninstall depend on how it was originally installed.
-:::
+
