@@ -13,6 +13,49 @@ Changelog
 
 .. towncrier release notes start
 
+3.45.0 (2024-01-24)
+===================
+REST API
+--------
+
+Features
+~~~~~~~~
+
+- Added ``orphaned_for`` filters to artifact and content endpoints to filter content that has been
+  orphaned for a given number of minutes.
+  :github:`3364`
+- Added ``pulp-certguard`` as a resident plugin.
+  :github:`4626`
+
+
+Bugfixes
+~~~~~~~~
+
+- Fixed a bug where publications couldn't be created from repository versions when using RBAC.
+  :github:`4932`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
+Pulp File
+---------
+
+No significant changes.
+
+
+Pulp Cert Guard
+---------------
+
+No significant changes.
+
+
+----
+
+
 3.44.1 (2024-01-17)
 ===================
 REST API
