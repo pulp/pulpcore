@@ -366,7 +366,7 @@ class AsyncContentCache(AsyncCache):
         response_type = entry.pop("type", None)
         if not response_type or response_type not in self.RESPONSE_TYPES:
             # Bad entry, delete from cache
-            self.delete(key, base_key)
+            await self.delete(key, base_key)
             return None
         response = self.RESPONSE_TYPES[response_type](**entry)
         response.headers.update({"X-PULP-CACHE": "HIT"})
