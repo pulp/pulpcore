@@ -383,7 +383,7 @@ class AsyncContentCache(AsyncCache):
             expires and expires < time.time()
         ):
             # Bad entry, delete from cache
-            self.delete(key, base_key)
+            await self.delete(key, base_key)
             return None
         response = self.RESPONSE_TYPES[response_type](**entry)
         response.headers.update({"X-PULP-CACHE": "HIT"})
