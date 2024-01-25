@@ -13,6 +13,49 @@ Changelog
 
 .. towncrier release notes start
 
+3.45.0 (2024-01-24)
+===================
+REST API
+--------
+
+Features
+~~~~~~~~
+
+- Added ``orphaned_for`` filters to artifact and content endpoints to filter content that has been
+  orphaned for a given number of minutes.
+  :github:`3364`
+- Added ``pulp-certguard`` as a resident plugin.
+  :github:`4626`
+
+
+Bugfixes
+~~~~~~~~
+
+- Fixed a bug where publications couldn't be created from repository versions when using RBAC.
+  :github:`4932`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
+Pulp File
+---------
+
+No significant changes.
+
+
+Pulp Cert Guard
+---------------
+
+No significant changes.
+
+
+----
+
+
 3.44.1 (2024-01-17)
 ===================
 REST API
@@ -517,6 +560,27 @@ Features
 
 - Starting from this release `pulp_file` will be shipped as part of the `pulpcore` package.
   :github:`4550`
+
+
+3.39.7 (2024-01-24)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Taught downloader to trust system-cert-store on HTTPS proxy connections.
+  :github:`3036`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
+----
 
 
 3.39.6 (2024-01-16)
@@ -1281,6 +1345,34 @@ Misc
 ~~~~
 
 - :github:`3798`
+
+
+3.28.20 (2024-01-24)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fixed a regular expression used when listing directories.
+  :github:`3673`
+- Taught repair task to be tolerant in the face of any artifact download failure.
+  :github:`4111`
+- Removed a workaround to force close all tcp connections in sync leading to an exhaustion of port
+  numbers and their reuse while in time_wait state.
+  :github:`4452`
+- Fix file:// syncs deleting the original files.
+  :github:`4681`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
+----
 
 
 3.28.19 (2023-11-06)
