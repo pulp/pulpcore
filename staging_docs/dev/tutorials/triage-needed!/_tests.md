@@ -1,5 +1,3 @@
-
-
 # Testing Pulp
 
 There are two types of tests in *pulp_core* and in the plugins:

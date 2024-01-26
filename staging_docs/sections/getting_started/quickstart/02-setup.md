@@ -1,3 +1,0 @@
-# Setup
-
-This is setup.
