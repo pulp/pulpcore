@@ -1,5 +1,3 @@
-
-
 # Error Handling
 
 ## Errors in Tasks

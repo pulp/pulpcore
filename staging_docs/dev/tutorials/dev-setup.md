@@ -1,5 +1,3 @@
-
-
 # Developer Setup
 
 To ease developer setup, we have the [oci-env](https://github.com/pulp/oci_env) which is our
