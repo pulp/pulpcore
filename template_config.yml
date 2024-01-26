@@ -1,7 +1,7 @@
 # This config represents the latest values used when running the plugin-template. Any settings that
 # were not present before running plugin-template have been added with their default values.
 
-# generated with plugin_template@2021.08.26-308-gd58d154
+# generated with plugin_template@2021.08.26-310-g59cd732
 
 api_root: /pulp/
 black: true
@@ -11,16 +11,7 @@ check_manifest: true
 check_stray_pulpcore_imports: false
 ci_env: {}
 ci_trigger: '{pull_request: {branches: [''*'']}}'
-ci_update_branches:
-- '3.16'
-- '3.18'
-- '3.21'
-- '3.22'
-- '3.23'
-- '3.28'
-- '3.38'
 ci_update_docs: true
-ci_update_release_behavior: replace-previous-version
 cli_package: pulp-cli
 cli_repo: https://github.com/pulp/pulp-cli.git
 core_import_allowed: []
@@ -39,6 +30,7 @@ flake8_ignore:
 github_org: pulp
 issue_tracker: github
 kanban: true
+latest_release_branch: null
 lint_requirements: true
 noissue_marker: '[noissue]'
 parallel_test_workers: 8
@@ -82,6 +74,14 @@ stalebot: true
 stalebot_days_until_close: 30
 stalebot_days_until_stale: 90
 stalebot_limit_to_pulls: true
+supported_release_branches:
+- '3.16'
+- '3.18'
+- '3.21'
+- '3.22'
+- '3.23'
+- '3.28'
+- '3.38'
 sync_ci: true
 test_azure: true
 test_cli: true
