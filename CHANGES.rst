@@ -562,6 +562,23 @@ Features
   :github:`4550`
 
 
+3.39.8 (2024-01-25)
+===================
+REST API
+--------
+
+No significant changes.
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
+----
+
+
 3.39.7 (2024-01-24)
 ===================
 REST API
@@ -1345,6 +1362,44 @@ Misc
 ~~~~
 
 - :github:`3798`
+
+
+3.28.22 (2024-01-25)
+====================
+REST API
+--------
+
+No significant changes.
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
+----
+
+
+3.28.21 (2024-01-25)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fixed an issue with importing `async-timeout` in Python 3.11.
+  :github:`4923`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
+----
 
 
 3.28.20 (2024-01-24)
