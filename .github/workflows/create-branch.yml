@@ -81,7 +81,7 @@ jobs:
       - name: Update CI branches in template_config
         working-directory: plugin_template
         run: |
-          python3 ./plugin-template pulpcore --github --add-version-ci-update-branches "${NEW_BRANCH}"
+          python3 ./plugin-template pulpcore --github --latest-release-branch "${NEW_BRANCH}"
           git add -A
 
       - name: Make a PR with version bump and without CHANGES/*
