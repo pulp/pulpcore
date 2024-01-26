@@ -298,6 +298,7 @@ class DomainSerializer(ModelSerializer):
 
     pulp_href = IdentityField(view_name="domains-detail")
     name = serializers.SlugField(
+        max_length=50,
         help_text=_("A name for this domain."),
         validators=[UniqueValidator(queryset=models.Domain.objects.all())],
     )

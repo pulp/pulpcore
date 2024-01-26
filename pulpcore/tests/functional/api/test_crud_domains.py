@@ -2,6 +2,7 @@ import uuid
 
 import pytest
 import random
+import string
 import json
 from pulpcore.client.pulpcore import ApiException
 from pulpcore.app import settings
@@ -267,6 +268,21 @@ def test_special_domain_creation(domains_api_client, gen_object_with_cleanup):
         error_body = json.loads(e.value.body)
         assert "storage_settings" in error_body
         assert "Unexpected field" in error_body["storage_settings"].values()
+
+    # Try creating domains with a name greater than max_length
+    letters = string.ascii_lowercase
+    name = "".join(random.choice(letters) for i in range(80))
+    backend = installed_backends[0]
+    body = {
+        "name": name,
+        "storage_class": backend,
+        "storage_settings": storage_settings[backend],
+    }
+    with pytest.raises(ApiException) as e:
+        gen_object_with_cleanup(domains_api_client, body)
+
+    assert e.value.status == 400
+    assert "Ensure this field has no more than 50 characters." in e.value.body
 
     # Check that all domains are "apart" of the default domain
     domains = domains_api_client.list()
