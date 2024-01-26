@@ -6,7 +6,7 @@
 # For more info visit https://github.com/pulp/plugin_template
 
 # python packages handy for developers, but not required by pulp
-black
+black==23.12.1
 check-manifest
 flake8
 flake8-black

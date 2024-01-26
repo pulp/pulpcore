@@ -29,7 +29,7 @@ def main():
         "--branches",
         default="supported",
         help="A comma separated list of branches to check for releases. Can also use keyword: "
-        "'supported'. Defaults to 'supported', see `ci_update_branches` in "
+        "'supported'. Defaults to 'supported', see `supported_release_branches` in "
         "`plugin_template.yml`.",
     )
     opts = parser.parse_args()
@@ -46,12 +46,15 @@ def main():
         if branches == "supported":
             with open(f"{d}/template_config.yml", mode="r") as f:
                 tc = yaml.safe_load(f)
-                branches = tc["ci_update_branches"]
-            branches.append(DEFAULT_BRANCH)
+                branches = set(tc["supported_release_branches"])
+            latest_release_branch = tc["latest_release_branch"]
+            if latest_release_branch is not None:
+                branches.add(latest_release_branch)
+            branches.add(DEFAULT_BRANCH)
         else:
-            branches = branches.split(",")
+            branches = set(branches.split(","))
 
-        if diff := set(branches) - set(available_branches):
+        if diff := branches - set(available_branches):
             print(f"Supplied branches contains non-existent branches! {diff}")
             exit(1)
 
