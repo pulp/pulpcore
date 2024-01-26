@@ -32,10 +32,14 @@ response = session.get("https://api.github.com/repos/pulp/pulpcore/labels", head
 assert response.status_code == 200
 old_labels = set([x["name"] for x in response.json() if x["name"].startswith("backport-")])
 
-# get ci_update_branches from template_config.yml
+# get list of branches from template_config.yml
 with open("./template_config.yml", "r") as f:
     plugin_template = yaml.safe_load(f)
-new_labels = set(["backport-" + x for x in plugin_template["ci_update_branches"]])
+branches = set(plugin_template["supported_release_branches"])
+latest_release_branch = plugin_template["latest_release_branch"]
+if latest_release_branch is not None:
+    branches.add(latest_release_branch)
+new_labels = {"backport-" + x for x in branches}
 
 # delete old labels that are not in new labels
 for label in old_labels.difference(new_labels):
