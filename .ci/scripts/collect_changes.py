@@ -19,9 +19,11 @@ tc_settings = toml.load("pyproject.toml")["tool"]["towncrier"]
 CHANGELOG_FILE = tc_settings.get("filename", "NEWS.rst")
 START_STRING = tc_settings.get(
     "start_string",
-    "<!-- towncrier release notes start -->\n"
-    if CHANGELOG_FILE.endswith(".md")
-    else ".. towncrier release notes start\n",
+    (
+        "<!-- towncrier release notes start -->\n"
+        if CHANGELOG_FILE.endswith(".md")
+        else ".. towncrier release notes start\n"
+    ),
 )
 TITLE_FORMAT = tc_settings.get("title_format", "{name} {version} ({project_date})")
 
