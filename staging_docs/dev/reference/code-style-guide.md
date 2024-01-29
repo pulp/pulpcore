@@ -1,4 +1,4 @@
-# Style Guide
+# Code Style Guide
 
 ## Python Version
 

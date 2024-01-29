@@ -1,15 +1,16 @@
-
-
-# Webserver
+# Authenticate using external service
 
 Pulp can be configured to use authentication provided in the webserver outside of Pulp. This allows
 for integration with ldap for example, through [mod_ldap](https://httpd.apache.org/docs/2.4/mod/mod_ldap.html), or certificate based API access, etc.
 
-Enable external authentication in two steps:
+## Enable external Auth
 
-1\. Accept external auth instead of checking the internal users database by setting the
-`AUTHENTICATION_BACKENDS` to `['django.contrib.auth.backends.RemoteUserBackend']`. This will
-cause Pulp to accept any username for each request and by default create a user in the database
+### 1. Accept external Auth
+
+Accept external auth instead of checking the internal users database by setting the
+`AUTHENTICATION_BACKENDS` to `['django.contrib.auth.backends.RemoteUserBackend']`.
+
+This will cause Pulp to accept any username for each request and by default create a user in the database
 backend for them. To have any name accepted but not create the user in the database backend, use the
 `pulpcore.app.authentication.PulpNoCreateRemoteUserBackend` instead.
 
@@ -23,15 +24,17 @@ to authenticated users specify set `DEFAULT_PERMISSION_CLASSES` to
 `rest_framework.permissions.IsAuthenticated`. Alternatively, to allow any user (even
 unauthenticated) use `rest_framework.permissions.AllowAny`.
 
-2. Specify how to receive the username from the webserver. Do this by specifying to DRF an
-   `DEFAULT_AUTHENTICATION_CLASSES`. For example, consider this example:
+### 2. Configure 
 
-   ```
-   REST_FRAMEWORK['DEFAULT_AUTHENTICATION_CLASSES'] = (
-       'rest_framework.authentication.SessionAuthentication',
-       'pulpcore.app.authentication.PulpRemoteUserAuthentication'
-   )
-   ```
+Specify how to receive the username from the webserver. Do this by specifying to DRF an
+`DEFAULT_AUTHENTICATION_CLASSES`. For example, consider this example:
+
+ ```python
+ REST_FRAMEWORK['DEFAULT_AUTHENTICATION_CLASSES'] = (
+     'rest_framework.authentication.SessionAuthentication',
+     'pulpcore.app.authentication.PulpRemoteUserAuthentication'
+ )
+ ```
 
 This removes `rest_framework.authentication.BasicAuthentication`, but retains
 `rest_framework.authentication.SessionAuthentication` and adds
@@ -89,6 +92,6 @@ Pulp provides a setting named `REMOTE_USER_ENVIRON_NAME <remote-user-environ-nam
 you to specify another WSGI environment variable to read the authenticated username from.
 
 !!! warning
-Configuring this has serious security implications. See the [Django warning at the end of this
-section in their docs](https://docs.djangoproject.com/en/4.2/howto/auth-remote-user/#configuration) for more details.
+    Configuring this has serious security implications. See the [Django warning at the end of this
+    section in their docs](https://docs.djangoproject.com/en/4.2/howto/auth-remote-user/#configuration) for more details.
 

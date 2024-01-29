@@ -1,13 +1,11 @@
-
-
 # Architecture
 
 Pulp's architecture has three components to it: a REST API, a content serving application, and the
 tasking system. Each component can be horizontally scaled for both high availability and/or
 additional capacity for that part of the architecture.
 
-```{image} /static/architecture.png
-:align: center
+```
+/static/architecture.png
 ```
 
 ## REST API
@@ -21,8 +19,8 @@ Pulp's REST API is a Django application that runs standalone using the `gunicorn
 - Static content used by Django, e.g. images used by the browse-able API. This is not Pulp content.
 
 !!! note
-A simple way to run the REST API as a standalone service is using the provided `pulpcore-api`
-entrypoint. It is `gunicorn` based and provides many of its options.
+    A simple way to run the REST API as a standalone service is using the provided `pulpcore-api`
+    entrypoint. It is `gunicorn` based and provides many of its options.
 
 
 The REST API should only be deployed via the `pulpcore-api` entrypoint.
@@ -36,13 +34,12 @@ be `Artifacts` already downloaded and saved in Pulp, or
 component as well.
 
 !!! note
-Pulp installs a script that lets you run the content serving app as a standalone service as
-follows. This script accepts many `gunicorn` options.:
+    Pulp installs a script that lets you run the content serving app as a standalone service as
+    follows. This script accepts many `gunicorn` options.:
 
 ```
 $ pulpcore-content
 ```
-
 
 The content serving application should be deployed with `pulpcore-content`. See `--help` to see
 available options.
@@ -51,8 +48,8 @@ available options.
 
 Ensuring the REST API and the content server is healthy and alive:
 
-- REST API: GET request to `${API_ROOT}api/v3/status/` (see `API_ROOT <api-root>`)
-- Content Server: HEAD request to `/pulp/content/` or `CONTENT_PATH_PREFIX <content-path-prefix>`
+- REST API: GET request to `${API_ROOT}api/v3/status/` (see [`API_ROOT](#)`)
+- Content Server: HEAD request to `/pulp/content/` or `CONTENT_PATH_PREFIX`
 
 ## Distributed Tasking System
 
@@ -64,9 +61,9 @@ are available or resources are released.  Workers auto-name and are auto-discove
 started and stopped without notifying Pulp.
 
 !!! note
-Pulp serializes tasks that are unsafe to run in parallel, e.g. a sync and publish operation on
-the same repo should not run in parallel. Generally tasks are serialized at the "resource" level, so
-if you start *N* workers you can process *N* repo sync/modify/publish operations concurrently.
+    Pulp serializes tasks that are unsafe to run in parallel, e.g. a sync and publish operation on
+    the same repo should not run in parallel. Generally tasks are serialized at the "resource" level, so
+    if you start *N* workers you can process *N* repo sync/modify/publish operations concurrently.
 
 
 All necessary information about tasks is stored in Pulp's Postgres database as a single source of
@@ -92,8 +89,6 @@ Collect all of the static content into place using the `collectstatic` command. 
 $ pulpcore-manager collectstatic
 ```
 
-
-
 ## Analytics Collection
 
 By default, Pulp installations post anonymous analytics data every 24 hours which is summarized on
@@ -109,10 +104,10 @@ Here is the list of exactly what is collected along with an example below:
   custom access policies)
 
 !!! note
-We may add more analytics data points collected in the future. To keep our high standards for
-privacy protection, we have a rigorous approval process in place. You can see open proposals on
-[https://github.com/pulp/analytics.pulpproject.org/issues](https://github.com/pulp/analytics.pulpproject.org/issues). In doubt,
-[reach out to us](https://pulpproject.org/get_involved/).
+    We may add more analytics data points collected in the future. To keep our high standards for
+    privacy protection, we have a rigorous approval process in place. You can see open proposals on
+    [https://github.com/pulp/analytics.pulpproject.org/issues](https://github.com/pulp/analytics.pulpproject.org/issues). In doubt,
+    [reach out to us](https://pulpproject.org/get_involved/).
 
 
 An example payload:
@@ -164,10 +159,10 @@ and set the following environment variables:
 - `OTEL_EXPORTER_OTLP_PROTOCOL` set to `http/protobuf`.
 
 !!! note
-A quick example on how it would run using this method:
+    A quick example on how it would run using this method:
 
-```
-$ /usr/local/bin/opentelemetry-instrument --service_name pulp-api /usr/local/bin/pulpcore-api \
+```bash
+/usr/local/bin/opentelemetry-instrument --service_name pulp-api /usr/local/bin/pulpcore-api \
 --bind "127.0.0.1:24817" --name pulp-api --workers 4 --access-logfile -
 ```
 

@@ -1,15 +1,11 @@
-
-
-# Domains - Multi-Tenancy in Pulp
+# Enable and create Domains
 
 !!! warning
-This feature requires plugin support to work correctly.
-
+    This feature requires plugin support to work correctly.
 
 !!! warning
-This feature is provided as a tech preview and could change in backwards incompatible
-ways in the future.
-
+    This feature is provided as a tech preview and could change in backwards incompatible
+    ways in the future.
 
 ## Overview
 
@@ -34,8 +30,6 @@ a plugin is not compatible Pulp will fail to start. See list below for current l
 domain compatibility. Once domains are enabled all current objects in Pulp will be found under the
 `default` domain.
 
-
-
 Current Domain Compatible Plugins:
 
 - pulp_file>=1.13.0
@@ -43,7 +37,6 @@ Current Domain Compatible Plugins:
 
 !!! warning
 Before turning on domains, you should let all currently running tasks finished.
-
 
 ## Creating Domains
 
@@ -54,7 +47,7 @@ after the `API_ROOT<api-root>`, e.g. `/pulp/<domain_name>/api/v3/`. You can also
 the content app behavior for your domain through the fields `redirect_to_object_storage` and
 `hide_guarded_distributions`. See `settings` for more details on these settings.
 
-```
+```bash
 pulp domains create \
   --name <domain_name> \
   --storage-class <storage_class> \
@@ -70,21 +63,18 @@ pulp domains create \
 ```
 
 !!! note
-`default`, `content`, and `api` are reserved names that can not be used during creation
-or update. The `default` domain can not be updated or deleted.
+    `default`, `content`, and `api` are reserved names that can not be used during creation
+    or update. The `default` domain can not be updated or deleted.
 
 
 !!! note
-To delete a domain all objects within that domain must be deleted first, including artifacts and
-orphaned content.
+    To delete a domain all objects within that domain must be deleted first, including artifacts and
+    orphaned content.
 
 
 !!! warning
-Changing the `storage-class` or `storage-settings` of an in-use domain is
-dangerous and can result in a broken domain.
-
-
-
+    Changing the `storage-class` or `storage-settings` of an in-use domain is
+    dangerous and can result in a broken domain.
 
 ## Using Domains
 
@@ -95,7 +85,7 @@ Once domains are enabled all URLs in Pulp will require the domain name in the pa
 present under the `default` domain. To work in a domain you must specify the domain's name in the
 URL.
 
-```
+```bash
 # List repositories in 'test' domain
 pulp --domain test repository list
 
@@ -125,7 +115,7 @@ role at the domain-level will allow users to operate with those permissions only
 Current global(model)-level roles should be converted to domain-level if you wish for the user to
 not have permission across all domains.
 
-```
+```bash
 # Delete the global-level role
 pulp user role-assignment remove --username <username> --role <role_name> --object ""
 
@@ -134,12 +124,12 @@ pulp user role-assignment add --username <username> --role <role_name> --domain 
 ```
 
 !!! note
-Operations on resources across separate domains is not allowed. e.g. You can not add content
-from one domain to the repository of another domain even if you own both domains.
+    Operations on resources across separate domains is not allowed. e.g. You can not add content
+    from one domain to the repository of another domain even if you own both domains.
 
 
 !!! warning
-Pulp Export and Import are currently not supported with domains enabled.
+    Pulp Export and Import are currently not supported with domains enabled.
 
 
 There are notable objects in Pulp, `AccessPolicies`, `Roles`, `Users`, and `Groups`, that

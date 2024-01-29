@@ -1,6 +1,6 @@
-# Testing Pulp
+# Write and run tests
 
-There are two types of tests in *pulp_core* and in the plugins:
+There are two types of tests in *pulpcore* and in the plugins:
 
 1. **Unittests** are meant to test the interface of a specific unit utilizing a test database.
 2. **Functional tests** are meant to test certain workflows utilizing a running instance of pulp.
@@ -72,14 +72,14 @@ If you are only interested in functional tests, you can skip the creation of the
 using `pytest <path_to_plugin>/<plugin_name>/tests/functional`.
 
 !!! note
-Make sure, the task runners are actually running. In doubt, run `prestart` or
-`systemctl restart pulpcore-worker@*`.
+    Make sure, the task runners are actually running. In doubt, run `prestart` or
+    `systemctl restart pulpcore-worker@*`.
 
 
 !!! note
-You can be more specific on which tests to run by calling something like
-`pulpcore-manager test pulp_file.tests.unit.test_models` or
-`py.test <path_to_plugin>/<plugin_name>/tests/functional/api/test_sync.py`.
+    You can be more specific on which tests to run by calling something like
+    `pulpcore-manager test pulp_file.tests.unit.test_models` or
+    `py.test <path_to_plugin>/<plugin_name>/tests/functional/api/test_sync.py`.
 
 
 ## Contributing to tests
