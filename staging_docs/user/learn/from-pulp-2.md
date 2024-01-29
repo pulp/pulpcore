@@ -61,11 +61,12 @@ Applicability is a feature that provides a list of updates, content which needs 
 on a specific host to bring it up to date. In Pulp 2, it is possible to calculate applicability
 based on the installation and subscription profile of a host managed by Pulp. This is
 not supported in Pulp 3. The functionality is available as part of [the Katello project](https://theforeman.org/plugins/katello/).
-# Scheduling Tasks
+
+## Scheduling Tasks
 
 While Pulp 2 supported scheduling tasks natively, this is no longer a core feature in Pulp 3. Scheduling Pulp tasks
 in Pulp 3 can be accomplished using any of the following external tools (and possibly others not on this list).
 
-> - [cron](http://pubs.opengroup.org/onlinepubs/9699919799/utilities/crontab.html)
-> - [rundeck](http://rundeck.org/)
-> - [distributed cron](https://github.com/ivanmp91/distributed-cron)
+- [cron](http://pubs.opengroup.org/onlinepubs/9699919799/utilities/crontab.html)
+- [rundeck](http://rundeck.org/)
+- [distributed cron](https://github.com/ivanmp91/distributed-cron)

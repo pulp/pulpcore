@@ -1,4 +1,4 @@
-# Promotion
+# Lifecyle Promotion Support
 
 A typical workflow for several users of Pulp is managing separate sets of content for different
 lifecycle environments (e.g. Dev, Staging, Production, etc) and promoting content from one

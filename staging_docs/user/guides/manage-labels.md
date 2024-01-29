@@ -1,17 +1,15 @@
-# Labels
+# Manage Labels
 
 Pulp provides a way to add key/value data to many resources (e.g. repositories, remotes,
 distributions) in the form of labels. Labels are also useful for categorizing and filtering
 resources. In the API, labels appear as a dictionary field that maps keys (strings) to values (also
 strings).
 
-## Managing labels
-
-### Creating labels
+## Creating labels
 
 To create labels:
 
-```
+```bash
 # create a new repository
 pulp file repository create --name myrepo
 
@@ -25,7 +23,7 @@ pulp file repository show --name myrepo
 
 On show, you should see the new labels that have been created:
 
-```
+```json
 {
   "pulp_href": "/pulp/api/v3/repositories/file/file/13477a92-b811-4436-a76a-d2469a17a62e/",
   "pulp_created": "2021-01-29T17:54:17.084105Z",
@@ -42,11 +40,11 @@ On show, you should see the new labels that have been created:
 }
 ```
 
-### Updating labels
+## Updating labels
 
 To update an existing label, call set again:
 
-```
+```bash
 # update the label
 pulp file repository label set --name myrepo --key reviewed --value false
 
@@ -56,7 +54,7 @@ pulp file repository show --name myrepo
 
 On show, you should now see:
 
-```
+```json
 {
   "pulp_href": "/pulp/api/v3/repositories/file/file/13477a92-b811-4436-a76a-d2469a17a62e/",
   "pulp_created": "2021-01-29T17:54:17.084105Z",
@@ -72,11 +70,11 @@ On show, you should now see:
 }
 ```
 
-### Unsetting labels
+## Unsetting labels
 
 To remove a label from a resource, call the unset command:
 
-```
+```bash
 # update the label
 pulp file repository label unset --name myrepo --key reviewed
 
@@ -86,7 +84,7 @@ pulp file repository show --name myrepo
 
 On show, you should now see:
 
-```
+```json
 {
   "pulp_href": "/pulp/api/v3/repositories/file/file/13477a92-b811-4436-a76a-d2469a17a62e/",
   "pulp_created": "2021-01-29T17:54:17.084105Z",
@@ -121,13 +119,13 @@ Multiple terms can be combined with `,`:
 
 To filter using the CLI use `--label-select`:
 
-```
+```bash
 pulp file repository list --label-select="environment~prod,reviewed"
 ```
 
 This would return a list of repositories such as:
 
-```
+```json
 {
   "pulp_href": "/pulp/api/v3/repositories/file/file/13477a92-b811-4436-a76a-d2469a17a62e/",
   "pulp_created": "2021-01-29T17:54:17.084105Z",

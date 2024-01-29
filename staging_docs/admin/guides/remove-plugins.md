@@ -1,6 +1,4 @@
-
-
-# Plugin removal
+# Remove Plugins
 
 In case when one does not need a certain Pulp plugin anymore or there is a plugin which is no
 longer supported and having it installed may prevent from upgrading to the latest releases for
@@ -23,6 +21,6 @@ It is possible to install back the removed plugin if desired and if it's compati
 pulpcore version being used.
 
 !!! note
-After `remove-plugin` command has succeeded, the plugin needs to be uninstalled manually.
-Steps to uninstall depend on how it was originally installed.
+    After `remove-plugin` command has succeeded, the plugin needs to be uninstalled manually.
+    Steps to uninstall depend on how it was originally installed.
 

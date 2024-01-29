@@ -1,4 +1,4 @@
-# Pulp Import and Export
+# Import/Export Repositories
 
 ## Overview
 
@@ -10,20 +10,15 @@ network-isolated.
 
 The high-level workflow for this use case is
 
-1\. On the Upstream Pulp instance, an Exporter is defined for the set of
+1. On the Upstream Pulp instance, an Exporter is defined for the set of
 `Repositories` that are to be exported to some Downstream Pulp instance.
-
-2\. That Exporter is requested to produce and execute an Export for the current
-`RepositoryVersions` of the specified
-`Repositories`
-
-3. The resulting `.tar` Export is transferred to the appropriate Downstream.
-
-4\. On the Downstream Pulp instance, an Importer is defined, that maps the incoming
+1. That Exporter is requested to produce and execute an Export for the current
+`RepositoryVersions` of the specified `Repositories`
+1. The resulting `.tar` Export is transferred to the appropriate Downstream.
+1. On the Downstream Pulp instance, an Importer is defined, that maps the incoming
 Upstream `Repositories` to matching Downstream
 `Repositories`.
-
-5\. That Importer is requested to produce and execute an Import, pointing to the provided
+1. That Importer is requested to produce and execute an Import, pointing to the provided
 export file from the Upstream.
 
 In order to minimize space utilization, import/export operates on sets of
@@ -33,58 +28,58 @@ In order to minimize space utilization, import/export operates on sets of
 
 ## Definitions
 
-Upstream
+### Upstream
 
-: Pulp instance whose `RepositoryVersions` we want to export
+Pulp instance whose `RepositoryVersions` we want to export
 
-Downstream
+### Downstream
 
-: Pulp instance that will be importing those `RepositoryVersions`
+Pulp instance that will be importing those `RepositoryVersions`
 
-ModelResource
+### ModelResource
 
-: entity that understands how to map the metadata for a specific Model
-  owned/controlled by a plugin to an exportable file-format
-  (see [django-import-export](https://django-import-export.readthedocs.io/en/latest/api_resources.html#modelresource))
+entity that understands how to map the metadata for a specific Model
+owned/controlled by a plugin to an exportable file-format
+(see [django-import-export](https://django-import-export.readthedocs.io/en/latest/api_resources.html#modelresource))
 
-Exporter
+### Exporter
 
-: resource that exports content from Pulp for a variety of different use cases
+resource that exports content from Pulp for a variety of different use cases
 
-PulpExporter
+### PulpExporter
 
-: kind-of Exporter, that is specifically used to export data from an Upstream
-  for consumption by a Downstream
+kind-of Exporter, that is specifically used to export data from an Upstream
+for consumption by a Downstream
 
-PulpExport
+### PulpExport
 
-: specific instantiation/run of a PulpExporter
+specific instantiation/run of a PulpExporter
 
-Export file
+### Export file
 
-: compressed tarfile containing database content and `Artifacts` for
-  `RepositoryVersions`, generated during execution of an Export
+compressed tarfile containing database content and `Artifacts` for
+`RepositoryVersions`, generated during execution of an Export
 
-PulpImporter
+### PulpImporter
 
-: resource that accepts an Upstream PulpExporter export file, and manages
-  the process of importing the content and `Artifacts` included
+resource that accepts an Upstream PulpExporter export file, and manages
+the process of importing the content and `Artifacts` included
 
-PulpImport
+### PulpImport
 
-: specific instantiation/run of a PulpImporter
+specific instantiation/run of a PulpImporter
 
-Repository-mapping
+### Repository-mapping
 
-: configuration file that provides the ability to map an Upstream `Repository`,
-  to a Downstream `Repository`, into which the Upstream’s `RepositoryVersion`
-  should be imported by a PulpImporter
+configuration file that provides the ability to map an Upstream `Repository`,
+to a Downstream `Repository`, into which the Upstream’s `RepositoryVersion`
+should be imported by a PulpImporter
 
-Import order
+### Import order
 
-: for complicated repository-types, managing relationships requires that
-  ModelResources be imported in order. Plugins are responsible for specifying the
-  import-order of the ModelResources they own
+for complicated repository-types, managing relationships requires that
+ModelResources be imported in order. Plugins are responsible for specifying the
+import-order of the ModelResources they own
 
 ## Assumptions
 
@@ -101,7 +96,9 @@ all the only way for the Downstream Pulp instance to gain access to them!
 If a repository is specified for export that utilized on-demand/streamed syncing, the
 export will fail with a RuntimeError:
 
-> `Remote artifacts cannot be exported.`
+```
+Remote artifacts cannot be exported.
+```
 
 ### Export/Import Directories must be explicitly allowed
 
@@ -110,7 +107,9 @@ the settings options `ALLOWED_IMPORT_PATHS` and `ALLOWED_EXPORT_PATHS`.
 These default to empty - if they not explicitly set, attempts to import or export will fail
 with a validation error like
 
-> `"Path '/tmp/exports/' is not an allowed export path"`
+```
+"Path '/tmp/exports/' is not an allowed export path"
+```
 
 ### Installed plugins must match
 
@@ -118,7 +117,9 @@ A Downstream must support the complete set of plugins present in a given export.
 export includes plugins that are not installed in the Downstream, an import attempt will
 fail with a validation error like
 
-> `Export uses pulp_rpm which is not installed.`
+```
+Export uses pulp_rpm which is not installed.
+```
 
 ### Version-compatibility required
 
@@ -127,15 +128,16 @@ Downstream instances are running "compatible" versions of pulpcore and plugins. 
 context, "compatible" is defined as **"share the same X.Y version"**.  If this is not the
 case, an import attempt will fail with a validation error like
 
-> `Export version 3.14.15 of pulpcore incompatible with installed version 3.16.3.`
+```
+Export version 3.14.15 of pulpcore incompatible with installed version 3.16.3.
+```
 
 ## Exporting
 
 !!! note
-The following examples assume a Pulp instance that includes the `pulp_file` and
-`pulp_rpm` plugins. They also assume that the `http` and `jq` packages are
-installed.
-
+    The following examples assume a Pulp instance that includes the `pulp_file` and
+    `pulp_rpm` plugins. They also assume that the `http` and `jq` packages are
+    installed.
 
 These workflows are executed on an Upstream Pulp instance.
 
@@ -150,32 +152,32 @@ and save their UUIDs as `ZOO_UUID` and `ISOFILE_UUID`
 
 Set up 'zoo' repository":
 
-```
+```bash
 # Create the repository
 export ZOO_HREF=$(http POST :/pulp/api/v3/repositories/rpm/rpm/ name=zoo | jq -r '.pulp_href')
-#
+
 # add a remote
 http POST :/pulp/api/v3/remotes/rpm/rpm/ name=zoo url=https://fixtures.pulpproject.org/rpm-signed/  policy='immediate'
-#
+
 # find remote's href
 export REMOTE_HREF=$(http :/pulp/api/v3/remotes/rpm/rpm/ | jq -r ".results[] | select(.name == \"zoo\") | .pulp_href")
-#
+
 # sync the repository to give us some content
 http POST :$ZOO_HREF'sync/' remote=$REMOTE_HREF
 ```
 
 Set up 'isofile' repository:
 
-```
+```bash
 # create the repository
 ISOFILE_HREF=$(http POST :/pulp/api/v3/repositories/file/file/ name=isofile | jq -r '.pulp_href')
-#
+
 # add remote
 http POST :/pulp/api/v3/remotes/file/file/ name=isofile url=https://fixtures.pulpproject.org/file/PULP_MANIFEST
-#
+
 # find remote's href
 REMOTE_HREF=$(http :/pulp/api/v3/remotes/file/file/ | jq -r ".results[] | select(.name == \"isofile\") | .pulp_href")
-#
+
 # sync the repository to give us some content
 http POST :$ISOFILE_HREF'sync/' remote=$REMOTE_HREF
 ```
@@ -183,7 +185,7 @@ http POST :$ISOFILE_HREF'sync/' remote=$REMOTE_HREF
 Now that we have `Repositories` with content, let's define an Exporter named `test-exporter`
 that will export these `Repositories` to the directory `/tmp/exports/`:
 
-```
+```bash
 export EXPORTER_HREF=$(http POST :/pulp/api/v3/exporters/core/pulp/ \
     name=test-exporter                                              \
     repositories:=[\"${ISOFILE_HREF}\",\"${ZOO_HREF}\"]             \
@@ -196,7 +198,7 @@ http GET :${EXPORTER_HREF}
 Once we have an Exporter defined, we invoke it to generate an export-file in the directory
 specified by that Exporter's `path` attribute:
 
-```
+```bash
 http POST :${EXPORTER_HREF}exports/
 ```
 
@@ -206,7 +208,7 @@ Exporter's path, with a name that follows the convention `export-<export-UUID>-Y
 It will also produce a "table of contents" file describing the file (or files, see
 [Exporting Chunked Files] below) for later use verifying and importing the results of the export:
 
-```
+```bash
 ls /tmp/exports
 export-32fd25c7-18b2-42de-b2f8-16f6d90358c3-20200416_2000.tar
 export-32fd25c7-18b2-42de-b2f8-16f6d90358c3-20200416_2000-toc.json
@@ -226,9 +228,9 @@ python -m json.tool /tmp/exports/export-32fd25c7-18b2-42de-b2f8-16f6d90358c3-202
 These export files can now be transferred to a Downstream Pulp instance, and imported.
 
 !!! note
-In the event of any failure during an export, the process will clean up any partial
-export-files that may have been generated. Export-files can be very large; this will
-preserve available space in the export-directory.
+    In the event of any failure during an export, the process will clean up any partial
+    export-files that may have been generated. Export-files can be very large; this will
+    preserve available space in the export-directory.
 
 
 ### Exporting Specific Versions
@@ -240,14 +242,14 @@ if you wish using the `versions=` parameter on the `/exports/` invocation.
 Following the above example - let's assume we want to export the "zero'th" `RepositoryVersion` of the
 repositories in our Exporter.:
 
-```
+```bash
 http POST :${EXPORTER_HREF}exports/ \
     versions:=[\"${ISO_HREF}versions/0/\",\"${ZOO_HREF}versions/0/\"]
 ```
 
 Note that the "zero'th" `RepositoryVersion` of a `Repository` is created when the `Repository` is created, and is empty. If you unpack the resulting Export `tar` you will find, for example, that there is no `artifacts/` directory and an empty `ArtifactResource.json` file:
 
-```
+```bash
 cd /tmp/exports
 tar xvf export-930ea60c-97b7-4e00-a737-70f773ebbb14-20200511_2005.tar
     versions.json
@@ -282,7 +284,7 @@ do so; exporting only the "entities that have changed" is a better choice. You c
 accomplish this by setting the `full` parameter on the `/exports/` invocation to
 `False`:
 
-```
+```bash
 http POST :${EXPORTER_HREF}exports/ full=False
 ```
 
@@ -294,7 +296,7 @@ parameter. Building on our example Exporter, if we want to do an incremental exp
 **second** `RepositoryVersion` of each `Repository`, regardless of what happened in our last export,
 we would issue a command such as the following:
 
-```
+```bash
 http POST :${EXPORTER_HREF}exports/ \
     full=False                      \
     start_versions:=[\"${ISO_HREF}versions/1/\",\"${ZOO_HREF}versions/1/\"]
@@ -307,7 +309,7 @@ of our `Repositories`.
 Finally, if we need complete control over incremental exporting, we can combine the use of `start_versions=` and `versions=`
 to produce an incremental export of everything that happened after `start_versions=` up to and including `versions=`:
 
-```
+```bash
 http POST :${EXPORTER_HREF}exports/                                         \
     full=False                                                              \
     start_versions:=[\"${ISO_HREF}versions/1/\",\"${ZOO_HREF}versions/1/\"] \
@@ -315,8 +317,8 @@ http POST :${EXPORTER_HREF}exports/                                         \
 ```
 
 !!! note
-**Note** that specifying `start_versions=` without specifying `full=False` (i.e., asking for an incremental export)
-is an error, since it makes no sense to specify a 'starting version' for a full export.
+    **Note** that specifying `start_versions=` without specifying `full=False` (i.e., asking for an incremental export)
+    is an error, since it makes no sense to specify a 'starting version' for a full export.
 
 
 ### Exporting Chunked Files
@@ -330,7 +332,7 @@ You accomplish this by setting the `chunk_size` parameter to the desired maximum
 parameter takes an integer, or size-units of KB, MB, or GB. Files appear in the Exporter.path
 directory, with a four-digit sequence number suffix:
 
-```
+```bash
 http POST :/pulp/api/v3/exporters/core/pulp/1ddbe6bf-a6c3-4a88-8614-ad9511d21b94/exports/ chunk_size="10KB"
     {
         "task": "/pulp/api/v3/tasks/da3350f7-0102-4dd5-81e0-81becf3ffdc7/"
@@ -348,7 +350,7 @@ ls -l /tmp/exports/
 
 The "table of contents" lists all the resulting files and their checksums:
 
-```
+```bash
 python -m json.tool /tmp/exports/export-780822a4-d280-4ed0-a53c-382a887576a6-20200522_2325-toc.json
 {
     "meta": {
@@ -372,7 +374,7 @@ python -m json.tool /tmp/exports/export-780822a4-d280-4ed0-a53c-382a887576a6-202
 
 You can update an Exporter to modify a subset of its fields:
 
-```
+```bash
 http PATCH :${EXPORTER_HREF} path=/tmp/newpath
 ```
 
@@ -382,7 +384,7 @@ http PATCH :${EXPORTER_HREF} path=/tmp/newpath
 
 The first step to importing a Pulp export archive is to create an importer:
 
-```
+```bash
 http :/pulp/api/v3/importers/core/pulp/ name="test"
 ```
 
@@ -391,27 +393,26 @@ in Pulp by name. This can be overriden by supplying a repo mapping that maps nam
 to the names of repos in Pulp. For example, suppose the name of the repo in the Pulp export achive was
 'source' and the repo in Pulp was 'dest'. The following command would set up this mapping:
 
-```
+```bash
 http :/pulp/api/v3/importers/core/pulp/ name="test" repo_mapping:="{\"source\": \"dest\"}"
 ```
 
 After the importer is created, a POST request to create an import will trigger the import process.
 
 !!! note
-By default, the Pulp import machinery expects destination repositories to be present at the time
-of the import. This can be overridden by passing the `create_repositories=True` field via the
-POST request that will lead Pulp to create missing repositories on the fly.
+    By default, the Pulp import machinery expects destination repositories to be present at the time
+    of the import. This can be overridden by passing the `create_repositories=True` field via the
+    POST request that will lead Pulp to create missing repositories on the fly.
 
 
 !!! warning
-The options `repo_mapping` and `create_repositories` are not compatible with each other. The
-existence of a repository specified in the `repo_mapping` option is tested before the importer
-is initialized. Thus, the repository has to be already created in advance.
-
+    The options `repo_mapping` and `create_repositories` are not compatible with each other. The
+    existence of a repository specified in the `repo_mapping` option is tested before the importer
+    is initialized. Thus, the repository has to be already created in advance.
 
 You can import an exported `.tar` directly using the `path` parameter:
 
-```
+```bash
 http POST :/pulp/api/v3/importers/core/pulp/f8acba87-0250-4640-b56b-c92597d344b7/imports/ \
   path="/data/export-113c8950-072b-432a-9da6-24da1f4d0a02-20200408_2015.tar"
 ```
@@ -420,27 +421,27 @@ Or you can point the importer at the "table of contents" file that was produced 
 If the TOC file is in the same directory as the export-files it points to, the import process
 will:
 
-> - verify the checksum(s) of all export-files,
-> - reassemble a chunked-export into a single `.tar`
-> - remove chunks as they are used (in order to conserve disk space)
-> - verify the checksum of the resulting reassembled `.tar`
+- verify the checksum(s) of all export-files,
+- reassemble a chunked-export into a single `.tar`
+- remove chunks as they are used (in order to conserve disk space)
+- verify the checksum of the resulting reassembled `.tar`
 
 and then import the result:
 
-```
+```bash
 http POST :/pulp/api/v3/importers/core/pulp/f8acba87-0250-4640-b56b-c92597d344b7/imports/ \
   toc="/data/export-113c8950-072b-432a-9da6-24da1f4d0a02-20200408_2015-toc.json"
 ```
 
 !!! note
-The directory containing the file pointed to by `path` or `toc` must be defined in the
-`ALLOWED_IMPORT_PATHS` setting or the import will fail.
+    The directory containing the file pointed to by `path` or `toc` must be defined in the
+    `ALLOWED_IMPORT_PATHS` setting or the import will fail.
 
 
 The command to create an import will return a task that can be used to monitor the import. You can
 also see a history of past imports:
 
-```
+```bash
 http :/pulp/api/v3/importers/core/pulp/f8acba87-0250-4640-b56b-c92597d344b7/imports/
 ```
 
@@ -450,23 +451,23 @@ There are a number of things that can keep an import from being successful, rang
 export-file not being available to bad JSON specified for `repo_mapping`. You can pre-validate your
 proposed import using the `import-check` command:
 
-```
+```bash
 http POST :/pulp/api/v3/importers/core/pulp/import-check/ \
   path=/tmp/export-file-path toc=/tmp/export-toc-path repo_mapping:="{\"source\": \"dest\"}"
 ```
 
 `import-check` will validate that:
 
-> - paths are in `ALLOWED_IMPORT_PATHS`
-> - containing directory exists
-> - containing directory is readable
-> - path/toc file(s) exist and are readable
-> - for TOC, containing directory is writeable
-> - repo_mapping is valid JSON
+- paths are in `ALLOWED_IMPORT_PATHS`
+- containing directory exists
+- containing directory is readable
+- path/toc file(s) exist and are readable
+- for TOC, containing directory is writeable
+- repo_mapping is valid JSON
 
 `import-check` is a low-overhead synchronous call. It does not attempt to do validations that
 require database access or long-running tasks such as verifying checksums. All parameters are optional.
 
 !!! note
-For `path` and `toc`, if the ALLOWED_IMPORT_PATHS check fails, no further information will be given.
+    For `path` and `toc`, if the ALLOWED_IMPORT_PATHS check fails, no further information will be given.
 

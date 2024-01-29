@@ -1,6 +1,4 @@
-# Troubleshooting
-
-
+# Troubleshoot tasks
 
 ## Debugging Tasks
 

@@ -1,6 +1,4 @@
-
-
-# Versioning
+# Pulp Versioning
 
 Pulp uses a version scheme `x.y.z`, which is based on [Semantic Versioning](http://semver.org/). Briefly, `x.y.z` releases may only contain bugfixes (no features),
 `x.y` releases may only contain backwards compatible changes (new features, bugfixes), and `x`
