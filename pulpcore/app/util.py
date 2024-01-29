@@ -13,13 +13,17 @@ from datetime import timedelta
 import gnupg
 
 from django.conf import settings
+from django.db.models import Sum
 from django.urls import Resolver404, resolve, reverse
+from opentelemetry import metrics
+
 from rest_framework.serializers import ValidationError
 
 from pulpcore.app.loggers import deprecation_logger
 from pulpcore.app.apps import pulp_plugin_configs
 from pulpcore.app import models
 from pulpcore.exceptions.validation import InvalidSignatureError
+
 
 # a little cache so viewset_for_model doesn't have to iterate over every app every time
 _model_viewset_cache = {}
@@ -467,3 +471,65 @@ def cache_key(base_path):
             base_path = [f"{domain.name}:{path}" for path in base_path]
 
     return base_path
+
+
+class DomainMetricsEmitterBuilder:
+    """A builder class that initializes an emitter for recording domain's metrics.
+
+    If Open Telemetry is enabled, the builder configures a real emitter capable of sending data to
+    the collector. Otherwise, a no-op emitter is initialized. The real emitter utilizes the global
+    settings to send metrics.
+
+    By default, the emitter sends data to the collector every 60 seconds. Adjust the environment
+    variable OTEL_METRIC_EXPORT_INTERVAL accordingly if needed.
+    """
+
+    class _DomainMetricsEmitter:
+        def __init__(self, domain):
+            self.domain = domain
+            self.meter = metrics.get_meter(f"domain.{domain.name}.meter")
+            self.instrument = self._init_emitting_total_size()
+
+        def _init_emitting_total_size(self):
+            return self.meter.create_observable_gauge(
+                name="disk_usage",
+                description="The total disk size by domain.",
+                callbacks=[self._disk_usage_callback()],
+                unit="Bytes",
+            )
+
+        def _disk_usage_callback(self):
+            from pulpcore.app.models import Artifact
+
+            options = yield  # noqa
+
+            while True:
+                artifacts = Artifact.objects.filter(pulp_domain=self.domain).distinct()
+                total_size = artifacts.aggregate(size=Sum("size", default=0))["size"]
+                options = yield [  # noqa
+                    metrics.Observation(
+                        total_size, {"pulp_href": get_url(self.domain), "name": self.domain.name}
+                    )
+                ]
+
+    class _NoopEmitter:
+        def __call__(self, *args, **kwargs):
+            return self
+
+        def __getattr__(self, *args, **kwargs):
+            return self
+
+    @classmethod
+    def build(cls, domain):
+        otel_enabled = os.getenv("PULP_OTEL_ENABLED")
+        if otel_enabled == "true" and settings.DOMAIN_ENABLED:
+            return cls._DomainMetricsEmitter(domain)
+        else:
+            return cls._NoopEmitter()
+
+
+def init_domain_metrics_exporter():
+    from pulpcore.app.models.domain import Domain
+
+    for domain in Domain.objects.all():
+        DomainMetricsEmitterBuilder.build(domain)

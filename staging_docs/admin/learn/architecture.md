@@ -142,6 +142,10 @@ Pulp can produce OpenTelemetry data, like the number of requests, active connect
 `pulp-api` and `pulp-content` using OpenTelemetry. You can read more about
 [OpenTelemetry here](https://opentelemetry.io).
 
+!!! attention
+    This feature is provided as a tech preview and could change in backwards incompatible
+    ways in the future.
+
 If you are using [Pulp in One Container](https://pulpproject.org/pulp-in-one-container/) or [Pulp Operator](https://docs.pulpproject.org/pulp_operator/) and want to enable it, you will need to set the following
 environment variables:
 
@@ -169,3 +173,20 @@ and set the following environment variables:
 
 You will need to run an instance of OpenTelemetry Collector. You can read more about the [OpenTelemetry
 Collector here](https://opentelemetry.io/docs/collector/).
+
+**At the moment, the following data is recorded by Pulp:**
+
+- Access to every API endpoint (an HTTP method, target URL, status code, and user agent).
+- Access to every requested package (an HTTP method, target URL, status code, and user agent).
+- Disk usage within a specific domain (total used disk space and the reference to the domain).
+
+The information above is sent to the collector in the form of spans and metrics. Thus, the data is
+emitted either based on the user interaction with the system or on a regular basis. Consult
+[OpenTelemetry Traces](https://opentelemetry.io/docs/concepts/signals/traces/) and
+[OpenTelemetry Metrics](https://opentelemetry.io/docs/concepts/signals/metrics/) to learn more.
+
+!!! note
+    It is highly recommended to set the [`OTEL_METRIC_EXPORT_INTERVAL`](https://opentelemetry.io/docs/specs/otel/configuration/sdk-environment-variables/#periodic-exporting-metricreader)
+    environment variable to `300000` (5 minutes) to reduce the frequency of queries executed on the
+    Pulp's backend. This value represents the interval between emitted metrics and should be set
+    before runtime.
