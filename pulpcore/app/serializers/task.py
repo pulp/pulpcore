@@ -1,7 +1,6 @@
 from gettext import gettext as _
 
 from django.conf import settings
-from django.urls import reverse
 from rest_framework import serializers
 
 from pulpcore.app import models
@@ -15,7 +14,7 @@ from pulpcore.app.serializers import (
     TaskGroupStatusCountField,
 )
 from pulpcore.constants import TASK_STATES
-from pulpcore.app.util import get_domain
+from pulpcore.app.util import reverse
 
 
 class CreatedResourceSerializer(RelatedResourceField):
@@ -95,9 +94,8 @@ class TaskSerializer(ModelSerializer):
         if task_user_map := self.context.get("task_user_mapping"):
             if user_id := task_user_map.get(str(obj.pk)):
                 kwargs = {"pk": user_id}
-                if settings.DOMAIN_ENABLED:
-                    kwargs["pulp_domain"] = get_domain().name
-                return reverse("users-detail", kwargs=kwargs)
+                request = self.context.get("request")
+                return reverse("users-detail", kwargs=kwargs, request=request)
         return None
 
     class Meta:

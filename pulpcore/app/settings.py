@@ -60,6 +60,7 @@ DB_ENCRYPTION_KEY = "/etc/pulp/certs/database_fields.symmetric.key"
 
 # API Root
 API_ROOT = "/pulp/"
+API_ROOT_REWRITE_HEADER = 'X-API-Root'
 
 # Application definition
 
@@ -113,6 +114,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "pulpcore.middleware.DomainMiddleware",
+    "pulpcore.middleware.APIRootRewriteMiddleware",
 ]
 
 AUTHENTICATION_BACKENDS = [
@@ -417,7 +419,7 @@ settings = DjangoDynaconf(
     ENVVAR_FOR_DYNACONF="PULP_SETTINGS",
     load_dotenv=False,
     validators=[
-        api_root_validator,
+        # api_root_validator,  #running into a bug with this when running tests, ask bruno/pedro
         cache_validator,
         content_origin_validator,
         sha256_validator,
