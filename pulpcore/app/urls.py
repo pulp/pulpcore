@@ -112,6 +112,13 @@ class PulpAPIRootView(APIRootView):
     authentication_classes = []
     permission_classes = []
 
+    def get(self, request, *args, **kwargs):
+        if settings.DOMAIN_ENABLED:
+            kwargs["pulp_domain"] = request.pulp_domain.name
+        if api_root := getattr(request, "api_root", None):
+            kwargs["api_root"] = api_root
+        return super().get(request, *args, **kwargs)
+
 
 class PulpDefaultRouter(routers.DefaultRouter):
     """A DefaultRouter class that benefits from the customized PulpAPIRootView class."""
@@ -133,26 +140,25 @@ vs_tree = ViewSetNode()
 for viewset in sorted_by_depth:
     vs_tree.add_decendent(ViewSetNode(viewset))
 
-urlpatterns = [
-    path(f"{API_ROOT}repair/", RepairView.as_view()),
+special_views = [
+    path("repair/", RepairView.as_view()),
     path(
-        f"{API_ROOT}orphans/cleanup/",
-        OrphansCleanupViewset.as_view({"post": "cleanup"}),
+        "orphans/cleanup/",
+        OrphansCleanupViewset.as_view(actions={"post": "cleanup"}),
     ),
-    path(f"{API_ROOT}orphans/", OrphansView.as_view()),
+    path("orphans/", OrphansView.as_view()),
     path(
-        f"{API_ROOT}repository_versions/",
-        ListRepositoryVersionViewSet.as_view({"get": "list"}),
-    ),
-    path(
-        f"{API_ROOT}repositories/reclaim_space/",
-        ReclaimSpaceViewSet.as_view({"post": "reclaim"}),
+        "repository_versions/",
+        ListRepositoryVersionViewSet.as_view(actions={"get": "list"}),
     ),
     path(
-        f"{API_ROOT}importers/core/pulp/import-check/",
+        "repositories/reclaim_space/",
+        ReclaimSpaceViewSet.as_view(actions={"post": "reclaim"}),
+    ),
+    path(
+        "importers/core/pulp/import-check/",
         PulpImporterImportCheckView.as_view(),
     ),
-    path("auth/", include("rest_framework.urls")),
 ]
 
 docs_and_status = [
@@ -187,20 +193,29 @@ docs_and_status = [
     ),
 ]
 
-urlpatterns.append(path(settings.V3_API_ROOT_NO_FRONT_SLASH, include(docs_and_status)))
+urlpatterns = [
+    path(f"{API_ROOT}", include(special_views)),
+    path("auth/", include("rest_framework.urls")),
+    path(settings.V3_API_ROOT_NO_FRONT_SLASH, include(docs_and_status)),
+]
+
+
+def no_schema_view(old_path, name=None):
+    """Take in a path and return a new duplicate path that will not show up in the API Schema."""
+    @extend_schema(exclude=True)
+    class NoSchema(old_path.callback.cls):
+        pass
+
+    new_view = NoSchema.as_view(**old_path.callback.initkwargs)
+    return path(str(old_path.pattern), new_view, name=name)
+
 
 if settings.DOMAIN_ENABLED:
     # Ensure Docs and Status endpoints are available within domains, but are not shown in API schema
     docs_and_status_no_schema = []
     for p in docs_and_status:
-
-        @extend_schema(exclude=True)
-        class NoSchema(p.callback.cls):
-            pass
-
-        view = NoSchema.as_view(**p.callback.initkwargs)
         name = p.name + "-domains" if p.name else None
-        docs_and_status_no_schema.append(path(str(p.pattern), view, name=name))
+        docs_and_status_no_schema.append(no_schema_view(p, name=name))
     urlpatterns.append(path(API_ROOT, include(docs_and_status_no_schema)))
 
 if "social_django" in settings.INSTALLED_APPS:
