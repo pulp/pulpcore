@@ -4,3 +4,4 @@ aiotools
 pytest-django
 pytest-asyncio
 pytest-redis
+pytest<8
