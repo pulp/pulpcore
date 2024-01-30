@@ -13,6 +13,40 @@ Changelog
 
 .. towncrier release notes start
 
+3.45.1 (2024-01-30)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fixed a warning that gets raised when cache is enabled: ``RuntimeWarning: coroutine
+  'AsyncCache.delete' was never awaited``.
+  :github:`4967`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
+Pulp File
+---------
+
+No significant changes.
+
+
+Pulp Cert Guard
+---------------
+
+No significant changes.
+
+
+----
+
+
 3.45.0 (2024-01-24)
 ===================
 REST API
