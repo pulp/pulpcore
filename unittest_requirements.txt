@@ -2,3 +2,4 @@
 asynctest
 mock
 pytest-django
+pytest<8
