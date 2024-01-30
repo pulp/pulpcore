@@ -38,8 +38,11 @@ if settings.DOMAIN_ENABLED:
     API_ROOT_NO_FRONT_SLASH = settings.V3_DOMAIN_API_ROOT_NO_FRONT_SLASH.replace("slug:", "")
 else:
     API_ROOT_NO_FRONT_SLASH = settings.V3_API_ROOT_NO_FRONT_SLASH
+if settings.API_ROOT_REWRITE_HEADER:
+    API_ROOT_NO_FRONT_SLASH = API_ROOT_NO_FRONT_SLASH.replace(
+        "<path:api_root>", settings.API_ROOT.strip("/")
+    )
 API_ROOT_NO_FRONT_SLASH = API_ROOT_NO_FRONT_SLASH.replace("<", "{").replace(">", "}")
-
 
 # Python does not distinguish integer sizes. The safest assumption is that they are large.
 extend_schema_field(OpenApiTypes.INT64)(serializers.IntegerField)
@@ -55,6 +58,7 @@ class PulpAutoSchema(AutoSchema):
         "patch": "partial_update",
         "delete": "delete",
     }
+    V3_API = API_ROOT_NO_FRONT_SLASH.replace("{pulp_domain}/", "")
 
     def _tokenize_path(self):
         """
@@ -82,7 +86,7 @@ class PulpAutoSchema(AutoSchema):
             if not tokenized_path and getattr(self.view, "get_view_name", None):
                 tokenized_path.extend(self.view.get_view_name().split())
 
-        path = "/".join(tokenized_path).replace(settings.V3_API_ROOT_NO_FRONT_SLASH, "")
+        path = "/".join(tokenized_path).replace(self.V3_API, "")
         tokenized_path = path.split("/")
 
         return tokenized_path
@@ -345,6 +349,9 @@ class PulpSchemaGenerator(SchemaGenerator):
                 continue
 
             schema = view.schema
+
+            if settings.API_ROOT_REWRITE_HEADER:
+                path = path.replace("{api_root}", settings.API_ROOT.strip("/"))
 
             if input_request is None or "pk_path" not in query_params:
                 path = self.convert_endpoint_path_params(path, view, schema)

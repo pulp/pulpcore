@@ -823,6 +823,8 @@ def pulp_api_v3_path(pulp_settings, pulp_domain_enabled):
         raise RuntimeError(
             "This fixture requires the server to have the `V3_API_ROOT` setting set."
         )
+    if pulp_settings.API_ROOT_REWRITE_HEADER:
+        v3_api_root = v3_api_root.replace("<path:api_root>", pulp_settings.API_ROOT.strip("/"))
     return v3_api_root
 
 

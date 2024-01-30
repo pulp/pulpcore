@@ -14,11 +14,11 @@ from datetime import timedelta
 from django.conf import settings
 from django.db import connection
 from django.db.models import Model, Sum
-from django.urls import Resolver404, resolve, reverse
-
+from django.urls import Resolver404, resolve
 from opentelemetry import metrics
 
 from rest_framework.serializers import ValidationError
+from rest_framework.reverse import reverse as drf_reverse
 
 from pulpcore.app.loggers import deprecation_logger
 from pulpcore.app.apps import pulp_plugin_configs
@@ -30,9 +30,27 @@ from pulpcore.exceptions.validation import InvalidSignatureError
 
 # a little cache so viewset_for_model doesn't have to iterate over every app every time
 _model_viewset_cache = {}
+STRIPPED_API_ROOT = settings.API_ROOT.strip("/")
 
 
-def get_url(model, domain=None):
+def reverse(viewname, args=None, kwargs=None, request=None, relative_url=True, **extra):
+    """
+    Customized reverse to handle Pulp specific parameters like domains and API_ROOT rewrite.
+
+    Calls DRF's reverse, but with request as None if relative_url is True (default) so that the
+    returned url is always relative.
+    """
+    kwargs = kwargs or {}
+    if settings.DOMAIN_ENABLED:
+        kwargs.setdefault("pulp_domain", get_domain().name)
+    if settings.API_ROOT_REWRITE_HEADER:
+        kwargs.setdefault("api_root", getattr(request, "api_root", STRIPPED_API_ROOT))
+    if relative_url:
+        request = None
+    return drf_reverse(viewname, args=args, kwargs=kwargs, request=request, **extra)
+
+
+def get_url(model, domain=None, request=None):
     """
     Get a resource url for the specified model instance or class. This returns the path component of
     the resource URI.
@@ -41,6 +59,7 @@ def get_url(model, domain=None):
         model (django.models.Model): A model instance or class.
         domain Optional(str or Domain): The domain the url should be in if DOMAIN_ENABLED is set and
         domain can not be gathered from the model. Defaults to 'default'.
+        request Optional(django.http.HttpRequest): The request object this url is being created for.
 
     Returns:
         str: The path component of the resource url
@@ -59,7 +78,7 @@ def get_url(model, domain=None):
         view_action = "detail"
         kwargs["pk"] = model.pk
 
-    return reverse(get_view_name_for_model(model, view_action), kwargs=kwargs)
+    return reverse(get_view_name_for_model(model, view_action), kwargs=kwargs, request=request)
 
 
 def get_prn(instance=None, uri=None):

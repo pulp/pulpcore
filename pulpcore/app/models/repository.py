@@ -15,7 +15,6 @@ from django.contrib.postgres.fields import HStoreField
 from django.core.validators import MinValueValidator
 from django.db import models, transaction
 from django.db.models import F, Func, Q, Value
-from django.urls import reverse
 from django_lifecycle import AFTER_UPDATE, BEFORE_DELETE, hook
 from rest_framework.exceptions import APIException
 
@@ -23,9 +22,9 @@ from pulpcore.app.util import (
     batch_qs,
     get_prn,
     get_view_name_for_model,
-    get_domain,
     get_domain_pk,
     cache_key,
+    reverse,
 )
 from pulpcore.constants import ALL_KNOWN_CONTENT_CHECKSUMS, PROTECTED_REPO_VERSION_MESSAGE
 from pulpcore.download.factory import DownloaderFactory
@@ -1296,8 +1295,7 @@ class RepositoryVersionContentDetails(models.Model):
     )
     count = models.IntegerField()
 
-    @property
-    def content_href(self):
+    def get_content_href(self, request=None):
         """
         Generate URLs for the content types added, removed, or present in the RepositoryVersion.
 
@@ -1316,11 +1314,8 @@ class RepositoryVersionContentDetails(models.Model):
         ctypes = {c.get_pulp_type(): c for c in repository_model.CONTENT_TYPES}
         ctype_model = ctypes[self.content_type]
         ctype_view = get_view_name_for_model(ctype_model, "list")
-        kwargs = {}
-        if settings.DOMAIN_ENABLED:
-            kwargs["pulp_domain"] = get_domain().name
         try:
-            ctype_url = reverse(ctype_view, kwargs=kwargs)
+            ctype_url = reverse(ctype_view, request=request)
         except django.urls.exceptions.NoReverseMatch:
             # We've hit a content type for which there is no viewset.
             # There's nothing we can do here, except to skip it.
@@ -1328,7 +1323,7 @@ class RepositoryVersionContentDetails(models.Model):
 
         repository_view = get_view_name_for_model(repository_model, "list")
 
-        repository_url = reverse(repository_view, kwargs=kwargs)
+        repository_url = reverse(repository_view, request=request)
         rv_href = (
             repository_url
             + str(self.repository_version.repository_id)
@@ -1342,3 +1337,5 @@ class RepositoryVersionContentDetails(models.Model):
             partial_url_str = "{base}?repository_version_removed={rv_href}"
         full_url = partial_url_str.format(base=ctype_url, rv_href=rv_href)
         return full_url
+
+    content_href = property(get_content_href)
