@@ -98,4 +98,5 @@ ignore = [
     ".github/**",
     "lint_requirements.txt",
     ".flake8",
+    "pulpcore/tests/functional/assets/**",
 ]

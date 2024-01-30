@@ -75,6 +75,7 @@ DB_ENCRYPTION_KEY = "/etc/pulp/certs/database_fields.symmetric.key"
 
 # API Root
 API_ROOT = "/pulp/"
+API_ROOT_REWRITE_HEADER = None
 
 # Application definition
 
@@ -128,6 +129,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "pulpcore.middleware.DomainMiddleware",
+    "pulpcore.middleware.APIRootRewriteMiddleware",
 ]
 
 AUTHENTICATION_BACKENDS = [
@@ -548,7 +550,11 @@ if not (len(sys.argv) >= 2 and sys.argv[1] in _SKIPPED_COMMANDS_FOR_CONTENT_CHEC
     finally:
         connection.close()
 
-settings.set("V3_API_ROOT", settings.API_ROOT + "api/v3/")  # Not user configurable
-settings.set("V3_DOMAIN_API_ROOT", settings.API_ROOT + "<slug:pulp_domain>/api/v3/")
+if settings.API_ROOT_REWRITE_HEADER:
+    api_root = "/<path:api_root>/"
+else:
+    api_root = settings.API_ROOT
+settings.set("V3_API_ROOT", api_root + "api/v3/")  # Not user configurable
+settings.set("V3_DOMAIN_API_ROOT", api_root + "<slug:pulp_domain>/api/v3/")
 settings.set("V3_API_ROOT_NO_FRONT_SLASH", settings.V3_API_ROOT.lstrip("/"))
 settings.set("V3_DOMAIN_API_ROOT_NO_FRONT_SLASH", settings.V3_DOMAIN_API_ROOT.lstrip("/"))

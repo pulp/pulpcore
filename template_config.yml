@@ -64,6 +64,7 @@ pulp_settings:
   tmpfile_protection_time: 10
   upload_protection_time: 10
 pulp_settings_azure:
+  api_root_rewrite_header: X-API-Root
   domain_enabled: true
 pulp_settings_gcp: null
 pulp_settings_s3:
