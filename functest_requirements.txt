@@ -2,7 +2,7 @@ aiohttp
 django
 dynaconf
 drf-spectacular
-pytest<8
+pytest<9
 pytest-custom_exit_code
 pytest-xdist
 python-gnupg
