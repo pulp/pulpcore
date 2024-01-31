@@ -13,6 +13,40 @@ Changelog
 
 .. towncrier release notes start
 
+3.45.1 (2024-01-30)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fixed a warning that gets raised when cache is enabled: ``RuntimeWarning: coroutine
+  'AsyncCache.delete' was never awaited``.
+  :github:`4967`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
+Pulp File
+---------
+
+No significant changes.
+
+
+Pulp Cert Guard
+---------------
+
+No significant changes.
+
+
+----
+
+
 3.45.0 (2024-01-24)
 ===================
 REST API
@@ -560,6 +594,28 @@ Features
 
 - Starting from this release `pulp_file` will be shipped as part of the `pulpcore` package.
   :github:`4550`
+
+
+3.39.9 (2024-01-30)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fixed a warning that gets raised when cache is enabled: ``RuntimeWarning: coroutine
+  'AsyncCache.delete' was never awaited``.
+  :github:`4967`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
+----
 
 
 3.39.8 (2024-01-25)
@@ -1362,6 +1418,28 @@ Misc
 ~~~~
 
 - :github:`3798`
+
+
+3.28.23 (2024-01-30)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fixed a warning that gets raised when cache is enabled: ``RuntimeWarning: coroutine
+  'AsyncCache.delete' was never awaited``.
+  :github:`4967`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
+----
 
 
 3.28.22 (2024-01-25)
@@ -2850,6 +2928,28 @@ Deprecations
   :github:`3604`
 
 
+3.22.22 (2024-01-30)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fixed a warning that gets raised when cache is enabled: ``RuntimeWarning: coroutine
+  'AsyncCache.delete' was never awaited``.
+  :github:`4967`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
+----
+
+
 3.22.21 (2024-01-09)
 ====================
 REST API
@@ -3415,6 +3515,28 @@ Removals
 - Deprecated model ``Label`` and serializer field ``LabelField`` and ``LabelSelectFilter`` for
   removal in 3.25.
   :github:`3400`
+
+
+3.21.26 (2024-01-30)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fixed a warning that gets raised when cache is enabled: ``RuntimeWarning: coroutine
+  'AsyncCache.delete' was never awaited``.
+  :github:`4967`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
+----
 
 
 3.21.25 (2024-01-09)
@@ -4459,6 +4581,28 @@ Bugfixes
   the stage will still accumulate up to 500 (by default) items so batching is still in-effect there
   where it matters.
   :github:`2069`
+
+
+3.18.35 (2024-01-30)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fixed a warning that gets raised when cache is enabled: ``RuntimeWarning: coroutine
+  'AsyncCache.delete' was never awaited``.
+  :github:`4967`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
+----
 
 
 3.18.34 (2024-01-09)
