@@ -64,6 +64,7 @@ pulp_settings:
   allowed_import_paths:
   - /tmp
   orphan_protection_time: 0
+  content_path_prefix: /somewhere/else/
 pulp_settings_azure:
   domain_enabled: true
 pulp_settings_gcp: null
