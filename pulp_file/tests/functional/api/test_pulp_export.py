@@ -155,7 +155,8 @@ def test_crud_exporter(exporters_pulp_api_client, shallow_pulp_exporter, monitor
     assert exporter.name in [e.name for e in exporters]
 
     # DELETE
-    exporters_pulp_api_client.delete(exporter.pulp_href)
+    result = exporters_pulp_api_client.delete(exporter.pulp_href)
+    monitor_task(result.task)
     with pytest.raises(ApiException):
         exporters_pulp_api_client.read(exporter.pulp_href)
 
