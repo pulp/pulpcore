@@ -45,4 +45,6 @@ RUN export plugin_path="$(pip3 show {{ item.name }} | sed -n -e 's/Location: //p
     ln $plugin_path/app/webserver_snippets/nginx.conf /etc/nginx/pulp/{{ item.name }}.conf || true
 {% endfor %}
 
+COPY $GITHUB_WORKSPACE/.ci/ansible/re-rooted-content.conf /etc/nginx/pulp/re-rooted-content.conf
+
 ENTRYPOINT ["/init"]
