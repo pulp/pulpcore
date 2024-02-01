@@ -86,6 +86,31 @@ from .gpg_ascii_armor_signing_service import (
 )
 
 
+try:
+    import pulp_smash
+except ImportError:
+
+    def pytest_addoption(parser):
+        group = parser.getgroup("pulpcore")
+        group.addoption(
+            "--nightly",
+            action="store_true",
+            default=False,
+            help="Enable to run nightly test.",
+        )
+
+    def pytest_collection_modifyitems(config, items):
+        # Skip nightly tests by default
+        # https://docs.pytest.org/en/7.1.x/example/simple.html#control-skipping-of-tests-according-to-command-line-option
+        if config.getoption("--nightly"):
+            # Run all tests unmodified
+            return
+        skip_nightly = pytest.mark.skip(reason="need --nightly option to run")
+        for item in items:
+            if "nightly" in item.keywords:
+                item.add_marker(skip_nightly)
+
+
 class PulpTaskTimeoutError(Exception):
     """Exception to describe task and taskgroup timeout errors."""
 
