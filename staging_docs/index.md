@@ -11,7 +11,7 @@ hide:
 
 ![Pulp Logo](site:pulpcore/docs/assets/pulp_logo_big.png)
 
-## Pulp is an open source project that makes it easy for developers to fetch, upload, and distribute *Software Packages* on-prem or in the cloud.
+## Pulp is an open source project that makes it easy for developers to fetch, upload, and distribute *Software Packages* on-prem or in the cloud!
 
 </div>
 
