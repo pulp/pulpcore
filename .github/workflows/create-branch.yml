@@ -33,7 +33,7 @@ jobs:
       - name: "Install python dependencies"
         run: |
           echo ::group::PYDEPS
-          pip install bump2version jinja2 pyyaml
+          pip install bump2version jinja2 pyyaml packaging
           echo ::endgroup::
 
       - name: "Setting secrets"
