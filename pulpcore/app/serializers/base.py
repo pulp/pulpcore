@@ -418,9 +418,17 @@ class ModelSerializer(
     exclude_arg_name = "exclude_fields"
 
     class Meta:
-        fields = ("pulp_href", "pulp_created")
+        fields = ("pulp_href", "pulp_created", "pulp_last_updated")
 
     pulp_created = serializers.DateTimeField(help_text=_("Timestamp of creation."), read_only=True)
+    pulp_last_updated = serializers.DateTimeField(
+        help_text=_(
+            "Timestamp of the last time this resource was updated. Note: for immutable "
+            "resources - like content, repository versions, and publication - pulp_created and "
+            "pulp_last_updated dates will be the same."
+        ),
+        read_only=True,
+    )
 
     def _validate_relative_path(self, path):
         """
