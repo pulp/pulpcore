@@ -81,9 +81,7 @@ cat >> vars/main.yaml << VARSYAML
 pulp_env: {}
 pulp_settings: {"allowed_export_paths": ["/tmp"], "allowed_import_paths": ["/tmp"], "orphan_protection_time": 0}
 pulp_scheme: https
-
-pulp_container_tag: "latest"
-
+pulp_default_container: ghcr.io/pulp/pulp-ci-centos:latest
 VARSYAML
 
 SCENARIOS=("pulp" "performance" "azure" "gcp" "s3" "generate-bindings" "lowerbounds")

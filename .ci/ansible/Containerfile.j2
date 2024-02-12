@@ -1,4 +1,4 @@
-FROM {{ ci_base | default("ghcr.io/pulp/pulp-ci-centos:" + pulp_container_tag) }}
+FROM {{ ci_base | default(pulp_default_container) }}
 
 # Add source directories to container
 {% for item in plugins %}
@@ -11,7 +11,7 @@ ADD ./{{ item.name }} ./{{ item.name }}
 
 RUN pip3 install
 {%- if s3_test | default(false) -%}
-{{ " " }}git+https://github.com/fabricio-aguiar/botocore.git@fix-100-continue
+{{ " " }}git+https://github.com/gerrod3/botocore.git@fix-100-continue
 {%- endif -%}
 {%- for item in plugins -%}
 {{ " " }}{{ item.source }}
