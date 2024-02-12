@@ -9,7 +9,7 @@ the Master/Detail relationship).
 
 Our API starts at a `DRF` `Router`. Each `ViewSet` is attached to this
 router, and the router's routes are exposed in urls.py. Subclasses of
-{class}`pulpcore.app.viewsets.base.NamedModelViewSet` are automatically registered with the API router,
+`pulpcore.app.viewsets.base.NamedModelViewSet` are automatically registered with the API router,
 and most (possibly all) ViewSets created by plugins should be subclasses of this base class.
 NamedModelViewSets are associated with a Django queryset, a `Serializer` that is able to
 represent members of the Django queryset in the API, and an endpoint name used when registering
@@ -47,7 +47,7 @@ When creating API components, consider these guidelines:
   `PrimaryKeyRelatedField`, `SlugRelatedField`, etc) should be avoided. See the "Serializer
   Relationships" section below for more details. In the database an object is identified by its
   Primary Key. In the API an object is identified by its URL.
-- {class}`pulpcore.app.viewsets.base.NamedModelViewSet` subclasses defined in a plugin's "viewsets" module
+- `pulpcore.app.viewsets.base.NamedModelViewSet` subclasses defined in a plugin's "viewsets" module
   are automatically registered with the API router. Endpoint names (the `endpoint_name` attribute)
   should plural, not singular (e.g. /pulp/api/v3/repositories/, not /pulp/api/v3/repository/).
 - DRF supports natural keys on models in ModelViewSets with the "lookup_field" class attribute, but
@@ -64,7 +64,7 @@ When creating API components, consider these guidelines:
 - Many of the model writing guidelines can be applied to writing serializers. Familiarity with
   them is recommended for writers of serializers.
 - All Serializers representing Pulp Models should subclass
-  {class}`pulpcore.app.serializers.base.ModelSerializer`, as it provides useful behaviors to handle some
+  `pulpcore.app.serializers.base.ModelSerializer`, as it provides useful behaviors to handle some
   of the conventions used when building Pulp Models.
 - Whether serializer fields are explicitly declared on the serializer class or not, the field names
   to expose via the API must be declared by specifying 'fields' in the serializer's `Meta` class,
@@ -142,7 +142,7 @@ control over what fields are exposed in the REST API, and that those fields are 
 the same way so that we don't break backward compatibility. To convert a ModelSerializer to its
 explicit Serializer class, DRF provides an excellent bit of functionality:
 
-```
+```python
 >>> from serializers import RepositorySerializer
 >>> RepositorySerializer()
 RepositorySerializer():
@@ -154,9 +154,9 @@ RepositorySerializer():
     content = HyperlinkedRelatedField(many=True, read_only=True, view_name='content-detail')
 ```
 
-DRF Serializers fully support \_\_repr\_\_, which means calling repr() on them will return a string
+DRF Serializers fully support `__repr__`, which means calling `repr()` on them will return a string
 that can be used to create that serializer. So, to see what fields DRF automatically generated
-for a ModelSerializer, either instantiate it in an interpreter, or capture the output via repr()
+for a ModelSerializer, either instantiate it in an interpreter, or capture the output via `repr()`
 and output it explicitly.
 
 ## Master/Detail Relationships Overview
@@ -169,7 +169,7 @@ behaviors to be easy to override or customize in plugins (if needed).
 
 As with most things related to the API, the place to start working with Master/Detail models
 is in their ViewSet. The default ViewSet base class provided by the Pulp platform,
-{class}`pulpcore.app.viewsets.base.NamedModelViewSet` is aware of Master/Detail relationships, and
+`pulpcore.app.viewsets.base.NamedModelViewSet` is aware of Master/Detail relationships, and
 will do the right thing when registered with our API router. In order to benefit from this
 behavior, a ViewSet must be declared that represents the Master model of a Master/Detail
 relationship, and that ViewSet must, at a minimum, have its `endpoint_name` set to something
@@ -213,9 +213,9 @@ representing the Master Model in a Master/Detail relationship, and every Seriali
 Detail Models must subclass their respective Master Serializer.
 
 Furthermore, every Serializer representing a Master Model should subclass a special Serializer
-created for Master/Detail models, {class}`pulpcore.app.serializers.base.ModelSerializer`. This
+created for Master/Detail models, `pulpcore.app.serializers.base.ModelSerializer`. This
 Serializer includes a definition for the `type` field present on all models inheriting from
-{class}`pulpcore.app.models.MasterModel`, and also identifies the `type` field as filterable,
+`pulpcore.app.models.MasterModel`, and also identifies the `type` field as filterable,
 centralizing common behavior that we're likely to want in all Serializers representing Models
 in a Master/Detail Relationship.
 
@@ -226,7 +226,7 @@ field must be used that is Master/Detail aware so that URLs identifying the Deta
 API representations are generated correctly.
 
 In this case, instead of using a normal `HyperlinkedRelatedField`,
-{class}`pulpcore.app.serializers.base.DetailRelatedField` should be used. This field knows how to
+`pulpcore.app.serializers.base.DetailRelatedField` should be used. This field knows how to
 correctly generate URLs to Detail types in the API by casting them down to their Detail Model
 type, but should be used with care due to the inherent cost in calling `cast()` on an arbitrary
 number of instances.
@@ -234,7 +234,7 @@ number of instances.
 ### Identifying Detail Serializers
 
 Similar to using `DetailRelatedField`, Detail Model Serializers should use
-{class}`pulpcore.app.serializers.base.DetailIdentityField` when declaring their `pulp_href` attribute,
+`pulpcore.app.serializers.base.DetailIdentityField` when declaring their `pulp_href` attribute,
 so that the URLs generated by Detail Serializers return the proper URL to the cast Detail
 object.
 
@@ -312,7 +312,7 @@ class RepositoryViewSet(viewsets.ModelViewSet):
 ```
 
 !!! note
-For `NamedModelViewSet` the base class `BaseFilterSet` should be used.
+    For `NamedModelViewSet` the base class `BaseFilterSet` should be used.
 
 
 #### Beyond Equality
@@ -361,9 +361,9 @@ class RepositoryFilter(filters.FilterSet):
 ```
 
 !!! note
-We should be careful when naming these filters. Using `repo__in` would be fine because
-repo is not defined on this model. However, using `name__in` does *not* work because Django
-gets to it first looking for a subfield `in` on the name.
+    We should be careful when naming these filters. Using `repo__in` would be fine because
+    repo is not defined on this model. However, using `name__in` does *not* work because Django
+    gets to it first looking for a subfield `in` on the name.
 
 
 ## Documenting

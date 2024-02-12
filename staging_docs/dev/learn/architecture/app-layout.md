@@ -60,14 +60,14 @@ pulpcore
 └── __init__.py
 ```
 
-The contents of this package are documented in detail in the {doc}`../platform-api/index`
+The contents of this package are documented in detail in the `../platform-api/index`
 documentation. Details how this package is organized can be found
 below, along with information about some of the modules found in this namespace.
 
 !!! tip
-This tree is incomplete, and maybe be out of date. Only the most notable and
-durable modules have been listed; the most complete listing of modules in this
-namespace will always be the {doc}`../platform-api/index` documentation.
+    This tree is incomplete, and maybe be out of date. Only the most notable and
+    durable modules have been listed; the most complete listing of modules in this
+    namespace will always be the `../platform-api/index` documentation.
 
 
 ## Module Imports
@@ -78,7 +78,7 @@ packages into subpackages. All public identifiers and objects defined
 in submodules are then collected into that module's `__init__.py`, from which
 they will be imported by other Pulp Platform modules.
 
-Using :mod:`pulpcore.app.models` as an example, this means that when breaking up the
+Using `pulpcore.app.models` as an example, this means that when breaking up the
 `models` package in `pulpcore.app`, the following things are true:
 
 - No models are defined in the `__init__.py` of `pulpcore.app.models`.
@@ -86,7 +86,7 @@ Using :mod:`pulpcore.app.models` as an example, this means that when breaking up
 - All models are defined in submodules located in the `pulpcore.app.models` module
   directory (where its `__init__.py` can be found).
 
-- The `` __init__.py` `` in `pulpcore.app.models` should consist only of import statements,
+- The ` __init__.py` in `pulpcore.app.models` should consist only of import statements,
   ordered to prevent any circular import issues that may result based on the imports
   that are done in any included submodules.
 
@@ -110,7 +110,7 @@ Using :mod:`pulpcore.app.models` as an example, this means that when breaking up
   - No: `from .submodule import *`
 
 Any module in `pulpcore.app` broken up in this way, such as
-{mod}`pulpcore.app.serializers` or {mod}`pulpcore.app.viewsets`, should do so in such a way
+`pulpcore.app.serializers` or `pulpcore.app.viewsets`, should do so in such a way
 that renders the implementation invisible to anyone importing from that module.
 
 ## pulpcore.app
@@ -121,10 +121,10 @@ viewsets required to assemble Pulp's REST API and underlying database.
 
 ### pulpcore.app.apps
 
-This module defines the {class}`~pulpcore.app.apps.PulpPluginAppConfig` base class
+This module defines the `pulpcore.app.apps.PulpPluginAppConfig` base class
 used by all Pulp plugins to identify themselves to the Pulp Platform as plugins.
 
-This module also includes the {class}`~pulpcore.app.apps.PulpAppConfig` class which
+This module also includes the `pulpcore.app.apps.PulpAppConfig` class which
 is the Pulp Platform application config.
 
 ### pulpcore.app.settings
@@ -139,24 +139,24 @@ Platform Django Project, using the `pulpcore.plugin` entry point.
 
 In order to use django-related tools with the Pulp Platform, the platform must be installed,
 and the `DJANGO_SETTINGS_MODULE` environment var must be set to
-{mod}`pulpcore.app.settings`.
+`pulpcore.app.settings`.
 
 ### pulpcore.app.urls
 
-This module contains the API {data}`~pulpcore.app.urls.root_router`, and is where all non-API
+This module contains the API `pulpcore.app.urls.root_router`, and is where all non-API
 views (should we ever write any) are mapped to URLs.
 
 ### pulpcore.app.models
 
-All models are contained in {mod}`pulpcore.app.models`.
+All models are contained in `pulpcore.app.models`.
 
 The Platform models are all importable directly from the `pulpcore.app.models`
-namespace. All Pulp models should subclass {mod}`pulpcore.app.models.Model`, or
+namespace. All Pulp models should subclass `pulpcore.app.models.Model`, or
 one of its subclasses.
 
 !!! note
-All models must exist in the pulpcore.app.models namespace in order to be
-recognized by Django and included in the Django ORM.
+    All models must exist in the pulpcore.app.models namespace in order to be
+    recognized by Django and included in the Django ORM.
 
 
 #### Master/Detail Models
@@ -166,14 +166,14 @@ Remotes and Publishers, implement a strategy we refer to as "Master/Detail".
 The Master/Detail strategy, as implemented in Pulp, allows us to define
 necessary relationships on a single master Model, while still allowing
 plugin developers to extend these Master classes with details pertinent
-to the plugin's requirements. Using the {class}`~pulpcore.app.models.Content`
-model as an example, {class}`~pulpcore.app.models.Repository` relates to the
+to the plugin's requirements. Using the `pulpcore.app.models.Content`
+model as an example, `pulpcore.app.models.Repository` relates to the
 Content model. This causes all content to relate to the repositories that
 contain them the same way while still allowing plugin writers to add any
 additional fields or behaviors to the model as-needed for their use cases.
 
 In the Pulp Platform, models requiring this sort of behavior should subclass
-{class}`pulpcore.app.models.MasterModel`.
+`pulpcore.app.models.MasterModel`.
 
 ## Serializers, ViewSets, and other Model-Related Classes
 
@@ -196,8 +196,8 @@ course be named in such a way as to make their purpose obvious an unambiguous.
 ### ViewSet Registration
 
 In order for ViewSets to be automatically registered with the Pulp Platform API router,
-they *must* subclass {class}`pulpcore.app.viewsets.base.NamedModelViewSet` and be imported into the
+they *must* subclass `pulpcore.app.viewsets.base.NamedModelViewSet` and be imported into the
 `pulpcore.app.viewsets` namespace.
 
 ViewSets not meeting this criteria must be manually registered with the API router in
-{mod}`pulpcore.app.urls` by using the router's `register` method during application setup.
+`pulpcore.app.urls` by using the router's `register` method during application setup.
