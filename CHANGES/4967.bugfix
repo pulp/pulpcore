@@ -1,2 +1,0 @@
-Fixed a warning that gets raised when cache is enabled: ``RuntimeWarning: coroutine
-'AsyncCache.delete' was never awaited``.
