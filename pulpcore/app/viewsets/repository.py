@@ -1,6 +1,7 @@
 from gettext import gettext as _
 
 from collections import defaultdict
+from django.conf import settings
 from django.db.models import Q, Max
 from django.urls.base import Resolver404, resolve
 from django_filters import Filter
@@ -177,6 +178,39 @@ class RepositoryViewSet(ImmutableRepositoryViewSet, AsyncUpdateMixin, LabelsMixi
     """
     A ViewSet for an ordinary repository.
     """
+
+    @extend_schema(
+        description="Trigger an asynchronous delete task",
+        responses={202: AsyncOperationResponseSerializer},
+    )
+    def destroy(self, request, pk, **kwargs):
+        """
+        Delete a model instance. We need to override this because of the unsuitability of the
+        standard implementation for large trees of objects. When a repository contains many
+        content, has many versions, (especially) is published many times (etc.), the cascading
+        delete of the object tree would otherwise cause out-of-memory errors as Django's
+        cascade implementation queries objects into memory.
+
+        See the implementation of the task for more details.
+
+        NOTE: this has implications for object delete hooks / signals, as they will not be run
+        when objects are deleted this way.
+        """
+        if not settings.ENABLE_FAST_CASCADE_DELETE:
+            return super().destroy(request, pk, **kwargs)
+
+        instance = self.get_object()
+        serializer = self.get_serializer(instance)
+        app_label = instance._meta.app_label
+
+        task = dispatch(
+            # tasks.base.generic_cascade_delete_task,
+            tasks.custom_repository_cascade_delete_task,
+            exclusive_resources=self.async_reserved_resources(instance),
+            args=(pk, app_label, serializer.__class__.__name__),
+            immediate=self.ALLOW_NON_BLOCKING_DELETE,
+        )
+        return OperationPostponedResponse(task, request)
 
 
 class RepositoryVersionContentFilter(Filter):

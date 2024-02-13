@@ -331,6 +331,12 @@ HIDE_GUARDED_DISTRIBUTIONS = False
 
 DOMAIN_ENABLED = False
 
+# Django's default implementation of cascade will load objects into memory prior to the deletion.
+# For some types of objects, especially repositories, this is quite a bad idea as it results in
+# many tens of thousands of objects being pulled into memory, some of which are quite large. The
+# alternative implementation enabled here falls back to SQL to avoid actively loading objects.
+ENABLE_FAST_CASCADE_DELETE = False
+
 SHELL_PLUS_IMPORTS = [
     "from pulpcore.app.util import get_domain, get_domain_pk, set_domain, get_url, extract_pk",
     "from pulpcore.tasking.tasks import dispatch, cancel_task, wakeup_worker",

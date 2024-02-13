@@ -236,3 +236,72 @@ def add_and_remove(repository_pk, add_content_units, remove_content_units, base_
     with repository.new_version(base_version=base_version) as new_version:
         new_version.remove_content(models.Content.objects.filter(pk__in=remove_content_units))
         new_version.add_content(models.Content.objects.filter(pk__in=add_content_units))
+
+
+def custom_repository_cascade_delete_task(instance_id, app_label, serializer_name):
+    """
+    Delete a model
+
+    The model instance is identified using the app_label, id, and serializer name.
+
+    Args:
+        id (str): the id of the model
+        app_label (str): the Django app label of the plugin that provides the model
+        serializer_name (str): name of the serializer class for the model
+    """
+    from pulpcore.app.apps import get_plugin_config
+
+    serializer_class = get_plugin_config(app_label).named_serializers[serializer_name]
+    instance = serializer_class.Meta.model.objects.get(pk=instance_id)
+    if isinstance(instance, models.MasterModel):
+        instance = instance.cast()
+    repository = instance._meta.model.objects.get(pk=instance_id)
+
+    # The purpose is to avoid the memory spike caused by the deletion of an object at the apex
+    # of a large tree of cascading deletes. As per the Django documentation [0], cascading deletes
+    # are handled by Django and require objects to be loaded into memory. If the tree of objects is
+    # sufficiently large, this can result in a fatal memory spike.
+    # [0] https://docs.djangoproject.com/en/4.2/ref/models/querysets/#delete
+    with transaction.atomic():
+        # because we're deleting all of the objects used by invalidate_cache() to determine how
+        # to invalidate the cache prior to deleting the repository, we have to call it manually
+        # rather than letting it be triggered as we delete the repository
+        repository.invalidate_cache()
+
+        # we have to independently delete the master and detail models while using _raw_delete()
+        detail_publication_model = models.Publication.get_model_for_pulp_type(
+            repository.get_pulp_type()
+        )
+
+        repo_versions = models.RepositoryVersion.objects.filter(repository=repository.pk)
+        repo_contents = models.RepositoryContent.objects.filter(repository=repository.pk)
+        repo_version_content_details = models.RepositoryVersionContentDetails.objects.filter(
+            repository_version__in=repo_versions.values_list("pk", flat=True)
+        )
+        publications = detail_publication_model.objects.filter(
+            repository_version__in=repo_versions.values_list("pk", flat=True)
+        )
+        detail_publications = models.Publication.objects.filter(
+            repository_version__in=repo_versions.values_list("pk", flat=True)
+        )
+        published_artifacts = models.PublishedArtifact.objects.filter(
+            publication__in=publications.values_list("pk", flat=True)
+        )
+        published_metadata = models.PublishedMetadata.objects.filter(
+            publication__in=publications.values_list("pk", flat=True)
+        )
+
+        models.Distribution.objects.filter(publication__in=publications).update(publication=None)
+        models.Distribution.objects.filter(repository_version__in=repo_versions).update(
+            repository_version=None
+        )
+
+        published_metadata._raw_delete(published_metadata.db)
+        published_artifacts._raw_delete(published_artifacts.db)
+        publications._raw_delete(publications.db)
+        detail_publications._raw_delete(detail_publications.db)
+        repo_contents._raw_delete(repo_contents.db)
+        repo_version_content_details._raw_delete(repo_version_content_details.db)
+        repo_versions._raw_delete(repo_versions.db)
+
+        repository.delete()

@@ -6,6 +6,7 @@ from .base import (
     general_delete,
     general_multi_delete,
     general_update,
+    generic_cascade_delete_task,
 )
 
 from .export import fs_publication_export, fs_repo_version_export
@@ -20,6 +21,6 @@ from .reclaim_space import reclaim_space
 
 from .replica import replicate_distributions
 
-from .repository import repair_all_artifacts
+from .repository import repair_all_artifacts, custom_repository_cascade_delete_task
 
 from .analytics import post_analytics
