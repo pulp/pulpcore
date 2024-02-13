@@ -149,7 +149,7 @@ def cascade_delete(from_model, instance_pk_query, skip_relations=None, base_mode
         del_query = instance_pk_query
         # make sure we send signals for the top-level deletion
         # important for repositories as we have to invalidate caches
-        rec_count = base_model.objects.filter(pk__in=instance_pk_query).delete()
+        rec_count = base_model.objects.filter(pk__in=del_query).delete()
         LOG.info(f"Deleted {rec_count}")
     else:
         filterspec = {f"{from_model._meta.pk.name}__in": models.Subquery(instance_pk_query)}

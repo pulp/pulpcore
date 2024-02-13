@@ -191,7 +191,7 @@ class RepositoryViewSet(ImmutableRepositoryViewSet, AsyncUpdateMixin, LabelsMixi
         app_label = instance._meta.app_label
 
         task = dispatch(
-            tasks.repository.custom_cascade_delete_task,
+            tasks.repository.generic_cascade_delete_task,
             exclusive_resources=self.async_reserved_resources(instance),
             args=(pk, app_label, serializer.__class__.__name__),
             immediate=self.ALLOW_NON_BLOCKING_DELETE,
