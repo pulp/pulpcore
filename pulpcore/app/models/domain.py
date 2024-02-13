@@ -1,4 +1,4 @@
-from django.core.files.storage import get_storage_class, default_storage
+from django.core.files.storage import get_storage_class
 from django.db import models
 from django_lifecycle import hook, BEFORE_DELETE, BEFORE_UPDATE
 
@@ -40,8 +40,6 @@ class Domain(BaseModel, AutoAddObjPermsMixin):
 
     def get_storage(self):
         """Returns this domain's instantiated storage class."""
-        if self.name == "default":
-            return default_storage
         storage_class = get_storage_class(self.storage_class)
         return storage_class(**self.storage_settings)
 

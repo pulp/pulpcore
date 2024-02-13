@@ -51,7 +51,7 @@ from .content import (
     SigningServiceSerializer,
     SingleArtifactContentSerializer,
 )
-from .domain import DomainSerializer
+from .domain import DomainSerializer, DomainBackendMigratorSerializer
 from .exporter import (
     ExporterSerializer,
     ExportSerializer,

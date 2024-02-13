@@ -1261,12 +1261,10 @@ def wget_recursive_download_on_host():
 
 
 @pytest.fixture()
-def domain_factory(domains_api_client, pulp_settings, gen_object_with_cleanup):
-    def _domain_factory():
-        if not pulp_settings.DOMAIN_ENABLED:
-            pytest.skip("Domains not enabled")
+def backend_settings_factory(pulp_settings):
+    def _settings_factory(storage_class=None, storage_settings=None):
         keys = dict()
-        keys["pulpcore.app.models.storage.FileSystem"] = ["MEDIA_ROOT"]
+        keys["pulpcore.app.models.storage.FileSystem"] = ["MEDIA_ROOT", "MEDIA_URL"]
         keys["storages.backends.s3boto3.S3Boto3Storage"] = [
             "AWS_ACCESS_KEY_ID",
             "AWS_SECRET_ACCESS_KEY",
@@ -1285,14 +1283,30 @@ def domain_factory(domains_api_client, pulp_settings, gen_object_with_cleanup):
             "AZURE_LOCATION",
             "AZURE_CONNECTION_STRING",
         ]
-        settings = dict()
-        for key in keys[pulp_settings.DEFAULT_FILE_STORAGE]:
-            settings[key] = getattr(pulp_settings, key, None)
-        body = {
-            "name": str(uuid.uuid4()),
-            "storage_class": pulp_settings.DEFAULT_FILE_STORAGE,
-            "storage_settings": settings,
-        }
-        return gen_object_with_cleanup(domains_api_client, body)
+        settings = storage_settings or dict()
+        backend = storage_class or pulp_settings.DEFAULT_FILE_STORAGE
+        for key in keys[backend]:
+            if key not in settings:
+                settings[key] = getattr(pulp_settings, key, None)
+        return backend, settings
+
+    return _settings_factory
+
+
+@pytest.fixture()
+def domain_factory(
+    domains_api_client, pulp_domain_enabled, backend_settings_factory, gen_object_with_cleanup
+):
+    def _domain_factory(**kwargs):
+        if not pulp_domain_enabled:
+            pytest.skip("Domains not enabled")
+
+        storage_class, storage_settings = backend_settings_factory(
+            storage_class=kwargs.pop("storage_class", None),
+            storage_settings=kwargs.pop("storage_settings", None),
+        )
+        kwargs.setdefault("name", str(uuid.uuid4()))
+        kwargs.update({"storage_class": storage_class, "storage_settings": storage_settings})
+        return gen_object_with_cleanup(domains_api_client, kwargs)
 
     return _domain_factory
