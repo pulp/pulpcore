@@ -13,6 +13,54 @@ Changelog
 
 .. towncrier release notes start
 
+3.46.0 (2024-02-13)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Taught downloader to trust system-cert-store on HTTPS proxy connections.
+  :github:`3036`
+- Fixed a warning that gets raised when cache is enabled: ``RuntimeWarning: coroutine
+  'AsyncCache.delete' was never awaited``.
+  :github:`4967`
+- Added a serializer validation for domain names with more than 50 characters.
+  :github:`4976`
+
+
+Misc
+~~~~
+
+- :github:`4589`
+
+
+Plugin API
+----------
+
+Features
+~~~~~~~~
+
+- Exposed ``TimeoutException`` to plugin writers.
+  :github:`5024`
+
+
+Pulp File
+---------
+
+No significant changes.
+
+
+Pulp Cert Guard
+---------------
+
+No significant changes.
+
+
+----
+
+
 3.45.1 (2024-01-30)
 ===================
 REST API

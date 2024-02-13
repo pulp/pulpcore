@@ -1,1 +1,0 @@
-Added a serializer validation for domain names with more than 50 characters.
