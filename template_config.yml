@@ -9,7 +9,7 @@ check_commit_message: true
 check_gettext: true
 check_manifest: true
 check_stray_pulpcore_imports: false
-ci_base_image: ghcr.io/pulp/pulp-ci-centos
+ci_base_image: ghcr.io/pulp/pulp-ci-centos9
 ci_env: {}
 ci_trigger: '{pull_request: {branches: [''*'']}}'
 ci_update_docs: true
