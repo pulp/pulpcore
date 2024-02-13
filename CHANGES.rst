@@ -13,6 +13,38 @@ Changelog
 
 .. towncrier release notes start
 
+3.45.2 (2024-02-13)
+===================
+REST API
+--------
+
+Misc
+~~~~
+
+- :github:`4589`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
+Pulp File
+---------
+
+No significant changes.
+
+
+Pulp Cert Guard
+---------------
+
+No significant changes.
+
+
+----
+
+
 3.45.1 (2024-01-30)
 ===================
 REST API
