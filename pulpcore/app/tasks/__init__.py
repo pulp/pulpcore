@@ -6,6 +6,7 @@ from .base import (
     general_delete,
     general_multi_delete,
     general_update,
+    generic_cascade_delete_task,
 )
 
 from .export import fs_publication_export, fs_repo_version_export

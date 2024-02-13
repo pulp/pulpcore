@@ -105,29 +105,38 @@ def cascade_delete(from_model, instance_pk_query, skip_relations=None, base_mode
     if skip_relations is None:
         skip_relations = []
     instance_pk_query = instance_pk_query.values_list("pk").order_by()
-    LOG.info(
+    LOG.debug(
         f"Level {level} Delete Cascade for {base_model.__name__}: "
-        "Checking relations for {from_model.__name__}"
+        f"Checking relations for {from_model.__name__}"
     )
     for model_relation in from_model._meta.related_objects:
         related_model = model_relation.related_model
+
+        LOG.debug(f"Relation from {related_model} to {base_model}: on_delete={model_relation.on_delete}")
         if related_model in skip_relations:
-            LOG.info(f"SKIPPING RELATION {related_model.__name__} from caller directive")
+            LOG.debug(f"SKIPPING RELATION {related_model.__name__} from caller directive")
             continue
 
-        if not model_relation.on_delete:
+        if model_relation.on_delete is None:
+            # This appears to be the case when the field is pointing to a many-to-many table
+            # and also the back-relationship to the parent on multi-table objects
             pass
+        elif model_relation.on_delete.__name__ == "DO_NOTHING":
+            pass
+        elif model_relation.on_delete.__name__  in {"PROTECT", "SET_DEFAULT", "SET", "RESTRICT"}:
+            # At the present moment, these are not needed in the object trees with which we are concerned
+            raise models.ProtectedError("Cannot execute cascade delete - unsupported relationship encountered")
         elif model_relation.on_delete.__name__ == "SET_NULL":
             filterspec = {
                 f"{model_relation.remote_field.column}__in": models.Subquery(instance_pk_query)
             }
             updatespec = {f"{model_relation.remote_field.column}": None}
-            LOG.info(
+            LOG.debug(
                 f"    Executing SET NULL constraint action on {related_model.__name__}"
                 f" relation of {from_model.__name__}"
             )
             rec_count = execute_update_sql(related_model.objects.filter(**filterspec), **updatespec)
-            LOG.info(f"    Updated {rec_count} records in {related_model.__name__}")
+            LOG.debug(f"    Updated {rec_count} records in {related_model.__name__}")
         elif model_relation.on_delete.__name__ == "CASCADE":
             filterspec = {
                 f"{model_relation.remote_field.column}__in": models.Subquery(instance_pk_query)
@@ -135,7 +144,7 @@ def cascade_delete(from_model, instance_pk_query, skip_relations=None, base_mode
             related_pk_values = related_model.objects.filter(**filterspec).values_list(
                 related_model._meta.pk.name
             )
-            LOG.info(f"    Cascading delete to relations of {related_model.__name__}")
+            LOG.debug(f"    Cascading delete to relations of {related_model.__name__}")
             cascade_delete(
                 related_model,
                 related_pk_values,
@@ -144,15 +153,15 @@ def cascade_delete(from_model, instance_pk_query, skip_relations=None, base_mode
                 skip_relations=skip_relations,
             )
 
-    LOG.info(f"Level {level}: delete records from {from_model.__name__}")
+    LOG.debug(f"Level {level}: delete records from {from_model.__name__}")
     if level == 0:
         del_query = instance_pk_query
         # make sure we send signals for the top-level deletion
         # important for repositories as we have to invalidate caches
-        rec_count = base_model.objects.filter(pk__in=instance_pk_query).delete()
-        LOG.info(f"Deleted {rec_count}")
+        rec_count = base_model.objects.filter(pk__in=del_query).delete()
+        LOG.debug(f"Deleted {rec_count}")
     else:
         filterspec = {f"{from_model._meta.pk.name}__in": models.Subquery(instance_pk_query)}
         del_query = from_model.objects.filter(**filterspec)
         rec_count = execute_delete_sql(del_query)
-        LOG.info(f"Deleted {rec_count} records from {from_model.__name__}")
+        LOG.debug(f"Deleted {rec_count} records from {from_model.__name__}")
