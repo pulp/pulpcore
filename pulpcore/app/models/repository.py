@@ -370,6 +370,46 @@ class Repository(MasterModel):
                 )
                 version.delete()
 
+    def delete(self, **kwargs):
+        """
+        Delete the repository.
+
+        Args:
+            **kwargs (dict): Delete options.
+        """
+        from .publication import Publication, PublishedArtifact  # circular import avoidance
+
+        # The purpose is to avoid the memory spike caused by the deletion of an object at
+        # the apex of a large tree of cascading deletes. As per the Django documentation [0],
+        # cascading deletes are handled by Django and require objects to be loaded into
+        # memory. If the tree of objects is sufficiently large, this can result in a fatal
+        # memory spike.
+        #
+        # Therefore, we manually delete the objects which we know we have many thousands of
+        # first, to make the cascade delete managable.
+        #
+        # [0] https://docs.djangoproject.com/en/4.2/ref/models/querysets/#delete
+        with transaction.atomic():
+            repo_versions = RepositoryVersion.objects.filter(repository=self)
+            repo_contents = RepositoryContent.objects.filter(repository=self)
+            publications = Publication.objects.filter(
+                repository_version__in=repo_versions.values_list("pk", flat=True)
+            )
+            published_artifacts = PublishedArtifact.objects.filter(
+                publication__in=publications.values_list("pk", flat=True)
+            )
+
+            # PublishedArtifact and RepositoryContent are the two most numerous object types
+            # PublishedMetadata would be trickier to delete because it's a Content subclass
+            # that is ignored by orphan cleanup, so to delete those in this way would require
+            # manual intervention
+            published_artifacts._raw_delete(published_artifacts.db)
+            repo_contents._raw_delete(repo_contents.db)
+
+            # Anything not deleted manually above will be caught up in Django cascade. Deleting
+            # those ojects manually should keep this operation from being too brutal.
+            return super().delete(**kwargs)
+
     @hook(BEFORE_DELETE)
     def invalidate_cache(self, everything=False):
         """Invalidates the cache if repository is present."""
@@ -1113,7 +1153,7 @@ class RepositoryVersion(BaseModel):
         the successor. If version is incomplete, delete and and clean up RepositoryContent,
         CreatedResource, and Repository objects.
 
-        Deletion of a complete RepositoryVersion should be done in a RQ Job.
+        Deletion of a complete RepositoryVersion should be done in a task.
         """
         if self.complete:
             if self.repository.versions.complete().count() <= 1:

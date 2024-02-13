@@ -111,7 +111,39 @@ def test_crud_repo_full_workflow(
     monitor_task(response.task)
 
     read_repo = file_bindings.RepositoriesFileApi.read(repo.pulp_href)
-    assert read_repo.latest_version_href == f"{repo.pulp_href}versions/1/"
+    repo_version = f"{repo.pulp_href}versions/1/"
+    assert read_repo.latest_version_href == repo_version
+
+    # create a publication and test that it (and repo versions) are deleted when the repo is
+    # also distributions should be reset
+    response = file_bindings.PublicationsFileApi.create({"repository": read_repo.pulp_href})
+    publication = monitor_task(response.task).created_resources[0]
+
+    response = file_bindings.DistributionsFileApi.create(
+        {
+            "name": str(uuid4()),
+            "repository": read_repo.pulp_href,
+            "base_path": "distribution_w_repository",
+        }
+    )
+    distribution_w_repo = monitor_task(response.task).created_resources[0]
+    assert (
+        file_bindings.DistributionsFileApi.read(distribution_w_repo).repository
+        == read_repo.pulp_href
+    )
+
+    response = file_bindings.DistributionsFileApi.create(
+        {
+            "name": str(uuid4()),
+            "publication": publication,
+            "base_path": "distribution_w_publication",
+        }
+    )
+    distribution_w_publication = monitor_task(response.task).created_resources[0]
+    assert (
+        file_bindings.DistributionsFileApi.read(distribution_w_publication).publication
+        == publication
+    )
 
     # Delete a repository.
     response = file_bindings.RepositoriesFileApi.delete(repo.pulp_href)
@@ -119,7 +151,13 @@ def test_crud_repo_full_workflow(
 
     # verify the delete
     with pytest.raises(ApiException):
-        file_bindings.RepositoriesFileApi.read(repo.pulp_href)
+        file_bindings.RepositoriesFileApi.read(read_repo.pulp_href)
+
+    with pytest.raises(ApiException):
+        file_bindings.PublicationsFileApi.read(publication)
+
+    assert file_bindings.DistributionsFileApi.read(distribution_w_repo).repository is None
+    assert file_bindings.DistributionsFileApi.read(distribution_w_publication).publication is None
 
     # Attempt to create repository passing extraneous invalid parameter.
     # Assert response returns an error 400 including ["Unexpected field"].
