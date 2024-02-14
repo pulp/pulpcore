@@ -545,7 +545,7 @@ def received_otel_span():
     so, please, run the server as follows: python3 pulpcore/tests/functional/assets/otel_server.py
     """
 
-    def _received_otel_span(data):
+    def _received_otel_span(data, retries=3):
         if os.environ.get("PULP_OTEL_ENABLED") != "true":
             # pretend everything is working as expected if tests are run from
             # a non-configured runner
@@ -557,8 +557,13 @@ def received_otel_span():
                 async with session.post(f"{otel_server_url}/test", json=data) as response:
                     return response.status
 
-        status = asyncio.run(_send_request())
-        return True if status == 200 else False
+        while retries:
+            status = asyncio.run(_send_request())
+            if status == 200:
+                return True
+            sleep(2)
+            retries -= 1
+        return False
 
     return _received_otel_span
 
