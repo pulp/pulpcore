@@ -254,6 +254,9 @@ TMPFILE_PROTECTION_TIME = 0
 
 REMOTE_USER_ENVIRON_NAME = "REMOTE_USER"
 
+AUTHENTICATION_JSON_HEADER = ""
+AUTHENTICATION_JSON_HEADER_JQ_FILTER = ""
+
 ALLOWED_IMPORT_PATHS = []
 
 ALLOWED_EXPORT_PATHS = []
@@ -379,6 +382,30 @@ api_root_validator = Validator(
     },
 )
 
+json_header_auth_class_restframework_validator = Validator(
+    "REST_FRAMEWORK__DEFAULT_AUTHENTICATION_CLASSES",
+    cont="pulpcore.app.authentication.JSONHeaderRemoteAuthentication",
+)
+
+authentication_json_header_validator = Validator(
+    "AUTHENTICATION_JSON_HEADER",
+    startswith="HTTP_",
+    must_exist=True,
+    when=json_header_auth_class_restframework_validator,
+    messages={"startswith": 'The AUTHENTICATION_JSON_HEADER must start with "HTTP_"'},
+)
+
+authentication_json_header_jq_filter_validator = Validator(
+    "AUTHENTICATION_JSON_HEADER_JQ_FILTER",
+    startswith=".",
+    must_exist=True,
+    when=json_header_auth_class_restframework_validator,
+    messages={"startswith": 'The AUTHENTICATION_JSON_HEADER_JQ_FILTER must start with "."'},
+)
+
+json_header_auth_validator = (
+    authentication_json_header_validator & authentication_json_header_jq_filter_validator
+)
 
 settings = DjangoDynaconf(
     __name__,
@@ -396,6 +423,7 @@ settings = DjangoDynaconf(
         sha256_validator,
         storage_validator,
         unknown_algs_validator,
+        json_header_auth_validator,
     ],
 )
 # HERE ENDS DYNACONF EXTENSION LOAD (No more code below this line)
