@@ -10,4 +10,5 @@ Authentication
    basic
    webserver
    keycloak
+   json_header
    other

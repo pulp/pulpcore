@@ -52,3 +52,14 @@ def test_api_root(settings):
     settings.set("API_ROOT", "hi/there/")
     with pytest.raises(ValidationError):
         settings.validators.validate()
+
+
+def test_json_header_authentication(settings):
+    settings.set("AUTHENTICATION_BACKENDS", "django.contrib.auth.backends.RemoteUserBackend")
+    settings.set(
+        "REST_FRAMEWORK__DEFAULT_AUTHENTICATION_CLASSES",
+        "pulpcore.app.authentication.JSONHeaderRemoteAuthentication",
+    )
+    settings.set("AUTHENTICATION_JSON_HEADER", "SOMETHING")
+    with pytest.raises(ValidationError):
+        settings.validators.validate()
