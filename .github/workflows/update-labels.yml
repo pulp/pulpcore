@@ -21,7 +21,7 @@ jobs:
     steps:
       - uses: "actions/setup-python@v4"
         with:
-          python-version: "3.8"
+          python-version: "3.11"
       - name: "Configure Git with pulpbot name and email"
         run: |
           git config --global user.name 'pulpbot'
