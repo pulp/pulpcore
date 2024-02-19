@@ -48,19 +48,30 @@ the content app behavior for your domain through the fields `redirect_to_object_
 `hide_guarded_distributions`. See `settings` for more details on these settings.
 
 ```bash
-pulp domains create \
+pulp domain create \
   --name <domain_name> \
   --storage-class <storage_class> \
   --storage-settings <storage_settings>
-
-Specific example:
-
-pulp domains create \
-  --name foo \
-  --description foo \
-  --storage-class pulpcore.app.models.storage.FileSystem \
-  --storage-settings "{\"MEDIA_ROOT\": \"/var/lib/pulp/media/\"}"
 ```
+
+Specific examples for different storage backends:
+
+=== "FileSystem"
+    ```bash
+    pulp domain create \
+      --name foo \
+      --description foo \
+      --storage-class pulpcore.app.models.storage.FileSystem \
+      --storage-settings "{\"MEDIA_ROOT\": \"/var/lib/pulp/media/\"}"
+    ```
+
+=== "S3"
+    ```bash
+    pulp domain create \
+      --name mydomain \
+      --storage-class storages.backends.s3boto3.S3Boto3Storage \
+      --storage-settings "{\"access_key\": \"AcVDppUlVkA6\", \"secret_key\": \"SFviCmMfRT6N\", \"bucket_name\": \"my-unique-bucket-name\", \"region_name\": \"us-east-1\", \"default_acl\": \"private\"}"
+    ```
 
 !!! note
     `default`, `content`, and `api` are reserved names that can not be used during creation
