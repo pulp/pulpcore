@@ -5,6 +5,13 @@ from types import SimpleNamespace
 
 VAR_TMP_PULP = Path("/var/tmp/pulp")
 
+# Special purpose advisory locks for use with the two number variant.
+# The group will be 0.
+# The numbers are randomly chosen.
+# !!! Never change these values !!!
+TASK_DISPATCH_LOCK = 21
+TASK_SCHEDULING_LOCK = 42
+
 
 #: All valid task states.
 TASK_STATES = SimpleNamespace(

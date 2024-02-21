@@ -5,15 +5,21 @@ import importlib
 import logging
 import sys
 import traceback
+from datetime import timedelta
 from gettext import gettext as _
 
 from django.db import connection, transaction
-from django.db.models import Model
+from django.db.models import Model, Max
 from django_guid import get_guid
 from pulpcore.app.apps import MODULE_PLUGIN_VERSIONS
 from pulpcore.app.models import Task
 from pulpcore.app.util import current_task, get_domain, get_url
-from pulpcore.constants import TASK_FINAL_STATES, TASK_INCOMPLETE_STATES, TASK_STATES
+from pulpcore.constants import (
+    TASK_FINAL_STATES,
+    TASK_INCOMPLETE_STATES,
+    TASK_STATES,
+    TASK_DISPATCH_LOCK,
+)
 
 _logger = logging.getLogger(__name__)
 
@@ -148,6 +154,13 @@ def dispatch(
     notify_workers = False
     with contextlib.ExitStack() as stack:
         with transaction.atomic():
+            # Task creation need to be serialized so that pulp_created will provide a stable order
+            # at every time. We specifically need to ensure that each task, when commited to the
+            # task table will be the newest with respect to `pulp_created`.
+            with connection.cursor() as cursor:
+                # Wait for exclusive access and release automatically after transaction.
+                cursor.execute("SELECT pg_advisory_xact_lock(%s, %s)", [0, TASK_DISPATCH_LOCK])
+            newest_created = Task.objects.aggregate(Max("pulp_created"))["pulp_created__max"]
             task = Task.objects.create(
                 state=TASK_STATES.WAITING,
                 logging_cid=(get_guid()),
@@ -159,6 +172,15 @@ def dispatch(
                 reserved_resources_record=resources,
                 versions=versions,
             )
+            if newest_created and task.pulp_created <= newest_created:
+                # Let this workaround not row forever into the future.
+                if newest_created - task.pulp_created > timedelta(seconds=1):
+                    # Do not commit the transaction if this condition is not met.
+                    # If we ever hit this, think about delegating the timestamping to PostgresQL.
+                    raise RuntimeError("Clockscrew detected. Task dispatching would be dangerous.")
+                # Try to work around the smaller glitch
+                task.pulp_created = newest_created + timedelta(milliseconds=1)
+                task.save()
             if immediate:
                 # Grab the advisory lock before the task hits the db.
                 stack.enter_context(task)
