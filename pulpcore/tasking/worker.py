@@ -16,7 +16,7 @@ from django.conf import settings
 from django.db import connection
 from django.utils import timezone
 
-from pulpcore.constants import TASK_STATES, TASK_INCOMPLETE_STATES
+from pulpcore.constants import TASK_STATES, TASK_INCOMPLETE_STATES, TASK_SCHEDULING_LOCK
 from pulpcore.exceptions import AdvisoryLockError
 from pulpcore.app.apps import pulp_plugin_configs
 from pulpcore.app.models import Worker, Task, ApiAppStatus, ContentAppStatus
@@ -40,8 +40,6 @@ TASK_GRACE_INTERVAL = 3
 TASK_KILL_INTERVAL = 1
 # Number of heartbeats between cleaning up worker processes (approx)
 WORKER_CLEANUP_INTERVAL = 100
-# Randomly chosen
-TASK_SCHEDULING_LOCK = 42
 
 
 class PulpcoreWorker:
