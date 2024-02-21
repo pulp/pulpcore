@@ -11,6 +11,7 @@ VAR_TMP_PULP = Path("/var/tmp/pulp")
 # !!! Never change these values !!!
 TASK_DISPATCH_LOCK = 21
 TASK_SCHEDULING_LOCK = 42
+TASK_UNBLOCKING_LOCK = 84
 
 
 #: All valid task states.

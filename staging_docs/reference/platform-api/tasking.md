@@ -4,12 +4,6 @@
 .. automodule:: pulpcore.tasking
 ```
 
-## pulp.tasking.constants
-
-```{eval-rst}
-.. automodule:: pulpcore.tasking.constants
-```
-
 ## pulp.tasking.worker
 
 ```{eval-rst}

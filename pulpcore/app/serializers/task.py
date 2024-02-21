@@ -38,11 +38,14 @@ class TaskSerializer(ModelSerializer):
         help_text=_("The logging correlation id associated with this task")
     )
     created_by = serializers.SerializerMethodField(help_text=_("User who dispatched this task."))
+    unblocked_at = serializers.DateTimeField(
+        help_text=_("Timestamp of when this task was identified ready for pickup."), read_only=True
+    )
     started_at = serializers.DateTimeField(
-        help_text=_("Timestamp of the when this task started execution."), read_only=True
+        help_text=_("Timestamp of when this task started execution."), read_only=True
     )
     finished_at = serializers.DateTimeField(
-        help_text=_("Timestamp of the when this task stopped execution."), read_only=True
+        help_text=_("Timestamp of when this task stopped execution."), read_only=True
     )
     error = serializers.DictField(
         child=serializers.JSONField(),
@@ -104,6 +107,7 @@ class TaskSerializer(ModelSerializer):
             "name",
             "logging_cid",
             "created_by",
+            "unblocked_at",
             "started_at",
             "finished_at",
             "error",
@@ -123,6 +127,7 @@ class MinimalTaskSerializer(TaskSerializer):
         fields = ModelSerializer.Meta.fields + (
             "name",
             "state",
+            "unblocked_at",
             "started_at",
             "finished_at",
             "worker",
