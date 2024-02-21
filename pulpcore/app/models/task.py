@@ -1,6 +1,7 @@
 """
 Django models related to the Tasking system
 """
+
 import logging
 import traceback
 from contextlib import suppress
@@ -78,6 +79,7 @@ class Task(BaseModel, AutoAddObjPermsMixin):
     name = models.TextField()
     logging_cid = models.TextField(db_index=True)
 
+    unblocked_at = models.DateTimeField(null=True)
     started_at = models.DateTimeField(null=True)
     finished_at = models.DateTimeField(null=True)
 
@@ -254,6 +256,12 @@ class Task(BaseModel, AutoAddObjPermsMixin):
             del self.finished_at
         with suppress(AttributeError):
             del self.error
+
+    def unblock(self):
+        # This should be safe to be called without holding the lock.
+        Task.objects.filter(pk=self.pk).update(unblocked_at=timezone.now())
+        with suppress(AttributeError):
+            del self.unblocked_at
 
     # Example taken from here:
     # https://docs.djangoproject.com/en/3.2/ref/models/instances/#refreshing-objects-from-database

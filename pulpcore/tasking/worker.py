@@ -16,7 +16,12 @@ from django.conf import settings
 from django.db import connection
 from django.utils import timezone
 
-from pulpcore.constants import TASK_STATES, TASK_INCOMPLETE_STATES, TASK_SCHEDULING_LOCK
+from pulpcore.constants import (
+    TASK_STATES,
+    TASK_INCOMPLETE_STATES,
+    TASK_SCHEDULING_LOCK,
+    TASK_UNBLOCKING_LOCK,
+)
 from pulpcore.exceptions import AdvisoryLockError
 from pulpcore.app.apps import pulp_plugin_configs
 from pulpcore.app.models import Worker, Task, ApiAppStatus, ContentAppStatus
@@ -29,7 +34,6 @@ from pulpcore.tasking._util import (
     startup_hook,
     PGAdvisoryLock,
 )
-
 
 _logger = logging.getLogger(__name__)
 random.seed()
@@ -195,27 +199,61 @@ class PulpcoreWorker:
             return False
         return True
 
+    def identify_unblocked_tasks(self):
+        """Iterate over waiting tasks and mark them unblocked accordingly."""
+
+        changed = False
+        taken_exclusive_resources = set()
+        taken_shared_resources = set()
+        # When batching this query, be sure to use "pulp_created" as a cursor
+        for task in Task.objects.filter(state__in=TASK_INCOMPLETE_STATES).order_by("pulp_created"):
+            reserved_resources_record = task.reserved_resources_record or []
+            exclusive_resources = [
+                resource
+                for resource in reserved_resources_record
+                if not resource.startswith("shared:")
+            ]
+            shared_resources = [
+                resource[7:]
+                for resource in reserved_resources_record
+                if resource.startswith("shared:") and resource[7:] not in exclusive_resources
+            ]
+            if task.state == TASK_STATES.CANCELING:
+                if task.unblocked_at is None:
+                    _logger.debug("Marking canceling task %s unblocked.", task.pk)
+                    task.unblock()
+                    changed = True
+                # Don't consider this tasks reosurces as held.
+                continue
+
+            elif (
+                task.state == TASK_STATES.WAITING
+                and task.unblocked_at is None
+                # No exclusive resource taken?
+                and not any(
+                    resource in taken_exclusive_resources or resource in taken_shared_resources
+                    for resource in exclusive_resources
+                )
+                # No shared resource exclusively taken?
+                and not any(resource in taken_exclusive_resources for resource in shared_resources)
+            ):
+                _logger.debug("Marking waiting task %s unblocked.", task.pk)
+                task.unblock()
+                changed = True
+
+            # Record the resources of the pending task
+            taken_exclusive_resources.update(exclusive_resources)
+            taken_shared_resources.update(shared_resources)
+        return changed
+
     def iter_tasks(self):
         """Iterate over ready tasks and yield each task while holding the lock."""
 
         while not self.shutdown_requested:
-            taken_exclusive_resources = set()
-            taken_shared_resources = set()
             # When batching this query, be sure to use "pulp_created" as a cursor
-            for task in Task.objects.filter(state__in=TASK_INCOMPLETE_STATES).order_by(
-                "pulp_created"
-            ):
-                reserved_resources_record = task.reserved_resources_record or []
-                exclusive_resources = [
-                    resource
-                    for resource in reserved_resources_record
-                    if not resource.startswith("shared:")
-                ]
-                shared_resources = [
-                    resource[7:]
-                    for resource in reserved_resources_record
-                    if resource.startswith("shared:") and resource[7:] not in exclusive_resources
-                ]
+            for task in Task.objects.filter(
+                state__in=TASK_INCOMPLETE_STATES, unblocked_at__isnull=False
+            ).order_by("pulp_created"):
                 with contextlib.suppress(AdvisoryLockError), task:
                     # This code will only be called if we acquired the lock successfully
                     # The lock will be automatically be released at the end of the block
@@ -240,27 +278,13 @@ class PulpcoreWorker:
                     # This statement is using lazy evaluation
                     if (
                         task.state == TASK_STATES.WAITING
+                        and task.unblocked_at is not None
                         and self.is_compatible(task)
-                        # No exclusive resource taken?
-                        and not any(
-                            resource in taken_exclusive_resources
-                            or resource in taken_shared_resources
-                            for resource in exclusive_resources
-                        )
-                        # No shared resource exclusively taken?
-                        and not any(
-                            resource in taken_exclusive_resources for resource in shared_resources
-                        )
                     ):
                         yield task
                         # Start from the top of the Task list
                         break
-
-                # Record the resources of the pending task we didn't get
-                taken_exclusive_resources.update(exclusive_resources)
-                taken_shared_resources.update(shared_resources)
             else:
-                # If we got here, there is nothing to do
                 break
 
     def sleep(self):
@@ -314,6 +338,12 @@ class PulpcoreWorker:
                         _logger.info(_("Received signal to cancel current task %s."), task.pk)
                         cancel_state = TASK_STATES.CANCELED
                         self.cancel_task = False
+                    if self.wakeup:
+                        with contextlib.suppress(AdvisoryLockError), PGAdvisoryLock(
+                            TASK_UNBLOCKING_LOCK
+                        ):
+                            self.identify_unblocked_tasks()
+                        self.wakeup = False
                 if task_process.sentinel in r:
                     if not task_process.is_alive():
                         break
@@ -350,6 +380,18 @@ class PulpcoreWorker:
             self.notify_workers()
         self.task = None
 
+    def handle_available_tasks(self):
+        keep_looping = True
+        while keep_looping and not self.shutdown_requested:
+            try:
+                with PGAdvisoryLock(TASK_UNBLOCKING_LOCK):
+                    keep_looping = self.identify_unblocked_tasks()
+            except AdvisoryLockError:
+                keep_looping = True
+            for task in self.iter_tasks():
+                keep_looping = True
+                self.supervise_task(task)
+
     def run(self, burst=False):
         with WorkerDirectory(self.name):
             signal.signal(signal.SIGINT, self._signal_handler)
@@ -359,15 +401,16 @@ class PulpcoreWorker:
             connection.connection.add_notify_handler(self._pg_notify_handler)
             self.cursor.execute("LISTEN pulp_worker_cancel")
             if burst:
-                for task in self.iter_tasks():
-                    self.supervise_task(task)
+                self.handle_available_tasks()
             else:
                 self.cursor.execute("LISTEN pulp_worker_wakeup")
                 while not self.shutdown_requested:
-                    for task in self.iter_tasks():
-                        self.supervise_task(task)
-                    if not self.shutdown_requested:
-                        self.sleep()
+                    if self.shutdown_requested:
+                        break
+                    self.handle_available_tasks()
+                    if self.shutdown_requested:
+                        break
+                    self.sleep()
                 self.cursor.execute("UNLISTEN pulp_worker_wakeup")
             self.cursor.execute("UNLISTEN pulp_worker_cancel")
             self.shutdown()

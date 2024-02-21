@@ -4,11 +4,6 @@ pulp.tasking
 
 .. automodule:: pulpcore.tasking
 
-pulp.tasking.constants
-----------------------
-
-.. automodule:: pulpcore.tasking.constants
-
 pulp.tasking.worker
 -------------------
 

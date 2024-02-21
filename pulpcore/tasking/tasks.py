@@ -203,6 +203,7 @@ def dispatch(
                     reserved_resources_record__overlap=colliding_resources
                 ).exists()
             ):
+                task.unblock()
                 execute_task(task)
                 if resources:
                     notify_workers = True
