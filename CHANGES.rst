@@ -13,6 +13,41 @@ Changelog
 
 .. towncrier release notes start
 
+3.47.0 (2024-02-22)
+===================
+REST API
+--------
+
+Features
+~~~~~~~~
+
+- Started emitting metrics that report disk usage within a domain. The metrics are sent to the
+  collector every 60 seconds. The interval can be adjusted with the ``OTEL_METRIC_EXPORT_INTERVAL``
+  environemnt variable.
+  :github:`4603`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
+Pulp File
+---------
+
+No significant changes.
+
+
+Pulp Cert Guard
+---------------
+
+No significant changes.
+
+
+----
+
+
 3.46.0 (2024-02-13)
 ===================
 REST API
