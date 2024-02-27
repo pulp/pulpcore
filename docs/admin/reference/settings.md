@@ -196,6 +196,11 @@ The password for Redis.
 Pulp defines the following settings itself:
 
 
+### ENABLED_PLUGINS
+
+An optional list of plugin names.
+If provided, Pulp will limit loading plugins to this list.
+If omitted, Pulp will load all installed plugins.
 
 ### API_ROOT
 
