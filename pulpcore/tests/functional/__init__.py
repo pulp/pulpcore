@@ -1033,11 +1033,7 @@ def monitor_task_group(pulpcore_bindings):
 
 @pytest.fixture(scope="session")
 def pulp_settings():
-    import django
-
-    django.setup()
-
-    from django.conf import settings
+    from dynaconf import settings
 
     return settings
 
