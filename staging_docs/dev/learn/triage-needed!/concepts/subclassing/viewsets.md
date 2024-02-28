@@ -125,6 +125,11 @@ ViewSet, the associated serializer should also subclass `NoArtifactContentUpload
 that by using the aforesaid Serializer and ViewSet, Pulp still loads content of an uploaded file to
 a temporary file. But the file is going to be removed by the end of a created task.
 
+If creating the content does not require any files to be uploaded at all, you can use
+`NoArtifactContentViewSet` along with `NoArtifactContentSerializer`. This is useful if creating the
+content in question requires only a set of required API parameters, but should still use the same
+"add to repository" and/or `retrieve` workflows.
+
 If any additional context needs to be passed from the ViewSet to the creation task, the
 `get_deferred_context` method of the ViewSet might be overwritten. It's return value will then be
 available as `self.context` in the Serializer.

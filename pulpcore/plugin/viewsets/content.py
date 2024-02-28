@@ -29,6 +29,35 @@ class DefaultDeferredContextMixin:
         return {}
 
 
+class NoArtifactContentViewSet(DefaultDeferredContextMixin, ContentViewSet):
+    """A ViewSet for content creation that does not require a file to be uploaded."""
+
+    @extend_schema(
+        description="Trigger an asynchronous task to create content,"
+        "optionally create new repository version.",
+        responses={202: AsyncOperationResponseSerializer},
+    )
+    def create(self, request):
+        """Create a content unit."""
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        exclusive_resources = [
+            item for item in (serializer.validated_data.get(key) for key in ("repository",)) if item
+        ]
+
+        task = dispatch(
+            tasks.base.general_create,
+            exclusive_resources=exclusive_resources,
+            args=(self.queryset.model._meta.app_label, serializer.__class__.__name__),
+            kwargs={
+                "data": {k: v for k, v in request.data.items()},
+                "context": self.get_deferred_context(request),
+            },
+        )
+        return OperationPostponedResponse(task, request)
+
+
 class NoArtifactContentUploadViewSet(DefaultDeferredContextMixin, ContentViewSet):
     """A ViewSet for uploads that do not require to store an uploaded content as an Artifact."""
 
