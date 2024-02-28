@@ -1,1 +1,0 @@
-Fixed a theoretical race condition leading to improper locking when dispatching tasks.
