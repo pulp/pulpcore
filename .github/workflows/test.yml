@@ -22,7 +22,6 @@ jobs:
       matrix:
         env:
           - TEST: pulp
-          - TEST: docs
           - TEST: azure
           - TEST: s3
           - TEST: lowerbounds
@@ -150,12 +149,6 @@ jobs:
           path: "pulpcore/core-ruby-client.tar"
           if-no-files-found: "error"
           retention-days: 5
-      - name: Upload built docs
-        if: ${{ env.TEST == 'docs' }}
-        uses: actions/upload-artifact@v3
-        with:
-          name: "docs.tar"
-          path: "pulpcore/docs/docs.tar"
 
       - name: "Logs"
         if: always()
