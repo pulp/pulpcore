@@ -23,7 +23,7 @@ disabled_redis_runners:
 - s3
 doc_requirements_from_pulpcore: true
 docker_fixtures: true
-docs_test: true
+docs_test: false
 extra_docs_requirements: []
 flake8: true
 flake8_ignore: []
