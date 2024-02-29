@@ -13,6 +13,48 @@ Changelog
 
 .. towncrier release notes start
 
+3.48.0 (2024-02-28)
+===================
+REST API
+--------
+
+Features
+~~~~~~~~
+
+- Added a serializer to output `pulp_last_updated` field on pulp resources.
+  :github:`5033`
+- Added ``unblocked_at`` to tasks to distingish waiting for other resources from waiting for a free worker.
+  :github:`5057`
+
+
+Bugfixes
+~~~~~~~~
+
+- Fixed a theoretical race condition leading to improper locking when dispatching tasks.
+  :github:`5071`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
+Pulp File
+---------
+
+No significant changes.
+
+
+Pulp Cert Guard
+---------------
+
+No significant changes.
+
+
+----
+
+
 3.47.0 (2024-02-22)
 ===================
 REST API
