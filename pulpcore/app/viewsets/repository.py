@@ -186,6 +186,9 @@ class RepositoryViewSet(ImmutableRepositoryViewSet, AsyncUpdateMixin, LabelsMixi
         """
         Delete a model instance
         """
+        if not settings.ENABLE_FAST_CASCADE_DELETE:
+            return super().destroy(request, pk, **kwargs)
+
         instance = self.get_object()
         serializer = self.get_serializer(instance)
         app_label = instance._meta.app_label
