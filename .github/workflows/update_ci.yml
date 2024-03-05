@@ -31,7 +31,7 @@ jobs:
 
       - uses: "actions/setup-python@v4"
         with:
-          python-version: "3.8"
+          python-version: "3.11"
 
       - name: "Install python dependencies"
         run: |
@@ -55,7 +55,7 @@ jobs:
           ../plugin_template/scripts/update_ci.sh
 
       - name: "Create Pull Request for CI files"
-        uses: "peter-evans/create-pull-request@v4"
+        uses: "peter-evans/create-pull-request@v6"
         with:
           token: "${{ secrets.RELEASE_TOKEN }}"
           path: "pulpcore"
