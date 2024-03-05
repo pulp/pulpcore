@@ -21,7 +21,7 @@ jobs:
     steps:
       - uses: "actions/setup-python@v4"
         with:
-          python-version: "3.8"
+          python-version: "3.11"
       - name: "Configure Git with pulpbot name and email"
         run: |
           git config --global user.name 'pulpbot'
@@ -31,7 +31,7 @@ jobs:
           echo ::group::PYDEPS
           pip install requests pyyaml
           echo ::endgroup::
-      - uses: "actions/checkout@v3"
+      - uses: "actions/checkout@v4"
       - name: "Update labels"
         run: |
           python3 .github/workflows/scripts/update_backport_labels.py
