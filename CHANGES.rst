@@ -13,6 +13,45 @@ Changelog
 
 .. towncrier release notes start
 
+3.49.0 (2024-03-05)
+===================
+REST API
+--------
+
+No significant changes.
+
+
+Plugin API
+----------
+
+Features
+~~~~~~~~
+
+- Added NoArtifactContentViewSet for content creation that does not require a file to be uploaded.
+  :github:`5086`
+
+
+Pulp File
+---------
+
+Misc
+~~~~
+
+- :github:`5055`
+
+
+Pulp Cert Guard
+---------------
+
+Misc
+~~~~
+
+- :github:`5054`
+
+
+----
+
+
 3.48.0 (2024-02-28)
 ===================
 REST API
