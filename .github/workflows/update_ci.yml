@@ -55,7 +55,7 @@ jobs:
           ../plugin_template/scripts/update_ci.sh
 
       - name: "Create Pull Request for CI files"
-        uses: "peter-evans/create-pull-request@v4"
+        uses: "peter-evans/create-pull-request@v6"
         with:
           token: "${{ secrets.RELEASE_TOKEN }}"
           path: "pulpcore"
@@ -82,7 +82,7 @@ jobs:
           ../plugin_template/scripts/update_ci.sh
 
       - name: "Create Pull Request for CI files"
-        uses: "peter-evans/create-pull-request@v4"
+        uses: "peter-evans/create-pull-request@v6"
         with:
           token: "${{ secrets.RELEASE_TOKEN }}"
           path: "pulpcore"
@@ -109,7 +109,7 @@ jobs:
           ../plugin_template/scripts/update_ci.sh
 
       - name: "Create Pull Request for CI files"
-        uses: "peter-evans/create-pull-request@v4"
+        uses: "peter-evans/create-pull-request@v6"
         with:
           token: "${{ secrets.RELEASE_TOKEN }}"
           path: "pulpcore"
@@ -136,7 +136,7 @@ jobs:
           ../plugin_template/scripts/update_ci.sh
 
       - name: "Create Pull Request for CI files"
-        uses: "peter-evans/create-pull-request@v4"
+        uses: "peter-evans/create-pull-request@v6"
         with:
           token: "${{ secrets.RELEASE_TOKEN }}"
           path: "pulpcore"
@@ -163,7 +163,7 @@ jobs:
           ../plugin_template/scripts/update_ci.sh
 
       - name: "Create Pull Request for CI files"
-        uses: "peter-evans/create-pull-request@v4"
+        uses: "peter-evans/create-pull-request@v6"
         with:
           token: "${{ secrets.RELEASE_TOKEN }}"
           path: "pulpcore"
@@ -190,7 +190,7 @@ jobs:
           ../plugin_template/scripts/update_ci.sh
 
       - name: "Create Pull Request for CI files"
-        uses: "peter-evans/create-pull-request@v4"
+        uses: "peter-evans/create-pull-request@v6"
         with:
           token: "${{ secrets.RELEASE_TOKEN }}"
           path: "pulpcore"
@@ -217,7 +217,7 @@ jobs:
           ../plugin_template/scripts/update_ci.sh
 
       - name: "Create Pull Request for CI files"
-        uses: "peter-evans/create-pull-request@v4"
+        uses: "peter-evans/create-pull-request@v6"
         with:
           token: "${{ secrets.RELEASE_TOKEN }}"
           path: "pulpcore"
@@ -244,7 +244,7 @@ jobs:
           ../plugin_template/scripts/update_ci.sh
 
       - name: "Create Pull Request for CI files"
-        uses: "peter-evans/create-pull-request@v4"
+        uses: "peter-evans/create-pull-request@v6"
         with:
           token: "${{ secrets.RELEASE_TOKEN }}"
           path: "pulpcore"
