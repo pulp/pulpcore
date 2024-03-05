@@ -31,7 +31,7 @@ jobs:
           echo ::group::PYDEPS
           pip install requests pyyaml
           echo ::endgroup::
-      - uses: "actions/checkout@v3"
+      - uses: "actions/checkout@v4"
       - name: "Update labels"
         run: |
           python3 .github/workflows/scripts/update_backport_labels.py
