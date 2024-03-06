@@ -13,6 +13,45 @@ Changelog
 
 .. towncrier release notes start
 
+3.49.0 (2024-03-05)
+===================
+REST API
+--------
+
+No significant changes.
+
+
+Plugin API
+----------
+
+Features
+~~~~~~~~
+
+- Added NoArtifactContentViewSet for content creation that does not require a file to be uploaded.
+  :github:`5086`
+
+
+Pulp File
+---------
+
+Misc
+~~~~
+
+- :github:`5055`
+
+
+Pulp Cert Guard
+---------------
+
+Misc
+~~~~
+
+- :github:`5054`
+
+
+----
+
+
 3.48.0 (2024-02-28)
 ===================
 REST API
@@ -121,6 +160,35 @@ Features
 
 - Exposed ``TimeoutException`` to plugin writers.
   :github:`5024`
+
+
+Pulp File
+---------
+
+No significant changes.
+
+
+Pulp Cert Guard
+---------------
+
+No significant changes.
+
+
+----
+
+
+3.45.3 (2024-03-05)
+===================
+REST API
+--------
+
+No significant changes.
+
+
+Plugin API
+----------
+
+No significant changes.
 
 
 Pulp File
@@ -751,6 +819,23 @@ Features
 
 - Starting from this release `pulp_file` will be shipped as part of the `pulpcore` package.
   :github:`4550`
+
+
+3.39.11 (2024-03-05)
+====================
+REST API
+--------
+
+No significant changes.
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
+----
 
 
 3.39.10 (2024-02-13)
@@ -1595,6 +1680,23 @@ Misc
 ~~~~
 
 - :github:`3798`
+
+
+3.28.24 (2024-03-05)
+====================
+REST API
+--------
+
+No significant changes.
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
+----
 
 
 3.28.23 (2024-01-30)
