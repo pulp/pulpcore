@@ -1,7 +1,7 @@
 # This config represents the latest values used when running the plugin-template. Any settings that
 # were not present before running plugin-template have been added with their default values.
 
-# generated with plugin_template@2021.08.26-316-g69ef1f6
+# generated with plugin_template@2021.08.26-319-ga283c28
 
 api_root: /pulp/
 black: true
@@ -68,13 +68,12 @@ pulp_settings_azure:
   domain_enabled: true
 pulp_settings_gcp: null
 pulp_settings_s3:
+  authentication_backends: '@merge django.contrib.auth.backends.RemoteUserBackend'
+  authentication_json_header: HTTP_X_RH_IDENTITY
+  authentication_json_header_jq_filter: .identity.user.username
   domain_enabled: true
   hide_guarded_distributions: true
-  authentication_backends: "@merge django.contrib.auth.backends.RemoteUserBackend"
-  rest_framework__default_authentication_classes: "@merge pulpcore.app.authentication.JSONHeaderRemoteAuthentication"
-  authentication_json_header: "HTTP_X_RH_IDENTITY"
-  authentication_json_header_jq_filter: ".identity.user.username"
-pulpprojectdotorg_key_id: d1a778bda808
+  rest_framework__default_authentication_classes: '@merge pulpcore.app.authentication.JSONHeaderRemoteAuthentication'
 pydocstyle: true
 release_email: pulp-infra@redhat.com
 release_user: pulpbot

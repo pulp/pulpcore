@@ -134,7 +134,6 @@ cmd_user_prefix bash -c "django-admin makemigrations certguard --check --dry-run
 cmd_user_prefix bash -c "PULP_DATABASES__default__USER=postgres pytest -v -r sx --color=yes --suppress-no-test-exit-code -p no:pulpcore --pyargs pulpcore.tests.unit"
 cmd_user_prefix bash -c "PULP_DATABASES__default__USER=postgres pytest -v -r sx --color=yes --suppress-no-test-exit-code -p no:pulpcore --pyargs pulp_file.tests.unit"
 cmd_user_prefix bash -c "PULP_DATABASES__default__USER=postgres pytest -v -r sx --color=yes --suppress-no-test-exit-code -p no:pulpcore --pyargs pulp_certguard.tests.unit"
-
 # Run functional tests
 if [[ "$TEST" == "performance" ]]; then
   if [[ -z ${PERFORMANCE_TEST+x} ]]; then
@@ -172,7 +171,7 @@ fi
 export PULP_FIXTURES_URL="http://pulp-fixtures:8080"
 pushd ../pulp-cli
 pip install -r test_requirements.txt
-pytest -v -m pulpcore
+pytest -v -m "pulpcore or pulp_file or pulp_certguard"
 popd
 
 if [ -f "$POST_SCRIPT" ]; then
