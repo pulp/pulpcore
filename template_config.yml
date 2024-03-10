@@ -1,7 +1,7 @@
 # This config represents the latest values used when running the plugin-template. Any settings that
 # were not present before running plugin-template have been added with their default values.
 
-# generated with plugin_template@2021.08.26-317-gde9891b
+# generated with plugin_template@2021.08.26-319-ga283c28
 
 api_root: /pulp/
 black: true
@@ -74,7 +74,6 @@ pulp_settings_s3:
   domain_enabled: true
   hide_guarded_distributions: true
   rest_framework__default_authentication_classes: '@merge pulpcore.app.authentication.JSONHeaderRemoteAuthentication'
-pulpprojectdotorg_key_id: d1a778bda808
 pydocstyle: true
 release_email: pulp-infra@redhat.com
 release_user: pulpbot
