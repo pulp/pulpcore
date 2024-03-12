@@ -137,7 +137,7 @@ if [ "${PULP_API_ROOT:-}" ]; then
   sed -i -e '$a api_root: "'"$PULP_API_ROOT"'"' vars/main.yaml
 fi
 
-pulp config create --base-url https://pulp --api-root "$PULP_API_ROOT"
+pulp config create --base-url https://pulp --api-root "$PULP_API_ROOT" --username "admin" --password "password"
 if [[ "$TEST" != "docs" ]]; then
   cp ~/.config/pulp/cli.toml "${REPO_ROOT}/../pulp-cli/tests/cli.toml"
 fi
