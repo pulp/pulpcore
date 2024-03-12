@@ -83,22 +83,14 @@
           command: "docker logs pulp"
           failed_when: true
 
-    - block:
-        - name: "Check version of component being tested"
-          assert:
-            that:
-              - (result.json.versions | items2dict(key_name="component", value_name="version"))[component_name] | canonical_semver == (component_version | canonical_semver)
-            fail_msg: |
-              Component {{ component_name }} was expected to be installed in version {{ component_version }}.
-              Instead it is reported as version {{ (result.json.versions | items2dict(key_name="component", value_name="version"))[component_name] }}.
-      rescue:
-        - name: "Check version of component being tested (legacy)"
-          assert:
-            that:
-              - (result.json.versions | items2dict(key_name="component", value_name="version"))[legacy_component_name] | canonical_semver == (component_version | canonical_semver)
-            fail_msg: |
-              Component {{ legacy_component_name }} was expected to be installed in version {{ component_version }}.
-              Instead it is reported as version {{ (result.json.versions | items2dict(key_name="component", value_name="version"))[legacy_component_name] }}.
+    - name: "Check version of component being tested"
+      assert:
+        that:
+          - (result.json.versions | items2dict(key_name="component", value_name="version"))[item.app_label] | canonical_semver == (component_version | canonical_semver)
+        fail_msg: |
+          Component {{ item.app_label }} was expected to be installed in version {{ component_version }}.
+          Instead it is reported as version {{ (result.json.versions | items2dict(key_name="component", value_name="version"))[item.app_label] }}.
+      loop: "{{ 'plugins' | ansible.builtin.extract(lookup('ansible.builtin.file', '../../template_config.yml') | from_yaml) }}"
 
     - name: "Set pulp password in .netrc"
       copy:
