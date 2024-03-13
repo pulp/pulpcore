@@ -421,7 +421,7 @@ class Handler:
 {% else -%}
 {% set date = "" -%}
 {% endif -%}
-{% if sizes.get(name, "") -%}
+{% if name in sizes -%}
 {% set size | filesizeformat -%}
 {{ sizes.get(name) }}
 {% endset -%}
