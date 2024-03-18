@@ -1,6 +1,5 @@
 from gettext import gettext as _
 
-from django.conf import settings
 from rest_framework import serializers
 
 from pulpcore.app import models

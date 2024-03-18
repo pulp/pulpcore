@@ -2,7 +2,6 @@ import pytest
 import uuid
 import json
 
-from pulpcore.app import settings
 
 """
 To run these tests:
@@ -11,9 +10,6 @@ To run these tests:
 3. Restart Pulp and nginx
 """
 
-if settings.API_ROOT_REWRITE_HEADER != 'X-API-Root':
-    pytest.skip("API_ROOT_REWRITE_HEADER not set", allow_module_level=True)
-
 
 @pytest.fixture(scope="session")
 def proxy_rewrite_url(bindings_cfg):
@@ -21,7 +17,9 @@ def proxy_rewrite_url(bindings_cfg):
 
 
 @pytest.fixture(scope="session", autouse=True)
-def proxy_rewrite_set(pulpcore_bindings, proxy_rewrite_url):
+def proxy_rewrite_set(pulpcore_bindings, pulp_settings, proxy_rewrite_url):
+    if pulp_settings.API_ROOT_REWRITE_HEADER != "X-API-Root":
+        pytest.skip("API_ROOT_REWRITE_HEADER not set", allow_module_level=True)
     response = pulpcore_bindings.client.request("GET", proxy_rewrite_url)
     if response.status == 200:
         body = json.loads(response.data)
@@ -42,9 +40,9 @@ def auth_headers(pulpcore_bindings):
 
 
 @pytest.mark.parallel
-def test_list_endpoints(pulpcore_bindings, proxy_rewrite_set, auth_headers):
+def test_list_endpoints(pulpcore_bindings, proxy_rewrite_set, auth_headers, pulp_api_v3_path):
     """Check that ALL rewritten API_ROOT endpoints are accessible."""
-    API_ROOT = settings.API_ROOT.encode("utf-8")
+    API_ROOT = pulp_api_v3_path.encode("utf-8")
     for endpoint, url in proxy_rewrite_set.items():
         response = pulpcore_bindings.client.request("GET", url, headers=auth_headers)
         assert response.status == 200

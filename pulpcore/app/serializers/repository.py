@@ -379,7 +379,8 @@ class ContentSummarySerializer(serializers.Serializer):
         for count_detail in obj.counts.all():
             count_type = count_detail.get_count_type_display()
             item_dict = {
-                "count": count_detail.count, "href": count_detail.get_content_href(request=request)
+                "count": count_detail.count,
+                "href": count_detail.get_content_href(request=request),
             }
             to_return[count_type][count_detail.content_type] = item_dict
 

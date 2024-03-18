@@ -3,7 +3,6 @@ from pulpcore.app.util import set_current_user_lazy, set_domain
 from django.http.response import Http404
 from django.conf import settings
 from django.core.exceptions import MiddlewareNotUsed
-from django.urls import set_urlconf
 
 
 class DomainMiddleware:
@@ -50,8 +49,8 @@ class APIRootRewriteMiddleware:
     When API_ROOT_REWRITE_HEADER is set, this middleware will check for the existence of the header
     on the request and if set it will add the new API_ROOT to the request context and remove the
     path from the view_kwargs. If the header API_ROOT does not match the url path's API_ROOT this
-    middleware will return a 404. If the header is not set on the request this middleware does
-    nothing.
+    middleware will return a 404. If the header is not set on the request this middleware will set
+    `api_root` on the request context to the default setting's API_ROOT value.
 
     When API_ROOT_REWRITE_HEADER is not set, this middleware will be marked as unused.
     """
@@ -64,10 +63,11 @@ class APIRootRewriteMiddleware:
     def __call__(self, request):
         # Code to be executed for each request before
         # the view (and later middleware) are called.
-        if new_api_root := request.headers.get(settings.API_ROOT_REWRITE_HEADER):
-            setattr(request, 'api_root', new_api_root)
-            setattr(request, 'urlconf', 'pulpcore.app.path_api_urls')
-            set_urlconf('pulpcore.app.path_api_urls')
+        if settings.API_ROOT_REWRITE_HEADER in request.headers:
+            api_root = request.headers[settings.API_ROOT_REWRITE_HEADER].strip("/")
+        else:
+            api_root = settings.API_ROOT.strip("/")
+        setattr(request, "api_root", api_root)
 
         response = self.get_response(request)
 
@@ -78,11 +78,9 @@ class APIRootRewriteMiddleware:
         return response
 
     def process_view(self, request, view_func, view_args, view_kwargs):
-        if new_api_root := getattr(request, 'api_root', None):
-            # Ensure that the requested URL's API_ROOT matches the header's API_ROOT
-            # Should I be less strict in the check and strip '/' from beginning and end?
-            api_root = view_kwargs.pop('api_root', None)
-            if api_root and api_root != new_api_root:
-                raise Http404()
+        # Ensure that the requested URL's API_ROOT matches the header's/default API_ROOT
+        api_root = view_kwargs.pop("api_root", None)
+        if api_root and api_root != request.api_root:
+            raise Http404()
 
         return None
