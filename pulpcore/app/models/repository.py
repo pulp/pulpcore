@@ -21,10 +21,9 @@ from pulpcore.app.util import (
     batch_qs,
     get_url,
     get_view_name_for_model,
-    get_domain,
     get_domain_pk,
     cache_key,
-    reverse
+    reverse,
 )
 from pulpcore.constants import ALL_KNOWN_CONTENT_CHECKSUMS, PROTECTED_REPO_VERSION_MESSAGE
 from pulpcore.download.factory import DownloaderFactory

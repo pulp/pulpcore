@@ -45,15 +45,29 @@ log = getLogger(__name__)
 # Field mixins
 
 
+def _reverse(obj):
+    """Include domain-path in reverse call if DOMAIN_ENABLED."""
+
+    if settings.DOMAIN_ENABLED:
+
+        @functools.wraps(reverse)
+        def _patched_reverse(viewname, request=None, args=None, kwargs=None, **extra):
+            kwargs = kwargs or {}
+            domain_name = obj.pulp_domain.name if hasattr(obj, "pulp_domain") else "default"
+            kwargs["pulp_domain"] = domain_name
+            return reverse(viewname, request=request, args=args, kwargs=kwargs, **extra)
+
+        return _patched_reverse
+
+    return reverse
+
+
 class HrefFieldMixin:
     """A mixin to configure related fields to generate relative hrefs."""
 
     def get_url(self, obj, view_name, request, *args, **kwargs):
         # Use the Pulp reverse method to display relative hrefs.
-        self.reverse = reverse
-        if settings.DOMAIN_ENABLED:
-            domain_name = obj.pulp_domain.name if hasattr(obj, "pulp_domain") else "default"
-            kwargs["pulp_domain"] = domain_name
+        self.reverse = _reverse(obj)
         return super().get_url(obj, view_name, request, *args, **kwargs)
 
 

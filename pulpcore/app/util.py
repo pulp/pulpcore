@@ -14,7 +14,7 @@ import gnupg
 
 from django.conf import settings
 from django.db.models import Model, Sum
-from django.urls import Resolver404, resolve, get_urlconf
+from django.urls import Resolver404, resolve
 from opentelemetry import metrics
 
 from rest_framework.serializers import ValidationError
@@ -40,10 +40,9 @@ def reverse(viewname, args=None, kwargs=None, request=None, relative_url=True, *
     """
     kwargs = kwargs or {}
     if settings.DOMAIN_ENABLED:
-        kwargs.setdefault('pulp_domain', get_domain().name)
-    api_root = getattr(request, 'api_root', STRIPPED_API_ROOT)
-    if api_root != STRIPPED_API_ROOT or get_urlconf() == "pulpcore.app.path_api_urls":
-        kwargs.setdefault('api_root', api_root)
+        kwargs.setdefault("pulp_domain", get_domain().name)
+    if settings.API_ROOT_REWRITE_HEADER:
+        kwargs.setdefault("api_root", getattr(request, "api_root", STRIPPED_API_ROOT))
     if relative_url:
         request = None
     return drf_reverse(viewname, args=args, kwargs=kwargs, request=request, **extra)

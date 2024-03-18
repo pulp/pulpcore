@@ -24,6 +24,10 @@ if settings.DOMAIN_ENABLED:
     API_ROOT = settings.V3_DOMAIN_API_ROOT_NO_FRONT_SLASH
 else:
     API_ROOT = settings.V3_API_ROOT_NO_FRONT_SLASH
+if settings.API_ROOT_REWRITE_HEADER:
+    V3_API_ROOT = settings.V3_API_ROOT.replace("/<path:api_root>/", settings.API_ROOT)
+else:
+    V3_API_ROOT = settings.V3_API_ROOT
 
 
 class ViewSetNode:
@@ -178,7 +182,7 @@ docs_and_status = [
         SpectacularRedocView.as_view(
             authentication_classes=[],
             permission_classes=[],
-            url=f"{settings.V3_API_ROOT}docs/api.json?include_html=1&pk_path=1",
+            url=f"{V3_API_ROOT}docs/api.json?include_html=1&pk_path=1",
         ),
         name="schema-redoc",
     ),
@@ -187,36 +191,31 @@ docs_and_status = [
         SpectacularSwaggerView.as_view(
             authentication_classes=[],
             permission_classes=[],
-            url=f"{settings.V3_API_ROOT}docs/api.json?include_html=1&pk_path=1",
+            url=f"{V3_API_ROOT}docs/api.json?include_html=1&pk_path=1",
         ),
         name="schema-swagger",
     ),
 ]
 
 urlpatterns = [
-    path(f"{API_ROOT}", include(special_views)),
+    path(API_ROOT, include(special_views)),
     path("auth/", include("rest_framework.urls")),
     path(settings.V3_API_ROOT_NO_FRONT_SLASH, include(docs_and_status)),
 ]
-
-
-def no_schema_view(old_path, name=None):
-    """Take in a path and return a new duplicate path that will not show up in the API Schema."""
-    @extend_schema(exclude=True)
-    class NoSchema(old_path.callback.cls):
-        pass
-
-    new_view = NoSchema.as_view(**old_path.callback.initkwargs)
-    return path(str(old_path.pattern), new_view, name=name)
-
 
 if settings.DOMAIN_ENABLED:
     # Ensure Docs and Status endpoints are available within domains, but are not shown in API schema
     docs_and_status_no_schema = []
     for p in docs_and_status:
+
+        @extend_schema(exclude=True)
+        class NoSchema(p.callback.cls):
+            pass
+
+        view = NoSchema.as_view(**p.callback.initkwargs)
         name = p.name + "-domains" if p.name else None
-        docs_and_status_no_schema.append(no_schema_view(p, name=name))
-    urlpatterns.append(path(API_ROOT, include(docs_and_status_no_schema)))
+        docs_and_status_no_schema.append(path(str(p.pattern), view, name=name))
+    urlpatterns.insert(-1, path(API_ROOT, include(docs_and_status_no_schema)))
 
 if "social_django" in settings.INSTALLED_APPS:
     urlpatterns.append(

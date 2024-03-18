@@ -10,7 +10,6 @@ from gettext import gettext as _
 
 from django.db import connection, transaction
 from django.db.models import Model, Max
-from django.urls import get_urlconf, set_urlconf
 from django_guid import get_guid
 from pulpcore.app.apps import MODULE_PLUGIN_VERSIONS
 from pulpcore.app.models import Task
@@ -68,7 +67,6 @@ def _execute_task(task):
         func = getattr(module, function_name)
         args = task.enc_args or ()
         kwargs = task.enc_kwargs or {}
-        set_urlconf(kwargs.pop("_urlconf", None))
         result = func(*args, **kwargs)
         if asyncio.iscoroutine(result):
             _logger.debug(_("Task is coroutine %s"), task.pk)
@@ -160,9 +158,6 @@ def dispatch(
     resources = exclusive_resources + [f"shared:{resource}" for resource in shared_resources]
 
     notify_workers = False
-    if urlconf := get_urlconf():
-        kwargs = kwargs or {}
-        kwargs["_urlconf"] = urlconf
     with contextlib.ExitStack() as stack:
         with transaction.atomic():
             # Task creation need to be serialized so that pulp_created will provide a stable order

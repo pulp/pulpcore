@@ -2,7 +2,6 @@ import pytest
 import uuid
 import json
 
-from pulpcore.app import settings
 
 """
 To run these tests:
@@ -11,42 +10,46 @@ To run these tests:
 3. Restart Pulp and nginx
 """
 
-if settings.API_ROOT_REWRITE_HEADER != 'X-API-Root':
-    pytest.skip("API_ROOT_REWRITE_HEADER not set", allow_module_level=True)
-
 
 @pytest.fixture(scope="session")
-def proxy_rewrite_url(bindings_cfg):
-    return f"{bindings_cfg.host}/proxy/rewrite/api/v3/"
+def proxy_rewrite_url(pulp_api_v3_url, pulp_settings):
+    return pulp_api_v3_url.replace(pulp_settings.API_ROOT, "/proxy/rewrite/")
 
 
 @pytest.fixture(scope="session", autouse=True)
-def proxy_rewrite_set(pulpcore_bindings, proxy_rewrite_url):
+def proxy_rewrite_set(pulpcore_bindings, pulp_settings, proxy_rewrite_url):
+    if pulp_settings.API_ROOT_REWRITE_HEADER != "X-API-Root":
+        pytest.skip("API_ROOT_REWRITE_HEADER not set", allow_module_level=True)
     response = pulpcore_bindings.client.request("GET", proxy_rewrite_url)
+    host = pulpcore_bindings.client.configuration.host
     if response.status == 200:
         body = json.loads(response.data)
-        for value in body.values():
+        for key, value in body.items():
             if "proxy/rewrite" not in value:
                 break
+            if host not in value:
+                # Hack for the CI
+                [_, api_root, endpoint] = value.partition("/proxy/rewrite/")
+                body[key] = f"{host}{api_root}{endpoint}"
         else:
             return body
 
     pytest.skip("Proxy rewrite path was not set up.", allow_module_level=True)
 
 
-@pytest.fixture(scope="session")
-def auth_headers(pulpcore_bindings):
+def auth_headers(bindings):
     headers = {}
-    pulpcore_bindings.client.update_params_for_auth(headers, {}, ["basicAuth"])
+    bindings.client.update_params_for_auth(headers, {}, ["basicAuth"])
     return headers
 
 
 @pytest.mark.parallel
-def test_list_endpoints(pulpcore_bindings, proxy_rewrite_set, auth_headers):
+def test_list_endpoints(file_bindings, proxy_rewrite_set, pulp_api_v3_path):
     """Check that ALL rewritten API_ROOT endpoints are accessible."""
-    API_ROOT = settings.API_ROOT.encode("utf-8")
+    API_ROOT = pulp_api_v3_path.encode("utf-8")
     for endpoint, url in proxy_rewrite_set.items():
-        response = pulpcore_bindings.client.request("GET", url, headers=auth_headers)
+        headers = auth_headers(file_bindings)
+        response = file_bindings.client.request("GET", url, headers=headers)
         assert response.status == 200
 
         if endpoint != "tasks":
@@ -60,7 +63,6 @@ def test_full_workflow(
     basic_manifest_path,
     file_fixture_server,
     proxy_rewrite_url,
-    auth_headers,
     monitor_task,
     add_to_cleanup,
 ):
@@ -70,7 +72,9 @@ def test_full_workflow(
     remote_url = file_fixture_server.make_url(basic_manifest_path)
     body = {"name": name, "url": remote_url, "policy": "on_demand"}
     url = f"{proxy_rewrite_url}remotes/file/file/"
-    response = file_bindings.client.request("POST", url, body=body, headers=auth_headers)
+    response = file_bindings.client.request(
+        "POST", url, body=body, headers=auth_headers(file_bindings)
+    )
     assert response.status == 201
     remote = json.loads(response.data)
     add_to_cleanup(file_bindings.RemotesFileApi, remote["pulp_href"])
@@ -78,7 +82,9 @@ def test_full_workflow(
     # Step 2: Create Repository
     body = {"name": name}
     url = f"{proxy_rewrite_url}repositories/file/file/"
-    response = file_bindings.client.request("POST", url, body=body, headers=auth_headers)
+    response = file_bindings.client.request(
+        "POST", url, body=body, headers=auth_headers(file_bindings)
+    )
     assert response.status == 201
     repository = json.loads(response.data)
     add_to_cleanup(file_bindings.RepositoriesFileApi, repository["pulp_href"])
@@ -88,7 +94,9 @@ def test_full_workflow(
     # Step 3: Sync Repository w/ Remote
     body = {"remote": remote["pulp_href"]}
     url = f"{file_bindings.client.configuration.host}{repository['pulp_href']}sync/"
-    response = file_bindings.client.request("POST", url, body=body, headers=auth_headers)
+    response = file_bindings.client.request(
+        "POST", url, body=body, headers=auth_headers(file_bindings)
+    )
     assert response.status == 202
     task_response = json.loads(response.data)
     assert task_response["task"].startswith("/proxy/rewrite/")
@@ -103,7 +111,9 @@ def test_full_workflow(
     # Step 4: Publish Repository
     body = {"repository_version": repo_ver.pulp_href}
     url = f"{proxy_rewrite_url}publications/file/file/"
-    response = file_bindings.client.request("POST", url, body=body, headers=auth_headers)
+    response = file_bindings.client.request(
+        "POST", url, body=body, headers=auth_headers(file_bindings)
+    )
     assert response.status == 202
     task = monitor_task(json.loads(response.data)["task"])
     assert len(task.created_resources) == 1
@@ -117,7 +127,9 @@ def test_full_workflow(
     # Step 5: Distribute Publication
     body = {"name": name, "base_path": name, "publication": publication.pulp_href}
     url = f"{proxy_rewrite_url}distributions/file/file/"
-    response = file_bindings.client.request("POST", url, body=body, headers=auth_headers)
+    response = file_bindings.client.request(
+        "POST", url, body=body, headers=auth_headers(file_bindings)
+    )
     assert response.status == 202
     task = monitor_task(json.loads(response.data)["task"])
     assert len(task.created_resources) == 1

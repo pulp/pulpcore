@@ -192,6 +192,8 @@ class NamedModelViewSet(viewsets.GenericViewSet):
                 elif key == "pulp_domain":
                     if hasattr(model, "pulp_domain"):
                         kwargs["pulp_domain__name"] = value
+                elif key == "api_root":
+                    continue
                 else:
                     kwargs[key] = value
 
