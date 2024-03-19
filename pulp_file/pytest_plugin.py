@@ -308,7 +308,7 @@ def file_remote_client_cert_req_factory(
 
 
 @pytest.fixture(scope="class")
-def file_repository_factory(file_repository_api_client, gen_object_with_cleanup):
+def file_repository_factory(file_bindings, gen_object_with_cleanup):
     """A factory to generate a File Repository with auto-deletion after the test run."""
 
     def _file_repository_factory(pulp_domain=None, **body):
@@ -316,9 +316,24 @@ def file_repository_factory(file_repository_api_client, gen_object_with_cleanup)
         if pulp_domain:
             kwargs["pulp_domain"] = pulp_domain
         body.setdefault("name", str(uuid.uuid4()))
-        return gen_object_with_cleanup(file_repository_api_client, body, **kwargs)
+        return gen_object_with_cleanup(file_bindings.RepositoriesFileApi, body, **kwargs)
 
     return _file_repository_factory
+
+
+@pytest.fixture(scope="class")
+def file_publication_factory(file_bindings, gen_object_with_cleanup):
+    """A factory to generate a File Publication with auto-deletion after the test run."""
+
+    def _file_publication_factory(**kwargs):
+        extra_args = {}
+        if pulp_domain := kwargs.pop("pulp_domain", None):
+            extra_args["pulp_domain"] = pulp_domain
+        # XOR check on repository and repository_version
+        assert bool("repository" in kwargs) ^ bool("repository_version" in kwargs)
+        return gen_object_with_cleanup(file_bindings.PublicationsFileApi, kwargs, **extra_args)
+
+    return _file_publication_factory
 
 
 @pytest.fixture
