@@ -7,7 +7,6 @@ from tempfile import NamedTemporaryFile
 from pulpcore.app.apps import pulp_plugin_configs
 from pulpcore.app.models import UpstreamPulp, TaskGroup
 from pulpcore.app.replica import ReplicaContext
-from pulpcore.app.util import get_domain
 
 from pulp_glue.common import __version__ as pulp_glue_version
 
@@ -24,7 +23,6 @@ def user_agent():
 
 
 def replicate_distributions(server_pk):
-    domain = get_domain()
     server = UpstreamPulp.objects.get(pk=server_pk)
 
     # Write out temporary files related to SSL
@@ -80,18 +78,9 @@ def replicate_distributions(server_pk):
             # Create remote
             remote = replicator.create_or_update_remote(upstream_distribution=distro)
             if not remote:
-                # The upstream distribution is not serving any content, cleanup an existing local
-                # distribution
-                try:
-                    local_distro = replicator.distribution_model.objects.get(
-                        name=distro["name"], pulp_domain=domain
-                    )
-                    local_distro.repository = None
-                    local_distro.publication = None
-                    local_distro.save()
-                    continue
-                except replicator.distribution_model.DoesNotExist:
-                    continue
+                # The upstream distribution is not serving any content,
+                # let if fall throug the cracks and be cleanup below.
+                continue
             # Check if there is already a repository
             repository = replicator.create_or_update_repository(remote=remote)
 
