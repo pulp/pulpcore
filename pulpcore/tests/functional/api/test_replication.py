@@ -45,6 +45,109 @@ def test_replication(
 
 
 @pytest.mark.parallel
+def test_replication_idempotence(
+    domain_factory,
+    bindings_cfg,
+    pulpcore_bindings,
+    file_bindings,
+    monitor_task,
+    monitor_task_group,
+    pulp_settings,
+    add_to_cleanup,
+    gen_object_with_cleanup,
+    file_distribution_factory,
+    file_publication_factory,
+    file_repository_factory,
+    tmp_path,
+):
+    # This test assures that an Upstream Pulp can be created in a non-default domain and that this
+    # Upstream Pulp configuration can be used to execute the replicate task.
+
+    # Create a domain to replicate from
+    source_domain = domain_factory()
+
+    # Add stuff to it
+    repository = file_repository_factory(pulp_domain=source_domain.name)
+    file_path = tmp_path / "file.txt"
+    file_path.write_text("DEADBEEF")
+    monitor_task(
+        file_bindings.ContentFilesApi.create(
+            file=file_path,
+            relative_path="file.txt",
+            repository=repository.pulp_href,
+            pulp_domain=source_domain.name,
+        ).task
+    )
+    publication = file_publication_factory(
+        pulp_domain=source_domain.name, repository=repository.pulp_href
+    )
+    file_distribution_factory(pulp_domain=source_domain.name, publication=publication.pulp_href)
+
+    # Create a domain as replica
+    replica_domain = domain_factory()
+
+    # Create an Upstream Pulp in the non-default domain
+    upstream_pulp_body = {
+        "name": str(uuid.uuid4()),
+        "base_url": bindings_cfg.host,
+        "api_root": pulp_settings.API_ROOT,
+        "domain": source_domain.name,
+        "username": bindings_cfg.username,
+        "password": bindings_cfg.password,
+    }
+    upstream_pulp = gen_object_with_cleanup(
+        pulpcore_bindings.UpstreamPulpsApi, upstream_pulp_body, pulp_domain=replica_domain.name
+    )
+    # Run the replicate task and assert that all tasks successfully complete.
+    response = pulpcore_bindings.UpstreamPulpsApi.replicate(upstream_pulp.pulp_href)
+    monitor_task_group(response.task_group)
+
+    for api_client in (
+        file_bindings.DistributionsFileApi,
+        file_bindings.RemotesFileApi,
+        file_bindings.RepositoriesFileApi,
+    ):
+        result = api_client.list(pulp_domain=replica_domain.name)
+        for item in result.results:
+            add_to_cleanup(api_client, item)
+
+    for api_client in (
+        file_bindings.DistributionsFileApi,
+        file_bindings.RemotesFileApi,
+        file_bindings.RepositoriesFileApi,
+        file_bindings.ContentFilesApi,
+    ):
+        result = api_client.list(pulp_domain=replica_domain.name)
+        assert result.count == 1
+
+    # Now replicate backwards
+
+    upstream_pulp_body = {
+        "name": str(uuid.uuid4()),
+        "base_url": bindings_cfg.host,
+        "api_root": pulp_settings.API_ROOT,
+        "domain": replica_domain.name,
+        "username": bindings_cfg.username,
+        "password": bindings_cfg.password,
+    }
+    upstream_pulp = gen_object_with_cleanup(
+        pulpcore_bindings.UpstreamPulpsApi, upstream_pulp_body, pulp_domain=source_domain.name
+    )
+    # Run the replicate task and assert that all tasks successfully complete.
+    response = pulpcore_bindings.UpstreamPulpsApi.replicate(upstream_pulp.pulp_href)
+    monitor_task_group(response.task_group)
+
+    for api_client in (
+        file_bindings.DistributionsFileApi,
+        file_bindings.RemotesFileApi,
+        file_bindings.RepositoriesFileApi,
+    ):
+        result = api_client.list(pulp_domain=replica_domain.name)
+        for item in result.results:
+            add_to_cleanup(api_client, item)
+
+
+@pytest.mark.parallel
 def test_replication_with_wrong_ca_cert(
     domain_factory,
     bindings_cfg,

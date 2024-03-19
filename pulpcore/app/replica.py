@@ -1,18 +1,36 @@
 from django.conf import settings
 from django.db.models import Model
+import logging
 
 from pulp_glue.common.context import PulpContext
 from pulpcore.tasking.tasks import dispatch
-from pulpcore.app.tasks.base import general_update, general_create, general_delete
+from pulpcore.app.tasks.base import (
+    general_update,
+    general_create,
+    general_multi_delete,
+)
 from pulpcore.plugin.util import get_url, get_domain
+
+_logger = logging.getLogger(__name__)
 
 
 class ReplicaContext(PulpContext):
-    def prompt(self, *args, **kwargs):
-        pass
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.out_buf = ""
+        self.err_buf = ""
 
-    def echo(self, *args, **kwargs):
-        pass
+    def echo(self, message: str, nl: bool = True, err: bool = False) -> None:
+        if err:
+            self.err_buf += message
+            if nl:
+                _logger.warn("{}", self.err_buf)
+                self.err_buf = ""
+        else:
+            self.out_buf += message
+            if nl:
+                _logger.info("{}", self.out_buf)
+                self.out_buf = ""
 
 
 class Replicator:
@@ -39,6 +57,7 @@ class Replicator:
         self.tls_settings = tls_settings
         self.domain = get_domain()
         uri = "/api/v3/distributions/"
+        # TODO check and compare this to distribution locking on the distribution viewset.
         if settings.DOMAIN_ENABLED:
             uri = f"/{self.domain.name}{uri}"
         self.distros_uri = uri
@@ -133,49 +152,47 @@ class Replicator:
             repository.save()
         return repository
 
+    def distribution_data(self, repository, upstream_distribution):
+        """
+        Return the fields that need to be updated/cleared on distributions for idempotence.
+        """
+        return {
+            "repository": get_url(repository),
+            "publication": None,
+            "base_path": upstream_distribution["base_path"],
+        }
+
     def create_or_update_distribution(self, repository, upstream_distribution):
+        distribution_data = self.distribution_data(repository, upstream_distribution)
         try:
             distro = self.distribution_model_cls.objects.get(
                 name=upstream_distribution["name"], pulp_domain=self.domain
             )
             # Check that the distribution has the right repository associated
-            needs_update = self.needs_update(
-                {
-                    "repository": get_url(repository),
-                    "base_path": upstream_distribution["base_path"],
-                },
-                distro,
-            )
+            needs_update = self.needs_update(distribution_data, distro)
             if needs_update:
                 # Update the distribution
                 dispatch(
                     general_update,
                     task_group=self.task_group,
+                    shared_resources=[repository],
                     exclusive_resources=[self.distros_uri],
                     args=(distro.pk, self.app_label, self.distribution_serializer_name),
                     kwargs={
-                        "data": {
-                            "name": upstream_distribution["name"],
-                            "base_path": upstream_distribution["base_path"],
-                            "repository": get_url(repository),
-                        },
+                        "data": distribution_data,
                         "partial": True,
                     },
                 )
         except self.distribution_model_cls.DoesNotExist:
             # Dispatch a task to create the distribution
+            distribution_data["name"] = upstream_distribution["name"]
             dispatch(
                 general_create,
                 task_group=self.task_group,
+                shared_resources=[repository],
                 exclusive_resources=[self.distros_uri],
                 args=(self.app_label, self.distribution_serializer_name),
-                kwargs={
-                    "data": {
-                        "name": upstream_distribution["name"],
-                        "base_path": upstream_distribution["base_path"],
-                        "repository": get_url(repository),
-                    }
-                },
+                kwargs={"data": distribution_data},
             )
 
     def sync_params(self, repository, remote):
@@ -193,35 +210,42 @@ class Replicator:
 
     def remove_missing(self, names):
         # Remove all distributions with names not present in the list of names
-        distros_to_delete = self.distribution_model_cls.objects.filter(
-            pulp_domain=self.domain
-        ).exclude(name__in=names)
-        for distro in distros_to_delete:
+        # Perform this in an extra task, because we hold a big lock here.
+        distribution_ids = [
+            (distribution.pk, self.app_label, self.distribution_serializer_name)
+            for distribution in self.distribution_model_cls.objects.filter(
+                pulp_domain=self.domain
+            ).exclude(name__in=names)
+        ]
+        if distribution_ids:
             dispatch(
-                general_delete,
+                general_multi_delete,
                 task_group=self.task_group,
                 exclusive_resources=[self.distros_uri],
-                args=(distro.pk, self.app_label, self.distribution_serializer_name),
+                args=(distribution_ids,),
             )
 
         # Remove all the repositories and remotes of the missing distributions
-        repos_to_delete = self.repository_model_cls.objects.filter(pulp_domain=self.domain).exclude(
-            name__in=names
-        )
-        for repo in repos_to_delete:
-            dispatch(
-                general_delete,
-                task_group=self.task_group,
-                exclusive_resources=[repo],
-                args=(repo.pk, self.app_label, self.repository_serializer_name),
+        repositories = list(
+            self.repository_model_cls.objects.filter(pulp_domain=self.domain).exclude(
+                name__in=names
             )
-        remotes_to_delete = self.remote_model_cls.objects.filter(pulp_domain=self.domain).exclude(
-            name__in=names
         )
-        for remote in remotes_to_delete:
+        repository_ids = [
+            (repo.pk, self.app_label, self.repository_serializer_name) for repo in repositories
+        ]
+
+        remotes = list(
+            self.remote_model_cls.objects.filter(pulp_domain=self.domain).exclude(name__in=names)
+        )
+        remote_ids = [
+            (remote.pk, self.app_label, self.remote_serializer_name) for remote in remotes
+        ]
+
+        if repository_ids or remote_ids:
             dispatch(
-                general_delete,
+                general_multi_delete,
                 task_group=self.task_group,
-                exclusive_resources=[remote],
-                args=(remote.pk, self.app_label, self.remote_serializer_name),
+                exclusive_resources=repositories + remotes,
+                args=(repository_ids + remote_ids,),
             )
