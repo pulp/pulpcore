@@ -13,6 +13,39 @@ Changelog
 
 .. towncrier release notes start
 
+3.49.1 (2024-03-19)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fixed content directory listing not showing file size for 0-byte files.
+  :github:`5100`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
+Pulp File
+---------
+
+No significant changes.
+
+
+Pulp Cert Guard
+---------------
+
+No significant changes.
+
+
+----
+
+
 3.49.0 (2024-03-05)
 ===================
 REST API
