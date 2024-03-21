@@ -1301,3 +1301,18 @@ def domain_factory(domains_api_client, pulp_settings, gen_object_with_cleanup):
         return gen_object_with_cleanup(domains_api_client, body)
 
     return _domain_factory
+
+
+@pytest.fixture(scope="class")
+def openpgp_keyring_factory(pulpcore_bindings, gen_object_with_cleanup):
+    def _openpgp_keyring_factory(**kwargs):
+        extra_args = {}
+        if pulp_domain := kwargs.pop("pulp_domain", None):
+            extra_args["pulp_domain"] = pulp_domain
+        body = {"name": str(uuid.uuid4())}
+        body.update(kwargs)
+        return gen_object_with_cleanup(
+            pulpcore_bindings.RepositoriesOpenpgpKeyringApi, body, **extra_args
+        )
+
+    return _openpgp_keyring_factory

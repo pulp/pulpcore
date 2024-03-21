@@ -116,3 +116,8 @@ from .user import (
     UserSerializer,
 )
 from .replica import UpstreamPulpSerializer
+from .openpgp import (
+    OpenPGPDistributionSerializer,
+    OpenPGPKeyringSerializer,
+    OpenPGPPublicKeySerializer,
+)

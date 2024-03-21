@@ -91,3 +91,13 @@ from .progress import GroupProgressReport, ProgressReport
 
 # Moved here to avoid a circular import with GroupProgressReport
 from .replica import UpstreamPulp
+
+from .openpgp import (
+    OpenPGPDistribution,
+    OpenPGPKeyring,
+    OpenPGPPublicKey,
+    OpenPGPPublicSubkey,
+    OpenPGPSignature,
+    OpenPGPUserAttribute,
+    OpenPGPUserID,
+)
