@@ -39,6 +39,7 @@ if [[ "$TEST" = "docs" ]]; then
   if [ -f "$POST_DOCS_TEST" ]; then
     source "$POST_DOCS_TEST"
   fi
+  pulp-docs build
   exit
 fi
 
