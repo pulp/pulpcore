@@ -11,7 +11,7 @@ django-filter>=23.1,<=23.5
 django-guid>=3.3,<=3.4.0
 django-import-export>=2.9,<3.4.0
 django-lifecycle>=1.0,<=1.1.2
-djangorestframework>=3.14.0,<=3.14.0
+djangorestframework>=3.14.0,<=3.15.1
 djangorestframework-queryfields>=1.0,<=1.1.0
 drf-access-policy>=1.1.2,<1.5.1
 drf-nested-routers>=0.93.4,<=0.93.5
