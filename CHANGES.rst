@@ -631,7 +631,6 @@ Features
 ~~~~~~~~
 
 - Added a ``--restart`` option to pulpcore worker. This requires "hupper" to be installed.
-  :github:`+pulpcore-worker-restart`
 - Added new management command ``repository-size`` that calculates the total size in bytes of files stored in repositories.
   :github:`2079`
 
@@ -1228,7 +1227,6 @@ Bugfixes
 ~~~~~~~~
 
 - Added encryption to task argument fields.
-  :github:`+enc_task_args`
 - Fixed sync not deleting temporary files when WORKING_DIRECTORY is not a sub-directory of MEDIA_ROOT
   or when using a non-filesystem storage backend.
   :github:`1936`
@@ -1245,7 +1243,6 @@ Removals
 ~~~~~~~~
 
 - Removed the ``pulp-content`` script that was superseeded by ``pulpcore-content``.
-  :github:`+remove_old_script`
 
 
 Plugin API
