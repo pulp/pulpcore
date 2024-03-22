@@ -28,6 +28,9 @@ export PULP_SETTINGS=$PWD/.ci/ansible/settings/settings.py
 export PULP_URL="https://pulp"
 
 if [[ "$TEST" = "docs" ]]; then
+  # Unified Docs Build
+  pulp-docs build
+  # Legacy Docs Build
   if [[ "$GITHUB_WORKFLOW" == "Core CI" ]]; then
     towncrier build --yes --version 4.0.0.ci
   fi

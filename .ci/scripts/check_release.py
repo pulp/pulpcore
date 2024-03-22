@@ -80,9 +80,31 @@ def main():
                     # Blobless clone does not have file contents for Z branches,
                     # check commit message for last Z bump
                     git_branch = f"origin/{branch}"
-                    next_version = repo.git.log(
-                        "--oneline", "--grep=Bump to", "-n 1", git_branch, "--", ".bumpversion.cfg"
-                    ).split("to")[-1]
+                    next_version = None
+                    bump_commit = repo.git.log(
+                        "--oneline",
+                        "--grep=Bump version",
+                        "-n 1",
+                        git_branch,
+                        "--",
+                        ".bumpversion.cfg",
+                    )
+                    if bump_commit:
+                        next_version = bump_commit.split("→ ")[-1]
+                    # If not found - try old-commit-msg
+                    if not next_version:
+                        bump_commit = repo.git.log(
+                            "--oneline",
+                            "--grep=Bump to",
+                            "-n 1",
+                            git_branch,
+                            "--",
+                            ".bumpversion.cfg",
+                        )
+                        next_version = bump_commit.split("to ")[-1] if bump_commit else None
+
+                    # You could, theoretically, be next_vers==None here - but that's always
+                    # been true for this script.
                     next_version = Version(next_version)
                     print(
                         f"A Z-release is needed for {branch}, "
