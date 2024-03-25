@@ -29,6 +29,7 @@ python-gnupg>=0.5,<=0.5.2
 PyYAML>=5.1.1,<=6.0.1
 redis>=4.3,<4.4.1
 setuptools>=39.2,<69.1.0
+tablib<3.6.0
 url-normalize>=1.4.3,<=1.4.3
 whitenoise>=5.0,<=6.7.0
 yarl>=1.8,<1.9.5
