@@ -1,2 +1,0 @@
-Added new task resource locking method ``get_prn`` that does not change with different settings.
-``get_url`` is planned to be phased out of resource locking by pulpcore 3.55.
