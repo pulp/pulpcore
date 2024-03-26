@@ -13,6 +13,54 @@ Changelog
 
 .. towncrier release notes start
 
+3.50.0 (2024-03-26)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fixed an issue in replicate, where an existing distribution had a conflicting publication set.
+  :github:`4637`
+- Fixed content directory listing not showing file size for 0-byte files.
+  :github:`5100`
+
+
+Deprecations
+~~~~~~~~~~~~
+
+- Task filter ``reserved_resources_record`` has been deprecated and planned for removal in pulpcore 3.55.
+  :github:`4315`
+
+
+Misc
+~~~~
+
+- :github:`4315`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
+Pulp File
+---------
+
+No significant changes.
+
+
+Pulp Cert Guard
+---------------
+
+No significant changes.
+
+
+----
+
+
 3.49.1 (2024-03-19)
 ===================
 REST API
