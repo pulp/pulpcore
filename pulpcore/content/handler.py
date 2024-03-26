@@ -19,6 +19,8 @@ from yarl import URL
 
 from asgiref.sync import sync_to_async
 
+from opentelemetry import metrics
+
 import django
 
 from pulpcore.constants import STORAGE_RESPONSE_MAP
@@ -49,7 +51,12 @@ from pulpcore.app.models import (  # noqa: E402: module level not at top of file
     RemoteArtifact,
 )
 from pulpcore.app import mime_types  # noqa: E402: module level not at top of file
-from pulpcore.app.util import get_domain, cache_key  # noqa: E402: module level not at top of file
+from pulpcore.app.util import (  # noqa: E402: module level not at top of file
+    MetricsEmitter,
+    get_domain,
+    get_url,
+    cache_key,
+)
 
 from pulpcore.exceptions import UnsupportedDigestValidationError  # noqa: E402
 
@@ -153,6 +160,21 @@ class Handler:
     ]
 
     distribution_model = None
+    counter_lock = asyncio.Lock()
+
+    class ArtifactsSizeCounter(MetricsEmitter):
+        def __init__(self):
+            self.meter = metrics.get_meter("artifacts.size.meter")
+            self.counter = self.meter.create_counter(
+                "artifacts.size.counter",
+                unit="Bytes",
+                description="Counts the size of served artifacts",
+            )
+
+        def add(self, amount, attributes):
+            self.counter.add(amount, attributes)
+
+    artifacts_size_counter = ArtifactsSizeCounter.build()
 
     @staticmethod
     def _reset_db_connection():
@@ -934,6 +956,8 @@ class Handler:
         Depending on where the file storage (e.g. filesystem, S3, etc) this could be responding with
         the file (filesystem) or a redirect (S3).
 
+        This method reports the size of the served artifact to a metrics collector on success.
+
         Args:
             content_artifact (:class:`pulpcore.app.models.ContentArtifact`): The Content Artifact to
                 respond with.
@@ -957,40 +981,39 @@ class Handler:
                         params[STORAGE_RESPONSE_MAP[storage_domain][a_key]] = hdrs[a_key]
             return params
 
+        def _build_url(**kwargs):
+            filename = os.path.basename(content_artifact.relative_path)
+            content_disposition = f"attachment;filename={filename}"
+
+            headers["Content-Disposition"] = content_disposition
+            parameters = _set_params_from_headers(headers, domain.storage_class)
+            storage_url = artifact_file.storage.url(artifact_name, parameters=parameters, **kwargs)
+
+            return URL(storage_url, encoded=True)
+
         artifact_file = content_artifact.artifact.file
         artifact_name = artifact_file.name
-        filename = os.path.basename(content_artifact.relative_path)
-        content_disposition = f"attachment;filename={filename}"
         domain = get_domain()
-        storage = domain.get_storage()
 
         if domain.storage_class == "pulpcore.app.models.storage.FileSystem":
+            storage = domain.get_storage()
             path = storage.path(artifact_name)
             if not os.path.exists(path):
                 raise Exception(_("Expected path '{}' is not found").format(path))
+            await self._report_served_artifact_size(artifact_file.size)
             return FileResponse(path, headers=headers)
         elif not domain.redirect_to_object_storage:
+            await self._report_served_artifact_size(artifact_file.size)
             return ArtifactResponse(content_artifact.artifact, headers=headers)
         elif domain.storage_class == "storages.backends.s3boto3.S3Boto3Storage":
-            headers["Content-Disposition"] = content_disposition
-            parameters = _set_params_from_headers(headers, domain.storage_class)
-            url = URL(
-                artifact_file.storage.url(
-                    artifact_name, parameters=parameters, http_method=request.method
-                ),
-                encoded=True,
-            )
-            raise HTTPFound(url)
-        elif domain.storage_class == "storages.backends.azure_storage.AzureStorage":
-            headers["Content-Disposition"] = content_disposition
-            parameters = _set_params_from_headers(headers, domain.storage_class)
-            url = URL(artifact_file.storage.url(artifact_name, parameters=parameters), encoded=True)
-            raise HTTPFound(url)
-        elif domain.storage_class == "storages.backends.gcloud.GoogleCloudStorage":
-            headers["Content-Disposition"] = content_disposition
-            parameters = _set_params_from_headers(headers, domain.storage_class)
-            url = URL(artifact_file.storage.url(artifact_name, parameters=parameters), encoded=True)
-            raise HTTPFound(url)
+            await self._report_served_artifact_size(artifact_file.size)
+            raise HTTPFound(_build_url(http_method=request.method))
+        elif domain.storage_class in (
+            "storages.backends.azure_storage.AzureStorage",
+            "storages.backends.gcloud.GoogleCloudStorage",
+        ):
+            await self._report_served_artifact_size(artifact_file.size)
+            raise HTTPFound(_build_url())
         else:
             raise NotImplementedError()
 
@@ -1108,6 +1131,8 @@ class Handler:
         downloader.finalize = finalize
         download_result = await downloader.run()
 
+        await self._report_served_artifact_size(size)
+
         if save_artifact and remote.policy != Remote.STREAMED:
             await asyncio.shield(
                 sync_to_async(self._save_artifact)(download_result, remote_artifact, request)
@@ -1116,4 +1141,10 @@ class Handler:
 
         if response.status == 404:
             raise HTTPNotFound()
+
         return response
+
+    async def _report_served_artifact_size(self, size):
+        async with self.counter_lock:
+            # locking prevents multiple coroutines from accessing the same counter
+            self.artifacts_size_counter.add(size, {"domain": get_url(get_domain())})
