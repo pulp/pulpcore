@@ -1,5 +1,5 @@
 from redis import Redis
-from aioredis import Redis as aRedis
+from redis.asyncio import Redis as aRedis
 
 from pulpcore.app.settings import settings
 
