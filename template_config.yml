@@ -1,7 +1,7 @@
 # This config represents the latest values used when running the plugin-template. Any settings that
 # were not present before running plugin-template have been added with their default values.
 
-# generated with plugin_template@2021.08.26-319-ga283c28
+# generated with plugin_template@2021.08.26-320-g4fd782b
 
 api_root: /pulp/
 black: true
@@ -65,6 +65,7 @@ pulp_settings:
   - /tmp
   orphan_protection_time: 0
 pulp_settings_azure:
+  api_root_rewrite_header: X-API-Root
   domain_enabled: true
 pulp_settings_gcp: null
 pulp_settings_s3:
