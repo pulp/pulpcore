@@ -1091,6 +1091,11 @@ def pulp_content_origin(pulp_settings):
 
 
 @pytest.fixture(scope="session")
+def pulp_content_origin_with_prefix(pulp_settings):
+    return pulp_settings.CONTENT_ORIGIN + pulp_settings.CONTENT_PATH_PREFIX[:-1]
+
+
+@pytest.fixture(scope="session")
 def pulp_api_v3_path(pulp_settings, pulp_domain_enabled):
     if pulp_domain_enabled:
         v3_api_root = pulp_settings.V3_DOMAIN_API_ROOT
@@ -1243,7 +1248,7 @@ def add_to_filesystem_cleanup():
 
 
 @pytest.fixture(scope="session")
-def download_content_unit(pulp_domain_enabled, pulp_content_origin):
+def download_content_unit(pulp_domain_enabled, pulp_content_origin_with_prefix):
     def _download_content_unit(base_path, content_path, domain="default"):
         async def _get_response(url):
             async with aiohttp.ClientSession() as session:
@@ -1252,16 +1257,14 @@ def download_content_unit(pulp_domain_enabled, pulp_content_origin):
 
         if pulp_domain_enabled:
             url_fragments = [
-                pulp_content_origin,
-                "pulp/content",
+                pulp_content_origin_with_prefix,
                 domain,
                 base_path,
                 content_path,
             ]
         else:
             url_fragments = [
-                pulp_content_origin,
-                "pulp/content",
+                pulp_content_origin_with_prefix,
                 base_path,
                 content_path,
             ]
