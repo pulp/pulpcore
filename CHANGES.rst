@@ -13,6 +13,39 @@ Changelog
 
 .. towncrier release notes start
 
+3.49.2 (2024-03-26)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fixed an issue in replicate, where an existing distribution had a conflicting publication set.
+  :github:`4637`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
+Pulp File
+---------
+
+No significant changes.
+
+
+Pulp Cert Guard
+---------------
+
+No significant changes.
+
+
+----
+
+
 3.49.1 (2024-03-19)
 ===================
 REST API
