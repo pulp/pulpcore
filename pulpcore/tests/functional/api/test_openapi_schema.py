@@ -86,3 +86,22 @@ def test_no_dup_operation_ids(pulp_openapi_schema):
 
     dup_ids = [id for id, cnt in operation_ids.items() if cnt > 1]
     assert len(dup_ids) == 0, f"Duplicate operationIds found: {dup_ids}"
+
+
+@pytest.mark.parallel
+def test_external_auth_on_security_scheme(pulp_settings, pulp_openapi_schema):
+    if (
+        "django.contrib.auth.backends.RemoteUserBackend"
+        not in pulp_settings.AUTHENTICATION_BACKENDS
+        and "pulpcore.app.authentication.JSONHeaderRemoteAuthentication"
+        not in pulp_settings.REST_FRAMEWORK["DEFAULT_AUTHENTICATION_CLASSES"]
+    ):
+        pytest.skip(
+            "Test can't run unless RemoteUserBackend and JSONHeaderRemoteAuthentication are enabled"
+        )
+
+    security_schemes = pulp_openapi_schema["components"]["securitySchemes"]
+    assert "json_header_remote_authentication" in security_schemes
+
+    security_scheme = security_schemes["json_header_remote_authentication"]
+    assert pulp_settings.AUTHENTICATION_JSON_HEADER_OPENAPI_SECURITY_SCHEME == security_scheme

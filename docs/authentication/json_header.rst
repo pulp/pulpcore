@@ -6,7 +6,7 @@ JSON Header Authentication
 In a situation where it is not possible to use ``Basic Authentication`` Pulp can rely on a third-party
 service to authenticate a user.
 Using ``JSONHeaderRemoteAuthentication`` it's possible to receive a payload and even use ``JQ`` to filter
-it and obtain a user. The user is created in the database if one is not found.
+it and obtain the relevant data. The user is created in the database if one is not found.
 
 You can set ``AUTHENTICATION_JSON_HEADER`` and ``AUTHENTICATION_JSON_HEADER_JQ_FILTER`` to obtain a user
 given a header name and its value respectively::
@@ -44,3 +44,25 @@ must start with `HTTP_`, so, if your header is ``x-authentication-service``, you
 official site `here <https://jqlang.github.io/jq/>`_.
 
 Remember that the content of the header must be Base64 encoded.
+
+
+Enabling the ThirdParty Authentication Schema
+*********************************************
+
+In a case where Pulp is deployed behind an API Gateway, it may be necessary to indicate to the clients where and which authorization process to use.
+For this scenario, you may be able to provide an OpenAPI security schema to be used by clients or Pulp-CLI itself.
+
+To enable that, you have to configure the `AUTHENTICATION_JSON_HEADER_OPENAPI_SECURITY_SCHEME` with a payload following the 
+`Security Scheme Object definition <https://spec.openapis.org/oas/latest.html#security-scheme-object>`_. Here is an example describing
+an OAuth2 authentication system::
+
+      AUTHENTICATION_JSON_HEADER_OPENAPI_SECURITY_SCHEME = {
+        "type": "oauth2",
+        "description": "External OAuth integration",
+        "flows": {
+          "clientCredentials": {
+            "tokenUrl": "https://your-identity-provider/token/issuer",
+            "scopes": {"api.console":"grant_access_to_pulp"}
+          }
+        }
+      }

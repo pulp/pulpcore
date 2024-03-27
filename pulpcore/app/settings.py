@@ -256,6 +256,7 @@ REMOTE_USER_ENVIRON_NAME = "REMOTE_USER"
 
 AUTHENTICATION_JSON_HEADER = ""
 AUTHENTICATION_JSON_HEADER_JQ_FILTER = ""
+AUTHENTICATION_JSON_HEADER_OPENAPI_SECURITY_SCHEME = {}
 
 ALLOWED_IMPORT_PATHS = []
 
@@ -407,6 +408,16 @@ json_header_auth_validator = (
     authentication_json_header_validator & authentication_json_header_jq_filter_validator
 )
 
+authentication_json_header_openapi_security_scheme_setting_validator = Validator(
+    "AUTHENTICATION_JSON_HEADER_OPENAPI_SECURITY_SCHEME", len_min=1
+)
+authentication_json_header_openapi_security_scheme_validator = Validator(
+    "AUTHENTICATION_JSON_HEADER_OPENAPI_SECURITY_SCHEME",
+    when=authentication_json_header_openapi_security_scheme_setting_validator,
+    is_type_of=dict,
+    messages={"is_type_of": "{name} must be a dictionary."},
+)
+
 settings = DjangoDynaconf(
     __name__,
     ENVVAR_PREFIX_FOR_DYNACONF="PULP",
@@ -424,6 +435,7 @@ settings = DjangoDynaconf(
         storage_validator,
         unknown_algs_validator,
         json_header_auth_validator,
+        authentication_json_header_openapi_security_scheme_validator,
     ],
 )
 # HERE ENDS DYNACONF EXTENSION LOAD (No more code below this line)
