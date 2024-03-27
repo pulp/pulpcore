@@ -521,9 +521,9 @@ class PulpSchemaGenerator(SchemaGenerator):
         return normalize_result_object(result)
 
 
-class JSONHeaderRemoteAuthenticationScheme(OpenApiAuthenticationExtension):
-    target_class = 'pulpcore.app.authentication.JSONHeaderRemoteAuthentication'
-    name = next(iter(settings.REMOTE_AUTHORIZATION_DISCOVERY_PAYLOAD))
+class ThirdPartyRemoteAuthenticationScheme(OpenApiAuthenticationExtension):
+    target_class = settings.REMOTE_AUTHENTICATION_DISCOVERY_PAYLOAD.pop("target_class", None)
+    name = settings.REMOTE_AUTHENTICATION_DISCOVERY_PAYLOAD.pop("name", None)
 
     def get_security_definition(self, auto_schema):
-        return settings.REMOTE_AUTHORIZATION_DISCOVERY_PAYLOAD[self.name]
+        return settings.REMOTE_AUTHENTICATION_DISCOVERY_PAYLOAD[self.name]

@@ -78,7 +78,9 @@ def main():
                         z_changelog = True
 
                 last_tag = repo.git.describe("--tags", "--abbrev=0", f"origin/{branch}")
-                req_txt_diff = repo.git.diff(f"{last_tag}..HEAD", "--name-only", "requirements.txt")
+                req_txt_diff = repo.git.diff(
+                    f"{last_tag}", f"origin/{branch}", "--name-only", "--", "requirements.txt"
+                )
                 if z_changelog or req_txt_diff:
                     # Blobless clone does not have file contents for Z branches,
                     # check commit message for last Z bump

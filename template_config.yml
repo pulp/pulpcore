@@ -74,6 +74,25 @@ pulp_settings_s3:
   domain_enabled: true
   hide_guarded_distributions: true
   rest_framework__default_authentication_classes: '@merge pulpcore.app.authentication.JSONHeaderRemoteAuthentication'
+  remote_authentication_discovery_payload: |
+    {
+        'name': 'oAuth2',
+        'target_class': 'pulpcore.app.authentication.JSONHeaderRemoteAuthentication',
+        'oAuth2': {
+            'type': 'oauth2',
+            'in': 'header',
+            'description': 'External OAuth integration',
+            'flows': {
+                'clientCredentials': {
+                    'tokenUrl': 'https://your-identity-provider/token/issuer',
+                    'scopes': {'api.console': 'Grant access to Pulp'}
+                }
+            }
+        }
+    }
+  # remote_authentication_discovery_payload:
+  # remote_authentication_discovery_payload__name: 'oAuth2'
+
 pydocstyle: true
 release_email: pulp-infra@redhat.com
 release_user: pulpbot
