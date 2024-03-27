@@ -133,18 +133,20 @@ class SingleArtifactContentUploadViewSet(DefaultDeferredContextMixin, ContentVie
             # in the upload code path make sure, the artifact exists, and the 'file'
             # parameter is replaced by 'artifact'
             artifact = Artifact.init_and_validate(task_payload.pop("file"))
+            # if artifact already exists, let's use it
             try:
-                artifact.save()
-            except IntegrityError:
-                # if artifact already exists, let's use it
+                artifact = Artifact.objects.get(
+                    sha256=artifact.sha256, pulp_domain=request.pulp_domain
+                )
+                artifact.touch()
+            except (Artifact.DoesNotExist, DatabaseError):
                 try:
+                    artifact.save()
+                except IntegrityError:
                     artifact = Artifact.objects.get(
                         sha256=artifact.sha256, pulp_domain=request.pulp_domain
                     )
                     artifact.touch()
-                except (Artifact.DoesNotExist, DatabaseError):
-                    # the artifact has since been removed from when we first attempted to save it
-                    artifact.save()
 
             task_payload["artifact"] = ArtifactSerializer(
                 artifact, context={"request": request}
