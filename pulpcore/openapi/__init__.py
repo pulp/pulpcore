@@ -22,6 +22,7 @@ from drf_spectacular.plumbing import (
 from drf_spectacular.settings import spectacular_settings
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiParameter, extend_schema_field
+from drf_spectacular.extensions import OpenApiAuthenticationExtension
 from rest_framework import mixins, serializers
 from rest_framework.exceptions import ParseError
 from rest_framework.schemas.utils import get_pk_description
@@ -518,3 +519,11 @@ class PulpSchemaGenerator(SchemaGenerator):
         result["servers"] = [{"url": server_url}]
 
         return normalize_result_object(result)
+
+
+class JSONHeaderRemoteAuthenticationScheme(OpenApiAuthenticationExtension):
+    target_class = "pulpcore.app.authentication.JSONHeaderRemoteAuthentication"
+    name = "json_header_remote_authentication"
+
+    def get_security_definition(self, auto_schema):
+        return settings.AUTHENTICATION_JSON_HEADER_OPENAPI_SECURITY_SCHEME
