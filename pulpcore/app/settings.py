@@ -155,6 +155,21 @@ REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": "pulpcore.openapi.PulpAutoSchema",
 }
 
+REMOTE_AUTHORIZATION_DISCOVERY_PAYLOAD = {
+    "oAuth2": {
+        "type": "oauth2",
+        "name": "oauth2",
+        "in": "header",
+        "description": "External OAuth integration",
+        "flows": {
+            "client_credentials": {
+                "tokenUrl": "https://sso.stage.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token",
+                "scopes": {"api.console": "Grant access to Pulp"}
+            }
+        }
+    }
+}
+
 # Password validation
 # https://docs.djangoproject.com/en/3.2/ref/settings/#auth-password-validators
 
@@ -405,6 +420,13 @@ authentication_json_header_jq_filter_validator = Validator(
 
 json_header_auth_validator = (
     authentication_json_header_validator & authentication_json_header_jq_filter_validator
+)
+
+remote_authorization_discovery_payload_validator = Validator(
+    "REMOTE_AUTHORIZATION_DISCOVERY_PAYLOAD",
+    must_exist=True,
+    cast=dict,
+    condition=lambda payload: isinstance(payload.get(next(iter(payload)), dict))
 )
 
 settings = DjangoDynaconf(
