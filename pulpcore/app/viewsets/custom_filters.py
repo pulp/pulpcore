@@ -84,13 +84,14 @@ class ReservedResourcesRecordFilter(Filter):
         Returns:
             django.db.models.query.QuerySet: Queryset filtered by the reserved resource
         """
-        deprecation_logger.warning(
-            "This filter is deprecated. Please use reserved_resources(__in) instead."
-        )
 
         if value is None:
             # a value was not supplied by a user
             return qs
+
+        deprecation_logger.warning(
+            "This filter is deprecated. Please use reserved_resources(__in) instead."
+        )
 
         try:
             resolve(urlparse(value).path)
