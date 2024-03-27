@@ -13,6 +13,87 @@ Changelog
 
 .. towncrier release notes start
 
+3.50.0 (2024-03-26)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fixed an issue in replicate, where an existing distribution had a conflicting publication set.
+  :github:`4637`
+- Fixed content directory listing not showing file size for 0-byte files.
+  :github:`5100`
+
+
+Deprecations
+~~~~~~~~~~~~
+
+- Task filter ``reserved_resources_record`` has been deprecated and planned for removal in pulpcore 3.55.
+  :github:`4315`
+
+
+Misc
+~~~~
+
+- :github:`4315`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
+Pulp File
+---------
+
+No significant changes.
+
+
+Pulp Cert Guard
+---------------
+
+No significant changes.
+
+
+----
+
+
+3.49.2 (2024-03-26)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fixed an issue in replicate, where an existing distribution had a conflicting publication set.
+  :github:`4637`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
+Pulp File
+---------
+
+No significant changes.
+
+
+Pulp Cert Guard
+---------------
+
+No significant changes.
+
+
+----
+
+
 3.49.1 (2024-03-19)
 ===================
 REST API
@@ -193,6 +274,35 @@ Features
 
 - Exposed ``TimeoutException`` to plugin writers.
   :github:`5024`
+
+
+Pulp File
+---------
+
+No significant changes.
+
+
+Pulp Cert Guard
+---------------
+
+No significant changes.
+
+
+----
+
+
+3.45.4 (2024-03-26)
+===================
+REST API
+--------
+
+No significant changes.
+
+
+Plugin API
+----------
+
+No significant changes.
 
 
 Pulp File
@@ -851,6 +961,23 @@ Features
 
 - Starting from this release `pulp_file` will be shipped as part of the `pulpcore` package.
   :github:`4550`
+
+
+3.39.12 (2024-03-26)
+====================
+REST API
+--------
+
+No significant changes.
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
+----
 
 
 3.39.11 (2024-03-05)
@@ -1710,6 +1837,23 @@ Misc
 ~~~~
 
 - :github:`3798`
+
+
+3.28.25 (2024-03-26)
+====================
+REST API
+--------
+
+No significant changes.
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
+----
 
 
 3.28.24 (2024-03-05)
@@ -3237,6 +3381,43 @@ Deprecations
   :github:`3604`
 
 
+3.22.24 (2024-03-26)
+====================
+REST API
+--------
+
+Misc
+~~~~
+
+- :github:`3574`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
+----
+
+
+3.22.23 (2024-03-26)
+====================
+REST API
+--------
+
+No significant changes.
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
+----
+
+
 3.22.22 (2024-01-30)
 ====================
 REST API
@@ -3824,6 +4005,43 @@ Removals
 - Deprecated model ``Label`` and serializer field ``LabelField`` and ``LabelSelectFilter`` for
   removal in 3.25.
   :github:`3400`
+
+
+3.21.28 (2024-03-26)
+====================
+REST API
+--------
+
+Misc
+~~~~
+
+- :github:`3574`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
+----
+
+
+3.21.27 (2024-03-26)
+====================
+REST API
+--------
+
+No significant changes.
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
+----
 
 
 3.21.26 (2024-01-30)
@@ -4890,6 +5108,23 @@ Bugfixes
   the stage will still accumulate up to 500 (by default) items so batching is still in-effect there
   where it matters.
   :github:`2069`
+
+
+3.18.36 (2024-03-26)
+====================
+REST API
+--------
+
+No significant changes.
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
+----
 
 
 3.18.35 (2024-01-30)
