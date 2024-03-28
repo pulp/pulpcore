@@ -61,6 +61,39 @@ No significant changes.
 ----
 
 
+3.49.3 (2024-03-27)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fix import in wsgi preventing startup.
+  :github:`5189`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
+Pulp File
+---------
+
+No significant changes.
+
+
+Pulp Cert Guard
+---------------
+
+No significant changes.
+
+
+----
+
+
 3.49.2 (2024-03-26)
 ===================
 REST API
