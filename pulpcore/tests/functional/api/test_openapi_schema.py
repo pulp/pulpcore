@@ -11,6 +11,8 @@ from drf_spectacular.validation import JSON_SCHEMA_SPEC_PATH
 from jsonschema import ValidationError
 from collections import defaultdict
 
+from pulpcore.app import settings
+
 
 @pytest.fixture(scope="session")
 def openapi3_schema_spec():
@@ -85,3 +87,24 @@ def test_no_dup_operation_ids(pulp_openapi_schema):
 
     dup_ids = [id for id, cnt in operation_ids.items() if cnt > 1]
     assert len(dup_ids) == 0, f"Duplicate operationIds found: {dup_ids}"
+
+
+@pytest.mark.parallel
+@pytest.mark.skipif(
+    "django.contrib.auth.backends.RemoteUserBackend" not in settings.AUTHENTICATION_BACKENDS
+    and "pulpcore.app.authentication.JSONHeaderRemoteAuthentication"
+    not in settings.REST_FRAMEWORK["DEFAULT_AUTHENTICATION_CLASSES"],
+    reason="Test can't run unless RemoteUserBackend and JSONHeaderRemoteAuthentication are enabled",
+)
+def test_external_auth_on_security_scheme(pulp_openapi_schema):
+    security_schemes = pulp_openapi_schema["components"]["securitySchemes"]
+
+    assert "oAuth2" in security_schemes
+
+    oauth_security_scheme = security_schemes["oAuth2"]
+
+    assert {"type", "name", "in"} < set(oauth_security_scheme)
+
+    assert oauth_security_scheme["type"] == "oauth2"
+
+    assert "clientCredentials" in oauth_security_scheme["flows"]

@@ -155,6 +155,8 @@ REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": "pulpcore.openapi.PulpAutoSchema",
 }
 
+REMOTE_AUTHENTICATION_DISCOVERY_PAYLOAD = {}
+
 # Password validation
 # https://docs.djangoproject.com/en/3.2/ref/settings/#auth-password-validators
 
@@ -407,6 +409,44 @@ json_header_auth_validator = (
     authentication_json_header_validator & authentication_json_header_jq_filter_validator
 )
 
+remote_authentication_discovery_payload_setting_validator = Validator(
+    "REMOTE_AUTHENTICATION_DISCOVERY_PAYLOAD", len_min=1
+)
+remote_authentication_discovery_payload_type_validator = Validator(
+    "REMOTE_AUTHENTICATION_DISCOVERY_PAYLOAD",
+    when=remote_authentication_discovery_payload_setting_validator,
+    is_type_of=dict,
+    messages={"is_type_of": "{name} must be a dictionary."},
+)
+
+remote_authentication_discovery_payload_name_validator = Validator(
+    "REMOTE_AUTHENTICATION_DISCOVERY_PAYLOAD",
+    when=remote_authentication_discovery_payload_setting_validator,
+    cont="name",
+    messages={"cont": 'When using {name} it must have a "name" key'},
+)
+
+remote_authentication_discovery_payload_target_validator = Validator(
+    "REMOTE_AUTHENTICATION_DISCOVERY_PAYLOAD",
+    when=remote_authentication_discovery_payload_setting_validator,
+    cont="target_class",
+    messages={"cont": 'When using {name} it must have a "target_class" key'},
+)
+
+remote_authentication_discovery_payload_auth_validator = Validator(
+    "REMOTE_AUTHENTICATION_DISCOVERY_PAYLOAD",
+    when=remote_authentication_discovery_payload_setting_validator,
+    condition=lambda x: True if x.get(x.get("name")) else False,
+    messages={"condition": ('{name} must have an key with the same valueof the key "name".')},
+)
+
+remote_authentication_discovery_payload_validator = (
+    remote_authentication_discovery_payload_type_validator
+    & remote_authentication_discovery_payload_name_validator
+    & remote_authentication_discovery_payload_target_validator
+    & remote_authentication_discovery_payload_auth_validator
+)
+
 settings = DjangoDynaconf(
     __name__,
     ENVVAR_PREFIX_FOR_DYNACONF="PULP",
@@ -424,6 +464,7 @@ settings = DjangoDynaconf(
         storage_validator,
         unknown_algs_validator,
         json_header_auth_validator,
+        remote_authentication_discovery_payload_validator,
     ],
 )
 # HERE ENDS DYNACONF EXTENSION LOAD (No more code below this line)

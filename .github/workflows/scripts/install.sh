@@ -106,7 +106,7 @@ if [ "$TEST" = "s3" ]; then
   sed -i -e '$a s3_test: true\
 minio_access_key: "'$MINIO_ACCESS_KEY'"\
 minio_secret_key: "'$MINIO_SECRET_KEY'"\
-pulp_scenario_settings: {"authentication_backends": "@merge django.contrib.auth.backends.RemoteUserBackend", "authentication_json_header": "HTTP_X_RH_IDENTITY", "authentication_json_header_jq_filter": ".identity.user.username", "domain_enabled": true, "hide_guarded_distributions": true, "rest_framework__default_authentication_classes": "@merge pulpcore.app.authentication.JSONHeaderRemoteAuthentication"}\
+pulp_scenario_settings: {"authentication_backends": "@merge django.contrib.auth.backends.RemoteUserBackend", "authentication_json_header": "HTTP_X_RH_IDENTITY", "authentication_json_header_jq_filter": ".identity.user.username", "domain_enabled": true, "hide_guarded_distributions": true, "remote_authentication_discovery_payload": "{\n    \u0027name\u0027: \u0027oAuth2\u0027,\n    \u0027target_class\u0027: \u0027pulpcore.app.authentication.JSONHeaderRemoteAuthentication\u0027,\n    \u0027oAuth2\u0027: {\n        \u0027type\u0027: \u0027oauth2\u0027,\n        \u0027in\u0027: \u0027header\u0027,\n        \u0027description\u0027: \u0027External OAuth integration\u0027,\n        \u0027flows\u0027: {\n            \u0027clientCredentials\u0027: {\n                \u0027tokenUrl\u0027: \u0027https://your-identity-provider/token/issuer\u0027,\n                \u0027scopes\u0027: {\u0027api.console\u0027: \u0027Grant access to Pulp\u0027}\n            }\n        }\n    }\n}\n", "rest_framework__default_authentication_classes": "@merge pulpcore.app.authentication.JSONHeaderRemoteAuthentication"}\
 pulp_scenario_env: {}\
 ' vars/main.yaml
   export PULP_API_ROOT="/rerouted/djnd/"
