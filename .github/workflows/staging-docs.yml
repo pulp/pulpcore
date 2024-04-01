@@ -1,6 +1,10 @@
 ---
 name: Publish staging-docs.pulpproject.org
 on:
+  schedule:
+    # * is a special character in YAML so you have to quote this string
+    # runs at 3:00 UTC daily on weekdays 1 to 5 (no weekends)
+    - cron: '00 3 * * 1-5'
   workflow_dispatch:
 
 defaults:
