@@ -129,7 +129,7 @@ async def _repair_artifacts_for_content(subset=None, verify_checksums=True):
     ) as repaired:
         with ThreadPoolExecutor(max_workers=2) as checksum_executor:
             storage = domain.get_storage()
-            async for content_artifact in (query_set.select_related("artifact").aiterator()):
+            async for content_artifact in query_set.select_related("artifact").aiterator():
                 artifact = content_artifact.artifact
 
                 valid = await loop.run_in_executor(None, storage.exists, artifact.file.name)
