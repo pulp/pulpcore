@@ -1,4 +1,5 @@
 """Tests related to the workers."""
+
 import pytest
 import subprocess
 import uuid
