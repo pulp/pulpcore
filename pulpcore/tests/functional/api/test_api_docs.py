@@ -1,4 +1,5 @@
 """Test related to the api docs page."""
+
 import unittest
 
 from pulp_smash import api, config

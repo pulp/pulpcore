@@ -4,6 +4,7 @@ Tests FilesystemExporter and FilesystemExport functionality
 NOTE: assumes ALLOWED_EXPORT_PATHS setting contains "/tmp" - all tests will fail if this is not
 the case.
 """
+
 import unittest
 from pulp_smash import api, cli, config
 from pulp_smash.utils import uuid4

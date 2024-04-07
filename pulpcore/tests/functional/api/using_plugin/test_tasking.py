@@ -1,4 +1,5 @@
 """Tests related to the tasking system."""
+
 import unittest
 from urllib.parse import urljoin
 

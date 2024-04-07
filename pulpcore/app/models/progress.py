@@ -1,6 +1,7 @@
 """
 Django models related to progress reporting
 """
+
 import datetime
 import logging
 from asgiref.sync import sync_to_async

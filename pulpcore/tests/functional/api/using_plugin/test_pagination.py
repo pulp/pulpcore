@@ -1,4 +1,5 @@
 """Tests related to pagination."""
+
 import unittest
 from random import randint, sample
 

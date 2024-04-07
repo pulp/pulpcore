@@ -1,4 +1,5 @@
 """Tests related to content cache."""
+
 import requests
 import unittest
 from urllib.parse import urljoin
