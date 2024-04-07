@@ -1,4 +1,5 @@
 """Test the status page."""
+
 import warnings
 import unittest
 
