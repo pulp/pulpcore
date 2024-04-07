@@ -1,4 +1,5 @@
 """Test that operations can be performed over tasks."""
+
 import json
 import subprocess
 from urllib.parse import urljoin

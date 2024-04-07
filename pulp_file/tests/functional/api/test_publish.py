@@ -1,4 +1,5 @@
 """Tests that publish file plugin repositories."""
+
 from aiohttp import BasicAuth
 import json
 import pytest
