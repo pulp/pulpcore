@@ -8,7 +8,6 @@ will fail if this is not the case.
 import json
 import os
 import pytest
-import shutil
 import uuid
 from pathlib import Path
 
@@ -62,7 +61,7 @@ def import_export_repositories(
 
 
 @pytest.fixture
-def created_exporter(
+def exporter(
     tmpdir, gen_object_with_cleanup, exporters_pulp_api_client, import_export_repositories
 ):
     _, export_repos = import_export_repositories
@@ -76,54 +75,35 @@ def created_exporter(
 
 
 @pytest.fixture
-def created_export(exporters_pulp_exports_api_client, created_exporter, monitor_task):
-    export_response = exporters_pulp_exports_api_client.create(created_exporter.pulp_href, {})
-    export_href = monitor_task(export_response.task).created_resources[0]
-    export = exporters_pulp_exports_api_client.read(export_href)
-    return export
-
-
-@pytest.fixture
-def chunked_export(exporters_pulp_exports_api_client, created_exporter, monitor_task):
-    export_response = exporters_pulp_exports_api_client.create(
-        created_exporter.pulp_href, {"chunk_size": "5KB"}
-    )
-    export_href = monitor_task(export_response.task).created_resources[0]
-    export = exporters_pulp_exports_api_client.read(export_href)
-    return export
-
-
-@pytest.fixture
-def import_check_directory(tmpdir):
+def import_check_directory(tmp_path):
     """Creates a directory/file structure for testing import-check"""
-    os.makedirs(f"{tmpdir}/noreaddir")
-    os.makedirs(f"{tmpdir}/nowritedir")
-    os.makedirs(f"{tmpdir}/nowritedir/notafile")
+    os.makedirs(f"{tmp_path}/noreaddir")
+    os.makedirs(f"{tmp_path}/nowritedir")
+    os.makedirs(f"{tmp_path}/nowritedir/notafile")
 
-    Path(f"{tmpdir}/noreadfile").touch()
-    Path(f"{tmpdir}/noreaddir/goodfile").touch()
-    Path(f"{tmpdir}/nowritedir/goodfile").touch()
-    Path(f"{tmpdir}/nowritedir/noreadfile").touch()
+    Path(f"{tmp_path}/noreadfile").touch()
+    Path(f"{tmp_path}/noreaddir/goodfile").touch()
+    Path(f"{tmp_path}/nowritedir/goodfile").touch()
+    Path(f"{tmp_path}/nowritedir/noreadfile").touch()
 
-    os.chmod(f"{tmpdir}/nowritedir/noreadfile", 0o333)
-    os.chmod(f"{tmpdir}/noreadfile", 0o333)
-    os.chmod(f"{tmpdir}/noreaddir", 0o333)
-    os.chmod(f"{tmpdir}/nowritedir", 0o555)
+    os.chmod(f"{tmp_path}/nowritedir/noreadfile", 0o333)
+    os.chmod(f"{tmp_path}/noreadfile", 0o333)
+    os.chmod(f"{tmp_path}/noreaddir", 0o333)
+    os.chmod(f"{tmp_path}/nowritedir", 0o555)
 
-    yield tmpdir
+    yield tmp_path
 
-    os.chmod(f"{tmpdir}/nowritedir/noreadfile", 0o644)
-    os.chmod(f"{tmpdir}/noreadfile", 0o644)
-    os.chmod(f"{tmpdir}/noreaddir", 0o755)
-    os.chmod(f"{tmpdir}/nowritedir", 0o755)
-    shutil.rmtree(tmpdir)
+    os.chmod(f"{tmp_path}/nowritedir/noreadfile", 0o644)
+    os.chmod(f"{tmp_path}/noreadfile", 0o644)
+    os.chmod(f"{tmp_path}/noreaddir", 0o755)
+    os.chmod(f"{tmp_path}/nowritedir", 0o755)
 
 
 @pytest.fixture
-def pulp_importer_factory(
+def importer_factory(
     gen_object_with_cleanup, import_export_repositories, importers_pulp_api_client
 ):
-    def _pulp_importer_factory(name=None, exported_repos=None, mapping=None):
+    def _importer_factory(name=None, exported_repos=None, mapping=None):
         """Create an importer."""
         _import_repos, _exported_repos = import_export_repositories
         if not name:
@@ -146,7 +126,7 @@ def pulp_importer_factory(
 
         return importer
 
-    return _pulp_importer_factory
+    return _importer_factory
 
 
 def _find_toc(chunked_export):
@@ -155,32 +135,25 @@ def _find_toc(chunked_export):
 
 
 def _find_path(created_export):
-    filenames = [
-        f
-        for f in list(created_export.output_file_info.keys())
-        if f.endswith("tar") or f.endswith(".tar.gz")
-    ]
+    filenames = [f for f in list(created_export.output_file_info.keys()) if f.endswith("tar")]
     return filenames[0]
 
 
 @pytest.fixture
 def perform_import(
-    chunked_export, created_export, importers_pulp_imports_api_client, monitor_task_group
+    exporter, generate_export, importers_pulp_imports_api_client, monitor_task_group
 ):
-    def _perform_import(importer, chunked=False, an_export=None, body=None):
+    def _perform_import(importer, export, chunked=False, body=None):
         """Perform an import with importer."""
         if body is None:
             body = {}
 
-        if not an_export:
-            an_export = chunked_export if chunked else created_export
-
         if chunked:
             if "toc" not in body:
-                body["toc"] = _find_toc(an_export)
+                body["toc"] = _find_toc(export)
         else:
             if "path" not in body:
-                body["path"] = _find_path(an_export)
+                body["path"] = _find_path(export)
 
         import_response = importers_pulp_imports_api_client.create(importer.pulp_href, body)
         task_group = monitor_task_group(import_response.task_group)
@@ -191,10 +164,10 @@ def perform_import(
 
 
 @pytest.mark.parallel
-def test_importer_create(pulp_importer_factory, importers_pulp_api_client):
+def test_importer_create(importer_factory, importers_pulp_api_client):
     """Test creating an importer."""
     name = str(uuid.uuid4())
-    importer = pulp_importer_factory(name)
+    importer = importer_factory(name)
     assert importer.name == name
 
     importer = importers_pulp_api_client.read(importer.pulp_href)
@@ -202,9 +175,9 @@ def test_importer_create(pulp_importer_factory, importers_pulp_api_client):
 
 
 @pytest.mark.parallel
-def test_importer_delete(pulp_importer_factory, importers_pulp_api_client):
+def test_importer_delete(importer_factory, importers_pulp_api_client):
     """Test deleting an importer."""
-    importer = pulp_importer_factory()
+    importer = importer_factory()
 
     importers_pulp_api_client.delete(importer.pulp_href)
 
@@ -214,11 +187,19 @@ def test_importer_delete(pulp_importer_factory, importers_pulp_api_client):
 
 
 @pytest.mark.parallel
-def test_import(pulp_importer_factory, file_bindings, import_export_repositories, perform_import):
+def test_import(
+    exporter,
+    generate_export,
+    importer_factory,
+    file_bindings,
+    import_export_repositories,
+    perform_import,
+):
     """Test an import."""
     import_repos, exported_repos = import_export_repositories
-    importer = pulp_importer_factory()
-    task_group = perform_import(importer)
+    importer = importer_factory()
+    export = generate_export(exporter)
+    task_group = perform_import(importer, export)
     assert (len(import_repos) + 1) == task_group.completed
 
     for report in task_group.group_progress_reports:
@@ -230,8 +211,31 @@ def test_import(pulp_importer_factory, file_bindings, import_export_repositories
         assert f"{repo.pulp_href}versions/1/" == repo.latest_version_href
 
 
+@pytest.mark.parallel
+@pytest.mark.parametrize("chunk_size", ["1KB", "5KB"])
+def test_chunked_import(
+    chunk_size,
+    exporter,
+    generate_export,
+    importer_factory,
+    import_export_repositories,
+    file_bindings,
+    perform_import,
+):
+    """Test an import."""
+    import_repos, exported_repos = import_export_repositories
+    importer = importer_factory()
+    export = generate_export(exporter, body={"chunk_size": chunk_size})
+    task_group = perform_import(importer, export, chunked=True)
+    assert (len(import_repos) + 1) == task_group.completed
+
+    for repo in import_repos:
+        repo = file_bindings.RepositoriesFileApi.read(repo.pulp_href)
+        assert f"{repo.pulp_href}versions/1/" == repo.latest_version_href
+
+
 @pytest.fixture
-def test_import_mapping_missing_repos(pulp_importer_factory, import_export_repositories):
+def test_import_mapping_missing_repos(importer_factory, import_export_repositories):
     import_repos, exported_repos = import_export_repositories
     a_map = {"foo": "bar"}
     for repo in import_repos:
@@ -239,7 +243,7 @@ def test_import_mapping_missing_repos(pulp_importer_factory, import_export_repos
     a_map["blech"] = "bang"
 
     with pytest.raises(ApiException, match="['bar', 'bang']"):
-        pulp_importer_factory(mapping=a_map)
+        importer_factory(mapping=a_map)
 
 
 @pytest.mark.parallel
@@ -288,7 +292,7 @@ def test_import_auto_repo_creation(
 
     # 4. import the exported repository without creating an import repository beforehand
     importer = gen_object_with_cleanup(importers_pulp_api_client, {"name": str(uuid.uuid4())})
-    perform_import(importer, an_export=export, body={"create_repositories": True})
+    perform_import(importer, export, body={"create_repositories": True})
 
     # 5. run assertions on the automatically created import repository
     repositories = file_bindings.RepositoriesFileApi.list(name=export_repo.name).results
@@ -307,7 +311,9 @@ def test_import_auto_repo_creation(
 
 @pytest.mark.parallel
 def test_double_import(
-    pulp_importer_factory,
+    exporter,
+    generate_export,
+    importer_factory,
     importers_pulp_imports_api_client,
     import_export_repositories,
     file_bindings,
@@ -315,10 +321,11 @@ def test_double_import(
 ):
     """Test two imports of our export."""
     import_repos, exported_repos = import_export_repositories
+    export = generate_export(exporter)
 
-    importer = pulp_importer_factory()
-    perform_import(importer)
-    perform_import(importer)
+    importer = importer_factory()
+    perform_import(importer, export)
+    perform_import(importer, export)
 
     imports = importers_pulp_imports_api_client.list(importer.pulp_href).results
     assert len(imports) == 2
@@ -330,26 +337,10 @@ def test_double_import(
 
 
 @pytest.mark.parallel
-def test_chunked_import(
-    pulp_importer_factory, import_export_repositories, file_bindings, perform_import
+def test_import_check_valid_path(
+    exporter, generate_export, importers_pulp_imports_check_api_client
 ):
-    """Test an import."""
-    import_repos, exported_repos = import_export_repositories
-    importer = pulp_importer_factory()
-    task_group = perform_import(importer, chunked=True)
-    assert (len(import_repos) + 1) == task_group.completed
-
-    for repo in import_repos:
-        repo = file_bindings.RepositoriesFileApi.read(repo.pulp_href)
-        assert f"{repo.pulp_href}versions/1/" == repo.latest_version_href
-
-    # We should be able to import a second time, even though the chunks have now been reassembled.
-    task_group = perform_import(importer, chunked=True)
-    assert (len(import_repos) + 1) == task_group.completed
-
-
-@pytest.mark.parallel
-def test_import_check_valid_path(created_export, importers_pulp_imports_check_api_client):
+    created_export = generate_export(exporter)
     body = {"path": _find_path(created_export)}
     result = importers_pulp_imports_check_api_client.pulp_import_check_post(body)
     assert result.path.context == _find_path(created_export)
@@ -360,7 +351,8 @@ def test_import_check_valid_path(created_export, importers_pulp_imports_check_ap
 
 
 @pytest.mark.parallel
-def test_import_check_valid_toc(chunked_export, importers_pulp_imports_check_api_client):
+def test_import_check_valid_toc(exporter, generate_export, importers_pulp_imports_check_api_client):
+    chunked_export = generate_export(exporter, body={"chunk_size": "5KB"})
     body = {"toc": _find_toc(chunked_export)}
     result = importers_pulp_imports_check_api_client.pulp_import_check_post(body)
     assert result.toc.context == _find_toc(chunked_export)
@@ -420,9 +412,9 @@ def test_import_check_no_file(importers_pulp_imports_check_api_client):
 
 
 @pytest.mark.parallel
-def test_import_check_all_valid(
-    created_export, chunked_export, importers_pulp_imports_check_api_client
-):
+def test_import_check_all_valid(exporter, generate_export, importers_pulp_imports_check_api_client):
+    created_export = generate_export(exporter)
+    chunked_export = generate_export(exporter, body={"chunk_size": "5KB"})
     body = {
         "path": _find_path(created_export),
         "toc": _find_toc(chunked_export),
@@ -490,7 +482,7 @@ def generate_export(exporters_pulp_exports_api_client, monitor_task):
 
 @pytest.fixture
 def exported_version(
-    pulp_importer_factory,
+    importer_factory,
     gen_object_with_cleanup,
     import_export_repositories,
     exporters_pulp_api_client,
@@ -533,8 +525,8 @@ def exported_version(
     }
     export = generate_export(exporter, body)
 
-    importer = pulp_importer_factory(exported_repos=[file_repo])
-    task_group = perform_import(importer, chunked=False, an_export=export)
+    importer = importer_factory(exported_repos=[file_repo])
+    task_group = perform_import(importer, export, chunked=False)
 
     return import_repos, task_group
 
