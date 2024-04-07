@@ -1,4 +1,5 @@
 """pulp URL Configuration"""
+
 from django.conf import settings
 from django.urls import path, include
 from drf_spectacular.utils import extend_schema

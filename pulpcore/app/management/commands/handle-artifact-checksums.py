@@ -71,9 +71,7 @@ class Command(BaseCommand):
         )
         if content.count():
             self.stdout.write(
-                "There is approx {:.2f}Mb of content to be downloaded.".format(
-                    ras_size / (1024**2)
-                )
+                "There is approx {:.2f}Mb of content to be downloaded.".format(ras_size / (1024**2))
             )
 
         if repo_versions.exists():
