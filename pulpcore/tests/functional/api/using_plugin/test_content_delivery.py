@@ -1,4 +1,5 @@
 """Tests related to content delivery."""
+
 from aiohttp.client_exceptions import ClientResponseError
 import hashlib
 import pytest
