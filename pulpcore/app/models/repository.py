@@ -1,6 +1,7 @@
 """
 Repository related Django models.
 """
+
 from contextlib import suppress
 from gettext import gettext as _
 from os import path, environ
