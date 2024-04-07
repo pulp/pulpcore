@@ -31,6 +31,7 @@ if [[ "$TEST" = "docs" ]]; then
   if [[ "$GITHUB_WORKFLOW" == "Core CI" ]]; then
     towncrier build --yes --version 4.0.0.ci
   fi
+  # Legacy Docs Build
   cd docs
   make PULP_URL="$PULP_URL" diagrams html
   tar -cvf docs.tar ./_build
