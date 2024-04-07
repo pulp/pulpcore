@@ -1,4 +1,5 @@
 """Tests related to content cache."""
+
 import pytest
 from urllib.parse import urljoin
 

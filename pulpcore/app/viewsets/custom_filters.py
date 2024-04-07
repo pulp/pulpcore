@@ -1,6 +1,7 @@
 """
 This module contains custom filters that might be used by more than one ViewSet.
 """
+
 import re
 
 from collections import defaultdict

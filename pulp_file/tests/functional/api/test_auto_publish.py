@@ -1,4 +1,5 @@
 """Tests that sync file plugin repositories."""
+
 import pytest
 
 from pulpcore.tests.functional.utils import get_files_in_manifest

@@ -1,4 +1,5 @@
 """Test that operations can be performed over tasks."""
+
 import json
 from urllib.parse import urljoin
 from uuid import uuid4
