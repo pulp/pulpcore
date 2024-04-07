@@ -1,6 +1,7 @@
 """
 Django models related to the Status API
 """
+
 from datetime import timedelta
 
 from django.conf import settings
