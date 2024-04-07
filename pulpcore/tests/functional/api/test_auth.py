@@ -3,6 +3,7 @@
 For more information, see the documentation on `Authentication
 <https://docs.pulpproject.org/restapi.html#section/Authentication>`_.
 """
+
 import unittest
 
 from pulp_smash import api, config, utils

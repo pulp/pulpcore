@@ -1,4 +1,5 @@
 """Test related to the openapi schema Pulp generates."""
+
 import asyncio
 import copy
 import json

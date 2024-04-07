@@ -1,4 +1,5 @@
 """Tests that perform actions over artifacts."""
+
 import hashlib
 import itertools
 import os
