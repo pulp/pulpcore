@@ -1,4 +1,5 @@
 """Tests that CRUD repositories."""
+
 import json
 import pytest
 import re

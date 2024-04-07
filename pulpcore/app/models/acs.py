@@ -1,6 +1,7 @@
 """
 Repository related Django models.
 """
+
 from django.db import models
 
 from .base import MasterModel, BaseModel
