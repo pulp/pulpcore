@@ -1,4 +1,5 @@
 """Tests related to content path."""
+
 import unittest
 
 from pulp_smash import api, config

@@ -1,4 +1,5 @@
 """Tests that perform actions over publications."""
+
 import unittest
 from itertools import permutations
 

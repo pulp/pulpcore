@@ -1,4 +1,5 @@
 """Tests that look at generic list endpoints."""
+
 import tempfile
 import unittest
 

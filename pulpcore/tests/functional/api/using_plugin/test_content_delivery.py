@@ -1,4 +1,5 @@
 """Tests related to content delivery."""
+
 import hashlib
 import unittest
 from random import choice

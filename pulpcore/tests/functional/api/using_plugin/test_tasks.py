@@ -1,4 +1,5 @@
 """Test that operations can be performed over tasks."""
+
 import unittest
 
 from pulp_smash import api, config, utils
