@@ -1,4 +1,5 @@
 """Tests related to repository versions."""
+
 import pytest
 from random import choice
 from tempfile import NamedTemporaryFile

@@ -1,4 +1,5 @@
 """Tests related to content promotion."""
+
 import hashlib
 import pytest
 from urllib.parse import urljoin
