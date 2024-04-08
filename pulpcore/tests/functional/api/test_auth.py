@@ -3,6 +3,7 @@
 For more information, see the documentation on `Authentication
 <https://docs.pulpproject.org/restapi.html#section/Authentication>`_.
 """
+
 import pytest
 import json
 
@@ -101,9 +102,9 @@ def test_jq_header_remote_auth_denied_by_wrong_header(pulpcore_bindings, anonymo
         encoded_header = b64encode(bytes(header_content, "ascii"))
 
         pulpcore_bindings.ArtifactsApi.api_client.default_headers.pop("x-rh-identity", None)
-        pulpcore_bindings.ArtifactsApi.api_client.default_headers[
-            "x-something-identity"
-        ] = encoded_header
+        pulpcore_bindings.ArtifactsApi.api_client.default_headers["x-something-identity"] = (
+            encoded_header
+        )
 
         with pytest.raises(ApiException) as exception:
             pulpcore_bindings.ArtifactsApi.list()

@@ -1,4 +1,5 @@
 """Test the status page."""
+
 import pytest
 
 from django.conf import settings
