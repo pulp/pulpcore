@@ -1,9 +1,11 @@
 """Tests related to the tasking system."""
 
+import os
 import json
 import pytest
 import subprocess
 import time
+
 from aiohttp import BasicAuth
 from urllib.parse import urljoin
 from uuid import uuid4
@@ -349,3 +351,47 @@ def test_task_version_prevent_pickup(dispatch_task, pulpcore_bindings):
         task = pulpcore_bindings.TasksApi.read(task_href)
         assert task.state == "waiting"
         pulpcore_bindings.TasksApi.tasks_cancel(task_href, {"state": "canceled"})
+
+
+def test_emmiting_unblocked_task_telemetry(
+    dispatch_task, pulpcore_bindings, pulp_settings, received_otel_metrics
+):
+    if os.getenv("PULP_OTEL_ENABLED").lower() != "true":
+        pytest.skip("Need PULP_OTEL_ENABLED to run this test.")
+
+    # Checking online workers ready to get a task
+    workers_online = pulpcore_bindings.WorkersApi.list(online="true").count
+
+    # We need to generate long running tasks to block the workers from executing other tasks
+    resident_task_hrefs = [
+        dispatch_task("pulpcore.app.tasks.test.sleep", args=(30,))
+        for worker in range(workers_online)
+    ]
+
+    # Then we dispatch a quick unblockable task just to keep it waiting in the queue
+    task_href = dispatch_task("pulpcore.app.tasks.test.sleep", args=(0,))
+
+    task = pulpcore_bindings.TasksApi.read(task_href)
+    assert task.state == "waiting"
+
+    # And trigger the metrics
+    assert received_otel_metrics(
+        {
+            "name": "tasks_unblocked_queue",
+            "description": "Number of unblocked tasks waiting in the queue.",
+            "unit": "tasks",
+        }
+    )
+
+    assert received_otel_metrics(
+        {
+            "name": "tasks_longest_unblocked_time",
+            "description": "The age of the longest waiting task.",
+            "unit": "seconds",
+        }
+    )
+
+    [
+        pulpcore_bindings.TasksApi.tasks_cancel(task_href, {"state": "canceled"})
+        for task_href in resident_task_hrefs
+    ]

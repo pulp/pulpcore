@@ -8,6 +8,9 @@ import threading
 from aiohttp import web
 
 from opentelemetry.proto.trace.v1.trace_pb2 import TracesData
+from opentelemetry.proto.metrics.v1.metrics_pb2 import MetricsData
+
+_logger = logging.getLogger(__name__)
 
 
 class ThreadedAiohttpServer(threading.Thread):
@@ -47,12 +50,13 @@ def _otel_collector():
         or os.environ.get("OTEL_EXPORTER_OTLP_ENDPOINT") != "http://localhost:4318"
         or os.environ.get("OTEL_EXPORTER_OTLP_PROTOCOL") != "http/protobuf"
     ):
-        logging.info("Telemetry was not configured. Exiting...")
+        _logger.info("Telemetry was not configured. Exiting...")
         sys.exit(0)
     else:
-        logging.info("Booting up the otel collector server...")
+        _logger.info("Booting up the otel collector server...")
 
     spans = []
+    metrics = []
 
     async def _null_handler(request):
         raise web.HTTPOk()
@@ -70,6 +74,25 @@ def _otel_collector():
                     spans.append(attrs)
         raise web.HTTPOk()
 
+    async def _metrics_handler(request):
+        disabled_metrics = {"http.server.active_requests"}
+
+        metrics_data = MetricsData()
+        metrics_data.ParseFromString(await request.read())
+        for resource_metric in metrics_data.resource_metrics:
+            for scope_metric in resource_metric.scope_metrics:
+                for metric in scope_metric.metrics:
+                    if metric.name in disabled_metrics:
+                        _logger.info("Dropping {} metric".format(metric.name))
+                        break
+                    translated_metric = {}
+                    translated_metric["name"] = metric.name
+                    translated_metric["description"] = metric.description
+                    translated_metric["unit"] = metric.unit
+                    metrics.append(translated_metric)
+                    _logger.info("Received a {} metric meter".format(translated_metric["name"]))
+        raise web.HTTPOk()
+
     async def _test_handler(request):
         try:
             attrs = await request.json()
@@ -85,12 +108,37 @@ def _otel_collector():
         else:
             raise web.HTTPNotFound()
 
+    async def _metrics_test_handler(request):
+        try:
+            attrs = await request.json()
+        except json.decoder.JSONDecodeError:
+            raise web.HTTPNotFound()
+
+        matched_metric = next(
+            (
+                metric
+                for metric in metrics
+                if all((metric.get(key) == value for key, value in attrs.items()))
+            ),
+            None,
+        )
+        if matched_metric:
+            metrics.remove(matched_metric)
+            raise web.HTTPOk()
+        else:
+            raise web.HTTPNotFound()
+
+    async def _read_handler(request):
+        return web.Response(text=json.dumps(metrics))
+
     app = web.Application()
     app.add_routes(
         [
-            web.post("/v1/metrics", _null_handler),
+            web.post("/v1/metrics", _metrics_handler),
             web.post("/v1/traces", _traces_handler),
             web.post("/test", _test_handler),
+            web.post("/metrics_test", _metrics_test_handler),
+            web.get("/read", _read_handler),
         ]
     )
 
