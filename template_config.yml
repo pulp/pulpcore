@@ -54,6 +54,7 @@ pulp_env_azure:
   otel_bsp_max_queue_size: 1
   otel_exporter_otlp_endpoint: http://localhost:4318
   otel_exporter_otlp_protocol: http/protobuf
+  otel_metric_export_interval: 800
   pulp_otel_enabled: 'true'
 pulp_env_gcp: {}
 pulp_env_s3: {}
