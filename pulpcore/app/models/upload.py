@@ -9,11 +9,11 @@ from django.db.models.signals import post_delete
 from django.dispatch import receiver
 from rest_framework import serializers
 
-from pulpcore.app.models import BaseModel, fields, storage
+from pulpcore.app.models import BaseModel, fields, storage, AutoAddObjPermsMixin
 from pulpcore.app.util import get_domain_pk
 
 
-class Upload(BaseModel):
+class Upload(BaseModel, AutoAddObjPermsMixin):
     """
     A chunked upload. Stores chunks until used to create an artifact, etc.
 

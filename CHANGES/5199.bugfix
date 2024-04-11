@@ -1,0 +1,3 @@
+Fix Upload failing to run post create hooks.
+On installations using the default access policy, this fixes the automatic owner assignment for
+users with the `core.upload_create` role on upload objects.
