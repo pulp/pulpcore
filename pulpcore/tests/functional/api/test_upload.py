@@ -1,4 +1,5 @@
 """Tests related to content upload."""
+
 import hashlib
 import uuid
 import pytest
@@ -183,3 +184,16 @@ def test_delete_upload(
         uploads_api_client.read(upload.pulp_href)
 
     assert e.value.status == 404
+
+
+def test_upload_owner(pulpcore_bindings, gen_user, gen_object_with_cleanup):
+    user = gen_user(model_roles=["core.upload_creator"])
+    with user:
+        upload = gen_object_with_cleanup(pulpcore_bindings.UploadsApi, {"size": 1024})
+        pulpcore_bindings.UploadsApi.read(upload.pulp_href)
+        assert set(pulpcore_bindings.UploadsApi.my_permissions(upload.pulp_href).permissions) == {
+            "core.view_upload",
+            "core.change_upload",
+            "core.delete_upload",
+            "core.manage_roles_upload",
+        }

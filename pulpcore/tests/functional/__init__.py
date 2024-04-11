@@ -840,31 +840,31 @@ def role_factory(roles_api_client, gen_object_with_cleanup):
 
 
 @pytest.fixture
-def gen_user(bindings_cfg, users_api_client, users_roles_api_client, gen_object_with_cleanup):
+def gen_user(bindings_cfg, pulpcore_bindings, gen_object_with_cleanup):
     class user_context:
         def __init__(self, username=None, model_roles=None, object_roles=None, domain_roles=None):
             self.username = username or str(uuid.uuid4())
             self.password = str(uuid.uuid4())
             self.user = gen_object_with_cleanup(
-                users_api_client, {"username": self.username, "password": self.password}
+                pulpcore_bindings.UsersApi, {"username": self.username, "password": self.password}
             )
             self._saved_credentials = []
 
             if model_roles:
                 for role in model_roles:
-                    users_roles_api_client.create(
+                    pulpcore_bindings.UsersRolesApi.create(
                         auth_user_href=self.user.pulp_href,
                         user_role={"role": role, "domain": None, "content_object": None},
                     )
             if domain_roles:
                 for role, domain in domain_roles:
-                    users_roles_api_client.create(
+                    pulpcore_bindings.UsersRolesApi.create(
                         auth_user_href=self.user.pulp_href,
                         user_role={"role": role, "domain": domain, "content_object": None},
                     )
             if object_roles:
                 for role, content_object in object_roles:
-                    users_roles_api_client.create(
+                    pulpcore_bindings.UsersRolesApi.create(
                         auth_user_href=self.user.pulp_href,
                         user_role={"role": role, "domain": None, "content_object": content_object},
                     )
