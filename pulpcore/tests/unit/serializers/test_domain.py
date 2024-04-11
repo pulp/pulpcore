@@ -52,13 +52,21 @@ def required_settings(storage_class):
     if storage_class == "pulpcore.app.models.storage.FileSystem":
         return {"location": "/var/lib/pulp/media/"}
     elif storage_class == "storages.backends.s3boto3.S3Boto3Storage":
-        return {"access_key": "testing", "secret_key": "secret", "bucket_name": "test"}
+        return {"access_key": "testing", "bucket_name": "test"}
     elif storage_class == "storages.backends.azure_storage.AzureStorage":
         return {"account_name": "test", "account_key": "secret", "azure_container": "test"}
 
 
 @pytest.fixture
-def all_settings(serializer_class, required_settings):
+def extra_required_settings(storage_class):
+    """For fields required in the serializer's validate, but not on the field itself."""
+    if storage_class == "storages.backends.s3boto3.S3Boto3Storage":
+        return {"secret_key": "secret"}
+    return {}
+
+
+@pytest.fixture
+def all_settings(serializer_class, required_settings, extra_required_settings):
     serializer = serializer_class()
     fields = serializer.get_fields()
     default_settings = {
@@ -66,10 +74,12 @@ def all_settings(serializer_class, required_settings):
         for name, field in fields.items()
         if not field.required and not field.read_only
     }
-    return {**required_settings, **default_settings}
+    return {**required_settings, **default_settings, **extra_required_settings}
 
 
-def test_minimal_storage_settings(storage_class, required_settings, all_settings):
+def test_minimal_storage_settings(
+    storage_class, required_settings, extra_required_settings, all_settings
+):
     domain = SimpleNamespace(storage_class=storage_class, **MIN_DOMAIN_SETTINGS)
     data = {"storage_settings": {}}
     serializer = DomainSerializer(domain, data=data, partial=True)
@@ -81,6 +91,10 @@ def test_minimal_storage_settings(storage_class, required_settings, all_settings
         assert field_name in str(exc_info.value)
 
     data["storage_settings"].update(required_settings)
+    if extra_required_settings:
+        with pytest.raises(serializers.ValidationError):
+            serializer.is_valid(raise_exception=True)
+        data["storage_settings"].update(extra_required_settings)
     serializer = DomainSerializer(domain, data=data, partial=True)
     serializer.is_valid(raise_exception=True)
 
@@ -132,7 +146,11 @@ class DomainSettingsBaseMixin:
 
 def test_hidden_settings(storage_class, serializer_class, all_settings):
     fields = serializer_class().get_fields()
-    hidden_field_names = [name for name, field in fields.items() if field.write_only]
+    hidden_field_names = [
+        name
+        for name, field in fields.items()
+        if field.write_only and not isinstance(field, serializers.HiddenField)
+    ]
     domain = SimpleNamespace(
         name="hello",
         storage_class=storage_class,
@@ -148,7 +166,7 @@ def test_hidden_settings(storage_class, serializer_class, all_settings):
     for field in hidden_field_names:
         assert field in hidden_fields
         is_set = bool(all_settings[field])
-        assert hidden_fields[field] == is_set
+        assert hidden_fields[field] == is_set, field
 
 
 # class TestDomainSFTPSettingsSerializer(DomainSettingsBaseMixin, TestCase):
