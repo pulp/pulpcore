@@ -120,7 +120,9 @@ class AmazonS3SettingsSerializer(BaseSettingsClass):
         "aws_access_key_id": "access_key",
         "aws_s3_secret_access_key": "secret_key",
         "aws_secret_access_key": "secret_key",
-        # 'aws_s3_session_profile': 'session_profile',  # Too dangerous to use shared cred file
+        "aws_session_token": "security_token",
+        "aws_security_token": "security_token",
+        "aws_s3_session_profile": "session_profile",
         "aws_s3_file_overwrite": "file_overwrite",
         "aws_s3_object_parameters": "object_parameters",
         "aws_storage_bucket_name": "bucket_name",
@@ -129,8 +131,8 @@ class AmazonS3SettingsSerializer(BaseSettingsClass):
         "aws_s3_signature_version": "signature_version",
         "aws_location": "location",
         "aws_s3_custom_domain": "custom_domain",
-        # Requires AWS_CLOUDFRONT_KEY_ID & AWS_CLOUDFRONT_KEY to create cloudfront_signer
-        # 'cloudfront_signer': cloudfront_signer,
+        "aws_cloudfront_key_id": "cloudfront_key_id",
+        "aws_cloudfront_key": "cloudfront_key",
         "aws_s3_addressing_style": "addressing_style",
         "aws_s3_file_name_charset": "file_name_charset",
         "aws_is_gzipped": "gzip",
@@ -140,14 +142,18 @@ class AmazonS3SettingsSerializer(BaseSettingsClass):
         "aws_s3_proxies": "proxies",
         "aws_s3_region_name": "region_name",
         "aws_s3_use_ssl": "use_ssl",
-        # 'aws_s3_verify': 'verify',  # Dangerous, this accepts False or path to CA cert bundle
+        "aws_s3_verify": "verify",
         "aws_s3_max_memory_size": "max_memory_size",
         "aws_default_acl": "default_acl",
         "aws_s3_use_threads": "use_threads",
+        "aws_s3_transfer_config": "transfer_config",
     }
 
     access_key = serializers.CharField(required=True, write_only=True)
-    secret_key = serializers.CharField(required=True, write_only=True)
+    secret_key = serializers.CharField(allow_null=True, default=None, write_only=True)
+    security_token = serializers.CharField(allow_null=True, default=None, write_only=True)
+    # Too dangerous to use shared cred file, ensure is always False
+    session_profile = serializers.HiddenField(default=False)
     file_overwrite = serializers.BooleanField(default=True)
     object_parameters = serializers.DictField(default={})
     bucket_name = serializers.CharField(required=True)
@@ -156,6 +162,8 @@ class AmazonS3SettingsSerializer(BaseSettingsClass):
     signature_version = serializers.CharField(allow_null=True, default=None)
     location = serializers.CharField(allow_blank=True, default="")
     custom_domain = serializers.CharField(allow_null=True, default=None)
+    cloudfront_key_id = serializers.CharField(allow_null=True, default=None)
+    cloudfront_key = serializers.CharField(allow_null=True, default=None, write_only=True)
     addressing_style = serializers.CharField(allow_null=True, default=None)
     file_name_charset = serializers.CharField(default="utf-8")
     gzip = serializers.BooleanField(default=False)
@@ -167,9 +175,27 @@ class AmazonS3SettingsSerializer(BaseSettingsClass):
     proxies = serializers.DictField(allow_null=True, default=None)
     region_name = serializers.CharField(allow_null=True, default=None)
     use_ssl = serializers.BooleanField(default=True)
+    verify = serializers.BooleanField(allow_null=True, default=None)
     max_memory_size = serializers.IntegerField(default=0)
     default_acl = serializers.CharField(allow_null=True, default=None)
     use_threads = serializers.BooleanField(default=True)
+    # Not supported yet, requires instantiating a boto3.TransferConfig object
+    transfer_config = serializers.HiddenField(default=None)
+
+    def validate_verify(self, value):
+        """Verify can **only** be None or False. None=verify ssl."""
+        if value:
+            value = None
+        return value
+
+    def validate(self, data):
+        """Verify that secret_key or security_token is set."""
+        data = super().validate(data)
+        if not (data.get("secret_key") or data.get("security_token")):
+            raise serializers.ValidationError(
+                _("One of 'secret_key' or 'security_token' must be set.")
+            )
+        return data
 
 
 class AzureSettingsSerializer(BaseSettingsClass):

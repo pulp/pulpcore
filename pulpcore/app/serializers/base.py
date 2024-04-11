@@ -15,7 +15,6 @@ from django.db import IntegrityError
 from django.db.models import Model
 from drf_queryfields.mixins import QueryFieldsMixin
 from rest_framework import serializers
-from rest_framework.fields import get_attribute
 from rest_framework.validators import UniqueValidator
 from rest_framework_nested.relations import (
     NestedHyperlinkedIdentityField,
@@ -341,14 +340,13 @@ class HiddenFieldsMixin(serializers.Serializer):
         hidden_fields = []
 
         # returns false if field is "" or None
-        def _is_set(field_name):
-            field_value = get_attribute(obj, [field_name])
+        def _is_set(field):
+            field_value = field.get_attribute(obj)
             return field_value != "" and field_value is not None
 
-        fields = self.get_fields()
-        for field_name in fields:
-            if fields[field_name].write_only:
-                hidden_fields.append({"name": field_name, "is_set": _is_set(field_name)})
+        for field_name, field in self.fields.items():
+            if field.write_only and not isinstance(field, serializers.HiddenField):
+                hidden_fields.append({"name": field_name, "is_set": _is_set(field)})
 
         return hidden_fields
 
