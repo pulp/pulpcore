@@ -33,6 +33,7 @@ DEFAULT_CONTENT_TYPES = [
 class BaseSettingsClass(HiddenFieldsMixin, serializers.Serializer):
     """A Base Serializer class for different Storage Backend Settings."""
 
+    STORAGE_CLASS = None
     SETTING_MAPPING = None
 
     def to_representation(self, instance):
@@ -68,10 +69,20 @@ class BaseSettingsClass(HiddenFieldsMixin, serializers.Serializer):
         data.update(update_dict)
         return super().to_internal_value(data)
 
+    def create(self, validated_data):
+        """
+        Create a storage instance based on the stored settings.
+
+        Subclasses can override this to instantiate objects needed for creation.
+        """
+        storage_class = import_string(self.STORAGE_CLASS)
+        return storage_class(**validated_data)
+
 
 class FileSystemSettingsSerializer(BaseSettingsClass):
     """A Serializer for FileSystem storage settings."""
 
+    STORAGE_CLASS = "pulpcore.app.models.storage.FileSystem"
     SETTING_MAPPING = {
         "media_root": "location",
         "media_url": "base_url",
@@ -89,6 +100,7 @@ class FileSystemSettingsSerializer(BaseSettingsClass):
 class SFTPSettingsSerializer(BaseSettingsClass):
     """A Serializer for SFTP storage settings."""
 
+    STORAGE_CLASS = "pulpcore.app.models.storage.PulpSFTPStorage"
     SETTING_MAPPING = {
         "sftp_storage_host": "host",
         "sftp_storage_params": "params",
@@ -112,9 +124,30 @@ class SFTPSettingsSerializer(BaseSettingsClass):
     base_url = serializers.CharField(allow_null=True, default=None)
 
 
+class TransferConfigSerializer(serializers.Serializer):
+    """A Serializer for the boto3.S3 Transfer Config object."""
+
+    multipart_threshold = serializers.IntegerField(default=8388608)  # 8 * 1MB
+    max_concurrency = serializers.IntegerField(default=10)
+    multipart_chunksize = serializers.IntegerField(default=8388608)
+    num_download_attempts = serializers.IntegerField(default=5)
+    max_io_queue = serializers.IntegerField(default=100)
+    io_chunksize = serializers.IntegerField(default=262144)  # 256 * 1KB
+    use_threads = serializers.BooleanField(default=True)
+    max_bandwidth = serializers.IntegerField(allow_null=True, default=None)
+    preferred_transfer_client = serializers.ChoiceField(choices=("auto", "classic"), default="auto")
+
+    def create(self, validated_data):
+        """Return a boto3.S3.transfer.TransferConfig object."""
+        from boto3.s3.transfer import TransferConfig
+
+        return TransferConfig(**validated_data)
+
+
 class AmazonS3SettingsSerializer(BaseSettingsClass):
     """A Serializer for Amazon S3 storage settings."""
 
+    STORAGE_CLASS = "storages.backends.s3boto3.S3Boto3Storage"
     SETTING_MAPPING = {
         "aws_s3_access_key_id": "access_key",
         "aws_access_key_id": "access_key",
@@ -179,8 +212,7 @@ class AmazonS3SettingsSerializer(BaseSettingsClass):
     max_memory_size = serializers.IntegerField(default=0)
     default_acl = serializers.CharField(allow_null=True, default=None)
     use_threads = serializers.BooleanField(default=True)
-    # Not supported yet, requires instantiating a boto3.TransferConfig object
-    transfer_config = serializers.HiddenField(default=None)
+    transfer_config = TransferConfigSerializer(allow_null=True, default=None)
 
     def validate_verify(self, value):
         """Verify can **only** be None or False. None=verify ssl."""
@@ -197,10 +229,18 @@ class AmazonS3SettingsSerializer(BaseSettingsClass):
             )
         return data
 
+    def create(self, validated_data):
+        """Special handling for TransferConfig if set."""
+        if transfer_config := validated_data.get("transfer_config"):
+            transfer = self.fields["transfer_config"].create(transfer_config)
+            validated_data["transfer_config"] = transfer
+        return super().create(validated_data)
+
 
 class AzureSettingsSerializer(BaseSettingsClass):
     """A Serializer for Azure storage settings."""
 
+    STORAGE_CLASS = "storages.backends.azure_storage.AzureStorage"
     SETTING_MAPPING = {
         "azure_account_name": "account_name",
         "azure_account_key": "account_key",
@@ -245,6 +285,7 @@ class AzureSettingsSerializer(BaseSettingsClass):
 class GoogleSettingsSerializer(BaseSettingsClass):
     """A Serializer for Google storage settings."""
 
+    STORAGE_CLASS = "storages.backends.gcloud.GoogleCloudStorage"
     SETTING_MAPPING = {
         "gs_project_id": "project_id",
         # "gs_credentials": "credentials",
@@ -317,6 +358,14 @@ class StorageSettingsSerializer(serializers.Serializer):
             ret.update(serializer.validated_data)
         # Hack to get correct data for DomainSerializer since this field uses source="*"
         return {"storage_settings": ret}
+
+    def create_storage(self):
+        """Instantiate a storage class based on the Domain's storage class."""
+        instance = self.root.instance
+        serializer_class = self.STORAGE_MAPPING[instance.storage_class]
+        serializer = serializer_class(data=instance.storage_settings)
+        serializer.is_valid(raise_exception=True)
+        return serializer.create(serializer.validated_data)
 
 
 class DomainSerializer(ModelSerializer):
@@ -394,6 +443,9 @@ class DomainSerializer(ModelSerializer):
                 }
             )
         return data
+
+    def create_storage(self):
+        return self.fields["storage_settings"].create_storage()
 
     class Meta:
         model = models.Domain
