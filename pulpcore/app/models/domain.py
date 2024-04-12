@@ -1,6 +1,6 @@
 from opentelemetry.metrics import Observation
 
-from django.core.files.storage import get_storage_class, default_storage
+from django.core.files.storage import default_storage
 from django.db import models
 from django_lifecycle import hook, BEFORE_DELETE, BEFORE_UPDATE, AFTER_CREATE
 
@@ -8,6 +8,9 @@ from pulpcore.app.models import BaseModel, AutoAddObjPermsMixin
 from pulpcore.exceptions import DomainProtectedError
 
 from .fields import EncryptedJSONField
+
+# Global used to store instantiated storage classes to speed up lookups across domains
+storages = {}
 
 
 class Domain(BaseModel, AutoAddObjPermsMixin):
@@ -44,8 +47,17 @@ class Domain(BaseModel, AutoAddObjPermsMixin):
         """Returns this domain's instantiated storage class."""
         if self.name == "default":
             return default_storage
-        storage_class = get_storage_class(self.storage_class)
-        return storage_class(**self.storage_settings)
+
+        if date_storage_tuple := storages.get(self.pulp_id):
+            last_updated, storage = date_storage_tuple
+            if self.pulp_last_updated == last_updated:
+                return storage
+
+        from pulpcore.app.serializers import DomainSerializer
+
+        storage = DomainSerializer(instance=self).create_storage()
+        storages[self.pulp_id] = (self.pulp_last_updated, storage)
+        return storage
 
     @hook(BEFORE_DELETE, when="name", is_now="default")
     @hook(BEFORE_UPDATE, when="name", was="default")
