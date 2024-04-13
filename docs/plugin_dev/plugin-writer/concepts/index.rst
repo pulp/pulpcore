@@ -376,10 +376,10 @@ In some cases, a setting should not overwrite an existing setting, but instead a
 example, consider adding a custom log handler or logger to the `LOGGING <https://github.com/pulp/
 pulpcore/blob/ec336c2b7bc7cefd3a28fc69dcd1c65655332841/pulpcore/app/settings.py#L183-L202>`_
 settings. You don't want to fully overwrite it, but instead add or overwrite only a sub-portion.
-``dynaconf`` provides the `dynaconf_merge feature <https://dynaconf.readthedocs.io/en/latest/guides/
-usage.html#merging-existing-values>`_ which is for merging settings instead of overwriting them. For
-example, pulp_ansible makes use of this `here <https://github.com/pulp/pulp_ansible/blob/
-31dd6b77f0e2748644a4b76607be4a6cd2b6ce89/pulp_ansible/app/settings.py>`_.
+``dynaconf`` provides the `dynaconf_merge feature <https://www.dynaconf.com/merging/>`_ which is for
+merging settings instead of overwriting them. For example, pulp_ansible makes use of this `here
+<https://github.com/pulp/pulp_ansible/blob/31dd6b77f0e2748644a4b76607be4a6cd2b6ce89/pulp_ansible/
+app/settings.py>`_.
 
 Some settings require validation to ensure the user has entered a valid value. Plugins can add
 validation for their settings using validators added in a ``dynaconf`` hook file that will run
