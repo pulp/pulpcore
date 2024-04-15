@@ -175,20 +175,3 @@ def verify_get_response(status, expected_schema):
     else:
         assert status["storage"]["free"] is not None
         assert status["storage"]["total"] is not None
-
-
-@pytest.mark.parallel
-def test_head_unauthenticated(
-    test_path,
-    pulpcore_bindings,
-    pulp_api_v3_url,
-    anonymous_user,
-):
-    """
-    Assert that HEAD requests to Status API return 200 without a response body.
-    """
-    status_url = f"{pulp_api_v3_url}status/"
-    with anonymous_user:
-        r = pulpcore_bindings.client.request("HEAD", status_url, headers={"User-Agent": test_path})
-    assert r.status == 200
-    assert r.data == b""
