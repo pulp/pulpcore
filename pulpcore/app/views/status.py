@@ -43,12 +43,6 @@ class StatusView(APIView):
     authentication_classes = []
     permission_classes = []
 
-    def head(self, request):
-        """
-        Lightweight status check that ensures that the REST API can connect to the database.
-        """
-        return Response()
-
     @extend_schema(
         summary="Inspect status of Pulp",
         operation_id="status_read",
