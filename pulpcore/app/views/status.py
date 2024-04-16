@@ -136,3 +136,24 @@ class StatusView(APIView):
             return False
         else:
             return True
+
+
+class LivezView(APIView):
+    """
+    Liveness Probe for the REST API.
+    """
+
+    # allow anyone to access the liveness api
+    authentication_classes = []
+    permission_classes = []
+
+    @extend_schema(
+        summary="Inspect liveness of Pulp's REST API.",
+        operation_id="livez_read",
+        responses={200: None},
+    )
+    def get(self, request):
+        """
+        Returns 200 OK when API is alive.
+        """
+        return Response()
