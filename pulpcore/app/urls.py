@@ -13,7 +13,13 @@ from rest_framework_nested import routers
 from rest_framework.routers import APIRootView
 
 from pulpcore.app.apps import pulp_plugin_configs
-from pulpcore.app.views import OrphansView, PulpImporterImportCheckView, RepairView, StatusView
+from pulpcore.app.views import (
+    LivezView,
+    OrphansView,
+    PulpImporterImportCheckView,
+    RepairView,
+    StatusView,
+)
 from pulpcore.app.viewsets import (
     ListRepositoryVersionViewSet,
     OrphansCleanupViewset,
@@ -157,6 +163,7 @@ urlpatterns = [
 ]
 
 docs_and_status = [
+    path("livez/", LivezView.as_view()),
     path("status/", StatusView.as_view()),
     path(
         "docs/api.json",
