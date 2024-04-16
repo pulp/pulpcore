@@ -4,7 +4,7 @@ import logging
 from asgiref.sync import sync_to_async
 from aiohttp.web import middleware
 from django.conf import settings
-from django.db.utils import InterfaceError, OperationalError
+from django.db.utils import InterfaceError, DatabaseError
 from django.http.request import HttpRequest
 from rest_framework.views import APIView
 from rest_framework.exceptions import APIException
@@ -29,7 +29,7 @@ async def authenticate(request, handler):
             try:
                 domain = validate_domain(request)
                 fake_view.perform_authentication(drf_request)
-            except (InterfaceError, OperationalError):
+            except (InterfaceError, DatabaseError):
                 Handler._reset_db_connection()
                 domain = validate_domain(request)
                 fake_view.perform_authentication(drf_request)
