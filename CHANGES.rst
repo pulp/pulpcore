@@ -13,6 +13,43 @@ Changelog
 
 .. towncrier release notes start
 
+3.50.3 (2024-04-16)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fix Upload failing to run post create hooks.
+  On installations using the default access policy, this fixes the automatic owner assignment for
+  users with the `core.upload_create` role on upload objects.
+  :github:`5199`
+- Catch any DatabaseError, not only OperationalError to trigger reconnect to the database
+  :github:`5259`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
+Pulp File
+---------
+
+No significant changes.
+
+
+Pulp Cert Guard
+---------------
+
+No significant changes.
+
+
+----
+
+
 3.50.2 (2024-04-09)
 ===================
 REST API
