@@ -19,7 +19,7 @@ django.setup()
 from django.conf import settings  # noqa: E402: module level not at top of file
 from django.db.utils import (  # noqa: E402: module level not at top of file
     InterfaceError,
-    OperationalError,
+    DatabaseError,
 )
 
 from pulpcore.app.apps import pulp_plugin_configs  # noqa: E402: module level not at top of file
@@ -64,7 +64,7 @@ async def _heartbeat():
                         await content_app_status.asave(update_fields=["versions"])
 
                 log.debug(msg)
-            except (InterfaceError, OperationalError):
+            except (InterfaceError, DatabaseError):
                 await sync_to_async(Handler._reset_db_connection)()
                 log.info(fail_msg)
             await asyncio.sleep(heartbeat_interval)

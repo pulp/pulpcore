@@ -1,0 +1,1 @@
+Catch any DatabaseError, not only OperationalError to trigger reconnect to the database
