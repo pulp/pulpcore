@@ -82,35 +82,11 @@ def main():
                     f"{last_tag}", f"origin/{branch}", "--name-only", "--", "requirements.txt"
                 )
                 if z_changelog or req_txt_diff:
-                    # Blobless clone does not have file contents for Z branches,
-                    # check commit message for last Z bump
-                    git_branch = f"origin/{branch}"
-                    next_version = None
-                    bump_commit = repo.git.log(
-                        "--oneline",
-                        "--grep=Bump version",
-                        "-n 1",
-                        git_branch,
-                        "--",
-                        ".bumpversion.cfg",
-                    )
-                    if bump_commit:
-                        next_version = bump_commit.split("→ ")[-1]
-                    # If not found - try old-commit-msg
-                    if not next_version:
-                        bump_commit = repo.git.log(
-                            "--oneline",
-                            "--grep=Bump to",
-                            "-n 1",
-                            git_branch,
-                            "--",
-                            ".bumpversion.cfg",
-                        )
-                        next_version = bump_commit.split("to ")[-1] if bump_commit else None
-
-                    # You could, theoretically, be next_vers==None here - but that's always
-                    # been true for this script.
-                    next_version = Version(next_version)
+                    curr_version = Version(last_tag)
+                    assert curr_version.base_version.startswith(
+                        branch
+                    ), "Current-version has to belong to the current branch!"
+                    next_version = Version(f"{branch}.{curr_version.micro + 1}")
                     reason = "CHANGES" if z_changelog else "requirements.txt"
                     print(
                         f"A Z-release is needed for {branch}, "
