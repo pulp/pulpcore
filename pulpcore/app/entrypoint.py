@@ -7,7 +7,7 @@ import click
 import django
 from django.conf import settings
 from django.db import connection
-from django.db.utils import InterfaceError, OperationalError
+from django.db.utils import InterfaceError, DatabaseError
 from gunicorn.workers.sync import SyncWorker
 
 from pulpcore.app.apps import pulp_plugin_configs
@@ -38,7 +38,7 @@ class PulpApiWorker(SyncWorker):
                     self.api_app_status.save(update_fields=["versions"])
 
             logger.debug(self.beat_msg)
-        except (InterfaceError, OperationalError):
+        except (InterfaceError, DatabaseError):
             connection.close_if_unusable_or_obsolete()
             logger.info(self.fail_beat_msg)
 
