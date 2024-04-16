@@ -107,5 +107,5 @@ test_reroute: true
 test_s3: true
 use_issue_template: true
 use_legacy_docs: true
-use_unified_docs: false
+use_unified_docs: true
 
