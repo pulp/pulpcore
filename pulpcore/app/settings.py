@@ -12,9 +12,9 @@ import sys
 
 from contextlib import suppress
 from importlib import import_module
+from importlib.metadata import entry_points
 from logging import getLogger
 from pathlib import Path
-from pkg_resources import iter_entry_points
 
 from cryptography.fernet import Fernet
 from django.core.exceptions import ImproperlyConfigured
@@ -80,14 +80,6 @@ INSTALLED_APPS = [
     # pulp core app
     "pulpcore.app",
 ]
-
-# Enumerate the installed Pulp plugins during the loading process for use in the status API
-INSTALLED_PULP_PLUGINS = []
-
-for entry_point in iter_entry_points("pulpcore.plugin"):
-    plugin_app_config = entry_point.load()
-    INSTALLED_PULP_PLUGINS.append(entry_point.module_name)
-    INSTALLED_APPS.append(plugin_app_config)
 
 # Optional apps that help with development, or augment Pulp in some non-critical way
 OPTIONAL_APPS = [
@@ -317,9 +309,17 @@ IMPORT_WORKERS_PERCENT = 100
 
 # HERE STARTS DYNACONF EXTENSION LOAD (Keep at the very bottom of settings.py)
 # Read more at https://dynaconf.readthedocs.io/en/latest/guides/django.html
-from dynaconf import DjangoDynaconf, Validator  # noqa
+from dynaconf import DjangoDynaconf, Dynaconf, Validator  # noqa
 
 # Validators
+
+enabled_plugins_validator = Validator(
+    "ENABLED_PLUGINS",
+    is_type_of=list,
+    len_min=1,
+    when=Validator("ENABLED_PLUGINS", must_exist=True),
+)
+
 content_origin_validator = Validator(
     "CONTENT_ORIGIN",
     must_exist=True,
@@ -407,19 +407,43 @@ json_header_auth_validator = (
     authentication_json_header_validator & authentication_json_header_jq_filter_validator
 )
 
+
+def load_plugin_config_hook(settings):
+    # Enumerate the installed Pulp plugins during the loading process for use in the status API
+    ENABLED_PLUGINS = getattr(settings, "ENABLED_PLUGINS", None)
+    installed_plugins = []
+    installed_plugin_apps = []
+
+    for entry_point in entry_points().get("pulpcore.plugin", []):
+        if ENABLED_PLUGINS is not None and entry_point.name not in ENABLED_PLUGINS:
+            continue
+        installed_plugins.append(entry_point.module)
+        installed_plugin_apps.append(entry_point.load())
+
+    plugin_settings = Dynaconf(
+        PRELOAD_FOR_DYNACONF=[f"{module}.app.settings" for module in installed_plugins]
+    )
+
+    data = {"dynaconf_merge": True}
+    data.update(plugin_settings.as_dict())
+    data.update(settings.as_dict())
+    data["INSTALLED_APPS"].extend(installed_plugin_apps)
+    data["INSTALLED_APPS"].append("dynaconf_merge_unique")
+    return data
+
+
 settings = DjangoDynaconf(
     __name__,
     ENVVAR_PREFIX_FOR_DYNACONF="PULP",
     ENV_SWITCHER_FOR_DYNACONF="PULP_ENV",
-    PRELOAD_FOR_DYNACONF=[
-        "{}.app.settings".format(plugin_name) for plugin_name in INSTALLED_PULP_PLUGINS
-    ],
     ENVVAR_FOR_DYNACONF="PULP_SETTINGS",
+    post_hooks=(load_plugin_config_hook,),
     load_dotenv=False,
     validators=[
         api_root_validator,
         cache_validator,
         content_origin_validator,
+        enabled_plugins_validator,
         sha256_validator,
         storage_validator,
         unknown_algs_validator,
