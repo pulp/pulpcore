@@ -13,6 +13,39 @@ Changelog
 
 .. towncrier release notes start
 
+3.49.4 (2024-04-16)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Catch any DatabaseError, not only OperationalError to trigger reconnect to the database
+  :github:`5259`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
+Pulp File
+---------
+
+No significant changes.
+
+
+Pulp Cert Guard
+---------------
+
+No significant changes.
+
+
+----
+
+
 3.49.3 (2024-03-27)
 ===================
 REST API
