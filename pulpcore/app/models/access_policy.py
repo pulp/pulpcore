@@ -67,10 +67,14 @@ class AutoAddObjPermsMixin:
 
     @hook("after_create")
     def add_perms(self):
-        viewset = get_viewset_for_model(self)
-        for permission_class in viewset.get_permissions(viewset):
-            if hasattr(permission_class, "handle_creation_hooks"):
-                permission_class.handle_creation_hooks(self)
+        try:
+            viewset = get_viewset_for_model(self)
+        except LookupError:
+            pass
+        else:
+            for permission_class in viewset.get_permissions(viewset):
+                if hasattr(permission_class, "handle_creation_hooks"):
+                    permission_class.handle_creation_hooks(self)
 
     def add_roles_for_users(self, roles, users):
         """
