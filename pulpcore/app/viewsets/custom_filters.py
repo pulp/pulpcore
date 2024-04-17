@@ -248,8 +248,13 @@ class ContentAddedRepositoryVersionFilter(RepoVersionHrefFilter):
             # user didn't supply a value
             return qs
 
-        repo_version = self.get_repository_version(value)
-        return qs.filter(pk__in=repo_version.added())
+        if "," in value:
+            rv1 = self.get_repository_version(value.split(",")[0])
+            rv2 = self.get_repository_version(value.split(",")[1])
+            return qs.filter(pk__in=rv2.added(rv1))
+        else:
+            repo_version = self.get_repository_version(value)
+            return qs.filter(pk__in=repo_version.added())
 
 
 class ContentRemovedRepositoryVersionFilter(RepoVersionHrefFilter):
@@ -270,8 +275,13 @@ class ContentRemovedRepositoryVersionFilter(RepoVersionHrefFilter):
             # user didn't supply a value
             return qs
 
-        repo_version = self.get_repository_version(value)
-        return qs.filter(pk__in=repo_version.removed())
+        if "," in value:
+            rv1 = self.get_repository_version(value.split(",")[0])
+            rv2 = self.get_repository_version(value.split(",")[1])
+            return qs.filter(pk__in=rv2.removed(rv1))
+        else:
+            repo_version = self.get_repository_version(value)
+            return qs.filter(pk__in=repo_version.removed())
 
 
 class CharInFilter(BaseInFilter, CharFilter):
