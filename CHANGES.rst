@@ -13,6 +13,39 @@ Changelog
 
 .. towncrier release notes start
 
+3.51.1 (2024-04-17)
+===================
+REST API
+--------
+
+No significant changes.
+
+
+Plugin API
+----------
+
+Bugfixes
+~~~~~~~~
+
+- Fixed a bug where models with auto assign permissions failed when no viewset was attached.
+  :github:`5267`
+
+
+Pulp File
+---------
+
+No significant changes.
+
+
+Pulp Cert Guard
+---------------
+
+No significant changes.
+
+
+----
+
+
 3.51.0 (2024-04-16)
 ===================
 REST API
