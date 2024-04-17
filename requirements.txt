@@ -18,6 +18,7 @@ drf-nested-routers>=0.93.4,<=0.93.5
 drf-spectacular==0.26.5  # We monkeypatch this so we need a very narrow requirement string
 dynaconf>=3.1.12,<3.2.5
 gunicorn>=20.1,<=21.2.0
+gunicorn>=20.1,<22.1.0
 importlib-metadata>=6.0.1,<=6.0.1  # Pinned to fix opentelemetry dependency solving issues with pip
 jinja2>=3.1,<=3.1.3
 json_stream>=2.3.2,<2.4
