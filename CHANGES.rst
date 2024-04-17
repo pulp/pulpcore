@@ -13,6 +13,126 @@ Changelog
 
 .. towncrier release notes start
 
+3.51.1 (2024-04-17)
+===================
+REST API
+--------
+
+No significant changes.
+
+
+Plugin API
+----------
+
+Bugfixes
+~~~~~~~~
+
+- Fixed a bug where models with auto assign permissions failed when no viewset was attached.
+  :github:`5267`
+
+
+Pulp File
+---------
+
+No significant changes.
+
+
+Pulp Cert Guard
+---------------
+
+No significant changes.
+
+
+----
+
+
+3.51.0 (2024-04-16)
+===================
+REST API
+--------
+
+Features
+~~~~~~~~
+
+- Add a new SecurityScheme for external authentication in the OpenAPI schema.
+  :github:`5179`
+
+
+Bugfixes
+~~~~~~~~
+
+- Fix Upload failing to run post create hooks.
+  On installations using the default access policy, this fixes the automatic owner assignment for
+  users with the `core.upload_create` role on upload objects.
+  :github:`5199`
+- Catch any DatabaseError, not only OperationalError to trigger reconnect to the database
+  :github:`5259`
+
+
+Misc
+~~~~
+
+- :github:`4592`, :github:`5010`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
+Pulp File
+---------
+
+No significant changes.
+
+
+Pulp Cert Guard
+---------------
+
+No significant changes.
+
+
+----
+
+
+3.50.3 (2024-04-16)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fix Upload failing to run post create hooks.
+  On installations using the default access policy, this fixes the automatic owner assignment for
+  users with the `core.upload_create` role on upload objects.
+  :github:`5199`
+- Catch any DatabaseError, not only OperationalError to trigger reconnect to the database
+  :github:`5259`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
+Pulp File
+---------
+
+No significant changes.
+
+
+Pulp Cert Guard
+---------------
+
+No significant changes.
+
+
+----
+
+
 3.50.2 (2024-04-09)
 ===================
 REST API
@@ -99,6 +219,39 @@ Misc
 ~~~~
 
 - :github:`4315`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
+Pulp File
+---------
+
+No significant changes.
+
+
+Pulp Cert Guard
+---------------
+
+No significant changes.
+
+
+----
+
+
+3.49.4 (2024-04-16)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Catch any DatabaseError, not only OperationalError to trigger reconnect to the database
+  :github:`5259`
 
 
 Plugin API
