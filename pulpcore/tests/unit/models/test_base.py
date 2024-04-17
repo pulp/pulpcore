@@ -1,12 +1,8 @@
 import pytest
 from uuid import uuid4
 
-from pulpcore.app.models import Repository
-
-try:
-    from pulp_file.app.models import FileRepository, FileRemote
-except ImportError:
-    pytestmark = pytest.mark.skip("These tests need pulp_file to be installed.")
+from pulpcore.app.models import AutoAddObjPermsMixin, Repository
+from pulp_file.app.models import FileRepository, FileRemote
 
 
 @pytest.mark.django_db
@@ -61,3 +57,15 @@ def test_cast(django_assert_num_queries):
 def test_get_model_for_pulp_type():
     assert Repository.get_model_for_pulp_type("core.repository") is Repository
     assert Repository.get_model_for_pulp_type("file.file") is FileRepository
+
+
+class PermissionRepository(Repository, AutoAddObjPermsMixin):
+    class Meta:
+        app_label = "test"
+        default_related_name = "permission_repository"
+        proxy = True
+
+
+@pytest.mark.django_db
+def test_resiliant_auto_perms():
+    PermissionRepository(name="auto permission test").save()
