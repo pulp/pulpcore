@@ -13,6 +13,35 @@ Changelog
 
 .. towncrier release notes start
 
+3.51.2 (2024-04-17)
+===================
+REST API
+--------
+
+No significant changes.
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
+Pulp File
+---------
+
+No significant changes.
+
+
+Pulp Cert Guard
+---------------
+
+No significant changes.
+
+
+----
+
+
 3.51.1 (2024-04-17)
 ===================
 REST API
@@ -219,6 +248,35 @@ Misc
 ~~~~
 
 - :github:`4315`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
+Pulp File
+---------
+
+No significant changes.
+
+
+Pulp Cert Guard
+---------------
+
+No significant changes.
+
+
+----
+
+
+3.49.5 (2024-04-17)
+===================
+REST API
+--------
+
+No significant changes.
 
 
 Plugin API
@@ -1210,6 +1268,23 @@ Features
   :github:`4550`
 
 
+3.39.13 (2024-04-17)
+====================
+REST API
+--------
+
+No significant changes.
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
+----
+
+
 3.39.12 (2024-03-26)
 ====================
 REST API
@@ -2084,6 +2159,23 @@ Misc
 ~~~~
 
 - :github:`3798`
+
+
+3.28.26 (2024-04-17)
+====================
+REST API
+--------
+
+No significant changes.
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
+----
 
 
 3.28.25 (2024-03-26)
@@ -3626,6 +3718,23 @@ Deprecations
   Deprecated ``pulpcore.plugin.actions.raise_for_unknown_content_units`` in favour of
   ``pulpcore.plugin.util.raise_for_unknown_content_units``.
   :github:`3604`
+
+
+3.22.25 (2024-04-17)
+====================
+REST API
+--------
+
+No significant changes.
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
+----
 
 
 3.22.24 (2024-03-26)
