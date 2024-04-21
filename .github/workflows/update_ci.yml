@@ -101,33 +101,6 @@ jobs:
         with:
           fetch-depth: 0
           path: "pulpcore"
-          ref: "3.18"
-
-      - name: "Run update"
-        working-directory: "pulpcore"
-        run: |
-          ../plugin_template/scripts/update_ci.sh
-
-      - name: "Create Pull Request for CI files"
-        uses: "peter-evans/create-pull-request@v6"
-        with:
-          token: "${{ secrets.RELEASE_TOKEN }}"
-          path: "pulpcore"
-          committer: "pulpbot <pulp-infra@redhat.com>"
-          author: "pulpbot <pulp-infra@redhat.com>"
-          title: "Update CI files for branch 3.18"
-          body: ""
-          branch: "update-ci/3.18"
-          base: "3.18"
-          commit-message: |
-            Update CI files
-
-            [noissue]
-          delete-branch: true
-      - uses: "actions/checkout@v4"
-        with:
-          fetch-depth: 0
-          path: "pulpcore"
           ref: "3.21"
 
       - name: "Run update"
@@ -227,33 +200,6 @@ jobs:
           body: ""
           branch: "update-ci/3.39"
           base: "3.39"
-          commit-message: |
-            Update CI files
-
-            [noissue]
-          delete-branch: true
-      - uses: "actions/checkout@v4"
-        with:
-          fetch-depth: 0
-          path: "pulpcore"
-          ref: "3.45"
-
-      - name: "Run update"
-        working-directory: "pulpcore"
-        run: |
-          ../plugin_template/scripts/update_ci.sh
-
-      - name: "Create Pull Request for CI files"
-        uses: "peter-evans/create-pull-request@v6"
-        with:
-          token: "${{ secrets.RELEASE_TOKEN }}"
-          path: "pulpcore"
-          committer: "pulpbot <pulp-infra@redhat.com>"
-          author: "pulpbot <pulp-infra@redhat.com>"
-          title: "Update CI files for branch 3.45"
-          body: ""
-          branch: "update-ci/3.45"
-          base: "3.45"
           commit-message: |
             Update CI files
 
