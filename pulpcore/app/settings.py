@@ -22,6 +22,14 @@ from django.db import connection
 
 from pulpcore import constants
 
+
+try:
+    import sentry_sdk
+
+    sentry_sdk.init()
+except ImportError:
+    pass
+
 # Build paths inside the project like this: BASE_DIR / ...
 BASE_DIR = Path(__file__).absolute().parent
 
