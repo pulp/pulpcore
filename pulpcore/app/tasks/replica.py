@@ -50,7 +50,6 @@ def replicate_distributions(server_pk):
     ctx = ReplicaContext(
         api_root=server.api_root,
         api_kwargs=api_kwargs,
-        format="json",
         background_tasks=True,
         timeout=0,
         domain=server.domain,
