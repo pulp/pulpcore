@@ -1,2 +1,0 @@
-Fixed bug where Last-Modified header of packages in django-storages was being updated on duplicate
-uploads.
