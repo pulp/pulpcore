@@ -13,6 +13,59 @@ Changelog
 
 .. towncrier release notes start
 
+3.52.0 (2024-04-23)
+===================
+REST API
+--------
+
+Features
+~~~~~~~~
+
+- Added a Liveness API that can be used for the livenessProbe in k8s.
+  :github:`5243`
+
+
+Bugfixes
+~~~~~~~~
+
+- Fixed bug where Last-Modified header of packages in django-storages was being updated on duplicate
+  uploads.
+  :github:`5149`
+- Fixed bug which prevented the Pulp API usaging from a web browser
+  :github:`5250`
+
+
+Misc
+~~~~
+
+- 
+
+
+Plugin API
+----------
+
+Bugfixes
+~~~~~~~~
+
+- Fixed a bug where models with auto assign permissions failed when no viewset was attached.
+  :github:`5267`
+
+
+Pulp File
+---------
+
+No significant changes.
+
+
+Pulp Cert Guard
+---------------
+
+No significant changes.
+
+
+----
+
+
 3.51.2 (2024-04-17)
 ===================
 REST API

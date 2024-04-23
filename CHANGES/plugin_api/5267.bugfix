@@ -1,1 +1,0 @@
-Fixed a bug where models with auto assign permissions failed when no viewset was attached.
