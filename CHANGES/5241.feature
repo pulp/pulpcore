@@ -1,1 +1,1 @@
-Add support for filtering packages by if they were added/removed between repository versions
+Add support for filtering packages by if they are not in a repository version
