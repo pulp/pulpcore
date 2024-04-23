@@ -47,7 +47,6 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.autosummary',
     'sphinx.ext.napoleon',
-    'sphinxcontrib.openapi',
     'sphinxcontrib.jquery',
     'napoleon_django',
 ]
