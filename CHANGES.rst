@@ -13,6 +13,39 @@ Changelog
 
 .. towncrier release notes start
 
+3.51.3 (2024-04-23)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fixed bug which prevented the Pulp API usaging from a web browser
+  :github:`5250`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
+Pulp File
+---------
+
+No significant changes.
+
+
+Pulp Cert Guard
+---------------
+
+No significant changes.
+
+
+----
+
+
 3.51.2 (2024-04-17)
 ===================
 REST API
