@@ -21,6 +21,7 @@ from .custom_filters import (
     ContentAddedRepositoryVersionFilter,
     ContentRemovedRepositoryVersionFilter,
     ContentRepositoryVersionFilter,
+    ContentNotInRepositoryVersionFilter,
 )
 
 
@@ -102,6 +103,8 @@ class ContentFilter(BaseFilterSet):
 
         repository_version:
             Return Content which is contained within this repository version.
+        repository_version_not_in:
+            Return Content which is not contained within this repository version.
         repository_version_added:
             Return Content which was added in this repository version.
         repository_version_removed:
@@ -112,6 +115,7 @@ class ContentFilter(BaseFilterSet):
     """
 
     repository_version = ContentRepositoryVersionFilter()
+    repository_version_not_in = ContentNotInRepositoryVersionFilter()
     repository_version_added = ContentAddedRepositoryVersionFilter()
     repository_version_removed = ContentRemovedRepositoryVersionFilter()
     orphaned_for = OrphanedFilter(

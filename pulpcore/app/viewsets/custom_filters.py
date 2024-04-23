@@ -230,6 +230,28 @@ class ContentRepositoryVersionFilter(RepoVersionHrefFilter):
         return qs.filter(pk__in=repo_version.content)
 
 
+class ContentNotInRepositoryVersionFilter(RepoVersionHrefFilter):
+    """
+    Filter used to get the content of this type not found in a repository version.
+    """
+
+    def filter(self, qs, value):
+        """
+        Args:
+            qs (django.db.models.query.QuerySet): The Content Queryset
+            value (string): The RepositoryVersion href to filter by
+
+        Returns:
+            Queryset of the content contained within the specified repository version
+        """
+        if value is None:
+            # user didn't supply a value
+            return qs
+
+        repo_version = self.get_repository_version(value)
+        return qs.exclude(pk__in=repo_version.content)
+
+
 class ContentAddedRepositoryVersionFilter(RepoVersionHrefFilter):
     """
     Filter used to get the content of this type found in a repository version.
@@ -248,13 +270,8 @@ class ContentAddedRepositoryVersionFilter(RepoVersionHrefFilter):
             # user didn't supply a value
             return qs
 
-        if "," in value:
-            rv1 = self.get_repository_version(value.split(",")[0])
-            rv2 = self.get_repository_version(value.split(",")[1])
-            return qs.filter(pk__in=rv2.added(rv1))
-        else:
-            repo_version = self.get_repository_version(value)
-            return qs.filter(pk__in=repo_version.added())
+        repo_version = self.get_repository_version(value)
+        return qs.filter(pk__in=repo_version.added())
 
 
 class ContentRemovedRepositoryVersionFilter(RepoVersionHrefFilter):
@@ -275,13 +292,8 @@ class ContentRemovedRepositoryVersionFilter(RepoVersionHrefFilter):
             # user didn't supply a value
             return qs
 
-        if "," in value:
-            rv1 = self.get_repository_version(value.split(",")[0])
-            rv2 = self.get_repository_version(value.split(",")[1])
-            return qs.filter(pk__in=rv2.removed(rv1))
-        else:
-            repo_version = self.get_repository_version(value)
-            return qs.filter(pk__in=repo_version.removed())
+        repo_version = self.get_repository_version(value)
+        return qs.filter(pk__in=repo_version.removed())
 
 
 class CharInFilter(BaseInFilter, CharFilter):
