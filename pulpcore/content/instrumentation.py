@@ -17,8 +17,12 @@
 #       1. https://github.com/pypi/support/issues/3353
 #       2. https://github.com/open-telemetry/opentelemetry-python-contrib/issues/2053
 
+import os
+import socket
 import urllib
+
 from aiohttp import web
+from functools import lru_cache
 from multidict import CIMultiDictProxy
 from timeit import default_timer
 from typing import Tuple, Dict, List, Union
@@ -61,6 +65,11 @@ _instruments = ("aiohttp ~= 3.0",)
 tracer = trace.get_tracer(__name__)
 meter = metrics.get_meter(__name__, __version__)
 _excluded_urls = get_excluded_urls("AIOHTTP_SERVER")
+
+
+@lru_cache(maxsize=1)
+def _get_content_app_name():
+    return f"{os.getpid()}@{socket.gethostname()}"
 
 
 def _parse_duration_attrs(req_attrs):
@@ -216,6 +225,12 @@ async def middleware(request, handler):
         description="measures the number of concurrent HTTP requests those are currently in flight",
     )
 
+    served_artifact_size_counter = meter.create_counter(
+        name="artifacts.size.counter",
+        unit="bytes",
+        description="counts the size of served artifacts",
+    )
+
     with tracer.start_as_current_span(
         span_name,
         context=extract(request, getter=getter),
@@ -236,6 +251,14 @@ async def middleware(request, handler):
             duration = max((default_timer() - start) * 1000, 0)
             duration_histogram.record(duration, duration_attrs)
             active_requests_counter.add(-1, active_requests_count_attrs)
+
+        if size := resp.headers.get("X-PULP-ARTIFACT-SIZE"):
+            attributes = {
+                "domain_name": "",
+                "content_app_name": _get_content_app_name(),
+            }
+            served_artifact_size_counter.add(int(size), attributes)
+
         return resp
 
 

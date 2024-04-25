@@ -957,14 +957,38 @@ class Handler:
                         params[STORAGE_RESPONSE_MAP[storage_domain][a_key]] = hdrs[a_key]
             return params
 
+        def _build_url(**kwargs):
+            filename = os.path.basename(content_artifact.relative_path)
+            content_disposition = f"attachment;filename={filename}"
+
+            headers["Content-Disposition"] = content_disposition
+            parameters = _set_params_from_headers(headers, domain.storage_class)
+            storage_url = artifact_file.storage.url(artifact_name, parameters=parameters, **kwargs)
+
+            return URL(storage_url, encoded=True)
+
         artifact_file = content_artifact.artifact.file
         artifact_name = artifact_file.name
-        filename = os.path.basename(content_artifact.relative_path)
-        content_disposition = f"attachment;filename={filename}"
         domain = get_domain()
-        storage = domain.get_storage()
+
+        content_length = artifact_file.size
+
+        try:
+            range_start, range_stop = request.http_range.start, request.http_range.stop
+            if range_start or range_stop:
+                if range_stop and artifact_file.size and range_stop > artifact_file.size:
+                    start = 0 if range_start is None else range_start
+                    content_length = artifact_file.size - start
+                elif range_stop:
+                    content_length = range_stop - range_start
+        except ValueError:
+            size = artifact_file.size or "*"
+            raise HTTPRequestRangeNotSatisfiable(headers={"Content-Range": f"bytes */{size}"})
+
+        headers.update({"X-PULP-ARTIFACT-SIZE": str(content_length)})
 
         if domain.storage_class == "pulpcore.app.models.storage.FileSystem":
+            storage = domain.get_storage()
             path = storage.path(artifact_name)
             if not os.path.exists(path):
                 raise Exception(_("Expected path '{}' is not found").format(path))
@@ -972,25 +996,12 @@ class Handler:
         elif not domain.redirect_to_object_storage:
             return ArtifactResponse(content_artifact.artifact, headers=headers)
         elif domain.storage_class == "storages.backends.s3boto3.S3Boto3Storage":
-            headers["Content-Disposition"] = content_disposition
-            parameters = _set_params_from_headers(headers, domain.storage_class)
-            url = URL(
-                artifact_file.storage.url(
-                    artifact_name, parameters=parameters, http_method=request.method
-                ),
-                encoded=True,
-            )
-            raise HTTPFound(url)
-        elif domain.storage_class == "storages.backends.azure_storage.AzureStorage":
-            headers["Content-Disposition"] = content_disposition
-            parameters = _set_params_from_headers(headers, domain.storage_class)
-            url = URL(artifact_file.storage.url(artifact_name, parameters=parameters), encoded=True)
-            raise HTTPFound(url)
-        elif domain.storage_class == "storages.backends.gcloud.GoogleCloudStorage":
-            headers["Content-Disposition"] = content_disposition
-            parameters = _set_params_from_headers(headers, domain.storage_class)
-            url = URL(artifact_file.storage.url(artifact_name, parameters=parameters), encoded=True)
-            raise HTTPFound(url)
+            raise HTTPFound(_build_url(http_method=request.method))
+        elif domain.storage_class in (
+            "storages.backends.azure_storage.AzureStorage",
+            "storages.backends.gcloud.GoogleCloudStorage",
+        ):
+            raise HTTPFound(_build_url())
         else:
             raise NotImplementedError()
 
@@ -1107,6 +1118,11 @@ class Handler:
         original_finalize = downloader.finalize
         downloader.finalize = finalize
         download_result = await downloader.run()
+
+        if content_length := response.headers.get("Content-Length"):
+            response.headers.update({"X-PULP-ARTIFACT-SIZE": str(content_length)})
+        else:
+            response.headers.update({"X-PULP-ARTIFACT-SIZE": str(size)})
 
         if save_artifact and remote.policy != Remote.STREAMED:
             await asyncio.shield(
