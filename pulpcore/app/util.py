@@ -516,52 +516,17 @@ def cache_key(base_path):
     return base_path
 
 
-class DomainMetricsEmitterBuilder:
-    """A builder class that initializes an emitter for recording domain's metrics.
+class MetricsEmitter:
+    """
+    A builder class that initializes an emitter.
 
     If Open Telemetry is enabled, the builder configures a real emitter capable of sending data to
-    the collector. Otherwise, a no-op emitter is initialized. The real emitter utilizes the global
-    settings to send metrics.
+    the collector. Otherwise, a no-op emitter is initialized. The real emitter may utilize the
+    global settings to send metrics.
 
     By default, the emitter sends data to the collector every 60 seconds. Adjust the environment
     variable OTEL_METRIC_EXPORT_INTERVAL accordingly if needed.
     """
-
-    class _DomainMetricsEmitter:
-        def __init__(self, domain):
-            self.domain = domain
-            self.meter = metrics.get_meter(f"domain.{domain.name}.meter")
-            self.instrument = self._init_emitting_total_size()
-
-        def _init_emitting_total_size(self):
-            return self.meter.create_observable_gauge(
-                name="disk_usage",
-                description="The total disk size by domain.",
-                callbacks=[self._disk_usage_callback()],
-                unit="Bytes",
-            )
-
-        def _disk_usage_callback(self):
-            try:
-                with PGAdvisoryLock(STORAGE_METRICS_LOCK):
-                    from pulpcore.app.models import Artifact
-
-                    options = yield  # noqa
-
-                    while True:
-                        artifacts = Artifact.objects.filter(pulp_domain=self.domain).only("size")
-                        total_size = artifacts.aggregate(size=Sum("size", default=0))["size"]
-                        options = yield [  # noqa
-                            metrics.Observation(
-                                total_size,
-                                {
-                                    "pulp_href": get_url(self.domain),
-                                    "domain_name": self.domain.name,
-                                },
-                            )
-                        ]
-            except AdvisoryLockError:
-                yield
 
     class _NoopEmitter:
         def __call__(self, *args, **kwargs):
@@ -571,19 +536,58 @@ class DomainMetricsEmitterBuilder:
             return self
 
     @classmethod
-    def build(cls, domain):
-        otel_enabled = os.getenv("PULP_OTEL_ENABLED")
-        if otel_enabled == "true" and settings.DOMAIN_ENABLED:
-            return cls._DomainMetricsEmitter(domain)
+    def build(cls, *args, **kwargs):
+        otel_enabled = os.getenv("PULP_OTEL_ENABLED", "").lower() == "true"
+        if otel_enabled and settings.DOMAIN_ENABLED:
+            return cls(*args, **kwargs)
         else:
             return cls._NoopEmitter()
+
+
+class DomainMetricsEmitter(MetricsEmitter):
+    """A builder class that initializes an emitter for recording domain's metrics."""
+
+    def __init__(self, domain):
+        self.domain = domain
+        self.meter = metrics.get_meter(f"domain.{domain.name}.meter")
+        self.instrument = self._init_emitting_total_size()
+
+    def _init_emitting_total_size(self):
+        return self.meter.create_observable_gauge(
+            name="disk_usage",
+            description="The total disk size by domain.",
+            callbacks=[self._disk_usage_callback()],
+            unit="Bytes",
+        )
+
+    def _disk_usage_callback(self):
+        try:
+            with PGAdvisoryLock(STORAGE_METRICS_LOCK):
+                from pulpcore.app.models import Artifact
+
+                options = yield  # noqa
+
+                while True:
+                    artifacts = Artifact.objects.filter(pulp_domain=self.domain).only("size")
+                    total_size = artifacts.aggregate(size=Sum("size", default=0))["size"]
+                    options = yield [  # noqa
+                        metrics.Observation(
+                            total_size,
+                            {
+                                "pulp_href": get_url(self.domain),
+                                "domain_name": self.domain.name,
+                            },
+                        )
+                    ]
+        except AdvisoryLockError:
+            yield
 
 
 def init_domain_metrics_exporter():
     from pulpcore.app.models.domain import Domain
 
     for domain in Domain.objects.all():
-        DomainMetricsEmitterBuilder.build(domain)
+        DomainMetricsEmitter.build(domain)
 
 
 class PGAdvisoryLock:

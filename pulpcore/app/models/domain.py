@@ -1,5 +1,3 @@
-from opentelemetry.metrics import Observation
-
 from django.core.files.storage import default_storage
 from django.db import models
 from django_lifecycle import hook, BEFORE_DELETE, BEFORE_UPDATE
@@ -85,17 +83,4 @@ class Domain(BaseModel, AutoAddObjPermsMixin):
     class Meta:
         permissions = [
             ("manage_roles_domain", "Can manage role assignments on domain"),
-        ]
-
-
-def disk_usage_callback(domain):
-    from pulpcore.app.models import Artifact
-    from pulpcore.app.util import get_url
-
-    options = yield  # noqa
-    while True:
-        artifacts = Artifact.objects.filter(pulp_domain=domain).only("size")
-        total_size = artifacts.aggregate(size=models.Sum("size", default=0))["size"]
-        options = yield [  # noqa
-            Observation(total_size, {"pulp_href": get_url(domain), "domain_name": domain.name})
         ]
