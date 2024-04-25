@@ -179,7 +179,8 @@ Collector here](https://opentelemetry.io/docs/collector/).
 
 - Access to every API endpoint (an HTTP method, target URL, status code, and user agent).
 - Access to every requested package (an HTTP method, target URL, status code, and user agent).
-- Disk usage within a specific domain (total used disk space and the reference to the domain).
+- Disk usage within a specific domain (total used disk space and the reference to a domain). Currently disabled.
+- The size of served artifacts (total count of served data and the reference to a domain).
 
 The information above is sent to the collector in the form of spans and metrics. Thus, the data is
 emitted either based on the user interaction with the system or on a regular basis. Consult
