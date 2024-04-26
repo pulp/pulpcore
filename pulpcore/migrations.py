@@ -17,6 +17,9 @@ class RequireVersion(Operation):
     def state_forwards(self, app_label, state):
         pass
 
+    def state_backwards(self, app_label, state):
+        pass
+
     def database_forwards(self, app_label, schema_editor, from_state, to_state):
         from_state.clear_delayed_apps_cache()
         ApiAppStatus = from_state.apps.get_model("core", "ApiAppStatus")
@@ -53,6 +56,9 @@ class RequireVersion(Operation):
                     ]
                 )
             )
+
+    def database_backwards(self, app_label, schema_editor, from_state, to_state):
+        pass
 
     def describe(self):
         return f"Require plugin '{self.plugin}' >= '{self.version}'."
