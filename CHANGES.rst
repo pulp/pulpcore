@@ -13,6 +13,46 @@ Changelog
 
 .. towncrier release notes start
 
+3.53.0 (2024-04-30)
+===================
+REST API
+--------
+
+Features
+~~~~~~~~
+
+- Added integration with Sentry/GlitchTip.
+  :github:`5285`
+
+
+Bugfixes
+~~~~~~~~
+
+- Update jquery version from 3.5.1 to 3.7.1 in API.html template
+  :github:`5306`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
+Pulp File
+---------
+
+No significant changes.
+
+
+Pulp Cert Guard
+---------------
+
+No significant changes.
+
+
+----
+
+
 3.52.0 (2024-04-23)
 ===================
 REST API
@@ -334,6 +374,35 @@ Misc
 ~~~~
 
 - :github:`4315`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
+Pulp File
+---------
+
+No significant changes.
+
+
+Pulp Cert Guard
+---------------
+
+No significant changes.
+
+
+----
+
+
+3.49.6 (2024-04-30)
+===================
+REST API
+--------
+
+No significant changes.
 
 
 Plugin API
