@@ -1,10 +1,6 @@
 Complex Filtering
 =================
 
-.. warning::
-
-   This feature is in tech-preview. It may change in significant ways in the future.
-
 In addition to the usual querystring filters, Pulp provides a special ``q`` filter, that allows you
 to combine other filters with `NOT`, `AND` and `OR` operations.
 
