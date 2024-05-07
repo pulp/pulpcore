@@ -29,7 +29,7 @@ jobs:
           repository: "pulp/plugin_template"
           path: "plugin_template"
 
-      - uses: "actions/setup-python@v4"
+      - uses: "actions/setup-python@v5"
         with:
           python-version: "3.11"
 
@@ -74,7 +74,7 @@ jobs:
         with:
           fetch-depth: 0
           path: "pulpcore"
-          ref: "3.53"
+          ref: "3.54"
 
       - name: "Run update"
         working-directory: "pulpcore"
@@ -88,10 +88,10 @@ jobs:
           path: "pulpcore"
           committer: "pulpbot <pulp-infra@redhat.com>"
           author: "pulpbot <pulp-infra@redhat.com>"
-          title: "Update CI files for branch 3.53"
+          title: "Update CI files for branch 3.54"
           body: ""
-          branch: "update-ci/3.53"
-          base: "3.53"
+          branch: "update-ci/3.54"
+          base: "3.54"
           commit-message: |
             Update CI files
 

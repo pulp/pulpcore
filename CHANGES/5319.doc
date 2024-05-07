@@ -1,2 +1,0 @@
-Made the complex filtering feature production-ready. This feature supports a special `q` filter
-that allows combinations of other filters with `NOT`, `AND` and `OR` operations.
