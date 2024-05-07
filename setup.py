@@ -23,7 +23,7 @@ setup(
         "sftp": ["django-storages[sftp]<=1.14.2"],
         "s3": ["django-storages[boto3]~=1.14.2"],
         "google": ["django-storages[google]>=1.13.2,<=1.14.2"],
-        "azure": ["django-storages[azure]>=1.12.2,<=1.14.2"],
+        "azure": ["django-storages[azure]>=1.12.2,<=1.14.3"],
         "prometheus": ["django-prometheus"],
     },
     include_package_data=True,
