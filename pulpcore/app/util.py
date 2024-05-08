@@ -547,7 +547,8 @@ class DomainMetricsEmitterBuilder:
                 total_size = artifacts.aggregate(size=Sum("size", default=0))["size"]
                 options = yield [  # noqa
                     metrics.Observation(
-                        total_size, {"pulp_href": get_url(self.domain), "name": self.domain.name}
+                        total_size,
+                        {"pulp_href": get_url(self.domain), "domain_name": self.domain.name},
                     )
                 ]
 
