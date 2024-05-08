@@ -95,5 +95,5 @@ def disk_usage_callback(domain):
         distinct_artifacts = Artifact.objects.filter(pulp_domain=domain).distinct()
         total_size = distinct_artifacts.aggregate(size=models.Sum("size", default=0))["size"]
         options = yield [  # noqa
-            Observation(total_size, {"pulp_href": get_url(domain), "name": domain.name})
+            Observation(total_size, {"pulp_href": get_url(domain), "domain_name": domain.name})
         ]
