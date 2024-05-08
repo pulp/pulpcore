@@ -45,7 +45,7 @@ jobs:
       - name: "Install python dependencies"
         run: |
           echo ::group::PYDEPS
-          pip install gitpython packaging toml
+          pip install gitpython packaging
           echo ::endgroup::
 
       - name: "Configure Git with pulpbot name and email"
