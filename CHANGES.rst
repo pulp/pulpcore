@@ -397,6 +397,39 @@ No significant changes.
 ----
 
 
+3.49.7 (2024-05-07)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fixed bug which prevented the Pulp API usaging from a web browser
+  :github:`5250`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
+Pulp File
+---------
+
+No significant changes.
+
+
+Pulp Cert Guard
+---------------
+
+No significant changes.
+
+
+----
+
+
 3.49.6 (2024-04-30)
 ===================
 REST API
