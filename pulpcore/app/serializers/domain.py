@@ -112,6 +112,7 @@ class SFTPSettingsSerializer(BaseSettingsClass):
         # 'sftp_known_host_file': 'known_host_file',  # This is dangerous to allow to be set
         "sftp_storage_root": "root_path",
         "media_url": "base_url",
+        "sftp_base_url": "base_url",
     }
 
     host = serializers.CharField(required=True)
@@ -180,6 +181,7 @@ class AmazonS3SettingsSerializer(BaseSettingsClass):
         "aws_default_acl": "default_acl",
         "aws_s3_use_threads": "use_threads",
         "aws_s3_transfer_config": "transfer_config",
+        "aws_s3_client_config": "client_config",
     }
 
     access_key = serializers.CharField(required=True, write_only=True)
@@ -213,6 +215,8 @@ class AmazonS3SettingsSerializer(BaseSettingsClass):
     default_acl = serializers.CharField(allow_null=True, default=None)
     use_threads = serializers.BooleanField(default=True)
     transfer_config = TransferConfigSerializer(allow_null=True, default=None)
+    # TODO: Add a botocore.Config serializer to allow specifying this field from json
+    client_config = serializers.HiddenField(default=None)
 
     def validate_verify(self, value):
         """Verify can **only** be None or False. None=verify ssl."""
