@@ -515,7 +515,7 @@ class Handler:
                 )
                 # Find the sizes for on_demand artifacts
                 r_artifacts = RemoteArtifact.objects.filter(
-                    content_artifact__in=artifacts_to_find.keys()
+                    content_artifact__in=artifacts_to_find.keys(), size__isnull=False
                 ).values_list("content_artifact_id", "size")
                 sizes.update({artifacts_to_find[ra_ca_id]: size for ra_ca_id, size in r_artifacts})
 
