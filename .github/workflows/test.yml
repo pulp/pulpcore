@@ -38,11 +38,11 @@ jobs:
           repository: "pulp/pulp-openapi-generator"
           path: "pulp-openapi-generator"
 
-      - uses: "actions/setup-python@v4"
+      - uses: "actions/setup-python@v5"
         with:
           python-version: "3.11"
 
-      - uses: "actions/download-artifact@v3"
+      - uses: "actions/download-artifact@v4"
         with:
           name: "plugin_package"
           path: "pulpcore/dist/"
@@ -118,15 +118,15 @@ jobs:
           docker logs pulp 2>&1 | grep -i pulpcore.deprecation | tee deprecations-${{ matrix.env.TEST }}.txt
 
       - name: "Upload Deprecations"
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
-          name: "deprecations"
+          name: "deprecations-${{ matrix.env.TEST }}"
           path: "pulpcore/deprecations-${{ matrix.env.TEST }}.txt"
           if-no-files-found: "error"
           retention-days: 5
       - name: Upload python client packages
         if: ${{ env.TEST == 'pulp' }}
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: "python-client.tar"
           path: "pulpcore/core-python-client.tar"
@@ -135,7 +135,7 @@ jobs:
 
       - name: Upload python client docs
         if: ${{ env.TEST == 'pulp' }}
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: "python-client-docs.tar"
           path: "pulpcore/core-python-client-docs.tar"
@@ -143,7 +143,7 @@ jobs:
           retention-days: 5
       - name: Upload Ruby client
         if: ${{ env.TEST == 'pulp' }}
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: "ruby-client.tar"
           path: "pulpcore/core-ruby-client.tar"

@@ -25,7 +25,7 @@ jobs:
         with:
           fetch-depth: 0
           path: "pulpcore"
-      - uses: "actions/setup-python@v4"
+      - uses: "actions/setup-python@v5"
         with:
           python-version: "3.11"
       - name: "Install python dependencies"
@@ -67,10 +67,11 @@ jobs:
           mkdir -p "pulpcore"
         working-directory: "."
       - name: "Download Deprecations"
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
-          name: "deprecations"
+          pattern: "deprecations-*"
           path: "pulpcore"
+          merge-multiple: true
       - name: "Print deprecations"
         run: |
           cat deprecations-*.txt | sort -u
