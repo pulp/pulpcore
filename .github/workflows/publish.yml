@@ -39,11 +39,11 @@ jobs:
           repository: "pulp/pulp-openapi-generator"
           path: "pulp-openapi-generator"
 
-      - uses: "actions/setup-python@v4"
+      - uses: "actions/setup-python@v5"
         with:
           python-version: "3.11"
 
-      - uses: "actions/download-artifact@v3"
+      - uses: "actions/download-artifact@v4"
         with:
           name: "plugin_package"
           path: "pulpcore/dist/"
@@ -89,20 +89,20 @@ jobs:
           .github/workflows/scripts/install_ruby_client.sh
         shell: "bash"
       - name: "Upload python client packages"
-        uses: "actions/upload-artifact@v3"
+        uses: "actions/upload-artifact@v4"
         with:
           name: "python-client.tar"
           path: "pulpcore/core-python-client.tar"
           if-no-files-found: "error"
 
       - name: "Upload python client docs"
-        uses: "actions/upload-artifact@v3"
+        uses: "actions/upload-artifact@v4"
         with:
           name: "python-client-docs.tar"
           path: "pulpcore/core-python-client-docs.tar"
           if-no-files-found: "error"
       - name: "Upload ruby client packages"
-        uses: "actions/upload-artifact@v3"
+        uses: "actions/upload-artifact@v4"
         with:
           name: "ruby-client.tar"
           path: "pulpcore/core-ruby-client.tar"
@@ -115,7 +115,7 @@ jobs:
           tar -cvf docs/docs.tar docs/_build
 
       - name: "Upload built docs"
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: "docs.tar"
           path: "pulpcore/docs/docs.tar"
@@ -145,12 +145,12 @@ jobs:
           fetch-depth: 1
           path: "pulpcore"
 
-      - uses: "actions/download-artifact@v3"
+      - uses: "actions/download-artifact@v4"
         with:
           name: "plugin_package"
           path: "pulpcore/dist/"
 
-      - uses: "actions/setup-python@v4"
+      - uses: "actions/setup-python@v5"
         with:
           python-version: "3.11"
 
@@ -184,7 +184,7 @@ jobs:
           path: "pulpcore"
 
       - name: "Download Python client"
-        uses: "actions/download-artifact@v3"
+        uses: "actions/download-artifact@v4"
         with:
           name: "python-client.tar"
           path: "pulpcore/"
@@ -193,7 +193,7 @@ jobs:
         run: |
           tar -xvf core-python-client.tar
 
-      - uses: "actions/setup-python@v4"
+      - uses: "actions/setup-python@v5"
         with:
           python-version: "3.11"
 
@@ -227,7 +227,7 @@ jobs:
           path: "pulpcore"
 
       - name: "Download Ruby client"
-        uses: "actions/download-artifact@v3"
+        uses: "actions/download-artifact@v4"
         with:
           name: "ruby-client.tar"
           path: "pulpcore/"
@@ -263,7 +263,7 @@ jobs:
           fetch-depth: 1
           path: "pulpcore"
 
-      - uses: "actions/setup-python@v4"
+      - uses: "actions/setup-python@v5"
         with:
           python-version: "3.11"
 
@@ -280,13 +280,13 @@ jobs:
           SECRETS_CONTEXT: "${{ toJson(secrets) }}"
 
       - name: "Download built docs"
-        uses: "actions/download-artifact@v3"
+        uses: "actions/download-artifact@v4"
         with:
           name: "docs.tar"
           path: "pulpcore/"
 
       - name: "Download Python client docs"
-        uses: "actions/download-artifact@v3"
+        uses: "actions/download-artifact@v4"
         with:
           name: "python-client-docs.tar"
           path: "pulpcore/"
