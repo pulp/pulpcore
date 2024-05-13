@@ -4,7 +4,7 @@ from gettext import gettext as _
 from django.db import transaction
 from django.db import connection
 
-from pulpcore.app.models import Task
+from pulpcore.app.models import Artifact, Content, Task
 from pulpcore.constants import TASK_FINAL_STATES, TASK_STATES
 
 _logger = logging.getLogger(__name__)
@@ -55,6 +55,8 @@ def _delete_incomplete_resources(task):
     if task.state != TASK_STATES.CANCELING:
         raise RuntimeError(_("Task must be canceling."))
     for model in (r.content_object for r in task.created_resources.all()):
+        if isinstance(model, (Artifact, Content)):
+            continue
         try:
             if model.complete:
                 continue
