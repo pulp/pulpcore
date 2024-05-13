@@ -310,3 +310,8 @@ class MyPythonDomain(PythonDomain):
 def setup(sphinx):
     """Use MyPythonDomain in place of PythonDomain"""
     sphinx.add_domain(MyPythonDomain, override=True)
+
+rst_prolog = """.. attention::
+    This documentation will be deactivated in the near future. `Learn More <https://discourse.pulpproject.org/t/unified-documentation-part-2/1188>`_
+    or go to the `New Pulp Docs <https://staging-docs.pulpproject.org/>`_ (beta).
+"""
