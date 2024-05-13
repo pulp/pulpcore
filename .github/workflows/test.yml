@@ -124,6 +124,7 @@ jobs:
           path: "pulpcore/deprecations-${{ matrix.env.TEST }}.txt"
           if-no-files-found: "error"
           retention-days: 5
+          overwrite: true
       - name: Upload python client packages
         if: ${{ env.TEST == 'pulp' }}
         uses: actions/upload-artifact@v4
@@ -132,6 +133,7 @@ jobs:
           path: "pulpcore/core-python-client.tar"
           if-no-files-found: "error"
           retention-days: 5
+          overwrite: true
 
       - name: Upload python client docs
         if: ${{ env.TEST == 'pulp' }}
@@ -141,6 +143,7 @@ jobs:
           path: "pulpcore/core-python-client-docs.tar"
           if-no-files-found: "error"
           retention-days: 5
+          overwrite: true
       - name: Upload Ruby client
         if: ${{ env.TEST == 'pulp' }}
         uses: actions/upload-artifact@v4
@@ -149,6 +152,7 @@ jobs:
           path: "pulpcore/core-ruby-client.tar"
           if-no-files-found: "error"
           retention-days: 5
+          overwrite: true
 
       - name: "Logs"
         if: always()
