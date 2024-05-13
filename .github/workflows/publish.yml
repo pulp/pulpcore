@@ -94,6 +94,7 @@ jobs:
           name: "python-client.tar"
           path: "pulpcore/core-python-client.tar"
           if-no-files-found: "error"
+          overwrite: true
 
       - name: "Upload python client docs"
         uses: "actions/upload-artifact@v4"
@@ -101,12 +102,14 @@ jobs:
           name: "python-client-docs.tar"
           path: "pulpcore/core-python-client-docs.tar"
           if-no-files-found: "error"
+          overwrite: true
       - name: "Upload ruby client packages"
         uses: "actions/upload-artifact@v4"
         with:
           name: "ruby-client.tar"
           path: "pulpcore/core-ruby-client.tar"
           if-no-files-found: "error"
+          overwrite: true
       - name: Build docs
         run: |
           export DJANGO_SETTINGS_MODULE=pulpcore.app.settings
@@ -119,6 +122,8 @@ jobs:
         with:
           name: "docs.tar"
           path: "pulpcore/docs/docs.tar"
+          if-no-files-found: "error"
+          overwrite: true
 
       - name: "Logs"
         if: always()
