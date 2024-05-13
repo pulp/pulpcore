@@ -15,7 +15,7 @@ from django.db.models import Q
 from django.utils import timezone
 from django_guid import set_guid
 from django_guid.utils import generate_guid
-from pulpcore.app.models import Task, TaskSchedule
+from pulpcore.app.models import Artifact, Content, Task, TaskSchedule
 from pulpcore.app.role_util import get_users_with_perms
 from pulpcore.app.util import set_current_user, set_domain, configure_analytics, configure_cleanup
 from pulpcore.constants import TASK_FINAL_STATES, TASK_STATES, VAR_TMP_PULP
@@ -68,6 +68,8 @@ def delete_incomplete_resources(task):
     if task.state != TASK_STATES.CANCELING:
         raise RuntimeError(_("Task must be canceling."))
     for model in (r.content_object for r in task.created_resources.all()):
+        if isinstance(model, (Artifact, Content)):
+            continue
         try:
             if model.complete:
                 continue
