@@ -51,7 +51,10 @@ class UserRole(BaseModel):
 
     class Meta:
         unique_together = (("user", "role", "content_type", "object_id", "domain"),)
-        indexes = [models.Index(fields=["content_type", "object_id"])]
+        indexes = [
+            models.Index(fields=["object_id"]),
+            models.Index(fields=["content_type", "object_id"]),
+        ]
 
 
 class GroupRole(BaseModel):
@@ -76,4 +79,7 @@ class GroupRole(BaseModel):
 
     class Meta:
         unique_together = (("group", "role", "content_type", "object_id", "domain"),)
-        indexes = [models.Index(fields=["content_type", "object_id"])]
+        indexes = [
+            models.Index(fields=["object_id"]),
+            models.Index(fields=["content_type", "object_id"]),
+        ]
