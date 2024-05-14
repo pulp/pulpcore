@@ -379,6 +379,7 @@ def configure_cleanup():
             "pulpcore.app.tasks.orphan.tmpfile_cleanup",
             settings.TMPFILE_PROTECTION_TIME,
         ),
+        ("tasks", "pulpcore.app.tasks.purge.purge", settings.TASK_PROTECTION_TIME),
     ]:
         if protection_time > 0:
             dispatch_interval = timedelta(minutes=protection_time)

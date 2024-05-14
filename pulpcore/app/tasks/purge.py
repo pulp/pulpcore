@@ -1,7 +1,9 @@
 from gettext import gettext as _
 from logging import getLogger
 
+from django.conf import settings
 from django.db.models.deletion import ProtectedError
+from django.utils import timezone
 
 from pulpcore.app.models import (
     ProgressReport,
@@ -9,7 +11,7 @@ from pulpcore.app.models import (
 )
 from pulpcore.app.role_util import get_objects_for_user
 from pulpcore.app.util import get_domain, get_current_authenticated_user
-from pulpcore.constants import TASK_STATES
+from pulpcore.constants import TASK_STATES, TASK_FINAL_STATES
 
 log = getLogger(__name__)
 
@@ -55,7 +57,7 @@ def _details_reporting(current_reports, current_details, totals_pb):
     return current_reports
 
 
-def purge(finished_before, states):
+def purge(finished_before=None, states=None):
     """
     This task purges from the database records of tasks which finished prior to the specified time.
 
@@ -70,10 +72,15 @@ def purge(finished_before, states):
     by deleting a Task.
 
     Args:
-        finished_before (DateTime): Earliest finished-time to **NOT** purge.
-        states (List[str]): List of task-states we want to purge.
+        finished_before (Optional[DateTime]): Earliest finished-time to **NOT** purge.
+        states (Optional[List[str]]): List of task-states we want to purge.
 
     """
+    if finished_before is None:
+        assert settings.TASK_PROTECTION_TIME > 0
+        finished_before = timezone.now() - timezone.timedelta(minutes=settings.TASK_PROTECTION_TIME)
+    if states is None:
+        states = TASK_FINAL_STATES
     current_user = get_current_authenticated_user()
     domain = get_domain()
     # Tasks, prior to the specified date, in the specified state, owned by the current-user, in the

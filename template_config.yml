@@ -65,6 +65,9 @@ pulp_settings:
   - /tmp
   content_path_prefix: /somewhere/else/
   orphan_protection_time: 0
+  upload_protection_time: 10
+  tmpfile_protection_time: 10
+  task_protection_time: 10
 pulp_settings_azure:
   domain_enabled: true
 pulp_settings_gcp: null
