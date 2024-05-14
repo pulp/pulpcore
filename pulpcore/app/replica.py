@@ -227,9 +227,9 @@ class Replicator:
 
         # Remove all the repositories and remotes of the missing distributions
         repositories = list(
-            self.repository_model_cls.objects.filter(pulp_domain=self.domain).exclude(
-                name__in=names
-            )
+            self.repository_model_cls.objects.filter(
+                pulp_domain=self.domain, user_hidden=False
+            ).exclude(name__in=names)
         )
         repository_ids = [
             (repo.pk, self.app_label, self.repository_serializer_name) for repo in repositories
