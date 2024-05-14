@@ -12,7 +12,7 @@ check_stray_pulpcore_imports: false
 ci_base_image: ghcr.io/pulp/pulp-ci-centos
 ci_env: {}
 ci_trigger: '{pull_request: {branches: [''*'']}}'
-ci_update_docs: false
+ci_update_docs: true
 cli_package: pulp-cli
 cli_repo: https://github.com/pulp/pulp-cli.git
 core_import_allowed: []
