@@ -278,7 +278,12 @@ class Task(BaseModel, AutoAddObjPermsMixin):
         super().refresh_from_db(using, fields, **kwargs)
 
     class Meta:
-        indexes = [models.Index(fields=["pulp_created"])]
+        indexes = [
+            models.Index(fields=["pulp_created"]),
+            models.Index(fields=["unblocked_at"]),
+            models.Index(fields=["state"]),
+            models.Index(fields=["state", "pulp_created"]),
+        ]
         permissions = [
             ("manage_roles_task", "Can manage role assignments on task"),
         ]
