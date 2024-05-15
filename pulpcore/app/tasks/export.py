@@ -25,7 +25,7 @@ from pulpcore.app.models import (
     RepositoryVersion,
     Task,
 )
-from pulpcore.app.models.content import Artifact, ContentArtifact
+from pulpcore.app.models.content import ContentArtifact
 from pulpcore.app.serializers import PulpExportSerializer
 
 from pulpcore.app.util import compute_file_hash, Crc32Hasher
@@ -509,7 +509,7 @@ def _do_export(pulp_exporter, tar, the_export):
 
     # Export the top-level entities (artifacts and repositories)
     # Note: we've already handled "what about incrementals" when building the 'artifacts' list
-    export_artifacts(the_export, Artifact.objects.filter(pk__in=artifact_pks))
+    export_artifacts(the_export, list(artifact_pks))
     del artifact_pks
 
     # Export the repository-version data, per-version
