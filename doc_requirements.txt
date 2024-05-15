@@ -5,11 +5,14 @@
 #
 # For more info visit https://github.com/pulp/plugin_template
 -r requirements.txt
+towncrier
+
+# Legacy docs
 plantuml
 sphinx~=7.1.2
 sphinx-rtd-theme==1.3.0
 sphinxcontrib-jquery
 sphinxcontrib-openapi
-towncrier
 mistune<4.0.0
 Jinja2<3.2
+# Extra requirements
