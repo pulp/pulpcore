@@ -156,6 +156,7 @@ sudo chown -R 700:700 ~/.config
 echo ::group::SSL
 # Copy pulp CA
 sudo docker cp pulp:/etc/pulp/certs/pulp_webserver.crt /usr/local/share/ca-certificates/pulp_webserver.crt
+sudo docker exec -u root pulp trust anchor /etc/pulp/certs/pulp_webserver.crt
 
 # Hack: adding pulp CA to certifi.where()
 CERTIFI=$(python -c 'import certifi; print(certifi.where())')
@@ -184,6 +185,7 @@ if [[ "$TEST" = "azure" ]]; then
   cat /usr/local/share/ca-certificates/azcert.crt >> $AZCERTIFI
   cat /usr/local/share/ca-certificates/azcert.crt | cmd_stdin_prefix tee -a "$PULPCERTIFI" > /dev/null
   cat /usr/local/share/ca-certificates/azcert.crt | cmd_stdin_prefix tee -a /etc/pki/tls/cert.pem > /dev/null
+  cmd_stdin_prefix sudo trust anchor /etc/pki/tls/cert.pem
   AZURE_STORAGE_CONNECTION_STRING='DefaultEndpointsProtocol=https;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=https://ci-azurite:10000/devstoreaccount1;'
   az storage container create --name pulp-test --connection-string $AZURE_STORAGE_CONNECTION_STRING
 fi
