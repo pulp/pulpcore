@@ -17,28 +17,6 @@ Changelog
 
 .. towncrier release notes start
 
-3.22.26 (2024-05-14)
-====================
-REST API
---------
-
-Bugfixes
-~~~~~~~~
-
-- Stopped deleting content and artifacts presumably created by later failed or canceled tasks.
-  Deleting these lies solely in the responsibility of orphan cleanup.
-  :github:`5363`
-
-
-Plugin API
-----------
-
-No significant changes.
-
-
-----
-
-
 3.22.25 (2024-04-17)
 ====================
 REST API
