@@ -13,6 +13,40 @@ Changelog
 
 .. towncrier release notes start
 
+3.49.8 (2024-05-16)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Stopped deleting content and artifacts presumably created by later failed or canceled tasks.
+  Deleting these lies solely in the responsibility of orphan cleanup.
+  :github:`5363`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
+Pulp File
+---------
+
+No significant changes.
+
+
+Pulp Cert Guard
+---------------
+
+No significant changes.
+
+
+----
+
+
 3.49.7 (2024-05-07)
 ===================
 REST API
