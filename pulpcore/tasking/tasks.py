@@ -27,7 +27,7 @@ from pulpcore.constants import (
     TASK_STATES,
     TASK_DISPATCH_LOCK,
 )
-from pulpcore.tasking.kafka import get_async_kafka_producer
+from pulpcore.tasking.kafka import get_kafka_producer
 
 _logger = logging.getLogger(__name__)
 
@@ -272,7 +272,7 @@ def cancel_task(task_id):
 
 
 def _send_task_notification(task):
-    kafka_producer = get_async_kafka_producer()
+    kafka_producer = get_kafka_producer()
     if kafka_producer is not None:
         attributes = {
             "type": "pulpcore.tasking.status",

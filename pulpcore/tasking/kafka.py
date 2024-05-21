@@ -39,7 +39,7 @@ class KafkaProducerPollingWorker:
         self._thread.join()
 
 
-def get_async_kafka_producer() -> Optional[Producer]:
+def get_kafka_producer() -> Optional[Producer]:
     global _kafka_producer
     if _bootstrap_servers is None:
         return None
