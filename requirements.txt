@@ -5,6 +5,8 @@ asyncio-throttle>=1.0,<=1.0.2
 async-timeout>=4.0.3,<4.0.4;python_version<"3.11"
 backoff>=2.1.2,<2.2.2
 click>=8.1.0,<=8.1.7
+cloudevents==1.10.1  # Pinned because project warns "things might (and will) break with every update"
+confluent-kafka~=2.4.0
 cryptography>=38.0.1,<42.0.9
 Django~=4.2.0  # LTS version, switch only if we have a compelling reason to
 django-filter>=23.1,<=24.2

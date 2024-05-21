@@ -1,0 +1,55 @@
+$schema: http://json-schema.org/draft-07/hyper-schema
+$id: https://github.com/pulp/pulpcore/blob/main/docs/static/task-status-v1.yaml
+type: object
+properties:
+  pulp_href:
+    description: URI for the task in the pulp API
+    type: string
+    examples:
+    - /pulp/api/v3/tasks/018f973c-ad7b-7f03-96d0-b38a42c18100/
+  pulp_created:
+    description: Created timestamp for the task
+    type: string
+    format: date-time
+    examples:
+    - 2024-05-20T18:21:27.292394Z
+  pulp_last_updated:
+    description: Last updated timestamp for the task
+    type: string
+    format: date-time
+    examples:
+    - 2024-05-20T18:21:27.292405Z
+  name:
+    description: Name of the task
+    type: string
+    examples:
+    - pulp_file.app.tasks.synchronizing.synchronize
+  state:
+    description: State of the task
+    type: string
+    enum:
+      - waiting
+      - skipped
+      - running
+      - completed
+      - failed
+      - canceled
+      - canceling
+  unblocked_at:
+    description: The time the task became unblocked
+    type: string
+    format: date-time
+    examples:
+    - 2024-05-20T18:21:27.317792Z
+  started_at:
+    description: The time the task started executing
+    type: string
+    format: date-time
+    examples:
+    - 2024-05-20T18:21:27.349481Z
+  finished_at:
+    description:  The time the task finished executing
+    type: string
+    format: date-time
+    examples:
+    - 2024-05-20T18:21:28.074560Z

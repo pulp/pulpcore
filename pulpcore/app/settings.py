@@ -333,6 +333,17 @@ SHELL_PLUS_IMPORTS = [
 # By default, use all available workers.
 IMPORT_WORKERS_PERCENT = 100
 
+# Kafka settings
+KAFKA_BOOTSTRAP_SERVERS = None  # kafka integration disabled by default
+KAFKA_TASKS_STATUS_TOPIC = "pulpcore.tasking.status"
+KAFKA_TASKS_STATUS_PRODUCER_SYNC_ENABLED = False
+KAFKA_PRODUCER_POLL_TIMEOUT = 0.1
+KAFKA_SECURITY_PROTOCOL = "plaintext"
+KAFKA_SSL_CA_PEM = None
+KAFKA_SASL_MECHANISM = None
+KAFKA_SASL_USERNAME = None
+KAFKA_SASL_PASSWORD = None
+
 # HERE STARTS DYNACONF EXTENSION LOAD (Keep at the very bottom of settings.py)
 # Read more at https://www.dynaconf.com/django/
 from dynaconf import DjangoDynaconf, Validator  # noqa
