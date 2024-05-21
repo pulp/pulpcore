@@ -24,10 +24,8 @@ RESPONSE="$(curl --write-out '%{http_code}' --silent --output /dev/null "https:/
 if [ "$RESPONSE" == "200" ];
 then
   echo "pulpcore client $VERSION has already been released. Skipping."
-  exit
+else
+  twine upload -u __token__ -p "$PYPI_API_TOKEN" \
+  "dist/pulpcore_client-$VERSION-py3-none-any.whl" \
+  "dist/pulpcore-client-$VERSION.tar.gz"
 fi
-
-twine upload -u __token__ -p "$PYPI_API_TOKEN" \
-"dist/pulpcore_client-$VERSION-py3-none-any.whl" \
-"dist/pulpcore-client-$VERSION.tar.gz" \
-;
