@@ -403,3 +403,57 @@ If `True`, Pulp will anonymously post analytics information to
 `analytics docs ` for more info on exactly what is posted along with an example.
 
 Defaults to `True`.
+
+## Kafka Settings
+
+!!! note
+    Kafka integration functionality is in tech preview and may change based on user feedback.
+
+See [librdkafka configuration documentation](https://github.com/confluentinc/librdkafka/blob/master/CONFIGURATION.md)
+for details on client configuration properties.
+
+### KAFKA_BOOTSTRAP_SERVERS
+
+`bootstrap.servers` value for the client. Specifies endpoint(s) for the kafka client. Kafka integration is disabled if
+unspecified.
+
+### KAFKA_SECURITY_PROTOCOL
+
+`security.protocol` value for the client. What protocol to use for communication with the broker.
+
+Defaults to `plaintext` (unencrypted).
+
+### KAFKA_SSL_CA_PEM
+
+`ssl.ca.pem` value for the client (optional). Used to override the TLS truststore for broker connections.
+
+### KAFKA_SASL_MECHANISM
+
+`sasl.mechanisms` value for the client (optional). Specifies the authentication method used by the kafka broker.
+
+### KAFKA_SASL_USERNAME
+
+`sasl.username` value for the client (optional). Username for broker authentication.
+
+### KAFKA_SASL_PASSWORD
+
+`sasl.password` value for the client (optional). Password for broker authentication.
+
+### KAFKA_TASKS_STATUS_TOPIC
+
+What kafka topic to emit notifications to when tasks start/stop.
+
+Defaults to `pulpcore.tasking.status`.
+
+### KAFKA_TASKS_STATUS_PRODUCER_SYNC_ENABLED
+
+Whether to synchronously send task status messages. When `True`, the task message is sent synchronously, otherwise the
+sends happen asynchronously, with a background thread periodically sending messages to the kafka server.
+
+Defaults to `False`.
+
+### KAFKA_PRODUCER_POLL_TIMEOUT
+
+Timeout in seconds for the kafka producer polling thread's `poll` calls.
+
+Defaults to `0.1`.

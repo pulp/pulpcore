@@ -277,3 +277,22 @@ class TaskScheduleSerializer(ModelSerializer):
             "next_dispatch",
             "last_task",
         )
+
+
+class TaskStatusMessageSerializer(TaskSerializer):
+    """
+    Serializer for Task status messages.
+
+    Independent of other serializers in order to decouple the task message schema from other
+    interfaces.
+    """
+
+    class Meta:
+        model = models.Task
+        fields = ModelSerializer.Meta.fields + (
+            "name",
+            "state",
+            "unblocked_at",
+            "started_at",
+            "finished_at",
+        )
