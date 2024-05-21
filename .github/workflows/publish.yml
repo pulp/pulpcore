@@ -88,11 +88,13 @@ jobs:
         run: |
           .github/workflows/scripts/install_ruby_client.sh
         shell: "bash"
+
       - name: "Upload python client packages"
         uses: "actions/upload-artifact@v4"
         with:
           name: "python-client.tar"
-          path: "pulpcore/core-python-client.tar"
+          path: |
+            pulpcore/core-python-client.tar
           if-no-files-found: "error"
           overwrite: true
 
@@ -100,14 +102,16 @@ jobs:
         uses: "actions/upload-artifact@v4"
         with:
           name: "python-client-docs.tar"
-          path: "pulpcore/core-python-client-docs.tar"
+          path: |
+            pulpcore/core-python-client-docs.tar
           if-no-files-found: "error"
           overwrite: true
       - name: "Upload ruby client packages"
         uses: "actions/upload-artifact@v4"
         with:
           name: "ruby-client.tar"
-          path: "pulpcore/core-ruby-client.tar"
+          path: |
+            pulpcore/core-ruby-client.tar
           if-no-files-found: "error"
           overwrite: true
 
