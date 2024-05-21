@@ -88,11 +88,15 @@ jobs:
         run: |
           .github/workflows/scripts/install_ruby_client.sh
         shell: "bash"
+
       - name: "Upload python client packages"
         uses: "actions/upload-artifact@v4"
         with:
           name: "python-client.tar"
-          path: "pulpcore/core-python-client.tar"
+          path: |
+            pulpcore/core-python-client.tar
+            pulpcore/file-python-client.tar
+            pulpcore/certguard-python-client.tar
           if-no-files-found: "error"
           overwrite: true
 
@@ -100,58 +104,20 @@ jobs:
         uses: "actions/upload-artifact@v4"
         with:
           name: "python-client-docs.tar"
-          path: "pulpcore/core-python-client-docs.tar"
+          path: |
+            pulpcore/core-python-client-docs.tar
+            pulpcore/file-python-client-docs.tar
+            pulpcore/certguard-python-client-docs.tar
           if-no-files-found: "error"
           overwrite: true
       - name: "Upload ruby client packages"
         uses: "actions/upload-artifact@v4"
         with:
           name: "ruby-client.tar"
-          path: "pulpcore/core-ruby-client.tar"
-          if-no-files-found: "error"
-          overwrite: true
-      - name: "Upload python client packages"
-        uses: "actions/upload-artifact@v4"
-        with:
-          name: "python-client.tar"
-          path: "pulpcore/file-python-client.tar"
-          if-no-files-found: "error"
-          overwrite: true
-
-      - name: "Upload python client docs"
-        uses: "actions/upload-artifact@v4"
-        with:
-          name: "python-client-docs.tar"
-          path: "pulpcore/file-python-client-docs.tar"
-          if-no-files-found: "error"
-          overwrite: true
-      - name: "Upload ruby client packages"
-        uses: "actions/upload-artifact@v4"
-        with:
-          name: "ruby-client.tar"
-          path: "pulpcore/file-ruby-client.tar"
-          if-no-files-found: "error"
-          overwrite: true
-      - name: "Upload python client packages"
-        uses: "actions/upload-artifact@v4"
-        with:
-          name: "python-client.tar"
-          path: "pulpcore/certguard-python-client.tar"
-          if-no-files-found: "error"
-          overwrite: true
-
-      - name: "Upload python client docs"
-        uses: "actions/upload-artifact@v4"
-        with:
-          name: "python-client-docs.tar"
-          path: "pulpcore/certguard-python-client-docs.tar"
-          if-no-files-found: "error"
-          overwrite: true
-      - name: "Upload ruby client packages"
-        uses: "actions/upload-artifact@v4"
-        with:
-          name: "ruby-client.tar"
-          path: "pulpcore/certguard-ruby-client.tar"
+          path: |
+            pulpcore/core-ruby-client.tar
+            pulpcore/file-ruby-client.tar
+            pulpcore/certguard-ruby-client.tar
           if-no-files-found: "error"
           overwrite: true
       - name: Build docs
