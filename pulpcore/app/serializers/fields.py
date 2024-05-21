@@ -6,11 +6,10 @@ from urllib.parse import urljoin
 from django.conf import settings
 from rest_framework import serializers
 from rest_framework.fields import empty
-from rest_framework.reverse import reverse
 
 from pulpcore.app import models
 from pulpcore.app.serializers import DetailIdentityField, IdentityField, RelatedField
-from pulpcore.app.util import get_domain
+from pulpcore.app.util import reverse
 
 
 def relative_path_validator(relative_path):
@@ -179,13 +178,11 @@ class ContentArtifactsField(serializers.DictField):
         """
         ret = {}
         kwargs = {}
-        if settings.DOMAIN_ENABLED:
-            domain = get_domain()
-            kwargs["pulp_domain"] = domain.name
         for content_artifact in value:
             if content_artifact.artifact_id:
                 kwargs["pk"] = content_artifact.artifact_id
-                url = reverse("artifacts-detail", kwargs=kwargs, request=None)
+                request = self.context.get("request")
+                url = reverse("artifacts-detail", kwargs=kwargs, request=request)
             else:
                 url = None
             ret[content_artifact.relative_path] = url

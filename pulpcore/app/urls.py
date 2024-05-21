@@ -31,6 +31,10 @@ if settings.DOMAIN_ENABLED:
     API_ROOT = settings.V3_DOMAIN_API_ROOT_NO_FRONT_SLASH
 else:
     API_ROOT = settings.V3_API_ROOT_NO_FRONT_SLASH
+if settings.API_ROOT_REWRITE_HEADER:
+    V3_API_ROOT = settings.V3_API_ROOT.replace("/<path:api_root>/", settings.API_ROOT)
+else:
+    V3_API_ROOT = settings.V3_API_ROOT
 
 
 class ViewSetNode:
@@ -119,6 +123,13 @@ class PulpAPIRootView(APIRootView):
     authentication_classes = []
     permission_classes = []
 
+    def get(self, request, *args, **kwargs):
+        if settings.DOMAIN_ENABLED:
+            kwargs["pulp_domain"] = request.pulp_domain.name
+        if api_root := getattr(request, "api_root", None):
+            kwargs["api_root"] = api_root
+        return super().get(request, *args, **kwargs)
+
 
 class PulpDefaultRouter(routers.DefaultRouter):
     """A DefaultRouter class that benefits from the customized PulpAPIRootView class."""
@@ -140,26 +151,25 @@ vs_tree = ViewSetNode()
 for viewset in sorted_by_depth:
     vs_tree.add_decendent(ViewSetNode(viewset))
 
-urlpatterns = [
-    path(f"{API_ROOT}repair/", RepairView.as_view()),
+special_views = [
+    path("repair/", RepairView.as_view()),
     path(
-        f"{API_ROOT}orphans/cleanup/",
-        OrphansCleanupViewset.as_view({"post": "cleanup"}),
+        "orphans/cleanup/",
+        OrphansCleanupViewset.as_view(actions={"post": "cleanup"}),
     ),
-    path(f"{API_ROOT}orphans/", OrphansView.as_view()),
+    path("orphans/", OrphansView.as_view()),
     path(
-        f"{API_ROOT}repository_versions/",
-        ListRepositoryVersionViewSet.as_view({"get": "list"}),
-    ),
-    path(
-        f"{API_ROOT}repositories/reclaim_space/",
-        ReclaimSpaceViewSet.as_view({"post": "reclaim"}),
+        "repository_versions/",
+        ListRepositoryVersionViewSet.as_view(actions={"get": "list"}),
     ),
     path(
-        f"{API_ROOT}importers/core/pulp/import-check/",
+        "repositories/reclaim_space/",
+        ReclaimSpaceViewSet.as_view(actions={"post": "reclaim"}),
+    ),
+    path(
+        "importers/core/pulp/import-check/",
         PulpImporterImportCheckView.as_view(),
     ),
-    path("auth/", include("rest_framework.urls")),
 ]
 
 docs_and_status = [
@@ -180,7 +190,7 @@ docs_and_status = [
         SpectacularRedocView.as_view(
             authentication_classes=[],
             permission_classes=[],
-            url=f"{settings.V3_API_ROOT}docs/api.json?include_html=1&pk_path=1",
+            url=f"{V3_API_ROOT}docs/api.json?include_html=1&pk_path=1",
         ),
         name="schema-redoc",
     ),
@@ -189,13 +199,17 @@ docs_and_status = [
         SpectacularSwaggerView.as_view(
             authentication_classes=[],
             permission_classes=[],
-            url=f"{settings.V3_API_ROOT}docs/api.json?include_html=1&pk_path=1",
+            url=f"{V3_API_ROOT}docs/api.json?include_html=1&pk_path=1",
         ),
         name="schema-swagger",
     ),
 ]
 
-urlpatterns.append(path(settings.V3_API_ROOT_NO_FRONT_SLASH, include(docs_and_status)))
+urlpatterns = [
+    path(API_ROOT, include(special_views)),
+    path("auth/", include("rest_framework.urls")),
+    path(settings.V3_API_ROOT_NO_FRONT_SLASH, include(docs_and_status)),
+]
 
 if settings.DOMAIN_ENABLED:
     # Ensure Docs and Status endpoints are available within domains, but are not shown in API schema
@@ -209,7 +223,7 @@ if settings.DOMAIN_ENABLED:
         view = NoSchema.as_view(**p.callback.initkwargs)
         name = p.name + "-domains" if p.name else None
         docs_and_status_no_schema.append(path(str(p.pattern), view, name=name))
-    urlpatterns.append(path(API_ROOT, include(docs_and_status_no_schema)))
+    urlpatterns.insert(-1, path(API_ROOT, include(docs_and_status_no_schema)))
 
 if "social_django" in settings.INSTALLED_APPS:
     urlpatterns.append(

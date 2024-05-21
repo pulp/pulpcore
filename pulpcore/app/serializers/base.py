@@ -34,6 +34,7 @@ from pulpcore.app.util import (
     get_viewset_for_model,
     get_request_without_query_params,
     get_domain,
+    reverse,
 )
 
 
@@ -43,17 +44,17 @@ log = getLogger(__name__)
 # Field mixins
 
 
-def _reverse(reverse, request, obj):
+def _reverse(obj):
     """Include domain-path in reverse call if DOMAIN_ENABLED."""
 
     if settings.DOMAIN_ENABLED:
 
         @functools.wraps(reverse)
-        def _patched_reverse(viewname, args=None, kwargs=None, **extra):
+        def _patched_reverse(viewname, request=None, args=None, kwargs=None, **extra):
             kwargs = kwargs or {}
             domain_name = obj.pulp_domain.name if hasattr(obj, "pulp_domain") else "default"
             kwargs["pulp_domain"] = domain_name
-            return reverse(viewname, args=args, kwargs=kwargs, **extra)
+            return reverse(viewname, request=request, args=args, kwargs=kwargs, **extra)
 
         return _patched_reverse
 
@@ -64,9 +65,9 @@ class HrefFieldMixin:
     """A mixin to configure related fields to generate relative hrefs."""
 
     def get_url(self, obj, view_name, request, *args, **kwargs):
-        # Removes the request from the arguments to display relative hrefs.
-        self.reverse = _reverse(self.reverse, request, obj)
-        return super().get_url(obj, view_name, None, *args, **kwargs)
+        # Use the Pulp reverse method to display relative hrefs.
+        self.reverse = _reverse(obj)
+        return super().get_url(obj, view_name, request, *args, **kwargs)
 
 
 class _MatchingRegexViewName(object):
@@ -164,14 +165,19 @@ class RelatedResourceField(RelatedField):
     Specific implementation requires the model to be defined in the Meta:.
     """
 
-    def repo_ver_url(self, repo_ver):
+    def repo_ver_url(self, repo_ver, request=None):
         repo_model = Repository.get_model_for_pulp_type(repo_ver.repository.pulp_type)
         view_name = get_view_name_for_model(repo_model, "detail")
         obj = PKDomainObject(pk=repo_ver.repository.pk, pulp_domain=self.context["pulp_domain"])
-        repo_url = self.get_url(obj, view_name, request=None, format=None)
+        repo_url = self.get_url(obj, view_name, request=request, format=None)
         return f"{repo_url}versions/{repo_ver.number}/"
 
     def to_representation(self, data):
+        # query parameters can be ignored because we are looking just for 'pulp_href'; still,
+        # we need to use the request object due to contextual references required by some
+        # serializers
+        request = get_request_without_query_params(self.context)
+
         # Try to use optimized lookup to avoid DB if content_type has been already been fetched
         if GenericRelationModel.content_type.is_cached(data):
             model = data.content_type.model_class()
@@ -180,7 +186,7 @@ class RelatedResourceField(RelatedField):
                 repo_ver_mapping = self.context.get("repo_ver_mapping")
                 if repo_ver_mapping is not None:
                     if repo_ver := repo_ver_mapping.get(data.object_id):
-                        return self.repo_ver_url(repo_ver)
+                        return self.repo_ver_url(repo_ver, request=request)
                     return None
             else:
                 try:
@@ -195,7 +201,7 @@ class RelatedResourceField(RelatedField):
                     else:
                         obj = PKObject(pk=data.object_id)
                     try:
-                        return self.get_url(obj, view_name, request=None, format=None)
+                        return self.get_url(obj, view_name, request=request, format=None)
                     except NoReverseMatch:
                         pass
 
@@ -208,11 +214,6 @@ class RelatedResourceField(RelatedField):
                 return None
         except AttributeError:
             pass
-
-        # query parameters can be ignored because we are looking just for 'pulp_href'; still,
-        # we need to use the request object due to contextual references required by some
-        # serializers
-        request = get_request_without_query_params(self.context)
 
         viewset = get_viewset_for_model(data.content_object)
         serializer = viewset.serializer_class(data.content_object, context={"request": request})

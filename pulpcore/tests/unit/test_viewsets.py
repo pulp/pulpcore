@@ -11,6 +11,8 @@ API_ROOT = (
     if not settings.DOMAIN_ENABLED
     else settings.V3_DOMAIN_API_ROOT.replace("<slug:pulp_domain>", "default")
 )
+if settings.API_ROOT_REWRITE_HEADER:
+    API_ROOT = API_ROOT.replace("<path:api_root>", settings.API_ROOT.strip("/"))
 
 
 class TestGetResource(TestCase):
