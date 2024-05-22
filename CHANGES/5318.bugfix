@@ -1,1 +1,0 @@
-Fixed content directory listing returning 500 in certain scenarios due to missing artifact sizes.
