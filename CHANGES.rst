@@ -13,6 +13,44 @@ Changelog
 
 .. towncrier release notes start
 
+3.53.1 (2024-05-22)
+===================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Fixed content directory listing returning 500 in certain scenarios due to missing artifact sizes.
+  :github:`5318`
+- Fixed a bug related to replication of AppStream and BaseOS repositories of CentOS.
+  :github:`5358`
+- Stopped deleting content and artifacts presumably created by later failed or canceled tasks.
+  Deleting these lies solely in the responsibility of orphan cleanup.
+  :github:`5363`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
+Pulp File
+---------
+
+No significant changes.
+
+
+Pulp Cert Guard
+---------------
+
+No significant changes.
+
+
+----
+
+
 3.53.0 (2024-04-30)
 ===================
 REST API
