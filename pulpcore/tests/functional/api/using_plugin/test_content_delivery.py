@@ -1,5 +1,6 @@
 """Tests related to content delivery."""
 
+from aiohttp.client_exceptions import ClientResponseError
 import hashlib
 import pytest
 from urllib.parse import urljoin
@@ -39,10 +40,10 @@ def test_delete_remote_on_demand(
 
     # Delete the remote and assert that downloading content returns a 404
     monitor_task(file_remote_api_client.delete(remote.pulp_href).task)
-
-    url = urljoin(distribution.base_url, expected_file_list[0][0])
-    response = download_file(url)
-    assert response.response_obj.status_code == 404
+    with pytest.raises(ClientResponseError) as exc:
+        url = urljoin(distribution.base_url, expected_file_list[0][0])
+        download_file(url)
+    assert exc.value.status == 404
 
     # Recreate the remote and sync into the repository using it
     remote = file_remote_ssl_factory(manifest_path=basic_manifest_path, policy="on_demand")
@@ -84,9 +85,10 @@ def test_remote_artifact_url_update(
     expected_file_list = list(get_files_in_manifest(remote.url))
 
     # Assert that trying to download content raises a 404
-    url = urljoin(distribution.base_url, expected_file_list[0][0])
-    response = download_file(url)
-    assert response.response_obj.status_code == 404
+    with pytest.raises(ClientResponseError) as exc:
+        url = urljoin(distribution.base_url, expected_file_list[0][0])
+        download_file(url)
+    assert exc.value.status == 404
 
     # Create a new remote that points to a repository that does have the missing content
     remote2 = file_remote_ssl_factory(manifest_path=basic_manifest_path, policy="on_demand")

@@ -11,7 +11,6 @@ import uuid
 import warnings
 
 import pytest
-import requests
 
 from aiohttp import web
 from contextlib import suppress
@@ -552,9 +551,14 @@ def received_otel_span():
             # a non-configured runner
             return True
 
+        async def _send_request():
+            async with aiohttp.ClientSession(raise_for_status=False) as session:
+                otel_server_url = os.environ.get("OTEL_EXPORTER_OTLP_ENDPOINT")
+                async with session.post(f"{otel_server_url}/test", json=data) as response:
+                    return response.status
+
         while retries:
-            otel_server_url = os.environ.get("OTEL_EXPORTER_OTLP_ENDPOINT")
-            status = requests.post(f"{otel_server_url}/test", data=data).status
+            status = asyncio.run(_send_request())
             if status == 200:
                 return True
             sleep(2)
@@ -1246,6 +1250,11 @@ def add_to_filesystem_cleanup():
 @pytest.fixture(scope="session")
 def download_content_unit(pulp_domain_enabled, pulp_content_origin_with_prefix):
     def _download_content_unit(base_path, content_path, domain="default"):
+        async def _get_response(url):
+            async with aiohttp.ClientSession() as session:
+                async with session.get(url) as response:
+                    return await response.read()
+
         if pulp_domain_enabled:
             url_fragments = [
                 pulp_content_origin_with_prefix,
@@ -1260,7 +1269,7 @@ def download_content_unit(pulp_domain_enabled, pulp_content_origin_with_prefix):
                 content_path,
             ]
         url = "/".join(url_fragments)
-        return requests.get(url).content
+        return asyncio.run(_get_response(url))
 
     return _download_content_unit
 
@@ -1268,7 +1277,13 @@ def download_content_unit(pulp_domain_enabled, pulp_content_origin_with_prefix):
 @pytest.fixture(scope="session")
 def http_get():
     def _http_get(url, **kwargs):
-        return requests.get(url, **kwargs).content
+        async def _send_request():
+            async with aiohttp.ClientSession(raise_for_status=True) as session:
+                async with session.get(url, **kwargs) as response:
+                    return await response.content.read()
+
+        response = asyncio.run(_send_request())
+        return response
 
     return _http_get
 

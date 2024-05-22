@@ -1,13 +1,18 @@
 """Utilities for Pulpcore tests."""
 
+import aiohttp
+import asyncio
 import hashlib
 import os
-
-import requests
 
 from aiohttp import web
 from dataclasses import dataclass
 from multidict import CIMultiDict
+
+
+async def get_response(url):
+    async with aiohttp.ClientSession() as session:
+        return await session.get(url)
 
 
 SLEEP_TIME = 0.5
@@ -56,7 +61,7 @@ class MockDownload:
     """Class for representing a downloaded file."""
 
     body: bytes
-    response_obj: requests.Response
+    response_obj: aiohttp.ClientResponse
 
     def __init__(self, body, response_obj):
         self.body = body
@@ -85,12 +90,17 @@ def download_file(url, auth=None, headers=None):
     """Download a file.
 
     :param url: str URL to the file to download
-    :param auth: `requests.auth.HTTPBasicAuth` containing basic auth credentials
+    :param auth: `aiohttp.BasicAuth` containing basic auth credentials
     :param headers: dict of headers to send with the GET request
     :return: Download
     """
-    response = requests.get(url, auth=auth, headers=headers, verify=False)
-    return MockDownload(body=response.content, response_obj=response)
+    return asyncio.run(_download_file(url, auth=auth, headers=headers))
+
+
+async def _download_file(url, auth=None, headers=None):
+    async with aiohttp.ClientSession(auth=auth, raise_for_status=True) as session:
+        async with session.get(url, ssl=False, headers=headers) as response:
+            return MockDownload(body=await response.read(), response_obj=response)
 
 
 def generate_iso(full_path, size=1024, relative_path=None):
@@ -130,6 +140,12 @@ def get_files_in_manifest(url):
 
 def get_from_url(url, auth=None, headers=None):
     """
-    Performs a GET request on a URL and returns a requests.Response object.
+    Performs a GET request on a URL and returns an aiohttp.Response object.
     """
-    return requests.get(url, auth=auth, headers=headers, verify=False)
+    return asyncio.run(_get_from_url(url, auth=auth, headers=headers))
+
+
+async def _get_from_url(url, auth=None, headers=None):
+    async with aiohttp.ClientSession(auth=auth) as session:
+        async with session.get(url, verify_ssl=False, headers=headers) as response:
+            return response

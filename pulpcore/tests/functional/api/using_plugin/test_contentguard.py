@@ -1,3 +1,4 @@
+from aiohttp import BasicAuth
 from base64 import b64encode
 import json
 import pytest
@@ -42,12 +43,12 @@ def test_rbac_content_guard_full_workflow(
         """Asserts that only authorized users have access to the distribution's base_url."""
         for user in all_users:
             if user is not anonymous_user:
-                auth = (user.username, user.password)
+                auth = BasicAuth(login=user.username, password=user.password)
             else:
                 auth = None
             response = get_from_url(distro.base_url, auth=auth)
             expected_status = 404 if user in authorized_users else 403
-            assert response.status_code == expected_status, f"Failed on {user.username=}"
+            assert response.status == expected_status, f"Failed on {user.username=}"
 
     # Make sure all users can access the distribution URL without a content guard
     _assert_access(all_users)
@@ -120,7 +121,7 @@ def test_header_contentguard_workflow(
 
     # Expect to receive a 403 Forbiden
     response = get_from_url(distro.base_url, headers=None)
-    assert response.status_code == 403
+    assert response.status == 403
 
     # Expect the status to be 404 given the distribution is accessible
     # but not pointing to any publication, or repository version.
@@ -128,7 +129,7 @@ def test_header_contentguard_workflow(
     headers = {"x-header": header_value}
 
     response = get_from_url(distro.base_url, headers=headers)
-    assert response.status_code == 404
+    assert response.status == 404
 
     # Check the access using an jq_filter
     header_name = "x-organization"
@@ -162,7 +163,7 @@ def test_header_contentguard_workflow(
     headers = {header_name: header_value}
 
     response = get_from_url(distro.base_url, headers=headers)
-    assert response.status_code == 404
+    assert response.status == 404
 
 
 def test_composite_contentguard_crud(
@@ -280,7 +281,7 @@ def test_composite_contentguard_permissions(
         distro = file_distribution_factory()
         # attempt access to base-url, expect 404 (no content, no guards)
         response = get_from_url(distro.base_url)
-        assert response.status_code == 404
+        assert response.status == 404
 
         # Assign CCG1, no guards
         body = PatchedfileFileDistribution(content_guard=ccg1.pulp_href)
@@ -290,7 +291,7 @@ def test_composite_contentguard_permissions(
 
         # attempt access to base-url, expect 404 (no content, no guards allows)
         response = get_from_url(distro.base_url)
-        assert response.status_code == 404
+        assert response.status == 404
 
         # update CCG with RCG
         body = PatchedCompositeContentGuard(guards=[rcg.pulp_href])
@@ -298,7 +299,7 @@ def test_composite_contentguard_permissions(
 
         # attempt dist-access, expect 403 (1 guard, forbids)
         response = get_from_url(distro.base_url)
-        assert response.status_code == 403
+        assert response.status == 403
 
         # Create HeaderContentGuard, update CCG with [RCG, HCG]
         body = PatchedCompositeContentGuard(guards=[rcg.pulp_href, hcg.pulp_href])
@@ -306,7 +307,7 @@ def test_composite_contentguard_permissions(
 
         # attempt dist-access, expect 403 (2 guards, both forbid)
         response = get_from_url(distro.base_url)
-        assert response.status_code == 403
+        assert response.status == 403
 
         # examine error-response, expect one from each guard
         assert rcg.pulp_href in response.reason
@@ -317,4 +318,4 @@ def test_composite_contentguard_permissions(
         header_value = b64encode(b"123456").decode("ascii")
         headers = {"x-header": header_value}
         response = get_from_url(distro.base_url, headers=headers)
-        assert response.status_code == 404
+        assert response.status == 404

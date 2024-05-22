@@ -6,6 +6,7 @@ from urllib.parse import urljoin
 from uuid import uuid4
 
 import pytest
+from aiohttp import BasicAuth
 from pulpcore.client.pulp_file import RepositorySyncURL
 from pulpcore.client.pulpcore.exceptions import ApiException
 
@@ -30,7 +31,7 @@ def test_retrieve_task_with_fields_created_resources_only(
 
     task = tasks_api_client.list(created_resources=distribution.pulp_href).results[0]
 
-    auth = (bindings_cfg.username, bindings_cfg.password)
+    auth = BasicAuth(login=bindings_cfg.username, password=bindings_cfg.password)
     full_href = urljoin(bindings_cfg.host, task.pulp_href)
 
     response_body = download_file(f"{full_href}?fields=created_resources", auth=auth).body

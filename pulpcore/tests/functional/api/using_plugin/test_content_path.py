@@ -64,30 +64,30 @@ def test_content_directory_listing(
     if pulp_settings.DOMAIN_ENABLED:
         base_url = urljoin(base_url, "default/")
     response = get_from_url(base_url[:-1])
-    assert response.history[0].status_code == 301
-    assert response.status_code == 200
+    assert response.history[0].status == 301
+    assert response.status == 200
 
     # Assert that not using a trailing slash returns a 301 for a partial base path
     url = urljoin(base_url, base_path)
     response = get_from_url(url)
-    assert response.history[0].status_code == 301
-    assert response.status_code == 200
+    assert response.history[0].status == 301
+    assert response.status == 200
 
     # Assert that not using a trailing slash within a distribution returns a 301
     url = f"{url}/boo1"
     response = get_from_url(url)
-    assert response.history[0].status_code == 301
-    assert response.status_code == 200
+    assert response.history[0].status == 301
+    assert response.status == 200
 
     # Assert that not using a trailing slash for a full base path returns a 301
     url = f"{url}/foo1"
     response = get_from_url(url)
-    assert response.history[0].status_code == 301
-    assert response.status_code == 404
+    assert response.history[0].status == 301
+    assert response.status == 404
     assert "Distribution is not pointing to" in response.reason
 
     # Assert that a non-existing base path does not return a 301
     url = url[:-1]
     response = get_from_url(url)
     assert len(response.history) == 0
-    assert response.status_code == 404
+    assert response.status == 404

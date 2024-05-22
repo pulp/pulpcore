@@ -1,5 +1,6 @@
 """Tests that publish file plugin repositories."""
 
+from aiohttp import BasicAuth
 import json
 import pytest
 from urllib.parse import urljoin
@@ -73,7 +74,7 @@ def test_crd_publications(
 
     # Read a publication by its href providing specific field list.
     config = file_bindings.RepositoriesFileApi.api_client.configuration
-    auth = (config.username, config.password)
+    auth = BasicAuth(login=config.username, password=config.password)
     full_href = urljoin(config.host, publication.pulp_href)
     for fields in [
         ("pulp_href", "pulp_created"),
