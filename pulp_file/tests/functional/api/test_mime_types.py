@@ -1,5 +1,4 @@
-import aiohttp
-import asyncio
+import requests
 import pytest
 import uuid
 
@@ -50,15 +49,8 @@ def test_content_types(
 
     received_mimetypes = {}
     for extension, content_unit in files.items():
-
-        async def get_content_type():
-            async with aiohttp.ClientSession() as session:
-                url = urljoin(distribution.base_url, content_unit.relative_path)
-                async with session.get(url) as response:
-                    return response.headers.get("Content-Type")
-
-        content_type = asyncio.run(get_content_type())
-        received_mimetypes[extension] = content_type
+        url = urljoin(distribution.base_url, content_unit.relative_path)
+        received_mimetypes[extension] = requests.get(url).headers.get("Content-Type")
 
     expected_mimetypes = {
         "tar.gz": "application/gzip",

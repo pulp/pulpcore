@@ -1,6 +1,5 @@
 """Tests for Pulp`s download policies."""
 
-from aiohttp.client_exceptions import ClientResponseError
 from bs4 import BeautifulSoup
 import hashlib
 import os
@@ -28,8 +27,8 @@ def _do_range_request_download_and_assert(url, range_header, expected_bytes):
     assert expected_bytes == len(file2.body)
     assert file1.body == file2.body
 
-    assert file1.response_obj.status == 206
-    assert file1.response_obj.status == file2.response_obj.status
+    assert file1.response_obj.status_code == 206
+    assert file1.response_obj.status_code == file2.response_obj.status_code
 
     assert str(expected_bytes) == file1.response_obj.headers["Content-Length"]
     assert str(expected_bytes) == file2.response_obj.headers["Content-Length"]
@@ -108,10 +107,9 @@ def test_download_policy(
 
     # Assert that un-published content is not available
     for expected_file in expected_files:
-        with pytest.raises(ClientResponseError) as exc:
-            content_unit_url = urljoin(distribution.base_url, expected_file[0])
-            download_file(content_unit_url)
-        assert exc.value.status == 404
+        content_unit_url = urljoin(distribution.base_url, expected_file[0])
+        response = download_file(content_unit_url)
+        assert response.response_obj.status_code == 404
 
     # Create a File Publication and assert that the repository_version is set on the Publication.
     publish_data = FileFilePublication(repository=file_repo.pulp_href)
@@ -134,7 +132,7 @@ def test_download_policy(
     # Download the listing page for the 'foo' directory
     distribution_html_page = download_file(f"{distribution.base_url}foo")
     # Assert that requesting a path inside a distribution without a trailing / returns a 301
-    assert distribution_html_page.response_obj.history[0].status == 301
+    assert distribution_html_page.response_obj.history[0].status_code == 301
     soup = BeautifulSoup(distribution_html_page.body, "html.parser")
     all_strings = [s for s in soup.strings if s != "\n"]
     assert all_strings[3] == "0.iso"
@@ -193,18 +191,16 @@ def test_download_policy(
     content_unit_url = urljoin(distribution.base_url, content_unit[0])
     # The S3 test API project doesn't handle invalid Range values correctly
     if settings.DEFAULT_FILE_STORAGE == "pulpcore.app.models.storage.FileSystem":
-        with pytest.raises(ClientResponseError) as exc:
-            range_header = {"Range": "bytes=-1-11"}
-            download_file(content_unit_url, headers=range_header)
-        assert exc.value.status == 416
+        range_header = {"Range": "bytes=-1-11"}
+        response = download_file(content_unit_url, headers=range_header)
+        assert response.response_obj.status_code == 416
 
     # Assert that a range request with a start value larger than the content errors
     content_unit = expected_files_list[5]
     content_unit_url = urljoin(distribution.base_url, content_unit[0])
-    with pytest.raises(ClientResponseError) as exc:
-        range_header = {"Range": "bytes=10485860-10485870"}
-        download_file(content_unit_url, headers=range_header)
-    assert exc.value.status == 416
+    range_header = {"Range": "bytes=10485860-10485870"}
+    response = download_file(content_unit_url, headers=range_header)
+    assert response.response_obj.status_code == 416
 
     # Assert that a range request with an end value that is larger than the data works
     range_header = {"Range": "bytes=4193804-4294304"}

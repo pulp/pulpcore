@@ -45,7 +45,7 @@ def test_content_promotion(
     for distro in [distribution1, distribution2, distribution3]:
         # Assert that all 3 distributions can be accessed
         r = get_from_url(distro.base_url)
-        assert r.status == 200
+        assert r.status_code == 200
         # Download one of the files from the distribution and assert it has the correct checksum
         expected_files_list = list(expected_files)
         content_unit = expected_files_list[0]

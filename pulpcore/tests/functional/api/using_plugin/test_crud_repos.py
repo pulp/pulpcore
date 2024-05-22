@@ -5,7 +5,6 @@ import pytest
 import re
 
 from uuid import uuid4
-from aiohttp import BasicAuth
 from subprocess import run
 from urllib.parse import urljoin
 
@@ -41,7 +40,7 @@ def test_crud_repo_full_workflow(
 
     # Read a repository by its href providing specific field list.
     config = file_bindings.RepositoriesFileApi.api_client.configuration
-    auth = BasicAuth(login=config.username, password=config.password)
+    auth = (config.username, config.password)
     full_href = urljoin(config.host, repo.pulp_href)
     for fields in [
         ("pulp_href", "pulp_created"),

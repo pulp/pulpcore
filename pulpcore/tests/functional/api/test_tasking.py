@@ -4,7 +4,6 @@ import json
 import pytest
 import subprocess
 import time
-from aiohttp import BasicAuth
 from urllib.parse import urljoin
 from uuid import uuid4
 
@@ -182,7 +181,7 @@ def test_retrieve_task_with_limited_fields(task, bindings_cfg):
     """Verify for specific fields retrieve in the payload."""
     expected_fields = set(("pulp_href", "state", "worker"))
 
-    auth = BasicAuth(login=bindings_cfg.username, password=bindings_cfg.password)
+    auth = (bindings_cfg.username, bindings_cfg.password)
     full_href = urljoin(bindings_cfg.host, task.pulp_href)
 
     response = download_file(f"{full_href}?fields={','.join(expected_fields)}", auth=auth)
@@ -198,7 +197,7 @@ def test_retrieve_task_without_specific_fields(task, bindings_cfg):
     """Verify if some fields are excluded from the response."""
     unexpected_fields = set(("state", "worker"))
 
-    auth = BasicAuth(login=bindings_cfg.username, password=bindings_cfg.password)
+    auth = (bindings_cfg.username, bindings_cfg.password)
     full_href = urljoin(bindings_cfg.host, task.pulp_href)
 
     response = download_file(f"{full_href}?exclude_fields={','.join(unexpected_fields)}", auth=auth)
@@ -214,7 +213,7 @@ def test_retrieve_task_with_minimal_fields(task, bindings_cfg):
     """Verify if some fields doesn't show when retrieving the minimal payload."""
     unexpected_fields = set(("progress_reports", "parent_task", "error"))
 
-    auth = BasicAuth(login=bindings_cfg.username, password=bindings_cfg.password)
+    auth = (bindings_cfg.username, bindings_cfg.password)
     full_href = urljoin(bindings_cfg.host, task.pulp_href)
 
     response = download_file(f"{full_href}?minimal=true", auth=auth)

@@ -35,8 +35,8 @@ def test_full_workflow(
         r = get_from_url(url)
         if r.history:
             r = r.history[0]
-            return 200 if r.status == 302 else r.status, r.headers.get("X-PULP-CACHE")
-        return r.status, r.headers.get("X-PULP-CACHE")
+            return 200 if r.status_code == 302 else r.status_code, r.headers.get("X-PULP-CACHE")
+        return r.status_code, r.headers.get("X-PULP-CACHE")
 
     # Sync from the remote and assert that a new repository version is created
     remote = file_remote_factory(manifest_path=basic_manifest_path, policy="immediate")

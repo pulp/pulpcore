@@ -1,11 +1,10 @@
 """Test related to the openapi schema Pulp generates."""
 
-import asyncio
 import copy
 import json
 
-import aiohttp
 import pytest
+import requests
 import jsonschema
 
 from drf_spectacular.validation import JSON_SCHEMA_SPEC_PATH
@@ -39,19 +38,13 @@ def pulp_openapi_schema_url(pulp_api_v3_url):
 
 @pytest.fixture(scope="session")
 def pulp_openapi_schema(pulp_openapi_schema_url):
-    return asyncio.run(_download_schema(pulp_openapi_schema_url))
+    return requests.get(pulp_openapi_schema_url).json()
 
 
 @pytest.fixture(scope="session")
 def pulp_openapi_schema_pk_path_set(pulp_openapi_schema_url):
     url = f"{pulp_openapi_schema_url}?pk_path=1"
-    return asyncio.run(_download_schema(url))
-
-
-async def _download_schema(url):
-    async with aiohttp.ClientSession() as session:
-        async with session.get(url) as response:
-            return await response.json()
+    return requests.get(url).json()
 
 
 @pytest.mark.parallel
