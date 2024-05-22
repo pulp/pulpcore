@@ -1,1 +1,0 @@
-Renamed ``name`` to ``domain_name`` in the metric's attributes reporting domain's disk usage.

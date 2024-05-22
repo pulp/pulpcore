@@ -13,6 +13,64 @@ Changelog
 
 .. towncrier release notes start
 
+3.54.0 (2024-05-22)
+===================
+REST API
+--------
+
+Features
+~~~~~~~~
+
+- Added search indices to the Task table to speed up task operations.
+  :github:`5367`
+- Added a scheduled version of task purge.
+  You need to adjust the "TASK_PROTECTION_TIME" setting in order to use it.
+  :github:`5378`
+
+
+Bugfixes
+~~~~~~~~
+
+- Renamed ``name`` to ``domain_name`` in the metric's attributes reporting domain's disk usage.
+  :github:`5134`
+- Fixed content directory listing returning 500 in certain scenarios due to missing artifact sizes.
+  :github:`5318`
+- Fixed a bug related to replication of AppStream and BaseOS repositories of CentOS.
+  :github:`5358`
+- Stopped deleting content and artifacts presumably created by later failed or canceled tasks.
+  Deleting these lies solely in the responsibility of orphan cleanup.
+  :github:`5363`
+
+
+Improved Documentation
+~~~~~~~~~~~~~~~~~~~~~~
+
+- Made the complex filtering feature production-ready. This feature supports a special `q` filter
+  that allows combinations of other filters with `NOT`, `AND` and `OR` operations.
+  :github:`5319`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
+Pulp File
+---------
+
+No significant changes.
+
+
+Pulp Cert Guard
+---------------
+
+No significant changes.
+
+
+----
+
+
 3.53.0 (2024-04-30)
 ===================
 REST API
