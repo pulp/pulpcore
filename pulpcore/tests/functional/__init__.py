@@ -9,6 +9,7 @@ import threading
 import time
 import uuid
 import warnings
+import certifi
 
 import pytest
 
@@ -40,6 +41,9 @@ from .gpg_ascii_armor_signing_service import (
     signing_script_temp_dir,
 )
 
+
+ssl_context = ssl.create_default_context()
+ssl_context.load_verify_locations(certifi.where())
 
 try:
     import pulp_smash
@@ -121,6 +125,7 @@ def bindings_cfg():
         password=os.environ.get("ADMIN_PASSWORD", "password"),
     )
     configuration.safe_chars_for_path_param = "/"
+    configuration.ssl_ca_cert = certifi.where()
     return configuration
 
 
