@@ -1,10 +1,17 @@
 import pytest
 import uuid
+import certifi
 
 from pulpcore.client.pulpcore import ApiException
 from pulpcore.client.pulpcore import AsyncOperationResponse
 
 from pulpcore.tests.functional.utils import PulpTaskGroupError
+
+
+@pytest.fixture
+def ca_cert():
+    with open(certifi.where()) as f:
+        return f.read()
 
 
 @pytest.mark.parallel
@@ -15,6 +22,7 @@ def test_replication(
     monitor_task_group,
     pulp_settings,
     gen_object_with_cleanup,
+    ca_cert,
 ):
     # This test assures that an Upstream Pulp can be created in a non-default domain and that this
     # Upstream Pulp configuration can be used to execute the replicate task.
@@ -33,6 +41,7 @@ def test_replication(
         "domain": source_domain.name,
         "username": bindings_cfg.username,
         "password": bindings_cfg.password,
+        "ca_cert": ca_cert,
     }
     upstream_pulp = gen_object_with_cleanup(
         pulpcore_bindings.UpstreamPulpsApi, upstream_pulp_body, pulp_domain=non_default_domain.name
@@ -59,6 +68,7 @@ def test_replication_idempotence(
     file_publication_factory,
     file_repository_factory,
     tmp_path,
+    ca_cert,
 ):
     # This test assures that an Upstream Pulp can be created in a non-default domain and that this
     # Upstream Pulp configuration can be used to execute the replicate task.
@@ -94,6 +104,7 @@ def test_replication_idempotence(
         "domain": source_domain.name,
         "username": bindings_cfg.username,
         "password": bindings_cfg.password,
+        "ca_cert": ca_cert,
     }
     upstream_pulp = gen_object_with_cleanup(
         pulpcore_bindings.UpstreamPulpsApi, upstream_pulp_body, pulp_domain=replica_domain.name
@@ -129,6 +140,7 @@ def test_replication_idempotence(
         "domain": replica_domain.name,
         "username": bindings_cfg.username,
         "password": bindings_cfg.password,
+        "ca_cert": ca_cert,
     }
     upstream_pulp = gen_object_with_cleanup(
         pulpcore_bindings.UpstreamPulpsApi, upstream_pulp_body, pulp_domain=source_domain.name
