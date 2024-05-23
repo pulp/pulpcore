@@ -16,7 +16,6 @@ from pulpcore.tests.functional.utils import download_file, get_files_in_manifest
 def test_delete_remote_on_demand(
     file_repo_with_auto_publish,
     file_remote_ssl_factory,
-    file_remote_api_client,
     file_bindings,
     basic_manifest_path,
     monitor_task,
@@ -39,7 +38,7 @@ def test_delete_remote_on_demand(
     expected_file_list = list(get_files_in_manifest(remote.url))
 
     # Delete the remote and assert that downloading content returns a 404
-    monitor_task(file_remote_api_client.delete(remote.pulp_href).task)
+    monitor_task(file_bindings.RemotesFileApi.delete(remote.pulp_href).task)
     with pytest.raises(ClientResponseError) as exc:
         url = urljoin(distribution.base_url, expected_file_list[0][0])
         download_file(url)

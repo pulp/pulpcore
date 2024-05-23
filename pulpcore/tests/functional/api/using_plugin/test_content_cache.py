@@ -19,9 +19,6 @@ def test_full_workflow(
     basic_manifest_path,
     file_remote_factory,
     file_bindings,
-    file_publication_api_client,
-    file_distribution_api_client,
-    file_content_api_client,
     file_distribution_factory,
     monitor_task,
     redis_status,
@@ -48,8 +45,8 @@ def test_full_workflow(
     assert repo.latest_version_href.endswith("/versions/1/")
 
     body = FileFilePublication(repository=repo.pulp_href)
-    pub2 = file_publication_api_client.read(
-        monitor_task(file_publication_api_client.create(body).task).created_resources[0]
+    pub2 = file_bindings.PublicationsFileApi.read(
+        monitor_task(file_bindings.PublicationsFileApi.create(body).task).created_resources[0]
     )
     distro = file_distribution_factory(repository=repo.pulp_href)
 
@@ -61,7 +58,7 @@ def test_full_workflow(
 
     # Check that removing the repository from the distribution invalidates the cache
     body = PatchedfileFileDistribution(repository="")
-    monitor_task(file_distribution_api_client.partial_update(distro.pulp_href, body).task)
+    monitor_task(file_bindings.DistributionsFileApi.partial_update(distro.pulp_href, body).task)
     files = ["", "PULP_MANIFEST", "1.iso"]
     for file in files:
         url = urljoin(distro.base_url, file)
@@ -69,7 +66,7 @@ def test_full_workflow(
 
     # Check that responses are cacheable after a repository is added back
     body = PatchedfileFileDistribution(repository=repo.pulp_href)
-    monitor_task(file_distribution_api_client.partial_update(distro.pulp_href, body).task)
+    monitor_task(file_bindings.DistributionsFileApi.partial_update(distro.pulp_href, body).task)
     files = ["", "", "PULP_MANIFEST", "PULP_MANIFEST", "1.iso", "1.iso"]
     for i, file in enumerate(files):
         url = urljoin(distro.base_url, file)
@@ -84,12 +81,12 @@ def test_full_workflow(
         assert (200, "HIT" if i % 2 == 1 else "MISS") == _check_cache(url), file
 
     # Test that updating a repository pointed by multiple distributions invalidates all
-    cfile = file_content_api_client.list(
+    cfile = file_bindings.ContentFilesApi.list(
         relative_path="1.iso", repository_version=repo.latest_version_href
     ).results[0]
     body = RepositoryAddRemoveContent(remove_content_units=[cfile.pulp_href])
     response = monitor_task(file_bindings.RepositoriesFileApi.modify(repo.pulp_href, body).task)
-    pub3 = file_publication_api_client.read(response.created_resources[1])
+    pub3 = file_bindings.PublicationsFileApi.read(response.created_resources[1])
     files = ["", "", "PULP_MANIFEST", "PULP_MANIFEST", "2.iso", "2.iso"]
     for i, file in enumerate(files):
         url = urljoin(distro.base_url, file)
@@ -98,7 +95,7 @@ def test_full_workflow(
         assert (200, "HIT" if i % 2 == 1 else "MISS") == _check_cache(url), file
 
     # Tests that deleting one distribution sharing a repository only invalidates its cache
-    monitor_task(file_distribution_api_client.delete(distro2.pulp_href).task)
+    monitor_task(file_bindings.DistributionsFileApi.delete(distro2.pulp_href).task)
     files = ["", "PULP_MANIFEST", "2.iso"]
     for file in files:
         url = urljoin(distro.base_url, file)
@@ -107,7 +104,7 @@ def test_full_workflow(
         assert (404, None) == _check_cache(url), file
 
     # Test that deleting a publication not being served doesn't invalidate cache
-    file_publication_api_client.delete(pub2.pulp_href)
+    file_bindings.PublicationsFileApi.delete(pub2.pulp_href)
     files = ["", "PULP_MANIFEST", "2.iso"]
     for file in files:
         url = urljoin(distro.base_url, file)
@@ -115,7 +112,7 @@ def test_full_workflow(
 
     # Test that deleting the serving publication does invalidate the cache"""
     # Reverts back to serving self.pub1
-    file_publication_api_client.delete(pub3.pulp_href)
+    file_bindings.PublicationsFileApi.delete(pub3.pulp_href)
     files = ["", "", "PULP_MANIFEST", "PULP_MANIFEST", "2.iso", "2.iso"]
     for i, file in enumerate(files):
         url = urljoin(distro.base_url, file)

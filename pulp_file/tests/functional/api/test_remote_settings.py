@@ -7,14 +7,12 @@ from pulpcore.client.pulp_file import (
 )
 
 
-def _run_basic_sync_and_assert(
-    remote, file_repo, file_bindings, file_content_api_client, monitor_task
-):
+def _run_basic_sync_and_assert(file_bindings, remote, file_repo, monitor_task):
     body = RepositorySyncURL(remote=remote.pulp_href)
     monitor_task(file_bindings.RepositoriesFileApi.sync(file_repo.pulp_href, body).task)
 
     # Check content is present, but no artifacts are there
-    content_response = file_content_api_client.list(
+    content_response = file_bindings.ContentFilesApi.list(
         repository_version=f"{file_repo.versions_href}1/"
     )
     assert content_response.count == 3
@@ -27,10 +25,9 @@ def _run_basic_sync_and_assert(
 
 @pytest.mark.parallel
 def test_http_sync_no_ssl(
+    file_bindings,
     file_remote_factory,
     file_repo,
-    file_bindings,
-    file_content_api_client,
     basic_manifest_path,
     monitor_task,
 ):
@@ -40,20 +37,18 @@ def test_http_sync_no_ssl(
     remote_on_demand = file_remote_factory(manifest_path=basic_manifest_path, policy="on_demand")
 
     _run_basic_sync_and_assert(
+        file_bindings,
         remote_on_demand,
         file_repo,
-        file_bindings,
-        file_content_api_client,
         monitor_task,
     )
 
 
 @pytest.mark.parallel
 def test_http_sync_ssl_tls_validation_off(
+    file_bindings,
     file_remote_ssl_factory,
     file_repo,
-    file_bindings,
-    file_content_api_client,
     basic_manifest_path,
     monitor_task,
 ):
@@ -65,20 +60,18 @@ def test_http_sync_ssl_tls_validation_off(
     )
 
     _run_basic_sync_and_assert(
+        file_bindings,
         remote_on_demand,
         file_repo,
-        file_bindings,
-        file_content_api_client,
         monitor_task,
     )
 
 
 @pytest.mark.parallel
 def test_http_sync_ssl_tls_validation_on(
+    file_bindings,
     file_remote_ssl_factory,
     file_repo,
-    file_bindings,
-    file_content_api_client,
     basic_manifest_path,
     monitor_task,
 ):
@@ -90,20 +83,18 @@ def test_http_sync_ssl_tls_validation_on(
     )
 
     _run_basic_sync_and_assert(
+        file_bindings,
         remote_on_demand,
         file_repo,
-        file_bindings,
-        file_content_api_client,
         monitor_task,
     )
 
 
 @pytest.mark.parallel
 def test_http_sync_ssl_tls_validation_defaults_to_on(
+    file_bindings,
     file_remote_ssl_factory,
     file_repo,
-    file_bindings,
-    file_content_api_client,
     basic_manifest_path,
     monitor_task,
 ):
@@ -116,20 +107,18 @@ def test_http_sync_ssl_tls_validation_defaults_to_on(
     )
 
     _run_basic_sync_and_assert(
+        file_bindings,
         remote_on_demand,
         file_repo,
-        file_bindings,
-        file_content_api_client,
         monitor_task,
     )
 
 
 @pytest.mark.parallel
 def test_http_sync_ssl_with_client_cert_req(
+    file_bindings,
     file_remote_client_cert_req_factory,
     file_repo,
-    file_bindings,
-    file_content_api_client,
     basic_manifest_path,
     monitor_task,
 ):
@@ -141,20 +130,18 @@ def test_http_sync_ssl_with_client_cert_req(
     )
 
     _run_basic_sync_and_assert(
+        file_bindings,
         remote_on_demand,
         file_repo,
-        file_bindings,
-        file_content_api_client,
         monitor_task,
     )
 
 
 @pytest.mark.parallel
 def test_ondemand_to_immediate_sync(
+    file_bindings,
     file_remote_ssl_factory,
     file_repo,
-    file_bindings,
-    file_content_api_client,
     basic_manifest_path,
     monitor_task,
 ):
@@ -166,10 +153,9 @@ def test_ondemand_to_immediate_sync(
     )
 
     _run_basic_sync_and_assert(
+        file_bindings,
         remote_on_demand,
         file_repo,
-        file_bindings,
-        file_content_api_client,
         monitor_task,
     )
 
@@ -178,22 +164,19 @@ def test_ondemand_to_immediate_sync(
     )
 
     _run_basic_sync_and_assert(
+        file_bindings,
         remote_immediate,
         file_repo,
-        file_bindings,
-        file_content_api_client,
         monitor_task,
     )
 
 
 @pytest.mark.parallel
 def test_header_for_sync(
+    file_bindings,
     file_fixture_server_ssl,
     tls_certificate_authority_cert,
-    file_remote_api_client,
     file_repo,
-    file_bindings,
-    file_content_api_client,
     gen_object_with_cleanup,
     basic_manifest_path,
     monitor_task,
@@ -215,13 +198,12 @@ def test_header_for_sync(
         "ca_cert": tls_certificate_authority_cert,
         "headers": headers,
     }
-    remote_on_demand = gen_object_with_cleanup(file_remote_api_client, remote_on_demand_data)
+    remote_on_demand = gen_object_with_cleanup(file_bindings.RemotesFileApi, remote_on_demand_data)
 
     _run_basic_sync_and_assert(
+        file_bindings,
         remote_on_demand,
         file_repo,
-        file_bindings,
-        file_content_api_client,
         monitor_task,
     )
 

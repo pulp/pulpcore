@@ -11,7 +11,6 @@ from pulpcore.client.pulp_file import RepositorySyncURL
 
 @pytest.mark.parallel
 def test_repository_content_filters(
-    file_content_api_client,
     file_bindings,
     file_repository_factory,
     file_remote_factory,
@@ -27,7 +26,7 @@ def test_repository_content_filters(
     body = RepositorySyncURL(remote=remote.pulp_href)
     task_response = file_bindings.RepositoriesFileApi.sync(repo.pulp_href, body).task
     version_href = monitor_task(task_response).created_resources[0]
-    content = file_content_api_client.list(repository_version_added=version_href).results[0]
+    content = file_bindings.ContentFilesApi.list(repository_version_added=version_href).results[0]
     repo = file_bindings.RepositoriesFileApi.read(repo.pulp_href)
 
     # filter repo by the content
@@ -79,7 +78,6 @@ def test_repo_size(
     file_remote_factory,
     basic_manifest_path,
     random_artifact_factory,
-    file_content_api_client,
     monitor_task,
 ):
     # Sync repository with on_demand
@@ -130,7 +128,7 @@ def test_repo_size(
     # Add content unit w/ same name, but different artifact
     art1 = random_artifact_factory()
     body = {"repository": file_repo.pulp_href, "artifact": art1.pulp_href, "relative_path": "1.iso"}
-    monitor_task(file_content_api_client.create(**body).task)
+    monitor_task(file_bindings.ContentFilesApi.create(**body).task)
 
     run = subprocess.run(cmd, capture_output=True, check=True)
     out = json.loads(run.stdout)

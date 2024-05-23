@@ -10,7 +10,6 @@ from pulpcore.client.pulp_file import FileFileDistribution, RepositoryAddRemoveC
 
 @pytest.mark.parallel
 def test_content_types(
-    file_distribution_api_client,
     file_bindings,
     file_repo_with_auto_publish,
     file_content_unit_with_name_factory,
@@ -46,7 +45,7 @@ def test_content_types(
         base_path=str(uuid.uuid4()),
         repository=file_repo_with_auto_publish.pulp_href,
     )
-    distribution = gen_object_with_cleanup(file_distribution_api_client, data)
+    distribution = gen_object_with_cleanup(file_bindings.DistributionsFileApi, data)
 
     received_mimetypes = {}
     for extension, content_unit in files.items():

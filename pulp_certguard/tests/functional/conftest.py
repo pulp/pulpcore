@@ -3,7 +3,7 @@ import pytest
 
 @pytest.fixture(scope="class")
 def repository_test_file(
-    file_content_api_client,
+    file_bindings,
     file_repository_factory,
     monitor_task,
     tmp_path_factory,
@@ -12,7 +12,7 @@ def repository_test_file(
     filename = tmp_path_factory.mktemp("fixtures") / "test_file"
     filename.write_bytes(b"test content")
     repository = file_repository_factory(autopublish=True)
-    upload_task = file_content_api_client.create(
+    upload_task = file_bindings.ContentFilesApi.create(
         relative_path="test_file", file=filename, repository=repository.pulp_href
     ).task
     monitor_task(upload_task)

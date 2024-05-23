@@ -1,7 +1,6 @@
 import os
 import uuid
 import subprocess
-import warnings
 from collections import defaultdict
 from pathlib import Path
 
@@ -29,51 +28,6 @@ def file_bindings(_api_client_set, bindings_cfg):
     _api_client_set.remove(file_client)
 
 
-# TODO Deprecate all the api_client fixtures below.
-
-
-@pytest.fixture(scope="session")
-def file_acs_api_client(file_bindings):
-    warnings.warn("This fixture is deprecated. Use `file_bindings` instead.", DeprecationWarning)
-    return file_bindings.AcsFileApi
-
-
-@pytest.fixture(scope="session")
-def file_content_api_client(file_bindings):
-    warnings.warn("This fixture is deprecated. Use `file_bindings` instead.", DeprecationWarning)
-    return file_bindings.ContentFilesApi
-
-
-@pytest.fixture(scope="session")
-def file_distribution_api_client(file_bindings):
-    warnings.warn("This fixture is deprecated. Use `file_bindings` instead.", DeprecationWarning)
-    return file_bindings.DistributionsFileApi
-
-
-@pytest.fixture(scope="session")
-def file_publication_api_client(file_bindings):
-    warnings.warn("This fixture is deprecated. Use `file_bindings` instead.", DeprecationWarning)
-    return file_bindings.PublicationsFileApi
-
-
-@pytest.fixture(scope="session")
-def file_repository_api_client(file_bindings):
-    warnings.warn("This fixture is deprecated. Use `file_bindings` instead.", DeprecationWarning)
-    return file_bindings.RepositoriesFileApi
-
-
-@pytest.fixture(scope="session")
-def file_repository_version_api_client(file_bindings):
-    warnings.warn("This fixture is deprecated. Use `file_bindings` instead.", DeprecationWarning)
-    return file_bindings.RepositoriesFileVersionsApi
-
-
-@pytest.fixture(scope="session")
-def file_remote_api_client(file_bindings):
-    warnings.warn("This fixture is deprecated. Use `file_bindings` instead.", DeprecationWarning)
-    return file_bindings.RemotesFileApi
-
-
 # Factory fixtures
 
 
@@ -96,26 +50,26 @@ def file_content_unit_with_name_factory(file_bindings, random_artifact, monitor_
 
 
 @pytest.fixture
-def file_repo(file_repository_api_client, gen_object_with_cleanup):
+def file_repo(file_bindings, gen_object_with_cleanup):
     body = {"name": str(uuid.uuid4())}
-    return gen_object_with_cleanup(file_repository_api_client, body)
+    return gen_object_with_cleanup(file_bindings.RepositoriesFileApi, body)
 
 
 @pytest.fixture
-def file_repo_with_auto_publish(file_repository_api_client, gen_object_with_cleanup):
+def file_repo_with_auto_publish(file_bindings, gen_object_with_cleanup):
     body = {"name": str(uuid.uuid4()), "autopublish": True}
-    return gen_object_with_cleanup(file_repository_api_client, body)
+    return gen_object_with_cleanup(file_bindings.RepositoriesFileApi, body)
 
 
 @pytest.fixture(scope="class")
-def file_distribution_factory(file_distribution_api_client, gen_object_with_cleanup):
+def file_distribution_factory(file_bindings, gen_object_with_cleanup):
     def _file_distribution_factory(pulp_domain=None, **body):
         data = {"base_path": str(uuid.uuid4()), "name": str(uuid.uuid4())}
         data.update(body)
         kwargs = {}
         if pulp_domain:
             kwargs["pulp_domain"] = pulp_domain
-        return gen_object_with_cleanup(file_distribution_api_client, data, **kwargs)
+        return gen_object_with_cleanup(file_bindings.DistributionsFileApi, data, **kwargs)
 
     return _file_distribution_factory
 
@@ -241,7 +195,7 @@ def file_fixture_server(file_fixtures_root, gen_fixture_server):
 
 
 @pytest.fixture
-def file_remote_factory(file_fixture_server, file_remote_api_client, gen_object_with_cleanup):
+def file_remote_factory(file_fixture_server, file_bindings, gen_object_with_cleanup):
     def _file_remote_factory(
         manifest_path=None, url=None, policy="immediate", pulp_domain=None, **body
     ):
@@ -254,7 +208,7 @@ def file_remote_factory(file_fixture_server, file_remote_api_client, gen_object_
         kwargs = {}
         if pulp_domain:
             kwargs["pulp_domain"] = pulp_domain
-        return gen_object_with_cleanup(file_remote_api_client, body, **kwargs)
+        return gen_object_with_cleanup(file_bindings.RemotesFileApi, body, **kwargs)
 
     return _file_remote_factory
 
@@ -262,7 +216,7 @@ def file_remote_factory(file_fixture_server, file_remote_api_client, gen_object_
 @pytest.fixture
 def file_remote_ssl_factory(
     file_fixture_server_ssl,
-    file_remote_api_client,
+    file_bindings,
     tls_certificate_authority_cert,
     gen_object_with_cleanup,
 ):
@@ -276,7 +230,7 @@ def file_remote_ssl_factory(
                 "ca_cert": tls_certificate_authority_cert,
             }
         )
-        return gen_object_with_cleanup(file_remote_api_client, kwargs)
+        return gen_object_with_cleanup(file_bindings.RemotesFileApi, kwargs)
 
     return _file_remote_ssl_factory
 
@@ -284,7 +238,7 @@ def file_remote_ssl_factory(
 @pytest.fixture
 def file_remote_client_cert_req_factory(
     file_fixture_server_ssl_client_cert_req,
-    file_remote_api_client,
+    file_bindings,
     tls_certificate_authority_cert,
     client_tls_certificate_cert_pem,
     client_tls_certificate_key_pem,
@@ -302,7 +256,7 @@ def file_remote_client_cert_req_factory(
                 "client_key": client_tls_certificate_key_pem,
             }
         )
-        return gen_object_with_cleanup(file_remote_api_client, kwargs)
+        return gen_object_with_cleanup(file_bindings.RemotesFileApi, kwargs)
 
     return _file_remote_client_cert_req_factory
 

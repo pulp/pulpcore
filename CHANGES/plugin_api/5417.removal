@@ -1,0 +1,2 @@
+Removed deprecated fixtures for api clients.
+The new `pulpcore_bindings`, `file_bindings`, ... fixtures should be used instead.

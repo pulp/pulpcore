@@ -8,7 +8,6 @@ from pulpcore.client.pulp_file import FileFileDistribution, RepositoryAddRemoveC
 
 
 def test_get_requests(
-    file_distribution_api_client,
     file_bindings,
     file_repo_with_auto_publish,
     file_content_unit_with_name_factory,
@@ -34,7 +33,7 @@ def test_get_requests(
         base_path=str(uuid.uuid4()),
         repository=file_repo_with_auto_publish.pulp_href,
     )
-    distribution = gen_object_with_cleanup(file_distribution_api_client, data)
+    distribution = gen_object_with_cleanup(file_bindings.DistributionsFileApi, data)
 
     for content_unit in content_units:
         url = urljoin(distribution.base_url, content_unit.relative_path)

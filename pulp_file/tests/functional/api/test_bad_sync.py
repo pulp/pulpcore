@@ -8,9 +8,8 @@ from pulpcore.client.pulp_file import RepositorySyncURL
 
 @pytest.fixture
 def perform_sync(
-    file_repo,
     file_bindings,
-    file_remote_api_client,
+    file_repo,
     gen_object_with_cleanup,
     monitor_task,
 ):
@@ -20,7 +19,7 @@ def perform_sync(
             "policy": policy,
             "name": str(uuid.uuid4()),
         }
-        remote = gen_object_with_cleanup(file_remote_api_client, remote_data)
+        remote = gen_object_with_cleanup(file_bindings.RemotesFileApi, remote_data)
 
         body = RepositorySyncURL(remote=remote.pulp_href)
         monitor_task(file_bindings.RepositoriesFileApi.sync(file_repo.pulp_href, body).task)

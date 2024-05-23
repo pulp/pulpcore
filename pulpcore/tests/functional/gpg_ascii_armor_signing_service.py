@@ -159,8 +159,8 @@ def _ascii_armored_detached_signing_service_name(
 
 @pytest.fixture
 def ascii_armored_detached_signing_service(
-    _ascii_armored_detached_signing_service_name, signing_service_api_client
+    _ascii_armored_detached_signing_service_name, pulpcore_bindings
 ):
-    return signing_service_api_client.list(
+    return pulpcore_bindings.SigningServicesApi.list(
         name=_ascii_armored_detached_signing_service_name
     ).results[0]

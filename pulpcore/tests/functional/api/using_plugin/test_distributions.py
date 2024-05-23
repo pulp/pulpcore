@@ -14,15 +14,11 @@ from pulpcore.client.pulp_file.exceptions import ApiException
 
 @pytest.mark.parallel
 def test_crud_publication_distribution(
-    file_content_api_client,
+    file_bindings,
     file_repo,
     file_remote_ssl_factory,
-    file_bindings,
-    file_repository_version_api_client,
-    file_publication_api_client,
     basic_manifest_path,
     gen_object_with_cleanup,
-    file_distribution_api_client,
     file_distribution_factory,
     monitor_task,
 ):
@@ -35,7 +31,9 @@ def test_crud_publication_distribution(
     first_repo_version_href = file_bindings.RepositoriesFileApi.read(
         file_repo.pulp_href
     ).latest_version_href
-    v1_content = file_content_api_client.list(repository_version=first_repo_version_href).results
+    v1_content = file_bindings.ContentFilesApi.list(
+        repository_version=first_repo_version_href
+    ).results
 
     for i in range(2):
         monitor_task(
@@ -45,9 +43,9 @@ def test_crud_publication_distribution(
         )
 
     # Create a publication from version 2
-    repo_versions = file_repository_version_api_client.list(file_repo.pulp_href).results
+    repo_versions = file_bindings.RepositoriesFileVersionsApi.list(file_repo.pulp_href).results
     publish_data = FileFilePublication(repository_version=repo_versions[2].pulp_href)
-    publication = gen_object_with_cleanup(file_publication_api_client, publish_data)
+    publication = gen_object_with_cleanup(file_bindings.PublicationsFileApi, publish_data)
     distribution_data = {
         "publication": publication.pulp_href,
         "name": str(uuid4()),
@@ -56,7 +54,7 @@ def test_crud_publication_distribution(
     distribution = file_distribution_factory(**distribution_data)
 
     # Refresh the publication data
-    publication = file_publication_api_client.read(publication.pulp_href)
+    publication = file_bindings.PublicationsFileApi.read(publication.pulp_href)
 
     # Assert on all the field values
     assert distribution.content_guard is None
@@ -71,49 +69,55 @@ def test_crud_publication_distribution(
     # Test updating name with 'partial_update'
     new_name = str(uuid4())
     monitor_task(
-        file_distribution_api_client.partial_update(distribution.pulp_href, {"name": new_name}).task
+        file_bindings.DistributionsFileApi.partial_update(
+            distribution.pulp_href, {"name": new_name}
+        ).task
     )
-    distribution = file_distribution_api_client.read(distribution.pulp_href)
+    distribution = file_bindings.DistributionsFileApi.read(distribution.pulp_href)
     assert distribution.name == new_name
 
     # Test updating base_path with 'partial_update'
     new_base_path = str(uuid4())
     monitor_task(
-        file_distribution_api_client.partial_update(
+        file_bindings.DistributionsFileApi.partial_update(
             distribution.pulp_href, {"base_path": new_base_path}
         ).task
     )
-    distribution = file_distribution_api_client.read(distribution.pulp_href)
+    distribution = file_bindings.DistributionsFileApi.read(distribution.pulp_href)
     assert distribution.base_path == new_base_path
 
     # Test updating name with 'update'
     new_name = str(uuid4())
     distribution.name = new_name
-    monitor_task(file_distribution_api_client.update(distribution.pulp_href, distribution).task)
-    distribution = file_distribution_api_client.read(distribution.pulp_href)
+    monitor_task(
+        file_bindings.DistributionsFileApi.update(distribution.pulp_href, distribution).task
+    )
+    distribution = file_bindings.DistributionsFileApi.read(distribution.pulp_href)
     assert distribution.name == new_name
 
     # Test updating base_path with 'update'
     new_base_path = str(uuid4())
     distribution.base_path = new_base_path
-    monitor_task(file_distribution_api_client.update(distribution.pulp_href, distribution).task)
-    distribution = file_distribution_api_client.read(distribution.pulp_href)
+    monitor_task(
+        file_bindings.DistributionsFileApi.update(distribution.pulp_href, distribution).task
+    )
+    distribution = file_bindings.DistributionsFileApi.read(distribution.pulp_href)
     assert distribution.base_path == new_base_path
 
     # Test the generic distribution list endpoint.
-    distributions = file_distribution_api_client.list()
+    distributions = file_bindings.DistributionsFileApi.list()
     assert distribution.pulp_href in [distro.pulp_href for distro in distributions.results]
 
     # Delete a distribution.
-    file_distribution_api_client.delete(distribution.pulp_href)
+    file_bindings.DistributionsFileApi.delete(distribution.pulp_href)
     with pytest.raises(ApiException):
-        file_distribution_api_client.read(distribution.pulp_href)
+        file_bindings.DistributionsFileApi.read(distribution.pulp_href)
 
 
 @pytest.mark.parallel
 def test_distribution_base_path(
+    file_bindings,
     file_distribution_factory,
-    file_distribution_api_client,
 ):
     distribution = file_distribution_factory(base_path=str(uuid4()).replace("-", "/"))
 
@@ -128,7 +132,7 @@ def test_distribution_base_path(
     assert json.loads(exc.value.body)["base_path"] is not None
 
     with pytest.raises(ApiException) as exc:
-        file_distribution_api_client.update(
+        file_bindings.DistributionsFileApi.update(
             distribution.pulp_href, {"base_path": f"/{str(uuid4())}", "name": distribution.name}
         )
     assert json.loads(exc.value.body)["base_path"] is not None
@@ -139,7 +143,7 @@ def test_distribution_base_path(
     assert json.loads(exc.value.body)["base_path"] is not None
 
     with pytest.raises(ApiException) as exc:
-        file_distribution_api_client.update(
+        file_bindings.DistributionsFileApi.update(
             distribution.pulp_href, {"base_path": f"{str(uuid4())}/", "name": str(uuid4())}
         )
     assert json.loads(exc.value.body)["base_path"] is not None
@@ -162,13 +166,10 @@ def test_distribution_base_path(
 
 @pytest.mark.parallel
 def test_distribution_filtering(
-    file_content_api_client,
-    file_distribution_api_client,
+    file_bindings,
     file_remote_factory,
     file_random_content_unit,
-    file_bindings,
     file_repository_factory,
-    file_publication_api_client,
     gen_object_with_cleanup,
     write_3_iso_file_fixture_data_factory,
     monitor_task,
@@ -182,32 +183,34 @@ def test_distribution_filtering(
         body = RepositorySyncURL(remote=remote.pulp_href)
         task_response = file_bindings.RepositoriesFileApi.sync(repo.pulp_href, body).task
         version_href = monitor_task(task_response).created_resources[0]
-        content = file_content_api_client.list(repository_version_added=version_href).results[0]
+        content = file_bindings.ContentFilesApi.list(repository_version_added=version_href).results[
+            0
+        ]
         return repo, content
 
     repo1, content1 = generate_repo_with_content()
 
     publish_data = FileFilePublication(repository=repo1.pulp_href)
-    publication = gen_object_with_cleanup(file_publication_api_client, publish_data)
+    publication = gen_object_with_cleanup(file_bindings.PublicationsFileApi, publish_data)
 
     # test if a publication attached to a distribution exposes the published content
     data = FileFileDistribution(
         name=str(uuid4()), base_path=str(uuid4()), publication=publication.pulp_href
     )
-    distribution_pub1 = gen_object_with_cleanup(file_distribution_api_client, data)
+    distribution_pub1 = gen_object_with_cleanup(file_bindings.DistributionsFileApi, data)
 
-    results = file_distribution_api_client.list(with_content=content1.pulp_href).results
+    results = file_bindings.DistributionsFileApi.list(with_content=content1.pulp_href).results
     assert [distribution_pub1] == results
 
     # test if a publication pointing to repository version no. 0 does not expose any content
     publish_data = FileFilePublication(repository_version=repo1.versions_href + "0/")
-    publication_version_0 = gen_object_with_cleanup(file_publication_api_client, publish_data)
+    publication_version_0 = gen_object_with_cleanup(file_bindings.PublicationsFileApi, publish_data)
     data = FileFileDistribution(
         name=str(uuid4()), base_path=str(uuid4()), publication=publication_version_0.pulp_href
     )
-    gen_object_with_cleanup(file_distribution_api_client, data)
+    gen_object_with_cleanup(file_bindings.DistributionsFileApi, data)
 
-    results = file_distribution_api_client.list(with_content=content1.pulp_href).results
+    results = file_bindings.DistributionsFileApi.list(with_content=content1.pulp_href).results
     assert [distribution_pub1] == results
 
     # test if a repository assigned to a distribution exposes the content available in the latest
@@ -215,10 +218,10 @@ def test_distribution_filtering(
     data = FileFileDistribution(
         name=str(uuid4()), base_path=str(uuid4()), repository=repo1.pulp_href
     )
-    distribution_repopub = gen_object_with_cleanup(file_distribution_api_client, data)
+    distribution_repopub = gen_object_with_cleanup(file_bindings.DistributionsFileApi, data)
     results = set(
         d.pulp_href
-        for d in file_distribution_api_client.list(with_content=content1.pulp_href).results
+        for d in file_bindings.DistributionsFileApi.list(with_content=content1.pulp_href).results
     )
     assert {distribution_pub1.pulp_href, distribution_repopub.pulp_href} == results
 
@@ -232,10 +235,10 @@ def test_distribution_filtering(
         {"remove_content_units": [], "add_content_units": [content2.pulp_href]},
     )
     monitor_task(response.task)
-    assert [] == file_distribution_api_client.list(with_content=content2.pulp_href).results
+    assert [] == file_bindings.DistributionsFileApi.list(with_content=content2.pulp_href).results
 
     publish_data = FileFilePublication(repository=repo1.pulp_href)
-    new_publication = gen_object_with_cleanup(file_publication_api_client, publish_data)
+    new_publication = gen_object_with_cleanup(file_bindings.PublicationsFileApi, publish_data)
 
     # test later (20 lines below) if the publication now exposes the recently added content in the
     # affected distributions (i.e., the distribution with the reference to a repository and the
@@ -243,28 +246,28 @@ def test_distribution_filtering(
     data = FileFileDistribution(
         name="pub3", base_path="pub3", publication=new_publication.pulp_href
     )
-    distribution_pub3 = gen_object_with_cleanup(file_distribution_api_client, data)
+    distribution_pub3 = gen_object_with_cleanup(file_bindings.DistributionsFileApi, data)
 
     # test if a repository without any attached publication does not expose any kind of content
     # to a user even though the content is still present in the latest repository version
     data = FileFileDistribution(
         name=str(uuid4()), base_path=str(uuid4()), repository=repo2.pulp_href
     )
-    distribution_repo_only = gen_object_with_cleanup(file_distribution_api_client, data)
+    distribution_repo_only = gen_object_with_cleanup(file_bindings.DistributionsFileApi, data)
 
     results = set(
         d.pulp_href
-        for d in file_distribution_api_client.list(with_content=content2.pulp_href).results
+        for d in file_bindings.DistributionsFileApi.list(with_content=content2.pulp_href).results
     )
     assert {distribution_pub3.pulp_href, distribution_repopub.pulp_href} == results
 
     # create a publication to see whether the content of the second repository is now served or not
     publish_data = FileFilePublication(repository=repo2.pulp_href)
-    gen_object_with_cleanup(file_publication_api_client, publish_data)
+    gen_object_with_cleanup(file_bindings.PublicationsFileApi, publish_data)
 
     results = set(
         d.pulp_href
-        for d in file_distribution_api_client.list(with_content=content2.pulp_href).results
+        for d in file_bindings.DistributionsFileApi.list(with_content=content2.pulp_href).results
     )
     assert {
         distribution_pub3.pulp_href,
@@ -273,7 +276,7 @@ def test_distribution_filtering(
     } == results
 
     # test if a random content unit is not accessible from any distribution
-    results = file_distribution_api_client.list(
+    results = file_bindings.DistributionsFileApi.list(
         with_content=file_random_content_unit.pulp_href
     ).results
     assert [] == results

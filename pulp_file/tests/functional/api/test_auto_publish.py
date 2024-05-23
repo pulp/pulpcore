@@ -16,13 +16,11 @@ def file_repo_with_auto_publish(file_repository_factory):
 
 @pytest.mark.parallel
 def test_auto_publish_and_distribution(
+    file_bindings,
     file_repo_with_auto_publish,
     file_remote_ssl_factory,
-    file_bindings,
-    file_publication_api_client,
     basic_manifest_path,
     gen_object_with_cleanup,
-    file_distribution_api_client,
     file_random_content_unit,
     monitor_task,
     has_pulp_plugin,
@@ -31,15 +29,18 @@ def test_auto_publish_and_distribution(
     remote = file_remote_ssl_factory(manifest_path=basic_manifest_path, policy="on_demand")
     repo = file_bindings.RepositoriesFileApi.read(file_repo_with_auto_publish.pulp_href)
     distribution = gen_object_with_cleanup(
-        file_distribution_api_client,
+        file_bindings.DistributionsFileApi,
         {"name": "foo", "base_path": "bar/foo", "repository": repo.pulp_href},
     )
 
     # Assert that the repository is at version 0 and that there are no publications associated with
     # this Repository and that the distribution doesn't have a publication associated with it.
     assert repo.latest_version_href.endswith("/versions/0/")
-    assert file_publication_api_client.list(repository=repo.pulp_href).count == 0
-    assert file_publication_api_client.list(repository_version=repo.latest_version_href).count == 0
+    assert file_bindings.PublicationsFileApi.list(repository=repo.pulp_href).count == 0
+    assert (
+        file_bindings.PublicationsFileApi.list(repository_version=repo.latest_version_href).count
+        == 0
+    )
     assert distribution.publication is None
 
     # Check what content and artifacts are in the fixture repository
@@ -52,11 +53,14 @@ def test_auto_publish_and_distribution(
 
     # Assert that a new repository version was created and a publication was created
     assert repo.latest_version_href.endswith("/versions/1/")
-    assert file_publication_api_client.list(repository=repo.pulp_href).count == 1
-    assert file_publication_api_client.list(repository_version=repo.latest_version_href).count == 1
+    assert file_bindings.PublicationsFileApi.list(repository=repo.pulp_href).count == 1
+    assert (
+        file_bindings.PublicationsFileApi.list(repository_version=repo.latest_version_href).count
+        == 1
+    )
 
     # Assert that the publication has a custom manifest
-    publication = file_publication_api_client.list(
+    publication = file_bindings.PublicationsFileApi.list(
         repository_version=repo.latest_version_href
     ).results[0]
     assert publication.manifest == "TEST_MANIFEST"
@@ -80,20 +84,25 @@ def test_auto_publish_and_distribution(
     )
     files_added = files_in_second_publication - files_in_first_publication
     assert repo.latest_version_href.endswith("/versions/2/")
-    assert file_publication_api_client.list(repository=repo.pulp_href).count == 2
-    assert file_publication_api_client.list(repository_version=repo.latest_version_href).count == 1
+    assert file_bindings.PublicationsFileApi.list(repository=repo.pulp_href).count == 2
+    assert (
+        file_bindings.PublicationsFileApi.list(repository_version=repo.latest_version_href).count
+        == 1
+    )
     assert len(files_added) == 1
     assert list(files_added)[0][1] == file_random_content_unit.sha256
 
     if has_pulp_plugin("core", min="3.23.0"):
         # Assert that filtering distributions by repository is possible
-        distros = file_distribution_api_client.list(repository=repo.pulp_href).results
+        distros = file_bindings.DistributionsFileApi.list(repository=repo.pulp_href).results
         assert len(distros) == 1
 
-        distros = file_distribution_api_client.list(repository__in=[repo.pulp_href]).results
+        distros = file_bindings.DistributionsFileApi.list(repository__in=[repo.pulp_href]).results
         assert len(distros) == 1
 
         # Assert that no results are returned when filtering by non-existent repository
         nonexistent_repository_href = f"{repo.pulp_href[:-37]}12345678-1234-1234-1234-012345678912/"
-        distros = file_distribution_api_client.list(repository=nonexistent_repository_href).results
+        distros = file_bindings.DistributionsFileApi.list(
+            repository=nonexistent_repository_href
+        ).results
         assert len(distros) == 0

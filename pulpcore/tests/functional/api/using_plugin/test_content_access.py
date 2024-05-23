@@ -18,7 +18,6 @@ def test_file_remote_on_demand(
     file_distribution_factory,
     file_fixtures_root,
     file_repo_with_auto_publish,
-    file_remote_api_client,
     file_bindings,
     gen_object_with_cleanup,
     monitor_task,
@@ -30,7 +29,7 @@ def test_file_remote_on_demand(
         "policy": "on_demand",
         "name": str(uuid.uuid4()),
     }
-    remote = gen_object_with_cleanup(file_remote_api_client, kwargs)
+    remote = gen_object_with_cleanup(file_bindings.RemotesFileApi, kwargs)
     # Sync from the remote
     body = RepositorySyncURL(remote=remote.pulp_href)
     monitor_task(

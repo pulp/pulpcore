@@ -13,9 +13,7 @@ from pulpcore.tests.functional.utils import get_from_url
 @pytest.mark.parallel
 def test_rbac_content_guard_full_workflow(
     pulpcore_bindings,
-    groups_api_client,
-    groups_users_api_client,
-    file_distribution_api_client,
+    file_bindings,
     pulp_admin_user,
     anonymous_user,
     gen_user,
@@ -31,9 +29,9 @@ def test_rbac_content_guard_full_workflow(
     user_b = gen_user()
 
     all_users = [creator_user, user_a, user_b, pulp_admin_user, anonymous_user]
-    group = gen_object_with_cleanup(groups_api_client, {"name": str(uuid.uuid4())})
-    groups_users_api_client.create(group.pulp_href, {"username": user_b.username})
-    groups_users_api_client.create(group.pulp_href, {"username": user_a.username})
+    group = gen_object_with_cleanup(pulpcore_bindings.GroupsApi, {"name": str(uuid.uuid4())})
+    pulpcore_bindings.GroupsUsersApi.create(group.pulp_href, {"username": user_b.username})
+    pulpcore_bindings.GroupsUsersApi.create(group.pulp_href, {"username": user_a.username})
 
     # Create a distribution
     with creator_user:
@@ -59,8 +57,8 @@ def test_rbac_content_guard_full_workflow(
             pulpcore_bindings.ContentguardsRbacApi, {"name": distro.name}
         )
         body = PatchedfileFileDistribution(content_guard=guard.pulp_href)
-        monitor_task(file_distribution_api_client.partial_update(distro.pulp_href, body).task)
-        distro = file_distribution_api_client.read(distro.pulp_href)
+        monitor_task(file_bindings.DistributionsFileApi.partial_update(distro.pulp_href, body).task)
+        distro = file_bindings.DistributionsFileApi.read(distro.pulp_href)
         assert guard.pulp_href == distro.content_guard
 
     # Check that now only the creator and admin user can access the distribution
@@ -95,11 +93,11 @@ def test_rbac_content_guard_full_workflow(
 @pytest.mark.parallel
 def test_header_contentguard_workflow(
     pulpcore_bindings,
+    file_bindings,
     gen_user,
     file_distribution_factory,
     gen_object_with_cleanup,
     monitor_task,
-    file_distribution_api_client,
 ):
     # Create all of the users and groups
     creator_user = gen_user(
@@ -115,8 +113,8 @@ def test_header_contentguard_workflow(
             {"name": distro.name, "header_name": "x-header", "header_value": "123456"},
         )
         body = PatchedfileFileDistribution(content_guard=guard.pulp_href)
-        monitor_task(file_distribution_api_client.partial_update(distro.pulp_href, body).task)
-        distro = file_distribution_api_client.read(distro.pulp_href)
+        monitor_task(file_bindings.DistributionsFileApi.partial_update(distro.pulp_href, body).task)
+        distro = file_bindings.DistributionsFileApi.read(distro.pulp_href)
         assert guard.pulp_href == distro.content_guard
 
     # Expect to receive a 403 Forbiden
@@ -150,8 +148,8 @@ def test_header_contentguard_workflow(
             },
         )
         body = PatchedfileFileDistribution(content_guard=guard.pulp_href)
-        monitor_task(file_distribution_api_client.partial_update(distro.pulp_href, body).task)
-        distro = file_distribution_api_client.read(distro.pulp_href)
+        monitor_task(file_bindings.DistributionsFileApi.partial_update(distro.pulp_href, body).task)
+        distro = file_bindings.DistributionsFileApi.read(distro.pulp_href)
         assert guard.pulp_href == distro.content_guard
 
     # Expect the status to be 404 given the distribution is accesible
@@ -243,10 +241,10 @@ def test_composite_contentguard_crud(
 
 def test_composite_contentguard_permissions(
     pulpcore_bindings,
+    file_bindings,
     gen_user,
     gen_object_with_cleanup,
     monitor_task,
-    file_distribution_api_client,
     file_distribution_factory,
 ):
     # Create allowed-user
@@ -285,8 +283,8 @@ def test_composite_contentguard_permissions(
 
         # Assign CCG1, no guards
         body = PatchedfileFileDistribution(content_guard=ccg1.pulp_href)
-        monitor_task(file_distribution_api_client.partial_update(distro.pulp_href, body).task)
-        distro = file_distribution_api_client.read(distro.pulp_href)
+        monitor_task(file_bindings.DistributionsFileApi.partial_update(distro.pulp_href, body).task)
+        distro = file_bindings.DistributionsFileApi.read(distro.pulp_href)
         assert ccg1.pulp_href == distro.content_guard
 
         # attempt access to base-url, expect 404 (no content, no guards allows)
