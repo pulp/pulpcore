@@ -61,16 +61,14 @@ def import_export_repositories(
 
 
 @pytest.fixture
-def exporter(
-    tmpdir, gen_object_with_cleanup, exporters_pulp_api_client, import_export_repositories
-):
+def exporter(pulpcore_bindings, tmpdir, gen_object_with_cleanup, import_export_repositories):
     _, export_repos = import_export_repositories
     body = {
         "name": str(uuid.uuid4()),
         "repositories": [r.pulp_href for r in export_repos],
         "path": str(tmpdir),
     }
-    exporter = gen_object_with_cleanup(exporters_pulp_api_client, body)
+    exporter = gen_object_with_cleanup(pulpcore_bindings.ExportersPulpApi, body)
     return exporter
 
 
@@ -100,9 +98,7 @@ def import_check_directory(tmp_path):
 
 
 @pytest.fixture
-def importer_factory(
-    gen_object_with_cleanup, import_export_repositories, importers_pulp_api_client
-):
+def importer_factory(pulpcore_bindings, gen_object_with_cleanup, import_export_repositories):
     def _importer_factory(name=None, exported_repos=None, mapping=None):
         """Create an importer."""
         _import_repos, _exported_repos = import_export_repositories
@@ -122,7 +118,7 @@ def importer_factory(
             "repo_mapping": mapping,
         }
 
-        importer = gen_object_with_cleanup(importers_pulp_api_client, body)
+        importer = gen_object_with_cleanup(pulpcore_bindings.ImportersPulpApi, body)
 
         return importer
 
@@ -140,9 +136,7 @@ def _find_path(created_export):
 
 
 @pytest.fixture
-def perform_import(
-    exporter, generate_export, importers_pulp_imports_api_client, monitor_task_group
-):
+def perform_import(pulpcore_bindings, exporter, generate_export, monitor_task_group):
     def _perform_import(importer, export, chunked=False, body=None):
         """Perform an import with importer."""
         if body is None:
@@ -155,7 +149,7 @@ def perform_import(
             if "path" not in body:
                 body["path"] = _find_path(export)
 
-        import_response = importers_pulp_imports_api_client.create(importer.pulp_href, body)
+        import_response = pulpcore_bindings.ImportersPulpImportsApi.create(importer.pulp_href, body)
         task_group = monitor_task_group(import_response.task_group)
 
         return task_group
@@ -164,34 +158,34 @@ def perform_import(
 
 
 @pytest.mark.parallel
-def test_importer_create(importer_factory, importers_pulp_api_client):
+def test_importer_create(pulpcore_bindings, importer_factory):
     """Test creating an importer."""
     name = str(uuid.uuid4())
     importer = importer_factory(name)
     assert importer.name == name
 
-    importer = importers_pulp_api_client.read(importer.pulp_href)
+    importer = pulpcore_bindings.ImportersPulpApi.read(importer.pulp_href)
     assert importer.name == name
 
 
 @pytest.mark.parallel
-def test_importer_delete(importer_factory, importers_pulp_api_client):
+def test_importer_delete(pulpcore_bindings, importer_factory):
     """Test deleting an importer."""
     importer = importer_factory()
 
-    importers_pulp_api_client.delete(importer.pulp_href)
+    pulpcore_bindings.ImportersPulpApi.delete(importer.pulp_href)
 
     with pytest.raises(ApiException) as ae:
-        importers_pulp_api_client.read(importer.pulp_href)
+        pulpcore_bindings.ImportersPulpApi.read(importer.pulp_href)
     assert 404 == ae.value.status
 
 
 @pytest.mark.parallel
 def test_import(
+    file_bindings,
     exporter,
     generate_export,
     importer_factory,
-    file_bindings,
     import_export_repositories,
     perform_import,
 ):
@@ -214,12 +208,12 @@ def test_import(
 @pytest.mark.parallel
 @pytest.mark.parametrize("chunk_size", ["1KB", "5KB"])
 def test_chunked_import(
+    file_bindings,
     chunk_size,
     exporter,
     generate_export,
     importer_factory,
     import_export_repositories,
-    file_bindings,
     perform_import,
 ):
     """Test an import."""
@@ -248,15 +242,13 @@ def test_import_mapping_missing_repos(importer_factory, import_export_repositori
 
 @pytest.mark.parallel
 def test_import_auto_repo_creation(
+    pulpcore_bindings,
+    file_bindings,
     basic_manifest_path,
-    exporters_pulp_api_client,
-    file_content_api_client,
     file_repository_factory,
     file_remote_ssl_factory,
-    file_bindings,
     gen_object_with_cleanup,
     generate_export,
-    importers_pulp_api_client,
     monitor_task,
     perform_import,
     tmpdir,
@@ -273,7 +265,7 @@ def test_import_auto_repo_creation(
     monitor_task(sync_response.task)
 
     export_repo = file_bindings.RepositoriesFileApi.read(export_repo.pulp_href)
-    added_content_in_export_repo = file_content_api_client.list(
+    added_content_in_export_repo = file_bindings.ContentFilesApi.list(
         repository_version_added=export_repo.latest_version_href
     ).results
 
@@ -283,7 +275,7 @@ def test_import_auto_repo_creation(
         "repositories": [export_repo.pulp_href],
         "path": str(tmpdir),
     }
-    exporter = gen_object_with_cleanup(exporters_pulp_api_client, body)
+    exporter = gen_object_with_cleanup(pulpcore_bindings.ExportersPulpApi, body)
     export = generate_export(exporter)
 
     # 3. delete the exported repository
@@ -291,7 +283,9 @@ def test_import_auto_repo_creation(
     assert len(file_bindings.RepositoriesFileApi.list(name=export_repo.name).results) == 0
 
     # 4. import the exported repository without creating an import repository beforehand
-    importer = gen_object_with_cleanup(importers_pulp_api_client, {"name": str(uuid.uuid4())})
+    importer = gen_object_with_cleanup(
+        pulpcore_bindings.ImportersPulpApi, {"name": str(uuid.uuid4())}
+    )
     perform_import(importer, export, body={"create_repositories": True})
 
     # 5. run assertions on the automatically created import repository
@@ -301,7 +295,7 @@ def test_import_auto_repo_creation(
     imported_repo = repositories[0]
     assert f"{imported_repo.pulp_href}versions/1/" == imported_repo.latest_version_href
 
-    added_content_in_imported_repo = file_content_api_client.list(
+    added_content_in_imported_repo = file_bindings.ContentFilesApi.list(
         repository_version_added=imported_repo.latest_version_href
     ).results
     assert len(added_content_in_export_repo) == len(added_content_in_imported_repo)
@@ -311,12 +305,12 @@ def test_import_auto_repo_creation(
 
 @pytest.mark.parallel
 def test_double_import(
+    pulpcore_bindings,
+    file_bindings,
     exporter,
     generate_export,
     importer_factory,
-    importers_pulp_imports_api_client,
     import_export_repositories,
-    file_bindings,
     perform_import,
 ):
     """Test two imports of our export."""
@@ -327,7 +321,7 @@ def test_double_import(
     perform_import(importer, export)
     perform_import(importer, export)
 
-    imports = importers_pulp_imports_api_client.list(importer.pulp_href).results
+    imports = pulpcore_bindings.ImportersPulpImportsApi.list(importer.pulp_href).results
     assert len(imports) == 2
 
     for repo in import_repos:
@@ -337,12 +331,10 @@ def test_double_import(
 
 
 @pytest.mark.parallel
-def test_import_check_valid_path(
-    exporter, generate_export, importers_pulp_imports_check_api_client
-):
+def test_import_check_valid_path(pulpcore_bindings, exporter, generate_export):
     created_export = generate_export(exporter)
     body = {"path": _find_path(created_export)}
-    result = importers_pulp_imports_check_api_client.pulp_import_check_post(body)
+    result = pulpcore_bindings.ImportersPulpImportCheckApi.pulp_import_check_post(body)
     assert result.path.context == _find_path(created_export)
     assert result.path.is_valid
     assert len(result.path.messages) == 0
@@ -351,10 +343,10 @@ def test_import_check_valid_path(
 
 
 @pytest.mark.parallel
-def test_import_check_valid_toc(exporter, generate_export, importers_pulp_imports_check_api_client):
+def test_import_check_valid_toc(pulpcore_bindings, exporter, generate_export):
     chunked_export = generate_export(exporter, body={"chunk_size": "5KB"})
     body = {"toc": _find_toc(chunked_export)}
-    result = importers_pulp_imports_check_api_client.pulp_import_check_post(body)
+    result = pulpcore_bindings.ImportersPulpImportCheckApi.pulp_import_check_post(body)
     assert result.toc.context == _find_toc(chunked_export)
     assert result.toc.is_valid
     assert len(result.toc.messages) == 0
@@ -363,9 +355,9 @@ def test_import_check_valid_toc(exporter, generate_export, importers_pulp_import
 
 
 @pytest.mark.parallel
-def test_import_check_repo_mapping(importers_pulp_imports_check_api_client):
+def test_import_check_repo_mapping(pulpcore_bindings):
     body = {"repo_mapping": json.dumps({"foo": "bar"})}
-    result = importers_pulp_imports_check_api_client.pulp_import_check_post(body)
+    result = pulpcore_bindings.ImportersPulpImportCheckApi.pulp_import_check_post(body)
     assert result.repo_mapping.context == json.dumps({"foo": "bar"})
     assert result.repo_mapping.is_valid
     assert len(result.repo_mapping.messages) == 0
@@ -373,23 +365,23 @@ def test_import_check_repo_mapping(importers_pulp_imports_check_api_client):
     assert result.toc is None
 
     body = {"repo_mapping": '{"foo": "bar"'}
-    result = importers_pulp_imports_check_api_client.pulp_import_check_post(body)
+    result = pulpcore_bindings.ImportersPulpImportCheckApi.pulp_import_check_post(body)
     assert result.repo_mapping.context == '{"foo": "bar"'
     assert not result.repo_mapping.is_valid
     assert result.repo_mapping.messages[0] == "invalid JSON"
 
 
 @pytest.mark.parallel
-def test_import_check_not_allowed(importers_pulp_imports_check_api_client):
+def test_import_check_not_allowed(pulpcore_bindings):
     body = {"path": "/notinallowedimports"}
-    result = importers_pulp_imports_check_api_client.pulp_import_check_post(body)
+    result = pulpcore_bindings.ImportersPulpImportCheckApi.pulp_import_check_post(body)
     assert result.path.context == "/notinallowedimports"
     assert not result.path.is_valid
     assert len(result.path.messages) == 1, "Only not-allowed should be returned"
     assert result.path.messages[0] == "/ is not an allowed import path"
 
     body = {"toc": "/notinallowedimports"}
-    result = importers_pulp_imports_check_api_client.pulp_import_check_post(body)
+    result = pulpcore_bindings.ImportersPulpImportCheckApi.pulp_import_check_post(body)
     assert result.toc.context == "/notinallowedimports"
     assert not result.toc.is_valid
     assert len(result.toc.messages) == 1, "Only not-allowed should be returned"
@@ -397,22 +389,22 @@ def test_import_check_not_allowed(importers_pulp_imports_check_api_client):
 
 
 @pytest.mark.parallel
-def test_import_check_no_file(importers_pulp_imports_check_api_client):
+def test_import_check_no_file(pulpcore_bindings):
     body = {"path": "/tmp/idonotexist"}
-    result = importers_pulp_imports_check_api_client.pulp_import_check_post(body)
+    result = pulpcore_bindings.ImportersPulpImportCheckApi.pulp_import_check_post(body)
     assert result.path.context == "/tmp/idonotexist"
     assert not result.path.is_valid
     assert any("file /tmp/idonotexist does not exist" in s for s in result.path.messages)
 
     body = {"toc": "/tmp/idonotexist"}
-    result = importers_pulp_imports_check_api_client.pulp_import_check_post(body)
+    result = pulpcore_bindings.ImportersPulpImportCheckApi.pulp_import_check_post(body)
     assert result.toc.context == "/tmp/idonotexist"
     assert not result.toc.is_valid
     assert any("file /tmp/idonotexist does not exist" in s for s in result.toc.messages)
 
 
 @pytest.mark.parallel
-def test_import_check_all_valid(exporter, generate_export, importers_pulp_imports_check_api_client):
+def test_import_check_all_valid(pulpcore_bindings, exporter, generate_export):
     created_export = generate_export(exporter)
     chunked_export = generate_export(exporter, body={"chunk_size": "5KB"})
     body = {
@@ -420,7 +412,7 @@ def test_import_check_all_valid(exporter, generate_export, importers_pulp_import
         "toc": _find_toc(chunked_export),
         "repo_mapping": json.dumps({"foo": "bar"}),
     }
-    result = importers_pulp_imports_check_api_client.pulp_import_check_post(body)
+    result = pulpcore_bindings.ImportersPulpImportCheckApi.pulp_import_check_post(body)
     assert result.path.context == _find_path(created_export)
     assert result.toc.context == _find_toc(chunked_export)
     assert result.repo_mapping.context == json.dumps({"foo": "bar"})
@@ -435,15 +427,13 @@ def test_import_check_all_valid(exporter, generate_export, importers_pulp_import
 
 
 @pytest.mark.parallel
-def test_import_check_multiple_errors(
-    importers_pulp_imports_check_api_client, import_check_directory
-):
+def test_import_check_multiple_errors(pulpcore_bindings, import_check_directory):
     body = {
         "path": "/notinallowedimports",
         "toc": f"{import_check_directory}/nowritedir/notafile",
         "repo_mapping": '{"foo": "bar"',
     }
-    result = importers_pulp_imports_check_api_client.pulp_import_check_post(body)
+    result = pulpcore_bindings.ImportersPulpImportCheckApi.pulp_import_check_post(body)
 
     assert not result.path.is_valid
     assert len(result.path.messages) == 1, "Only not-allowed should be returned"
@@ -464,16 +454,16 @@ def test_import_check_multiple_errors(
 
 
 @pytest.fixture
-def generate_export(exporters_pulp_exports_api_client, monitor_task):
+def generate_export(pulpcore_bindings, monitor_task):
     """Create and read back an export for the specified PulpExporter."""
 
     def _generate_export(exporter, body=None):
         if body is None:
             body = {}
 
-        export_response = exporters_pulp_exports_api_client.create(exporter.pulp_href, body)
+        export_response = pulpcore_bindings.ExportersPulpExportsApi.create(exporter.pulp_href, body)
         export_href = monitor_task(export_response.task).created_resources[0]
-        export = exporters_pulp_exports_api_client.read(export_href)
+        export = pulpcore_bindings.ExportersPulpExportsApi.read(export_href)
 
         return export
 
@@ -482,22 +472,22 @@ def generate_export(exporters_pulp_exports_api_client, monitor_task):
 
 @pytest.fixture
 def exported_version(
+    pulpcore_bindings,
+    file_bindings,
     importer_factory,
     gen_object_with_cleanup,
     import_export_repositories,
-    exporters_pulp_api_client,
     generate_export,
     perform_import,
     file_repo,
-    file_bindings,
-    file_repository_version_api_client,
-    content_api_client,
     monitor_task,
     tmpdir,
 ):
     import_repos, export_repos = import_export_repositories
 
-    file_list = content_api_client.list(repository_version=export_repos[0].latest_version_href)
+    file_list = pulpcore_bindings.ContentApi.list(
+        repository_version=export_repos[0].latest_version_href
+    )
 
     # copy files from repositories[0] into new, one file at a time
     results = file_list.results
@@ -508,14 +498,16 @@ def exported_version(
         )
         monitor_task(modify_response.task)
     # get all versions of that repo
-    versions = file_repository_version_api_client.list(file_repo.pulp_href, ordering=["number"])
+    versions = file_bindings.RepositoriesFileVersionsApi.list(
+        file_repo.pulp_href, ordering=["number"]
+    )
 
     body = {
         "name": str(uuid.uuid4()),
         "repositories": [file_repo.pulp_href],
         "path": str(tmpdir),
     }
-    exporter = gen_object_with_cleanup(exporters_pulp_api_client, body)
+    exporter = gen_object_with_cleanup(pulpcore_bindings.ExportersPulpApi, body)
 
     # export from version-0 to version-1, last=v1
     body = {

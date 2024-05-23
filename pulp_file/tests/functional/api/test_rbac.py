@@ -130,9 +130,8 @@ def test_role_management(gen_users, file_bindings, file_repository_factory, try_
 
 
 def test_content_apis(
-    gen_users,
-    file_content_api_client,
     file_bindings,
+    gen_users,
     file_repository_factory,
     file_remote_factory,
     file_fixture_server,
@@ -143,9 +142,9 @@ def test_content_apis(
 ):
     """Check content listing, scoping and upload APIs."""
     alice, bob, charlie = gen_users()
-    aresponse = try_action(alice, file_content_api_client, "list", 200)
-    bresponse = try_action(bob, file_content_api_client, "list", 200)
-    cresponse = try_action(charlie, file_content_api_client, "list", 200)
+    aresponse = try_action(alice, file_bindings.ContentFilesApi, "list", 200)
+    bresponse = try_action(bob, file_bindings.ContentFilesApi, "list", 200)
+    cresponse = try_action(charlie, file_bindings.ContentFilesApi, "list", 200)
 
     assert aresponse.count == bresponse.count == cresponse.count == 0
 
@@ -156,9 +155,9 @@ def test_content_apis(
         file_bindings.RepositoriesFileApi.sync(repo.pulp_href, {"remote": remote.pulp_href}).task
     )
 
-    aresponse = try_action(alice, file_content_api_client, "list", 200)
-    bresponse = try_action(bob, file_content_api_client, "list", 200)
-    cresponse = try_action(charlie, file_content_api_client, "list", 200)
+    aresponse = try_action(alice, file_bindings.ContentFilesApi, "list", 200)
+    bresponse = try_action(bob, file_bindings.ContentFilesApi, "list", 200)
+    cresponse = try_action(charlie, file_bindings.ContentFilesApi, "list", 200)
 
     assert aresponse.count > bresponse.count
     assert bresponse.count == cresponse.count == 0
@@ -166,28 +165,27 @@ def test_content_apis(
     nested_role = {"users": [charlie.username], "role": "file.filerepository_viewer"}
     file_bindings.RepositoriesFileApi.add_role(repo.pulp_href, nested_role)
 
-    cresponse = try_action(charlie, file_content_api_client, "list", 200)
+    cresponse = try_action(charlie, file_bindings.ContentFilesApi, "list", 200)
     assert cresponse.count > bresponse.count
 
     # This might need to change if we change Artifact's default upload policy
     body = {"artifact": random_artifact.pulp_href}
-    try_action(alice, file_content_api_client, "create", 400, "1.iso", **body)
+    try_action(alice, file_bindings.ContentFilesApi, "create", 400, "1.iso", **body)
     body["repository"] = repo.pulp_href
-    try_action(bob, file_content_api_client, "create", 403, "1.iso", **body)
-    try_action(charlie, file_content_api_client, "create", 403, "1.iso", **body)
+    try_action(bob, file_bindings.ContentFilesApi, "create", 403, "1.iso", **body)
+    try_action(charlie, file_bindings.ContentFilesApi, "create", 403, "1.iso", **body)
 
     nested_role = {"users": [charlie.username], "role": "file.filerepository_owner"}
     file_bindings.RepositoriesFileApi.add_role(repo.pulp_href, nested_role)
-    try_action(charlie, file_content_api_client, "create", 202, "1.iso", **body)
+    try_action(charlie, file_bindings.ContentFilesApi, "create", 202, "1.iso", **body)
 
 
 @pytest.mark.parallel
 def test_repository_apis(
-    gen_users,
     file_bindings,
+    gen_users,
     file_repository_factory,
     file_remote_factory,
-    file_remote_api_client,
     try_action,
     basic_manifest_path,
 ):
@@ -211,9 +209,9 @@ def test_repository_apis(
 
 @pytest.mark.parallel
 def test_repository_version_repair(
+    file_bindings,
     gen_users,
     file_repository_factory,
-    file_repository_version_api_client,
     try_action,
 ):
     """Test the repository version repair action"""
@@ -222,16 +220,16 @@ def test_repository_version_repair(
         repo = file_repository_factory()
         ver_href = repo.latest_version_href
     body = {"verify_checksums": True}
-    try_action(alice, file_repository_version_api_client, "repair", 403, ver_href, body)
-    try_action(bob, file_repository_version_api_client, "repair", 202, ver_href, body)
-    try_action(charlie, file_repository_version_api_client, "repair", 403, ver_href, body)
+    try_action(alice, file_bindings.RepositoriesFileVersionsApi, "repair", 403, ver_href, body)
+    try_action(bob, file_bindings.RepositoriesFileVersionsApi, "repair", 202, ver_href, body)
+    try_action(charlie, file_bindings.RepositoriesFileVersionsApi, "repair", 403, ver_href, body)
 
 
 @pytest.mark.parallel
 def test_acs_apis(
+    file_bindings,
     gen_users,
     file_remote_factory,
-    file_acs_api_client,
     monitor_task,
     try_action,
     basic_manifest_path,
@@ -241,21 +239,20 @@ def test_acs_apis(
     with bob:
         remote = file_remote_factory(manifest_path=basic_manifest_path, policy="on_demand")
         body = {"name": str(uuid.uuid4()), "remote": remote.pulp_href}
-        acs = file_acs_api_client.create(body)
+        acs = file_bindings.AcsFileApi.create(body)
     # Test that only bob can do the refresh action
-    try_action(alice, file_acs_api_client, "refresh", 403, acs.pulp_href)
-    try_action(bob, file_acs_api_client, "refresh", 202, acs.pulp_href)
-    try_action(charlie, file_acs_api_client, "refresh", 404, acs.pulp_href)
+    try_action(alice, file_bindings.AcsFileApi, "refresh", 403, acs.pulp_href)
+    try_action(bob, file_bindings.AcsFileApi, "refresh", 202, acs.pulp_href)
+    try_action(charlie, file_bindings.AcsFileApi, "refresh", 404, acs.pulp_href)
 
-    monitor_task(file_acs_api_client.delete(acs.pulp_href).task)
+    monitor_task(file_bindings.AcsFileApi.delete(acs.pulp_href).task)
 
 
 @pytest.mark.parallel
 def test_object_creation(
+    file_bindings,
     gen_users,
     file_repository_factory,
-    file_publication_api_client,
-    file_distribution_api_client,
     monitor_task,
     try_action,
 ):
@@ -265,23 +262,23 @@ def test_object_creation(
     with bob:
         repo = file_repository_factory()
     try_action(
-        bob, file_publication_api_client, "create", 403, {"repository": admin_repo.pulp_href}
+        bob, file_bindings.PublicationsFileApi, "create", 403, {"repository": admin_repo.pulp_href}
     )
     pub_from_repo_version = try_action(
         bob,
-        file_publication_api_client,
+        file_bindings.PublicationsFileApi,
         "create",
         202,
         {"repository_version": repo.latest_version_href},
     )
     assert pub_from_repo_version.created_resources[0] is not None
     pub = try_action(
-        bob, file_publication_api_client, "create", 202, {"repository": repo.pulp_href}
+        bob, file_bindings.PublicationsFileApi, "create", 202, {"repository": repo.pulp_href}
     )
     pub = pub.created_resources[0]
     try_action(
         bob,
-        file_distribution_api_client,
+        file_bindings.DistributionsFileApi,
         "create",
         403,
         {
@@ -292,7 +289,7 @@ def test_object_creation(
     )
     dis = try_action(
         bob,
-        file_distribution_api_client,
+        file_bindings.DistributionsFileApi,
         "create",
         202,
         {
@@ -313,6 +310,6 @@ def test_object_creation(
         "name": str(uuid.uuid4()),
         "base_path": str(uuid.uuid4()),
     }
-    try_action(bob, file_distribution_api_client, "partial_update", 403, dis, admin_body)
-    try_action(bob, file_distribution_api_client, "partial_update", 202, dis, bob_body)
-    monitor_task(file_distribution_api_client.delete(dis).task)
+    try_action(bob, file_bindings.DistributionsFileApi, "partial_update", 403, dis, admin_body)
+    try_action(bob, file_bindings.DistributionsFileApi, "partial_update", 202, dis, bob_body)
+    monitor_task(file_bindings.DistributionsFileApi.delete(dis).task)

@@ -13,10 +13,8 @@ from pulpcore.client.pulp_file import RepositorySyncURL
 
 
 def test_sync_file_protocol_handler(
-    file_repo,
     file_bindings,
-    file_repository_version_api_client,
-    file_remote_api_client,
+    file_repo,
     gen_object_with_cleanup,
     monitor_task,
     fixtures_cfg,
@@ -29,7 +27,7 @@ def test_sync_file_protocol_handler(
         "policy": "immediate",
         "name": str(uuid.uuid4()),
     }
-    remote = gen_object_with_cleanup(file_remote_api_client, remote_kwargs)
+    remote = gen_object_with_cleanup(file_bindings.RemotesFileApi, remote_kwargs)
     files = set(os.listdir("/tmp/file/"))
 
     body = RepositorySyncURL(remote=remote.pulp_href)
@@ -41,16 +39,16 @@ def test_sync_file_protocol_handler(
     file_repo = file_bindings.RepositoriesFileApi.read(file_repo.pulp_href)
     assert file_repo.latest_version_href.endswith("/versions/1/")
 
-    version = file_repository_version_api_client.read(file_repo.latest_version_href)
+    version = file_bindings.RepositoriesFileVersionsApi.read(file_repo.latest_version_href)
     assert version.content_summary.present["file.file"]["count"] == 3
     assert version.content_summary.added["file.file"]["count"] == 3
 
 
 @pytest.mark.parallel
 def test_mirrored_sync(
+    file_bindings,
     file_repo,
     file_remote_ssl_factory,
-    file_bindings,
     basic_manifest_path,
     monitor_task,
 ):
@@ -70,20 +68,14 @@ def test_mirrored_sync(
 
 
 @pytest.mark.parallel
-def test_invalid_url(
-    file_repo,
-    gen_object_with_cleanup,
-    file_remote_api_client,
-    file_bindings,
-    monitor_task,
-):
+def test_invalid_url(file_bindings, file_repo, gen_object_with_cleanup, monitor_task):
     """Sync a repository using a remote url that does not exist."""
     remote_kwargs = {
         "url": "http://i-am-an-invalid-url.com/invalid/",
         "policy": "immediate",
         "name": str(uuid.uuid4()),
     }
-    remote = gen_object_with_cleanup(file_remote_api_client, remote_kwargs)
+    remote = gen_object_with_cleanup(file_bindings.RemotesFileApi, remote_kwargs)
 
     body = RepositorySyncURL(remote=remote.pulp_href)
     with pytest.raises(PulpTaskError):
@@ -103,11 +95,10 @@ def test_invalid_file(
 
 @pytest.mark.parallel
 def test_duplicate_file_sync(
+    file_bindings,
     file_repo,
     file_remote_factory,
     duplicate_filename_paths,
-    file_bindings,
-    file_repository_version_api_client,
     monitor_task,
 ):
     remote = file_remote_factory(manifest_path=duplicate_filename_paths[0], policy="on_demand")
@@ -117,7 +108,7 @@ def test_duplicate_file_sync(
     monitor_task(file_bindings.RepositoriesFileApi.sync(file_repo.pulp_href, body).task)
     file_repo = file_bindings.RepositoriesFileApi.read(file_repo.pulp_href)
 
-    version = file_repository_version_api_client.read(file_repo.latest_version_href)
+    version = file_bindings.RepositoriesFileVersionsApi.read(file_repo.latest_version_href)
     assert version.content_summary.present["file.file"]["count"] == 3
     assert version.content_summary.added["file.file"]["count"] == 3
     assert file_repo.latest_version_href.endswith("/1/")
@@ -126,7 +117,7 @@ def test_duplicate_file_sync(
     monitor_task(file_bindings.RepositoriesFileApi.sync(file_repo.pulp_href, body).task)
     file_repo = file_bindings.RepositoriesFileApi.read(file_repo.pulp_href)
 
-    version = file_repository_version_api_client.read(file_repo.latest_version_href)
+    version = file_bindings.RepositoriesFileVersionsApi.read(file_repo.latest_version_href)
     assert version.content_summary.present["file.file"]["count"] == 3
     assert version.content_summary.added["file.file"]["count"] == 3
     assert file_repo.latest_version_href.endswith("/2/")
@@ -134,11 +125,10 @@ def test_duplicate_file_sync(
 
 @pytest.mark.parallel
 def test_filepath_includes_commas(
+    file_bindings,
     file_repo,
     file_remote_factory,
     manifest_path_with_commas,
-    file_bindings,
-    file_repository_version_api_client,
     monitor_task,
 ):
     """Sync a repository using a manifest file with a file whose relative_path includes commas"""
@@ -148,7 +138,7 @@ def test_filepath_includes_commas(
     monitor_task(file_bindings.RepositoriesFileApi.sync(file_repo.pulp_href, body).task)
     file_repo = file_bindings.RepositoriesFileApi.read(file_repo.pulp_href)
 
-    version = file_repository_version_api_client.read(file_repo.latest_version_href)
+    version = file_bindings.RepositoriesFileVersionsApi.read(file_repo.latest_version_href)
     assert version.content_summary.present["file.file"]["count"] == 3
     assert version.content_summary.added["file.file"]["count"] == 3
     assert file_repo.latest_version_href.endswith("/1/")

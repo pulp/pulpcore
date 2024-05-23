@@ -2,16 +2,16 @@ import uuid
 import pytest
 
 
-def test_contains_permission_filter(roles_api_client):
+def test_contains_permission_filter(pulpcore_bindings):
     """Test contains_permission query parameter."""
     # Test single permission
-    roles = roles_api_client.list(contains_permission=["core.change_task"])
+    roles = pulpcore_bindings.RolesApi.list(contains_permission=["core.change_task"])
     assert len(roles.results) > 0
     for role in roles.results:
         assert "core.change_task" in role.permissions
 
     # Test two permissions
-    roles = roles_api_client.list(
+    roles = pulpcore_bindings.RolesApi.list(
         contains_permission=["core.change_task", "core.view_taskschedule"]
     )
     assert len(roles.results) > 0
@@ -33,7 +33,7 @@ def test_contains_permission_filter(roles_api_client):
 
 
 @pytest.mark.parallel
-def test_for_object_type_filter(pulp_api_v3_url, roles_api_client, role_factory):
+def test_for_object_type_filter(pulp_api_v3_url, pulpcore_bindings, role_factory):
     """Test for_object_type query parameter."""
 
     group_href = pulp_api_v3_url + "groups/"
@@ -66,26 +66,26 @@ def test_for_object_type_filter(pulp_api_v3_url, roles_api_client, role_factory)
     )
 
     # verify that roles with permissions for other objects aren't returned.
-    roles = roles_api_client.list(for_object_type=group_href, name=multiple.name)
+    roles = pulpcore_bindings.RolesApi.list(for_object_type=group_href, name=multiple.name)
 
     assert roles.count == 0
 
     # verify that roles for a single object type are returned.
-    roles = roles_api_client.list(for_object_type=group_href, name=single_type.name)
+    roles = pulpcore_bindings.RolesApi.list(for_object_type=group_href, name=single_type.name)
 
     assert roles.count == 1
 
-    roles = roles_api_client.list(for_object_type=group_href, name=single_type2.name)
+    roles = pulpcore_bindings.RolesApi.list(for_object_type=group_href, name=single_type2.name)
 
     assert roles.count == 1
 
     # verify that empty roles are not returned
-    roles = roles_api_client.list(for_object_type=group_href, name=empty.name)
+    roles = pulpcore_bindings.RolesApi.list(for_object_type=group_href, name=empty.name)
 
     assert roles.count == 0
 
     # check multiple roles
-    roles = roles_api_client.list(for_object_type=group_href, name__startswith=prefix)
+    roles = pulpcore_bindings.RolesApi.list(for_object_type=group_href, name__startswith=prefix)
 
     assert roles.count == 2
 

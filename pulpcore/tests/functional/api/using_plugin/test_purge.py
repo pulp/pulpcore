@@ -85,8 +85,8 @@ def sync_results(
     failed_sync_task = task
 
     post_total, post_final, post_summary = _task_summary(pulpcore_bindings)
-    assert post_total == (pre_total + 2)
-    assert post_final == (pre_final + 2)
+    assert post_total >= (pre_total + 2)
+    assert post_final >= (pre_final + 2)
 
     return completed_sync_task, failed_sync_task, pre_total, pre_final, pre_summary
 

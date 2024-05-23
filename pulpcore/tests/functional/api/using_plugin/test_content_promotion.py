@@ -11,10 +11,9 @@ from pulpcore.client.pulp_file import RepositorySyncURL
 
 @pytest.mark.parallel
 def test_content_promotion(
+    file_bindings,
     file_repo_with_auto_publish,
     file_remote_ssl_factory,
-    file_bindings,
-    file_publication_api_client,
     file_distribution_factory,
     basic_manifest_path,
     monitor_task,
@@ -31,7 +30,7 @@ def test_content_promotion(
     created = monitor_task(
         file_bindings.RepositoriesFileApi.sync(file_repo.pulp_href, body).task
     ).created_resources
-    pub = file_publication_api_client.read(created[1])
+    pub = file_bindings.PublicationsFileApi.read(created[1])
 
     # Create two Distributions pointing to the publication
     distribution1 = file_distribution_factory(publication=pub.pulp_href)

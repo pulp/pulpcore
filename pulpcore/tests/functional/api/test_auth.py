@@ -14,27 +14,27 @@ from pulpcore.app import settings
 
 
 @pytest.mark.parallel
-def test_base_auth_success(artifacts_api_client, pulp_admin_user):
+def test_base_auth_success(pulpcore_bindings, pulp_admin_user):
     """Perform HTTP basic authentication with valid credentials.
 
     Assert that a response indicating success is returned.
     """
     with pulp_admin_user:
-        response, status, headers = artifacts_api_client.list_with_http_info()
+        response, status, headers = pulpcore_bindings.ArtifactsApi.list_with_http_info()
     assert status == 200
     assert headers["Content-Type"] == "application/json"
     # Maybe test correlation ID as well?
 
 
 @pytest.mark.parallel
-def test_base_auth_failure(artifacts_api_client, invalid_user):
+def test_base_auth_failure(pulpcore_bindings, invalid_user):
     """Perform HTTP basic authentication with invalid credentials.
 
     Assert that a response indicating failure is returned.
     """
     with invalid_user:
         with pytest.raises(ApiException) as e:
-            artifacts_api_client.list()
+            pulpcore_bindings.ArtifactsApi.list()
 
     assert e.value.status == 401
     response = json.loads(e.value.body)
@@ -44,14 +44,14 @@ def test_base_auth_failure(artifacts_api_client, invalid_user):
 
 
 @pytest.mark.parallel
-def test_base_auth_required(artifacts_api_client, anonymous_user):
+def test_base_auth_required(pulpcore_bindings, anonymous_user):
     """Perform HTTP basic authentication with no credentials.
 
     Assert that a response indicating failure is returned.
     """
     with anonymous_user:
         with pytest.raises(ApiException) as e:
-            artifacts_api_client.list()
+            pulpcore_bindings.ArtifactsApi.list()
 
     assert e.value.status == 401
     response = json.loads(e.value.body)

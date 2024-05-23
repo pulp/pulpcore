@@ -59,12 +59,12 @@ STATUS = {
 
 
 @pytest.mark.parallel
-def test_get_authenticated(test_path, status_api_client, received_otel_span):
+def test_get_authenticated(test_path, pulpcore_bindings, received_otel_span):
     """GET the status path with valid credentials.
 
     Verify the response with :meth:`verify_get_response`.
     """
-    response = status_api_client.status_read()
+    response = pulpcore_bindings.StatusApi.status_read()
     verify_get_response(response.to_dict(), STATUS)
     assert received_otel_span(
         {
@@ -77,13 +77,13 @@ def test_get_authenticated(test_path, status_api_client, received_otel_span):
 
 
 @pytest.mark.parallel
-def test_get_unauthenticated(test_path, status_api_client, anonymous_user, received_otel_span):
+def test_get_unauthenticated(test_path, pulpcore_bindings, anonymous_user, received_otel_span):
     """GET the status path with no credentials.
 
     Verify the response with :meth:`verify_get_response`.
     """
     with anonymous_user:
-        response = status_api_client.status_read()
+        response = pulpcore_bindings.StatusApi.status_read()
     verify_get_response(response.to_dict(), STATUS)
     assert received_otel_span(
         {
@@ -99,9 +99,8 @@ def test_get_unauthenticated(test_path, status_api_client, anonymous_user, recei
 def test_post_authenticated(
     test_path,
     pulp_api_v3_path,
-    status_api_client,
-    pulpcore_bindings,
     pulp_api_v3_url,
+    pulpcore_bindings,
     received_otel_span,
 ):
     """POST the status path with valid credentials.
@@ -109,7 +108,7 @@ def test_post_authenticated(
     Assert an error is returned.
     """
     # Ensure bindings doesn't have a "post" method
-    attrs = dir(status_api_client)
+    attrs = dir(pulpcore_bindings.StatusApi)
     for post_attr in ("create", "post", "status_post", "status_create"):
         assert post_attr not in attrs
     # Try anyway to POST to /status/
@@ -130,7 +129,6 @@ def test_post_authenticated(
 
 @pytest.mark.parallel
 def test_storage_per_domain(
-    status_api_client,
     pulpcore_bindings,
     pulp_api_v3_url,
     domain_factory,
@@ -150,7 +148,7 @@ def test_storage_per_domain(
 
     assert domain_status.storage.used == 1
 
-    default_status = status_api_client.status_read()
+    default_status = pulpcore_bindings.StatusApi.status_read()
     assert default_status.storage != domain_status.storage
 
 

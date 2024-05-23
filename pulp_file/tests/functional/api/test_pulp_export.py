@@ -19,7 +19,7 @@ pytestmark = [
 @pytest.fixture
 def pulp_exporter_factory(
     tmpdir,
-    exporters_pulp_api_client,
+    pulpcore_bindings,
     gen_object_with_cleanup,
     add_to_filesystem_cleanup,
 ):
@@ -33,7 +33,7 @@ def pulp_exporter_factory(
             "path": path,
             "repositories": [r.pulp_href for r in repositories],
         }
-        exporter = gen_object_with_cleanup(exporters_pulp_api_client, body)
+        exporter = gen_object_with_cleanup(pulpcore_bindings.ExportersPulpApi, body)
         add_to_filesystem_cleanup(path)
         assert exporter.name == name
         assert exporter.path == path
@@ -45,10 +45,10 @@ def pulp_exporter_factory(
 
 
 @pytest.fixture
-def pulp_export_factory(exporters_pulp_exports_api_client, monitor_task):
+def pulp_export_factory(pulpcore_bindings, monitor_task):
     def _pulp_export_factory(exporter, body=None):
         task = monitor_task(
-            exporters_pulp_exports_api_client.create(exporter.pulp_href, body or {}).task
+            pulpcore_bindings.ExportersPulpExportsApi.create(exporter.pulp_href, body or {}).task
         )
         assert len(task.created_resources) == 1
         shared_resources = [
@@ -58,7 +58,7 @@ def pulp_export_factory(exporters_pulp_exports_api_client, monitor_task):
         ]
         assert len(exporter.repositories) == len(shared_resources)
 
-        export = exporters_pulp_exports_api_client.read(task.created_resources[0])
+        export = pulpcore_bindings.ExportersPulpExportsApi.read(task.created_resources[0])
         for report in task.progress_reports:
             assert report.state == TASK_STATES.COMPLETED
         report_codes = [report.code for report in task.progress_reports]
@@ -103,14 +103,14 @@ def three_synced_repositories(
 @pytest.fixture
 def repository_with_four_versions(
     file_repository_factory,
-    file_content_api_client,
+    file_bindings,
     random_artifact,
     monitor_task,
 ):
     repository = file_repository_factory()
     for i in range(3):
         monitor_task(
-            file_content_api_client.create(
+            file_bindings.ContentFilesApi.create(
                 artifact=random_artifact.pulp_href,
                 relative_path=f"{i}.dat",
                 repository=repository.pulp_href,
@@ -134,37 +134,35 @@ def full_pulp_exporter(
 
 
 @pytest.mark.parallel
-def test_crud_exporter(exporters_pulp_api_client, shallow_pulp_exporter, monitor_task):
+def test_crud_exporter(pulpcore_bindings, shallow_pulp_exporter, monitor_task):
     # READ
     exporter = shallow_pulp_exporter
-    exporter_read = exporters_pulp_api_client.read(exporter.pulp_href)
+    exporter_read = pulpcore_bindings.ExportersPulpApi.read(exporter.pulp_href)
     assert exporter_read.name == exporter.name
     assert exporter_read.path == exporter.path
     assert len(exporter_read.repositories) == 0
 
     # UPDATE
     body = {"path": "/tmp/{}".format(str(uuid.uuid4()))}
-    result = exporters_pulp_api_client.partial_update(exporter.pulp_href, body)
+    result = pulpcore_bindings.ExportersPulpApi.partial_update(exporter.pulp_href, body)
     monitor_task(result.task)
-    exporter_read = exporters_pulp_api_client.read(exporter.pulp_href)
+    exporter_read = pulpcore_bindings.ExportersPulpApi.read(exporter.pulp_href)
     assert exporter_read.path != exporter.path
     assert exporter_read.path == body["path"]
 
     # LIST
-    exporters = exporters_pulp_api_client.list(name=exporter.name).results
+    exporters = pulpcore_bindings.ExportersPulpApi.list(name=exporter.name).results
     assert exporter.name in [e.name for e in exporters]
 
     # DELETE
-    result = exporters_pulp_api_client.delete(exporter.pulp_href)
+    result = pulpcore_bindings.ExportersPulpApi.delete(exporter.pulp_href)
     monitor_task(result.task)
     with pytest.raises(ApiException):
-        exporters_pulp_api_client.read(exporter.pulp_href)
+        pulpcore_bindings.ExportersPulpApi.read(exporter.pulp_href)
 
 
 @pytest.mark.parallel
-def test_export(
-    exporters_pulp_exports_api_client, pulp_export_factory, full_pulp_exporter, monitor_task
-):
+def test_export(pulpcore_bindings, pulp_export_factory, full_pulp_exporter, monitor_task):
     exporter = full_pulp_exporter
     assert len(exporter.repositories) == 3
 
@@ -175,18 +173,18 @@ def test_export(
     # export 2 more to test on
     export_href2, export_href3 = (
         monitor_task(
-            exporters_pulp_exports_api_client.create(exporter.pulp_href, {}).task
+            pulpcore_bindings.ExportersPulpExportsApi.create(exporter.pulp_href, {}).task
         ).created_resources[0]
         for _ in range(2)
     )
-    exports = exporters_pulp_exports_api_client.list(exporter.pulp_href).results
+    exports = pulpcore_bindings.ExportersPulpExportsApi.list(exporter.pulp_href).results
     assert len(exports) == 3
-    exporters_pulp_exports_api_client.delete(export.pulp_href)
-    exporters_pulp_exports_api_client.delete(export_href2)
-    exports = exporters_pulp_exports_api_client.list(exporter.pulp_href).results
+    pulpcore_bindings.ExportersPulpExportsApi.delete(export.pulp_href)
+    pulpcore_bindings.ExportersPulpExportsApi.delete(export_href2)
+    exports = pulpcore_bindings.ExportersPulpExportsApi.list(exporter.pulp_href).results
     assert len(exports) == 1
-    exporters_pulp_exports_api_client.delete(export_href3)
-    exports = exporters_pulp_exports_api_client.list(exporter.pulp_href).results
+    pulpcore_bindings.ExportersPulpExportsApi.delete(export_href3)
+    exports = pulpcore_bindings.ExportersPulpExportsApi.list(exporter.pulp_href).results
     assert len(exports) == 0
 
 
@@ -235,14 +233,14 @@ def test_export_by_version_and_chunked(
 
 @pytest.mark.parallel
 def test_export_incremental(
-    file_repository_version_api_client,
+    file_bindings,
     pulp_exporter_factory,
     pulp_export_factory,
     file_repo,
     repository_with_four_versions,
 ):
     repository = repository_with_four_versions
-    versions = file_repository_version_api_client.list(repository.pulp_href).results
+    versions = file_bindings.RepositoriesFileVersionsApi.list(repository.pulp_href).results
 
     # create exporter for that repository
     exporter = pulp_exporter_factory(repositories=[repository])

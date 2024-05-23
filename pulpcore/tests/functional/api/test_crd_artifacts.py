@@ -40,7 +40,7 @@ def _do_upload_valid_attrs(artifact_api, file, data):
 
 
 @pytest.mark.parallel
-def test_upload_valid_attrs(artifacts_api_client, pulpcore_random_file):
+def test_upload_valid_attrs(pulpcore_bindings, pulpcore_random_file):
     """Upload a file, and provide valid attributes.
 
     For each possible combination of ``sha256`` and ``size`` (including
@@ -56,10 +56,12 @@ def test_upload_valid_attrs(artifacts_api_client, pulpcore_random_file):
     for i in range(len(file_attrs) + 1):
         for keys in itertools.combinations(file_attrs, i):
             data = {key: file_attrs[key] for key in keys}
-            _do_upload_valid_attrs(artifacts_api_client, pulpcore_random_file["name"], data)
+            _do_upload_valid_attrs(
+                pulpcore_bindings.ArtifactsApi, pulpcore_random_file["name"], data
+            )
 
 
-def test_upload_empty_file(delete_orphans_pre, artifacts_api_client, tmp_path):
+def test_upload_empty_file(delete_orphans_pre, pulpcore_bindings, tmp_path):
     """Upload an empty file.
 
     For each possible combination of ``sha256`` and ``size`` (including
@@ -78,11 +80,11 @@ def test_upload_empty_file(delete_orphans_pre, artifacts_api_client, tmp_path):
     for i in range(len(file_attrs) + 1):
         for keys in itertools.combinations(file_attrs, i):
             data = {key: file_attrs[key] for key in keys}
-            _do_upload_valid_attrs(artifacts_api_client, file, data)
+            _do_upload_valid_attrs(pulpcore_bindings.ArtifactsApi, file, data)
 
 
 @pytest.mark.parallel
-def test_upload_invalid_attrs(artifacts_api_client, pulpcore_random_file):
+def test_upload_invalid_attrs(pulpcore_bindings, pulpcore_random_file):
     """Upload a file, and provide invalid attributes.
 
     For each possible combination of ``sha256`` and ``size`` (except for
@@ -97,7 +99,7 @@ def test_upload_invalid_attrs(artifacts_api_client, pulpcore_random_file):
     for i in range(1, len(file_attrs) + 1):
         for keys in itertools.combinations(file_attrs, i):
             data = {key: file_attrs[key] for key in keys}
-            _do_upload_invalid_attrs(artifacts_api_client, pulpcore_random_file, data)
+            _do_upload_invalid_attrs(pulpcore_bindings.ArtifactsApi, pulpcore_random_file, data)
 
 
 def _do_upload_invalid_attrs(artifact_api, file, data):
@@ -112,20 +114,20 @@ def _do_upload_invalid_attrs(artifact_api, file, data):
 
 
 @pytest.mark.parallel
-def test_upload_md5(artifacts_api_client, pulpcore_random_file):
+def test_upload_md5(pulpcore_bindings, pulpcore_random_file):
     """Attempt to upload a file using an MD5 checksum.
 
     Assumes ALLOWED_CONTENT_CHECKSUMS does NOT contain ``md5``
     """
     file_attrs = {"md5": str(uuid.uuid4()), "size": pulpcore_random_file["size"]}
     with pytest.raises(ApiException) as e:
-        artifacts_api_client.create(pulpcore_random_file["name"], **file_attrs)
+        pulpcore_bindings.ArtifactsApi.create(pulpcore_random_file["name"], **file_attrs)
 
     assert e.value.status == 400
 
 
 @pytest.mark.parallel
-def test_upload_mixed_attrs(artifacts_api_client, pulpcore_random_file):
+def test_upload_mixed_attrs(pulpcore_bindings, pulpcore_random_file):
     """Upload a file, and provide both valid and invalid attributes.
 
     Do the following:
@@ -140,22 +142,22 @@ def test_upload_mixed_attrs(artifacts_api_client, pulpcore_random_file):
         {"sha256": str(uuid.uuid4()), "size": pulpcore_random_file["size"]},
     )
     for data in invalid_data:
-        _do_upload_invalid_attrs(artifacts_api_client, pulpcore_random_file, data)
+        _do_upload_invalid_attrs(pulpcore_bindings.ArtifactsApi, pulpcore_random_file, data)
 
 
 @pytest.mark.parallel
-def test_delete_artifact(artifacts_api_client, pulpcore_random_file):
+def test_delete_artifact(pulpcore_bindings, pulpcore_random_file):
     """Delete an artifact, it is removed from the filesystem."""
     if settings.DEFAULT_FILE_STORAGE != "pulpcore.app.models.storage.FileSystem":
         pytest.skip("this test only works for filesystem storage")
     media_root = settings.MEDIA_ROOT
 
-    artifact = artifacts_api_client.create(pulpcore_random_file["name"])
+    artifact = pulpcore_bindings.ArtifactsApi.create(pulpcore_random_file["name"])
     path_to_file = os.path.join(media_root, artifact.file)
     file_exists = os.path.exists(path_to_file)
     assert file_exists
 
     # delete
-    artifacts_api_client.delete(artifact.pulp_href)
+    pulpcore_bindings.ArtifactsApi.delete(artifact.pulp_href)
     file_exists = os.path.exists(path_to_file)
     assert not file_exists

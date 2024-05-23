@@ -15,10 +15,9 @@ from pulpcore.tests.functional.utils import download_file
 
 @pytest.mark.parallel
 def test_crd_publications(
+    file_bindings,
     file_repo,
     file_remote_ssl_factory,
-    file_bindings,
-    file_publication_api_client,
     basic_manifest_path,
     gen_object_with_cleanup,
     file_random_content_unit,
@@ -47,13 +46,13 @@ def test_crd_publications(
 
     # Create a Publication using a repository and assert that its repository_version is the latest
     publish_data = FileFilePublication(repository=file_repo.pulp_href)
-    publication = gen_object_with_cleanup(file_publication_api_client, publish_data)
+    publication = gen_object_with_cleanup(file_bindings.PublicationsFileApi, publish_data)
     assert publication.repository_version == file_repo.latest_version_href
     assert publication.manifest == "PULP_MANIFEST"
 
     # Create a Publication using a non-latest repository version
     publish_data = FileFilePublication(repository_version=first_repo_version_href)
-    publication = gen_object_with_cleanup(file_publication_api_client, publish_data)
+    publication = gen_object_with_cleanup(file_bindings.PublicationsFileApi, publish_data)
     assert publication.repository_version == first_repo_version_href
 
     # Assert that a publication can't be created by specifying a repository and a repo version
@@ -61,16 +60,16 @@ def test_crd_publications(
         repository=file_repo.pulp_href, repository_version=first_repo_version_href
     )
     with pytest.raises(ApiException) as exc:
-        gen_object_with_cleanup(file_publication_api_client, publish_data)
+        gen_object_with_cleanup(file_bindings.PublicationsFileApi, publish_data)
     assert exc.value.status == 400
 
     # Assert that a Publication can be created using a custom manifest
     publish_data = FileFilePublication(repository=file_repo.pulp_href, manifest="listing")
-    publication = gen_object_with_cleanup(file_publication_api_client, publish_data)
+    publication = gen_object_with_cleanup(file_bindings.PublicationsFileApi, publish_data)
     assert publication.manifest == "listing"
 
     # Assert that a Publication can be accessed using pulp_href
-    publication = file_publication_api_client.read(publication.pulp_href)
+    publication = file_bindings.PublicationsFileApi.read(publication.pulp_href)
 
     # Read a publication by its href providing specific field list.
     config = file_bindings.RepositoriesFileApi.api_client.configuration
@@ -91,40 +90,40 @@ def test_crd_publications(
     assert "repository" not in response_fields
 
     # Read a publication by its repository version (2 of the 3 publications should be returned)
-    page = file_publication_api_client.list(repository_version=file_repo.latest_version_href)
+    page = file_bindings.PublicationsFileApi.list(repository_version=file_repo.latest_version_href)
     assert len(page.results) == 2
     for key, val in publication.to_dict().items():
         assert getattr(page.results[0], key) == val
 
     # Filter by repo version for which no publication exists
-    page = file_publication_api_client.list(repository_version=initial_repo_version)
+    page = file_bindings.PublicationsFileApi.list(repository_version=initial_repo_version)
     assert len(page.results) == 0
 
     # Filter by a repo version that does not exist
     with pytest.raises(ApiException) as exc:
         invalid_version = initial_repo_version.replace("versions/0", "versions/10")
-        file_publication_api_client.list(repository_version=invalid_version)
+        file_bindings.PublicationsFileApi.list(repository_version=invalid_version)
     assert exc.value.status == 400
 
     # Read a publication by its created time
-    page = file_publication_api_client.list(pulp_created=publication.pulp_created)
+    page = file_bindings.PublicationsFileApi.list(pulp_created=publication.pulp_created)
     assert len(page.results) == 1
     for key, val in publication.to_dict().items():
         assert getattr(page.results[0], key) == val
 
     # Filter for created time for which no publication exists
-    page = file_publication_api_client.list(pulp_created=file_repo.pulp_created)
+    page = file_bindings.PublicationsFileApi.list(pulp_created=file_repo.pulp_created)
     assert len(page.results) == 0
 
     # Assert that publications are ordered by created time
-    page = file_publication_api_client.list()
+    page = file_bindings.PublicationsFileApi.list()
     for i, pub in enumerate(page.results[:-1]):
         current = pub.pulp_created
         previous = page.results[i + 1].pulp_created
         assert current > previous
 
     # Delete a publication and assert that it can't be read again
-    file_publication_api_client.delete(publication.pulp_href)
+    file_bindings.PublicationsFileApi.delete(publication.pulp_href)
     with pytest.raises(ApiException) as exc:
-        file_publication_api_client.read(publication.pulp_href)
+        file_bindings.PublicationsFileApi.read(publication.pulp_href)
     assert exc.value.status == 404

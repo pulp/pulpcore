@@ -11,10 +11,9 @@ from pulpcore.tests.functional.utils import get_files_in_manifest, download_file
 
 @pytest.mark.parallel
 def test_reclaim_immediate_content(
+    pulpcore_bindings,
     file_bindings,
     file_repo,
-    repositories_reclaim_space_api_client,
-    artifacts_api_client,
     file_remote_ssl_factory,
     basic_manifest_path,
     monitor_task,
@@ -33,7 +32,7 @@ def test_reclaim_immediate_content(
     monitor_task(sync_response.task)
 
     # reclaim disk space
-    reclaim_response = repositories_reclaim_space_api_client.reclaim(
+    reclaim_response = pulpcore_bindings.RepositoriesReclaimSpaceApi.reclaim(
         {"repo_hrefs": [file_repo.pulp_href]}
     )
     monitor_task(reclaim_response.task)
@@ -41,7 +40,7 @@ def test_reclaim_immediate_content(
     # assert no artifacts left
     expected_files = list(get_files_in_manifest(remote.url))
     for f in expected_files:
-        artifacts = artifacts_api_client.list(sha256=f[1]).count
+        artifacts = pulpcore_bindings.ArtifactsApi.list(sha256=f[1]).count
         assert artifacts == 0
 
     # sync repo again
@@ -53,7 +52,7 @@ def test_reclaim_immediate_content(
 
     # assert re-sync populated missing artifacts
     for f in expected_files:
-        artifacts = artifacts_api_client.list(sha256=f[1]).count
+        artifacts = pulpcore_bindings.ArtifactsApi.list(sha256=f[1]).count
         assert artifacts == 1
 
 
@@ -84,9 +83,8 @@ def sync_repository_distribution(
 
 @pytest.mark.parallel
 def test_reclaim_on_demand_content(
+    pulpcore_bindings,
     sync_repository_distribution,
-    artifacts_api_client,
-    repositories_reclaim_space_api_client,
     monitor_task,
 ):
     """
@@ -100,61 +98,60 @@ def test_reclaim_on_demand_content(
 
     expected_files = get_files_in_manifest(remote.url)
     artifact_sha256 = get_file_by_path(content[0], expected_files)[1]
-    assert 1 == artifacts_api_client.list(sha256=artifact_sha256).count
+    assert 1 == pulpcore_bindings.ArtifactsApi.list(sha256=artifact_sha256).count
 
     # reclaim disk space
-    reclaim_response = repositories_reclaim_space_api_client.reclaim(
+    reclaim_response = pulpcore_bindings.RepositoriesReclaimSpaceApi.reclaim(
         {"repo_hrefs": [repo.pulp_href]}
     )
     monitor_task(reclaim_response.task)
 
-    assert 0 == artifacts_api_client.list(sha256=artifact_sha256).count
+    assert 0 == pulpcore_bindings.ArtifactsApi.list(sha256=artifact_sha256).count
 
     download_file(urljoin(distribution.base_url, content[0]))
 
-    assert 1 == artifacts_api_client.list(sha256=artifact_sha256).count
+    assert 1 == pulpcore_bindings.ArtifactsApi.list(sha256=artifact_sha256).count
 
 
 @pytest.mark.parallel
 def test_immediate_reclaim_becomes_on_demand(
+    pulpcore_bindings,
     sync_repository_distribution,
-    artifacts_api_client,
-    repositories_reclaim_space_api_client,
     monitor_task,
 ):
     """Tests if immediate content becomes like on_demand content after reclaim."""
     repo, remote, distribution = sync_repository_distribution()
 
-    artifacts_before_reclaim = artifacts_api_client.list().count
+    artifacts_before_reclaim = pulpcore_bindings.ArtifactsApi.list().count
     assert artifacts_before_reclaim > 0
 
     content = get_files_in_manifest(urljoin(distribution.base_url, "PULP_MANIFEST")).pop()
     # Populate cache
     download_file(urljoin(distribution.base_url, content[0]))
 
-    reclaim_response = repositories_reclaim_space_api_client.reclaim(
+    reclaim_response = pulpcore_bindings.RepositoriesReclaimSpaceApi.reclaim(
         {"repo_hrefs": [repo.pulp_href]}
     )
     monitor_task(reclaim_response.task)
 
     expected_files = get_files_in_manifest(remote.url)
     artifact_sha256 = get_file_by_path(content[0], expected_files)[1]
-    assert 0 == artifacts_api_client.list(sha256=artifact_sha256).count
+    assert 0 == pulpcore_bindings.ArtifactsApi.list(sha256=artifact_sha256).count
 
     download_file(urljoin(distribution.base_url, content[0]))
 
-    assert 1 == artifacts_api_client.list(sha256=artifact_sha256).count
+    assert 1 == pulpcore_bindings.ArtifactsApi.list(sha256=artifact_sha256).count
 
 
 def test_specified_all_repos(
+    pulpcore_bindings,
     file_repository_factory,
-    repositories_reclaim_space_api_client,
     monitor_task,
 ):
     """Tests that specifying all repos w/ '*' properly grabs all the repos."""
     repos = [file_repository_factory().pulp_href for _ in range(10)]
 
-    reclaim_response = repositories_reclaim_space_api_client.reclaim({"repo_hrefs": ["*"]})
+    reclaim_response = pulpcore_bindings.RepositoriesReclaimSpaceApi.reclaim({"repo_hrefs": ["*"]})
     task_status = monitor_task(reclaim_response.task)
 
     repos_locked = [

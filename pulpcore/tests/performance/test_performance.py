@@ -51,12 +51,9 @@ def report_tasks_stats(performance_task_name, tasks):
 
 
 def test_performance(
+    file_bindings,
     gen_object_with_cleanup,
-    file_repository_api_client,
     file_repository_factory,
-    file_remote_api_client,
-    file_publication_api_client,
-    file_distribution_api_client,
     fixtures_cfg,
     monitor_task,
     bindings_cfg,
@@ -77,12 +74,12 @@ def test_performance(
         if r["remote_url"] not in args.repositories:
             continue
         r["repository_name"] = str(uuid4())
-        r["repository_href"] = file_repository_api_client.create(
+        r["repository_href"] = file_bindings.RepositoriesFileApi.create(
             {"name": r["repository_name"]}
         ).pulp_href
         r["remote_name"] = str(uuid4())
         r["remote_href"] = gen_object_with_cleanup(
-            file_remote_api_client,
+            file_bindings.RemotesFileApi,
             {"name": r["remote_name"], "url": r["remote_url"] + "PULP_MANIFEST"},
         ).pulp_href
 
@@ -91,7 +88,7 @@ def test_performance(
         if r["remote_url"] not in args.repositories:
             continue
         body = {"remote": r["remote_href"], "mirror": False}
-        response = file_repository_api_client.sync(r["repository_href"], body)
+        response = file_bindings.RepositoriesFileApi.sync(r["repository_href"], body)
         responses.append(response)
 
     results = [monitor_task(response.task) for response in responses]
@@ -101,7 +98,7 @@ def test_performance(
     responses = []
     for r in data:
         body = {"remote": r["remote_href"], "mirror": False}
-        response = file_repository_api_client.sync(r["repository_href"], body)
+        response = file_bindings.RepositoriesFileApi.sync(r["repository_href"], body)
         responses.append(response)
 
     results = [monitor_task(response.task) for response in responses]
@@ -110,7 +107,7 @@ def test_performance(
     """Measure time of repository publishing."""
     responses = []
     for r in data:
-        response = file_publication_api_client.create({"repository": r["repository_href"]})
+        response = file_bindings.PublicationsFileApi.create({"repository": r["repository_href"]})
         responses.append(response)
 
     results = [monitor_task(response.task) for response in responses]
@@ -118,7 +115,7 @@ def test_performance(
 
     for i in range(len(results)):
         data[i]["publication_href"] = results[i].created_resources[0]
-        data[i]["repository_version_href"] = file_publication_api_client.read(
+        data[i]["repository_version_href"] = file_bindings.PublicationsFileApi.read(
             data[i]["publication_href"]
         ).repository_version
 
@@ -131,7 +128,7 @@ def test_performance(
             "base_path": r["distribution_base_path"],
             "publication": r["publication_href"],
         }
-        response = file_distribution_api_client.create(body)
+        response = file_bindings.DistributionsFileApi.create(body)
         responses.append(response)
 
     results = [monitor_task(response.task) for response in responses]
@@ -139,7 +136,7 @@ def test_performance(
 
     for i in range(len(results)):
         data[i]["distribution_href"] = results[i].created_resources[0]
-        data[i]["download_base_url"] = file_distribution_api_client.read(
+        data[i]["download_base_url"] = file_bindings.DistributionsFileApi.read(
             data[i]["distribution_href"]
         ).base_url
 
@@ -191,7 +188,7 @@ def test_performance(
     responses = []
     for r in data:
         body = {"base_version": r["repository_version_href"]}
-        response = file_repository_api_client.modify(r["repository_clone1_href"], body)
+        response = file_bindings.RepositoriesFileApi.modify(r["repository_clone1_href"], body)
         responses.append(response)
 
     results = [monitor_task(response.task) for response in responses]
@@ -205,7 +202,7 @@ def test_performance(
     responses = []
     for r in data:
         body = {"add_content_units": hrefs}
-        response = file_repository_api_client.modify(r["repository_clone2_href"], body)
+        response = file_bindings.RepositoriesFileApi.modify(r["repository_clone2_href"], body)
         responses.append(response)
 
     results = [monitor_task(response.task) for response in responses]

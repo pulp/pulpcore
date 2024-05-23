@@ -23,8 +23,7 @@ def extract_pk(href):
 
 @pytest.fixture(scope="class")
 def rbac_and_redirect_guards(
-    redirect_contentguard_api_client,
-    rbac_contentguard_api_client,
+    pulpcore_bindings,
     gen_object_with_cleanup,
 ):
     prefix = str(uuid.uuid4())
@@ -32,10 +31,14 @@ def rbac_and_redirect_guards(
     redis = []
     for name in NAMES:
         rbacs.append(
-            gen_object_with_cleanup(rbac_contentguard_api_client, {"name": prefix + "-" + name})
+            gen_object_with_cleanup(
+                pulpcore_bindings.ContentguardsRbacApi, {"name": prefix + "-" + name}
+            )
         )
         redis.append(
-            gen_object_with_cleanup(redirect_contentguard_api_client, {"name": prefix + "+" + name})
+            gen_object_with_cleanup(
+                pulpcore_bindings.ContentguardsContentRedirectApi, {"name": prefix + "+" + name}
+            )
         )
     return prefix, rbacs, redis
 
@@ -54,9 +57,7 @@ class TestFilter:
         filter,
         f,
         exception_message,
-        content_guards_api_client,
-        redirect_contentguard_api_client,
-        rbac_contentguard_api_client,
+        pulpcore_bindings,
         rbac_and_redirect_guards,
     ):
         """Tests pulp_href__in and pulp_id__in filters."""
@@ -67,33 +68,37 @@ class TestFilter:
         rbac_sample = random.sample(rbac_extracted, 3)
         redi_sample = random.sample(redi_extracted, 3)
 
-        rbac_results = rbac_contentguard_api_client.list(**{filter: rbac_sample})
+        rbac_results = pulpcore_bindings.ContentguardsRbacApi.list(**{filter: rbac_sample})
         assert rbac_results.count == 3
         assert set(rbac_sample) == {f(cg.pulp_href) for cg in rbac_results.results}
 
-        redi_results = redirect_contentguard_api_client.list(**{filter: redi_sample})
+        redi_results = pulpcore_bindings.ContentguardsContentRedirectApi.list(
+            **{filter: redi_sample}
+        )
         assert redi_results.count == 3
         assert set(redi_sample) == {f(cg.pulp_href) for cg in redi_results.results}
 
         # Test that generic endpoint can return both
-        results = content_guards_api_client.list(**{filter: rbac_sample + redi_sample})
+        results = pulpcore_bindings.ContentguardsApi.list(**{filter: rbac_sample + redi_sample})
         assert results.count == 6
         assert set(redi_sample + rbac_sample) == {f(cg.pulp_href) for cg in results.results}
 
         # Test swapping rbac & redirect return 0
-        rbac_results = rbac_contentguard_api_client.list(**{filter: redi_sample})
+        rbac_results = pulpcore_bindings.ContentguardsRbacApi.list(**{filter: redi_sample})
         assert rbac_results.count == 0
 
-        redi_results = redirect_contentguard_api_client.list(**{filter: rbac_sample})
+        redi_results = pulpcore_bindings.ContentguardsContentRedirectApi.list(
+            **{filter: rbac_sample}
+        )
         assert redi_results.count == 0
 
         # test out empty list
-        redi_results = redirect_contentguard_api_client.list(**{filter: []})
+        redi_results = pulpcore_bindings.ContentguardsContentRedirectApi.list(**{filter: []})
         assert redi_results.count == 0
 
         # Test that filter fails when not a valid type
         with pytest.raises(ApiException) as exc:
-            content_guards_api_client.list(**{filter: ["hello"]})
+            pulpcore_bindings.ContentguardsApi.list(**{filter: ["hello"]})
 
         assert exc.value.status == 400
         assert exception_message in exc.value.body
@@ -101,22 +106,20 @@ class TestFilter:
     @pytest.mark.parallel
     def test_pulp_type_filter(
         self,
-        content_guards_api_client,
-        redirect_contentguard_api_client,
-        rbac_contentguard_api_client,
+        pulpcore_bindings,
         rbac_and_redirect_guards,
     ):
         """Tests the pulp_type__in filter."""
         prefix = rbac_and_redirect_guards[0]
         # Test filtering by one pulp_type
-        rbac_result = content_guards_api_client.list(
+        rbac_result = pulpcore_bindings.ContentguardsApi.list(
             name__startswith=prefix, pulp_type__in=["core.rbac"]
         )
         assert rbac_result.count == 5
         for c in rbac_result.results:
             assert "core/rbac" in c.pulp_href
 
-        redirect_result = content_guards_api_client.list(
+        redirect_result = pulpcore_bindings.ContentguardsApi.list(
             name__startswith=prefix, pulp_type__in=["core.content_redirect"]
         )
         assert redirect_result.count == 5
@@ -124,7 +127,7 @@ class TestFilter:
             assert "core/content_redirect" in c.pulp_href
 
         # Test filtering by multiple pulp_types
-        together_result = content_guards_api_client.list(
+        together_result = pulpcore_bindings.ContentguardsApi.list(
             name__startswith=prefix, pulp_type__in=["core.rbac", "core.content_redirect"]
         )
         assert together_result.count == 10
@@ -133,7 +136,7 @@ class TestFilter:
 
         # Test filtering by invalid pulp_type
         with pytest.raises(ApiException) as exc:
-            content_guards_api_client.list(pulp_type__in=["i.invalid"])
+            pulpcore_bindings.ContentguardsApi.list(pulp_type__in=["i.invalid"])
 
         assert exc.value.status == 400
         assert (
@@ -143,12 +146,14 @@ class TestFilter:
 
         # Test filter does not exist on child viewsets
         with pytest.raises(ApiTypeError) as exc:
-            rbac_contentguard_api_client.list(pulp_type__in=["core.rbac"])
+            pulpcore_bindings.ContentguardsRbacApi.list(pulp_type__in=["core.rbac"])
 
         assert "Got an unexpected keyword argument 'pulp_type__in'" in str(exc.value)
 
         with pytest.raises(ApiTypeError) as exc:
-            redirect_contentguard_api_client.list(pulp_type__in=["core.content_redirect"])
+            pulpcore_bindings.ContentguardsContentRedirectApi.list(
+                pulp_type__in=["core.content_redirect"]
+            )
 
         assert "Got an unexpected keyword argument 'pulp_type__in'" in str(exc.value)
 
@@ -177,13 +182,13 @@ class TestFilter:
         self,
         q,
         count,
-        content_guards_api_client,
+        pulpcore_bindings,
         rbac_and_redirect_guards,
     ):
         """Tests the "q" filter."""
         prefix = rbac_and_redirect_guards[0]
 
-        result = content_guards_api_client.list(
+        result = pulpcore_bindings.ContentguardsApi.list(
             name__startswith=prefix, q=q.format(*NAMES, prefix=prefix)
         )
         assert result.count == count
@@ -225,11 +230,11 @@ class TestFilter:
         self,
         q,
         exception_message,
-        content_guards_api_client,
+        pulpcore_bindings,
     ):
         """Tests the "q" filter with invalid expressions."""
 
         with pytest.raises(ApiException) as exc_info:
-            content_guards_api_client.list(q=q.format(*NAMES))
+            pulpcore_bindings.ContentguardsApi.list(q=q.format(*NAMES))
         assert exc_info.value.status == 400
         assert exc_info.value.body == exception_message

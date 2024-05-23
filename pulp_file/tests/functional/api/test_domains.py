@@ -14,9 +14,9 @@ pytestmark = pytest.mark.skipif(not settings.DOMAIN_ENABLED, reason="Domains not
 
 @pytest.mark.parallel
 def test_object_creation(
-    domains_api_client,
-    gen_object_with_cleanup,
+    pulpcore_bindings,
     file_bindings,
+    gen_object_with_cleanup,
     file_remote_factory,
     basic_manifest_path,
 ):
@@ -26,7 +26,7 @@ def test_object_creation(
         "storage_class": "pulpcore.app.models.storage.FileSystem",
         "storage_settings": {"MEDIA_ROOT": "/var/lib/pulp/media/"},
     }
-    domain = gen_object_with_cleanup(domains_api_client, body)
+    domain = gen_object_with_cleanup(pulpcore_bindings.DomainsApi, body)
     domain_name = domain.name
 
     repo_body = {"name": str(uuid.uuid4())}
@@ -65,11 +65,9 @@ def test_object_creation(
 
 @pytest.mark.parallel
 def test_artifact_upload(
-    domains_api_client,
+    pulpcore_bindings,
     gen_object_with_cleanup,
     random_artifact_factory,
-    artifacts_api_client,
-    uploads_api_client,
     tmp_path,
     monitor_task,
 ):
@@ -80,11 +78,11 @@ def test_artifact_upload(
         "storage_class": "pulpcore.app.models.storage.FileSystem",
         "storage_settings": {"MEDIA_ROOT": "/var/lib/pulp/media/"},
     }
-    domain = gen_object_with_cleanup(domains_api_client, body)
+    domain = gen_object_with_cleanup(pulpcore_bindings.DomainsApi, body)
 
     artifact = random_artifact_factory(pulp_domain=domain.name)
 
-    artifacts = artifacts_api_client.list(pulp_domain=domain.name)
+    artifacts = pulpcore_bindings.ArtifactsApi.list(pulp_domain=domain.name)
     assert artifacts.count == 1
     assert artifact.pulp_href == artifacts.results[0].pulp_href
 
@@ -92,7 +90,7 @@ def test_artifact_upload(
     filename = tmp_path / str(uuid.uuid4())
     file = generate_iso(filename)  # Default size is 1024
     upload_body = {"size": file["size"]}
-    upload = uploads_api_client.create(upload_body, pulp_domain=domain.name)
+    upload = pulpcore_bindings.UploadsApi.create(upload_body, pulp_domain=domain.name)
     assert f"{domain.name}/api/v3/" in upload.pulp_href
 
     with open(filename, mode="rb") as f:
@@ -101,44 +99,43 @@ def test_artifact_upload(
             with open(cfilename, mode="wb") as cf:
                 cf.write(f.read(512))
                 cf.flush()
-            uploads_api_client.update(chunk_header, upload.pulp_href, cfilename)
+            pulpcore_bindings.UploadsApi.update(chunk_header, upload.pulp_href, cfilename)
     commit_body = {"sha256": file["digest"]}
-    task = uploads_api_client.commit(upload.pulp_href, commit_body).task
+    task = pulpcore_bindings.UploadsApi.commit(upload.pulp_href, commit_body).task
     finished = monitor_task(task)
 
     assert len(finished.created_resources) == 1
     second_artifact_href = finished.created_resources[0]
     assert f"{domain.name}/api/v3/" in second_artifact_href
 
-    artifacts = artifacts_api_client.list(pulp_domain=domain.name)
+    artifacts = pulpcore_bindings.ArtifactsApi.list(pulp_domain=domain.name)
     assert artifacts.count == 2
 
-    second_artifact = artifacts_api_client.read(second_artifact_href)
+    second_artifact = pulpcore_bindings.ArtifactsApi.read(second_artifact_href)
     assert second_artifact.sha256 == file["digest"]
 
     # Test that duplicate artifact can not be uploaded in same domain
     with pytest.raises(CoreApiException) as e:
-        artifacts_api_client.create(filename, pulp_domain=domain.name)
+        pulpcore_bindings.ArtifactsApi.create(filename, pulp_domain=domain.name)
     assert e.value.status == 400
     assert json.loads(e.value.body) == {
         "non_field_errors": [f"Artifact with sha256 checksum of '{file['digest']}' already exists."]
     }
 
     # Show that duplicate artifacts can be uploaded into different domains
-    dup_artifact = gen_object_with_cleanup(artifacts_api_client, filename)
+    dup_artifact = gen_object_with_cleanup(pulpcore_bindings.ArtifactsApi, filename)
     assert "default/api/v3/" in dup_artifact.pulp_href
     assert dup_artifact.sha256 == second_artifact.sha256
 
     # Delete second artifact so domain can be deleted
-    artifacts_api_client.delete(second_artifact_href)
+    pulpcore_bindings.ArtifactsApi.delete(second_artifact_href)
 
 
 @pytest.mark.parallel
 def test_content_upload(
-    domains_api_client,
-    orphans_cleanup_api_client,
+    pulpcore_bindings,
+    file_bindings,
     gen_object_with_cleanup,
-    file_content_api_client,
     tmp_path,
     monitor_task,
 ):
@@ -148,48 +145,45 @@ def test_content_upload(
         "storage_class": "pulpcore.app.models.storage.FileSystem",
         "storage_settings": {"MEDIA_ROOT": "/var/lib/pulp/media/"},
     }
-    domain = gen_object_with_cleanup(domains_api_client, body)
+    domain = gen_object_with_cleanup(pulpcore_bindings.DomainsApi, body)
 
     filename = tmp_path / str(uuid.uuid4())
     file = generate_iso(filename)
     relative_path = "1.iso"
 
-    task = file_content_api_client.create(relative_path, file=filename).task
-    task2 = file_content_api_client.create(
+    task = file_bindings.ContentFilesApi.create(relative_path, file=filename).task
+    task2 = file_bindings.ContentFilesApi.create(
         relative_path, file=filename, pulp_domain=domain.name
     ).task
     response = monitor_task(task)
-    default_content = file_content_api_client.read(response.created_resources[0])
+    default_content = file_bindings.ContentFilesApi.read(response.created_resources[0])
     response = monitor_task(task2)
-    domain_content = file_content_api_client.read(response.created_resources[0])
+    domain_content = file_bindings.ContentFilesApi.read(response.created_resources[0])
 
     assert default_content.pulp_href != domain_content.pulp_href
     assert default_content.sha256 == domain_content.sha256 == file["digest"]
     assert default_content.relative_path == domain_content.relative_path
 
-    domain_contents = file_content_api_client.list(pulp_domain=domain.name)
+    domain_contents = file_bindings.ContentFilesApi.list(pulp_domain=domain.name)
     assert domain_contents.count == 1
 
     # Content needs to be deleted for the domain to be deleted
     body = {"orphan_protection_time": 0}
-    task = orphans_cleanup_api_client.cleanup(body, pulp_domain=domain.name).task
+    task = pulpcore_bindings.OrphansCleanupApi.cleanup(body, pulp_domain=domain.name).task
     monitor_task(task)
 
-    domain_contents = file_content_api_client.list(pulp_domain=domain.name)
+    domain_contents = file_bindings.ContentFilesApi.list(pulp_domain=domain.name)
     assert domain_contents.count == 0
 
 
 @pytest.mark.parallel
 def test_content_promotion(
-    domains_api_client,
+    pulpcore_bindings,
     file_bindings,
-    file_repository_version_api_client,
     basic_manifest_path,
     file_remote_factory,
-    file_publication_api_client,
     file_distribution_factory,
     gen_object_with_cleanup,
-    orphans_cleanup_api_client,
     monitor_task,
 ):
     """Tests Content promotion path with domains: Sync->Publish->Distribute"""
@@ -198,7 +192,7 @@ def test_content_promotion(
         "storage_class": "pulpcore.app.models.storage.FileSystem",
         "storage_settings": {"MEDIA_ROOT": "/var/lib/pulp/media/"},
     }
-    domain = gen_object_with_cleanup(domains_api_client, body)
+    domain = gen_object_with_cleanup(pulpcore_bindings.DomainsApi, body)
 
     # Sync task
     remote = file_remote_factory(
@@ -216,11 +210,11 @@ def test_content_promotion(
 
     # Publish task
     pub_body = {"repository": repo.pulp_href}
-    task = file_publication_api_client.create(pub_body, pulp_domain=domain.name).task
+    task = file_bindings.PublicationsFileApi.create(pub_body, pulp_domain=domain.name).task
     response = monitor_task(task)
     assert len(response.created_resources) == 1
     pub_href = response.created_resources[0]
-    pub = file_publication_api_client.read(pub_href)
+    pub = file_bindings.PublicationsFileApi.read(pub_href)
 
     assert pub.repository == repo.pulp_href
 
@@ -238,7 +232,7 @@ def test_content_promotion(
         assert len(download.body) == 1024
 
     # Test that a repository version repair operation can be run without error
-    response = file_repository_version_api_client.repair(
+    response = file_bindings.RepositoriesFileVersionsApi.repair(
         repo.latest_version_href, Repair(verify_checksums=True)
     )
     results = monitor_task(response.task)
@@ -249,19 +243,19 @@ def test_content_promotion(
     task = file_bindings.RepositoriesFileApi.delete(repo.pulp_href).task
     monitor_task(task)
     body = {"orphan_protection_time": 0}
-    task = orphans_cleanup_api_client.cleanup(body, pulp_domain=domain.name).task
+    task = pulpcore_bindings.OrphansCleanupApi.cleanup(body, pulp_domain=domain.name).task
     monitor_task(task)
 
 
 @pytest.mark.parallel
-def test_domain_rbac(domains_api_client, gen_user, gen_object_with_cleanup, file_bindings):
+def test_domain_rbac(pulpcore_bindings, file_bindings, gen_user, gen_object_with_cleanup):
     """Test domain level-roles."""
     body = {
         "name": str(uuid.uuid4()),
         "storage_class": "pulpcore.app.models.storage.FileSystem",
         "storage_settings": {"MEDIA_ROOT": "/var/lib/pulp/media/"},
     }
-    domain = gen_object_with_cleanup(domains_api_client, body)
+    domain = gen_object_with_cleanup(pulpcore_bindings.DomainsApi, body)
 
     file_viewer = "file.filerepository_viewer"
     file_creator = "file.filerepository_creator"

@@ -11,9 +11,9 @@ from pulpcore.tests.functional.utils import get_from_url
 
 @pytest.mark.parallel
 def test_content_directory_listing(
+    pulpcore_bindings,
     file_distribution_factory,
     gen_object_with_cleanup,
-    rbac_contentguard_api_client,
     pulp_settings,
     http_get,
     pulp_status,
@@ -23,7 +23,7 @@ def test_content_directory_listing(
     HIDE_GUARDED_DISTRIBUTIONS = getattr(pulp_settings, "HIDE_GUARDED_DISTRIBUTIONS", False)
 
     content_guard1 = gen_object_with_cleanup(
-        rbac_contentguard_api_client, {"name": str(uuid.uuid4())}
+        pulpcore_bindings.ContentguardsRbacApi, {"name": str(uuid.uuid4())}
     )
 
     base_path = str(uuid.uuid4())

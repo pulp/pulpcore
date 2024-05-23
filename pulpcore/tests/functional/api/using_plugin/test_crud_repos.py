@@ -134,8 +134,8 @@ def test_crud_repo_full_workflow(
 
 @pytest.mark.parallel
 def test_crud_remotes_full_workflow(
+    file_bindings,
     file_remote_factory,
-    file_remote_api_client,
     monitor_task,
     basic_manifest_path,
     file_fixture_server,
@@ -175,9 +175,9 @@ def test_crud_remotes_full_workflow(
 
     # Test updating remote
     data = {"download_concurrency": 23, "policy": "immediate"}
-    response = file_remote_api_client.partial_update(remote.pulp_href, data)
+    response = file_bindings.RemotesFileApi.partial_update(remote.pulp_href, data)
     monitor_task(response.task)
-    new_remote = file_remote_api_client.read(remote.pulp_href)
+    new_remote = file_bindings.RemotesFileApi.read(remote.pulp_href)
     _compare_results(data, new_remote)
 
     # Test that a password can be updated with a PUT request.
@@ -192,7 +192,7 @@ def test_crud_remotes_full_workflow(
 
     # test a PUT request with a new password
     remote_update = {"name": temp_remote.name, "url": "http://", "password": "changed"}
-    response = file_remote_api_client.update(href, remote_update)
+    response = file_bindings.RemotesFileApi.update(href, remote_update)
     monitor_task(response.task)
     exc = run(["pulpcore-manager", "shell", "-c", shell_cmd], text=True, capture_output=True)
     assert exc.stdout.rstrip("\n") == "changed"
@@ -207,7 +207,7 @@ def test_crud_remotes_full_workflow(
 
     # test a PUT request without a password
     remote_update = {"name": temp_remote.name, "url": "http://"}
-    response = file_remote_api_client.update(href, remote_update)
+    response = file_bindings.RemotesFileApi.update(href, remote_update)
     monitor_task(response.task)
     exc = run(["pulpcore-manager", "shell", "-c", shell_cmd], text=True, capture_output=True)
     assert exc.stdout.rstrip("\n") == "new"
@@ -219,9 +219,9 @@ def test_crud_remotes_full_workflow(
         "sock_connect_timeout": 0.0,
         "sock_read_timeout": 3.1415926535,
     }
-    response = file_remote_api_client.partial_update(remote.pulp_href, data)
+    response = file_bindings.RemotesFileApi.partial_update(remote.pulp_href, data)
     monitor_task(response.task)
-    new_remote = file_remote_api_client.read(remote.pulp_href)
+    new_remote = file_bindings.RemotesFileApi.read(remote.pulp_href)
     _compare_results(data, new_remote)
 
     # Test invalid float < 0
@@ -229,14 +229,14 @@ def test_crud_remotes_full_workflow(
         "total_timeout": -1.0,
     }
     with pytest.raises(ApiException):
-        file_remote_api_client.partial_update(remote.pulp_href, data)
+        file_bindings.RemotesFileApi.partial_update(remote.pulp_href, data)
 
     # Test invalid non-float
     data = {
         "connect_timeout": "abc",
     }
     with pytest.raises(ApiException):
-        file_remote_api_client.partial_update(remote.pulp_href, data)
+        file_bindings.RemotesFileApi.partial_update(remote.pulp_href, data)
 
     # Test reset to empty
     data = {
@@ -245,28 +245,28 @@ def test_crud_remotes_full_workflow(
         "sock_connect_timeout": False,
         "sock_read_timeout": None,
     }
-    response = file_remote_api_client.partial_update(remote.pulp_href, data)
+    response = file_bindings.RemotesFileApi.partial_update(remote.pulp_href, data)
     monitor_task(response.task)
-    new_remote = file_remote_api_client.read(remote.pulp_href)
+    new_remote = file_bindings.RemotesFileApi.read(remote.pulp_href)
     _compare_results(data, new_remote)
 
     # Test that headers value must be a list of dicts
     data = {"headers": {"Connection": "keep-alive"}}
     with pytest.raises(ApiException):
-        file_remote_api_client.partial_update(remote.pulp_href, data)
+        file_bindings.RemotesFileApi.partial_update(remote.pulp_href, data)
     data = {"headers": [1, 2, 3]}
     with pytest.raises(ApiException):
-        file_remote_api_client.partial_update(remote.pulp_href, data)
+        file_bindings.RemotesFileApi.partial_update(remote.pulp_href, data)
     data = {"headers": [{"Connection": "keep-alive"}]}
-    response = file_remote_api_client.partial_update(remote.pulp_href, data)
+    response = file_bindings.RemotesFileApi.partial_update(remote.pulp_href, data)
     monitor_task(response.task)
 
     # Test deleting a remote
-    response = file_remote_api_client.delete(remote.pulp_href)
+    response = file_bindings.RemotesFileApi.delete(remote.pulp_href)
     monitor_task(response.task)
     # verify the delete
     with pytest.raises(ApiException):
-        file_remote_api_client.read(remote.pulp_href)
+        file_bindings.RemotesFileApi.read(remote.pulp_href)
 
 
 @pytest.mark.parallel
@@ -284,13 +284,13 @@ def test_remote_pulp_labels(file_remote_factory, basic_manifest_path):
 
 
 @pytest.mark.parallel
-def test_file_remote_url_validation(file_remote_api_client, gen_object_with_cleanup):
+def test_file_remote_url_validation(file_bindings, gen_object_with_cleanup):
     """A test case that verifies the validation of remotes' URLs."""
 
     def raise_for_invalid_request(remote_attrs):
         """Check if Pulp returns HTTP 400 after issuing an invalid request."""
         with pytest.raises(ApiException) as ae:
-            file_remote_api_client.create(remote_attrs)
+            file_bindings.RemotesFileApi.create(remote_attrs)
             assert ae.value.status == 400
 
     # Test the validation of an invalid absolute pathname.
@@ -312,7 +312,7 @@ def test_file_remote_url_validation(file_remote_api_client, gen_object_with_clea
         "name": str(uuid4()),
         "url": "file:///tmp/good",
     }
-    gen_object_with_cleanup(file_remote_api_client, remote_attrs)
+    gen_object_with_cleanup(file_bindings.RemotesFileApi, remote_attrs)
 
     # Test that the remote url can't contain username/password.
     remote_attrs = {

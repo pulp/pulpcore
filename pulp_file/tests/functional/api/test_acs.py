@@ -14,13 +14,13 @@ from pulpcore.tests.functional.utils import (
 
 @pytest.fixture
 def generate_server_and_remote(
-    gen_fixture_server, file_fixtures_root, file_remote_api_client, gen_object_with_cleanup
+    file_bindings, gen_fixture_server, file_fixtures_root, gen_object_with_cleanup
 ):
     def _generate_server_and_remote(*, manifest_path, policy):
         server = gen_fixture_server(file_fixtures_root, None)
         url = server.make_url(manifest_path)
         remote = gen_object_with_cleanup(
-            file_remote_api_client,
+            file_bindings.RemotesFileApi,
             {"name": str(uuid.uuid4()), "url": str(url), "policy": policy},
         )
         return server, remote
@@ -30,7 +30,7 @@ def generate_server_and_remote(
 
 @pytest.mark.parallel
 def test_acs_validation_and_update(
-    file_acs_api_client,
+    file_bindings,
     file_remote_factory,
     basic_manifest_path,
     gen_object_with_cleanup,
@@ -44,7 +44,7 @@ def test_acs_validation_and_update(
         "paths": [],
     }
     with pytest.raises(ApiException) as exc:
-        file_acs_api_client.create(acs_data)
+        file_bindings.AcsFileApi.create(acs_data)
     assert exc.value.status == 400
     assert "remote" in exc.value.body
 
@@ -56,43 +56,46 @@ def test_acs_validation_and_update(
         "paths": ["good/path", "/bad/path"],
     }
     with pytest.raises(ApiException) as exc:
-        file_acs_api_client.create(acs_data)
+        file_bindings.AcsFileApi.create(acs_data)
     assert exc.value.status == 400
     assert "paths" in exc.value.body
 
     # Assert that an ACS can be created with valid paths
     acs_data["paths"] = ["good/path", "valid"]
-    acs = gen_object_with_cleanup(file_acs_api_client, acs_data)
+    acs = gen_object_with_cleanup(file_bindings.AcsFileApi, acs_data)
     assert set(acs.paths) == set(acs_data["paths"])
 
     # Test that an ACS's name can be updated without clobbering the paths
     new_name = str(uuid.uuid4())
     monitor_task(
-        file_acs_api_client.update(acs.pulp_href, {"name": new_name, "remote": acs.remote}).task
+        file_bindings.AcsFileApi.update(
+            acs.pulp_href, {"name": new_name, "remote": acs.remote}
+        ).task
     )
-    acs = file_acs_api_client.read(acs.pulp_href)
+    acs = file_bindings.AcsFileApi.read(acs.pulp_href)
     assert acs.name == new_name
     assert sorted(acs.paths) == sorted(acs_data["paths"])
 
     # Test that you can do a partial update of an ACS
     new_name = str(uuid.uuid4())
-    monitor_task(file_acs_api_client.partial_update(acs.pulp_href, {"name": new_name}).task)
-    acs = file_acs_api_client.read(acs.pulp_href)
+    monitor_task(file_bindings.AcsFileApi.partial_update(acs.pulp_href, {"name": new_name}).task)
+    acs = file_bindings.AcsFileApi.read(acs.pulp_href)
     assert acs.name == new_name
     assert sorted(acs.paths) == sorted(acs_data["paths"])
 
     # Test that paths can be updated
     updated_paths = ["foo"]
-    monitor_task(file_acs_api_client.partial_update(acs.pulp_href, {"paths": updated_paths}).task)
-    acs = file_acs_api_client.read(acs.pulp_href)
+    monitor_task(
+        file_bindings.AcsFileApi.partial_update(acs.pulp_href, {"paths": updated_paths}).task
+    )
+    acs = file_bindings.AcsFileApi.read(acs.pulp_href)
     assert acs.paths == updated_paths
 
 
 @pytest.mark.parallel
 def test_acs_sync(
-    file_repo,
     file_bindings,
-    file_acs_api_client,
+    file_repo,
     basic_manifest_path,
     gen_object_with_cleanup,
     generate_server_and_remote,
@@ -111,12 +114,12 @@ def test_acs_sync(
 
     # Create the ACS that uses the remote from above
     acs = gen_object_with_cleanup(
-        file_acs_api_client,
+        file_bindings.AcsFileApi,
         {"remote": acs_remote.pulp_href, "paths": [], "name": str(uuid.uuid4())},
     )
 
     # Refresh ACS and assert that only the PULP_MANIFEST was downloaded
-    monitor_task_group(file_acs_api_client.refresh(acs.pulp_href).task_group)
+    monitor_task_group(file_bindings.AcsFileApi.refresh(acs.pulp_href).task_group)
     assert len(acs_server.requests_record) == 1
     assert acs_server.requests_record[0].path == basic_manifest_path
 
@@ -144,9 +147,8 @@ def test_acs_sync(
 
 @pytest.mark.parallel
 def test_acs_sync_with_paths(
-    file_repo,
     file_bindings,
-    file_acs_api_client,
+    file_repo,
     basic_manifest_path,
     large_manifest_path,
     gen_object_with_cleanup,
@@ -164,7 +166,7 @@ def test_acs_sync_with_paths(
 
     # Create the ACS that uses the remote from above
     acs = gen_object_with_cleanup(
-        file_acs_api_client,
+        file_bindings.AcsFileApi,
         {
             "remote": acs_remote.pulp_href,
             "paths": [basic_manifest_path[1:], large_manifest_path[1:]],
@@ -173,7 +175,7 @@ def test_acs_sync_with_paths(
     )
 
     # Refresh ACS and assert that only the PULP_MANIFEST was downloaded
-    task_group = monitor_task_group(file_acs_api_client.refresh(acs.pulp_href).task_group)
+    task_group = monitor_task_group(file_bindings.AcsFileApi.refresh(acs.pulp_href).task_group)
     expected_request_paths = {basic_manifest_path, large_manifest_path}
     actual_requested_paths = set([request.path for request in acs_server.requests_record])
     assert len(task_group.tasks) == 2
@@ -205,9 +207,8 @@ def test_acs_sync_with_paths(
 
 @pytest.mark.parallel
 def test_serving_acs_content(
-    file_repo,
     file_bindings,
-    file_acs_api_client,
+    file_repo,
     file_distribution_factory,
     basic_manifest_path,
     gen_object_with_cleanup,
@@ -227,12 +228,12 @@ def test_serving_acs_content(
 
     # Create the ACS that uses the remote from above
     acs = gen_object_with_cleanup(
-        file_acs_api_client,
+        file_bindings.AcsFileApi,
         {"remote": acs_remote.pulp_href, "paths": [], "name": str(uuid.uuid4())},
     )
 
     # Refresh ACS
-    monitor_task_group(file_acs_api_client.refresh(acs.pulp_href).task_group)
+    monitor_task_group(file_bindings.AcsFileApi.refresh(acs.pulp_href).task_group)
 
     # Create a distribution
     distribution = file_distribution_factory(repository=file_repo.pulp_href)

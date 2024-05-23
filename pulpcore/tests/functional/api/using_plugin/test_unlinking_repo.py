@@ -7,7 +7,6 @@ import pytest
 def test_shared_remote_usage(
     file_bindings,
     file_repository_factory,
-    file_content_api_client,
     file_remote_ssl_factory,
     basic_manifest_path,
     monitor_task,
@@ -29,7 +28,7 @@ def test_shared_remote_usage(
     # Compare contents of repositories.
     contents = set()
     for repo in repos:
-        content = file_content_api_client.list(repository_version=repo.latest_version_href)
+        content = file_bindings.ContentFilesApi.list(repository_version=repo.latest_version_href)
         assert content.count == 3
         contents.update({c.pulp_href for c in content.results})
     assert len(contents) == 3

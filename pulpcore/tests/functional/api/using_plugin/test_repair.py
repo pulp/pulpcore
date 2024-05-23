@@ -11,9 +11,9 @@ from pulpcore.tests.functional.utils import get_files_in_manifest
 
 @pytest.fixture
 def repository_with_corrupted_artifacts(
+    pulpcore_bindings,
     file_bindings,
     file_repo,
-    artifacts_api_client,
     file_remote_ssl_factory,
     basic_manifest_path,
     monitor_task,
@@ -28,18 +28,18 @@ def repository_with_corrupted_artifacts(
     content1, content2 = sample(get_files_in_manifest(remote.url), 2)
 
     # Modify an artifact
-    artifact1_path = artifacts_api_client.list(sha256=content1[1]).results[0].file
+    artifact1_path = pulpcore_bindings.ArtifactsApi.list(sha256=content1[1]).results[0].file
     with default_storage.open(artifact1_path, "w+b") as f:
         f.write(b"$a bit rot")
 
     # Delete an artifact
-    artifact2_path = artifacts_api_client.list(sha256=content2[1]).results[0].file
+    artifact2_path = pulpcore_bindings.ArtifactsApi.list(sha256=content2[1]).results[0].file
     default_storage.delete(artifact2_path)
     return repo
 
 
 def test_repair_global_with_checksums(
-    repair_api_client, repository_with_corrupted_artifacts, monitor_task
+    pulpcore_bindings, repository_with_corrupted_artifacts, monitor_task
 ):
     """Test whether missing and corrupted files can be re-downloaded.
 
@@ -51,14 +51,14 @@ def test_repair_global_with_checksums(
     6. Assert that the repair task reported no missing, corrupted or repaired units.
     """
     # STEP 3
-    response = repair_api_client.post(Repair(verify_checksums=True))
+    response = pulpcore_bindings.RepairApi.post(Repair(verify_checksums=True))
     results = monitor_task(response.task)
 
     # STEP 4
     _verify_repair_results(results, missing=1, corrupted=1, repaired=2)
 
     # STEP 5
-    response = repair_api_client.post(Repair(verify_checksums=True))
+    response = pulpcore_bindings.RepairApi.post(Repair(verify_checksums=True))
     results = monitor_task(response.task)
 
     # STEP 6
@@ -66,7 +66,7 @@ def test_repair_global_with_checksums(
 
 
 def test_repair_global_without_checksums(
-    repair_api_client, repository_with_corrupted_artifacts, monitor_task
+    pulpcore_bindings, repository_with_corrupted_artifacts, monitor_task
 ):
     """Test whether missing files can be redownloaded.
 
@@ -80,21 +80,21 @@ def test_repair_global_without_checksums(
     8. Assert that the repair task reported one corrupted and one repaired unit.
     """
     # STEP 3
-    response = repair_api_client.post(Repair(verify_checksums=False))
+    response = pulpcore_bindings.RepairApi.post(Repair(verify_checksums=False))
     results = monitor_task(response.task)
 
     # STEP 4
     _verify_repair_results(results, missing=1, repaired=1)
 
     # STEP 5
-    response = repair_api_client.post(Repair(verify_checksums=False))
+    response = pulpcore_bindings.RepairApi.post(Repair(verify_checksums=False))
     results = monitor_task(response.task)
 
     # STEP 6
     _verify_repair_results(results)
 
     # STEP 7
-    response = repair_api_client.post(Repair(verify_checksums=True))
+    response = pulpcore_bindings.RepairApi.post(Repair(verify_checksums=True))
     results = monitor_task(response.task)
 
     # STEP 8
@@ -103,7 +103,7 @@ def test_repair_global_without_checksums(
 
 @pytest.mark.parallel
 def test_repair_repository_version_with_checksums(
-    file_repository_version_api_client, repository_with_corrupted_artifacts, monitor_task
+    file_bindings, repository_with_corrupted_artifacts, monitor_task
 ):
     """Test whether corrupted files can be redownloaded.
 
@@ -116,7 +116,7 @@ def test_repair_repository_version_with_checksums(
     """
     # STEP 3
     latest_version = repository_with_corrupted_artifacts.latest_version_href
-    response = file_repository_version_api_client.repair(
+    response = file_bindings.RepositoriesFileVersionsApi.repair(
         latest_version, Repair(verify_checksums=True)
     )
     results = monitor_task(response.task)
@@ -125,7 +125,7 @@ def test_repair_repository_version_with_checksums(
     _verify_repair_results(results, missing=1, corrupted=1, repaired=2)
 
     # STEP 5
-    response = file_repository_version_api_client.repair(
+    response = file_bindings.RepositoriesFileVersionsApi.repair(
         latest_version, Repair(verify_checksums=True)
     )
     results = monitor_task(response.task)
@@ -136,7 +136,7 @@ def test_repair_repository_version_with_checksums(
 
 @pytest.mark.parallel
 def test_repair_repository_version_without_checksums(
-    file_repository_version_api_client, repository_with_corrupted_artifacts, monitor_task
+    file_bindings, repository_with_corrupted_artifacts, monitor_task
 ):
     """Test whether missing files can be redownloaded.
 
@@ -151,7 +151,7 @@ def test_repair_repository_version_without_checksums(
     """
     # STEP 3
     latest_version = repository_with_corrupted_artifacts.latest_version_href
-    response = file_repository_version_api_client.repair(
+    response = file_bindings.RepositoriesFileVersionsApi.repair(
         latest_version, Repair(verify_checksums=False)
     )
     results = monitor_task(response.task)
@@ -160,7 +160,7 @@ def test_repair_repository_version_without_checksums(
     _verify_repair_results(results, missing=1, repaired=1)
 
     # STEP 5
-    response = file_repository_version_api_client.repair(
+    response = file_bindings.RepositoriesFileVersionsApi.repair(
         latest_version, Repair(verify_checksums=False)
     )
     results = monitor_task(response.task)
@@ -169,7 +169,7 @@ def test_repair_repository_version_without_checksums(
     _verify_repair_results(results)
 
     # STEP 7
-    response = file_repository_version_api_client.repair(
+    response = file_bindings.RepositoriesFileVersionsApi.repair(
         latest_version, Repair(verify_checksums=True)
     )
     results = monitor_task(response.task)
