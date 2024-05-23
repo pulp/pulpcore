@@ -13,6 +13,39 @@ Changelog
 
 .. towncrier release notes start
 
+3.49.10 (2024-05-23)
+====================
+REST API
+--------
+
+Bugfixes
+~~~~~~~~
+
+- Added Pulp side batching to fix large exports that were failing due to changes in psycopg.
+  :github:`5375`
+
+
+Plugin API
+----------
+
+No significant changes.
+
+
+Pulp File
+---------
+
+No significant changes.
+
+
+Pulp Cert Guard
+---------------
+
+No significant changes.
+
+
+----
+
+
 3.49.9 (2024-05-22)
 ===================
 REST API
