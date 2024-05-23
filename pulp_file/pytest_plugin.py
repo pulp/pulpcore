@@ -22,10 +22,10 @@ def file_bindings(_api_client_set, bindings_cfg):
     """
     from pulpcore.client import pulp_file as file_bindings_module
 
-    file_client = file_bindings_module.ApiClient(bindings_cfg)
-    _api_client_set.add(file_client)
-    yield BindingsNamespace(file_bindings_module, file_client)
-    _api_client_set.remove(file_client)
+    api_client = file_bindings_module.ApiClient(bindings_cfg)
+    _api_client_set.add(api_client)
+    yield BindingsNamespace(file_bindings_module, api_client)
+    _api_client_set.remove(api_client)
 
 
 # Factory fixtures
