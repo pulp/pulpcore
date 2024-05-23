@@ -51,7 +51,7 @@ setup(
             "pulp_certguard = pulp_certguard:default_app_config",
         ],
         "pytest11": [
-            "pulpcore = pulpcore.tests.functional",
+            "pulpcore = pulpcore.pytest_plugin",
             "pulp_file = pulp_file.pytest_plugin",
             "pulp_certguard = pulp_certguard.pytest_plugin",
         ],
