@@ -13,9 +13,9 @@ _DYNAMIC_WORKER_ATTRS = ("last_heartbeat", "current_task")
 
 
 @pytest.mark.parallel
-def test_worker_actions(workers_api_client):
+def test_worker_actions(pulpcore_bindings):
     # Read all workers.
-    workers = workers_api_client.list().results
+    workers = pulpcore_bindings.WorkersApi.list().results
     for worker in workers:
         for key, val in worker.to_dict().items():
             if key in _DYNAMIC_WORKER_ATTRS:
@@ -26,14 +26,14 @@ def test_worker_actions(workers_api_client):
     chosen_worker = choice(workers)
 
     # Read a worker by its pulp_href.
-    read_worker = workers_api_client.read(chosen_worker.pulp_href)
+    read_worker = pulpcore_bindings.WorkersApi.read(chosen_worker.pulp_href)
     for key, val in chosen_worker.to_dict().items():
         if key in _DYNAMIC_WORKER_ATTRS:
             continue
         assert getattr(read_worker, key) == val
 
     # Read a worker by its name.
-    response = workers_api_client.list(name=chosen_worker.name)
+    response = pulpcore_bindings.WorkersApi.list(name=chosen_worker.name)
     assert response.count == 1
     found_worker = response.results[0]
     for key, val in chosen_worker.to_dict().items():
@@ -42,7 +42,7 @@ def test_worker_actions(workers_api_client):
         assert getattr(found_worker, key) == val
 
     # Read a worker using a set of query parameters.
-    response = workers_api_client.list(
+    response = pulpcore_bindings.WorkersApi.list(
         **{
             "last_heartbeat__gte": chosen_worker.last_heartbeat,
             "name": chosen_worker.name,
@@ -56,7 +56,7 @@ def test_worker_actions(workers_api_client):
         assert getattr(found_worker, key) == val
 
     # Read a worker with a query that does not match any worker.
-    response = workers_api_client.list(
+    response = pulpcore_bindings.WorkersApi.list(
         **{
             "last_heartbeat__gte": str(datetime.now() + timedelta(days=1)),
             "name": chosen_worker.name,
@@ -66,7 +66,7 @@ def test_worker_actions(workers_api_client):
 
     # Use an HTTP method different than GET
     with pytest.raises(AttributeError):
-        workers_api_client.delete(chosen_worker.pulp_href)
+        pulpcore_bindings.WorkersApi.delete(chosen_worker.pulp_href)
 
 
 @pytest.fixture(params=[None, 100])
@@ -99,22 +99,23 @@ def task_schedule(request):
 
 
 @pytest.mark.parallel
-def test_task_schedule(task_schedule, task_schedules_api_client):
+def test_task_schedule(task_schedule, pulpcore_bindings):
     """Test that a worker will schedule a task roughly at a given time."""
     # Worker TTL is configured to 30s, therefore they will have a heartbeat each 10s (6 bpm). The
     # task is scheduled 5s in the future to give us time to invesitgate the state before and after.
     # 16s later we can be sure it was scheduled (as long as at least one worker is running).
+    # Waiting for 18s to give some more slack.
 
-    result = task_schedules_api_client.list(name=task_schedule["name"])
+    result = pulpcore_bindings.TaskSchedulesApi.list(name=task_schedule["name"])
     assert result.count == 1
     ts = result.results[0]
     assert ts.name == task_schedule["name"]
     assert ts.task_name == task_schedule["task_name"]
     assert ts.last_task is None
     # At least a worker heartbeat is needed
-    for i in range(16):
+    for i in range(18):
         sleep(1)
-        ts = task_schedules_api_client.read(task_schedule_href=ts.pulp_href)
+        ts = pulpcore_bindings.TaskSchedulesApi.read(task_schedule_href=ts.pulp_href)
         if ts.last_task is not None:
             break
     assert ts.last_task is not None
