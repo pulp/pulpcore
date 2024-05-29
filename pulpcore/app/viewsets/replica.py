@@ -2,7 +2,6 @@
 ViewSet for replicating repositories and distributions from an upstream Pulp
 """
 
-from django.conf import settings
 from drf_spectacular.utils import extend_schema
 from rest_framework import mixins
 from rest_framework.decorators import action
@@ -124,10 +123,7 @@ class UpstreamPulpViewSet(
         server = UpstreamPulp.objects.get(pk=pk)
         task_group = TaskGroup.objects.create(description=f"Replication of {server.name}")
 
-        uri = "/api/v3/servers/"
-        if settings.DOMAIN_ENABLED:
-            uri = f"/{request.pulp_domain.name}{uri}"
-        exclusive_resources = [uri, f"pdrn:{request.pulp_domain.pulp_id}:servers"]
+        exclusive_resources = [f"pdrn:{request.pulp_domain.pulp_id}:servers"]
 
         dispatch(
             replicate_distributions,

@@ -54,7 +54,7 @@ def pulp_export_factory(pulpcore_bindings, monitor_task):
         shared_resources = [
             r
             for r in task.reserved_resources_record
-            if r.startswith("shared:") and "repositories/file/file" in r
+            if r.startswith("shared:") and "file.filerepository" in r
         ]
         assert len(exporter.repositories) == len(shared_resources)
 

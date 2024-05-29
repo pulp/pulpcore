@@ -1,4 +1,3 @@
-from django.conf import settings
 from django.db.models import Model
 import logging
 
@@ -56,11 +55,7 @@ class Replicator:
         self.task_group = task_group
         self.tls_settings = tls_settings
         self.domain = get_domain()
-        uri = "/api/v3/distributions/"
-        # TODO check and compare this to distribution locking on the distribution viewset.
-        if settings.DOMAIN_ENABLED:
-            uri = f"/{self.domain.name}{uri}"
-        self.distros_uris = [uri, f"pdrn:{self.domain.pulp_id}:distributions"]
+        self.distros_uris = [f"pdrn:{self.domain.pulp_id}:distributions"]
 
     @staticmethod
     def needs_update(fields_dict, model_instance):

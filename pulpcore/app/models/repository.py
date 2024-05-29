@@ -21,7 +21,7 @@ from rest_framework.exceptions import APIException
 
 from pulpcore.app.util import (
     batch_qs,
-    get_url,
+    get_prn,
     get_view_name_for_model,
     get_domain,
     get_domain_pk,
@@ -141,9 +141,9 @@ class Repository(MasterModel):
                 if task_id is None:
                     return
 
-                repository_url = Value(get_url(self))
+                repository_prn = Value(get_prn(instance=self))
                 update_func = Func(
-                    F("reserved_resources_record"), repository_url, function="ARRAY_APPEND"
+                    F("reserved_resources_record"), repository_prn, function="ARRAY_APPEND"
                 )
                 updated = Task.objects.filter(pk=task_id).update(
                     reserved_resources_record=update_func
