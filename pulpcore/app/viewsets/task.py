@@ -36,7 +36,6 @@ from pulpcore.app.viewsets.base import DATETIME_FILTER_OPTIONS, NAME_FILTER_OPTI
 from pulpcore.app.viewsets.custom_filters import (
     ReservedResourcesFilter,
     ReservedResourcesInFilter,
-    ReservedResourcesRecordFilter,
     CreatedResourcesFilter,
 )
 from pulpcore.constants import TASK_INCOMPLETE_STATES, TASK_STATES
@@ -44,11 +43,6 @@ from pulpcore.tasking.tasks import dispatch, cancel_task
 
 
 class TaskFilter(BaseFilterSet):
-    # This filter is deprecated and badly documented, but we need to keep it for compatibility
-    # reasons
-    reserved_resources_record = ReservedResourcesRecordFilter(
-        help_text=_("Deprecated, will be removed in pulpcore 3.55. Use reserved_resources instead.")
-    )
     created_resources = CreatedResourcesFilter()
     # Non model field filters
     reserved_resources = ReservedResourcesFilter(exclusive=True, shared=True)
@@ -70,7 +64,6 @@ class TaskFilter(BaseFilterSet):
             "parent_task": ["exact"],
             "child_tasks": ["exact"],
             "task_group": ["exact"],
-            "reserved_resources_record": ["exact"],
             "created_resources": ["exact"],
         }
 
