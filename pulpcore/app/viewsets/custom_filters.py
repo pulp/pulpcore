@@ -7,9 +7,8 @@ import re
 from collections import defaultdict
 from itertools import chain
 from gettext import gettext as _
-from urllib.parse import urlparse
 
-from django.urls import Resolver404, resolve
+from django.urls import resolve
 from django.db.models import ObjectDoesNotExist
 from django_filters import BaseInFilter, CharFilter, Filter
 from rest_framework import serializers
@@ -17,7 +16,6 @@ from rest_framework.serializers import ValidationError as DRFValidationError
 
 from pulpcore.app.models import ContentArtifact, RepositoryVersion, Publication
 from pulpcore.app.viewsets import NamedModelViewSet
-from pulpcore.app.loggers import deprecation_logger
 
 
 class ReservedResourcesFilter(Filter):
@@ -66,40 +64,6 @@ class ReservedResourcesInFilter(BaseInFilter, ReservedResourcesFilter):
     """
     Enables a user to filter tasks by a list of reserved resource hrefs.
     """
-
-
-class ReservedResourcesRecordFilter(Filter):
-    """
-    Enables a user to filter tasks by a reserved resource href.
-
-    Warning: This filter is badly documented and not fully functional, but we need to keep it for
-    compatibility reasons. Use ``ReservedResourcesFilter`` instead.
-    """
-
-    def filter(self, qs, value):
-        """
-        Args:
-            qs (django.db.models.query.QuerySet): The Queryset to filter
-            value (string): href containing a reference to a reserved resource
-
-        Returns:
-            django.db.models.query.QuerySet: Queryset filtered by the reserved resource
-        """
-
-        if value is None:
-            # a value was not supplied by a user
-            return qs
-
-        deprecation_logger.warning(
-            "This filter is deprecated. Please use reserved_resources(__in) instead."
-        )
-
-        try:
-            resolve(urlparse(value).path)
-        except Resolver404:
-            raise serializers.ValidationError(detail=_("URI not valid: {u}").format(u=value))
-
-        return qs.filter(reserved_resources_record__contains=[value])
 
 
 class CreatedResourcesFilter(Filter):
