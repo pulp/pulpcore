@@ -69,7 +69,7 @@ def test_filter_tasks_by_reserved_resources(setup_filter_fixture, pulpcore_bindi
     """Filter all tasks by a particular reserved resource."""
     repo_sync_task, repo_update_task, _, _ = setup_filter_fixture
     for resource in repo_update_task.reserved_resources_record:
-        if "/api/v3/repositories/file/file/" in resource:
+        if "prn:file.filerepository" in resource:
             reserved_resources_record = resource
             break
     else:
@@ -119,10 +119,14 @@ def test_reserved_resources_filter(setup_filter_fixture, pulpcore_bindings):
     repo_prn = get_prn(repo.pulp_href)
     remote_prn = get_prn(remote.pulp_href)
 
-    # Sanity check, TODO: remove pulp_href from filter checks in pulpcore 3.55
+    # Sanity check, pulp_hrefs are no longer in reserved_resources as of 3.55
+    assert repo.pulp_href not in repo_sync_task.reserved_resources_record
     assert repo_prn in repo_sync_task.reserved_resources_record
+    assert f"shared:{remote.pulp_href}" not in repo_sync_task.reserved_resources_record
     assert f"shared:{remote_prn}" in repo_sync_task.reserved_resources_record
+    assert repo.pulp_href not in repo_update_task.reserved_resources_record
     assert repo_prn in repo_update_task.reserved_resources_record
+    assert remote.pulp_href not in repo_update_task.reserved_resources_record
     assert remote_prn not in repo_update_task.reserved_resources_record
 
     # reserved_resources filter

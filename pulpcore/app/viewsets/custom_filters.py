@@ -8,6 +8,7 @@ from collections import defaultdict
 from itertools import chain
 from gettext import gettext as _
 
+from django.conf import settings
 from django.urls import resolve
 from django.db.models import ObjectDoesNotExist
 from django_filters import BaseInFilter, CharFilter, Filter
@@ -16,6 +17,17 @@ from rest_framework.serializers import ValidationError as DRFValidationError
 
 from pulpcore.app.models import ContentArtifact, RepositoryVersion, Publication
 from pulpcore.app.viewsets import NamedModelViewSet
+from pulpcore.app.util import get_prn, get_domain_pk
+
+
+# Lookup conversion table from old resource hrefs to new PDRN resource names
+OLD_RESOURCE_HREFS = {
+    "/api/v3/orphans/cleanup/": "orphans",
+    "/api/v3/repair/": "repair",
+    "/api/v3/distributions/": "distributions",
+    "/api/v3/repositories/reclaim_space/": "reclaim_space",
+    "/api/v3/servers/": "servers",
+}
 
 
 class ReservedResourcesFilter(Filter):
@@ -37,7 +49,7 @@ class ReservedResourcesFilter(Filter):
 
         Args:
             qs (django.db.models.query.QuerySet): The Queryset to filter
-            value (string|List[str]): href to a reference to a reserved resource or a list thereof
+            value (string|List[str]): href/prn to a reserved resource or a list thereof
 
         Returns:
             django.db.models.query.QuerySet: Queryset filtered by the reserved resource
@@ -46,6 +58,17 @@ class ReservedResourcesFilter(Filter):
         if value is not None:
             if isinstance(value, str):
                 value = [value]
+            # Ensure passing hrefs still works as valid filterable
+            for i, item in enumerate(value):
+                if item.startswith(settings.API_ROOT):
+                    try:
+                        prn = get_prn(uri=item)
+                    except DRFValidationError:
+                        pass
+                    else:
+                        value[i] = prn
+                elif item in OLD_RESOURCE_HREFS:
+                    value[i] = f"pdrn:{get_domain_pk()}:{OLD_RESOURCE_HREFS[item]}"
             if self.exclusive:
                 if self.shared:
                     for item in value:

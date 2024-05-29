@@ -26,10 +26,7 @@ class OrphansCleanupViewset(ViewSet):
         orphan_protection_time = serializer.validated_data.get(
             "orphan_protection_time", settings.ORPHAN_PROTECTION_TIME
         )
-        uri = "/api/v3/orphans/cleanup/"
-        if settings.DOMAIN_ENABLED:
-            uri = f"/{request.pulp_domain.name}{uri}"
-        exclusive_resources = [uri, f"pdrn:{request.pulp_domain.pulp_id}:orphans"]
+        exclusive_resources = [f"pdrn:{request.pulp_domain.pulp_id}:orphans"]
 
         task = dispatch(
             orphan_cleanup,

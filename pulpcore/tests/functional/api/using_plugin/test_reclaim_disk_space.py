@@ -149,13 +149,13 @@ def test_specified_all_repos(
     monitor_task,
 ):
     """Tests that specifying all repos w/ '*' properly grabs all the repos."""
-    repos = [file_repository_factory().pulp_href for _ in range(10)]
+    repos = [file_repository_factory().pulp_href.split("/")[-2] for _ in range(10)]
 
     reclaim_response = pulpcore_bindings.RepositoriesReclaimSpaceApi.reclaim({"repo_hrefs": ["*"]})
     task_status = monitor_task(reclaim_response.task)
 
     repos_locked = [
-        r.split(":")[-1] for r in task_status.reserved_resources_record if "/repositories/" in r
+        r.split(":")[-1] for r in task_status.reserved_resources_record if "filerepository" in r
     ]
     assert len(repos) == len(repos_locked)
     assert set(repos) == set(repos_locked)

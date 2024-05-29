@@ -13,7 +13,7 @@ from django.db.models import Model, Max
 from django_guid import get_guid
 from pulpcore.app.apps import MODULE_PLUGIN_VERSIONS
 from pulpcore.app.models import Task
-from pulpcore.app.util import current_task, get_domain, get_prn, get_url
+from pulpcore.app.util import current_task, get_domain, get_prn
 from pulpcore.constants import (
     TASK_FINAL_STATES,
     TASK_INCOMPLETE_STATES,
@@ -30,10 +30,6 @@ def _validate_and_get_resources(resources):
         if isinstance(r, str):
             resource_set.add(r)
         elif isinstance(r, Model):
-            # TODO: In pulpcore 3.55 remove get_url from this list
-            # If 3.55 requires downtime then this line can be removed with no further changes
-            # Else, we must update the scheduling logic to account for prior tasks using get_url
-            resource_set.add(get_url(r))
             resource_set.add(get_prn(r))
         elif r is None:
             # Silently drop None values
@@ -151,10 +147,8 @@ def dispatch(
 
     # A task that is exclusive on a domain will block all tasks within that domain
     domain_prn = get_prn(get_domain())
-    domain_url = get_url(get_domain())
-    if not (domain_prn in exclusive_resources or domain_url in exclusive_resources):
+    if domain_prn not in exclusive_resources:
         shared_resources.append(domain_prn)
-        shared_resources.append(domain_url)
     resources = exclusive_resources + [f"shared:{resource}" for resource in shared_resources]
 
     notify_workers = False
