@@ -1,6 +1,5 @@
 from opentelemetry.metrics import Observation
 
-from django.core.files.storage import default_storage
 from django.db import models
 from django_lifecycle import hook, BEFORE_DELETE, BEFORE_UPDATE, AFTER_CREATE
 
@@ -45,9 +44,6 @@ class Domain(BaseModel, AutoAddObjPermsMixin):
 
     def get_storage(self):
         """Returns this domain's instantiated storage class."""
-        if self.name == "default":
-            return default_storage
-
         if date_storage_tuple := storages.get(self.pulp_id):
             last_updated, storage = date_storage_tuple
             if self.pulp_last_updated == last_updated:
