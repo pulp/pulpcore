@@ -7,11 +7,13 @@ build-backend = 'setuptools.build_meta'
 
 [tool.towncrier]
 package = "pulpcore"
-filename = "CHANGES.rst"
+filename = "CHANGES.md"
 directory = "CHANGES/"
-title_format = "{version} ({project_date})"
-template = "CHANGES/.TEMPLATE.rst"
-issue_format = ":github:`{issue}`"
+title_format = "## {version} ({project_date}) {{: #{version} }}"
+template = "CHANGES/.TEMPLATE.md"
+issue_format = "[#{issue}](https://github.com/pulp/pulpcore/issues/{issue})"
+start_string = "[//]: # (towncrier release notes start)\n"
+underlines = ["", "", ""]
 
     [[tool.towncrier.section]]
         path = ""
