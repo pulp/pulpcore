@@ -1,5 +1,4 @@
-.. _pulpcore-changes:
+Changes
+*********
 
-.. include:: ../CHANGES.rst
-
-.. include:: ../HISTORY.rst
+Removed due to docs migration process.
