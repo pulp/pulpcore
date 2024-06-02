@@ -4,7 +4,7 @@ exclude .gitleaks.toml
 include LICENSE
 include requirements.txt
 include pyproject.toml
-include CHANGES.rst
+include CHANGES.md
 include COMMITMENT
 include ci_requirements.txt
 include functest_requirements.txt
