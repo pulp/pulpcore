@@ -72,6 +72,20 @@ def test_no_dup_operation_ids(pulp_openapi_schema):
 
 
 @pytest.mark.parallel
+def test_remote_user_auth_security_scheme(pulp_settings, pulp_openapi_schema):
+    if (
+        "pulpcore.app.authentication.PulpRemoteUserAuthentication"
+        not in pulp_settings.REST_FRAMEWORK["DEFAULT_AUTHENTICATION_CLASSES"]
+    ):
+        pytest.skip("Test can't run unless PulpRemoteUserAuthentication is enabled.")
+
+    expected_security_scheme = pulp_settings.REMOTE_USER_OPENAPI_SECURITY_SCHEME
+    security_schemes = pulp_openapi_schema["components"]["securitySchemes"]
+
+    assert security_schemes["remoteUserAuthentication"] == expected_security_scheme
+
+
+@pytest.mark.parallel
 def test_external_auth_on_security_scheme(pulp_settings, pulp_openapi_schema):
     if (
         "django.contrib.auth.backends.RemoteUserBackend"

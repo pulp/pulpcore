@@ -66,6 +66,7 @@ pulp_settings_azure:
   api_root_rewrite_header: X-API-Root
   content_origin: null
   domain_enabled: true
+  rest_framework__default_authentication_classes: '@merge pulpcore.app.authentication.PulpRemoteUserAuthentication'
   rest_framework__default_permission_classes:
   - pulpcore.plugin.access_policy.DefaultAccessPolicy
   task_diagnostics:
