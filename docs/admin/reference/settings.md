@@ -335,12 +335,19 @@ Defaults to `5` minutes.
 ### REMOTE\_USER\_ENVIRON\_NAME
 
 The name of the WSGI environment variable to read for [Webserver Auth with Reverse Proxy].
+It is only used with the `PulpRemoteUserAuthentication` authentication class.
 
 !!! warning
     Configuring this has serious security implications.
     See the [Django warning at the end of this section in their docs] for more details.
 
 Defaults to `'REMOTE_USER'`.
+
+### REMOTE\_USER\_OPENAPI\_SECURITY\_SCHEME
+
+A JSON object representing the security scheme advertised for the `PulpRemoteUserAuthentication` authentication class.
+
+Defaults to `{"type": "mutualTLS"}`, which represents x509 certificate based authentication.
 
 ### TASK\_DIAGNOSTICS
 
