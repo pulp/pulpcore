@@ -455,6 +455,14 @@ class BasicAuthenticationScheme(OpenApiAuthenticationExtension):
         }
 
 
+class PulpRemoteUserAuthenticationScheme(OpenApiAuthenticationExtension):
+    target_class = "pulpcore.app.authentication.PulpRemoteUserAuthentication"
+    name = "remoteUserAuthentication"
+
+    def get_security_definition(self, auto_schema):
+        return settings.REMOTE_USER_OPENAPI_SECURITY_SCHEME
+
+
 class JSONHeaderRemoteAuthenticationScheme(OpenApiAuthenticationExtension):
     target_class = "pulpcore.app.authentication.JSONHeaderRemoteAuthentication"
     name = "json_header_remote_authentication"
