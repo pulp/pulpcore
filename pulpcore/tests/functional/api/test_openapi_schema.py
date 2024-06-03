@@ -11,7 +11,7 @@ from drf_spectacular import validation
 from collections import defaultdict
 
 JSON_SCHEMA_SPEC_PATH = os.path.join(
-    os.path.dirname(validation.__file__), "openapi_3_0_schema.json"
+    os.path.dirname(validation.__file__), "openapi_3_1_schema.json"
 )
 
 
@@ -27,9 +27,9 @@ def openapi3_schema_spec():
 def openapi3_schema_with_modified_safe_chars(openapi3_schema_spec):
     openapi3_schema_spec_copy = copy.deepcopy(openapi3_schema_spec)  # Don't modify the original
     # Making OpenAPI validation to accept paths starting with / and {
-    properties = openapi3_schema_spec_copy["definitions"]["Paths"]["patternProperties"]
-    properties["^\\/|{"] = properties["^\\/"]
-    del properties["^\\/"]
+    properties = openapi3_schema_spec_copy["$defs"]["paths"]["patternProperties"]
+    properties["^/|{"] = properties["^/"]
+    del properties["^/"]
 
     return openapi3_schema_spec_copy
 
@@ -66,6 +66,20 @@ def test_no_dup_operation_ids(pulp_openapi_schema):
 
     dup_ids = [id for id, cnt in operation_ids.items() if cnt > 1]
     assert len(dup_ids) == 0, f"Duplicate operationIds found: {dup_ids}"
+
+
+@pytest.mark.parallel
+def test_remote_user_auth_security_scheme(pulp_settings, pulp_openapi_schema):
+    if (
+        "pulpcore.app.authentication.PulpRemoteUserAuthentication"
+        not in pulp_settings.REST_FRAMEWORK["DEFAULT_AUTHENTICATION_CLASSES"]
+    ):
+        pytest.skip("Test can't run unless PulpRemoteUserAuthentication is enabled.")
+
+    expected_security_scheme = pulp_settings.REMOTE_USER_OPENAPI_SECURITY_SCHEME
+    security_schemes = pulp_openapi_schema["components"]["securitySchemes"]
+
+    assert security_schemes["remoteUserAuthentication"] == expected_security_scheme
 
 
 @pytest.mark.parallel
