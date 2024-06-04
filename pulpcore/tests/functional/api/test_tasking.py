@@ -3,7 +3,6 @@
 import os
 import json
 import pytest
-import subprocess
 import time
 
 from aiohttp import BasicAuth
@@ -15,36 +14,9 @@ from pulpcore.client.pulpcore import ApiException
 from pulpcore.tests.functional.utils import download_file
 
 
-@pytest.fixture(scope="session")
-def dispatch_task(pulpcore_bindings):
-    def _dispatch_task(*args, **kwargs):
-        cid = pulpcore_bindings.client.default_headers.get("Correlation-ID") or str(uuid4())
-        username = pulpcore_bindings.client.configuration.username
-        commands = (
-            "from django_guid import set_guid; "
-            "from pulpcore.tasking.tasks import dispatch; "
-            "from pulpcore.app.util import get_url, set_current_user; "
-            "from django.contrib.auth import get_user_model; "
-            "User = get_user_model(); "
-            f"user = User.objects.filter(username='{username}').first(); "
-            "set_current_user(user); "
-            f"set_guid({cid!r}); "
-            f"task = dispatch(*{args!r}, **{kwargs!r}); "
-            "print(get_url(task))"
-        )
-
-        process = subprocess.run(["pulpcore-manager", "shell", "-c", commands], capture_output=True)
-
-        assert process.returncode == 0
-        task_href = process.stdout.decode().strip()
-        return task_href
-
-    return _dispatch_task
-
-
 @pytest.fixture(scope="module")
 def task(dispatch_task, monitor_task):
-    """Fixture containing a Task."""
+    """Fixture containing a finished Task."""
     task_href = dispatch_task("pulpcore.app.tasks.test.sleep", args=(0,))
     return monitor_task(task_href)
 
