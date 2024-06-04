@@ -38,62 +38,62 @@ def _purge_report_total(task):
     pytest.fail("NO PURGE_TASKS_TOTAL?!?")
 
 
-def _check_delete_report(task, expected):
+def _check_delete_report(task, expected, fuzzy=False):
     # Make sure we reported the deletion
     for report in task.progress_reports:
         if report.code == "purge.tasks.key.core.Task":
-            assert report.total == expected
+            if fuzzy:
+                assert report.total >= expected
+            else:
+                assert report.total == expected
             break
     else:
         pytest.fail("NO core.Task DELETIONS?!?")
 
 
-@pytest.fixture
-def sync_results(
-    file_bindings,
-    pulpcore_bindings,
-    file_remote_factory,
-    file_remote_ssl_factory,
-    file_repository_factory,
-    basic_manifest_path,
-    monitor_task,
-):
-    good_remote = file_remote_ssl_factory(manifest_path=basic_manifest_path, policy="on_demand")
-    good_repo = file_repository_factory()
-    good_sync_data = RepositorySyncURL(remote=good_remote.pulp_href)
-
-    bad_remote = file_remote_factory(
-        url="https://fixtures.pulpproject.org/THEREISNOFILEREPOHERE/", policy="on_demand"
+@pytest.fixture(scope="module")
+def async_tasks_possible(pulp_settings):
+    return (
+        pulp_settings.UPLOAD_PROTECTION_TIME != 0
+        or pulp_settings.TASK_PROTECTION_TIME != 0
+        or pulp_settings.TMPFILE_PROTECTION_TIME != 0
     )
-    bad_repo = file_repository_factory()
-    bad_sync_data = RepositorySyncURL(remote=bad_remote.pulp_href)
 
+
+@pytest.fixture
+def good_and_bad_task(
+    pulpcore_bindings,
+    dispatch_task,
+    monitor_task,
+    async_tasks_possible,
+):
     pre_total, pre_final, pre_summary = _task_summary(pulpcore_bindings)
 
-    # good sync
-    sync_response = file_bindings.RepositoriesFileApi.sync(good_repo.pulp_href, good_sync_data)
-    task = monitor_task(sync_response.task)
-    assert "completed" == task.state
-    completed_sync_task = task
+    # good task
+    good_task = monitor_task(dispatch_task("pulpcore.app.tasks.test.sleep", args=(0,)))
+    assert good_task.state == "completed"
 
     # bad sync
-    sync_response = file_bindings.RepositoriesFileApi.sync(bad_repo.pulp_href, bad_sync_data)
+    bad_task_href = dispatch_task("pulpcore.app.tasks.test.sleep", args=(-1,))
     with pytest.raises(PulpTaskError):
-        monitor_task(sync_response.task)
-    task = pulpcore_bindings.TasksApi.read(sync_response.task)
-    assert "failed" == task.state
-    failed_sync_task = task
+        monitor_task(bad_task_href)
+    bad_task = pulpcore_bindings.TasksApi.read(bad_task_href)
+    assert bad_task.state == "failed"
 
     post_total, post_final, post_summary = _task_summary(pulpcore_bindings)
-    assert post_total >= (pre_total + 2)
-    assert post_final >= (pre_final + 2)
+    if async_tasks_possible:
+        assert post_total >= (pre_total + 2)
+        assert post_final >= (pre_final + 2)
+    else:
+        assert post_total == (pre_total + 2)
+        assert post_final == (pre_final + 2)
 
-    return completed_sync_task, failed_sync_task, pre_total, pre_final, pre_summary
+    return good_task, bad_task, pre_total, pre_final, pre_summary
 
 
-def test_purge_before_time(pulpcore_bindings, sync_results, monitor_task):
+def test_purge_before_time(pulpcore_bindings, good_and_bad_task, monitor_task):
     """Purge that should find no tasks to delete."""
-    _, _, pre_total, _, _ = sync_results
+    _, _, pre_total, _, _ = good_and_bad_task
     dta = Purge(finished_before="1970-01-01T00:00")
     response = pulpcore_bindings.TasksApi.purge(dta)
     task = monitor_task(response.task)
@@ -104,24 +104,24 @@ def test_purge_before_time(pulpcore_bindings, sync_results, monitor_task):
     assert _purge_report_total(task) == 0
 
 
-def test_purge_defaults(pulpcore_bindings, sync_results, monitor_task):
+def test_purge_defaults(pulpcore_bindings, good_and_bad_task, monitor_task):
     """Purge using defaults (finished_before=30-days-ago, state=completed)"""
     dta = Purge()
     response = pulpcore_bindings.TasksApi.purge(dta)
     monitor_task(response.task)
 
-    completed_sync_task, failed_sync_task, _, _, _ = sync_results
+    good_task, bad_task, _, _, _ = good_and_bad_task
     # default is "completed before 30 days ago" - so both sync tasks should still exist
     # Make sure good sync-task still exists
-    pulpcore_bindings.TasksApi.read(completed_sync_task.pulp_href)
+    pulpcore_bindings.TasksApi.read(good_task.pulp_href)
 
     # Make sure the failed sync still exists
-    pulpcore_bindings.TasksApi.read(failed_sync_task.pulp_href)
+    pulpcore_bindings.TasksApi.read(bad_task.pulp_href)
 
 
-def test_purge_all(pulpcore_bindings, sync_results, monitor_task):
+def test_purge_all(pulpcore_bindings, good_and_bad_task, monitor_task, async_tasks_possible):
     """Purge all tasks in any 'final' state."""
-    completed_sync_task, failed_sync_task, pre_total, pre_final, pre_summary = sync_results
+    good_task, bad_task, pre_total, pre_final, pre_summary = good_and_bad_task
 
     states = list(TASK_FINAL_STATES)
     dta = Purge(finished_before=TOMORROW_STR, states=states)
@@ -132,65 +132,65 @@ def test_purge_all(pulpcore_bindings, sync_results, monitor_task):
 
     # Make sure good sync-task is gone
     with pytest.raises(ApiException):
-        pulpcore_bindings.TasksApi.read(completed_sync_task.pulp_href)
+        pulpcore_bindings.TasksApi.read(good_task.pulp_href)
 
     # Make sure failed sync-task is gone
     with pytest.raises(ApiException):
-        pulpcore_bindings.TasksApi.read(failed_sync_task.pulp_href)
+        pulpcore_bindings.TasksApi.read(bad_task.pulp_href)
 
     # Make sure we reported the deletions
-    _check_delete_report(task, pre_final + 2)
+    _check_delete_report(task, pre_final + 2, async_tasks_possible)
 
 
-def test_purge_leave_one(pulpcore_bindings, sync_results, monitor_task):
+def test_purge_leave_one(pulpcore_bindings, good_and_bad_task, monitor_task, async_tasks_possible):
     """Arrange to leave one task unscathed."""
     # Leave only the failed sync
-    completed_sync_task, failed_sync_task, pre_total, pre_final, pre_summary = sync_results
+    good_task, bad_task, pre_total, pre_final, pre_summary = good_and_bad_task
 
-    dta = Purge(finished_before=failed_sync_task.finished_at)
+    dta = Purge(finished_before=bad_task.finished_at)
     response = pulpcore_bindings.TasksApi.purge(dta)
     task = monitor_task(response.task)
 
-    # Make sure good sync-task is gone
+    # Make sure good task is gone
     with pytest.raises(ApiException):
-        pulpcore_bindings.TasksApi.read(completed_sync_task.pulp_href)
+        pulpcore_bindings.TasksApi.read(good_task.pulp_href)
 
-    # Make sure the failed sync still exists
-    pulpcore_bindings.TasksApi.read(failed_sync_task.pulp_href)
+    # Make sure the bad task still exists
+    pulpcore_bindings.TasksApi.read(bad_task.pulp_href)
 
     # Make sure we reported the task-deletion
-    _check_delete_report(task, pre_final + 1)
+    _check_delete_report(task, pre_final + 1, async_tasks_possible)
 
 
-def test_purge_only_failed(pulpcore_bindings, sync_results, monitor_task):
+def test_purge_only_failed(pulpcore_bindings, good_and_bad_task, monitor_task):
     """Purge all failed tasks only."""
     dta = Purge(finished_before=TOMORROW_STR, states=["failed"])
     response = pulpcore_bindings.TasksApi.purge(dta)
     monitor_task(response.task)
-    # completed sync-task should exist
-    completed_sync_task, failed_sync_task, pre_total, pre_final, pre_summary = sync_results
-    pulpcore_bindings.TasksApi.read(completed_sync_task.pulp_href)
+    # good task should exist
+    good_task, bad_task, pre_total, pre_final, pre_summary = good_and_bad_task
+    pulpcore_bindings.TasksApi.read(good_task.pulp_href)
 
-    # failed should not exist
+    # bad task should not exist
     with pytest.raises(ApiException):
-        pulpcore_bindings.TasksApi.read(failed_sync_task.pulp_href)
+        pulpcore_bindings.TasksApi.read(bad_task.pulp_href)
 
 
-def test_bad_date(pulpcore_bindings, sync_results):
+def test_bad_date(pulpcore_bindings, good_and_bad_task):
     """What happens if you use a bad date format?"""
     dta = Purge(finished_before="THISISNOTADATE")
     with pytest.raises(ApiException):
         pulpcore_bindings.TasksApi.purge(dta)
 
 
-def test_bad_state(pulpcore_bindings, sync_results):
+def test_bad_state(pulpcore_bindings, good_and_bad_task):
     """What happens if you specify junk for a state?"""
     dta = Purge(finished_before=TOMORROW_STR, states=["BAD STATE"])
     with pytest.raises(ApiException):
         pulpcore_bindings.TasksApi.purge(dta)
 
 
-def test_not_final_state(pulpcore_bindings, sync_results):
+def test_not_final_state(pulpcore_bindings, good_and_bad_task):
     """What happens if you use a valid state that isn't a 'final' one?"""
     dta = Purge(finished_before=TOMORROW_STR, states=["running"])
     with pytest.raises(ApiException):
