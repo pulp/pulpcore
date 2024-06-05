@@ -8,6 +8,50 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.54.0 (2024-05-22) {: #3.54.0 }
+
+### REST API
+
+#### Features
+
+-   Added search indices to the Task table to speed up task operations.
+    [#5367](https://github.com/pulp/pulpcore/issues/5367)
+-   Added a scheduled version of task purge.
+    You need to adjust the "TASK_PROTECTION_TIME" setting in order to use it.
+    [#5378](https://github.com/pulp/pulpcore/issues/5378)
+
+#### Bugfixes
+
+-   Renamed `name` to `domain_name` in the metric's attributes reporting domain's disk usage.
+    [#5134](https://github.com/pulp/pulpcore/issues/5134)
+-   Fixed content directory listing returning 500 in certain scenarios due to missing artifact sizes.
+    [#5318](https://github.com/pulp/pulpcore/issues/5318)
+-   Fixed a bug related to replication of AppStream and BaseOS repositories of CentOS.
+    [#5358](https://github.com/pulp/pulpcore/issues/5358)
+-   Stopped deleting content and artifacts presumably created by later failed or canceled tasks.
+    Deleting these lies solely in the responsibility of orphan cleanup.
+    [#5363](https://github.com/pulp/pulpcore/issues/5363)
+
+#### Improved Documentation
+
+-   Made the complex filtering feature production-ready. This feature supports a special q filter
+    that allows combinations of other filters with NOT, AND and OR operations.
+    [#5319](https://github.com/pulp/pulpcore/issues/5319)
+
+### Plugin API
+
+No significant changes.
+
+### Pulp File
+
+No significant changes.
+
+### Pulp Cert Guard
+
+No significant changes.
+
+---
+
 ## 3.53.0 (2024-04-30) {: #3.53.0 }
 
 ### REST API
@@ -264,6 +308,73 @@ No significant changes.
 #### Misc
 
 -   [#4315](https://github.com/pulp/pulpcore/issues/4315)
+
+### Plugin API
+
+No significant changes.
+
+### Pulp File
+
+No significant changes.
+
+### Pulp Cert Guard
+
+No significant changes.
+
+---
+
+## 3.49.10 (2024-05-23) {: #3.49.10 }
+
+### REST API
+
+#### Bugfixes
+
+-   Added Pulp side batching to fix large exports that were failing due to changes in psycopg.
+    [#5375](https://github.com/pulp/pulpcore/issues/5375)
+
+### Plugin API
+
+No significant changes.
+
+### Pulp File
+
+No significant changes.
+
+### Pulp Cert Guard
+
+No significant changes.
+
+---
+
+## 3.49.9 (2024-05-22) {: #3.49.9 }
+
+### REST API
+
+No significant changes.
+
+### Plugin API
+
+No significant changes.
+
+### Pulp File
+
+No significant changes.
+
+### Pulp Cert Guard
+
+No significant changes.
+
+---
+
+## 3.49.8 (2024-05-16) {: #3.49.8 }
+
+### REST API
+
+#### Bugfixes
+
+-   Stopped deleting content and artifacts presumably created by later failed or canceled tasks.
+    Deleting these lies solely in the responsibility of orphan cleanup.
+    [#5363](https://github.com/pulp/pulpcore/issues/5363)
 
 ### Plugin API
 
@@ -1039,6 +1150,37 @@ No significant changes.
 -   Starting from this release pulp_file will be shipped as part of the pulpcore package.
     [#4550](https://github.com/pulp/pulpcore/issues/4550)
 
+## 3.39.15 (2024-05-23) {: #3.39.15 }
+
+### REST API
+
+#### Bugfixes
+
+-   Added Pulp side batching to fix large exports that were failing due to changes in psycopg.
+    [#5375](https://github.com/pulp/pulpcore/issues/5375)
+
+### Plugin API
+
+No significant changes.
+
+---
+
+## 3.39.14 (2024-05-16) {: #3.39.14 }
+
+### REST API
+
+#### Bugfixes
+
+-   Stopped deleting content and artifacts presumably created by later failed or canceled tasks.
+    Deleting these lies solely in the responsibility of orphan cleanup.
+    [#5363](https://github.com/pulp/pulpcore/issues/5363)
+
+### Plugin API
+
+No significant changes.
+
+---
+
 ## 3.39.13 (2024-04-17) {: #3.39.13 }
 
 ### REST API
@@ -1746,6 +1888,22 @@ No significant changes.
 #### Misc
 
 -   [#3798](https://github.com/pulp/pulpcore/issues/3798)
+
+## 3.28.27 (2024-05-22) {: #3.28.27 }
+
+### REST API
+
+#### Bugfixes
+
+-   Stopped deleting content and artifacts presumably created by later failed or canceled tasks.
+    Deleting these lies solely in the responsibility of orphan cleanup.
+    [#5363](https://github.com/pulp/pulpcore/issues/5363)
+
+### Plugin API
+
+No significant changes.
+
+---
 
 ## 3.28.26 (2024-04-17) {: #3.28.26 }
 
