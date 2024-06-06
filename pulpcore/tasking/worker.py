@@ -22,9 +22,10 @@ from pulpcore.constants import (
     TASK_SCHEDULING_LOCK,
     TASK_UNBLOCKING_LOCK,
 )
-from pulpcore.exceptions import AdvisoryLockError
 from pulpcore.app.apps import pulp_plugin_configs
 from pulpcore.app.models import Worker, Task, ApiAppStatus, ContentAppStatus
+from pulpcore.app.util import PGAdvisoryLock
+from pulpcore.exceptions import AdvisoryLockError
 
 from pulpcore.tasking.storage import WorkerDirectory
 from pulpcore.tasking._util import (
@@ -32,7 +33,6 @@ from pulpcore.tasking._util import (
     dispatch_scheduled_tasks,
     perform_task,
     startup_hook,
-    PGAdvisoryLock,
 )
 
 _logger = logging.getLogger(__name__)
