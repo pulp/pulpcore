@@ -24,38 +24,9 @@ from pulpcore.app.util import (
     configure_cleanup,
 )
 from pulpcore.constants import TASK_FINAL_STATES, TASK_STATES, VAR_TMP_PULP
-from pulpcore.exceptions import AdvisoryLockError
 from pulpcore.tasking.tasks import dispatch, execute_task
 
 _logger = logging.getLogger(__name__)
-
-
-class PGAdvisoryLock:
-    """
-    A context manager that will hold a postgres advisory lock non-blocking.
-
-    The locks can be chosen from a lock group to avoid collisions. They will never collide with the
-    locks used for tasks.
-    """
-
-    def __init__(self, lock, lock_group=0):
-        self.lock_group = lock_group
-        self.lock = lock
-
-    def __enter__(self):
-        with connection.cursor() as cursor:
-            cursor.execute("SELECT pg_try_advisory_lock(%s, %s)", [self.lock_group, self.lock])
-            acquired = cursor.fetchone()[0]
-        if not acquired:
-            raise AdvisoryLockError("Could not acquire lock.")
-        return self
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        with connection.cursor() as cursor:
-            cursor.execute("SELECT pg_advisory_unlock(%s, %s)", [self.lock_group, self.lock])
-            released = cursor.fetchone()[0]
-        if not released:
-            raise RuntimeError("Lock not held.")
 
 
 def startup_hook():

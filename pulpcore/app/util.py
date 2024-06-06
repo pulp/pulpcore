@@ -1,20 +1,21 @@
 import hashlib
 import zlib
-from functools import lru_cache
-from gettext import gettext as _
 import os
 import tempfile
+import gnupg
 
+from functools import lru_cache
+from gettext import gettext as _
 from urllib.parse import urlparse
-
 from contextlib import ExitStack
 from contextvars import ContextVar
 from datetime import timedelta
-import gnupg
 
 from django.conf import settings
+from django.db import connection
 from django.db.models import Model, Sum
 from django.urls import Resolver404, resolve, reverse
+
 from opentelemetry import metrics
 
 from rest_framework.serializers import ValidationError
@@ -22,6 +23,8 @@ from rest_framework.serializers import ValidationError
 from pulpcore.app.loggers import deprecation_logger
 from pulpcore.app.apps import pulp_plugin_configs
 from pulpcore.app import models
+from pulpcore.constants import STORAGE_METRICS_LOCK
+from pulpcore.exceptions import AdvisoryLockError
 from pulpcore.exceptions.validation import InvalidSignatureError
 
 
@@ -539,19 +542,26 @@ class DomainMetricsEmitterBuilder:
             )
 
         def _disk_usage_callback(self):
-            from pulpcore.app.models import Artifact
+            try:
+                with PGAdvisoryLock(STORAGE_METRICS_LOCK):
+                    from pulpcore.app.models import Artifact
 
-            options = yield  # noqa
+                    options = yield  # noqa
 
-            while True:
-                artifacts = Artifact.objects.filter(pulp_domain=self.domain).distinct()
-                total_size = artifacts.aggregate(size=Sum("size", default=0))["size"]
-                options = yield [  # noqa
-                    metrics.Observation(
-                        total_size,
-                        {"pulp_href": get_url(self.domain), "domain_name": self.domain.name},
-                    )
-                ]
+                    while True:
+                        artifacts = Artifact.objects.filter(pulp_domain=self.domain).distinct()
+                        total_size = artifacts.aggregate(size=Sum("size", default=0))["size"]
+                        options = yield [  # noqa
+                            metrics.Observation(
+                                total_size,
+                                {
+                                    "pulp_href": get_url(self.domain),
+                                    "domain_name": self.domain.name,
+                                },
+                            )
+                        ]
+            except AdvisoryLockError:
+                yield
 
     class _NoopEmitter:
         def __call__(self, *args, **kwargs):
@@ -574,3 +584,31 @@ def init_domain_metrics_exporter():
 
     for domain in Domain.objects.all():
         DomainMetricsEmitterBuilder.build(domain)
+
+
+class PGAdvisoryLock:
+    """
+    A context manager that will hold a postgres advisory lock non-blocking.
+
+    The locks can be chosen from a lock group to avoid collisions. They will never collide with the
+    locks used for tasks.
+    """
+
+    def __init__(self, lock, lock_group=0):
+        self.lock_group = lock_group
+        self.lock = lock
+
+    def __enter__(self):
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT pg_try_advisory_lock(%s, %s)", [self.lock_group, self.lock])
+            acquired = cursor.fetchone()[0]
+        if not acquired:
+            raise AdvisoryLockError("Could not acquire lock.")
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT pg_advisory_unlock(%s, %s)", [self.lock_group, self.lock])
+            released = cursor.fetchone()[0]
+        if not released:
+            raise RuntimeError("Lock not held.")
