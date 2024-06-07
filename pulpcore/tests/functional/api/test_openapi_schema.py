@@ -1,16 +1,19 @@
 """Test related to the openapi schema Pulp generates."""
 
-import asyncio
 import copy
 import json
+import os
 
-import aiohttp
+import requests
 import pytest
 import jsonschema
 
-from drf_spectacular.validation import JSON_SCHEMA_SPEC_PATH
-from jsonschema import ValidationError
+from drf_spectacular import validation
 from collections import defaultdict
+
+JSON_SCHEMA_SPEC_PATH = os.path.join(
+    os.path.dirname(validation.__file__), "openapi_3_0_schema.json"
+)
 
 
 @pytest.fixture(scope="session")
@@ -39,19 +42,12 @@ def pulp_openapi_schema_url(pulp_api_v3_url):
 
 @pytest.fixture(scope="session")
 def pulp_openapi_schema(pulp_openapi_schema_url):
-    return asyncio.run(_download_schema(pulp_openapi_schema_url))
+    return requests.get(pulp_openapi_schema_url).json()
 
 
 @pytest.fixture(scope="session")
 def pulp_openapi_schema_pk_path_set(pulp_openapi_schema_url):
-    url = f"{pulp_openapi_schema_url}?pk_path=1"
-    return asyncio.run(_download_schema(url))
-
-
-async def _download_schema(url):
-    async with aiohttp.ClientSession() as session:
-        async with session.get(url) as response:
-            return await response.json()
+    return requests.get(f"{pulp_openapi_schema_url}?pk_path=1").json()
 
 
 @pytest.mark.parallel
@@ -63,7 +59,7 @@ def test_valid_with_pk_path_set(pulp_openapi_schema_pk_path_set, openapi3_schema
 @pytest.mark.parallel
 @pytest.mark.from_pulpcore_for_all_plugins
 def test_invalid_default_schema(pulp_openapi_schema, openapi3_schema_spec):
-    with pytest.raises(ValidationError):
+    with pytest.raises(jsonschema.ValidationError):
         jsonschema.validate(instance=pulp_openapi_schema, schema=openapi3_schema_spec)
 
 
@@ -93,7 +89,7 @@ def test_external_auth_on_security_scheme(pulp_settings, pulp_openapi_schema):
     if (
         "django.contrib.auth.backends.RemoteUserBackend"
         not in pulp_settings.AUTHENTICATION_BACKENDS
-        and "pulpcore.app.authentication.JSONHeaderRemoteAuthentication"
+        or "pulpcore.app.authentication.JSONHeaderRemoteAuthentication"
         not in pulp_settings.REST_FRAMEWORK["DEFAULT_AUTHENTICATION_CLASSES"]
     ):
         pytest.skip(

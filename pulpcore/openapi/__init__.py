@@ -16,6 +16,7 @@ from drf_spectacular.plumbing import (
     build_root_object,
     force_instance,
     normalize_result_object,
+    process_webhooks,
     resolve_django_path_parameter,
     resolve_regex_path_parameter,
 )
@@ -498,6 +499,7 @@ class PulpSchemaGenerator(SchemaGenerator):
         result = build_root_object(
             paths=self.parse(request, public),
             components=self.registry.build(spectacular_settings.APPEND_COMPONENTS),
+            webhooks=process_webhooks(spectacular_settings.WEBHOOKS, self.registry),
             version=self.api_version or getattr(request, "version", None),
         )
         for hook in spectacular_settings.POSTPROCESSING_HOOKS:
