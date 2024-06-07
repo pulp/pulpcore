@@ -475,26 +475,15 @@ class PulpSchemaGenerator(SchemaGenerator):
         reset_generator_stats()
 
         apps = list(pulp_plugin_configs())
+        if request and "plugin" in request.query_params:
+            raise ParseError("'plugin' has been removed. Use 'component' instead.")
         if request and "component" in request.query_params:
             # /pulp/api/v3/docs/api.json?component=core,file
-            if "plugin" in request.query_params:
-                raise ParseError("'component' and 'plugin' cannot be combined.")
             app_labels = request.query_params["component"].split(",")
             apps = [app for app in apps if app.label in app_labels]
             if len(apps) != len(app_labels):
                 raise ParseError("Invalid component specified.")
             request.plugins = [app.name.split(".")[0] for app in apps]
-
-        if request and "plugin" in request.query_params:
-            # /pulp/api/v3/docs/api.json?plugin=pulp_file
-            deprecation_logger.warn(
-                _(
-                    "The query parameter `plugin` has been deprecated and "
-                    "will be removed with pulpcore>=3.55. "
-                    "Please use `component` with a list of app labels instead."
-                )
-            )
-            request.plugins = request.query_params["plugin"].split(",")
 
         result = build_root_object(
             paths=self.parse(request, public),
