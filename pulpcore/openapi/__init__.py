@@ -5,6 +5,7 @@ from urllib.parse import urljoin
 
 from django.conf import settings
 from django.core.exceptions import FieldDoesNotExist
+from django.http import HttpRequest
 from django.utils.html import strip_tags
 from drf_spectacular.drainage import reset_generator_stats
 from drf_spectacular.generators import SchemaGenerator
@@ -26,6 +27,7 @@ from drf_spectacular.utils import OpenApiParameter, extend_schema_field
 from drf_spectacular.extensions import OpenApiAuthenticationExtension
 from rest_framework import mixins, serializers
 from rest_framework.exceptions import ParseError
+from rest_framework.request import Request
 from rest_framework.schemas.utils import get_pk_description
 
 from pulpcore.app.apps import pulp_plugin_configs
@@ -215,78 +217,6 @@ class PulpAutoSchema(AutoSchema):
             request_body["required"] = True
         return request_body
 
-    def _resolve_path_parameters(self, variables):
-        """
-        Resolve path parameters.
-
-        Extended to omit undesired warns.
-        """
-        model = getattr(getattr(self.view, "queryset", None), "model", None)
-        parameters = []
-
-        for variable in variables:
-            schema = build_basic_type(OpenApiTypes.STR)
-            description = ""
-
-            resolved_parameter = resolve_django_path_parameter(
-                self.path_regex,
-                variable,
-                self.map_renderers("format"),
-            )
-            if not resolved_parameter:
-                resolved_parameter = resolve_regex_path_parameter(self.path_regex, variable)
-
-            if resolved_parameter:
-                schema = resolved_parameter["schema"]
-            elif model:
-                try:
-                    model_field = model._meta.get_field(variable)
-                    schema = self._map_model_field(model_field, direction=None)
-                    # strip irrelevant meta data
-                    irrelevant_field_meta = ["readOnly", "writeOnly", "nullable", "default"]
-                    schema = {k: v for k, v in schema.items() if k not in irrelevant_field_meta}
-                    if "description" not in schema and model_field.primary_key:
-                        description = get_pk_description(model, model_field)
-                except FieldDoesNotExist:
-                    pass
-
-            # Used by the bindings to identify which param is the domain path
-            extensions = {}
-            if settings.DOMAIN_ENABLED and variable == "pulp_domain":
-                extensions["x-isDomain"] = True
-
-            parameters.append(
-                build_parameter_type(
-                    name=variable,
-                    location=OpenApiParameter.PATH,
-                    description=description,
-                    schema=schema,
-                    extensions=extensions,
-                )
-            )
-
-        return parameters
-
-    def resolve_serializer(self, serializer, direction):
-        """Serializer to component."""
-        component_schema = self._map_serializer(serializer, direction)
-        if not component_schema.get("properties", {}):
-            component = ResolvedComponent(
-                name=self._get_serializer_name(serializer, direction),
-                type=ResolvedComponent.SCHEMA,
-                object=serializer,
-            )
-            if component in self.registry:
-                return self.registry[component]
-
-            component.schema = component_schema
-            self.registry.register(component)
-
-        else:
-            component = super().resolve_serializer(serializer, direction)
-
-        return component
-
     def _get_response_bodies(self):
         """
         Handle response status code.
@@ -472,7 +402,10 @@ class PulpSchemaGenerator(SchemaGenerator):
 
     def get_schema(self, request=None, public=False):
         """Generate a OpenAPI schema."""
-        reset_generator_stats()
+        if request is None:
+            request = Request(HttpRequest())
+            request.META["SERVER_NAME"] = "localhost"
+            request.META["SERVER_PORT"] = "24817"
 
         apps = list(pulp_plugin_configs())
         if request and "plugin" in request.query_params:
@@ -484,32 +417,18 @@ class PulpSchemaGenerator(SchemaGenerator):
             if len(apps) != len(app_labels):
                 raise ParseError("Invalid component specified.")
             request.plugins = [app.name.split(".")[0] for app in apps]
+        request.apps = apps
 
-        result = build_root_object(
-            paths=self.parse(request, public),
-            components=self.registry.build(spectacular_settings.APPEND_COMPONENTS),
-            webhooks=process_webhooks(spectacular_settings.WEBHOOKS, self.registry),
-            version=self.api_version or getattr(request, "version", None),
-        )
-        for hook in spectacular_settings.POSTPROCESSING_HOOKS:
-            result = hook(result=result, generator=self, request=request, public=public)
+        request.bindings = "bindings" in request.query_params
 
-        # Basically I'm doing it to get pulp logo at redoc page
-        result["info"]["x-logo"] = {
-            "url": "https://pulp.plan.io/attachments/download/517478/pulp_logo_word_rectangle.svg"
-        }
+        result = super().get_schema(request, public)
 
-        # Adding plugin version config
-        result["info"]["x-pulp-app-versions"] = {app.label: app.version for app in apps}
-
-        # Add domain-settings value
-        result["info"]["x-pulp-domain-enabled"] = settings.DOMAIN_ENABLED
-
-        # Adding current host as server (it will provide a default value for the bindings)
-        server_url = "http://localhost:24817" if not request else request.build_absolute_uri("/")
-        result["servers"] = [{"url": server_url}]
-
-        return normalize_result_object(result)
+        if request.bindings:
+            # Undo the spectacular sanitization of operation ids
+            for path, path_spec in result["paths"].items():
+                for operation, operation_spec in path_spec.items():
+                    operation_spec["operationId"] = operation_spec.pop("x-copy-operationId")
+        return result
 
 
 class JSONHeaderRemoteAuthenticationScheme(OpenApiAuthenticationExtension):
