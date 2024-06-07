@@ -71,6 +71,7 @@ pulp_settings:
   upload_protection_time: 10
 pulp_settings_azure:
   domain_enabled: true
+  rest_framework__default_authentication_classes: '@merge pulpcore.app.authentication.PulpRemoteUserAuthentication'
 pulp_settings_gcp: null
 pulp_settings_s3:
   authentication_backends: '@merge django.contrib.auth.backends.RemoteUserBackend'

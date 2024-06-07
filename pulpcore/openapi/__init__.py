@@ -499,6 +499,7 @@ class PulpSchemaGenerator(SchemaGenerator):
             paths=self.parse(request, public),
             components=self.registry.build(spectacular_settings.APPEND_COMPONENTS),
             version=self.api_version or getattr(request, "version", None),
+            webhooks=None,
         )
         for hook in spectacular_settings.POSTPROCESSING_HOOKS:
             result = hook(result=result, generator=self, request=request, public=public)
@@ -518,7 +519,27 @@ class PulpSchemaGenerator(SchemaGenerator):
         server_url = "http://localhost:24817" if not request else request.build_absolute_uri("/")
         result["servers"] = [{"url": server_url}]
 
+        if "bindings" in request.query_params:
+            # Remove all but basic auth for bindings generation
+            securitySchemes = {
+                k: v for k, v in result["components"]["securitySchemes"].items() if k == "basicAuth"
+            }
+            result["components"]["securitySchemes"] = securitySchemes
+            for path in result["paths"].values():
+                for operation in path.values():
+                    security = operation.get("security")
+                    if security:
+                        operation["security"] = [item for item in security if "basicAuth" in item]
+
         return normalize_result_object(result)
+
+
+class PulpRemoteUserAuthenticationScheme(OpenApiAuthenticationExtension):
+    target_class = "pulpcore.app.authentication.PulpRemoteUserAuthentication"
+    name = "remoteUserAuthentication"
+
+    def get_security_definition(self, auto_schema):
+        return settings.REMOTE_USER_OPENAPI_SECURITY_SCHEME
 
 
 class JSONHeaderRemoteAuthenticationScheme(OpenApiAuthenticationExtension):
