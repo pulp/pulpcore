@@ -1,0 +1,2 @@
+Removed deprecated `plugin` query string parameter from api doc endpoint.
+Please use a list of app labels with the `component` parameter instead.
