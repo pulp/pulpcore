@@ -290,6 +290,10 @@ SPECTACULAR_SETTINGS = {
     "COMPONENT_NO_READ_ONLY_REQUIRED": True,
     "GENERIC_ADDITIONAL_PROPERTIES": None,
     "DISABLE_ERRORS_AND_WARNINGS": not DEBUG,
+    "POSTPROCESSING_HOOKS": [
+        "drf_spectacular.hooks.postprocess_schema_enums",
+        "pulpcore.openapi.hooks.add_info_hook",
+    ],
     "TITLE": "Pulp 3 API",
     "DESCRIPTION": "Fetch, Upload, Organize, and Distribute Software Packages",
     "VERSION": "v3",
