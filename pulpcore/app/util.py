@@ -549,7 +549,7 @@ class DomainMetricsEmitterBuilder:
                     options = yield  # noqa
 
                     while True:
-                        artifacts = Artifact.objects.filter(pulp_domain=self.domain).distinct()
+                        artifacts = Artifact.objects.filter(pulp_domain=self.domain).only("size")
                         total_size = artifacts.aggregate(size=Sum("size", default=0))["size"]
                         options = yield [  # noqa
                             metrics.Observation(
