@@ -217,78 +217,6 @@ class PulpAutoSchema(AutoSchema):
             request_body["required"] = True
         return request_body
 
-    def _resolve_path_parameters(self, variables):
-        """
-        Resolve path parameters.
-
-        Extended to omit undesired warns.
-        """
-        model = getattr(getattr(self.view, "queryset", None), "model", None)
-        parameters = []
-
-        for variable in variables:
-            schema = build_basic_type(OpenApiTypes.STR)
-            description = ""
-
-            resolved_parameter = resolve_django_path_parameter(
-                self.path_regex,
-                variable,
-                self.map_renderers("format"),
-            )
-            if not resolved_parameter:
-                resolved_parameter = resolve_regex_path_parameter(self.path_regex, variable)
-
-            if resolved_parameter:
-                schema = resolved_parameter["schema"]
-            elif model:
-                try:
-                    model_field = model._meta.get_field(variable)
-                    schema = self._map_model_field(model_field, direction=None)
-                    # strip irrelevant meta data
-                    irrelevant_field_meta = ["readOnly", "writeOnly", "nullable", "default"]
-                    schema = {k: v for k, v in schema.items() if k not in irrelevant_field_meta}
-                    if "description" not in schema and model_field.primary_key:
-                        description = get_pk_description(model, model_field)
-                except FieldDoesNotExist:
-                    pass
-
-            # Used by the bindings to identify which param is the domain path
-            extensions = {}
-            if settings.DOMAIN_ENABLED and variable == "pulp_domain":
-                extensions["x-isDomain"] = True
-
-            parameters.append(
-                build_parameter_type(
-                    name=variable,
-                    location=OpenApiParameter.PATH,
-                    description=description,
-                    schema=schema,
-                    extensions=extensions,
-                )
-            )
-
-        return parameters
-
-    def resolve_serializer(self, serializer, direction):
-        """Serializer to component."""
-        component_schema = self._map_serializer(serializer, direction)
-        if not component_schema.get("properties", {}):
-            component = ResolvedComponent(
-                name=self._get_serializer_name(serializer, direction),
-                type=ResolvedComponent.SCHEMA,
-                object=serializer,
-            )
-            if component in self.registry:
-                return self.registry[component]
-
-            component.schema = component_schema
-            self.registry.register(component)
-
-        else:
-            component = super().resolve_serializer(serializer, direction)
-
-        return component
-
     def _get_response_bodies(self):
         """
         Handle response status code.
@@ -491,7 +419,16 @@ class PulpSchemaGenerator(SchemaGenerator):
             request.plugins = [app.name.split(".")[0] for app in apps]
         request.apps = apps
 
-        return super().get_schema(request, public)
+        request.bindings = "bindings" in request.query_params
+
+        result = super().get_schema(request, public)
+
+        if request.bindings:
+            # Undo the spectacular sanitization of operation ids
+            for path, path_spec in result["paths"].items():
+                for operation, operation_spec in path_spec.items():
+                    operation_spec["operationId"] = operation_spec.pop("x-operationName")
+        return result
 
 
 class JSONHeaderRemoteAuthenticationScheme(OpenApiAuthenticationExtension):
