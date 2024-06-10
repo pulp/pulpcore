@@ -99,7 +99,9 @@ class Replicator:
         return {}
 
     def create_or_update_remote(self, upstream_distribution):
-        if not upstream_distribution["repository"] and not upstream_distribution["publication"]:
+        if not upstream_distribution.get("repository") and not upstream_distribution.get(
+            "publication"
+        ):
             return None
         url = self.url(upstream_distribution)
         remote_fields_dict = {"url": url}
