@@ -18,8 +18,7 @@ drf-access-policy>=1.1.2,<1.5.1
 drf-nested-routers>=0.93.4,<=0.93.5
 drf-spectacular==0.25.0  # We monkeypatch this so we need a very narrow requirement string
 dynaconf>=3.1.9,<3.3
-gunicorn>=20.1,<=21.2.0
-gunicorn>=20.1,<22.1.0
+gunicorn>=20.1,<21.3
 jinja2>=3.1,<=3.1.3
 naya>=1.1.1,<=1.1.1
 protobuf>=4.21.0,<4.25.3

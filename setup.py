@@ -22,7 +22,7 @@ setup(
     extras_require={
         "sftp": ["django-storages[sftp]"],
         "s3": ["django-storages[boto3]"],
-        "azure": ["django-storages[azure]>=1.12.2"],
+        "azure": ["django-storages[azure]>=1.12.2", "requests<2.32"],
         "prometheus": ["django-prometheus"],
     },
     include_package_data=True,
