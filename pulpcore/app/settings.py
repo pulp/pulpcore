@@ -332,17 +332,6 @@ IMPORT_WORKERS_PERCENT = 100
 from dynaconf import DjangoDynaconf, Validator  # noqa
 
 # Validators
-content_origin_validator = Validator(
-    "CONTENT_ORIGIN",
-    must_exist=True,
-    messages={
-        "must_exist_true": (
-            "CONTENT_ORIGIN is a required setting but it was not configured. This may be caused "
-            "by invalid read permissions of the settings file. Note that CONTENT_ORIGIN is set by "
-            "the installation automatically."
-        )
-    },
-)
 storage_validator = (
     Validator("REDIRECT_TO_OBJECT_STORAGE", eq=False)
     | Validator("DEFAULT_FILE_STORAGE", eq="pulpcore.app.models.storage.FileSystem")
@@ -441,7 +430,6 @@ settings = DjangoDynaconf(
     validators=[
         api_root_validator,
         cache_validator,
-        content_origin_validator,
         sha256_validator,
         storage_validator,
         unknown_algs_validator,
@@ -455,9 +443,8 @@ _logger = getLogger(__name__)
 
 
 if not (
-    Path(sys.argv[0]).name == "pytest"
-    or Path(sys.argv[0]).name == "sphinx-build"
-    or (len(sys.argv) >= 2 and sys.argv[1] == "collectstatic")
+    Path(sys.argv[0]).name in ["pytest", "sphinx-build"]
+    or (len(sys.argv) >= 2 and sys.argv[1] in ["collectstatic", "openapi"])
 ):
     try:
         with open(DB_ENCRYPTION_KEY, "rb") as key_file:
@@ -474,7 +461,12 @@ FORBIDDEN_CHECKSUMS = set(constants.ALL_KNOWN_CONTENT_CHECKSUMS).difference(
     ALLOWED_CONTENT_CHECKSUMS
 )
 
-_SKIPPED_COMMANDS_FOR_CONTENT_CHECKS = ["handle-artifact-checksums", "migrate", "collectstatic"]
+_SKIPPED_COMMANDS_FOR_CONTENT_CHECKS = [
+    "handle-artifact-checksums",
+    "migrate",
+    "collectstatic",
+    "openapi",
+]
 
 if not (len(sys.argv) >= 2 and sys.argv[1] in _SKIPPED_COMMANDS_FOR_CONTENT_CHECKS):
     try:
