@@ -41,3 +41,6 @@ url-normalize>=1.4.3,<=1.4.3
 uuid6>=2023.5.2,<=2024.1.12
 whitenoise>=5.0,<6.7.0
 yarl>=1.8,<1.9.5
+
+# experiment
+requests!=2.32.3,<2.32
