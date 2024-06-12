@@ -2,7 +2,7 @@ from opentelemetry.metrics import Observation
 
 from django.core.files.storage import default_storage
 from django.db import models
-from django_lifecycle import hook, BEFORE_DELETE, BEFORE_UPDATE, AFTER_CREATE
+from django_lifecycle import hook, BEFORE_DELETE, BEFORE_UPDATE
 
 from pulpcore.app.models import BaseModel, AutoAddObjPermsMixin
 from pulpcore.exceptions import DomainProtectedError
@@ -74,11 +74,13 @@ class Domain(BaseModel, AutoAddObjPermsMixin):
             # Delete on by one to properly cleanup the storage.
             artifact.delete()
 
-    @hook(AFTER_CREATE)
-    def _report_domain_disk_usage(self):
-        from pulpcore.app.util import DomainMetricsEmitterBuilder
-
-        DomainMetricsEmitterBuilder.build(self)
+    # Disabling Storage metrics until we find a solution to resource usage.
+    # https://github.com/pulp/pulpcore/issues/5468
+    # @hook(AFTER_CREATE)
+    # def _report_domain_disk_usage(self):
+    #     from pulpcore.app.util import DomainMetricsEmitterBuilder
+    #
+    #     DomainMetricsEmitterBuilder.build(self)
 
     class Meta:
         permissions = [
