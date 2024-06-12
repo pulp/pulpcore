@@ -18,6 +18,8 @@ if not using_pulp_api_worker.get(False):
 application = get_wsgi_application()
 application = OpenTelemetryMiddleware(application)
 
-from pulpcore.app.util import init_domain_metrics_exporter  # noqa: E402
+# Disabling Storage metrics until we find a solution to resource usage.
+# https://github.com/pulp/pulpcore/issues/5468
+# from pulpcore.app.util import init_domain_metrics_exporter  # noqa: E402
 
-init_domain_metrics_exporter()
+# init_domain_metrics_exporter()
