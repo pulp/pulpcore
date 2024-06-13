@@ -1,3 +1,4 @@
+from gettext import gettext as _
 import os
 import re
 from urllib.parse import urljoin
@@ -22,9 +23,11 @@ from drf_spectacular.settings import spectacular_settings
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiParameter
 from rest_framework import mixins, serializers
+from rest_framework.exceptions import ParseError
 from rest_framework.schemas.utils import get_pk_description
 
 from pulpcore.app.apps import pulp_plugin_configs
+from pulpcore.app.loggers import deprecation_logger
 
 
 class PulpAutoSchema(AutoSchema):
@@ -382,15 +385,13 @@ class PulpSchemaGenerator(SchemaGenerator):
             path_prefix = "^" + path_prefix  # make sure regex only matches from the start
 
         # Adding plugin filter
-        plugins = None
-        # /pulp/api/v3/docs/api.json?plugin=pulp_file
-        if input_request and "plugin" in query_params:
-            plugins = [input_request.query_params["plugin"]]
+        plugins = getattr(input_request, "plugins", None)
 
         for path, path_regex, method, view in endpoints:
-            plugin = view.__module__.split(".")[0]
-            if plugins and plugin not in plugins:  # plugin filter
-                continue
+            if plugins:
+                plugin = view.__module__.split(".")[0]
+                if plugin not in plugins:  # plugin filter
+                    continue
 
             view.request = spectacular_settings.GET_MOCK_REQUEST(method, path, view, input_request)
 
@@ -456,6 +457,29 @@ class PulpSchemaGenerator(SchemaGenerator):
     def get_schema(self, request=None, public=False):
         """Generate a OpenAPI schema."""
         reset_generator_stats()
+
+        apps = list(pulp_plugin_configs())
+        if request and "component" in request.query_params:
+            # /pulp/api/v3/docs/api.json?component=core,file
+            if "plugin" in request.query_params:
+                raise ParseError("'component' and 'plugin' cannot be combined.")
+            app_labels = request.query_params["component"].split(",")
+            apps = [app for app in apps if app.label in app_labels]
+            if len(apps) != len(app_labels):
+                raise ParseError("Invalid component specified.")
+            request.plugins = [app.name.split(".")[0] for app in apps]
+
+        if request and "plugin" in request.query_params:
+            # /pulp/api/v3/docs/api.json?plugin=pulp_file
+            deprecation_logger.warn(
+                _(
+                    "The query parameter `plugin` has been deprecated and "
+                    "will be removed with pulpcore>=3.55. "
+                    "Please use `component` with a list of app labels instead."
+                )
+            )
+            request.plugins = request.query_params["plugin"].split(",")
+
         result = build_root_object(
             paths=self.parse(request, public),
             components=self.registry.build(spectacular_settings.APPEND_COMPONENTS),
@@ -470,9 +494,7 @@ class PulpSchemaGenerator(SchemaGenerator):
         }
 
         # Adding plugin version config
-        result["info"]["x-pulp-app-versions"] = {}
-        for app in pulp_plugin_configs():
-            result["info"]["x-pulp-app-versions"][app.label] = app.version
+        result["info"]["x-pulp-app-versions"] = {app.label: app.version for app in apps}
 
         # Adding current host as server (it will provide a default value for the bindings)
         server_url = "http://localhost:24817" if not request else request.build_absolute_uri("/")
