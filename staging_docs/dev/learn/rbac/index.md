@@ -11,28 +11,23 @@ The goals of the authorization system are to:
 
 Pulp's authorization model has the following architecture:
 
-```{image} /static/rbac_architecture.png
-:align: center
-```
+![RBAC Architecture](site:pulpcore/docs/assets/images/rbac_architecture.png)
 
-```{eval-rst}
+Task Permissions Check:
+:  A permission check that occurs inside of Task code. This tends to use
+   permission checking calls like `has_perm` or `has_perms`
+   [provided by Django](https://docs.djangoproject.com/en/4.2/ref/contrib/auth/#django.contrib.auth.models.User.has_perm).
 
-:Task Permissions Check: A permission check that occurs inside of Task code. This tends to use
-    permission checking calls like `has_perm` or `has_perms` `provided by Django <https://
-    docs.djangoproject.com/en/4.2/ref/contrib/auth/#django.contrib.auth.models.User.has_perm>`_.
+Permission Checking Machinery
+: A set of methods which can check various conditions such as if a
+  requesting user has a given permission, or is a member of a group that has a given permission,
+  etc. See the [permission_checking_machinery](site:pulpcore/docs/dev/learn/rbac/permissions/) section for the complete list of available
+  methods.
 
-:Permission Checking Machinery: A set of methods which can check various conditions such as if a
-    requesting user has a given permission, or is a member of a group that has a given permission,
-    etc. See the :ref:`permission_checking_machinery` section for the complete list of available
-    methods.
+Users and Groups
+: Users and Groups live in the Django database and are used by the Permission Checking Machinery.
+  See the [users_and_groups](site:pulpcore/docs/dev/learn/rbac/users_groups/) documentation for more information.
 
-:Users and Groups: Users and Groups live in the Django database and are used by the Permission
-    Checking Machinery. See the :ref:`users_and_groups` documentation for more information.
-
-
-Getting Started
----------------
-```
 
 ## Getting Started
 

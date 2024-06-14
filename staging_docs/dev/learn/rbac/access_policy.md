@@ -68,7 +68,7 @@ These names correspond with the [default DRF viewset action names](https://www.d
 ## Authorization Conditions
 
 Each policy statement can contain [drf-access-policy conditions](https://rsinger86.github.io/drf-access-policy/statement_elements/#condition) which is useful for verifying a user has one or
-more permissions. Pulp ships many built-in checks. See the `permission_checking_machinery`
+more permissions. Pulp ships many built-in checks. See the [permission_checking_machinery](site:pulpcore/docs/dev/learn/rbac/permissions/)
 documentation for more information on available checks.
 
 When multiple conditions are present, **all** of them must return True for the request to be
