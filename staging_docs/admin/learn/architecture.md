@@ -4,9 +4,10 @@ Pulp's architecture has three components to it: a REST API, a content serving ap
 tasking system. Each component can be horizontally scaled for both high availability and/or
 additional capacity for that part of the architecture.
 
-```
-/static/architecture.png
-```
+<figure markdown="span">
+  ![Pulp Architecture](site:pulpcore/docs/assets/images/architecture.png)
+  <!-- <figcaption>Image caption</figcaption> -->
+</figure>
 
 ## REST API
 
