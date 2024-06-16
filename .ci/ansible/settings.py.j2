@@ -49,7 +49,7 @@ AZURE_CONTAINER =  "pulp-test"
 AZURE_LOCATION = "pulp3"
 AZURE_OVERWRITE_FILES = True
 AZURE_URL_EXPIRATION_SECS = 120
-AZURE_CONNECTION_STRING = 'DefaultEndpointsProtocol={{ pulp_scheme }};AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint={{ pulp_scheme }}://ci-azurite:10000/devstoreaccount1;'
+AZURE_CONNECTION_STRING = 'DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://ci-azurite:10000/devstoreaccount1;'
 {% endif %}
 
 {% if gcp_test | default(false) %}
