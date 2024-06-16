@@ -113,18 +113,12 @@ pulp_scenario_env: {}\
 fi
 
 if [ "$TEST" = "azure" ]; then
-  mkdir -p azurite
-  cd azurite
-  openssl req -newkey rsa:2048 -x509 -nodes -keyout azkey.pem -new -out azcert.pem -sha256 -days 365 -addext "subjectAltName=DNS:ci-azurite" -subj "/C=CO/ST=ST/L=LO/O=OR/OU=OU/CN=CN"
-  sudo cp azcert.pem /usr/local/share/ca-certificates/azcert.crt
-  sudo dpkg-reconfigure ca-certificates
-  cd ..
   sed -i -e '/^services:/a \
   - name: ci-azurite\
     image: mcr.microsoft.com/azure-storage/azurite\
     volumes:\
       - ./azurite:/etc/pulp\
-    command: "azurite-blob --blobHost 0.0.0.0 --cert /etc/pulp/azcert.pem --key /etc/pulp/azkey.pem"' vars/main.yaml
+    command: "azurite-blob --blobHost 0.0.0.0"' vars/main.yaml
   sed -i -e '$a azure_test: true\
 pulp_scenario_settings: {"domain_enabled": true}\
 pulp_scenario_env: {}\
@@ -160,31 +154,17 @@ sudo docker cp pulp:/etc/pulp/certs/pulp_webserver.crt /usr/local/share/ca-certi
 # Hack: adding pulp CA to certifi.where()
 CERTIFI=$(python -c 'import certifi; print(certifi.where())')
 cat /usr/local/share/ca-certificates/pulp_webserver.crt | sudo tee -a "$CERTIFI" > /dev/null
-if [[ "$TEST" = "azure" ]]; then
-  cat /usr/local/share/ca-certificates/azcert.crt | sudo tee -a "$CERTIFI" > /dev/null
-fi
 
 # Hack: adding pulp CA to default CA file
 CERT=$(python -c 'import ssl; print(ssl.get_default_verify_paths().openssl_cafile)')
-cat "$CERTIFI" | sudo tee -a "$CERT" > /dev/null
+cat /usr/local/share/ca-certificates/pulp_webserver.crt | sudo tee -a "$CERT" > /dev/null
 
 # Updating certs
 sudo update-ca-certificates
 echo ::endgroup::
 
-# Add our azcert.crt certificate to the container image along with the certificates from certifi
-# so that we can use HTTPS with our fake Azure CI. certifi is self-contained and doesn't allow
-# extension or modification of the trust store, so we do a weird and hacky thing (above) where we just
-# overwrite or append to certifi's trust store behind it's back.
-#
-# We do this for both the CI host and the CI image.
 if [[ "$TEST" = "azure" ]]; then
-  AZCERTIFI=$(/opt/az/bin/python3 -c 'import certifi; print(certifi.where())')
-  PULPCERTIFI=$(cmd_prefix python3 -c 'import certifi; print(certifi.where())')
-  cat /usr/local/share/ca-certificates/azcert.crt >> $AZCERTIFI
-  cat /usr/local/share/ca-certificates/azcert.crt | cmd_stdin_prefix tee -a "$PULPCERTIFI" > /dev/null
-  cat /usr/local/share/ca-certificates/azcert.crt | cmd_stdin_prefix tee -a /etc/pki/tls/cert.pem > /dev/null
-  AZURE_STORAGE_CONNECTION_STRING='DefaultEndpointsProtocol=https;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=https://ci-azurite:10000/devstoreaccount1;'
+  AZURE_STORAGE_CONNECTION_STRING='DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://ci-azurite:10000/devstoreaccount1;'
   az storage container create --name pulp-test --connection-string $AZURE_STORAGE_CONNECTION_STRING
 fi
 
