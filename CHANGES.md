@@ -8,6 +8,35 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.54.1 (2024-06-18) {: #3.54.1 }
+
+
+### REST API {: #3.54.1-rest-api }
+
+#### Bugfixes {: #3.54.1-rest-api-bugfix }
+
+- Pulpcore no longer assumes that every plugin implementing the Replication feature supports
+  Publications.
+  [#5464](https://github.com/pulp/pulpcore/issues/5464)
+
+#### Misc {: #3.54.1-rest-api-misc }
+
+- [#5462](https://github.com/pulp/pulpcore/issues/5462)
+
+### Plugin API {: #3.54.1-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.54.1-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.54.1-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.54.0 (2024-05-22) {: #3.54.0 }
 
 ### REST API
