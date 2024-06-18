@@ -8,6 +8,21 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.28.28 (2024-06-18) {: #3.28.28 }
+
+
+### REST API {: #3.28.28-rest-api }
+
+#### Misc {: #3.28.28-rest-api-misc }
+
+- [#5462](https://github.com/pulp/pulpcore/issues/5462)
+
+### Plugin API {: #3.28.28-plugin-api }
+
+No significant changes.
+
+---
+
 ## 3.28.27 (2024-05-22) {: #3.28.27 }
 
 ### REST API
