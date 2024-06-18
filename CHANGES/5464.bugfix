@@ -1,2 +1,0 @@
-Pulpcore no longer assumes that every plugin implementing the Replication feature supports
-Publications.

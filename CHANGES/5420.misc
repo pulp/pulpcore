@@ -1,1 +1,0 @@
-Increased the waiting time for the scheduled task in its corresponding test, because the latter was flaky.
