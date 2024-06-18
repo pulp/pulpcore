@@ -8,6 +8,66 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.55.0 (2024-06-18) {: #3.55.0 }
+
+
+### REST API {: #3.55.0-rest-api }
+
+#### Features {: #3.55.0-rest-api-feature }
+
+- Added two new metrics related to Tasks: `pulp_tasks_unblocked_waiting_queue` has the number of unblocked waiting tasks that have been waiting longer than five(5) seconds,
+  while `pulp_tasks_longest_unblocked_waiting_time` record the time in seconds of the longest waiting time for a task in the queue.
+  [#3821](https://github.com/pulp/pulpcore/issues/3821)
+- Added indices to `object_id` on user and group roles tables.
+  [#5369](https://github.com/pulp/pulpcore/issues/5369)
+- Add `pulpcore-manager openapi` command to help generate `api.json` for bindings.
+  [#5462](https://github.com/pulp/pulpcore/issues/5462)
+
+#### Bugfixes {: #3.55.0-rest-api-bugfix }
+
+- Added Pulp side batching to fix large exports that were failing due to changes in psycopg.
+  [#5375](https://github.com/pulp/pulpcore/issues/5375)
+- Added a lock to avoid multiple workers sending metrics at the same time.
+  [#5442](https://github.com/pulp/pulpcore/issues/5442)
+- Pulpcore no longer assumes that every plugin implementing the Replication feature supports
+  Publications.
+  [#5464](https://github.com/pulp/pulpcore/issues/5464)
+
+#### Removals {: #3.55.0-rest-api-removal }
+
+- Removed ``pulp_hrefs`` from task reserved resources record. Task resource locking will now use Pulp
+  Resource Names (PRNs) that are immutable with respect to settings changes. A resource's ``pulp_href``
+  can still be used in task's ``reserved_resources`` filter, Pulp will convert it to the new format
+  behind the scenes.
+  [#5148](https://github.com/pulp/pulpcore/issues/5148)
+- Removed task's ``reserved_resources_record`` filter. Please use ``reserved_resources`` instead.
+  [#5415](https://github.com/pulp/pulpcore/issues/5415)
+- Removed deprecated `plugin` query string parameter from api doc endpoint.
+  Please use a list of app labels with the `component` parameter instead.
+- Upgrade the version of drf spectacular to 0.27.2.
+
+#### Misc {: #3.55.0-rest-api-misc }
+
+- [#5420](https://github.com/pulp/pulpcore/issues/5420), [#5468](https://github.com/pulp/pulpcore/issues/5468)
+
+### Plugin API {: #3.55.0-plugin-api }
+
+#### Removals {: #3.55.0-plugin-api-removal }
+
+- Removed deprecated functional test fixtures for api clients.
+  The new `pulpcore_bindings`, `file_bindings`, ... fixtures should be used instead.
+  [#5417](https://github.com/pulp/pulpcore/issues/5417)
+
+### Pulp File {: #3.55.0-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.55.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.54.0 (2024-05-22) {: #3.54.0 }
 
 ### REST API

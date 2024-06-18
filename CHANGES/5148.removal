@@ -1,4 +1,0 @@
-Removed ``pulp_hrefs`` from task reserved resources record. Task resource locking will now use Pulp
-Resource Names (PRNs) that are immutable with respect to settings changes. A resource's ``pulp_href``
-can still be used in task's ``reserved_resources`` filter, Pulp will convert it to the new format
-behind the scenes.

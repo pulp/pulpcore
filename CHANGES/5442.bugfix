@@ -1,1 +1,0 @@
-Added a lock to avoid multiple workers sending metrics at the same time.
