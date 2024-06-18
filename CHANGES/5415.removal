@@ -1,1 +1,0 @@
-Removed task's ``reserved_resources_record`` filter. Please use ``reserved_resources`` instead.
