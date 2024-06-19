@@ -8,6 +8,95 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.55.0 (2024-06-18) {: #3.55.0 }
+
+
+### REST API {: #3.55.0-rest-api }
+
+#### Features {: #3.55.0-rest-api-feature }
+
+- Added two new metrics related to Tasks: `pulp_tasks_unblocked_waiting_queue` has the number of unblocked waiting tasks that have been waiting longer than five(5) seconds,
+  while `pulp_tasks_longest_unblocked_waiting_time` record the time in seconds of the longest waiting time for a task in the queue.
+  [#3821](https://github.com/pulp/pulpcore/issues/3821)
+- Added indices to `object_id` on user and group roles tables.
+  [#5369](https://github.com/pulp/pulpcore/issues/5369)
+- Add `pulpcore-manager openapi` command to help generate `api.json` for bindings.
+  [#5462](https://github.com/pulp/pulpcore/issues/5462)
+
+#### Bugfixes {: #3.55.0-rest-api-bugfix }
+
+- Added Pulp side batching to fix large exports that were failing due to changes in psycopg.
+  [#5375](https://github.com/pulp/pulpcore/issues/5375)
+- Added a lock to avoid multiple workers sending metrics at the same time.
+  [#5442](https://github.com/pulp/pulpcore/issues/5442)
+- Pulpcore no longer assumes that every plugin implementing the Replication feature supports
+  Publications.
+  [#5464](https://github.com/pulp/pulpcore/issues/5464)
+
+#### Removals {: #3.55.0-rest-api-removal }
+
+- Removed ``pulp_hrefs`` from task reserved resources record. Task resource locking will now use Pulp
+  Resource Names (PRNs) that are immutable with respect to settings changes. A resource's ``pulp_href``
+  can still be used in task's ``reserved_resources`` filter, Pulp will convert it to the new format
+  behind the scenes.
+  [#5148](https://github.com/pulp/pulpcore/issues/5148)
+- Removed task's ``reserved_resources_record`` filter. Please use ``reserved_resources`` instead.
+  [#5415](https://github.com/pulp/pulpcore/issues/5415)
+- Removed deprecated `plugin` query string parameter from api doc endpoint.
+  Please use a list of app labels with the `component` parameter instead.
+- Upgrade the version of drf spectacular to 0.27.2.
+
+#### Misc {: #3.55.0-rest-api-misc }
+
+- [#5420](https://github.com/pulp/pulpcore/issues/5420), [#5468](https://github.com/pulp/pulpcore/issues/5468)
+
+### Plugin API {: #3.55.0-plugin-api }
+
+#### Removals {: #3.55.0-plugin-api-removal }
+
+- Removed deprecated functional test fixtures for api clients.
+  The new `pulpcore_bindings`, `file_bindings`, ... fixtures should be used instead.
+  [#5417](https://github.com/pulp/pulpcore/issues/5417)
+
+### Pulp File {: #3.55.0-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.55.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.54.1 (2024-06-18) {: #3.54.1 }
+
+
+### REST API {: #3.54.1-rest-api }
+
+#### Bugfixes {: #3.54.1-rest-api-bugfix }
+
+- Pulpcore no longer assumes that every plugin implementing the Replication feature supports
+  Publications.
+  [#5464](https://github.com/pulp/pulpcore/issues/5464)
+
+#### Misc {: #3.54.1-rest-api-misc }
+
+- [#5462](https://github.com/pulp/pulpcore/issues/5462)
+
+### Plugin API {: #3.54.1-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.54.1-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.54.1-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.54.0 (2024-05-22) {: #3.54.0 }
 
 ### REST API
@@ -318,6 +407,35 @@ No significant changes.
 No significant changes.
 
 ### Pulp Cert Guard
+
+No significant changes.
+
+---
+
+## 3.49.11 (2024-06-18) {: #3.49.11 }
+
+
+### REST API {: #3.49.11-rest-api }
+
+#### Bugfixes {: #3.49.11-rest-api-bugfix }
+
+- Pulpcore no longer assumes that every plugin implementing the Replication feature supports
+  Publications.
+  [#5464](https://github.com/pulp/pulpcore/issues/5464)
+
+#### Misc {: #3.49.11-rest-api-misc }
+
+- [#5462](https://github.com/pulp/pulpcore/issues/5462)
+
+### Plugin API {: #3.49.11-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.49.11-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.49.11-pulp-cert-guard }
 
 No significant changes.
 
@@ -1150,6 +1268,21 @@ No significant changes.
 -   Starting from this release pulp_file will be shipped as part of the pulpcore package.
     [#4550](https://github.com/pulp/pulpcore/issues/4550)
 
+## 3.39.16 (2024-06-18) {: #3.39.16 }
+
+
+### REST API {: #3.39.16-rest-api }
+
+#### Misc {: #3.39.16-rest-api-misc }
+
+- [#5462](https://github.com/pulp/pulpcore/issues/5462)
+
+### Plugin API {: #3.39.16-plugin-api }
+
+No significant changes.
+
+---
+
 ## 3.39.15 (2024-05-23) {: #3.39.15 }
 
 ### REST API
@@ -1888,6 +2021,21 @@ No significant changes.
 #### Misc
 
 -   [#3798](https://github.com/pulp/pulpcore/issues/3798)
+
+## 3.28.28 (2024-06-18) {: #3.28.28 }
+
+
+### REST API {: #3.28.28-rest-api }
+
+#### Misc {: #3.28.28-rest-api-misc }
+
+- [#5462](https://github.com/pulp/pulpcore/issues/5462)
+
+### Plugin API {: #3.28.28-plugin-api }
+
+No significant changes.
+
+---
 
 ## 3.28.27 (2024-05-22) {: #3.28.27 }
 
@@ -3123,6 +3271,25 @@ No significant changes.
     `pulpcore.plugin.util.raise_for_unknown_content_units`.
     [#3604](https://github.com/pulp/pulpcore/issues/3604)
 
+## 3.22.27 (2024-06-18) {: #3.22.27 }
+
+
+### REST API {: #3.22.27-rest-api }
+
+#### Misc {: #3.22.27-rest-api-misc }
+
+- [#5462](https://github.com/pulp/pulpcore/issues/5462)
+
+### Plugin API {: #3.22.27-plugin-api }
+
+No significant changes.
+
+---
+
+!!! warning
+    Until Role-Based Access Control is added to Pulp, REST API is not safe for multi-user use.
+    Sensitive credentials can be read by any user, e.g. `Remote.password`, `Remote.client_key`.
+
 ## 3.22.26 (2024-05-14) {: #3.22.26 }
 
 ### REST API
@@ -3635,6 +3802,25 @@ No significant changes.
 -   Deprecated model `Label` and serializer field `LabelField` and `LabelSelectFilter` for
     removal in 3.25.
     [#3400](https://github.com/pulp/pulpcore/issues/3400)
+
+## 3.21.30 (2024-06-18) {: #3.21.30 }
+
+
+### REST API {: #3.21.30-rest-api }
+
+#### Misc {: #3.21.30-rest-api-misc }
+
+- [#5462](https://github.com/pulp/pulpcore/issues/5462)
+
+### Plugin API {: #3.21.30-plugin-api }
+
+No significant changes.
+
+---
+
+!!! warning
+    Until Role-Based Access Control is added to Pulp, REST API is not safe for multi-user use.
+    Sensitive credentials can be read by any user, e.g. `Remote.password`, `Remote.client_key`.
 
 ## 3.21.29 (2024-05-14) {: #3.21.29 }
 
