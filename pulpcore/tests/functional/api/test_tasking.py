@@ -367,3 +367,34 @@ def test_emmiting_unblocked_task_telemetry(
         pulpcore_bindings.TasksApi.tasks_cancel(task_href, {"state": "canceled"})
         for task_href in resident_task_hrefs
     ]
+
+
+@pytest.fixture
+def task_group(dispatch_task_group, monitor_task_group):
+    """Fixture containing a finished Task Group."""
+    kwargs = {"inbetween": 0, "intervals": [0]}
+    tgroup_href = dispatch_task_group("pulpcore.app.tasks.test.dummy_group_task", kwargs=kwargs)
+    return monitor_task_group(tgroup_href)
+
+
+@pytest.mark.parallel
+def test_scope_task_groups(pulpcore_bindings, task_group, gen_user):
+    """Test that task groups can be queryset scoped by permission on Tasks."""
+    for task in task_group.tasks:
+        if task.name == "pulpcore.app.tasks.test.dummy_group_task":
+            break
+
+    response = pulpcore_bindings.TaskGroupsApi.list()
+    assert response.count > 0
+
+    with gen_user():
+        response = pulpcore_bindings.TaskGroupsApi.list()
+        assert response.count == 0
+
+    with gen_user(model_roles=["core.task_viewer"]):
+        response = pulpcore_bindings.TaskGroupsApi.list()
+        assert response.count > 0
+
+    with gen_user(object_roles=[("core.task_owner", task.pulp_href)]):
+        response = pulpcore_bindings.TaskGroupsApi.list()
+        assert response.count == 1

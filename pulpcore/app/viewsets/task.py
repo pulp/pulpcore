@@ -249,6 +249,27 @@ class TaskGroupViewSet(NamedModelViewSet, mixins.RetrieveModelMixin, mixins.List
     serializer_class = TaskGroupSerializer
     ordering = "-pulp_created"
 
+    DEFAULT_ACCESS_POLICY = {
+        "statements": [
+            {"action": ["list", "retrieve"], "principal": "authenticated", "effect": "allow"},
+        ],
+        "queryset_scoping": {"function": "scope_queryset"},
+    }
+
+    def scope_queryset(self, qs):
+        """Filter based on having view permission on the parent task of the group."""
+        if not self.request.user.is_superuser:
+            task_viewset = TaskViewSet()
+            setattr(task_viewset, "request", self.request)
+            setattr(task_viewset, "action", "group")  # Set this to avoid extra prefetch queries
+            tasks = (
+                task_viewset.get_queryset()
+                .filter(parent_task__isnull=True, task_group__isnull=False)
+                .values_list("pk", flat=True)
+            )
+            qs = qs.filter(tasks__in=tasks)
+        return qs
+
 
 class WorkerFilter(BaseFilterSet):
     online = filters.BooleanFilter(method="filter_online")
