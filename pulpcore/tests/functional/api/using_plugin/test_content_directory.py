@@ -42,3 +42,14 @@ def test_zero_byte_file_listing(
     z_line = [i for i in response.decode("utf-8").split("\n") if i.startswith('<a href="zero">')]
     assert len(z_line) == 1
     assert z_line[0].endswith("0 Bytes")
+
+
+@pytest.mark.parallel
+def test_content_index_title(pulp_content_url, pulp_settings, http_get):
+    title = pulp_settings.CONTENT_PATH_PREFIX
+    if pulp_settings.DOMAIN_ENABLED:
+        title += "default/"
+
+    response = http_get(pulp_content_url).decode("utf-8")
+    assert f"<head><title>Index of {title}</title></head>" in response
+    assert f"<h1>Index of {title}</h1>" in response

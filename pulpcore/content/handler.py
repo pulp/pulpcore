@@ -407,6 +407,9 @@ class Handler:
         """
         dates = dates or {}
         sizes = sizes or {}
+        root = path == settings.CONTENT_PATH_PREFIX
+        if root and settings.DOMAIN_ENABLED:
+            path += f"{get_domain().name}/"
         template = Template(
             """
 <html>
@@ -439,7 +442,7 @@ class Handler:
             dir_list=sorted(directory_list),
             dates=dates,
             path=path,
-            root=path == settings.CONTENT_PATH_PREFIX,
+            root=root,
             sizes=sizes,
         )
 
