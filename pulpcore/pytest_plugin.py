@@ -1015,19 +1015,21 @@ def wget_recursive_download_on_host():
 
 @pytest.fixture(scope="session")
 def dispatch_task(pulpcore_bindings):
-    def _dispatch_task(*args, **kwargs):
+    def _dispatch_task(*args, task_group_id=None, **kwargs):
         cid = pulpcore_bindings.client.default_headers.get("Correlation-ID") or str(uuid.uuid4())
         username = pulpcore_bindings.client.configuration.username
         commands = (
             "from django_guid import set_guid; "
             "from pulpcore.tasking.tasks import dispatch; "
+            "from pulpcore.app.models import TaskGroup; "
             "from pulpcore.app.util import get_url, set_current_user; "
             "from django.contrib.auth import get_user_model; "
             "User = get_user_model(); "
             f"user = User.objects.filter(username='{username}').first(); "
             "set_current_user(user); "
             f"set_guid({cid!r}); "
-            f"task = dispatch(*{args!r}, **{kwargs!r}); "
+            f"tg = {task_group_id!r} and TaskGroup.objects.filter(pk={task_group_id!r}).first(); "
+            f"task = dispatch(*{args!r}, task_group=tg, **{kwargs!r}); "
             "print(get_url(task))"
         )
 
@@ -1038,6 +1040,25 @@ def dispatch_task(pulpcore_bindings):
         return task_href
 
     return _dispatch_task
+
+
+@pytest.fixture(scope="session")
+def dispatch_task_group(dispatch_task):
+    def _dispatch_task_group(task_name, *args, **kwargs):
+        commands = (
+            "from pulpcore.app.models import TaskGroup; "
+            "from pulpcore.app.util import get_url; "
+            "task_group = TaskGroup.objects.create(); "
+            "print(task_group.pk, get_url(task_group))"
+        )
+        process = subprocess.run(["pulpcore-manager", "shell", "-c", commands], capture_output=True)
+        assert process.returncode == 0
+        tgroup_id, tgroup_href = process.stdout.decode().strip().split()
+
+        dispatch_task(task_name, *args, task_group_id=tgroup_id, **kwargs)
+        return tgroup_href
+
+    return _dispatch_task_group
 
 
 # GPG related fixtures
