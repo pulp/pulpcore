@@ -1,10 +1,12 @@
 from gettext import gettext as _
 
+from django.db import transaction
 from django.db.models import Prefetch
 from django_filters.rest_framework import filters
 from drf_spectacular.utils import extend_schema, inline_serializer
 from rest_framework import mixins, status
 from rest_framework.decorators import action
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
 from rest_framework.serializers import DictField, URLField, ValidationError
 
@@ -40,7 +42,8 @@ from pulpcore.app.viewsets.custom_filters import (
     CreatedResourcesFilter,
 )
 from pulpcore.constants import TASK_INCOMPLETE_STATES, TASK_STATES
-from pulpcore.tasking.tasks import dispatch, cancel_task
+from pulpcore.tasking.tasks import dispatch, cancel_task, cancel_task_group
+from pulpcore.app.role_util import get_objects_for_user
 
 
 class TaskFilter(BaseFilterSet):
@@ -211,11 +214,10 @@ class TaskViewSet(
         responses={200: TaskSerializer, 409: TaskSerializer},
     )
     def partial_update(self, request, pk=None, partial=True):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
         task = self.get_object()
-        if "state" not in request.data:
-            raise ValidationError(_("'state' must be provided with the request."))
-        if request.data["state"] != "canceled":
-            raise ValidationError(_("The only acceptable value for 'state' is 'canceled'."))
         task = cancel_task(task.pk)
         # Check whether task is actually canceled
         http_status = (
@@ -280,7 +282,7 @@ class TaskViewSet(
         return Response({"urls": data})
 
 
-class TaskGroupViewSet(NamedModelViewSet, mixins.RetrieveModelMixin, mixins.ListModelMixin):
+class TaskGroupViewSet(mixins.RetrieveModelMixin, mixins.ListModelMixin, NamedModelViewSet):
     queryset = TaskGroup.objects.all()
     endpoint_name = "task-groups"
     serializer_class = TaskGroupSerializer
@@ -288,7 +290,11 @@ class TaskGroupViewSet(NamedModelViewSet, mixins.RetrieveModelMixin, mixins.List
 
     DEFAULT_ACCESS_POLICY = {
         "statements": [
-            {"action": ["list", "retrieve"], "principal": "authenticated", "effect": "allow"},
+            {
+                "action": ["list", "retrieve", "partial_update"],
+                "principal": "authenticated",
+                "effect": "allow",
+            },
         ],
         "queryset_scoping": {"function": "scope_queryset"},
     }
@@ -306,6 +312,36 @@ class TaskGroupViewSet(NamedModelViewSet, mixins.RetrieveModelMixin, mixins.List
             )
             qs = qs.filter(tasks__in=tasks)
         return qs
+
+    @extend_schema(
+        description="This operation cancels a task group.",
+        summary="Cancel a task group",
+        operation_id="task_groups_cancel",
+        request=TaskCancelSerializer,
+        responses={200: TaskGroupSerializer, 409: TaskGroupSerializer},
+    )
+    def partial_update(self, request, pk=None, partial=True):
+        TaskCancelSerializer(data=request.data, context={"request": request}).is_valid(
+            raise_exception=True
+        )
+
+        task_group = self.get_object()
+        with transaction.atomic():
+            if (
+                task_group.tasks.count()
+                != get_objects_for_user(
+                    request.user, "core.change_task", task_group.tasks.all()
+                ).count()
+            ):
+                raise PermissionDenied()
+        task_group = cancel_task_group(task_group.pk)
+        # Check whether task group is actually canceled
+        serializer = TaskGroupSerializer(task_group, context={"request": request})
+        task_statuses = (
+            task["state"] in (TASK_STATES.RUNNING, TASK_STATES.WAITING)
+            for task in serializer.data["tasks"]
+        )
+        return Response(serializer.data, status=409 if any(task_statuses) else 200)
 
 
 class WorkerFilter(BaseFilterSet):
