@@ -1,6 +1,6 @@
 from gettext import gettext as _
 
-from django.db import transaction, IntegrityError
+from django.db import IntegrityError
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 
@@ -64,16 +64,24 @@ class NoArtifactContentSerializer(base.ModelSerializer):
             content.touch()
         else:
             try:
-                with transaction.atomic():
-                    content = self.Meta.model.objects.create(**validated_data)
-                    for relative_path, artifact in artifacts.items():
-                        models.ContentArtifact.objects.create(
-                            artifact=artifact, content=content, relative_path=relative_path
-                        )
+                content = self.Meta.model.objects.create(**validated_data)
             except IntegrityError:
                 content = self.retrieve(validated_data)
                 if content is None:
                     raise
+        # Ensure the content now has the uploaded artifact(s)
+        ca_set = content.contentartifact_set
+        if ca_set.count() == 0 or ca_set.filter(artifact=None).exists():
+            cas = [
+                models.ContentArtifact(artifact=a, content=content, relative_path=rp)
+                for rp, a in artifacts.items()
+            ]
+            models.ContentArtifact.objects.bulk_create(
+                cas,
+                update_conflicts=True,
+                update_fields=["artifact"],
+                unique_fields=["content", "relative_path"],
+            )
 
         if repository:
             repository.cast()
