@@ -60,6 +60,7 @@ class NoArtifactContentSerializer(base.ModelSerializer):
         artifacts = self.get_artifacts(validated_data)
 
         content = self.retrieve(validated_data)
+        created = False
         if content is not None:
             content.touch()
         else:
@@ -74,6 +75,22 @@ class NoArtifactContentSerializer(base.ModelSerializer):
                 content = self.retrieve(validated_data)
                 if content is None:
                     raise
+            else:
+                created = True
+        # Ensure the content now has the uploaded artifact(s)
+        if not created:
+            ca_set = content.contentartifact_set
+            if ca_set.count() == 0 or ca_set.filter(artifact=None).exists():
+                cas = [
+                    models.ContentArtifact(artifact=a, content=content, relative_path=rp)
+                    for rp, a in artifacts.items()
+                ]
+                models.ContentArtifact.objects.bulk_create(
+                    cas,
+                    update_conflicts=True,
+                    update_fields=["artifact"],
+                    unique_fields=["content", "relative_path"],
+                )
 
         if repository:
             repository.cast()
