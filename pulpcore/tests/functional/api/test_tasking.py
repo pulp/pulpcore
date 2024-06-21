@@ -445,3 +445,29 @@ def test_scope_task_groups(pulpcore_bindings, task_group, gen_user):
     with gen_user(object_roles=[("core.task_owner", task.pulp_href)]):
         response = pulpcore_bindings.TaskGroupsApi.list()
         assert response.count == 1
+
+
+@pytest.mark.parallel
+def test_cancel_task_group(pulpcore_bindings, dispatch_task_group, gen_user):
+    """Test that task groups can be canceled."""
+    kwargs = {"inbetween": 1, "intervals": [10, 10, 10, 10, 10]}
+    tgroup_href = dispatch_task_group("pulpcore.app.tasks.test.dummy_group_task", kwargs=kwargs)
+
+    tgroup = pulpcore_bindings.TaskGroupsApi.task_groups_cancel(tgroup_href, {"state": "canceled"})
+    for task in tgroup.tasks:
+        assert task.state in ["canceled", "canceling"]
+
+    with gen_user(model_roles=["core.task_viewer"]), pytest.raises(
+        pulpcore_bindings.ApiException
+    ) as e:
+        pulpcore_bindings.TaskGroupsApi.task_groups_cancel(tgroup_href, {"state": "canceled"})
+        assert "You do not have permission" in e.value.message
+
+    if len(tgroup.tasks) > 1:
+        one_role = [("core.task_owner", task.pulp_href)]
+        with gen_user(object_roles=one_role), pytest.raises(pulpcore_bindings.ApiException) as e:
+            pulpcore_bindings.TaskGroupsApi.task_groups_cancel(tgroup_href, {"state": "canceled"})
+            assert "You do not have permission" in e.value.message
+
+    with gen_user(model_roles=["core.task_owner"]):
+        pulpcore_bindings.TaskGroupsApi.task_groups_cancel(tgroup_href, {"state": "canceled"})
