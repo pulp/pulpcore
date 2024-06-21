@@ -183,13 +183,20 @@ class TaskGroupSerializer(ModelSerializer):
         )
 
 
-class TaskCancelSerializer(ModelSerializer):
+class TaskCancelSerializer(serializers.Serializer):
     state = serializers.CharField(
         help_text=_("The desired state of the task. Only 'canceled' is accepted."),
+        required=True,
     )
 
+    def validate_state(self, value):
+        if value != "canceled":
+            raise serializers.ValidationError(
+                _("The only acceptable value for 'state' is 'canceled'.")
+            )
+        return value
+
     class Meta:
-        model = models.Task
         fields = ("state",)
 
 
