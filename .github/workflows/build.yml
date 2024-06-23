@@ -35,11 +35,32 @@ jobs:
         run: |
           python3 setup.py sdist bdist_wheel --python-tag py3
           twine check dist/*
+      - name: "Install built packages"
+        run: |
+          pip install dist/pulpcore-*-py3-none-any.whl
+      - name: "Generate api specs"
+        run: |
+          pulpcore-manager openapi --file "api.json"
+          pulpcore-manager openapi --bindings --component "core" --file "core-api.json"
+          pulpcore-manager openapi --bindings --component "file" --file "file-api.json"
+          pulpcore-manager openapi --bindings --component "certguard" --file "certguard-api.json"
       - name: "Upload Package whl"
         uses: "actions/upload-artifact@v4"
         with:
           name: "plugin_package"
           path: "pulpcore/dist/"
+          if-no-files-found: "error"
+          retention-days: 5
+          overwrite: true
+      - name: "Upload API specs"
+        uses: "actions/upload-artifact@v4"
+        with:
+          name: "api_spec"
+          path: |
+            pulpcore/api.json
+            pulpcore/core-api.json
+            pulpcore/file-api.json
+            pulpcore/certguard-api.json
           if-no-files-found: "error"
           retention-days: 5
           overwrite: true
