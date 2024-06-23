@@ -54,64 +54,38 @@ cmd_prefix bash -c "chmod 600 ~pulp/.netrc"
 
 # Generate and install binding
 pushd ../pulp-openapi-generator
-if pulp debug has-plugin --name "core" --specifier ">=3.44.0.dev"
+# Use app_label to generate api.json and package to produce the proper package name.
+
+if [ "$(jq -r '.domain_enabled' <<<"$REPORTED_STATUS")" = "true" ]
 then
-  # Use app_label to generate api.json and package to produce the proper package name.
-
-  if [ "$(jq -r '.domain_enabled' <<<"$REPORTED_STATUS")" = "true" ]
-  then
-    # Workaround: Domains are not supported by the published bindings.
-    # Generate new bindings for all packages.
-    for item in $(jq -r '.versions[] | tojson' <<<"$REPORTED_STATUS")
-    do
-      echo $item
-      COMPONENT="$(jq -r '.component' <<<"$item")"
-      VERSION="$(jq -r '.version' <<<"$item")"
-      MODULE="$(jq -r '.module' <<<"$item")"
-      PACKAGE="${MODULE%%.*}"
-      curl --fail-with-body -k -o api.json "${PULP_URL}${PULP_API_ROOT}api/v3/docs/api.json?bindings&component=$COMPONENT"
-      USE_LOCAL_API_JSON=1 ./generate.sh "${PACKAGE}" python "${VERSION}"
-      cmd_prefix pip3 install "/root/pulp-openapi-generator/${PACKAGE}-client"
-      sudo rm -rf "./${PACKAGE}-client"
-    done
-  else
-    # Sadly: Different pulpcore-versions aren't either...
-    for item in $(jq -r '.versions[]| select(.component!="core")| select(.component!="file")| select(.component!="certguard")| tojson' <<<"$REPORTED_STATUS")
-    do
-      echo $item
-      COMPONENT="$(jq -r '.component' <<<"$item")"
-      VERSION="$(jq -r '.version' <<<"$item")"
-      MODULE="$(jq -r '.module' <<<"$item")"
-      PACKAGE="${MODULE%%.*}"
-      curl --fail-with-body -k -o api.json "${PULP_URL}${PULP_API_ROOT}api/v3/docs/api.json?bindings&component=$COMPONENT"
-      USE_LOCAL_API_JSON=1 ./generate.sh "${PACKAGE}" python "${VERSION}"
-      cmd_prefix pip3 install "/root/pulp-openapi-generator/${PACKAGE}-client"
-      sudo rm -rf "./${PACKAGE}-client"
-    done
-  fi
+  # Workaround: Domains are not supported by the published bindings.
+  # Generate new bindings for all packages.
+  for item in $(jq -r '.versions[] | tojson' <<<"$REPORTED_STATUS")
+  do
+    echo $item
+    COMPONENT="$(jq -r '.component' <<<"$item")"
+    VERSION="$(jq -r '.version' <<<"$item")"
+    MODULE="$(jq -r '.module' <<<"$item")"
+    PACKAGE="${MODULE%%.*}"
+    cmd_prefix pulpcore-manager openapi --bindings --component "${COMPONENT}" > api.json
+    ./gen-client.sh api.json "${COMPONENT}" python "${PACKAGE}"
+    cmd_prefix pip3 install "/root/pulp-openapi-generator/${PACKAGE}-client"
+    sudo rm -rf "./${PACKAGE}-client"
+  done
 else
-  # Infer the client name from the package name by replacing "-" with "_".
-  # Use the component to infer the package name on older versions of pulpcore.
-
-  if [ "$(echo "$REPORTED_STATUS" | jq -r '.domain_enabled')" = "true" ]
-  then
-    # Workaround: Domains are not supported by the published bindings.
-    # Generate new bindings for all packages.
-    for item in $(echo "$REPORTED_STATUS" | jq -r '.versions[]|(.package // ("pulp_" + .component)|sub("pulp_core"; "pulpcore"))|sub("-"; "_")')
-    do
-      ./generate.sh "${item}" python
-      cmd_prefix pip3 install "/root/pulp-openapi-generator/${item}-client"
-      sudo rm -rf "./${item}-client"
-    done
-  else
-    # Sadly: Different pulpcore-versions aren't either...
-    for item in $(echo "$REPORTED_STATUS" | jq -r '.versions[]|select(.component!="core")|select(.component!="file")|select(.component!="certguard")|(.package // ("pulp_" + .component)|sub("pulp_core"; "pulpcore"))|sub("-"; "_")')
-    do
-      ./generate.sh "${item}" python
-      cmd_prefix pip3 install "/root/pulp-openapi-generator/${item}-client"
-      sudo rm -rf "./${item}-client"
-    done
-  fi
+  # Sadly: Different pulpcore-versions aren't either...
+  for item in $(jq -r '.versions[]| select(.component!="core")| select(.component!="file")| select(.component!="certguard")| tojson' <<<"$REPORTED_STATUS")
+  do
+    echo $item
+    COMPONENT="$(jq -r '.component' <<<"$item")"
+    VERSION="$(jq -r '.version' <<<"$item")"
+    MODULE="$(jq -r '.module' <<<"$item")"
+    PACKAGE="${MODULE%%.*}"
+    cmd_prefix pulpcore-manager openapi --bindings --component "${COMPONENT}" > api.json
+    ./gen-client.sh api.json "${COMPONENT}" python "${PACKAGE}"
+    cmd_prefix pip3 install "/root/pulp-openapi-generator/${PACKAGE}-client"
+    sudo rm -rf "./${PACKAGE}-client"
+  done
 fi
 popd
 
