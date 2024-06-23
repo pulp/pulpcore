@@ -1,7 +1,7 @@
 # This config represents the latest values used when running the plugin-template. Any settings that
 # were not present before running plugin-template have been added with their default values.
 
-# generated with plugin_template@2021.08.26-326-ge5addc7
+# generated with plugin_template@2021.08.26-342-g13e7dc5
 
 api_root: /pulp/
 black: true
@@ -12,7 +12,7 @@ check_stray_pulpcore_imports: false
 ci_base_image: ghcr.io/pulp/pulp-ci-centos
 ci_env: {}
 ci_trigger: '{pull_request: {branches: [''*'']}}'
-ci_update_docs: true
+ci_update_docs: false
 cli_package: pulp-cli
 cli_repo: https://github.com/pulp/pulp-cli.git
 core_import_allowed: []
