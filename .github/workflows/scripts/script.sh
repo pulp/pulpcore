@@ -65,7 +65,9 @@ then
     echo $item
     COMPONENT="$(jq -r '.component' <<<"$item")"
     VERSION="$(jq -r '.version' <<<"$item")"
-    MODULE="$(jq -r '.module' <<<"$item")"
+    # On older status endpoints, the module was not provided, but the package should be accurate
+    # there, because we did not merge plugins into pulpcore back then.
+    MODULE="$(jq -r '.module // (.package|gsub("-"; "_"))' <<<"$item")"
     PACKAGE="${MODULE%%.*}"
     cmd_prefix pulpcore-manager openapi --bindings --component "${COMPONENT}" > api.json
     ./gen-client.sh api.json "${COMPONENT}" python "${PACKAGE}"
@@ -79,7 +81,9 @@ else
     echo $item
     COMPONENT="$(jq -r '.component' <<<"$item")"
     VERSION="$(jq -r '.version' <<<"$item")"
-    MODULE="$(jq -r '.module' <<<"$item")"
+    # On older status endpoints, the module was not provided, but the package should be accurate
+    # there, because we did not merge plugins into pulpcore back then.
+    MODULE="$(jq -r '.module // (.package|gsub("-"; "_"))' <<<"$item")"
     PACKAGE="${MODULE%%.*}"
     cmd_prefix pulpcore-manager openapi --bindings --component "${COMPONENT}" > api.json
     ./gen-client.sh api.json "${COMPONENT}" python "${PACKAGE}"
