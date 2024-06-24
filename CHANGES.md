@@ -8,6 +8,22 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.28.29 (2024-06-24) {: #3.28.29 }
+
+
+### REST API {: #3.28.29-rest-api }
+
+#### Bugfixes {: #3.28.29-rest-api-bugfix }
+
+- Fixed openapi command where plugins relied on CONTENT_ORIGIN to be set.
+  [#5510](https://github.com/pulp/pulpcore/issues/5510)
+
+### Plugin API {: #3.28.29-plugin-api }
+
+No significant changes.
+
+---
+
 ## 3.28.28 (2024-06-18) {: #3.28.28 }
 
 
