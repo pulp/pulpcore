@@ -240,6 +240,8 @@ LOGGING = {
 
 DRF_ACCESS_POLICY = {"reusable_conditions": ["pulpcore.app.global_access_conditions"]}
 
+# This is a sentinal value for deploy checks, since we don't want to set a default one.
+CONTENT_ORIGIN = "UNREACHABLE"
 CONTENT_PATH_PREFIX = "/pulp/content/"
 
 API_APP_TTL = 120  # The heartbeat is called from gunicorn notify (defaulting to 45 sec).
