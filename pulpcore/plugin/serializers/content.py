@@ -4,12 +4,14 @@ from tempfile import NamedTemporaryFile
 
 from django.db import DatabaseError
 from rest_framework.serializers import (
+    CharField,
     FileField,
     Serializer,
     ValidationError,
 )
+from urllib.parse import urlparse
 from pulpcore.app.files import PulpTemporaryUploadedFile
-from pulpcore.app.models import Artifact, PulpTemporaryFile, Upload, UploadChunk
+from pulpcore.app.models import Artifact, PulpTemporaryFile, Remote, Upload, UploadChunk
 from pulpcore.app.serializers import (
     RelatedField,
     ArtifactSerializer,
@@ -21,6 +23,8 @@ from pulpcore.app.util import get_domain_pk
 
 class UploadSerializerFieldsMixin(Serializer):
     """A mixin class that contains fields and methods common to content upload serializers."""
+
+    REMOTE_CLASS = Remote
 
     file = FileField(
         help_text=_("An uploaded file that may be turned into the content unit."),
@@ -34,6 +38,45 @@ class UploadSerializerFieldsMixin(Serializer):
         view_name=r"uploads-detail",
         queryset=Upload.objects.all(),
     )
+    url = CharField(
+        help_text=_("A url that Pulp can download and turn into the content unit."),
+        required=False,
+        write_only=True,
+    )
+
+    def validate_url(self, value):
+        """Parse out the auth if provided."""
+        url_parse = urlparse(value)
+        if url_parse.username or url_parse.password:
+            kwargs = {"username": url_parse.username, "password": url_parse.password}
+            if self.context.get("remote_kwargs"):
+                self.context["remote_kwargs"].update(kwargs)
+            else:
+                self.context["remote_kwargs"] = kwargs
+
+        return url_parse._replace(netloc=url_parse.netloc.split("@")[-1]).geturl()
+
+    def download(self, url, expected_digests=None, expected_size=None):
+        """
+        Downloads & returns the file from the url.
+
+        Plugins can overwrite this method on their content serializers to get specific download
+        behavior for their content types.
+
+        Args:
+            url (str): A url that Pulp can download
+            expected_digests (dict): A dict of expected digests.
+            expected_size (int): The expected size in bytes.
+
+        Returns:
+            PulpTemporaryUploadedFile: the downloaded file
+        """
+        remote = self.REMOTE_CLASS(url=url, **self.context.get("remote_kwargs", {}))
+        downloader = remote.get_downloader(
+            url=url, expected_digests=expected_digests, expected_size=expected_size
+        )
+        result = downloader.fetch()
+        return PulpTemporaryUploadedFile.from_file(open(result.path, "rb"))
 
     def validate(self, data):
         """Validate that we have an Artifact/File or can create one."""
@@ -42,7 +85,9 @@ class UploadSerializerFieldsMixin(Serializer):
 
         if "request" in self.context:
             upload_fields = {
-                field for field in self.Meta.fields if field in {"file", "upload", "artifact"}
+                field
+                for field in self.Meta.fields
+                if field in {"file", "upload", "artifact", "url"}
             }
             if len(upload_fields.intersection(data.keys())) != 1:
                 raise ValidationError(
@@ -81,6 +126,12 @@ class UploadSerializerFieldsMixin(Serializer):
         elif pulp_temp_file_pk := self.context.get("pulp_temp_file_pk"):
             pulp_temp_file = PulpTemporaryFile.objects.get(pk=pulp_temp_file_pk)
             data["file"] = PulpTemporaryUploadedFile.from_file(pulp_temp_file.file)
+        elif url := data.pop("url", None):
+            expected_digests = data.get("expected_digests", None)
+            expected_size = data.get("expected_size", None)
+            data["file"] = self.download(
+                url, expected_digests=expected_digests, expected_size=expected_size
+            )
         return data
 
     def create(self, validated_data):
@@ -96,6 +147,7 @@ class UploadSerializerFieldsMixin(Serializer):
         fields = (
             "file",
             "upload",
+            "url",
         )
 
 

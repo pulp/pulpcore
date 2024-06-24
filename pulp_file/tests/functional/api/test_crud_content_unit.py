@@ -253,3 +253,39 @@ def test_create_file_content_from_chunked_upload(
     # Upload gets deleted even though no new content got created
     with pytest.raises(coreApiException):
         pulpcore_bindings.UploadsApi.read(upload.pulp_href)
+
+
+@pytest.mark.parallel
+def test_create_file_from_url(
+    file_bindings,
+    file_repository_factory,
+    file_remote_factory,
+    file_distribution_factory,
+    basic_manifest_path,
+    monitor_task,
+):
+    # Test create w/ url
+    remote = file_remote_factory(manifest_path=basic_manifest_path)
+    body = {"url": remote.url, "relative_path": "PULP_MANIFEST"}
+    response = file_bindings.ContentFilesApi.create(**body)
+    task = monitor_task(response.task)
+    assert len(task.created_resources) == 1
+    assert "api/v3/content/file/files/" in task.created_resources[0]
+
+    # Set up
+    repo1 = file_repository_factory(autopublish=True)
+    body = {"remote": remote.pulp_href}
+    monitor_task(file_bindings.RepositoriesFileApi.sync(repo1.pulp_href, body).task)
+    distro = file_distribution_factory(repository=repo1.pulp_href)
+    content = file_bindings.ContentFilesApi.list(
+        repository_version=f"{repo1.versions_href}1/", relative_path="1.iso"
+    ).results[0]
+
+    # Test create w/ url for already existing content
+    response = file_bindings.ContentFilesApi.create(
+        url=f"{distro.base_url}1.iso",
+        relative_path="1.iso",
+    )
+    task = monitor_task(response.task)
+    assert len(task.created_resources) == 1
+    assert task.created_resources[0] == content.pulp_href
