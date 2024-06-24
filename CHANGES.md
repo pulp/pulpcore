@@ -8,6 +8,30 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.55.1 (2024-06-24) {: #3.55.1 }
+
+
+### REST API {: #3.55.1-rest-api }
+
+#### Bugfixes {: #3.55.1-rest-api-bugfix }
+
+- Fixed openapi command where plugins relied on CONTENT_ORIGIN to be set.
+  [#5510](https://github.com/pulp/pulpcore/issues/5510)
+
+### Plugin API {: #3.55.1-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.55.1-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.55.1-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.55.0 (2024-06-18) {: #3.55.0 }
 
 
