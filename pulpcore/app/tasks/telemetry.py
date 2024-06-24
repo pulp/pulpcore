@@ -3,7 +3,6 @@ import json
 import logging
 
 import aiohttp
-import async_timeout
 
 from asgiref.sync import sync_to_async
 from google.protobuf.json_format import MessageToJson
@@ -13,6 +12,12 @@ from pulpcore.app.models import SystemID
 from pulpcore.app.models.status import ContentAppStatus
 from pulpcore.app.models.task import Worker
 from pulpcore.app.protobuf.telemetry_pb2 import Telemetry
+
+# For Python >= 3.11 use timeout from asyncio:
+try:
+    from asyncio import timeout
+except ImportError:
+    from async_timeout import timeout
 
 
 logger = logging.getLogger(__name__)
@@ -92,7 +97,7 @@ async def post_telemetry():
 
     try:
         async with aiohttp.ClientSession() as session:
-            async with async_timeout.timeout(300):
+            async with timeout(300):
                 async with session.post(url, data=telemetry.SerializeToString()) as resp:
                     if resp.status == 200:
                         logger.info(
