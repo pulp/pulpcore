@@ -1,0 +1,1 @@
+Fixed openapi command where plugins relied on CONTENT_ORIGIN to be set.
