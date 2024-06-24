@@ -3,7 +3,5 @@ django
 dynaconf
 drf-spectacular
 pulp-smash @ git+https://github.com/pulp/pulp-smash.git
-pulpcore-client
-pulp-file-client
 pytest<8
 python-gnupg
