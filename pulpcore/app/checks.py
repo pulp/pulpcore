@@ -7,7 +7,7 @@ from django.core.checks import Error as CheckError, Warning as CheckWarning, reg
 @register(deploy=True)
 def content_origin_check(app_configs, **kwargs):
     messages = []
-    if not getattr(settings, "CONTENT_ORIGIN", None):
+    if getattr(settings, "CONTENT_ORIGIN", "UNREACHABLE") == "UNREACHABLE":
         messages.append(
             CheckError(
                 "CONTENT_ORIGIN is a required setting but it was not configured. This may be "
