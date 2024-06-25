@@ -8,6 +8,30 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.55.1 (2024-06-24) {: #3.55.1 }
+
+
+### REST API {: #3.55.1-rest-api }
+
+#### Bugfixes {: #3.55.1-rest-api-bugfix }
+
+- Fixed openapi command where plugins relied on CONTENT_ORIGIN to be set.
+  [#5510](https://github.com/pulp/pulpcore/issues/5510)
+
+### Plugin API {: #3.55.1-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.55.1-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.55.1-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.55.0 (2024-06-18) {: #3.55.0 }
 
 
@@ -407,6 +431,30 @@ No significant changes.
 No significant changes.
 
 ### Pulp Cert Guard
+
+No significant changes.
+
+---
+
+## 3.49.12 (2024-06-24) {: #3.49.12 }
+
+
+### REST API {: #3.49.12-rest-api }
+
+#### Bugfixes {: #3.49.12-rest-api-bugfix }
+
+- Fixed openapi command where plugins relied on CONTENT_ORIGIN to be set.
+  [#5510](https://github.com/pulp/pulpcore/issues/5510)
+
+### Plugin API {: #3.49.12-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.49.12-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.49.12-pulp-cert-guard }
 
 No significant changes.
 
@@ -1268,6 +1316,22 @@ No significant changes.
 -   Starting from this release pulp_file will be shipped as part of the pulpcore package.
     [#4550](https://github.com/pulp/pulpcore/issues/4550)
 
+## 3.39.17 (2024-06-24) {: #3.39.17 }
+
+
+### REST API {: #3.39.17-rest-api }
+
+#### Bugfixes {: #3.39.17-rest-api-bugfix }
+
+- Fixed openapi command where plugins relied on CONTENT_ORIGIN to be set.
+  [#5510](https://github.com/pulp/pulpcore/issues/5510)
+
+### Plugin API {: #3.39.17-plugin-api }
+
+No significant changes.
+
+---
+
 ## 3.39.16 (2024-06-18) {: #3.39.16 }
 
 
@@ -2021,6 +2085,22 @@ No significant changes.
 #### Misc
 
 -   [#3798](https://github.com/pulp/pulpcore/issues/3798)
+
+## 3.28.29 (2024-06-24) {: #3.28.29 }
+
+
+### REST API {: #3.28.29-rest-api }
+
+#### Bugfixes {: #3.28.29-rest-api-bugfix }
+
+- Fixed openapi command where plugins relied on CONTENT_ORIGIN to be set.
+  [#5510](https://github.com/pulp/pulpcore/issues/5510)
+
+### Plugin API {: #3.28.29-plugin-api }
+
+No significant changes.
+
+---
 
 ## 3.28.28 (2024-06-18) {: #3.28.28 }
 
@@ -3271,6 +3351,22 @@ No significant changes.
     `pulpcore.plugin.util.raise_for_unknown_content_units`.
     [#3604](https://github.com/pulp/pulpcore/issues/3604)
 
+## 3.22.28 (2024-06-24) {: #3.22.28 }
+
+
+### REST API {: #3.22.28-rest-api }
+
+#### Bugfixes {: #3.22.28-rest-api-bugfix }
+
+- Fixed openapi command where plugins relied on CONTENT_ORIGIN to be set.
+  [#5510](https://github.com/pulp/pulpcore/issues/5510)
+
+### Plugin API {: #3.22.28-plugin-api }
+
+No significant changes.
+
+---
+
 ## 3.22.27 (2024-06-18) {: #3.22.27 }
 
 
@@ -3802,6 +3898,22 @@ No significant changes.
 -   Deprecated model `Label` and serializer field `LabelField` and `LabelSelectFilter` for
     removal in 3.25.
     [#3400](https://github.com/pulp/pulpcore/issues/3400)
+
+## 3.21.31 (2024-06-24) {: #3.21.31 }
+
+
+### REST API {: #3.21.31-rest-api }
+
+#### Bugfixes {: #3.21.31-rest-api-bugfix }
+
+- Fixed openapi command where plugins relied on CONTENT_ORIGIN to be set.
+  [#5510](https://github.com/pulp/pulpcore/issues/5510)
+
+### Plugin API {: #3.21.31-plugin-api }
+
+No significant changes.
+
+---
 
 ## 3.21.30 (2024-06-18) {: #3.21.30 }
 
