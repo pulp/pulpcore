@@ -178,6 +178,29 @@ class RepositoryViewSet(ImmutableRepositoryViewSet, AsyncUpdateMixin, LabelsMixi
     A ViewSet for an ordinary repository.
     """
 
+    @extend_schema(
+        description="Trigger an asynchronous delete task",
+        responses={202: AsyncOperationResponseSerializer},
+    )
+    def destroy(self, request, pk, **kwargs):
+        """
+        Delete a model instance
+        """
+        if not settings.ENABLE_FAST_CASCADE_DELETE:
+            return super().destroy(request, pk, **kwargs)
+
+        instance = self.get_object()
+        serializer = self.get_serializer(instance)
+        app_label = instance._meta.app_label
+
+        task = dispatch(
+            tasks.repository.generic_cascade_delete_task,
+            exclusive_resources=self.async_reserved_resources(instance),
+            args=(pk, app_label, serializer.__class__.__name__),
+            immediate=self.ALLOW_NON_BLOCKING_DELETE,
+        )
+        return OperationPostponedResponse(task, request)
+
 
 class RepositoryVersionContentFilter(Filter):
     """
