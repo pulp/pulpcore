@@ -3,7 +3,9 @@ import logging
 from multidict import CIMultiDict
 import os
 import re
+import socket
 from gettext import gettext as _
+from functools import lru_cache
 
 from aiohttp.client_exceptions import ClientResponseError
 from aiohttp.web import FileResponse, StreamResponse, HTTPOk
@@ -20,6 +22,8 @@ from yarl import URL
 from asgiref.sync import sync_to_async
 
 import django
+
+from opentelemetry import metrics
 
 from pulpcore.constants import STORAGE_RESPONSE_MAP
 from pulpcore.responses import ArtifactResponse
@@ -49,7 +53,11 @@ from pulpcore.app.models import (  # noqa: E402: module level not at top of file
     RemoteArtifact,
 )
 from pulpcore.app import mime_types  # noqa: E402: module level not at top of file
-from pulpcore.app.util import get_domain, cache_key  # noqa: E402: module level not at top of file
+from pulpcore.app.util import (  # noqa: E402: module level not at top of file
+    MetricsEmitter,
+    get_domain,
+    cache_key,
+)
 
 from pulpcore.exceptions import UnsupportedDigestValidationError  # noqa: E402
 
@@ -57,6 +65,11 @@ from jinja2 import Template  # noqa: E402: module level not at top of file
 from pulpcore.cache import AsyncContentCache  # noqa: E402
 
 log = logging.getLogger(__name__)
+
+
+@lru_cache(maxsize=1)
+def _get_content_app_name():
+    return f"{os.getpid()}@{socket.gethostname()}"
 
 
 class PathNotResolved(HTTPNotFound):
@@ -153,6 +166,20 @@ class Handler:
     ]
 
     distribution_model = None
+
+    class ArtifactsSizeCounter(MetricsEmitter):
+        def __init__(self):
+            self.meter = metrics.get_meter("artifacts.size.meter")
+            self.counter = self.meter.create_counter(
+                "artifacts.size.counter",
+                unit="Bytes",
+                description="Counts the size of served artifacts",
+            )
+
+        def add(self, amount, attributes):
+            self.counter.add(amount, attributes)
+
+    artifacts_size_counter = ArtifactsSizeCounter.build()
 
     @staticmethod
     def _reset_db_connection():
@@ -960,12 +987,36 @@ class Handler:
                         params[STORAGE_RESPONSE_MAP[storage_domain][a_key]] = hdrs[a_key]
             return params
 
+        def _build_url(**kwargs):
+            filename = os.path.basename(content_artifact.relative_path)
+            content_disposition = f"attachment;filename={filename}"
+
+            headers["Content-Disposition"] = content_disposition
+            parameters = _set_params_from_headers(headers, domain.storage_class)
+            storage_url = storage.url(artifact_name, parameters=parameters, **kwargs)
+
+            return URL(storage_url, encoded=True)
+
         artifact_file = content_artifact.artifact.file
         artifact_name = artifact_file.name
-        filename = os.path.basename(content_artifact.relative_path)
-        content_disposition = f"attachment;filename={filename}"
         domain = get_domain()
         storage = domain.get_storage()
+
+        content_length = artifact_file.size
+
+        try:
+            range_start, range_stop = request.http_range.start, request.http_range.stop
+            if range_start or range_stop:
+                if range_stop and artifact_file.size and range_stop > artifact_file.size:
+                    start = 0 if range_start is None else range_start
+                    content_length = artifact_file.size - start
+                elif range_stop:
+                    content_length = range_stop - range_start
+        except ValueError:
+            size = artifact_file.size or "*"
+            raise HTTPRequestRangeNotSatisfiable(headers={"Content-Range": f"bytes */{size}"})
+
+        self._report_served_artifact_size(content_length)
 
         if domain.storage_class == "pulpcore.app.models.storage.FileSystem":
             path = storage.path(artifact_name)
@@ -975,25 +1026,12 @@ class Handler:
         elif not domain.redirect_to_object_storage:
             return ArtifactResponse(content_artifact.artifact, headers=headers)
         elif domain.storage_class == "storages.backends.s3boto3.S3Boto3Storage":
-            headers["Content-Disposition"] = content_disposition
-            parameters = _set_params_from_headers(headers, domain.storage_class)
-            url = URL(
-                artifact_file.storage.url(
-                    artifact_name, parameters=parameters, http_method=request.method
-                ),
-                encoded=True,
-            )
-            raise HTTPFound(url)
-        elif domain.storage_class == "storages.backends.azure_storage.AzureStorage":
-            headers["Content-Disposition"] = content_disposition
-            parameters = _set_params_from_headers(headers, domain.storage_class)
-            url = URL(artifact_file.storage.url(artifact_name, parameters=parameters), encoded=True)
-            raise HTTPFound(url)
-        elif domain.storage_class == "storages.backends.gcloud.GoogleCloudStorage":
-            headers["Content-Disposition"] = content_disposition
-            parameters = _set_params_from_headers(headers, domain.storage_class)
-            url = URL(artifact_file.storage.url(artifact_name, parameters=parameters), encoded=True)
-            raise HTTPFound(url)
+            raise HTTPFound(_build_url(http_method=request.method))
+        elif domain.storage_class in (
+            "storages.backends.azure_storage.AzureStorage",
+            "storages.backends.gcloud.GoogleCloudStorage",
+        ):
+            raise HTTPFound(_build_url())
         else:
             raise NotImplementedError()
 
@@ -1111,6 +1149,11 @@ class Handler:
         downloader.finalize = finalize
         download_result = await downloader.run()
 
+        if content_length := response.headers.get("Content-Length"):
+            self._report_served_artifact_size(int(content_length))
+        else:
+            self._report_served_artifact_size(size)
+
         if save_artifact and remote.policy != Remote.STREAMED:
             await asyncio.shield(
                 sync_to_async(self._save_artifact)(download_result, remote_artifact, request)
@@ -1120,3 +1163,10 @@ class Handler:
         if response.status == 404:
             raise HTTPNotFound()
         return response
+
+    def _report_served_artifact_size(self, size):
+        attributes = {
+            "domain_name": get_domain().name,
+            "content_app_name": _get_content_app_name(),
+        }
+        self.artifacts_size_counter.add(size, attributes)
