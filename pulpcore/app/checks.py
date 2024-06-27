@@ -20,6 +20,21 @@ def content_origin_check(app_configs, **kwargs):
 
 
 @register(deploy=True)
+def secret_key_check(app_configs, **kwargs):
+    messages = []
+    if getattr(settings, "SECRET_KEY", "SECRET") == "SECRET":
+        messages.append(
+            CheckError(
+                "SECRET_KEY is a required setting but it was not configured. It does not "
+                "come pre-configured by the installation and it should be set to a unique, "
+                "unpredictable value.",
+                id="pulpcore.E001",
+            )
+        )
+    return messages
+
+
+@register(deploy=True)
 def storage_paths(app_configs, **kwargs):
     warnings = []
 
