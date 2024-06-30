@@ -1,7 +1,7 @@
 # This config represents the latest values used when running the plugin-template. Any settings that
 # were not present before running plugin-template have been added with their default values.
 
-# generated with plugin_template@2021.08.26-335-gdf91f79
+# generated with plugin_template@2021.08.26-347-gc4a2504
 
 api_root: /pulp/
 black: true
@@ -34,6 +34,7 @@ kanban: true
 latest_release_branch: '3.54'
 lint_requirements: true
 noissue_marker: '[noissue]'
+os_required_packages: []
 parallel_test_workers: 8
 plugin_app_label: core
 plugin_default_branch: main
