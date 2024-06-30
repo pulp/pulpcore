@@ -22,6 +22,7 @@ RUN pip3 install
 {{ " " }}-r ./{{ item.name }}/ci_requirements.txt
 {%- endif -%}
 {%- endfor %}
+{{ " " }}-c ./{{ plugins[0].name }}/.ci/assets/ci_constraints.txt
 
 {% if pulp_env is defined and pulp_env %}
 {% for key, value in pulp_env.items() %}
