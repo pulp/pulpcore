@@ -43,15 +43,44 @@ jobs:
         with:
           python-version: "3.11"
 
-      - uses: "actions/download-artifact@v4"
+      - name: "Download plugin package"
+        uses: "actions/download-artifact@v4"
         with:
           name: "plugin_package"
           path: "pulpcore/dist/"
 
+      - name: "Download API specs"
+        uses: "actions/download-artifact@v4"
+        with:
+          name: "api_spec"
+          path: "pulpcore/"
+
+      - name: "Download client packages"
+        uses: "actions/download-artifact@v4"
+        with:
+          name: "python-client.tar"
+          path: "pulpcore"
+
+      - name: "Unpack client packages"
+        working-directory: "pulp-openapi-generator"
+        run: |
+          mkdir -p "pulpcore-client"
+          pushd "pulpcore-client"
+          tar xvf "../../pulpcore/core-python-client.tar"
+          popd
+          mkdir -p "pulp_file-client"
+          pushd "pulp_file-client"
+          tar xvf "../../pulpcore/file-python-client.tar"
+          popd
+          mkdir -p "pulp_certguard-client"
+          pushd "pulp_certguard-client"
+          tar xvf "../../pulpcore/certguard-python-client.tar"
+          popd
+
       - name: "Install python dependencies"
         run: |
           echo ::group::PYDEPS
-          pip install towncrier twine wheel httpie docker netaddr boto3 ansible mkdocs
+          pip install towncrier twine wheel httpie docker netaddr boto3 ansible mkdocs jq jsonpatch
           echo "HTTPIE_CONFIG_DIR=$GITHUB_WORKSPACE/pulpcore/.ci/assets/httpie/" >> $GITHUB_ENV
           echo ::endgroup::
 
@@ -94,16 +123,6 @@ jobs:
           GITHUB_CONTEXT: "${{ github.event.pull_request.commits_url }}"
           REDIS_DISABLED: "${{ contains('s3', matrix.env.TEST) }}"
 
-      - name: "Install Python client"
-        run: |
-          .github/workflows/scripts/install_python_client.sh
-        shell: "bash"
-      - name: "Install Ruby client"
-        if: "${{ env.TEST == 'pulp' }}"
-        run: |
-          .github/workflows/scripts/install_ruby_client.sh
-        shell: "bash"
-
       - name: "Script"
         run: |
           .github/workflows/scripts/script.sh
@@ -123,90 +142,6 @@ jobs:
         with:
           name: "deprecations-${{ matrix.env.TEST }}"
           path: "pulpcore/deprecations-${{ matrix.env.TEST }}.txt"
-          if-no-files-found: "error"
-          retention-days: 5
-          overwrite: true
-      - name: Upload python client packages
-        if: ${{ env.TEST == 'pulp' }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: "python-client.tar"
-          path: "pulpcore/core-python-client.tar"
-          if-no-files-found: "error"
-          retention-days: 5
-          overwrite: true
-
-      - name: Upload python client docs
-        if: ${{ env.TEST == 'pulp' }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: "python-client-docs.tar"
-          path: "pulpcore/core-python-client-docs.tar"
-          if-no-files-found: "error"
-          retention-days: 5
-          overwrite: true
-      - name: Upload Ruby client
-        if: ${{ env.TEST == 'pulp' }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: "ruby-client.tar"
-          path: "pulpcore/core-ruby-client.tar"
-          if-no-files-found: "error"
-          retention-days: 5
-          overwrite: true
-      - name: Upload python client packages
-        if: ${{ env.TEST == 'pulp' }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: "python-client.tar"
-          path: "pulpcore/file-python-client.tar"
-          if-no-files-found: "error"
-          retention-days: 5
-          overwrite: true
-
-      - name: Upload python client docs
-        if: ${{ env.TEST == 'pulp' }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: "python-client-docs.tar"
-          path: "pulpcore/file-python-client-docs.tar"
-          if-no-files-found: "error"
-          retention-days: 5
-          overwrite: true
-      - name: Upload Ruby client
-        if: ${{ env.TEST == 'pulp' }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: "ruby-client.tar"
-          path: "pulpcore/file-ruby-client.tar"
-          if-no-files-found: "error"
-          retention-days: 5
-          overwrite: true
-      - name: Upload python client packages
-        if: ${{ env.TEST == 'pulp' }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: "python-client.tar"
-          path: "pulpcore/certguard-python-client.tar"
-          if-no-files-found: "error"
-          retention-days: 5
-          overwrite: true
-
-      - name: Upload python client docs
-        if: ${{ env.TEST == 'pulp' }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: "python-client-docs.tar"
-          path: "pulpcore/certguard-python-client-docs.tar"
-          if-no-files-found: "error"
-          retention-days: 5
-          overwrite: true
-      - name: Upload Ruby client
-        if: ${{ env.TEST == 'pulp' }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: "ruby-client.tar"
-          path: "pulpcore/certguard-ruby-client.tar"
           if-no-files-found: "error"
           retention-days: 5
           overwrite: true
@@ -231,3 +166,4 @@ jobs:
           docker exec pulp ls -latr /etc/yum.repos.d/ || true
           docker exec pulp cat /etc/yum.repos.d/* || true
           docker exec pulp bash -c "pip3 list && pip3 install pipdeptree && pipdeptree"
+...
