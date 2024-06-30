@@ -52,53 +52,74 @@ password password
 # Some commands like ansible-galaxy specifically require 600
 cmd_prefix bash -c "chmod 600 ~pulp/.netrc"
 
-# Generate and install binding
-pushd ../pulp-openapi-generator
-# Use app_label to generate api.json and package to produce the proper package name.
+# Generate bindings
+###################
 
-if [ "$(jq -r '.domain_enabled' <<<"$REPORTED_STATUS")" = "true" ]
-then
+echo "::group::Generate bindings"
+
+touch bindings_requirements.txt
+pushd ../pulp-openapi-generator
+  # Use app_label to generate api.json and package to produce the proper package name.
+
   # Workaround: Domains are not supported by the published bindings.
-  # Generate new bindings for all packages.
-  for item in $(jq -r '.versions[] | tojson' <<<"$REPORTED_STATUS")
-  do
-    echo $item
-    COMPONENT="$(jq -r '.component' <<<"$item")"
-    VERSION="$(jq -r '.version' <<<"$item")"
-    # On older status endpoints, the module was not provided, but the package should be accurate
-    # there, because we did not merge plugins into pulpcore back then.
-    MODULE="$(jq -r '.module // (.package|gsub("-"; "_"))' <<<"$item")"
-    PACKAGE="${MODULE%%.*}"
-    cmd_prefix pulpcore-manager openapi --bindings --component "${COMPONENT}" > api.json
-    ./gen-client.sh api.json "${COMPONENT}" python "${PACKAGE}"
-    cmd_prefix pip3 install "/root/pulp-openapi-generator/${PACKAGE}-client"
-    sudo rm -rf "./${PACKAGE}-client"
-  done
-else
   # Sadly: Different pulpcore-versions aren't either...
-  for item in $(jq -r '.versions[]| select(.component!="core")| tojson' <<<"$REPORTED_STATUS")
+  # So we exclude the prebuilt ones only for domains disabled.
+  if [ "$(jq -r '.domain_enabled' <<<"${REPORTED_STATUS}")" = "true" ] || [ "$(jq -r '.online_workers[0].pulp_href|startswith("/pulp/api/v3/")' <<< "${REPORTED_STATUS}")" = "false" ]
+  then
+    BUILT_CLIENTS=""
+  else
+    BUILT_CLIENTS=" core "
+  fi
+
+  for ITEM in $(jq -r '.versions[] | tojson' <<<"${REPORTED_STATUS}")
   do
-    echo $item
-    COMPONENT="$(jq -r '.component' <<<"$item")"
-    VERSION="$(jq -r '.version' <<<"$item")"
+    COMPONENT="$(jq -r '.component' <<<"${ITEM}")"
+    VERSION="$(jq -r '.version' <<<"${ITEM}" | python3 -c "from packaging.version import Version; print(Version(input()))")"
     # On older status endpoints, the module was not provided, but the package should be accurate
     # there, because we did not merge plugins into pulpcore back then.
-    MODULE="$(jq -r '.module // (.package|gsub("-"; "_"))' <<<"$item")"
+    MODULE="$(jq -r '.module // (.package|gsub("-"; "_"))' <<<"${ITEM}")"
     PACKAGE="${MODULE%%.*}"
-    cmd_prefix pulpcore-manager openapi --bindings --component "${COMPONENT}" > api.json
-    ./gen-client.sh api.json "${COMPONENT}" python "${PACKAGE}"
-    cmd_prefix pip3 install "/root/pulp-openapi-generator/${PACKAGE}-client"
-    sudo rm -rf "./${PACKAGE}-client"
+    cmd_prefix pulpcore-manager openapi --bindings --component "${COMPONENT}" > "${COMPONENT}-api.json"
+    if [[ ! " ${BUILT_CLIENTS} " =~ "${COMPONENT}" ]]
+    then
+      rm -rf "./${PACKAGE}-client"
+      ./gen-client.sh "${COMPONENT}-api.json" "${COMPONENT}" python "${PACKAGE}"
+      pushd "${PACKAGE}-client"
+        python setup.py sdist bdist_wheel --python-tag py3
+      popd
+    else
+      if [ ! -f "${PACKAGE}-client/dist/${PACKAGE}_client-${VERSION}-py3-none-any.whl" ]
+      then
+        ls -lR "${PACKAGE}-client/"
+        echo "Error: Client bindings for ${COMPONENT} not found."
+        echo "File ${PACKAGE}-client/dist/${PACKAGE}_client-${VERSION}-py3-none-any.whl missing."
+        exit 1
+      fi
+    fi
+    echo "/root/pulp-openapi-generator/${PACKAGE}-client/dist/${PACKAGE}_client-${VERSION}-py3-none-any.whl" >> "../pulpcore/bindings_requirements.txt"
   done
-fi
 popd
 
-# At this point, this is a safeguard only, so let's not make too much fuzz about the old status format.
-echo "$REPORTED_STATUS" | jq -r '.versions[]|select(.package)|(.package|sub("_"; "-")) + "-client==" + .version' > bindings_requirements.txt
+echo "::endgroup::"
+
+echo "::group::Debug bindings diffs"
+
+# Bindings diff for core
+jq '(.paths[][].parameters|select(.)) |= sort_by(.name)' < "core-api.json" > "build-api.json"
+jq '(.paths[][].parameters|select(.)) |= sort_by(.name)' < "../pulp-openapi-generator/core-api.json" > "test-api.json"
+jsondiff --indent 2 build-api.json test-api.json || true
+echo "::endgroup::"
+
+# Install test requirements
+###########################
+
+# Add a safeguard to make sure the proper versions of the clients are installed.
+echo "$REPORTED_STATUS" | jq -r '.versions[]|select(.package)|(.package|sub("_"; "-")) + "-client==" + .version' > bindings_constraints.txt
 cmd_stdin_prefix bash -c "cat > /tmp/unittest_requirements.txt" < unittest_requirements.txt
 cmd_stdin_prefix bash -c "cat > /tmp/functest_requirements.txt" < functest_requirements.txt
 cmd_stdin_prefix bash -c "cat > /tmp/bindings_requirements.txt" < bindings_requirements.txt
-cmd_prefix pip3 install -r /tmp/unittest_requirements.txt -r /tmp/functest_requirements.txt -r /tmp/bindings_requirements.txt
+cmd_stdin_prefix bash -c "cat > /tmp/bindings_constraints.txt" < bindings_constraints.txt
+cmd_prefix pip3 install -r /tmp/unittest_requirements.txt -r /tmp/functest_requirements.txt -r /tmp/bindings_requirements.txt -c /tmp/bindings_constraints.txt
 
 CERTIFI=$(cmd_prefix python3 -c 'import certifi; print(certifi.where())')
 cmd_prefix bash -c "cat /etc/pulp/certs/pulp_webserver.crt >> '$CERTIFI'"
@@ -129,7 +150,7 @@ else
   else
     cmd_user_prefix bash -c "pytest -v -r sx --color=yes --suppress-no-test-exit-code --pyargs pulpcore.tests.functional -m parallel -n 8"
     cmd_user_prefix bash -c "pytest -v -r sx --color=yes --suppress-no-test-exit-code --pyargs pulpcore.tests.functional -m 'not parallel'"
-  fi 
+  fi
 fi
 export PULP_FIXTURES_URL="http://pulp-fixtures:8080"
 pushd ../pulp-cli
