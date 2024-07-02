@@ -61,7 +61,8 @@ CHUNKED_UPLOAD_DIR = "upload"
 # List of upload handler classes to be applied in order.
 FILE_UPLOAD_HANDLERS = ("pulpcore.app.files.HashingFileUploadHandler",)
 
-SECRET_KEY = True
+# SECURITY WARNING: this should be set to a unique, unpredictable value
+SECRET_KEY = "SECRET"
 
 # Key used to encrypt fields in the database
 DB_ENCRYPTION_KEY = "/etc/pulp/certs/database_fields.symmetric.key"
