@@ -8,6 +8,30 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.49.13 (2024-07-02) {: #3.49.13 }
+
+
+### REST API {: #3.49.13-rest-api }
+
+#### Bugfixes {: #3.49.13-rest-api-bugfix }
+
+- Update jquery version from 3.5.1 to 3.7.1 in API.html template
+  [#5306](https://github.com/pulp/pulpcore/issues/5306)
+
+### Plugin API {: #3.49.13-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.49.13-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.49.13-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.49.12 (2024-06-24) {: #3.49.12 }
 
 
