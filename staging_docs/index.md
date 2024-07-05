@@ -1,54 +1,19 @@
----
-hide:
-  - navigation
-  - toc
-  - footer
----
+# Welcome to Pulp Core
 
-<h1 class="landing-page-h1"></h1>
+Pulpcore is the main component of the Pulp Project.
 
-<div class="hero-header" markdown>
+It handles some parts of common content management workflows, including high performance
+downloading, task queuing with scalable workers, and management of content within versioned
+repositories.
 
-![Pulp Logo](site:pulpcore/docs/assets/pulp_logo_big.png)
+If you are looking for:
 
-## Pulp is an open source project that makes it easy for developers to fetch, upload, and distribute *Software Packages* on-prem or in the cloud.
-
-</div>
-
----
-
-<div class="grid cards" markdown>
-
--   :material-clock-fast:{ .lg .middle } **Starter Tutorial**
-
-    ---
-
-    Learn to manage content with Pulp and get yourself familiar with core concepts and workflows.
-
-    [:octicons-arrow-right-24: Getting started](site:pulpcore/docs/user/tutorials/01-overview/)
-
--   :octicons-download-16:{ .lg .middle } **Pulp in a Container**
-
-    ---
-
-    Use OCI (Open Container Initiative) images to install Pulp in single or multi-container setups.
-
-    [:octicons-arrow-right-24: Installation Quickstart](site:pulp-oci-images/docs/admin/tutorials/quickstart/)
-
--   :octicons-rocket-16:{ .lg .middle } **Why Pulp?**
-
-    ---
-
-    Learn why important projects rely on Pulp to manage the lifecyle of huge *Software Content* collections.
-
-    [:octicons-arrow-right-24: Features](#)
-
--   :octicons-people-16:{ .lg .middle } **Get Involved**
-
-    ---
-
-    Join our communication channels and get to know the contributors and users of Pulp's strong ecosystem.
-
-    [:octicons-arrow-right-24: Community](#)
-
-</div>
+- A high-level features overview, check out
+  [Why Pulp](site:help/more/why-pulp/).
+- Main concepts and terminology overview, see
+  [Concepts and Terminology](site:pulpcore/docs/user/learn/concepts/).
+- Installing Pulp, start with our
+  [Installation Introduction](site:pulp-oci-images/docs/admin/tutorials/quickstart/)
+- Learning core and plugin workflows, see the *How-to Guides* in Core or in Plugin pages.
+- Writing a Plugin, refer to
+  [Plugin Development](site:pulpcore/docs/dev/).
