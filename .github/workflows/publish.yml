@@ -19,137 +19,10 @@ defaults:
 jobs:
   build:
     uses: "./.github/workflows/build.yml"
-
-  build-bindings-docs:
-    needs:
-      - "build"
-    runs-on: "ubuntu-latest"
-    # Install scripts expect TEST to be set, 'docs' is most appropriate even though we don't run tests
-    env:
-      TEST: "docs"
-    steps:
-      - uses: "actions/checkout@v4"
-        with:
-          fetch-depth: 1
-          path: "pulpcore"
-
-      - uses: "actions/checkout@v4"
-        with:
-          fetch-depth: 1
-          repository: "pulp/pulp-openapi-generator"
-          path: "pulp-openapi-generator"
-
-      - uses: "actions/setup-python@v5"
-        with:
-          python-version: "3.11"
-
-      - uses: "actions/download-artifact@v4"
-        with:
-          name: "plugin_package"
-          path: "pulpcore/dist/"
-      - uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: "2.6"
-
-      - name: "Install python dependencies"
-        run: |
-          echo ::group::PYDEPS
-          pip install towncrier twine wheel httpie docker netaddr boto3 ansible mkdocs
-          echo "HTTPIE_CONFIG_DIR=$GITHUB_WORKSPACE/pulpcore/.ci/assets/httpie/" >> $GITHUB_ENV
-          echo ::endgroup::
-
-      # Building the bindings and docs requires accessing the OpenAPI specs endpoint, so we need to
-      # setup the Pulp instance.
-      - name: "Before Install"
-        run: |
-          .github/workflows/scripts/before_install.sh
-        shell: "bash"
-        env:
-          PY_COLORS: "1"
-          ANSIBLE_FORCE_COLOR: "1"
-          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
-          GITHUB_CONTEXT: "${{ github.event.pull_request.commits_url }}"
-
-      - name: "Install"
-        run: |
-          .github/workflows/scripts/install.sh
-        shell: "bash"
-        env:
-          PY_COLORS: "1"
-          ANSIBLE_FORCE_COLOR: "1"
-          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
-          GITHUB_CONTEXT: "${{ github.event.pull_request.commits_url }}"
-
-      - name: "Install Python client"
-        run: |
-          .github/workflows/scripts/install_python_client.sh
-        shell: "bash"
-      - name: "Install Ruby client"
-        run: |
-          .github/workflows/scripts/install_ruby_client.sh
-        shell: "bash"
-
-      - name: "Upload python client packages"
-        uses: "actions/upload-artifact@v4"
-        with:
-          name: "python-client.tar"
-          path: |
-            pulpcore/core-python-client.tar
-            pulpcore/file-python-client.tar
-            pulpcore/certguard-python-client.tar
-          if-no-files-found: "error"
-          overwrite: true
-
-      - name: "Upload python client docs"
-        uses: "actions/upload-artifact@v4"
-        with:
-          name: "python-client-docs.tar"
-          path: |
-            pulpcore/core-python-client-docs.tar
-            pulpcore/file-python-client-docs.tar
-            pulpcore/certguard-python-client-docs.tar
-          if-no-files-found: "error"
-          overwrite: true
-      - name: "Upload ruby client packages"
-        uses: "actions/upload-artifact@v4"
-        with:
-          name: "ruby-client.tar"
-          path: |
-            pulpcore/core-ruby-client.tar
-            pulpcore/file-ruby-client.tar
-            pulpcore/certguard-ruby-client.tar
-          if-no-files-found: "error"
-          overwrite: true
-      - name: Build docs
-        run: |
-          export DJANGO_SETTINGS_MODULE=pulpcore.app.settings
-          export PULP_SETTINGS=$PWD/.ci/ansible/settings/settings.py
-          make -C docs/ PULP_URL="https://pulp" diagrams html
-          tar -cvf docs/docs.tar docs/_build
-
-      - name: "Upload built docs"
-        uses: actions/upload-artifact@v4
-        with:
-          name: "docs.tar"
-          path: "pulpcore/docs/docs.tar"
-          if-no-files-found: "error"
-          overwrite: true
-
-      - name: "Logs"
-        if: always()
-        run: |
-          echo "Need to debug? Please check: https://github.com/marketplace/actions/debugging-with-tmate"
-          http --timeout 30 --check-status --pretty format --print hb "https://pulp${PULP_API_ROOT}api/v3/status/" || true
-          docker images || true
-          docker ps -a || true
-          docker logs pulp || true
-          docker exec pulp ls -latr /etc/yum.repos.d/ || true
-          docker exec pulp cat /etc/yum.repos.d/* || true
-          docker exec pulp bash -c "pip3 list && pip3 install pipdeptree && pipdeptree"
   publish-package:
     runs-on: "ubuntu-latest"
     needs:
-      - "build-bindings-docs"
+      - "build"
 
     env:
       GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
@@ -187,7 +60,7 @@ jobs:
   publish-python-bindings:
     runs-on: "ubuntu-latest"
     needs:
-      - "build-bindings-docs"
+      - "build"
 
     env:
       GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
@@ -232,7 +105,7 @@ jobs:
   publish-ruby-bindings:
     runs-on: "ubuntu-latest"
     needs:
-      - "build-bindings-docs"
+      - "build"
 
     env:
       GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
@@ -271,7 +144,7 @@ jobs:
   publish-docs:
     runs-on: "ubuntu-latest"
     needs:
-      - "build-bindings-docs"
+      - "build"
 
     env:
       GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
@@ -318,7 +191,7 @@ jobs:
   create-gh-release:
     runs-on: "ubuntu-latest"
     needs:
-      - "build-bindings-docs"
+      - "build"
       - "publish-package"
       - "publish-python-bindings"
       - "publish-ruby-bindings"
