@@ -65,6 +65,7 @@ class Repository(MasterModel):
     TYPE = "repository"
     CONTENT_TYPES = []
     REMOTE_TYPES = []
+    PULL_THROUGH_SUPPORTED = False
 
     name = models.TextField(db_index=True)
     pulp_labels = HStoreField(default=dict)
@@ -352,6 +353,33 @@ class Repository(MasterModel):
                 qs |= self.versions.filter(pk=version.pk)
 
         return qs.distinct()
+
+    def pull_through_add_content(self, content_artifact):
+        """
+        Dispatch a task to add the passed in content_artifact from the content app's pull-through
+        feature to this repository.
+
+        Defaults to adding the associated content of the passed in content_artifact to the
+        repository. Plugins should overwrite this method if more complex behavior is necessary, i.e.
+        adding multiple associated content units in the same task.
+
+        Args:
+            content_artifact (pulpcore.app.models.ContentArtifact): the content artifact to add
+
+        Returns:
+            Optional(Task): Returns the dispatched task or None if nothing was done
+        """
+        cpk = content_artifact.content_id
+        already_present = RepositoryContent.objects.filter(
+            content__pk=cpk, repository=self, version_removed__isnull=True
+        )
+        if not cpk or already_present.exists():
+            return None
+
+        from pulpcore.plugin.tasking import dispatch, add_and_remove
+
+        body = {"repository_pk": self.pk, "add_content_units": [cpk], "remove_content_units": []}
+        return dispatch(add_and_remove, kwargs=body, exclusive_resources=[self], immediate=True)
 
     @hook(AFTER_UPDATE, when="retain_repo_versions", has_changed=True)
     def _cleanup_old_versions_hook(self):
