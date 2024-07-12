@@ -420,7 +420,7 @@ class PulpcoreWorker:
                 self.supervise_task(task)
 
     def record_unblocked_waiting_tasks_metric(self):
-        if os.getenv("PULP_OTEL_ENABLED").lower() != "true":
+        if os.getenv("PULP_OTEL_ENABLED", "").lower() != "true":
             return
 
         now = timezone.now()
