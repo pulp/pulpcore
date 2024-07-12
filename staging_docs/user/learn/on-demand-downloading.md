@@ -45,7 +45,9 @@ Unless a plugin has enabled either the 'on_demand' or 'streamed' values for the 
 you will receive an error. Check that plugin's documentation also.
 
 !!! note
-    Want to add on-demand support to your plugin? See the [Pulp Plugin API](../plugins/nightly/) documentation for more details on how to add on-demand support to a plugin.
+    Want to add on-demand support to your plugin? See the
+    [On-Demand Support](site:pulpcore/docs/dev/learn/other/on-demand-support/)
+    documentation for more details on how to add on-demand support to a plugin.
 
 
 ## Associating On-Demand Content with Additional Repository Versions

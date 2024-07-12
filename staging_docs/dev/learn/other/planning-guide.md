@@ -2,9 +2,8 @@
 
 # Plugin Planning Guide
 
-This guide assumes that you are familiar with [general pulp concepts](https://docs.pulpproject.org/plugins/plugin-writer/concepts/).  Usually, the most difficult part
-of writing a new plugin is understanding the ecosystem surrounding the content type(s) that you
-want to support.
+This guide assumes that you are familiar with [general pulp concepts](site:pulpcore/docs/dev/learn/plugin-concepts/).
+Usually, the most difficult part of writing a new plugin is understanding the ecosystem surrounding the content type(s) that you want to support.
 
 This page outlines some of the questions a plugin writer should consider while planning and writing
 a new plugin.

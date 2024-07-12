@@ -56,7 +56,7 @@ developers call the "Master/Detail pattern". The model defining the common field
 
 For example, pulpcore defines the [Remote](https://github.com/pulp/pulpcore/blob/b575e1338e04978755a0231905950659aeea4ea9/pulpcore/app/models/repository.py#L268) Master model. It
 inherits from `MasterModel` which identifies it as a Master model, and defines many fields. Then
-pulp_file defines the [FileRemote](https://github.com/pulp/pulp_file/blob/68cdbde4f7f9609d987ec4e6694810e6085288db/pulp_file/app/models.py#L46) which is a Detail model. The
+pulp_file defines the [FileRemote](https://github.com/pulp/pulpcore/blob/859427253903bdd55500cbc54097092baacec890/pulp_file/app/models.py#L48) which is a Detail model. The
 Detail model defines a `TYPE` class attribute and is a subclass of a Master model.
 
 Typically Master models are provided by pulpcore, and Detail models by plugins, but this is not
@@ -383,7 +383,7 @@ def post(settings):
 
 ## Custom API URL Routes
 
-The [typical plugin viewsets](subclassing-viewsets) are all suburls under `/pulp/api/v3/`, but
+The [typical plugin viewsets](site:pulpcore/docs/dev/learn/subclassing/viewsets/) are all suburls under `/pulp/api/v3/`, but
 some content types require additional urls outside of this area. For example pulp_ansible provides
 the Galaxy API at `/pulp_ansible/galaxy/`.
 
@@ -703,7 +703,8 @@ This could be done as follows:
 - Add the `new` field next to the `old` field and have Django auto-create a migration adding
   `new`.
 - The same migration needs to install a new trigger that anytime `old` is written to, `new` is
-  also written to and vice-versa. For example, something [like this](https://www.appsloveworld.com/postgresql/100/94/how-to-dual-write-to-two-columns-in-one-table-using-postgres-trigger)
+  also written to and vice-versa.
+  For example, something like writting to two columns in one table using postgres trigger.
   This allows the new code to read/write exclusively with `new` and the old code to deal with `old`.
 - Write a data migration that updates the `new` column with `old` data in batches. Use batching
   to avoid a long table-lock.

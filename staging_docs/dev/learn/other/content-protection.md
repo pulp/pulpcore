@@ -23,7 +23,7 @@ Master/Detail objects a `TYPE` class attribute is needed which is then used in t
 ```
 
 !!! note
-The [pulp-certguard](https://docs.pulpproject.org/pulp_certguard/) plugin ships various
+The [pulp-certguard](site:pulp_certguard/) plugin ships various
 `ContentGuard` types for users and plugin writers to use together. Plugins can ship their own
 content guards too, but look at the existing ones first.
 
@@ -74,7 +74,7 @@ http POST http://localhost:24817/pulp/api/v3/contentguards/<plugin_name>/secret_
 ```
 
 Then the user can protect one or more Distributions by specifying `content_guard`. See the
-[ContentGuard creation API](https://docs.pulpproject.org/restapi.html#operation/distributions_file_file_create) for more information.
+[ContentGuard creation API](site:pulpcore/restapi/#tag/Distributions:-File/operation/distributions_file_file_list) for more information.
 
 
 

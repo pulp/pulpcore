@@ -18,7 +18,7 @@ You can automatically associate newly uploaded content with a Repository when us
 
 ## Chunked Uploads
 
-For large file uploads, Pulp provides an [Uploads API](../../restapi.html#tag/uploads). To begin
+For large file uploads, Pulp provides an [Uploads API](site:pulpcore/restapi/#tag/Uploads). To begin
 uploading a file in chunks, an initial POST request must be sent to the `/pulp/api/v3/uploads`
 endpoint with the total size of the file:
 

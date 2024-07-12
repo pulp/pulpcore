@@ -1,6 +1,10 @@
 # Pull Request Walkthrough
 
-Changes to pulpcore are submitted via [GitHub Pull Requests (PR)](https://help.github.com/articles/about-pull-requests/) to the [pulp git repository](https://github.com/pulp/pulpcore) . Plugin git repositories are listed in the [plugin table](https://pulpproject.org/content-plugins/).
+Changes to pulpcore are submitted via
+[GitHub Pull Requests (PR)](https://help.github.com/articles/about-pull-requests/) to the
+[pulp git repository](https://github.com/pulp/pulpcore).
+
+Plugin git repositories are listed in the [plugin table](site:help/#quick-links-wip).
 
 ## Checklist
 

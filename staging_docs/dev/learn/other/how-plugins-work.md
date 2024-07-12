@@ -18,7 +18,7 @@ attributes:
 - `name` attribute defines the importable dotted Python location of the plugin application (the
   Python namespace that contains at least models and viewsets).
 - `label` attribute to something that unambiguously labels the plugin in a clear way for users.
-  See [how it is done](https://github.com/pulp/pulp_file/blob/master/pulp_file/app/__init__.py) in
+  See [how it is done](https://github.com/pulp/pulpcore/blob/master/pulp_file/app/__init__.py) in
   the `pulp_file` plugin.
 - `version` attribute to the string representing the version.
 
@@ -49,7 +49,7 @@ If you do not wish to use Django's `default_app_config` convention, the name giv
 importable dotted path to your plugin's application config class, just as `default_app_config`
 does.
 
-Check out `pulp_file` plugin: [default_app_config](https://github.com/pulp/pulp_file/blob/master/pulp_file/__init__.py) and [setup.py example](https://github.com/pulp/pulp_file/blob/master/setup.py).
+Check out `pulp_file` plugin: [default_app_config](https://github.com/pulp/pulpcore/blob/master/pulp_file/__init__.py) and [setup.py example](https://github.com/pulp/pulpcore/blob/master/setup.py).
 
 
 
@@ -64,7 +64,7 @@ module of a plugin app, and so on.
 This matching of module names is required for the Pulp Core to be able to auto-discover plugin
 components, particularly for both models and viewsets.
 
-Take a look at [the structure](https://github.com/pulp/pulp_file/tree/master/pulp_file/app) of
+Take a look at [the structure](https://github.com/pulp/pulpcore/tree/master/pulp_file/app) of
 the `pulp_file` plugin.
 
 ## Serializer and OpenAPI schema
