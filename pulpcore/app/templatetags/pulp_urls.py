@@ -3,7 +3,7 @@ import re
 from django import template
 from django.conf import settings
 from django.utils.encoding import force_str
-from django.utils.html import escape
+from django.utils.html import escape, smart_urlquote
 from django.utils.safestring import SafeData, mark_safe
 
 register = template.Library()
@@ -20,6 +20,8 @@ WRAPPING_PUNCTUATION = [
     ("&quot;", "&quot;"),
 ]
 word_split_re = re.compile(r"(\s+)")
+api_root_prefix = r"^" + settings.V3_API_ROOT.replace("/", r"\/")
+href_re = re.compile(api_root_prefix, re.IGNORECASE)
 
 
 @register.filter(needs_autoescape=True)
@@ -57,6 +59,9 @@ def urlize_quoted_hrefs(text, trim_url_limit=None, nofollow=True, autoescape=Tru
             url = None
             nofollow_attr = ' rel="nofollow"' if nofollow else ""
 
+            if href_re.match(middle):
+                url = smart_urlquote(middle)
+
             # Check if it's a real URL
             if url and ("{" in url or "%7B" in url):
                 url = None
@@ -74,8 +79,6 @@ def urlize_quoted_hrefs(text, trim_url_limit=None, nofollow=True, autoescape=Tru
                     words[i] = mark_safe(word)
                 elif autoescape:
                     words[i] = escape(word)
-        elif safe_input:
-            words[i] = mark_safe(word)
-        elif autoescape:
+        else:
             words[i] = escape(word)
     return "".join(words)
