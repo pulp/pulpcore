@@ -28,7 +28,7 @@ except ImportError:
 
         def __init__(self, task):
             """Provide task info to exception."""
-            description = task.to_dict()["error"].get("description")
+            description = task.to_dict()
             super().__init__(self, f"Pulp task failed ({description})")
             self.task = task
 
