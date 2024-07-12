@@ -108,7 +108,7 @@ Here is the list of exactly what is collected along with an example below:
     We may add more analytics data points collected in the future. To keep our high standards for
     privacy protection, we have a rigorous approval process in place. You can see open proposals on
     [https://github.com/pulp/analytics.pulpproject.org/issues](https://github.com/pulp/analytics.pulpproject.org/issues). In doubt,
-    [reach out to us](https://pulpproject.org/get_involved/).
+    [reach out to us](site:help/community/get-involved/).
 
 
 An example payload:
@@ -147,8 +147,8 @@ Pulp can produce OpenTelemetry data, like the number of requests, active connect
     This feature is provided as a tech preview and could change in backwards incompatible
     ways in the future.
 
-If you are using [Pulp in One Container](https://pulpproject.org/pulp-in-one-container/) or [Pulp Operator](https://docs.pulpproject.org/pulp_operator/) and want to enable it, you will need to set the following
-environment variables:
+If you are using [Pulp in One Container](site:pulp-oci-images/docs/admin/tutorials/quickstart/#single-container)
+or [Pulp Operator](site:pulp-operator/) and want to enable it, you will need to set the following environment variables:
 
 - `PULP_OTEL_ENABLED` set to `True`.
 - `OTEL_EXPORTER_OTLP_ENDPOINT` set to the address of your OpenTelemetry Collector instance

@@ -1,6 +1,6 @@
 # Plugin Walkthrough
 
-This guide assumes that you are familiar with [general pulp concepts](https://docs.pulpproject.org/plugins/plugin-writer/concepts/) as well as the `planning-guide`.
+This guide assumes that you are familiar with [general pulp concepts](site:pulpcore/docs/dev/learn/plugin-concepts/) as well as the `planning-guide`.
 It will be helpful to skim the `plugin-concepts` pages, and refer back to them as you go
 through the process.
 
@@ -33,9 +33,9 @@ To define a new content type(s), e.g. `ExampleContent`:
 {class}`~pulpcore.plugin.models.Content` model should not be used directly anywhere in plugin code.
 Only plugin-defined Content classes are expected to be used.
 
-Check `pulp_file` implementation of [the FileContent](https://github.com/pulp/pulp_file/blob/master/pulp_file/app/models.py) and its
-[serializer](https://github.com/pulp/pulp_file/blob/master/pulp_file/app/serializers.py)
-and [viewset](https://github.com/pulp/pulp_file/blob/master/pulp_file/app/viewsets.py).
+Check `pulp_file` implementation of [the FileContent](https://github.com/pulp/pulpcore/blob/master/pulp_file/app/models.py) and its
+[serializer](https://github.com/pulp/pulpcore/blob/master/pulp_file/app/serializers.py)
+and [viewset](https://github.com/pulp/pulpcore/blob/master/pulp_file/app/viewsets.py).
 For a general reference for serializers and viewsets, check [DRF documentation](http://www.django-rest-framework.org/api-guide/viewsets/).
 
 Add any fields that correspond to the metadata of your content, which could be the project name,
@@ -89,7 +89,7 @@ See `writing-tasks`. Almost all plugins must implement a `sync` task, most imple
 >
 > - `Plugin entry point is defined <plugin-entry-point>`
 >
-> - [pulpcore is specified as a requirement](https://github.com/pulp/pulp_file/blob/master/setup.py#L6)
+> - [pulpcore is specified as a requirement](https://github.com/pulp/pulp_rpm/blob/main/requirements.txt#L6)
 >
 > - Necessary models/serializers/viewsets are `defined <subclassing-general>` and `discoverable <mvs-discovery>`. At a minimum:
 >

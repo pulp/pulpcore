@@ -18,7 +18,8 @@ client libraries for plugins should follow the\`\`pulp\_\<slug>\_client\`\` nami
 
 ## Other Languages
 
-A client can be generated using Pulp's OpenAPI schema and any of the available [generators](https://openapi-generator.tech/docs/generators.html).
+A client can be generated using Pulp's OpenAPI schema and any of the available
+[generators](https://openapi-generator.tech/docs/generators/).
 
 Generating a client is a two step process:
 

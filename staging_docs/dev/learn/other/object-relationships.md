@@ -43,6 +43,6 @@ An important feature of the current design is deduplication of
 {class}`~pulpcore.plugin.models.Content`.
 See more details on how it affects remote implementation in `define-remote` section.
 
-Check `pulp_file` [implementation](https://github.com/pulp/pulp_file/) to see how all
+Check `pulp_file` [implementation](https://github.com/pulp/pulpcore/tree/main/pulp_file) to see how all
 those models are used in practice.
 More detailed explanation of model usage with references to `pulp_file` code is below.
