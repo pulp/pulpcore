@@ -15,6 +15,9 @@ RUN pip3 install
 {%- endif -%}
 {%- for item in plugins -%}
 {{ " " }}{{ item.source }}
+{%- if item.upperbounds | default(false) -%}
+{{ " " }}-c ./{{ item.name }}/upperbounds_constraints.txt
+{%- endif -%}
 {%- if item.lowerbounds | default(false) -%}
 {{ " " }}-c ./{{ item.name }}/lowerbounds_constraints.txt
 {%- endif -%}
