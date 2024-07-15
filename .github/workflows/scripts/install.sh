@@ -56,6 +56,11 @@ if [[ -f ../../ci_requirements.txt ]]; then
     ci_requirements: true
 VARSYAML
 fi
+if [ "$TEST" = "pulp" ]; then
+  cat >> vars/main.yaml << VARSYAML
+    upperbounds: true
+VARSYAML
+fi
 if [ "$TEST" = "lowerbounds" ]; then
   cat >> vars/main.yaml << VARSYAML
     lowerbounds: true
