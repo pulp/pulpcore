@@ -1,7 +1,7 @@
 # This config represents the latest values used when running the plugin-template. Any settings that
 # were not present before running plugin-template have been added with their default values.
 
-# generated with plugin_template@2021.08.26-347-gc4a2504
+# generated with plugin_template@2021.08.26-354-g82d22de
 
 api_root: /pulp/
 black: true
@@ -12,7 +12,7 @@ check_stray_pulpcore_imports: false
 ci_base_image: ghcr.io/pulp/pulp-ci-centos9
 ci_env: {}
 ci_trigger: '{pull_request: {branches: [''*'']}}'
-ci_update_docs: true
+ci_update_docs: false
 cli_package: pulp-cli
 cli_repo: https://github.com/pulp/pulp-cli.git
 core_import_allowed: []
@@ -23,8 +23,7 @@ disabled_redis_runners:
 - s3
 doc_requirements_from_pulpcore: false
 docker_fixtures: true
-docs_test: true
-extra_docs_requirements: []
+docs_test: false
 flake8: true
 flake8_ignore:
 - ./pulpcore/app/protobuf/*
@@ -48,7 +47,6 @@ plugins:
   name: pulp-certguard
 post_job_template: null
 pre_job_template: null
-publish_docs_to_pulpprojectdotorg: true
 pulp_env: {}
 pulp_env_azure:
   otel_bsp_max_export_batch_size: 1
@@ -99,6 +97,4 @@ test_performance: false
 test_reroute: true
 test_s3: true
 use_issue_template: true
-use_legacy_docs: true
-use_unified_docs: false
 
