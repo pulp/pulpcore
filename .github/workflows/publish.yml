@@ -141,52 +141,6 @@ jobs:
       - name: "Publish client to rubygems"
         run: |
           bash .github/workflows/scripts/publish_client_gem.sh ${{ github.ref_name }}
-  publish-docs:
-    runs-on: "ubuntu-latest"
-    needs:
-      - "build"
-
-    env:
-      GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
-
-    steps:
-      - uses: "actions/checkout@v4"
-        with:
-          fetch-depth: 1
-          path: "pulpcore"
-
-      - uses: "actions/setup-python@v5"
-        with:
-          python-version: "3.11"
-
-      - name: "Install python dependencies"
-        run: |
-          echo ::group::PYDEPS
-          pip install 'packaging~=21.3' requests
-          echo ::endgroup::
-
-      - name: "Setting secrets"
-        run: |
-          python3 .github/workflows/scripts/secrets.py "$SECRETS_CONTEXT"
-        env:
-          SECRETS_CONTEXT: "${{ toJson(secrets) }}"
-
-      - name: "Download built docs"
-        uses: "actions/download-artifact@v4"
-        with:
-          name: "docs.tar"
-          path: "pulpcore/"
-
-      - name: "Download Python client docs"
-        uses: "actions/download-artifact@v4"
-        with:
-          name: "python-client-docs.tar"
-          path: "pulpcore/"
-
-      - name: "Publish docs to pulpproject.org"
-        run: |
-          tar -xvf docs.tar
-          .github/workflows/scripts/publish_docs.sh tag ${{ github.ref_name }}
 
   create-gh-release:
     runs-on: "ubuntu-latest"
@@ -195,7 +149,6 @@ jobs:
       - "publish-package"
       - "publish-python-bindings"
       - "publish-ruby-bindings"
-      - "publish-docs"
 
     steps:
       - name: "Create release on GitHub"
