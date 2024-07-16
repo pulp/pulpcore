@@ -5,7 +5,7 @@ asyncio-throttle>=1.0,<=1.0.2
 async-timeout>=4.0.3,<4.0.4;python_version<"3.11"
 backoff>=2.1.2,<2.2.2
 click>=8.1.0,<=8.1.7
-cryptography>=38.0.1,<42.0.1
+cryptography>=38.0.1,<42.0
 Django~=3.2.16  # LTS version, switch only if we have a compelling reason to
 django-currentuser>=0.5.3,<=0.5.3
 django-filter>=22.1,<=22.1
