@@ -8,6 +8,22 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.39.18 (2024-07-16) {: #3.39.18 }
+
+
+### REST API {: #3.39.18-rest-api }
+
+#### Bugfixes {: #3.39.18-rest-api-bugfix }
+
+- Browsable HREFs now have clickable links again.
+  [#5563](https://github.com/pulp/pulpcore/issues/5563)
+
+### Plugin API {: #3.39.18-plugin-api }
+
+No significant changes.
+
+---
+
 ## 3.39.17 (2024-06-24) {: #3.39.17 }
 
 
