@@ -8,6 +8,30 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.55.2 (2024-07-16) {: #3.55.2 }
+
+
+### REST API {: #3.55.2-rest-api }
+
+#### Bugfixes {: #3.55.2-rest-api-bugfix }
+
+- Browsable HREFs now have clickable links again.
+  [#5563](https://github.com/pulp/pulpcore/issues/5563)
+
+### Plugin API {: #3.55.2-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.55.2-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.55.2-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.55.1 (2024-06-24) {: #3.55.1 }
 
 
@@ -431,6 +455,30 @@ No significant changes.
 No significant changes.
 
 ### Pulp Cert Guard
+
+No significant changes.
+
+---
+
+## 3.49.14 (2024-07-16) {: #3.49.14 }
+
+
+### REST API {: #3.49.14-rest-api }
+
+#### Bugfixes {: #3.49.14-rest-api-bugfix }
+
+- Browsable HREFs now have clickable links again.
+  [#5563](https://github.com/pulp/pulpcore/issues/5563)
+
+### Plugin API {: #3.49.14-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.49.14-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.49.14-pulp-cert-guard }
 
 No significant changes.
 
@@ -1340,6 +1388,22 @@ No significant changes.
 -   Starting from this release pulp_file will be shipped as part of the pulpcore package.
     [#4550](https://github.com/pulp/pulpcore/issues/4550)
 
+## 3.39.18 (2024-07-16) {: #3.39.18 }
+
+
+### REST API {: #3.39.18-rest-api }
+
+#### Bugfixes {: #3.39.18-rest-api-bugfix }
+
+- Browsable HREFs now have clickable links again.
+  [#5563](https://github.com/pulp/pulpcore/issues/5563)
+
+### Plugin API {: #3.39.18-plugin-api }
+
+No significant changes.
+
+---
+
 ## 3.39.17 (2024-06-24) {: #3.39.17 }
 
 
@@ -2109,6 +2173,22 @@ No significant changes.
 #### Misc
 
 -   [#3798](https://github.com/pulp/pulpcore/issues/3798)
+
+## 3.28.30 (2024-07-16) {: #3.28.30 }
+
+
+### REST API {: #3.28.30-rest-api }
+
+#### Bugfixes {: #3.28.30-rest-api-bugfix }
+
+- Browsable HREFs now have clickable links again.
+  [#5563](https://github.com/pulp/pulpcore/issues/5563)
+
+### Plugin API {: #3.28.30-plugin-api }
+
+No significant changes.
+
+---
 
 ## 3.28.29 (2024-06-24) {: #3.28.29 }
 
@@ -3375,6 +3455,22 @@ No significant changes.
     `pulpcore.plugin.util.raise_for_unknown_content_units`.
     [#3604](https://github.com/pulp/pulpcore/issues/3604)
 
+## 3.22.29 (2024-07-16) {: #3.22.29 }
+
+
+### REST API {: #3.22.29-rest-api }
+
+#### Bugfixes {: #3.22.29-rest-api-bugfix }
+
+- Browsable HREFs now have clickable links again.
+  [#5563](https://github.com/pulp/pulpcore/issues/5563)
+
+### Plugin API {: #3.22.29-plugin-api }
+
+No significant changes.
+
+---
+
 ## 3.22.28 (2024-06-24) {: #3.22.28 }
 
 
@@ -3922,6 +4018,22 @@ No significant changes.
 -   Deprecated model `Label` and serializer field `LabelField` and `LabelSelectFilter` for
     removal in 3.25.
     [#3400](https://github.com/pulp/pulpcore/issues/3400)
+
+## 3.21.32 (2024-07-16) {: #3.21.32 }
+
+
+### REST API {: #3.21.32-rest-api }
+
+#### Bugfixes {: #3.21.32-rest-api-bugfix }
+
+- Browsable HREFs now have clickable links again.
+  [#5563](https://github.com/pulp/pulpcore/issues/5563)
+
+### Plugin API {: #3.21.32-plugin-api }
+
+No significant changes.
+
+---
 
 ## 3.21.31 (2024-06-24) {: #3.21.31 }
 
