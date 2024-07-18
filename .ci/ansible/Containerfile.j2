@@ -9,7 +9,9 @@ ADD ./{{ item.name }} ./{{ item.name }}
 # S3 botocore needs to be patched to handle responses from minio during 0-byte uploads
 # Hacking botocore (https://github.com/boto/botocore/pull/1990)
 
-RUN pip3 install
+RUN pip3 install --upgrade pip setuptools wheel && \
+  rm -rf /root/.cache/pip && \
+  pip3 install
 {%- if s3_test | default(false) -%}
 {{ " " }}git+https://github.com/gerrod3/botocore.git@fix-100-continue
 {%- endif -%}
@@ -25,7 +27,8 @@ RUN pip3 install
 {{ " " }}-r ./{{ item.name }}/ci_requirements.txt
 {%- endif -%}
 {%- endfor %}
-{{ " " }}-c ./{{ plugins[0].name }}/.ci/assets/ci_constraints.txt
+{{ " " }}-c ./{{ plugins[0].name }}/.ci/assets/ci_constraints.txt && \
+  rm -rf /root/.cache/pip
 
 {% if pulp_env is defined and pulp_env %}
 {% for key, value in pulp_env.items() %}
