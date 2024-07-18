@@ -62,6 +62,8 @@ def to_upper_bound(req):
                     max_version = f"{version.major}.{version.minor}.{version.micro-1}"
                 elif version.minor != 0:
                     max_version = f"{version.major}.{version.minor-1}"
+                elif version.major != 0:
+                    max_version = f"{version.major-1}.0"
                 else:
                     return f"# NO BETTER CONSTRAINT: {req}"
                 return f"{requirement.name}{operator}{max_version}"
