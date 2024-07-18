@@ -28,7 +28,7 @@ opentelemetry-exporter-otlp-proto-http>=1.24.0,<=1.25.0
 opentelemetry-instrumentation-django>=0.45b0,<=0.46b0
 opentelemetry-instrumentation-wsgi>=0.45b,<=0.46b0
 protobuf>=4.21.1,<5.0
-pulp-glue>=0.18.0,<0.27
+pulp-glue>=0.18.0,<0.28
 pygtrie>=2.5,<=2.5.0
 psycopg[binary]>=3.1.8,<=3.2.1
 pyparsing>=3.1.0,<=3.1.2
