@@ -18,15 +18,7 @@ cd "$(dirname "$(realpath -e "$0")")"/../../..
 pushd ../pulp-openapi-generator
 rm -rf "pulpcore-client"
 
-# We need to copy that over to be visible in the container.
-#cp "../pulpcore/core-api.json" .
-#./gen-client.sh "core-api.json" "core" ruby "pulpcore"
-
-# -------------
-# The generator still needs to have it called api.json at this time...
-cp "../pulpcore/api.json" .
-./gen-client.sh "api.json" "core" ruby "pulpcore"
-# -------------
+./gen-client.sh "../pulpcore/core-api.json" "core" ruby "pulpcore"
 
 pushd pulpcore-client
 gem build pulpcore_client
@@ -34,15 +26,7 @@ tar cvf "../../pulpcore/core-ruby-client.tar" "./pulpcore_client-"*".gem"
 popd
 rm -rf "pulp_file-client"
 
-# We need to copy that over to be visible in the container.
-#cp "../pulpcore/file-api.json" .
-#./gen-client.sh "file-api.json" "file" ruby "pulp_file"
-
-# -------------
-# The generator still needs to have it called api.json at this time...
-cp "../pulpcore/api.json" .
-./gen-client.sh "api.json" "file" ruby "pulp_file"
-# -------------
+./gen-client.sh "../pulpcore/file-api.json" "file" ruby "pulp_file"
 
 pushd pulp_file-client
 gem build pulp_file_client
@@ -50,15 +34,7 @@ tar cvf "../../pulpcore/file-ruby-client.tar" "./pulp_file_client-"*".gem"
 popd
 rm -rf "pulp_certguard-client"
 
-# We need to copy that over to be visible in the container.
-#cp "../pulpcore/certguard-api.json" .
-#./gen-client.sh "certguard-api.json" "certguard" ruby "pulp_certguard"
-
-# -------------
-# The generator still needs to have it called api.json at this time...
-cp "../pulpcore/api.json" .
-./gen-client.sh "api.json" "certguard" ruby "pulp_certguard"
-# -------------
+./gen-client.sh "../pulpcore/certguard-api.json" "certguard" ruby "pulp_certguard"
 
 pushd pulp_certguard-client
 gem build pulp_certguard_client
