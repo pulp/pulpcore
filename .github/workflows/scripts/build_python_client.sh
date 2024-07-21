@@ -18,9 +18,7 @@ cd "$(dirname "$(realpath -e "$0")")"/../../..
 pushd ../pulp-openapi-generator
 rm -rf "pulpcore-client"
 
-# We need to copy that over to be visible in the container.
-cp "../pulpcore/core-api.json" .
-./gen-client.sh "core-api.json" "core" python "pulpcore"
+./gen-client.sh "../pulpcore/core-api.json" "core" python "pulpcore"
 
 pushd pulpcore-client
 python setup.py sdist bdist_wheel --python-tag py3
@@ -55,9 +53,7 @@ tar cvf ../../pulpcore/core-python-client-docs.tar ./site
 popd
 rm -rf "pulp_file-client"
 
-# We need to copy that over to be visible in the container.
-cp "../pulpcore/file-api.json" .
-./gen-client.sh "file-api.json" "file" python "pulp_file"
+./gen-client.sh "../pulpcore/file-api.json" "file" python "pulp_file"
 
 pushd pulp_file-client
 python setup.py sdist bdist_wheel --python-tag py3
@@ -92,9 +88,7 @@ tar cvf ../../pulpcore/file-python-client-docs.tar ./site
 popd
 rm -rf "pulp_certguard-client"
 
-# We need to copy that over to be visible in the container.
-cp "../pulpcore/certguard-api.json" .
-./gen-client.sh "certguard-api.json" "certguard" python "pulp_certguard"
+./gen-client.sh "../pulpcore/certguard-api.json" "certguard" python "pulp_certguard"
 
 pushd pulp_certguard-client
 python setup.py sdist bdist_wheel --python-tag py3
