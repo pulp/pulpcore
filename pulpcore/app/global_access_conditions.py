@@ -479,9 +479,9 @@ def has_repo_or_repo_ver_param_model_or_obj_perms(request, view, action, permiss
     )
     serializer.is_valid(raise_exception=True)
     if repository := serializer.validated_data.get("repository"):
-        return request.user.has_perm(permission, repository)
+        return request.user.has_perm(permission, repository.cast())
     elif repo_ver := serializer.validated_data.get("repository_version"):
-        return request.user.has_perm(permission, repo_ver.repository)
+        return request.user.has_perm(permission, repo_ver.repository.cast())
     return True
 
 
