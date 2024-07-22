@@ -50,6 +50,19 @@ def _uuid_to_advisory_lock(value):
     return ((value >> 64) ^ value) & 0x7FFFFFFFFFFFFFFF
 
 
+class ProfileArtifact(BaseModel):
+    """
+    A model encapsulating profiled artifact data
+    """
+
+    artifact = models.ForeignKey("Artifact", on_delete=models.CASCADE)
+    task = models.ForeignKey("Task", on_delete=models.CASCADE)
+    name = models.TextField()
+
+    class Meta:
+        unique_together = ("task", "name")
+
+
 class Task(BaseModel, AutoAddObjPermsMixin):
     """
     Represents a task
@@ -99,6 +112,8 @@ class Task(BaseModel, AutoAddObjPermsMixin):
     reserved_resources_record = ArrayField(models.TextField(), null=True)
     pulp_domain = models.ForeignKey("Domain", default=get_domain_pk, on_delete=models.CASCADE)
     versions = HStoreField(default=dict)
+
+    profile_artifacts = models.ManyToManyField("Artifact", through=ProfileArtifact)
 
     def __str__(self):
         return "Task: {name} [{state}]".format(name=self.name, state=self.state)
@@ -286,6 +301,7 @@ class Task(BaseModel, AutoAddObjPermsMixin):
         ]
         permissions = [
             ("manage_roles_task", "Can manage role assignments on task"),
+            ("view_task_profile_artifacts", "Can view profile data for task"),
         ]
 
 

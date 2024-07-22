@@ -73,6 +73,7 @@ from .status import ApiAppStatus, ContentAppStatus
 
 from .task import (
     CreatedResource,
+    ProfileArtifact,
     Task,
     TaskGroup,
     TaskSchedule,

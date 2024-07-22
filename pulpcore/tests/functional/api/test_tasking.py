@@ -22,6 +22,16 @@ def task(dispatch_task, monitor_task):
 
 
 @pytest.mark.parallel
+def test_retrieving_task_profile_artifacts(gen_user, pulpcore_bindings, task):
+    with gen_user(model_roles=["core.task_viewer"]), pytest.raises(ApiException) as ctx:
+        pulpcore_bindings.TasksApi.profile_artifacts(task.pulp_href)
+    assert ctx.value.status == 403
+
+    with gen_user(model_roles=["core.task_owner"]):
+        assert pulpcore_bindings.TasksApi.profile_artifacts(task.pulp_href).urls is not None
+
+
+@pytest.mark.parallel
 def test_multi_resource_locking(dispatch_task, monitor_task):
     task_href1 = dispatch_task(
         "pulpcore.app.tasks.test.sleep",
