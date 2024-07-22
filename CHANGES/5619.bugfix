@@ -1,0 +1,2 @@
+Fixed a bug in `has_repo_or_repo_ver_param_model_or_obj_perms` function to make
+it work with plugin Repositories.
