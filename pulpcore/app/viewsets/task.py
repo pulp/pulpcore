@@ -2,14 +2,15 @@ from gettext import gettext as _
 
 from django.db.models import Prefetch
 from django_filters.rest_framework import filters
-from drf_spectacular.utils import extend_schema
+from drf_spectacular.utils import extend_schema, inline_serializer
 from rest_framework import mixins, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.serializers import ValidationError
+from rest_framework.serializers import DictField, URLField, ValidationError
 
 from pulpcore.filters import BaseFilterSet
 from pulpcore.app.models import (
+    ProfileArtifact,
     Task,
     TaskGroup,
     TaskSchedule,
@@ -30,7 +31,7 @@ from pulpcore.app.serializers import (
     WorkerSerializer,
 )
 from pulpcore.app.tasks import purge
-from pulpcore.app.util import get_domain
+from pulpcore.app.util import get_domain, get_artifact_url
 from pulpcore.app.viewsets import NamedModelViewSet, RolesMixin
 from pulpcore.app.viewsets.base import DATETIME_FILTER_OPTIONS, NAME_FILTER_OPTIONS
 from pulpcore.app.viewsets.custom_filters import (
@@ -93,6 +94,12 @@ class TaskViewSet(
                 "condition": "has_model_or_domain_or_obj_perms:core.view_task",
             },
             {
+                "action": ["profile_artifacts"],
+                "principal": "authenticated",
+                "effect": "allow",
+                "condition": "has_model_or_domain_or_obj_perms:core.view_task_profile_artifacts",
+            },
+            {
                 "action": ["destroy"],
                 "principal": "authenticated",
                 "effect": "allow",
@@ -131,6 +138,7 @@ class TaskViewSet(
             "description": "Allow all actions on a task.",
             "permissions": [
                 "core.view_task",
+                "core.view_task_profile_artifacts",
                 "core.change_task",
                 "core.delete_task",
                 "core.manage_roles_task",
@@ -241,6 +249,26 @@ class TaskViewSet(
             purge, args=[serializer.data["finished_before"], list(serializer.data["states"])]
         )
         return OperationPostponedResponse(task, request)
+
+    @extend_schema(
+        summary=_("Fetch downloadable links for profile artifacts"),
+        responses=inline_serializer(
+            "ProfileArtifactResponse",
+            fields={"urls": DictField(child=URLField())},
+        ),
+    )
+    @action(detail=True)
+    def profile_artifacts(self, request, pk):
+        """
+        Return pre-signed URLs used for downloading raw profile artifacts.
+        """
+        task = self.get_object()
+        data = {}
+
+        for pa in ProfileArtifact.objects.select_related("artifact").filter(task=task):
+            data[pa.name] = get_artifact_url(pa.artifact)
+
+        return Response({"urls": data})
 
 
 class TaskGroupViewSet(NamedModelViewSet, mixins.RetrieveModelMixin, mixins.ListModelMixin):

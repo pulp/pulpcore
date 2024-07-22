@@ -1,9 +1,6 @@
 from gettext import gettext as _
-from pathlib import Path
 from types import SimpleNamespace
 
-
-VAR_TMP_PULP = Path("/var/tmp/pulp")
 
 # Special purpose advisory locks for use with the two number variant.
 # The group will be 0.

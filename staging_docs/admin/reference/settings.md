@@ -389,10 +389,12 @@ If set to 0, automatic cleanup is disabled, which is the default.
 
 ### TASK_DIAGNOSTICS
 
-If `True`, each task will record various diagnostics (listed below) to files in the dir
-`/var/tmp/pulp/<task_UUID>/`. This is `False` by default.
+The default setting is `False`. When set to `True`, each task records various diagnostics (listed below)
+and stores them as separate artifacts. To download the data, issue GET requests to `${TASK_HREF}profile_artifacts/`.
+The artifacts are cleaned up automatically by the orphan cleanup.
 
-> - memory - the task's max resident set size in MB.
+> - memory.datum - the task's max resident set size in MB
+> - pyinstrument.html - the output of the pyinstrument profiler, if installed
 
 
 
