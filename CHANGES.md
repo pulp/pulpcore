@@ -8,6 +8,31 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.49.15 (2024-07-23) {: #3.49.15 }
+
+
+### REST API {: #3.49.15-rest-api }
+
+#### Bugfixes {: #3.49.15-rest-api-bugfix }
+
+- Fixed a bug in `has_repo_or_repo_ver_param_model_or_obj_perms` function to make
+  it work with plugin Repositories.
+  [#5619](https://github.com/pulp/pulpcore/issues/5619)
+
+### Plugin API {: #3.49.15-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.49.15-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.49.15-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.49.14 (2024-07-16) {: #3.49.14 }
 
 
