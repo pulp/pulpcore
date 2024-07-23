@@ -8,7 +8,7 @@ with open("requirements.txt") as requirements:
 
 setup(
     name="pulpcore",
-    version="3.55.3",
+    version="3.55.4.dev",
     description="Pulp Django Application and Related Modules",
     long_description=long_description,
     long_description_content_type="text/markdown",
