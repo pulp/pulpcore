@@ -1,2 +1,2 @@
-pulp_file
-pulp-certguard
+pulp_file>=1.15,<1.16
+pulp-certguard>=1.7,<1.8
