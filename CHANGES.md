@@ -8,6 +8,51 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.56.0 (2024-07-23) {: #3.56.0 }
+
+
+### REST API {: #3.56.0-rest-api }
+
+#### Features {: #3.56.0-rest-api-feature }
+
+- Added kafka integration (tech-preview).
+  [#5337](https://github.com/pulp/pulpcore/issues/5337)
+- Added RBAC for `TaskGroups` API.
+  [#5497](https://github.com/pulp/pulpcore/issues/5497)
+
+#### Bugfixes {: #3.56.0-rest-api-bugfix }
+
+- Fixed path title at content directory index to include domain's name when enabled.
+  [#4253](https://github.com/pulp/pulpcore/issues/4253)
+- Fixed content upload for existing on-demand content not properly storing the new artifact.
+  [#5501](https://github.com/pulp/pulpcore/issues/5501)
+- Fixed openapi command where plugins relied on CONTENT_ORIGIN to be set.
+  [#5510](https://github.com/pulp/pulpcore/issues/5510)
+- Added a note about the default value of the `SECRET_KEY` setting.
+  [#5529](https://github.com/pulp/pulpcore/issues/5529)
+- Browsable HREFs now have clickable links again.
+  [#5563](https://github.com/pulp/pulpcore/issues/5563)
+- Fixed a bug in `has_repo_or_repo_ver_param_model_or_obj_perms` function to make
+  it work with plugin Repositories.
+  [#5619](https://github.com/pulp/pulpcore/issues/5619)
+
+### Plugin API {: #3.56.0-plugin-api }
+
+#### Features {: #3.56.0-plugin-api-feature }
+
+- Added new `url` field to UploadSerializerFieldsMixin that will download the file used for the content upload task.
+  [#4608](https://github.com/pulp/pulpcore/issues/4608)
+
+### Pulp File {: #3.56.0-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.56.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.55.2 (2024-07-16) {: #3.55.2 }
 
 
