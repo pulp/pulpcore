@@ -8,6 +8,19 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.39.19 (2024-07-23) {: #3.39.19 }
+
+
+### REST API {: #3.39.19-rest-api }
+
+No significant changes.
+
+### Plugin API {: #3.39.19-plugin-api }
+
+No significant changes.
+
+---
+
 ## 3.39.18 (2024-07-16) {: #3.39.18 }
 
 
