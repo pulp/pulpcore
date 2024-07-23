@@ -11,8 +11,8 @@ name: "Core CI Update"
 on:
   schedule:
     # * is a special character in YAML so you have to quote this string
-    # runs at 2:30 UTC every Sunday
-    - cron: '30 2 * * 0'
+    # runs at 17:30 UTC every Sunday
+    - cron: '30 17 * * 0'
   workflow_dispatch:
 
 jobs:
@@ -74,7 +74,7 @@ jobs:
         with:
           fetch-depth: 0
           path: "pulpcore"
-          ref: "3.55"
+          ref: "3.56"
 
       - name: "Run update"
         working-directory: "pulpcore"
@@ -88,10 +88,10 @@ jobs:
           path: "pulpcore"
           committer: "pulpbot <pulp-infra@redhat.com>"
           author: "pulpbot <pulp-infra@redhat.com>"
-          title: "Update CI files for branch 3.55"
+          title: "Update CI files for branch 3.56"
           body: ""
-          branch: "update-ci/3.55"
-          base: "3.55"
+          branch: "update-ci/3.56"
+          base: "3.56"
           commit-message: |
             Update CI files
 
