@@ -1,8 +1,0 @@
-@startuml
-(Repository Version) -right-> (Publication)
-(Publication) --> (Distribution)
-
-note left of Distribution
-  How and where to publish
-end note
-@enduml
