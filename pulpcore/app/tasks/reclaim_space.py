@@ -69,10 +69,15 @@ def reclaim_space(repo_pks, keeplist_rv_pks=None, force=False):
             ca_to_update.append(ca)
 
     ContentArtifact.objects.bulk_update(objs=ca_to_update, fields=["artifact"], batch_size=1000)
-    artifacts_to_delete = Artifact.objects.filter(pk__in=artifact_pks)
+
+    # Process artifacts in batches
+    batch_size = 1000
+    artifact_pks_list = list(artifact_pks)
+    num_batches = (len(artifact_pks_list) // batch_size) + 1
+
     progress_bar = ProgressReport(
         message="Reclaim disk space",
-        total=artifacts_to_delete.count(),
+        total=len(artifact_pks_list),
         code="reclaim-space.artifact",
         done=0,
         state="running",
@@ -81,21 +86,26 @@ def reclaim_space(repo_pks, keeplist_rv_pks=None, force=False):
 
     counter = 0
     interval = 100
-    for artifact in artifacts_to_delete.iterator():
-        try:
-            # we need to manually call delete() because it cleans up the file on the filesystem
-            artifact.delete()
-        except ProtectedError as e:
-            # Rarely artifact could be shared between two different content units.
-            # Just log and skip the artifact deletion in this case
-            log.debug(e)
-        else:
-            progress_bar.done += 1
-            counter += 1
+    for i in range(num_batches):
+        start = i * batch_size
+        end = start + batch_size
+        artifacts_to_delete = Artifact.objects.filter(pk__in=artifact_pks_list[start:end])
 
-        if counter >= interval:
-            progress_bar.save()
-            counter = 0
+        for artifact in artifacts_to_delete.iterator():
+            try:
+                # we need to manually call delete() because it cleans up the file on the filesystem
+                artifact.delete()
+            except ProtectedError as e:
+                # Rarely artifact could be shared between two different content units.
+                # Just log and skip the artifact deletion in this case
+                log.debug(e)
+            else:
+                progress_bar.done += 1
+                counter += 1
+
+            if counter >= interval:
+                progress_bar.save()
+                counter = 0
 
     progress_bar.state = "completed"
     progress_bar.save()
