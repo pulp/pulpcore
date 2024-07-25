@@ -266,7 +266,7 @@ def test_create_file_from_url(
 ):
     # Test create w/ url
     remote = file_remote_factory(manifest_path=basic_manifest_path)
-    body = {"url": remote.url, "relative_path": "PULP_MANIFEST"}
+    body = {"file_url": remote.url, "relative_path": "PULP_MANIFEST"}
     response = file_bindings.ContentFilesApi.create(**body)
     task = monitor_task(response.task)
     assert len(task.created_resources) == 1
@@ -283,7 +283,7 @@ def test_create_file_from_url(
 
     # Test create w/ url for already existing content
     response = file_bindings.ContentFilesApi.create(
-        url=f"{distro.base_url}1.iso",
+        file_url=f"{distro.base_url}1.iso",
         relative_path="1.iso",
     )
     task = monitor_task(response.task)

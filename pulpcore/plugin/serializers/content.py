@@ -38,13 +38,13 @@ class UploadSerializerFieldsMixin(Serializer):
         view_name=r"uploads-detail",
         queryset=Upload.objects.all(),
     )
-    url = CharField(
+    file_url = CharField(
         help_text=_("A url that Pulp can download and turn into the content unit."),
         required=False,
         write_only=True,
     )
 
-    def validate_url(self, value):
+    def validate_file_url(self, value):
         """Parse out the auth if provided."""
         url_parse = urlparse(value)
         if url_parse.username or url_parse.password:
@@ -87,7 +87,7 @@ class UploadSerializerFieldsMixin(Serializer):
             upload_fields = {
                 field
                 for field in self.Meta.fields
-                if field in {"file", "upload", "artifact", "url"}
+                if field in {"file", "upload", "artifact", "file_url"}
             }
             if len(upload_fields.intersection(data.keys())) != 1:
                 raise ValidationError(
@@ -126,11 +126,11 @@ class UploadSerializerFieldsMixin(Serializer):
         elif pulp_temp_file_pk := self.context.get("pulp_temp_file_pk"):
             pulp_temp_file = PulpTemporaryFile.objects.get(pk=pulp_temp_file_pk)
             data["file"] = PulpTemporaryUploadedFile.from_file(pulp_temp_file.file)
-        elif url := data.pop("url", None):
+        elif file_url := data.pop("file_url", None):
             expected_digests = data.get("expected_digests", None)
             expected_size = data.get("expected_size", None)
             data["file"] = self.download(
-                url, expected_digests=expected_digests, expected_size=expected_size
+                file_url, expected_digests=expected_digests, expected_size=expected_size
             )
         return data
 
@@ -147,7 +147,7 @@ class UploadSerializerFieldsMixin(Serializer):
         fields = (
             "file",
             "upload",
-            "url",
+            "file_url",
         )
 
 
