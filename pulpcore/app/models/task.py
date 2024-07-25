@@ -63,6 +63,14 @@ class ProfileArtifact(BaseModel):
         unique_together = ("task", "name")
 
 
+class TaskManager(models.Manager):
+    def get_queryset(self):
+        # Always make encrypted args deferred.
+        # This will prevent a lot of issues when the fernet key is lost.
+        # Only task workers need to be able to read these args anyway.
+        return super().get_queryset().defer("enc_args", "enc_kwargs")
+
+
 class Task(BaseModel, AutoAddObjPermsMixin):
     """
     Represents a task
@@ -87,6 +95,8 @@ class Task(BaseModel, AutoAddObjPermsMixin):
         worker (models.ForeignKey): The worker that this task is in
         pulp_domain (models.ForeignKey): The domain the Task is a part of
     """
+
+    objects = TaskManager()
 
     state = models.TextField(choices=TASK_CHOICES)
     name = models.TextField()
@@ -285,8 +295,10 @@ class Task(BaseModel, AutoAddObjPermsMixin):
         # loaded.
         if fields is not None:
             fields = set(fields)
-            deferred_fields = self.get_deferred_fields()
-            # If any deferred field is going to be loaded
+            deferred_fields = {
+                field for field in self.get_deferred_fields() if not field.startswith("enc_")
+            }
+            # If any state related deferred field is going to be loaded
             if fields.intersection(deferred_fields):
                 # then load all of them
                 fields = fields.union(deferred_fields)

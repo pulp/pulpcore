@@ -95,7 +95,8 @@ def perform_task(task_pk, task_working_dir_rel_path):
     signal.signal(signal.SIGUSR1, child_signal_handler)
     # All processes need to create their own postgres connection
     connection.connection = None
-    task = Task.objects.select_related("pulp_domain").get(pk=task_pk)
+    # enc_args and enc_kwargs are deferred by default but we actually want them
+    task = Task.objects.defer(None).select_related("pulp_domain").get(pk=task_pk)
     user = get_users_with_perms(task, with_group_users=False).first()
     # Isolate from the parent asyncio.
     asyncio.set_event_loop(asyncio.new_event_loop())
