@@ -1,0 +1,2 @@
+Change field name `url` to `file_url` on UploadSerializerFieldsMixin to avoid conflicting fields in
+plugins.
