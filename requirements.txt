@@ -26,7 +26,7 @@ json_stream>=2.3.2,<2.4
 jq>=1.6.0,<1.8.0
 PyOpenSSL<25.0
 opentelemetry-distro[otlp]>=0.45b0,<=0.46b0
-opentelemetry-exporter-otlp-proto-http>=1.24.0,<=1.25.0
+opentelemetry-exporter-otlp-proto-http>=1.24.0,<=1.26.0
 opentelemetry-instrumentation-django>=0.45b0,<=0.46b0
 opentelemetry-instrumentation-wsgi>=0.45b,<=0.46b0
 protobuf>=4.21.1,<5.0
