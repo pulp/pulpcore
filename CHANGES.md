@@ -8,6 +8,31 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.56.1 (2024-07-26) {: #3.56.1 }
+
+
+### REST API {: #3.56.1-rest-api }
+
+No significant changes.
+
+### Plugin API {: #3.56.1-plugin-api }
+
+#### Bugfixes {: #3.56.1-plugin-api-bugfix }
+
+- Change field name `url` to `file_url` on UploadSerializerFieldsMixin to avoid conflicting fields in
+  plugins.
+  [#5633](https://github.com/pulp/pulpcore/issues/5633)
+
+### Pulp File {: #3.56.1-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.56.1-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.56.0 (2024-07-23) {: #3.56.0 }
 
 
