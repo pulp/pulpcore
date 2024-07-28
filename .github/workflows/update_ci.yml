@@ -11,8 +11,8 @@ name: "Core CI Update"
 on:
   schedule:
     # * is a special character in YAML so you have to quote this string
-    # runs at 2:30 UTC every Sunday
-    - cron: '30 2 * * 0'
+    # runs at 17:30 UTC every Sunday
+    - cron: '30 17 * * 0'
   workflow_dispatch:
 
 jobs:
