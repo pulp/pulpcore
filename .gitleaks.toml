@@ -1,15 +1,16 @@
 [allowlist]
-  files = [
-    'pulp_certguard/tests/functional/artifacts/rhsm/v3/5527980418107729172-key.pem',
-    'pulp_certguard/tests/functional/artifacts/x509/keys/server.pem',
-    'pulp_certguard/tests/functional/artifacts/rhsm/v3/4260035510644027985-key.pem',
-    'pulp_certguard/tests/functional/artifacts/x509/keys/client.pem',
-    'pulp_certguard/tests/functional/artifacts/x509/keys/ca.pem',
-    'pulp_certguard/tests/functional/artifacts/rhsm/v1/159442575569388840-key.pem',
-    'pulp_certguard/tests/functional/artifacts/rhsm/v1/1514454871848760713-key.pem',
-    'pulp_certguard/tests/functional/artifacts/rhsm/untrusted_cert-key.pem',
-    'pulp_certguard/tests/functional/artifacts/rhsm/uber.cert',
-    'pulp_certguard/tests/functional/artifacts/rhsm/katello-default-ca.key',
-    'pulp_certguard/tests/functional/artifacts/thirdparty_ca/keys/ca.pem'
+  description = "Allow various test-certificates."
+  paths = [
+    "pulp_certguard/tests/functional/artifacts/rhsm/v3/5527980418107729172-key.pem",
+    "pulp_certguard/tests/functional/artifacts/x509/keys/server.pem",
+    "pulp_certguard/tests/functional/artifacts/rhsm/v3/4260035510644027985-key.pem",
+    "pulp_certguard/tests/functional/artifacts/x509/keys/client.pem",
+    "pulp_certguard/tests/functional/artifacts/x509/keys/ca.pem",
+    "pulp_certguard/tests/functional/artifacts/rhsm/v1/159442575569388840-key.pem",
+    "pulp_certguard/tests/functional/artifacts/rhsm/v1/1514454871848760713-key.pem",
+    "pulp_certguard/tests/functional/artifacts/rhsm/untrusted_cert-key.pem",
+    "pulp_certguard/tests/functional/artifacts/rhsm/uber.cert",
+    "pulp_certguard/tests/functional/artifacts/rhsm/katello-default-ca.key",
+    "pulp_certguard/tests/functional/artifacts/thirdparty_ca/keys/ca.pem"
   ]
 
