@@ -90,15 +90,9 @@ class Replicator:
             params = {"q": q}
         else:
             params = {}
-        offset = 0
-        list_size = 100
-        while True:
-            distributions = self.distribution_ctx_cls(self.pulp_ctx).list(list_size, offset, params)
-            for distro in distributions:
-                yield distro
-            if len(distributions) < list_size:
-                break
-            offset += list_size
+        yield from self.distribution_ctx_cls(self.pulp_ctx).list_iterator(
+            parameters=params, batch_size=100
+        )
 
     def labels(self, upstream_object):
         upstream_labels = getattr(upstream_object, "pulp_labels", {})
