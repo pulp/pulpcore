@@ -5,7 +5,6 @@ import copy
 from gettext import gettext as _
 from multidict import MultiDict
 import platform
-from pkg_resources import get_distribution
 import ssl
 import sys
 from tempfile import NamedTemporaryFile
@@ -13,6 +12,7 @@ from urllib.parse import urlparse
 
 import aiohttp
 
+from pulpcore.app.apps import PulpAppConfig
 from .http import HttpDownloader
 from .file import FileDownloader
 
@@ -80,7 +80,7 @@ class DownloaderFactory:
         """
         Produce a User-Agent string to identify Pulp and relevant system info.
         """
-        pulp_version = get_distribution("pulpcore").version
+        pulp_version = PulpAppConfig.version
         python = "{} {}.{}.{}-{}{}".format(sys.implementation.name, *sys.version_info)
         uname = platform.uname()
         system = f"{uname.system} {uname.machine}"
