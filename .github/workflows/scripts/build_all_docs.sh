@@ -1,5 +1,9 @@
-# This script builds the documentation site for staging-docs.pulpproject.org
+#!/bin/bash
+
+# This script builds the documentation site for pulpproject.org
+
+set -euv
 
 pip install git+https://github.com/pulp/pulp-docs.git
 pulp-docs build
-tar cvf staging-docs.pulpproject.org.tar site
+tar cvf pulpproject.org.tar site
