@@ -1,3 +1,5 @@
+#!/bin/bash
+
 set -euv
 
 # make sure this script runs at the repo root
@@ -20,9 +22,9 @@ export WORKSPACE=$PWD
 eval "$(ssh-agent -s)"
 ssh-add ~/.ssh/pulp-infra
 
-mkdir -p ../staging-docs.pulpproject.org
-tar -xvf staging-docs.pulpproject.org.tar --directory ../staging-docs.pulpproject.org
-pushd ../staging-docs.pulpproject.org
+mkdir -p ../pulpproject.org
+tar -xvf pulpproject.org.tar --directory ../pulpproject.org
+pushd ../pulpproject.org
 
 # publish to pulpproject.org
 rsync -avzh --delete site/ doc_builder_staging_pulp_core@docs.pulpproject.org:/var/www/docs.pulpproject.org/staging_pulp_core/
