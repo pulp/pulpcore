@@ -72,21 +72,21 @@ application. That would look like this:
 nginx <---http---> gunicorn <----WSGI----> pulpcore.app.wsgi application
 ```
 
-With nginx providing authentication, all it can do is pass `REMOTE_USER` (or similar name) to the
+With nginx providing authentication, all it can do is pass `REMOTE-USER` (or similar name) to the
 application webserver, i.e. gunicorn. You can pass the header as part of the proxy request in nginx
 with a config line like:
 
 ```
-proxy_set_header REMOTE_USER $remote_user;
+proxy_set_header REMOTE-USER $remote_user;
 ```
 
-Per the [WSGI standard](https://www.python.org/dev/peps/pep-0333/#environ-variables), any incoming
-headers will be prepended with a `HTTP_`. The above line would send the header named
-`REMOTE_USER` to gunicorn, and the WSGI application would receive it as `HTTP_REMOTE_USER`. The
-default configuration of Pulp is expecting `REMOTE_USER` in the WSGI environment not
-`HTTP_REMOTE_USER`, so this won't work with
-`pulpcore.app.authentication.PulpRemoteUserAuthentication` or the Django Rest Framework provided
-`rest_framework.authentication.RemoteUserAuthentication` as is.
+Per the [WSGI standard](https://www.python.org/dev/peps/pep-0333/#environ-variables),
+any incoming headers will be prepended with a `HTTP_`. The above line would send
+the header named `REMOTE-USER` to gunicorn, and the WSGI application would receive
+it as `HTTP_REMOTE_USER` (after gunicorn normalization). The default configuration
+of Pulp is expecting `REMOTE_USER` in the WSGI environment not `HTTP_REMOTE_USER`,
+so this won't work with `pulpcore.app.authentication.PulpRemoteUserAuthentication`
+or the Django Rest Framework provided `rest_framework.authentication.RemoteUserAuthentication` as is.
 
 Pulp provides a setting named `REMOTE_USER_ENVIRON_NAME <remote-user-environ-name>` which allows
 you to specify another WSGI environment variable to read the authenticated username from.
