@@ -379,6 +379,43 @@ def test_emmiting_unblocked_task_telemetry(
     ]
 
 
+@pytest.mark.parallel
+def test_correct_task_ownership(
+    dispatch_task, pulpcore_bindings, gen_user, file_repository_factory
+):
+    """Test that tasks get the correct ownership when dispatched."""
+    alice = gen_user(model_roles=["core.task_viewer"])
+    bob = gen_user(model_roles=["file.filerepository_creator"])
+
+    with alice:
+        atask_href = dispatch_task("pulpcore.app.tasks.test.sleep", args=(0,))
+    aroles = pulpcore_bindings.UsersRolesApi.list(alice.user.pulp_href)
+    assert aroles.count == 3
+    roles = {r.role: r.content_object for r in aroles.results}
+    correct_roles = {
+        "core.task_owner": atask_href,
+        "core.task_user_dispatcher": atask_href,
+        "core.task_viewer": None,
+    }
+    assert roles == correct_roles
+
+    with bob:
+        btask_href = dispatch_task("pulpcore.app.tasks.test.sleep", args=(0,))
+        repo = file_repository_factory()
+    aroles = pulpcore_bindings.UsersRolesApi.list(alice.user.pulp_href)
+    assert aroles.count == 3
+    broles = pulpcore_bindings.UsersRolesApi.list(bob.user.pulp_href)
+    assert broles.count == 4
+    roles = {r.role: r.content_object for r in broles.results}
+    correct_roles = {
+        "core.task_owner": btask_href,
+        "core.task_user_dispatcher": btask_href,
+        "file.filerepository_owner": repo.pulp_href,
+        "file.filerepository_creator": None,
+    }
+    assert roles == correct_roles
+
+
 @pytest.fixture
 def task_group(dispatch_task_group, monitor_task_group):
     """Fixture containing a finished Task Group."""
