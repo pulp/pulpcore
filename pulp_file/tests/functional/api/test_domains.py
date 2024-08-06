@@ -123,12 +123,9 @@ def test_artifact_upload(
     }
 
     # Show that duplicate artifacts can be uploaded into different domains
-    dup_artifact = gen_object_with_cleanup(pulpcore_bindings.ArtifactsApi, filename)
+    dup_artifact = pulpcore_bindings.ArtifactsApi.create(filename, pulp_domain="default")
     assert "default/api/v3/" in dup_artifact.pulp_href
     assert dup_artifact.sha256 == second_artifact.sha256
-
-    # Delete second artifact so domain can be deleted
-    pulpcore_bindings.ArtifactsApi.delete(second_artifact_href)
 
 
 @pytest.mark.parallel

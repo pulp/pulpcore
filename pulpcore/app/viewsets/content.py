@@ -3,10 +3,11 @@ from gettext import gettext as _
 from django.conf import settings
 from django.db import models
 from django_filters import NumberFilter
-from rest_framework import mixins, permissions, status
+from rest_framework import mixins, status
 from rest_framework.response import Response
 
 from pulpcore.filters import BaseFilterSet
+from pulpcore.app.loggers import deprecation_logger
 from pulpcore.app.models import Artifact, Content, PublishedMetadata, SigningService
 from pulpcore.app.serializers import (
     ArtifactSerializer,
@@ -73,12 +74,29 @@ class ArtifactViewSet(
     queryset = Artifact.objects.all()
     serializer_class = ArtifactSerializer
     filterset_class = ArtifactFilter
-    permission_classes = (permissions.IsAuthenticated,)
 
+    DEFAULT_ACCESS_POLICY = {
+        "statements": [
+            {
+                "action": ["create", "list", "retrieve"],
+                "principal": "admin",
+                "effect": "allow",
+            },
+        ],
+    }
+
+    # Deleting artifacts is a risky operation and will be removed in a future release.
+    # However, for compatibility reasons, it is still possible to execute the DELETE
+    # request by overriding the DEFAULT_ACCESS_POLICY.
     def destroy(self, request, pk):
         """
         Remove Artifact only if it is not associated with any Content.
         """
+        msg = _(
+            "destroy is deprecated. Deleting artifacts is a dangerous operation, "
+            "use orphan cleanup instead."
+        )
+        deprecation_logger.warning(msg)
         try:
             return super().destroy(request, pk)
         except models.ProtectedError:
