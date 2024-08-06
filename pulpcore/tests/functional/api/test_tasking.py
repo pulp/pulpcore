@@ -17,10 +17,16 @@ from pulpcore.tests.functional.utils import download_file
 def dispatch_task(pulpcore_client):
     def _dispatch_task(*args, **kwargs):
         cid = pulpcore_client.default_headers.get("Correlation-ID") or str(uuid4())
+        username = pulpcore_client.configuration.username
         commands = (
             "from django_guid import set_guid; "
             "from pulpcore.tasking.tasks import dispatch; "
             "from pulpcore.app.util import get_url; "
+            "from django.contrib.auth import get_user_model; "
+            "from django_currentuser.middleware import _set_current_user; "
+            "User = get_user_model(); "
+            f"user = User.objects.filter(username='{username}').first(); "
+            "_set_current_user(user); "
             f"set_guid({cid!r}); "
             f"task = dispatch(*{args!r}, **{kwargs!r}); "
             "print(get_url(task))"
@@ -296,3 +302,36 @@ def test_cancel_gooey_task(tasks_api_client, dispatch_task, monitor_task):
             task = tasks_api_client.read(task_href)
 
     assert task.state == "canceled"
+
+
+@pytest.mark.parallel
+def test_correct_task_ownership(dispatch_task, users_roles_api_client, gen_user):
+    """Test that tasks get the correct ownership when dispatched."""
+    alice = gen_user(model_roles=["core.task_viewer"])
+    bob = gen_user(model_roles=["file.filerepository_creator"])
+
+    with alice:
+        atask_href = dispatch_task("pulpcore.app.tasks.test.sleep", args=(0,))
+    aroles = users_roles_api_client.list(alice.user.pulp_href)
+    assert aroles.count == 3
+    roles = {r.role: r.content_object for r in aroles.results}
+    correct_roles = {
+        "core.task_owner": atask_href,
+        "core.task_user_dispatcher": atask_href,
+        "core.task_viewer": None,
+    }
+    assert roles == correct_roles
+
+    with bob:
+        btask_href = dispatch_task("pulpcore.app.tasks.test.sleep", args=(0,))
+    aroles = users_roles_api_client.list(alice.user.pulp_href)
+    assert aroles.count == 3
+    broles = users_roles_api_client.list(bob.user.pulp_href)
+    assert broles.count == 3
+    roles = {r.role: r.content_object for r in broles.results}
+    correct_roles = {
+        "core.task_owner": btask_href,
+        "core.task_user_dispatcher": btask_href,
+        "file.filerepository_creator": None,
+    }
+    assert roles == correct_roles
