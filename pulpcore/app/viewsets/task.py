@@ -142,6 +142,10 @@ class TaskViewSet(
             ],
         },
         "core.task_viewer": ["core.view_task"],
+        # This is a special role to designate the user who dispatched the task, it is assigned to
+        # the user on the object-level at task creation. It is not meant to be edited or manually
+        # added/removed from users.
+        "core.task_user_dispatcher": ["core.add_task"],
     }
 
     def get_serializer(self, *args, **kwargs):
@@ -190,6 +194,11 @@ class TaskViewSet(
                 ),
                 Prefetch("child_tasks", queryset=Task.objects.only("pk")),
             )
+        if self.action in ("add_role", "remove_role"):
+            if "core.task_user_dispatcher" == self.request.data.get("role"):
+                raise ValidationError(
+                    _("core.task_user_dispatcher can not be added/removed from a task.")
+                )
         return qs
 
     @extend_schema(
