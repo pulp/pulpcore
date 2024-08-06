@@ -638,9 +638,7 @@ def pulp_admin_user(bindings_cfg):
 
 
 @pytest.fixture
-def random_artifact_factory(
-    pulpcore_bindings, tmp_path, gen_object_with_cleanup, pulp_domain_enabled
-):
+def random_artifact_factory(pulpcore_bindings, tmp_path, pulp_domain_enabled):
     def _random_artifact_factory(size=32, pulp_domain=None):
         kwargs = {}
         if pulp_domain:
@@ -649,7 +647,7 @@ def random_artifact_factory(
             kwargs["pulp_domain"] = pulp_domain
         temp_file = tmp_path / str(uuid.uuid4())
         temp_file.write_bytes(os.urandom(size))
-        return gen_object_with_cleanup(pulpcore_bindings.ArtifactsApi, temp_file, **kwargs)
+        return pulpcore_bindings.ArtifactsApi.create(temp_file, **kwargs)
 
     return _random_artifact_factory
 
