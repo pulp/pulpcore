@@ -450,7 +450,24 @@ def _perform_task(task_pk, task_working_dir_rel_path):
     task.set_running()
     # Store the task id in the environment for `Task.current()`.
     os.environ["PULP_TASK_ID"] = str(task.pk)
-    user = get_users_with_perms(task, with_group_users=False).first()
+    # These queries were specifically constructed and ordered this way to ensure we have the highest
+    # chance of getting the user who dispatched the task since we don't have a user relation on the
+    # task model. The second query acts as a fallback to provide ZDU support. Future changes will
+    # require to keep these around till a breaking change release is planned (3.70 the earliest).
+    user = (
+        get_users_with_perms(
+            task,
+            only_with_perms_in=["core.add_task"],
+            with_group_users=False,
+            include_model_permissions=False,
+        ).first()
+        or get_users_with_perms(
+            task,
+            only_with_perms_in=["core.manage_roles_task"],
+            with_group_users=False,
+            include_model_permissions=False,
+        ).first()
+    )
     _set_current_user(user)
     set_guid(task.logging_cid)
 

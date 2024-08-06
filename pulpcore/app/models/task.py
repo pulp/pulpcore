@@ -13,6 +13,7 @@ from django.contrib.postgres.fields import ArrayField
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import connection, models
 from django.utils import timezone
+from django_lifecycle import hook, AFTER_CREATE
 
 from pulpcore.app.models import (
     AutoAddObjPermsMixin,
@@ -229,6 +230,11 @@ class Task(BaseModel, AutoAddObjPermsMixin):
         else:
             task = Task.objects.get(pk=task_id)
         return task
+
+    @hook(AFTER_CREATE)
+    def add_role_dispatcher(self):
+        """Set the "core.task_user_dispatcher" role for the current user after creation."""
+        self.add_roles_for_object_creator("core.task_user_dispatcher")
 
     def set_running(self):
         """
