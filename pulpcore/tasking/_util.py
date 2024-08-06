@@ -97,7 +97,26 @@ def perform_task(task_pk, task_working_dir_rel_path):
     connection.connection = None
     # enc_args and enc_kwargs are deferred by default but we actually want them
     task = Task.objects.defer(None).select_related("pulp_domain").get(pk=task_pk)
-    user = get_users_with_perms(task, with_group_users=False).first()
+    # These queries were specifically constructed and ordered this way to ensure we have the highest
+    # chance of getting the user who dispatched the task since we don't have a user relation on the
+    # task model. The second query acts as a fallback to provide ZDU support. Future changes will
+    # require to keep these around till a breaking change release is planned (3.70 the earliest).
+    user = (
+        get_users_with_perms(
+            task,
+            only_with_perms_in=["core.add_task"],
+            with_group_users=False,
+            include_model_permissions=False,
+            include_domain_permissions=False,
+        ).first()
+        or get_users_with_perms(
+            task,
+            only_with_perms_in=["core.manage_roles_task"],
+            with_group_users=False,
+            include_model_permissions=False,
+            include_domain_permissions=False,
+        ).first()
+    )
     # Isolate from the parent asyncio.
     asyncio.set_event_loop(asyncio.new_event_loop())
     # Set current contexts
