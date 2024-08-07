@@ -10,6 +10,7 @@ from urllib.parse import urlparse
 from contextlib import ExitStack
 from contextvars import ContextVar
 from datetime import timedelta
+from sys import byteorder
 
 from django.conf import settings
 from django.db import connection
@@ -23,7 +24,6 @@ from rest_framework.serializers import ValidationError
 from pulpcore.app.loggers import deprecation_logger
 from pulpcore.app.apps import pulp_plugin_configs
 from pulpcore.app import models
-from pulpcore.constants import STORAGE_METRICS_LOCK
 from pulpcore.exceptions import AdvisoryLockError
 from pulpcore.exceptions.validation import InvalidSignatureError
 
@@ -543,7 +543,8 @@ class DomainMetricsEmitterBuilder:
 
         def _disk_usage_callback(self):
             try:
-                with PGAdvisoryLock(STORAGE_METRICS_LOCK):
+                domain_lock = int.from_bytes(self.domain.name.encode("utf-8"), byteorder)
+                with PGAdvisoryLock(domain_lock):
                     from pulpcore.app.models import Artifact
 
                     options = yield  # noqa
@@ -572,7 +573,7 @@ class DomainMetricsEmitterBuilder:
 
     @classmethod
     def build(cls, domain):
-        otel_enabled = os.getenv("PULP_OTEL_ENABLED")
+        otel_enabled = os.getenv("PULP_OTEL_ENABLED").lower()
         if otel_enabled == "true" and settings.DOMAIN_ENABLED:
             return cls._DomainMetricsEmitter(domain)
         else:
