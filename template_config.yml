@@ -26,7 +26,7 @@ flake8_ignore:
 - ./pulpcore/app/protobuf/*
 github_org: pulp
 issue_tracker: github
-latest_release_branch: '3.56'
+latest_release_branch: '3.57'
 lint_requirements: true
 noissue_marker: '[noissue]'
 os_required_packages: []

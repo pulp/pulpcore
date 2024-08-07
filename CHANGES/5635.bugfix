@@ -1,1 +1,0 @@
-Implemented batching for artifact deletion to handle the reclaim space task for large repositories.
