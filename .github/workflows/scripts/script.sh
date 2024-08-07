@@ -18,21 +18,13 @@ source .github/workflows/scripts/utils.sh
 export POST_SCRIPT=$PWD/.github/workflows/scripts/post_script.sh
 export FUNC_TEST_SCRIPT=$PWD/.github/workflows/scripts/func_test_script.sh
 
-# Needed for both starting the service and building the docs.
+# Needed for starting the service
 # Gets set in .github/settings.yml, but doesn't seem to inherited by
 # this script.
 export DJANGO_SETTINGS_MODULE=pulpcore.app.settings
 export PULP_SETTINGS=$PWD/.ci/ansible/settings/settings.py
 
 export PULP_URL="https://pulp"
-
-if [[ "$TEST" = "docs" ]]; then
-  if [[ "$GITHUB_WORKFLOW" == "Core CI" ]]; then
-    towncrier build --yes --version 4.0.0.ci
-  fi
-  pulp-docs build
-  exit
-fi
 
 REPORTED_STATUS="$(pulp status)"
 
