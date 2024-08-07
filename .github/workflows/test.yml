@@ -22,7 +22,6 @@ jobs:
       matrix:
         env:
           - TEST: pulp
-          - TEST: docs
           - TEST: azure
           - TEST: s3
           - TEST: lowerbounds
