@@ -8,6 +8,50 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.57.0 (2024-08-07) {: #3.57.0 }
+
+### REST API {: #3.57.0-rest-api }
+
+#### Features {: #3.57.0-rest-api-feature }
+
+- Added the ability to save task's diagnostics data as artifacts. These artifacts are available at the
+  task's detail endpoint. To download them, issue a GET request to `${TASK_HREF}profile_artifacts/`.
+  The artifacts are cleaned up automatically by the orphan cleanup.
+  [#5422](https://github.com/pulp/pulpcore/issues/5422)
+- Improved performance when handling tasks by deferred loading of encrypted args.
+  This also allows seeing and purging tasks in case the symmetric db key was lost.
+
+#### Bugfixes {: #3.57.0-rest-api-bugfix }
+
+- Implemented batching for artifact deletion to handle the reclaim space task for large repositories.
+  [#5635](https://github.com/pulp/pulpcore/issues/5635)
+- Fixed urlizing of api hrefs in clickable api.
+  [#5664](https://github.com/pulp/pulpcore/issues/5664)
+
+#### Improved Documentation {: #3.57.0-rest-api-doc }
+
+- Updated REMOTE-USER header definition (to use hyphen, instead of underscore) due
+  to gunicorn version update blocking its usage for security purposes.
+  [#5478](https://github.com/pulp/pulpcore/issues/5478)
+
+### Plugin API {: #3.57.0-plugin-api }
+
+#### Bugfixes {: #3.57.0-plugin-api-bugfix }
+
+- Change field name `url` to `file_url` on UploadSerializerFieldsMixin to avoid conflicting fields in
+  plugins.
+  [#5633](https://github.com/pulp/pulpcore/issues/5633)
+
+### Pulp File {: #3.57.0-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.57.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.56.1 (2024-07-26) {: #3.56.1 }
 
 
