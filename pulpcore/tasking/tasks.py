@@ -16,7 +16,7 @@ from django.db import connection, transaction
 from django.db.models import Model, Max
 from django_guid import get_guid
 from pulpcore.app.apps import MODULE_PLUGIN_VERSIONS
-from pulpcore.app.models import Task
+from pulpcore.app.models import Task, TaskGroup
 from pulpcore.app.serializers.task import TaskStatusMessageSerializer
 from pulpcore.app.util import current_task, get_domain, get_prn
 from pulpcore.constants import (
@@ -192,6 +192,14 @@ def dispatch(
                 # Try to work around the smaller glitch
                 task.pulp_created = newest_created + timedelta(milliseconds=1)
                 task.save()
+            if task_group:
+                task_group.refresh_from_db()
+                if task_group.all_tasks_dispatched:
+                    task.set_canceling()
+                    task.set_canceled(
+                        TASK_STATES.CANCELED, "All tasks in group have been dispatched/canceled."
+                    )
+                    return task
             if immediate:
                 # Grab the advisory lock before the task hits the db.
                 stack.enter_context(task)
@@ -261,6 +269,32 @@ def cancel_task(task_id):
         cursor.execute("SELECT pg_notify('pulp_worker_cancel', %s)", (str(task.pk),))
         cursor.execute("NOTIFY pulp_worker_wakeup")
     return task
+
+
+def cancel_task_group(task_group_id):
+    """
+    Cancel the task group that is represented by the given task_group_id.
+
+    This method attempts to cancel all tasks in the task group.
+
+    Args:
+        task_group_id (str): The ID of the task group you wish to cancel
+
+    Raises:
+        TaskGroup.DoesNotExist: If a task group with given task_group_id does not exist
+    """
+    task_group = TaskGroup.objects.get(pk=task_group_id)
+    task_group.all_tasks_dispatched = True
+    task_group.save(update_fields=["all_tasks_dispatched"])
+
+    TASK_RUNNING_STATES = (TASK_STATES.RUNNING, TASK_STATES.WAITING)
+    tasks = task_group.tasks.filter(state__in=TASK_RUNNING_STATES).values_list("pk", flat=True)
+    for task_id in tasks:
+        try:
+            cancel_task(task_id)
+        except RuntimeError:
+            pass
+    return task_group
 
 
 def _send_task_notification(task):
