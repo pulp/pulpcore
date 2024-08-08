@@ -5,6 +5,8 @@ Check `Plugin Writer's Guide`_ for more details.
     https://docs.pulpproject.org/pulpcore/plugins/plugin-writer/index.html
 """
 
+from datetime import datetime, timezone
+
 from django.db import models
 from pulpcore.plugin.models import BaseModel, EncryptedTextField, AutoAddObjPermsMixin
 from pulpcore.app.util import get_domain_pk
@@ -28,9 +30,16 @@ class UpstreamPulp(BaseModel, AutoAddObjPermsMixin):
 
     pulp_label_select = models.TextField(null=True)
 
+    last_replication = models.DateTimeField(null=True)
+
     class Meta:
         unique_together = ("name", "pulp_domain")
         permissions = [
             ("replicate_upstreampulp", "Can start a replication task"),
             ("manage_roles_upstreampulp", "Can manage roles on upstream pulps"),
         ]
+
+    def set_last_replication_timestamp(self):
+        self.last_replication = datetime.now(timezone.utc)
+        # enforce the update without changing pulp_last_updated
+        self.save(update_fields=["last_replication"])

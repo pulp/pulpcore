@@ -1,5 +1,7 @@
-from django.db.models import Model
 import logging
+
+from django.db.models import Model
+from django.utils.dateparse import parse_datetime
 
 from pulp_glue.common.context import PulpContext
 from pulpcore.tasking.tasks import dispatch
@@ -45,7 +47,7 @@ class Replicator:
     app_label = None
     sync_task = None
 
-    def __init__(self, pulp_ctx, task_group, tls_settings):
+    def __init__(self, pulp_ctx, task_group, tls_settings, server):
         """
         :param pulp_ctx: PulpReplicaContext
         :param task_group: TaskGroup
@@ -54,6 +56,7 @@ class Replicator:
         self.pulp_ctx = pulp_ctx
         self.task_group = task_group
         self.tls_settings = tls_settings
+        self.server = server
         self.domain = get_domain()
         self.distros_uris = [f"pdrn:{self.domain.pulp_id}:distributions"]
 
@@ -165,7 +168,6 @@ class Replicator:
             distro = self.distribution_model_cls.objects.get(
                 name=upstream_distribution["name"], pulp_domain=self.domain
             )
-            # Check that the distribution has the right repository associated
             needs_update = self.needs_update(distribution_data, distro)
             if needs_update:
                 # Update the distribution
@@ -195,6 +197,16 @@ class Replicator:
     def sync_params(self, repository, remote):
         """This method returns a dict that will be passed as kwargs to the sync task."""
         raise NotImplementedError("Each replicator must supply its own sync params.")
+
+    def requires_syncing(self, distro):
+        no_content_change_since = _read_content_change_since_timestamp(distro)
+        if no_content_change_since and self.server.last_replication:
+            if self.server.last_replication < self.server.pulp_last_updated:
+                return True
+            if self.server.last_replication > no_content_change_since:
+                return False
+
+        return True
 
     def sync(self, repository, remote):
         dispatch(
@@ -246,3 +258,8 @@ class Replicator:
                 exclusive_resources=repositories + remotes,
                 args=(repository_ids + remote_ids,),
             )
+
+
+def _read_content_change_since_timestamp(distribution):
+    if no_content_change_since := distribution.get("no_content_change_since"):
+        return parse_datetime(no_content_change_since)

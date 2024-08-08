@@ -85,6 +85,10 @@ class UpstreamPulpSerializer(ModelSerializer, HiddenFieldsMixin):
         required=False,
     )
 
+    last_replication = serializers.DateTimeField(
+        help_text="Timestamp of the last replication that occurred.", read_only=True
+    )
+
     class Meta:
         abstract = True
         model = UpstreamPulp
@@ -102,4 +106,5 @@ class UpstreamPulpSerializer(ModelSerializer, HiddenFieldsMixin):
             "pulp_last_updated",
             "hidden_fields",
             "pulp_label_select",
+            "last_replication",
         )
