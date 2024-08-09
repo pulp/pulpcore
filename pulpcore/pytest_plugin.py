@@ -14,12 +14,13 @@ import uuid
 import pytest
 
 from aiohttp import web
-from contextlib import suppress
+from contextlib import suppress, nullcontext
 from dataclasses import dataclass
 from packaging.version import parse as parse_version
 from time import sleep
 from yarl import URL
 
+from pulpcore.client.pulpcore.api.artifacts_api import ArtifactsApi
 from pulpcore.tests.functional.utils import (
     SLEEP_TIME,
     TASK_TIMEOUT,
@@ -879,7 +880,7 @@ def redis_status(pulp_status):
 
 
 @pytest.fixture(scope="class")
-def add_to_cleanup(monitor_task):
+def add_to_cleanup(allow_admin_destroy_artifact, monitor_task):
     """Fixture to allow pulp objects to be deleted in reverse order after the test module."""
     obj_refs = []
 
@@ -891,10 +892,19 @@ def add_to_cleanup(monitor_task):
     delete_task_hrefs = []
     # Delete newest items first to avoid dependency lockups
     for api_client, pulp_href in reversed(obj_refs):
+
+        # There was no delete task for this unit or the unit may already have been deleted.
+        # Also we can never be sure which one is the right ApiException to catch.
         with suppress(Exception):
-            # There was no delete task for this unit or the unit may already have been deleted.
-            # Also we can never be sure which one is the right ApiException to catch.
-            task_url = api_client.delete(pulp_href).task
+            # artifacts.delete is not allowed by the default access policy, and
+            # we cannot run the orphan cleanup process to avoid disrupting other
+            # tests running in parallel
+            with (
+                allow_admin_destroy_artifact()
+                if isinstance(api_client, ArtifactsApi)
+                else nullcontext()
+            ):
+                task_url = api_client.delete(pulp_href).task
             delete_task_hrefs.append(task_url)
 
     for deleted_task_href in delete_task_hrefs:
@@ -1008,6 +1018,36 @@ def wget_recursive_download_on_host():
         )
 
     return _wget_recursive_download_on_host
+
+
+@pytest.fixture(scope="session")
+def allow_admin_destroy_artifact(pulpcore_bindings):
+    class admin_context:
+        def __init__(self):
+            artifacts_policies_list = pulpcore_bindings.AccessPoliciesApi.list(
+                viewset_name="artifacts"
+            )
+            self.artifact_policy_href = artifacts_policies_list.results[0].pulp_href
+
+        def __enter__(self):
+            # relax the permissions to allow artifact.delete for admins
+            pulpcore_bindings.AccessPoliciesApi.partial_update(
+                self.artifact_policy_href,
+                {
+                    "statements": [
+                        {
+                            "action": ["create", "list", "retrieve", "delete", "destroy"],
+                            "principal": "admin",
+                            "effect": "allow",
+                        }
+                    ]
+                },
+            )
+
+        def __exit__(self, exc_type, exc_value, traceback):
+            pulpcore_bindings.AccessPoliciesApi.reset(self.artifact_policy_href)
+
+    return admin_context
 
 
 # Tasking related fixtures

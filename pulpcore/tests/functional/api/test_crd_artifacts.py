@@ -21,26 +21,30 @@ def pulpcore_random_file(tmp_path):
     return {"name": name, "size": 1024, "digest": digest}
 
 
-def _do_upload_valid_attrs(artifact_api, file, data):
-    """Upload a file with the given attributes."""
-    artifact = artifact_api.create(file, **data)
-    # assumes ALLOWED_CONTENT_CHECKSUMS does NOT contain "md5"
-    assert artifact.md5 is None, "MD5 {}".format(artifact.md5)
-    read_artifact = artifact_api.read(artifact.pulp_href)
-    # assumes ALLOWED_CONTENT_CHECKSUMS does NOT contain "md5"
-    assert read_artifact.md5 is None
-    for key, val in artifact.to_dict().items():
-        assert getattr(read_artifact, key) == val
-    # Delete the Artifact
-    artifact_api.delete(read_artifact.pulp_href)
-    with pytest.raises(ApiException) as e:
-        artifact_api.read(read_artifact.pulp_href)
+@pytest.fixture
+def upload_valid_attrs(allow_admin_destroy_artifact):
+    def _upload_valid_attrs(artifact_api, file, data):
+        """Upload a file with the given attributes."""
+        artifact = artifact_api.create(file, **data)
+        # assumes ALLOWED_CONTENT_CHECKSUMS does NOT contain "md5"
+        assert artifact.md5 is None, "MD5 {}".format(artifact.md5)
+        read_artifact = artifact_api.read(artifact.pulp_href)
+        # assumes ALLOWED_CONTENT_CHECKSUMS does NOT contain "md5"
+        assert read_artifact.md5 is None
+        for key, val in artifact.to_dict().items():
+            assert getattr(read_artifact, key) == val
+        # Delete the Artifact
+        with allow_admin_destroy_artifact():
+            artifact_api.delete(read_artifact.pulp_href)
+        with pytest.raises(ApiException) as e:
+            artifact_api.read(read_artifact.pulp_href)
+        assert e.value.status == 404
 
-    assert e.value.status == 404
+    return _upload_valid_attrs
 
 
 @pytest.mark.parallel
-def test_upload_valid_attrs(pulpcore_bindings, pulpcore_random_file):
+def test_upload_valid_attrs(pulpcore_bindings, pulpcore_random_file, upload_valid_attrs):
     """Upload a file, and provide valid attributes.
 
     For each possible combination of ``sha256`` and ``size`` (including
@@ -56,12 +60,10 @@ def test_upload_valid_attrs(pulpcore_bindings, pulpcore_random_file):
     for i in range(len(file_attrs) + 1):
         for keys in itertools.combinations(file_attrs, i):
             data = {key: file_attrs[key] for key in keys}
-            _do_upload_valid_attrs(
-                pulpcore_bindings.ArtifactsApi, pulpcore_random_file["name"], data
-            )
+            upload_valid_attrs(pulpcore_bindings.ArtifactsApi, pulpcore_random_file["name"], data)
 
 
-def test_upload_empty_file(delete_orphans_pre, pulpcore_bindings, tmp_path):
+def test_upload_empty_file(delete_orphans_pre, pulpcore_bindings, tmp_path, upload_valid_attrs):
     """Upload an empty file.
 
     For each possible combination of ``sha256`` and ``size`` (including
@@ -80,7 +82,7 @@ def test_upload_empty_file(delete_orphans_pre, pulpcore_bindings, tmp_path):
     for i in range(len(file_attrs) + 1):
         for keys in itertools.combinations(file_attrs, i):
             data = {key: file_attrs[key] for key in keys}
-            _do_upload_valid_attrs(pulpcore_bindings.ArtifactsApi, file, data)
+            upload_valid_attrs(pulpcore_bindings.ArtifactsApi, file, data)
 
 
 @pytest.mark.parallel
@@ -146,7 +148,9 @@ def test_upload_mixed_attrs(pulpcore_bindings, pulpcore_random_file):
 
 
 @pytest.mark.parallel
-def test_delete_artifact(pulpcore_bindings, pulpcore_random_file):
+def test_delete_artifact(
+    pulpcore_bindings, pulpcore_random_file, gen_user, allow_admin_destroy_artifact
+):
     """Delete an artifact, it is removed from the filesystem."""
     if settings.DEFAULT_FILE_STORAGE != "pulpcore.app.models.storage.FileSystem":
         pytest.skip("this test only works for filesystem storage")
@@ -157,7 +161,45 @@ def test_delete_artifact(pulpcore_bindings, pulpcore_random_file):
     file_exists = os.path.exists(path_to_file)
     assert file_exists
 
-    # delete
-    pulpcore_bindings.ArtifactsApi.delete(artifact.pulp_href)
+    # try to delete as a regular (non-admin) user
+    regular_user = gen_user()
+    with regular_user, pytest.raises(ApiException) as e:
+        pulpcore_bindings.ArtifactsApi.delete(artifact.pulp_href)
+    assert e.value.status == 403
+
+    # destroy artifact api is not allowed, even for admins
+    with pytest.raises(ApiException) as e:
+        pulpcore_bindings.ArtifactsApi.delete(artifact.pulp_href)
+    assert e.value.status == 403
+
+    # relax the permissions and remove the artifact
+    with allow_admin_destroy_artifact():
+        pulpcore_bindings.ArtifactsApi.delete(artifact.pulp_href)
     file_exists = os.path.exists(path_to_file)
     assert not file_exists
+
+
+@pytest.mark.parallel
+def test_upload_artifact_as_a_regular_user(pulpcore_bindings, gen_user, pulpcore_random_file):
+    regular_user = gen_user()
+    with regular_user, pytest.raises(ApiException) as e:
+        pulpcore_bindings.ArtifactsApi.create(pulpcore_random_file["name"])
+    assert e.value.status == 403
+
+
+@pytest.mark.parallel
+def test_list_and_retrieve_artifact_as_a_regular_user(
+    pulpcore_bindings, gen_user, pulpcore_random_file
+):
+    regular_user = gen_user()
+    artifact = pulpcore_bindings.ArtifactsApi.create(pulpcore_random_file["name"])
+
+    # check if list is not allowed
+    with regular_user, pytest.raises(ApiException) as e:
+        pulpcore_bindings.ArtifactsApi.list()
+    assert e.value.status == 403
+
+    # check if retrieve is also not allowed
+    with regular_user, pytest.raises(ApiException) as e:
+        pulpcore_bindings.ArtifactsApi.read(artifact.pulp_href)
+    assert e.value.status == 403

@@ -65,6 +65,7 @@ def test_object_creation(
 
 @pytest.mark.parallel
 def test_artifact_upload(
+    allow_admin_destroy_artifact,
     pulpcore_bindings,
     gen_object_with_cleanup,
     random_artifact_factory,
@@ -128,7 +129,8 @@ def test_artifact_upload(
     assert dup_artifact.sha256 == second_artifact.sha256
 
     # Delete second artifact so domain can be deleted
-    pulpcore_bindings.ArtifactsApi.delete(second_artifact_href)
+    with allow_admin_destroy_artifact():
+        pulpcore_bindings.ArtifactsApi.delete(second_artifact_href)
 
 
 @pytest.mark.parallel
