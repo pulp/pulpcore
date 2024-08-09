@@ -160,6 +160,24 @@ class HeaderContentGuardSerializer(ContentGuardSerializer, GetOrCreateSerializer
         fields = ContentGuardSerializer.Meta.fields + ("header_name", "header_value", "jq_filter")
 
 
+class NoContentChangeSinceField(serializers.DateTimeField, serializers.ReadOnlyField):
+    """
+    A field representing a timestamp since when the distributed content has not changed.
+    """
+
+    def get_attribute(self, instance):
+        return instance
+
+    def to_representation(self, distribution):
+        publication = distribution.publication
+        repo_version = distribution.repository_version
+
+        if publication or repo_version and not distribution.SERVE_FROM_PUBLICATION:
+            return distribution.pulp_last_updated
+        else:
+            return None
+
+
 class DistributionSerializer(ModelSerializer):
     """
     The Serializer for the Distribution model.
@@ -232,6 +250,12 @@ class DistributionSerializer(ModelSerializer):
     hidden = serializers.BooleanField(
         default=False, help_text=_("Whether this distribution should be shown in the content app.")
     )
+    no_content_change_since = NoContentChangeSinceField(
+        help_text=_(
+            "Timestamp since when the distributed content served by this distribution has "
+            "not changed. If equals to `null`, no guarantee is provided about content changes."
+        )
+    )
 
     class Meta:
         model = models.Distribution
@@ -239,6 +263,7 @@ class DistributionSerializer(ModelSerializer):
             "base_path",
             "base_url",
             "content_guard",
+            "no_content_change_since",
             "hidden",
             "pulp_labels",
             "name",
