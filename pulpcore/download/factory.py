@@ -137,8 +137,11 @@ class DownloaderFactory:
             sock_read=self._remote.sock_read_timeout,
             connect=self._remote.connect_timeout,
         )
+        # TCPConnector is supposed to be instanciated in a running loop.
+        # I don't see why...
+        # https://github.com/aio-libs/aiohttp/pull/3372
         return aiohttp.ClientSession(
-            connector=aiohttp.TCPConnector(**tcp_conn_opts),
+            connector=aiohttp.TCPConnector(loop=asyncio.get_event_loop(), **tcp_conn_opts),
             timeout=timeout,
             headers=headers,
             requote_redirect_url=False,
