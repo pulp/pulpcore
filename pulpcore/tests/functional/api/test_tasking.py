@@ -296,3 +296,36 @@ def test_cancel_gooey_task(tasks_api_client, dispatch_task, monitor_task):
             task = tasks_api_client.read(task_href)
 
     assert task.state == "canceled"
+
+
+@pytest.mark.parallel
+def test_correct_task_ownership(dispatch_task, users_roles_api_client, gen_user):
+    """Test that tasks get the correct ownership when dispatched."""
+    alice = gen_user(model_roles=["core.task_viewer"])
+    bob = gen_user(model_roles=["file.filerepository_creator"])
+
+    with alice:
+        atask_href = dispatch_task("pulpcore.app.tasks.test.sleep", args=(0,))
+    aroles = users_roles_api_client.list(alice.user.pulp_href)
+    assert aroles.count == 3
+    roles = {r.role: r.content_object for r in aroles.results}
+    correct_roles = {
+        "core.task_owner": atask_href,
+        "core.task_user_dispatcher": atask_href,
+        "core.task_viewer": None,
+    }
+    assert roles == correct_roles
+
+    with bob:
+        btask_href = dispatch_task("pulpcore.app.tasks.test.sleep", args=(0,))
+    aroles = users_roles_api_client.list(alice.user.pulp_href)
+    assert aroles.count == 3
+    broles = users_roles_api_client.list(bob.user.pulp_href)
+    assert broles.count == 4
+    roles = {r.role: r.content_object for r in broles.results}
+    correct_roles = {
+        "core.task_owner": btask_href,
+        "core.task_user_dispatcher": btask_href,
+        "file.filerepository_creator": None,
+    }
+    assert roles == correct_roles
