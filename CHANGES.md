@@ -8,6 +8,22 @@
 
 [//]: # (towncrier release notes start)
 
+# ## 3.28.32 (2024-08-10) {: #3.28.32 }
+
+### REST API {: #3.28.32-rest-api }
+
+#### Bugfixes {: #3.28.32-rest-api-bugfix }
+
+- Fixed RBAC permissions being incorrectly assigned in tasks that create objects.
+  https://access.redhat.com/security/cve/cve-2024-7143
+  [#5683](https://github.com/pulp/pulpcore/issues/5683)
+
+### Plugin API {: #3.28.32-plugin-api }
+
+No significant changes.
+
+---
+
 ## 3.28.31 (2024-07-23) {: #3.28.31 }
 
 
