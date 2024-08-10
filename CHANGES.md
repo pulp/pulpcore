@@ -8,6 +8,30 @@
 
 [//]: # (towncrier release notes start)
 
+# ## 3.49.17 (2024-08-10) {: #3.49.17 }
+
+### REST API {: #3.49.17-rest-api }
+
+#### Bugfixes {: #3.49.17-rest-api-bugfix }
+
+- Fixed RBAC permissions being incorrectly assigned in tasks that create objects.
+  https://access.redhat.com/security/cve/cve-2024-7143
+  [#5683](https://github.com/pulp/pulpcore/issues/5683)
+
+### Plugin API {: #3.49.17-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.49.17-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.49.17-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 # ## 3.49.16 (2024-08-06) {: #3.49.16 }
 
 ### REST API {: #3.49.16-rest-api }
