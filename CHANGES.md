@@ -8,7 +8,31 @@
 
 [//]: # (towncrier release notes start)
 
-## 3.57.0 (2024-08-07) {: #3.57.0 }
+## 3.57.1 (2024-08-10) {: #3.57.1 }
+
+### REST API {: #3.57.1-rest-api }
+
+#### Bugfixes {: #3.57.1-rest-api-bugfix }
+
+- Fixed RBAC permissions being incorrectly assigned in tasks that create objects.
+  https://access.redhat.com/security/cve/cve-2024-7143
+  [#5683](https://github.com/pulp/pulpcore/issues/5683)
+
+### Plugin API {: #3.57.1-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.57.1-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.57.1-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+# ## 3.57.0 (2024-08-07) {: #3.57.0 }
 
 ### REST API {: #3.57.0-rest-api }
 
@@ -599,7 +623,31 @@ No significant changes.
 
 ---
 
-## 3.49.16 (2024-08-06) {: #3.49.16 }
+## 3.49.17 (2024-08-10) {: #3.49.17 }
+
+### REST API {: #3.49.17-rest-api }
+
+#### Bugfixes {: #3.49.17-rest-api-bugfix }
+
+- Fixed RBAC permissions being incorrectly assigned in tasks that create objects.
+  https://access.redhat.com/security/cve/cve-2024-7143
+  [#5683](https://github.com/pulp/pulpcore/issues/5683)
+
+### Plugin API {: #3.49.17-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.49.17-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.49.17-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+# ## 3.49.16 (2024-08-06) {: #3.49.16 }
 
 ### REST API {: #3.49.16-rest-api }
 
@@ -1572,6 +1620,22 @@ No significant changes.
 -   Starting from this release pulp_file will be shipped as part of the pulpcore package.
     [#4550](https://github.com/pulp/pulpcore/issues/4550)
 
+## 3.39.20 (2024-08-10) {: #3.39.20 }
+
+### REST API {: #3.39.20-rest-api }
+
+#### Bugfixes {: #3.39.20-rest-api-bugfix }
+
+- Fixed RBAC permissions being incorrectly assigned in tasks that create objects.
+  https://access.redhat.com/security/cve/cve-2024-7143
+  [#5683](https://github.com/pulp/pulpcore/issues/5683)
+
+### Plugin API {: #3.39.20-plugin-api }
+
+No significant changes.
+
+---
+
 ## 3.39.19 (2024-07-23) {: #3.39.19 }
 
 
@@ -2370,6 +2434,22 @@ No significant changes.
 #### Misc
 
 -   [#3798](https://github.com/pulp/pulpcore/issues/3798)
+
+## 3.28.32 (2024-08-10) {: #3.28.32 }
+
+### REST API {: #3.28.32-rest-api }
+
+#### Bugfixes {: #3.28.32-rest-api-bugfix }
+
+- Fixed RBAC permissions being incorrectly assigned in tasks that create objects.
+  https://access.redhat.com/security/cve/cve-2024-7143
+  [#5683](https://github.com/pulp/pulpcore/issues/5683)
+
+### Plugin API {: #3.28.32-plugin-api }
+
+No significant changes.
+
+---
 
 ## 3.28.31 (2024-07-23) {: #3.28.31 }
 
@@ -3664,6 +3744,22 @@ No significant changes.
     Deprecated `pulpcore.plugin.actions.raise_for_unknown_content_units` in favour of
     `pulpcore.plugin.util.raise_for_unknown_content_units`.
     [#3604](https://github.com/pulp/pulpcore/issues/3604)
+
+## 3.22.30 (2024-08-10) {: #3.22.30 }
+
+### REST API {: #3.22.30-rest-api }
+
+#### Bugfixes {: #3.22.30-rest-api-bugfix }
+
+- Fixed RBAC permissions being incorrectly assigned in tasks that create objects.
+  https://access.redhat.com/security/cve/cve-2024-7143
+  [#5683](https://github.com/pulp/pulpcore/issues/5683)
+
+### Plugin API {: #3.22.30-plugin-api }
+
+No significant changes.
+
+---
 
 ## 3.22.29 (2024-07-16) {: #3.22.29 }
 
