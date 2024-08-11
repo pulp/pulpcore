@@ -26,6 +26,12 @@ jobs:
           fetch-depth: 0
           path: "pulpcore"
 
+      - uses: "actions/checkout@v4"
+        with:
+          fetch-depth: 1
+          repository: "pulp/plugin_template"
+          path: "plugin_template"
+
       - uses: "actions/setup-python@v5"
         with:
           python-version: "3.11"
@@ -33,7 +39,7 @@ jobs:
       - name: "Install python dependencies"
         run: |
           echo ::group::PYDEPS
-          pip install bump2version jinja2 pyyaml packaging requests
+          pip install bump2version packaging -r plugin_template/requirements.txt
           echo ::endgroup::
 
       - name: "Setting secrets"
@@ -70,13 +76,6 @@ jobs:
         working-directory: pulpcore
         run: |
           find CHANGES -type f -regex ".*\.\(bugfix\|doc\|feature\|misc\|deprecation\|removal\)" -exec git rm {} +
-
-      - name: Checkout plugin template
-        uses: actions/checkout@v4
-        with:
-          repository: pulp/plugin_template
-          path: plugin_template
-          fetch-depth: 0
 
       - name: Update CI branches in template_config
         working-directory: plugin_template
