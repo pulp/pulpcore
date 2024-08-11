@@ -21,13 +21,11 @@ PLUGIN_SOURCE="./pulpcore/dist/pulpcore-${PLUGIN_VERSION}-py3-none-any.whl"
 export PULP_API_ROOT="/pulp/"
 
 PIP_REQUIREMENTS=("pulp-cli")
-if [[ "$TEST" = "publish" ]]
-then
-  PIP_REQUIREMENTS+=("psycopg2-binary")
-fi
 
+# This must be the **only** call to "pip install" on the test runner.
 pip install ${PIP_REQUIREMENTS[*]}
 
+# Check out the pulp-cli branch matching the installed version.
 PULP_CLI_VERSION="$(pip freeze | sed -n -e 's/pulp-cli==//p')"
 git clone --depth 1 --branch "$PULP_CLI_VERSION" https://github.com/pulp/pulp-cli.git ../pulp-cli
 
