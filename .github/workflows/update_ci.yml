@@ -36,7 +36,7 @@ jobs:
       - name: "Install python dependencies"
         run: |
           echo ::group::PYDEPS
-          pip install gitpython requests packaging jinja2 pyyaml
+          pip install gitpython packaging -r plugin_template/requirements.txt
           echo ::endgroup::
 
       - name: "Configure Git with pulpbot name and email"
