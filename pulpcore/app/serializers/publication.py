@@ -232,6 +232,12 @@ class DistributionSerializer(ModelSerializer):
     hidden = serializers.BooleanField(
         default=False, help_text=_("Whether this distribution should be shown in the content app.")
     )
+    no_content_change_since = serializers.SerializerMethodField(
+        help_text=_(
+            "Timestamp since when the distributed content served by this distribution has "
+            "not changed. If equals to `null`, no guarantee is provided about content changes."
+        )
+    )
 
     class Meta:
         model = models.Distribution
@@ -239,6 +245,7 @@ class DistributionSerializer(ModelSerializer):
             "base_path",
             "base_url",
             "content_guard",
+            "no_content_change_since",
             "hidden",
             "pulp_labels",
             "name",
@@ -311,6 +318,15 @@ class DistributionSerializer(ModelSerializer):
             )
 
         return data
+
+    def get_no_content_change_since(self, obj):
+        publication = obj.publication
+        repo_version = obj.repository_version
+
+        if publication or (repo_version and not obj.SERVE_FROM_PUBLICATION):
+            return obj.pulp_last_updated
+        else:
+            return None
 
 
 class ArtifactDistributionSerializer(DistributionSerializer):
