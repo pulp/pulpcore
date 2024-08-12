@@ -67,7 +67,8 @@ def replicate_distributions(server_pk):
     for config in pulp_plugin_configs():
         if config.replicator_classes:
             for replicator_class in config.replicator_classes:
-                supported_replicators.append(replicator_class(ctx, task_group, tls_settings))
+                replicator = replicator_class(ctx, task_group, tls_settings, server)
+                supported_replicators.append(replicator)
 
     for replicator in supported_replicators:
         distros = replicator.upstream_distributions(labels=server.pulp_label_select)
@@ -77,13 +78,14 @@ def replicate_distributions(server_pk):
             remote = replicator.create_or_update_remote(upstream_distribution=distro)
             if not remote:
                 # The upstream distribution is not serving any content,
-                # let if fall throug the cracks and be cleanup below.
+                # let if fall through the cracks and be cleanup below.
                 continue
             # Check if there is already a repository
             repository = replicator.create_or_update_repository(remote=remote)
 
-            # Dispatch a sync task
-            replicator.sync(repository, remote)
+            # Dispatch a sync task if needed
+            if replicator.requires_syncing(distro):
+                replicator.sync(repository, remote)
 
             # Get or create a distribution
             replicator.create_or_update_distribution(repository, distro)
@@ -92,4 +94,8 @@ def replicate_distributions(server_pk):
             distro_names.append(distro["name"])
 
         replicator.remove_missing(distro_names)
+
+    started_at = task_group.tasks.first().started_at
+    server.set_last_replication_timestamp(started_at)
+
     task_group.finish()

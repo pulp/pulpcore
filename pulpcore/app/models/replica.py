@@ -28,9 +28,16 @@ class UpstreamPulp(BaseModel, AutoAddObjPermsMixin):
 
     pulp_label_select = models.TextField(null=True)
 
+    last_replication = models.DateTimeField(null=True)
+
     class Meta:
         unique_together = ("name", "pulp_domain")
         permissions = [
             ("replicate_upstreampulp", "Can start a replication task"),
             ("manage_roles_upstreampulp", "Can manage roles on upstream pulps"),
         ]
+
+    def set_last_replication_timestamp(self, timestamp):
+        self.last_replication = timestamp
+        # enforce the update without changing pulp_last_updated
+        self.save(update_fields=["last_replication"])
