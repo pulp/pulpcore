@@ -1,2 +1,0 @@
-Fixed RBAC permissions being incorrectly assigned in tasks that create objects.
-https://access.redhat.com/security/cve/cve-2024-7143
