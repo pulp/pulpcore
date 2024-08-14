@@ -8,6 +8,41 @@
 
 [//]: # (towncrier release notes start)
 
+# ## 3.58.0 (2024-08-14) {: #3.58.0 }
+
+### REST API {: #3.58.0-rest-api }
+
+#### Features {: #3.58.0-rest-api-feature }
+
+- Optimized replication to skip content syncing when upstream distributions are unchanged. The
+  optimization considers changes on the upstream distributions serving content directly from a
+  publication or repository version.
+  [#5493](https://github.com/pulp/pulpcore/issues/5493)
+- Exposed the `no_content_change_since` field on the Distribution API endpoint to return a timestamp
+  since when the distributed content served by a distribution has not changed. If the value equals to
+  `null`, no such a guarantee about the content change is given.
+  [#5687](https://github.com/pulp/pulpcore/issues/5687)
+
+#### Bugfixes {: #3.58.0-rest-api-bugfix }
+
+- Fixed RBAC permissions being incorrectly assigned in tasks that create objects.
+  https://access.redhat.com/security/cve/cve-2024-7143
+  [#5683](https://github.com/pulp/pulpcore/issues/5683)
+
+### Plugin API {: #3.58.0-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.58.0-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.58.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.57.1 (2024-08-10) {: #3.57.1 }
 
 ### REST API {: #3.57.1-rest-api }
