@@ -28,9 +28,9 @@ are relative paths inside the current working directory:
 The filename must remain the same for the detached signature, as shown.
 
 !!! note
-      Plugins may provide other signing service classes that may need their JSON output to
-      contain different information.
 
+    Plugins may provide other signing service classes that may need their JSON output to
+    contain different information.
 
 Below is an example of a signing script that produces signatures for content:
 
@@ -58,11 +58,11 @@ fi
 ```
 
 !!! note
-      As the creator of the signing script, you can expect PULP_SIGNING_KEY_FINGERPRINT
-      and potentially other environment variables, depending on the content plugin calling signing service.
-      Make sure the script contains a proper shebang and Pulp has got valid permissions
-      to execute it.
 
+    As the creator of the signing script, you can expect PULP_SIGNING_KEY_FINGERPRINT
+    and potentially other environment variables, depending on the content plugin calling signing service.
+    Make sure the script contains a proper shebang and Pulp has got valid permissions
+    to execute it.
 
 ## 3. Create a signing service
 
@@ -77,14 +77,14 @@ pulpcore-manager add-signing-service ${SERVICE_NAME} ${SCRIPT_ABS_FILENAME} ${KE
 ```
 
 !!! note
-      The public key must be available on the caller's keyring or on a keyring provided via the
-      `--gpghome` or `--keyring` parameters.
 
+    The public key must be available on the caller's keyring or on a keyring provided via the
+    `--gpghome` or `--keyring` parameters.
 
 !!! warning
-      It is possible to insert a new signing service into the database by using the
-      `pulpcore-manager shell_plus` interactive Python shell. However, this is not recommended.
 
+    It is possible to insert a new signing service into the database by using the
+    `pulpcore-manager shell_plus` interactive Python shell. However, this is not recommended.
 
 ## 4. Check the signing service
 

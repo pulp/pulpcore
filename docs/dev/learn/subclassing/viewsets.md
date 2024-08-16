@@ -57,13 +57,13 @@ this is accomplished.
 See {class}`~pulpcore.plugin.tasking.dispatch` for more details.
 
 !!! note
-The arguments provided to a task must be JSON serializable, but may contain instances of
-`uuid.UUID`.
+    The arguments provided to a task must be JSON serializable, but may contain instances of
+    `uuid.UUID`.
 
 
 !!! note
-You should always prefer handing primary keys instead of serialized instances of ORM objects to
-a task.
+    You should always prefer handing primary keys instead of serialized instances of ORM objects to
+    a task.
 
 
 ```python
@@ -135,6 +135,6 @@ If any additional context needs to be passed from the ViewSet to the creation ta
 available as `self.context` in the Serializer.
 
 !!! note
-Context passed from the ViewSet to the Task must be easily serializable. i.e. one cannot
-return the request from `get_deferred_context`.
+    Context passed from the ViewSet to the Task must be easily serializable. i.e. one cannot
+    return the request from `get_deferred_context`.
 

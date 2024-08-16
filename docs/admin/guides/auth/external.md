@@ -92,6 +92,7 @@ Pulp provides a setting named `REMOTE_USER_ENVIRON_NAME <remote-user-environ-nam
 you to specify another WSGI environment variable to read the authenticated username from.
 
 !!! warning
+
     Configuring this has serious security implications. See the [Django warning at the end of this
     section in their docs](https://docs.djangoproject.com/en/4.2/howto/auth-remote-user/#configuration) for more details.
 

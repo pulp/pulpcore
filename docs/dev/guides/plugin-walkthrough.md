@@ -72,7 +72,8 @@ in the `object-relationships` section:
   corresponding {class}`~pulpcore.plugin.models.Artifact` is downloaded
 
 !!! note
-Some of these steps may need to behave differently for other download policies.
+
+    Some of these steps may need to behave differently for other download policies.
 
 
 The remote implementation suggestion above allows plugin writer to have an understanding and

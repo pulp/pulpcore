@@ -61,13 +61,14 @@ the content to the next stage. The function `resolve()` will unblock the corouti
 attached `Future`.
 
 !!! tip
-To improve performance when you expect to create a lot of those futures, consider to
-create a larger batch before starting to await them. This way the batching in the subsequent
-stages will still be exploited.
 
+    To improve performance when you expect to create a lot of those futures, consider to
+    create a larger batch before starting to await them. This way the batching in the subsequent
+    stages will still be exploited.
 
 !!! tip
-If you need downloaded artifacts of this content for further discovery, make sure to
-provide `deferred_download=False` to the
-{class}`pulpcore.plugin.stages.DeclarativeArtifact`.
+
+    If you need downloaded artifacts of this content for further discovery, make sure to
+    provide `deferred_download=False` to the
+    {class}`pulpcore.plugin.stages.DeclarativeArtifact`.
 

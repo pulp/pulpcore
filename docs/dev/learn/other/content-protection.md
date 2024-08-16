@@ -23,9 +23,9 @@ Master/Detail objects a `TYPE` class attribute is needed which is then used in t
 ```
 
 !!! note
-The [pulp-certguard](site:pulp_certguard/) plugin ships various
-`ContentGuard` types for users and plugin writers to use together. Plugins can ship their own
-content guards too, but look at the existing ones first.
+    The [pulp-certguard](site:pulp_certguard/) plugin ships various
+    `ContentGuard` types for users and plugin writers to use together. Plugins can ship their own
+    content guards too, but look at the existing ones first.
 
 
 ## Simple Example

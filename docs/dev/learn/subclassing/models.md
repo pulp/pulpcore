@@ -5,13 +5,13 @@
 For the most part, models provided by plugin writers are just regular [Django Models](https://docs.djangoproject.com/en/2.1/topics/db/models/).
 
 !!! note
-One slight variation is that the validation is primarily handled in the Django Rest Framework
-Serializer. `.clean()` is not called.
+    One slight variation is that the validation is primarily handled in the Django Rest Framework
+    Serializer. `.clean()` is not called.
 
 
 Most plugins will implement:
-: - model(s) for the specific content type(s) used in the plugin, should be subclassed from Content model
-  - model(s) for the plugin specific remote(s), should be subclassed from Remote model
+- model(s) for the specific content type(s) used in the plugin, should be subclassed from Content model
+- model(s) for the plugin specific remote(s), should be subclassed from Remote model
 
 ## Adding Model Fields
 
@@ -21,7 +21,7 @@ for your fields. See the [Django field documentation](https://docs.djangoproject
 using these fields.
 
 !!! note
-It is required to declare the `default_related_name`.
+    It is required to declare the `default_related_name`.
 
 
 The TYPE class attribute is used for filtering purposes.
@@ -50,8 +50,8 @@ pulpcore-manager migrate
 ```
 
 !!! warning
-Do not use settings directly in the model fields, it will lead to a data migration that is
-specific to the users installation in case those settings change.
+    Do not use settings directly in the model fields, it will lead to a data migration that is
+    specific to the users installation in case those settings change.
 
 
 If you recognize this syntax, it is because pulpcore-manager is `manage.py` configured with
