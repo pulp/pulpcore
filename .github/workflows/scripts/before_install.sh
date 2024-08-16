@@ -57,7 +57,7 @@ fi
 
 for i in {1..3}
 do
-  ansible-galaxy collection install "amazon.aws:1.5.0" && s=0 && break || s=$? && sleep 3
+  ansible-galaxy collection install "amazon.aws:8.1.0" && s=0 && break || s=$? && sleep 3
 done
 if [[ $s -gt 0 ]]
 then
