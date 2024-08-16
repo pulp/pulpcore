@@ -1,5 +1,3 @@
-
-
 # Adding Automatic Permissions for New Objects
 
 When creating new objects in either viewsets or tasks it's important to have the right permissions.
@@ -62,8 +60,9 @@ example assigning the `"core.task_viewer"` role to the group `"foo"`.
 ```
 
 !!! note
-All the hooks shipped with pulpcore accept either a single item or list of items for their
-arguments like `roles`, `users` or `groups`.
+
+    All the hooks shipped with pulpcore accept either a single item or list of items for their
+    arguments like `roles`, `users` or `groups`.
 
 
 
@@ -71,20 +70,12 @@ arguments like `roles`, `users` or `groups`.
 ## Enabling New Object Permission Creation
 
 To enable automatic permission creation for an object managed by an AccessPolicy, have your model
-use the `pulpcore.plugin.models.AutoAddObjPermsMixin`. See the example below as an example:
+use the [pulpcore.plugin.models.AutoAddObjPermsMixin][]. See the example below as an example:
 
 ```python
 class MyModel(BaseModel, AutoAddObjPermsMixin):
    ...
 ```
-
-See the docstring below for more information on this mixin.
-
-```{eval-rst}
-.. autoclass:: pulpcore.app.models.access_policy.AutoAddObjPermsMixin
-
-```
-
 
 
 ## Shipping a Default New Object Policy
@@ -151,5 +142,11 @@ This would be callable with a configuration like this one:
 ```
 
 !!! note
-The `parameters` dict must actually match the creation hooks signature.
 
+    The `parameters` dict must actually match the creation hooks signature.
+
+---
+
+## Reference
+
+::: pulpcore.plugin.models.AutoAddObjPermsMixin

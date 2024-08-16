@@ -1,5 +1,3 @@
-
-
 # Restricting Viewable Objects
 
 With limited object-level permissions on certain objects, its desirable to restrict the objects
@@ -11,8 +9,9 @@ filter on the base Queryset of a ViewSet. This causes the permission filtering t
 filterings applied by a user.
 
 !!! note
-If Domains are enabled, querysets will be scoped by the current request's domain before being
-passed onto RBAC queryset scoping.
+
+    If Domains are enabled, querysets will be scoped by the current request's domain before being
+    passed onto RBAC queryset scoping.
 
 
 
@@ -27,7 +26,7 @@ Pulp's default permission class, `pulpcore.app.AccessPolicyFromDB`, implementati
 defined. This field can be changed by the user to any method on the ViewSet or set empty if they
 wish to turn off Queryset Scoping for that view:
 
-```
+```python
 DEFAULT_ACCESS_POLICY = {
     ...
     # Call method `scope_queryset` on ViewSet to perform Queryset Scoping
@@ -44,7 +43,7 @@ model-level or object-level.
 For example Tasks are restricted only to those users with the "core.view_task" permission like
 this:
 
-```
+```python
 TaskViewSet(NamedModelViewSet):
     ...
     queryset_filtering_required_permission = "core.view_task"
@@ -60,9 +59,10 @@ Content ViewSet's have their `scope_queryset` method overriden to scope based on
 the user can see.
 
 !!! note
-When queryset scoping is enabled for content you must also use the
-`has_required_repo_perms_on_upload` access condition on the upload endpoint to ensure users
-specify a repository for upload or they won't be able to see their uploaded content.
+
+    When queryset scoping is enabled for content you must also use the
+    `has_required_repo_perms_on_upload` access condition on the upload endpoint to ensure users
+    specify a repository for upload or they won't be able to see their uploaded content.
 
 
 Extra Queryset Scoping methods can be defined on the ViewSet to allow users to choose different
@@ -109,7 +109,8 @@ class MyViewSet(rest_framework.viewsets.GenericViewSet):
 ```
 
 !!! warning
-If you have custom ViewSets and plan to add Domains compatibility to your plugin, you must
-scope your objects by the domain in the ViewSet's `get_queryset` method to comply
-with Domain's isolation policies.
+
+    If you have custom ViewSets and plan to add Domains compatibility to your plugin, you must
+    scope your objects by the domain in the ViewSet's `get_queryset` method to comply
+    with Domain's isolation policies.
 
