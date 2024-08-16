@@ -1,4 +1,4 @@
-::: pulpcore
+# Base Models
 
 ::: pulpcore.app.models.repository
 
