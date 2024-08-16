@@ -35,11 +35,11 @@ class CustomView(APIView):
 ```
 
 !!! note
-`Meta.ref_name` is a string that is used as the model definition name for
-the serializer class. If this attribute is not specified, all serializers
-have an implicit name derived from their class name. In order to avoid
-possible name collisions between plugins, plugins must define `ref_name`
-on the Meta class using `<app_label>.` as a prefix.
+    `Meta.ref_name` is a string that is used as the model definition name for
+    the serializer class. If this attribute is not specified, all serializers
+    have an implicit name derived from their class name. In order to avoid
+    possible name collisions between plugins, plugins must define `ref_name`
+    on the Meta class using `<app_label>.` as a prefix.
 
 For the model based serializers offered by pulpcore (i.e.
 {class}`~pulpcore.plugin.serializers.ModelSerializer` and derived
@@ -61,7 +61,8 @@ class SnippetSerializerV1(serializers.Serializer):
 
 
 !!! note
-Plugin authors can provide manual overrides using the [@extend_schema decorator](https://drf-spectacular.readthedocs.io/en/stable/drf_spectacular.html#drf_spectacular.utils.extend_schema)
+    Plugin authors can provide manual overrides using the
+    [@extend_schema decorator](https://drf-spectacular.readthedocs.io/en/stable/drf_spectacular.html#drf_spectacular.utils.extend_schema)
 
 
 The OpenAPI schema for pulpcore and all installed plugins can be downloaded from the `pulp-api`

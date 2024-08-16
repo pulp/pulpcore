@@ -224,12 +224,13 @@ In case a task was marked for immediate execution, but the reservations were not
 be left in the task queue or marked as canceled, depending on the `deferred` attribute.
 
 !!! warning
-A task marked for immediate execution will not be isolated in the `pulpcore-worker`, but may
-be executed in the current api worker. This will not only delay the response to the http call,
-but also the complete single threaded gunicorn process. To prevent degrading the whole Pulp
-service, this is only ever allowed for tasks that guarantee to perform fast **and** without
-blocking on external resources. E.g. simple attribute updates, deletes... A model with a lot of
-dependants that cause cascaded deletes may not be suitable for immediate execution.
+
+    A task marked for immediate execution will not be isolated in the `pulpcore-worker`, but may
+    be executed in the current api worker. This will not only delay the response to the http call,
+    but also the complete single threaded gunicorn process. To prevent degrading the whole Pulp
+    service, this is only ever allowed for tasks that guarantee to perform fast **and** without
+    blocking on external resources. E.g. simple attribute updates, deletes... A model with a lot of
+    dependants that cause cascaded deletes may not be suitable for immediate execution.
 
 
 **Diagnostics**
@@ -530,9 +531,10 @@ Then in 3.9 the following happens:
    removed.
 
 !!! note
-Deprecation log statements are shown to users of your plugin when using a deprecated call
-interface. This is by design to raise general awareness that the code in-use will eventually be
-removed.
+
+    Deprecation log statements are shown to users of your plugin when using a deprecated call
+    interface. This is by design to raise general awareness that the code in-use will eventually be
+    removed.
 
 
 This also applies to models importable from `pulpcore.plugin.models`. For example, an attribute
@@ -591,13 +593,13 @@ import and use Django directly, but pulpcore also includes Django. Since your pl
 directly, your plugin should declare its dependency on Django.
 
 !!! note
-Why add a requirement when pulpcore is known to provide it? To continue with the Django
-example... Django can introduce breaking changes with each release, so if your plugin relies on
-pulpcore to declare the Django requirement, and then pulpcore upgrades, your plugin could
-receive breaking changes with a new version of pulpcore. These breaking changes could be subtle
-and not be noticeable until they affect your users. By your plugin declaring the dependency on
-Django directly, at install/upgrade time (in the CI), you'll know right away you have a
-conflicting dependency on Django.
+    Why add a requirement when pulpcore is known to provide it? To continue with the Django
+    example... Django can introduce breaking changes with each release, so if your plugin relies on
+    pulpcore to declare the Django requirement, and then pulpcore upgrades, your plugin could
+    receive breaking changes with a new version of pulpcore. These breaking changes could be subtle
+    and not be noticeable until they affect your users. By your plugin declaring the dependency on
+    Django directly, at install/upgrade time (in the CI), you'll know right away you have a
+    conflicting dependency on Django.
 
 
 One useful tool for managing the upperbound is [dependabot](https://github.com/dependabot) which
@@ -629,11 +631,12 @@ is allowed to handle. This includes two types of "checksum handling":
    data used in those publications to the set of allowed hashers in `ALLOWED_CONTENT_CHECKSUMS`.
 
 !!! note
-The plugin API provides the `pulpcore.plugin.pulp_hashlib` module which provides the `new`
-function. This is a wrapper around `hashlib.new` which raises an exception if a hasher is
-requested that is not listed in the `ALLOWED_CONTENT_CHECKSUMS` setting. This is a convenience
-facility allowing plugin writers to not check the `ALLOWED_CONTENT_CHECKSUMS` setting
-themselves.
+
+    The plugin API provides the `pulpcore.plugin.pulp_hashlib` module which provides the `new`
+    function. This is a wrapper around `hashlib.new` which raises an exception if a hasher is
+    requested that is not listed in the `ALLOWED_CONTENT_CHECKSUMS` setting. This is a convenience
+    facility allowing plugin writers to not check the `ALLOWED_CONTENT_CHECKSUMS` setting
+    themselves.
 
 
 (il8n-expectations)=
@@ -733,7 +736,8 @@ breaking signature change in tasking code and if this is needed you need to make
 preserve the old code until the next major Pulp version.
 
 !!! note
-Users not performing zero downtime upgrades who are still wary of any task incompatibilities,
-should consider running the pulpcore worker in burst mode (`pulpcore-worker --burst`) after
-shutting down all the api and content workers to drain the task queue.
+
+    Users not performing zero downtime upgrades who are still wary of any task incompatibilities,
+    should consider running the pulpcore worker in burst mode (`pulpcore-worker --burst`) after
+    shutting down all the api and content workers to drain the task queue.
 

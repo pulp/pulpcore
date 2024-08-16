@@ -36,7 +36,7 @@ Current Domain Compatible Plugins:
 - pulp_certguard>=1.6.0
 
 !!! warning
-Before turning on domains, you should let all currently running tasks finished.
+    Before turning on domains, you should let all currently running tasks finished.
 
 ## Creating Domains
 

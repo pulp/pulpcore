@@ -93,16 +93,16 @@ See the {class}`~pulpcore.plugin.download.DownloaderFactory` for more informatio
 supported urls.
 
 !!! tip
-The {meth}`~pulpcore.plugin.models.Remote.get_downloader` accepts kwargs that can
-enable size or digest based validation, and specifying a file-like object for the data to be
-written into. See {meth}`~pulpcore.plugin.models.Remote.get_downloader` for more
-information.
+    The {meth}`~pulpcore.plugin.models.Remote.get_downloader` accepts kwargs that can
+    enable size or digest based validation, and specifying a file-like object for the data to be
+    written into. See {meth}`~pulpcore.plugin.models.Remote.get_downloader` for more
+    information.
 
 
 !!! note
-All {class}`~pulpcore.plugin.download.HttpDownloader` downloaders produced by the same
-remote instance share an `aiohttp` session, which provides a connection pool, connection
-reusage and keep-alives shared across all downloaders produced by a single remote.
+    All {class}`~pulpcore.plugin.download.HttpDownloader` downloaders produced by the same
+    remote instance share an `aiohttp` session, which provides a connection pool, connection
+    reusage and keep-alives shared across all downloaders produced by a single remote.
 
 
 
@@ -128,8 +128,8 @@ Plugin writers can choose to halt the entire task by allowing the exception be u
 would mark the entire task as failed.
 
 !!! note
-The {class}`~pulpcore.plugin.download.HttpDownloader` automatically retry in some cases, but if
-unsuccessful will raise an exception for any HTTP response code that is 400 or greater.
+    The {class}`~pulpcore.plugin.download.HttpDownloader` automatically retry in some cases, but if
+    unsuccessful will raise an exception for any HTTP response code that is 400 or greater.
 
 
 
@@ -169,16 +169,16 @@ The {meth}`~pulpcore.plugin.download.DownloaderFactory.build` method constructs 
 downloader for any given url.
 
 !!! note
-Any `HttpDownloader <http-downloader>` objects produced by an instantiated
-`DownloaderFactory` share an `aiohttp` session, which provides a connection pool, connection
-reusage and keep-alives shared across all downloaders produced by a single factory.
+    Any `HttpDownloader <http-downloader>` objects produced by an instantiated
+    `DownloaderFactory` share an `aiohttp` session, which provides a connection pool, connection
+    reusage and keep-alives shared across all downloaders produced by a single factory.
 
 
 !!! tip
-The {meth}`~pulpcore.plugin.download.DownloaderFactory.build` method accepts kwargs that
-enable size or digest based validation or the specification of a file-like object for the data
-to be written into. See {meth}`~pulpcore.plugin.download.DownloaderFactory.build` for
-more information.
+    The {meth}`~pulpcore.plugin.download.DownloaderFactory.build` method accepts kwargs that
+    enable size or digest based validation or the specification of a file-like object for the data
+    to be written into. See {meth}`~pulpcore.plugin.download.DownloaderFactory.build` for
+    more information.
 
 
 ```{eval-rst}

@@ -34,10 +34,10 @@ async def run(self):
 ```
 
 !!! tip
-The `deferred_download` flag is used at the artifact level, to support on-demand concepts for
-plugins that need some artifacts to download immediately in all cases.
-See also `multi-level-discovery`.
 
+    The `deferred_download` flag is used at the artifact level, to support on-demand concepts for
+    plugins that need some artifacts to download immediately in all cases.
+    See also `multi-level-discovery`.
 
 ## Adding Support when using a Custom Stages API Pipeline
 
@@ -58,14 +58,14 @@ stages.extend(the_rest_of_the_pipeline)  # This adds the Content and Association
 ```
 
 !!! warning
-Skipping of those Stages does not work with `multi-level-discovery`.
-If you need some artifacts downloaded anyway, follow the example on
-\:ref:on-demand-support-with-dv\` and include the artifact stages in the custom pipeline.
 
+    Skipping of those Stages does not work with `multi-level-discovery`.
+    If you need some artifacts downloaded anyway, follow the example on
+    \:ref:on-demand-support-with-dv\` and include the artifact stages in the custom pipeline.
 
 !!! tip
-Consider to also exclude the `ResolveContentFutures` stage.
 
+    Consider to also exclude the `ResolveContentFutures` stage.
 
 ## What if the Custom Pipeline Needs Artifact Downloading?
 
@@ -78,7 +78,8 @@ By specifying `deferred_download=False` in the `DeclarativeArtifact` regardless 
 policy, lazy downloading for that specific artifact can be prohibited.
 
 !!! tip
-See also `on-demand-support-with-da`
+
+    See also `on-demand-support-with-da`
 
 
 ## How Does This Work at the Model Layer?
@@ -104,9 +105,10 @@ If `remote.policy == Remote.ON_DEMAND` the Artifact is saved on the first downlo
 future requests to serve the already-downloaded and validated Artifact.
 
 !!! note
-In situations where multiple Remotes synced and provided the same `Content` unit, only one
-`Content` unit is created but many `RemoteArtifact` objects may be created. The Pulp Content app
-will try all `RemoteArtifact` objects that correspond with a `ContentArtifact`. It's possible an
-unexpected `Remote` could be used when fetching that equivalent `Content` unit. Similar warnings
-are in the user documentation on on-demand.
+
+    In situations where multiple Remotes synced and provided the same `Content` unit, only one
+    `Content` unit is created but many `RemoteArtifact` objects may be created. The Pulp Content app
+    will try all `RemoteArtifact` objects that correspond with a `ContentArtifact`. It's possible an
+    unexpected `Remote` could be used when fetching that equivalent `Content` unit. Similar warnings
+    are in the user documentation on on-demand.
 

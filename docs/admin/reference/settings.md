@@ -233,9 +233,9 @@ Store cached responses from the content app into Redis. This setting improves th
 of the content app under heavy load for similar requests. Defaults to `False`.
 
 !!! note
-The entire response is not stored in the cache. Only the location of the file needed to
-recreate the response is stored. This reduces database queries and allows for many
-responses to be stored inside the cache.
+    The entire response is not stored in the cache. Only the location of the file needed to
+    recreate the response is stored. This reduces database queries and allows for many
+    responses to be stored inside the cache.
 
 
 ### CACHE_SETTINGS

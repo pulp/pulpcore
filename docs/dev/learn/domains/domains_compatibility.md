@@ -29,10 +29,11 @@ class FileContent(Content):
 ```
 
 !!! note
-Child content models need a separate domain relation since Postgres does not allow
-`unique_together` on fields from the parent table. The base `Content` model has a
-`pulp_domain` relation already, so the child content model must use an underscore to prevent
-a name collision.
+
+    Child content models need a separate domain relation since Postgres does not allow
+    `unique_together` on fields from the parent table. The base `Content` model has a
+    `pulp_domain` relation already, so the child content model must use an underscore to prevent
+    a name collision.
 
 
 ## Ensure any Custom Action Serializer Prevents Cross-Domain Parameters
