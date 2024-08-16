@@ -1,5 +1,3 @@
-
-
 # Defining an Access Policy
 
 The Access Policy controls the authorization of a given request and is enforced at the
@@ -10,7 +8,7 @@ described here](https://rsinger86.github.io/drf-access-policy/policy_logic/).
 
 Below is an example policy used by `FileRemote`, with an explanation of its effect below that:
 
-```
+```python
 [
     {
         "action": ["list"],
@@ -75,15 +73,17 @@ When multiple conditions are present, **all** of them must return True for the r
 authorized.
 
 !!! note
-If you are making your plugin compatible with Domains, then use the `has_model_or_domain_perms`
-and `has_model_or_domain_or_obj_perms` checks where appropriate.
+
+    If you are making your plugin compatible with Domains, then use the `has_model_or_domain_perms`
+    and `has_model_or_domain_or_obj_perms` checks where appropriate.
 
 
 !!! warning
-The `admin` user created on installations prior to RBAC being enabled has
-`is_superuser=True`. Django assumes a superuser has any model-level permission even without it
-being assigned. Django's permission checking machinery assumes superusers bypass authorization
-checks.
+
+    The `admin` user created on installations prior to RBAC being enabled has
+    `is_superuser=True`. Django assumes a superuser has any model-level permission even without it
+    being assigned. Django's permission checking machinery assumes superusers bypass authorization
+    checks.
 
 
 ## Custom ViewSet Actions
@@ -92,7 +92,7 @@ The `action` part of a policy statement can reference [any custom action your vi
 For example `FileRepositoryViewSet` has a `sync` custom action used by users to sync a given
 `FileRepository`. Below is an example of the default policy used to guard that action:
 
-```
+```python
 {
     "action": ["sync"],
     "principal": "authenticated",
@@ -108,13 +108,8 @@ For example `FileRepositoryViewSet` has a `sync` custom action used by users to 
 
 ## Storing an Access Policy in the DB
 
-All access policies are stored in the database in the `pulpcore.plugin.models.AccessPolicy` model,
-which stores the policy statements described above. Here is a look at the `AccessPolicy` model:
-
-```{eval-rst}
-.. autoclass:: pulpcore.plugin.models.AccessPolicy
-   :members: viewset_name, statements, creation_hooks
-```
+All access policies are stored in the database in the [pulpcore.plugin.models.AccessPolicy][] model,
+which stores the policy statements described above.
 
 By storing these in the database they are readable to users with a GET to
 `/pulp/api/v3/access_policies/`. Additionally users can PUT/PATCH modify them at
@@ -137,7 +132,7 @@ Here's an example of code to define a default policy:
 ```python
 class FileRemoteViewSet(RemoteViewSet):
 
-<...>
+    # <...>
     DEFAULT_ACCESS_POLICY = {
         "statements": [
             {
@@ -190,7 +185,7 @@ class FileRemoteViewSet(RemoteViewSet):
 ```
 
 For an explanation of the `creation_hooks` see the
-`shipping_a_default_new_object_policy` documentation.
+[Shipping a default new object policy](site:pulpcore/docs/dev/learn/rbac/adding_automatic_permissions/#shipping-a-default-new-object-policy) documentation.
 
 The attribute `LOCKED_ROLES` contains roles that are managed by the plugin author. Their name
 needs to be prefixed by the plugins `app_label` with a dot to prevent collisions. Roles defined
@@ -283,15 +278,8 @@ to be globally available. Pulp enables this as follows:
 DRF_ACCESS_POLICY = {"reusable_conditions": ["pulpcore.app.global_access_conditions"]}
 ```
 
-The `pulpcore.app.global_access_conditions` provides the following checks that are available for
-both users and plugin writers to use in their policies:
-
-```{eval-rst}
-.. automodule:: pulpcore.app.global_access_conditions
-   :members:
-
-```
-
+The [pulpcore.app.global_access_conditions][]
+provides several checks that are available for both users and plugin writers to use in their policies.
 
 
 ## Custom Permission Checks
@@ -307,3 +295,11 @@ DRF_ACCESS_POLICY = {
 ```
 
 to their `app.settings` module.
+
+---
+
+## Reference
+
+::: pulpcore.plugin.models.AccessPolicy
+
+::: pulpcore.app.global_access_conditions

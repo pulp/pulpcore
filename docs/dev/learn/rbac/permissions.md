@@ -67,8 +67,9 @@ class FileRepository(Repository):
 ```
 
 !!! note
-It is not necessary to "namespace" this `modify_repo_content` permission because by including
-it in the meta class of your Detail view, it will already be namespaced on the correct object.
+
+    It is not necessary to "namespace" this `modify_repo_content` permission because by including
+    it in the meta class of your Detail view, it will already be namespaced on the correct object.
 
 
 
@@ -81,18 +82,17 @@ the permissions to view modify and delete the object, or `viewer` limited to see
 scope the reach of the permissions in a role, these role are assigned to `Users` or `Groups`
 either on the model-level, domain-level (if domains are enabled), or the object-level.
 
-```{eval-rst}
+### Role Levels
 
-FileRemotes".
-:Domain-Level: When the domains feature is enabled, a role is associated to a user or group for
-    access to a specific model within the specific domain and only that domain. This allows you
-    to express concepts like "Hilde can administer all FileRemotes within Domain 'foo'".
-:Object-Level: A role is associated to a user or group for access to a specific instance of a
-   specific model. This allows you to express concepts like "Hilde can administer
-   FileRemote(name='foo remote').
+Domain-Level
+: When the domains feature is enabled, a role is associated to a user or group for
+access to a specific model within the specific domain and only that domain. This allows you
+to express concepts like "Hilde can administer all FileRemotes within Domain 'foo'".
 
-Certain roles may contain permissions that are only ever checked on the model(or domain)-level.
-```
+Object-Level
+: A role is associated to a user or group for access to a specific instance of a
+specific model. This allows you to express concepts like "Hilde can administer
+FileRemote(name='foo remote').
 
 Certain roles may contain permissions that are only ever checked on the model(or domain)-level.
 For example the `creator` role for a model that contains the models `add` permission.
@@ -112,10 +112,16 @@ LOCKED_ROLES = {
 }
 ```
 
-Roles come in two flavors, locked and user-defined. First there are so called locked roles that are
+### Locked and User-Defined
+
+Roles come in two flavors, locked and user-defined.
+
+First there are so called locked roles that are
 provided by plugins. Their name needs to be prefixed by the plugin `app_label` followed by a dot
 (see the example above). They can be seen, but not modified via the api, and are kept up to date
 with their definition in the plugin code. That way, plugins can ship default access policies that
-rely on those roles. The other flavor is user defined roles. These are managed via the Pulp
+rely on those roles.
+
+The other flavor is user defined roles. These are managed via the Pulp
 API, and plugin code will not interfere with them. Users can opt to use the provided locked roles or
 roll their own.

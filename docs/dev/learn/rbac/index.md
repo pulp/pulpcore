@@ -40,7 +40,8 @@ To add authorization for a given resource, e.g. `FileRemote`, you'll need to:
 2. Define the `roles` as sets of permissions for that resource.
 3. Define the default role associations created for new objects using the `creation_hooks`
    attribute of the new Access Policy for the resource. See the
-   `adding_automatic_permissions_for_new_objects` documentation for more information on that.
+   [Adding Automatic Permissions](site:pulpcore/docs/dev/learn/rbac/adding_automatic_permissions/)
+   documentation for more information on that.
 4. Ship that Access Policy as the class attribute `DEFAULT_ACCESS_POLICY` of a
    `NamedModelViewSet`. This will contain the `statements` and `creation_hooks` attributes.
    Ship the roles as the `LOCKED_ROLES` attribute accordingly. See the
