@@ -51,3 +51,9 @@ pulp_type="core.rbac" AND(   name__icontains=gh OR name__contains="naïve")
 pulp_type="core.rbac" OR name__icontains=gh OR name__contains="naïve"
 # complexity: 4 = 1 (AND/OR) + 3 (filter expression)
 ```
+
+For instance, use the following filter to list sync tasks that did not fail:
+
+```bash
+http http://localhost:5001/pulp/api/v3/tasks/?q='name__contains=sync AND (NOT state="failed" OR state="completed")'
+```

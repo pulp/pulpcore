@@ -256,6 +256,9 @@ class ExpressionFilter(filters.CharFilter):
     field_class = ExpressionFilterField
 
     def __init__(self, *args, **kwargs):
+        kwargs.setdefault(
+            "help_text", _("Filter results by using NOT, AND and OR operations on other filters")
+        )
         super().__init__(*args, **kwargs)
         self.extra["filter"] = self
 
