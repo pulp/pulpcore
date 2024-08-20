@@ -15,18 +15,18 @@ from .api import Stage
 class QueryExistingContents(Stage):
     """
     A Stages API stage that saves :attr:`DeclarativeContent.content` objects and saves its related
-    :class:`~pulpcore.plugin.models.ContentArtifact` objects too.
+    [pulpcore.plugin.models.ContentArtifact][] objects too.
 
-    This stage expects :class:`~pulpcore.plugin.stages.DeclarativeContent` units from `self._in_q`
-    and inspects their associated :class:`~pulpcore.plugin.stages.DeclarativeArtifact` objects. Each
-    :class:`~pulpcore.plugin.stages.DeclarativeArtifact` object stores one
-    :class:`~pulpcore.plugin.models.Artifact`.
+    This stage expects [pulpcore.plugin.stages.DeclarativeContent][] units from `self._in_q`
+    and inspects their associated [pulpcore.plugin.stages.DeclarativeArtifact][] objects. Each
+    [pulpcore.plugin.stages.DeclarativeArtifact][] object stores one
+    [pulpcore.plugin.models.Artifact][].
 
     This stage inspects any "unsaved" Content unit objects and searches for existing saved Content
     units inside Pulp with the same unit key. Any existing Content objects found, replace their
-    "unsaved" counterpart in the :class:`~pulpcore.plugin.stages.DeclarativeContent` object.
+    "unsaved" counterpart in the [pulpcore.plugin.stages.DeclarativeContent][] object.
 
-    Each :class:`~pulpcore.plugin.stages.DeclarativeContent` is sent to `self._out_q` after it has
+    Each [pulpcore.plugin.stages.DeclarativeContent][] is sent to `self._out_q` after it has
     been handled.
 
     This stage drains all available items from `self._in_q` and batches everything into one large
@@ -72,17 +72,17 @@ class QueryExistingContents(Stage):
 class ContentSaver(Stage):
     """
     A Stages API stage that saves :attr:`DeclarativeContent.content` objects and saves its related
-    :class:`~pulpcore.plugin.models.ContentArtifact` objects too.
+    [pulpcore.plugin.models.ContentArtifact][] objects too.
 
-    This stage expects :class:`~pulpcore.plugin.stages.DeclarativeContent` units from `self._in_q`
-    and inspects their associated :class:`~pulpcore.plugin.stages.DeclarativeArtifact` objects. Each
-    :class:`~pulpcore.plugin.stages.DeclarativeArtifact` object stores one
-    :class:`~pulpcore.plugin.models.Artifact`.
+    This stage expects [pulpcore.plugin.stages.DeclarativeContent][] units from `self._in_q`
+    and inspects their associated [pulpcore.plugin.stages.DeclarativeArtifact][] objects. Each
+    [pulpcore.plugin.stages.DeclarativeArtifact][] object stores one
+    [pulpcore.plugin.models.Artifact][].
 
-    Each "unsaved" Content objects is saved and a :class:`~pulpcore.plugin.models.ContentArtifact`
+    Each "unsaved" Content objects is saved and a [pulpcore.plugin.models.ContentArtifact][]
     objects too.
 
-    Each :class:`~pulpcore.plugin.stages.DeclarativeContent` is sent to after it has been handled.
+    Each [pulpcore.plugin.stages.DeclarativeContent][] is sent to after it has been handled.
 
     This stage drains all available items from `self._in_q` and batches everything into one large
     call to the db for efficiency.
@@ -206,8 +206,8 @@ class ContentSaver(Stage):
         This is run within the same transaction as the content unit saving.
 
         Args:
-            batch (list of :class:`~pulpcore.plugin.stages.DeclarativeContent`): The batch of
-                :class:`~pulpcore.plugin.stages.DeclarativeContent` objects to be saved.
+            batch (list of [pulpcore.plugin.stages.DeclarativeContent][]): The batch of
+                [pulpcore.plugin.stages.DeclarativeContent][] objects to be saved.
 
         """
         pass
@@ -219,8 +219,8 @@ class ContentSaver(Stage):
         This is run within the same transaction as the content unit saving.
 
         Args:
-            batch (list of :class:`~pulpcore.plugin.stages.DeclarativeContent`): The batch of
-                :class:`~pulpcore.plugin.stages.DeclarativeContent` objects to be saved.
+            batch (list of [pulpcore.plugin.stages.DeclarativeContent][]): The batch of
+                [pulpcore.plugin.stages.DeclarativeContent][] objects to be saved.
 
         """
         pass
@@ -228,12 +228,12 @@ class ContentSaver(Stage):
 
 class ResolveContentFutures(Stage):
     """
-    This stage resolves the futures in :class:`~pulpcore.plugin.stages.DeclarativeContent`.
+    This stage resolves the futures in [pulpcore.plugin.stages.DeclarativeContent][].
 
-    Futures results are set to the found/created :class:`~pulpcore.plugin.models.Content`.
+    Futures results are set to the found/created [pulpcore.plugin.models.Content][].
 
     This is useful when data downloaded from the plugin API needs to be parsed by FirstStage to
-    create additional :class:`~pulpcore.plugin.stages.DeclarativeContent` objects to be send down
+    create additional [pulpcore.plugin.stages.DeclarativeContent][] objects to be send down
     the pipeline. Consider an example where content type `Foo` references additional instances of a
     different content type `Bar`. Consider this code in FirstStage::
 
@@ -275,7 +275,7 @@ class ContentAssociation(Stage):
 
     This stage stores all content unit primary keys in memory before running. This is done to
     compute the units already associated but not received from `self._in_q`. These units are passed
-    via `self._out_q` to the next stage as a :class:`django.db.models.query.QuerySet`.
+    via `self._out_q` to the next stage as a [django.db.models.query.QuerySet][].
 
     This stage creates a ProgressReport named 'Associating Content' that counts the number of units
     associated. Since it's a stream the total count isn't known until it's finished.
@@ -285,12 +285,12 @@ class ContentAssociation(Stage):
     of units un-associated.
 
     Args:
-        new_version (:class:`~pulpcore.plugin.models.RepositoryVersion`): The repo version this
+        new_version (pulpcore.plugin.models.RepositoryVersion) The repo version this
             stage associates content with.
         mirror (bool): Whether or not to "mirror" the stream of DeclarativeContent - whether content
             not in the stream should be removed from the repository.
-        args: unused positional arguments passed along to :class:`~pulpcore.plugin.stages.Stage`.
-        kwargs: unused keyword arguments passed along to :class:`~pulpcore.plugin.stages.Stage`.
+        args: unused positional arguments passed along to [pulpcore.plugin.stages.Stage][].
+        kwargs: unused keyword arguments passed along to [pulpcore.plugin.stages.Stage][].
     """
 
     def __init__(self, new_version, mirror, *args, **kwargs):

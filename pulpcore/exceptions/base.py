@@ -22,7 +22,7 @@ class PulpException(Exception):
         """
         Returns the string representation of the exception.
 
-        Each concrete class that inherits from :class: `pulpcore.server.exception.PulpException` is
+        Each concrete class that inherits from [pulpcore.server.exception.PulpException][] is
         expected to implement it's own __str__() method. The return value is used by Pulp when
         recording the exception in the database.
         """

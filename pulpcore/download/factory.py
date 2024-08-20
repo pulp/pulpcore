@@ -53,7 +53,7 @@ class DownloaderFactory:
     def __init__(self, remote, downloader_overrides=None):
         """
         Args:
-            remote (:class:`~pulpcore.plugin.models.Remote`): The remote used to populate
+            remote (pulpcore.plugin.models.Remote) The remote used to populate
                 downloader settings.
             downloader_overrides (dict): Keyed on a scheme name, e.g. 'https' or 'ftp' and the value
                 is the downloader class to be used for that scheme, e.g.
@@ -91,12 +91,12 @@ class DownloaderFactory:
 
     def _make_aiohttp_session_from_remote(self):
         """
-        Build a :class:`aiohttp.ClientSession` from the remote's settings and timing settings.
+        Build a [aiohttp.ClientSession][] from the remote's settings and timing settings.
 
         This method is what provides the force_close of the TCP connection with each request.
 
         Returns:
-            :class:`aiohttp.ClientSession`
+            [aiohttp.ClientSession][]
         """
         tcp_conn_opts = {}
 
@@ -156,10 +156,10 @@ class DownloaderFactory:
         Args:
             url (str): The download URL.
             kwargs (dict): All kwargs are passed along to the downloader. At a minimum, these
-                include the :class:`~pulpcore.plugin.download.BaseDownloader` parameters.
+                include the [pulpcore.plugin.download.BaseDownloader][] parameters.
 
         Returns:
-            subclass of :class:`~pulpcore.plugin.download.BaseDownloader`: A downloader that
+            subclass of [pulpcore.plugin.download.BaseDownloader][]: A downloader that
             is configured with the remote settings.
         """
         kwargs["semaphore"] = self._semaphore
@@ -183,14 +183,14 @@ class DownloaderFactory:
         Build a downloader for http:// or https:// URLs.
 
         Args:
-            download_class (:class:`~pulpcore.plugin.download.BaseDownloader`): The download
+            download_class (pulpcore.plugin.download.BaseDownloader) The download
                 class to be instantiated.
             url (str): The download URL.
             kwargs (dict): All kwargs are passed along to the downloader. At a minimum, these
-                include the :class:`~pulpcore.plugin.download.BaseDownloader` parameters.
+                include the [pulpcore.plugin.download.BaseDownloader][] parameters.
 
         Returns:
-            :class:`~pulpcore.plugin.download.HttpDownloader`: A downloader that
+            [pulpcore.plugin.download.HttpDownloader][]: A downloader that
             is configured with the remote settings.
         """
         options = {"session": self._session}
@@ -215,14 +215,14 @@ class DownloaderFactory:
         Build a generic downloader based on the url.
 
         Args:
-            download_class (:class:`~pulpcore.plugin.download.BaseDownloader`): The download
+            download_class (pulpcore.plugin.download.BaseDownloader) The download
                 class to be instantiated.
             url (str): The download URL.
             kwargs (dict): All kwargs are passed along to the downloader. At a minimum, these
-                include the :class:`~pulpcore.plugin.download.BaseDownloader` parameters.
+                include the [pulpcore.plugin.download.BaseDownloader][] parameters.
 
         Returns:
-            subclass of :class:`~pulpcore.plugin.download.BaseDownloader`: A downloader that
+            subclass of [pulpcore.plugin.download.BaseDownloader][]: A downloader that
             is configured with the remote settings.
         """
         return download_class(url, **kwargs)

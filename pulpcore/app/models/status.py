@@ -21,7 +21,7 @@ class AppStatusManager(models.Manager):
         ``self.model.APP_TTL`` from now.
 
         Returns:
-            :class:`django.db.models.query.QuerySet`:  A query set of the
+            [django.db.models.query.QuerySet][]:  A query set of the
                 objects which are considered 'online'.
         """
         age_threshold = timezone.now() - self.model.APP_TTL
@@ -40,7 +40,7 @@ class AppStatusManager(models.Manager):
                 considered missing.
 
         Returns:
-            :class:`django.db.models.query.QuerySet`:  A query set of the objects objects which
+            [django.db.models.query.QuerySet][]:  A query set of the objects objects which
                 are considered to be 'missing'.
         """
         age_threshold = timezone.now() - (age or self.model.APP_TTL)

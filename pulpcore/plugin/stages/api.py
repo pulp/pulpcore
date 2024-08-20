@@ -54,13 +54,13 @@ class Stage:
 
     async def items(self):
         """
-        Asynchronous iterator yielding items of :class:`DeclarativeContent` from `self._in_q`.
+        Asynchronous iterator yielding items of [DeclarativeContent][] from `self._in_q`.
 
-        The iterator will get instances of :class:`DeclarativeContent` one by one as they get
+        The iterator will get instances of [DeclarativeContent][] one by one as they get
         available.
 
         Yields:
-            An instance of :class:`DeclarativeContent`
+            An instance of [DeclarativeContent][]
 
         Examples:
             Used in stages to get d_content instances one by one from `self._in_q`::
@@ -81,17 +81,17 @@ class Stage:
 
     async def batches(self, minsize=500):
         """
-        Asynchronous iterator yielding batches of :class:`DeclarativeContent` from `self._in_q`.
+        Asynchronous iterator yielding batches of [DeclarativeContent][] from `self._in_q`.
 
         The iterator will try to get as many instances of
-        :class:`DeclarativeContent` as possible without blocking, but
+        [DeclarativeContent][] as possible without blocking, but
         at least `minsize` instances.
 
         Args:
             minsize (int): The minimum batch size to yield (unless it is the final batch)
 
         Yields:
-            A list of :class:`DeclarativeContent` instances
+            A list of [DeclarativeContent][] instances
 
         Examples:
             Used in stages to get large chunks of d_content instances from `self._in_q`::
@@ -163,7 +163,7 @@ class Stage:
         Coroutine to pass items to the next stage.
 
         Args:
-            item: A handled instance of :class:`pulpcore.plugin.stages.DeclarativeContent`
+            item: A handled instance of [pulpcore.plugin.stages.DeclarativeContent][]
 
         Raises:
             ValueError: When `item` is None.
@@ -181,7 +181,7 @@ async def create_pipeline(stages, maxsize=1):
     """
     A coroutine that builds a Stages API linear pipeline from the list `stages` and runs it.
 
-    Each stage is an instance of a class derived from :class:`pulpcore.plugin.stages.Stage` that
+    Each stage is an instance of a class derived from [pulpcore.plugin.stages.Stage][] that
     implements the :meth:`run` coroutine. This coroutine reads asynchronously either from the
     `items()` iterator or the `batches()` iterator and outputs the items with `put()`. Here is an
     example of the simplest stage that only passes data::

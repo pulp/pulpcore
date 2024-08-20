@@ -13,10 +13,10 @@ class FileDownloader(BaseDownloader):
 
     It provides digest and size validation along with computation of the digests needed to save the
     file as an Artifact. It writes a new file to the disk and the return path is included in the
-    :class:`~pulpcore.plugin.download.DownloadResult`.
+    [pulpcore.plugin.download.DownloadResult][].
 
     This downloader has all of the attributes of
-    :class:`~pulpcore.plugin.download.BaseDownloader`
+    [pulpcore.plugin.download.BaseDownloader][]
     """
 
     def __init__(self, url, *args, **kwargs):
@@ -26,7 +26,7 @@ class FileDownloader(BaseDownloader):
         Args:
             url (str): The url to the file. This is expected to begin with `file://`
             kwargs (dict): This accepts the parameters of
-                :class:`~pulpcore.plugin.download.BaseDownloader`.
+                [pulpcore.plugin.download.BaseDownloader][].
 
         Raises:
             ValidationError: When the url starts with `file://`, but is not a subfolder of a path in

@@ -108,7 +108,7 @@ def dispatch(
     serialized urls. No two tasks that claim the same resource can execute concurrently. It
     accepts resources which it transforms into a list of urls (one for each resource).
 
-    This method creates a :class:`pulpcore.app.models.Task` object and returns it.
+    This method creates a [pulpcore.app.models.Task][] object and returns it.
 
     The values in `args` and `kwargs` must be JSON serializable, but may contain instances of
     ``uuid.UUID``.

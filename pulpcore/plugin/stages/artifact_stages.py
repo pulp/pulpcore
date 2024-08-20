@@ -43,21 +43,21 @@ def _check_for_forbidden_checksum_type(artifact):
 class QueryExistingArtifacts(Stage):
     """
     A Stages API stage that replaces :attr:`DeclarativeContent.content` objects with already-saved
-    :class:`~pulpcore.plugin.models.Artifact` objects.
+    [pulpcore.plugin.models.Artifact][] objects.
 
-    This stage expects :class:`~pulpcore.plugin.stages.DeclarativeContent` units from `self._in_q`
-    and inspects their associated :class:`~pulpcore.plugin.stages.DeclarativeArtifact` objects. Each
-    :class:`~pulpcore.plugin.stages.DeclarativeArtifact` object stores one
-    :class:`~pulpcore.plugin.models.Artifact`.
+    This stage expects [pulpcore.plugin.stages.DeclarativeContent][] units from `self._in_q`
+    and inspects their associated [pulpcore.plugin.stages.DeclarativeArtifact][] objects. Each
+    [pulpcore.plugin.stages.DeclarativeArtifact][] object stores one
+    [pulpcore.plugin.models.Artifact][].
 
-    This stage inspects any unsaved :class:`~pulpcore.plugin.models.Artifact` objects and searches
-    using their metadata for existing saved :class:`~pulpcore.plugin.models.Artifact` objects inside
-    Pulp with the same digest value(s). Any existing :class:`~pulpcore.plugin.models.Artifact`
+    This stage inspects any unsaved [pulpcore.plugin.models.Artifact][] objects and searches
+    using their metadata for existing saved [pulpcore.plugin.models.Artifact][] objects inside
+    Pulp with the same digest value(s). Any existing [pulpcore.plugin.models.Artifact][]
     objects found will replace their unsaved counterpart in the
-    :class:`~pulpcore.plugin.stages.DeclarativeArtifact` object.
+    [pulpcore.plugin.stages.DeclarativeArtifact][] object.
 
-    Each :class:`~pulpcore.plugin.stages.DeclarativeContent` is sent to `self._out_q` after all of
-    its :class:`~pulpcore.plugin.stages.DeclarativeArtifact` objects have been handled.
+    Each [pulpcore.plugin.stages.DeclarativeContent][] is sent to `self._out_q` after all of
+    its [pulpcore.plugin.stages.DeclarativeArtifact][] objects have been handled.
 
     This stage drains all available items from `self._in_q` and batches everything into one large
     call to the db for efficiency.
@@ -123,17 +123,17 @@ class GenericDownloader(Stage):
     This stage drains all available items from `self._in_q` and starts as many concurrent
     downloading tasks as possible, up to the limit defined by ``self.max_concurrent_content``.
 
-    Each :class:`~pulpcore.plugin.stages.DeclarativeContent` is sent to `_handle_content_unit`,
+    Each [pulpcore.plugin.stages.DeclarativeContent][] is sent to `_handle_content_unit`,
     which must be implemented by the subclass, to handle processing the content unit and starting
     the downloads. After the downloads for that unit are complete the content should put into
     `self._out_q` to move onto the next stage.
 
     Args:
         max_concurrent_content (int): The maximum number of
-            :class:`~pulpcore.plugin.stages.DeclarativeContent` instances to handle simultaneously.
+            [pulpcore.plugin.stages.DeclarativeContent][] instances to handle simultaneously.
             Default is 200.
-        args: unused positional arguments passed along to :class:`~pulpcore.plugin.stages.Stage`.
-        kwargs: unused keyword arguments passed along to :class:`~pulpcore.plugin.stages.Stage`.
+        args: unused positional arguments passed along to [pulpcore.plugin.stages.Stage][].
+        kwargs: unused keyword arguments passed along to [pulpcore.plugin.stages.Stage][].
     """
 
     PROGRESS_REPORTING_MESSAGE = "Downloading"
@@ -163,7 +163,7 @@ class GenericDownloader(Stage):
 
         content_iterator = self.items()
 
-        #: (:class:`asyncio.Task`): The task that gets new content from `self._in_q`.
+        #: (asyncio.Task) The task that gets new content from `self._in_q`.
         #    Set to None if stage is shutdown.
         content_get_task = _add_to_pending(content_iterator.__anext__())
 
@@ -208,17 +208,17 @@ class GenericDownloader(Stage):
 
 class ArtifactDownloader(GenericDownloader):
     """
-    A Stages API stage to download :class:`~pulpcore.plugin.models.Artifact` files, but don't save
-    the :class:`~pulpcore.plugin.models.Artifact` in the db.
+    A Stages API stage to download [pulpcore.plugin.models.Artifact][] files, but don't save
+    the [pulpcore.plugin.models.Artifact][] in the db.
 
-    This stage downloads the file for any :class:`~pulpcore.plugin.models.Artifact` objects missing
-    files and creates a new :class:`~pulpcore.plugin.models.Artifact` object from the downloaded
-    file and its digest data. The new :class:`~pulpcore.plugin.models.Artifact` is not saved but
-    added to the :class:`~pulpcore.plugin.stages.DeclarativeArtifact` object, replacing the likely
-    incomplete :class:`~pulpcore.plugin.models.Artifact`.
+    This stage downloads the file for any [pulpcore.plugin.models.Artifact][] objects missing
+    files and creates a new [pulpcore.plugin.models.Artifact][] object from the downloaded
+    file and its digest data. The new [pulpcore.plugin.models.Artifact][] is not saved but
+    added to the [pulpcore.plugin.stages.DeclarativeArtifact][] object, replacing the likely
+    incomplete [pulpcore.plugin.models.Artifact][].
 
-    Each :class:`~pulpcore.plugin.stages.DeclarativeContent` is sent to `self._out_q` after all of
-    its :class:`~pulpcore.plugin.stages.DeclarativeArtifact` objects have been handled.
+    Each [pulpcore.plugin.stages.DeclarativeContent][] is sent to `self._out_q` after all of
+    its [pulpcore.plugin.stages.DeclarativeArtifact][] objects have been handled.
     """
 
     PROGRESS_REPORTING_MESSAGE = "Downloading Artifacts"
@@ -247,14 +247,14 @@ class ArtifactSaver(Stage):
     """
     A Stages API stage that saves any unsaved :attr:`DeclarativeArtifact.artifact` objects.
 
-    This stage expects :class:`~pulpcore.plugin.stages.DeclarativeContent` units from `self._in_q`
-    and inspects their associated :class:`~pulpcore.plugin.stages.DeclarativeArtifact` objects. Each
-    :class:`~pulpcore.plugin.stages.DeclarativeArtifact` object stores one
-    :class:`~pulpcore.plugin.models.Artifact`.
+    This stage expects [pulpcore.plugin.stages.DeclarativeContent][] units from `self._in_q`
+    and inspects their associated [pulpcore.plugin.stages.DeclarativeArtifact][] objects. Each
+    [pulpcore.plugin.stages.DeclarativeArtifact][] object stores one
+    [pulpcore.plugin.models.Artifact][].
 
-    Any unsaved :class:`~pulpcore.plugin.models.Artifact` objects are saved. Each
-    :class:`~pulpcore.plugin.stages.DeclarativeContent` is sent to `self._out_q` after all of its
-    :class:`~pulpcore.plugin.stages.DeclarativeArtifact` objects have been handled.
+    Any unsaved [pulpcore.plugin.models.Artifact][] objects are saved. Each
+    [pulpcore.plugin.stages.DeclarativeContent][] is sent to `self._out_q` after all of its
+    [pulpcore.plugin.stages.DeclarativeArtifact][] objects have been handled.
 
     This stage drains all available items from `self._in_q` and batches everything into one large
     call to the db for efficiency.
@@ -296,10 +296,10 @@ class ArtifactSaver(Stage):
 
 class RemoteArtifactSaver(Stage):
     """
-    A Stage that saves :class:`~pulpcore.plugin.models.RemoteArtifact` objects
+    A Stage that saves [pulpcore.plugin.models.RemoteArtifact][] objects
 
-    An :class:`~pulpcore.plugin.models.RemoteArtifact` object is saved for each
-    :class:`~pulpcore.plugin.stages.DeclarativeArtifact`.
+    An [pulpcore.plugin.models.RemoteArtifact][] object is saved for each
+    [pulpcore.plugin.stages.DeclarativeArtifact][].
     """
 
     def __init__(self, fix_mismatched_remote_artifacts=False, *args, **kwargs):
@@ -320,14 +320,14 @@ class RemoteArtifactSaver(Stage):
 
     async def _handle_remote_artifacts(self, batch):
         """
-        Build a list of only :class:`~pulpcore.plugin.models.RemoteArtifact` that need
+        Build a list of only [pulpcore.plugin.models.RemoteArtifact][] that need
         to be created for the batch.
 
         Args:
-            batch (list): List of :class:`~pulpcore.plugin.stages.DeclarativeContent`.
+            batch (list): List of [pulpcore.plugin.stages.DeclarativeContent][].
 
         Returns:
-            List: Of :class:`~pulpcore.plugin.models.RemoteArtifact`.
+            List: Of [pulpcore.plugin.models.RemoteArtifact][].
         """
         remotes_present = set()
         for d_content in batch:
@@ -466,7 +466,7 @@ class RemoteArtifactSaver(Stage):
 
 class ACSArtifactHandler(Stage):
     """
-    API stage to download :class:`~pulpcore.plugin.models.Artifact` files from Alternate
+    API stage to download [pulpcore.plugin.models.Artifact][] files from Alternate
     Content Source if available.
     """
 

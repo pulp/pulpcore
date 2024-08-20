@@ -19,7 +19,7 @@ class OperationPostponedResponse(Response):
     def __init__(self, task, request):
         """
         Args:
-            task (pulpcore.plugin.models.Task): A :class:`~pulpcore.plugin.models.Task` object
+            task (pulpcore.plugin.models.Task): A [pulpcore.plugin.models.Task][] object
                 used to generate the response.
             request (rest_framework.request.Request): Request used to generate the pulp_href urls
         """
@@ -46,7 +46,7 @@ class TaskGroupOperationResponse(Response):
         """
         Args:
             task_group (pulpcore.plugin.models.TaskGroup): A
-                :class:`~pulpcore.plugin.models.TaskGroup` object used to generate the response.
+                [pulpcore.plugin.models.TaskGroup][] object used to generate the response.
             request (rest_framework.request.Request): Request used to generate the pulp_href urls
         """
         kwargs = {"pk": task_group.pk}
