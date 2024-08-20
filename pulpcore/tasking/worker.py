@@ -27,7 +27,7 @@ from pulpcore.constants import (
 )
 from pulpcore.app.apps import pulp_plugin_configs
 from pulpcore.app.models import Worker, Task, ApiAppStatus, ContentAppStatus
-from pulpcore.app.util import PGAdvisoryLock
+from pulpcore.app.util import PGAdvisoryLock, get_domain
 from pulpcore.exceptions import AdvisoryLockError
 
 from pulpcore.tasking.storage import WorkerDirectory
@@ -189,19 +189,26 @@ class PulpcoreWorker:
         Return ``True`` if the task was actually canceled, ``False`` otherwise.
         """
         # A task is considered abandoned when in running state, but no worker holds its lock
+        domain = get_domain()
         try:
             task.set_canceling()
         except RuntimeError:
             return False
         if reason:
             _logger.info(
-                "Cleaning up task %s and marking as %s. Reason: %s",
+                "Cleaning up task %s in domain: %s and marking as %s. Reason: %s",
                 task.pk,
+                domain.name,
                 final_state,
                 reason,
             )
         else:
-            _logger.info(_("Cleaning up task %s and marking as %s."), task.pk, final_state)
+            _logger.info(
+                _("Cleaning up task %s in domain: %s and marking as %s."),
+                task.pk,
+                domain.name,
+                final_state,
+            )
         delete_incomplete_resources(task)
         task.set_canceled(final_state=final_state, reason=reason)
         if task.reserved_resources_record:
@@ -209,6 +216,7 @@ class PulpcoreWorker:
         return True
 
     def is_compatible(self, task):
+        domain = get_domain()
         unmatched_versions = [
             f"task: {label}>={version} worker: {self.versions.get(label)}"
             for label, version in task.versions.items()
@@ -217,8 +225,9 @@ class PulpcoreWorker:
         ]
         if unmatched_versions:
             _logger.info(
-                _("Incompatible versions to execute task %s by worker %s: %s"),
+                _("Incompatible versions to execute task %s in domain: %s by worker %s: %s"),
                 task.pk,
+                domain.name,
                 self.name,
                 ",".join(unmatched_versions),
             )
@@ -232,7 +241,11 @@ class PulpcoreWorker:
         taken_exclusive_resources = set()
         taken_shared_resources = set()
         # When batching this query, be sure to use "pulp_created" as a cursor
-        for task in Task.objects.filter(state__in=TASK_INCOMPLETE_STATES).order_by("pulp_created"):
+        for task in (
+            Task.objects.filter(state__in=TASK_INCOMPLETE_STATES)
+            .order_by("pulp_created")
+            .select_related("pulp_domain")
+        ):
             reserved_resources_record = task.reserved_resources_record or []
             exclusive_resources = [
                 resource
@@ -246,7 +259,11 @@ class PulpcoreWorker:
             ]
             if task.state == TASK_STATES.CANCELING:
                 if task.unblocked_at is None:
-                    _logger.debug("Marking canceling task %s unblocked.", task.pk)
+                    _logger.debug(
+                        "Marking canceling task %s in domain: %s unblocked.",
+                        task.pk,
+                        task.pulp_domain.name,
+                    )
                     task.unblock()
                     changed = True
                 # Don't consider this task's resources as held.
@@ -263,7 +280,11 @@ class PulpcoreWorker:
                 # No shared resource exclusively taken?
                 and not any(resource in taken_exclusive_resources for resource in shared_resources)
             ):
-                _logger.debug("Marking waiting task %s unblocked.", task.pk)
+                _logger.debug(
+                    "Marking waiting task %s in domain: %s unblocked.",
+                    task.pk,
+                    task.pulp_domain.name,
+                )
                 task.unblock()
                 changed = True
 
@@ -340,6 +361,7 @@ class PulpcoreWorker:
         task.save(update_fields=["worker"])
         cancel_state = None
         cancel_reason = None
+        domain = get_domain()
         with TemporaryDirectory(dir=".") as task_working_dir_rel_path:
             task_process = Process(target=perform_task, args=(task.pk, task_working_dir_rel_path))
             task_process.start()
@@ -349,7 +371,11 @@ class PulpcoreWorker:
                         _logger.info("Wait for canceled task to abort.")
                     else:
                         self.task_grace_timeout = TASK_KILL_INTERVAL
-                        _logger.info("Aborting current task %s due to cancelation.", task.pk)
+                        _logger.info(
+                            "Aborting current task %s in domain: %s due to cancelation.",
+                            task.pk,
+                            domain.name,
+                        )
                         os.kill(task_process.pid, signal.SIGUSR1)
 
                 r, w, x = select.select(
@@ -362,7 +388,11 @@ class PulpcoreWorker:
                 if connection.connection in r:
                     connection.connection.execute("SELECT 1")
                     if self.cancel_task:
-                        _logger.info(_("Received signal to cancel current task %s."), task.pk)
+                        _logger.info(
+                            _("Received signal to cancel current task %s in domain: %s."),
+                            task.pk,
+                            domain.name,
+                        )
                         cancel_state = TASK_STATES.CANCELED
                         self.cancel_task = False
                     if self.wakeup:
@@ -378,11 +408,18 @@ class PulpcoreWorker:
                     os.read(self.sentinel, 256)
                 if self.shutdown_requested:
                     if self.task_grace_timeout != 0:
-                        _logger.info(
-                            "Worker shutdown requested, waiting for task %s to finish.", task.pk
+                        msg = (
+                            "Worker shutdown requested, waiting for task {pk} in domain: {name} "
+                            "to finish.".format(pk=task.pk, name=domain.name)
                         )
+
+                        _logger.info(msg)
                     else:
-                        _logger.info("Aborting current task %s due to worker shutdown.", task.pk)
+                        _logger.info(
+                            "Aborting current task %s in domain: %s due to worker shutdown.",
+                            task.pk,
+                            domain.name,
+                        )
                         cancel_state = TASK_STATES.FAILED
                         cancel_reason = "Aborted during worker shutdown."
             task_process.join()
