@@ -63,8 +63,9 @@ def _execute_task(task):
     # Store the task id in the context for `Task.current()`.
     current_task.set(task)
     task.set_running()
+    domain = get_domain()
     try:
-        _logger.info(_("Starting task %s"), task.pk)
+        _logger.info(_("Starting task %s in domain: %s"), task.pk, domain.name)
 
         # Execute task
         module_name, function_name = task.name.rsplit(".", 1)
@@ -81,12 +82,12 @@ def _execute_task(task):
     except Exception:
         exc_type, exc, tb = sys.exc_info()
         task.set_failed(exc, tb)
-        _logger.info(_("Task %s failed (%s)"), task.pk, exc)
+        _logger.info(_("Task %s failed (%s) in domain: %s"), task.pk, exc, domain.name)
         _logger.info("\n".join(traceback.format_list(traceback.extract_tb(tb))))
         _send_task_notification(task)
     else:
         task.set_completed()
-        _logger.info(_("Task completed %s"), task.pk)
+        _logger.info(_("Task completed %s in domain: %s"), task.pk, domain.name)
         _send_task_notification(task)
 
 
@@ -249,18 +250,19 @@ def cancel_task(task_id):
     Raises:
         rest_framework.exceptions.NotFound: If a task with given task_id does not exist
     """
-    task = Task.objects.get(pk=task_id)
+    task = Task.objects.select_related("pulp_domain").get(pk=task_id)
 
     if task.state in TASK_FINAL_STATES:
         # If the task is already done, just stop
         _logger.debug(
-            "Task [{task_id}] already in a final state: {state}".format(
-                task_id=task_id, state=task.state
+            "Task [{task_id}] in domain: {name} already in a final state: {state}".format(
+                task_id=task_id, name=task.pulp_domain.name, state=task.state
             )
         )
         return task
-
-    _logger.info(_("Canceling task: {id}").format(id=task_id))
+    _logger.info(
+        _("Canceling task: {id} in domain: {name}").format(id=task_id, name=task.pulp_domain.name)
+    )
 
     # This is the only valid transition without holding the task lock
     task.set_canceling()
