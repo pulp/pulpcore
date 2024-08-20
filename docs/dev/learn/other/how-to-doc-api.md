@@ -42,7 +42,7 @@ class CustomView(APIView):
     on the Meta class using `<app_label>.` as a prefix.
 
 For the model based serializers offered by pulpcore (i.e.
-{class}`~pulpcore.plugin.serializers.ModelSerializer` and derived
+`pulpcore.plugin.serializers.ModelSerializer` and derived
 serializers), `Meta.ref_name` will be set correctly automatically. There is no
 need to set `Meta.ref_name` in this case.
 

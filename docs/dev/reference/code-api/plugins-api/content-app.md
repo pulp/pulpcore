@@ -13,10 +13,10 @@ Making a custom Handler is a two-step process:
 2. Add the Handler to a route using aiohttp.server's [add_route()](https://aiohttp.readthedocs.io/en/stable/web_reference.html#aiohttp.web.UrlDispatcher.add_route) interface.
 
 If content needs to be served from within the `Distribution`'s base_path,
-overriding the {meth}`~pulpcore.plugin.models.Distribution.content_handler` and
-{meth}`~pulpcore.plugin.models.Distribution.content_handler_directory_listing`
+overriding the `pulpcore.plugin.models.Distribution.content_handler` and
+`pulpcore.plugin.models.Distribution.content_handler_directory_listing`
 methods in your Distribution is an easier way to serve this content. The
-{meth}`~pulpcore.plugin.models.Distribution.content_handler` method should
+`pulpcore.plugin.models.Distribution.content_handler` method should
 return an instance of `aiohttp.web_response.Response` or a
 `pulpcore.plugin.models.ContentArtifact`.
 

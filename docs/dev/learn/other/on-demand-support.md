@@ -13,7 +13,7 @@ expectations there.
 
 Plugins like `pulp-file` sync content using `DeclarativeVersion`.
 On-demand support can be added by specifying `deferred_download=True` at instantiation of
-{class}`pulpcore.plugin.stages.DeclarativeArtifact`.
+`pulpcore.plugin.stages.DeclarativeArtifact`.
 
 `Remote.policy` can take several values. To easily translate them, consider a snippet like this one
 taken from `pulp-file`.:

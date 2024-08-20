@@ -7,12 +7,12 @@
 Like the Pulp Core itself, all Pulp Plugins begin as Django Applications, started like any other
 with `pulpcore-manager startapp <your_plugin>`. However, instead of subclassing Django's
 `django.apps.AppConfig` as seen [in the Django documentation](https://docs.djangoproject.com/en/4.2/ref/applications/#for-application-authors), Pulp Plugins identify themselves as plugins to
-pulpcore by subclassing {class}`pulpcore.plugin.PulpPluginAppConfig`.
+pulpcore by subclassing `pulpcore.plugin.PulpPluginAppConfig`.
 
-{class}`pulpcore.plugin.PulpPluginAppConfig` also provides the application autoloading behaviors,
+`pulpcore.plugin.PulpPluginAppConfig` also provides the application autoloading behaviors,
 such as automatic registration of viewsets with the API router, which adds plugin endpoints.
 
-The {class}`pulpcore.plugin.PulpPluginAppConfig` subclass for any plugin must set a few required
+The `pulpcore.plugin.PulpPluginAppConfig` subclass for any plugin must set a few required
 attributes:
 
 - `name` attribute defines the importable dotted Python location of the plugin application (the
@@ -28,7 +28,7 @@ attributes:
 
 The Pulp Core discovers available plugins by inspecting the pulpcore.plugin entry point.
 
-Once a plugin has defined its {class}`pulpcore.plugin.PulpPluginAppConfig` subclass, it should add
+Once a plugin has defined its `pulpcore.plugin.PulpPluginAppConfig` subclass, it should add
 a pointer to that subclass using the Django `default_app_config` convention, e.g.
 `default_app_config = pulp_myplugin.app.MyPulpPluginAppConfig` somewhere in the module that
 contains your Django application. The Pulp Core can then be told to use this value to discover your
@@ -57,8 +57,8 @@ Check out `pulp_file` plugin: [default_app_config](https://github.com/pulp/pulpc
 
 The structure of plugins should, where possible, mimic the layout of the Pulp Core Plugin API. For
 example, model classes should be based on platform classes imported from
-{mod}`pulpcore.plugin.models` and be defined in the `models` module or directory of a plugin app.
-ViewSets should be imported from {mod}`pulpcore.plugin.viewsets`, and be defined in the `viewsets`
+`pulpcore.plugin.models` and be defined in the `models` module or directory of a plugin app.
+ViewSets should be imported from `pulpcore.plugin.viewsets`, and be defined in the `viewsets`
 module of a plugin app, and so on.
 
 This matching of module names is required for the Pulp Core to be able to auto-discover plugin

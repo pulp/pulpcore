@@ -2,8 +2,8 @@
 
 All viewsets documented here should be imported directly from the `pulpcore.app.viewsets` namespace.
 
-Viewsets that dispatch tasks that are descendants of {class}`~pulpcore.tasking.tasks.UserFacingTask`
-should return an {class}`~pulpcore.app.response.OperationPostponedResponse`.
+Viewsets that dispatch tasks that are descendants of `pulpcore.tasking.tasks.UserFacingTask`
+should return an `pulpcore.app.response.OperationPostponedResponse`.
 
 ```{eval-rst}
 .. automodule:: pulpcore.app.viewsets

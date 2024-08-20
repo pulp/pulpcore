@@ -11,7 +11,7 @@ Plugin git repositories are listed in the [plugin table](site:help/#quick-links-
 1. Add `functional tests` or `unit tests` where appropriate and ensure tests
    are passing on the CI.
 2. Add a `CHANGES entry <changelog-update>`.
-3. Update relevent {doc}`documentation`. Please build the docs to test!
+3. Update relevent `documentation`. Please build the docs to test!
 4. `Rebase and squash` to a single commit.
 5. Write an excellent `commit-message`. Make sure you reference and link to the issue.
 6. Push your branch to your fork and open a [Pull request across forks](https://help.github.com/articles/creating-a-pull-request-from-a-fork/).
