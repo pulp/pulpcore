@@ -53,61 +53,68 @@ instantiation.
 
 For more information see the corresponding `workflow documentation <configuring-signing>`.
 
+## Procedure Sample
 
-The following procedure may be taken into account for the plugin writers:
+The following procedure may be taken into account for the plugin writers.
 
-> 1. Let us assume that a file repository contains the field `metadata_signing_service`:
->
->    ```python
->    metadata_signing_service = models.ForeignKey(
->        AsciiArmoredDetachedSigningService,
->        on_delete=models.SET_NULL,
->        null=True
->    )
->    ```
->
->    In the serializer, there is also added a corresponding field that serializes `metadata_signing_service`,
->    like so:
->
->    ```python
->    metadata_signing_service = serializers.HyperlinkedRelatedField(
->        help_text="A reference to an associated signing service.",
->        view_name="signing-services-detail",
->        queryset=models.AsciiArmoredDetachedSigningService.objects.all(),
->        many=False,
->        required=False,
->        allow_null=True
->    )
->    ```
->
-> 2. Retrieve a desired signing script via the field `metadata_signing_service` stored in the repository:
->
->    ```python
->    metadata_signing_service = FileRepository.objects.get(name='foo').metadata_signing_service
->    ```
->
->    A plugin writer can create a new repository with an associated signing service in the following two ways:
->
->    > - Using Python:
->    >
->    >   ```python
->    >   signing_service = AsciiArmoredDetachedSigningService.objects.get(name='sign-metadata')
->    >   FileRepository.objects.create(name='foo', metadata_signing_service=signing_service)
->    >   ```
->    >
->    > - Using HTTP calls:
->    >
->    >   ```bash
->    >   http POST :24817/pulp/api/v3/repositories/file/file/ name=foo metadata_signing_service=http://localhost:24817/pulp/api/v3/signing-services/5506c8ac-8eae-4f34-bb5a-3bc08f82b088/
->    >   ```
->
-> 3. Sign a file by calling the method `sign()`:
->
->    ```python
->    with tempfile.TemporaryDirectory("."):
->        try:
->            signature = metadata_signing_service.sign(metadata.filepath)
->        except RuntimeError:
->            raise
->        add_to_repository(metadata, signature)
->    ```
+### Context
+
+Let us assume that a file repository contains the field `metadata_signing_service`:
+
+```python
+metadata_signing_service = models.ForeignKey(
+   AsciiArmoredDetachedSigningService,
+   on_delete=models.SET_NULL,
+   null=True
+)
+```
+
+In the serializer, there is also added a corresponding field that serializes `metadata_signing_service`,
+like so:
+
+```python
+metadata_signing_service = serializers.HyperlinkedRelatedField(
+   help_text="A reference to an associated signing service.",
+   view_name="signing-services-detail",
+   queryset=models.AsciiArmoredDetachedSigningService.objects.all(),
+   many=False,
+   required=False,
+   allow_null=True
+)
+```
+
+### Associate a signing service
+
+Retrieve a desired signing script via the field `metadata_signing_service` stored in the repository:
+
+```python
+metadata_signing_service = FileRepository.objects.get(name='foo').metadata_signing_service
+```
+
+A plugin writer can create a new repository with an associated signing service in the following two ways:
+
+=== "Using Python"
+
+    ```python
+    signing_service = AsciiArmoredDetachedSigningService.objects.get(name='sign-metadata')
+    FileRepository.objects.create(name='foo', metadata_signing_service=signing_service)
+    ```
+
+=== "Using HTTP calls"
+
+    ```bash
+    http POST :24817/pulp/api/v3/repositories/file/file/ name=foo metadata_signing_service=http://localhost:24817/pulp/api/v3/signing-services/5506c8ac-8eae-4f34-bb5a-3bc08f82b088/
+    ```
+
+### Sign the file
+
+Sign a file by calling the method `sign()`:
+
+```python
+with tempfile.TemporaryDirectory("."):
+    try:
+        signature = metadata_signing_service.sign(metadata.filepath)
+    except RuntimeError:
+        raise
+    add_to_repository(metadata, signature)
+```

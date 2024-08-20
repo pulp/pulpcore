@@ -31,8 +31,8 @@ Only the tests for features related to `pulpcore` should live in this repository
 Functional tests for features related to a specific plugin should live in the
 plugin repository itself. For example:
 
-> - [File Plugin](https://github.com/pulp/pulpcore/tree/master/pulp_file/tests/functional)
-> - [RPM Plugin](https://github.com/pulp/pulp_rpm/tree/master/pulp_rpm/tests/functional)
+- [File Plugin](https://github.com/pulp/pulpcore/tree/master/pulp_file/tests/functional)
+- [RPM Plugin](https://github.com/pulp/pulp_rpm/tree/master/pulp_rpm/tests/functional)
 
 ## Prerequisites for running tests
 

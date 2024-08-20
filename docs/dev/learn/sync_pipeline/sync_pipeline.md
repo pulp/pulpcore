@@ -30,14 +30,14 @@ this is the part of the pipeline specific to the repository type.
 The pulp plugin api provides the following stages which also comprise the default pipeline in the
 following order:
 
-> 1. `pulpcore.plugin.stages.QueryExistingContents`
-> 2. `pulpcore.plugin.stages.QueryExistingArtifacts`
-> 3. `pulpcore.plugin.stages.ArtifactDownloader`
-> 4. `pulpcore.plugin.stages.ArtifactSaver`
-> 5. `pulpcore.plugin.stages.ContentSaver`
-> 6. `pulpcore.plugin.stages.RemoteArtifactSaver`
-> 7. `pulpcore.plugin.stages.ResolveContentFutures`
-> 8. `pulpcore.plugin.stages.ContentAssociation`
+1. `pulpcore.plugin.stages.QueryExistingContents`
+2. `pulpcore.plugin.stages.QueryExistingArtifacts`
+3. `pulpcore.plugin.stages.ArtifactDownloader`
+4. `pulpcore.plugin.stages.ArtifactSaver`
+5. `pulpcore.plugin.stages.ContentSaver`
+6. `pulpcore.plugin.stages.RemoteArtifactSaver`
+7. `pulpcore.plugin.stages.ResolveContentFutures`
+8. `pulpcore.plugin.stages.ContentAssociation`
 
 If the `mirror=True` optional parameter is passed to `DeclarativeVersion` the pipeline also runs
 `pulpcore.plugin.stages.ContentUnassociation` at the end.
