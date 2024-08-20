@@ -14,7 +14,7 @@ Pulp's documentation is designed with the following principles:
 
 5. Pulp terminology should be be explicitly defined and added to the glossary.
 
-6. Documentation should stay consistent with the language used in the {doc}`/concepts`.
+6. Documentation should stay consistent with the language used in the `concepts`.
 
 7. Where reasonable, documents should include:
 

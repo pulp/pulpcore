@@ -24,15 +24,15 @@ result = downloader.fetch()
 ```
 
 The example above downloads the data synchronously. The
-{meth}`~pulpcore.plugin.download.HttpDownloader.fetch` call blocks until the data is
-downloaded and the {class}`~pulpcore.plugin.download.DownloadResult` is returned or a fatal
+`pulpcore.plugin.download.HttpDownloader.fetch` call blocks until the data is
+downloaded and the `pulpcore.plugin.download.DownloadResult` is returned or a fatal
 exception is raised.
 
 ## Parallel Downloading
 
 Any downloader in the `pulpcore.plugin.download` package can be run in parallel with the
 `asyncio` event loop. Each downloader has a
-{meth}`~pulpcore.plugin.download.BaseDownloader.run` method which returns a coroutine object
+`pulpcore.plugin.download.BaseDownloader.run` method which returns a coroutine object
 that `asyncio` can schedule in parallel. Consider this example:
 
 ```
@@ -70,8 +70,8 @@ the downloader's `run()` method when the download is complete.
 When fetching content during a sync, the remote has settings like SSL certs, SSL validation, basic
 auth credentials, and proxy settings. Downloaders commonly want to use these settings while
 downloading. The Remote's settings can automatically configure a downloader either to download a
-`url` or a {class}`pulpcore.plugin.models.RemoteArtifact` using the
-{meth}`~pulpcore.plugin.models.Remote.get_downloader` call. Here is an example download from a URL:
+`url` or a `pulpcore.plugin.models.RemoteArtifact` using the
+`pulpcore.plugin.models.Remote.get_downloader` call. Here is an example download from a URL:
 
 ```
 downloader = my_remote.get_downloader(url='http://example.com')
@@ -87,20 +87,22 @@ downloader = my_remote.get_downloader(remote_artifact=ra)
 downloader.fetch()  # This downloader has the remote's settings and digest+validation checking
 ```
 
-The {meth}`~pulpcore.plugin.models.Remote.get_downloader` internally calls the
+The `pulpcore.plugin.models.Remote.get_downloader` internally calls the
 `DownloaderFactory`, so it expects a `url` that the `DownloaderFactory` can build a downloader for.
-See the {class}`~pulpcore.plugin.download.DownloaderFactory` for more information on
+See the `pulpcore.plugin.download.DownloaderFactory` for more information on
 supported urls.
 
 !!! tip
-    The {meth}`~pulpcore.plugin.models.Remote.get_downloader` accepts kwargs that can
+
+    The `pulpcore.plugin.models.Remote.get_downloader` accepts kwargs that can
     enable size or digest based validation, and specifying a file-like object for the data to be
-    written into. See {meth}`~pulpcore.plugin.models.Remote.get_downloader` for more
+    written into. See `pulpcore.plugin.models.Remote.get_downloader` for more
     information.
 
 
 !!! note
-    All {class}`~pulpcore.plugin.download.HttpDownloader` downloaders produced by the same
+
+    All `pulpcore.plugin.download.HttpDownloader` downloaders produced by the same
     remote instance share an `aiohttp` session, which provides a connection pool, connection
     reusage and keep-alives shared across all downloaders produced by a single remote.
 
@@ -109,7 +111,7 @@ supported urls.
 
 ## Automatic Retry
 
-The {class}`~pulpcore.plugin.download.HttpDownloader` will automatically retry 10 times if the
+The `pulpcore.plugin.download.HttpDownloader` will automatically retry 10 times if the
 server responds with one of the following error codes:
 
 - 429 - Too Many Requests
@@ -128,7 +130,8 @@ Plugin writers can choose to halt the entire task by allowing the exception be u
 would mark the entire task as failed.
 
 !!! note
-    The {class}`~pulpcore.plugin.download.HttpDownloader` automatically retry in some cases, but if
+
+    The `pulpcore.plugin.download.HttpDownloader` automatically retry in some cases, but if
     unsuccessful will raise an exception for any HTTP response code that is 400 or greater.
 
 
@@ -142,18 +145,18 @@ downloader knew of several mirrors. Here is an [example of that](https://gist.gi
 code.
 
 A custom downloader can be given as the downloader to use for a given protocol using the
-`downloader_overrides` on the {class}`~pulpcore.plugin.download.DownloaderFactory`.
-Additionally, you can implement the {meth}`~pulpcore.plugin.models.Remote.get_downloader`
+`downloader_overrides` on the `pulpcore.plugin.download.DownloaderFactory`.
+Additionally, you can implement the `pulpcore.plugin.models.Remote.get_downloader`
 method to specify the `downloader_overrides` to the
-{class}`~pulpcore.plugin.download.DownloaderFactory`.
+`pulpcore.plugin.download.DownloaderFactory`.
 
 
 
 ## Adding New Protocol Support
 
 To create a new protocol downloader implement a subclass of the
-{class}`~pulpcore.plugin.download.BaseDownloader`. See the docs on
-{class}`~pulpcore.plugin.download.BaseDownloader` for more information on the requirements.
+`pulpcore.plugin.download.BaseDownloader`. See the docs on
+`pulpcore.plugin.download.BaseDownloader` for more information on the requirements.
 
 
 
@@ -165,7 +168,7 @@ The DownloaderFactory constructs and configures a downloader for any given url. 
 2. Auto-configure the selected downloader with settings from a remote including (auth, ssl,
    proxy).
 
-The {meth}`~pulpcore.plugin.download.DownloaderFactory.build` method constructs one
+The `pulpcore.plugin.download.DownloaderFactory.build` method constructs one
 downloader for any given url.
 
 !!! note
@@ -175,9 +178,9 @@ downloader for any given url.
 
 
 !!! tip
-    The {meth}`~pulpcore.plugin.download.DownloaderFactory.build` method accepts kwargs that
+    The `pulpcore.plugin.download.DownloaderFactory.build` method accepts kwargs that
     enable size or digest based validation or the specification of a file-like object for the data
-    to be written into. See {meth}`~pulpcore.plugin.download.DownloaderFactory.build` for
+    to be written into. See `pulpcore.plugin.download.DownloaderFactory.build` for
     more information.
 
 
@@ -192,7 +195,7 @@ downloader for any given url.
 
 This downloader is an asyncio-aware parallel downloader which is the default downloader produced by
 the `downloader-factory` for urls starting with `http://` or `https://`. It also supports
-synchronous downloading using {meth}`~pulpcore.plugin.download.HttpDownloader.fetch`.
+synchronous downloading using `pulpcore.plugin.download.HttpDownloader.fetch`.
 
 ```{eval-rst}
 .. autoclass:: pulpcore.plugin.download.HttpDownloader

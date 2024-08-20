@@ -15,22 +15,22 @@ Follow the documentation in the README to get a working stub plugin.
 
 To define a new content type(s), e.g. `ExampleContent`:
 
-- {class}`pulpcore.plugin.models.Content` should be subclassed and extended with additional
+- `pulpcore.plugin.models.Content` should be subclassed and extended with additional
   attributes to the plugin needs,
 - define `TYPE` class attribute which is used for filtering purposes,
 - uniqueness should be specified in `Meta` class of newly defined `ExampleContent` model,
 - `unique_together` should be specified for the `Meta` class of `ExampleContent` model,
 - create a serializer for your new Content type as a subclass of
-  {class}`pulpcore.plugin.serializers.NoArtifactContentSerializer`,
-  {class}`pulpcore.plugin.serializers.SingleArtifactContentSerializer`, or
-  {class}`pulpcore.plugin.serializers.MultipleArtifactContentSerializer`
+  `pulpcore.plugin.serializers.NoArtifactContentSerializer`,
+  `pulpcore.plugin.serializers.SingleArtifactContentSerializer`, or
+  `pulpcore.plugin.serializers.MultipleArtifactContentSerializer`
 - create a viewset for your new Content type. It can be as a subclass of
-  {class}`pulpcore.plugin.viewsets.ContentViewSet`, and you can define your `create()` method based
+  `pulpcore.plugin.viewsets.ContentViewSet`, and you can define your `create()` method based
   on the serializer you chose. If you need a read-only viewset, subclass
-  {class}`pulpcore.plugin.viewsets.ReadOnlyContentViewSet` instead. It's also convenient to subclass
-  {class}`pulpcore.plugin.viewsets.SingleArtifactContentUploadViewSet` if you need an upload support.
+  `pulpcore.plugin.viewsets.ReadOnlyContentViewSet` instead. It's also convenient to subclass
+  `pulpcore.plugin.viewsets.SingleArtifactContentUploadViewSet` if you need an upload support.
 
-{class}`~pulpcore.plugin.models.Content` model should not be used directly anywhere in plugin code.
+`pulpcore.plugin.models.Content` model should not be used directly anywhere in plugin code.
 Only plugin-defined Content classes are expected to be used.
 
 Check `pulp_file` implementation of [the FileContent](https://github.com/pulp/pulpcore/blob/master/pulp_file/app/models.py) and its
@@ -47,29 +47,29 @@ the author name, or any other type of metadata.
 
 To define a new remote, e.g. `ExampleRemote`:
 
-- {class}`pulpcore.plugin.models.Remote` should be subclassed and extended with additional
+- `pulpcore.plugin.models.Remote` should be subclassed and extended with additional
   attributes to the plugin needs,
 - define `TYPE` class attribute which is used for filtering purposes,
 - create a serializer for your new remote as a subclass of
-  {class}`pulpcore.plugin.serializers.RemoteSerializer`,
+  `pulpcore.plugin.serializers.RemoteSerializer`,
 - create a viewset for your new remote as a subclass of
-  {class}`pulpcore.plugin.viewsets.RemoteViewSet`.
+  `pulpcore.plugin.viewsets.RemoteViewSet`.
 
-{class}`~pulpcore.plugin.models.Remote` model should not be used directly anywhere in plugin code.
+`pulpcore.plugin.models.Remote` model should not be used directly anywhere in plugin code.
 Only plugin-defined Remote classes are expected to be used.
 
 There are several important aspects relevant to remote implementation which are briefly mentioned
 in the `object-relationships` section:
 
-- due to deduplication of {class}`~pulpcore.plugin.models.Content` and
-  {class}`~pulpcore.plugin.models.Artifact` data, they may already exist and the remote needs to
+- due to deduplication of `pulpcore.plugin.models.Content` and
+  `pulpcore.plugin.models.Artifact` data, they may already exist and the remote needs to
   fetch and use them when they do.
-- {class}`~pulpcore.plugin.models.ContentArtifact` associates
-  {class}`~pulpcore.plugin.models.Content` and {class}`~pulpcore.plugin.models.Artifact`. If
-  {class}`~pulpcore.plugin.models.Artifact` is not downloaded yet,
-  {class}`~pulpcore.plugin.models.ContentArtifact` contains `NULL` value for
-  {attr}`~pulpcore.plugin.models.ContentArtifact.artifact`. It should be updated whenever
-  corresponding {class}`~pulpcore.plugin.models.Artifact` is downloaded
+- `pulpcore.plugin.models.ContentArtifact` associates
+  `pulpcore.plugin.models.Content` and `pulpcore.plugin.models.Artifact`. If
+  `pulpcore.plugin.models.Artifact` is not downloaded yet,
+  `pulpcore.plugin.models.ContentArtifact` contains `NULL` value for
+  `pulpcore.plugin.models.ContentArtifact.artifact`. It should be updated whenever
+  corresponding `pulpcore.plugin.models.Artifact` is downloaded
 
 !!! note
 

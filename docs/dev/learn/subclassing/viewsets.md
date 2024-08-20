@@ -54,7 +54,7 @@ The above example will create a simple nested endpoint at
 Some endpoints may need to deploy tasks to the tasking system. The following is an example of how
 this is accomplished.
 
-See {class}`~pulpcore.plugin.tasking.dispatch` for more details.
+See `pulpcore.plugin.tasking.dispatch` for more details.
 
 !!! note
     The arguments provided to a task must be JSON serializable, but may contain instances of
@@ -102,7 +102,7 @@ automatically added to the task group. Once done spawning new tasks for a given 
 you should call `.finish()` on the task group object.
 
 For more details about the reservation system and task groups, see `writing-tasks`. and
-{class}`~pulpcore.plugin.models.TaskGroup`.
+`pulpcore.plugin.models.TaskGroup`.
 
 ### Content Upload ViewSet
 
