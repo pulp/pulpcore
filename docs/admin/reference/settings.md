@@ -393,8 +393,8 @@ The default setting is `False`. When set to `True`, each task records various di
 and stores them as separate artifacts. To download the data, issue GET requests to `${TASK_HREF}profile_artifacts/`.
 The artifacts are cleaned up automatically by the orphan cleanup.
 
-> - memory.datum - the task's max resident set size in MB
-> - pyinstrument.html - the output of the pyinstrument profiler, if installed
+- memory.datum - the task's max resident set size in MB
+- pyinstrument.html - the output of the pyinstrument profiler, if installed
 
 
 
