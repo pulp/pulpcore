@@ -46,7 +46,7 @@ def get_plugin_config(plugin_app_label):
         plugin_app_label (str): Django app label of the pulp plugin
 
     Returns:
-        :class:`pulpcore.app.apps.PulpPluginAppConfig`: The app config of the Pulp plugin.
+        [pulpcore.app.apps.PulpPluginAppConfig][]: The app config of the Pulp plugin.
 
     Raises:
         MissingPlugin: When plugin with the requested app label is not installed.

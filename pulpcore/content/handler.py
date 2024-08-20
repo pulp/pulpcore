@@ -166,11 +166,11 @@ class Handler:
         The handler for an HTML listing all distributions
 
         Args:
-            request (:class:`aiohttp.web.request`): The request from the client.
+            request (aiohttp.web.request) The request from the client.
 
         Raises:
-            :class:`aiohttp.web.HTTPOk`: The response back to the client.
-            :class: `PathNotResolved`: 404 error response when path doesn't exist.
+            [aiohttp.web.HTTPOk][]: The response back to the client.
+            [PathNotResolved][]: 404 error response when path doesn't exist.
         """
         domain = get_domain()
 
@@ -191,8 +191,8 @@ class Handler:
         Finds the base-path to use for the base-key in the cache
 
         Args:
-            request (:class:`aiohttp.web.request`): The request from the client.
-            cached (:class:`CacheAiohttp`): The Pulp cache
+            request (aiohttp.web.request) The request from the client.
+            cached (CacheAiohttp) The Pulp cache
 
         Returns:
             str: The base-path associated with this request
@@ -218,8 +218,8 @@ class Handler:
         Authentication check for the cached stream_content handler
 
         Args:
-            request (:class:`aiohttp.web.request`): The request from the client.
-            cached (:class:`CacheAiohttp`): The Pulp cache
+            request (aiohttp.web.request) The request from the client.
+            cached (CacheAiohttp) The Pulp cache
             base_key (str): The base_key associated with this response
         """
         guard_key = "DISTRO#GUARD#PRESENT"
@@ -247,10 +247,10 @@ class Handler:
         The request handler for the Content app.
 
         Args:
-            request (:class:`aiohttp.web.request`): The request from the client.
+            request (aiohttp.web.request) The request from the client.
 
         Returns:
-            :class:`aiohttp.web.StreamResponse` or :class:`aiohttp.web.FileResponse`: The response
+            [aiohttp.web.StreamResponse][] or [aiohttp.web.FileResponse][]: The response
                 back to the client.
         """
         path = request.match_info["path"]
@@ -348,12 +348,12 @@ class Handler:
         Authorization is delegated to the optional content-guard associated with the distribution.
 
         Args:
-            request (:class:`aiohttp.web.Request`): A request for a published file.
-            distribution (detail of :class:`pulpcore.plugin.models.Distribution`): The matched
+            request (aiohttp.web.Request) A request for a published file.
+            distribution (detail of [pulpcore.plugin.models.Distribution][]): The matched
                 distribution.
 
         Raises:
-            :class:`aiohttp.web_exceptions.HTTPForbidden`: When not permitted.
+            [aiohttp.web_exceptions.HTTPForbidden][]: When not permitted.
         """
         guard = distribution.content_guard
         if not guard:
@@ -455,8 +455,8 @@ class Handler:
         version or publication.
 
         Args:
-            repo_version (:class:`~pulpcore.app.models.RepositoryVersion`): The repository version
-            publication (:class:`~pulpcore.app.models.Publication`): Publication
+            repo_version (pulpcore.app.models.RepositoryVersion) The repository version
+            publication (pulpcore.app.models.Publication) Publication
             path (str): relative path inside the repo version of publication.
 
         Returns:
@@ -549,14 +549,14 @@ class Handler:
 
         Args:
             path (str): The path component of the URL.
-            request(:class:`~aiohttp.web.Request`): The request to prepare a response for.
+            request(aiohttp.web.Request) The request to prepare a response for.
 
         Raises:
             PathNotResolved: The path could not be matched to a published file.
             PermissionError: When not permitted.
 
         Returns:
-            :class:`aiohttp.web.StreamResponse` or :class:`aiohttp.web.FileResponse`: The response
+            [aiohttp.web.StreamResponse][] or [aiohttp.web.FileResponse][]: The response
                 streamed back to the client.
         """
         distro = await sync_to_async(self._match_distribution)(path)
@@ -794,21 +794,21 @@ class Handler:
         Stream and optionally save a ContentArtifact by requesting it using the associated remote.
 
         If a fatal download failure occurs while downloading and there are additional
-        :class:`~pulpcore.plugin.models.RemoteArtifact` objects associated with the
-        :class:`~pulpcore.plugin.models.ContentArtifact` they will also be tried. If all
-        :class:`~pulpcore.plugin.models.RemoteArtifact` downloads raise exceptions, an HTTP 502
+        [pulpcore.plugin.models.RemoteArtifact][] objects associated with the
+        [pulpcore.plugin.models.ContentArtifact][] they will also be tried. If all
+        [pulpcore.plugin.models.RemoteArtifact][] downloads raise exceptions, an HTTP 502
         error is returned to the client.
 
         Args:
-            request(:class:`~aiohttp.web.Request`): The request to prepare a response for.
-            response (:class:`~aiohttp.web.StreamResponse`): The response to stream data to.
-            content_artifact (:class:`~pulpcore.plugin.models.ContentArtifact`): The ContentArtifact
+            request(aiohttp.web.Request) The request to prepare a response for.
+            response (aiohttp.web.StreamResponse) The response to stream data to.
+            content_artifact (pulpcore.plugin.models.ContentArtifact) The ContentArtifact
                 to fetch and then stream back to the client
 
         Raises:
-            :class:`~aiohttp.web.HTTPNotFound` when no
-                :class:`~pulpcore.plugin.models.RemoteArtifact` objects associated with the
-                :class:`~pulpcore.plugin.models.ContentArtifact` returned the binary data needed for
+            [aiohttp.web.HTTPNotFound][] when no
+                [pulpcore.plugin.models.RemoteArtifact][] objects associated with the
+                [pulpcore.plugin.models.ContentArtifact][] returned the binary data needed for
                 the client.
         """
 
@@ -834,7 +834,7 @@ class Handler:
         """
         Create/Get an Artifact and associate it to a RemoteArtifact and/or ContentArtifact.
 
-        Create (or get if already existing) an :class:`~pulpcore.plugin.models.Artifact`
+        Create (or get if already existing) an [pulpcore.plugin.models.Artifact][]
         based on the `download_result` and associate it to the `content_artifact` of the given
         `remote_artifact`. Both the created artifact and the updated content_artifact are saved to
         the DB.  The `remote_artifact` is also saved for the pull-through caching use case.
@@ -843,16 +843,16 @@ class Handler:
         additional/different steps for saving.
 
         Args:
-            download_result (:class:`~pulpcore.plugin.download.DownloadResult`: The
+            download_result ([pulpcore.plugin.download.DownloadResult][]: The
                 DownloadResult for the downloaded artifact.
 
-            remote_artifact (:class:`~pulpcore.plugin.models.RemoteArtifact`): The
+            remote_artifact (pulpcore.plugin.models.RemoteArtifact) The
                 RemoteArtifact to associate the Artifact with.
 
-            request (:class:`aiohttp.web.Request`): The request.
+            request (aiohttp.web.Request) The request.
 
         Returns:
-            The associated :class:`~pulpcore.plugin.models.Artifact`.
+            The associated [pulpcore.plugin.models.Artifact][].
         """
         content_artifact = remote_artifact.content_artifact
         remote = remote_artifact.remote
@@ -938,17 +938,17 @@ class Handler:
         the file (filesystem) or a redirect (S3).
 
         Args:
-            content_artifact (:class:`pulpcore.app.models.ContentArtifact`): The Content Artifact to
+            content_artifact (pulpcore.app.models.ContentArtifact) The Content Artifact to
                 respond with.
             headers (dict): A dictionary of response headers.
-            request(:class:`~aiohttp.web.Request`): The request to prepare a response for.
+            request(aiohttp.web.Request) The request to prepare a response for.
 
         Raises:
-            :class:`aiohttp.web_exceptions.HTTPFound`: When we need to redirect to the file
+            [aiohttp.web_exceptions.HTTPFound][]: When we need to redirect to the file
             NotImplementedError: If file is stored in a file storage we can't handle
 
         Returns:
-            The :class:`aiohttp.web.FileResponse` for the file.
+            The [aiohttp.web.FileResponse][] for the file.
         """
 
         def _set_params_from_headers(hdrs, storage_domain):
@@ -1002,16 +1002,16 @@ class Handler:
         Stream and save a RemoteArtifact.
 
         Args:
-            request(:class:`~aiohttp.web.Request`): The request to prepare a response for.
-            response (:class:`~aiohttp.web.StreamResponse`): The response to stream data to.
-            remote_artifact (:class:`~pulpcore.plugin.models.RemoteArtifact`): The RemoteArtifact
+            request(aiohttp.web.Request) The request to prepare a response for.
+            response (aiohttp.web.StreamResponse) The response to stream data to.
+            remote_artifact (pulpcore.plugin.models.RemoteArtifact) The RemoteArtifact
                 to fetch and then stream back to the client
             save_artifact (bool): Override the save behavior on the streamed RemoteArtifact
 
         Raises:
-            :class:`~aiohttp.web.HTTPNotFound` when no
-                :class:`~pulpcore.plugin.models.RemoteArtifact` objects associated with the
-                :class:`~pulpcore.plugin.models.ContentArtifact` returned the binary data needed for
+            [aiohttp.web.HTTPNotFound][] when no
+                [pulpcore.plugin.models.RemoteArtifact][] objects associated with the
+                [pulpcore.plugin.models.ContentArtifact][] returned the binary data needed for
                 the client.
 
         """

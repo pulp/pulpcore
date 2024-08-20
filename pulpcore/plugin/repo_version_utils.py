@@ -25,14 +25,14 @@ def remove_duplicates(repository_version):
     one repository. For example, pulp_file's content has `relative_path` for that file within the
     repository.
 
-    Any content newly added to the :class:`~pulpcore.plugin.models.RepositoryVersion` is checked
-    against existing content in the :class:`~pulpcore.plugin.models.RepositoryVersion` with newer
+    Any content newly added to the [pulpcore.plugin.models.RepositoryVersion][] is checked
+    against existing content in the [pulpcore.plugin.models.RepositoryVersion][] with newer
     "repository duplicates" replace existing "repository duplicates". Each Content model can define
     a `repo_key_fields` attribute with the field names to be compared. If all `repo_key_fields`
     contain the same value for two content units, they are considered "repository duplicates".
 
     Args:
-        repository_version: The :class:`~pulpcore.plugin.models.RepositoryVersion` to be checked
+        repository_version: The [pulpcore.plugin.models.RepositoryVersion][] to be checked
             and possibly modified.
     """
     added_content = repository_version.added(base_version=repository_version.base_version)

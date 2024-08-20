@@ -26,7 +26,7 @@ Args:
     url (str): The url corresponding with the download.
     path (str): The absolute path to the saved file
     artifact_attributes (dict): Contains keys corresponding with
-        :class:`~pulpcore.plugin.models.Artifact` fields. This includes the computed digest values
+        [pulpcore.plugin.models.Artifact][] fields. This includes the computed digest values
         along with size information.
     headers (aiohttp.multidict.MultiDict): HTTP response headers. The keys are header names. The
         values are header content. None when not using the HttpDownloader or sublclass.
@@ -49,7 +49,7 @@ class BaseDownloader:
     Passing all downloaded data the into
     :meth:`~pulpcore.plugin.download.BaseDownloader.handle_data` allows the file digests to
     be computed while data is written to disk. The digests computed are required if the download is
-    to be saved as an :class:`~pulpcore.plugin.models.Artifact` which avoids having to re-read the
+    to be saved as an [pulpcore.plugin.models.Artifact][] which avoids having to re-read the
     data later.
 
     The :meth:`~pulpcore.plugin.download.BaseDownloader.handle_data` method by default
@@ -156,10 +156,10 @@ class BaseDownloader:
         :meth:`~pulpcore.plugin.download.BaseDownloader.handle_data`.
 
         Raises:
-            :class:`~pulpcore.exceptions.DigestValidationError`: When any of the ``expected_digest``
+            [pulpcore.exceptions.DigestValidationError][]: When any of the ``expected_digest``
                 values don't match the digest of the data passed to
                 :meth:`~pulpcore.plugin.download.BaseDownloader.handle_data`.
-            :class:`~pulpcore.exceptions.SizeValidationError`: When the ``expected_size`` value
+            [pulpcore.exceptions.SizeValidationError][]: When the ``expected_size`` value
                 doesn't match the size of the data passed to
                 :meth:`~pulpcore.plugin.download.BaseDownloader.handle_data`.
         """
@@ -177,7 +177,7 @@ class BaseDownloader:
         Run the download synchronously and return the `DownloadResult`.
 
         Returns:
-            :class:`~pulpcore.plugin.download.DownloadResult`
+            [pulpcore.plugin.download.DownloadResult][]
 
         Raises:
             Exception: Any fatal exception emitted during downloading
@@ -200,7 +200,7 @@ class BaseDownloader:
     def artifact_attributes(self):
         """
         A property that returns a dictionary with size and digest information. The keys of this
-        dictionary correspond with :class:`~pulpcore.plugin.models.Artifact` fields.
+        dictionary correspond with [pulpcore.plugin.models.Artifact][] fields.
         """
         attributes = {"size": self._size}
         for algorithm in self._digests:
@@ -212,7 +212,7 @@ class BaseDownloader:
         Validate all digests validate if ``expected_digests`` is set
 
         Raises:
-            :class:`~pulpcore.exceptions.DigestValidationError`: When any of the ``expected_digest``
+            [pulpcore.exceptions.DigestValidationError][]: When any of the ``expected_digest``
                 values don't match the digest of the data passed to
                 :meth:`~pulpcore.plugin.download.BaseDownloader.handle_data`.
         """
@@ -227,7 +227,7 @@ class BaseDownloader:
         Validate the size if ``expected_size`` is set
 
         Raises:
-            :class:`~pulpcore.exceptions.SizeValidationError`: When the ``expected_size`` value
+            [pulpcore.exceptions.SizeValidationError][]: When the ``expected_size`` value
                 doesn't match the size of the data passed to
                 :meth:`~pulpcore.plugin.download.BaseDownloader.handle_data`.
         """
@@ -249,7 +249,7 @@ class BaseDownloader:
             extra_data (dict): Extra data passed to the downloader.
 
         Returns:
-            :class:`~pulpcore.plugin.download.DownloadResult` from `_run()`.
+            [pulpcore.plugin.download.DownloadResult][] from `_run()`.
 
         """
         async with self.semaphore:
@@ -272,9 +272,9 @@ class BaseDownloader:
            been delivered to :meth:`~pulpcore.plugin.download.BaseDownloader.handle_data`.
 
         It is also expected that the subclass implementation return a
-        :class:`~pulpcore.plugin.download.DownloadResult` object. The
+        [pulpcore.plugin.download.DownloadResult][] object. The
         ``artifact_attributes`` value of the
-        :class:`~pulpcore.plugin.download.DownloadResult` is usually set to the
+        [pulpcore.plugin.download.DownloadResult][] is usually set to the
         :attr:`~pulpcore.plugin.download.BaseDownloader.artifact_attributes` property value.
 
         This method is called from :meth:`~pulpcore.plugin.download.BaseDownloader.run` which
@@ -285,7 +285,7 @@ class BaseDownloader:
             extra_data (dict): Extra data passed to the downloader.
 
         Returns:
-            :class:`~pulpcore.plugin.download.DownloadResult`
+            [pulpcore.plugin.download.DownloadResult][]
 
         Raises:
             Validation errors could be emitted when subclassed implementations call

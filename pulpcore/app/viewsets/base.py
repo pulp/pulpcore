@@ -418,8 +418,8 @@ class AsyncReservedObjectMixin:
 
         .. note::
 
-          This does not work for :class:`~pulpcore.app.viewsets.AsyncCreateMixin`
-          (as there is no instance). Classes using :class:`~pulpcore.app.viewsets.AsyncCreateMixin`
+          This does not work for [pulpcore.app.viewsets.AsyncCreateMixin][]
+          (as there is no instance). Classes using [pulpcore.app.viewsets.AsyncCreateMixin][]
           must override this method.
 
         Args:

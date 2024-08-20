@@ -57,7 +57,7 @@ def general_update(instance_id, app_label, serializer_name, *args, **kwargs):
             their values are updated as such.
 
     Raises:
-        :class:`rest_framework.exceptions.ValidationError`: When serializer instance can't be saved
+        [rest_framework.exceptions.ValidationError][]: When serializer instance can't be saved
             due to validation error. This theoretically should never occur since validation is
             performed before the task is dispatched.
     """

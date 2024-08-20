@@ -402,7 +402,7 @@ class DomainUniqueValidator(UniqueValidator):
 class ModelSerializer(
     ValidateFieldsMixin, QueryFieldsMixin, serializers.HyperlinkedModelSerializer
 ):
-    """Base serializer for use with :class:`pulpcore.app.models.Model`
+    """Base serializer for use with [pulpcore.app.models.Model][]
 
     This ensures that all Serializers provide values for the 'pulp_href` field.
 

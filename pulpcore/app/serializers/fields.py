@@ -39,7 +39,7 @@ class SingleContentArtifactField(RelatedField):
         improper context.
 
         Args:
-            instance (:class:`pulpcore.app.models.Content`): An instance of Content being
+            instance (pulpcore.app.models.Content) An instance of Content being
                 serialized.
 
         Returns:
@@ -77,14 +77,14 @@ class ContentArtifactChecksumField(serializers.CharField):
         This serializer looks up the checksum for single artifact content
 
         Args:
-            instance (:class:`pulpcore.app.models.Content`): An instance of Content being
+            instance (pulpcore.app.models.Content) An instance of Content being
                 serialized.
 
         Returns:
             A string of the checksum or None.
 
         Raises:
-            :class:`rest_framework.exceptions.ValidationError`: When more than one Artifacts exist.
+            [rest_framework.exceptions.ValidationError][]: When more than one Artifacts exist.
         """
         # using get() and first() will query the db. count() and all() will use cached artifacts if
         # they are prefetched.
@@ -122,7 +122,7 @@ class ContentArtifactsField(serializers.DictField):
                 instances.
 
         Raises:
-            :class:`rest_framework.exceptions.ValidationError`: When one of the Artifacts does not
+            [rest_framework.exceptions.ValidationError][]: When one of the Artifacts does not
                 exist or one of the paths is not a relative path or the field is missing.
         """
         ret = {}
@@ -154,7 +154,7 @@ class ContentArtifactsField(serializers.DictField):
         ContentArtifact models related to this Content.
 
         Args:
-            instance (:class:`pulpcore.app.models.Content`): An instance of Content being
+            instance (pulpcore.app.models.Content) An instance of Content being
                 serialized.
 
         Returns:
@@ -170,7 +170,7 @@ class ContentArtifactsField(serializers.DictField):
         URLs.
 
         Args:
-            value (list of :class:`pulpcore.app.models.ContentArtifact`): A list of all the
+            value (list of [pulpcore.app.models.ContentArtifact][]): A list of all the
                 ContentArtifacts related to the Content model being serialized.
 
         Returns:
@@ -252,7 +252,7 @@ class LatestVersionField(RepositoryVersionRelatedField):
                 current ViewSet.
 
         Returns:
-            instance :class:`pulpcore.app.models.RepositoryVersion`
+            instance [pulpcore.app.models.RepositoryVersion][]
         """
         if hasattr(instance, "latest_version_number"):
             # Return a shallow object sufficient to create the HREF.

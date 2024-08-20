@@ -212,9 +212,9 @@ def add_and_remove(repository_pk, add_content_units, remove_content_units, base_
     Args:
         repository_pk (uuid): The primary key for a Repository for which a new Repository Version
             should be created.
-        add_content_units (list): List of PKs for :class:`~pulpcore.app.models.Content` that
+        add_content_units (list): List of PKs for [pulpcore.app.models.Content][] that
             should be added to the previous Repository Version for this Repository.
-        remove_content_units (list): List of PKs for:class:`~pulpcore.app.models.Content` that
+        remove_content_units (list): List of PKs for[pulpcore.app.models.Content][] that
             should be removed from the previous Repository Version for this Repository.
         base_version_pk (uuid): the primary key for a RepositoryVersion whose content will be used
             as the initial set of content for our new RepositoryVersion

@@ -256,11 +256,11 @@ class ArtifactSerializer(base.ModelSerializer):
         Validate file by size and by all checksums provided.
 
         Args:
-            data (:class:`django.http.QueryDict`): QueryDict mapping Artifact model fields to their
+            data (django.http.QueryDict) QueryDict mapping Artifact model fields to their
                 values
 
         Raises:
-            :class:`rest_framework.exceptions.ValidationError`: When the expected file size or any
+            [rest_framework.exceptions.ValidationError][]: When the expected file size or any
                 of the checksums don't match their actual values.
         """
         super().validate(data)

@@ -206,7 +206,7 @@ class Repository(MasterModel):
 
         This method should be overridden by plugin writers for an opportunity for plugin input. This
         method is intended to be called with the incomplete
-        :class:`pulpcore.app.models.RepositoryVersion` to validate or modify the content.
+        [pulpcore.app.models.RepositoryVersion][] to validate or modify the content.
 
         This method does not adjust the value of complete, or save the `RepositoryVersion` itself.
         Its intent is to allow the plugin writer an opportunity for plugin input before any other
@@ -225,7 +225,7 @@ class Repository(MasterModel):
 
         This method should be overridden by plugin writers for an opportunity for plugin input. This
         method is intended to be called with the incomplete
-        :class:`pulpcore.app.models.RepositoryVersion` to validate or modify the content.
+        [pulpcore.app.models.RepositoryVersion][] to validate or modify the content.
 
         This method does not adjust the value of complete, or save the `RepositoryVersion` itself.
         Its intent is to allow the plugin writer an opportunity for plugin input before pulpcore
@@ -396,13 +396,13 @@ class Remote(MasterModel):
     This is meant to be subclassed by plugin authors as an opportunity to provide plugin-specific
     persistent data attributes for a plugin remote subclass.
 
-    This object is a Django model that inherits from :class: `pulpcore.app.models.Remote` which
+    This object is a Django model that inherits from [pulpcore.app.models.Remote][] which
     provides the platform persistent attributes for a remote object. Plugin authors can add
     additional persistent remote data by subclassing this object and adding Django fields. We
     defer to the Django docs on extending this model definition with additional fields.
 
     Validation of the remote is done at the API level by a plugin defined subclass of
-    :class: `pulpcore.plugin.serializers.repository.RemoteSerializer`.
+    [pulpcore.plugin.serializers.repository.RemoteSerializer][].
 
     Fields:
 
@@ -553,19 +553,19 @@ class Remote(MasterModel):
         another class of download is required.
 
         Args:
-            remote_artifact (:class:`~pulpcore.app.models.RemoteArtifact`): The RemoteArtifact to
+            remote_artifact (pulpcore.app.models.RemoteArtifact) The RemoteArtifact to
                 download.
             url (str): The URL to download.
-            download_factory (:class:`~pulpcore.plugin.download.DownloadFactory`): The download
+            download_factory (pulpcore.plugin.download.DownloadFactory) The download
                 factory to be used.
             kwargs (dict): This accepts the parameters of
-                :class:`~pulpcore.plugin.download.BaseDownloader`.
+                [pulpcore.plugin.download.BaseDownloader][].
 
         Raises:
             ValueError: If neither remote_artifact and url are passed, or if both are passed.
 
         Returns:
-            subclass of :class:`~pulpcore.plugin.download.BaseDownloader`: A downloader that
+            subclass of [pulpcore.plugin.download.BaseDownloader][]: A downloader that
             is configured with the remote settings.
         """
         if remote_artifact and url:
@@ -770,7 +770,7 @@ class RepositoryVersion(BaseModel):
         Returns a set of content for a repository version
 
         Args:
-            content_qs (:class:`django.db.models.QuerySet`): The queryset for Content that will be
+            content_qs (django.db.models.QuerySet): The queryset for Content that will be
                 restricted further to the content present in this repository version. If not given,
                 ``Content.objects.all()`` is used (to return over all content types present in the
                 repository version).
@@ -830,11 +830,11 @@ class RepositoryVersion(BaseModel):
               stable results. By default, it is ordered by primary key.
 
         Args:
-            content_qs (:class:`django.db.models.QuerySet`): The queryset for Content that will be
+            content_qs (django.db.models.QuerySet) The queryset for Content that will be
                 restricted further to the content present in this repository version. If not given,
                 ``Content.objects.all()`` is used (to iterate over all content present in the
                 repository version). A plugin may want to use a specific subclass of
-                :class:`~pulpcore.plugin.models.Content` or use e.g. ``filter()`` to select
+                [pulpcore.plugin.models.Content][] or use e.g. ``filter()`` to select
                 a subset of the repository version's content.
             order_by_params (tuple of str): The parameters for the ``order_by`` clause
                 for the content. The Default is ``("pk",)``. This needs to
@@ -845,12 +845,12 @@ class RepositoryVersion(BaseModel):
             batch_size (int): The maximum batch size.
 
         Yields:
-            :class:`django.db.models.QuerySet`: A QuerySet representing a slice of the content.
+            [django.db.models.QuerySet][]: A QuerySet representing a slice of the content.
 
         Example:
             The following code could be used to loop over all ``FileContent`` in
             ``repository_version``. It prefetches the related
-            :class:`~pulpcore.plugin.models.ContentArtifact` instances for every batch::
+            [pulpcore.plugin.models.ContentArtifact][] instances for every batch::
 
                 repository_version = ...
 
@@ -1018,10 +1018,11 @@ class RepositoryVersion(BaseModel):
     def next(self):
         """
         Returns:
-            pulpcore.app.models.RepositoryVersion: The next complete RepositoryVersion for the same
-                repository.
+            [pulpcore.app.models.RepositoryVersion][]: The next complete RepositoryVersion
+            for the same repository.
+
         Raises:
-            RepositoryVersion.DoesNotExist: if there is not a RepositoryVersion for the same
+            [RepositoryVersion.DoesNotExist][]: if there is not a RepositoryVersion for the same
                 repository and with a higher "number".
         """
         try:
@@ -1155,8 +1156,8 @@ class RepositoryVersion(BaseModel):
         """
         Compute and save content unit counts by type.
 
-        Count records are stored as :class:`~pulpcore.app.models.RepositoryVersionContentDetails`.
-        This method deletes existing :class:`~pulpcore.app.models.RepositoryVersionContentDetails`
+        Count records are stored as [pulpcore.app.models.RepositoryVersionContentDetails][].
+        This method deletes existing [pulpcore.app.models.RepositoryVersionContentDetails][]
         objects and makes new ones with each call.
         """
         with transaction.atomic():

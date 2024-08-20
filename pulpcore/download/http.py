@@ -121,7 +121,7 @@ class HttpDownloader(BaseDownloader):
             as its values. e.g. `{'Transfer-Encoding': 'chunked'}`. This can also be None.
 
     This downloader also has all of the attributes of
-    :class:`~pulpcore.plugin.download.BaseDownloader`
+    [pulpcore.plugin.download.BaseDownloader][]
     """
 
     def __init__(
@@ -154,7 +154,7 @@ class HttpDownloader(BaseDownloader):
             throttler (asyncio_throttle.Throttler): Throttler for asyncio.
             max_retries (int): The maximum number of times to retry a download upon failure.
             kwargs (dict): This accepts the parameters of
-                :class:`~pulpcore.plugin.download.BaseDownloader`.
+                [pulpcore.plugin.download.BaseDownloader][].
         """
         if session:
             self.session = session
@@ -224,7 +224,7 @@ class HttpDownloader(BaseDownloader):
             extra_data (dict): Extra data passed to the downloader.
 
         Returns:
-            :class:`~pulpcore.plugin.download.DownloadResult` from `_run()`.
+            [pulpcore.plugin.download.DownloadResult][] from `_run()`.
 
         """
         retryable_errors = (
