@@ -436,7 +436,6 @@ def test_replicate_rbac(
             "domain": "default",
             "username": bindings_cfg.username,
             "password": bindings_cfg.password,
-            "pulp_label_select": str(uuid.uuid4()),
         }
         upstream_pulp = gen_object_with_cleanup(
             pulpcore_bindings.UpstreamPulpsApi,
@@ -465,3 +464,148 @@ def test_replicate_rbac(
     try_action(
         dean, pulpcore_bindings.UpstreamPulpsApi, "partial_update", 403, upstream_pulp.pulp_href, {}
     )
+
+
+@pytest.fixture
+def populate_upstream(
+    domain_factory,
+    file_bindings,
+    file_repository_factory,
+    file_remote_factory,
+    file_distribution_factory,
+    write_3_iso_file_fixture_data_factory,
+    monitor_task,
+):
+    def _populate_upstream(number):
+        upstream_domain = domain_factory()
+        tasks = []
+        for i in range(number):
+            repo = file_repository_factory(pulp_domain=upstream_domain.name, autopublish=True)
+            fix = write_3_iso_file_fixture_data_factory(str(i))
+            remote = file_remote_factory(pulp_domain=upstream_domain.name, manifest_path=fix)
+            body = {"remote": remote.pulp_href}
+            tasks.append(file_bindings.RepositoriesFileApi.sync(repo.pulp_href, body).task)
+            file_distribution_factory(
+                name=str(i),
+                pulp_domain=upstream_domain.name,
+                repository=repo.pulp_href,
+                pulp_labels={"upstream": str(i), "even" if i % 2 == 0 else "odd": ""},
+            )
+        for t in tasks:
+            monitor_task(t)
+        return upstream_domain
+
+    return _populate_upstream
+
+
+@pytest.mark.parallel
+def test_replicate_with_basic_q_select(
+    domain_factory,
+    populate_upstream,
+    bindings_cfg,
+    pulpcore_bindings,
+    monitor_task_group,
+    pulp_settings,
+    gen_object_with_cleanup,
+):
+    """Test basic label select replication."""
+    source_domain = populate_upstream(10)
+    dest_domain = domain_factory()
+    upstream_body = {
+        "name": str(uuid.uuid4()),
+        "base_url": bindings_cfg.host,
+        "api_root": pulp_settings.API_ROOT,
+        "domain": source_domain.name,
+        "username": bindings_cfg.username,
+        "password": bindings_cfg.password,
+    }
+    upstream = gen_object_with_cleanup(
+        pulpcore_bindings.UpstreamPulpsApi, upstream_body, pulp_domain=dest_domain.name
+    )
+    # Run the replicate task and assert that all 10 repos got synced
+    response = pulpcore_bindings.UpstreamPulpsApi.replicate(upstream.pulp_href)
+    monitor_task_group(response.task_group)
+    result = pulpcore_bindings.DistributionsApi.list(pulp_domain=dest_domain.name)
+    assert result.count == 10
+
+    # Update q_select to sync only 'even' repos
+    body = {"q_select": "pulp_label_select='even'"}
+    pulpcore_bindings.UpstreamPulpsApi.partial_update(upstream.pulp_href, body)
+    response = pulpcore_bindings.UpstreamPulpsApi.replicate(upstream.pulp_href)
+    monitor_task_group(response.task_group)
+    result = pulpcore_bindings.DistributionsApi.list(pulp_domain=dest_domain.name)
+    assert result.count == 5
+    assert {d.name for d in result.results} == {"0", "2", "4", "6", "8"}
+
+    # Update q_select to sync one 'upstream' repo
+    body["q_select"] = "pulp_label_select='upstream=4'"
+    pulpcore_bindings.UpstreamPulpsApi.partial_update(upstream.pulp_href, body)
+    response = pulpcore_bindings.UpstreamPulpsApi.replicate(upstream.pulp_href)
+    monitor_task_group(response.task_group)
+    result = pulpcore_bindings.DistributionsApi.list(pulp_domain=dest_domain.name)
+    assert result.count == 1
+    assert result.results[0].name == "4"
+
+    # Show that basic label select is ANDed together
+    body["q_select"] = "pulp_label_select='even,upstream=0'"
+    pulpcore_bindings.UpstreamPulpsApi.partial_update(upstream.pulp_href, body)
+    response = pulpcore_bindings.UpstreamPulpsApi.replicate(upstream.pulp_href)
+    monitor_task_group(response.task_group)
+    result = pulpcore_bindings.DistributionsApi.list(pulp_domain=dest_domain.name)
+    assert result.count == 1
+    assert result.results[0].name == "0"
+
+
+@pytest.mark.parallel
+def test_replicate_with_complex_q_select(
+    domain_factory,
+    populate_upstream,
+    bindings_cfg,
+    pulpcore_bindings,
+    monitor_task_group,
+    pulp_settings,
+    gen_object_with_cleanup,
+):
+    """Test complex q_select replication."""
+    source_domain = populate_upstream(10)
+    dest_domain = domain_factory()
+    upstream_body = {
+        "name": str(uuid.uuid4()),
+        "base_url": bindings_cfg.host,
+        "api_root": pulp_settings.API_ROOT,
+        "domain": source_domain.name,
+        "username": bindings_cfg.username,
+        "password": bindings_cfg.password,
+        "q_select": "pulp_label_select='upstream=1' OR pulp_label_select='upstream=2'",
+    }
+    upstream = gen_object_with_cleanup(
+        pulpcore_bindings.UpstreamPulpsApi, upstream_body, pulp_domain=dest_domain.name
+    )
+    # Run the replicate task and assert that two repos got synced
+    response = pulpcore_bindings.UpstreamPulpsApi.replicate(upstream.pulp_href)
+    monitor_task_group(response.task_group)
+    result = pulpcore_bindings.DistributionsApi.list(pulp_domain=dest_domain.name)
+    assert result.count == 2
+    assert {d.name for d in result.results} == {"1", "2"}
+
+    # Test odds but not seven
+    body = {"q_select": "pulp_label_select='odd' AND NOT pulp_label_select='upstream=7'"}
+    pulpcore_bindings.UpstreamPulpsApi.partial_update(upstream.pulp_href, body)
+    response = pulpcore_bindings.UpstreamPulpsApi.replicate(upstream.pulp_href)
+    monitor_task_group(response.task_group)
+    result = pulpcore_bindings.DistributionsApi.list(pulp_domain=dest_domain.name)
+    assert result.count == 4
+    assert {d.name for d in result.results} == {"1", "3", "5", "9"}
+
+    # Test we error when trying to provide an invalid q expression
+    body["q_select"] = "invalid='testing'"
+    with pytest.raises(pulpcore_bindings.ApiException) as e:
+        pulpcore_bindings.UpstreamPulpsApi.partial_update(upstream.pulp_href, body)
+    assert e.value.status == 400
+    assert e.value.body == '{"q_select":["Filter \'invalid\' does not exist."]}'
+
+    body["q_select"] = "name='hi' AND"
+    with pytest.raises(pulpcore_bindings.ApiException) as e:
+        pulpcore_bindings.UpstreamPulpsApi.partial_update(upstream.pulp_href, body)
+    assert e.value.status == 400
+    assert e.value.body == '{"q_select":["Syntax error in expression."]}'

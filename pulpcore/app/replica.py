@@ -75,9 +75,9 @@ class Replicator:
                 needs_update = True
         return needs_update
 
-    def upstream_distributions(self, labels=None):
-        if labels:
-            params = {"pulp_label_select": labels}
+    def upstream_distributions(self, q=None):
+        if q:
+            params = {"q": q}
         else:
             params = {}
         offset = 0
