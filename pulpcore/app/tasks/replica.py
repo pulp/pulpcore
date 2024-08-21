@@ -71,7 +71,7 @@ def replicate_distributions(server_pk):
                 supported_replicators.append(replicator)
 
     for replicator in supported_replicators:
-        distros = replicator.upstream_distributions(labels=server.pulp_label_select)
+        distros = replicator.upstream_distributions(q=server.q_select)
         distro_names = []
         for distro in distros:
             # Create remote
