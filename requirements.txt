@@ -33,7 +33,7 @@ protobuf>=4.21.1,<5.0
 pulp-glue>=0.18.0,<0.28
 pygtrie>=2.5,<=2.5.0
 psycopg[binary]>=3.1.8,<=3.2.1
-pyparsing>=3.1.0,<=3.1.2
+pyparsing>=3.1.0,<=3.1.4
 python-gnupg>=0.5,<=0.5.2
 PyYAML>=5.1.1,<=6.0.2
 redis>=4.3,<5.0.9
