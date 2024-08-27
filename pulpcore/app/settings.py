@@ -335,7 +335,7 @@ DOMAIN_ENABLED = False
 # For some types of objects, especially repositories, this is quite a bad idea as it results in
 # many tens of thousands of objects being pulled into memory, some of which are quite large. The
 # alternative implementation enabled here falls back to SQL to avoid actively loading objects.
-ENABLE_FAST_CASCADE_DELETE = False
+ENABLE_FAST_CASCADE_DELETE = True
 
 SHELL_PLUS_IMPORTS = [
     "from pulpcore.app.util import get_domain, get_domain_pk, set_domain, get_url, extract_pk",

@@ -263,25 +263,12 @@ def custom_repository_cascade_delete_task(instance_id, app_label, serializer_nam
     # sufficiently large, this can result in a fatal memory spike.
     # [0] https://docs.djangoproject.com/en/4.2/ref/models/querysets/#delete
     with transaction.atomic():
-        # because we're deleting all of the objects used by invalidate_cache() to determine how
-        # to invalidate the cache prior to deleting the repository, we have to call it manually
-        # rather than letting it be triggered as we delete the repository
-        repository.invalidate_cache()
-
-        # we have to independently delete the master and detail models while using _raw_delete()
-        detail_publication_model = models.Publication.get_model_for_pulp_type(
-            repository.get_pulp_type()
-        )
-
         repo_versions = models.RepositoryVersion.objects.filter(repository=repository.pk)
         repo_contents = models.RepositoryContent.objects.filter(repository=repository.pk)
         repo_version_content_details = models.RepositoryVersionContentDetails.objects.filter(
             repository_version__in=repo_versions.values_list("pk", flat=True)
         )
-        publications = detail_publication_model.objects.filter(
-            repository_version__in=repo_versions.values_list("pk", flat=True)
-        )
-        detail_publications = models.Publication.objects.filter(
+        publications = models.Publication.objects.filter(
             repository_version__in=repo_versions.values_list("pk", flat=True)
         )
         published_artifacts = models.PublishedArtifact.objects.filter(
@@ -298,10 +285,14 @@ def custom_repository_cascade_delete_task(instance_id, app_label, serializer_nam
 
         published_metadata._raw_delete(published_metadata.db)
         published_artifacts._raw_delete(published_artifacts.db)
-        publications._raw_delete(publications.db)
-        detail_publications._raw_delete(detail_publications.db)
+
         repo_contents._raw_delete(repo_contents.db)
         repo_version_content_details._raw_delete(repo_version_content_details.db)
-        repo_versions._raw_delete(repo_versions.db)
 
+        # because we've deleted all of the leaf node objects already, hopefully the
+        # cascade delete won't be too brutal. All of the more central, top-level objects
+        # we delete "the normal way" to ensure Django signals get triggered. Anything not
+        # deleted manually above will be caught up in Django cascade.
+        publications.delete()
+        repo_versions.delete()
         repository.delete()
