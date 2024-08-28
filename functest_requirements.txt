@@ -8,3 +8,5 @@ python-gnupg
 
 # from pulp_file
 beautifulsoup4
+pytest-xdist
+pytest-timeout
