@@ -11,3 +11,5 @@ trustme~=1.0.0
 # Temporarily taken from pulp_file
 # Preferrably we can depend on pulp_file[test] instead.
 beautifulsoup4
+pytest-xdist
+pytest-timeout
