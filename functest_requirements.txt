@@ -11,3 +11,4 @@ trustme~=1.1.0
 
 # pulp_file tests
 beautifulsoup4
+pytest-timeout
