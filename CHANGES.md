@@ -8,6 +8,29 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.49.18 (2024-08-28) {: #3.49.18 }
+
+### REST API {: #3.49.18-rest-api }
+
+#### Bugfixes {: #3.49.18-rest-api-bugfix }
+
+- Fixed urlizing of api hrefs in clickable api.
+  [#5664](https://github.com/pulp/pulpcore/issues/5664)
+
+### Plugin API {: #3.49.18-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.49.18-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.49.18-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 # ## 3.49.17 (2024-08-10) {: #3.49.17 }
 
 ### REST API {: #3.49.17-rest-api }
