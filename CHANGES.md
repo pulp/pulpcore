@@ -8,6 +8,46 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.59.0 (2024-08-28) {: #3.59.0 }
+
+### REST API {: #3.59.0-rest-api }
+
+#### Features {: #3.59.0-rest-api-feature }
+
+- Added ability to cancel all tasks in a TaskGroup through a partial update with `state=canceled`.
+  [#4125](https://github.com/pulp/pulpcore/issues/4125)
+
+#### Bugfixes {: #3.59.0-rest-api-bugfix }
+
+- Added a default access policy where only admin users will be able to upload and
+  read/list artifacts.
+  [#5525](https://github.com/pulp/pulpcore/issues/5525)
+
+#### Improved Documentation {: #3.59.0-rest-api-doc }
+
+- Improved documentation for the complex filtering.
+  [#5703](https://github.com/pulp/pulpcore/issues/5703)
+
+#### Deprecations {: #3.59.0-rest-api-deprecation }
+
+- The `DELETE` request method from Artifact viewset has been deprecated and
+  planned for removal.
+  [#5525](https://github.com/pulp/pulpcore/issues/5525)
+
+### Plugin API {: #3.59.0-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.59.0-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.59.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.58.0 (2024-08-14) {: #3.58.0 }
 
 ### REST API {: #3.58.0-rest-api }
