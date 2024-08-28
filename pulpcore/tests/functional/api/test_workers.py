@@ -76,7 +76,7 @@ def task_schedule():
         "from django.utils.timezone import now;"
         "from datetime import timedelta;"
         "from pulpcore.app.models import TaskSchedule;"
-        "dispatch_interval = timedelta(seconds=4);"
+        "dispatch_interval = timedelta(seconds=5);"
         "next_dispatch = now() + dispatch_interval;"
         "TaskSchedule("
         f"    name='{name}', task_name='{task_name}', "
@@ -100,8 +100,9 @@ def task_schedule():
 def test_task_schedule(task_schedule, task_schedules_api_client):
     """Test that a worker will schedule a task roughly at a given time."""
     # Worker TTL is configured to 30s, therefore they will have a heartbeat each 10s (6 bpm). The
-    # task is scheduled 4s in the future to give us time to invesitgate the state before and after.
-    # 15s later we can be sure it was scheduled (as long as at least one worker is running).
+    # task is scheduled 5s in the future to give us time to invesitgate the state before and after.
+    # 16s later we can be sure it was scheduled (as long as at least one worker is running).
+    # Waiting for 18s to give some more slack.
 
     result = task_schedules_api_client.list(name=task_schedule["name"])
     assert result.count == 1
@@ -110,7 +111,7 @@ def test_task_schedule(task_schedule, task_schedules_api_client):
     assert ts.task_name == task_schedule["task_name"]
     assert ts.last_task is None
     # At least a worker heartbeat is needed
-    for i in range(15):
+    for i in range(18):
         sleep(1)
         ts = task_schedules_api_client.read(task_schedule_href=result.results[0].pulp_href)
         if ts.last_task is not None:
