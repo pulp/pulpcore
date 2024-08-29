@@ -166,21 +166,20 @@ class ThreadedAiohttpServer(threading.Thread):
         await runner.setup()
         site = web.TCPSite(runner, host=self.host, port=self.port, ssl_context=self.ssl_ctx)
         await site.start()
-        async with self.shutdown_condition:
-            await self.shutdown_condition.wait()
+        await self.shutdown_event.wait()
         await runner.cleanup()
 
     def run(self):
         asyncio.set_event_loop(self.loop)
-        self.shutdown_condition = asyncio.Condition()
+        self.shutdown_event = asyncio.Event()
         self.loop.run_until_complete(self.arun())
 
     async def astop(self):
-        async with self.shutdown_condition:
-            self.shutdown_condition.notify_all()
+        self.shutdown_event.set()
 
     def stop(self):
-        asyncio.run_coroutine_threadsafe(self.astop(), self.loop)
+        fut = asyncio.run_coroutine_threadsafe(self.astop(), self.loop)
+        fut.result()
 
 
 class ThreadedAiohttpServerData:
