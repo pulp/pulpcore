@@ -25,6 +25,7 @@ from pulpcore.app.util import (
     set_domain,
     configure_analytics,
     configure_cleanup,
+    configure_periodic_telemetry,
 )
 from pulpcore.constants import TASK_FINAL_STATES, TASK_STATES
 from pulpcore.tasking.tasks import dispatch, execute_task
@@ -35,6 +36,7 @@ _logger = logging.getLogger(__name__)
 def startup_hook():
     configure_analytics()
     configure_cleanup()
+    configure_periodic_telemetry()
 
 
 def delete_incomplete_resources(task):
