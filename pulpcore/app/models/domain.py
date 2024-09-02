@@ -72,14 +72,6 @@ class Domain(BaseModel, AutoAddObjPermsMixin):
             # Delete on by one to properly cleanup the storage.
             artifact.delete()
 
-    # Disabling Storage metrics until we find a solution to resource usage.
-    # https://github.com/pulp/pulpcore/issues/5468
-    # @hook(AFTER_CREATE)
-    # def _report_domain_disk_usage(self):
-    #     from pulpcore.app.util import DomainMetricsEmitterBuilder
-    #
-    #     DomainMetricsEmitterBuilder.build(self)
-
     class Meta:
         permissions = [
             ("manage_roles_domain", "Can manage role assignments on domain"),
