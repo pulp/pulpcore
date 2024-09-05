@@ -11,4 +11,3 @@ updates:
     otel:
       patterns:
         - opentelemetry*
-        - protobuf
