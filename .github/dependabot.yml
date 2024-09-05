@@ -7,3 +7,8 @@ updates:
   open-pull-requests-limit: 10
   commit-message:
     prefix: "[noissue]"
+  groups:
+    otel:
+      patterns:
+        - opentelemetry*
+        - protobuf
