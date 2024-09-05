@@ -67,10 +67,10 @@ pulp_settings_azure:
   domain_enabled: true
 pulp_settings_gcp: null
 pulp_settings_s3:
-  authentication_backends: '@merge django.contrib.auth.backends.RemoteUserBackend'
-  authentication_json_header: HTTP_X_RH_IDENTITY
-  authentication_json_header_jq_filter: .identity.user.username
-  authentication_json_header_openapi_security_scheme:
+  DISABLED_authentication_backends: '@merge django.contrib.auth.backends.RemoteUserBackend'
+  DISABLED_authentication_json_header: HTTP_X_RH_IDENTITY
+  DISABLED_authentication_json_header_jq_filter: .identity.user.username
+  DISABLED_authentication_json_header_openapi_security_scheme:
     description: External OAuth integration
     flows:
       clientCredentials:
@@ -80,7 +80,7 @@ pulp_settings_s3:
     type: oauth2
   domain_enabled: true
   hide_guarded_distributions: true
-  rest_framework__default_authentication_classes: '@merge pulpcore.app.authentication.JSONHeaderRemoteAuthentication'
+  DISABLED_rest_framework__default_authentication_classes: '@merge pulpcore.app.authentication.JSONHeaderRemoteAuthentication'
 pydocstyle: true
 release_email: pulp-infra@redhat.com
 release_user: pulpbot
