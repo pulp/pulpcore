@@ -18,6 +18,7 @@ from django_lifecycle import hook, AFTER_CREATE
 from pulpcore.app.models import (
     AutoAddObjPermsMixin,
     BaseModel,
+    Domain,
     GenericRelationModel,
 )
 from pulpcore.app.models.status import BaseAppStatus
@@ -371,6 +372,8 @@ class TaskSchedule(BaseModel):
     dispatch_interval = models.DurationField(null=True)
     task_name = models.TextField()
     last_task = models.ForeignKey(Task, null=True, on_delete=models.SET_NULL)
+    pulp_domain = models.ForeignKey(Domain, null=True, on_delete=models.CASCADE)
+    task_args = models.TextField(null=True)
 
     class Meta:
         permissions = [

@@ -1,3 +1,4 @@
+import ast
 import asyncio
 import importlib
 import logging
@@ -209,9 +210,15 @@ def dispatch_scheduled_tasks():
                     # Do not schedule in the past
                     task_schedule.next_dispatch += task_schedule.dispatch_interval
             set_guid(generate_guid())
+            if task_schedule.task_args:
+                task_args = ast.literal_eval(task_schedule.task_args)
+                if not isinstance(task_args, tuple) or not isinstance(task_args, list):
+                    raise Exception("Task args could not been interpreted as a tuple or a list.")
+
             with transaction.atomic():
                 task_schedule.last_task = dispatch(
                     task_schedule.task_name,
+                    task_schedule.task_args
                 )
                 task_schedule.save(update_fields=["next_dispatch", "last_task"])
 
