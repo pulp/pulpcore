@@ -25,7 +25,7 @@ flake8: true
 flake8_ignore:
 - ./pulpcore/app/protobuf/*
 github_org: pulp
-latest_release_branch: '3.59'
+latest_release_branch: '3.60'
 lint_requirements: true
 noissue_marker: '[noissue]'
 os_required_packages: []
@@ -78,9 +78,9 @@ pulp_settings_s3:
           api.console: grant_access_to_pulp
         tokenUrl: https://your-identity-provider/token/issuer
     type: oauth2
+  DISABLED_rest_framework__default_authentication_classes: '@merge pulpcore.app.authentication.JSONHeaderRemoteAuthentication'
   domain_enabled: true
   hide_guarded_distributions: true
-  DISABLED_rest_framework__default_authentication_classes: '@merge pulpcore.app.authentication.JSONHeaderRemoteAuthentication'
 pydocstyle: true
 release_email: pulp-infra@redhat.com
 release_user: pulpbot
