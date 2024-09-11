@@ -28,9 +28,11 @@ def general_create(app_label, serializer_name, *args, **kwargs):
 
     """
     data = kwargs.pop("data", None)
+
     context = kwargs.pop("context", {})
     serializer_class = get_plugin_config(app_label).named_serializers[serializer_name]
     serializer = serializer_class(data=data, context=context)
+
     serializer.is_valid(raise_exception=True)
     instance = serializer.save()
     if isinstance(instance, MasterModel):

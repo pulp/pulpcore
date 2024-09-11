@@ -15,7 +15,8 @@ from pulpcore.app.serializers import (
     SigningServiceSerializer,
 )
 from pulpcore.app.util import get_viewset_for_model
-from pulpcore.app.viewsets.base import NamedModelViewSet
+from pulpcore.app.viewsets.base import NamedModelViewSet, LabelsMixin
+from pulpcore.app.viewsets.custom_filters import LabelFilter
 
 from .custom_filters import (
     ArtifactRepositoryVersionFilter,
@@ -127,6 +128,8 @@ class ContentFilter(BaseFilterSet):
         orphaned_for:
             Return Content which has been orphaned for a given number of minutes;
             -1 uses ORPHAN_PROTECTION_TIME value.
+        pulp_label_select:
+            Return Content which has has the specified label
     """
 
     repository_version = ContentRepositoryVersionFilter()
@@ -135,6 +138,7 @@ class ContentFilter(BaseFilterSet):
     orphaned_for = OrphanedFilter(
         help_text="Minutes Content has been orphaned for. -1 uses ORPHAN_PROTECTION_TIME."
     )
+    pulp_label_select = LabelFilter()
 
 
 class BaseContentViewSet(NamedModelViewSet):
@@ -199,7 +203,11 @@ class ListContentViewSet(BaseContentViewSet, mixins.ListModelMixin):
 
 
 class ContentViewSet(
-    BaseContentViewSet, mixins.CreateModelMixin, mixins.RetrieveModelMixin, mixins.ListModelMixin
+    BaseContentViewSet,
+    mixins.CreateModelMixin,
+    mixins.RetrieveModelMixin,
+    mixins.ListModelMixin,
+    LabelsMixin,
 ):
     """
     Content viewset that supports POST and GET by default.
