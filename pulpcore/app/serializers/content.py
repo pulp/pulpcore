@@ -5,12 +5,21 @@ from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 
 from pulpcore.app import models
-from pulpcore.app.serializers import base, fields, DetailRelatedField
+from pulpcore.app.serializers import base, fields, pulp_labels_validator, DetailRelatedField
 from pulpcore.app.util import get_domain
 
 
 class NoArtifactContentSerializer(base.ModelSerializer):
     pulp_href = base.DetailIdentityField(view_name_pattern=r"contents(-.*/.*)-detail")
+    pulp_labels = serializers.HStoreField(
+        help_text=_(
+            "A dictionary of arbitrary key/value pairs used to describe a specific "
+            "Content instance."
+        ),
+        required=False,
+        validators=[pulp_labels_validator],
+    )
+
     repository = DetailRelatedField(
         help_text=_("A URI of a repository the new content unit should be associated with."),
         required=False,
@@ -39,8 +48,8 @@ class NoArtifactContentSerializer(base.ModelSerializer):
 
     def validate(self, data):
         """Validate that we have an Artifact or can create one."""
-
         data = super().validate(data)
+
         if repository := data.get("repository"):
             if (
                 self.Meta.model
@@ -104,7 +113,10 @@ class NoArtifactContentSerializer(base.ModelSerializer):
 
     class Meta:
         model = models.Content
-        fields = base.ModelSerializer.Meta.fields + ("repository",)
+        fields = base.ModelSerializer.Meta.fields + (
+            "repository",
+            "pulp_labels",
+        )
 
 
 class SingleArtifactContentSerializer(NoArtifactContentSerializer):

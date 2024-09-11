@@ -1,3 +1,4 @@
+import json
 import os
 import re
 from gettext import gettext as _
@@ -417,10 +418,20 @@ class TaskGroupStatusCountField(serializers.IntegerField, serializers.ReadOnlyFi
 
 def pulp_labels_validator(value):
     """A validator designed for the pulp_labels field."""
-    for key, value in value.items():
-        if not re.match(r"^[\w ]+$", key):
-            raise serializers.ValidationError(_("Key '{}' contains non-alphanumerics.").format(key))
-        if re.search(r"[,()]", value):
+
+    # If we have a string instead of a dict, make sure it's valid JSON and then validate *that*
+    # as valid-labels.
+    # We're doing this to deal with a limitation in DRF's ability to handle structured-form-data
+    # on content-creation.
+    if isinstance(value, str):
+        value = json.loads(value)
+
+    for k, v in value.items():
+        if not re.match(r"^[\w ]+$", k):
+            raise serializers.ValidationError(_("Key '{}' contains non-alphanumerics.").format(k))
+        if re.search(r"[,()]", v):
             raise serializers.ValidationError(
-                _("Key '{}' contains value with comma or parenthesis.").format(key)
+                _("Key '{}' contains value with comma or parenthesis.").format(k)
             )
+
+    return value

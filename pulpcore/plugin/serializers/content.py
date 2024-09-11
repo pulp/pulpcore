@@ -1,3 +1,5 @@
+import json
+
 from gettext import gettext as _
 
 from tempfile import NamedTemporaryFile
@@ -179,7 +181,17 @@ class SingleArtifactContentUploadSerializer(
 
     def __init__(self, *args, **kwargs):
         """Initializer for SingleArtifactContentUploadSerializer."""
+        # pulp_labels can come into the system as a str-of-json - intercept and correct
+        # before attempting to validate
+        if (
+            "data" in kwargs
+            and "pulp_labels" in kwargs["data"]
+            and isinstance(kwargs["data"]["pulp_labels"], str)
+        ):
+            kwargs["data"]["pulp_labels"] = json.loads(kwargs["data"]["pulp_labels"])
+
         super().__init__(*args, **kwargs)
+
         if "artifact" in self.fields:
             self.fields["artifact"].required = False
 
@@ -195,6 +207,7 @@ class SingleArtifactContentUploadSerializer(
         the artifact.
         """
         data = super().deferred_validate(data)
+
         if "file" in data:
             file = data.pop("file")
             # if artifact already exists, let's use it
