@@ -8,6 +8,31 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.60.0 (2024-09-10) {: #3.60.0 }
+
+### REST API {: #3.60.0-rest-api }
+
+#### Features {: #3.60.0-rest-api-feature }
+
+- Added metrics reporting the size of served artifacts.
+  [#4602](https://github.com/pulp/pulpcore/issues/4602)
+- Pulp-workers now also log domain name in which the task is executed.
+  [#5693](https://github.com/pulp/pulpcore/issues/5693)
+
+### Plugin API {: #3.60.0-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.60.0-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.60.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.59.0 (2024-08-28) {: #3.59.0 }
 
 ### REST API {: #3.59.0-rest-api }
