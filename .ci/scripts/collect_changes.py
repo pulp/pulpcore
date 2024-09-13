@@ -103,7 +103,7 @@ def main():
             for change in main_changes:
                 fp.write(change[1])
 
-        repo.git.commit("-m", "Update Changelog", "-m" "[noissue]", CHANGELOG_FILE)
+        repo.git.commit("-m", "Update Changelog", CHANGELOG_FILE)
 
 
 if __name__ == "__main__":

@@ -6,57 +6,62 @@
 # For more info visit https://github.com/pulp/plugin_template
 
 ---
-name: Core PR static checks
+name: "Core PR static checks"
 on:
   pull_request_target:
-    types: [opened, synchronize, reopened]
+    types: ["opened", "synchronize", "reopened"]
 
 # This workflow runs with elevated permissions.
 # Do not even think about running a single bit of code from the PR.
 # Static analysis should be fine however.
 
 concurrency:
-  group: ${{ github.event.pull_request.number }}-${{ github.workflow }}
+  group: "${{ github.event.pull_request.number }}-${{ github.workflow }}"
   cancel-in-progress: true
 
 jobs:
-  single_commit:
-    runs-on: ubuntu-latest
-    name: Label multiple commit PR
+  apply_labels:
+    runs-on: "ubuntu-latest"
+    name: "Label PR"
     permissions:
-      pull-requests: write
+      pull-requests: "write"
     steps:
       - uses: "actions/checkout@v4"
         with:
           fetch-depth: 0
-      - name: Commit Count Check
+      - uses: "actions/setup-python@v5"
+        with:
+          python-version: "3.11"
+      - name: "Determine PR labels"
         run: |
+          pip install GitPython==3.1.42
           git fetch origin ${{ github.event.pull_request.head.sha }}
-          echo "COMMIT_COUNT=$(git log  --oneline --no-merges origin/${{ github.base_ref }}..${{ github.event.pull_request.head.sha }} | wc -l)" >> "$GITHUB_ENV"
-      - uses: actions/github-script@v7
+          python .ci/scripts/pr_labels.py "origin/${{ github.base_ref }}" "${{ github.event.pull_request.head.sha }}" >> "$GITHUB_ENV"
+      - uses: "actions/github-script@v7"
+        name: "Apply PR Labels"
         with:
           script: |
-            const labelName = "multi-commit";
-            const { COMMIT_COUNT } = process.env;
+            const { ADD_LABELS, REMOVE_LABELS } = process.env;
 
-            if (COMMIT_COUNT == 1)
-            {
-              try {
-                await github.rest.issues.removeLabel({
-                  issue_number: context.issue.number,
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  name: labelName,
-                });
-              } catch(err) {
+            if (REMOVE_LABELS.length) {
+              for await (const labelName of REMOVE_LABELS.split(",")) {
+                try {
+                  await github.rest.issues.removeLabel({
+                    issue_number: context.issue.number,
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    name: labelName,
+                  });
+                } catch(err) {
+                }
               }
             }
-            else
-            {
+            if (ADD_LABELS.length) {
               await github.rest.issues.addLabels({
                 issue_number: context.issue.number,
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                labels: [labelName],
+                labels: ADD_LABELS.split(","),
               });
             }
+...
