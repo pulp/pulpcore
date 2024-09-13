@@ -105,7 +105,7 @@ if [ "$TEST" = "s3" ]; then
   sed -i -e '$a s3_test: true\
 minio_access_key: "'$MINIO_ACCESS_KEY'"\
 minio_secret_key: "'$MINIO_SECRET_KEY'"\
-pulp_scenario_settings: {"authentication_backends": "@merge django.contrib.auth.backends.RemoteUserBackend", "authentication_json_header": "HTTP_X_RH_IDENTITY", "authentication_json_header_jq_filter": ".identity.user.username", "authentication_json_header_openapi_security_scheme": {"description": "External OAuth integration", "flows": {"clientCredentials": {"scopes": {"api.console": "grant_access_to_pulp"}, "tokenUrl": "https://your-identity-provider/token/issuer"}}, "type": "oauth2"}, "domain_enabled": true, "hide_guarded_distributions": true, "rest_framework__default_authentication_classes": "@merge pulpcore.app.authentication.JSONHeaderRemoteAuthentication"}\
+pulp_scenario_settings: {"DISABLED_authentication_backends": "@merge django.contrib.auth.backends.RemoteUserBackend", "DISABLED_authentication_json_header": "HTTP_X_RH_IDENTITY", "DISABLED_authentication_json_header_jq_filter": ".identity.user.username", "DISABLED_authentication_json_header_openapi_security_scheme": {"description": "External OAuth integration", "flows": {"clientCredentials": {"scopes": {"api.console": "grant_access_to_pulp"}, "tokenUrl": "https://your-identity-provider/token/issuer"}}, "type": "oauth2"}, "DISABLED_rest_framework__default_authentication_classes": "@merge pulpcore.app.authentication.JSONHeaderRemoteAuthentication", "domain_enabled": true, "hide_guarded_distributions": true}\
 pulp_scenario_env: {}\
 ' vars/main.yaml
   export PULP_API_ROOT="/rerouted/djnd/"
@@ -166,5 +166,5 @@ if [[ "$TEST" = "azure" ]]; then
 fi
 
 echo ::group::PIP_LIST
-cmd_prefix bash -c "pip3 list && pip3 install pipdeptree && pipdeptree"
+cmd_prefix bash -c "pip3 list && pipdeptree"
 echo ::endgroup::
