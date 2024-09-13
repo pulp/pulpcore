@@ -1,7 +1,7 @@
 # This config represents the latest values used when running the plugin-template. Any settings that
 # were not present before running plugin-template have been added with their default values.
 
-# generated with plugin_template@unknown
+# generated with plugin_template@2021.08.26-382-gc88324b
 
 api_root: /pulp/
 black: true
@@ -27,7 +27,6 @@ flake8_ignore:
 github_org: pulp
 latest_release_branch: '3.59'
 lint_requirements: true
-noissue_marker: '[noissue]'
 os_required_packages: []
 parallel_test_workers: 8
 plugin_app_label: core
@@ -78,9 +77,9 @@ pulp_settings_s3:
           api.console: grant_access_to_pulp
         tokenUrl: https://your-identity-provider/token/issuer
     type: oauth2
+  DISABLED_rest_framework__default_authentication_classes: '@merge pulpcore.app.authentication.JSONHeaderRemoteAuthentication'
   domain_enabled: true
   hide_guarded_distributions: true
-  DISABLED_rest_framework__default_authentication_classes: '@merge pulpcore.app.authentication.JSONHeaderRemoteAuthentication'
 pydocstyle: true
 release_email: pulp-infra@redhat.com
 release_user: pulpbot
