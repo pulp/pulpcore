@@ -166,5 +166,5 @@ if [[ "$TEST" = "azure" ]]; then
 fi
 
 echo ::group::PIP_LIST
-cmd_prefix bash -c "pip3 list && pip3 install pipdeptree && pipdeptree"
+cmd_prefix bash -c "pip3 list && pipdeptree"
 echo ::endgroup::
