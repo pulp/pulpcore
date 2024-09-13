@@ -62,13 +62,8 @@ jobs:
           committer: "pulpbot <pulp-infra@redhat.com>"
           author: "pulpbot <pulp-infra@redhat.com>"
           title: "Update CI files for branch main"
-          body: ""
           branch: "update-ci/main"
           base: "main"
-          commit-message: |
-            Update CI files
-
-            [noissue]
           delete-branch: true
       - uses: "actions/checkout@v4"
         with:
@@ -89,13 +84,8 @@ jobs:
           committer: "pulpbot <pulp-infra@redhat.com>"
           author: "pulpbot <pulp-infra@redhat.com>"
           title: "Update CI files for branch 3.60"
-          body: ""
           branch: "update-ci/3.60"
           base: "3.60"
-          commit-message: |
-            Update CI files
-
-            [noissue]
           delete-branch: true
       - uses: "actions/checkout@v4"
         with:
@@ -116,13 +106,8 @@ jobs:
           committer: "pulpbot <pulp-infra@redhat.com>"
           author: "pulpbot <pulp-infra@redhat.com>"
           title: "Update CI files for branch 3.21"
-          body: ""
           branch: "update-ci/3.21"
           base: "3.21"
-          commit-message: |
-            Update CI files
-
-            [noissue]
           delete-branch: true
       - uses: "actions/checkout@v4"
         with:
@@ -143,13 +128,8 @@ jobs:
           committer: "pulpbot <pulp-infra@redhat.com>"
           author: "pulpbot <pulp-infra@redhat.com>"
           title: "Update CI files for branch 3.22"
-          body: ""
           branch: "update-ci/3.22"
           base: "3.22"
-          commit-message: |
-            Update CI files
-
-            [noissue]
           delete-branch: true
       - uses: "actions/checkout@v4"
         with:
@@ -170,13 +150,8 @@ jobs:
           committer: "pulpbot <pulp-infra@redhat.com>"
           author: "pulpbot <pulp-infra@redhat.com>"
           title: "Update CI files for branch 3.28"
-          body: ""
           branch: "update-ci/3.28"
           base: "3.28"
-          commit-message: |
-            Update CI files
-
-            [noissue]
           delete-branch: true
       - uses: "actions/checkout@v4"
         with:
@@ -197,13 +172,8 @@ jobs:
           committer: "pulpbot <pulp-infra@redhat.com>"
           author: "pulpbot <pulp-infra@redhat.com>"
           title: "Update CI files for branch 3.39"
-          body: ""
           branch: "update-ci/3.39"
           base: "3.39"
-          commit-message: |
-            Update CI files
-
-            [noissue]
           delete-branch: true
       - uses: "actions/checkout@v4"
         with:
@@ -224,11 +194,7 @@ jobs:
           committer: "pulpbot <pulp-infra@redhat.com>"
           author: "pulpbot <pulp-infra@redhat.com>"
           title: "Update CI files for branch 3.49"
-          body: ""
           branch: "update-ci/3.49"
           base: "3.49"
-          commit-message: |
-            Update CI files
-
-            [noissue]
           delete-branch: true
+...
