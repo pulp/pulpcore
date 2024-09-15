@@ -93,10 +93,8 @@ jobs:
           branch: minor-version-bump
           base: main
           title: Bump minor version
-          body: '[noissue]'
           commit-message: |
             Bump minor version
-            [noissue]
           delete-branch: true
 
       - name: Push release branch
