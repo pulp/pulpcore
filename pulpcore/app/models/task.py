@@ -178,10 +178,6 @@ class Task(BaseModel, AutoAddObjPermsMixin):
         rows = Task.objects.filter(pk=self.pk, state=TASK_STATES.WAITING).update(
             state=TASK_STATES.RUNNING, started_at=timezone.now()
         )
-        if rows != 1:
-            raise RuntimeError(
-                _("Task set_running() occurred but Task {} is not WAITING").format(self.pk)
-            )
         with suppress(AttributeError):
             del self.state
         with suppress(AttributeError):
@@ -190,6 +186,12 @@ class Task(BaseModel, AutoAddObjPermsMixin):
             del self.finished_at
         with suppress(AttributeError):
             del self.error
+        if rows != 1:
+            raise RuntimeError(
+                _("Attempt to set not waiting task {} to running from '{}'.").format(
+                    self.pk, self.state
+                )
+            )
 
     def set_completed(self):
         """
@@ -202,10 +204,6 @@ class Task(BaseModel, AutoAddObjPermsMixin):
         rows = Task.objects.filter(pk=self.pk, state=TASK_STATES.RUNNING).update(
             state=TASK_STATES.COMPLETED, finished_at=timezone.now()
         )
-        if rows != 1:
-            raise RuntimeError(
-                _("Task set_completed() occurred but Task {} is not RUNNING.").format(self.pk)
-            )
         with suppress(AttributeError):
             del self.state
         with suppress(AttributeError):
@@ -214,6 +212,15 @@ class Task(BaseModel, AutoAddObjPermsMixin):
             del self.finished_at
         with suppress(AttributeError):
             del self.error
+        if rows != 1:
+            # If the user requested to cancel this task while the worker finished it, we leave it
+            # as it is, but accept this is not an error condition.
+            if self.state != TASK_STATES.CANCELLING:
+                raise RuntimeError(
+                    _("Attempt to set not running task {} to completed from '{}'.").format(
+                        self.pk, self.state
+                    )
+                )
 
     def set_failed(self, exc, tb):
         """
@@ -232,8 +239,6 @@ class Task(BaseModel, AutoAddObjPermsMixin):
             finished_at=timezone.now(),
             error=exception_to_dict(exc, tb_str),
         )
-        if rows != 1:
-            raise RuntimeError(_("Attempt to set a not running task to failed."))
         with suppress(AttributeError):
             del self.state
         with suppress(AttributeError):
@@ -242,6 +247,12 @@ class Task(BaseModel, AutoAddObjPermsMixin):
             del self.finished_at
         with suppress(AttributeError):
             del self.error
+        if rows != 1:
+            raise RuntimeError(
+                _("Attempt to set not running task {} to failed from '{}'.").format(
+                    self.pk, self.state
+                )
+            )
 
     def set_canceling(self):
         """
@@ -252,8 +263,6 @@ class Task(BaseModel, AutoAddObjPermsMixin):
         rows = Task.objects.filter(pk=self.pk, state__in=TASK_INCOMPLETE_STATES).update(
             state=TASK_STATES.CANCELING,
         )
-        if rows != 1:
-            raise RuntimeError(_("Attempt to cancel a finished task."))
         with suppress(AttributeError):
             del self.state
         with suppress(AttributeError):
@@ -262,6 +271,12 @@ class Task(BaseModel, AutoAddObjPermsMixin):
             del self.finished_at
         with suppress(AttributeError):
             del self.error
+        if rows != 1:
+            raise RuntimeError(
+                _("Attempt to set not incomplete task {} to canceling from '{}'.").format(
+                    self.pk, self.state
+                )
+            )
 
     def set_canceled(self, final_state=TASK_STATES.CANCELED, reason=None):
         """
@@ -277,8 +292,6 @@ class Task(BaseModel, AutoAddObjPermsMixin):
             finished_at=timezone.now(),
             **task_data,
         )
-        if rows != 1:
-            raise RuntimeError(_("Attempt to mark a task canceled that is not in canceling state."))
         with suppress(AttributeError):
             del self.state
         with suppress(AttributeError):
@@ -287,6 +300,12 @@ class Task(BaseModel, AutoAddObjPermsMixin):
             del self.finished_at
         with suppress(AttributeError):
             del self.error
+        if rows != 1:
+            raise RuntimeError(
+                _("Attempt to set not canceling task {} to canceled from '{}'.").format(
+                    self.pk, self.state
+                )
+            )
 
     def unblock(self):
         # This should be safe to be called without holding the lock.
