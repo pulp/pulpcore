@@ -5,3 +5,8 @@ pulpcore>=3.21.30,!=3.23.*,!=3.24.*,!=3.25.*,!=3.26.*,!=3.27.*,!=3.29.*,!=3.30.*
 
 tablib!=3.6.0
 # 3.6.0: This release introduced a regression removing the "html" optional dependency.
+
+
+
+# Newer version seem to have a conflict around packaging, that pip fails to resolve in time. Remove this when this starts to impose an issue.
+pipdeptree<=3.23.1
