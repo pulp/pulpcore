@@ -1763,7 +1763,19 @@ No significant changes.
 -   Starting from this release pulp_file will be shipped as part of the pulpcore package.
     [#4550](https://github.com/pulp/pulpcore/issues/4550)
 
-## 3.39.20 (2024-08-10) {: #3.39.20 }
+## 3.39.21 (2024-09-16) {: #3.39.21 }
+
+### REST API {: #3.39.21-rest-api }
+
+No significant changes.
+
+### Plugin API {: #3.39.21-plugin-api }
+
+No significant changes.
+
+---
+
+# ## 3.39.20 (2024-08-10) {: #3.39.20 }
 
 ### REST API {: #3.39.20-rest-api }
 
