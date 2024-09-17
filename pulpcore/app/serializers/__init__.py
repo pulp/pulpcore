@@ -13,6 +13,7 @@ from .base import (
     ModelSerializer,
     NestedIdentityField,
     NestedRelatedField,
+    PRNField,
     RelatedField,
     RelatedResourceField,
     SetLabelSerializer,

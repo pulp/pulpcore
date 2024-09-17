@@ -22,6 +22,7 @@ from pulpcore.app.serializers import (
     NestedRelatedField,
     NoArtifactContentSerializer,
     ProgressReportSerializer,
+    PRNField,
     PublicationSerializer,
     RelatedField,
     RemoteSerializer,

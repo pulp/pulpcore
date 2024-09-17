@@ -9,7 +9,6 @@ from itertools import chain
 from gettext import gettext as _
 
 from django.conf import settings
-from django.urls import resolve
 from django.db.models import ObjectDoesNotExist
 from django_filters import BaseInFilter, CharFilter, Filter
 from rest_framework import serializers
@@ -110,28 +109,27 @@ class CreatedResourcesFilter(Filter):
         if value is None:
             return qs
 
-        match = resolve(value)
-        resource = NamedModelViewSet.get_resource(value, match.func.cls.queryset.model)
+        resource = NamedModelViewSet.get_resource(value)
 
         return qs.filter(created_resources__object_id=resource.pk)
 
 
-class RepoVersionHrefFilter(Filter):
+class RepoVersionHrefPrnFilter(Filter):
     """
     Filter Content by a Repository Version.
     """
 
     def __init__(self, *args, **kwargs):
-        kwargs.setdefault("help_text", _("Repository Version referenced by HREF"))
+        kwargs.setdefault("help_text", _("Repository Version referenced by HREF/PRN"))
         super().__init__(*args, **kwargs)
 
     @staticmethod
     def get_repository_version(value):
         """
-        Get the repository version from the HREF value provided by the user.
+        Get the repository version from the HREF/PRN value provided by the user.
 
         Args:
-            value (string): The RepositoryVersion href to filter by
+            value (string): The RepositoryVersion href/prn to filter by
         """
         if not value:
             raise serializers.ValidationError(
@@ -144,21 +142,21 @@ class RepoVersionHrefFilter(Filter):
         """
         Args:
             qs (django.db.models.query.QuerySet): The Content Queryset
-            value (string): The RepositoryVersion href to filter by
+            value (string): The RepositoryVersion href/prn to filter by
         """
         raise NotImplementedError()
 
 
-class RepositoryVersionFilter(RepoVersionHrefFilter):
+class RepositoryVersionFilter(RepoVersionHrefPrnFilter):
     """
-    Filter by RepositoryVersion href.
+    Filter by RepositoryVersion href/prn.
     """
 
     def filter(self, qs, value):
         """
         Args:
             qs (django.db.models.query.QuerySet): The Queryset to filter
-            value (string): The RepositoryVersion href to filter by
+            value (string): The RepositoryVersion href/prn to filter by
 
         Returns:
             Queryset filtered by given repository version on field_name
@@ -172,7 +170,7 @@ class RepositoryVersionFilter(RepoVersionHrefFilter):
         return qs.filter(**{key: repo_version.pk})
 
 
-class ArtifactRepositoryVersionFilter(RepoVersionHrefFilter):
+class ArtifactRepositoryVersionFilter(RepoVersionHrefPrnFilter):
     """
     Filter used to get the artifacts in a repository version.
     """
@@ -181,7 +179,7 @@ class ArtifactRepositoryVersionFilter(RepoVersionHrefFilter):
         """
         Args:
             qs (django.db.models.query.QuerySet): The Artifact Queryset
-            value (string): The RepositoryVersion href to filter by
+            value (string): The RepositoryVersion href/prn to filter by
 
         Returns:
             Queryset of the artifacts contained within the specified repository version
@@ -196,7 +194,7 @@ class ArtifactRepositoryVersionFilter(RepoVersionHrefFilter):
         return qs.filter(pk__in=artifact_pks)
 
 
-class ContentRepositoryVersionFilter(RepoVersionHrefFilter):
+class ContentRepositoryVersionFilter(RepoVersionHrefPrnFilter):
     """
     Filter used to get the content of this type found in a repository version.
     """
@@ -205,7 +203,7 @@ class ContentRepositoryVersionFilter(RepoVersionHrefFilter):
         """
         Args:
             qs (django.db.models.query.QuerySet): The Content Queryset
-            value (string): The RepositoryVersion href to filter by
+            value (string): The RepositoryVersion href/prn to filter by
 
         Returns:
             Queryset of the content contained within the specified repository version
@@ -218,7 +216,7 @@ class ContentRepositoryVersionFilter(RepoVersionHrefFilter):
         return qs.filter(pk__in=repo_version.content)
 
 
-class ContentAddedRepositoryVersionFilter(RepoVersionHrefFilter):
+class ContentAddedRepositoryVersionFilter(RepoVersionHrefPrnFilter):
     """
     Filter used to get the content of this type found in a repository version.
     """
@@ -227,7 +225,7 @@ class ContentAddedRepositoryVersionFilter(RepoVersionHrefFilter):
         """
         Args:
             qs (django.db.models.query.QuerySet): The Content Queryset
-            value (string): The RepositoryVersion href to filter by
+            value (string): The RepositoryVersion href/prn to filter by
 
         Returns:
             Queryset of the content added by the specified repository version
@@ -240,7 +238,7 @@ class ContentAddedRepositoryVersionFilter(RepoVersionHrefFilter):
         return qs.filter(pk__in=repo_version.added())
 
 
-class ContentRemovedRepositoryVersionFilter(RepoVersionHrefFilter):
+class ContentRemovedRepositoryVersionFilter(RepoVersionHrefPrnFilter):
     """
     Filter used to get the content of this type found in a repository version.
     """
@@ -249,7 +247,7 @@ class ContentRemovedRepositoryVersionFilter(RepoVersionHrefFilter):
         """
         Args:
             qs (django.db.models.query.QuerySet): The Content Queryset
-            value (string): The RepositoryVersion href to filter by
+            value (string): The RepositoryVersion href/prn to filter by
 
         Returns:
             Queryset of the content removed by the specified repository version
@@ -329,14 +327,14 @@ class WithContentFilter(Filter):
     """Filter class for filtering by content in Publications and RepositoryVersions."""
 
     def __init__(self, *args, **kwargs):
-        kwargs.setdefault("help_text", _("Content Unit referenced by HREF"))
+        kwargs.setdefault("help_text", _("Content Unit referenced by HREF/PRN"))
         super().__init__(*args, **kwargs)
 
     def filter(self, qs, value):
         """
         Args:
             qs (django.db.models.query.QuerySet): The Publication/RepositoryVersion Queryset
-            value (string or list[string]): of content href(s) to filter
+            value (string or list[string]): of content href/prn(s) to filter
 
         Returns:
             Queryset of the Publication/RepositoryVersion containing the specified content

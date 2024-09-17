@@ -10,7 +10,9 @@ from urllib.parse import urlparse
 from contextlib import ExitStack
 from contextvars import ContextVar
 from datetime import timedelta
+from uuid import UUID
 
+from django.apps import apps
 from django.conf import settings
 from django.db import connection
 from django.db.models import Model, Sum
@@ -120,12 +122,51 @@ def get_prn(instance=None, uri=None):
     return f"prn:{instance._meta.label_lower}:{instance.pk}"
 
 
-def extract_pk(uri):
+def resolve_prn(prn):
     """
-    Resolve a resource URI to a simple PK value.
+    Resolve a PRN to its model and pk.
 
-    Provides a means to resolve an href passed in a POST body to a primary key.
-    Doesn't assume anything about whether the resource corresponding to the URI
+    Args:
+        prn (str): The PRN to resolve.
+
+    Returns:
+        model_pk_tuple (tuple): A tuple of the model class and pk of the PRN
+
+    Raises:
+        rest_framework.exceptions.ValidationError: on invalid PRN.
+    """
+    if not prn.startswith("prn:"):
+        raise ValidationError(_("PRN must start with 'prn:': {}").format(prn))
+    split = prn.split(":")
+    if len(split) != 3:
+        raise ValidationError(
+            _("PRN must be of the form 'prn:app_label.model_label:pk': {}").format(prn)
+        )
+    p, full_model_label, pk = split
+    try:
+        model = apps.get_model(full_model_label)
+    except LookupError:
+        raise ValidationError(_("Model {} does not exist").format(full_model_label))
+    except ValueError:
+        raise ValidationError(
+            _("The model must be in the form of 'app_label.model_label': {}").format(
+                full_model_label
+            )
+        )
+    try:
+        UUID(pk, version=4)
+    except ValueError:
+        raise ValidationError(_("PK invalid: {}").format(pk))
+
+    return model, pk
+
+
+def extract_pk(uri, only_prn=False):
+    """
+    Resolve a resource URI or PRN to a simple PK value.
+
+    Provides a means to resolve an href/prn passed in a POST body to a primary key.
+    Doesn't assume anything about whether the resource corresponding to the URI/PRN
     passed in actually exists.
 
     Note:
@@ -134,14 +175,22 @@ def extract_pk(uri):
         RepositoryVersion PK is present within the URI.
 
     Args:
-        uri (str): A resource URI.
+        uri (str): A resource URI/PRN.
+        only_prn (bool): Ensure passed in value is only a valid PRN
 
     Returns:
-        primary_key (uuid.uuid4): The primary key of the resource extracted from the URI.
+        primary_key (uuid.uuid4): The primary key of the resource extracted from the URI/PRN.
 
     Raises:
-        rest_framework.exceptions.ValidationError: on invalid URI.
+        rest_framework.exceptions.ValidationError: on invalid URI/PRN.
     """
+    if uri.startswith("prn:"):
+        prn = uri.split(":")
+        if len(prn) != 3:
+            raise ValidationError(_("PRN not valid: {p}").format(p=prn))
+        return prn[2]
+    elif only_prn:
+        raise ValidationError(_("Not a valid PRN: {p}, must start with 'prn:'").format(p=uri))
     try:
         match = resolve(urlparse(uri).path)
     except Resolver404:

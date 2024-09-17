@@ -35,6 +35,8 @@ from pulpcore.app.util import (
     get_request_without_query_params,
     get_domain,
     reverse,
+    get_prn,
+    resolve_prn,
 )
 
 
@@ -61,13 +63,21 @@ def _reverse(obj):
     return reverse
 
 
-class HrefFieldMixin:
-    """A mixin to configure related fields to generate relative hrefs."""
+class HrefPrnFieldMixin:
+    """A mixin to configure related fields to generate relative hrefs and accept PRNs."""
 
     def get_url(self, obj, view_name, request, *args, **kwargs):
         # Use the Pulp reverse method to display relative hrefs.
         self.reverse = _reverse(obj)
         return super().get_url(obj, view_name, request, *args, **kwargs)
+
+    def to_internal_value(self, data):
+        # Properly also handle PRNs as values by converting them to URLs first
+        if data.startswith("prn:"):
+            model, pk = resolve_prn(data)
+            obj = model(pk=pk) if self.use_pk_only_optimization() else model.objects.get(pk=pk)
+            data = self.get_url(obj, self.view_name, self.context.get("request"), None)
+        return super().to_internal_value(data)
 
 
 class _MatchingRegexViewName(object):
@@ -90,7 +100,7 @@ class _MatchingRegexViewName(object):
         return re.fullmatch(self.pattern, other) is not None
 
 
-class _DetailFieldMixin(HrefFieldMixin):
+class _DetailFieldMixin(HrefPrnFieldMixin):
     """Mixin class containing code common to DetailIdentityField and DetailRelatedField"""
 
     def __init__(self, view_name=None, view_name_pattern=None, **kwargs):
@@ -132,7 +142,7 @@ class _DetailFieldMixin(HrefFieldMixin):
 
 
 class IdentityField(
-    HrefFieldMixin,
+    HrefPrnFieldMixin,
     serializers.HyperlinkedIdentityField,
 ):
     """IdentityField for use in the pulp_href field of non-Master/Detail Serializers.
@@ -142,13 +152,24 @@ class IdentityField(
 
 
 class RelatedField(
-    HrefFieldMixin,
+    HrefPrnFieldMixin,
     serializers.HyperlinkedRelatedField,
 ):
     """RelatedField when relating to non-Master/Detail models
 
     When using this field on a serializer, it will serialize the related resource as a relative URL.
     """
+
+
+class PRNField(serializers.StringRelatedField):
+    """A special IdentityField that shows any object's PRN."""
+
+    def __init__(self, **kwargs):
+        kwargs["source"] = "*"
+        super().__init__(**kwargs)
+
+    def to_representation(self, value):
+        return get_prn(instance=value)
 
 
 PKObject = namedtuple("PKObject", ["pk"])
@@ -255,7 +276,7 @@ class DetailRelatedField(_DetailFieldMixin, serializers.HyperlinkedRelatedField)
         return False
 
 
-class NestedIdentityField(HrefFieldMixin, NestedHyperlinkedIdentityField):
+class NestedIdentityField(HrefPrnFieldMixin, NestedHyperlinkedIdentityField):
     """NestedIdentityField for use with nested resources.
 
     When using this field in a serializer, it serializes the resource as a relative URL.
@@ -263,7 +284,7 @@ class NestedIdentityField(HrefFieldMixin, NestedHyperlinkedIdentityField):
 
 
 class NestedRelatedField(
-    HrefFieldMixin,
+    HrefPrnFieldMixin,
     NestedHyperlinkedRelatedField,
 ):
     """NestedRelatedField for use when relating to nested resources.
@@ -417,8 +438,9 @@ class ModelSerializer(
     exclude_arg_name = "exclude_fields"
 
     class Meta:
-        fields = ("pulp_href", "pulp_created", "pulp_last_updated")
+        fields = ("pulp_href", "prn", "pulp_created", "pulp_last_updated")
 
+    prn = PRNField(help_text=_("The Pulp Resource Name (PRN)."))
     pulp_created = serializers.DateTimeField(help_text=_("Timestamp of creation."), read_only=True)
     pulp_last_updated = serializers.DateTimeField(
         help_text=_(
