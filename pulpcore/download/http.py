@@ -3,6 +3,7 @@ import logging
 import aiohttp
 import asyncio
 import backoff
+import urllib.parse
 
 from .base import BaseDownloader, DownloadResult
 from pulpcore.exceptions import (
@@ -47,6 +48,14 @@ def http_giveup_handler(exc):
 
     # any other type of error (pre-filtered by the backoff decorator) shouldn't be fatal
     return False
+
+
+def encode_url(url):
+    """Helper function to encode only the path part of the URL."""
+    parsed_url = urllib.parse.urlparse(url)
+    encoded_path = urllib.parse.quote(parsed_url.path)
+    encoded_url = parsed_url._replace(path=encoded_path).geturl()
+    return encoded_url
 
 
 class HttpDownloader(BaseDownloader):
@@ -284,8 +293,9 @@ class HttpDownloader(BaseDownloader):
         """
         if self.download_throttler:
             await self.download_throttler.acquire()
+        encoded_url = encode_url(self.url)
         async with self.session.get(
-            self.url, proxy=self.proxy, proxy_auth=self.proxy_auth, auth=self.auth
+            encoded_url, proxy=self.proxy, proxy_auth=self.proxy_auth, auth=self.auth
         ) as response:
             self.raise_for_status(response)
             to_return = await self._handle_response(response)
