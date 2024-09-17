@@ -81,6 +81,16 @@ using `pytest <path_to_plugin>/<plugin_name>/tests/functional`.
     `pulpcore-manager test pulp_file.tests.unit.test_models` or
     `py.test <path_to_plugin>/<plugin_name>/tests/functional/api/test_sync.py`.
 
+### Environment variables
+
+The following environment variables can be set to adjust the API configuration for
+functional tests:
+
+- `API_PROTOCOL` (default: "https")
+- `API_HOST` (default: "pulp")
+- `API_PORT` (default: "443")
+- `ADMIN_USERNAME` (default: "admin"),
+- `ADMIN_PASSWORD` (default: "password")
 
 ## Contributing to tests
 
