@@ -102,6 +102,16 @@ def basic_manifest_path(write_3_iso_file_fixture_data_factory):
 
 
 @pytest.fixture
+def encoded_manifest_path(file_fixtures_root):
+    file_fixtures_root.joinpath("encoded").mkdir()
+    file1 = generate_iso(file_fixtures_root.joinpath("encoded/long-name-%253a-encoded.iso"))
+    file2 = generate_iso(file_fixtures_root.joinpath("encoded/another-%25-encoded.iso"))
+    file3 = generate_iso(file_fixtures_root.joinpath("encoded/more-%3C-encoded.iso"))
+    generate_manifest(file_fixtures_root.joinpath("encoded/PULP_MANIFEST"), [file1, file2, file3])
+    return "/encoded/PULP_MANIFEST"
+
+
+@pytest.fixture
 def copy_manifest_only_factory(file_fixtures_root):
     def _copy_manifest_only(name):
         file_fixtures_root.joinpath(f"{name}-manifest").mkdir()

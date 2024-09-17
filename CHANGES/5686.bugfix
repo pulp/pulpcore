@@ -1,0 +1,1 @@
+Implemented a more robust URL encoding mechanism ensuring that special characters are processed correctly.
