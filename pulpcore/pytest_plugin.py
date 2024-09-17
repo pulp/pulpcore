@@ -841,6 +841,21 @@ def pulp_content_url(pulp_settings, pulp_domain_enabled):
     return url
 
 
+@pytest.fixture(scope="session")
+def pulp_openapi_schema_url(pulp_api_v3_url):
+    return f"{pulp_api_v3_url}docs/api.json"
+
+
+@pytest.fixture(scope="session")
+def pulp_openapi_schema(pulp_openapi_schema_url):
+    return requests.get(pulp_openapi_schema_url).json()
+
+
+@pytest.fixture(scope="session")
+def pulp_openapi_schema_pk_path_set(pulp_openapi_schema_url):
+    return requests.get(f"{pulp_openapi_schema_url}?pk_path=1").json()
+
+
 # Pulp status information fixtures
 
 

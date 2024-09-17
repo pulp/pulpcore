@@ -52,6 +52,7 @@ def _gen_remote_serializer():
     serializer = RemoteSerializer(remote)
     # The pulp_href field needs too much things we are not interested in here.
     serializer.fields.pop("pulp_href")
+    serializer.fields.pop("prn")
     return serializer
 
 

@@ -23,7 +23,7 @@ from .content import (
     SigningServiceViewSet,
 )
 from .custom_filters import (
-    RepoVersionHrefFilter,
+    RepoVersionHrefPrnFilter,
     RepositoryVersionFilter,
 )
 from .domain import DomainViewSet

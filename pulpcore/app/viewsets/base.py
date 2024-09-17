@@ -27,7 +27,7 @@ from pulpcore.app.serializers import (
     SetLabelSerializer,
     UnsetLabelSerializer,
 )
-from pulpcore.app.util import get_viewset_for_model
+from pulpcore.app.util import get_viewset_for_model, resolve_prn
 from pulpcore.tasking.tasks import dispatch
 
 # These should be used to prevent duplication and keep things consistent
@@ -158,35 +158,43 @@ class NamedModelViewSet(viewsets.GenericViewSet):
     @staticmethod
     def get_resource(uri, model=None):
         """
-        Resolve a resource URI to an instance of the resource.
+        Resolve a resource URI/PRN to an instance of the resource.
 
-        Provides a means to resolve an href passed in a POST body to an
+        Provides a means to resolve an href/prn passed in a POST body to an
         instance of the resource.
 
         Args:
-            uri (str): A resource URI.
+            uri (str): A resource URI/PRN.
             model (django.models.Model): A model class. If not provided, the method automatically
-                determines the used model from the resource URI.
+                determines the used model from the resource URI/PRN.
 
         Returns:
             django.models.Model: The resource fetched from the DB.
 
         Raises:
-            rest_framework.exceptions.ValidationError: on invalid URI or resource not found.
+            rest_framework.exceptions.ValidationError: on invalid URI/PRN or resource not found.
         """
-        try:
-            match = resolve(urlparse(uri).path)
-        except Resolver404:
-            raise DRFValidationError(detail=_("URI not valid: {u}").format(u=uri))
+        found_kwargs = {}
+        if uri.startswith("prn:"):
+            m, pk = resolve_prn(uri)
+            if model is None:
+                model = m
+            found_kwargs["pk"] = pk
+        else:
+            try:
+                match = resolve(urlparse(uri).path)
+            except Resolver404:
+                raise DRFValidationError(detail=_("URI not valid: {u}").format(u=uri))
+            else:
+                if model is None:
+                    model = match.func.cls.queryset.model
+                found_kwargs = match.kwargs
 
-        if model is None:
-            model = match.func.cls.queryset.model
-
-        if "pk" in match.kwargs:
-            kwargs = {"pk": match.kwargs["pk"]}
+        if "pk" in found_kwargs:
+            kwargs = {"pk": found_kwargs["pk"]}
         else:
             kwargs = {}
-            for key, value in match.kwargs.items():
+            for key, value in found_kwargs.items():
                 if key.endswith("_pk"):
                     kwargs["{}__pk".format(key[:-3])] = value
                 elif key == "pulp_domain":

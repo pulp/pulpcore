@@ -99,7 +99,7 @@ def test_filter_tasks_by_reserved_resources(setup_filter_fixture, pulpcore_bindi
     with pytest.raises(ApiException) as ctx:
         pulpcore_bindings.TasksApi.list(created_resources=created_resources)
 
-    assert ctx.value.status == 404
+    assert ctx.value.status == 400
 
 
 def get_prn(uri):

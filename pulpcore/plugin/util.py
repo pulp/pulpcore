@@ -16,6 +16,7 @@ from pulpcore.app.util import (  # noqa: F401
     batch_qs,
     extract_pk,
     get_artifact_url,
+    get_prn,
     get_url,
     gpg_verify,
     raise_for_unknown_content_units,
@@ -27,4 +28,5 @@ from pulpcore.app.util import (  # noqa: F401
     get_current_authenticated_user,
     reverse,
     set_current_user,
+    resolve_prn,
 )

@@ -11,8 +11,10 @@ Most plugins will implement:
 : - serializer(s) for plugin specific content type(s), should be subclassed from one of
     NoArtifactContentSerializer, SingleArtifactContentSerializer, or
     MultipleArtifactContentSerializer, depending on the properties of the content type(s)
+  - serializer(s) for plugin specific repository(s), should be subclassed from RepositorySerializer
   - serializer(s) for plugin specific remote(s), should be subclassed from RemoteSerializer
-  - serializer(s) for plugin specific publisher(s), should be subclassed from PublisherSerializer
+  - serializer(s) for plugin specific publication(s), should be subclassed from PublicationSerializer
+  - serializer(s) for plugin specific distribution(s), should be subclassed from DistributionSerializer
 
 ## Adding Fields
 
@@ -33,6 +35,19 @@ class Meta:
       fields = SingleArtifactContentSerializer.Meta.fields + ('relative_path',)
       model = FileContent
 ```
+
+!!! note
+    
+    When inheriting from `pulpcore.plugin.serializers.ModelSerializer`, or one of its many subclasses,
+    you should include the fields of that serializer in your own. Important fields it provides include
+    `pulp_created`, `pulp_last_updated`, and `prn`.
+
+    See `pulpcore.plugin.serializers.ContentGuardSerializer` for an example:
+    ```python
+    class Meta:
+        model = models.ContentGuard
+        fields = ModelSerializer.Meta.fields + ("name", "description")
+    ```
 
 ### Help Text
 

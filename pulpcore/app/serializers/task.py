@@ -166,6 +166,7 @@ class TaskGroupSerializer(ModelSerializer):
         model = models.TaskGroup
         fields = (
             "pulp_href",
+            "prn",
             "description",
             "all_tasks_dispatched",
             "waiting",

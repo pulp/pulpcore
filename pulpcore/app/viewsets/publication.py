@@ -61,7 +61,7 @@ class RepositoryThroughVersionFilter(Filter):
 
 
 class PublicationFilter(BaseFilterSet):
-    repository = RepositoryThroughVersionFilter(help_text=_("Repository referenced by HREF"))
+    repository = RepositoryThroughVersionFilter(help_text=_("Repository referenced by HREF/PRN"))
     repository_version = RepositoryVersionFilter()
     content = WithContentFilter()
     content__in = WithContentInFilter()

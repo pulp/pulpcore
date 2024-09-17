@@ -4,7 +4,6 @@ import copy
 import json
 import os
 
-import requests
 import pytest
 import jsonschema
 
@@ -33,21 +32,6 @@ def openapi3_schema_with_modified_safe_chars(openapi3_schema_spec):
     del properties["^\\/"]
 
     return openapi3_schema_spec_copy
-
-
-@pytest.fixture(scope="session")
-def pulp_openapi_schema_url(pulp_api_v3_url):
-    return f"{pulp_api_v3_url}docs/api.json"
-
-
-@pytest.fixture(scope="session")
-def pulp_openapi_schema(pulp_openapi_schema_url):
-    return requests.get(pulp_openapi_schema_url).json()
-
-
-@pytest.fixture(scope="session")
-def pulp_openapi_schema_pk_path_set(pulp_openapi_schema_url):
-    return requests.get(f"{pulp_openapi_schema_url}?pk_path=1").json()
 
 
 @pytest.mark.parallel

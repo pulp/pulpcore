@@ -42,6 +42,7 @@ from pulpcore.app.viewsets.base import (
 from pulpcore.app.viewsets.custom_filters import LabelFilter, WithContentFilter, WithContentInFilter
 from pulpcore.tasking.tasks import dispatch
 from pulpcore.filters import HyperlinkRelatedFilter
+from pulpcore.app.util import resolve_prn
 
 
 class RepositoryContentFilter(Filter):
@@ -50,7 +51,7 @@ class RepositoryContentFilter(Filter):
     """
 
     def __init__(self, *args, **kwargs):
-        kwargs.setdefault("help_text", _("Content Unit referenced by HREF"))
+        kwargs.setdefault("help_text", _("Content Unit referenced by HREF/PRN"))
         self.latest = kwargs.pop("latest", False)
         super().__init__(*args, **kwargs)
 
@@ -58,7 +59,7 @@ class RepositoryContentFilter(Filter):
         """
         Args:
             qs (django.db.models.query.QuerySet): The Repository Queryset
-            value (string): of content href to filter
+            value (string): of content href/prn to filter
 
         Returns:
             Queryset of the Repository containing the specified content
@@ -192,18 +193,29 @@ class RepositoryVersionFilter(BaseFilterSet):
     def filter_pulp_href(self, queryset, name, value):
         """Special handling for RepositoryVersion HREF filtering."""
         repo_versions = defaultdict(list)
+        repo_version_pks = []
         for uri in value:
-            try:
-                href_match = resolve(urlparse(uri).path).kwargs
-            except Resolver404:
-                href_match = {}
-            if "repository_pk" not in href_match or "number" not in href_match:
-                raise serializers.ValidationError(
-                    _("Invalid RepositoryVersion HREF: {}".format(uri))
-                )
-            repo_versions[href_match["repository_pk"]].append(int(href_match["number"]))
+            if uri.startswith("prn:"):
+                model, pk = resolve_prn(uri)
+                if model != RepositoryVersion:
+                    raise serializers.ValidationError(
+                        _("Invalid RepositoryVersion PRN: {}").format(uri)
+                    )
+                repo_version_pks.append(pk)
+            else:
+                try:
+                    href_match = resolve(urlparse(uri).path).kwargs
+                except Resolver404:
+                    href_match = {}
+                if "repository_pk" not in href_match or "number" not in href_match:
+                    raise serializers.ValidationError(
+                        _("Invalid RepositoryVersion HREF: {}".format(uri))
+                    )
+                repo_versions[href_match["repository_pk"]].append(int(href_match["number"]))
 
         filter_Q = Q()
+        if repo_version_pks:
+            filter_Q |= Q(pk__in=repo_version_pks)
         for repo_pk, numbers in repo_versions.items():
             filter_Q |= Q(repository__pk=repo_pk, number__in=numbers)
         return queryset.filter(filter_Q)
