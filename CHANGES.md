@@ -8,6 +8,35 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.61.0 (2024-09-18) {: #3.61.0 }
+
+### REST API {: #3.61.0-rest-api }
+
+#### Features {: #3.61.0-rest-api-feature }
+
+- Added new `/migrate/` endpoint to Domains that allows for migrating artifacts from one storage backend to another.
+  [#3358](https://github.com/pulp/pulpcore/issues/3358)
+
+#### Bugfixes {: #3.61.0-rest-api-bugfix }
+
+- Fix a memory spike on deletion of large repositories.
+  [#5048](https://github.com/pulp/pulpcore/issues/5048)
+- Fixed a logging issue, when a task marked for cancelling that finished produced an unecessary stack trace.
+
+### Plugin API {: #3.61.0-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.61.0-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.61.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.60.0 (2024-09-10) {: #3.60.0 }
 
 ### REST API {: #3.60.0-rest-api }
