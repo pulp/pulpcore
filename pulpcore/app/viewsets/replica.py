@@ -11,6 +11,7 @@ from pulpcore.app.serializers import TaskGroupOperationResponseSerializer, Upstr
 from pulpcore.app.viewsets import NamedModelViewSet, RolesMixin
 from pulpcore.app.response import TaskGroupOperationResponse
 from pulpcore.app.tasks import replicate_distributions
+from pulpcore.app.viewsets.base import NAME_FILTER_OPTIONS, DATETIME_FILTER_OPTIONS
 from pulpcore.tasking.tasks import dispatch
 
 
@@ -30,6 +31,11 @@ class UpstreamPulpViewSet(
     serializer_class = UpstreamPulpSerializer
     ordering = "-pulp_created"
     queryset_filtering_required_permission = "core.view_upstreampulp"
+    filterset_fields = {
+        "name": NAME_FILTER_OPTIONS,
+        "base_url": NAME_FILTER_OPTIONS,
+        "last_replication": DATETIME_FILTER_OPTIONS,
+    }
 
     DEFAULT_ACCESS_POLICY = {
         "statements": [
