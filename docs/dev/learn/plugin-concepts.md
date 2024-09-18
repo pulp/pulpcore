@@ -657,9 +657,9 @@ time to finding a fix and was generally less surprising.
 
 ## Zero-Downtime Upgrades
 
-Eventually, Pulp users will be able to upgrade without first stopping Pulp services. This has been
-[requested from the community](https://discourse.pulpproject.org/t/support-zero-downtime-updates/645),
-To work towards that goal, developers of `pulpcore` or a plugin should follow these requirements:
+Pulp users should be able to upgrade without first stopping Pulp services. This has been
+[requested from the community](https://discourse.pulpproject.org/t/support-zero-downtime-updates/645).
+To support this, developers of `pulpcore` or a plugin should follow these requirements:
 
 - Migrations must not break earlier versions code still running during an upgrade.
 - Task code must be backwards compatible until the next major Pulp version.
@@ -668,6 +668,12 @@ Future user upgrades will likely run as follow:
 
 1. Run the migrations while old pulp code is online. Old code, is using the new data format.
 2. Rolling restart old code to become new code. Old and new code is running at the same time!
+
+!!! note
+
+    Zero-downtime upgrade support is provided as a best effort and sometimes it is not feasible to
+    write a migration that doesn't require downtime. In such cases, a changelog entry should be
+    added that notes the release has a migration that requires downtime.
 
 # Zero-Downtime Migrations
 
