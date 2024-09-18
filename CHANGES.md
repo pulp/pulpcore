@@ -8,6 +8,26 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.49.20 (2024-09-18) {: #3.49.20 }
+
+### REST API {: #3.49.20-rest-api }
+
+No significant changes.
+
+### Plugin API {: #3.49.20-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.49.20-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.49.20-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.49.19 (2024-09-03) {: #3.49.19 }
 
 ### REST API {: #3.49.19-rest-api }
