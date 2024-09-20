@@ -101,3 +101,20 @@ def test_external_auth_on_security_scheme(pulp_settings, pulp_openapi_schema):
 
     security_scheme = security_schemes["json_header_remote_authentication"]
     assert pulp_settings.AUTHENTICATION_JSON_HEADER_OPENAPI_SECURITY_SCHEME == security_scheme
+
+
+@pytest.mark.parallel
+def test_content_in_filter_is_array(pulp_openapi_schema):
+    tested = []
+    for name, path in pulp_openapi_schema["paths"].items():
+        if name.endswith("repository_versions/") or name.endswith("publications/"):
+            tested.append(name)
+            for parameter in path["get"]["parameters"]:
+                if parameter["name"] == "content__in":
+                    schema = parameter["schema"]
+                    assert schema["type"] == "array"
+                    assert schema["items"]["type"] == "string"
+                    break
+            else:
+                assert False, "Couldn't find the content__in filter!"
+    assert len(tested) == 2, "Couldn't test both the Publication and RepositoryVersion endpoints"
