@@ -72,3 +72,6 @@ class JSONHeaderRemoteAuthentication(BaseAuthentication):
 
         _logger.debug(_("User {user} authenticated.").format(user=remote_user))
         return (user, None)
+
+    def authenticate_header(self, request):
+        return "JSONHeaderRemoteAuthentication"

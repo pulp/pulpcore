@@ -1,0 +1,1 @@
+Add an `authentication_header` method to make JSONHeaderRemoteAuthentication return proper 401 when the request is not properly authenticated.
