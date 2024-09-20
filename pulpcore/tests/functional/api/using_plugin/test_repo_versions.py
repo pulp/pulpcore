@@ -934,7 +934,7 @@ def test_content_in_repository_version_view(
     pulpcore_bindings,
     file_bindings,
     file_repository_factory,
-    file_random_content_unit,
+    file_content_unit_with_name_factory,
     monitor_task,
 ):
     """Sync two repositories and check view filter."""
@@ -950,17 +950,17 @@ def test_content_in_repository_version_view(
 
     repo = file_repository_factory()
     repo2 = file_repository_factory()
+    all_content = [file_content_unit_with_name_factory(str(uuid4())) for i in range(3)]
+    content = choice(all_content)
 
     # Add content to first repo and assert repo-ver list w/ content is correct
-    body = {"add_content_units": [file_random_content_unit.pulp_href]}
+    body = {"add_content_units": [content.pulp_href]}
     task = file_bindings.RepositoriesFileApi.modify(repo.pulp_href, body).task
     monitor_task(task)
     repo = file_bindings.RepositoriesFileApi.read(repo.pulp_href)
     assert repo.latest_version_href[-2] == "1"
 
-    repo_vers = pulpcore_bindings.RepositoryVersionsApi.list(
-        content=file_random_content_unit.pulp_href
-    )
+    repo_vers = pulpcore_bindings.RepositoryVersionsApi.list(content=content.pulp_href)
     assert repo_vers.count == 1
     assert repo_vers.results[0].pulp_href == repo.latest_version_href
 
@@ -970,11 +970,47 @@ def test_content_in_repository_version_view(
     repo2 = file_bindings.RepositoriesFileApi.read(repo2.pulp_href)
     assert repo2.latest_version_href[-2] == "1"
 
-    repo_vers = pulpcore_bindings.RepositoryVersionsApi.list(
-        content=file_random_content_unit.pulp_href
-    )
+    repo_vers = pulpcore_bindings.RepositoryVersionsApi.list(content=content.pulp_href)
     assert repo_vers.count == 2
     assert {r.pulp_href for r in repo_vers.results} == {
         repo.latest_version_href,
         repo2.latest_version_href,
     }
+
+    # Test that content__in w/ one unit gives identical results to content filter
+    repo_vers = pulpcore_bindings.RepositoryVersionsApi.list(content__in=[content.pulp_href])
+    assert repo_vers.count == 2
+    assert {r.pulp_href for r in repo_vers.results} == {
+        repo.latest_version_href,
+        repo2.latest_version_href,
+    }
+
+    # Add all content to first repo and assert content__in w/ more content returns 1 repo-ver
+    all_content_href = [c.pulp_href for c in all_content]
+    body = {"add_content_units": all_content_href}
+    task = file_bindings.RepositoriesFileApi.modify(repo.pulp_href, body).task
+    monitor_task(task)
+    repo = file_bindings.RepositoriesFileApi.read(repo.pulp_href)
+    assert repo.latest_version_href[-2] == "2"
+
+    contents = list(set(all_content_href) - {content.pulp_href})
+    repo_vers = pulpcore_bindings.RepositoryVersionsApi.list(content__in=contents)
+    assert repo_vers.count == 1
+    assert repo_vers.results[0].pulp_href == repo.latest_version_href
+
+    # Add back the first content and assert that all 3 repo-vers are returned
+    contents.append(content.pulp_href)
+    repo_vers = pulpcore_bindings.RepositoryVersionsApi.list(content__in=contents)
+    assert repo_vers.count == 3
+    assert {r.pulp_href for r in repo_vers.results} == {
+        f"{repo.versions_href}1/",
+        repo.latest_version_href,
+        repo2.latest_version_href,
+    }
+
+    # Test content__in validates the hrefs passed in
+    contents.append(non_existant_content_href)
+    with pytest.raises(pulpcore_bindings.ApiException) as e:
+        pulpcore_bindings.RepositoryVersionsApi.list(content__in=contents)
+
+    assert e.value.status == 400

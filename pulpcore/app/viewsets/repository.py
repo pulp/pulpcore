@@ -39,7 +39,7 @@ from pulpcore.app.viewsets.base import (
     NAME_FILTER_OPTIONS,
     NULLABLE_NUMERIC_FILTER_OPTIONS,
 )
-from pulpcore.app.viewsets.custom_filters import LabelFilter
+from pulpcore.app.viewsets.custom_filters import LabelFilter, WithContentFilter, WithContentInFilter
 from pulpcore.tasking.tasks import dispatch
 from pulpcore.filters import HyperlinkRelatedFilter
 
@@ -179,38 +179,6 @@ class RepositoryViewSet(ImmutableRepositoryViewSet, AsyncUpdateMixin, LabelsMixi
     """
 
 
-class RepositoryVersionContentFilter(Filter):
-    """
-    Filter used to get the repository versions where some given content can be found.
-    """
-
-    def __init__(self, *args, **kwargs):
-        kwargs.setdefault("help_text", _("Content Unit referenced by HREF"))
-        super().__init__(*args, **kwargs)
-
-    def filter(self, qs, value):
-        """
-        Args:
-            qs (django.db.models.query.QuerySet): The RepositoryVersion Queryset
-            value (string): of content href to filter
-
-        Returns:
-            Queryset of the RepositoryVersions containing the specified content
-        """
-
-        if value is None:
-            # user didn't supply a value
-            return qs
-
-        if not value:
-            raise serializers.ValidationError(detail=_("No value supplied for content filter"))
-
-        # Get the content object from the content_href
-        content = NamedModelViewSet.get_resource(value, Content)
-
-        return qs.with_content([content.pk])
-
-
 class RepositoryVersionFilter(BaseFilterSet):
     # e.g.
     # /?number=4
@@ -218,8 +186,8 @@ class RepositoryVersionFilter(BaseFilterSet):
     # /?pulp_created__gte=2018-04-12T19:45
     # /?pulp_created__range=2018-04-12T19:45,2018-04-13T20:00
     # /?content=/pulp/api/v3/content/file/fb8ad2d0-03a8-4e36-a209-77763d4ed16c/
-    content = RepositoryVersionContentFilter()
-    content__in = RepositoryVersionContentFilter(field_name="content", lookup_expr="in")
+    content = WithContentFilter()
+    content__in = WithContentInFilter()
 
     def filter_pulp_href(self, queryset, name, value):
         """Special handling for RepositoryVersion HREF filtering."""

@@ -15,9 +15,9 @@ from django_filters import BaseInFilter, CharFilter, Filter
 from rest_framework import serializers
 from rest_framework.serializers import ValidationError as DRFValidationError
 
-from pulpcore.app.models import ContentArtifact, RepositoryVersion, Publication
+from pulpcore.app.models import Content, ContentArtifact, RepositoryVersion, Publication
 from pulpcore.app.viewsets import NamedModelViewSet
-from pulpcore.app.util import get_prn, get_domain_pk
+from pulpcore.app.util import get_prn, get_domain_pk, extract_pk, raise_for_unknown_content_units
 
 
 # Lookup conversion table from old resource hrefs to new PDRN resource names
@@ -323,6 +323,47 @@ class LabelFilter(Filter):
                     qs = qs.filter(**{f"{field_name}__has_key": key})
 
         return qs
+
+
+class WithContentFilter(Filter):
+    """Filter class for filtering by content in Publications and RepositoryVersions."""
+
+    def __init__(self, *args, **kwargs):
+        kwargs.setdefault("help_text", _("Content Unit referenced by HREF"))
+        super().__init__(*args, **kwargs)
+
+    def filter(self, qs, value):
+        """
+        Args:
+            qs (django.db.models.query.QuerySet): The Publication/RepositoryVersion Queryset
+            value (string or list[string]): of content href(s) to filter
+
+        Returns:
+            Queryset of the Publication/RepositoryVersion containing the specified content
+        """
+        if value is None:
+            # user didn't supply a value
+            return qs
+
+        if not value:
+            raise serializers.ValidationError(detail=_("No value supplied for content filter"))
+
+        if isinstance(value, str):
+            value = [value]
+
+        content_units = {}
+        for url in value:
+            content_units[extract_pk(url)] = url
+
+        content_units_pks = set(content_units.keys())
+        existing_content_units = Content.objects.filter(pk__in=content_units_pks)
+        raise_for_unknown_content_units(existing_content_units, content_units)
+
+        return qs.with_content(content_units_pks)
+
+
+class WithContentInFilter(BaseInFilter, WithContentFilter):
+    """The multi-content variant of WithContentFilter."""
 
 
 class DistributionWithContentFilter(Filter):

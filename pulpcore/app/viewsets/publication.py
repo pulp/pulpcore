@@ -15,7 +15,6 @@ from pulpcore.app.models import (
     Distribution,
     Publication,
     Repository,
-    Content,
     ArtifactDistribution,
 )
 from pulpcore.app.serializers import (
@@ -40,27 +39,10 @@ from pulpcore.app.viewsets.custom_filters import (
     DistributionWithContentFilter,
     LabelFilter,
     RepositoryVersionFilter,
+    WithContentFilter,
+    WithContentInFilter,
 )
 from pulpcore.app.util import get_domain
-
-
-class PublicationContentFilter(Filter):
-    def __init__(self, *args, **kwargs):
-        kwargs.setdefault("help_text", _("Content Unit referenced by HREF"))
-        super().__init__(*args, **kwargs)
-
-    def filter(self, qs, value):
-        if value is None:
-            # user didn't supply a value
-            return qs
-
-        if not value:
-            raise serializers.ValidationError(detail=_("No value supplied for content filter"))
-
-        # Get the content object from the content_href
-        content = NamedModelViewSet.get_resource(value, Content)
-
-        return qs.with_content([content.pk])
 
 
 class RepositoryThroughVersionFilter(Filter):
@@ -81,8 +63,8 @@ class RepositoryThroughVersionFilter(Filter):
 class PublicationFilter(BaseFilterSet):
     repository = RepositoryThroughVersionFilter(help_text=_("Repository referenced by HREF"))
     repository_version = RepositoryVersionFilter()
-    content = PublicationContentFilter()
-    content__in = PublicationContentFilter(field_name="content", lookup_expr="in")
+    content = WithContentFilter()
+    content__in = WithContentInFilter()
 
     class Meta:
         model = Publication
