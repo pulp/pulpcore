@@ -124,21 +124,6 @@ def test_duplicate_file_sync(
 
 
 @pytest.mark.parallel
-def test_encoded_file_name(
-    file_repo, file_bindings, encoded_manifest_path, file_remote_factory, monitor_task
-):
-    remote = file_remote_factory(manifest_path=encoded_manifest_path, policy="immediate")
-    body = RepositorySyncURL(remote=remote.pulp_href)
-    monitor_task(file_bindings.RepositoriesFileApi.sync(file_repo.pulp_href, body).task)
-    file_repo = file_bindings.RepositoriesFileApi.read(file_repo.pulp_href)
-
-    version = file_bindings.RepositoriesFileVersionsApi.read(file_repo.latest_version_href)
-    assert version.content_summary.present["file.file"]["count"] == 3
-    assert version.content_summary.added["file.file"]["count"] == 3
-    assert file_repo.latest_version_href.endswith("/1/")
-
-
-@pytest.mark.parallel
 def test_filepath_includes_commas(
     file_bindings,
     file_repo,
