@@ -10,7 +10,6 @@ import ssl
 import subprocess
 import threading
 import uuid
-import urllib.parse
 
 import pytest
 
@@ -322,19 +321,11 @@ def gen_threaded_aiohttp_server(fixtures_cfg, unused_port):
 @pytest.fixture
 def gen_fixture_server(gen_threaded_aiohttp_server):
     def _gen_fixture_server(fixtures_root, ssl_ctx):
-        app = web.Application(middlewares=[_aiohttp_request_middleware])
+        app = web.Application()
         call_record = add_recording_route(app, fixtures_root)
         return gen_threaded_aiohttp_server(app, ssl_ctx, call_record)
 
     yield _gen_fixture_server
-
-
-@web.middleware
-async def _aiohttp_request_middleware(request, handler):
-    unquoted_url = urllib.parse.unquote(request.url.human_repr())
-    url = urllib.parse.urlparse(unquoted_url)
-    response = await handler(request.clone(rel_url=url.path))
-    return response
 
 
 # Proxy Fixtures
