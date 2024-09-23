@@ -76,7 +76,7 @@ services:
 VARSYAML
 
 cat >> vars/main.yaml << VARSYAML
-pulp_env: {}
+pulp_env: {"PULP_CA_BUNDLE": "/etc/pulp/certs/pulp_webserver.crt"}
 pulp_settings: {"allowed_export_paths": ["/tmp"], "allowed_import_paths": ["/tmp"], "content_path_prefix": "/somewhere/else/", "orphan_protection_time": 0, "task_protection_time": 10, "tmpfile_protection_time": 10, "upload_protection_time": 10}
 pulp_scheme: https
 pulp_default_container: ghcr.io/pulp/pulp-ci-centos9:latest
