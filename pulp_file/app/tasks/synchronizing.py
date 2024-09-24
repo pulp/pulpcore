@@ -2,7 +2,7 @@ import logging
 import os
 
 from gettext import gettext as _
-from urllib.parse import urlparse, urlunparse
+from urllib.parse import quote, urlparse, urlunparse
 
 from django.core.files import File
 
@@ -113,7 +113,8 @@ class FileFirstStage(Stage):
             await pb.asave()
 
             for entry in entries:
-                path = os.path.join(root_dir, entry.relative_path)
+                path = _get_safe_path(root_dir, entry, parsed_url.scheme)
+
                 url = urlunparse(parsed_url._replace(path=path))
                 file = FileContent(relative_path=entry.relative_path, digest=entry.digest)
                 artifact = Artifact(size=entry.size, sha256=entry.digest)
@@ -127,3 +128,9 @@ class FileFirstStage(Stage):
                 dc = DeclarativeContent(content=file, d_artifacts=[da])
                 await pb.aincrement()
                 await self.put(dc)
+
+
+def _get_safe_path(root_dir, entry, scheme):
+    relative_path = entry.relative_path.lstrip("/")
+    path = os.path.join(root_dir, relative_path)
+    return path if scheme == "file" else quote(path, safe=":/")
