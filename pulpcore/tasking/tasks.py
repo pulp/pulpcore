@@ -8,16 +8,11 @@ import traceback
 from datetime import timedelta
 from gettext import gettext as _
 
-# NOTE: in spite of the name, cloudevents.http.CloudEvent is appropriate for other protocols
-from cloudevents.http import CloudEvent
-from cloudevents.kafka import to_structured
-from django.conf import settings
 from django.db import connection, transaction
 from django.db.models import Model, Max
 from django_guid import get_guid
 from pulpcore.app.apps import MODULE_PLUGIN_VERSIONS
 from pulpcore.app.models import Task, TaskGroup
-from pulpcore.app.serializers.task import TaskStatusMessageSerializer
 from pulpcore.app.util import current_task, get_domain, get_prn
 from pulpcore.constants import (
     TASK_FINAL_STATES,
@@ -25,12 +20,9 @@ from pulpcore.constants import (
     TASK_STATES,
     TASK_DISPATCH_LOCK,
 )
-from pulpcore.tasking.kafka import get_kafka_producer
+from pulpcore.tasking.kafka import send_task_notification
 
 _logger = logging.getLogger(__name__)
-
-_kafka_tasks_status_topic = settings.get("KAFKA_TASKS_STATUS_TOPIC")
-_kafka_tasks_status_producer_sync_enabled = settings.get("KAFKA_TASKS_STATUS_PRODUCER_SYNC_ENABLED")
 
 
 def _validate_and_get_resources(resources):
@@ -84,11 +76,11 @@ def _execute_task(task):
         task.set_failed(exc, tb)
         _logger.info(_("Task %s failed (%s) in domain: %s"), task.pk, exc, domain.name)
         _logger.info("\n".join(traceback.format_list(traceback.extract_tb(tb))))
-        _send_task_notification(task)
+        send_task_notification(task)
     else:
         task.set_completed()
         _logger.info(_("Task completed %s in domain: %s"), task.pk, domain.name)
-        _send_task_notification(task)
+        send_task_notification(task)
 
 
 def dispatch(
@@ -297,32 +289,3 @@ def cancel_task_group(task_group_id):
         except RuntimeError:
             pass
     return task_group
-
-
-def _send_task_notification(task):
-    kafka_producer = get_kafka_producer()
-    if kafka_producer is not None:
-        attributes = {
-            "type": "pulpcore.tasking.status",
-            "source": "pulpcore.tasking",
-            "datacontenttype": "application/json",
-            "dataref": "https://github.com/pulp/pulpcore/blob/main/docs/static/task-status-v1.yaml",
-        }
-        data = TaskStatusMessageSerializer(task, context={"request": None}).data
-        task_message = to_structured(CloudEvent(attributes, data))
-        kafka_producer.produce(
-            topic=_kafka_tasks_status_topic,
-            value=task_message.value,
-            key=task_message.key,
-            headers=task_message.headers,
-            on_delivery=_report_message_delivery,
-        )
-        if _kafka_tasks_status_producer_sync_enabled:
-            kafka_producer.flush()
-
-
-def _report_message_delivery(error, message):
-    if error is not None:
-        _logger.error(error)
-    elif _logger.isEnabledFor(logging.DEBUG):
-        _logger.debug(f"Message delivery successfully with contents {message.value}")
