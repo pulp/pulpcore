@@ -8,7 +8,7 @@ import socket
 from asgiref.sync import sync_to_async
 from aiohttp import web
 
-from .instrumentation import middleware as instrumentation
+from opentelemetry.instrumentation.aiohttp_server import middleware as instrumentation
 
 import django
 
