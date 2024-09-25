@@ -1,1 +1,0 @@
-Fixed Publication & RepositoryVersion's `content__in` filter to properly accept an array of strings.
