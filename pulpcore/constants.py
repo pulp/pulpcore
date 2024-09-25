@@ -12,7 +12,6 @@ TASK_UNBLOCKING_LOCK = 84
 TASK_METRICS_HEARTBEAT_LOCK = 74
 STORAGE_METRICS_LOCK = 72
 
-
 #: All valid task states.
 TASK_STATES = SimpleNamespace(
     WAITING="waiting",
