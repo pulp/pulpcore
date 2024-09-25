@@ -175,6 +175,8 @@ class PulpcoreWorker:
                 self.worker_cleanup()
             with contextlib.suppress(AdvisoryLockError), PGAdvisoryLock(TASK_SCHEDULING_LOCK):
                 dispatch_scheduled_tasks()
+            # This "reporting code" must not me moved inside a task, because it is supposed
+            # to be able to report on a congested tasking system to produce reliable results.
             self.record_unblocked_waiting_tasks_metric()
 
     def notify_workers(self):
@@ -234,8 +236,11 @@ class PulpcoreWorker:
             return False
         return True
 
-    def identify_unblocked_tasks(self):
-        """Iterate over waiting tasks and mark them unblocked accordingly."""
+    def unblock_tasks(self):
+        """Iterate over waiting tasks and mark them unblocked accordingly.
+
+        Returns `True` if at least one task was unblocked. `False` otherwise.
+        """
 
         changed = False
         taken_exclusive_resources = set()
@@ -296,33 +301,33 @@ class PulpcoreWorker:
 
     def iter_tasks(self):
         """Iterate over ready tasks and yield each task while holding the lock."""
-
         while not self.shutdown_requested:
             # When batching this query, be sure to use "pulp_created" as a cursor
             for task in Task.objects.filter(
-                state__in=TASK_INCOMPLETE_STATES, unblocked_at__isnull=False
-            ).order_by("pulp_created"):
+                state__in=TASK_INCOMPLETE_STATES,
+                unblocked_at__isnull=False,
+            ).order_by("-immediate", "pulp_created"):
+                # This code will only be called if we acquired the lock successfully
+                # The lock will be automatically be released at the end of the block
                 with contextlib.suppress(AdvisoryLockError), task:
-                    # This code will only be called if we acquired the lock successfully
-                    # The lock will be automatically be released at the end of the block
                     # Check if someone else changed the task before we got the lock
                     task.refresh_from_db()
+
                     if task.state == TASK_STATES.CANCELING and task.worker is None:
                         # No worker picked this task up before being canceled
                         if self.cancel_abandoned_task(task, TASK_STATES.CANCELED):
-                            # Continue looking for the next task
-                            # without considering this tasks resources
-                            # as we just released them
+                            # Continue looking for the next task without considering this
+                            # tasks resources, as we just released them
                             continue
                     if task.state in [TASK_STATES.RUNNING, TASK_STATES.CANCELING]:
                         # A running task without a lock must be abandoned
                         if self.cancel_abandoned_task(
                             task, TASK_STATES.FAILED, "Worker has gone missing."
                         ):
-                            # Continue looking for the next task
-                            # without considering this tasks resources
-                            # as we just released them
+                            # Continue looking for the next task without considering this
+                            # tasks resources, as we just released them
                             continue
+
                     # This statement is using lazy evaluation
                     if (
                         task.state == TASK_STATES.WAITING
@@ -333,6 +338,7 @@ class PulpcoreWorker:
                         # Start from the top of the Task list
                         break
             else:
+                # No task found in the for-loop
                 break
 
     def sleep(self):
@@ -399,7 +405,7 @@ class PulpcoreWorker:
                         with contextlib.suppress(AdvisoryLockError), PGAdvisoryLock(
                             TASK_UNBLOCKING_LOCK
                         ):
-                            self.identify_unblocked_tasks()
+                            self.unblock_tasks()
                         self.wakeup = False
                 if task_process.sentinel in r:
                     if not task_process.is_alive():
@@ -422,6 +428,7 @@ class PulpcoreWorker:
                         )
                         cancel_state = TASK_STATES.FAILED
                         cancel_reason = "Aborted during worker shutdown."
+
             task_process.join()
             if not cancel_state and task_process.exitcode != 0:
                 _logger.warning(
@@ -445,11 +452,17 @@ class PulpcoreWorker:
         self.task = None
 
     def handle_available_tasks(self):
+        """Pick and supervise tasks until there are no more available tasks.
+
+        Failing to detect new available tasks can lead to a stuck state, as the workers
+        would go to sleep and wouldn't be able to know about the unhandled task until
+        an external wakeup event occurs (e.g., new worker startup or new task gets in).
+        """
         keep_looping = True
         while keep_looping and not self.shutdown_requested:
             try:
                 with PGAdvisoryLock(TASK_UNBLOCKING_LOCK):
-                    keep_looping = self.identify_unblocked_tasks()
+                    keep_looping = self.unblock_tasks()
             except AdvisoryLockError:
                 keep_looping = True
             for task in self.iter_tasks():
@@ -509,11 +522,13 @@ class PulpcoreWorker:
             else:
                 self.cursor.execute("LISTEN pulp_worker_wakeup")
                 while not self.shutdown_requested:
+                    # do work
                     if self.shutdown_requested:
                         break
                     self.handle_available_tasks()
                     if self.shutdown_requested:
                         break
+                    # rest until notified to wakeup
                     self.sleep()
                 self.cursor.execute("UNLISTEN pulp_worker_wakeup")
             self.cursor.execute("UNLISTEN pulp_worker_metrics_heartbeat")

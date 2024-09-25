@@ -183,6 +183,8 @@ def dispatch(
                 parent_task=Task.current(),
                 reserved_resources_record=resources,
                 versions=versions,
+                immediate=immediate,
+                deferred=deferred,
             )
             if newest_created and task.pulp_created <= newest_created:
                 # Let this workaround not row forever into the future.
