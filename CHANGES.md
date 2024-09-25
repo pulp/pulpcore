@@ -8,6 +8,56 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.62.0 (2024-09-25) {: #3.62.0 }
+
+### REST API {: #3.62.0-rest-api }
+
+#### Features {: #3.62.0-rest-api-feature }
+
+- Added `name`, `base_url` and `last_replication` filters for UpstreamPulps.
+  [#4110](https://github.com/pulp/pulpcore/issues/4110)
+- Added new setting ``API_ROOT_REWRITE_HEADER`` that when specified allows the API_ROOT to be rewritten
+  per request based on the header's value.
+  [#4207](https://github.com/pulp/pulpcore/issues/4207)
+- Added new `q_select` field to UpstreamPulp to allow for more advanced filtering on upstream distributions.
+  `pulp_label_select` has been removed and its values have been migrated to this new field.
+  Please upgrade every API worker before issuing a new replicate task to avoid unwanted behavior.
+  [#5087](https://github.com/pulp/pulpcore/issues/5087)
+
+#### Bugfixes {: #3.62.0-rest-api-bugfix }
+
+- Fixed Publication & RepositoryVersion's `content__in` filter to properly accept an array of strings.
+  [#3634](https://github.com/pulp/pulpcore/issues/3634)
+
+#### Improved Documentation {: #3.62.0-rest-api-doc }
+
+- Document the environment variables used in the test fixture `bindings_cfg`.
+  [#5807](https://github.com/pulp/pulpcore/issues/5807)
+
+### Plugin API {: #3.62.0-plugin-api }
+
+#### Features {: #3.62.0-plugin-api-feature }
+
+- Added new ``reverse`` method that handles Pulp specific url formatting. Plugins should update
+  instances of ``django.urls.reverse`` and ``rest_framework.reverse`` to this new Pulp one.
+  [#4207](https://github.com/pulp/pulpcore/issues/4207)
+
+#### Deprecations {: #3.62.0-plugin-api-deprecation }
+
+- Deprecated Replicator's `distribution_data`, plugins should switch to `distribution_extra_fields`.
+  `distribution_data` will be removed in pulpcore==3.70.
+  [#3649](https://github.com/pulp/pulpcore/issues/3649)
+
+### Pulp File {: #3.62.0-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.62.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.61.0 (2024-09-18) {: #3.61.0 }
 
 ### REST API {: #3.61.0-rest-api }

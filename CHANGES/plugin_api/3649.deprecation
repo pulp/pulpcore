@@ -1,2 +1,0 @@
-Deprecated Replicator's `distribution_data`, plugins should switch to `distribution_extra_fields`.
-`distribution_data` will be removed in pulpcore==3.70.
