@@ -82,7 +82,15 @@ def _execute_task(task):
     except Exception:
         exc_type, exc, tb = sys.exc_info()
         task.set_failed(exc, tb)
-        _logger.info(_("Task %s failed (%s) in domain: %s"), task.pk, exc, domain.name)
+        _logger.info(
+            _("Task[{task_type}] {task_pk} failed ({exc_type}: {exc}) in domain: {domain}").format(
+                task_type=task.name,
+                task_pk=task.pk,
+                exc_type=exc_type.__name__,
+                exc=exc,
+                domain=domain.name,
+            )
+        )
         _logger.info("\n".join(traceback.format_list(traceback.extract_tb(tb))))
         _send_task_notification(task)
     else:
