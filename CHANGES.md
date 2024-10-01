@@ -8,6 +8,39 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.63.0 (2024-10-01) {: #3.63.0 }
+
+### REST API {: #3.63.0-rest-api }
+
+#### Features {: #3.63.0-rest-api-feature }
+
+- Introduced new immutable resource identifier: Pulp Resource Name (PRN). All objects within Pulp
+  will now show their PRN alongside their pulp_href. The PRN can be used in lieu of the pulp_href
+  in API calls when creating or filtering objects. The PRN of any object has the form of
+  `prn:app_label.model_label:pulp_id`.
+  [#5766](https://github.com/pulp/pulpcore/issues/5766)
+
+#### Bugfixes {: #3.63.0-rest-api-bugfix }
+
+- Removed opentelemetry-instrumentation-django from dependencies.
+  [#5843](https://github.com/pulp/pulpcore/issues/5843)
+- Made Kafka dependencies optional depending on whether the producer is configured.
+  [#5850](https://github.com/pulp/pulpcore/issues/5850)
+
+### Plugin API {: #3.63.0-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.63.0-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.63.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.62.0 (2024-09-25) {: #3.62.0 }
 
 ### REST API {: #3.62.0-rest-api }

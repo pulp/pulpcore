@@ -1,1 +1,0 @@
-Made Kafka dependencies optional depending on whether the producer is configured.
