@@ -8,6 +8,22 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.21.34 (2024-10-01) {: #3.21.34 }
+
+### REST API {: #3.21.34-rest-api }
+
+#### Bugfixes {: #3.21.34-rest-api-bugfix }
+
+- Fixed a bug that caused Pulp to return duplicate content when a user was logged in as a
+  non-superuser while the content was part of multiple repositories.
+  [#3641](https://github.com/pulp/pulpcore/issues/3641)
+
+### Plugin API {: #3.21.34-plugin-api }
+
+No significant changes.
+
+---
+
 # ## 3.21.33 (2024-08-12) {: #3.21.33 }
 
 ### REST API {: #3.21.33-rest-api }
