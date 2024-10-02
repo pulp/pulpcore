@@ -8,6 +8,39 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.63.0 (2024-10-01) {: #3.63.0 }
+
+### REST API {: #3.63.0-rest-api }
+
+#### Features {: #3.63.0-rest-api-feature }
+
+- Introduced new immutable resource identifier: Pulp Resource Name (PRN). All objects within Pulp
+  will now show their PRN alongside their pulp_href. The PRN can be used in lieu of the pulp_href
+  in API calls when creating or filtering objects. The PRN of any object has the form of
+  `prn:app_label.model_label:pulp_id`.
+  [#5766](https://github.com/pulp/pulpcore/issues/5766)
+
+#### Bugfixes {: #3.63.0-rest-api-bugfix }
+
+- Removed opentelemetry-instrumentation-django from dependencies.
+  [#5843](https://github.com/pulp/pulpcore/issues/5843)
+- Made Kafka dependencies optional depending on whether the producer is configured.
+  [#5850](https://github.com/pulp/pulpcore/issues/5850)
+
+### Plugin API {: #3.63.0-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.63.0-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.63.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.62.0 (2024-09-25) {: #3.62.0 }
 
 ### REST API {: #3.62.0-rest-api }
@@ -3999,7 +4032,23 @@ No significant changes.
     `pulpcore.plugin.util.raise_for_unknown_content_units`.
     [#3604](https://github.com/pulp/pulpcore/issues/3604)
 
-## 3.22.30 (2024-08-10) {: #3.22.30 }
+## 3.22.31 (2024-10-01) {: #3.22.31 }
+
+### REST API {: #3.22.31-rest-api }
+
+#### Bugfixes {: #3.22.31-rest-api-bugfix }
+
+- Fixed a bug that caused Pulp to return duplicate content when a user was logged in as a
+  non-superuser while the content was part of multiple repositories.
+  [#3641](https://github.com/pulp/pulpcore/issues/3641)
+
+### Plugin API {: #3.22.31-plugin-api }
+
+No significant changes.
+
+---
+
+# ## 3.22.30 (2024-08-10) {: #3.22.30 }
 
 ### REST API {: #3.22.30-rest-api }
 
@@ -4579,7 +4628,23 @@ No significant changes.
     removal in 3.25.
     [#3400](https://github.com/pulp/pulpcore/issues/3400)
 
-## 3.21.33 (2024-08-12) {: #3.21.33 }
+## 3.21.34 (2024-10-01) {: #3.21.34 }
+
+### REST API {: #3.21.34-rest-api }
+
+#### Bugfixes {: #3.21.34-rest-api-bugfix }
+
+- Fixed a bug that caused Pulp to return duplicate content when a user was logged in as a
+  non-superuser while the content was part of multiple repositories.
+  [#3641](https://github.com/pulp/pulpcore/issues/3641)
+
+### Plugin API {: #3.21.34-plugin-api }
+
+No significant changes.
+
+---
+
+# ## 3.21.33 (2024-08-12) {: #3.21.33 }
 
 ### REST API {: #3.21.33-rest-api }
 
