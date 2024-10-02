@@ -1,6 +1,7 @@
 import hashlib
 import zlib
 import os
+import socket
 import tempfile
 import gnupg
 
@@ -656,6 +657,11 @@ def init_domain_metrics_exporter():
 
     for domain in Domain.objects.all():
         DomainMetricsEmitter.build(domain)
+
+
+@lru_cache(maxsize=1)
+def get_worker_name():
+    return f"{os.getpid()}@{socket.gethostname()}"
 
 
 class PGAdvisoryLock:

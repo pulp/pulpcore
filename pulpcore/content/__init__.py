@@ -24,6 +24,7 @@ from django.db.utils import (  # noqa: E402: module level not at top of file
 
 from pulpcore.app.apps import pulp_plugin_configs  # noqa: E402: module level not at top of file
 from pulpcore.app.models import ContentAppStatus  # noqa: E402: module level not at top of file
+from pulpcore.app.util import get_worker_name  # noqa: E402: module level not at top of file
 
 from .handler import Handler  # noqa: E402: module level not at top of file
 from .authentication import authenticate  # noqa: E402: module level not at top of file
@@ -38,7 +39,7 @@ CONTENT_MODULE_NAME = "content"
 
 async def _heartbeat():
     content_app_status = None
-    name = "{pid}@{hostname}".format(pid=os.getpid(), hostname=socket.gethostname())
+    name = get_worker_name()
     heartbeat_interval = settings.CONTENT_APP_TTL // 4
     msg = "Content App '{name}' heartbeat written, sleeping for '{interarrival}' seconds".format(
         name=name, interarrival=heartbeat_interval

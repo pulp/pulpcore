@@ -3,9 +3,7 @@ import logging
 from multidict import CIMultiDict
 import os
 import re
-import socket
 from gettext import gettext as _
-from functools import lru_cache
 
 from aiohttp.client_exceptions import ClientResponseError
 from aiohttp.web import FileResponse, StreamResponse, HTTPOk
@@ -56,6 +54,7 @@ from pulpcore.app import mime_types  # noqa: E402: module level not at top of fi
 from pulpcore.app.util import (  # noqa: E402: module level not at top of file
     MetricsEmitter,
     get_domain,
+    get_worker_name,
     cache_key,
 )
 
@@ -65,11 +64,6 @@ from jinja2 import Template  # noqa: E402: module level not at top of file
 from pulpcore.cache import AsyncContentCache  # noqa: E402
 
 log = logging.getLogger(__name__)
-
-
-@lru_cache(maxsize=1)
-def _get_content_app_name():
-    return f"{os.getpid()}@{socket.gethostname()}"
 
 
 class PathNotResolved(HTTPNotFound):
@@ -1167,6 +1161,6 @@ class Handler:
     def _report_served_artifact_size(self, size):
         attributes = {
             "domain_name": get_domain().name,
-            "content_app_name": _get_content_app_name(),
+            "worker_name": get_worker_name(),
         }
         self.artifacts_size_counter.add(size, attributes)
