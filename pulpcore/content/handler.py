@@ -23,8 +23,6 @@ from asgiref.sync import sync_to_async
 
 import django
 
-from opentelemetry import metrics
-
 from pulpcore.constants import STORAGE_RESPONSE_MAP
 from pulpcore.responses import ArtifactResponse
 
@@ -54,7 +52,6 @@ from pulpcore.app.models import (  # noqa: E402: module level not at top of file
 )
 from pulpcore.app import mime_types  # noqa: E402: module level not at top of file
 from pulpcore.app.util import (  # noqa: E402: module level not at top of file
-    MetricsEmitter,
     get_domain,
     cache_key,
 )
@@ -166,20 +163,6 @@ class Handler:
     ]
 
     distribution_model = None
-
-    class ArtifactsSizeCounter(MetricsEmitter):
-        def __init__(self):
-            self.meter = metrics.get_meter("artifacts.size.meter")
-            self.counter = self.meter.create_counter(
-                "artifacts.size.counter",
-                unit="Bytes",
-                description="Counts the size of served artifacts",
-            )
-
-        def add(self, amount, attributes):
-            self.counter.add(amount, attributes)
-
-    artifacts_size_counter = ArtifactsSizeCounter.build()
 
     @staticmethod
     def _reset_db_connection():
@@ -1016,7 +999,7 @@ class Handler:
             size = artifact_file.size or "*"
             raise HTTPRequestRangeNotSatisfiable(headers={"Content-Range": f"bytes */{size}"})
 
-        self._report_served_artifact_size(content_length)
+        headers["X-PULP-ARTIFACT-SIZE"] = str(content_length)
 
         if domain.storage_class == "pulpcore.app.models.storage.FileSystem":
             path = storage.path(artifact_name)
@@ -1150,9 +1133,9 @@ class Handler:
         download_result = await downloader.run()
 
         if content_length := response.headers.get("Content-Length"):
-            self._report_served_artifact_size(int(content_length))
+            response.headers["X-PULP-ARTIFACT-SIZE"] = content_length
         else:
-            self._report_served_artifact_size(size)
+            response.headers["X-PULP-ARTIFACT-SIZE"] = str(size)
 
         if save_artifact and remote.policy != Remote.STREAMED:
             await asyncio.shield(
@@ -1163,10 +1146,3 @@ class Handler:
         if response.status == 404:
             raise HTTPNotFound()
         return response
-
-    def _report_served_artifact_size(self, size):
-        attributes = {
-            "domain_name": get_domain().name,
-            "content_app_name": _get_content_app_name(),
-        }
-        self.artifacts_size_counter.add(size, attributes)
