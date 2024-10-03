@@ -1,0 +1,1 @@
+pulp-worker fails to start with "float object cannot be interpreted as an integer" on some versions of python.
