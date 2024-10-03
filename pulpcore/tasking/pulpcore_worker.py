@@ -103,7 +103,7 @@ class NewPulpWorker:
         self.worker = self.handle_worker_heartbeat()
         self.task_grace_timeout = 0
         self.worker_cleanup_countdown = random.randint(
-            WORKER_CLEANUP_INTERVAL / 10, WORKER_CLEANUP_INTERVAL
+            int(WORKER_CLEANUP_INTERVAL / 10), WORKER_CLEANUP_INTERVAL
         )
 
         # Add a file descriptor to trigger select on signals
