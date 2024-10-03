@@ -21,6 +21,8 @@ from pulpcore.app.redis_connection import (
 )
 from pulpcore.responses import ArtifactResponse
 
+from pulpcore.metrics import artifacts_size_counter
+
 DEFAULT_EXPIRES_TTL = settings.CACHE_SETTINGS["EXPIRES_TTL"]
 
 
@@ -352,6 +354,10 @@ class AsyncContentCache(AsyncCache):
                 response = await self.make_entry(
                     key, bk, func, args, kwargs, self.default_expires_ttl
                 )
+
+            if size := response.headers.get("X-PULP-ARTIFACT-SIZE"):
+                artifacts_size_counter.add(size)
+
             return response
 
         return cached_function
