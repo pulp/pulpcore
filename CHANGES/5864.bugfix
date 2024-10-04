@@ -1,0 +1,2 @@
+Fixed the name of the metrics' attribute reporting the worker's process name. Started emitting the
+name of the Pulp service with a dedicated label (i.e., job=pulp-api).
