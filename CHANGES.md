@@ -8,6 +8,36 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.64.0 (2024-10-03) {: #3.64.0 }
+
+### REST API {: #3.64.0-rest-api }
+
+#### Features {: #3.64.0-rest-api-feature }
+
+- Started using an upstream version of the OpenTelemetry aiohttp server instrumentation.
+  [#5833](https://github.com/pulp/pulpcore/issues/5833)
+- Included the worker's name in the ``http.server.duration`` OpenTelemetry metric attributes.
+  [#5844](https://github.com/pulp/pulpcore/issues/5844)
+
+#### Bugfixes {: #3.64.0-rest-api-bugfix }
+
+- Started collecting artifact size metrics even after caching the served content.
+  [#5817](https://github.com/pulp/pulpcore/issues/5817)
+
+### Plugin API {: #3.64.0-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.64.0-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.64.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.63.0 (2024-10-01) {: #3.63.0 }
 
 ### REST API {: #3.63.0-rest-api }
