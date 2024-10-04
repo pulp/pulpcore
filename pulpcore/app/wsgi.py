@@ -18,6 +18,7 @@ from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
 
 from pulpcore.app.entrypoint import using_pulp_api_worker
 from pulpcore.app.util import get_worker_name
+from opentelemetry.sdk.resources import Resource
 
 if not using_pulp_api_worker.get(False):
     raise RuntimeError("This app must be executed using pulpcore-api entrypoint.")
@@ -28,16 +29,17 @@ class WorkerNameMetricsExporter(OTLPMetricExporter):
         for resource_metric in metrics_data.resource_metrics:
             for scope_metric in resource_metric.scope_metrics:
                 for metric in scope_metric.metrics:
-                    if metric.name == "http.server.duration":
-                        histogram_data = metric.data.data_points[0]
-                        histogram_data.attributes["worker.process"] = get_worker_name()
+                    if metric.data.data_points:
+                        point = metric.data.data_points[0]
+                        point.attributes["worker.name"] = get_worker_name()
 
         return super().export(metrics_data, timeout_millis, **kwargs)
 
 
 exporter = WorkerNameMetricsExporter()
 reader = PeriodicExportingMetricReader(exporter)
-provider = MeterProvider(metric_readers=[reader])
+resource = Resource(attributes={"service.name": "pulp-api"})
+provider = MeterProvider(metric_readers=[reader], resource=resource)
 
 application = get_wsgi_application()
 if os.getenv("PULP_OTEL_ENABLED", "").lower() == "true":
