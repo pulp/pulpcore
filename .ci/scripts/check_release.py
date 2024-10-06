@@ -64,6 +64,7 @@ def main():
         for branch in branches:
             if branch != DEFAULT_BRANCH:
                 # Check if a Z release is needed
+                reasons = []
                 changes = repo.git.ls_tree("-r", "--name-only", f"origin/{branch}", "CHANGES/")
                 z_changelog = False
                 for change in changes.split("\n"):
@@ -76,23 +77,27 @@ def main():
                         )
                     elif ext in Z_CHANGELOG_EXTS:
                         z_changelog = True
+                if z_changelog:
+                    reasons.append("Backports")
 
                 last_tag = repo.git.describe("--tags", "--abbrev=0", f"origin/{branch}")
                 req_txt_diff = repo.git.diff(
                     f"{last_tag}", f"origin/{branch}", "--name-only", "--", "requirements.txt"
                 )
-                if z_changelog or req_txt_diff:
+                if req_txt_diff:
+                    reasons.append("requirements.txt")
+
+                if reasons:
                     curr_version = Version(last_tag)
                     assert curr_version.base_version.startswith(
                         branch
                     ), "Current-version has to belong to the current branch!"
                     next_version = Version(f"{branch}.{curr_version.micro + 1}")
-                    reason = "CHANGES" if z_changelog else "requirements.txt"
                     print(
                         f"A Z-release is needed for {branch}, "
                         f"Prev: {last_tag}, "
                         f"Next: {next_version.base_version}, "
-                        f"Reason: {reason}"
+                        f"Reason: {','.join(reasons)}"
                     )
                     releases.append(next_version)
             else:
