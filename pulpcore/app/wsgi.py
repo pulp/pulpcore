@@ -7,6 +7,7 @@ For more information on this file, see
 https://docs.djangoproject.com/en/3.2/howto/deployment/wsgi/
 """
 
+import os
 from django.core.wsgi import get_wsgi_application
 from opentelemetry.instrumentation.wsgi import OpenTelemetryMiddleware
 from opentelemetry.exporter.otlp.proto.http.metric_exporter import (
@@ -39,7 +40,8 @@ reader = PeriodicExportingMetricReader(exporter)
 provider = MeterProvider(metric_readers=[reader])
 
 application = get_wsgi_application()
-application = OpenTelemetryMiddleware(application, meter_provider=provider)
+if os.getenv("PULP_OTEL_ENABLED", "").lower() == "true":
+    application = OpenTelemetryMiddleware(application, meter_provider=provider)
 
 # Disabling Storage metrics until we find a solution to resource usage.
 # https://github.com/pulp/pulpcore/issues/5468
