@@ -1,0 +1,1 @@
+Fixed to not use the OpenTelemetryMiddleware when PULP_OTEL_ENABLED is not set.
