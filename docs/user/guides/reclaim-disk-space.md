@@ -15,7 +15,8 @@ To start a reclaim task send a POST request to `/pulp/api/v3/repositories/reclai
     ```bash
     RECLAIM_TASK=$(http POST :24817/pulp/api/v3/repositories/reclaim_space/ repo_hrefs:=[\"/pulp/api/v3/repositories/rpm/rpm/b3a6674d-181c-4e72-9412-7cbc747480ad/\"] | qq -r '.task')
     http --body :24817$RECLAIM_TASK
-j   ```
+    ```
+
 === "output"
     ```json
     {
