@@ -7,7 +7,7 @@ pytest-custom_exit_code
 pytest-xdist
 python-gnupg
 proxy.py~=2.4.8
-trustme~=1.1.0
+trustme~=1.2.0
 
 # pulp_file tests
 beautifulsoup4
