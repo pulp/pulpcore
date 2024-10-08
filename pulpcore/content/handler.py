@@ -1026,12 +1026,12 @@ class Handler:
         elif not domain.redirect_to_object_storage:
             return ArtifactResponse(content_artifact.artifact, headers=headers)
         elif domain.storage_class == "storages.backends.s3boto3.S3Boto3Storage":
-            raise HTTPFound(_build_url(http_method=request.method))
+            raise HTTPFound(_build_url(http_method=request.method), headers=headers)
         elif domain.storage_class in (
             "storages.backends.azure_storage.AzureStorage",
             "storages.backends.gcloud.GoogleCloudStorage",
         ):
-            raise HTTPFound(_build_url())
+            raise HTTPFound(_build_url(), headers=headers)
         else:
             raise NotImplementedError()
 
