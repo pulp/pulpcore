@@ -1,37 +1,34 @@
+from copy import deepcopy
+
 from rest_access_policy import AccessPolicy
 from rest_framework.exceptions import APIException
 
+from pulpcore.app import settings
 from pulpcore.app.models import AccessPolicy as AccessPolicyModel
 from pulpcore.app.util import get_view_urlpattern, get_viewset_for_model
 
 
-class AccessPolicyFromDB(AccessPolicy):
+DEFAULT_ACCESS_POLICY = {"statements": [{"action": "*", "principal": "admin", "effect": "allow"}]}
+
+
+class DefaultAccessPolicy(AccessPolicy):
     """
-    An AccessPolicy that loads statements from an `AccessPolicy` model instance.
+    An AccessPolicy that takes default statements from the view(set).
     """
 
-    @staticmethod
-    def get_access_policy(view):
+    @classmethod
+    def get_access_policy(cls, view):
         """
-        Retrieves the AccessPolicy from the DB or None if it doesn't exist.
+        Retrieves the default access policy of a view.
 
         Args:
             view (subclass of rest_framework.view.APIView): The view or viewset to receive the
                 AccessPolicy model for.
 
         Returns:
-            Either a `pulpcore.app.models.AccessPolicy` or None.
+            A dictionary representing the access policy.
         """
-        try:
-            urlpattern = get_view_urlpattern(view)
-        except AttributeError:
-            # The view does not define a `urlpattern()` method, e.g. it's not a NamedModelViewset
-            return None
-
-        try:
-            return AccessPolicyModel.objects.get(viewset_name=urlpattern)
-        except AccessPolicyModel.DoesNotExist:
-            return None
+        return getattr(view, "DEFAULT_ACCESS_POLICY", DEFAULT_ACCESS_POLICY)
 
     @classmethod
     def handle_creation_hooks(cls, obj):
@@ -45,8 +42,8 @@ class AccessPolicyFromDB(AccessPolicy):
         """
         viewset = get_viewset_for_model(obj)
         access_policy = cls.get_access_policy(viewset)
-        if access_policy and access_policy.creation_hooks is not None:
-            for creation_hook in access_policy.creation_hooks:
+        if (creation_hooks := access_policy.get("creation_hooks")) is not None:
+            for creation_hook in creation_hooks:
                 hook_name = creation_hook["function"]
                 try:
                     function = obj.REGISTERED_CREATION_HOOKS[hook_name]
@@ -62,15 +59,14 @@ class AccessPolicyFromDB(AccessPolicy):
         """
         Scope the queryset based on the access policy `scope_queryset` method if present.
         """
-        if access_policy := self.get_access_policy(view):
-            if access_policy.queryset_scoping:
-                scope = access_policy.queryset_scoping["function"]
-                if not (function := getattr(view, scope, None)):
-                    raise APIException(
-                        f"Queryset scoping method {scope} is not present on this view set."
-                    )
-                kwargs = access_policy.queryset_scoping.get("parameters") or {}
-                qs = function(qs, **kwargs)
+        if (queryset_scoping := self.get_access_policy(view).get("queryset_scoping")) is not None:
+            scope = queryset_scoping["function"]
+            if not (function := getattr(view, scope, None)):
+                raise APIException(
+                    f"Queryset scoping method {scope} is not present on this view set."
+                )
+            kwargs = queryset_scoping.get("parameters") or {}
+            qs = function(qs, **kwargs)
         return qs
 
     def get_policy_statements(self, request, view):
@@ -98,9 +94,68 @@ class AccessPolicyFromDB(AccessPolicy):
         Returns:
             The access policy statements in drf-access-policy policy structure.
         """
-        if access_policy_obj := self.get_access_policy(view):
-            return access_policy_obj.statements
-        else:
-            default_statement = [{"action": "*", "principal": "admin", "effect": "allow"}]
-            policy = getattr(view, "DEFAULT_ACCESS_POLICY", {"statements": default_statement})
-            return policy["statements"]
+        # It looks like AccessPolicy is modifying the thing we give it... Tztztz
+        return deepcopy(self.get_access_policy(view)["statements"])
+
+
+class AccessPolicyFromSettings(DefaultAccessPolicy):
+    """
+    An AccessPolicy that loads statements from settings.
+
+    If an access policy cannot be found this falls back to the default one.
+    """
+
+    @classmethod
+    def get_access_policy(cls, view):
+        """
+        Retrieves the AccessPolicy from the DB or None if it doesn't exist.
+
+        Args:
+            view (subclass of rest_framework.view.APIView): The view or viewset to receive the
+                AccessPolicy model for.
+
+        Returns:
+            A dictionary representing the access policy.
+        """
+        try:
+            urlpattern = get_view_urlpattern(view)
+            return settings.ACCESS_POLICIES[urlpattern]
+        except (AttributeError, KeyError):
+            # The view does not define a `urlpattern()` method, e.g. it's not a NamedModelViewset
+            return super().get_access_policy(view)
+
+
+class AccessPolicyFromDB(DefaultAccessPolicy):
+    """
+    An AccessPolicy that loads statements from an `AccessPolicy` model instance.
+
+    If an access policy cannot be found this falls back to the default one.
+    """
+
+    @classmethod
+    def get_access_policy(cls, view):
+        """
+        Retrieves the AccessPolicy from the DB or None if it doesn't exist.
+
+        Args:
+            view (subclass of rest_framework.view.APIView): The view or viewset to receive the
+                AccessPolicy model for.
+
+        Returns:
+            A dictionary representing the access policy.
+        """
+        try:
+            urlpattern = get_view_urlpattern(view)
+        except AttributeError:
+            # The view does not define a `urlpattern()` method, e.g. it's not a NamedModelViewset
+            return super().get_access_policy(view)
+
+        try:
+            access_policy = AccessPolicyModel.objects.get(viewset_name=urlpattern)
+            return {
+                "statements": access_policy.statements,
+                "queryset_scoping": access_policy.queryset_scoping,
+                "creation_hooks": access_policy.creation_hooks,
+            }
+        except AccessPolicyModel.DoesNotExist:
+            return super().get_access_policy(view)
