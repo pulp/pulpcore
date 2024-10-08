@@ -105,7 +105,7 @@ if [ "$TEST" = "s3" ]; then
   sed -i -e '$a s3_test: true\
 minio_access_key: "'$MINIO_ACCESS_KEY'"\
 minio_secret_key: "'$MINIO_SECRET_KEY'"\
-pulp_scenario_settings: {"DISABLED_authentication_backends": "@merge django.contrib.auth.backends.RemoteUserBackend", "DISABLED_authentication_json_header": "HTTP_X_RH_IDENTITY", "DISABLED_authentication_json_header_jq_filter": ".identity.user.username", "DISABLED_authentication_json_header_openapi_security_scheme": {"description": "External OAuth integration", "flows": {"clientCredentials": {"scopes": {"api.console": "grant_access_to_pulp"}, "tokenUrl": "https://your-identity-provider/token/issuer"}}, "type": "oauth2"}, "DISABLED_rest_framework__default_authentication_classes": "@merge pulpcore.app.authentication.JSONHeaderRemoteAuthentication", "domain_enabled": true, "hide_guarded_distributions": true}\
+pulp_scenario_settings: {"DISABLED_authentication_backends": "@merge django.contrib.auth.backends.RemoteUserBackend", "DISABLED_authentication_json_header": "HTTP_X_RH_IDENTITY", "DISABLED_authentication_json_header_jq_filter": ".identity.user.username", "DISABLED_authentication_json_header_openapi_security_scheme": {"description": "External OAuth integration", "flows": {"clientCredentials": {"scopes": {"api.console": "grant_access_to_pulp"}, "tokenUrl": "https://your-identity-provider/token/issuer"}}, "type": "oauth2"}, "DISABLED_rest_framework__default_authentication_classes": "@merge pulpcore.app.authentication.JSONHeaderRemoteAuthentication", "domain_enabled": true, "hide_guarded_distributions": true, "rest_framework__default_permission_classes": ["pulpcore.plugin.access_policy.AccessPolicyFromSettings"]}\
 pulp_scenario_env: {}\
 ' vars/main.yaml
   export PULP_API_ROOT="/rerouted/djnd/"
@@ -119,7 +119,7 @@ if [ "$TEST" = "azure" ]; then
       - ./azurite:/etc/pulp\
     command: "azurite-blob --blobHost 0.0.0.0"' vars/main.yaml
   sed -i -e '$a azure_test: true\
-pulp_scenario_settings: {"api_root_rewrite_header": "X-API-Root", "domain_enabled": true}\
+pulp_scenario_settings: {"api_root_rewrite_header": "X-API-Root", "domain_enabled": true, "rest_framework__default_permission_classes": ["pulpcore.plugin.access_policy.DefaultAccessPolicy"]}\
 pulp_scenario_env: {"otel_bsp_max_export_batch_size": 1, "otel_bsp_max_queue_size": 1, "otel_exporter_otlp_endpoint": "http://localhost:4318", "otel_exporter_otlp_protocol": "http/protobuf", "otel_metric_export_interval": 800, "pulp_otel_enabled": "true"}\
 ' vars/main.yaml
 fi
