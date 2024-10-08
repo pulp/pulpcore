@@ -8,6 +8,42 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.65.0 (2024-10-08) {: #3.65.0 }
+
+### REST API {: #3.65.0-rest-api }
+
+#### Bugfixes {: #3.65.0-rest-api-bugfix }
+
+- pulp-worker fails to start with "float object cannot be interpreted as an integer" on some versions of python.
+  [#5861](https://github.com/pulp/pulpcore/issues/5861)
+- Fixed the name of the metrics' attribute reporting the worker's process name. Started emitting the
+  name of the Pulp service with a dedicated label (i.e., job=pulp-api).
+  [#5864](https://github.com/pulp/pulpcore/issues/5864)
+- Started propagating headers from the content-app when using a non-default filesystem storage.
+  [#5879](https://github.com/pulp/pulpcore/issues/5879)
+
+#### Improved Documentation {: #3.65.0-rest-api-doc }
+
+- Correct rendering of pulp bash example in reclaim-disk-space.md
+  [#5876](https://github.com/pulp/pulpcore/issues/5876)
+
+### Plugin API {: #3.65.0-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.65.0-pulp-file }
+
+#### Bugfixes {: #3.65.0-pulp-file-bugfix }
+
+- During sync, quote the URL path for file downloads using HTTP.
+  [#5686](https://github.com/pulp/pulpcore/issues/5686)
+
+### Pulp Cert Guard {: #3.65.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.64.0 (2024-10-03) {: #3.64.0 }
 
 ### REST API {: #3.64.0-rest-api }
