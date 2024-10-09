@@ -40,8 +40,6 @@ to make writing sync code easier. There are several parts to the API:
 ## Content Related Stages
 
 ::: pulpcore.plugin.stages.ContentSaver
-    options:
-       filters: ["!_pre_save", "!_post_save"]
 
 ::: pulpcore.plugin.stages.QueryExistingContents
 
