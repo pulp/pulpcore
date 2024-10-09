@@ -1,5 +1,6 @@
 # pulp.app.settings
 
-```{eval-rst}
-.. automodule:: pulpcore.app.settings
-```
+::: pulpcore.app.settings
+    options:
+        members: true
+        heading_level: 2
