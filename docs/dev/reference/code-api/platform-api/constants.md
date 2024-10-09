@@ -1,6 +1,6 @@
 # pulp.constants
 
-```{eval-rst}
-.. automodule:: pulpcore.constants
-   :members:
-```
+::: pulpcore.constants
+    options:
+        members: true
+        heading_level: 2

@@ -1,5 +1,3 @@
-
-
 # pulpcore.plugin.stages
 
 Plugin writers can use the Stages API to create a high-performance, download-and-saving pipeline
@@ -9,83 +7,44 @@ to make writing sync code easier. There are several parts to the API:
 2. The builtin Stages including `artifact-stages` and `content-stages`.
 3. The `stages-api`, which allows you to build custom stages and pipelines.
 
-
-
 ## DeclarativeVersion
 
-```{eval-rst}
-.. autoclass:: pulpcore.plugin.stages.DeclarativeVersion
-```
+::: pulpcore.plugin.stages.DeclarativeVersion
 
-```{eval-rst}
-.. autoclass:: pulpcore.plugin.stages.DeclarativeArtifact
-   :no-members:
-```
+::: pulpcore.plugin.stages.DeclarativeArtifact
+    options:
+        members: false
 
-```{eval-rst}
-.. autoclass:: pulpcore.plugin.stages.DeclarativeContent
-   :no-members:
-   :members: resolution
-
-```
-
-
+::: pulpcore.plugin.stages.DeclarativeContent
+    options:
+        members: false
 
 ## Stages API
 
-```{eval-rst}
-.. autofunction:: pulpcore.plugin.stages.create_pipeline
-```
+::: pulpcore.plugin.stages.create_pipeline
 
-```{eval-rst}
-.. autoclass:: pulpcore.plugin.stages.Stage
-   :special-members: __call__
-```
+::: pulpcore.plugin.stages.Stage
 
-```{eval-rst}
-.. autoclass:: pulpcore.plugin.stages.EndStage
-   :special-members: __call__
-
-```
-
-
+::: pulpcore.plugin.stages.EndStage
 
 ## Artifact Related Stages
 
-```{eval-rst}
-.. autoclass:: pulpcore.plugin.stages.ArtifactDownloader
-```
+::: pulpcore.plugin.stages.ArtifactDownloader
 
-```{eval-rst}
-.. autoclass:: pulpcore.plugin.stages.ArtifactSaver
-```
+::: pulpcore.plugin.stages.ArtifactSaver
 
-```{eval-rst}
-.. autoclass:: pulpcore.plugin.stages.RemoteArtifactSaver
-```
+::: pulpcore.plugin.stages.RemoteArtifactSaver
 
-```{eval-rst}
-.. autoclass:: pulpcore.plugin.stages.QueryExistingArtifacts
-
-```
-
-
+::: pulpcore.plugin.stages.QueryExistingArtifacts
 
 ## Content Related Stages
 
-```{eval-rst}
-.. autoclass:: pulpcore.plugin.stages.ContentSaver
-   :private-members: _pre_save, _post_save
-```
+::: pulpcore.plugin.stages.ContentSaver
+    options:
+       filters: ["!_pre_save", "!_post_save"]
 
-```{eval-rst}
-.. autoclass:: pulpcore.plugin.stages.QueryExistingContents
-```
+::: pulpcore.plugin.stages.QueryExistingContents
 
-```{eval-rst}
-.. autoclass:: pulpcore.plugin.stages.ResolveContentFutures
-```
+::: pulpcore.plugin.stages.ResolveContentFutures
 
-```{eval-rst}
-.. autoclass:: pulpcore.plugin.stages.ContentAssociation
-```
+::: pulpcore.plugin.stages.ContentAssociation

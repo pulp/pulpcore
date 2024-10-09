@@ -1,5 +1,3 @@
 # pulp.app.urls
 
-```{eval-rst}
-.. automodule:: pulpcore.app.urls
-```
+::: pulpcore.app.urls

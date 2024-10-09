@@ -1,5 +1,3 @@
-
-
 # pulpcore.plugin.download
 
 The module implements downloaders that solve many of the common problems plugin writers have while
@@ -58,12 +56,9 @@ for task in done:
 The download result contains all the information about a completed download and is returned from a
 the downloader's `run()` method when the download is complete.
 
-```{eval-rst}
-.. autoclass:: pulpcore.plugin.download.DownloadResult
-    :no-members:
-```
-
-
+::: pulpcore.plugin.download.DownloadResult
+    options:
+        members: false
 
 ## Configuring from a Remote
 
@@ -184,11 +179,7 @@ downloader for any given url.
     more information.
 
 
-```{eval-rst}
-.. autoclass:: pulpcore.plugin.download.DownloaderFactory
-    :members:
-```
-
+::: pulpcore.plugin.download.DownloaderFactory
 
 
 ## HttpDownloader
@@ -197,11 +188,9 @@ This downloader is an asyncio-aware parallel downloader which is the default dow
 the `downloader-factory` for urls starting with `http://` or `https://`. It also supports
 synchronous downloading using `pulpcore.plugin.download.HttpDownloader.fetch`.
 
-```{eval-rst}
-.. autoclass:: pulpcore.plugin.download.HttpDownloader
-    :members:
-    :inherited-members: fetch
-```
+::: pulpcore.plugin.download.HttpDownloader
+    options:
+        inherited_members: true
 
 
 
@@ -210,11 +199,9 @@ synchronous downloading using `pulpcore.plugin.download.HttpDownloader.fetch`.
 This downloader is an asyncio-aware parallel file reader which is the default downloader produced by
 the `downloader-factory` for urls starting with `file://`.
 
-```{eval-rst}
-.. autoclass:: pulpcore.plugin.download.FileDownloader
-    :members:
-    :inherited-members: fetch
-```
+::: pulpcore.plugin.download.FileDownloader
+    options:
+        inherited_members: true
 
 
 
@@ -223,27 +210,14 @@ the `downloader-factory` for urls starting with `file://`.
 This is an abstract downloader that is meant for subclassing. All downloaders are expected to be
 descendants of BaseDownloader.
 
-```{eval-rst}
-.. autoclass:: pulpcore.plugin.download.BaseDownloader
-    :members:
-
-```
+::: pulpcore.plugin.download.BaseDownloader
 
 
 
 ## Validation Exceptions
 
-```{eval-rst}
-.. autoclass:: pulpcore.exceptions.DigestValidationError
-    :noindex:
-```
+::: pulpcore.exceptions.DigestValidationError
 
-```{eval-rst}
-.. autoclass:: pulpcore.exceptions.SizeValidationError
-    :noindex:
-```
+::: pulpcore.exceptions.SizeValidationError
 
-```{eval-rst}
-.. autoclass:: pulpcore.exceptions.ValidationError
-    :noindex:
-```
+::: pulpcore.exceptions.ValidationError
