@@ -16,9 +16,6 @@ class AccessPolicyViewSet(
 ):
     """
     ViewSet for AccessPolicy.
-
-    NOTE: This API endpoint is in "tech preview" and subject to change
-
     """
 
     queryset = AccessPolicy.objects.all()
