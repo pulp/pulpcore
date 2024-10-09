@@ -44,9 +44,3 @@ provider = MeterProvider(metric_readers=[reader], resource=resource)
 application = get_wsgi_application()
 if os.getenv("PULP_OTEL_ENABLED", "").lower() == "true":
     application = OpenTelemetryMiddleware(application, meter_provider=provider)
-
-# Disabling Storage metrics until we find a solution to resource usage.
-# https://github.com/pulp/pulpcore/issues/5468
-# from pulpcore.app.util import init_domain_metrics_exporter  # noqa: E402
-
-# init_domain_metrics_exporter()

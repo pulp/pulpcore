@@ -16,9 +16,8 @@ from uuid import UUID
 from django.apps import apps
 from django.conf import settings
 from django.db import connection
-from django.db.models import Model, Sum
+from django.db.models import Model
 from django.urls import Resolver404, resolve
-from opentelemetry import metrics
 
 from rest_framework.serializers import ValidationError
 from rest_framework.reverse import reverse as drf_reverse
@@ -26,7 +25,6 @@ from rest_framework.reverse import reverse as drf_reverse
 from pulpcore.app.loggers import deprecation_logger
 from pulpcore.app.apps import pulp_plugin_configs
 from pulpcore.app import models
-from pulpcore.constants import STORAGE_METRICS_LOCK
 from pulpcore.exceptions import AdvisoryLockError
 from pulpcore.exceptions.validation import InvalidSignatureError
 
@@ -463,6 +461,19 @@ def configure_cleanup():
             models.TaskSchedule.objects.filter(task_name=task_name).delete()
 
 
+def configure_periodic_telemetry():
+    task_name = "pulpcore.app.tasks.telemetry.emit_domain_space_usage_metric"
+    dispatch_interval = timedelta(minutes=5)
+    name = "Emit Domain Space Usage metric periodically"
+
+    if os.getenv("PULP_OTEL_ENABLED", "").lower() == "true" and settings.DOMAIN_ENABLED:
+        models.TaskSchedule.objects.update_or_create(
+            name=name, defaults={"task_name": task_name, "dispatch_interval": dispatch_interval}
+        )
+    else:
+        models.TaskSchedule.objects.filter(task_name=task_name).delete()
+
+
 @lru_cache(maxsize=1)
 def _artifact_serving_distribution():
     return models.ArtifactDistribution.objects.get()
@@ -611,52 +622,6 @@ class MetricsEmitter:
             return cls(*args, **kwargs)
         else:
             return cls._NoopEmitter()
-
-
-class DomainMetricsEmitter(MetricsEmitter):
-    """A builder class that initializes an emitter for recording domain's metrics."""
-
-    def __init__(self, domain):
-        self.domain = domain
-        self.meter = metrics.get_meter(f"domain.{domain.name}.meter")
-        self.instrument = self._init_emitting_total_size()
-
-    def _init_emitting_total_size(self):
-        return self.meter.create_observable_gauge(
-            name="disk_usage",
-            description="The total disk size by domain.",
-            callbacks=[self._disk_usage_callback()],
-            unit="Bytes",
-        )
-
-    def _disk_usage_callback(self):
-        try:
-            with PGAdvisoryLock(STORAGE_METRICS_LOCK):
-                from pulpcore.app.models import Artifact
-
-                options = yield  # noqa
-
-                while True:
-                    artifacts = Artifact.objects.filter(pulp_domain=self.domain).only("size")
-                    total_size = artifacts.aggregate(size=Sum("size", default=0))["size"]
-                    options = yield [  # noqa
-                        metrics.Observation(
-                            total_size,
-                            {
-                                "pulp_href": get_url(self.domain),
-                                "domain_name": self.domain.name,
-                            },
-                        )
-                    ]
-        except AdvisoryLockError:
-            yield
-
-
-def init_domain_metrics_exporter():
-    from pulpcore.app.models.domain import Domain
-
-    for domain in Domain.objects.all():
-        DomainMetricsEmitter.build(domain)
 
 
 @lru_cache(maxsize=1)
