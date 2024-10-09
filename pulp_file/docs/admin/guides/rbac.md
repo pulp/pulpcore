@@ -16,10 +16,6 @@ policies can be modified to achieve a different RBAC behavior. Use the Pulp CLI 
 with the examples here.
 
 !!! note
-    This feature is currently in tech preview and is subject to change in future releases.
-
-
-!!! note
     Customizing the access policy will cause any future changes to the default policies, like
     statement changes and bugfixes, to be ignored unless reset to the default policy.
 
