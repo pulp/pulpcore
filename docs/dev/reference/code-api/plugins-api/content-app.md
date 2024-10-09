@@ -66,6 +66,4 @@ class MyHandler(Handler):
 
 ## pulpcore.plugin.content.Handler
 
-```{eval-rst}
-.. autoclass:: pulpcore.plugin.content.Handler
-```
+::: pulpcore.plugin.content.Handler

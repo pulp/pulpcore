@@ -1,5 +1,6 @@
 # pulp.app.auth
 
-```{eval-rst}
-.. automodule:: pulpcore.app.authentication
-```
+::: pulpcore.app.authentication
+    options:
+        members: true
+        filters: ["!_*"]
