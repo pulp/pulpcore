@@ -43,20 +43,6 @@ this can be accomplished by `workon pulp; pulpcore-manager runserver 24817`. The
 `pulpcore-manager` command is `manage.py` configured with the
 `DJANGO_SETTINGS_MODULE="pulpcore.app.settings"`.
 
-### Using pulplift
-
-When running one of the `pulp3-source-*` boxes in `pulplift`, all the services are running.  They
-should be restarted with `prestart` if any pulp code (not test code) has been changed.
-
-When testing S3 support, you can start and configure a local `minio` container with `pminio`.
-
-Pulp functional tests use a set of upstream fixture repositories hosted on
-[fixtures.pulpproject.org](https://fixtures.pulpproject.org/).  In case you want serve those
-locally, you can run `pfixtures` which will execute a `nginx` container with a copy of those
-fixtures.
-
-For more info about Pulp development specific helper commands, you can consult `phelp`.
-
 ## Running tests
 
 In case pulp is installed in a virtual environment, activate it first (`workon pulp`).
