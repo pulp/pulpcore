@@ -162,7 +162,7 @@ REST_FRAMEWORK = {
     "DEFAULT_FILTER_BACKENDS": ("pulpcore.filters.PulpFilterBackend",),
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.LimitOffsetPagination",
     "PAGE_SIZE": 100,
-    "DEFAULT_PERMISSION_CLASSES": ("pulpcore.plugin.access_policy.AccessPolicyFromDB",),
+    "DEFAULT_PERMISSION_CLASSES": ("pulpcore.app.access_policy.AccessPolicyFromDB",),
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework.authentication.BasicAuthentication",
         "rest_framework.authentication.SessionAuthentication",
@@ -254,6 +254,11 @@ LOGGING = {
         },
     },
 }
+
+# Custom access policies indexed by the url_pattern of the view.
+# This will only take effect when combined with the
+# `pulpcore.app.access_policy.AccessPoliciesFromSettings` permission class.
+ACCESS_POLICIES = {}
 
 DRF_ACCESS_POLICY = {"reusable_conditions": ["pulpcore.app.global_access_conditions"]}
 
