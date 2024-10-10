@@ -96,7 +96,6 @@ Here are general guidelines:
 | Body | - Should be wrapped at wrapped at 72 characters
 |  |    - May be broken up into paragraphs.
 | Footer |  - Should Linked issue on the plugin Github Issue tracker. See the [Github Linking Docs](https://docs.github.com/en/issues/tracking-your-work-with-issues/linking-a-pull-request-to-an-issue#linking-a-pull-request-to-an-issue-using-a-keyword).
-| |- May have a [noissue] instead, if really required.
 
 For more on what constitutes a good commit message, we recommend [Tim Pope’s blog post on the subject](http://tbaggery.com/2008/04/19/a-note-about-git-commit-messages.html). Putting this all together, the following is an example of a good commit message:
 
