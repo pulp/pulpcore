@@ -42,9 +42,6 @@ Pope's blog post on the subject](http://tbaggery.com/2008/04/19/a-note-about-git
 
 Each commit message should link to an issue on the [pulpcore Github Issue tracker](https://github.com/pulp/pulpcore/issues/). See the [Github Linking Docs](https://docs.github.com/en/issues/tracking-your-work-with-issues/linking-a-pull-request-to-an-issue#linking-a-pull-request-to-an-issue-using-a-keyword) and include at least one link in your commit message.
 
-If you must create a commit for which there is no issue, add the `[noissue]` syntax in the commit
-message.
-
 Putting this all together, the following is an example of a good commit message:
 
 ```
