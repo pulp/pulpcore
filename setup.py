@@ -28,7 +28,7 @@ setup(
         "kafka": [
             # Pinned because project warns "things might (and will) break with every update"
             "cloudevents==1.11.0",
-            "confluent-kafka>=2.4.0,<2.6.0",
+            "confluent-kafka>=2.4.0,<2.7.0",
         ],
     },
     include_package_data=True,
