@@ -13,3 +13,4 @@ include COPYRIGHT
 include pulpcore/app/templates/rest_framework/api.html
 include manage.py
 include test_requirements.txt
+exclude releasing.md
