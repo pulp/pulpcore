@@ -7,6 +7,7 @@ from gettext import gettext as _
 import asyncio
 import datetime
 import json
+import os
 import tempfile
 import shutil
 import subprocess
@@ -783,7 +784,7 @@ class SigningService(BaseModel):
         }
         if env_vars:
             env.update(env_vars)
-        return env
+        return {**os.environ, **env}
 
     def sign(self, filename, env_vars=None):
         """
