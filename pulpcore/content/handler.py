@@ -704,6 +704,7 @@ class Handler:
                             request, StreamResponse(headers=headers), ca
                         )
                 else:
+                    breakpoint()
                     # Try to stream the RemoteArtifact and potentially save it as a new Content unit
                     save_artifact = remote.get_remote_artifact_content_type(rel_path) is not None
                     ca = ContentArtifact(relative_path=rel_path)
