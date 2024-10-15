@@ -2,10 +2,10 @@
 Django settings for the Pulp Platform application
 
 Never import this module directly, instead `from django.conf import settings`, see
-https://docs.djangoproject.com/en/3.2/topics/settings/#using-settings-in-python-code
+<https://docs.djangoproject.com/en/3.2/topics/settings/#using-settings-in-python-code>
 
 For the full list of settings and their values, see
-https://docs.djangoproject.com/en/3.2/ref/settings/
+<https://docs.djangoproject.com/en/3.2/ref/settings/>
 """
 
 import sys
