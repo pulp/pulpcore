@@ -5,8 +5,10 @@ from collections import namedtuple
 import logging
 import os
 import tempfile
+from pathlib import Path
 from urllib.parse import urlsplit
 
+from django.conf import settings
 from pulpcore.app import pulp_hashlib
 from pulpcore.app.models import Artifact
 from pulpcore.exceptions import (
@@ -127,7 +129,13 @@ class BaseDownloader:
             # write the file to the current working directory with a random prefix and the
             # desired suffix. we always want the random prefix as it is possible to download
             # the same filename from two different URLs, and the files may not be the same.
-            self._writer = tempfile.NamedTemporaryFile(dir=".", suffix=suffix, delete=False)
+            # Ensure CWD is in Pulp's working directory to prevent permission error on download
+            work_dir = str(settings.WORKING_DIRECTORY)
+            self._writer = tempfile.NamedTemporaryFile(
+                dir="." if Path.cwd().is_relative_to(work_dir) else work_dir,
+                suffix=suffix,
+                delete=False,
+            )
             self.path = self._writer.name
             self._digests = {n: pulp_hashlib.new(n) for n in Artifact.DIGEST_FIELDS}
             self._size = 0
