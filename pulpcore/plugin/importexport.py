@@ -75,4 +75,5 @@ class BaseContentResource(QueryModelResource):
             "content",
             "content_ptr",
             "timestamp_of_interest",
+            "pulp_labels",
         )
