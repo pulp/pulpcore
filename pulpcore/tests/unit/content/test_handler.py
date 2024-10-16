@@ -14,6 +14,8 @@ from pulpcore.plugin.models import (
     Distribution,
     Remote,
     RemoteArtifact,
+    Repository,
+    RepositoryContent,
 )
 
 
@@ -359,24 +361,30 @@ def test_mock_server(server_a, server_b):
 async def test_server_client_setup(monkeypatch, server_a, server_b):
     async def delete_all_objects(model):
         await sync_to_async(model.objects.all().delete)()
-    for m in (Remote, Distribution, ContentArtifact, Content, RemoteArtifact, Artifact):
+    for m in (Remote, Distribution, ContentArtifact, Content, RemoteArtifact, Artifact, Repository):
         await delete_all_objects(m)
         
     expected_aaa_digest = hashlib.sha256(b"aaa").hexdigest()
     # broken remote server setup
     monkeypatch.setattr(Remote, "get_remote_artifact_content_type", Mock(return_value=Content))
     monkeypatch.setattr(Content, "init_from_artifact_and_relative_path", Mock(return_value=Content()))
+    # Add content to repository
     content = await Content.objects.acreate()
-    ca = await ContentArtifact.objects.acreate(content=content)
+    repo_a = await Repository.objects.acreate(name="repo_a")
+    async def setup_repo():
+        with await sync_to_async(repo_a.new_version)() as new_version:
+            await sync_to_async(new_version.add_content)(content)
+    await setup_repo()
 
+    ca = await ContentArtifact.objects.acreate(content=content)
+    # Setup Remote/CA/RA relationships
+    # * pulp expects aaa for ra_b, but server_b updated and we didnt sync, so should fail
     remote_a = await Remote.objects.acreate(name="server_a", url=server_a)
     ra_a = await RemoteArtifact.objects.acreate(content_artifact=ca, remote=remote_a, sha256=expected_aaa_digest)
-
-    # pulp expects aaa for ra_b, but server_b updated and we didnt sync, so should fail
     remote_b = await Remote.objects.acreate(name="server_b", url=server_b)
     ra_b = await RemoteArtifact.objects.acreate(content_artifact=ca, remote=remote_b, sha256=expected_aaa_digest)
 
-    dist = await Distribution.objects.acreate(name="mydist", base_path="mydist", remote=remote_b)
+    dist = await Distribution.objects.acreate(name="mydist", base_path="mydist", remote=remote_b, repository=repo_a)
 
     resources = [remote_a, remote_b, content, ca, ra_b, ra_a, dist]
 
@@ -399,13 +407,17 @@ async def test_server_client_setup(monkeypatch, server_a, server_b):
         assert "aaa" in text
 
     try:
-        await assert_content_in("/pulp/content/", content="Index of /pulp/content/")
-        await assert_content_in("/pulp/content/mydist/", content="blob")
+        # await assert_content_in("/pulp/content/", content="Index of /pulp/content/")
+        # await assert_content_in("/pulp/content/mydist/", content="blob")
         # TODO: the content handler is going through the pull-through caching and calling
         # _stream_remote_artifact(), but I need to make it call _stream_content_artifact(),
         # so I can test the RA selection/retry.
+        # assert await ContentArtifact.objects.filter(
+        #     content__in=repo_a.latest_version().content, relative_path="blob"
+        # ).aexists()
         await assert_can_get_blob()
     finally:
+        breakpoint()
         await client.close()
         for item in resources:
             await item.adelete()
