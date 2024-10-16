@@ -1,1 +1,0 @@
-Fixed task purge to not expect a user, when a run has been scheduled by Pulp itself.
