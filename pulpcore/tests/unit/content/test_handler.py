@@ -16,6 +16,9 @@ from pulpcore.plugin.models import (
     RemoteArtifact,
     Repository,
     RepositoryContent,
+    PublishedArtifact,
+    Publication,
+    RepositoryVersion,
 )
 
 
@@ -295,8 +298,6 @@ def run_server(port: int, server_dir: str, q: Queue):
     httpd.serve_forever()
 
 
-
-
 def create_server(port: int, server_dir: str) -> Process:
     # setup/teardown server
     q = Queue()
@@ -311,7 +312,7 @@ def create_server(port: int, server_dir: str) -> Process:
         proc.join()
         raise TimeoutError("The test server didnt get ready.")
     return proc
-    
+
 
 @pytest.fixture
 def server_a(tmp_path):
@@ -355,58 +356,81 @@ def test_mock_server(server_a, server_b):
     assert b"bbb" == response.content
 
 
+async def clean_db():
+    for model in (
+        Remote,
+        Distribution,
+        ContentArtifact,
+        Content,
+        RemoteArtifact,
+        Artifact,
+        Repository,
+        RepositoryContent,
+        Publication,
+        PublishedArtifact,
+        RepositoryVersion,
+    ):
+        await sync_to_async(model.objects.all().delete)()
+
+
+async def list_qs(qs):
+    return list(qs)
+
 
 @pytest.mark.asyncio
 @pytest.mark.django_db
 async def test_server_client_setup(monkeypatch, server_a, server_b):
-    async def delete_all_objects(model):
-        await sync_to_async(model.objects.all().delete)()
-    for m in (Remote, Distribution, ContentArtifact, Content, RemoteArtifact, Artifact, Repository):
-        await delete_all_objects(m)
-        
+    await clean_db()
     expected_aaa_digest = hashlib.sha256(b"aaa").hexdigest()
+    # monkeypatch.setattr(Remote, "get_remote_artifact_content_type", Mock(return_value=Content))
+    # monkeypatch.setattr(Content, "init_from_artifact_and_relative_path", Mock(return_value=Content()))
+
     # broken remote server setup
-    monkeypatch.setattr(Remote, "get_remote_artifact_content_type", Mock(return_value=Content))
-    monkeypatch.setattr(Content, "init_from_artifact_and_relative_path", Mock(return_value=Content()))
-    # Add content to repository
-    content = await Content.objects.acreate()
-    repo_a = await Repository.objects.acreate(name="repo_a")
-    async def setup_repo():
-        with await sync_to_async(repo_a.new_version)() as new_version:
-            await sync_to_async(new_version.add_content)(content)
-    await setup_repo()
+    def setup_data():
+        # Add content to repository
+        content = Content.objects.create()
+        repo_a = Repository.objects.create(name="repo_a")
+        ca = ContentArtifact.objects.create(content=content)
+        with repo_a.new_version() as v:
+            v.add_content(Content.objects.filter(pk=repo_a.pk))
 
-    ca = await ContentArtifact.objects.acreate(content=content)
-    # Setup Remote/CA/RA relationships
-    # * pulp expects aaa for ra_b, but server_b updated and we didnt sync, so should fail
-    remote_a = await Remote.objects.acreate(name="server_a", url=server_a)
-    ra_a = await RemoteArtifact.objects.acreate(content_artifact=ca, remote=remote_a, sha256=expected_aaa_digest)
-    remote_b = await Remote.objects.acreate(name="server_b", url=server_b)
-    ra_b = await RemoteArtifact.objects.acreate(content_artifact=ca, remote=remote_b, sha256=expected_aaa_digest)
+        repover = repo_a.latest_version()
+        assert repover
+        assert len(repover.content) != 0  # fails
 
-    dist = await Distribution.objects.acreate(name="mydist", base_path="mydist", remote=remote_b, repository=repo_a)
+        # Setup Remote/CA/RA relationships
+        # * ra_b has b'bbb' but we say it's expected b'aaa'
+        # * this is to simulate server updating without a pulp sync
+        # * dist uses that remove and
+        remote_b = Remote.objects.create(name="server_b", url=server_b)
+        ra_b = RemoteArtifact.objects.create(
+            content_artifact=ca, remote=remote_b, sha256=expected_aaa_digest
+        )
+        Distribution.objects.create(name="mydist", base_path="mydist", repository=repo_a)
 
-    resources = [remote_a, remote_b, content, ca, ra_b, ra_a, dist]
+        return content, repo_a, ca, remote_b, ra_b
+
+    content, repo_a, ca, remote_b, ra_b = await sync_to_async(setup_data)()
 
     # run aiohttp server and client
     app = await server()
     client = TestClient(TestServer(app))
     await client.start_server()
 
-    # asserts
-    async def assert_content_in(path, content):
-        resp = await client.get(path)
-        assert resp.status == 200
-        text = await resp.text()
-        assert content in text
-
-    async def assert_can_get_blob():
-        resp = await client.get("/pulp/content/mydist/blob")
-        assert resp.status == 200
-        text = await resp.text()
-        assert "aaa" in text
-
     try:
+        # asserts
+        async def assert_content_in(path, content):
+            resp = await client.get(path)
+            assert resp.status == 200
+            text = await resp.text()
+            assert content in text
+
+        async def assert_can_get_blob():
+            resp = await client.get("/pulp/content/mydist/blob")
+            assert resp.status == 200
+            text = await resp.text()
+            assert "aaa" in text
+
         # await assert_content_in("/pulp/content/", content="Index of /pulp/content/")
         # await assert_content_in("/pulp/content/mydist/", content="blob")
         # TODO: the content handler is going through the pull-through caching and calling
@@ -417,8 +441,5 @@ async def test_server_client_setup(monkeypatch, server_a, server_b):
         # ).aexists()
         await assert_can_get_blob()
     finally:
-        breakpoint()
         await client.close()
-        for item in resources:
-            await item.adelete()
-
+        await clean_db()

@@ -1095,17 +1095,15 @@ class RepositoryVersion(BaseModel):
         repository.initialize_new_version(self)
         return self
 
-    # TODO: revert this
-    # only here so I can get the test right with less friction
-    async def __exit__(self, exc_type, exc_value, traceback):
+    def __exit__(self, exc_type, exc_value, traceback):
         """
         Finalize and save the RepositoryVersion if no errors are raised, delete it if not
         """
         if exc_value:
-            await sync_to_async(self.delete)()
+            self.delete()
         else:
             try:
-                repository = self.repository.acast()
+                repository = self.repository.cast()
                 repository.finalize_new_version(self)
                 no_change = not self.added() and not self.removed()
                 if no_change:
