@@ -642,6 +642,7 @@ class Handler:
                             request, StreamResponse(headers=headers), ca
                         )
 
+        assert repo_version and not publication and not distro.SERVE_FROM_PUBLICATION
         if repo_version and not publication and not distro.SERVE_FROM_PUBLICATION:
             if rel_path == "" or rel_path[-1] == "/":
                 index_path = "{}index.html".format(rel_path)
@@ -686,6 +687,7 @@ class Handler:
 
         # If we haven't found a match yet, try to use pull-through caching with remote
         if distro.remote:
+            assert False, "Shouldt hit here"
             remote = await distro.remote.acast()
             if url := remote.get_remote_artifact_url(rel_path, request=request):
                 if (

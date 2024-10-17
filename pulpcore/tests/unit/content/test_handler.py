@@ -1,9 +1,12 @@
 import pytest
 import uuid
+import hashlib
 
 from unittest.mock import Mock, AsyncMock
+from aiohttp.test_utils import make_mocked_request, TestClient, TestServer
+from asgiref.sync import sync_to_async
 
-from pulpcore.content import Handler
+from pulpcore.content import Handler, server
 from pulpcore.plugin.models import (
     Artifact,
     Content,
@@ -11,6 +14,11 @@ from pulpcore.plugin.models import (
     Distribution,
     Remote,
     RemoteArtifact,
+    Repository,
+    RepositoryContent,
+    PublishedArtifact,
+    Publication,
+    RepositoryVersion,
 )
 
 
@@ -106,8 +114,8 @@ async def create_content_artifact(content):
     )
 
 
-async def create_remote():
-    return await Remote.objects.acreate(name=str(uuid.uuid4()), url="https://123")
+async def create_remote(url="https://123"):
+    return await Remote.objects.acreate(name=str(uuid.uuid4()), url=url)
 
 
 async def create_remote_artifact(remote, ca):
@@ -267,3 +275,171 @@ def test_pull_through_save_multi_artifact_content(
     artifacts = set(ca.content._artifacts.all())
     assert len(artifacts) == 2
     assert {artifact, artifact123} == artifacts
+
+
+import select
+from multiprocessing import Process, Queue
+
+import requests
+
+
+def run_server(port: int, server_dir: str, q: Queue):
+    import http.server
+    import os
+
+    handler_cls = http.server.SimpleHTTPRequestHandler
+    server_cls = http.server.HTTPServer
+
+    os.chdir(server_dir)
+    server_address = ("", port)
+    httpd = server_cls(server_address, handler_cls)
+
+    q.put(httpd.fileno())  # send to parent so can use select
+    httpd.serve_forever()
+
+
+def create_server(port: int, server_dir: str) -> Process:
+    # setup/teardown server
+    q = Queue()
+    proc = Process(target=run_server, args=(port, server_dir, q))
+    proc.start()
+
+    # block until the server socket fd is ready for write
+    server_socket_fd = q.get()
+    _, w, _ = select.select([], [server_socket_fd], [], 5)
+    if not w:
+        proc.terminate()
+        proc.join()
+        raise TimeoutError("The test server didnt get ready.")
+    return proc
+
+
+@pytest.fixture
+def server_a(tmp_path):
+    # setup data
+    server_dir = tmp_path / "server_a"
+    server_dir.mkdir()
+    blob_a = server_dir / "blob"
+    blob_a.write_bytes(b"aaa")
+    # setup server
+    port = 8787
+    proc = create_server(port, server_dir)
+    base_url = f"http://localhost:{port}"
+    yield base_url
+    proc.terminate()
+    proc.join()
+
+
+@pytest.fixture
+def server_b(tmp_path):
+    # setup data
+    server_dir = tmp_path / "server_b"
+    server_dir.mkdir()
+    blob_a = server_dir / "blob"
+    blob_a.write_bytes(b"bbb")
+    # setup server
+    port = 8788
+    proc = create_server(port, server_dir)
+    base_url = f"http://localhost:{port}"
+    yield base_url
+    proc.terminate()
+    proc.join()
+
+
+def test_mock_server(server_a, server_b):
+    response = requests.get(server_a + "/blob")
+    assert response.status_code == 200
+    assert b"aaa" == response.content
+
+    response = requests.get(server_b + "/blob")
+    assert response.status_code == 200
+    assert b"bbb" == response.content
+
+
+async def clean_db():
+    for model in (
+        Remote,
+        Distribution,
+        ContentArtifact,
+        Content,
+        RemoteArtifact,
+        Artifact,
+        Repository,
+        RepositoryContent,
+        Publication,
+        PublishedArtifact,
+        RepositoryVersion,
+    ):
+        await sync_to_async(model.objects.all().delete)()
+
+
+async def list_qs(qs):
+    return list(qs)
+
+
+@pytest.mark.asyncio
+@pytest.mark.django_db
+async def test_server_client_setup(monkeypatch, server_a, server_b):
+    await clean_db()
+    expected_aaa_digest = hashlib.sha256(b"aaa").hexdigest()
+    # monkeypatch.setattr(Remote, "get_remote_artifact_content_type", Mock(return_value=Content))
+    # monkeypatch.setattr(Content, "init_from_artifact_and_relative_path", Mock(return_value=Content()))
+
+    # broken remote server setup
+    def setup_data():
+        # Add content to repository
+        content = Content.objects.create()
+        repo_a = Repository.objects.create(name="repo_a")
+        ca = ContentArtifact.objects.create(content=content)
+        with repo_a.new_version() as v:
+            v.add_content(Content.objects.filter(pk=repo_a.pk))
+
+        repover = repo_a.latest_version()
+        assert repover
+        assert len(repover.content) != 0  # fails
+
+        # Setup Remote/CA/RA relationships
+        # * ra_b has b'bbb' but we say it's expected b'aaa'
+        # * this is to simulate server updating without a pulp sync
+        # * dist uses that remove and
+        remote_b = Remote.objects.create(name="server_b", url=server_b)
+        ra_b = RemoteArtifact.objects.create(
+            content_artifact=ca, remote=remote_b, sha256=expected_aaa_digest
+        )
+        Distribution.objects.create(name="mydist", base_path="mydist", repository=repo_a)
+
+        return content, repo_a, ca, remote_b, ra_b
+
+    content, repo_a, ca, remote_b, ra_b = await sync_to_async(setup_data)()
+
+    # run aiohttp server and client
+    app = await server()
+    client = TestClient(TestServer(app))
+    await client.start_server()
+
+    try:
+        # asserts
+        async def assert_content_in(path, content):
+            resp = await client.get(path)
+            assert resp.status == 200
+            text = await resp.text()
+            assert content in text
+
+        async def assert_can_get_blob():
+            resp = await client.get("/pulp/content/mydist/blob")
+            assert resp.status == 200
+            text = await resp.text()
+            assert "aaa" in text
+
+        # await assert_content_in("/pulp/content/", content="Index of /pulp/content/")
+        # await assert_content_in("/pulp/content/mydist/", content="blob")
+        # TODO: the content handler is going through the pull-through caching and calling
+        # _stream_remote_artifact(), but I need to make it call _stream_content_artifact(),
+        # so I can test the RA selection/retry.
+        # assert await ContentArtifact.objects.filter(
+        #     content__in=repo_a.latest_version().content, relative_path="blob"
+        # ).aexists()
+        await assert_can_get_blob()
+    finally:
+        await client.close()
+        await clean_db()
