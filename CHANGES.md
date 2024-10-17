@@ -8,6 +8,40 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.66.0 (2024-10-16) {: #3.66.0 }
+
+### REST API {: #3.66.0-rest-api }
+
+#### Features {: #3.66.0-rest-api-feature }
+
+- Added OpenPGP keyring repository type and OpenPGP key content type.
+  [#3024](https://github.com/pulp/pulpcore/issues/3024)
+- Re-enabled and refactored the Domain Storage metric emitter.
+  [#5762](https://github.com/pulp/pulpcore/issues/5762)
+- Added a formal "immediate" type of Task and changed workers behavior to prioritize those.
+  This labeling is exlusive to plugin code and should only be applied where it's known that
+  the task will finish shortly, like in updates of repositories, remotes, and distributions.
+  [#5767](https://github.com/pulp/pulpcore/issues/5767)
+
+#### Bugfixes {: #3.66.0-rest-api-bugfix }
+
+- Fixed task purge to not expect a user, when a run has been scheduled by Pulp itself.
+  [#5881](https://github.com/pulp/pulpcore/issues/5881)
+
+### Plugin API {: #3.66.0-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.66.0-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.66.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.65.0 (2024-10-08) {: #3.65.0 }
 
 ### REST API {: #3.65.0-rest-api }
