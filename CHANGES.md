@@ -935,6 +935,29 @@ No significant changes.
 
 ---
 
+## 3.49.22 (2024-10-17) {: #3.49.22 }
+
+### REST API {: #3.49.22-rest-api }
+
+#### Bugfixes {: #3.49.22-rest-api-bugfix }
+
+- pass envvars to Signing Scripts to access GNUPGHOME
+  [#5911](https://github.com/pulp/pulpcore/issues/5911)
+
+### Plugin API {: #3.49.22-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.49.22-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.49.22-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.49.21 (2024-10-09) {: #3.49.21 }
 
 ### REST API {: #3.49.21-rest-api }
