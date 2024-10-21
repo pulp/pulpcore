@@ -361,14 +361,17 @@ async def clean_db():
         Remote,
         Distribution,
         ContentArtifact,
+        RepositoryContent,
         Content,
         RemoteArtifact,
         Artifact,
         Repository,
-        RepositoryContent,
         Publication,
         PublishedArtifact,
         RepositoryVersion,
+        FileContent,
+        FileRepository,
+        ContentArtifact,
     ):
         await sync_to_async(model.objects.all().delete)()
 
@@ -377,36 +380,41 @@ async def list_qs(qs):
     return list(qs)
 
 
+try:
+    from pulp_file.app.models import FileRepository, FileRemote, FileContent, FileDistribution
+except ImportError:
+    pytestmark = pytest.mark.skip("These tests need pulp_file to be installed.")
+
+
 @pytest.mark.asyncio
 @pytest.mark.django_db
 async def test_server_client_setup(monkeypatch, server_a, server_b):
     await clean_db()
     expected_aaa_digest = hashlib.sha256(b"aaa").hexdigest()
-    # monkeypatch.setattr(Remote, "get_remote_artifact_content_type", Mock(return_value=Content))
-    # monkeypatch.setattr(Content, "init_from_artifact_and_relative_path", Mock(return_value=Content()))
 
     # broken remote server setup
     def setup_data():
         # Add content to repository
-        content = Content.objects.create()
-        repo_a = Repository.objects.create(name="repo_a")
-        ca = ContentArtifact.objects.create(content=content)
+        remote_b = FileRemote.objects.create(name="server_b", url=server_b + "/")
+        content = FileContent.objects.create()
+        repo_a = FileRepository.objects.create(name="repo_a", remote=remote_b)
+        ca = ContentArtifact.objects.create(content=content, relative_path="blob")
         with repo_a.new_version() as v:
-            v.add_content(Content.objects.filter(pk=repo_a.pk))
+            v.add_content(FileContent.objects.filter(pk=content.pk))
 
         repover = repo_a.latest_version()
         assert repover
-        assert len(repover.content) != 0  # fails
+        assert len(repover.content) != 0
 
         # Setup Remote/CA/RA relationships
         # * ra_b has b'bbb' but we say it's expected b'aaa'
         # * this is to simulate server updating without a pulp sync
         # * dist uses that remove and
-        remote_b = Remote.objects.create(name="server_b", url=server_b)
         ra_b = RemoteArtifact.objects.create(
-            content_artifact=ca, remote=remote_b, sha256=expected_aaa_digest
+            content_artifact=ca, remote=remote_b, sha256=expected_aaa_digest, url=server_b
         )
-        Distribution.objects.create(name="mydist", base_path="mydist", repository=repo_a)
+        FileDistribution.SERVE_FROM_PUBLICATION = False
+        FileDistribution.objects.create(name="mydist", base_path="mydist", repository=repo_a)
 
         return content, repo_a, ca, remote_b, ra_b
 
