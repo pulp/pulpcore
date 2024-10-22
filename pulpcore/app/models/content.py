@@ -785,7 +785,7 @@ class SigningService(BaseModel):
             env.update(env_vars)
         return env
 
-    def sign(self, filename, env_vars=None):
+    def sign(self, filename, output_path=None, env_vars=None):
         """
         Signs the file provided via 'filename' by invoking an external script (or executable).
 
@@ -796,6 +796,7 @@ class SigningService(BaseModel):
         Args:
             filename (str): A relative path to a file which is intended to be signed.
             env_vars (dict): dictionary of environment variables
+            output_path (str): Allow contents to be signed at a specific location.
 
         Raises:
             RuntimeError: If the return code of the script is not equal to 0.
@@ -803,8 +804,13 @@ class SigningService(BaseModel):
         Returns:
             A dictionary as validated by the validate() method.
         """
+        command = [self.script, filename]
+
+        if output_path:
+            command.append(output_path)
+
         completed_process = subprocess.run(
-            [self.script, filename],
+            command,
             env=self._env_variables(env_vars),
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
@@ -820,11 +826,15 @@ class SigningService(BaseModel):
 
         return return_value
 
-    async def asign(self, filename, env_vars=None):
+    async def asign(self, filename, output_path=None, env_vars=None):
         """Async version of sign."""
+        command = [self.script, filename]
+
+        if output_path:
+            command.append(output_path)
+
         process = await asyncio.create_subprocess_exec(
-            self.script,
-            filename,
+            *command,
             env=self._env_variables(env_vars),
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
