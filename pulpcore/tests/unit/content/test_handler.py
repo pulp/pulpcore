@@ -1,9 +1,13 @@
 import pytest
 import uuid
+import hashlib
 
 from unittest.mock import Mock, AsyncMock
+from aiohttp.test_utils import make_mocked_request, TestClient, TestServer
+from asgiref.sync import sync_to_async
+import aiohttp
 
-from pulpcore.content import Handler
+from pulpcore.content import Handler, server
 from pulpcore.plugin.models import (
     Artifact,
     Content,
@@ -11,6 +15,11 @@ from pulpcore.plugin.models import (
     Distribution,
     Remote,
     RemoteArtifact,
+    Repository,
+    RepositoryContent,
+    PublishedArtifact,
+    Publication,
+    RepositoryVersion,
 )
 
 
@@ -106,8 +115,8 @@ async def create_content_artifact(content):
     )
 
 
-async def create_remote():
-    return await Remote.objects.acreate(name=str(uuid.uuid4()), url="https://123")
+async def create_remote(url="https://123"):
+    return await Remote.objects.acreate(name=str(uuid.uuid4()), url=url)
 
 
 async def create_remote_artifact(remote, ca):
@@ -267,3 +276,199 @@ def test_pull_through_save_multi_artifact_content(
     artifacts = set(ca.content._artifacts.all())
     assert len(artifacts) == 2
     assert {artifact, artifact123} == artifacts
+
+
+import select
+from multiprocessing import Process, Queue
+
+import requests
+
+
+def run_server(port: int, server_dir: str, q: Queue):
+    import http.server
+    import os
+
+    handler_cls = http.server.SimpleHTTPRequestHandler
+    server_cls = http.server.HTTPServer
+
+    os.chdir(server_dir)
+    server_address = ("", port)
+    httpd = server_cls(server_address, handler_cls)
+
+    q.put(httpd.fileno())  # send to parent so can use select
+    httpd.serve_forever()
+
+
+def create_server(port: int, server_dir: str) -> Process:
+    # setup/teardown server
+    q = Queue()
+    proc = Process(target=run_server, args=(port, server_dir, q))
+    proc.start()
+
+    # block until the server socket fd is ready for write
+    server_socket_fd = q.get()
+    _, w, _ = select.select([], [server_socket_fd], [], 5)
+    if not w:
+        proc.terminate()
+        proc.join()
+        raise TimeoutError("The test server didnt get ready.")
+    return proc
+
+
+@pytest.fixture
+def server_a(tmp_path):
+    # setup data
+    server_dir = tmp_path / "server_a"
+    server_dir.mkdir()
+    blob_a = server_dir / "blob"
+    blob_a.write_bytes(b"aaa")
+    # setup server
+    port = 8787
+    proc = create_server(port, server_dir)
+    base_url = f"http://localhost:{port}"
+    yield base_url
+    proc.terminate()
+    proc.join()
+
+
+@pytest.fixture
+def server_b(tmp_path):
+    # setup data
+    server_dir = tmp_path / "server_b"
+    server_dir.mkdir()
+    blob_a = server_dir / "blob"
+    blob_a.write_bytes(b"bbb")
+    # setup server
+    port = 8788
+    proc = create_server(port, server_dir)
+    base_url = f"http://localhost:{port}"
+    yield base_url
+    proc.terminate()
+    proc.join()
+
+
+def test_mock_server(server_a, server_b):
+    response = requests.get(server_a + "/blob")
+    assert response.status_code == 200
+    assert b"aaa" == response.content
+
+    response = requests.get(server_b + "/blob")
+    assert response.status_code == 200
+    assert b"bbb" == response.content
+
+
+async def clean_db():
+    for model in (
+        Remote,
+        Distribution,
+        ContentArtifact,
+        RepositoryContent,
+        Content,
+        RemoteArtifact,
+        Artifact,
+        Repository,
+        Publication,
+        PublishedArtifact,
+        RepositoryVersion,
+        FileContent,
+        FileRepository,
+        ContentArtifact,
+    ):
+        await sync_to_async(model.objects.all().delete)()
+
+
+async def list_qs(qs):
+    return list(qs)
+
+
+try:
+    from pulp_file.app.models import FileRepository, FileRemote, FileContent, FileDistribution
+except ImportError:
+    pytestmark = pytest.mark.skip("These tests need pulp_file to be installed.")
+
+
+async def debug_reqres(req_or_resp) -> None:
+    print(f"\n--- {req_or_resp.__class__.__name__} ---")
+    print(f"Status: {req_or_resp.status}")
+    print("Headers:")
+    for header, value in req_or_resp.headers.items():
+        print(f"  {header}: {value}")
+    text = await req_or_resp.text()
+    print(f"Body: {text[:1000]}...")  # Truncate long responses
+
+
+async def on_request_start(
+    session, trace_config_ctx, params: aiohttp.TraceRequestStartParams
+) -> None:
+    print("\n--- Request Start ---")
+    print(f"Method: {params.method}")
+    print(f"URL: {params.url}")
+    print("Headers:")
+    for header, value in params.headers.items():
+        print(f"  {header}: {value}")
+
+
+async def on_request_end(session, trace_config_ctx, params: aiohttp.TraceRequestEndParams) -> None:
+    print("\n--- Response ---")
+    print(f"Status: {params.response.status}")
+    print("Headers:")
+    for header, value in params.response.headers.items():
+        print(f"  {header}: {value}")
+    text = await params.response.text()
+    print(f"Body: {text[:1000]}...")  # Truncate long responses
+
+
+def create_trace_config():
+    """Create a trace config with debug handlers."""
+    trace_config = aiohttp.TraceConfig()
+    trace_config.on_request_start.append(on_request_start)
+    trace_config.on_request_end.append(on_request_end)
+    return trace_config
+
+
+@pytest.mark.asyncio
+@pytest.mark.django_db
+async def test_server_client_setup(monkeypatch, server_a, server_b):
+    await clean_db()
+    expected_aaa_digest = hashlib.sha256(b"aaa").hexdigest()
+
+    # broken remote server setup
+    def setup_data():
+        # Add content to repository
+        remote_b = FileRemote.objects.create(name="server_b", url=server_b + "/")
+        content = FileContent.objects.create()
+        repo_a = FileRepository.objects.create(name="repo_a", remote=remote_b)
+        ca = ContentArtifact.objects.create(content=content, relative_path="blob")
+        with repo_a.new_version() as v:
+            v.add_content(FileContent.objects.filter(pk=content.pk))
+
+        # Setup Remote/CA/RA relationships
+        # * ra_b has b'bbb' but we say it's expected b'aaa'
+        # * this is to simulate server updating without a pulp sync
+        # * dist uses that remove and
+        ra_b = RemoteArtifact.objects.create(
+            content_artifact=ca, remote=remote_b, sha256=expected_aaa_digest, url=server_b
+        )
+        FileDistribution.SERVE_FROM_PUBLICATION = False
+        FileDistribution.objects.create(name="mydist", base_path="mydist", repository=repo_a)
+
+        return content, repo_a, ca, remote_b, ra_b
+
+    content, repo_a, ca, remote_b, ra_b = await sync_to_async(setup_data)()
+
+    # run aiohttp server and client
+    app = await server()
+    client = TestClient(TestServer(app))
+    await client.start_server()
+
+    try:
+        response = await client.get("/pulp/content/mydist/")
+        assert response.status == 200
+
+        response = await client.get("/pulp/content/mydist/blob")
+        # TODO: what kind of error to expect in the client side?
+        assert response.status != 200  # this passes, but if it's after text() we get an exception
+        await response.text()
+    finally:
+        await client.close()
+        await clean_db()

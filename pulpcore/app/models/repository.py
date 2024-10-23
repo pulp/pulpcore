@@ -9,6 +9,7 @@ from collections import defaultdict
 import logging
 
 import django
+from asgiref.sync import sync_to_async
 from asyncio_throttle import Throttler
 from django.conf import settings
 from django.contrib.postgres.fields import HStoreField

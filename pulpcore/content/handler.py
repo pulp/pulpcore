@@ -19,6 +19,7 @@ from yarl import URL
 from asgiref.sync import sync_to_async
 
 import django
+from pulpcore.exceptions import DigestValidationError
 
 from pulpcore.constants import STORAGE_RESPONSE_MAP
 from pulpcore.responses import ArtifactResponse
@@ -642,6 +643,9 @@ class Handler:
                             request, StreamResponse(headers=headers), ca
                         )
 
+        assert repo_version
+        assert not publication
+        assert not distro.SERVE_FROM_PUBLICATION
         if repo_version and not publication and not distro.SERVE_FROM_PUBLICATION:
             if rel_path == "" or rel_path[-1] == "/":
                 index_path = "{}index.html".format(rel_path)
@@ -686,6 +690,7 @@ class Handler:
 
         # If we haven't found a match yet, try to use pull-through caching with remote
         if distro.remote:
+            assert False, "Shouldt hit here"
             remote = await distro.remote.acast()
             if url := remote.get_remote_artifact_url(rel_path, request=request):
                 if (
@@ -1054,7 +1059,10 @@ class Handler:
         downloader.handle_data = handle_data
         original_finalize = downloader.finalize
         downloader.finalize = finalize
-        download_result = await downloader.run()
+        try:
+            download_result = await downloader.run()
+        except DigestValidationError:
+            request.transport.close()
 
         if save_artifact and remote.policy != Remote.STREAMED:
             await asyncio.shield(
