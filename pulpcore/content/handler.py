@@ -19,6 +19,7 @@ from yarl import URL
 from asgiref.sync import sync_to_async
 
 import django
+from pulpcore.exceptions import DigestValidationError
 
 from pulpcore.constants import STORAGE_RESPONSE_MAP
 from pulpcore.responses import ArtifactResponse
@@ -1058,7 +1059,10 @@ class Handler:
         downloader.handle_data = handle_data
         original_finalize = downloader.finalize
         downloader.finalize = finalize
-        download_result = await downloader.run()
+        try:
+            download_result = await downloader.run()
+        except DigestValidationError:
+            request.transport.close()
 
         if save_artifact and remote.policy != Remote.STREAMED:
             await asyncio.shield(

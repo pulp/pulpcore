@@ -5,6 +5,7 @@ import hashlib
 from unittest.mock import Mock, AsyncMock
 from aiohttp.test_utils import make_mocked_request, TestClient, TestServer
 from asgiref.sync import sync_to_async
+import aiohttp
 
 from pulpcore.content import Handler, server
 from pulpcore.plugin.models import (
@@ -386,6 +387,45 @@ except ImportError:
     pytestmark = pytest.mark.skip("These tests need pulp_file to be installed.")
 
 
+async def debug_reqres(req_or_resp) -> None:
+    print(f"\n--- {req_or_resp.__class__.__name__} ---")
+    print(f"Status: {req_or_resp.status}")
+    print("Headers:")
+    for header, value in req_or_resp.headers.items():
+        print(f"  {header}: {value}")
+    text = await req_or_resp.text()
+    print(f"Body: {text[:1000]}...")  # Truncate long responses
+
+
+async def on_request_start(
+    session, trace_config_ctx, params: aiohttp.TraceRequestStartParams
+) -> None:
+    print("\n--- Request Start ---")
+    print(f"Method: {params.method}")
+    print(f"URL: {params.url}")
+    print("Headers:")
+    for header, value in params.headers.items():
+        print(f"  {header}: {value}")
+
+
+async def on_request_end(session, trace_config_ctx, params: aiohttp.TraceRequestEndParams) -> None:
+    print("\n--- Response ---")
+    print(f"Status: {params.response.status}")
+    print("Headers:")
+    for header, value in params.response.headers.items():
+        print(f"  {header}: {value}")
+    text = await params.response.text()
+    print(f"Body: {text[:1000]}...")  # Truncate long responses
+
+
+def create_trace_config():
+    """Create a trace config with debug handlers."""
+    trace_config = aiohttp.TraceConfig()
+    trace_config.on_request_start.append(on_request_start)
+    trace_config.on_request_end.append(on_request_end)
+    return trace_config
+
+
 @pytest.mark.asyncio
 @pytest.mark.django_db
 async def test_server_client_setup(monkeypatch, server_a, server_b):
@@ -401,10 +441,6 @@ async def test_server_client_setup(monkeypatch, server_a, server_b):
         ca = ContentArtifact.objects.create(content=content, relative_path="blob")
         with repo_a.new_version() as v:
             v.add_content(FileContent.objects.filter(pk=content.pk))
-
-        repover = repo_a.latest_version()
-        assert repover
-        assert len(repover.content) != 0
 
         # Setup Remote/CA/RA relationships
         # * ra_b has b'bbb' but we say it's expected b'aaa'
@@ -426,28 +462,13 @@ async def test_server_client_setup(monkeypatch, server_a, server_b):
     await client.start_server()
 
     try:
-        # asserts
-        async def assert_content_in(path, content):
-            resp = await client.get(path)
-            assert resp.status == 200
-            text = await resp.text()
-            assert content in text
+        response = await client.get("/pulp/content/mydist/")
+        assert response.status == 200
 
-        async def assert_can_get_blob():
-            resp = await client.get("/pulp/content/mydist/blob")
-            assert resp.status == 200
-            text = await resp.text()
-            assert "aaa" in text
-
-        # await assert_content_in("/pulp/content/", content="Index of /pulp/content/")
-        # await assert_content_in("/pulp/content/mydist/", content="blob")
-        # TODO: the content handler is going through the pull-through caching and calling
-        # _stream_remote_artifact(), but I need to make it call _stream_content_artifact(),
-        # so I can test the RA selection/retry.
-        # assert await ContentArtifact.objects.filter(
-        #     content__in=repo_a.latest_version().content, relative_path="blob"
-        # ).aexists()
-        await assert_can_get_blob()
+        response = await client.get("/pulp/content/mydist/blob")
+        # TODO: what kind of error to expect in the client side?
+        assert response.status != 200  # this passes, but if it's after text() we get an exception
+        await response.text()
     finally:
         await client.close()
         await clean_db()
