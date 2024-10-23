@@ -66,6 +66,8 @@ pulp_settings:
 pulp_settings_azure:
   api_root_rewrite_header: X-API-Root
   domain_enabled: true
+  rest_framework__default_permission_classes:
+    - "pulpcore.plugin.access_policy.DefaultAccessPolicy"
 pulp_settings_gcp: null
 pulp_settings_s3:
   DISABLED_authentication_backends: '@merge django.contrib.auth.backends.RemoteUserBackend'
@@ -82,6 +84,8 @@ pulp_settings_s3:
   DISABLED_rest_framework__default_authentication_classes: '@merge pulpcore.app.authentication.JSONHeaderRemoteAuthentication'
   domain_enabled: true
   hide_guarded_distributions: true
+  rest_framework__default_permission_classes:
+    - "pulpcore.plugin.access_policy.AccessPolicyFromSettings"
 pydocstyle: true
 release_email: pulp-infra@redhat.com
 release_user: pulpbot
