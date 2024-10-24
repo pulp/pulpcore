@@ -984,6 +984,7 @@ class RepositoryVersion(BaseModel):
         if self.complete:
             raise ResourceImmutableError(self)
 
+        assert not content.exclude(pulp_domain_id=get_domain_pk()).exists()
         repo_content = []
         to_add = set(content.values_list("pk", flat=True)) - set(
             self.content.values_list("pk", flat=True)
@@ -1025,6 +1026,7 @@ class RepositoryVersion(BaseModel):
 
         if not content or not content.count():
             return
+        assert not content.exclude(pulp_domain_id=get_domain_pk()).exists()
 
         # Normalize representation if content has already been added in this version.
         # Undo addition by deleting the RepositoryContent.
