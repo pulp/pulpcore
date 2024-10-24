@@ -51,7 +51,7 @@ def test_object_creation(
     assert e.value.status == 400
     # What key should this error be under? non-field-errors seems wrong
     assert json.loads(e.value.body) == {
-        "non_field_errors": [f"Objects must all be apart of the {domain_name} domain."]
+        "non_field_errors": [f"Objects must all be a part of the {domain_name} domain."]
     }
 
     with pytest.raises(ApiException) as e:
@@ -59,7 +59,7 @@ def test_object_creation(
         file_bindings.RepositoriesFileApi.sync(repo.pulp_href, sync_body)
     assert e.value.status == 400
     assert json.loads(e.value.body) == {
-        "non_field_errors": [f"Objects must all be apart of the {domain_name} domain."]
+        "non_field_errors": [f"Objects must all be a part of the {domain_name} domain."]
     }
 
 
@@ -298,3 +298,75 @@ def test_domain_rbac(domains_api_client, gen_user, gen_object_with_cleanup, file
                 {"name": str(uuid.uuid4())}, pulp_domain=domain.name
             )
         assert e.value.status == 403
+
+
+@pytest.mark.parallel
+def test_no_cross_pollination(
+    pulpcore_bindings,
+    file_bindings,
+    basic_manifest_path,
+    file_repository_factory,
+    file_remote_factory,
+    file_publication_factory,
+    file_distribution_factory,
+    gen_object_with_cleanup,
+    monitor_task,
+):
+    """Tests that you can't use objects across domains."""
+    d_remote = file_remote_factory(manifest_path=basic_manifest_path, policy="immediate")
+    d_repo = file_repository_factory(remote=d_remote.pulp_href)
+    monitor_task(file_bindings.RepositoriesFileApi.sync(d_repo.pulp_href, {}).task)
+    d_repo = file_bindings.RepositoriesFileApi.read(d_repo.pulp_href)
+    assert d_repo.latest_version_href[-2] == "1"
+
+    body = {
+        "name": str(uuid.uuid4()),
+        "storage_class": "pulpcore.app.models.storage.FileSystem",
+        "storage_settings": {"MEDIA_ROOT": "/var/lib/pulp/media/"},
+    }
+    domain = gen_object_with_cleanup(pulpcore_bindings.DomainsApi, body)
+    # Fail repository create
+    with pytest.raises(file_bindings.ApiException) as e:
+        file_repository_factory(remote=d_remote.pulp_href, pulp_domain=domain.name)
+    assert e.value.status == 400
+    assert json.loads(e.value.body) == {
+        "non_field_errors": [f"Objects must all be a part of the {domain.name} domain."]
+    }
+
+    # Fail repository sync
+    repo = file_repository_factory(pulp_domain=domain.name)
+    with pytest.raises(file_bindings.ApiException) as e:
+        file_bindings.RepositoriesFileApi.sync(repo.pulp_href, {"remote": d_remote.pulp_href})
+    assert e.value.status == 400
+    assert json.loads(e.value.body) == {
+        "non_field_errors": [f"Objects must all be a part of the {domain.name} domain."]
+    }
+
+    # Fail publication
+    with pytest.raises(file_bindings.ApiException) as e:
+        file_publication_factory(repository=d_repo.pulp_href, pulp_domain=domain.name)
+    assert e.value.status == 400
+    assert json.loads(e.value.body) == {
+        "non_field_errors": [f"Objects must all be a part of the {domain.name} domain."]
+    }
+
+    # Fail distribute
+    with pytest.raises(file_bindings.ApiException) as e:
+        file_distribution_factory(repository=d_repo.pulp_href, pulp_domain=domain.name)
+    assert e.value.status == 400
+    assert json.loads(e.value.body) == {
+        "non_field_errors": [f"Objects must all be a part of the {domain.name} domain."]
+    }
+
+    # Fail repo modify
+    content = file_bindings.ContentFilesApi.list(repository_version=d_repo.latest_version_href)
+    content_hrefs = [c.pulp_href for c in content.results]
+    body = {"add_content_units": content_hrefs}
+    with pytest.raises(file_bindings.ApiException) as e:
+        file_bindings.RepositoriesFileApi.modify(repo.pulp_href, body)
+    assert e.value.status == 400
+    error = json.loads(e.value.body)
+    assert "add_content_units" in error
+    assert error["add_content_units"][0].startswith(
+        f"Content units are not a part of the current domain {domain.name}: ["
+    )
