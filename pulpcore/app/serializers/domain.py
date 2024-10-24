@@ -311,7 +311,7 @@ class GoogleSettingsSerializer(BaseSettingsClass):
 
     bucket_name = serializers.CharField(required=True)
     project_id = serializers.CharField(required=True)
-    # credentials = serializers.JSONField(write_only=True)  # Need better upstream support
+    # credentials = fields.JSONDictField(write_only=True)  # Need better upstream support
     custom_endpoint = serializers.CharField(allow_null=True, default=None)
     location = serializers.CharField(allow_blank=True, default="")
     default_acl = serializers.CharField(allow_null=True, default=None)
