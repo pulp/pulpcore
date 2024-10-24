@@ -317,7 +317,7 @@ class ValidateFieldsMixin:
                 ):
                     if current_domain.pulp_id != domain_id:
                         raise serializers.ValidationError(
-                            _("Objects must all be apart of the {} domain.").format(
+                            _("Objects must all be a part of the {} domain.").format(
                                 current_domain.name
                             )
                         )
