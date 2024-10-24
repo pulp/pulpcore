@@ -1,0 +1,2 @@
+Fixed the JSONField specification so it doesn't break ruby bindings.
+See context [here](https://github.com/pulp/pulp_rpm/issues/3639).
