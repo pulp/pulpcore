@@ -201,7 +201,11 @@ def extract_pk(uri, only_prn=False):
         raise ValidationError("URI does not contain an unqualified resource PK")
 
 
-def raise_for_unknown_content_units(existing_content_units, content_units_pks_hrefs):
+def raise_for_unknown_content_units(
+    existing_content_units,
+    content_units_pks_hrefs,
+    domain=None,
+):
     """Verify if all the specified content units were found in the database.
 
     Args:
@@ -209,9 +213,22 @@ def raise_for_unknown_content_units(existing_content_units, content_units_pks_hr
             specified_content_units.
         content_units_pks_hrefs (dict): An original dictionary of pk-href pairs that
             are used for the verification.
+        domain (pulpcore.plugin.models.Domain): A domain to use for verifying that all the
+            content units are within the same domain. defaults to current domain.
     Raises:
-        ValidationError: If some of the referenced content units are not present in the database
+        ValidationError: If some of the referenced content units are not present in the database or
+            content units are from multiple domains
     """
+    domain = domain or get_domain()
+    bad_domain_pks = existing_content_units.exclude(pulp_domain=domain).values_list("pk", flat=True)
+    if bad_domain_pks:
+        bad_hrefs = [content_units_pks_hrefs[str(pk)] for pk in bad_domain_pks]
+        raise ValidationError(
+            _("Content units are not a part of the current domain {}: {}").format(
+                domain.name, bad_hrefs
+            )
+        )
+
     existing_content_units_pks = existing_content_units.values_list("pk", flat=True)
     existing_content_units_pks = set(map(str, existing_content_units_pks))
 
