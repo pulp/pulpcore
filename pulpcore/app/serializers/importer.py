@@ -12,6 +12,7 @@ from pulpcore.app.serializers import (
     ModelSerializer,
     RelatedField,
     ValidateFieldsMixin,
+    fields,
 )
 
 
@@ -40,7 +41,7 @@ class ImportSerializer(ModelSerializer):
         view_name="tasks-detail",
     )
 
-    params = serializers.JSONField(
+    params = fields.JSONDictField(
         help_text=_("Any parameters that were used to create the import."),
     )
 
