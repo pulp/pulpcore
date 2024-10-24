@@ -11,6 +11,7 @@ from pulpcore.app.serializers import (
     RelatedField,
     RelatedResourceField,
     TaskGroupStatusCountField,
+    fields,
 )
 from pulpcore.constants import TASK_STATES
 from pulpcore.app.util import reverse
@@ -46,7 +47,7 @@ class TaskSerializer(ModelSerializer):
         help_text=_("Timestamp of when this task stopped execution."), read_only=True
     )
     error = serializers.DictField(
-        child=serializers.JSONField(),
+        child=fields.JSONDictField(),
         help_text=_(
             "A JSON Object of a fatal error encountered during the execution of this task."
         ),

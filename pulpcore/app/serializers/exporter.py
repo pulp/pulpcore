@@ -15,6 +15,7 @@ from pulpcore.app.serializers import (
     RelatedField,
     RelatedResourceField,
     RepositoryVersionRelatedField,
+    fields,
 )
 from pulpcore.constants import FS_EXPORT_CHOICES, FS_EXPORT_METHODS
 
@@ -103,7 +104,7 @@ class ExportSerializer(ModelSerializer):
         view_name="None",  # This is a polymorphic field. The serializer does not need a view name.
     )
 
-    params = serializers.JSONField(
+    params = fields.JSONDictField(
         help_text=_("Any additional parameters that were used to create the export."),
         read_only=True,
     )
@@ -118,12 +119,12 @@ class PulpExportSerializer(ExportSerializer):
     Serializer for PulpExports.
     """
 
-    output_file_info = serializers.JSONField(
+    output_file_info = fields.JSONDictField(
         help_text=_("Dictionary of filename: sha256hash entries for export-output-file(s)"),
         read_only=True,
     )
 
-    toc_info = serializers.JSONField(
+    toc_info = fields.JSONDictField(
         help_text=_("Filename and sha256-checksum of table-of-contents for this export"),
         read_only=True,
     )
