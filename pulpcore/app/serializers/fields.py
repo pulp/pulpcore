@@ -21,13 +21,48 @@ def relative_path_validator(relative_path):
         )
 
 
+# Prefer JSONDictField and JSONListField over JSONField:
+# * Drf serializers.JSONField provides a OpenApi schema type of Any.
+# * This can cause problems with bindings and is not helpful to the user.
+# * https://github.com/tfranzel/drf-spectacular/issues/1095
+
+
 @extend_schema_field(OpenApiTypes.OBJECT)
 class JSONDictField(serializers.JSONField):
-    """A drf JSONField override to force openapi schema to use 'object' type.
+    """A JSONField accepting dicts, specifying as type 'object' in the openapi."""
 
-    Not strictly correct, but we relied on that for a long time.
-    See: https://github.com/tfranzel/drf-spectacular/issues/1095
-    """
+    def to_internal_value(self, data):
+        value = super().to_internal_value(data)
+        ERROR_MSG = f"Invalid type. Expected a JSON object (dict), got {value!r}."
+        # This condition is from the JSONField source:
+        # if it's True, it will return the python representation,
+        # else the raw data string
+        returns_python_repr = self.binary or getattr(data, "is_json_string", False)
+        if returns_python_repr:
+            if not isinstance(value, dict):
+                raise serializers.ValidationError(ERROR_MSG)
+        elif not value.strip().startswith("{"):
+            raise serializers.ValidationError(ERROR_MSG)
+        return value
+
+
+@extend_schema_field(serializers.ListField)
+class JSONListField(serializers.JSONField):
+    """A JSONField accepting lists, specifying as type 'array' in the openapi."""
+
+    def to_internal_value(self, data):
+        value = super().to_internal_value(data)
+        ERROR_MSG = f"Invalid type. Expected a JSON array (list), got {value!r}."
+        # This condition is from the JSONField source:
+        # if it's True, it will return the python representation,
+        # else the raw data string
+        returns_python_repr = self.binary or getattr(data, "is_json_string", False)
+        if returns_python_repr:
+            if not isinstance(value, list):
+                raise serializers.ValidationError(ERROR_MSG)
+        elif not value.strip().startswith("["):
+            raise serializers.ValidationError(ERROR_MSG)
+        return value
 
 
 class SingleContentArtifactField(RelatedField):

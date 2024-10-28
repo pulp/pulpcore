@@ -30,6 +30,8 @@ from .fields import (
     ImportsIdentityFromImporterField,
     ImportRelatedField,
     ImportIdentityField,
+    JSONDictField,
+    JSONListField,
     LatestVersionField,
     SingleContentArtifactField,
     RepositoryVersionsIdentityFromRepositoryField,

@@ -1,0 +1,7 @@
+Exposed JSONDictField and JSONListField on the plugin API.
+
+DRF serializers.JSONField can be any json entity, but we want more precise types
+for better schema/bindings representation. New fields that are supposed to be dict
+or list structures should use the new JSONDictField or JSONListField field.
+
+Some context: <https://github.com/pulp/pulp_rpm/issues/3639>
