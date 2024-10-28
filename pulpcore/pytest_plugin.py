@@ -3,6 +3,7 @@ import asyncio
 import gnupg
 import json
 import os
+import pathlib
 import requests
 import shutil
 import socket
@@ -1171,11 +1172,18 @@ def signing_gpg_metadata(signing_gpg_homedir_path):
     """A fixture that returns a GPG instance and related metadata (i.e., fingerprint, keyid)."""
     PRIVATE_KEY_URL = "https://raw.githubusercontent.com/pulp/pulp-fixtures/master/common/GPG-PRIVATE-KEY-fixture-signing"  # noqa: E501
 
-    response = requests.get(PRIVATE_KEY_URL)
-    response.raise_for_status()
+    key_file = pathlib.Path(__file__).parent / "GPG-PRIVATE-KEY-fixture-signing"
+    if key_file.exists():
+        private_key_data = key_file.read_text()
+    else:
+        response = requests.get(PRIVATE_KEY_URL)
+        response.raise_for_status()
+        private_key_data = response.text
+        with suppress(FileNotFoundError, PermissionError):
+            key_file.write_text(private_key_data)
 
     gpg = gnupg.GPG(gnupghome=signing_gpg_homedir_path)
-    gpg.import_keys(response.content)
+    gpg.import_keys(private_key_data)
 
     fingerprint = gpg.list_keys()[0]["fingerprint"]
     keyid = gpg.list_keys()[0]["keyid"]
