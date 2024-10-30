@@ -83,6 +83,11 @@ Specific examples for different storage backends:
     orphaned content.
 
 
+!!! note
+    The AWS access key must be authorized to perform the `s3:ListBucket` and `s3:PutObject`
+    operations.
+
+
 !!! warning
     Changing the `storage-class` or `storage-settings` of an in-use domain is
     dangerous and can result in a broken domain.
