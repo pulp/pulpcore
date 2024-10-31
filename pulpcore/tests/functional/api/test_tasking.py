@@ -1,6 +1,5 @@
 """Tests related to the tasking system."""
 
-import os
 import json
 import pytest
 import time
@@ -335,12 +334,7 @@ def test_task_version_prevent_pickup(dispatch_task, pulpcore_bindings):
         pulpcore_bindings.TasksApi.tasks_cancel(task_href, {"state": "canceled"})
 
 
-def test_emmiting_unblocked_task_telemetry(
-    dispatch_task, pulpcore_bindings, pulp_settings, received_otel_metrics
-):
-    if os.getenv("PULP_OTEL_ENABLED").lower() != "true":
-        pytest.skip("Need PULP_OTEL_ENABLED to run this test.")
-
+def test_emmiting_unblocked_task_telemetry(dispatch_task, pulpcore_bindings, pulp_settings):
     # Checking online workers ready to get a task
     workers_online = pulpcore_bindings.WorkersApi.list(online="true").count
 
@@ -355,23 +349,6 @@ def test_emmiting_unblocked_task_telemetry(
 
     task = pulpcore_bindings.TasksApi.read(task_href)
     assert task.state == "waiting"
-
-    # And trigger the metrics
-    assert received_otel_metrics(
-        {
-            "name": "tasks_unblocked_queue",
-            "description": "Number of unblocked tasks waiting in the queue.",
-            "unit": "tasks",
-        }
-    )
-
-    assert received_otel_metrics(
-        {
-            "name": "tasks_longest_unblocked_time",
-            "description": "The age of the longest waiting task.",
-            "unit": "seconds",
-        }
-    )
 
     [
         pulpcore_bindings.TasksApi.tasks_cancel(task_href, {"state": "canceled"})

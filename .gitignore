@@ -41,6 +41,7 @@ tags
 # Vagrant
 .vagrant
 Vagrantfile
+__pycache__/
 
 # Built documentation
 docs/_build
