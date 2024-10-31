@@ -8,6 +8,21 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.21.35 (2024-10-31) {: #3.21.35 }
+
+### REST API {: #3.21.35-rest-api }
+
+#### Bugfixes {: #3.21.35-rest-api-bugfix }
+
+- Fixed the JSONField specification so it doesn't break ruby bindings.
+  See context [here](https://github.com/pulp/pulp_rpm/issues/3639).
+
+### Plugin API {: #3.21.35-plugin-api }
+
+No significant changes.
+
+---
+
 ## 3.21.34 (2024-10-01) {: #3.21.34 }
 
 ### REST API {: #3.21.34-rest-api }
