@@ -8,7 +8,7 @@ Using Pulp you can:
 - Locally mirror all or part of a repository
 - Host your own content in a new repository
 - Manage content from multiple sources in one place
-- Promote content through different repos in an organized way
+- Promote content through different repositories in an organized way
 
 Pulp is completely free and open-source!
 - License: GPLv2+
