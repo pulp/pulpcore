@@ -3,6 +3,7 @@ dist
 *.egg-info
 pip-wheel-metadata/
 .pytest_cache
+__pycache__/
 
 # Built documentation
 docs/_build
