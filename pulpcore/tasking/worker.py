@@ -11,7 +11,6 @@ from datetime import datetime, timedelta
 from multiprocessing import Process
 from tempfile import TemporaryDirectory
 from packaging.version import parse as parse_version
-from opentelemetry.metrics import get_meter
 
 from django.conf import settings
 from django.db import connection
@@ -25,6 +24,7 @@ from pulpcore.constants import (
     TASK_UNBLOCKING_LOCK,
     TASK_METRICS_HEARTBEAT_LOCK,
 )
+from pulpcore.metrics import init_otel_meter
 from pulpcore.app.apps import pulp_plugin_configs
 from pulpcore.app.models import Worker, Task, ApiAppStatus, ContentAppStatus
 from pulpcore.app.util import PGAdvisoryLock, get_domain
@@ -74,26 +74,32 @@ class PulpcoreWorker:
             int(WORKER_CLEANUP_INTERVAL / 10), WORKER_CLEANUP_INTERVAL
         )
 
-        meter = get_meter(__name__)
-        self.tasks_unblocked_queue_meter = meter.create_gauge(
-            name="tasks_unblocked_queue",
-            description="Number of unblocked tasks waiting in the queue.",
-            unit="tasks",
-        )
-
-        self.tasks_longest_unblocked_time_meter = meter.create_gauge(
-            name="tasks_longest_unblocked_time",
-            description="The age of the longest waiting task.",
-            unit="seconds",
-        )
-
         # Add a file descriptor to trigger select on signals
         self.sentinel, sentinel_w = os.pipe()
         os.set_blocking(self.sentinel, False)
         os.set_blocking(sentinel_w, False)
         signal.set_wakeup_fd(sentinel_w)
 
+        self._init_instrumentation()
+
         startup_hook()
+
+    def _init_instrumentation(self):
+        if settings.OTEL_ENABLED:
+            meter = init_otel_meter("pulp-worker")
+            self.tasks_unblocked_queue_meter = meter.create_gauge(
+                name="tasks_unblocked_queue",
+                description="Number of unblocked tasks waiting in the queue.",
+                unit="tasks",
+            )
+            self.tasks_longest_unblocked_time_meter = meter.create_gauge(
+                name="tasks_longest_unblocked_time",
+                description="The age of the longest waiting task.",
+                unit="seconds",
+            )
+            self.record_unblocked_waiting_tasks_metric = self._record_unblocked_waiting_tasks_metric
+        else:
+            self.record_unblocked_waiting_tasks_metric = lambda *args, **kwargs: None
 
     def _signal_handler(self, thesignal, frame):
         if thesignal in (signal.SIGHUP, signal.SIGTERM):
@@ -469,10 +475,7 @@ class PulpcoreWorker:
                 keep_looping = True
                 self.supervise_task(task)
 
-    def record_unblocked_waiting_tasks_metric(self):
-        if os.getenv("PULP_OTEL_ENABLED", "").lower() != "true":
-            return
-
+    def _record_unblocked_waiting_tasks_metric(self):
         now = timezone.now()
         if now > self.last_metric_heartbeat + self.heartbeat_period:
             with contextlib.suppress(AdvisoryLockError), PGAdvisoryLock(

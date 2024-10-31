@@ -483,7 +483,7 @@ def configure_periodic_telemetry():
     dispatch_interval = timedelta(minutes=5)
     name = "Emit OpenTelemetry metrics periodically"
 
-    if os.getenv("PULP_OTEL_ENABLED", "").lower() == "true" and settings.DOMAIN_ENABLED:
+    if settings.OTEL_ENABLED and settings.DOMAIN_ENABLED:
         models.TaskSchedule.objects.update_or_create(
             name=name, defaults={"task_name": task_name, "dispatch_interval": dispatch_interval}
         )
@@ -613,34 +613,6 @@ def cache_key(base_path):
     return base_path
 
 
-class MetricsEmitter:
-    """
-    A builder class that initializes an emitter.
-
-    If Open Telemetry is enabled, the builder configures a real emitter capable of sending data to
-    the collector. Otherwise, a no-op emitter is initialized. The real emitter may utilize the
-    global settings to send metrics.
-
-    By default, the emitter sends data to the collector every 60 seconds. Adjust the environment
-    variable OTEL_METRIC_EXPORT_INTERVAL accordingly if needed.
-    """
-
-    class _NoopEmitter:
-        def __call__(self, *args, **kwargs):
-            return self
-
-        def __getattr__(self, *args, **kwargs):
-            return self
-
-    @classmethod
-    def build(cls, *args, **kwargs):
-        otel_enabled = os.getenv("PULP_OTEL_ENABLED", "").lower() == "true"
-        if otel_enabled and settings.DOMAIN_ENABLED:
-            return cls(*args, **kwargs)
-        else:
-            return cls._NoopEmitter()
-
-
 @lru_cache(maxsize=1)
 def get_worker_name():
     return f"{os.getpid()}@{socket.gethostname()}"
@@ -672,3 +644,19 @@ class PGAdvisoryLock:
             released = cursor.fetchone()[0]
         if not released:
             raise RuntimeError("Lock not held.")
+
+
+def normalize_http_status(status):
+    """Convert the HTTP status code to 2xx, 3xx, etc., normalizing the last two digits."""
+    if 100 <= status < 200:
+        return "1xx"
+    elif 200 <= status < 300:
+        return "2xx"
+    elif 300 <= status < 400:
+        return "3xx"
+    elif 400 <= status < 500:
+        return "4xx"
+    elif 500 <= status < 600:
+        return "5xx"
+    else:
+        return ""
