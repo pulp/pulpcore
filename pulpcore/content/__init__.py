@@ -3,12 +3,9 @@ from contextlib import suppress
 from importlib import import_module
 import logging
 import os
-import socket
 
 from asgiref.sync import sync_to_async
 from aiohttp import web
-
-from opentelemetry.instrumentation.aiohttp_server import middleware as instrumentation
 
 import django
 
@@ -27,12 +24,16 @@ from pulpcore.app.models import ContentAppStatus  # noqa: E402: module level not
 from pulpcore.app.util import get_worker_name  # noqa: E402: module level not at top of file
 
 from .handler import Handler  # noqa: E402: module level not at top of file
+from .instrumentation import instrumentation  # noqa: E402: module level not at top of file
 from .authentication import authenticate  # noqa: E402: module level not at top of file
 
 
 log = logging.getLogger(__name__)
 
-app = web.Application(middlewares=[authenticate, instrumentation])
+if settings.OTEL_ENABLED:
+    app = web.Application(middlewares=[authenticate, instrumentation()])
+else:
+    app = web.Application(middlewares=[authenticate])
 
 CONTENT_MODULE_NAME = "content"
 

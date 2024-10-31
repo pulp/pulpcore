@@ -358,6 +358,9 @@ KAFKA_SASL_MECHANISM = None
 KAFKA_SASL_USERNAME = None
 KAFKA_SASL_PASSWORD = None
 
+# opentelemetry settings
+OTEL_ENABLED = False
+
 # HERE STARTS DYNACONF EXTENSION LOAD (Keep at the very bottom of settings.py)
 # Read more at https://www.dynaconf.com/django/
 from dynaconf import DjangoDynaconf, Validator  # noqa
@@ -449,6 +452,14 @@ authentication_json_header_openapi_security_scheme_validator = Validator(
     messages={"is_type_of": "{name} must be a dictionary."},
 )
 
+
+def otel_middleware_hook(settings):
+    data = {"dynaconf_merge": True}
+    if settings.OTEL_ENABLED:
+        data["MIDDLEWARE"] = ["pulpcore.middleware.DjangoMetricsMiddleware"]
+    return data
+
+
 settings = DjangoDynaconf(
     __name__,
     ENVVAR_PREFIX_FOR_DYNACONF="PULP",
@@ -467,6 +478,7 @@ settings = DjangoDynaconf(
         json_header_auth_validator,
         authentication_json_header_openapi_security_scheme_validator,
     ],
+    post_hooks=otel_middleware_hook,
 )
 # HERE ENDS DYNACONF EXTENSION LOAD (No more code below this line)
 

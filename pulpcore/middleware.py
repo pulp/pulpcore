@@ -1,8 +1,17 @@
-from pulpcore.app.models import Domain
-from pulpcore.app.util import set_current_user_lazy, set_domain
+import time
+
 from django.http.response import Http404
 from django.conf import settings
 from django.core.exceptions import MiddlewareNotUsed
+
+from pulpcore.metrics import init_otel_meter
+from pulpcore.app.models import Domain
+from pulpcore.app.util import (
+    get_worker_name,
+    normalize_http_status,
+    set_current_user_lazy,
+    set_domain,
+)
 
 
 class DomainMiddleware:
@@ -84,3 +93,53 @@ class APIRootRewriteMiddleware:
             raise Http404()
 
         return None
+
+
+class DjangoMetricsMiddleware:
+    def __init__(self, get_response):
+        self.meter = init_otel_meter("pulp-api")
+        self.request_duration_histogram = self.meter.create_histogram(
+            name="api.request_duration",
+            description="Tracks the duration of HTTP requests",
+            unit="ms",
+        )
+
+        self.get_response = get_response
+
+    def __call__(self, request):
+        start_time = time.time()
+        response = self.get_response(request)
+        end_time = time.time()
+
+        duration_ms = (end_time - start_time) * 1000
+        attributes = self._process_attributes(request, response)
+
+        self.request_duration_histogram.record(duration_ms, attributes=attributes)
+
+        return response
+
+    def _set_histogram(self, meter):
+        self.request_duration_histogram = meter.create_histogram(
+            name="api.request_duration",
+            description="Tracks the duration of HTTP requests",
+            unit="ms",
+        )
+
+    def _process_attributes(self, request, response):
+        return {
+            "http.method": request.method,
+            "http.status_code": normalize_http_status(response.status_code),
+            "http.target": self._process_path(request, response),
+            "worker.name": get_worker_name(),
+        }
+
+    @staticmethod
+    def _process_path(request, response):
+        # to prevent cardinality explosion, do not record invalid paths
+        if response.status_code > 400:
+            return ""
+
+        # these attributes are initialized in the django's process_view method
+        match = getattr(request, "resolver_match", "")
+        route = getattr(match, "route", "")
+        return route

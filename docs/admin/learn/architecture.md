@@ -139,56 +139,29 @@ An example payload:
 
 ## Telemetry Support
 
-Pulp can produce OpenTelemetry data, like the number of requests, active connections and latency response for
-`pulp-api` and `pulp-content` using OpenTelemetry. You can read more about
-[OpenTelemetry here](https://opentelemetry.io).
+Pulp can produce telemetry data, like the response latency, using OpenTelemetry. You can read more
+about [OpenTelemetry here](https://opentelemetry.io). The telemetry is **disabled by default**.
 
 !!! attention
     This feature is provided as a tech preview and could change in backwards incompatible
     ways in the future.
 
-If you are using [Pulp in One Container](site:pulp-oci-images/docs/admin/tutorials/quickstart/#single-container)
-or [Pulp Operator](site:pulp-operator/) and want to enable it, you will need to set the following environment variables:
+In order to enable the telemetry, set `OTEL_ENABLED=True` in the settings  file and follow the next
+steps:
 
-- `PULP_OTEL_ENABLED` set to `True`.
-- `OTEL_EXPORTER_OTLP_ENDPOINT` set to the address of your OpenTelemetry Collector instance
-  ex. `http://otel-collector:4318`.
-- `OTEL_EXPORTER_OTLP_PROTOCOL` set to `http/protobuf`.
+- Spin up a new instance of the [Opentelemetry Collector](https://opentelemetry.io/docs/collector/).
+- Configure the `OTEL_EXPORTER_OTLP_ENDPOINT` environment variable to point to the address of the
+  OpenTelemetry Collector instance (e.g.,`http://otel-collector:4318`).
+- Set the `OTEL_EXPORTER_OTLP_PROTOCOL` environment variable to `http/protobuf`.
 
-If you are using other type of installation maybe you will need to manually initialize Pulp using the
-[OpenTelemetry automatic instrumentation](https://opentelemetry.io/docs/instrumentation/python/getting-started/#instrumentation)
-and set the following environment variables:
-
-- `OTEL_EXPORTER_OTLP_ENDPOINT` set to the address of your OpenTelemetry Collector instance
-  ex. `http://otel-collector:4318`.
-- `OTEL_EXPORTER_OTLP_PROTOCOL` set to `http/protobuf`.
-
-!!! note
-    A quick example on how it would run using this method:
-
-```bash
-/usr/local/bin/opentelemetry-instrument --service_name pulp-api /usr/local/bin/pulpcore-api \
---bind "127.0.0.1:24817" --name pulp-api --workers 4 --access-logfile -
-```
-
-
-You will need to run an instance of OpenTelemetry Collector. You can read more about the [OpenTelemetry
-Collector here](https://opentelemetry.io/docs/collector/).
 
 **At the moment, the following data is recorded by Pulp:**
 
-- Access to every API endpoint (an HTTP method, target URL, status code, and user agent).
-- Access to every requested package (an HTTP method, target URL, status code, and user agent).
-- Disk usage within a specific domain (total used disk space and the reference to a domain). Currently disabled.
+- Latency of API endpoints (along with an HTTP method, URL, status code, and unique worker name).
+- Latency of delivering requested packages (an HTTP method, status code, and unique worker name).
+- Disk usage within a specific domain (total used disk space and the reference to a domain).
 - The size of served artifacts (total count of served data and the reference to a domain).
 
-The information above is sent to the collector in the form of spans and metrics. Thus, the data is
-emitted either based on the user interaction with the system or on a regular basis. Consult
-[OpenTelemetry Traces](https://opentelemetry.io/docs/concepts/signals/traces/) and
+The information above is sent to the collector in the form of metrics. Thus, the data is  emitted
+either based on the user interaction with the system or on a regular basis. Consult
 [OpenTelemetry Metrics](https://opentelemetry.io/docs/concepts/signals/metrics/) to learn more.
-
-!!! note
-    It is highly recommended to set the [`OTEL_METRIC_EXPORT_INTERVAL`](https://opentelemetry.io/docs/specs/otel/configuration/sdk-environment-variables/#periodic-exporting-metricreader)
-    environment variable to `300000` (5 minutes) to reduce the frequency of queries executed on the
-    Pulp's backend. This value represents the interval between emitted metrics and should be set
-    before runtime.

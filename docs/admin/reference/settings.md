@@ -459,3 +459,11 @@ Defaults to `False`.
 Timeout in seconds for the kafka producer polling thread's `poll` calls.
 
 Defaults to `0.1`.
+
+
+### OTEL_ENABLED
+
+Toggles the activation of OpenTelemetry instrumentation for monitoring and tracing the application's
+performance.
+
+Defaults to `False`.
