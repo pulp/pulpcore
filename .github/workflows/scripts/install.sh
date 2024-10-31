@@ -120,7 +120,7 @@ if [ "$TEST" = "azure" ]; then
     command: "azurite-blob --blobHost 0.0.0.0"' vars/main.yaml
   sed -i -e '$a azure_test: true\
 pulp_scenario_settings: {"domain_enabled": true}\
-pulp_scenario_env: {"otel_bsp_max_export_batch_size": 1, "otel_bsp_max_queue_size": 1, "otel_exporter_otlp_endpoint": "http://localhost:4318", "otel_exporter_otlp_protocol": "http/protobuf", "pulp_otel_enabled": "true"}\
+pulp_scenario_env: {}\
 ' vars/main.yaml
 fi
 
@@ -166,5 +166,5 @@ if [[ "$TEST" = "azure" ]]; then
 fi
 
 echo ::group::PIP_LIST
-cmd_prefix bash -c "pip3 list && pipdeptree"
+cmd_prefix bash -c "pip3 list"
 echo ::endgroup::
