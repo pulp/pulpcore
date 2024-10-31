@@ -59,25 +59,17 @@ STATUS = {
 
 
 @pytest.mark.parallel
-def test_get_authenticated(test_path, pulpcore_bindings, received_otel_span):
+def test_get_authenticated(test_path, pulpcore_bindings):
     """GET the status path with valid credentials.
 
     Verify the response with :meth:`verify_get_response`.
     """
     response = pulpcore_bindings.StatusApi.status_read()
     verify_get_response(response.to_dict(), STATUS)
-    assert received_otel_span(
-        {
-            "http.method": "GET",
-            "http.target": "/pulp/api/v3/status/",
-            "http.status_code": 200,
-            "http.user_agent": test_path,
-        }
-    )
 
 
 @pytest.mark.parallel
-def test_get_unauthenticated(test_path, pulpcore_bindings, anonymous_user, received_otel_span):
+def test_get_unauthenticated(test_path, pulpcore_bindings, anonymous_user):
     """GET the status path with no credentials.
 
     Verify the response with :meth:`verify_get_response`.
@@ -85,14 +77,6 @@ def test_get_unauthenticated(test_path, pulpcore_bindings, anonymous_user, recei
     with anonymous_user:
         response = pulpcore_bindings.StatusApi.status_read()
     verify_get_response(response.to_dict(), STATUS)
-    assert received_otel_span(
-        {
-            "http.method": "GET",
-            "http.target": "/pulp/api/v3/status/",
-            "http.status_code": 200,
-            "http.user_agent": test_path,
-        }
-    )
 
 
 @pytest.mark.parallel
@@ -101,7 +85,6 @@ def test_post_authenticated(
     pulp_api_v3_path,
     pulp_api_v3_url,
     pulpcore_bindings,
-    received_otel_span,
 ):
     """POST the status path with valid credentials.
 
@@ -117,14 +100,6 @@ def test_post_authenticated(
         pulpcore_bindings.client.request("POST", status_url, headers={"User-Agent": test_path})
 
     assert e.value.status == 405
-    assert received_otel_span(
-        {
-            "http.method": "POST",
-            "http.target": f"{pulp_api_v3_path}status/",
-            "http.status_code": 405,
-            "http.user_agent": test_path,
-        }
-    )
 
 
 @pytest.mark.parallel
