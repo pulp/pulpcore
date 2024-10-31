@@ -28,8 +28,7 @@ RUN pip3 install --upgrade pip setuptools wheel && \
 {{ " " }}-r ./{{ item.name }}/ci_requirements.txt
 {%- endif -%}
 {%- endfor %}
-{{ " " }}-c ./{{ plugins[0].name }}/.ci/assets/ci_constraints.txt \
-  pipdeptree && \
+{{ " " }}-c ./{{ plugins[0].name }}/.ci/assets/ci_constraints.txt && \
   rm -rf /root/.cache/pip
 
 {% if pulp_env is defined and pulp_env %}
