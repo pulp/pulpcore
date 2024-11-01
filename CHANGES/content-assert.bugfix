@@ -1,0 +1,1 @@
+Fixed an assertion on all content being added/removed in a repository version is of the same domain.
