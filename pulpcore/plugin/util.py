@@ -14,6 +14,7 @@ from pulpcore.app.role_util import (
 
 from pulpcore.app.util import (
     batch_qs,
+    cache_key,
     extract_pk,
     get_artifact_url,
     get_prn,
@@ -60,4 +61,5 @@ __all__ = [
     "reverse",
     "set_current_user",
     "resolve_prn",
+    "cache_key",
 ]
