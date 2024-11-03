@@ -147,5 +147,5 @@ jobs:
           docker logs pulp || true
           docker exec pulp ls -latr /etc/yum.repos.d/ || true
           docker exec pulp cat /etc/yum.repos.d/* || true
-          docker exec pulp bash -c "pip3 list && pip3 install pipdeptree && pipdeptree"
+          docker exec pulp bash -c "pip3 list" || true
 ...
