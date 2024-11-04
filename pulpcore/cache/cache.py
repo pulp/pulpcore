@@ -354,8 +354,7 @@ class AsyncContentCache(AsyncCache):
                 response = await self.make_entry(
                     key, bk, func, args, kwargs, self.default_expires_ttl
                 )
-
-            if size := response.headers.get("X-PULP-ARTIFACT-SIZE"):
+            elif size := response.headers.get("X-PULP-ARTIFACT-SIZE"):
                 artifacts_size_counter.add(size)
 
             return response

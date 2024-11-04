@@ -55,6 +55,7 @@ from pulpcore.app.util import (  # noqa: E402: module level not at top of file
 )
 
 from pulpcore.exceptions import UnsupportedDigestValidationError  # noqa: E402
+from pulpcore.metrics import artifacts_size_counter  # noqa: E402
 
 from jinja2 import Template  # noqa: E402: module level not at top of file
 from pulpcore.cache import AsyncContentCache  # noqa: E402
@@ -993,6 +994,7 @@ class Handler:
             raise HTTPRequestRangeNotSatisfiable(headers={"Content-Range": f"bytes */{size}"})
 
         headers["X-PULP-ARTIFACT-SIZE"] = str(content_length)
+        artifacts_size_counter.add(content_length)
 
         if domain.storage_class == "pulpcore.app.models.storage.FileSystem":
             path = storage.path(artifact_name)
@@ -1127,8 +1129,10 @@ class Handler:
 
         if content_length := response.headers.get("Content-Length"):
             response.headers["X-PULP-ARTIFACT-SIZE"] = content_length
+            artifacts_size_counter.add(content_length)
         else:
             response.headers["X-PULP-ARTIFACT-SIZE"] = str(size)
+            artifacts_size_counter.add(size)
 
         if save_artifact and remote.policy != Remote.STREAMED:
             await asyncio.shield(
