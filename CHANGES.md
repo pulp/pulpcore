@@ -8,6 +8,34 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.49.23 (2024-11-06) {: #3.49.23 }
+
+### REST API {: #3.49.23-rest-api }
+
+#### Bugfixes {: #3.49.23-rest-api-bugfix }
+
+- Fixed repository modify allowing content from separate domains.
+  [#5934](https://github.com/pulp/pulpcore/issues/5934)
+- Fixed the JSONField specification so it doesn't break ruby bindings.
+  See context [here](https://github.com/pulp/pulp_rpm/issues/3639).
+
+### Plugin API {: #3.49.23-plugin-api }
+
+#### Bugfixes {: #3.49.23-plugin-api-bugfix }
+
+- Downloaders now always ensure the download ends up under `WORKING_DIRECTORY`.
+  [#5912](https://github.com/pulp/pulpcore/issues/5912)
+
+### Pulp File {: #3.49.23-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.49.23-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.49.22 (2024-10-17) {: #3.49.22 }
 
 ### REST API {: #3.49.22-rest-api }
