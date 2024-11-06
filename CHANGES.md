@@ -8,6 +8,31 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.66.1 (2024-11-06) {: #3.66.1 }
+
+### REST API {: #3.66.1-rest-api }
+
+#### Bugfixes {: #3.66.1-rest-api-bugfix }
+
+- Fixed repository modify allowing content from separate domains.
+  [#5934](https://github.com/pulp/pulpcore/issues/5934)
+- Fixed the JSONField specification so it doesn't break ruby bindings.
+  See context [here](https://github.com/pulp/pulp_rpm/issues/3639).
+
+### Plugin API {: #3.66.1-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.66.1-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.66.1-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.66.0 (2024-10-16) {: #3.66.0 }
 
 ### REST API {: #3.66.0-rest-api }
