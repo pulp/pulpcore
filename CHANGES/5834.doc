@@ -1,1 +1,0 @@
-Fixed pulpcore code-api generated docs, which was not using the right mkdocstring directives yet.
