@@ -8,6 +8,81 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.67.0 (2024-11-06) {: #3.67.0 }
+
+### REST API {: #3.67.0-rest-api }
+
+#### Features {: #3.67.0-rest-api-feature }
+
+- Added `DefaultAccessPolicy` that will always use the default policy declared on the views.
+  Added `AccessPolicyFromSettings` that will read policies from the `ACCESS_POLICIES` setting first.
+  [#5882](https://github.com/pulp/pulpcore/issues/5882)
+- Replaced built-in opentelemetry metrics with custom middlewares. Additionally, introduced a new
+  setting `OTEL_ENABLED` that toggles the opentelemetry instrumentation on and off. It defaults to
+  `False`.
+  [#5943](https://github.com/pulp/pulpcore/issues/5943)
+
+#### Bugfixes {: #3.67.0-rest-api-bugfix }
+
+- pass envvars to Signing Scripts to access GNUPGHOME
+  [#5911](https://github.com/pulp/pulpcore/issues/5911)
+- Fixed repository modify allowing content from separate domains.
+  [#5934](https://github.com/pulp/pulpcore/issues/5934)
+- Fixed the JSONField specification so it doesn't break ruby bindings.
+  See context [here](https://github.com/pulp/pulp_rpm/issues/3639).
+
+#### Improved Documentation {: #3.67.0-rest-api-doc }
+
+- Fixed pulpcore code-api generated docs, which was not using the right mkdocstring directives yet.
+  [#5834](https://github.com/pulp/pulpcore/issues/5834)
+
+### Plugin API {: #3.67.0-plugin-api }
+
+#### Bugfixes {: #3.67.0-plugin-api-bugfix }
+
+- Downloaders now always ensure the download ends up under `WORKING_DIRECTORY`.
+  [#5912](https://github.com/pulp/pulpcore/issues/5912)
+
+#### Removals {: #3.67.0-plugin-api-removal }
+
+- Deprecated `AccessPolicyFromDB` for removal in 4.0.
+  [#5822](https://github.com/pulp/pulpcore/issues/5822)
+
+### Pulp File {: #3.67.0-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.67.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.66.1 (2024-11-06) {: #3.66.1 }
+
+### REST API {: #3.66.1-rest-api }
+
+#### Bugfixes {: #3.66.1-rest-api-bugfix }
+
+- Fixed repository modify allowing content from separate domains.
+  [#5934](https://github.com/pulp/pulpcore/issues/5934)
+- Fixed the JSONField specification so it doesn't break ruby bindings.
+  See context [here](https://github.com/pulp/pulp_rpm/issues/3639).
+
+### Plugin API {: #3.66.1-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.66.1-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.66.1-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.66.0 (2024-10-16) {: #3.66.0 }
 
 ### REST API {: #3.66.0-rest-api }
@@ -955,6 +1030,34 @@ No significant changes.
 No significant changes.
 
 ### Pulp Cert Guard
+
+No significant changes.
+
+---
+
+## 3.49.23 (2024-11-06) {: #3.49.23 }
+
+### REST API {: #3.49.23-rest-api }
+
+#### Bugfixes {: #3.49.23-rest-api-bugfix }
+
+- Fixed repository modify allowing content from separate domains.
+  [#5934](https://github.com/pulp/pulpcore/issues/5934)
+- Fixed the JSONField specification so it doesn't break ruby bindings.
+  See context [here](https://github.com/pulp/pulp_rpm/issues/3639).
+
+### Plugin API {: #3.49.23-plugin-api }
+
+#### Bugfixes {: #3.49.23-plugin-api-bugfix }
+
+- Downloaders now always ensure the download ends up under `WORKING_DIRECTORY`.
+  [#5912](https://github.com/pulp/pulpcore/issues/5912)
+
+### Pulp File {: #3.49.23-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.49.23-pulp-cert-guard }
 
 No significant changes.
 
@@ -2063,6 +2166,21 @@ No significant changes.
 -   Starting from this release pulp_file will be shipped as part of the pulpcore package.
     [#4550](https://github.com/pulp/pulpcore/issues/4550)
 
+## 3.39.22 (2024-11-06) {: #3.39.22 }
+
+### REST API {: #3.39.22-rest-api }
+
+#### Bugfixes {: #3.39.22-rest-api-bugfix }
+
+- Fixed the JSONField specification so it doesn't break ruby bindings.
+  See context [here](https://github.com/pulp/pulp_rpm/issues/3639).
+
+### Plugin API {: #3.39.22-plugin-api }
+
+No significant changes.
+
+---
+
 ## 3.39.21 (2024-09-16) {: #3.39.21 }
 
 ### REST API {: #3.39.21-rest-api }
@@ -2890,7 +3008,22 @@ No significant changes.
 
 -   [#3798](https://github.com/pulp/pulpcore/issues/3798)
 
-## 3.28.32 (2024-08-10) {: #3.28.32 }
+## 3.28.33 (2024-11-06) {: #3.28.33 }
+
+### REST API {: #3.28.33-rest-api }
+
+#### Bugfixes {: #3.28.33-rest-api-bugfix }
+
+- Fixed the JSONField specification so it doesn't break ruby bindings.
+  See context [here](https://github.com/pulp/pulp_rpm/issues/3639).
+
+### Plugin API {: #3.28.33-plugin-api }
+
+No significant changes.
+
+---
+
+# ## 3.28.32 (2024-08-10) {: #3.28.32 }
 
 ### REST API {: #3.28.32-rest-api }
 
@@ -4199,6 +4332,21 @@ No significant changes.
     Deprecated `pulpcore.plugin.actions.raise_for_unknown_content_units` in favour of
     `pulpcore.plugin.util.raise_for_unknown_content_units`.
     [#3604](https://github.com/pulp/pulpcore/issues/3604)
+
+## 3.22.32 (2024-11-06) {: #3.22.32 }
+
+### REST API {: #3.22.32-rest-api }
+
+#### Bugfixes {: #3.22.32-rest-api-bugfix }
+
+- Fixed the JSONField specification so it doesn't break ruby bindings.
+  See context [here](https://github.com/pulp/pulp_rpm/issues/3639).
+
+### Plugin API {: #3.22.32-plugin-api }
+
+No significant changes.
+
+---
 
 ## 3.22.31 (2024-10-01) {: #3.22.31 }
 
