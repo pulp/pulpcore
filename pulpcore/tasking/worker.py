@@ -483,7 +483,7 @@ class PulpcoreWorker:
             ):
                 # For performance reasons we aggregate these statistics on a single database call.
                 unblocked_tasks_stats = (
-                    Task.objects.filter(unblocked_at__isnull=False, started_at__isnull=True)
+                    Task.objects.filter(unblocked_at__isnull=False, state=TASK_STATES.WAITING)
                     .annotate(unblocked_for=Value(timezone.now()) - F("unblocked_at"))
                     .aggregate(
                         longest_unblocked_waiting_time=Max(
