@@ -25,7 +25,7 @@ def repository_with_corrupted_artifacts(
     repo = file_bindings.RepositoriesFileApi.read(file_repo.pulp_href)
 
     # STEP 2: sample artifacts that will be modified on the filesystem later on
-    content1, content2 = sample(get_files_in_manifest(remote.url), 2)
+    content1, content2 = sample(list(get_files_in_manifest(remote.url)), 2)
 
     # Modify an artifact
     artifact1_path = pulpcore_bindings.ArtifactsApi.list(sha256=content1[1]).results[0].file
