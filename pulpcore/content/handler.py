@@ -7,7 +7,7 @@ import socket
 from gettext import gettext as _
 from functools import lru_cache
 
-from aiohttp.client_exceptions import ClientResponseError
+from aiohttp.client_exceptions import ClientResponseError, ClientConnectionError
 from aiohttp.web import FileResponse, StreamResponse, HTTPOk
 from aiohttp.web_exceptions import (
     HTTPError,
@@ -838,6 +838,13 @@ class Handler:
                 [pulpcore.plugin.models.ContentArtifact][] returned the binary data needed for
                 the client.
         """
+        # We should only retry with exceptions that happen before we receive any data
+        # and start streaming, as we can't rollback data if something happens after that.
+        RETRYABLE_EXCEPTIONS = (
+            ClientResponseError,
+            UnsupportedDigestValidationError,
+            ClientConnectionError,
+        )
 
         remote_artifacts = content_artifact.remoteartifact_set.select_related(
             "remote"
@@ -846,8 +853,7 @@ class Handler:
             try:
                 response = await self._stream_remote_artifact(request, response, remote_artifact)
                 return response
-
-            except (ClientResponseError, UnsupportedDigestValidationError) as e:
+            except RETRYABLE_EXCEPTIONS as e:
                 log.warning(
                     "Could not download remote artifact at '{}': {}".format(
                         remote_artifact.url, str(e)
