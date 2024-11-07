@@ -1,0 +1,2 @@
+On the content-app, added ClientConnectionError (aiohttp) as an exception that can trigger
+a retry when streaming content from a Remote.
