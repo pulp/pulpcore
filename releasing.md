@@ -9,19 +9,21 @@
 This document outlines the steps to perform a release.
 
 ### Determine if a Release is Required
+- Make sure to have GitPython python package installed
 - Run the release checker script:
   ```
   python3 .ci/scripts/check_release.py
   ```
 
-### Create a New Y-branch (e.g., 3.23)
-- If a new minor version (Y) is needed, trigger a [Create New Release Branch](https://github.com/pulp/pulpcore/actions/workflows/create-branch.yml) job via the GitHub Actions.
+### Release a New Y-version (e.g., 3.23.0)
+- If a new minor version (Y) is needed, trigger a [Create New Release Branch](https://github.com/pulp/pulpcore/actions/workflows/create-branch.yml) job from the main branch via the GitHub Actions.
 - Look for the "Bump minor version" pull request and merge it.
+- Trigger a [Release Pipeline](https://github.com/pulp/pulpcore/actions/workflows/release.yml) job by specifying the new release branch (X.**Y**) via the GitHub Actions.
 
 ### Release a New Z-version (Patch Release) (e.g., 3.23.1, 3.22.12)
 - Trigger a [Release Pipeline](https://github.com/pulp/pulpcore/actions/workflows/release.yml) job by specifying the release branch (X.Y) via the GitHub Actions.
 
-### Final Steps (Optional but Recommended)
-- Ensure the new version appears on PyPI.
-- Verify that the changelog has been updated by looking for the "Update Changelog" pull request.
-- Post a brief announcement about the new release on the [Pulp Discourse](https://discourse.pulpproject.org/).
+## Final Steps
+- Ensure the new version appears on PyPI (it should appear after [Publish Release](https://github.com/pulp/pulpcore/actions/workflows/publish.yml) workflow succeeds).
+- Verify that the changelog has been updated by looking for the "Update Changelog" pull request (A new PR should be available on the next day).
+- [optional] Post a brief announcement about the new release on the [Pulp Discourse](https://discourse.pulpproject.org/).
