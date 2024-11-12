@@ -8,6 +8,32 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.49.24 (2024-11-12) {: #3.49.24 }
+
+### REST API {: #3.49.24-rest-api }
+
+#### Bugfixes {: #3.49.24-rest-api-bugfix }
+
+- Fixed an assertion on all content being added/removed in a repository version is of the same domain.
+  [#content-assert](https://github.com/pulp/pulpcore/issues/content-assert)
+- On the content-app, added ClientConnectionError (aiohttp) as an exception that can trigger
+  a retry when streaming content from a Remote.
+  [#5967](https://github.com/pulp/pulpcore/issues/5967)
+
+### Plugin API {: #3.49.24-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.49.24-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.49.24-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.49.23 (2024-11-06) {: #3.49.23 }
 
 ### REST API {: #3.49.23-rest-api }
