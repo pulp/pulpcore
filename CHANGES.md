@@ -8,6 +8,29 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.67.1 (2024-11-12) {: #3.67.1 }
+
+### REST API {: #3.67.1-rest-api }
+
+#### Bugfixes {: #3.67.1-rest-api-bugfix }
+
+- Fixed an assertion on all content being added/removed in a repository version is of the same domain.
+  [#content-assert](https://github.com/pulp/pulpcore/issues/content-assert)
+
+### Plugin API {: #3.67.1-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.67.1-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.67.1-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.67.0 (2024-11-06) {: #3.67.0 }
 
 ### REST API {: #3.67.0-rest-api }
