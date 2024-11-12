@@ -8,6 +8,38 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.68.0 (2024-11-12) {: #3.68.0 }
+
+### REST API {: #3.68.0-rest-api }
+
+#### Bugfixes {: #3.68.0-rest-api-bugfix }
+
+- Fixed an assertion on all content being added/removed in a repository version is of the same domain.
+  [#content-assert](https://github.com/pulp/pulpcore/issues/content-assert)
+- Fixed incorrect count of waiting tasks in the queue for the `tasks_unblocked_queue` and `tasks_longest_unblocked_time` metrics.
+  [#5941](https://github.com/pulp/pulpcore/issues/5941)
+- On the content-app, added ClientConnectionError (aiohttp) as an exception that can trigger
+  a retry when streaming content from a Remote.
+  [#5967](https://github.com/pulp/pulpcore/issues/5967)
+
+### Plugin API {: #3.68.0-plugin-api }
+
+#### Features {: #3.68.0-plugin-api-feature }
+
+- Added `pulpcore.app.util.cache_key` to the plugin api.
+  Use this method to get the base-key when using the Pulp cache.
+  [#cache-key](https://github.com/pulp/pulpcore/issues/cache-key)
+
+### Pulp File {: #3.68.0-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.68.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.67.0 (2024-11-06) {: #3.67.0 }
 
 ### REST API {: #3.67.0-rest-api }
