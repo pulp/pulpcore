@@ -7,7 +7,7 @@ build-backend = 'setuptools.build_meta'
 
 [project]
 name = "pulpcore"
-version = "3.68.0.dev"
+version = "3.69.0.dev"
 description = "Pulp Django Application and Related Modules"
 readme = "README.md"
 authors = [
