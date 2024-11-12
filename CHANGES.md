@@ -8,6 +8,43 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.63.2 (2024-11-12) {: #3.63.2 }
+
+### REST API {: #3.63.2-rest-api }
+
+#### Bugfixes {: #3.63.2-rest-api-bugfix }
+
+- Fixed an assertion on all content being added/removed in a repository version is of the same domain.
+  [#content-assert](https://github.com/pulp/pulpcore/issues/content-assert)
+- pulp-worker fails to start with "float object cannot be interpreted as an integer" on some versions of python.
+  [#5861](https://github.com/pulp/pulpcore/issues/5861)
+- Started propagating headers from the content-app when using a non-default filesystem storage.
+  [#5879](https://github.com/pulp/pulpcore/issues/5879)
+- Fixed task purge to not expect a user, when a run has been scheduled by Pulp itself.
+  [#5881](https://github.com/pulp/pulpcore/issues/5881)
+- pass envvars to Signing Scripts to access GNUPGHOME
+  [#5911](https://github.com/pulp/pulpcore/issues/5911)
+- On the content-app, added ClientConnectionError (aiohttp) as an exception that can trigger
+  a retry when streaming content from a Remote.
+  [#5967](https://github.com/pulp/pulpcore/issues/5967)
+
+### Plugin API {: #3.63.2-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.63.2-pulp-file }
+
+#### Bugfixes {: #3.63.2-pulp-file-bugfix }
+
+- During sync, quote the URL path for file downloads using HTTP.
+  [#5686](https://github.com/pulp/pulpcore/issues/5686)
+
+### Pulp Cert Guard {: #3.63.2-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.63.1 (2024-10-30) {: #3.63.1 }
 
 ### REST API {: #3.63.1-rest-api }
