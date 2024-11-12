@@ -23,7 +23,7 @@ def main():
             f".{item['directory']}" for item in PYPROJECT_TOML["tool"]["towncrier"]["type"]
         }
     except KeyError:
-        CHANGELOG_EXTS = {"feature", "bugfix", "doc", "removal", "misc"}
+        CHANGELOG_EXTS = {".feature", ".bugfix", ".doc", ".removal", ".misc"}
 
     repo = Repo(".")
 
