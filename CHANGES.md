@@ -8,6 +8,22 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.39.23 (2024-11-12) {: #3.39.23 }
+
+### REST API {: #3.39.23-rest-api }
+
+#### Bugfixes {: #3.39.23-rest-api-bugfix }
+
+- On the content-app, added ClientConnectionError (aiohttp) as an exception that can trigger
+  a retry when streaming content from a Remote.
+  [#5967](https://github.com/pulp/pulpcore/issues/5967)
+
+### Plugin API {: #3.39.23-plugin-api }
+
+No significant changes.
+
+---
+
 ## 3.39.22 (2024-11-06) {: #3.39.22 }
 
 ### REST API {: #3.39.22-rest-api }
