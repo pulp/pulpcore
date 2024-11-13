@@ -17,6 +17,7 @@ from functools import lru_cache, partial
 from itertools import chain
 
 from django.conf import settings
+from django.contrib.postgres.fields import HStoreField
 from django.core import validators
 from django.db import IntegrityError, models, transaction
 from django.forms.models import model_to_dict
@@ -516,6 +517,7 @@ class Content(MasterModel, QueryMixin):
     Fields:
         upstream_id (models.UUIDField) : identifier of content imported from an 'upstream' Pulp
         timestamp_of_interest (models.DateTimeField): timestamp that prevents orphan cleanup
+        pulp_labels (HStoreField): Dictionary of string values.
 
     Relations:
 
@@ -529,6 +531,7 @@ class Content(MasterModel, QueryMixin):
     TYPE = "content"
     repo_key_fields = ()  # Used by pulpcore.plugin.repo_version_utils.remove_duplicates
     upstream_id = models.UUIDField(null=True)  # Used by PulpImport/Export processing
+    pulp_labels = HStoreField(default=dict)
 
     _artifacts = models.ManyToManyField(Artifact, through="ContentArtifact")
     timestamp_of_interest = models.DateTimeField(auto_now=True)
