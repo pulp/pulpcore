@@ -8,6 +8,61 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.68.0 (2024-11-12) {: #3.68.0 }
+
+### REST API {: #3.68.0-rest-api }
+
+#### Bugfixes {: #3.68.0-rest-api-bugfix }
+
+- Fixed an assertion on all content being added/removed in a repository version is of the same domain.
+  [#content-assert](https://github.com/pulp/pulpcore/issues/content-assert)
+- Fixed incorrect count of waiting tasks in the queue for the `tasks_unblocked_queue` and `tasks_longest_unblocked_time` metrics.
+  [#5941](https://github.com/pulp/pulpcore/issues/5941)
+- On the content-app, added ClientConnectionError (aiohttp) as an exception that can trigger
+  a retry when streaming content from a Remote.
+  [#5967](https://github.com/pulp/pulpcore/issues/5967)
+
+### Plugin API {: #3.68.0-plugin-api }
+
+#### Features {: #3.68.0-plugin-api-feature }
+
+- Added `pulpcore.app.util.cache_key` to the plugin api.
+  Use this method to get the base-key when using the Pulp cache.
+  [#cache-key](https://github.com/pulp/pulpcore/issues/cache-key)
+
+### Pulp File {: #3.68.0-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.68.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.67.1 (2024-11-12) {: #3.67.1 }
+
+### REST API {: #3.67.1-rest-api }
+
+#### Bugfixes {: #3.67.1-rest-api-bugfix }
+
+- Fixed an assertion on all content being added/removed in a repository version is of the same domain.
+  [#content-assert](https://github.com/pulp/pulpcore/issues/content-assert)
+
+### Plugin API {: #3.67.1-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.67.1-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.67.1-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.67.0 (2024-11-06) {: #3.67.0 }
 
 ### REST API {: #3.67.0-rest-api }
@@ -178,6 +233,43 @@ No significant changes.
 No significant changes.
 
 ### Pulp Cert Guard {: #3.64.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.63.2 (2024-11-12) {: #3.63.2 }
+
+### REST API {: #3.63.2-rest-api }
+
+#### Bugfixes {: #3.63.2-rest-api-bugfix }
+
+- Fixed an assertion on all content being added/removed in a repository version is of the same domain.
+  [#content-assert](https://github.com/pulp/pulpcore/issues/content-assert)
+- pulp-worker fails to start with "float object cannot be interpreted as an integer" on some versions of python.
+  [#5861](https://github.com/pulp/pulpcore/issues/5861)
+- Started propagating headers from the content-app when using a non-default filesystem storage.
+  [#5879](https://github.com/pulp/pulpcore/issues/5879)
+- Fixed task purge to not expect a user, when a run has been scheduled by Pulp itself.
+  [#5881](https://github.com/pulp/pulpcore/issues/5881)
+- pass envvars to Signing Scripts to access GNUPGHOME
+  [#5911](https://github.com/pulp/pulpcore/issues/5911)
+- On the content-app, added ClientConnectionError (aiohttp) as an exception that can trigger
+  a retry when streaming content from a Remote.
+  [#5967](https://github.com/pulp/pulpcore/issues/5967)
+
+### Plugin API {: #3.63.2-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.63.2-pulp-file }
+
+#### Bugfixes {: #3.63.2-pulp-file-bugfix }
+
+- During sync, quote the URL path for file downloads using HTTP.
+  [#5686](https://github.com/pulp/pulpcore/issues/5686)
+
+### Pulp Cert Guard {: #3.63.2-pulp-cert-guard }
 
 No significant changes.
 
@@ -1030,6 +1122,32 @@ No significant changes.
 No significant changes.
 
 ### Pulp Cert Guard
+
+No significant changes.
+
+---
+
+## 3.49.24 (2024-11-12) {: #3.49.24 }
+
+### REST API {: #3.49.24-rest-api }
+
+#### Bugfixes {: #3.49.24-rest-api-bugfix }
+
+- Fixed an assertion on all content being added/removed in a repository version is of the same domain.
+  [#content-assert](https://github.com/pulp/pulpcore/issues/content-assert)
+- On the content-app, added ClientConnectionError (aiohttp) as an exception that can trigger
+  a retry when streaming content from a Remote.
+  [#5967](https://github.com/pulp/pulpcore/issues/5967)
+
+### Plugin API {: #3.49.24-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.49.24-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.49.24-pulp-cert-guard }
 
 No significant changes.
 
@@ -2165,6 +2283,22 @@ No significant changes.
 
 -   Starting from this release pulp_file will be shipped as part of the pulpcore package.
     [#4550](https://github.com/pulp/pulpcore/issues/4550)
+
+## 3.39.23 (2024-11-12) {: #3.39.23 }
+
+### REST API {: #3.39.23-rest-api }
+
+#### Bugfixes {: #3.39.23-rest-api-bugfix }
+
+- On the content-app, added ClientConnectionError (aiohttp) as an exception that can trigger
+  a retry when streaming content from a Remote.
+  [#5967](https://github.com/pulp/pulpcore/issues/5967)
+
+### Plugin API {: #3.39.23-plugin-api }
+
+No significant changes.
+
+---
 
 ## 3.39.22 (2024-11-06) {: #3.39.22 }
 
