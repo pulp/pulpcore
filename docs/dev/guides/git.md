@@ -77,9 +77,9 @@ git+https://github.com/pulp/pulpcore@refs/pull/1234/head
 git+https://github.com/pulp/pulpcore@refs/heads/main
 ```
 
-to `ci_requirements.txt` in the plugin PR. Make sure that file is covered by `MANIFEST.in`. Also
-bump the requirement on `pulpcore` in `requirements.txt` to at least the current `dev` version if
-you want to be sure the `lower bounds` scenario passes.
+to `ci_requirements.txt` in the plugin PR. Make sure that file is covered by `MANIFEST.in`.
+Also bump the requirement on `pulpcore` in `requirements.txt` or `pyproject.toml` to at least the current `dev` version
+if you want to be sure the `lower bounds` scenario passes.
 
 This works accordingly for depending on other plugins.
 

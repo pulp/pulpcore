@@ -86,12 +86,13 @@ See `writing-tasks`. Almost all plugins must implement a `sync` task, most imple
 
 ## Plugin Completeness Checklist
 
-- `Plugin django app is defined using PulpAppConfig as a parent <plugin-django-application>`
-- `Plugin entry point is defined <plugin-entry-point>`
-- [pulpcore is specified as a requirement](https://github.com/pulp/pulp_rpm/blob/main/requirements.txt#L6)
-- Necessary models/serializers/viewsets are `defined <subclassing-general>` and `discoverable <mvs-discovery>`. At a minimum:
+- Plugin django app is defined using PulpAppConfig as a parent
+- Plugin entry point is defined
+- `pulpcore` is specified as a requirement
+- Necessary models/serializers/viewsets are defined and discoverable.
+  At a minimum:
     - models for plugin content type, remote, publisher
     - serializers for plugin content type, remote, publisher
     - viewset for plugin content type, remote, publisher
-- `Errors are handled according to Pulp conventions <error-handling-basics>`
+- Errors are handled according to Pulp conventions
 - Docs for plugin are available (any location and format preferred and provided by plugin writer)
