@@ -1,0 +1,3 @@
+Fixed content-app behavior for the case where the client would get a 200 response for a package
+streamed from a Remote which did not match the expected checksum.
+Now, the connection is closed before finalizing the response.
