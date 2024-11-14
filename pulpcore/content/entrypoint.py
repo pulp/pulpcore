@@ -5,7 +5,7 @@ from pulpcore.app.pulpcore_gunicorn_application import PulpcoreGunicornApplicati
 class PulpcoreContentApplication(PulpcoreGunicornApplication):
     def load_app_specific_config(self):
         self.set_option("default_proc_name", "pulpcore-content", enforced=True)
-        self.set_option("worker_class", "aiohttp.GunicornWebWorker", enforced=True)
+        self.set_option("worker_class", "aiohttp.GunicornUVLoopWebWorker", enforced=True)
 
     def load(self):
         import pulpcore.content
@@ -15,6 +15,11 @@ class PulpcoreContentApplication(PulpcoreGunicornApplication):
 
 @click.option("--bind", "-b", default="[::]:24816")
 @click.option("--workers", "-w", type=int)
+@click.option(
+    "--worker-class",
+    "-k",
+    type=click.Choice(["aiohttp.GunicornWebWorker", "aiohttp.GunicornUVLoopWebWorker"]),
+)
 # @click.option("--threads", "-w", type=int)  # We don't use a threaded worker...
 @click.option("--name", "-n", "proc_name")
 @click.option("--timeout", "-t", type=int)
