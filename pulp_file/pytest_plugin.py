@@ -83,8 +83,8 @@ def file_fixtures_root(tmp_path):
 
 @pytest.fixture
 def write_3_iso_file_fixture_data_factory(file_fixtures_root):
-    def _write_3_iso_file_fixture_data_factory(name):
-        file_fixtures_root.joinpath(name).mkdir()
+    def _write_3_iso_file_fixture_data_factory(name, overwrite=False):
+        file_fixtures_root.joinpath(name).mkdir(exist_ok=overwrite)
         file1 = generate_iso(file_fixtures_root.joinpath(f"{name}/1.iso"))
         file2 = generate_iso(file_fixtures_root.joinpath(f"{name}/2.iso"))
         file3 = generate_iso(file_fixtures_root.joinpath(f"{name}/3.iso"))
