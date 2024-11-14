@@ -1,8 +1,9 @@
 """Tests related to content delivery."""
 
-from aiohttp.client_exceptions import ClientResponseError
+from aiohttp.client_exceptions import ClientResponseError, ClientPayloadError
 import hashlib
 import pytest
+import subprocess
 from urllib.parse import urljoin
 
 from pulpcore.client.pulp_file import (
@@ -103,3 +104,43 @@ def test_remote_artifact_url_update(
     actual_checksum = hashlib.sha256(downloaded_file.body).hexdigest()
     expected_checksum = expected_file_list[0][1]
     assert expected_checksum == actual_checksum
+
+
+@pytest.mark.parallel
+def test_remote_content_changed_with_on_demand(
+    write_3_iso_file_fixture_data_factory,
+    file_repo_with_auto_publish,
+    file_remote_ssl_factory,
+    file_bindings,
+    monitor_task,
+    file_distribution_factory,
+):
+    """
+    GIVEN a remote synced on demand with fileA (e.g, digest=123),
+    WHEN on the remote server, fileA changed its content (e.g, digest=456),
+    THEN retrieving fileA from the content app will cause a connection-close/incomplete-response.
+    """
+    # GIVEN
+    basic_manifest_path = write_3_iso_file_fixture_data_factory("basic")
+    remote = file_remote_ssl_factory(manifest_path=basic_manifest_path, policy="on_demand")
+    body = RepositorySyncURL(remote=remote.pulp_href)
+    monitor_task(
+        file_bindings.RepositoriesFileApi.sync(file_repo_with_auto_publish.pulp_href, body).task
+    )
+    repo = file_bindings.RepositoriesFileApi.read(file_repo_with_auto_publish.pulp_href)
+    distribution = file_distribution_factory(repository=repo.pulp_href)
+    expected_file_list = list(get_files_in_manifest(remote.url))
+
+    # WHEN
+    write_3_iso_file_fixture_data_factory("basic", overwrite=True)
+
+    # THEN
+    get_url = urljoin(distribution.base_url, expected_file_list[0][0])
+    with pytest.raises(ClientPayloadError, match="Response payload is not completed"):
+        download_file(get_url)
+
+    # Assert again with curl just to be sure.
+    result = subprocess.run(["curl", "-v", get_url], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    assert result.returncode == 18
+    assert b"* Closing connection 0" in result.stderr
+    assert b"curl: (18) transfer closed with outstanding read data remaining" in result.stderr
