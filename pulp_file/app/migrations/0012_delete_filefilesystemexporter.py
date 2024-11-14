@@ -20,6 +20,7 @@ class Migration(migrations.Migration):
         migrations.RunPython(
             code=delete_fs_exporters,
             reverse_code=migrations.RunPython.noop,
+            elidable=True,
         ),
         migrations.DeleteModel(
             name='FileFileSystemExporter',
