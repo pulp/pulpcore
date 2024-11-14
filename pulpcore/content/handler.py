@@ -3,6 +3,8 @@ import logging
 from multidict import CIMultiDict
 import os
 import re
+import socket
+import struct
 from gettext import gettext as _
 
 from aiohttp.client_exceptions import ClientResponseError, ClientConnectionError
@@ -54,7 +56,10 @@ from pulpcore.app.util import (  # noqa: E402: module level not at top of file
     cache_key,
 )
 
-from pulpcore.exceptions import UnsupportedDigestValidationError  # noqa: E402
+from pulpcore.exceptions import (  # noqa: E402
+    UnsupportedDigestValidationError,
+    DigestValidationError,
+)
 from pulpcore.metrics import artifacts_size_counter  # noqa: E402
 
 from jinja2 import Template  # noqa: E402: module level not at top of file
@@ -1125,13 +1130,25 @@ class Handler:
                 await original_finalize()
 
         downloader = remote.get_downloader(
-            remote_artifact=remote_artifact, headers_ready_callback=handle_response_headers
+            remote_artifact=remote_artifact,
+            headers_ready_callback=handle_response_headers,
         )
         original_handle_data = downloader.handle_data
         downloader.handle_data = handle_data
         original_finalize = downloader.finalize
         downloader.finalize = finalize
-        download_result = await downloader.run()
+        try:
+            download_result = await downloader.run()
+        except DigestValidationError:
+            await downloader.session.close()
+            close_tcp_connection(request.transport._sock)
+            raise RuntimeError(
+                f"We tried streaming {remote_artifact.url!r} to the client, but it "
+                "failed checkusm validation. "
+                "At this point, we cant recover from wrong data already sent, "
+                "so we are forcing the connection to close. "
+                "If this error persists, the remote server might be corrupted."
+            )
 
         if content_length := response.headers.get("Content-Length"):
             response.headers["X-PULP-ARTIFACT-SIZE"] = content_length
@@ -1149,3 +1166,13 @@ class Handler:
         if response.status == 404:
             raise HTTPNotFound()
         return response
+
+
+def close_tcp_connection(sock):
+    """Configure socket to close TCP connection immediately."""
+    try:
+        l_onoff = 1
+        l_linger = 0  # 0 seconds timeout - immediate close
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_LINGER, struct.pack("ii", l_onoff, l_linger))
+    except (socket.error, OSError) as e:
+        log.warning(f"Error configuring socket for force close: {e}")
