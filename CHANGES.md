@@ -3142,6 +3142,18 @@ No significant changes.
 
 -   [#3798](https://github.com/pulp/pulpcore/issues/3798)
 
+## 3.28.34 (2024-11-13) {: #3.28.34 }
+
+### REST API {: #3.28.34-rest-api }
+
+No significant changes.
+
+### Plugin API {: #3.28.34-plugin-api }
+
+No significant changes.
+
+---
+
 ## 3.28.33 (2024-11-06) {: #3.28.33 }
 
 ### REST API {: #3.28.33-rest-api }
@@ -4467,6 +4479,18 @@ No significant changes.
     `pulpcore.plugin.util.raise_for_unknown_content_units`.
     [#3604](https://github.com/pulp/pulpcore/issues/3604)
 
+## 3.22.33 (2024-11-13) {: #3.22.33 }
+
+### REST API {: #3.22.33-rest-api }
+
+No significant changes.
+
+### Plugin API {: #3.22.33-plugin-api }
+
+No significant changes.
+
+---
+
 ## 3.22.32 (2024-11-06) {: #3.22.32 }
 
 ### REST API {: #3.22.32-rest-api }
@@ -5077,6 +5101,18 @@ No significant changes.
 -   Deprecated model `Label` and serializer field `LabelField` and `LabelSelectFilter` for
     removal in 3.25.
     [#3400](https://github.com/pulp/pulpcore/issues/3400)
+
+## 3.21.36 (2024-11-13) {: #3.21.36 }
+
+### REST API {: #3.21.36-rest-api }
+
+No significant changes.
+
+### Plugin API {: #3.21.36-plugin-api }
+
+No significant changes.
+
+---
 
 ## 3.21.35 (2024-10-31) {: #3.21.35 }
 
