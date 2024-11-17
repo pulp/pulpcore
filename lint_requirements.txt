@@ -5,9 +5,10 @@
 #
 # For more info visit https://github.com/pulp/plugin_template
 
-# python packages handy for developers, but not required by pulp
 black==24.3.0
+bump-my-version
 check-manifest
 flake8
 flake8-black
+packaging
 yamllint

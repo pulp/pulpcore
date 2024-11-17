@@ -45,11 +45,6 @@ if [ -f $PRE_BEFORE_INSTALL ]; then
   source $PRE_BEFORE_INSTALL
 fi
 
-if [[ -n $(echo -e $COMMIT_MSG | grep -P "Required PR:.*") ]]; then
-  echo "The Required PR mechanism has been removed. Consider adding a scm requirement to requirements.txt."
-  exit 1
-fi
-
 if [ "$GITHUB_EVENT_NAME" = "pull_request" ] || [ "${BRANCH_BUILD}" = "1" -a "${BRANCH}" != "main" ]
 then
   echo $COMMIT_MSG | sed -n -e 's/.*CI Base Image:\s*\([-_/[:alnum:]]*:[-_[:alnum:]]*\).*/ci_base: "\1"/p' >> .ci/ansible/vars/main.yaml
