@@ -5,11 +5,13 @@
 #
 # For more info visit https://github.com/pulp/plugin_template
 
+import tomllib
 import warnings
-from pkg_resources import Requirement
+from packaging.requirements import Requirement
 
 
 CHECK_MATRIX = [
+    ("pyproject.toml", True, True, True),
     ("requirements.txt", True, True, True),
     ("dev_requirements.txt", False, True, False),
     ("ci_requirements.txt", False, True, True),
@@ -20,17 +22,33 @@ CHECK_MATRIX = [
     ("clitest_requirements.txt", False, True, True),
 ]
 
-errors = []
 
-for filename, check_upperbound, check_prereleases, check_r in CHECK_MATRIX:
-    try:
+def iterate_file(filename):
+    if filename == "pyproject.toml":
+        with open(filename, "rb") as fd:
+            pyproject_toml = tomllib.load(fd)
+            if "project" in pyproject_toml:
+                for nr, line in enumerate(pyproject_toml["project"]["dependencies"]):
+                    yield nr, line
+    else:
         with open(filename, "r") as fd:
             for nr, line in enumerate(fd.readlines()):
                 line = line.strip()
                 if not line or line.startswith("#"):
                     continue
+                if "#" in line:
+                    line = line.split("#", maxsplit=1)[0]
+                yield nr, line.strip()
+
+
+def main():
+    errors = []
+
+    for filename, check_upperbound, check_prereleases, check_r in CHECK_MATRIX:
+        try:
+            for nr, line in iterate_file(filename):
                 try:
-                    req = Requirement.parse(line)
+                    req = Requirement(line)
                 except ValueError:
                     if line.startswith("git+"):
                         # The single exception...
@@ -49,18 +67,21 @@ for filename, check_upperbound, check_prereleases, check_r in CHECK_MATRIX:
                             and req.name != "pulpcore-client"
                         ):
                             errors.append(f"{filename}:{nr}: Prerelease versions found in {line}.")
-                    ops = [op for op, ver in req.specs]
-                    spec = str(req.specs)
+                    ops = [spec.operator for spec in req.specifier]
                     if "~=" in ops:
                         warnings.warn(f"{filename}:{nr}: Please avoid using ~= on {req.name}!")
                     elif "<" not in ops and "<=" not in ops and "==" not in ops:
                         if check_upperbound:
                             errors.append(f"{filename}:{nr}: Upper bound missing in {line}.")
-    except FileNotFoundError:
-        # skip this test for plugins that don't use this requirements.txt
-        pass
+        except FileNotFoundError:
+            # skip this test for plugins that don't use this requirements.txt
+            pass
 
-if errors:
-    print("Dependency issues found:")
-    print("\n".join(errors))
-    exit(1)
+    if errors:
+        print("Dependency issues found:")
+        print("\n".join(errors))
+        exit(1)
+
+
+if __name__ == "__main__":
+    main()
