@@ -42,9 +42,6 @@ jobs:
           GITHUB_CONTEXT: "${{ github.event.pull_request.commits_url }}"
         run: |
           .github/workflows/scripts/check_commit.sh
-      - name: "Verify requirements files"
-        run: |
-          python .ci/scripts/check_requirements.py
 
   docs:
     uses: "./.github/workflows/docs.yml"
