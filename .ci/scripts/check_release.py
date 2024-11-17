@@ -86,6 +86,13 @@ def main():
                 )
                 if req_txt_diff:
                     reasons.append("requirements.txt")
+                pyproject_diff = repo.git.diff(
+                    f"{last_tag}", f"origin/{branch}", "--name-only", "--", "pyproject.toml"
+                )
+                if pyproject_diff:
+                    reasons.append(
+                        "pyproject.toml changed (PLEASE check if dependencies are affected."
+                    )
 
                 if reasons:
                     curr_version = Version(last_tag)
