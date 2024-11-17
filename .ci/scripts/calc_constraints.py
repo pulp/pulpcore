@@ -13,6 +13,11 @@ from packaging.requirements import Requirement
 from packaging.version import Version
 import yaml
 
+try:
+    import tomllib
+except ImportError:
+    import tomli as tomllib
+
 
 CORE_TEMPLATE_URL = "https://raw.githubusercontent.com/pulp/pulpcore/main/template_config.yml"
 
@@ -59,11 +64,11 @@ def to_upper_bound(req):
                 operator = "~="
                 version = Version(spec.version)
                 if version.micro != 0:
-                    max_version = f"{version.major}.{version.minor}.{version.micro-1}"
+                    max_version = f"{version.major}.{version.minor}.{version.micro - 1}"
                 elif version.minor != 0:
-                    max_version = f"{version.major}.{version.minor-1}"
+                    max_version = f"{version.major}.{version.minor - 1}"
                 elif version.major != 0:
-                    max_version = f"{version.major-1}.0"
+                    max_version = f"{version.major - 1}.0"
                 else:
                     return f"# NO BETTER CONSTRAINT: {req}"
                 return f"{requirement.name}{operator}{max_version}"
@@ -100,18 +105,32 @@ def main():
     parser.add_argument("filename", nargs="*")
     args = parser.parse_args()
 
-    with fileinput.input(files=args.filename) as req_file:
-        for line in req_file:
-            if line.strip().startswith("#"):
-                # Shortcut comment only lines
-                print(line.strip())
-            else:
-                req, comment = split_comment(line)
-                if args.upper:
-                    new_req = to_upper_bound(req)
+    modifier = to_upper_bound if args.upper else to_lower_bound
+
+    req_files = [filename for filename in args.filename if not filename.endswith("pyproject.toml")]
+    pyp_files = [filename for filename in args.filename if filename.endswith("pyproject.toml")]
+    if req_files:
+        with fileinput.input(files=req_files) as req_file:
+            for line in req_file:
+                if line.strip().startswith("#"):
+                    # Shortcut comment only lines
+                    print(line.strip())
                 else:
-                    new_req = to_lower_bound(req)
-                print(new_req + comment)
+                    req, comment = split_comment(line)
+                    new_req = modifier(req)
+                    print(new_req + comment)
+    for filename in pyp_files:
+        with open(filename, "rb") as fp:
+            pyproject = tomllib.load(fp)
+            for req in pyproject["project"]["dependencies"]:
+                new_req = modifier(req)
+                print(new_req)
+            optional_dependencies = pyproject["project"].get("optional-dependencies")
+            if optional_dependencies:
+                for opt in optional_dependencies.values():
+                    for req in opt:
+                        new_req = modifier(req)
+                        print(new_req)
 
 
 if __name__ == "__main__":
