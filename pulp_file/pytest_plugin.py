@@ -377,8 +377,10 @@ def gen_bad_response_fixture_server(gen_threaded_aiohttp_server):
                     chunk2 = await f.read()
                     await response.write(chunk2[:-1])
                     await response.write(bytes([chunk2[-1] ^ 1]))
+                else:
+                    request.transport.close()
 
-            await response.write_eof()
+            return response
 
         app = web.Application()
         app.add_routes([web.get("/{tail:.*}", handler)])
