@@ -35,7 +35,7 @@ jobs:
       - name: "Install python dependencies"
         run: |
           echo ::group::PYDEPS
-          pip install bump2version towncrier
+          pip install bump-my-version towncrier
           echo ::endgroup::
 
       - name: "Configure Git with pulpbot name and email"
