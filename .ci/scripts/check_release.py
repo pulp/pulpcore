@@ -10,6 +10,7 @@
 import argparse
 import re
 import os
+import tomllib
 import yaml
 from tempfile import TemporaryDirectory
 from packaging.version import Version
@@ -20,6 +21,17 @@ DEFAULT_BRANCH = "main"
 RELEASE_BRANCH_REGEX = r"^([0-9]+)\.([0-9]+)$"
 Y_CHANGELOG_EXTS = [".feature", ".removal", ".deprecation"]
 Z_CHANGELOG_EXTS = [".bugfix", ".doc", ".misc"]
+
+
+def current_version(repo):
+    try:
+        pyproject_toml = tomllib.loads(repo.git.show(f"{DEFAULT_BRANCH}:pyproject.toml"))
+        current_version = pyproject_toml["project"]["version"]
+    except Exception:
+        current_version = repo.git.grep(
+            "current_version", DEFAULT_BRANCH, "--", ".bumpversion.cfg"
+        ).split("=")[-1]
+    return Version(current_version)
 
 
 def main():
@@ -113,15 +125,10 @@ def main():
                 for change in changes.split("\n"):
                     _, ext = os.path.splitext(change)
                     if ext in Y_CHANGELOG_EXTS:
-                        # We don't put Y release bumps in the commit message, check file instead
-                        # The 'current_version' is always the next version to release
-                        next_version = repo.git.grep(
-                            "current_version", DEFAULT_BRANCH, "--", ".bumpversion.cfg"
-                        ).split("=")[-1]
-                        next_version = Version(next_version)
-                        print(
-                            f"A new Y-release is needed! New Version: {next_version.base_version}"
-                        )
+                        # We don't put Y release bumps in the commit message, check file instead.
+                        # The 'current_version' is always the dev of the next version to release.
+                        next_version = current_version(repo).base_version
+                        print(f"A new Y-release is needed! New Version: {next_version}")
                         releases.append(next_version)
                         break
 
