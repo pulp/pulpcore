@@ -8,6 +8,29 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.63.3 (2024-11-20) {: #3.63.3 }
+
+### REST API {: #3.63.3-rest-api }
+
+#### Bugfixes {: #3.63.3-rest-api-bugfix }
+
+- Fixed incorrect count of waiting tasks in the queue for the `tasks_unblocked_queue` and `tasks_longest_unblocked_time` metrics.
+  [#5941](https://github.com/pulp/pulpcore/issues/5941)
+
+### Plugin API {: #3.63.3-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.63.3-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.63.3-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.63.2 (2024-11-12) {: #3.63.2 }
 
 ### REST API {: #3.63.2-rest-api }
