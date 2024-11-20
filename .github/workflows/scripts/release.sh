@@ -10,7 +10,8 @@ then
   exit 1
 fi
 
-NEW_VERSION="$(bump2version --dry-run --list release | sed -ne 's/^new_version=//p')"
+# The tail is a necessary workaround to remove the warning from the output.
+NEW_VERSION="$(bump-my-version show new_version --increment release | tail -n -1)"
 echo "Release ${NEW_VERSION}"
 
 if ! [[ "${NEW_VERSION}" == "${BRANCH}"* ]]
@@ -20,7 +21,7 @@ then
 fi
 
 towncrier build --yes --version "${NEW_VERSION}"
-bump2version release --commit --message "Release {new_version}" --tag --tag-name "{new_version}" --tag-message "Release {new_version}" --allow-dirty
-bump2version patch --commit
+bump-my-version bump release --commit --message "Release {new_version}" --tag --tag-name "{new_version}" --tag-message "Release {new_version}" --allow-dirty
+bump-my-version bump patch --commit
 
 git push origin "${BRANCH}" "${NEW_VERSION}"
