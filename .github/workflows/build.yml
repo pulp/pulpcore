@@ -34,11 +34,11 @@ jobs:
       - name: "Install python dependencies"
         run: |
           echo ::group::PYDEPS
-          pip install packaging twine wheel mkdocs jq
+          pip install build packaging twine wheel mkdocs jq
           echo ::endgroup::
       - name: "Build package"
         run: |
-          python3 setup.py sdist bdist_wheel --python-tag py3
+          python3 -m build
           twine check dist/*
       - name: "Install built packages"
         run: |
