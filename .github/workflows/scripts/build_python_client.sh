@@ -106,7 +106,7 @@ find ./docs/* -exec sed -i 's/\.md//g' {} \;
 
 cat >> mkdocs.yml << DOCSYAML
 ---
-site_name: Pulp-Certguard Client
+site_name: PulpCertguard Client
 site_description: Certguard bindings
 site_author: Pulp Team
 site_url: https://docs.pulpproject.org/pulp_certguard_client/
