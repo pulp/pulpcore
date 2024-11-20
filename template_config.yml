@@ -38,7 +38,7 @@ plugins:
 - app_label: file
   name: pulp_file
 - app_label: certguard
-  name: pulp-certguard
+  name: pulp_certguard
 post_job_template: null
 pre_job_template: null
 pulp_env:
