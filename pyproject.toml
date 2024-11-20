@@ -202,3 +202,52 @@ ignore = [
     ".flake8",
     "pulpcore/tests/functional/assets/**",
 ]
+
+[tool.bumpversion]
+# This section is managed by the plugin template. Do not edit manually.
+
+current_version = "3.69.0.dev"
+commit = false
+tag = false
+parse = "(?P<major>\\d+)\\.(?P<minor>\\d+)\\.(?P<patch>\\d+)(\\.(?P<release>[a-z]+))?"
+serialize = [
+	"{major}.{minor}.{patch}.{release}",
+	"{major}.{minor}.{patch}",
+]
+
+[tool.bumpversion.parts.release]
+# This section is managed by the plugin template. Do not edit manually.
+
+optional_value = "prod"
+values = [
+	"dev",
+	"prod",
+]
+
+[[tool.bumpversion.files]]
+# This section is managed by the plugin template. Do not edit manually.
+
+filename = "./pulpcore/app/apps.py"
+search = "version = \"{current_version}\""
+replace = "version = \"{new_version}\""
+
+[[tool.bumpversion.files]]
+# This section is managed by the plugin template. Do not edit manually.
+
+filename = "./pulp_file/app/__init__.py"
+search = "version = \"{current_version}\""
+replace = "version = \"{new_version}\""
+
+[[tool.bumpversion.files]]
+# This section is managed by the plugin template. Do not edit manually.
+
+filename = "./pulp-certguard/app/__init__.py"
+search = "version = \"{current_version}\""
+replace = "version = \"{new_version}\""
+
+[[tool.bumpversion.files]]
+# This section is managed by the plugin template. Do not edit manually.
+
+filename = "./pyproject.toml"
+search = "version = \"{current_version}\""
+replace = "version = \"{new_version}\""
