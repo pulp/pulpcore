@@ -1,0 +1,1 @@
+Fixed exception propagation in the pulp-content instrumentation middleware.
