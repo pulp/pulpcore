@@ -102,7 +102,7 @@ class PulpcoreApiApplication(PulpcoreGunicornApplication):
 # https://github.com/benoitc/gunicorn/blob/master/gunicorn/config.py
 
 
-@click.option("--bind", "-b", default="[::]:24817")
+@click.option("--bind", "-b", default=["[::]:24817"], multiple=True)
 @click.option("--workers", "-w", type=int)
 # @click.option("--threads", "-w", type=int)  # We don't use a threaded worker...
 @click.option("--name", "-n", "proc_name")
@@ -136,5 +136,6 @@ class PulpcoreApiApplication(PulpcoreGunicornApplication):
 @click.option("--user", "-u")
 @click.option("--group", "-g")
 @click.command()
-def main(**options):
+def main(bind, **options):
+    options["bind"] = list(bind)
     PulpcoreApiApplication(options).run()
