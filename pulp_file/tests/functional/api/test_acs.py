@@ -12,22 +12,6 @@ from pulpcore.tests.functional.utils import (
 )
 
 
-@pytest.fixture
-def generate_server_and_remote(
-    file_bindings, gen_fixture_server, file_fixtures_root, gen_object_with_cleanup
-):
-    def _generate_server_and_remote(*, manifest_path, policy):
-        server = gen_fixture_server(file_fixtures_root, None)
-        url = server.make_url(manifest_path)
-        remote = gen_object_with_cleanup(
-            file_bindings.RemotesFileApi,
-            {"name": str(uuid.uuid4()), "url": str(url), "policy": policy},
-        )
-        return server, remote
-
-    yield _generate_server_and_remote
-
-
 @pytest.mark.parallel
 def test_acs_validation_and_update(
     file_bindings,
