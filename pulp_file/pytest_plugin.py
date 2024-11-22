@@ -83,11 +83,11 @@ def file_fixtures_root(tmp_path):
 
 @pytest.fixture
 def write_3_iso_file_fixture_data_factory(file_fixtures_root):
-    def _write_3_iso_file_fixture_data_factory(name, overwrite=False):
+    def _write_3_iso_file_fixture_data_factory(name, overwrite=False, seed=None):
         file_fixtures_root.joinpath(name).mkdir(exist_ok=overwrite)
-        file1 = generate_iso(file_fixtures_root.joinpath(f"{name}/1.iso"))
-        file2 = generate_iso(file_fixtures_root.joinpath(f"{name}/2.iso"))
-        file3 = generate_iso(file_fixtures_root.joinpath(f"{name}/3.iso"))
+        file1 = generate_iso(file_fixtures_root.joinpath(f"{name}/1.iso"), seed=seed)
+        file2 = generate_iso(file_fixtures_root.joinpath(f"{name}/2.iso"), seed=seed)
+        file3 = generate_iso(file_fixtures_root.joinpath(f"{name}/3.iso"), seed=seed)
         generate_manifest(
             file_fixtures_root.joinpath(f"{name}/PULP_MANIFEST"), [file1, file2, file3]
         )
@@ -362,3 +362,19 @@ def wget_recursive_download_on_host():
         )
 
     return _wget_recursive_download_on_host
+
+
+@pytest.fixture
+def generate_server_and_remote(
+    file_bindings, gen_fixture_server, file_fixtures_root, gen_object_with_cleanup
+):
+    def _generate_server_and_remote(*, manifest_path, policy):
+        server = gen_fixture_server(file_fixtures_root, None)
+        url = server.make_url(manifest_path)
+        remote = gen_object_with_cleanup(
+            file_bindings.RemotesFileApi,
+            {"name": str(uuid.uuid4()), "url": str(url), "policy": policy},
+        )
+        return server, remote
+
+    yield _generate_server_and_remote
