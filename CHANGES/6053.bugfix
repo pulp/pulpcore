@@ -1,0 +1,2 @@
+Allowed to bind api and content workers to multiple addresses.
+You can specify `--bind` multiple times on the `pulpcore-{api,content}` entrypoints.
