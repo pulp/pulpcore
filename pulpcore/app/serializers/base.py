@@ -386,6 +386,8 @@ class GetOrCreateSerializerMixin:
             if default_values:
                 data.update(default_values)
             data.update(natural_key)
+            if "pulp_domain" in natural_key:
+                del data["pulp_domain"]
             serializer = cls(data=data)
             try:
                 serializer.is_valid(raise_exception=True)
@@ -402,6 +404,8 @@ class GetOrCreateSerializerMixin:
                 # validation failed with 400 'unique' error code only
                 result = cls.Meta.model.objects.get(**natural_key)
             try:
+                if "pulp_domain" in natural_key:
+                    serializer.validated_data["pulp_domain"] = natural_key["pulp_domain"]
                 result = result or serializer.create(serializer.validated_data)
             except IntegrityError:
                 # recover from a race condition, where another thread just created the object
