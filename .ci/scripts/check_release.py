@@ -37,7 +37,10 @@ def template_config():
 def current_version(repo, commitish):
     try:
         pyproject_toml = tomllib.loads(repo.git.show(f"{commitish}:pyproject.toml"))
-        current_version = pyproject_toml["project"]["version"]
+        try:
+            current_version = pyproject_toml["project"]["version"]
+        except Exception:
+            current_version = pyproject_toml["tool"]["bumpversion"]["current_version"]
     except Exception:
         current_version = repo.git.grep(
             "current_version", commitish, "--", ".bumpversion.cfg"
