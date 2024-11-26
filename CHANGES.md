@@ -8,6 +8,36 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.49.25 (2024-11-26) {: #3.49.25 }
+
+### REST API {: #3.49.25-rest-api }
+
+#### Bugfixes {: #3.49.25-rest-api-bugfix }
+
+- Fixed content-app behavior for the case where the client would get a 200 response for a package
+  streamed from a Remote which did not match the expected checksum.
+  Now, the connection is closed before finalizing the response.
+  [#5012](https://github.com/pulp/pulpcore/issues/5012)
+- Fixed content directory listing returning 500 in certain scenarios due to missing artifact sizes.
+  [#5318](https://github.com/pulp/pulpcore/issues/5318)
+- Allowed to bind api and content workers to multiple addresses.
+  You can specify `--bind` multiple times on the `pulpcore-{api,content}` entrypoints.
+  [#6053](https://github.com/pulp/pulpcore/issues/6053)
+
+### Plugin API {: #3.49.25-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.49.25-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.49.25-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.49.24 (2024-11-12) {: #3.49.24 }
 
 ### REST API {: #3.49.24-rest-api }
