@@ -8,6 +8,34 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.68.1 (2024-11-26) {: #3.68.1 }
+
+### REST API {: #3.68.1-rest-api }
+
+#### Bugfixes {: #3.68.1-rest-api-bugfix }
+
+- Fixed content-app behavior for the case where the client would get a 200 response for a package
+  streamed from a Remote which did not match the expected checksum.
+  Now, the connection is closed before finalizing the response.
+  [#5012](https://github.com/pulp/pulpcore/issues/5012)
+- Allowed to bind api and content workers to multiple addresses.
+  You can specify `--bind` multiple times on the `pulpcore-{api,content}` entrypoints.
+  [#6053](https://github.com/pulp/pulpcore/issues/6053)
+
+### Plugin API {: #3.68.1-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.68.1-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.68.1-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.68.0 (2024-11-12) {: #3.68.0 }
 
 ### REST API {: #3.68.0-rest-api }
