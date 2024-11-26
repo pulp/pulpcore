@@ -2,7 +2,13 @@ import pytest
 
 from rest_framework import serializers
 
-from pulpcore.app.serializers import validate_unknown_fields
+from pulpcore.app.serializers import (
+    validate_unknown_fields,
+    RBACContentGuardSerializer,
+    GetOrCreateSerializerMixin,
+)
+from pulpcore.app.models import RBACContentGuard
+from pulpcore.app.util import get_domain
 
 
 def test_unknown_field():
@@ -108,3 +114,28 @@ def test_ignored_fields_no_side_effects():
     initial_data = {"field1": 1, "csrfmiddlewaretoken": 2}
     defined_fields = {"field1": 1}
     validate_unknown_fields(initial_data, defined_fields)
+
+
+@pytest.fixture
+def guard_fixture(db):
+    return RBACContentGuard.objects.get_or_create(name="test")[0]
+
+
+class GuardSerializer(GetOrCreateSerializerMixin, RBACContentGuardSerializer):
+    pass
+
+
+def test_mixin_get(guard_fixture):
+    """Test GetOrCreateSerializerMixin's get functionality."""
+    natural_key = {"name": "test", "pulp_domain": get_domain()}
+    guard = GuardSerializer.get_or_create(natural_key)
+    assert guard.pk == guard_fixture.pk
+
+
+def test_mixin_create(guard_fixture):
+    """Test GetOrCreateSerializerMixin's create functionality.'"""
+    natural_key = {"name": "test2", "pulp_domain": get_domain()}
+    default_data = {"description": "hello"}
+    guard = GuardSerializer.get_or_create(natural_key, default_data)
+    assert guard.pk != guard_fixture.pk
+    assert guard.description == default_data["description"]
