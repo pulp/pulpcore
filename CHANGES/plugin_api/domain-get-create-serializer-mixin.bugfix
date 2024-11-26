@@ -1,0 +1,1 @@
+Fixed `GetOrCreateSerializerMixin` not accepting pulp_domain for the natural key creation.
