@@ -1138,7 +1138,9 @@ class Handler:
         original_finalize = downloader.finalize
         downloader.finalize = finalize
         try:
-            download_result = await downloader.run()
+            download_result = await downloader.run(
+                extra_data={"disable_retry_list": (DigestValidationError,)}
+            )
         except DigestValidationError:
             await downloader.session.close()
             close_tcp_connection(request.transport._sock)
