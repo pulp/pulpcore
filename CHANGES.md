@@ -8,6 +8,34 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.68.1 (2024-11-26) {: #3.68.1 }
+
+### REST API {: #3.68.1-rest-api }
+
+#### Bugfixes {: #3.68.1-rest-api-bugfix }
+
+- Fixed content-app behavior for the case where the client would get a 200 response for a package
+  streamed from a Remote which did not match the expected checksum.
+  Now, the connection is closed before finalizing the response.
+  [#5012](https://github.com/pulp/pulpcore/issues/5012)
+- Allowed to bind api and content workers to multiple addresses.
+  You can specify `--bind` multiple times on the `pulpcore-{api,content}` entrypoints.
+  [#6053](https://github.com/pulp/pulpcore/issues/6053)
+
+### Plugin API {: #3.68.1-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.68.1-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.68.1-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.68.0 (2024-11-12) {: #3.68.0 }
 
 ### REST API {: #3.68.0-rest-api }
@@ -233,6 +261,34 @@ No significant changes.
 No significant changes.
 
 ### Pulp Cert Guard {: #3.64.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.63.4 (2024-11-26) {: #3.63.4 }
+
+### REST API {: #3.63.4-rest-api }
+
+#### Bugfixes {: #3.63.4-rest-api-bugfix }
+
+- Fixed content-app behavior for the case where the client would get a 200 response for a package
+  streamed from a Remote which did not match the expected checksum.
+  Now, the connection is closed before finalizing the response.
+  [#5012](https://github.com/pulp/pulpcore/issues/5012)
+- Allowed to bind api and content workers to multiple addresses.
+  You can specify `--bind` multiple times on the `pulpcore-{api,content}` entrypoints.
+  [#6053](https://github.com/pulp/pulpcore/issues/6053)
+
+### Plugin API {: #3.63.4-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.63.4-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.63.4-pulp-cert-guard }
 
 No significant changes.
 
@@ -1145,6 +1201,36 @@ No significant changes.
 No significant changes.
 
 ### Pulp Cert Guard
+
+No significant changes.
+
+---
+
+## 3.49.25 (2024-11-26) {: #3.49.25 }
+
+### REST API {: #3.49.25-rest-api }
+
+#### Bugfixes {: #3.49.25-rest-api-bugfix }
+
+- Fixed content-app behavior for the case where the client would get a 200 response for a package
+  streamed from a Remote which did not match the expected checksum.
+  Now, the connection is closed before finalizing the response.
+  [#5012](https://github.com/pulp/pulpcore/issues/5012)
+- Fixed content directory listing returning 500 in certain scenarios due to missing artifact sizes.
+  [#5318](https://github.com/pulp/pulpcore/issues/5318)
+- Allowed to bind api and content workers to multiple addresses.
+  You can specify `--bind` multiple times on the `pulpcore-{api,content}` entrypoints.
+  [#6053](https://github.com/pulp/pulpcore/issues/6053)
+
+### Plugin API {: #3.49.25-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.49.25-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.49.25-pulp-cert-guard }
 
 No significant changes.
 
@@ -2307,6 +2393,18 @@ No significant changes.
 -   Starting from this release pulp_file will be shipped as part of the pulpcore package.
     [#4550](https://github.com/pulp/pulpcore/issues/4550)
 
+## 3.39.24 (2024-11-26) {: #3.39.24 }
+
+### REST API {: #3.39.24-rest-api }
+
+No significant changes.
+
+### Plugin API {: #3.39.24-plugin-api }
+
+No significant changes.
+
+---
+
 ## 3.39.23 (2024-11-12) {: #3.39.23 }
 
 ### REST API {: #3.39.23-rest-api }
@@ -3164,6 +3262,18 @@ No significant changes.
 #### Misc
 
 -   [#3798](https://github.com/pulp/pulpcore/issues/3798)
+
+## 3.28.35 (2024-11-26) {: #3.28.35 }
+
+### REST API {: #3.28.35-rest-api }
+
+No significant changes.
+
+### Plugin API {: #3.28.35-plugin-api }
+
+No significant changes.
+
+---
 
 ## 3.28.34 (2024-11-13) {: #3.28.34 }
 
@@ -4501,6 +4611,18 @@ No significant changes.
     Deprecated `pulpcore.plugin.actions.raise_for_unknown_content_units` in favour of
     `pulpcore.plugin.util.raise_for_unknown_content_units`.
     [#3604](https://github.com/pulp/pulpcore/issues/3604)
+
+## 3.22.34 (2024-11-26) {: #3.22.34 }
+
+### REST API {: #3.22.34-rest-api }
+
+No significant changes.
+
+### Plugin API {: #3.22.34-plugin-api }
+
+No significant changes.
+
+---
 
 ## 3.22.33 (2024-11-13) {: #3.22.33 }
 
