@@ -1125,7 +1125,9 @@ class Handler:
         original_finalize = downloader.finalize
         downloader.finalize = finalize
         try:
-            download_result = await downloader.run()
+            download_result = await downloader.run(
+                extra_data={"disable_retry_list": (DigestValidationError,)}
+            )
         except DigestValidationError:
             # Using this otherwise unused dbfield is a workaround to allow this fix to be
             # backported. Read "failed_at" instead.
