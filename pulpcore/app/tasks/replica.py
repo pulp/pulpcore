@@ -1,10 +1,9 @@
 import os
 import platform
-from pkg_resources import get_distribution
 import sys
 from tempfile import NamedTemporaryFile
 
-from pulpcore.app.apps import pulp_plugin_configs
+from pulpcore.app.apps import pulp_plugin_configs, PulpAppConfig
 from pulpcore.app.models import UpstreamPulp, TaskGroup
 from pulpcore.app.replica import ReplicaContext
 
@@ -15,7 +14,7 @@ def user_agent():
     """
     Produce a User-Agent string to identify Pulp and relevant system info.
     """
-    pulp_version = get_distribution("pulpcore").version
+    pulp_version = PulpAppConfig.version
     python = "{} {}.{}.{}-{}{}".format(sys.implementation.name, *sys.version_info)
     uname = platform.uname()
     system = f"{uname.system} {uname.machine}"

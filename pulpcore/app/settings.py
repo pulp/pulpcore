@@ -14,13 +14,19 @@ from contextlib import suppress
 from importlib import import_module
 from logging import getLogger
 from pathlib import Path
-from pkg_resources import iter_entry_points
 
 from cryptography.fernet import Fernet
 from django.core.exceptions import ImproperlyConfigured
 from django.db import connection
 
 from pulpcore import constants
+
+if sys.version_info < (3, 10):
+    # Python 3.9 has a rather different interface for `entry_points`.
+    # Let's use a compatibility version.
+    from importlib_metadata import entry_points
+else:
+    from importlib.metadata import entry_points
 
 # Build paths inside the project like this: BASE_DIR / ...
 BASE_DIR = Path(__file__).absolute().parent
@@ -84,9 +90,9 @@ INSTALLED_APPS = [
 # Enumerate the installed Pulp plugins during the loading process for use in the status API
 INSTALLED_PULP_PLUGINS = []
 
-for entry_point in iter_entry_points("pulpcore.plugin"):
+for entry_point in entry_points(group="pulpcore.plugin"):
     plugin_app_config = entry_point.load()
-    INSTALLED_PULP_PLUGINS.append(entry_point.module_name)
+    INSTALLED_PULP_PLUGINS.append(entry_point.name)
     INSTALLED_APPS.append(plugin_app_config)
 
 # Optional apps that help with development, or augment Pulp in some non-critical way
