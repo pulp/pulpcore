@@ -29,6 +29,9 @@ jobs:
   test:
     needs: "build"
     uses: "./.github/workflows/test.yml"
+    with:
+      matrix_env: |
+        [{"TEST": "pulp"}, {"TEST": "azure"}, {"TEST": "s3"}, {"TEST": "lowerbounds"}]
 
   changelog:
     runs-on: ubuntu-latest
@@ -65,3 +68,4 @@ jobs:
           branch: "changelog/update"
           delete-branch: true
           path: "pulpcore"
+...
