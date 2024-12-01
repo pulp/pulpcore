@@ -9,6 +9,10 @@
 name: "Test"
 on:
   workflow_call:
+    inputs:
+      matrix_env:
+        required: true
+        type: string
 
 defaults:
   run:
@@ -20,11 +24,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        env:
-          - TEST: pulp
-          - TEST: azure
-          - TEST: s3
-          - TEST: lowerbounds
+        env: ${{ fromJSON(inputs.matrix_env) }}
 
     steps:
       - uses: "actions/checkout@v4"
@@ -96,10 +96,6 @@ jobs:
           ANSIBLE_FORCE_COLOR: "1"
           GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
           GITHUB_CONTEXT: "${{ github.event.pull_request.commits_url }}"
-      - uses: ruby/setup-ruby@v1
-        if: ${{ env.TEST == 'pulp' }}
-        with:
-          ruby-version: "2.6"
 
       - name: "Install"
         run: |
