@@ -420,10 +420,16 @@ class PulpSchemaGenerator(SchemaGenerator):
         if request and "component" in request.query_params:
             # /pulp/api/v3/docs/api.json?component=core,file
             app_labels = request.query_params["component"].split(",")
+            if "core" not in app_labels:
+                core_app = [app for app in apps if app.label == "core"]
+            else:
+                core_app = []
             apps = [app for app in apps if app.label in app_labels]
             if len(apps) != len(app_labels):
                 raise ParseError("Invalid component specified.")
             request.plugins = [app.name.split(".")[0] for app in apps]
+            # Adding core back because we want to report it's version too.
+            apps.extend(core_app)
         request.apps = apps
 
         request.bindings = "bindings" in request.query_params
