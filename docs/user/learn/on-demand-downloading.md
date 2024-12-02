@@ -1,11 +1,13 @@
-# On-Demand Downloading
+# On-Demand Download and Sync
 
 ## Overview
 
-Pulp can sync content in a few modes: 'immediate', 'on_demand', and 'streamed'. Each provides a
+Pulp can sync content in a few modes: `immediate`, `on_demand`, and `streamed`. Each provides a
 different behavior on how and when Pulp acquires content. These are set as the `policy` attribute
 of the `Remote` performing the sync. Policy is an optional parameter and defaults to
 `immediate`.
+
+## Sync Modes
 
 ### immediate
 
@@ -39,10 +41,15 @@ instance, syncing from a nightly repo would cause Pulp to store every nightly ev
 is likely not valuable. Units created from this mode are
 `on-demand content units<on-demand content>`.
 
-## Does Plugin X Support 'on_demand' or 'streamed'?
+## Plugin support for on-demand/streamed
 
 Unless a plugin has enabled either the 'on_demand' or 'streamed' values for the `policy` attribute
 you will receive an error. Check that plugin's documentation also.
+
+Example of the "Create Remote" endpoints for some plugins that supports these features:
+
+* [pulp-rpm](https://pulpproject.org/pulp_rpm/restapi/#tag/Remotes:-Rpm/operation/remotes_rpm_rpm_create)
+* [pulp-container](https://pulpproject.org/pulp_container/restapi/#tag/Remotes:-Container/operation/remotes_container_container_create)
 
 !!! note
     Want to add on-demand support to your plugin? See the
@@ -50,14 +57,66 @@ you will receive an error. Check that plugin's documentation also.
     documentation for more details on how to add on-demand support to a plugin.
 
 
-## Associating On-Demand Content with Additional Repository Versions
+## On-Demand Content and Repository Versions
 
 An `on-demand content unit` can be associated and unassociated from a `repository version` just like a normal unit. Note that the original `Remote` will be used to download content should a client request it, even as that content is
 made available in multiple places.
 
-!!! warning
-    Deleting a `Remote` that was used in a sync with either the `on_demand` or `streamed`
-    options can break published data. Specifically, clients who want to fetch content that a
-    `Remote` was providing access to would begin to 404. Recreating a `Remote` and
-    re-triggering a sync will cause these broken units to recover again.
+!!! warning "Deleting a Remote"
+    Learn about the dangers of [deleting a Remote](#remote-deletion-and-content-sharing) in the context of on-demand content.
 
+## On-Demand and Streamed limitations
+
+On-demand and streamed content can be useful, but they come with some problems.
+
+### External dependency and error handling
+
+There are two different types of errors that can occur with on-demand streaming:
+
+1. Pre-response: For some reason, Pulp can't get any data from the server (e.g, connectivity errors). A response is never started.
+2. Post-response: Pulp can get data from the remote and start streaming the response, but in the end the data doesn't match the expected digest.
+
+In the first case, Pulp will try all the available remote sources for the requested content and will return a 404 if all of them fail *with this same type of error*.
+
+In the second case, Pulp already sent the corrupted data to the client and can't recover from it, so it will close the connection to prevent the client from consolidating the file.
+When this happens, the content-app will ignore that remote source for a certain amount of time, which will enable future requests to select a different remote source.
+If all remote sources are ignored due to prior failure, then a 404 will be returned for all requests of that content until the cooldown period for one of those sources has expired.
+Pulp doesn't permanently invalidate the remote because it can't know if the error is transient or not.
+
+The second case is complex and can be confusing to the user.
+The core reason for this complexity lies in the very nature of on-demand serving, which imposes that Pulp must fetch and stream the content on request time, and has no way to know anything about the remote before that.
+This constraint great limits the range of actions Pulp can do to properly satisfy the request.
+
+If this behavior is prohibitive, consider using the immediate sync policy.
+
+Context: <https://github.com/pulp/pulpcore/issues/5012>.
+
+### Remote deletion and content sharing
+
+Deleting a `Remote` that was used in a sync with either the `on_demand` or `streamed`
+options can break published data.
+
+Specifically, clients who want to fetch content that a `Remote` was providing access to would begin to 404.
+Recreating a `Remote` and re-triggering a sync will cause these broken units to recover again.
+
+In the worst case, the Content is shared across multiple Repositories, and the Remote's removal
+can invalidate all those repositories at once.
+
+In either case, proceed with the deletion of a remote with great care.
+
+Context: <https://github.com/pulp/pulpcore/issues/1975>.
+
+### Implicit credential sharing within a domain
+
+In the same domain, a request for on-demand content may use any available Remotes associated with that content,
+regardless of which user created it.
+
+An example:
+
+* Given User A and User B both synced the same on-demand content from their separate remotes (there are two different sources for the same content).
+* When User B requests the content
+* Then the credentials used for the download could potentially be User A's.
+
+If a user doesn't want their registered Remotes to be indirectly used by other users, they should use a separate domain.
+
+Context: <https://github.com/pulp/pulpcore/issues/3212>.
