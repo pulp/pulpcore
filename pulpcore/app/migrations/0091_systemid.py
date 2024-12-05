@@ -8,7 +8,7 @@ import uuid
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('core', '0090_char_to_text_field'),
+        ('core', '0001_squashed_0090_char_to_text_field'),
     ]
 
     operations = [
