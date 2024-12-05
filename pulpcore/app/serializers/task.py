@@ -46,8 +46,7 @@ class TaskSerializer(ModelSerializer):
     finished_at = serializers.DateTimeField(
         help_text=_("Timestamp of when this task stopped execution."), read_only=True
     )
-    error = serializers.DictField(
-        child=fields.JSONDictField(),
+    error = fields.JSONDictField(
         help_text=_(
             "A JSON Object of a fatal error encountered during the execution of this task."
         ),
