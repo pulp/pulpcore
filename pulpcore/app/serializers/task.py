@@ -17,7 +17,7 @@ from pulpcore.constants import TASK_STATES
 from pulpcore.app.util import reverse
 
 
-class CreatedResourceSerializer(RelatedResourceField):
+class CreatedResourceField(RelatedResourceField):
     class Meta:
         model = models.CreatedResource
         fields = []
@@ -78,7 +78,7 @@ class TaskSerializer(ModelSerializer):
         view_name="task-groups-detail",
     )
     progress_reports = ProgressReportSerializer(many=True, read_only=True)
-    created_resources = CreatedResourceSerializer(
+    created_resources = CreatedResourceField(
         help_text=_("Resources created by this task."),
         many=True,
         read_only=True,

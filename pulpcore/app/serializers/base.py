@@ -208,7 +208,7 @@ class RelatedResourceField(RelatedField):
                 if repo_ver_mapping is not None:
                     if repo_ver := repo_ver_mapping.get(data.object_id):
                         return self.repo_ver_url(repo_ver, request=request)
-                    return None
+                    return "<unavailabe>"
             else:
                 try:
                     view_name = get_view_name_for_model(model, "detail")
@@ -229,10 +229,10 @@ class RelatedResourceField(RelatedField):
         # Fallback onto normal lookup:
         # If the content object was deleted
         if data.content_object is None:
-            return None
+            return "<unavailabe>"
         try:
             if not data.content_object.complete:
-                return None
+                return "<unavailable>"
         except AttributeError:
             pass
 
