@@ -17,7 +17,7 @@ from pulpcore.constants import TASK_STATES
 from pulpcore.app.util import reverse
 
 
-class CreatedResourceSerializer(RelatedResourceField):
+class CreatedResourceField(RelatedResourceField):
     class Meta:
         model = models.CreatedResource
         fields = []
@@ -46,8 +46,7 @@ class TaskSerializer(ModelSerializer):
     finished_at = serializers.DateTimeField(
         help_text=_("Timestamp of when this task stopped execution."), read_only=True
     )
-    error = serializers.DictField(
-        child=fields.JSONDictField(),
+    error = fields.JSONDictField(
         help_text=_(
             "A JSON Object of a fatal error encountered during the execution of this task."
         ),
@@ -78,7 +77,7 @@ class TaskSerializer(ModelSerializer):
         view_name="task-groups-detail",
     )
     progress_reports = ProgressReportSerializer(many=True, read_only=True)
-    created_resources = CreatedResourceSerializer(
+    created_resources = CreatedResourceField(
         help_text=_("Resources created by this task."),
         many=True,
         read_only=True,
