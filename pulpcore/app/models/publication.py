@@ -576,47 +576,6 @@ class CompositeContentGuard(ContentGuard, AutoAddObjPermsMixin):
         )
 
 
-class BaseDistribution(MasterModel):
-    """
-    A distribution defines how a publication is distributed by the Content App.
-
-    This abstract model can be used by plugin writers to create concrete distributions that are
-    stored in separate tables from the Distributions provided by pulpcore.
-
-    The `name` must be unique.
-
-    The ``base_path`` must have no overlapping components. So if a Distribution with ``base_path``
-    of ``a/path/foo`` existed, you could not make a second Distribution with a ``base_path`` of
-    ``a/path`` or ``a`` because both are subpaths of ``a/path/foo``.
-
-    Note:
-        This class is no longer supported and cannot be removed from Pulp 3 due to possible
-        problems with old migrations for plugins. Until the migrations are squashed, this class
-        should be preserved.
-
-    Fields:
-        name (models.TextField): The name of the distribution. Examples: "rawhide" and "stable".
-        base_path (models.TextField): The base (relative) path component of the published url.
-
-    Relations:
-        content_guard (models.ForeignKey): An optional content-guard.
-        remote (models.ForeignKey): A remote that the content app can use to find content not
-            yet stored in Pulp.
-    """
-
-    name = models.TextField(db_index=True, unique=True)
-    base_path = models.TextField(unique=True)
-
-    content_guard = models.ForeignKey(ContentGuard, null=True, on_delete=models.SET_NULL)
-    remote = models.ForeignKey(Remote, null=True, on_delete=models.SET_NULL)
-
-    def __init__(self, *args, **kwargs):
-        raise Exception(
-            "BaseDistribution is no longer supported. "
-            "Please use pulpcore.plugin.models.Distribution instead."
-        )
-
-
 class Distribution(MasterModel):
     """
     A Distribution defines how the Content App distributes a publication or repository_version.
