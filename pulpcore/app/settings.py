@@ -56,7 +56,7 @@ MEDIA_ROOT = str(DEPLOY_ROOT / "media")  # Django 3.1 adds support for pathlib.P
 STATIC_URL = "/assets/"
 STATIC_ROOT = DEPLOY_ROOT / STATIC_URL.strip("/")
 
-DEFAULT_FILE_STORAGE = "pulpcore.app.models.storage.FileSystem"
+
 REDIRECT_TO_OBJECT_STORAGE = True
 
 WORKING_DIRECTORY = DEPLOY_ROOT / "tmp"
@@ -363,19 +363,19 @@ OTEL_ENABLED = False
 
 # HERE STARTS DYNACONF EXTENSION LOAD (Keep at the very bottom of settings.py)
 # Read more at https://www.dynaconf.com/django/
-from dynaconf import DjangoDynaconf, Validator  # noqa
+from dynaconf import DjangoDynaconf, Validator, get_history  # noqa
 
 # Validators
 storage_validator = (
     Validator("REDIRECT_TO_OBJECT_STORAGE", eq=False)
-    | Validator("DEFAULT_FILE_STORAGE", eq="pulpcore.app.models.storage.FileSystem")
-    | Validator("DEFAULT_FILE_STORAGE", eq="storages.backends.azure_storage.AzureStorage")
-    | Validator("DEFAULT_FILE_STORAGE", eq="storages.backends.s3boto3.S3Boto3Storage")
-    | Validator("DEFAULT_FILE_STORAGE", eq="storages.backends.gcloud.GoogleCloudStorage")
+    | Validator("STORAGES.default.BACKEND", eq="pulpcore.app.models.storage.FileSystem")
+    | Validator("STORAGES.default.BACKEND", eq="storages.backends.azure_storage.AzureStorage")
+    | Validator("STORAGES.default.BACKEND", eq="storages.backends.s3boto3.S3Boto3Storage")
+    | Validator("STORAGES.default.BACKEND", eq="storages.backends.gcloud.GoogleCloudStorage")
 )
 storage_validator.messages["combined"] = (
     "'REDIRECT_TO_OBJECT_STORAGE=True' is only supported with the local file, S3, GCP or Azure"
-    "storage backend configured in DEFAULT_FILE_STORAGE."
+    "storage backend configured in STORAGES['default']['BACKEND']."
 )
 
 cache_enabled_validator = Validator("CACHE_ENABLED", eq=True)
@@ -473,13 +473,35 @@ settings = DjangoDynaconf(
         api_root_validator,
         cache_validator,
         sha256_validator,
-        storage_validator,
         unknown_algs_validator,
         json_header_auth_validator,
         authentication_json_header_openapi_security_scheme_validator,
     ],
     post_hooks=otel_middleware_hook,
 )
+
+# begin Compatiblity Layer for DEFAULT_FILE_STORAGE deprecation (remove in 3.85):
+#
+# 1. Removed DEFAULT_FILE_STORAGE from toplevel setting, because STORAGES and DEFAULT_FILE_STORAGE
+#    are mutually exclusive. This enables users to migrate to STORAGES before true removal of the
+#    legacy setting.
+# 2. After dropping this compat-layer, put the default STORAGES in the toplevel module, as usual.
+#    Then, DEFAULT_FILE_STORAGE would not be allowed anymore.
+
+# Dynamically update default storages backend to use Pulp's special class,
+# but only in the case the user has not provided an explicit setting for it.
+dfstorage_history = get_history(settings, key="DEFAULT_FILE_STORAGE")
+django_default_used = (
+    len(dfstorage_history) == 1 and dfstorage_history[0]["identifier"] == "undefined"
+)
+if django_default_used:
+    settings.set("STORAGES.default.BACKEND", "pulpcore.app.models.storage.FileSystem")
+
+settings.validators.register(storage_validator)
+settings.validators.validate(only=["STORAGES.default.BACKEND", "REDIRECT_TO_OBJECT_STORAGE"])
+
+# end Compatibility Layer
+
 # HERE ENDS DYNACONF EXTENSION LOAD (No more code below this line)
 
 _logger = getLogger(__name__)

@@ -59,7 +59,7 @@ def test_default_domain(pulpcore_bindings):
     # Read the default domain, ensure storage is set to default
     default_domain = domains.results[0]
     assert default_domain.name == "default"
-    assert default_domain.storage_class == settings.DEFAULT_FILE_STORAGE
+    assert default_domain.storage_class == settings.STORAGES["default"]["BACKEND"]
     assert default_domain.redirect_to_object_storage == settings.REDIRECT_TO_OBJECT_STORAGE
     assert default_domain.hide_guarded_distributions == settings.HIDE_GUARDED_DISTRIBUTIONS
 

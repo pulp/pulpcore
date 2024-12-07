@@ -1,0 +1,1 @@
+Removed `DEFAULT_FILE_STORAGE` setting in favour of the new `STORAGES` options introduced in Django 4.2.
