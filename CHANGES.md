@@ -8,6 +8,29 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.49.27 (2024-12-07) {: #3.49.27 }
+
+### REST API {: #3.49.27-rest-api }
+
+No significant changes.
+
+### Plugin API {: #3.49.27-plugin-api }
+
+#### Bugfixes {: #3.49.27-plugin-api-bugfix }
+
+- Fixed `GetOrCreateSerializerMixin` not accepting pulp_domain for the natural key creation.
+  [#domain-get-create-serializer-mixin](https://github.com/pulp/pulpcore/issues/domain-get-create-serializer-mixin)
+
+### Pulp File {: #3.49.27-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.49.27-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.49.26 (2024-11-29) {: #3.49.26 }
 
 ### REST API {: #3.49.26-rest-api }
