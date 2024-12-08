@@ -107,19 +107,33 @@ ignore = [
 current_version = "3.68.2.dev"
 commit = false
 tag = false
-parse = "(?P<major>\\d+)\\.(?P<minor>\\d+)\\.(?P<patch>\\d+)(\\.(?P<release>[a-z]+))?"
+parse = "(?P<major>\\d+)\\.(?P<minor>\\d+)\\.(?P<alpha>0a)?(?P<patch>\\d+)(\\.(?P<release>[a-z]+))?"
 serialize = [
-	"{major}.{minor}.{patch}.{release}",
-	"{major}.{minor}.{patch}",
+  "{major}.{minor}.{patch}.{release}",
+  "{major}.{minor}.{patch}",
+  "{major}.{minor}.{alpha}{patch}.{release}",
+  "{major}.{minor}.{alpha}{patch}",
 ]
+
+[tool.bumpversion.parts.alpha]
+# This section is managed by the plugin template. Do not edit manually.
+
+# This is sort of a hack. In PEP440 prerelease markers work quite differently.
+# But this fits best with the way we have been doing release versions.
+optional_value = "final"
+values = [
+  "0a",
+  "final",
+]
+independent = true
 
 [tool.bumpversion.parts.release]
 # This section is managed by the plugin template. Do not edit manually.
 
 optional_value = "prod"
 values = [
-	"dev",
-	"prod",
+  "dev",
+  "prod",
 ]
 
 [[tool.bumpversion.files]]
