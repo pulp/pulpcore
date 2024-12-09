@@ -142,7 +142,7 @@ def verify_get_response(status, expected_schema):
     assert status["content_settings"]["content_path_prefix"] is not None
 
     assert status["storage"]["used"] is not None
-    if settings.DEFAULT_FILE_STORAGE != "pulpcore.app.models.storage.FileSystem":
+    if settings.STORAGES["default"]["BACKEND"] != "pulpcore.app.models.storage.FileSystem":
         assert status["storage"]["free"] is None
         assert status["storage"]["total"] is None
     else:
