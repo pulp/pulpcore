@@ -56,6 +56,7 @@ jobs:
 
       - name: "Create Pull Request for CI files"
         uses: "peter-evans/create-pull-request@v6"
+        id: "create_pr_main"
         with:
           token: "${{ secrets.RELEASE_TOKEN }}"
           path: "pulpcore"
@@ -65,6 +66,14 @@ jobs:
           branch: "update-ci/main"
           base: "main"
           delete-branch: true
+      - name: "Mark PR automerge"
+        working-directory: "pulpcore"
+        run: |
+          gh pr merge --rebase --auto "${{ steps.create_pr_main.outputs.pull-request-number }}"
+        if: "steps.create_pr_main.outputs.pull-request-number"
+        env:
+          GH_TOKEN: "${{ secrets.RELEASE_TOKEN }}"
+        continue-on-error: true
       - uses: "actions/checkout@v4"
         with:
           fetch-depth: 0
@@ -78,6 +87,7 @@ jobs:
 
       - name: "Create Pull Request for CI files"
         uses: "peter-evans/create-pull-request@v6"
+        id: "create_pr_3_22"
         with:
           token: "${{ secrets.RELEASE_TOKEN }}"
           path: "pulpcore"
@@ -87,6 +97,14 @@ jobs:
           branch: "update-ci/3.22"
           base: "3.22"
           delete-branch: true
+      - name: "Mark PR automerge"
+        working-directory: "pulpcore"
+        run: |
+          gh pr merge --rebase --auto "${{ steps.create_pr_3_22.outputs.pull-request-number }}"
+        if: "steps.create_pr_3_22.outputs.pull-request-number"
+        env:
+          GH_TOKEN: "${{ secrets.RELEASE_TOKEN }}"
+        continue-on-error: true
       - uses: "actions/checkout@v4"
         with:
           fetch-depth: 0
@@ -100,6 +118,7 @@ jobs:
 
       - name: "Create Pull Request for CI files"
         uses: "peter-evans/create-pull-request@v6"
+        id: "create_pr_3_28"
         with:
           token: "${{ secrets.RELEASE_TOKEN }}"
           path: "pulpcore"
@@ -109,6 +128,14 @@ jobs:
           branch: "update-ci/3.28"
           base: "3.28"
           delete-branch: true
+      - name: "Mark PR automerge"
+        working-directory: "pulpcore"
+        run: |
+          gh pr merge --rebase --auto "${{ steps.create_pr_3_28.outputs.pull-request-number }}"
+        if: "steps.create_pr_3_28.outputs.pull-request-number"
+        env:
+          GH_TOKEN: "${{ secrets.RELEASE_TOKEN }}"
+        continue-on-error: true
       - uses: "actions/checkout@v4"
         with:
           fetch-depth: 0
@@ -122,6 +149,7 @@ jobs:
 
       - name: "Create Pull Request for CI files"
         uses: "peter-evans/create-pull-request@v6"
+        id: "create_pr_3_39"
         with:
           token: "${{ secrets.RELEASE_TOKEN }}"
           path: "pulpcore"
@@ -131,6 +159,14 @@ jobs:
           branch: "update-ci/3.39"
           base: "3.39"
           delete-branch: true
+      - name: "Mark PR automerge"
+        working-directory: "pulpcore"
+        run: |
+          gh pr merge --rebase --auto "${{ steps.create_pr_3_39.outputs.pull-request-number }}"
+        if: "steps.create_pr_3_39.outputs.pull-request-number"
+        env:
+          GH_TOKEN: "${{ secrets.RELEASE_TOKEN }}"
+        continue-on-error: true
       - uses: "actions/checkout@v4"
         with:
           fetch-depth: 0
@@ -144,6 +180,7 @@ jobs:
 
       - name: "Create Pull Request for CI files"
         uses: "peter-evans/create-pull-request@v6"
+        id: "create_pr_3_49"
         with:
           token: "${{ secrets.RELEASE_TOKEN }}"
           path: "pulpcore"
@@ -153,6 +190,14 @@ jobs:
           branch: "update-ci/3.49"
           base: "3.49"
           delete-branch: true
+      - name: "Mark PR automerge"
+        working-directory: "pulpcore"
+        run: |
+          gh pr merge --rebase --auto "${{ steps.create_pr_3_49.outputs.pull-request-number }}"
+        if: "steps.create_pr_3_49.outputs.pull-request-number"
+        env:
+          GH_TOKEN: "${{ secrets.RELEASE_TOKEN }}"
+        continue-on-error: true
       - uses: "actions/checkout@v4"
         with:
           fetch-depth: 0
@@ -166,6 +211,7 @@ jobs:
 
       - name: "Create Pull Request for CI files"
         uses: "peter-evans/create-pull-request@v6"
+        id: "create_pr_3_63"
         with:
           token: "${{ secrets.RELEASE_TOKEN }}"
           path: "pulpcore"
@@ -175,6 +221,14 @@ jobs:
           branch: "update-ci/3.63"
           base: "3.63"
           delete-branch: true
+      - name: "Mark PR automerge"
+        working-directory: "pulpcore"
+        run: |
+          gh pr merge --rebase --auto "${{ steps.create_pr_3_63.outputs.pull-request-number }}"
+        if: "steps.create_pr_3_63.outputs.pull-request-number"
+        env:
+          GH_TOKEN: "${{ secrets.RELEASE_TOKEN }}"
+        continue-on-error: true
       - uses: "actions/checkout@v4"
         with:
           fetch-depth: 0
@@ -188,6 +242,7 @@ jobs:
 
       - name: "Create Pull Request for CI files"
         uses: "peter-evans/create-pull-request@v6"
+        id: "create_pr_3_68"
         with:
           token: "${{ secrets.RELEASE_TOKEN }}"
           path: "pulpcore"
@@ -197,4 +252,12 @@ jobs:
           branch: "update-ci/3.68"
           base: "3.68"
           delete-branch: true
+      - name: "Mark PR automerge"
+        working-directory: "pulpcore"
+        run: |
+          gh pr merge --rebase --auto "${{ steps.create_pr_3_68.outputs.pull-request-number }}"
+        if: "steps.create_pr_3_68.outputs.pull-request-number"
+        env:
+          GH_TOKEN: "${{ secrets.RELEASE_TOKEN }}"
+        continue-on-error: true
 ...
