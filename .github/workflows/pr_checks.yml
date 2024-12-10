@@ -9,7 +9,13 @@
 name: "Core PR static checks"
 on:
   pull_request_target:
-    types: ["opened", "synchronize", "reopened"]
+    types:
+      - "opened"
+      - "synchronize"
+      - "reopened"
+    branches:
+      - "main"
+      - "[0-9]+.[0-9]+"
 
 # This workflow runs with elevated permissions.
 # Do not even think about running a single bit of code from the PR.
