@@ -14,40 +14,17 @@ cd "$(dirname "$(realpath -e "$0")")/../../.."
 
 VERSION="$1"
 
-if [[ -z "$VERSION" ]]; then
+if [[ -z "${VERSION}" ]]
+then
   echo "No version specified."
   exit 1
 fi
 
-RESPONSE="$(curl --write-out '%{http_code}' --silent --output /dev/null "https://pypi.org/project/pulpcore-client/$VERSION/")"
-
-if [ "$RESPONSE" == "200" ];
-then
-  echo "pulpcore client $VERSION has already been released. Skipping."
-else
-  twine upload -u __token__ -p "$PYPI_API_TOKEN" \
-  "dist/pulpcore_client-$VERSION-py3-none-any.whl" \
-  "dist/pulpcore-client-$VERSION.tar.gz"
-fi
-
-RESPONSE="$(curl --write-out '%{http_code}' --silent --output /dev/null "https://pypi.org/project/pulp-file-client/$VERSION/")"
-
-if [ "$RESPONSE" == "200" ];
-then
-  echo "pulp_file client $VERSION has already been released. Skipping."
-else
-  twine upload -u __token__ -p "$PYPI_API_TOKEN" \
-  "dist/pulp_file_client-$VERSION-py3-none-any.whl" \
-  "dist/pulp_file-client-$VERSION.tar.gz"
-fi
-
-RESPONSE="$(curl --write-out '%{http_code}' --silent --output /dev/null "https://pypi.org/project/pulp-certguard-client/$VERSION/")"
-
-if [ "$RESPONSE" == "200" ];
-then
-  echo "pulp_certguard client $VERSION has already been released. Skipping."
-else
-  twine upload -u __token__ -p "$PYPI_API_TOKEN" \
-  "dist/pulp_certguard_client-$VERSION-py3-none-any.whl" \
-  "dist/pulp_certguard-client-$VERSION.tar.gz"
-fi
+twine upload -u __token__ -p "${PYPI_API_TOKEN}" \
+"dist/pulpcore_client-${VERSION}-py3-none-any.whl" \
+"dist/pulpcore-client-${VERSION}.tar.gz" \
+"dist/pulp_file_client-${VERSION}-py3-none-any.whl" \
+"dist/pulp_file-client-${VERSION}.tar.gz" \
+"dist/pulp_certguard_client-${VERSION}-py3-none-any.whl" \
+"dist/pulp_certguard-client-${VERSION}.tar.gz" \
+;
