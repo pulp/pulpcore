@@ -43,7 +43,7 @@ def test_create_read_delete_content(tmp_path):
 
 @pytest.mark.django_db
 def test_storage_location(tmp_path, settings):
-    if settings.DEFAULT_FILE_STORAGE != "pulpcore.app.models.storage.FileSystem":
+    if settings.STORAGES["default"]["BACKEND"] != "pulpcore.app.models.storage.FileSystem":
         pytest.skip("Skipping test for nonlocal storage.")
 
     tf = tmp_path / "ab"

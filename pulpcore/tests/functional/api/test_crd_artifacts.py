@@ -6,7 +6,6 @@ import os
 import uuid
 import pytest
 
-from django.conf import settings
 
 
 @pytest.fixture
@@ -142,10 +141,11 @@ def test_upload_mixed_attrs(pulpcore_bindings, pulpcore_random_file):
 
 
 @pytest.mark.parallel
-def test_delete_artifact(pulpcore_bindings, pulpcore_random_file, gen_user):
+def test_delete_artifact(pulpcore_bindings, pulpcore_random_file, gen_user, pulp_settings):
     """Verify that the deletion of artifacts is prohibited for both regular users and
     administrators."""
-    if settings.DEFAULT_FILE_STORAGE != "pulpcore.app.models.storage.FileSystem":
+    settings = pulp_settings
+    if settings.STORAGES["default"]["BACKEND"] != "pulpcore.app.models.storage.FileSystem":
         pytest.skip("this test only works for filesystem storage")
     media_root = settings.MEDIA_ROOT
 
