@@ -323,11 +323,11 @@ def _ensure_default_domain(sender, **kwargs):
         if (
             settings.HIDE_GUARDED_DISTRIBUTIONS != default.hide_guarded_distributions
             or settings.REDIRECT_TO_OBJECT_STORAGE != default.redirect_to_object_storage
-            or settings.DEFAULT_FILE_STORAGE != default.storage_class
+            or settings.STORAGES["default"]["BACKEND"] != default.storage_class
         ):
             default.hide_guarded_distributions = settings.HIDE_GUARDED_DISTRIBUTIONS
             default.redirect_to_object_storage = settings.REDIRECT_TO_OBJECT_STORAGE
-            default.storage_class = settings.DEFAULT_FILE_STORAGE
+            default.storage_class = settings.STORAGES["default"]["BACKEND"]
             default.save(skip_hooks=True)
 
 
@@ -394,7 +394,7 @@ def adjust_roles(apps, role_prefix, desired_roles, verbosity=1):
 
 def _populate_artifact_serving_distribution(sender, apps, verbosity, **kwargs):
     if (
-        settings.DEFAULT_FILE_STORAGE == "pulpcore.app.models.storage.FileSystem"
+        settings.STORAGES["default"]["BACKEND"] == "pulpcore.app.models.storage.FileSystem"
         or not settings.REDIRECT_TO_OBJECT_STORAGE
     ):
         try:

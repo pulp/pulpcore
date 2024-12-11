@@ -11,7 +11,6 @@ from urllib.parse import urljoin
 
 from pulpcore.tests.functional.utils import get_files_in_manifest, download_file
 
-from pulpcore.app import settings
 from pulpcore.client.pulp_file import FileFilePublication, RepositorySyncURL
 
 
@@ -54,7 +53,8 @@ def test_download_policy(
     download_policy,
 ):
     """Test that "on_demand" and "streamed" download policies work as expected."""
-    if download_policy == "on_demand" and "SFTP" in pulp_settings.DEFAULT_FILE_STORAGE:
+    settings = pulp_settings
+    if download_policy == "on_demand" and "SFTP" in settings.STORAGES["default"]["BACKEND"]:
         pytest.skip("This storage technology is not properly supported.")
 
     remote = file_remote_ssl_factory(
@@ -148,7 +148,7 @@ def test_download_policy(
     assert expected_checksum == actual_checksum
     if (
         download_policy == "immediate"
-        and settings.DEFAULT_FILE_STORAGE != "pulpcore.app.models.storage.FileSystem"
+        and settings.STORAGES["default"]["BACKEND"] != "pulpcore.app.models.storage.FileSystem"
         and settings.REDIRECT_TO_OBJECT_STORAGE
     ):
         content_disposition = downloaded_file.response_obj.headers.get("Content-Disposition")
@@ -187,7 +187,7 @@ def test_download_policy(
     content_unit = expected_files_list[4]
     content_unit_url = urljoin(distribution.base_url, content_unit[0])
     # The S3 test API project doesn't handle invalid Range values correctly
-    if settings.DEFAULT_FILE_STORAGE == "pulpcore.app.models.storage.FileSystem":
+    if settings.STORAGES["default"]["BACKEND"] == "pulpcore.app.models.storage.FileSystem":
         with pytest.raises(ClientResponseError) as exc:
             range_header = {"Range": "bytes=-1-11"}
             download_file(content_unit_url, headers=range_header)
