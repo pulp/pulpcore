@@ -50,10 +50,15 @@ def current_version(repo, commitish):
 
 def check_pyproject_dependencies(repo, from_commit, to_commit):
     try:
-        old_pyproject = tomllib.load(repo.show("{from_commit}:pyproject.toml"))
+        new_pyproject = tomllib.loads(repo.git.show(f"{to_commit}:pyproject.toml"))
+        try:
+            new_dependencies = set(new_pyproject["project"]["dependencies"])
+        except KeyError:
+            # New branch does not declare dependencies in pyproject.toml.
+            # Assume no release needed for this reason.
+            return []
+        old_pyproject = tomllib.loads(repo.git.show(f"{from_commit}:pyproject.toml"))
         old_dependencies = set(old_pyproject["project"]["dependencies"])
-        new_pyproject = tomllib.load(repo.show("{to_commit}:pyproject.toml"))
-        new_dependencies = set(new_pyproject["project"]["dependencies"])
         if old_dependencies != new_dependencies:
             return ["dependencies"]
         else:
