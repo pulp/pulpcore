@@ -15,8 +15,4 @@ set -euv
 for SHA in $(curl -H "Authorization: token $GITHUB_TOKEN" "$GITHUB_CONTEXT" | jq -r '.[].sha')
 do
   python3 .ci/scripts/validate_commit_message.py "$SHA"
-  VALUE=$?
-  if [ "$VALUE" -gt 0 ]; then
-    exit $VALUE
-  fi
 done
