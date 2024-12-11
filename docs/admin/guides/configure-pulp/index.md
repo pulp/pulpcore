@@ -1,4 +1,4 @@
-# Configure Pulp
+# Introduction
 
 Pulp uses [dynaconf](https://www.dynaconf.com/) for its settings which allows you
 to configure Pulp settings using various ways:

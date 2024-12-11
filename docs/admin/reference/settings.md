@@ -73,16 +73,55 @@ instructions on how to configure the database, refer to `database installation <
 
 ### DEFAULT_FILE_STORAGE
 
-By default, Pulp uses the local filesystem to store files. The default option which
-uses the local filesystem is `pulpcore.app.models.storage.FileSystem`.
+!!! warning "Deprecated in `3.70`"
+    The `DEFAULT_FILE_STORAGE` setting was deprecated in
+    [django `4.2`](https://docs.djangoproject.com/en/4.2/ref/settings/#default-file-storage)
+    and will be removed from pulpcore on `3.85`.
+    Between `3.70` and `3.85`, replace it with [`STORAGES`](#storages).
 
-For more information about different Pulp storage options, see the
-`storage documentation `.
+### STORAGES
+
+!!! note "Added in `3.70`"
+    Starting in `3.70`, this should be used in the place of [`DEFAULT_FILE_STORAGE`](#default-file-storage).
+
+Pulp uses [django-storages](https://django-storages.readthedocs.io/en/latest/index.html) to support multiple storage backends.
+If no backend is configured, Pulp will by default use the local filesystem (`pulpcore.app.models.storage.FileSystem`).
+
+The storage setting has the form:
+
+```python
+STORAGES = {
+    "default": {
+        "BACKEND": "{storage-class}",
+        "OPTIONS": {
+            "{option-key}": "{option-value}",
+            ...
+        },
+    },
+}
+```
+
+To use another backend storage, you'll need to:
+
+1. Setup your storage and gather required credentials and specific configs.
+2. Ensure the `django-storage[s3|google|azure]` python package is installed. This depends on the installation method.
+3. Configure the default `BACKEND` storage class.
+4. Configure available `OPTIONS` for that backend.
+
+Learn more on the
+[Configure Storages](site:pulpcore/docs/admin/guides/configure-pulp/configure-storages/) guide.
+
+Overview of the integration with Pulp:
+
+- **Supported**: We support (test) Amazon S3 and Azure.
+- **Untested**: Other backends provided by `django-storages` may work as well, but we provide no guarantee.
+- **Known caveat**: Using SFTP Storage is not recommended in Pulp's current state, and doing so can lead to file corruption. This is because Pulp currently uses coroutines that seem to be incompatible with Django's SFTPStorage implementation.
+
 
 ### REDIRECT_TO_OBJECT_STORAGE
 
 When set to `True` access to artifacts is redirected to the corresponding Cloud storage
-configured in `DEFAULT_FILE_STORAGE` using pre-authenticated URLs. When set to `False`
+configured in `STORAGES['default']['BACKEND']` using pre-authenticated URLs. When set to `False`
 artifacts are always served by the content app instead.
 
 Defaults to `True`; ignored for local file storage.
@@ -91,9 +130,10 @@ Defaults to `True`; ignored for local file storage.
 
 The location where Pulp will store files. By default this is `/var/lib/pulp/media`.
 
-This only affects storage location when `DEFAULT_FILE_STORAGE` is set to
-`pulpcore.app.models.storage.FileSystem`. See the `storage documentation ` for
-more info.
+This only affects storage location when `STORAGES['default']['BACKEND']` is set to
+`pulpcore.app.models.storage.FileSystem`.
+
+See the [storage documentation](site:pulpcore/docs/admin/guides/configure-pulp/configure-storages/) for more info.
 
 It should have permissions of:
 
@@ -188,7 +228,7 @@ It should have permissions of:
 ### CHUNKED_UPLOAD_DIR
 
 A relative path inside the DEPLOY_ROOT directory used exclusively for uploaded chunks. The
-uploaded chunks are stored in the default storage specified by `DEFAULT_FILE_STORAGE`. This
+uploaded chunks are stored in the default storage specified by `STORAGES['default']['BACKEND']`. This
 option allows users to customize the actual place where chunked uploads should be stored within
 the declared storage. The default, `upload`, is sufficient for most use cases. A change to
 this setting only applies to uploads created after the change.
