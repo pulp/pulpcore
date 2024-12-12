@@ -585,7 +585,7 @@ def random_artifact_factory(pulpcore_bindings, tmp_path, pulp_domain_enabled):
             kwargs["pulp_domain"] = pulp_domain
         temp_file = tmp_path / str(uuid.uuid4())
         temp_file.write_bytes(os.urandom(size))
-        return pulpcore_bindings.ArtifactsApi.create(temp_file, **kwargs)
+        return pulpcore_bindings.ArtifactsApi.create(str(temp_file), **kwargs)
 
     return _random_artifact_factory
 

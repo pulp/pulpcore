@@ -13,7 +13,7 @@ def repository_test_file(
     filename.write_bytes(b"test content")
     repository = file_repository_factory(autopublish=True)
     upload_task = file_bindings.ContentFilesApi.create(
-        relative_path="test_file", file=filename, repository=repository.pulp_href
+        relative_path="test_file", file=str(filename), repository=repository.pulp_href
     ).task
     monitor_task(upload_task)
     return repository

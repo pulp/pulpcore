@@ -4,11 +4,10 @@ For more information, see the documentation on `Authentication
 <https://docs.pulpproject.org/restapi.html#section/Authentication>`_.
 """
 
-import pytest
 import json
-
 from base64 import b64encode
-from pulpcore.client.pulpcore import ApiException
+
+import pytest
 
 from pulpcore.app import settings
 
@@ -20,8 +19,15 @@ def test_base_auth_success(pulpcore_bindings, pulp_admin_user):
     Assert that a response indicating success is returned.
     """
     with pulp_admin_user:
-        response, status, headers = pulpcore_bindings.ArtifactsApi.list_with_http_info()
-    assert status == 200
+        response = pulpcore_bindings.ArtifactsApi.list_with_http_info()
+        if isinstance(response, tuple):
+            # old bindings
+            _, status_code, headers = response
+        else:
+            # new bindings
+            status_code = response.status_code
+            headers = response.headers
+    assert status_code == 200
     assert headers["Content-Type"] == "application/json"
     # Maybe test correlation ID as well?
 
@@ -33,7 +39,7 @@ def test_base_auth_failure(pulpcore_bindings, invalid_user):
     Assert that a response indicating failure is returned.
     """
     with invalid_user:
-        with pytest.raises(ApiException) as e:
+        with pytest.raises(pulpcore_bindings.ApiException) as e:
             pulpcore_bindings.ArtifactsApi.list()
 
     assert e.value.status == 401
@@ -50,7 +56,7 @@ def test_base_auth_required(pulpcore_bindings, anonymous_user):
     Assert that a response indicating failure is returned.
     """
     with anonymous_user:
-        with pytest.raises(ApiException) as e:
+        with pytest.raises(pulpcore_bindings.ApiException) as e:
             pulpcore_bindings.ArtifactsApi.list()
 
     assert e.value.status == 401
@@ -79,8 +85,14 @@ def test_jq_header_remote_auth(pulpcore_bindings, anonymous_user):
         encoded_header = b64encode(bytes(header_content, "ascii"))
 
         pulpcore_bindings.ArtifactsApi.api_client.default_headers["x-rh-identity"] = encoded_header
-        _, status, _ = pulpcore_bindings.ArtifactsApi.list_with_http_info()
-    assert status == 200
+        response = pulpcore_bindings.ArtifactsApi.list_with_http_info()
+        if isinstance(response, tuple):
+            # old bindings
+            _, status_code, _ = response
+        else:
+            # new bindings
+            status_code = response.status_code
+    assert status_code == 200
 
 
 @pytest.mark.parallel
@@ -106,7 +118,7 @@ def test_jq_header_remote_auth_denied_by_wrong_header(pulpcore_bindings, anonymo
             encoded_header
         )
 
-        with pytest.raises(ApiException) as exception:
+        with pytest.raises(pulpcore_bindings.ApiException) as exception:
             pulpcore_bindings.ArtifactsApi.list()
 
     assert exception.value.status == 401
@@ -127,7 +139,7 @@ def test_jq_header_remote_auth_denied_by_wrong_content(pulpcore_bindings, anonym
 
         pulpcore_bindings.ArtifactsApi.api_client.default_headers["x-rh-identity"] = encoded_header
 
-        with pytest.raises(ApiException) as exception:
+        with pytest.raises(pulpcore_bindings.ApiException) as exception:
             pulpcore_bindings.ArtifactsApi.list()
 
     assert exception.value.status == 401

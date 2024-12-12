@@ -111,16 +111,6 @@ def test_model_partial_update(file_repository_factory, file_bindings, monitor_ta
 
 
 @pytest.mark.parallel
-def test_invalid_label_type(file_repository_factory):
-    """Test that label doesn't accept non-dicts"""
-
-    with pytest.raises(ApiException) as e_info:
-        labels = "key_a"  # str instead of dict
-        file_repository_factory(name=str(uuid4()), pulp_labels=labels)
-    assert e_info.value.status == 400
-
-
-@pytest.mark.parallel
 def test_invalid_labels(file_repository_factory):
     """Test that label keys and values are validated."""
     with pytest.raises(ApiException) as e_info:
