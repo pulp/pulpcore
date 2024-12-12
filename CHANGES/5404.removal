@@ -1,0 +1,11 @@
+Marked django's `DEFAULT_FILE_STORAGE` and `STATIC_FILE_STORAGE` settings to be
+removed in pulpcore 3.85. Users should upgrade to use the
+[`STORAGES`](https://docs.djangoproject.com/en/4.2/ref/settings/#std-setting-STORAGES)
+setting instead.
+
+The [django-upgrade](https://github.com/adamchainz/django-upgrade?tab=readme-ov-file#django-42)
+tool can handle simple cases. If cloud storages are being used, refer to django-storages
+to adapt their specific storage options. E.g:
+
+* <https://django-storages.readthedocs.io/en/latest/backends/amazon-S3.html>
+* <https://django-storages.readthedocs.io/en/latest/backends/azure.html>
