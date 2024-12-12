@@ -1,0 +1,2 @@
+Updated the OpenAPI generator version used to generate python bindings to 7.10.0.
+This involves stricter client side validation of api calls when using the bindings.

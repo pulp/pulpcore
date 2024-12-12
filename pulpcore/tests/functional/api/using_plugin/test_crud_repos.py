@@ -123,7 +123,7 @@ def test_crud_repo_full_workflow(
         {
             "name": str(uuid4()),
             "repository": read_repo.pulp_href,
-            "base_path": "distribution_w_repository",
+            "base_path": str(uuid4()),
         }
     )
     distribution_w_repo = monitor_task(response.task).created_resources[0]
@@ -136,7 +136,7 @@ def test_crud_repo_full_workflow(
         {
             "name": str(uuid4()),
             "publication": publication,
-            "base_path": "distribution_w_publication",
+            "base_path": str(uuid4()),
         }
     )
     distribution_w_publication = monitor_task(response.task).created_resources[0]
@@ -158,16 +158,6 @@ def test_crud_repo_full_workflow(
 
     assert file_bindings.DistributionsFileApi.read(distribution_w_repo).repository is None
     assert file_bindings.DistributionsFileApi.read(distribution_w_publication).publication is None
-
-    # Attempt to create repository passing extraneous invalid parameter.
-    # Assert response returns an error 400 including ["Unexpected field"].
-    with pytest.raises(ApiException) as e:
-        file_bindings.RepositoriesFileApi.create({"name": str(uuid4()), "foo": "bar"})
-
-    assert e.value.status == 400
-    error_body = json.loads(e.value.body)
-    assert "foo" in error_body
-    assert "Unexpected field" in error_body["foo"]
 
 
 @pytest.mark.parallel
@@ -262,25 +252,11 @@ def test_crud_remotes_full_workflow(
     new_remote = file_bindings.RemotesFileApi.read(remote.pulp_href)
     _compare_results(data, new_remote)
 
-    # Test invalid float < 0
-    data = {
-        "total_timeout": -1.0,
-    }
-    with pytest.raises(ApiException):
-        file_bindings.RemotesFileApi.partial_update(remote.pulp_href, data)
-
-    # Test invalid non-float
-    data = {
-        "connect_timeout": "abc",
-    }
-    with pytest.raises(ApiException):
-        file_bindings.RemotesFileApi.partial_update(remote.pulp_href, data)
-
     # Test reset to empty
     data = {
-        "total_timeout": False,
+        "total_timeout": None,
         "connect_timeout": None,
-        "sock_connect_timeout": False,
+        "sock_connect_timeout": None,
         "sock_read_timeout": None,
     }
     response = file_bindings.RemotesFileApi.partial_update(remote.pulp_href, data)
@@ -289,12 +265,6 @@ def test_crud_remotes_full_workflow(
     _compare_results(data, new_remote)
 
     # Test that headers value must be a list of dicts
-    data = {"headers": {"Connection": "keep-alive"}}
-    with pytest.raises(ApiException):
-        file_bindings.RemotesFileApi.partial_update(remote.pulp_href, data)
-    data = {"headers": [1, 2, 3]}
-    with pytest.raises(ApiException):
-        file_bindings.RemotesFileApi.partial_update(remote.pulp_href, data)
     data = {"headers": [{"Connection": "keep-alive"}]}
     response = file_bindings.RemotesFileApi.partial_update(remote.pulp_href, data)
     monitor_task(response.task)

@@ -4,7 +4,6 @@ import pytest
 
 from django.conf import settings
 from jsonschema import validate
-from pulpcore.client.pulpcore import ApiException
 
 
 STATUS = {
@@ -96,10 +95,10 @@ def test_post_authenticated(
         assert post_attr not in attrs
     # Try anyway to POST to /status/
     status_url = f"{pulp_api_v3_url}status/"
-    with pytest.raises(ApiException) as e:
-        pulpcore_bindings.client.request("POST", status_url, headers={"User-Agent": test_path})
-
-    assert e.value.status == 405
+    response = pulpcore_bindings.client.rest_client.request(
+        "POST", status_url, headers={"User-Agent": test_path}
+    )
+    assert response.status == 405
 
 
 @pytest.mark.parallel
@@ -113,13 +112,17 @@ def test_storage_per_domain(
     domain = domain_factory()
     # Status endpoint is not exposed at domain url in API spec to prevent duplicates, call manually
     status_url = f"{pulp_api_v3_url}status/".replace("default", domain.name)
-    status_response = pulpcore_bindings.client.request("GET", status_url)
-    domain_status = pulpcore_bindings.client.deserialize(status_response, "StatusResponse")
+    status_response = pulpcore_bindings.client.rest_client.request("GET", status_url)
+    domain_status = pulpcore_bindings.client.deserialize(
+        status_response.response.data, "StatusResponse", "application/json"
+    )
     assert domain_status.storage.used == 0
 
     random_artifact_factory(size=1, pulp_domain=domain.name)
-    status_response = pulpcore_bindings.client.request("GET", status_url)
-    domain_status = pulpcore_bindings.client.deserialize(status_response, "StatusResponse")
+    status_response = pulpcore_bindings.client.rest_client.request("GET", status_url)
+    domain_status = pulpcore_bindings.client.deserialize(
+        status_response.response.data, "StatusResponse", "application/json"
+    )
 
     assert domain_status.storage.used == 1
 

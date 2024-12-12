@@ -7,9 +7,6 @@ import uuid
 
 from pulpcore.tests.functional.utils import PulpTaskError
 
-from pulpcore.client.pulpcore.exceptions import ApiException as coreApiException
-from pulpcore.client.pulp_file.exceptions import ApiException
-
 
 @pytest.mark.parallel
 def test_crud_content_unit(file_bindings, random_artifact, gen_object_with_cleanup):
@@ -184,17 +181,18 @@ def test_cannot_create_repo_version_with_two_relative_paths_the_same(
 
 
 @pytest.mark.parallel
-def test_bad_inputs_to_modify_endpoint(file_bindings, file_repo, needs_pulp_plugin):
-    needs_pulp_plugin("core", min="3.23.0.dev")
-
-    with pytest.raises(ApiException):
-        file_bindings.RepositoriesFileApi.modify(file_repo.pulp_href, [{}])
-
-    with pytest.raises(ApiException):
-        file_bindings.RepositoriesFileApi.modify(file_repo.pulp_href, {"a": "b"})
-
-    with pytest.raises(ApiException):
-        file_bindings.RepositoriesFileApi.modify(file_repo.pulp_href, ["/content/"])
+@pytest.mark.parametrize(
+    "bad_input",
+    [
+        pytest.param([()], id="list_with_empty_dict"),
+        # Pydantic ignores the superfluous parameters for us.
+        pytest.param({"a": "b"}, id="dict", marks=pytest.mark.xfail),
+        pytest.param(["/content/"], id="list"),
+    ],
+)
+def test_modify_rejects_bad_input(file_bindings, file_repo, bad_input):
+    with pytest.raises((file_bindings.module.ApiException, ValueError)):
+        file_bindings.RepositoriesFileApi.modify(file_repo.pulp_href, bad_input)
 
 
 @pytest.mark.parallel
@@ -220,10 +218,10 @@ def test_create_file_content_from_chunked_upload(
         # Upload the file and generate content
         upload = gen_object_with_cleanup(pulpcore_bindings.UploadsApi, {"size": 256})
         pulpcore_bindings.UploadsApi.update(
-            upload_href=upload.pulp_href, file=file_1, content_range="bytes 0-127/256"
+            upload_href=upload.pulp_href, file=str(file_1), content_range="bytes 0-127/256"
         )
         pulpcore_bindings.UploadsApi.update(
-            upload_href=upload.pulp_href, file=file_2, content_range="bytes 128-255/256"
+            upload_href=upload.pulp_href, file=str(file_2), content_range="bytes 128-255/256"
         )
         most_recent_path = str(uuid.uuid4())
         response = file_bindings.ContentFilesApi.create(
@@ -233,16 +231,16 @@ def test_create_file_content_from_chunked_upload(
         content = file_bindings.ContentFilesApi.read(task.created_resources[0])
         assert content.sha256 == expected_digest
         # Upload gets deleted if the content gets created
-        with pytest.raises(coreApiException):
+        with pytest.raises(pulpcore_bindings.module.ApiException):
             pulpcore_bindings.UploadsApi.read(upload.pulp_href)
 
     # Attempt to create a duplicate content by re-using the most recent relative path
     upload = gen_object_with_cleanup(pulpcore_bindings.UploadsApi, {"size": 256})
     pulpcore_bindings.UploadsApi.update(
-        upload_href=upload.pulp_href, file=file_1, content_range="bytes 0-127/256"
+        upload_href=upload.pulp_href, file=str(file_1), content_range="bytes 0-127/256"
     )
     pulpcore_bindings.UploadsApi.update(
-        upload_href=upload.pulp_href, file=file_2, content_range="bytes 128-255/256"
+        upload_href=upload.pulp_href, file=str(file_2), content_range="bytes 128-255/256"
     )
     response = file_bindings.ContentFilesApi.create(
         upload=upload.pulp_href, relative_path=most_recent_path
@@ -251,7 +249,7 @@ def test_create_file_content_from_chunked_upload(
     content = file_bindings.ContentFilesApi.read(task.created_resources[0])
     assert content.sha256 == expected_digest
     # Upload gets deleted even though no new content got created
-    with pytest.raises(coreApiException):
+    with pytest.raises(pulpcore_bindings.module.ApiException):
         pulpcore_bindings.UploadsApi.read(upload.pulp_href)
 
 

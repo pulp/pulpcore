@@ -1,7 +1,6 @@
 """Tests related to the api docs page."""
 
 import pytest
-from pulpcore.client.pulpcore import ApiException
 
 
 @pytest.fixture(scope="session")
@@ -15,7 +14,7 @@ def test_valid_credentials(pulpcore_bindings, pulp_docs_url):
 
     Assert the API documentation is returned.
     """
-    response = pulpcore_bindings.client.request("GET", pulp_docs_url)
+    response = pulpcore_bindings.client.rest_client.request("GET", pulp_docs_url)
     assert response.status == 200
 
 
@@ -26,7 +25,7 @@ def test_no_credentials(pulpcore_bindings, pulp_docs_url, anonymous_user):
     Assert the API documentation is returned.
     """
     with anonymous_user:
-        response = pulpcore_bindings.client.request("GET", pulp_docs_url)
+        response = pulpcore_bindings.client.rest_client.request("GET", pulp_docs_url)
         assert response.status == 200
 
 
@@ -36,7 +35,6 @@ def test_http_method(pulpcore_bindings, pulp_docs_url):
 
     Assert an error is returned.
     """
-    with pytest.raises(ApiException) as e:
-        pulpcore_bindings.client.request("POST", pulp_docs_url)
+    response = pulpcore_bindings.client.rest_client.request("POST", pulp_docs_url)
 
-    assert e.value.status == 405
+    assert response.status == 405

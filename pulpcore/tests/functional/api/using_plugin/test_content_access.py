@@ -62,7 +62,7 @@ def test_upload_file_on_demand_already(
         assert content.artifact is None
 
     file_content = file_fixtures_root / "basic" / content.relative_path
-    body = {"relative_path": content.relative_path, "file": file_content}
+    body = {"relative_path": content.relative_path, "file": str(file_content)}
     task = monitor_task(file_bindings.ContentFilesApi.create(**body).task)
     assert len(task.created_resources) == 1
     assert task.created_resources[0] == content.pulp_href

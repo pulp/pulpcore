@@ -31,7 +31,7 @@ def session_user(pulpcore_bindings, gen_user, anonymous_user):
         else:
             # new bindings
             headers = response.headers
-    cookie_jar = http.cookies.SimpleCookie(headers["set-cookie"])
+    cookie_jar = http.cookies.SimpleCookie(headers["Set-Cookie"])
     # Use anonymous_user to remove the basic auth header from the api client.
     with anonymous_user:
         pulpcore_bindings.client.cookie = "; ".join(
@@ -70,15 +70,15 @@ def test_login_sets_session_cookie(pulpcore_bindings, gen_user):
         response = pulpcore_bindings.LoginApi.login_with_http_info()
         if isinstance(response, tuple):
             # old bindings
-            result, status, headers = response
+            result, status_code, headers = response
         else:
             # new bindings
             result = response.data
-            status = response.status
+            status_code = response.status_code
             headers = response.headers
-    assert status == 201
+    assert status_code == 201
     assert result.username == user.username
-    cookie_jar = http.cookies.SimpleCookie(headers["set-cookie"])
+    cookie_jar = http.cookies.SimpleCookie(headers["Set-Cookie"])
     assert cookie_jar["sessionid"].value != ""
     assert cookie_jar["csrftoken"].value != ""
 
@@ -92,13 +92,13 @@ def test_logout_removes_sessionid(pulpcore_bindings, session_user):
     response = pulpcore_bindings.LoginApi.logout_with_http_info()
     if isinstance(response, tuple):
         # old bindings
-        _, status, headers = response
+        _, status_code, headers = response
     else:
         # new bindings
-        status = response.status
+        status_code = response.status_code
         headers = response.headers
-    assert status == 204
-    cookie_jar = http.cookies.SimpleCookie(headers["set-cookie"])
+    assert status_code == 204
+    cookie_jar = http.cookies.SimpleCookie(headers["Set-Cookie"])
     assert cookie_jar["sessionid"].value == ""
 
 

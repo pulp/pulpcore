@@ -152,7 +152,7 @@ def test_orphan_domain_deletion(
     monitor_task(
         file_bindings.ContentFilesApi.create(
             relative_path=str(uuid.uuid4()),
-            file=new_file,
+            file=str(new_file),
             pulp_domain=domain.name,
             repository=repository.pulp_href,
         ).task
@@ -277,11 +277,14 @@ def test_special_domain_creation(pulpcore_bindings, gen_object_with_cleanup):
         "storage_class": backend,
         "storage_settings": storage_settings[backend],
     }
-    with pytest.raises(ApiException) as e:
+    with pytest.raises((ApiException, ValueError)) as e:
         gen_object_with_cleanup(pulpcore_bindings.DomainsApi, body)
 
-    assert e.value.status == 400
-    assert "Ensure this field has no more than 50 characters." in e.value.body
+    if isinstance(e.value, ApiException):
+        assert e.value.status == 400
+        assert "Ensure this field has no more than 50 characters." in e.value.body
+    else:
+        assert "String should have at most 50 characters" in str(e.value)
 
     # Check that all domains are "apart" of the default domain
     domains = pulpcore_bindings.DomainsApi.list()

@@ -5,8 +5,6 @@ import uuid
 
 import pytest
 
-from pulpcore.client.pulp_file.exceptions import ApiException
-
 
 @pytest.mark.parallel
 def test_remote_crud_workflow(file_bindings, gen_object_with_cleanup, monitor_task):
@@ -15,7 +13,7 @@ def test_remote_crud_workflow(file_bindings, gen_object_with_cleanup, monitor_ta
     assert remote.url == remote_data["url"]
     assert remote.name == remote_data["name"]
 
-    with pytest.raises(ApiException) as exc:
+    with pytest.raises(file_bindings.module.ApiException) as exc:
         gen_object_with_cleanup(file_bindings.RemotesFileApi, remote_data)
     assert exc.value.status == 400
     assert json.loads(exc.value.body) == {"name": ["This field must be unique."]}
@@ -40,25 +38,12 @@ def test_remote_crud_workflow(file_bindings, gen_object_with_cleanup, monitor_ta
 
 
 @pytest.mark.parallel
-def test_create_file_remote_with_invalid_parameter(file_bindings, gen_object_with_cleanup):
-    unexpected_field_remote_data = {
-        "name": str(uuid.uuid4()),
-        "url": "http://example.com",
-        "foo": "bar",
-    }
-
-    with pytest.raises(ApiException) as exc:
-        gen_object_with_cleanup(file_bindings.RemotesFileApi, unexpected_field_remote_data)
-    assert exc.value.status == 400
-    assert json.loads(exc.value.body) == {"foo": ["Unexpected field"]}
-
-
-@pytest.mark.parallel
 def test_create_file_remote_without_url(file_bindings, gen_object_with_cleanup):
-    with pytest.raises(ApiException) as exc:
+    with pytest.raises((file_bindings.module.ApiException, ValueError)) as exc:
         gen_object_with_cleanup(file_bindings.RemotesFileApi, {"name": str(uuid.uuid4())})
-    assert exc.value.status == 400
-    assert json.loads(exc.value.body) == {"url": ["This field is required."]}
+    if isinstance(exc.value, file_bindings.module.ApiException):
+        assert exc.value.status == 400
+        assert json.loads(exc.value.body) == {"url": ["This field is required."]}
 
 
 @pytest.mark.parallel
