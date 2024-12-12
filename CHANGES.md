@@ -8,6 +8,90 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.69.0 (2024-12-11) {: #3.69.0 }
+
+### REST API {: #3.69.0-rest-api }
+
+#### Features {: #3.69.0-rest-api-feature }
+
+- Added core version to the bindings api spec even if core apis are not part of the spec.
+
+#### Bugfixes {: #3.69.0-rest-api-bugfix }
+
+- Fixed content-app behavior for the case where the client would get a 200 response for a package
+  streamed from a Remote which did not match the expected checksum.
+  Now, the connection is closed before finalizing the response.
+  [#5012](https://github.com/pulp/pulpcore/issues/5012)
+- On a request for on-demand content in the content app, a corrupted Remote that
+  contains the wrong binary (for that content) prevented other Remotes from being
+  attempted on future requests. Now the last failed Remotes are temporarily ignored
+  and others may be picked.
+  [#5725](https://github.com/pulp/pulpcore/issues/5725)
+- Disable retry logic on the context of content-app on-demand streaming, as we can't recover
+  from any errors after starting the streaming process (chunked transfer).
+  [#5937](https://github.com/pulp/pulpcore/issues/5937)
+- Allowed to bind api and content workers to multiple addresses.
+  You can specify `--bind` multiple times on the `pulpcore-{api,content}` entrypoints.
+  [#6053](https://github.com/pulp/pulpcore/issues/6053)
+- Fixed the openapi schema definition of task error.
+- Fixed the schema definition for created resources.
+
+#### Improved Documentation {: #3.69.0-rest-api-doc }
+
+- Added docs about on-demand content limitations and caveats.
+  [#1975](https://github.com/pulp/pulpcore/issues/1975),
+  [#3212](https://github.com/pulp/pulpcore/issues/3212)
+
+### Plugin API {: #3.69.0-plugin-api }
+
+#### Features {: #3.69.0-plugin-api-feature }
+
+- Pulpcore migrations have been squashed.
+  In order to allow removing the old ones, plugins should rebase their migrations on at least the 0091 migration of core.
+  The `pulpcore-manager rebasemigrations` command will hep with that.
+
+#### Bugfixes {: #3.69.0-plugin-api-bugfix }
+
+- Fixed `GetOrCreateSerializerMixin` not accepting pulp_domain for the natural key creation.
+  [#domain-get-create-serializer-mixin](https://github.com/pulp/pulpcore/issues/domain-get-create-serializer-mixin)
+
+#### Misc {: #3.69.0-plugin-api-misc }
+
+- 
+
+### Pulp File {: #3.69.0-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.69.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.68.2 (2024-12-11) {: #3.68.2 }
+
+### REST API {: #3.68.2-rest-api }
+
+No significant changes.
+
+### Plugin API {: #3.68.2-plugin-api }
+
+#### Bugfixes {: #3.68.2-plugin-api-bugfix }
+
+- Fixed `GetOrCreateSerializerMixin` not accepting pulp_domain for the natural key creation.
+  [#domain-get-create-serializer-mixin](https://github.com/pulp/pulpcore/issues/domain-get-create-serializer-mixin)
+
+### Pulp File {: #3.68.2-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.68.2-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.68.1 (2024-11-26) {: #3.68.1 }
 
 ### REST API {: #3.68.1-rest-api }
@@ -261,6 +345,29 @@ No significant changes.
 No significant changes.
 
 ### Pulp Cert Guard {: #3.64.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.63.5 (2024-12-11) {: #3.63.5 }
+
+### REST API {: #3.63.5-rest-api }
+
+No significant changes.
+
+### Plugin API {: #3.63.5-plugin-api }
+
+#### Bugfixes {: #3.63.5-plugin-api-bugfix }
+
+- Fixed `GetOrCreateSerializerMixin` not accepting pulp_domain for the natural key creation.
+  [#domain-get-create-serializer-mixin](https://github.com/pulp/pulpcore/issues/domain-get-create-serializer-mixin)
+
+### Pulp File {: #3.63.5-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.63.5-pulp-cert-guard }
 
 No significant changes.
 
