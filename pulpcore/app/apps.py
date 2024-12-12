@@ -5,7 +5,6 @@ from gettext import gettext as _
 from importlib import import_module
 
 from django import apps
-from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.db import connection, transaction
 from django.db.models.signals import post_migrate
@@ -68,6 +67,11 @@ class PulpPluginAppConfig(apps.AppConfig):
 
     def __init__(self, app_name, app_module):
         super().__init__(app_name, app_module)
+        # Workaround for getting the up-to-date settings instance.
+        # A module-level settings import is a cached version from before dynaconf do its work.
+        from django.conf import settings
+
+        self.settings = settings
 
         try:
             self.version
@@ -312,6 +316,7 @@ def _populate_system_id(sender, apps, verbosity, **kwargs):
 
 
 def _ensure_default_domain(sender, **kwargs):
+    settings = sender.settings
     table_names = connection.introspection.table_names()
     if "core_domain" in table_names:
         from pulpcore.app.util import get_default_domain
@@ -391,6 +396,7 @@ def adjust_roles(apps, role_prefix, desired_roles, verbosity=1):
 
 
 def _populate_artifact_serving_distribution(sender, apps, verbosity, **kwargs):
+    settings = sender.settings
     if (
         settings.STORAGES["default"]["BACKEND"] == "pulpcore.app.models.storage.FileSystem"
         or not settings.REDIRECT_TO_OBJECT_STORAGE
