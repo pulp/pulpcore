@@ -4,11 +4,6 @@ import pytest
 import json
 from uuid import uuid4
 
-from pulpcore.client.pulp_file import (
-    RepositorySyncURL,
-    FileFileDistribution,
-    FileFilePublication,
-)
 from pulpcore.client.pulp_file.exceptions import ApiException
 
 
@@ -24,7 +19,7 @@ def test_crud_publication_distribution(
 ):
     # Create a remote and sync from it to create the first repository version
     remote = file_remote_ssl_factory(manifest_path=basic_manifest_path, policy="on_demand")
-    body = RepositorySyncURL(remote=remote.pulp_href)
+    body = file_bindings.RepositorySyncURL(remote=remote.pulp_href)
     monitor_task(file_bindings.RepositoriesFileApi.sync(file_repo.pulp_href, body).task)
 
     # Remove content to create two more repository versions
@@ -44,7 +39,7 @@ def test_crud_publication_distribution(
 
     # Create a publication from version 2
     repo_versions = file_bindings.RepositoriesFileVersionsApi.list(file_repo.pulp_href).results
-    publish_data = FileFilePublication(repository_version=repo_versions[2].pulp_href)
+    publish_data = file_bindings.FileFilePublication(repository_version=repo_versions[2].pulp_href)
     publication = gen_object_with_cleanup(file_bindings.PublicationsFileApi, publish_data)
     distribution_data = {
         "publication": publication.pulp_href,
@@ -90,7 +85,7 @@ def test_crud_publication_distribution(
     new_name = str(uuid4())
     distribution.name = new_name
     monitor_task(
-        file_bindings.DistributionsFileApi.update(distribution.pulp_href, distribution).task
+        file_bindings.DistributionsFileApi.update(distribution.pulp_href, distribution.dict()).task
     )
     distribution = file_bindings.DistributionsFileApi.read(distribution.pulp_href)
     assert distribution.name == new_name
@@ -99,7 +94,7 @@ def test_crud_publication_distribution(
     new_base_path = str(uuid4())
     distribution.base_path = new_base_path
     monitor_task(
-        file_bindings.DistributionsFileApi.update(distribution.pulp_href, distribution).task
+        file_bindings.DistributionsFileApi.update(distribution.pulp_href, distribution.dict()).task
     )
     distribution = file_bindings.DistributionsFileApi.read(distribution.pulp_href)
     assert distribution.base_path == new_base_path
@@ -180,7 +175,7 @@ def test_distribution_filtering(
         repo = file_repository_factory()
         repo_manifest_path = write_3_iso_file_fixture_data_factory(str(uuid4()))
         remote = file_remote_factory(manifest_path=repo_manifest_path, policy="on_demand")
-        body = RepositorySyncURL(remote=remote.pulp_href)
+        body = file_bindings.RepositorySyncURL(remote=remote.pulp_href)
         task_response = file_bindings.RepositoriesFileApi.sync(repo.pulp_href, body).task
         version_href = monitor_task(task_response).created_resources[0]
         content = file_bindings.ContentFilesApi.list(repository_version_added=version_href).results[
@@ -190,11 +185,11 @@ def test_distribution_filtering(
 
     repo1, content1 = generate_repo_with_content()
 
-    publish_data = FileFilePublication(repository=repo1.pulp_href)
+    publish_data = file_bindings.FileFilePublication(repository=repo1.pulp_href)
     publication = gen_object_with_cleanup(file_bindings.PublicationsFileApi, publish_data)
 
     # test if a publication attached to a distribution exposes the published content
-    data = FileFileDistribution(
+    data = file_bindings.FileFileDistribution(
         name=str(uuid4()), base_path=str(uuid4()), publication=publication.pulp_href
     )
     distribution_pub1 = gen_object_with_cleanup(file_bindings.DistributionsFileApi, data)
@@ -203,9 +198,9 @@ def test_distribution_filtering(
     assert [distribution_pub1] == results
 
     # test if a publication pointing to repository version no. 0 does not expose any content
-    publish_data = FileFilePublication(repository_version=repo1.versions_href + "0/")
+    publish_data = file_bindings.FileFilePublication(repository_version=repo1.versions_href + "0/")
     publication_version_0 = gen_object_with_cleanup(file_bindings.PublicationsFileApi, publish_data)
-    data = FileFileDistribution(
+    data = file_bindings.FileFileDistribution(
         name=str(uuid4()), base_path=str(uuid4()), publication=publication_version_0.pulp_href
     )
     gen_object_with_cleanup(file_bindings.DistributionsFileApi, data)
@@ -215,7 +210,7 @@ def test_distribution_filtering(
 
     # test if a repository assigned to a distribution exposes the content available in the latest
     # publication for that repository's versions
-    data = FileFileDistribution(
+    data = file_bindings.FileFileDistribution(
         name=str(uuid4()), base_path=str(uuid4()), repository=repo1.pulp_href
     )
     distribution_repopub = gen_object_with_cleanup(file_bindings.DistributionsFileApi, data)
@@ -237,20 +232,20 @@ def test_distribution_filtering(
     monitor_task(response.task)
     assert [] == file_bindings.DistributionsFileApi.list(with_content=content2.pulp_href).results
 
-    publish_data = FileFilePublication(repository=repo1.pulp_href)
+    publish_data = file_bindings.FileFilePublication(repository=repo1.pulp_href)
     new_publication = gen_object_with_cleanup(file_bindings.PublicationsFileApi, publish_data)
 
     # test later (20 lines below) if the publication now exposes the recently added content in the
     # affected distributions (i.e., the distribution with the reference to a repository and the
     # new one)
-    data = FileFileDistribution(
+    data = file_bindings.FileFileDistribution(
         name="pub3", base_path="pub3", publication=new_publication.pulp_href
     )
     distribution_pub3 = gen_object_with_cleanup(file_bindings.DistributionsFileApi, data)
 
     # test if a repository without any attached publication does not expose any kind of content
     # to a user even though the content is still present in the latest repository version
-    data = FileFileDistribution(
+    data = file_bindings.FileFileDistribution(
         name=str(uuid4()), base_path=str(uuid4()), repository=repo2.pulp_href
     )
     distribution_repo_only = gen_object_with_cleanup(file_bindings.DistributionsFileApi, data)
@@ -262,7 +257,7 @@ def test_distribution_filtering(
     assert {distribution_pub3.pulp_href, distribution_repopub.pulp_href} == results
 
     # create a publication to see whether the content of the second repository is now served or not
-    publish_data = FileFilePublication(repository=repo2.pulp_href)
+    publish_data = file_bindings.FileFilePublication(repository=repo2.pulp_href)
     gen_object_with_cleanup(file_bindings.PublicationsFileApi, publish_data)
 
     results = set(

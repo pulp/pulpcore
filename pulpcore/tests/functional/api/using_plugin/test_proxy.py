@@ -1,14 +1,11 @@
 import pytest
 from pulpcore.tests.functional.utils import PulpTaskError
 
-from pulpcore.client.pulp_file import (
-    RepositorySyncURL,
-)
 import sys
 
 
 def _run_basic_sync_and_assert(file_bindings, monitor_task, remote, file_repo):
-    body = RepositorySyncURL(remote=remote.pulp_href)
+    body = file_bindings.RepositorySyncURL(remote=remote.pulp_href)
     monitor_task(file_bindings.RepositoriesFileApi.sync(file_repo.pulp_href, body).task)
 
     # Check content is present, but no artifacts are there
@@ -73,7 +70,7 @@ def test_sync_https_through_http_proxy_with_auth(
     remote_on_demand = file_remote_ssl_factory(
         manifest_path=basic_manifest_path,
         policy="on_demand",
-        tls_validation="true",
+        tls_validation=True,
         proxy_url=http_proxy_with_auth.proxy_url,
         proxy_username=http_proxy_with_auth.username,
         proxy_password=http_proxy_with_auth.password,
@@ -97,7 +94,7 @@ def test_sync_https_through_http_proxy_with_auth_but_auth_not_configured(
     remote_on_demand = file_remote_ssl_factory(
         manifest_path=basic_manifest_path,
         policy="on_demand",
-        tls_validation="true",
+        tls_validation=True,
         proxy_url=http_proxy_with_auth.proxy_url,
     )
 
@@ -123,7 +120,7 @@ def test_sync_http_through_https_proxy(
         manifest_path=basic_manifest_path,
         policy="on_demand",
         proxy_url=https_proxy.proxy_url,
-        tls_validation="false",  # We instead should have a `proxy_insecure` option
+        tls_validation=False,  # We instead should have a `proxy_insecure` option
     )
 
     _run_basic_sync_and_assert(file_bindings, monitor_task, remote_on_demand, file_repo)

@@ -1,10 +1,6 @@
 import pytest
 import uuid
 
-from pulpcore.client.pulpcore import ApiException
-from pulpcore.client.pulpcore import AsyncOperationResponse
-from pulpcore.client.pulp_file import RepositorySyncURL
-
 from pulpcore.tests.functional.utils import PulpTaskGroupError, generate_iso
 
 
@@ -73,7 +69,7 @@ def test_replication_idempotence(
     file_path.write_text("DEADBEEF")
     monitor_task(
         file_bindings.ContentFilesApi.create(
-            file=file_path,
+            file=str(file_path),
             relative_path="file.txt",
             repository=repository.pulp_href,
             pulp_domain=source_domain.name,
@@ -265,7 +261,9 @@ def test_replication_optimization(
     )
     upstream_repository = file_repository_factory(pulp_domain=source_domain.name)
 
-    repository_sync_data = RepositorySyncURL(remote=upstream_remote.pulp_href, mirror=True)
+    repository_sync_data = file_bindings.module.RepositorySyncURL(
+        remote=upstream_remote.pulp_href, mirror=True
+    )
     response = file_bindings.RepositoriesFileApi.sync(
         upstream_repository.pulp_href, repository_sync_data
     )
@@ -299,7 +297,7 @@ def test_replication_optimization(
 
     response = file_bindings.ContentFilesApi.create(
         relative_path,
-        file=filename,
+        file=str(filename),
         repository=upstream_repository.pulp_href,
         pulp_domain=source_domain.name,
     )
@@ -397,18 +395,27 @@ def gen_users(gen_user):
 
 
 @pytest.fixture
-def try_action(monitor_task):
+def try_action(pulpcore_bindings, monitor_task):
     def _try_action(user, client, action, outcome, *args, **kwargs):
         action_api = getattr(client, f"{action}_with_http_info")
         try:
             with user:
-                response, status, _ = action_api(*args, **kwargs, _return_http_data_only=False)
-            if isinstance(response, AsyncOperationResponse):
-                response = monitor_task(response.task)
-        except ApiException as e:
+                response = action_api(*args, **kwargs)
+            if isinstance(response, tuple):
+                # old bindings
+                data, status, _ = response
+            else:
+                # new bindings
+                data = response.data
+                status_code = response.status_code
+            if isinstance(data, pulpcore_bindings.module.AsyncOperationResponse):
+                data = monitor_task(data.task)
+        except pulpcore_bindings.module.ApiException as e:
             assert e.status == outcome, f"{e}"
         else:
-            assert status == outcome, f"User performed {action} when they shouldn't been able to"
+            assert (
+                status_code == outcome
+            ), f"User performed {action} when they shouldn't been able to"
             return response
 
     return _try_action

@@ -3,9 +3,6 @@ import pytest
 from django.core.files.storage import default_storage
 from random import sample
 
-from pulpcore.client.pulpcore import Repair
-from pulpcore.client.pulp_file import RepositorySyncURL
-
 from pulpcore.tests.functional.utils import get_files_in_manifest
 
 
@@ -20,7 +17,7 @@ def repository_with_corrupted_artifacts(
 ):
     # STEP 1: sync content from a remote source
     remote = file_remote_ssl_factory(manifest_path=basic_manifest_path, policy="immediate")
-    sync_data = RepositorySyncURL(remote=remote.pulp_href)
+    sync_data = file_bindings.RepositorySyncURL(remote=remote.pulp_href)
     monitor_task(file_bindings.RepositoriesFileApi.sync(file_repo.pulp_href, sync_data).task)
     repo = file_bindings.RepositoriesFileApi.read(file_repo.pulp_href)
 
@@ -51,14 +48,14 @@ def test_repair_global_with_checksums(
     6. Assert that the repair task reported no missing, corrupted or repaired units.
     """
     # STEP 3
-    response = pulpcore_bindings.RepairApi.post(Repair(verify_checksums=True))
+    response = pulpcore_bindings.RepairApi.post(pulpcore_bindings.Repair(verify_checksums=True))
     results = monitor_task(response.task)
 
     # STEP 4
     _verify_repair_results(results, missing=1, corrupted=1, repaired=2)
 
     # STEP 5
-    response = pulpcore_bindings.RepairApi.post(Repair(verify_checksums=True))
+    response = pulpcore_bindings.RepairApi.post(pulpcore_bindings.Repair(verify_checksums=True))
     results = monitor_task(response.task)
 
     # STEP 6
@@ -66,7 +63,10 @@ def test_repair_global_with_checksums(
 
 
 def test_repair_global_without_checksums(
-    pulpcore_bindings, repository_with_corrupted_artifacts, monitor_task
+    pulpcore_bindings,
+    repository_with_corrupted_artifacts,
+    monitor_task,
+    delete_orphans_pre,
 ):
     """Test whether missing files can be redownloaded.
 
@@ -80,21 +80,21 @@ def test_repair_global_without_checksums(
     8. Assert that the repair task reported one corrupted and one repaired unit.
     """
     # STEP 3
-    response = pulpcore_bindings.RepairApi.post(Repair(verify_checksums=False))
+    response = pulpcore_bindings.RepairApi.post(pulpcore_bindings.Repair(verify_checksums=False))
     results = monitor_task(response.task)
 
     # STEP 4
     _verify_repair_results(results, missing=1, repaired=1)
 
     # STEP 5
-    response = pulpcore_bindings.RepairApi.post(Repair(verify_checksums=False))
+    response = pulpcore_bindings.RepairApi.post(pulpcore_bindings.Repair(verify_checksums=False))
     results = monitor_task(response.task)
 
     # STEP 6
     _verify_repair_results(results)
 
     # STEP 7
-    response = pulpcore_bindings.RepairApi.post(Repair(verify_checksums=True))
+    response = pulpcore_bindings.RepairApi.post(pulpcore_bindings.Repair(verify_checksums=True))
     results = monitor_task(response.task)
 
     # STEP 8
@@ -117,7 +117,7 @@ def test_repair_repository_version_with_checksums(
     # STEP 3
     latest_version = repository_with_corrupted_artifacts.latest_version_href
     response = file_bindings.RepositoriesFileVersionsApi.repair(
-        latest_version, Repair(verify_checksums=True)
+        latest_version, file_bindings.Repair(verify_checksums=True)
     )
     results = monitor_task(response.task)
 
@@ -126,7 +126,7 @@ def test_repair_repository_version_with_checksums(
 
     # STEP 5
     response = file_bindings.RepositoriesFileVersionsApi.repair(
-        latest_version, Repair(verify_checksums=True)
+        latest_version, file_bindings.Repair(verify_checksums=True)
     )
     results = monitor_task(response.task)
 
@@ -152,7 +152,7 @@ def test_repair_repository_version_without_checksums(
     # STEP 3
     latest_version = repository_with_corrupted_artifacts.latest_version_href
     response = file_bindings.RepositoriesFileVersionsApi.repair(
-        latest_version, Repair(verify_checksums=False)
+        latest_version, file_bindings.Repair(verify_checksums=False)
     )
     results = monitor_task(response.task)
 
@@ -161,7 +161,7 @@ def test_repair_repository_version_without_checksums(
 
     # STEP 5
     response = file_bindings.RepositoriesFileVersionsApi.repair(
-        latest_version, Repair(verify_checksums=False)
+        latest_version, file_bindings.Repair(verify_checksums=False)
     )
     results = monitor_task(response.task)
 
@@ -170,7 +170,7 @@ def test_repair_repository_version_without_checksums(
 
     # STEP 7
     response = file_bindings.RepositoriesFileVersionsApi.repair(
-        latest_version, Repair(verify_checksums=True)
+        latest_version, file_bindings.Repair(verify_checksums=True)
     )
     results = monitor_task(response.task)
 

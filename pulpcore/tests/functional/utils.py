@@ -50,9 +50,11 @@ class BindingsNamespace:
 
     def __getattr__(self, name):
         # __getattr__ is only consulted if nothing is found in __dict__.
-        assert name.endswith("Api")
-
-        api_object = getattr(self.module, name)(self.client)
+        # So we get memoization for free.
+        if name.endswith("Api"):
+            api_object = getattr(self.module, name)(self.client)
+        else:
+            api_object = getattr(self.module, name)
         self.__dict__[name] = api_object
         return api_object
 

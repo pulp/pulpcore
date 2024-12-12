@@ -39,8 +39,9 @@ def test_migrate_default_domain(pulpcore_bindings, pulp_domain_enabled):
     kwargs = {}
     if pulp_domain_enabled:
         kwargs["pulp_domain"] = domain.name
+    body = {"storage_class": "pulpcore.app.models.storage.FileSystem", "storage_settings": {}}
     with pytest.raises(pulpcore_bindings.ApiException) as e:
-        pulpcore_bindings.DomainsApi.migrate({}, **kwargs)
+        pulpcore_bindings.DomainsApi.migrate(body, **kwargs)
     assert e.value.status == 400
     assert "Default domain can not be migrated" in e.value.body
 

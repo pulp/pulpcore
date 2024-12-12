@@ -24,15 +24,15 @@ def pulpcore_random_chunked_file_factory(tmp_path):
         hasher = hashlib.new("sha256")
         start = 0
         for chunk_size in chunk_sizes:
-            name = tmp_path / str(uuid.uuid4())
-            with open(name, "wb") as f:
-                content = os.urandom(chunk_size)
-                hasher.update(content)
-                f.write(content)
-                f.flush()
+            chunk_file = tmp_path / str(uuid.uuid4())
+            content = os.urandom(chunk_size)
+            hasher.update(content)
+            chunk_file.write_bytes(content)
             content_sha = hashlib.sha256(content).hexdigest()
             end = start + chunk_size - 1
-            chunks["chunks"].append((name, f"bytes {start}-{end}/{chunks['size']}", content_sha))
+            chunks["chunks"].append(
+                (str(chunk_file), f"bytes {start}-{end}/{chunks['size']}", content_sha)
+            )
             start = start + chunk_size
         chunks["digest"] = hasher.hexdigest()
         return chunks
@@ -138,28 +138,27 @@ def test_upload_response(
 
     expected_keys = ["pulp_href", "pulp_created", "size"]
     for key in expected_keys:
-        assert getattr(upload, key)
+        assert hasattr(upload, key)
 
     for data in file_chunks_data["chunks"]:
         kwargs = {"file": data[0], "content_range": data[1], "upload_href": upload.pulp_href}
         response = pulpcore_bindings.UploadsApi.update(**kwargs)
 
         for key in expected_keys:
-            assert getattr(response, key)
+            assert hasattr(response, key)
 
     upload = pulpcore_bindings.UploadsApi.read(upload.pulp_href)
 
     expected_keys.append("chunks")
 
     for key in expected_keys:
-        assert getattr(upload, key)
+        assert hasattr(upload, key)
 
     expected_chunks = [
         {"offset": 0, "size": 6291456},
         {"offset": 6291456, "size": 4194304},
     ]
-
-    sorted_chunks_response = sorted([c.to_dict() for c in upload.chunks], key=lambda i: i["offset"])
+    sorted_chunks_response = sorted([c.dict() for c in upload.chunks], key=lambda i: i["offset"])
     assert sorted_chunks_response == expected_chunks
 
 
