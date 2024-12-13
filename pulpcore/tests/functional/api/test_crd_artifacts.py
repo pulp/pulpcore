@@ -7,7 +7,6 @@ import uuid
 import pytest
 
 
-
 @pytest.fixture
 def pulpcore_random_file(tmp_path):
     name = tmp_path / str(uuid.uuid4())
