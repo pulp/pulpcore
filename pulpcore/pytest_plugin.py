@@ -603,13 +603,13 @@ def backend_settings_factory(pulp_settings):
         keys = dict()
         keys["pulpcore.app.models.storage.FileSystem"] = ["MEDIA_ROOT", "MEDIA_URL"]
         keys["storages.backends.s3boto3.S3Boto3Storage"] = [
-            "AWS_ACCESS_KEY_ID",
-            "AWS_SECRET_ACCESS_KEY",
-            "AWS_S3_ENDPOINT_URL",
-            "AWS_S3_ADDRESSING_STYLE",
-            "AWS_S3_SIGNATURE_VERSION",
-            "AWS_S3_REGION_NAME",
-            "AWS_STORAGE_BUCKET_NAME",
+            "access_key",
+            "secret_key",
+            "endpoint_url",
+            "addressing_style",
+            "signature_version",
+            "region_name",
+            "bucket_name",
         ]
         keys["storages.backends.azure_storage.AzureStorage"] = [
             "AZURE_ACCOUNT_NAME",
@@ -622,8 +622,16 @@ def backend_settings_factory(pulp_settings):
         ]
         settings = storage_settings or dict()
         backend = storage_class or pulp_settings.STORAGES["default"]["BACKEND"]
-        for key in keys[backend]:
-            if key not in settings:
+        not_defined_settings = (k for k in keys[backend] if k not in settings)
+        # The CI configures s3 with STORAGES and Azure with legacy
+        # Move all to STORAGES structure on DEFAULT_FILE_STORAGE removal
+        if backend == "storages.backends.s3boto3.S3Boto3Storage":
+            storages_dict = getattr(pulp_settings, "STORAGES", {})
+            storage_options = storages_dict.get("default", {}).get("OPTIONS", {})
+            for key in not_defined_settings:
+                settings[key] = storage_options.get(key)
+        else:
+            for key in not_defined_settings:
                 settings[key] = getattr(pulp_settings, key, None)
         return backend, settings
 
