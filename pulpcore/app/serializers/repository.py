@@ -165,7 +165,9 @@ class RemoteSerializer(ModelSerializer, HiddenFieldsMixin):
     )
     policy = serializers.ChoiceField(
         help_text="The policy to use when downloading content.",
-        choices=((models.Remote.IMMEDIATE, "When syncing, download all metadata and content now.")),
+        choices=(
+            (models.Remote.IMMEDIATE, "When syncing, download all metadata and content now."),
+        ),
         default=models.Remote.IMMEDIATE,
     )
 
@@ -321,6 +323,14 @@ class RemoteSerializer(ModelSerializer, HiddenFieldsMixin):
             "rate_limit",
             "hidden_fields",
         )
+
+
+class GenericRemoteSerializer(RemoteSerializer):
+    policy = serializers.ChoiceField(
+        help_text="The policy to use when downloading content.",
+        choices=models.Remote.POLICY_CHOICES,
+        default=models.Remote.IMMEDIATE,
+    )
 
 
 class RepositorySyncURLSerializer(ValidateFieldsMixin, serializers.Serializer):
