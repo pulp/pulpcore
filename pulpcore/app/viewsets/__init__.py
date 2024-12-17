@@ -76,6 +76,7 @@ from .user import (
     GroupViewSet,
     GroupRoleViewSet,
     GroupUserViewSet,
+    LoginViewSet,
     RoleViewSet,
     UserViewSet,
     UserRoleViewSet,

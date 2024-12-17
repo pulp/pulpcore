@@ -1,6 +1,7 @@
 from gettext import gettext as _
 
 from django.contrib.auth import get_user_model
+from django.contrib.auth import logout as auth_logout
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import FieldError
 from django.shortcuts import get_object_or_404
@@ -8,7 +9,7 @@ from django_filters.rest_framework import filters
 from django.db.models import Q, Count
 from django.contrib.auth.models import Permission
 
-from rest_framework import mixins, status
+from rest_framework import generics, mixins, status
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import SAFE_METHODS
 from rest_framework.response import Response
@@ -24,6 +25,7 @@ from pulpcore.app.serializers import (
     GroupSerializer,
     GroupUserSerializer,
     GroupRoleSerializer,
+    LoginSerializer,
     RoleSerializer,
     UserSerializer,
     UserRoleSerializer,
@@ -422,3 +424,35 @@ class GroupRoleViewSet(
     serializer_class = GroupRoleSerializer
     queryset = GroupRole.objects.all()
     ordering = ("-pulp_created",)
+
+
+class LoginViewSet(generics.CreateAPIView):
+    serializer_class = LoginSerializer
+
+    DEFAULT_ACCESS_POLICY = {
+        "statements": [
+            {
+                "action": ["*"],
+                "principal": "authenticated",
+                "effect": "allow",
+            },
+        ],
+        "creation_hooks": [],
+    }
+
+    @staticmethod
+    def urlpattern():
+        return "login"
+
+    @extend_schema(operation_id="login_read")
+    def get(self, request):
+        return Response(self.get_serializer(request.user).data)
+
+    @extend_schema(operation_id="logout")
+    def delete(self, request):
+        auth_logout(request)
+        return Response(status=204)
+
+
+# Annotate without redefining the post method.
+extend_schema(operation_id="login")(LoginViewSet.post)

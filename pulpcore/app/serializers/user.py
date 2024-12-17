@@ -3,6 +3,7 @@ import typing
 from gettext import gettext as _
 
 from django.contrib.auth import get_user_model
+from django.contrib.auth import login as auth_login
 from django.contrib.auth.models import Permission
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth.password_validation import validate_password
@@ -490,3 +491,14 @@ class NestedRoleSerializer(serializers.Serializer):
                         )
                     self.group_role_pks.append(qs.get().pk)
         return data
+
+
+class LoginSerializer(serializers.Serializer):
+    pulp_href = IdentityField(view_name="users-detail")
+    prn = PRNField()
+    username = serializers.CharField(read_only=True)
+
+    def create(self, validated_data):
+        user = self.context["request"].user
+        auth_login(self.context["request"], user)
+        return user

@@ -22,6 +22,7 @@ from pulpcore.app.views import (
 )
 from pulpcore.app.viewsets import (
     ListRepositoryVersionViewSet,
+    LoginViewSet,
     OrphansCleanupViewset,
     ReclaimSpaceViewSet,
 )
@@ -152,6 +153,7 @@ for viewset in sorted_by_depth:
     vs_tree.add_decendent(ViewSetNode(viewset))
 
 special_views = [
+    path("login/", LoginViewSet.as_view()),
     path("repair/", RepairView.as_view()),
     path(
         "orphans/cleanup/",
