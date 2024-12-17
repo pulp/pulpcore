@@ -265,6 +265,7 @@ class PulpAppConfig(PulpPluginAppConfig):
 
 def _populate_access_policies(sender, apps, verbosity, **kwargs):
     from pulpcore.app.util import get_view_urlpattern
+    from pulpcore.app.viewsets import LoginViewSet
 
     try:
         AccessPolicy = apps.get_model("core", "AccessPolicy")
@@ -273,7 +274,8 @@ def _populate_access_policies(sender, apps, verbosity, **kwargs):
             print(_("AccessPolicy model does not exist. Skipping initialization."))
         return
 
-    for viewset_batch in sender.named_viewsets.values():
+    extra_viewsets = [LoginViewSet]
+    for viewset_batch in list(sender.named_viewsets.values()) + [extra_viewsets]:
         for viewset in viewset_batch:
             access_policy = getattr(viewset, "DEFAULT_ACCESS_POLICY", None)
             if access_policy is not None:

@@ -113,6 +113,7 @@ from .user import (
     GroupRoleSerializer,
     GroupSerializer,
     GroupUserSerializer,
+    LoginSerializer,
     NestedRoleSerializer,
     RoleSerializer,
     UserRoleSerializer,
