@@ -275,6 +275,11 @@ CACHE_SETTINGS = {
     "EXPIRES_TTL": 600,  # 10 minutes
 }
 
+# The time a RemoteArtifact will be ignored after failure.
+# In on-demand, if a fetching content from a remote failed due to corrupt data,
+# the corresponding RemoteArtifact will be ignored for that time (seconds).
+REMOTE_CONTENT_FETCH_FAILURE_COOLDOWN = 5 * 60  # 5 minutes
+
 SPECTACULAR_SETTINGS = {
     "SERVE_URLCONF": ROOT_URLCONF,
     "DEFAULT_GENERATOR_CLASS": "pulpcore.openapi.PulpSchemaGenerator",

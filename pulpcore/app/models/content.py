@@ -703,6 +703,7 @@ class RemoteArtifact(BaseModel, QueryMixin):
         sha256 (models.CharField): The expected SHA-256 checksum of the file.
         sha384 (models.CharField): The expected SHA-384 checksum of the file.
         sha512 (models.CharField): The expected SHA-512 checksum of the file.
+        failed_at (models.DateTimeField): The datetime of last download attempt failure.
 
     Relations:
 
@@ -721,6 +722,7 @@ class RemoteArtifact(BaseModel, QueryMixin):
     sha256 = models.CharField(max_length=64, null=True, db_index=True)
     sha384 = models.CharField(max_length=96, null=True, db_index=True)
     sha512 = models.CharField(max_length=128, null=True, db_index=True)
+    failed_at = models.DateTimeField(null=True)
 
     content_artifact = models.ForeignKey(ContentArtifact, on_delete=models.CASCADE)
     remote = models.ForeignKey("Remote", on_delete=models.CASCADE)
