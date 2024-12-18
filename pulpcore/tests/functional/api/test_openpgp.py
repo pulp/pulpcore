@@ -133,14 +133,14 @@ def test_key_upload(tmpdir, openpgp_keyring_factory, pulpcore_bindings, monitor_
     bob_pub.write_text(BOB_PUB, "UTF-8")
 
     result = pulpcore_bindings.ContentOpenpgpPublickeyApi.create(
-        file=alice_pub, repository=keyring.pulp_href
+        file=str(alice_pub), repository=keyring.pulp_href
     )
     monitor_task(result.task)
     result = pulpcore_bindings.ContentOpenpgpPublickeyApi.create(
-        file=bob_pub, repository=keyring.pulp_href
+        file=str(bob_pub), repository=keyring.pulp_href
     )
     monitor_task(result.task)
     result = pulpcore_bindings.ContentOpenpgpPublickeyApi.create(
-        file=alice_revoked, repository=keyring.pulp_href
+        file=str(alice_revoked), repository=keyring.pulp_href
     )
     monitor_task(result.task)

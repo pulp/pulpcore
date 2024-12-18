@@ -5,8 +5,6 @@ Tests task-purge functionality.
 from datetime import datetime, timedelta, timezone
 
 import pytest
-from pulpcore.client.pulpcore import ApiException, Purge
-from pulpcore.client.pulp_file import RepositorySyncURL
 
 from pulpcore.constants import TASK_STATES, TASK_FINAL_STATES
 
@@ -94,7 +92,7 @@ def good_and_bad_task(
 def test_purge_before_time(pulpcore_bindings, good_and_bad_task, monitor_task):
     """Purge that should find no tasks to delete."""
     _, _, pre_total, _, _ = good_and_bad_task
-    dta = Purge(finished_before="1970-01-01T00:00")
+    dta = pulpcore_bindings.Purge(finished_before="1970-01-01T00:00")
     response = pulpcore_bindings.TasksApi.purge(dta)
     task = monitor_task(response.task)
     new_total, new_final, new_summary = _task_summary(pulpcore_bindings)
@@ -106,7 +104,7 @@ def test_purge_before_time(pulpcore_bindings, good_and_bad_task, monitor_task):
 
 def test_purge_defaults(pulpcore_bindings, good_and_bad_task, monitor_task):
     """Purge using defaults (finished_before=30-days-ago, state=completed)"""
-    dta = Purge()
+    dta = pulpcore_bindings.Purge()
     response = pulpcore_bindings.TasksApi.purge(dta)
     monitor_task(response.task)
 
@@ -124,18 +122,18 @@ def test_purge_all(pulpcore_bindings, good_and_bad_task, monitor_task, async_tas
     good_task, bad_task, pre_total, pre_final, pre_summary = good_and_bad_task
 
     states = list(TASK_FINAL_STATES)
-    dta = Purge(finished_before=TOMORROW_STR, states=states)
+    dta = pulpcore_bindings.Purge(finished_before=TOMORROW_STR, states=states)
     response = pulpcore_bindings.TasksApi.purge(dta)
     task = monitor_task(response.task)
     new_total, new_final, new_summary = _task_summary(pulpcore_bindings)
     assert 1 == new_final, "The purge-task should be the only final-task left"
 
     # Make sure good sync-task is gone
-    with pytest.raises(ApiException):
+    with pytest.raises(pulpcore_bindings.ApiException):
         pulpcore_bindings.TasksApi.read(good_task.pulp_href)
 
     # Make sure failed sync-task is gone
-    with pytest.raises(ApiException):
+    with pytest.raises(pulpcore_bindings.ApiException):
         pulpcore_bindings.TasksApi.read(bad_task.pulp_href)
 
     # Make sure we reported the deletions
@@ -147,12 +145,12 @@ def test_purge_leave_one(pulpcore_bindings, good_and_bad_task, monitor_task, asy
     # Leave only the failed sync
     good_task, bad_task, pre_total, pre_final, pre_summary = good_and_bad_task
 
-    dta = Purge(finished_before=bad_task.finished_at)
+    dta = pulpcore_bindings.Purge(finished_before=bad_task.finished_at)
     response = pulpcore_bindings.TasksApi.purge(dta)
     task = monitor_task(response.task)
 
     # Make sure good task is gone
-    with pytest.raises(ApiException):
+    with pytest.raises(pulpcore_bindings.ApiException):
         pulpcore_bindings.TasksApi.read(good_task.pulp_href)
 
     # Make sure the bad task still exists
@@ -164,7 +162,7 @@ def test_purge_leave_one(pulpcore_bindings, good_and_bad_task, monitor_task, asy
 
 def test_purge_only_failed(pulpcore_bindings, good_and_bad_task, monitor_task):
     """Purge all failed tasks only."""
-    dta = Purge(finished_before=TOMORROW_STR, states=["failed"])
+    dta = pulpcore_bindings.Purge(finished_before=TOMORROW_STR, states=["failed"])
     response = pulpcore_bindings.TasksApi.purge(dta)
     monitor_task(response.task)
     # good task should exist
@@ -172,28 +170,28 @@ def test_purge_only_failed(pulpcore_bindings, good_and_bad_task, monitor_task):
     pulpcore_bindings.TasksApi.read(good_task.pulp_href)
 
     # bad task should not exist
-    with pytest.raises(ApiException):
+    with pytest.raises(pulpcore_bindings.ApiException):
         pulpcore_bindings.TasksApi.read(bad_task.pulp_href)
 
 
 def test_bad_date(pulpcore_bindings, good_and_bad_task):
     """What happens if you use a bad date format?"""
-    dta = Purge(finished_before="THISISNOTADATE")
-    with pytest.raises(ApiException):
+    with pytest.raises((pulpcore_bindings.ApiException, ValueError)):
+        dta = pulpcore_bindings.Purge(finished_before="THISISNOTADATE")
         pulpcore_bindings.TasksApi.purge(dta)
 
 
 def test_bad_state(pulpcore_bindings, good_and_bad_task):
     """What happens if you specify junk for a state?"""
-    dta = Purge(finished_before=TOMORROW_STR, states=["BAD STATE"])
-    with pytest.raises(ApiException):
+    with pytest.raises((pulpcore_bindings.ApiException, ValueError)):
+        dta = pulpcore_bindings.Purge(finished_before=TOMORROW_STR, states=["BAD STATE"])
         pulpcore_bindings.TasksApi.purge(dta)
 
 
 def test_not_final_state(pulpcore_bindings, good_and_bad_task):
     """What happens if you use a valid state that isn't a 'final' one?"""
-    dta = Purge(finished_before=TOMORROW_STR, states=["running"])
-    with pytest.raises(ApiException):
+    with pytest.raises((pulpcore_bindings.ApiException, ValueError)):
+        dta = pulpcore_bindings.Purge(finished_before=TOMORROW_STR, states=["running"])
         pulpcore_bindings.TasksApi.purge(dta)
 
 
@@ -208,7 +206,7 @@ def test_purge_with_different_users(
 ):
     # create admin related data
     admin_remote = file_remote_ssl_factory(manifest_path=basic_manifest_path, policy="on_demand")
-    admin_sync_data = RepositorySyncURL(remote=admin_remote.pulp_href)
+    admin_sync_data = file_bindings.RepositorySyncURL(remote=admin_remote.pulp_href)
     admin_repo = file_repository_factory()
 
     # create random user related data
@@ -221,7 +219,7 @@ def test_purge_with_different_users(
     )
     with user:
         user_remote = file_remote_ssl_factory(manifest_path=basic_manifest_path, policy="on_demand")
-        user_sync_data = RepositorySyncURL(remote=user_remote.pulp_href)
+        user_sync_data = file_bindings.RepositorySyncURL(remote=user_remote.pulp_href)
         user_repo = file_repository_factory()
 
     # Sync as admin
@@ -230,7 +228,7 @@ def test_purge_with_different_users(
 
     # Purge as user
     states = list(TASK_FINAL_STATES)
-    data = Purge(finished_before=TOMORROW_STR, states=states)
+    data = pulpcore_bindings.Purge(finished_before=TOMORROW_STR, states=states)
     with user:
         response = pulpcore_bindings.TasksApi.purge(data)
         task = monitor_task(response.task)
@@ -245,13 +243,13 @@ def test_purge_with_different_users(
 
     # Purge as user
     states = list(TASK_FINAL_STATES)
-    data = Purge(finished_before=TOMORROW_STR, states=states)
+    data = pulpcore_bindings.Purge(finished_before=TOMORROW_STR, states=states)
     with user:
         response = pulpcore_bindings.TasksApi.purge(data)
         monitor_task(response.task)
 
     # Make sure task DOES NOT exist
-    with pytest.raises(ApiException):
+    with pytest.raises(pulpcore_bindings.ApiException):
         pulpcore_bindings.TasksApi.read(sync_task.pulp_href)
 
     # Sync as user
@@ -261,10 +259,10 @@ def test_purge_with_different_users(
 
     # Purge as ADMIN
     states = list(TASK_FINAL_STATES)
-    data = Purge(finished_before=TOMORROW_STR, states=states)
+    data = pulpcore_bindings.Purge(finished_before=TOMORROW_STR, states=states)
     response = pulpcore_bindings.TasksApi.purge(data)
     monitor_task(response.task)
 
     # Make sure task DOES NOT exist
-    with pytest.raises(ApiException):
+    with pytest.raises(pulpcore_bindings.ApiException):
         pulpcore_bindings.TasksApi.read(sync_task.pulp_href)

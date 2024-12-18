@@ -56,7 +56,7 @@ def test_http_sync_ssl_tls_validation_off(
     Test file on_demand sync with https:// serving from an untrusted certificate.
     """
     remote_on_demand = file_remote_ssl_factory(
-        manifest_path=basic_manifest_path, policy="on_demand", tls_validation="false"
+        manifest_path=basic_manifest_path, policy="on_demand", tls_validation=False
     )
 
     _run_basic_sync_and_assert(
@@ -79,7 +79,7 @@ def test_http_sync_ssl_tls_validation_on(
     Test file on_demand sync with https:// and a client connection configured to trust it.
     """
     remote_on_demand = file_remote_ssl_factory(
-        manifest_path=basic_manifest_path, policy="on_demand", tls_validation="true"
+        manifest_path=basic_manifest_path, policy="on_demand", tls_validation=True
     )
 
     _run_basic_sync_and_assert(

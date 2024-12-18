@@ -18,23 +18,24 @@ def test_sync_file_protocol_handler(
     gen_object_with_cleanup,
     monitor_task,
     fixtures_cfg,
+    tmp_path,
     wget_recursive_download_on_host,
 ):
     """Test syncing from a file repository with the file:// protocol handler"""
-    wget_recursive_download_on_host(urljoin(fixtures_cfg.remote_fixtures_origin, "file/"), "/tmp")
+    wget_recursive_download_on_host(urljoin(fixtures_cfg.remote_fixtures_origin, "file/"), tmp_path)
     remote_kwargs = {
-        "url": "file:///tmp/file/PULP_MANIFEST",
+        "url": f"file:///{tmp_path}/file/PULP_MANIFEST",
         "policy": "immediate",
         "name": str(uuid.uuid4()),
     }
     remote = gen_object_with_cleanup(file_bindings.RemotesFileApi, remote_kwargs)
-    files = set(os.listdir("/tmp/file/"))
+    files = set(os.listdir(tmp_path / "file"))
 
     body = RepositorySyncURL(remote=remote.pulp_href)
     monitor_task(file_bindings.RepositoriesFileApi.sync(file_repo.pulp_href, body).task)
 
     # test that all the files are still present
-    assert set(os.listdir("/tmp/file/")) == files
+    assert set(os.listdir(tmp_path / "file")) == files
 
     file_repo = file_bindings.RepositoriesFileApi.read(file_repo.pulp_href)
     assert file_repo.latest_version_href.endswith("/versions/1/")

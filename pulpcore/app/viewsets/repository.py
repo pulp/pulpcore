@@ -23,6 +23,7 @@ from pulpcore.app.models import (
 from pulpcore.app.response import OperationPostponedResponse
 from pulpcore.app.serializers import (
     AsyncOperationResponseSerializer,
+    GenericRemoteSerializer,
     RemoteSerializer,
     RepairSerializer,
     RepositorySerializer,
@@ -330,7 +331,7 @@ class RemoteFilter(BaseFilterSet):
 class ListRemoteViewSet(NamedModelViewSet, mixins.ListModelMixin):
     endpoint_name = "remotes"
     queryset = Remote.objects.all()
-    serializer_class = RemoteSerializer
+    serializer_class = GenericRemoteSerializer
     filterset_class = RemoteFilter
 
     DEFAULT_ACCESS_POLICY = {

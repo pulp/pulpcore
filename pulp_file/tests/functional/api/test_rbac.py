@@ -1,9 +1,6 @@
 import pytest
 import uuid
 
-from pulpcore.client.pulp_file import ApiException
-from pulpcore.client.pulp_file import AsyncOperationResponse
-
 
 @pytest.fixture()
 def gen_users(gen_user):
@@ -23,19 +20,28 @@ def gen_users(gen_user):
 
 
 @pytest.fixture
-def try_action(monitor_task):
+def try_action(file_bindings, monitor_task):
     def _try_action(user, client, action, outcome, *args, **kwargs):
         action_api = getattr(client, f"{action}_with_http_info")
         try:
             with user:
-                response, status, _ = action_api(*args, **kwargs, _return_http_data_only=False)
-            if isinstance(response, AsyncOperationResponse):
-                response = monitor_task(response.task)
-        except ApiException as e:
+                response = action_api(*args, **kwargs)
+            if isinstance(response, tuple):
+                # old bindings
+                data, status, _ = response
+            else:
+                # new bindings
+                data = response.data
+                status_code = response.status_code
+            if isinstance(data, file_bindings.module.AsyncOperationResponse):
+                data = monitor_task(data.task)
+        except file_bindings.module.ApiException as e:
             assert e.status == outcome, f"{e}"
         else:
-            assert status == outcome, f"User performed {action} when they shouldn't been able to"
-            return response
+            assert (
+                status_code == outcome
+            ), f"User performed {action} when they shouldn't been able to"
+            return data
 
     return _try_action
 

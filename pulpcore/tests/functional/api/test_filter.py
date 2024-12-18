@@ -2,8 +2,6 @@ import pytest
 import random
 import uuid
 
-from pulpcore.client.pulpcore.exceptions import ApiException, ApiTypeError
-
 
 # Warning: Do not use HEX digits here!
 NAMES = (
@@ -97,7 +95,7 @@ class TestFilter:
         assert redi_results.count == 0
 
         # Test that filter fails when not a valid type
-        with pytest.raises(ApiException) as exc:
+        with pytest.raises(pulpcore_bindings.ApiException) as exc:
             pulpcore_bindings.ContentguardsApi.list(**{filter: ["hello"]})
 
         assert exc.value.status == 400
@@ -135,7 +133,7 @@ class TestFilter:
             assert "core/rbac" in c.pulp_href or "core/content_redirect" in c.pulp_href
 
         # Test filtering by invalid pulp_type
-        with pytest.raises(ApiException) as exc:
+        with pytest.raises(pulpcore_bindings.ApiException) as exc:
             pulpcore_bindings.ContentguardsApi.list(pulp_type__in=["i.invalid"])
 
         assert exc.value.status == 400
@@ -145,17 +143,19 @@ class TestFilter:
         )
 
         # Test filter does not exist on child viewsets
-        with pytest.raises(ApiTypeError) as exc:
+        with pytest.raises((pulpcore_bindings.ApiTypeError, ValueError)) as exc:
             pulpcore_bindings.ContentguardsRbacApi.list(pulp_type__in=["core.rbac"])
 
-        assert "Got an unexpected keyword argument 'pulp_type__in'" in str(exc.value)
+        assert "nexpected keyword argument" in str(exc.value)
+        assert "pulp_type__in" in str(exc.value)
 
-        with pytest.raises(ApiTypeError) as exc:
+        with pytest.raises((pulpcore_bindings.ApiTypeError, ValueError)) as exc:
             pulpcore_bindings.ContentguardsContentRedirectApi.list(
                 pulp_type__in=["core.content_redirect"]
             )
 
-        assert "Got an unexpected keyword argument 'pulp_type__in'" in str(exc.value)
+        assert "nexpected keyword argument" in str(exc.value)
+        assert "pulp_type__in" in str(exc.value)
 
     @pytest.mark.parallel
     @pytest.mark.parametrize(
@@ -234,7 +234,7 @@ class TestFilter:
     ):
         """Tests the "q" filter with invalid expressions."""
 
-        with pytest.raises(ApiException) as exc_info:
+        with pytest.raises(pulpcore_bindings.ApiException) as exc_info:
             pulpcore_bindings.ContentguardsApi.list(q=q.format(*NAMES))
         assert exc_info.value.status == 400
         assert exc_info.value.body == exception_message
