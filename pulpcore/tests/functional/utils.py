@@ -4,6 +4,7 @@ import aiohttp
 import asyncio
 import hashlib
 import os
+import random
 
 from aiohttp import web
 from dataclasses import dataclass
@@ -103,10 +104,14 @@ async def _download_file(url, auth=None, headers=None):
             return MockDownload(body=await response.read(), response_obj=response)
 
 
-def generate_iso(full_path, size=1024, relative_path=None):
+def generate_iso(full_path, size=1024, relative_path=None, seed=None):
     """Generate a random file."""
     with open(full_path, "wb") as fout:
-        contents = os.urandom(size)
+        if seed:
+            random.seed(seed)
+            contents = random.randbytes(size)
+        else:
+            contents = os.urandom(size)
         fout.write(contents)
         fout.flush()
     digest = hashlib.sha256(contents).hexdigest()
