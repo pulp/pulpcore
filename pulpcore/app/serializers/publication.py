@@ -30,6 +30,7 @@ class PublicationSerializer(ModelSerializer):
         view_name_pattern=r"repositories(-.*/.*)?-detail",
         queryset=models.Repository.objects.all(),
     )
+    snapshot = serializers.BooleanField(default=False)
 
     def validate(self, data):
         data = super().validate(data)
@@ -62,7 +63,7 @@ class PublicationSerializer(ModelSerializer):
     class Meta:
         abstract = True
         model = models.Publication
-        fields = ModelSerializer.Meta.fields + ("repository_version", "repository")
+        fields = ModelSerializer.Meta.fields + ("repository_version", "repository", "snapshot")
 
 
 class ContentGuardSerializer(ModelSerializer):
@@ -238,6 +239,7 @@ class DistributionSerializer(ModelSerializer):
             "not changed. If equals to `null`, no guarantee is provided about content changes."
         )
     )
+    snapshot = serializers.BooleanField(default=False)
 
     class Meta:
         model = models.Distribution
@@ -250,6 +252,7 @@ class DistributionSerializer(ModelSerializer):
             "pulp_labels",
             "name",
             "repository",
+            "snapshot",
         )
 
     def _validate_path_overlap(self, path):
