@@ -1,4 +1,0 @@
-On a request for on-demand content in the content app, a corrupted Remote that
-contains the wrong binary (for that content) prevented other Remotes from being
-attempted on future requests. Now the last failed Remotes are temporarily ignored
-and others may be picked.
