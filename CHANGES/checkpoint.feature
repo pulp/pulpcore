@@ -1,0 +1,1 @@
+Added support to create and distribute checkpoint publications in Pulp.

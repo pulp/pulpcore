@@ -73,6 +73,7 @@ class Publication(MasterModel):
         pass_through (models.BooleanField): Indicates that the publication is a pass-through
             to the repository version. Enabling pass-through has the same effect as creating
             a PublishedArtifact for all of the content (artifacts) in the repository.
+        checkpoint (models.BooleanField): Indicates a checkpoint publication.
 
     Relations:
         repository_version (models.ForeignKey): The RepositoryVersion used to
@@ -98,12 +99,13 @@ class Publication(MasterModel):
 
     complete = models.BooleanField(db_index=True, default=False)
     pass_through = models.BooleanField(default=False)
+    checkpoint = models.BooleanField(default=False, editable=False)
 
     repository_version = models.ForeignKey("RepositoryVersion", on_delete=models.CASCADE)
     pulp_domain = models.ForeignKey("Domain", default=get_domain_pk, on_delete=models.PROTECT)
 
     @classmethod
-    def create(cls, repository_version, pass_through=False):
+    def create(cls, repository_version, pass_through=False, checkpoint=False):
         """
         Create a publication.
 
@@ -125,7 +127,11 @@ class Publication(MasterModel):
             Adds a Task.created_resource for the publication.
         """
         with transaction.atomic():
-            publication = cls(pass_through=pass_through, repository_version=repository_version)
+            publication = cls(
+                pass_through=pass_through,
+                repository_version=repository_version,
+                checkpoint=checkpoint,
+            )
             publication.save()
             resource = CreatedResource(content_object=publication)
             resource.save()
@@ -159,6 +165,10 @@ class Publication(MasterModel):
             # It's possible for errors to occur before any publication has been completed,
             # so we need to handle the case when no Publication exists.
             try:
+                if self.checkpoint:
+                    base_paths |= Distribution.objects.filter(
+                        checkpoint=self.checkpoint, repository=self.repository_version.repository
+                    ).values_list("base_path", flat=True)
                 versions = self.repository.versions.all()
                 pubs = Publication.objects.filter(repository_version__in=versions, complete=True)
                 publication = pubs.latest("repository_version", "pulp_created")
@@ -629,6 +639,7 @@ class Distribution(MasterModel):
         pulp_labels (HStoreField): Dictionary of string values.
         base_path (models.TextField): The base (relative) path component of the published url.
         hidden (models.BooleanField): Whether this distribution should be hidden in the content app.
+        checkpoint (models.BooleanField): Whether this distribution serves checkpoint publications.
 
     Relations:
         content_guard (models.ForeignKey): An optional content-guard.
@@ -649,6 +660,7 @@ class Distribution(MasterModel):
     base_path = models.TextField()
     pulp_domain = models.ForeignKey("Domain", default=get_domain_pk, on_delete=models.PROTECT)
     hidden = models.BooleanField(default=False, null=True)
+    checkpoint = models.BooleanField(default=False)
 
     content_guard = models.ForeignKey(ContentGuard, null=True, on_delete=models.SET_NULL)
     publication = models.ForeignKey(Publication, null=True, on_delete=models.SET_NULL)
@@ -706,6 +718,7 @@ class Distribution(MasterModel):
             "remote",
             "repository",
             "repository_version",
+            "checkpoint",
         ],
         has_changed=True,
     )
