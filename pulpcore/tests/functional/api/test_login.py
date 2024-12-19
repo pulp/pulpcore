@@ -4,6 +4,21 @@ import pytest
 pytestmark = [pytest.mark.parallel]
 
 
+@pytest.fixture(autouse=True)
+def _fix_response_headers(monkeypatch, pulpcore_bindings):
+    """
+    Fix bindings incorrectly translating HTTPHeaderDict to dict.
+    Ideally they wouldn't even make it a dict, but keep it whatever case insensitive multivalued
+    mapping the underlying http adapter provides. Alternatively translate everything into the
+    mutidict.CIMultiDict type.
+    """
+    monkeypatch.setattr(
+        pulpcore_bindings.module.rest.RESTResponse,
+        "getheaders",
+        lambda self: dict(self.response.headers),
+    )
+
+
 @pytest.fixture
 def session_user(pulpcore_bindings, gen_user, anonymous_user):
     old_cookie = pulpcore_bindings.client.cookie
