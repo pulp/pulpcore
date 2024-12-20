@@ -19,7 +19,7 @@ from pulp_file.manifest import Entry, Manifest
 log = logging.getLogger(__name__)
 
 
-def publish(manifest, repository_version_pk):
+def publish(manifest, repository_version_pk, snapshot):
     """
     Create a Publication based on a RepositoryVersion.
 
@@ -37,7 +37,9 @@ def publish(manifest, repository_version_pk):
     )
 
     with tempfile.TemporaryDirectory(dir="."):
-        with FilePublication.create(repo_version, pass_through=True) as publication:
+        with FilePublication.create(
+            repo_version, pass_through=True, snapshot=snapshot
+        ) as publication:
             publication.manifest = manifest
             if manifest:
                 manifest = Manifest(manifest)
