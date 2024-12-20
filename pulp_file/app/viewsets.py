@@ -433,11 +433,16 @@ class FilePublicationViewSet(PublicationViewSet, RolesMixin):
         serializer.is_valid(raise_exception=True)
         repository_version = serializer.validated_data.get("repository_version")
         manifest = serializer.validated_data.get("manifest")
+        snapshot = serializer.validated_data.get("snapshot")
 
         result = dispatch(
             tasks.publish,
             shared_resources=[repository_version.repository],
-            kwargs={"repository_version_pk": str(repository_version.pk), "manifest": manifest},
+            kwargs={
+                "repository_version_pk": str(repository_version.pk),
+                "manifest": manifest,
+                "snapshot": snapshot,
+            },
         )
         return OperationPostponedResponse(result, request)
 
