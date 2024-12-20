@@ -71,18 +71,58 @@ For a zero downtime key rotation you can follow the slightly more complex recipe
 By default Pulp uses PostgreSQL on localhost. PostgreSQL is the only supported database. For
 instructions on how to configure the database, refer to `database installation <database-install>`.
 
-### DEFAULT_FILE_STORAGE
+### DEFULT_FILE_STORAGE
 
-By default, Pulp uses the local filesystem to store files. The default option which
-uses the local filesystem is `pulpcore.app.models.storage.FileSystem`.
+!!! warning "Removed in `3.70`"
+    The `DEFAULT_FILE_STORAGE` setting was deprecated in
+    [django `4.2`](https://docs.djangoproject.com/en/4.2/ref/settings/#default-file-storage).
+    Use [`STORAGES`](#STORAGES) instead.
 
-For more information about different Pulp storage options, see the
-`storage documentation `.
+### STORAGES
+
+!!! note "Added in `3.70`"
+    Replaces [`DEFAULT_DJANGO_STORAGES`](#DEFULT_FILE_STORAGE).
+
+Pulp uses [django-storages](https://django-storages.readthedocs.io/en/latest/index.html) to support multiple storage backends.
+If no backend is configured, Pulp will by default use the local filesystem (`pulpcore.app.models.storage.FileSystem`).
+
+To use another backend storage, you'll need to:
+
+- 1. Setup your storage and gather required credentials and specific configs.
+- 1. Ensure the `django-storage[ s3 | google | azure ]` python package is installed. This depends on the installation method. On 
+- 1. Configure the default `BACKEND` storage class. 
+- 1. Configure available `OPTIONS` for that backend.
+
+An Amazon S3 might look like this:
+
+```python
+STORAGES = {
+    "default": {
+        "BACKEND": "storages.backends.s3.S3Storage",
+        "OPTIONS": {
+            "access_key": 'AKIAIT2Z5TDYPX3ARJBA',
+            "secret_key": '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',
+            "bucket_name": 'pulp3',
+            "signature_version": "s3v4",
+            "addressing_style": "path",
+            "region_name": "eu-central-1",
+        },
+    },
+}
+```
+
+Overview of the integration with Pulp:
+
+- **Supported**: We support (test) Amazon S3 and Azure. You can find more detailed information about it in
+[Configure Storages](site:pulpcore/docs/admin/guides/configure-pulp/configure-storages.md) guide.
+- **Untested**: Other backends provided by `django-storages` should work as well, but we provide no guarantee.
+- **Known caveat**: Using SFTP Storage is not recommended in Pulp's current state, and doing so can lead to file corruption. This is because Pulp currently uses coroutines that seem to be incompatible with Django's SFTPStorage implementation.
+
 
 ### REDIRECT_TO_OBJECT_STORAGE
 
 When set to `True` access to artifacts is redirected to the corresponding Cloud storage
-configured in `DEFAULT_FILE_STORAGE` using pre-authenticated URLs. When set to `False`
+configured in `STORAGES['default']['BACKEND']` using pre-authenticated URLs. When set to `False`
 artifacts are always served by the content app instead.
 
 Defaults to `True`; ignored for local file storage.
@@ -91,9 +131,10 @@ Defaults to `True`; ignored for local file storage.
 
 The location where Pulp will store files. By default this is `/var/lib/pulp/media`.
 
-This only affects storage location when `DEFAULT_FILE_STORAGE` is set to
-`pulpcore.app.models.storage.FileSystem`. See the `storage documentation ` for
-more info.
+This only affects storage location when `STORAGES['default']['BACKEND']` is set to
+`pulpcore.app.models.storage.FileSystem`.
+
+See the [storage documentation](site:pulpcore/docs/admin/guides/configure-pulp/configure-storages.md) for more info.
 
 It should have permissions of:
 
@@ -188,7 +229,7 @@ It should have permissions of:
 ### CHUNKED_UPLOAD_DIR
 
 A relative path inside the DEPLOY_ROOT directory used exclusively for uploaded chunks. The
-uploaded chunks are stored in the default storage specified by `DEFAULT_FILE_STORAGE`. This
+uploaded chunks are stored in the default storage specified by `STORAGES['default']['BACKEND']`. This
 option allows users to customize the actual place where chunked uploads should be stored within
 the declared storage. The default, `upload`, is sufficient for most use cases. A change to
 this setting only applies to uploads created after the change.
