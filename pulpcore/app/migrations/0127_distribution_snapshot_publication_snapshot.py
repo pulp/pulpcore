@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("core", "0125_openpgpdistribution_openpgpkeyring_openpgppublickey_and_more"),
+        ("core", "0126_remoteartifact_failed_at"),
     ]
 
     operations = [
