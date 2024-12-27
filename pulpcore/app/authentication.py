@@ -8,12 +8,25 @@ from gettext import gettext as _
 
 from django.contrib.auth import authenticate
 from django.contrib.auth.backends import RemoteUserBackend
-from rest_framework.authentication import BaseAuthentication, RemoteUserAuthentication
+from rest_framework.authentication import (
+    BaseAuthentication,
+    RemoteUserAuthentication,
+    BasicAuthentication as OrigBasicAuthentication,
+)
 from rest_framework.exceptions import AuthenticationFailed
 
 from pulpcore.app import settings
 
 _logger = logging.getLogger(__name__)
+
+
+class BasicAuthentication(OrigBasicAuthentication):
+    def authenticate_header(self, request):
+        xrw_header = request.headers.get("X-Requested-With")
+
+        if xrw_header is not None and xrw_header.lower() == "xmlhttprequest":
+            return "x" + super().authenticate_header(request)
+        return super().authenticate_header(request)
 
 
 class PulpRemoteUserAuthentication(RemoteUserAuthentication):
