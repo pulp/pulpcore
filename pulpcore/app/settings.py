@@ -164,7 +164,7 @@ REST_FRAMEWORK = {
     "PAGE_SIZE": 100,
     "DEFAULT_PERMISSION_CLASSES": ("pulpcore.app.access_policy.AccessPolicyFromDB",),
     "DEFAULT_AUTHENTICATION_CLASSES": (
-        "rest_framework.authentication.BasicAuthentication",
+        "pulpcore.app.authentication.BasicAuthentication",
         "rest_framework.authentication.SessionAuthentication",
     ),
     "UPLOADED_FILES_USE_URL": False,

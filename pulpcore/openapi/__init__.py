@@ -444,6 +444,17 @@ class PulpSchemaGenerator(SchemaGenerator):
         return result
 
 
+class BasicAuthenticationScheme(OpenApiAuthenticationExtension):
+    target_class = "pulpcore.app.authentication.BasicAuthentication"
+    name = "basicAuth"
+
+    def get_security_definition(self, auto_schema):
+        return {
+            "type": "http",
+            "scheme": "basic",
+        }
+
+
 class JSONHeaderRemoteAuthenticationScheme(OpenApiAuthenticationExtension):
     target_class = "pulpcore.app.authentication.JSONHeaderRemoteAuthentication"
     name = "json_header_remote_authentication"
