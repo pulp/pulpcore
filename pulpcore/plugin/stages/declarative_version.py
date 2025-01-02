@@ -1,20 +1,22 @@
 import asyncio
 import tempfile
 
-from .api import create_pipeline, EndStage
-from .artifact_stages import (
+from pulpcore.plugin.models import AlternateContentSource
+from pulpcore.plugin.stages.api import create_pipeline, EndStage
+from pulpcore.plugin.stages.artifact_stages import (
     ACSArtifactHandler,
     ArtifactDownloader,
     ArtifactSaver,
     QueryExistingArtifacts,
     RemoteArtifactSaver,
 )
-from .content_stages import (
+from pulpcore.plugin.stages.content_stages import (
     ContentAssociation,
     ContentSaver,
     QueryExistingContents,
     ResolveContentFutures,
 )
+from pulpcore.plugin.util import get_domain_pk
 
 
 class DeclarativeVersion:
@@ -131,7 +133,7 @@ class DeclarativeVersion:
             self.first_stage,
             QueryExistingArtifacts(),
         ]
-        if self.acs:
+        if self.acs and AlternateContentSource.objects.filter(pulp_domain=get_domain_pk()).exists():
             pipeline.append(ACSArtifactHandler())
         pipeline.extend(
             [
