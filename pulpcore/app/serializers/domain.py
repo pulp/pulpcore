@@ -42,7 +42,10 @@ class BaseSettingsClass(HiddenFieldsMixin, serializers.Serializer):
         # Should I convert back the saved settings to their Setting names for to_representation?
         if getattr(self.context.get("domain", None), "name", None) == "default":
             for setting_name, field in self.SETTING_MAPPING.items():
-                if value := getattr(settings, setting_name.upper(), None):
+                value = getattr(settings, setting_name, None) or settings.STORAGES["default"].get(
+                    "OPTIONS", {}
+                ).get(field)
+                if value:
                     instance[field] = value
         return super().to_representation(instance)
 
