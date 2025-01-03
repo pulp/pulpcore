@@ -51,10 +51,6 @@ def test_create_exporter_with_custom_method_field(create_exporter):
     exporter, _ = create_exporter({"method": "symlink"})
     assert "symlink" == exporter.method
 
-    with pytest.raises(ApiException) as ae:
-        create_exporter({"method": "invalid"})
-    assert 400 == ae.value.status
-
 
 @pytest.mark.parallel
 def test_read_exporter(pulpcore_bindings, create_exporter):

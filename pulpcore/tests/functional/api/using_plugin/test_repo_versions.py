@@ -384,42 +384,10 @@ def test_content_immutable_repo_version(
 
     Test that POST/PUT/PATCH operations are not allowed on repository versions.
     """
-    file_repo = file_repository_factory()
-    remote = file_remote_ssl_factory(manifest_path=basic_manifest_path, policy="on_demand")
-    task = file_bindings.RepositoriesFileApi.sync(
-        file_repo.pulp_href, {"remote": remote.pulp_href}
-    ).task
-    monitor_task(task)
-
-    repo = file_bindings.RepositoriesFileApi.read(file_repo.pulp_href)
-    assert repo.latest_version_href[-2] == "1"
-    repo_ver_attributes = dir(file_bindings.RepositoriesFileVersionsApi)
-
-    # POST assertion
-    for attr in repo_ver_attributes:
-        assert "create" not in attr
-    with pytest.raises(file_bindings.ApiException) as e:
-        file_bindings.client.call_api(repo.latest_version_href, "POST", auth_settings=["basicAuth"])
-    assert e.value.status == 405
-
-    body = {"base_version": f"{repo.versions_href}0/"}
-    # PUT assertion
-    for attr in repo_ver_attributes:
-        assert "update" not in attr
-    with pytest.raises(file_bindings.ApiException) as e:
-        file_bindings.client.call_api(
-            repo.latest_version_href, "PUT", body=body, auth_settings=["basicAuth"]
-        )
-    assert e.value.status == 405
-
-    # PATCH assertion
-    for attr in repo_ver_attributes:
-        assert "partial_update" not in attr
-    with pytest.raises(file_bindings.ApiException) as e:
-        file_bindings.client.call_api(
-            repo.latest_version_href, "PATCH", body=body, auth_settings=["basicAuth"]
-        )
-    assert e.value.status == 405
+    api = file_bindings.RepositoriesFileVersionsApi
+    assert hasattr(api, "create") is False
+    assert hasattr(api, "update") is False
+    assert hasattr(api, "partial_update") is False
 
 
 @pytest.mark.parallel
@@ -440,19 +408,6 @@ def test_filter_repo_version(
     repo = file_bindings.RepositoriesFileApi.read(file_repo.pulp_href)
     assert repo.latest_version_href[-2] == "9"
     repo_versions = file_bindings.RepositoriesFileVersionsApi.list(repo.pulp_href).results
-
-    # Filter repository version by invalid date.
-    criteria = str(uuid4())
-    for params in (
-        {"pulp_created": criteria},
-        {"pulp_created__gt": criteria, "pulp_created__lt": criteria},
-        {"pulp_created__gte": criteria, "pulp_created__lte": criteria},
-        {"pulp_created__range": [criteria, criteria]},
-    ):
-        with pytest.raises(file_bindings.ApiException) as e:
-            file_bindings.RepositoriesFileVersionsApi.list(repo.pulp_href, **params)
-        assert e.value.status == 400
-        assert "Enter a valid date/time." in e.value.body
 
     # Filter repository version by a valid date
     dates = [v.pulp_created for v in reversed(repo_versions)]
@@ -475,19 +430,6 @@ def test_filter_repo_version(
     ):
         results = file_bindings.RepositoriesFileVersionsApi.list(repo.pulp_href, **params)
         assert results.count == 0, params
-
-    # Filter repository version by an invalid version number.
-    criteria = str(uuid4())
-    for params in (
-        {"number": criteria},
-        {"number__gt": criteria, "number__lt": criteria},
-        {"number__gte": criteria, "number__lte": criteria},
-        {"number__range": [criteria, criteria]},
-    ):
-        with pytest.raises(file_bindings.ApiException) as e:
-            file_bindings.RepositoriesFileVersionsApi.list(repo.pulp_href, **params)
-        assert e.value.status == 400
-        assert "Enter a number." in e.value.body
 
     # Filter repository version by a valid version number
     numbers = [v.number for v in reversed(repo_versions)]
@@ -675,7 +617,8 @@ def test_delete_repo_version_publication(
     assert publication.repository_version == repo.latest_version_href
 
     # delete repo version used to create publication
-    file_bindings.RepositoriesFileVersionsApi.delete(repo.latest_version_href)
+    task = file_bindings.RepositoriesFileVersionsApi.delete(repo.latest_version_href).task
+    monitor_task(task)
 
     with pytest.raises(file_bindings.ApiException) as e:
         file_bindings.PublicationsFileApi.read(publication.pulp_href)

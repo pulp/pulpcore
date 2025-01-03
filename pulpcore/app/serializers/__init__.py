@@ -87,6 +87,7 @@ from .publication import (
 )
 from .purge import PurgeSerializer
 from .repository import (
+    GenericRemoteSerializer,
     RemoteSerializer,
     RepositorySerializer,
     RepositorySyncURLSerializer,

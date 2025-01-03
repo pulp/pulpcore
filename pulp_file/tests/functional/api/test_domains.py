@@ -3,9 +3,6 @@ import uuid
 import json
 
 from pulpcore.app import settings
-from pulpcore.client.pulp_file import ApiException
-from pulpcore.client.pulpcore import ApiException as CoreApiException
-from pulpcore.client.pulpcore import Repair
 from pulpcore.tests.functional.utils import generate_iso, download_file
 
 
@@ -45,7 +42,7 @@ def test_object_creation(
 
     # Try to create an object w/ cross domain relations
     default_remote = file_remote_factory(manifest_path=basic_manifest_path, policy="immediate")
-    with pytest.raises(ApiException) as e:
+    with pytest.raises(file_bindings.ApiException) as e:
         repo_body = {"name": str(uuid.uuid4()), "remote": default_remote.pulp_href}
         file_bindings.RepositoriesFileApi.create(repo_body, pulp_domain=domain.name)
     assert e.value.status == 400
@@ -54,7 +51,7 @@ def test_object_creation(
         "non_field_errors": [f"Objects must all be a part of the {domain_name} domain."]
     }
 
-    with pytest.raises(ApiException) as e:
+    with pytest.raises(file_bindings.ApiException) as e:
         sync_body = {"remote": default_remote.pulp_href}
         file_bindings.RepositoriesFileApi.sync(repo.pulp_href, sync_body)
     assert e.value.status == 400
@@ -115,15 +112,15 @@ def test_artifact_upload(
     assert second_artifact.sha256 == file["digest"]
 
     # Test that duplicate artifact can not be uploaded in same domain
-    with pytest.raises(CoreApiException) as e:
-        pulpcore_bindings.ArtifactsApi.create(filename, pulp_domain=domain.name)
+    with pytest.raises(pulpcore_bindings.ApiException) as e:
+        pulpcore_bindings.ArtifactsApi.create(str(filename), pulp_domain=domain.name)
     assert e.value.status == 400
     assert json.loads(e.value.body) == {
         "non_field_errors": [f"Artifact with sha256 checksum of '{file['digest']}' already exists."]
     }
 
     # Show that duplicate artifacts can be uploaded into different domains
-    dup_artifact = pulpcore_bindings.ArtifactsApi.create(filename, pulp_domain="default")
+    dup_artifact = pulpcore_bindings.ArtifactsApi.create(str(filename), pulp_domain="default")
     assert "default/api/v3/" in dup_artifact.pulp_href
     assert dup_artifact.sha256 == second_artifact.sha256
 
@@ -148,9 +145,9 @@ def test_content_upload(
     file = generate_iso(filename)
     relative_path = "1.iso"
 
-    task = file_bindings.ContentFilesApi.create(relative_path, file=filename).task
+    task = file_bindings.ContentFilesApi.create(relative_path, file=str(filename)).task
     task2 = file_bindings.ContentFilesApi.create(
-        relative_path, file=filename, pulp_domain=domain.name
+        relative_path, file=str(filename), pulp_domain=domain.name
     ).task
     response = monitor_task(task)
     default_content = file_bindings.ContentFilesApi.read(response.created_resources[0])
@@ -230,7 +227,7 @@ def test_content_promotion(
 
     # Test that a repository version repair operation can be run without error
     response = file_bindings.RepositoriesFileVersionsApi.repair(
-        repo.latest_version_href, Repair(verify_checksums=True)
+        repo.latest_version_href, file_bindings.Repair(verify_checksums=True)
     )
     results = monitor_task(response.task)
     assert results.state == "completed"
@@ -273,7 +270,7 @@ def test_domain_rbac(pulpcore_bindings, file_bindings, gen_user, gen_object_with
         assert repos.count == 1
         assert repos.results[0].pulp_href == repo.pulp_href
         # Try to create a repository in default domain
-        with pytest.raises(ApiException) as e:
+        with pytest.raises(file_bindings.ApiException) as e:
             file_bindings.RepositoriesFileApi.create({"name": str(uuid.uuid4())})
         assert e.value.status == 403
 
@@ -284,7 +281,7 @@ def test_domain_rbac(pulpcore_bindings, file_bindings, gen_user, gen_object_with
         repos = file_bindings.RepositoriesFileApi.list()
         assert repos.count == 0
         # Try to create a repo
-        with pytest.raises(ApiException) as e:
+        with pytest.raises(file_bindings.ApiException) as e:
             file_bindings.RepositoriesFileApi.create(
                 {"name": str(uuid.uuid4())}, pulp_domain=domain.name
             )
