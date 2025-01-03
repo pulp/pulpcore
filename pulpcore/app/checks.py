@@ -5,21 +5,6 @@ from django.core.checks import Error as CheckError, Warning as CheckWarning, reg
 
 
 @register(deploy=True)
-def content_origin_check(app_configs, **kwargs):
-    messages = []
-    if getattr(settings, "CONTENT_ORIGIN", "UNREACHABLE") == "UNREACHABLE":
-        messages.append(
-            CheckError(
-                "CONTENT_ORIGIN is a required setting but it was not configured. This may be "
-                "caused by invalid read permissions of the settings file. Note that "
-                "CONTENT_ORIGIN is set by the installation automatically.",
-                id="pulpcore.E001",
-            )
-        )
-    return messages
-
-
-@register(deploy=True)
 def secret_key_check(app_configs, **kwargs):
     messages = []
     if getattr(settings, "SECRET_KEY", "SECRET") == "SECRET":
