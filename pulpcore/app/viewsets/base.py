@@ -45,7 +45,7 @@ NAME_FILTER_OPTIONS = [
 # e.g.
 # /?name=foo
 # /?name__in=foo,bar
-DATETIME_FILTER_OPTIONS = ["exact", "lt", "lte", "gt", "gte", "range"]
+DATETIME_FILTER_OPTIONS = ["exact", "lt", "lte", "gt", "gte", "range", "isnull"]
 # e.g.
 # /?pulp_created__gte=2018-04-12T19:45:52
 # /?pulp_created__range=2018-04-12T19:45:52,2018-04-13T19:45:52
