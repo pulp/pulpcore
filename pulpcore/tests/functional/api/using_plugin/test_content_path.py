@@ -11,6 +11,7 @@ from pulpcore.tests.functional.utils import get_from_url
 
 @pytest.mark.parallel
 def test_content_directory_listing(
+    bindings_cfg,
     pulpcore_bindings,
     file_distribution_factory,
     gen_object_with_cleanup,
@@ -35,8 +36,11 @@ def test_content_directory_listing(
     ]:
         file_distribution_factory(base_path=base_path + path, content_guard=content_guard)
 
+    content_origin = pulp_status.content_settings.content_origin
+    if not content_origin:
+        content_origin = bindings_cfg.host
     base_url = urljoin(
-        pulp_status.content_settings.content_origin,
+        content_origin,
         pulp_status.content_settings.content_path_prefix,
     )
     if pulp_settings.DOMAIN_ENABLED:
@@ -58,7 +62,7 @@ def test_content_directory_listing(
 
     # Assert that not using a trailing slash on the root returns a 301
     base_url = urljoin(
-        pulp_status.content_settings.content_origin,
+        content_origin,
         pulp_status.content_settings.content_path_prefix,
     )
     if pulp_settings.DOMAIN_ENABLED:

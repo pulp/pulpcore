@@ -2,6 +2,7 @@ import logging
 
 from django.db.models import Model
 from django.utils.dateparse import parse_datetime
+from urllib.parse import urljoin
 
 from pulp_glue.common.context import PulpContext
 from pulpcore.tasking.tasks import dispatch
@@ -103,6 +104,9 @@ class Replicator:
         ):
             return None
         url = self.url(upstream_distribution)
+        if url.startswith("/"):
+            url = urljoin(self.server.base_url, url)
+
         remote_fields_dict = {"url": url}
         remote_fields_dict.update(self.tls_settings)
         remote_fields_dict.update(self.remote_extra_fields(upstream_distribution))

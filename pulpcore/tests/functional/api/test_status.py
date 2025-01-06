@@ -42,7 +42,7 @@ STATUS = {
         "content_settings": {
             "type": "object",
             "properties": {
-                "content_origin": {"type": "string"},
+                "content_origin": {"type": ["string", "null"]},
                 "content_path_prefix": {"type": "string"},
             },
             "required": ["content_origin", "content_path_prefix"],
@@ -138,7 +138,6 @@ def verify_get_response(status, expected_schema):
     assert status["versions"] != []
 
     assert status["content_settings"] is not None
-    assert status["content_settings"]["content_origin"] is not None
     assert status["content_settings"]["content_path_prefix"] is not None
 
     assert status["storage"]["used"] is not None

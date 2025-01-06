@@ -14,6 +14,7 @@ from pulpcore.tests.functional.utils import download_file, get_files_in_manifest
 
 @pytest.mark.parallel
 def test_delete_remote_on_demand(
+    distribution_base_url,
     file_repo_with_auto_publish,
     file_remote_ssl_factory,
     file_bindings,
@@ -33,6 +34,7 @@ def test_delete_remote_on_demand(
 
     # Create a distribution pointing to the repository
     distribution = file_distribution_factory(repository=repo.pulp_href)
+    distribution_base_url = distribution_base_url(distribution.base_url)
 
     # Download the manifest from the remote
     expected_file_list = list(get_files_in_manifest(remote.url))
@@ -40,7 +42,7 @@ def test_delete_remote_on_demand(
     # Delete the remote and assert that downloading content returns a 404
     monitor_task(file_bindings.RemotesFileApi.delete(remote.pulp_href).task)
     with pytest.raises(ClientResponseError) as exc:
-        url = urljoin(distribution.base_url, expected_file_list[0][0])
+        url = urljoin(distribution_base_url, expected_file_list[0][0])
         download_file(url)
     assert exc.value.status == 404
 
@@ -50,7 +52,7 @@ def test_delete_remote_on_demand(
     monitor_task(file_bindings.RepositoriesFileApi.sync(repo.pulp_href, body).task)
 
     # Assert that files can now be downloaded from the distribution
-    content_unit_url = urljoin(distribution.base_url, expected_file_list[0][0])
+    content_unit_url = urljoin(distribution_base_url, expected_file_list[0][0])
     downloaded_file = download_file(content_unit_url)
     actual_checksum = hashlib.sha256(downloaded_file.body).hexdigest()
     expected_checksum = expected_file_list[0][1]
@@ -59,6 +61,7 @@ def test_delete_remote_on_demand(
 
 @pytest.mark.parallel
 def test_remote_artifact_url_update(
+    distribution_base_url,
     file_repo_with_auto_publish,
     file_remote_ssl_factory,
     file_bindings,
@@ -79,13 +82,14 @@ def test_remote_artifact_url_update(
 
     # Create a distribution from the publication
     distribution = file_distribution_factory(repository=repo.pulp_href)
+    distribution_base_url = distribution_base_url(distribution.base_url)
 
     # Download the manifest from the remote
     expected_file_list = list(get_files_in_manifest(remote.url))
 
     # Assert that trying to download content raises a 404
     with pytest.raises(ClientResponseError) as exc:
-        url = urljoin(distribution.base_url, expected_file_list[0][0])
+        url = urljoin(distribution_base_url, expected_file_list[0][0])
         download_file(url)
     assert exc.value.status == 404
 
@@ -97,7 +101,7 @@ def test_remote_artifact_url_update(
     monitor_task(
         file_bindings.RepositoriesFileApi.sync(file_repo_with_auto_publish.pulp_href, body).task
     )
-    content_unit_url = urljoin(distribution.base_url, expected_file_list[0][0])
+    content_unit_url = urljoin(distribution_base_url, expected_file_list[0][0])
     downloaded_file = download_file(content_unit_url)
     actual_checksum = hashlib.sha256(downloaded_file.body).hexdigest()
     expected_checksum = expected_file_list[0][1]
@@ -107,6 +111,7 @@ def test_remote_artifact_url_update(
 @pytest.mark.parallel
 def test_remote_content_changed_with_on_demand(
     write_3_iso_file_fixture_data_factory,
+    distribution_base_url,
     file_repo_with_auto_publish,
     file_remote_ssl_factory,
     file_bindings,
@@ -135,7 +140,7 @@ def test_remote_content_changed_with_on_demand(
     expected_file_list = list(get_files_in_manifest(remote.url))
     write_3_iso_file_fixture_data_factory("basic", overwrite=True)
 
-    get_url = urljoin(distribution.base_url, expected_file_list[0][0])
+    get_url = urljoin(distribution_base_url(distribution.base_url), expected_file_list[0][0])
 
     # WHEN (first request)
     result = subprocess.run(["curl", "-v", get_url], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -156,6 +161,7 @@ def test_remote_content_changed_with_on_demand(
 @pytest.mark.parallel
 def test_handling_remote_artifact_on_demand_streaming_failure(
     write_3_iso_file_fixture_data_factory,
+    distribution_base_url,
     file_repo_with_auto_publish,
     file_remote_factory,
     file_bindings,
@@ -215,7 +221,7 @@ def test_handling_remote_artifact_on_demand_streaming_failure(
         return content_unit[0], content_unit[1]
 
     def download_from_distribution(content, distribution):
-        content_unit_url = urljoin(distribution.base_url, content_name)
+        content_unit_url = urljoin(distribution_base_url(distribution.base_url), content_name)
         downloaded_file = download_file(content_unit_url)
         actual_checksum = hashlib.sha256(downloaded_file.body).hexdigest()
         return actual_checksum

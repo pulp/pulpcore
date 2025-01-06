@@ -793,6 +793,7 @@ def test_clear_all_units_repo_version(
 @pytest.mark.parallel
 def test_repo_version_retention(
     file_bindings,
+    distribution_base_url,
     file_repository_content,
     file_repository_factory,
     file_remote_ssl_factory,
@@ -873,7 +874,8 @@ def test_repo_version_retention(
 
     # check that the last publication is distributed
     distro = file_distribution_factory(repository=repo.pulp_href)
-    manifest_files = get_files_in_manifest(f"{distro.base_url}PULP_MANIFEST")
+    distro_base_url = distribution_base_url(distro.base_url)
+    manifest_files = get_files_in_manifest(f"{distro_base_url}PULP_MANIFEST")
     assert len(manifest_files) == contents.count
 
 

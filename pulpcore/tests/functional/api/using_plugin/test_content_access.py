@@ -15,6 +15,7 @@ from pulpcore.tests.functional.utils import (
 @pytest.mark.parallel
 def test_file_remote_on_demand(
     basic_manifest_path,
+    distribution_base_url,
     file_distribution_factory,
     file_fixtures_root,
     file_repo_with_auto_publish,
@@ -39,7 +40,7 @@ def test_file_remote_on_demand(
     # Create a distribution from the publication
     distribution = file_distribution_factory(repository=repo.pulp_href)
     # attempt to download_file() a file
-    download_file(f"{distribution.base_url}/1.iso")
+    download_file(f"{distribution_base_url(distribution.base_url)}/1.iso")
 
 
 @pytest.mark.parallel

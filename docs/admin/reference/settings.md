@@ -1,6 +1,6 @@
 # Settings
 
-There is one required settings, although specific plugins may have additional required
+There is one required setting, although specific plugins may have additional required
 settings.
 
 - `SECRET_KEY <secret-key-setting>`
@@ -196,11 +196,13 @@ this setting only applies to uploads created after the change.
 
 ### CONTENT_ORIGIN
 
-A string containing the protocol, fqdn, and port where the content app is reachable by
-users. This is used by `pulpcore` and various plugins when referring users to the content app.
+A string containing the protocol, fqdn, and port where the content app is reachable by users.
+This is used by `pulpcore` and various plugins when referring users to the content app.
 For example if the API should refer users to content at using http to pulp.example.com on port
-24816, (the content default port), you would set: `http://pulp.example.com:24816`. The default is
-`None`. When set to `None`, the API returns relative URLs (without the protocol, fqdn, and port).  
+24816, (the content default port), you would set: `https://pulp.example.com:24816`. The default is `None`.
+When set to `None`, the `base_url` for Distributions is a relative path.
+This means the API returns relative URLs without the protocol, fqdn, and port.
+
 
 ### HIDE_GUARDED_DISTRIBUTIONS
 

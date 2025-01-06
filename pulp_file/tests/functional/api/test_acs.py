@@ -193,6 +193,7 @@ def test_acs_sync_with_paths(
 def test_serving_acs_content(
     file_bindings,
     file_repo,
+    distribution_base_url,
     file_distribution_factory,
     basic_manifest_path,
     gen_object_with_cleanup,
@@ -245,7 +246,7 @@ def test_serving_acs_content(
     # Download one of the files and assert that it has the right checksum and that it is downloaded
     # from the ACS server.
     content_unit = list(expected_files)[0]
-    content_unit_url = urljoin(distribution.base_url, content_unit[0])
+    content_unit_url = urljoin(distribution_base_url(distribution.base_url), content_unit[0])
     downloaded_file = download_file(content_unit_url)
     actual_checksum = hashlib.sha256(downloaded_file.body).hexdigest()
     expected_checksum = content_unit[1]
