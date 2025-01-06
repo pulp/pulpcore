@@ -17,6 +17,7 @@ def file_repo_with_auto_publish(file_repository_factory):
 @pytest.mark.parallel
 def test_auto_publish_and_distribution(
     file_bindings,
+    distribution_base_url,
     file_repo_with_auto_publish,
     file_remote_ssl_factory,
     basic_manifest_path,
@@ -32,6 +33,7 @@ def test_auto_publish_and_distribution(
         file_bindings.DistributionsFileApi,
         {"name": "foo", "base_path": "bar/foo", "repository": repo.pulp_href},
     )
+    distribution_base_url = distribution_base_url(distribution.base_url)
 
     # Assert that the repository is at version 0 and that there are no publications associated with
     # this Repository and that the distribution doesn't have a publication associated with it.
@@ -67,7 +69,7 @@ def test_auto_publish_and_distribution(
 
     # Download the custom manifest
     files_in_first_publication = get_files_in_manifest(
-        "{}{}".format(distribution.base_url, publication.manifest)
+        "{}{}".format(distribution_base_url, publication.manifest)
     )
     assert files_in_first_publication == expected_files
 
@@ -80,7 +82,7 @@ def test_auto_publish_and_distribution(
     )
     repo = file_bindings.RepositoriesFileApi.read(repo.pulp_href)
     files_in_second_publication = get_files_in_manifest(
-        "{}{}".format(distribution.base_url, publication.manifest)
+        "{}{}".format(distribution_base_url, publication.manifest)
     )
     files_added = files_in_second_publication - files_in_first_publication
     assert repo.latest_version_href.endswith("/versions/2/")

@@ -18,6 +18,7 @@ def test_hidden_distros(file_distribution_factory, pulp_content_url, http_get):
 def test_zero_byte_file_listing(
     file_bindings,
     file_distribution_factory,
+    distribution_base_url,
     file_repo_with_auto_publish,
     random_artifact_factory,
     http_get,
@@ -37,8 +38,7 @@ def test_zero_byte_file_listing(
     ).task
     monitor_task(task)
     distribution = file_distribution_factory(repository=file_repo_with_auto_publish.pulp_href)
-
-    response = http_get(distribution.base_url)
+    response = http_get(distribution_base_url(distribution.base_url))
     z_line = [i for i in response.decode("utf-8").split("\n") if i.startswith('<a href="zero">')]
     assert len(z_line) == 1
     assert z_line[0].endswith("0 Bytes")

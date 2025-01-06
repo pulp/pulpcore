@@ -19,6 +19,7 @@ def test_full_workflow(
     basic_manifest_path,
     file_remote_factory,
     file_bindings,
+    distribution_base_url,
     file_distribution_factory,
     monitor_task,
     redis_status,
@@ -49,11 +50,12 @@ def test_full_workflow(
         monitor_task(file_bindings.PublicationsFileApi.create(body).task).created_resources[0]
     )
     distro = file_distribution_factory(repository=repo.pulp_href)
+    distro_base_url = distribution_base_url(distro.base_url)
 
     # Checks responses are cached for content
     files = ["", "", "PULP_MANIFEST", "PULP_MANIFEST", "1.iso", "1.iso"]
     for i, file in enumerate(files):
-        url = urljoin(distro.base_url, file)
+        url = urljoin(distro_base_url, file)
         assert (200, "HIT" if i % 2 == 1 else "MISS") == _check_cache(url), file
 
     # Check that removing the repository from the distribution invalidates the cache
@@ -61,7 +63,7 @@ def test_full_workflow(
     monitor_task(file_bindings.DistributionsFileApi.partial_update(distro.pulp_href, body).task)
     files = ["", "PULP_MANIFEST", "1.iso"]
     for file in files:
-        url = urljoin(distro.base_url, file)
+        url = urljoin(distro_base_url, file)
         assert (404, None) == _check_cache(url), file
 
     # Check that responses are cacheable after a repository is added back
@@ -69,15 +71,16 @@ def test_full_workflow(
     monitor_task(file_bindings.DistributionsFileApi.partial_update(distro.pulp_href, body).task)
     files = ["", "", "PULP_MANIFEST", "PULP_MANIFEST", "1.iso", "1.iso"]
     for i, file in enumerate(files):
-        url = urljoin(distro.base_url, file)
+        url = urljoin(distro_base_url, file)
         assert (200, "HIT" if i % 2 == 1 else "MISS") == _check_cache(url), file
 
     # Add a new distribution and check that its responses are cached separately
     distro2 = file_distribution_factory(repository=repo.pulp_href)
+    distro2_base_url = distribution_base_url(distro2.base_url)
     url = urljoin(pulp_content_url, f"{distro2.base_path}/")
     files = ["", "", "PULP_MANIFEST", "PULP_MANIFEST", "1.iso", "1.iso"]
     for i, file in enumerate(files):
-        url = urljoin(distro2.base_url, file)
+        url = urljoin(distro2_base_url, file)
         assert (200, "HIT" if i % 2 == 1 else "MISS") == _check_cache(url), file
 
     # Test that updating a repository pointed by multiple distributions invalidates all
@@ -89,25 +92,25 @@ def test_full_workflow(
     pub3 = file_bindings.PublicationsFileApi.read(response.created_resources[1])
     files = ["", "", "PULP_MANIFEST", "PULP_MANIFEST", "2.iso", "2.iso"]
     for i, file in enumerate(files):
-        url = urljoin(distro.base_url, file)
+        url = urljoin(distro_base_url, file)
         assert (200, "HIT" if i % 2 == 1 else "MISS") == _check_cache(url), file
-        url = urljoin(distro2.base_url, file)
+        url = urljoin(distro2_base_url, file)
         assert (200, "HIT" if i % 2 == 1 else "MISS") == _check_cache(url), file
 
     # Tests that deleting one distribution sharing a repository only invalidates its cache
     monitor_task(file_bindings.DistributionsFileApi.delete(distro2.pulp_href).task)
     files = ["", "PULP_MANIFEST", "2.iso"]
     for file in files:
-        url = urljoin(distro.base_url, file)
+        url = urljoin(distro_base_url, file)
         assert (200, "HIT") == _check_cache(url), file
-        url = urljoin(distro2.base_url, file)
+        url = urljoin(distro2_base_url, file)
         assert (404, None) == _check_cache(url), file
 
     # Test that deleting a publication not being served doesn't invalidate cache
     file_bindings.PublicationsFileApi.delete(pub2.pulp_href)
     files = ["", "PULP_MANIFEST", "2.iso"]
     for file in files:
-        url = urljoin(distro.base_url, file)
+        url = urljoin(distro_base_url, file)
         assert (200, "HIT") == _check_cache(url), file
 
     # Test that deleting the serving publication does invalidate the cache"""
@@ -115,14 +118,14 @@ def test_full_workflow(
     file_bindings.PublicationsFileApi.delete(pub3.pulp_href)
     files = ["", "", "PULP_MANIFEST", "PULP_MANIFEST", "2.iso", "2.iso"]
     for i, file in enumerate(files):
-        url = urljoin(distro.base_url, file)
+        url = urljoin(distro_base_url, file)
         assert (200, "HIT" if i % 2 == 1 else "MISS") == _check_cache(url), file
 
     # Tests that deleting a repository invalidates the cache"""
     monitor_task(file_bindings.RepositoriesFileApi.delete(repo.pulp_href).task)
     files = ["", "PULP_MANIFEST", "2.iso"]
     for file in files:
-        url = urljoin(distro.base_url, file)
+        url = urljoin(distro_base_url, file)
         assert (404, None) == _check_cache(url), file
 
     # Tests that accessing a file that doesn't exist on content app gives 404

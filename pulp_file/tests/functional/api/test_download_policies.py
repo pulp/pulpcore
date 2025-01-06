@@ -44,6 +44,7 @@ def test_download_policy(
     pulpcore_bindings,
     file_bindings,
     file_repo,
+    distribution_base_url,
     file_remote_ssl_factory,
     range_header_manifest_path,
     gen_object_with_cleanup,
@@ -100,11 +101,12 @@ def test_download_policy(
             "repository": file_repo.pulp_href,
         },
     )
+    distribution_base_url = distribution_base_url(distribution.base_url)
 
     # Assert that un-published content is not available
     for expected_file in expected_files:
         with pytest.raises(ClientResponseError) as exc:
-            content_unit_url = urljoin(distribution.base_url, expected_file[0])
+            content_unit_url = urljoin(distribution_base_url, expected_file[0])
             download_file(content_unit_url)
         assert exc.value.status == 404
 
@@ -127,7 +129,7 @@ def test_download_policy(
     assert process.returncode == 0
     content_artifact_created_date = process.stdout.decode().strip()
     # Download the listing page for the 'foo' directory
-    distribution_html_page = download_file(f"{distribution.base_url}foo")
+    distribution_html_page = download_file(f"{distribution_base_url}foo")
     # Assert that requesting a path inside a distribution without a trailing / returns a 301
     assert distribution_html_page.response_obj.history[0].status == 301
     soup = BeautifulSoup(distribution_html_page.body, "html.parser")
@@ -141,7 +143,7 @@ def test_download_policy(
     # Download one of the files and assert that it has the right checksum
     expected_files_list = list(expected_files)
     content_unit = expected_files_list[0]
-    content_unit_url = urljoin(distribution.base_url, content_unit[0])
+    content_unit_url = urljoin(distribution_base_url, content_unit[0])
     downloaded_file = download_file(content_unit_url)
     actual_checksum = hashlib.sha256(downloaded_file.body).hexdigest()
     expected_checksum = content_unit[1]
@@ -160,32 +162,32 @@ def test_download_policy(
     range_header = {"Range": "bytes=1048586-1049586"}
     num_bytes = 1001
     content_unit = expected_files_list[1]
-    content_unit_url = urljoin(distribution.base_url, content_unit[0])
+    content_unit_url = urljoin(distribution_base_url, content_unit[0])
     _do_range_request_download_and_assert(content_unit_url, range_header, num_bytes)
 
     # Assert proper download with range requests spanning multiple chunks of downloader
     range_header = {"Range": "bytes=1048176-2248576"}
     num_bytes = 1200401
     content_unit = expected_files_list[2]
-    content_unit_url = urljoin(distribution.base_url, content_unit[0])
+    content_unit_url = urljoin(distribution_base_url, content_unit[0])
     _do_range_request_download_and_assert(content_unit_url, range_header, num_bytes)
 
     # Assert that multiple requests with different Range header values work as expected
     range_header = {"Range": "bytes=1048176-2248576"}
     num_bytes = 1200401
     content_unit = expected_files_list[3]
-    content_unit_url = urljoin(distribution.base_url, content_unit[0])
+    content_unit_url = urljoin(distribution_base_url, content_unit[0])
     _do_range_request_download_and_assert(content_unit_url, range_header, num_bytes)
 
     range_header = {"Range": "bytes=2042176-3248576"}
     num_bytes = 1206401
     content_unit = expected_files_list[3]
-    content_unit_url = urljoin(distribution.base_url, content_unit[0])
+    content_unit_url = urljoin(distribution_base_url, content_unit[0])
     _do_range_request_download_and_assert(content_unit_url, range_header, num_bytes)
 
     # Assert that range requests with a negative start value errors as expected
     content_unit = expected_files_list[4]
-    content_unit_url = urljoin(distribution.base_url, content_unit[0])
+    content_unit_url = urljoin(distribution_base_url, content_unit[0])
     # The S3 test API project doesn't handle invalid Range values correctly
     if settings.STORAGES["default"]["BACKEND"] == "pulpcore.app.models.storage.FileSystem":
         with pytest.raises(ClientResponseError) as exc:
@@ -195,7 +197,7 @@ def test_download_policy(
 
     # Assert that a range request with a start value larger than the content errors
     content_unit = expected_files_list[5]
-    content_unit_url = urljoin(distribution.base_url, content_unit[0])
+    content_unit_url = urljoin(distribution_base_url, content_unit[0])
     with pytest.raises(ClientResponseError) as exc:
         range_header = {"Range": "bytes=10485860-10485870"}
         download_file(content_unit_url, headers=range_header)
@@ -205,7 +207,7 @@ def test_download_policy(
     range_header = {"Range": "bytes=4193804-4294304"}
     num_bytes = 500
     content_unit = expected_files_list[6]
-    content_unit_url = urljoin(distribution.base_url, content_unit[0])
+    content_unit_url = urljoin(distribution_base_url, content_unit[0])
     _do_range_request_download_and_assert(content_unit_url, range_header, num_bytes)
 
     # Assert that artifacts were not downloaded if policy is not immediate

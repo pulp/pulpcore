@@ -258,6 +258,7 @@ def test_create_file_from_url(
     file_bindings,
     file_repository_factory,
     file_remote_factory,
+    distribution_base_url,
     file_distribution_factory,
     basic_manifest_path,
     monitor_task,
@@ -281,7 +282,7 @@ def test_create_file_from_url(
 
     # Test create w/ url for already existing content
     response = file_bindings.ContentFilesApi.create(
-        file_url=f"{distro.base_url}1.iso",
+        file_url=f"{distribution_base_url(distro.base_url)}1.iso",
         relative_path="1.iso",
     )
     task = monitor_task(response.task)

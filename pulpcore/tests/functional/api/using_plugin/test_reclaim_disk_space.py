@@ -83,6 +83,7 @@ def sync_repository_distribution(
 
 @pytest.mark.parallel
 def test_reclaim_on_demand_content(
+    distribution_base_url,
     pulpcore_bindings,
     sync_repository_distribution,
     monitor_task,
@@ -93,8 +94,9 @@ def test_reclaim_on_demand_content(
     """
     repo, remote, distribution = sync_repository_distribution(policy="on_demand")
 
-    content = get_files_in_manifest(urljoin(distribution.base_url, "PULP_MANIFEST")).pop()
-    download_file(urljoin(distribution.base_url, content[0]))
+    distribution_base_url = distribution_base_url(distribution.base_url)
+    content = get_files_in_manifest(urljoin(distribution_base_url, "PULP_MANIFEST")).pop()
+    download_file(urljoin(distribution_base_url, content[0]))
 
     expected_files = get_files_in_manifest(remote.url)
     artifact_sha256 = get_file_by_path(content[0], expected_files)[1]
@@ -108,13 +110,14 @@ def test_reclaim_on_demand_content(
 
     assert 0 == pulpcore_bindings.ArtifactsApi.list(sha256=artifact_sha256).count
 
-    download_file(urljoin(distribution.base_url, content[0]))
+    download_file(urljoin(distribution_base_url, content[0]))
 
     assert 1 == pulpcore_bindings.ArtifactsApi.list(sha256=artifact_sha256).count
 
 
 @pytest.mark.parallel
 def test_immediate_reclaim_becomes_on_demand(
+    distribution_base_url,
     pulpcore_bindings,
     sync_repository_distribution,
     monitor_task,
@@ -125,9 +128,10 @@ def test_immediate_reclaim_becomes_on_demand(
     artifacts_before_reclaim = pulpcore_bindings.ArtifactsApi.list().count
     assert artifacts_before_reclaim > 0
 
-    content = get_files_in_manifest(urljoin(distribution.base_url, "PULP_MANIFEST")).pop()
+    distribution_base_url = distribution_base_url(distribution.base_url)
+    content = get_files_in_manifest(urljoin(distribution_base_url, "PULP_MANIFEST")).pop()
     # Populate cache
-    download_file(urljoin(distribution.base_url, content[0]))
+    download_file(urljoin(distribution_base_url, content[0]))
 
     reclaim_response = pulpcore_bindings.RepositoriesReclaimSpaceApi.reclaim(
         {"repo_hrefs": [repo.pulp_href]}
@@ -138,7 +142,7 @@ def test_immediate_reclaim_becomes_on_demand(
     artifact_sha256 = get_file_by_path(content[0], expected_files)[1]
     assert 0 == pulpcore_bindings.ArtifactsApi.list(sha256=artifact_sha256).count
 
-    download_file(urljoin(distribution.base_url, content[0]))
+    download_file(urljoin(distribution_base_url, content[0]))
 
     assert 1 == pulpcore_bindings.ArtifactsApi.list(sha256=artifact_sha256).count
 

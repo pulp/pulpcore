@@ -176,6 +176,7 @@ def test_content_promotion(
     file_bindings,
     basic_manifest_path,
     file_remote_factory,
+    distribution_base_url,
     file_distribution_factory,
     gen_object_with_cleanup,
     monitor_task,
@@ -214,14 +215,15 @@ def test_content_promotion(
 
     # Distribute Task
     distro = file_distribution_factory(publication=pub.pulp_href, pulp_domain=domain.name)
+    distro_base_url = distribution_base_url(distro.base_url)
 
     assert distro.publication == pub.pulp_href
     # Url structure should be host/CONTENT_ORIGIN/DOMAIN_PATH/BASE_PATH
-    assert domain.name == distro.base_url.rstrip("/").split("/")[-2]
+    assert domain.name == distro_base_url.rstrip("/").split("/")[-2]
 
     # Check that content can be downloaded from base_url
     for path in ("1.iso", "2.iso", "3.iso"):
-        download = download_file(f"{distro.base_url}{path}")
+        download = download_file(f"{distro_base_url}{path}")
         assert download.response_obj.status == 200
         assert len(download.body) == 1024
 

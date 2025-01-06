@@ -77,11 +77,18 @@ def parameterized_cert(request):
 class TestX509CertGuard:
     """A test class to share the costly distribution setup."""
 
-    def test_download(self, x509_guarded_distribution, parameterized_cert, content_path):
+    def test_download(
+        self,
+        x509_guarded_distribution,
+        parameterized_cert,
+        content_path,
+        distribution_base_url,
+    ):
         cert_data, status_code = parameterized_cert
 
+        distribution_base_url = distribution_base_url(x509_guarded_distribution.base_url)
         response = requests.get(
-            urljoin(x509_guarded_distribution.base_url, content_path),
+            urljoin(distribution_base_url, content_path),
             headers=cert_data and {"X-CLIENT-CERT": cert_data},
         )
         assert response.status_code == status_code
