@@ -60,6 +60,7 @@ from pulpcore.app.util import (  # noqa: E402: module level not at top of file
     MetricsEmitter,
     get_domain,
     cache_key,
+    ENABLE_6064_BACKPORT_WORKAROUND,
 )
 
 from pulpcore.exceptions import (  # noqa: E402
@@ -852,12 +853,15 @@ class Handler:
             ClientConnectionError,
         )
 
-        protection_time = settings.REMOTE_CONTENT_FETCH_FAILURE_COOLDOWN
-        remote_artifacts = (
-            content_artifact.remoteartifact_set.select_related("remote")
-            .order_by_acs()
-            .exclude(failed_at__gte=timezone.now() - timedelta(seconds=protection_time))
-        )
+        remote_artifacts = content_artifact.remoteartifact_set.select_related(
+            "remote"
+        ).order_by_acs()
+
+        if ENABLE_6064_BACKPORT_WORKAROUND:
+            protection_time = settings.REMOTE_CONTENT_FETCH_FAILURE_COOLDOWN
+            remote_artifacts = remote_artifacts.exclude(
+                failed_at__gte=timezone.now() - timedelta(seconds=protection_time)
+            )
         async for remote_artifact in remote_artifacts:
             try:
                 response = await self._stream_remote_artifact(request, response, remote_artifact)
@@ -1166,18 +1170,25 @@ class Handler:
         try:
             download_result = await downloader.run()
         except DigestValidationError:
-            remote_artifact.failed_at = timezone.now()
-            await remote_artifact.asave()
+            COOLDOWN_MSG = ""
+            if ENABLE_6064_BACKPORT_WORKAROUND:
+                remote_artifact.failed_at = timezone.now()
+                await remote_artifact.asave()
+                REMOTE_CONTENT_FETCH_FAILURE_COOLDOWN = (
+                    settings.REMOTE_CONTENT_FETCH_FAILURE_COOLDOWN
+                )
+                COOLDOWN_MSG = (
+                    "- Marking this Remote to be ignored for "
+                    f"{REMOTE_CONTENT_FETCH_FAILURE_COOLDOWN=}s.\n\n"
+                )
             await downloader.session.close()
             close_tcp_connection(request.transport._sock)
-            REMOTE_CONTENT_FETCH_FAILURE_COOLDOWN = settings.REMOTE_CONTENT_FETCH_FAILURE_COOLDOWN
             raise RuntimeError(
                 f"Pulp tried streaming {remote_artifact.url!r} to "
                 "the client, but it failed checksum validation.\n\n"
                 "We can't recover from wrong data already sent so we are:\n"
                 "- Forcing the connection to close.\n"
-                "- Marking this Remote to be ignored for "
-                f"{REMOTE_CONTENT_FETCH_FAILURE_COOLDOWN=}s.\n\n"
+                f"{COOLDOWN_MSG}"
                 "If the Remote is known to be fixed, try resyncing the associated repository.\n"
                 "If the Remote is known to be permanently corrupted, try removing "
                 "affected Pulp Remote, adding a good one and resyncing.\n"

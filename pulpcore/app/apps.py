@@ -261,6 +261,11 @@ class PulpAppConfig(PulpPluginAppConfig):
             sender=self,
             dispatch_uid="populate_artifact_serving_distribution_identifier",
         )
+        post_migrate.connect(
+            _conditional_6064_backport_workaround,
+            sender=self,
+            dispatch_uid="conditional_6064_backport_workaround",
+        )
 
 
 def _populate_access_policies(sender, apps, verbosity, **kwargs):
@@ -416,3 +421,14 @@ def _populate_artifact_serving_distribution(sender, apps, verbosity, **kwargs):
                     pulp_type="core.artifact",
                     defaults={"base_path": name, "content_guard": content_guard},
                 )
+
+
+def _conditional_6064_backport_workaround(sender, apps, verbosity, **kwargs):
+    # See context in pulpcore.app.util.ENABLE_6064_BACKPORT_WORKAROUND
+    from pulpcore.app.models import RemoteArtifact
+    from django.db import models
+    import pulpcore.app.util
+
+    if pulpcore.app.util.failed_at_exists(connection, RemoteArtifact):
+        pulpcore.app.util.ENABLE_6064_BACKPORT_WORKAROUND = True
+        RemoteArtifact.add_to_class("failed_at", models.DateTimeField(null=True))

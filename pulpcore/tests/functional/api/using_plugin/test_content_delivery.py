@@ -236,5 +236,11 @@ def test_handling_remote_artifact_on_demand_streaming_failure(
         download_from_distribution(content_name, distribution)
 
     # WHEN/THEN (second request)
-    actual_checksum = download_from_distribution(content_name, distribution)
-    assert actual_checksum == expected_checksum
+    from pulpcore.app.util import ENABLE_6064_BACKPORT_WORKAROUND
+
+    if ENABLE_6064_BACKPORT_WORKAROUND:
+        actual_checksum = download_from_distribution(content_name, distribution)
+        assert actual_checksum == expected_checksum
+    else:
+        with pytest.raises(ClientPayloadError, match="Response payload is not completed"):
+            download_from_distribution(content_name, distribution)

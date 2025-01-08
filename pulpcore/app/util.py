@@ -30,6 +30,28 @@ from pulpcore.exceptions import AdvisoryLockError
 from pulpcore.exceptions.validation import InvalidSignatureError
 
 
+# Backport workaround for https://github.com/pulp/pulpcore/pull/6064
+# If 'pulpcore-manager backport-patch-6064' was run, the field
+# RemoteArtifact.failed_at will be set and the backport will take effect.
+ENABLE_6064_BACKPORT_WORKAROUND = False
+
+
+def failed_at_exists(connection, ra_class) -> bool:
+    """Whtether 'failed_at' exists in the database."""
+    table_name = ra_class._meta.db_table
+    field_name = "failed_at"
+    CHECK_COL_QUERY = """
+    SELECT COUNT(*)
+    FROM information_schema.columns
+    WHERE table_name = %s
+    AND column_name = %s;
+    """
+    with connection.cursor() as cursor:
+        cursor.execute(CHECK_COL_QUERY, [table_name, field_name])
+        field_exists = cursor.fetchone()[0] > 0
+    return field_exists
+
+
 # a little cache so viewset_for_model doesn't have to iterate over every app every time
 _model_viewset_cache = {}
 STRIPPED_API_ROOT = settings.API_ROOT.strip("/")
