@@ -79,7 +79,7 @@ prometheus = ["django-prometheus"]
 kafka = [
   # Pinned because project warns "things might (and will) break with every update"
   "cloudevents==1.11.0",
-  "confluent-kafka>=2.4.0,<2.8.0",
+  "confluent-kafka>=2.4.0,<2.9.0",
 ]
 
 [project.urls]
