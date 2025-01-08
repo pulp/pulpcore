@@ -32,18 +32,16 @@ class ArtifactResponse(StreamResponse):
         self._artifact_pk = artifact_pk
         self._chunk_size = chunk_size
 
-    async def _sendfile(self, request, fobj, offset, count):
+    # Experiment: See if this is still an issue or fixed in aiohttp
+    async def _sendfile_fallback(self, writer, fobj, offset, count):
         # To keep memory usage low, fobj is transferred in chunks
         # controlled by the constructor's chunk_size argument.
 
-        writer = await super().prepare(request)
-        assert writer is not None
-
         loop = asyncio.get_event_loop()
 
-        await loop.run_in_executor(None, fobj.seek, offset)
-
-        chunk = await loop.run_in_executor(None, fobj.read, min(self._chunk_size, count))
+        chunk = await loop.run_in_executor(
+            None, fobj._seek_and_read, offset, min(self._chunk_size, count)
+        )
         while chunk:
             await writer.write(chunk)
             count = count - self._chunk_size
