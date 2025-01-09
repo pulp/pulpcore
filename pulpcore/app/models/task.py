@@ -226,7 +226,7 @@ class Task(BaseModel, AutoAddObjPermsMixin):
         if rows != 1:
             # If the user requested to cancel this task while the worker finished it, we leave it
             # as it is, but accept this is not an error condition.
-            if self.state != TASK_STATES.CANCELLING:
+            if self.state != TASK_STATES.CANCELING:
                 raise RuntimeError(
                     _("Attempt to set not running task {} to completed from '{}'.").format(
                         self.pk, self.state
