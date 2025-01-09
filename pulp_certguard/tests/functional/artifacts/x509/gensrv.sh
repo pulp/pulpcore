@@ -32,7 +32,7 @@ then
     -CA certificates/ca.pem \
     -CAkey keys/ca.pem \
     -CAcreateserial \
-    -set_serial $RANDOM
+    -set_serial $RANDOM \
     -subj "/CN=$HOSTNAME" &> /dev/null
 else
   openssl x509 \
@@ -45,7 +45,7 @@ else
     -CA certificates/ca.pem \
     -CAkey keys/ca.pem \
     -CAcreateserial \
-    -set_serial $RANDOM
+    -set_serial $RANDOM \
     -subj "/CN=$HOSTNAME" &> /dev/null
 fi
 
