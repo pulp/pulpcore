@@ -350,6 +350,26 @@ No significant changes.
 
 ---
 
+## 3.63.7 (2025-01-08) {: #3.63.7 }
+
+### REST API {: #3.63.7-rest-api }
+
+No significant changes.
+
+### Plugin API {: #3.63.7-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.63.7-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.63.7-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.63.6 (2024-12-13) {: #3.63.6 }
 
 ### REST API {: #3.63.6-rest-api }
@@ -1328,6 +1348,26 @@ No significant changes.
 No significant changes.
 
 ### Pulp Cert Guard
+
+No significant changes.
+
+---
+
+## 3.49.30 (2025-01-08) {: #3.49.30 }
+
+### REST API {: #3.49.30-rest-api }
+
+No significant changes.
+
+### Plugin API {: #3.49.30-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.49.30-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.49.30-pulp-cert-guard }
 
 No significant changes.
 
@@ -2602,6 +2642,18 @@ No significant changes.
 
 -   Starting from this release pulp_file will be shipped as part of the pulpcore package.
     [#4550](https://github.com/pulp/pulpcore/issues/4550)
+
+## 3.39.25 (2025-01-08) {: #3.39.25 }
+
+### REST API {: #3.39.25-rest-api }
+
+No significant changes.
+
+### Plugin API {: #3.39.25-plugin-api }
+
+No significant changes.
+
+---
 
 ## 3.39.24 (2024-11-26) {: #3.39.24 }
 
@@ -4821,6 +4873,18 @@ No significant changes.
     Deprecated `pulpcore.plugin.actions.raise_for_unknown_content_units` in favour of
     `pulpcore.plugin.util.raise_for_unknown_content_units`.
     [#3604](https://github.com/pulp/pulpcore/issues/3604)
+
+## 3.22.35 (2025-01-08) {: #3.22.35 }
+
+### REST API {: #3.22.35-rest-api }
+
+No significant changes.
+
+### Plugin API {: #3.22.35-plugin-api }
+
+No significant changes.
+
+---
 
 ## 3.22.34 (2024-11-26) {: #3.22.34 }
 
