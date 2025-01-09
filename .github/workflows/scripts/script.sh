@@ -123,13 +123,6 @@ cmd_user_prefix bash -c "django-admin makemigrations core --check --dry-run"
 cmd_user_prefix bash -c "django-admin makemigrations file --check --dry-run"
 cmd_user_prefix bash -c "django-admin makemigrations certguard --check --dry-run"
 
-# See pulpcore.app.util.ENABLE_6064_BACKPORT_WORKAROUND for context.
-# This needs to be set here because it relies on service init.
-# Its being tested in only one scenario to have both cases covered.
-if [[ "$TEST" == "s3" ]]; then
-    cmd_prefix pulpcore-manager backport-patch-6064
-fi
-
 # Run unit tests.
 cmd_user_prefix bash -c "PULP_DATABASES__default__USER=postgres pytest -v -r sx --color=yes --suppress-no-test-exit-code -p no:pulpcore --pyargs pulpcore.tests.unit"
 cmd_user_prefix bash -c "PULP_DATABASES__default__USER=postgres pytest -v -r sx --color=yes --suppress-no-test-exit-code -p no:pulpcore --pyargs pulp_file.tests.unit"

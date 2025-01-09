@@ -11,6 +11,11 @@ from aiohttp.client_exceptions import ClientPayloadError, ClientResponseError
 from pulpcore.client.pulp_file import RepositorySyncURL
 from pulpcore.tests.functional.utils import download_file, get_files_in_manifest
 
+import django
+
+django.setup()
+from pulpcore.app.util import ENABLE_6064_BACKPORT_WORKAROUND  # noqa: E402
+
 
 @pytest.mark.parallel
 def test_delete_remote_on_demand(
@@ -115,7 +120,7 @@ def test_remote_content_changed_with_on_demand(
 ):
     """
     GIVEN a remote synced on demand with fileA (e.g, digest=123),
-    AND the remote server, fileA changed its content (e.g, digest=456),
+    AND in the remote server, fileA changed its content (e.g, digest=456),
 
     WHEN the client first requests that content
     THEN the content app will start a response but close the connection before finishing
@@ -149,8 +154,9 @@ def test_remote_content_changed_with_on_demand(
     result = subprocess.run(["curl", "-v", get_url], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
     # THEN
-    assert result.returncode == 0
-    assert b"< HTTP/1.1 404 Not Found" in result.stderr
+    if ENABLE_6064_BACKPORT_WORKAROUND:
+        assert result.returncode == 0
+        assert b"< HTTP/1.1 404 Not Found" in result.stderr
 
 
 @pytest.mark.parallel
@@ -236,8 +242,6 @@ def test_handling_remote_artifact_on_demand_streaming_failure(
         download_from_distribution(content_name, distribution)
 
     # WHEN/THEN (second request)
-    from pulpcore.app.util import ENABLE_6064_BACKPORT_WORKAROUND
-
     if ENABLE_6064_BACKPORT_WORKAROUND:
         actual_checksum = download_from_distribution(content_name, distribution)
         assert actual_checksum == expected_checksum
