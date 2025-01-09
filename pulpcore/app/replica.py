@@ -11,7 +11,6 @@ from pulpcore.app.tasks.base import (
     general_multi_delete,
 )
 from pulpcore.plugin.util import get_url, get_domain
-from pulpcore.app.loggers import deprecation_logger
 
 _logger = logging.getLogger(__name__)
 
@@ -153,12 +152,6 @@ class Replicator:
             repository.save()
         return repository
 
-    def distribution_data(self, repository, upstream_distribution):
-        """
-        Deprecated, use distribution_extra_fields instead.
-        """
-        return self.distribution_extra_fields(repository, upstream_distribution)
-
     def distribution_extra_fields(self, repository, upstream_distribution):
         """
         Return the fields that need to be updated/cleared on distributions for idempotence.
@@ -171,12 +164,6 @@ class Replicator:
 
     def create_or_update_distribution(self, repository, upstream_distribution):
         distribution_data = self.distribution_extra_fields(repository, upstream_distribution)
-        if "distribution_data" in self.__class__.__dict__:
-            deprecation_logger.warning(
-                "distribution_data() is deprecated and will be removed in pulpcore==3.70;"
-                " use distribution_extra_fields() instead."
-            )
-            distribution_data = self.distribution_data(repository, upstream_distribution)
         try:
             distro = self.distribution_model_cls.objects.get(
                 name=upstream_distribution["name"], pulp_domain=self.domain
