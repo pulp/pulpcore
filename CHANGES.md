@@ -3525,6 +3525,18 @@ No significant changes.
 
 -   [#3798](https://github.com/pulp/pulpcore/issues/3798)
 
+## 3.28.36 (2025-01-10) {: #3.28.36 }
+
+### REST API {: #3.28.36-rest-api }
+
+No significant changes.
+
+### Plugin API {: #3.28.36-plugin-api }
+
+No significant changes.
+
+---
+
 ## 3.28.35 (2024-11-26) {: #3.28.35 }
 
 ### REST API {: #3.28.35-rest-api }
