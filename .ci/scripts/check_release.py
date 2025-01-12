@@ -6,7 +6,6 @@ import os
 import tomllib
 import yaml
 from pathlib import Path
-from tempfile import TemporaryDirectory
 from packaging.version import Version
 from git import Repo
 
@@ -24,6 +23,12 @@ def options():
         help="A comma separated list of branches to check for releases. Can also use keyword: "
         "'supported'. Defaults to 'supported', see `supported_release_branches` in "
         "`plugin_template.yml`.",
+    )
+    parser.add_argument(
+        "--no-fetch",
+        default=False,
+        action="store_true",
+        help="Don't fetch remote. Run faster at the expense of maybe being outdated.",
     )
     return parser.parse_args()
 
@@ -70,97 +75,100 @@ def check_pyproject_dependencies(repo, from_commit, to_commit):
 
 
 def main(options, template_config):
-    with TemporaryDirectory() as d:
-        # Clone from upstream to ensure we have updated branches & main
-        GITHUB_ORG = template_config["github_org"]
-        PLUGIN_NAME = template_config["plugin_name"]
-        UPSTREAM_REMOTE = f"https://github.com/{GITHUB_ORG}/{PLUGIN_NAME}.git"
-        DEFAULT_BRANCH = template_config["plugin_default_branch"]
+    DEFAULT_BRANCH = template_config["plugin_default_branch"]
 
-        repo = Repo.clone_from(UPSTREAM_REMOTE, d, filter="blob:none")
-        heads = [h.split("/")[-1] for h in repo.git.ls_remote("--heads").split("\n")]
-        available_branches = [h for h in heads if re.search(RELEASE_BRANCH_REGEX, h)]
-        available_branches.sort(key=lambda ver: Version(ver))
-        available_branches.append(DEFAULT_BRANCH)
+    repo = Repo()
 
-        branches = options.branches
-        if branches == "supported":
-            with open(f"{d}/template_config.yml", mode="r") as f:
-                tc = yaml.safe_load(f)
-                branches = set(tc["supported_release_branches"])
-            latest_release_branch = tc["latest_release_branch"]
-            if latest_release_branch is not None:
-                branches.add(latest_release_branch)
-            branches.add(DEFAULT_BRANCH)
-        else:
-            branches = set(branches.split(","))
+    upstream_default_branch = next(
+        (branch for branch in repo.branches if branch.name == DEFAULT_BRANCH)
+    ).tracking_branch()
+    remote = upstream_default_branch.remote_name
+    if not options.no_fetch:
+        repo.remote(remote).fetch()
 
-        if diff := branches - set(available_branches):
-            print(f"Supplied branches contains non-existent branches! {diff}")
-            exit(1)
+    # Warning: This will not work if branch names contain "/" but we don't really care here.
+    heads = [h.split("/")[-1] for h in repo.git.branch("--remote").split("\n")]
+    available_branches = [h for h in heads if re.search(RELEASE_BRANCH_REGEX, h)]
+    available_branches.sort(key=lambda ver: Version(ver))
+    available_branches.append(DEFAULT_BRANCH)
 
-        print(f"Checking for releases on branches: {branches}")
+    branches = options.branches
+    if branches == "supported":
+        tc = yaml.safe_load(repo.git.show(f"{upstream_default_branch}:template_config.yml"))
+        branches = set(tc["supported_release_branches"])
+        latest_release_branch = tc["latest_release_branch"]
+        if latest_release_branch is not None:
+            branches.add(latest_release_branch)
+        branches.add(DEFAULT_BRANCH)
+    else:
+        branches = set(branches.split(","))
 
-        releases = []
-        for branch in branches:
-            if branch != DEFAULT_BRANCH:
-                # Check if a Z release is needed
-                reasons = []
-                changes = repo.git.ls_tree("-r", "--name-only", f"origin/{branch}", "CHANGES/")
-                z_changelog = False
-                for change in changes.split("\n"):
-                    # Check each changelog file to make sure everything checks out
-                    _, ext = os.path.splitext(change)
-                    if ext in Y_CHANGELOG_EXTS:
-                        print(
-                            f"Warning: A non-backported changelog ({change}) is present in the "
-                            f"{branch} release branch!"
-                        )
-                    elif ext in Z_CHANGELOG_EXTS:
-                        z_changelog = True
-                if z_changelog:
-                    reasons.append("Backports")
+    if diff := branches - set(available_branches):
+        print(f"Supplied branches contains non-existent branches! {diff}")
+        exit(1)
 
-                last_tag = repo.git.describe("--tags", "--abbrev=0", f"origin/{branch}")
-                req_txt_diff = repo.git.diff(
-                    f"{last_tag}", f"origin/{branch}", "--name-only", "--", "requirements.txt"
-                )
-                if req_txt_diff:
-                    reasons.append("requirements.txt")
-                pyproject_diff = repo.git.diff(
-                    f"{last_tag}", f"origin/{branch}", "--name-only", "--", "pyproject.toml"
-                )
-                if pyproject_diff:
-                    reasons.extend(check_pyproject_dependencies(repo, last_tag, f"origin/{branch}"))
+    print(f"Checking for releases on branches: {branches}")
 
-                if reasons:
-                    curr_version = Version(last_tag)
-                    assert curr_version.base_version.startswith(
-                        branch
-                    ), "Current-version has to belong to the current branch!"
-                    next_version = Version(f"{branch}.{curr_version.micro + 1}")
+    releases = []
+    for branch in branches:
+        if branch != DEFAULT_BRANCH:
+            # Check if a Z release is needed
+            reasons = []
+            changes = repo.git.ls_tree("-r", "--name-only", f"{remote}/{branch}", "CHANGES/")
+            z_changelog = False
+            for change in changes.split("\n"):
+                # Check each changelog file to make sure everything checks out
+                _, ext = os.path.splitext(change)
+                if ext in Y_CHANGELOG_EXTS:
                     print(
-                        f"A Z-release is needed for {branch}, "
-                        f"Prev: {last_tag}, "
-                        f"Next: {next_version.base_version}, "
-                        f"Reason: {','.join(reasons)}"
+                        f"Warning: A non-backported changelog ({change}) is present in the "
+                        f"{branch} release branch!"
                     )
-                    releases.append(next_version)
-            else:
-                # Check if a Y release is needed
-                changes = repo.git.ls_tree("-r", "--name-only", DEFAULT_BRANCH, "CHANGES/")
-                for change in changes.split("\n"):
-                    _, ext = os.path.splitext(change)
-                    if ext in Y_CHANGELOG_EXTS:
-                        # We don't put Y release bumps in the commit message, check file instead.
-                        # The 'current_version' is always the dev of the next version to release.
-                        next_version = current_version(repo, DEFAULT_BRANCH).base_version
-                        print(f"A new Y-release is needed! New Version: {next_version}")
-                        releases.append(next_version)
-                        break
+                elif ext in Z_CHANGELOG_EXTS:
+                    z_changelog = True
+            if z_changelog:
+                reasons.append("Backports")
 
-        if len(releases) == 0:
-            print("No new releases to perform.")
+            last_tag = repo.git.describe("--tags", "--abbrev=0", f"{remote}/{branch}")
+            req_txt_diff = repo.git.diff(
+                f"{last_tag}", f"{remote}/{branch}", "--name-only", "--", "requirements.txt"
+            )
+            if req_txt_diff:
+                reasons.append("requirements.txt")
+            pyproject_diff = repo.git.diff(
+                f"{last_tag}", f"{remote}/{branch}", "--name-only", "--", "pyproject.toml"
+            )
+            if pyproject_diff:
+                reasons.extend(check_pyproject_dependencies(repo, last_tag, f"{remote}/{branch}"))
+
+            if reasons:
+                curr_version = Version(last_tag)
+                assert curr_version.base_version.startswith(
+                    branch
+                ), "Current-version has to belong to the current branch!"
+                next_version = Version(f"{branch}.{curr_version.micro + 1}")
+                print(
+                    f"A Z-release is needed for {branch}, "
+                    f"Prev: {last_tag}, "
+                    f"Next: {next_version.base_version}, "
+                    f"Reason: {','.join(reasons)}"
+                )
+                releases.append(next_version)
+        else:
+            # Check if a Y release is needed
+            changes = repo.git.ls_tree("-r", "--name-only", DEFAULT_BRANCH, "CHANGES/")
+            for change in changes.split("\n"):
+                _, ext = os.path.splitext(change)
+                if ext in Y_CHANGELOG_EXTS:
+                    # We don't put Y release bumps in the commit message, check file instead.
+                    # The 'current_version' is always the dev of the next version to release.
+                    next_version = current_version(repo, DEFAULT_BRANCH).base_version
+                    print(f"A new Y-release is needed! New Version: {next_version}")
+                    releases.append(next_version)
+                    break
+
+    if len(releases) == 0:
+        print("No new releases to perform.")
 
 
 if __name__ == "__main__":
