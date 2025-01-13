@@ -22,7 +22,7 @@ API_ROOT = {{ api_root | repr }}
 
 {% if pulp_scenario_settings is defined and pulp_scenario_settings %}
 {% for key, value in pulp_scenario_settings.items() %}
-{% if key != "STORAGES" %}
+{% if not (s3_test | default(false) and key == "STORAGES") %}
 {{ key | upper }} = {{ value | repr }}
 {% endif %}
 {% endfor %}
