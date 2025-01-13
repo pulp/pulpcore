@@ -80,6 +80,20 @@ pulp_settings_s3:
   hide_guarded_distributions: true
   rest_framework__default_permission_classes:
   - pulpcore.plugin.access_policy.AccessPolicyFromSettings
+  STORAGES:
+    "default":
+      "BACKEND": "storages.backends.s3boto3.S3Boto3Storage"
+      "OPTIONS":
+          "access_key": "{{ minio_access_key }}"
+          "secret_key": "{{ minio_secret_key }}"
+          "region_name": "eu-central-1"
+          "addressing_style": "path"
+          "signature_version": "s3v4"
+          "bucket_name": "pulp3"
+          "endpoint_url": "http://minio:9000"
+          "default_acl": "@none None"
+    "staticfiles":
+      "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"
 pydocstyle: true
 release_email: pulp-infra@redhat.com
 release_user: pulpbot
