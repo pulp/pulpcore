@@ -458,8 +458,9 @@ class RepositoryAddRemoveContentSerializer(ModelSerializer, NestedHyperlinkedMod
     remove_content_units = serializers.ListField(
         help_text=_(
             "A list of content units to remove from the latest repository version. "
-            "You may also specify '*' as an entry to remove all content. This content is "
-            "removed before add_content_units are added."
+            "You may specify '*' as an entry to remove all content, or 'key=value' pairs "
+            "to remove content by-label. This content is removed before add_content_units "
+            "are added."
         ),
         child=serializers.CharField(error_messages={"invalid": "Not a valid URI of a resource."}),
         required=False,
@@ -488,19 +489,29 @@ class RepositoryAddRemoveContentSerializer(ModelSerializer, NestedHyperlinkedMod
 
     def validate_remove_content_units(self, value):
         remove_content_units = {}
-
+        # "* must be alone, and means "all-content"
         if "*" in value:
             if len(value) > 1:
                 raise serializers.ValidationError("Cannot supply content units and '*'.")
             else:
                 return ["*"]
-        else:
+
+        # Q: just one label? can label/hrefs be mixed? accept full label-operand-set?
+        # Current: multiple labels, mixed with hrefs, only '='
+        # "x=y" can happen multiple times, and means "all content with label x=y, pass k=v pair"
+        labels_specified = [s for s in value if "=" in s]
+        if labels_specified:
+            value = set(value) - set(labels_specified)
+
+        # Anything remaining means "content HREFs, pass UUIDs"
+        if value:
             for url in value:
                 remove_content_units[extract_pk(url)] = url
             content_units_pks = set(remove_content_units.keys())
             existing_content_units = models.Content.objects.filter(pk__in=content_units_pks)
             raise_for_unknown_content_units(existing_content_units, remove_content_units)
-            return list(remove_content_units.keys())
+
+        return list(remove_content_units.keys()) + labels_specified
 
     class Meta:
         model = models.RepositoryVersion
