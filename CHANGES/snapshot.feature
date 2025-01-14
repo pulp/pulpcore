@@ -1,0 +1,1 @@
+Added snapshot support to Pulp.

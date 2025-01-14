@@ -32,29 +32,6 @@ def file_9_contents(
     return content_units
 
 
-@pytest.fixture
-def file_repository_content(
-    file_bindings,
-    file_remote_ssl_factory,
-    file_repository_factory,
-    basic_manifest_path,
-    monitor_task,
-):
-    """Create some content that was synced into a repo on-demand."""
-    remote = file_remote_ssl_factory(manifest_path=basic_manifest_path, policy="on_demand")
-    base_repo = file_repository_factory()
-    task = file_bindings.RepositoriesFileApi.sync(
-        base_repo.pulp_href, {"remote": remote.pulp_href}
-    ).task
-    monitor_task(task)
-    base_repo = file_bindings.RepositoriesFileApi.read(base_repo.pulp_href)
-    assert base_repo.latest_version_href[-2] == "1"
-    contents = file_bindings.ContentFilesApi.list(repository_version=base_repo.latest_version_href)
-    assert contents.count == 3
-
-    return contents
-
-
 @pytest.mark.parallel
 def test_add_remove_content(
     file_bindings,
@@ -880,7 +857,7 @@ def test_repo_version_retention(
 @pytest.mark.parallel
 def test_repo_versions_protected_from_cleanup(
     file_bindings,
-    file_repository_content,
+    file_9_contents,
     file_repository_factory,
     file_distribution_factory,
     gen_object_with_cleanup,
@@ -903,7 +880,7 @@ def test_repo_versions_protected_from_cleanup(
         return repo
 
     # Setup
-    contents = file_repository_content
+    contents = list(file_9_contents.values())
     repo = file_repository_factory(retain_repo_versions=1)
 
     # Publish and distribute version 0
@@ -913,7 +890,7 @@ def test_repo_versions_protected_from_cleanup(
     file_distribution_factory(publication=publication.pulp_href)
 
     # Version 0 is protected since it's distributed
-    repo = _modify_and_validate(repo, contents.results[0], "1", 2)
+    repo = _modify_and_validate(repo, contents[0], "1", 2)
 
     # Create a new publication and distribution which protects version 1 from deletion
     file_distribution_factory(repository=repo.pulp_href)
@@ -923,10 +900,41 @@ def test_repo_versions_protected_from_cleanup(
     file_distribution_factory(publication=publication.pulp_href)
 
     # Create version 2 and there should be 3 versions now (2 protected)
-    repo = _modify_and_validate(repo, contents.results[1], "2", 3)
+    repo = _modify_and_validate(repo, contents[1], "2", 3)
 
     # Version 2 will be removed since we're creating version 3 and it's not protected
-    _modify_and_validate(repo, contents.results[2], "3", 3)
+    repo = _modify_and_validate(repo, contents[2], "3", 3)
+
+    # Publish version 3 as a snapshot
+    gen_object_with_cleanup(
+        file_bindings.PublicationsFileApi,
+        {"repository_version": repo.latest_version_href, "snapshot": True},
+    )
+
+    # Version 3 is not protected since there is no snapshot distribution to distribute it
+    repo = _modify_and_validate(repo, contents[3], "4", 3)
+
+    # Publish version 4 as a snapshot and ditribute it
+    gen_object_with_cleanup(
+        file_bindings.PublicationsFileApi,
+        {"repository_version": repo.latest_version_href, "snapshot": True},
+    )
+    file_distribution_factory(repository=repo.pulp_href, snapshot=True)
+
+    # Version 4 is protected since it's ditributed by the snapshot distribution
+    repo = _modify_and_validate(repo, contents[4], "5", 4)
+
+    # Publish version 5 as a snapshot (it's already distributed)
+    gen_object_with_cleanup(
+        file_bindings.PublicationsFileApi,
+        {"repository_version": repo.latest_version_href, "snapshot": True},
+    )
+
+    # Version 5 is protected since it's ditributed by the snapshot distribution
+    repo = _modify_and_validate(repo, contents[5], "6", 5)
+
+    # Version 6 will be removed since it's not protected and we're creating version 7
+    _modify_and_validate(repo, contents[6], "7", 5)
 
 
 @pytest.mark.parallel
