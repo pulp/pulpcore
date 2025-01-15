@@ -852,11 +852,10 @@ class Handler:
             ClientConnectionError,
         )
 
-        protection_time = settings.REMOTE_CONTENT_FETCH_FAILURE_COOLDOWN
         remote_artifacts = (
             content_artifact.remoteartifact_set.select_related("remote")
             .order_by_acs()
-            .exclude(failed_at__gte=timezone.now() - timedelta(seconds=protection_time))
+            .exclude(pulp_last_updated__gte=timezone.now())
         )
         async for remote_artifact in remote_artifacts:
             try:
@@ -1166,8 +1165,12 @@ class Handler:
         try:
             download_result = await downloader.run()
         except DigestValidationError:
-            remote_artifact.failed_at = timezone.now()
-            await remote_artifact.asave()
+            # Using this otherwise unused dbfield is a workaround to allow this fix to be
+            # backported. Read "failed_at" instead.
+            await RemoteArtifact.objects.filter(pulp_id=remote_artifact.pulp_id).aupdate(
+                pulp_last_updated=timezone.now()
+                + timedelta(settings.REMOTE_CONTENT_FETCH_FAILURE_COOLDOWN)
+            )
             await downloader.session.close()
             close_tcp_connection(request.transport._sock)
             REMOTE_CONTENT_FETCH_FAILURE_COOLDOWN = settings.REMOTE_CONTENT_FETCH_FAILURE_COOLDOWN
