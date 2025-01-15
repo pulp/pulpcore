@@ -703,6 +703,9 @@ class RemoteArtifact(BaseModel, QueryMixin):
         sha256 (models.CharField): The expected SHA-256 checksum of the file.
         sha384 (models.CharField): The expected SHA-384 checksum of the file.
         sha512 (models.CharField): The expected SHA-512 checksum of the file.
+        pulp_last_updated (models.DateTimeField):
+            Re-purposed this field to enable a backport that contained a migration.
+            See https://github.com/pulp/pulpcore/pull/6196
 
     Relations:
 
