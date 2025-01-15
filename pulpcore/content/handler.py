@@ -118,6 +118,29 @@ class DistroListings(HTTPOk):
         super().__init__(body=html, headers={"Content-Type": "text/html"})
 
 
+from datetime import datetime
+class SnapshotListings(HTTPOk):
+    """
+    Response for browsing through the snapshots of a specific snapshot distro.
+
+    This is returned when visiting the base path of a snapshot distro.
+    """
+
+    def __init__(self, path, repo):
+        """Create the HTML response."""
+
+        snapshots = (
+            Publication.objects.filter(repository_version__repository=repo, snapshot=True)
+            .order_by("pulp_created")
+            .values_list("pulp_created", flat=True)
+            .distinct()
+        )
+        dates = {f"{datetime.strftime(s, '%Y%m%dT%H%M%SZ')}/": s for s in snapshots}
+        directory_list = dates.keys()
+        html = Handler.render_html(directory_list, dates=dates, path=path)
+        super().__init__(body=html, headers={"Content-Type": "text/html"})
+
+
 class ArtifactNotFound(Exception):
     """
     The artifact associated with a published-artifact does not exist.
@@ -312,7 +335,7 @@ class Handler:
         distro_model = cls.distribution_model or Distribution
         domain = get_domain()
         try:
-            return (
+            distro_object = (
                 distro_model.objects.filter(pulp_domain=domain)
                 .select_related(
                     "repository",
@@ -326,6 +349,49 @@ class Handler:
                 .get(base_path__in=base_paths)
                 .cast()
             )
+
+            if distro_object.snapshot:
+                # Determine whether it's a listing or a specific snapshot
+                if path == f"{distro_object.base_path}/":
+                    if not path_ends_in_slash:
+                        raise HTTPMovedPermanently(f"/{path}")
+                    raise SnapshotListings(path=path, repo=distro_object.repository)
+                else:
+                    # Validate path i.e. <base_path>/<timestamp>/.*
+                    base_path = distro_object.base_path
+                    pattern = rf"^{re.escape(base_path)}/(\d{{8}}T\d{{6}}Z)(/.*)?$"
+                    re.compile(pattern)
+                    match = re.search(pattern, path)
+                    if match:
+                        timestamp_str = match.group(1)
+                        timestamp = datetime.strptime(timestamp_str, "%Y%m%dT%H%M%SZ")
+                        timestamp = timestamp.replace(microsecond=999999)
+                    else:
+                        raise PathNotResolved(original_path)
+
+                    # Find the latest snapshot publication before or at the timestamp
+                    snapshot_publication = (
+                        Publication.objects.filter(
+                            pulp_created__lte=timestamp,
+                            repository_version__repository=distro_object.repository,
+                            snapshot=True,
+                        )
+                        .order_by("-pulp_created")
+                        .first()
+                    )
+                    distro_object.base_path = f"{base_path}/{timestamp_str}"
+                    distro_object.repository = None
+                    distro_object.publication = snapshot_publication
+                    # Or if we want to redirect
+                    redirect = False
+                    pub_timestamp_str = datetime.strftime(
+                        snapshot_publication.pulp_created, "%Y%m%dT%H%M%SZ"
+                    )
+                    if redirect and pub_timestamp_str != timestamp_str:
+                        raise HTTPMovedPermanently(
+                            f"{settings.CONTENT_PATH_PREFIX}{base_path}/{pub_timestamp_str}/"
+                        )
+            return distro_object
         except ObjectDoesNotExist:
             if path.rstrip("/") in base_paths:
                 distros = distro_model.objects.filter(

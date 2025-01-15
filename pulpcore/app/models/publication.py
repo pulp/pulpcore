@@ -98,12 +98,13 @@ class Publication(MasterModel):
 
     complete = models.BooleanField(db_index=True, default=False)
     pass_through = models.BooleanField(default=False)
+    snapshot = models.BooleanField(default=False)
 
     repository_version = models.ForeignKey("RepositoryVersion", on_delete=models.CASCADE)
     pulp_domain = models.ForeignKey("Domain", default=get_domain_pk, on_delete=models.PROTECT)
 
     @classmethod
-    def create(cls, repository_version, pass_through=False):
+    def create(cls, repository_version, pass_through=False, snapshot=False):
         """
         Create a publication.
 
@@ -125,7 +126,9 @@ class Publication(MasterModel):
             Adds a Task.created_resource for the publication.
         """
         with transaction.atomic():
-            publication = cls(pass_through=pass_through, repository_version=repository_version)
+            publication = cls(
+                pass_through=pass_through, repository_version=repository_version, snapshot=snapshot
+            )
             publication.save()
             resource = CreatedResource(content_object=publication)
             resource.save()
@@ -649,6 +652,7 @@ class Distribution(MasterModel):
     base_path = models.TextField()
     pulp_domain = models.ForeignKey("Domain", default=get_domain_pk, on_delete=models.PROTECT)
     hidden = models.BooleanField(default=False, null=True)
+    snapshot = models.BooleanField(default=False)
 
     content_guard = models.ForeignKey(ContentGuard, null=True, on_delete=models.SET_NULL)
     publication = models.ForeignKey(Publication, null=True, on_delete=models.SET_NULL)
