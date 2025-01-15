@@ -27,17 +27,38 @@ API_ROOT = {{ api_root | repr }}
 {% endif %}
 
 {% if s3_test | default(false) %}
+MEDIA_ROOT: ""
+S3_USE_SIGV4 = True
+{% if test_storages_compat_layer is defined and test_storages_compat_layer %}
+STORAGES = {
+    "default": {
+        "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
+        "OPTIONS": {
+            "access_key": "{{ minio_access_key }}",
+            "secret_key": "{{ minio_secret_key }}",
+            "region_name": "eu-central-1",
+            "addressing_style": "path",
+            "signature_version": "s3v4",
+            "bucket_name": "pulp3",
+            "endpoint_url": "http://minio:9000",
+            "default_acl": "@none None",
+        },
+    },
+    "staticfiles": {
+      "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+    },
+}
+{% else %}
 DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
-MEDIA_ROOT = ""
 AWS_ACCESS_KEY_ID = "{{ minio_access_key }}"
 AWS_SECRET_ACCESS_KEY = "{{ minio_secret_key }}"
 AWS_S3_REGION_NAME = "eu-central-1"
 AWS_S3_ADDRESSING_STYLE = "path"
-S3_USE_SIGV4 = True
 AWS_S3_SIGNATURE_VERSION = "s3v4"
 AWS_STORAGE_BUCKET_NAME = "pulp3"
 AWS_S3_ENDPOINT_URL = "http://minio:9000"
 AWS_DEFAULT_ACL = "@none None"
+{% endif %}
 {% endif %}
 
 {% if azure_test | default(false) %}
