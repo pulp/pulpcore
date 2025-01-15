@@ -1,7 +1,7 @@
 # This config represents the latest values used when running the plugin-template. Any settings that
 # were not present before running plugin-template have been added with their default values.
 
-# generated with plugin_template@2021.08.26-382-gc88324b
+# generated with plugin_template@2021.08.26-420-gf332a34
 
 api_root: /pulp/
 black: true
@@ -71,5 +71,6 @@ test_lowerbounds: true
 test_performance: false
 test_reroute: true
 test_s3: true
+test_storages_compat_layer: false
 use_issue_template: true
 

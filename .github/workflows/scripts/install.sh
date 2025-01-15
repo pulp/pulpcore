@@ -107,6 +107,7 @@ minio_access_key: "'$MINIO_ACCESS_KEY'"\
 minio_secret_key: "'$MINIO_SECRET_KEY'"\
 pulp_scenario_settings: null\
 pulp_scenario_env: {}\
+test_storages_compat_layer: false\
 ' vars/main.yaml
   export PULP_API_ROOT="/rerouted/djnd/"
 fi
