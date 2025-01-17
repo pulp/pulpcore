@@ -1,7 +1,7 @@
 """Tests for Pulp 3's authentication API.
 
 For more information, see the documentation on `Authentication
-<https://docs.pulpproject.org/restapi.html#section/Authentication>`_.
+https://pulpproject.org/pulpcore/docs/admin/guides/auth/basic/
 """
 
 import json

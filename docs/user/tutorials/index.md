@@ -1,5 +1,10 @@
 # Start Here
 
+<figure markdown="span">
+  ![Pulp 101](site:pulpcore/docs/assets/images/pulp-101.png)
+  <!-- <figcaption>Image caption</figcaption> -->
+</figure>
+
 If you are a new user and are unsure where to begin, this page outlines the different options available, as well as the limitations and requirements for those options.
 
 ## Want to evaluate Pulp?

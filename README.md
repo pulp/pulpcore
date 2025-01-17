@@ -12,7 +12,7 @@ Using Pulp you can:
 
 Pulp is completely free and open-source!
 - License: GPLv2+
-- Documentation: https://docs.pulpproject.org/
+- Documentation: https://pulpproject.org/
 - Source: https://github.com/pulp/pulpcore/
 - Bugs: https://github.com/pulp/pulpcore/issues
 
