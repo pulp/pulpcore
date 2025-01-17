@@ -312,7 +312,7 @@ ALLOWED_IMPORT_PATHS = []
 
 ALLOWED_EXPORT_PATHS = []
 
-# https://docs.pulpproject.org/pulpcore/configuration/settings.html#pulp-cache
+# https://pulpproject.org/pulpcore/docs/admin/reference/settings/?h=settings#cache_enabled
 CACHE_ENABLED = False
 CACHE_SETTINGS = {
     "EXPIRES_TTL": 600,  # 10 minutes
@@ -415,7 +415,7 @@ redis_port_validator = Validator("REDIS_PORT", must_exist=True, when=cache_enabl
 cache_validator = redis_url_validator | (redis_host_validator & redis_port_validator)
 cache_validator.messages["combined"] = (
     "CACHE_ENABLED is enabled but it requires to have REDIS configured. Please check "
-    "https://docs.pulpproject.org/pulpcore/configuration/settings.html#redis-settings "
+    "https://pulpproject.org/pulpcore/docs/admin/reference/settings/?h=settings#redis-settings "
     "for more information."
 )
 
