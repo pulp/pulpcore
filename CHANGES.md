@@ -8,6 +8,32 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.63.8 (2025-01-21) {: #3.63.8 }
+
+### REST API {: #3.63.8-rest-api }
+
+#### Bugfixes {: #3.63.8-rest-api-bugfix }
+
+- On a request for on-demand content in the content app, a corrupted Remote that
+  contains the wrong binary (for that content) prevented other Remotes from being
+  attempted on future requests. Now the last failed Remotes are temporarily ignored
+  and others may be picked.
+  [#5725](https://github.com/pulp/pulpcore/issues/5725)
+
+### Plugin API {: #3.63.8-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.63.8-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.63.8-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.63.7 (2025-01-08) {: #3.63.7 }
 
 ### REST API {: #3.63.7-rest-api }
