@@ -8,6 +8,26 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.69.1 (2025-01-21) {: #3.69.1 }
+
+### REST API {: #3.69.1-rest-api }
+
+No significant changes.
+
+### Plugin API {: #3.69.1-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.69.1-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.69.1-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.69.0 (2024-12-11) {: #3.69.0 }
 
 ### REST API {: #3.69.0-rest-api }
@@ -345,6 +365,32 @@ No significant changes.
 No significant changes.
 
 ### Pulp Cert Guard {: #3.64.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.63.8 (2025-01-21) {: #3.63.8 }
+
+### REST API {: #3.63.8-rest-api }
+
+#### Bugfixes {: #3.63.8-rest-api-bugfix }
+
+- On a request for on-demand content in the content app, a corrupted Remote that
+  contains the wrong binary (for that content) prevented other Remotes from being
+  attempted on future requests. Now the last failed Remotes are temporarily ignored
+  and others may be picked.
+  [#5725](https://github.com/pulp/pulpcore/issues/5725)
+
+### Plugin API {: #3.63.8-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.63.8-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.63.8-pulp-cert-guard }
 
 No significant changes.
 
@@ -1348,6 +1394,32 @@ No significant changes.
 No significant changes.
 
 ### Pulp Cert Guard
+
+No significant changes.
+
+---
+
+## 3.49.31 (2025-01-21) {: #3.49.31 }
+
+### REST API {: #3.49.31-rest-api }
+
+#### Bugfixes {: #3.49.31-rest-api-bugfix }
+
+- On a request for on-demand content in the content app, a corrupted Remote that
+  contains the wrong binary (for that content) prevented other Remotes from being
+  attempted on future requests. Now the last failed Remotes are temporarily ignored
+  and others may be picked.
+  [#5725](https://github.com/pulp/pulpcore/issues/5725)
+
+### Plugin API {: #3.49.31-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.49.31-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.49.31-pulp-cert-guard }
 
 No significant changes.
 
