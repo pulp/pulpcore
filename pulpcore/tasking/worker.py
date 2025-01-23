@@ -240,6 +240,17 @@ class PulpcoreWorker:
                 _logger.debug("Marking waiting task %s unblocked.", task.pk)
                 task.unblock()
                 changed = True
+            elif task.state == TASK_STATES.RUNNING and task.unblocked_at is None:
+                # This should not happen in normal operation.
+                # And it is only an issue if the worker running that task died, because it will
+                # never be considered for cleanup.
+                # But during at least one specific upgrade this situation can emerge.
+                # In this case, we can assume that the old algorithm was employed to identify the
+                # task as unblocked, and we just rectify the situation here.
+                _logger.warn(
+                    _("Running task %s was not previously marked unblocked. Fixing.", task.pk)
+                )
+                task.unblock()
 
             # Record the resources of the pending task
             taken_exclusive_resources.update(exclusive_resources)
