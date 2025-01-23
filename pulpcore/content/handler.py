@@ -877,11 +877,12 @@ class Handler:
             request (aiohttp.web.Request) The request.
 
         Returns:
-            The associated [pulpcore.plugin.models.Artifact][].
+            A dictionary of created ContentArtifact objects by relative path.
         """
         content_artifact = remote_artifact.content_artifact
         remote = remote_artifact.remote
         artifact = Artifact(**download_result.artifact_attributes, file=download_result.path)
+        cas = []
         with transaction.atomic():
             try:
                 with transaction.atomic():
@@ -909,7 +910,6 @@ class Handler:
                 c_type = remote.get_remote_artifact_content_type(rel_path)
                 artifacts = {rel_path: artifact}
                 content = c_type.init_from_artifact_and_relative_path(artifact, rel_path)
-                cas = []
                 if isinstance(content, tuple):
                     content, artifacts = content
                 try:
@@ -939,24 +939,21 @@ class Handler:
                 # Now try to save RemoteArtifacts for each ContentArtifact
                 for ca in cas:
                     if url := remote.get_remote_artifact_url(ca.relative_path, request=request):
-                        ra = RemoteArtifact(
-                            remote=remote, content_artifact=ca, url=url
-                        )
+                        ra = RemoteArtifact(remote=remote, content_artifact=ca, url=url)
                         try:
                             with transaction.atomic():
                                 ra.save()
                         except IntegrityError:
                             # Remote artifact must have already been saved during a parallel request
                             log.info(f"RemoteArtifact for {url} already exists.")
-                    if ca.relative_path == content_artifact.relative_path:
-                        # Side effect used by pull-through-caching in _stream_remote_artifact
-                        remote_artifact.content_artifact = ca
-
             else:
                 # Normal on-demand downloading, update CA to point to new saved Artifact
                 content_artifact.artifact = artifact
                 content_artifact.save()
-        return artifact
+        ret = {content_artifact.relative_path: content_artifact}
+        if cas:
+            ret.update({ca.relative_path: ca for ca in cas})
+        return ret
 
     async def _serve_content_artifact(self, content_artifact, headers, request):
         """
@@ -1185,12 +1182,12 @@ class Handler:
             artifacts_size_counter.add(size)
 
         if save_artifact and remote.policy != Remote.STREAMED:
-            await asyncio.shield(
+            content_artifacts = await asyncio.shield(
                 sync_to_async(self._save_artifact)(download_result, remote_artifact, request)
             )
             # Try to add content to repository if present & supported
             if repository and repository.PULL_THROUGH_SUPPORTED:
-                ca = remote_artifact.content_artifact
+                ca = content_artifacts[remote_artifact.content_artifact.relative_path]
                 await sync_to_async(repository.pull_through_add_content)(ca)
         await response.write_eof()
 
