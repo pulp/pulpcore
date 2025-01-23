@@ -1,0 +1,2 @@
+Added an extra check to the task unblocking logic to catch a rare case of stuck tasks in running, but never unblocked.
+Tasks in normal operation should never end in this state, but at least with a specific upgrade it can happen.
