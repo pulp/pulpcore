@@ -939,9 +939,7 @@ class Handler:
                 # Now try to save RemoteArtifacts for each ContentArtifact
                 for ca in cas:
                     if url := remote.get_remote_artifact_url(ca.relative_path, request=request):
-                        ra = RemoteArtifact(
-                            remote=remote, content_artifact=ca, url=url
-                        )
+                        ra = RemoteArtifact(remote=remote, content_artifact=ca, url=url)
                         try:
                             with transaction.atomic():
                                 ra.save()
