@@ -24,7 +24,8 @@ BLOCKING_REGEX = [
     r"^DO\s*NOT\s*MERGE",
     r"^EXPERIMENT",
     r"^FIXUP",
-    r"Apply suggestions from code review",
+    r"^fixup!",  # This is created by 'git commit --fixup'
+    r"Apply suggestions from code review",  # This usually comes from GitHub
 ]
 try:
     CHANGELOG_EXTS = [
@@ -40,7 +41,11 @@ message = subprocess.check_output(["git", "log", "--format=%B", "-n 1", sha]).de
 if NOISSUE_MARKER in message:
     sys.exit(f"Do not add '{NOISSUE_MARKER}' in the commit message.")
 
-if any((re.match(pattern, message, re.IGNORECASE) for pattern in BLOCKING_REGEX)):
+blocking_matches = [m for m in (re.match(pattern, message) for pattern in BLOCKING_REGEX) if m]
+if blocking_matches:
+    print("Found these phrases in the commit message:")
+    for m in blocking_matches:
+        print(" - " + m.group(0))
     sys.exit("This PR is not ready for consumption.")
 
 g = Github(os.environ.get("GITHUB_TOKEN"))
