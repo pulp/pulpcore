@@ -46,6 +46,7 @@ class Replicator:
     remote_serializer_name = None
     app_label = None
     sync_task = None
+    required_version = None  # A PEP-440 compatible version range required in the Upstream.
 
     def __init__(self, pulp_ctx, task_group, tls_settings, server):
         """
