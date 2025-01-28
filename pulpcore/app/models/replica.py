@@ -26,8 +26,6 @@ class UpstreamPulp(BaseModel, AutoAddObjPermsMixin):
     username = EncryptedTextField(null=True)
     password = EncryptedTextField(null=True)
 
-    # TODO: Remove this field in next breaking change release
-    pulp_label_select = models.TextField(null=True)
     q_select = models.TextField(null=True)
 
     last_replication = models.DateTimeField(null=True)
