@@ -8,6 +8,7 @@ from pulpcore.app.models import UpstreamPulp, TaskGroup
 from pulpcore.app.replica import ReplicaContext
 
 from pulp_glue.common import __version__ as pulp_glue_version
+from pulp_glue.common.context import PluginRequirement
 
 
 def user_agent():
@@ -67,8 +68,10 @@ def replicate_distributions(server_pk):
     for config in pulp_plugin_configs():
         if config.replicator_classes:
             for replicator_class in config.replicator_classes:
-                replicator = replicator_class(ctx, task_group, tls_settings, server)
-                supported_replicators.append(replicator)
+                req = PluginRequirement(config.label, specifier=replicator_class.required_version)
+                if ctx.has_plugin(req):
+                    replicator = replicator_class(ctx, task_group, tls_settings, server)
+                    supported_replicators.append(replicator)
 
     for replicator in supported_replicators:
         distros = replicator.upstream_distributions(q=server.q_select)
