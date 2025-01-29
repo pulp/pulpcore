@@ -117,3 +117,6 @@ PROTECTED_REPO_VERSION_MESSAGE = _(
     "The repository version cannot be deleted because it (or its publications) are currently being "
     "used to distribute content. Please update the necessary distributions first."
 )
+
+# Valid timestamp format for checkpoint distribution paths.
+CHECKPOINT_TS_FORMAT = "%Y%m%dT%H%M%SZ"
