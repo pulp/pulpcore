@@ -8,6 +8,30 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.63.9 (2025-01-29) {: #3.63.9 }
+
+### REST API {: #3.63.9-rest-api }
+
+#### Bugfixes {: #3.63.9-rest-api-bugfix }
+
+- Added an extra check to the task unblocking logic to catch a rare case of stuck tasks in running, but never unblocked.
+  Tasks in normal operation should never end in this state, but at least with a specific upgrade it can happen.
+  [#6225](https://github.com/pulp/pulpcore/issues/6225)
+
+### Plugin API {: #3.63.9-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.63.9-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.63.9-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.63.8 (2025-01-21) {: #3.63.8 }
 
 ### REST API {: #3.63.8-rest-api }
