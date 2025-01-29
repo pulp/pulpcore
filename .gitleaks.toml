@@ -13,4 +13,9 @@
     "pulp_certguard/tests/functional/artifacts/rhsm/katello-default-ca.key",
     "pulp_certguard/tests/functional/artifacts/thirdparty_ca/keys/ca.pem"
   ]
-
+  # Allow various bogus test keys
+  regexes = [
+    # Ignore specific keys
+    '''AKIAIT2Z5TDYPX3ARJBA''',
+    '''qR+vjWPU50fCqQuUWbj9Fain/j2pV+ZtBCiDiieS''',
+  ]
