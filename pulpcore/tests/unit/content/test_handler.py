@@ -1,9 +1,12 @@
+from datetime import datetime, timedelta, timezone
 import pytest
 import uuid
 
 from unittest.mock import Mock, AsyncMock
 
-from pulpcore.content import Handler
+from aiohttp.web_exceptions import HTTPMovedPermanently
+from django.conf import settings
+from pulpcore.content.handler import Handler, CheckpointListings, PathNotResolved
 from pulpcore.plugin.models import (
     Artifact,
     Content,
@@ -11,6 +14,9 @@ from pulpcore.plugin.models import (
     Distribution,
     Remote,
     RemoteArtifact,
+    Repository,
+    RepositoryVersion,
+    Publication,
 )
 
 
@@ -54,6 +60,61 @@ def ca2(c2):
 @pytest.fixture
 def ra2(ca2):
     return Mock(content_artifact=ca2)
+
+
+@pytest.fixture
+def repo():
+    return Repository.objects.create(name=str(uuid.uuid4()))
+
+
+@pytest.fixture
+def repo_version_1(repo):
+    return RepositoryVersion.objects.create(repository=repo, number=1)
+
+
+@pytest.fixture
+def repo_version_2(repo):
+    return RepositoryVersion.objects.create(repository=repo, number=2)
+
+
+@pytest.fixture
+def repo_version_3(repo):
+    return RepositoryVersion.objects.create(repository=repo, number=3)
+
+
+@pytest.fixture
+def checkpoint_distribution(repo):
+    return Distribution.objects.create(
+        name=str(uuid.uuid4()), base_path=str(uuid.uuid4()), repository=repo, checkpoint=True
+    )
+
+
+@pytest.fixture
+def checkpoint_publication_1(repo_version_1):
+    publication = Publication.objects.create(repository_version=repo_version_1, checkpoint=True)
+    # Avoid creating publications in the future, which wuould cause a 404
+    publication.pulp_created = publication.pulp_created - timedelta(seconds=6)
+    publication.save()
+
+    return publication
+
+
+@pytest.fixture
+def noncheckpoint_publication(repo_version_2, checkpoint_publication_1):
+    publication = Publication.objects.create(repository_version=repo_version_2, checkpoint=False)
+    publication.pulp_created = checkpoint_publication_1.pulp_created + timedelta(seconds=2)
+    publication.save()
+
+    return publication
+
+
+@pytest.fixture
+def checkpoint_publication_2(repo_version_3, noncheckpoint_publication):
+    publication = Publication.objects.create(repository_version=repo_version_3, checkpoint=True)
+    publication.pulp_created = noncheckpoint_publication.pulp_created + timedelta(seconds=2)
+    publication.save()
+
+    return publication
 
 
 def test_save_artifact(c1, ra1, download_result_mock):
@@ -267,3 +328,133 @@ def test_pull_through_save_multi_artifact_content(
     artifacts = set(ca.content._artifacts.all())
     assert len(artifacts) == 2
     assert {artifact, artifact123} == artifacts
+
+
+@pytest.mark.django_db
+def test_handle_checkpoint_listing(
+    monkeypatch,
+    checkpoint_distribution,
+    checkpoint_publication_1,
+    noncheckpoint_publication,
+    checkpoint_publication_2,
+):
+    """Checkpoint listing is generated correctly."""
+    # Extract the pulp_created timestamps
+    checkpoint_pub_1_ts = Handler._format_checkpoint_timestamp(
+        checkpoint_publication_1.pulp_created
+    )
+    noncheckpoint_pub_ts = Handler._format_checkpoint_timestamp(
+        noncheckpoint_publication.pulp_created
+    )
+    checkpoint_pub_2_ts = Handler._format_checkpoint_timestamp(
+        checkpoint_publication_2.pulp_created
+    )
+
+    # Mock the render_html function to capture the checkpoint list
+    original_render_html = Handler.render_html
+    checkpoint_list = None
+
+    def mock_render_html(directory_list, dates=None, path=None):
+        nonlocal checkpoint_list
+        html = original_render_html(directory_list, dates=dates, path=path)
+        checkpoint_list = directory_list
+        return html
+
+    render_html_mock = Mock(side_effect=mock_render_html)
+    monkeypatch.setattr(Handler, "render_html", render_html_mock)
+
+    with pytest.raises(CheckpointListings):
+        Handler._handle_checkpoint_distribution(
+            checkpoint_distribution,
+            f"{checkpoint_distribution.base_path}/",
+        )
+    assert len(checkpoint_list) == 2
+    assert (
+        f"{checkpoint_pub_1_ts}/" in checkpoint_list
+    ), f"{checkpoint_pub_1_ts} not found in error body"
+    assert (
+        f"{checkpoint_pub_2_ts}/" in checkpoint_list
+    ), f"{checkpoint_pub_2_ts} not found in error body"
+    assert (
+        f"{noncheckpoint_pub_ts}/" not in checkpoint_list
+    ), f"{noncheckpoint_pub_ts} found in error body"
+
+
+@pytest.mark.django_db
+def test_handle_checkpoint_exact_ts(
+    checkpoint_distribution,
+    checkpoint_publication_1,
+    noncheckpoint_publication,
+    checkpoint_publication_2,
+):
+    """Checkpoint is correctly served when using exact timestamp."""
+    checkpoint_pub_2_ts = Handler._format_checkpoint_timestamp(
+        checkpoint_publication_2.pulp_created
+    )
+    distro_object = Handler._handle_checkpoint_distribution(
+        checkpoint_distribution,
+        f"{checkpoint_distribution.base_path}/{checkpoint_pub_2_ts}/",
+    )
+
+    assert distro_object is not None
+    assert distro_object.publication == checkpoint_publication_2
+
+
+@pytest.mark.django_db
+def test_handle_checkpoint_invalid_ts(
+    checkpoint_distribution,
+    checkpoint_publication_1,
+):
+    """Invalid checkpoint timestamp raises PathNotResolved."""
+    with pytest.raises(PathNotResolved):
+        Handler._handle_checkpoint_distribution(
+            checkpoint_distribution,
+            f"{checkpoint_distribution.base_path}/99990115T181699Z/",
+        )
+
+    with pytest.raises(PathNotResolved):
+        Handler._handle_checkpoint_distribution(
+            checkpoint_distribution,
+            f"{checkpoint_distribution.base_path}/invalid_ts/",
+        )
+
+
+@pytest.mark.django_db
+def test_handle_checkpoint_arbitrary_ts(
+    checkpoint_distribution,
+    checkpoint_publication_1,
+    noncheckpoint_publication,
+    checkpoint_publication_2,
+):
+    """Checkpoint is correctly served when using an arbitrary timestamp."""
+    request_ts = Handler._format_checkpoint_timestamp(
+        checkpoint_publication_1.pulp_created + timedelta(seconds=3)
+    )
+    with pytest.raises(HTTPMovedPermanently) as excinfo:
+        Handler._handle_checkpoint_distribution(
+            checkpoint_distribution,
+            f"{checkpoint_distribution.base_path}/{request_ts}/",
+        )
+
+    redirect_location = excinfo.value.location
+    expected_location = f"{settings.CONTENT_PATH_PREFIX}{checkpoint_distribution.base_path}/{Handler._format_checkpoint_timestamp(checkpoint_publication_1.pulp_created)}/"
+
+    assert (
+        redirect_location == expected_location
+    ), f"Unexpected redirect location: {redirect_location}"
+
+
+@pytest.mark.django_db
+def test_handle_checkpoint_before_first_ts(
+    checkpoint_distribution,
+    checkpoint_publication_1,
+):
+    """Checkpoint timestamp before the first checkpoint raises PathNotResolved.."""
+    request_ts = Handler._format_checkpoint_timestamp(
+        checkpoint_publication_1.pulp_created - timedelta(seconds=1)
+    )
+    with pytest.raises(PathNotResolved):
+        Handler._handle_checkpoint_distribution(
+            checkpoint_distribution,
+            f"{checkpoint_distribution.base_path}/{request_ts}/",
+        )

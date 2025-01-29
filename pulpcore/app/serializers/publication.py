@@ -297,6 +297,8 @@ class DistributionSerializer(ModelSerializer):
             "publication", (self.partial and self.instance.publication) or None
         )
 
+        checkpoint = data.get("checkpoint", (self.partial and self.instance.checkpoint) or None)
+
         if publication_provided and repository_version_provided:
             raise serializers.ValidationError(
                 _(
@@ -318,6 +320,12 @@ class DistributionSerializer(ModelSerializer):
                     "Only one of the attributes 'repository' and 'publication' "
                     "may be used simultaneously."
                 )
+            )
+        elif checkpoint and (
+            not repository_provided or publication_provided or repository_version_provided
+        ):
+            raise serializers.ValidationError(
+                _("The 'checkpoint' attribute may only be used with the 'repository' attribute.")
             )
 
         return data

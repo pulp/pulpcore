@@ -1,5 +1,6 @@
 """Tests related to repository versions."""
 
+import uuid
 import pytest
 from random import choice
 from tempfile import NamedTemporaryFile
@@ -857,7 +858,7 @@ def test_repo_version_retention(
 @pytest.mark.parallel
 def test_repo_versions_protected_from_cleanup(
     file_bindings,
-    file_9_contents,
+    file_content_unit_with_name_factory,
     file_repository_factory,
     file_distribution_factory,
     gen_object_with_cleanup,
@@ -865,7 +866,8 @@ def test_repo_versions_protected_from_cleanup(
 ):
     """Test that distributed repo versions are protected from retain_repo_versions."""
 
-    def _modify_and_validate(repo, content, expected_version, expected_total):
+    def _modify_and_validate(repo, expected_version, expected_total):
+        content = file_content_unit_with_name_factory(str(uuid.uuid4()))
         task = file_bindings.RepositoriesFileApi.modify(
             repo.pulp_href, {"add_content_units": [content.pulp_href]}
         ).task
@@ -880,7 +882,6 @@ def test_repo_versions_protected_from_cleanup(
         return repo
 
     # Setup
-    contents = list(file_9_contents.values())
     repo = file_repository_factory(retain_repo_versions=1)
 
     # Publish and distribute version 0
@@ -890,7 +891,7 @@ def test_repo_versions_protected_from_cleanup(
     file_distribution_factory(publication=publication.pulp_href)
 
     # Version 0 is protected since it's distributed
-    repo = _modify_and_validate(repo, contents[0], "1", 2)
+    repo = _modify_and_validate(repo, "1", 2)
 
     # Create a new publication and distribution which protects version 1 from deletion
     file_distribution_factory(repository=repo.pulp_href)
@@ -900,41 +901,32 @@ def test_repo_versions_protected_from_cleanup(
     file_distribution_factory(publication=publication.pulp_href)
 
     # Create version 2 and there should be 3 versions now (2 protected)
-    repo = _modify_and_validate(repo, contents[1], "2", 3)
+    repo = _modify_and_validate(repo, "2", 3)
 
     # Version 2 will be removed since we're creating version 3 and it's not protected
-    repo = _modify_and_validate(repo, contents[2], "3", 3)
+    repo = _modify_and_validate(repo, "3", 3)
 
-    # Publish version 3 as a snapshot
+    # Publish version 3 as a checkpoint and ditribute it
     gen_object_with_cleanup(
         file_bindings.PublicationsFileApi,
-        {"repository_version": repo.latest_version_href, "snapshot": True},
+        {"repository_version": repo.latest_version_href, "checkpoint": True},
     )
+    file_distribution_factory(repository=repo.pulp_href, checkpoint=True)
 
-    # Version 3 is not protected since there is no snapshot distribution to distribute it
-    repo = _modify_and_validate(repo, contents[3], "4", 3)
+    # Version 3 is protected since it's ditributed by the checkpoint distribution
+    repo = _modify_and_validate(repo, "4", 4)
 
-    # Publish version 4 as a snapshot and ditribute it
+    # Publish version 4 as a checkpoint (it's already distributed)
     gen_object_with_cleanup(
         file_bindings.PublicationsFileApi,
-        {"repository_version": repo.latest_version_href, "snapshot": True},
-    )
-    file_distribution_factory(repository=repo.pulp_href, snapshot=True)
-
-    # Version 4 is protected since it's ditributed by the snapshot distribution
-    repo = _modify_and_validate(repo, contents[4], "5", 4)
-
-    # Publish version 5 as a snapshot (it's already distributed)
-    gen_object_with_cleanup(
-        file_bindings.PublicationsFileApi,
-        {"repository_version": repo.latest_version_href, "snapshot": True},
+        {"repository_version": repo.latest_version_href, "checkpoint": True},
     )
 
-    # Version 5 is protected since it's ditributed by the snapshot distribution
-    repo = _modify_and_validate(repo, contents[5], "6", 5)
+    # Version 4 is protected since it's ditributed by the checkpoint distribution
+    repo = _modify_and_validate(repo, "5", 5)
 
-    # Version 6 will be removed since it's not protected and we're creating version 7
-    _modify_and_validate(repo, contents[6], "7", 5)
+    # Version 5 will be removed since it's not protected and we're creating version 6
+    _modify_and_validate(repo, "6", 5)
 
 
 @pytest.mark.parallel

@@ -328,17 +328,19 @@ class Repository(MasterModel):
             publication__pk__in=Distribution.objects.values_list("publication_id")
         )
 
-        # If the repository has a snapshot distribution, protect versions with snapshot publications
-        if Distribution.objects.filter(repository=self.pk, snapshot=True).exists():
+        # If the repository has a checkpoint distribution, protect versions with checkpoint publications
+        if Distribution.objects.filter(repository=self.pk, checkpoint=True).exists():
             qs |= self.versions.filter(
-                publication__pk__in=Publication.objects.filter(snapshot=True).values_list("pulp_id")
+                publication__pk__in=Publication.objects.filter(checkpoint=True).values_list(
+                    "pulp_id"
+                )
             )
 
-        if distro := Distribution.objects.filter(repository=self.pk, snapshot=False).first():
+        if distro := Distribution.objects.filter(repository=self.pk, checkpoint=False).first():
             if distro.detail_model().SERVE_FROM_PUBLICATION:
                 # if the distro serves publications, protect the latest published repo version
                 version = self.versions.filter(
-                    pk__in=Publication.objects.filter(complete=True, snapshot=False).values_list(
+                    pk__in=Publication.objects.filter(complete=True).values_list(
                         "repository_version_id"
                     )
                 ).last()
