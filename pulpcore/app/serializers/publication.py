@@ -36,11 +36,16 @@ class PublicationSerializer(ModelSerializer):
 
         repository = data.pop("repository", None)  # not an actual field on publication
         repository_version = data.get("repository_version")
+        checkpoint = data.get("checkpoint", None)
         if not repository and not repository_version:
             raise serializers.ValidationError(
                 _("Either the 'repository' or 'repository_version' need to be specified")
             )
         elif not repository and repository_version:
+            if checkpoint:
+                raise serializers.ValidationError(
+                    _("'checkpoint' may only be used with 'repository'")
+                )
             return data
         elif repository and not repository_version:
             version = repository.latest_version()
@@ -294,6 +299,8 @@ class DistributionSerializer(ModelSerializer):
             "publication", (self.partial and self.instance.publication) or None
         )
 
+        checkpoint = data.get("checkpoint", (self.partial and self.instance.checkpoint) or None)
+
         if publication_provided and repository_version_provided:
             raise serializers.ValidationError(
                 _(
@@ -315,6 +322,12 @@ class DistributionSerializer(ModelSerializer):
                     "Only one of the attributes 'repository' and 'publication' "
                     "may be used simultaneously."
                 )
+            )
+        elif checkpoint and (
+            not repository_provided or publication_provided or repository_version_provided
+        ):
+            raise serializers.ValidationError(
+                _("The 'checkpoint' attribute may only be used with the 'repository' attribute.")
             )
 
         return data

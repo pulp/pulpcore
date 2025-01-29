@@ -115,10 +115,11 @@ class FilePublicationSerializer(PublicationSerializer):
         required=False,
         allow_null=True,
     )
+    checkpoint = serializers.BooleanField(required=False)
 
     class Meta:
         model = FilePublication
-        fields = PublicationSerializer.Meta.fields + ("distributions", "manifest")
+        fields = PublicationSerializer.Meta.fields + ("distributions", "manifest", "checkpoint")
 
 
 class FileDistributionSerializer(DistributionSerializer):
@@ -133,9 +134,10 @@ class FileDistributionSerializer(DistributionSerializer):
         queryset=models.Publication.objects.exclude(complete=False),
         allow_null=True,
     )
+    checkpoint = serializers.BooleanField(required=False)
 
     class Meta:
-        fields = DistributionSerializer.Meta.fields + ("publication",)
+        fields = DistributionSerializer.Meta.fields + ("publication", "checkpoint")
         model = FileDistribution
 
 

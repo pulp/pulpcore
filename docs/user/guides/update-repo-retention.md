@@ -15,7 +15,7 @@ Setting retain_repo_versions to 1 effectively disables repository versioning sin
 store the latest version.
 
 Cleanup will ignore any repo versions that are being served directly via a distribution or via a
-publication.
+publication. This includes repo versions of distributed checkpoint publications.
 
 To update this field for a file Repository called myrepo, simply call:
 

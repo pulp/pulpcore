@@ -6,7 +6,7 @@ import re
 import socket
 import struct
 from gettext import gettext as _
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 from aiohttp.client_exceptions import ClientResponseError, ClientConnectionError
 from aiohttp.web import FileResponse, StreamResponse, HTTPOk
@@ -25,7 +25,7 @@ from asgiref.sync import sync_to_async
 import django
 from django.utils import timezone
 
-from pulpcore.constants import STORAGE_RESPONSE_MAP
+from pulpcore.constants import STORAGE_RESPONSE_MAP, CHECKPOINT_TS_FORMAT
 from pulpcore.responses import ArtifactResponse
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "pulpcore.app.settings")
@@ -115,6 +115,28 @@ class DistroListings(HTTPOk):
         if path == "":
             path = settings.CONTENT_PATH_PREFIX
         html = Handler.render_html(directory_list, path=path)
+        super().__init__(body=html, headers={"Content-Type": "text/html"})
+
+
+class CheckpointListings(HTTPOk):
+    """
+    Response for browsing through the checkpoints of a specific checkpoint distro.
+
+    This is returned when visiting the base path of a checkpoint distro.
+    """
+
+    def __init__(self, path, repo):
+        """Create the HTML response."""
+
+        checkpoints = (
+            Publication.objects.filter(repository_version__repository=repo, checkpoint=True)
+            .order_by("pulp_created")
+            .values_list("pulp_created", flat=True)
+            .distinct()
+        )
+        dates = {f"{Handler._format_checkpoint_timestamp(s)}/": s for s in checkpoints}
+        directory_list = dates.keys()
+        html = Handler.render_html(directory_list, dates=dates, path=path)
         super().__init__(body=html, headers={"Content-Type": "text/html"})
 
 
@@ -312,7 +334,7 @@ class Handler:
         distro_model = cls.distribution_model or Distribution
         domain = get_domain()
         try:
-            return (
+            distro_object = (
                 distro_model.objects.filter(pulp_domain=domain)
                 .select_related(
                     "repository",
@@ -326,6 +348,7 @@ class Handler:
                 .get(base_path__in=base_paths)
                 .cast()
             )
+            return distro_object
         except ObjectDoesNotExist:
             if path.rstrip("/") in base_paths:
                 distros = distro_model.objects.filter(
@@ -336,12 +359,7 @@ class Handler:
                         raise DistroListings(path=path, distros=distros)
                     else:
                         # The list of a subset of distributions was requested without a trailing /
-                        if settings.DOMAIN_ENABLED:
-                            raise HTTPMovedPermanently(
-                                f"{settings.CONTENT_PATH_PREFIX}{domain.name}/{path}"
-                            )
-                        else:
-                            raise HTTPMovedPermanently(f"{settings.CONTENT_PATH_PREFIX}{path}")
+                        Handler._redirect_sub_path(path)
 
             log.debug(
                 _("Distribution not matched for {path} using: {base_paths}").format(
@@ -350,6 +368,115 @@ class Handler:
             )
 
         raise PathNotResolved(original_path)
+
+    @classmethod
+    def _select_checkpoint_publication(cls, distro, path):
+        """
+        Finds the checkpoint publication to serve based on the checkpoint distribution and path.
+
+        Args:
+            distro (Distribution): The checkpoint distribution.
+            path (str): The checkpoint path component of the URL (e.g. 20250212T194653Z/dists/).
+
+        Returns:
+            The detail object of the selected publication.
+
+        Raises:
+            PathNotResolved: when the path is invalid.
+            CheckpointListings: when the path is the base path of a checkpoint distribution.
+        """
+        # Determine whether it's a listing or a specific checkpoint
+        if path == "":
+            raise CheckpointListings(path=path, repo=distro.repository)
+        else:
+            request_timestamp, rel_path = Handler._parse_checkpoint_path(path)
+
+            # Find the latest checkpoint publication before or at the timestamp
+            checkpoint_publication = (
+                Publication.objects.filter(
+                    pulp_created__lte=request_timestamp,
+                    repository_version__repository=distro.repository,
+                    checkpoint=True,
+                )
+                .order_by("-pulp_created")
+                .first()
+            )
+
+            if not checkpoint_publication:
+                raise PathNotResolved(path)
+
+            pub_timestamp_str = Handler._format_checkpoint_timestamp(
+                checkpoint_publication.pulp_created
+            )
+            request_timestamp_str = Handler._format_checkpoint_timestamp(request_timestamp)
+            if pub_timestamp_str != request_timestamp_str:
+                Handler._redirect_sub_path(f"{distro.base_path}/{pub_timestamp_str}/{rel_path}")
+
+            return checkpoint_publication
+
+    @staticmethod
+    def _parse_checkpoint_path(path):
+        """
+        Validate the path and extract the timestamp and rel_path from it.
+
+        Args:
+            path (str): The checkpoint path component of the URL (e.g. 20250212T194653Z/dists/).
+
+        Returns:
+            tuple: The timestamp and the relative path.
+
+        Raises:
+            PathNotResolved: when the path is invalid.
+        """
+        pattern = r"^(\d{8}T\d{6}Z)/?(.*)?$"
+        match = re.search(pattern, path)
+        if match:
+            request_timestamp_str = match.group(1)
+            try:
+                request_timestamp = datetime.strptime(request_timestamp_str, CHECKPOINT_TS_FORMAT)
+            except ValueError:
+                raise PathNotResolved(path)
+        else:
+            raise PathNotResolved(path)
+
+        request_timestamp = request_timestamp.replace(tzinfo=timezone.utc)
+        # Future timestamps are not allowed for checkpoints
+        if request_timestamp > datetime.now(tz=timezone.utc):
+            raise PathNotResolved(path)
+        # The timestamp is truncated to seconds, so we need to cover the whole second
+        request_timestamp = request_timestamp.replace(microsecond=999999)
+
+        rel_path = match.group(2)
+        return request_timestamp, rel_path
+
+    @staticmethod
+    def _format_checkpoint_timestamp(timestamp):
+        """
+        Format a timestamp to the checkpoint format.
+
+        Args:
+            timestamp (datetime): The timestamp to format.
+
+        Returns:
+            The formatted timestamp using the `CHECKPOINT_TS_FORMAT`.
+        """
+        return datetime.strftime(timestamp, CHECKPOINT_TS_FORMAT)
+
+    @staticmethod
+    def _redirect_sub_path(path):
+        """
+        Redirect to the correct path based on whether domain is enabled.
+
+        Args:
+            path (str): The path component after the path prefix.
+
+        Raises:
+            HTTPMovedPermanently: to the correct path.
+        """
+        if settings.DOMAIN_ENABLED:
+            raise HTTPMovedPermanently(f"{settings.CONTENT_PATH_PREFIX}{get_domain().name}/{path}")
+        else:
+            raise HTTPMovedPermanently(f"{settings.CONTENT_PATH_PREFIX}{path}")
 
     @staticmethod
     def _permit(request, distribution):
@@ -604,9 +731,18 @@ class Handler:
                 # the result is a response so just return it
                 return content_handler_result
 
-        repository = distro.repository
-        publication = distro.publication
-        repo_version = distro.repository_version
+        if distro.checkpoint:
+            repository = repo_version = None
+            publication = await sync_to_async(self._select_checkpoint_publication)(
+                distro, original_rel_path
+            )
+            # Remove the timestamp from the path to get the relative path for the publication
+            rel_path = rel_path.split("/", 1)[1]
+            original_rel_path = original_rel_path.split("/", 1)[1]
+        else:
+            repository = distro.repository
+            publication = distro.publication
+            repo_version = distro.repository_version
 
         if repository:
             # Search for publication serving the latest (last complete) version

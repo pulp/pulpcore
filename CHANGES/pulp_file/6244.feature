@@ -1,0 +1,1 @@
+Added support to create checkpoint file publications and distribute them through checkpoint file distributions.
