@@ -5,6 +5,7 @@ from django.utils.dateparse import parse_datetime
 from urllib.parse import urljoin
 
 from pulp_glue.common.context import PulpContext
+from pulpcore.app.models import UpstreamPulp
 from pulpcore.tasking.tasks import dispatch
 from pulpcore.app.tasks.base import (
     general_update,
@@ -77,6 +78,13 @@ class Replicator:
                 needs_update = True
         return needs_update
 
+    def _is_managed(self, object):
+        """Checks to see if the passed in object should be managed by replicate."""
+        if self.server.policy == UpstreamPulp.LABELED:
+            if object.pulp_labels.get("UpstreamPulp") != str(self.server.pk):
+                return False
+        return True
+
     def upstream_distributions(self, q=None):
         if q:
             params = {"q": q}
@@ -92,6 +100,11 @@ class Replicator:
                 break
             offset += list_size
 
+    def labels(self, upstream_object):
+        upstream_labels = getattr(upstream_object, "pulp_labels", {})
+        upstream_labels["UpstreamPulp"] = str(self.server.pk)
+        return upstream_labels
+
     def url(self, upstream_distribution):
         return upstream_distribution["base_url"]
 
@@ -106,8 +119,7 @@ class Replicator:
         url = self.url(upstream_distribution)
         if url.startswith("/"):
             url = urljoin(self.server.base_url, url)
-
-        remote_fields_dict = {"url": url}
+        remote_fields_dict = {"url": url, "pulp_labels": self.labels(upstream_distribution)}
         remote_fields_dict.update(self.tls_settings)
         remote_fields_dict.update(self.remote_extra_fields(upstream_distribution))
 
@@ -116,6 +128,8 @@ class Replicator:
             remote = self.remote_model_cls.objects.get(
                 name=upstream_distribution["name"], pulp_domain=self.domain
             )
+            if not self._is_managed(remote):
+                return None
             needs_update = self.needs_update(remote_fields_dict, remote)
             if needs_update:
                 dispatch(
@@ -137,11 +151,14 @@ class Replicator:
         return {}
 
     def create_or_update_repository(self, remote):
+        repo_fields_dict = self.repository_extra_fields(remote)
+        repo_fields_dict["pulp_labels"] = self.labels(remote)
         try:
             repository = self.repository_model_cls.objects.get(
                 name=remote.name, pulp_domain=self.domain
             )
-            repo_fields_dict = self.repository_extra_fields(remote)
+            if not self._is_managed(repository):
+                return None
             needs_update = self.needs_update(repo_fields_dict, repository)
             if needs_update:
                 dispatch(
@@ -153,9 +170,7 @@ class Replicator:
                     kwargs={"data": repo_fields_dict, "partial": True},
                 )
         except self.repository_model_cls.DoesNotExist:
-            repository = self.repository_model_cls(
-                name=remote.name, **self.repository_extra_fields(remote)
-            )
+            repository = self.repository_model_cls(name=remote.name, **repo_fields_dict)
             repository.save()
         return repository
 
@@ -171,10 +186,13 @@ class Replicator:
 
     def create_or_update_distribution(self, repository, upstream_distribution):
         distribution_data = self.distribution_extra_fields(repository, upstream_distribution)
+        distribution_data["pulp_labels"] = self.labels(upstream_distribution)
         try:
             distro = self.distribution_model_cls.objects.get(
                 name=upstream_distribution["name"], pulp_domain=self.domain
             )
+            if not self._is_managed(distro):
+                return None
             needs_update = self.needs_update(distribution_data, distro)
             if needs_update:
                 # Update the distribution
@@ -225,12 +243,18 @@ class Replicator:
         )
 
     def remove_missing(self, names):
+        if self.server.policy == UpstreamPulp.NODELETE:
+            return
+        if self.server.policy == UpstreamPulp.LABELED:
+            label_filter = {"pulp_labels__contains": {"UpstreamPulp": str(self.server.pk)}}
+        else:
+            label_filter = {}
         # Remove all distributions with names not present in the list of names
         # Perform this in an extra task, because we hold a big lock here.
         distribution_ids = [
             (distribution.pk, self.app_label, self.distribution_serializer_name)
             for distribution in self.distribution_model_cls.objects.filter(
-                pulp_domain=self.domain
+                pulp_domain=self.domain, **label_filter
             ).exclude(name__in=names)
         ]
         if distribution_ids:
@@ -245,7 +269,7 @@ class Replicator:
         # Remove all the repositories and remotes of the missing distributions
         repositories = list(
             self.repository_model_cls.objects.filter(
-                pulp_domain=self.domain, user_hidden=False
+                pulp_domain=self.domain, user_hidden=False, **label_filter
             ).exclude(name__in=names)
         )
         repository_ids = [
@@ -253,7 +277,9 @@ class Replicator:
         ]
 
         remotes = list(
-            self.remote_model_cls.objects.filter(pulp_domain=self.domain).exclude(name__in=names)
+            self.remote_model_cls.objects.filter(pulp_domain=self.domain, **label_filter).exclude(
+                name__in=names
+            )
         )
         remote_ids = [
             (remote.pk, self.app_label, self.remote_serializer_name) for remote in remotes

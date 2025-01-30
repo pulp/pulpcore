@@ -11,6 +11,21 @@ from pulpcore.app.util import get_domain_pk
 
 
 class UpstreamPulp(BaseModel, AutoAddObjPermsMixin):
+    ALL = "all"
+    LABELED = "labeled"
+    NODELETE = "nodelete"
+    POLICY_CHOICES = (
+        (ALL, "Replicate manages ALL local objects within the domain."),
+        (
+            LABELED,
+            "Replicate will only manage the objects created from a previous replication, unlabled local objects will be untouched.",  # noqa: E501
+        ),
+        (
+            NODELETE,
+            "Replicate will not delete any local object whether they were created by replication or not.",  # noqa: E501
+        ),
+    )
+
     name = models.TextField(db_index=True)
     pulp_domain = models.ForeignKey("Domain", default=get_domain_pk, on_delete=models.PROTECT)
 
@@ -27,6 +42,7 @@ class UpstreamPulp(BaseModel, AutoAddObjPermsMixin):
     password = EncryptedTextField(null=True)
 
     q_select = models.TextField(null=True)
+    policy = models.TextField(choices=POLICY_CHOICES, default=ALL)
 
     last_replication = models.DateTimeField(null=True)
 
