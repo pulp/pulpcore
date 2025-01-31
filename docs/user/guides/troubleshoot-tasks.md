@@ -46,3 +46,8 @@ Cancel a running task:
 # warning canceling tasks may break higher level workflows
 pulp task cancel --href "$TASK_HREF"
 ```
+
+## Tracing workloads
+
+To help users better trace workloads in Pulp, Pulp provides [support for correlation
+ids](site:pulpcore/docs/user/guides/correlation-id/).
