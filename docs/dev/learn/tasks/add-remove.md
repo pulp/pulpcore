@@ -6,7 +6,7 @@ hood.
 
 ## Repository Versions
 
-Starting with Pulp 3, repositories are versioned. A new immutable respository version is created
+Starting with Pulp 3, repositories are versioned. A new immutable repository version is created
 when its set of content units changes
 
 To facilitate the creation of repository versions a
