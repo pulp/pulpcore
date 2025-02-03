@@ -1,8 +1,9 @@
 import gettext
+import http.cookies
 import logging
 
 from asgiref.sync import sync_to_async
-from aiohttp.web import middleware
+from aiohttp.web import middleware, HTTPBadRequest
 from django.conf import settings
 from django.db.utils import InterfaceError, DatabaseError
 from django.http.request import HttpRequest
@@ -60,7 +61,10 @@ def convert_request(request):
     # These two headers are specially set by Django without the HTTP prefix
     h = {"CONTENT_LENGTH", "CONTENT_TYPE"}
     djr.META = {f"HTTP_{k}" if k not in h else k: request.headers[k] for k in upper_keys}
-    djr.COOKIES = request.cookies
+    try:
+        djr.COOKIES = request.cookies
+    except http.cookies.CookieError:
+        raise HTTPBadRequest(reason="Received invalid cookies")
     djr.path = request.path
     djr.path_info = request.match_info.get("path", "")
     djr.encoding = request.charset
