@@ -11,7 +11,12 @@ from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 
 from pulpcore.app.models import Domain
-from pulpcore.app.serializers import IdentityField, ModelSerializer, HiddenFieldsMixin
+from pulpcore.app.serializers import (
+    IdentityField,
+    ModelSerializer,
+    HiddenFieldsMixin,
+    pulp_labels_validator,
+)
 
 
 BACKEND_CHOICES = (
@@ -433,6 +438,7 @@ class DomainSerializer(BackendSettingsValidator, ModelSerializer):
     description = serializers.CharField(
         help_text=_("An optional description."), required=False, allow_null=True
     )
+    pulp_labels = serializers.HStoreField(required=False, validators=[pulp_labels_validator])
     storage_class = serializers.ChoiceField(
         help_text=_("Backend storage class for domain."),
         choices=BACKEND_CHOICES,
@@ -484,6 +490,7 @@ class DomainSerializer(BackendSettingsValidator, ModelSerializer):
         fields = ModelSerializer.Meta.fields + (
             "name",
             "description",
+            "pulp_labels",
             "storage_class",
             "storage_settings",
             "redirect_to_object_storage",
