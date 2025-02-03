@@ -3,11 +3,14 @@ import contextlib
 import contextvars
 import importlib
 import logging
+import os
 import sys
 import traceback
+import tempfile
 from datetime import timedelta
 from gettext import gettext as _
 
+from django.conf import settings
 from django.db import connection, transaction
 from django.db.models import Model, Max
 from django_guid import get_guid
@@ -226,7 +229,9 @@ def dispatch(
                 ).exists()
             ):
                 task.unblock()
-                execute_task(task)
+                with tempfile.TemporaryDirectory(dir=settings.WORKING_DIRECTORY) as working_dir:
+                    os.chdir(working_dir)
+                    execute_task(task)
                 if resources:
                     notify_workers = True
             elif deferred:
