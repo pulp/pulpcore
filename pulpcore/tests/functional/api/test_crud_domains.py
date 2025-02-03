@@ -308,3 +308,38 @@ def test_special_domain_creation(pulpcore_bindings, gen_object_with_cleanup, pul
     domain = gen_object_with_cleanup(pulpcore_bindings.DomainsApi, body, pulp_domain=random_name)
     assert "default/api/v3/" in domain.pulp_href
     assert random_name not in domain.pulp_href
+
+
+@pytest.mark.parallel
+def test_filter_domains_by_label(pulpcore_bindings, gen_object_with_cleanup):
+    """Test filtering domains by label."""
+    # Create domains with different labels
+    body_a = {
+        "name": str(uuid.uuid4()),
+        "storage_class": "pulpcore.app.models.storage.FileSystem",
+        "storage_settings": {"MEDIA_ROOT": "/var/lib/pulp/media/"},
+        "pulp_labels": {"key_a": "label_a"},
+    }
+    domain_a = gen_object_with_cleanup(pulpcore_bindings.DomainsApi, body_a)
+
+    body_b = {
+        "name": str(uuid.uuid4()),
+        "storage_class": "pulpcore.app.models.storage.FileSystem",
+        "storage_settings": {"MEDIA_ROOT": "/var/lib/pulp/media/"},
+        "pulp_labels": {"key_b": "label_b"},
+    }
+    domain_b = gen_object_with_cleanup(pulpcore_bindings.DomainsApi, body_b)
+
+    # Filter by label key
+    domains = pulpcore_bindings.DomainsApi.list(pulp_label_select="key_a").results
+    assert len(domains) == 1
+    assert domains[0].pulp_href == domain_a.pulp_href
+
+    # Filter by label value
+    domains = pulpcore_bindings.DomainsApi.list(pulp_label_select="key_b=label_b").results
+    assert len(domains) == 1
+    assert domains[0].pulp_href == domain_b.pulp_href
+
+    # Filter by non-existent label
+    domains = pulpcore_bindings.DomainsApi.list(pulp_label_select="key_c").results
+    assert len(domains) == 0

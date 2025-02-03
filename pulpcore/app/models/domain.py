@@ -1,5 +1,6 @@
 from django.core.files.storage import default_storage
 from django.db import models
+from django.contrib.postgres.fields import HStoreField
 from django_lifecycle import hook, BEFORE_DELETE, BEFORE_UPDATE
 
 from pulpcore.app.models import BaseModel, AutoAddObjPermsMixin
@@ -25,6 +26,7 @@ class Domain(BaseModel, AutoAddObjPermsMixin):
 
     Fields:
         name (models.SlugField): Unique name of domain
+        pulp_labels (HStoreField): Dictionary of string values
         description (models.TextField): Optional description of domain
         storage_class (models.TextField): Required storage class for backend
         storage_settings (EncryptedJSONField): Settings needed to configure storage backend
@@ -33,6 +35,7 @@ class Domain(BaseModel, AutoAddObjPermsMixin):
     """
 
     name = models.SlugField(null=False, unique=True)
+    pulp_labels = HStoreField(default=dict)
     description = models.TextField(null=True)
     # Storage class is required, optional settings are validated by serializer
     storage_class = models.TextField(null=False)

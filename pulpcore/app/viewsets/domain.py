@@ -14,13 +14,16 @@ from pulpcore.app.serializers import (
     AsyncOperationResponseSerializer,
 )
 from pulpcore.app.tasks import migrate_backend
-from pulpcore.app.viewsets import NamedModelViewSet, AsyncRemoveMixin, AsyncUpdateMixin
+from pulpcore.app.viewsets import NamedModelViewSet, AsyncRemoveMixin, AsyncUpdateMixin, LabelsMixin
 from pulpcore.app.viewsets.base import NAME_FILTER_OPTIONS
+from pulpcore.app.viewsets.custom_filters import LabelFilter
 from pulpcore.tasking.tasks import dispatch
 
 
 class DomainFilter(BaseFilterSet):
     """FilterSet for Domain."""
+
+    pulp_label_select = LabelFilter()
 
     class Meta:
         model = Domain
@@ -34,6 +37,7 @@ class DomainViewSet(
     mixins.RetrieveModelMixin,
     AsyncUpdateMixin,
     AsyncRemoveMixin,
+    LabelsMixin,
 ):
     """
     ViewSet for Domain.
