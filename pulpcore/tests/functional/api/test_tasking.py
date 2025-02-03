@@ -5,6 +5,7 @@ import pytest
 import time
 
 from aiohttp import BasicAuth
+from datetime import datetime
 from urllib.parse import urljoin
 from uuid import uuid4
 
@@ -270,6 +271,33 @@ def test_filter_tasks_using_worker__in_filter(pulpcore_bindings, dispatch_task, 
 
     assert task1_href in tasks_hrefs
     assert task2_href in tasks_hrefs
+
+
+@pytest.mark.parallel
+def test_filter_tasks_using_pulp_created_filter(pulpcore_bindings, dispatch_task):
+
+    task1_href = dispatch_task("pulpcore.app.tasks.test.sleep", args=(0,))
+
+    time.sleep(2)
+    start_time = datetime.now()
+    task2_href = dispatch_task("pulpcore.app.tasks.test.sleep", args=(0,))
+    task3_href = dispatch_task("pulpcore.app.tasks.test.sleep", args=(0,))
+
+    search_results_gte = pulpcore_bindings.TasksApi.list(pulp_created__gte=start_time)
+
+    tasks_hrefs_gte = [task.pulp_href for task in search_results_gte.results]
+
+    assert task1_href not in tasks_hrefs_gte
+    assert task2_href in tasks_hrefs_gte
+    assert task3_href in tasks_hrefs_gte
+
+    search_results_lte = pulpcore_bindings.TasksApi.list(pulp_created__lte=start_time)
+
+    tasks_hrefs_lte = [task.pulp_href for task in search_results_lte.results]
+
+    assert task1_href in tasks_hrefs_lte
+    assert task2_href not in tasks_hrefs_lte
+    assert task3_href not in tasks_hrefs_lte
 
 
 def test_cancel_gooey_task(pulpcore_bindings, dispatch_task, monitor_task):
