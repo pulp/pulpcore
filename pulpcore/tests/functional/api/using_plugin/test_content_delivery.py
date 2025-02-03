@@ -244,3 +244,21 @@ def test_handling_remote_artifact_on_demand_streaming_failure(
     # WHEN/THEN (second request)
     actual_checksum = download_from_distribution(content_name, distribution)
     assert actual_checksum == expected_checksum
+
+
+@pytest.mark.parallel
+def test_invalid_cookie_handling(distribution_base_url, file_distribution_factory):
+    """Test that invalid cookies return a 400 Bad Request response."""
+    # Create a distribution
+    distribution = file_distribution_factory()
+    distribution_base_url = distribution_base_url(distribution.base_url)
+
+    # Test with an invalid cookie
+    result = subprocess.run(
+        ["curl", "-v", "--cookie", "{=1", distribution_base_url],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+
+    # Verify we get a 400 response with the correct error message
+    assert b"< HTTP/1.1 400 Received invalid cookies" in result.stderr
