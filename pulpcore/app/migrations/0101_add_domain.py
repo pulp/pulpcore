@@ -2,14 +2,10 @@
 
 from django.conf import settings
 from django.db import migrations, models
-import django.db.models.deletion
 import django_lifecycle.mixins
 import pulpcore.app.models.access_policy
 import pulpcore.app.models.fields
-import pulpcore.app.models.upload
-import pulpcore.app.util
 import uuid
-
 
 
 DEFAULT_DELETE_TRIGGER = """
@@ -29,6 +25,18 @@ REMOVE_DEFAULT_DELETE_TRIGGER = """
 DROP TRIGGER IF EXISTS protect_default ON core_domain;
 DROP FUNCTION IF EXISTS protect_default();
 """
+
+
+def create_default_domain(apps, schema_editor):
+    Domain = apps.get_model('core', 'Domain')
+    try:
+        default_domain = Domain.objects.get(name="default")
+    except Domain.DoesNotExist:
+        default_domain = Domain(
+            name="default", storage_class=settings.STORAGES["default"]["BACKEND"]
+        )
+        default_domain.save(skip_hooks=True)
+
 
 class Migration(migrations.Migration):
 
@@ -58,4 +66,5 @@ class Migration(migrations.Migration):
             bases=(django_lifecycle.mixins.LifecycleModelMixin, models.Model, pulpcore.app.models.access_policy.AutoAddObjPermsMixin),
         ),
         migrations.RunSQL(DEFAULT_DELETE_TRIGGER, reverse_sql=REMOVE_DEFAULT_DELETE_TRIGGER),
+        migrations.RunPython(code=create_default_domain, reverse_code=migrations.RunPython.noop),
     ]

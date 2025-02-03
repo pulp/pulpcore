@@ -573,7 +573,7 @@ current_domain = ContextVar("current_domain", default=None)
 
 def get_default_domain():
     global default_domain
-    # This can be run in a migration, and once after
+    # This will run in a post-migration hook
     if default_domain is None:
         try:
             Domain = models.Domain
@@ -595,7 +595,22 @@ def get_domain():
 
 
 def get_domain_pk():
-    return get_domain().pk
+    """
+    THIS CAN/WILL BE RAN IN MIGRATIONS. DO NOT USE ORM FOR IT MIGHT GENERATE INVALID SQL.
+
+    This is ran in plugin migrations so we can not move this implemenation or change its
+    semantics, EVER!
+    """
+    if domain := current_domain.get():
+        return domain.pk
+    # Same behavior as get_domain: use currently set domain, else assume default domain
+    if default_domain:
+        return default_domain.pk
+    # If we haven't cached the default_domain then use raw SQL to get its PK
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT pulp_id FROM core_domain WHERE name = 'default'")
+        row = cursor.fetchone()
+        return row[0]
 
 
 def set_domain(new_domain):
