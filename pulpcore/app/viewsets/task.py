@@ -63,6 +63,7 @@ class TaskFilter(BaseFilterSet):
             "worker": ["exact", "in", "isnull"],
             "name": ["exact", "contains", "in", "ne"],
             "logging_cid": ["exact", "contains"],
+            "pulp_created": DATETIME_FILTER_OPTIONS,
             "started_at": DATETIME_FILTER_OPTIONS,
             "finished_at": DATETIME_FILTER_OPTIONS,
             "unblocked_at": DATETIME_FILTER_OPTIONS,
