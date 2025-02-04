@@ -1,9 +1,0 @@
-Started using `settings.STORAGES` internally instead of `settings.DEFAULT_FILE_STORAGE` and `settings.STATICFILES_STORAGE`,
-which was deprecated in Django 4.2.
-
-For compatibility, plugins must replace access to:
-
-* `settings.DEFAULT_FILE_STORAGE` with `settings.STORAGES["default"]["BACKEND"]`
-* `settings.STATICFILES_STORAGE` with `settings.STORAGES["staticfiles"]["BACKEND"]`
-
-See the new storage structure in [Django docs](https://docs.djangoproject.com/en/4.2/ref/settings/#std-setting-STORAGES).
