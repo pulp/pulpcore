@@ -25,7 +25,7 @@ flake8: true
 flake8_ignore:
 - ./pulpcore/app/protobuf/*
 github_org: pulp
-latest_release_branch: '3.69'
+latest_release_branch: '3.70'
 lint_requirements: true
 os_required_packages: []
 parallel_test_workers: 8
@@ -58,8 +58,8 @@ pulp_settings:
   tmpfile_protection_time: 10
   upload_protection_time: 10
 pulp_settings_azure:
-  content_origin: null
   api_root_rewrite_header: X-API-Root
+  content_origin: null
   domain_enabled: true
   rest_framework__default_permission_classes:
   - pulpcore.plugin.access_policy.DefaultAccessPolicy
