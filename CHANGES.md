@@ -8,6 +8,85 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.70.0 (2025-02-04) {: #3.70.0 }
+
+### REST API {: #3.70.0-rest-api }
+
+#### Features {: #3.70.0-rest-api-feature }
+
+- Allow CONTENT_ORIGIN to be None. When None, the base_url for Distributions is a relative path.
+  [#5931](https://github.com/pulp/pulpcore/issues/5931)
+- Added a login api endpoint to result in an authorization cookie from any other sort of feasible authentication.
+  [#5932](https://github.com/pulp/pulpcore/issues/5932)
+- Added the unblocked_at filter for Tasks API.
+  [#6165](https://github.com/pulp/pulpcore/issues/6165)
+- Added a check to the basic auth module to respect the `X-Requested-With: "XMLHttpRequest"` header.
+  In return the signature of the `WWW-Authenticate` header is changed so browsers will not pop up a password dialog.
+
+#### Bugfixes {: #3.70.0-rest-api-bugfix }
+
+- Fixed replication failing when the upstream Pulp doesn't have all the same plugins as the downstream.
+  [#4509](https://github.com/pulp/pulpcore/issues/4509)
+- Added an extra check to the task unblocking logic to catch a rare case of stuck tasks in running, but never unblocked.
+  Tasks in normal operation should never end in this state, but at least with a specific upgrade it can happen.
+  [#6225](https://github.com/pulp/pulpcore/issues/6225)
+
+#### Improved Documentation {: #3.70.0-rest-api-doc }
+
+- Expanded docs on correlation id.
+  [#6248](https://github.com/pulp/pulpcore/issues/6248)
+
+#### Removals {: #3.70.0-rest-api-removal }
+
+- Marked django's `DEFAULT_FILE_STORAGE` and `STATIC_FILE_STORAGE` settings to be
+  removed in pulpcore 3.85. Users should upgrade to use the
+  [`STORAGES`](https://docs.djangoproject.com/en/4.2/ref/settings/#std-setting-STORAGES)
+  setting instead.
+
+  The [django-upgrade](https://github.com/adamchainz/django-upgrade?tab=readme-ov-file#django-42)
+  tool can handle simple cases. If cloud storages are being used, refer to django-storages
+  to adapt their specific storage options. E.g:
+
+  * <https://django-storages.readthedocs.io/en/latest/backends/amazon-S3.html>
+  * <https://django-storages.readthedocs.io/en/latest/backends/azure.html>
+  [#5404](https://github.com/pulp/pulpcore/issues/5404)
+- Updated the OpenAPI generator version used to generate python bindings to 7.10.0.
+  This involves stricter client side validation of api calls when using the bindings.
+
+### Plugin API {: #3.70.0-plugin-api }
+
+#### Features {: #3.70.0-plugin-api-feature }
+
+- Modified the `artifact_url` method from `ArtifactDistribution` model to return a relative URL
+  (no protocol, fqdn, and port) in case `CONTENT_ORIGIN` is not defined.
+  [#relative-path-base-url](https://github.com/pulp/pulpcore/issues/relative-path-base-url)
+
+#### Removals {: #3.70.0-plugin-api-removal }
+
+- Started using `settings.STORAGES` internally instead of `settings.DEFAULT_FILE_STORAGE` and `settings.STATICFILES_STORAGE`,
+  which was deprecated in Django 4.2.
+
+  For compatibility, plugins must replace access to:
+
+  * `settings.DEFAULT_FILE_STORAGE` with `settings.STORAGES["default"]["BACKEND"]`
+  * `settings.STATICFILES_STORAGE` with `settings.STORAGES["staticfiles"]["BACKEND"]`
+
+  See the new storage structure in [Django docs](https://docs.djangoproject.com/en/4.2/ref/settings/#std-setting-STORAGES).
+  [#5404](https://github.com/pulp/pulpcore/issues/5404)
+- Removed `distribution_data` from `Replicator`. The function was renamed to `distribution_extra_fields`.
+  [#6077](https://github.com/pulp/pulpcore/issues/6077)
+- Deleted field `pulp_label_select` from UpstreamPulp model.
+
+### Pulp File {: #3.70.0-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.70.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.69.2 (2025-01-29) {: #3.69.2 }
 
 ### REST API {: #3.69.2-rest-api }
