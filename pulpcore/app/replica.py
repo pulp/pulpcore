@@ -121,6 +121,7 @@ class Replicator:
                 dispatch(
                     general_update,
                     task_group=self.task_group,
+                    shared_resources=[self.server],
                     exclusive_resources=[remote],
                     args=(remote.pk, self.app_label, self.remote_serializer_name),
                     kwargs={"data": remote_fields_dict, "partial": True},
@@ -146,6 +147,7 @@ class Replicator:
                 dispatch(
                     general_update,
                     task_group=self.task_group,
+                    shared_resources=[self.server],
                     exclusive_resources=[repository],
                     args=(repository.pk, self.app_label, self.repository_serializer_name),
                     kwargs={"data": repo_fields_dict, "partial": True},
@@ -179,7 +181,7 @@ class Replicator:
                 dispatch(
                     general_update,
                     task_group=self.task_group,
-                    shared_resources=[repository],
+                    shared_resources=[repository, self.server],
                     exclusive_resources=self.distros_uris,
                     args=(distro.pk, self.app_label, self.distribution_serializer_name),
                     kwargs={
@@ -193,7 +195,7 @@ class Replicator:
             dispatch(
                 general_create,
                 task_group=self.task_group,
-                shared_resources=[repository],
+                shared_resources=[repository, self.server],
                 exclusive_resources=self.distros_uris,
                 args=(self.app_label, self.distribution_serializer_name),
                 kwargs={"data": distribution_data},
@@ -217,7 +219,7 @@ class Replicator:
         dispatch(
             self.sync_task,
             task_group=self.task_group,
-            shared_resources=[remote],
+            shared_resources=[remote, self.server],
             exclusive_resources=[repository],
             kwargs=self.sync_params(repository, remote),
         )
@@ -235,6 +237,7 @@ class Replicator:
             dispatch(
                 general_multi_delete,
                 task_group=self.task_group,
+                shared_resources=[self.server],
                 exclusive_resources=self.distros_uris,
                 args=(distribution_ids,),
             )
@@ -260,6 +263,7 @@ class Replicator:
             dispatch(
                 general_multi_delete,
                 task_group=self.task_group,
+                shared_resources=[self.server],
                 exclusive_resources=repositories + remotes,
                 args=(repository_ids + remote_ids,),
             )
