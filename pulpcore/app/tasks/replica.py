@@ -3,9 +3,13 @@ import platform
 import sys
 from tempfile import NamedTemporaryFile
 
+from django.db.models import Min
+
+from pulpcore.constants import TASK_STATES
 from pulpcore.app.apps import pulp_plugin_configs, PulpAppConfig
-from pulpcore.app.models import UpstreamPulp, TaskGroup
+from pulpcore.app.models import UpstreamPulp, Task, TaskGroup
 from pulpcore.app.replica import ReplicaContext
+from pulpcore.tasking.tasks import dispatch
 
 from pulp_glue.common import __version__ as pulp_glue_version
 from pulp_glue.common.context import PluginRequirement
@@ -98,7 +102,22 @@ def replicate_distributions(server_pk):
 
         replicator.remove_missing(distro_names)
 
-    started_at = task_group.tasks.first().started_at
-    server.set_last_replication_timestamp(started_at)
-
+    dispatch(
+        finalize_replication,
+        task_group=task_group,
+        exclusive_resources=[server],
+        args=[server.pk],
+    )
     task_group.finish()
+
+
+def finalize_replication(server_pk):
+    task = Task.current()
+    task_group = TaskGroup.current()
+    server = UpstreamPulp.objects.get(pk=server_pk)
+    if task_group.tasks.exclude(pk=task.pk).exclude(state=TASK_STATES.COMPLETED).exists():
+        raise Exception("Replication failed.")
+
+    # Record timestamp of last successful replication.
+    started_at = task_group.tasks.aggregate(Min("started_at"))["started_at__min"]
+    server.set_last_replication_timestamp(started_at)
