@@ -292,6 +292,11 @@ API_APP_TTL = 120  # The heartbeat is called from gunicorn notify (defaulting to
 CONTENT_APP_TTL = 30
 WORKER_TTL = 30
 
+# Seconds for a task to finish on semi graceful worker shutdown (approx)
+# On SIGHUP, SIGTERM the currently running task will be awaited forever.
+# On SIGINT, this value represents the time before the worker will attempt to kill the subprocess.
+TASK_GRACE_INTERVAL = 600
+
 # how long to protect ephemeral items in minutes
 ORPHAN_PROTECTION_TIME = 24 * 60
 

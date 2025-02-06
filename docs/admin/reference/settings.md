@@ -312,6 +312,16 @@ Defaults to `30` seconds.
 
 
 
+### TASK_GRACE_INTERVAL
+
+On receiving SIGHUP or SIGTERM a worker will await the currently running task forever.
+On SIGINT, this value represents the time before the worker will attempt to kill the subprocess.
+This time is only accurate to one worker heartbeat corresponding to `WORKER_TTL / 3`.
+
+Defaults to `600` seconds.
+
+
+
 ### REMOTE_USER_ENVIRON_NAME
 
 The name of the WSGI environment variable to read for `webserver authentication
@@ -414,8 +424,6 @@ The time specified in minutes for how long Pulp will hold orphan Content and Art
 they become candidates for deletion by an orphan cleanup task. This should ideally be longer
 than your longest running task otherwise any content created during that task could be cleaned
 up before the task finishes. Default is 1440 minutes (24 hours).
-
-
 
 
 
