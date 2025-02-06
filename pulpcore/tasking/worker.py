@@ -45,9 +45,9 @@ random.seed()
 # Unless/until we can provide reasonable ways to decide to change their values,
 # they will live as constants instead of "proper" settings.
 
-# Number of heartbeats for a task to finish on graceful worker shutdown (approx)
-TASK_GRACE_INTERVAL = 3
-# Number of heartbeats between attempts to kill the subprocess (approx)
+# Seconds for a task to finish on semi graceful worker shutdown (approx)
+TASK_GRACE_INTERVAL = settings.TASK_GRACE_INTERVAL
+# Seconds between attempts to kill the subprocess (approx)
 TASK_KILL_INTERVAL = 1
 # Number of heartbeats between cleaning up worker processes (approx)
 WORKER_CLEANUP_INTERVAL = 100
@@ -69,7 +69,10 @@ class PulpcoreWorker:
         self.versions = {app.label: app.version for app in pulp_plugin_configs()}
         self.cursor = connection.cursor()
         self.worker = self.handle_worker_heartbeat()
-        self.task_grace_timeout = 0
+        # This defaults to immediate task cancelation.
+        # It will be set into the future on moderately graceful worker shutdown,
+        # and set to None for fully graceful shutdown.
+        self.task_grace_timeout = timezone.now()
         self.worker_cleanup_countdown = random.randint(
             int(WORKER_CLEANUP_INTERVAL / 10), WORKER_CLEANUP_INTERVAL
         )
@@ -104,7 +107,8 @@ class PulpcoreWorker:
     def _signal_handler(self, thesignal, frame):
         if thesignal in (signal.SIGHUP, signal.SIGTERM):
             _logger.info(_("Worker %s was requested to shut down gracefully."), self.name)
-            self.task_grace_timeout = -1
+            # Wait forever...
+            self.task_grace_timeout = None
         else:
             # Reset signal handlers to default
             # If you kill the process a second time it's not graceful anymore.
@@ -113,7 +117,9 @@ class PulpcoreWorker:
             signal.signal(signal.SIGHUP, signal.SIG_DFL)
 
             _logger.info(_("Worker %s was requested to shut down."), self.name)
-            self.task_grace_timeout = TASK_GRACE_INTERVAL
+            self.task_grace_timeout = timezone.now() + timezone.timedelta(
+                seconds=TASK_GRACE_INTERVAL
+            )
         self.shutdown_requested = True
 
     def _pg_notify_handler(self, notification):
@@ -173,8 +179,6 @@ class PulpcoreWorker:
     def beat(self):
         if self.worker.last_heartbeat < timezone.now() - self.heartbeat_period:
             self.worker = self.handle_worker_heartbeat()
-            if self.task_grace_timeout > 0:
-                self.task_grace_timeout -= 1
             self.worker_cleanup_countdown -= 1
             if self.worker_cleanup_countdown <= 0:
                 self.worker_cleanup_countdown = WORKER_CLEANUP_INTERVAL
@@ -390,10 +394,12 @@ class PulpcoreWorker:
             task_process.start()
             while True:
                 if cancel_state:
-                    if self.task_grace_timeout != 0:
+                    if self.task_grace_timeout is None or self.task_grace_timeout > timezone.now():
                         _logger.info("Wait for canceled task to abort.")
                     else:
-                        self.task_grace_timeout = TASK_KILL_INTERVAL
+                        self.task_grace_timeout = timezone.now() + timezone.timedelta(
+                            seconds=TASK_KILL_INTERVAL
+                        )
                         _logger.info(
                             "Aborting current task %s in domain: %s due to cancelation.",
                             task.pk,
@@ -430,7 +436,7 @@ class PulpcoreWorker:
                 if self.sentinel in r:
                     os.read(self.sentinel, 256)
                 if self.shutdown_requested:
-                    if self.task_grace_timeout != 0:
+                    if self.task_grace_timeout is None or self.task_grace_timeout > timezone.now():
                         msg = (
                             "Worker shutdown requested, waiting for task {pk} in domain: {name} "
                             "to finish.".format(pk=task.pk, name=domain.name)
