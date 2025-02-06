@@ -1157,11 +1157,9 @@ def pulp_trusted_public_key_fingerprint(signing_gpg_metadata):
 
 @pytest.fixture(scope="session")
 def _ascii_armored_detached_signing_service_name(
-    bindings_cfg,
     signing_script_path,
     signing_gpg_metadata,
     signing_gpg_homedir_path,
-    pytestconfig,
 ):
     service_name = str(uuid.uuid4())
     gpg, fingerprint, keyid = signing_gpg_metadata
@@ -1201,7 +1199,7 @@ def _ascii_armored_detached_signing_service_name(
     )
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def ascii_armored_detached_signing_service(
     _ascii_armored_detached_signing_service_name, pulpcore_bindings
 ):
