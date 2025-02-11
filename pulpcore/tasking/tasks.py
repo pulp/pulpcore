@@ -50,7 +50,6 @@ def wakeup_worker():
 
 
 def execute_task(task):
-    # This extra stack is needed to isolate the current_task ContextVar
     contextvars.copy_context().run(_execute_task, task)
 
 
@@ -69,10 +68,27 @@ def _execute_task(task):
         args = task.enc_args or ()
         kwargs = task.enc_kwargs or {}
         result = func(*args, **kwargs)
-        if asyncio.iscoroutine(result):
+        immediate = task.immediate
+        is_coroutine = asyncio.iscoroutine(result)
+
+        if immediate is True and not is_coroutine:
+            raise RuntimeError(_("Immediate tasks must be coroutines."))
+
+        if is_coroutine:
             _logger.debug(_("Task is coroutine %s"), task.pk)
             loop = asyncio.get_event_loop()
-            loop.run_until_complete(result)
+            if immediate:
+                IMMEDIATE_TIMEOUT = 60 * 5
+                try:
+                    result = loop.run_until_complete(
+                        asyncio.wait_for(result, timeout=IMMEDIATE_TIMEOUT)
+                    )
+                except asyncio.TimeoutError:
+                    raise RuntimeError(
+                        _("Immediate task timed out after {} seconds").format(IMMEDIATE_TIMEOUT)
+                    )
+            else:
+                loop.run_until_complete(result)
 
     except Exception:
         exc_type, exc, tb = sys.exc_info()
