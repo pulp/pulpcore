@@ -34,7 +34,7 @@ dependencies = [
   "async-timeout>=4.0.3,<4.0.4;python_version<'3.11'",
   "backoff>=2.1.2,<2.2.2",
   "click>=8.1.0,<=8.1.8",
-  "cryptography>=38.0.1,<44.0.1",
+  "cryptography>=38.0.1,<44.0.2",
   "Django~=4.2.0",  # LTS version, switch only if we have a compelling reason to",
   "django-filter>=23.1,<=24.3",
   "django-guid>=3.3,<=3.5.1",
