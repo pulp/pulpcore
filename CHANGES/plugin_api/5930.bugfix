@@ -1,0 +1,5 @@
+Added timeout to tasks dispatched as immediate for both deferred and non-deferred runs.
+
+Also, immediate tasks must be coroutines from now on.
+This is to enable immediate tasks to run on the workers foreground without completely blocking heartbeats.
+Support for legacy non-coroutines immediate task will be dropped in pulpcore 3.85.

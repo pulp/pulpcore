@@ -4,6 +4,8 @@ from pulpcore.app.apps import get_plugin_config
 from pulpcore.app.models import CreatedResource
 from pulpcore.plugin.models import MasterModel
 
+from asgiref.sync import sync_to_async
+
 
 def general_create_from_temp_file(app_label, serializer_name, temp_file_pk, *args, **kwargs):
     """
@@ -111,3 +113,29 @@ def general_multi_delete(instance_ids):
     with transaction.atomic():
         for instance in instances:
             instance.delete()
+
+
+async def ageneral_update(instance_id, app_label, serializer_name, *args, **kwargs):
+    """
+    Async version of [pulpcore.app.tasks.base.general_update][].
+    """
+    data = kwargs.pop("data", None)
+    partial = kwargs.pop("partial", False)
+    serializer_class = get_plugin_config(app_label).named_serializers[serializer_name]
+    instance = await serializer_class.Meta.model.objects.aget(pk=instance_id)
+    if isinstance(instance, MasterModel):
+        instance = await instance.acast()
+    serializer = serializer_class(instance, data=data, partial=partial)
+    await sync_to_async(serializer.is_valid)(raise_exception=True)
+    await sync_to_async(serializer.save)()
+
+
+async def ageneral_delete(instance_id, app_label, serializer_name):
+    """
+    Async version of [pulpcore.app.tasks.base.general_delete][].
+    """
+    serializer_class = get_plugin_config(app_label).named_serializers[serializer_name]
+    instance = await serializer_class.Meta.model.objects.aget(pk=instance_id)
+    if isinstance(instance, MasterModel):
+        instance = await instance.acast()
+    await instance.adelete()
