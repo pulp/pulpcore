@@ -8,6 +8,29 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.70.1 (2025-02-12) {: #3.70.1 }
+
+### REST API {: #3.70.1-rest-api }
+
+#### Bugfixes {: #3.70.1-rest-api-bugfix }
+
+- Fixed a bug in replication, where a failed sync will not be reattempted.
+  [#6261](https://github.com/pulp/pulpcore/issues/6261)
+
+### Plugin API {: #3.70.1-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.70.1-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.70.1-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.70.0 (2025-02-04) {: #3.70.0 }
 
 ### REST API {: #3.70.0-rest-api }
