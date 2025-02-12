@@ -58,11 +58,11 @@ MEDIA_ROOT = str(DEPLOY_ROOT / "media")  # Django 3.1 adds support for pathlib.P
 STATIC_URL = "/assets/"
 STATIC_ROOT = DEPLOY_ROOT / STATIC_URL.strip("/")
 
-# begin compatilibity layer for DEFAULT_FILE_STORAGE
+# begin compatibility layer for DEFAULT_FILE_STORAGE
 # Remove on pulpcore=3.85 or pulpcore=4.0
 
 # - What is this?
-# We shouldnt use STORAGES or DEFAULT_FILE_STORAGE directly because those are
+# We shouldn't use STORAGES or DEFAULT_FILE_STORAGE directly because those are
 # mutually exclusive by django, which constraints users to use whatever we use.
 # This is a hack/workaround to set Pulp's default while still enabling users to choose
 # the legacy or the new storage setting.
@@ -295,7 +295,7 @@ WORKER_TTL = 30
 # how long to protect ephemeral items in minutes
 ORPHAN_PROTECTION_TIME = 24 * 60
 
-# Custom cleaup intervals
+# Custom cleanup intervals
 # for the following, if set to 0, the corresponding cleanup task is disabled
 UPLOAD_PROTECTION_TIME = 0
 TASK_PROTECTION_TIME = 0
@@ -510,7 +510,7 @@ settings = DjangoDynaconf(
     post_hooks=otel_middleware_hook,
 )
 
-# begin compatilibity layer for DEFAULT_FILE_STORAGE
+# begin compatibility layer for DEFAULT_FILE_STORAGE
 # Remove on pulpcore=3.85 or pulpcore=4.0
 
 # Ensures the cached property storage.backends uses the the right value
@@ -552,7 +552,9 @@ if not (len(sys.argv) >= 2 and sys.argv[1] in _SKIPPED_COMMANDS_FOR_CONTENT_CHEC
         with connection.cursor() as cursor:
             for checksum in ALLOWED_CONTENT_CHECKSUMS:
                 # can't import Artifact here so use a direct db connection
-                cursor.execute(f"SELECT count(pulp_id) FROM core_artifact WHERE {checksum} IS NULL")
+                cursor.execute(
+                    f"SELECT count(pulp_id) FROM core_artifact WHERE {checksum} IS NULL LIMIT 1"
+                )
                 row = cursor.fetchone()
                 if row[0] > 0:
                     raise ImproperlyConfigured(
@@ -565,7 +567,7 @@ if not (len(sys.argv) >= 2 and sys.argv[1] in _SKIPPED_COMMANDS_FOR_CONTENT_CHEC
             for checksum in FORBIDDEN_CHECKSUMS:
                 # can't import Artifact here so use a direct db connection
                 cursor.execute(
-                    f"SELECT count(pulp_id) FROM core_artifact WHERE {checksum} IS NOT NULL"
+                    f"SELECT count(pulp_id) FROM core_artifact WHERE {checksum} IS NOT NULL LIMIT 1"
                 )
                 row = cursor.fetchone()
                 if row[0] > 0:
@@ -583,7 +585,7 @@ if not (len(sys.argv) >= 2 and sys.argv[1] in _SKIPPED_COMMANDS_FOR_CONTENT_CHEC
             cond = " AND ".join([f"{c} IS NULL" for c in ALLOWED_CONTENT_CHECKSUMS])
             cursor.execute(
                 f"SELECT count(pulp_id) FROM core_remoteartifact WHERE {cond} AND "
-                f"pulp_id NOT IN ({no_checksum_query})"
+                f"pulp_id NOT IN ({no_checksum_query}) LIMIT 1"
             )
             row = cursor.fetchone()
             if row[0] > 0:
