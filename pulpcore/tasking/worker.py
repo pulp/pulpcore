@@ -36,6 +36,7 @@ from pulpcore.tasking._util import (
     dispatch_scheduled_tasks,
     perform_task,
     startup_hook,
+    execute_task,
 )
 
 _logger = logging.getLogger(__name__)
@@ -484,7 +485,10 @@ class PulpcoreWorker:
                 keep_looping = True
             for task in self.iter_tasks():
                 keep_looping = True
-                self.supervise_task(task)
+                if task.immediate:
+                    execute_task(task)
+                else:
+                    self.supervise_task(task)
 
     def _record_unblocked_waiting_tasks_metric(self):
         now = timezone.now()
