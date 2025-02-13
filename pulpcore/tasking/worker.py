@@ -7,6 +7,7 @@ import select
 import signal
 import socket
 import contextlib
+import time
 from datetime import datetime, timedelta
 from multiprocessing import Process
 from tempfile import TemporaryDirectory
@@ -23,6 +24,7 @@ from pulpcore.constants import (
     TASK_SCHEDULING_LOCK,
     TASK_UNBLOCKING_LOCK,
     TASK_METRICS_HEARTBEAT_LOCK,
+    IMMEDIATE_TIMEOUT,
 )
 from pulpcore.metrics import init_otel_meter
 from pulpcore.app.apps import pulp_plugin_configs
@@ -36,7 +38,6 @@ from pulpcore.tasking._util import (
     dispatch_scheduled_tasks,
     perform_task,
     startup_hook,
-    execute_task,
 )
 
 _logger = logging.getLogger(__name__)
@@ -385,6 +386,7 @@ class PulpcoreWorker:
         task.save(update_fields=["worker"])
         cancel_state = None
         cancel_reason = None
+        time_limit = time.monotonic() + IMMEDIATE_TIMEOUT
         domain = get_domain()
         with TemporaryDirectory(dir=".") as task_working_dir_rel_path:
             task_process = Process(target=perform_task, args=(task.pk, task_working_dir_rel_path))
@@ -446,6 +448,14 @@ class PulpcoreWorker:
                         )
                         cancel_state = TASK_STATES.FAILED
                         cancel_reason = "Aborted during worker shutdown."
+                if task.immediate and time.monotonic() > time_limit:
+                    _logger.info(
+                        "Aborting current task %s in domain: %s due to worker timeout.",
+                        task.pk,
+                        domain.name,
+                    )
+                    cancel_state = TASK_STATES.FAILED
+                    cancel_reason = "Aborted immediate task due to timeout."
 
             task_process.join()
             if not cancel_state and task_process.exitcode != 0:
@@ -485,10 +495,7 @@ class PulpcoreWorker:
                 keep_looping = True
             for task in self.iter_tasks():
                 keep_looping = True
-                if task.immediate:
-                    execute_task(task)
-                else:
-                    self.supervise_task(task)
+                self.supervise_task(task)
 
     def _record_unblocked_waiting_tasks_metric(self):
         now = timezone.now()
