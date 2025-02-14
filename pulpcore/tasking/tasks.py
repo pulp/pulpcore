@@ -7,6 +7,7 @@ import os
 import sys
 import traceback
 import tempfile
+from asgiref.sync import sync_to_async
 from datetime import timedelta
 from gettext import gettext as _
 
@@ -16,7 +17,7 @@ from django.db.models import Model, Max
 from django_guid import get_guid
 from pulpcore.app.apps import MODULE_PLUGIN_VERSIONS
 from pulpcore.app.models import Task, TaskGroup
-from pulpcore.app.util import current_task, get_domain, get_prn
+from pulpcore.app.util import current_task, get_domain, get_prn, deprecation_logger
 from pulpcore.constants import (
     TASK_FINAL_STATES,
     TASK_INCOMPLETE_STATES,
@@ -73,20 +74,29 @@ def _execute_task(task):
         is_coroutine = asyncio.iscoroutine(result)
 
         if immediate is True and not is_coroutine:
-            raise RuntimeError(_("Immediate tasks must be coroutines."))
+            deprecation_logger.warning(
+                _(
+                    "Immediate tasks must be coroutine functions."
+                    "Support for non-coroutine immediate tasks will be dropped in pulpcore 3.85."
+                )
+            )
+            result = sync_to_async(func)
+            is_coroutine = True
 
         if is_coroutine:
             _logger.debug(_("Task is coroutine %s"), task.pk)
-            loop = asyncio.get_event_loop()
             if immediate:
-                try:
-                    loop.run_until_complete(asyncio.wait_for(result, timeout=IMMEDIATE_TIMEOUT))
-                except asyncio.TimeoutError:
-                    raise RuntimeError(
-                        _("Immediate task timed out after {} seconds").format(IMMEDIATE_TIMEOUT)
-                    )
+                coro = asyncio.wait_for(result, timeout=IMMEDIATE_TIMEOUT)
             else:
-                loop.run_until_complete(result)
+                coro = result
+
+            loop = asyncio.get_event_loop()
+            try:
+                loop.run_until_complete(coro)
+            except asyncio.TimeoutError:
+                raise RuntimeError(
+                    _("Immediate task timed out after {} seconds").format(IMMEDIATE_TIMEOUT)
+                )
 
     except Exception:
         exc_type, exc, tb = sys.exc_info()
@@ -225,9 +235,6 @@ def dispatch(
                 stack.enter_context(task)
             else:
                 notify_workers = True
-        _logger.info("asdfasdf*")
-        _logger.info("asdfasdf")
-        _logger.info("*" * 50)
         if immediate:
             prior_tasks = Task.objects.filter(
                 state__in=TASK_INCOMPLETE_STATES, pulp_created__lt=task.pulp_created

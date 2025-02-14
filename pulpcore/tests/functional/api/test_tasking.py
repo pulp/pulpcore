@@ -520,7 +520,7 @@ def test_immediate_task_requires_resource(pulpcore_bindings, dispatch_task, moni
     def wait_until(state, task_href, timeout=10):
         for i in range(timeout):
             task = pulpcore_bindings.TasksApi.read(task_href)
-            if task.state != state:
+            if task.state == state:
                 break
             time.sleep(1)
         raise RuntimeError("Timeout waiting for task to transition")
