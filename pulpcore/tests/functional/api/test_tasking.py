@@ -508,12 +508,14 @@ def test_immediate_task_requires_resource(pulpcore_bindings, dispatch_task, moni
     THEN an error is raised
 
     3
+    WHEN dispatching a task as immediate
     AND it takes longer than timeout
     THEN an error is raised
     """
     LT_TIMEOUT = IMMEDIATE_TIMEOUT / 2
     GT_TIMEOUT = IMMEDIATE_TIMEOUT + 1
     LONG_RUNNING = 5
+    COMMON_RESOURCE = "XYZ"
 
     def wait_until(state, task_href, timeout=10):
         for i in range(timeout):
@@ -521,48 +523,48 @@ def test_immediate_task_requires_resource(pulpcore_bindings, dispatch_task, moni
             if task.state != state:
                 break
             time.sleep(1)
+        raise RuntimeError("Timeout waiting for task to transition")
+
+    def dispatch_long_task(requires_resource):
+        task_href = dispatch_task(
+            "pulpcore.app.tasks.test.sleep",
+            args=(LONG_RUNNING,),
+            exclusive_resources=[requires_resource],
+        )
+        wait_until("running", task_href)
 
     # Case 1
-    long_href = dispatch_task(
-        "pulpcore.app.tasks.test.sleep", args=(LONG_RUNNING,), exclusive_resources=["XYZ"]
-    )
-    wait_until("running", long_href)
+    dispatch_long_task(requires_resource=COMMON_RESOURCE)
     task_href = dispatch_task(
         "pulpcore.app.tasks.test.asleep",
         args=(LT_TIMEOUT,),
         immediate=True,
-        exclusive_resources=["XYZ"],
+        exclusive_resources=[COMMON_RESOURCE],
     )
     task = monitor_task(task_href)
     assert task.state == "completed"
     assert task.worker is not None
 
     # Case 2
-    long_href = dispatch_task(
-        "pulpcore.app.tasks.test.sleep", args=(LONG_RUNNING,), exclusive_resources=["XYZ"]
-    )
-    wait_until("running", long_href)
+    dispatch_long_task(requires_resource=COMMON_RESOURCE)
     with pytest.raises(PulpTaskError):
         task_href = dispatch_task(
             "pulpcore.app.tasks.test.asleep",
             args=(0,),
             immediate=True,
             deferred=False,
-            exclusive_resources=["XYZ"],
+            exclusive_resources=[COMMON_RESOURCE],
         )
         monitor_task(task_href)
 
     # Case 3
-    long_href = dispatch_task(
-        "pulpcore.app.tasks.test.sleep", args=(LONG_RUNNING,), exclusive_resources=["XYZ"]
-    )
-    wait_until("running", long_href)
+    dispatch_long_task(requires_resource=COMMON_RESOURCE)
     with pytest.raises(PulpTaskError) as ctx:
         task_href = dispatch_task(
             "pulpcore.app.tasks.test.asleep",
             args=(GT_TIMEOUT,),
             immediate=True,
-            exclusive_resources=["XYZ"],
+            exclusive_resources=[COMMON_RESOURCE],
         )
         monitor_task(task_href)
     assert "task timed out after" in ctx.value.task.error["description"]

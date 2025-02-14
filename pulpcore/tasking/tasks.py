@@ -225,6 +225,9 @@ def dispatch(
                 stack.enter_context(task)
             else:
                 notify_workers = True
+        _logger.info("asdfasdf*")
+        _logger.info("asdfasdf")
+        _logger.info("*" * 50)
         if immediate:
             prior_tasks = Task.objects.filter(
                 state__in=TASK_INCOMPLETE_STATES, pulp_created__lt=task.pulp_created
