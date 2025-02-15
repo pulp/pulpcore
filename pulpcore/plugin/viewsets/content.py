@@ -128,16 +128,23 @@ class SingleArtifactContentUploadViewSet(DefaultDeferredContextMixin, ContentVie
 
     def init_content_data(self, serializer, request):
         """Initialize the reference to an Artifact along with relevant task's payload data."""
+
         task_payload = {k: v for k, v in request.data.items()}
         if "file" in task_payload:
             # in the upload code path make sure, the artifact exists, and the 'file'
             # parameter is replaced by 'artifact'
-            artifact = Artifact.init_and_validate(task_payload.pop("file"))
+            file = task_payload.pop("file")
+            artifact = Artifact.init_and_validate(file)
             # if artifact already exists, let's use it
             try:
                 artifact = Artifact.objects.get(
                     sha256=artifact.sha256, pulp_domain=request.pulp_domain
                 )
+                if not artifact.pulp_domain.get_storage().exists(artifact.file.name):
+                    # artifact.save will do the "recreate file in file storage"
+                    # only if file is set and *dirty*, so we need to reset it here
+                    artifact.file = file
+                    raise Artifact.DoesNotExist
                 artifact.touch()
             except (Artifact.DoesNotExist, DatabaseError):
                 try:
