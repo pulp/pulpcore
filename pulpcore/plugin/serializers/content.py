@@ -202,7 +202,11 @@ class SingleArtifactContentUploadSerializer(
                 artifact = Artifact.objects.get(
                     sha256=file.hashers["sha256"].hexdigest(), pulp_domain=get_domain_pk()
                 )
-                artifact.touch()
+                if not artifact.pulp_domain.get_storage().exists(artifact.file.name):
+                    artifact.file = file
+                    artifact.save()
+                else:
+                    artifact.touch()
             except (Artifact.DoesNotExist, DatabaseError):
                 artifact_data = {"file": file}
                 serializer = ArtifactSerializer(data=artifact_data)
