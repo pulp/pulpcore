@@ -1,1 +1,0 @@
-Content app now returns a 400 Bad Request response when receiving invalid cookies instead of a 500 error. 
