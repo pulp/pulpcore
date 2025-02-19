@@ -302,6 +302,7 @@ TASK_PROTECTION_TIME = 0
 TMPFILE_PROTECTION_TIME = 0
 
 REMOTE_USER_ENVIRON_NAME = "REMOTE_USER"
+REMOTE_USER_OPENAPI_SECURITY_SCHEME = {"type": "mutualTLS"}
 
 AUTHENTICATION_JSON_HEADER = ""
 AUTHENTICATION_JSON_HEADER_JQ_FILTER = ""
@@ -335,6 +336,7 @@ SPECTACULAR_SETTINGS = {
         "drf_spectacular.hooks.postprocess_schema_enums",
         "pulpcore.openapi.hooks.add_info_hook",
     ],
+    "OAS_VERSION": "3.1.0",
     "TITLE": "Pulp 3 API",
     "DESCRIPTION": "Fetch, Upload, Organize, and Distribute Software Packages",
     "VERSION": "v3",
