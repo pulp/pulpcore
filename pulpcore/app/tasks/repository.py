@@ -232,6 +232,24 @@ def add_and_remove(repository_pk, add_content_units, remove_content_units, base_
             remove_content_units = latest.content.values_list("pk", flat=True)
         else:
             remove_content_units = []
+    else:
+        # Deal with labels in remove_content_units
+        # If there are none - then we can "just use" remove_content_units as-is
+        labels_specified = [s for s in remove_content_units if "=" in s]  # Ew.
+        if labels_specified:
+            # "x=y" can happen multiple times, and means "all content with label x=y, pass UUIDS"
+            latest = repository.latest_version()
+            if latest:
+                # First, remove labels from set-to-be-removed, r_c_u is now a set
+                remove_content_units = set(remove_content_units) - set(labels_specified)
+                # For each label, find all content w/ that label and add to be-removed
+                for label in labels_specified:
+                    kv = label.split("=")
+                    labeled_content_pks = latest.content.filter(
+                        **{f"pulp_labels__{kv[0]}": kv[1]}
+                    ).values_list("pk", flat=True)
+                    remove_content_units.update(labeled_content_pks)
+                remove_content_units = list(remove_content_units)
 
     with repository.new_version(base_version=base_version) as new_version:
         new_version.remove_content(models.Content.objects.filter(pk__in=remove_content_units))
