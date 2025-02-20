@@ -8,6 +8,39 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.71.0 (2025-02-19) {: #3.71.0 }
+
+### REST API {: #3.71.0-rest-api }
+
+#### Features {: #3.71.0-rest-api-feature }
+
+- Added `pulp_created` filter for Tasks API.
+  [#6241](https://github.com/pulp/pulpcore/issues/6241)
+
+#### Bugfixes {: #3.71.0-rest-api-bugfix }
+
+- Content app now returns a 400 Bad Request response when receiving invalid cookies instead of a 500 error.
+  [#6214](https://github.com/pulp/pulpcore/issues/6214)
+- Fixed a bug in replication, where a failed sync will not be reattempted.
+  [#6261](https://github.com/pulp/pulpcore/issues/6261)
+
+### Plugin API {: #3.71.0-plugin-api }
+
+#### Bugfixes {: #3.71.0-plugin-api-bugfix }
+
+- Fixed immediate tasks to run in a temporary directory.
+  [#5928](https://github.com/pulp/pulpcore/issues/5928)
+
+### Pulp File {: #3.71.0-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.71.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.70.1 (2025-02-12) {: #3.70.1 }
 
 ### REST API {: #3.70.1-rest-api }
