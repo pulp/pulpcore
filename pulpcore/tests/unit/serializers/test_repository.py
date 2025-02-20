@@ -7,6 +7,7 @@ from rest_framework import serializers
 from pulpcore.app import models
 from pulpcore.app.serializers import (
     PublicationSerializer,
+    DistributionSerializer,
     RemoteSerializer,
 )
 
@@ -118,5 +119,28 @@ def test_validate_repository_version_only_unknown_field():
     mock_version = Mock()
     data = {"repository_version": mock_version, "unknown_field": "unknown"}
     serializer = PublicationSerializer(data=data)
+    with pytest.raises(serializers.ValidationError):
+        serializer.validate(data)
+
+
+def test_validate_checkpoint_and_repository():
+    mock_repository = Mock()
+    mock_version = Mock()
+    mock_publication = Mock()
+
+    data = {"checkpoint": False, "repository": mock_repository}
+    serializer = DistributionSerializer()
+    serializer.validate(data)
+
+    data["checkpoint"] = True
+    serializer.validate(data)
+
+    data.pop("repository")
+    data["repository_version"] = mock_version
+    with pytest.raises(serializers.ValidationError):
+        serializer.validate(data)
+
+    data.pop("repository_version")
+    data["publication"] = mock_publication
     with pytest.raises(serializers.ValidationError):
         serializer.validate(data)
