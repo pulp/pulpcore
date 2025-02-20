@@ -229,9 +229,11 @@ def dispatch(
                 ).exists()
             ):
                 task.unblock()
+                cur_dir = os.getcwd()
                 with tempfile.TemporaryDirectory(dir=settings.WORKING_DIRECTORY) as working_dir:
                     os.chdir(working_dir)
                     execute_task(task)
+                os.chdir(cur_dir)
                 if resources:
                     notify_workers = True
             elif deferred:
