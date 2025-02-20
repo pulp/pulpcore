@@ -120,14 +120,6 @@ INSTALLED_APPS = [
     "pulpcore.app",
 ]
 
-# Enumerate the installed Pulp plugins during the loading process for use in the status API
-INSTALLED_PULP_PLUGINS = []
-
-for entry_point in entry_points(group="pulpcore.plugin"):
-    plugin_app_config = entry_point.load()
-    INSTALLED_PULP_PLUGINS.append(entry_point.name)
-    INSTALLED_APPS.append(plugin_app_config)
-
 # Optional apps that help with development, or augment Pulp in some non-critical way
 OPTIONAL_APPS = [
     "crispy_forms",
@@ -395,9 +387,17 @@ OTEL_ENABLED = False
 
 # HERE STARTS DYNACONF EXTENSION LOAD (Keep at the very bottom of settings.py)
 # Read more at https://www.dynaconf.com/django/
-from dynaconf import DjangoDynaconf, Validator  # noqa
+from dynaconf import DjangoDynaconf, Dynaconf, Validator  # noqa
 
 # Validators
+
+enabled_plugins_validator = Validator(
+    "ENABLED_PLUGINS",
+    is_type_of=list,
+    len_min=1,
+    when=Validator("ENABLED_PLUGINS", must_exist=True),
+)
+
 storage_keys = ("STORAGES.default.BACKEND", "DEFAULT_FILE_STORAGE")
 storage_validator = (
     Validator("REDIRECT_TO_OBJECT_STORAGE", eq=False)
@@ -498,22 +498,30 @@ settings = DjangoDynaconf(
     __name__,
     ENVVAR_PREFIX_FOR_DYNACONF="PULP",
     ENV_SWITCHER_FOR_DYNACONF="PULP_ENV",
-    PRELOAD_FOR_DYNACONF=[
-        "{}.app.settings".format(plugin_name) for plugin_name in INSTALLED_PULP_PLUGINS
-    ],
     ENVVAR_FOR_DYNACONF="PULP_SETTINGS",
     load_dotenv=False,
     validators=[
         api_root_validator,
         cache_validator,
+        enabled_plugins_validator,
         sha256_validator,
         storage_validator,
         unknown_algs_validator,
         json_header_auth_validator,
         authentication_json_header_openapi_security_scheme_validator,
     ],
-    post_hooks=otel_middleware_hook,
+    post_hooks=(otel_middleware_hook,),
 )
+
+# Select enabled plugins and load their settings.
+enabled_plugins = settings.get("ENABLED_PLUGINS", None)
+for entry_point in entry_points(group="pulpcore.plugin"):
+    if enabled_plugins and entry_point.name not in enabled_plugins:
+        continue
+    if (plugin_app := entry_point.load()) not in settings.INSTALLED_APPS:
+        settings.load_file(f"{entry_point.module}.app.settings")
+        settings.INSTALLED_APPS += [plugin_app]
+INSTALLED_APPS = settings.INSTALLED_APPS
 
 # begin compatibility layer for DEFAULT_FILE_STORAGE
 # Remove on pulpcore=3.85 or pulpcore=4.0
