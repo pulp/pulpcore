@@ -8,6 +8,29 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.71.1 (2025-02-24) {: #3.71.1 }
+
+### REST API {: #3.71.1-rest-api }
+
+#### Bugfixes {: #3.71.1-rest-api-bugfix }
+
+- Fixed an issue in immediate tasks switching to tmp directories and API worker failing to run `cwd`.
+  [#6293](https://github.com/pulp/pulpcore/issues/6293)
+
+### Plugin API {: #3.71.1-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.71.1-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.71.1-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.71.0 (2025-02-19) {: #3.71.0 }
 
 ### REST API {: #3.71.0-rest-api }
