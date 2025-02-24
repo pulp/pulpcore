@@ -11,7 +11,7 @@ from drf_spectacular import validation
 from collections import defaultdict
 
 JSON_SCHEMA_SPEC_PATH = os.path.join(
-    os.path.dirname(validation.__file__), "openapi_3_0_schema.json"
+    os.path.dirname(validation.__file__), "openapi_3_1_schema.json"
 )
 
 
@@ -27,9 +27,9 @@ def openapi3_schema_spec():
 def openapi3_schema_with_modified_safe_chars(openapi3_schema_spec):
     openapi3_schema_spec_copy = copy.deepcopy(openapi3_schema_spec)  # Don't modify the original
     # Making OpenAPI validation to accept paths starting with / and {
-    properties = openapi3_schema_spec_copy["definitions"]["Paths"]["patternProperties"]
-    properties["^\\/|{"] = properties["^\\/"]
-    del properties["^\\/"]
+    properties = openapi3_schema_spec_copy["$defs"]["paths"]["patternProperties"]
+    properties["^/|{"] = properties["^/"]
+    del properties["^/"]
 
     return openapi3_schema_spec_copy
 

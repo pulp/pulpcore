@@ -332,6 +332,7 @@ SPECTACULAR_SETTINGS = {
         "drf_spectacular.hooks.postprocess_schema_enums",
         "pulpcore.openapi.hooks.add_info_hook",
     ],
+    "OAS_VERSION": "3.1.1",
     "TITLE": "Pulp 3 API",
     "DESCRIPTION": "Fetch, Upload, Organize, and Distribute Software Packages",
     "VERSION": "v3",
