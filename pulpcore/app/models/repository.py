@@ -328,7 +328,15 @@ class Repository(MasterModel):
             publication__pk__in=Distribution.objects.values_list("publication_id")
         )
 
-        if distro := Distribution.objects.filter(repository=self.pk).first():
+        # Protect repo versions of distributed checkpoint publications.
+        if Distribution.objects.filter(repository=self.pk, checkpoint=True).exists():
+            qs |= self.versions.filter(
+                publication__pk__in=Publication.objects.filter(checkpoint=True).values_list(
+                    "pulp_id"
+                )
+            )
+
+        if distro := Distribution.objects.filter(repository=self.pk, checkpoint=False).first():
             if distro.detail_model().SERVE_FROM_PUBLICATION:
                 # if the distro serves publications, protect the latest published repo version
                 version = self.versions.filter(
