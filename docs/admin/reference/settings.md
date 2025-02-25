@@ -329,14 +329,22 @@ Defaults to `600` seconds.
 
 ### REMOTE_USER_ENVIRON_NAME
 
-The name of the WSGI environment variable to read for `webserver authentication
-<webserver-authentication>`.
+The name of the WSGI environment variable to read for `webserver authentication <webserver-authentication>`.
+It is only used with the `PulpRemoteUserAuthentication` authentication class.
 
 !!! warning
     Configuring this has serious security implications. See the [Django warning at the end of this
     section in their docs](https://docs.djangoproject.com/en/4.2/howto/auth-remote-user/#configuration) for more details.
 
 Defaults to `'REMOTE_USER'`.
+
+
+
+### REMOTE_USER_OPENAPI_SECURITY_SCHEME
+
+A JSON object representing the security scheme advertised for the `PulpRemoteUserAuthentication` authentication class.
+
+Defaults to `{"type": "mutualTLS"}`, which represents x509 certificate based authentication.
 
 
 
