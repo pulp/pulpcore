@@ -8,6 +8,46 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.72.0 (2025-02-25) {: #3.72.0 }
+
+### REST API {: #3.72.0-rest-api }
+
+#### Features {: #3.72.0-rest-api-feature }
+
+- Added ``ENABLED_PLUGINS`` option to allow selecting installed plugins to be enabled.
+  [#5235](https://github.com/pulp/pulpcore/issues/5235)
+- Added support for labels on domains.
+  [#6236](https://github.com/pulp/pulpcore/issues/6236)
+- Added `TASK_GRACE_INTERVAL` as a setting to specify the amount of seconds a worker gives the current task to finish when receiving SIGINT.
+  [#6242](https://github.com/pulp/pulpcore/issues/6242)
+
+#### Bugfixes {: #3.72.0-rest-api-bugfix }
+
+- Taught the upload-workflow to replace missing artifact-files when discovered.
+  [#6274](https://github.com/pulp/pulpcore/issues/6274)
+- Fixed an issue in immediate tasks switching to tmp directories and API worker failing to run `cwd`.
+  [#6293](https://github.com/pulp/pulpcore/issues/6293)
+- The Alternate Content Source sync feature has received some optimizations, making it dramatically faster.
+
+#### Improved Documentation {: #3.72.0-rest-api-doc }
+
+- Added basic documentation for Content Guards.
+  [#4629](https://github.com/pulp/pulpcore/issues/4629)
+
+### Plugin API {: #3.72.0-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.72.0-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.72.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.71.2 (2025-02-24) {: #3.71.2 }
 
 ### REST API {: #3.71.2-rest-api }
