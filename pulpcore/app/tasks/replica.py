@@ -89,6 +89,10 @@ def replicate_distributions(server_pk):
                 continue
             # Check if there is already a repository
             repository = replicator.create_or_update_repository(remote=remote)
+            if not repository:
+                # No update occured because server.policy==LABELED and there was
+                # an already existing local repository with the same name
+                continue
 
             # Dispatch a sync task if needed
             if replicator.requires_syncing(distro):

@@ -91,6 +91,12 @@ class UpstreamPulpSerializer(ModelSerializer, HiddenFieldsMixin):
         read_only=True,
     )
 
+    policy = serializers.ChoiceField(
+        choices=UpstreamPulp.POLICY_CHOICES,
+        help_text=_("Policy for how replicate will manage the local objects within the domain."),
+        required=False,
+    )
+
     def validate_q_select(self, value):
         """Ensure we have a valid q_select expression."""
         from pulpcore.app.viewsets import DistributionFilter
@@ -116,4 +122,5 @@ class UpstreamPulpSerializer(ModelSerializer, HiddenFieldsMixin):
             "hidden_fields",
             "q_select",
             "last_replication",
+            "policy",
         )

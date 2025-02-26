@@ -56,6 +56,7 @@ def test_replication_idempotence(
     file_publication_factory,
     file_repository_factory,
     tmp_path,
+    add_domain_objects_to_cleanup,
 ):
     # This test assures that an Upstream Pulp can be created in a non-default domain and that this
     # Upstream Pulp configuration can be used to execute the replicate task.
@@ -78,7 +79,9 @@ def test_replication_idempotence(
     publication = file_publication_factory(
         pulp_domain=source_domain.name, repository=repository.pulp_href
     )
-    file_distribution_factory(pulp_domain=source_domain.name, publication=publication.pulp_href)
+    distro = file_distribution_factory(
+        pulp_domain=source_domain.name, publication=publication.pulp_href
+    )
 
     # Create a domain as replica
     replica_domain = domain_factory()
@@ -98,15 +101,7 @@ def test_replication_idempotence(
     # Run the replicate task and assert that all tasks successfully complete.
     response = pulpcore_bindings.UpstreamPulpsApi.replicate(upstream_pulp.pulp_href)
     monitor_task_group(response.task_group)
-
-    for api_client in (
-        file_bindings.DistributionsFileApi,
-        file_bindings.RemotesFileApi,
-        file_bindings.RepositoriesFileApi,
-    ):
-        result = api_client.list(pulp_domain=replica_domain.name)
-        for item in result.results:
-            add_to_cleanup(api_client, item)
+    objects = add_domain_objects_to_cleanup(replica_domain)
 
     for api_client in (
         file_bindings.DistributionsFileApi,
@@ -116,6 +111,10 @@ def test_replication_idempotence(
     ):
         result = api_client.list(pulp_domain=replica_domain.name)
         assert result.count == 1
+    # Test that each new object (besides Content) has a source UpstreamPulp label
+    for obj in objects:
+        assert "UpstreamPulp" in obj.pulp_labels
+        assert upstream_pulp.prn.split(":")[-1] == obj.pulp_labels["UpstreamPulp"]
 
     # Now replicate backwards
 
@@ -127,21 +126,33 @@ def test_replication_idempotence(
         "username": bindings_cfg.username,
         "password": bindings_cfg.password,
     }
-    upstream_pulp = gen_object_with_cleanup(
+    upstream_pulp2 = gen_object_with_cleanup(
         pulpcore_bindings.UpstreamPulpsApi, upstream_pulp_body, pulp_domain=source_domain.name
     )
     # Run the replicate task and assert that all tasks successfully complete.
-    response = pulpcore_bindings.UpstreamPulpsApi.replicate(upstream_pulp.pulp_href)
+    response = pulpcore_bindings.UpstreamPulpsApi.replicate(upstream_pulp2.pulp_href)
     monitor_task_group(response.task_group)
+    objects = add_domain_objects_to_cleanup(source_domain)
+    # Replicating backwards will create a new repository (deleting the old) + new remote,
+    # but use the same distribution
+    result = file_bindings.RepositoriesFileApi.list(pulp_domain=source_domain.name)
+    assert result.count == 1
+    new_repository = result.results[0]
+    assert new_repository.pulp_href != repository.pulp_href
+    assert new_repository.name == distro.name
 
-    for api_client in (
-        file_bindings.DistributionsFileApi,
-        file_bindings.RemotesFileApi,
-        file_bindings.RepositoriesFileApi,
-    ):
-        result = api_client.list(pulp_domain=replica_domain.name)
-        for item in result.results:
-            add_to_cleanup(api_client, item)
+    result = file_bindings.DistributionsFileApi.list(pulp_domain=source_domain.name)
+    assert result.count == 1
+    assert result.results[0].pulp_href == distro.pulp_href
+    assert result.results[0].repository == new_repository.pulp_href
+    assert result.results[0].publication is None
+
+    result = file_bindings.RemotesFileApi.list(pulp_domain=source_domain.name)
+    assert result.count == 1
+    # Test that each replicate object (besides Content) now has a new UpstreamPulp label
+    for obj in objects:
+        assert "UpstreamPulp" in obj.pulp_labels
+        assert upstream_pulp2.prn.split(":")[-1] == obj.pulp_labels["UpstreamPulp"]
 
 
 @pytest.mark.parallel
@@ -319,7 +330,9 @@ def test_replication_optimization(
 
 
 @pytest.fixture
-def check_replication(pulpcore_bindings, file_bindings, monitor_task_group):
+def check_replication(
+    pulpcore_bindings, file_bindings, monitor_task_group, add_domain_objects_to_cleanup
+):
     def _check_replication(
         upstream_pulp,
         upstream_distribution,
@@ -330,6 +343,7 @@ def check_replication(pulpcore_bindings, file_bindings, monitor_task_group):
         response = pulpcore_bindings.UpstreamPulpsApi.replicate(upstream_pulp.pulp_href)
         # check if the replication succeeded
         task_group = monitor_task_group(response.task_group)
+        add_domain_objects_to_cleanup(local_domain)
         for task in task_group.tasks:
             assert task.state == "completed"
 
@@ -403,7 +417,7 @@ def try_action(pulpcore_bindings, monitor_task):
                 response = action_api(*args, **kwargs)
             if isinstance(response, tuple):
                 # old bindings
-                data, status, _ = response
+                data, status_code, _ = response
             else:
                 # new bindings
                 data = response.data
@@ -483,17 +497,18 @@ def populate_upstream(
     write_3_iso_file_fixture_data_factory,
     monitor_task,
 ):
-    def _populate_upstream(number):
+    def _populate_upstream(number, prefix=""):
         upstream_domain = domain_factory()
         tasks = []
         for i in range(number):
             repo = file_repository_factory(pulp_domain=upstream_domain.name, autopublish=True)
-            fix = write_3_iso_file_fixture_data_factory(str(i))
+            name = f"{prefix}{i}"
+            fix = write_3_iso_file_fixture_data_factory(name)
             remote = file_remote_factory(pulp_domain=upstream_domain.name, manifest_path=fix)
             body = {"remote": remote.pulp_href}
             tasks.append(file_bindings.RepositoriesFileApi.sync(repo.pulp_href, body).task)
             file_distribution_factory(
-                name=str(i),
+                name=name,
                 pulp_domain=upstream_domain.name,
                 repository=repo.pulp_href,
                 pulp_labels={"upstream": str(i), "even" if i % 2 == 0 else "odd": ""},
@@ -514,6 +529,7 @@ def test_replicate_with_basic_q_select(
     monitor_task_group,
     pulp_settings,
     gen_object_with_cleanup,
+    add_domain_objects_to_cleanup,
 ):
     """Test basic label select replication."""
     source_domain = populate_upstream(10)
@@ -532,6 +548,7 @@ def test_replicate_with_basic_q_select(
     # Run the replicate task and assert that all 10 repos got synced
     response = pulpcore_bindings.UpstreamPulpsApi.replicate(upstream.pulp_href)
     monitor_task_group(response.task_group)
+    add_domain_objects_to_cleanup(dest_domain)
     result = pulpcore_bindings.DistributionsApi.list(pulp_domain=dest_domain.name)
     assert result.count == 10
 
@@ -572,6 +589,7 @@ def test_replicate_with_complex_q_select(
     monitor_task_group,
     pulp_settings,
     gen_object_with_cleanup,
+    add_domain_objects_to_cleanup,
 ):
     """Test complex q_select replication."""
     source_domain = populate_upstream(10)
@@ -591,6 +609,7 @@ def test_replicate_with_complex_q_select(
     # Run the replicate task and assert that two repos got synced
     response = pulpcore_bindings.UpstreamPulpsApi.replicate(upstream.pulp_href)
     monitor_task_group(response.task_group)
+    add_domain_objects_to_cleanup(dest_domain)
     result = pulpcore_bindings.DistributionsApi.list(pulp_domain=dest_domain.name)
     assert result.count == 2
     assert {d.name for d in result.results} == {"1", "2"}
@@ -616,3 +635,105 @@ def test_replicate_with_complex_q_select(
         pulpcore_bindings.UpstreamPulpsApi.partial_update(upstream.pulp_href, body)
     assert e.value.status == 400
     assert e.value.body == '{"q_select":["Syntax error in expression."]}'
+
+
+@pytest.fixture
+def add_domain_objects_to_cleanup(add_to_cleanup, file_bindings):
+    def _add_objects_to_cleanup(domain):
+        objects = []
+        for api_client in (
+            file_bindings.DistributionsFileApi,
+            file_bindings.RemotesFileApi,
+            file_bindings.RepositoriesFileApi,
+        ):
+            result = api_client.list(pulp_domain=domain.name)
+            for item in result.results:
+                objects.append(item)
+                add_to_cleanup(api_client, item.pulp_href)
+        return objects
+
+    return _add_objects_to_cleanup
+
+
+@pytest.mark.parallel
+@pytest.mark.parametrize(
+    "policy,results",
+    [
+        ("nodelete", [{"b0", "b1", "a0", "a1", "a2"}, {"b0", "b1", "a0", "a1", "a2"}]),
+        ("labeled", [{"b0", "b1", "a0", "a1", "a2"}, {"b0", "b1", "a0"}]),
+        ("all", [{"a0", "a1", "a2"}, {"a0"}]),
+    ],
+)
+def test_replicate_policy(
+    policy,
+    results,
+    populate_upstream,
+    bindings_cfg,
+    add_domain_objects_to_cleanup,
+    pulpcore_bindings,
+    file_bindings,
+    monitor_task,
+    monitor_task_group,
+    pulp_settings,
+    gen_object_with_cleanup,
+):
+    """Test replicate delete_policy."""
+    a_domain = populate_upstream(3, prefix="a")
+    b_domain = populate_upstream(2, prefix="b")
+    upstream_body = {
+        "name": str(uuid.uuid4()),
+        "base_url": bindings_cfg.host,
+        "api_root": pulp_settings.API_ROOT,
+        "domain": a_domain.name,
+        "username": bindings_cfg.username,
+        "password": bindings_cfg.password,
+        "policy": policy,
+    }
+    upstream = gen_object_with_cleanup(
+        pulpcore_bindings.UpstreamPulpsApi, upstream_body, pulp_domain=b_domain.name
+    )
+
+    response = pulpcore_bindings.UpstreamPulpsApi.replicate(upstream.pulp_href)
+    monitor_task_group(response.task_group)
+    add_domain_objects_to_cleanup(b_domain)
+
+    result = pulpcore_bindings.DistributionsApi.list(pulp_domain=b_domain.name)
+    assert result.count == len(results[0])
+    assert {r.name for r in result.results} == results[0]
+
+    # delete a1, a2
+    result = pulpcore_bindings.DistributionsApi.list(pulp_domain=a_domain.name)
+    monitor_task(file_bindings.DistributionsFileApi.delete(result.results[0].pulp_href).task)
+    monitor_task(file_bindings.DistributionsFileApi.delete(result.results[1].pulp_href).task)
+    result = pulpcore_bindings.DistributionsApi.list(pulp_domain=a_domain.name)
+    assert result.count == 1
+    assert result.results[0].name == "a0"
+
+    # Perform second replicate and check the correct distros were deleted
+    response = pulpcore_bindings.UpstreamPulpsApi.replicate(upstream.pulp_href)
+    monitor_task_group(response.task_group)
+    result = pulpcore_bindings.DistributionsApi.list(pulp_domain=b_domain.name)
+    assert result.count == len(results[1])
+    assert {r.name for r in result.results} == results[1]
+
+    # Delete a0 from upstream and remove the UpstreamPulp label from downstream a0
+    result = pulpcore_bindings.DistributionsApi.list(pulp_domain=a_domain.name)
+    monitor_task(file_bindings.DistributionsFileApi.delete(result.results[0].pulp_href).task)
+    result = pulpcore_bindings.DistributionsApi.list(pulp_domain=a_domain.name)
+    assert result.count == 0
+    result = pulpcore_bindings.DistributionsApi.list(name="a0", pulp_domain=b_domain.name)
+    file_bindings.DistributionsFileApi.unset_label(
+        result.results[0].pulp_href, {"key": "UpstreamPulp"}
+    )
+
+    # Replicate again and check that it was managed correctly by policy
+    response = pulpcore_bindings.UpstreamPulpsApi.replicate(upstream.pulp_href)
+    monitor_task_group(response.task_group)
+    result = pulpcore_bindings.DistributionsApi.list(pulp_domain=b_domain.name)
+    if policy in ("nodelete", "labeled"):
+        for distro in result.results:
+            assert distro.name in results[1]
+            if distro.name == "a0":
+                assert "UpstreamPulp" not in distro.pulp_labels
+    else:
+        assert result.count == 0
