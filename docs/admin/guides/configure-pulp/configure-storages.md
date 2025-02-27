@@ -86,6 +86,58 @@ Notes:
     1. The system that hosts Pulp is running on AWS
     2. And the [`instance_profile`](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_switch-role-ec2_instance-profiles.html) provides access to the S3 bucket
 
+
+### Configure AWS CloudFront for Content Distribution
+
+Check out how to configure [django-storages to use CloudFront with URL signing](https://django-storages.readthedocs.io/en/latest/backends/amazon-S3.html#cloudfront-signed-urls).
+
+Also, you can follow this [doc](https://github.com/aws-samples/amazon-cloudfront-signed-urls-using-lambda-secretsmanager/tree/main/2-Create_CloudFront_Distribution) to understand what you need to configure on AWS side.
+
+You'll need:
+- The standard options for a normal S3 Bucket (access_key, secret_key, bucket_name and region_name)
+- A CloudFront Key ID (`cloudfront_key_id`)
+- A CloudFront Key (`cloudfront_key`)
+- And a Custom Domain (`custom_domain`)
+
+When creating a `Domain` you can use the following payload:
+```json
+{
+  "name": "cloudfront_storage",
+  "storage_class": "storages.backends.s3boto3.S3Boto3Storage",
+  "storage_settings": {
+    "access_key": "{aws_access_key}",
+    "secret_key": "{aws_secret_key}",
+    "bucket_name": "{aws_bucket_name}",
+    "region_name": "{aws_region_name}",
+    "default_acl": "private",
+    "cloudfront_key_id": "{aws_cloudfront_key_id}",
+    "cloudfront_key": "{aws_cloudfront_key}",
+    "custom_domain": "{aws_cloudfront_custom_domain}"
+  },
+  "redirect_to_object_storage": true,
+  "hide_guarded_distributions": false
+}
+```
+
+=== Create a new Domain
+```bash
+# We need to format our key to a JSON friendly format
+export CLOUDFRONT_KEY=$(cat keyfile.pem | jq -sR .)
+
+curl -X POST $BASE_HREF/pulp/default/api/v3/domains/ -d '{"name": "cloudfront_storage", "storage_class": "storages.backends.s3boto3.S3Boto3Storage", "storage_settings": {"access_key": "{aws_access_key}", "secret_key": "{aws_secret_key}", "bucket_name": "{aws_bucket_name}", "region_name": "{aws_region_name}", "default_acl": "private", "cloudfront_key_id": "{aws_cloudfront_key_id}", "cloudfront_key": '"$CLOUDFRONT_KEY"', "custom_domain": "{aws_cloudfront_custom_domain}"}, "redirect_to_object_storage": true, "hide_guarded_distributions": false}' -H 'Content-Type: application/json'
+```
+
+=== Create a new Domain using pulp-cli
+```bash
+export CLOUDFRONT_KEY=$(cat keyfile.pem | jq -sR .)
+
+pulp domain create --name cloudfront_test --storage-class storages.backends.s3boto3.S3Boto3Storage --storage-settings '{"access_key": "{aws_access_key}", "secret_key": "{aws_secret_key}", "bucket_name": "{aws_bucket_name}", "region_name": "{aws_region_name}", "default_acl": "private", "cloudfront_key_id": "{aws_cloudfront_key_id}", "cloudfront_key": '"$CLOUDFRONT_KEY"', "custom_domain": "{aws_cloudfront_custom_domain}"}'
+```
+
+Create your remotes, repositories, and distributions under this domain and the requests will be redirected to the
+CloudFront custom domain specified.
+
+
 Comprehensive options for Amazon S3 can be found in
 [`django-storages` docs](https://django-storages.readthedocs.io/en/latest/backends/amazon-S3.html#configuration-settings).
 
