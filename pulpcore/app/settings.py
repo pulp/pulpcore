@@ -515,12 +515,16 @@ settings = DjangoDynaconf(
 
 # Select enabled plugins and load their settings.
 enabled_plugins = settings.get("ENABLED_PLUGINS", None)
+plugin_settings = []
 for entry_point in entry_points(group="pulpcore.plugin"):
     if enabled_plugins and entry_point.name not in enabled_plugins:
         continue
     if (plugin_app := entry_point.load()) not in settings.INSTALLED_APPS:
-        settings.load_file(f"{entry_point.module}.app.settings")
+        plugin_settings.append(f"{entry_point.module}.app.settings")
         settings.INSTALLED_APPS += [plugin_app]
+# Ensure the plugin defaults are loaded before user configs
+settings.PRELOAD_FOR_DYNACONF = plugin_settings
+settings.reload()
 INSTALLED_APPS = settings.INSTALLED_APPS
 
 # begin compatibility layer for DEFAULT_FILE_STORAGE
