@@ -127,6 +127,26 @@ def test_using_setting_names(storage_class, serializer_class, all_settings):
     assert storage_settings == all_settings
 
 
+@pytest.mark.django_db
+def test_cloudfront_s3_storage_settings(storage_class, required_settings):
+    if storage_class != "storages.backends.s3boto3.S3Boto3Storage":
+        pytest.skip("This test only make sense when using S3 as storage backend.")
+
+    domain = SimpleNamespace(storage_class=storage_class, **MIN_DOMAIN_SETTINGS)
+    data = {
+        "storage_settings": {
+            "secret_key": "secret_key",
+            "custom_domain": "custom_domain.cloudfront.net",
+            "cloudfront_key_id": "key_id",
+            "cloudfront_key": "cloudfront_key",
+            **required_settings,
+        }
+    }
+    serializer = DomainSerializer(domain, data=data, partial=True)
+
+    assert serializer.is_valid(raise_exception=True)
+
+
 class DomainSettingsBaseMixin:
     storage_class = None
     serializer_class = None
