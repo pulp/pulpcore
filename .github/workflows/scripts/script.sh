@@ -28,6 +28,8 @@ export PULP_URL="https://pulp"
 
 REPORTED_STATUS="$(pulp status)"
 
+echo "${REPORTED_STATUS}"
+
 echo "machine pulp
 login admin
 password password

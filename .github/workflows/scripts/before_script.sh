@@ -32,6 +32,10 @@ tail -v -n +1 .ci/ansible/settings/settings.* ~/.config/pulp_smash/settings.json
 echo "Containerfile:"
 tail -v -n +1 .ci/ansible/Containerfile
 
+echo "Constraints Files:"
+# The need not even exist.
+tail -v -n +1  ../*/*constraints.txt || true
+
 # Needed for some functional tests
 cmd_prefix bash -c "echo '%wheel        ALL=(ALL)       NOPASSWD: ALL' > /etc/sudoers.d/nopasswd"
 cmd_prefix bash -c "usermod -a -G wheel pulp"
