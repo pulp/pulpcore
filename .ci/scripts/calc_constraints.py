@@ -83,13 +83,15 @@ def to_lower_bound(req):
     else:
         for spec in requirement.specifier:
             if spec.operator == ">=":
+                min_version = spec.version
                 if requirement.name == "pulpcore":
                     # Currently an exception to allow for pulpcore bugfix releases.
                     # TODO Semver libraries should be allowed too.
                     operator = "~="
+                    if len(Version(min_version).release) != 3:
+                        raise RuntimeError("Pulpcore lower bound must be in the form '>=x.y.z'.")
                 else:
                     operator = "=="
-                min_version = spec.version
                 return f"{requirement.name}{operator}{min_version}"
         return f"# NO LOWER BOUND: {req}"
 
