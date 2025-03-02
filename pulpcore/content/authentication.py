@@ -7,6 +7,8 @@ from aiohttp.web import middleware, HTTPBadRequest
 from django.conf import settings
 from django.db.utils import InterfaceError, DatabaseError
 from django.http.request import HttpRequest
+from django_guid import set_guid
+from django_guid.utils import generate_guid
 from rest_framework.views import APIView
 from rest_framework.exceptions import APIException
 
@@ -16,6 +18,13 @@ from pulpcore.app.util import set_domain
 
 log = logging.getLogger(__name__)
 _ = gettext.gettext
+
+
+@middleware
+async def guid(request, handler):
+    """Sets the django_guid for each request."""
+    set_guid(generate_guid())
+    return await handler(request)
 
 
 @middleware
