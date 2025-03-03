@@ -8,6 +8,28 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.49.33 (2025-03-03) {: #3.49.33 }
+
+### REST API {: #3.49.33-rest-api }
+
+#### Misc {: #3.49.33-rest-api-misc }
+
+- [#6225](https://github.com/pulp/pulpcore/issues/6225)
+
+### Plugin API {: #3.49.33-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.49.33-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.49.33-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.49.32 (2025-01-29) {: #3.49.32 }
 
 ### REST API {: #3.49.32-rest-api }
