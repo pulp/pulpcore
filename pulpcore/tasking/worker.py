@@ -306,7 +306,7 @@ class PulpcoreWorker:
                 # In this case, we can assume that the old algorithm was employed to identify the
                 # task as unblocked, and we just rectify the situation here.
                 _logger.warn(
-                    _("Running task %s was not previously marked unblocked. Fixing.", task.pk)
+                    "Running task %s was not previously marked unblocked. Fixing.", task.pk
                 )
                 task.unblock()
 
