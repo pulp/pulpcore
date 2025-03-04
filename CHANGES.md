@@ -8,6 +8,55 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.73.0 (2025-03-04) {: #3.73.0 }
+
+### REST API {: #3.73.0-rest-api }
+
+#### Features {: #3.73.0-rest-api-feature }
+
+- Allow labelling Content in pulp.
+
+  This adds `pulp_labels` to Content subclasses, using the same entities as used for
+  labelling Repositories, Remotes, and Distributions currently (q.v.). Labels can be added
+  when uploading Content, searched on using the `pulp_labels_select` filter to the list
+  endpoints, and set/unset on existing Content.
+  [#3338](https://github.com/pulp/pulpcore/issues/3338)
+- Added new field `policy` to UpstreamPulp that decides how Replicate manages local objects within the domain.
+
+  Replicate will now copy the upstream's `pulp_labels` on downstream objects. Also, replicate will now
+  label the downstream objects created with the UpstreamPulp they came from.
+  [#5214](https://github.com/pulp/pulpcore/issues/5214)
+- Add ability to configure the openapi schema for remote user authentication via `REMOTE_USER_OPENAPI_SECURITY_SCHEME`.
+  Its type defaults to "mutualTLS" for cert based authentication.
+  [#5437](https://github.com/pulp/pulpcore/issues/5437)
+
+#### Bugfixes {: #3.73.0-rest-api-bugfix }
+
+- Fixed plugin default settings overriding user settings.
+
+#### Improved Documentation {: #3.73.0-rest-api-doc }
+
+- Add a new section about configuring AWS CloudFront as storage backend.
+  [#6258](https://github.com/pulp/pulpcore/issues/6258)
+
+#### Misc {: #3.73.0-rest-api-misc }
+
+- [#6225](https://github.com/pulp/pulpcore/issues/6225)
+
+### Plugin API {: #3.73.0-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.73.0-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.73.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.72.1 (2025-02-26) {: #3.72.1 }
 
 ### REST API {: #3.72.1-rest-api }
