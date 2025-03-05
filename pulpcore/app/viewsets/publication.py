@@ -70,6 +70,7 @@ class PublicationFilter(BaseFilterSet):
         model = Publication
         fields = {
             "pulp_created": DATETIME_FILTER_OPTIONS,
+            "checkpoint": ["exact"],
         }
 
 
@@ -497,6 +498,7 @@ class DistributionFilter(BaseFilterSet):
             "name": NAME_FILTER_OPTIONS,
             "base_path": ["exact", "contains", "icontains", "in"],
             "repository": ["exact", "in"],
+            "checkpoint": ["exact"],
         }
 
 
