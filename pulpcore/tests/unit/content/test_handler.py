@@ -11,6 +11,7 @@ from pulpcore.plugin.models import (
     Distribution,
     Remote,
     RemoteArtifact,
+    Repository,
 )
 
 
@@ -116,9 +117,15 @@ async def create_remote_artifact(remote, ca):
     )
 
 
-async def create_distribution(remote):
+async def create_repository():
+    return await Repository.objects.acreate(name=str(uuid.uuid4()))
+
+
+async def create_distribution(remote, repository=None):
     name = str(uuid.uuid4())
-    return await Distribution.objects.acreate(name=name, base_path=name, remote=remote)
+    return await Distribution.objects.acreate(
+        name=name, base_path=name, remote=remote, repository=repository
+    )
 
 
 @pytest.mark.asyncio
@@ -267,3 +274,41 @@ def test_pull_through_save_multi_artifact_content(
     artifacts = set(ca.content._artifacts.all())
     assert len(artifacts) == 2
     assert {artifact, artifact123} == artifacts
+
+
+@pytest.mark.asyncio
+@pytest.mark.django_db
+async def test_pull_through_repository_add(request123, monkeypatch):
+    """Test that repository adding is called when supported."""
+    handler = Handler()
+    handler._stream_content_artifact = AsyncMock()
+
+    content = await create_content()
+    ca = await create_content_artifact(content)
+    remote = await create_remote()
+    await create_remote_artifact(remote, ca)
+    repo = await create_repository()
+    monkeypatch.setattr(Remote, "get_remote_artifact_content_type", Mock(return_value=Content))
+    monkeypatch.setattr(Repository, "pull_through_add_content", Mock())
+    distro = await create_distribution(remote, repository=repo)
+
+    try:
+        # Assert with Repository.PULL_THROUGH_SUPPORTED=False the method isn't called
+        await handler._match_and_stream(f"{distro.base_path}/c123", request123)
+        handler._stream_content_artifact.assert_called_once()
+        assert ca in handler._stream_content_artifact.call_args[0]
+        repo.pull_through_add_content.assert_not_called()
+
+        # Now set PULL_THROUGH_SUPPORTED=True and see the method is called with CA
+        monkeypatch.setattr(Repository, "PULL_THROUGH_SUPPORTED", True)
+        handler._stream_content_artifact.reset_mock()
+        await handler._match_and_stream(f"{distro.base_path}/c123", request123)
+        handler._stream_content_artifact.assert_called_once()
+        assert ca in handler._stream_content_artifact.call_args[0]
+        repo.pull_through_add_content.assert_called_once()
+        assert ca in repo.pull_through_add_content.call_args[0]
+    finally:
+        await content.adelete()
+        await repo.adelete()
+        await remote.adelete()
+        await distro.adelete()
