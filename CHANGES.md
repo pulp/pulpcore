@@ -8,6 +8,28 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.73.1 (2025-03-06) {: #3.73.1 }
+
+### REST API {: #3.73.1-rest-api }
+
+#### Bugfixes {: #3.73.1-rest-api-bugfix }
+
+- Reverted the feature to allow describing remote authentication in the openapi specs. It depended on the also reverted switch to openapi 3.1.
+
+### Plugin API {: #3.73.1-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.73.1-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.73.1-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.73.0 (2025-03-04) {: #3.73.0 }
 
 ### REST API {: #3.73.0-rest-api }
