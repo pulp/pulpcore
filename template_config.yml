@@ -63,7 +63,6 @@ pulp_settings_azure:
   domain_enabled: true
   rest_framework__default_permission_classes:
   - pulpcore.plugin.access_policy.DefaultAccessPolicy
-  rest_framework__default_authentication_classes: '@merge pulpcore.app.authentication.PulpRemoteUserAuthentication'
 pulp_settings_gcp: null
 pulp_settings_s3:
   DISABLED_authentication_backends: '@merge django.contrib.auth.backends.RemoteUserBackend'
@@ -106,3 +105,4 @@ test_reroute: true
 test_s3: true
 test_storages_compat_layer: true
 use_issue_template: true
+
