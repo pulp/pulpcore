@@ -24,8 +24,10 @@ from pulpcore.app.serializers import (
     PRNField,
 )
 from pulpcore.app.util import (
-    get_viewset_for_model,
     get_request_without_query_params,
+    get_url,
+    get_prn,
+    resolve_prn,
 )
 
 User = get_user_model()
@@ -60,27 +62,42 @@ class PermissionField(serializers.RelatedField):
 class ContentObjectField(serializers.CharField):
     """Content object field"""
 
-    def to_representation(self, obj):
-        content_object = getattr(obj, "content_object", None)
-        if content_object:
-            viewset = get_viewset_for_model(obj.content_object)
-
+    def to_representation(self, value):
+        if value is None:
+            return None
+        else:
             request = get_request_without_query_params(self.context)
+            return get_url(value, request=request)
 
-            serializer = viewset.serializer_class(obj.content_object, context={"request": request})
-            return serializer.data.get("pulp_href")
-
-    def to_internal_value(self, data):
+    def to_internal_value(self, value):
         # ... circular import ...
         from pulpcore.app.viewsets.base import NamedModelViewSet
 
-        if data is None:
-            return {"content_object": None}
-        try:
-            obj = NamedModelViewSet.get_resource(data)
-        except serializers.ValidationError:
-            raise serializers.ValidationError(_("Invalid value: {}.").format(data))
-        return {"content_object": obj}
+        if value is None:
+            return None
+        else:
+            try:
+                obj = NamedModelViewSet.get_resource(value)
+            except serializers.ValidationError:
+                raise serializers.ValidationError(_("Invalid value: {}.").format(value))
+            return obj
+
+
+class ContentObjectPRNField(serializers.CharField):
+    """Content object PRN field"""
+
+    def to_representation(self, value):
+        if value is None:
+            return None
+        else:
+            return get_prn(value)
+
+    def to_internal_value(self, value):
+        if value is None:
+            return None
+        else:
+            model, pk = resolve_prn(value)
+            return model.objects.get(pk=pk)
 
 
 class UserGroupSerializer(serializers.ModelSerializer):
@@ -247,6 +264,13 @@ class ValidateRoleMixin:
         and checks if the user/group already has the role. Does not set any value
         in data or return anything.
         """
+        if "content_object" not in data:
+            raise serializers.ValidationError(
+                _(
+                    "Either 'content_object' or 'content_object_prn' needs to be specified."
+                    " Use 'null' for global or domain level access."
+                )
+            )
         natural_key_args = {
             f"{role_type}_id": data[role_type].pk,
             "role_id": data["role"].pk,
@@ -308,8 +332,18 @@ class UserRoleSerializer(ValidateRoleMixin, ModelSerializer, NestedHyperlinkedMo
             "pulp_href of the object for which role permissions should be asserted. "
             "If set to 'null', permissions will act on either domain or model-level."
         ),
-        source="*",
         allow_null=True,
+        required=False,
+    )
+
+    content_object_prn = ContentObjectPRNField(
+        help_text=_(
+            "prn of the object for which role permissions should be asserted. "
+            "If set to 'null', permissions will act on either domain or model-level."
+        ),
+        source="content_object",
+        allow_null=True,
+        required=False,
     )
 
     domain = RelatedField(
@@ -343,6 +377,7 @@ class UserRoleSerializer(ValidateRoleMixin, ModelSerializer, NestedHyperlinkedMo
         fields = ModelSerializer.Meta.fields + (
             "role",
             "content_object",
+            "content_object_prn",
             "description",
             "permissions",
             "domain",
@@ -366,8 +401,18 @@ class GroupRoleSerializer(ValidateRoleMixin, ModelSerializer, NestedHyperlinkedM
             "pulp_href of the object for which role permissions should be asserted. "
             "If set to 'null', permissions will act on the model-level."
         ),
-        source="*",
         allow_null=True,
+        required=False,
+    )
+
+    content_object_prn = ContentObjectPRNField(
+        help_text=_(
+            "prn of the object for which role permissions should be asserted. "
+            "If set to 'null', permissions will act on either domain or model-level."
+        ),
+        source="content_object",
+        allow_null=True,
+        required=False,
     )
 
     domain = RelatedField(
@@ -403,6 +448,7 @@ class GroupRoleSerializer(ValidateRoleMixin, ModelSerializer, NestedHyperlinkedM
         fields = ModelSerializer.Meta.fields + (
             "role",
             "content_object",
+            "content_object_prn",
             "description",
             "permissions",
             "domain",

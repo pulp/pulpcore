@@ -66,18 +66,19 @@ def get_url(model, domain=None, request=None):
         str: The path component of the resource url
     """
     kwargs = {}
-    view_action = "list"
     if settings.DOMAIN_ENABLED:
         kwargs["pulp_domain"] = "default"
-        if not domain and hasattr(model, "pulp_domain") and isinstance(model, model._meta.model):
+        if not domain and hasattr(model, "pulp_domain") and isinstance(model, Model):
             kwargs["pulp_domain"] = model.pulp_domain.name
         elif isinstance(domain, models.Domain):
             kwargs["pulp_domain"] = domain.name
         elif isinstance(domain, str):
             kwargs["pulp_domain"] = domain
-    if isinstance(model, model._meta.model):
+    if isinstance(model, Model):
         view_action = "detail"
         kwargs["pk"] = model.pk
+    else:
+        view_action = "list"
 
     return reverse(get_view_name_for_model(model, view_action), kwargs=kwargs, request=request)
 
