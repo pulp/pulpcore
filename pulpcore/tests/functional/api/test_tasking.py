@@ -11,7 +11,8 @@ from uuid import uuid4
 
 from pulpcore.client.pulpcore import ApiException
 
-from pulpcore.tests.functional.utils import download_file
+from pulpcore.tests.functional.utils import download_file, PulpTaskError
+from pulpcore.constants import IMMEDIATE_TIMEOUT
 
 
 @pytest.fixture(scope="module")
@@ -445,3 +446,125 @@ def test_cancel_task_group(pulpcore_bindings, dispatch_task_group, gen_user):
 
     with gen_user(model_roles=["core.task_owner"]):
         pulpcore_bindings.TaskGroupsApi.task_groups_cancel(tgroup_href, {"state": "canceled"})
+
+
+@pytest.mark.parallel
+def test_immediate_task_doesnt_require_resource(pulpcore_bindings, dispatch_task, monitor_task):
+    """
+    GIVEN a task with no resource requirements
+
+    1
+    AND the task is an async function
+    WHEN dispatching a task as immediate
+    THEN the task completes with no associated worker
+
+    2
+    AND the task is NOT an async function
+    WHEN dispatching a task as immediate
+    THEN an error is raised
+
+    3
+    WHEN dispatching a task as immediate
+    AND it takes longer than timeout
+    THEN an error is raised
+    """
+    LT_TIMEOUT = IMMEDIATE_TIMEOUT / 2
+    GT_TIMEOUT = IMMEDIATE_TIMEOUT + 1
+
+    # Case 1
+    task_href = dispatch_task("pulpcore.app.tasks.test.asleep", args=(LT_TIMEOUT,), immediate=True)
+    task = monitor_task(task_href)
+    assert task.state == "completed"
+    assert task.worker is None
+
+    # Case 2
+    with pytest.raises(PulpTaskError) as ctx:
+        task_href = dispatch_task(
+            "pulpcore.app.tasks.test.sleep", args=(LT_TIMEOUT,), immediate=True
+        )
+        monitor_task(task_href)
+    assert "coroutine" in ctx.value.task.error["description"]
+
+    # Case 3
+    with pytest.raises(PulpTaskError) as ctx:
+        task_href = dispatch_task(
+            "pulpcore.app.tasks.test.asleep", args=(GT_TIMEOUT,), immediate=True
+        )
+        monitor_task(task_href)
+    assert "task timed out after" in ctx.value.task.error["description"]
+
+
+@pytest.mark.parallel
+def test_immediate_task_requires_resource(pulpcore_bindings, dispatch_task, monitor_task):
+    """
+    GIVEN an async task requiring busy resources
+
+    1
+    WHEN dispatching a task as immediate
+    THEN the task completes with a worker
+
+    2
+    WHEN dispatching as immediate and not deferrable
+    THEN an error is raised
+
+    3
+    WHEN dispatching a task as immediate
+    AND it takes longer than timeout
+    THEN an error is raised
+    """
+    LT_TIMEOUT = IMMEDIATE_TIMEOUT / 2
+    GT_TIMEOUT = IMMEDIATE_TIMEOUT + 1
+    LONG_RUNNING = 5
+    COMMON_RESOURCE = "XYZ"
+
+    def wait_until(state, task_href, timeout=10):
+        for i in range(timeout):
+            task = pulpcore_bindings.TasksApi.read(task_href)
+            if task.state == state:
+                return
+            time.sleep(1)
+        raise RuntimeError("Timeout waiting for task to transition")
+
+    def dispatch_long_task(requires_resource):
+        task_href = dispatch_task(
+            "pulpcore.app.tasks.test.sleep",
+            args=(LONG_RUNNING,),
+            exclusive_resources=[requires_resource],
+        )
+        wait_until("running", task_href)
+
+    # Case 1
+    dispatch_long_task(requires_resource=COMMON_RESOURCE)
+    task_href = dispatch_task(
+        "pulpcore.app.tasks.test.asleep",
+        args=(LT_TIMEOUT,),
+        immediate=True,
+        exclusive_resources=[COMMON_RESOURCE],
+    )
+    task = monitor_task(task_href)
+    assert task.state == "completed"
+    assert task.worker is not None
+
+    # Case 2
+    dispatch_long_task(requires_resource=COMMON_RESOURCE)
+    with pytest.raises(PulpTaskError):
+        task_href = dispatch_task(
+            "pulpcore.app.tasks.test.asleep",
+            args=(0,),
+            immediate=True,
+            deferred=False,
+            exclusive_resources=[COMMON_RESOURCE],
+        )
+        monitor_task(task_href)
+
+    # Case 3
+    dispatch_long_task(requires_resource=COMMON_RESOURCE)
+    with pytest.raises(PulpTaskError) as ctx:
+        task_href = dispatch_task(
+            "pulpcore.app.tasks.test.asleep",
+            args=(GT_TIMEOUT,),
+            immediate=True,
+            exclusive_resources=[COMMON_RESOURCE],
+        )
+        monitor_task(task_href)
+    assert "task timed out after" in ctx.value.task.error["description"]

@@ -7,6 +7,7 @@ import os
 import sys
 import traceback
 import tempfile
+from asgiref.sync import sync_to_async
 from datetime import timedelta
 from gettext import gettext as _
 
@@ -16,12 +17,13 @@ from django.db.models import Model, Max
 from django_guid import get_guid
 from pulpcore.app.apps import MODULE_PLUGIN_VERSIONS
 from pulpcore.app.models import Task, TaskGroup
-from pulpcore.app.util import current_task, get_domain, get_prn
+from pulpcore.app.util import current_task, get_domain, get_prn, deprecation_logger
 from pulpcore.constants import (
     TASK_FINAL_STATES,
     TASK_INCOMPLETE_STATES,
     TASK_STATES,
     TASK_DISPATCH_LOCK,
+    IMMEDIATE_TIMEOUT,
 )
 from pulpcore.tasking.kafka import send_task_notification
 
@@ -50,7 +52,6 @@ def wakeup_worker():
 
 
 def execute_task(task):
-    # This extra stack is needed to isolate the current_task ContextVar
     contextvars.copy_context().run(_execute_task, task)
 
 
@@ -69,10 +70,33 @@ def _execute_task(task):
         args = task.enc_args or ()
         kwargs = task.enc_kwargs or {}
         result = func(*args, **kwargs)
-        if asyncio.iscoroutine(result):
+        immediate = task.immediate
+        is_coroutine = asyncio.iscoroutine(result)
+
+        if immediate is True and not is_coroutine:
+            deprecation_logger.warning(
+                _(
+                    "Immediate tasks must be coroutine functions."
+                    "Support for non-coroutine immediate tasks will be dropped in pulpcore 3.85."
+                )
+            )
+            result = sync_to_async(func)
+            is_coroutine = True
+
+        if is_coroutine:
             _logger.debug(_("Task is coroutine %s"), task.pk)
+            if immediate:
+                coro = asyncio.wait_for(result, timeout=IMMEDIATE_TIMEOUT)
+            else:
+                coro = result
+
             loop = asyncio.get_event_loop()
-            loop.run_until_complete(result)
+            try:
+                loop.run_until_complete(coro)
+            except asyncio.TimeoutError:
+                raise RuntimeError(
+                    _("Immediate task timed out after {} seconds").format(IMMEDIATE_TIMEOUT)
+                )
 
     except Exception:
         exc_type, exc, tb = sys.exc_info()
