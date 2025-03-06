@@ -13,11 +13,6 @@ from pulpcore.app import settings
 
 
 @pytest.mark.parallel
-@pytest.mark.skipif(
-    "rest_framework.authentication.BasicAuthentication"
-    not in settings.REST_FRAMEWORK["DEFAULT_AUTHENTICATION_CLASSES"],
-    reason="Test can't run unless BasicAuthentication is enabled",
-)
 def test_base_auth_success(pulpcore_bindings, pulp_admin_user):
     """Perform HTTP basic authentication with valid credentials.
 
@@ -38,11 +33,6 @@ def test_base_auth_success(pulpcore_bindings, pulp_admin_user):
 
 
 @pytest.mark.parallel
-@pytest.mark.skipif(
-    "rest_framework.authentication.BasicAuthentication"
-    not in settings.REST_FRAMEWORK["DEFAULT_AUTHENTICATION_CLASSES"],
-    reason="Test can't run unless BasicAuthentication is enabled",
-)
 def test_base_auth_failure(pulpcore_bindings, invalid_user):
     """Perform HTTP basic authentication with invalid credentials.
 
@@ -60,11 +50,6 @@ def test_base_auth_failure(pulpcore_bindings, invalid_user):
 
 
 @pytest.mark.parallel
-@pytest.mark.skipif(
-    "rest_framework.authentication.BasicAuthentication"
-    not in settings.REST_FRAMEWORK["DEFAULT_AUTHENTICATION_CLASSES"],
-    reason="Test can't run unless BasicAuthentication is enabled",
-)
 def test_base_auth_required(pulpcore_bindings, anonymous_user):
     """Perform HTTP basic authentication with no credentials.
 
@@ -84,7 +69,7 @@ def test_base_auth_required(pulpcore_bindings, anonymous_user):
 @pytest.mark.parallel
 @pytest.mark.skipif(
     "django.contrib.auth.backends.RemoteUserBackend" not in settings.AUTHENTICATION_BACKENDS
-    or "pulpcore.app.authentication.JSONHeaderRemoteAuthentication"
+    and "pulpcore.app.authentication.JSONHeaderRemoteAuthentication"
     not in settings.REST_FRAMEWORK["DEFAULT_AUTHENTICATION_CLASSES"],
     reason="Test can't run unless RemoteUserBackend and JSONHeaderRemoteAuthentication are enabled",
 )
@@ -113,7 +98,7 @@ def test_jq_header_remote_auth(pulpcore_bindings, anonymous_user):
 @pytest.mark.parallel
 @pytest.mark.skipif(
     "django.contrib.auth.backends.RemoteUserBackend" not in settings.AUTHENTICATION_BACKENDS
-    or "pulpcore.app.authentication.JSONHeaderRemoteAuthentication"
+    and "pulpcore.app.authentication.JSONHeaderRemoteAuthentication"
     not in settings.REST_FRAMEWORK["DEFAULT_AUTHENTICATION_CLASSES"],
     reason="Test can't run unless RemoteUserBackend and JSONHeaderRemoteAuthentication are enabled",
 )
@@ -142,7 +127,7 @@ def test_jq_header_remote_auth_denied_by_wrong_header(pulpcore_bindings, anonymo
 @pytest.mark.parallel
 @pytest.mark.skipif(
     "django.contrib.auth.backends.RemoteUserBackend" not in settings.AUTHENTICATION_BACKENDS
-    or "pulpcore.app.authentication.JSONHeaderRemoteAuthentication"
+    and "pulpcore.app.authentication.JSONHeaderRemoteAuthentication"
     not in settings.REST_FRAMEWORK["DEFAULT_AUTHENTICATION_CLASSES"],
     reason="Test can't run unless RemoteUserBackend and JSONHeaderRemoteAuthentication are enabled",
 )
