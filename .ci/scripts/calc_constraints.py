@@ -7,11 +7,12 @@
 
 import argparse
 import fileinput
-import urllib.request
 import sys
+from urllib.request import urlopen, Request
 from packaging.requirements import Requirement
 from packaging.version import Version
-import yaml
+from packaging.utils import canonicalize_name
+import json
 
 try:
     import tomllib
@@ -19,20 +20,38 @@ except ImportError:
     import tomli as tomllib
 
 
-CORE_TEMPLATE_URL = "https://raw.githubusercontent.com/pulp/pulpcore/main/template_config.yml"
+PYPI_URL = "https://pypi.org/simple/{canonical_name}/"
 
 
-def fetch_pulpcore_upper_bound(requirement):
-    with urllib.request.urlopen(CORE_TEMPLATE_URL) as f:
-        template = yaml.safe_load(f.read())
-    supported_versions = template["supported_release_branches"]
-    supported_versions.append(template["latest_release_branch"])
-    applicable_versions = sorted(
-        requirement.specifier.filter((Version(v) for v in supported_versions))
+def fetch_package_versions(name):
+    canonical_name = canonicalize_name(name, validate=True)
+    with urlopen(
+        Request(
+            PYPI_URL.format(canonical_name=canonical_name),
+            headers={"Accept": "application/vnd.pypi.simple.v1+json"},
+        )
+    ) as f:
+        data = json.load(f)
+    versions = sorted(
+        (
+            Version(v)
+            for v in data["versions"]
+            if all(
+                (
+                    f["yanked"] is False
+                    for f in data["files"]
+                    if f["filename"].startswith(f"{data['name']}-{v}")
+                )
+            )
+        )
     )
-    if len(applicable_versions) == 0:
-        raise Exception("No supported pulpcore version in required range.")
-    return f"{requirement.name}~={applicable_versions[-1]}"
+    return versions
+
+
+def applicable_versions(requirement):
+    return sorted(
+        (v for v in fetch_package_versions(requirement.name) if v in requirement.specifier)
+    )
 
 
 def split_comment(line):
@@ -50,29 +69,8 @@ def to_upper_bound(req):
     except ValueError:
         return f"# UNPARSABLE: {req}"
     else:
-        if requirement.name == "pulpcore":
-            # An exception to allow for pulpcore deprecation policy.
-            return fetch_pulpcore_upper_bound(requirement)
-        for spec in requirement.specifier:
-            if spec.operator == "~=":
-                return f"# NO BETTER CONSTRAINT: {req}"
-            if spec.operator == "<=":
-                operator = "=="
-                max_version = spec.version
-                return f"{requirement.name}{operator}{max_version}"
-            if spec.operator == "<":
-                operator = "~="
-                version = Version(spec.version)
-                if version.micro != 0:
-                    max_version = f"{version.major}.{version.minor}.{version.micro - 1}"
-                elif version.minor != 0:
-                    max_version = f"{version.major}.{version.minor - 1}"
-                elif version.major != 0:
-                    max_version = f"{version.major - 1}.0"
-                else:
-                    return f"# NO BETTER CONSTRAINT: {req}"
-                return f"{requirement.name}{operator}{max_version}"
-        return f"# NO UPPER BOUND: {req}"
+        max_version = applicable_versions(requirement)[-1]
+        return f"{requirement.name}=={max_version}"
 
 
 def to_lower_bound(req):
