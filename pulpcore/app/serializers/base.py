@@ -564,7 +564,7 @@ class SetLabelSerializer(serializers.Serializer):
 
 class UnsetLabelSerializer(serializers.Serializer):
     """
-    Serializer for synchronously setting a label.
+    Serializer for synchronously UNsetting a label.
     """
 
     key = serializers.SlugField(required=True)
