@@ -542,6 +542,9 @@ class Content(MasterModel, QueryMixin):
     class Meta:
         verbose_name_plural = "content"
         unique_together = ()
+        permissions = [
+            ("manage_content_labels", "Can manage content-labels"),
+        ]
 
     @classmethod
     def repository_types(cls):

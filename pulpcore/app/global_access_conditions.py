@@ -493,6 +493,9 @@ def has_required_repo_perms_on_upload(request, view, action, permission):
     also checks to make sure that any user that isn't an admin has also supplied the ``repository``
     parameter when performing a content upload.
 
+    In addition, if the user has specified labels with this content, make sure they are allowed
+    to do so by looking for the "core.manage_labels" permission if the action is "create".
+
     This is usable as a conditional check in an AccessPolicy for content uploads. Here is an
     example checking for the "file.modify_filerepository" permission.
 
@@ -515,20 +518,45 @@ def has_required_repo_perms_on_upload(request, view, action, permission):
         True if the user has supplied the ``repository`` parameter and has the Permission on it
             named by the ``permission`` argument, or is an admin. False otherwise.
     """
+
+    def _forbidden_labels():
+        "Return true if we're creating, specifying labels, and DO NOT HAVE labeling-permissions."
+        if action == "create" and request.data.get("pulp_labels"):
+            return not has_model_or_domain_perms(
+                request, view, action, "core.manage_content_labels"
+            )
+        else:
+            return False
+
+    # Superuser can do anything
     if request.user.is_superuser:
         return True
+
+    # Check incoming data is valid, raise if not
     obj = view.get_object() if view.detail else None
     serializer = view.serializer_class(
         instance=obj, data=request.data, context={"request": request}
     )
     serializer.is_valid(raise_exception=True)
+
+    # Check repository-specified
     if repository := serializer.validated_data.get("repository"):
-        if has_model_or_domain_perms(request, view, action, permission):
+        # Check create/labels/permission
+        if _forbidden_labels():
+            # We raise here rather than just returning False in order to give a more detailed
+            # response than a simple 403
+            raise ValidationError(
+                _(
+                    "pulp_labels cannot be specified by users who do not have "
+                    "the core.manage_labels permission."
+                )
+            )
+        elif has_model_or_domain_perms(request, view, action, permission):
             return True
-        return request.user.has_perm(permission, repository)
-    if not request.user.is_superuser and not repository:
+        else:
+            return request.user.has_perm(permission, repository)
+    else:  # not superuser, no repository
         raise ValidationError(_("Destination upload repository was not provided."))
-    return False
 
 
 def has_publication_param_model_or_domain_or_obj_perms(request, view, action, permission):
