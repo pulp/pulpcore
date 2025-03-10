@@ -195,6 +195,10 @@ class ListContentViewSet(BaseContentViewSet, mixins.ListModelMixin):
         ],
         "queryset_scoping": {"function": "scope_queryset"},
     }
+    LOCKED_ROLES = {
+        # Even with this role, can only label content user has access to
+        "core.content_labeler": ["core.manage_content_labels"],
+    }
 
     @classmethod
     def routable(cls):
@@ -214,7 +218,9 @@ class ContentViewSet(
     """
 
 
-class ReadOnlyContentViewSet(BaseContentViewSet, mixins.RetrieveModelMixin, mixins.ListModelMixin):
+class ReadOnlyContentViewSet(
+    BaseContentViewSet, mixins.RetrieveModelMixin, mixins.ListModelMixin, LabelsMixin
+):
     """
     Content viewset that supports only GET by default.
     """
