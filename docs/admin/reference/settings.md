@@ -5,14 +5,15 @@ settings.
 
 - `SECRET_KEY <secret-key-setting>`
 
-!!! note
-    For more information on how to specify settings see the [`Applying Settings`](#).
-
 Pulp uses three types of settings:
 
 - `Django settings` Pulp is configuring
 - `Redis settings` Pulp is using
 - `Pulp defined settings`
+
+!!! note
+    For more information on how to specify settings see the
+    [`Applying Settings`](site:pulpcore/docs/admin/guides/configure-pulp/).
 
 ## Django Settings
 
