@@ -74,6 +74,14 @@ def test_full_workflow(
         url = urljoin(distro_base_url, file)
         assert (200, "HIT" if i % 2 == 1 else "MISS") == _check_cache(url), file
 
+    # Check that creating a new publication manually invalidates the cache
+    body = FileFilePublication(repository=repo.pulp_href)
+    monitor_task(file_bindings.PublicationsFileApi.create(body).task)
+    files = ["", "", "PULP_MANIFEST", "PULP_MANIFEST", "1.iso", "1.iso"]
+    for i, file in enumerate(files):
+        url = urljoin(distro_base_url, file)
+        assert (200, "HIT" if i % 2 == 1 else "MISS") == _check_cache(url), file
+
     # Add a new distribution and check that its responses are cached separately
     distro2 = file_distribution_factory(repository=repo.pulp_href)
     distro2_base_url = distribution_base_url(distro2.base_url)
