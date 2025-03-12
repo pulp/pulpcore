@@ -230,8 +230,7 @@ class Publication(MasterModel):
                     repository=self.repository_version.repository
                 ).values_list("base_path", flat=True)
                 if base_paths:
-                    base_keys = [f"{self.pulp_domain.name}:{base_path}" for base_path in base_paths]
-                    Cache().delete(base_key=base_keys)
+                    Cache().delete(base_key=cache_key(base_paths))
 
 
 class PublishedArtifact(BaseModel):
