@@ -1130,7 +1130,7 @@ class RepositoryVersion(BaseModel):
             if settings.CACHE_ENABLED:
                 base_paths = self.distribution_set.values_list("base_path", flat=True)
                 if base_paths:
-                    Cache().delete(base_key=base_paths)
+                    Cache().delete(base_key=cache_key(base_paths))
 
             # Handle the manipulation of the repository version content and its final deletion in
             # the same transaction.
