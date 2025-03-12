@@ -214,7 +214,9 @@ class ContentViewSet(
     """
 
 
-class ReadOnlyContentViewSet(BaseContentViewSet, mixins.RetrieveModelMixin, mixins.ListModelMixin):
+class ReadOnlyContentViewSet(
+    BaseContentViewSet, mixins.RetrieveModelMixin, mixins.ListModelMixin, LabelsMixin
+):
     """
     Content viewset that supports only GET by default.
     """
