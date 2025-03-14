@@ -119,21 +119,27 @@ def checkpoint_publication_2(repo_version_3, noncheckpoint_publication):
 def test_save_artifact(c1, ra1, download_result_mock):
     """Artifact needs to be created."""
     handler = Handler()
-    new_artifact = handler._save_artifact(download_result_mock, ra1)
+    content_artifacts = handler._save_artifact(download_result_mock, ra1)
     c1 = Content.objects.get(pk=c1.pk)
-    assert new_artifact is not None
-    assert c1._artifacts.get().pk == new_artifact.pk
+    assert content_artifacts is not None
+    assert ra1.content_artifact.relative_path in content_artifacts
+    artifact = content_artifacts[ra1.content_artifact.relative_path].artifact
+    assert c1._artifacts.get().pk == artifact.pk
 
 
 def test_save_artifact_artifact_already_exists(c2, ra1, ra2, download_result_mock):
     """Artifact turns out to already exist."""
     cch = Handler()
-    new_artifact = cch._save_artifact(download_result_mock, ra1)
+    new_content_artifacts = cch._save_artifact(download_result_mock, ra1)
 
-    existing_artifact = cch._save_artifact(download_result_mock, ra2)
+    existing_content_artifacts = cch._save_artifact(download_result_mock, ra2)
     c2 = Content.objects.get(pk=c2.pk)
-    assert existing_artifact.pk == new_artifact.pk
-    assert c2._artifacts.get().pk == existing_artifact.pk
+    assert ra1.content_artifact.relative_path in new_content_artifacts
+    assert ra2.content_artifact.relative_path in existing_content_artifacts
+    new_artifact = new_content_artifacts[ra1.content_artifact.relative_path]
+    existing_artifact = existing_content_artifacts[ra2.content_artifact.relative_path]
+    assert new_artifact.artifact.pk == existing_artifact.artifact.pk
+    assert c2._artifacts.get().pk == existing_artifact.artifact.pk
 
 
 # Test pull through features
@@ -176,9 +182,15 @@ async def create_remote_artifact(remote, ca):
     )
 
 
-async def create_distribution(remote):
+async def create_repository():
+    return await Repository.objects.acreate(name=str(uuid.uuid4()))
+
+
+async def create_distribution(remote, repository=None):
     name = str(uuid.uuid4())
-    return await Distribution.objects.acreate(name=name, base_path=name, remote=remote)
+    return await Distribution.objects.acreate(
+        name=name, base_path=name, remote=remote, repository=repository
+    )
 
 
 @pytest.mark.asyncio
@@ -285,7 +297,8 @@ def test_pull_through_save_single_artifact_content(
     ra = RemoteArtifact(url=f"{remote123.url}/c123", remote=remote123, content_artifact=ca)
 
     # Content is saved during handler._save_artifact
-    artifact = handler._save_artifact(download_result_mock, ra, request=request123)
+    content_artifacts = handler._save_artifact(download_result_mock, ra, request=request123)
+    artifact = content_artifacts[ra.content_artifact.relative_path].artifact
 
     remote123.get_remote_artifact_content_type.assert_called_once_with("c123")
     content_init_mock.assert_called_once_with(artifact, "c123")
@@ -319,14 +332,16 @@ def test_pull_through_save_multi_artifact_content(
     ca = ContentArtifact(relative_path="c123")
     ra = RemoteArtifact(url=f"{remote123.url}/c123", remote=remote123, content_artifact=ca)
 
-    artifact = handler._save_artifact(download_result_mock, ra, request123)
+    content_artifacts = handler._save_artifact(download_result_mock, ra, request123)
+    ca1 = content_artifacts["c123"]
+    ca2 = content_artifacts["c123abc"]
+    assert ca1.content is not None
+    assert ca2.content == ca1.content
+    assert ca1.artifact == artifact123
 
-    ca = artifact.content_memberships.first()
-    assert ca.content is not None
-
-    artifacts = set(ca.content._artifacts.all())
+    artifacts = set(ca1.content._artifacts.all())
     assert len(artifacts) == 2
-    assert {artifact, artifact123} == artifacts
+    assert {ca2.artifact, artifact123} == artifacts
 
 
 @pytest.mark.django_db
@@ -446,3 +461,41 @@ def test_handle_checkpoint_before_first_ts(
     )
     with pytest.raises(PathNotResolved):
         Handler._select_checkpoint_publication(checkpoint_distribution, f"{request_ts}/")
+
+
+@pytest.mark.asyncio
+@pytest.mark.django_db
+async def test_pull_through_repository_add(request123, monkeypatch):
+    """Test that repository adding is called when supported."""
+    handler = Handler()
+    handler._stream_content_artifact = AsyncMock()
+
+    content = await create_content()
+    ca = await create_content_artifact(content)
+    remote = await create_remote()
+    await create_remote_artifact(remote, ca)
+    repo = await create_repository()
+    monkeypatch.setattr(Remote, "get_remote_artifact_content_type", Mock(return_value=Content))
+    monkeypatch.setattr(Repository, "pull_through_add_content", Mock())
+    distro = await create_distribution(remote, repository=repo)
+
+    try:
+        # Assert with Repository.PULL_THROUGH_SUPPORTED=False the method isn't called
+        await handler._match_and_stream(f"{distro.base_path}/c123", request123)
+        handler._stream_content_artifact.assert_called_once()
+        assert ca in handler._stream_content_artifact.call_args[0]
+        repo.pull_through_add_content.assert_not_called()
+
+        # Now set PULL_THROUGH_SUPPORTED=True and see the method is called with CA
+        monkeypatch.setattr(Repository, "PULL_THROUGH_SUPPORTED", True)
+        handler._stream_content_artifact.reset_mock()
+        await handler._match_and_stream(f"{distro.base_path}/c123", request123)
+        handler._stream_content_artifact.assert_called_once()
+        assert ca in handler._stream_content_artifact.call_args[0]
+        repo.pull_through_add_content.assert_called_once()
+        assert ca in repo.pull_through_add_content.call_args[0]
+    finally:
+        await content.adelete()
+        await repo.adelete()
+        await remote.adelete()
+        await distro.adelete()
