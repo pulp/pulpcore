@@ -1,5 +1,8 @@
 from gettext import gettext as _
 
+from django.conf import settings
+
+
 from rest_framework import fields, serializers
 
 from pulpcore.app.models import Content
@@ -21,6 +24,8 @@ class OrphansCleanupSerializer(serializers.Serializer, ValidateFieldsMixin):
         ),
         allow_null=True,
         required=False,
+        min_value=settings.ORPHAN_PROTECTION_TIME_LOWER_BOUND,
+        max_value=settings.ORPHAN_PROTECTION_TIME_UPPER_BOUND,
     )
 
     def validate_content_hrefs(self, value):

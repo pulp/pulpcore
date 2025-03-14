@@ -291,6 +291,9 @@ TASK_GRACE_INTERVAL = 600
 
 # how long to protect ephemeral items in minutes
 ORPHAN_PROTECTION_TIME = 24 * 60
+# allowed range for the ORPHAN_PROTECTION_TIME value in minutes
+ORPHAN_PROTECTION_TIME_LOWER_BOUND = 0
+ORPHAN_PROTECTION_TIME_UPPER_BOUND = 525600  # 365 days
 
 # Custom cleanup intervals
 # for the following, if set to 0, the corresponding cleanup task is disabled
