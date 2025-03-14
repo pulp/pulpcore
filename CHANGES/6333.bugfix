@@ -1,1 +1,0 @@
-Fixed cache not being invalidated when a publication was created or a repository version was deleted.
