@@ -8,6 +8,36 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.73.2 (2025-03-14) {: #3.73.2 }
+
+### REST API {: #3.73.2-rest-api }
+
+#### Bugfixes {: #3.73.2-rest-api-bugfix }
+
+- Fixed cache not being invalidated when a publication was created or a repository version was deleted.
+  [#6333](https://github.com/pulp/pulpcore/issues/6333)
+- Reworked content-labeling RBAC to use a specific permission for set/unset labels.
+
+  Users must be explicitly given the `core.content_labeler` role to access this
+  functionality, or to upload content with labels.
+  [#6337](https://github.com/pulp/pulpcore/issues/6337)
+- Fixed a bug in the plugin API related to set and unset labels for ReadOnlyContentViewSet.
+  [#6340](https://github.com/pulp/pulpcore/issues/6340)
+
+### Plugin API {: #3.73.2-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.73.2-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.73.2-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.73.1 (2025-03-06) {: #3.73.1 }
 
 ### REST API {: #3.73.1-rest-api }
