@@ -2,6 +2,7 @@
 
 import os
 import pytest
+from pydantic import ValidationError
 
 
 def test_content_orphan_filter(
@@ -158,3 +159,36 @@ def test_cleanup_specific_orphans(
     with pytest.raises(pulpcore_bindings.ApiException) as exc:
         pulpcore_bindings.OrphansCleanupApi.cleanup(content_hrefs_dict)
     assert exc.value.status == 400
+
+
+def test_orphans_cleanup_restriction(
+    pulpcore_bindings,
+    file_bindings,
+    file_random_content_unit,
+    pulp_settings,
+):
+    """
+    Test that orphans cleanup fails if the "orphan_protection_time" value is not in the range
+    defined by ORPHAN_PROTECTION_TIME_LOWER_BOUND and ORPHAN_PROTECTION_TIME_UPPER_BOUND.
+    """
+    settings = pulp_settings
+
+    # Verify that the system contains the orphan content unit
+    content_unit = file_bindings.ContentFilesApi.read(file_random_content_unit.pulp_href)
+
+    if settings.STORAGES["default"]["BACKEND"] == "pulpcore.app.models.storage.FileSystem":
+        # Verify that the orphan content unit is on disk
+        relative_path = pulpcore_bindings.ArtifactsApi.read(content_unit.artifact).file
+        artifact_path = os.path.join(pulp_settings.MEDIA_ROOT, relative_path)
+        assert os.path.exists(artifact_path) is True
+
+    # Assert that the cleanup of content unit fails due to the wrong "orphan_protection_time" value
+    with pytest.raises((pulpcore_bindings.ApiException, ValidationError)) as exc1:
+        pulpcore_bindings.OrphansCleanupApi.cleanup({"orphan_protection_time": 525601})
+    if isinstance(exc1, pulpcore_bindings.ApiException):
+        assert exc1.value.status == 400
+
+    with pytest.raises((pulpcore_bindings.ApiException, ValidationError)) as exc2:
+        pulpcore_bindings.OrphansCleanupApi.cleanup({"orphan_protection_time": -1})
+    if isinstance(exc2, pulpcore_bindings.ApiException):
+        assert exc2.value.status == 400

@@ -433,6 +433,22 @@ up before the task finishes. Default is 1440 minutes (24 hours).
 
 
 
+### ORPHAN_PROTECTION_TIME_LOWER_BOUND
+
+The minimal allowed value for `ORPHAN_PROTECTION_TIME`.
+
+Defaults to `0` minutes.
+
+
+
+### ORPHAN_PROTECTION_TIME_UPPER_BOUND
+
+The maximal allowed value for `ORPHAN_PROTECTION_TIME`.
+
+Defaults to `525600` minutes (365 days).
+
+
+
 ### UPLOAD_PROTECTION_TIME, TMPFILE_PROTECTION_TIME and TASK_PROTECTION_TIME
 
 Pulp uses `tasks`, `uploads` and `pulp temporary files` to pass data from the api to worker tasks.
