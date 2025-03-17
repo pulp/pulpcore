@@ -4,6 +4,10 @@ from rest_framework import fields, serializers
 
 from pulpcore.app.models import Content
 from pulpcore.app.serializers import ValidateFieldsMixin
+from pulpcore.constants import (
+    ORPHAN_PROTECTION_TIME_LOWER_BOUND,
+    ORPHAN_PROTECTION_TIME_UPPER_BOUND,
+)
 
 
 class OrphansCleanupSerializer(serializers.Serializer, ValidateFieldsMixin):
@@ -21,6 +25,8 @@ class OrphansCleanupSerializer(serializers.Serializer, ValidateFieldsMixin):
         ),
         allow_null=True,
         required=False,
+        min_value=ORPHAN_PROTECTION_TIME_LOWER_BOUND,
+        max_value=ORPHAN_PROTECTION_TIME_UPPER_BOUND,
     )
 
     def validate_content_hrefs(self, value):

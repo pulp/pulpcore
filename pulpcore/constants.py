@@ -120,3 +120,8 @@ PROTECTED_REPO_VERSION_MESSAGE = _(
 
 # Valid timestamp format for checkpoint distribution paths.
 CHECKPOINT_TS_FORMAT = "%Y%m%dT%H%M%SZ"
+
+# Allowed range for the ORPHAN_PROTECTION_TIME value in minutes
+# The upper boundary represents an unsigned 32-bit integer and prevents overflow
+ORPHAN_PROTECTION_TIME_LOWER_BOUND = 0
+ORPHAN_PROTECTION_TIME_UPPER_BOUND = 4294967295  # (2^32)-1
