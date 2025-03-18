@@ -8,6 +8,30 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.49.34 (2025-03-18) {: #3.49.34 }
+
+### REST API {: #3.49.34-rest-api }
+
+#### Bugfixes {: #3.49.34-rest-api-bugfix }
+
+- Fixed cache not being invalidated when a publication was created or a repository version was deleted.
+  [#6333](https://github.com/pulp/pulpcore/issues/6333)
+- The Alternate Content Source sync feature has received some optimizations, making it dramatically faster.
+
+### Plugin API {: #3.49.34-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.49.34-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.49.34-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.49.33 (2025-03-03) {: #3.49.33 }
 
 ### REST API {: #3.49.33-rest-api }
