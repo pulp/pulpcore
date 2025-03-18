@@ -52,6 +52,7 @@ def wakeup_worker():
 
 
 def execute_task(task):
+    # This extra stack is needed to isolate the current_task ContextVar
     contextvars.copy_context().run(_execute_task, task)
 
 
@@ -69,27 +70,29 @@ def _execute_task(task):
         func = getattr(module, function_name)
         args = task.enc_args or ()
         kwargs = task.enc_kwargs or {}
-        result = func(*args, **kwargs)
         immediate = task.immediate
-        is_coroutine = asyncio.iscoroutine(result)
+        is_coroutine_fn = asyncio.iscoroutinefunction(func)
 
-        if immediate is True and not is_coroutine:
-            deprecation_logger.warning(
-                _(
-                    "Immediate tasks must be coroutine functions."
-                    "Support for non-coroutine immediate tasks will be dropped in pulpcore 3.85."
-                )
-            )
-            result = sync_to_async(func)
-            is_coroutine = True
-
-        if is_coroutine:
-            _logger.debug(_("Task is coroutine %s"), task.pk)
+        if not is_coroutine_fn:
             if immediate:
-                coro = asyncio.wait_for(result, timeout=IMMEDIATE_TIMEOUT)
+                deprecation_logger.warning(
+                    _(
+                        "Immediate tasks must be coroutine functions."
+                        "Support for non-coroutine immediate tasks will be dropped"
+                        "in pulpcore 3.85."
+                    )
+                )
+                func = sync_to_async(func)
+                is_coroutine_fn = True
             else:
-                coro = result
+                func(*args, **kwargs)
 
+        if is_coroutine_fn:
+            _logger.debug(_("Task is coroutine %s"), task.pk)
+            coro = func(*args, **kwargs)
+            if immediate:
+                coro = asyncio.wait_for(coro, timeout=IMMEDIATE_TIMEOUT)
+            assert asyncio.iscoroutine(coro), coro
             loop = asyncio.get_event_loop()
             try:
                 loop.run_until_complete(coro)
