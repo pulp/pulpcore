@@ -8,6 +8,20 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.39.26 (2025-03-18) {: #3.39.26 }
+
+### REST API {: #3.39.26-rest-api }
+
+#### Bugfixes {: #3.39.26-rest-api-bugfix }
+
+- The Alternate Content Source sync feature has received some optimizations, making it dramatically faster.
+
+### Plugin API {: #3.39.26-plugin-api }
+
+No significant changes.
+
+---
+
 ## 3.39.25 (2025-01-08) {: #3.39.25 }
 
 ### REST API {: #3.39.25-rest-api }
