@@ -69,7 +69,7 @@ class DomainViewSet(
                 "condition": "has_model_or_obj_perms:core.view_domain",
             },
             {
-                "action": ["update", "partial_update", "migrate"],
+                "action": ["update", "partial_update", "migrate", "set_label", "unset_label"],
                 "principal": "authenticated",
                 "effect": "allow",
                 "condition": "has_model_or_obj_perms:core.change_domain",
