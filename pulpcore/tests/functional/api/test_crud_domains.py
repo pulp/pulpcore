@@ -330,3 +330,20 @@ def test_filter_domains_by_label(pulpcore_bindings, domain_factory):
     # Filter by non-existent label
     domains = pulpcore_bindings.DomainsApi.list(pulp_label_select="key_c").results
     assert len(domains) == 0
+
+
+@pytest.mark.parallel
+def test_set_label_on_domain(pulpcore_bindings, domain_factory, gen_user):
+    """Test setting a label on a domain."""
+    domain = domain_factory()
+    response = pulpcore_bindings.DomainsApi.set_label(
+        domain.pulp_href, {"key": "abc", "value": "def"}
+    )
+    assert response.key == "abc"
+    assert response.value == "def"
+
+    user = gen_user(object_roles=[("core.domain_owner", domain.pulp_href)])
+    with user:
+        response = pulpcore_bindings.DomainsApi.unset_label(domain.pulp_href, {"key": "abc"})
+        assert response.key == "abc"
+        assert response.value == "def"
