@@ -1,1 +1,0 @@
-Fixed a bug in the plugin API related to set and unset labels for ReadOnlyContentViewSet.

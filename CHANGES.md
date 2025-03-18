@@ -8,6 +8,59 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.74.0 (2025-03-18) {: #3.74.0 }
+
+### REST API {: #3.74.0-rest-api }
+
+#### Features {: #3.74.0-rest-api-feature }
+
+- Added validation to the `orphans/cleanup/` endpoint to restrict the `orphan_protection_time` value.
+  [#3234](https://github.com/pulp/pulpcore/issues/3234)
+- Added support to create and distribute checkpoint publications in Pulp.
+  [#6244](https://github.com/pulp/pulpcore/issues/6244)
+
+#### Bugfixes {: #3.74.0-rest-api-bugfix }
+
+- Fixed cache not being invalidated when a publication was created or a repository version was deleted.
+  [#6333](https://github.com/pulp/pulpcore/issues/6333)
+- Reworked content-labeling RBAC to use a specific permission for set/unset labels.
+
+  Users must be explicitly given the `core.content_labeler` role to access this
+  functionality, or to upload content with labels.
+  [#6337](https://github.com/pulp/pulpcore/issues/6337)
+- Fixed a bug in the plugin API related to set and unset labels for ReadOnlyContentViewSet.
+  [#6340](https://github.com/pulp/pulpcore/issues/6340)
+- Fixed not being able to call the set/unset label endpoints for domains.
+- Reverted the feature to allow describing remote authentication in the openapi specs. It depended on the also reverted switch to openapi 3.1.
+
+### Plugin API {: #3.74.0-plugin-api }
+
+#### Features {: #3.74.0-plugin-api-feature }
+
+- Added ability for plugins to dispatch a task to add pull-through content to an associated repository.
+
+  Add the class var `PULL_THROUGH_SUPPORTED = True` to the plugin's repository model to enable this
+  feature. Plugins can also customize the dispatched task by supplying their own
+  `pull_through_add_content` method on their repository model.
+  [#6201](https://github.com/pulp/pulpcore/issues/6201)
+- Added support to create and distribute checkpoint publications in Pulp.
+  Plugins can choose to enable this feature by exposing the checkpoint field in their inherited PublicationSerializer and DistributionSerializer.
+  Checkpoint publications and distributions can be created by passing checkpoint=True when creating them.
+  [#6244](https://github.com/pulp/pulpcore/issues/6244)
+
+### Pulp File {: #3.74.0-pulp-file }
+
+#### Features {: #3.74.0-pulp-file-feature }
+
+- Added support to create checkpoint file publications and distribute them through checkpoint file distributions.
+  [#6244](https://github.com/pulp/pulpcore/issues/6244)
+
+### Pulp Cert Guard {: #3.74.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.73.2 (2025-03-14) {: #3.73.2 }
 
 ### REST API {: #3.73.2-rest-api }

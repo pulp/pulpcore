@@ -1,4 +1,0 @@
-Reworked content-labeling RBAC to use a specific permission for set/unset labels.
-
-Users must be explicitly given the `core.content_labeler` role to access this
-functionality, or to upload content with labels.
