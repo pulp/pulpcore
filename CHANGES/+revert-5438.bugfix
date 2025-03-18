@@ -1,1 +1,0 @@
-Reverted the feature to allow describing remote authentication in the openapi specs. It depended on the also reverted switch to openapi 3.1.
