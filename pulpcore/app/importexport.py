@@ -53,7 +53,7 @@ def _write_export(the_tarfile, resource, dest_dir=None):
             def process_batch(batch):
                 model = resource.queryset.model
                 queryset = model.objects.filter(pk__in=batch)
-                dataset = resource.export(queryset)
+                dataset = resource.export(queryset=queryset)
                 # Strip "[" and "]" as we are writing the dataset in batch
                 temp_file.write(dataset.json.lstrip("[").rstrip("]"))
 
