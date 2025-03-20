@@ -112,7 +112,6 @@ class YourModelViewSet(NamedModelViewSet, ListModelMixin, RetrieveModelMixin):
 For domain-enabled APIs that need async operations:
 
 ```python
-@shared_task(base=Task, bind=True)
 def your_async_task(self, param1):
     """
     Process data asynchronously.
