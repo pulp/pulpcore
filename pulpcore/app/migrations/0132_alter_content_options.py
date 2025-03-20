@@ -6,7 +6,7 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("core", "0131_distribution_checkpoint_publication_checkpoint"),
+        ("core", "0130_upstreampulp_policy"),
     ]
 
     operations = [

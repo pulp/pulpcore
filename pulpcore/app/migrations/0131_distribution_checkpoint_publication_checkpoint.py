@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("core", "0130_upstreampulp_policy"),
+        ("core", "0132_alter_content_options"),
     ]
 
     operations = [
