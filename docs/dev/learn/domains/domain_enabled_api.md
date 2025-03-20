@@ -1,10 +1,10 @@
-# Creating Domain-Enabled APIs in Pulp Service
+# Creating Domain-Enabled APIs
 
-This document outlines the components and patterns needed to create a domain-enabled API in the Pulp Service platform, using the AnsibleLogReport implementation as a reference example.
+This document outlines the components and patterns needed to create a domain-enabled API in the Pulp platform
 
 ## 1. Model Configuration
 
-### Required Components
+### Steps
 
 - Inherit from `BaseModel` to get standard Pulp fields and behaviors
 - Include a `pulp_domain` foreign key field to associate records with specific domains
@@ -29,7 +29,7 @@ class YourDomainEnabledModel(BaseModel):
 
 ## 2. Serializer Configuration
 
-### Required Components
+### Instructions
 
 - Inherit from `ModelSerializer` to get standard Pulp serialization behavior
 - Include an `IdentityField` for proper HREF generation
@@ -55,7 +55,7 @@ class YourModelSerializer(ModelSerializer):
 
 ## 3. ViewSet Configuration
 
-### Required Components
+### Instructions
 
 - Inherit from `NamedModelViewSet` for standard CRUD operations
 - Include mixins for specific operations (ListModelMixin, RetrieveModelMixin, etc.)
@@ -68,14 +68,14 @@ class YourModelSerializer(ModelSerializer):
 By including the standard Django REST Framework mixins, you get working endpoints without writing additional code:
 
 - **ListModelMixin**: Automatically implements the `.list()` method, handling GET requests to the collection endpoint (`/api/pulp/your-endpoint-name/`). This provides:
-  - Automatic pagination
-  - Domain-aware filtering (objects only from the current domain)
-  - Serialization of results using your serializer class
+    - Automatic pagination
+    - Domain-aware filtering (objects only from the current domain)
+    - Serialization of results using your serializer class
 
 - **RetrieveModelMixin**: Automatically implements the `.retrieve()` method, handling GET requests to detail endpoints (`/api/pulp/your-endpoint-name/{uuid}/`). This provides:
-  - Automatic lookup by UUID (pulp_id)
-  - Domain-aware object retrieval
-  - 404 responses for objects that don't exist or are in other domains
+    - Automatic lookup by UUID (pulp_id)
+    - Domain-aware object retrieval
+    - 404 responses for objects that don't exist or are in other domains
 
 Simply by including these mixins and setting up the proper `queryset` and `serializer_class`, your API gains functional list and detail views with proper domain isolation.
 
@@ -165,9 +165,9 @@ class YourModelViewSet(NamedModelViewSet, ListModelMixin, RetrieveModelMixin):
 3. **Serialization**: Ensure proper serialization of domain-specific data
 4. **Task Dispatching**: Use the Pulp task system for async operations
 
-## Complete Example: AnsibleLogReport
+## Complete Example: 
 
-The AnsibleLogReport implementation demonstrates these patterns:
+The implementation demonstrates these patterns:
 
 - **Model**: Has `pulp_domain` field to associate reports with domains
 - **Serializer**: Exposes domain-specific fields and proper HREF generation
