@@ -72,7 +72,7 @@ By including the standard Django REST Framework mixins, you get working endpoint
     - Domain-aware filtering (objects only from the current domain)
     - Serialization of results using your serializer class
 
-- **RetrieveModelMixin**: Automatically implements the `.retrieve()` method, handling GET requests to detail endpoints (`/api/pulp/your-endpoint-name/{uuid}/`). This provides:
+- **RetrieveModelMixin**: Automatically implements the `.retrieve()` method, handling GET requests to detail endpoints (`/pulp/{domain}/api/v3/your-endpoint-name/{uuid}/`). This provides:
     - Automatic lookup by UUID (pulp_id)
     - Domain-aware object retrieval
     - 404 responses for objects that don't exist or are in other domains
