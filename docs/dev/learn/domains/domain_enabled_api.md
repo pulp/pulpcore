@@ -67,7 +67,7 @@ class YourModelSerializer(ModelSerializer):
 
 By including the standard Django REST Framework mixins, you get working endpoints without writing additional code:
 
-- **ListModelMixin**: Automatically implements the `.list()` method, handling GET requests to the collection endpoint (`/api/pulp/your-endpoint-name/`). This provides:
+- **ListModelMixin**: Automatically implements the `.list()` method, handling GET requests to the collection endpoint (`/pulp/{domain}/api/v3/your-endpoint-name/`). This provides:
     - Automatic pagination
     - Domain-aware filtering (objects only from the current domain)
     - Serialization of results using your serializer class
