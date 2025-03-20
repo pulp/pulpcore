@@ -57,7 +57,7 @@ class YourModelSerializer(ModelSerializer):
 
 ### Instructions
 
-- Inherit from `NamedModelViewSet` for standard CRUD operations
+- Inherit from `NamedModelViewSet` for correct Pulp behavior (routing, permissions, domain scoping)
 - Include mixins for specific operations (ListModelMixin, RetrieveModelMixin, etc.)
 - Set `endpoint_name` for API URL generation
 - Set `queryset` and `serializer_class`
