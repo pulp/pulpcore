@@ -57,7 +57,7 @@ class YourModelSerializer(ModelSerializer):
 
 ### Instructions
 
-- Inherit from `NamedModelViewSet` for standard CRUD operations
+- Inherit from `NamedModelViewSet` for correct Pulp behavior (routing, permissions, domain scoping)
 - Include mixins for specific operations (ListModelMixin, RetrieveModelMixin, etc.)
 - Set `endpoint_name` for API URL generation
 - Set `queryset` and `serializer_class`
@@ -67,12 +67,12 @@ class YourModelSerializer(ModelSerializer):
 
 By including the standard Django REST Framework mixins, you get working endpoints without writing additional code:
 
-- **ListModelMixin**: Automatically implements the `.list()` method, handling GET requests to the collection endpoint (`/api/pulp/your-endpoint-name/`). This provides:
+- **ListModelMixin**: Automatically implements the `.list()` method, handling GET requests to the collection endpoint (`/pulp/{domain}/api/v3/your-endpoint-name/`). This provides:
     - Automatic pagination
     - Domain-aware filtering (objects only from the current domain)
     - Serialization of results using your serializer class
 
-- **RetrieveModelMixin**: Automatically implements the `.retrieve()` method, handling GET requests to detail endpoints (`/api/pulp/your-endpoint-name/{uuid}/`). This provides:
+- **RetrieveModelMixin**: Automatically implements the `.retrieve()` method, handling GET requests to detail endpoints (`/pulp/{domain}/api/v3/your-endpoint-name/{uuid}/`). This provides:
     - Automatic lookup by UUID (pulp_id)
     - Domain-aware object retrieval
     - 404 responses for objects that don't exist or are in other domains
@@ -112,7 +112,6 @@ class YourModelViewSet(NamedModelViewSet, ListModelMixin, RetrieveModelMixin):
 For domain-enabled APIs that need async operations:
 
 ```python
-@shared_task(base=Task, bind=True)
 def your_async_task(self, param1):
     """
     Process data asynchronously.
@@ -145,8 +144,8 @@ With `NamedModelViewSet`, URL registration happens automatically:
 - URLs are registered automatically when Pulp starts up
 
 For example, a ViewSet with `endpoint_name = 'your-endpoint-name'` will automatically be available at:
-- `GET /api/pulp/{domain-name}/your-endpoint-name/` (list endpoint)
-- `GET /api/pulp/{domain-name}/your-endpoint-name/{uuid}/` (detail endpoint)
+- `GET /pulp/{domain-name}/api/v3/your-endpoint-name/` (list endpoint)
+- `GET /pulp/{domain-name}/api/v3/your-endpoint-name/{uuid}/` (detail endpoint)
 - Other HTTP methods as defined by your included mixins
 
 This automatic URL registration is a key advantage of using the Pulp platform and `NamedModelViewSet`.
