@@ -8,6 +8,29 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.74.1 (2025-03-20) {: #3.74.1 }
+
+### REST API {: #3.74.1-rest-api }
+
+#### Bugfixes {: #3.74.1-rest-api-bugfix }
+
+- Fixed miigrations 0131 and 0132 to make it possible to upgrade from 3.73.
+  [#6375](https://github.com/pulp/pulpcore/issues/6375)
+
+### Plugin API {: #3.74.1-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.74.1-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.74.1-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.74.0 (2025-03-18) {: #3.74.0 }
 
 ### REST API {: #3.74.0-rest-api }
