@@ -124,6 +124,7 @@ def your_async_task(self, param1):
     """
     # Your task implementation
     # Domain context is automatically handled by Pulp task system
+    # Use util method `get_domain` to get the current domain in the running Task
     
     # Create the model instance
     model_instance = YourDomainEnabledModel.objects.create(
