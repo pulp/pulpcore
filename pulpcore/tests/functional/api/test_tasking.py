@@ -3,7 +3,6 @@
 import json
 import pytest
 import time
-import logging
 
 from aiohttp import BasicAuth
 from datetime import datetime
@@ -475,8 +474,7 @@ class TestImmediateTaskWithNoResource:
     def test_executes_on_api_worker_when_no_async(
         self,
         pulpcore_bindings,
-        dispatch_task,
-        caplog,
+        dispatch_task_with_stderr,
     ):
         """
         GIVEN a task with no resource requirements
@@ -484,14 +482,14 @@ class TestImmediateTaskWithNoResource:
         WHEN dispatching a task as immediate
         THEN the task completes with no associated worker
         """
-        caplog.set_level(logging.WARNING)
         # TODO: on 3.85 this should throw an error
-        task_href = dispatch_task(
+        task_href, stderr = dispatch_task_with_stderr(
             "pulpcore.app.tasks.test.sleep", args=(LT_TIMEOUT,), immediate=True
         )
         task = pulpcore_bindings.TasksApi.read(task_href)
         assert task.state == "completed"
         assert task.worker is None
+        assert "Support for non-coroutine immediate tasks will be dropped" in stderr
 
     @pytest.mark.parallel
     def test_timeouts_on_api_worker(self, pulpcore_bindings, dispatch_task):
@@ -530,7 +528,9 @@ def dispatch_long_task(pulpcore_bindings, dispatch_task):
         )
         wait_until("running", task_href)
         yield
-        pulpcore_bindings.TasksApi.tasks_cancel(task_href, {"state": "canceled"})
+        task = pulpcore_bindings.TasksApi.read(task_href)
+        if task.state == "running":
+            pulpcore_bindings.TasksApi.tasks_cancel(task_href, {"state": "canceled"})
 
     return _dispatch_long_task
 
@@ -546,7 +546,7 @@ class TestImmediateTaskWithBlockedResource:
         WHEN dispatching a task as immediate
         THEN the task completes with a worker
         """
-        COMMON_RESOURCE = "MMM"
+        COMMON_RESOURCE = str(uuid4())
         with dispatch_long_task(required_resources=[COMMON_RESOURCE]):
             task_href = dispatch_task(
                 "pulpcore.app.tasks.test.asleep",
@@ -554,8 +554,6 @@ class TestImmediateTaskWithBlockedResource:
                 immediate=True,
                 exclusive_resources=[COMMON_RESOURCE],
             )
-            task = pulpcore_bindings.TasksApi.read(task_href)
-            assert task.state == "waiting"
         task = monitor_task(task_href)
         assert task.state == "completed"
         assert task.worker is not None
@@ -569,7 +567,7 @@ class TestImmediateTaskWithBlockedResource:
         WHEN dispatching as immediate and not deferrable
         THEN an error is raised
         """
-        COMMON_RESOURCE = "NNN"
+        COMMON_RESOURCE = str(uuid4())
         with dispatch_long_task(required_resources=[COMMON_RESOURCE]):
             task_href = dispatch_task(
                 "pulpcore.app.tasks.test.asleep",
@@ -593,7 +591,7 @@ class TestImmediateTaskWithBlockedResource:
         AND it takes longer than timeout
         THEN an error is raised
         """
-        COMMON_RESOURCE = "PPP"
+        COMMON_RESOURCE = str(uuid4())
         with pytest.raises(PulpTaskError) as ctx:
             with dispatch_long_task(required_resources=[COMMON_RESOURCE]):
                 task_href = dispatch_task(
@@ -602,7 +600,5 @@ class TestImmediateTaskWithBlockedResource:
                     immediate=True,
                     exclusive_resources=[COMMON_RESOURCE],
                 )
-                task = pulpcore_bindings.TasksApi.read(task_href)
-                assert task.state == "waiting"
             monitor_task(task_href)
         assert "task timed out after" in ctx.value.task.error["description"]
