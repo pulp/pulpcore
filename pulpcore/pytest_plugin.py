@@ -993,31 +993,53 @@ def wget_recursive_download_on_host():
 # Tasking related fixtures
 
 
+def _build_dispatch_cmd(pulpcore_bindings, task_group_id, args, kwargs):
+    cid = pulpcore_bindings.client.default_headers.get("Correlation-ID") or str(uuid.uuid4())
+    username = pulpcore_bindings.client.configuration.username
+    return (
+        "from django_guid import set_guid; "
+        "from pulpcore.tasking.tasks import dispatch; "
+        "from pulpcore.app.models import TaskGroup; "
+        "from pulpcore.app.util import get_url, set_current_user; "
+        "from django.contrib.auth import get_user_model; "
+        "User = get_user_model(); "
+        f"user = User.objects.filter(username='{username}').first(); "
+        "set_current_user(user); "
+        f"set_guid({cid!r}); "
+        f"tg = {task_group_id!r} and TaskGroup.objects.filter(pk={task_group_id!r}).first(); "
+        f"task = dispatch(*{args!r}, task_group=tg, **{kwargs!r}); "
+        "print(get_url(task))"
+    )
+
+
 @pytest.fixture(scope="session")
 def dispatch_task(pulpcore_bindings):
     def _dispatch_task(*args, task_group_id=None, **kwargs):
-        cid = pulpcore_bindings.client.default_headers.get("Correlation-ID") or str(uuid.uuid4())
-        username = pulpcore_bindings.client.configuration.username
-        commands = (
-            "from django_guid import set_guid; "
-            "from pulpcore.tasking.tasks import dispatch; "
-            "from pulpcore.app.models import TaskGroup; "
-            "from pulpcore.app.util import get_url, set_current_user; "
-            "from django.contrib.auth import get_user_model; "
-            "User = get_user_model(); "
-            f"user = User.objects.filter(username='{username}').first(); "
-            "set_current_user(user); "
-            f"set_guid({cid!r}); "
-            f"tg = {task_group_id!r} and TaskGroup.objects.filter(pk={task_group_id!r}).first(); "
-            f"task = dispatch(*{args!r}, task_group=tg, **{kwargs!r}); "
-            "print(get_url(task))"
-        )
-
+        commands = _build_dispatch_cmd(pulpcore_bindings, task_group_id, args, kwargs)
         process = subprocess.run(["pulpcore-manager", "shell", "-c", commands], capture_output=True)
-
         assert process.returncode == 0
         task_href = process.stdout.decode().strip()
         return task_href
+
+    return _dispatch_task
+
+
+@pytest.fixture(scope="session")
+def dispatch_task_with_stderr(pulpcore_bindings):
+    """Variation of dispatch_task that returns (task_href, stderr_content).
+
+    The stderr can be useful write asserts over log messages.
+    This is required because the pytest caplog fixture can't capture log messages
+    streamed from the pulpcore-manager call.
+    """
+
+    def _dispatch_task(*args, task_group_id=None, **kwargs):
+        commands = _build_dispatch_cmd(pulpcore_bindings, task_group_id, args, kwargs)
+        process = subprocess.run(["pulpcore-manager", "shell", "-c", commands], capture_output=True)
+        assert process.returncode == 0
+        task_href = process.stdout.decode().strip()
+        stderr = process.stderr.decode()
+        return task_href, stderr
 
     return _dispatch_task
 
