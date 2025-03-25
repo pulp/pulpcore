@@ -549,10 +549,10 @@ def set_current_user(user):
     _current_user_func.set(lambda: user)
 
 
-def set_current_user_lazy(user):
+def set_current_user_lazy(user_func):
     # This allows to be lazy, because the authentication happens on the view and not in the
     # middleware.
-    _current_user_func.set(user)
+    _current_user_func.set(user_func)
 
 
 default_domain = None
