@@ -940,18 +940,20 @@ class Handler:
                 except IntegrityError:
                     # There is already content saved
                     content = c_type.objects.get(content.q())
-                    created_artifact_digests = {rp: a.sha256 for rp, a in artifacts.items() if a}
+                    # Update the ContentArtifacts to point to the new Artifacts
                     cas = list(content.contentartifact_set.select_related("artifact"))
-                    found_artifact_digests = {
-                        ca.relative_path: ca.artifact.sha256 for ca in cas if ca.artifact
-                    }
-                    # The created artifacts should be (at least) a subset of the found artifacts
-                    if not created_artifact_digests.items() <= found_artifact_digests.items():
-                        raise RuntimeError(
-                            "The Artifacts created during pull-through does not "
-                            "match the Artifacts already stored for the same "
-                            "content."
+                    if len(cas) == 0 or any(ca.artifact is None for ca in cas):
+                        new_cas = [
+                            ContentArtifact(artifact=a, content=content, relative_path=rp)
+                            for rp, a in artifacts.items()
+                        ]
+                        cas = ContentArtifact.objects.bulk_create(
+                            new_cas,
+                            update_conflicts=True,
+                            update_fields=["artifact"],
+                            unique_fields=["content", "relative_path"],
                         )
+
                 # Now try to save RemoteArtifacts for each ContentArtifact
                 for ca in cas:
                     if url := remote.get_remote_artifact_url(ca.relative_path, request=request):
