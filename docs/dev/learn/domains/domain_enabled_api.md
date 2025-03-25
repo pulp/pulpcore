@@ -144,6 +144,7 @@ With `NamedModelViewSet`, URL registration happens automatically:
 - URLs are registered automatically when Pulp starts up
 
 For example, a ViewSet with `endpoint_name = 'your-endpoint-name'` will automatically be available at:
+
 - `GET /pulp/{domain-name}/api/v3/your-endpoint-name/` (list endpoint)
 - `GET /pulp/{domain-name}/api/v3/your-endpoint-name/{uuid}/` (detail endpoint)
 - Other HTTP methods as defined by your included mixins
