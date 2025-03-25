@@ -33,7 +33,7 @@ from pulpcore.app.serializers import (
     WorkerSerializer,
 )
 from pulpcore.app.tasks import purge
-from pulpcore.app.util import get_domain, get_artifact_url
+from pulpcore.app.util import get_domain, get_artifact_url, get_current_user
 from pulpcore.app.viewsets import NamedModelViewSet, RolesMixin
 from pulpcore.app.viewsets.base import DATETIME_FILTER_OPTIONS, NAME_FILTER_OPTIONS
 from pulpcore.app.viewsets.custom_filters import (
@@ -258,8 +258,11 @@ class TaskViewSet(
         """
         serializer = PurgeSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+        current_user = get_current_user()
         task = dispatch(
-            purge, args=[serializer.data["finished_before"], list(serializer.data["states"])]
+            purge,
+            args=[serializer.data["finished_before"], list(serializer.data["states"])],
+            kwargs={"user_pk": None if current_user is None else current_user.pk},
         )
         return OperationPostponedResponse(task, request)
 

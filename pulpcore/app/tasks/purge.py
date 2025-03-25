@@ -4,6 +4,7 @@ from logging import getLogger
 from django.conf import settings
 from django.db.models.deletion import ProtectedError
 from django.utils import timezone
+from django.contrib.auth import get_user_model
 
 from pulpcore.app.models import (
     ProgressReport,
@@ -14,6 +15,8 @@ from pulpcore.app.util import current_task, get_domain, get_current_authenticate
 from pulpcore.constants import TASK_STATES, TASK_FINAL_STATES
 
 log = getLogger(__name__)
+
+User = get_user_model()
 
 # Delete 1K at a time - better to use less memory, and take a little longer, with a utility
 # function like this.
@@ -57,7 +60,9 @@ def _details_reporting(current_reports, current_details, totals_pb):
     return current_reports
 
 
-def purge(finished_before=None, states=None):
+# Versions of this task up until at least 3.74 may not know about the user_pk argument.
+# We need to handle them accordingly.
+def purge(finished_before=None, states=None, **kwargs):
     """
     This task purges from the database records of tasks which finished prior to the specified time.
 
@@ -88,15 +93,22 @@ def purge(finished_before=None, states=None):
     candidate_qs = Task.objects.filter(
         finished_at__lt=finished_before, state__in=states, pulp_domain=domain
     )
-    # Has this task not been dispatched from a task schedule? Then we assume there was a user doing
-    # that.
-    if not current_task.get().taskschedule_set.exists():
-        current_user = get_current_authenticated_user()
-        assert current_user is not None, (
-            "This task should have been dispatched by a user. Cannot find it though. "
-            "Maybe it got deleted."
-        )
-        candidate_qs = get_objects_for_user(current_user, "core.delete_task", qs=candidate_qs)
+    if "user_pk" in kwargs:
+        if (user_pk := kwargs["user_pk"]) is not None:
+            current_user = User.objects.get(pk=user_pk)
+            candidate_qs = get_objects_for_user(current_user, "core.delete_task", qs=candidate_qs)
+    else:
+        # This is the old task signature (<= 3.74) without "user_pk".
+        # Has this task not been dispatched from a task schedule? Then we assume there was a user
+        # doing that.
+        if not current_task.get().taskschedule_set.exists():
+            current_user = get_current_authenticated_user()
+            if current_user is None:
+                raise RuntimeError(
+                    "This task should have been dispatched by a user. Cannot find it though. "
+                    "Maybe it got deleted."
+                )
+            candidate_qs = get_objects_for_user(current_user, "core.delete_task", qs=candidate_qs)
     # Progress bar reporting total-units
     totals_pb = ProgressReport(
         message=_("Purged task-related-objects total"),
