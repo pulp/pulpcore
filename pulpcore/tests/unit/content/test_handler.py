@@ -2,6 +2,7 @@ import pytest
 import uuid
 
 from unittest.mock import Mock, AsyncMock
+from django.db import IntegrityError
 
 from pulpcore.content import Handler
 from pulpcore.plugin.models import (
@@ -267,3 +268,35 @@ def test_pull_through_save_multi_artifact_content(
     artifacts = set(ca.content._artifacts.all())
     assert len(artifacts) == 2
     assert {artifact, artifact123} == artifacts
+
+
+def test_pull_through_save_single_artifact_on_demand_content(
+    remote123, request123, download_result_mock, monkeypatch
+):
+    """Ensure single-artifact content is properly saved on pull-through."""
+    handler = Handler()
+    remote123.get_remote_artifact_content_type = Mock(return_value=Content)
+    content = Content.objects.create()
+    content.save = Mock(side_effect=IntegrityError)
+    content_init_mock = Mock(return_value=content)
+    monkeypatch.setattr(Content, "init_from_artifact_and_relative_path", content_init_mock)
+    monkeypatch.setattr(Content.objects, "get", Mock(return_value=content))
+    ca = ContentArtifact(relative_path="c123")
+    ra = RemoteArtifact(url=f"{remote123.url}/c123", remote=remote123, content_artifact=ca)
+
+    # Content is saved during handler._save_artifact
+    artifact = handler._save_artifact(download_result_mock, ra, request=request123)
+
+    remote123.get_remote_artifact_content_type.assert_called_once_with("c123")
+    content_init_mock.assert_called_once_with(artifact, "c123")
+    content.save.assert_called_once()
+    Content.objects.get.assert_called_once()
+
+    # Assert the CA and RA are properly saved
+    ca = artifact.content_memberships.first()
+    assert ca.content is not None
+    assert ca.relative_path == "c123"
+    ra = RemoteArtifact.objects.filter(
+        url=f"{remote123.url}/c123", remote=remote123, content_artifact=ca
+    ).first()
+    assert ra is not None
