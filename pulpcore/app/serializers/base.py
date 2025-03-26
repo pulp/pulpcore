@@ -312,15 +312,16 @@ class ValidateFieldsMixin:
             elif not isinstance(lvalue, list):
                 lvalue = [lvalue]
             for value in lvalue:
-                if isinstance(value, Model) and (
-                    domain_id := getattr(value, "pulp_domain_id", None)
-                ):
-                    if current_domain.pulp_id != domain_id:
-                        raise serializers.ValidationError(
-                            _("Objects must all be a part of the {} domain.").format(
-                                current_domain.name
+                if isinstance(value, Model):
+                    if isinstance(value, RepositoryVersion):
+                        value = value.repository
+                    if domain_id := getattr(value, "pulp_domain_id", None):
+                        if current_domain.pulp_id != domain_id:
+                            raise serializers.ValidationError(
+                                _("Objects must all be a part of the {} domain.").format(
+                                    current_domain.name
+                                )
                             )
-                        )
 
 
 class HiddenFieldsMixin(serializers.Serializer):
