@@ -341,6 +341,16 @@ def test_no_cross_pollination(
         "non_field_errors": [f"Objects must all be a part of the {domain.name} domain."]
     }
 
+    with pytest.raises(file_bindings.ApiException) as e:
+        file_publication_factory(
+            repository_version=d_repo.latest_version_href,
+            pulp_domain=domain.name,
+        )
+    assert e.value.status == 400
+    assert json.loads(e.value.body) == {
+        "non_field_errors": [f"Objects must all be a part of the {domain.name} domain."]
+    }
+
     # Fail distribute
     with pytest.raises(file_bindings.ApiException) as e:
         file_distribution_factory(repository=d_repo.pulp_href, pulp_domain=domain.name)
