@@ -6,6 +6,7 @@ from rest_framework import fields, serializers
 from rest_framework_nested.serializers import NestedHyperlinkedModelSerializer
 
 from pulpcore.app import models, settings
+from pulpcore.app.util import get_prn
 from pulpcore.app.serializers import (
     DetailIdentityField,
     DetailRelatedField,
@@ -360,6 +361,15 @@ class RepositorySyncURLSerializer(ValidateFieldsMixin, serializers.Serializer):
         if not remote:
             raise serializers.ValidationError(
                 {"remote": _("This field is required since a remote is not set on the repository.")}
+            )
+        if repository and type(remote.cast()) not in repository.cast().REMOTE_TYPES:
+            raise serializers.ValidationError(
+                {
+                    "remote": _(
+                        f"Type for Remote '{get_prn(remote)}' "
+                        f"does not match Repository '{get_prn(repository)}'."
+                    )
+                }
             )
         self.check_cross_domains({"repository": repository, "remote": remote})
         return data

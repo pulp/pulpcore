@@ -9,6 +9,8 @@ from pulpcore.app.serializers import (
     PublicationSerializer,
     DistributionSerializer,
     RemoteSerializer,
+    RepositorySyncURLSerializer,
+    ValidateFieldsMixin,
 )
 
 pytestmark = pytest.mark.usefixtures("fake_domain")
@@ -143,4 +145,25 @@ def test_validate_checkpoint_and_repository():
     data.pop("repository_version")
     data["publication"] = mock_publication
     with pytest.raises(serializers.ValidationError):
+        serializer.validate(data)
+
+
+def test_validate_repo_remote_sync(monkeypatch):
+    """
+    Test that the synchronization of repository and remote fails if they are from different plugins.
+    """
+    mock_remote = Mock(spec=models.Remote)
+    data = {"remote": mock_remote}
+
+    mock_repo = Mock(spec=models.Repository)
+    mock_repo.cast = lambda: mock_repo
+    mock_repo.REMOTE_TYPES = list()
+    context = {"repository_pk": mock_repo.pk}
+
+    monkeypatch.setattr(models.Repository.objects, "get", lambda *args, **kwargs: mock_repo)
+    monkeypatch.setattr(ValidateFieldsMixin, "CHECK_SAME_DOMAIN", False)
+
+    serializer = RepositorySyncURLSerializer(data=data, context=context)
+    error_msg = r"Type for Remote .* does not match Repository .*."
+    with pytest.raises(serializers.ValidationError, match=error_msg):
         serializer.validate(data)
