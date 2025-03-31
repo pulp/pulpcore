@@ -131,11 +131,14 @@ class DownloaderFactory:
                     headers["User-Agent"] = f"{headers['User-Agent']}, {user_agent_header}"
                 headers.extend(header_dict)
 
+        # Explicit fallback is required, as passing None to ClientTimeout means disabling it
+        # https://docs.aiohttp.org/en/stable/client_quickstart.html#timeouts
+        default_timeout = aiohttp.client.DEFAULT_TIMEOUT
         timeout = aiohttp.ClientTimeout(
-            total=self._remote.total_timeout,
-            sock_connect=self._remote.sock_connect_timeout,
-            sock_read=self._remote.sock_read_timeout,
-            connect=self._remote.connect_timeout,
+            total=self._remote.total_timeout or default_timeout.total,
+            sock_connect=self._remote.sock_connect_timeout or default_timeout.sock_connect,
+            sock_read=self._remote.sock_read_timeout or default_timeout.sock_read,
+            connect=self._remote.connect_timeout or default_timeout.connect,
         )
         # TCPConnector is supposed to be instanciated in a running loop.
         # I don't see why...
