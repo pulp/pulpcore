@@ -1248,6 +1248,13 @@ class Handler:
                     response.headers["Content-Range"] = "bytes {0}-{1}/{2}".format(
                         start, stop - 1, content_length
                     )
+
+            content_encoding = headers.get("content-encoding")
+            content_length = headers.get("content-length")
+            if content_length and not content_encoding:
+                response.headers["X-PULP-ARTIFACT-SIZE"] = content_length
+                artifacts_size_counter.add(content_length)
+
             await response.prepare(request)
 
         data_size_handled = 0
@@ -1311,13 +1318,6 @@ class Handler:
                 "affected Pulp Remote, adding a good one and resyncing.\n"
                 "If the problem persists, please contact the Pulp team."
             )
-
-        if content_length := response.headers.get("Content-Length"):
-            response.headers["X-PULP-ARTIFACT-SIZE"] = content_length
-            artifacts_size_counter.add(content_length)
-        else:
-            response.headers["X-PULP-ARTIFACT-SIZE"] = str(size)
-            artifacts_size_counter.add(size)
 
         if save_artifact and remote.policy != Remote.STREAMED:
             content_artifacts = await asyncio.shield(
