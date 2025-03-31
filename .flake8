@@ -8,13 +8,14 @@
 exclude = ./docs/*,*/migrations/*,./pulpcore/app/protobuf/*
 per-file-ignores = */__init__.py: F401
 
-ignore = E203,W503,Q000,Q003,D100,D104,D106,D200,D205,D400,D401,D402
+ignore = E203,W503,Q000,Q003,D100,D104,D106,D200,D205,D400,D401,D402,F824
 max-line-length = 100
 
 # Flake8 builtin codes
 # --------------------
 # E203: no whitespace around ':'. disabled until https://github.com/PyCQA/pycodestyle/issues/373 is fixed
 # W503: This enforces operators before line breaks which is not pep8 or black compatible.
+# F824: 'nonlocal' is unused: name is never assigned in scope
 
 # Flake8-quotes extension codes
 # -----------------------------
