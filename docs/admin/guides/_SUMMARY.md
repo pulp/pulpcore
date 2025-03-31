@@ -3,9 +3,9 @@
     * [Using external service](auth/external.md)
     * [Using Keycloak](auth/keycloak.md)
     * [Using JSON Header](auth/json_header.md)
-    * *.md
+    * auth/*.md
 * Configuration
     * [Introduction](configure-pulp/index.md)
     * [Configure Storage backends](configure-pulp/configure-storages.md)
 * *.md
-  
+
