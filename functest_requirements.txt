@@ -1,7 +1,3 @@
-aiohttp
-django
-dynaconf
-drf-spectacular
 pytest<8
 pytest-custom_exit_code
 pytest-xdist
