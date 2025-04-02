@@ -8,6 +8,52 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.75.0 (2025-04-02) {: #3.75.0 }
+
+### REST API {: #3.75.0-rest-api }
+
+#### Features {: #3.75.0-rest-api-feature }
+
+- Added validation to the `RepositorySyncURLSerializer` to raise an error if repo and remote are from different plugins.
+  [#1860](https://github.com/pulp/pulpcore/issues/1860)
+
+#### Bugfixes {: #3.75.0-rest-api-bugfix }
+
+- Fixes the Remote configuration of timeouts to properly fallback to aiohttp defaults if they are unset by the user.
+  [#5439](https://github.com/pulp/pulpcore/issues/5439)
+- Reworked the loading of plugin default settings in order to fix interference with environment injection.
+  [#6341](https://github.com/pulp/pulpcore/issues/6341)
+- Fixed miigrations 0131 and 0132 to make it possible to upgrade from 3.73.
+  [#6375](https://github.com/pulp/pulpcore/issues/6375)
+- Fixed task purge in case no access policy based permission framework is configured for Pulp.
+  [#6380](https://github.com/pulp/pulpcore/issues/6380)
+- Fixed pull-through caching failure when content already existed on-demand.
+  [#6385](https://github.com/pulp/pulpcore/issues/6385)
+- Fixed cross-domain check for RepositoryVersion fields.
+  [#6388](https://github.com/pulp/pulpcore/issues/6388)
+- Redeclared the aiohttp dependency boundaries to follow semver as stated in their documentation.
+
+### Plugin API {: #3.75.0-plugin-api }
+
+#### Bugfixes {: #3.75.0-plugin-api-bugfix }
+
+- Added timeout to tasks dispatched as immediate for both deferred and non-deferred runs.
+
+  Also, immediate tasks must be coroutines from now on.
+  This is to enable immediate tasks to run on the workers foreground without completely blocking heartbeats.
+  Support for legacy non-coroutines immediate task will be dropped in pulpcore 3.85.
+  [#5930](https://github.com/pulp/pulpcore/issues/5930)
+
+### Pulp File {: #3.75.0-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.75.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.74.1 (2025-03-20) {: #3.74.1 }
 
 ### REST API {: #3.74.1-rest-api }
