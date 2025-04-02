@@ -8,6 +8,36 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.73.3 (2025-04-02) {: #3.73.3 }
+
+### REST API {: #3.73.3-rest-api }
+
+#### Bugfixes {: #3.73.3-rest-api-bugfix }
+
+- Fixes the Remote configuration of timeouts to properly fallback to aiohttp defaults if they are unset by the user.
+  [#5439](https://github.com/pulp/pulpcore/issues/5439)
+- Fixed task purge in case no access policy based permission framework is configured for Pulp.
+  [#6380](https://github.com/pulp/pulpcore/issues/6380)
+- Fixed pull-through caching failure when content already existed on-demand.
+  [#6385](https://github.com/pulp/pulpcore/issues/6385)
+- Fixed cross-domain check for RepositoryVersion fields.
+  [#6388](https://github.com/pulp/pulpcore/issues/6388)
+- Redeclared the aiohttp dependency boundaries to follow semver as stated in their documentation.
+
+### Plugin API {: #3.73.3-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.73.3-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.73.3-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.73.2 (2025-03-14) {: #3.73.2 }
 
 ### REST API {: #3.73.2-rest-api }
