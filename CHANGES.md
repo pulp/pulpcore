@@ -8,6 +8,21 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.39.27 (2025-04-02) {: #3.39.27 }
+
+### REST API {: #3.39.27-rest-api }
+
+#### Bugfixes {: #3.39.27-rest-api-bugfix }
+
+- Fixes the Remote configuration of timeouts to properly fallback to aiohttp defaults if they are unset by the user.
+  [#5439](https://github.com/pulp/pulpcore/issues/5439)
+
+### Plugin API {: #3.39.27-plugin-api }
+
+No significant changes.
+
+---
+
 ## 3.39.26 (2025-03-18) {: #3.39.26 }
 
 ### REST API {: #3.39.26-rest-api }
