@@ -1,1 +1,0 @@
-Fixed task purge in case no access policy based permission framework is configured for Pulp.
