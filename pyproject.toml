@@ -71,7 +71,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-sftp = ["django-storages[sftp]==1.14.5"]
+sftp = ["django-storages[sftp]==1.14.6"]
 s3 = ["django-storages[boto3]==1.14.5"]
 google = ["django-storages[google]==1.14.5"]
 azure = ["django-storages[azure]==1.14.5"]
