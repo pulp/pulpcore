@@ -294,7 +294,26 @@ def test_pull_through_save_single_artifact_on_demand_content(
 
     # Assert the CA and RA are properly saved
     ca = artifact.content_memberships.first()
-    assert ca.content is not None
+    assert ca.content == content
+    assert ca.relative_path == "c123"
+    ra = RemoteArtifact.objects.filter(
+        url=f"{remote123.url}/c123", remote=remote123, content_artifact=ca
+    ).first()
+    assert ra is not None
+
+    # Test on-demand were CA is updated with downloaded artifact
+    ra.delete()
+    ca.artifact = None
+    ca.save()
+
+    ca = ContentArtifact(relative_path="c123")
+    ra = RemoteArtifact(url=f"{remote123.url}/c123", remote=remote123, content_artifact=ca)
+    artifact2 = handler._save_artifact(download_result_mock, ra, request=request123)
+    assert artifact == artifact2
+
+    # Assert the CA and RA are properly saved
+    ca = artifact.content_memberships.first()
+    assert ca.content == content
     assert ca.relative_path == "c123"
     ra = RemoteArtifact.objects.filter(
         url=f"{remote123.url}/c123", remote=remote123, content_artifact=ca
