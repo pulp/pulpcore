@@ -1,4 +1,5 @@
 from gettext import gettext as _
+from pulpcore.app.util import get_prn
 
 from django.db.models import Q
 from drf_spectacular.utils import extend_schema_field
@@ -42,12 +43,18 @@ class PublicationSerializer(ModelSerializer):
                 _("Either the 'repository' or 'repository_version' need to be specified")
             )
         elif not repository and repository_version:
+            validate_repo_and_remote(
+                repository_version.repository,
+                "repository_version",
+                repository_version=repository_version,
+            )
             if checkpoint:
                 raise serializers.ValidationError(
                     _("'checkpoint' may only be used with 'repository'")
                 )
             return data
         elif repository and not repository_version:
+            validate_repo_and_remote(repository, "repository")
             version = repository.latest_version()
             if version:
                 new_data = {"repository_version": version}
@@ -330,6 +337,32 @@ class DistributionSerializer(ModelSerializer):
                 _("The 'checkpoint' attribute may only be used with the 'repository' attribute.")
             )
 
+        # Validate that repository and its remote are of a compatible type
+        if repository_provided:
+            validate_repo_and_remote(repository_provided, "repository")
+
+        if repository_version_provided:
+            validate_repo_and_remote(
+                repository_version_provided.repository,
+                "repository_version",
+                repository_version=repository_version_provided,
+            )
+
+        if publication_provided and publication_provided.repository:
+            validate_repo_and_remote(
+                publication_provided.repository,
+                "publication",
+                publication=publication_provided,
+            )
+
+        if publication_provided and publication_provided.repository_version:
+            validate_repo_and_remote(
+                publication_provided.repository_version.repository,
+                "publication",
+                publication=publication_provided,
+                repository_version=publication_provided.repository_version,
+            )
+
         return data
 
     def get_no_content_change_since(self, obj):
@@ -355,3 +388,33 @@ class ArtifactDistributionSerializer(DistributionSerializer):
                 "repository",
             }
         )
+
+
+def validate_repo_and_remote(repository, field, **kwargs):
+    """
+    Validate that a repository has a remote of a compatible type.
+
+    Args:
+        repository: repository to check
+        field: serializer field to use in the error message
+        **kwargs: additional data for the error message (repository_version or publication)
+
+    Returns:
+        None or ValidationError
+    """
+    if not (repository or field):
+        raise serializers.ValidationError("Both 'repository' and 'field' must be provided.")
+
+    detail_repo = repository.cast()
+    if detail_repo.remote and type(detail_repo.remote.cast()) not in detail_repo.REMOTE_TYPES:
+        msg = (
+            f"Type for Remote '{get_prn(repository.remote)}' "
+            f"does not match Repository '{get_prn(repository)}'"
+        )
+        if repository_version := kwargs.pop("repository_version", None):
+            msg += f" from RepositoryVersion '{get_prn(repository_version)}'"
+        if publication := kwargs.pop("publication", None):
+            msg += f" from Publication '{get_prn(publication)}'"
+        msg += "."
+
+        raise serializers.ValidationError({field: _(msg)})
