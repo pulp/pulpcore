@@ -1067,13 +1067,13 @@ class Handler:
                             ContentArtifact(artifact=a, content=content, relative_path=rp)
                             for rp, a in artifacts.items()
                         ]
-                        cas = ContentArtifact.objects.bulk_create(
+                        ContentArtifact.objects.bulk_create(
                             new_cas,
                             update_conflicts=True,
                             update_fields=["artifact"],
                             unique_fields=["content", "relative_path"],
                         )
-
+                        cas = list(content.contentartifact_set.select_related("artifact"))
                 # Now try to save RemoteArtifacts for each ContentArtifact
                 for ca in cas:
                     if url := remote.get_remote_artifact_url(ca.relative_path, request=request):
