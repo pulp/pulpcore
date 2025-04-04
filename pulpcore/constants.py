@@ -45,8 +45,6 @@ TASK_FINAL_STATES = (
 #: Tasks in an incomplete state have not finished their work yet.
 TASK_INCOMPLETE_STATES = (TASK_STATES.WAITING, TASK_STATES.RUNNING, TASK_STATES.CANCELING)
 
-#: Timeout for immediate tasks in seconds
-IMMEDIATE_TIMEOUT = 5
 
 SYNC_MODES = SimpleNamespace(ADDITIVE="additive", MIRROR="mirror")
 SYNC_CHOICES = (

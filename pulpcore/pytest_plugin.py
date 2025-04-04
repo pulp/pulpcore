@@ -9,7 +9,6 @@ import shutil
 import socket
 import ssl
 import subprocess
-import sys
 import threading
 import uuid
 
@@ -1018,7 +1017,6 @@ def dispatch_task(pulpcore_bindings):
 
         assert process.returncode == 0
         task_href = process.stdout.decode().strip()
-        print(process.stderr.decode(), file=sys.stderr)
         return task_href
 
     return _dispatch_task
