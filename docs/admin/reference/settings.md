@@ -4,9 +4,10 @@ There is one required setting, although specific plugins may have additional req
 
 - `SECRET_KEY <secret-key-setting>`
 
-Pulp uses three types of settings:
+Pulp uses four types of settings:
 
 - `Django settings` Pulp is configuring
+- `Kafka settings`
 - `Pulp defined settings`
 - `Redis settings` Pulp is using
 
