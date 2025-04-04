@@ -1,7 +1,6 @@
 # Settings
 
-There is one required setting, although specific plugins may have additional required
-settings.
+There is one required setting, although specific plugins may have additional required settings.
 
 - `SECRET_KEY <secret-key-setting>`
 
@@ -15,6 +14,7 @@ Pulp uses three types of settings:
     For more information on how to specify settings see the
     [`Applying Settings`](site:pulpcore/docs/admin/guides/configure-pulp/).
 
+
 ## Django Settings
 
 Below is a list of the most common Django settings Pulp users typically use. Pulp is a Django
@@ -22,9 +22,8 @@ project, so any [Django setting](https://docs.djangoproject.com/en/4.2/ref/setti
 
 ### SECRET_KEY
 
-In order to get a pulp server up and running a [Django SECRET_KEY](https://docs.djangoproject.com/en/4.2/ref/settings/#secret-key) *must* be
-provided.
-The following code snippet can be used to generate a random SECRET_KEY.
+In order to get a pulp server up and running a [Django SECRET_KEY](https://docs.djangoproject.com/en/4.2/ref/settings/#secret-key)
+*must* be provided. The following code snippet can be used to generate a random SECRET_KEY.
 
 ```python linenums="1"
 import secrets
@@ -115,8 +114,8 @@ Overview of the integration with Pulp:
 
 - **Supported**: We support (test) Amazon S3 and Azure.
 - **Untested**: Other backends provided by `django-storages` may work as well, but we provide no guarantee.
-- **Known caveat**: Using SFTP Storage is not recommended in Pulp's current state, and doing so can lead to file corruption. This is because Pulp currently uses coroutines that seem to be incompatible with Django's SFTPStorage implementation.
-
+- **Known caveat**: Using SFTP Storage is not recommended in Pulp's current state, and doing so can lead to file corruption.
+This is because Pulp currently uses coroutines that seem to be incompatible with Django's SFTPStorage implementation.
 
 ### REDIRECT_TO_OBJECT_STORAGE
 
@@ -158,15 +157,14 @@ By default, Pulp has two types of authentication enabled, and they fall back for
 2. Webserver authentication that relies on the webserver to perform the authentication.
 
 To change the authentication types Pulp will use, modify the `AUTHENTICATION_BACKENDS`
-settings. See the [Django authentication documentation](https://docs.djangoproject.com/en/4.2/topics/auth/customizing/#authentication-backends) for more information.
-
+settings. See the [Django authentication documentation](https://docs.djangoproject.com/en/4.2/topics/auth/customizing/#authentication-backends)
+for more information.
 
 
 ## Redis Settings
 
 !!! warning
     To enable usage of Redis the [CACHE_ENABLED] option must be set to `True`.
-
 
 The following Redis settings can be set in your Pulp config:
 
@@ -191,17 +189,14 @@ The port for Redis.
 The password for Redis.
 
 
-
 ## Pulp Settings
 
 Pulp defines the following settings itself:
 
-
 ### ENABLED_PLUGINS
 
-An optional list of plugin names.
-If provided, Pulp will limit loading plugins to this list.
-If omitted, Pulp will load all installed plugins.
+An optional list of plugin names. If provided, Pulp will limit loading plugins to this list. If omitted,
+Pulp will load all installed plugins.
 
 ### API_ROOT
 
@@ -229,7 +224,6 @@ It should have permissions of:
     volume for performance reasons. Files are commonly staged in the `WORKING_DIRECTORY` and
     validated before being moved to their permanent home in `MEDIA_ROOT`.
 
-
 ### CHUNKED_UPLOAD_DIR
 
 A relative path inside the DEPLOY_ROOT directory used exclusively for uploaded chunks. The
@@ -237,8 +231,6 @@ uploaded chunks are stored in the default storage specified by `STORAGES['defaul
 option allows users to customize the actual place where chunked uploads should be stored within
 the declared storage. The default, `upload`, is sufficient for most use cases. A change to
 this setting only applies to uploads created after the change.
-
-
 
 ### CONTENT_ORIGIN
 
@@ -249,13 +241,10 @@ For example if the API should refer users to content at using http to pulp.examp
 When set to `None`, the `base_url` for Distributions is a relative path.
 This means the API returns relative URLs without the protocol, fqdn, and port.
 
-
 ### HIDE_GUARDED_DISTRIBUTIONS
 
 If activated, the distributions that are protected by a content guard will not be shown on the
 directory listing in the content app. Defaults to `False`.
-
-
 
 ### CONTENT_PATH_PREFIX
 
@@ -265,15 +254,11 @@ to match incoming URLs.
 
 Defaults to `/pulp/content/`.
 
-
-
 ### CONTENT_APP_TTL
 
 The number of seconds before a content app should be considered lost.
 
 Defaults to `30` seconds.
-
-
 
 ### CACHE_ENABLED
 
@@ -284,7 +269,6 @@ of the content app under heavy load for similar requests. Defaults to `False`.
     The entire response is not stored in the cache. Only the location of the file needed to
     recreate the response is stored. This reduces database queries and allows for many
     responses to be stored inside the cache.
-
 
 ### CACHE_SETTINGS
 
@@ -298,25 +282,19 @@ Defaults to `600` seconds.
     Set to `None` to have entries not expire.
     Content app responses are always invalidated when the backing distribution is updated.
 
-
 ### DOMAIN_ENABLED
 
 !!! note
     This feature is provided as a tech-preview
 
-
 Enable the `Domains feature to enable multi-tenancy capabilities <domains>`. All installed
 plugins must be Domain compatible for Pulp to start. Defaults to `False`.
-
-
 
 ### WORKER_TTL
 
 The number of seconds before a worker should be considered lost.
 
 Defaults to `30` seconds.
-
-
 
 ### TASK_GRACE_INTERVAL
 
@@ -325,8 +303,6 @@ On SIGINT, this value represents the time before the worker will attempt to kill
 This time is only accurate to one worker heartbeat corresponding to `WORKER_TTL / 3`.
 
 Defaults to `600` seconds.
-
-
 
 ### REMOTE_USER_ENVIRON_NAME
 
@@ -339,8 +315,6 @@ The name of the WSGI environment variable to read for `webserver authentication
 
 Defaults to `'REMOTE_USER'`.
 
-
-
 ### ALLOWED_IMPORT_PATHS
 
 One or more real filesystem paths that Remotes with filesystem paths can import from. For example
@@ -351,8 +325,6 @@ ALLOWED_IMPORT_PATHS = ['/mnt/foo/bar']  # only a subpath is needed
 ```
 
 Defaults to `[]`, meaning `file:///` urls are not allowed in any Remote.
-
-
 
 ### ALLOWED_EXPORT_PATHS
 
@@ -365,15 +337,12 @@ ALLOWED_EXPORT_PATHS = ['/mnt/foo/bar']  # only a subpath is needed
 
 Defaults to `[]` which means no path is allowed.
 
-
-
 ### ALLOWED_CONTENT_CHECKSUMS
 
 !!! warning
     Enforcement of this setting in `pulpcore` and various plugins is not fully in place. It is
     possible that checksums not in this list may still be used in various places. This banner will
     be removed when it is believed all `pulpcore` and plugin code fully enforces this setting.
-
 
 The list of content-checksums this pulp-instance is **allowed to use**. By default, the following
 are used:
@@ -422,8 +391,6 @@ to configure the `DJANGO_GUID` setting, see the [django-guid settings
 documentation](https://django-guid.readthedocs.io/en/latest/settings.html). To read more about using
 correlation id in Pulp, read [our guide](site:pulpcore/docs/user/guides/correlation-id/).
 
-
-
 ### ORPHAN_PROTECTION_TIME
 
 The time specified in minutes for how long Pulp will hold orphan Content and Artifacts before
@@ -431,15 +398,11 @@ they become candidates for deletion by an orphan cleanup task. This should ideal
 than your longest running task otherwise any content created during that task could be cleaned
 up before the task finishes. Default is 1440 minutes (24 hours).
 
-
-
 ### UPLOAD_PROTECTION_TIME, TMPFILE_PROTECTION_TIME and TASK_PROTECTION_TIME
 
 Pulp uses `tasks`, `uploads` and `pulp temporary files` to pass data from the api to worker tasks.
 These options allow to specify a timeinterval in minutes used for cleaning up stale entries.
 If set to 0, automatic cleanup is disabled, which is the default.
-
-
 
 ### TASK_DIAGNOSTICS
 
@@ -450,8 +413,6 @@ The artifacts are cleaned up automatically by the orphan cleanup.
 - memory.datum - the task's max resident set size in MB
 - pyinstrument.html - the output of the pyinstrument profiler, if installed
 
-
-
 ### ANALYTICS
 
 If `True`, Pulp will anonymously post analytics information to
@@ -459,6 +420,7 @@ If `True`, Pulp will anonymously post analytics information to
 `analytics docs ` for more info on exactly what is posted along with an example.
 
 Defaults to `True`.
+
 
 ## Kafka Settings
 
@@ -513,7 +475,6 @@ Defaults to `False`.
 Timeout in seconds for the kafka producer polling thread's `poll` calls.
 
 Defaults to `0.1`.
-
 
 ### OTEL_ENABLED
 
