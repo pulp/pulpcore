@@ -7,8 +7,8 @@ There is one required setting, although specific plugins may have additional req
 Pulp uses three types of settings:
 
 - `Django settings` Pulp is configuring
-- `Redis settings` Pulp is using
 - `Pulp defined settings`
+- `Redis settings` Pulp is using
 
 !!! note
     For more information on how to specify settings see the
@@ -159,34 +159,6 @@ By default, Pulp has two types of authentication enabled, and they fall back for
 To change the authentication types Pulp will use, modify the `AUTHENTICATION_BACKENDS`
 settings. See the [Django authentication documentation](https://docs.djangoproject.com/en/4.2/topics/auth/customizing/#authentication-backends)
 for more information.
-
-
-## Redis Settings
-
-!!! warning
-    To enable usage of Redis the [CACHE_ENABLED] option must be set to `True`.
-
-The following Redis settings can be set in your Pulp config:
-
-- REDIS_URL
-- REDIS_HOST
-- REDIS_PORT
-- REDIS_DB
-- REDIS_PASSWORD
-
-Below are some common settings used for Redis configuration.
-
-### REDIS_HOST
-
-The hostname for Redis.
-
-### REDIS_PORT
-
-The port for Redis.
-
-### REDIS_PASSWORD
-
-The password for Redis.
 
 
 ## Pulp Settings
@@ -420,6 +392,34 @@ If `True`, Pulp will anonymously post analytics information to
 `analytics docs ` for more info on exactly what is posted along with an example.
 
 Defaults to `True`.
+
+
+## Redis Settings
+
+!!! warning
+    To enable usage of Redis the [CACHE_ENABLED] option must be set to `True`.
+
+The following Redis settings can be set in your Pulp config:
+
+- REDIS_URL
+- REDIS_HOST
+- REDIS_PORT
+- REDIS_DB
+- REDIS_PASSWORD
+
+Below are some common settings used for Redis configuration.
+
+### REDIS_HOST
+
+The hostname for Redis.
+
+### REDIS_PORT
+
+The port for Redis.
+
+### REDIS_PASSWORD
+
+The password for Redis.
 
 
 ## Kafka Settings
