@@ -20,17 +20,21 @@ Pulp uses three types of settings:
 Below is a list of the most common Django settings Pulp users typically use. Pulp is a Django
 project, so any [Django setting](https://docs.djangoproject.com/en/4.2/ref/settings/) can be set.
 
-### SECRET_KEY
+### AUTHENTICATION_BACKENDS
 
-In order to get a pulp server up and running a [Django SECRET_KEY](https://docs.djangoproject.com/en/4.2/ref/settings/#secret-key)
-*must* be provided. The following code snippet can be used to generate a random SECRET_KEY.
+By default, Pulp has two types of authentication enabled, and they fall back for each other:
 
-```python linenums="1"
-import secrets
+1. Basic Auth which is checked against an internal users database
+2. Webserver authentication that relies on the webserver to perform the authentication.
 
-chars = 'abcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*(-_=+)'
-print(''.join(secrets.choice(chars) for i in range(50)))
-```
+To change the authentication types Pulp will use, modify the `AUTHENTICATION_BACKENDS`
+settings. See the [Django authentication documentation](https://docs.djangoproject.com/en/4.2/topics/auth/customizing/#authentication-backends)
+for more information.
+
+### DATABASES
+
+By default, Pulp uses PostgreSQL on localhost. PostgreSQL is the only supported database. For
+instructions on how to configure the database, refer to `database installation <database-install>`.
 
 ### DB_ENCRYPTION_KEY
 
@@ -65,11 +69,6 @@ For a zero downtime key rotation you can follow the slightly more complex recipe
 1. Remove the old key (on the second line) from the key file.
 1. Restart the Pulp services for the last time.
 
-### DATABASES
-
-By default, Pulp uses PostgreSQL on localhost. PostgreSQL is the only supported database. For
-instructions on how to configure the database, refer to `database installation <database-install>`.
-
 ### DEFAULT_FILE_STORAGE
 
 !!! warning "Deprecated in `3.70`"
@@ -77,6 +76,50 @@ instructions on how to configure the database, refer to `database installation <
     [django `4.2`](https://docs.djangoproject.com/en/4.2/ref/settings/#default-file-storage)
     and will be removed from pulpcore on `3.85`.
     Between `3.70` and `3.85`, replace it with [`STORAGES`](#storages).
+
+### LOGGING
+
+By default, Pulp logs at an INFO level to syslog. For all possible configurations please
+refer to [Django documenation on logging](https://docs.djangoproject.com/en/4.2/topics/logging/#configuring-logging)
+
+Enabling DEBUG logging is a common troubleshooting step. See the `enabling-debug-logging`
+documentation for details on how to do that.
+
+### MEDIA_ROOT
+
+The location where Pulp will store files. By default, this is `/var/lib/pulp/media`.
+
+This only affects storage location when `STORAGES['default']['BACKEND']` is set to
+`pulpcore.app.models.storage.FileSystem`.
+
+See the [storage documentation](site:pulpcore/docs/admin/guides/configure-pulp/configure-storages/) for more info.
+
+It should have permissions of:
+
+- mode: 750
+- owner: pulp (the account that pulp runs under)
+- group: pulp (the group of the account that pulp runs under)
+- SELinux context: system_u:object_r:pulpcore_var_lib_t:s0
+
+### REDIRECT_TO_OBJECT_STORAGE
+
+When set to `True` access to artifacts is redirected to the corresponding Cloud storage
+configured in `STORAGES['default']['BACKEND']` using pre-authenticated URLs. When set to `False`
+artifacts are always served by the content app instead.
+
+Defaults to `True`; ignored for local file storage.
+
+### SECRET_KEY
+
+In order to get a pulp server up and running a [Django SECRET_KEY](https://docs.djangoproject.com/en/4.2/ref/settings/#secret-key)
+*must* be provided. The following code snippet can be used to generate a random SECRET_KEY.
+
+```python linenums="1"
+import secrets
+
+chars = 'abcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*(-_=+)'
+print(''.join(secrets.choice(chars) for i in range(50)))
+```
 
 ### STORAGES
 
@@ -116,49 +159,6 @@ Overview of the integration with Pulp:
 - **Untested**: Other backends provided by `django-storages` may work as well, but we provide no guarantee.
 - **Known caveat**: Using SFTP Storage is not recommended in Pulp's current state, and doing so can lead to file corruption.
 This is because Pulp currently uses coroutines that seem to be incompatible with Django's SFTPStorage implementation.
-
-### REDIRECT_TO_OBJECT_STORAGE
-
-When set to `True` access to artifacts is redirected to the corresponding Cloud storage
-configured in `STORAGES['default']['BACKEND']` using pre-authenticated URLs. When set to `False`
-artifacts are always served by the content app instead.
-
-Defaults to `True`; ignored for local file storage.
-
-### MEDIA_ROOT
-
-The location where Pulp will store files. By default, this is `/var/lib/pulp/media`.
-
-This only affects storage location when `STORAGES['default']['BACKEND']` is set to
-`pulpcore.app.models.storage.FileSystem`.
-
-See the [storage documentation](site:pulpcore/docs/admin/guides/configure-pulp/configure-storages/) for more info.
-
-It should have permissions of:
-
-- mode: 750
-- owner: pulp (the account that pulp runs under)
-- group: pulp (the group of the account that pulp runs under)
-- SELinux context: system_u:object_r:pulpcore_var_lib_t:s0
-
-### LOGGING
-
-By default, Pulp logs at an INFO level to syslog. For all possible configurations please
-refer to [Django documenation on logging](https://docs.djangoproject.com/en/4.2/topics/logging/#configuring-logging)
-
-Enabling DEBUG logging is a common troubleshooting step. See the `enabling-debug-logging`
-documentation for details on how to do that.
-
-### AUTHENTICATION_BACKENDS
-
-By default, Pulp has two types of authentication enabled, and they fall back for each other:
-
-1. Basic Auth which is checked against an internal users database
-2. Webserver authentication that relies on the webserver to perform the authentication.
-
-To change the authentication types Pulp will use, modify the `AUTHENTICATION_BACKENDS`
-settings. See the [Django authentication documentation](https://docs.djangoproject.com/en/4.2/topics/auth/customizing/#authentication-backends)
-for more information.
 
 
 ## Kafka Settings
