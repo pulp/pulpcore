@@ -426,9 +426,9 @@ This time is only accurate to one worker heartbeat corresponding to `WORKER_TTL 
 
 Defaults to `600` seconds.
 
-### UPLOAD_PROTECTION_TIME, TMPFILE_PROTECTION_TIME and TASK_PROTECTION_TIME
+### TASK_PROTECTION_TIME, TMPFILE_PROTECTION_TIME and UPLOAD_PROTECTION_TIME
 
-Pulp uses `tasks`, `uploads` and `pulp temporary files` to pass data from the api to worker tasks.
+Pulp uses `tasks`, `pulp temporary files` and `uploads` to pass data from the api to worker tasks.
 These options allow to specify a timeinterval in minutes used for cleaning up stale entries.
 If set to 0, automatic cleanup is disabled, which is the default.
 
