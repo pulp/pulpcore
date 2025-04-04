@@ -463,11 +463,11 @@ It should have permissions of:
 
 The following Redis settings can be set in your Pulp config:
 
-- REDIS_URL
-- REDIS_HOST
-- REDIS_PORT
 - REDIS_DB
+- REDIS_HOST
 - REDIS_PASSWORD
+- REDIS_PORT
+- REDIS_URL
 
 Below are some common settings used for Redis configuration.
 
@@ -475,10 +475,10 @@ Below are some common settings used for Redis configuration.
 
 The hostname for Redis.
 
-### REDIS_PORT
-
-The port for Redis.
-
 ### REDIS_PASSWORD
 
 The password for Redis.
+
+### REDIS_PORT
+
+The port for Redis.
