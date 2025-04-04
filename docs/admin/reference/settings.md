@@ -174,6 +174,24 @@ for details on client configuration properties.
 `bootstrap.servers` value for the client. Specifies endpoint(s) for the kafka client. Kafka integration is disabled if
 unspecified.
 
+### KAFKA_PRODUCER_POLL_TIMEOUT
+
+Timeout in seconds for the kafka producer polling thread's `poll` calls.
+
+Defaults to `0.1`.
+
+### KAFKA_SASL_MECHANISM
+
+`sasl.mechanisms` value for the client (optional). Specifies the authentication method used by the kafka broker.
+
+### KAFKA_SASL_PASSWORD
+
+`sasl.password` value for the client (optional). Password for broker authentication.
+
+### KAFKA_SASL_USERNAME
+
+`sasl.username` value for the client (optional). Username for broker authentication.
+
 ### KAFKA_SECURITY_PROTOCOL
 
 `security.protocol` value for the client. What protocol to use for communication with the broker.
@@ -184,24 +202,6 @@ Defaults to `plaintext` (unencrypted).
 
 `ssl.ca.pem` value for the client (optional). Used to override the TLS truststore for broker connections.
 
-### KAFKA_SASL_MECHANISM
-
-`sasl.mechanisms` value for the client (optional). Specifies the authentication method used by the kafka broker.
-
-### KAFKA_SASL_USERNAME
-
-`sasl.username` value for the client (optional). Username for broker authentication.
-
-### KAFKA_SASL_PASSWORD
-
-`sasl.password` value for the client (optional). Password for broker authentication.
-
-### KAFKA_TASKS_STATUS_TOPIC
-
-What kafka topic to emit notifications to when tasks start/stop.
-
-Defaults to `pulpcore.tasking.status`.
-
 ### KAFKA_TASKS_STATUS_PRODUCER_SYNC_ENABLED
 
 Whether to synchronously send task status messages. When `True`, the task message is sent synchronously, otherwise the
@@ -209,11 +209,11 @@ sends happen asynchronously, with a background thread periodically sending messa
 
 Defaults to `False`.
 
-### KAFKA_PRODUCER_POLL_TIMEOUT
+### KAFKA_TASKS_STATUS_TOPIC
 
-Timeout in seconds for the kafka producer polling thread's `poll` calls.
+What kafka topic to emit notifications to when tasks start/stop.
 
-Defaults to `0.1`.
+Defaults to `pulpcore.tasking.status`.
 
 ### OTEL_ENABLED
 
