@@ -25,7 +25,7 @@ project, so any [Django setting](https://docs.djangoproject.com/en/4.2/ref/setti
 By default, Pulp has two types of authentication enabled, and they fall back for each other:
 
 1. Basic Auth which is checked against an internal users database
-2. Webserver authentication that relies on the webserver to perform the authentication.
+1. Webserver authentication that relies on the webserver to perform the authentication.
 
 To change the authentication types Pulp will use, modify the `AUTHENTICATION_BACKENDS`
 settings. See the [Django authentication documentation](https://docs.djangoproject.com/en/4.2/topics/auth/customizing/#authentication-backends)
@@ -146,9 +146,9 @@ STORAGES = {
 To use another backend storage, you'll need to:
 
 1. Set up your storage and gather required credentials and specific configs.
-2. Ensure the `django-storage[s3|google|azure]` python package is installed. This depends on the installation method.
-3. Configure the default `BACKEND` storage class.
-4. Configure available `OPTIONS` for that backend.
+1. Ensure the `django-storage[s3|google|azure]` python package is installed. This depends on the installation method.
+1. Configure the default `BACKEND` storage class.
+1. Configure available `OPTIONS` for that backend.
 
 Learn more on the
 [Configure Storages](site:pulpcore/docs/admin/guides/configure-pulp/configure-storages/) guide.
