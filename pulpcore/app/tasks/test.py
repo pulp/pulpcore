@@ -14,13 +14,6 @@ def sleep(interval):
     sleep(interval)
 
 
-async def asleep(interval):
-    """Async function that sleeps."""
-    import asyncio
-
-    await asyncio.sleep(interval)
-
-
 @backoff.on_exception(backoff.expo, BaseException)
 def gooey_task(interval):
     """A sleep task that tries to avoid being killed by ignoring all exceptions."""
