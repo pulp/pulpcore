@@ -227,150 +227,6 @@ Defaults to `False`.
 
 Pulp defines the following settings itself:
 
-### ENABLED_PLUGINS
-
-An optional list of plugin names. If provided, Pulp will limit loading plugins to this list. If omitted,
-Pulp will load all installed plugins.
-
-### API_ROOT
-
-A string containing the path prefix for the Pulp API. This is used by the REST API when forming
-URLs to refer clients to other parts of the REST API and by the `pulpcore-api` application to
-match incoming URLs. Pulp appends the string `api/v3/` to this setting.
-
-Defaults to `/pulp/`. After the application appends `api/v3/` it makes the V3 API by default
-serve from `/pulp/api/v3/`.
-
-### WORKING_DIRECTORY
-
-The directory used by workers to stage files temporarily. This defaults to
-`/var/lib/pulp/tmp/`.
-
-It should have permissions of:
-
-- mode: 750
-- owner: pulp (the account that pulp runs under)
-- group: pulp (the group of the account that pulp runs under)
-- SELinux context: system_u:object_r:pulpcore_var_lib_t:s0
-
-!!! note
-    It is recommended that `WORKING_DIRECTORY` and `MEDIA_ROOT` exist on the same storage
-    volume for performance reasons. Files are commonly staged in the `WORKING_DIRECTORY` and
-    validated before being moved to their permanent home in `MEDIA_ROOT`.
-
-### CHUNKED_UPLOAD_DIR
-
-A relative path inside the DEPLOY_ROOT directory used exclusively for uploaded chunks. The
-uploaded chunks are stored in the default storage specified by `STORAGES['default']['BACKEND']`. This
-option allows users to customize the actual place where chunked uploads should be stored within
-the declared storage. The default, `upload`, is sufficient for most use cases. A change to
-this setting only applies to uploads created after the change.
-
-### CONTENT_ORIGIN
-
-A string containing the protocol, fqdn, and port where the content app is reachable by users.
-This is used by `pulpcore` and various plugins when referring users to the content app.
-For example if the API should refer users to content at using http to pulp.example.com on port
-24816, (the content default port), you would set: `https://pulp.example.com:24816`. The default is `None`.
-When set to `None`, the `base_url` for Distributions is a relative path.
-This means the API returns relative URLs without the protocol, fqdn, and port.
-
-### HIDE_GUARDED_DISTRIBUTIONS
-
-If activated, the distributions that are protected by a content guard will not be shown on the
-directory listing in the content app. Defaults to `False`.
-
-### CONTENT_PATH_PREFIX
-
-A string containing the path prefix for the content app. This is used by the REST API when
-forming URLs to refer clients to the content serving app, and by the content serving application
-to match incoming URLs.
-
-Defaults to `/pulp/content/`.
-
-### CONTENT_APP_TTL
-
-The number of seconds before a content app should be considered lost.
-
-Defaults to `30` seconds.
-
-### CACHE_ENABLED
-
-Store cached responses from the content app into Redis. This setting improves the performance
-of the content app under heavy load for similar requests. Defaults to `False`.
-
-!!! note
-    The entire response is not stored in the cache. Only the location of the file needed to
-    recreate the response is stored. This reduces database queries and allows for many
-    responses to be stored inside the cache.
-
-### CACHE_SETTINGS
-
-Dictionary with tunable settings for the cache:
-
-- `EXPIRES_TTL` - Number of seconds entries should stay in the cache before expiring.
-
-Defaults to `600` seconds.
-
-!!! note
-    Set to `None` to have entries not expire.
-    Content app responses are always invalidated when the backing distribution is updated.
-
-### DOMAIN_ENABLED
-
-!!! note
-    This feature is provided as a tech-preview
-
-Enable the `Domains feature to enable multi-tenancy capabilities <domains>`. All installed
-plugins must be Domain compatible for Pulp to start. Defaults to `False`.
-
-### WORKER_TTL
-
-The number of seconds before a worker should be considered lost.
-
-Defaults to `30` seconds.
-
-### TASK_GRACE_INTERVAL
-
-On receiving SIGHUP or SIGTERM a worker will await the currently running task forever.
-On SIGINT, this value represents the time before the worker will attempt to kill the subprocess.
-This time is only accurate to one worker heartbeat corresponding to `WORKER_TTL / 3`.
-
-Defaults to `600` seconds.
-
-### REMOTE_USER_ENVIRON_NAME
-
-The name of the WSGI environment variable to read for `webserver authentication
-<webserver-authentication>`.
-
-!!! warning
-    Configuring this has serious security implications. See the [Django warning at the end of this
-    section in their docs](https://docs.djangoproject.com/en/4.2/howto/auth-remote-user/#configuration) for more details.
-
-Defaults to `'REMOTE_USER'`.
-
-### ALLOWED_IMPORT_PATHS
-
-One or more real filesystem paths that Remotes with filesystem paths can import from. For example
-to allow a remote url of `file:///mnt/foo/bar/another/folder/` you could specify:
-
-```
-ALLOWED_IMPORT_PATHS = ['/mnt/foo/bar']  # only a subpath is needed
-```
-
-Defaults to `[]`, meaning `file:///` urls are not allowed in any Remote.
-
-### ALLOWED_EXPORT_PATHS
-
-One or more real filesystem paths that Exporters can export to. For example to allow a path of
-`/mnt/foo/bar/another/folder/` you could specify:
-
-```
-ALLOWED_EXPORT_PATHS = ['/mnt/foo/bar']  # only a subpath is needed
-```
-
-Defaults to `[]` which means no path is allowed.
-
 ### ALLOWED_CONTENT_CHECKSUMS
 
 !!! warning
@@ -418,12 +274,122 @@ You can update them using:
     If Pulp fails to start because forbidden checksums have been identified or required ones are
     missing, run `pulpcore-manager handle-artifact-checksums` command.
 
+### ALLOWED_EXPORT_PATHS
+
+One or more real filesystem paths that Exporters can export to. For example to allow a path of
+`/mnt/foo/bar/another/folder/` you could specify:
+
+```
+ALLOWED_EXPORT_PATHS = ['/mnt/foo/bar']  # only a subpath is needed
+```
+
+Defaults to `[]` which means no path is allowed.
+
+### ALLOWED_IMPORT_PATHS
+
+One or more real filesystem paths that Remotes with filesystem paths can import from. For example
+to allow a remote url of `file:///mnt/foo/bar/another/folder/` you could specify:
+
+```
+ALLOWED_IMPORT_PATHS = ['/mnt/foo/bar']  # only a subpath is needed
+```
+
+Defaults to `[]`, meaning `file:///` urls are not allowed in any Remote.
+
+### ANALYTICS
+
+If `True`, Pulp will anonymously post analytics information to
+[https://analytics.pulpproject.org/](https://analytics.pulpproject.org/) and aids in project decision-making. See the
+`analytics docs ` for more info on exactly what is posted along with an example.
+
+Defaults to `True`.
+
+### API_ROOT
+
+A string containing the path prefix for the Pulp API. This is used by the REST API when forming
+URLs to refer clients to other parts of the REST API and by the `pulpcore-api` application to
+match incoming URLs. Pulp appends the string `api/v3/` to this setting.
+
+Defaults to `/pulp/`. After the application appends `api/v3/` it makes the V3 API by default
+serve from `/pulp/api/v3/`.
+
+### CACHE_ENABLED
+
+Store cached responses from the content app into Redis. This setting improves the performance
+of the content app under heavy load for similar requests. Defaults to `False`.
+
+!!! note
+    The entire response is not stored in the cache. Only the location of the file needed to
+    recreate the response is stored. This reduces database queries and allows for many
+    responses to be stored inside the cache.
+
+### CACHE_SETTINGS
+
+Dictionary with tunable settings for the cache:
+
+- `EXPIRES_TTL` - Number of seconds entries should stay in the cache before expiring.
+
+Defaults to `600` seconds.
+
+!!! note
+    Set to `None` to have entries not expire.
+    Content app responses are always invalidated when the backing distribution is updated.
+
+### CHUNKED_UPLOAD_DIR
+
+A relative path inside the DEPLOY_ROOT directory used exclusively for uploaded chunks. The
+uploaded chunks are stored in the default storage specified by `STORAGES['default']['BACKEND']`. This
+option allows users to customize the actual place where chunked uploads should be stored within
+the declared storage. The default, `upload`, is sufficient for most use cases. A change to
+this setting only applies to uploads created after the change.
+
+### CONTENT_APP_TTL
+
+The number of seconds before a content app should be considered lost.
+
+Defaults to `30` seconds.
+
+### CONTENT_ORIGIN
+
+A string containing the protocol, fqdn, and port where the content app is reachable by users.
+This is used by `pulpcore` and various plugins when referring users to the content app.
+For example if the API should refer users to content at using http to pulp.example.com on port
+24816, (the content default port), you would set: `https://pulp.example.com:24816`. The default is `None`.
+When set to `None`, the `base_url` for Distributions is a relative path.
+This means the API returns relative URLs without the protocol, fqdn, and port.
+
+### CONTENT_PATH_PREFIX
+
+A string containing the path prefix for the content app. This is used by the REST API when
+forming URLs to refer clients to the content serving app, and by the content serving application
+to match incoming URLs.
+
+Defaults to `/pulp/content/`.
+
 ### DJANGO_GUID
 
 Pulp uses `django-guid` to append correlation IDs to logging messages. For more information on how
 to configure the `DJANGO_GUID` setting, see the [django-guid settings
 documentation](https://django-guid.readthedocs.io/en/latest/settings.html). To read more about using
 correlation id in Pulp, read [our guide](site:pulpcore/docs/user/guides/correlation-id/).
+
+### DOMAIN_ENABLED
+
+!!! note
+    This feature is provided as a tech-preview
+
+Enable the `Domains feature to enable multi-tenancy capabilities <domains>`. All installed
+plugins must be Domain compatible for Pulp to start. Defaults to `False`.
+
+### ENABLED_PLUGINS
+
+An optional list of plugin names. If provided, Pulp will limit loading plugins to this list. If omitted,
+Pulp will load all installed plugins.
+
+### HIDE_GUARDED_DISTRIBUTIONS
+
+If activated, the distributions that are protected by a content guard will not be shown on the
+directory listing in the content app. Defaults to `False`.
 
 ### ORPHAN_PROTECTION_TIME
 
@@ -432,11 +398,16 @@ they become candidates for deletion by an orphan cleanup task. This should ideal
 than your longest running task otherwise any content created during that task could be cleaned
 up before the task finishes. Default is 1440 minutes (24 hours).
 
-### UPLOAD_PROTECTION_TIME, TMPFILE_PROTECTION_TIME and TASK_PROTECTION_TIME
+### REMOTE_USER_ENVIRON_NAME
 
-Pulp uses `tasks`, `uploads` and `pulp temporary files` to pass data from the api to worker tasks.
-These options allow to specify a timeinterval in minutes used for cleaning up stale entries.
-If set to 0, automatic cleanup is disabled, which is the default.
+The name of the WSGI environment variable to read for `webserver authentication
+<webserver-authentication>`.
+
+!!! warning
+    Configuring this has serious security implications. See the [Django warning at the end of this
+    section in their docs](https://docs.djangoproject.com/en/4.2/howto/auth-remote-user/#configuration) for more details.
+
+Defaults to `'REMOTE_USER'`.
 
 ### TASK_DIAGNOSTICS
 
@@ -447,13 +418,42 @@ The artifacts are cleaned up automatically by the orphan cleanup.
 - memory.datum - the task's max resident set size in MB
 - pyinstrument.html - the output of the pyinstrument profiler, if installed
 
-### ANALYTICS
+### TASK_GRACE_INTERVAL
 
-If `True`, Pulp will anonymously post analytics information to
-[https://analytics.pulpproject.org/](https://analytics.pulpproject.org/) and aids in project decision-making. See the
-`analytics docs ` for more info on exactly what is posted along with an example.
+On receiving SIGHUP or SIGTERM a worker will await the currently running task forever.
+On SIGINT, this value represents the time before the worker will attempt to kill the subprocess.
+This time is only accurate to one worker heartbeat corresponding to `WORKER_TTL / 3`.
 
-Defaults to `True`.
+Defaults to `600` seconds.
+
+### UPLOAD_PROTECTION_TIME, TMPFILE_PROTECTION_TIME and TASK_PROTECTION_TIME
+
+Pulp uses `tasks`, `uploads` and `pulp temporary files` to pass data from the api to worker tasks.
+These options allow to specify a timeinterval in minutes used for cleaning up stale entries.
+If set to 0, automatic cleanup is disabled, which is the default.
+
+### WORKER_TTL
+
+The number of seconds before a worker should be considered lost.
+
+Defaults to `30` seconds.
+
+### WORKING_DIRECTORY
+
+The directory used by workers to stage files temporarily. This defaults to
+`/var/lib/pulp/tmp/`.
+
+It should have permissions of:
+
+- mode: 750
+- owner: pulp (the account that pulp runs under)
+- group: pulp (the group of the account that pulp runs under)
+- SELinux context: system_u:object_r:pulpcore_var_lib_t:s0
+
+!!! note
+    It is recommended that `WORKING_DIRECTORY` and `MEDIA_ROOT` exist on the same storage
+    volume for performance reasons. Files are commonly staged in the `WORKING_DIRECTORY` and
+    validated before being moved to their permanent home in `MEDIA_ROOT`.
 
 
 ## Redis Settings
