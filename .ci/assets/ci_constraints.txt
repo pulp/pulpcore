@@ -7,4 +7,4 @@ tablib!=3.6.0
 
 
 multidict!=6.3.0
-# This release failed the lower bounds test for some sase sensitivity in CIMultiDict.
+# This release failed the lower bounds test for some case sensitivity in CIMultiDict.
