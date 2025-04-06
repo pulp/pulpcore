@@ -100,8 +100,11 @@ echo "::endgroup::"
 # Install test requirements
 ###########################
 
+# Carry on previous constraints (there might be no such file).
+cat *_constraints.txt > bindings_constraints.txt || true
+cat .ci/assets/ci_constraints.txt >> bindings_constraints.txt
 # Add a safeguard to make sure the proper versions of the clients are installed.
-echo "$REPORTED_STATUS" | jq -r '.versions[]|select(.package)|(.package|sub("_"; "-")) + "-client==" + .version' > bindings_constraints.txt
+echo "$REPORTED_STATUS" | jq -r '.versions[]|select(.package)|(.package|sub("_"; "-")) + "-client==" + .version' >> bindings_constraints.txt
 cmd_stdin_prefix bash -c "cat > /tmp/unittest_requirements.txt" < unittest_requirements.txt
 cmd_stdin_prefix bash -c "cat > /tmp/functest_requirements.txt" < functest_requirements.txt
 cmd_stdin_prefix bash -c "cat > /tmp/bindings_requirements.txt" < bindings_requirements.txt
