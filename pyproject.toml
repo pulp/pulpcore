@@ -67,7 +67,7 @@ dependencies = [
   "url-normalize>=1.4.3,<=2.2.0",
   "uuid6>=2023.5.2,<=2024.7.10",
   "whitenoise>=5.0,<6.10.0",
-  "yarl>=1.8,<1.18.4",
+  "yarl>=1.8,<1.19.1",
 ]
 
 [project.optional-dependencies]
