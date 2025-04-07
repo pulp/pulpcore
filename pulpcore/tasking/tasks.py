@@ -7,6 +7,7 @@ import os
 import sys
 import traceback
 import tempfile
+from asgiref.sync import sync_to_async
 from datetime import timedelta
 from gettext import gettext as _
 
@@ -16,12 +17,13 @@ from django.db.models import Model, Max
 from django_guid import get_guid
 from pulpcore.app.apps import MODULE_PLUGIN_VERSIONS
 from pulpcore.app.models import Task, TaskGroup
-from pulpcore.app.util import current_task, get_domain, get_prn
+from pulpcore.app.util import current_task, get_domain, get_prn, deprecation_logger
 from pulpcore.constants import (
     TASK_FINAL_STATES,
     TASK_INCOMPLETE_STATES,
     TASK_STATES,
     TASK_DISPATCH_LOCK,
+    IMMEDIATE_TIMEOUT,
 )
 from pulpcore.tasking.kafka import send_task_notification
 
@@ -75,11 +77,38 @@ def _execute_task(task):
         func = getattr(module, function_name)
         args = task.enc_args or ()
         kwargs = task.enc_kwargs or {}
-        result = func(*args, **kwargs)
-        if asyncio.iscoroutine(result):
+        immediate = task.immediate
+        is_coroutine_fn = asyncio.iscoroutinefunction(func)
+
+        if not is_coroutine_fn:
+            if immediate:
+                deprecation_logger.warning(
+                    "Immediate tasks must be coroutine functions. "
+                    "Support for non-coroutine immediate tasks will be dropped "
+                    "in pulpcore 3.85."
+                )
+                func = sync_to_async(func)
+                is_coroutine_fn = True
+            else:
+                func(*args, **kwargs)
+
+        if is_coroutine_fn:
             _logger.debug("Task is coroutine %s", task.pk)
+            coro = func(*args, **kwargs)
+            if immediate:
+                coro = asyncio.wait_for(coro, timeout=IMMEDIATE_TIMEOUT)
             loop = asyncio.get_event_loop()
-            loop.run_until_complete(result)
+            try:
+                loop.run_until_complete(coro)
+            except asyncio.TimeoutError:
+                _logger.info(
+                    "Immediate task %s timed out after %s seconds.", task.pk, IMMEDIATE_TIMEOUT
+                )
+                raise RuntimeError(
+                    "Immediate task timed out after {timeout} seconds.".format(
+                        timeout=IMMEDIATE_TIMEOUT,
+                    )
+                )
 
     except Exception:
         exc_type, exc, tb = sys.exc_info()

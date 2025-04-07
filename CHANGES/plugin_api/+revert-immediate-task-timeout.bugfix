@@ -1,2 +1,0 @@
-Reverted adding timeout to immediate tasks, for it was causing a regression
-with pull-through caching (https://github.com/pulp/pulpcore/issues/6429).
