@@ -8,6 +8,31 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.75.1 (2025-04-08) {: #3.75.1 }
+
+### REST API {: #3.75.1-rest-api }
+
+#### Bugfixes {: #3.75.1-rest-api-bugfix }
+
+- Fixed an oversight in the #6385 fix.
+
+### Plugin API {: #3.75.1-plugin-api }
+
+#### Bugfixes {: #3.75.1-plugin-api-bugfix }
+
+- Reverted adding timeout to immediate tasks, for it was causing a regression
+  with pull-through caching (https://github.com/pulp/pulpcore/issues/6429).
+
+### Pulp File {: #3.75.1-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.75.1-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.75.0 (2025-04-02) {: #3.75.0 }
 
 ### REST API {: #3.75.0-rest-api }
