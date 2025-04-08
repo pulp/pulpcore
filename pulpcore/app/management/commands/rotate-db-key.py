@@ -22,9 +22,10 @@ class Command(BaseCommand):
         "Rotate the db encryption key. "
         "This command will re-encrypt all values in instances of EncryptedTextField and "
         "EncryptedJSONField with the first key in the file refereced by "
-        "settings.DB_ENCRYPTION_KEY. You need to make sure that all running instances of the "
-        "application already loaded this key for proper functioning. Refer to the docs for zero "
-        "downtime key rotation."
+        "settings.DB_ENCRYPTION_KEY. "
+        "You need to make sure that all running instances of the application already loaded this "
+        "key for proper functioning. "
+        "Refer to the docs for zero downtime key rotation."
         "It is safe to abort and resume or rerun this operation."
     )
 
