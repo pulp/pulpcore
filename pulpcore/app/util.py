@@ -590,8 +590,31 @@ def get_default_domain():
     return default_domain
 
 
+async def aget_default_domain():
+    global default_domain
+    # This will run in a post-migration hook
+    if default_domain is None:
+        try:
+            Domain = models.Domain
+        except AttributeError:
+            return None
+        try:
+            default_domain = await Domain.objects.aget(name="default")
+        except Domain.DoesNotExist:
+            default_domain = Domain(
+                name="default", storage_class=settings.STORAGES["default"]["BACKEND"]
+            )
+            await default_domain.asave(skip_hooks=True)
+
+    return default_domain
+
+
 def get_domain():
     return current_domain.get() or get_default_domain()
+
+
+async def aget_domain():
+    return current_domain.get() or await aget_default_domain()
 
 
 def get_domain_pk():
