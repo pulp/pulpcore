@@ -8,6 +8,31 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.75.1 (2025-04-08) {: #3.75.1 }
+
+### REST API {: #3.75.1-rest-api }
+
+#### Bugfixes {: #3.75.1-rest-api-bugfix }
+
+- Fixed an oversight in the #6385 fix.
+
+### Plugin API {: #3.75.1-plugin-api }
+
+#### Bugfixes {: #3.75.1-plugin-api-bugfix }
+
+- Reverted adding timeout to immediate tasks, for it was causing a regression
+  with pull-through caching (https://github.com/pulp/pulpcore/issues/6429).
+
+### Pulp File {: #3.75.1-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.75.1-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.75.0 (2025-04-02) {: #3.75.0 }
 
 ### REST API {: #3.75.0-rest-api }
@@ -155,6 +180,28 @@ No significant changes.
   [#6244](https://github.com/pulp/pulpcore/issues/6244)
 
 ### Pulp Cert Guard {: #3.74.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.73.4 (2025-04-08) {: #3.73.4 }
+
+### REST API {: #3.73.4-rest-api }
+
+#### Bugfixes {: #3.73.4-rest-api-bugfix }
+
+- Fixed an oversight in the #6385 fix.
+
+### Plugin API {: #3.73.4-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.73.4-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.73.4-pulp-cert-guard }
 
 No significant changes.
 
@@ -932,6 +979,28 @@ No significant changes.
 No significant changes.
 
 ### Pulp Cert Guard {: #3.64.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.63.14 (2025-04-08) {: #3.63.14 }
+
+### REST API {: #3.63.14-rest-api }
+
+#### Bugfixes {: #3.63.14-rest-api-bugfix }
+
+- Fixed an oversight in the #6385 fix.
+
+### Plugin API {: #3.63.14-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.63.14-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.63.14-pulp-cert-guard }
 
 No significant changes.
 
@@ -2078,6 +2147,28 @@ No significant changes.
 No significant changes.
 
 ### Pulp Cert Guard
+
+No significant changes.
+
+---
+
+## 3.49.36 (2025-04-08) {: #3.49.36 }
+
+### REST API {: #3.49.36-rest-api }
+
+#### Bugfixes {: #3.49.36-rest-api-bugfix }
+
+- Fixed an oversight in the #6385 fix.
+
+### Plugin API {: #3.49.36-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.49.36-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.49.36-pulp-cert-guard }
 
 No significant changes.
 
