@@ -126,11 +126,6 @@ Pulp defines the following settings itself:
 
 ### ALLOWED\_CONTENT\_CHECKSUMS
 
-!!! warning
-    Enforcement of this setting in `pulpcore` and various plugins is not fully in place.
-    It is possible that checksums not in this list may still be used in various places.
-    This banner will be removed when it is believed all `pulpcore` and plugin code fully enforces this setting.
-
 The list of content-checksums this pulp-instance is **allowed to use**.
 By default, the following are used:
 
@@ -252,10 +247,11 @@ Defaults to `30` seconds.
 
 ### CONTENT\_ORIGIN
 
-A string containing the protocol, fqdn, and port where the content app is reachable by users.
+A string containing the `protocol`, `fqdn`, and optionally `port` where the content app is reachable by users.
 This is used by `pulpcore` and various plugins when referring users to the content app.
-For example if the API should refer users to content at using http to pulp.example.com on port 24816,
-(the content default port), you would set: `https://pulp.example.com:24816`.
+For example if the API should redirect users to content at pulp.example.com using HTTPS,
+you would set: `https://pulp.example.com` (not including `/pulp/content`, the `CONTENT_PATH_PREFIX`).
+Usually this should point to the external address of the reverse proxy.
 When set to `None`, the `base_url` for Distributions is a relative path.
 This means the API returns relative URLs without the protocol, fqdn, and port.
 
@@ -264,7 +260,7 @@ Default to `None`.
 ### CONTENT\_PATH\_PREFIX
 
 A string containing the path prefix for the content app.
-This is used by the REST API when forming URLs to refer clients to the content serving app,
+This is used by the REST API when forming URLs to redirect clients to the content serving app,
 and by the content serving application to match incoming URLs.
 
 Defaults to `/pulp/content/`.
@@ -393,7 +389,7 @@ Defaults to `/var/lib/pulp/tmp/`.
 
 ## Redis Settings
 
-!!! warning
+!!! note
     To enable usage of Redis the [CACHE\_ENABLED](#cache_enabled) option must be set to `True`.
 
 Below are some common settings used for Redis configuration.
