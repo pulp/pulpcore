@@ -1,4 +1,6 @@
+import OpenSSL
 import os
+
 from gettext import gettext as _
 from urllib.parse import urlparse
 
@@ -69,6 +71,34 @@ class RepositorySerializer(ModelSerializer):
             "retain_repo_versions",
             "remote",
         )
+
+
+def validate_certificate(which_cert, value):
+    """
+    Validate and return *just* the cert and not any commentary that came along with it.
+
+    Args:
+        which_cert: The attribute-name whose cert we're validating (only used for error-message).
+        value: The string being proposed as a certificate.
+
+    Raises:
+        ValidationError: When the provided value can't be interpreted as a certificate.
+
+    Returns:
+        The cert-string with *just* the validated BEGIN/END CERTIFICATE segments.
+    """
+    if value:
+        try:
+            # Let OpenSSL validate and clean the proposed cert.
+            cleansed_str = OpenSSL.crypto.dump_certificate(
+                OpenSSL.crypto.FILETYPE_PEM,
+                OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_PEM, bytes(value, "UTF-8")),
+            ).decode("ASCII")
+            return cleansed_str
+        except OpenSSL.crypto.Error as e:
+            raise serializers.ValidationError(
+                _("Invalid {} specified, error '{}'").format(which_cert, e.args)
+            )
 
 
 class RemoteSerializer(ModelSerializer, HiddenFieldsMixin):
@@ -269,6 +299,12 @@ class RemoteSerializer(ModelSerializer, HiddenFieldsMixin):
         if value and "@" in value:
             raise serializers.ValidationError(_("proxy_url must not contain credentials"))
         return value
+
+    def validate_ca_cert(self, value):
+        return validate_certificate("ca_cert", value)
+
+    def validate_client_cert(self, value):
+        return validate_certificate("client_cert", value)
 
     def validate(self, data):
         """
