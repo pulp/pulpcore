@@ -14,7 +14,7 @@ In containerized deployments, the setting can point to a properly shaped cluster
 !!! warning
 
     This key should take part in your backup strategy.
-    Loosing it results failures to operate Pulp.
+    Loosing it results in failures to operate Pulp.
 
 To generate such a key with openssl, use:
 
