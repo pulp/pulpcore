@@ -8,6 +8,29 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.75.2 (2025-04-09) {: #3.75.2 }
+
+### REST API {: #3.75.2-rest-api }
+
+#### Bugfixes {: #3.75.2-rest-api-bugfix }
+
+- Set the X-PULP-ARTIFACT-SIZE header at the handle_response_header function.
+  [#6390](https://github.com/pulp/pulpcore/issues/6390)
+
+### Plugin API {: #3.75.2-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.75.2-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.75.2-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.75.1 (2025-04-08) {: #3.75.1 }
 
 ### REST API {: #3.75.1-rest-api }
