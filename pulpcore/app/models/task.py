@@ -4,6 +4,8 @@ Django models related to the Tasking system
 
 import logging
 import traceback
+import asyncio
+from asgiref.sync import sync_to_async
 from contextlib import suppress
 from datetime import timedelta
 from gettext import gettext as _
@@ -150,11 +152,25 @@ class Task(BaseModel, AutoAddObjPermsMixin):
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
-        with connection.cursor() as cursor:
-            cursor.execute("SELECT pg_advisory_unlock(%s)", [self.lock])
-            released = cursor.fetchone()[0]
-        if not released:
-            raise RuntimeError("Lock not held.")
+        # In some special ExitStack contexts, the __enter__ code may be run in a
+        # synchronous thread and the __exit__ in an async context.
+        try:
+            async_ctx = True
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            async_ctx = False
+
+        def _exit():
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT pg_advisory_unlock(%s)", [self.lock])
+                released = cursor.fetchone()[0]
+            if not released:
+                raise RuntimeError("Lock not held.")
+
+        if async_ctx:
+            loop.create_task(sync_to_async(_exit)())
+        else:
+            _exit()
 
     @staticmethod
     def current_id():
@@ -321,6 +337,12 @@ class Task(BaseModel, AutoAddObjPermsMixin):
     def unblock(self):
         # This should be safe to be called without holding the lock.
         Task.objects.filter(pk=self.pk).update(unblocked_at=timezone.now())
+        with suppress(AttributeError):
+            del self.unblocked_at
+
+    async def aunblock(self):
+        # This should be safe to be called without holding the lock.
+        await Task.objects.filter(pk=self.pk).aupdate(unblocked_at=timezone.now())
         with suppress(AttributeError):
             del self.unblocked_at
 

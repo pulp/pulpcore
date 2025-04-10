@@ -492,7 +492,7 @@ class AsyncUpdateMixin(AsyncReservedObjectMixin):
         serializer.is_valid(raise_exception=True)
         app_label = instance._meta.app_label
         task = dispatch(
-            tasks.base.general_update,
+            tasks.base.ageneral_update,
             exclusive_resources=self.async_reserved_resources(instance),
             args=(pk, app_label, serializer.__class__.__name__),
             kwargs={"data": request.data, "partial": partial},
@@ -528,7 +528,7 @@ class AsyncRemoveMixin(AsyncReservedObjectMixin):
         serializer = self.get_serializer(instance)
         app_label = instance._meta.app_label
         task = dispatch(
-            tasks.base.general_delete,
+            tasks.base.ageneral_delete,
             exclusive_resources=self.async_reserved_resources(instance),
             args=(pk, app_label, serializer.__class__.__name__),
             immediate=self.ALLOW_NON_BLOCKING_DELETE,

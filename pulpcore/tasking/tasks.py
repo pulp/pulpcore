@@ -7,6 +7,8 @@ import os
 import sys
 import traceback
 import tempfile
+import uuid
+from asgiref.sync import sync_to_async
 from datetime import timedelta
 from gettext import gettext as _
 
@@ -16,12 +18,13 @@ from django.db.models import Model, Max
 from django_guid import get_guid
 from pulpcore.app.apps import MODULE_PLUGIN_VERSIONS
 from pulpcore.app.models import Task, TaskGroup
-from pulpcore.app.util import current_task, get_domain, get_prn
+from pulpcore.app.util import current_task, get_domain, get_prn, deprecation_logger, aget_domain
 from pulpcore.constants import (
     TASK_FINAL_STATES,
     TASK_INCOMPLETE_STATES,
     TASK_STATES,
     TASK_DISPATCH_LOCK,
+    IMMEDIATE_TIMEOUT,
 )
 from pulpcore.tasking.kafka import send_task_notification
 
@@ -68,12 +71,40 @@ def _execute_task(task):
         func = getattr(module, function_name)
         args = task.enc_args or ()
         kwargs = task.enc_kwargs or {}
-        result = func(*args, **kwargs)
-        if asyncio.iscoroutine(result):
-            _logger.debug(_("Task is coroutine %s"), task.pk)
-            loop = asyncio.get_event_loop()
-            loop.run_until_complete(result)
+        immediate = task.immediate
+        is_coroutine_fn = asyncio.iscoroutinefunction(func)
 
+        if not is_coroutine_fn:
+            if immediate:
+                deprecation_logger.warning(
+                    _(
+                        "Immediate tasks must be coroutine functions."
+                        "Support for non-coroutine immediate tasks will be dropped"
+                        "in pulpcore 3.85."
+                    )
+                )
+                func = sync_to_async(func)
+                is_coroutine_fn = True
+            else:
+                func(*args, **kwargs)
+
+        if is_coroutine_fn:
+            _logger.debug(_("Task is coroutine %s"), task.pk)
+            coro = func(*args, **kwargs)
+            if immediate:
+                coro = asyncio.wait_for(coro, timeout=IMMEDIATE_TIMEOUT)
+            loop = asyncio.get_event_loop()
+            try:
+                loop.run_until_complete(coro)
+            except asyncio.TimeoutError:
+                _logger.info(
+                    _("Immediate task %s timed out after %s seconds."), task.pk, IMMEDIATE_TIMEOUT
+                )
+                raise RuntimeError(
+                    _("Immediate task timed out after {timeout} seconds.").format(
+                        timeout=IMMEDIATE_TIMEOUT,
+                    )
+                )
     except Exception:
         exc_type, exc, tb = sys.exc_info()
         task.set_failed(exc, tb)
@@ -90,6 +121,73 @@ def _execute_task(task):
         send_task_notification(task)
     else:
         task.set_completed()
+        _logger.info(_("Task completed %s in domain: %s"), task.pk, domain.name)
+        send_task_notification(task)
+
+
+async def aexecute_task(task):
+    # Store the task id in the context for `Task.current()`.
+    current_task.set(task)
+    await sync_to_async(task.set_running)()
+    domain = await aget_domain()
+    try:
+        _logger.info(_("Starting task %s in domain: %s"), task.pk, domain.name)
+
+        # Execute task
+        module_name, function_name = task.name.rsplit(".", 1)
+        module = importlib.import_module(module_name)
+        func = getattr(module, function_name)
+        args = task.enc_args or ()
+        kwargs = task.enc_kwargs or {}
+        immediate = task.immediate
+        is_coroutine_fn = asyncio.iscoroutinefunction(func)
+
+        if not is_coroutine_fn:
+            if immediate:
+                deprecation_logger.warning(
+                    _(
+                        "Immediate tasks must be coroutine functions."
+                        "Support for non-coroutine immediate tasks will be dropped"
+                        "in pulpcore 3.85."
+                    )
+                )
+                func = sync_to_async(func)
+                is_coroutine_fn = True
+            else:
+                func(*args, **kwargs)
+
+        if is_coroutine_fn:
+            _logger.debug(_("Task is coroutine %s"), task.pk)
+            coro = func(*args, **kwargs)
+            if immediate:
+                coro = asyncio.wait_for(coro, timeout=IMMEDIATE_TIMEOUT)
+            try:
+                await coro
+            except asyncio.TimeoutError:
+                _logger.info(
+                    _("Immediate task %s timed out after %s seconds."), task.pk, IMMEDIATE_TIMEOUT
+                )
+                raise RuntimeError(
+                    _("Immediate task timed out after {timeout} seconds.").format(
+                        timeout=IMMEDIATE_TIMEOUT,
+                    )
+                )
+    except Exception:
+        exc_type, exc, tb = sys.exc_info()
+        await sync_to_async(task.set_failed)(exc, tb)
+        _logger.info(
+            _("Task[{task_type}] {task_pk} failed ({exc_type}: {exc}) in domain: {domain}").format(
+                task_type=task.name,
+                task_pk=task.pk,
+                exc_type=exc_type.__name__,
+                exc=exc,
+                domain=domain.name,
+            )
+        )
+        _logger.info("\n".join(traceback.format_list(traceback.extract_tb(tb))))
+        send_task_notification(task)
+    else:
+        await sync_to_async(task.set_completed)()
         _logger.info(_("Task completed %s in domain: %s"), task.pk, domain.name)
         send_task_notification(task)
 
@@ -248,6 +346,147 @@ def dispatch(
                 task.set_canceled(TASK_STATES.CANCELED, "Resources temporarily unavailable.")
     if notify_workers:
         wakeup_worker()
+    return task
+
+
+async def adispatch(
+    func,
+    args=None,
+    kwargs=None,
+    task_group=None,
+    exclusive_resources=None,
+    shared_resources=None,
+    immediate=False,
+    deferred=True,
+    versions=None,
+):
+    """Async version of `dispatch`."""
+
+    assert deferred or immediate, "A task must be at least `deferred` or `immediate`."
+
+    if callable(func):
+        function_name = f"{func.__module__}.{func.__name__}"
+    else:
+        function_name = func
+
+    if versions is None:
+        versions = MODULE_PLUGIN_VERSIONS[function_name.split(".", maxsplit=1)[0]]
+
+    if exclusive_resources is None:
+        exclusive_resources = []
+    else:
+        exclusive_resources = _validate_and_get_resources(exclusive_resources)
+    if shared_resources is None:
+        shared_resources = []
+    else:
+        shared_resources = _validate_and_get_resources(shared_resources)
+
+    # A task that is exclusive on a domain will block all tasks within that domain
+    domain = await aget_domain()
+    domain_prn = get_prn(domain)
+    if domain_prn not in exclusive_resources:
+        shared_resources.append(domain_prn)
+    resources = exclusive_resources + [f"shared:{resource}" for resource in shared_resources]
+
+    @sync_to_async
+    def _create_task(stack):
+        """Sync wrapper for creating task in a transaction.
+
+        Django does no support running a transaction in a async context:
+        https://code.djangoproject.com/ticket/33882
+        """
+        notify_workers = False
+        with transaction.atomic():
+            # Task creation need to be serialized so that pulp_created will provide a stable order
+            # at every time. We specifically need to ensure that each task, when commited to the
+            # task table will be the newest with respect to `pulp_created`.
+            with connection.cursor() as cursor:
+                # Wait for exclusive access and release automatically after transaction.
+                cursor.execute("SELECT pg_advisory_xact_lock(%s, %s)", [0, TASK_DISPATCH_LOCK])
+            newest_created = Task.objects.aggregate(Max("pulp_created"))["pulp_created__max"]
+            task = Task.objects.create(
+                state=TASK_STATES.WAITING,
+                # TODO: remove 'or uuid 'call (used for local testing)
+                logging_cid=(get_guid() or uuid.uuid4()),
+                task_group=task_group,
+                name=function_name,
+                enc_args=args,
+                enc_kwargs=kwargs,
+                parent_task=Task.current(),
+                reserved_resources_record=resources,
+                versions=versions,
+                immediate=immediate,
+                deferred=deferred,
+            )
+            if newest_created and task.pulp_created <= newest_created:
+                # Let this workaround not row forever into the future.
+                if newest_created - task.pulp_created > timedelta(seconds=1):
+                    # Do not commit the transaction if this condition is not met.
+                    # If we ever hit this, think about delegating the timestamping to PostgresQL.
+                    raise RuntimeError("Clockscrew detected. Task dispatching would be dangerous.")
+                # Try to work around the smaller glitch
+                task.pulp_created = newest_created + timedelta(milliseconds=1)
+                task.save()
+            if task_group:
+                task_group.refresh_from_db()
+                if task_group.all_tasks_dispatched:
+                    task.set_canceling()
+                    task.set_canceled(
+                        TASK_STATES.CANCELED, "All tasks in group have been dispatched/canceled."
+                    )
+                    return notify_workers, task, True
+            if immediate:
+                # Grab the advisory lock before the task hits the db.
+                stack.enter_context(task)
+            else:
+                notify_workers = True
+            return notify_workers, task, False
+
+    @sync_to_async
+    def _cancel_task(task):
+        task.set_canceling()
+        task.set_canceled(TASK_STATES.CANCELED, "Resources temporarily unavailable.")
+
+    with contextlib.ExitStack() as stack:
+        notify_workers, task, done = await _create_task(stack)
+        if done:
+            return task
+        if immediate:
+            prior_tasks = Task.objects.filter(
+                state__in=TASK_INCOMPLETE_STATES, pulp_created__lt=task.pulp_created
+            )
+            # Compile a list of resources that must not be taken by other tasks.
+            colliding_resources = (
+                shared_resources
+                + exclusive_resources
+                + [f"shared:{resource}" for resource in exclusive_resources]
+            )
+            # Can we execute this task immediately?
+            if (
+                not colliding_resources
+                or not await prior_tasks.filter(
+                    reserved_resources_record__overlap=colliding_resources
+                ).aexists()
+            ):
+                await task.aunblock()
+
+                cur_dir = os.getcwd()
+                with tempfile.TemporaryDirectory(dir=settings.WORKING_DIRECTORY) as working_dir:
+                    os.chdir(working_dir)
+                    try:
+                        await aexecute_task(task)
+                    finally:
+                        # whether the task fails or not, we should always restore the workdir
+                        os.chdir(cur_dir)
+
+                if resources:
+                    notify_workers = True
+            elif deferred:
+                notify_workers = True
+            else:
+                await _cancel_task(task)
+    if notify_workers:
+        await sync_to_async(wakeup_worker)()
     return task
 
 
