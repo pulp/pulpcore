@@ -58,7 +58,8 @@ fi
 
 !!! note
 
-    As the creator of the signing script, you can expect `PULP_SIGNING_KEY_FINGERPRINT` and potentially other environment variables,
+    As the creator of the signing script, you can expect `PULP_SIGNING_KEY_FINGERPRINT`,
+    and potentially other environment variables,
     depending on the content plugin calling signing service.
     Make sure the script contains a proper shebang and Pulp has got valid permissions to execute it.
     If deploying in a distributed way, all `pulpcore-worker` processes need to be able to access this script in the same path.
@@ -78,11 +79,6 @@ pulpcore-manager add-signing-service ${SERVICE_NAME} ${SCRIPT_ABS_FILENAME} ${KE
 !!! note
 
     The public key must be available on the caller's keyring or on a keyring provided via the `--gpghome` or `--keyring` parameters.
-
-!!! warning
-
-    It is possible to insert a new signing service into the database by using the `pulpcore-manager shell_plus` interactive Python shell.
-    However, this is not recommended.
 
 ## 4. Check the signing service
 
@@ -112,6 +108,6 @@ Retrieve and check the saved signing service via REST API:
 
 Plugins referring to this signing service can now sign selected content by the provided script.
 However support and details of this process varies greatly between different content types.
-To learn more about the signing from a plugin writers's perspective, see the section [Metadata Signing].
+To learn more about the signing from a plugin writer's perspective, see the section [Metadata Signing].
 
 [Metadata Signing]: site:pulpcore/docs/dev/learn/other/metadata-signing/

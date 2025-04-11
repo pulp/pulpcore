@@ -7,9 +7,9 @@ There is one required setting, although specific plugins may have additional req
 Pulp uses four types of settings:
 
 - `Django settings` Pulp is configuring
-- `Kafka settings`
 - `Pulp defined settings`
 - `Redis settings` Pulp is using
+- `Kafka settings`
 
 !!! note
     For more information on how to specify settings see the
@@ -18,54 +18,45 @@ Pulp uses four types of settings:
 
 ## Django Settings
 
-Below is a list of the most common Django settings Pulp users typically use. Pulp is a Django
-project, so any [Django setting](https://docs.djangoproject.com/en/4.2/ref/settings/) can be set.
+Below is a list of the most common Django settings Pulp users typically use.
+Pulp is a Django project, so any [Django setting] can be set.
 
-### AUTHENTICATION_BACKENDS
+### AUTHENTICATION\_BACKENDS
 
 By default, Pulp has two types of authentication enabled, and they fall back for each other:
 
-1. Basic Auth which is checked against an internal users database
+1. Basic Auth which is checked against an internal users database.
 1. Webserver authentication that relies on the webserver to perform the authentication.
 
-To change the authentication types Pulp will use, modify the `AUTHENTICATION_BACKENDS`
-settings. See the [Django authentication documentation](https://docs.djangoproject.com/en/4.2/topics/auth/customizing/#authentication-backends)
-for more information.
+To change the authentication types Pulp will use, modify the `AUTHENTICATION_BACKENDS` settings.
+See the [Django authentication documentation] for more information.
 
 ### DATABASES
 
-By default, Pulp uses PostgreSQL on localhost. PostgreSQL is the only supported database. For
-instructions on how to configure the database, refer to `database installation <database-install>`.
+By default, Pulp uses PostgreSQL on localhost.
+PostgreSQL is the only supported database.
+For instructions on how to configure the database, refer to [Django database settings].
 
-### DB\_ENCRYPTION\_KEY
-
-The file location of a symmetric fernet key that Pulp uses to encrypt sensitive fields in the database.
-Default location is `/etc/pulp/certs/database_fields.symmetric.key`.
-
-See [Database Encryption](site:pulpcore/docs/admin/guides/configure-pulp/db-encryption) for more details.
-
-### DEFAULT_FILE_STORAGE
+### DEFAULT\_FILE\_STORAGE
 
 !!! warning "Deprecated in `3.70`"
-    The `DEFAULT_FILE_STORAGE` setting was deprecated in
-    [django `4.2`](https://docs.djangoproject.com/en/4.2/ref/settings/#default-file-storage)
-    and will be removed from pulpcore on `3.85`.
+    The `DEFAULT_FILE_STORAGE` setting was deprecated in [django 4.2] and will be removed from pulpcore on `3.85`.
     Between `3.70` and `3.85`, replace it with [`STORAGES`](#storages).
 
 ### LOGGING
 
-By default, Pulp logs at an INFO level to syslog. For all possible configurations please
-refer to [Django documenation on logging](https://docs.djangoproject.com/en/4.2/topics/logging/#configuring-logging)
+By default, Pulp logs at an INFO level to syslog.
+For all possible configurations please refer to [Django documentation on logging].
 
-Enabling DEBUG logging is a common troubleshooting step. See the `enabling-debug-logging`
-documentation for details on how to do that.
+Enabling DEBUG logging is a common troubleshooting step.
+See the [Enabling Debug Logging] documentation for details on how to do that.
 
-### MEDIA_ROOT
+### MEDIA\_ROOT
 
-The location where Pulp will store files. By default, this is `/var/lib/pulp/media`.
+The location where Pulp will store files.
+By default, this is `/var/lib/pulp/media`.
 
-This only affects storage location when `STORAGES['default']['BACKEND']` is set to
-`pulpcore.app.models.storage.FileSystem`.
+This only affects storage location when `STORAGES['default']['BACKEND']` is set to `pulpcore.app.models.storage.FileSystem`.
 
 See the [storage documentation](site:pulpcore/docs/admin/guides/configure-pulp/configure-storages/) for more info.
 
@@ -74,20 +65,12 @@ It should have permissions of:
 - mode: 750
 - owner: pulp (the account that pulp runs under)
 - group: pulp (the group of the account that pulp runs under)
-- SELinux context: system_u:object_r:pulpcore_var_lib_t:s0
+- SELinux context: `system_u:object_r:pulpcore_var_lib_t:s0`
 
-### REDIRECT_TO_OBJECT_STORAGE
+### SECRET\_KEY
 
-When set to `True` access to artifacts is redirected to the corresponding Cloud storage
-configured in `STORAGES['default']['BACKEND']` using pre-authenticated URLs. When set to `False`
-artifacts are always served by the content app instead.
-
-Defaults to `True`; ignored for local file storage.
-
-### SECRET_KEY
-
-In order to get a pulp server up and running a [Django SECRET_KEY](https://docs.djangoproject.com/en/4.2/ref/settings/#secret-key)
-*must* be provided. The following code snippet can be used to generate a random SECRET_KEY.
+In order to get a pulp server up and running a [Django secret key] *must* be provided.
+The following code snippet can be used to generate a random `SECRET_KEY`.
 
 ```python linenums="1"
 import secrets
@@ -101,7 +84,7 @@ print(''.join(secrets.choice(chars) for i in range(50)))
 !!! note "Added in `3.70`"
     Starting in `3.70`, this should be used in the place of [`DEFAULT_FILE_STORAGE`](#default_file_storage).
 
-Pulp uses [django-storages](https://django-storages.readthedocs.io/en/latest/index.html) to support multiple storage backends.
+Pulp uses [django-storages] to support multiple storage backends.
 If no backend is configured, Pulp will by default use the local filesystem (`pulpcore.app.models.storage.FileSystem`).
 
 The storage setting has the form:
@@ -121,7 +104,8 @@ STORAGES = {
 To use another backend storage, you'll need to:
 
 1. Set up your storage and gather required credentials and specific configs.
-1. Ensure the `django-storage[s3|google|azure]` python package is installed. This depends on the installation method.
+1. Ensure the `django-storage[s3|google|azure]` python package is installed.
+This depends on the installation method.
 1. Configure the default `BACKEND` storage class.
 1. Configure available `OPTIONS` for that backend.
 
@@ -136,99 +120,32 @@ Overview of the integration with Pulp:
 This is because Pulp currently uses coroutines that seem to be incompatible with Django's SFTPStorage implementation.
 
 
-## Kafka Settings
-
-!!! note
-    Kafka integration functionality is in tech preview and may change based on user feedback.
-
-See [librdkafka configuration documentation](https://github.com/confluentinc/librdkafka/blob/master/CONFIGURATION.md)
-for details on client configuration properties.
-
-### KAFKA_BOOTSTRAP_SERVERS
-
-`bootstrap.servers` value for the client. Specifies endpoint(s) for the kafka client. Kafka integration is disabled if
-unspecified.
-
-### KAFKA_PRODUCER_POLL_TIMEOUT
-
-Timeout in seconds for the kafka producer polling thread's `poll` calls.
-
-Defaults to `0.1`.
-
-### KAFKA_SASL_MECHANISM
-
-`sasl.mechanisms` value for the client (optional). Specifies the authentication method used by the kafka broker.
-
-### KAFKA_SASL_PASSWORD
-
-`sasl.password` value for the client (optional). Password for broker authentication.
-
-### KAFKA_SASL_USERNAME
-
-`sasl.username` value for the client (optional). Username for broker authentication.
-
-### KAFKA_SECURITY_PROTOCOL
-
-`security.protocol` value for the client. What protocol to use for communication with the broker.
-
-Defaults to `plaintext` (unencrypted).
-
-### KAFKA_SSL_CA_PEM
-
-`ssl.ca.pem` value for the client (optional). Used to override the TLS truststore for broker connections.
-
-### KAFKA_TASKS_STATUS_PRODUCER_SYNC_ENABLED
-
-Whether to synchronously send task status messages. When `True`, the task message is sent synchronously, otherwise the
-sends happen asynchronously, with a background thread periodically sending messages to the kafka server.
-
-Defaults to `False`.
-
-### KAFKA_TASKS_STATUS_TOPIC
-
-What kafka topic to emit notifications to when tasks start/stop.
-
-Defaults to `pulpcore.tasking.status`.
-
-### OTEL_ENABLED
-
-Toggles the activation of OpenTelemetry instrumentation for monitoring and tracing the application's
-performance.
-
-Defaults to `False`.
-
-
 ## Pulp Settings
 
 Pulp defines the following settings itself:
 
-### ALLOWED_CONTENT_CHECKSUMS
+### ALLOWED\_CONTENT\_CHECKSUMS
 
-!!! warning
-    Enforcement of this setting in `pulpcore` and various plugins is not fully in place. It is
-    possible that checksums not in this list may still be used in various places. This banner will
-    be removed when it is believed all `pulpcore` and plugin code fully enforces this setting.
-
-The list of content-checksums this pulp-instance is **allowed to use**. By default, the following
-are used:
+The list of content-checksums this pulp-instance is **allowed to use**.
+By default, the following are used:
 
 ```
 ALLOWED_CONTENT_CHECKSUMS = ["sha224", "sha256", "sha384", "sha512"]
 ```
 
-The entire set of supported checksums are: `md5`, `sha1`, `sha224`, `sha256`,
-`sha384`, and `sha512`.
+The entire set of supported checksums are:
+`md5`, `sha1`, `sha224`, `sha256`, `sha384`, and `sha512`.
 
 !!! warning
-    Due to its use as the primary content-identifier, "sha256" **IS REQUIRED**. Pulp will
-    fail to start if `"sha256"` is not found in this set.
+    Due to its use as the primary content-identifier, "sha256" **IS REQUIRED**.
+    Pulp will fail to start if `"sha256"` is not found in this set.
 
-Pulp can prohibit or allow checksums by setting the ALLOWED_CONTENT_CHECKSUMS setting.
+Pulp can prohibit or allow checksums by setting the `ALLOWED_CONTENT_CHECKSUMS` setting.
 Changing this setting requires a few steps.
 
 First, before you change the setting, see how your Pulp instance will be impacted by this change by running:
 
-`pulpcore-manager handle-artifact-checksums --report --checksums sha256,512`
+`pulpcore-manager handle-artifact-checksums --report --checksums sha256,sha512`
 
 Adjust `--checksums` as comma separated list of checksums types to match your needs.
 
@@ -236,11 +153,12 @@ Adjust `--checksums` as comma separated list of checksums types to match your ne
     If you already changed `ALLOWED_CONTENT_CHECKSUMS` in pulp settings you can leave out `--checksums`,
     and the checksums will be parsed from Pulp settings.
 
-Before switching, any on-demand repos containing forbidden checksum digests needs to be synced with
-`policy=immediate` to populate missing allowed checksums. This can heavily impact your disk space.
-Alternatively, users can remove these offending repo versions followed by orphan cleanup.
+Before switching, any on-demand repositories containing forbidden checksum digests
+need to be synced with `policy=immediate` to populate missing allowed checksums.
+This can heavily impact your disk space.
+Alternatively, users can remove these offending repository versions followed by orphan cleanup.
 
-If you have artifacts that do not conform to your ALLOWED_CONTENT_CHECKSUMS setting, they need to be re-hashed.
+If you have artifacts that do not conform to your `ALLOWED_CONTENT_CHECKSUMS` setting, they need to be re-hashed.
 You can update them using:
 
 `pulpcore-manager handle-artifact-checksums`
@@ -249,10 +167,10 @@ You can update them using:
     If Pulp fails to start because forbidden checksums have been identified or required ones are
     missing, run `pulpcore-manager handle-artifact-checksums` command.
 
-### ALLOWED_EXPORT_PATHS
+### ALLOWED\_EXPORT\_PATHS
 
-One or more real filesystem paths that Exporters can export to. For example to allow a path of
-`/mnt/foo/bar/another/folder/` you could specify:
+One or more real filesystem paths that Exporters can export to.
+For example to allow a path of `/mnt/foo/bar/another/folder/` you could specify:
 
 ```
 ALLOWED_EXPORT_PATHS = ['/mnt/foo/bar']  # only a subpath is needed
@@ -260,10 +178,10 @@ ALLOWED_EXPORT_PATHS = ['/mnt/foo/bar']  # only a subpath is needed
 
 Defaults to `[]` which means no path is allowed.
 
-### ALLOWED_IMPORT_PATHS
+### ALLOWED\_IMPORT\_PATHS
 
-One or more real filesystem paths that Remotes with filesystem paths can import from. For example
-to allow a remote url of `file:///mnt/foo/bar/another/folder/` you could specify:
+One or more real filesystem paths that Remotes with filesystem paths can import from.
+For example to allow a remote url of `file:///mnt/foo/bar/another/folder/` you could specify:
 
 ```
 ALLOWED_IMPORT_PATHS = ['/mnt/foo/bar']  # only a subpath is needed
@@ -274,31 +192,33 @@ Defaults to `[]`, meaning `file:///` urls are not allowed in any Remote.
 ### ANALYTICS
 
 If `True`, Pulp will anonymously post analytics information to
-[https://analytics.pulpproject.org/](https://analytics.pulpproject.org/) and aids in project decision-making. See the
-`analytics docs ` for more info on exactly what is posted along with an example.
+[https://analytics.pulpproject.org/](https://analytics.pulpproject.org/) and aids in project decision-making.
+See the `analytics docs ` for more info on exactly what is posted along with an example.
 
 Defaults to `True`.
 
-### API_ROOT
+### API\_ROOT
 
-A string containing the path prefix for the Pulp API. This is used by the REST API when forming
-URLs to refer clients to other parts of the REST API and by the `pulpcore-api` application to
-match incoming URLs. Pulp appends the string `api/v3/` to this setting.
+A string containing the prefix for the Pulp API path generated by appending `api/v3/`.
+This setting can be used to root the Pulp API in a different namespace on your server.
+It must match your reverse proxy configuration and effects hrefs returned from the API.
 
-Defaults to `/pulp/`. After the application appends `api/v3/` it makes the V3 API by default
-serve from `/pulp/api/v3/`.
+Defaults to `/pulp/`.
+This makes the V3 API by default serve from `/pulp/api/v3/`.
 
-### CACHE_ENABLED
+### CACHE\_ENABLED
 
-Store cached responses from the content app into Redis. This setting improves the performance
-of the content app under heavy load for similar requests. Defaults to `False`.
+Store cached responses from the content app into Redis.
+This setting improves the performance of the content app under heavy load for similar requests.
+
+Defaults to `False`.
 
 !!! note
-    The entire response is not stored in the cache. Only the location of the file needed to
-    recreate the response is stored. This reduces database queries and allows for many
-    responses to be stored inside the cache.
+    The entire response is not stored in the cache.
+    Only the location of the file needed to recreate the response is stored.
+    This reduces database queries and allows for many responses to be stored inside the cache.
 
-### CACHE_SETTINGS
+### CACHE\_SETTINGS
 
 Dictionary with tunable settings for the cache:
 
@@ -310,90 +230,122 @@ Defaults to `600` seconds.
     Set to `None` to have entries not expire.
     Content app responses are always invalidated when the backing distribution is updated.
 
-### CHUNKED_UPLOAD_DIR
+### CHUNKED\_UPLOAD\_DIR
 
-A relative path inside the DEPLOY_ROOT directory used exclusively for uploaded chunks. The
-uploaded chunks are stored in the default storage specified by `STORAGES['default']['BACKEND']`. This
-option allows users to customize the actual place where chunked uploads should be stored within
-the declared storage. The default, `upload`, is sufficient for most use cases. A change to
-this setting only applies to uploads created after the change.
+A relative path inside the `DEPLOY_ROOT` directory used exclusively for uploaded chunks.
+The uploaded chunks are stored in the default storage specified by `STORAGES['default']['BACKEND']`.
+This option allows users to customize the actual place where chunked uploads should be stored within the declared storage.
+A change to this setting only applies to uploads created after the change.
 
-### CONTENT_APP_TTL
+Defaults to `upload`, which is sufficient for most use cases.
+
+### CONTENT\_APP\_TTL
 
 The number of seconds before a content app should be considered lost.
 
 Defaults to `30` seconds.
 
-### CONTENT_ORIGIN
+### CONTENT\_ORIGIN
 
-A string containing the protocol, fqdn, and port where the content app is reachable by users.
+A string containing the protocol, fqdn, and optionally port where the content app is reachable by users.
 This is used by `pulpcore` and various plugins when referring users to the content app.
-For example if the API should refer users to content at using http to pulp.example.com on port
-24816, (the content default port), you would set: `https://pulp.example.com:24816`. The default is `None`.
+For example if the API should redirect users to content at pulp.example.com using HTTPS,
+you would set: `https://pulp.example.com` (not including `/pulp/content`, the `CONTENT_PATH_PREFIX`).
+Usually this should point to the external address of the reverse proxy.
 When set to `None`, the `base_url` for Distributions is a relative path.
 This means the API returns relative URLs without the protocol, fqdn, and port.
 
-### CONTENT_PATH_PREFIX
+Default to `None`.
 
-A string containing the path prefix for the content app. This is used by the REST API when
-forming URLs to refer clients to the content serving app, and by the content serving application
-to match incoming URLs.
+### CONTENT\_PATH\_PREFIX
+
+A string containing the path prefix for the content app.
+This is used by the REST API when forming URLs to redirect clients to the content serving app,
+and by the content serving application to match incoming URLs.
 
 Defaults to `/pulp/content/`.
 
-### DJANGO_GUID
+### DB\_ENCRYPTION\_KEY
 
-Pulp uses `django-guid` to append correlation IDs to logging messages. For more information on how
-to configure the `DJANGO_GUID` setting, see the [django-guid settings
-documentation](https://django-guid.readthedocs.io/en/latest/settings.html). To read more about using
-correlation id in Pulp, read [our guide](site:pulpcore/docs/user/guides/correlation-id/).
+The file location of a symmetric fernet key that Pulp uses to encrypt sensitive fields in the database.
+Default location is `/etc/pulp/certs/database_fields.symmetric.key`.
 
-### DOMAIN_ENABLED
+See [Database Encryption] for more details.
+
+### DJANGO\_GUID
+
+Pulp uses `django-guid` to append correlation IDs to logging messages.
+For more information on how to configure the `DJANGO_GUID` setting, see the [django-guid settings documentation].
+To read more about using correlation id in Pulp, read [our guide](site:pulpcore/docs/user/guides/correlation-id/).
+
+### DOMAIN\_ENABLED
 
 !!! note
     This feature is provided as a tech-preview
 
-Enable the `Domains feature to enable multi-tenancy capabilities <domains>`. All installed
-plugins must be Domain compatible for Pulp to start. Defaults to `False`.
+Enable the `Domains feature to enable multi-tenancy capabilities <domains>`.
+All installed plugins must be Domain compatible for Pulp to start.
 
-### ENABLED_PLUGINS
+Defaults to `False`.
 
-An optional list of plugin names. If provided, Pulp will limit loading plugins to this list. If omitted,
-Pulp will load all installed plugins.
+### ENABLED\_PLUGINS
 
-### HIDE_GUARDED_DISTRIBUTIONS
+An optional list of plugin names.
+If provided, Pulp will limit loading plugins to this list.
+If omitted, Pulp will load all installed plugins.
 
-If activated, the distributions that are protected by a content guard will not be shown on the
-directory listing in the content app. Defaults to `False`.
+### HIDE\_GUARDED\_DISTRIBUTIONS
 
-### ORPHAN_PROTECTION_TIME
+If `True`, the distributions, that are protected by a content guard,
+will not be shown on the directory listing in the content app.
 
-The time specified in minutes for how long Pulp will hold orphan Content and Artifacts before
-they become candidates for deletion by an orphan cleanup task. This should ideally be longer
-than your longest running task otherwise any content created during that task could be cleaned
-up before the task finishes. Default is 1440 minutes (24 hours).
+Defaults to `False`.
 
-### REMOTE_USER_ENVIRON_NAME
+### ORPHAN\_PROTECTION\_TIME
 
-The name of the WSGI environment variable to read for `webserver authentication
-<webserver-authentication>`.
+The time, specified in minutes, for how long Pulp will hold orphan Content and Artifacts
+before they become candidates for deletion by an orphan cleanup task.
+This should ideally be longer than your longest running task.
+Otherwise any content created during that task could be cleaned up before the task finishes.
+
+Defaults to 1440 minutes (24 hours).
+
+### OTEL\_ENABLED
+
+Toggles the activation of OpenTelemetry instrumentation for monitoring and tracing the application's performance.
+
+Defaults to `False`.
+
+### REDIRECT\_TO\_OBJECT\_STORAGE
+
+When set to `True` access to artifacts is redirected to the corresponding Cloud storage
+configured in `STORAGES['default']['BACKEND']` using pre-authenticated URLs.
+When set to `False` artifacts are always served by the content app instead.
+
+Defaults to `True`; ignored for local file storage.
+
+### REMOTE\_USER\_ENVIRON\_NAME
+
+The name of the WSGI environment variable to read for [Webserver Auth with Reverse Proxy].
 
 !!! warning
-    Configuring this has serious security implications. See the [Django warning at the end of this
-    section in their docs](https://docs.djangoproject.com/en/4.2/howto/auth-remote-user/#configuration) for more details.
+    Configuring this has serious security implications.
+    See the [Django warning at the end of this section in their docs] for more details.
 
 Defaults to `'REMOTE_USER'`.
 
-### TASK_DIAGNOSTICS
+### TASK\_DIAGNOSTICS
 
-The default setting is `False`. When set to `True`, each task records various diagnostics (listed below)
-and stores them as separate artifacts. To download the data, issue GET requests to `${TASK_HREF}profile_artifacts/`.
+When set to `True`, each task records various diagnostics (listed below) and stores them as separate artifacts.
+To download the data, issue GET requests to `${TASK_HREF}profile_artifacts/`.
 The artifacts are cleaned up automatically by the orphan cleanup.
 
 - memory.datum - the task's max resident set size in MB
 - pyinstrument.html - the output of the pyinstrument profiler, if installed
 
-### TASK_GRACE_INTERVAL
+Defaults to `False`.
+
+### TASK\_GRACE\_INTERVAL
 
 On receiving SIGHUP or SIGTERM a worker will await the currently running task forever.
 On SIGINT, this value represents the time before the worker will attempt to kill the subprocess.
@@ -401,59 +353,135 @@ This time is only accurate to one worker heartbeat corresponding to `WORKER_TTL 
 
 Defaults to `600` seconds.
 
-### TASK_PROTECTION_TIME, TMPFILE_PROTECTION_TIME and UPLOAD_PROTECTION_TIME
+### TASK\_PROTECTION\_TIME, TMPFILE\_PROTECTION\_TIME and UPLOAD\_PROTECTION\_TIME
 
 Pulp uses `tasks`, `pulp temporary files` and `uploads` to pass data from the api to worker tasks.
 These options allow to specify a timeinterval in minutes used for cleaning up stale entries.
-If set to 0, automatic cleanup is disabled, which is the default.
+If set to `0`, automatic cleanup is disabled.
 
-### WORKER_TTL
+Each one defaults to `0`.
+
+### WORKER\_TTL
 
 The number of seconds before a worker should be considered lost.
 
 Defaults to `30` seconds.
 
-### WORKING_DIRECTORY
+### WORKING\_DIRECTORY
 
-The directory used by workers to stage files temporarily. This defaults to
-`/var/lib/pulp/tmp/`.
+The directory used by workers to stage files temporarily.
 
 It should have permissions of:
 
 - mode: 750
 - owner: pulp (the account that pulp runs under)
 - group: pulp (the group of the account that pulp runs under)
-- SELinux context: system_u:object_r:pulpcore_var_lib_t:s0
+- SELinux context: `system_u:object_r:pulpcore_var_lib_t:s0`
+
+Defaults to `/var/lib/pulp/tmp/`.
 
 !!! note
-    It is recommended that `WORKING_DIRECTORY` and `MEDIA_ROOT` exist on the same storage
-    volume for performance reasons. Files are commonly staged in the `WORKING_DIRECTORY` and
+    It is recommended that `WORKING_DIRECTORY` and `MEDIA_ROOT`
+    exist on the same storage volume for performance reasons.
+    Files are commonly staged in the `WORKING_DIRECTORY` and
     validated before being moved to their permanent home in `MEDIA_ROOT`.
 
 
 ## Redis Settings
 
-!!! warning
-    To enable usage of Redis the [CACHE_ENABLED] option must be set to `True`.
-
-The following Redis settings can be set in your Pulp config:
-
-- REDIS_DB
-- REDIS_HOST
-- REDIS_PASSWORD
-- REDIS_PORT
-- REDIS_URL
+!!! note
+    To enable usage of Redis the [CACHE\_ENABLED](#cache_enabled) option must be set to `True`.
 
 Below are some common settings used for Redis configuration.
 
-### REDIS_HOST
+### REDIS\_HOST
 
 The hostname for Redis.
 
-### REDIS_PASSWORD
+### REDIS\_PASSWORD
 
 The password for Redis.
 
-### REDIS_PORT
+### REDIS\_PORT
 
 The port for Redis.
+
+Additionally, the following Redis settings can be set in your Pulp config:
+
+- `REDIS_DB`
+- `REDIS_URL`
+
+
+## Kafka Settings
+
+!!! note
+    Kafka integration functionality is in tech preview and may change based on user feedback.
+
+See [librdkafka configuration documentation] for details on client configuration properties.
+
+### KAFKA\_BOOTSTRAP\_SERVERS
+
+`bootstrap.servers` value for the client.
+Specifies endpoint(s) for the kafka client.
+Kafka integration is disabled if unspecified.
+
+### KAFKA\_PRODUCER\_POLL\_TIMEOUT
+
+Timeout in seconds for the kafka producer polling thread's `poll` calls.
+
+Defaults to `0.1`.
+
+### KAFKA\_SASL\_MECHANISM
+
+`sasl.mechanisms` value for the client (optional).
+Specifies the authentication method used by the kafka broker.
+
+### KAFKA\_SASL\_PASSWORD
+
+`sasl.password` value for the client (optional).
+Password for broker authentication.
+
+### KAFKA\_SASL\_USERNAME
+
+`sasl.username` value for the client (optional).
+Username for broker authentication.
+
+### KAFKA\_SECURITY\_PROTOCOL
+
+`security.protocol` value for the client.
+What protocol to use for communication with the broker.
+
+Defaults to `plaintext` (unencrypted).
+
+### KAFKA\_SSL\_CA\_PEM
+
+`ssl.ca.pem` value for the client (optional).
+Used to override the TLS truststore for broker connections.
+
+### KAFKA\_TASKS\_STATUS\_PRODUCER\_SYNC\_ENABLED
+
+Whether to synchronously send task status messages.
+When `True`, the task message is sent synchronously, otherwise the sends happen asynchronously,
+with a background thread periodically sending messages to the kafka server.
+
+Defaults to `False`.
+
+### KAFKA\_TASKS\_STATUS\_TOPIC
+
+What kafka topic to emit notifications to when tasks start/stop.
+
+Defaults to `pulpcore.tasking.status`.
+
+[Database Encryption]: site:pulpcore/docs/admin/guides/configure-pulp/db-encryption
+[django 4.2]: https://docs.djangoproject.com/en/4.2/ref/settings/#default-file-storage
+[Django authentication documentation]: https://docs.djangoproject.com/en/4.2/topics/auth/customizing/#authentication-backends
+[Django database settings]: https://docs.djangoproject.com/en/4.2/ref/settings/#databases
+[Django documentation on logging]: https://docs.djangoproject.com/en/4.2/topics/logging/#configuring-logging
+[django-guid settings documentation]: https://django-guid.readthedocs.io/en/latest/settings.html
+[Django secret key]: https://docs.djangoproject.com/en/4.2/ref/settings/#secret-key
+[Django setting]: https://docs.djangoproject.com/en/4.2/ref/settings/
+[django-storages]: https://django-storages.readthedocs.io/en/latest/index.html
+[Django warning at the end of this section in their docs]: https://docs.djangoproject.com/en/4.2/howto/auth-remote-user/#configuration
+[Enabling Debug Logging]: site:pulpcore/docs/admin/guides/troubleshooting/#enabling-debug-logging
+[librdkafka configuration documentation]: https://github.com/confluentinc/librdkafka/blob/master/CONFIGURATION.md
+[Webserver Auth with Reverse Proxy]: site:pulpcore/docs/admin/guides/auth/external/#webserver-auth-with-reverse-proxy
