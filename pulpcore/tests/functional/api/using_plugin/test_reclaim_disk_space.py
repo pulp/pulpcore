@@ -149,11 +149,15 @@ def test_immediate_reclaim_becomes_on_demand(
 
 def test_specified_all_repos(
     pulpcore_bindings,
+    file_bindings,
     file_repository_factory,
     monitor_task,
 ):
     """Tests that specifying all repos w/ '*' properly grabs all the repos."""
-    repos = [file_repository_factory().pulp_href.split("/")[-2] for _ in range(10)]
+    # Get existing file repositories or create new ones
+    repos = [
+        r.pulp_href.split("/")[-2] for r in file_bindings.RepositoriesFileApi.list().results
+    ] or [file_repository_factory().pulp_href.split("/")[-2] for _ in range(10)]
 
     reclaim_response = pulpcore_bindings.RepositoriesReclaimSpaceApi.reclaim({"repo_hrefs": ["*"]})
     task_status = monitor_task(reclaim_response.task)
