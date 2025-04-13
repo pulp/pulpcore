@@ -31,7 +31,7 @@ jobs:
       - name: "Install python dependencies"
         run: |
           echo ::group::PYDEPS
-          pip install requests pygithub
+          pip install requests pygithub pyyaml
           echo ::endgroup::
       - name: "Check commit message"
         if: github.event_name == 'pull_request'
