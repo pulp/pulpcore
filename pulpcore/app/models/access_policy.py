@@ -140,7 +140,7 @@ class AutoAddObjPermsMixin:
 
         roles = _ensure_iterable(roles)
         current_user = get_current_authenticated_user()
-        if current_user:
+        if current_user and isinstance(current_user, get_user_model()):
             for role in roles:
                 assign_role(role, current_user, self)
 
