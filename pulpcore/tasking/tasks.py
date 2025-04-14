@@ -7,6 +7,7 @@ import os
 import sys
 import traceback
 import tempfile
+import threading
 from asgiref.sync import sync_to_async
 from datetime import timedelta
 from gettext import gettext as _
@@ -130,6 +131,12 @@ def _execute_task(task):
         send_task_notification(task)
 
 
+def running_from_thread_pool() -> bool:
+    thread_name = threading.current_thread().name
+    # ThreadPoolExecutor names threads like: "ThreadPoolExecutor-0_0"
+    return "ThreadPoolExecutor" in thread_name
+
+
 def dispatch(
     func,
     args=None,
@@ -178,6 +185,11 @@ def dispatch(
     """
 
     assert deferred or immediate, "A task must be at least `deferred` or `immediate`."
+
+    # Can't run short tasks immediately if running from thread pool
+    force_defer = True if running_from_thread_pool() else False
+    short = immediate
+    immediate = short and not force_defer
 
     if callable(func):
         function_name = f"{func.__module__}.{func.__name__}"
