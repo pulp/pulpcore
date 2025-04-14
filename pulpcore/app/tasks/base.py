@@ -2,6 +2,7 @@ from django.db import transaction
 
 from pulpcore.app.apps import get_plugin_config
 from pulpcore.app.models import CreatedResource
+from pulpcore.app.loggers import deprecation_logger
 from pulpcore.plugin.models import MasterModel
 
 from asgiref.sync import sync_to_async
@@ -65,6 +66,10 @@ def general_update(instance_id, app_label, serializer_name, *args, **kwargs):
             due to validation error. This theoretically should never occur since validation is
             performed before the task is dispatched.
     """
+    deprecation_logger.warning(
+        "`pulpcore.app.tasks.base.general_update` is deprecated and will be removed in Pulp 4. "
+        "Use `pulpcore.app.tasks.base.ageneral_update` instead."
+    )
     data = kwargs.pop("data", None)
     partial = kwargs.pop("partial", False)
     serializer_class = get_plugin_config(app_label).named_serializers[serializer_name]
@@ -87,6 +92,10 @@ def general_delete(instance_id, app_label, serializer_name):
         app_label (str): the Django app label of the plugin that provides the model
         serializer_name (str): name of the serializer class for the model
     """
+    deprecation_logger.warning(
+        "`pulpcore.app.tasks.base.general_delete` is deprecated and will be removed in Pulp 4. "
+        "Use `pulpcore.app.tasks.base.ageneral_delete` instead."
+    )
     serializer_class = get_plugin_config(app_label).named_serializers[serializer_name]
     instance = serializer_class.Meta.model.objects.get(pk=instance_id)
     if isinstance(instance, MasterModel):
