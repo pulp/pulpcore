@@ -7,6 +7,7 @@ import os
 import sys
 import traceback
 import tempfile
+import threading
 from asgiref.sync import sync_to_async
 from datetime import timedelta
 from gettext import gettext as _
@@ -130,6 +131,14 @@ def _execute_task(task):
         send_task_notification(task)
 
 
+def running_from_thread_pool() -> bool:
+    # TODO: this needs an alternative approach ASAP!
+    # Currently we rely on the weak fact that ThreadPoolExecutor names threads like:
+    # "ThreadPoolExecutor-0_0"
+    thread_name = threading.current_thread().name
+    return "ThreadPoolExecutor" in thread_name
+
+
 def dispatch(
     func,
     args=None,
@@ -177,6 +186,8 @@ def dispatch(
         ValueError: When `resources` is an unsupported type.
     """
 
+    # Can't run short tasks immediately if running from thread pool
+    immediate = immediate and not running_from_thread_pool()
     assert deferred or immediate, "A task must be at least `deferred` or `immediate`."
 
     if callable(func):

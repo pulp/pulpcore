@@ -1,4 +1,6 @@
+import asyncio
 import backoff
+import time
 from pulpcore.app.models import TaskGroup
 from pulpcore.tasking.tasks import dispatch
 
@@ -9,24 +11,18 @@ def dummy_task():
 
 
 def sleep(interval):
-    from time import sleep
-
-    sleep(interval)
+    time.sleep(interval)
 
 
 async def asleep(interval):
     """Async function that sleeps."""
-    import asyncio
-
     await asyncio.sleep(interval)
 
 
 @backoff.on_exception(backoff.expo, BaseException)
 def gooey_task(interval):
     """A sleep task that tries to avoid being killed by ignoring all exceptions."""
-    from time import sleep
-
-    sleep(interval)
+    time.sleep(interval)
 
 
 def dummy_group_task(inbetween=3, intervals=None):
@@ -35,5 +31,5 @@ def dummy_group_task(inbetween=3, intervals=None):
     task_group = TaskGroup.current()
     for interval in intervals:
         dispatch(sleep, args=(interval,), task_group=task_group)
-        sleep(inbetween)
+        time.sleep(inbetween)
     task_group.finish()
