@@ -69,7 +69,7 @@ class PulpcoreWorker:
         self.versions = {app.label: app.version for app in pulp_plugin_configs()}
         self.cursor = connection.cursor()
         self.worker = self.handle_worker_heartbeat()
-        # This defaults to immediate task cancelation.
+        # This defaults to immediate task cancellation.
         # It will be set into the future on moderately graceful worker shutdown,
         # and set to None for fully graceful shutdown.
         self.task_grace_timeout = timezone.now()
@@ -401,7 +401,7 @@ class PulpcoreWorker:
                             seconds=TASK_KILL_INTERVAL
                         )
                         _logger.info(
-                            "Aborting current task %s in domain: %s due to cancelation.",
+                            "Aborting current task %s in domain: %s due to cancellation.",
                             task.pk,
                             domain.name,
                         )

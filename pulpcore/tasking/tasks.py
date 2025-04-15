@@ -60,7 +60,14 @@ def _execute_task(task):
     task.set_running()
     domain = get_domain()
     try:
-        _logger.info(_("Starting task %s in domain: %s"), task.pk, domain.name)
+        _logger.info(
+            "Starting task id: %s in domain: %s, task_type: %s, immediate: %s, deferred: %s",
+            task.pk,
+            domain.name,
+            task.name,
+            str(task.immediate),
+            str(task.deferred),
+        )
 
         # Execute task
         module_name, function_name = task.name.rsplit(".", 1)
@@ -70,7 +77,7 @@ def _execute_task(task):
         kwargs = task.enc_kwargs or {}
         result = func(*args, **kwargs)
         if asyncio.iscoroutine(result):
-            _logger.debug(_("Task is coroutine %s"), task.pk)
+            _logger.debug("Task is coroutine %s", task.pk)
             loop = asyncio.get_event_loop()
             loop.run_until_complete(result)
 
@@ -78,7 +85,7 @@ def _execute_task(task):
         exc_type, exc, tb = sys.exc_info()
         task.set_failed(exc, tb)
         _logger.info(
-            _("Task[{task_type}] {task_pk} failed ({exc_type}: {exc}) in domain: {domain}").format(
+            "Task[{task_type}] {task_pk} failed ({exc_type}: {exc}) in domain: {domain}".format(
                 task_type=task.name,
                 task_pk=task.pk,
                 exc_type=exc_type.__name__,
@@ -90,7 +97,7 @@ def _execute_task(task):
         send_task_notification(task)
     else:
         task.set_completed()
-        _logger.info(_("Task completed %s in domain: %s"), task.pk, domain.name)
+        _logger.info("Task completed %s in domain: %s", task.pk, domain.name)
         send_task_notification(task)
 
 
@@ -170,7 +177,7 @@ def dispatch(
     with contextlib.ExitStack() as stack:
         with transaction.atomic():
             # Task creation need to be serialized so that pulp_created will provide a stable order
-            # at every time. We specifically need to ensure that each task, when commited to the
+            # at every time. We specifically need to ensure that each task, when committed to the
             # task table will be the newest with respect to `pulp_created`.
             with connection.cursor() as cursor:
                 # Wait for exclusive access and release automatically after transaction.
@@ -275,7 +282,7 @@ def cancel_task(task_id):
         )
         return task
     _logger.info(
-        _("Canceling task: {id} in domain: {name}").format(id=task_id, name=task.pulp_domain.name)
+        "Canceling task: {id} in domain: {name}".format(id=task_id, name=task.pulp_domain.name)
     )
 
     # This is the only valid transition without holding the task lock
