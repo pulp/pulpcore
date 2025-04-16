@@ -184,12 +184,9 @@ def dispatch(
         ValueError: When `resources` is an unsupported type.
     """
 
-    assert deferred or immediate, "A task must be at least `deferred` or `immediate`."
-
     # Can't run short tasks immediately if running from thread pool
-    force_defer = True if running_from_thread_pool() else False
-    short = immediate
-    immediate = short and not force_defer
+    immediate = immediate and not running_from_thread_pool()
+    assert deferred or immediate, "A task must be at least `deferred` or `immediate`."
 
     if callable(func):
         function_name = f"{func.__module__}.{func.__name__}"
