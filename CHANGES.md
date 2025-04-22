@@ -8,6 +8,22 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.39.28 (2025-04-22) {: #3.39.28 }
+
+### REST API {: #3.39.28-rest-api }
+
+#### Bugfixes {: #3.39.28-rest-api-bugfix }
+
+- Client- and CA-certificates used in Remotes are now validated and any comments stripped
+  before being applied to the Remote.
+  [#6491](https://github.com/pulp/pulpcore/issues/6491)
+
+### Plugin API {: #3.39.28-plugin-api }
+
+No significant changes.
+
+---
+
 ## 3.39.27 (2025-04-02) {: #3.39.27 }
 
 ### REST API {: #3.39.27-rest-api }
