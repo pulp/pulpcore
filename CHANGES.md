@@ -8,6 +8,32 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.73.5 (2025-04-22) {: #3.73.5 }
+
+### REST API {: #3.73.5-rest-api }
+
+#### Bugfixes {: #3.73.5-rest-api-bugfix }
+
+- Client- and CA-certificates used in Remotes are now validated and any comments stripped
+  before being applied to the Remote.
+  [#6491](https://github.com/pulp/pulpcore/issues/6491)
+
+### Plugin API {: #3.73.5-plugin-api }
+
+#### Bugfixes {: #3.73.5-plugin-api-bugfix }
+
+- Fixed `add_roles_for_object_creator` not handling anonymous users.
+
+### Pulp File {: #3.73.5-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.73.5-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.73.4 (2025-04-08) {: #3.73.4 }
 
 ### REST API {: #3.73.4-rest-api }
