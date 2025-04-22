@@ -1,1 +1,0 @@
-Added validation to `PublicationSerializer` and `DistributionSerializer` to raise an error if repo and remote differ.
