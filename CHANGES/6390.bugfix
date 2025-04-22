@@ -1,1 +1,0 @@
-Set the X-PULP-ARTIFACT-SIZE header at the handle_response_header function.
