@@ -13,6 +13,7 @@ from pulpcore.plugin.models import (
     ContentArtifact,
     ProgressReport,
     RemoteArtifact,
+    Remote,
 )
 from pulpcore.plugin.sync import sync_to_async_iterable
 
@@ -469,6 +470,9 @@ class ACSArtifactHandler(Stage):
     Content Source if available.
     """
 
+    def __init__(self, *args, **kwargs):
+        self.remote_cache = {}
+
     async def run(self):
         async for batch in self.batches():
             # Gather batch d_artifact checksums
@@ -484,17 +488,19 @@ class ACSArtifactHandler(Stage):
                 existing_ras = (
                     RemoteArtifact.objects.acs()
                     .filter(**{f"{checksum_type}__in": batch_checksums[checksum_type]})
-                    .only("url", checksum_type, "remote")
-                    .select_related("remote")
+                    .only("url", checksum_type, "remote_id")
                 )
-                # todo: we could probably get rid of this select_related by separating
-                # out the remote query
                 async for ra in existing_ras.aiterator():
                     checksum = getattr(ra, checksum_type)
                     # pick the first occurence of RA from ACS
                     if checksum not in existing_ras_dict:
+                        if ra.remote_id not in self.remote_cache:
+                            self.remote_cache[ra.remote_id] = await Remote.objects.aget(
+                                pk=ra.remote_id
+                            )
+
                         existing_ras_dict[checksum] = {
-                            "remote": ra.remote,
+                            "remote": self.remote_cache[ra.remote_id],
                             "url": ra.url,
                         }
 
