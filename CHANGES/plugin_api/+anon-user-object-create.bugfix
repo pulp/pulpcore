@@ -1,1 +1,0 @@
-Fixed `add_roles_for_object_creator` not handling anonymous users.

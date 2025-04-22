@@ -8,6 +8,28 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.75.3 (2025-04-22) {: #3.75.3 }
+
+### REST API {: #3.75.3-rest-api }
+
+No significant changes.
+
+### Plugin API {: #3.75.3-plugin-api }
+
+#### Bugfixes {: #3.75.3-plugin-api-bugfix }
+
+- Fixed `add_roles_for_object_creator` not handling anonymous users.
+
+### Pulp File {: #3.75.3-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.75.3-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.75.2 (2025-04-09) {: #3.75.2 }
 
 ### REST API {: #3.75.2-rest-api }
