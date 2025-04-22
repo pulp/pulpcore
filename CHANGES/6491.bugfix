@@ -1,2 +1,0 @@
-Client- and CA-certificates used in Remotes are now validated and any comments stripped
-before being applied to the Remote.
