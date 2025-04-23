@@ -8,6 +8,71 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.76.0 (2025-04-22) {: #3.76.0 }
+
+### REST API {: #3.76.0-rest-api }
+
+#### Features {: #3.76.0-rest-api-feature }
+
+- Added the `task_name` and if it's a `task.immediate` to the `Starting task ...` log entry.
+  [#6482](https://github.com/pulp/pulpcore/issues/6482)
+
+#### Bugfixes {: #3.76.0-rest-api-bugfix }
+
+- Added validation to `PublicationSerializer` and `DistributionSerializer` to raise an error if repo and remote differ.
+  [#6174](https://github.com/pulp/pulpcore/issues/6174)
+- Set the X-PULP-ARTIFACT-SIZE header at the handle_response_header function.
+  [#6390](https://github.com/pulp/pulpcore/issues/6390)
+- Client- and CA-certificates used in Remotes are now validated and any comments stripped
+  before being applied to the Remote.
+  [#6491](https://github.com/pulp/pulpcore/issues/6491)
+- Fixed an oversight in the #6385 fix.
+
+#### Improved Documentation {: #3.76.0-rest-api-doc }
+
+- Updated the settings.md file to be sorted alphabetically.
+  [#6459](https://github.com/pulp/pulpcore/issues/6459)
+
+### Plugin API {: #3.76.0-plugin-api }
+
+#### Bugfixes {: #3.76.0-plugin-api-bugfix }
+
+- Fixed `add_roles_for_object_creator` not handling anonymous users.
+- Reverted adding timeout to immediate tasks, for it was causing a regression
+  with pull-through caching (https://github.com/pulp/pulpcore/issues/6429).
+
+### Pulp File {: #3.76.0-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.76.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.75.3 (2025-04-22) {: #3.75.3 }
+
+### REST API {: #3.75.3-rest-api }
+
+No significant changes.
+
+### Plugin API {: #3.75.3-plugin-api }
+
+#### Bugfixes {: #3.75.3-plugin-api-bugfix }
+
+- Fixed `add_roles_for_object_creator` not handling anonymous users.
+
+### Pulp File {: #3.75.3-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.75.3-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.75.2 (2025-04-09) {: #3.75.2 }
 
 ### REST API {: #3.75.2-rest-api }
@@ -203,6 +268,32 @@ No significant changes.
   [#6244](https://github.com/pulp/pulpcore/issues/6244)
 
 ### Pulp Cert Guard {: #3.74.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.73.5 (2025-04-22) {: #3.73.5 }
+
+### REST API {: #3.73.5-rest-api }
+
+#### Bugfixes {: #3.73.5-rest-api-bugfix }
+
+- Client- and CA-certificates used in Remotes are now validated and any comments stripped
+  before being applied to the Remote.
+  [#6491](https://github.com/pulp/pulpcore/issues/6491)
+
+### Plugin API {: #3.73.5-plugin-api }
+
+#### Bugfixes {: #3.73.5-plugin-api-bugfix }
+
+- Fixed `add_roles_for_object_creator` not handling anonymous users.
+
+### Pulp File {: #3.73.5-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.73.5-pulp-cert-guard }
 
 No significant changes.
 
@@ -1002,6 +1093,32 @@ No significant changes.
 No significant changes.
 
 ### Pulp Cert Guard {: #3.64.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.63.15 (2025-04-22) {: #3.63.15 }
+
+### REST API {: #3.63.15-rest-api }
+
+#### Bugfixes {: #3.63.15-rest-api-bugfix }
+
+- Client- and CA-certificates used in Remotes are now validated and any comments stripped
+  before being applied to the Remote.
+  [#6491](https://github.com/pulp/pulpcore/issues/6491)
+
+### Plugin API {: #3.63.15-plugin-api }
+
+#### Bugfixes {: #3.63.15-plugin-api-bugfix }
+
+- Fixed `add_roles_for_object_creator` not handling anonymous users.
+
+### Pulp File {: #3.63.15-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.63.15-pulp-cert-guard }
 
 No significant changes.
 
@@ -2170,6 +2287,30 @@ No significant changes.
 No significant changes.
 
 ### Pulp Cert Guard
+
+No significant changes.
+
+---
+
+## 3.49.37 (2025-04-22) {: #3.49.37 }
+
+### REST API {: #3.49.37-rest-api }
+
+#### Bugfixes {: #3.49.37-rest-api-bugfix }
+
+- Client- and CA-certificates used in Remotes are now validated and any comments stripped
+  before being applied to the Remote.
+  [#6491](https://github.com/pulp/pulpcore/issues/6491)
+
+### Plugin API {: #3.49.37-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.49.37-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.49.37-pulp-cert-guard }
 
 No significant changes.
 
@@ -3609,6 +3750,22 @@ No significant changes.
 
 -   Starting from this release pulp_file will be shipped as part of the pulpcore package.
     [#4550](https://github.com/pulp/pulpcore/issues/4550)
+
+## 3.39.28 (2025-04-22) {: #3.39.28 }
+
+### REST API {: #3.39.28-rest-api }
+
+#### Bugfixes {: #3.39.28-rest-api-bugfix }
+
+- Client- and CA-certificates used in Remotes are now validated and any comments stripped
+  before being applied to the Remote.
+  [#6491](https://github.com/pulp/pulpcore/issues/6491)
+
+### Plugin API {: #3.39.28-plugin-api }
+
+No significant changes.
+
+---
 
 ## 3.39.27 (2025-04-02) {: #3.39.27 }
 
