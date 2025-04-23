@@ -8,6 +8,21 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.39.29 (2025-04-23) {: #3.39.29 }
+
+### REST API {: #3.39.29-rest-api }
+
+#### Bugfixes {: #3.39.29-rest-api-bugfix }
+
+- Fixed a memory consumption issue that was triggered by the use of the Alternate Content Source feature.
+  [#6500](https://github.com/pulp/pulpcore/issues/6500)
+
+### Plugin API {: #3.39.29-plugin-api }
+
+No significant changes.
+
+---
+
 ## 3.39.28 (2025-04-22) {: #3.39.28 }
 
 ### REST API {: #3.39.28-rest-api }
