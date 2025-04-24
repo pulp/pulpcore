@@ -229,7 +229,9 @@ class ContentArtifactsField(serializers.DictField):
             if content_artifact.artifact_id:
                 kwargs["pk"] = content_artifact.artifact_id
                 request = self.context.get("request")
-                url = reverse("artifacts-detail", kwargs=kwargs, request=request)
+                url = reverse(
+                    "artifacts-detail", kwargs=kwargs, request=request
+                )  # TODO: reverse() + namespacing issues
             else:
                 url = None
             ret[content_artifact.relative_path] = url
