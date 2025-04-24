@@ -100,23 +100,10 @@ Below is an example of the default policy used to guard that action:
 
 
 
-## Storing an Access Policy in the DB
-
-All access policies are stored in the database in the [pulpcore.plugin.models.AccessPolicy] model,
-which stores the policy statements described above.
-
-By storing these in the database they are readable to users with a GET to `/pulp/api/v3/access_policies/`.
-Additionally users can PUT/PATCH modify them at `/pulp/api/v3/access_policies/:uuid/`.
-Users cannot modify create or delete an Access Policy in the database,
-because only plugin writers create them and their viewset code expects a specific AccessPolicy instance to exist.
-
-
-
 ## Shipping a Default Access Policy
 
 To ship a default access policy, define a dictionary named `DEFAULT_ACCESS_POLICY` as a class attribute on a subclass of `NamedModelViewSet`.
 This attribute should contain all of `statements` and `creation_hooks`.
-The `AccessPolicy` instance will then be created in the `post_migrate` signal handler.
 In the same way you might want to specify a `LOCKED_ROLES` dictionary that will define roles as lists of permissions to be used in the access policy.
 
 Here's an example of code to define a default policy:
@@ -239,6 +226,11 @@ They have `is_superuser=True` which generally causes them to pass any permission
 Pulp configures the `DEFAULT_PERMISSION_CLASSES` in the settings file to use `pulpcore.plugin.access_policy.AccessPolicyFromDB` by default.
 This ensures that by defining a `DEFAULT_ACCESS_POLICY` on your Viewset, Pulp will automatically save it to the database at migration-time,
 and your Viewset will be protected without additional effort.
+
+!!! Note:
+
+    This default configuration is supposed to change to `AccessPolicyFromSettings` with Pulp 4.
+    Any not explicitely configured access policy will still be taken from the default.
 
 This strategy allows users to completely customize or disable the DRF Permission checks Pulp uses like any typical DRF project would.
 
