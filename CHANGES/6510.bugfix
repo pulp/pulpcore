@@ -1,0 +1,1 @@
+Reverted fix for #6491, it broke certificate-chains.
