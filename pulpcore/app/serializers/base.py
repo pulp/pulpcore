@@ -68,7 +68,7 @@ class HrefPrnFieldMixin:
 
     def get_url(self, obj, view_name, request, *args, **kwargs):
         # Use the Pulp reverse method to display relative hrefs.
-        self.reverse = _reverse(obj)
+        self.reverse = _reverse(obj)  # TODO: reverse() + namespacing issues
         return super().get_url(obj, view_name, request, *args, **kwargs)
 
     def to_internal_value(self, data):
@@ -455,6 +455,16 @@ class ModelSerializer(
         ),
         read_only=True,
     )
+
+    def to_representation(self, instance):
+        """Overridden to drop the pulp_href field from responses"""
+        representation = super().to_representation(instance)
+        if self.context.get("request").version == "v4":
+            # TODO: this feels hacky, but apparently this code is being used on serializers
+            # w/o pulp_href
+            if "pulp_href" in representation:
+                representation.pop("pulp_href")
+        return representation
 
     def _validate_relative_path(self, path):
         """

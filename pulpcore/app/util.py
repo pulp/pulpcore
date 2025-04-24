@@ -79,7 +79,9 @@ def get_url(model, domain=None, request=None):
         view_action = "detail"
         kwargs["pk"] = model.pk
 
-    return reverse(get_view_name_for_model(model, view_action), kwargs=kwargs, request=request)
+    return reverse(
+        get_view_name_for_model(model, view_action), kwargs=kwargs, request=request
+    )  # TODO: reverse() + namespacing issues
 
 
 def get_prn(instance=None, uri=None):
