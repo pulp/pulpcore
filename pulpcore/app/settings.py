@@ -239,6 +239,7 @@ USE_L10N = True
 
 USE_TZ = True
 
+USE_X_FORWARDED_HOST = True
 
 # A set of default settings to use if the configuration file in
 # /etc/pulp/ is missing or if it does not have values for every setting
