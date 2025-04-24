@@ -273,6 +273,49 @@ No significant changes.
 
 ---
 
+## 3.73.7 (2025-04-23) {: #3.73.7 }
+
+### REST API {: #3.73.7-rest-api }
+
+#### Bugfixes {: #3.73.7-rest-api-bugfix }
+
+- Fixed a memory consumption issue that was triggered by the use of the Alternate Content Source feature.
+  [#6500](https://github.com/pulp/pulpcore/issues/6500)
+
+### Plugin API {: #3.73.7-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.73.7-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.73.7-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.73.6 (2025-04-23) {: #3.73.6 }
+
+### REST API {: #3.73.6-rest-api }
+
+No significant changes.
+
+### Plugin API {: #3.73.6-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.73.6-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.73.6-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.73.5 (2025-04-22) {: #3.73.5 }
 
 ### REST API {: #3.73.5-rest-api }
@@ -1093,6 +1136,29 @@ No significant changes.
 No significant changes.
 
 ### Pulp Cert Guard {: #3.64.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.63.16 (2025-04-23) {: #3.63.16 }
+
+### REST API {: #3.63.16-rest-api }
+
+#### Bugfixes {: #3.63.16-rest-api-bugfix }
+
+- Fixed a memory consumption issue that was triggered by the use of the Alternate Content Source feature.
+  [#6500](https://github.com/pulp/pulpcore/issues/6500)
+
+### Plugin API {: #3.63.16-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.63.16-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.63.16-pulp-cert-guard }
 
 No significant changes.
 
@@ -2287,6 +2353,29 @@ No significant changes.
 No significant changes.
 
 ### Pulp Cert Guard
+
+No significant changes.
+
+---
+
+## 3.49.38 (2025-04-23) {: #3.49.38 }
+
+### REST API {: #3.49.38-rest-api }
+
+#### Bugfixes {: #3.49.38-rest-api-bugfix }
+
+- Fixed a memory consumption issue that was triggered by the use of the Alternate Content Source feature.
+  [#6500](https://github.com/pulp/pulpcore/issues/6500)
+
+### Plugin API {: #3.49.38-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.49.38-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.49.38-pulp-cert-guard }
 
 No significant changes.
 
@@ -3750,6 +3839,21 @@ No significant changes.
 
 -   Starting from this release pulp_file will be shipped as part of the pulpcore package.
     [#4550](https://github.com/pulp/pulpcore/issues/4550)
+
+## 3.39.29 (2025-04-23) {: #3.39.29 }
+
+### REST API {: #3.39.29-rest-api }
+
+#### Bugfixes {: #3.39.29-rest-api-bugfix }
+
+- Fixed a memory consumption issue that was triggered by the use of the Alternate Content Source feature.
+  [#6500](https://github.com/pulp/pulpcore/issues/6500)
+
+### Plugin API {: #3.39.29-plugin-api }
+
+No significant changes.
+
+---
 
 ## 3.39.28 (2025-04-22) {: #3.39.28 }
 
