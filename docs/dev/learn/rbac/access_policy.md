@@ -1,8 +1,7 @@
 # Defining an Access Policy
 
-The Access Policy controls the authorization of a given request and is enforced at the
-viewset-level. Access policies are based on the AccessPolicy from [drf-access-policy](https://rsinger86.github.io/drf-access-policy/policy_logic/) which uses [policy statements
-described here](https://rsinger86.github.io/drf-access-policy/policy_logic/).
+The Access Policy controls the authorization of a given request and is enforced at the viewset-level.
+Access policies are based on the AccessPolicy from [drf-access-policy] which uses policy statements described there.
 
 ## Example Policy
 
@@ -42,55 +41,50 @@ Below is an example policy used by `FileRemote`, with an explanation of its effe
 ]
 ```
 
-The above policy allows the following four cases, and denies all others by default. Overall this
-creates a "user isolation policy" whereby users with the `file.add_fileremote` permission can
-create `FileRemote` objects, and users can only read/modify/delete `FileRemote` objects they
-created.
+The above policy allows the following four cases, and denies all others by default.
+Overall this creates a "user isolation policy" whereby users with the `file.add_fileremote` permission can create `FileRemote` objects,
+and users can only read/modify/delete `FileRemote` objects they created.
 
 Here's a written explanation of the policy statements:
 
-- `list` is allowed by any authenticated user. Although users are allowed to perform an operation
-  what they can list will still be restricted to `only the objects that user can view
-  <queryset_scoping>`.
+- `list` is allowed by any authenticated user.
+  Although users are allowed to perform an operation what they can list will still be restricted to `only the objects that user can view`.
+  See [queryset scoping].
 - `create` is allowed by any authenticated user with the `file.add_fileremote` permission.
-- `retrieve` (the detail view of an object) is allowed by an authenticated user who has the
-  `file.view_fileremote` permission. Although users are allowed to perform an operation what they
-  can list will still be restricted to `only the objects that user can view
-  <queryset_scoping>`.
-- `update` or `partial_update` is allowed by an authenticated user who has the
-  `file.change_fileremote` permission.
+- `retrieve` (the detail view of an object) is allowed by an authenticated user who has the `file.view_fileremote` permission.
+  Although users are allowed to perform an operation what they can list will still be restricted to `only the objects that user can view`.
+  See [queryset scoping].
+- `update` or `partial_update` is allowed by an authenticated user who has the `file.change_fileremote` permission.
 - `destroy` is allowed by any authenticated user with the `file.delete_fileremote` permission.
 
-These names correspond with the [default DRF viewset action names](https://www.django-rest-framework.org/api-guide/viewsets/#viewset-actions).
+These names correspond with the [default DRF viewset action names].
 
 ## Authorization Conditions
 
-Each policy statement can contain [drf-access-policy conditions](https://rsinger86.github.io/drf-access-policy/statement_elements/#condition) which is useful for verifying a user has one or
-more permissions. Pulp ships many built-in checks. See the [permission_checking_machinery](site:pulpcore/docs/dev/learn/rbac/permissions/)
-documentation for more information on available checks.
+Each policy statement can contain [drf-access-policy conditions] which is useful for verifying a user has one or more permissions.
+Pulp ships many built-in checks.
+See the [permission checking machinery] documentation for more information on available checks.
 
-When multiple conditions are present, **all** of them must return True for the request to be
-authorized.
+When multiple conditions are present, **all** of them must return True for the request to be authorized.
 
 !!! note
 
-    If you are making your plugin compatible with Domains, then use the `has_model_or_domain_perms`
-    and `has_model_or_domain_or_obj_perms` checks where appropriate.
+    If you are making your plugin compatible with Domains,
+    use the `has_model_or_domain_perms` and `has_model_or_domain_or_obj_perms` checks where appropriate.
 
 
 !!! warning
 
-    The `admin` user created on installations prior to RBAC being enabled has
-    `is_superuser=True`. Django assumes a superuser has any model-level permission even without it
-    being assigned. Django's permission checking machinery assumes superusers bypass authorization
-    checks.
+    The `admin` user created on installations prior to RBAC being enabled has `is_superuser=True`.
+    Django assumes a superuser has any model-level permission even without it being assigned.
+    Django's permission checking machinery assumes superusers bypass authorization checks.
 
 
 ## Custom ViewSet Actions
 
-The `action` part of a policy statement can reference [any custom action your viewset has](https://www.django-rest-framework.org/api-guide/viewsets/#marking-extra-actions-for-routing).
-For example `FileRepositoryViewSet` has a `sync` custom action used by users to sync a given
-`FileRepository`. Below is an example of the default policy used to guard that action:
+The `action` part of a policy statement can reference [any custom action your viewset has].
+For example `FileRepositoryViewSet` has a `sync` custom action used by users to sync a given `FileRepository`.
+Below is an example of the default policy used to guard that action:
 
 ```python
 {
@@ -108,24 +102,22 @@ For example `FileRepositoryViewSet` has a `sync` custom action used by users to 
 
 ## Storing an Access Policy in the DB
 
-All access policies are stored in the database in the [pulpcore.plugin.models.AccessPolicy][] model,
+All access policies are stored in the database in the [pulpcore.plugin.models.AccessPolicy] model,
 which stores the policy statements described above.
 
-By storing these in the database they are readable to users with a GET to
-`/pulp/api/v3/access_policies/`. Additionally users can PUT/PATCH modify them at
-`/pulp/api/v3/access_policies/:uuid/`. Users cannot modify create or delete an Access Policy in
-the database because only plugin writers create them and their viewset code expects a specific
-AccessPolicy instance to exist.
+By storing these in the database they are readable to users with a GET to `/pulp/api/v3/access_policies/`.
+Additionally users can PUT/PATCH modify them at `/pulp/api/v3/access_policies/:uuid/`.
+Users cannot modify create or delete an Access Policy in the database,
+because only plugin writers create them and their viewset code expects a specific AccessPolicy instance to exist.
 
 
 
 ## Shipping a Default Access Policy
 
-To ship a default access policy, define a dictionary named `DEFAULT_ACCESS_POLICY` as a class
-attribute on a subclass of `NamedModelViewSet` containing all of `statements` and
-`creation_hooks`. The `AccessPolicy` instance will then be created in the `post_migrate`
-signal handler. In the same way you might want to specify a `LOCKED_ROLES` dictionary that will
-define roles as lists of permissions to be used in the access policy.
+To ship a default access policy, define a dictionary named `DEFAULT_ACCESS_POLICY` as a class attribute on a subclass of `NamedModelViewSet`.
+This attribute should contain all of `statements` and `creation_hooks`.
+The `AccessPolicy` instance will then be created in the `post_migrate` signal handler.
+In the same way you might want to specify a `LOCKED_ROLES` dictionary that will define roles as lists of permissions to be used in the access policy.
 
 Here's an example of code to define a default policy:
 
@@ -184,21 +176,19 @@ class FileRemoteViewSet(RemoteViewSet):
     <...>
 ```
 
-For an explanation of the `creation_hooks` see the
-[Shipping a default new object policy](site:pulpcore/docs/dev/learn/rbac/adding_automatic_permissions/#shipping-a-default-new-object-policy) documentation.
+For an explanation of the `creation_hooks` see the [Shipping a default new object policy] documentation.
 
-The attribute `LOCKED_ROLES` contains roles that are managed by the plugin author. Their name
-needs to be prefixed by the plugins `app_label` with a dot to prevent collisions. Roles defined
-there will be replicated and updated in the database after every migration. They are also marked
-`locked=True` to prevent being modified by users. The primary purpose of these roles is to allow
-plugin writers to refer to them in the default access policy.
+The attribute `LOCKED_ROLES` contains roles that are managed by the plugin author.
+Their name needs to be prefixed by the plugins `app_label` with a dot to prevent collisions.
+Roles defined there will be replicated and updated in the database after every migration.
+They are also marked `locked=True` to prevent being modified by users.
+The primary purpose of these roles is to allow plugin writers to refer to them in the default access policy.
 
 
 
 ## Allow Granting Permissions by the Object Owners
 
-To allow object owners to grant access to other users, first add a `manage_roles` permission to
-the model.
+To allow object owners to grant access to other users, first add a `manage_roles` permission to the model.
 
 ```python
 class FileRemote(Remote):
@@ -239,24 +229,21 @@ class FileRemoteViewSet(RemoteViewSet, RolesMixin):
 
 ## Handling Objects created prior to RBAC
 
-Prior to RBAC being enabled, `admin` was the only user and they have `is_superuser=True` which
-generally causes them to pass any permission check even without explicit permissions being assigned.
+Prior to RBAC being enabled, `admin` was the only user.
+They have `is_superuser=True` which generally causes them to pass any permission check even without explicit permissions being assigned.
 
 
 
 ## Viewset Enforcement
 
-Pulp configures the `DEFAULT_PERMISSION_CLASSES` in the settings file to use
-`pulpcore.plugin.access_policy.AccessPolicyFromDB` by default. This ensures that by defining a
-`DEFAULT_ACCESS_POLICY` on your Viewset, Pulp will automatically save it to the database at
-migration-time, and your Viewset will be protected without additional effort.
+Pulp configures the `DEFAULT_PERMISSION_CLASSES` in the settings file to use `pulpcore.plugin.access_policy.AccessPolicyFromDB` by default.
+This ensures that by defining a `DEFAULT_ACCESS_POLICY` on your Viewset, Pulp will automatically save it to the database at migration-time,
+and your Viewset will be protected without additional effort.
 
-This strategy allows users to completely customize or disable the DRF Permission checks Pulp uses
-like any typical DRF project would.
+This strategy allows users to completely customize or disable the DRF Permission checks Pulp uses like any typical DRF project would.
 
-Also like a typical DRF project, individual Viewsets or views can also be customized to use a
-different Permission check by declaring the `permission_classes` check. For example, here is the
-`StatusView` which disables permission checks entirely as follows:
+Also like a typical DRF project, individual Viewsets or views can also be customized to use a different Permission check by declaring the `permission_classes` check.
+For example, here is the `StatusView` which disables permission checks entirely as follows:
 
 ```python
 class StatusView(APIView):
@@ -269,10 +256,9 @@ class StatusView(APIView):
 
 ## Permission Checking Machinery
 
-drf-access-policy provides a feature to enable conditional checks to be globally available as their
-docs [describe here](https://rsinger86.github.io/drf-access-policy/reusable_conditions/). Pulp
-enables the `reusable_conditions` in its settings.py file, allowing a variety of condition checks
-to be globally available. Pulp enables this as follows:
+`drf-access-policy` provides a feature to enable [conditional checks] to be globally available.
+Pulp enables the `reusable_conditions` in its settings.py file, allowing a variety of condition checks to be globally available.
+Pulp enables this as follows:
 
 ```python
 DRF_ACCESS_POLICY = {"reusable_conditions": ["pulpcore.app.global_access_conditions"]}
@@ -284,8 +270,7 @@ provides several checks that are available for both users and plugin writers to 
 
 ## Custom Permission Checks
 
-Plugins can provide their own permission checks by defining them in a
-`app.global_access_conditions` module and adding an operation like
+Plugins can provide their own permission checks by defining them in a `app.global_access_conditions` module and adding a statement like
 
 ```python
 DRF_ACCESS_POLICY = {
@@ -300,6 +285,13 @@ to their `app.settings` module.
 
 ## Reference
 
-::: pulpcore.plugin.models.AccessPolicy
-
 ::: pulpcore.app.global_access_conditions
+
+[drf-access-policy]: https://rsinger86.github.io/drf-access-policy/policy_logic/
+[queryset scoping]: site:pulpcore/docs/dev/learn/rbac/queryset_scoping/
+[default DRF viewset action names]: https://www.django-rest-framework.org/api-guide/viewsets/#viewset-actions
+[drf-access-policy conditions]: https://rsinger86.github.io/drf-access-policy/statement_elements/#condition
+[permission checking machinery]: site:pulpcore/docs/dev/learn/rbac/permissions/
+[any custom action your viewset has]: https://www.django-rest-framework.org/api-guide/viewsets/#marking-extra-actions-for-routing
+[Shipping a default new object policy]: site:pulpcore/docs/dev/learn/rbac/adding_automatic_permissions/#shipping-a-default-new-object-policy
+[conditional checks]: https://rsinger86.github.io/drf-access-policy/reusable_conditions/
