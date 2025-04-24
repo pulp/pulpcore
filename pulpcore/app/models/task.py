@@ -193,6 +193,10 @@ class Task(BaseModel, AutoAddObjPermsMixin):
                 )
             )
 
+    def _cleanup_progress_reports(self, state):
+        """Find any running progress-reports and set their states to the specified end-state."""
+        self.progress_reports.filter(state=TASK_STATES.RUNNING).update(state=state)
+
     def set_completed(self):
         """
         Set this Task to the completed state, save it, and log output in warning cases.
@@ -221,6 +225,7 @@ class Task(BaseModel, AutoAddObjPermsMixin):
                         self.pk, self.state
                     )
                 )
+        self._cleanup_progress_reports(TASK_STATES.COMPLETED)
 
     def set_failed(self, exc, tb):
         """
@@ -253,6 +258,7 @@ class Task(BaseModel, AutoAddObjPermsMixin):
                     self.pk, self.state
                 )
             )
+        self._cleanup_progress_reports(TASK_STATES.FAILED)
 
     def set_canceling(self):
         """
@@ -306,6 +312,7 @@ class Task(BaseModel, AutoAddObjPermsMixin):
                     self.pk, self.state
                 )
             )
+        self._cleanup_progress_reports(final_state)
 
     def unblock(self):
         # This should be safe to be called without holding the lock.
