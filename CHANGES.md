@@ -8,6 +8,29 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.49.39 (2025-04-24) {: #3.49.39 }
+
+### REST API {: #3.49.39-rest-api }
+
+#### Bugfixes {: #3.49.39-rest-api-bugfix }
+
+- Reverted fix for #6491, it broke certificate-chains.
+  [#6510](https://github.com/pulp/pulpcore/issues/6510)
+
+### Plugin API {: #3.49.39-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.49.39-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.49.39-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.49.38 (2025-04-23) {: #3.49.38 }
 
 ### REST API {: #3.49.38-rest-api }
