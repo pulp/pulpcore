@@ -48,7 +48,9 @@ class Command(BaseCommand):
         published_artifacts = publication.published_artifact.select_related(
             "content_artifact__artifact"
         ).order_by("relative_path")
-        artifact_href_prefix = reverse(get_view_name_for_model(Artifact, "list"))
+        artifact_href_prefix = reverse(
+            get_view_name_for_model(Artifact, "list")
+        )  # todo: reverse() + namespacing issues, print PRN instead?
 
         if options["tabular"]:
             table = PrettyTable()

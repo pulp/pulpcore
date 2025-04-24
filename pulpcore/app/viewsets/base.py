@@ -182,7 +182,7 @@ class NamedModelViewSet(viewsets.GenericViewSet):
             found_kwargs["pk"] = pk
         else:
             try:
-                match = resolve(urlparse(uri).path)
+                match = resolve(urlparse(uri).path)  # TODO: resolve() + namespacing issues
             except Resolver404:
                 raise DRFValidationError(detail=_("URI not valid: {u}").format(u=uri))
             else:

@@ -1,0 +1,1 @@
+Added a /pulp/api/v4/ namespace in parallel with the existing /pulp/api/v3/ namespace. This is disabled by default (`settings.ENABLE_V4_API`) and should be used only for development & experimentation.

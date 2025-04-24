@@ -23,7 +23,9 @@ class OperationPostponedResponse(Response):
             request (rest_framework.request.Request): Request used to generate the pulp_href urls
         """
         kwargs = {"pk": task.pk}
-        resp = {"task": reverse("tasks-detail", kwargs=kwargs, request=request)}
+        resp = {
+            "task": reverse("tasks-detail", kwargs=kwargs, request=request)
+        }  # reverse() + namespacing issues
         super().__init__(data=resp, status=202)
 
 
@@ -47,5 +49,7 @@ class TaskGroupOperationResponse(Response):
             request (rest_framework.request.Request): Request used to generate the pulp_href urls
         """
         kwargs = {"pk": task_group.pk}
-        resp = {"task_group": reverse("task-groups-detail", kwargs=kwargs, request=request)}
+        resp = {
+            "task_group": reverse("task-groups-detail", kwargs=kwargs, request=request)
+        }  # reverse() + namespacing issues
         super().__init__(data=resp, status=202)
