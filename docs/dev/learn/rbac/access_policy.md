@@ -123,7 +123,7 @@ AccessPolicy instance to exist.
 
 To ship a default access policy, define a dictionary named `DEFAULT_ACCESS_POLICY` as a class
 attribute on a subclass of `NamedModelViewSet` containing all of `statements` and
-`creation_hooks`. The `AccessPolicy` instance will then be created in the `pulp_migrate`
+`creation_hooks`. The `AccessPolicy` instance will then be created in the `post_migrate`
 signal handler. In the same way you might want to specify a `LOCKED_ROLES` dictionary that will
 define roles as lists of permissions to be used in the access policy.
 
