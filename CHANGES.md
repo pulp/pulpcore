@@ -8,6 +8,31 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.76.1 (2025-04-24) {: #3.76.1 }
+
+### REST API {: #3.76.1-rest-api }
+
+#### Bugfixes {: #3.76.1-rest-api-bugfix }
+
+- Fixed a memory consumption issue that was triggered by the use of the Alternate Content Source feature.
+  [#6500](https://github.com/pulp/pulpcore/issues/6500)
+- Reverted fix for #6491, it broke certificate-chains.
+  [#6510](https://github.com/pulp/pulpcore/issues/6510)
+
+### Plugin API {: #3.76.1-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.76.1-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.76.1-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.76.0 (2025-04-22) {: #3.76.0 }
 
 ### REST API {: #3.76.0-rest-api }
@@ -268,6 +293,29 @@ No significant changes.
   [#6244](https://github.com/pulp/pulpcore/issues/6244)
 
 ### Pulp Cert Guard {: #3.74.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.73.8 (2025-04-24) {: #3.73.8 }
+
+### REST API {: #3.73.8-rest-api }
+
+#### Bugfixes {: #3.73.8-rest-api-bugfix }
+
+- Reverted fix for #6491, it broke certificate-chains.
+  [#6510](https://github.com/pulp/pulpcore/issues/6510)
+
+### Plugin API {: #3.73.8-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.73.8-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.73.8-pulp-cert-guard }
 
 No significant changes.
 
@@ -1136,6 +1184,29 @@ No significant changes.
 No significant changes.
 
 ### Pulp Cert Guard {: #3.64.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.63.17 (2025-04-24) {: #3.63.17 }
+
+### REST API {: #3.63.17-rest-api }
+
+#### Bugfixes {: #3.63.17-rest-api-bugfix }
+
+- Reverted fix for #6491, it broke certificate-chains.
+  [#6510](https://github.com/pulp/pulpcore/issues/6510)
+
+### Plugin API {: #3.63.17-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.63.17-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.63.17-pulp-cert-guard }
 
 No significant changes.
 
@@ -2353,6 +2424,29 @@ No significant changes.
 No significant changes.
 
 ### Pulp Cert Guard
+
+No significant changes.
+
+---
+
+## 3.49.39 (2025-04-24) {: #3.49.39 }
+
+### REST API {: #3.49.39-rest-api }
+
+#### Bugfixes {: #3.49.39-rest-api-bugfix }
+
+- Reverted fix for #6491, it broke certificate-chains.
+  [#6510](https://github.com/pulp/pulpcore/issues/6510)
+
+### Plugin API {: #3.49.39-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.49.39-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.49.39-pulp-cert-guard }
 
 No significant changes.
 
@@ -3839,6 +3933,21 @@ No significant changes.
 
 -   Starting from this release pulp_file will be shipped as part of the pulpcore package.
     [#4550](https://github.com/pulp/pulpcore/issues/4550)
+
+## 3.39.30 (2025-04-24) {: #3.39.30 }
+
+### REST API {: #3.39.30-rest-api }
+
+#### Bugfixes {: #3.39.30-rest-api-bugfix }
+
+- Reverted fix for #6491, it broke certificate-chains.
+  [#6510](https://github.com/pulp/pulpcore/issues/6510)
+
+### Plugin API {: #3.39.30-plugin-api }
+
+No significant changes.
+
+---
 
 ## 3.39.29 (2025-04-23) {: #3.39.29 }
 
