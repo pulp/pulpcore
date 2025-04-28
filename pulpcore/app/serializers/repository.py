@@ -365,9 +365,8 @@ class RepositorySyncURLSerializer(ValidateFieldsMixin, serializers.Serializer):
         if repository and type(remote.cast()) not in repository.cast().REMOTE_TYPES:
             raise serializers.ValidationError(
                 {
-                    "remote": _(
-                        f"Type for Remote '{get_prn(remote)}' "
-                        f"does not match Repository '{get_prn(repository)}'."
+                    "remote": _("Type for Remote '{}' does not match Repository '{}'.").format(
+                        get_prn(remote), get_prn(repository)
                     )
                 }
             )
