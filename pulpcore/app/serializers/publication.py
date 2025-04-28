@@ -407,14 +407,34 @@ def validate_repo_and_remote(repository, field, **kwargs):
 
     detail_repo = repository.cast()
     if detail_repo.remote and type(detail_repo.remote.cast()) not in detail_repo.REMOTE_TYPES:
-        msg = (
-            f"Type for Remote '{get_prn(repository.remote)}' "
-            f"does not match Repository '{get_prn(repository)}'"
-        )
-        if repository_version := kwargs.pop("repository_version", None):
-            msg += f" from RepositoryVersion '{get_prn(repository_version)}'"
-        if publication := kwargs.pop("publication", None):
-            msg += f" from Publication '{get_prn(publication)}'"
-        msg += "."
+        repository_version = kwargs.pop("repository_version", None)
+        publication = kwargs.pop("publication", None)
 
-        raise serializers.ValidationError({field: _(msg)})
+        if repository_version and publication:
+            msg_template = _(
+                "Type for Remote '{remote}' does not match Repository '{repository}' "
+                "from RepositoryVersion '{repository_version}' from Publication '{publication}'."
+            )
+        elif repository_version:
+            msg_template = _(
+                "Type for Remote '{remote}' does not match Repository '{repository}' "
+                "from RepositoryVersion '{repository_version}'."
+            )
+        elif publication:
+            msg_template = _(
+                "Type for Remote '{remote}' does not match Repository '{repository}' "
+                "from Publication '{publication}'."
+            )
+        else:
+            msg_template = _("Type for Remote '{remote}' does not match Repository '{repository}'.")
+
+        raise serializers.ValidationError(
+            {
+                field: msg_template.format(
+                    remote=get_prn(repository.remote),
+                    repository=get_prn(repository),
+                    repository_version=get_prn(repository_version) if repository_version else "",
+                    publication=get_prn(publication) if publication else "",
+                )
+            }
+        )
