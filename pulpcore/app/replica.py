@@ -8,7 +8,7 @@ from pulp_glue.common.context import PulpContext
 from pulpcore.app.models import UpstreamPulp
 from pulpcore.tasking.tasks import dispatch
 from pulpcore.app.tasks.base import (
-    general_update,
+    ageneral_update,
     general_create,
     general_multi_delete,
 )
@@ -133,7 +133,7 @@ class Replicator:
             needs_update = self.needs_update(remote_fields_dict, remote)
             if needs_update:
                 dispatch(
-                    general_update,
+                    ageneral_update,
                     task_group=self.task_group,
                     shared_resources=[self.server],
                     exclusive_resources=[remote],
@@ -162,7 +162,7 @@ class Replicator:
             needs_update = self.needs_update(repo_fields_dict, repository)
             if needs_update:
                 dispatch(
-                    general_update,
+                    ageneral_update,
                     task_group=self.task_group,
                     shared_resources=[self.server],
                     exclusive_resources=[repository],
@@ -197,7 +197,7 @@ class Replicator:
             if needs_update:
                 # Update the distribution
                 dispatch(
-                    general_update,
+                    ageneral_update,
                     task_group=self.task_group,
                     shared_resources=[repository, self.server],
                     exclusive_resources=self.distros_uris,
