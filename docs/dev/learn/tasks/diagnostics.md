@@ -9,17 +9,19 @@ enabled in production environments (at last not without careful supervision).
 
 The following diagnostics are supported currently:
 
-- memory - Logs the task's max resident set size in MB logged over time
-- pyinstrument - Dumps an HTML report from the pyinstrument profiler, if installed
+- memory:
+   Logs the task's max resident set size in MB logged over time
+- pyinstrument:
+   Dumps an HTML report from the pyinstrument profiler, if installed
 
 When enabled, these are accessed by using HTTP GET requests to the path `${TASK_HREF}profile_artifacts/`
 for the task which is under inspection. The response will contain a set of keys and corresponding URLs
 which provides access to download the artifacts. Eventually these artifacts are removed automatically
 by orphan cleanup and are no longer accessible.
 
-## Memory Analysis
+## Memory Logging
 
-The resident set size (RSS) of the process is measured every 5 seconds and logged to a file.
+The resident set size (RSS) of the process is measured every 2 seconds and logged to a file.
 
 You can plot this with gnuplot by:
 
@@ -31,8 +33,6 @@ You can plot this with gnuplot by:
 3. Paste these commands:
 
    ```
-   set terminal png size 1200,900 enhanced font "Arial, 10"
-   set output "memory.png"
    set ylabel "Task Process Megabytes (MB)"
    set xlabel "Seconds since task start"
    plot "memory.datum" with lines
@@ -40,7 +40,7 @@ You can plot this with gnuplot by:
 
 4. Open your png chart saved at memory.png
 
-## Profiling
+## Pyinstrument Profiling
 
 If the `pyinstrument` package is installed, a runtime profile of the execution of the task will be
 automatically produced and written to a file.

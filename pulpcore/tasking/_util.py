@@ -71,8 +71,8 @@ def write_memory_usage(stop_event, path):
             current_mb_in_use = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024
             file.write(f"{seconds}\t{current_mb_in_use:.2f}\n")
             file.flush()
-            time.sleep(5)
-            seconds += 5
+            time.sleep(2)
+            seconds += 2
 
 
 def child_signal_handler(sig, frame):
@@ -143,7 +143,7 @@ def _execute_task_and_profile(task):
 
 def _memory_diagnostic_decorator(temp_dir, func):
     def __memory_diagnostic_decorator(task):
-        mem_diagnostics_file_path = os.path.join(temp_dir, "memory.datum")
+        mem_diagnostics_file_path = os.path.join(temp_dir, "memory_profile.datum")
         # It would be better to have this recording happen in the parent process instead of here
         # https://github.com/pulp/pulpcore/issues/2337
         stop_event = threading.Event()
@@ -158,10 +158,10 @@ def _memory_diagnostic_decorator(temp_dir, func):
         artifact = Artifact.init_and_validate(mem_diagnostics_file_path)
         with suppress(IntegrityError):
             artifact.save()
-
-        ProfileArtifact.objects.get_or_create(artifact=artifact, name="memory_profile", task=task)
-
-        _logger.info("Created memory diagnostic data.")
+            ProfileArtifact.objects.get_or_create(
+                artifact=artifact, name="memory_profile", task=task
+            )
+            _logger.info("Created memory diagnostic data.")
 
     return __memory_diagnostic_decorator
 
@@ -171,7 +171,7 @@ def _pyinstrument_diagnostic_decorator(temp_dir, func):
         if importlib.util.find_spec("pyinstrument") is not None:
             from pyinstrument import Profiler
 
-            with Profiler() as profiler:
+            with Profiler(interval=0.002) as profiler:
                 func(task)
 
             profile_file_path = os.path.join(temp_dir, "pyinstrument.html")
@@ -182,12 +182,10 @@ def _pyinstrument_diagnostic_decorator(temp_dir, func):
             artifact = Artifact.init_and_validate(str(profile_file_path))
             with suppress(IntegrityError):
                 artifact.save()
-
-            ProfileArtifact.objects.get_or_create(
-                artifact=artifact, name="pyinstrument_data", task=task
-            )
-
-            _logger.info("Created pyinstrument profile data.")
+                ProfileArtifact.objects.get_or_create(
+                    artifact=artifact, name="pyinstrument_profile", task=task
+                )
+                _logger.info("Created pyinstrument profile data.")
         else:
             func(task)
 
