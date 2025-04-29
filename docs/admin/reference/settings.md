@@ -339,9 +339,17 @@ Defaults to `'REMOTE_USER'`.
 When enabled, each task records various diagnostics for analysis by a developer.
 Some of these diagnostics add runtime overhead, and should probably not be enabled in production environments without careful thought and supervision.
 
-See [task diagnostics documentation] for more details.
+The list of possible diagnostics that can be used are `["memory", "pyinstrument"]`.
+Any subset of those can be used, or all of them, or none of them.
 
-Defaults to `False`.
+A value of `True` enables all diagnostics.
+
+!!! note
+    `pyinstrument` diagnostics requires additional packages to be installed.
+
+Defaults to `[]` (no diagnostics).
+
+See [task diagnostics documentation] for more details.
 
 ### TASK\_GRACE\_INTERVAL
 
