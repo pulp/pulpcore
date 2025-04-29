@@ -382,7 +382,15 @@ ALLOWED_CONTENT_CHECKSUMS = ["sha224", "sha256", "sha384", "sha512"]
 
 DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
 
-TASK_DIAGNOSTICS = False
+# Possible diagnostics:
+# * "memory"
+#    Logs the task process RSS every couple of seconds
+# * "pyinstrument"
+#    Dumps an HTML profile report produced by pyinstrument, showing time spent in various
+#    callstacks. This adds ~10% overhead to the task process and consumes extra memory.
+#    Tweaking code might be warranted for some advanced settings.
+# NOTE: "pyinstrument" requires additional packages to be installed on the system.
+TASK_DIAGNOSTICS = []  # ["memory", "pyinstrument"]
 
 ANALYTICS = True
 

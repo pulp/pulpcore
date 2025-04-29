@@ -132,14 +132,16 @@ def perform_task(task_pk, task_working_dir_rel_path):
     else:
         execute_task(task)
 
-
 def _execute_task_and_profile(task):
     with tempfile.TemporaryDirectory(dir=settings.WORKING_DIRECTORY) as temp_dir:
-        pyinstrument_func = _pyinstrument_diagnostic_decorator(temp_dir, execute_task)
-        memory_func = _memory_diagnostic_decorator(temp_dir, pyinstrument_func)
+        _execute_task = execute_task
 
-        memory_func(task)
+        if settings.TASK_DIAGNOSTICS is True or "memory" in settings.TASK_DIAGNOSTICS:
+            _execute_task = _memory_diagnostic_decorator(temp_dir, _execute_task)
+        if settings.TASK_DIAGNOSTICS is True or "pyinstrument" in settings.TASK_DIAGNOSTICS:
+            _execute_task = _pyinstrument_diagnostic_decorator(temp_dir, _execute_task)
 
+        _execute_task(task)
 
 def _memory_diagnostic_decorator(temp_dir, func):
     def __memory_diagnostic_decorator(task):
