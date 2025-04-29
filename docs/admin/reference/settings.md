@@ -336,12 +336,10 @@ Defaults to `'REMOTE_USER'`.
 
 ### TASK\_DIAGNOSTICS
 
-When set to `True`, each task records various diagnostics (listed below) and stores them as separate artifacts.
-To download the data, issue GET requests to `${TASK_HREF}profile_artifacts/`.
-The artifacts are cleaned up automatically by the orphan cleanup.
+When enabled, each task records various diagnostics for analysis by a developer.
+Some of these diagnostics add runtime overhead, and should probably not be enabled in production environments without careful thought and supervision.
 
-- memory.datum - the task's max resident set size in MB
-- pyinstrument.html - the output of the pyinstrument profiler, if installed
+See [task diagnostics documentation] for more details.
 
 Defaults to `False`.
 
@@ -484,4 +482,5 @@ Defaults to `pulpcore.tasking.status`.
 [Django warning at the end of this section in their docs]: https://docs.djangoproject.com/en/4.2/howto/auth-remote-user/#configuration
 [Enabling Debug Logging]: site:pulpcore/docs/admin/guides/troubleshooting/#enabling-debug-logging
 [librdkafka configuration documentation]: https://github.com/confluentinc/librdkafka/blob/master/CONFIGURATION.md
+[task diagnostics documentation]: site:pulpcore/docs/dev/learn/tasks/diagnostics.md
 [Webserver Auth with Reverse Proxy]: site:pulpcore/docs/admin/guides/auth/external/#webserver-auth-with-reverse-proxy
