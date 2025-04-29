@@ -13,6 +13,9 @@ The following diagnostics are supported currently:
    Logs the task's max resident set size in MB logged over time
 - pyinstrument:
    Dumps an HTML report from the pyinstrument profiler, if installed
+- memray:
+   Dumps a profile which can be processed with `memray`, which shows which lines and functions were
+   responsible for the most allocations at the time of peak RSS of the process
 
 When enabled, these are accessed by using HTTP GET requests to the path `${TASK_HREF}profile_artifacts/`
 for the task which is under inspection. The response will contain a set of keys and corresponding URLs
@@ -52,3 +55,27 @@ Enabling this profiler adds a bit of overhead (10-20%) to the runtime of the tas
 a bit of memory over time. This can be problematic for very long-running tasks. Behavior of the 
 profiler (including sampling interval, directly proportional to memory overhead) can be adjusted 
 by tweaking the code manually if required.
+
+## Memray Profiling
+
+If the `memray` package is installed, a runtime profile of the execution of the task will be
+automatically produced and written to a file.
+
+When downloaded and processed using `memray` (see [memray docs]), you can view the details of which
+lines and functions were responsible for the most memory allocations at the time of peak process RSS.
+
+Enabling this profiler adds significant overhead (25-40%+) to the runtime of the task. Behavior of the
+profiler can be adjusted by tweaking the code manually if required, however, enabling most of the
+additional options (such as profiling native callstacks, or recording the memory callstacks of the entire
+process instead of merely max RSS) also adds additional runtime overhead and makes the resulting files
+larger.
+
+While the [memray docs] are recommended reading to fully grasp the options available, a recommended
+starting point is:
+
+1. Downloading the memray dump artifact, and saving it to a file such as `memray.bin` in your current
+   working directory
+
+2. python3 -m memray tree memray.bin
+
+[memray docs]: https://bloomberg.github.io/memray/getting_started.html

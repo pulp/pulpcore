@@ -132,6 +132,7 @@ def perform_task(task_pk, task_working_dir_rel_path):
     else:
         execute_task(task)
 
+
 def _execute_task_and_profile(task):
     with tempfile.TemporaryDirectory(dir=settings.WORKING_DIRECTORY) as temp_dir:
         _execute_task = execute_task
@@ -140,8 +141,11 @@ def _execute_task_and_profile(task):
             _execute_task = _memory_diagnostic_decorator(temp_dir, _execute_task)
         if settings.TASK_DIAGNOSTICS is True or "pyinstrument" in settings.TASK_DIAGNOSTICS:
             _execute_task = _pyinstrument_diagnostic_decorator(temp_dir, _execute_task)
+        if settings.TASK_DIAGNOSTICS is True or "memray" in settings.TASK_DIAGNOSTICS:
+            _execute_task = _memray_diagnostic_decorator(temp_dir, _execute_task)
 
         _execute_task(task)
+
 
 def _memory_diagnostic_decorator(temp_dir, func):
     def __memory_diagnostic_decorator(task):
@@ -192,6 +196,32 @@ def _pyinstrument_diagnostic_decorator(temp_dir, func):
             func(task)
 
     return __pyinstrument_diagnostic_decorator
+
+
+def _memray_diagnostic_decorator(temp_dir, func):
+    def __memray_diagnostic_decorator(task):
+        if importlib.util.find_spec("memray") is not None:
+            import memray
+
+            profile_file_path = os.path.join(temp_dir, "memray_profile.bin")
+            with memray.Tracker(
+                profile_file_path,
+                native_traces=False,
+                file_format=memray.FileFormat.AGGREGATED_ALLOCATIONS,
+            ):
+                func(task)
+
+            artifact = Artifact.init_and_validate(str(profile_file_path))
+            with suppress(IntegrityError):
+                artifact.save()
+                ProfileArtifact.objects.get_or_create(
+                    artifact=artifact, name="memray_profile", task=task
+                )
+                _logger.info("Created memray memory profile data.")
+        else:
+            func(task)
+
+    return __memray_diagnostic_decorator
 
 
 def dispatch_scheduled_tasks():
