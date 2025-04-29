@@ -389,8 +389,12 @@ DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
 #    Dumps an HTML profile report produced by pyinstrument, showing time spent in various
 #    callstacks. This adds ~10% overhead to the task process and consumes extra memory.
 #    Tweaking code might be warranted for some advanced settings.
-# NOTE: "pyinstrument" requires additional packages to be installed on the system.
-TASK_DIAGNOSTICS = []  # ["memory", "pyinstrument"]
+# * "memray" - Dumps a report produced by memray which logs how much memory was allocated by which
+#    lines and functions, at the time of peak RSS of the task process. This adds significant
+#    runtime overhead to the task process, 20-40%. Tweaking code might be warranted for
+#    some advanced settings.
+# NOTE: "memray" and "pyinstrument" require additional packages to be installed on the system.
+TASK_DIAGNOSTICS = []  # ["memory", "pyinstrument", "memray"]
 
 ANALYTICS = True
 

@@ -339,13 +339,13 @@ Defaults to `'REMOTE_USER'`.
 When enabled, each task records various diagnostics for analysis by a developer.
 Some of these diagnostics add runtime overhead, and should probably not be enabled in production environments without careful thought and supervision.
 
-The list of possible diagnostics that can be used are `["memory", "pyinstrument"]`.
+The list of possible diagnostics that can be used are `["memory", "pyinstrument", "memray"]`.
 Any subset of those can be used, or all of them, or none of them.
 
 A value of `True` enables all diagnostics.
 
 !!! note
-    `pyinstrument` diagnostics requires additional packages to be installed.
+    `memray` and `pyinstrument` diagnostics require additional packages to be installed.
 
 Defaults to `[]` (no diagnostics).
 
