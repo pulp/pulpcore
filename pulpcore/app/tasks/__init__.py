@@ -1,11 +1,11 @@
 from pulpcore.app.tasks import base, repository, upload
 
 from .base import (
+    ageneral_update,
     general_create,
     general_create_from_temp_file,
     general_delete,
     general_multi_delete,
-    general_update,
 )
 
 from .export import fs_publication_export, fs_repo_version_export
