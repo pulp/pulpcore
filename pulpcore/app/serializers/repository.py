@@ -1,4 +1,5 @@
 import os
+from cryptography.x509 import load_pem_x509_certificate
 from gettext import gettext as _
 from urllib.parse import urlparse
 
@@ -70,6 +71,46 @@ class RepositorySerializer(ModelSerializer):
             "retain_repo_versions",
             "remote",
         )
+
+
+def validate_certificate(which_cert, value):
+    """
+    Validate and return *just* the certs and not any commentary that came along with them.
+
+    Args:
+        which_cert: The attribute-name whose cert we're validating (only used for error-message).
+        value: The string being proposed as a certificate-containing PEM.
+
+    Raises:
+        ValidationError: When the provided value has no or an invalid certificate.
+
+    Returns:
+        The pem-string with *just* the validated BEGIN/END CERTIFICATE segments.
+    """
+    if value:
+        try:
+            # Find any/all CERTIFICATE entries in the proposed PEM and let crypto validate them.
+            # NOTE: crypto/39 includes load_certificates(), which will let us remove this whole
+            # loop. But we want to fix the current problem on older supported branches that
+            # allow 38, so we do it ourselves for now
+            certs = list()
+            a_cert = ""
+            for line in value.split("\n"):
+                if "-----BEGIN CERTIFICATE-----" in line or a_cert:
+                    a_cert += line + "\n"
+                if "-----END CERTIFICATE-----" in line:
+                    load_pem_x509_certificate(bytes(a_cert, "ASCII"))
+                    certs.append(a_cert.strip())
+                    a_cert = ""
+            if not certs:
+                raise serializers.ValidationError(
+                    "No {} specified in string {}".format(which_cert, value)
+                )
+            return "\n".join(certs) + "\n"
+        except ValueError as e:
+            raise serializers.ValidationError(
+                "Invalid {} specified, error '{}'".format(which_cert, e.args)
+            )
 
 
 class RemoteSerializer(ModelSerializer, HiddenFieldsMixin):
@@ -270,6 +311,12 @@ class RemoteSerializer(ModelSerializer, HiddenFieldsMixin):
         if value and "@" in value:
             raise serializers.ValidationError(_("proxy_url must not contain credentials"))
         return value
+
+    def validate_ca_cert(self, value):
+        return validate_certificate("ca_cert", value)
+
+    def validate_client_cert(self, value):
+        return validate_certificate("client_cert", value)
 
     def validate(self, data):
         """
