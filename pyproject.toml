@@ -81,6 +81,7 @@ kafka = [
   "cloudevents==1.11.0",
   "confluent-kafka>=2.4.0,<2.10.0",
 ]
+diagnostics = ["pyinstrument~=5.0", "memray~=1.17"]
 
 [project.urls]
 Homepage = "https://pulpproject.org"
