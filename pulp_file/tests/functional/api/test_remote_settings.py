@@ -1,10 +1,89 @@
-import uuid
-
 import pytest
+import uuid
 
 from pulpcore.client.pulp_file import (
     RepositorySyncURL,
 )
+from pulpcore.client.pulp_file.exceptions import BadRequestException
+
+GOOD_CERT = """-----BEGIN CERTIFICATE-----
+MIICoDCCAYgCCQC2c2uY34HNlzANBgkqhkiG9w0BAQUFADASMRAwDgYDVQQDDAdn
+b3ZlZ2FuMB4XDTE5MDMxMzIxMDMzMFoXDTM4MDYxNjIxMDMzMFowEjEQMA4GA1UE
+AwwHZ292ZWdhbjCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBANEatWsZ
+1iwGmTxD02dxMI4ci+Au4FzvmWLBWD07H5GGTVFwnqmNOKhP6DHs1EsMZevkUvaG
+CRxZlPYhjNFLZr2c2FnoDZ5nBXlSW6sodXURbMfyT187nDeBXVYFuh4T2eNCatnm
+t3vgdi+pWsF0LbOgpu7GJI2sh5K1imxyB77tJ7PFTDZCSohkK+A+0nDCnJqDUNXD
+5CK8iaBciCbnzp3nRKuM2EmgXno9Repy/HYxIgB7ZodPwDvYNjMGfvs0s9mJIKmc
+CKgkPXVO9y9gaRrrytICcPOs+YoU/PN4Ttg6wzxaWvJgw44vsR8wM/0i4HlXfBdl
+9br+cgn8jukDOgECAwEAATANBgkqhkiG9w0BAQUFAAOCAQEAyNHV6NA+0GfUrvBq
+AHXHNnBE3nzMhGPhF/0B/dO4o0n6pgGZyzRxaUaoo6+5oQnBf/2NmDyLWdalFWX7
+D1WBaxkhK+FU922+qwQKhABlwMxGCnfZ8F+rlk4lNotm3fP4wHbnO1SGIDvvZFt/
+mpMgkhwL4lShUFv57YylXr+D2vSFcAryKiVGk1X3sHMXlFAMLHUm3d97fJnmb1qQ
+wC43BlJCBQF98wKtYNwTUG/9gblfk8lCB2DL1hwmPy3q9KbSDOdUK3HW6a75ZzCD
+6mXc/Y0bJcwweDsywbPBYP13hYUcpw4htcU6hg6DsoAjLNkSrlY+GGo7htx+L9HH
+IwtfRg==
+-----END CERTIFICATE-----
+"""
+
+GOOD_CERT_WITH_COMMENT = """saydas Intermédiaire CA
+-----BEGIN CERTIFICATE-----
+MIICoDCCAYgCCQC2c2uY34HNlzANBgkqhkiG9w0BAQUFADASMRAwDgYDVQQDDAdn
+b3ZlZ2FuMB4XDTE5MDMxMzIxMDMzMFoXDTM4MDYxNjIxMDMzMFowEjEQMA4GA1UE
+AwwHZ292ZWdhbjCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBANEatWsZ
+1iwGmTxD02dxMI4ci+Au4FzvmWLBWD07H5GGTVFwnqmNOKhP6DHs1EsMZevkUvaG
+CRxZlPYhjNFLZr2c2FnoDZ5nBXlSW6sodXURbMfyT187nDeBXVYFuh4T2eNCatnm
+t3vgdi+pWsF0LbOgpu7GJI2sh5K1imxyB77tJ7PFTDZCSohkK+A+0nDCnJqDUNXD
+5CK8iaBciCbnzp3nRKuM2EmgXno9Repy/HYxIgB7ZodPwDvYNjMGfvs0s9mJIKmc
+CKgkPXVO9y9gaRrrytICcPOs+YoU/PN4Ttg6wzxaWvJgw44vsR8wM/0i4HlXfBdl
+9br+cgn8jukDOgECAwEAATANBgkqhkiG9w0BAQUFAAOCAQEAyNHV6NA+0GfUrvBq
+AHXHNnBE3nzMhGPhF/0B/dO4o0n6pgGZyzRxaUaoo6+5oQnBf/2NmDyLWdalFWX7
+D1WBaxkhK+FU922+qwQKhABlwMxGCnfZ8F+rlk4lNotm3fP4wHbnO1SGIDvvZFt/
+mpMgkhwL4lShUFv57YylXr+D2vSFcAryKiVGk1X3sHMXlFAMLHUm3d97fJnmb1qQ
+wC43BlJCBQF98wKtYNwTUG/9gblfk8lCB2DL1hwmPy3q9KbSDOdUK3HW6a75ZzCD
+6mXc/Y0bJcwweDsywbPBYP13hYUcpw4htcU6hg6DsoAjLNkSrlY+GGo7htx+L9HH
+IwtfRg==
+-----END CERTIFICATE-----
+"""
+
+GOOD_CERT_TWO = """-----BEGIN CERTIFICATE-----
+MIICqjCCAZICAgtCMA0GCSqGSIb3DQEBBQUAMBIxEDAOBgNVBAMMB2dvdmVnYW4w
+HhcNMTkwMzEzMjEwMzMwWhcNMjkwMzEwMjEwMzMwWjAjMRAwDgYDVQQDDAdnb3Zl
+Z2FuMQ8wDQYDVQQKDAZjbGllbnQwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEK
+AoIBAQCxJWx5t25jY4womWtKxGqv2LHg9YnU0b2VCECLhu5JjoAzFPja5VHB0Maz
+G8m5c0+N2ubrPcBC+KdoGMd2MqrrGyzKOiwbVDW0YOgnFqh58p796iKtVboWx41y
+Gzn289PzYccxH6mhhPmRVD25KyV1TenqvGIHJTepF7mgIemGDTv+j7+mYPT/3r6I
+pnwTkEVPr+Q4iW0l3fNESlFFRt2b7yhz9f0E4SMhmIRnSIGOLO1zE02IJ1hTuGkx
+/MZ1AqQdVSdm4jenTIMp91R1kYylI66yMcpU6w6x4j8qvJ8nBZ4r4DqOHcOobyHp
+qlaJjv/K5SGJxV2k0EFk7b483lbrAgMBAAEwDQYJKoZIhvcNAQEFBQADggEBALYh
+SHLGJCxVL8ePFLs294fhTq4pTQsvHm8q3SyJD9DaB+HKTceCFErNv18Dsl/QwBis
+WPHWKpDN0EUcuuE/8oUaGjjzByJ8bPafMicFCHSSefcJw+IOOqKBkWDT+4YGkvfs
+RpwxSLqLOhEt7aSkiPcMvD20v8cvj0O36c5G3Vv0E8WmPWOEqjyPFoU9X1vACr+h
+DdIKvxFbvRU9ObektFxOYHuvP010IBv2dGyw3G5W5fh9A5OSXHAShWSwkRU36oft
+ugB47fIIlb7zLm4GBmxGG0yBwAf4otBlUXVNqNx15bbUuVgKbGMFfItQgEo9AQcz
+gGsetwDOs/NgZ95oH40=
+-----END CERTIFICATE-----
+"""
+
+BAD_CERT = """-----BEGIN CERTIFICATE-----\nBOGUS==\n-----END CERTIFICATE-----
+"""
+
+NO_CERT = """
+MIICoDCCAYgCCQC2c2uY34HNlzANBgkqhkiG9w0BAQUFADASMRAwDgYDVQQDDAdn
+b3ZlZ2FuMB4XDTE5MDMxMzIxMDMzMFoXDTM4MDYxNjIxMDMzMFowEjEQMA4GA1UE
+AwwHZ292ZWdhbjCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBANEatWsZ
+1iwGmTxD02dxMI4ci+Au4FzvmWLBWD07H5GGTVFwnqmNOKhP6DHs1EsMZevkUvaG
+CRxZlPYhjNFLZr2c2FnoDZ5nBXlSW6sodXURbMfyT187nDeBXVYFuh4T2eNCatnm
+t3vgdi+pWsF0LbOgpu7GJI2sh5K1imxyB77tJ7PFTDZCSohkK+A+0nDCnJqDUNXD
+5CK8iaBciCbnzp3nRKuM2EmgXno9Repy/HYxIgB7ZodPwDvYNjMGfvs0s9mJIKmc
+CKgkPXVO9y9gaRrrytICcPOs+YoU/PN4Ttg6wzxaWvJgw44vsR8wM/0i4HlXfBdl
+9br+cgn8jukDOgECAwEAATANBgkqhkiG9w0BAQUFAAOCAQEAyNHV6NA+0GfUrvBq
+AHXHNnBE3nzMhGPhF/0B/dO4o0n6pgGZyzRxaUaoo6+5oQnBf/2NmDyLWdalFWX7
+D1WBaxkhK+FU922+qwQKhABlwMxGCnfZ8F+rlk4lNotm3fP4wHbnO1SGIDvvZFt/
+mpMgkhwL4lShUFv57YylXr+D2vSFcAryKiVGk1X3sHMXlFAMLHUm3d97fJnmb1qQ
+wC43BlJCBQF98wKtYNwTUG/9gblfk8lCB2DL1hwmPy3q9KbSDOdUK3HW6a75ZzCD
+6mXc/Y0bJcwweDsywbPBYP13hYUcpw4htcU6hg6DsoAjLNkSrlY+GGo7htx+L9HH
+IwtfRg==
+"""
 
 
 def _run_basic_sync_and_assert(file_bindings, remote, file_repo, monitor_task):
@@ -211,3 +290,55 @@ def test_header_for_sync(
     assert requests_record[0].path == "/basic/PULP_MANIFEST"
     assert header_name in requests_record[0].headers
     assert header_value == requests_record[0].headers[header_name]
+
+
+@pytest.mark.parallel
+def test_certificate_clean(file_remote_factory):
+    # Check that a good cert validates
+    a_remote = file_remote_factory(url="http://example.com/", ca_cert=GOOD_CERT)
+    assert a_remote.ca_cert == GOOD_CERT
+    a_remote = file_remote_factory(url="http://example.com/", client_cert=GOOD_CERT)
+    assert a_remote.client_cert == GOOD_CERT
+
+    # Check that a good-cert-with-comments validates and strips the comments
+    a_remote = file_remote_factory(url="http://example.com/", ca_cert=GOOD_CERT_WITH_COMMENT)
+    assert a_remote.ca_cert == GOOD_CERT
+    a_remote = file_remote_factory(url="http://example.com/", client_cert=GOOD_CERT_WITH_COMMENT)
+    assert a_remote.client_cert == GOOD_CERT
+
+    # Check that a bad-cert gets rejected
+    with pytest.raises(BadRequestException):
+        a_remote = file_remote_factory(url="http://example.com/", ca_cert=BAD_CERT)
+    with pytest.raises(BadRequestException):
+        a_remote = file_remote_factory(url="http://example.com/", client_cert=BAD_CERT)
+
+    # Check that a no-cert string returns the expected error
+    with pytest.raises(BadRequestException):
+        a_remote = file_remote_factory(url="http://example.com/", ca_cert=NO_CERT)
+    with pytest.raises(BadRequestException):
+        a_remote = file_remote_factory(url="http://example.com/", client_cert=NO_CERT)
+
+
+@pytest.mark.parallel
+def test_multi_certificate_clean(file_remote_factory):
+    multi_cert = GOOD_CERT + GOOD_CERT_TWO
+
+    # Check that a good multi-cert PEM validates
+    a_remote = file_remote_factory(url="http://example.com/", ca_cert=multi_cert)
+    assert a_remote.ca_cert == multi_cert
+    a_remote = file_remote_factory(url="http://example.com/", client_cert=multi_cert)
+    assert a_remote.client_cert == multi_cert
+
+    # Check that a good-cert-with-comments validates and strips the comments
+    multi_cert_with_comment = GOOD_CERT_WITH_COMMENT + GOOD_CERT_TWO
+    a_remote = file_remote_factory(url="http://example.com/", ca_cert=multi_cert_with_comment)
+    assert a_remote.ca_cert == multi_cert
+    a_remote = file_remote_factory(url="http://example.com/", client_cert=multi_cert_with_comment)
+    assert a_remote.client_cert == multi_cert
+
+    # Check that multi-with-bad is rejected
+    multi_bad = GOOD_CERT + BAD_CERT
+    with pytest.raises(BadRequestException):
+        a_remote = file_remote_factory(url="http://example.com/", ca_cert=multi_bad)
+    with pytest.raises(BadRequestException):
+        a_remote = file_remote_factory(url="http://example.com/", client_cert=multi_bad)
