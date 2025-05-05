@@ -425,6 +425,9 @@ KAFKA_SASL_PASSWORD = None
 # opentelemetry settings
 OTEL_ENABLED = False
 
+# Replaces asyncio event loop with uvloop
+UVLOOP_ENABLED = False
+
 # HERE STARTS DYNACONF EXTENSION LOAD (Keep at the very bottom of settings.py)
 # Read more at https://www.dynaconf.com/django/
 

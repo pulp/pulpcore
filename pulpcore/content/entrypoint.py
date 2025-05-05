@@ -1,11 +1,17 @@
 import click
 from pulpcore.app.pulpcore_gunicorn_application import PulpcoreGunicornApplication
+from django.conf import settings
 
 
 class PulpcoreContentApplication(PulpcoreGunicornApplication):
     def load_app_specific_config(self):
+        worker_class = (
+            "aiohttp.GunicornUVLoopWebWorker"
+            if settings.UVLOOP_ENABLED
+            else "aiohttp.GunicornWebWorker"
+        )
         self.set_option("default_proc_name", "pulpcore-content", enforced=True)
-        self.set_option("worker_class", "aiohttp.GunicornWebWorker", enforced=True)
+        self.set_option("worker_class", worker_class, enforced=True)
 
     def load(self):
         import pulpcore.content
