@@ -1,6 +1,7 @@
 import asyncio
 from contextlib import suppress
 from importlib import import_module
+from importlib.util import find_spec
 import logging
 import os
 
@@ -34,6 +35,13 @@ if settings.OTEL_ENABLED:
     app = web.Application(middlewares=[guid, authenticate, instrumentation()])
 else:
     app = web.Application(middlewares=[guid, authenticate])
+
+
+if settings.UVLOOP_ENABLED:
+    if not find_spec("uvloop"):
+        raise RuntimeError("The library 'uvloop' must be installed if UVLOOP_ENABLED is true.")
+    log.info("Using uvloop as the asyncio event loop.")
+
 
 CONTENT_MODULE_NAME = "content"
 

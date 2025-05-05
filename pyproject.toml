@@ -82,6 +82,7 @@ kafka = [
   "confluent-kafka>=2.4.0,<2.10.0",
 ]
 diagnostics = ["pyinstrument~=5.0", "memray~=1.17"]
+uvloop = ["uvloop>=0.20,<0.22"]
 
 [project.urls]
 Homepage = "https://pulpproject.org"

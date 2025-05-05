@@ -367,6 +367,14 @@ If set to `0`, automatic cleanup is disabled.
 
 Each one defaults to `0`.
 
+### UVLOOP\_ENABLED
+
+Enable using the [uvloop] event loop in the content-app workers.
+This is [recommended by aiohttp] for performance improvements.
+
+The `uvloop` python package must be installed in the content-app's system.
+That's available as an optional dependency for pulpcore: `pulpcore[uvloop]`.
+
 ### WORKER\_TTL
 
 The number of seconds before a worker should be considered lost.
@@ -490,5 +498,7 @@ Defaults to `pulpcore.tasking.status`.
 [Django warning at the end of this section in their docs]: https://docs.djangoproject.com/en/4.2/howto/auth-remote-user/#configuration
 [Enabling Debug Logging]: site:pulpcore/docs/admin/guides/troubleshooting/#enabling-debug-logging
 [librdkafka configuration documentation]: https://github.com/confluentinc/librdkafka/blob/master/CONFIGURATION.md
+[recommended by aiohttp]: https://docs.aiohttp.org/en/stable/third_party.html#approved-third-party-libraries
 [task diagnostics documentation]: site:pulpcore/docs/dev/learn/tasks/diagnostics.md
+[uvloop]: https://github.com/MagicStack/uvloop
 [Webserver Auth with Reverse Proxy]: site:pulpcore/docs/admin/guides/auth/external/#webserver-auth-with-reverse-proxy
