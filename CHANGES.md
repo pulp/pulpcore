@@ -8,6 +8,29 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.49.40 (2025-05-06) {: #3.49.40 }
+
+### REST API {: #3.49.40-rest-api }
+
+#### Bugfixes {: #3.49.40-rest-api-bugfix }
+
+- Fixed to not use the OpenTelemetryMiddleware when PULP_OTEL_ENABLED is not set.
+  [#6529](https://github.com/pulp/pulpcore/issues/6529)
+
+### Plugin API {: #3.49.40-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.49.40-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.49.40-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.49.39 (2025-04-24) {: #3.49.39 }
 
 ### REST API {: #3.49.39-rest-api }
