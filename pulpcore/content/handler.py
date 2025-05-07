@@ -1093,26 +1093,8 @@ class Handler:
             ret.update({ca.relative_path: ca for ca in cas})
         return ret
 
-    async def _serve_content_artifact(self, content_artifact, headers, request):
-        """
-        Handle response for a Content Artifact with the file present.
-
-        Depending on where the file storage (e.g. filesystem, S3, etc) this could be responding with
-        the file (filesystem) or a redirect (S3).
-
-        Args:
-            content_artifact (pulpcore.app.models.ContentArtifact) The Content Artifact to
-                respond with.
-            headers (dict): A dictionary of response headers.
-            request(aiohttp.web.Request) The request to prepare a response for.
-
-        Raises:
-            [aiohttp.web_exceptions.HTTPFound][]: When we need to redirect to the file
-            NotImplementedError: If file is stored in a file storage we can't handle
-
-        Returns:
-            The [aiohttp.web.FileResponse][] for the file.
-        """
+    def _build_response_from_content_artifact(self, content_artifact, headers, request):
+        """Helper method to build the correct response to serve a ContentArtifact."""
 
         def _set_params_from_headers(hdrs, storage_domain):
             # Map standard-response-headers to storage-object-specific keys
@@ -1137,7 +1119,47 @@ class Handler:
         artifact_name = artifact_file.name
         domain = get_domain()
         storage = domain.get_storage()
+        headers["X-PULP-ARTIFACT-SIZE"] = str(artifact_file.size)
 
+        if domain.storage_class == "pulpcore.app.models.storage.FileSystem":
+            path = storage.path(artifact_name)
+            if not os.path.exists(path):
+                raise Exception(_("Expected path '{}' is not found").format(path))
+            return FileResponse(path, headers=headers)
+        elif not domain.redirect_to_object_storage:
+            return ArtifactResponse(content_artifact.artifact, headers=headers)
+        elif domain.storage_class == "storages.backends.s3boto3.S3Boto3Storage":
+            return HTTPFound(_build_url(http_method=request.method), headers=headers)
+        elif domain.storage_class in (
+            "storages.backends.azure_storage.AzureStorage",
+            "storages.backends.gcloud.GoogleCloudStorage",
+        ):
+            return HTTPFound(_build_url(), headers=headers)
+        else:
+            raise NotImplementedError()
+
+    async def _serve_content_artifact(self, content_artifact, headers, request):
+        """
+        Handle response for a Content Artifact with the file present.
+
+        Depending on where the file storage (e.g. filesystem, S3, etc) this could be responding with
+        the file (filesystem) or a redirect (S3).
+
+        Args:
+            content_artifact (pulpcore.app.models.ContentArtifact) The Content Artifact to
+                respond with.
+            headers (dict): A dictionary of response headers.
+            request(aiohttp.web.Request) The request to prepare a response for.
+
+        Raises:
+            [aiohttp.web_exceptions.HTTPFound][]: When we need to redirect to the file
+            NotImplementedError: If file is stored in a file storage we can't handle
+            HTTPRequestRangeNotSatisfiable: If the request is for a range that is not
+                satisfiable.
+        Returns:
+            The [aiohttp.web.FileResponse][] for the file.
+        """
+        artifact_file = content_artifact.artifact.file
         content_length = artifact_file.size
 
         try:
@@ -1152,25 +1174,13 @@ class Handler:
             size = artifact_file.size or "*"
             raise HTTPRequestRangeNotSatisfiable(headers={"Content-Range": f"bytes */{size}"})
 
-        headers["X-PULP-ARTIFACT-SIZE"] = str(content_length)
         artifacts_size_counter.add(content_length)
 
-        if domain.storage_class == "pulpcore.app.models.storage.FileSystem":
-            path = storage.path(artifact_name)
-            if not os.path.exists(path):
-                raise Exception(_("Expected path '{}' is not found").format(path))
-            return FileResponse(path, headers=headers)
-        elif not domain.redirect_to_object_storage:
-            return ArtifactResponse(content_artifact.artifact, headers=headers)
-        elif domain.storage_class == "storages.backends.s3boto3.S3Boto3Storage":
-            raise HTTPFound(_build_url(http_method=request.method), headers=headers)
-        elif domain.storage_class in (
-            "storages.backends.azure_storage.AzureStorage",
-            "storages.backends.gcloud.GoogleCloudStorage",
-        ):
-            raise HTTPFound(_build_url(), headers=headers)
+        response = self._build_response_from_content_artifact(content_artifact, headers, request)
+        if isinstance(response, HTTPFound):
+            raise response
         else:
-            raise NotImplementedError()
+            return response
 
     async def _stream_remote_artifact(
         self, request, response, remote_artifact, save_artifact=True, repository=None
@@ -1214,6 +1224,7 @@ class Handler:
             size = remote_artifact.size or "*"
             raise HTTPRequestRangeNotSatisfiable(headers={"Content-Range": f"bytes */{size}"})
 
+        original_headers = response.headers.copy()
         actual_content_length = None
 
         if range_start or range_stop:
@@ -1323,9 +1334,14 @@ class Handler:
             content_artifacts = await asyncio.shield(
                 sync_to_async(self._save_artifact)(download_result, remote_artifact, request)
             )
+            ca = content_artifacts[remote_artifact.content_artifact.relative_path]
+            # If cache is enabled, add the future response to our stream response
+            if settings.CACHE_ENABLED:
+                response.future_response = self._build_response_from_content_artifact(
+                    ca, original_headers, request
+                )
             # Try to add content to repository if present & supported
             if repository and repository.PULL_THROUGH_SUPPORTED:
-                ca = content_artifacts[remote_artifact.content_artifact.relative_path]
                 await sync_to_async(repository.pull_through_add_content)(ca)
         await response.write_eof()
 
