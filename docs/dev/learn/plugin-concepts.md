@@ -1,11 +1,9 @@
-
-
 # Plugin Concepts
 
 Like the Pulp Core itself, all Pulp Plugins are Django Applications, and could be created like any
 other Django app with `pulpcore-manager startapp <your_plugin>`. However, instead of writing all
 of the boilerplate yourself, it is recommended that you start your plugin by utilizing the [Plugin
-Template](https://github.com/pulp/plugin_template).  This guide will assume that you have used
+Template](https://github.com/pulp/plugin_template). This guide will assume that you have used
 the plugin_template, but if you are interested in the details of what it provides you, please see
 `plugin-django-application` for more information for how plugins are "discovered" and connected to
 the `pulpcore` Django app. Additional information is given as inline comments in the template.
@@ -14,8 +12,6 @@ the `pulpcore` Django app. Additional information is given as inline comments in
 
 Plugin Applications interact with pulpcore with two high level interfaces, **subclassing** and
 adding **tasks**.
-
-
 
 ## Subclassing
 
@@ -37,8 +33,6 @@ subclassing/replication
 subclassing/pull-through
 ```
 
-
-
 ## Master/Detail Models
 
 Typically pulpcore wants to define a set of common fields on a Model; for example,
@@ -47,7 +41,7 @@ Plugin writers are able to also add plugin-specific fields through subclassing t
 Conceptually this is easy, but two practical problems arise:
 
 - With each subclass becoming its own table in the database, the common fields get duplicated on
-  each of these tables.
+    each of these tables.
 - Migrations are now no longer on a single table, but N tables produced from subclassing.
 
 To address these issues, pulpcore uses Django's [Multi-table inheritance support](https://docs.djangoproject.com/en/4.2/topics/db/models/#multi-table-inheritance) to create a pattern Pulp
@@ -115,8 +109,6 @@ descendent. Consider the usage from below.
 pulp_file.app.models.FileRemote  # Now it's a detail instance with both master and detail fields
 ```
 
-
-
 ## Validating Models
 
 Pulp ensures validity of its database models by carefully crafted serializers.
@@ -146,8 +138,6 @@ d_content = DeclarativeContent(
 await self.put(d_content)
 # <...>
 ```
-
-
 
 ## Tasks
 
@@ -232,7 +222,6 @@ be left in the task queue or marked as canceled, depending on the `deferred` att
     blocking on external resources. E.g. simple attribute updates, deletes... A model with a lot of
     dependants that cause cascaded deletes may not be suitable for immediate execution.
 
-
 **Diagnostics**
 
 ```{toctree}
@@ -303,8 +292,6 @@ order to be enabled.
 domains/domains_compatibility
 ```
 
-
-
 ## Role Based Access Control
 
 Pulp uses a policy-based approach for Role Based Access Control (RBAC).
@@ -339,8 +326,7 @@ want to offer built-in content protection features. For example pulp_container m
 to download container images they have rights to based on some permissions system pulp_container
 could provide.
 
-For more information, see the `ContentGuard Usage by Plugin Writers
-<plugin-writers-use-content-protection>` documentation.
+For more information, see the `ContentGuard Usage by Plugin Writers <plugin-writers-use-content-protection>` documentation.
 
 ## Plugin Settings
 
@@ -353,8 +339,8 @@ overlay the settings on top of `pulpcore`'s settings and user provided settings.
 Settings are parsed in the following order with later settings overwriting earlier ones:
 
 1. Settings from `/etc/pulp/settings.py`.
-2. Settings from `pulpcore.app.settings` (the pulpcore provided settings defaults).
-3. Plugin settings from `<your plugin>.app.settings`.
+1. Settings from `pulpcore.app.settings` (the pulpcore provided settings defaults).
+1. Plugin settings from `<your plugin>.app.settings`.
 
 In some cases, a setting should not overwrite an existing setting, but instead add to it. For
 example, consider adding a custom log handler or logger to the [LOGGING](https://github.com/pulp/pulpcore/blob/ec336c2b7bc7cefd3a28fc69dcd1c65655332841/pulpcore/app/settings.py#L183-L202)
@@ -380,8 +366,6 @@ def post(settings):
     settings.validators.validate()
 ```
 
-
-
 ## Custom API URL Routes
 
 The [typical plugin viewsets](site:pulpcore/docs/dev/learn/subclassing/viewsets/) are all suburls under `/pulp/api/v3/`, but
@@ -392,14 +376,10 @@ Place a urls.py that defines a `urlpatterns` at the root of your Python package,
 plugin loading code will append those urls to the url root. This allows your urls.py to be a typical
 Django file. For example pulp_ansible uses a [urls.py defined here](https://github.com/pulp/pulp_ansible/blob/master/pulp_ansible/app/urls.py)
 
-
-
 ## Custom Content App Routes
 
 The Content App may also require custom routes, for example [pulp_container](https://github.com/pulp/pulp_container/blob/master/pulp_container/app/content.py) defines some. Read more about how
 to `customize the content app with custom routes <content-app-docs>`.
-
-
 
 ## Configuring Reverse Proxy with Custom URLs
 
@@ -412,13 +392,13 @@ such as k8s, podman, or docker may need manual configuration. Having clear docs 
 
 You can ship webserver snippets as part of your Python package with three steps:
 
-1\. Create a python package named `webserver_snippets` directory inside your app, e.g.
-`pulp_ansible.app.webserver_snippets`. Like all Python packages it will have an `__init__.py`.
+1. Create a python package named `webserver_snippets` directory inside your app, e.g.
+    `pulp_ansible.app.webserver_snippets`. Like all Python packages it will have an `__init__.py`.
 
-2. Create an `nginx.conf` and an `apache.conf`.
+1. Create an `nginx.conf` and an `apache.conf`.
 
-3\. Create an entry in MANIFEST.in to have the packaged plugin include the `apache.conf` and
-`nginx.conf` files.
+1. Create an entry in MANIFEST.in to have the packaged plugin include the `apache.conf` and
+    `nginx.conf` files.
 
 Here is an example in [pulp_ansible's webserver configs](https://github.com/pulp/pulp_ansible/tree/master/pulp_ansible/app/webserver_snippets).
 
@@ -453,8 +433,6 @@ For the MANIFEST.in entry, you'll likely want one like the example below which w
 ```
 include pulp_ansible/app/webserver_snippets/*
 ```
-
-
 
 ## Overriding the Reverse Proxy Route Configuration
 
@@ -499,8 +477,6 @@ of the order in the config file. The pulp-oci-env ships the a default of `/pulp/
 anything containing another portion after `v3` such as `/pulp/api/v3/foo_route` would be more
 specific.
 
-
-
 ## Plugin API Stability and Deprecation Policy
 
 The `pulpcore.plugin` API can introduce breaking changes, and will be introduced in the following
@@ -510,32 +486,31 @@ signature of a method named `def foo(a, b)` which is importable via the plugin A
 In 3.8 the following changes happen:
 
 1. The new method would be introduced as a new named function `def the_new_foo(...)` or some
-   similar name.
+    similar name.
 
-2. The existing method signature `def foo(a, b)` is left in-tact.
+1. The existing method signature `def foo(a, b)` is left in-tact.
 
-3. The `foo` method would have the a Python `DeprecationWarning` added to it such as:
+1. The `foo` method would have the a Python `DeprecationWarning` added to it such as:
 
-   ```
-   from pulpcore.app.loggers import deprecation_logger
-   deprecation_logger.warning("foo() is deprecated and will be removed in pulpcore==3.9; use the_new_foo().")
-   ```
+    ```
+    from pulpcore.app.loggers import deprecation_logger
+    deprecation_logger.warning("foo() is deprecated and will be removed in pulpcore==3.9; use the_new_foo().")
+    ```
 
-4. A `CHANGES/plugin_api/XXXX.deprecation` changelog entry is created explaining how to port
-   plugin code onto the new call interface.
+1. A `CHANGES/plugin_api/XXXX.deprecation` changelog entry is created explaining how to port
+    plugin code onto the new call interface.
 
 Then in 3.9 the following happens:
 
 1. The `def foo(a, b)` method is deleted entirely.
-2. A `CHANGES/plugin_api/XXXX.removal` changelog entry is created explaining what has been
-   removed.
+1. A `CHANGES/plugin_api/XXXX.removal` changelog entry is created explaining what has been
+    removed.
 
 !!! note
 
     Deprecation log statements are shown to users of your plugin when using a deprecated call
     interface. This is by design to raise general awareness that the code in-use will eventually be
     removed.
-
 
 This also applies to models importable from `pulpcore.plugin.models`. For example, an attribute
 that is being renamed or removed would follow a similar deprecation process described above to allow
@@ -554,8 +529,6 @@ LOGGING = {
 }
 ```
 
-
-
 ## Declaring Dependencies
 
 Pulpcore and Pulp plugins are Python applications and are expected to follow Python ecosystem norms
@@ -564,14 +537,14 @@ including declaring direct dependencies using the setuptools `install_requires` 
 
 Pulpcore and Pulp plugins are expected to do two things when declaring dependencies:
 
-1\. Declare an upper bound to prevent a breaking-change release of a dependency from breaking user
-installations. To prevent unexpected breakages due to new plugin releases, this typically is the
-current latest release of a dependency (assuming a plugin is compatible with the latest release).
-The latest release is preferred because it allows each new dependency release to be tested, and it
-prevents unexpected user breakages when dependencies release breaking changes.
+1. Declare an upper bound to prevent a breaking-change release of a dependency from breaking user
+    installations. To prevent unexpected breakages due to new plugin releases, this typically is the
+    current latest release of a dependency (assuming a plugin is compatible with the latest release).
+    The latest release is preferred because it allows each new dependency release to be tested, and it
+    prevents unexpected user breakages when dependencies release breaking changes.
 
-2\. Declare as broad a range of compatible versions as possible to minimize conflicts between your
-code and other Python projects installed in the same Python environment.
+1. Declare as broad a range of compatible versions as possible to minimize conflicts between your
+    code and other Python projects installed in the same Python environment.
 
 Here are some examples assuming our code directly depends on the `jsonschema` library and assuming
 the latest `jsonschema` release is 4.4.2:
@@ -593,6 +566,7 @@ import and use Django directly, but pulpcore also includes Django. Since your pl
 directly, your plugin should declare its dependency on Django.
 
 !!! note
+
     Why add a requirement when pulpcore is known to provide it? To continue with the Django
     example... Django can introduce breaking changes with each release, so if your plugin relies on
     pulpcore to declare the Django requirement, and then pulpcore upgrades, your plugin could
@@ -600,7 +574,6 @@ directly, your plugin should declare its dependency on Django.
     and not be noticeable until they affect your users. By your plugin declaring the dependency on
     Django directly, at install/upgrade time (in the CI), you'll know right away you have a
     conflicting dependency on Django.
-
 
 One useful tool for managing the upperbound is [dependabot](https://github.com/dependabot) which
 can open PRs raising the upper bound when new releases occur. These changes will go through the CI
@@ -612,11 +585,9 @@ bound:
 
 - A plugin code change uses a new dependency feature
 - A bug in the lower bound version of a dependency affects your plugin's users and a fix is
-  available in a newer version of the dependency.
+    available in a newer version of the dependency.
 - Plugin code is incompatible with the lower bound version of a dependency and the solution is to
-  declare a new lower bound.
-
-
+    declare a new lower bound.
 
 ## Checksum Use In Plugins
 
@@ -624,11 +595,11 @@ The `ALLOWED_CONTENT_CHECKSUMS` setting provides the list of allowed checksums a
 is allowed to handle. This includes two types of "checksum handling":
 
 1. Generating checksums. Only hashers in the `ALLOWED_CONTENT_CHECKSUMS` list should be used for
-   checksum generation.
-2. Passing through checksum data to clients. Pulp installations should not deliver checksum data to
-   clients that are not in the `ALLOWED_CONTENT_CHECKSUMS` list. For example, the RPM plugin
-   publications contain checksums that Pulp does not generate, and it should restrict the checksum
-   data used in those publications to the set of allowed hashers in `ALLOWED_CONTENT_CHECKSUMS`.
+    checksum generation.
+1. Passing through checksum data to clients. Pulp installations should not deliver checksum data to
+    clients that are not in the `ALLOWED_CONTENT_CHECKSUMS` list. For example, the RPM plugin
+    publications contain checksums that Pulp does not generate, and it should restrict the checksum
+    data used in those publications to the set of allowed hashers in `ALLOWED_CONTENT_CHECKSUMS`.
 
 !!! note
 
@@ -637,7 +608,6 @@ is allowed to handle. This includes two types of "checksum handling":
     requested that is not listed in the `ALLOWED_CONTENT_CHECKSUMS` setting. This is a convenience
     facility allowing plugin writers to not check the `ALLOWED_CONTENT_CHECKSUMS` setting
     themselves.
-
 
 (il8n-expectations)=
 
@@ -653,8 +623,6 @@ internationalized will remain in English. This expectation was formed after feed
 multi-language speakers who believe having error messages for admins in English would reduce the
 time to finding a fix and was generally less surprising.
 
-
-
 ## Zero-Downtime Upgrades
 
 Pulp users should be able to upgrade without first stopping Pulp services. This has been
@@ -667,7 +635,7 @@ To support this, developers of `pulpcore` or a plugin should follow these requir
 Future user upgrades will likely run as follow:
 
 1. Run the migrations while old pulp code is online. Old code, is using the new data format.
-2. Rolling restart old code to become new code. Old and new code is running at the same time!
+1. Rolling restart old code to become new code. Old and new code is running at the same time!
 
 !!! note
 
@@ -685,21 +653,21 @@ column. This would break all previous code which expects the previous column nam
 Before getting into specific suggestions, the general pattern is to do the following:
 
 1. The migration should be split into two parts: a "compatible with earlier code migration" and a
-   "breaking earlier code migration". In continuing the column rename example, it would become a
-   "create a new column" migration, and later a "delete the original column" migration.
-2. The "breaking earlier code migration" should be delivered in a later release. It contains the
-   the component versions that would not be broken by that change. When that migration goes to run
-   it uses the db info in the db for each running pulp process to determine if any components are
-   running a version that would break if this change is applied.
+    "breaking earlier code migration". In continuing the column rename example, it would become a
+    "create a new column" migration, and later a "delete the original column" migration.
+1. The "breaking earlier code migration" should be delivered in a later release. It contains the
+    the component versions that would not be broken by that change. When that migration goes to run
+    it uses the db info in the db for each running pulp process to determine if any components are
+    running a version that would break if this change is applied.
 
 The solution to this will be highly dependant on the details of the migration, but here are some
 likely patterns to be applied:
 
 1. Avoid it. Is this rename really that important? Is it worth the trouble?
-2. Rename the model attributes in code, but leave the actual column name as-is with
-   the [db_column](https://docs.djangoproject.com/en/4.2/ref/models/fields/#db-column).
-3. Have an "old" and a "new" column and use database triggers to keep data written to one to also be
-   written to the other and vice-versa.
+1. Rename the model attributes in code, but leave the actual column name as-is with
+    the [db_column](https://docs.djangoproject.com/en/4.2/ref/models/fields/#db-column).
+1. Have an "old" and a "new" column and use database triggers to keep data written to one to also be
+    written to the other and vice-versa.
 
 Here's an example:
 
@@ -710,21 +678,21 @@ using the `db-column` option to just rename it in the ORM are not viable.
 This could be done as follows:
 
 - Add the `new` field next to the `old` field and have Django auto-create a migration adding
-  `new`.
+    `new`.
 - The same migration needs to install a new trigger that anytime `old` is written to, `new` is
-  also written to and vice-versa.
-  For example, something like writting to two columns in one table using postgres trigger.
-  This allows the new code to read/write exclusively with `new` and the old code to deal with `old`.
+    also written to and vice-versa.
+    For example, something like writting to two columns in one table using postgres trigger.
+    This allows the new code to read/write exclusively with `new` and the old code to deal with `old`.
 - Write a data migration that updates the `new` column with `old` data in batches. Use batching
-  to avoid a long table-lock.
+    to avoid a long table-lock.
 - Have the codebase of pulp_file 1.10.0 stop using `old` entirely.
 
 At a later time, e.g. pulp_file 1.13.0, a migration will be shipped to remove column `old`. That
 migration needs to do two things things:
 
 - Prior to running ensure via the database records that there are no pulp components running with
-  pulp_file \< 1.10.0. If there are, abort running the migration and notify the user they need to
-  upgrade to a version pulp_file>=1.10,\<1.13.0.
+    pulp_file < 1.10.0. If there are, abort running the migration and notify the user they need to
+    upgrade to a version pulp_file>=1.10,\<1.13.0.
 - Remove the database trigger and then the column `old`.
 
 # Data Migrations
@@ -746,4 +714,3 @@ preserve the old code until the next major Pulp version.
     Users not performing zero downtime upgrades who are still wary of any task incompatibilities,
     should consider running the pulpcore worker in burst mode (`pulpcore-worker --burst`) after
     shutting down all the api and content workers to drain the task queue.
-

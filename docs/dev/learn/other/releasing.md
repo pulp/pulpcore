@@ -31,32 +31,32 @@ Here are the steps to take to release a minor Plugin version, e.g. pulp_file 1.1
 
 1. Via the Github Actions, trigger a ["Create new release branch"](https://github.com/pulp/pulpcore/actions/workflows/create-branch.yml) job.
 
-2. Checkout locally the target plugin release branch and set accordingly `pulpcore_branch` and
-   `pulpcore_pip_version_specifier` in the template_config file.
+1. Checkout locally the target plugin release branch and set accordingly `pulpcore_branch` and
+    `pulpcore_pip_version_specifier` in the template_config file.
 
-3. Pull in latest CI changes from the plugin_template. Ensure you have the latest copy of upstream
-   remote.
+1. Pull in latest CI changes from the plugin_template. Ensure you have the latest copy of upstream
+    remote.
 
-   ```
-   [user@localhost plugin_template]$ git remote -v
-   origin      git@github.com:user/plugin_template.git (fetch)
-   origin      git@github.com:user/plugin_template.git (push)
-   upstream    git@github.com:pulp/plugin_template.git (fetch)
-   upstream    git@github.com:pulp/plugin_template.git (push)
-   [user@localhost plugin_template]$ git branch
-   * main
-   [user@localhost plugin_template]$ git pull upstream main
-   [user@localhost plugin_template]$ ./plugin-template --github <plugin_name>
-   ```
+    ```
+    [user@localhost plugin_template]$ git remote -v
+    origin      git@github.com:user/plugin_template.git (fetch)
+    origin      git@github.com:user/plugin_template.git (push)
+    upstream    git@github.com:pulp/plugin_template.git (fetch)
+    upstream    git@github.com:pulp/plugin_template.git (push)
+    [user@localhost plugin_template]$ git branch
+    * main
+    [user@localhost plugin_template]$ git pull upstream main
+    [user@localhost plugin_template]$ ./plugin-template --github <plugin_name>
+    ```
 
-   Make the PR against target plugin release branch and merge it.
+    Make the PR against target plugin release branch and merge it.
 
-4. Via the Github Actions, trigger a ["Release pipeline"](https://github.com/pulp/pulpcore/actions/workflows/release.yml) job
-   by specifying the release branch and the tag of the release.
+1. Via the Github Actions, trigger a ["Release pipeline"](https://github.com/pulp/pulpcore/actions/workflows/release.yml) job
+    by specifying the release branch and the tag of the release.
 
-5. Once the release is available, make an anouncement on the discourse. See [example](https://discourse.pulpproject.org/t/pulp-file-1-11-0-has-been-released/551/2) .
+1. Once the release is available, make an anouncement on the discourse. See [example](https://discourse.pulpproject.org/t/pulp-file-1-11-0-has-been-released/551/2) .
 
-6. The CI automation will create PRs with the Changelog update and Versions bump that will need to
-   be merged.
+1. The CI automation will create PRs with the Changelog update and Versions bump that will need to
+    be merged.
 
 To release a patch Plugin version, e.g. pulp_file 1.11.1, start with the step number 4.

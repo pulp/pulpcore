@@ -7,4 +7,3 @@ When writing plugins, care should be taken to only import `pulpcore` components 
 namespace; importing from elsewhere within the `pulpcore` module (e.g. importing directly from
 `pulpcore.app`, `pulpcore.exceptions`, etc.) is unsupported, and not protected by the
 aforementioned Pulp Plugin API deprecation policy.
-

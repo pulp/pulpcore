@@ -1,5 +1,3 @@
-
-
 # Pulp Import/Export
 
 The Pulp Import/Export process is based around the [Django Import/Export library](https://django-import-export.readthedocs.io/en/latest/) .

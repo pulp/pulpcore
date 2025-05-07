@@ -3,16 +3,12 @@
 Pulp source code lives on [GitHub](https://github.com/pulp/pulpcore). This document is definitive
 for `pulpcore` only, but some plugins may choose to follow the same strategies.
 
-
-
 ## Versions and Branches
 
 Code is submitted by a Pull Request on Github to merge the changes to `main` which represents
 the next `pulpcore` release. See `versioning` for more details.
 
 ## Commits
-
-
 
 ### Rebasing and Squashing
 
@@ -29,12 +25,9 @@ GitHub will update the PR and keep the comments when you force push an amended c
     make sure that all copies of those original commits get deleted. Did you push
     your branch to origin? Delete it and re-push after the rebase.
 
-
-
-
 ### Commit Message
 
-Commit messages in Pulp should contain a human readable explanation of what was fixed.  They should
+Commit messages in Pulp should contain a human readable explanation of what was fixed. They should
 also follow the standard git message format of starting with a subject line or title (usually
 wrapped at about 50 chars) and optionally, a longer message (usually wrapped at 72 characters)
 broken up into paragraphs. For more on what constitutes a good commit message, we recommend [Tim
@@ -57,9 +50,6 @@ closes #1392
 
     A good candidate for a `noissue` tag is a one line fix or a typo, otherwise we encourage
     you to open an issue.
-
-
-
 
 ### Requiring other Pull Requests
 
@@ -96,8 +86,6 @@ CI Base Image: pulp/pulp-ci:special_feature
 ```
 
 Attention and care must be given not to merge PRs that require custom CI images.
-
-
 
 ### Changelog update
 

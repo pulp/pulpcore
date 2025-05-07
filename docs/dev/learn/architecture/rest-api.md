@@ -39,43 +39,43 @@ router
 When creating API components, consider these guidelines:
 
 - Where possible, API components representing models will be defined in files whose names match
-  the corresponding file names of the models represented. For example, if you're defining the
-  serializer for a model found in `pulpcore.app.models.consumer`, the serializer should be defined in
-  `pulpcore.app.serializers.consumer`, and imported by name into `pulpcore.app.serializers`.
+    the corresponding file names of the models represented. For example, if you're defining the
+    serializer for a model found in `pulpcore.app.models.consumer`, the serializer should be defined in
+    `pulpcore.app.serializers.consumer`, and imported by name into `pulpcore.app.serializers`.
 - All objects represented in the REST API will be referred to by a single complete URL to that
-  object, using a DRF `HyperlinkedRelatedField` or subclass. Non-hyperlinked relations (e.g.
-  `PrimaryKeyRelatedField`, `SlugRelatedField`, etc) should be avoided. See the "Serializer
-  Relationships" section below for more details. In the database an object is identified by its
-  Primary Key. In the API an object is identified by its URL.
+    object, using a DRF `HyperlinkedRelatedField` or subclass. Non-hyperlinked relations (e.g.
+    `PrimaryKeyRelatedField`, `SlugRelatedField`, etc) should be avoided. See the "Serializer
+    Relationships" section below for more details. In the database an object is identified by its
+    Primary Key. In the API an object is identified by its URL.
 - `pulpcore.app.viewsets.base.NamedModelViewSet` subclasses defined in a plugin's "viewsets" module
-  are automatically registered with the API router. Endpoint names (the `endpoint_name` attribute)
-  should plural, not singular (e.g. /pulp/api/v3/repositories/, not /pulp/api/v3/repository/).
+    are automatically registered with the API router. Endpoint names (the `endpoint_name` attribute)
+    should plural, not singular (e.g. /pulp/api/v3/repositories/, not /pulp/api/v3/repository/).
 - DRF supports natural keys on models in ModelViewSets with the "lookup_field" class attribute, but
-  only if the natural key is derived from a single field (e.g. `Repository.name`). For natural
-  keys made up of multiple fields, a custom Viewset and Serializer are required. The custom ViewSet
-  ensures that the correct URL endpoints are created, and that a model instance can be returned for
-  a given natural key. The custom Serializer (and any necessary related serializer fields), at a
-  minimum, ensures that objects generate the correct `pulp_href` value when serialized.
+    only if the natural key is derived from a single field (e.g. `Repository.name`). For natural
+    keys made up of multiple fields, a custom Viewset and Serializer are required. The custom ViewSet
+    ensures that the correct URL endpoints are created, and that a model instance can be returned for
+    a given natural key. The custom Serializer (and any necessary related serializer fields), at a
+    minimum, ensures that objects generate the correct `pulp_href` value when serialized.
 
 ## Serializer Relationships
 
 ### Serializer Notes
 
 - Many of the model writing guidelines can be applied to writing serializers. Familiarity with
-  them is recommended for writers of serializers.
+    them is recommended for writers of serializers.
 - All Serializers representing Pulp Models should subclass
-  `pulpcore.app.serializers.base.ModelSerializer`, as it provides useful behaviors to handle some
-  of the conventions used when building Pulp Models.
+    `pulpcore.app.serializers.base.ModelSerializer`, as it provides useful behaviors to handle some
+    of the conventions used when building Pulp Models.
 - Whether serializer fields are explicitly declared on the serializer class or not, the field names
-  to expose via the API must be declared by specifying 'fields' in the serializer's `Meta` class,
-  as described in the DRF `Serializer` docs. The names of exposed API fields should always
-  be explicit.
+    to expose via the API must be declared by specifying 'fields' in the serializer's `Meta` class,
+    as described in the DRF `Serializer` docs. The names of exposed API fields should always
+    be explicit.
 - Serialized objects will provide thier own URL as the value of the "pulp_href" field on the serializer.
-  You will need to use a `rest_framework.serializers.HyperlinkedIdentifyField` to generate the
-  `pulp_href` field value by specifying its `view_name`. If this object is referenced in the url by
-  a field other than the pk, you will also need to specify a `lookup_field`.
+    You will need to use a `rest_framework.serializers.HyperlinkedIdentifyField` to generate the
+    `pulp_href` field value by specifying its `view_name`. If this object is referenced in the url by
+    a field other than the pk, you will also need to specify a `lookup_field`.
 - When subclassing serializers, you should also explicitly inherit properties that would normally
-  be overridden in the parent Serializer's Meta class.
+    be overridden in the parent Serializer's Meta class.
 
 ### Normal
 
@@ -312,8 +312,8 @@ class RepositoryViewSet(viewsets.ModelViewSet):
 ```
 
 !!! note
-    For `NamedModelViewSet` the base class `BaseFilterSet` should be used.
 
+    For `NamedModelViewSet` the base class `BaseFilterSet` should be used.
 
 #### Beyond Equality
 
@@ -361,10 +361,10 @@ class RepositoryFilter(filters.FilterSet):
 ```
 
 !!! note
+
     We should be careful when naming these filters. Using `repo__in` would be fine because
     repo is not defined on this model. However, using `name__in` does *not* work because Django
     gets to it first looking for a subfield `in` on the name.
-
 
 ## Documenting
 
@@ -393,7 +393,6 @@ until either DRF supports OpenAPI, or until CoreAPI supports response documentat
 
 ## Glossary
 
-
 DRF
 
 : The Django Rest Framework.
@@ -405,27 +404,26 @@ Pagination
 Router
 
 : A `DRF` API router exposes registered views (like a `ViewSet`) at
-  programatically-made URLs. Among other things, routers save us the trouble of having
-  to manually write URLs for every API view.
+programatically-made URLs. Among other things, routers save us the trouble of having
+to manually write URLs for every API view.
 
-  <http://www.django-rest-framework.org/api-guide/routers/>
+<http://www.django-rest-framework.org/api-guide/routers/>
 
 Serializer
 
 : A `DRF` Serializer is responsible for representing python objects in the API,
-  and for converting API objects back into native python objects. Every model exposed
-  via the API must have a related serializer.
+and for converting API objects back into native python objects. Every model exposed
+via the API must have a related serializer.
 
-  <http://www.django-rest-framework.org/api-guide/serializers/>
+<http://www.django-rest-framework.org/api-guide/serializers/>
 
 ViewSet
 
 : A `DRF` ViewSet is a collection of views representing all API actions available
-  at an API endpoint. ViewSets use a `Serializer` or Serializers to correctly
-  represent API-related objects, and are exposed in urls.py by being registered with
-  a `Router`. API actions provided by a ViewSet include "list", "create", "retreive",
-  "update", "partial_update", and "destroy". Each action is one of the views that make up
-  a ViewSet, and additional views can be added as-needed.
+at an API endpoint. ViewSets use a `Serializer` or Serializers to correctly
+represent API-related objects, and are exposed in urls.py by being registered with
+a `Router`. API actions provided by a ViewSet include "list", "create", "retreive",
+"update", "partial_update", and "destroy". Each action is one of the views that make up
+a ViewSet, and additional views can be added as-needed.
 
-  <http://www.django-rest-framework.org/api-guide/viewsets/>
-
+<http://www.django-rest-framework.org/api-guide/viewsets/>

@@ -65,10 +65,10 @@ documentation. Details how this package is organized can be found
 below, along with information about some of the modules found in this namespace.
 
 !!! tip
+
     This tree is incomplete, and maybe be out of date. Only the most notable and
     durable modules have been listed; the most complete listing of modules in this
     namespace will always be the `../platform-api/index` documentation.
-
 
 ## Module Imports
 
@@ -84,30 +84,30 @@ Using `pulpcore.app.models` as an example, this means that when breaking up the
 - No models are defined in the `__init__.py` of `pulpcore.app.models`.
 
 - All models are defined in submodules located in the `pulpcore.app.models` module
-  directory (where its `__init__.py` can be found).
+    directory (where its `__init__.py` can be found).
 
 - The ` __init__.py` in `pulpcore.app.models` should consist only of import statements,
-  ordered to prevent any circular import issues that may result based on the imports
-  that are done in any included submodules.
+    ordered to prevent any circular import issues that may result based on the imports
+    that are done in any included submodules.
 
 - Any models defined in submodules in `pulpcore.app.models` namespace must be imported
-  from the `pulpcore.app.models` namespace, not the submodule in which they are defined.
-  Yes: `from pulpcore.app.models import PulpModel`,
-  No: `from pulpcore.app.models.pulp import PulpModel`.
+    from the `pulpcore.app.models` namespace, not the submodule in which they are defined.
+    Yes: `from pulpcore.app.models import PulpModel`,
+    No: `from pulpcore.app.models.pulp import PulpModel`.
 
 - When adding new models, they must be imported into the `pulpcore.app.models`
-  `__init__.py`, so that they are available to be imported by any other Pulp Platform
-  components that use them from the `pulpcore.app.models` namespace.
+    `__init__.py`, so that they are available to be imported by any other Pulp Platform
+    components that use them from the `pulpcore.app.models` namespace.
 
 - Imports done inside any submodules should be relative, e.g.
-  `from .submodule import identifier` or `from . import submodule`, avoiding the
-  creation of circular imports.
+    `from .submodule import identifier` or `from . import submodule`, avoiding the
+    creation of circular imports.
 
 - Imports done inside the module's `__init__.py` should be relative and explict, e.g.
 
-  - Yes: `from .submodule import identifier1, identifier2`
-  - No: `from submodule import identifier1, identifier2`
-  - No: `from .submodule import *`
+    - Yes: `from .submodule import identifier1, identifier2`
+    - No: `from submodule import identifier1, identifier2`
+    - No: `from .submodule import *`
 
 Any module in `pulpcore.app` broken up in this way, such as
 `pulpcore.app.serializers` or `pulpcore.app.viewsets`, should do so in such a way
@@ -155,9 +155,9 @@ namespace. All Pulp models should subclass `pulpcore.app.models.Model`, or
 one of its subclasses.
 
 !!! note
+
     All models must exist in the pulpcore.app.models namespace in order to be
     recognized by Django and included in the Django ORM.
-
 
 #### Master/Detail Models
 

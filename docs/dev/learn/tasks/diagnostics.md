@@ -10,12 +10,12 @@ enabled in production environments (at last not without careful supervision).
 The following diagnostics are supported currently:
 
 - memory:
-   Logs the task's max resident set size in MB logged over time
+    Logs the task's max resident set size in MB logged over time
 - pyinstrument:
-   Dumps an HTML report from the pyinstrument profiler, if installed
+    Dumps an HTML report from the pyinstrument profiler, if installed
 - memray:
-   Dumps a profile which can be processed with `memray`, which shows which lines and functions were
-   responsible for the most allocations at the time of peak RSS of the process
+    Dumps a profile which can be processed with `memray`, which shows which lines and functions were
+    responsible for the most allocations at the time of peak RSS of the process
 
 When enabled, these are accessed by using HTTP GET requests to the path `${TASK_HREF}profile_artifacts/`
 for the task which is under inspection. The response will contain a set of keys and corresponding URLs
@@ -29,19 +29,19 @@ The resident set size (RSS) of the process is measured every 2 seconds and logge
 You can plot this with gnuplot by:
 
 1. Downloading the memory log artifact, and saving it to a file such as `memory.datum` in your current
-   working directory
+    working directory
 
-2. Enter the `gnuplot` interactive environment.
+1. Enter the `gnuplot` interactive environment.
 
-3. Paste these commands:
+1. Paste these commands:
 
-   ```
-   set ylabel "Task Process Megabytes (MB)"
-   set xlabel "Seconds since task start"
-   plot "memory.datum" with lines
-   ```
+    ```
+    set ylabel "Task Process Megabytes (MB)"
+    set xlabel "Seconds since task start"
+    plot "memory.datum" with lines
+    ```
 
-4. Open your png chart saved at memory.png
+1. Open your png chart saved at memory.png
 
 ## Pyinstrument Profiling
 
@@ -52,8 +52,8 @@ When downloaded and opened in a browser, this profile will present an interactiv
 much time is being spent in various functions relative to the total runtime of the task.
 
 Enabling this profiler adds a bit of overhead (10-20%) to the runtime of the task, and also may leak
-a bit of memory over time. This can be problematic for very long-running tasks. Behavior of the 
-profiler (including sampling interval, directly proportional to memory overhead) can be adjusted 
+a bit of memory over time. This can be problematic for very long-running tasks. Behavior of the
+profiler (including sampling interval, directly proportional to memory overhead) can be adjusted
 by tweaking the code manually if required.
 
 ## Memray Profiling
@@ -74,8 +74,8 @@ While the [memray docs] are recommended reading to fully grasp the options avail
 starting point is:
 
 1. Downloading the memray dump artifact, and saving it to a file such as `memray.bin` in your current
-   working directory
+    working directory
 
-2. python3 -m memray tree memray.bin
+1. python3 -m memray tree memray.bin
 
 [memray docs]: https://bloomberg.github.io/memray/getting_started.html

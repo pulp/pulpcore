@@ -1,9 +1,11 @@
 # Create and Distribute Checkpoints
 
 !!! warning
+
     This feature requires plugin support to work correctly.
 
 !!! warning
+
     This feature is provided as a tech preview and could change in backwards incompatible
     ways in the future.
 
@@ -54,8 +56,9 @@ pulp file publication create \
 ## Accessing Checkpoints
 
 ### Listing All Checkpoints
+
 You can access a listing of all the available repository's checkpoint publications by accessing the
-base path of any of the repository's checkpoint distributions. 
+base path of any of the repository's checkpoint distributions.
 
 ```bash
 http https://pulp.example/pulp/content/checkpoint/myfile
@@ -74,6 +77,7 @@ http https://pulp.example/pulp/content/checkpoint/myfile
 ```
 
 ### Accessing a Specific Checkpoint
+
 To access a specific checkpoint, suffix the checkpoint distribution's path with a timestamp in the format
 `yyyyMMddTHHmmssZ` (e.g. 20250130T205339Z), If a checkpoint was created at this time, it will be
 served. Otherwise, you will be redirected to the latest checkpoint created before this timestamp.
@@ -81,6 +85,7 @@ Trying to access a checkpoint using a timestamp in the future or before the firs
 timestamp, will result in a 404 response.
 
 Assuming the checkpoints from the above example, the below table show responses for sample requests
+
 <table>
   <tr>
     <th>Request path</th>

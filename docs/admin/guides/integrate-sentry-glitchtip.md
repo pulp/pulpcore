@@ -6,4 +6,4 @@ Exceptions encountered during task execution are not reported to GlitchTip.
 Tasks API should be used to view exceptions encountered during task execution.
 
 1. Install the `sentry-sdk` package.
-2. Set the `SENTRY_DSN` environment variable to configure where to report the exceptions.
+1. Set the `SENTRY_DSN` environment variable to configure where to report the exceptions.

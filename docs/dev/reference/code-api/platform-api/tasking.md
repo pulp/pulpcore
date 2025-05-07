@@ -16,4 +16,4 @@
 
 ## pulp.tasking.\_util
 
-::: pulpcore.tasking._util
+::: pulpcore.tasking.\_util

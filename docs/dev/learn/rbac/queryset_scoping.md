@@ -13,9 +13,6 @@ filterings applied by a user.
     If Domains are enabled, querysets will be scoped by the current request's domain before being
     passed onto RBAC queryset scoping.
 
-
-
-
 ## Enabling QuerySet Scoping
 
 The support for this is built into `pulpcore.plugin.viewsets.NamedModelViewSet`, which is often
@@ -49,8 +46,6 @@ TaskViewSet(NamedModelViewSet):
     queryset_filtering_required_permission = "core.view_task"
 ```
 
-
-
 ## Manually Implementing QuerySet Scoping
 
 Default scoping behavior can be overriden by supplying your own `scope_queryset` method.
@@ -63,7 +58,6 @@ the user can see.
     When queryset scoping is enabled for content you must also use the
     `has_required_repo_perms_on_upload` access condition on the upload endpoint to ensure users
     specify a repository for upload or they won't be able to see their uploaded content.
-
 
 Extra Queryset Scoping methods can be defined on the ViewSet to allow users to choose different
 behaviors besides On/Off. The method must accept the queryset as the first argument. Additional
@@ -113,4 +107,3 @@ class MyViewSet(rest_framework.viewsets.GenericViewSet):
     If you have custom ViewSets and plan to add Domains compatibility to your plugin, you must
     scope your objects by the domain in the ViewSet's `get_queryset` method to comply
     with Domain's isolation policies.
-

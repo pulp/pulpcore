@@ -1,13 +1,9 @@
-
-
 # On-Demand Support
 
 "On-Demand support" refers to a plugin's ability to support downloading and creating Content but not
 downloading their associated Artifacts. By convention, users expect the `Remote.policy` attribute to
 determine when Artifacts will be downloaded. See the user docs for specifics on the user
 expectations there.
-
-
 
 ## Adding Support when using DeclarativeVersion
 
@@ -61,7 +57,7 @@ stages.extend(the_rest_of_the_pipeline)  # This adds the Content and Association
 
     Skipping of those Stages does not work with `multi-level-discovery`.
     If you need some artifacts downloaded anyway, follow the example on
-    \:ref:on-demand-support-with-dv\` and include the artifact stages in the custom pipeline.
+    :ref:on-demand-support-with-dv\` and include the artifact stages in the custom pipeline.
 
 !!! tip
 
@@ -81,18 +77,17 @@ policy, lazy downloading for that specific artifact can be prohibited.
 
     See also `on-demand-support-with-da`
 
-
 ## How Does This Work at the Model Layer?
 
 The presence of a `RemoteArtifact` is what allows the Pulp content app to fetch and serve that
 Artifact on-demand. So a Content unit is on-demand if and only if:
 
 1. It has a saved Content unit
-2. A `ContentArtifact` for each `Artifact` is saved that the Content unit would have referenced.
-   Note: the `ContentArtifact` is created in both on-demand and not on-demand cases.
-3. Instead of creating and saving an `Artifact`, a `RemoteArtifact` is created. This contains any
-   known digest or size information allowing for automatic validation when the `Artifact` is
-   fetched.
+1. A `ContentArtifact` for each `Artifact` is saved that the Content unit would have referenced.
+    Note: the `ContentArtifact` is created in both on-demand and not on-demand cases.
+1. Instead of creating and saving an `Artifact`, a `RemoteArtifact` is created. This contains any
+    known digest or size information allowing for automatic validation when the `Artifact` is
+    fetched.
 
 ## How does the Content App work with this Model Layer?
 
@@ -111,4 +106,3 @@ future requests to serve the already-downloaded and validated Artifact.
     will try all `RemoteArtifact` objects that correspond with a `ContentArtifact`. It's possible an
     unexpected `Remote` could be used when fetching that equivalent `Content` unit. Similar warnings
     are in the user documentation on on-demand.
-

@@ -3,11 +3,9 @@
 There are two types of tests in *pulpcore* and in the plugins:
 
 1. **Unittests** are meant to test the interface of a specific unit utilizing a test database.
-2. **Functional tests** are meant to test certain workflows utilizing a running instance of pulp.
+1. **Functional tests** are meant to test certain workflows utilizing a running instance of pulp.
 
 A pull request that has failing unit or functional tests cannot be merged.
-
-
 
 ## Unit Tests
 
@@ -15,8 +13,6 @@ New code is encouraged to have basic unit tests that demonstrate that
 units (function, method or class instance) are working correctly.
 
 The unit tests for `pulpcore` are in [pulpcore/tests](https://github.com/pulp/pulpcore/tree/master/pulpcore/tests/unit).
-
-
 
 ## Functional Tests
 
@@ -58,11 +54,12 @@ If you are only interested in functional tests, you can skip the creation of the
 using `pytest <path_to_plugin>/<plugin_name>/tests/functional`.
 
 !!! note
+
     Make sure, the task runners are actually running. In doubt, run `prestart` or
     `systemctl restart pulpcore-worker@*`.
 
-
 !!! note
+
     You can be more specific on which tests to run by calling something like
     `pulpcore-manager test pulp_file.tests.unit.test_models` or
     `py.test <path_to_plugin>/<plugin_name>/tests/functional/api/test_sync.py`.
@@ -84,5 +81,3 @@ A new version of Pulp will only be released when all unit and functional tests a
 passing.
 
 Contributing test is a great way to ensure that your workflows never regress.
-
-[istqb]: https://www.istqb.org/downloads/syllabi/foundation-level-syllabus.html

@@ -6,7 +6,8 @@ pulpcore and other Pulp plugins.
 
 Pulp provides an ability to remove its plugins. It might be needed for the following reasons:
 : - a plugin is no longer needed
-  - a plugin is no longer supported (it can block further pulpcore upgrades if maintainers no
+
+- a plugin is no longer supported (it can block further pulpcore upgrades if maintainers no
     longer update the plugin to be compatible with the latest pulpcore)
 
 Plugins can be removed one at a time using the `pulpcore-manager` command `remove-plugin`. In this
@@ -21,6 +22,6 @@ It is possible to install back the removed plugin if desired and if it's compati
 pulpcore version being used.
 
 !!! note
+
     After `remove-plugin` command has succeeded, the plugin needs to be uninstalled manually.
     Steps to uninstall depend on how it was originally installed.
-

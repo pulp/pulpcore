@@ -48,12 +48,12 @@ and users can only read/modify/delete `FileRemote` objects they created.
 Here's a written explanation of the policy statements:
 
 - `list` is allowed by any authenticated user.
-  Although users are allowed to perform an operation what they can list will still be restricted to `only the objects that user can view`.
-  See [queryset scoping].
+    Although users are allowed to perform an operation what they can list will still be restricted to `only the objects that user can view`.
+    See [queryset scoping].
 - `create` is allowed by any authenticated user with the `file.add_fileremote` permission.
 - `retrieve` (the detail view of an object) is allowed by an authenticated user who has the `file.view_fileremote` permission.
-  Although users are allowed to perform an operation what they can list will still be restricted to `only the objects that user can view`.
-  See [queryset scoping].
+    Although users are allowed to perform an operation what they can list will still be restricted to `only the objects that user can view`.
+    See [queryset scoping].
 - `update` or `partial_update` is allowed by an authenticated user who has the `file.change_fileremote` permission.
 - `destroy` is allowed by any authenticated user with the `file.delete_fileremote` permission.
 
@@ -72,13 +72,11 @@ When multiple conditions are present, **all** of them must return True for the r
     If you are making your plugin compatible with Domains,
     use the `has_model_or_domain_perms` and `has_model_or_domain_or_obj_perms` checks where appropriate.
 
-
 !!! warning
 
     The `admin` user created on installations prior to RBAC being enabled has `is_superuser=True`.
     Django assumes a superuser has any model-level permission even without it being assigned.
     Django's permission checking machinery assumes superusers bypass authorization checks.
-
 
 ## Custom ViewSet Actions
 
@@ -97,8 +95,6 @@ Below is an example of the default policy used to guard that action:
     ]
 }
 ```
-
-
 
 ## Shipping a Default Access Policy
 
@@ -171,8 +167,6 @@ Roles defined there will be replicated and updated in the database after every m
 They are also marked `locked=True` to prevent being modified by users.
 The primary purpose of these roles is to allow plugin writers to refer to them in the default access policy.
 
-
-
 ## Allow Granting Permissions by the Object Owners
 
 To allow object owners to grant access to other users, first add a `manage_roles` permission to the model.
@@ -212,14 +206,10 @@ class FileRemoteViewSet(RemoteViewSet, RolesMixin):
     }
 ```
 
-
-
 ## Handling Objects created prior to RBAC
 
 Prior to RBAC being enabled, `admin` was the only user.
 They have `is_superuser=True` which generally causes them to pass any permission check even without explicit permissions being assigned.
-
-
 
 ## Viewset Enforcement
 
@@ -244,8 +234,6 @@ class StatusView(APIView):
     ...
 ```
 
-
-
 ## Permission Checking Machinery
 
 `drf-access-policy` provides a feature to enable [conditional checks] to be globally available.
@@ -258,7 +246,6 @@ DRF_ACCESS_POLICY = {"reusable_conditions": ["pulpcore.app.global_access_conditi
 
 The [pulpcore.app.global_access_conditions][]
 provides several checks that are available for both users and plugin writers to use in their policies.
-
 
 ## Custom Permission Checks
 
@@ -273,17 +260,17 @@ DRF_ACCESS_POLICY = {
 
 to their `app.settings` module.
 
----
+______________________________________________________________________
 
 ## Reference
 
 ::: pulpcore.app.global_access_conditions
 
+[any custom action your viewset has]: https://www.django-rest-framework.org/api-guide/viewsets/#marking-extra-actions-for-routing
+[conditional checks]: https://rsinger86.github.io/drf-access-policy/reusable_conditions/
+[default drf viewset action names]: https://www.django-rest-framework.org/api-guide/viewsets/#viewset-actions
 [drf-access-policy]: https://rsinger86.github.io/drf-access-policy/policy_logic/
-[queryset scoping]: site:pulpcore/docs/dev/learn/rbac/queryset_scoping/
-[default DRF viewset action names]: https://www.django-rest-framework.org/api-guide/viewsets/#viewset-actions
 [drf-access-policy conditions]: https://rsinger86.github.io/drf-access-policy/statement_elements/#condition
 [permission checking machinery]: site:pulpcore/docs/dev/learn/rbac/permissions/
-[any custom action your viewset has]: https://www.django-rest-framework.org/api-guide/viewsets/#marking-extra-actions-for-routing
-[Shipping a default new object policy]: site:pulpcore/docs/dev/learn/rbac/adding_automatic_permissions/#shipping-a-default-new-object-policy
-[conditional checks]: https://rsinger86.github.io/drf-access-policy/reusable_conditions/
+[queryset scoping]: site:pulpcore/docs/dev/learn/rbac/queryset_scoping/
+[shipping a default new object policy]: site:pulpcore/docs/dev/learn/rbac/adding_automatic_permissions/#shipping-a-default-new-object-policy

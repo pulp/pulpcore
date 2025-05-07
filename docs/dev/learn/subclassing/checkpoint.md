@@ -1,6 +1,7 @@
 # Checkpoint
 
 !!! warning
+
     This feature is provided as a tech preview and could change in backwards incompatible
     ways in the future.
 
@@ -11,6 +12,7 @@ regressions were introduced. This feature supports reproducible deployments, hel
 package behavior, and facilitates a structured update workflow.
 
 !!! warning
+
     The checkpoint feature is only supported for plugins using publications.
 
 Plugin writers need to expose the `checkpoint` field on their distribution and publication
@@ -19,6 +21,7 @@ serve these publications. The `checkpoint` field is already present on the base 
 publication models, so no new migration is needed.
 
 Example: enabling the checkpoint feature in the pulp_file plugin.
+
 ```python
 class FileDistributionSerializer(DistributionSerializer):
     """

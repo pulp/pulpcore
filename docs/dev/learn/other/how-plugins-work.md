@@ -1,7 +1,5 @@
 # How Plugins Work
 
-
-
 ## Plugin Django Application
 
 Like the Pulp Core itself, all Pulp Plugins begin as Django Applications, started like any other
@@ -16,13 +14,11 @@ The `pulpcore.plugin.PulpPluginAppConfig` subclass for any plugin must set a few
 attributes:
 
 - `name` attribute defines the importable dotted Python location of the plugin application (the
-  Python namespace that contains at least models and viewsets).
+    Python namespace that contains at least models and viewsets).
 - `label` attribute to something that unambiguously labels the plugin in a clear way for users.
-  See [how it is done](https://github.com/pulp/pulpcore/blob/master/pulp_file/app/__init__.py) in
-  the `pulp_file` plugin.
+    See [how it is done](https://github.com/pulp/pulpcore/blob/master/pulp_file/app/__init__.py) in
+    the `pulp_file` plugin.
 - `version` attribute to the string representing the version.
-
-
 
 ## pulpcore.plugin Entry Point
 
@@ -50,8 +46,6 @@ importable dotted path to your plugin's application config class, just as `defau
 does.
 
 Check out `pulp_file` plugin: [default_app_config](https://github.com/pulp/pulpcore/blob/master/pulp_file/__init__.py) and [setup.py example](https://github.com/pulp/pulpcore/blob/master/setup.py).
-
-
 
 ## Model, Serializer, Viewset Discovery
 

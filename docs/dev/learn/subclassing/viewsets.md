@@ -1,5 +1,3 @@
-
-
 # Viewsets
 
 Each [Django Rest Framework Viewset](https://www.django-rest-framework.org/api-guide/viewsets/)
@@ -11,9 +9,10 @@ Pulp 3 (to support Repository Versions).
 
 Most Plugins will implement:
 : - viewset(s) for plugin specific content type(s), should be subclassed from `ContentViewSet`,
-    `ReadOnlyContentViewSet` or `SingleArtifactContentUploadViewSet`
-  - viewset(s) for plugin specific remote(s), should be subclassed from `RemoteViewSet`
-  - viewset(s) for plugin specific publisher(s), should be subclassed from `PublisherViewSet`
+`ReadOnlyContentViewSet` or `SingleArtifactContentUploadViewSet`
+
+- viewset(s) for plugin specific remote(s), should be subclassed from `RemoteViewSet`
+- viewset(s) for plugin specific publisher(s), should be subclassed from `PublisherViewSet`
 
 ## Endpoint Namespacing
 
@@ -47,8 +46,6 @@ class PackageViewSet(ContentViewSet):
 The above example will create a simple nested endpoint at
 `pulp/api/v3/content/foobar/packages/hello/`
 
-
-
 ### Kick off Tasks
 
 Some endpoints may need to deploy tasks to the tasking system. The following is an example of how
@@ -57,14 +54,14 @@ this is accomplished.
 See `pulpcore.plugin.tasking.dispatch` for more details.
 
 !!! note
+
     The arguments provided to a task must be JSON serializable, but may contain instances of
     `uuid.UUID`.
 
-
 !!! note
+
     You should always prefer handing primary keys instead of serialized instances of ORM objects to
     a task.
-
 
 ```python
 # We recommend using POST for any endpoints that kick off task.
@@ -135,6 +132,6 @@ If any additional context needs to be passed from the ViewSet to the creation ta
 available as `self.context` in the Serializer.
 
 !!! note
+
     Context passed from the ViewSet to the Task must be easily serializable. i.e. one cannot
     return the request from `get_deferred_context`.
-

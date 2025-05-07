@@ -1,5 +1,3 @@
-
-
 # Plugin Planning Guide
 
 This guide assumes that you are familiar with [general pulp concepts](site:pulpcore/docs/dev/learn/plugin-concepts/).
@@ -19,8 +17,8 @@ research scope. For sychronization, Pulp mimics the behavior of the client, and 
 publishing/distributing, Pulp mimics the behavior of the server.
 
 1. Discover content in a remote repository
-2. Retrieve metadata about the content
-3. Retrieve files
+1. Retrieve metadata about the content
+1. Retrieve files
 
 ## What does the metadata look like?
 
