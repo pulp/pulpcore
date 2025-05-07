@@ -16,7 +16,7 @@ from pulpcore.tests.functional.utils import get_from_url
 @pytest.mark.parallel
 def test_full_workflow(
     file_repo_with_auto_publish,
-    basic_manifest_path,
+    duplicate_filename_paths,
     file_remote_factory,
     file_bindings,
     distribution_base_url,
@@ -37,7 +37,8 @@ def test_full_workflow(
         return r.status, r.headers.get("X-PULP-CACHE")
 
     # Sync from the remote and assert that a new repository version is created
-    remote = file_remote_factory(manifest_path=basic_manifest_path, policy="immediate")
+    manifest_1, manifest_2 = duplicate_filename_paths
+    remote = file_remote_factory(manifest_path=manifest_1, policy="immediate")
     body = RepositorySyncURL(remote=remote.pulp_href)
     monitor_task(
         file_bindings.RepositoriesFileApi.sync(file_repo_with_auto_publish.pulp_href, body).task
@@ -128,6 +129,21 @@ def test_full_workflow(
     for i, file in enumerate(files):
         url = urljoin(distro_base_url, file)
         assert (200, "HIT" if i % 2 == 1 else "MISS") == _check_cache(url), file
+
+    # Sync a new remote with same filenames but on-demand
+    remote = file_remote_factory(manifest_path=manifest_2, policy="on_demand")
+    body = RepositorySyncURL(remote=remote.pulp_href)
+    monitor_task(
+        file_bindings.RepositoriesFileApi.sync(file_repo_with_auto_publish.pulp_href, body).task
+    )
+    repo = file_bindings.RepositoriesFileApi.read(file_repo_with_auto_publish.pulp_href)
+    assert repo.latest_version_href.endswith("/versions/3/")
+
+    # Test that cache is invalidated from sync, but on-demand responses are immediately cached
+    files = ["1.iso", "1.iso", "2.iso", "2.iso", "3.iso", "3.iso"]
+    for i, file in enumerate(files):
+        url = urljoin(distro_base_url, file)
+        assert (200, "HIT" if i % 2 == 1 else None) == _check_cache(url), file
 
     # Tests that deleting a repository invalidates the cache"""
     monitor_task(file_bindings.RepositoriesFileApi.delete(repo.pulp_href).task)

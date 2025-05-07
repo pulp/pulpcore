@@ -8,7 +8,7 @@ from django.http import HttpResponseRedirect, HttpResponse, FileResponse as ApiF
 
 from rest_framework.request import Request as ApiRequest
 
-from aiohttp.web import FileResponse, Response, HTTPSuccessful, Request
+from aiohttp.web import FileResponse, Response, HTTPSuccessful, Request, StreamResponse
 from aiohttp.web_exceptions import HTTPFound
 
 from redis import ConnectionError
@@ -401,6 +401,11 @@ class AsyncContentCache(AsyncCache):
         except (HTTPSuccessful, HTTPFound) as e:
             response = e
 
+        original_response = response
+        if isinstance(response, StreamResponse):
+            if hasattr(response, "future_response"):
+                response = response.future_response
+
         entry = {"headers": dict(response.headers), "status": response.status}
         if expires is not None:
             # Redis TTL is not sufficient: https://github.com/pulp/pulpcore/issues/4845
@@ -427,12 +432,12 @@ class AsyncContentCache(AsyncCache):
             entry["location"] = str(response.location)
             entry["type"] = "Redirect"
         else:
-            # We don't cache StreamResponses or errors
+            # We don't cache errors
             return response
 
         # TODO look into smaller format, maybe some compression on the text
         await self.set(key, json.dumps(entry), expires, base_key=base_key)
-        return response
+        return original_response
 
     def make_key(self, request):
         """Makes the key based off the request"""
