@@ -8,6 +8,55 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.77.0 (2025-05-06) {: #3.77.0 }
+
+### REST API {: #3.77.0-rest-api }
+
+#### Features {: #3.77.0-rest-api-feature }
+
+- The `TASK_DIAGNOSTICS` option now permits individual diagnostics to be enabled or disabled by listing them.
+  [#4548](https://github.com/pulp/pulpcore/issues/4548)
+- If enabled using `TASK_DIAGNOSTICS` and the appropriate package is installed, tasks can now output a profile of what functions / lines allocated the most memory at the time of peak RSS.
+
+#### Bugfixes {: #3.77.0-rest-api-bugfix }
+
+- Fixed a memory consumption issue that was triggered by the use of the Alternate Content Source feature.
+  [#6500](https://github.com/pulp/pulpcore/issues/6500)
+- Fixed incorrect use of f-strings in gettext.
+  [#6521](https://github.com/pulp/pulpcore/issues/6521)
+
+#### Improved Documentation {: #3.77.0-rest-api-doc }
+
+- Fixed the TASK_DIAGNOSTICS documentation, which was out of date.
+  [#6481](https://github.com/pulp/pulpcore/issues/6481)
+
+#### Misc {: #3.77.0-rest-api-misc }
+
+- 
+
+### Plugin API {: #3.77.0-plugin-api }
+
+#### Bugfixes {: #3.77.0-plugin-api-bugfix }
+
+- Re-added* timeout to tasks dispatched as immediate for both deferred and non-deferred runs.
+
+  Also, immediate tasks must be coroutines from now on.
+  This is to enable immediate tasks to run on the workers foreground without completely blocking heartbeats.
+  Support for legacy non-coroutines immediate task will be dropped in pulpcore 3.85.
+
+  \* This was added in pulpcore 3.75.0, reverted in 3.75.1 due to a regression and re-applied here with the regression fix.
+  [#6429](https://github.com/pulp/pulpcore/issues/6429)
+
+### Pulp File {: #3.77.0-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.77.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.76.1 (2025-04-24) {: #3.76.1 }
 
 ### REST API {: #3.76.1-rest-api }
@@ -293,6 +342,26 @@ No significant changes.
   [#6244](https://github.com/pulp/pulpcore/issues/6244)
 
 ### Pulp Cert Guard {: #3.74.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
+## 3.73.9 (2025-05-06) {: #3.73.9 }
+
+### REST API {: #3.73.9-rest-api }
+
+No significant changes.
+
+### Plugin API {: #3.73.9-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.73.9-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.73.9-pulp-cert-guard }
 
 No significant changes.
 
@@ -2424,6 +2493,29 @@ No significant changes.
 No significant changes.
 
 ### Pulp Cert Guard
+
+No significant changes.
+
+---
+
+## 3.49.40 (2025-05-06) {: #3.49.40 }
+
+### REST API {: #3.49.40-rest-api }
+
+#### Bugfixes {: #3.49.40-rest-api-bugfix }
+
+- Fixed to not use the OpenTelemetryMiddleware when PULP_OTEL_ENABLED is not set.
+  [#6529](https://github.com/pulp/pulpcore/issues/6529)
+
+### Plugin API {: #3.49.40-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.49.40-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.49.40-pulp-cert-guard }
 
 No significant changes.
 
