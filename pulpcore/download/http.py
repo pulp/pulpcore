@@ -214,20 +214,22 @@ class HttpDownloader(BaseDownloader):
 
     async def run(self, extra_data=None):
         """
-        Run the downloader with concurrency restriction and retry logic.
+        Run the downloader with concurrency restriction and optional retry logic.
 
         This method acquires `self.semaphore` before calling the actual download implementation
         contained in `_run()`. This ensures that the semaphore stays acquired even as the `backoff`
         wrapper around `_run()`, handles backoff-and-retry logic.
 
         Args:
-            extra_data (dict): Extra data passed to the downloader.
+            extra_data (dict): Extra data passed to the downloader:
+                disable_retry_list: List of exceptions which should not be retried.
 
         Returns:
             :class:`~pulpcore.plugin.download.DownloadResult` from `_run()`.
 
         """
-        retryable_errors = (
+        disable_retry_list = [] if not extra_data else extra_data.get("disable_retry_list", [])
+        default_retryable_errors = (
             aiohttp.ClientConnectorSSLError,
             aiohttp.ClientConnectorError,
             aiohttp.ClientOSError,
@@ -240,6 +242,9 @@ class HttpDownloader(BaseDownloader):
             SizeValidationError,
         )
 
+        retryable_errors = tuple(
+            [e for e in default_retryable_errors if e not in disable_retry_list]
+        )
         async with self.semaphore:
 
             @backoff.on_exception(
