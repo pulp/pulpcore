@@ -1173,10 +1173,9 @@ class Handler:
                 pulp_last_updated=timezone.now()
                 + timedelta(settings.REMOTE_CONTENT_FETCH_FAILURE_COOLDOWN)
             )
-            await downloader.session.close()
             close_tcp_connection(request.transport._sock)
             REMOTE_CONTENT_FETCH_FAILURE_COOLDOWN = settings.REMOTE_CONTENT_FETCH_FAILURE_COOLDOWN
-            raise RuntimeError(
+            log.error(
                 f"Pulp tried streaming {remote_artifact.url!r} to "
                 "the client, but it failed checksum validation.\n\n"
                 "We can't recover from wrong data already sent so we are:\n"
@@ -1186,8 +1185,10 @@ class Handler:
                 "If the Remote is known to be fixed, try resyncing the associated repository.\n"
                 "If the Remote is known to be permanently corrupted, try removing "
                 "affected Pulp Remote, adding a good one and resyncing.\n"
-                "If the problem persists, please contact the Pulp team."
+                "Learn more on <https://pulpproject.org/pulpcore/docs/user/learn/"
+                "on-demand-downloading/#on-demand-and-streamed-limitations>"
             )
+            return response
 
         if content_length := response.headers.get("Content-Length"):
             self._report_served_artifact_size(int(content_length))
