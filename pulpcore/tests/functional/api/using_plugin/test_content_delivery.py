@@ -117,6 +117,7 @@ def test_remote_content_changed_with_on_demand(
     file_bindings,
     monitor_task,
     file_distribution_factory,
+    tmp_path,
 ):
     """
     GIVEN a remote synced on demand with fileA (e.g, digest=123),
@@ -124,6 +125,7 @@ def test_remote_content_changed_with_on_demand(
 
     WHEN the client first requests that content
     THEN the content app will start a response but close the connection before finishing
+    AND no file will be present in the filesystem
 
     WHEN the client requests that content again (within the RA cooldown interval)
     THEN the content app will return a 404
@@ -143,9 +145,12 @@ def test_remote_content_changed_with_on_demand(
     get_url = urljoin(distribution_base_url(distribution.base_url), expected_file_list[0][0])
 
     # WHEN (first request)
-    result = subprocess.run(["curl", "-v", get_url], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    output_file = tmp_path / "out.rpm"
+    cmd = ["curl", "-v", get_url, "-o", str(output_file)]
+    result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
     # THEN
+    assert not output_file.exists()
     assert result.returncode == 18
     assert b"* Closing connection 0" in result.stderr
     assert b"curl: (18) transfer closed with outstanding read data remaining" in result.stderr
@@ -211,10 +216,6 @@ def test_handling_remote_artifact_on_demand_streaming_failure(
         distribution = file_distribution_factory(repository=repo.pulp_href)
         return distribution
 
-    def refresh_acs(acs):
-        monitor_task_group(file_bindings.AcsFileApi.refresh(acs.pulp_href).task_group)
-        return acs
-
     def get_original_content_info(remote):
         expected_files = get_files_in_manifest(remote.url)
         content_unit = list(expected_files)[0]
@@ -231,8 +232,7 @@ def test_handling_remote_artifact_on_demand_streaming_failure(
     acs_manifest_path = write_3_iso_file_fixture_data_factory("acs", seed=123)
     remote = create_simple_remote(basic_manifest_path)
     distribution = sync_publish_and_distribute(remote)
-    acs = create_acs_remote(acs_manifest_path)
-    refresh_acs(acs)
+    create_acs_remote(acs_manifest_path)
     write_3_iso_file_fixture_data_factory("acs", overwrite=True)  # corrupt
 
     # WHEN/THEN (first request)
