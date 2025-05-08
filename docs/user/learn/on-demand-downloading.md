@@ -73,21 +73,26 @@ On-demand and streamed content can be useful, but they come with some problems.
 
 There are two different types of errors that can occur with on-demand streaming:
 
-1. Pre-response: For some reason, Pulp can't get any data from the server (e.g, connectivity errors). A response is never started.
-2. Post-response: Pulp can get data from the remote and start streaming the response, but in the end the data doesn't match the expected digest.
+1. **Pre-response**: Pulp can't find or connect to the server. A response is never started.
+2. **Post-response**: Pulp can get data from the remote and start streaming the response, but the final digest is wrong.
 
-In the first case, Pulp will try all the available remote sources for the requested content and will return a 404 if all of them fail *with this same type of error*.
+(1) Pulp will try all the available remote sources for the requested content and will return a 404
+if all of them fail with pre-response retriable errors.
 
-In the second case, Pulp already sent the corrupted data to the client and can't recover from it, so it will close the connection to prevent the client from consolidating the file.
-When this happens, the content-app will ignore that remote source for a certain amount of time, which will enable future requests to select a different remote source.
-If all remote sources are ignored due to prior failure, then a 404 will be returned for all requests of that content until the cooldown period for one of those sources has expired.
+(2) Pulp already sent the corrupted data to the client and can't recover from it, so it will close the connection to prevent the client from consolidating the file.
+When this happens, the content-app will ignore that remote source for a [configurable cooldown interval],
+which will enable future requests to select a different remote source.
+If all remote sources are ignored due to prior failure, then a 404 will be returned for all requests of that content until the *cooldown interval* for one of those sources has expired.
 Pulp doesn't permanently invalidate the remote because it can't know if the error is transient or not.
 
-The second case is complex and can be confusing to the user.
-The core reason for this complexity lies in the very nature of on-demand serving, which imposes that Pulp must fetch and stream the content on request time, and has no way to know anything about the remote before that.
-This constraint great limits the range of actions Pulp can do to properly satisfy the request.
+!!! info
 
-If this behavior is prohibitive, consider using the immediate sync policy.
+    Case (2) is complex and can be confusing to the user.
+
+    The core reason for this complexity lies in the very nature of on-demand serving, which imposes that Pulp must fetch and stream the content on request time, and has no way to know anything about the remote before that.
+    This constrains the range of actions Pulp can do to satisfy the request properly.
+
+    **If this behavior is prohibitive, consider using the immediate sync policy.**
 
 Context: <https://github.com/pulp/pulpcore/issues/5012>.
 
@@ -120,3 +125,5 @@ An example:
 If a user doesn't want their registered Remotes to be indirectly used by other users, they should use a separate domain.
 
 Context: <https://github.com/pulp/pulpcore/issues/3212>.
+
+[configurable cooldown interval]: site:pulpcore/docs/admin/reference/settings/#remote_content_fetch_failure_cooldown
