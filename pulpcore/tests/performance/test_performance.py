@@ -9,8 +9,6 @@ from collections import namedtuple
 from urllib.parse import urljoin
 from uuid import uuid4
 
-from .pulpperf import reporting
-
 Args = namedtuple("Arguments", "limit processes repositories")
 
 
@@ -92,7 +90,7 @@ def test_performance(
         responses.append(response)
 
     results = [monitor_task(response.task) for response in responses]
-    reporting.report_tasks_stats("Sync tasks", results)
+    report_tasks_stats("Sync tasks", results)
 
     """Measure time of resynchronization."""
     responses = []
@@ -102,7 +100,7 @@ def test_performance(
         responses.append(response)
 
     results = [monitor_task(response.task) for response in responses]
-    reporting.report_tasks_stats("Resync tasks", results)
+    report_tasks_stats("Resync tasks", results)
 
     """Measure time of repository publishing."""
     responses = []
@@ -111,7 +109,7 @@ def test_performance(
         responses.append(response)
 
     results = [monitor_task(response.task) for response in responses]
-    reporting.report_tasks_stats("Publication tasks", results)
+    report_tasks_stats("Publication tasks", results)
 
     for i in range(len(results)):
         data[i]["publication_href"] = results[i].created_resources[0]
@@ -132,7 +130,7 @@ def test_performance(
         responses.append(response)
 
     results = [monitor_task(response.task) for response in responses]
-    reporting.report_tasks_stats("Distribution tasks", results)
+    report_tasks_stats("Distribution tasks", results)
 
     for i in range(len(results)):
         data[i]["distribution_href"] = results[i].created_resources[0]
@@ -152,7 +150,7 @@ def test_performance(
             pool.starmap(download, params)
 
     after = datetime.datetime.utcnow()
-    reporting.print_fmt_experiment_time("Repository download", before, after)
+    print_fmt_experiment_time("Repository download", before, after)
 
     """Measure time of inspecting the repository content."""
     before = datetime.datetime.utcnow()
@@ -172,7 +170,7 @@ def test_performance(
         with multiprocessing.Pool(processes=args.processes) as pool:
             pool.starmap(measureit, params)
     after = datetime.datetime.utcnow()
-    reporting.print_fmt_experiment_time("Content inspection", before, after)
+    print_fmt_experiment_time("Content inspection", before, after)
 
     """Measure time of repository cloning."""
     for r in data:
@@ -192,7 +190,7 @@ def test_performance(
         responses.append(response)
 
     results = [monitor_task(response.task) for response in responses]
-    reporting.report_tasks_stats("Version clone with base_version tasks", results)
+    report_tasks_stats("Version clone with base_version tasks", results)
 
     hrefs = [
         i["pulp_href"]
@@ -206,7 +204,7 @@ def test_performance(
         responses.append(response)
 
     results = [monitor_task(response.task) for response in responses]
-    reporting.report_tasks_stats("Version clone with add_content_units tasks", results)
+    report_tasks_stats("Version clone with add_content_units tasks", results)
 
 
 def download(base_url, file_name, file_size):
