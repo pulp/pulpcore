@@ -334,6 +334,14 @@ The name of the WSGI environment variable to read for [Webserver Auth with Rever
 
 Defaults to `'REMOTE_USER'`.
 
+### REMOTE\_CONTENT\_FETCH\_FAILURE\_COOLDOWN
+
+In the context of on-demand requests in the the Content App,
+the time in seconds that a content source from a specific remote will be ignored after failing to download the correct binary from it.
+Default to 5 minutes.
+
+Learn more about [on-demand and streaming limitations].
+
 ### TASK\_DIAGNOSTICS
 
 When enabled, each task records various diagnostics for analysis by a developer.
@@ -498,6 +506,7 @@ Defaults to `pulpcore.tasking.status`.
 [Django warning at the end of this section in their docs]: https://docs.djangoproject.com/en/4.2/howto/auth-remote-user/#configuration
 [Enabling Debug Logging]: site:pulpcore/docs/admin/guides/troubleshooting/#enabling-debug-logging
 [librdkafka configuration documentation]: https://github.com/confluentinc/librdkafka/blob/master/CONFIGURATION.md
+[on-demand and streaming limitations]: site:pulpcore/docs/user/learn/on-demand-downloading/#on-demand-and-streamed-limitations
 [recommended by aiohttp]: https://docs.aiohttp.org/en/stable/third_party.html#approved-third-party-libraries
 [task diagnostics documentation]: site:pulpcore/docs/dev/learn/tasks/diagnostics.md
 [uvloop]: https://github.com/MagicStack/uvloop
