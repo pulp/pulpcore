@@ -8,6 +8,29 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.77.1 (2025-05-08) {: #3.77.1 }
+
+### REST API {: #3.77.1-rest-api }
+
+#### Bugfixes {: #3.77.1-rest-api-bugfix }
+
+- On-demand or pull-through content is now immediately cached upon first request.
+  [#6540](https://github.com/pulp/pulpcore/issues/6540)
+
+### Plugin API {: #3.77.1-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.77.1-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.77.1-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.77.0 (2025-05-06) {: #3.77.0 }
 
 ### REST API {: #3.77.0-rest-api }
