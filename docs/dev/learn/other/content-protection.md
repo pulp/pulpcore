@@ -1,5 +1,3 @@
-
-
 # Content Protection
 
 By default, the Content app will serve all content, but some deployments want to only serve content
@@ -23,10 +21,10 @@ Master/Detail objects a `TYPE` class attribute is needed which is then used in t
 ```
 
 !!! note
+
     The [pulp-certguard](site:pulp_certguard/) plugin ships various
     `ContentGuard` types for users and plugin writers to use together. Plugins can ship their own
     content guards too, but look at the existing ones first.
-
 
 ## Simple Example
 
@@ -75,8 +73,6 @@ http POST http://localhost:24817/pulp/api/v3/contentguards/<plugin_name>/secret_
 
 Then the user can protect one or more Distributions by specifying `content_guard`. See the
 [ContentGuard creation API](site:pulpcore/restapi/#tag/Distributions:-File/operation/distributions_file_file_list) for more information.
-
-
 
 ### Plugin Writer use of ContentGuard
 

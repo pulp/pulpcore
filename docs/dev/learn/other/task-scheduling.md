@@ -1,9 +1,7 @@
-
-
 # Task Scheduling
 
 % warning: This feature is only accessible by direct manipulation of
-% ``TaskSchedule`` objects. It is targeted for plugin writers and no api access is planned.
+% `TaskSchedule` objects. It is targeted for plugin writers and no api access is planned.
 
 Pulp supports scheduling of tasks. Scheduled tasks will be dispatched shortly after their
 `next_dispatch` time, and be rescheduled one `dispatch_interval` after that, if the latter is

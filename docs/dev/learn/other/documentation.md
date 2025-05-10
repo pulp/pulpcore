@@ -6,22 +6,22 @@ Pulp's documentation is designed with the following principles:
 
 1. Avoid documenting external projects, providing links wherever reasonable.
 
-2. Documentation layout should be designed for users to intuitively find information.
+1. Documentation layout should be designed for users to intuitively find information.
 
-3. The structure should present introductory material before advanced topics.
+1. The structure should present introductory material before advanced topics.
 
-4. Documentation should cross reference to limit repitition.
+1. Documentation should cross reference to limit repitition.
 
-5. Pulp terminology should be be explicitly defined and added to the glossary.
+1. Pulp terminology should be be explicitly defined and added to the glossary.
 
-6. Documentation should stay consistent with the language used in the `concepts`.
+1. Documentation should stay consistent with the language used in the `concepts`.
 
-7. Where reasonable, documents should include:
+1. Where reasonable, documents should include:
 
-   1. Summary of content.
-   2. Intended audience.
-   3. Links to prerequisite material.
-   4. Links to related material.
+    1. Summary of content.
+    1. Intended audience.
+    1. Links to prerequisite material.
+    1. Links to related material.
 
 ## Building the Docs:
 

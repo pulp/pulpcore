@@ -6,8 +6,6 @@ groups of users. The models driving this data are `django.contrib.auth.models.Pe
 associated with one or more `Role`. Roles can be assigned to users or groups either on the
 Model-Level, Domain-level (if domains are enabled), or Object-Level.
 
-
-
 ## Model Permissions
 
 `Permissions` in Django are tied to models and usually map to certain
@@ -15,7 +13,7 @@ actions performed thereon. By default, each model receives four permissions:
 
 - The “add” permission limits the user’s ability to view the “add” form and add an object.
 - The “change” permission limits a user’s ability to view the change list, view the “change”
-  form and change an object.
+    form and change an object.
 - The “delete” permission limits the ability to delete an object.
 - The “view” permission limits the ability to view an object.
 
@@ -32,8 +30,6 @@ Here's an example of the Permissions automatically created for the `FileRemote` 
 - `file.change_fileremote`
 - `file.delete_fileremote`
 
-
-
 ## Defining Custom Permissions
 
 Any model can define custom permissions, and Django will automatically make a migration to add it
@@ -41,8 +37,6 @@ for you. See the [Django Custom Permissions Documentation](https://docs.djangopr
 to `AccessPolicies` and `creation_hooks`, permissions can only be defined by the plugin writer.
 As a rule of thumb, permissions should be the atomic building blocks for roles and each action that
 can be performed on an object should have its own permission.
-
-
 
 ## Custom Permission for Repository Content Modification
 
@@ -70,9 +64,6 @@ class FileRepository(Repository):
 
     It is not necessary to "namespace" this `modify_repo_content` permission because by including
     it in the meta class of your Detail view, it will already be namespaced on the correct object.
-
-
-
 
 ## Roles
 

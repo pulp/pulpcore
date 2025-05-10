@@ -4,22 +4,25 @@ Pulp provides some features for self-repair in cases where artifacts in the stor
 got corrupted in some way (i.e. bit rot).
 
 !!! warning
+
     This repair feature looks for missing or corrupted files that are supposed to be in
     the storage. It attempts a redownload of these files from known upstream urls.
     In case upstream stopped serving the corresponding files, or these files were uploaded
     directly into Pulp or were created by Pulp itself (i.e. generated metadata), the Pulp
     repair feature is unable to remedy the situation.
 
-
 To start a repair task for all of Pulp (i.e. checks all content), send a POST request to
 `/pulp/api/v3/repair/`.
 
 === "run"
+
     ```bash
     $ REPAIR_TASK=$(http POST :24817/pulp/api/v3/repair/ | jq -r '.task')
     $ http --body :24817$REPAIR_TASK
     ```
+
 === "output"
+
     ```json
     {
         "child_tasks": [],
@@ -60,11 +63,14 @@ To start a repair task on a specific repository version, send a POST request to 
 endpoint:
 
 === "run"
+
     ```bash
     $ REPAIR_TASK=$(http POST :24817${REPOSITORY_VERSION}repair/ | jq -r '.task')
     $ http --body :24817$REPAIR_TASK
     ```
+
 === "output"
+
     ```json
     {
         "child_tasks": [],

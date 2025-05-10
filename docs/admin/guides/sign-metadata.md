@@ -86,28 +86,28 @@ Retrieve and check the saved signing service via REST API:
 
 === "run"
 
-      ```bash
-      pulp signing-service list
-      ```
+    ```bash
+    pulp signing-service list
+    ```
 
 === "output"
 
-      ```json
-      [
-          {
-              "name": "sign-metadata",
-              "pubkey_fingerprint": "19CD52BD1CA9A00DF10A842D74B14E3590C2231F",
-              "public_key": "-----BEGIN PGP PUBLIC KEY BLOCK-----\n\n [...] \n-----END PGP PUBLIC KEY BLOCK-----\n",
-              "pulp_created": "2020-11-06T15:42:20.645197Z",
-              "pulp_href": "/pulp/api/v3/signing-services/ffb9e987-952f-47e3-a274-ffe69a80ded7/",
-              "prn": "prn:core.signingservice:ffb9e987-952f-47e3-a274-ffe69a80ded7",
-              "script": "/var/lib/pulp/sign-metadata.sh"
-          }
-      ]
-      ```
+    ```json
+    [
+        {
+            "name": "sign-metadata",
+            "pubkey_fingerprint": "19CD52BD1CA9A00DF10A842D74B14E3590C2231F",
+            "public_key": "-----BEGIN PGP PUBLIC KEY BLOCK-----\n\n [...] \n-----END PGP PUBLIC KEY BLOCK-----\n",
+            "pulp_created": "2020-11-06T15:42:20.645197Z",
+            "pulp_href": "/pulp/api/v3/signing-services/ffb9e987-952f-47e3-a274-ffe69a80ded7/",
+            "prn": "prn:core.signingservice:ffb9e987-952f-47e3-a274-ffe69a80ded7",
+            "script": "/var/lib/pulp/sign-metadata.sh"
+        }
+    ]
+    ```
 
 Plugins referring to this signing service can now sign selected content by the provided script.
 However support and details of this process varies greatly between different content types.
 To learn more about the signing from a plugin writer's perspective, see the section [Metadata Signing].
 
-[Metadata Signing]: site:pulpcore/docs/dev/learn/other/metadata-signing/
+[metadata signing]: site:pulpcore/docs/dev/learn/other/metadata-signing/

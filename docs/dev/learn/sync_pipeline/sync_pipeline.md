@@ -1,5 +1,3 @@
-
-
 # Synchronizing Repositories with the async-Pipeline
 
 To accomplish the steps outlined in `sync-docs` in an efficient way, pulp provides a high
@@ -31,13 +29,13 @@ The pulp plugin api provides the following stages which also comprise the defaul
 following order:
 
 1. `pulpcore.plugin.stages.QueryExistingContents`
-2. `pulpcore.plugin.stages.QueryExistingArtifacts`
-3. `pulpcore.plugin.stages.ArtifactDownloader`
-4. `pulpcore.plugin.stages.ArtifactSaver`
-5. `pulpcore.plugin.stages.ContentSaver`
-6. `pulpcore.plugin.stages.RemoteArtifactSaver`
-7. `pulpcore.plugin.stages.ResolveContentFutures`
-8. `pulpcore.plugin.stages.ContentAssociation`
+1. `pulpcore.plugin.stages.QueryExistingArtifacts`
+1. `pulpcore.plugin.stages.ArtifactDownloader`
+1. `pulpcore.plugin.stages.ArtifactSaver`
+1. `pulpcore.plugin.stages.ContentSaver`
+1. `pulpcore.plugin.stages.RemoteArtifactSaver`
+1. `pulpcore.plugin.stages.ResolveContentFutures`
+1. `pulpcore.plugin.stages.ContentAssociation`
 
 If the `mirror=True` optional parameter is passed to `DeclarativeVersion` the pipeline also runs
 `pulpcore.plugin.stages.ContentUnassociation` at the end.
@@ -45,8 +43,6 @@ If the `mirror=True` optional parameter is passed to `DeclarativeVersion` the pi
 ## On-demand synchronizing
 
 See `on-demand-support`.
-
-
 
 ## Multiple level discovery
 
@@ -71,4 +67,3 @@ attached `Future`.
     If you need downloaded artifacts of this content for further discovery, make sure to
     provide `deferred_download=False` to the
     `pulpcore.plugin.stages.DeclarativeArtifact`.
-

@@ -43,10 +43,10 @@ See the [markdown cheat sheet].
 Our docs comply with the [Diataxis framework] for organizing content.
 Here is a brief summary:
 
-|               | Tutorial                          | How-to Guide                      | Reference                 | Explanation               |
-| ---           | ---                               | ---                               | ---                       | ---                       |
-| **purpose**   | to provide a learning experience  | to help achieve a particular goal | to describe the machinery | to illuminate a topic     |
-| **form**      | a lesson                          | a series of steps                 | dry description           | discursive explanation    |
+|             | Tutorial                         | How-to Guide                      | Reference                 | Explanation            |
+| ----------- | -------------------------------- | --------------------------------- | ------------------------- | ---------------------- |
+| **purpose** | to provide a learning experience | to help achieve a particular goal | to describe the machinery | to illuminate a topic  |
+| **form**    | a lesson                         | a series of steps                 | dry description           | discursive explanation |
 
 Also, keep in mind that you are always writing primarily for one of the three types of `persona`:
 
@@ -93,12 +93,12 @@ A more comprehensive guide on using towncrier in the Pulp project is documented 
 Commit messages in Pulp should contain a human readable explanation of what was fixed.
 Here are general guidelines:
 
-| Section       | description                                                                                           |
-| ---           | ---                                                                                                   |
-| Title         | - Should be wrapped at about 50 characters.                                                           |
-| Body          | - Should be wrapped at 72 characters.                                                                 |
-|               |    - May be broken up into paragraphs.                                                                |
-| Footer        | - Should reference a linked issue on the plugin Github Issue tracker. See the [Github Linking Docs].  |
+| Section | description                                                                                          |
+| ------- | ---------------------------------------------------------------------------------------------------- |
+| Title   | - Should be wrapped at about 50 characters.                                                          |
+| Body    | - Should be wrapped at 72 characters.                                                                |
+|         | - May be broken up into paragraphs.                                                                  |
+| Footer  | - Should reference a linked issue on the plugin Github Issue tracker. See the [Github Linking Docs]. |
 
 For more on what constitutes a good commit message, we recommend [Tim Pope’s blog post on the subject].
 Putting this all together, the following is an example of a good commit message:
@@ -114,8 +114,8 @@ closes #1392
 
 A more comprehensive guide on using git in the Pulp project is documented [here](site:pulpcore/docs/dev/guides/git/).
 
-[Diataxis framework]: https://diataxis.fr/map/
-[Github Linking Docs]: https://docs.github.com/en/issues/tracking-your-work-with-issues/linking-a-pull-request-to-an-issue#linking-a-pull-request-to-an-issue-using-a-keyword
+[diataxis framework]: https://diataxis.fr/map/
+[github linking docs]: https://docs.github.com/en/issues/tracking-your-work-with-issues/linking-a-pull-request-to-an-issue#linking-a-pull-request-to-an-issue-using-a-keyword
 [markdown cheat sheet]: site:/pulp-docs/docs/dev/reference/markdown-cheatsheet
-[Tim Pope’s blog post on the subject]: http://tbaggery.com/2008/04/19/a-note-about-git-commit-messages.html
+[tim pope’s blog post on the subject]: http://tbaggery.com/2008/04/19/a-note-about-git-commit-messages.html
 [towncrier]: https://towncrier.readthedocs.io/en/stable/

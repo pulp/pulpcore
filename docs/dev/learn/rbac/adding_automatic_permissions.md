@@ -8,8 +8,6 @@ requirements for the AccessPolicy `statements`, plugin writers can define and sh
 behavior for permissions on new objects, and then users can modify them as needed after migrations
 are run.
 
-
-
 ## Defining New Object Permission Behaviors
 
 The `AccessPolicy.creation_hooks` attribute defines a set of callables that are intended to be
@@ -64,9 +62,6 @@ example assigning the `"core.task_viewer"` role to the group `"foo"`.
     All the hooks shipped with pulpcore accept either a single item or list of items for their
     arguments like `roles`, `users` or `groups`.
 
-
-
-
 ## Enabling New Object Permission Creation
 
 To enable automatic permission creation for an object managed by an AccessPolicy, have your model
@@ -76,7 +71,6 @@ use the [pulpcore.plugin.models.AutoAddObjPermsMixin][]. See the example below a
 class MyModel(BaseModel, AutoAddObjPermsMixin):
    ...
 ```
-
 
 ## Shipping a Default New Object Policy
 
@@ -103,8 +97,6 @@ LOCKED_ROLES = {
 
 This effectively creates a "user isolation" policy which aligns with the examples from
 `shipping_default_access_policy`.
-
-
 
 ## Defining Custom New Object Permission Callables
 
@@ -145,7 +137,7 @@ This would be callable with a configuration like this one:
 
     The `parameters` dict must actually match the creation hooks signature.
 
----
+______________________________________________________________________
 
 ## Reference
 

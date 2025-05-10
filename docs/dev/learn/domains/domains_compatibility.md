@@ -1,5 +1,3 @@
-
-
 # Adding Domain Compatibility to a Plugin
 
 In order to enable Domains, all plugins must be Domain compatible or Pulp will refuse to start.
@@ -36,7 +34,6 @@ class FileContent(Content):
     The base `Content` model has a `pulp_domain` relation already,
     so the child content model must use an underscore to prevent a name collision.
 
-
 ## Ensure any Custom Action Serializer Prevents Cross-Domain Parameters
 
 Domains are strictly isolated from each other and thus two objects from different domains can not be used within the same task/operation.
@@ -68,14 +65,14 @@ def custom_task(custom_property):
     objects = CustomModel.objects.filter(pulp_domain=domain)
 ```
 
-## Add the Appropriate has\_domain\_perms Checks to the ViewSets' AccessPolicies
+## Add the Appropriate has_domain_perms Checks to the ViewSets' AccessPolicies
 
 If your plugin uses [RBAC AccessPolicies],
 then the current access condition checks need to be updated to use their Domain compatible variants.
 These checks ensure that Domain-level permissions work properly in your ViewSets.
 See the `permission_checking_machinery` documentation for all available checks.
 
-## Update any extra URL Routes to include \{pulp\_domain\}
+## Update any extra URL Routes to include {pulp_domain}
 
 Enabling Domains modifies the URL paths Pulp generates and custom routes added in `urls.py` need to add `{pulp_domain}` when `DOMAIN_ENABLED` is set.
 Pulp has a custom Domain middleware that will remove the `pulp_domain` from the ViewSet's handler method args and attach it to the request object to prevent breaking current ViewSets.
@@ -108,5 +105,5 @@ pulp_settings_stream: null
 Add Domain documentation to your workflows to show off your new features!
 
 [creating a publication]: site:/pulpcore/docs/dev/learn/tasks/publish/
-[RBAC AccessPolicies]: site:/pulpcore/docs/dev/learn/rbac/access_policy/
+[rbac accesspolicies]: site:/pulpcore/docs/dev/learn/rbac/access_policy/
 [sync pipeline]: site:/pulpcore/docs/dev/learn/sync_pipeline/sync_pipeline/
