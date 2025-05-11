@@ -22,28 +22,27 @@ jobs:
         with:
           fetch-depth: 1
           path: "pulpcore"
+      - uses: "actions/checkout@v4"
+        with:
+          fetch-depth: 0
+          repository: "pulp/pulp-docs"
+          path: "pulp-docs"
+          ref: "rewrite-as-mkdocs-plugin"
       - uses: "actions/setup-python@v5"
         with:
-          python-version: "3.11"
-      - name: "Setup cache key"
-        run: |
-          git ls-remote https://github.com/pulp/pulp-docs main | tee pulp-docs-main-sha
-      - uses: "actions/cache@v4"
-        with:
-          path: "~/.cache/pip"
-          key: ${{ runner.os }}-pip-${{ hashFiles('pulp-docs-main-sha') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
+          python-version: "3.12"
       - name: "Install python dependencies"
         run: |
           echo ::group::PYDEPS
-          pip install -r doc_requirements.txt
+          pip install ../pulp-docs towncrier
           echo ::endgroup::
       - name: "Build changelog"
         run: |
           towncrier build --yes --version 4.0.0.ci
       - name: "Build docs"
+        working-directory: "pulp-docs"
         run: |
+          pulp-docs fetch --dest ..
           pulp-docs build
 
   no-test:
@@ -51,4 +50,4 @@ jobs:
     runs-on: "ubuntu-latest"
     steps:
       - run: |
-          echo "Skip docs testing on non-main branches."
+          echo "Skip docs testing on non-default branches."
