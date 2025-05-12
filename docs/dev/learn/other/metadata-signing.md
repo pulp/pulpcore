@@ -1,5 +1,3 @@
-
-
 # Metadata Signing
 
 Plugin writers wishing to enable users to sign metadata need to add a new field `metadata_signing_service`

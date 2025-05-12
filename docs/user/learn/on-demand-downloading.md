@@ -48,14 +48,14 @@ you will receive an error. Check that plugin's documentation also.
 
 Example of the "Create Remote" endpoints for some plugins that supports these features:
 
-* [pulp-rpm](https://pulpproject.org/pulp_rpm/restapi/#tag/Remotes:-Rpm/operation/remotes_rpm_rpm_create)
-* [pulp-container](https://pulpproject.org/pulp_container/restapi/#tag/Remotes:-Container/operation/remotes_container_container_create)
+- [pulp-rpm](https://pulpproject.org/pulp_rpm/restapi/#tag/Remotes:-Rpm/operation/remotes_rpm_rpm_create)
+- [pulp-container](https://pulpproject.org/pulp_container/restapi/#tag/Remotes:-Container/operation/remotes_container_container_create)
 
 !!! note
+
     Want to add on-demand support to your plugin? See the
     [On-Demand Support](site:pulpcore/docs/dev/learn/other/on-demand-support/)
     documentation for more details on how to add on-demand support to a plugin.
-
 
 ## On-Demand Content and Repository Versions
 
@@ -63,6 +63,7 @@ An `on-demand content unit` can be associated and unassociated from a `repositor
 made available in multiple places.
 
 !!! warning "Deleting a Remote"
+
     Learn about the dangers of [deleting a Remote](#remote-deletion-and-content-sharing) in the context of on-demand content.
 
 ## On-Demand and Streamed limitations
@@ -74,7 +75,7 @@ On-demand and streamed content can be useful, but they come with some problems.
 There are two different types of errors that can occur with on-demand streaming:
 
 1. Pre-response: For some reason, Pulp can't get any data from the server (e.g, connectivity errors). A response is never started.
-2. Post-response: Pulp can get data from the remote and start streaming the response, but in the end the data doesn't match the expected digest.
+1. Post-response: Pulp can get data from the remote and start streaming the response, but in the end the data doesn't match the expected digest.
 
 In the first case, Pulp will try all the available remote sources for the requested content and will return a 404 if all of them fail *with this same type of error*.
 
@@ -113,9 +114,9 @@ regardless of which user created it.
 
 An example:
 
-* Given User A and User B both synced the same on-demand content from their separate remotes (there are two different sources for the same content).
-* When User B requests the content
-* Then the credentials used for the download could potentially be User A's.
+- Given User A and User B both synced the same on-demand content from their separate remotes (there are two different sources for the same content).
+- When User B requests the content
+- Then the credentials used for the download could potentially be User A's.
 
 If a user doesn't want their registered Remotes to be indirectly used by other users, they should use a separate domain.
 

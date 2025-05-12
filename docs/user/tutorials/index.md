@@ -44,4 +44,3 @@ You can also find us on [**pulp** on Matrix](https://matrix.to/#/!HWvLQmBGVPfJfT
 
     We plan to write an Introduction Tutorial to teach fundamentals skills and concepts throught a basic Project.
     Reach out if you have a good idea of what this didactical Project could look like.
-

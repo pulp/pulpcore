@@ -4,20 +4,23 @@ Pulp provides the ability to reclaim disk space for:
 
 - content that one no longer needs to serve but would like to keep in the repo for historical reasons.
 - repos that were synced with the on_demand download policy and one would want to clear out
-  downloaded files for those repos.
+    downloaded files for those repos.
 
 !!! Note
+
     Usually, a repository that was synced with the on_demand download policy will store artifacts locally after they have been requested by the client, but there really isn't a way to have pulp delete the locally stored files and free disk space if these packages are unlikely to be used again.
 
 To start a reclaim task send a POST request to `/pulp/api/v3/repositories/reclaim_space/`.
 
 === "run"
+
     ```bash
     RECLAIM_TASK=$(http POST :24817/pulp/api/v3/repositories/reclaim_space/ repo_hrefs:=[\"/pulp/api/v3/repositories/rpm/rpm/b3a6674d-181c-4e72-9412-7cbc747480ad/\"] | qq -r '.task')
     http --body :24817$RECLAIM_TASK
     ```
 
 === "output"
+
     ```json
     {
         "child_tasks": [],
@@ -60,8 +63,8 @@ The task will remove artifacts only from content that was synced from a remote s
 touch the content that was uploaded directly into Pulp.
 
 !!! note
+
     The task will clean up artifacts regardless of the download policy. The content app will be able
     to stream artifact if it is locally available, otherwise it will attempt to redownload it from
     the known upstream urls. In case upstream stopped serving the corresponding file, Pulp won't be
     able to download and serve it.
-

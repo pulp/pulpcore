@@ -31,9 +31,9 @@ This is also termed "one sentence per line" rule, but do not take that too liter
 
 Rules of thumb:
 
-* Use your best judgement.
-* Avoid complicated sentence structure.
-* Write technical prose, not lyrical.
+- Use your best judgement.
+- Avoid complicated sentence structure.
+- Write technical prose, not lyrical.
 
 ### In-code Documentation
 
@@ -44,13 +44,13 @@ Most classes and functions should have a docstring that follows the conventions 
 # Exceptions and Clarifications
 
 1. Modules should not include license information.
-2. The type of each Args value should be included after the variable name in parentheses.
-   The type of each Returns value should be the first item on the line.
-3. Following the type of Args and Returns values, there will be a colon and a single space followed by the description.
-   Additional spaces should not be used to align types and descriptions.
-4. Fields and Relations sections will be used when documenting fields on Django models.
-   The Fields section will be used for non-related fields on Model classes.
-   The Relations section will be used for related fields on Model classes.
+1. The type of each Args value should be included after the variable name in parentheses.
+    The type of each Returns value should be the first item on the line.
+1. Following the type of Args and Returns values, there will be a colon and a single space followed by the description.
+    Additional spaces should not be used to align types and descriptions.
+1. Fields and Relations sections will be used when documenting fields on Django models.
+    The Fields section will be used for non-related fields on Model classes.
+    The Relations section will be used for related fields on Model classes.
 
 # Auto-Documentation
 
@@ -83,8 +83,8 @@ Python 3 assumes that files are encoded with UTF-8, so it is not necessary to de
 
 [black]: https://github.com/psf/black
 [flake8]: http://flake8.pycqa.org/en/latest/
-[Google's Python Style Guide]: https://google.github.io/styleguide/pyguide.html?showone=Comments#Comments
+[google's python style guide]: https://google.github.io/styleguide/pyguide.html?showone=Comments#Comments
 [integration]: https://github.com/psf/black#editor-integration
 [markdown cheat sheet]: site:pulp-docs/docs/dev/reference/markdown-cheatsheet/
-[Napoleon plugin for Sphinx]: http://www.sphinx-doc.org/en/stable/ext/napoleon.html
+[napoleon plugin for sphinx]: http://www.sphinx-doc.org/en/stable/ext/napoleon.html
 [pep-8]: https://www.python.org/dev/peps/pep-0008

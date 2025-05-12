@@ -61,6 +61,6 @@ http POST :24817${UPLOAD}commit/ sha256=`sha256sum 1.iso | cut -d ' ' -f1`
 ```
 
 !!! note
+
     Each uploaded chunk is stored as a separate file in the default storage.
     When an upload is committed, uploaded chunks are removed automatically and a new artifact is created, as usually.
-

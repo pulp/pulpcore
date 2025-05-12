@@ -24,13 +24,13 @@ To set up an RBAC content guard:
     pulp content-guard rbac create --name rbac
     ```
 
-2. Assign permissions to users and/or groups:
+1. Assign permissions to users and/or groups:
 
     ```bash
     pulp content-guard rbac assign --name rbac --user alice --user bob --group file-buddies
     ```
 
-3. Associate the content guard with a distribution:
+1. Associate the content guard with a distribution:
 
     ```bash
     pulp file distribution update --name foo --content-guard rbac
@@ -45,11 +45,12 @@ The X509 certificate guard (from pulp-certguard) protects distributions using x5
 ### RHSM Certificate Guard
 
 The RHSM certificate guard (from pulp-certguard) validates certificates created using python-rhsm.
+
 !!! warning
 
     This guard is currently not recommended as python-rhsm has not been updated recently.
 
-### Header Content Guard 
+### Header Content Guard
 
 The header content guard checks for specific HTTP headers in incoming requests. This guard is primarily useful in custom setups where a reverse proxy adds authentication/authorization headers before forwarding requests to Pulp.
 

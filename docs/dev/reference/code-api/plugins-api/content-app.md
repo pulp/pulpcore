@@ -1,5 +1,3 @@
-
-
 # pulpcore.plugin.content
 
 The Content app provides built-in functionality to handle user requests for content, but in some
@@ -10,7 +8,7 @@ Handler to the Content App by subclassing `pulpcore.plugin.content.Handler`.
 Making a custom Handler is a two-step process:
 
 1. subclass `pulpcore.plugin.content.Handler` to define your Handler's behavior
-2. Add the Handler to a route using aiohttp.server's [add_route()](https://aiohttp.readthedocs.io/en/stable/web_reference.html#aiohttp.web.UrlDispatcher.add_route) interface.
+1. Add the Handler to a route using aiohttp.server's [add_route()](https://aiohttp.readthedocs.io/en/stable/web_reference.html#aiohttp.web.UrlDispatcher.add_route) interface.
 
 If content needs to be served from within the `Distribution`'s base_path,
 overriding the `pulpcore.plugin.models.Distribution.content_handler` and

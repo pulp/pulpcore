@@ -1,9 +1,11 @@
 # Enable and create Domains
 
 !!! warning
+
     This feature requires plugin support to work correctly.
 
 !!! warning
+
     This feature is provided as a tech preview and could change in backwards incompatible
     ways in the future.
 
@@ -36,6 +38,7 @@ Current Domain Compatible Plugins:
 - pulp_certguard>=1.6.0
 
 !!! warning
+
     Before turning on domains, you should let all currently running tasks finished.
 
 ## Creating Domains
@@ -57,6 +60,7 @@ pulp domain create \
 Specific examples for different storage backends:
 
 === "FileSystem"
+
     ```bash
     pulp domain create \
       --name foo \
@@ -66,6 +70,7 @@ Specific examples for different storage backends:
     ```
 
 === "S3"
+
     ```bash
     pulp domain create \
       --name mydomain \
@@ -74,21 +79,22 @@ Specific examples for different storage backends:
     ```
 
 !!! note
+
     `default`, `content`, and `api` are reserved names that can not be used during creation
     or update. The `default` domain can not be updated or deleted.
 
-
 !!! note
+
     To delete a domain all objects within that domain must be deleted first, including artifacts and
     orphaned content.
 
-
 !!! note
+
     The AWS access key must be authorized to perform the `s3:ListBucket` and `s3:PutObject`
     operations.
 
-
 !!! warning
+
     Changing the `storage-class` or `storage-settings` of an in-use domain is
     dangerous and can result in a broken domain.
 
@@ -140,13 +146,13 @@ pulp user role-assignment add --username <username> --role <role_name> --domain 
 ```
 
 !!! note
+
     Operations on resources across separate domains is not allowed. e.g. You can not add content
     from one domain to the repository of another domain even if you own both domains.
 
-
 !!! warning
-    Pulp Export and Import are currently not supported with domains enabled.
 
+    Pulp Export and Import are currently not supported with domains enabled.
 
 There are notable objects in Pulp, `AccessPolicies`, `Roles`, `Users`, and `Groups`, that
 are not a part of domains and remain global across the system. These objects are closely intertwined

@@ -113,9 +113,9 @@ field must be url-encoded. The following operations are supported:
 Multiple terms can be combined with `,`:
 
 - `environment=production,reviewed=true` - returns resources with labels where environment is
-  production and reviewed is true
+    production and reviewed is true
 - `environment,reviewed=false` - returns resources with an environment label and where reviewed is
-  false
+    false
 
 To filter using the CLI use `--label-select`:
 
@@ -140,13 +140,14 @@ This would return a list of repositories such as:
   "remote": null
 }
 ```
+
 ## Labeling content
 
 All of the above also applies to Content entities - with a few extra caveats.
 
-Unlike the entities described above (Repository, Remote, and Distribution), in Pulp all Content is a shared resource. 
-That is, a given Content entity with a specific key/digest/sha256 exists in Pulp **once**, and will be shared between 
-any Repositories to which it is assigned. This means that User-A who has access to Repository-1 could label a piece of 
+Unlike the entities described above (Repository, Remote, and Distribution), in Pulp all Content is a shared resource.
+That is, a given Content entity with a specific key/digest/sha256 exists in Pulp **once**, and will be shared between
+any Repositories to which it is assigned. This means that User-A who has access to Repository-1 could label a piece of
 "their" Content, and User-B would see those labels in "their" Content in Repository-B.
 
 As a result of this sharing, Pulp only allows setting `pulp_labels` on Content to users who have been given the

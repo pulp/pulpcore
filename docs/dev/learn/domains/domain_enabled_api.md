@@ -68,11 +68,13 @@ class YourModelSerializer(ModelSerializer):
 By including the standard Django REST Framework mixins, you get working endpoints without writing additional code:
 
 - **ListModelMixin**: Automatically implements the `.list()` method, handling GET requests to the collection endpoint (`/pulp/{domain}/api/v3/your-endpoint-name/`). This provides:
+
     - Automatic pagination
     - Domain-aware filtering (objects only from the current domain)
     - Serialization of results using your serializer class
 
 - **RetrieveModelMixin**: Automatically implements the `.retrieve()` method, handling GET requests to detail endpoints (`/pulp/{domain}/api/v3/your-endpoint-name/{uuid}/`). This provides:
+
     - Automatic lookup by UUID (pulp_id)
     - Domain-aware object retrieval
     - 404 responses for objects that don't exist or are in other domains
@@ -162,11 +164,11 @@ class YourModelViewSet(NamedModelViewSet, ListModelMixin, RetrieveModelMixin):
 ## Key Considerations
 
 1. **Domain Filtering**: The `pulp_domain` foreign key enables automatic domain filtering in the Pulp platform
-2. **Permissions**: Consider domain-specific permissions if needed
-3. **Serialization**: Ensure proper serialization of domain-specific data
-4. **Task Dispatching**: Use the Pulp task system for async operations
+1. **Permissions**: Consider domain-specific permissions if needed
+1. **Serialization**: Ensure proper serialization of domain-specific data
+1. **Task Dispatching**: Use the Pulp task system for async operations
 
-## Complete Example: 
+## Complete Example:
 
 The implementation demonstrates these patterns:
 

@@ -11,15 +11,15 @@ network-isolated.
 The high-level workflow for this use case is
 
 1. On the Upstream Pulp instance, an Exporter is defined for the set of
-`Repositories` that are to be exported to some Downstream Pulp instance.
+    `Repositories` that are to be exported to some Downstream Pulp instance.
 1. That Exporter is requested to produce and execute an Export for the current
-`RepositoryVersions` of the specified `Repositories`
+    `RepositoryVersions` of the specified `Repositories`
 1. The resulting `.tar` Export is transferred to the appropriate Downstream.
 1. On the Downstream Pulp instance, an Importer is defined, that maps the incoming
-Upstream `Repositories` to matching Downstream
-`Repositories`.
+    Upstream `Repositories` to matching Downstream
+    `Repositories`.
 1. That Importer is requested to produce and execute an Import, pointing to the provided
-export file from the Upstream.
+    export file from the Upstream.
 
 In order to minimize space utilization, import/export operates on sets of
 `Repositories`. This allows the Export operation to export shared
@@ -125,7 +125,7 @@ Export uses pulp_rpm which is not installed.
 
 The export-to-import workflow is built on the assumption that the Upstream and
 Downstream instances are running "compatible" versions of pulpcore and plugins. In this
-context, "compatible" is defined as **"share the same X.Y version"**.  If this is not the
+context, "compatible" is defined as **"share the same X.Y version"**. If this is not the
 case, an import attempt will fail with a validation error like
 
 ```
@@ -135,6 +135,7 @@ Export version 3.14.15 of pulpcore incompatible with installed version 3.16.3.
 ## Exporting
 
 !!! note
+
     The following examples assume a Pulp instance that includes the `pulp_file` and
     `pulp_rpm` plugins. They also assume that the `http` and `jq` packages are
     installed.
@@ -228,10 +229,10 @@ python -m json.tool /tmp/exports/export-32fd25c7-18b2-42de-b2f8-16f6d90358c3-202
 These export files can now be transferred to a Downstream Pulp instance, and imported.
 
 !!! note
+
     In the event of any failure during an export, the process will clean up any partial
     export-files that may have been generated. Export-files can be very large; this will
     preserve available space in the export-directory.
-
 
 ### Exporting Specific Versions
 
@@ -278,7 +279,7 @@ python -m json.tool pulpcore.app.modelresource.ArtifactResource.json
 
 By default, PulpExport exports all of the content and artifacts of the
 `RepositoryVersions` being exported. A common use-case is to do
-regular transfers of content from an Upstream to a Downstream Pulp instance.  While you
+regular transfers of content from an Upstream to a Downstream Pulp instance. While you
 **can** export everything every time, it is an inefficient use of time and disk storage to
 do so; exporting only the "entities that have changed" is a better choice. You can
 accomplish this by setting the `full` parameter on the `/exports/` invocation to
@@ -317,9 +318,9 @@ http POST :${EXPORTER_HREF}exports/                                         \
 ```
 
 !!! note
+
     **Note** that specifying `start_versions=` without specifying `full=False` (i.e., asking for an incremental export)
     is an error, since it makes no sense to specify a 'starting version' for a full export.
-
 
 ### Exporting Chunked Files
 
@@ -400,12 +401,13 @@ http :/pulp/api/v3/importers/core/pulp/ name="test" repo_mapping:="{\"source\": 
 After the importer is created, a POST request to create an import will trigger the import process.
 
 !!! note
+
     By default, the Pulp import machinery expects destination repositories to be present at the time
     of the import. This can be overridden by passing the `create_repositories=True` field via the
     POST request that will lead Pulp to create missing repositories on the fly.
 
-
 !!! warning
+
     The options `repo_mapping` and `create_repositories` are not compatible with each other. The
     existence of a repository specified in the `repo_mapping` option is tested before the importer
     is initialized. Thus, the repository has to be already created in advance.
@@ -434,9 +436,9 @@ http POST :/pulp/api/v3/importers/core/pulp/f8acba87-0250-4640-b56b-c92597d344b7
 ```
 
 !!! note
+
     The directory containing the file pointed to by `path` or `toc` must be defined in the
     `ALLOWED_IMPORT_PATHS` setting or the import will fail.
-
 
 The command to create an import will return a task that can be used to monitor the import. You can
 also see a history of past imports:
@@ -469,5 +471,5 @@ http POST :/pulp/api/v3/importers/core/pulp/import-check/ \
 require database access or long-running tasks such as verifying checksums. All parameters are optional.
 
 !!! note
-    For `path` and `toc`, if the ALLOWED_IMPORT_PATHS check fails, no further information will be given.
 
+    For `path` and `toc`, if the ALLOWED_IMPORT_PATHS check fails, no further information will be given.
