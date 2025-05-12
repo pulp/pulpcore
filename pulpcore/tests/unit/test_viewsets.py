@@ -33,7 +33,7 @@ class TestGetResource(TestCase):
             "{api_root}repositories/file/file/{pk}/".format(api_root=API_ROOT, pk=repo.pk),
             models.FileRepository,
         )
-        self.assertEquals(repo, resource)
+        self.assertEqual(repo, resource)
 
     def test_multiple_matches(self):
         """
