@@ -8,6 +8,30 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.49.41 (2025-05-13) {: #3.49.41 }
+
+### REST API {: #3.49.41-rest-api }
+
+#### Bugfixes {: #3.49.41-rest-api-bugfix }
+
+- Disable retry logic on the context of content-app on-demand streaming, as we can't recover
+  from any errors after starting the streaming process (chunked transfer).
+  [#5937](https://github.com/pulp/pulpcore/issues/5937)
+
+### Plugin API {: #3.49.41-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.49.41-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.49.41-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.49.40 (2025-05-06) {: #3.49.40 }
 
 ### REST API {: #3.49.40-rest-api }
