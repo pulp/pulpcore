@@ -52,8 +52,16 @@ pulp_type="core.rbac" OR name__icontains=gh OR name__contains="naïve"
 # complexity: 4 = 1 (AND/OR) + 3 (filter expression)
 ```
 
+### Examples
+
 For instance, use the following filter to list sync tasks that did not fail:
 
 ```bash
 http http://localhost:5001/pulp/api/v3/tasks/?q='name__contains=sync AND (NOT state="failed" OR state="completed")'
+```
+
+To filter RPM packages by a set of `build_id` labels use the following:
+
+```bash
+http http://localhost:5001/api/pulp/default/api/v3/content/rpm/packages/?q='pulp_label_select="build_id=6789" OR pulp_label_select="build_id=123"'
 ```
