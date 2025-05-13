@@ -1,2 +1,0 @@
-Disable retry logic on the context of content-app on-demand streaming, as we can't recover
-from any errors after starting the streaming process (chunked transfer).
