@@ -8,6 +8,45 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.78.0 (2025-05-13) {: #3.78.0 }
+
+### REST API {: #3.78.0-rest-api }
+
+#### Features {: #3.78.0-rest-api-feature }
+
+- Added the optional feature to enable uvloop library as a replacement of asyncio eventloop.
+  The feature is activated through the UVLOOP_ENABLED feature flag settings and the 'uvloop' optional dependency.
+  [#6021](https://github.com/pulp/pulpcore/issues/6021)
+
+#### Bugfixes {: #3.78.0-rest-api-bugfix }
+
+- Taught tasks to update the state of associated progress-reports when canceled/failed.
+
+  Added a management-task, `clean-up-progress-reports`, to clean up existing reports.
+  [#3609](https://github.com/pulp/pulpcore/issues/3609)
+- Fixed a server error when listing user roles.
+  [#6330](https://github.com/pulp/pulpcore/issues/6330)
+- On-demand or pull-through content is now immediately cached upon first request.
+  [#6540](https://github.com/pulp/pulpcore/issues/6540)
+
+#### Misc {: #3.78.0-rest-api-misc }
+
+- 
+
+### Plugin API {: #3.78.0-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.78.0-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.78.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.77.1 (2025-05-08) {: #3.77.1 }
 
 ### REST API {: #3.77.1-rest-api }
