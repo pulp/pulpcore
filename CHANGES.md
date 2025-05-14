@@ -17,6 +17,7 @@
 - Disable retry logic on the context of content-app on-demand streaming, as we can't recover
   from any errors after starting the streaming process (chunked transfer).
   [#5937](https://github.com/pulp/pulpcore/issues/5937)
+- Prevent downloader session to be closed when there is a digest validation in on_demand content serving.
 
 ### Plugin API {: #3.63.18-plugin-api }
 
