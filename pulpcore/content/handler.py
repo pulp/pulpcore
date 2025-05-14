@@ -1177,7 +1177,7 @@ class Handler:
             )
             close_tcp_connection(request.transport._sock)
             REMOTE_CONTENT_FETCH_FAILURE_COOLDOWN = settings.REMOTE_CONTENT_FETCH_FAILURE_COOLDOWN
-            log.error(
+            raise RuntimeError(
                 f"Pulp tried streaming {remote_artifact.url!r} to "
                 "the client, but it failed checksum validation.\n\n"
                 "We can't recover from wrong data already sent so we are:\n"
@@ -1190,7 +1190,6 @@ class Handler:
                 "Learn more on <https://pulpproject.org/pulpcore/docs/user/learn/"
                 "on-demand-downloading/#on-demand-and-streamed-limitations>"
             )
-            return response
 
         if content_length := response.headers.get("Content-Length"):
             self._report_served_artifact_size(int(content_length))
