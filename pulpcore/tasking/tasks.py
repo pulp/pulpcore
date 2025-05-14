@@ -127,7 +127,18 @@ def _execute_task(task):
         send_task_notification(task)
     else:
         task.set_completed()
-        _logger.info("Task completed %s in domain: %s", task.pk, domain.name)
+        execution_time = task.finished_at - task.started_at
+        execution_time_us = int(execution_time.total_seconds() * 1_000_000)  # μs
+        _logger.info(
+            "Task completed %s in domain:"
+            " %s, task_type: %s, immediate: %s, deferred: %s, execution_time: %s μs",
+            task.pk,
+            domain.name,
+            task.name,
+            str(task.immediate),
+            str(task.deferred),
+            execution_time_us,
+        )
         send_task_notification(task)
 
 
