@@ -8,6 +8,7 @@ import sys
 import traceback
 import tempfile
 import threading
+import time
 from asgiref.sync import sync_to_async
 from datetime import timedelta
 from gettext import gettext as _
@@ -63,6 +64,7 @@ def _execute_task(task):
     task.set_running()
     domain = get_domain()
     try:
+        start = time.perf_counter_ns()
         _logger.info(
             "Starting task id: %s in domain: %s, task_type: %s, immediate: %s, deferred: %s",
             task.pk,
@@ -126,8 +128,18 @@ def _execute_task(task):
         _logger.info("\n".join(traceback.format_list(traceback.extract_tb(tb))))
         send_task_notification(task)
     else:
+        finish = time.perf_counter_ns()
+        execution_time = (finish - start) / 1000000  # ns to ms
         task.set_completed()
-        _logger.info("Task completed %s in domain: %s", task.pk, domain.name)
+        _logger.info(
+            "Task completed %s in domain: %s, task_type: %s, immediate: %s, deferred: %s, execution_time: %s ms",  # noqa: 501
+            task.pk,
+            domain.name,
+            task.name,
+            str(task.immediate),
+            str(task.deferred),
+            execution_time,
+        )
         send_task_notification(task)
 
 
