@@ -43,7 +43,7 @@ dependencies = [
   "djangorestframework>=3.14.0,<=3.16.0",
   "djangorestframework-queryfields>=1.0,<=1.1.0",
   "drf-access-policy>=1.1.2,<1.5.1",
-  "drf-nested-routers>=0.93.4,<=0.94.1",
+  "drf-nested-routers>=0.93.4,<=0.94.2",
   "drf-spectacular==0.27.2",  # We monkeypatch this so we need a very narrow requirement string
   "dynaconf>=3.2.5,<3.3.0",
   "gunicorn>=20.1,<23.1.0",
