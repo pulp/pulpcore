@@ -79,7 +79,7 @@ async def _repair_ca(content_artifact, repaired=None):
         try:
             dl_result = await downloader.run()
         except Exception as e:
-            log.warn(_("Redownload failed from '{}': {}.").format(remote_artifact.url, str(e)))
+            log.warning(_("Redownload failed from '{}': {}.").format(remote_artifact.url, str(e)))
         else:
             if dl_result.artifact_attributes["sha256"] == content_artifact.artifact.sha256:
                 with open(dl_result.path, "rb") as src:
@@ -138,7 +138,7 @@ async def _repair_artifacts_for_content(subset=None, verify_checksums=True):
                 valid = await loop.run_in_executor(None, storage.exists, artifact.file.name)
                 if not valid:
                     await missing.aincrement()
-                    log.warn(_("Missing file for {}").format(artifact))
+                    log.warning(_("Missing file for {}").format(artifact))
                 elif verify_checksums:
                     # default ThreadPoolExecutor uses num cores x 5 threads. Since we're doing
                     # such long and sequential reads, using too many threads might hurt more
@@ -151,7 +151,7 @@ async def _repair_artifacts_for_content(subset=None, verify_checksums=True):
                     )
                     if not valid:
                         await corrupted.aincrement()
-                        log.warn(_("Digest mismatch for {}").format(artifact))
+                        log.warning(_("Digest mismatch for {}").format(artifact))
 
                 if not valid:
                     if len(pending) >= 5:  # Limit the number of concurrent repair tasks

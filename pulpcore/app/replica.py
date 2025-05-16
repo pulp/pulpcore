@@ -27,7 +27,7 @@ class ReplicaContext(PulpContext):
         if err:
             self.err_buf += message
             if nl:
-                _logger.warn("{}", self.err_buf)
+                _logger.warning("{}", self.err_buf)
                 self.err_buf = ""
         else:
             self.out_buf += message

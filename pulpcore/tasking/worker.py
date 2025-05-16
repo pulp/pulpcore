@@ -309,7 +309,7 @@ class PulpcoreWorker:
                 # But during at least one specific upgrade this situation can emerge.
                 # In this case, we can assume that the old algorithm was employed to identify the
                 # task as unblocked, and we just rectify the situation here.
-                _logger.warn(
+                _logger.warning(
                     "Running task %s was not previously marked unblocked. Fixing.", task.pk
                 )
                 task.unblock()
