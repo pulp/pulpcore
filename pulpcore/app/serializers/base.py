@@ -112,7 +112,7 @@ class _DetailFieldMixin(HrefPrnFieldMixin):
             if view_name_pattern:
                 view_name = _MatchingRegexViewName(view_name_pattern)
             else:
-                log.warn(
+                log.warning(
                     _(
                         "Please provide either 'view_name' or 'view_name_pattern' for {} on {}."
                     ).format(self.__class__.__name__, traceback.extract_stack()[-4][2])

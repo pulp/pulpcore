@@ -109,7 +109,7 @@ class Command(BaseCommand):
                         repo_path = os.path.join(options["dest"], distribution.base_path)
                         to_export.append((repo_path, publication))
                     except ObjectDoesNotExist:
-                        logging.warn(
+                        logging.warning(
                             "No publication found for the repo published at '{}': skipping".format(
                                 distribution.base_path
                             )
