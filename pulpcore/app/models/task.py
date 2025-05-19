@@ -24,6 +24,7 @@ from pulpcore.app.models.fields import EncryptedJSONField
 from pulpcore.constants import TASK_CHOICES, TASK_INCOMPLETE_STATES, TASK_STATES
 from pulpcore.exceptions import AdvisoryLockError, exception_to_dict
 from pulpcore.app.util import get_domain_pk, current_task
+from pulpcore.app.loggers import deprecation_logger
 
 _logger = logging.getLogger(__name__)
 
@@ -378,6 +379,10 @@ class TaskGroup(BaseModel):
         Set 'all_tasks_dispatched' to True so that API users can know that there are no
         tasks in the group yet to be created.
         """
+        # "All tasks dispatched" cannot be relied on.
+        deprecation_logger.warning(
+            "TaskGroup finish is deprecated and scheduled for removal in Pulp 4."
+        )
         self.all_tasks_dispatched = True
         self.save()
 

@@ -97,10 +97,6 @@ def sync(self, request, pk):
     return OperationPostponedResponse(result, request)
 ```
 
-If a "task_group" is provided as an optional keyword argument, then the deployed task will be
-automatically added to the task group. Once done spawning new tasks for a given task group,
-you should call `.finish()` on the task group object.
-
 For more details about the reservation system and task groups, see `writing-tasks`. and
 `pulpcore.plugin.models.TaskGroup`.
 
@@ -137,4 +133,3 @@ available as `self.context` in the Serializer.
 !!! note
     Context passed from the ViewSet to the Task must be easily serializable. i.e. one cannot
     return the request from `get_deferred_context`.
-

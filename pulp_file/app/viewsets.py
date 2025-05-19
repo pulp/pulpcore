@@ -681,6 +681,4 @@ class FileAlternateContentSourceViewSet(AlternateContentSourceViewSet, RolesMixi
                 },
             )
 
-        # Update TaskGroup that all child task are dispatched
-        task_group.finish()
         return TaskGroupOperationResponse(task_group, request)

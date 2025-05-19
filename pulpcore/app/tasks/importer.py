@@ -558,5 +558,3 @@ def pulp_import(importer_pk, path, toc, create_repositories):
                     ),
                     task_group=task_group,
                 )
-
-    task_group.finish()
