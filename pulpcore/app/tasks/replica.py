@@ -112,7 +112,6 @@ def replicate_distributions(server_pk):
         exclusive_resources=[server],
         args=[server.pk],
     )
-    task_group.finish()
 
 
 def finalize_replication(server_pk):

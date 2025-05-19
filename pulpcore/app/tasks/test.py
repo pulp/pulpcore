@@ -32,4 +32,3 @@ def dummy_group_task(inbetween=3, intervals=None):
     for interval in intervals:
         dispatch(sleep, args=(interval,), task_group=task_group)
         time.sleep(inbetween)
-    task_group.finish()
