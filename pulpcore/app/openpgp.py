@@ -289,15 +289,15 @@ def analyze_signature(data, pubkey, signed_packet_type, signed_packet):
             if version == 4:
                 hash_payload = b"\x99" + len(signed_packet).to_bytes(2, "big") + signed_packet
             else:  # version == 5
-                hash_payload = b"\x9A" + len(signed_packet).to_bytes(4, "big") + signed_packet
+                hash_payload = b"\x9a" + len(signed_packet).to_bytes(4, "big") + signed_packet
         elif signature_type in [0x10, 0x11, 0x12, 0x13, 0x16, 0x30]:
             # 0x10 - 0x13 Certification of a user id or attribute
             # 0x16 Attested Key Signature
             # 0x30 Certification Revocation Signature
             if signed_packet_type == 13:
-                hash_payload = b"\xB4" + len(signed_packet).to_bytes(4, "big") + signed_packet
+                hash_payload = b"\xb4" + len(signed_packet).to_bytes(4, "big") + signed_packet
             elif signed_packet_type == 17:
-                hash_payload = b"\xD1" + len(signed_packet).to_bytes(4, "big") + signed_packet
+                hash_payload = b"\xd1" + len(signed_packet).to_bytes(4, "big") + signed_packet
             else:
                 raise ValueError("Out of band user ID or attribute signature.")
         elif signature_type in [0x1F, 0x20, 0x30]:
@@ -318,18 +318,18 @@ def analyze_signature(data, pubkey, signed_packet_type, signed_packet):
         if version == 4:
             h.update(b"\x99" + len(pubkey).to_bytes(2, "big") + pubkey)
         else:  # version == 5
-            h.update(b"\x9A" + len(pubkey).to_bytes(4, "big") + pubkey)
+            h.update(b"\x9a" + len(pubkey).to_bytes(4, "big") + pubkey)
         h.update(hash_payload)
         if version == 4:
             h.update(
                 data[: 6 + hashed_size]
-                + b"\x04\xFF"
+                + b"\x04\xff"
                 + ((6 + hashed_size) % (1 << 32)).to_bytes(4, "big")
             )
         else:  # version == 5
             h.update(
                 data[: 6 + hashed_size]
-                + b"\x05\xFF"
+                + b"\x05\xff"
                 + ((6 + hashed_size) % (1 << 64)).to_bytes(8, "big")
             )
         if not h.digest().startswith(canary):

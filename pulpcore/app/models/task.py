@@ -4,7 +4,6 @@ Django models related to the Tasking system
 
 import logging
 import traceback
-from contextlib import suppress
 from datetime import timedelta
 from gettext import gettext as _
 
@@ -214,14 +213,7 @@ class Task(BaseModel, AutoAddObjPermsMixin):
             self.state = TASK_STATES.RUNNING
             self.started_at = started_at
         else:
-            with suppress(AttributeError):
-                del self.state
-            with suppress(AttributeError):
-                del self.started_at
-            with suppress(AttributeError):
-                del self.finished_at
-            with suppress(AttributeError):
-                del self.error
+            self.refresh_from_db()
             raise RuntimeError(
                 _("Attempt to set not waiting task {} to running from '{}'.").format(
                     self.pk, self.state
@@ -245,14 +237,7 @@ class Task(BaseModel, AutoAddObjPermsMixin):
             self.state = TASK_STATES.COMPLETED
             self.finished_at = finished_at
         else:
-            with suppress(AttributeError):
-                del self.state
-            with suppress(AttributeError):
-                del self.started_at
-            with suppress(AttributeError):
-                del self.finished_at
-            with suppress(AttributeError):
-                del self.error
+            self.refresh_from_db()
             # If the user requested to cancel this task while the worker finished it, we leave it
             # as it is, but accept this is not an error condition.
             if self.state != TASK_STATES.CANCELING:
@@ -287,14 +272,7 @@ class Task(BaseModel, AutoAddObjPermsMixin):
             self.finished_at = finished_at
             self.error = error
         else:
-            with suppress(AttributeError):
-                del self.state
-            with suppress(AttributeError):
-                del self.started_at
-            with suppress(AttributeError):
-                del self.finished_at
-            with suppress(AttributeError):
-                del self.error
+            self.refresh_from_db()
             raise RuntimeError(
                 _("Attempt to set not running task {} to failed from '{}'.").format(
                     self.pk, self.state
@@ -314,14 +292,7 @@ class Task(BaseModel, AutoAddObjPermsMixin):
         if rows == 1:
             self.state = TASK_STATES.CANCELING
         else:
-            with suppress(AttributeError):
-                del self.state
-            with suppress(AttributeError):
-                del self.started_at
-            with suppress(AttributeError):
-                del self.finished_at
-            with suppress(AttributeError):
-                del self.error
+            self.refresh_from_db()
             raise RuntimeError(
                 _("Attempt to set not incomplete task {} to canceling from '{}'.").format(
                     self.pk, self.state
@@ -349,14 +320,7 @@ class Task(BaseModel, AutoAddObjPermsMixin):
             if reason:
                 self.error = task_data["error"]
         else:
-            with suppress(AttributeError):
-                del self.state
-            with suppress(AttributeError):
-                del self.started_at
-            with suppress(AttributeError):
-                del self.finished_at
-            with suppress(AttributeError):
-                del self.error
+            self.refresh_from_db()
             raise RuntimeError(
                 _("Attempt to set not canceling task {} to canceled from '{}'.").format(
                     self.pk, self.state
@@ -371,24 +335,10 @@ class Task(BaseModel, AutoAddObjPermsMixin):
         if rows == 1:
             self.unblocked_at = unblocked_at
         else:
-            with suppress(AttributeError):
-                del self.unblocked_at
-
-    # Example taken from here:
-    # https://docs.djangoproject.com/en/3.2/ref/models/instances/#refreshing-objects-from-database
-    def refresh_from_db(self, using=None, fields=None, **kwargs):
-        # fields contains the name of the deferred field to be
-        # loaded.
-        if fields is not None:
-            fields = set(fields)
-            deferred_fields = {
-                field for field in self.get_deferred_fields() if not field.startswith("enc_")
-            }
-            # If any state related deferred field is going to be loaded
-            if fields.intersection(deferred_fields):
-                # then load all of them
-                fields = fields.union(deferred_fields)
-        super().refresh_from_db(using, fields, **kwargs)
+            self.refresh_from_db()
+            raise RuntimeError(
+                _("Falied to set task {} unblocked in state '{}'.").format(self.pk, self.state)
+            )
 
     class Meta:
         indexes = [
