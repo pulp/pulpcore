@@ -153,24 +153,31 @@ class Task(BaseModel, AutoAddObjPermsMixin):
     immediate = models.BooleanField(default=False, null=True)
     deferred = models.BooleanField(default=True, null=True)
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._lock = None
+
     def __str__(self):
         return "Task: {name} [{state}]".format(name=self.name, state=self.state)
 
     def __enter__(self):
-        self.lock = _uuid_to_advisory_lock(self.pk.int)
+        assert self._lock is None
+        self._lock = _uuid_to_advisory_lock(self.pk.int)
         with connection.cursor() as cursor:
-            cursor.execute("SELECT pg_try_advisory_lock(%s)", [self.lock])
+            cursor.execute("SELECT pg_try_advisory_lock(%s)", [self._lock])
             acquired = cursor.fetchone()[0]
         if not acquired:
             raise AdvisoryLockError("Could not acquire lock.")
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
+        assert self._lock is not None
         with connection.cursor() as cursor:
-            cursor.execute("SELECT pg_advisory_unlock(%s)", [self.lock])
+            cursor.execute("SELECT pg_advisory_unlock(%s)", [self._lock])
             released = cursor.fetchone()[0]
         if not released:
             raise RuntimeError("Lock not held.")
+        self._lock = None
 
     @staticmethod
     def current_id():
@@ -206,6 +213,8 @@ class Task(BaseModel, AutoAddObjPermsMixin):
 
         This updates the :attr:`started_at` and sets the :attr:`state` to :attr:`RUNNING`.
         """
+        assert self._lock is not None, "Called without the tasks context manager."
+
         started_at = timezone.now()
         rows = Task.objects.filter(pk=self.pk, state=TASK_STATES.WAITING).update(
             state=TASK_STATES.RUNNING,
@@ -228,6 +237,8 @@ class Task(BaseModel, AutoAddObjPermsMixin):
 
         This updates the :attr:`finished_at` and sets the :attr:`state` to :attr:`COMPLETED`.
         """
+        assert self._lock is not None, "Called without the tasks context manager."
+
         # Only set the state to finished if it's running. This is important for when the task has
         # been canceled, so we don't move the task from canceled to finished.
         finished_at = timezone.now()
@@ -261,6 +272,8 @@ class Task(BaseModel, AutoAddObjPermsMixin):
             exc (Exception): The exception raised by the task.
             tb (traceback): Traceback instance for the current exception.
         """
+        assert self._lock is not None, "Called without the tasks context manager."
+
         finished_at = timezone.now()
         tb_str = "".join(traceback.format_tb(tb))
         error = exception_to_dict(exc, tb_str)
@@ -307,6 +320,8 @@ class Task(BaseModel, AutoAddObjPermsMixin):
         """
         # Make sure this function was called with a proper final state
         assert final_state in [TASK_STATES.CANCELED, TASK_STATES.FAILED]
+        assert self._lock is not None, "Called without the tasks context manager."
+
         finished_at = timezone.now()
         task_data = {}
         if reason:

@@ -25,16 +25,19 @@ def test_report_state_changes(to_state, use_canceled):
         # Two ways to fail a task - set_failed and set_canceled("failed")
         if use_canceled:
             task.set_cancelling()
-            task.set_canceled(TASK_STATES.FAILED)
+            with task:
+                task.set_canceled(TASK_STATES.FAILED)
         else:
             try:
                 raise ValueError("test")
             except ValueError:
                 exc_type, exc, tb = sys.exc_info()
-                task.set_failed(exc, tb)
+                with task:
+                    task.set_failed(exc, tb)
     elif TASK_STATES.CANCELED == to_state:
         task.set_canceling()
-        task.set_canceled()
+        with task:
+            task.set_canceled()
 
     for state in vars(TASK_STATES):
         report = ProgressReport.objects.get(pk=reports[state].pulp_id)
