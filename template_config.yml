@@ -37,7 +37,8 @@ plugins:
   name: pulpcore
 post_job_template: null
 pre_job_template: null
-pulp_env: {}
+pulp_env:
+  PULP_CA_BUNDLE: /etc/pulp/certs/pulp_webserver.crt
 pulp_env_azure: {}
 pulp_env_gcp: {}
 pulp_env_s3: {}
@@ -79,4 +80,3 @@ test_reroute: true
 test_s3: true
 test_storages_compat_layer: false
 use_issue_template: true
-
