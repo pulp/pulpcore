@@ -8,6 +8,29 @@
 
 [//]: # (towncrier release notes start)
 
+## 3.79.0 (2025-05-20) {: #3.79.0 }
+
+### REST API {: #3.79.0-rest-api }
+
+#### Features {: #3.79.0-rest-api-feature }
+
+- Added the `execution_time` as microseconds and other task related information on the finished task log entry.
+  [#6569](https://github.com/pulp/pulpcore/issues/6569)
+
+### Plugin API {: #3.79.0-plugin-api }
+
+No significant changes.
+
+### Pulp File {: #3.79.0-pulp-file }
+
+No significant changes.
+
+### Pulp Cert Guard {: #3.79.0-pulp-cert-guard }
+
+No significant changes.
+
+---
+
 ## 3.78.0 (2025-05-13) {: #3.78.0 }
 
 ### REST API {: #3.78.0-rest-api }
