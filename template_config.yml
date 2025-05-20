@@ -37,7 +37,8 @@ plugins:
   name: pulpcore
 post_job_template: null
 pre_job_template: null
-pulp_env: {}
+pulp_env:
+  PULP_CA_BUNDLE: /etc/pulp/certs/pulp_webserver.crt
 pulp_env_azure:
   otel_bsp_max_export_batch_size: 1
   otel_bsp_max_queue_size: 1
@@ -85,4 +86,3 @@ test_reroute: true
 test_s3: true
 test_storages_compat_layer: false
 use_issue_template: true
-
