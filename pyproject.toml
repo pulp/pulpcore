@@ -58,7 +58,7 @@ dependencies = [
   "protobuf>=4.21.1,<6.0",
   "pulp-glue>=0.18.0,<0.33",
   "pygtrie>=2.5,<=2.5.0",
-  "psycopg[binary]>=3.1.8,<=3.2.5",
+  "psycopg[binary]>=3.1.8,<3.3",  # semver, not explicitely stated, but mentioned on multiple changes
   "pyparsing>=3.1.0,<=3.2.1",
   "python-gnupg>=0.5,<=0.5.4",
   "PyYAML>=5.1.1,<=6.0.2",
