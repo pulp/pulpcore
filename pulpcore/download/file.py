@@ -8,15 +8,13 @@ from .base import BaseDownloader, DownloadResult
 
 
 class FileDownloader(BaseDownloader):
-    """
-    A downloader for downloading files from the filesystem.
+    """A downloader for downloading files from the filesystem.
 
     It provides digest and size validation along with computation of the digests needed to save the
     file as an Artifact. It writes a new file to the disk and the return path is included in the
     [pulpcore.plugin.download.DownloadResult][].
 
-    This downloader has all of the attributes of
-    [pulpcore.plugin.download.BaseDownloader][]
+    This downloader has all of the attributes of [pulpcore.plugin.download.BaseDownloader][]
     """
 
     def __init__(self, url, *args, **kwargs):
@@ -40,8 +38,7 @@ class FileDownloader(BaseDownloader):
         super().__init__(url, *args, **kwargs)
 
     async def _run(self, extra_data=None):
-        """
-        Read, validate, and compute digests on the `url`. This is a coroutine.
+        """Read, validate, and compute digests on the `url`. This is a coroutine.
 
         This method provides the same return object type and documented in
         :meth:`~pulpcore.plugin.download.BaseDownloader._run`.

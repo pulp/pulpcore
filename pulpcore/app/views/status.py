@@ -35,9 +35,7 @@ def _disk_usage():
 
 
 class StatusView(APIView):
-    """
-    Returns status information about the application
-    """
+    """Returns status information about the application."""
 
     # allow anyone to access the status api
     authentication_classes = []
@@ -49,8 +47,7 @@ class StatusView(APIView):
         responses={200: StatusSerializer},
     )
     def get(self, request):
-        """
-        Returns status and app information about Pulp.
+        """Returns status and app information about Pulp.
 
         Information includes:
          * version of pulpcore and loaded pulp plugins
@@ -106,8 +103,7 @@ class StatusView(APIView):
 
     @staticmethod
     def _get_db_conn_status():
-        """
-        Returns True if pulp is connected to the database
+        """Returns True if pulp is connected to the database.
 
         Returns:
             bool: True if there's a db connection. False otherwise.
@@ -122,8 +118,7 @@ class StatusView(APIView):
 
     @staticmethod
     def _get_redis_conn_status():
-        """
-        Returns True if pulp can connect to Redis
+        """Returns True if pulp can connect to Redis.
 
         Returns:
             bool: True if pulp can connect to Redis. False otherwise.
@@ -139,9 +134,7 @@ class StatusView(APIView):
 
 
 class LivezView(APIView):
-    """
-    Liveness Probe for the REST API.
-    """
+    """Liveness Probe for the REST API."""
 
     # allow anyone to access the liveness api
     authentication_classes = []
@@ -153,7 +146,5 @@ class LivezView(APIView):
         responses={200: None},
     )
     def get(self, request):
-        """
-        Returns 200 OK when API is alive.
-        """
+        """Returns 200 OK when API is alive."""
         return Response()

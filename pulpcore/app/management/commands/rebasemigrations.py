@@ -7,9 +7,7 @@ from django.core.management import BaseCommand
 
 
 class Command(BaseCommand):
-    """
-    Django management command to adjust migration dependencies to rebase on another plugin.
-    """
+    """Django management command to adjust migration dependencies to rebase on another plugin."""
 
     help = _("Adjust migration dependencies to rebase on another plugin.")
 

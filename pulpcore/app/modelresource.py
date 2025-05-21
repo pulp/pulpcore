@@ -23,13 +23,11 @@ class ArtifactResource(QueryModelResource):
     """Resource for import/export of artifacts."""
 
     def before_import_row(self, row, **kwargs):
-        """
-        Sets digests to None if they are blank strings.
+        """Sets digests to None if they are blank strings.
 
         Args:
             row (tablib.Dataset row): incoming import-row representing a single Variant.
             kwargs: args passed along from the import() call.
-
         """
         super().before_import_row(row, **kwargs)
 
@@ -73,15 +71,14 @@ class RepositoryResource(QueryModelResource):
 
 
 class ContentArtifactResource(QueryModelResource):
-    """
-    Handles import/export of the ContentArtifact model.
+    """Handles import/export of the ContentArtifact model.
 
     ContentArtifact is different from other import-export entities because it has no 'natural key'
     other than a pulp_id, which aren't shared across instances. We do some magic to link up
     ContentArtifacts to their matching (already-imported) Content.
 
-    Some plugin-models have sub-repositories. We take advantage of the content-mapping
-    machinery to account for those contentartifacts as well.
+    Some plugin-models have sub-repositories. We take advantage of the content-mapping machinery to
+    account for those contentartifacts as well.
     """
 
     artifact = fields.Field(
@@ -96,8 +93,7 @@ class ContentArtifactResource(QueryModelResource):
         super().__init__(repo_version)
 
     def before_import_row(self, row, **kwargs):
-        """
-        Fixes the content-ptr of an incoming content-artifact row at import time.
+        """Fixes the content-ptr of an incoming content-artifact row at import time.
 
         Finds the 'original uuid' of the Content for this row, looks it up as the
         'upstream_id' of imported Content, and then replaces the Content-pk with its

@@ -39,8 +39,7 @@ class DomainViewSet(
     AsyncRemoveMixin,
     LabelsMixin,
 ):
-    """
-    ViewSet for Domain.
+    """ViewSet for Domain.
 
     NOTE: This API endpoint is in "tech preview" and subject to change
     """
@@ -138,8 +137,7 @@ class DomainViewSet(
     )
     @action(detail=False, methods=["post"])
     def migrate(self, request, **kwargs):
-        """
-        Migrate the domain's storage backend to a new one.
+        """Migrate the domain's storage backend to a new one.
 
         Launches a background task to copy the domain's artifacts over to the supplied storage
         backend. Then updates the domain's storage settings to the new storage backend. This task
@@ -147,8 +145,8 @@ class DomainViewSet(
 
         **IMPORTANT** This task will block all other tasks within the domain until the migration is
         completed, essentially putting the domain into a read only state. Content will still be
-        served from the old storage backend until the migration has completed, so don't remove
-        the old backend until then. Note, this endpoint is not allowed on the default domain.
+        served from the old storage backend until the migration has completed, so don't remove the
+        old backend until then. Note, this endpoint is not allowed on the default domain.
 
         This feature is in Tech Preview and is subject to future change and thus not guaranteed to
         be backwards compatible.

@@ -8,9 +8,7 @@ User = get_user_model()
 
 
 class Command(BaseCommand):
-    """
-    Django management command for resetting the password of the 'admin' user in Pulp.
-    """
+    """Django management command for resetting the password of the 'admin' user in Pulp."""
 
     help = 'Resets "admin" user\'s password.'
 

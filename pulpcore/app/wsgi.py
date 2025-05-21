@@ -1,5 +1,4 @@
-"""
-WSGI config for pulp project.
+"""WSGI config for pulp project.
 
 It exposes the WSGI callable as a module-level variable named ``application``.
 

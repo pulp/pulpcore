@@ -1,6 +1,4 @@
-"""
-Tests task-purge functionality.
-"""
+"""Tests task-purge functionality."""
 
 from datetime import datetime, timedelta, timezone
 

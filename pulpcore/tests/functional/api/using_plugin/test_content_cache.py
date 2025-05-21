@@ -29,7 +29,7 @@ def test_full_workflow(
         pytest.xfail("Could not connect to the Redis server")
 
     def _check_cache(url):
-        """Helper to check if cache miss or hit"""
+        """Helper to check if cache miss or hit."""
         r = get_from_url(url)
         if r.history:
             r = r.history[0]

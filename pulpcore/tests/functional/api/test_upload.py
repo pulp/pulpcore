@@ -50,9 +50,8 @@ def pulpcore_upload_chunks(
     artifacts = []
 
     def _upload_chunks(size, chunks, sha256, include_chunk_sha256=False):
-        """
-        Chunks is a list of tuples in the form of (chunk_filename, "bytes-ranges", optional_sha256).
-        """
+        """Chunks is a list of tuples in the form of (chunk_filename, "bytes-ranges",
+        optional_sha256)."""
         upload = gen_object_with_cleanup(pulpcore_bindings.UploadsApi, {"size": size})
 
         for data in chunks:

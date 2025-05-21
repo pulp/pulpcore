@@ -75,9 +75,7 @@ class PublicationFilter(BaseFilterSet):
 
 
 class BasePublicationViewSet(NamedModelViewSet):
-    """
-    A base class for any publication viewset.
-    """
+    """A base class for any publication viewset."""
 
     endpoint_name = "publications"
     queryset = Publication.objects.filter(complete=True)
@@ -133,8 +131,9 @@ class PublicationViewSet(
     mixins.ListModelMixin,
     mixins.DestroyModelMixin,
 ):
-    """
-    Provides read, list and destroy methods for publications. Plugins should inherit from this.
+    """Provides read, list and destroy methods for publications.
+
+    Plugins should inherit from this.
     """
 
 
@@ -184,14 +183,12 @@ class ContentGuardViewSet(
     mixins.RetrieveModelMixin,
     mixins.ListModelMixin,
 ):
-    """
-    A viewset for contentguards.
-    """
+    """A viewset for contentguards."""
 
 
 class RBACContentGuardViewSet(ContentGuardViewSet, RolesMixin):
-    """
-    Viewset for creating contentguards that use RBAC to protect content.
+    """Viewset for creating contentguards that use RBAC to protect content.
+
     Has add and remove actions for managing permission for users and groups to download content
     protected by this guard.
     """
@@ -269,9 +266,7 @@ class RBACContentGuardViewSet(ContentGuardViewSet, RolesMixin):
 
 
 class ContentRedirectContentGuardViewSet(ContentGuardViewSet, RolesMixin):
-    """
-    Content guard to protect preauthenticated redirects to the content app.
-    """
+    """Content guard to protect preauthenticated redirects to the content app."""
 
     endpoint_name = "content_redirect"
     queryset = ContentRedirectContentGuard.objects.all()
@@ -344,9 +339,7 @@ class ContentRedirectContentGuardViewSet(ContentGuardViewSet, RolesMixin):
 
 
 class HeaderContentGuardViewSet(ContentGuardViewSet, RolesMixin):
-    """
-    Content guard to protect the content app using a specific header.
-    """
+    """Content guard to protect the content app using a specific header."""
 
     endpoint_name = "header"
     queryset = HeaderContentGuard.objects.all()
@@ -414,9 +407,7 @@ class HeaderContentGuardViewSet(ContentGuardViewSet, RolesMixin):
 
 
 class CompositeContentGuardViewSet(ContentGuardViewSet, RolesMixin):
-    """
-    Content guard that queries a list-of content-guards for access permissions.
-    """
+    """Content guard that queries a list-of content-guards for access permissions."""
 
     endpoint_name = "composite"
     queryset = CompositeContentGuard.objects.all()
@@ -503,9 +494,7 @@ class DistributionFilter(BaseFilterSet):
 
 
 class BaseDistributionViewSet(NamedModelViewSet):
-    """
-    Provides base viewset for Distributions.
-    """
+    """Provides base viewset for Distributions."""
 
     endpoint_name = "distributions"
     queryset = Distribution.objects.all()
@@ -554,9 +543,7 @@ class ReadOnlyDistributionViewSet(
     mixins.RetrieveModelMixin,
     mixins.ListModelMixin,
 ):
-    """
-    Provides read and list methods for Distributions.
-    """
+    """Provides read and list methods for Distributions."""
 
 
 class DistributionViewSet(
@@ -566,17 +553,13 @@ class DistributionViewSet(
     AsyncUpdateMixin,
     LabelsMixin,
 ):
-    """
-    Provides read and list methods and also provides asynchronous CUD methods to dispatch tasks
+    """Provides read and list methods and also provides asynchronous CUD methods to dispatch tasks
     with reservation that lock all Distributions preventing race conditions during base_path
-    checking.
-    """
+    checking."""
 
 
 class ArtifactDistributionViewSet(ReadOnlyDistributionViewSet):
-    """
-    ViewSet for ArtifactDistribution.
-    """
+    """ViewSet for ArtifactDistribution."""
 
     endpoint_name = "artifacts"
     queryset = ArtifactDistribution.objects.all()

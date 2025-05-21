@@ -26,8 +26,7 @@ TASK_KEY = "core.Task"
 
 
 def _details_reporting(current_reports, current_details, totals_pb):
-    """
-    Create and update progress-reports for each detail-key returned from a delete() call.
+    """Create and update progress-reports for each detail-key returned from a delete() call.
 
     We don't know how many entities will be deleted via cascade-delete until we're all done.
 
@@ -63,8 +62,8 @@ def _details_reporting(current_reports, current_details, totals_pb):
 # Versions of this task up until at least 3.74 may not know about the user_pk argument.
 # We need to handle them accordingly.
 def purge(finished_before=None, states=None, **kwargs):
-    """
-    This task purges from the database records of tasks which finished prior to the specified time.
+    """This task purges from the database records of tasks which finished prior to the specified
+    time.
 
     It will remove only tasks that are 'deletable' by the current-user (admin-users own All The
     Things, so admins can delete all tasks). It will only delete tasks within the domain this task
@@ -80,7 +79,6 @@ def purge(finished_before=None, states=None, **kwargs):
     Args:
         finished_before (Optional[DateTime]): Earliest finished-time to **NOT** purge.
         states (Optional[List[str]]): List of task-states we want to purge.
-
     """
     if finished_before is None:
         assert settings.TASK_PROTECTION_TIME > 0

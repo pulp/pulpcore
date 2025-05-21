@@ -20,12 +20,11 @@ def _check_allowed_import_path(a_path):
 
 
 def _validate_file(in_param, data):
-    """
-    Returns a (is-valid, msgs[]) tuple describing all problems found with data[in_param]
+    """Returns a (is-valid, msgs[]) tuple describing all problems found with data[in_param]
 
     We check for a number of things, attempting to return all the errors we can find. We don't want
-    to give out information for files in arbitrary locations on the filesystem; if the check
-    for ALLOWED_IMPORT_PATHS fails, we report that and ignore any other problems.
+    to give out information for files in arbitrary locations on the filesystem; if the check for
+    ALLOWED_IMPORT_PATHS fails, we report that and ignore any other problems.
 
     If the directory containing the base-file doesn't exist, or isn't readable, or the specified
     file doesn't exist, report and return.
@@ -74,9 +73,7 @@ def _validate_file(in_param, data):
 
 
 class PulpImporterImportCheckView(APIView):
-    """
-    Returns validity of proposed parameters for a PulpImport call.
-    """
+    """Returns validity of proposed parameters for a PulpImport call."""
 
     @extend_schema(
         summary="Validate the parameters to be used for a PulpImport call",
@@ -85,8 +82,7 @@ class PulpImporterImportCheckView(APIView):
         responses={200: PulpImportCheckResponseSerializer},
     )
     def post(self, request, format=None):
-        """
-        Evaluates validity of proposed PulpImport parameters 'toc', 'path', and 'repo_mapping'.
+        """Evaluates validity of proposed PulpImport parameters 'toc', 'path', and 'repo_mapping'.
 
         * Checks that toc, path are in ALLOWED_IMPORT_PATHS
         * if ALLOWED:

@@ -2,7 +2,6 @@ import pytest
 import uuid
 import json
 
-
 """
 To run these tests:
 1. Copy ../assets/api_root_rewrite.conf to /etc/nginx/pulp in your Pulp container

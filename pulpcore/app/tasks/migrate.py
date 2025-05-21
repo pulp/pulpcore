@@ -11,8 +11,8 @@ _logger = logging.getLogger(__name__)
 
 
 def migrate_backend(data):
-    """
-    Copy the artifacts from the current storage backend to a new one. Then update backend settings.
+    """Copy the artifacts from the current storage backend to a new one. Then update backend
+    settings.
 
     Args:
         data (dict): validated data of the new storage backend settings

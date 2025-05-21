@@ -3,9 +3,7 @@ from gettext import gettext as _
 
 
 class PulpException(Exception):
-    """
-    Base exception class for Pulp.
-    """
+    """Base exception class for Pulp."""
 
     http_status_code = http.client.INTERNAL_SERVER_ERROR
 
@@ -19,8 +17,7 @@ class PulpException(Exception):
         self.error_code = error_code
 
     def __str__(self):
-        """
-        Returns the string representation of the exception.
+        """Returns the string representation of the exception.
 
         Each concrete class that inherits from [pulpcore.server.exception.PulpException][] is
         expected to implement it's own __str__() method. The return value is used by Pulp when
@@ -30,24 +27,18 @@ class PulpException(Exception):
 
 
 def exception_to_dict(exc, traceback=None):
-    """
-    Return a dictionary representation of an Exception.
+    """Return a dictionary representation of an Exception.
 
-    :param exc: Exception that is being serialized
-    :type exc: Exception
-    :param traceback: String representation of a traceback generated when the exception occurred.
-    :type traceback: str
+    :param exc: Exception that is being serialized :type exc: Exception :param traceback: String
+    representation of a traceback generated when the exception occurred. :type traceback: str
 
-    :return: dictionary representing the Exception
-    :rtype: dict
+    :return: dictionary representing the Exception :rtype: dict
     """
     return {"description": str(exc), "traceback": traceback}
 
 
 class ResourceImmutableError(PulpException):
-    """
-    Exceptions that are raised due to trying to update an immutable resource
-    """
+    """Exceptions that are raised due to trying to update an immutable resource."""
 
     def __init__(self, model):
         """
@@ -69,9 +60,7 @@ class AdvisoryLockError(Exception):
 
 
 class TimeoutException(PulpException):
-    """
-    Exception to signal timeout error.
-    """
+    """Exception to signal timeout error."""
 
     def __init__(self, url):
         """
@@ -88,10 +77,8 @@ class TimeoutException(PulpException):
 
 
 class DomainProtectedError(PulpException):
-    """
-    Exception to signal that a domain the user is trying to delete still contains
-    repositories with content.
-    """
+    """Exception to signal that a domain the user is trying to delete still contains repositories
+    with content."""
 
     def __init__(self):
         super().__init__("PLP0007")

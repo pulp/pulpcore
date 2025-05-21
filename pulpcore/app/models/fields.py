@@ -30,16 +30,14 @@ def _fernet():
 
 
 class ArtifactFileField(FileField):
-    """
-    A custom FileField that always saves files to location specified by 'upload_to'.
+    """A custom FileField that always saves files to location specified by 'upload_to'.
 
     The field can be set as either a path to the file or File object. In both cases the file is
     moved or copied to the location specified by 'upload_to' field parameter.
     """
 
     def pre_save(self, model_instance, add):
-        """
-        Return FieldFile object which specifies path to the file to be stored in database.
+        """Return FieldFile object which specifies path to the file to be stored in database.
 
         There are two ways to get artifact into Pulp: sync and upload.
 
@@ -60,7 +58,6 @@ class ArtifactFileField(FileField):
 
         Returns:
             FieldFile object just before saving.
-
         """
         file = model_instance.file
         artifact_storage_path = self.upload_to(model_instance, "")

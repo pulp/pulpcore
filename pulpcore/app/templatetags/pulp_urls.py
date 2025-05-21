@@ -6,8 +6,7 @@ from django.utils.safestring import SafeData, mark_safe
 @register.filter(needs_autoescape=True)
 @stringfilter
 def urlize(text, autoescape=True):
-    """
-    Converts hrefs and urls in the input in to clickable links.
+    """Converts hrefs and urls in the input in to clickable links.
 
     This filter overwrites the django default implementation to also handle pulp api hrefs.
     """

@@ -8,9 +8,7 @@ from pulpcore.constants import TASK_STATES
 
 
 class Command(BaseCommand):
-    """
-    Django management command for repairing progress-reports in inconsistent states.
-    """
+    """Django management command for repairing progress-reports in inconsistent states."""
 
     help = (
         "Repairs issue #3609. Long-running tasks that utilize ProgressReports, which "

@@ -10,9 +10,7 @@ from pulpcore.app.serializers.task import (
 
 
 class VersionSerializer(serializers.Serializer):
-    """
-    Serializer for the version information of Pulp components
-    """
+    """Serializer for the version information of Pulp components."""
 
     component = serializers.CharField(help_text=_("Name of a versioned component of Pulp"))
 
@@ -28,9 +26,7 @@ class VersionSerializer(serializers.Serializer):
 
 
 class DatabaseConnectionSerializer(serializers.Serializer):
-    """
-    Serializer for the database connection information
-    """
+    """Serializer for the database connection information."""
 
     connected = serializers.BooleanField(
         help_text=_("Info about whether the app can connect to the database")
@@ -38,9 +34,7 @@ class DatabaseConnectionSerializer(serializers.Serializer):
 
 
 class RedisConnectionSerializer(serializers.Serializer):
-    """
-    Serializer for information about the Redis connection
-    """
+    """Serializer for information about the Redis connection."""
 
     connected = serializers.BooleanField(
         help_text=_("Info about whether the app can connect to Redis")
@@ -48,9 +42,7 @@ class RedisConnectionSerializer(serializers.Serializer):
 
 
 class StorageSerializer(serializers.Serializer):
-    """
-    Serializer for information about the storage system
-    """
+    """Serializer for information about the storage system."""
 
     total = serializers.IntegerField(
         min_value=0, help_text=_("Total number of bytes"), allow_null=True
@@ -66,9 +58,7 @@ class StorageSerializer(serializers.Serializer):
 
 
 class ContentSettingsSerializer(serializers.Serializer):
-    """
-    Serializer for information about content-app-settings for the pulp instance
-    """
+    """Serializer for information about content-app-settings for the pulp instance."""
 
     content_origin = serializers.CharField(
         help_text=_("The CONTENT_ORIGIN setting for this Pulp instance"),
@@ -82,9 +72,7 @@ class ContentSettingsSerializer(serializers.Serializer):
 
 
 class StatusSerializer(serializers.Serializer):
-    """
-    Serializer for the status information of the app
-    """
+    """Serializer for the status information of the app."""
 
     versions = VersionSerializer(help_text=_("Version information of Pulp components"), many=True)
 

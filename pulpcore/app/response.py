@@ -3,8 +3,7 @@ from pulpcore.app.util import reverse
 
 
 class OperationPostponedResponse(Response):
-    """
-    An HTTP response class for returning 202 and a spawned task.
+    """An HTTP response class for returning 202 and a spawned task.
 
     This response object should be used by views that dispatch asynchronous tasks. The most common
     use case is for sync and publish operations. When JSON is requested, the response will look
@@ -28,8 +27,7 @@ class OperationPostponedResponse(Response):
 
 
 class TaskGroupOperationResponse(Response):
-    """
-    An HTTP response class for returning 202 and a task group.
+    """An HTTP response class for returning 202 and a task group.
 
     This response object should be used by views that create a task group and dispatch one or more
     tasks for that group. When JSON is requested, the response will look like the following::

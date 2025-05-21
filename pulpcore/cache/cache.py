@@ -65,18 +65,18 @@ def aconnection_error_wrapper(func):
 
 
 class Cache:
-    """Base class for Pulp's cache"""
+    """Base class for Pulp's cache."""
 
     default_base_key = "PULP_CACHE"
     default_expires_ttl = DEFAULT_EXPIRES_TTL
 
     def __init__(self):
-        """Creates synchronous cache instance"""
+        """Creates synchronous cache instance."""
         self.redis = get_redis_connection()
 
     @connection_error_wrapper
     def get(self, key, base_key=None):
-        """Gets cached entry of key"""
+        """Gets cached entry of key."""
         base_key = base_key or self.default_base_key
         if key is None:
             return self.redis.hgetall(base_key)
@@ -84,7 +84,7 @@ class Cache:
 
     @connection_error_wrapper
     def set(self, key, value, expires=None, base_key=None):
-        """Sets the cached entry at key"""
+        """Sets the cached entry at key."""
         base_key = base_key or self.default_base_key
         ret = self.redis.hset(base_key, key, value)
         if expires:
@@ -93,7 +93,7 @@ class Cache:
 
     @connection_error_wrapper
     def exists(self, key=None, base_key=None):
-        """Checks if cached entries exist"""
+        """Checks if cached entries exist."""
         if not base_key and base_key is not None:
             return False  # Failsafe for passing empty list/str
         base_key = base_key or self.default_base_key
@@ -132,8 +132,7 @@ class SyncContentCache(Cache):
     }
 
     def __init__(self, base_key=None, expires_ttl=None, keys=None, auth=None):
-        """
-        Initiates a cache instance to be used for dealing with a django server.
+        """Initiates a cache instance to be used for dealing with a django server.
 
         Args:
             base_key: a string to group entries under, defaults to DEFAULT_BASE_KEY,
@@ -176,13 +175,13 @@ class SyncContentCache(Cache):
         return cached_function
 
     def get_request_from_args(self, args):
-        """Finds the request object from list of args"""
+        """Finds the request object from list of args."""
         for arg in args:
             if isinstance(arg, ApiRequest):
                 return arg
 
     def make_response(self, key, base_key):
-        """Tries to find the cached entry and turn it into a proper response"""
+        """Tries to find the cached entry and turn it into a proper response."""
         entry = self.get(key, base_key)
         if not entry:
             return None
@@ -202,7 +201,7 @@ class SyncContentCache(Cache):
         return response
 
     def make_entry(self, key, base_key, handler, args, kwargs, expires=DEFAULT_EXPIRES_TTL):
-        """Gets the response for the request and try to turn it into a cacheable entry"""
+        """Gets the response for the request and try to turn it into a cacheable entry."""
         response = handler(*args, **kwargs)
         entry = {"headers": dict(response.headers), "status": response.status_code}
         if expires is not None:
@@ -230,7 +229,7 @@ class SyncContentCache(Cache):
         return response
 
     def make_key(self, request):
-        """Makes the key based off the request"""
+        """Makes the key based off the request."""
         all_keys = {
             CacheKeys.path: request.path,
             CacheKeys.method: request.method,
@@ -243,18 +242,18 @@ class SyncContentCache(Cache):
 
 
 class AsyncCache:
-    """Base class for asynchronous Pulp Cache"""
+    """Base class for asynchronous Pulp Cache."""
 
     default_base_key = "PULP_CACHE"
     default_expires_ttl = DEFAULT_EXPIRES_TTL
 
     def __init__(self):
-        """Creates asynchronous cache instance"""
+        """Creates asynchronous cache instance."""
         self.redis = get_async_redis_connection()
 
     @aconnection_error_wrapper
     async def get(self, key, base_key=None):
-        """Gets cached entry of key"""
+        """Gets cached entry of key."""
         base_key = base_key or self.default_base_key
         if key is None:
             return await self.redis.hgetall(base_key)
@@ -262,7 +261,7 @@ class AsyncCache:
 
     @aconnection_error_wrapper
     async def set(self, key, value, expires=None, base_key=None):
-        """Sets the cached entry at key"""
+        """Sets the cached entry at key."""
         base_key = base_key or self.default_base_key
         ret = await self.redis.hset(base_key, key, value)
         if expires:
@@ -271,7 +270,7 @@ class AsyncCache:
 
     @aconnection_error_wrapper
     async def exists(self, key=None, base_key=None):
-        """Checks if cached entries exist"""
+        """Checks if cached entries exist."""
         if not base_key and base_key is not None:
             return False  # Failsafe for passing empty list/str
         base_key = base_key or self.default_base_key
@@ -301,7 +300,7 @@ class AsyncCache:
 
 
 class AsyncContentCache(AsyncCache):
-    """Cache object meant to be used for the content app"""
+    """Cache object meant to be used for the content app."""
 
     RESPONSE_TYPES = {
         "FileResponse": FileResponse,
@@ -313,8 +312,7 @@ class AsyncContentCache(AsyncCache):
     ADD_TRAILING_SLASH = True
 
     def __init__(self, base_key=None, expires_ttl=None, keys=None, auth=None):
-        """
-        Initiates a cache instance to be used for dealing with an aiohttp server
+        """Initiates a cache instance to be used for dealing with an aiohttp server.
 
         Args:
             base_key: a string to group entries under, defaults to DEFAULT_BASE_KEY,
@@ -335,7 +333,7 @@ class AsyncContentCache(AsyncCache):
         self.auth = auth
 
     def __call__(self, func):
-        """Decorator magic call to make the handler cached"""
+        """Decorator magic call to make the handler cached."""
         if not settings.CACHE_ENABLED:
             return func
 
@@ -362,13 +360,13 @@ class AsyncContentCache(AsyncCache):
         return cached_function
 
     def get_request_from_args(self, args):
-        """Finds the request object from list of args"""
+        """Finds the request object from list of args."""
         for arg in args:
             if isinstance(arg, Request):
                 return arg
 
     async def make_response(self, key, base_key):
-        """Tries to find the cached entry and turn it into a proper response"""
+        """Tries to find the cached entry and turn it into a proper response."""
         entry = await self.get(key, base_key)
         if not entry:
             return None
@@ -395,7 +393,7 @@ class AsyncContentCache(AsyncCache):
         return response
 
     async def make_entry(self, key, base_key, handler, args, kwargs, expires=DEFAULT_EXPIRES_TTL):
-        """Gets the response for the request and try to turn it into a cacheable entry"""
+        """Gets the response for the request and try to turn it into a cacheable entry."""
         try:
             response = await handler(*args, **kwargs)
         except (HTTPSuccessful, HTTPFound) as e:
@@ -440,7 +438,7 @@ class AsyncContentCache(AsyncCache):
         return original_response
 
     def make_key(self, request):
-        """Makes the key based off the request"""
+        """Makes the key based off the request."""
         # Might potentially have to make this async if keys require async data from request
         all_keys = {
             CacheKeys.path: request.path,

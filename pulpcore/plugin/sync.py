@@ -15,8 +15,7 @@ def next_async(it):
 
 
 def sync_to_async_iterable(sync_iterable):
-    """
-    Creates an async iterable.
+    """Creates an async iterable.
 
     The returned iterator is able to be reused and iterated through multiple times.
 

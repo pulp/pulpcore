@@ -25,8 +25,7 @@ PROTOCOL_MAP = {
 
 
 class DownloaderFactory:
-    """
-    A factory for creating downloader objects that are configured from with remote settings.
+    """A factory for creating downloader objects that are configured from with remote settings.
 
     The DownloadFactory correctly handles SSL settings, basic auth settings, proxy settings, and
     connection limit settings.
@@ -77,9 +76,7 @@ class DownloaderFactory:
 
     @staticmethod
     def user_agent():
-        """
-        Produce a User-Agent string to identify Pulp and relevant system info.
-        """
+        """Produce a User-Agent string to identify Pulp and relevant system info."""
         pulp_version = PulpAppConfig.version
         python = "{} {}.{}.{}-{}{}".format(sys.implementation.name, *sys.version_info)
         uname = platform.uname()
@@ -90,8 +87,7 @@ class DownloaderFactory:
         asyncio.get_event_loop().run_until_complete(self._session.close())
 
     def _make_aiohttp_session_from_remote(self):
-        """
-        Build a [aiohttp.ClientSession][] from the remote's settings and timing settings.
+        """Build a [aiohttp.ClientSession][] from the remote's settings and timing settings.
 
         This method is what provides the force_close of the TCP connection with each request.
 
@@ -151,8 +147,7 @@ class DownloaderFactory:
         )
 
     def build(self, url, **kwargs):
-        """
-        Build a downloader which can optionally verify integrity using either digest or size.
+        """Build a downloader which can optionally verify integrity using either digest or size.
 
         The built downloader also provides concurrency restriction if specified by the remote.
 
@@ -214,8 +209,7 @@ class DownloaderFactory:
         return download_class(url, **options, **kwargs)
 
     def _generic(self, download_class, url, **kwargs):
-        """
-        Build a generic downloader based on the url.
+        """Build a generic downloader based on the url.
 
         Args:
             download_class (pulpcore.plugin.download.BaseDownloader) The download

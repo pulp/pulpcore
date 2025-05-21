@@ -5,8 +5,7 @@ from django.conf import settings
 
 
 class _WorkingDir:
-    """
-    A base class for temporary working directories.
+    """A base class for temporary working directories.
 
     TODO: This is very similar to functionality already in the stdlib, why keep our own?
 
@@ -25,8 +24,7 @@ class _WorkingDir:
 
     @property
     def path(self):
-        """
-        The absolute path to the directory.
+        """The absolute path to the directory.
 
         Returns:
             str: The absolute directory path.
@@ -34,14 +32,11 @@ class _WorkingDir:
         return self._path
 
     def create(self):
-        """
-        Create the directory.
-        """
+        """Create the directory."""
         os.makedirs(self.path, mode=self.MODE)
 
     def delete(self):
-        """
-        Delete the directory.
+        """Delete the directory.
 
         On permission denied - an attempt is made to fix the
         permissions on the tree and the delete is retried.
@@ -53,18 +48,14 @@ class _WorkingDir:
             self._delete()
 
     def _delete(self):
-        """
-        Helper method for delete
-        """
+        """Helper method for delete."""
         try:
             shutil.rmtree(self.path, ignore_errors=True)
         except FileNotFoundError:
             pass
 
     def _set_permissions(self):
-        """
-        Set appropriate permissions on the directory tree.
-        """
+        """Set appropriate permissions on the directory tree."""
         for path in os.walk(self.path):
             os.chmod(path[0], mode=self.MODE)
 
@@ -72,8 +63,7 @@ class _WorkingDir:
         return self.path
 
     def __enter__(self):
-        """
-        Create the directory and set the CWD to the path.
+        """Create the directory and set the CWD to the path.
 
         Returns: self
 
@@ -86,16 +76,13 @@ class _WorkingDir:
         return self
 
     def __exit__(self, *unused):
-        """
-        Delete the directory (tree) and restore the original CWD.
-        """
+        """Delete the directory (tree) and restore the original CWD."""
         os.chdir(self._prev_dir)
         self.delete()
 
 
 def get_worker_path(hostname):
-    """
-    Get the root directory path for a worker by hostname.
+    """Get the root directory path for a worker by hostname.
 
     Format: <root>/<worker-hostname>
 
@@ -109,8 +96,7 @@ def get_worker_path(hostname):
 
 
 class WorkerDirectory(_WorkingDir):
-    """
-    The directory associated with a pulpcore-worker.
+    """The directory associated with a pulpcore-worker.
 
     Path format: <root>/<worker-hostname>
     """
@@ -123,11 +109,10 @@ class WorkerDirectory(_WorkingDir):
         self._path = get_worker_path(hostname)
 
     def create(self):
-        """
-        Create the directory.
+        """Create the directory.
 
-        The directory is deleted and recreated when already exists.
-        Only one of these should ever be held at a time for any individual worker.
+        The directory is deleted and recreated when already exists. Only one of these should ever be
+        held at a time for any individual worker.
         """
         try:
             super().create()

@@ -23,11 +23,10 @@ MODULE_PLUGIN_VERSIONS = {}
 
 
 def pulp_plugin_configs():
-    """
-    A generator of Pulp plugin AppConfigs
+    """A generator of Pulp plugin AppConfigs.
 
-    This makes it easy to iterate over just the installed Pulp plugins when working
-    with discovered plugin components.
+    This makes it easy to iterate over just the installed Pulp plugins when working with discovered
+    plugin components.
     """
     for app_config in apps.apps.get_app_configs():
         if isinstance(app_config, PulpPluginAppConfig):
@@ -35,8 +34,7 @@ def pulp_plugin_configs():
 
 
 def get_plugin_config(plugin_app_label):
-    """
-    A getter of specific pulp plugin config
+    """A getter of specific pulp plugin config.
 
     This makes it easy to retrieve a config for a specific Pulp plugin when looking for a
     registered model.
@@ -57,7 +55,10 @@ def get_plugin_config(plugin_app_label):
 
 
 class PulpPluginAppConfig(apps.AppConfig):
-    """AppConfig class. Use this in plugins to identify your app as a Pulp plugin."""
+    """AppConfig class.
+
+    Use this in plugins to identify your app as a Pulp plugin.
+    """
 
     # Plugin behavior loading should happen in ready(), not in __init__().
     # ready() is called after all models are initialized, and at that point we should
@@ -195,16 +196,13 @@ class PulpPluginAppConfig(apps.AppConfig):
                     continue
 
     def import_urls(self):
-        """
-        If a plugin defines a urls.py, include it.
-        """
+        """If a plugin defines a urls.py, include it."""
         if module_has_submodule(self.module, URLS_MODULE_NAME) and self.name != "pulpcore.app":
             urls_module_name = "{name}.{module}".format(name=self.name, module=URLS_MODULE_NAME)
             self.urls_module = import_module(urls_module_name)
 
     def import_modelresources(self):
-        """
-        If a plugin has a modelresource.py, import it
+        """If a plugin has a modelresource.py, import it.
 
         (This exists when a plugin knows how to import-export itself)
         """
@@ -219,8 +217,7 @@ class PulpPluginAppConfig(apps.AppConfig):
             self.exportable_classes = self.modelresource_module.IMPORT_ORDER
 
     def import_replicators(self):
-        """
-        If a plugin has a replicator.py, import it.
+        """If a plugin has a replicator.py, import it.
 
         This exists when a plugin supports replication from an upstream Pulp.
         """
@@ -353,8 +350,7 @@ def _populate_roles(sender, apps, verbosity, **kwargs):
 
 
 def adjust_roles(apps, role_prefix, desired_roles, verbosity=1):
-    """
-    Adjust all roles with a given prefix.
+    """Adjust all roles with a given prefix.
 
     Args:
         apps (django.apps.registry.Apps): Django app registry

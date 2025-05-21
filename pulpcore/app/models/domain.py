@@ -13,8 +13,7 @@ storages = {}
 
 
 class Domain(BaseModel, AutoAddObjPermsMixin):
-    """
-    A namespace-like object applied to most Pulp models to allow for multi-tenancy.
+    """A namespace-like object applied to most Pulp models to allow for multi-tenancy.
 
     Pulp models have a domain as a part of their uniqueness-constraint to provide isolation from
     other domains. Domains each have their own storage backend for storing and deduplicating

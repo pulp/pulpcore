@@ -119,16 +119,14 @@ def test_remote_content_changed_with_on_demand(
     file_distribution_factory,
     tmp_path,
 ):
-    """
-    GIVEN a remote synced on demand with fileA (e.g, digest=123),
-    AND the remote server, fileA changed its content (e.g, digest=456),
+    """GIVEN a remote synced on demand with fileA (e.g, digest=123), AND the remote server, fileA
+    changed its content (e.g, digest=456),
 
-    WHEN the client first requests that content
-    THEN the content app will start a response but close the connection before finishing
-    AND no file will be present in the filesystem
+    WHEN the client first requests that content THEN the content app will start a response but close
+    the connection before finishing AND no file will be present in the filesystem
 
-    WHEN the client requests that content again (within the RA cooldown interval)
-    THEN the content app will return a 404
+    WHEN the client requests that content again (within the RA cooldown interval) THEN the content
+    app will return a 404
     """
     # GIVEN
     basic_manifest_path = write_3_iso_file_fixture_data_factory("basic")
@@ -176,15 +174,12 @@ def test_handling_remote_artifact_on_demand_streaming_failure(
     gen_object_with_cleanup,
     generate_server_and_remote,
 ):
-    """
-    GIVEN A content synced with on-demand which has 2 RemoteArtifacts (Remote + ACS).
-    AND Only the ACS RemoteArtifact (that has priority on the content-app) is corrupted
+    """GIVEN A content synced with on-demand which has 2 RemoteArtifacts (Remote + ACS). AND Only
+    the ACS RemoteArtifact (that has priority on the content-app) is corrupted.
 
-    WHEN a client requests the content for the first time
-    THEN the client doesnt get any content
+    WHEN a client requests the content for the first time THEN the client doesnt get any content
 
-    WHEN a client requests the content for the second time
-    THEN the client gets the right content
+    WHEN a client requests the content for the second time THEN the client gets the right content
     """
 
     # Plumbing

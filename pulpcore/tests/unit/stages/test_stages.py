@@ -141,7 +141,7 @@ class LastStage(Stage):
 
 @pytest.mark.asyncio
 async def test_batch_queue_and_min_sizes():
-    """Test batches iterator in a small stages setting with various sizes"""
+    """Test batches iterator in a small stages setting with various sizes."""
     for num in range(10):
         for minsize in range(1, 5):
             for qsize in range(1, num + 1):

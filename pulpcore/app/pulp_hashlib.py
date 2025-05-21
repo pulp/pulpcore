@@ -1,4 +1,4 @@
-"""A wrapper around `hashlib` providing only hashers named in settings.ALLOWED_CONTENT_CHECKSUMS"""
+"""A wrapper around `hashlib` providing only hashers named in settings.ALLOWED_CONTENT_CHECKSUMS."""
 
 from gettext import gettext as _
 import hashlib as the_real_hashlib
@@ -7,8 +7,7 @@ from django.conf import settings
 
 
 def new(name, *args, **kwargs):
-    """
-    A wrapper around the real `hashlib.new()` providing only trusted hashers.
+    """A wrapper around the real `hashlib.new()` providing only trusted hashers.
 
     The `ALLOWED_CONTENT_CHECKSUMS` setting identifies which hashers are allowed for use by Pulp.
     This function raises an exception if a hasher is requested which is not allowed, and otherwise,
@@ -24,7 +23,6 @@ def new(name, *args, **kwargs):
 
     Raises:
         An exception if the name of the hasher is not in the `ALLOWED_CONTENT_CHECKSUMS` settings.
-
     """
     if name not in settings.ALLOWED_CONTENT_CHECKSUMS:
         raise Exception(

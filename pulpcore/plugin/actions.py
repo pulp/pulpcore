@@ -22,9 +22,8 @@ class ModifyRepositoryActionMixin:
     )
     @action(detail=True, methods=["post"], serializer_class=RepositoryAddRemoveContentSerializer)
     def modify(self, request, pk):
-        """
-        Queues a task that creates a new RepositoryVersion by adding and removing content units
-        """
+        """Queues a task that creates a new RepositoryVersion by adding and removing content
+        units."""
         repository = self.get_object()
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)

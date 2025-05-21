@@ -29,7 +29,7 @@ async def guid(request, handler):
 
 @middleware
 async def authenticate(request, handler):
-    """Authenticates the request to the content app using the DRF authentication classes"""
+    """Authenticates the request to the content app using the DRF authentication classes."""
     django_request = convert_request(request)
     fake_view = APIView()
 
@@ -59,8 +59,7 @@ async def authenticate(request, handler):
 
 
 def convert_request(request):
-    """
-    Converts an aiohttp Request to a Django HttpRequest
+    """Converts an aiohttp Request to a Django HttpRequest.
 
     This does not convert the async body to a sync body for POST requests
     """
@@ -84,9 +83,7 @@ def convert_request(request):
 
 
 def validate_domain(request):
-    """
-    Ensures the request is inside a proper Domain.
-    """
+    """Ensures the request is inside a proper Domain."""
     domain_name = request.match_info.get("pulp_domain", "default")
     try:
         domain = Domain.objects.get(name=domain_name)

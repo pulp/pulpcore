@@ -6,8 +6,8 @@ pytestmark = [pytest.mark.parallel]
 
 @pytest.fixture(autouse=True)
 def _fix_response_headers(monkeypatch, pulpcore_bindings):
-    """
-    Fix bindings incorrectly translating HTTPHeaderDict to dict.
+    """Fix bindings incorrectly translating HTTPHeaderDict to dict.
+
     Ideally they wouldn't even make it a dict, but keep it whatever case insensitive multivalued
     mapping the underlying http adapter provides. Alternatively translate everything into the
     mutidict.CIMultiDict type.

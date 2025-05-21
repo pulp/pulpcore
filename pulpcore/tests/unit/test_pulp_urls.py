@@ -13,8 +13,9 @@ def api_root(settings):
 
 
 def test_urlize_basic_url():
-    """
-    Text starts with V3_API_ROOT. Should be made clickable.
+    """Text starts with V3_API_ROOT.
+
+    Should be made clickable.
     """
     txt = "/baz/api/v3/foo/bar/"
     ret = pulp_urls.urlize(txt)
@@ -22,8 +23,9 @@ def test_urlize_basic_url():
 
 
 def test_urlize_quoted_href():
-    """
-    Text contains V3_API_ROOT in quotes. Should be made clickable.
+    """Text contains V3_API_ROOT in quotes.
+
+    Should be made clickable.
     """
     txt = json.dumps({"pulp_href": "/baz/api/v3/foo/bar/"})
     ret = pulp_urls.urlize(txt)
@@ -34,9 +36,7 @@ def test_urlize_quoted_href():
 
 
 def test_urlize_mixed_bag():
-    """
-    Text contains lots of stuff in json.
-    """
+    """Text contains lots of stuff in json."""
     txt = json.dumps(
         {
             "pulp_href": "/baz/api/v3/foo/bar/",
@@ -56,8 +56,9 @@ def test_urlize_mixed_bag():
 
 
 def test_urlize_quoted_href_no_autoescape():
-    """
-    Text contains V3_API_ROOT in quotes. Should be made clickable.
+    """Text contains V3_API_ROOT in quotes.
+
+    Should be made clickable.
     """
     txt = json.dumps({"pulp_href": "/baz/api/v3/foo/bar/"})
     ret = pulp_urls.urlize(txt, autoescape=False)
@@ -67,8 +68,9 @@ def test_urlize_quoted_href_no_autoescape():
 
 
 def test_urlize_url_xss_autoescape():
-    """
-    Text starts with API_ROOT, includes XSS. Should be made clickable, escape XSS.
+    """Text starts with API_ROOT, includes XSS.
+
+    Should be made clickable, escape XSS.
     """
     txt = "/baz/api/v3/foo/bar/<script>alert('ALERT!')</script>blech/"
     escapified_linked_text = (
@@ -80,8 +82,9 @@ def test_urlize_url_xss_autoescape():
 
 
 def test_urlize_url_xss_no_autoescape():
-    """
-    Text starts with API_ROOT, includes XSS. Should be made clickable, not escape XSS.
+    """Text starts with API_ROOT, includes XSS.
+
+    Should be made clickable, not escape XSS.
     """
     txt = "/baz/api/v3/foo/bar/<script>alert('ALERT!')</script>blech/"
     escapified_linked_text = (
@@ -93,8 +96,9 @@ def test_urlize_url_xss_no_autoescape():
 
 
 def test_urlize_autoescape():
-    """
-    Text contains XSS. Expect escaped.
+    """Text contains XSS.
+
+    Expect escaped.
     """
     txt = "foo/bar/<script>alert('ALERT!')</script>blech/"
     ret = pulp_urls.urlize(txt)
@@ -102,8 +106,9 @@ def test_urlize_autoescape():
 
 
 def test_urlize_no_autoescape():
-    """
-    Text contains XSS. Expect not escaped.
+    """Text contains XSS.
+
+    Expect not escaped.
     """
     txt = "foo/bar/<script>alert('ALERT!')</script>blech/"
     ret = pulp_urls.urlize(txt, autoescape=False)

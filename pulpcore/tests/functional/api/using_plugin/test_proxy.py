@@ -26,9 +26,7 @@ def test_sync_http_through_http_proxy(
     basic_manifest_path,
     monitor_task,
 ):
-    """
-    Test syncing http through a http proxy.
-    """
+    """Test syncing http through a http proxy."""
     remote_on_demand = file_remote_factory(
         manifest_path=basic_manifest_path, policy="on_demand", proxy_url=http_proxy.proxy_url
     )
@@ -45,9 +43,7 @@ def test_sync_https_through_http_proxy(
     basic_manifest_path,
     monitor_task,
 ):
-    """
-    Test syncing https through a http proxy.
-    """
+    """Test syncing https through a http proxy."""
     remote_on_demand = file_remote_ssl_factory(
         manifest_path=basic_manifest_path, policy="on_demand", proxy_url=http_proxy.proxy_url
     )
@@ -64,9 +60,7 @@ def test_sync_https_through_http_proxy_with_auth(
     basic_manifest_path,
     monitor_task,
 ):
-    """
-    Test syncing https through a http proxy that requires auth.
-    """
+    """Test syncing https through a http proxy that requires auth."""
     remote_on_demand = file_remote_ssl_factory(
         manifest_path=basic_manifest_path,
         policy="on_demand",
@@ -88,9 +82,7 @@ def test_sync_https_through_http_proxy_with_auth_but_auth_not_configured(
     basic_manifest_path,
     monitor_task,
 ):
-    """
-    Test syncing https through a http proxy that requires auth, but auth is not configured.
-    """
+    """Test syncing https through a http proxy that requires auth, but auth is not configured."""
     remote_on_demand = file_remote_ssl_factory(
         manifest_path=basic_manifest_path,
         policy="on_demand",
@@ -113,9 +105,7 @@ def test_sync_http_through_https_proxy(
     basic_manifest_path,
     monitor_task,
 ):
-    """
-    Test syncing http through an https proxy.
-    """
+    """Test syncing http through an https proxy."""
     remote_on_demand = file_remote_factory(
         manifest_path=basic_manifest_path,
         policy="on_demand",
@@ -135,9 +125,7 @@ def test_sync_https_through_https_proxy(
     basic_manifest_path,
     monitor_task,
 ):
-    """
-    Test syncing http through an https proxy.
-    """
+    """Test syncing http through an https proxy."""
     if not (sys.version_info.major >= 3 and sys.version_info.minor >= 11):
         pytest.skip("HTTPS proxy only supported on python3.11+")
     remote_on_demand = file_remote_ssl_factory(

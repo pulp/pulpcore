@@ -9,9 +9,7 @@ from pulpcore.app.util import get_domain
 
 
 class ReclaimSpaceSerializer(serializers.Serializer, ValidateFieldsMixin):
-    """
-    Serializer for reclaim disk space operation.
-    """
+    """Serializer for reclaim disk space operation."""
 
     repo_hrefs = fields.ListField(
         required=True,
@@ -26,8 +24,8 @@ class ReclaimSpaceSerializer(serializers.Serializer, ValidateFieldsMixin):
     )
 
     def validate_repo_hrefs(self, value):
-        """
-        Check that the repo_hrefs is not an empty list and contains all valid hrefs.
+        """Check that the repo_hrefs is not an empty list and contains all valid hrefs.
+
         Args:
             value (list): The list supplied by the user
         Returns:

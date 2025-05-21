@@ -9,8 +9,7 @@ log = getLogger(__name__)
 
 
 def commit(upload_id, sha256):
-    """
-    Commit the upload and turn it into an artifact.
+    """Commit the upload and turn it into an artifact.
 
     Args:
         upload_id (int): The upload primary key

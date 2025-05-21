@@ -18,9 +18,7 @@ class RepairView(APIView):
         responses={202: AsyncOperationResponseSerializer},
     )
     def post(self, request):
-        """
-        Repair artifacts.
-        """
+        """Repair artifacts."""
         serializer = RepairSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 

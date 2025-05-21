@@ -6,9 +6,7 @@ from django.core.management import BaseCommand
 
 
 class Command(BaseCommand):
-    """
-    Django management command to dump static informations about a migration.
-    """
+    """Django management command to dump static informations about a migration."""
 
     help = _("Dump static informations about a migration.")
 

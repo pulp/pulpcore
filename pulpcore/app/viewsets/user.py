@@ -42,9 +42,7 @@ class UserViewSet(
     mixins.ListModelMixin,
     mixins.DestroyModelMixin,
 ):
-    """
-    ViewSet for User.
-    """
+    """ViewSet for User."""
 
     endpoint_name = "users"
     router_lookup = "user"
@@ -70,9 +68,7 @@ class GroupViewSet(
     mixins.DestroyModelMixin,
     RolesMixin,
 ):
-    """
-    ViewSet for Group.
-    """
+    """ViewSet for Group."""
 
     endpoint_name = "groups"
     router_lookup = "group"
@@ -149,9 +145,7 @@ class GroupViewSet(
 
 
 class GroupUserViewSet(NamedModelViewSet):
-    """
-    ViewSet for Users that belong to a Group.
-    """
+    """ViewSet for Users that belong to a Group."""
 
     endpoint_name = "users"
     router_lookup = "user"
@@ -185,9 +179,7 @@ class GroupUserViewSet(NamedModelViewSet):
     }
 
     def list(self, request, group_pk):
-        """
-        List group users.
-        """
+        """List group users."""
         group = Group.objects.get(pk=group_pk)
         queryset = group.user_set.all()
 
@@ -200,9 +192,7 @@ class GroupUserViewSet(NamedModelViewSet):
         return Response(serializer.data)
 
     def create(self, request, group_pk):
-        """
-        Add a user to a group.
-        """
+        """Add a user to a group."""
         group = Group.objects.get(pk=group_pk)
         if not request.data:
             raise ValidationError(
@@ -220,9 +210,7 @@ class GroupUserViewSet(NamedModelViewSet):
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def destroy(self, request, group_pk, pk):
-        """
-        Remove a user from a group.
-        """
+        """Remove a user from a group."""
         group = Group.objects.get(pk=group_pk)
         user = get_object_or_404(User, pk=pk)
         group.user_set.remove(user)
@@ -231,9 +219,7 @@ class GroupUserViewSet(NamedModelViewSet):
 
 
 class RoleFilter(BaseFilterSet):
-    """
-    FilterSet for Role.
-    """
+    """FilterSet for Role."""
 
     for_object_type = filters.CharFilter(
         field_name="for_object_type", method="filter_for_object_type"
@@ -309,9 +295,7 @@ class RoleViewSet(
     mixins.ListModelMixin,
     mixins.DestroyModelMixin,
 ):
-    """
-    ViewSet for Role.
-    """
+    """ViewSet for Role."""
 
     endpoint_name = "roles"
     router_lookup = "role"
@@ -332,9 +316,7 @@ class _CharInFilter(filters.BaseInFilter, filters.CharFilter):
 
 
 class NestedRoleFilter(BaseFilterSet):
-    """
-    FilterSet for Roles nested under users / groups.
-    """
+    """FilterSet for Roles nested under users / groups."""
 
     # For some reason the generated Filters don't work here
     role = filters.CharFilter(field_name="role__name")
@@ -365,9 +347,7 @@ class NestedRoleFilter(BaseFilterSet):
 
 
 class UserRoleFilter(NestedRoleFilter):
-    """
-    FilterSet for UserRole.
-    """
+    """FilterSet for UserRole."""
 
     class Meta:
         model = UserRole
@@ -381,9 +361,7 @@ class UserRoleViewSet(
     mixins.ListModelMixin,
     mixins.DestroyModelMixin,
 ):
-    """
-    ViewSet for UserRole.
-    """
+    """ViewSet for UserRole."""
 
     endpoint_name = "roles"
     router_lookup = "user"
@@ -396,9 +374,7 @@ class UserRoleViewSet(
 
 
 class GroupRoleFilter(NestedRoleFilter):
-    """
-    FilterSet for GroupRole.
-    """
+    """FilterSet for GroupRole."""
 
     class Meta:
         model = GroupRole
@@ -412,9 +388,7 @@ class GroupRoleViewSet(
     mixins.ListModelMixin,
     mixins.DestroyModelMixin,
 ):
-    """
-    ViewSet for GroupRole.
-    """
+    """ViewSet for GroupRole."""
 
     endpoint_name = "roles"
     router_lookup = "group"

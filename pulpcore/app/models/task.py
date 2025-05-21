@@ -1,6 +1,4 @@
-"""
-Django models related to the Tasking system
-"""
+"""Django models related to the Tasking system."""
 
 import logging
 import traceback
@@ -29,16 +27,13 @@ _logger = logging.getLogger(__name__)
 
 
 class Worker(BaseAppStatus):
-    """
-    Represents a worker
-    """
+    """Represents a worker."""
 
     APP_TTL = timedelta(seconds=settings.WORKER_TTL)
 
     @property
     def current_task(self):
-        """
-        The task this worker is currently executing, if any.
+        """The task this worker is currently executing, if any.
 
         Returns:
             Task: The currently executing task
@@ -51,9 +46,7 @@ def _uuid_to_advisory_lock(value):
 
 
 class ProfileArtifact(BaseModel):
-    """
-    A model encapsulating profiled artifact data
-    """
+    """A model encapsulating profiled artifact data."""
 
     artifact = models.ForeignKey("Artifact", on_delete=models.CASCADE)
     task = models.ForeignKey("Task", on_delete=models.CASCADE)
@@ -72,8 +65,7 @@ class TaskManager(models.Manager):
 
 
 class Task(BaseModel, AutoAddObjPermsMixin):
-    """
-    Represents a task
+    """Represents a task.
 
     The Tasks state machine works like a finite automaton without loops:
     The initial state is WAITING.
@@ -199,8 +191,7 @@ class Task(BaseModel, AutoAddObjPermsMixin):
         self.progress_reports.filter(state=TASK_STATES.RUNNING).update(state=state)
 
     def set_running(self):
-        """
-        Set this Task to the running state, save it, and log output in warning cases.
+        """Set this Task to the running state, save it, and log output in warning cases.
 
         This updates the :attr:`started_at` and sets the :attr:`state` to :attr:`RUNNING`.
         """
@@ -221,8 +212,7 @@ class Task(BaseModel, AutoAddObjPermsMixin):
             )
 
     def set_completed(self):
-        """
-        Set this Task to the completed state, save it, and log output in warning cases.
+        """Set this Task to the completed state, save it, and log output in warning cases.
 
         This updates the :attr:`finished_at` and sets the :attr:`state` to :attr:`COMPLETED`.
         """
@@ -249,8 +239,7 @@ class Task(BaseModel, AutoAddObjPermsMixin):
         self._cleanup_progress_reports(TASK_STATES.COMPLETED)
 
     def set_failed(self, exc, tb):
-        """
-        Set this Task to the failed state and save it.
+        """Set this Task to the failed state and save it.
 
         This updates the :attr:`finished_at` attribute, sets the :attr:`state` to
         :attr:`FAILED`, and sets the :attr:`error` attribute.
@@ -281,8 +270,7 @@ class Task(BaseModel, AutoAddObjPermsMixin):
         self._cleanup_progress_reports(TASK_STATES.FAILED)
 
     def set_canceling(self):
-        """
-        Set this task to canceling from either waiting, running or canceling.
+        """Set this task to canceling from either waiting, running or canceling.
 
         This is the only valid transition without holding the task lock.
         """
@@ -300,9 +288,7 @@ class Task(BaseModel, AutoAddObjPermsMixin):
             )
 
     def set_canceled(self, final_state=TASK_STATES.CANCELED, reason=None):
-        """
-        Set this task to canceled or failed from canceling.
-        """
+        """Set this task to canceled or failed from canceling."""
         # Make sure this function was called with a proper final state
         assert final_state in [TASK_STATES.CANCELED, TASK_STATES.FAILED]
         finished_at = timezone.now()
@@ -372,19 +358,17 @@ class TaskGroup(BaseModel):
         return task_group
 
     def finish(self):
-        """
-        Finalize the task group.
+        """Finalize the task group.
 
-        Set 'all_tasks_dispatched' to True so that API users can know that there are no
-        tasks in the group yet to be created.
+        Set 'all_tasks_dispatched' to True so that API users can know that there are no tasks in the
+        group yet to be created.
         """
         self.all_tasks_dispatched = True
         self.save()
 
 
 class CreatedResource(GenericRelationModel):
-    """
-    Resources created by the task.
+    """Resources created by the task.
 
     Relations:
         task (models.ForeignKey): The task that created the resource.

@@ -65,10 +65,8 @@ class Replicator:
 
     @staticmethod
     def needs_update(fields_dict, model_instance):
-        """
-        Compares a Model instance's attributes against a dictionary where keys are attribute
-        names and values are expected values.
-        """
+        """Compares a Model instance's attributes against a dictionary where keys are attribute
+        names and values are expected values."""
         needs_update = False
         for field_name, value in fields_dict.items():
             if isinstance(getattr(model_instance, field_name), Model):
@@ -175,9 +173,7 @@ class Replicator:
         return repository
 
     def distribution_extra_fields(self, repository, upstream_distribution):
-        """
-        Return the fields that need to be updated/cleared on distributions for idempotence.
-        """
+        """Return the fields that need to be updated/cleared on distributions for idempotence."""
         return {
             "repository": get_url(repository),
             "publication": None,

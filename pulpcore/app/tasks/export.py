@@ -59,8 +59,7 @@ def _validate_fs_export(content_artifacts):
 
 
 def _export_to_file_system(path, relative_paths_to_artifacts, method=FS_EXPORT_METHODS.WRITE):
-    """
-    Export a set of artifacts to the filesystem.
+    """Export a set of artifacts to the filesystem.
 
     Args:
         path (str): A path to export the ContentArtifacts to
@@ -108,8 +107,7 @@ def _export_to_file_system(path, relative_paths_to_artifacts, method=FS_EXPORT_M
 def _export_publication_to_file_system(
     path, publication, start_repo_version=None, method=FS_EXPORT_METHODS.WRITE, allow_missing=False
 ):
-    """
-    Export a publication to the file system.
+    """Export a publication to the file system.
 
     Args:
         path (str): Path to place the exported data
@@ -166,8 +164,7 @@ def _export_publication_to_file_system(
 
 
 def _export_location_is_clean(path):
-    """
-    Returns whether the provided path is valid to use as an export location.
+    """Returns whether the provided path is valid to use as an export location.
 
     Args:
         path (str):
@@ -183,8 +180,7 @@ def _export_location_is_clean(path):
 
 
 def fs_publication_export(exporter_pk, publication_pk, start_repo_version_pk=None):
-    """
-    Export a publication to the file system using an exporter.
+    """Export a publication to the file system using an exporter.
 
     Args:
         exporter_pk (str): FilesystemExporter pk
@@ -227,8 +223,7 @@ def fs_publication_export(exporter_pk, publication_pk, start_repo_version_pk=Non
 
 
 def fs_repo_version_export(exporter_pk, repo_version_pk, start_repo_version_pk=None):
-    """
-    Export a repository version to the file system using an exporter.
+    """Export a repository version to the file system using an exporter.
 
     Args:
         exporter_pk (str): FilesystemExporter pk
@@ -284,11 +279,9 @@ def fs_repo_version_export(exporter_pk, repo_version_pk, start_repo_version_pk=N
 
 
 def _get_versions_to_export(the_exporter, the_export):
-    """
-    Return repo-versions to be exported.
+    """Return repo-versions to be exported.
 
-    versions is based on exporter-repositories and how the export-cmd was
-    invoked.
+    versions is based on exporter-repositories and how the export-cmd was invoked.
     """
     repositories = the_exporter.repositories.all()
     # Figure out which RepositoryVersions we're going to be exporting
@@ -316,9 +309,7 @@ def _get_starting_versions(do_incremental, the_exporter, the_export):
 
 
 def _get_versions_info(the_exporter):
-    """
-    Return plugin-version-info based on plugins are responsible for exporter-repositories.
-    """
+    """Return plugin-version-info based on plugins are responsible for exporter-repositories."""
     # extract plugin-version-info based on the repositories we're exporting from
     repositories = the_exporter.repositories.all()
     repo_types = {r.pulp_type for r in repositories}
@@ -329,14 +320,13 @@ def _get_versions_info(the_exporter):
 
 
 def _version_match(curr_versions, prev_versions):
-    """
-    Match list of repo-versions, to a prev-set, based on belonging to the same repository.
+    """Match list of repo-versions, to a prev-set, based on belonging to the same repository.
 
     We need this in order to be able to know how to 'diff' versions for incremental exports.
 
-    :param curr_versions ([model.RepositoryVersion]): versions we want to export
-    :param prev_versions ([model.RepositoryVersion]): last set of versions we exported (if any)
-    :return: { <a_curr_version>: <matching-prev-version>, or None if no match or no prev_versions }
+    :param curr_versions ([model.RepositoryVersion]): versions we want to export :param
+    prev_versions ([model.RepositoryVersion]): last set of versions we exported (if any) :return: {
+    <a_curr_version>: <matching-prev-version>, or None if no match or no prev_versions }
     """
     curr_to_repo = {v.repository: v for v in curr_versions}
     if prev_versions is None:
@@ -358,8 +348,7 @@ def _incremental_requested(the_export):
 
 
 def pulp_export(exporter_pk, params):
-    """
-    Create a PulpExport to export pulp_exporter.repositories.
+    """Create a PulpExport to export pulp_exporter.repositories.
 
     1) Spit out all Artifacts, ArtifactResource.json, and RepositoryResource.json
     2) Spit out all *resource JSONs in per-repo-version directories

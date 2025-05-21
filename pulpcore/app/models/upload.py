@@ -14,8 +14,7 @@ from pulpcore.app.util import get_domain_pk
 
 
 class Upload(BaseModel, AutoAddObjPermsMixin):
-    """
-    A chunked upload. Stores chunks until used to create an artifact, etc.
+    """A chunked upload. Stores chunks until used to create an artifact, etc.
 
     Fields:
 
@@ -30,8 +29,7 @@ class Upload(BaseModel, AutoAddObjPermsMixin):
     pulp_domain = models.ForeignKey("Domain", default=get_domain_pk, on_delete=models.PROTECT)
 
     def append(self, chunk, offset, sha256=None):
-        """
-        Append a chunk to an upload.
+        """Append a chunk to an upload.
 
         Args:
             chunk (File): Binary data to append to the upload file.
@@ -54,8 +52,7 @@ class Upload(BaseModel, AutoAddObjPermsMixin):
 
 
 class UploadChunk(BaseModel):
-    """
-    A chunk for an uploaded file.
+    """A chunk for an uploaded file.
 
     Fields:
 
@@ -66,8 +63,7 @@ class UploadChunk(BaseModel):
     """
 
     def storage_path(self, name):
-        """
-        Callable used by FileField to determine where the uploaded file should be stored.
+        """Callable used by FileField to determine where the uploaded file should be stored.
 
         Args:
             name (str): Original name of uploaded file. It is ignored by this method because the

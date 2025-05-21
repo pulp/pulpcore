@@ -127,9 +127,7 @@ class UploadViewSet(
         responses={200: UploadSerializer},
     )
     def update(self, request, pk=None):
-        """
-        Upload a chunk for an upload.
-        """
+        """Upload a chunk for an upload."""
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
@@ -150,9 +148,8 @@ class UploadViewSet(
     )
     @action(detail=True, methods=["post"])
     def commit(self, request, pk):
-        """
-        Queues a Task that creates an Artifact, and the Upload gets deleted and cannot be re-used.
-        """
+        """Queues a Task that creates an Artifact, and the Upload gets deleted and cannot be re-
+        used."""
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 

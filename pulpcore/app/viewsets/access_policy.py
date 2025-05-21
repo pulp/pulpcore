@@ -14,9 +14,7 @@ from pulpcore.app.util import get_view_urlpattern
 class AccessPolicyViewSet(
     NamedModelViewSet, mixins.UpdateModelMixin, mixins.RetrieveModelMixin, mixins.ListModelMixin
 ):
-    """
-    ViewSet for AccessPolicy.
-    """
+    """ViewSet for AccessPolicy."""
 
     queryset = AccessPolicy.objects.all()
     serializer_class = AccessPolicySerializer
@@ -27,9 +25,7 @@ class AccessPolicyViewSet(
     @extend_schema(request=None)
     @action(detail=True, methods=["post"])
     def reset(self, request, pk=None):
-        """
-        Reset the access policy to its uncustomized default value.
-        """
+        """Reset the access policy to its uncustomized default value."""
 
         access_policy = self.get_object()
         for plugin_config in pulp_plugin_configs():

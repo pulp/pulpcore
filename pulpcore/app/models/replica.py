@@ -1,5 +1,4 @@
-"""
-Check `Plugin Writer's Guide`_ for more details.
+"""Check `Plugin Writer's Guide`_ for more details.
 
 Plugin Writer's Guide:
 https://pulpproject.org/pulpcore/docs/dev/learn/plugin-concepts/

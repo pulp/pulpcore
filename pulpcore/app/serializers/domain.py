@@ -79,8 +79,7 @@ class BaseSettingsClass(HiddenFieldsMixin, serializers.Serializer):
         return super().to_internal_value(data)
 
     def create(self, validated_data):
-        """
-        Create a storage instance based on the stored settings.
+        """Create a storage instance based on the stored settings.
 
         Subclasses can override this to instantiate objects needed for creation.
         """
@@ -229,7 +228,10 @@ class AmazonS3SettingsSerializer(BaseSettingsClass):
     client_config = serializers.HiddenField(default=None)
 
     def validate_verify(self, value):
-        """Verify can **only** be None or False. None=verify ssl."""
+        """Verify can **only** be None or False.
+
+        None=verify ssl.
+        """
         if value:
             value = None
         return value

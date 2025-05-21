@@ -21,8 +21,7 @@ class AlternateContentSourcePathField(serializers.ListField):
     child = serializers.CharField()
 
     def to_representation(self, paths):
-        """
-        A serializer field for AlternateContentSourcePath models.
+        """A serializer field for AlternateContentSourcePath models.
 
         Args:
             acs_pk (pk of AlternateContentSource instance): UUID of AlternateContentSource
@@ -34,9 +33,7 @@ class AlternateContentSourcePathField(serializers.ListField):
 
 
 class AlternateContentSourceSerializer(ModelSerializer):
-    """
-    Serializer for the AlternateContentSource.
-    """
+    """Serializer for the AlternateContentSource."""
 
     pulp_href = DetailIdentityField(view_name_pattern=r"acs(-.*/.*)-detail")
     name = serializers.CharField(
@@ -146,9 +143,7 @@ class AlternateContentSourceSerializer(ModelSerializer):
 
 
 class AlternateContentSourcePathSerializer(ModelSerializer):
-    """
-    Serializer for the AlternateContentSourcePath.
-    """
+    """Serializer for the AlternateContentSourcePath."""
 
     alternate_content_source = DetailRelatedField(
         view_name_pattern=r"acs(-.*/.*)-detail",

@@ -9,8 +9,7 @@ log = logging.getLogger(__name__)
 
 
 class Stage:
-    """
-    The base class for all Stages API stages.
+    """The base class for all Stages API stages.
 
     To make a stage, inherit from this class and implement :meth:`run` on the subclass.
     """
@@ -21,8 +20,7 @@ class Stage:
         self.domain = get_domain()
 
     def _connect(self, in_q, out_q):
-        """
-        Connect to queues within a pipeline.
+        """Connect to queues within a pipeline.
 
         Args:
             in_q (asyncio.Queue): The stage input queue.
@@ -32,8 +30,7 @@ class Stage:
         self._out_q = out_q
 
     async def __call__(self):
-        """
-        This coroutine makes the stage callable.
+        """This coroutine makes the stage callable.
 
         It calls :meth:`run` and signals the next stage that its work is finished.
         """
@@ -43,18 +40,15 @@ class Stage:
         log.debug(_("%(name)s - put end-marker."), {"name": self})
 
     async def run(self):
-        """
-        The coroutine that is run as part of this stage.
+        """The coroutine that is run as part of this stage.
 
         Returns:
             The coroutine that runs this stage.
-
         """
         raise NotImplementedError(_("A plugin writer must implement this method"))
 
     async def items(self):
-        """
-        Asynchronous iterator yielding items of [DeclarativeContent][] from `self._in_q`.
+        """Asynchronous iterator yielding items of [DeclarativeContent][] from `self._in_q`.
 
         The iterator will get instances of [DeclarativeContent][] one by one as they get
         available.
@@ -70,7 +64,6 @@ class Stage:
                         async for d_content in self.items():
                             # process declarative content
                             await self.put(d_content)
-
         """
         while True:
             content = await self._in_q.get()
@@ -80,8 +73,7 @@ class Stage:
             yield content
 
     async def batches(self, minsize=500):
-        """
-        Asynchronous iterator yielding batches of [DeclarativeContent][] from `self._in_q`.
+        """Asynchronous iterator yielding batches of [DeclarativeContent][] from `self._in_q`.
 
         The iterator will try to get as many instances of
         [DeclarativeContent][] as possible without blocking, but
@@ -102,7 +94,6 @@ class Stage:
                             for d_content in batch:
                                 # process declarative content
                                 await self.put(d_content)
-
         """
         batch = []
         shutdown = False
@@ -159,8 +150,7 @@ class Stage:
         get_listener.cancel()
 
     async def put(self, item):
-        """
-        Coroutine to pass items to the next stage.
+        """Coroutine to pass items to the next stage.
 
         Args:
             item: A handled instance of [pulpcore.plugin.stages.DeclarativeContent][]
@@ -178,8 +168,7 @@ class Stage:
 
 
 async def create_pipeline(stages, maxsize=1):
-    """
-    A coroutine that builds a Stages API linear pipeline from the list `stages` and runs it.
+    """A coroutine that builds a Stages API linear pipeline from the list `stages` and runs it.
 
     Each stage is an instance of a class derived from [pulpcore.plugin.stages.Stage][] that
     implements the :meth:`run` coroutine. This coroutine reads asynchronously either from the
@@ -232,8 +221,7 @@ async def create_pipeline(stages, maxsize=1):
 
 
 class EndStage(Stage):
-    """
-    A Stages API stage that drains incoming items and does nothing with the items. This is
+    """A Stages API stage that drains incoming items and does nothing with the items. This is
     required at the end of all pipelines.
 
     Without this stage, the `maxsize` of the last stage's `_out_q` could fill up and block the
@@ -241,8 +229,7 @@ class EndStage(Stage):
     """
 
     async def __call__(self):
-        """
-        This method drains items from the last queue and drops them.
+        """This method drains items from the last queue and drops them.
 
         Importantly it does not try to put items into the nonexistent next queue.
         """

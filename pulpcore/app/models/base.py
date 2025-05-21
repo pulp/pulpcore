@@ -18,8 +18,7 @@ def pulp_uuid():
 
 
 class BaseModel(LifecycleModel):
-    """
-    Base model class for all Pulp models.
+    """Base model class for all Pulp models.
 
     This model inherits from `LifecycleModel` which allows all Pulp models to be used with
     `django-lifecycle`.
@@ -36,7 +35,6 @@ class BaseModel(LifecycleModel):
 
         * https://docs.djangoproject.com/en/3.2/topics/db/models/#automatic-primary-key-fields
         * https://rsinger86.github.io/django-lifecycle/
-
     """
 
     pulp_id = models.UUIDField(primary_key=True, default=pulp_uuid, editable=False)
@@ -98,8 +96,7 @@ class MasterModelMeta(ModelBase):
 
 
 class MasterModel(BaseModel, metaclass=MasterModelMeta):
-    """
-    Base model for the "Master" model in a "Master-Detail" relationship.
+    """Base model for the "Master" model in a "Master-Detail" relationship.
 
     Provides methods for casting down to detail types, back up to the master type,
     as well as a model field for tracking the type.
@@ -119,7 +116,6 @@ class MasterModel(BaseModel, metaclass=MasterModelMeta):
         only abstract Model base classes for MasterModel to behave properly.
         Specifically, OneToOneField relationships must not be used in any MasterModel
         subclass.
-
     """
 
     # TYPE is the user-facing string that describes this type. It is used to construct API
@@ -189,8 +185,7 @@ class MasterModel(BaseModel, metaclass=MasterModelMeta):
 
     @property
     def master(self):
-        """
-        The "Master" model instance of this master-detail pair
+        """The "Master" model instance of this master-detail pair.
 
         If this is already the master model instance, it will return itself.
         """
@@ -211,12 +206,11 @@ class MasterModel(BaseModel, metaclass=MasterModelMeta):
 # on Model classes, but it's easy enough to use the model's _meta namespace to do this, since
 # that's where other methods like this exist in Django.
 def master_model(options):
-    """
-    The Master model class of this Model's Master/Detail relationship.
+    """The Master model class of this Model's Master/Detail relationship.
 
     Accessible at ``<model_class>._meta.master_model``, the Master model class in a Master/Detail
-    relationship is the most generic non-abstract Model in this model's multiple-table chain
-    of inheritance.
+    relationship is the most generic non-abstract Model in this model's multiple-table chain of
+    inheritance.
 
     If this model is not a detail model, None will be returned.
     """

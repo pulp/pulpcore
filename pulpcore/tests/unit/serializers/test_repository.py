@@ -157,9 +157,8 @@ def test_validate_checkpoint_and_repository():
 
 
 def test_validate_repo_remote_sync(monkeypatch):
-    """
-    Test that the synchronization of repository and remote fails if they are from different plugins.
-    """
+    """Test that the synchronization of repository and remote fails if they are from different
+    plugins."""
     mock_remote = Mock(spec=models.Remote)
     data = {"remote": mock_remote}
 
@@ -179,10 +178,8 @@ def test_validate_repo_remote_sync(monkeypatch):
 
 @pytest.mark.parametrize("tested_serializer", [PublicationSerializer, DistributionSerializer])
 def test_validate_repo_remote_via_repository(monkeypatch, tested_serializer):
-    """
-    Test that the publication/distribution fails if
-    "repository" has a remote of an incompatible type.
-    """
+    """Test that the publication/distribution fails if "repository" has a remote of an incompatible
+    type."""
     monkeypatch.setattr(tested_serializer, "check_cross_domains", lambda self, data: None)
 
     mock_repository = Mock(spec=models.Repository)
@@ -199,10 +196,8 @@ def test_validate_repo_remote_via_repository(monkeypatch, tested_serializer):
 
 @pytest.mark.parametrize("tested_serializer", [PublicationSerializer, DistributionSerializer])
 def test_validate_repo_remote_via_repository_version(monkeypatch, tested_serializer):
-    """
-    Test that the publication/distribution fails if repository within
-    "repository_version" has a remote of an incompatible type.
-    """
+    """Test that the publication/distribution fails if repository within "repository_version" has a
+    remote of an incompatible type."""
     monkeypatch.setattr(tested_serializer, "check_cross_domains", lambda self, data: None)
 
     mock_repository = Mock(spec=models.Repository)
@@ -222,11 +217,9 @@ def test_validate_repo_remote_via_repository_version(monkeypatch, tested_seriali
 
 @pytest.mark.parametrize("field", ["repository", "repository_version"])
 def test_validate_repo_remote_via_publication(monkeypatch, field):
-    """
-    Test that the distribution fails if "publication.repository" has a remote
-    of an incompatible type or if repository within "publication.repository_version"
-    has a remote of an incompatible type.
-    """
+    """Test that the distribution fails if "publication.repository" has a remote of an incompatible
+    type or if repository within "publication.repository_version" has a remote of an incompatible
+    type."""
     monkeypatch.setattr(DistributionSerializer, "check_cross_domains", lambda self, data: None)
 
     mock_repository = Mock(spec=models.Repository)

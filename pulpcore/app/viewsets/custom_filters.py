@@ -1,6 +1,4 @@
-"""
-This module contains custom filters that might be used by more than one ViewSet.
-"""
+"""This module contains custom filters that might be used by more than one ViewSet."""
 
 import re
 
@@ -30,9 +28,7 @@ OLD_RESOURCE_HREFS = {
 
 
 class ReservedResourcesFilter(Filter):
-    """
-    Enables a user to filter tasks by a reserved resource href.
-    """
+    """Enables a user to filter tasks by a reserved resource href."""
 
     def __init__(self, *args, exclusive=True, shared=True, **kwargs):
         self.exclusive = exclusive
@@ -43,8 +39,7 @@ class ReservedResourcesFilter(Filter):
         super().__init__(*args, **kwargs)
 
     def filter(self, qs, value):
-        """
-        Callback to filter the query set based on the provided filter value.
+        """Callback to filter the query set based on the provided filter value.
 
         Args:
             qs (django.db.models.query.QuerySet): The Queryset to filter
@@ -83,17 +78,13 @@ class ReservedResourcesFilter(Filter):
 
 
 class ReservedResourcesInFilter(BaseInFilter, ReservedResourcesFilter):
-    """
-    Enables a user to filter tasks by a list of reserved resource hrefs.
-    """
+    """Enables a user to filter tasks by a list of reserved resource hrefs."""
 
 
 class CreatedResourcesFilter(Filter):
-    """
-    Filter used to get tasks by created resources.
+    """Filter used to get tasks by created resources.
 
-    Created resources contain a reference to newly created repository
-    versions, distributions, etc.
+    Created resources contain a reference to newly created repository versions, distributions, etc.
     """
 
     def filter(self, qs, value):
@@ -115,9 +106,7 @@ class CreatedResourcesFilter(Filter):
 
 
 class RepoVersionHrefPrnFilter(Filter):
-    """
-    Filter Content by a Repository Version.
-    """
+    """Filter Content by a Repository Version."""
 
     def __init__(self, *args, **kwargs):
         kwargs.setdefault("help_text", _("Repository Version referenced by HREF/PRN"))
@@ -125,8 +114,7 @@ class RepoVersionHrefPrnFilter(Filter):
 
     @staticmethod
     def get_repository_version(value):
-        """
-        Get the repository version from the HREF/PRN value provided by the user.
+        """Get the repository version from the HREF/PRN value provided by the user.
 
         Args:
             value (string): The RepositoryVersion href/prn to filter by
@@ -148,9 +136,7 @@ class RepoVersionHrefPrnFilter(Filter):
 
 
 class RepositoryVersionFilter(RepoVersionHrefPrnFilter):
-    """
-    Filter by RepositoryVersion href/prn.
-    """
+    """Filter by RepositoryVersion href/prn."""
 
     def filter(self, qs, value):
         """
@@ -171,9 +157,7 @@ class RepositoryVersionFilter(RepoVersionHrefPrnFilter):
 
 
 class ArtifactRepositoryVersionFilter(RepoVersionHrefPrnFilter):
-    """
-    Filter used to get the artifacts in a repository version.
-    """
+    """Filter used to get the artifacts in a repository version."""
 
     def filter(self, qs, value):
         """
@@ -195,9 +179,7 @@ class ArtifactRepositoryVersionFilter(RepoVersionHrefPrnFilter):
 
 
 class ContentRepositoryVersionFilter(RepoVersionHrefPrnFilter):
-    """
-    Filter used to get the content of this type found in a repository version.
-    """
+    """Filter used to get the content of this type found in a repository version."""
 
     def filter(self, qs, value):
         """
@@ -217,9 +199,7 @@ class ContentRepositoryVersionFilter(RepoVersionHrefPrnFilter):
 
 
 class ContentAddedRepositoryVersionFilter(RepoVersionHrefPrnFilter):
-    """
-    Filter used to get the content of this type found in a repository version.
-    """
+    """Filter used to get the content of this type found in a repository version."""
 
     def filter(self, qs, value):
         """
@@ -239,9 +219,7 @@ class ContentAddedRepositoryVersionFilter(RepoVersionHrefPrnFilter):
 
 
 class ContentRemovedRepositoryVersionFilter(RepoVersionHrefPrnFilter):
-    """
-    Filter used to get the content of this type found in a repository version.
-    """
+    """Filter used to get the content of this type found in a repository version."""
 
     def filter(self, qs, value):
         """

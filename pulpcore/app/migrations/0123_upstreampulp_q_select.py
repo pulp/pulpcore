@@ -4,12 +4,13 @@ from django.db import migrations, models
 
 
 def move_label_select_to_q(apps, schema_editor):
-    """
-    To keep ZDU, the pulp_label_select field will be moved, but not deleted during this
-    migration. Old tasks will still be able to access the field and new tasks will use the new
-    q_select field. Any new UpstreamPulps will only use q_select (label_select is being removed
-    from the serializer), so on the next breaking change release we can add a migration to remove
-    the pulp_label_select field.
+    """To keep ZDU, the pulp_label_select field will be moved, but not deleted during this
+    migration.
+
+    Old tasks will still be able to access the field and new tasks will use the new q_select field.
+    Any new UpstreamPulps will only use q_select (label_select is being removed from the
+    serializer), so on the next breaking change release we can add a migration to remove the
+    pulp_label_select field.
     """
     UpstreamPulp = apps.get_model("core", "UpstreamPulp")
     batch = []

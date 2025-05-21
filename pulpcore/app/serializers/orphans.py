@@ -30,8 +30,8 @@ class OrphansCleanupSerializer(serializers.Serializer, ValidateFieldsMixin):
     )
 
     def validate_content_hrefs(self, value):
-        """
-        Check that the content_hrefs is not an empty list and contains all valid hrefs.
+        """Check that the content_hrefs is not an empty list and contains all valid hrefs.
+
         Args:
             value (list): The list supplied by the user
         Returns:

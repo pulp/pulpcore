@@ -1,5 +1,4 @@
-"""
-Django settings for the Pulp Platform application
+"""Django settings for the Pulp Platform application.
 
 Never import this module directly, instead `from django.conf import settings`, see
 <https://docs.djangoproject.com/en/3.2/topics/settings/#using-settings-in-python-code>

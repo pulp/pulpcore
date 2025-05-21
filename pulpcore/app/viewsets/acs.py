@@ -27,9 +27,7 @@ class AlternateContentSourceViewSet(
     AsyncUpdateMixin,
     NamedModelViewSet,
 ):
-    """
-    A class for ACS viewset.
-    """
+    """A class for ACS viewset."""
 
     queryset = AlternateContentSource.objects.all()
     serializer_class = AlternateContentSourceSerializer

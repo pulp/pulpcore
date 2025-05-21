@@ -21,8 +21,7 @@ def get_user_model():
 
 
 def assign_role(rolename, entity, obj=None, domain=None):
-    """
-    Assign a role to a user or a group.
+    """Assign a role to a user or a group.
 
     Args:
         rolename (str): Name of the role to assign.
@@ -63,8 +62,7 @@ def assign_role(rolename, entity, obj=None, domain=None):
 
 
 def remove_role(rolename, entity, obj=None, domain=None):
-    """
-    Remove a role from a user or a group.
+    """Remove a role from a user or a group.
 
     Args:
         rolename (str): Name of the role to assign.

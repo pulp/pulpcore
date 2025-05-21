@@ -1,6 +1,4 @@
-"""
-Repository related Django models.
-"""
+"""Repository related Django models."""
 
 from django.db import models
 
@@ -9,8 +7,7 @@ from pulpcore.app.util import get_domain_pk
 
 
 class AlternateContentSource(MasterModel):
-    """
-    Alternate sources of content.
+    """Alternate sources of content.
 
     Fields:
 
@@ -38,8 +35,7 @@ class AlternateContentSource(MasterModel):
 
 
 class AlternateContentSourcePath(BaseModel):
-    """
-    Alternate sources of content.
+    """Alternate sources of content.
 
     Fields:
 

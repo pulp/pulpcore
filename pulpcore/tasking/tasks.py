@@ -161,8 +161,7 @@ def dispatch(
     deferred=True,
     versions=None,
 ):
-    """
-    Enqueue a message to Pulp workers with a reservation.
+    """Enqueue a message to Pulp workers with a reservation.
 
     This method provides normal enqueue functionality, while also requesting necessary locks for
     serialized urls. No two tasks that claim the same resource can execute concurrently. It
@@ -310,8 +309,7 @@ def dispatch(
 
 
 def cancel_task(task_id):
-    """
-    Cancel the task that is represented by the given task_id.
+    """Cancel the task that is represented by the given task_id.
 
     This method cancels only the task with given task_id, not the spawned tasks. This also updates
     task's state to 'canceling'.
@@ -346,8 +344,7 @@ def cancel_task(task_id):
 
 
 def cancel_task_group(task_group_id):
-    """
-    Cancel the task group that is represented by the given task_group_id.
+    """Cancel the task group that is represented by the given task_group_id.
 
     This method attempts to cancel all tasks in the task group.
 

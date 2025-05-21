@@ -1,6 +1,4 @@
-"""
-Django models related to the Status API
-"""
+"""Django models related to the Status API."""
 
 from datetime import timedelta
 
@@ -14,8 +12,7 @@ from pulpcore.app.models import BaseModel
 
 class AppStatusManager(models.Manager):
     def online(self):
-        """
-        Returns a queryset of objects that are online.
+        """Returns a queryset of objects that are online.
 
         To be considered 'online', a AppStatus must have a heartbeat timestamp within
         ``self.model.APP_TTL`` from now.
@@ -28,8 +25,7 @@ class AppStatusManager(models.Manager):
         return self.filter(last_heartbeat__gte=age_threshold)
 
     def missing(self, age=None):
-        """
-        Returns a queryset of workers meeting the criteria to be considered 'missing'
+        """Returns a queryset of workers meeting the criteria to be considered 'missing'.
 
         To be considered missing, a AppsStatus must have a stale timestamp.  By default, stale is
         defined here as longer than the ``self.model.APP_TTL``, or you can specify age as a
@@ -48,8 +44,7 @@ class AppStatusManager(models.Manager):
 
 
 class BaseAppStatus(BaseModel):
-    """
-    Represents an AppStatus.
+    """Represents an AppStatus.
 
     This class is abstract. Subclasses must define `APP_TTL` as a `timedelta`.
 
@@ -68,8 +63,7 @@ class BaseAppStatus(BaseModel):
 
     @property
     def online(self):
-        """
-        Whether an app can be considered 'online'
+        """Whether an app can be considered 'online'.
 
         To be considered 'online', an app must have a timestamp more recent than ``self.APP_TTL``.
 
@@ -81,8 +75,7 @@ class BaseAppStatus(BaseModel):
 
     @property
     def missing(self):
-        """
-        Whether an app can be considered 'missing'
+        """Whether an app can be considered 'missing'.
 
         To be considered 'missing', an App must have a timestamp older than ``self.APP_TTL``.
 
@@ -92,8 +85,7 @@ class BaseAppStatus(BaseModel):
         return not self.online
 
     def save_heartbeat(self):
-        """
-        Update the last_heartbeat field to now and save it.
+        """Update the last_heartbeat field to now and save it.
 
         Only the last_heartbeat field will be saved. No other changes will be saved.
 
@@ -108,16 +100,12 @@ class BaseAppStatus(BaseModel):
 
 
 class ApiAppStatus(BaseAppStatus):
-    """
-    Represents a Api App Status
-    """
+    """Represents a Api App Status."""
 
     APP_TTL = timedelta(seconds=settings.API_APP_TTL)
 
 
 class ContentAppStatus(BaseAppStatus):
-    """
-    Represents a Content App Status
-    """
+    """Represents a Content App Status."""
 
     APP_TTL = timedelta(seconds=settings.CONTENT_APP_TTL)

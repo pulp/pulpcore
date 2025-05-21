@@ -9,8 +9,7 @@ from .repository import Repository
 
 
 class Import(BaseModel):
-    """
-    A model that represents imports into Pulp.
+    """A model that represents imports into Pulp.
 
     Fields:
         params (models.JSONField): A set of parameters used to run the import
@@ -26,8 +25,7 @@ class Import(BaseModel):
 
 
 class Importer(MasterModel):
-    """
-    A base model that provides logic to import data into Pulp.
+    """A base model that provides logic to import data into Pulp.
 
     Can be extended by plugins to provide import functionality.
 
@@ -39,9 +37,7 @@ class Importer(MasterModel):
 
 
 class PulpImporter(Importer):
-    """
-    A model that can be used to import exports from other Pulp instances.
-    """
+    """A model that can be used to import exports from other Pulp instances."""
 
     TYPE = "pulp"
 
@@ -77,8 +73,7 @@ class PulpImporter(Importer):
 
 
 class PulpImporterRepository(BaseModel):
-    """
-    A model that maps repo names in an export to repos in Pulp.
+    """A model that maps repo names in an export to repos in Pulp.
 
     Fields:
         source_repo (models.TextField): The name of the repo in the export

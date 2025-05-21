@@ -12,8 +12,7 @@ from pulpcore.app.util import get_url, extract_pk
 
 
 def gather_repository_sizes(repositories, include_versions=False, include_on_demand=False):
-    """
-    Creates a list containing the size report for given repositories.
+    """Creates a list containing the size report for given repositories.
 
     Each entry in the list will contain a dict with following minimal fields:
         - name: name of the repository

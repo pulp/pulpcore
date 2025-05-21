@@ -1,6 +1,4 @@
-"""
-Django models related to progress reporting
-"""
+"""Django models related to progress reporting."""
 
 import datetime
 import logging
@@ -17,8 +15,7 @@ _logger = logging.getLogger(__name__)
 
 
 class ProgressReport(BaseModel):
-    """
-    A model for all progress reporting.
+    """A model for all progress reporting.
 
     All progress reports have a message, state, and are related to a Task.
 
@@ -122,14 +119,13 @@ class ProgressReport(BaseModel):
     _last_save_time = None
 
     def save(self, *args, **kwargs):
-        """
-        Auto-set the task_id if running inside a task
+        """Auto-set the task_id if running inside a task.
 
         If the task_id is already set it will not be updated. If it is unset and this is running
         inside of a task it will be auto-set prior to saving.
 
-        args (list): positional arguments to be passed on to the real save
-        kwargs (dict): keyword arguments to be passed on to the real save
+        args (list): positional arguments to be passed on to the real save kwargs (dict): keyword
+        arguments to be passed on to the real save
         """
         now = timezone.now()
 
@@ -145,14 +141,13 @@ class ProgressReport(BaseModel):
             self._last_save_time = now
 
     async def asave(self, *args, **kwargs):
-        """
-        Auto-set the task_id if running inside a task
+        """Auto-set the task_id if running inside a task.
 
         If the task_id is already set it will not be updated. If it is unset and this is running
         inside of a task it will be auto-set prior to saving.
 
-        args (list): positional arguments to be passed on to the real save
-        kwargs (dict): keyword arguments to be passed on to the real save
+        args (list): positional arguments to be passed on to the real save kwargs (dict): keyword
+        arguments to be passed on to the real save
         """
         now = timezone.now()
 
@@ -168,9 +163,7 @@ class ProgressReport(BaseModel):
             self._last_save_time = now
 
     def __enter__(self):
-        """
-        Saves the progress report state as RUNNING
-        """
+        """Saves the progress report state as RUNNING."""
         self.state = TASK_STATES.RUNNING
         self.save()
 
@@ -179,9 +172,7 @@ class ProgressReport(BaseModel):
         return self
 
     async def __aenter__(self):
-        """
-        Async implementation of __enter__
-        """
+        """Async implementation of __enter__"""
         self.state = TASK_STATES.RUNNING
         await self.asave()
 
@@ -190,8 +181,7 @@ class ProgressReport(BaseModel):
         return self
 
     def __exit__(self, type, value, traceback):
-        """
-        Update the progress report state to COMPLETED, CANCELED, or FAILED.
+        """Update the progress report state to COMPLETED, CANCELED, or FAILED.
 
         If an exception occurs the progress report state is saved as:
         - CANCELED if the exception is `asyncio.CancelledError`
@@ -212,8 +202,7 @@ class ProgressReport(BaseModel):
         self.save()
 
     async def __aexit__(self, type, value, traceback):
-        """
-        Async implementation of __exit__
+        """Async implementation of __exit__
 
         Update the progress report state to COMPLETED, CANCELED, or FAILED.
 
@@ -236,8 +225,7 @@ class ProgressReport(BaseModel):
         await self.asave()
 
     def increment(self):
-        """
-        Increment done count and save the progress report.
+        """Increment done count and save the progress report.
 
         This will increment and save the self.done attribute which is useful to put into a loop
         processing items.
@@ -245,8 +233,7 @@ class ProgressReport(BaseModel):
         self.increase_by(1)
 
     async def aincrement(self):
-        """
-        Increment done count and save the progress report.
+        """Increment done count and save the progress report.
 
         This will increment and save the self.done attribute which is useful to put into a loop
         processing items.
@@ -254,8 +241,7 @@ class ProgressReport(BaseModel):
         await self.aincrease_by(1)
 
     def increase_by(self, count):
-        """
-        Increase the done count and save the progress report.
+        """Increase the done count and save the progress report.
 
         This will increment and save the self.done attribute which is useful to put into a loop
         processing items.
@@ -267,8 +253,7 @@ class ProgressReport(BaseModel):
         self.save()
 
     async def aincrease_by(self, count):
-        """
-        Increase the done count and save the progress report.
+        """Increase the done count and save the progress report.
 
         This will increment and save the self.done attribute which is useful to put into a loop
         processing items.
@@ -280,8 +265,7 @@ class ProgressReport(BaseModel):
         await self.asave()
 
     def iter(self, iter):
-        """
-        Iterate and automatically call increment().
+        """Iterate and automatically call increment().
 
             >>> progress_bar = ProgressReport(message='Publishing files', code='publish', total=23)
             >>> progress_bar.save()
@@ -300,8 +284,7 @@ class ProgressReport(BaseModel):
 
 
 class GroupProgressReport(BaseModel):
-    """
-    A model for all progress reporting in a Task Group.
+    """A model for all progress reporting in a Task Group.
 
     All progress reports have a message, code and are related to a Task Group.
 
@@ -348,7 +331,6 @@ class GroupProgressReport(BaseModel):
     Relations:
 
         task_group: The task group associated with this group progress report.
-
     """
 
     message = models.TextField()

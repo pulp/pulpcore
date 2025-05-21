@@ -141,18 +141,14 @@ class RBACContentGuardPermissionSerializer(serializers.Serializer):
 
 
 class ContentRedirectContentGuardSerializer(ContentGuardSerializer, GetOrCreateSerializerMixin):
-    """
-    A serializer for ContentRedirectContentGuard.
-    """
+    """A serializer for ContentRedirectContentGuard."""
 
     class Meta(ContentGuardSerializer.Meta):
         model = models.ContentRedirectContentGuard
 
 
 class HeaderContentGuardSerializer(ContentGuardSerializer, GetOrCreateSerializerMixin):
-    """
-    A serializer for HeaderContentGuard.
-    """
+    """A serializer for HeaderContentGuard."""
 
     header_name = serializers.CharField(help_text=_("The header name the guard will check on."))
     header_value = serializers.CharField(help_text=_("The value that will authorize the request."))
@@ -173,8 +169,7 @@ class HeaderContentGuardSerializer(ContentGuardSerializer, GetOrCreateSerializer
 
 
 class DistributionSerializer(ModelSerializer):
-    """
-    The Serializer for the Distribution model.
+    """The Serializer for the Distribution model.
 
     The serializer deliberately omits the `publication` and `repository_version` field due to
     plugins typically requiring one or the other but not both.
@@ -205,7 +200,6 @@ class DistributionSerializer(ModelSerializer):
           queryset=models.Remote.objects.all(),
           allow_null=True
       )
-
     """
 
     pulp_href = DetailIdentityField(view_name_pattern=r"distributions(-.*/.*)-detail")
@@ -376,9 +370,7 @@ class DistributionSerializer(ModelSerializer):
 
 
 class ArtifactDistributionSerializer(DistributionSerializer):
-    """
-    A serializer for ArtifactDistribution.
-    """
+    """A serializer for ArtifactDistribution."""
 
     class Meta:
         model = models.ArtifactDistribution
@@ -391,8 +383,7 @@ class ArtifactDistributionSerializer(DistributionSerializer):
 
 
 def validate_repo_and_remote(repository, field, **kwargs):
-    """
-    Validate that a repository has a remote of a compatible type.
+    """Validate that a repository has a remote of a compatible type.
 
     Args:
         repository: repository to check

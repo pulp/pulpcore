@@ -1,6 +1,4 @@
-"""
-Base pulpcore module.
-"""
+"""Base pulpcore module."""
 
 from pkgutil import extend_path
 

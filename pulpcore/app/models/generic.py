@@ -1,5 +1,4 @@
-"""
-Container for models using generic relations provided by Django's ContentTypes framework.
+"""Container for models using generic relations provided by Django's ContentTypes framework.
 
 References:
     https://docs.djangoproject.com/en/3.2/ref/contrib/contenttypes/#generic-relations
@@ -15,9 +14,9 @@ from pulpcore.app.models.base import BaseModel
 class GenericRelationModel(BaseModel):
     """Base model class for implementing Generic Relations.
 
-    This class provides the required fields to implement generic relations. Instances of
-    this class can only be related models with a primary key, such as those subclassing
-    Pulp's base Model class.
+    This class provides the required fields to implement generic relations. Instances of this class
+    can only be related models with a primary key, such as those subclassing Pulp's base Model
+    class.
     """
 
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)

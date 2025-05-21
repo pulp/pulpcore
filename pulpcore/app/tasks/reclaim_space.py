@@ -17,8 +17,7 @@ log = getLogger(__name__)
 
 
 def reclaim_space(repo_pks, keeplist_rv_pks=None, force=False):
-    """
-    This task frees-up disk space by removing Artifact files from the filesystem for Content
+    """This task frees-up disk space by removing Artifact files from the filesystem for Content
     exclusive to the list of provided repos.
 
     Note: content marked as `proctected` will be excluded from the reclaim disk space.
@@ -28,7 +27,6 @@ def reclaim_space(repo_pks, keeplist_rv_pks=None, force=False):
         keeplist_rv_pks (list): A list of repo version pks that will be excluded from the reclaim
         disk space.
         force (bool): If True, uploaded content will be taken into account.
-
     """
     reclaimed_repos = Repository.objects.filter(pk__in=repo_pks)
     for repo in reclaimed_repos:

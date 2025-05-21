@@ -15,7 +15,7 @@ def pulp_redisdb(settings, redisdb, monkeypatch):
 
 
 def test_basic_set_get(pulp_redisdb):
-    """Tests setting value, then getting it"""
+    """Tests setting value, then getting it."""
     cache = Cache()
     cache.set("key", "hello")
     ret = cache.get("key")
@@ -26,7 +26,7 @@ def test_basic_set_get(pulp_redisdb):
 
 
 def test_basic_exists(pulp_redisdb):
-    """Tests that keys already set exist"""
+    """Tests that keys already set exist."""
     cache = Cache()
     cache.set("key", "hello")
     assert cache.exists("key")
@@ -34,7 +34,7 @@ def test_basic_exists(pulp_redisdb):
 
 
 def test_basic_delete(pulp_redisdb):
-    """Tests deleting value"""
+    """Tests deleting value."""
     cache = Cache()
     cache.set("key", "hello")
     assert cache.exists("key")
@@ -44,7 +44,7 @@ def test_basic_delete(pulp_redisdb):
 
 
 def test_basic_expires(pulp_redisdb):
-    """Tests setting values with expiration times"""
+    """Tests setting values with expiration times."""
     cache = Cache()
     cache.set("key", "hi", expires=2)
     ret = cache.get("key")
@@ -55,7 +55,7 @@ def test_basic_expires(pulp_redisdb):
 
 
 def test_group_with_base_key(pulp_redisdb):
-    """Tests grouping multiple key-values under one base-key"""
+    """Tests grouping multiple key-values under one base-key."""
     cache = Cache()
     tuples = [
         ("key1", "hi", "base1"),
@@ -78,7 +78,7 @@ def test_group_with_base_key(pulp_redisdb):
 
 
 def test_delete_base_key(pulp_redisdb):
-    """Tests deleting multiple key-values under one base-key"""
+    """Tests deleting multiple key-values under one base-key."""
     cache = Cache()
     cache.delete(base_key="base1")
     assert not cache.exists("key1", base_key="base1")
@@ -93,7 +93,7 @@ def test_delete_base_key(pulp_redisdb):
 
 
 def test_clear(pulp_redisdb):
-    """Tests clearing the cache"""
+    """Tests clearing the cache."""
     cache = Cache()
     tuples = [
         ("key", "hi", None),

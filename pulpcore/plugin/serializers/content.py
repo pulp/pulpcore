@@ -59,8 +59,7 @@ class UploadSerializerFieldsMixin(Serializer):
         return url_parse._replace(netloc=url_parse.netloc.split("@")[-1]).geturl()
 
     def download(self, url, expected_digests=None, expected_size=None):
-        """
-        Downloads & returns the file from the url.
+        """Downloads & returns the file from the url.
 
         Plugins can overwrite this method on their content serializers to get specific download
         behavior for their content types.
@@ -106,8 +105,7 @@ class UploadSerializerFieldsMixin(Serializer):
         return data
 
     def deferred_validate(self, data):
-        """
-        Validate the content unit by deeply analyzing the specified Artifact.
+        """Validate the content unit by deeply analyzing the specified Artifact.
 
         This is only called when validating without a request context to prevent stalling
         an ongoing http request.
@@ -168,12 +166,11 @@ class NoArtifactContentUploadSerializer(UploadSerializerFieldsMixin, NoArtifactC
 class SingleArtifactContentUploadSerializer(
     UploadSerializerFieldsMixin, SingleArtifactContentSerializer
 ):
-    """
-    A serializer for content_types with a single Artifact.
+    """A serializer for content_types with a single Artifact.
 
-    The Artifact can either be specified via it's url or an uncommitted upload, or a new file can
-    be uploaded in the POST data.
-    Additionally a repository can be specified, to which the content unit will be added.
+    The Artifact can either be specified via it's url or an uncommitted upload, or a new file can be
+    uploaded in the POST data. Additionally a repository can be specified, to which the content unit
+    will be added.
 
     When using this serializer, the creation of the real content must be wrapped in a task that
     touches the Artifact and locks the Upload and Repository when specified.
@@ -196,8 +193,7 @@ class SingleArtifactContentUploadSerializer(
             self.fields["artifact"].required = False
 
     def deferred_validate(self, data):
-        """
-        Validate the content unit by deeply analyzing the specified Artifact.
+        """Validate the content unit by deeply analyzing the specified Artifact.
 
         This is only called when validating without a request context to prevent stalling
         an ongoing http request.

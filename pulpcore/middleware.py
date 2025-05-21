@@ -15,8 +15,7 @@ from pulpcore.app.util import (
 
 
 class DomainMiddleware:
-    """
-    A middleware class to add in the domain name to the request context.
+    """A middleware class to add in the domain name to the request context.
 
     Removes the domain name from the view kwargs if present in the url. If no domain is specified
     "default" is used.
@@ -52,8 +51,7 @@ class DomainMiddleware:
 
 
 class APIRootRewriteMiddleware:
-    """
-    A middleware class to support API_ROOT_REWRITE_HEADER setting.
+    """A middleware class to support API_ROOT_REWRITE_HEADER setting.
 
     When API_ROOT_REWRITE_HEADER is set, this middleware will check for the existence of the header
     on the request and if set it will add the new API_ROOT to the request context and remove the

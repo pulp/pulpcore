@@ -15,9 +15,7 @@ from pulpcore.app.models.content import SigningService as BaseSigningService
 
 
 class Command(BaseCommand):
-    """
-    Django management command for adding a signing service.
-    """
+    """Django management command for adding a signing service."""
 
     help = "Adds a new SigningService."
 
