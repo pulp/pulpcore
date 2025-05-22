@@ -11,6 +11,7 @@ from django.db.utils import InterfaceError, DatabaseError
 from gunicorn.workers.sync import SyncWorker
 
 from pulpcore.app.apps import pulp_plugin_configs
+from pulpcore.app.netutil import has_ipv6
 from pulpcore.app.pulpcore_gunicorn_application import PulpcoreGunicornApplication
 
 logger = getLogger(__name__)
@@ -102,7 +103,9 @@ class PulpcoreApiApplication(PulpcoreGunicornApplication):
 # https://github.com/benoitc/gunicorn/blob/master/gunicorn/config.py
 
 
-@click.option("--bind", "-b", default=["[::]:24817"], multiple=True)
+@click.option(
+    "--bind", "-b", default=[f"{ '[::]' if has_ipv6() else '0.0.0.0' }:24817"], multiple=True
+)
 @click.option("--workers", "-w", type=int)
 # @click.option("--threads", "-w", type=int)  # We don't use a threaded worker...
 @click.option("--name", "-n", "proc_name")
