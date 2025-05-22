@@ -1,4 +1,5 @@
 import click
+from pulpcore.app.netutil import has_ipv6
 from pulpcore.app.pulpcore_gunicorn_application import PulpcoreGunicornApplication
 from django.conf import settings
 
@@ -19,7 +20,9 @@ class PulpcoreContentApplication(PulpcoreGunicornApplication):
         return pulpcore.content.server
 
 
-@click.option("--bind", "-b", default=["[::]:24816"], multiple=True)
+@click.option(
+    "--bind", "-b", default=[f"{ '[::]' if has_ipv6() else '0.0.0.0' }:24816"], multiple=True
+)
 @click.option("--workers", "-w", type=int)
 # @click.option("--threads", "-w", type=int)  # We don't use a threaded worker...
 @click.option("--name", "-n", "proc_name")
