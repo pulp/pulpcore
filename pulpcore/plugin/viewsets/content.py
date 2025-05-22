@@ -20,11 +20,10 @@ class DefaultDeferredContextMixin:
     """A mixin that provides a method for retrieving the default deferred context."""
 
     def get_deferred_context(self, request):
-        """
-        Supply context for deferred validation.
+        """Supply context for deferred validation.
 
-        When overwriting this method, it must return a dict, that is JSON serializable by
-        and does _not_ contain 'request' as a key.
+        When overwriting this method, it must return a dict, that is JSON serializable by and does
+        _not_ contain 'request' as a key.
         """
         return {}
 

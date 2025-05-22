@@ -156,8 +156,6 @@ def test_livez_unauthenticated(
     pulpcore_bindings,
     anonymous_user,
 ):
-    """
-    Assert that GET requests to Livez API return 200 without a response body.
-    """
+    """Assert that GET requests to Livez API return 200 without a response body."""
     with anonymous_user:
         assert pulpcore_bindings.LivezApi.livez_read() is None

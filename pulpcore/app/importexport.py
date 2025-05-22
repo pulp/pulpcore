@@ -23,8 +23,7 @@ log = logging.getLogger(__name__)
 
 
 def _write_export(the_tarfile, resource, dest_dir=None):
-    """
-    Write the JSON export for the specified resource to the specified tarfile.
+    """Write the JSON export for the specified resource to the specified tarfile.
 
     The resulting file will be found at <dest_dir>/<resource.__class__.__name__>.json. If dest_dir
     is None, the file will be added at the 'top level' of the_tarfile.
@@ -81,8 +80,7 @@ def _write_export(the_tarfile, resource, dest_dir=None):
 
 
 def export_versions(export, version_info):
-    """
-    Write a JSON list of plugins and their versions as 'versions.json' to export.tarfile
+    """Write a JSON list of plugins and their versions as 'versions.json' to export.tarfile.
 
     Output format is [{"component": "<pluginname>", "version": "<pluginversion>"},...]
 
@@ -100,8 +98,7 @@ def export_versions(export, version_info):
 
 
 def export_artifacts(export, artifact_pks):
-    """
-    Export a set of Artifacts, ArtifactResources, and RepositoryResources
+    """Export a set of Artifacts, ArtifactResources, and RepositoryResources.
 
     Args:
         export (django.db.models.PulpExport): export instance that's doing the export
@@ -149,8 +146,7 @@ def export_artifacts(export, artifact_pks):
 
 
 def export_content(export, repository_version):
-    """
-    Export db-content, and the db-content of the owning repositories
+    """Export db-content, and the db-content of the owning repositories.
 
     Args:
         export (django.db.models.PulpExport): export instance that's doing the export

@@ -1,6 +1,4 @@
-"""
-ViewSet for replicating repositories and distributions from an upstream Pulp
-"""
+"""ViewSet for replicating repositories and distributions from an upstream Pulp."""
 
 from drf_spectacular.utils import extend_schema
 from rest_framework import mixins
@@ -24,7 +22,10 @@ class UpstreamPulpViewSet(
     mixins.UpdateModelMixin,
     RolesMixin,
 ):
-    """API for configuring an upstream Pulp to replicate. This API is provided as a tech preview."""
+    """API for configuring an upstream Pulp to replicate.
+
+    This API is provided as a tech preview.
+    """
 
     queryset = UpstreamPulp.objects.all()
     endpoint_name = "upstream-pulps"
@@ -123,9 +124,7 @@ class UpstreamPulpViewSet(
     )
     @action(detail=True, methods=["post"])
     def replicate(self, request, pk):
-        """
-        Triggers an asynchronous repository replication operation.
-        """
+        """Triggers an asynchronous repository replication operation."""
         server = UpstreamPulp.objects.get(pk=pk)
         task_group = TaskGroup.objects.create(description=f"Replication of {server.name}")
 

@@ -16,9 +16,7 @@ from pulp_glue.common.context import PluginRequirement
 
 
 def user_agent():
-    """
-    Produce a User-Agent string to identify Pulp and relevant system info.
-    """
+    """Produce a User-Agent string to identify Pulp and relevant system info."""
     pulp_version = PulpAppConfig.version
     python = "{} {}.{}.{}-{}{}".format(sys.implementation.name, *sys.version_info)
     uname = platform.uname()

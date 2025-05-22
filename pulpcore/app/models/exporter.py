@@ -13,8 +13,7 @@ from pulpcore.constants import FS_EXPORT_CHOICES, FS_EXPORT_METHODS
 
 
 class Export(BaseModel):
-    """
-    A model that represents an Export.
+    """A model that represents an Export.
 
     Fields:
 
@@ -32,8 +31,7 @@ class Export(BaseModel):
 
 
 class ExportedResource(GenericRelationModel):
-    """
-    A model to represent anything that was exported in an Export.
+    """A model to represent anything that was exported in an Export.
 
     Resource can be a repo version, publication, etc.
 
@@ -46,8 +44,7 @@ class ExportedResource(GenericRelationModel):
 
 
 class Exporter(MasterModel):
-    """
-    A base model that provides logic to export a set of content and keep track of Exports.
+    """A base model that provides logic to export a set of content and keep track of Exports.
 
     Fields:
 
@@ -58,16 +55,13 @@ class Exporter(MasterModel):
 
 
 class FilesystemExport(Export):
-    """
-    A model that represents an export to the filesystem.
-    """
+    """A model that represents an export to the filesystem."""
 
     pass
 
 
 class FilesystemExporter(Exporter):
-    """
-    A base model that provides logic to export a set of content to the filesystem.
+    """A base model that provides logic to export a set of content to the filesystem.
 
     Fields:
 
@@ -84,8 +78,7 @@ class FilesystemExporter(Exporter):
 
 
 class PulpExport(Export):
-    """
-    A model that provides export-files that can be imported into other Pulp instances.
+    """A model that provides export-files that can be imported into other Pulp instances.
 
     Fields:
 
@@ -109,9 +102,7 @@ class PulpExport(Export):
     toc_info = models.JSONField(null=True)
 
     def export_tarfile_path(self):
-        """
-        Return the full tarfile name where the specified PulpExport should store its export
-        """
+        """Return the full tarfile name where the specified PulpExport should store its export."""
         # EXPORTER-PATH/export-EXPORTID-YYYYMMDD_HHMM.tar
         return os.path.normpath(
             "{}/export-{}-{}.tar".format(
@@ -124,8 +115,7 @@ class PulpExport(Export):
 
 
 class PulpExporter(Exporter):
-    """
-    A model that controls creating exports that can be imported into other Pulp instances.
+    """A model that controls creating exports that can be imported into other Pulp instances.
 
     Fields:
 

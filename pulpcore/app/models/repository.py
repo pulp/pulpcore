@@ -1,6 +1,4 @@
-"""
-Repository related Django models.
-"""
+"""Repository related Django models."""
 
 from contextlib import suppress
 from gettext import gettext as _
@@ -42,8 +40,7 @@ _logger = logging.getLogger(__name__)
 
 
 class Repository(MasterModel):
-    """
-    Collection of content.
+    """Collection of content.
 
     Fields:
 
@@ -123,8 +120,7 @@ class Repository(MasterModel):
         pass
 
     def save(self, *args, **kwargs):
-        """
-        Saves Repository model and creates an initial repository version.
+        """Saves Repository model and creates an initial repository version.
 
         Args:
             args (list): list of positional arguments for Model.save()
@@ -152,8 +148,7 @@ class Repository(MasterModel):
                     raise RuntimeError(f"The repository '{self.name}' could not be locked")
 
     def create_initial_version(self):
-        """
-        Create an initial repository version (version 0).
+        """Create an initial repository version (version 0).
 
         This method can be overriden by plugins if they require custom logic.
         """
@@ -163,8 +158,7 @@ class Repository(MasterModel):
         version.save()
 
     def new_version(self, base_version=None):
-        """
-        Create a new RepositoryVersion for this Repository
+        """Create a new RepositoryVersion for this Repository.
 
         Creation of a RepositoryVersion should be done in a RQ Job.
 
@@ -201,8 +195,7 @@ class Repository(MasterModel):
             return version
 
     def initialize_new_version(self, new_version):
-        """
-        Initialize the new RepositoryVersion with plugin-provided code.
+        """Initialize the new RepositoryVersion with plugin-provided code.
 
         This method should be overridden by plugin writers for an opportunity for plugin input. This
         method is intended to be called with the incomplete
@@ -215,13 +208,11 @@ class Repository(MasterModel):
         Args:
             new_version (pulpcore.app.models.RepositoryVersion): The incomplete RepositoryVersion to
                 finalize.
-
         """
         pass
 
     def finalize_new_version(self, new_version):
-        """
-        Finalize the incomplete RepositoryVersion with plugin-provided code.
+        """Finalize the incomplete RepositoryVersion with plugin-provided code.
 
         This method should be overridden by plugin writers for an opportunity for plugin input. This
         method is intended to be called with the incomplete
@@ -236,53 +227,45 @@ class Repository(MasterModel):
                 finalize.
 
         Returns:
-
         """
         pass
 
     def latest_version(self):
-        """
-        Get the latest RepositoryVersion on a repository
+        """Get the latest RepositoryVersion on a repository.
 
         Args:
             repository (pulpcore.app.models.Repository): to get the latest version of
 
         Returns:
             pulpcore.app.models.RepositoryVersion: The latest RepositoryVersion
-
         """
         with suppress(RepositoryVersion.DoesNotExist):
             model = self.versions.complete().latest()
             return model
 
     async def alatest_version(self):
-        """
-        Get the latest RepositoryVersion on a repository asynchronously
+        """Get the latest RepositoryVersion on a repository asynchronously.
 
         Args:
             repository (pulpcore.app.models.Repository): to get the latest version of
 
         Returns:
             pulpcore.app.models.RepositoryVersion: The latest RepositoryVersion
-
         """
         with suppress(RepositoryVersion.DoesNotExist):
             model = await self.versions.complete().alatest()
             return model
 
     def natural_key(self):
-        """
-        Get the model's natural key.
+        """Get the model's natural key.
 
-        :return: The model's natural key.
-        :rtype: tuple
+        :return: The model's natural key. :rtype: tuple
         """
         return (self.name,)
 
     @staticmethod
     def on_demand_artifacts_for_version(version):
-        """
-        Returns the remote artifacts of on-demand content for a repository version.
+        """Returns the remote artifacts of on-demand content for a repository version.
 
         Provides a method that plugins can override since RepositoryVersions aren't typed.
         Note: this only returns remote artifacts that have a non-null size.
@@ -297,8 +280,7 @@ class Repository(MasterModel):
 
     @staticmethod
     def artifacts_for_version(version):
-        """
-        Return the artifacts for a repository version.
+        """Return the artifacts for a repository version.
 
         Provides a method that plugins can override since RepositoryVersions aren't typed.
 
@@ -311,8 +293,7 @@ class Repository(MasterModel):
         return Artifact.objects.filter(content__pk__in=version.content)
 
     def protected_versions(self):
-        """
-        Return repository versions that are protected.
+        """Return repository versions that are protected.
 
         A protected version is one that is being served by a distro directly or via publication.
 
@@ -355,8 +336,7 @@ class Repository(MasterModel):
         return qs.distinct()
 
     def pull_through_add_content(self, content_artifact):
-        """
-        Dispatch a task to add the passed in content_artifact from the content app's pull-through
+        """Dispatch a task to add the passed in content_artifact from the content app's pull-through
         feature to this repository.
 
         Defaults to adding the associated content of the passed in content_artifact to the
@@ -406,8 +386,7 @@ class Repository(MasterModel):
                 version.delete()
 
     def delete(self, **kwargs):
-        """
-        Delete the repository.
+        """Delete the repository.
 
         Args:
             **kwargs (dict): Delete options.
@@ -465,8 +444,7 @@ class Repository(MasterModel):
 
 
 class Remote(MasterModel):
-    """
-    A remote source for content.
+    """A remote source for content.
 
     This is meant to be subclassed by plugin authors as an opportunity to provide plugin-specific
     persistent data attributes for a plugin remote subclass.
@@ -579,8 +557,7 @@ class Remote(MasterModel):
 
     @property
     def download_factory(self):
-        """
-        Return the DownloaderFactory which can be used to generate asyncio capable downloaders.
+        """Return the DownloaderFactory which can be used to generate asyncio capable downloaders.
 
         Upon first access, the DownloaderFactory is instantiated and saved internally.
 
@@ -599,8 +576,7 @@ class Remote(MasterModel):
 
     @property
     def download_throttler(self):
-        """
-        Return the Throttler which can be used to rate limit downloaders.
+        """Return the Throttler which can be used to rate limit downloaders.
 
         Upon first access, the Throttler is instantiated and saved internally.
         Plugin writers are expected to override when additional configuration of the
@@ -608,7 +584,6 @@ class Remote(MasterModel):
 
         Returns:
             Throttler: The instantiated Throttler to be used by get_downloader()
-
         """
         try:
             return self._download_throttler
@@ -618,8 +593,7 @@ class Remote(MasterModel):
                 return self._download_throttler
 
     def get_downloader(self, remote_artifact=None, url=None, download_factory=None, **kwargs):
-        """
-        Get a downloader from either a RemoteArtifact or URL that is configured with this Remote.
+        """Get a downloader from either a RemoteArtifact or URL that is configured with this Remote.
 
         This method accepts either `remote_artifact` or `url` but not both. At least one is
         required. If neither or both are passed a ValueError is raised.
@@ -663,8 +637,7 @@ class Remote(MasterModel):
         return download_factory.build(url, **kwargs)
 
     def get_remote_artifact_url(self, relative_path=None, request=None):
-        """
-        Get the full URL for a RemoteArtifact from relative path and request.
+        """Get the full URL for a RemoteArtifact from relative path and request.
 
         This method returns the URL for a RemoteArtifact by concatenating the Remote's url and the
         relative path. Plugin writers are expected to override this method when a more complex
@@ -685,8 +658,7 @@ class Remote(MasterModel):
         return path.join(self.url, relative_path)
 
     def get_remote_artifact_content_type(self, relative_path=None):
-        """
-        Get the type of content that should be available at the relative path.
+        """Get the type of content that should be available at the relative path.
 
         Plugin writers are expected to implement this method. This method can return None if the
         relative path is for metadata that should only be streamed from the remote and not saved.
@@ -714,8 +686,7 @@ class Remote(MasterModel):
 
 
 class RepositoryContent(BaseModel):
-    """
-    Association between a repository and its contained content.
+    """Association between a repository and its contained content.
 
     Fields:
 
@@ -762,8 +733,7 @@ class RepositoryVersionQuerySet(models.QuerySet):
         return self.filter(complete=True)
 
     def with_content(self, content):
-        """
-        Filters repository versions that contain the provided content units.
+        """Filters repository versions that contain the provided content units.
 
         Args:
             content (django.db.models.QuerySet): query of content
@@ -788,8 +758,7 @@ class RepositoryVersionQuerySet(models.QuerySet):
 
 
 class RepositoryVersion(BaseModel):
-    """
-    A version of a repository's content set.
+    """A version of a repository's content set.
 
     Plugin Writers are strongly encouraged to use RepositoryVersion as a context manager to provide
     transactional safety, working directory set up, plugin finalization, and cleaning up the
@@ -830,8 +799,7 @@ class RepositoryVersion(BaseModel):
         ordering = ("number",)
 
     def _content_relationships(self):
-        """
-        Returns a set of repository_content for a repository version
+        """Returns a set of repository_content for a repository version.
 
         Returns:
             django.db.models.QuerySet: The repository_content that is contained within this version.
@@ -841,8 +809,7 @@ class RepositoryVersion(BaseModel):
         ).exclude(version_removed__number__lte=self.number)
 
     def get_content(self, content_qs=None):
-        """
-        Returns a set of content for a repository version
+        """Returns a set of content for a repository version.
 
         Args:
             content_qs (django.db.models.QuerySet): The queryset for Content that will be
@@ -867,8 +834,7 @@ class RepositoryVersion(BaseModel):
 
     @property
     def content(self):
-        """
-        Returns a set of content for a repository version
+        """Returns a set of content for a repository version.
 
         Returns:
             django.db.models.QuerySet: The content that is contained within this version.
@@ -888,8 +854,7 @@ class RepositoryVersion(BaseModel):
         return self.get_content()
 
     def content_batch_qs(self, content_qs=None, order_by_params=("pk",), batch_size=1000):
-        """
-        Generate content batches to efficiently iterate over all content.
+        """Generate content batches to efficiently iterate over all content.
 
         Generates query sets that span the `content_qs` content of the repository
         version. Each yielded query set evaluates to at most `batch_size` content records.
@@ -936,15 +901,13 @@ class RepositoryVersion(BaseModel):
                     content_batch_qs.prefetch_related("contentartifact_set")
                     for content in content_batch_qs:
                         ...
-
         """
         version_content_qs = self.get_content(content_qs).order_by(*order_by_params)
         yield from batch_qs(version_content_qs, batch_size=batch_size)
 
     @property
     def artifacts(self):
-        """
-        Returns a set of artifacts for a repository version.
+        """Returns a set of artifacts for a repository version.
 
         Returns:
             django.db.models.QuerySet: The artifacts that are contained within this version.
@@ -997,8 +960,7 @@ class RepositoryVersion(BaseModel):
         ).exclude(version_memberships__in=self._content_relationships())
 
     def contains(self, content):
-        """
-        Check whether a content exists in this repository version's set of content
+        """Check whether a content exists in this repository version's set of content.
 
         Returns:
             bool: True if the repository version contains the content, False otherwise
@@ -1006,8 +968,7 @@ class RepositoryVersion(BaseModel):
         return self.content.filter(pk=content.pk).exists()
 
     def add_content(self, content):
-        """
-        Add a content unit to this version.
+        """Add a content unit to this version.
 
         Args:
            content (django.db.models.QuerySet): Set of Content to add
@@ -1050,8 +1011,7 @@ class RepositoryVersion(BaseModel):
         RepositoryContent.objects.bulk_create(repo_content)
 
     def remove_content(self, content):
-        """
-        Remove content from the repository.
+        """Remove content from the repository.
 
         Args:
             content (django.db.models.QuerySet): Set of Content to remove
@@ -1087,8 +1047,7 @@ class RepositoryVersion(BaseModel):
         q_set.update(version_removed=self)
 
     def set_content(self, content):
-        """
-        Sets the repo version content by calling remove_content() then add_content().
+        """Sets the repo version content by calling remove_content() then add_content().
 
         Args:
             content (django.db.models.QuerySet): Set of desired content
@@ -1139,9 +1098,7 @@ class RepositoryVersion(BaseModel):
             raise self.DoesNotExist
 
     def _squash(self, repo_relations, next_version):
-        """
-        Squash a complete repo version into the next version
-        """
+        """Squash a complete repo version into the next version."""
         # delete any relationships added in the version being deleted and removed in the next one.
         repo_relations.filter(version_added=self, version_removed=next_version).delete()
 
@@ -1191,8 +1148,7 @@ class RepositoryVersion(BaseModel):
             raise Exception(PROTECTED_REPO_VERSION_MESSAGE)
 
     def delete(self, **kwargs):
-        """
-        Deletes a RepositoryVersion
+        """Deletes a RepositoryVersion.
 
         If RepositoryVersion is complete and has a successor, squash RepositoryContent changes into
         the successor. If version is incomplete, delete and and clean up RepositoryContent,
@@ -1238,8 +1194,7 @@ class RepositoryVersion(BaseModel):
                 super().delete(**kwargs)
 
     def _compute_counts(self):
-        """
-        Compute and save content unit counts by type.
+        """Compute and save content unit counts by type.
 
         Count records are stored as [pulpcore.app.models.RepositoryVersionContentDetails][].
         This method deletes existing [pulpcore.app.models.RepositoryVersionContentDetails][]
@@ -1267,8 +1222,7 @@ class RepositoryVersion(BaseModel):
             RepositoryVersionContentDetails.objects.bulk_create(counts_list)
 
     def __enter__(self):
-        """
-        Create the repository version
+        """Create the repository version.
 
         Returns:
             RepositoryVersion: self
@@ -1282,9 +1236,7 @@ class RepositoryVersion(BaseModel):
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
-        """
-        Finalize and save the RepositoryVersion if no errors are raised, delete it if not
-        """
+        """Finalize and save the RepositoryVersion if no errors are raised, delete it if not."""
         if exc_value:
             self.delete()
         else:
@@ -1342,8 +1294,7 @@ class RepositoryVersionContentDetails(models.Model):
     count = models.IntegerField()
 
     def get_content_href(self, request=None):
-        """
-        Generate URLs for the content types added, removed, or present in the RepositoryVersion.
+        """Generate URLs for the content types added, removed, or present in the RepositoryVersion.
 
         For each content type present in or removed from this RepositoryVersion, create the URL of
         the viewset of that variety of content along with a query parameter which filters it by

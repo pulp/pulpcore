@@ -23,7 +23,7 @@ def test_access_policy_default_policies(pulpcore_bindings):
 
 
 def test_statements_attr_can_be_modified(pulpcore_bindings):
-    """Test that `AccessPolicy.statements` can be modified"""
+    """Test that `AccessPolicy.statements` can be modified."""
     tasks_response = pulpcore_bindings.AccessPoliciesApi.list(viewset_name="tasks")
     tasks_href = tasks_response.results[0].pulp_href
     task_access_policy = pulpcore_bindings.AccessPoliciesApi.read(tasks_href)
@@ -44,7 +44,7 @@ def test_statements_attr_can_be_modified(pulpcore_bindings):
 
 
 def test_creation_hooks_attr_can_be_modified(pulpcore_bindings):
-    """Test that `AccessPolicy.creation_hooks` can be modified"""
+    """Test that `AccessPolicy.creation_hooks` can be modified."""
     groups_response = pulpcore_bindings.AccessPoliciesApi.list(viewset_name="groups")
     groups_href = groups_response.results[0].pulp_href
     groups_access_policy = pulpcore_bindings.AccessPoliciesApi.read(groups_href)
@@ -66,7 +66,7 @@ def test_creation_hooks_attr_can_be_modified(pulpcore_bindings):
 
 @pytest.mark.parallel
 def test_customized_is_read_only(pulpcore_bindings):
-    """Test that the `AccessPolicy.customized` attribute is read only"""
+    """Test that the `AccessPolicy.customized` attribute is read only."""
     tasks_response = pulpcore_bindings.AccessPoliciesApi.list(viewset_name="tasks")
     tasks_href = tasks_response.results[0].pulp_href
     task_access_policy = pulpcore_bindings.AccessPoliciesApi.read(tasks_href)
@@ -79,7 +79,7 @@ def test_customized_is_read_only(pulpcore_bindings):
 
 @pytest.mark.parallel
 def test_viewset_name_is_read_only(pulpcore_bindings):
-    """Test that the `AccessPolicy.viewset_name` attribute is read only"""
+    """Test that the `AccessPolicy.viewset_name` attribute is read only."""
     tasks_response = pulpcore_bindings.AccessPoliciesApi.list(viewset_name="tasks")
     tasks_href = tasks_response.results[0].pulp_href
     task_access_policy = pulpcore_bindings.AccessPoliciesApi.read(tasks_href)

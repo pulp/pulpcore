@@ -64,8 +64,7 @@ class PulpImporterSerializer(ImporterSerializer):
     )
 
     def create(self, validated_data):
-        """
-        Save the PulpImporter and handle saving repo mapping.
+        """Save the PulpImporter and handle saving repo mapping.
 
         Args:
             validated_data (dict): A dict of validated data to create the PulpImporter
@@ -125,8 +124,7 @@ class PulpImportSerializer(ModelSerializer):
         )
 
     def validate_path(self, value):
-        """
-        Check if path exists and is in ALLOWED_IMPORT_PATHS.
+        """Check if path exists and is in ALLOWED_IMPORT_PATHS.
 
         Args:
             value (str): The user-provided value path to be validated.
@@ -140,8 +138,7 @@ class PulpImportSerializer(ModelSerializer):
         return self._check_path_allowed("path", value)
 
     def validate_toc(self, value):
-        """
-        Check validity of provided 'toc' parameter.
+        """Check validity of provided 'toc' parameter.
 
         'toc' must be within ALLOWED_IMPORT_PATHS.
 
@@ -187,9 +184,7 @@ class PulpImportSerializer(ModelSerializer):
 
 
 class EvaluationSerializer(serializers.Serializer):
-    """
-    Results from evaluating a proposed parameter to a PulpImport call.
-    """
+    """Results from evaluating a proposed parameter to a PulpImport call."""
 
     context = serializers.CharField(
         help_text=_("Parameter value being evaluated."),
@@ -204,9 +199,7 @@ class EvaluationSerializer(serializers.Serializer):
 
 
 class PulpImportCheckResponseSerializer(serializers.Serializer):
-    """
-    Return the response to a PulpImport import-check call.
-    """
+    """Return the response to a PulpImport import-check call."""
 
     toc = EvaluationSerializer(
         help_text=_("Evaluation of proposed 'toc' file for PulpImport"),
@@ -223,11 +216,10 @@ class PulpImportCheckResponseSerializer(serializers.Serializer):
 
 
 class PulpImportCheckSerializer(ValidateFieldsMixin, serializers.Serializer):
-    """
-    Check validity of provided import-options.
+    """Check validity of provided import-options.
 
-    Provides the ability to check that an import is 'sane' without having to actually
-    create an importer.
+    Provides the ability to check that an import is 'sane' without having to actually create an
+    importer.
     """
 
     path = serializers.CharField(

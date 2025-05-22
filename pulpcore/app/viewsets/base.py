@@ -53,16 +53,14 @@ NULLABLE_NUMERIC_FILTER_OPTIONS = ["exact", "ne", "lt", "lte", "gt", "gte", "ran
 
 
 class DefaultSchema(PulpAutoSchema):
-    """
-    Overrides _allows_filters method to include filter fields only for read actions.
+    """Overrides _allows_filters method to include filter fields only for read actions.
 
     Schema can be customised per view(set). Override this class and set it as a ``schema``
     attribute of a view(set) of interest.
     """
 
     def _allows_filters(self):
-        """
-        Include filter fields only for read actions, or GET requests.
+        """Include filter fields only for read actions, or GET requests.
 
         Returns:
             bool: True if filter fields should be included into the schema, False otherwise.
@@ -77,8 +75,7 @@ class DefaultSchema(PulpAutoSchema):
 
 
 class NamedModelViewSet(viewsets.GenericViewSet):
-    """
-    A customized named ModelViewSet that knows how to register itself with the Pulp API router.
+    """A customized named ModelViewSet that knows how to register itself with the Pulp API router.
 
     This viewset is discoverable by its name.
     "Normal" Django Models and Master/Detail models are supported by the ``register_with`` method.
@@ -105,15 +102,14 @@ class NamedModelViewSet(viewsets.GenericViewSet):
     schema = DefaultSchema()
 
     def get_serializer_class(self):
-        """
-        Fetch the serializer class to use for the request.
+        """Fetch the serializer class to use for the request.
 
-        The default behavior is to use the "serializer_class" attribute on the viewset.
-        We override that for the case where a "minimal_serializer_class" attribute is defined
-        and where the request contains a query parameter of "minimal=True".
+        The default behavior is to use the "serializer_class" attribute on the viewset. We override
+        that for the case where a "minimal_serializer_class" attribute is defined and where the
+        request contains a query parameter of "minimal=True".
 
-        The intention is that ViewSets can define a second, more minimal serializer with only
-        the most important fields.
+        The intention is that ViewSets can define a second, more minimal serializer with only the
+        most important fields.
         """
         assert self.serializer_class is not None, (
             "'{}' should either include a `serializer_class` attribute, or override the "
@@ -133,8 +129,7 @@ class NamedModelViewSet(viewsets.GenericViewSet):
 
     @staticmethod
     def get_resource_model(uri):
-        """
-        Resolve a resource URI to the model for the resource.
+        """Resolve a resource URI to the model for the resource.
 
         Provides a means to resolve an href passed in a POST body to an
         model for the resource.
@@ -157,8 +152,7 @@ class NamedModelViewSet(viewsets.GenericViewSet):
 
     @staticmethod
     def get_resource(uri, model=None):
-        """
-        Resolve a resource URI/PRN to an instance of the resource.
+        """Resolve a resource URI/PRN to an instance of the resource.
 
         Provides a means to resolve an href/prn passed in a POST body to an
         instance of the resource.
@@ -299,19 +293,17 @@ class NamedModelViewSet(viewsets.GenericViewSet):
             return pieces
 
     def initial(self, request, *args, **kwargs):
-        """
-        Runs anything that needs to occur prior to calling the method handler.
+        """Runs anything that needs to occur prior to calling the method handler.
 
-        For nested ViewSets, it checks that the parent object exists, otherwise return 404.
-        For non-nested Viewsets, this does nothing.
+        For nested ViewSets, it checks that the parent object exists, otherwise return 404. For non-
+        nested Viewsets, this does nothing.
         """
         if self.parent_lookup_kwargs:
             self.get_parent_field_and_object()
         super().initial(request, *args, **kwargs)
 
     def get_queryset(self):
-        """
-        Gets a QuerySet based on the current request.
+        """Gets a QuerySet based on the current request.
 
         For nested ViewSets, this adds parent filters to the result returned by the superclass. For
         non-nested ViewSets, this returns the original QuerySet unchanged.
@@ -346,8 +338,7 @@ class NamedModelViewSet(viewsets.GenericViewSet):
         return qs
 
     def scope_queryset(self, qs):
-        """
-        A default queryset scoping method implementation for all NamedModelViewSets.
+        """A default queryset scoping method implementation for all NamedModelViewSets.
 
         If the ViewSet is not a Master ViewSet, then it'll perform scoping based on the ViewSet's
         `queryset_filtering_required_permission` attribute if present.
@@ -382,8 +373,7 @@ class NamedModelViewSet(viewsets.GenericViewSet):
         return max([len(v.split("__")) for k, v in cls.parent_lookup_kwargs.items()])
 
     def get_parent_field_and_object(self):
-        """
-        For nested ViewSets, retrieve the nested parent implied by the url.
+        """For nested ViewSets, retrieve the nested parent implied by the url.
 
         Returns:
             tuple: (parent field name, parent)
@@ -401,8 +391,7 @@ class NamedModelViewSet(viewsets.GenericViewSet):
             return parent_field, get_object_or_404(self.parent_viewset.queryset, **filters)
 
     def get_parent_object(self):
-        """
-        For nested ViewSets, retrieve the nested parent implied by the url.
+        """For nested ViewSets, retrieve the nested parent implied by the url.
 
         Returns:
             pulpcore.app.models.Model: parent model object
@@ -414,15 +403,13 @@ class NamedModelViewSet(viewsets.GenericViewSet):
 
 
 class AsyncReservedObjectMixin:
-    """
-    Mixin class providing the default method to compute the resources to reserve in the task.
+    """Mixin class providing the default method to compute the resources to reserve in the task.
 
     By default, lock the object instance we are working on.
     """
 
     def async_reserved_resources(self, instance):
-        """
-        Return the resources to reserve for the task created by the Async...Mixins.
+        """Return the resources to reserve for the task created by the Async...Mixins.
 
         This default implementation locks the instance being worked on.
 
@@ -441,7 +428,6 @@ class AsyncReservedObjectMixin:
 
         Raises:
             AssertionError if instance is None (which happens for creation)
-
         """
         assert instance is not None, (
             "'{}' must not use the default `async_reserved_resources` method " "when using create."
@@ -450,18 +436,14 @@ class AsyncReservedObjectMixin:
 
 
 class AsyncCreateMixin:
-    """
-    Provides a create method that dispatches a task with reservation.
-    """
+    """Provides a create method that dispatches a task with reservation."""
 
     @extend_schema(
         description="Trigger an asynchronous create task",
         responses={202: AsyncOperationResponseSerializer},
     )
     def create(self, request, *args, **kwargs):
-        """
-        Dispatches a task with reservation for creating an instance.
-        """
+        """Dispatches a task with reservation for creating an instance."""
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         app_label = self.queryset.model._meta.app_label
@@ -475,9 +457,7 @@ class AsyncCreateMixin:
 
 
 class AsyncUpdateMixin(AsyncReservedObjectMixin):
-    """
-    Provides an update method that dispatches a task with reservation
-    """
+    """Provides an update method that dispatches a task with reservation."""
 
     ALLOW_NON_BLOCKING_UPDATE = True
 
@@ -510,9 +490,7 @@ class AsyncUpdateMixin(AsyncReservedObjectMixin):
 
 
 class AsyncRemoveMixin(AsyncReservedObjectMixin):
-    """
-    Provides a delete method that dispatches a task with reservation
-    """
+    """Provides a delete method that dispatches a task with reservation."""
 
     ALLOW_NON_BLOCKING_DELETE = True
 
@@ -521,9 +499,7 @@ class AsyncRemoveMixin(AsyncReservedObjectMixin):
         responses={202: AsyncOperationResponseSerializer},
     )
     def destroy(self, request, pk, **kwargs):
-        """
-        Delete a model instance
-        """
+        """Delete a model instance."""
         instance = self.get_object()
         serializer = self.get_serializer(instance)
         app_label = instance._meta.app_label

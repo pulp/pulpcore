@@ -159,9 +159,7 @@ class OpenPGPSignature(_OpenPGPContent):
 
 
 class OpenPGPKeyring(Repository, AutoAddObjPermsMixin):
-    """
-    A Repository to hold OpenPGP (rfc4880bis) public key material.
-    """
+    """A Repository to hold OpenPGP (rfc4880bis) public key material."""
 
     TYPE = "openpgp"
     CONTENT_TYPES = [
@@ -191,9 +189,7 @@ class OpenPGPKeyring(Repository, AutoAddObjPermsMixin):
 
 
 class OpenPGPDistribution(Distribution, AutoAddObjPermsMixin):
-    """
-    A Distribution to allow downloading OpenPGP keys.
-    """
+    """A Distribution to allow downloading OpenPGP keys."""
 
     TYPE = "openpgp"
     SERVE_FROM_PUBLICATION = False

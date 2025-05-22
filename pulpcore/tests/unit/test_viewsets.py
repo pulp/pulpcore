@@ -16,16 +16,14 @@ if settings.API_ROOT_REWRITE_HEADER:
 
 
 class TestGetResource(TestCase):
-    """
-    Test NamedViewSet from core using some detail endpoints provided by file.
+    """Test NamedViewSet from core using some detail endpoints provided by file.
 
     Note: This is really a pulpcore test, but we can't test it from pulpcore.
     """
 
     def test_no_errors(self):
-        """
-        Tests that get_resource() properly resolves a valid URI and returns the correct resource.
-        """
+        """Tests that get_resource() properly resolves a valid URI and returns the correct
+        resource."""
 
         repo = models.FileRepository.objects.create(name="foo")
         viewset = viewsets.FileRepositoryViewSet()
@@ -36,9 +34,8 @@ class TestGetResource(TestCase):
         assert repo == resource
 
     def test_multiple_matches(self):
-        """
-        Tests that get_resource() raises a ValidationError if you attempt to use a list endpoint.
-        """
+        """Tests that get_resource() raises a ValidationError if you attempt to use a list
+        endpoint."""
         models.FileRepository.objects.create(name="foo")
         models.FileRepository.objects.create(name="foo2")
         viewset = viewsets.FileRepositoryViewSet()
@@ -51,19 +48,15 @@ class TestGetResource(TestCase):
             )
 
     def test_invalid_uri(self):
-        """
-        Tests that get_resource raises a ValidationError if you attempt to use an invalid URI.
-        """
+        """Tests that get_resource raises a ValidationError if you attempt to use an invalid URI."""
         viewset = viewsets.FileRepositoryViewSet()
 
         with self.assertRaises(DRFValidationError):
             viewset.get_resource("/pulp/api/v2/nonexistent/", models.FileRepository)
 
     def test_resource_does_not_exist(self):
-        """
-        Tests that get_resource() raises a ValidationError if you use a URI for a resource that
-        does not exist.
-        """
+        """Tests that get_resource() raises a ValidationError if you use a URI for a resource that
+        does not exist."""
         pk = uuid4()
         viewset = viewsets.FileRepositoryViewSet()
 
@@ -74,10 +67,8 @@ class TestGetResource(TestCase):
             )
 
     def test_resource_with_field_error(self):
-        """
-        Tests that get_resource() raises a ValidationError if you use a URI that is not a valid
-        model.
-        """
+        """Tests that get_resource() raises a ValidationError if you use a URI that is not a valid
+        model."""
         repo = models.FileRepository.objects.create(name="foo")
         viewset = viewsets.FileRepositoryViewSet()
 

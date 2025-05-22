@@ -13,10 +13,8 @@ from pulpcore.app.serializers import fields
 )
 @pytest.mark.parametrize("binary_arg", [True, False])
 def test_custom_json_dict_field(field_and_data, binary_arg):
-    """
-    On the happy overlap case,
-    pulpcore JSONDictField and JSONListField should be compatible with drf JSONField.
-    """
+    """On the happy overlap case, pulpcore JSONDictField and JSONListField should be compatible with
+    drf JSONField."""
     custom_field, data = field_and_data
     drf_json_field = serializers.JSONField(binary=binary_arg)
     custom_field = custom_field(binary=binary_arg)
@@ -38,10 +36,8 @@ def test_custom_json_dict_field(field_and_data, binary_arg):
 )
 @pytest.mark.parametrize("binary_arg", [True, False])
 def test_custom_json_dict_field_raises(field_and_data, binary_arg):
-    """
-    On the invalid data case,
-    pulpcore JSONDictField and JSONListField should raise appropriately.
-    """
+    """On the invalid data case, pulpcore JSONDictField and JSONListField should raise
+    appropriately."""
     custom_field, data = field_and_data
     custom_field = custom_field(binary=binary_arg)
     error_msg = "Invalid type"

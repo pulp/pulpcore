@@ -14,9 +14,7 @@ class DryRun(Exception):
 
 
 class Command(BaseCommand):
-    """
-    Django management command for db key rotation.
-    """
+    """Django management command for db key rotation."""
 
     help = _(
         "Rotate the db encryption key. "

@@ -10,8 +10,7 @@ from pulpcore.app.util import get_domain
 
 
 class FileSystem(FileSystemStorage):
-    """
-    Django's FileSystemStorage with modified _save() and get_available_name behaviors
+    """Django's FileSystemStorage with modified _save() and get_available_name behaviors.
 
     The _save() will check if the file is saved in WORKING_DIRECTORY first. If it is, a move is
     used. This will move all files created by the Downloaders and uploaded files from the user. If
@@ -20,8 +19,7 @@ class FileSystem(FileSystemStorage):
     """
 
     def get_available_name(self, name, max_length=None):
-        """
-        Returns a filename for the file even if it already exists.
+        """Returns a filename for the file even if it already exists.
 
         Content adressable storage must be saved with the expected filename.
 
@@ -35,8 +33,8 @@ class FileSystem(FileSystemStorage):
         return name
 
     def _save(self, name, content, max_length=None):
-        """
-        Create dirs to the destination, move the file if already in MEDIA_ROOT, or copy otherwise.
+        """Create dirs to the destination, move the file if already in MEDIA_ROOT, or copy
+        otherwise.
 
         Args:
             name (str): Target path to which the file is copied.
@@ -106,8 +104,7 @@ try:
         """Upstream class is missing the file_overwrite option."""
 
         def get_available_name(self, name, max_length=None):
-            """
-            Returns a filename for the file even if it already exists.
+            """Returns a filename for the file even if it already exists.
 
             Content adressable storage must be saved with the expected filename.
 
@@ -136,8 +133,7 @@ class DomainStorage:
 
 
 def get_artifact_path(sha256digest):
-    """
-    Determine the relative path where a file backing the Artifact should be stored.
+    """Determine the relative path where a file backing the Artifact should be stored.
 
     Args:
         sha256digest (str): sha256 digest of the file for the Artifact
@@ -155,8 +151,7 @@ def get_artifact_path(sha256digest):
 
 
 def get_temp_file_path(pulp_id):
-    """
-    Determine the relative path where a file backing the PulpTemporaryFile should be stored.
+    """Determine the relative path where a file backing the PulpTemporaryFile should be stored.
 
     Args:
         pulp_id (uuid): An identifier identifying the file for the PulpTemporaryFile
@@ -170,8 +165,7 @@ def get_temp_file_path(pulp_id):
 
 
 def get_upload_chunk_file_path(pulp_id):
-    """
-    Determine the relative path where a file backing an uploaded chunk should be stored.
+    """Determine the relative path where a file backing an uploaded chunk should be stored.
 
     Args:
         pulp_id (uuid): An identifier identifying the file for UploadChunk

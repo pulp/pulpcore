@@ -35,8 +35,7 @@ User = get_user_model()
 
 
 def get_analytics_posting_url():
-    """
-    Return either the dev or production analytics FQDN url.
+    """Return either the dev or production analytics FQDN url.
 
     Production version string examples:  ["3.21.1", "1.11.0"]
     Developer version string example: ["3.20.3.dev", "2.0.0a6"]

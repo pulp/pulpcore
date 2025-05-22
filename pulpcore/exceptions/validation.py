@@ -4,17 +4,13 @@ from pulpcore.exceptions import PulpException
 
 
 class ValidationError(PulpException):
-    """
-    A base class for all Validation Errors.
-    """
+    """A base class for all Validation Errors."""
 
     pass
 
 
 class DigestValidationError(ValidationError):
-    """
-    Raised when a file fails to validate a digest checksum.
-    """
+    """Raised when a file fails to validate a digest checksum."""
 
     def __init__(self, actual, expected, *args, url=None, **kwargs):
         super().__init__("PLP0003")
@@ -37,9 +33,7 @@ class DigestValidationError(ValidationError):
 
 
 class SizeValidationError(ValidationError):
-    """
-    Raised when a file fails to validate a size checksum.
-    """
+    """Raised when a file fails to validate a size checksum."""
 
     def __init__(self, actual, expected, *args, url=None, **kwargs):
         super().__init__("PLP0004")
@@ -62,25 +56,19 @@ class SizeValidationError(ValidationError):
 
 
 class MissingDigestValidationError(Exception):
-    """
-    Raised when attempting to save() an Artifact with an incomplete set of checksums.
-    """
+    """Raised when attempting to save() an Artifact with an incomplete set of checksums."""
 
     pass
 
 
 class UnsupportedDigestValidationError(Exception):
-    """
-    Raised when an attempt is made to use a checksum-type that is not enabled/available.
-    """
+    """Raised when an attempt is made to use a checksum-type that is not enabled/available."""
 
     pass
 
 
 class InvalidSignatureError(RuntimeError):
-    """
-    Raised when a signature could not be verified by the GnuPG utility.
-    """
+    """Raised when a signature could not be verified by the GnuPG utility."""
 
     def __init__(self, *args, **kwargs):
         self.verified = kwargs.pop("verified", None)

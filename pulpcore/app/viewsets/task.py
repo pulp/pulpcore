@@ -253,9 +253,7 @@ class TaskViewSet(
     )
     @action(detail=False, methods=["post"])
     def purge(self, request):
-        """
-        Purge task-records for tasks in 'final' states.
-        """
+        """Purge task-records for tasks in 'final' states."""
         serializer = PurgeSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         current_user = get_current_user()
@@ -275,9 +273,7 @@ class TaskViewSet(
     )
     @action(detail=True)
     def profile_artifacts(self, request, pk):
-        """
-        Return pre-signed URLs used for downloading raw profile artifacts.
-        """
+        """Return pre-signed URLs used for downloading raw profile artifacts."""
         task = self.get_object()
         data = {}
 
@@ -392,9 +388,7 @@ class TaskScheduleViewSet(
     mixins.ListModelMixin,
     RolesMixin,
 ):
-    """
-    ViewSet to monitor task schedules.
-    """
+    """ViewSet to monitor task schedules."""
 
     queryset = TaskSchedule.objects.all()
     endpoint_name = "task-schedules"

@@ -250,9 +250,7 @@ def test_search_task_by_name(task, pulpcore_bindings):
 
 @pytest.mark.parallel
 def test_search_task_using_an_invalid_name(pulpcore_bindings):
-    """Expect to return an empty results array when searching using an invalid
-    task name.
-    """
+    """Expect to return an empty results array when searching using an invalid task name."""
 
     search_results = pulpcore_bindings.TasksApi.list(name=str(uuid4()))
 
@@ -457,12 +455,8 @@ class TestImmediateTaskWithNoResource:
 
     @pytest.mark.parallel
     def test_succeeds_on_api_worker(self, pulpcore_bindings, dispatch_task):
-        """
-        GIVEN a task with no resource requirements
-        AND the task IS an async function
-        WHEN dispatching a task as immediate
-        THEN the task completes with no associated worker
-        """
+        """GIVEN a task with no resource requirements AND the task IS an async function WHEN
+        dispatching a task as immediate THEN the task completes with no associated worker."""
         task_href = dispatch_task(
             "pulpcore.app.tasks.test.asleep", args=(LT_TIMEOUT,), immediate=True
         )
@@ -472,12 +466,8 @@ class TestImmediateTaskWithNoResource:
 
     @pytest.mark.parallel
     def test_executes_on_api_worker_when_no_async(self, pulpcore_bindings, dispatch_task, capsys):
-        """
-        GIVEN a task with no resource requirements
-        AND the task IS NOT an async function
-        WHEN dispatching a task as immediate
-        THEN the task completes with no associated worker
-        """
+        """GIVEN a task with no resource requirements AND the task IS NOT an async function WHEN
+        dispatching a task as immediate THEN the task completes with no associated worker."""
         # TODO: on 3.85 this should throw an error
         task_href = dispatch_task(
             "pulpcore.app.tasks.test.sleep", args=(LT_TIMEOUT,), immediate=True
@@ -490,13 +480,9 @@ class TestImmediateTaskWithNoResource:
 
     @pytest.mark.parallel
     def test_timeouts_on_api_worker(self, pulpcore_bindings, dispatch_task):
-        """
-        GIVEN a task with no resource requirements
-        AND the task is an async function
-        WHEN dispatching a task as immediate
-        AND it takes longer than timeout
-        THEN the task fails with a timeout error message
-        """
+        """GIVEN a task with no resource requirements AND the task is an async function WHEN
+        dispatching a task as immediate AND it takes longer than timeout THEN the task fails with a
+        timeout error message."""
         task_href = dispatch_task(
             "pulpcore.app.tasks.test.asleep", args=(GT_TIMEOUT,), immediate=True
         )
@@ -534,11 +520,8 @@ class TestImmediateTaskWithBlockedResource:
     def test_executes_in_task_worker(
         self, resource_blocker, dispatch_task, monitor_task, pulpcore_bindings
     ):
-        """
-        GIVEN an async task requiring busy resources
-        WHEN dispatching a task as immediate
-        THEN the task completes with a worker
-        """
+        """GIVEN an async task requiring busy resources WHEN dispatching a task as immediate THEN
+        the task completes with a worker."""
         COMMON_RESOURCE = str(uuid4())
         with resource_blocker(exclusive_resources=[COMMON_RESOURCE]):
             task_href = dispatch_task(
@@ -555,11 +538,8 @@ class TestImmediateTaskWithBlockedResource:
     def test_throws_when_non_deferrable(
         self, resource_blocker, pulpcore_bindings, dispatch_task, monitor_task
     ):
-        """
-        GIVEN an async task requiring busy resources
-        WHEN dispatching as immediate and not deferrable
-        THEN an error is raised
-        """
+        """GIVEN an async task requiring busy resources WHEN dispatching as immediate and not
+        deferrable THEN an error is raised."""
         COMMON_RESOURCE = str(uuid4())
         with resource_blocker(exclusive_resources=[COMMON_RESOURCE]):
             task_href = dispatch_task(
@@ -578,12 +558,8 @@ class TestImmediateTaskWithBlockedResource:
     def test_times_out_on_task_worker(
         self, resource_blocker, pulpcore_bindings, dispatch_task, monitor_task
     ):
-        """
-        GIVEN an async task requiring busy resources
-        WHEN dispatching a task as immediate
-        AND it takes longer than timeout
-        THEN an error is raised
-        """
+        """GIVEN an async task requiring busy resources WHEN dispatching a task as immediate AND it
+        takes longer than timeout THEN an error is raised."""
         COMMON_RESOURCE = str(uuid4())
         with pytest.raises(PulpTaskError) as ctx:
             with resource_blocker(exclusive_resources=[COMMON_RESOURCE]):

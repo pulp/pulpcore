@@ -16,9 +16,7 @@ class OrphansCleanupViewset(ViewSet):
         responses={202: AsyncOperationResponseSerializer},
     )
     def cleanup(self, request):
-        """
-        Triggers an asynchronous orphan cleanup operation.
-        """
+        """Triggers an asynchronous orphan cleanup operation."""
         serializer = OrphansCleanupSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 

@@ -48,7 +48,7 @@ def test_create_and_filter_with_prn(
     file_distribution_factory,
     monitor_task,
 ):
-    """Test that we can use PRNs to refer to any object"""
+    """Test that we can use PRNs to refer to any object."""
     # Creation tests
     remote = file_remote_factory(basic_manifest_path)
     task = file_bindings.RepositoriesFileApi.sync(file_repo.pulp_href, {"remote": remote.prn}).task

@@ -19,8 +19,7 @@ log = getLogger(__name__)
 
 
 def queryset_iterator(qs, batchsize=2000, gc_collect=True):
-    """
-    Provide a batching functionality that returns individual querysets per batch.
+    """Provide a batching functionality that returns individual querysets per batch.
 
     Copied from here with minor changes:
     https://www.guguweb.com/2020/03/27/optimize-django-memory-usage/
@@ -40,14 +39,11 @@ def queryset_iterator(qs, batchsize=2000, gc_collect=True):
 
 
 def orphan_cleanup(content_pks=None, orphan_protection_time=settings.ORPHAN_PROTECTION_TIME):
-    """
-    Delete all orphan Content and Artifact records.
-    Go through orphan Content multiple times to remove content from subrepos.
-    This task removes Artifact files from the filesystem as well.
+    """Delete all orphan Content and Artifact records. Go through orphan Content multiple times to
+    remove content from subrepos. This task removes Artifact files from the filesystem as well.
 
     Kwargs:
         content_pks (list): A list of content pks. If specified, only remove these orphans.
-
     """
     content = Content.objects.orphaned(orphan_protection_time, content_pks).exclude(
         pulp_type=PublishedMetadata.get_pulp_type()

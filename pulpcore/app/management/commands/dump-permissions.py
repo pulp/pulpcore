@@ -157,9 +157,7 @@ def _get_group_object_permissions():
 
 
 class Command(BaseCommand):
-    """
-    Django management command for getting a data dump of deprecated permission.
-    """
+    """Django management command for getting a data dump of deprecated permission."""
 
     help = _("Dumps deprecated permissions.")
 

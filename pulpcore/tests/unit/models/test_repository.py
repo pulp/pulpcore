@@ -44,8 +44,7 @@ def remove_content(content_pks):
 @pytest.fixture
 def verify_content_sets(content_pks):
     def _verify_content_sets(version, current, added, removed, base_version=None):
-        """
-        Verify the content, added, and removed sets for a repository version.
+        """Verify the content, added, and removed sets for a repository version.
 
         Args:
             version (pulpcore.app.models.RepositoryVersion): the version instance to verify
@@ -56,7 +55,6 @@ def verify_content_sets(content_pks):
             remove (list): "presence list" for removed content
             base_version (pulpcore.app.models.RepositoryVersion): optional base version to
                 verify the difference to
-
         """
         current_pks = set(version.content.values_list("pk", flat=True))
         added_pks = set(version.added(base_version).values_list("pk", flat=True))
@@ -125,8 +123,8 @@ def test_remove_add(repository, add_content, remove_content, verify_content_sets
 def test_multiple_adds_and_removes(repository, add_content, remove_content, verify_content_sets):
     """Verify that adding/removing content multiple times is handled properly.
 
-    Additionally, verify that other content (untouched, simple add, simple
-    remove) is not influenced and behaves as expected.
+    Additionally, verify that other content (untouched, simple add, simple remove) is not influenced
+    and behaves as expected.
     """
     # v1 == content id 0, 2, and 4
     with repository.new_version() as version1:

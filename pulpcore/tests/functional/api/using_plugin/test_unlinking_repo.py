@@ -1,4 +1,4 @@
-"""Tests that perform action over remotes"""
+"""Tests that perform action over remotes."""
 
 import pytest
 

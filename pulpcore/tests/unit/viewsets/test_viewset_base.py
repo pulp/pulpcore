@@ -9,10 +9,8 @@ from pulpcore.app import models, serializers, viewsets
 
 @pytest.mark.django_db
 def test_adds_filters():
-    """
-    Tests to make sure the correct lookup is being added to the queryset based on its
-    'parent_lookup_kwargs' value.
-    """
+    """Tests to make sure the correct lookup is being added to the queryset based on its
+    'parent_lookup_kwargs' value."""
     repo = models.Repository.objects.create(name="foo")
     repo2 = models.Repository.objects.create(name="foo2")
     # no concurrency so this is fine
@@ -28,10 +26,8 @@ def test_adds_filters():
 
 @pytest.mark.django_db
 def test_does_not_add_filters():
-    """
-    Tests to make sure no filters are applied, based on its empty 'parent_lookup_kwargs'
-    value.
-    """
+    """Tests to make sure no filters are applied, based on its empty 'parent_lookup_kwargs'
+    value."""
     models.Repository.objects.create(name="foo")
     viewset = viewsets.RepositoryViewSet()
     viewset.kwargs = {"name": "foo"}
@@ -42,10 +38,8 @@ def test_does_not_add_filters():
 
 
 def test_must_define_serializer_class():
-    """
-    Test that get_serializer_class() raises an AssertionError if you don't define the
-    serializer_class attribute.
-    """
+    """Test that get_serializer_class() raises an AssertionError if you don't define the
+    serializer_class attribute."""
 
     class TestTaskViewSet(viewsets.NamedModelViewSet):
         minimal_serializer_class = serializers.MinimalTaskSerializer
@@ -55,10 +49,8 @@ def test_must_define_serializer_class():
 
 
 def test_serializer_class():
-    """
-    Tests that get_serializer_class() returns the serializer_class attribute if it exists,
-    and that it doesn't error if no minimal serializer is defined, but minimal=True.
-    """
+    """Tests that get_serializer_class() returns the serializer_class attribute if it exists, and
+    that it doesn't error if no minimal serializer is defined, but minimal=True."""
 
     class TestTaskViewSet(viewsets.NamedModelViewSet):
         serializer_class = serializers.TaskSerializer
@@ -74,9 +66,8 @@ def test_serializer_class():
 
 
 def test_minimal_query_param():
-    """
-    Tests that get_serializer_class() returns the correct serializer in the correct situations.
-    """
+    """Tests that get_serializer_class() returns the correct serializer in the correct
+    situations."""
 
     class TestTaskViewSet(viewsets.NamedModelViewSet):
         serializer_class = serializers.TaskSerializer
@@ -101,10 +92,8 @@ def test_minimal_query_param():
 
 @pytest.mark.django_db
 def test_no_parent_object():
-    """
-    Tests that get_parent_field_and_object() raises django.http.Http404 if the parent object
-    does not exist on a nested viewset.
-    """
+    """Tests that get_parent_field_and_object() raises django.http.Http404 if the parent object does
+    not exist on a nested viewset."""
     viewset = viewsets.RepositoryVersionViewSet()
     viewset.kwargs = {"repository_pk": 500}
 
@@ -114,10 +103,8 @@ def test_no_parent_object():
 
 @pytest.mark.django_db
 def test_get_parent_field_and_object():
-    """
-    Tests that get_parent_field_and_object() returns the correct parent field and parent
-    object.
-    """
+    """Tests that get_parent_field_and_object() returns the correct parent field and parent
+    object."""
     repo = models.Repository.objects.create(name="foo")
     viewset = viewsets.RepositoryVersionViewSet()
     viewset.kwargs = {"repository_pk": repo.pk}
@@ -127,9 +114,7 @@ def test_get_parent_field_and_object():
 
 @pytest.mark.django_db
 def test_get_parent_object():
-    """
-    Tests that get_parent_object() returns the correct parent object.
-    """
+    """Tests that get_parent_object() returns the correct parent object."""
     repo = models.Repository.objects.create(name="foo")
     viewset = viewsets.RepositoryVersionViewSet()
     viewset.kwargs = {"repository_pk": repo.pk}
@@ -138,8 +123,6 @@ def test_get_parent_object():
 
 
 def test_get_nest_depth():
-    """
-    Test that _get_nest_depth() returns the correct nesting depths.
-    """
+    """Test that _get_nest_depth() returns the correct nesting depths."""
     assert viewsets.RepositoryViewSet._get_nest_depth() == 1
     assert viewsets.RepositoryVersionViewSet._get_nest_depth() == 2

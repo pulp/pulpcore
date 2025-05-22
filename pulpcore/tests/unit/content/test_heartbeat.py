@@ -14,10 +14,8 @@ class MockException(Exception):
 
 @pytest.mark.asyncio
 async def test_db_connection_interface_error(monkeypatch, settings):
-    """
-    Test that if an InterfaceError or OperationalError is raised,
-    Handler._reset_db_connection() is called
-    """
+    """Test that if an InterfaceError or OperationalError is raised, Handler._reset_db_connection()
+    is called."""
 
     mock_aget_or_create = AsyncMock()
     mock_aget_or_create.side_effect = [InterfaceError(), OperationalError(), MockException()]

@@ -5,8 +5,8 @@ from django.db.models.expressions import OuterRef, RawSQL
 
 
 def migrate_remaining_labels(apps, schema_editor):
-    """
-    This data migration handles the "but what about plugins" problem noted in the issue [0], with only two caveats:
+    """This data migration handles the "but what about plugins" problem noted in the issue [0], with
+    only two caveats:
 
     Case 1: If there were to exist a plugin containing a Model whose model-name ended in (for example) "Repository",
     that was NOT a detail-model of a Repository master-model, AND that plugin allowed Labels for such a model - then,

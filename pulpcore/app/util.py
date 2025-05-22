@@ -35,8 +35,7 @@ STRIPPED_API_ROOT = settings.API_ROOT.strip("/")
 
 
 def reverse(viewname, args=None, kwargs=None, request=None, relative_url=True, **extra):
-    """
-    Customized reverse to handle Pulp specific parameters like domains and API_ROOT rewrite.
+    """Customized reverse to handle Pulp specific parameters like domains and API_ROOT rewrite.
 
     Calls DRF's reverse, but with request as None if relative_url is True (default) so that the
     returned url is always relative.
@@ -52,9 +51,8 @@ def reverse(viewname, args=None, kwargs=None, request=None, relative_url=True, *
 
 
 def get_url(model, domain=None, request=None):
-    """
-    Get a resource url for the specified model instance or class. This returns the path component of
-    the resource URI.
+    """Get a resource url for the specified model instance or class. This returns the path component
+    of the resource URI.
 
     Args:
         model (django.models.Model): A model instance or class.
@@ -84,11 +82,10 @@ def get_url(model, domain=None, request=None):
 
 
 def get_prn(instance=None, uri=None):
-    """
-    Get a Pulp Resource Name (PRN) for the specified model instance. It is similar to a HREF
-    url in that it uniquely identifies a resource, but it also has the guarantee that it will not
-    change regardless of API_ROOT or DOMAIN_ENABLED. This is used in our resource locking/
-    reservation code to identify resources.
+    """Get a Pulp Resource Name (PRN) for the specified model instance. It is similar to a HREF url
+    in that it uniquely identifies a resource, but it also has the guarantee that it will not change
+    regardless of API_ROOT or DOMAIN_ENABLED. This is used in our resource locking/ reservation code
+    to identify resources.
 
     The format for the PRN is as follows:
     ```
@@ -123,8 +120,7 @@ def get_prn(instance=None, uri=None):
 
 
 def resolve_prn(prn):
-    """
-    Resolve a PRN to its model and pk.
+    """Resolve a PRN to its model and pk.
 
     Args:
         prn (str): The PRN to resolve.
@@ -162,8 +158,7 @@ def resolve_prn(prn):
 
 
 def extract_pk(uri, only_prn=False):
-    """
-    Resolve a resource URI or PRN to a simple PK value.
+    """Resolve a resource URI or PRN to a simple PK value.
 
     Provides a means to resolve an href/prn passed in a POST body to a primary key.
     Doesn't assume anything about whether the resource corresponding to the URI/PRN
@@ -246,9 +241,7 @@ def raise_for_unknown_content_units(
 # depended on by viewsets. They're defined here because they're used here, and to avoid
 # odd import dependencies.
 def get_viewset_for_model(model_obj, ignore_error=False):
-    """
-    Given a Model instance or class, return the registered ViewSet for that Model
-    """
+    """Given a Model instance or class, return the registered ViewSet for that Model."""
     # model_obj can be an instance or class, force it to class
     model_class = model_obj._meta.model
     if model_class in _model_viewset_cache:
@@ -279,8 +272,7 @@ def get_viewset_for_model(model_obj, ignore_error=False):
 
 
 def get_view_name_for_model(model_obj, view_action):
-    """
-    Given a Model instance or class, return the correct view name for that ViewSet view.
+    """Given a Model instance or class, return the correct view name for that ViewSet view.
 
     This is the "glue" that generates view names dynamically based on a model object.
 
@@ -334,10 +326,8 @@ def batch_qs(qs, batch_size=1000):
 
 
 def get_view_urlpattern(view):
-    """
-    Get a full urlpattern for a view which includes a parent urlpattern if it exists.
-    E.g. for repository versions the urlpattern is just `versions` without its parent_viewset
-    urlpattern.
+    """Get a full urlpattern for a view which includes a parent urlpattern if it exists. E.g. for
+    repository versions the urlpattern is just `versions` without its parent_viewset urlpattern.
 
     Args:
         view(subclass rest_framework.viewsets.GenericViewSet): The view being requested.
@@ -351,8 +341,7 @@ def get_view_urlpattern(view):
 
 
 def get_request_without_query_params(context):
-    """
-    Remove query parameters from a request object.
+    """Remove query parameters from a request object.
 
     Removing query parameters should not influence the features provided by the library
     'djangorestframework-queryfields'. But, once a user selects which fields should be sent in the
@@ -383,8 +372,7 @@ def get_request_without_query_params(context):
 
 
 def gpg_verify(public_keys, signature, detached_data=None):
-    """
-    Check whether the provided gnupg signature is valid for one of the provided public keys.
+    """Check whether the provided gnupg signature is valid for one of the provided public keys.
 
     Args:
         public_keys (str): Ascii armored public key data
@@ -428,7 +416,7 @@ def compute_file_hash(filename, hasher=None, cumulative_hash=None, blocksize=819
 
 
 class Crc32Hasher:
-    """Wrapper to make the CRC32 implementation act like a standard hashlib hasher"""
+    """Wrapper to make the CRC32 implementation act like a standard hashlib hasher."""
 
     def __init__(self):
         self.hashval = 0
@@ -596,11 +584,10 @@ def get_domain():
 
 
 def get_domain_pk():
-    """
-    THIS CAN/WILL BE RAN IN MIGRATIONS. DO NOT USE ORM FOR IT MIGHT GENERATE INVALID SQL.
+    """THIS CAN/WILL BE RAN IN MIGRATIONS. DO NOT USE ORM FOR IT MIGHT GENERATE INVALID SQL.
 
-    This is ran in plugin migrations so we can not move this implemenation or change its
-    semantics, EVER!
+    This is ran in plugin migrations so we can not move this implemenation or change its semantics,
+    EVER!
     """
     if domain := current_domain.get():
         return domain.pk
@@ -637,8 +624,7 @@ def get_worker_name():
 
 
 class PGAdvisoryLock:
-    """
-    A context manager that will hold a postgres advisory lock non-blocking.
+    """A context manager that will hold a postgres advisory lock non-blocking.
 
     The locks can be chosen from a lock group to avoid collisions. They will never collide with the
     locks used for tasks.

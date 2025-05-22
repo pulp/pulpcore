@@ -12,14 +12,11 @@ DEFAULT_ACCESS_POLICY = {"statements": [{"action": "*", "principal": "admin", "e
 
 
 class DefaultAccessPolicy(AccessPolicy):
-    """
-    An AccessPolicy that takes default statements from the view(set).
-    """
+    """An AccessPolicy that takes default statements from the view(set)."""
 
     @classmethod
     def get_access_policy(cls, view):
-        """
-        Retrieves the default access policy of a view.
+        """Retrieves the default access policy of a view.
 
         Args:
             view (subclass of rest_framework.view.APIView): The view or viewset to receive the
@@ -32,13 +29,11 @@ class DefaultAccessPolicy(AccessPolicy):
 
     @classmethod
     def handle_creation_hooks(cls, obj):
-        """
-        Handle the creation hooks defined in this policy for the passed in `obj`.
+        """Handle the creation hooks defined in this policy for the passed in `obj`.
 
         Args:
             cls: The class this method belongs to.
             obj: The model instance to have its creation hooks handled for.
-
         """
         viewset = get_viewset_for_model(obj)
         access_policy = cls.get_access_policy(viewset)
@@ -56,9 +51,7 @@ class DefaultAccessPolicy(AccessPolicy):
                 function(**kwargs)
 
     def scope_queryset(self, view, qs):
-        """
-        Scope the queryset based on the access policy `scope_queryset` method if present.
-        """
+        """Scope the queryset based on the access policy `scope_queryset` method if present."""
         if (queryset_scoping := self.get_access_policy(view).get("queryset_scoping")) is not None:
             scope = queryset_scoping["function"]
             if not (function := getattr(view, scope, None)):
@@ -70,8 +63,7 @@ class DefaultAccessPolicy(AccessPolicy):
         return qs
 
     def get_policy_statements(self, request, view):
-        """
-        Return the policy statements from an AccessPolicy instance matching the viewset name.
+        """Return the policy statements from an AccessPolicy instance matching the viewset name.
 
         This is an implementation of a method that will be called by
         `rest_access_policy.AccessPolicy`. See the drf-access-policy docs for more info:
@@ -99,16 +91,14 @@ class DefaultAccessPolicy(AccessPolicy):
 
 
 class AccessPolicyFromSettings(DefaultAccessPolicy):
-    """
-    An AccessPolicy that loads statements from settings.
+    """An AccessPolicy that loads statements from settings.
 
     If an access policy cannot be found this falls back to the default one.
     """
 
     @classmethod
     def get_access_policy(cls, view):
-        """
-        Retrieves the AccessPolicy from the DB or None if it doesn't exist.
+        """Retrieves the AccessPolicy from the DB or None if it doesn't exist.
 
         Args:
             view (subclass of rest_framework.view.APIView): The view or viewset to receive the
@@ -126,16 +116,14 @@ class AccessPolicyFromSettings(DefaultAccessPolicy):
 
 
 class AccessPolicyFromDB(DefaultAccessPolicy):
-    """
-    An AccessPolicy that loads statements from an `AccessPolicy` model instance.
+    """An AccessPolicy that loads statements from an `AccessPolicy` model instance.
 
     If an access policy cannot be found this falls back to the default one.
     """
 
     @classmethod
     def get_access_policy(cls, view):
-        """
-        Retrieves the AccessPolicy from the DB or None if it doesn't exist.
+        """Retrieves the AccessPolicy from the DB or None if it doesn't exist.
 
         Args:
             view (subclass of rest_framework.view.APIView): The view or viewset to receive the

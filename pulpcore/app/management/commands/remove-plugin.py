@@ -30,9 +30,7 @@ $$;
 
 
 class Command(BaseCommand):
-    """
-    Django management command for removing a plugin.
-    """
+    """Django management command for removing a plugin."""
 
     help = "Disable a Pulp plugin and remove all the relevant data from the database. Destructive!"
 
@@ -43,9 +41,7 @@ class Command(BaseCommand):
         )
 
     def _check_pulp_services(self):
-        """
-        Check if any pulp services are running and error out if they are.
-        """
+        """Check if any pulp services are running and error out if they are."""
         is_pulp_running = True
         waiting_time = max(settings.CONTENT_APP_TTL, settings.WORKER_TTL)
         check_started = time.time()
@@ -66,8 +62,7 @@ class Command(BaseCommand):
             )
 
     def _remove_indirect_plugin_data(self, app_label):
-        """
-        Remove plugin data not accessible via plugin models.
+        """Remove plugin data not accessible via plugin models.
 
         Specifically,
             - remove django content type by app_label (also auth permissions are removed by cascade)
@@ -87,11 +82,10 @@ class Command(BaseCommand):
         Role.objects.filter(name__in=role_names, locked=True).delete()
 
     def _remove_plugin_data(self, app_label):
-        """
-        Remove all plugin data.
+        """Remove all plugin data.
 
-        Removal happens via ORM to be sure that all relations are cleaned properly as well,
-        e.g. Master-Detail, FKs to various content plugins in pulp-2to3-migration.
+        Removal happens via ORM to be sure that all relations are cleaned properly as well, e.g.
+        Master-Detail, FKs to various content plugins in pulp-2to3-migration.
 
         In some cases, the order in which models are removed matters, e.g. FK is a part of
         uniqueness constraint. Try to remove such problematic models later.
@@ -126,15 +120,12 @@ class Command(BaseCommand):
         self._remove_indirect_plugin_data(app_label)
 
     def _drop_plugin_tables(self, app_label):
-        """
-        Drop plugin table with raw SQL.
-        """
+        """Drop plugin table with raw SQL."""
         with connection.cursor() as cursor:
             cursor.execute(DROP_PLUGIN_TABLES_QUERY.format(app_label=app_label))
 
     def _unapply_migrations(self, app_label):
-        """
-        Unapply migrations so the plugin can be installed/run django migrations again if needed.
+        """Unapply migrations so the plugin can be installed/run django migrations again if needed.
 
         Make sure no post migration signals are connected/run (it's enough to disable only
         `populate_access_policy` and `populate_roles` for the requested plugin, so after

@@ -74,8 +74,7 @@ class RepositorySerializer(ModelSerializer):
 
 
 def validate_certificate(which_cert, value):
-    """
-    Validate and return *just* the certs and not any commentary that came along with them.
+    """Validate and return *just* the certs and not any commentary that came along with them.
 
     Args:
         which_cert: The attribute-name whose cert we're validating (only used for error-message).
@@ -114,9 +113,10 @@ def validate_certificate(which_cert, value):
 
 
 class RemoteSerializer(ModelSerializer, HiddenFieldsMixin):
-    """
-    Every remote defined by a plugin should have a Remote serializer that inherits from this
-    class. Please import from `pulpcore.plugin.serializers` rather than from this module directly.
+    """Every remote defined by a plugin should have a Remote serializer that inherits from this
+    class.
+
+    Please import from `pulpcore.plugin.serializers` rather than from this module directly.
     """
 
     pulp_href = DetailIdentityField(view_name_pattern=r"remotes(-.*/.*)-detail")
@@ -305,9 +305,7 @@ class RemoteSerializer(ModelSerializer, HiddenFieldsMixin):
         )
 
     def validate_proxy_url(self, value):
-        """
-        Check, that the proxy_url does not contain credentials.
-        """
+        """Check, that the proxy_url does not contain credentials."""
         if value and "@" in value:
             raise serializers.ValidationError(_("proxy_url must not contain credentials"))
         return value
@@ -319,9 +317,8 @@ class RemoteSerializer(ModelSerializer, HiddenFieldsMixin):
         return validate_certificate("client_cert", value)
 
     def validate(self, data):
-        """
-        Check, that proxy credentials are only provided completely and if a proxy is configured.
-        """
+        """Check, that proxy credentials are only provided completely and if a proxy is
+        configured."""
         data = super().validate(data)
 
         proxy_url = self.instance.proxy_url if self.partial else None
@@ -422,13 +419,10 @@ class RepositorySyncURLSerializer(ValidateFieldsMixin, serializers.Serializer):
 
 
 class ContentSummarySerializer(serializers.Serializer):
-    """
-    Serializer for the RepositoryVersion content summary
-    """
+    """Serializer for the RepositoryVersion content summary."""
 
     def to_representation(self, obj):
-        """
-        The summary of contained content.
+        """The summary of contained content.
 
         Returns:
             dict: The dictionary has the following format.::
@@ -438,7 +432,6 @@ class ContentSummarySerializer(serializers.Serializer):
                     'removed': {<pulp_type>: {'count': <count>, 'href': <href>},
                     'present': {<pulp_type>: {'count': <count>, 'href': <href>},
                 }
-
         """
         to_return = {"added": {}, "removed": {}, "present": {}}
         request = self.context.get("request")
@@ -453,9 +446,7 @@ class ContentSummarySerializer(serializers.Serializer):
         return to_return
 
     def to_internal_value(self, data):
-        """
-        Setting the internal value.
-        """
+        """Setting the internal value."""
         return {
             self.added: data["added"],
             self.removed: data["removed"],

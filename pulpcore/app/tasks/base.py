@@ -9,8 +9,7 @@ from asgiref.sync import sync_to_async
 
 
 def general_create_from_temp_file(app_label, serializer_name, temp_file_pk, *args, **kwargs):
-    """
-    Create a model instance from contents stored in a temporary file.
+    """Create a model instance from contents stored in a temporary file.
 
     A task which executes this function takes the ownership of a temporary file and deletes it
     afterwards. This function calls the function general_create() to create a model instance.
@@ -23,12 +22,10 @@ def general_create_from_temp_file(app_label, serializer_name, temp_file_pk, *arg
 
 
 def general_create(app_label, serializer_name, *args, **kwargs):
-    """
-    Create a model instance.
+    """Create a model instance.
 
     Raises:
         ValidationError: If the serializer is not valid
-
     """
     data = kwargs.pop("data", None)
 
@@ -45,8 +42,7 @@ def general_create(app_label, serializer_name, *args, **kwargs):
 
 
 def general_update(instance_id, app_label, serializer_name, *args, **kwargs):
-    """
-    Update a model
+    """Update a model.
 
     The model instance is identified using the app_label, id, and serializer name. The serializer is
     used to perform validation.
@@ -82,8 +78,7 @@ def general_update(instance_id, app_label, serializer_name, *args, **kwargs):
 
 
 def general_delete(instance_id, app_label, serializer_name):
-    """
-    Delete a model
+    """Delete a model.
 
     The model instance is identified using the app_label, id, and serializer name.
 
@@ -104,8 +99,7 @@ def general_delete(instance_id, app_label, serializer_name):
 
 
 def general_multi_delete(instance_ids):
-    """
-    Delete a list of model instances in a transaction
+    """Delete a list of model instances in a transaction.
 
     The model instances are identified using the id, app_label, and serializer_name.
 
@@ -125,9 +119,7 @@ def general_multi_delete(instance_ids):
 
 
 async def ageneral_update(instance_id, app_label, serializer_name, *args, **kwargs):
-    """
-    Async version of [pulpcore.app.tasks.base.general_update][].
-    """
+    """Async version of [pulpcore.app.tasks.base.general_update][]."""
     data = kwargs.pop("data", None)
     partial = kwargs.pop("partial", False)
     serializer_class = get_plugin_config(app_label).named_serializers[serializer_name]
@@ -140,9 +132,7 @@ async def ageneral_update(instance_id, app_label, serializer_name, *args, **kwar
 
 
 async def ageneral_delete(instance_id, app_label, serializer_name):
-    """
-    Async version of [pulpcore.app.tasks.base.general_delete][].
-    """
+    """Async version of [pulpcore.app.tasks.base.general_delete][]."""
     serializer_class = get_plugin_config(app_label).named_serializers[serializer_name]
     instance = await serializer_class.Meta.model.objects.aget(pk=instance_id)
     if isinstance(instance, MasterModel):

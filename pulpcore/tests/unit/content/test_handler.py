@@ -266,7 +266,10 @@ async def test_pull_through_new_remote_artifacts(request123, monkeypatch):
 @pytest.mark.asyncio
 @pytest.mark.django_db
 async def test_pull_through_metadata_file(request123, monkeypatch):
-    """Requested path is for a metadata file. Don't save response."""
+    """Requested path is for a metadata file.
+
+    Don't save response.
+    """
     handler = Handler()
     handler._stream_remote_artifact = AsyncMock()
 

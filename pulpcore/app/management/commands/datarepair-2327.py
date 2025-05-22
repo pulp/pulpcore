@@ -12,9 +12,7 @@ from pulpcore.app.models import Remote
 
 
 class Command(BaseCommand):
-    """
-    Django management command for repairing incorrectly migrated remote data.
-    """
+    """Django management command for repairing incorrectly migrated remote data."""
 
     help = (
         "Repairs issue #2327. A small number of configuration settings may have been "

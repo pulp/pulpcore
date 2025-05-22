@@ -5,8 +5,7 @@ from pulpcore.app.files import validate_file_paths
 
 
 def validate_publication_paths(publication):
-    """
-    Validate artifact relative paths for dupes or overlap (e.g. a/b and a/b/c).
+    """Validate artifact relative paths for dupes or overlap (e.g. a/b and a/b/c).
 
     Raises:
         ValueError: If two artifact relative paths are dupes or overlap

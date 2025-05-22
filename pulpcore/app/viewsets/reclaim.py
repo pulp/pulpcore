@@ -8,9 +8,7 @@ from pulpcore.tasking.tasks import dispatch
 
 
 class ReclaimSpaceViewSet(ViewSet):
-    """
-    Viewset for reclaim disk space endpoint.
-    """
+    """Viewset for reclaim disk space endpoint."""
 
     serializer_class = ReclaimSpaceSerializer
 
@@ -19,9 +17,7 @@ class ReclaimSpaceViewSet(ViewSet):
         responses={202: AsyncOperationResponseSerializer},
     )
     def reclaim(self, request):
-        """
-        Triggers an asynchronous space reclaim operation.
-        """
+        """Triggers an asynchronous space reclaim operation."""
         serializer = ReclaimSpaceSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 

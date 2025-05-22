@@ -132,12 +132,10 @@ class PulpcoreWorker:
                 self.cancel_task = True
 
     def handle_worker_heartbeat(self):
-        """
-        Create or update worker heartbeat records.
+        """Create or update worker heartbeat records.
 
         Existing Worker objects are searched for one to update. If an existing one is found, it is
         updated. Otherwise a new Worker entry is created. Logging at the info level is also done.
-
         """
         worker, created = Worker.objects.get_or_create(
             name=self.name, defaults={"versions": self.versions}
@@ -380,7 +378,8 @@ class PulpcoreWorker:
     def supervise_task(self, task):
         """Call and supervise the task process while heart beating.
 
-        This function must only be called while holding the lock for that task."""
+        This function must only be called while holding the lock for that task.
+        """
 
         self.cancel_task = False
         self.task = task
@@ -477,9 +476,9 @@ class PulpcoreWorker:
     def handle_available_tasks(self):
         """Pick and supervise tasks until there are no more available tasks.
 
-        Failing to detect new available tasks can lead to a stuck state, as the workers
-        would go to sleep and wouldn't be able to know about the unhandled task until
-        an external wakeup event occurs (e.g., new worker startup or new task gets in).
+        Failing to detect new available tasks can lead to a stuck state, as the workers would go to
+        sleep and wouldn't be able to know about the unhandled task until an external wakeup event
+        occurs (e.g., new worker startup or new task gets in).
         """
         keep_looping = True
         while keep_looping and not self.shutdown_requested:

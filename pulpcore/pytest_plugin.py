@@ -138,8 +138,7 @@ def _patch_cid_user_agent(_api_client_set, cid, monkeypatch):
 
 @pytest.fixture(scope="session")
 def pulpcore_bindings(_api_client_set, bindings_cfg):
-    """
-    A namespace providing preconfigured pulpcore api clients.
+    """A namespace providing preconfigured pulpcore api clients.
 
     e.g. `pulpcore_bindings.WorkersApi.list()`.
     """
@@ -671,8 +670,7 @@ def delete_orphans_pre(request, pulpcore_bindings, monitor_task):
 
 @pytest.fixture(scope="session")
 def monitor_task(pulpcore_bindings, pulp_domain_enabled):
-    """
-    Wait for a task to reach a final state.
+    """Wait for a task to reach a final state.
 
     Returns the task in "completed" state, or throws a `PulpTaskTimeoutError` in case the timeout
     in seconds (defaulting to 30*60) exceeded or a `PulpTaskError` in case it reached any other
@@ -706,8 +704,7 @@ def monitor_task(pulpcore_bindings, pulp_domain_enabled):
 
 @pytest.fixture(scope="session")
 def monitor_task_group(pulpcore_bindings):
-    """
-    Wait for a task group to reach a final state.
+    """Wait for a task group to reach a final state.
 
     Returns the task group in "completed" state, or throws a `PulpTaskTimeoutError` in case the
     timeout in seconds (defaulting to 30*60) exceeded or a `PulpTaskGroupError` in case it reached
@@ -823,7 +820,7 @@ def pulp_versions(pulp_status):
 
 @pytest.fixture
 def needs_pulp_plugin(pulp_versions):
-    """Skip test if a component is not available in the specified version range"""
+    """Skip test if a component is not available in the specified version range."""
 
     def _needs_pulp_plugin(plugin, min=None, max=None):
         if plugin not in pulp_versions:
@@ -1091,9 +1088,7 @@ def signing_gpg_homedir_path(tmp_path_factory):
 
 @pytest.fixture
 def sign_with_ascii_armored_detached_signing_service(signing_script_path, signing_gpg_metadata):
-    """
-    Runs the test signing script manually, locally, and returns the signature file produced.
-    """
+    """Runs the test signing script manually, locally, and returns the signature file produced."""
 
     def _sign_with_ascii_armored_detached_signing_service(filename):
         env = {"PULP_SIGNING_KEY_FINGERPRINT": signing_gpg_metadata[1]}

@@ -31,9 +31,7 @@ def parse_human_readable_file_size(size: str):
 
 
 class ExporterSerializer(ModelSerializer):
-    """
-    Base serializer for Exporters.
-    """
+    """Base serializer for Exporters."""
 
     pulp_href = DetailIdentityField(view_name_pattern=r"exporter(-.*/.*)-detail")
     name = serializers.CharField(
@@ -43,8 +41,7 @@ class ExporterSerializer(ModelSerializer):
 
     @staticmethod
     def validate_path(value, check_is_dir=False):
-        """
-        Check if path is in ALLOWED_EXPORT_PATHS.
+        """Check if path is in ALLOWED_EXPORT_PATHS.
 
         Args:
             value: The user-provided value path to be validated.
@@ -83,9 +80,7 @@ class ExportedResourceField(RelatedResourceField):
 
 
 class ExportSerializer(ModelSerializer):
-    """
-    Base serializer for Exports.
-    """
+    """Base serializer for Exports."""
 
     pulp_href = ExportIdentityField()
 
@@ -115,9 +110,7 @@ class ExportSerializer(ModelSerializer):
 
 
 class PulpExportSerializer(ExportSerializer):
-    """
-    Serializer for PulpExports.
-    """
+    """Serializer for PulpExports."""
 
     output_file_info = fields.JSONDictField(
         help_text=_("Dictionary of filename: sha256hash entries for export-output-file(s)"),
@@ -167,9 +160,8 @@ class PulpExportSerializer(ExportSerializer):
     )
 
     def _validate_versions_to_repos(self, the_versions):
-        """
-        If specifying repo-versions explicitly, must provide a version for each exporter-repository
-        """
+        """If specifying repo-versions explicitly, must provide a version for each exporter-
+        repository."""
         # make sure counts match
         the_exporter = self.context.get("exporter", None)
         num_repos = the_exporter.repositories.count()
@@ -252,9 +244,7 @@ class PulpExportSerializer(ExportSerializer):
 
 
 class PulpExporterSerializer(ExporterSerializer):
-    """
-    Serializer for pulp exporters.
-    """
+    """Serializer for pulp exporters."""
 
     path = serializers.CharField(help_text=_("File system directory to store exported tar.gzs."))
 
@@ -277,9 +267,7 @@ class PulpExporterSerializer(ExporterSerializer):
 
 
 class FilesystemExportSerializer(ExportSerializer):
-    """
-    Serializer for FilesystemExports.
-    """
+    """Serializer for FilesystemExports."""
 
     publication = DetailRelatedField(
         required=False,
@@ -320,9 +308,7 @@ class FilesystemExportSerializer(ExportSerializer):
 
 
 class FilesystemExporterSerializer(ExporterSerializer):
-    """
-    Serializer for FilesystemExporters.
-    """
+    """Serializer for FilesystemExporters."""
 
     path = serializers.CharField(help_text=_("File system location to export to."))
 

@@ -14,8 +14,8 @@ __all__ = ["remove_duplicates"]
 
 
 def remove_duplicates(repository_version):
-    """
-    Inspect content additions in the `RepositoryVersion` and remove existing repository duplicates.
+    """Inspect content additions in the `RepositoryVersion` and remove existing repository
+    duplicates.
 
     This function will inspect the content being added to a repo version and remove any existing
     content which would collide with the content being added to the repository version. It does not
@@ -72,8 +72,7 @@ def remove_duplicates(repository_version):
 
 
 def validate_duplicate_content(version):
-    """
-    Validate that a repository version doesn't contain duplicate content.
+    """Validate that a repository version doesn't contain duplicate content.
 
     Uses repo_key_fields to determine if content is duplicated.
 
@@ -110,8 +109,7 @@ def validate_duplicate_content(version):
 
 
 def validate_version_paths(version):
-    """
-    Validate artifact relative paths for dupes or overlap (e.g. a/b and a/b/c).
+    """Validate artifact relative paths for dupes or overlap (e.g. a/b and a/b/c).
 
     Raises:
         ValueError: If two artifact relative paths overlap
@@ -126,8 +124,7 @@ def validate_version_paths(version):
 
 
 def validate_repo_version(version):
-    """
-    Validate a repo version.
+    """Validate a repo version.
 
     Checks for duplicate content, duplicate relative paths, etc.
 

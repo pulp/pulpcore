@@ -8,8 +8,7 @@ from pulpcore.app.models import BaseModel, Group
 
 
 class Role(BaseModel):
-    """
-    A model for the "role" part in RBAC.
+    """A model for the "role" part in RBAC.
 
     Fields:
 
@@ -28,8 +27,7 @@ class Role(BaseModel):
 
 
 class UserRole(BaseModel):
-    """
-    Join table for user to role associations with optional content object.
+    """Join table for user to role associations with optional content object.
 
     Relations:
 
@@ -58,8 +56,7 @@ class UserRole(BaseModel):
 
 
 class GroupRole(BaseModel):
-    """
-    Join table for group to role associations with optional content object.
+    """Join table for group to role associations with optional content object.
 
     Relations:
 
